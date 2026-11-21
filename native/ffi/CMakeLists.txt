@@ -11,7 +11,7 @@ if(WIN32 AND EXISTS "${CMAKE_INSTALL_PREFIX}/include/wasmtime.h")
 endif()
 foreach(PAIR IN ITEMS "llhttp.h|LLHTTP" "nghttp2/nghttp2.h|NGHTTP2" "curl/curl.h|CURL" "openssl/ssl.h|OPENSSL"
     "sqlite3.h|SQLITE" "libpq-fe.h|LIBPQ" "hiredis/hiredis_ssl.h|HIREDIS" "sodium.h|LIBSODIUM"
-    "protobuf-c/protobuf-c.h|PROTOBUF_C" "yaml.h|LIBYAML" "utf8proc.h|UTF8PROC")
+    "librdkafka/rdkafka.h|LIBRDKAFKA" "protobuf-c/protobuf-c.h|PROTOBUF_C" "yaml.h|LIBYAML" "utf8proc.h|UTF8PROC")
   string(REPLACE "|" ";" FIELDS "${PAIR}")
   list(GET FIELDS 0 HEADER)
   list(GET FIELDS 1 SYMBOL)
@@ -48,6 +48,9 @@ endif()
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/flint_security.h" AND
     (EXISTS "${CMAKE_INSTALL_PREFIX}/include/openssl/evp.h" OR EXISTS "${CMAKE_INSTALL_PREFIX}/include/sodium.h"))
   install(FILES flint_security.h DESTINATION include)
+endif()
+if(EXISTS "${CMAKE_INSTALL_PREFIX}/include/librdkafka/rdkafka.h")
+  install(FILES flint_mq.h flint_mq_socket.h DESTINATION include)
 endif()
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/flint_rpc.h" AND
     (EXISTS "${CMAKE_INSTALL_PREFIX}/include/openssl/evp.h" OR
