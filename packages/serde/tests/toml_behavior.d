@@ -236,6 +236,22 @@ dates = [2026-11-21, "quoted", 0x10]
     assert(entries.value[4].path == ["a", "empty"] && entries.value[4].json == "{}");
 }
 
+@("owned TOML entries sort interleaved tables by source offset")
+unittest
+{
+    import flint.serde.owned : readTomlEntries;
+
+    enum source = "title = 1\n[a]\nx = 2\n[b]\ny = 3\n[a.nested]\nz = 4\n";
+    const result = readTomlEntries(source);
+    assert(result.ok() && result.value.length == 4);
+    assert(result.value[0].path == ["title"]);
+    assert(result.value[1].path == ["a", "x"]);
+    assert(result.value[2].path == ["b", "y"]);
+    assert(result.value[3].path == ["a", "nested", "z"]);
+    foreach (index; 1 .. result.value.length)
+        assert(result.value[index - 1].offset < result.value[index].offset);
+}
+
 @("seeded malformed TOML inputs retain existing destination and arena data")
 unittest
 {

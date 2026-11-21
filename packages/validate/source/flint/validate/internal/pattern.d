@@ -69,7 +69,8 @@ private struct Term
     Selection selection;
 }
 
-private struct RegexParser
+// The parser and lowering run only when a Pattern UDA is instantiated.
+private struct RegexParser()
 {
     string expression;
     size_t offset;
@@ -323,7 +324,7 @@ private struct RegexParser
     }
 }
 
-private int hexValue(int ch) pure nothrow @nogc
+private int hexValue()(int ch) pure nothrow @nogc
 {
     if (ch >= '0' && ch <= '9')
         return ch - '0';
@@ -334,7 +335,7 @@ private int hexValue(int ch) pure nothrow @nogc
     return -1;
 }
 
-private Selection shorthand(int ch) pure nothrow @nogc
+private Selection shorthand()(int ch) pure nothrow @nogc
 {
     Selection mask;
     switch (ch | 0x20)
@@ -367,7 +368,7 @@ private struct Instruction
     Selection selection;
 }
 
-private struct Program
+private struct Program()
 {
     Instruction[stateLimit] states;
     ushort count;
@@ -442,21 +443,21 @@ private struct Program
     }
 }
 
-private Program compilePattern(string expression)
+private Program!() compilePattern()(string expression)
 {
     if (expression.length > 4_096)
     {
-        Program failure;
+        Program!() failure;
         failure.error = "pattern exceeds 4096 source bytes";
         return failure;
     }
 
-    RegexParser parser;
+    RegexParser!() parser;
     parser.expression = expression;
     parser.add(Term(Op.empty));
     immutable syntax = parser.parse();
 
-    Program program;
+    Program!() program;
     if (parser.error !is null || parser.offset != expression.length)
     {
         program.error = parser.error is null ? "unmatched pattern group delimiter" : parser.error;

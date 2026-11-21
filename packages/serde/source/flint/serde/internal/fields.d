@@ -66,7 +66,7 @@ private struct Hash
     bool valid;
 }
 
-private Hash nameHash(scope const(ubyte)[] name) nothrow @nogc
+private Hash nameHash()(scope const(ubyte)[] name) nothrow @nogc
 {
     uint hash = nameHashSeed;
     size_t offset;
@@ -118,7 +118,7 @@ private Field[] describe(T)(string base, size_t depth)
     return result;
 }
 
-private bool before(string left, string right) pure nothrow @nogc
+private bool before()(string left, string right) pure nothrow @nogc
 {
     foreach (index, byteValue; left)
     {
@@ -130,7 +130,7 @@ private bool before(string left, string right) pure nothrow @nogc
     return left.length < right.length;
 }
 
-private size_t[] canonicalOrder(scope const(Field)[] fields)
+private size_t[] canonicalOrder()(scope const(Field)[] fields)
 {
     auto order = new size_t[fields.length];
     foreach (index; 0 .. order.length)

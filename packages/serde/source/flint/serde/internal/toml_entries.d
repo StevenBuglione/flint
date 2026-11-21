@@ -1,6 +1,7 @@
 /// Native startup view of TOML assignments with original source locations.
 module flint.serde.internal.toml_entries;
 
+import core.lifetime : move;
 import flint.arena : Error, Result, Status;
 import flint.serde.internal.decimal : writeDecimal;
 import flint.serde.internal.json_codec : bounded;
@@ -9,7 +10,6 @@ import flint.serde.internal.toml_text : emitText;
 import flint.serde.internal.toml_values : ScalarKind, booleanValue, floatingValue, integerValue;
 import flint.serde.internal.types : DecodeOptions;
 import flint.serde.internal.writer : Writer;
-import std.algorithm.sorting : sort;
 
 @safe:
 
@@ -49,10 +49,42 @@ else
         result.error = collectTable(document, rootNode, path, 0, entries);
         if (result.error.code == Status.ok)
         {
-            sort!((left, right) => left.offset < right.offset)(entries);
+            sortByOffset(entries);
             result.value = entries;
         }
         return result;
+    }
+
+    private void sortByOffset(scope TomlEntry[] entries) pure nothrow @nogc
+    {
+        // Drain a max heap in place. The tree walk that builds entries can
+        // interleave key offsets when a source table is extended later.
+        for (size_t parent = entries.length / 2; parent != 0;)
+            siftDown(entries, --parent);
+        for (size_t end = entries.length; end > 1;)
+        {
+            --end;
+            auto latest = move(entries[0]);
+            move(entries[end], entries[0]);
+            move(latest, entries[end]);
+            siftDown(entries[0 .. end], 0);
+        }
+    }
+
+    private void siftDown(scope TomlEntry[] entries, size_t parent) pure nothrow @nogc
+    {
+        auto entry = move(entries[parent]);
+        while (parent < entries.length / 2)
+        {
+            size_t child = parent * 2 + 1;
+            if (child + 1 < entries.length && entries[child].offset < entries[child + 1].offset)
+                ++child;
+            if (entry.offset >= entries[child].offset)
+                break;
+            move(entries[child], entries[parent]);
+            parent = child;
+        }
+        move(entry, entries[parent]);
     }
 
     private string ownedText(scope const(ubyte)[] token)
