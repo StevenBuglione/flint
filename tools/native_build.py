@@ -192,6 +192,7 @@ class Builder:
                 self.command([src/'configure','--disable-shared','--enable-static','--prefix='+str(self.prefix)],build)
                 self.command(['make','-j',str(self.a.jobs)],build);self.command(['make','install'],build)
         elif name=='liburing':
+            if self.a.phase=='build':self.prefix.mkdir(parents=True,exist_ok=True)
             configure=['sh','configure','--use-libc','--prefix='+str(self.prefix),'--libdir='+str(self.prefix/'lib')]
             if self.a.sanitize=='address,undefined':configure.append('--enable-sanitizer')
             if self.a.phase=='plan' or (src/'config-host.mak').exists():self.command(['make','-C','src','clean'],src)
@@ -351,7 +352,10 @@ class Builder:
                 if metadata:
                     if digest(Path(metadata['path']))!=metadata['sha256']:raise RuntimeError('Installed system linker metadata changed')
                     flags+=metadata['flags']
-            if self.a.target.startswith('linux'):flags+=['-pthread','-ldl','-lm']
+            if self.a.target.startswith('linux'):
+                # DUB passes lflags to the linker. -pthread is a compiler-driver option.
+                flags=['-lpthread' if flag=='-pthread' else flag for flag in flags]
+                flags+=['-lpthread','-ldl','-lm']
             elif self.a.target.startswith('windows'):flags+=['ws2_32.lib','advapi32.lib','crypt32.lib','bcrypt.lib','userenv.lib','ntdll.lib','shell32.lib','ole32.lib']
             else:
                 flags+=['-Wl,-framework,Security','-Wl,-framework,CoreFoundation']
