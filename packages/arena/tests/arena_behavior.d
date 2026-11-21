@@ -123,6 +123,35 @@ unittest
     }
 }
 
+@("append joins parser fragments and preserves prefix handles and bounds on failure")
+unittest
+{
+    align(8) ubyte[12] storage;
+    ubyte[8] otherStorage;
+    scope arena = RequestArena(storage[]);
+    scope other = RequestArena(otherStorage[]);
+    auto prefix = arena.copyIn([cast(ubyte) 'a']);
+    assert(prefix.ok());
+    auto joined = prefix.value;
+    assert(arena.append(joined, cast(const(ubyte)[]) "bc") == Status.ok);
+    assert(prefix.value.length() == 1 && joined.length() == 3);
+    assert(arena.append(prefix.value, cast(const(ubyte)[]) "d") == Status.conflict);
+    assert(other.append(joined, cast(const(ubyte)[]) "e") == Status.invalidArgument);
+    assert(arena.append(joined, cast(const(ubyte)[]) "too many!!") == Status.outOfMemory);
+    assert(arena.stats().used == 3 && arena.stats().peak == 3);
+    assert(arena.read(joined, (scope const(ubyte)[] bytes) @safe nothrow @nogc {
+            assert(bytes == cast(const(ubyte)[]) "abc");
+            assert(arena.append(joined, bytes) == Status.conflict);
+        }) == Status.ok);
+    assert(arena.append(joined, cast(const(ubyte)[]) "defghijkl") == Status.ok);
+    assert(arena.stats().used == 12 && joined.length() == 12);
+    assert(arena.reset() == Status.ok);
+    assert(arena.append(joined, null) == Status.invalidArgument);
+    auto empty = arena.allocate(0);
+    assert(empty.ok() && arena.append(empty.value, cast(const(ubyte)[]) "x") == Status.ok);
+    assert(empty.value.length() == 1);
+}
+
 @("allocation clears storage and copy-in preserves overlapping input")
 unittest
 {

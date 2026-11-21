@@ -68,6 +68,15 @@ struct Context
         return deadlineValue;
     }
 
+    /// Retain this cancellation identity and narrow its deadline without allocating another source.
+    Context withDeadline(Deadline deadline) const nothrow @nogc
+    {
+        if (deadlineValue.monotonicNanoseconds < deadline.monotonicNanoseconds)
+            deadline = deadlineValue;
+        retainContext(id);
+        return Context(id, deadline);
+    }
+
     /// Report the earliest terminal status or success while work may proceed.
     Error check() const nothrow @nogc
     {

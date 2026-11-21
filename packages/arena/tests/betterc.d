@@ -10,8 +10,9 @@ private int behaviorTest() nothrow @nogc
     auto block = arena.allocate(8);
     assert(block.ok());
     assert(arena.write(block.value, (scope ubyte[] bytes) @safe nothrow @nogc { bytes[0] = 7; }) == Status.ok);
+    assert(arena.append(block.value, cast(const(ubyte)[]) "a") == Status.ok);
     assert(arena.read(block.value, (scope const(ubyte)[] bytes) @safe nothrow @nogc {
-            assert(bytes[0] == 7);
+            assert(bytes.length == 9 && bytes[0] == 7 && bytes[8] == 'a');
         }) == Status.ok);
     assert(arena.reset() == Status.ok);
     assert(arena.read(block.value, (scope const(ubyte)[] bytes) @safe nothrow @nogc {

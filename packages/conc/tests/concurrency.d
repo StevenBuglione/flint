@@ -95,6 +95,31 @@ unittest
     assert(early.value.context().check().code == Status.timedOut);
 }
 
+@("deadline views retain the original cancellation and only narrow inherited time")
+unittest
+{
+    const inherited = Deadline.afterMillis(60_000);
+    auto source = CancelSource.create(Context.init, inherited);
+    assert(source.ok());
+    auto original = source.value.context();
+    auto unchanged = original.withDeadline(Deadline.none());
+    assert(unchanged.deadline().monotonicNanoseconds == inherited.monotonicNanoseconds);
+
+    const earlier = Deadline.afterMillis(1_000);
+    auto narrowed = unchanged.withDeadline(earlier);
+    assert(narrowed.deadline().monotonicNanoseconds == earlier.monotonicNanoseconds);
+    auto expired = narrowed.withDeadline(Deadline(0));
+    assert(expired.check().code == Status.timedOut);
+    assert(Context.init.withDeadline(Deadline(0)).check().code == Status.timedOut);
+
+    source.value.cancel();
+    source.value.close();
+    assert(narrowed.check().code == Status.cancelled);
+    assert(unchanged.check().code == Status.cancelled);
+    assert(original.check().code == Status.cancelled);
+    assert(expired.check().code == Status.timedOut);
+}
+
 @("retained contexts survive source close and slab reuse")
 unittest
 {

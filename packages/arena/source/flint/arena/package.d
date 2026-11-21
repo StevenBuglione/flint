@@ -154,7 +154,31 @@ struct RequestArena
         if (!allocation.ok() || source.length == 0)
             return allocation;
 
-        scope destination = storage[allocation.value.start .. cursor];
+        copyBytes(storage[allocation.value.start .. cursor], source);
+        return allocation;
+    }
+
+    /// Extend the most recent allocation with initialized bytes. A failed append preserves both handles and storage.
+    Status append(ref Buffer handle, scope const(ubyte)[] tail) scope nothrow @nogc
+    {
+        if (!valid(handle))
+            return Status.invalidArgument;
+        if (activeBorrows != 0 || handle.count != cursor - handle.start)
+            return Status.conflict;
+        if (tail.length > storage.length - cursor)
+            return Status.outOfMemory;
+
+        immutable end = cursor + tail.length;
+        copyBytes(storage[cursor .. end], tail);
+        cursor = end;
+        handle.count += tail.length;
+        if (cursor > peak)
+            peak = cursor;
+        return Status.ok;
+    }
+
+    private static void copyBytes(scope ubyte[] destination, scope const(ubyte)[] source) nothrow @nogc
+    {
         // Copy backwards when the source begins below the destination to allow overlap.
         if (cast(size_t) source.ptr < cast(size_t) destination.ptr)
         {
@@ -166,7 +190,6 @@ struct RequestArena
             foreach (index, byteValue; source)
                 destination[index] = byteValue;
         }
-        return allocation;
     }
 
     /// Present a checked handle as a read-only slice for the visitor's duration.
