@@ -11,7 +11,8 @@ if(WIN32 AND EXISTS "${CMAKE_INSTALL_PREFIX}/include/wasmtime.h")
 endif()
 foreach(PAIR IN ITEMS "llhttp.h|LLHTTP" "nghttp2/nghttp2.h|NGHTTP2" "curl/curl.h|CURL" "openssl/ssl.h|OPENSSL"
     "sqlite3.h|SQLITE" "libpq-fe.h|LIBPQ" "hiredis/hiredis_ssl.h|HIREDIS" "sodium.h|LIBSODIUM"
-    "librdkafka/rdkafka.h|LIBRDKAFKA" "protobuf-c/protobuf-c.h|PROTOBUF_C" "yaml.h|LIBYAML" "utf8proc.h|UTF8PROC")
+    "librdkafka/rdkafka.h|LIBRDKAFKA" "protobuf-c/protobuf-c.h|PROTOBUF_C" "yaml.h|LIBYAML" "utf8proc.h|UTF8PROC"
+    "zlib.h|ZLIB" "zstd.h|ZSTD" "brotli/decode.h|BROTLI" "archive.h|LIBARCHIVE")
   string(REPLACE "|" ";" FIELDS "${PAIR}")
   list(GET FIELDS 0 HEADER)
   list(GET FIELDS 1 SYMBOL)
@@ -25,6 +26,11 @@ enable_testing()
 add_test(NAME flint_abi_test COMMAND flint_abi_test)
 install(TARGETS flint_ffi ARCHIVE DESTINATION lib)
 install(FILES flint_abi_probe.h DESTINATION include)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/flint_codec.h" AND
+    (EXISTS "${CMAKE_INSTALL_PREFIX}/include/zlib.h" OR EXISTS "${CMAKE_INSTALL_PREFIX}/include/zstd.h" OR
+     EXISTS "${CMAKE_INSTALL_PREFIX}/include/brotli/decode.h" OR EXISTS "${CMAKE_INSTALL_PREFIX}/include/archive.h"))
+  install(FILES flint_codec.h DESTINATION include)
+endif()
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/flint_yaml.h" AND EXISTS "${CMAKE_INSTALL_PREFIX}/include/yaml.h")
   install(FILES flint_yaml.h DESTINATION include)
 endif()
