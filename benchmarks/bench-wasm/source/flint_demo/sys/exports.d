@@ -24,11 +24,11 @@ version (WebAssembly)
         auto b = CommandBuffer.fromStorage(output[], sessionEpoch);
         if (!b.ok())
             return cast(uint) b.error.code;
-        commands = move(b.value);
+        move(b.value, commands);
         auto g = SignalGraph.fromStorage(signals[], observers[], dirty[]);
         if (!g.ok())
             return cast(uint) g.error.code;
-        graph = move(g.value);
+        move(g.value, graph);
         auto s = graph.create(0);
         if (!s.ok())
             return cast(uint) s.error.code;

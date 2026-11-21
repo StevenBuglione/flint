@@ -1,7 +1,13 @@
 // FLNT ABI v1. Pure decoding is separately testable without a DOM.
 const tags = new Map([[1,"div"],[2,"span"],[3,"button"],[4,"input"],[5,"canvas"],[6,"p"]]);
-const decoder = new TextDecoder("utf-8", {fatal:true});
-const require = (condition, message) => { if (!condition) throw new Error(message); };
+const decoder = new TextDecoder("utf-8", {fatal:true,ignoreBOM:true});
+export const Status = Object.freeze({invalidArgument:1,unsupported:9});
+class BridgeError extends Error {
+    constructor(status,message) { super(message); this.status=status; }
+}
+const require = (condition,message,status=Status.invalidArgument) => {
+    if (!condition) throw new BridgeError(status,message);
+};
 export function initialState(epoch = 1) {
     require(Number.isInteger(epoch)&&epoch>0&&epoch<=0xffffffff,"invalid session epoch");
     return {epoch,sequence:null,nodes:new Map([[0,{generation:1,parent:null,children:new Set(),tag:"span"}]]), generations:new Map([[0,1]])};
@@ -40,7 +46,11 @@ export function decodeBatch(memory, pointer, length, state = initialState(), cap
     }
     function text(offset,size,end) {
         require(size<=65536&&offset<=end&&size<=end-offset,"invalid text length");
-        return decoder.decode(new Uint8Array(buffer,pointer+offset,size));
+        try {
+            return decoder.decode(new Uint8Array(buffer,pointer+offset,size));
+        } catch {
+            throw new BridgeError(Status.invalidArgument,"invalid UTF-8 field");
+        }
     }
     let p=32;
     for(let c=0;c<count;c++) {
@@ -55,7 +65,7 @@ export function decodeBatch(memory, pointer, length, state = initialState(), cap
             op.tag=tags.get(d.getUint16(q,true));require(op.tag,"unknown element tag");
             require(!nodes.has(id)&&id!==0&&generation===(generations.get(id)??1),"duplicate or retired create");
             nodes.set(id,{generation,parent:null,children:new Set(),tag:op.tag,
-                width:op.tag==="canvas"?300:null,height:op.tag==="canvas"?150:null});
+                width:op.tag==="canvas"?300:null,height:op.tag==="canvas"?150:null,drawing:null});
             generations.set(id,generation);used=q+4;
         } else if(opcode===2) {
             const n=node(id,generation);require(q<=end-4,"truncated text");const size=d.getUint32(q,true);
@@ -83,18 +93,25 @@ export function decodeBatch(memory, pointer, length, state = initialState(), cap
             node(id,generation);require(bytes===16&&id!==0,"invalid remove payload");retire(id,op.removed);used=q;
         } else if(opcode===6) {
             const canvas=node(id,generation);
-            require(canvas.tag==="canvas"&&capabilities.canvas===true,"canvas unavailable");
+            require(canvas.tag==="canvas","canvas operation requires a canvas node");
+            require(canvas.drawing!=="webgpu","canvas already belongs to WebGPU");
             require(bytes===40&&d.getUint32(q,true)===1,"invalid canvas command");
             op.x=d.getInt32(q+4,true);op.y=d.getInt32(q+8,true);op.width=d.getUint32(q+12,true);op.height=d.getUint32(q+16,true);op.rgba=d.getUint32(q+20,true);
             require(op.x>=0&&op.y>=0&&op.width<=16384&&op.height<=16384&&
-                op.x<=canvas.width&&op.y<=canvas.height&&op.width<=canvas.width-op.x&&op.height<=canvas.height-op.y,"canvas bounds");used=q+24;
+                op.x<=canvas.width&&op.y<=canvas.height&&op.width<=canvas.width-op.x&&op.height<=canvas.height-op.y,"canvas bounds");
+            require(capabilities.canvas===true,"canvas unavailable",Status.unsupported);used=q+24;
+            canvas.drawing="canvas";
         } else if(opcode===7) {
-            require(node(id,generation).tag==="canvas"&&capabilities.webgpu===true,"WebGPU unavailable");
+            const canvas=node(id,generation);
+            require(canvas.tag==="canvas","WebGPU operation requires a canvas node");
+            require(canvas.drawing!=="canvas","canvas already belongs to 2D drawing");
             require(bytes===40&&d.getUint32(q,true)===1,"invalid GPU command");
             op.rgba=[0,1,2,3].map(i=>d.getFloat32(q+4+i*4,true));
-            require(op.rgba.every(x=>Number.isFinite(x)&&x>=0&&x<=1),"invalid GPU color");used=q+20;
-        } else throw new Error("unknown opcode");
-        require(used<=end,"payload exceeds record");
+            require(op.rgba.every(x=>Number.isFinite(x)&&x>=0&&x<=1),"invalid GPU color");
+            require(capabilities.webgpu===true,"WebGPU unavailable",Status.unsupported);used=q+20;
+            canvas.drawing="webgpu";
+        } else throw new BridgeError(Status.invalidArgument,"unknown opcode");
+        require(used<=end&&end-used<8,"invalid record padding size");
         for(let i=used;i<end;i++) require(d.getUint8(i)===0,"nonzero padding");
         operations.push(op);p=end;
     }
@@ -133,5 +150,13 @@ export function createDriver(mount,{gpuDevice=null,epoch=1}={}) {
         }
         state=decoded.state;return decoded.operations.length;
     }
-    return {apply};
+    function reset(nextEpoch) {
+        const next=initialState(nextEpoch);
+        require(next.epoch!==state.epoch,"a session reset needs a new epoch");
+        mount.replaceChildren();
+        elements.clear();
+        elements.set(0,mount);
+        state=next;
+    }
+    return {apply,reset};
 }

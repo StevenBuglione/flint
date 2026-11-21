@@ -13,9 +13,18 @@ try {
   const response=await fetch('./build/app.wasm');if(!response.ok)throw new Error('Build the Flint WASM example before serving it.');
   const {instance}=await WebAssembly.instantiate(await response.arrayBuffer(),{});const x=instance.exports;
   if(x.flint_init(1)!==0)throw new Error('Module initialization failed.');
-  const driver=createDriver(document.querySelector('#counter'),{epoch:1});let pending=0,first=true,failed=false;
-  button.addEventListener('click',()=>{pending=Math.min(1024,pending+1);});button.disabled=false;
+  const driver=createDriver(document.querySelector('#counter'),{epoch:1});
+  let pending=0,first=true,failed=false,queued=false;
+  function wake(){
+    if(queued||failed||document.hidden||(!first&&!pending))return;
+    queued=true;
+    requestAnimationFrame(frame);
+  }
+  button.addEventListener('click',()=>{pending=Math.min(1024,pending+1);wake();});
+  document.addEventListener('visibilitychange',wake);
+  button.disabled=false;
   function frame(){
+    queued=false;
     if(failed)return;
     if(!document.hidden&&(first||pending)) {
       try {
@@ -23,9 +32,9 @@ try {
         driver.apply(x.memory,x.flint_buffer_ptr(),x.flint_buffer_len());status.textContent='Ready';
       } catch(e){failed=true;button.disabled=true;status.textContent=e.message;return;}
     }
-    requestAnimationFrame(frame);
+    wake();
   }
-  requestAnimationFrame(frame);
+  wake();
 } catch(e){status.textContent=e.message;}
 </script>
 </html>
