@@ -152,7 +152,7 @@ if '-c' not in expanded or any('dub_platform_probe_' in value for value in expan
     os.execv(compiler, [compiler] + args)
 identity = uuid.uuid4().hex
 trace = traces / (identity + '.trace.json')
-command = [compiler] + args + ['-vtemplates', '-ftime-trace', '-ftime-trace-file=' + str(trace)]
+command = [compiler] + args + ['-vtemplates=list-instances', '-ftime-trace', '-ftime-trace-file=' + str(trace)]
 response_files = []
 for index, (original, text) in enumerate(responses):
     retained = traces / (identity + '-' + str(index) + '.response.txt')
@@ -503,14 +503,15 @@ def main(argv=None):
                         wasm_row[profile] = {'raw_bytes': len(data), 'gzip_bytes': len(gzip.compress(data, compresslevel=9, mtime=0)), 'sha256': digest(target)}
                         shutil.copy2(target, published / ('bench.wasm' if profile == 'O3' else 'bench-wasm-Oz.wasm'))
     result['apps']['bench-wasm'] = wasm_row
-    # Go's stdlib cache is primed once to match D's precompiled runtime. Each app
-    # trial gets a fresh clone of that cache; the app itself has no cached objects.
+    # Prime the Go stdlib with the same compile flags as the app. Each app trial
+    # gets a fresh clone of that cache and compiles its own objects.
     go_env = base_env.copy()
     go_env.update({'GOTOOLCHAIN': 'local', 'GOPROXY': 'off', 'GOSUMDB': 'off', 'GOWORK': 'off', 'CGO_ENABLED': '0'})
     with tempfile.TemporaryDirectory(prefix='flint-go-') as temporary:
         temporary = Path(temporary); prime = temporary / 'prime'; prime.mkdir()
         go_env['GOCACHE'] = str(prime)
-        run_checked([args.go, 'build', '-buildvcs=false', 'std'], ROOT, go_env)
+        go_build = [args.go, 'build', '-buildvcs=false', '-trimpath']
+        run_checked(go_build + ['std'], ROOT, go_env)
         for name, source in go_sources.items():
             samples = []; last_binary = None
             for iteration in range(9):
@@ -520,7 +521,7 @@ def main(argv=None):
                 shutil.copytree(prime, cache, copy_function=os.link)
                 env = go_env.copy(); env['GOCACHE'] = str(cache)
                 target = work / 'reference'
-                command = [args.go, 'build', '-buildvcs=false', '-trimpath', '-ldflags=-s -w', '-o', target, '.']
+                command = go_build + ['-ldflags=-s -w', '-o', target, '.']
                 logfile = logs / f'{name}-go-{iteration}.log'
                 measured = timed_process(command, work, env, logfile)
                 samples.append(measured['seconds']); last_binary = target
