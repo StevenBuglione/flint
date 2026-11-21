@@ -31,9 +31,28 @@ def check_import(package,module,where):
         private=[P[dep]['module']+'.'+part for part in ['internal','sys','ffi']]
         require(not prefix_match(module,private),where+': cross-package private boundary import '+module)
 
+def project_mixin_tokens(text, compiler):
+    # DMD dumps Phobos and druntime template expansions in the same file as Flint's.
+    # Skip only expansions located inside the bundled compiler's standard library sources.
+    installation = Path(compiler).resolve().parents[2]
+    standard = (installation / 'src/phobos', installation / 'src/druntime/import')
+    headers = list(re.finditer(r'^// expansion at(?: (.+)\([0-9]+\))?$', text, re.MULTILINE))
+    if not headers:
+        yield from tokens(text)
+        return
+    yield from tokens(text[:headers[0].start()])
+    for index, header in enumerate(headers):
+        end = headers[index + 1].start() if index + 1 < len(headers) else len(text)
+        location = header.group(1)
+        if location:
+            source = (ROOT / location).resolve()
+            if source.is_file() and any(source.is_relative_to(root) for root in standard):
+                continue
+        yield from tokens(text[header.end():end])
+
 def generated_dependencies(packages):
     if not packages:return {'packages':0}
-    compiler=os.environ.get('DMD') or shutil.which('dmd')
+    compiler=shutil.which(os.environ.get('DMD','dmd'))
     require(compiler,'approved string mixins require DMD on PATH or DMD=/absolute/path for compiler dependency audit')
     imports=['-I'+str(ROOT/'packages'/name/'source') for name in P]
     count=0
@@ -48,7 +67,8 @@ def generated_dependencies(packages):
                 require(process.returncode==0,'generated dependency compile failed: '+process.stdout+process.stderr)
                 require(destination.is_file(),'compiler did not produce a dependency receipt')
                 require(expansion.is_file() and expansion.stat().st_size>0,'string mixin has no instantiated expansion; add a positive unittest fixture')
-                expanded=list(tokens(expansion.read_text()))
+                expanded=list(project_mixin_tokens(expansion.read_text(),compiler))
+                require(expanded,'string mixin has no audited application expansion')
                 require(not imported_modules(expanded),'generated import statements are prohibited')
                 values=[token.value for token in expanded]
                 require(not any(values[i]=='@' and values[i+1] in ['trusted','system'] for i in range(len(values)-1)),'generated unsafe annotations are prohibited')

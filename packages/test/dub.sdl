@@ -9,6 +9,11 @@ dflags "-preview=dip1000"
 configuration "library" {
     targetType "library"
 }
+
+configuration "runner" {
+    targetType "library"
+    buildOptions "unittests"
+}
 configuration "unittest" {
     targetType "library"
     sourcePaths "source" "tests"

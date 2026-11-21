@@ -93,6 +93,17 @@ class SourcePolicyTests(unittest.TestCase):
         result = gates.structural(['di'])
         self.assertEqual(result['generated_dependencies']['compiler_profiles'], 2)
 
+    def test_standard_library_expansions_leave_project_expansions_auditable(self):
+        installation = self.root / 'pinned-toolchain'
+        compiler = installation / 'linux/bin64/dmd'
+        library = installation / 'src/druntime/import/object.d'
+        library.parent.mkdir(parents=True)
+        library.touch()
+        source = self.source('di', 'flint.di.internal.wiring', '@safe:\n')
+        output = (f'// expansion at {library}(4990)\nimport imported = std.traits;\n\n'
+                  f'// expansion at {source}(3)\nimport flint.web;\n')
+        self.assertEqual(imported_modules(gates.project_mixin_tokens(output, compiler)), ['flint.web'])
+
 
 def synthetic_evidence(commit, scale=1.0):
     """Synthetic constant series for gate logic only; never write this to baselines/."""
