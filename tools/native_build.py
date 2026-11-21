@@ -375,6 +375,10 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
             self.receipt['ffi_archive']={'path':str(paths[0]),'sha256':digest(paths[0])}
             if 'protobuf-c' in self.receipt['libraries']:
                 self.receipt['rpc_test_archive'] = self.rpc_test_archive_receipt()
+            if self.a.target.startswith('linux') and 'wasmtime' in self.receipt['libraries']:
+                self.receipt['wasi_reference_archive'] = self.wasi_reference_archive_receipt()
+            else:
+                self.receipt.pop('wasi_reference_archive', None)
             curl = self.receipt['libraries'].get('curl', {})
             if curl.get('provider_profile') == 'smtp-http':
                 reference = self.prefix / 'lib/libflint_mail_reference.a'
@@ -382,6 +386,12 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
             else:
                 self.receipt.pop('mail_reference_archive', None)
             self.receipt_path.write_text(json.dumps(self.receipt,indent=2)+'\n')
+
+    def wasi_reference_archive_receipt(self):
+        path = self.prefix / 'lib/libflint_wasi_reference.a'
+        if not path.is_file():
+            raise RuntimeError('Missing installed WASI reference archive; rebuild the native shims')
+        return {'path': str(path), 'sha256': digest(path)}
 
     def rpc_test_archive_receipt(self):
         names = ('libflint_rpc_fixture.a', 'flint_rpc_fixture.lib')
@@ -468,6 +478,12 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
                 # the provider archives for single-pass static linkers.
                 block = block.replace('\nlflags ', '\n' + self.rpc_fixture_flag() + 'lflags ', 1)
                 recipes[root + '/bench/dub.sdl'] = block
+            if package == 'wasi' and self.a.target.startswith('linux') and 'wasmtime' in self.receipt['libraries']:
+                reference = self.receipt.get('wasi_reference_archive')
+                if not reference or reference != self.wasi_reference_archive_receipt():
+                    raise RuntimeError('Installed WASI reference archive changed; rebuild the native shims')
+                flag = 'lflags ' + json.dumps(reference['path']) + ' platform=' + json.dumps(self.dub_platform()) + '\n'
+                block = block.replace('\nlflags ', '\n' + flag + 'lflags ', 1)
             recipes[root + '/bench/baseline/dub.sdl'] = block
         return recipes
 

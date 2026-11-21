@@ -259,7 +259,7 @@ def stripped_size(target, strip, readelf, workspace, log):
     # The designated Linux profile ships static D/C dependencies. Only the
     # installed system runtime may remain dynamic; a new desktop/system backend
     # must explicitly extend this reviewed policy or provide a closure measure.
-    system = {'libc.so.6', 'libm.so.6', 'libdl.so.2', 'libpthread.so.0', 'librt.so.1',
+    system = {'libc.so.6', 'libm.so.6', 'libdl.so.2', 'libpthread.so.0', 'librt.so.1', 'libutil.so.1',
               'libgcc_s.so.1', 'libstdc++.so.6', 'libatomic.so.1', 'ld-linux-x86-64.so.2'}
     if set(needed) - system:
         raise RuntimeError('uncounted shared dependency; static profile or full closure measurement required: ' + str(needed))

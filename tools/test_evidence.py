@@ -14,7 +14,6 @@ import sys
 import tempfile
 import unittest
 from unittest.mock import patch
-from types import SimpleNamespace
 
 import collect_evidence as evidence
 import gates
@@ -179,31 +178,56 @@ class SourceIdentityTests(unittest.TestCase):
         artifact = evidence.verified_receipt(capture['receipt'], output.parent, capture['receipt']['commit'])
         self.assertEqual(evidence.read(artifact), capture['payload'])
 
-    def test_native_provider_baseline_requires_exact_verified_block(self):
+    def test_wasi_baseline_requires_exact_verified_reference_archive(self):
         import native_build
         (self.root / '.gitignore').write_text('.native/\n')
-        policy = self.root / 'policy'; policy.mkdir(); (policy / 'native-lock.json').write_text('{"libraries":[]}')
+        policy = self.root / 'policy'; policy.mkdir()
+        lock = {'libraries': [{'name': 'wasmtime', 'consumers': ['wasi'], 'dependencies': []}]}
+        (policy / 'native-lock.json').write_text(json.dumps(lock))
+        (policy / 'packages.json').write_text(json.dumps({'packages': {'wasi': {}}}))
         package = self.root / 'packages/wasi'; baseline = package / 'bench/baseline'
         baseline.mkdir(parents=True)
-        for path, name in [(package / 'dub.sdl', 'wasi'), (baseline / 'dub.sdl', 'probe-wasi-baseline')]:
-            path.write_text('name "' + name + '"\n')
+        recipe = package / 'dub.sdl'; control = baseline / 'dub.sdl'
+        recipe.write_text('name "wasi"\n')
+        control_source = 'name "probe-wasi-baseline"\n'
+        control.write_text(control_source)
         subprocess.run(['git', 'add', '.'], cwd=self.root, check=True)
         subprocess.run(['git', '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid',
                         'commit', '--quiet', '-m', 'Synthetic native recipe fixture'], cwd=self.root, check=True)
-        prefix = self.root / '.native/install/linux-x86_64-glibc'; prefix.mkdir(parents=True)
-        (prefix / 'flint-native-install.json').write_text('{"fixture":"path-check-only"}')
-        block = '\n// BEGIN FLINT NATIVE\nversions "FlintNativeWasmtime" platform="linux-x86_64"\n// END FLINT NATIVE\n'
-        recipes = {str(path.relative_to(self.root)): block for path in [package / 'dub.sdl', baseline / 'dub.sdl']}
-        mock = SimpleNamespace(prefix=prefix, receipt={'libraries': {'wasmtime': {}}}, dub_recipe_blocks=lambda: recipes)
-        for path in [package / 'dub.sdl', baseline / 'dub.sdl']:
-            path.write_text(path.read_text().rstrip() + '\n' + block)
-        # Only the path/equality policy is mocked here; native_build separately
-        # verifies actual archive digests and the real emitted DUB recipes.
-        with patch.object(native_build, 'Builder', return_value=mock):
+        prefix = self.root / '.native/install/linux-x86_64-glibc'
+        lib = prefix / 'lib'; lib.mkdir(parents=True)
+
+        def installed(name, payload=b'!<arch>\n'):
+            path = lib / name
+            path.write_bytes(payload)
+            return {'path': str(path), 'sha256': builds.digest(path)}
+
+        metadata = installed('native-static-link.json', b'{"flags": []}'); metadata['flags'] = []
+        receipt = prefix / 'flint-native-install.json'
+        state = {'target': 'linux-x86_64-glibc', 'ffi_archive': installed('libflint_ffi.a'),
+                 'wasi_reference_archive': installed('libflint_wasi_reference.a'),
+                 'libraries': {'wasmtime': {'archives': [installed('libwasmtime.a')],
+                                            'system_link_metadata': metadata}}}
+        receipt.write_text(json.dumps(state))
+        with patch.object(native_build, 'ROOT', self.root):
+            args = argparse.Namespace(work_dir=self.root / '.native', target='linux-x86_64-glibc',
+                                      prefix=None, cc=None, cxx=None, sanitize=None, phase='build')
+            native_build.Builder(args, lock).emit_dub()
+            self.assertNotIn('libflint_wasi_reference.a', recipe.read_text())
+            original = control.read_text()
+            self.assertLess(original.index('libflint_wasi_reference.a'), original.index('libwasmtime.a'))
             _, native = builds.source_identity(self.root)
-            self.assertEqual(set(native['generated_blocks']), set(recipes))
-            path = baseline / 'dub.sdl'; path.write_text(path.read_text().replace('FlintNativeWasmtime', 'UnexpectedProvider'))
+            self.assertEqual(set(native['generated_blocks']), {str(path.relative_to(self.root)) for path in (recipe, control)})
+            self.assertEqual(builds.workload_digest(self.root, control, native),
+                             hashlib.sha256(control_source.encode()).hexdigest())
+            control.write_text(original.replace('libflint_wasi_reference.a', 'unverified.a'))
             with self.assertRaisesRegex(RuntimeError, 'block differs'):
+                builds.source_identity(self.root)
+            with self.assertRaisesRegex(RuntimeError, 'benchmark flags changed'):
+                builds.workload_digest(self.root, control, native)
+            control.write_text(original)
+            (lib / 'libflint_wasi_reference.a').write_bytes(b'altered archive')
+            with self.assertRaisesRegex(RuntimeError, 'WASI reference archive changed'):
                 builds.source_identity(self.root)
 
     def test_rpc_probe_and_unittest_flags_verify_the_installed_archive(self):
@@ -277,6 +301,20 @@ class SourceIdentityTests(unittest.TestCase):
 
 
 class MeasurementDefinitionTests(unittest.TestCase):
+    def test_size_policy_allows_glibc_libutil_and_rejects_private_shared_libraries(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            target = root / 'probe'; target.write_bytes(b'synthetic ELF fixture')
+            log = root / 'strip.log'
+            output = '(NEEDED) Shared library: [libutil.so.1]\n'
+            result = subprocess.CompletedProcess([], 0, stdout=output, stderr='')
+            with patch.object(builds, 'run_checked', return_value=result):
+                size = builds.stripped_size(target, 'strip', 'readelf', root, log)
+                self.assertEqual(size['dynamic_system_dependencies'], ['libutil.so.1'])
+                result.stdout += '(NEEDED) Shared library: [libprivate.so.1]\n'
+                with self.assertRaisesRegex(RuntimeError, 'uncounted shared dependency'):
+                    builds.stripped_size(target, 'strip', 'readelf', root, log)
+
     def test_equivalent_native_profiles_ignore_install_prefix_only(self):
         first = {'wasi': 'versions "FlintNativeWasmtime"\nlflags "/base/native/lib/libwasmtime.a"\n'}
         second = {'wasi': 'versions "FlintNativeWasmtime"\nlflags "/candidate/native/lib/libwasmtime.a"\n'}
