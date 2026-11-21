@@ -1,6 +1,6 @@
 # serde exercised probe
 
-The implementation task creates `source/app.d` and `baseline/source/app.d` in this directory. The recipes resolve the local implementation root. Source is intentionally absent until real behavior exists; the measurement tool rejects missing probes.
+The feature and baseline applications use the fixed input and measurement harness in `harness/serde_probe.d`. The core JSON workload measures the real typed implementation and uses an arena-only reference control.
 
 `source/app.d` must instantiate and execute the required workload in `handoff/specs/tier-1/serde.md`. Preserve an observable checksum derived from actual results and check correctness through code that remains active in the release build. A bare import, constant-only substitute or discarded operation is invalid. Use the pinned input sizes/seeds from the specification; microbenchmark timing, where applicable, must exceed 100 ms per trial.
 
