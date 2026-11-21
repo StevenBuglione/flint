@@ -154,11 +154,13 @@ def run_tests(runner,compiler,*,sanitize=False):
 def negative_tests(runner,compiler):
     imports=import_flags()
     fixtures=ROOT/'tests/compile'
-    positive=fixtures/'positive.d'
-    if not runner.plan:require(positive.is_file(),'positive scope/@nogc compile fixture missing')
-    runner.run([compiler,'-c','-o-','-preview=dip1000',*imports,positive])
+    for filename in ('positive.d','reactor_protocol.d'):
+        positive=fixtures/filename
+        if not runner.plan:require(positive.is_file(),'positive scope/@nogc compile fixture missing: '+filename)
+        runner.run([compiler,'-c','-o-','-preview=dip1000',*imports,positive])
     negatives=[('escape_borrow.d',r'(?i)scope|escap'),('escape_storage.d',r'(?i)scope|escap|local'),
-               ('forge_buffer.d',r'(?i)private|accessible|constructor'),('gc_in_hot_path.d',r'@nogc')]
+               ('forge_buffer.d',r'(?i)private|accessible|constructor'),('gc_in_hot_path.d',r'@nogc'),
+               ('reactor_read_retained.d',r'(?i)(scope variable|escapes the scope|scope parameter)')]
     out=ROOT/'artifacts/compile-negative'/Path(compiler).name
     if not runner.plan:out.mkdir(parents=True,exist_ok=True)
     for filename,pattern in negatives:
