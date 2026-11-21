@@ -58,12 +58,12 @@
       "flint.term.sys",
       "flint.term.ffi"
     ],
-    "tui": [],
+    "tui": ["flint.tui.sys.worker"],
     "style": [
       "flint.style.ffi"
     ],
     "widgets": [],
-    "prompt": [],
+    "prompt": ["flint.prompt.sys.secret"],
     "os": [
       "flint.os.sys",
       "flint.os.ffi"
