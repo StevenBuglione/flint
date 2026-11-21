@@ -10,7 +10,8 @@ if(WIN32 AND EXISTS "${CMAKE_INSTALL_PREFIX}/include/wasmtime.h")
   target_compile_definitions(flint_ffi PRIVATE WASM_API_EXTERN= WASI_API_EXTERN=)
 endif()
 foreach(PAIR IN ITEMS "llhttp.h|LLHTTP" "nghttp2/nghttp2.h|NGHTTP2" "curl/curl.h|CURL" "openssl/ssl.h|OPENSSL"
-    "sqlite3.h|SQLITE" "libpq-fe.h|LIBPQ" "hiredis/hiredis_ssl.h|HIREDIS" "yaml.h|LIBYAML" "utf8proc.h|UTF8PROC")
+    "sqlite3.h|SQLITE" "libpq-fe.h|LIBPQ" "hiredis/hiredis_ssl.h|HIREDIS" "sodium.h|LIBSODIUM"
+    "protobuf-c/protobuf-c.h|PROTOBUF_C" "yaml.h|LIBYAML" "utf8proc.h|UTF8PROC")
   string(REPLACE "|" ";" FIELDS "${PAIR}")
   list(GET FIELDS 0 HEADER)
   list(GET FIELDS 1 SYMBOL)
@@ -43,6 +44,15 @@ endif()
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/flint_cache.h" AND
     EXISTS "${CMAKE_INSTALL_PREFIX}/include/hiredis/hiredis_ssl.h")
   install(FILES flint_cache.h DESTINATION include)
+endif()
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/flint_security.h" AND
+    (EXISTS "${CMAKE_INSTALL_PREFIX}/include/openssl/evp.h" OR EXISTS "${CMAKE_INSTALL_PREFIX}/include/sodium.h"))
+  install(FILES flint_security.h DESTINATION include)
+endif()
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/flint_rpc.h" AND
+    (EXISTS "${CMAKE_INSTALL_PREFIX}/include/openssl/evp.h" OR
+     EXISTS "${CMAKE_INSTALL_PREFIX}/include/protobuf-c/protobuf-c.h"))
+  install(FILES flint_rpc.h DESTINATION include)
 endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND EXISTS "${CMAKE_INSTALL_PREFIX}/include/liburing.h")

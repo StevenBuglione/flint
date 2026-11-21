@@ -445,6 +445,7 @@
       "consumers": [
         "web",
         "http",
+        "rpc",
         "security",
         "sql",
         "mail",
