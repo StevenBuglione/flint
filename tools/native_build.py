@@ -22,7 +22,7 @@ PROFILES = {
 }
 CMAKE = {
  'llhttp': ('.', ['LLHTTP_BUILD_SHARED_LIBS=OFF','LLHTTP_BUILD_STATIC_LIBS=ON']),
- 'nghttp2': ('.', ['ENABLE_LIB_ONLY=ON','ENABLE_STATIC_LIB=ON','ENABLE_SHARED_LIB=OFF','BUILD_TESTING=OFF']),
+ 'nghttp2': ('.', ['ENABLE_LIB_ONLY=ON','BUILD_STATIC_LIBS=ON','BUILD_SHARED_LIBS=OFF','BUILD_TESTING=OFF']),
  'curl': ('.', ['BUILD_CURL_EXE=OFF','BUILD_SHARED_LIBS=OFF','BUILD_STATIC_LIBS=ON','BUILD_TESTING=OFF','HTTP_ONLY=ON','CURL_USE_OPENSSL=ON','CURL_USE_LIBPSL=OFF','CURL_USE_LIBSSH2=OFF','CURL_USE_GSSAPI=OFF','USE_NGHTTP2=ON','USE_LIBIDN2=OFF','CURL_ZLIB=ON','CURL_BROTLI=OFF','CURL_ZSTD=OFF','ENABLE_THREADED_RESOLVER=ON']),
  'librdkafka': ('.', ['RDKAFKA_BUILD_STATIC=ON','RDKAFKA_BUILD_EXAMPLES=OFF','RDKAFKA_BUILD_TESTS=OFF','WITH_SSL=ON','WITH_SASL=OFF','WITH_CURL=OFF','WITH_ZLIB=ON','WITH_ZSTD=ON','WITH_PLUGINS=OFF','ENABLE_LZ4_EXT=OFF']),
  'zstd': ('build/cmake', ['ZSTD_BUILD_STATIC=ON','ZSTD_BUILD_SHARED=OFF','ZSTD_BUILD_PROGRAMS=OFF','ZSTD_BUILD_TESTS=OFF']),
@@ -173,7 +173,23 @@ class Builder:
         src=self.fetch(name); build=self.work/'build'/self.a.target/name
         if self.a.phase=='fetch': return
         self.submodules(name,src)
-        if name in CMAKE:
+        if name=='protobuf-c' and not self.a.with_codegen:
+            runtime=src/'protobuf-c'
+            project='''cmake_minimum_required(VERSION 3.20)
+project(flint_protobuf_c_runtime C)
+include(TestBigEndian)
+test_big_endian(PROTOBUF_C_BIG_ENDIAN)
+add_library(protobuf-c STATIC "{runtime}/protobuf-c.c")
+if(PROTOBUF_C_BIG_ENDIAN)
+    target_compile_definitions(protobuf-c PRIVATE WORDS_BIGENDIAN)
+endif()
+install(TARGETS protobuf-c ARCHIVE DESTINATION lib)
+install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
+'''.format(runtime=runtime.as_posix())
+            # The upstream runtime is standalone C. Its CMake generator recipe requires C++ Protobuf even when disabled.
+            self.write(build/'runtime-project/CMakeLists.txt',project)
+            self.cmake(name,build/'runtime-project',build/'runtime', '.',[])
+        elif name in CMAKE:
             relative,options=CMAKE[name];self.cmake(name,src,build,relative,options)
         elif name=='openssl':
             target={'linux-x86_64-glibc':'linux-x86_64','linux-x86_64-musl':'linux-x86_64','linux-aarch64-glibc':'linux-aarch64','linux-aarch64-musl':'linux-aarch64','macos-arm64':'darwin64-arm64-cc','windows-x86_64':'VC-WIN64A'}[self.a.target]
@@ -213,16 +229,16 @@ class Builder:
             options=['docs','gssapi','icu','ldap','libcurl','libnuma','liburing','libxml','libxslt','llvm','lz4','nls','pam','plperl','plpython','pltcl','readline','selinux','systemd','tap_tests','zstd']
             self.command(['meson','setup',build,src,'--prefix='+str(self.prefix),'--buildtype=release','-Dssl=openssl','-Dzlib=enabled',*['-D'+x+'=disabled' for x in options]],ROOT)
             # Exact native build targets avoid building or installing a database server.
-            self.command(['meson','compile','-C',build,'-j',str(self.a.jobs),'libpq:static_library','pgcommon:static_library','pgport:static_library'],ROOT)
+            client_targets=('libpq','libpgcommon','libpgport')
+            self.command(['meson','compile','-C',build,'-j',str(self.a.jobs),*[target+':static_library' for target in client_targets]],ROOT)
             if self.a.phase=='build':
                 targets=json.loads(subprocess.check_output(['meson','introspect','--targets',str(build)],text=True))
                 for target in targets:
-                    if target['type']=='static library' and target['name'] in ('libpq','pgcommon','pgport'):
+                    if target['type']=='static library' and target['name'] in client_targets:
                         for filename in target['filename']:self.copy(Path(filename),self.prefix/'lib'/Path(filename).name)
-            else:self.plan.append({'install_meson_static_targets':['libpq','pgcommon','pgport']})
+            else:self.plan.append({'install_meson_static_targets':list(client_targets)})
             for header in ['libpq-fe.h','libpq-events.h']:self.copy(src/'src/interfaces/libpq'/header,self.prefix/'include'/header)
             self.copy(src/'src/include/postgres_ext.h',self.prefix/'include/postgres_ext.h')
-            self.copy(build/'src/include/pg_config_ext.h',self.prefix/'include/pg_config_ext.h')
         elif name in ('wasmtime','wgpu-native'):
             triple={'linux-x86_64-glibc':'x86_64-unknown-linux-gnu','linux-aarch64-glibc':'aarch64-unknown-linux-gnu','linux-x86_64-musl':'x86_64-unknown-linux-musl','linux-aarch64-musl':'aarch64-unknown-linux-musl','macos-arm64':'aarch64-apple-darwin','windows-x86_64':'x86_64-pc-windows-msvc'}[self.a.target]
             if self.a.phase=='build' and not (src/'Cargo.lock').exists():raise RuntimeError('Rust dependency lockfile missing')
