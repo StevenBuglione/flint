@@ -59,7 +59,9 @@
       "flint.term.ffi"
     ],
     "tui": [],
-    "style": [],
+    "style": [
+      "flint.style.ffi"
+    ],
     "widgets": [],
     "prompt": [],
     "os": [
