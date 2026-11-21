@@ -21,6 +21,7 @@ import tempfile
 import time
 
 ROOT = Path(__file__).resolve().parents[1]
+NATIVE_BLOCK = re.compile(r'\n// BEGIN FLINT NATIVE\n.*?// END FLINT NATIVE\n', re.S)
 
 
 def digest(path):
@@ -206,7 +207,7 @@ def source_identity(root):
         args = argparse.Namespace(work_dir=root / '.native', target='linux-x86_64-glibc',
                                   prefix=None, cc=None, cxx=None, sanitize=None, phase='build')
         builder = native_build.Builder(args, json.loads((root / 'policy/native-lock.json').read_text()))
-        expected = builder.dub_blocks()  # Rehashes every referenced installed archive.
+        expected = builder.dub_recipe_blocks()  # Rehashes every referenced installed archive.
         if builder.receipt.get('sanitizers'):
             raise RuntimeError('performance cannot reuse a sanitizer-instrumented native install')
         native = {'receipt': str(receipt_path), 'sha256': digest(receipt_path),
@@ -215,27 +216,38 @@ def source_identity(root):
                                        for name, block in expected.items()},
                   'profile_sha256': native_profile_hash(expected, builder.prefix),
                   'prepared_dependency_policy': 'verified immutable installed C archives shared across source-cache-cold trials'}
-    pattern = r'\n// BEGIN FLINT NATIVE\n.*?// END FLINT NATIVE\n'
     for relative in changed:
-        match = re.fullmatch(r'packages/([\w-]+)/(?:bench/baseline/)?dub\.sdl', relative)
-        if not match or match[1] not in expected:
+        if relative not in expected:
             raise RuntimeError('uncommitted source modification: ' + relative)
         text = (root / relative).read_text()
-        blocks = re.findall(pattern, text, re.S)
-        if len(blocks) != 1 or blocks[0] != expected[match[1]]:
+        if NATIVE_BLOCK.findall(text) != [expected[relative]]:
             raise RuntimeError('native recipe block differs from verified installed dependency receipt: ' + relative)
-        clean = re.sub(pattern, '\n', text, flags=re.S).rstrip() + '\n'
         original = run_checked(['git', 'show', 'HEAD:' + prefix + relative], root).stdout
-        if clean != original.rstrip() + '\n':
+        if relative == 'packages/rpc/dub.sdl':
+            # The unittest-only generated codec is a separate receipt-bound
+            # section and does not appear in the production linker block.
+            original = builder.emit_rpc_test_archive(original)
+        if text != original.rstrip() + '\n' + expected[relative]:
             raise RuntimeError('non-generated recipe modification: ' + relative)
     # Every provider expected by the native preparation must be enabled exactly.
-    for name, block in expected.items():
-        for relative in ['dub.sdl', 'bench/baseline/dub.sdl']:
-            path = root / 'packages' / name / relative
-            text = path.read_text()
-            if re.findall(pattern, text, re.S) != [block]:
-                raise RuntimeError('run native_build.py --emit-dub before measuring: ' + str(path))
+    for relative, block in expected.items():
+        path = root / relative
+        if NATIVE_BLOCK.findall(path.read_text()) != [block]:
+            raise RuntimeError('run native_build.py --emit-dub before measuring: ' + str(path))
     return commit, native
+
+
+def workload_digest(root, path, native_inputs):
+    relative = str(path.relative_to(root))
+    expected = native_inputs['generated_blocks'].get(relative) if native_inputs else None
+    if expected is None:
+        return digest(path)
+    text = path.read_text()
+    blocks = NATIVE_BLOCK.findall(text)
+    if len(blocks) != 1 or not text.endswith(blocks[0]) or hashlib.sha256(blocks[0].encode()).hexdigest() != expected:
+        raise RuntimeError('native benchmark flags changed during measurement: ' + relative)
+    # Only the already-verified generated flags are path-dependent.
+    return hashlib.sha256((NATIVE_BLOCK.sub('\n', text).rstrip() + '\n').encode()).hexdigest()
 
 
 def stripped_size(target, strip, readelf, workspace, log):
@@ -247,7 +259,7 @@ def stripped_size(target, strip, readelf, workspace, log):
     # The designated Linux profile ships static D/C dependencies. Only the
     # installed system runtime may remain dynamic; a new desktop/system backend
     # must explicitly extend this reviewed policy or provide a closure measure.
-    system = {'libc.so.6', 'libm.so.6', 'libdl.so.2', 'libpthread.so.0', 'librt.so.1',
+    system = {'libc.so.6', 'libm.so.6', 'libdl.so.2', 'libpthread.so.0', 'librt.so.1', 'libutil.so.1',
               'libgcc_s.so.1', 'libstdc++.so.6', 'libatomic.so.1', 'ld-linux-x86-64.so.2'}
     if set(needed) - system:
         raise RuntimeError('uncounted shared dependency; static profile or full closure measurement required: ' + str(needed))
@@ -338,24 +350,11 @@ def main(argv=None):
     # A fully qualified LDC linker path is accepted by -linker; no shell is involved.
     native = native_profiles(args.lld)
     workload_files={}
-    def workload_digest(path):
-        relative = str(path.relative_to(ROOT))
-        match = re.fullmatch(r'packages/([\w-]+)/bench/baseline/dub\.sdl', relative)
-        if match and native_inputs and match[1] in native_inputs['generated_blocks']:
-            text = path.read_text()
-            pattern = r'\n// BEGIN FLINT NATIVE\n.*?// END FLINT NATIVE\n'
-            blocks = re.findall(pattern, text, re.S)
-            if len(blocks) != 1 or hashlib.sha256(blocks[0].encode()).hexdigest() != native_inputs['generated_blocks'][match[1]]:
-                raise RuntimeError('native baseline flags changed during measurement: ' + relative)
-            # Native profile gets its own path-normalized fingerprint. Absolute
-            # installation prefixes must not make equivalent worktrees differ.
-            return hashlib.sha256((re.sub(pattern, '\n', text, flags=re.S).rstrip() + '\n').encode()).hexdigest()
-        return digest(path)
     for name,fixture in manifest['packages'].items():
         for variant in ['fixture','baseline']:
             for path in sorted((ROOT/fixture[variant]).rglob('*')):
-                if path.is_file() and (path.suffix=='.d' or path.name=='dub.sdl') and '.dub' not in path.parts:
-                    workload_files[str(path.relative_to(ROOT))]=workload_digest(path)
+                if path.is_file() and (path.suffix in ('.d', '.c', '.h') or path.name=='dub.sdl') and '.dub' not in path.parts:
+                    workload_files[str(path.relative_to(ROOT))]=workload_digest(ROOT, path, native_inputs)
     for name,fixture in manifest['apps'].items():
         for path in sorted((ROOT/fixture['fixture']).rglob('*')):
             if path.is_file() and (path.suffix=='.d' or path.name=='dub.sdl') and '.dub' not in path.parts:

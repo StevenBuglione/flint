@@ -69,14 +69,15 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/flint_rpc.h" AND
   install(FILES flint_rpc.h DESTINATION include)
 endif()
 
-# Generated test codecs are deliberately separate from the production FFI archive.
+# Test codecs and their benchmark control are separate from the production FFI archive.
 if(EXISTS "${CMAKE_INSTALL_PREFIX}/include/protobuf-c/protobuf-c.h")
   set(FLINT_RPC_TEST_CODECS "${CMAKE_CURRENT_SOURCE_DIR}/../../packages/rpc/tests/generated")
   add_library(flint_rpc_fixture STATIC
     "${FLINT_RPC_TEST_CODECS}/echo.pb-c.c"
-    "${FLINT_RPC_TEST_CODECS}/echo_flint.c")
+    "${FLINT_RPC_TEST_CODECS}/echo_flint.c"
+    "../../packages/rpc/bench/baseline/source/probe.c")
   target_include_directories(flint_rpc_fixture PRIVATE
-    "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_INSTALL_PREFIX}/include")
+    "${FLINT_RPC_TEST_CODECS}" "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_INSTALL_PREFIX}/include")
   install(TARGETS flint_rpc_fixture ARCHIVE DESTINATION lib)
 endif()
 
@@ -107,6 +108,9 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND EXISTS "${CMAKE_INSTALL_PREFIX}/includ
   target_compile_definitions(flint_ffi PRIVATE FLINT_HAS_WASMTIME=1)
   if(EXISTS "${CMAKE_INSTALL_PREFIX}/include/flint_wasmtime_extensions.h")
     target_compile_definitions(flint_ffi PRIVATE FLINT_HAS_WASMTIME_EXTENSIONS=1)
+    add_library(flint_wasi_reference STATIC "../../packages/wasi/bench/baseline/native/direct.c")
+    target_include_directories(flint_wasi_reference PRIVATE "${CMAKE_INSTALL_PREFIX}/include")
+    install(TARGETS flint_wasi_reference ARCHIVE DESTINATION lib)
   endif()
   install(FILES flint_wasi.h DESTINATION include)
 endif()
