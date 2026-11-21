@@ -390,20 +390,22 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
             raise RuntimeError('Expected exactly one installed RPC test fixture archive')
         return {'path': str(paths[0]), 'sha256': digest(paths[0])}
 
+    def rpc_fixture_flag(self):
+        fixture = self.receipt.get('rpc_test_archive')
+        if not fixture or fixture != self.rpc_test_archive_receipt():
+            raise RuntimeError('Installed RPC test fixture archive changed')
+        return 'lflags ' + json.dumps(fixture['path']) + ' platform=' + json.dumps(self.dub_platform()) + '\n'
+
     def emit_rpc_test_archive(self, text):
         begin = '    // BEGIN FLINT RPC TEST NATIVE\n'
         end = '    // END FLINT RPC TEST NATIVE\n'
         cleaned = re.sub(re.escape(begin) + r'.*?' + re.escape(end), '', text, flags=re.S)
         if 'protobuf-c' not in self.receipt['libraries']:
             return cleaned
-        fixture = self.receipt.get('rpc_test_archive')
-        if not fixture or fixture != self.rpc_test_archive_receipt():
-            raise RuntimeError('Installed RPC test fixture archive changed')
-        platform_tag = self.dub_platform()
         anchor = 'configuration "unittest" {\n'
         if cleaned.count(anchor) != 1:
             raise RuntimeError('Expected exactly one RPC unittest configuration')
-        flag = '    lflags ' + json.dumps(fixture['path']) + ' platform=' + json.dumps(platform_tag) + '\n'
+        flag = '    ' + self.rpc_fixture_flag()
         return cleaned.replace(anchor, anchor + begin + flag + end)
 
     def dub_platform(self):
@@ -455,18 +457,30 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
             blocks[package]=block
         return blocks
 
+    def dub_recipe_blocks(self):
+        """Return exact generated blocks by repository-relative recipe path."""
+        recipes = {}
+        for package, block in self.dub_blocks().items():
+            root = 'packages/' + package
+            recipes[root + '/dub.sdl'] = block
+            if package == 'rpc':
+                # Both executables call fixture symbols. Place the fixture before
+                # the provider archives for single-pass static linkers.
+                block = block.replace('\nlflags ', '\n' + self.rpc_fixture_flag() + 'lflags ', 1)
+                recipes[root + '/bench/dub.sdl'] = block
+            recipes[root + '/bench/baseline/dub.sdl'] = block
+        return recipes
+
     def emit_dub(self):
-        if self.a.phase!='build':self.plan.append({'emit_dub':'verified installed archives only'});return
-        for package,block in self.dub_blocks().items():
-            paths=[ROOT/'packages'/package/'dub.sdl']
-            baseline=ROOT/'packages'/package/'bench/baseline/dub.sdl'
-            if baseline.is_file():paths.append(baseline)
-            for path in paths:
-                text=path.read_text()
-                text=re.sub(r'\n// BEGIN FLINT NATIVE\n.*?// END FLINT NATIVE\n','\n',text,flags=re.S)
-                if package == 'rpc' and path == paths[0]:
-                    text = self.emit_rpc_test_archive(text)
-                path.write_text(text.rstrip()+'\n'+block)
+        if self.a.phase != 'build':
+            self.plan.append({'emit_dub': 'verified installed archives only'})
+            return
+        for relative, block in self.dub_recipe_blocks().items():
+            path = ROOT / relative
+            text = re.sub(r'\n// BEGIN FLINT NATIVE\n.*?// END FLINT NATIVE\n', '\n', path.read_text(), flags=re.S)
+            if relative == 'packages/rpc/dub.sdl':
+                text = self.emit_rpc_test_archive(text)
+            path.write_text(text.rstrip() + '\n' + block)
 
 def dependency_order(names,rows,codegen):
     result=[];visiting=set();done=set()

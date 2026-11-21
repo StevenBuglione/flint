@@ -2,6 +2,7 @@
 """Adversarial evidence/protocol tests. Temporary synthetic data is never a baseline."""
 from __future__ import annotations
 import argparse
+import hashlib
 import copy
 import gzip
 import json
@@ -192,19 +193,20 @@ class SourceIdentityTests(unittest.TestCase):
         prefix = self.root / '.native/install/linux-x86_64-glibc'; prefix.mkdir(parents=True)
         (prefix / 'flint-native-install.json').write_text('{"fixture":"path-check-only"}')
         block = '\n// BEGIN FLINT NATIVE\nversions "FlintNativeWasmtime" platform="linux-x86_64"\n// END FLINT NATIVE\n'
-        mock = SimpleNamespace(prefix=prefix, receipt={'libraries': {'wasmtime': {}}}, dub_blocks=lambda: {'wasi': block})
+        recipes = {str(path.relative_to(self.root)): block for path in [package / 'dub.sdl', baseline / 'dub.sdl']}
+        mock = SimpleNamespace(prefix=prefix, receipt={'libraries': {'wasmtime': {}}}, dub_recipe_blocks=lambda: recipes)
         for path in [package / 'dub.sdl', baseline / 'dub.sdl']:
             path.write_text(path.read_text().rstrip() + '\n' + block)
         # Only the path/equality policy is mocked here; native_build separately
         # verifies actual archive digests and the real emitted DUB recipes.
         with patch.object(native_build, 'Builder', return_value=mock):
             _, native = builds.source_identity(self.root)
-            self.assertIn('wasi', native['generated_blocks'])
+            self.assertEqual(set(native['generated_blocks']), set(recipes))
             path = baseline / 'dub.sdl'; path.write_text(path.read_text().replace('FlintNativeWasmtime', 'UnexpectedProvider'))
             with self.assertRaisesRegex(RuntimeError, 'block differs'):
                 builds.source_identity(self.root)
 
-    def test_rpc_unittest_section_must_match_the_actual_installed_receipt(self):
+    def test_rpc_probe_and_unittest_flags_verify_the_installed_archive(self):
         import native_build
         (self.root / '.gitignore').write_text('.native/\n')
         policy = self.root / 'policy'; policy.mkdir()
@@ -216,7 +218,10 @@ class SourceIdentityTests(unittest.TestCase):
         baseline = package / 'bench/baseline'; baseline.mkdir(parents=True)
         recipe = package / 'dub.sdl'
         recipe.write_text('name "rpc"\nconfiguration "unittest" {\n    targetType "library"\n}\n')
-        (baseline / 'dub.sdl').write_text('name "probe-rpc-baseline"\n')
+        probes = {package / 'bench/dub.sdl': 'name "probe-rpc"\n',
+                  baseline / 'dub.sdl': 'name "probe-rpc-baseline"\n'}
+        for probe, text in probes.items():
+            probe.write_text(text)
         subprocess.run(['git', 'add', '.'], cwd=self.root, check=True)
         subprocess.run(['git', '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid',
                         'commit', '--quiet', '-m', 'Native RPC recipe fixture'], cwd=self.root, check=True)
@@ -240,8 +245,28 @@ class SourceIdentityTests(unittest.TestCase):
             builder.emit_dub()
             emitted = recipe.read_text()
             self.assertIn('libflint_rpc_fixture.a', emitted)
+            self.assertNotIn('libflint_rpc_fixture.a', builds.NATIVE_BLOCK.findall(emitted)[0])
             _, native = builds.source_identity(self.root)
-            self.assertIn('rpc', native['generated_blocks'])
+            for path, original in probes.items():
+                with self.subTest(recipe=path):
+                    text = path.read_text()
+                    self.assertLess(text.index('libflint_rpc_fixture.a'), text.index('libprotobuf-c.a'))
+                    self.assertEqual(builds.workload_digest(self.root, path, native),
+                                     hashlib.sha256(original.encode()).hexdigest())
+                    path.write_text(text.replace('libflint_rpc_fixture.a', 'unverified.a'))
+                    with self.assertRaisesRegex(RuntimeError, 'block differs'):
+                        builds.source_identity(self.root)
+                    with self.assertRaisesRegex(RuntimeError, 'benchmark flags changed'):
+                        builds.workload_digest(self.root, path, native)
+                    path.write_text(original)
+                    with self.assertRaisesRegex(RuntimeError, 'run native_build'):
+                        builds.source_identity(self.root)
+                    path.write_text(builds.NATIVE_BLOCK.findall(text)[0] + original)
+                    with self.assertRaisesRegex(RuntimeError, 'non-generated recipe modification'):
+                        builds.source_identity(self.root)
+                    path.write_text(text)
+            builder.emit_dub()
+            self.assertEqual(builds.source_identity(self.root)[1], native)
             recipe.write_text(emitted.replace('libflint_rpc_fixture.a', 'unverified.a'))
             with self.assertRaisesRegex(RuntimeError, 'non-generated recipe modification'):
                 builds.source_identity(self.root)
