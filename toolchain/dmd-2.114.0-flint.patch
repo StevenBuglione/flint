@@ -1,0 +1,1483 @@
+diff -ruN a/build.d b/build.d
+--- a/build.d	2026-10-31 19:29:10.000000000 -0400
++++ b/build.d	2026-11-21 17:33:07.214007621 -0500
+@@ -1386,7 +1386,7 @@
+             glue/s2ir.d glue/tocsym.d glue/toctype.d glue/tocvdebug.d glue/todt.d glue/toir.d glue/toobj.d
+         "),
+         driver: fileArray(env["D"], "dinifile.d dmdparams.d lib/package.d lib/elf.d lib/mach.d lib/mscoff.d
+-            link.d mars.d main.d sarif.d lib/scanelf.d lib/scanmach.d lib/scanmscoff.d timetrace.d vsoptions.d
++            link.d mars.d main.d flintserver.d flintlink.d sarif.d lib/scanelf.d lib/scanmach.d lib/scanmscoff.d timetrace.d vsoptions.d
+         "),
+         frontend: fileArray(env["D"], "
+             access.d aggregate.d aliasthis.d argtypes_x86.d argtypes_sysv_x64.d argtypes_aarch64.d arrayop.d
+diff -ruN a/dmd/cond.d b/dmd/cond.d
+--- a/dmd/cond.d	2026-10-31 19:29:10.000000000 -0400
++++ b/dmd/cond.d	2026-11-21 17:12:34.309580398 -0500
+@@ -15,6 +15,7 @@
+ 
+ import core.stdc.string;
+ import dmd.arraytypes;
++import dmd.root.array : Array;
+ import dmd.astenums;
+ import dmd.ast_node;
+ import dmd.dmodule;
+@@ -232,6 +233,11 @@
+     }
+ }
+ 
++/// Set while the compile server loads its prelude (Flint toolchain fork).
++__gshared bool recordConditionQueries;
++/// Version / debug identifiers evaluated against the global lists while recording.
++__gshared Array!Identifier recordedVersionQueries, recordedDebugQueries;
++
+ /***********************************************************
+  */
+ extern (C++) class DVCondition : Condition
+diff -ruN a/dmd/expressionsem.d b/dmd/expressionsem.d
+--- a/dmd/expressionsem.d	2026-10-31 19:29:10.000000000 -0400
++++ b/dmd/expressionsem.d	2026-11-21 17:12:23.626232962 -0500
+@@ -19642,6 +19642,8 @@
+         bool definedInModule = false;
+         if (dc.ident)
+         {
++            if (recordConditionQueries)
++                recordedDebugQueries.push(dc.ident);
+             if (dc.mod.debugids && findCondition(*dc.mod.debugids, dc.ident))
+             {
+                 dc.inc = Include.yes;
+@@ -19678,6 +19680,8 @@
+         bool definedInModule = false;
+         if (vc.ident)
+         {
++            if (recordConditionQueries)
++                recordedVersionQueries.push(vc.ident);
+             if (vc.mod.versionids && findCondition(*vc.mod.versionids, vc.ident))
+             {
+                 vc.inc = Include.yes;
+diff -ruN a/dmd/flintlink.d b/dmd/flintlink.d
+--- a/dmd/flintlink.d	1969-12-31 19:00:00.000000000 -0500
++++ b/dmd/flintlink.d	2026-11-21 17:33:26.611906470 -0500
+@@ -0,0 +1,445 @@
++/**
++ * Direct linker invocation for the DMD driver (Flint toolchain fork).
++ *
++ * The ordinary driver links through `cc`, which on many systems is a chain
++ * of wrapper scripts and driver processes (`cc` -> `gcc` -> `collect2` ->
++ * `ld`).  This module asks the C compiler driver once, with `-###`, which
++ * linker command it would run for marker inputs, caches that expansion, and
++ * then substitutes the real inputs to execute the linker directly.  The
++ * linker, its startup files, search paths and libraries are exactly those
++ * the driver would have used.
++ *
++ * Anything this module does not fully understand falls back to `cc`.
++ *
++ * Environment:
++ *   FLINT_DMD_DIRECT_LINK=0   always link through `cc`
++ *   FLINT_LINK_THREADS=<n>    thread count passed to mold (default 4)
++ */
++module dmd.flintlink;
++
++version (Posix):
++
++import core.stdc.errno;
++import core.stdc.stdio;
++import core.stdc.stdlib;
++import core.stdc.string;
++import core.sys.posix.stdio : popen, pclose;
++import core.sys.posix.sys.stat;
++import core.sys.posix.unistd;
++
++import dmd.root.array;
++import dmd.arraytypes : Strings;
++import dmd.root.rmem;
++
++nothrow:
++
++extern (C) private extern __gshared char** environ;
++
++private enum markerDir = "-L/__flint_marker_dir__";
++private enum markerObj = "/__flint_marker_obj__.o";
++private enum markerLib = "-l__flint_marker_lib__";
++
++private bool startsWith(const(char)* s, string p)
++{
++    return strncmp(s, p.ptr, p.length) == 0;
++}
++
++private bool eq(const(char)* s, string v)
++{
++    return strlen(s) == v.length && strncmp(s, v.ptr, v.length) == 0;
++}
++
++private ulong fnv(ulong h, const(char)* s)
++{
++    for (; *s; ++s)
++    {
++        h ^= cast(ubyte) *s;
++        h *= 0x100000001b3UL;
++    }
++    h ^= 0xff;
++    h *= 0x100000001b3UL;
++    return h;
++}
++
++/// Split a shell-quoted `-###` line into arguments.
++private void splitQuoted(const(char)* line, ref Strings result)
++{
++    auto p = line;
++    while (*p)
++    {
++        while (*p == ' ' || *p == '\t' || *p == '\n')
++            ++p;
++        if (!*p)
++            break;
++        char[8192] buf;
++        size_t n;
++        while (*p && *p != ' ' && *p != '\t' && *p != '\n' && n + 1 < buf.length)
++        {
++            if (*p == '"')
++            {
++                ++p;
++                while (*p && *p != '"' && n + 1 < buf.length)
++                {
++                    if (*p == '\\' && p[1])
++                        ++p;
++                    buf[n++] = *p++;
++                }
++                if (*p == '"')
++                    ++p;
++            }
++            else if (*p == '\'')
++            {
++                ++p;
++                while (*p && *p != '\'' && n + 1 < buf.length)
++                    buf[n++] = *p++;
++                if (*p == '\'')
++                    ++p;
++            }
++            else if (*p == '\\' && p[1])
++            {
++                ++p;
++                buf[n++] = *p++;
++            }
++            else
++                buf[n++] = *p++;
++        }
++        buf[n] = 0;
++        result.push(mem.xstrdup(buf.ptr));
++    }
++}
++
++private struct Template
++{
++    Strings pre;    /// linker and options before the user -L position
++    Strings mid;    /// between the user -L position and the inputs
++    Strings post;   /// after the inputs
++    bool isMold;
++}
++
++/// Ask `cc` for its link expansion with marker inputs.
++private bool expand(ref Strings ccPrefix, ref Strings ccSwitches, ref Template t)
++{
++    import dmd.common.outbuffer : OutBuffer;
++    OutBuffer cmd;
++    foreach (a; ccPrefix)
++    {
++        cmd.writeByte('\'');
++        cmd.writestring(a[0 .. strlen(a)]);
++        cmd.writestring("' ");
++    }
++    cmd.writestring("-### -m64 ");
++    foreach (a; ccSwitches)
++    {
++        cmd.writeByte('\'');
++        cmd.writestring(a[0 .. strlen(a)]);
++        cmd.writestring("' ");
++    }
++    cmd.writestring(markerDir ~ " " ~ markerObj ~ " -o /__flint_marker_out__ " ~ markerLib ~ " 2>&1");
++    auto f = popen(cmd.peekChars(), "r");
++    if (!f)
++        return false;
++    char[65536] line;
++    Strings ld;
++    while (fgets(line.ptr, line.length, f))
++    {
++        // The last non-diagnostic line that mentions the marker object is the link step.
++        if (strstr(line.ptr, markerObj.ptr) && (strstr(line.ptr, "collect2") || strstr(line.ptr, "ld")))
++        {
++            ld.setDim(0);
++            splitQuoted(line.ptr, ld);
++        }
++    }
++    if (pclose(f) != 0 || ld.length == 0)
++        return false;
++
++    // collect2 runs the linker named by -fuse-ld through gcc's program search;
++    // find that linker the same way gcc would: the -B directories first.
++    const(char)* linker;
++    size_t i = 0;
++    if (strstr(ld[0], "collect2"))
++    {
++        const(char)* fuse = "ld";
++        foreach (s; ccSwitches)
++            if (startsWith(s, "-fuse-ld="))
++                fuse = s + 9;
++        char[4096] name;
++        snprintf(name.ptr, name.length, "ld.%s", fuse);
++        if (eq(fuse, "ld") || eq(fuse, "bfd"))
++            snprintf(name.ptr, name.length, eq(fuse, "bfd") ? "ld.bfd" : "ld");
++        foreach (s; ccSwitches)
++        {
++            if (!startsWith(s, "-B"))
++                continue;
++            char[4096] cand;
++            snprintf(cand.ptr, cand.length, "%s%s%s", s + 2, s[strlen(s) - 1] == '/' ? "".ptr : "/".ptr, name.ptr);
++            if (access(cand.ptr, X_OK) == 0)
++            {
++                linker = mem.xstrdup(cand.ptr);
++                break;
++            }
++        }
++        if (!linker)
++            return false; // let collect2's own search decide
++    }
++    else
++        linker = ld[0];
++    t.pre.push(linker);
++    const(char)* base = strrchr(linker, '/');
++    t.isMold = strstr(base ? base : linker, "mold") !is null;
++
++    int stage = 0;
++    for (i = 1; i < ld.length; ++i)
++    {
++        auto a = ld[i];
++        if (eq(a, "-plugin") && i + 1 < ld.length)
++        {
++            ++i; // LTO plugin: DMD objects are never LTO objects
++            continue;
++        }
++        if (startsWith(a, "-plugin-opt") || startsWith(a, "-fuse-ld="))
++            continue;
++        if (eq(a, "-o") && i + 1 < ld.length && eq(ld[i + 1], "/__flint_marker_out__"))
++        {
++            ++i;
++            continue;
++        }
++        if (eq(a, markerDir))
++        {
++            if (stage != 0)
++                return false;
++            stage = 1;
++            continue;
++        }
++        if (eq(a, markerObj))
++        {
++            if (stage != 1)
++                return false;
++            stage = 2;
++            continue;
++        }
++        if (eq(a, markerLib))
++        {
++            if (stage != 2)
++                return false;
++            stage = 3;
++            continue;
++        }
++        if (stage == 2)
++            return false; // driver inserted something between inputs; stay safe
++        (stage == 0 ? t.pre : stage == 1 ? t.mid : t.post).push(a);
++    }
++    return stage == 3;
++}
++
++private bool load(const(char)* path, ref Template t)
++{
++    auto f = fopen(path, "r");
++    if (!f)
++        return false;
++    scope (exit) fclose(f);
++    char[8192] line;
++    Strings* cur;
++    while (fgets(line.ptr, line.length, f))
++    {
++        auto n = strlen(line.ptr);
++        if (n && line[n - 1] == '\n')
++            line[--n] = 0;
++        if (eq(line.ptr, "[pre]"))
++            cur = &t.pre;
++        else if (eq(line.ptr, "[mid]"))
++            cur = &t.mid;
++        else if (eq(line.ptr, "[post]"))
++            cur = &t.post;
++        else if (eq(line.ptr, "[mold]"))
++            t.isMold = true;
++        else if (cur)
++            cur.push(mem.xstrdup(line.ptr));
++    }
++    return t.pre.length > 0;
++}
++
++private void save(const(char)* path, ref Template t)
++{
++    char[4200] tmp;
++    snprintf(tmp.ptr, tmp.length, "%s.%d", path, cast(int) getpid());
++    auto f = fopen(tmp.ptr, "w");
++    if (!f)
++        return;
++    if (t.isMold)
++        fputs("[mold]\n", f);
++    fputs("[pre]\n", f);
++    foreach (a; t.pre) { fputs(a, f); fputc('\n', f); }
++    fputs("[mid]\n", f);
++    foreach (a; t.mid) { fputs(a, f); fputc('\n', f); }
++    fputs("[post]\n", f);
++    foreach (a; t.post) { fputs(a, f); fputc('\n', f); }
++    fclose(f);
++    rename(tmp.ptr, path);
++}
++
++/**
++ * Rewrite a `cc` link command into a direct linker command.
++ * Params:
++ *   argv = `cc` command as built by the driver (not NULL terminated)
++ *   ccSwitchFlags = for each element of argv, true when it is an -Xcc switch
++ *   result = receives the linker command
++ * Returns: false to link through `cc` unchanged
++ */
++bool directLinkCommand(ref Strings argv, ref Array!bool ccSwitchFlags, ref Strings result)
++{
++    const off = getenv("FLINT_DMD_DIRECT_LINK");
++    if (off && off[0] == '0')
++        return false;
++    if (getenv("CC"))
++        return false; // custom driver command lines are left alone
++
++    // Classify the driver arguments.
++    Strings ccPrefix, ccSwitches, lpaths, inputs;
++    ccPrefix.push(argv[0]);
++    const(char)* output;
++    for (size_t i = 1; i < argv.length; ++i)
++    {
++        auto a = argv[i];
++        if (ccSwitchFlags[i])
++        {
++            if (startsWith(a, "-B") || startsWith(a, "-fuse-ld="))
++            {
++                ccSwitches.push(a);
++                continue;
++            }
++            return false;
++        }
++        if (eq(a, "-o") && i + 1 < argv.length)
++        {
++            output = argv[++i];
++            continue;
++        }
++        if (eq(a, "-g") || eq(a, "-m64"))
++            continue;
++        if (eq(a, "-Xlinker") && i + 1 < argv.length)
++        {
++            inputs.push(argv[++i]);
++            continue;
++        }
++        if (startsWith(a, "-L"))
++        {
++            lpaths.push(a);
++            continue;
++        }
++        if (startsWith(a, "-l") || a[0] != '-')
++        {
++            inputs.push(a);
++            continue;
++        }
++        return false; // -shared, -static, -pie and anything else: use cc
++    }
++    if (!output)
++        return false;
++
++    // Cache key: driver binary, its switches and the environment it reads.
++    char[4096] ccPath;
++    {
++        // resolve cc through PATH like execvp
++        const(char)* name = argv[0];
++        ccPath[0] = 0;
++        if (strchr(name, '/'))
++            snprintf(ccPath.ptr, ccPath.length, "%s", name);
++        else if (auto path = getenv("PATH"))
++        {
++            auto p = path;
++            while (*p)
++            {
++                auto e = strchr(p, ':');
++                const len = e ? cast(size_t)(e - p) : strlen(p);
++                char[4096] cand;
++                snprintf(cand.ptr, cand.length, "%.*s/%s", cast(int) len, p, name);
++                if (access(cand.ptr, X_OK) == 0)
++                {
++                    snprintf(ccPath.ptr, ccPath.length, "%s", cand.ptr);
++                    break;
++                }
++                if (!e)
++                    break;
++                p = e + 1;
++            }
++        }
++        if (!ccPath[0])
++            return false;
++    }
++    ulong h = 0xcbf29ce484222325UL;
++    h = fnv(h, ccPath.ptr);
++    stat_t st;
++    if (stat(ccPath.ptr, &st) != 0)
++        return false;
++    {
++        char[64] m;
++        snprintf(m.ptr, m.length, "%lld.%lld.%lld", cast(long) st.st_mtim.tv_sec, cast(long) st.st_ino, cast(long) st.st_size);
++        h = fnv(h, m.ptr);
++    }
++    foreach (s; ccSwitches)
++        h = fnv(h, s);
++
++    for (auto e = environ; *e; ++e)
++    {
++        auto v = *e;
++        if (startsWith(v, "NIX_") || startsWith(v, "PATH=") || strstr(v, "LIBRARY_PATH=") || startsWith(v, "COMPILER_PATH=")
++            || startsWith(v, "GCC_") || startsWith(v, "LD_") || startsWith(v, "LDFLAGS=") || startsWith(v, "SYSROOT="))
++            h = fnv(h, v);
++    }
++
++    char[4096] dir;
++    const xdg = getenv("XDG_CACHE_HOME");
++    const home = getenv("HOME");
++    if (xdg && *xdg)
++        snprintf(dir.ptr, dir.length, "%s/flint-dmd", xdg);
++    else if (home && *home)
++        snprintf(dir.ptr, dir.length, "%s/.cache/flint-dmd", home);
++    else
++        return false;
++    {
++        char[4096] parent;
++        snprintf(parent.ptr, parent.length, "%s", dir.ptr);
++        if (auto slash = strrchr(parent.ptr, '/'))
++        {
++            *slash = 0;
++            mkdir(parent.ptr, octal(755));
++        }
++        mkdir(dir.ptr, octal(700));
++    }
++    char[4200] cache;
++    snprintf(cache.ptr, cache.length, "%s/link-%016llx.txt", dir.ptr, h);
++
++    Template t;
++    if (!load(cache.ptr, t))
++    {
++        if (!expand(ccPrefix, ccSwitches, t))
++            return false;
++        save(cache.ptr, t);
++    }
++
++    foreach (a; t.pre)
++        result.push(a);
++    if (t.isMold)
++    {
++        const threads = getenv("FLINT_LINK_THREADS");
++        char[64] opt;
++        snprintf(opt.ptr, opt.length, "--threads=%s", threads && *threads ? threads : "4".ptr);
++        result.push(mem.xstrdup(opt.ptr));
++    }
++    result.push("-o");
++    result.push(output);
++    foreach (a; lpaths)
++        result.push(a);
++    foreach (a; t.mid)
++        result.push(a);
++    foreach (a; inputs)
++        result.push(a);
++    foreach (a; t.post)
++        result.push(a);
++    return true;
++}
++
++private uint octal(uint v) pure
++{
++    return (v / 100) * 64 + ((v / 10) % 10) * 8 + v % 10;
++}
+diff -ruN a/dmd/flintserver.d b/dmd/flintserver.d
+--- a/dmd/flintserver.d	1969-12-31 19:00:00.000000000 -0500
++++ b/dmd/flintserver.d	2026-11-21 17:52:11.090753585 -0500
+@@ -0,0 +1,672 @@
++/**
++ * Resident toolchain compile server ("zygote") for the DMD driver.
++ *
++ * A server process parses and semantically analyses a fixed prelude of
++ * toolchain modules (druntime and Phobos only), then forks one child per
++ * compile request.  Each child continues the ordinary driver from the
++ * point where the command line has been parsed, reusing the already
++ * analysed toolchain modules exactly as if an earlier import had loaded
++ * them.  Project and application modules are never preloaded, so every
++ * project build still compiles all of its own sources.
++ *
++ * The client side runs at the start of the normal `dmd` entry point.  When
++ * no compatible server is running it starts one in the background and
++ * compiles in-process, so the first build never waits for the server.
++ *
++ * A child refuses (exit status `zygoteIncompatible`) before producing any
++ * output whenever the request could observe the preloaded state:
++ *  - a `-version=`/`-debug=` identifier that the prelude queried,
++ *  - an extra import path that could shadow a preloaded package,
++ *  - a root module inside a preloaded package.
++ * The client then compiles in-process with the stock driver.
++ *
++ * Environment:
++ *   FLINT_DMD_SERVER=0         disable the client entirely
++ *   FLINT_DMD_SERVER_IDLE=<s>  idle seconds before a server exits (default 1800)
++ */
++module dmd.flintserver;
++
++import core.stdc.errno;
++import core.stdc.stdio;
++import core.stdc.stdlib;
++import core.stdc.string;
++import core.sys.posix.fcntl;
++import core.sys.posix.poll;
++import core.sys.posix.signal;
++import core.sys.posix.sys.socket;
++import core.sys.posix.sys.stat;
++import core.sys.posix.sys.un;
++import core.sys.posix.sys.wait;
++import core.sys.posix.unistd;
++import core.stdc.stdlib : atexit;
++
++import dmd.arraytypes : Modules, Strings;
++import dmd.globals;
++import dmd.identifier;
++import dmd.location;
++import dmd.root.array;
++import dmd.root.response;
++
++/// Child entry point supplied by the driver.
++alias ChildEntry = int function(const(char)[][] argv);
++/// Loads one prelude module by dotted name.
++alias PreloadFn = bool function(const(char)[] name);
++
++nothrow:
++
++/// Exit status of a child that must not handle the request.
++enum int zygoteIncompatible = 213;
++
++/// Socket path when this process runs as a server, else null.
++__gshared const(char)* serverSocketPath;
++/// True inside a forked request child.
++__gshared bool zygoteChild;
++/// Number of version / debug identifiers defined by the server itself.
++__gshared size_t zygoteVersionCount, zygoteDebugCount;
++/// Modules loaded by the prelude.
++__gshared Modules zygoteModules;
++/// Import search path used while loading the prelude.
++__gshared Strings zygoteImportPaths;
++/// Top level packages (or modules) of the prelude, e.g. `std`, `core`, `object`.
++__gshared Strings zygoteTopLevel;
++
++extern (C) private
++{
++    int flock(int fd, int operation);
++    long syscall(long number, ...);
++    int clearenv();
++    int putenv(char*);
++    ssize_t readlink(const(char)* path, char* buf, size_t len);
++    extern __gshared char** environ;
++}
++private enum LOCK_EX = 2, LOCK_NB = 4;
++private enum SYS_pidfd_open = 434;
++private enum uint magic = 0x464C4E54; // "FLNT"
++
++/*********************************************************************
++ * Client
++ */
++
++private bool startsWith(const(char)* s, string prefix)
++{
++    return strncmp(s, prefix.ptr, prefix.length) == 0;
++}
++
++private bool equals(const(char)* s, string v)
++{
++    return strlen(s) == v.length && strncmp(s, v.ptr, v.length) == 0;
++}
++
++/// Options for which the server is never used.
++private bool forcesLocal(const(char)* a)
++{
++    static immutable string[] exact = ["-", "-v", "-verbose", "-lowmem", "-run", "-man", "-h", "--help",
++        "-i", "-vcg-ast", "-o-", "-deps", "-makedeps", "-X", "-H", "-D", "-vtemplates", "-main"];
++    foreach (e; exact)
++        if (equals(a, e))
++            return true;
++    static immutable string[] prefixes = ["-deps=", "-makedeps=", "-Xf", "-H", "-D",
++        "-i=", "-mixin=", "-mv=", "-conf=", "-vtemplates=", "-run"];
++    foreach (p; prefixes)
++        if (startsWith(a, p))
++            return true;
++    return false;
++}
++
++/// Options that only select inputs/outputs or are re-validated by the child.
++private bool excludedFromKey(const(char)* a)
++{
++    static immutable string[] prefixes = ["-of", "-od", "-oq", "-op", "-I", "-J", "-version=", "-debug=", "-ftime-trace",
++        "-L", "-defaultlib=", "-debuglib=", "-Xcc=", "-map"];
++    foreach (p; prefixes)
++        if (startsWith(a, p))
++            return true;
++    return equals(a, "-c") || equals(a, "-lib");
++}
++
++private ulong fnv(ulong h, const(void)* data, size_t n)
++{
++    auto p = cast(const(ubyte)*) data;
++    foreach (i; 0 .. n)
++    {
++        h ^= p[i];
++        h *= 0x100000001b3UL;
++    }
++    return h;
++}
++
++private bool fileExists(const(char)* path)
++{
++    stat_t st;
++    return stat(path, &st) == 0;
++}
++
++private const(char)* selfExe()
++{
++    __gshared char[4096] buf;
++    const n = readlink("/proc/self/exe", buf.ptr, buf.length - 1);
++    if (n <= 0)
++        return null;
++    buf[n] = 0;
++    return buf.ptr;
++}
++
++private const(char)* socketDirectory()
++{
++    __gshared char[1024] dir;
++    const runtime = getenv("XDG_RUNTIME_DIR");
++    if (runtime && *runtime)
++        snprintf(dir.ptr, dir.length, "%s/flint-dmd", runtime);
++    else
++        snprintf(dir.ptr, dir.length, "/tmp/flint-dmd-%u", cast(uint) getuid());
++    mkdir(dir.ptr, octal700);
++    return dir.ptr;
++}
++private enum octal700 = 448;
++
++private bool writeAll(int fd, const(void)* data, size_t n)
++{
++    auto p = cast(const(ubyte)*) data;
++    while (n)
++    {
++        const w = write(fd, p, n);
++        if (w < 0 && errno == EINTR)
++            continue;
++        if (w <= 0)
++            return false;
++        p += w;
++        n -= w;
++    }
++    return true;
++}
++
++private bool readAll(int fd, void* data, size_t n)
++{
++    auto p = cast(ubyte*) data;
++    while (n)
++    {
++        const r = read(fd, p, n);
++        if (r < 0 && errno == EINTR)
++            continue;
++        if (r <= 0)
++            return false;
++        p += r;
++        n -= r;
++    }
++    return true;
++}
++
++/**
++ * Try to run this compile in a resident server.
++ * Returns: true and sets `status` when the server handled the request.
++ */
++bool tryCompileServer(const(char)[][] dargs, out int status)
++{
++    const env = getenv("FLINT_DMD_SERVER");
++    if (env && env[0] == '0')
++        return false;
++    foreach (a; dargs)
++        if (a.length > 13 && a[0 .. 13] == "-fork-server=")
++            return false;
++    // Project or user configuration files change the configuration; stay local.
++    if (fileExists("dmd.conf"))
++        return false;
++    if (const home = getenv("HOME"))
++    {
++        char[4096] hc;
++        snprintf(hc.ptr, hc.length, "%s/dmd.conf", home);
++        if (fileExists(hc.ptr))
++            return false;
++    }
++
++    Strings args = Strings(dargs.length);
++    foreach (i, a; dargs)
++    {
++        auto c = cast(char*) malloc(a.length + 1);
++        memcpy(c, a.ptr, a.length);
++        c[a.length] = 0;
++        args[i] = c;
++    }
++    if (responseExpand(args))
++        return false;
++
++    const exe = selfExe();
++    if (!exe)
++        return false;
++    stat_t est;
++    if (stat(exe, &est) != 0)
++        return false;
++    char[4096] conf;
++    snprintf(conf.ptr, conf.length, "%s", exe);
++    if (auto slash = strrchr(conf.ptr, '/'))
++        strcpy(slash + 1, "dmd.conf");
++    stat_t cst;
++    const haveConf = stat(conf.ptr, &cst) == 0;
++
++    ulong h = 0xcbf29ce484222325UL;
++    h = fnv(h, exe, strlen(exe));
++    h = fnv(h, &est.st_ino, est.st_ino.sizeof);
++    h = fnv(h, &est.st_mtim, est.st_mtim.sizeof);
++    h = fnv(h, &est.st_size, est.st_size.sizeof);
++    if (haveConf)
++    {
++        h = fnv(h, &cst.st_ino, cst.st_ino.sizeof);
++        h = fnv(h, &cst.st_mtim, cst.st_mtim.sizeof);
++        h = fnv(h, &cst.st_size, cst.st_size.sizeof);
++    }
++    Strings keyArgs;
++    bool haveSource;
++    foreach (i; 1 .. args.length)
++    {
++        const a = args[i];
++        if (forcesLocal(a))
++            return false;
++        if (a[0] != '-')
++        {
++            const n = strlen(a);
++            if ((n > 2 && strcmp(a + n - 2, ".d") == 0) || (n > 3 && strcmp(a + n - 3, ".di") == 0))
++                haveSource = true;
++            else if ((n > 2 && strcmp(a + n - 2, ".c") == 0) || (n > 2 && strcmp(a + n - 2, ".i") == 0)
++                || (n > 2 && strcmp(a + n - 2, ".h") == 0))
++                return false;
++            continue;
++        }
++        if (excludedFromKey(a))
++            continue;
++        keyArgs.push(a);
++        h = fnv(h, a, strlen(a) + 1);
++    }
++    if (!haveSource)
++        return false;
++
++    const dir = socketDirectory();
++    char[1100] sock;
++    snprintf(sock.ptr, sock.length, "%s/%016llx.sock", dir, h);
++
++    const fd = socket(AF_UNIX, SOCK_STREAM, 0);
++    if (fd < 0)
++        return false;
++    scope (exit) close(fd);
++    sockaddr_un addr;
++    addr.sun_family = AF_UNIX;
++    if (strlen(sock.ptr) >= addr.sun_path.length)
++        return false;
++    strcpy(cast(char*) addr.sun_path.ptr, sock.ptr);
++    if (connect(fd, cast(sockaddr*) &addr, addr.sizeof) != 0)
++    {
++        spawnServer(exe, sock.ptr, keyArgs);
++        return false;
++    }
++
++    // Request: header, cwd, args, environment, all NUL separated.
++    import dmd.common.outbuffer : OutBuffer;
++    OutBuffer body;
++    char[8192] cwd;
++    if (!getcwd(cwd.ptr, cwd.length))
++        return false;
++    body.writestring(cwd.ptr[0 .. strlen(cwd.ptr)]);
++    body.writeByte(0);
++    foreach (a; args)
++    {
++        body.writestring(a[0 .. strlen(a)]);
++        body.writeByte(0);
++    }
++    size_t nenv;
++    for (auto e = environ; *e; ++e)
++    {
++        body.writestring((*e)[0 .. strlen(*e)]);
++        body.writeByte(0);
++        ++nenv;
++    }
++    uint[4] header = [magic, cast(uint) args.length, cast(uint) nenv, cast(uint) body.length];
++
++    // Pass stdin/stdout/stderr with the header.
++    iovec iov;
++    iov.iov_base = header.ptr;
++    iov.iov_len = header.sizeof;
++    enum nfds = 3;
++    ubyte[CMSG_SPACE(int.sizeof * nfds)] control;
++    msghdr msg;
++    msg.msg_iov = &iov;
++    msg.msg_iovlen = 1;
++    msg.msg_control = control.ptr;
++    msg.msg_controllen = control.length;
++    auto cmsg = CMSG_FIRSTHDR(&msg);
++    cmsg.cmsg_level = SOL_SOCKET;
++    cmsg.cmsg_type = SCM_RIGHTS;
++    cmsg.cmsg_len = CMSG_LEN(int.sizeof * nfds);
++    auto fds = cast(int*) CMSG_DATA(cmsg);
++    fds[0] = 0;
++    fds[1] = 1;
++    fds[2] = 2;
++    if (sendmsg(fd, &msg, 0) != header.sizeof)
++        return false;
++    if (!writeAll(fd, body[].ptr, body.length))
++        return false;
++    int result;
++    if (!readAll(fd, &result, result.sizeof))
++        return false;
++    if (result == zygoteIncompatible)
++        return false;
++    status = result;
++    return true;
++}
++
++private void spawnServer(const(char)* exe, const(char)* sock, ref Strings keyArgs)
++{
++    const pid = fork();
++    if (pid < 0)
++        return;
++    if (pid > 0)
++    {
++        int st;
++        while (waitpid(pid, &st, 0) < 0 && errno == EINTR) {}
++        return;
++    }
++    setsid();
++    if (fork() != 0)
++        _exit(0);
++    const devnull = open("/dev/null", O_RDWR);
++    char[1200] log;
++    snprintf(log.ptr, log.length, "%s.log", sock);
++    const logfd = open(log.ptr, O_WRONLY | O_CREAT | O_TRUNC, octal600);
++    dup2(devnull, 0);
++    dup2(devnull, 1);
++    dup2(logfd >= 0 ? logfd : devnull, 2);
++    foreach (int i; 3 .. 1024)
++        close(i);
++    auto argv = cast(const(char)**) malloc((keyArgs.length + 3) * (char*).sizeof);
++    argv[0] = exe;
++    char[1200] opt;
++    snprintf(opt.ptr, opt.length, "-fork-server=%s", sock);
++    argv[1] = opt.ptr;
++    foreach (i, a; keyArgs)
++        argv[2 + i] = a;
++    argv[keyArgs.length + 2] = null;
++    putenv(cast(char*) "FLINT_DMD_SERVER=0".ptr);
++    execv(exe, cast(char**) argv);
++    _exit(127);
++}
++private enum octal600 = 384;
++
++/*********************************************************************
++ * Server
++ */
++
++
++private __gshared int traceFd = -2;
++
++/// Append a timestamped event for this worker when FLINT_DMD_SERVER_TRACE names a file.
++private void traceMark(const(char)* what)
++{
++    import core.sys.posix.time : clock_gettime, timespec, CLOCK_MONOTONIC;
++    if (traceFd == -2)
++    {
++        const path = getenv("FLINT_DMD_SERVER_TRACE");
++        traceFd = path ? open(path, O_WRONLY | O_CREAT | O_APPEND, octal600) : -1;
++    }
++    if (traceFd < 0)
++        return;
++    timespec ts;
++    clock_gettime(CLOCK_MONOTONIC, &ts);
++    char[160] line;
++    const n = snprintf(line.ptr, line.length, "%lld.%06ld %d %s\n", cast(long) ts.tv_sec, cast(long)(ts.tv_nsec / 1000), cast(int) getpid(), what);
++    write(traceFd, line.ptr, n);
++}
++
++/// Connection of the request handled by this worker, or -1.
++private __gshared int workerConn = -1;
++
++/// Report the exit status to the client; also runs for `exit()` inside the driver.
++private void reportStatus(int status)
++{
++    if (workerConn < 0)
++        return;
++    fflush(stdout);
++    fflush(stderr);
++    writeAll(workerConn, &status, status.sizeof);
++    close(workerConn);
++    workerConn = -1;
++}
++
++extern (C) private void reportFailureAtExit()
++{
++    reportStatus(1); // the driver only calls exit() on failure
++}
++
++/**
++ * Load the prelude, then serve requests until idle.  Never returns.
++ *
++ * The server keeps a pool of pre-forked workers blocked in `accept`, so a
++ * request never waits for `fork`.  Each worker handles exactly one request.
++ * Params:
++ *   entry = continues the driver for one request inside a worker
++ *   preload = loads one prelude module by dotted name, returns false on failure
++ */
++void runServer(ChildEntry entry, PreloadFn preload)
++{
++    char[1200] lockPath;
++    snprintf(lockPath.ptr, lockPath.length, "%s.lock", serverSocketPath);
++    const lock = open(lockPath.ptr, O_CREAT | O_RDWR, octal600);
++    if (lock < 0 || flock(lock, LOCK_EX | LOCK_NB) != 0)
++        _exit(0);
++
++    // Prelude list next to the executable.
++    const exe = selfExe();
++    char[4096] list;
++    snprintf(list.ptr, list.length, "%s", exe);
++    if (auto slash = strrchr(list.ptr, '/'))
++        strcpy(slash + 1, "dmd-server-prelude.txt");
++    auto f = fopen(list.ptr, "r");
++    if (!f)
++    {
++        fprintf(stderr, "flint-dmd-server: missing %s\n", list.ptr);
++        _exit(1);
++    }
++    char[512] line;
++    while (fgets(line.ptr, line.length, f))
++    {
++        auto n = strlen(line.ptr);
++        while (n && (line[n - 1] == '\n' || line[n - 1] == '\r' || line[n - 1] == ' '))
++            line[--n] = 0;
++        if (!n || line[0] == '#')
++            continue;
++        bool ok;
++        try
++            ok = preload(line[0 .. n].dup);
++        catch (Throwable)
++            ok = false;
++        if (!ok)
++        {
++            fprintf(stderr, "flint-dmd-server: cannot preload %s\n", line.ptr);
++            _exit(1);
++        }
++        if (global.errors)
++        {
++            fprintf(stderr, "flint-dmd-server: errors while preloading %s\n", line.ptr);
++            _exit(1);
++        }
++    }
++    fclose(f);
++
++    zygoteVersionCount = global.versionids.length;
++    zygoteDebugCount = global.debugids.length;
++
++    const listen_ = socket(AF_UNIX, SOCK_STREAM, 0);
++    sockaddr_un addr;
++    addr.sun_family = AF_UNIX;
++    strcpy(cast(char*) addr.sun_path.ptr, serverSocketPath);
++    unlink(serverSocketPath);
++    if (listen_ < 0 || bind(listen_, cast(sockaddr*) &addr, addr.sizeof) != 0 || listen(listen_, 512) != 0)
++    {
++        fprintf(stderr, "flint-dmd-server: cannot listen on %s\n", serverSocketPath);
++        _exit(1);
++    }
++    chmod(serverSocketPath, octal600);
++    fflush(stdout);
++    fflush(stderr);
++
++    int idleSeconds = 1800;
++    if (const idle = getenv("FLINT_DMD_SERVER_IDLE"))
++        idleSeconds = atoi(idle);
++    // Two workers per hardware thread: a parallel build never waits for fork().
++    int poolSize = 2 * cast(int) sysconf(_SC_NPROCESSORS_ONLN);
++    if (poolSize < 8)
++        poolSize = 8;
++    if (const pool = getenv("FLINT_DMD_SERVER_POOL"))
++        poolSize = atoi(pool);
++
++    signal(SIGCHLD, SIG_IGN); // workers are reaped automatically
++    int[2] notify;
++    if (pipe(notify) != 0)
++        _exit(1);
++
++    void spawnWorker()
++    {
++        const pid = fork();
++        if (pid != 0)
++            return;
++        close(notify[0]);
++        int conn;
++        do
++            conn = accept(listen_, null, null);
++        while (conn < 0 && errno == EINTR);
++        traceMark("accepted");
++        char b = 'x';
++        write(notify[1], &b, 1);
++        close(notify[1]);
++        close(listen_);
++        if (conn < 0)
++            _exit(1);
++        handleRequest(conn, entry);
++        _exit(1);
++    }
++
++    foreach (i; 0 .. poolSize)
++        spawnWorker();
++    while (true)
++    {
++        pollfd pfd = pollfd(notify[0], POLLIN, 0);
++        const ready = poll(&pfd, 1, idleSeconds * 1000);
++        if (ready < 0 && errno == EINTR)
++            continue;
++        if (ready <= 0)
++            break; // idle
++        char[64] taken;
++        const n = read(notify[0], taken.ptr, taken.length);
++        foreach (i; 0 .. n > 0 ? n : 0)
++            spawnWorker();
++    }
++    unlink(serverSocketPath);
++    signal(SIGTERM, SIG_IGN);
++    kill(0, SIGTERM); // idle workers in this process group
++    _exit(0);
++}
++
++/// Handle one request inside a worker.  Never returns.
++private void handleRequest(int conn, ChildEntry entry)
++{
++    uint[4] header;
++    iovec iov;
++    iov.iov_base = header.ptr;
++    iov.iov_len = header.sizeof;
++    enum nfds = 3;
++    ubyte[CMSG_SPACE(int.sizeof * nfds)] control;
++    msghdr msg;
++    msg.msg_iov = &iov;
++    msg.msg_iovlen = 1;
++    msg.msg_control = control.ptr;
++    msg.msg_controllen = control.length;
++    if (recvmsg(conn, &msg, 0) != header.sizeof || header[0] != magic)
++        _exit(1);
++    auto cmsg = CMSG_FIRSTHDR(&msg);
++    if (!cmsg || cmsg.cmsg_type != SCM_RIGHTS || cmsg.cmsg_len != CMSG_LEN(int.sizeof * nfds))
++        _exit(1);
++    int[nfds] fds;
++    memcpy(fds.ptr, CMSG_DATA(cmsg), fds.sizeof);
++    auto data = cast(char*) malloc(header[3] + 1);
++    if (!readAll(conn, data, header[3]))
++        _exit(1);
++    data[header[3]] = 0;
++    workerConn = conn;
++    foreach (int i, fd; fds)
++    {
++        dup2(fd, i);
++        close(fd);
++    }
++    // Unpack cwd, argv and environment.
++    auto p = data;
++    const(char)* cwd = p;
++    p += strlen(p) + 1;
++    auto argv = (cast(const(char)[]*) malloc(header[1] * (const(char)[]).sizeof))[0 .. header[1]];
++    foreach (ref a; argv)
++    {
++        const n = strlen(p);
++        a = p[0 .. n];
++        p += n + 1;
++    }
++    clearenv();
++    foreach (i; 0 .. header[2])
++    {
++        putenv(p);
++        p += strlen(p) + 1;
++    }
++    if (chdir(cwd) != 0)
++    {
++        reportStatus(zygoteIncompatible);
++        _exit(1);
++    }
++    atexit(&reportFailureAtExit);
++    zygoteChild = true;
++    traceMark("received");
++    int status = 1;
++    try
++        status = entry(argv);
++    catch (Throwable)
++        status = 1;
++    traceMark("compiled");
++    reportStatus(status);
++    traceMark("reported");
++    _exit(status);
++}
++
++/*********************************************************************
++ * Child-side compatibility checks
++ */
++
++/// True when a user identifier was queried by the prelude.
++bool queriedByPrelude(ref Array!Identifier queried, Identifier id)
++{
++    foreach (q; queried)
++        if (q is id)
++            return true;
++    return false;
++}
++
++/// True when `dir` contains an entry that could shadow a preloaded package.
++bool shadowsPrelude(const(char)* dir)
++{
++    char[4096] path;
++    foreach (top; zygoteTopLevel)
++    {
++        snprintf(path.ptr, path.length, "%s/%s", dir, top);
++        if (fileExists(path.ptr))
++            return true;
++        snprintf(path.ptr, path.length, "%s/%s.d", dir, top);
++        if (fileExists(path.ptr))
++            return true;
++        snprintf(path.ptr, path.length, "%s/%s.di", dir, top);
++        if (fileExists(path.ptr))
++            return true;
++    }
++    return false;
++}
++
++/// True when `name` is a preloaded top level package or module.
++bool preloadedTopLevel(const(char)[] name)
++{
++    foreach (top; zygoteTopLevel)
++        if (strlen(top) == name.length && strncmp(top, name.ptr, name.length) == 0)
++            return true;
++    return false;
++}
+diff -ruN a/dmd/link.d b/dmd/link.d
+--- a/dmd/link.d	2026-10-31 19:29:10.000000000 -0400
++++ b/dmd/link.d	2026-11-21 17:33:07.213802481 -0500
+@@ -658,6 +658,28 @@
+             // Link against -lexecinfo for backtrace symbols
+             argv.push("-lexecinfo");
+         }
++        // Flint toolchain fork: run the linker the driver would run, directly.
++        {
++            Array!bool isCC;
++            isCC.setDim(argv.length);
++            foreach (i; 0 .. argv.length)
++            {
++                isCC[i] = false;
++                foreach (pi, p; global.params.linkswitches)
++                    if (p is argv[i] && global.params.linkswitchIsForCC[pi])
++                    {
++                        isCC[i] = true;
++                        break;
++                    }
++            }
++            import dmd.flintlink : directLinkCommand;
++            Strings direct;
++            if (directLinkCommand(argv, isCC, direct))
++            {
++                argv.setDim(0);
++                argv.append(&direct);
++            }
++        }
+         OutBuffer buf;
+         foreach (i; 0 .. argv.length)
+         {
+diff -ruN a/dmd/main.d b/dmd/main.d
+--- a/dmd/main.d	2026-10-31 19:29:10.000000000 -0400
++++ b/dmd/main.d	2026-11-21 17:13:04.055801639 -0500
+@@ -73,6 +73,8 @@
+ import dmd.timetrace;
+ import dmd.utils;
+ import dmd.vsoptions;
++import dmd.flintserver;
++import core.stdc.string : strlen;
+ 
+ /**
+  * DMD's entry point, C main.
+@@ -148,9 +150,40 @@
+             fputs(buf.peekChars(), stderr);
+         }
+ 
++    // Resident toolchain compile server (Flint toolchain fork).
++    {
++        const(char)[][] kept;
++        foreach (a; dargs)
++        {
++            if (a.length > 13 && a[0 .. 13] == "-fork-server=")
++            {
++                auto copy = cast(char*) malloc(a.length - 13 + 1);
++                memcpy(copy, a.ptr + 13, a.length - 13);
++                copy[a.length - 13] = 0;
++                serverSocketPath = copy;
++            }
++            else
++                kept ~= a;
++        }
++        if (serverSocketPath)
++            dargs = kept;
++        else
++        {
++            int serverStatus;
++            if (tryCompileServer(dargs, serverStatus))
++                return serverStatus;
++        }
++    }
+     return tryMain(dargs, global.params);
+ }
+ 
++/// Entry for a forked server child: continue the driver with this request.
++int zygoteChildMain(const(char)[][] argv)
++{
++    driverParams = DMDparams.init;
++    return tryMain(argv, global.params);
++}
++
+ /************************************************************************************/
+ 
+ private:
+@@ -176,7 +209,8 @@
+ 
+     Strings files;
+     Strings libmodules;
+-    global._init();
++    if (!zygoteChild)
++        global._init();
+ 
+     ErrorSink eSink = global.errorSink;
+ 
+@@ -187,11 +221,23 @@
+         global.plugErrorSinks();
+     }
+ 
+-    target.setTargetBuildDefaults();
++    if (!zygoteChild)
++        target.setTargetBuildDefaults();
+ 
+     if (parseCommandlineAndConfig(argv, params, files, eSink))
+         return EXIT_FAILURE;
+ 
++    if (zygoteChild)
++    {
++        // Identifiers the prelude evaluated must keep the server's answer.
++        foreach (i; zygoteVersionCount .. global.versionids.length)
++            if (queriedByPrelude(recordedVersionQueries, global.versionids[i]))
++                return zygoteIncompatible;
++        foreach (i; zygoteDebugCount .. global.debugids.length)
++            if (queriedByPrelude(recordedDebugQueries, global.debugids[i]))
++                return zygoteIncompatible;
++    }
++
+     if (global.params.v.messageStyle == MessageStyle.sarif)
+     {
+         // Hand off the settings the CLI wrote into the original sink so the
+@@ -376,7 +422,7 @@
+     {
+         fatal();
+     }
+-    if (files.length == 0 && !params.readStdin)
++    if (files.length == 0 && !params.readStdin && !serverSocketPath)
+     {
+         if (params.jsonFieldFlags)
+         {
+@@ -395,13 +441,16 @@
+     setDefaultLibraries(target, driverParams.defaultlibname, driverParams.debuglibname);
+ 
+     // Initialization
+-    target._init(params);
+-    Type_init();
+-    Id.initialize();
+-    Module._init();
+-    Expression._init();
+-    Objc._init();
+-    Loc._init();
++    if (!zygoteChild)
++    {
++        target._init(params);
++        Type_init();
++        Id.initialize();
++        Module._init();
++        Expression._init();
++        Objc._init();
++        Loc._init();
++    }
+ 
+     reconcileLinkRunLib(params, files.length, target.obj_ext, eSink);
+     version(CRuntime_Microsoft)
+@@ -410,10 +459,13 @@
+         initFPU();
+     }
+     import dmd.root.ctfloat : CTFloat;
+-    CTFloat.initialize();
++    if (!zygoteChild)
++    {
++        CTFloat.initialize();
+ 
+-    // Predefined version identifiers
+-    addDefaultVersionIdentifiers(params, target);
++        // Predefined version identifiers
++        addDefaultVersionIdentifiers(params, target);
++    }
+ 
+     if (params.v.verbose)
+     {
+@@ -465,8 +517,31 @@
+         atexit(&flushMixins); // see comment for flushMixins
+     }
+     scope(exit) flushMixins();
++    if (zygoteChild)
++    {
++        global.path.setDim(0);
++        global.importPaths.setDim(0);
++        global.filePath.setDim(0);
++    }
+     buildImportPath(params.imppath, global.path, global.importPaths);
+     buildFileImportPath(params.fileImppath, global.filePath);
++    if (zygoteChild)
++    {
++        // Extra import paths precede the toolchain paths; refuse any that
++        // could resolve a preloaded package differently.
++        foreach (p; global.importPaths)
++        {
++            bool known;
++            foreach (z; zygoteImportPaths)
++                if (strcmp(z, p) == 0)
++                {
++                    known = true;
++                    break;
++                }
++            if (!known && shadowsPrelude(p))
++                return zygoteIncompatible;
++        }
++    }
+ 
+     if (params.timeTrace)
+     {
+@@ -474,6 +549,13 @@
+         initializeTimeTrace(params.timeTraceGranularityUs, toCString(argv[0]).ptr);
+     }
+ 
++    if (serverSocketPath && !zygoteChild)
++    {
++        foreach (p; global.importPaths)
++            zygoteImportPaths.push(p);
++        runServer(&zygoteChildMain, &preloadModule);
++    }
++
+     // Create Modules
+     Modules modules;
+     if (createModules(files, libmodules, params, target, eSink, modules))
+@@ -580,6 +662,21 @@
+     }
+     }
+ 
++    if (zygoteChild && modules.length)
++    {
++        // Root modules must not collide with preloaded toolchain packages.
++        foreach (m; modules)
++        {
++            const(char)[] top = m.md && m.md.packages.length ? m.md.packages[0].toString()
++                : m.md ? m.md.id.toString() : m.ident.toString();
++            if (preloadedTopLevel(top))
++                return zygoteIncompatible;
++        }
++        // As if the first root module had imported the prelude.
++        foreach (m; zygoteModules)
++            m.importedFrom = modules[0];
++    }
++
+     if (anydocfiles && modules.length && (driverParams.oneobj || params.objname))
+     {
+         eSink.error(Loc.initial, "conflicting Ddoc and obj generation options");
+@@ -912,6 +1009,63 @@
+ }
+ 
+ /**
++ * Load and analyse one prelude module exactly as an import would.
++ */
++bool preloadModule(const(char)[] name)
++{
++    Identifier[] packages;
++    Identifier ident;
++    size_t start = 0;
++    foreach (i; 0 .. name.length + 1)
++    {
++        if (i == name.length || name[i] == '.')
++        {
++            auto id = Identifier.idPool(name[start .. i]);
++            if (i == name.length)
++                ident = id;
++            else
++                packages ~= id;
++            start = i + 1;
++        }
++    }
++    // Already loaded transitively?
++    foreach (m; Module.amodules)
++        if (m.ident is ident && m.md && m.md.packages.length == packages.length)
++        {
++            bool same = true;
++            foreach (i, p; packages)
++                same &= m.md.packages[i] is p;
++            if (same)
++                return true;
++        }
++    recordConditionQueries = true;
++    scope (exit) recordConditionQueries = false;
++    auto m = Module.load(Loc.initial, packages, ident);
++    if (!m)
++        return false;
++    m.importAll(null);
++    m.dsymbolSemantic(null);
++    runDeferredSemantic();
++    m.semantic2(null);
++    runDeferredSemantic2();
++    zygoteModules.setDim(0);
++    foreach (am; Module.amodules)
++    {
++        zygoteModules.push(am);
++        const(char)[] top = am.md && am.md.packages.length ? am.md.packages[0].toString()
++            : am.md ? am.md.id.toString() : am.ident.toString();
++        if (!preloadedTopLevel(top))
++        {
++            auto c = cast(char*) malloc(top.length + 1);
++            memcpy(c, top.ptr, top.length);
++            c[top.length] = 0;
++            zygoteTopLevel.push(c);
++        }
++    }
++    return true;
++}
++
++/**
+  * Parses the command line arguments and configuration files
+  *
+  * Params:
