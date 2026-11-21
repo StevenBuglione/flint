@@ -5,10 +5,20 @@ import core.thread.osthread : Thread;
 import std.algorithm.mutation : move;
 import flint.arena : Error, RequestArena, Status;
 import flint.conc : CancelSource, Channel, Context, Deadline, QueueKind, WorkTicket, WorkerOptions, WorkerPool;
+import flint.conc : fillSecureRandom;
 import flint.conc.sys.atomics : yieldThread;
 import flint.conc.sys.workers : WorkerThreads;
 
 @safe:
+
+version (linux) unittest
+{
+    ubyte[32] first, second;
+    assert(fillSecureRandom(first[0 .. 0]).code == Status.ok);
+    assert(fillSecureRandom(first[]).code == Status.ok);
+    assert(fillSecureRandom(second[]).code == Status.ok);
+    assert(first != second);
+}
 
 private struct Flat
 {

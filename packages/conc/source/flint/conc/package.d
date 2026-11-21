@@ -7,6 +7,21 @@ import flint.conc.sys.cancellation : cancelSource, closeSource, closedContextId,
 
 @safe:
 
+/// Fill the supplied bytes from the operating system random source.
+Error fillSecureRandom(scope ubyte[] output) nothrow @nogc
+{
+    import flint.conc.sys.random : secureRandom;
+
+    return secureRandom(output);
+}
+
+package(flint) Error startBackground(void delegate() @safe nothrow @nogc run)
+{
+    import flint.conc.sys.background : startDaemon;
+
+    return startDaemon(run);
+}
+
 /// Absolute time on the process monotonic clock.
 struct Deadline
 {
