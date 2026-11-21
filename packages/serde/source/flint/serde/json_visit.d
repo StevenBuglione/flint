@@ -42,7 +42,10 @@ struct JsonMemberName
 /// Visit one checked object field. Both arguments are borrowed for the call.
 alias JsonMemberVisitor = Error delegate(scope JsonMemberName name, scope const(ubyte)[] value) @safe nothrow @nogc;
 /// Inspect a decoded member name and the byte range of its checked JSON value.
-alias JsonMemberRangeVisitor = Error delegate(scope JsonMemberName name, size_t offset, size_t length) @safe nothrow @nogc;
+// dfmt off
+alias JsonMemberRangeVisitor = Error delegate(scope JsonMemberName name, size_t offset,
+        size_t length) @safe nothrow @nogc;
+// dfmt on
 /// Visit one checked value in array order.
 alias JsonElementVisitor = Error delegate(scope const(ubyte)[] value) @safe nothrow @nogc;
 
@@ -108,13 +111,9 @@ private Error visit(Visitor)(scope const(ubyte)[] json, scope Visitor visitor, D
         static if (object)
         {
             TextToken key;
-            const tokenized = cursor.text(key);
+            const tokenized = readMemberKey(cursor, key);
             if (tokenized.code != Status.ok)
                 return tokenized;
-            cursor.whitespace();
-            if (!cursor.take(':'))
-                return Error(Status.invalidArgument, "expected a JSON member colon", cursor.offset);
-            cursor.whitespace();
             scope const name = JsonMemberName(json, key);
         }
         const start = cursor.offset;
@@ -134,5 +133,17 @@ private Error visit(Visitor)(scope const(ubyte)[] json, scope Visitor visitor, D
             return Error(Status.invalidArgument, "expected a JSON member separator", cursor.offset);
         cursor.whitespace();
     }
+    return Error.init;
+}
+
+private Error readMemberKey(ref scope Scanner cursor, out TextToken key) nothrow @nogc
+{
+    const tokenized = cursor.text(key);
+    if (tokenized.code != Status.ok)
+        return tokenized;
+    cursor.whitespace();
+    if (!cursor.take(':'))
+        return Error(Status.invalidArgument, "expected a JSON member colon", cursor.offset);
+    cursor.whitespace();
     return Error.init;
 }
