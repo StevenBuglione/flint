@@ -57,3 +57,11 @@ Result!WorkerStats workerStats(uint core) const nothrow @nogc;
 - Posted tasks retain their own cancellation context and run on fibers pinned to the chosen worker. When a task yields to a finite monotonic deadline, its owner resumes it on expiry, cancellation or shutdown. `currentTask()` exposes the active fiber's context. After the loop has joined, `workerStats()` exposes allocation and collection deltas, affinity, CPU time, context switches and outstanding operation counts.
 
 The Linux adapter uses a single-threaded opaque C ring through `native/ffi/flint_reactor_uring.h`. A successful preparation transfers the buffer to that operation until its original CQE. Cancellation uses a separate CQE with reserved token zero. Accept uses token one. The adapter retains stable operation tokens across submission and reports errors from feature probing through the backend selector. The D loop drains original and cancellation CQEs before destroying the ring.
+
+## Application-owned callbacks and native readiness
+
+`listenWith`, `readWith`, and `writeWith` retain application delegates through listener lifetime or the final I/O callback. A listener can run concurrently on different cores. Every read and write completion runs on the connection owner. `postWith` retains a task delegate for a fiber on the posting owner core and copies its `TaskContext`.
+
+Linux clients can register caller-owned descriptors using `watchNative`. The callback runs outside owner fibers and receives level-triggered read, write, and error flags. The library owning the descriptor calls `unwatchNative` before releasing it. A removed slot advances its identity before reuse, so a queued event from the earlier registration cannot notify the new callback. `maxNativeWatchesPerCore` bounds this table.
+
+The epoll loop observes the native watch poller as a child descriptor. The io_uring loop uses an asynchronous readable poll for that child with reserved token two. Shutdown retires that poll and any cancellation acknowledgement before releasing the epoll descriptor.
