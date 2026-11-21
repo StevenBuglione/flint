@@ -20,6 +20,11 @@ foreach(PAIR IN ITEMS "llhttp.h|LLHTTP" "nghttp2/nghttp2.h|NGHTTP2" "curl/curl.h
     target_compile_definitions(flint_ffi PRIVATE "FLINT_HAS_${SYMBOL}=1")
   endif()
 endforeach()
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND EXISTS "${CMAKE_INSTALL_PREFIX}/include/SDL3/SDL.h"
+    AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/flint_desktop.h")
+  target_compile_definitions(flint_ffi PRIVATE FLINT_HAS_SDL3=1)
+  install(FILES flint_desktop.h DESTINATION include)
+endif()
 add_executable(flint_abi_test probe_main.c)
 target_link_libraries(flint_abi_test PRIVATE flint_ffi)
 enable_testing()
