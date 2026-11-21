@@ -347,13 +347,45 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
             paths=[p for p in self.prefix.rglob('*') if p.name in ('libflint_ffi.a','flint_ffi.lib')]
             if len(paths)!=1:raise RuntimeError('Expected exactly one Flint FFI archive')
             self.receipt['ffi_archive']={'path':str(paths[0]),'sha256':digest(paths[0])}
+            if 'protobuf-c' in self.receipt['libraries']:
+                self.receipt['rpc_test_archive'] = self.rpc_test_archive_receipt()
             self.receipt_path.write_text(json.dumps(self.receipt,indent=2)+'\n')
+
+    def rpc_test_archive_receipt(self):
+        names = ('libflint_rpc_fixture.a', 'flint_rpc_fixture.lib')
+        paths = [self.prefix / 'lib' / name for name in names if (self.prefix / 'lib' / name).is_file()]
+        if len(paths) != 1:
+            raise RuntimeError('Expected exactly one installed RPC test fixture archive')
+        return {'path': str(paths[0]), 'sha256': digest(paths[0])}
+
+    def emit_rpc_test_archive(self, text):
+        begin = '    // BEGIN FLINT RPC TEST NATIVE\n'
+        end = '    // END FLINT RPC TEST NATIVE\n'
+        cleaned = re.sub(re.escape(begin) + r'.*?' + re.escape(end), '', text, flags=re.S)
+        if 'protobuf-c' not in self.receipt['libraries']:
+            return cleaned
+        fixture = self.receipt.get('rpc_test_archive')
+        if not fixture or fixture != self.rpc_test_archive_receipt():
+            raise RuntimeError('Installed RPC test fixture archive changed')
+        platform_tag = self.dub_platform()
+        anchor = 'configuration "unittest" {\n'
+        if cleaned.count(anchor) != 1:
+            raise RuntimeError('Expected exactly one RPC unittest configuration')
+        flag = '    lflags ' + json.dumps(fixture['path']) + ' platform=' + json.dumps(platform_tag) + '\n'
+        return cleaned.replace(anchor, anchor + begin + flag + end)
+
+    def dub_platform(self):
+        return {
+            'linux-x86_64-glibc': 'linux-x86_64', 'linux-x86_64-musl': 'linux-x86_64',
+            'linux-aarch64-glibc': 'linux-aarch64', 'linux-aarch64-musl': 'linux-aarch64',
+            'macos-arm64': 'osx-aarch64', 'windows-x86_64': 'windows-x86_64',
+        }[self.a.target]
 
     def dub_blocks(self):
         """Return deterministic, verified provider/linker blocks without mutating files."""
         blocks={}
         packages=json.loads((ROOT/'policy/packages.json').read_text())['packages'];available=set(self.receipt['libraries'])
-        tag={'linux-x86_64-glibc':'linux-x86_64','linux-x86_64-musl':'linux-x86_64','linux-aarch64-glibc':'linux-aarch64','linux-aarch64-musl':'linux-aarch64','macos-arm64':'osx-aarch64','windows-x86_64':'windows-x86_64'}[self.a.target]
+        tag=self.dub_platform()
         for package in packages:
             direct=sorted(n for n in available if package in self.rows[n]['consumers'])
             if not direct:continue
@@ -394,6 +426,8 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
             for path in paths:
                 text=path.read_text()
                 text=re.sub(r'\n// BEGIN FLINT NATIVE\n.*?// END FLINT NATIVE\n','\n',text,flags=re.S)
+                if package == 'rpc' and path == paths[0]:
+                    text = self.emit_rpc_test_archive(text)
                 path.write_text(text.rstrip()+'\n'+block)
 
 def dependency_order(names,rows,codegen):
