@@ -123,7 +123,7 @@ private struct Binding
         if (present)
             input = InputValue(attributes.defaultText, Origin("@Default"));
 
-        const name = attributes.environment.length == 0 ? defaultEnvironment(envPrefix, key) : attributes.environment;
+        string name = attributes.environment.length == 0 ? defaultEnvironment(envPrefix, key) : attributes.environment;
         if (const prior = name in envKeys)
             problem(Origin("schema"), Status.conflict, (*prior < key) ? *prior : key,
                     "has an ambiguous environment variable");

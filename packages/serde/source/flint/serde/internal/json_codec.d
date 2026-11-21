@@ -3,7 +3,7 @@ module flint.serde.internal.json_codec;
 
 import flint.arena : Buffer, Error, RequestArena, Result, Status, Text;
 import flint.serde.internal.decimal : parseDecimal, writeDecimal;
-import flint.serde.internal.fields : Field, JsonFields;
+import flint.serde.internal.fields : JsonFields;
 import flint.serde.internal.json_scan : Scanner, TextToken, NumberToken, copyText, earlierKey, skipValue, textEquals;
 import flint.serde.internal.types : DecodeOptions, EncodeOptions, UnknownFields;
 import flint.serde.internal.writer : Writer, writeArenaBuffer;
@@ -324,9 +324,9 @@ private Error readArray(T, size_t extent, bool owned)(ref scope Scanner scanner,
     return Error.init;
 }
 
-private size_t lookup(ref scope Scanner scanner, TextToken token, scope const(Field)[] fields) nothrow @nogc
+private size_t lookup(T)(ref scope Scanner scanner, TextToken token) nothrow @nogc
 {
-    foreach (index, ref const field; fields)
+    foreach (index, field; JsonFields!T.entries)
     {
         if (token.hash == field.hash && textEquals(scanner.bytes, token, cast(const(ubyte)[]) field.name))
             return index;
@@ -342,8 +342,8 @@ private Error readObject(T, bool owned)(ref scope Scanner scanner, ref T target,
     if (!scanner.take('{'))
         return Error(Status.invalidArgument, "expected a JSON object", scanner.offset);
 
-    static immutable properties = JsonFields!T.entries;
-    bool[JsonFields!T.entries.length] seen;
+    enum properties = JsonFields!T.entries;
+    bool[properties.length] seen;
     immutable firstMember = scanner.offset;
     scanner.whitespace();
     uint members;
@@ -351,16 +351,10 @@ private Error readObject(T, bool owned)(ref scope Scanner scanner, ref T target,
     {
         for (;;)
         {
-            size_t index;
-            auto failure = readObjectMember(scanner, properties, seen, firstMember, depth + 1, members, index);
+            auto failure = readObjectMember!(T, owned)(scanner, target, arena, plan, seen,
+                    firstMember, depth + 1, members);
             if (failure.code != Status.ok)
                 return failure;
-            if (index != noProperty)
-            {
-                failure = readProperty!(T, owned)(scanner, target, arena, plan, depth + 1, index);
-                if (failure.code != Status.ok)
-                    return failure;
-            }
             ++members;
             scanner.whitespace();
             if (scanner.take('}'))
@@ -373,8 +367,9 @@ private Error readObject(T, bool owned)(ref scope Scanner scanner, ref T target,
     return readDefaults!(T, owned)(scanner, target, arena, plan, seen, depth + 1);
 }
 
-private Error readObjectMember(ref scope Scanner scanner, scope const(Field)[] fields, scope bool[] seen,
-        size_t firstMember, uint depth, uint members, out size_t index) nothrow @nogc
+private Error readObjectMember(T, bool owned)(ref scope Scanner scanner, ref T target,
+        ref scope RequestArena arena, ref AllocationPlan plan, scope bool[] seen, size_t firstMember,
+        uint depth, uint members)
 {
     if (members >= scanner.options.maxMembers)
         return Error(Status.resourceExhausted, "JSON member limit exceeded", scanner.offset);
@@ -383,7 +378,7 @@ private Error readObjectMember(ref scope Scanner scanner, scope const(Field)[] f
     auto failure = scanner.text(token);
     if (failure.code != Status.ok)
         return failure;
-    index = lookup(scanner, token, fields);
+    immutable index = lookup!T(scanner, token);
     if (scanner.options.rejectDuplicateKeys)
     {
         immutable duplicate = index != noProperty ? seen[index] : earlierKey(scanner, firstMember,
@@ -402,7 +397,7 @@ private Error readObjectMember(ref scope Scanner scanner, scope const(Field)[] f
         return skipValue(scanner, depth);
     }
     seen[index] = true;
-    return Error.init;
+    return readProperty!(T, owned)(scanner, target, arena, plan, depth, index);
 }
 
 private Error readProperty(T, bool owned)(ref scope Scanner scanner, ref T target,
