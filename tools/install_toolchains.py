@@ -23,37 +23,40 @@ def install(name,destination):
         with tarfile.open(archive) as t:t.extractall(destination,filter='data')
     return destination
 
-def identify_lld(executable):
+def identify_elf_linker(executable):
     path = shutil.which(executable)
     if path is None:
         raise ValueError(f'Cannot find executable {executable!r}')
-    # ld.lld can be a symlink. Its invocation name selects the ELF driver.
+    # LLVM selects its driver by invocation name. Keep the requested symlink.
     linker = Path(path).absolute()
     version = subprocess.check_output([str(linker), '--version'], text=True).strip()
-    if not version.startswith('LLD '):
-        raise ValueError(f'Expected an ELF ld.lld executable, got {version!r}')
-    return {'path': str(linker), 'version': version,
+    name = version.split(' ', 1)[0].lower()
+    if name not in ('lld', 'mold'):
+        raise ValueError(f'Expected ld.lld or mold, got {version!r}')
+    return {'driver': name, 'path': str(linker), 'version': version,
             'sha256': hashlib.sha256(linker.read_bytes()).hexdigest()}
 
 
-def configure_dmd_lld(bin_dir, linker):
+def configure_dmd_linker(bin_dir, linker):
     config = bin_dir / 'dmd.conf'
     original = config.read_text()
     before, marker, after = original.partition('[Environment64]\nDFLAGS=')
     if not marker:
         raise ValueError('Missing 64-bit DFLAGS in the pinned dmd.conf')
-    driver_dir = bin_dir / 'flint-lld'
+    driver_dir = bin_dir / 'flint-linker'
+    driver = linker['driver']
+    executable = 'ld.' + driver
     driver_dir.mkdir(exist_ok=True)
     with TemporaryDirectory(dir=driver_dir) as temporary:
         tmp = Path(temporary)
-        (tmp / 'ld.lld').symlink_to(linker)
-        (tmp / 'ld.lld').replace(driver_dir / 'ld.lld')
+        (tmp / executable).symlink_to(linker['path'])
+        (tmp / executable).replace(driver_dir / executable)
         # The compiler driver still supplies the CRT and system library paths.
         # The private -B directory selects only the ELF linker.
         line, newline, rest = after.partition('\n')
         # DMD expands %@P% before splitting DFLAGS, including for its own include paths.
         flags = ['"' + flag + '"' if '%@P%' in flag else flag for flag in line.split()]
-        flags += ['"-Xcc=-B%@P%/flint-lld/"', '-Xcc=-fuse-ld=lld']
+        flags += ['"-Xcc=-B%@P%/flint-linker/"', '-Xcc=-fuse-ld=' + driver]
         updated = before + marker + ' '.join(flags) + newline + rest
         (tmp / 'dmd.conf').write_text(updated)
         (tmp / 'dmd.conf').replace(config)
@@ -61,14 +64,14 @@ def configure_dmd_lld(bin_dir, linker):
 
 def main():
     ap=argparse.ArgumentParser();ap.add_argument('--compiler',choices=['dmd','ldc','go','oha'],required=True);ap.add_argument('--musl',action='store_true');ap.add_argument('--destination',type=Path,default=ROOT/'.tools')
-    ap.add_argument('--dmd-lld', metavar='LD_LLD', help='Use this installed ELF LLD for project-local 64-bit DMD links')
+    ap.add_argument('--dmd-linker', metavar='LINKER', help='Use installed ld.lld or mold for project-local 64-bit DMD links')
     a=ap.parse_args()
     linker = None
-    if a.dmd_lld:
+    if a.dmd_linker:
         if a.compiler != 'dmd':
-            ap.error('--dmd-lld applies only to --compiler dmd')
+            ap.error('--dmd-linker applies only to --compiler dmd')
         try:
-            linker = identify_lld(a.dmd_lld)
+            linker = identify_elf_linker(a.dmd_linker)
         except (OSError, ValueError, subprocess.CalledProcessError) as error:
             ap.error(str(error))
     a.destination=a.destination.resolve()
@@ -92,7 +95,7 @@ def main():
     if not binary_path.is_dir():raise SystemExit('archive layout did not contain '+str(binary_path))
     receipt = {'compiler':a.compiler,'version':LOCK['versions'][a.compiler],'bin':str(binary_path),'sha256':LOCK['assets'][name]['sha256']}
     if linker:
-        configure_dmd_lld(binary_path, linker['path'])
+        configure_dmd_linker(binary_path, linker)
         receipt['linker'] = linker
     if os.environ.get('GITHUB_PATH'):
         with open(os.environ['GITHUB_PATH'],'a') as f:f.write(str(binary_path)+'\n')
