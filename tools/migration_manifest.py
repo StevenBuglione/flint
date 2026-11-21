@@ -73,15 +73,22 @@ def render(rows: list[dict], module: str) -> str:
         f"module {module};",
         "import flint.migrate : Migration;",
         "",
+        "/// Versioned SQL files and their offline SHA-256 digests.",
         "enum Migration[] migrations = [",
     ]
     for row in rows:
-        digest = ", ".join(f"ubyte(0x{row['sha256'][i:i+2]})" for i in range(0,64,2))
-        lines += [
-            f"    Migration({row['version']}UL, {dquote(row['description'])},",
-            f"        import({dquote(row['file'])}),",
-            f"        [{digest}], {'true' if row['transactional'] else 'false'}),",
-        ]
+        transactional = "true" if row["transactional"] else "false"
+        literals = [f"0x{row['sha256'][index:index + 2]}" for index in range(0, 64, 2)]
+        lines.append(
+            f"    Migration({row['version']}UL, {dquote(row['description'])}, "
+            f"import({dquote(row['file'])}), ["
+        )
+        lines.extend([
+            "        " + ", ".join(literals[:15]) + ",",
+            "        " + ", ".join(literals[15:31]) + ",",
+            "        " + literals[31],
+        ])
+        lines.append(f"    ], {transactional}),")
     lines += ["];", ""]
     return "\n".join(lines)
 
