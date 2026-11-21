@@ -87,3 +87,12 @@ if(EXISTS "${CMAKE_INSTALL_PREFIX}/include/llhttp.h" AND EXISTS "${CMAKE_INSTALL
   target_link_libraries(flint_native_library_test PRIVATE flint_ffi "${FLINT_LLHTTP}" "${FLINT_ZLIB}")
   add_test(NAME flint_native_library_test COMMAND flint_native_library_test)
 endif()
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND EXISTS "${CMAKE_INSTALL_PREFIX}/include/wasmtime.h" AND
+    EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/flint_wasi.h")
+  target_compile_definitions(flint_ffi PRIVATE FLINT_HAS_WASMTIME=1)
+  if(EXISTS "${CMAKE_INSTALL_PREFIX}/include/flint_wasmtime_extensions.h")
+    target_compile_definitions(flint_ffi PRIVATE FLINT_HAS_WASMTIME_EXTENSIONS=1)
+  endif()
+  install(FILES flint_wasi.h DESTINATION include)
+endif()

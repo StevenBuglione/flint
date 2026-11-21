@@ -252,6 +252,11 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
             self.env['CARGO_PROFILE_RELEASE_PANIC']='abort'
             args=['cargo','rustc','--lib','--crate-type','staticlib','--release','--locked','--jobs',str(self.a.jobs),'--target',triple]
             if name=='wasmtime':args+=['-p','wasmtime-c-api','--no-default-features','--features','cranelift,wasi,component-model,component-model-async']
+            flint_extensions=name=='wasmtime' and self.a.target.startswith('linux')
+            if flint_extensions:
+                extension=ROOT/'packages/wasi/native/install_extensions.py'
+                self.command([sys.executable,extension,src],src)
+                args[-1]+=',flint-wasi-extensions'
             output=self.command(args+['--','--print','native-static-libs'],src)
             if self.a.phase=='build':
                 matches=re.findall(r'native-static-libs:\s*(.+)',output)
@@ -265,6 +270,10 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
             if name=='wasmtime':
                 features=['CRANELIFT','WASI','COMPONENT_MODEL','COMPONENT_MODEL_ASYNC','ASYNC']
                 self.command(['cmake','-DWASMTIME_DISABLE_ALL_FEATURES=ON','-DCMAKE_INSTALL_PREFIX='+str(self.prefix),*['-DWASMTIME_FEATURE_'+f+'=ON' for f in features],'-P','cmake/install-headers.cmake'],src/'crates/c-api')
+                if flint_extensions:
+                    overlay=self.command([sys.executable,extension,src,'--install-prefix',self.prefix],src)
+                    if self.a.phase=='build':
+                        self.toolchain_metadata[name]['flint_extensions']=json.loads(overlay)
             else:
                 self.copy(src/'ffi/wgpu.h',self.prefix/'include/wgpu.h')
                 self.copy(src/'ffi/webgpu-headers/webgpu.h',self.prefix/'include/webgpu.h')
