@@ -9,7 +9,7 @@ target_include_directories(flint_ffi PRIVATE "${CMAKE_INSTALL_PREFIX}/include")
 if(WIN32 AND EXISTS "${CMAKE_INSTALL_PREFIX}/include/wasmtime.h")
   target_compile_definitions(flint_ffi PRIVATE WASM_API_EXTERN= WASI_API_EXTERN=)
 endif()
-foreach(PAIR IN ITEMS "llhttp.h|LLHTTP" "nghttp2/nghttp2.h|NGHTTP2" "curl/curl.h|CURL"
+foreach(PAIR IN ITEMS "llhttp.h|LLHTTP" "nghttp2/nghttp2.h|NGHTTP2" "curl/curl.h|CURL" "openssl/ssl.h|OPENSSL"
     "sqlite3.h|SQLITE" "libpq-fe.h|LIBPQ" "hiredis/hiredis_ssl.h|HIREDIS" "yaml.h|LIBYAML" "utf8proc.h|UTF8PROC")
   string(REPLACE "|" ";" FIELDS "${PAIR}")
   list(GET FIELDS 0 HEADER)
@@ -39,6 +39,10 @@ endif()
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/flint_sql.h" AND
     (EXISTS "${CMAKE_INSTALL_PREFIX}/include/sqlite3.h" OR EXISTS "${CMAKE_INSTALL_PREFIX}/include/libpq-fe.h"))
   install(FILES flint_sql.h DESTINATION include)
+endif()
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/flint_cache.h" AND
+    EXISTS "${CMAKE_INSTALL_PREFIX}/include/hiredis/hiredis_ssl.h")
+  install(FILES flint_cache.h DESTINATION include)
 endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND EXISTS "${CMAKE_INSTALL_PREFIX}/include/liburing.h")
