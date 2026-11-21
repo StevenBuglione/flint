@@ -44,7 +44,7 @@ ALIASES = {
  'brotli':[('brotlienc','brotlienc-static'),('brotlidec','brotlidec-static'),('brotlicommon','brotlicommon-static')],
  'hiredis':[('hiredis_ssl','hiredis_ssl_static'),('hiredis','hiredis_static')], 'liburing':[('uring-ffi',),('uring',)],
  'utf8proc':[('utf8proc','utf8proc_static')], 'libyaml':[('yaml','yaml_static')], 'protobuf-c':[('protobuf-c',)],
- 'protoc':[], 'sqlite':[('sqlite3',)], 'libpq':[('pq','libpq'),('pgcommon',),('pgport',)],
+ 'protoc':[], 'sqlite':[('sqlite3',)], 'libpq':[('pq','libpq'),('pgcommon_shlib',),('pgport_shlib',)],
  'wasmtime':[('wasmtime',)], 'wamr':[('vmlib',)], 'sdl3':[('SDL3','SDL3-static')],
  'wgpu-native':[('wgpu_native',)], 'webview':[('webview','webview_core','webview_static')], 'stb':[('flint_stb',)], 'libarchive':[('archive','archive_static')],
 }
@@ -227,9 +227,12 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
             self.write(build/'project/CMakeLists.txt',project);self.cmake(name,build/'project',build/'cmake','.',[])
         elif name=='libpq':
             options=['docs','gssapi','icu','ldap','libcurl','libnuma','liburing','libxml','libxslt','llvm','lz4','nls','pam','plperl','plpython','pltcl','readline','selinux','systemd','tap_tests','zstd']
-            self.command(['meson','setup',build,src,'--prefix='+str(self.prefix),'--buildtype=release','-Dssl=openssl','-Dzlib=enabled',*['-D'+x+'=disabled' for x in options]],ROOT)
-            # Exact native build targets avoid building or installing a database server.
-            client_targets=('libpq','libpgcommon','libpgport')
+            reconfigure=['--reconfigure'] if (build/'meson-private/coredata.dat').is_file() and self.a.phase=='build' else []
+            include_flag=('/I' if self.a.target.startswith('windows') else '-I')+str(self.prefix/'include')
+            frontend_flags=shlex.split(self.env.get('CFLAGS',''))+shlex.split(os.environ.get('CPPFLAGS',''))+[include_flag]
+            self.command(['meson','setup',*reconfigure,build,src,'--prefix='+str(self.prefix),'--buildtype=release','-Dssl=openssl','-Dzlib=enabled','-Dc_args='+repr(frontend_flags),*['-D'+x+'=disabled' for x in options]],ROOT)
+            # PostgreSQL's libpq Makefile links these static support variants for the public encoding ABI.
+            client_targets=('libpq','libpgcommon_shlib','libpgport_shlib')
             self.command(['meson','compile','-C',build,'-j',str(self.a.jobs),*[target+':static_library' for target in client_targets]],ROOT)
             if self.a.phase=='build':
                 targets=json.loads(subprocess.check_output(['meson','introspect','--targets',str(build)],text=True))
