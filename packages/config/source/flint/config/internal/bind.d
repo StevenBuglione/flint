@@ -102,9 +102,23 @@ private struct Binding
         }
     }
 
-    void leaf(T, FieldRules attributes)(ref T destination, string key)
+    void leaf(T)(ref T destination, string key, FieldRules attributes)
     {
         InputValue input;
+        if (!selectInput(attributes, key, input))
+        {
+            if (attributes.required && destination is T.init)
+                problem(Origin("effective configuration"), Status.notFound, key, "is required");
+            return;
+        }
+        if (!coerce(input, destination))
+            problem(input.origin, Status.invalidArgument, key, "does not match the field type");
+        else
+            applied[key] = input.origin;
+    }
+
+    private bool selectInput(FieldRules attributes, string key, out InputValue input)
+    {
         bool present = attributes.defaulted;
         if (present)
             input = InputValue(attributes.defaultText, Origin("@Default"));
@@ -121,23 +135,11 @@ private struct Binding
         {
             input = InputValue(*value, Origin("process environment"));
             present = true;
-            layers.process.remove(name.idup);
+            layers.process.remove(name);
         }
         take(layers.arguments, key, input, present);
 
-        if (!present)
-        {
-            static if (attributes.required)
-            {
-                if (destination is T.init)
-                    problem(Origin("effective configuration"), Status.notFound, key, "is required");
-            }
-            return;
-        }
-        if (!coerce(input, destination))
-            problem(input.origin, Status.invalidArgument, key, "does not match the field type");
-        else
-            applied[key] = input.origin;
+        return present;
     }
 
     private void take(ref Inputs entries, string name, ref InputValue selected, ref bool present)
@@ -184,7 +186,7 @@ private void walk(T, string prefix, size_t depth)(ref T value, ref Binding bindi
                 else
                 {
                     enum metadata = rules!(T, name)();
-                    binding.leaf!(Field, metadata)(__traits(getMember, value, name), fullKey);
+                    binding.leaf(__traits(getMember, value, name), fullKey, metadata);
                 }
             }
         }

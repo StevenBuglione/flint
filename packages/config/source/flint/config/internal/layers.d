@@ -7,7 +7,6 @@ import flint.config.types : ConfigOptions;
 import flint.serde : DecodeOptions;
 import flint.serde.owned : readTomlEntries;
 import std.algorithm.searching : startsWith;
-import std.process : environment;
 
 @safe:
 
@@ -148,6 +147,8 @@ private Error applicationFiles(string directory, string profile, ref Inputs valu
 
 package(flint.config) Error loadLayers(scope const ref ConfigOptions options, ref Layers layers)
 {
+    import std.process : environment;
+
     layers.process = environment.toAA();
     string profile = options.profile.idup;
     if (const fromEnvironment = "FLINT_PROFILE" in layers.process)

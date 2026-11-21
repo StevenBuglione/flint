@@ -1,12 +1,6 @@
 module flint.config.internal.sources;
 
 import flint.arena : Error, Result, Status;
-import flint.serde : DecodeOptions, UnknownFields;
-import flint.serde.owned : deserialize;
-import std.conv : to;
-import std.file : exists, read;
-import std.string : strip;
-import std.utf : validate;
 
 @safe:
 
@@ -21,6 +15,8 @@ package(flint.config) struct Origin
 
     Error report(Status status, string key, string reason) const
     {
+        import std.conv : to;
+
         const label = key.length == 0 ? "configuration" : "configuration key " ~ key;
         if (offset != size_t.max && offset <= document.length)
         {
@@ -63,11 +59,9 @@ private string sourcePath(string directory, string name)
 {
     version (linux)
     {
-        import std.path : dirSeparator, isDirSeparator;
-
         if (directory.length == 0)
             return name;
-        const separator = isDirSeparator(directory[$ - 1]) ? "" : dirSeparator;
+        const separator = directory[$ - 1] == '/' ? "" : "/";
         return directory ~ separator ~ name;
     }
     else
@@ -80,6 +74,9 @@ private string sourcePath(string directory, string name)
 
 package(flint.config) Result!SourceFile sourceFile(string directory, string name)
 {
+    import std.file : exists, read;
+    import std.utf : validate;
+
     const path = sourcePath(directory, name);
     if (!exists(path))
         return Result!SourceFile(SourceFile.init);
@@ -128,6 +125,8 @@ package(flint.config) Error putInput(ref Inputs entries, string key, InputValue 
 
 package(flint.config) Error readDotEnv(string text, ref Inputs entries)
 {
+    import std.string : strip;
+
     size_t start;
     foreach (index; 0 .. text.length + 1)
     {
@@ -316,6 +315,8 @@ private struct ObjectReader
 
     private Result!string keyAndColon(string parent, ref bool[string] seen)
     {
+        import flint.serde.owned : deserialize;
+
         const start = cursor;
         if (!skipString())
             return Result!string(null, invalid(parent, "requires a quoted JSON key"));
@@ -338,6 +339,9 @@ private struct ObjectReader
 
     private Error readLeaf(string key, size_t keyOffset, size_t depth, ref Inputs entries)
     {
+        import flint.serde : DecodeOptions, UnknownFields;
+        import flint.serde.owned : deserialize;
+
         const start = cursor;
         if (!skipValue(depth))
             return invalid(key, "has invalid or excessively nested JSON");
