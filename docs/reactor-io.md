@@ -17,6 +17,9 @@ struct TaskContext
 {
     ulong requestId;
     Context cancellation;
+    ulong traceIdHigh;
+    ulong traceIdLow;
+    ulong spanId;
     this(ulong requestId, Context cancellation = Context.init) nothrow @nogc;
 }
 
