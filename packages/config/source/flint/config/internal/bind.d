@@ -7,7 +7,6 @@ import flint.config.internal.values : coerce;
 import flint.config.types : ConfigurationProperties, Default, Env, Required;
 import flint.validate : Violation, validate;
 import std.algorithm.searching : startsWith;
-import std.array : split;
 import std.traits : FieldNameTuple;
 
 @safe:
@@ -192,17 +191,28 @@ private void walk(T, string prefix, size_t depth)(ref T value, ref Binding bindi
     }
 }
 
+private bool validConfigPrefix(string prefix) pure nothrow @nogc
+{
+    if (prefix.length == 0)
+        return true;
+    size_t begin;
+    foreach (index, ch; prefix)
+    {
+        if (ch != '.')
+            continue;
+        if (!keyComponent(prefix[begin .. index]))
+            return false;
+        begin = index + 1;
+    }
+    return keyComponent(prefix[begin .. $]);
+}
+
 package(flint.config) Error bind(T)(ref T value, ref Layers layers, string envPrefix, bool rejectUnknown)
 {
     enum keyPrefix = configPrefix!T;
-    if (keyPrefix.length != 0)
-    {
-        foreach (part; keyPrefix.split("."))
-        {
-            if (!keyComponent(part))
-                return Origin("schema").report(Status.invalidArgument, "", "has an invalid configuration prefix");
-        }
-    }
+    enum valid = validConfigPrefix(keyPrefix);
+    if (!valid)
+        return Origin("schema").report(Status.invalidArgument, "", "has an invalid configuration prefix");
     const environmentScope = keyPrefix.length == 0 ? envPrefix : defaultEnvironment(envPrefix, keyPrefix) ~ "__";
     Binding binding = Binding(layers, envPrefix, environmentScope);
     walk!(T, keyPrefix, 1)(value, binding);

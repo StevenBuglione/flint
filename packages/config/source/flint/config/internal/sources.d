@@ -5,7 +5,6 @@ import flint.serde : DecodeOptions, UnknownFields;
 import flint.serde.owned : deserialize;
 import std.conv : to;
 import std.file : exists, read;
-import std.path : buildPath;
 import std.string : strip;
 import std.utf : validate;
 
@@ -59,9 +58,29 @@ package(flint.config) struct SourceFile
     string text;
 }
 
+// The file name is a single component selected by the configuration loader.
+private string sourcePath(string directory, string name)
+{
+    version (linux)
+    {
+        import std.path : dirSeparator, isDirSeparator;
+
+        if (directory.length == 0)
+            return name;
+        const separator = isDirSeparator(directory[$ - 1]) ? "" : dirSeparator;
+        return directory ~ separator ~ name;
+    }
+    else
+    {
+        import std.path : buildPath;
+
+        return buildPath(directory, name);
+    }
+}
+
 package(flint.config) Result!SourceFile sourceFile(string directory, string name)
 {
-    const path = buildPath(directory, name);
+    const path = sourcePath(directory, name);
     if (!exists(path))
         return Result!SourceFile(SourceFile.init);
     auto origin = Origin(name);
