@@ -55,7 +55,8 @@
       "license_expression": "curl",
       "license_selected": "curl",
       "consumers": [
-        "http"
+        "http",
+        "mail"
       ],
       "dependencies": [
         "openssl",

@@ -82,7 +82,7 @@
       "flint.mq.ffi"
     ],
     "storage": [],
-    "mail": [],
+    "mail": ["flint.mail.ffi"],
     "ai": [],
     "mcp": [],
     "template": [],

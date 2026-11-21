@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 TARGETS = ('linux-x86_64-glibc','linux-aarch64-glibc','linux-x86_64-musl','linux-aarch64-musl','macos-arm64','windows-x86_64')
 PROFILES = {
     'rest': ['openssl','libsodium','llhttp','nghttp2','curl'],
-    'http': ['curl'], 'sql':['sqlite','libpq'], 'mq':['librdkafka'],
+    'http': ['curl'], 'mail': ['curl'], 'sql':['sqlite','libpq'], 'mq':['librdkafka'],
     'codec':['zstd','zlib','brotli','libarchive'], 'desktop':['sdl3'],
     'wasm-host':['wasmtime'], 'tui':['utf8proc'], 'yaml':['libyaml'],
     # C-provider closure; all-package CI adds --library wasmtime explicitly.
@@ -138,6 +138,13 @@ class Builder:
 
     def cmake(self,name,src,build,relative,options,install=True,target=None):
         options=list(options)
+        if name == 'curl' and self.a.target.startswith('linux'):
+            options.remove('HTTP_ONLY=ON')  # The pinned CMake removed this option.
+            smtp = self.a.profile in ('mail', 'ci', 'all')
+            options += ['CURL_DISABLE_SMTP=' + ('OFF' if smtp else 'ON'), 'CURL_USE_LIBSSH=OFF']
+            disabled = ('DICT', 'FILE', 'FTP', 'GOPHER', 'IMAP', 'LDAP', 'LDAPS', 'MQTT',
+                        'POP3', 'RTSP', 'TELNET', 'TFTP', 'IPFS')
+            options += ['CURL_DISABLE_' + protocol + '=ON' for protocol in disabled]
         if name=='protobuf-c': options += ['BUILD_PROTOC='+('ON' if self.a.with_codegen else 'OFF')]
         if name=='sdl3' and self.a.target.startswith('linux'): options += ['SDL_WAYLAND=OFF','SDL_X11=ON','SDL_X11_SHARED=ON','SDL_DEPS_SHARED=ON','SDL_KMSDRM=OFF','SDL_ALSA=OFF','SDL_PULSEAUDIO=OFF','SDL_PIPEWIRE=OFF','SDL_JACK=OFF','SDL_SNDIO=OFF','SDL_RPI=OFF','SDL_ROCKCHIP=OFF']
         argv=['cmake','-S',src/relative,'-B',build,'-G','Ninja','-DCMAKE_BUILD_TYPE=Release',
@@ -340,6 +347,16 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
         row=self.rows[name];paths=self.archive_paths(name)
         self.receipt['libraries'][name]={'source_sha256':row['archive_sha256'],'revision':row.get('commit',row.get('source_id')),'license':row['license_selected'],'requested_sanitizers':self.a.sanitize,'archives':[{'path':str(p),'sha256':digest(p)} for p in paths]}
         if name=='sdl3':self.link_metadata[name]=self.sdl_link_metadata()
+        if name == 'curl' and self.a.target.startswith('linux'):
+            config = self.prefix / 'bin/curl-config'
+            protocols = sorted(self.command([config, '--protocols'], ROOT).split())
+            smtp = self.a.profile in ('mail', 'ci', 'all')
+            expected = {'HTTP', 'HTTPS', 'WS', 'WSS'} | ({'SMTP', 'SMTPS'} if smtp else set())
+            if set(protocols) != expected:
+                raise RuntimeError('Unexpected pinned curl protocol set: ' + repr(protocols))
+            self.receipt['libraries'][name].update(
+                protocols=protocols, provider_profile='smtp-http' if smtp else 'http-only',
+                curl_config_sha256=digest(config))
         if name in self.link_metadata:self.receipt['libraries'][name]['system_link_metadata']=self.link_metadata[name]
         if name in self.toolchain_metadata:self.receipt['libraries'][name]['toolchain']=self.toolchain_metadata[name]
         self.prefix.mkdir(parents=True,exist_ok=True);self.receipt_path.write_text(json.dumps(self.receipt,indent=2)+'\n')
@@ -358,6 +375,12 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
             self.receipt['ffi_archive']={'path':str(paths[0]),'sha256':digest(paths[0])}
             if 'protobuf-c' in self.receipt['libraries']:
                 self.receipt['rpc_test_archive'] = self.rpc_test_archive_receipt()
+            curl = self.receipt['libraries'].get('curl', {})
+            if curl.get('provider_profile') == 'smtp-http':
+                reference = self.prefix / 'lib/libflint_mail_reference.a'
+                self.receipt['mail_reference_archive'] = {'path': str(reference), 'sha256': digest(reference)}
+            else:
+                self.receipt.pop('mail_reference_archive', None)
             self.receipt_path.write_text(json.dumps(self.receipt,indent=2)+'\n')
 
     def rpc_test_archive_receipt(self):
@@ -399,6 +422,12 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
             direct=sorted(n for n in available if package in self.rows[n]['consumers'])
             if not direct:continue
             closure=dependency_order(direct,self.rows,False);flags=[]
+            if package == 'mail':
+                reference = self.receipt.get('mail_reference_archive')
+                if reference:
+                    if digest(Path(reference['path'])) != reference['sha256']:
+                        raise RuntimeError('Installed mail reference archive changed')
+                    flags.append(reference['path'])
             ffi=self.receipt['ffi_archive']
             if digest(Path(ffi['path']))!=ffi['sha256']:raise RuntimeError('Installed Flint FFI archive changed')
             flags.append(ffi['path'])

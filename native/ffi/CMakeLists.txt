@@ -105,3 +105,12 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND EXISTS "${CMAKE_INSTALL_PREFIX}/includ
   endif()
   install(FILES flint_wasi.h DESTINATION include)
 endif()
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/flint_mail.h" AND
+    EXISTS "${CMAKE_INSTALL_PREFIX}/include/curl/curl.h")
+  install(FILES flint_mail.h DESTINATION include)
+  # Isolated pinned-ABI control. Static linking retains it only in the reference executable.
+  add_library(flint_mail_reference STATIC "../../packages/mail/bench/baseline/native/direct.c")
+  target_include_directories(flint_mail_reference PRIVATE "${CMAKE_INSTALL_PREFIX}/include")
+  install(TARGETS flint_mail_reference ARCHIVE DESTINATION lib)
+endif()
