@@ -1,8 +1,19 @@
 name "probe-cli"
 targetType "executable"
-sourcePaths "source"
-importPaths "source"
+sourcePaths "source" "harness"
+importPaths "source" "harness"
 targetPath "build"
 targetName "probe-cli"
 dflags "-preview=dip1000"
 dependency "flint:cli" path="../../.."
+dependency "flint:arena" path="../../.."
+dependency "flint:validate" path="../../.."
+
+configuration "fixture" {
+    targetType "executable"
+}
+
+configuration "scale" {
+    targetType "executable"
+    versions "FlintCliScale"
+}
