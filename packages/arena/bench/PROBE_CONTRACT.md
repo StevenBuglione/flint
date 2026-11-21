@@ -1,8 +1,8 @@
 # arena exercised probe
 
-The implementation task creates `source/app.d` and `baseline/source/app.d` in this directory. The recipes resolve the local implementation root. Source is intentionally absent until real behavior exists; the measurement tool rejects missing probes.
+The feature probe in `source/app.d` uses the local Flint implementation. The baseline in `baseline/source/app.d` uses caller-owned byte storage. Both use the timing and checksum logic in `harness/arena_probe_harness.d`.
 
-`source/app.d` must instantiate and execute the required workload in `handoff/specs/tier-0/arena.md`. Preserve an observable checksum derived from actual results and check correctness through code that remains active in the release build. A bare import, constant-only substitute or discarded operation is invalid. Use the pinned input sizes/seeds from the specification; microbenchmark timing, where applicable, must exceed 100 ms per trial.
+`source/app.d` executes the required workloads in `handoff/specs/tier-0/arena.md`. Preserve an observable checksum derived from actual results and check correctness through code that remains active in the release build. A bare import, constant-only substitute or discarded operation is invalid. Use the pinned input sizes/seeds from the specification; microbenchmark timing, where applicable, must exceed 100 ms per trial.
 
 ## Equivalent provider baseline
 
