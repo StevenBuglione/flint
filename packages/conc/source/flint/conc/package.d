@@ -22,6 +22,13 @@ package(flint) Error startBackground(void delegate() @safe nothrow @nogc run)
     return startDaemon(run);
 }
 
+package(flint) Error startManagedBackground(void delegate() @safe nothrow run)
+{
+    import flint.conc.sys.background : startDaemon;
+
+    return startDaemon(run);
+}
+
 /// Absolute time on the process monotonic clock.
 struct Deadline
 {
