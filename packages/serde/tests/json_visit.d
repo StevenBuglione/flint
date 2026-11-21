@@ -1,7 +1,8 @@
 module flint.serde.json_visit_test;
 
 import flint.arena : Error, Status;
-import flint.serde.json_visit : JsonMemberName, visitJsonArray, visitJsonObject;
+import flint.serde : DecodeOptions;
+import flint.serde.json_visit : JsonMemberName, visitJsonArray, visitJsonObject, visitJsonObjectRanges;
 
 @safe:
 
@@ -26,4 +27,32 @@ unittest
     assert(visitJsonObject(nested, inspect).code == Status.invalidArgument);
     assert(visitJsonObject(cast(const(ubyte)[]) "{\"id\":[true]} false", inspect).code == Status.invalidArgument);
     assert(visited == 1);
+}
+
+unittest
+{
+    enum cap = 4 * 1024 * 1024;
+    auto document = new ubyte[cap + 1];
+    document[] = ' ';
+    enum member = `{"i\u0064": [true]}`;
+    document[0 .. member.length] = cast(const(ubyte)[]) member;
+    DecodeOptions bounds;
+    bounds.maxBytes = cap;
+    uint seen;
+    auto inspect = delegate Error(scope JsonMemberName key, size_t offset, size_t length) @safe nothrow @nogc {
+        ++seen;
+        assert(key.isName("id"));
+        assert(offset == 12 && length == 6);
+        assert(document[offset .. offset + length] == cast(const(ubyte)[]) "[true]");
+        return Error.init;
+    };
+    assert(visitJsonObjectRanges(document[0 .. cap], inspect, bounds).code == Status.ok);
+    assert(seen == 1);
+    assert(visitJsonObjectRanges(document, inspect, bounds).code == Status.resourceExhausted);
+    assert(visitJsonObjectRanges(document[0 .. cap], inspect).code == Status.resourceExhausted);
+    document[cap - 1] = 'x';
+    assert(visitJsonObjectRanges(document[0 .. cap], inspect, bounds).code == Status.invalidArgument);
+    const duplicate = cast(const(ubyte)[]) `{"id":[true],"i\u0064":[]}`;
+    assert(visitJsonObjectRanges(duplicate, inspect, bounds).code == Status.invalidArgument);
+    assert(seen == 1);
 }

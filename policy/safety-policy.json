@@ -84,7 +84,7 @@
     "storage": [],
     "mail": ["flint.mail.ffi"],
     "ai": [],
-    "mcp": [],
+    "mcp": ["flint.mcp.sys.storage", "flint.mcp.sys.stdio"],
     "template": [],
     "codec": [
       "flint.codec.sys",
