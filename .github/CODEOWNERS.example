@@ -1,0 +1,6 @@
+# Copy to CODEOWNERS and replace this documented example with an actual
+# repository user/team that has write access. The handoff does not invent one.
+/.github/ @YOUR-ORG/flint-maintainers
+/tools/ @YOUR-ORG/flint-maintainers
+/policy/ @YOUR-ORG/flint-maintainers
+/benchmarks/ @YOUR-ORG/flint-maintainers

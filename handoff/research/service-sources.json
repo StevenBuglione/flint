@@ -1,0 +1,326 @@
+[
+  {
+    "title": "nghttp2 programmer guide",
+    "url": "https://nghttp2.org/documentation/programmers-guide.html",
+    "consulted": "2026-11-21",
+    "claim": "nghttp2 is I/O-agnostic and a session has one owner at a time."
+  },
+  {
+    "title": "D parameter attributes",
+    "url": "https://dlang.org/spec/function.html",
+    "consulted": "2026-11-21",
+    "claim": "Function parameters can carry UDAs; scope/return are compiler-checked attributes, not ownership magic."
+  },
+  {
+    "title": "curl threading",
+    "url": "https://curl.se/libcurl/c/threadsafe.html",
+    "consulted": "2026-11-21",
+    "claim": "A handle cannot be used concurrently on multiple threads."
+  },
+  {
+    "title": "multi-socket action",
+    "url": "https://curl.se/libcurl/c/curl_multi_socket_action.html",
+    "consulted": "2026-11-21",
+    "claim": "Socket and timeout notifications drive asynchronous transfer progress."
+  },
+  {
+    "title": "JWT best practices",
+    "url": "https://www.rfc-editor.org/rfc/rfc8725.html",
+    "consulted": "2026-11-21",
+    "claim": "Algorithm, issuer and audience validation must be explicit."
+  },
+  {
+    "title": "libsodium password hashing",
+    "url": "https://doc.libsodium.org/password_hashing/default_phf",
+    "consulted": "2026-11-21",
+    "claim": "Use the library password verifier format and high-level functions."
+  },
+  {
+    "title": "OTLP specification",
+    "url": "https://opentelemetry.io/docs/specs/otlp/",
+    "consulted": "2026-11-21",
+    "claim": "OTLP/HTTP supports Protobuf JSON and defines signal endpoints/partial success."
+  },
+  {
+    "title": "D compile-time attributes",
+    "url": "https://dlang.org/spec/attribute.html",
+    "consulted": "2026-11-21",
+    "claim": "UDA metadata is available to compile-time descriptors."
+  },
+  {
+    "title": "gRPC concepts",
+    "url": "https://grpc.io/docs/what-is-grpc/core-concepts/",
+    "consulted": "2026-11-21",
+    "claim": "gRPC supports four call shapes and independent local completion outcomes."
+  },
+  {
+    "title": "gRPC flow control",
+    "url": "https://grpc.io/docs/guides/flow-control/",
+    "consulted": "2026-11-21",
+    "claim": "Bounded streams must keep readers making progress to avoid mutual writer stalls."
+  },
+  {
+    "title": "protobuf-c",
+    "url": "https://github.com/protobuf-c/protobuf-c",
+    "consulted": "2026-11-21",
+    "claim": "Generated C codec supplies the Protobuf runtime boundary."
+  },
+  {
+    "title": "libpq asynchronous processing",
+    "url": "https://www.postgresql.org/docs/current/libpq-async.html",
+    "consulted": "2026-11-21",
+    "claim": "Nonblocking output and complete result draining are separate requirements."
+  },
+  {
+    "title": "SQLite WAL",
+    "url": "https://www.sqlite.org/wal.html",
+    "consulted": "2026-11-21",
+    "claim": "WAL concurrency and checkpoint/durability tradeoffs require explicit operational choices."
+  },
+  {
+    "title": "PostgreSQL parameters",
+    "url": "https://www.postgresql.org/docs/current/libpq-exec.html",
+    "consulted": "2026-11-21",
+    "claim": "Parameterized query APIs separate data from SQL command text."
+  },
+  {
+    "title": "D string import",
+    "url": "https://dlang.org/spec/expression.html#import_expressions",
+    "consulted": "2026-11-21",
+    "claim": "Templates can consume compile-time source resources."
+  },
+  {
+    "title": "PostgreSQL explicit locking",
+    "url": "https://www.postgresql.org/docs/current/explicit-locking.html",
+    "consulted": "2026-11-21",
+    "claim": "Database-scoped advisory locks coordinate independent migration processes."
+  },
+  {
+    "title": "hiredis",
+    "url": "https://github.com/redis/hiredis",
+    "consulted": "2026-11-21",
+    "claim": "hiredis provides async parsing and length-aware command APIs; its README is the upstream integration source."
+  },
+  {
+    "title": "librdkafka overview",
+    "url": "https://docs.confluent.io/kafka-clients/librdkafka/current/overview.html",
+    "consulted": "2026-11-21",
+    "claim": "Manual offset management and delivery callbacks are upstream-supported control points."
+  },
+  {
+    "title": "librdkafka configuration",
+    "url": "https://docs.confluent.io/platform/current/clients/librdkafka/html/md_CONFIGURATION.html",
+    "consulted": "2026-11-21",
+    "claim": "Producer idempotence and transaction settings are separate configuration decisions."
+  },
+  {
+    "title": "JetStream semantics",
+    "url": "https://github.com/nats-io/nats.docs/blob/master/using-nats/jetstream/model_deep_dive.md",
+    "consulted": "2026-11-21",
+    "claim": "Deduplication and acknowledged acks improve broker delivery guarantees without atomically covering external side effects."
+  },
+  {
+    "title": "AWS SigV4 authorization",
+    "url": "https://docs.aws.amazon.com/AmazonS3/latest/developerguide/sigv4-auth-using-authorization-header.html",
+    "consulted": "2026-11-21",
+    "claim": "Signing mode and payload checksum semantics are explicit protocol choices."
+  },
+  {
+    "title": "S3 multipart limits",
+    "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/qfacts.html",
+    "consulted": "2026-11-21",
+    "claim": "Multipart part size and count constraints are upstream-defined."
+  },
+  {
+    "title": "SigV4 streaming",
+    "url": "https://docs.aws.amazon.com/AmazonS3/latest/developerguide/sigv4-streaming.html",
+    "consulted": "2026-11-21",
+    "claim": "Chunk signatures are chained; ordinary chunked HTTP is not automatically SigV4 streaming."
+  },
+  {
+    "title": "SMTP",
+    "url": "https://www.rfc-editor.org/rfc/rfc5321.html",
+    "consulted": "2026-11-21",
+    "claim": "SMTP replies and final acceptance are protocol-level states."
+  },
+  {
+    "title": "SMTP TLS",
+    "url": "https://www.rfc-editor.org/rfc/rfc3207.html",
+    "consulted": "2026-11-21",
+    "claim": "STARTTLS changes protocol state and requires capability renegotiation."
+  },
+  {
+    "title": "OpenAI streaming",
+    "url": "https://developers.openai.com/api/docs/guides/streaming-responses",
+    "consulted": "2026-11-21",
+    "claim": "Responses uses typed semantic streaming events."
+  },
+  {
+    "title": "Anthropic streaming",
+    "url": "https://platform.claude.com/docs/en/build-with-claude/streaming",
+    "consulted": "2026-11-21",
+    "claim": "Content blocks, incremental tool JSON and cumulative usage require distinct handling."
+  },
+  {
+    "title": "Gemini REST streaming",
+    "url": "https://colab.research.google.com/github/google-gemini/gemini-api-cookbook/blob/main/quickstarts/rest/Streaming_REST.ipynb/",
+    "consulted": "2026-11-21",
+    "claim": "streamGenerateContent supports SSE with alt=sse."
+  },
+  {
+    "title": "OpenRouter streaming",
+    "url": "https://github.com/OpenRouterTeam/docs/blob/main/api_reference/streaming.mdx",
+    "consulted": "2026-11-21",
+    "claim": "Endpoint-specific terminal and usage events differ."
+  },
+  {
+    "title": "Modern transport",
+    "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/streamable-http",
+    "consulted": "2026-11-21",
+    "claim": "2026 revision removes GET/session transport behavior and defines request-scoped responses."
+  },
+  {
+    "title": "Modern versioning",
+    "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/versioning",
+    "consulted": "2026-11-21",
+    "claim": "Per-request metadata replaces initialization; dual-era compatibility is explicit."
+  },
+  {
+    "title": "Legacy transport",
+    "url": "https://modelcontextprotocol.io/specification/2025-11-25/basic/transports",
+    "consulted": "2026-11-21",
+    "claim": "Compatibility behavior must remain version-specific."
+  },
+  {
+    "title": "D templates",
+    "url": "https://dlang.org/spec/template.html",
+    "consulted": "2026-11-21",
+    "claim": "Template bodies need explicit instantiation for semantic verification."
+  },
+  {
+    "title": "Zstandard upstream",
+    "url": "https://github.com/facebook/zstd",
+    "consulted": "2026-11-21",
+    "claim": "Use the maintained C implementation and its documented streaming interfaces."
+  },
+  {
+    "title": "zlib manual",
+    "url": "https://zlib.net/manual.html",
+    "consulted": "2026-11-21",
+    "claim": "gzip framing and streaming state are handled by zlib."
+  },
+  {
+    "title": "Brotli upstream",
+    "url": "https://github.com/google/brotli",
+    "consulted": "2026-11-21",
+    "claim": "Brotli C encoder/decoder APIs are the native backend."
+  },
+  {
+    "title": "libarchive upstream",
+    "url": "https://github.com/libarchive/libarchive",
+    "consulted": "2026-11-21",
+    "claim": "Optional ZIP/tar support wraps the maintained C archive implementation."
+  },
+  {
+    "title": "SDL homepage",
+    "url": "https://www.libsdl.org/",
+    "consulted": "2026-11-21",
+    "claim": "SDL3 provides portable C window/input/render interfaces."
+  },
+  {
+    "title": "SDL license",
+    "url": "https://www.libsdl.org/license.php",
+    "consulted": "2026-11-21",
+    "claim": "SDL2 and newer use the zlib license."
+  },
+  {
+    "title": "WebKitGTK license",
+    "url": "https://webkitgtk.org/reference/webkit2gtk/unstable/",
+    "consulted": "2026-11-21",
+    "claim": "WebKitGTK includes BSD and LGPL-2.1 licensing; it is not wholly permissive."
+  },
+  {
+    "title": "Oha 1.16.0 protocol and flags",
+    "url": "https://github.com/hatoo/oha/blob/v1.16.0/README.md",
+    "consulted": "2026-11-21",
+    "claim": "Fixed-rate latency correction and output modes are documented by the pinned load generator."
+  },
+  {
+    "title": "Oha 1.16.0 result schema",
+    "url": "https://github.com/hatoo/oha/blob/v1.16.0/schema.json",
+    "consulted": "2026-11-21",
+    "claim": "The pinned JSON schema defines p50/p99/p99.9 latency fields and second-based units."
+  },
+  {
+    "title": "Linux process counters",
+    "url": "https://docs.kernel.org/filesystems/proc.html",
+    "consulted": "2026-11-21",
+    "claim": "Process CPU and RSS/high-water counters have explicit scope and units."
+  },
+  {
+    "title": "GitHub hosted runners",
+    "url": "https://docs.github.com/en/actions/reference/runners/github-hosted-runners",
+    "consulted": "2026-11-21",
+    "claim": "The hosted-runner table identifies Ubuntu ARM64 and macOS ARM64 labels."
+  },
+  {
+    "title": "GitHub ephemeral runners",
+    "url": "https://docs.github.com/en/actions/reference/runners/self-hosted-runners",
+    "consulted": "2026-11-21",
+    "claim": "Ephemeral runner registration limits jobs per runner; infrastructure must wipe the machine."
+  },
+  {
+    "title": "GitHub runner security",
+    "url": "https://docs.github.com/en/actions/reference/security/secure-use",
+    "consulted": "2026-11-21",
+    "claim": "Self-hosted execution is a trust boundary, not isolation guaranteed by a label."
+  },
+  {
+    "title": "GitHub required ruleset API",
+    "url": "https://docs.github.com/en/rest/repos/rules",
+    "consulted": "2026-11-21",
+    "claim": "Repository rulesets can require named status checks, current-base testing and code-owner review."
+  },
+  {
+    "title": "GitHub environment API",
+    "url": "https://docs.github.com/en/rest/deployments/environments",
+    "consulted": "2026-11-21",
+    "claim": "Environment protection supports required reviewers, prevention of self-review and protected-branch restrictions."
+  },
+  {
+    "title": "GitHub download-artifact release",
+    "url": "https://github.com/actions/download-artifact/releases/tag/v8.0.0",
+    "consulted": "2026-11-21",
+    "claim": "The selected immutable action revision enforces download digest mismatch failure by default."
+  },
+  {
+    "title": "WinFlexBison release",
+    "url": "https://github.com/lexxmark/winflexbison/releases/tag/v2.5.25",
+    "consulted": "2026-11-21",
+    "claim": "The selected host build utility release contains Bison 3.8.2 and Flex 2.6.4."
+  },
+  {
+    "title": "Meson package",
+    "url": "https://pypi.org/project/meson/1.12.1/",
+    "consulted": "2026-11-21",
+    "claim": "The selected Windows Meson build utility release is 1.12.1."
+  },
+  {
+    "title": "ELF program headers",
+    "url": "https://gabi.xinuos.com/elf/07-pheader.html",
+    "consulted": "2026-11-21",
+    "claim": "ELF program headers identify loadable segments and an optional interpreter."
+  },
+  {
+    "title": "ELF dynamic linking",
+    "url": "https://gabi.xinuos.com/elf/08-dynamic.html",
+    "consulted": "2026-11-21",
+    "claim": "PT_INTERP and active DT_NEEDED entries express dynamic loader/shared-library requirements."
+  },
+  {
+    "title": "GNU readelf",
+    "url": "https://sourceware.org/binutils/docs/binutils/readelf.html",
+    "consulted": "2026-11-21",
+    "claim": "The program/header/dynamic options inspect exact linked ELF artifacts."
+  }
+]

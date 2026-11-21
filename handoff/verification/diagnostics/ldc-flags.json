@@ -1,0 +1,82 @@
+{
+  "sanitizer_undefined": {
+    "command": [
+      "-c",
+      "/workspace/scratch/09fd6c26fd15/toolchains/probes/flags.d",
+      "-of=/workspace/scratch/09fd6c26fd15/toolchains/probes/sanitizer_undefined.o",
+      "-fsanitize=address,undefined"
+    ],
+    "exit_code": 1,
+    "stdout": "",
+    "stderr": "Error: Unrecognized -fsanitize value 'undefined'.\n"
+  },
+  "sanitizer_address": {
+    "command": [
+      "-c",
+      "/workspace/scratch/09fd6c26fd15/toolchains/probes/flags.d",
+      "-of=/workspace/scratch/09fd6c26fd15/toolchains/probes/sanitizer_address.o",
+      "-fsanitize=address"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "dip1000": {
+    "command": [
+      "-c",
+      "/workspace/scratch/09fd6c26fd15/toolchains/probes/flags.d",
+      "-of=/workspace/scratch/09fd6c26fd15/toolchains/probes/dip1000.o",
+      "-preview=dip1000"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "release_o3": {
+    "command": [
+      "-c",
+      "/workspace/scratch/09fd6c26fd15/toolchains/probes/flags.d",
+      "-of=/workspace/scratch/09fd6c26fd15/toolchains/probes/release_o3.o",
+      "-O3",
+      "--flto=thin"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "release_oz": {
+    "command": [
+      "-c",
+      "/workspace/scratch/09fd6c26fd15/toolchains/probes/flags.d",
+      "-of=/workspace/scratch/09fd6c26fd15/toolchains/probes/release_oz.o",
+      "-Oz"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "wasm": {
+    "command": [
+      "-c",
+      "/workspace/scratch/09fd6c26fd15/toolchains/probes/flags.d",
+      "-of=/workspace/scratch/09fd6c26fd15/toolchains/probes/wasm.o",
+      "-betterC",
+      "-mtriple=wasm32-unknown-unknown-wasm"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "trace": {
+    "command": [
+      "-c",
+      "/workspace/scratch/09fd6c26fd15/toolchains/probes/flags.d",
+      "-of=/workspace/scratch/09fd6c26fd15/toolchains/probes/trace.o",
+      "-ftime-trace",
+      "-vtemplates=list-instances"
+    ],
+    "exit_code": 1,
+    "stdout": "",
+    "stderr": "Error: Error writing -ftime-trace profile: could not open ''\n"
+  }
+}

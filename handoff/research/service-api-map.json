@@ -1,0 +1,20 @@
+{
+  "web": "contracts/source/flint/web.d",
+  "http": "contracts/source/flint/http.d",
+  "security": "contracts/source/flint/security.d",
+  "actuator": "contracts/source/flint/actuator.d",
+  "schedule": "contracts/source/flint/schedule.d",
+  "rpc": "contracts/source/flint/rpc.d",
+  "sql": "contracts/source/flint/sql.d",
+  "data": "contracts/source/flint/data.d",
+  "migrate": "contracts/source/flint/migrate.d",
+  "cache": "contracts/source/flint/cache.d",
+  "mq": "contracts/source/flint/mq.d",
+  "storage": "contracts/source/flint/storage.d",
+  "mail": "contracts/source/flint/mail.d",
+  "ai": "contracts/source/flint/ai.d",
+  "mcp": "contracts/source/flint/mcp.d",
+  "templates": "contracts/source/flint/templates.d",
+  "codec": "contracts/source/flint/codec.d",
+  "desktop": "contracts/source/flint/desktop.d"
+}

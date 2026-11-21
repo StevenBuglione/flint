@@ -1,0 +1,8 @@
+name "probe-log"
+targetType "executable"
+sourcePaths "source"
+importPaths "source"
+targetPath "build"
+targetName "probe-log"
+dflags "-preview=dip1000"
+dependency "flint:log" path="../../.."

@@ -1,0 +1,2 @@
+SQLite is dedicated to the public domain by its authors. Primary declaration: https://www.sqlite.org/copyright.html
+Pinned source contains its own dedication. The amalgamation SHA3 is verified against the official 3.54.1 release page.

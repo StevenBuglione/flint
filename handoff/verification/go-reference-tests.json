@@ -1,0 +1,33 @@
+[
+  {
+    "command": [
+      "/workspace/scratch/09fd6c26fd15/toolchains/go/bin/go",
+      "mod",
+      "tidy"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/workspace/scratch/09fd6c26fd15/toolchains/go/bin/gofmt",
+      "-w",
+      "main.go",
+      "main_test.go"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/workspace/scratch/09fd6c26fd15/toolchains/go/bin/go",
+      "test",
+      "./..."
+    ],
+    "exit_code": 0,
+    "stdout": "ok  \tflint.example/reference-go-rest\t0.005s\n",
+    "stderr": ""
+  }
+]

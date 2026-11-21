@@ -1,0 +1,7 @@
+name "probe-arena-baseline"
+targetType "executable"
+sourcePaths "source"
+importPaths "source"
+targetPath "build"
+targetName "probe-arena-baseline"
+dflags "-preview=dip1000"

@@ -1,0 +1,38 @@
+[
+  {
+    "template": "golden-cli",
+    "compiler": "dmd",
+    "exit_code": 1,
+    "stderr": "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/cli.d(4): Error: variable name expected after type `string`, not `version`\nstruct Command { string name; string description; string version = \"0.1.0\"; }\n                                                         ^\n/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/cli.d(4):        `version` is a keyword, perhaps append `_` to make it an identifier\nstruct Command { string name; string description; string version = \"0.1.0\"; }\n                                                         ^\n/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/cli.d(4): Error: declaration expected, not `=`\nstruct Command { string name; string description; string version = \"0.1.0\"; }\n                                                                 ^\n"
+  },
+  {
+    "template": "golden-cli",
+    "compiler": "ldc2",
+    "exit_code": 1,
+    "stderr": "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/cli.d(4): Error: variable name expected after type `string`, not `version`\nstruct Command { string name; string description; string version = \"0.1.0\"; }\n                                                         ^\n/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/cli.d(4):        `version` is a keyword, perhaps append `_` to make it an identifier\nstruct Command { string name; string description; string version = \"0.1.0\"; }\n                                                         ^\n/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/cli.d(4): Error: declaration expected, not `=`\nstruct Command { string name; string description; string version = \"0.1.0\"; }\n                                                                 ^\n"
+  },
+  {
+    "template": "golden-tui",
+    "compiler": "dmd",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "template": "golden-tui",
+    "compiler": "ldc2",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "template": "golden-rest-service",
+    "compiler": "dmd",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "template": "golden-rest-service",
+    "compiler": "ldc2",
+    "exit_code": 0,
+    "stderr": ""
+  }
+]

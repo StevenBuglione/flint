@@ -1,0 +1,13 @@
+{
+  "command": [
+    "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+    "-c",
+    "-ftime-trace",
+    "-ftime-trace-file=/workspace/scratch/09fd6c26fd15/toolchains/probes/trace.json",
+    "-of=/workspace/scratch/09fd6c26fd15/toolchains/probes/trace.o",
+    "/workspace/scratch/09fd6c26fd15/toolchains/probes/flags.d"
+  ],
+  "exit_code": 0,
+  "stdout": "",
+  "stderr": ""
+}

@@ -1,0 +1,168 @@
+{
+  "dmd": {
+    "command": [
+      "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+      "-c",
+      "-o-",
+      "-preview=dip1000",
+      "-Icontracts/source",
+      "contracts/source/flint/web.d",
+      "contracts/source/flint/http.d",
+      "contracts/source/flint/security.d",
+      "contracts/source/flint/actuator.d",
+      "contracts/source/flint/schedule.d",
+      "contracts/source/flint/rpc.d",
+      "contracts/source/flint/sql.d",
+      "contracts/source/flint/data.d",
+      "contracts/source/flint/migrate.d",
+      "contracts/source/flint/cache.d",
+      "contracts/source/flint/mq.d",
+      "contracts/source/flint/storage.d",
+      "contracts/source/flint/mail.d",
+      "contracts/source/flint/ai.d",
+      "contracts/source/flint/mcp.d",
+      "contracts/source/flint/templates.d",
+      "contracts/source/flint/codec.d",
+      "contracts/source/flint/desktop.d"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "source_sha256": {
+      "contracts/source/flint/web.d": "3fd6a7d3f4420341ec4cda6a1c74a485cef9bb988835de11a5449a169dba78c3",
+      "contracts/source/flint/http.d": "c5d1d4bfe853a624791e495f79dbb37cc1f877ae79d38b6dac9156910d2da7f9",
+      "contracts/source/flint/security.d": "54d4bf0cc46c7e5a37302d0bf0bee44f0d826a6b4a8dad78a61db68b1eac8c3f",
+      "contracts/source/flint/actuator.d": "48fb6f74f61805621fdcc71d131b181fd94cb81354ca6ba9be6165cd81437399",
+      "contracts/source/flint/schedule.d": "ed87ab2e12d29254f260900cdce8163feb4a733c51daab9321cd0a48254805ca",
+      "contracts/source/flint/rpc.d": "29f33f9da63c7016581020b70c191cd76bea2be94c6dc7c25a7e607144deb496",
+      "contracts/source/flint/sql.d": "65d15c50f5ab151c483c4d29c942812afba8f180a6664ecd4eda697b10f2d52d",
+      "contracts/source/flint/data.d": "0d573dc17bd550d1a832b01cba3f0df69ebcadc6d3985c067be7760b9a0dab69",
+      "contracts/source/flint/migrate.d": "e50e944801e189178d41dedb3df534dcf9383b789660e745f7b65ef4026eb4e0",
+      "contracts/source/flint/cache.d": "3aad8a90e9f932f06a903e2146b80e2d5396830584555c7132345967b46313cb",
+      "contracts/source/flint/mq.d": "d1215322376587ca3e17d90332f38c45a41fb900961662d471d5cc3b9366e16e",
+      "contracts/source/flint/storage.d": "98f081a33284beb6f71d84ef30d9fe8c1bfaea2addcc78144b5cde67bf8b1e62",
+      "contracts/source/flint/mail.d": "4f4d3a941056b73fecdf966c621eb915a592f6c17beea373bc34fd9593d1f583",
+      "contracts/source/flint/ai.d": "a21effc939f50affa30a21a0faddf7a3047a6e8b54e0b32bbf2cf4dea9c735d1",
+      "contracts/source/flint/mcp.d": "e49ff9070d7884182ef2e95595b1db7e708dd54cbca470dcf135c38f3f50a8ba",
+      "contracts/source/flint/templates.d": "d9b32455a2441a550d5a3f54dc57a073d0eb57e31cfcab77f8700770e2bc6d94",
+      "contracts/source/flint/codec.d": "1f51529cdd9b007e7caae2d977c004e1d9865aff5cbe19f95567d324f762832e",
+      "contracts/source/flint/desktop.d": "c31857194e6b0b2bb287f1e6b31ca0ce3ae440bb6bc5cefca45ffe32958a2b44"
+    }
+  },
+  "ldc": {
+    "command": [
+      "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+      "-c",
+      "-o-",
+      "-preview=dip1000",
+      "-Icontracts/source",
+      "contracts/source/flint/web.d",
+      "contracts/source/flint/http.d",
+      "contracts/source/flint/security.d",
+      "contracts/source/flint/actuator.d",
+      "contracts/source/flint/schedule.d",
+      "contracts/source/flint/rpc.d",
+      "contracts/source/flint/sql.d",
+      "contracts/source/flint/data.d",
+      "contracts/source/flint/migrate.d",
+      "contracts/source/flint/cache.d",
+      "contracts/source/flint/mq.d",
+      "contracts/source/flint/storage.d",
+      "contracts/source/flint/mail.d",
+      "contracts/source/flint/ai.d",
+      "contracts/source/flint/mcp.d",
+      "contracts/source/flint/templates.d",
+      "contracts/source/flint/codec.d",
+      "contracts/source/flint/desktop.d"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "source_sha256": {
+      "contracts/source/flint/web.d": "3fd6a7d3f4420341ec4cda6a1c74a485cef9bb988835de11a5449a169dba78c3",
+      "contracts/source/flint/http.d": "c5d1d4bfe853a624791e495f79dbb37cc1f877ae79d38b6dac9156910d2da7f9",
+      "contracts/source/flint/security.d": "54d4bf0cc46c7e5a37302d0bf0bee44f0d826a6b4a8dad78a61db68b1eac8c3f",
+      "contracts/source/flint/actuator.d": "48fb6f74f61805621fdcc71d131b181fd94cb81354ca6ba9be6165cd81437399",
+      "contracts/source/flint/schedule.d": "ed87ab2e12d29254f260900cdce8163feb4a733c51daab9321cd0a48254805ca",
+      "contracts/source/flint/rpc.d": "29f33f9da63c7016581020b70c191cd76bea2be94c6dc7c25a7e607144deb496",
+      "contracts/source/flint/sql.d": "65d15c50f5ab151c483c4d29c942812afba8f180a6664ecd4eda697b10f2d52d",
+      "contracts/source/flint/data.d": "0d573dc17bd550d1a832b01cba3f0df69ebcadc6d3985c067be7760b9a0dab69",
+      "contracts/source/flint/migrate.d": "e50e944801e189178d41dedb3df534dcf9383b789660e745f7b65ef4026eb4e0",
+      "contracts/source/flint/cache.d": "3aad8a90e9f932f06a903e2146b80e2d5396830584555c7132345967b46313cb",
+      "contracts/source/flint/mq.d": "d1215322376587ca3e17d90332f38c45a41fb900961662d471d5cc3b9366e16e",
+      "contracts/source/flint/storage.d": "98f081a33284beb6f71d84ef30d9fe8c1bfaea2addcc78144b5cde67bf8b1e62",
+      "contracts/source/flint/mail.d": "4f4d3a941056b73fecdf966c621eb915a592f6c17beea373bc34fd9593d1f583",
+      "contracts/source/flint/ai.d": "a21effc939f50affa30a21a0faddf7a3047a6e8b54e0b32bbf2cf4dea9c735d1",
+      "contracts/source/flint/mcp.d": "e49ff9070d7884182ef2e95595b1db7e708dd54cbca470dcf135c38f3f50a8ba",
+      "contracts/source/flint/templates.d": "d9b32455a2441a550d5a3f54dc57a073d0eb57e31cfcab77f8700770e2bc6d94",
+      "contracts/source/flint/codec.d": "1f51529cdd9b007e7caae2d977c004e1d9865aff5cbe19f95567d324f762832e",
+      "contracts/source/flint/desktop.d": "c31857194e6b0b2bb287f1e6b31ca0ce3ae440bb6bc5cefca45ffe32958a2b44"
+    }
+  },
+  "dmd_rest_sample": {
+    "command": [
+      "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+      "-c",
+      "-o-",
+      "-preview=dip1000",
+      "-Icontracts/source",
+      "research/golden-rest-service-sample.d"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "source_sha256": {
+      "research/golden-rest-service-sample.d": "b3b667547b2d14d345871fb8aa666b959d2ec1cf841e839822d723671efa596f"
+    }
+  },
+  "ldc_rest_sample": {
+    "command": [
+      "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+      "-c",
+      "-o-",
+      "-preview=dip1000",
+      "-Icontracts/source",
+      "research/golden-rest-service-sample.d"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "source_sha256": {
+      "research/golden-rest-service-sample.d": "b3b667547b2d14d345871fb8aa666b959d2ec1cf841e839822d723671efa596f"
+    }
+  },
+  "dmd_generated_migrations": {
+    "command": [
+      "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+      "-c",
+      "-o-",
+      "-preview=dip1000",
+      "-Icontracts/source",
+      "-Jscaffold/tests/fixtures/migrations",
+      "verification/generated_migrations.d"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "source_sha256": {
+      "verification/generated_migrations.d": "7a90850125b992acdaa39b5219d6f71349a50627ff2a8b09f68448473815a8b5"
+    }
+  },
+  "ldc_generated_migrations": {
+    "command": [
+      "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+      "-c",
+      "-o-",
+      "-preview=dip1000",
+      "-Icontracts/source",
+      "-Jscaffold/tests/fixtures/migrations",
+      "verification/generated_migrations.d"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "source_sha256": {
+      "verification/generated_migrations.d": "7a90850125b992acdaa39b5219d6f71349a50627ff2a8b09f68448473815a8b5"
+    }
+  }
+}

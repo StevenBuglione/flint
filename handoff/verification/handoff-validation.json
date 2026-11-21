@@ -1,0 +1,1079 @@
+{
+  "schema": 1,
+  "checked_at_utc": "2026-11-21T07:36:18.709099+00:00",
+  "scope": "handoff integrity, API typechecking and explicitly identified standalone probes",
+  "not_claimed": [
+    "37 package runtime implementations",
+    "production performance or size targets",
+    "native cross-platform runtime support",
+    "FFI behavior without built libraries"
+  ],
+  "checks": [
+    {
+      "name": "required structure",
+      "status": "pass",
+      "detail": {
+        "packages": 37,
+        "adrs": 15
+      }
+    },
+    {
+      "name": "JSON syntax and duplicate keys",
+      "status": "pass",
+      "detail": {
+        "files": 62
+      }
+    },
+    {
+      "name": "YAML syntax, duplicate keys and workflow shape",
+      "status": "pass",
+      "detail": {
+        "files": 2
+      }
+    },
+    {
+      "name": "SDL canonical syntax",
+      "status": "pass",
+      "detail": {
+        "files": 119,
+        "scope": "canonical SDL syntax; actual DUB check is separate"
+      }
+    },
+    {
+      "name": "internal Markdown links",
+      "status": "pass",
+      "detail": {
+        "markdown_files": 161
+      }
+    },
+    {
+      "name": "Python syntax",
+      "status": "pass",
+      "detail": {
+        "files": 32
+      }
+    },
+    {
+      "name": "dependency and structural guardrails",
+      "status": "pass",
+      "detail": {
+        "command": [
+          "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+          "tools/gates.py",
+          "--gate",
+          "structural"
+        ],
+        "returncode": 0,
+        "stdout": "{\n  \"packages\": 37,\n  \"graph_nodes\": 37,\n  \"generated_dependencies\": {\n    \"packages\": 0\n  }\n}\n",
+        "stderr": ""
+      }
+    },
+    {
+      "name": "validator negative fixtures",
+      "status": "pass",
+      "detail": {
+        "command": [
+          "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+          "tools/test_verify_handoff.py"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": "...........\n----------------------------------------------------------------------\nRan 11 tests in 0.020s\n\nOK\n"
+      }
+    },
+    {
+      "name": "scaffold tooling unit tests",
+      "status": "pass",
+      "detail": {
+        "command": [
+          "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "tests",
+          "-p",
+          "test_*.py"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": "....................................\n----------------------------------------------------------------------\nRan 36 tests in 0.090s\n\nOK\n"
+      }
+    },
+    {
+      "name": "golden, benchmark and BetterC source quality",
+      "status": "pass",
+      "detail": {
+        "command": [
+          "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+          "tools/quality.py",
+          "--dfmt",
+          "/home/agent/.dub/packages/dfmt/0.15.2/dfmt/bin/dfmt",
+          "--dscanner",
+          "/home/agent/.dub/packages/dscanner/0.15.2/dscanner/bin/dscanner",
+          "--path",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/templates",
+          "--path",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/benchmarks",
+          "--path",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/packages"
+        ],
+        "returncode": 0,
+        "stdout": "{\"files\": 14, \"issues\": 0, \"formatter\": \"dfmt0.15.2 stdout byte comparison\"}\n",
+        "stderr": ""
+      }
+    },
+    {
+      "name": "guardrail negative fixtures",
+      "status": "pass",
+      "detail": {
+        "command": [
+          "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+          "tools/test_guards.py"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": "..................\n----------------------------------------------------------------------\nRan 18 tests in 17.230s\n\nOK\n"
+      }
+    },
+    {
+      "name": "measurement and evidence adversarial tests",
+      "status": "pass",
+      "detail": {
+        "command": [
+          "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+          "tools/test_evidence.py"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": "....................................\n----------------------------------------------------------------------\nRan 36 tests in 1.249s\n\nOK\n"
+      }
+    },
+    {
+      "name": "dmd version",
+      "status": "pass",
+      "detail": {
+        "command": [
+          "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+          "--version"
+        ],
+        "returncode": 0,
+        "stdout": "DMD64 D Compiler v2.114.0\nCopyright (C) 1999-2026 by The D Language Foundation, All Rights Reserved written by Walter Bright\n",
+        "stderr": ""
+      }
+    },
+    {
+      "name": "dmd all contract declarations",
+      "status": "pass",
+      "detail": {
+        "command": [
+          "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+          "-preview=dip1000",
+          "-o-",
+          "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/actuator.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/ai.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/arena.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/cache.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/cli.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/codec.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/conc.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/config.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/data.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/desktop.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/di.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/http.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/log.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/mail.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/mcp.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/migrate.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/mq.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/os.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/prompt.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/reactor.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/rpc.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/schedule.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/security.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/serde/owned.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/serde/package.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/serde/yaml.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/sql.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/storage.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/style.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/templates.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/term.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/test.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/tui.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/ui_signals.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/validate.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/wasi.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/wasm_bridge.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/web.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/widgets.d"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": ""
+      }
+    },
+    {
+      "name": "dmd core-betterc.d",
+      "status": "pass",
+      "detail": {
+        "command": [
+          "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+          "-preview=dip1000",
+          "-o-",
+          "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+          "-betterC",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/core-betterc.d"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": "",
+        "source_sha256": "d5b90e33271a641f234a23e92bba3c4c3a7c837fc3402dfabb66bf395b24b788",
+        "scope": "compile-only API/misuse check"
+      }
+    },
+    {
+      "name": "dmd core-negative-borrow.d",
+      "status": "pass",
+      "detail": {
+        "command": [
+          "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+          "-preview=dip1000",
+          "-o-",
+          "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/core-negative-borrow.d"
+        ],
+        "returncode": 1,
+        "stdout": "",
+        "stderr": "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/core-negative-borrow.d(5): Error: assigning scope variable `bytes` to global variable `leaked` is not allowed in a `@safe` function\n arena.read(b, (scope const(ubyte)[] bytes) @safe nothrow @nogc { leaked=bytes; });\n                                                                        ^\n",
+        "source_sha256": "abb29a26a5201c519462348ca26cb6b98d334b096956127dfb643767f1f285ac",
+        "scope": "compile-only API/misuse check"
+      }
+    },
+    {
+      "name": "dmd core-negative-forge.d",
+      "status": "pass",
+      "detail": {
+        "command": [
+          "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+          "-preview=dip1000",
+          "-o-",
+          "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/core-negative-forge.d"
+        ],
+        "returncode": 1,
+        "stdout": "",
+        "stderr": "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/core-negative-forge.d(3): Error: constructor `flint.arena.Buffer.this` of type `nothrow @nogc ref @safe Buffer(ulong owner, ulong epoch, ulong start, ulong count)` is not accessible from module `negative_forge`\nBuffer fabricate() @safe nothrow @nogc { return Buffer(1,1,0,10); }\n                                                      ^\n",
+        "source_sha256": "86eb5e820f231efab300f2d299b0dbc75fa31ca91ae196222970e7ce6c33e25c",
+        "scope": "compile-only API/misuse check"
+      }
+    },
+    {
+      "name": "dmd core-negative-storage.d",
+      "status": "pass",
+      "detail": {
+        "command": [
+          "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+          "-preview=dip1000",
+          "-o-",
+          "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/core-negative-storage.d"
+        ],
+        "returncode": 1,
+        "stdout": "",
+        "stderr": "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/core-negative-storage.d(5): Error: escaping a reference to local variable `backing` by returning `RequestArena(null, 0LU, 0u, 0LU, 0LU).this(backing[])`  is not allowed in a `@safe` function\n return RequestArena(backing[]);\n                    ^\n",
+        "source_sha256": "0eab6702247c2682ca1f205516f06640bb9e6a432434adcfdbd94682aef0a5bd",
+        "scope": "compile-only API/misuse check"
+      }
+    },
+    {
+      "name": "dmd core-positive.d",
+      "status": "pass",
+      "detail": {
+        "command": [
+          "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+          "-preview=dip1000",
+          "-o-",
+          "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/core-positive.d"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": "",
+        "source_sha256": "66c6fe79a3cf3d9505a223d688006060418bc54562b652a5d28504b32da04467",
+        "scope": "compile-only API/misuse check"
+      }
+    },
+    {
+      "name": "dmd toolchain_flags.d",
+      "status": "pass",
+      "detail": {
+        "command": [
+          "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+          "-preview=dip1000",
+          "-o-",
+          "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/toolchain_flags.d"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": "",
+        "source_sha256": "892fd8c13bdd069fb1a5a0d6257e257806bdf03b5fe9284d3aa5e883a6f8adaa",
+        "scope": "compile-only API/misuse check"
+      }
+    },
+    {
+      "name": "dmd golden-cli",
+      "status": "pass",
+      "detail": {
+        "command": [
+          "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+          "-preview=dip1000",
+          "-o-",
+          "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+          "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/templates/golden-cli/source",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/templates/golden-cli/source/app.d"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": "",
+        "scope": "golden API typecheck; runtime linking waits for implemented packages"
+      }
+    },
+    {
+      "name": "dmd golden-tui",
+      "status": "pass",
+      "detail": {
+        "command": [
+          "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+          "-preview=dip1000",
+          "-o-",
+          "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+          "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/templates/golden-tui/source",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/templates/golden-tui/source/app.d"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": "",
+        "scope": "golden API typecheck; runtime linking waits for implemented packages"
+      }
+    },
+    {
+      "name": "dmd golden-rest-service",
+      "status": "pass",
+      "detail": {
+        "command": [
+          "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+          "-preview=dip1000",
+          "-o-",
+          "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+          "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/templates/golden-rest-service/source",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/templates/golden-rest-service/source/app.d"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": "",
+        "scope": "golden API typecheck; runtime linking waits for implemented packages"
+      }
+    },
+    {
+      "name": "dmd golden-wasm-app",
+      "status": "pass",
+      "detail": {
+        "command": [
+          "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+          "-preview=dip1000",
+          "-o-",
+          "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+          "-betterC",
+          "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/templates/golden-wasm-app/source",
+          "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/templates/golden-wasm-app/source/flint_demo/sys",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/templates/golden-wasm-app/source/app.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/templates/golden-wasm-app/source/flint_demo/sys/exports.d"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": "",
+        "scope": "golden API typecheck; runtime linking waits for implemented packages"
+      }
+    },
+    {
+      "name": "dmd five BetterC behavior fixture contracts",
+      "status": "pass",
+      "detail": [
+        {
+          "command": [
+            "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+            "-preview=dip1000",
+            "-o-",
+            "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+            "-betterC",
+            "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/packages/arena/tests/betterc.d"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "",
+          "source_sha256": "a8024136894197499b918a5fec9b78aebe9ae03c5263ddc7b1958ee4e3092c06",
+          "scope": "fixture semantic check only; runtime assertions need actual package bodies"
+        },
+        {
+          "command": [
+            "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+            "-preview=dip1000",
+            "-o-",
+            "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+            "-betterC",
+            "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/packages/serde/tests/betterc.d"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "",
+          "source_sha256": "d0c5724d87bb5c46253214dacb7221477f67da81f32707cceb2d66ec800d9f29",
+          "scope": "fixture semantic check only; runtime assertions need actual package bodies"
+        },
+        {
+          "command": [
+            "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+            "-preview=dip1000",
+            "-o-",
+            "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+            "-betterC",
+            "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/packages/ui-signals/tests/betterc.d"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "",
+          "source_sha256": "f3ce89c44e4afc286996ee2a69590460f94e0e9fb849502d41e6a01066474ca6",
+          "scope": "fixture semantic check only; runtime assertions need actual package bodies"
+        },
+        {
+          "command": [
+            "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+            "-preview=dip1000",
+            "-o-",
+            "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+            "-betterC",
+            "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/packages/validate/tests/betterc.d"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "",
+          "source_sha256": "471a08d37ac8eb890a35fb94887aebef7d25c7b57abb7c586945ef5e741b2fae",
+          "scope": "fixture semantic check only; runtime assertions need actual package bodies"
+        },
+        {
+          "command": [
+            "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+            "-preview=dip1000",
+            "-o-",
+            "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+            "-betterC",
+            "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/packages/wasm-bridge/tests/betterc.d"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "",
+          "source_sha256": "e4a4289ef82be41cdf89695dfb7dcbfcaa590eb46e4c1e85d28cabb7f65956dd",
+          "scope": "fixture semantic check only; runtime assertions need actual package bodies"
+        }
+      ]
+    },
+    {
+      "name": "dmd bench-cli application contract",
+      "status": "pass",
+      "detail": {
+        "command": [
+          "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+          "-preview=dip1000",
+          "-o-",
+          "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/benchmarks/bench-cli/source/app.d"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": ""
+      }
+    },
+    {
+      "name": "dmd bench-rest application contract",
+      "status": "pass",
+      "detail": {
+        "command": [
+          "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+          "-preview=dip1000",
+          "-o-",
+          "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/benchmarks/bench-rest/source/app.d"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": ""
+      }
+    },
+    {
+      "name": "dmd standalone Markdown D modules",
+      "status": "pass",
+      "detail": {
+        "complete_modules": 41,
+        "scope": "standalone D blocks only; context fragments are not represented as runtime tests"
+      }
+    },
+    {
+      "name": "ldc2 version",
+      "status": "pass",
+      "detail": {
+        "command": [
+          "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+          "--version"
+        ],
+        "returncode": 0,
+        "stdout": "LDC - the LLVM D compiler (1.43.0):\n  based on DMD v2.113.0 and LLVM 22.1.8\n  built with LDC - the LLVM D compiler (1.43.0)\n  Default target: x86_64-unknown-linux-gnu\n  Host CPU: emeraldrapids\n  https://dlang.org - https://wiki.dlang.org/LDC\n\n\n  Registered Targets:\n    aarch64     - AArch64 (little endian)\n    aarch64_32  - AArch64 (little endian ILP32)\n    aarch64_be  - AArch64 (big endian)\n    amdgcn      - AMD GCN GPUs\n    arm         - ARM\n    arm64       - ARM64 (little endian)\n    arm64_32    - ARM64 (little endian ILP32)\n    armeb       - ARM (big endian)\n    avr         - Atmel AVR Microcontroller\n    bpf         - BPF (host endian)\n    bpfeb       - BPF (big endian)\n    bpfel       - BPF (little endian)\n    hexagon     - Hexagon\n    lanai       - Lanai\n    loongarch32 - 32-bit LoongArch\n    loongarch64 - 64-bit LoongArch\n    mips        - MIPS (32-bit big endian)\n    mips64      - MIPS (64-bit big endian)\n    mips64el    - MIPS (64-bit little endian)\n    mipsel      - MIPS (32-bit little endian)\n    msp430      - MSP430 [experimental]\n    nvptx       - NVIDIA PTX 32-bit\n    nvptx64     - NVIDIA PTX 64-bit\n    ppc32       - PowerPC 32\n    ppc32le     - PowerPC 32 LE\n    ppc64       - PowerPC 64\n    ppc64le     - PowerPC 64 LE\n    r600        - AMD GPUs HD2XXX-HD6XXX\n    riscv32     - 32-bit RISC-V\n    riscv32be   - 32-bit big endian RISC-V\n    riscv64     - 64-bit RISC-V\n    riscv64be   - 64-bit big endian RISC-V\n    sparc       - Sparc\n    sparcel     - Sparc LE\n    sparcv9     - Sparc V9\n    spirv       - SPIR-V Logical\n    spirv32     - SPIR-V 32-bit\n    spirv64     - SPIR-V 64-bit\n    systemz     - SystemZ\n    thumb       - Thumb\n    thumbeb     - Thumb (big endian)\n    ve          - VE\n    wasm32      - WebAssembly 32-bit\n    wasm64      - WebAssembly 64-bit\n    x86         - 32-bit X86: Pentium-Pro and above\n    x86-64      - 64-bit X86: EM64T and AMD64\n    xcore       - XCore\n    xtensa      - Xtensa 32\n",
+        "stderr": ""
+      }
+    },
+    {
+      "name": "ldc2 all contract declarations",
+      "status": "pass",
+      "detail": {
+        "command": [
+          "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+          "-preview=dip1000",
+          "-o-",
+          "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/actuator.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/ai.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/arena.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/cache.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/cli.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/codec.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/conc.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/config.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/data.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/desktop.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/di.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/http.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/log.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/mail.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/mcp.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/migrate.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/mq.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/os.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/prompt.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/reactor.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/rpc.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/schedule.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/security.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/serde/owned.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/serde/package.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/serde/yaml.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/sql.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/storage.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/style.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/templates.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/term.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/test.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/tui.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/ui_signals.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/validate.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/wasi.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/wasm_bridge.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/web.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source/flint/widgets.d"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": ""
+      }
+    },
+    {
+      "name": "ldc2 core-betterc.d",
+      "status": "pass",
+      "detail": {
+        "command": [
+          "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+          "-preview=dip1000",
+          "-o-",
+          "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+          "-betterC",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/core-betterc.d"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": "",
+        "source_sha256": "d5b90e33271a641f234a23e92bba3c4c3a7c837fc3402dfabb66bf395b24b788",
+        "scope": "compile-only API/misuse check"
+      }
+    },
+    {
+      "name": "ldc2 core-negative-borrow.d",
+      "status": "pass",
+      "detail": {
+        "command": [
+          "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+          "-preview=dip1000",
+          "-o-",
+          "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/core-negative-borrow.d"
+        ],
+        "returncode": 1,
+        "stdout": "",
+        "stderr": "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/core-negative-borrow.d(5): Error: assigning scope variable `bytes` to global variable `leaked` is not allowed in a `@safe` function\n arena.read(b, (scope const(ubyte)[] bytes) @safe nothrow @nogc { leaked=bytes; });\n                                                                        ^\n",
+        "source_sha256": "abb29a26a5201c519462348ca26cb6b98d334b096956127dfb643767f1f285ac",
+        "scope": "compile-only API/misuse check"
+      }
+    },
+    {
+      "name": "ldc2 core-negative-forge.d",
+      "status": "pass",
+      "detail": {
+        "command": [
+          "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+          "-preview=dip1000",
+          "-o-",
+          "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/core-negative-forge.d"
+        ],
+        "returncode": 1,
+        "stdout": "",
+        "stderr": "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/core-negative-forge.d(3): Error: constructor `flint.arena.Buffer.this` of type `nothrow @nogc ref @safe Buffer(ulong owner, ulong epoch, ulong start, ulong count)` is not accessible from module `negative_forge`\nBuffer fabricate() @safe nothrow @nogc { return Buffer(1,1,0,10); }\n                                                      ^\n",
+        "source_sha256": "86eb5e820f231efab300f2d299b0dbc75fa31ca91ae196222970e7ce6c33e25c",
+        "scope": "compile-only API/misuse check"
+      }
+    },
+    {
+      "name": "ldc2 core-negative-storage.d",
+      "status": "pass",
+      "detail": {
+        "command": [
+          "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+          "-preview=dip1000",
+          "-o-",
+          "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/core-negative-storage.d"
+        ],
+        "returncode": 1,
+        "stdout": "",
+        "stderr": "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/core-negative-storage.d(5): Error: escaping a reference to local variable `backing` by returning `RequestArena(null, 0LU, 0u, 0LU, 0LU).this(backing[])`  is not allowed in a `@safe` function\n return RequestArena(backing[]);\n                    ^\n",
+        "source_sha256": "0eab6702247c2682ca1f205516f06640bb9e6a432434adcfdbd94682aef0a5bd",
+        "scope": "compile-only API/misuse check"
+      }
+    },
+    {
+      "name": "ldc2 core-positive.d",
+      "status": "pass",
+      "detail": {
+        "command": [
+          "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+          "-preview=dip1000",
+          "-o-",
+          "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/core-positive.d"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": "",
+        "source_sha256": "66c6fe79a3cf3d9505a223d688006060418bc54562b652a5d28504b32da04467",
+        "scope": "compile-only API/misuse check"
+      }
+    },
+    {
+      "name": "ldc2 toolchain_flags.d",
+      "status": "pass",
+      "detail": {
+        "command": [
+          "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+          "-preview=dip1000",
+          "-o-",
+          "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/toolchain_flags.d"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": "",
+        "source_sha256": "892fd8c13bdd069fb1a5a0d6257e257806bdf03b5fe9284d3aa5e883a6f8adaa",
+        "scope": "compile-only API/misuse check"
+      }
+    },
+    {
+      "name": "ldc2 golden-cli",
+      "status": "pass",
+      "detail": {
+        "command": [
+          "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+          "-preview=dip1000",
+          "-o-",
+          "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+          "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/templates/golden-cli/source",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/templates/golden-cli/source/app.d"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": "",
+        "scope": "golden API typecheck; runtime linking waits for implemented packages"
+      }
+    },
+    {
+      "name": "ldc2 golden-tui",
+      "status": "pass",
+      "detail": {
+        "command": [
+          "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+          "-preview=dip1000",
+          "-o-",
+          "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+          "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/templates/golden-tui/source",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/templates/golden-tui/source/app.d"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": "",
+        "scope": "golden API typecheck; runtime linking waits for implemented packages"
+      }
+    },
+    {
+      "name": "ldc2 golden-rest-service",
+      "status": "pass",
+      "detail": {
+        "command": [
+          "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+          "-preview=dip1000",
+          "-o-",
+          "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+          "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/templates/golden-rest-service/source",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/templates/golden-rest-service/source/app.d"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": "",
+        "scope": "golden API typecheck; runtime linking waits for implemented packages"
+      }
+    },
+    {
+      "name": "ldc2 golden-wasm-app",
+      "status": "pass",
+      "detail": {
+        "command": [
+          "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+          "-preview=dip1000",
+          "-o-",
+          "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+          "-betterC",
+          "-mtriple=wasm32-unknown-unknown-wasm",
+          "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/templates/golden-wasm-app/source",
+          "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/templates/golden-wasm-app/source/flint_demo/sys",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/templates/golden-wasm-app/source/app.d",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/templates/golden-wasm-app/source/flint_demo/sys/exports.d"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": "",
+        "scope": "golden API typecheck; runtime linking waits for implemented packages"
+      }
+    },
+    {
+      "name": "ldc2 five BetterC behavior fixture contracts",
+      "status": "pass",
+      "detail": [
+        {
+          "command": [
+            "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+            "-preview=dip1000",
+            "-o-",
+            "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+            "-betterC",
+            "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/packages/arena/tests/betterc.d"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "",
+          "source_sha256": "a8024136894197499b918a5fec9b78aebe9ae03c5263ddc7b1958ee4e3092c06",
+          "scope": "fixture semantic check only; runtime assertions need actual package bodies"
+        },
+        {
+          "command": [
+            "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+            "-preview=dip1000",
+            "-o-",
+            "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+            "-betterC",
+            "-mtriple=wasm32-unknown-unknown-wasm",
+            "-checkaction=halt",
+            "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/packages/arena/tests/betterc.d"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "",
+          "source_sha256": "a8024136894197499b918a5fec9b78aebe9ae03c5263ddc7b1958ee4e3092c06",
+          "scope": "wasm32 fixture semantic check only"
+        },
+        {
+          "command": [
+            "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+            "-preview=dip1000",
+            "-o-",
+            "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+            "-betterC",
+            "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/packages/serde/tests/betterc.d"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "",
+          "source_sha256": "d0c5724d87bb5c46253214dacb7221477f67da81f32707cceb2d66ec800d9f29",
+          "scope": "fixture semantic check only; runtime assertions need actual package bodies"
+        },
+        {
+          "command": [
+            "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+            "-preview=dip1000",
+            "-o-",
+            "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+            "-betterC",
+            "-mtriple=wasm32-unknown-unknown-wasm",
+            "-checkaction=halt",
+            "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/packages/serde/tests/betterc.d"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "",
+          "source_sha256": "d0c5724d87bb5c46253214dacb7221477f67da81f32707cceb2d66ec800d9f29",
+          "scope": "wasm32 fixture semantic check only"
+        },
+        {
+          "command": [
+            "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+            "-preview=dip1000",
+            "-o-",
+            "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+            "-betterC",
+            "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/packages/ui-signals/tests/betterc.d"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "",
+          "source_sha256": "f3ce89c44e4afc286996ee2a69590460f94e0e9fb849502d41e6a01066474ca6",
+          "scope": "fixture semantic check only; runtime assertions need actual package bodies"
+        },
+        {
+          "command": [
+            "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+            "-preview=dip1000",
+            "-o-",
+            "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+            "-betterC",
+            "-mtriple=wasm32-unknown-unknown-wasm",
+            "-checkaction=halt",
+            "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/packages/ui-signals/tests/betterc.d"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "",
+          "source_sha256": "f3ce89c44e4afc286996ee2a69590460f94e0e9fb849502d41e6a01066474ca6",
+          "scope": "wasm32 fixture semantic check only"
+        },
+        {
+          "command": [
+            "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+            "-preview=dip1000",
+            "-o-",
+            "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+            "-betterC",
+            "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/packages/validate/tests/betterc.d"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "",
+          "source_sha256": "471a08d37ac8eb890a35fb94887aebef7d25c7b57abb7c586945ef5e741b2fae",
+          "scope": "fixture semantic check only; runtime assertions need actual package bodies"
+        },
+        {
+          "command": [
+            "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+            "-preview=dip1000",
+            "-o-",
+            "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+            "-betterC",
+            "-mtriple=wasm32-unknown-unknown-wasm",
+            "-checkaction=halt",
+            "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/packages/validate/tests/betterc.d"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "",
+          "source_sha256": "471a08d37ac8eb890a35fb94887aebef7d25c7b57abb7c586945ef5e741b2fae",
+          "scope": "wasm32 fixture semantic check only"
+        },
+        {
+          "command": [
+            "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+            "-preview=dip1000",
+            "-o-",
+            "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+            "-betterC",
+            "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/packages/wasm-bridge/tests/betterc.d"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "",
+          "source_sha256": "e4a4289ef82be41cdf89695dfb7dcbfcaa590eb46e4c1e85d28cabb7f65956dd",
+          "scope": "fixture semantic check only; runtime assertions need actual package bodies"
+        },
+        {
+          "command": [
+            "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+            "-preview=dip1000",
+            "-o-",
+            "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+            "-betterC",
+            "-mtriple=wasm32-unknown-unknown-wasm",
+            "-checkaction=halt",
+            "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/packages/wasm-bridge/tests/betterc.d"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "",
+          "source_sha256": "e4a4289ef82be41cdf89695dfb7dcbfcaa590eb46e4c1e85d28cabb7f65956dd",
+          "scope": "wasm32 fixture semantic check only"
+        }
+      ]
+    },
+    {
+      "name": "ldc2 bench-cli application contract",
+      "status": "pass",
+      "detail": {
+        "command": [
+          "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+          "-preview=dip1000",
+          "-o-",
+          "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/benchmarks/bench-cli/source/app.d"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": ""
+      }
+    },
+    {
+      "name": "ldc2 bench-rest application contract",
+      "status": "pass",
+      "detail": {
+        "command": [
+          "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+          "-preview=dip1000",
+          "-o-",
+          "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/benchmarks/bench-rest/source/app.d"
+        ],
+        "returncode": 0,
+        "stdout": "",
+        "stderr": ""
+      }
+    },
+    {
+      "name": "ldc2 standalone Markdown D modules",
+      "status": "pass",
+      "detail": {
+        "complete_modules": 41,
+        "scope": "standalone D blocks only; context fragments are not represented as runtime tests"
+      }
+    },
+    {
+      "name": "DUB manifest resolution",
+      "status": "pass",
+      "detail": {
+        "packages": [
+          "reactor",
+          "arena",
+          "conc",
+          "di",
+          "config",
+          "serde",
+          "validate",
+          "log",
+          "test",
+          "web",
+          "http",
+          "security",
+          "actuator",
+          "schedule",
+          "rpc",
+          "sql",
+          "data",
+          "migrate",
+          "cache",
+          "cli",
+          "term",
+          "tui",
+          "style",
+          "widgets",
+          "prompt",
+          "os",
+          "wasm-bridge",
+          "ui-signals",
+          "wasi",
+          "mq",
+          "storage",
+          "mail",
+          "ai",
+          "mcp",
+          "template",
+          "codec",
+          "desktop"
+        ],
+        "scope": "real DUB manifest resolution in a temporary copy; no source-free build reported as success"
+      }
+    },
+    {
+      "name": "standalone WASM ABI link and execution",
+      "status": "pass",
+      "detail": {
+        "command": [
+          "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/tools/verify_wasm.py",
+          "--ldc",
+          "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+          "--node",
+          "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node"
+        ],
+        "returncode": 0,
+        "stdout": "{\"scope\":\"standalone linked WASM ABI probe; no Flint runtime implementation\",\"checks\":8,\"passed\":true,\"results\":[{\"name\":\"real WASM emits a valid text record\",\"passed\":true},{\"name\":\"oversized record rejected\",\"passed\":true},{\"name\":\"unknown opcode rejected\",\"passed\":true},{\"name\":\"stale node generation rejected\",\"passed\":true},{\"name\":\"invalid UTF8 rejected\",\"passed\":true},{\"name\":\"nonzero record padding rejected\",\"passed\":true},{\"name\":\"memory growth recreates host views\",\"passed\":true},{\"name\":\"pointer outside linear memory rejected\",\"passed\":true}]}\n{\"wasm_bytes\": 658, \"link_and_execute\": \"passed\"}\n",
+        "stderr": ""
+      }
+    },
+    {
+      "name": "browser driver epoch, bounds, confinement and replay tests",
+      "status": "pass",
+      "detail": {
+        "command": [
+          "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/driver_contract_test.mjs"
+        ],
+        "returncode": 0,
+        "stdout": "{\"scope\":\"host-side ABI/DOM-driver validation; no Flint runtime implementation\",\"passed\":true,\"checks\":22,\"results\":[{\"name\":\"empty batch preserves active epoch\",\"passed\":true},{\"name\":\"zero active epoch rejected\",\"passed\":true},{\"name\":\"zero incoming epoch rejected\",\"passed\":true},{\"name\":\"higher incoming epoch cannot reset session\",\"passed\":true},{\"name\":\"host explicitly chooses a session epoch\",\"passed\":true},{\"name\":\"duplicate sequence rejected\",\"passed\":true},{\"name\":\"out-of-order sequence rejected\",\"passed\":true},{\"name\":\"sequence wrap accepted with forward serial arithmetic\",\"passed\":true},{\"name\":\"half-range sequence jump rejected\",\"passed\":true},{\"name\":\"canvas rectangle at final pixel accepted\",\"passed\":true},{\"name\":\"canvas rectangle exceeding actual dimensions rejected\",\"passed\":true},{\"name\":\"unavailable canvas capability rejected\",\"passed\":true},{\"name\":\"detached construction can subsequently join mount\",\"passed\":true},{\"name\":\"mounted subtree cannot move under a detached node\",\"passed\":true},{\"name\":\"node removal increments generation\",\"passed\":true},{\"name\":\"retired generation cannot be reused\",\"passed\":true},{\"name\":\"depth64 is accepted\",\"passed\":true},{\"name\":\"depth65 is rejected\",\"passed\":true},{\"name\":\"reparent validates full moved subtree depth\",\"passed\":true},{\"name\":\"invalid second operation causes no DOM mutation\",\"passed\":true},{\"name\":\"driver commits sequence only after successful application\",\"passed\":true},{\"name\":\"shared memory rejected by ABIv1\",\"passed\":true}]}\n",
+        "stderr": ""
+      }
+    },
+    {
+      "name": "Go reference unit tests",
+      "status": "pass",
+      "detail": {
+        "command": [
+          "/workspace/scratch/09fd6c26fd15/toolchains/go/bin/go",
+          "test",
+          "./..."
+        ],
+        "returncode": 0,
+        "stdout": "ok  \tflint.example/reference-go-rest\t(cached)\n",
+        "stderr": ""
+      }
+    }
+  ],
+  "status": "passed",
+  "counts": {
+    "pass": 48,
+    "fail": 0,
+    "not_run": 0
+  }
+}

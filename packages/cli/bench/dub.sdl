@@ -1,0 +1,8 @@
+name "probe-cli"
+targetType "executable"
+sourcePaths "source"
+importPaths "source"
+targetPath "build"
+targetName "probe-cli"
+dflags "-preview=dip1000"
+dependency "flint:cli" path="../../.."

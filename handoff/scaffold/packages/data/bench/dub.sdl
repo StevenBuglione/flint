@@ -1,0 +1,8 @@
+name "probe-data"
+targetType "executable"
+sourcePaths "source"
+importPaths "source"
+targetPath "build"
+targetName "probe-data"
+dflags "-preview=dip1000"
+dependency "flint:data" path="../../.."

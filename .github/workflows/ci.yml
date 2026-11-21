@@ -1,0 +1,295 @@
+name: Flint CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Compare two commits, or validate the first real baseline without a regression claim
+        type: choice
+        options: [compare, baseline]
+        default: compare
+        required: true
+      base_sha:
+        description: Exact different base commit; required for compare mode and unused for baseline mode
+        type: string
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: flint-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  refs:
+    name: Resolve measured commits
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      base: ${{ steps.refs.outputs.base }}
+      candidate: ${{ steps.refs.outputs.candidate }}
+      mode: ${{ steps.refs.outputs.mode }}
+      roles: ${{ steps.refs.outputs.roles }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Require two actual commit identities
+        id: refs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/ci.py refs
+
+  checks:
+    name: Quality safety DAG BetterC (${{ matrix.role }})
+    needs: refs
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        role: ${{ fromJSON(needs.refs.outputs.roles) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ matrix.role == 'base' && needs.refs.outputs.base || needs.refs.outputs.candidate }}
+          persist-credentials: false
+      - name: Native build prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake ninja-build meson pkg-config autoconf automake libtool bison flex perl libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxfixes-dev libxss-dev
+      - name: Install verified compiler archives
+        run: |
+          python3 tools/install_toolchains.py --compiler ldc
+          python3 tools/install_toolchains.py --compiler dmd
+      - name: Build pinned format and analysis tools
+        run: python3 tools/install_quality_tools.py
+      - name: Execute recorded checks
+        run: python3 tools/ci.py static
+      - name: Retain successful or failed check evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: ${{ matrix.role }}-checks
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 14
+
+  sanitizers:
+    name: C and D sanitizers (${{ matrix.role }})
+    needs: refs
+    # Provision one isolated, single-job ephemeral VM per runner registration.
+    # The label alone does not create isolation. See handoff/docs/CI_EXECUTION.md.
+    runs-on: [self-hosted, Linux, X64, flint-perf-x86_64-v1]
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        role: ${{ fromJSON(needs.refs.outputs.roles) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ matrix.role == 'base' && needs.refs.outputs.base || needs.refs.outputs.candidate }}
+          persist-credentials: false
+      - name: Require ephemeral runner provisioning
+        run: |
+          test "$FLINT_EPHEMERAL_RUNNER" = 1
+          test "$FLINT_RUNNER_LABEL" = flint-perf-x86_64-v1
+      - name: Install verified LDC archive
+        run: python3 tools/install_toolchains.py --compiler ldc
+      - name: Execute C ASan UBSan and D ASan tests
+        run: python3 tools/ci.py sanitizers
+      - if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: ${{ matrix.role }}-sanitizers
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 14
+
+  platforms:
+    name: ${{ matrix.target }} (${{ matrix.role }})
+    needs: refs
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        role: ${{ fromJSON(needs.refs.outputs.roles) }}
+        target: [linux-x86_64-glibc, linux-aarch64-glibc, linux-x86_64-musl, linux-aarch64-musl, macos-arm64, windows-x86_64]
+        include:
+          - target: linux-x86_64-glibc
+            runner: ubuntu-24.04
+            mode: native
+          - target: linux-aarch64-glibc
+            runner: ubuntu-24.04-arm
+            mode: native
+          - target: linux-x86_64-musl
+            runner: ubuntu-24.04
+            mode: musl
+          - target: linux-aarch64-musl
+            runner: ubuntu-24.04-arm
+            mode: musl
+          - target: macos-arm64
+            runner: macos-15
+            mode: native
+          - target: windows-x86_64
+            runner: windows-2025
+            mode: native
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ matrix.role == 'base' && needs.refs.outputs.base || needs.refs.outputs.candidate }}
+          persist-credentials: false
+      - name: Linux build prerequisites
+        if: runner.os == 'Linux' && matrix.mode == 'native'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake ninja-build meson pkg-config autoconf automake libtool bison flex perl libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxfixes-dev libxss-dev
+      - name: macOS build prerequisites
+        if: runner.os == 'macOS'
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: '1'
+        run: brew install cmake ninja meson pkg-config autoconf automake libtool bison flex
+      - name: Windows build prerequisites
+        if: runner.os == 'Windows'
+        run: python tools/ci.py windows-tools
+      - name: Install verified native LDC archive
+        if: matrix.mode == 'native'
+        run: python tools/install_toolchains.py --compiler ldc
+      - name: Execute native platform tests and BetterC fixtures
+        if: matrix.mode == 'native'
+        run: python tools/ci.py platform --target ${{ matrix.target }}
+      - name: Execute real musl binaries in a pinned Alpine image
+        if: matrix.mode == 'musl'
+        run: python3 tools/ci.py container --target ${{ matrix.target }}
+      - if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: ${{ matrix.role }}-platform-${{ matrix.target }}
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 14
+
+  wasm:
+    name: wasm32 (${{ matrix.role }})
+    needs: refs
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        role: ${{ fromJSON(needs.refs.outputs.roles) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ matrix.role == 'base' && needs.refs.outputs.base || needs.refs.outputs.candidate }}
+          persist-credentials: false
+      - run: python3 tools/install_toolchains.py --compiler ldc
+      - name: Link actual framework WASM and run its JavaScript ABI tests
+        run: python3 tools/ci.py platform --target wasm32
+      - if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: ${{ matrix.role }}-platform-wasm32
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 14
+
+  measured:
+    name: Compile runtime size measurements
+    needs: [refs, checks, sanitizers, platforms, wasm]
+    runs-on: [self-hosted, Linux, X64, flint-perf-x86_64-v1]
+    environment: ${{ needs.refs.outputs.mode == 'baseline' && 'flint-baseline' || 'flint-ci' }}
+    timeout-minutes: 360
+    steps:
+      - name: Check out the exact candidate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ needs.refs.outputs.candidate }}
+          path: candidate
+          persist-credentials: false
+      - name: Check out the exact base separately
+        if: needs.refs.outputs.mode == 'compare'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ needs.refs.outputs.base }}
+          path: base
+          persist-credentials: false
+      - name: Require isolated performance host
+        run: |
+          test "$FLINT_EPHEMERAL_RUNNER" = 1
+          test "$FLINT_RUNNER_LABEL" = flint-perf-x86_64-v1
+      - name: Install the same verified toolchains for both checkouts
+        working-directory: candidate
+        run: |
+          python3 tools/install_toolchains.py --compiler ldc --destination "$RUNNER_TEMP/flint-toolchains"
+          python3 tools/install_toolchains.py --compiler dmd --destination "$RUNNER_TEMP/flint-toolchains"
+          python3 tools/install_toolchains.py --compiler go --destination "$RUNNER_TEMP/flint-toolchains"
+          python3 tools/install_toolchains.py --compiler oha --destination "$RUNNER_TEMP/flint-toolchains"
+      - name: Prepare isolated Python measurement dependencies
+        run: |
+          python3 -m venv "$RUNNER_TEMP/flint-python"
+          "$RUNNER_TEMP/flint-python/bin/python" -m pip install -r candidate/tools/requirements.txt
+          echo "$RUNNER_TEMP/flint-python/bin" >> "$GITHUB_PATH"
+      - name: Download base receipts from this run
+        if: needs.refs.outputs.mode == 'compare'
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3
+        with:
+          pattern: base-*
+          path: evidence/base
+          merge-multiple: true
+          digest-mismatch: error
+      - name: Download candidate receipts from this run
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3
+        with:
+          pattern: candidate-*
+          path: evidence/candidate
+          merge-multiple: true
+          digest-mismatch: error
+      - name: Measure base then candidate on the same host and enforce all six gates
+        if: needs.refs.outputs.mode == 'compare'
+        working-directory: candidate
+        run: python3 tools/ci.py pair --base ../base --candidate . --evidence ../evidence --output ../paired --oha "$RUNNER_TEMP/flint-toolchains/oha-1.16.0/oha"
+      - name: Validate an actual initial baseline without a regression certification
+        if: needs.refs.outputs.mode == 'baseline'
+        working-directory: candidate
+        run: python3 tools/ci.py baseline --artifacts ../paired/baseline --receipts ../evidence/candidate/receipts --platforms ../evidence/candidate/platforms --output ../paired/baseline.json --oha "$RUNNER_TEMP/flint-toolchains/oha-1.16.0/oha"
+      - name: Retain raw results including failed partial collections
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: base-candidate-performance-evidence
+          path: paired/
+          if-no-files-found: error
+          retention-days: 30
+
+  required:
+    name: ${{ needs.refs.outputs.mode == 'baseline' && 'Flint / baseline evidence' || 'Flint / all six gates' }}
+    if: always()
+    needs: [refs, checks, sanitizers, platforms, wasm, measured]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Fail for failed skipped cancelled or missing prerequisites
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+          MODE: ${{ needs.refs.outputs.mode }}
+        run: |
+          python3 - <<'PY'
+          import json, os, sys
+          results = json.loads(os.environ['RESULTS'])
+          failed = {name: value['result'] for name, value in results.items() if value['result'] != 'success'}
+          if failed:
+              print('Flint gates did not complete:', json.dumps(failed, sort_keys=True))
+              sys.exit(1)
+          if os.environ['MODE'] == 'baseline':
+              print('Actual initial baseline passed absolute, Go, GC and platform checks. No regression claim.')
+          else:
+              print('All real prerequisites and measured gates completed successfully.')
+          PY

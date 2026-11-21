@@ -1,0 +1,253 @@
+{
+  "scope": "Five actual assertion fixtures; native and wasm32 semantics checked against declarations, runtime linking still requires packages",
+  "passed": true,
+  "checks": [
+    {
+      "name": "dmd five BetterC behavior fixture contracts",
+      "status": "pass",
+      "detail": [
+        {
+          "command": [
+            "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+            "-preview=dip1000",
+            "-o-",
+            "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+            "-betterC",
+            "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/packages/arena/tests/betterc.d"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "",
+          "source_sha256": "a8024136894197499b918a5fec9b78aebe9ae03c5263ddc7b1958ee4e3092c06",
+          "scope": "fixture semantic check only; runtime assertions need actual package bodies"
+        },
+        {
+          "command": [
+            "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+            "-preview=dip1000",
+            "-o-",
+            "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+            "-betterC",
+            "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/packages/serde/tests/betterc.d"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "",
+          "source_sha256": "d0c5724d87bb5c46253214dacb7221477f67da81f32707cceb2d66ec800d9f29",
+          "scope": "fixture semantic check only; runtime assertions need actual package bodies"
+        },
+        {
+          "command": [
+            "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+            "-preview=dip1000",
+            "-o-",
+            "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+            "-betterC",
+            "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/packages/ui-signals/tests/betterc.d"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "",
+          "source_sha256": "f3ce89c44e4afc286996ee2a69590460f94e0e9fb849502d41e6a01066474ca6",
+          "scope": "fixture semantic check only; runtime assertions need actual package bodies"
+        },
+        {
+          "command": [
+            "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+            "-preview=dip1000",
+            "-o-",
+            "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+            "-betterC",
+            "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/packages/validate/tests/betterc.d"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "",
+          "source_sha256": "471a08d37ac8eb890a35fb94887aebef7d25c7b57abb7c586945ef5e741b2fae",
+          "scope": "fixture semantic check only; runtime assertions need actual package bodies"
+        },
+        {
+          "command": [
+            "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+            "-preview=dip1000",
+            "-o-",
+            "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+            "-betterC",
+            "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/packages/wasm-bridge/tests/betterc.d"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "",
+          "source_sha256": "e4a4289ef82be41cdf89695dfb7dcbfcaa590eb46e4c1e85d28cabb7f65956dd",
+          "scope": "fixture semantic check only; runtime assertions need actual package bodies"
+        }
+      ]
+    },
+    {
+      "name": "ldc2 five BetterC behavior fixture contracts",
+      "status": "pass",
+      "detail": [
+        {
+          "command": [
+            "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+            "-preview=dip1000",
+            "-o-",
+            "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+            "-betterC",
+            "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/packages/arena/tests/betterc.d"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "",
+          "source_sha256": "a8024136894197499b918a5fec9b78aebe9ae03c5263ddc7b1958ee4e3092c06",
+          "scope": "fixture semantic check only; runtime assertions need actual package bodies"
+        },
+        {
+          "command": [
+            "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+            "-preview=dip1000",
+            "-o-",
+            "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+            "-betterC",
+            "-mtriple=wasm32-unknown-unknown-wasm",
+            "-checkaction=halt",
+            "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/packages/arena/tests/betterc.d"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "",
+          "source_sha256": "a8024136894197499b918a5fec9b78aebe9ae03c5263ddc7b1958ee4e3092c06",
+          "scope": "wasm32 fixture semantic check only"
+        },
+        {
+          "command": [
+            "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+            "-preview=dip1000",
+            "-o-",
+            "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+            "-betterC",
+            "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/packages/serde/tests/betterc.d"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "",
+          "source_sha256": "d0c5724d87bb5c46253214dacb7221477f67da81f32707cceb2d66ec800d9f29",
+          "scope": "fixture semantic check only; runtime assertions need actual package bodies"
+        },
+        {
+          "command": [
+            "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+            "-preview=dip1000",
+            "-o-",
+            "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+            "-betterC",
+            "-mtriple=wasm32-unknown-unknown-wasm",
+            "-checkaction=halt",
+            "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/packages/serde/tests/betterc.d"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "",
+          "source_sha256": "d0c5724d87bb5c46253214dacb7221477f67da81f32707cceb2d66ec800d9f29",
+          "scope": "wasm32 fixture semantic check only"
+        },
+        {
+          "command": [
+            "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+            "-preview=dip1000",
+            "-o-",
+            "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+            "-betterC",
+            "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/packages/ui-signals/tests/betterc.d"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "",
+          "source_sha256": "f3ce89c44e4afc286996ee2a69590460f94e0e9fb849502d41e6a01066474ca6",
+          "scope": "fixture semantic check only; runtime assertions need actual package bodies"
+        },
+        {
+          "command": [
+            "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+            "-preview=dip1000",
+            "-o-",
+            "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+            "-betterC",
+            "-mtriple=wasm32-unknown-unknown-wasm",
+            "-checkaction=halt",
+            "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/packages/ui-signals/tests/betterc.d"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "",
+          "source_sha256": "f3ce89c44e4afc286996ee2a69590460f94e0e9fb849502d41e6a01066474ca6",
+          "scope": "wasm32 fixture semantic check only"
+        },
+        {
+          "command": [
+            "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+            "-preview=dip1000",
+            "-o-",
+            "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+            "-betterC",
+            "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/packages/validate/tests/betterc.d"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "",
+          "source_sha256": "471a08d37ac8eb890a35fb94887aebef7d25c7b57abb7c586945ef5e741b2fae",
+          "scope": "fixture semantic check only; runtime assertions need actual package bodies"
+        },
+        {
+          "command": [
+            "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+            "-preview=dip1000",
+            "-o-",
+            "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+            "-betterC",
+            "-mtriple=wasm32-unknown-unknown-wasm",
+            "-checkaction=halt",
+            "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/packages/validate/tests/betterc.d"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "",
+          "source_sha256": "471a08d37ac8eb890a35fb94887aebef7d25c7b57abb7c586945ef5e741b2fae",
+          "scope": "wasm32 fixture semantic check only"
+        },
+        {
+          "command": [
+            "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+            "-preview=dip1000",
+            "-o-",
+            "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+            "-betterC",
+            "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/packages/wasm-bridge/tests/betterc.d"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "",
+          "source_sha256": "e4a4289ef82be41cdf89695dfb7dcbfcaa590eb46e4c1e85d28cabb7f65956dd",
+          "scope": "fixture semantic check only; runtime assertions need actual package bodies"
+        },
+        {
+          "command": [
+            "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+            "-preview=dip1000",
+            "-o-",
+            "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+            "-betterC",
+            "-mtriple=wasm32-unknown-unknown-wasm",
+            "-checkaction=halt",
+            "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/packages/wasm-bridge/tests/betterc.d"
+          ],
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "",
+          "source_sha256": "e4a4289ef82be41cdf89695dfb7dcbfcaa590eb46e4c1e85d28cabb7f65956dd",
+          "scope": "wasm32 fixture semantic check only"
+        }
+      ]
+    }
+  ]
+}

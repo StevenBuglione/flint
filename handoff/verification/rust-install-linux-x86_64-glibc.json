@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "target": "linux-x86_64-glibc",
+  "host": "x86_64-unknown-linux-gnu",
+  "rust_version": "1.97.0",
+  "rustup_version": "1.29.3",
+  "manifest_sha256": "3804d2666f7c12ce64205baa69b6be52f910b45b158091013264beb7aa1de7f5",
+  "bootstrap_sha256": "b1c8cb14e30889e7e2999e6b69e62d9e9b9ffc0f4df8180564d306d9680e6c55",
+  "commands": [
+    [
+      "/workspace/scratch/09fd6c26fd15/ci-rust-install-check/bootstrap/rustup-init",
+      "-y",
+      "--no-modify-path",
+      "--profile",
+      "minimal",
+      "--default-toolchain",
+      "1.97.0",
+      "--default-host",
+      "x86_64-unknown-linux-gnu"
+    ],
+    [
+      "/workspace/scratch/09fd6c26fd15/ci-rust-install-check/cargo/bin/rustup",
+      "set",
+      "auto-self-update",
+      "disable"
+    ],
+    [
+      "/workspace/scratch/09fd6c26fd15/ci-rust-install-check/cargo/bin/rustup",
+      "toolchain",
+      "install",
+      "1.97.0",
+      "--profile",
+      "minimal",
+      "--target",
+      "x86_64-unknown-linux-gnu"
+    ]
+  ],
+  "rustup_version_output": "rustup 1.29.3 (edbc831ce 2026-11-02)\n",
+  "rustc_version_output": "rustc 1.97.0 (2d8144b78 2026-07-07)\nbinary: rustc\ncommit-hash: 2d8144b7880597b6e6d3dfd63a9a9efae3f533d3\ncommit-date: 2026-07-07\nhost: x86_64-unknown-linux-gnu\nrelease: 1.97.0\nLLVM version: 22.1.6\n",
+  "cargo_version_output": "cargo 1.97.0 (c980f4866 2026-06-30)\n",
+  "environment": {
+    "RUSTUP_HOME": "/workspace/scratch/09fd6c26fd15/ci-rust-install-check/rustup",
+    "CARGO_HOME": "/workspace/scratch/09fd6c26fd15/ci-rust-install-check/cargo",
+    "RUSTUP_TOOLCHAIN": "1.97.0"
+  },
+  "status": "installed",
+  "verification": "Pinned bootstrap bytes and distribution manifest verified; Rustup verifies downloaded component checksums."
+}
