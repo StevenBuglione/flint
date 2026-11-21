@@ -3,8 +3,8 @@ module flint.config.internal.sources;
 import flint.arena : Error, Result, Status;
 import flint.serde : DecodeOptions, UnknownFields;
 import flint.serde.owned : deserialize;
+import std.conv : to;
 import std.file : exists, read;
-import std.format : format;
 import std.path : buildPath;
 import std.string : strip;
 import std.utf : validate;
@@ -37,9 +37,10 @@ package(flint.config) struct Origin
                 else
                     ++column;
             }
-            return Error(status, format!"%s in %s at %s:%s %s"(label, name, line, column, reason), offset);
+            return Error(status,
+                    label ~ " in " ~ name ~ " at " ~ line.to!string ~ ":" ~ column.to!string ~ " " ~ reason, offset);
         }
-        return Error(status, format!"%s in %s %s"(label, name, reason));
+        return Error(status, label ~ " in " ~ name ~ " " ~ reason);
     }
 }
 

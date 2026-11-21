@@ -200,7 +200,11 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
             relative,options=CMAKE[name];self.cmake(name,src,build,relative,options)
         elif name=='openssl':
             target={'linux-x86_64-glibc':'linux-x86_64','linux-x86_64-musl':'linux-x86_64','linux-aarch64-glibc':'linux-aarch64','linux-aarch64-musl':'linux-aarch64','macos-arm64':'darwin64-arm64-cc','windows-x86_64':'VC-WIN64A'}[self.a.target]
-            self.command(['perl',src/'Configure',target,'no-shared','no-module','no-tests','--prefix='+str(self.prefix),'--libdir=lib'],build)
+            configure = ['perl', src/'Configure', target, 'no-shared', 'no-module', 'no-tests',
+                         '--prefix=' + str(self.prefix), '--libdir=lib']
+            if self.a.target == 'linux-x86_64-glibc' and not self.a.sanitize:
+                configure.append('CFLAGS=' + self.env['CFLAGS'] + ' -Os -ffunction-sections -fdata-sections')
+            self.command(configure, build)
             make='nmake' if self.a.target.startswith('windows') else 'make'
             jobs=[] if make=='nmake' else ['-j',str(self.a.jobs)]
             self.command([make,*jobs,'build_libs'],build);self.command([make,'install_dev'],build)
