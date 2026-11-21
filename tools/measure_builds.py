@@ -226,6 +226,10 @@ def source_identity(root):
             raise RuntimeError('native recipe block differs from verified installed dependency receipt: ' + relative)
         clean = re.sub(pattern, '\n', text, flags=re.S).rstrip() + '\n'
         original = run_checked(['git', 'show', 'HEAD:' + prefix + relative], root).stdout
+        if relative == 'packages/rpc/dub.sdl':
+            # The unittest-only generated codec is a separate receipt-bound
+            # section and does not appear in the production linker block.
+            original = builder.emit_rpc_test_archive(original)
         if clean != original.rstrip() + '\n':
             raise RuntimeError('non-generated recipe modification: ' + relative)
     # Every provider expected by the native preparation must be enabled exactly.

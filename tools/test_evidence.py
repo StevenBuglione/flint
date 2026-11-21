@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Adversarial evidence/protocol tests. Temporary synthetic data is never a baseline."""
 from __future__ import annotations
+import argparse
 import copy
 import gzip
 import json
@@ -201,6 +202,52 @@ class SourceIdentityTests(unittest.TestCase):
             self.assertIn('wasi', native['generated_blocks'])
             path = baseline / 'dub.sdl'; path.write_text(path.read_text().replace('FlintNativeWasmtime', 'UnexpectedProvider'))
             with self.assertRaisesRegex(RuntimeError, 'block differs'):
+                builds.source_identity(self.root)
+
+    def test_rpc_unittest_section_must_match_the_actual_installed_receipt(self):
+        import native_build
+        (self.root / '.gitignore').write_text('.native/\n')
+        policy = self.root / 'policy'; policy.mkdir()
+        (policy / 'native-lock.json').write_text(json.dumps({'libraries': [
+            {'name': 'protobuf-c', 'consumers': ['rpc'], 'dependencies': []}
+        ]}))
+        (policy / 'packages.json').write_text(json.dumps({'packages': {'rpc': {}}}))
+        package = self.root / 'packages/rpc'
+        baseline = package / 'bench/baseline'; baseline.mkdir(parents=True)
+        recipe = package / 'dub.sdl'
+        recipe.write_text('name "rpc"\nconfiguration "unittest" {\n    targetType "library"\n}\n')
+        (baseline / 'dub.sdl').write_text('name "probe-rpc-baseline"\n')
+        subprocess.run(['git', 'add', '.'], cwd=self.root, check=True)
+        subprocess.run(['git', '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid',
+                        'commit', '--quiet', '-m', 'Native RPC recipe fixture'], cwd=self.root, check=True)
+        prefix = self.root / '.native/install/linux-x86_64-glibc'
+        lib = prefix / 'lib'; lib.mkdir(parents=True)
+        def archive(name):
+            path = lib / name
+            path.write_bytes(b'!<arch>\n')
+            return {'path': str(path), 'sha256': builds.digest(path)}
+        receipt = prefix / 'flint-native-install.json'
+        receipt.write_text(json.dumps({
+            'target': 'linux-x86_64-glibc',
+            'ffi_archive': archive('libflint_ffi.a'),
+            'rpc_test_archive': archive('libflint_rpc_fixture.a'),
+            'libraries': {'protobuf-c': {'archives': [archive('libprotobuf-c.a')]}}
+        }))
+        with patch.object(native_build, 'ROOT', self.root):
+            args = argparse.Namespace(work_dir=self.root / '.native', target='linux-x86_64-glibc',
+                                      prefix=None, cc=None, cxx=None, sanitize=None, phase='build')
+            builder = native_build.Builder(args, json.loads((policy / 'native-lock.json').read_text()))
+            builder.emit_dub()
+            emitted = recipe.read_text()
+            self.assertIn('libflint_rpc_fixture.a', emitted)
+            _, native = builds.source_identity(self.root)
+            self.assertIn('rpc', native['generated_blocks'])
+            recipe.write_text(emitted.replace('libflint_rpc_fixture.a', 'unverified.a'))
+            with self.assertRaisesRegex(RuntimeError, 'non-generated recipe modification'):
+                builds.source_identity(self.root)
+            recipe.write_text(emitted)
+            (lib / 'libflint_rpc_fixture.a').write_bytes(b'altered archive')
+            with self.assertRaisesRegex(RuntimeError, 'RPC test fixture archive changed'):
                 builds.source_identity(self.root)
 
 
