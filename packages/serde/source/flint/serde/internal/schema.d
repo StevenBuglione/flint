@@ -31,7 +31,7 @@ private void typeSchema(T)(ref scope Writer writer, uint depth) nothrow @nogc
     else static if (is(Value == byte) || is(Value == short) || is(Value == int) || is(Value == long)
             || is(Value == ubyte) || is(Value == ushort) || is(Value == uint) || is(Value == ulong))
         integerSchema!Value(writer);
-    else static if (is(Value == Element[extent], Element, size_t extent) || is(Value == Element[], Element))
+    else static if (is(Value == Element[extent], Element, size_t extent))
     {
         if (depth >= 64)
         {
@@ -40,6 +40,10 @@ private void typeSchema(T)(ref scope Writer writer, uint depth) nothrow @nogc
         }
         writer.append(cast(const(ubyte)[]) `{"type":"array","items":`);
         typeSchema!Element(writer, depth + 1);
+        writer.append(cast(const(ubyte)[]) `,"minItems":`);
+        writer.unsignedNumber(extent);
+        writer.append(cast(const(ubyte)[]) `,"maxItems":`);
+        writer.unsignedNumber(extent);
         writer.put('}');
     }
     else static if (is(Value == struct))
@@ -91,7 +95,11 @@ private void objectSchema(T)(ref scope Writer writer, uint depth) nothrow @nogc
                 first = false;
                 writer.stringValue(cast(const(ubyte)[]) field.name);
                 writer.put(':');
-                typeSchema!(typeof(mixin("T.init." ~ field.access)))(writer, depth + 1);
+                alias Member = typeof(mixin("T.init." ~ field.access));
+                static if (canDescribe!Member)
+                    typeSchema!Member(writer, depth + 1);
+                else
+                    static assert(false, "unsupported JSON Schema field " ~ T.stringof ~ "." ~ field.access);
             }
         }
     }
@@ -111,4 +119,17 @@ private void objectSchema(T)(ref scope Writer writer, uint depth) nothrow @nogc
         }
     }
     writer.append(cast(const(ubyte)[]) `],"additionalProperties":false}`);
+}
+
+private template canDescribe(T)
+{
+    alias Value = Unqual!T;
+    static if (is(Value == Element[extent], Element, size_t extent))
+        enum canDescribe = canDescribe!Element;
+    else
+        enum canDescribe = is(Value == struct) || is(Value == enum) || is(Value == bool)
+            || is(Value == float) || is(Value == double) || is(Value == byte) || is(Value == short)
+            || is(Value == int) || is(Value == long) || is(Value == ubyte) || is(Value == ushort)
+            || is(Value == uint) || is(Value == ulong) || is(Value == char[])
+            || is(Value == const(char)[]) || is(Value == immutable(char)[]);
 }
