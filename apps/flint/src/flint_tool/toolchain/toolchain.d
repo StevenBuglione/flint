@@ -362,6 +362,50 @@ bool canonicalToolchain(const ref Toolchain toolchain, scope const(string)[] nam
     return probe.ok;
 }
 
+/// Whether the DMD configuration next to `dmd` would split its own paths: the toolchain lies under a path with
+/// whitespace and a DFLAGS argument uses %@P% unquoted (FLINT-E0821).
+bool dmdConfSplits(string dmd)
+{
+    import std.algorithm.searching : any, canFind, startsWith;
+    import std.array : split;
+    import std.ascii : isWhite;
+    import std.path : buildPath, dirName;
+    import std.string : lineSplitter;
+    import flint_tool.support.files : readIfPresent;
+
+    if (!dmd.any!isWhite)
+        return false;
+    foreach (line; readIfPresent(buildPath(dirName(dmd), "dmd.conf")).lineSplitter)
+    {
+        if (!line.startsWith("DFLAGS="))
+            continue;
+        foreach (token; line["DFLAGS=".length .. $].split)
+        {
+            if (token.canFind("%@P%") && !token.startsWith("\""))
+                return true;
+        }
+    }
+    return false;
+}
+
+/// The libraries Phobos' std.net.curl tries, at run time, when DUB downloads from code.dlang.org.
+immutable string[] dubCurlLibraries = [
+    "libcurl.so", "libcurl.so.4", "libcurl-gnutls.so.4", "libcurl-nss.so.4", "libcurl.so.3"
+];
+
+/// How to make libcurl loadable for DUB.
+enum dubCurlFix = "install libcurl (Debian/Ubuntu: sudo apt-get install libcurl4), or point LD_LIBRARY_PATH at the "
+    ~ "directory holding libcurl.so.4 (NixOS: export LD_LIBRARY_PATH=\"$(nix-build '<nixpkgs>' -A curl.out "
+    ~ "--no-out-link)/lib\")";
+
+/// The libcurl DUB would load, or null when the loader finds none (FLINT-E0820 is then the caller's to raise).
+string dubCurl()
+{
+    import flint_tool.sys.posix : loadableLibrary;
+
+    return loadableLibrary(dubCurlLibraries);
+}
+
 /// The commands `flint toolchain install` runs.
 string[][] installCommands(const ref Home home, string directory, bool pgo, string linker,
         bool sanitizers = false, bool musl = false)

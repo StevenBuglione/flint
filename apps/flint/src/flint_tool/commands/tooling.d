@@ -119,6 +119,8 @@ int commandToolchainInstall(ref Session session, ToolchainInstallArgs args)
             session.say(command.join(" "));
         return finish(session, report, payload);
     }
+    if (!downloadsWork(session, payload.commands, report))
+        return finish(session, report, payload);
     // The installer replaces dmd in place; compile servers running it would make the file busy.
     import std.conv : to;
     import flint_tool.check.structural : realPath;
@@ -147,6 +149,25 @@ int commandToolchainInstall(ref Session session, ToolchainInstallArgs args)
     return finish(session, report, payload);
 }
 
+/// The quality tools are fetched with DUB, whose HTTP client loads libcurl at run time; check that before spending
+/// minutes on the compilers (FLINT-E0820).
+private bool downloadsWork(ref Session session, scope const string[][] commands, ref Report report)
+{
+    import std.algorithm.searching : canFind, endsWith;
+    import flint_tool.toolchain.toolchain : dubCurl, dubCurlFix;
+
+    foreach (command; commands)
+    {
+        if (command.length > 1 && command[1].endsWith("install_quality_tools.py") && dubCurl().length == 0)
+        {
+            report.error("FLINT-E0820",
+                    "DUB cannot load libcurl, so it cannot fetch the pinned dfmt and D-Scanner", dubCurlFix);
+            return false;
+        }
+    }
+    return true;
+}
+
 /// Run one installer command with the toolchain being installed first on PATH.
 private bool runInstaller(ref Session session, string directory, string[] command, out string output, ref Report report)
 {
@@ -168,20 +189,50 @@ private bool runInstaller(ref Session session, string directory, string[] comman
     launch.environment = [EnvVar("PATH", bins ~ ":" ~ environment.get("PATH", "/usr/bin:/bin"))];
     const json = session.json;
     string collected;
+    string errors;
+    // Standard output (progress) streams; standard error is kept for the log and summarised on failure, so a
+    // Python traceback never lands on the terminal.
     const outcome = streamed(command, launch, (scope const(char)[] text) @safe {
         collected ~= text;
         if (!json)
             writeError(text);
-    }, (scope const(char)[] text) @safe {
-        if (!json)
-            writeError(text);
-    });
+    }, (scope const(char)[] text) @safe { errors ~= text; });
     output = collected;
+    const log = installLog(session, command, collected, errors);
     if (outcome.ok)
         return true;
-    report.error("FLINT-E0814", command.join(" ") ~ " failed" ~ (outcome.failure.length
-            ? ": " ~ outcome.failure : ""), "fix the installer error above and rerun the install");
+    const reason = lastLine(errors).length ? lastLine(errors) : outcome.failure;
+    report.error("FLINT-E0814", command.join(" ") ~ " failed" ~ (reason.length ? ": " ~ reason : ""),
+            "the installer's complete output is in " ~ log ~ "; fix the cause and rerun flint toolchain install");
     return false;
+}
+
+/// Append one installer run to <flint>/.flint/logs/toolchain-install.log; returns the log's path.
+private string installLog(ref Session session, scope const string[] command, string output, string errors)
+{
+    import std.array : join;
+    import std.file : append, mkdirRecurse;
+    import std.path : buildPath;
+
+    const directory = buildPath(session.home.root, ".flint", "logs");
+    mkdirRecurse(directory);
+    const path = buildPath(directory, "toolchain-install.log");
+    append(path, "$ " ~ command.join(" ") ~ "\n" ~ output ~ errors ~ "\n");
+    return path;
+}
+
+/// The last non-empty line, such as the message a Python installer exits with.
+string lastLine(string text)
+{
+    import std.string : lineSplitter, strip;
+
+    string found;
+    foreach (line; text.lineSplitter)
+    {
+        if (line.strip.length)
+            found = line.strip.idup;
+    }
+    return found;
 }
 
 private bool writeToolchainReceipt(ref Session session, string directory, scope const(string)[] outputs,
@@ -241,6 +292,7 @@ int commandDoctor(ref Session session, DoctorArgs args)
     doctor.toolchain(session);
     doctor.environmentSwitches();
     doctor.compileServer();
+    doctor.dubDownloads();
     doctor.native(session);
     doctor.peers(session);
     doctor.project(session, args.project);
@@ -280,6 +332,16 @@ private struct Doctor
             add(component.name, component.present && component.versionMatches ? "ok" : "error",
                     component.present ? component.reported ~ " at " ~ component.path : "missing: " ~ component.path);
         add("fork", found.fork.verified ? "ok" : found.fork.installed ? "warning" : "error", forkDetail(found.fork));
+        {
+            import flint_tool.toolchain.toolchain : dmdConfSplits;
+
+            if (found.dmd.present && dmdConfSplits(found.dmd.path))
+            {
+                add("dmd.conf", "error", "unquoted %@P% arguments under a path with spaces break every DMD build");
+                const problem = found.dmd.path ~ "'s dmd.conf splits its include paths at the space in its path";
+                report.add(diagnostic("FLINT-E0821", Severity.error, problem, "flint toolchain install"));
+            }
+        }
         foreach (item; problems.items)
         {
             // Missing or wrong components stop builds; an unverified fork only makes them non-canonical.
@@ -298,6 +360,18 @@ private struct Doctor
             report.add(diagnostic("FLINT-E0812", Severity.warning,
                     "PATH selects " ~ onPath ~ " instead of " ~ pinned, fix));
         }
+    }
+
+    void dubDownloads()
+    {
+        import flint_tool.toolchain.toolchain : dubCurl, dubCurlFix;
+
+        const curl = dubCurl();
+        if (curl.length)
+            return add("dub downloads", "ok", "DUB's HTTP client can load " ~ curl);
+        add("dub downloads", "warning", "DUB cannot load libcurl, so dub fetch and flint toolchain install fail");
+        report.add(diagnostic("FLINT-E0820", Severity.warning,
+                "DUB cannot load libcurl (tried " ~ "libcurl.so, libcurl.so.4 and its variants)", dubCurlFix));
     }
 
     void environmentSwitches()

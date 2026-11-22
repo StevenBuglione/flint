@@ -157,7 +157,7 @@ private bool releaseBuild(ref Session session, const ref Target project, const r
     build.locked = request.locked;
     // DUB's up-to-date check does not see a change of target, so packaging always rebuilds.
     build.force = true;
-    const configuration = buildPath(project.root, ".flint", "generated", "ldc2-" ~ target.name ~ ".conf");
+    const configuration = configurationPath(project.root, target.name, ldcConfiguration(target));
     if (target.cross)
     {
         writeIfChanged(configuration, ldcConfiguration(target));
@@ -166,6 +166,22 @@ private bool releaseBuild(ref Session session, const ref Target project, const r
     build.targetDflags = targetDflags(target, configuration) ~ "-L--strip-all";
     build.targetCflags = targetCflags(target);
     return buildProject(session, project.manifest, project.resolution, build, outcome, report);
+}
+
+/// Where the cross target's ldc2.conf goes. It reaches every package through DFLAGS, which DUB splits on whitespace,
+/// so a project under a path with spaces gets a content-addressed copy in the temporary directory instead.
+string configurationPath(string root, string target, string content)
+{
+    import std.algorithm.searching : any;
+    import std.ascii : isWhite;
+    import std.file : tempDir;
+    import std.path : buildPath;
+    import flint_tool.support.files : sha256Hex;
+
+    const local = buildPath(root, ".flint", "generated", "ldc2-" ~ target ~ ".conf");
+    if (!local.any!isWhite)
+        return local;
+    return buildPath(tempDir(), "flint-ldc2-" ~ sha256Hex(cast(const(ubyte)[]) content)[0 .. 16] ~ ".conf");
 }
 
 /// Shared libraries a glibc executable may need: the C library itself.

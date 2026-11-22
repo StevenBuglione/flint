@@ -196,6 +196,20 @@ Status: proposed by the Milestone 8 implementation, for the project owner's revi
 
 8. **musl.** For `linux-x86_64-musl`, the resolver generates a CMake toolchain file for the pinned clang and the pinned musl sysroot. The recipes' CMake providers then cross-build on the glibc host. `native_build.py` refuses an unverified cross build of the other providers, as before; those build on a musl runner.
 
+### 6. Hosts: paths with spaces and DUB's libcurl
+
+These are two findings from installing on the NixOS performance runner, whose checkout lives under a path with a space.
+
+1. **Paths with spaces.** flint passes every path as its own argument, or quotes it in the files it writes: recipes, selections, receipts, the musl `ldc2.conf` and the CMake toolchain file.
+   - **The one exception, `DFLAGS`:** DUB splits it at whitespace. The only path flint puts there is the musl target's `-conf=`. When the project path has whitespace, that file is written content-addressed into the temporary directory instead.
+   - **Older toolchains:** DMD itself splits unquoted `%@P%` arguments in `dmd.conf`, and toolchains installed before `install_toolchains.py` quoted them (`c5be651`) fail. `flint doctor` reports such a `dmd.conf` under a path with spaces as FLINT-E0821, and reinstalling fixes it.
+   - **Verified:** a project and a toolchain both under paths with spaces build, test (with sanitizers too), check and package for musl with a container. `tests/test_flint_package.py` keeps the project half.
+
+2. **DUB's libcurl.** DUB downloads through Phobos' `std.net.curl`, which loads `libcurl.so.4` (or a variant) at run time. On NixOS the loader does not find it, so `dub fetch` fails although curl works.
+   - **`flint doctor`:** probes the same library names with `dlopen` and reports FLINT-E0820, with the fix: install libcurl, or point `LD_LIBRARY_PATH` at it (the NixOS command is given).
+   - **`flint toolchain install`:** checks the same before spending minutes on the compilers. `install_quality_tools.py` checks it too, and exits with a plain message instead of a traceback.
+   - **Installer errors:** installer standard error now goes to `<flint>/.flint/logs/toolchain-install.log`, and a failure is summarised by its last line in FLINT-E0814.
+
 ## Consequences
 
 - Repository-path dependencies resolve reproducibly. They work offline from the cache or from `vendor/`, and are tested only against local git fixture repositories (`tests/test_flint_deps.py`).

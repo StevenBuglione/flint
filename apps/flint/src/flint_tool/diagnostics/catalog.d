@@ -452,6 +452,16 @@ immutable CodeInfo[] catalog = [
     CodeInfo("FLINT-E0819", ExitCode.environment, "native package failed to build",
             "A native package failed to build from its pinned source with the pinned toolchain. The message names "
             ~ "the package and the log; the engine's own output is never shown.", "flint build --verbose"),
+    CodeInfo("FLINT-E0820", ExitCode.environment, "DUB cannot load libcurl",
+            "DUB downloads from code.dlang.org through Phobos' std.net.curl, which loads libcurl at run time "
+            ~ "(libcurl.so.4 and its variants). On hosts whose loader does not search libcurl's directory, NixOS for "
+            ~ "example, every `dub fetch` fails although curl itself works. flint's builds never download, but "
+            ~ "`flint toolchain install` fetches the pinned dfmt and D-Scanner sources with DUB.",
+            "export LD_LIBRARY_PATH=\"$(nix-build '<nixpkgs>' -A curl.out --no-out-link)/lib\"   # NixOS"),
+    CodeInfo("FLINT-E0821", ExitCode.environment, "dmd.conf breaks under a path with spaces",
+            "DMD expands %@P% (the directory of dmd.conf) before it splits DFLAGS at whitespace. A toolchain installed "
+            ~ "before tools/install_toolchains.py quoted those arguments fails every DMD build once its path contains "
+            ~ "a space. Reinstalling quotes them; nothing else changes.", "flint toolchain install"),
     // 09xx: receipts.
     CodeInfo("FLINT-E0901", ExitCode.environment, "receipt missing",
             "Every artifact flint builds has a JSON receipt next to it (<artifact>.receipt.json).",

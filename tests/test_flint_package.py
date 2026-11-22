@@ -169,5 +169,17 @@ class PackageTests(unittest.TestCase):
         self.assertIn('musl', {c['name'] for c in document['components']})
 
 
+    @unittest.skipUnless(MUSL, 'musl toolchain not installed (flint toolchain install --musl)')
+    def test_7_a_project_under_a_path_with_spaces_packages(self):
+        with tempfile.TemporaryDirectory(prefix='flint package ') as directory:
+            status, document = flint_json('new', 'spaced', cwd=directory, env=self.env)
+            self.assertEqual(status, 0, document['diagnostics'])
+            project = Path(directory) / 'spaced'
+            # DUB splits DFLAGS at whitespace, so the musl target's ldc2.conf must not live under this path.
+            status, document = flint_json('package', '--container', cwd=project, env=self.env)
+            self.assertEqual(status, 0, document['diagnostics'])
+            self.assertTrue(document['fully_static'])
+
+
 if __name__ == '__main__':
     unittest.main()

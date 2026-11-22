@@ -98,6 +98,32 @@ private bool probeProcess(int pid) @trusted nothrow @nogc
     return kill(pid, 0) == 0;
 }
 
+/// The first of `names` the dynamic loader can open, or null. Each library is closed again at once.
+string loadableLibrary(scope const(string)[] names)
+{
+    import std.string : toStringz;
+
+    foreach (name; names)
+    {
+        if (probeLibrary(name.toStringz))
+            return name;
+    }
+    return null;
+}
+
+// SAFETY: path is a NUL-terminated GC copy kept alive by the caller; the handle dlopen returns is closed before
+// returning and never escapes this function.
+private bool probeLibrary(const(char)* path) @trusted nothrow @nogc
+{
+    import core.sys.posix.dlfcn : RTLD_LAZY, dlclose, dlopen;
+
+    auto handle = dlopen(path, RTLD_LAZY);
+    if (handle is null)
+        return false;
+    dlclose(handle);
+    return true;
+}
+
 /// Write all of `text` to standard output.
 void writeOutput(scope const(char)[] text)
 {
