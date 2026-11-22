@@ -281,7 +281,8 @@ LLVM_ARCHIVE = 'LLVM-22.1.8-Linux-X64.tar.xz'
 LLVM_ROOT = 'LLVM-22.1.8-Linux-X64'
 # The sanitizer lane needs the compiler driver, its resource directory (headers
 # and compiler-rt) and the symbolizer. The rest of the 1.9 GB release is unused.
-LLVM_MEMBERS = ('bin/clang', 'bin/clang++', 'bin/clang-22', 'bin/llvm-symbolizer', 'lib/clang/22/')
+# clang-tidy is the fixed static-analysis profile for embedded C (ADR-021 section 5, ADR-023).
+LLVM_MEMBERS = ('bin/clang', 'bin/clang++', 'bin/clang-22', 'bin/clang-tidy', 'bin/llvm-symbolizer', 'lib/clang/22/')
 
 
 def keep_llvm_member(name):

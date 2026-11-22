@@ -543,6 +543,21 @@ private string[] testCompilers(ref Session session, string option, ref Report re
     }
 }
 
+/// `flint test --sanitize` builds with LDC only, in a project; the workspace lane is tools/ci.py's.
+private string[] sanitizeCompilers(string option, TargetKind kind, ref Report report)
+{
+    if (kind == TargetKind.workspace)
+    {
+        report.error("FLINT-E0004", "flint test --sanitize runs in a project",
+                "the workspace sanitizer lane, with sanitized native providers: python3 tools/ci.py sanitizers");
+        return null;
+    }
+    if (option.length == 0 || option == "ldc" || option == "ldc2")
+        return ["ldc2"];
+    report.error("FLINT-E0003", "--sanitize builds with LDC, not `" ~ option ~ "`", "flint test --sanitize");
+    return null;
+}
+
 /// Build and run a project's unittest configuration with each compiler.
 private TestRun[] testProject(ref Session session, const ref Target target,
         scope const(string)[] compilers, BuildRequest request, ref Report report)
@@ -567,6 +582,12 @@ private TestRun[] testProject(ref Session session, const ref Target target,
         session.progress("Running", display(outcome.artifact));
         Launch launch;
         launch.directory = target.root;
+        if (request.sanitize)
+        {
+            import flint_tool.engine.builder : sanitizerRunEnvironment;
+
+            launch.environment = sanitizerRunEnvironment(session);
+        }
         const result = capture([outcome.artifact], launch);
         run.summary = unittestSummary(result.combined());
         run.ok = result.ok;
@@ -589,10 +610,13 @@ int commandTest(ref Session session, TestArgs args)
     if (!locate(session, args.project, target, report))
         return finish(session, report, payload);
     payload.project = info(session, target);
-    const compilers = testCompilers(session, args.compiler, report);
+    const compilers = args.sanitize ? sanitizeCompilers(args.compiler, target.kind,
+            report) : testCompilers(session, args.compiler, report);
     if (compilers.length == 0)
         return finish(session, report, payload);
-    auto request = requestOf("test", null, null, null, args.verify, args.locked, args.force);
+    auto request = requestOf(args.sanitize ? "sanitize" : "test", null, null, null, args.verify,
+            args.locked, args.force);
+    request.sanitize = args.sanitize;
     if (target.kind == TargetKind.workspace)
     {
         const selected = selectedPackages(session, args.packages, report);
@@ -644,6 +668,8 @@ struct CheckPayload
     string[] checks;
     /// Sources the layout and safety rules covered.
     long files;
+    /// Embedded C sources clang-tidy covered.
+    long c_files;
     /// Diagnostics suppressed by waivers.
     long waived;
     /// Active waivers.
@@ -659,6 +685,7 @@ int commandCheck(ref Session session, CheckArgs args)
 {
     import std.path : buildPath;
     import flint_tool.check.quality : checkQuality, qualityFiles;
+    import flint_tool.engine.cbuild : nativeSources, tidyNativeC;
     import flint_tool.project.layout : checkProject;
     import flint_tool.project.lock : checkLock, renderLock;
     import flint_tool.toolchain.toolchain : componentPath, toolchainDirectory;
@@ -695,6 +722,12 @@ int commandCheck(ref Session session, CheckArgs args)
     payload.waivers = summary.waivers.dup;
     const files = qualityFiles([buildPath(target.root, "src"), buildPath(target.root, "test")]);
     payload.quality = checkQuality(files, dfmt, dscanner, session.home.root, target.root, report);
+    if (nativeSources(target.manifest).length)
+    {
+        payload.checks ~= "clang-tidy";
+        payload.c_files = cast(long) nativeSources(target.manifest).length;
+        tidyNativeC(session.home, target.manifest, report);
+    }
     if (!session.json && report.ok)
         session.progress("Finished", target.manifest.name ~ ": " ~ countText(cast(size_t) summary.files,
                 "file") ~ " checked, " ~ countText(summary.waivers.length, "waiver"));

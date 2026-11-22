@@ -139,3 +139,34 @@ unittest
     expect(closest("dependecies", ["dependencies", "project"])).toEqual("dependencies");
     expect(closest("zzz", ["dependencies"]) is null).toEqual(true);
 }
+
+@("[native.c] configures embedded C and [native] declares native packages")
+unittest
+{
+    Manifest manifest;
+    const report = parse(header ~ "[native.c]\nsources = [\"native/**/*.c\"]\ninclude_dirs = [\"native/include\"]\n"
+            ~ "standard = \"c11\"\ndefines = [\"SHOP_FAST=1\"]\n[native]\nzlib = \"1.3.1\"\n"
+            ~ "openssl = { version = \"3.5.4\", linkage = \"bundled\" }\n"
+            ~ "libpq = { version = \"17.6\", system = true, options = { ssl = true } }\n", manifest);
+    expect(report.items.length).toEqual(0);
+    expect(manifest.nativeC.sources).toEqual(["native/**/*.c"]);
+    expect(manifest.nativeC.includeDirs).toEqual(["native/include"]);
+    expect(manifest.nativeC.standard).toEqual("c11");
+    expect(manifest.nativeC.defines).toEqual(["SHOP_FAST=1"]);
+    expect(manifest.natives.length).toEqual(3);
+    expect(manifest.natives[0].name).toEqual("zlib");
+    expect(manifest.natives[0].version_).toEqual("1.3.1");
+    expect(manifest.natives[0].linkage).toEqual("static");
+    expect(manifest.natives[1].linkage).toEqual("bundled");
+    expect(manifest.natives[2].system).toEqual(true);
+    expect(manifest.natives[2].options).toEqual(["ssl=true"]);
+}
+
+@("[native] rejects unknown keys and linkages")
+unittest
+{
+    Manifest manifest;
+    expect(codes(parse(header ~ "[native]\nzlib = { version = \"1.3.1\", linkage = \"shared\" }\n", manifest))).toEqual(
+            ["FLINT-E0105"]);
+    expect(codes(parse(header ~ "[native.c]\nflags = [\"-O0\"]\n", manifest)).length).toEqual(1);
+}

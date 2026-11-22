@@ -85,6 +85,8 @@ struct TestArgs
     @Option("locked", 0, "Fail when flint.lock is missing") bool locked;
     /// Rebuild everything.
     @Option("force", 'f', "Rebuild even when up to date") bool force;
+    /// ASan and UBSan.
+    @Option("sanitize", 0, "Build with ASan and UBSan (LDC, the sanitize profile; embedded C included)") bool sanitize;
     /// Live scenarios.
     @Option("scenarios", 0, "Also run declared live scenarios (mq: Kafka, JetStream)") bool scenarios;
     /// Project directory.
@@ -201,6 +203,8 @@ struct ToolchainInstallArgs
     @Option("no-pgo", 0, "Build the DMD fork without profile-guided optimisation") bool noPgo;
     /// Linker.
     @Option("dmd-linker", 0, "Configure DMD to link with this installed ld.lld or mold") string linker;
+    /// Sanitizer runtime.
+    @Option("sanitizers", 0, "Also build the LDC runtime flint test --sanitize links") bool sanitizers;
     /// JSON output.
     @Option("json", 0, "Emit flint.toolchain/1 JSON on stdout") bool json;
 }

@@ -352,7 +352,7 @@ bool canonicalToolchain(const ref Toolchain toolchain, scope const(string)[] nam
 }
 
 /// The commands `flint toolchain install` runs.
-string[][] installCommands(const ref Home home, string directory, bool pgo, string linker)
+string[][] installCommands(const ref Home home, string directory, bool pgo, string linker, bool sanitizers = false)
 {
     import std.path : buildPath;
 
@@ -364,7 +364,13 @@ string[][] installCommands(const ref Home home, string directory, bool pgo, stri
         dmd ~= ["--dmd-linker", linker];
     dmd ~= ["--destination", directory];
     string[][] commands = [
-        dmd, ["python3", installer, "--compiler", "ldc", "--destination", directory]
+        dmd, ["python3", installer, "--compiler", "ldc", "--destination", directory],
+        // The pinned clang compiles embedded C and runs clang-tidy (ADR-023).
+        ["python3", installer, "--compiler", "clang", "--destination", directory]
+    ];
+    if (sanitizers)
+        commands ~= [
+        "python3", installer, "--compiler", "ldc-sanitizer-runtime", "--destination", directory
     ];
     if (directory == buildPath(home.root, ".tools"))
         commands ~= ["python3", buildPath(home.root, "tools", "install_quality_tools.py")];

@@ -68,6 +68,36 @@ struct Unchecked
     string reason;
 }
 
+/// C embedded in the project, from [native.c] or the native/ directory (ADR-021 section 5).
+struct NativeC
+{
+    /// Source globs relative to the project; default `native/**/*.c`.
+    string[] sources;
+    /// Include directories relative to the project.
+    string[] includeDirs;
+    /// "c11" or "c17"; default from policy/native-c.toml.
+    string standard;
+    /// Preprocessor definitions, NAME or NAME=VALUE.
+    string[] defines;
+}
+
+/// One native (C or C++) package the project needs, resolved by Flint's native resolver (ADR-021 section 4).
+struct NativeDependency
+{
+    /// Recipe name, such as "zlib".
+    string name;
+    /// Exact version.
+    string version_;
+    /// "static" (default) or "bundled".
+    string linkage = "static";
+    /// Use the host's library instead; marks builds non-portable.
+    bool system;
+    /// Recipe options as NAME=VALUE.
+    string[] options;
+    /// One-based manifest line.
+    long line;
+}
+
 /// A parsed flint.toml.
 struct Manifest
 {
@@ -101,6 +131,10 @@ struct Manifest
     Waiver[] waivers;
     /// Unchecked local DUB dependencies.
     Unchecked[] unchecked;
+    /// Embedded C settings.
+    NativeC nativeC;
+    /// Native package dependencies.
+    NativeDependency[] natives;
 
     /// D module root: the name with hyphens replaced by underscores.
     string moduleRoot() const
@@ -167,7 +201,7 @@ immutable string[] knownTargets = [
 
 private immutable string[] sections = [
     "project", "build", "starters", "dependencies", "test-dependencies", "profile", "targets",
-    "waivers", "unchecked"
+    "waivers", "unchecked", "native"
 ];
 
 private immutable string[] projectKeys = ["name", "version", "flint", "type", "description"];
@@ -336,14 +370,95 @@ private struct Reader
         }
     }
 
-    /// [[waivers]] and [unchecked], the visible escape hatches; anything else is unknown.
+    /// [[waivers]], [unchecked] and [native]; anything else is unknown.
     void exceptions(ref const TomlEntry entry, ref Manifest manifest)
     {
         if (entry.path[0] == "waivers")
             return waivers(entry, manifest);
         if (entry.path[0] == "unchecked")
             return unchecked(entry, manifest);
+        if (entry.path[0] == "native")
+            return entry.path.length > 1 && entry.path[1] == "c" ? nativeC(entry, manifest) : native(entry, manifest);
         unknown(entry, entry.path[0], sections, "flint.toml");
+    }
+
+    void nativeC(ref const TomlEntry entry, ref Manifest manifest)
+    {
+        static immutable string[] keys = ["sources", "include_dirs", "standard", "defines"];
+        if (entry.path.length != 3 || !contains(keys, entry.path[2]))
+            return unknown(entry, entry.path[$ - 1], keys, "[native.c]");
+        if (entry.path[2] == "standard")
+        {
+            string value;
+            if (str(entry, value))
+                manifest.nativeC.standard = value;
+            return;
+        }
+        string[] values;
+        if (!strings(entry, values))
+            return;
+        if (entry.path[2] == "sources")
+            manifest.nativeC.sources = values;
+        else if (entry.path[2] == "include_dirs")
+            manifest.nativeC.includeDirs = values;
+        else
+            manifest.nativeC.defines = values;
+    }
+
+    void native(ref const TomlEntry entry, ref Manifest manifest)
+    {
+        if (entry.path.length < 2)
+            return fail("FLINT-E0105", entry.offset, "[native] maps recipe names to versions",
+                    "[native]\nzlib = \"1.3.1\"");
+        const name = entry.path[1];
+        size_t index = manifest.natives.length;
+        foreach (i, ref existing; manifest.natives)
+        {
+            if (existing.name == name)
+                index = i;
+        }
+        if (index == manifest.natives.length)
+            manifest.natives ~= NativeDependency(name, null, "static", false, null,
+                    positionOf(text, entry.offset).line);
+        if (entry.path.length == 2)
+        {
+            string value;
+            if (str(entry, value))
+                manifest.natives[index].version_ = value;
+            return;
+        }
+        nativeField(entry, manifest.natives[index]);
+    }
+
+    void nativeField(ref const TomlEntry entry, ref NativeDependency dependency)
+    {
+        static immutable string[] keys = ["version", "linkage", "system", "options"];
+        const key = entry.path[2];
+        if (!contains(keys, key))
+            return unknown(entry, key, keys, "native package `" ~ dependency.name ~ "`");
+        if (key == "options")
+        {
+            if (entry.path.length == 4)
+                dependency.options ~= entry.path[3] ~ "=" ~ (entry.json.length > 1
+                        && entry.json[0] == '"' ? entry.json[1 .. $ - 1] : entry.json);
+            return;
+        }
+        if (key == "system")
+        {
+            dependency.system = entry.json == "true";
+            if (entry.json != "true" && entry.json != "false")
+                fail("FLINT-E0105", entry.offset, "`system` is true or false", "system = true");
+            return;
+        }
+        string value;
+        if (!str(entry, value))
+            return;
+        if (key == "version")
+            dependency.version_ = value;
+        else if (value == "static" || value == "bundled")
+            dependency.linkage = value;
+        else
+            fail("FLINT-E0105", entry.offset, "`linkage` is `static` or `bundled`", "linkage = \"static\"");
     }
 
     /// An empty table, such as a bare [dependencies] header, declares nothing.
