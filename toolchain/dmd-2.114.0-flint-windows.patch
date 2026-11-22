@@ -1,0 +1,723 @@
+diff --git c/dmd/flintlink.d w/dmd/flintlink.d
+index f4e30b1..2bc1654 100644
+--- c/dmd/flintlink.d
++++ w/dmd/flintlink.d
+@@ -17,6 +17,9 @@
+  */
+ module dmd.flintlink;
+ 
++// The direct link replaces the POSIX cc -> collect2 -> ld chain; Windows links through link.exe or lld-link.
++version (Posix):
++
+ version (Posix):
+ 
+ import core.stdc.errno;
+diff --git c/dmd/flintserver.d w/dmd/flintserver.d
+index d7b6893..68aad5b 100644
+--- c/dmd/flintserver.d
++++ w/dmd/flintserver.d
+@@ -30,6 +30,8 @@ import core.stdc.errno;
+ import core.stdc.stdio;
+ import core.stdc.stdlib;
+ import core.stdc.string;
++version (Posix)
++{
+ import core.sys.posix.fcntl;
+ import core.sys.posix.poll;
+ import core.sys.posix.signal;
+@@ -38,6 +40,7 @@ import core.sys.posix.sys.stat;
+ import core.sys.posix.sys.un;
+ import core.sys.posix.sys.wait;
+ import core.sys.posix.unistd;
++}
+ import core.stdc.stdlib : atexit;
+ 
+ import dmd.arraytypes : Modules, Strings;
+@@ -70,6 +73,8 @@ __gshared Strings zygoteImportPaths;
+ /// Top level packages (or modules) of the prelude, e.g. `std`, `core`, `object`.
+ __gshared Strings zygoteTopLevel;
+ 
++version (Posix)
++{
+ extern (C) private
+ {
+     int flock(int fd, int operation);
+@@ -81,6 +86,7 @@ extern (C) private
+ }
+ private enum LOCK_EX = 2, LOCK_NB = 4;
+ private enum SYS_pidfd_open = 434;
++}
+ private enum uint magic = 0x464C4E54; // "FLNT"
+ 
+ /*********************************************************************
+@@ -135,6 +141,8 @@ private ulong fnv(ulong h, const(void)* data, size_t n)
+     return h;
+ }
+ 
++version (Posix)
++{
+ private bool fileExists(const(char)* path)
+ {
+     stat_t st;
+@@ -630,6 +638,661 @@ private void handleRequest(int conn, ChildEntry entry)
+     _exit(status);
+ }
+ 
++} // version (Posix)
++
++version (Windows)
++{
++import core.sys.windows.windef;
++import core.sys.windows.winbase;
++import core.sys.windows.winnt;
++import core.sys.windows.winerror;
++import core.sys.windows.winnls : CP_UTF8, MultiByteToWideChar, WideCharToMultiByte;
++import dmd.common.outbuffer : OutBuffer;
++
++/*
++ * Windows has no fork(), so the server is a pool of pre-warmed, single-use worker processes (ADR-025 section 4,
++ * ADR-026).  Each worker takes one of `poolSize` slots (named mutexes, released by the kernel if it dies), loads
++ * and analyses the prelude, then waits on an instance of the key's named pipe.  The kernel connects each client
++ * to an idle instance.  On connect the worker frees its slot, starts its replacement in the background, takes
++ * the client's working directory, environment and standard handles, compiles once, reports the exit status and
++ * exits.  A client finding no worker starts the pool and compiles in-process; one finding every worker busy
++ * compiles in-process too.  The client duplicates its standard handles into the worker it reached, which also
++ * proves that worker belongs to the same user: otherwise OpenProcess(PROCESS_DUP_HANDLE) fails and the client
++ * compiles in-process.
++ */
++
++private extern (Windows) nothrow @nogc
++{
++    BOOL GetNamedPipeServerProcessId(HANDLE pipe, ULONG* id);
++    BOOL InitializeProcThreadAttributeList(void* list, DWORD count, DWORD flags, size_t* size);
++    BOOL UpdateProcThreadAttribute(void* list, DWORD flags, size_t attribute, void* value, size_t size,
++        void* previous, size_t* returned);
++    void DeleteProcThreadAttributeList(void* list);
++    BOOL ProcessIdToSessionId(DWORD process, DWORD* session);
++}
++
++private extern (C) nothrow @nogc
++{
++    int _open_osfhandle(ptrdiff_t handle, int flags);
++    int _dup2(int from, int to);
++    int _wputenv(const(wchar)* entry);
++}
++
++private enum DWORD createBreakawayFromJob = 0x0100_0000;
++private enum DWORD createNewProcessGroup = 0x0000_0200;
++private enum DWORD detachedProcess = 0x0000_0008;
++private enum DWORD createUnicodeEnvironment = 0x0000_0400;
++private enum DWORD extendedStartupInfoPresent = 0x0008_0000;
++private enum DWORD belowNormalPriorityClass = 0x0000_4000;
++private enum DWORD normalPriorityClass = 0x0000_0020;
++private enum size_t handleListAttribute = 0x0002_0002;
++private enum DWORD pipeRejectRemoteClients = 0x0000_0008;
++
++/// A malloc'd NUL-terminated UTF-16 copy of a UTF-8 string.
++private wchar* widen(const(char)* text)
++{
++    const n = MultiByteToWideChar(CP_UTF8, 0, text, -1, null, 0);
++    auto wide = cast(wchar*) malloc((n > 0 ? n : 1) * wchar.sizeof);
++    if (n <= 0 || MultiByteToWideChar(CP_UTF8, 0, text, -1, wide, n) != n)
++        wide[0] = 0;
++    return wide;
++}
++
++/// A malloc'd NUL-terminated UTF-8 copy of a UTF-16 string.
++private char* narrow(const(wchar)* text)
++{
++    const n = WideCharToMultiByte(CP_UTF8, 0, text, -1, null, 0, null, null);
++    auto utf8 = cast(char*) malloc(n > 0 ? n : 1);
++    if (n <= 0 || WideCharToMultiByte(CP_UTF8, 0, text, -1, utf8, n, null, null) != n)
++        utf8[0] = 0;
++    return utf8;
++}
++
++private bool fileExists(const(char)* path)
++{
++    auto wide = widen(path);
++    scope (exit) free(wide);
++    return GetFileAttributesW(wide) != INVALID_FILE_ATTRIBUTES;
++}
++
++private bool fileIdentity(const(char)* path, out WIN32_FILE_ATTRIBUTE_DATA data)
++{
++    auto wide = widen(path);
++    scope (exit) free(wide);
++    return GetFileAttributesExW(wide, GET_FILEEX_INFO_LEVELS.GetFileExInfoStandard, &data) != 0;
++}
++
++private const(char)* selfExe()
++{
++    __gshared char* cached;
++    if (cached)
++        return cached;
++    wchar[32_768] wide;
++    const n = GetModuleFileNameW(null, wide.ptr, cast(DWORD) wide.length);
++    if (n == 0 || n >= wide.length)
++        return null;
++    cached = narrow(wide.ptr);
++    return cached;
++}
++
++private bool writeAll(HANDLE handle, const(void)* data, size_t n)
++{
++    auto p = cast(const(ubyte)*) data;
++    while (n)
++    {
++        DWORD written;
++        const chunk = n > 1 << 20 ? 1 << 20 : cast(DWORD) n;
++        if (!WriteFile(handle, p, chunk, &written, null) || written == 0)
++            return false;
++        p += written;
++        n -= written;
++    }
++    return true;
++}
++
++private bool readAll(HANDLE handle, void* data, size_t n)
++{
++    auto p = cast(ubyte*) data;
++    while (n)
++    {
++        DWORD read;
++        const chunk = n > 1 << 20 ? 1 << 20 : cast(DWORD) n;
++        if (!ReadFile(handle, p, chunk, &read, null) || read == 0)
++            return false;
++        p += read;
++        n -= read;
++    }
++    return true;
++}
++
++/// Workers per key: two per hardware thread, at least eight, or FLINT_DMD_SERVER_POOL.
++private int poolSize()
++{
++    SYSTEM_INFO info;
++    GetSystemInfo(&info);
++    int size = 2 * cast(int) info.dwNumberOfProcessors;
++    if (size < 8)
++        size = 8;
++    if (const pool = getenv("FLINT_DMD_SERVER_POOL"))
++        size = atoi(pool);
++    return size > 0 ? size : 1;
++}
++
++/// Append one argument to a command line with the Microsoft C runtime's quoting rules.
++private void quoteArgument(ref OutBuffer line, const(char)[] argument)
++{
++    if (line.length)
++        line.writeByte(' ');
++    bool plain = argument.length != 0;
++    foreach (c; argument)
++        if (c == ' ' || c == '\t' || c == '\n' || c == '\v' || c == '"')
++            plain = false;
++    if (plain)
++    {
++        line.writestring(argument);
++        return;
++    }
++    line.writeByte('"');
++    size_t slashes;
++    foreach (c; argument)
++    {
++        if (c == '\\')
++        {
++            ++slashes;
++            continue;
++        }
++        foreach (_; 0 .. c == '"' ? slashes * 2 + 1 : slashes)
++            line.writeByte('\\');
++        slashes = 0;
++        line.writeByte(c);
++    }
++    foreach (_; 0 .. slashes * 2)
++        line.writeByte('\\');
++    line.writeByte('"');
++}
++
++/// Start `count` workers running `commandLine` (UTF-16), detached, outside the caller's job, inheriting only
++/// NUL as standard input and output and the server log as standard error.
++private void startWorkers(const(wchar)* commandLine, const(char)* logPath, int count)
++{
++    SECURITY_ATTRIBUTES inherit = SECURITY_ATTRIBUTES(SECURITY_ATTRIBUTES.sizeof, null, TRUE);
++    auto nul = CreateFileW("NUL"w.ptr, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, &inherit,
++        OPEN_EXISTING, 0, null);
++    if (nul == INVALID_HANDLE_VALUE)
++        return;
++    scope (exit) CloseHandle(nul);
++    auto logWide = widen(logPath);
++    scope (exit) free(logWide);
++    auto log = CreateFileW(logWide, FILE_APPEND_DATA, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
++        &inherit, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, null);
++    if (log == INVALID_HANDLE_VALUE)
++        log = nul;
++    scope (exit) if (log != nul) CloseHandle(log);
++    HANDLE[2] inherited = [nul, log];
++    size_t size;
++    InitializeProcThreadAttributeList(null, 1, 0, &size);
++    auto list = malloc(size);
++    if (!list || !InitializeProcThreadAttributeList(list, 1, 0, &size))
++        return;
++    scope (exit) { DeleteProcThreadAttributeList(list); free(list); }
++    if (!UpdateProcThreadAttribute(list, 0, handleListAttribute, inherited.ptr,
++        (log == nul ? 1 : 2) * HANDLE.sizeof, null, null))
++        return;
++    static struct StartupInfoEx { STARTUPINFOW startup; void* attributes; }
++    StartupInfoEx info;
++    info.startup.cb = StartupInfoEx.sizeof;
++    info.startup.dwFlags = STARTF_USESTDHANDLES;
++    info.startup.hStdInput = nul;
++    info.startup.hStdOutput = nul;
++    info.startup.hStdError = log;
++    info.attributes = list;
++    // A neutral working directory: a worker must never hold its starter's directory open for its lifetime.
++    auto neutral = widen(logDirectory());
++    scope (exit) free(neutral);
++    const length = wcslen(commandLine);
++    auto copy = cast(wchar*) malloc((length + 1) * wchar.sizeof);
++    scope (exit) free(copy);
++    foreach (i; 0 .. count)
++    {
++        copy[0 .. length + 1] = commandLine[0 .. length + 1];
++        PROCESS_INFORMATION process;
++        // Warming workers run below normal priority, so they never take CPU from compiles in progress.
++        DWORD flags = detachedProcess | createNewProcessGroup | extendedStartupInfoPresent | belowNormalPriorityClass;
++        // Outside the caller's job, so a build's job object does not end the pool with the build.
++        if (!CreateProcessW(null, copy, null, null, TRUE, flags | createBreakawayFromJob, null, neutral,
++            &info.startup, &process))
++        {
++            copy[0 .. length + 1] = commandLine[0 .. length + 1];
++            if (!CreateProcessW(null, copy, null, null, TRUE, flags, null, neutral, &info.startup, &process))
++                return;
++        }
++        CloseHandle(process.hThread);
++        CloseHandle(process.hProcess);
++    }
++}
++
++private extern (C) size_t wcslen(const(wchar)* text) nothrow @nogc;
++
++/// The directory of server logs: %TEMP%\flint-dmd.
++private const(char)* logDirectory()
++{
++    __gshared char[1024] dir;
++    wchar[1024] temp;
++    const n = GetTempPathW(cast(DWORD) temp.length, temp.ptr);
++    auto base = n ? narrow(temp.ptr) : null;
++    snprintf(dir.ptr, dir.length, "%sflint-dmd", base ? base : ".\\".ptr);
++    free(base);
++    auto wide = widen(dir.ptr);
++    CreateDirectoryW(wide, null);
++    free(wide);
++    return dir.ptr;
++}
++
++/// The named pipe of a server key, private to this logon session.
++private void pipeName(ulong key, char[] buffer)
++{
++    DWORD session;
++    ProcessIdToSessionId(GetCurrentProcessId(), &session);
++    snprintf(buffer.ptr, buffer.length, "\\\\.\\pipe\\flint-dmd-%u-%016llx", cast(uint) session, key);
++}
++
++/// The name of pool slot `index` for the server whose pipe or key text ends in `-<key>`.
++private void slotName(const(char)* keyText, int index, char[] buffer)
++{
++    snprintf(buffer.ptr, buffer.length, "Local\\flint-dmd%s-slot-%d", keyText, index);
++}
++
++/// Whether any worker of this pool exists: each holds its slot until it has reported its request.
++private bool poolAlive(const(char)* keyText)
++{
++    foreach (i; 0 .. poolSize())
++    {
++        char[200] name;
++        slotName(keyText, i, name);
++        if (auto m = OpenMutexA(SYNCHRONIZE, FALSE, name.ptr))
++        {
++            CloseHandle(m);
++            return true;
++        }
++    }
++    return false;
++}
++
++/**
++ * Try to run this compile in a warm worker.
++ * Returns: true and sets `status` when a worker handled the request.
++ */
++bool tryCompileServer(const(char)[][] dargs, out int status)
++{
++    // Experimental on Windows (ADR-026): replacing a single-use worker costs a full prelude analysis, so the pool
++    // is used only when FLINT_DMD_SERVER=1 asks for it.
++    const env = getenv("FLINT_DMD_SERVER");
++    if (!env || env[0] != '1')
++        return false;
++    foreach (a; dargs)
++        if (a.length > 13 && a[0 .. 13] == "-fork-server=")
++            return false;
++    // Project or user configuration files change the configuration; stay local.
++    if (fileExists("sc.ini"))
++        return false;
++    if (const home = getenv("HOME"))
++    {
++        char[4096] hc;
++        snprintf(hc.ptr, hc.length, "%s\\sc.ini", home);
++        if (fileExists(hc.ptr))
++            return false;
++    }
++
++    Strings args = Strings(dargs.length);
++    foreach (i, a; dargs)
++    {
++        auto c = cast(char*) malloc(a.length + 1);
++        memcpy(c, a.ptr, a.length);
++        c[a.length] = 0;
++        args[i] = c;
++    }
++    if (responseExpand(args))
++        return false;
++
++    const exe = selfExe();
++    if (!exe)
++        return false;
++    WIN32_FILE_ATTRIBUTE_DATA est, cst;
++    if (!fileIdentity(exe, est))
++        return false;
++    char[4096] conf;
++    snprintf(conf.ptr, conf.length, "%s", exe);
++    if (auto slash = strrchr(conf.ptr, '\\'))
++        strcpy(slash + 1, "sc.ini");
++    const haveConf = fileIdentity(conf.ptr, cst);
++
++    ulong h = 0xcbf29ce484222325UL;
++    h = fnv(h, exe, strlen(exe));
++    h = fnv(h, &est.ftLastWriteTime, est.ftLastWriteTime.sizeof);
++    h = fnv(h, &est.nFileSizeLow, est.nFileSizeLow.sizeof);
++    h = fnv(h, &est.nFileSizeHigh, est.nFileSizeHigh.sizeof);
++    if (haveConf)
++    {
++        h = fnv(h, &cst.ftLastWriteTime, cst.ftLastWriteTime.sizeof);
++        h = fnv(h, &cst.nFileSizeLow, cst.nFileSizeLow.sizeof);
++    }
++    Strings keyArgs;
++    bool haveSource;
++    foreach (i; 1 .. args.length)
++    {
++        const a = args[i];
++        if (forcesLocal(a))
++            return false;
++        if (a[0] != '-')
++        {
++            const n = strlen(a);
++            if ((n > 2 && strcmp(a + n - 2, ".d") == 0) || (n > 3 && strcmp(a + n - 3, ".di") == 0))
++                haveSource = true;
++            else if ((n > 2 && strcmp(a + n - 2, ".c") == 0) || (n > 2 && strcmp(a + n - 2, ".i") == 0)
++                || (n > 2 && strcmp(a + n - 2, ".h") == 0))
++                return false;
++            continue;
++        }
++        if (excludedFromKey(a))
++            continue;
++        keyArgs.push(a);
++        h = fnv(h, a, strlen(a) + 1);
++    }
++    if (!haveSource)
++        return false;
++
++    char[160] name;
++    pipeName(h, name);
++    auto pipe = CreateFileA(name.ptr, GENERIC_READ | GENERIC_WRITE, 0, null, OPEN_EXISTING, 0, null);
++    if (pipe == INVALID_HANDLE_VALUE)
++    {
++        // No idle worker.  Start the pool only when none of its workers exists, not while they warm up.
++        char[24] keyText;
++        snprintf(keyText.ptr, keyText.length, "-%016llx", h);
++        if (GetLastError() == ERROR_FILE_NOT_FOUND && !poolAlive(keyText.ptr))
++        {
++            OutBuffer line;
++            quoteArgument(line, exe[0 .. strlen(exe)]);
++            char[200] option;
++            snprintf(option.ptr, option.length, "-fork-server=%s", name.ptr);
++            quoteArgument(line, option[0 .. strlen(option.ptr)]);
++            foreach (a; keyArgs)
++                quoteArgument(line, a[0 .. strlen(a)]);
++            auto wide = widen(line.peekChars());
++            scope (exit) free(wide);
++            char[1300] log;
++            snprintf(log.ptr, log.length, "%s\\%016llx.log", logDirectory(), h);
++            startWorkers(wide, log.ptr, poolSize());
++        }
++        return false; // no worker yet, or every worker is busy: compile in-process
++    }
++    scope (exit) CloseHandle(pipe);
++    ULONG pid;
++    if (!GetNamedPipeServerProcessId(pipe, &pid))
++        return false;
++    auto worker = OpenProcess(PROCESS_DUP_HANDLE, FALSE, pid);
++    if (!worker)
++        return false;
++    scope (exit) CloseHandle(worker);
++    ulong[3] handles;
++    static immutable DWORD[3] which = [STD_INPUT_HANDLE, STD_OUTPUT_HANDLE, STD_ERROR_HANDLE];
++    foreach (i, w; which)
++    {
++        auto mine = GetStdHandle(w);
++        HANDLE theirs;
++        if (mine && mine != INVALID_HANDLE_VALUE
++            && DuplicateHandle(GetCurrentProcess(), mine, worker, &theirs, 0, FALSE, DUPLICATE_SAME_ACCESS))
++            handles[i] = cast(ulong) theirs;
++    }
++
++    // Request: header, handles, then cwd and args (UTF-8, NUL separated) and the UTF-16 environment block.
++    OutBuffer body;
++    wchar[32_768] cwdWide;
++    if (!GetCurrentDirectoryW(cast(DWORD) cwdWide.length, cwdWide.ptr))
++        return false;
++    auto cwd = narrow(cwdWide.ptr);
++    body.writestring(cwd[0 .. strlen(cwd)]);
++    body.writeByte(0);
++    free(cwd);
++    foreach (a; args)
++    {
++        body.writestring(a[0 .. strlen(a)]);
++        body.writeByte(0);
++    }
++    auto block = GetEnvironmentStringsW();
++    size_t units;
++    while (block[units] || block[units + 1])
++        ++units;
++    units += 2;
++    body.write(block[0 .. units]);
++    FreeEnvironmentStringsW(block);
++    uint[4] header = [magic, cast(uint) args.length, cast(uint)(units * wchar.sizeof), cast(uint) body.length];
++    if (!writeAll(pipe, header.ptr, header.sizeof) || !writeAll(pipe, handles.ptr, handles.sizeof)
++        || !writeAll(pipe, body[].ptr, body.length))
++        return false;
++    int result;
++    if (!readAll(pipe, &result, result.sizeof))
++        return false;
++    if (result == zygoteIncompatible)
++        return false;
++    status = result;
++    return true;
++}
++
++/// The pipe of the request handled by this worker, or null.
++private __gshared HANDLE workerPipe;
++/// This worker's pool slot, held until its request is reported.
++private __gshared HANDLE workerSlot;
++/// The server log of this pool.
++private __gshared char[1300] workerLog;
++
++/// Hand the slot to a replacement worker, which warms up below normal priority, once the client has its answer.
++private void handOver()
++{
++    if (!workerSlot)
++        return;
++    ReleaseMutex(workerSlot);
++    CloseHandle(workerSlot);
++    workerSlot = null;
++    startWorkers(GetCommandLineW(), workerLog.ptr, 1);
++}
++
++/// Report the exit status to the client; also runs for `exit()` inside the driver.
++private void reportStatus(int status)
++{
++    if (!workerPipe)
++        return;
++    fflush(stdout);
++    fflush(stderr);
++    writeAll(workerPipe, &status, status.sizeof);
++    FlushFileBuffers(workerPipe);
++    CloseHandle(workerPipe);
++    workerPipe = null;
++}
++
++extern (C) private void reportFailureAtExit()
++{
++    reportStatus(1); // the driver only calls exit() on failure
++    handOver();
++}
++
++/**
++ * Take a pool slot, load the prelude, then serve one request.  Never returns.
++ * Params:
++ *   entry = continues the driver for one request
++ *   preload = loads one prelude module by dotted name, returns false on failure
++ */
++void runServer(ChildEntry entry, PreloadFn preload)
++{
++    // The key is the pipe name's last component; one mutex per slot.
++    const keyStart = strrchr(serverSocketPath, '-');
++    const size = poolSize();
++    HANDLE slot;
++    foreach (i; 0 .. size)
++    {
++        char[200] mutexName;
++        slotName(keyStart ? keyStart : "".ptr, i, mutexName);
++        auto m = CreateMutexA(null, FALSE, mutexName.ptr);
++        if (!m)
++            continue;
++        const got = WaitForSingleObject(m, 0);
++        if (got == WAIT_OBJECT_0 || got == WAIT_ABANDONED)
++        {
++            slot = m;
++            break;
++        }
++        CloseHandle(m);
++    }
++    if (!slot)
++        TerminateProcess(GetCurrentProcess(), 0); // the pool is full
++
++    // Prelude list next to the executable.
++    const exe = selfExe();
++    char[4096] list;
++    snprintf(list.ptr, list.length, "%s", exe);
++    if (auto slash = strrchr(list.ptr, '\\'))
++        strcpy(slash + 1, "dmd-server-prelude.txt");
++    auto f = fopen(list.ptr, "r");
++    if (!f)
++    {
++        fprintf(stderr, "flint-dmd-server: missing %s\n", list.ptr);
++        TerminateProcess(GetCurrentProcess(), 1);
++    }
++    char[512] line;
++    while (fgets(line.ptr, line.length, f))
++    {
++        auto n = strlen(line.ptr);
++        while (n && (line[n - 1] == '\n' || line[n - 1] == '\r' || line[n - 1] == ' '))
++            line[--n] = 0;
++        if (!n || line[0] == '#')
++            continue;
++        bool ok;
++        try
++            ok = preload(line[0 .. n].dup);
++        catch (Throwable)
++            ok = false;
++        if (!ok || global.errors)
++        {
++            fprintf(stderr, "flint-dmd-server: cannot preload %s\n", line.ptr);
++            fflush(stderr);
++            TerminateProcess(GetCurrentProcess(), 1);
++        }
++    }
++    fclose(f);
++
++    zygoteVersionCount = global.versionids.length;
++    zygoteDebugCount = global.debugids.length;
++
++    int idleSeconds = 1800;
++    if (const idle = getenv("FLINT_DMD_SERVER_IDLE"))
++        idleSeconds = atoi(idle);
++    auto pipe = CreateNamedPipeA(serverSocketPath, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
++        PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT | pipeRejectRemoteClients, PIPE_UNLIMITED_INSTANCES,
++        65_536, 65_536, 0, null);
++    if (pipe == INVALID_HANDLE_VALUE)
++    {
++        fprintf(stderr, "flint-dmd-server: cannot listen on %s\n", serverSocketPath);
++        fflush(stderr);
++        TerminateProcess(GetCurrentProcess(), 1);
++    }
++    OVERLAPPED overlapped;
++    overlapped.hEvent = CreateEventW(null, TRUE, FALSE, null);
++    if (!ConnectNamedPipe(pipe, &overlapped))
++    {
++        const code = GetLastError();
++        if (code == ERROR_IO_PENDING)
++        {
++            if (WaitForSingleObject(overlapped.hEvent, idleSeconds * 1000) != WAIT_OBJECT_0)
++                TerminateProcess(GetCurrentProcess(), 0); // idle
++            DWORD ignored;
++            if (!GetOverlappedResult(pipe, &overlapped, &ignored, FALSE))
++                TerminateProcess(GetCurrentProcess(), 1);
++        }
++        else if (code != ERROR_PIPE_CONNECTED)
++            TerminateProcess(GetCurrentProcess(), 1);
++    }
++    // A request: compile at normal priority, and keep the slot until the client has its answer.
++    SetPriorityClass(GetCurrentProcess(), normalPriorityClass);
++    workerSlot = slot;
++    snprintf(workerLog.ptr, workerLog.length, "%s\\%s.log", logDirectory(), keyStart ? keyStart + 1 : "server".ptr);
++    handleRequest(pipe, entry);
++}
++
++/// Handle one request.  Never returns.
++private void handleRequest(HANDLE pipe, ChildEntry entry)
++{
++    uint[4] header;
++    ulong[3] handles;
++    if (!readAll(pipe, header.ptr, header.sizeof) || header[0] != magic || !readAll(pipe, handles.ptr, handles.sizeof))
++        TerminateProcess(GetCurrentProcess(), 1);
++    auto data = cast(char*) malloc(header[3] + 2);
++    if (!readAll(pipe, data, header[3]))
++        TerminateProcess(GetCurrentProcess(), 1);
++    data[header[3]] = 0;
++    data[header[3] + 1] = 0;
++    workerPipe = pipe;
++    static immutable DWORD[3] which = [STD_INPUT_HANDLE, STD_OUTPUT_HANDLE, STD_ERROR_HANDLE];
++    foreach (int i, h; handles)
++    {
++        if (!h)
++            continue;
++        SetStdHandle(which[i], cast(HANDLE) h);
++        enum readOnly = 0x0000;
++        const fd = _open_osfhandle(cast(ptrdiff_t) h, i == 0 ? readOnly : 0x0001); // _O_RDONLY / _O_WRONLY
++        if (fd >= 0)
++            _dup2(fd, i);
++    }
++    // Unpack cwd, argv and the environment block.
++    auto p = data;
++    const(char)* cwd = p;
++    p += strlen(p) + 1;
++    auto argv = (cast(const(char)[]*) malloc(header[1] * (const(char)[]).sizeof))[0 .. header[1]];
++    foreach (ref a; argv)
++    {
++        const n = strlen(p);
++        a = p[0 .. n];
++        p += n + 1;
++    }
++    auto environment = cast(const(wchar)*) p;
++    // Replace this process's environment with the client's, through the C runtime so getenv sees it too.
++    auto current = GetEnvironmentStringsW();
++    for (auto e = current; *e; e += wcslen(e) + 1)
++    {
++        if (*e == '=')
++            continue;
++        size_t n;
++        while (e[n] && e[n] != '=')
++            ++n;
++        auto unset = cast(wchar*) malloc((n + 2) * wchar.sizeof);
++        unset[0 .. n] = e[0 .. n];
++        unset[n] = '=';
++        unset[n + 1] = 0;
++        _wputenv(unset);
++        free(unset);
++    }
++    FreeEnvironmentStringsW(current);
++    for (auto e = environment; *e; e += wcslen(e) + 1)
++        if (*e != '=')
++            _wputenv(e);
++    auto cwdWide = widen(cwd);
++    if (!SetCurrentDirectoryW(cwdWide))
++    {
++        reportStatus(zygoteIncompatible);
++        TerminateProcess(GetCurrentProcess(), 1);
++    }
++    atexit(&reportFailureAtExit);
++    zygoteChild = true;
++    int status = 1;
++    try
++        status = entry(argv);
++    catch (Throwable)
++        status = 1;
++    reportStatus(status);
++    handOver();
++    TerminateProcess(GetCurrentProcess(), status);
++}
++} // version (Windows)
++
+ /*********************************************************************
+  * Child-side compatibility checks
+  */

@@ -36,7 +36,7 @@ The DMD archive's digest is the GitHub release asset digest of `dlang/dmd` v2.11
 
 The first stage built with the **upstream DMD 2.114.0 and its bundled DUB 1.43.0**, which matches the DUB pin, and LDC 1.43.0. ADR-025 section 4 then ports the toolchain fork's speed features to Windows, one at a time, each measured against Go on the VM. The VM gives diagnostic numbers only (ADR-025 section 5): 4 vCPUs on a shared host.
 
-`install_toolchains.py --compiler dmd` still refuses `--flint-fork` and `--dmd-linker` on Windows, because the DMD half of the fork is not ported yet.
+`install_toolchains.py --compiler dmd` refuses `--dmd-linker` on Windows (it selects an ELF linker). `--flint-fork` builds the experimental Windows server described below.
 
 #### The Flint DUB and its pipeline (done)
 
@@ -77,9 +77,36 @@ The cold link is slow because it is a full link with debug information. The dev 
 
 LLD wins the cold build but loses the incremental one: `link.exe` links incrementally from its `.ilk` in about 0.03 s, while LLD always does a full link (LLD's `/time`: 72 ms reading inputs, mostly `phobos64.lib`, and 117 ms writing the PDB). `-allinst` makes no difference to the link. The PDB is the cost either way, so the default stays `link.exe`, the better edit loop, and `lld-link` is an opt-in until the owner decides whether Windows dev builds may defer their PDB (link without one, and write it on demand, as in `flint run --debug`). The `lld-link` in DMD's Windows release is LLVM 9, which cannot link against the current MSVC runtime (`__guard_eh_cont_table`). `/DEBUG:GHASH` gains nothing, because DMD writes no precomputed type hashes.
 
-#### The compile server (after linking)
+#### The compile server: a warm worker pool (experimental, opt-in)
 
-ADR-025 section 4's pool of pre-warmed, single-use workers. Each compile job in the traced build pays DMD's start-up and the analysis of the druntime and Phobos modules it imports, which is what the server removes on Linux.
+`toolchain/dmd-2.114.0-flint-windows.patch` applies over the shared DMD patch on Windows only. `install_toolchains.py --compiler dmd --flint-fork` builds that DMD with the pinned LDC (no PGO or LTO yet), keeping `dmd.upstream.exe` beside it. The patch confines the POSIX server and the direct link to `version (Posix)` and adds ADR-025 section 4's pool of warm, single-use workers:
+
+- **Workers.** A worker (`dmd -fork-server=<pipe> <key flags>`) takes one of the pool's slots, which are named mutexes the kernel releases if a worker dies. It loads and analyses the prelude below normal priority, then waits on an instance of the key's named pipe, with the ADR-016 idle timeout.
+- **Requests.** The kernel connects each client to an idle instance. The worker raises itself to normal priority and takes the client's working directory, environment (through the C runtime, so `getenv` sees it) and standard handles. It compiles once with the ordinary driver, reports the exit status, hands its slot to a replacement and exits.
+- **Clients.** The client computes the Linux key from the same eligibility rules and refuses the same requests. It duplicates its standard handles into the worker it reached. That only works for a worker of the same user, so a pipe squatted by another user fails `OpenProcess(PROCESS_DUP_HANDLE)`, and the client compiles in-process. A client finding no worker starts the pool if none of its slots exists, and compiles in-process either way.
+- **Detachment.** Workers start detached, outside the caller's job object (flint's jobs allow breakaway), with only NUL and the server log inherited, and in a neutral working directory. An early version inherited the client's directory and kept project directories locked.
+
+A warm worker compiles a module importing the whole prelude in 0.022 s, against 0.18 s for a plain compile. Compiler errors reach the caller's console and the exit status is preserved. The full picture on the VM (`bench-cli`, median of five, back-to-back cold and incremental builds as `measure_builds.py` runs them; Go cold 0.25–0.28 s, incremental 0.23–0.27 s):
+
+| Toolchain | Cold | Incremental |
+| --- | ---: | ---: |
+| upstream DMD and DUB | 1.44 s | 0.292 s |
+| Flint DUB pipeline, `link.exe` | 1.08 s | 0.237 s |
+| Flint DUB pipeline, `lld-link` | 0.656 s | 0.435 s |
+| pipeline, warm workers, `link.exe` | 1.06 s | 0.87 s |
+| pipeline, warm workers, `lld-link` | 0.574 s | 0.589 s |
+
+The workers cut the cold compile phase from 0.31 s to 0.20 s. Three things keep the pool from paying off on Windows:
+
+- **Replacements cost a full analysis.** Each replacement costs a full prelude analysis (about 0.2 s of CPU) and about 105 MB, where Linux forks a pre-analysed worker almost for free. The 8 workers hold 840 MB, and a pool of 16 made things worse on this 8 GB, 4-vCPU VM.
+- **Back-to-back builds miss the pool.** A back-to-back incremental build arrives while the replacements of the cold build's workers are still warming, so it compiles in-process.
+- **Incremental linking breaks.** A worker's objects carry template instances the prelude instantiated (`core.checkedint.mulu`, for instance) that are also defined elsewhere in the link. COMDAT folding keeps the program correct, but `link.exe` answers "multiple definitions found ... performing full link", so incremental linking stops working (0.7 s per link).
+
+So on Windows the pool is opt-in: the client uses it only when `FLINT_DMD_SERVER=1`, and `flint toolchain install` keeps installing the upstream DMD. Follow-ups:
+
+- emit only the root modules' own template instances in workers, which restores `link.exe`'s incremental links;
+- `flint daemon stop` on Windows, because `dmd.exe` cannot be replaced while workers run it;
+- remeasure on a bare-metal Windows runner, where the replacement cost weighs less.
 
 Until these stages land and are measured, the Windows compile-speed gate reports failing.
 
@@ -158,7 +185,7 @@ Two details of the MSVC build of Flint's C shims (`native/ffi`):
 
 Next, in ADR-025's order:
 
-- the compile server's warm worker pool, then direct linking with a cached link command, once the PDB decision is made;
+- the owner's decision on PDBs in Windows dev builds, then the default linker and a cached link command; template-instance ownership in warm workers, so the pool can become the default;
 - the IOCP reactor backend, then the packages above the reactor;
 - the remaining native providers under MSVC hardening (`/guard:cf`, `/GS`, `/sdl`, and `/W4 /WX` for Flint's own C);
 - the `windows-x86_64` platform lane for Gate 6.

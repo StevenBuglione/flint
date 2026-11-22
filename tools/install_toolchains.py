@@ -207,6 +207,55 @@ def train_profile(bin_dir, instrumented, work, profiles):
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
+DMD_WINDOWS_PATCH = FORK_DIR / 'dmd-2.114.0-flint-windows.patch'
+
+
+def dmd_patches():
+    """The DMD patches this host applies, in order: Windows adds the warm worker pool (ADR-026)."""
+    return [DMD_PATCH, DMD_WINDOWS_PATCH] if platform.system() == 'Windows' else [DMD_PATCH]
+
+
+def dmd_patch_digest():
+    """SHA-256 of the concatenated DMD patches this host applies; the shared patch's own digest elsewhere."""
+    digest = hashlib.sha256()
+    for patch in dmd_patches():
+        digest.update(patch.read_bytes())
+    return digest.hexdigest()
+
+
+def install_flint_fork_windows(bin_dir, destination):
+    """Replace the pinned DMD with the Flint fork on Windows: the compile server as a pool of warm, single-use
+    workers (ADR-025 section 4). The upstream executable stays beside it as dmd.upstream.exe. The Flint DUB is
+    installed separately with --compiler dub. Built with the pinned LDC, without PGO or LTO for now.
+    """
+    ldc_bin = install(LDC_WINDOWS + '.7z', destination) / LDC_WINDOWS / 'bin'
+    upstream = bin_dir / 'dmd.upstream.exe'
+    if not upstream.exists():
+        shutil.copy2(bin_dir / 'dmd.exe', upstream)
+    work = destination / 'flint-fork-build'
+    stage = work / 'dmd'
+    if stage.exists():
+        shutil.rmtree(stage)
+    (stage / 'compiler').mkdir(parents=True)
+    dmd_root = bin_dir.parents[1]
+    shutil.copytree(dmd_root / 'src' / 'dmd', stage / 'compiler' / 'src')
+    shutil.copyfile(dmd_root / 'src' / 'VERSION', stage / 'VERSION')
+    for patch in dmd_patches():
+        apply_patch(patch, stage / 'compiler' / 'src')
+    env = dict(os.environ, PATH=str(ldc_bin) + os.pathsep + os.environ['PATH'])
+    subprocess.run([str(ldc_bin / 'ldmd2.exe'), '-run', 'build.d', 'HOST_DMD=ldmd2', 'ENABLE_RELEASE=1',
+                    '-j' + str(min(os.cpu_count() or 2, 16)), 'dmd'], cwd=stage / 'compiler' / 'src', env=env,
+                   check=True, stdout=subprocess.DEVNULL)
+    built = stage / 'generated' / 'windows' / 'release' / '64' / 'dmd.exe'
+    with TemporaryDirectory(dir=bin_dir) as temporary:
+        target = Path(temporary) / 'dmd.exe'
+        shutil.copyfile(built, target)
+        os.replace(target, bin_dir / 'dmd.exe')
+    shutil.copyfile(PRELUDE, bin_dir / 'dmd-server-prelude.txt')
+    return {'dmd_patch_sha256': dmd_patch_digest(), 'dub_patch_sha256': dub_patch_digest(),
+            'prelude_sha256': sha256_file(PRELUDE), 'pgo': False, 'dmd_sha256': sha256_file(bin_dir / 'dmd.exe')}
+
+
 def install_flint_fork(bin_dir, destination, pgo):
     """Replace the pinned DMD and DUB executables with the Flint toolchain fork.
 
@@ -680,7 +729,7 @@ def main():
     if a.compiler=='dmd':
         if (osname,arch)==('Windows','x86_64') and not a.musl:
             # ADR-026: the compile server and the parallel DUB pipeline are POSIX-only; Windows uses upstream DMD and DUB.
-            if a.flint_fork or a.dmd_linker:raise SystemExit('the Flint DMD/DUB fork and --dmd-linker are Linux-only (ADR-026)')
+            if a.dmd_linker:raise SystemExit('--dmd-linker selects an ELF linker; Windows links with link.exe (ADR-026)')
             name='dmd.2.114.0.windows.7z'
         elif (osname,arch)!=('Linux','x86_64') or a.musl:raise SystemExit('DMD development pin supports Linux x86_64 glibc and Windows x86_64; use LDC for this target')
         else:name='dmd.2.114.0.linux.tar.xz'
@@ -707,7 +756,9 @@ def main():
     if linker:
         configure_dmd_linker(binary_path, linker)
         receipt['linker'] = linker
-    if a.flint_fork:
+    if a.flint_fork and osname=='Windows':
+        receipt['flint_fork'] = install_flint_fork_windows(binary_path, a.destination)
+    elif a.flint_fork:
         receipt['flint_fork'] = install_flint_fork(binary_path, a.destination, not a.no_pgo)
     if os.environ.get('GITHUB_PATH'):
         with open(os.environ['GITHUB_PATH'],'a') as f:f.write(str(binary_path)+'\n')
