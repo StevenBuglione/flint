@@ -265,16 +265,35 @@ These features are first-class, not afterthoughts:
 
 Flint is free and open source under the **Apache License 2.0**, which gives an explicit patent grant and is what Spring uses. The `LICENSE` file moves from MIT to Apache-2.0 with a `NOTICE` file. Every package manifest already declares `Apache-2.0`, so this also removes an inconsistency. The CLI, the recipe index, the starters and the docs site are all public. Every release carries Sigstore signatures, a SBOM and the receipts that reproduce it.
 
+## 11. Proving it: the vibe-coding benchmark
+
+"Flint makes D just work" must be measured, not asserted.
+
+- **Tasks:** the benchmark is a fixed set, checked in with acceptance tests. Examples:
+  - a CRUD REST API with login, a database migration and validation;
+  - a CLI with configuration and subcommands;
+  - a background worker consuming a queue;
+  - a TUI dashboard.
+- **Who runs it:** coding agents, using only `flint mcp` and the generated `AGENTS.md`, with no prior Flint context.
+- **What is scored:** for each task,
+  - the share of runs that pass the acceptance tests;
+  - the number of build–fix iterations;
+  - the wall time;
+  - the review size: lines and attributes in the generated code.
+- **Comparison:** the same tasks run in Go and Spring Boot with the agents' usual tooling.
+- **Gate:** every Flint release reports these numbers, and a regression in success rate fails it. Milestone 13 publishes the results.
+
 ## Proposed milestone plan
 
 | Milestone | Delivers |
 | --- | --- |
 | 7 — CLI core and project model | `flint new/build/run/test/check/fmt`, `flint.toml` and `flint.lock`, profiles, receipts, toolchain install and doctor, compile-server management, the layout and safety checks in the build, structured diagnostics v1. The Flint repository builds itself with `flint`. Linux. |
 | 8 — Dependencies and packaging | Go-style D dependency resolution and proxy. The native resolver with Conan hidden inside, the Flint recipe remote (seeded from `native-lock.json`) and signed binary cache. Embedded C under the hardening rules. `flint package` static, bundled and container. SBOM and licence audit. |
-| 9 — Knowledge and diagnostics | API index, `flint docs/examples/explain`, `flint mcp`, generators and `AGENTS.md`. Diagnostics v2: template-error condensation and message rewriting in the forked DMD. |
-| 10 — Starters | The DI conditional and auto-configuration addition. `flint-starter-web`, `-data`, `-security`, `-observability` first, then the rest. `flint add`. |
-| 11 — Every OS, stage 1 | The dev container path for macOS and Windows hosts. Cross-target recipes. |
-| 12+ — Native macOS and Windows | Reactor backends, recipes and the compile server per platform. Gate 6 turns green per platform. |
+| 9 — Knowledge, diagnostics and tooling | API index, `flint docs/examples/explain`, `flint mcp`, generators and `AGENTS.md`. Diagnostics v2: template-error condensation and message rewriting in the forked DMD, plus a test that every framework misuse yields one readable, field-level error. **`flint lsp`**: a language server on the resident compile server. **The vibe-coding benchmark**: fixed tasks run by coding agents using only `flint mcp`, scoring success rate and fix iterations against Go and Spring Boot (section 11). `flint watch` (incremental rebuild and restart), generated debugger configurations and pretty-printers. |
+| 10 — Starters and the full-stack path | The DI conditional and auto-configuration addition. `flint-starter-web`, `-data`, `-security`, `-observability` first, then the rest. `flint add`. Attribute inference through the framework, so ordinary handlers need no `nothrow`/`@nogc`/`scope` annotations, with an attributes-per-handler metric. OpenAPI generated from controllers, typed TypeScript clients, SPA serving, and a complete auth starter: sessions, OAuth login, password hashing, email verification. Starters prefer structs and `Result`, and `flint check` flags nullable class fields in application code. |
+| 11 — Every OS | Native macOS arm64 and Windows x86-64 ports, and native Linux aarch64: reactor backends (kqueue, IOCP), recipes, platform lanes, with Gate 6 green per platform. The dev container path for any host. The macOS and Windows ports started early, in parallel with Milestones 8–9. |
+| 12 — Fast compiles everywhere | [ADR-025](ADR-025-fast-compiles-everywhere.md): the forked DMD as the development compiler on every platform. DMD's AArch64 backend completed in the fork for macOS and Linux arm64. The compile server, pipeline and direct linking ported to macOS and Windows. Per-platform compile-speed gates against Go on each runner. |
+| 13 — Adoption | A docs site, "Flint by Example", and migration guides from Go, Spring Boot and Express. A semver, deprecation and LTS policy. The vibe-coding benchmark and the per-platform build evidence published. Library breadth chosen by what the benchmark tasks need: payments, more cloud SDKs, GraphQL, search, an admin UI. |
 
 ## Decisions
 
@@ -285,3 +304,5 @@ Recorded on 2026-11-22.
 3. **Starter name:** `flint-starter-<domain>`.
 4. **Third-party DUB packages:** allowed through the compatibility index, with a visible `[unchecked]` waiver for any package that fails the safety checks.
 5. **Milestone order:** as in the table above: dependencies and packaging (8) before knowledge and diagnostics (9).
+6. **Gaps to close for "D just works"** (2026-11-22): the additions to Milestones 9, 10 and 13 above. The editor and language server, attribute noise, LLM familiarity measured by the benchmark, readable errors, the full-stack path, null class references, fast feedback, library breadth and trust signals.
+7. **Compile speed is the selling point on every platform** (2026-11-22): [ADR-025](ADR-025-fast-compiles-everywhere.md), Milestone 12. The macOS, Windows and Linux aarch64 work in Milestones 11 and 12 proceeds in parallel.
