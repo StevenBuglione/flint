@@ -1,6 +1,6 @@
 # ADR-016: Count a resident toolchain compile server as a retained toolchain runtime
 
-Status: proposed, awaiting review; date: 2026-11-21.
+Status: accepted by the project owner on 2026-11-21.
 
 ## Context
 
