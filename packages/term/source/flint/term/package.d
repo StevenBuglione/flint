@@ -91,6 +91,42 @@ struct Session
     }
 }
 
+/// A standard output stream a line-oriented tool writes to.
+enum Stream : ubyte
+{
+    output,
+    error
+}
+
+/// Capabilities of a standard output stream, read without owning the terminal.
+struct StreamInfo
+{
+    /// The stream is connected to a terminal.
+    bool terminal;
+    /// Colors the terminal accepts; none when the stream is not a terminal or NO_COLOR is set.
+    ColorProfile colors;
+    /// Window size, or zero columns and rows when the terminal does not report one.
+    Size size;
+}
+
+/// Describe stdout or stderr for line-oriented output. Unlike `Session.open`, this never changes
+/// terminal modes, enters the alternate screen or reads input.
+StreamInfo describe(Stream stream)
+{
+    StreamInfo info;
+    version (linux)
+    {
+        import flint.term.sys.linux_session : detectColors, environmentValue;
+        import flint.term.sys.output : probeStream;
+
+        info.terminal = probeStream(stream == Stream.output ? 1 : 2, info.size);
+        if (info.terminal)
+            info.colors = detectColors(environmentValue("TERM", ""), environmentValue("COLORTERM",
+                    ""), environmentValue("NO_COLOR") != "");
+    }
+    return info;
+}
+
 private Error unsupported() pure nothrow @nogc
 {
     return Error(Status.unsupported, "terminal sessions are unavailable on this platform");

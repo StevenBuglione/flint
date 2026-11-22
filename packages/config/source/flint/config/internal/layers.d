@@ -130,16 +130,16 @@ private Error loadFile(ApplicationFile selected, string stem, ref Inputs values)
     return overlay(selected.file, stem ~ extension, toml, values);
 }
 
-private Error applicationFiles(string directory, string profile, ref Inputs values)
+private Error applicationFiles(string directory, string baseName, string profile, ref Inputs values)
 {
-    const baseFile = selectFile(directory, "application", FileFormat.unspecified);
+    const baseFile = selectFile(directory, baseName, FileFormat.unspecified);
     if (!baseFile.ok)
         return baseFile.error;
-    const stem = "application-" ~ profile;
+    const stem = baseName ~ "-" ~ profile;
     const profileFile = selectFile(directory, stem, baseFile.value.kind);
     if (!profileFile.ok)
         return profileFile.error;
-    const base = loadFile(baseFile.value, "application", values);
+    const base = loadFile(baseFile.value, baseName, values);
     if (base.code != Status.ok)
         return base;
     return loadFile(profileFile.value, stem, values);
@@ -149,7 +149,8 @@ package(flint.config) Error loadLayers(scope const ref ConfigOptions options, re
 {
     import flint.config.sys.files : processEnvironment;
 
-    layers.process = processEnvironment();
+    if (options.readEnvironment)
+        layers.process = processEnvironment();
     layers.envPrefix = options.envPrefix.idup;
     string profile = options.profile.idup;
     if (const fromEnvironment = "FLINT_PROFILE" in layers.process)
@@ -160,11 +161,13 @@ package(flint.config) Error loadLayers(scope const ref ConfigOptions options, re
     if (profile.length > 32 || !keyComponent(profile))
         return Origin("profile selection").report(Status.invalidArgument, "flint.profile",
                 "has an invalid profile name");
+    if (options.baseName.length == 0 || options.baseName.length > 64 || !keyComponent(options.baseName))
+        return Origin("file selection").report(Status.invalidArgument, "", "has an invalid configuration file stem");
     layers.process.remove("FLINT_PROFILE");
 
     const directory = options.directory.idup;
-    failure = applicationFiles(directory, profile, layers.files);
-    if (failure.code != Status.ok)
+    failure = applicationFiles(directory, options.baseName.idup, profile, layers.files);
+    if (failure.code != Status.ok || !options.readEnvironment)
         return failure;
     const dotenv = sourceFile(directory, ".env");
     if (!dotenv.ok)

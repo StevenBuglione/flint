@@ -370,6 +370,69 @@ unittest
     assert(deserialize!(int[])("[1,2]", options).error.code == Status.resourceExhausted);
 }
 
+@("native owned values serialize with dynamic arrays, names, ignores and canonical order, and round-trip")
+unittest
+{
+    import flint.serde.owned : deserialize, serialize;
+
+    static struct Location
+    {
+        string file;
+        long line;
+    }
+
+    static struct Report
+    {
+        @JsonName("schema_name")
+        string schema;
+        bool ok;
+        string[] names;
+        Location[] where;
+        Kind kind;
+        @JsonIgnore string hidden = "secret";
+    }
+
+    Report report = Report("flint.check/1", true, ["a", "b\"c\n"], [Location("src/x.d", 3)], Kind.secondary);
+    auto text = serialize(report);
+    assert(text.ok());
+    enum expected = `{"schema_name":"flint.check/1","ok":true,"names":["a","b\"c\n"],`
+        ~ `"where":[{"file":"src/x.d","line":3}],"kind":"secondary"}`;
+    assert(text.value == expected);
+
+    auto options = EncodeOptions.init;
+    options.canonical = true;
+    auto sorted = serialize(report, options);
+    assert(sorted.ok() && sorted.value == `{"kind":"secondary","names":["a","b\"c\n"],"ok":true,`
+            ~ `"schema_name":"flint.check/1","where":[{"file":"src/x.d","line":3}]}`);
+
+    auto back = deserialize!Report(text.value);
+    assert(back.ok() && back.value.names == report.names && back.value.where[0].line == 3);
+    Report empty;
+    assert(serialize(empty).value == `{"schema_name":"","ok":false,"names":[],"where":[],"kind":"primary"}`);
+
+    auto deep = EncodeOptions.init;
+    deep.maxDepth = 1;
+    assert(serialize(report, deep).error.code == Status.resourceExhausted);
+    auto many = new int[DecodeOptions.init.maxMembers + 1];
+    assert(serialize(many).error.code == Status.resourceExhausted);
+}
+
+@("arena JSON encoding still rejects dynamic arrays at compile time")
+unittest
+{
+    static struct Owned
+    {
+        int[] values;
+    }
+
+    static assert(!__traits(compiles, () {
+            ubyte[64] backing;
+            auto arena = RequestArena(backing[]);
+            Owned value;
+            return encodeJson(value, arena);
+        }));
+}
+
 private char[] memberName(char prefix, size_t index)
 {
     char[6] name = prefix;

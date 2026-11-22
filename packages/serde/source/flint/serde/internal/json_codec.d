@@ -479,6 +479,29 @@ private bool validDefault(T, bool owned, string literal)()
     return readDocument!(T, owned)(cast(const(ubyte)[]) literal, value, arena, options, plan).code == Status.ok;
 }
 
+version (D_BetterC)
+{
+}
+else
+{
+    /// Encode native strings, dynamic arrays and nested DTOs into independent GC-owned text.
+    Result!string writeOwnedJson(T)(scope const ref T value, EncodeOptions options)
+    {
+        RequestArena none;
+        Writer sizing;
+        writeValue!(T, true)(sizing, value, none, options, 0);
+        if (sizing.error.code != Status.ok)
+            return Result!string(null, sizing.error);
+        auto data = new ubyte[sizing.length];
+        // The output is GC-owned, so the writer need not be scope-limited.
+        auto writer = Writer(data);
+        writeValue!(T, true)(writer, value, none, options, 0);
+        if (writer.error.code != Status.ok)
+            return Result!string(null, writer.error);
+        return Result!string((cast(const(char)[]) data).idup);
+    }
+}
+
 /// Generate JSON through the same size and emission passes.
 Result!Buffer writeJson(T)(scope const ref T value, ref scope RequestArena arena, EncodeOptions options) nothrow @nogc
 {
@@ -487,8 +510,8 @@ Result!Buffer writeJson(T)(scope const ref T value, ref scope RequestArena arena
     });
 }
 
-private void writeValue(T)(ref scope Writer writer, scope const ref T value, ref scope RequestArena arena,
-        EncodeOptions options, uint depth) nothrow @nogc
+private void writeValue(T, bool owned = false)(ref scope Writer writer, scope const ref T value,
+        ref scope RequestArena arena, EncodeOptions options, uint depth) nothrow @nogc
 {
     alias Value = Unqual!T;
     static if (is(Value == bool))
@@ -508,9 +531,11 @@ private void writeValue(T)(ref scope Writer writer, scope const ref T value, ref
     else static if (is(Value == Buffer))
         writeHandle(writer, value, arena);
     else static if (is(Value == Element[extent], Element, size_t extent))
-        writeArray(writer, value, arena, options, depth);
+        writeArray!(T, owned)(writer, value, arena, options, depth);
+    else static if (owned && is(Value == Element[], Element))
+        writeArray!(T, owned)(writer, value, arena, options, depth);
     else static if (is(Value == struct))
-        writeObject(writer, value, arena, options, depth);
+        writeObject!(T, owned)(writer, value, arena, options, depth);
     else
         static assert(false, "unsupported JSON input type " ~ T.stringof);
 }
@@ -545,8 +570,8 @@ private bool depthLimit(ref scope Writer writer, EncodeOptions options, uint dep
     return true;
 }
 
-private void writeArray(T)(ref scope Writer writer, scope const ref T value, ref scope RequestArena arena,
-        EncodeOptions options, uint depth) nothrow @nogc
+private void writeArray(T, bool owned)(ref scope Writer writer, scope const ref T value,
+        ref scope RequestArena arena, EncodeOptions options, uint depth) nothrow @nogc
 {
     if (depthLimit(writer, options, depth))
         return;
@@ -560,13 +585,13 @@ private void writeArray(T)(ref scope Writer writer, scope const ref T value, ref
     {
         if (index != 0)
             writer.put(',');
-        writeValue(writer, element, arena, options, depth + 1);
+        writeValue!(typeof(element), owned)(writer, element, arena, options, depth + 1);
     }
     writer.put(']');
 }
 
-private void writeObject(T)(ref scope Writer writer, scope const ref T value, ref scope RequestArena arena,
-        EncodeOptions options, uint depth) nothrow @nogc
+private void writeObject(T, bool owned)(ref scope Writer writer, scope const ref T value,
+        ref scope RequestArena arena, EncodeOptions options, uint depth) nothrow @nogc
 {
     if (depthLimit(writer, options, depth))
         return;
@@ -576,13 +601,13 @@ private void writeObject(T)(ref scope Writer writer, scope const ref T value, re
     foreach (index; 0 .. JsonFields!(Unqual!T).entries.length)
     {
         const position = options.canonical ? canonical[index] : index;
-        writeProperty(writer, value, arena, options, depth + 1, position, first);
+        writeProperty!(T, owned)(writer, value, arena, options, depth + 1, position, first);
     }
     writer.put('}');
 }
 
-private void writeProperty(T)(ref scope Writer writer, scope const ref T value, ref scope RequestArena arena,
-        EncodeOptions options, uint depth, size_t index, ref bool first) nothrow @nogc
+private void writeProperty(T, bool owned)(ref scope Writer writer, scope const ref T value,
+        ref scope RequestArena arena, EncodeOptions options, uint depth, size_t index, ref bool first) nothrow @nogc
 {
     switch (index)
     {
@@ -594,17 +619,19 @@ private void writeProperty(T)(ref scope Writer writer, scope const ref T value, 
                 if (options.omitIgnored)
                     return;
                 // Intentionally ignored members may be application-only types.
-                static if (!__traits(compiles, writeValue(writer, mixin("value." ~ field.access),
-                        arena, options, depth)))
+                static if (!__traits(compiles, writeValue!(typeof(mixin("value." ~ field.access)),
+                        owned)(writer, mixin("value." ~ field.access), arena, options, depth)))
                 {
                     writer.fail(Status.invalidArgument, "ignored JSON member has no serializable type");
                     return;
                 }
                 else
-                    writeNamedValue(writer, mixin("value." ~ field.access), arena, options, depth, field.name, first);
+                    writeNamedValue!(typeof(mixin("value." ~ field.access)), owned)(writer,
+                            mixin("value." ~ field.access), arena, options, depth, field.name, first);
             }
             else
-                writeNamedValue(writer, mixin("value." ~ field.access), arena, options, depth, field.name, first);
+                writeNamedValue!(typeof(mixin("value." ~ field.access)), owned)(writer,
+                        mixin("value." ~ field.access), arena, options, depth, field.name, first);
             return;
         }
     default:
@@ -613,7 +640,7 @@ private void writeProperty(T)(ref scope Writer writer, scope const ref T value, 
     }
 }
 
-private void writeNamedValue(T)(ref scope Writer writer, scope const ref T value,
+private void writeNamedValue(T, bool owned)(ref scope Writer writer, scope const ref T value,
         ref scope RequestArena arena, EncodeOptions options, uint depth, string name, ref bool first) nothrow @nogc
 {
     if (!first)
@@ -621,5 +648,5 @@ private void writeNamedValue(T)(ref scope Writer writer, scope const ref T value
     first = false;
     writer.stringValue(cast(const(ubyte)[]) name);
     writer.put(':');
-    writeValue(writer, value, arena, options, depth);
+    writeValue!(T, owned)(writer, value, arena, options, depth);
 }

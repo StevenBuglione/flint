@@ -74,8 +74,12 @@ static void terminal_signal(int signal_number)
     int fd = signal_number == SIGWINCH ? resize_write
         : signal_number == SIGINT ? interrupt_write : termination_write;
     unsigned char byte = (unsigned char) signal_number;
-    if (fd >= 0)
-        (void) write(fd, &byte, 1);
+    if (fd >= 0) {
+        /* A full self-pipe already holds a pending wake-up, so a failed write loses nothing.
+           Assigning the result keeps glibc's warn_unused_result (_FORTIFY_SOURCE) satisfied. */
+        ssize_t written = write(fd, &byte, 1);
+        (void) written;
+    }
     errno = saved;
 }
 
