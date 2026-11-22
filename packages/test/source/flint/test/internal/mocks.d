@@ -5,27 +5,24 @@ import std.format : format;
 import std.meta : AliasSeq, aliasSeqOf, staticMap;
 import std.traits : FA = FunctionAttribute, PSC = ParameterStorageClass, Parameters, ReturnType,
     Variadic, functionAttributes, functionLinkage, ParameterStorageClassTuple, variadicFunctionStyle;
-import std.typecons : Tuple;
 
 @safe:
 
-private template sameSignature(alias left, alias right)
+// Flags each candidate that is the first virtual method with its name and type, in one pass per interface.
+private bool[Methods.length] firstVirtuals(Methods...)()
 {
-    enum sameSignature = __traits(identifier, left) == __traits(identifier, right) && is(typeof(left) == typeof(right));
-}
-
-private bool firstVirtual(size_t position, Methods...)()
-{
-    alias method = Methods[position];
-    if (!__traits(isVirtualMethod, method))
-        return false;
-    static foreach (prior; 0 .. position)
+    bool[Methods.length] first;
+    static foreach (position; 0 .. Methods.length)
     {
-        if (__traits(identifier, method) == __traits(identifier, Methods[prior])
-                && is(typeof(method) == typeof(Methods[prior])))
-            return false;
+        first[position] = __traits(isVirtualMethod, Methods[position]);
+        static foreach (prior; 0 .. position)
+        {
+            if (__traits(identifier, Methods[position]) == __traits(identifier, Methods[prior])
+                    && is(typeof(Methods[position]) == typeof(Methods[prior])))
+                first[position] = false;
+        }
     }
-    return true;
+    return first;
 }
 
 private size_t[] indices(size_t count)
@@ -45,9 +42,10 @@ private template methodsOf(Contract)
     }
 
     private alias candidates = staticMap!(overloads, __traits(allMembers, Contract));
+    private enum first = firstVirtuals!candidates();
     template unique(size_t index)
     {
-        static if (firstVirtual!(index, candidates)())
+        static if (first[index])
             alias unique = AliasSeq!(candidates[index]);
         else
             alias unique = AliasSeq!();
@@ -69,14 +67,20 @@ package(flint.test) struct SelectedMethod(Contract, string name, size_t overload
     enum explicitlySelected = true;
 }
 
-private template indexOf(alias selected, size_t index, Methods...)
+// Position of the method with the selected name and type: one flat scan per lookup, not a recursive
+// instantiation per remaining method.
+private template indexOf(alias selected, Methods...)
 {
-    static if (Methods.length == 0)
-        enum indexOf = size_t.max;
-    else static if (sameSignature!(selected, Methods[0]))
-        enum indexOf = index;
-    else
-        enum indexOf = indexOf!(selected, index + 1, Methods[1 .. $]);
+    enum indexOf = () {
+        size_t found = size_t.max;
+        static foreach (index; 0 .. Methods.length)
+        {
+            if (found == size_t.max && __traits(identifier, selected) == __traits(identifier,
+                    Methods[index]) && is(typeof(selected) == typeof(Methods[index])))
+                found = index;
+        }
+        return found;
+    }();
 }
 
 package(flint.test) template methodIndex(Contract, alias selection)
@@ -93,7 +97,7 @@ package(flint.test) template methodIndex(Contract, alias selection)
         static assert(__traits(getOverloads, Contract, name).length == 1,
                 "select overloaded methods with MockMethod!(Interface, name, overload)");
     }
-    enum methodIndex = indexOf!(method, 0, methodsOf!Contract);
+    enum methodIndex = indexOf!(method, methodsOf!Contract);
     static assert(methodIndex != size_t.max, "method is not in the mock interface");
 }
 
@@ -138,6 +142,12 @@ private string emitMethods(Methods...)()
     return source;
 }
 
+// One formatter shared by every mock instead of one per generated method.
+private string missedCalls(string name, size_t expected, size_t observed)
+{
+    return format!"%s expected %s call(s), received %s"(name, expected, observed);
+}
+
 private struct Plan(alias method)
 {
     alias Value = ReturnType!method;
@@ -150,7 +160,9 @@ private struct Plan(alias method)
 package(flint.test) final class MockState(Contract)
 {
     private alias MethodList = methodsOf!Contract;
-    private alias Plans = Tuple!(staticMap!(Plan, MethodList));
+    // A built-in field sequence, one plan per method; std.typecons.Tuple would instantiate its comparison,
+    // hashing and formatting machinery for every mock.
+    private alias Plans = staticMap!(Plan, MethodList);
 
     // TLS provides mutable state for const methods without casting away their qualifiers.
     private static MockState[] active;
@@ -284,20 +296,16 @@ package(flint.test) final class MockState(Contract)
             return violation;
         static foreach (index, method; MethodList)
         {
-            {
-                const expected = plans[index].expected;
-                const observed = plans[index].observed;
-                if (observed < expected)
-                    return format!"%s expected %s call(s), received %s"(__traits(identifier,
-                            method), expected, observed);
-            }
+            if (plans[index].observed < plans[index].expected)
+                return missedCalls(__traits(identifier, method), plans[index].expected, plans[index].observed);
         }
         return null;
     }
 
     void reset()
     {
-        plans = Plans.init;
+        static foreach (index; 0 .. Plans.length)
+            plans[index] = Plans[index].init;
         callCount = 0;
         expectedCount = 0;
         violation = null;

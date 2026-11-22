@@ -6,7 +6,6 @@ version (unittest)
 {
     import flint.test : AssertionFailure;
     import std.algorithm.searching : canFind;
-    import std.algorithm.sorting : sort;
     import std.array : Appender, appender;
     import std.format : format;
     import std.random : rndGen;
@@ -21,42 +20,92 @@ version (unittest)
         void function() @safe run;
     }
 
+    // One test in the compile-time plan; `slot` indexes the declaration-order address table in `collect`.
+    private struct Planned
+    {
+        string moduleName;
+        string name;
+        size_t ordinal;
+        size_t slot;
+    }
+
     package(flint.test) TestCase[] collect(Modules...)()
     {
-        TestCase[] tests;
+        // Names, deduplication and ordering are resolved at compile time. The executable stores one function
+        // address per test and copies a constant table instead of unrolled registration and sorting code.
+        static immutable Planned[] plan = planOf!Modules();
+        enum slots = () {
+            size_t count;
+            static foreach (source; Modules)
+                count += __traits(getUnitTests, source).length;
+            return count;
+        }();
+        void function() @safe[slots] runs;
+        size_t slot;
+        static foreach (source; Modules)
+        {
+            static foreach (test; __traits(getUnitTests, source))
+            {
+                static assert(is(typeof(&test) : void function() @safe), "Expected an @safe test");
+                runs[slot++] = &test;
+            }
+        }
+        auto tests = new TestCase[plan.length];
+        foreach (index, ref entry; plan)
+            tests[index] = TestCase(entry.moduleName, entry.name, entry.ordinal, runs[entry.slot]);
+        return tests;
+    }
+
+    private Planned[] planOf(Modules...)()
+    {
+        Planned[] tests;
         string[] modules;
+        size_t slot;
         static foreach (source; Modules)
         {
             {
                 enum moduleName = __traits(fullyQualifiedName, source);
                 // Deduplicate repeated modules in the explicit list.
-                if (!modules.canFind(moduleName))
-                {
+                const first = !modules.canFind(moduleName);
+                if (first)
                     modules ~= moduleName;
-                    static foreach (index, test; __traits(getUnitTests, source))
+                static foreach (index, test; __traits(getUnitTests, source))
+                {
                     {
+                        enum fallback = format!"test-%s"(index + 1);
+                        string name = fallback;
+                        static foreach (attribute; __traits(getAttributes, test))
                         {
-                            enum fallback = format!"test-%s"(index + 1);
-                            string name = fallback;
-                            static foreach (attribute; __traits(getAttributes, test))
                             {
+                                static if (is(typeof(attribute) == string))
                                 {
-                                    static if (is(typeof(attribute) == string))
-                                    {
-                                        if (name == fallback && attribute.length != 0)
-                                            name = attribute;
-                                    }
+                                    if (name == fallback && attribute.length != 0)
+                                        name = attribute;
                                 }
                             }
-                            static assert(is(typeof(&test) : void function() @safe), "Expected an @safe test");
-                            tests ~= TestCase(moduleName, name, index, &test);
                         }
+                        if (first)
+                            tests ~= Planned(moduleName, name, index, slot);
+                        ++slot;
                     }
                 }
             }
         }
-        sort!((a, b) => a.moduleName == b.moduleName ? a.ordinal < b.ordinal : a.moduleName < b.moduleName)(tests);
+        // Insertion sort by module, then declaration order; the keys are unique after deduplication.
+        foreach (position; 1 .. tests.length)
+        {
+            const entry = tests[position];
+            size_t at = position;
+            for (; at > 0 && precedes(entry, tests[at - 1]); --at)
+                tests[at] = tests[at - 1];
+            tests[at] = entry;
+        }
         return tests;
+    }
+
+    private bool precedes(scope const Planned a, scope const Planned b) pure nothrow @nogc
+    {
+        return a.moduleName == b.moduleName ? a.ordinal < b.ordinal : a.moduleName < b.moduleName;
     }
 
     private void xmlEscape(ref Appender!string output, scope const(char)[] source)
@@ -122,9 +171,8 @@ version (unittest)
     {
         auto output = File(path, "wbx");
         output.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-        output.writef!(`%s%s%s%s%s%s%s`)(`<testsuite name="Flint" tests="`, total, `" failures="`,
-                failed, `" errors="`, errors, "\">\n");
-        output.writef!("  <properties><property name=\"seed\" value=\"%s\"/></properties>\n")(seed);
+        output.write(`<testsuite name="Flint" tests="`, total, `" failures="`, failed, `" errors="`, errors, "\">\n");
+        output.write("  <properties><property name=\"seed\" value=\"", seed, "\"/></properties>\n");
         output.write(cases, "</testsuite>\n");
         output.close();
     }
