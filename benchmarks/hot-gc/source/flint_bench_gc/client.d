@@ -11,10 +11,25 @@ import std.socket : InternetAddress, SocketOption, SocketOptionLevel, TcpSocket;
 private enum requestFields = " HTTP/1.1\r\nHost: localhost\r\nConnection: keep-alive\r\n\r\n";
 private enum jsonRequest = "GET /json" ~ requestFields;
 private enum barrierRequest = "GET /_flint_hot_gc_barrier" ~ requestFields;
-private enum jsonResponse = "HTTP/1.1 200 OK\r\nContent-Length: 26\r\n"
+// The Date value is the only varying field: an IMF-fixdate such as "Thu, 01 Jan 1970 00:00:00 GMT".
+private enum statusLine = "HTTP/1.1 200 OK\r\nDate: ";
+private enum datePlaceholder = "Ddd, DD Mmm YYYY HH:MM:SS GMT";
+private enum jsonResponse = statusLine ~ datePlaceholder ~ "\r\nContent-Length: 26\r\n"
     ~ "Content-Type: application/json\r\nConnection: keep-alive\r\n\r\n" ~ jsonBody;
-private enum barrierHeader = "HTTP/1.1 200 OK\r\nContent-Length: 1\r\n"
+private enum barrierHeader = statusLine ~ datePlaceholder ~ "\r\nContent-Length: 1\r\n"
     ~ "Content-Type: text/plain\r\nConnection: keep-alive\r\n\r\n";
+
+/// Compare a response with its canonical form, accepting any well-shaped Date value.
+private bool canonical(scope const(char)[] response, string expected) pure nothrow @nogc
+{
+    enum from = statusLine.length;
+    enum to = from + datePlaceholder.length;
+    if (response.length != expected.length || response[0 .. from] != expected[0 .. from]
+            || response[to .. $] != expected[to .. $])
+        return false;
+    const date = response[from .. to];
+    return date[3 .. 5] == ", " && date[$ - 4 .. $] == " GMT";
+}
 
 /// Discover a free numeric loopback port before creating the framework listener.
 ushort choosePort()
@@ -59,14 +74,16 @@ struct Client
     bool json() nothrow @nogc
     {
         char[jsonResponse.length] response;
-        return sendAll(fd, jsonRequest) && receiveAll(fd, response[]) && response[] == jsonResponse;
+        return sendAll(fd, jsonRequest) && receiveAll(fd, response[]) && canonical(response[], jsonResponse);
     }
 
     /// Read the current owner index and any sample taken by its barrier handler.
     uint barrier() nothrow @nogc
     {
         char[barrierHeader.length + 1] response;
-        if (!sendAll(fd, barrierRequest) || !receiveAll(fd, response[]) || response[0 .. $ - 1] != barrierHeader)
+        if (!sendAll(fd, barrierRequest) || !receiveAll(fd, response[]))
+            return uint.max;
+        if (!canonical(response[0 .. $ - 1], barrierHeader))
             return uint.max;
         const owner = response[$ - 1];
         return owner >= '0' && owner <= '9' ? cast(uint)(owner - '0') : uint.max;
