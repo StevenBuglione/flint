@@ -10,7 +10,8 @@
     "oha": "1.16.0",
     "rust": "1.97.0",
     "rustup": "1.29.3",
-    "clang": "22.1.8"
+    "clang": "22.1.8",
+    "conan": "2.34.0"
   },
   "assets": {
     "ldc2-1.43.0-addon-wasi.tar.xz": {
@@ -72,6 +73,11 @@
       "sha256": "df0e1ecf16caf3489a272a5eea4eec9b0d82878f6477fa309504f918a0006384",
       "checksum_url": "https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.8/LLVM-22.1.8-Linux-X64.tar.xz.jsonl",
       "verification": "The digest matches the subject of the release SLSA provenance attestation (.jsonl) and the GitHub release asset digest. The attestation signature was not verified with sigstore tooling."
+    },
+    "conan-2.34.0-linux-x86_64.tgz": {
+      "url": "https://github.com/conan-io/conan/releases/download/2.34.0/conan-2.34.0-linux-x86_64.tgz",
+      "sha256": "655177bf39c901ea6b532e02f55813eb03abaced931b5627307f1c8edc3627b6",
+      "verification": "The digest matches the GitHub release asset digest published for conan-io/conan 2.34.0 and was re-measured after download. Conan is Flint's internal native-package engine (ADR-023); it runs only with Flint's isolated home and recipe index."
     }
   },
   "actions": {

@@ -1,6 +1,6 @@
 # The `flint` command
 
-`flint` is the single entry point for creating, building, running, testing and checking Flint code with the pinned toolchain ([ADR-018](adr/ADR-018-flint-cli.md), [ADR-021](adr/ADR-021-flint-platform.md), [ADR-022](adr/ADR-022-milestone-7-decisions.md)). It is written in D on Flint's own libraries and lives in [`apps/flint`](../apps/flint).
+`flint` is the single entry point for creating, building, running, testing, checking and packaging Flint code with the pinned toolchain ([ADR-018](adr/ADR-018-flint-cli.md), [ADR-021](adr/ADR-021-flint-platform.md), [ADR-022](adr/ADR-022-milestone-7-decisions.md), [ADR-023](adr/ADR-023-milestone-8-decisions.md)). It is written in D on Flint's own libraries and lives in [`apps/flint`](../apps/flint).
 
 ## Install
 
@@ -32,11 +32,14 @@ flint check
 | `flint new <name> [--starter a,b] [--type executable\|library] [--path DIR] [--plan]` | Create a project in the canonical layout, with `flint.lock`. Never overwrites. `--plan` prints the files instead. |
 | `flint build [packages...] [--profile P] [--compiler C] [--dflags F]... [--lflags F]... [--verify] [--locked] [--force] [-- flags]` | Build the project, or workspace packages, with a canonical profile. Writes a receipt next to the artifact. |
 | `flint run [--profile P] [--dflags F]... [--verify] [--locked] [-- args]` | Build if needed, then run with the project root as working directory. |
-| `flint test [packages...] [--compiler dmd\|ldc\|both] [--verify] [--locked] [--force]` | Build and run unittests: the project's `src/` and `test/`, or `dub test` for workspace packages. |
-| `flint check [--gate structural] [--package P]...` | Every check CI runs: lock, layout, safety rules, configuration convention, dfmt and D-Scanner. In the workspace: `tools/gates.py`'s structural gate, then dfmt and D-Scanner. |
+| `flint test [packages...] [--compiler dmd\|ldc\|both] [--sanitize] [--scenarios] [--verify] [--locked] [--force]` | Build and run unittests: the project's `src/` and `test/`, or `dub test` for workspace packages. `--sanitize` builds a project's tests, embedded C and native packages with ASan and UBSan. |
+| `flint check [--gate structural] [--package P]...` | Every check CI runs: lock, layout, safety rules, configuration convention, dfmt, D-Scanner and clang-tidy over embedded C. In the workspace: `tools/gates.py`'s structural gate, then dfmt and D-Scanner. |
 | `flint fmt [--check]` | Format with the pinned dfmt and the repository's `.editorconfig`. |
 | `flint lock [--check]` | Write `flint.lock`, or verify it. |
-| `flint toolchain install [--toolchain-dir D] [--no-pgo] [--dmd-linker L] [--plan]` | Install the pinned DMD/DUB fork and LDC, and write the toolchain receipt. |
+| `flint deps tree\|why <package>\|update [packages...]\|vendor` | Print the graph, explain why a package is in it, raise repository-path requirements to their latest release, or copy repository modules and DUB packages into `vendor/` for offline builds. |
+| `flint deps audit [--target T]` | Verify the lock and every module, DUB and native hash; list each component's licence and the LGPL/AGPL obligations; show `[unchecked]` waivers. |
+| `flint package [--target T] [--container] [--sbom]` | Build the release executable for a target, verify it is static, and write a reproducible `tar.gz` with `bin/`, `config/` and `resources/`; `--container` adds a `FROM scratch` OCI image, `--sbom` SPDX 2.3 and CycloneDX 1.6 SBOMs. |
+| `flint toolchain install [--toolchain-dir D] [--no-pgo] [--dmd-linker L] [--sanitizers] [--musl] [--plan]` | Install the pinned DMD/DUB fork, LDC, clang (embedded C, clang-tidy) and the native package engine, and write the toolchain receipt. `--sanitizers` adds the sanitizer-aware LDC runtime, `--musl` the static musl target. |
 | `flint toolchain verify\|info [--toolchain-dir D]` | Check the toolchain against `policy/toolchains.json` and `toolchain/*.patch`, or describe it. |
 | `flint doctor [--project D]` | Explain environment problems that would make a build fail or non-canonical. |
 | `flint daemon start [--profile P]\|stop\|status` | Manage the forked DMD's compile server. |
@@ -126,6 +129,8 @@ Command fields:
 | `flint.check/1` | `project`, `checks`, `files`, `waived`, `waivers`, `structural` (as `tools/gates.py` reports it), `quality` (`files`, `unformatted`, `issues`, `formatter`) |
 | `flint.fmt/1` | `files`, `changed`, `check` |
 | `flint.lock/1` | `path`, `state` (`written`, `unchanged`, `current`, `missing`, `stale`), `packages` |
+| `flint.deps/1` | `action`, `project`, `nodes` (tree), `paths` (why), `changes` (update, vendor), `target`, `components`, `verified`, `obligations` (audit) |
+| `flint.package/1` | `project`, `target`, `libc`, `fully_static`, `needed`, `build_receipt`, `image`, `image_digest`, `components`, `outputs` (`kind`, `path`, `sha256`, `bytes`) |
 | `flint.toolchain/1` | `action`, `directory`, `components`, `fork`, `commands`, `plan` |
 | `flint.doctor/1` | `checks` (`name`, `status`, `detail`) |
 | `flint.daemon/1` | `action`, `directory`, `servers` (`socket`, `pid`, `alive`, `flags`) |
@@ -166,6 +171,8 @@ web = {}
 [dependencies]
 "flint:log" = {}                       # core package; versions come from `flint`
 model = { path = "../model" }          # a Flint library project or a local DUB package
+"github.com/acme/money" = "1.2.0"      # repository path: minimum release, minimal version selection
+"dub:dyaml" = "0.10.0"                 # a DUB package from the compatibility index
 
 [test-dependencies]
 "flint:test" = {}
@@ -181,9 +188,21 @@ rule = "FLINT-E0502"
 file = "src/shop/legacy.d"
 reason = "vendored parser, tracked in #12"
 
-[unchecked]                # local DUB packages used without Flint's checks
-legacy-parser = "audited in #12"
+[unchecked]                # DUB packages that fail Flint's safety checks, with a reason
+"dub:dyaml" = "YAML parsing until flint:serde reads YAML"
+
+[native]                   # native packages from Flint's recipe index, static by default
+zlib = "1.4"
+openssl = { version = "3.5.9", linkage = "bundled" }   # shared library in lib/, run path $ORIGIN/../lib
+libpq = { version = "18", system = true }              # the host's library: non-portable
+
+[native.c]                 # embedded C (default: native/**/*.c), C17, hardened, warnings are errors
+include_dirs = ["native/include"]
+standard = "c11"
+defines = ["SHOP_FAST=1"]
 ```
+
+`[project] license = "MIT"` sets the SPDX licence that SBOMs and `flint deps audit` report. D reaches embedded C and native packages only through `src/<root>/ffi/` modules (FLINT-E0513).
 
 ### Profiles
 
@@ -210,5 +229,10 @@ Every artifact has `<artifact>.receipt.json` (`flint.receipt/1`) next to it. Wor
 | `FLINT_COLOR` | `auto` (default), `always` or `never`. `NO_COLOR` is honoured. |
 | `FLINT_LOG` | Append a JSON line per child process `flint` runs (argv, directory, status, duration). |
 | `FLINT_PROFILE` | Read by applications: selects `config/application-<profile>.toml`. |
+| `FLINT_PROXY` | Fetch repository-path modules and DUB packages from `<proxy>/<path>` instead of `https://<path>`; `off` never fetches. |
+| `FLINT_CACHE` | The module cache, instead of `<installation>/.flint/cache`. |
+| `FLINT_OFFLINE` | `1`: never touch the network; use the cache or `vendor/`. |
+| `FLINT_DUB_INDEX` | An additional DUB compatibility index, for private packages. |
+| `SOURCE_DATE_EPOCH` | Timestamps of `flint package` archives, images and SBOMs, for byte-reproducible packages. |
 
 `flint` removes `DFLAGS` from its builds. It records `FLINT_DMD_SERVER`, `FLINT_DUB_PIPELINE`, `FLINT_DMD_DIRECT_LINK`, `FLINT_LINK_THREADS`, `CC` and `LD` in receipts when they are set.

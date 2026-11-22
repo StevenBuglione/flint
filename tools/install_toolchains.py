@@ -378,6 +378,24 @@ def install_musl_sysroot(destination):
     return receipt
 
 
+CONAN_ARCHIVE = 'conan-2.34.0-linux-x86_64.tgz'
+CONAN_ROOT = 'conan-2.34.0'
+
+
+def install_conan(destination):
+    """Install the pinned self-contained Conan 2 (a frozen Python bundle) into <destination>/conan-<version>."""
+    root = destination / CONAN_ROOT
+    install(CONAN_ARCHIVE, root)
+    binary = root / 'bin' / 'conan'
+    version = subprocess.run([str(binary), '--version'], capture_output=True, text=True,
+                             env={'PATH': '/usr/bin:/bin', 'CONAN_HOME': str(root / 'probe-home')}).stdout
+    shutil.rmtree(root / 'probe-home', ignore_errors=True)
+    if LOCK['versions']['conan'] not in version:
+        raise SystemExit('pinned Conan archive did not report version ' + LOCK['versions']['conan'] + ': ' + version)
+    return {'compiler': 'conan', 'version': LOCK['versions']['conan'], 'bin': str(binary.parent),
+            'sha256': LOCK['assets'][CONAN_ARCHIVE]['sha256']}
+
+
 SANITIZER_RUNTIME = 'ldc-1.43.0-sanitizer-runtime'
 SANITIZER_RUNTIME_RECEIPT = 'flint-sanitizer-runtime.json'
 # Upstream runtime CMake options. RT_SUPPORT_SANITIZERS adds -d-version=SupportSanitizers:
@@ -466,7 +484,7 @@ def build_sanitizer_runtime(destination, build_root=None, jobs=None):
 
 
 def main():
-    ap=argparse.ArgumentParser();ap.add_argument('--compiler',choices=['dmd','ldc','go','oha','clang','ldc-sanitizer-runtime','musl-sysroot','flint'],required=True);ap.add_argument('--musl',action='store_true');ap.add_argument('--destination',type=Path,default=ROOT/'.tools')
+    ap=argparse.ArgumentParser();ap.add_argument('--compiler',choices=['dmd','ldc','go','oha','clang','ldc-sanitizer-runtime','musl-sysroot','conan','flint'],required=True);ap.add_argument('--musl',action='store_true');ap.add_argument('--destination',type=Path,default=ROOT/'.tools')
     ap.add_argument('--dmd-linker', metavar='LINKER', help='Use installed ld.lld or mold for project-local 64-bit DMD links')
     ap.add_argument('--flint-fork', action='store_true',
                     help='Build the Flint DMD/DUB fork (resident toolchain compile server, parallel DUB pipeline, direct linking)')
@@ -492,6 +510,10 @@ def main():
         print(json.dumps(bootstrap_flint(a.destination)))
         return
     osname=platform.system();arch=platform.machine().lower();arch='aarch64' if arch in ['arm64','aarch64'] else 'x86_64' if arch in ['amd64','x86_64'] else arch
+    if a.compiler == 'conan':
+        if (osname,arch)!=('Linux','x86_64'):raise SystemExit('the Conan pin is for Linux x86_64 hosts')
+        print(json.dumps(install_conan(a.destination)))
+        return
     if a.compiler == 'musl-sysroot':
         if (osname,arch)!=('Linux','x86_64'):raise SystemExit('the musl sysroot pin is for Linux x86_64 hosts')
         print(json.dumps(install_musl_sysroot(a.destination)))

@@ -100,13 +100,13 @@ int commandPackage(ref Session session, PackageRequest request)
     if (!releaseBuild(session, project, request, target, outcome, report))
         return finish(session, report, payload);
     payload.build_receipt = displayed(outcome.receipt);
-    if (!verifyLinkage(outcome.artifact, target, payload, report))
+    if (!verifyLinkage(outcome.artifact, target, outcome.natives.bundled, payload, report))
         return finish(session, report, payload);
     const directory = buildPath(project.root, ".flint", "package");
     mkdirRecurse(directory);
     const stem = buildPath(directory, project.manifest.name ~ "-" ~ project.manifest.version_ ~ "-" ~ target.name);
     const created = sourceDateEpoch();
-    auto files = stagedFiles(project.root, outcome.artifact, project.manifest.artifactName());
+    auto files = stagedFiles(project.root, outcome.artifact, project.manifest.artifactName(), outcome.natives.bundled);
     writeArchive(stem, project.manifest.name ~ "-" ~ project.manifest.version_, files, created, payload);
     if (request.sbom)
         writeSboms(session, project, outcome, target, stem, created, payload);
@@ -174,7 +174,8 @@ private immutable string[] glibcLibraries = [
     "ld-linux-x86-64.so.2", "ld-linux-aarch64.so.1"
 ];
 
-private bool verifyLinkage(string artifact, const ref BuildTarget target, ref PackagePayload payload, ref Report report)
+private bool verifyLinkage(string artifact, const ref BuildTarget target,
+        scope const string[] outcomeBundled, ref PackagePayload payload, ref Report report)
 {
     import std.algorithm.searching : canFind;
     import std.file : read;
@@ -192,7 +193,7 @@ private bool verifyLinkage(string artifact, const ref BuildTarget target, ref Pa
     }
     foreach (library; facts.needed)
     {
-        if (!glibcLibraries.canFind(library))
+        if (!glibcLibraries.canFind(library) && !bundledName(outcomeBundled, library))
         {
             report.error("FLINT-E0711", artifact ~ " needs the shared library " ~ library
                     ~ "; packages link everything but the C library statically",
@@ -203,17 +204,36 @@ private bool verifyLinkage(string artifact, const ref BuildTarget target, ref Pa
     return true;
 }
 
+private bool bundledName(scope const string[] bundled, string library)
+{
+    import std.path : baseName;
+
+    foreach (path; bundled)
+    {
+        if (baseName(path) == library)
+            return true;
+    }
+    return false;
+}
+
 /// The executable under bin/, then the project's config/ and resources/.
-private Entry[] stagedFiles(string root, string artifact, string executable)
+private Entry[] stagedFiles(string root, string artifact, string executable, scope const string[] bundled)
 {
     import std.file : read;
     import std.path : buildPath;
     import flint_tool.support.archive : octal644, octal755;
     import flint_tool.support.files : findFiles;
 
+    import std.path : baseName;
+
     Entry[] files = [
         Entry("bin/"), Entry("bin/" ~ executable, cast(const(ubyte)[]) read(artifact), octal755)
     ];
+    // Bundled native packages: shared libraries the executable finds through its $ORIGIN/../lib run path.
+    if (bundled.length)
+        files ~= Entry("lib/");
+    foreach (library; bundled)
+        files ~= Entry("lib/" ~ baseName(library), cast(const(ubyte)[]) read(library), octal755);
     foreach (directory; ["config", "resources"])
     {
         const found = findFiles(buildPath(root, directory), "**");
@@ -277,7 +297,7 @@ private void writeSboms(ref Session session, const ref Target project, const ref
     foreach (source; outcome.native.sources)
         sources ~= [source, sha256File(buildPath(project.root, source))];
     const inventory = collect(session.home, project.manifest, project.resolution, target.name,
-            sha256File(outcome.artifact), sources);
+            sha256File(outcome.artifact), sources, outcome.natives);
     payload.components = cast(long) inventory.components.length;
     const release = session.home.platform.release;
     write(stem ~ ".spdx.json", renderSpdx(inventory, release, rfc3339(created)));

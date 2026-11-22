@@ -103,6 +103,8 @@ struct RemoteModule
     string projectName;
     /// The module's SPDX licence expression, or empty.
     string license;
+    /// Its `[native]` packages, as name@version.
+    string[] natives;
     /// Its D module root.
     string moduleRoot;
     /// "library" or "executable".
@@ -389,6 +391,8 @@ struct Fetcher
         }
         module_.projectName = manifest.name;
         module_.license = manifest.license;
+        foreach (ref native; manifest.natives)
+            module_.natives ~= native.name ~ "@" ~ native.version_;
         module_.moduleRoot = manifest.moduleRoot();
         module_.type = manifest.type;
         foreach (ref spec; manifest.dependencies)

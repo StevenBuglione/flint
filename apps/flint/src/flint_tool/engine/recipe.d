@@ -20,6 +20,8 @@ struct RecipeExtras
     string[] objects;
     /// Linker hardening for executables that contain embedded C.
     string[] linkHardening;
+    /// Native packages' linker flags: static archives, bundled libraries, system libraries.
+    string[] nativeFlags;
 }
 
 /// Render the root recipe for a project.
@@ -35,6 +37,8 @@ string renderRecipe(const ref Home home, const ref Manifest manifest, const ref 
         text ~= fields("sourceFiles", extras.objects);
     if (extras.objects.length && manifest.type == "executable")
         text ~= fields("lflags", extras.linkHardening);
+    if (extras.nativeFlags.length)
+        text ~= fields("lflags", dubEscaped(extras.nativeFlags));
     foreach (name; resolution.direct)
         text ~= dependencyLine(home, resolution, name, "");
     foreach (profile; profileNames)
@@ -147,6 +151,17 @@ private string dependencyLine(const ref Home home, const ref Resolution resoluti
 private string field(string key, string value, string indent = "")
 {
     return indent ~ key ~ " " ~ quoted(value) ~ "\n";
+}
+
+/// DUB expands `$NAME` in recipe fields; `$$` is a literal dollar (the `$ORIGIN` of a run path).
+private string[] dubEscaped(scope const(string)[] values)
+{
+    import std.array : replace;
+
+    string[] escaped;
+    foreach (value; values)
+        escaped ~= value.replace("$", "$$");
+    return escaped;
 }
 
 private string fields(string key, scope const(string)[] values, string indent = "")

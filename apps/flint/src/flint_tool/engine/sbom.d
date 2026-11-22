@@ -53,7 +53,8 @@ struct Inventory
 /// Collect the inventory of a project built for `target`. `artifactSha256` is the executable's hash and
 /// `cSources` the embedded C as (project-relative path, sha256) pairs.
 Inventory collect(const ref Home home, const ref Manifest manifest, const ref Resolution resolution,
-        string target, string artifactSha256, scope const string[2][] cSources)
+        string target, string artifactSha256, scope const string[2][] cSources,
+        const ref imported!"flint_tool.project.native".NativeResolution natives)
 {
     Inventory inventory;
     inventory.target = target;
@@ -83,6 +84,18 @@ Inventory collect(const ref Home home, const ref Manifest manifest, const ref Re
                 "embedded-c", manifest.license, pair[1], null, null, "static");
         inventory.root.dependsOn ~= file.reference;
         inventory.components ~= file;
+    }
+    foreach (ref native; natives.packages)
+    {
+        auto component = Component(reference("native", native.name), native.name, native.version_,
+                "library", "native", native.license, native.linkage == "system" ? null : native.sourceSha256,
+                "pkg:generic/flint-native/" ~ native.name ~ "@" ~ native.version_, null,
+                native.linkage == "system" ? "dynamic" : native.linkage);
+        foreach (dependency; native.dependencies)
+            component.dependsOn ~= reference("native", dependency);
+        if (native.direct)
+            inventory.root.dependsOn ~= component.reference;
+        inventory.components ~= component;
     }
     foreach (runtime; runtimeComponents(home, target))
     {

@@ -606,11 +606,26 @@ def main():
     parser.add_argument('--phase',choices=('plan','fetch','build'),default='plan');parser.add_argument('--work-dir',default=str(ROOT/'.native'));parser.add_argument('--prefix')
     parser.add_argument('--jobs',type=int,default=min(os.cpu_count() or 2,8));parser.add_argument('--cc');parser.add_argument('--cxx');parser.add_argument('--cmake-toolchain')
     parser.add_argument('--sanitize',choices=('address','undefined','address,undefined'))
+    # The Conan recipe index (native/conan-index, ADR-023) builds one library per Conan package with its
+    # dependencies' packages already merged into --prefix, and the Flint shims once over the deployed closure.
+    parser.add_argument('--no-dependencies',action='store_true',help='Build only the --library names; their dependencies are already in --prefix. --profile then only selects provider variants such as curl SMTP')
+    parser.add_argument('--no-shims',action='store_true',help='Do not build the Flint C shims (native/ffi)')
+    parser.add_argument('--shims-only',action='store_true',help='Build only the Flint C shims (and --emit-dub) over the libraries the prefix receipt records')
     parser.add_argument('--with-codegen',action='store_true');parser.add_argument('--emit-dub',action='store_true');parser.add_argument('--allow-webview',action='store_true');parser.add_argument('--pkg-config',default=os.environ.get('PKG_CONFIG','pkg-config'),help='pkg-config for dynamic system providers such as WebKitGTK')
     args=parser.parse_args()
     if args.jobs<1:parser.error('--jobs must be positive')
     lock=json.loads(Path(args.lock).read_text());builder=Builder(args,lock)
     names=list(args.library)
+    if args.shims_only or args.no_dependencies:
+        if args.shims_only and names:parser.error('--shims-only builds no libraries')
+        if args.no_dependencies and not names:parser.error('--no-dependencies needs --library')
+        if args.phase=='build' and host_target()!=args.target and not args.cmake_toolchain:parser.error('Use a native target runner or an explicit CMake cross toolchain')
+        for name in names:builder.build(name)
+        if args.phase!='fetch' and not args.no_shims:
+            builder.shims()
+            if args.emit_dub:builder.emit_dub()
+        print(json.dumps({'phase':args.phase,'target':args.target,'prefix':str(builder.prefix),'receipt':str(builder.receipt_path) if args.phase=='build' else None}))
+        return
     if args.profile=='all':names += [n for n in builder.rows if n not in ('webview','protoc') and (n not in ('liburing','webkitgtk') or args.target.startswith('linux'))]
     elif args.profile:names += PROFILES[args.profile]
     if args.profile in ('rest','http','sql','mq') and args.target.startswith('linux'):names.append('liburing')
@@ -627,7 +642,7 @@ def main():
             names.append('liburing')
     if args.phase=='build' and host_target()!=args.target and not args.cmake_toolchain:parser.error('Use a native target runner or an explicit CMake cross toolchain')
     for name in dependency_order(names,builder.rows,args.with_codegen):builder.build(name)
-    if args.phase!='fetch':
+    if args.phase!='fetch' and not args.no_shims:
         builder.shims()
         if args.emit_dub:builder.emit_dub()
     if args.phase=='plan':print(json.dumps({'target':args.target,'host':host_target(),'phase':'plan-only','prefix':str(builder.prefix),'steps':builder.plan},indent=2))

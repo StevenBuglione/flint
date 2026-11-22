@@ -341,7 +341,20 @@ int commandDepsAudit(ref Session session, string project, string targetName)
     string[2][] sources;
     foreach (source; nativeSources(target.manifest))
         sources ~= [source, sha256File(buildPath(target.root, source))];
-    const inventory = collect(session.home, target.manifest, target.resolution, payload.target, null, sources);
+    import flint_tool.project.native : NativeResolution;
+    import flint_tool.project.resolve : nativesFor;
+
+    NativeResolution natives;
+    if (!nativesFor(session.home, target.manifest, target.resolution, payload.target, false, natives, report))
+        return finish(session, report, payload);
+    foreach (ref native; natives.packages)
+    {
+        if (native.linkage != "system")
+            payload.verified ~= "native " ~ native.name ~ " " ~ native.version_ ~ " source sha256 "
+                ~ native.sourceSha256 ~ ", binary sha256 " ~ native.binarySha256;
+    }
+    const inventory = collect(session.home, target.manifest, target.resolution, payload.target,
+            null, sources, natives);
     foreach (ref component; inventory.components)
     {
         payload.components ~= AuditComponent(component.name, component.version_, component.origin,

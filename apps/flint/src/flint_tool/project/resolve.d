@@ -43,7 +43,8 @@ struct ResolvedPackage
     long safetyFindings;
     /// For DUB packages: the first findings.
     string[] safetySample;
-    /// For indexed DUB packages: the Flint native recipes they link, as name@version.
+    /// Native packages it needs, as name@version: a path or repository dependency's `[native]`, or the recipes an
+    /// indexed DUB package's entry names.
     string[] nativeRecipes;
 }
 
@@ -60,6 +61,8 @@ struct Resolution
     bool workspace;
     /// Every repository-path requirement seen during minimal version selection.
     Requirement[] requirements;
+    /// The native packages, resolved for the host target.
+    imported!"flint_tool.project.native".NativeResolution natives;
 
     /// The package named `name`, or null.
     const(ResolvedPackage)* find(string name) const
@@ -125,7 +128,88 @@ bool resolve(const ref Home home, const ref Manifest manifest, out Resolution re
 
     sort!((a, b) => a.name < b.name)(resolution.packages);
     checkRoots(manifest, resolution, report);
+    if (report.errors() == before)
+        resolveProjectNatives(home, manifest, resolution, report);
     return report.errors() == before;
+}
+
+/// The native packages of a build for `target`, with or without sanitizers: the locked host resolution, or a fresh
+/// one for another target or variant (whose recipes and sources the lock still pins).
+bool nativesFor(const ref Home home, const ref Manifest manifest, const ref Resolution resolution, string target,
+        bool sanitize, out imported!"flint_tool.project.native".NativeResolution natives, ref Report report)
+{
+    import flint_tool.project.native : NativeRequirement, collectRequirements, resolveNatives;
+
+    if (resolution.natives.packages.length == 0 || (resolution.natives.target == target && !sanitize))
+    {
+        natives = copyNatives(resolution.natives);
+        return true;
+    }
+    string[][string] fromDependencies;
+    foreach (ref item; resolution.packages)
+    {
+        if (item.nativeRecipes.length && !item.testOnly)
+            fromDependencies[item.name] = item.nativeRecipes.dup;
+    }
+    NativeRequirement[] requirements;
+    if (!collectRequirements(manifest, fromDependencies, requirements, report)
+            || !resolveNatives(home, manifest, requirements, target, sanitize, natives, report))
+        return false;
+    foreach (ref package_; natives.packages)
+    {
+        foreach (ref locked; resolution.natives.packages)
+        {
+            if (locked.name == package_.name && (locked.recipeRevision != package_.recipeRevision
+                    || locked.sourceSha256 != package_.sourceSha256))
+            {
+                const pinned = locked.recipeRevision;
+                report.error("FLINT-E0202", "native package " ~ package_.name ~ " for " ~ target
+                        ~ " resolved recipe " ~ package_.recipeRevision ~ " but flint.lock pins " ~ pinned,
+                        "review the change, then run `flint lock` to accept it");
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+private imported!"flint_tool.project.native".NativeResolution copyNatives(
+        const ref imported!"flint_tool.project.native".NativeResolution source)
+{
+    import flint_tool.project.native : NativePackage, NativeResolution;
+
+    NativeResolution copy;
+    copy.target = source.target;
+    copy.sanitize = source.sanitize;
+    foreach (ref package_; source.packages)
+        copy.packages ~= NativePackage(package_.name, package_.version_, package_.recipeRevision,
+                package_.packageId, package_.packageRevision, package_.sourceSha256, package_.binarySha256,
+                package_.license, package_.linkage, package_.folder, package_.direct,
+                package_.requesters.dup, package_.dependencies.dup, package_.archives.dup);
+    copy.linkFlags = source.linkFlags.dup;
+    copy.includeDirs = source.includeDirs.dup;
+    copy.nonPortable = source.nonPortable.dup;
+    copy.bundled = source.bundled.dup;
+    return copy;
+}
+
+/// Resolve the native packages of the project and its dependencies for the host target (the lock records them).
+private void resolveProjectNatives(const ref Home home, const ref Manifest manifest,
+        ref Resolution resolution, ref Report report)
+{
+    import flint_tool.engine.target : hostTarget;
+    import flint_tool.project.native : NativeRequirement, collectRequirements, resolveNatives;
+
+    string[][string] fromDependencies;
+    foreach (ref item; resolution.packages)
+    {
+        if (item.nativeRecipes.length && !item.testOnly)
+            fromDependencies[item.name] = item.nativeRecipes.dup;
+    }
+    NativeRequirement[] requirements;
+    if (!collectRequirements(manifest, fromDependencies, requirements, report) || requirements.length == 0)
+        return;
+    resolveNatives(home, manifest, requirements, hostTarget(), false, resolution.natives, report);
 }
 
 /// Add every core package reachable from a direct, path or remote dependency.
@@ -292,6 +376,7 @@ private bool resolveRemotes(const ref Home home, const ref Manifest manifest,
         item.version_ = module_.version_;
         item.commit = module_.commit;
         item.license = module_.license;
+        item.nativeRecipes = module_.natives.dup;
         item.contentSha256 = module_.contentSha256;
         foreach (ref spec; module_.requirements)
             item.dependencies ~= spec.name;
@@ -374,6 +459,8 @@ private string resolvePath(const ref Home home, const ref Manifest owner, const 
                 "run `flint check` in " ~ spec.path);
     item.kind = "path";
     item.license = nested.license;
+    foreach (ref native; nested.natives)
+        item.nativeRecipes ~= native.name ~ "@" ~ native.version_;
     item.moduleRoot = nested.moduleRoot();
     item.manifestType = nested.type;
     item.contentSha256 = contentHash(directory, ["flint.toml", "src/**", "native/**"]);

@@ -14,4 +14,5 @@ __pycache__/
 .ci-dub-home/
 .native/
 .native-sanitized/
+.native-conan/
 /packages/*/flint-*-test-unittest

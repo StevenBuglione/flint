@@ -366,8 +366,9 @@ string[][] installCommands(const ref Home home, string directory, bool pgo, stri
     dmd ~= ["--destination", directory];
     string[][] commands = [
         dmd, ["python3", installer, "--compiler", "ldc", "--destination", directory],
-        // The pinned clang compiles embedded C and runs clang-tidy (ADR-023).
-        ["python3", installer, "--compiler", "clang", "--destination", directory]
+        // The pinned clang compiles embedded C and runs clang-tidy; Conan is the hidden native-package engine.
+        ["python3", installer, "--compiler", "clang", "--destination", directory],
+        ["python3", installer, "--compiler", "conan", "--destination", directory]
     ];
     if (sanitizers)
         commands ~= [

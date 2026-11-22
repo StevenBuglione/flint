@@ -61,6 +61,19 @@ string renderLock(const ref Home home, const ref Manifest manifest, const ref Re
         text ~= pair("scope", item.testOnly ? "test" : "build");
         text ~= "dependencies = [" ~ list(item.dependencies) ~ "]\n";
     }
+    foreach (ref native; resolution.natives.packages)
+    {
+        // Native binaries are recorded for the host target; other targets verify the recipe and source.
+        text ~= "\n[[native]]\n" ~ pair("name", native.name) ~ pair("version",
+                native.version_) ~ pair("linkage", native.linkage);
+        if (native.linkage != "system")
+            text ~= pair("target", resolution.natives.target) ~ pair("recipe_revision",
+                    native.recipeRevision) ~ pair("package_id",
+                    native.packageId) ~ pair("source_sha256",
+                    native.sourceSha256) ~ pair("binary_sha256", native.binarySha256);
+        text ~= "requested_by = [" ~ list(native.requesters) ~ "]\n";
+        text ~= "dependencies = [" ~ list(native.dependencies) ~ "]\n";
+    }
     return text;
 }
 
@@ -181,21 +194,23 @@ private string[string] packageLines(string text)
     bool inPackage;
     string current;
     string body;
+    string prefix;
     foreach (line; text.lineSplitter)
     {
-        if (line == "[[package]]")
+        if (line == "[[package]]" || line == "[[native]]")
         {
             if (current.length)
                 packages[current] = body;
             inPackage = true;
             current = null;
             body = null;
+            prefix = line == "[[native]]" ? "native " : null;
             continue;
         }
         if (!inPackage)
             continue;
         if (current is null && line.startsWith("name = \"") && line.length > "name = \"".length)
-            current = line["name = \"".length .. $ - 1];
+            current = prefix ~ line["name = \"".length .. $ - 1];
         body ~= line ~ "\n";
     }
     if (current.length)

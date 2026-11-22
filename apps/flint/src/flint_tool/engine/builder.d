@@ -2,8 +2,9 @@
 module flint_tool.engine.builder;
 
 import flint.os : EnvVar;
-import flint_tool.engine.receipt : AdditionsRecord, ComponentRecord, EnvironmentRecord, OutputRecord, ProfileRecord,
-    Receipt, ToolchainRecord, nativeIdentity, outputRecord, receiptPath, sourceIdentity, writeReceipt;
+import flint_tool.engine.receipt : AdditionsRecord, ComponentRecord, EnvironmentRecord,
+    NativePackageRecord, OutputRecord,
+    ProfileRecord, Receipt, ToolchainRecord, nativeIdentity, outputRecord, receiptPath, sourceIdentity, writeReceipt;
 import flint_tool.engine.cbuild : CBuild, compileNativeC;
 import flint_tool.engine.session : Session;
 import flint_tool.diagnostics.report : Report, Severity, at, diagnostic;
@@ -68,6 +69,8 @@ struct BuildOutcome
     CheckSummary checks;
     /// Embedded C.
     CBuild native;
+    /// Native packages linked into the artifact.
+    imported!"flint_tool.project.native".NativeResolution natives;
 }
 
 /// The project's root directory relative to the current directory, for display.
@@ -254,8 +257,46 @@ private bool prepareBuild(ref Session session, const ref Manifest manifest, cons
     result.checks = checkProject(session.home, manifest, resolution, false, report);
     foreach (waiver; result.checks.unchecked)
         session.progress("Unchecked", waiver);
-    return report.ok && compileNativeC(session, manifest, request.sanitize, request.targetCflags,
-            result.native, report) && writeRecipes(session, manifest, resolution, result.native, report);
+    if (!report.ok || !prepareNatives(session, manifest, resolution, request, result.natives, report))
+        return false;
+    string[] cflags = request.targetCflags.dup;
+    foreach (directory; result.natives.includeDirs)
+        cflags ~= "-I" ~ directory;
+    return compileNativeC(session, manifest, request.sanitize, cflags, result.native, report)
+        && writeRecipes(session, manifest, resolution, result.native, result.natives, report);
+}
+
+/// Resolve the native packages for this build's target and variant, and bundle the `bundled` ones.
+private bool prepareNatives(ref Session session, const ref Manifest manifest, const ref Resolution resolution,
+        const ref BuildRequest request,
+        out imported!"flint_tool.project.native".NativeResolution natives, ref Report report)
+{
+    import std.path : buildPath;
+    import flint_tool.engine.target : hostTarget;
+    import flint_tool.project.native : bundle;
+    import flint_tool.project.resolve : nativesFor;
+    import flint_tool.toolchain.toolchain : toolchainDirectory;
+
+    const target = request.target.length ? request.target : hostTarget();
+    if (!nativesFor(session.home, manifest, resolution, target, request.sanitize, natives, report))
+        return false;
+    foreach (reason; natives.nonPortable)
+        session.progress("Non-portable", reason);
+    if (natives.packages.length)
+        session.progress("Native", countNatives(natives) ~ " for " ~ target);
+    const clang = buildPath(toolchainDirectory(session.home), "LLVM-22.1.8-Linux-X64", "bin", "clang");
+    return bundle(natives, clang, buildPath(manifest.root, ".flint", "build", "lib"), report);
+}
+
+private string countNatives(const ref imported!"flint_tool.project.native".NativeResolution natives)
+{
+    import std.array : join;
+
+    string[] names;
+    foreach (ref package_; natives.packages)
+        names ~= package_.name ~ " " ~ package_.version_ ~ (package_.linkage == "static"
+                ? "" : " (" ~ package_.linkage ~ ")");
+    return names.join(", ");
 }
 
 /// Build a project with a profile: lock, toolchain, fast checks, recipe, DUB, receipt.
@@ -383,8 +424,9 @@ private bool prepareLock(ref Session session, const ref Manifest manifest, const
     return report.ok;
 }
 
-private bool writeRecipes(ref Session session, const ref Manifest manifest,
-        const ref Resolution resolution, const ref CBuild native, ref Report report)
+private bool writeRecipes(ref Session session, const ref Manifest manifest, const ref Resolution resolution,
+        const ref CBuild native, const ref imported!"flint_tool.project.native".NativeResolution natives,
+        ref Report report)
 {
     import std.path : buildPath;
     import flint_tool.engine.cbuild : NativeCPolicy, loadNativeCPolicy;
@@ -394,6 +436,7 @@ private bool writeRecipes(ref Session session, const ref Manifest manifest,
 
     RecipeExtras extras;
     extras.objects = native.objects.dup;
+    extras.nativeFlags = natives.linkFlags.dup;
     if (native.objects.length)
     {
         NativeCPolicy policy;
@@ -531,6 +574,11 @@ private Receipt projectReceipt(ref Session session, const ref Manifest manifest,
     receipt.embedded_c.flags = result.native.flags.dup;
     receipt.embedded_c.compiler_sha256 = result.native.compilerSha256;
     receipt.embedded_c.policy_sha256 = result.native.policySha256;
+    foreach (ref package_; result.natives.packages)
+        receipt.native_packages ~= NativePackageRecord(package_.name, package_.version_, package_.linkage,
+                package_.recipeRevision, package_.packageId, package_.sourceSha256, package_.binarySha256);
+    receipt.portable = result.natives.nonPortable.length == 0;
+    receipt.non_portable_reasons = result.natives.nonPortable.dup;
     string[] reasons;
     if (flags.manifestDflags.length || flags.manifestLflags.length)
         reasons ~= "flint.toml adds flags to the " ~ request.profile ~ " profile";

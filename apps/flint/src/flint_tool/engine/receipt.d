@@ -149,6 +149,25 @@ struct EmbeddedCRecord
     string policy_sha256;
 }
 
+/// One native package linked into the artifact (ADR-023).
+struct NativePackageRecord
+{
+    /// Recipe name.
+    string name;
+    /// Version.
+    string version_number;
+    /// static, bundled or system.
+    string linkage;
+    /// Recipe revision in Flint's index.
+    string recipe_revision;
+    /// Binary package ID.
+    string package_id;
+    /// Pinned source archive hash.
+    string source_sha256;
+    /// Binary package content hash.
+    string binary_sha256;
+}
+
 /// A complete build receipt.
 struct Receipt
 {
@@ -186,6 +205,12 @@ struct Receipt
     EmbeddedCRecord embedded_c;
     /// Build target, such as linux-x86_64-musl.
     string target;
+    /// Native packages.
+    NativePackageRecord[] native_packages;
+    /// The artifact builds the same on every machine: no `system = true` packages.
+    bool portable = true;
+    /// Why it does not.
+    string[] non_portable_reasons;
 }
 
 /// Receipt path for an artifact.

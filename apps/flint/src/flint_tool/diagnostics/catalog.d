@@ -210,6 +210,21 @@ immutable CodeInfo[] catalog = [
             ~ "the SBOM and flint deps audit.",
             "[unchecked]\n\"dub:dyaml\" = \"YAML parsing until flint:serde " ~ "reads YAML\""),
 
+    CodeInfo("FLINT-E0318", ExitCode.dependency, "native package not in Flint's recipe index",
+            "[native] packages resolve only against Flint's checked-in recipe index (native/conan-index), whose "
+            ~ "recipes pin the source archives, hashes, licences and build flags of policy/native-lock.json. Nothing "
+            ~ "outside it is fetched.",
+            "[native]\nzlib = \"1.4\""),
+    CodeInfo("FLINT-E0320", ExitCode.dependency, "two versions of one native package",
+            "Two requesters (the project, a dependency's [native], or an indexed DUB package) need different versions "
+            ~ "of the same native library. The build fails and names both; flint never picks one.",
+            "require the same version in both places"),
+    CodeInfo("FLINT-E0321", ExitCode.dependency,
+            "system library unavailable",
+            "`system = true` takes the host's library through pkg-config, and marks the build non-portable. "
+            ~ "pkg-config does not know the library, or the host's version is older than the one written.",
+            "install the library's development package, or remove `system = true` to build Flint's pinned recipe"),
+
     // 04xx: project layout and module paths.
     CodeInfo("FLINT-E0401", ExitCode.user, "module name does not match its file path",
             "Module paths must match file paths under src/ and test/, so a reader can find any module from its "
@@ -429,8 +444,14 @@ immutable CodeInfo[] catalog = [
     CodeInfo("FLINT-E0817", ExitCode.environment, "target unavailable",
             "`flint package --target` builds for the host target natively and, on Linux x86-64, for "
             ~ "linux-x86_64-musl by cross-linking with the pinned clang, the Alpine LDC runtime and the pinned musl "
-            ~ "sysroot. Other targets build on their own runners.",
-            "flint toolchain install --musl"),
+            ~ "sysroot. Other targets build on their own runners.", "flint toolchain install --musl"),
+    CodeInfo("FLINT-E0818", ExitCode.environment, "native package engine missing",
+            "Native packages are resolved and built by Flint's pinned, checksum-verified native engine, which "
+            ~ "`flint toolchain install` installs with an isolated home and Flint's recipe index as its only source.",
+            "flint toolchain install"),
+    CodeInfo("FLINT-E0819", ExitCode.environment, "native package failed to build",
+            "A native package failed to build from its pinned source with the pinned toolchain. The message names "
+            ~ "the package and the log; the engine's own output is never shown.", "flint build --verbose"),
     // 09xx: receipts.
     CodeInfo("FLINT-E0901", ExitCode.environment, "receipt missing",
             "Every artifact flint builds has a JSON receipt next to it (<artifact>.receipt.json).",
