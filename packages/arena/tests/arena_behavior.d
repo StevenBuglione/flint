@@ -234,12 +234,33 @@ private bool holds(ref scope RequestArena arena, Buffer handle, ubyte expected) 
     return status == Status.ok && same;
 }
 
+/// Whether, after the allocations below, padding the cursor to a 4096-byte boundary needs more bytes
+/// than remain, so a 4096-aligned request overflows on padding alone.
+private bool paddingExceedsRemainder(scope ubyte[] window) @safe
+{
+    scope arena = RequestArena(window);
+    immutable capacity = arena.stats().capacity;
+    cast(void) arena.copyIn(cast(const(ubyte)[]) "live");
+    auto tail = arena.allocate(capacity - 16, 1);
+    size_t end;
+    cast(void) arena.read(tail.value, (scope const(ubyte)[] bytes) @safe nothrow @nogc {
+        end = cast(size_t)&bytes[$ - 1] + 1;
+    });
+    immutable remaining = capacity - arena.stats().used;
+    return (4_096 - end % 4_096) % 4_096 > remaining;
+}
+
 @("every outOfMemory path, including overflowing padding, preserves cursor, peak and live bytes")
 unittest
 {
-    ubyte[4_200] backing;
-    // An odd base address forces nonzero padding for every alignment above one.
-    scope arena = RequestArena(backing[1 .. 4_101]);
+    ubyte[8_400] backing;
+    // An odd base address forces nonzero padding for every alignment above one. Where the cursor lands
+    // relative to a 4096-byte boundary depends on the stack address, so pick the first odd window whose
+    // cursor needs more padding than remains; the overflow check below is then deterministic.
+    size_t start = 1;
+    while (!paddingExceedsRemainder(backing[start .. start + 4_100]))
+        start += 2;
+    scope arena = RequestArena(backing[start .. start + 4_100]);
     immutable capacity = arena.stats().capacity;
     auto live = arena.copyIn(cast(const(ubyte)[]) "live");
     assert(live.ok());

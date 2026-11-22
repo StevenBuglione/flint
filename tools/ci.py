@@ -330,7 +330,10 @@ def run_container(runner,target):
     common=Path(probe(['git','-C',str(ROOT),'rev-parse','--path-format=absolute','--git-common-dir']).strip() or ROOT/'.git')
     if not common.is_relative_to(ROOT):
         mounts+=['--mount','type=bind,source='+str(common)+',target='+str(common)+',readonly']
-    runner.run(['docker','run','--rm',*mounts,
+    # Docker's default seccomp profile denies io_uring_setup. The reactor falls back to epoll when
+    # that happens, and a dedicated test covers the denial, but this lane must exercise real io_uring
+    # on musl, so the disposable test container runs without that filter.
+    runner.run(['docker','run','--rm','--security-opt','seccomp=unconfined',*mounts,
                 '--workdir','/work','--env','FLINT_TARGET='+target,image,
                 'sh','.github/scripts/musl.sh'])
 
