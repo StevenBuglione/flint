@@ -46,6 +46,9 @@ Backend activeBackend() const nothrow @nogc;
 Error post(uint ownerCore, TaskFn task, TaskContext context) nothrow @nogc;
 Result!TaskContext currentTask() const nothrow @nogc;
 Error yieldUntil(Deadline deadline) nothrow @nogc;
+Error yieldUntil(Deadline deadline, ref scope const Context watched) nothrow @nogc;
+Result!TaskWaker currentWaker() const nothrow @nogc;
+Error wake(TaskWaker waker) nothrow @nogc;
 Result!WorkerStats workerStats(uint core) const nothrow @nogc;
 ```
 
@@ -54,7 +57,7 @@ Result!WorkerStats workerStats(uint core) const nothrow @nogc;
 - Cancel requests match both the connection identity and the operation generation. The owning loop resolves cancellation against the final completion. It retains kernel-visible storage until that completion and keeps callback storage live through callback return. Stale tickets cannot cancel a reused slot. Cancelled timers never invoke their callback after cancellation has won on the owning loop.
 - `localPort()` returns the bound port after `listen`, including the assigned port when the caller requests port zero. The active backend can be inspected after creation. `Backend.epoll` is appended to the enum. On Linux, `automatic` tries the pinned io_uring provider and falls back to epoll when the required capability is unavailable. Explicit `ioUring` requires the provider and kernel operations.
 - `ReactorOptions` adds `maxPendingIoPerCore` (128), `ioBufferBytes` (4096), `mailboxCapacity` (256) and `maxTimersPerCore` (1024). The reactor reserves these resources at startup and reports pool or mailbox exhaustion to the caller.
-- Posted tasks retain their own cancellation context and run on fibers pinned to the chosen worker. When a task yields to a finite monotonic deadline, its owner resumes it on expiry, cancellation or shutdown. `currentTask()` exposes the active fiber's context. After the loop has joined, `workerStats()` exposes allocation and collection deltas, affinity, CPU time, context switches and outstanding operation counts.
+- Posted tasks retain their own cancellation context and run on fibers pinned to the chosen worker. When a task yields to a finite monotonic deadline, its owner resumes it on expiry, cancellation, `wake` or shutdown. The `watched` overload also resumes it when the loop sees that context cancelled or expired. `currentWaker()` returns a `TaskWaker` (owner, fiber slot and the slot's task generation) for the active fiber. A completion, timer or other task on the same loop passes it to `wake`, which marks the suspended fiber due for the loop's next pass. Waking a running or due fiber is a no-op, and a handle whose task has ended is rejected with `notFound`. Waiters therefore re-check their condition after every resumption and clear their registration before an unrelated wait (ADR-017, Public API additions). `currentTask()` exposes the active fiber's context. After the loop has joined, `workerStats()` exposes allocation and collection deltas, affinity, CPU time, context switches and outstanding operation counts.
 
 The Linux adapter uses a single-threaded opaque C ring through `native/ffi/flint_reactor_uring.h`. A successful preparation transfers the buffer to that operation until its original CQE. Cancellation uses a separate CQE with reserved token zero. Accept uses token one. The adapter retains stable operation tokens across submission and reports errors from feature probing through the backend selector. The D loop drains original and cancellation CQEs before destroying the ring.
 

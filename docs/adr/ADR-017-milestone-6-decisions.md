@@ -39,6 +39,17 @@ The handoff archive under `handoff/` stays byte-identical to its `MANIFEST.sha25
 
   It reads the files, `.env`, environment and arguments once and binds every value from that one snapshot; types may share a prefix. With `rejectUnknownKeys`, a key is unknown only when no bound type's schema claims it, so a misspelt key inside a bound prefix is still rejected with the same diagnostic as `load!T`. On failure every value is reset to its initializer and the earliest diagnostic by key is returned. `load!T` keeps single-type semantics.
 
+- **Fiber wake-up.** Owner fibers waiting for stream or HTTP-client progress had no completion wake-up. They resumed on every loop pass for 200 µs and then polled every 1 ms, so a peer slower than 200 µs paid up to 1 ms per wait plus 200 µs of spinning. `flint.reactor` adds a targeted wake and a wait that also observes a caller's context:
+
+  ```d
+  struct TaskWaker { uint ownerCore = uint.max; uint slot; ulong generation; bool valid() const pure nothrow @nogc; }
+  Result!TaskWaker currentWaker() const nothrow @nogc;              // member of Reactor
+  Error wake(TaskWaker waker) nothrow @nogc;                         // member of Reactor
+  Error yieldUntil(Deadline deadline, ref scope const Context watched) nothrow @nogc; // member of Reactor
+  ```
+
+  `wake` is callable only on the owner loop. It marks a suspended fiber due, so the loop's next `resumeReadyTasks` pass resumes it before blocking. Waking a running or already due fiber does nothing, so waiters re-check their condition before yielding. Each task start gives its fiber slot a new generation, and a handle that outlives its task is rejected with `notFound`. The `yieldUntil` overload also ends the yield when the owner loop sees `watched` cancelled or expired, on the same per-pass check it already applies to the task's own context, so a wait on a handler-created context needs no polling. HTTP/1 read and write completions and close wake a streaming handler. HTTP/2 stream events, output drained by the provider and connection abort wake a stream's handler. The HTTP client keeps a list of waiting fibers per owner and wakes them on native readiness, on a libcurl timer fired by any fiber, and when a fiber's own call moves libcurl's timer ahead of another waiter's wake. Each waiter also sleeps no later than libcurl's next timer, read through the new internal C export `flint_http_timer`. The spin windows are gone. A 1 s fallback deadline remains only as a safety net against a missed wake (see `streamFallbackNanos` and the client's `fallbackMillis`). It never fires on a correct path. At one resumption per second, ten thousand idle stream waiters cost about 10,000 resumptions per second in total.
+
 ## Measurement method changes
 
 The first two changes were made before any baseline was recorded, and the milestone report shows counts under the old and new method. The next two were made after official performance runs at `96e475e` and `5f96e22`, whose results the report keeps. The last came from the AArch64 replay at `00ea4fc`.
