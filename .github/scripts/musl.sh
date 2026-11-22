@@ -2,7 +2,7 @@
 set -eu
 # This script executes inside the digest-locked Alpine image. GitHub's Node
 # actions stay on the glibc host; no glibc compatibility shim masks musl testing.
-apk add --no-cache python3 build-base binutils clang cmake ninja meson perl pkgconf git coreutils \
+apk add --no-cache python3 build-base binutils clang cmake ninja meson perl pkgconf git coreutils curl \
   autoconf automake libtool bison flex linux-headers \
   libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxfixes-dev libxscrnsaver-dev libxtst-dev
 git config --global --add safe.directory /work
