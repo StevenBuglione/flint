@@ -200,3 +200,26 @@ unittest
     assert(load!(Nested!7)(options).ok);
     assert(load!(Nested!17)(options).error.code == Status.resourceExhausted);
 }
+
+@("text overrides round decimal floats exactly like configuration files")
+unittest
+{
+    const directory = scratch();
+    scope (exit)
+        rmdirRecurse(directory);
+    auto options = configFor(directory);
+    // Just above the midpoint between 1 and its successor: correct rounding selects the successor.
+    enum spelling = "1.0000000000000001110223024625156540423631668090820312500001";
+    write(buildPath(directory, "application.toml"), "[server]\ntls=false\nrate=" ~ spelling ~ "\n");
+    options.arguments = ["--flint.profile=dev"];
+    const fromFile = load!Settings(options);
+    assert(fromFile.ok && fromFile.value.rate == 1.0 + double.epsilon);
+    options.arguments = ["--flint.profile=dev", "--set=server.rate=+" ~ spelling];
+    const fromText = load!Settings(options);
+    assert(fromText.ok && fromText.value.rate == fromFile.value.rate);
+    options.arguments = ["--flint.profile=dev", "--set=server.rate=0001e-400"];
+    const underflow = load!Settings(options);
+    assert(underflow.ok && underflow.value.rate == 0);
+    options.arguments = ["--flint.profile=dev", "--set=server.rate=1e400"];
+    assert(load!Settings(options).error.code == Status.invalidArgument);
+}

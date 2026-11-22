@@ -244,25 +244,101 @@ bool textTokensEqual(scope const(ubyte)[] bytes, TextToken left, TextToken right
     return left.start == left.end && right.start == right.end;
 }
 
+// The decoded byte of a two-character JSON escape, or -1 for \\u and invalid escapes.
+pragma(inline, true) private int shortEscape(ubyte spelling) pure nothrow @nogc
+{
+    switch (spelling)
+    {
+    case '"', '\\', '/':
+        return spelling;
+    case 'b':
+        return '\b';
+    case 'f':
+        return '\f';
+    case 'n':
+        return '\n';
+    case 'r':
+        return '\r';
+    case 't':
+        return '\t';
+    default:
+        return -1;
+    }
+}
+
+// Bytes that a JSON string carries unchanged and that need no UTF-8 decoding.
+private bool plainText(ubyte byteValue) pure nothrow @nogc
+{
+    return byteValue >= 0x20 && byteValue < 0x80 && byteValue != '"' && byteValue != '\\';
+}
+
 /// Materialize a validated JSON string in its exact-sized destination.
 bool copyText(scope const(ubyte)[] input, TextToken token, scope ubyte[] output) nothrow @nogc
 {
-    if (output.length != token.length)
+    if (output.length != token.length || token.end > input.length)
         return false;
 
     size_t offset = token.start;
     size_t written;
     while (offset < token.end)
     {
-        const point = stringScalar(input, offset);
-        if (!point.valid)
+        immutable run = offset;
+        while (offset < token.end && plainText(input[offset]))
+            ++offset;
+        if (offset != run && !copyBytes(output, written, input[run .. offset]))
             return false;
-        ubyte[4] encoded;
-        immutable length = writeScalar(point.scalar, encoded);
-        foreach (index; 0 .. length)
-            output[written++] = encoded[index];
+        if (offset == token.end)
+            break;
+
+        if (!copyScalar(input, token.end, offset, output, written))
+            return false;
     }
     return written == output.length;
+}
+
+// Copy one escape or non-ASCII scalar of a validated string.
+pragma(inline, true) private bool copyScalar(scope const(ubyte)[] input, size_t end, ref size_t offset,
+        scope ubyte[] output, ref size_t written) nothrow @nogc
+{
+    immutable first = offset;
+    immutable escaped = input[offset] == '\\';
+    if (escaped && offset + 1 < end)
+    {
+        immutable meaning = shortEscape(input[offset + 1]);
+        if (meaning >= 0)
+        {
+            if (written == output.length)
+                return false;
+            output[written++] = cast(ubyte) meaning;
+            offset += 2;
+            return true;
+        }
+    }
+    const point = stringScalar(input, offset);
+    if (!point.valid)
+        return false;
+    if (!escaped)
+        return copyBytes(output, written, input[first .. offset]);
+    ubyte[4] encoded;
+    immutable length = writeScalar(point.scalar, encoded);
+    return copyBytes(output, written, encoded[0 .. length]);
+}
+
+// Append within a checked destination.
+private bool copyBytes(scope ubyte[] output, ref size_t written, scope const(ubyte)[] bytes) nothrow @nogc
+{
+    if (bytes.length > output.length - written)
+        return false;
+    copyInto(output[written .. written + bytes.length], bytes);
+    written += bytes.length;
+    return true;
+}
+
+/// Copy equal-length spans with an element loop; slice assignment would need a runtime hook absent in BetterC.
+void copyInto(scope ubyte[] destination, scope const(ubyte)[] source) pure nothrow @nogc
+{
+    foreach (index; 0 .. source.length)
+        destination[index] = source[index];
 }
 
 /// A borrower over one JSON document with no allocator or runtime dependency.
@@ -274,6 +350,8 @@ struct Scanner
     size_t offset;
     /// Bounds and duplicate-key policy.
     DecodeOptions options;
+    /// Exact member index shared by the open objects, when the caller supplies one.
+    KeyIndex* keys;
 
     /// Keep the source borrowed for the scanner's lifetime.
     this(return scope const(ubyte)[] bytes, DecodeOptions options) nothrow @nogc
@@ -327,26 +405,64 @@ struct Scanner
         return true;
     }
 
-    /// Read and validate a quoted string without materializing it.
+    /// Read and validate a quoted member name, including its lookup hash.
     Error text(out TextToken token) scope nothrow @nogc
+    {
+        return quoted!true(token);
+    }
+
+    /// Read and validate a quoted string value; its lookup hash is not computed.
+    Error textValue(out TextToken token) scope nothrow @nogc
+    {
+        return quoted!false(token);
+    }
+
+    private Error quoted(bool hashed)(out TextToken token) scope nothrow @nogc
     {
         if (!take('"'))
             return Error(Status.invalidArgument, "expected a JSON string", offset);
 
         token.start = offset;
+        size_t length;
+        uint hash = nameHashSeed;
         while (offset < bytes.length)
         {
-            immutable position = offset;
-            if (take('"'))
+            immutable byteValue = bytes[offset];
+            if (plainText(byteValue))
             {
+                ++offset;
+                ++length;
+                static if (hashed)
+                    hash = advanceNameHash(hash, byteValue);
+                continue;
+            }
+            immutable position = offset;
+            if (byteValue == '"')
+            {
+                ++offset;
                 token.end = position;
+                token.length = length;
+                token.hash = hash;
                 return Error.init;
+            }
+            if (byteValue == '\\' && bytes.length - offset > 1)
+            {
+                immutable meaning = shortEscape(bytes[offset + 1]);
+                if (meaning >= 0)
+                {
+                    offset += 2;
+                    ++length;
+                    static if (hashed)
+                        hash = advanceNameHash(hash, meaning);
+                    continue;
+                }
             }
             const point = stringScalar(bytes, offset);
             if (!point.valid)
                 return Error(Status.invalidArgument, "invalid JSON string", position);
-            token.length += utf8Length(point.scalar);
-            token.hash = advanceNameHash(token.hash, point.scalar);
+            length += utf8Length(point.scalar);
+            static if (hashed)
+                hash = advanceNameHash(hash, point.scalar);
         }
         return Error(Status.invalidArgument, "unterminated JSON string", offset);
     }
@@ -396,11 +512,25 @@ private struct Container
     ubyte close;
     size_t firstMember;
     uint members;
-    ulong possibleDuplicate;
+    KeyScope keys;
 }
 
 /// Validate and consume an unbound JSON value with an explicit container stack.
 Error skipValue(ref scope Scanner scanner, uint parentDepth, bool checkDuplicates = true) nothrow @nogc
+{
+    if (scanner.keys !is null || !checkDuplicates || !scanner.options.rejectDuplicateKeys)
+        return skipTree(scanner, parentDepth, checkDuplicates);
+    KeyIndex index = void;
+    index.clear();
+    scope indexed = Scanner(scanner.bytes, scanner.options);
+    indexed.offset = scanner.offset;
+    indexed.keys = &index;
+    const failure = skipTree(indexed, parentDepth, true);
+    scanner.offset = indexed.offset;
+    return failure;
+}
+
+private Error skipTree(ref scope Scanner scanner, uint parentDepth, bool checkDuplicates) nothrow @nogc
 {
     Container[64] stack;
     size_t depth;
@@ -436,6 +566,7 @@ Error skipValue(ref scope Scanner scanner, uint parentDepth, bool checkDuplicate
             scope container = &stack[depth - 1];
             if (scanner.take(container.close))
             {
+                closeKeys(scanner, container.keys);
                 --depth;
                 continue;
             }
@@ -462,11 +593,9 @@ private Error skipMember(ref scope Scanner scanner, ref Container container, uin
         auto failure = scanner.text(key);
         if (failure.code != Status.ok)
             return failure;
-        immutable fingerprint = 1UL << (key.hash & 63);
-        if (checkKeys && scanner.options.rejectDuplicateKeys && (container.possibleDuplicate & fingerprint) != 0
-                && earlierKey(scanner, container.firstMember, keyOffset, key, depth))
+        if (checkKeys && scanner.options.rejectDuplicateKeys && repeatedKey(scanner, container.keys,
+                container.firstMember, keyOffset, key, depth))
             return Error(Status.invalidArgument, "duplicate JSON member", keyOffset);
-        container.possibleDuplicate |= fingerprint;
         scanner.whitespace();
         if (!scanner.take(':'))
             return Error(Status.invalidArgument, "expected a JSON member colon", scanner.offset);
@@ -500,13 +629,196 @@ bool earlierKey(ref scope Scanner scanner, size_t start, size_t end, TextToken k
     return false;
 }
 
+/// Duplicate-key state of one open object.
+struct KeyScope
+{
+    /// Fingerprints of the names checked in this object.
+    ulong bloom;
+    /// Logical index position of this object's first recorded name.
+    uint base;
+    /// Whether this object has recorded names in the shared index.
+    bool open;
+}
+
+/// Exact name index for the objects open in one document, with stack discipline.
+///
+/// Each object records its names above those of its ancestors. When the bounded
+/// ring is full, the oldest names are discarded; an object that lost names
+/// rebuilds them from its validated source span before trusting the index again.
+struct KeyIndex
+{
+    // A single object holds at most DecodeOptions.init.maxMembers names.
+    private enum uint capacity = 1_024;
+    private enum uint buckets = 512;
+
+    private struct Entry
+    {
+        uint offset;
+        ushort check;
+        ushort distance;
+    }
+
+    private Entry[capacity] entries;
+    private uint[buckets] heads;
+    private uint origin;
+    private uint top;
+    // A plain byte keeps void initialization free of unsafe bit patterns.
+    private ubyte ready;
+
+    /// Reset the index without touching the entry storage.
+    void clear() scope nothrow @nogc
+    {
+        origin = 0;
+        top = 0;
+        ready = 0;
+    }
+
+    private static ushort checkOf(uint hash) pure nothrow @nogc
+    {
+        return cast(ushort)(hash >> 16);
+    }
+
+    private static uint bucketOf(ushort check) pure nothrow @nogc
+    {
+        return check & (buckets - 1);
+    }
+
+    private void push(uint hash, size_t offset) scope nothrow @nogc
+    {
+        if (ready == 0)
+        {
+            heads[] = 0;
+            ready = 1;
+        }
+        if (top - origin == capacity)
+            ++origin;
+        immutable check = checkOf(hash);
+        immutable bucket = bucketOf(check);
+        immutable previous = heads[bucket];
+        ushort distance;
+        if (previous != 0 && previous - 1 >= origin)
+            distance = cast(ushort)(top - (previous - 1));
+        entries[top % capacity] = Entry(cast(uint) offset, check, distance);
+        heads[bucket] = top + 1;
+        ++top;
+    }
+
+    private void popTo(uint base) scope nothrow @nogc
+    {
+        while (top > base && top > origin)
+        {
+            --top;
+            const entry = entries[top % capacity];
+            heads[bucketOf(entry.check)] = entry.distance == 0 ? 0 : top - entry.distance + 1;
+        }
+        if (top < origin)
+            top = origin;
+    }
+
+    private bool contains(scope const(ubyte)[] bytes, TextToken key, uint base) const scope nothrow @nogc
+    {
+        if (ready == 0)
+            return false;
+        immutable check = checkOf(key.hash);
+        uint link = heads[bucketOf(check)];
+        while (link != 0)
+        {
+            immutable position = link - 1;
+            if (position < base || position < origin || position >= top)
+                return false;
+            const entry = entries[position % capacity];
+            if (entry.check == check && sameName(bytes, entry.offset, key))
+                return true;
+            if (entry.distance == 0)
+                return false;
+            link = position - entry.distance + 1;
+        }
+        return false;
+    }
+}
+
+private bool sameName(scope const(ubyte)[] bytes, size_t offset, TextToken key) nothrow @nogc
+{
+    scope recorded = Scanner(bytes, DecodeOptions.init);
+    recorded.offset = offset;
+    TextToken earlier;
+    return recorded.text(earlier).code == Status.ok && earlier.hash == key.hash && textTokensEqual(bytes, earlier, key);
+}
+
+/// Report whether a name repeats an earlier member of its object, then record it.
+bool repeatedKey(ref scope Scanner scanner, ref KeyScope keys, size_t firstMember, size_t keyOffset,
+        TextToken key, uint depth) nothrow @nogc
+{
+    immutable fingerprint = 1UL << (key.hash & 63);
+    immutable possible = (keys.bloom & fingerprint) != 0;
+    keys.bloom |= fingerprint;
+    scope index = scanner.keys;
+    if (index is null)
+        return possible && earlierKey(scanner, firstMember, keyOffset, key, depth);
+
+    if (!keys.open)
+    {
+        keys.open = true;
+        keys.base = index.top;
+    }
+    bool complete = keys.base >= index.origin;
+    if (possible)
+    {
+        if (!complete)
+        {
+            rebuildKeys(scanner, *index, keys, firstMember, keyOffset, depth);
+            complete = true;
+        }
+        if (index.contains(scanner.bytes, key, keys.base))
+            return true;
+    }
+    if (complete)
+        index.push(key.hash, keyOffset);
+    return false;
+}
+
+/// Release the names an object recorded once that object closes.
+void closeKeys(ref scope Scanner scanner, ref KeyScope keys) nothrow @nogc
+{
+    if (keys.open && scanner.keys !is null)
+        scanner.keys.popTo(keys.base);
+    keys.open = false;
+}
+
+// Rescan an object's already validated members after older names were discarded.
+private void rebuildKeys(ref scope Scanner scanner, ref scope KeyIndex index, ref KeyScope keys,
+        size_t start, size_t end, uint depth) nothrow @nogc
+{
+    index.popTo(index.origin);
+    keys.base = index.top;
+    scope previous = Scanner(scanner.bytes, scanner.options);
+    previous.offset = start;
+    while (previous.offset < end)
+    {
+        previous.whitespace();
+        if (previous.offset >= end)
+            break;
+        immutable keyOffset = previous.offset;
+        TextToken earlier;
+        if (previous.text(earlier).code != Status.ok)
+            return;
+        index.push(earlier.hash, keyOffset);
+        previous.whitespace();
+        if (!previous.take(':') || skipValue(previous, depth, false).code != Status.ok)
+            return;
+        previous.whitespace();
+        if (!previous.take(','))
+            break;
+    }
+}
+
 private Error skipScalar(ref scope Scanner scanner) nothrow @nogc
 {
     switch (scanner.peek())
     {
     case '"':
         TextToken text;
-        return scanner.text(text);
+        return scanner.textValue(text);
     case 't':
         if (scanner.literal(cast(const(ubyte)[]) "true"))
             return Error.init;

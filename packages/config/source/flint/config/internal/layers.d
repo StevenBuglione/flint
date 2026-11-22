@@ -16,6 +16,7 @@ package(flint.config) struct Layers
     Inputs dotenv;
     Inputs arguments;
     string[string] process;
+    string envPrefix;
 }
 
 private Error readArguments(scope const(string)[] arguments, ref string profile, ref Inputs overrides)
@@ -150,6 +151,7 @@ package(flint.config) Error loadLayers(scope const ref ConfigOptions options, re
     import std.process : environment;
 
     layers.process = environment.toAA();
+    layers.envPrefix = options.envPrefix.idup;
     string profile = options.profile.idup;
     if (const fromEnvironment = "FLINT_PROFILE" in layers.process)
         profile = *fromEnvironment;

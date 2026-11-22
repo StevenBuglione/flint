@@ -369,3 +369,108 @@ unittest
     options.maxMembers = 1;
     assert(deserialize!(int[])("[1,2]", options).error.code == Status.resourceExhausted);
 }
+
+private char[] memberName(char prefix, size_t index)
+{
+    char[6] name = prefix;
+    foreach_reverse (position; 1 .. 6)
+    {
+        name[position] = cast(char)('0' + index % 10);
+        index /= 10;
+    }
+    return name[].dup;
+}
+
+private char[] wideObject(char prefix, size_t members, size_t valueBytes)
+{
+    char[] text = "{".dup;
+    foreach (index; 0 .. members)
+    {
+        if (index != 0)
+            text ~= ',';
+        text ~= '"';
+        text ~= memberName(prefix, index);
+        text ~= `":"`;
+        foreach (fill; 0 .. valueBytes)
+            text ~= 'x';
+        text ~= '"';
+    }
+    return text ~ '}';
+}
+
+@("duplicate detection in skipped and visited JSON objects stays linear in the input size")
+unittest
+{
+    import core.time : MonoTime, seconds;
+    import flint.arena : Error;
+    import flint.serde.json_visit : JsonMemberName, visitJsonObject;
+
+    static struct Known
+    {
+        int known;
+        @JsonIgnore int skipped;
+    }
+
+    static struct Open
+    {
+        int known;
+    }
+
+    const wide = wideObject('k', 1000, 1000);
+    assert(wide.length < 1_040_000);
+    ubyte[64] storage;
+    scope arena = RequestArena(storage[]);
+    auto ignoring = DecodeOptions.init;
+    ignoring.unknownFields = UnknownFields.ignore;
+
+    const started = MonoTime.currTime;
+    Open open;
+    assert(decodeInto(cast(const(ubyte)[]) wide, open, arena, ignoring).code == Status.ok);
+    Known known;
+    const nested = `{"skipped":` ~ wide ~ `,"known":3}`;
+    assert(decodeInto(cast(const(ubyte)[]) nested, known, arena).code == Status.ok && known.known == 3);
+    uint visited;
+    auto count = delegate Error(scope JsonMemberName name, scope const(ubyte)[] value) @safe nothrow @nogc {
+        if (name.length == 6 && value.length == 1002)
+            ++visited;
+        return Error.init;
+    };
+    const visiting = visitJsonObject(cast(const(ubyte)[]) wide, count);
+    assert(visiting.code == Status.ok && visited == 1000);
+    assert(MonoTime.currTime - started < 3.seconds);
+}
+
+@("duplicate detection is exact across very wide nested JSON objects")
+unittest
+{
+    static struct Open
+    {
+        int known;
+    }
+
+    ubyte[64] storage;
+    scope arena = RequestArena(storage[]);
+    auto ignoring = DecodeOptions.init;
+    ignoring.unknownFields = UnknownFields.ignore;
+    Open open;
+
+    // The inner object displaces earlier outer names; the late outer repeat must still be found.
+    const outer = wideObject('o', 900, 1);
+    const inner = wideObject('i', 1000, 1);
+    const repeated = outer[0 .. $ - 1] ~ `,"inner":` ~ inner ~ `,"o00007":1}`;
+    auto failure = decodeInto(cast(const(ubyte)[]) repeated, open, arena, ignoring);
+    assert(failure.code == Status.invalidArgument && failure.message == "duplicate JSON member");
+    assert(failure.offset == repeated.length - `"o00007":1}`.length);
+    const distinct = outer[0 .. $ - 1] ~ `,"inner":` ~ inner ~ `,"o00900":1,"known":5}`;
+    assert(decodeInto(cast(const(ubyte)[]) distinct, open, arena, ignoring).code == Status.ok && open.known == 5);
+
+    // The same checks apply inside a skipped value and to escaped spellings.
+    const skipped = `{"skip":` ~ outer[0 .. $ - 1] ~ `,"inner":` ~ inner ~ `,"o00899":1}}`;
+    failure = decodeInto(cast(const(ubyte)[]) skipped, open, arena, ignoring);
+    assert(failure.code == Status.invalidArgument && failure.message == "duplicate JSON member");
+    assert(failure.offset == skipped.length - `"o00899":1}}`.length);
+    const innerRepeat = `{"skip":` ~ outer[0 .. $ - 1] ~ `,"inner":` ~ inner[0 .. $ - 1] ~ `,"i00999":2}}}`;
+    failure = decodeInto(cast(const(ubyte)[]) innerRepeat, open, arena, ignoring);
+    assert(failure.code == Status.invalidArgument);
+    assert(failure.offset == innerRepeat.length - `"i00999":2}}}`.length);
+}

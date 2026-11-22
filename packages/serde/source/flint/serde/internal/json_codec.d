@@ -4,7 +4,8 @@ module flint.serde.internal.json_codec;
 import flint.arena : Buffer, Error, RequestArena, Result, Status, Text;
 import flint.serde.internal.decimal : parseDecimal, writeDecimal;
 import flint.serde.internal.fields : JsonFields;
-import flint.serde.internal.json_scan : Scanner, TextToken, NumberToken, copyText, earlierKey, skipValue, textEquals;
+import flint.serde.internal.json_scan : KeyIndex, KeyScope, Scanner, TextToken, NumberToken,
+    closeKeys, copyText, repeatedKey, skipValue, textEquals;
 import flint.serde.internal.types : DecodeOptions, EncodeOptions, UnknownFields;
 import flint.serde.internal.writer : Writer, writeArenaBuffer;
 import std.traits : Unqual;
@@ -86,7 +87,10 @@ Error readOwnedJson(T)(scope const(ubyte)[] input, ref T target, DecodeOptions o
 private Error readDocument(T, bool owned = false)(scope const(ubyte)[] input, ref T target,
         ref scope RequestArena arena, DecodeOptions options, ref AllocationPlan plan)
 {
+    KeyIndex keys = void;
+    keys.clear();
     scope scanner = Scanner(input, options);
+    scanner.keys = &keys;
     auto failure = readValue!(T, owned)(scanner, target, arena, plan, 0);
     if (failure.code != Status.ok)
         return failure;
@@ -204,7 +208,7 @@ private Error readFloat(T)(ref scope Scanner scanner, ref T target) nothrow @nog
 private Error readEnum(T)(ref scope Scanner scanner, ref T target) nothrow @nogc
 {
     TextToken token;
-    auto failure = scanner.text(token);
+    auto failure = scanner.textValue(token);
     if (failure.code != Status.ok)
         return failure;
     static foreach (member; __traits(allMembers, T))
@@ -222,7 +226,7 @@ private Error readBytes(ref scope Scanner scanner, ref Buffer target, ref scope 
         ref AllocationPlan plan) nothrow @nogc
 {
     TextToken token;
-    auto failure = scanner.text(token);
+    auto failure = scanner.textValue(token);
     if (failure.code != Status.ok)
         return failure;
     if (!plan.materialize)
@@ -251,7 +255,7 @@ private Error readBytes(ref scope Scanner scanner, ref Buffer target, ref scope 
 private Error readOwnedString(T)(ref scope Scanner scanner, ref T target)
 {
     TextToken token;
-    auto failure = scanner.text(token);
+    auto failure = scanner.textValue(token);
     if (failure.code != Status.ok)
         return failure;
     auto buffer = new ubyte[token.length];
@@ -344,6 +348,7 @@ private Error readObject(T, bool owned)(ref scope Scanner scanner, ref T target,
 
     enum properties = JsonFields!T.entries;
     bool[properties.length] seen;
+    KeyScope unknownKeys;
     immutable firstMember = scanner.offset;
     scanner.whitespace();
     uint members;
@@ -352,7 +357,7 @@ private Error readObject(T, bool owned)(ref scope Scanner scanner, ref T target,
         for (;;)
         {
             auto failure = readObjectMember!(T, owned)(scanner, target, arena, plan, seen,
-                    firstMember, depth + 1, members);
+                    unknownKeys, firstMember, depth + 1, members);
             if (failure.code != Status.ok)
                 return failure;
             ++members;
@@ -364,11 +369,12 @@ private Error readObject(T, bool owned)(ref scope Scanner scanner, ref T target,
             scanner.whitespace();
         }
     }
+    closeKeys(scanner, unknownKeys);
     return readDefaults!(T, owned)(scanner, target, arena, plan, seen, depth + 1);
 }
 
-private Error readObjectMember(T, bool owned)(ref scope Scanner scanner, ref T target,
-        ref scope RequestArena arena, ref AllocationPlan plan, scope bool[] seen, size_t firstMember,
+private Error readObjectMember(T, bool owned)(ref scope Scanner scanner, ref T target, ref scope RequestArena arena,
+        ref AllocationPlan plan, scope bool[] seen, ref KeyScope unknownKeys, size_t firstMember,
         uint depth, uint members)
 {
     if (members >= scanner.options.maxMembers)
@@ -381,8 +387,8 @@ private Error readObjectMember(T, bool owned)(ref scope Scanner scanner, ref T t
     immutable index = lookup!T(scanner, token);
     if (scanner.options.rejectDuplicateKeys)
     {
-        immutable duplicate = index != noProperty ? seen[index] : earlierKey(scanner, firstMember,
-                keyOffset, token, depth);
+        immutable duplicate = index != noProperty ? seen[index] : repeatedKey(scanner, unknownKeys,
+                firstMember, keyOffset, token, depth);
         if (duplicate)
             return Error(Status.invalidArgument, "duplicate JSON member", keyOffset);
     }

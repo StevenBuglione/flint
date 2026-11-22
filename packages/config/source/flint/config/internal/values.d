@@ -4,7 +4,6 @@ import core.lifetime : move;
 import flint.config.internal.sources : InputValue;
 import flint.serde.owned : deserialize;
 import std.conv : to;
-import std.math.traits : isFinite;
 import std.traits : isFloatingPoint, isIntegral, isUnsigned;
 import std.utf : validate;
 
@@ -15,7 +14,93 @@ private struct Box(T)
     T value;
 }
 
+// Common field types bind through these non-template entry points, so their
+// decoder instantiations compile once in this package rather than in every
+// application module that calls load.
+package(flint.config) bool coerce(InputValue source, ref string value)
+{
+    return coerceValue(source, value);
+}
+
+/// ditto
+package(flint.config) bool coerce(InputValue source, ref string[] value)
+{
+    return coerceValue(source, value);
+}
+
+/// ditto
+package(flint.config) bool coerce(InputValue source, ref bool value)
+{
+    return coerceValue(source, value);
+}
+
+/// ditto
+package(flint.config) bool coerce(InputValue source, ref byte value)
+{
+    return coerceValue(source, value);
+}
+
+/// ditto
+package(flint.config) bool coerce(InputValue source, ref ubyte value)
+{
+    return coerceValue(source, value);
+}
+
+/// ditto
+package(flint.config) bool coerce(InputValue source, ref short value)
+{
+    return coerceValue(source, value);
+}
+
+/// ditto
+package(flint.config) bool coerce(InputValue source, ref ushort value)
+{
+    return coerceValue(source, value);
+}
+
+/// ditto
+package(flint.config) bool coerce(InputValue source, ref int value)
+{
+    return coerceValue(source, value);
+}
+
+/// ditto
+package(flint.config) bool coerce(InputValue source, ref uint value)
+{
+    return coerceValue(source, value);
+}
+
+/// ditto
+package(flint.config) bool coerce(InputValue source, ref long value)
+{
+    return coerceValue(source, value);
+}
+
+/// ditto
+package(flint.config) bool coerce(InputValue source, ref ulong value)
+{
+    return coerceValue(source, value);
+}
+
+/// ditto
+package(flint.config) bool coerce(InputValue source, ref float value)
+{
+    return coerceValue(source, value);
+}
+
+/// ditto
+package(flint.config) bool coerce(InputValue source, ref double value)
+{
+    return coerceValue(source, value);
+}
+
+/// Bind any other supported field type in the instantiating module.
 package(flint.config) bool coerce(T)(InputValue source, ref T value)
+{
+    return coerceValue(source, value);
+}
+
+private bool coerceValue(T)(InputValue source, ref T value)
 {
     if (source.json)
     {
@@ -103,20 +188,41 @@ private bool arrayValues(Element)(string input, ref Element[] values)
     return true;
 }
 
+// Rewrite accepted decimal text in JSON number syntax: no plus sign or redundant leading zeros.
+private string jsonNumber(string input)
+{
+    size_t index;
+    string sign;
+    if (input[0] == '+' || input[0] == '-')
+    {
+        sign = input[0] == '-' ? "-" : "";
+        index = 1;
+    }
+    while (index + 1 < input.length && input[index] == '0' && input[index + 1] >= '0' && input[index + 1] <= '9')
+        ++index;
+    return sign ~ input[index .. $];
+}
+
 private bool number(T)(string input, ref T value)
 {
     if (!decimal(input, isFloatingPoint!T, !isUnsigned!T))
         return false;
+    static if (isFloatingPoint!T)
+    {
+        // Use the same correctly rounded conversion as JSON and TOML file values.
+        return coerceValue(InputValue(jsonNumber(input), InputValue.init.origin, true), value);
+    }
+    else
+        return integer(input, value);
+}
+
+private bool integer(T)(string input, ref T value)
+{
     T parsed;
     try
         parsed = to!T(input);
     catch (Exception)
         return false;
-    static if (isFloatingPoint!T)
-    {
-        if (!isFinite(parsed))
-            return false;
-    }
     value = parsed;
     return true;
 }

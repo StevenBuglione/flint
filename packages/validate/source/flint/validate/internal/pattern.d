@@ -70,11 +70,13 @@ private struct Term
 }
 
 // The parser and lowering run only when a Pattern UDA is instantiated.
-private struct RegexParser()
+private struct RegexParser(size_t capacity)
 {
     string expression;
     size_t offset;
-    Term[8_193] terms;
+    // Each source byte adds at most two terms, plus the empty term: 8,193 at the
+    // 4,096-byte limit. Sizing per pattern keeps compile-time evaluation small.
+    Term[capacity] terms;
     ushort termCount;
     string error;
 
@@ -443,7 +445,7 @@ private struct Program()
     }
 }
 
-private Program!() compilePattern()(string expression)
+private Program!() compilePattern(string expression)()
 {
     if (expression.length > 4_096)
     {
@@ -452,7 +454,7 @@ private Program!() compilePattern()(string expression)
         return failure;
     }
 
-    RegexParser!() parser;
+    RegexParser!(expression.length > 4_096 ? 1 : 2 * expression.length + 1) parser;
     parser.expression = expression;
     parser.add(Term(Op.empty));
     immutable syntax = parser.parse();
@@ -470,7 +472,7 @@ private Program!() compilePattern()(string expression)
 
 private template PatternCode(string expression)
 {
-    enum compiled = compilePattern(expression);
+    enum compiled = compilePattern!expression();
     static immutable instructions = compiled.states[0 .. compiled.count];
 }
 

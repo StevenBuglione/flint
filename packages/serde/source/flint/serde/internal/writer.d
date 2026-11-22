@@ -2,7 +2,7 @@
 module flint.serde.internal.writer;
 
 import flint.arena : Buffer, Error, RequestArena, Result, Status;
-import flint.serde.internal.json_scan : utf8Scalar;
+import flint.serde.internal.json_scan : copyInto, readUtf8;
 
 @safe:
 
@@ -31,7 +31,7 @@ struct Writer
     }
 
     /// Emit one byte.
-    void put(ubyte byteValue) scope nothrow @nogc
+    pragma(inline, true) void put(ubyte byteValue) scope nothrow @nogc
     {
         if (error.code != Status.ok)
             return;
@@ -48,8 +48,28 @@ struct Writer
     /// Emit a fixed fragment.
     void append(scope const(ubyte)[] fragment) scope nothrow @nogc
     {
-        foreach (byteValue; fragment)
-            put(byteValue);
+        if (fragment.length < 16)
+        {
+            // Short fragments, such as escapes and punctuation, avoid the bulk-copy call overhead.
+            foreach (byteValue; fragment)
+                put(byteValue);
+            return;
+        }
+        if (error.code != Status.ok)
+            return;
+        immutable room = measuring ? size_t.max - length : buffer.length - length;
+        if (fragment.length > room)
+        {
+            // Match byte-at-a-time emission: fill to the bound, then report it.
+            if (!measuring)
+                copyInto(buffer[length .. $], fragment[0 .. room]);
+            length += room;
+            fail(Status.resourceExhausted, "serialization output exceeds its bound");
+            return;
+        }
+        if (!measuring)
+            copyInto(buffer[length .. length + fragment.length], fragment);
+        length += fragment.length;
     }
 
     /// Emit an unsigned magnitude in base ten.
@@ -86,50 +106,75 @@ struct Writer
         size_t offset;
         while (offset < value.length)
         {
-            immutable position = offset;
-            uint scalar;
-            if (!utf8Scalar(value, offset, scalar))
+            immutable run = offset;
+            offset = plainRun(value, offset, toml);
+            if (offset != run)
+                append(value[run .. offset]);
+            if (offset == value.length)
+                break;
+
+            // The run stops at an ASCII byte that needs an escape or at invalid UTF-8.
+            immutable scalar = value[offset];
+            if (scalar >= 0x80)
             {
                 fail(Status.invalidArgument, "invalid UTF-8 in serialization input");
                 return;
             }
+            ++offset;
+            put('\\');
             switch (scalar)
             {
             case '"':
-                append(cast(const(ubyte)[]) "\\\"");
-                break;
             case '\\':
-                append(cast(const(ubyte)[]) "\\\\");
+                put(cast(ubyte) scalar);
                 break;
             case '\b':
-                append(cast(const(ubyte)[]) "\\b");
+                put('b');
                 break;
             case '\t':
-                append(cast(const(ubyte)[]) "\\t");
+                put('t');
                 break;
             case '\n':
-                append(cast(const(ubyte)[]) "\\n");
+                put('n');
                 break;
             case '\f':
-                append(cast(const(ubyte)[]) "\\f");
+                put('f');
                 break;
             case '\r':
-                append(cast(const(ubyte)[]) "\\r");
+                put('r');
                 break;
             default:
-                if (scalar < 0x20 || (toml && scalar == 0x7f))
-                {
-                    append(cast(const(ubyte)[]) "\\u00");
-                    put(hex[(scalar >> 4) & 0xf]);
-                    put(hex[scalar & 0xf]);
-                }
-                else
-                    append(value[position .. offset]);
+                put('u');
+                put('0');
+                put('0');
+                put(hex[(scalar >> 4) & 0xf]);
+                put(hex[scalar & 0xf]);
                 break;
             }
         }
         put('"');
     }
+}
+
+// End of the longest run needing no escape, validating multibyte UTF-8 in place.
+pragma(inline, true) private size_t plainRun(scope const(ubyte)[] value, size_t offset, bool toml) nothrow @nogc
+{
+    while (offset < value.length)
+    {
+        immutable byteValue = value[offset];
+        if (byteValue >= 0x80)
+        {
+            size_t next = offset;
+            if (!readUtf8(value, next).valid)
+                break;
+            offset = next;
+        }
+        else if (byteValue >= 0x20 && byteValue != '"' && byteValue != '\\' && (byteValue != 0x7f || !toml))
+            ++offset;
+        else
+            break;
+    }
+    return offset;
 }
 
 private alias Emission = void delegate(ref scope Writer) @safe nothrow @nogc;

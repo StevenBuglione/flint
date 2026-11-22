@@ -303,9 +303,56 @@ private struct KeyCursor
     }
 }
 
+// The raw contents of a bare, literal or escape-free basic key equal its decoded name.
+private bool verbatimKey(scope const(ubyte)[] key, out size_t begin, out size_t end) nothrow @nogc
+{
+    end = key.length;
+    if (key.length == 0 || (key[0] != '"' && key[0] != '\''))
+        return true;
+    if (key.length < 2)
+        return false;
+    begin = 1;
+    --end;
+    if (key[0] == '\'')
+        return true;
+    foreach (byteValue; key[begin .. end])
+    {
+        if (byteValue == '\\')
+            return false;
+    }
+    return true;
+}
+
+// Byte equality without the C memcmp that slice comparison needs in BetterC.
+private bool sameBytes(scope const(ubyte)[] left, scope const(ubyte)[] right) pure nothrow @nogc
+{
+    if (left.length != right.length)
+        return false;
+    foreach (index, byteValue; left)
+    {
+        if (byteValue != right[index])
+            return false;
+    }
+    return true;
+}
+
+/// Hash an already validated TOML key component by its decoded Unicode scalars.
+ushort keyHash(scope const(ubyte)[] key) nothrow @nogc
+{
+    uint hash = 2_166_136_261;
+    KeyCursor cursor = KeyCursor(key);
+    Codepoint point;
+    while (cursor.next(key, point.scalar))
+        hash = (hash ^ point.scalar) * 16_777_619;
+    return cast(ushort)(hash ^ (hash >> 16));
+}
+
 /// Compare two already validated TOML key components.
 bool sameKey(scope const(ubyte)[] first, scope const(ubyte)[] second) nothrow @nogc
 {
+    size_t leftFirst, leftLast, rightFirst, rightLast;
+    if (verbatimKey(first, leftFirst, leftLast) && verbatimKey(second, rightFirst, rightLast))
+        return sameBytes(first[leftFirst .. leftLast], second[rightFirst .. rightLast]);
     KeyCursor left = KeyCursor(first);
     KeyCursor right = KeyCursor(second);
     Codepoint leftPoint;

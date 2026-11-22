@@ -305,3 +305,52 @@ unittest
     const all = encodeToml(payload, arena, EncodeOptions(false, false));
     assert(all.error.code == Status.invalidArgument);
 }
+
+private char[] longKeyTable(string open, string close, size_t members)
+{
+    char[] prefix;
+    foreach (index; 0 .. 1000)
+        prefix ~= 'a';
+    char[] text;
+    foreach (index; 0 .. members)
+    {
+        char[4] digits;
+        size_t value = index;
+        foreach_reverse (position; 0 .. 4)
+        {
+            digits[position] = cast(char)('0' + value % 10);
+            value /= 10;
+        }
+        text ~= open ~ prefix ~ digits[] ~ close ~ " = 1\n";
+    }
+    return text;
+}
+
+@("TOML sibling lookup stays fast for long keys with a shared prefix")
+unittest
+{
+    import core.time : MonoTime, seconds;
+
+    static struct Empty
+    {
+        int unused;
+    }
+
+    ubyte[64] storage;
+    scope arena = RequestArena(storage[]);
+    auto options = DecodeOptions.init;
+    options.unknownFields = UnknownFields.ignore;
+    Empty value;
+    const started = MonoTime.currTime;
+    foreach (quote; ["", "\"", "'"])
+    {
+        const document = longKeyTable(quote, quote, 1000);
+        assert(document.length < 1_048_576);
+        assert(decodeTomlInto(cast(const(ubyte)[]) document, value, arena, options).code == Status.ok);
+    }
+    // Escaped and verbatim spellings of the same key are still duplicates.
+    const repeated = longKeyTable("\"", "\"", 3) ~ "\"\\u0061" ~ longKeyTable("", "", 2)[1 .. 1004] ~ "\" = 2\n";
+    const failure = decodeTomlInto(cast(const(ubyte)[]) repeated, value, arena, options);
+    assert(failure.code == Status.invalidArgument && failure.message == "duplicate TOML key");
+    assert(MonoTime.currTime - started < 3.seconds);
+}

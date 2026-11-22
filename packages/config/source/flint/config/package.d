@@ -15,7 +15,7 @@ Result!T load(T)(scope const ref ConfigOptions options)
     if (failure.code != Status.ok)
         return Result!T(T.init, failure);
     Result!T result;
-    result.error = bind(result.value, layers, options.envPrefix.idup, options.rejectUnknownKeys);
+    result.error = bind(result.value, layers, layers.envPrefix, options.rejectUnknownKeys);
     if (!result.ok)
         result.value = T.init;
     return result;

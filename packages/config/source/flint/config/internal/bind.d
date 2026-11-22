@@ -114,7 +114,13 @@ private struct Binding
         if (!coerce(input, destination))
             problem(input.origin, Status.invalidArgument, key, "does not match the field type");
         else
-            applied[key] = input.origin;
+            record(key, input.origin);
+    }
+
+    // Kept out of the leaf template so applications do not instantiate the map insertion.
+    private void record(string key, Origin origin)
+    {
+        applied[key] = origin;
     }
 
     private bool selectInput(FieldRules attributes, string key, out InputValue input)
@@ -230,17 +236,28 @@ package(flint.config) Error check(T)(scope const ref T value, scope const(Origin
     const count = validate(value, null);
     if (count.valid)
         return Error.init;
-    auto violations = new Violation[count.total > 4096 ? 4096 : count.total];
+    auto violations = violationBuffer(count.total);
     const report = validate(value, violations);
-    if (report.written == 0)
+    return earliestViolation(violations[0 .. report.written], configPrefix!T, origins);
+}
+
+// The type-independent parts of check stay out of each application's instantiation.
+private Violation[] violationBuffer(size_t total)
+{
+    return new Violation[total > 4096 ? 4096 : total];
+}
+
+private Error earliestViolation(scope const(Violation)[] violations, string prefix, scope const(Origin[string]) origins)
+{
+    if (violations.length == 0)
         return Origin("validation").report(Status.invalidArgument, "", "did not pass validation");
-    auto earliest = violations[0];
-    foreach (candidate; violations[1 .. report.written])
+    size_t first;
+    foreach (index, ref candidate; violations)
     {
-        if (candidate.field < earliest.field)
-            earliest = candidate;
+        if (candidate.field < violations[first].field)
+            first = index;
     }
-    enum prefix = configPrefix!T;
+    const earliest = violations[first];
     const key = prefix.length == 0 ? earliest.field : prefix ~ "." ~ earliest.field;
     const origin = key in origins;
     return (origin is null ? Origin("validation") : *origin).report(Status.invalidArgument, key,

@@ -3,7 +3,7 @@ module flint.serde.internal.toml_document;
 
 import flint.arena : Error, Status;
 import flint.serde.internal.json_scan : digit, readUtf8;
-import flint.serde.internal.toml_text : Span, horizontal, keySpan, quotedSpan, sameKey;
+import flint.serde.internal.toml_text : Span, horizontal, keyHash, keySpan, quotedSpan, sameKey;
 import flint.serde.internal.toml_values : ScalarKind, classify;
 import flint.serde.internal.types : DecodeOptions;
 
@@ -41,6 +41,8 @@ struct Node
     NodeKind kind;
     /// Scalar type, when this is a leaf.
     ScalarKind scalar;
+    /// Decoded name hash; it screens sibling lookups before an exact comparison.
+    ushort hash;
 }
 
 /// Index of the implicit root table.
@@ -327,11 +329,13 @@ struct Document
 
     private ushort find(ushort parent, Span name) const scope nothrow @nogc
     {
+        scope wanted = input[name.first .. name.last];
+        immutable hash = keyHash(wanted);
         ushort child = nodes[parent].first;
         while (child != 0)
         {
             const candidate = nodes[child].key;
-            if (sameKey(input[candidate.first .. candidate.last], input[name.first .. name.last]))
+            if (nodes[child].hash == hash && sameKey(input[candidate.first .. candidate.last], wanted))
                 return child;
             child = nodes[child].next;
         }
@@ -349,7 +353,8 @@ struct Document
             return exhausted("TOML depth limit exceeded");
 
         index = ++allocated;
-        nodes[index] = Node(key, Span.init, 0, nodes[parent].first, 0, depth, kind);
+        immutable hash = key.last > key.first ? keyHash(input[key.first .. key.last]) : 0;
+        nodes[index] = Node(key, Span.init, 0, nodes[parent].first, 0, depth, kind, ScalarKind.init, hash);
         nodes[parent].first = index;
         ++nodes[parent].count;
         return Error.init;
