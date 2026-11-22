@@ -52,6 +52,24 @@ def identify_elf_linker(executable):
             'sha256': hashlib.sha256(linker.read_bytes()).hexdigest()}
 
 
+def quote_dmd_conf(bin_dir):
+    """Quote every DFLAGS argument that contains %@P%.
+
+    DMD expands %@P% (the directory of dmd.conf) before it splits DFLAGS at whitespace, so an
+    unquoted argument breaks whenever the installation path contains a space, such as a checkout
+    under "flint work" or "C:\\Program Files". dmd.conf honours double quotes. Idempotent.
+    """
+    config = bin_dir / 'dmd.conf'
+    lines = config.read_text().split('\n')
+    for index, line in enumerate(lines):
+        if not line.startswith('DFLAGS='):
+            continue
+        flags = line[len('DFLAGS='):].split()
+        quoted = ['"' + flag + '"' if '%@P%' in flag and not flag.startswith('"') else flag for flag in flags]
+        lines[index] = 'DFLAGS=' + ' '.join(quoted)
+    config.write_text('\n'.join(lines))
+
+
 def configure_dmd_linker(bin_dir, linker):
     config = bin_dir / 'dmd.conf'
     original = config.read_text()
@@ -70,7 +88,7 @@ def configure_dmd_linker(bin_dir, linker):
         # The private -B directory selects only the ELF linker.
         line, newline, rest = after.partition('\n')
         # DMD expands %@P% before splitting DFLAGS, including for its own include paths.
-        flags = ['"' + flag + '"' if '%@P%' in flag else flag for flag in line.split()]
+        flags = ['"' + flag + '"' if '%@P%' in flag and not flag.startswith('"') else flag for flag in line.split()]
         flags += ['"-Xcc=-B%@P%/flint-linker/"', '-Xcc=-fuse-ld=' + driver]
         updated = before + marker + ' '.join(flags) + newline + rest
         (tmp / 'dmd.conf').write_text(updated)
@@ -507,6 +525,8 @@ def main():
     install(name,a.destination);binary_path=a.destination/relative
     if not binary_path.is_dir():raise SystemExit('archive layout did not contain '+str(binary_path))
     receipt = {'compiler':a.compiler,'version':LOCK['versions'][a.compiler],'bin':str(binary_path),'sha256':LOCK['assets'][name]['sha256']}
+    if a.compiler=='dmd':
+        quote_dmd_conf(binary_path)
     if linker:
         configure_dmd_linker(binary_path, linker)
         receipt['linker'] = linker
