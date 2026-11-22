@@ -128,16 +128,14 @@ private string sourcePath(string directory, string name)
 
 package(flint.config) Result!SourceFile sourceFile(string directory, string name)
 {
-    import std.file : exists, read;
+    import flint.config.sys.files : pathExists, readLimited;
 
     const path = sourcePath(directory, name);
-    if (!exists(path))
+    if (!pathExists(path))
         return Result!SourceFile(SourceFile.init);
     auto origin = Origin(name);
     string content;
-    try
-        content = (cast(const(char)[]) read(path, maxSourceBytes + 1)).idup;
-    catch (Exception)
+    if (!readLimited(path, maxSourceBytes + 1, content))
         return Result!SourceFile(SourceFile.init, origin.report(Status.ioError, "", "could not be read"));
     if (content.length > maxSourceBytes)
         return Result!SourceFile(SourceFile.init, origin.report(Status.resourceExhausted, "", "exceeds 1 MiB"));

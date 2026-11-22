@@ -14,7 +14,7 @@
       "flint.conc.ffi"
     ],
     "di": [],
-    "config": [],
+    "config": ["flint.config.sys"],
     "serde": [
       "flint.serde.sys",
       "flint.serde.ffi"

@@ -147,9 +147,9 @@ private Error applicationFiles(string directory, string profile, ref Inputs valu
 
 package(flint.config) Error loadLayers(scope const ref ConfigOptions options, ref Layers layers)
 {
-    import std.process : environment;
+    import flint.config.sys.files : processEnvironment;
 
-    layers.process = environment.toAA();
+    layers.process = processEnvironment();
     layers.envPrefix = options.envPrefix.idup;
     string profile = options.profile.idup;
     if (const fromEnvironment = "FLINT_PROFILE" in layers.process)
