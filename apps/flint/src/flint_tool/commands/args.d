@@ -135,6 +135,51 @@ struct LockArgs
     @Option("json", 0, "Emit flint.lock/1 JSON on stdout") bool json;
 }
 
+/// Options every deps subcommand takes.
+struct DepsCommon
+{
+    /// Project directory.
+    @Option("project", 'C', "Run in this project directory") string project;
+    /// JSON output.
+    @Option("json", 0, "Emit flint.deps/1 JSON on stdout") bool json;
+}
+
+/// `flint deps why`.
+struct DepsWhyArgs
+{
+    /// Package.
+    @Arg(0, "Package to explain, such as github.com/acme/money or flint:log") string name;
+    /// Project directory.
+    @Option("project", 'C', "Run in this project directory") string project;
+    /// JSON output.
+    @Option("json", 0, "Emit flint.deps/1 JSON on stdout") bool json;
+}
+
+/// `flint deps update`.
+struct DepsUpdateArgs
+{
+    /// Packages.
+    @Arg(0, "Repository-path dependencies to update (default: all)") string[] names;
+    /// Project directory.
+    @Option("project", 'C', "Run in this project directory") string project;
+    /// JSON output.
+    @Option("json", 0, "Emit flint.deps/1 JSON on stdout") bool json;
+}
+
+/// `flint deps`.
+@Command("flint deps", "Inspect and change the dependency graph")
+struct DepsArgs
+{
+    /// tree.
+    @Subcommand("tree", "Print the resolved dependency graph") DepsCommon tree;
+    /// why.
+    @Subcommand("why", "Show why a package is in the graph") DepsWhyArgs why;
+    /// update.
+    @Subcommand("update", "Raise repository-path dependencies to their latest release") DepsUpdateArgs update;
+    /// vendor.
+    @Subcommand("vendor", "Copy repository-path modules into vendor/ for offline builds") DepsCommon vendor;
+}
+
 /// Options every toolchain subcommand takes.
 struct ToolchainCommon
 {
@@ -262,6 +307,8 @@ struct FlintArgs
     @Subcommand("fmt", "Format D sources") FmtArgs fmt;
     /// lock.
     @Subcommand("lock", "Write or verify flint.lock") LockArgs lock;
+    /// deps.
+    @Subcommand("deps", "Inspect and change the dependency graph") DepsArgs deps;
     /// toolchain.
     @Subcommand("toolchain", "Install, verify or describe the pinned toolchain") ToolchainArgs toolchain;
     /// doctor.

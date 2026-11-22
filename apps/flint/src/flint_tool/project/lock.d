@@ -54,6 +54,8 @@ string renderLock(const ref Home home, const ref Manifest manifest, const ref Re
             text ~= pair("source", item.source);
         if (item.declaredPath.length)
             text ~= pair("path", item.declaredPath);
+        if (item.version_.length)
+            text ~= pair("version", item.version_) ~ pair("commit", item.commit);
         if (item.contentSha256.length)
             text ~= pair("content_sha256", item.contentSha256);
         text ~= pair("scope", item.testOnly ? "test" : "build");

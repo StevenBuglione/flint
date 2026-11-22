@@ -30,7 +30,7 @@ sourcePaths "../../../src"
 importPaths "../../../src"
 dflags "-preview=dip1000"
 dependency "flint:log" path="/flint"
-dependency "model" path="../../../.flint/generated/deps/model"
+dependency "model" path="../deps/model"
 configuration "dev" {
     targetPath "../../build/dev"
 }
