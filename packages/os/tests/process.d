@@ -258,8 +258,14 @@ unittest
         assert(result.ok && result.value.code == 0, result.error.message);
     }
     elapsed[].sort();
-    // The supervisor previously noticed a finished child only on its 5 ms polling tick.
-    assert(elapsed[rounds / 2] < 3_000, "child reaping waited for the supervisor polling interval");
+    // The supervisor previously noticed a finished child only on its 5 ms polling tick. Under
+    // AddressSanitizer, forking a process with its shadow mappings alone costs milliseconds, so
+    // wall-clock latency is not representative there; the functional checks above still run.
+    version (LDC_AddressSanitizer)
+    {
+    }
+    else
+        assert(elapsed[rounds / 2] < 3_000, "child reaping waited for the supervisor polling interval");
 }
 
 @("concurrent stdout and stderr each reach their sink in emission order")

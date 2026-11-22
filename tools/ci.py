@@ -321,7 +321,13 @@ def run_container(runner,target):
     lock=json.loads((ROOT/'policy/toolchains.json').read_text())
     image=lock['containers']['alpine-musl']['image']
     require(re.fullmatch(r'docker\.io/library/alpine:[\w.]+@sha256:[0-9a-f]{64}',image),'Alpine image must have an immutable digest')
-    runner.run(['docker','run','--rm','--mount','type=bind,source='+str(ROOT)+',target=/work',
+    mounts=['--mount','type=bind,source='+str(ROOT)+',target=/work']
+    # A git worktree's .git file points into the main repository's git directory; mount that
+    # read-only at the same path so the tools inside the container can read the commit.
+    common=Path(probe(['git','-C',str(ROOT),'rev-parse','--path-format=absolute','--git-common-dir']).strip() or ROOT/'.git')
+    if not common.is_relative_to(ROOT):
+        mounts+=['--mount','type=bind,source='+str(common)+',target='+str(common)+',readonly']
+    runner.run(['docker','run','--rm',*mounts,
                 '--workdir','/work','--env','FLINT_TARGET='+target,image,
                 'sh','.github/scripts/musl.sh'])
 
