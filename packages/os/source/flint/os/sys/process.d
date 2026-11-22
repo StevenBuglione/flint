@@ -383,6 +383,48 @@ Result!uint waitForOutput(int first, int second, int milliseconds) @trusted noth
     return Result!uint(ready);
 }
 
+private enum long pidfdOpenNumber = 434;
+
+/// A descriptor that becomes readable when the unreaped child exits, or -1 when the kernel lacks pidfd.
+// SAFETY: pidfd_open takes two integers and returns a new close-on-exec descriptor owned by the caller.
+int openExitNotifier(int pid) @trusted nothrow @nogc
+{
+    const descriptor = syscall(pidfdOpenNumber, pid, 0U);
+    return descriptor >= 0 && descriptor <= int.max ? cast(int) descriptor : -1;
+}
+
+/// A nonblocking counter that wakes the supervisor's poll, or -1 when unavailable.
+// SAFETY: eventfd takes only integers and returns a new descriptor owned by the caller.
+int openWake() @trusted nothrow @nogc
+{
+    import core.sys.linux.sys.eventfd : EFD_CLOEXEC, EFD_NONBLOCK, eventfd;
+
+    const descriptor = eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK);
+    return descriptor >= 0 ? descriptor : -1;
+}
+
+// SAFETY: write copies one local counter value into the caller's live eventfd and retains nothing.
+void signalWake(int descriptor) @trusted nothrow @nogc
+{
+    if (descriptor < 0)
+        return;
+    const ulong one = 1;
+    while (write(descriptor, &one, one.sizeof) < 0 && errno == EINTR)
+    {
+    }
+}
+
+// SAFETY: read writes one local counter value from the caller's live nonblocking eventfd.
+void drainWake(int descriptor) @trusted nothrow @nogc
+{
+    if (descriptor < 0)
+        return;
+    ulong count;
+    while (read(descriptor, &count, count.sizeof) < 0 && errno == EINTR)
+    {
+    }
+}
+
 // SAFETY: read accesses only the bounded slice within this call and does not retain its pointer.
 Result!size_t pull(int descriptor, scope ubyte[] buffer) @trusted nothrow @nogc
 {

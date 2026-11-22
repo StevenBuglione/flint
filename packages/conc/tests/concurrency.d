@@ -154,6 +154,89 @@ unittest
     copy = Context.init;
 }
 
+private size_t availableSources()
+{
+    // Hold every free slab node at once, then release them all.
+    auto held = new CancelSource[16_384 + 1];
+    size_t count;
+    for (; count < held.length; ++count)
+    {
+        auto created = CancelSource.create(Context.init, Deadline.none());
+        if (!created.ok())
+            break;
+        move(created.value, held[count]);
+    }
+    foreach (ref source; held[0 .. count])
+        source.close();
+    return count;
+}
+
+private struct SharedContexts
+{
+    Context[8] contexts;
+    shared uint ready;
+    shared bool stop;
+    shared ulong observedCancelled;
+}
+
+private void churnContexts(SharedContexts* state) nothrow @nogc
+{
+    atomicOp!"+="(state.ready, 1U);
+    ulong cancelled;
+    while (!atomicLoad(state.stop))
+    {
+        foreach (ref context; state.contexts)
+        {
+            auto copy = context;
+            auto narrowed = copy.withDeadline(Deadline.afterMillis(60_000));
+            if (narrowed.check().code == Status.cancelled)
+                ++cancelled;
+            auto child = CancelSource.create(narrowed, Deadline.none());
+            if (child.ok() && child.value.context().check().code == Status.cancelled)
+                ++cancelled;
+        }
+    }
+    atomicOp!"+="(state.observedCancelled, cancelled);
+}
+
+@("concurrent context copies, child sources, cancellation and close return every slab node")
+unittest
+{
+    const before = availableSources();
+    assert(before > 0);
+    auto state = new SharedContexts;
+    CancelSource[8] sources;
+    foreach (index, ref source; sources)
+    {
+        auto created = CancelSource.create(Context.init, Deadline.none());
+        assert(created.ok());
+        move(created.value, source);
+        state.contexts[index] = source.context();
+    }
+
+    WorkerThreads threads;
+    assert(threads.start(4, () @safe nothrow{ churnContexts(state); }));
+    while (atomicLoad(state.ready) != 4)
+        yieldThread();
+    foreach (index, ref source; sources)
+    {
+        if (index % 2 == 0)
+            source.cancel();
+        source.close();
+        foreach (_; 0 .. 2_000)
+            yieldThread();
+    }
+    atomicStore(state.stop, true);
+    threads.join();
+    assert(atomicLoad(state.observedCancelled) != 0);
+    foreach (index, ref context; state.contexts)
+    {
+        assert(context.check().code == (index % 2 == 0 ? Status.cancelled : Status.ok));
+        context = Context.init;
+    }
+    assert(availableSources() == before, "a concurrent release leaked or double-freed a slab node");
+}
+
 private struct History(QueueKind kind)
 {
     Channel!(uint, kind) channel;
@@ -497,4 +580,24 @@ unittest
     assert(collect(first.value, submitted.value, [], written).code == Status.invalidArgument);
     assert(written == 0);
     assert(first.value.join(submitted.value, [], written).code == Status.notFound);
+}
+
+@("a shared clock sample reports the same status check would at that instant")
+unittest
+{
+    const now = Deadline.afterMillis(0).monotonicNanoseconds;
+    auto source = CancelSource.create(Context.init, Deadline(now + 1_000));
+    assert(source.ok());
+    auto context = source.value.context();
+    assert(context.statusAt(now) == Status.ok);
+    assert(context.statusAt(now + 999) == Status.ok);
+    assert(context.statusAt(now + 1_000) == Status.timedOut);
+    assert(Context.init.statusAt(long.max - 1) == Status.ok);
+    assert(Context.init.withDeadline(Deadline(now)).statusAt(now) == Status.timedOut);
+    source.value.cancel();
+    // The cancellation precedes the deadline, so it wins at every later sample.
+    assert(context.statusAt(now + 2_000) == Status.cancelled);
+    auto expired = CancelSource.create(Context.init, Deadline(0));
+    expired.value.cancel();
+    assert(expired.value.context().statusAt(now) == Status.timedOut);
 }

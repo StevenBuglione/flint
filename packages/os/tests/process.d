@@ -240,3 +240,24 @@ unittest
     assert(result.ok && result.value.code == 0);
     assert(result.value.stdoutBytes == cast(const(ubyte)[]) "ready");
 }
+
+@("a quickly exiting child is reaped as soon as its pipes close rather than on the next supervisor poll")
+unittest
+{
+    import core.time : MonoTime;
+    import std.algorithm.sorting : sort;
+
+    Context context;
+    enum rounds = 15;
+    long[rounds] elapsed;
+    foreach (ref sample; elapsed)
+    {
+        const started = MonoTime.currTime;
+        const result = run(context, ["true"]);
+        sample = (MonoTime.currTime - started).total!"usecs";
+        assert(result.ok && result.value.code == 0, result.error.message);
+    }
+    elapsed[].sort();
+    // The supervisor previously noticed a finished child only on its 5 ms polling tick.
+    assert(elapsed[rounds / 2] < 3_000, "child reaping waited for the supervisor polling interval");
+}

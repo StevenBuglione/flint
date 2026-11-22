@@ -3,8 +3,9 @@ module flint.os.internal;
 import core.atomic : atomicLoad, atomicStore, cas;
 import flint.arena : Error, Result, Status;
 import flint.conc : Context, Deadline;
-import flint.os.sys.process : Child, childExited, closeChildPipes, closeFd, launch, nativeStatus,
-    pull, reap, setupResult, signalGroup, validateWaitPolicy, waitForOutput;
+import flint.os.sys.process : Child, childExited, closeChildPipes, closeFd, drainWake, launch,
+    nativeStatus, openExitNotifier, openWake, pull, reap, setupResult, signalGroup, signalWake,
+    validateWaitPolicy, waitForOutput;
 import flint.os.sys.threads : joinThread, startThread;
 import flint.os.types : ExitStatus, OutputSink, ProcessOptions;
 import std.process : environment;
@@ -152,10 +153,20 @@ private struct Supervisor
     private shared bool done;
     private Error failure;
     private ExitStatus outcome;
+    // Optional descriptors that end the polling sleep on leader exit or on a request from the caller.
+    private int exitFd = -1;
+    private int wakeFd = -1;
 
     void stop(StopReason reason) nothrow @nogc
     {
         cas(&stopped, StopReason.none, reason);
+    }
+
+    /// Publish closed streams and wake the supervisor so it can reap without waiting for its next poll.
+    void closeStreams() nothrow @nogc
+    {
+        atomicStore(streamsClosed, true);
+        signalWake(wakeFd);
     }
 
     void supervise() nothrow @nogc
@@ -206,8 +217,17 @@ private struct Supervisor
                 retireChild();
                 return;
             }
-            waitForOutput(-1, -1, pollMillis);
+            pause(leaderExitAt >= 0);
         }
+    }
+
+    /// Sleep until the poll interval elapses, the leader exits or the caller signals the wake descriptor.
+    private void pause(bool leaderExited) nothrow @nogc
+    {
+        // A level-triggered exit notifier stays readable, so watch it only until the leader exit is seen.
+        const woke = waitForOutput(leaderExited ? -1 : exitFd, wakeFd, pollMillis);
+        if (woke.ok && (woke.value & 2) != 0)
+            drainWake(wakeFd);
     }
 
     private void observeCancellation(long now) nothrow @nogc
@@ -381,6 +401,14 @@ package(flint.os) Result!ExitStatus execute(ref scope Context context, scope con
     supervisor.context = context;
     supervisor.graceNanos = options.terminateGraceNanos;
     supervisor.stallNanos = options.sinkStallNanos;
+    supervisor.exitFd = openExitNotifier(child.value.pid);
+    supervisor.wakeFd = openWake();
+    // Runs after every path that joins the supervisor thread below.
+    scope (exit)
+    {
+        closeFd(supervisor.exitFd);
+        closeFd(supervisor.wakeFd);
+    }
     bool supervising;
     scope (failure)
     {
@@ -395,7 +423,7 @@ package(flint.os) Result!ExitStatus execute(ref scope Context context, scope con
     scope (failure)
     {
         supervisor.stop(StopReason.failed);
-        atomicStore(supervisor.streamsClosed, true);
+        supervisor.closeStreams();
         joinThread(thread);
     }
 
@@ -408,7 +436,7 @@ package(flint.os) Result!ExitStatus execute(ref scope Context context, scope con
         error = pump.run(child.value, outSink, errSink);
     if (error.code != Status.ok)
         supervisor.stop(StopReason.failed);
-    atomicStore(supervisor.streamsClosed, true);
+    supervisor.closeStreams();
     if (joinThread(thread) !is null)
         return Result!ExitStatus(ExitStatus.init, Error(Status.ioError, "child supervisor failed"));
     return childResult(supervisor, pump, error);

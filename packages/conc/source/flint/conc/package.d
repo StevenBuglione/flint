@@ -2,7 +2,7 @@ module flint.conc;
 
 import flint.arena : Error, Result, Status;
 import flint.conc.internal.transfer : TransferValue;
-import flint.conc.sys.cancellation : cancelSource, closeSource, closedContextId, contextStatus,
+import flint.conc.sys.cancellation : cancelSource, closeSource, closedContextId, contextStatus, contextStatusAt,
     createSource, monotonicNanoseconds, noDeadline, releaseContext, retainContext, retainFromSource;
 
 @safe:
@@ -97,6 +97,13 @@ struct Context
             deadline = deadlineValue;
         retainContext(id);
         return Context(id, deadline);
+    }
+
+    /// Framework loops that poll many contexts per tick share one monotonic sample instead of reading
+    /// the clock for each. Returns the status `check` would report at `nowNanoseconds`.
+    package(flint) Status statusAt(long nowNanoseconds) const nothrow @nogc
+    {
+        return contextStatusAt(id, deadlineValue.monotonicNanoseconds, nowNanoseconds);
     }
 
     /// Report the earliest terminal status or success while work may proceed.
