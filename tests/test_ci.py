@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import sys
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -17,6 +18,7 @@ def load(name):
     return module
 ci=load('ci')
 configure=load('configure_github')
+native_build=load('native_build')
 
 class CiBoundaryTests(unittest.TestCase):
     def event(self,kind,payload,**environment):
@@ -66,6 +68,59 @@ class CiBoundaryTests(unittest.TestCase):
             self.assertIn('--build=plain',command)
             self.assertIn('-unittest',kwargs['env']['DFLAGS'].split())
             self.assertIn('sanitized',kwargs['env']['DUB_HOME'])
+
+    def test_sanitizer_tests_link_the_fake_stack_runtime_only_in_that_lane(self):
+        calls=[]
+        class Recorder:
+            plan=True
+            def run(self,command,**kwargs):calls.append((command,kwargs))
+        with patch.dict(os.environ,{'LIBRARY_PATH':'/opt/x11/lib'}):
+            ci.run_tests(Recorder(),'ldc2',sanitize=True)
+            sanitized=calls[0][1]['env'];calls.clear()
+            ci.run_tests(Recorder(),'ldc2')
+            normal=calls[0][1]['env']
+        flags=sanitized['DFLAGS'].split()
+        self.assertIn('-defaultlib=phobos2-ldc-sanitizers,druntime-ldc-sanitizers',flags)
+        self.assertNotIn('-L-L',sanitized['DFLAGS'])
+        self.assertEqual(sanitized['LIBRARY_PATH'].split(os.pathsep),
+                         [str(ci.ROOT/'.tools/ldc-1.43.0-sanitizer-runtime/lib'),'/opt/x11/lib'])
+        self.assertIn('detect_stack_use_after_return=1',sanitized['ASAN_OPTIONS'])
+        self.assertNotIn('DFLAGS',normal)
+        self.assertEqual(normal['LIBRARY_PATH'],'/opt/x11/lib')
+
+    def test_sanitizer_gate_prepares_runtime_before_any_build(self):
+        calls=[]
+        class Recorder:
+            plan=True
+            def run(self,command,**kwargs):calls.append([str(x) for x in command])
+        with patch.object(ci,'probe',return_value='clang version 22.1.8 (x)'),patch.object(ci,'preserve_native'):
+            ci.check(Recorder(),'sanitizers')
+        self.assertEqual(calls[0][1:],['tools/install_toolchains.py','--compiler','ldc-sanitizer-runtime'])
+        self.assertFalse(any(command[-2:]==['--compiler','clang'] for command in calls))
+        calls.clear()
+        with patch.dict(os.environ,{}),patch.object(ci,'probe',return_value='clang version 18.1.3'),patch.object(ci,'preserve_native'):
+            ci.check(Recorder(),'sanitizers')
+            self.assertTrue(os.environ['PATH'].startswith(str(ci.ROOT/'.tools/LLVM-22.1.8-Linux-X64/bin')))
+        self.assertEqual(calls[0][1:],['tools/install_toolchains.py','--compiler','clang'])
+
+    def test_vendor_ubsan_exclusions_are_scoped_to_one_provider_build(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            args=SimpleNamespace(target='linux-x86_64-glibc',work_dir=temporary,prefix=None,cc='clang',cxx='clang++',
+                                 sanitize='address,undefined',phase='plan',cmake_toolchain=None,jobs=1,
+                                 profile='ci',with_codegen=False,allow_webview=False)
+            builder=native_build.Builder(args,json.loads((TOOLS.parent/'policy/native-lock.json').read_text()))
+            seen={}
+            def build_source(name,src,build):seen[name]=builder.env['CFLAGS'].split()
+            with patch.object(builder,'build_source',side_effect=build_source):
+                for name in ('openssl','protobuf-c','curl'):builder.build(name)
+            for name in ('openssl','protobuf-c'):
+                self.assertEqual(seen[name][-1],'-fno-sanitize=function')
+                self.assertIn('-fsanitize=address,undefined',seen[name])
+            self.assertNotIn('-fno-sanitize=function',seen['curl'])
+            self.assertNotIn('-fno-sanitize=function',builder.env['CFLAGS'])
+            self.assertEqual(native_build.VENDOR_UBSAN_EXCLUSIONS.keys(),{'openssl','protobuf-c'})
+            args.sanitize='address'
+            self.assertEqual(builder.sanitizer_exclusions('openssl'),())
 
     def test_ruleset_preparation_never_calls_github(self):
         with tempfile.TemporaryDirectory() as temporary,patch.object(configure,'api',side_effect=AssertionError('network mutation')):

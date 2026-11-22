@@ -6,22 +6,37 @@ from tempfile import TemporaryDirectory
 ROOT=Path(__file__).resolve().parents[1]
 LOCK=json.loads((ROOT/'policy/toolchains.json').read_text())
 
-def install(name,destination):
+def sha256_file(path):
+    digest = hashlib.sha256()
+    with Path(path).open('rb') as stream:
+        for block in iter(lambda: stream.read(1048576), b''):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def install(name,destination,keep=None):
+    """Download, verify and extract a locked asset; `keep` selects archive members by name."""
     a=LOCK['assets'][name];destination.mkdir(parents=True,exist_ok=True);archive=destination/name
-    if not archive.exists() or hashlib.sha256(archive.read_bytes()).hexdigest()!=a['sha256']:
+    if not archive.exists() or sha256_file(archive)!=a['sha256']:
         with urllib.request.urlopen(a['url'],timeout=90) as response,archive.open('wb') as out:
             while True:
                 block=response.read(1048576)
                 if not block:break
                 out.write(block)
-    if hashlib.sha256(archive.read_bytes()).hexdigest()!=a['sha256']:raise SystemExit('checksum mismatch: '+name)
+    if sha256_file(archive)!=a['sha256']:raise SystemExit('checksum mismatch: '+name)
     if name=='oha-linux-amd64':
         binary=destination/'oha-1.16.0/oha';binary.parent.mkdir(parents=True,exist_ok=True)
         shutil.copyfile(archive,binary);binary.chmod(0o755)
     elif name.endswith('.7z'):subprocess.run(['7z','x','-y',str(archive),'-o'+str(destination)],check=True)
+    elif keep:
+        # Stream the archive once; random access would decompress it again per member.
+        with tarfile.open(archive,'r|*') as t:
+            for member in t:
+                if keep(member.name):t.extract(member,destination,filter='data')
     else:
         with tarfile.open(archive) as t:t.extractall(destination,filter='data')
     return destination
+
 
 def identify_elf_linker(executable):
     path = shutil.which(executable)
@@ -70,10 +85,6 @@ PRELUDE = FORK_DIR / 'dmd-server-prelude.txt'
 # compiler paths as ordinary development builds of this repository.
 PGO_APPS = ('benchmarks/bench-cli', 'benchmarks/bench-rest', 'examples/golden-cli', 'examples/golden-rest-service')
 PGO_TESTS = ('arena', 'conc', 'config', 'serde', 'validate', 'log', 'cli', 'web', 'http', 'reactor', 'di')
-
-
-def sha256_file(path):
-    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
 def apply_patch(patch, directory):
@@ -190,12 +201,126 @@ def install_flint_fork(bin_dir, destination, pgo):
             'dmd_sha256': sha256_file(bin_dir / 'dmd'), 'dub_sha256': sha256_file(bin_dir / 'dub')}
 
 
+LLVM_ARCHIVE = 'LLVM-22.1.8-Linux-X64.tar.xz'
+LLVM_ROOT = 'LLVM-22.1.8-Linux-X64'
+# The sanitizer lane needs the compiler driver, its resource directory (headers
+# and compiler-rt) and the symbolizer. The rest of the 1.9 GB release is unused.
+LLVM_MEMBERS = ('bin/clang', 'bin/clang++', 'bin/clang-22', 'bin/llvm-symbolizer', 'lib/clang/22/')
+
+
+def keep_llvm_member(name):
+    prefix = LLVM_ROOT + '/'
+    if not name.startswith(prefix):
+        return False
+    relative = name[len(prefix):]
+    return any(relative == item or (item.endswith('/') and relative.startswith(item)) for item in LLVM_MEMBERS)
+
+
+def install_clang(destination):
+    """Install the subset of the pinned official LLVM release the sanitizer lane uses."""
+    install(LLVM_ARCHIVE, destination, keep=keep_llvm_member)
+    bin_dir = destination / LLVM_ROOT / 'bin'
+    version = subprocess.check_output([str(bin_dir / 'clang'), '--version'], text=True)
+    if 'clang version ' + LOCK['versions']['clang'] + ' ' not in version:
+        raise SystemExit('pinned LLVM archive did not provide clang ' + LOCK['versions']['clang'])
+    return bin_dir
+
+
+SANITIZER_RUNTIME = 'ldc-1.43.0-sanitizer-runtime'
+SANITIZER_RUNTIME_RECEIPT = 'flint-sanitizer-runtime.json'
+# Upstream runtime CMake options. RT_SUPPORT_SANITIZERS adds -d-version=SupportSanitizers:
+# GC scanning of ASan fake stacks and fiber-switch notifications. The runtime itself
+# stays uninstrumented, exactly like the shipped libraries.
+SANITIZER_RUNTIME_CMAKE = ('BUILD_SHARED_LIBS=OFF', 'BUILD_LTO_LIBS=OFF', 'RT_SUPPORT_SANITIZERS=ON')
+# Distinct library names: a stale or missing directory fails the link instead of
+# silently resolving to the shipped runtime earlier on the search path.
+SANITIZER_LIBRARIES = {'druntime-ldc': 'druntime-ldc-sanitizers', 'phobos2-ldc': 'phobos2-ldc-sanitizers'}
+SANITIZER_DEFAULTLIB = SANITIZER_LIBRARIES['phobos2-ldc'] + ',' + SANITIZER_LIBRARIES['druntime-ldc']
+FAKE_STACK_SCANNER = b'scanStackForASanFakeStack'
+
+
+def sanitizer_runtime_inputs():
+    return {'ldc_archive_sha256': LOCK['assets']['ldc2-1.43.0-linux-x86_64.tar.xz']['sha256'],
+            'ldc_source_sha256': LOCK['assets']['ldc-1.43.0-src.tar.gz']['sha256'],
+            'cmake': list(SANITIZER_RUNTIME_CMAKE)}
+
+
+def verified_sanitizer_runtime(output):
+    """Return the receipt when the installed runtime matches the lock and its own hashes."""
+    try:
+        receipt = json.loads((output / SANITIZER_RUNTIME_RECEIPT).read_text())
+    except (OSError, ValueError):
+        return None
+    if receipt.get('inputs') != sanitizer_runtime_inputs():
+        return None
+    for name in SANITIZER_LIBRARIES.values():
+        item = receipt.get('libraries', {}).get(name)
+        path = output / 'lib' / ('lib' + name + '.a')
+        if not item or not path.is_file() or sha256_file(path) != item['sha256']:
+            return None
+    return receipt
+
+
+def build_sanitizer_runtime(destination, build_root=None, jobs=None):
+    """Build druntime/Phobos with fake-stack GC scanning into a separate directory.
+
+    The shipped LDC runtime is never modified. Only sanitizer-lane test binaries
+    link the result, through -defaultlib with the distinct names above.
+    """
+    output = destination / SANITIZER_RUNTIME
+    receipt = verified_sanitizer_runtime(output)
+    if receipt:
+        return receipt
+    for tool in ('cmake', 'ninja'):
+        if shutil.which(tool) is None:
+            raise SystemExit(tool + ' is required to build the LDC sanitizer runtime')
+    ldc_root = install('ldc2-1.43.0-linux-x86_64.tar.xz', destination) / 'ldc2-1.43.0-linux-x86_64'
+    if build_root is not None:
+        build_root.mkdir(parents=True, exist_ok=True)
+    with TemporaryDirectory(prefix='flint-ldc-sanitizer-runtime-', dir=build_root) as temporary:
+        work = Path(temporary)
+        if any(character.isspace() for character in str(work)):
+            raise SystemExit('the LDC runtime build rules do not quote paths; use a --build-dir without whitespace')
+        # Upstream archive rules pass the compiler path unquoted to the shell.
+        compiler = work / 'ldc2-1.43.0-linux-x86_64'
+        compiler.symlink_to(ldc_root, target_is_directory=True)
+        source = install('ldc-1.43.0-src.tar.gz', work / 'download') / 'ldc-1.43.0-src'
+        build = work / 'build'
+        command = [str(compiler / 'bin' / 'ldc-build-runtime'), '--ldc=' + str(compiler / 'bin' / 'ldc2'),
+                   '--ldcSrcDir=' + str(source), '--buildDir=' + str(build), '--ninja',
+                   '-j' + str(jobs or os.cpu_count() or 2), *SANITIZER_RUNTIME_CMAKE]
+        subprocess.run(command, check=True)
+        built = {name: build / 'lib' / ('lib' + upstream + '.a') for upstream, name in SANITIZER_LIBRARIES.items()}
+        if FAKE_STACK_SCANNER not in built['druntime-ldc-sanitizers'].read_bytes():
+            raise SystemExit('built druntime lacks ASan fake-stack scanning; RT_SUPPORT_SANITIZERS was not applied')
+        destination.mkdir(parents=True, exist_ok=True)
+        with TemporaryDirectory(prefix='.' + SANITIZER_RUNTIME + '-', dir=destination) as staging:
+            stage = Path(staging) / SANITIZER_RUNTIME
+            (stage / 'lib').mkdir(parents=True)
+            libraries = {}
+            for name, path in built.items():
+                target = stage / 'lib' / ('lib' + name + '.a')
+                shutil.copyfile(path, target)
+                libraries[name] = {'sha256': sha256_file(target), 'size': target.stat().st_size}
+            receipt = {'schema': 1, 'runtime': SANITIZER_RUNTIME, 'inputs': sanitizer_runtime_inputs(),
+                       'd_version': 'SupportSanitizers', 'libraries': libraries,
+                       'defaultlib': SANITIZER_DEFAULTLIB,
+                       'command': [Path(command[0]).name, *command[4:]]}
+            (stage / SANITIZER_RUNTIME_RECEIPT).write_text(json.dumps(receipt, indent=2) + '\n')
+            if output.exists():
+                shutil.rmtree(output)
+            stage.rename(output)
+    return receipt
+
+
 def main():
-    ap=argparse.ArgumentParser();ap.add_argument('--compiler',choices=['dmd','ldc','go','oha'],required=True);ap.add_argument('--musl',action='store_true');ap.add_argument('--destination',type=Path,default=ROOT/'.tools')
+    ap=argparse.ArgumentParser();ap.add_argument('--compiler',choices=['dmd','ldc','go','oha','clang','ldc-sanitizer-runtime'],required=True);ap.add_argument('--musl',action='store_true');ap.add_argument('--destination',type=Path,default=ROOT/'.tools')
     ap.add_argument('--dmd-linker', metavar='LINKER', help='Use installed ld.lld or mold for project-local 64-bit DMD links')
     ap.add_argument('--flint-fork', action='store_true',
                     help='Build the Flint DMD/DUB fork (resident toolchain compile server, parallel DUB pipeline, direct linking)')
     ap.add_argument('--no-pgo', action='store_true', help='With --flint-fork, skip profile-guided optimization of DMD')
+    ap.add_argument('--build-dir', type=Path,
+                    help='With --compiler ldc-sanitizer-runtime, parent of the disposable build directory')
     a=ap.parse_args()
     if a.flint_fork and a.compiler != 'dmd':
         ap.error('--flint-fork applies only to --compiler dmd')
@@ -207,8 +332,21 @@ def main():
             linker = identify_elf_linker(a.dmd_linker)
         except (OSError, ValueError, subprocess.CalledProcessError) as error:
             ap.error(str(error))
+    if a.build_dir and a.compiler != 'ldc-sanitizer-runtime':
+        ap.error('--build-dir applies only to --compiler ldc-sanitizer-runtime')
     a.destination=a.destination.resolve()
     osname=platform.system();arch=platform.machine().lower();arch='aarch64' if arch in ['arm64','aarch64'] else 'x86_64' if arch in ['amd64','x86_64'] else arch
+    if a.compiler in ('clang','ldc-sanitizer-runtime'):
+        if (osname,arch)!=('Linux','x86_64') or a.musl:raise SystemExit('the sanitizer lane toolchain pin is Linux x86_64 glibc')
+        if a.compiler=='clang':
+            bin_dir=install_clang(a.destination)
+            receipt={'compiler':'clang','version':LOCK['versions']['clang'],'bin':str(bin_dir),'sha256':LOCK['assets'][LLVM_ARCHIVE]['sha256']}
+        else:
+            runtime=build_sanitizer_runtime(a.destination,a.build_dir.resolve() if a.build_dir else None)
+            receipt={'compiler':'ldc-sanitizer-runtime','version':LOCK['versions']['ldc'],
+                     'lib':str(a.destination/SANITIZER_RUNTIME/'lib'),**runtime}
+        print(json.dumps(receipt))
+        return
     if a.compiler=='dmd':
         if (osname,arch)!=('Linux','x86_64') or a.musl:raise SystemExit('DMD development pin supports Linux x86_64 glibc; use LDC for this target')
         name='dmd.2.114.0.linux.tar.xz';relative='dmd2/linux/bin64'

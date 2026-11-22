@@ -20,6 +20,19 @@ PROFILES = {
     # C-provider closure; all-package CI adds --library wasmtime explicitly.
     'ci':['openssl','libsodium','llhttp','nghttp2','curl','sqlite','libpq','librdkafka','zstd','zlib','brotli','libarchive','utf8proc','libyaml','sdl3','protobuf-c','hiredis'],
 }
+# UBSan checks disabled per vendored provider in sanitizer builds. Every other
+# requested check stays on, and Flint's own shims (native/ffi) keep full UBSan.
+# -fsanitize=function rejects calls through a function pointer whose type differs
+# from the callee's definition. Both providers below dispatch typed callbacks
+# through generic pointer types by design; the findings sit in upstream code and
+# are reproducible without Flint calling them incorrectly:
+#  - openssl 3.5.9: OPENSSL_sk_pop_free (crypto/stack/stack.c) calls typed free
+#    functions as void (*)(void *); ossl_sa_doall_arg (crypto/sparse_array.c) calls
+#    typed leaf callbacks; EVP_DigestUpdate (crypto/evp/digest.c) calls provider
+#    update functions as int (*)(void *, const unsigned char *, size_t).
+#  - protobuf-c 1.5.2: protobuf_c_message_init calls each message's generated
+#    foo__init(Foo *) through ProtobufCMessageInit, void (*)(ProtobufCMessage *).
+VENDOR_UBSAN_EXCLUSIONS = {'openssl': ('function',), 'protobuf-c': ('function',)}
 CMAKE = {
  'llhttp': ('.', ['LLHTTP_BUILD_SHARED_LIBS=OFF','LLHTTP_BUILD_STATIC_LIBS=ON']),
  'nghttp2': ('.', ['ENABLE_LIB_ONLY=ON','BUILD_STATIC_LIBS=ON','BUILD_SHARED_LIBS=OFF','BUILD_TESTING=OFF']),
@@ -179,6 +192,22 @@ class Builder:
         if self.a.phase=='build' and host_target()!=self.a.target and name not in CMAKE:raise ValueError(name+' requires a native target runner; refusing an unverified cross recipe')
         src=self.fetch(name); build=self.work/'build'/self.a.target/name
         if self.a.phase=='fetch': return
+        exclusions=self.sanitizer_exclusions(name)
+        if not exclusions:return self.build_source(name,src,build)
+        saved={key:self.env.get(key) for key in ('CFLAGS','CXXFLAGS')}
+        flag=' -fno-sanitize='+','.join(exclusions)
+        self.env['CFLAGS']+=flag;self.env['CXXFLAGS']=self.env.get('CXXFLAGS','')+flag
+        try:self.build_source(name,src,build)
+        finally:
+            for key,value in saved.items():
+                if value is None:self.env.pop(key,None)
+                else:self.env[key]=value
+
+    def sanitizer_exclusions(self,name):
+        if not self.a.sanitize or 'undefined' not in self.a.sanitize.split(','):return ()
+        return VENDOR_UBSAN_EXCLUSIONS.get(name,())
+
+    def build_source(self,name,src,build):
         self.submodules(name,src)
         if name=='protobuf-c' and not self.a.with_codegen:
             runtime=src/'protobuf-c'
@@ -350,6 +379,7 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
     def record(self,name):
         row=self.rows[name];paths=self.archive_paths(name)
         self.receipt['libraries'][name]={'source_sha256':row['archive_sha256'],'revision':row.get('commit',row.get('source_id')),'license':row['license_selected'],'requested_sanitizers':self.a.sanitize,'archives':[{'path':str(p),'sha256':digest(p)} for p in paths]}
+        if self.sanitizer_exclusions(name):self.receipt['libraries'][name]['sanitizer_exclusions']=list(self.sanitizer_exclusions(name))
         if name=='sdl3':self.link_metadata[name]=self.sdl_link_metadata()
         if name == 'curl' and self.a.target.startswith('linux'):
             config = self.prefix / 'bin/curl-config'
@@ -372,7 +402,9 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
         if self.a.phase=='build':
             self.receipt['native_ctest_executed']=host_target()==self.a.target
             self.receipt['sanitizers']=self.a.sanitize
-            self.receipt['sanitizer_scope']='Flint C shims and libraries whose requested_sanitizers field is non-null. Separately prepared Rust archives are not instrumented by this helper.'
+            self.receipt['sanitizer_scope']='Flint C shims and libraries whose requested_sanitizers field is non-null, minus each library\'s sanitizer_exclusions. Flint C shims have no exclusions. Separately prepared Rust archives are not instrumented by this helper.'
+            if self.a.sanitize:self.receipt['vendor_ubsan_exclusions']={k:list(v) for k,v in VENDOR_UBSAN_EXCLUSIONS.items() if k in self.receipt['libraries']}
+            else:self.receipt.pop('vendor_ubsan_exclusions',None)
             self.receipt['sanitizer_environment']={k:self.env[k] for k in ('ASAN_OPTIONS','UBSAN_OPTIONS','LSAN_OPTIONS') if k in self.env}
             paths=[p for p in self.prefix.rglob('*') if p.name in ('libflint_ffi.a','flint_ffi.lib')]
             if len(paths)!=1:raise RuntimeError('Expected exactly one Flint FFI archive')

@@ -15,6 +15,8 @@ import tempfile
 import urllib.request
 import zipfile
 from install_rust import environment as rust_environment
+from install_toolchains import (LLVM_ROOT, SANITIZER_DEFAULTLIB, SANITIZER_RUNTIME,
+                                SANITIZER_RUNTIME_RECEIPT, verified_sanitizer_runtime)
 
 ROOT=Path(__file__).resolve().parents[1]
 PYTHON=sys.executable
@@ -22,6 +24,10 @@ PACKAGES=json.loads((ROOT/'policy/packages.json').read_text())['packages']
 PLATFORMS=('linux-x86_64-glibc','linux-aarch64-glibc','linux-x86_64-musl',
            'linux-aarch64-musl','macos-arm64','windows-x86_64','wasm32')
 STATIC=('quality','dag','safety','betterc')
+# Sanitizer lane only: druntime/Phobos built with fake-stack GC scanning
+# (tools/install_toolchains.py --compiler ldc-sanitizer-runtime). Normal lanes
+# keep the shipped LDC runtime.
+SANITIZER_CLANG=r'clang version 22\.1\.8\b'
 
 def require(value,message):
     if not value:raise ValueError(message)
@@ -124,6 +130,31 @@ def native(runner,target,sanitize=False):
     else:command+=['--library','wasmtime']
     runner.run(command,env=env)
 
+def sanitizer_runtime_dir():
+    return ROOT/'.tools'/SANITIZER_RUNTIME
+
+def probe(command):
+    try:return subprocess.check_output(command,text=True,stderr=subprocess.STDOUT)
+    except (OSError,subprocess.CalledProcessError):return ''
+
+def sanitizer_toolchain(runner):
+    """Select Clang 22.1.8 and prepare the fake-stack-aware LDC runtime."""
+    if not re.search(SANITIZER_CLANG,probe(['clang','--version'])):
+        # No matching host Clang: use the pinned official LLVM release subset.
+        runner.run([PYTHON,'tools/install_toolchains.py','--compiler','clang'])
+        os.environ['PATH']=str(ROOT/'.tools'/LLVM_ROOT/'bin')+os.pathsep+os.environ.get('PATH','')
+    runner.run([PYTHON,'tools/install_toolchains.py','--compiler','ldc-sanitizer-runtime'])
+    if runner.plan:return
+    require(re.search(SANITIZER_CLANG,probe(['clang','--version'])),'sanitizer runner requires Clang 22.1.8 matching LDC LLVM 22')
+    version=probe(['ldc2','--version'])
+    require('(1.43.0)' in version and 'LLVM 22.1.8' in version,'sanitizer lane requires the pinned LDC 1.43.0 (LLVM 22.1.8)')
+    require(verified_sanitizer_runtime(sanitizer_runtime_dir()),'LDC sanitizer runtime missing or changed: '+str(sanitizer_runtime_dir()))
+
+def llvm_symbolizer():
+    path=probe(['clang','-print-prog-name=llvm-symbolizer']).strip()
+    if os.path.isabs(path) and os.access(path,os.X_OK):return path
+    return shutil.which('llvm-symbolizer')
+
 def preserve_native(target,sanitize=False,*,destination=None):
     root=ROOT/('.native-sanitized' if sanitize else '.native')
     destination=Path(destination) if destination else ROOT/'artifacts'/('native-sanitizers' if sanitize else 'native-'+target)
@@ -137,6 +168,8 @@ def preserve_native(target,sanitize=False,*,destination=None):
         for receipt in (root/'install').rglob('flint-native-install.json'):
             shutil.copy2(receipt,destination/(receipt.parent.name+'-install.json'))
         if rust_receipt.is_file():shutil.copy2(rust_receipt,destination/'rust-toolchain-install.json')
+        runtime_receipt=sanitizer_runtime_dir()/SANITIZER_RUNTIME_RECEIPT
+        if sanitize and runtime_receipt.is_file():shutil.copy2(runtime_receipt,destination/SANITIZER_RUNTIME_RECEIPT)
 
 def run_tests(runner,compiler,*,sanitize=False):
     if not runner.plan:implementation_required()
@@ -144,12 +177,30 @@ def run_tests(runner,compiler,*,sanitize=False):
     env.pop('DFLAGS',None)
     env['DUB_HOME']=str(ROOT/'.ci-dub-home'/('sanitized' if sanitize else 'normal')/Path(compiler).name)
     if sanitize:
-        env['DFLAGS']='-g -O1 -unittest -preview=dip1000 -boundscheck=on -fsanitize=address -gcc=clang -Xcc=-fsanitize=address,undefined'
+        if not runner.plan:
+            require(verified_sanitizer_runtime(sanitizer_runtime_dir()),'LDC sanitizer runtime missing or changed: '+str(sanitizer_runtime_dir()))
+        # DUB splits DFLAGS on whitespace, so the runtime directory travels through
+        # LIBRARY_PATH (honoured by the clang link driver) rather than -L-L.
+        env['DFLAGS']=('-g -O1 -unittest -preview=dip1000 -boundscheck=on -fsanitize=address '
+                       '-defaultlib='+SANITIZER_DEFAULTLIB+' -gcc=clang -Xcc=-fsanitize=address,undefined')
+        env['LIBRARY_PATH']=os.pathsep.join([str(sanitizer_runtime_dir()/'lib'),*filter(None,[env.get('LIBRARY_PATH')])])
+        # Stack-use-after-return keeps locals in ASan fake frames; only the sanitizer
+        # runtime's GC scans them.
         env['ASAN_OPTIONS']='detect_leaks=1:abort_on_error=1:detect_stack_use_after_return=1'
         env['UBSAN_OPTIONS']='halt_on_error=1:print_stacktrace=1'
+        symbolizer=None if runner.plan else llvm_symbolizer()
+        if symbolizer:env['ASAN_SYMBOLIZER_PATH']=symbolizer
     for name in PACKAGES:
         command=['dub','test',':'+name,'--compiler='+compiler,'--build=plain' if sanitize else '--build=unittest','--force']
-        runner.run(command,env=env)
+        package_env=env
+        if sanitize and name=='desktop':
+            # SDL's offscreen video and software rendering exercise every Flint window, event and
+            # teardown path without loading the host's uninstrumented X11 and EGL drivers, whose
+            # one-time internal allocations LeakSanitizer reports after SDL unloads them. Real
+            # displays stay covered by the ordinary lanes; no leak suppressions are used.
+            package_env={**env,'SDL_VIDEODRIVER':'offscreen','SDL_RENDER_DRIVER':'software',
+                         'SDL_FRAMEBUFFER_ACCELERATION':'0'}
+        runner.run(command,env=package_env)
 
 def negative_tests(runner,compiler):
     imports=import_flags()
@@ -219,8 +270,7 @@ def check(runner,gate):
     elif gate=='sanitizers':
         if not runner.plan:
             require(native_target()=='linux-x86_64-glibc','sanitizer lane requires the approved Linux x86-64 runner')
-            version=subprocess.check_output(['clang','--version'],text=True)
-            require(re.search(r'clang version 22\.1\.8\b',version),'sanitizer runner requires Clang 22.1.8 matching LDC LLVM 22')
+        sanitizer_toolchain(runner)
         try:
             native(runner,'linux-x86_64-glibc',sanitize=True)
             run_tests(runner,'ldc2',sanitize=True)

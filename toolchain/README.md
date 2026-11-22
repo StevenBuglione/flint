@@ -55,3 +55,28 @@ The caller never uses the server for `-v`, `-deps`, `-makedeps`, `-X`, `-H`, `-D
 | `FLINT_DUB_TRACE=1` | Print DUB phase and per-job timings |
 
 Measurements, test evidence and the remaining caveats are in [the Linux compile-time fork report](../docs/milestones/06-linux-compile-fork.md). The measurement interpretation is recorded in [ADR-016](../docs/adr/ADR-016-resident-toolchain-compile-server.md).
+
+## Sanitizer lane toolchain
+
+`python3 tools/ci.py check --gate sanitizers` runs on Linux x86-64 glibc only. It builds the locked C providers and Flint's C shims with Clang ASan and UBSan, then runs every package's `dub test` with LDC ASan. Neither the D language nor the normal lanes change: only sanitizer-lane test binaries use the pieces below.
+
+**Clang 22.1.8.** The C side must use the LLVM major version of LDC 1.43 (LLVM 22.1.8). The gate uses `clang` from `PATH` when it reports 22.1.8. Otherwise it runs `python3 tools/install_toolchains.py --compiler clang`, which verifies the pinned official `LLVM-22.1.8-Linux-X64.tar.xz` and extracts only `bin/clang`, `bin/clang++`, `bin/clang-22`, `bin/llvm-symbolizer` and `lib/clang/22/` (about 380 MB of the 1.9 GB archive) into `.tools/LLVM-22.1.8-Linux-X64`, then puts that `bin` first on `PATH`. Hosts where the release binaries cannot locate the system C library and GCC installation, such as NixOS, need a `clang`/`clang++` wrapper that reports 22.1.8 placed first on `PATH`. The gate also checks that `ldc2` is LDC 1.43.0 on LLVM 22.1.8.
+
+**Sanitizer-aware druntime and Phobos.** ASan's `detect_stack_use_after_return=1` moves function locals into heap-allocated "fake stack" frames. The druntime shipped in the LDC release does not scan those frames, so the GC can free objects that are only referenced from locals. The actuator suite crashed this way under the option. LDC's runtime source contains the scanner (`scanStackForASanFakeStack` in `core/thread/threadbase.d`), compiled only with `-d-version=SupportSanitizers`.
+
+```bash
+python3 tools/install_toolchains.py --compiler ldc-sanitizer-runtime [--build-dir /path/without/spaces]
+```
+
+This verifies the pinned LDC binary release and the pinned `ldc-1.43.0-src.tar.gz`, then runs the release's own `ldc-build-runtime` with the upstream CMake options `RT_SUPPORT_SANITIZERS=ON BUILD_SHARED_LIBS=OFF BUILD_LTO_LIBS=OFF`. `RT_SUPPORT_SANITIZERS` adds `-d-version=SupportSanitizers`. All other flags are the upstream release defaults, and the runtime itself is not instrumented, like the shipped one. The installer refuses a druntime that lacks the scanner symbol. It installs `libdruntime-ldc-sanitizers.a`, `libphobos2-ldc-sanitizers.a` and `flint-sanitizer-runtime.json` (input and output hashes) into `.tools/ldc-1.43.0-sanitizer-runtime/` (about 13 MB). It never writes into the LDC installation. It needs `cmake`, `ninja` and a C compiler, and takes about 20 seconds on 24 hardware threads. Because the upstream archive rules pass the compiler path to the shell unquoted, the disposable build directory (the system temporary directory, or `--build-dir`) must not contain whitespace. A rerun is a no-op while the receipt matches the lock and the installed files. The gate runs this step itself before any build.
+
+`run_tests(..., sanitize=True)` links the result by adding `-defaultlib=phobos2-ldc-sanitizers,druntime-ldc-sanitizers` to `DFLAGS` and prepending the runtime directory to `LIBRARY_PATH`. DUB splits `DFLAGS` on whitespace, so a `-L-L` path containing a space would break, while the Clang link driver reads `LIBRARY_PATH` directly. The distinct library names mean a missing runtime fails the link rather than silently resolving to the shipped runtime. The lane also sets `ASAN_SYMBOLIZER_PATH` to the `llvm-symbolizer` that `clang -print-prog-name` reports, so reports carry file and line numbers.
+
+**Vendor UBSan scope.** `-fsanitize=function` reports calls through a function pointer whose type differs from the callee's definition. Two pinned providers rely on that pattern in their own code:
+
+- OpenSSL 3.5.9 calls typed free functions as `void (*)(void *)` in `OPENSSL_sk_pop_free` (`crypto/stack/stack.c`), typed leaf callbacks in `ossl_sa_doall_arg` (`crypto/sparse_array.c`), and provider digest update functions through a generic signature in `EVP_DigestUpdate` (`crypto/evp/digest.c`).
+- protobuf-c 1.5.2 calls each message's generated `foo__init(Foo *)` through `ProtobufCMessageInit`, `void (*)(ProtobufCMessage *)`, in `protobuf_c_message_init`.
+
+These calls work on every supported ABI, and removing them would mean patching upstream sources. `tools/native_build.py` therefore builds exactly these two providers with `-fno-sanitize=function` appended (`VENDOR_UBSAN_EXCLUSIONS`) and keeps every other requested check for them. All other providers keep the full ASan and UBSan set. Flint's own shims in `native/ffi` always do, so a function-type mismatch in Flint code still fails the lane. The install receipt records `sanitizer_exclusions` for each affected library and `vendor_ubsan_exclusions` for the prefix. Add a provider to that table only with the upstream call sites named in the comment there.
+
+In the sanitizer lane, `:desktop` runs on SDL's offscreen video driver with software rendering and no framebuffer acceleration. That covers every Flint window, event and teardown path without loading the host's uninstrumented X11 and EGL drivers. Those drivers make one-time internal allocations that LeakSanitizer reports once SDL unloads them. No leak suppressions are used. Real displays are covered by the ordinary test lanes.
