@@ -93,7 +93,21 @@ Tests that observed Linux-only state use Darwin equivalents with the same assert
 | `/dev/full` | a pipe without a reader |
 | `F_SETPIPE_SZ` | pre-filling a nonblocking pipe |
 
-### 3. The flint CLI
+### 3. The kqueue reactor backend
+
+`Backend.kqueue` is the readiness backend on macOS, and `automatic` selects it. It shares the owner loop, operation table, timers, mailboxes, fibers and cancellation of the epoll backend. Only the kernel interface in `flint.reactor.sys` differs.
+
+- **Readiness and EOF.** Filters are level-triggered, like epoll without `EPOLLET`. A read or write operation registers `EVFILT_READ` or `EVFILT_WRITE` while it is active, and the owner removes the filter when the direction goes idle. `EV_EOF` and `EV_ERROR` are reported as faults, as epoll's `HUP`, `RDHUP` and `ERR` are. EOF with data still delivers the data first, because the next `recv` returns it before 0.
+- **Listener.** Each owner registers the listener in its own kqueue. kqueue has no `EPOLLEXCLUSIVE`, so every owner may wake for one connection. The losers' `accept` returns `EAGAIN`, which is ignored.
+- **Descriptor exhaustion.** When `accept` fails with `EMFILE`, XNU drops the pending connection (`accept_nocancel`) instead of leaving it in the backlog. The reactor's behaviour is the same as on Linux: it backs off for one loop budget and keeps serving. The test therefore checks that the next connection is admitted.
+- **Native watches.** A nested kqueue, registered in the owner's kqueue, replaces the nested epoll. Error readiness is always delivered, as on Linux: without read interest, the read filter stays registered with `NOTE_LOWAT` set to `INT_MAX`, so it fires only on EOF or a pending error.
+- **Sockets.** Accepted and listening sockets are made nonblocking and close-on-exec with `fcntl`, and get `SO_NOSIGPIPE`, since Darwin has neither `accept4` nor `MSG_NOSIGNAL`.
+- **Fiber pool.** Darwin's `MADV_DONTNEED` leaves pages resident. Parked pool stacks are replaced with a fresh fixed anonymous mapping instead, which keeps 1024 preallocated fibers out of resident memory, as on Linux.
+- **Worker statistics.** CPU time comes from the Mach thread's basic info. Darwin exposes no per-thread context-switch counts, so those stay zero, and CPU pinning is unavailable (`affinityPinned` is false).
+
+The reactor's tests that were Linux-only now run on macOS against `readinessBackend` (`tests/support.d`): epoll on Linux and kqueue on macOS. On Linux they still run against epoll, and against io_uring where liburing is linked.
+
+### 4. The flint CLI
 
 `apps/flint/src/flint_tool/toolchain/host.d` describes the toolchain layout per host. On macOS:
 
@@ -112,6 +126,7 @@ None so far. `flint.reactor.Backend.kqueue` is already part of the frozen contra
 The Linux behaviour of every changed module is unchanged by construction. The Linux branches were type-checked by cross-compiling with LDC for `x86_64-unknown-linux-gnu`, `aarch64-unknown-linux-gnu` and `x86_64-unknown-linux-musl`. They still have to run on venus:
 
 - `dub test` on both compilers for `:log`, `:os`, `:term`, `:prompt` and `:test` (their C files changed under `#if defined(__APPLE__)` only);
+- `dub test :reactor` on both compilers, with and without liburing. The Linux-only test blocks became `version (Posix)` and use `readinessBackend` (epoll) where they named `Backend.epoll`, and the native-watch code moved under `version (ReactorNativeWatches)`;
 - `flint test --project apps/flint`, and `python3 -m unittest discover -s tests -p 'test_*.py'`;
 - `python3 tools/gates.py --gate structural`, since `tools/gates.py` changed;
 - `flint toolchain install --plan`, `flint toolchain verify` and `tools/install_toolchains.py --compiler flint`, since `tools/install_toolchains.py` and the toolchain modules changed.
