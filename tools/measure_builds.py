@@ -36,29 +36,60 @@ def run_checked(command, cwd, env=None):
     return result
 
 
+PAGE_BYTES = os.sysconf('SC_PAGE_SIZE')
+
+
+def process_tree_rss(root, floor):
+    """Resident bytes of `root` and its live descendants, as psutil's memory_info().rss reports them.
+
+    Linux allocates PIDs in increasing order until they wrap, so a measured build's descendants have PIDs
+    at or above `floor`, the build's own PID; only those `/proc/<pid>/stat` files are read. Scanning every
+    process on the host each millisecond (psutil's children(recursive=True)) took enough CPU from the
+    measured build to lengthen it: 9 ms of a 94 ms parallel DMD build and 5 ms of a 110 ms Go build. Pass
+    `floor=0` after a PID wrap to scan everything.
+    """
+    parent = {}
+    resident = {}
+    for name in os.listdir('/proc'):
+        if not name.isdigit() or int(name) < floor:
+            continue
+        try:
+            with open('/proc/' + name + '/stat', 'rb') as stream:
+                stat = stream.read()
+        except OSError:
+            continue
+        # Fields after the parenthesised command: state, ppid, ..., rss (field 24) at index 21.
+        fields = stat[stat.rindex(b')') + 2:].split()
+        pid = int(name)
+        parent[pid] = int(fields[1])
+        resident[pid] = int(fields[21]) * PAGE_BYTES
+    total = 0
+    for pid, rss in resident.items():
+        ancestor = pid
+        while ancestor in parent and ancestor != root:
+            ancestor = parent[ancestor]
+        if ancestor == root:
+            total += rss
+    return total
+
+
 def timed_process(command, cwd, env, log_path):
-    try:
-        import psutil
-    except ImportError as exc:
-        raise RuntimeError('psutil required; install tools/requirements.txt') from exc
     peak = 0
     start = time.perf_counter_ns()
     with open(log_path, 'wb') as log:
         process = subprocess.Popen([str(x) for x in command], cwd=cwd, env=env,
                                    stdout=log, stderr=subprocess.STDOUT)
-        monitored = psutil.Process(process.pid)
+        floor = process.pid
         while process.poll() is None:
-            total = 0
-            try:
-                processes = [monitored] + monitored.children(recursive=True)
-            except psutil.NoSuchProcess:
-                processes = []
-            for child in processes:
+            # A PID wrap during the build hands out numbers below the root's; scan every process from then on.
+            if floor:
                 try:
-                    total += child.memory_info().rss
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    pass
-            peak = max(peak, total)
+                    with open('/proc/sys/kernel/ns_last_pid') as stream:
+                        if int(stream.read()) < floor:
+                            floor = 0
+                except OSError:
+                    floor = 0
+            peak = max(peak, process_tree_rss(process.pid, floor))
             time.sleep(.001)
         exit_code = process.wait()
     elapsed = (time.perf_counter_ns() - start) / 1e9
