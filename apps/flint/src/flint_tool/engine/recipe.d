@@ -22,6 +22,8 @@ struct RecipeExtras
     string[] linkHardening;
     /// Native packages' linker flags: static archives, bundled libraries, system libraries.
     string[] nativeFlags;
+    /// Compiler flags that only change how diagnostics read (`-verror-hide`, ADR-027 section 5).
+    string[] diagnosticFlags;
 }
 
 /// Render the root recipe for a project.
@@ -39,6 +41,8 @@ string renderRecipe(const ref Home home, const ref Manifest manifest, const ref 
         text ~= fields("lflags", extras.linkHardening);
     if (extras.nativeFlags.length)
         text ~= fields("lflags", dubEscaped(extras.nativeFlags));
+    if (extras.diagnosticFlags.length)
+        text ~= fields("dflags", dubEscaped(extras.diagnosticFlags));
     foreach (name; resolution.direct)
         text ~= dependencyLine(home, resolution, name, "");
     foreach (profile; profileNames)

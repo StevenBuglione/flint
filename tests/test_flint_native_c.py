@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from test_flint_cli import ROOT, codes, environment, flint_json, setUpModule  # noqa: F401
+from test_flint_cli import ROOT, codes, environment, error, flint_json, setUpModule  # noqa: F401
 
 CLANG = ROOT / '.tools' / 'LLVM-22.1.8-Linux-X64' / 'bin' / 'clang'
 SANITIZER_RUNTIME = ROOT / '.tools' / 'ldc-1.43.0-sanitizer-runtime' / 'flint-sanitizer-runtime.json'
@@ -199,7 +199,7 @@ class EmbeddedCTests(unittest.TestCase):
             status, document = self.run_flint('build')
             self.assertEqual(status, 1)
             self.assertEqual(codes(document), ['FLINT-E0708'])
-            self.assertIn('-Wunused-variable', document['diagnostics'][0]['fix'])
+            self.assertIn('-Wunused-variable', error(document, 'FLINT-E0708')['fix'])
         finally:
             source.write_text(CRC)
 
@@ -248,7 +248,7 @@ class EmbeddedCTests(unittest.TestCase):
             status, document = self.run_flint('test', '--sanitize')
             self.assertEqual(status, 1)
             self.assertEqual(codes(document), ['FLINT-E0702'])
-            self.assertIn('heap-buffer-overflow', document['diagnostics'][0]['fix'])
+            self.assertIn('heap-buffer-overflow', error(document, 'FLINT-E0702')['fix'])
             # Without sanitizers the same read goes unnoticed: the instrumentation is what caught it.
             status, document = self.run_flint('test')
             self.assertEqual(status, 0, document['diagnostics'])
@@ -259,7 +259,7 @@ class EmbeddedCTests(unittest.TestCase):
         try:
             status, document = self.run_flint('test', '--sanitize')
             self.assertEqual(status, 1)
-            self.assertIn('signed integer overflow', document['diagnostics'][0]['fix'])
+            self.assertIn('signed integer overflow', error(document, 'FLINT-E0702')['fix'])
         finally:
             signed.unlink()
 

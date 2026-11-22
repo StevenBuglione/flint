@@ -28,12 +28,13 @@ class ForkSourcesTests(unittest.TestCase):
             self.assertRegex(name, r'^(object|core(\.\w+)+|std(\.\w+)+|etc(\.\w+)+)$')
             self.assertNotIn('flint', name)
 
-    def test_dmd_patch_touches_driver_condition_recording_and_trace_naming_only(self):
+    def test_dmd_patch_touches_driver_condition_recording_trace_naming_and_diagnostics_only(self):
         # hdrgen.d and timetrace.d: -ftime-trace event naming without semantic side effects.
+        # errors.d, flintdiag.d and mars.d: -verror-hide, confined to the diagnostic sink (ADR-027 section 5).
         self.assertEqual(patched_files(TOOLCHAIN / 'dmd-2.114.0-flint.patch'),
-                         ['build.d', 'dmd/cond.d', 'dmd/expressionsem.d', 'dmd/flintlink.d',
-                          'dmd/flintserver.d', 'dmd/hdrgen.d', 'dmd/link.d', 'dmd/main.d',
-                          'dmd/timetrace.d'])
+                         ['build.d', 'dmd/cond.d', 'dmd/errors.d', 'dmd/expressionsem.d', 'dmd/flintdiag.d',
+                          'dmd/flintlink.d', 'dmd/flintserver.d', 'dmd/hdrgen.d', 'dmd/link.d', 'dmd/main.d',
+                          'dmd/mars.d', 'dmd/timetrace.d'])
 
     def test_dub_patch_files(self):
         self.assertEqual(patched_files(TOOLCHAIN / 'dub-1.43.0-flint.patch'),

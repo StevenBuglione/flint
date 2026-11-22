@@ -6,7 +6,7 @@ This directory holds the Flint fork of the pinned D toolchain as patches against
 - `dub-1.43.0-flint.patch` applies to the DUB v1.43.0 source archive pinned in `policy/toolchains.json`.
 - `dmd-server-prelude.txt` lists the druntime and Phobos modules the compile server keeps analysed.
 
-The D language, the compiler's diagnostics and the build commands developers run do not change. Applications still run `dub build`. The fork changes how the toolchain schedules and reuses work.
+The D language and the build commands developers run do not change. The compiler's diagnostics change only with the fork's own `-verror-hide` switch. Applications still run `dub build`. The fork changes how the toolchain schedules and reuses work.
 
 ## Install
 
@@ -34,6 +34,8 @@ The caller never uses the server for `-v`, `-deps`, `-makedeps`, `-X`, `-H`, `-D
 **Direct linking.** The first link asks the C compiler driver, once, which linker command `cc -###` would run for marker inputs, and caches that expansion under `$XDG_CACHE_HOME/flint-dmd`. Later links execute that linker directly with the same startup files, search paths and libraries, instead of the `cc` → `gcc` → `collect2` → `ld` process chain. The cache key covers the driver executable, its `-B`/`-fuse-ld` switches and the toolchain environment variables it reads. Shared libraries, static executables, a custom `CC` and any unrecognised driver switch use `cc` as before. mold runs with four threads.
 
 **Side-effect-free `-ftime-trace` names.** Upstream DMD 2.114.0 names an event only when it lasted longer than the trace granularity. Naming a template instance prints its arguments, and printing a variable argument expands its value. When that variable is a manifest constant whose initializer is still being evaluated, as `core.lifetime.hasContextPointers` is while `move` instantiates over a struct's fields, the expansion reports a spurious "recursive initialization of constant" and the compile fails. Whether it fails depends on how long the instantiation took, so it struck about one traced compile in 250 under load and nearly every compile with `-ftime-trace-granularity=0`. While the profiler names an event, the fork prints such an argument as written instead of expanding it. Nothing changes without `-ftime-trace`: object files are byte-identical to the previous build.
+
+**Condensed library errors: `-verror-hide=<directory>`.** An error raised inside a hidden directory is reported at the innermost frame of its instantiation trace outside the hidden directories, which is the user's line. The hidden frames collapse into one line naming where the error was raised, and a library `static assert` message loses DMD's `static assert:  "…"` wrapper. flint passes the switch for druntime, Phobos and the Flint packages unless `--verbose` is given. Only diagnostic text changes: object files are byte-identical with and without the switch, and with the previous build (ADR-027 section 5).
 
 ## What the DUB fork changes
 

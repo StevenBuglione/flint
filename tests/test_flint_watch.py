@@ -8,7 +8,7 @@ import time
 import unittest
 from pathlib import Path
 
-from test_flint_cli import FLINT, ROOT, environment, flint_json, setUpModule  # noqa: F401
+from test_flint_cli import FLINT, ROOT, codes, environment, flint_json, setUpModule  # noqa: F401
 
 
 def wait_for(predicate, timeout=60):
@@ -143,7 +143,7 @@ void main()
                                     timeout=180, env=environment())
             self.assertIn('Hello, gdb!', result.stdout)
             status, document = flint_json('run', '--debug', cwd=project)
-            self.assertEqual(document['diagnostics'][0]['code'], 'FLINT-E0004')
+            self.assertEqual(codes(document), ['FLINT-E0004'])
 
 
 if __name__ == '__main__':

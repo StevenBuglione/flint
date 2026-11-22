@@ -281,7 +281,42 @@ private bool prepareBuild(ref Session session, const ref Manifest manifest, cons
     foreach (directory; result.natives.includeDirs)
         cflags ~= "-I" ~ directory;
     return compileNativeC(session, manifest, request.sanitize, cflags, result.native, report)
-        && writeRecipes(session, manifest, resolution, result.native, result.natives, report);
+        && writeRecipes(session, manifest,
+                resolution, result.native, result.natives, condensedDiagnostics(session, toolchain,
+                    result.compiler), report);
+}
+
+/// `-verror-hide` for the DMD fork (ADR-027 section 5): an error raised inside druntime, Phobos or a Flint package
+/// is reported at the user's line that caused it. Not with `--verbose`, LDC, or a fork that was not built from this
+/// checkout's patch, which would not know the switch.
+string[] condensedDiagnostics(ref Session session, const ref Toolchain toolchain, string compiler)
+{
+    import std.algorithm.searching : canFind;
+    import std.path : buildNormalizedPath, buildPath, dirName, dirSeparator;
+    import flint_tool.check.structural : realPath;
+    import flint_tool.toolchain.host : dmdForkHost;
+
+    if (!dmdForkHost || compiler != "dmd" || session.verbose || !toolchain.fork.verified)
+        return null;
+    string[] flags = [
+        "-verror-hide=" ~ buildNormalizedPath(session.home.root, "packages") ~ dirSeparator
+    ];
+    // dmd.conf names druntime and Phobos as `<bin>/../../src`, and DMD reports their files with that spelling,
+    // where <bin> is the directory DUB invoked it from, or the resolved one.
+    const bin = dirName(toolchain.component("dmd").path);
+    foreach (directory; [bin, realPath(bin)])
+    {
+        const spellings = [
+            buildPath(directory, "..", "..", "src"), buildNormalizedPath(directory, "..", "..", "src")
+        ];
+        foreach (spelling; spellings)
+        {
+            const flag = "-verror-hide=" ~ spelling ~ dirSeparator;
+            if (!flags.canFind(flag))
+                flags ~= flag;
+        }
+    }
+    return flags;
 }
 
 /// Resolve the native packages for this build's target and variant, and bundle the `bundled` ones.
@@ -444,7 +479,7 @@ private bool prepareLock(ref Session session, const ref Manifest manifest, const
 
 private bool writeRecipes(ref Session session, const ref Manifest manifest, const ref Resolution resolution,
         const ref CBuild native, const ref imported!"flint_tool.project.native".NativeResolution natives,
-        ref Report report)
+        string[] diagnosticFlags, ref Report report)
 {
     import std.path : buildPath;
     import flint_tool.engine.cbuild : NativeCPolicy, loadNativeCPolicy;
@@ -455,6 +490,7 @@ private bool writeRecipes(ref Session session, const ref Manifest manifest, cons
     RecipeExtras extras;
     extras.objects = native.objects.dup;
     extras.nativeFlags = natives.linkFlags.dup;
+    extras.diagnosticFlags = diagnosticFlags;
     if (native.objects.length)
     {
         NativeCPolicy policy;

@@ -112,8 +112,41 @@ Status: proposed by the Milestone 9 implementation, for the project owner's revi
    - **Decision:** the language server therefore uses the faster plain check and does not start a server.
    - **What would change it:** letting the server serve `-o-` checks, and preloading the pinned Flint packages as well as Phobos, would make it pay for editors. That is a change to ADR-016's "druntime and Phobos only" rule, so it is proposed for the owner rather than taken here.
 
+### 5. Diagnostics v2: one readable, field-level error per framework misuse
+
+1. **The library says what is wrong, in the user's terms.** Every compile-time check of the reflective packages names the type and field, handler or service and says what would be accepted. The checks added here:
+   - **serde and config:** a field of a type that cannot be read is rejected by name, as in "`Order.callback`: `void delegate()` cannot be read from JSON or configuration; use bool, an integer, …". Configuration also names the key (`app.pool`).
+   - **web:** a handler whose return type is not `Response`, `Error`, `Result!T` or `void`, or that is not `@safe`, is rejected by name.
+   - **Before these:** the compiler reported the first failing `readValue` or `coerce` overload deep inside the library, or a dozen candidate templates.
+
+2. **The DMD fork condenses the trace: `-verror-hide=<directory>`.** The switch can be repeated.
+   - **Re-anchoring:** an error raised inside a hidden directory is held with its supplemental lines until its instantiation trace is complete. It is then printed at the innermost frame outside the hidden directories, which is the user's line that caused it.
+   - **The hidden frames:** they collapse into one line, "raised in library code at <file(line)>, through N hidden frames (`flint build --verbose` shows them)".
+   - **CTFE checks:** a check that runs during CTFE has no user frame in its own trace, and DMD follows it with a generic "error instantiating" at the user's line. The fork reports the library's message there instead.
+   - **Message rewriting:** a library's `static assert` message loses DMD's `static assert:  "…"` wrapper.
+   - **Unchanged:** errors in the user's own code, gagged errors (`__traits(compiles)`, speculative instantiation), messages and deprecations.
+   - **What it gives:** every misuse in `tests/compile/misuse` (CLI option, configuration field, entity column, missing DI dependency, JSON field, constraint type, `@PathVariable`, handler return type) is one error at the user's line.
+
+3. **Byte-identical objects.** The change is confined to the diagnostic sink (`dmd/errors.d`, the new `dmd/flintdiag.d`, the switch in `dmd/mars.d` and one entry in `build.d`). Nothing reaches semantic analysis or code generation.
+   - **Measured:** flint's own modules and the serde, config, validate, cli, di and web sources were compiled with `-c`, in debug and in `-O -release -inline`, with the previous fork and with this one, with and without the switch. 446 of 448 objects were byte-identical.
+   - **The other two:** the two exceptions are `support/process.d` under `-O`, which the previous fork also compiles to a different object on every run.
+   - **Kept as a test:** `tests/test_flint_diagnostics.py` checks that the switch changes no object byte.
+   - **The AArch64 work:** the fork's AArch64 backend work (ADR-025) can rely on this. The change arrives as separate hunks of `toolchain/dmd-2.114.0-flint.patch` and touches no backend file.
+
+4. **Where flint passes it.** flint adds the switch to the root recipe's `dflags` for the Flint packages and for druntime and Phobos, in both the `<bin>/../../src` spelling `dmd.conf` produces and the resolved one. `flint lsp` adds it to its checks.
+   - **When:** only when the compiler is DMD, the host has the fork, the fork is verified against this checkout's patch, and `--verbose` was not given.
+   - **Why that condition:** an older fork does not know the switch, and LDC has no equivalent. `--verbose` shows the full trace.
+   - **Why the recipe:** the recipe carries it as quoted SDL strings, not `DFLAGS`, so paths with spaces survive.
+
+5. **Rolling out the patch change.**
+   - **Existing installations:** until `flint toolchain install` rebuilds the fork, they report FLINT-E0805 as a warning. Builds pass the switch only once the receipt matches.
+   - **Projects outside the workspace:** these lock `dmd_patch_sha256`, so they need `flint lock` after the rebuild.
+   - **Until the rebuild:** the fork half of `tests/test_flint_diagnostics.py` fails and says so.
+   - **The shared toolchain:** the shared `.tools` is rebuilt by its owner.
+
 ## Consequences
 
+- A framework misuse reads as one error at the line that caused it, naming the field, handler or service. `tests/test_flint_diagnostics.py` compiles the misuse corpus with and without the fork's condensing and checks that condensing changes no object byte.
 - Editors get Flint-aware diagnostics as they type, and API hover, definition and completion, from `flint lsp`. `tests/test_flint_lsp.py` drives it as an LSP client: diagnostics following unsaved edits (a compiler error, then a policy error, then clean), and hover, definition and completion against the pinned API.
 - Edit, save, see: `flint watch` rebuilds and restarts, or retests, in one incremental cycle per change, and `flint run --debug` and the generated launch configurations show Flint values readably. `tests/test_flint_watch.py` covers the watch cycles, recovery from a broken edit, the library mode, the launch configurations, the gdb printers and `flint run --debug` under gdb.
 - An MCP client gets the exact pinned API, the diagnostics catalogue and the build loop from `flint mcp`. `tests/test_flint_mcp.py` drives it as a real stdio client: the handshake, the tool list and schemas, knowledge, the configuration, a failing build as a tool error, generation, invalid arguments and the call log.

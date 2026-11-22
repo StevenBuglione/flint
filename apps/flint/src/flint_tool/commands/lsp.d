@@ -196,6 +196,8 @@ private struct Server
     bool indexLoaded;
     ApiIndex index;
     string overlay;
+    string[] hideFlags;
+    bool hideFlagsKnown;
 
     /// Handle one message; false to stop.
     bool handle(string message)
@@ -374,7 +376,7 @@ private struct Server
         Launch launch;
         launch.directory = root;
         const dmd = compiler();
-        const result = capture([dmd, "-o-", "-c"] ~ devFlags() ~ imports ~ [target], launch);
+        const result = capture([dmd, "-o-", "-c"] ~ devFlags() ~ condensing() ~ imports ~ [target], launch);
         foreach (ref item; compilerDiagnostics(result.combined(), target))
             found ~= item;
         return found;
@@ -385,6 +387,21 @@ private struct Server
         import flint_tool.toolchain.toolchain : componentPath, toolchainDirectory;
 
         return componentPath(session.home, toolchainDirectory(session.home), "dmd");
+    }
+
+    /// The fork's `-verror-hide` flags, as builds pass them (ADR-027 section 5), worked out once.
+    private string[] condensing()
+    {
+        import flint_tool.engine.builder : condensedDiagnostics;
+        import flint_tool.toolchain.toolchain : inspect;
+
+        if (!hideFlagsKnown)
+        {
+            const toolchain = inspect(session.home, ["dmd"], true);
+            hideFlags = condensedDiagnostics(session, toolchain, "dmd");
+            hideFlagsKnown = true;
+        }
+        return hideFlags;
     }
 
     private string[] devFlags()

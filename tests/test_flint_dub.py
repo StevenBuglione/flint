@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from test_flint_cli import codes, environment, flint, flint_json, setUpModule  # noqa: F401
+from test_flint_cli import codes, environment, error, flint, flint_json, setUpModule  # noqa: F401
 from test_flint_deps import git
 
 
@@ -100,7 +100,7 @@ class DubIndexTests(unittest.TestCase):
         self.use('"dub:rawlib" = "0.3.0"\n')
         status, document = self.run_flint('build')
         self.assertEqual((status, codes(document)), (1, ['FLINT-E0316']))
-        self.assertIn('dub:rawlib 0.3.0 fails', document['diagnostics'][0]['message'])
+        self.assertIn('dub:rawlib 0.3.0 fails', error(document, 'FLINT-E0316')['message'])
         self.use('"dub:rawlib" = "0.3.0"\n', '"dub:rawlib" = "legacy maths pending a port"\n')
         result = flint('build', cwd=self.project, env=self.env)
         self.assertEqual(result.returncode, 0, result.stderr)

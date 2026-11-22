@@ -114,6 +114,17 @@ error[FLINT-E0401] module name does not match its file path
 | E08xx | Toolchain and environment |
 | E09xx | Receipts |
 
+### Compiler errors from library code
+
+With the DMD fork, an error that a Flint package, druntime or Phobos raises on your behalf is reported at your line, with the library's message and one line for the hidden frames. Misusing a framework API, such as a JSON field of a type that cannot be read, is one error that names the field:
+
+```text
+src/shop/orders.d(15,20): Error: Order.callback: `void delegate() @safe` cannot be read from JSON or configuration; use bool, an integer, float, double, an enum, string, an array, or a struct of these
+       raised in library code at packages/serde/source/flint/serde/internal/json_codec.d(441,21), through 6 hidden frames (`flint build --verbose` shows them)
+```
+
+`--verbose` prints the compiler's full instantiation trace instead. LDC builds always print the full trace (ADR-027 section 5).
+
 ## JSON output
 
 With `--json`, a command prints exactly one JSON document on stdout. Every document has these fields:

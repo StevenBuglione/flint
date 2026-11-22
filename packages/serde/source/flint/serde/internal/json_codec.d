@@ -100,6 +100,22 @@ private Error readDocument(T, bool owned = false)(scope const(ubyte)[] input, re
     return Error.init;
 }
 
+/// Whether readValue accepts `T`; probed without instantiating its failure.
+private enum jsonReadable(T, bool owned) = __traits(compiles, (ref scope Scanner scanner, ref T target,
+            ref scope RequestArena arena, ref AllocationPlan plan) => readValue!(T, owned)(scanner,
+            target, arena, plan, 0));
+
+/// Struct fields, and arrays of them, are checked member by member.
+private template nestedObject(T)
+{
+    static if (is(T == struct))
+        enum nestedObject = true;
+    else static if (is(T == Element[], Element) || is(T == Element[extent], Element, size_t extent))
+        enum nestedObject = is(Element == struct);
+    else
+        enum nestedObject = false;
+}
+
 private enum signedInteger(T) = is(T == byte) || is(T == short) || is(T == int) || is(T == long);
 private enum unsignedInteger(T) = is(T == ubyte) || is(T == ushort) || is(T == uint) || is(T == ulong);
 
@@ -418,8 +434,15 @@ private Error readProperty(T, bool owned)(ref scope Scanner scanner, ref T targe
                 return skipValue(scanner, depth);
             else
             {
-                return readValue!(typeof(mixin("target." ~ field.access)), owned)(scanner,
-                        mixin("target." ~ field.access), arena, plan, depth);
+                alias Member = typeof(mixin("target." ~ field.access));
+                // A field the codec cannot carry fails here, naming the field. Struct fields are checked by their own
+                // members, so the message names the deepest one.
+                static if (!nestedObject!Member && !jsonReadable!(Member, owned))
+                    static assert(false, Unqual!T.stringof ~ "." ~ field.access ~ ": `" ~ Member.stringof
+                            ~ "` cannot be read from JSON or configuration; use bool, an integer, float, double, an "
+                            ~ "enum, " ~ (owned ? "string" : "Text") ~ ", an array, or a struct of these");
+                else
+                    return readValue!(Member, owned)(scanner, mixin("target." ~ field.access), arena, plan, depth);
             }
         }
     default:

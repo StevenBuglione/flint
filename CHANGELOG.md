@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Milestone 9 (ADR-027) adds knowledge and tooling for people and agents:
+  - `flint docs`, `flint examples` and `flint explain` answer from an offline index of the pinned API.
+  - `flint generate` produces canonical components, and new projects get an `AGENTS.md`.
+  - `flint mcp` serves the API, the diagnostics catalogue and the build loop over `flint:mcp`, which gains blocking tools.
+  - `flint watch` rebuilds and restarts or retests on every change.
+  - `flint run --debug` and the generated launch configurations come with gdb pretty-printers.
+  - `flint lsp` gives editors diagnostics, hover, go-to-definition and completion.
+  - With the DMD fork's new `-verror-hide`, a framework misuse is one error at the user's line naming the field, handler or service. Object files stay byte-identical.
 - Bring Flint up natively on Windows x86-64 (ADR-026): the pinned DMD and LDC install and verify there, `flint` bootstraps itself, and 12 pure-D packages pass on both compilers, with Win32 process supervision (job objects, named pipes), console sessions over the shared terminal ABI, and Ctrl+C handling.
 - Implement the 37-package Flint library catalog, from scoped arenas and Linux reactors to typed HTTP, SQL, terminal, WASM, and application adapters.
 - Add Linux io_uring and epoll execution, linked HTTP/1.1 and HTTP/2, PostgreSQL and SQLite integration, gRPC, WebSocket support, middleware, and bounded cancellation.

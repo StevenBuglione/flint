@@ -90,7 +90,9 @@ class SharedPolicyTests(unittest.TestCase):
         flint('build', '--project', str(ROOT / 'apps/flint'))
         generated = ROOT / 'apps/flint/.flint/generated/dub/dub.sdl'
         manifest = tomllib.loads((ROOT / 'apps/flint/flint.toml').read_text())
-        self.assertEqual(generated.read_text(), install_toolchains.flint_recipe(manifest))
+        # A verified DMD fork adds `-verror-hide`, which only changes how diagnostics read (ADR-027 section 5).
+        lines = [line for line in generated.read_text().splitlines(True) if not line.startswith('dflags "-verror-hide=')]
+        self.assertEqual(''.join(lines), install_toolchains.flint_recipe(manifest))
 
 
 class StructuralParityTests(unittest.TestCase):

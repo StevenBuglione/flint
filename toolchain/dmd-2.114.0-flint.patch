@@ -10,6 +10,15 @@ diff -ruN a/build.d b/build.d
          "),
          frontend: fileArray(env["D"], "
              access.d aggregate.d aliasthis.d argtypes_x86.d argtypes_sysv_x64.d argtypes_aarch64.d arrayop.d
+@@ -1430,7 +1430,7 @@ auto sourceFiles()
+             scope.h statement.h staticassert.h target.h template.h tokens.h version.h visitor.h
+         "),
+         lexer: fileArray(env["D"], "
+-            console.d entity.d errors.d errorsink.d file_manager.d globals.d id.d identifier.d lexer.d location.d tokens.d
++            console.d entity.d errors.d errorsink.d flintdiag.d file_manager.d globals.d id.d identifier.d lexer.d location.d tokens.d
+         ") ~ fileArray(env["ROOT"], "
+             array.d bitarray.d ctfloat.d file.d filename.d hash.d port.d region.d rmem.d
+             stringtable.d utf.d
 diff -ruN a/dmd/cond.d b/dmd/cond.d
 --- a/dmd/cond.d	2026-10-31 19:29:10.000000000 -0400
 +++ b/dmd/cond.d	2026-11-21 17:12:34.309580398 -0500
@@ -33,6 +42,145 @@ diff -ruN a/dmd/cond.d b/dmd/cond.d
  /***********************************************************
   */
  extern (C++) class DVCondition : Condition
+diff -ruN a/dmd/errors.d b/dmd/errors.d
+--- a/dmd/errors.d	2026-10-31 19:29:10.000000000 -0400
++++ b/dmd/errors.d	2026-11-22 23:30:00.000000000 -0500
+@@ -38,6 +38,12 @@ nothrow:
+  */
+ extern (C++) class ErrorSinkCompiler : ErrorSink
+ {
++    /// Flint: print an error still held by -verror-hide before the compiler stops.
++    override void plugSink()
++    {
++        flushCondensed();
++    }
++
+     /// Maximum number of errors/deprecations to display before calling $(D fatal).
+     /// 0 means unlimited.
+     uint errorLimit = 20;
+@@ -239,6 +245,9 @@ extern (C++) class ErrorSinkCompiler : ErrorSink
+     void emit(const SourceLoc loc, const(char)* format, va_list ap,
+         ErrorKind kind, bool supplemental, bool gagged)
+     {
++        // Flint: -verror-hide condenses errors raised inside library code (dmd.flintdiag).
++        if (condenseDiagnostic(loc, format, ap, kind, supplemental, gagged))
++            return;
+         if (kind == ErrorKind.message && !supplemental)
+         {
+             OutBuffer tmp;
+@@ -260,6 +269,112 @@ extern (C++) class ErrorSinkCompiler : ErrorSink
+     }
+ }
+ 
++/// Flint: hold an error raised inside a hidden directory, with its supplemental trace, until the trace is
++/// complete. Returns true when the diagnostic was held.
++private bool condenseDiagnostic(const SourceLoc loc, const(char)* format, va_list ap, ErrorKind kind,
++    bool supplemental, bool gagged)
++{
++    import dmd.flintdiag : Frame, anchorFrame, condensing, held, hiddenFile, rewriteLibraryMessage, swallowing;
++
++    if (!condensing() || gagged || kind == ErrorKind.message || kind == ErrorKind.tip)
++        return false;
++    if (supplemental && swallowing)
++        return true;
++    if (!supplemental)
++    {
++        swallowing = false;
++        // An error raised during CTFE in library code has no user frame in its own trace; the compiler then
++        // reports "error instantiating" at the user's line. Report the library's message there instead.
++        if (held.active && anchorFrame() == size_t.max)
++        {
++            OutBuffer generic;
++            generic.vprintf(format, ap);
++            const instantiating = strstr(generic.peekChars(), "error instantiating") !is null;
++            if (instantiating && hiddenFile(loc.filename))
++                return true; // keep the library's message and adopt this error's trace to the user's line
++            if (instantiating)
++            {
++                held.frames.push(Frame(loc, null));
++                swallowing = true;
++                flushCondensed();
++                return true;
++            }
++            flushCondensed();
++            if (!hiddenFile(loc.filename))
++            {
++                printHeld(loc, kind, false, "%s", generic.peekChars());
++                return true;
++            }
++            held.active = true;
++            held.loc = loc;
++            held.kind = kind;
++            held.text = rewriteLibraryMessage(generic.extractChars());
++            held.frames.setDim(0);
++            return true;
++        }
++        flushCondensed();
++        if (!hiddenFile(loc.filename))
++            return false;
++        OutBuffer text;
++        text.vprintf(format, ap);
++        held.active = true;
++        held.loc = loc;
++        held.kind = kind;
++        held.text = rewriteLibraryMessage(text.extractChars());
++        held.frames.setDim(0);
++        return true;
++    }
++    if (!held.active)
++        return false;
++    OutBuffer text;
++    text.vprintf(format, ap);
++    held.frames.push(Frame(loc, text.extractChars()));
++    return true;
++}
++
++/// Flint: print the held error at its innermost user frame, the user's outer frames, and one line for the hidden
++/// ones; or unchanged when every frame is hidden.
++void flushCondensed()
++{
++    import dmd.flintdiag : anchorFrame, held, hiddenFile;
++
++    if (!held.active)
++        return;
++    held.active = false;
++    const anchor = anchorFrame();
++    if (anchor == size_t.max)
++    {
++        printHeld(held.loc, held.kind, false, "%s", held.text);
++        foreach (ref frame; held.frames[])
++            printHeld(frame.loc, held.kind, true, "%s", frame.text);
++        return;
++    }
++    printHeld(held.frames[anchor].loc, held.kind, false, "%s", held.text);
++    size_t hidden;
++    foreach (i, ref frame; held.frames[])
++    {
++        if (i <= anchor || hiddenFile(frame.loc.filename))
++            hidden += i < anchor;
++        else if (frame.text)
++            printHeld(frame.loc, held.kind, true, "%s", frame.text);
++    }
++    OutBuffer origin;
++    writeSourceLoc(origin, held.loc, Loc.showColumns, Loc.messageStyle);
++    printHeld(SourceLoc.init, held.kind, true, "raised in library code at %s, through %d hidden frame%s (`flint build --verbose` shows them)",
++        origin.extractChars(), cast(int) hidden + 1, hidden ? "s".ptr : "".ptr);
++}
++
++private void printHeld(const SourceLoc loc, ErrorKind kind, bool supplemental, const(char)* format, ...)
++{
++    va_list ap;
++    va_start(ap, format);
++    DiagnosticContext info = DiagnosticContext(loc, kind, null, null);
++    info.supplemental = supplemental;
++    info.headerColor = classificationFor(kind);
++    printDiagnostic(format, ap, info, false);
++    va_end(ap);
++}
++
+ /// Map an `ErrorKind` to the color used for its header in stderr output.
+ private Classification classificationFor(ErrorKind kind) @safe @nogc pure nothrow
+ {
 diff -ruN a/dmd/expressionsem.d b/dmd/expressionsem.d
 --- a/dmd/expressionsem.d	2026-10-31 19:29:10.000000000 -0400
 +++ b/dmd/expressionsem.d	2026-11-21 17:12:23.626232962 -0500
@@ -54,6 +202,100 @@ diff -ruN a/dmd/expressionsem.d b/dmd/expressionsem.d
              if (vc.mod.versionids && findCondition(*vc.mod.versionids, vc.ident))
              {
                  vc.inc = Include.yes;
+diff -ruN a/dmd/flintdiag.d b/dmd/flintdiag.d
+--- a/dmd/flintdiag.d	1969-12-31 19:00:00.000000000 -0500
++++ b/dmd/flintdiag.d	2026-11-22 23:30:00.000000000 -0500
+@@ -0,0 +1,90 @@
++/**
++ * Flint: condensed template errors (ADR-027).
++ *
++ * With `-verror-hide=<directory>` (repeatable), an error whose location lies inside a hidden directory (druntime,
++ * Phobos, the Flint libraries) is re-anchored at the innermost frame of its instantiation trace outside them,
++ * where the user wrote the code that caused it. The hidden frames collapse into one supplemental line naming where
++ * the error was raised, and a library `static assert` message loses DMD's wrapper. Only the text of diagnostics
++ * changes; nothing reaches semantic analysis or code generation, so object files are byte-identical with and
++ * without the option.
++ */
++module dmd.flintdiag;
++
++import core.stdc.string : strlen, strncmp;
++import dmd.errorsink : ErrorKind;
++import dmd.location : SourceLoc;
++import dmd.root.array : Array;
++
++nothrow:
++
++private __gshared Array!(const(char)*) hiddenPrefixes;
++
++/// Register a directory whose diagnostics are condensed.
++void hideDiagnosticsUnder(const(char)* prefix)
++{
++    if (prefix && *prefix)
++        hiddenPrefixes.push(prefix);
++}
++
++/// Whether any directory is hidden.
++bool condensing()
++{
++    return hiddenPrefixes.length != 0;
++}
++
++/// Whether `file` lies inside a hidden directory.
++bool hiddenFile(const(char)[] file)
++{
++    foreach (prefix; hiddenPrefixes[])
++    {
++        const n = strlen(prefix);
++        if (file.length >= n && strncmp(file.ptr, prefix, n) == 0)
++            return true;
++    }
++    return false;
++}
++
++/// One supplemental line of a held error.
++struct Frame
++{
++    SourceLoc loc;
++    const(char)* text;
++}
++
++/// The error being held until its trace is complete.
++struct Held
++{
++    bool active;
++    SourceLoc loc;
++    ErrorKind kind;
++    const(char)* text;
++    Array!Frame frames;
++}
++
++__gshared Held held;
++
++/// Supplemental lines of a generic "error instantiating" error that replaced a held error are dropped.
++__gshared bool swallowing;
++
++/// Index of the frame the held error is re-anchored at, or size_t.max when every frame is hidden.
++size_t anchorFrame()
++{
++    foreach (i, ref frame; held.frames[])
++    {
++        if (frame.loc.filename.length && !hiddenFile(frame.loc.filename))
++            return i;
++    }
++    return size_t.max;
++}
++
++/// A library's `static assert` message is a sentence of its own: drop the `static assert:  "..."` wrapper DMD
++/// prints around a single string message. `text` is owned by the held error and is shortened in place.
++const(char)* rewriteLibraryMessage(char* text)
++{
++    enum wrapper = "static assert:  \"";
++    const n = strlen(text);
++    if (n <= wrapper.length || strncmp(text, wrapper.ptr, wrapper.length) != 0 || text[n - 1] != '"')
++        return text;
++    text[n - 1] = 0;
++    return text + wrapper.length;
++}
 diff -ruN a/dmd/flintlink.d b/dmd/flintlink.d
 --- a/dmd/flintlink.d	1969-12-31 19:00:00.000000000 -0500
 +++ b/dmd/flintlink.d	2026-11-21 17:33:26.611906470 -0500
@@ -1524,6 +1766,22 @@ diff -ruN a/dmd/main.d b/dmd/main.d
   * Parses the command line arguments and configuration files
   *
   * Params:
+diff -ruN a/dmd/mars.d b/dmd/mars.d
+--- a/dmd/mars.d	2026-10-31 19:29:10.000000000 -0400
++++ b/dmd/mars.d	2026-11-22 23:30:00.000000000 -0500
+@@ -1101,6 +1101,12 @@ bool parseCommandLine(const ref Strings arguments, const size_t argc, out Param
+                 global.errorSink.errorLimit = params.v.errorLimit;
+             }
+         }
++        else if (startsWith(p + 1, "verror-hide="))
++        {
++            // Flint: condense errors raised inside this directory (dmd.flintdiag).
++            import dmd.flintdiag : hideDiagnosticsUnder;
++            hideDiagnosticsUnder(p + "-verror-hide=".length);
++        }
+         else if (startsWith(p + 1, "verror-supplements"))
+         {
+             if (!params.v.errorSupplementLimit.parseDigits(p.toDString()[20 .. $]))
 diff -ruN a/dmd/timetrace.d b/dmd/timetrace.d
 --- a/dmd/timetrace.d	2026-10-31 19:29:10.000000000 -0400
 +++ b/dmd/timetrace.d	2026-11-21 21:45:16.706324905 -0500

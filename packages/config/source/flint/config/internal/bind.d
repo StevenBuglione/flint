@@ -51,6 +51,9 @@ private string defaultEnvironment(string prefix, string key)
     return prefix ~ normalized.idup;
 }
 
+/// Whether a configuration value can be coerced into `T`; probed without instantiating the failure.
+private enum configurable(T) = __traits(compiles, (InputValue input, ref T destination) => coerce(input, destination));
+
 private struct Binding
 {
     Layers layers;
@@ -241,7 +244,13 @@ private void walk(T, string prefix, size_t depth)(ref T value, ref Binding bindi
                         }
                         return result;
                     }();
-                    binding.leaf(__traits(getMember, value, name), fullKey, metadata);
+                    // A field configuration cannot carry fails here, naming the type, the field and the key.
+                    static if (!configurable!Field)
+                        static assert(false, T.stringof ~ "." ~ name ~ " (key `" ~ fullKey ~ "`): `" ~ Field.stringof
+                                ~ "` cannot be bound from configuration; use bool, an integer, float, double, an "
+                                ~ "enum, string, an array of these, or a nested struct");
+                    else
+                        binding.leaf(__traits(getMember, value, name), fullKey, metadata);
                 }
             }
         }
