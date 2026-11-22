@@ -1,6 +1,5 @@
 module flint.cli.internal.convert;
 
-import std.conv : ConvException, to;
 import std.traits : Unqual, isDynamicArray, isIntegral, isUnsigned;
 
 @safe:
@@ -168,6 +167,8 @@ private Integer readInteger(scope const(char)[] text, IntegerBounds limits) pure
 
 private string convertFloat(T)(ref T output, scope const(char)[] text)
 {
+    import std.conv : ConvException, to;
+
     if (!isDecimal(text))
         return "expected a finite decimal number";
     try

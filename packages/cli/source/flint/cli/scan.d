@@ -2,7 +2,6 @@ module flint.cli.scan;
 
 import flint.arena : Error, Status;
 import flint.cli.types : ParseAction, Shell;
-import flint.validate : Size, validate;
 
 @safe:
 
@@ -43,15 +42,84 @@ package(flint.cli) struct ScanResult
 
 private alias Consume = Error delegate(size_t, scope const(char)[], size_t) @safe;
 
-private struct Utf8Argument
+/// Strict UTF-8: no overlong forms, surrogates or scalars above U+10FFFF. Schema checks
+/// evaluate this during CTFE, so it stays a plain loop rather than a validation template.
+package(flint.cli) bool isUtf8(scope const(char)[] text) pure nothrow @nogc
 {
-    @Size(0, size_t.max) const(char)[] text;
+    size_t index;
+    while (index < text.length)
+    {
+        const lead = cast(ubyte) text[index++];
+        if (lead < 0x80)
+            continue;
+        Sequence sequence;
+        if (!sequenceFor(lead, sequence) || sequence.extra > text.length - index)
+            return false;
+        foreach (_; 0 .. sequence.extra)
+        {
+            const next = cast(ubyte) text[index++];
+            if ((next & 0xC0) != 0x80)
+                return false;
+            sequence.scalar = (sequence.scalar << 6) | (next & 0x3F);
+        }
+        const scalar = sequence.scalar;
+        if (scalar < sequence.minimum || scalar > 0x10_FFFF || (scalar >= 0xD800 && scalar <= 0xDFFF))
+            return false;
+    }
+    return true;
 }
 
-package(flint.cli) bool isUtf8(scope const(char)[] text) nothrow @nogc
+private struct Sequence
 {
-    scope item = Utf8Argument(text);
-    return validate(item, []).valid;
+    uint scalar;
+    uint extra;
+    uint minimum;
+}
+
+private bool sequenceFor(ubyte lead, out Sequence sequence) pure nothrow @nogc
+{
+    if (lead >= 0xC2 && lead <= 0xDF)
+        sequence = Sequence(lead & 0x1F, 1, 0x80);
+    else if (lead >= 0xE0 && lead <= 0xEF)
+        sequence = Sequence(lead & 0x0F, 2, 0x800);
+    else if (lead >= 0xF0 && lead <= 0xF4)
+        sequence = Sequence(lead & 0x07, 3, 0x1_0000);
+    else
+        return false;
+    return true;
+}
+
+@("isUtf8 accepts exactly the scalars accepted by the UTF-8 Size validator")
+unittest
+{
+    import flint.validate : Size, validate;
+
+    static struct Reference
+    {
+        @Size(0, size_t.max) const(char)[] text;
+    }
+
+    immutable string[] samples = [
+        "", "plain", "é", "€", "𝄞", "\u07FF\u0800\uD7FF\uE000\U0010FFFF", "\x80", "\xC1\xBF",
+        "\xC2", "\xE0\x9F\xBF", "\xED\xA0\x80", "\xF0\x8F\xBF\xBF", "\xF4\x90\x80\x80",
+        "\xF5\x80\x80\x80", "\xFF", "a\xE2\x82", "\xE2\x82\xACz", "\xF0\x9D\x84"
+    ];
+    foreach (sample; samples)
+        foreach (prefix; ["", "x", "xy\xC3\xA9"])
+        {
+            const text = prefix ~ sample;
+            scope item = Reference(text);
+            assert(isUtf8(text) == validate(item, []).valid, text);
+        }
+    foreach (uint first; 0 .. 256)
+        foreach (uint second; [0x00, 0x7F, 0x80, 0x9F, 0xA0, 0xBF, 0xC0])
+        {
+            const char[3] text = [cast(char) first, cast(char) second, cast(char) 0x80];
+            scope item = Reference(text[]);
+            assert(isUtf8(text[]) == validate(item, []).valid);
+            scope pair = Reference(text[0 .. 2]);
+            assert(isUtf8(text[0 .. 2]) == validate(pair, []).valid);
+        }
 }
 
 package(flint.cli) Error invalid(scope const(char)[] label, scope const(char)[] reason, size_t index = missing)

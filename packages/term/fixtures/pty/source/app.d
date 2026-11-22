@@ -172,6 +172,10 @@ private void useTerminal(string mode)
     case "idle":
         measureIdle(created.value);
         break;
+    case "terminate":
+        // The driver sends SIGTERM or SIGHUP. The process must still terminate by that signal.
+        receive(created.value);
+        throw new Exception("termination signal did not terminate the fixture");
     default:
         throw new Exception("unknown PTY fixture mode");
     }

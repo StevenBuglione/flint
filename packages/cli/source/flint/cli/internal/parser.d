@@ -5,7 +5,6 @@ import flint.cli.internal.convert : apply, ownDefault;
 import flint.cli.internal.metadata : Schema;
 import flint.cli.scan : Binding, Field, invalid, isUtf8, missing, scan;
 import flint.cli.types : ParseAction, ParseOptions, ParseResult, Shell;
-import flint.validate : Violation, validate;
 
 @safe:
 
@@ -139,19 +138,21 @@ private Error completeNode(T)(ref T dto, scope Seen[] seen, ParseOptions policy)
 
     static if (Schema!T.checked)
     {
+        import flint.validate : Violation, validate;
+
         Violation[1] failures;
         if (!validate(dto, failures[]).valid)
-            return constraintError(Schema!T.fields[], seen, failures[0]);
+            return constraintError(Schema!T.fields[], seen, failures[0].field, failures[0].message);
     }
     return Error.init;
 }
 
-private Error constraintError(scope const Field[] fields, scope const Seen[] seen, scope ref const Violation violation)
+private Error constraintError(scope const Field[] fields, scope const Seen[] seen, string member, string message)
 {
     foreach (index, ref const field; fields)
     {
-        if (violation.field == field.member)
-            return invalid(field.label, violation.message ~ "; got <redacted>", seen[index].argument);
+        if (member == field.member)
+            return invalid(field.label, message ~ "; got <redacted>", seen[index].argument);
     }
-    return invalid(violation.field, violation.message ~ "; got <redacted>");
+    return invalid(member, message ~ "; got <redacted>");
 }

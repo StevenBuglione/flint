@@ -1,8 +1,8 @@
 module flint.log.sys.ring;
 
-import core.atomic : atomicLoad, atomicOp, atomicStore, cas;
+// Module scope imports only declaration types; implementation imports are local.
 import flint.arena : Status;
-import flint.log.encoding : RecordHeader, capture, formatRecord;
+import flint.log.encoding : RecordHeader;
 import flint.log.types : Field, Format;
 
 @safe:
@@ -12,6 +12,8 @@ private ulong threadProducer;
 
 package(flint.log) ulong producerIdentity() nothrow @nogc
 {
+    import core.atomic : atomicOp;
+
     if (threadProducer == 0)
         threadProducer = atomicOp!"+="(lastProducer, 1UL);
     return threadProducer;
@@ -39,12 +41,17 @@ package(flint.log) struct Ring
 
     bool belongsTo(ulong producer) nothrow @nogc
     {
+        import core.atomic : atomicLoad, cas;
+
         const current = atomicLoad(owner);
         return current == producer || (current == 0 && cas(&owner, 0UL, producer));
     }
 
     Status publish(RecordHeader meta, scope const(char)[] text, scope const(Field)[] fields, ubyte mask) nothrow @nogc
     {
+        import core.atomic : atomicLoad, atomicStore, cas;
+        import flint.log.encoding : capture;
+
         if (!cas(&publishing, false, true))
             return Status.resourceExhausted;
         scope (exit)
@@ -64,11 +71,15 @@ package(flint.log) struct Ring
 
     ulong published() const nothrow @nogc
     {
+        import core.atomic : atomicLoad;
+
         return atomicLoad(tail);
     }
 
     ulong delivered() const nothrow @nogc
     {
+        import core.atomic : atomicLoad;
+
         return atomicLoad(retired);
     }
 
@@ -85,6 +96,8 @@ package(flint.log) struct Ring
 
     Status render(Format format, scope char[] output, ulong sequence, out RecordHeader header) const nothrow @nogc
     {
+        import flint.log.encoding : formatRecord;
+
         const slot = cast(size_t)(delivered() % headers.length);
         header = headers[slot];
         const offset = slot * stride;
@@ -94,6 +107,8 @@ package(flint.log) struct Ring
 
     void retire() nothrow @nogc
     {
+        import core.atomic : atomicStore;
+
         atomicStore(retired, delivered() + 1);
     }
 }

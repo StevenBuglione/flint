@@ -1,20 +1,21 @@
 module flint.log.internal;
 
-import core.atomic : atomicLoad, atomicOp, atomicStore, cas;
-import core.thread : Thread;
+// Module scope imports only the declarations that LoggerState names. Implementation imports
+// are local to their functions, so an application importing flint.log does not analyze the
+// thread runtime, the OS bindings or the record encoder.
 import flint.arena : Error, Result, Status;
-import flint.conc : Deadline;
-import flint.log.encoding : RecordHeader, allowedMask, maximumRecord, measure;
-import flint.log.sys.clock : timestampMillis;
-import flint.log.sys.ring : Ring, producerIdentity;
-import flint.log.sys.sinks : NativeSink, closeSink, joinConsumer, openSink, pauseConsumer,
-    protectSink, push, startConsumer;
+import flint.log.sys.ring : Ring;
+import flint.log.sys.sinks : NativeSink;
 import flint.log.types : Field, Format, Level, LogContext, LogContextProvider, LogOptions, LogSink, LogStats;
 
 @safe:
 
 private enum workerShards = 32;
 private enum errorCapacityBytes = 65_536;
+// The consumer briefly polls before it parks, so producers in a burst rarely issue a wake.
+private enum spinRounds = 2048;
+// Every wait is also bounded, so a missed wake can only delay progress.
+private enum parkNanos = 10_000_000;
 
 private enum Phase : ubyte
 {
@@ -41,7 +42,7 @@ package(flint.log) struct LoggerState
     private Ring[] normal;
     private Ring priority;
     private char[] output;
-    private Thread worker;
+    private Object worker;
     private shared Phase phase;
     private shared ulong writers;
     private shared bool joined;
@@ -50,6 +51,12 @@ package(flint.log) struct LoggerState
     private shared ulong[5] dropped;
     private shared ulong delivered;
     private shared ulong sinkFailures;
+    // Producers and close bump consumerSignal to wake a parked consumer.
+    private shared uint consumerSignal;
+    private shared bool consumerParked;
+    // The consumer bumps progressSignal after deliveries and state changes for flush and close.
+    private shared uint progressSignal;
+    private shared uint progressWaiters;
     private size_t nextShard;
     private bool previousWasPriority;
 
@@ -57,6 +64,10 @@ package(flint.log) struct LoggerState
 
     static Result!(LoggerState*) create(LogOptions options)
     {
+        import core.atomic : atomicOp;
+        import flint.log.encoding : allowedMask;
+        import flint.log.sys.sinks : closeSink, openSink, startConsumer;
+
         if (!validOptions(options))
             return Result!(LoggerState*)(null, Error(Status.invalidArgument, "invalid logger options"));
 
@@ -90,6 +101,8 @@ package(flint.log) struct LoggerState
 
     private static bool validOptions(LogOptions options) pure nothrow @nogc
     {
+        import flint.log.encoding : maximumRecord;
+
         if (options.level > Level.off || options.format > Format.console
                 || options.maxRecordBytes == 0 || options.maxRecordBytes > maximumRecord
                 || options.ringBytes < options.maxRecordBytes)
@@ -115,6 +128,8 @@ package(flint.log) struct LoggerState
     Status submit(Level level, scope const(char)[] message, scope const(Field)[] fields,
             LogContext context, bool useProvider) nothrow @nogc
     {
+        import core.atomic : atomicLoad, atomicOp;
+
         if (level > Level.off)
             return Status.invalidArgument;
         if (level < threshold || level == Level.off)
@@ -125,7 +140,7 @@ package(flint.log) struct LoggerState
             return disabledStatus();
         atomicOp!"+="(writers, 1UL);
         scope (exit)
-            atomicOp!"-="(writers, 1UL);
+            leave();
 
         if (atomicLoad(phase) != Phase.open)
             return disabledStatus();
@@ -134,14 +149,42 @@ package(flint.log) struct LoggerState
             context = provider();
         const status = publishRecord(level, message, fields, context);
         if (status == Status.ok)
+        {
             atomicOp!"+="(accepted[level], 1UL);
+            notifyConsumer();
+        }
         else
             atomicOp!"+="(dropped[level], 1UL);
         return status;
     }
 
+    private void leave() nothrow @nogc
+    {
+        import core.atomic : atomicLoad, atomicOp;
+
+        atomicOp!"-="(writers, 1UL);
+        // A draining consumer waits for every admitted writer to leave.
+        if (atomicLoad(phase) != Phase.open)
+            notifyConsumer();
+    }
+
+    private void notifyConsumer() nothrow @nogc
+    {
+        import core.atomic : atomicLoad, atomicOp;
+        import flint.log.sys.sinks : wake;
+
+        // The caller's preceding publication or phase change is sequentially consistent with this load.
+        if (atomicLoad(consumerParked))
+        {
+            atomicOp!"+="(consumerSignal, 1U);
+            wake(consumerSignal);
+        }
+    }
+
     private Status disabledStatus() const nothrow @nogc
     {
+        import core.atomic : atomicLoad;
+
         const fault = atomicLoad(sinkFault);
         return fault == Status.ok ? Status.unavailable : fault;
     }
@@ -149,6 +192,9 @@ package(flint.log) struct LoggerState
     private Status publishRecord(Level level, scope const(char)[] message, scope const(Field)[] fields,
             LogContext context) nothrow @nogc
     {
+        import flint.log.encoding : measure;
+        import flint.log.sys.clock : timestampMillis;
+
         auto ring = level == Level.error ? &priority : chooseShard();
         if (ring.full())
             return Status.resourceExhausted;
@@ -165,6 +211,8 @@ package(flint.log) struct LoggerState
 
     private Ring* chooseShard() return nothrow @nogc
     {
+        import flint.log.sys.ring : producerIdentity;
+
         const producer = producerIdentity();
         const first = cast(size_t)(producer % normal.length);
         foreach (offset; 0 .. normal.length)
@@ -202,8 +250,21 @@ package(flint.log) struct LoggerState
         return null;
     }
 
+    private bool pending() const nothrow @nogc
+    {
+        if (priority.ready())
+            return true;
+        foreach (ref ring; normal)
+            if (ring.ready())
+                return true;
+        return false;
+    }
+
     private void consume() nothrow @nogc
     {
+        import core.atomic : atomicLoad, atomicOp, atomicStore;
+        import flint.log.sys.sinks : closeSink, protectSink;
+
         currentConsumer = id;
         scope (exit)
         {
@@ -211,6 +272,7 @@ package(flint.log) struct LoggerState
             sink = null;
             currentConsumer = 0;
             atomicStore(phase, Phase.stopped);
+            announceProgress();
         }
 
         if (sink is null && protectSink() != Status.ok)
@@ -227,7 +289,7 @@ package(flint.log) struct LoggerState
             {
                 if (drainedAndClosing())
                     return;
-                pauseConsumer();
+                idle();
                 continue;
             }
             const status = deliver(*ring, ++sequence);
@@ -235,6 +297,7 @@ package(flint.log) struct LoggerState
             {
                 atomicOp!"+="(delivered, 1UL);
                 ring.retire();
+                announceProgress();
             }
             else if (atomicLoad(phase) != Phase.abort)
             {
@@ -244,22 +307,91 @@ package(flint.log) struct LoggerState
         }
     }
 
+    private bool settled() nothrow @nogc
+    {
+        import core.atomic : atomicLoad;
+
+        return pending() || drainedAndClosing() || atomicLoad(phase) == Phase.abort;
+    }
+
+    private void idle() nothrow @nogc
+    {
+        import core.atomic : atomicLoad, atomicStore, pause;
+        import flint.log.sys.sinks : park;
+
+        foreach (_; 0 .. spinRounds)
+        {
+            if (settled())
+                return;
+            pause();
+        }
+        const ticket = atomicLoad(consumerSignal);
+        atomicStore(consumerParked, true);
+        // Recheck after announcing the park: a producer either sees the flag or its record is visible here.
+        if (!settled())
+            park(consumerSignal, ticket, parkNanos);
+        atomicStore(consumerParked, false);
+    }
+
+    private void announceProgress() nothrow @nogc
+    {
+        import core.atomic : atomicLoad, atomicOp;
+        import flint.log.sys.sinks : wake;
+
+        if (atomicLoad(progressWaiters) != 0)
+        {
+            atomicOp!"+="(progressSignal, 1U);
+            wake(progressSignal);
+        }
+    }
+
+    // Register as a progress waiter before the caller rechecks its condition.
+    private uint enterWait() nothrow @nogc
+    {
+        import core.atomic : atomicLoad, atomicOp;
+
+        const ticket = atomicLoad(progressSignal);
+        atomicOp!"+="(progressWaiters, 1U);
+        return ticket;
+    }
+
+    private void leaveWait(uint ticket, bool block, long expires) nothrow @nogc
+    {
+        import core.atomic : atomicOp;
+        import flint.log.sys.sinks : park;
+
+        if (block)
+        {
+            const remaining = expires - monotonicNow();
+            if (remaining > 0)
+                park(progressSignal, ticket, remaining < parkNanos ? remaining : parkNanos);
+        }
+        atomicOp!"-="(progressWaiters, 1U);
+    }
+
     private bool drainedAndClosing() nothrow @nogc
     {
+        import core.atomic : atomicLoad;
+
         // Once draining is visible no new producer can be admitted. Recheck after reading writers.
         return atomicLoad(phase) == Phase.draining && atomicLoad(writers) == 0 && readyRing() is null;
     }
 
     private void fail(Status status) nothrow @nogc
     {
+        import core.atomic : atomicOp, atomicStore, cas;
+
         atomicStore(sinkFault, status);
         atomicOp!"+="(sinkFailures, 1UL);
         cas(&phase, Phase.open, Phase.abort);
         cas(&phase, Phase.draining, Phase.abort);
+        announceProgress();
     }
 
     private Status deliver(ref Ring ring, ulong sequence) nothrow @nogc
     {
+        import flint.log.encoding : RecordHeader;
+
         if (sequence == 0)
             return Status.resourceExhausted;
         RecordHeader header;
@@ -273,6 +405,9 @@ package(flint.log) struct LoggerState
 
     private Status deliverCustom(scope const(char)[] line) nothrow @nogc
     {
+        import core.atomic : atomicLoad;
+        import flint.log.sys.sinks : pauseConsumer;
+
         while (atomicLoad(phase) != Phase.abort)
         {
             const status = sink(line);
@@ -285,6 +420,9 @@ package(flint.log) struct LoggerState
 
     private Status deliverNative(Level severity, scope const(char)[] line) nothrow @nogc
     {
+        import core.atomic : atomicLoad;
+        import flint.log.sys.sinks : pauseConsumer, push;
+
         while (line.length != 0 && atomicLoad(phase) != Phase.abort)
         {
             const written = push(nativeSink, severity, line);
@@ -300,6 +438,9 @@ package(flint.log) struct LoggerState
 
     Error flush(ulong millis) nothrow @nogc
     {
+        import core.atomic : atomicLoad;
+        import flint.conc : Deadline;
+
         if (currentConsumer == id)
             return Error(Status.conflict, "logger sink cannot flush its own batch");
 
@@ -310,16 +451,23 @@ package(flint.log) struct LoggerState
         const expires = Deadline.afterMillis(millis).monotonicNanoseconds;
         for (;;)
         {
+            const ticket = enterWait();
+            Error result;
+            bool finished = true;
             const failure = atomicLoad(sinkFault);
             if (failure != Status.ok)
-                return Error(failure, "logger sink failed");
-            if (allDelivered(target[], errors))
-                return Error.init;
-            if (atomicLoad(phase) >= Phase.abort)
-                return Error(Status.cancelled, "logger stopped before draining");
-            if (Deadline.afterMillis(0).monotonicNanoseconds >= expires)
-                return Error(Status.timedOut, "logger flush deadline elapsed");
-            pauseConsumer();
+                result = Error(failure, "logger sink failed");
+            else if (allDelivered(target[], errors))
+                result = Error.init;
+            else if (atomicLoad(phase) >= Phase.abort)
+                result = Error(Status.cancelled, "logger stopped before draining");
+            else if (monotonicNow() >= expires)
+                result = Error(Status.timedOut, "logger flush deadline elapsed");
+            else
+                finished = false;
+            leaveWait(ticket, !finished, expires);
+            if (finished)
+                return result;
         }
     }
 
@@ -335,27 +483,43 @@ package(flint.log) struct LoggerState
 
     void close() nothrow
     {
+        import core.atomic : atomicLoad, cas;
+        import flint.conc : Deadline;
+        import flint.log.sys.sinks : joinConsumer;
+
         cas(&phase, Phase.open, Phase.draining);
+        notifyConsumer();
         if (currentConsumer == id)
             return;
 
         const expires = Deadline.afterMillis(closeMillis).monotonicNanoseconds;
-        while (atomicLoad(phase) == Phase.draining)
+        for (;;)
         {
-            if (Deadline.afterMillis(0).monotonicNanoseconds >= expires)
+            const ticket = enterWait();
+            const draining = atomicLoad(phase) == Phase.draining;
+            const expired = draining && monotonicNow() >= expires;
+            leaveWait(ticket, draining && !expired, expires);
+            if (!draining)
+                break;
+            if (expired)
             {
                 cas(&phase, Phase.draining, Phase.abort);
+                notifyConsumer();
                 break;
             }
-            pauseConsumer();
         }
         // An OS write may still be blocked. Its worker retains all resources until the call returns.
         const retirement = Deadline.afterMillis(5).monotonicNanoseconds;
-        while (atomicLoad(phase) != Phase.stopped)
+        for (;;)
         {
-            if (Deadline.afterMillis(0).monotonicNanoseconds >= retirement)
+            const ticket = enterWait();
+            const stopped = atomicLoad(phase) == Phase.stopped;
+            const expired = !stopped && monotonicNow() >= retirement;
+            leaveWait(ticket, !stopped && !expired, retirement);
+            if (expired)
                 return;
-            pauseConsumer();
+            if (stopped)
+                break;
         }
         if (cas(&joined, false, true) && joinConsumer(worker) !is null)
             fail(Status.ioError);
@@ -363,6 +527,8 @@ package(flint.log) struct LoggerState
 
     LogStats stats() const nothrow @nogc
     {
+        import core.atomic : atomicLoad;
+
         LogStats snapshot;
         foreach (index; 0 .. 5)
         {
@@ -373,4 +539,11 @@ package(flint.log) struct LoggerState
         snapshot.sinkFailures = atomicLoad(sinkFailures);
         return snapshot;
     }
+}
+
+private long monotonicNow() nothrow @nogc
+{
+    import flint.conc : Deadline;
+
+    return Deadline.afterMillis(0).monotonicNanoseconds;
 }

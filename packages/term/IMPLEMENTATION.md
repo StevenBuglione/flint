@@ -12,6 +12,12 @@ scope. Keep the owner alive until concurrent callers have finished.
 
 An active terminal session converts SIGWINCH and SIGINT into resize and
 interrupt events. Ctrl-C in raw input also produces an interrupt event.
+When SIGTERM or SIGHUP still has its default action, the session observes
+it too: the handler only records the signal, a process-lifetime native
+thread restores the terminal under the session lock, and the signal is
+then delivered again with its default action, so the process still
+terminates by that signal. An application handler or an ignored
+termination signal is left untouched.
 Linux uses nonblocking signal pipes and a monotonic poll deadline. The
 process retains one bounded pair of pipes for each watched signal so an
 already-running handler can finish without writing to a reused descriptor.
@@ -29,7 +35,8 @@ terminal formatting.
 
 ## Recovery after forced termination
 
-A fatal signal can terminate the process before scope cleanup runs. To
+Another fatal signal, such as SIGKILL, can terminate the process before
+any cleanup runs. To
 restore the terminal from the shell, use:
 
 ```sh
@@ -50,7 +57,8 @@ python3 packages/term/fixtures/pty/test_pty.py packages/term/fixtures/pty/build/
 
 The PTY fixture checks the original termios settings and the exact ANSI
 mode snapshot after normal exit, exception unwinding, resize storms,
-SIGINT, input decoding and blocked-reader cancellation. It also checks
+SIGINT, termination by SIGTERM and SIGHUP, input decoding and
+blocked-reader cancellation. It also checks
 redirected streams and a broken output pipe.
 
 `fixtures/fuzz` runs the deterministic short-length and paste-boundary

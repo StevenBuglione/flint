@@ -61,7 +61,7 @@ def read_snapshot(master):
 
 
 @contextmanager
-def terminal_child(program, mode):
+def terminal_child(program, mode, status=0):
     master, slave = os.openpty()
     try:
         size(slave, 80, 24)
@@ -73,7 +73,7 @@ def terminal_child(program, mode):
         ) as process:
             try:
                 yield process, master, slave
-                assert process.wait(timeout=5) == 0, process.stderr.read().decode(errors="replace")
+                assert process.wait(timeout=5) == status, process.stderr.read().decode(errors="replace")
                 assert termios.tcgetattr(slave) == initial, mode
                 expected = b"" if mode == "conflict" else SNAPSHOT
                 output = read_snapshot(master)
@@ -135,11 +135,16 @@ def run_suite(program):
         await_raw(process, slave)
         os.kill(process.pid, signal.SIGINT)
         stderr_line(process, "SIGNAL_INTERRUPT")
+    for number in (signal.SIGTERM, signal.SIGHUP):
+        # Default termination signals still terminate the process, after the session restores its terminal.
+        with terminal_child(program, "terminate", -number) as (process, _, slave):
+            await_raw(process, slave)
+            os.kill(process.pid, number)
     with terminal_child(program, "cancel") as (process, _, _):
         stderr_line(process, "CANCELLED")
     with terminal_child(program, "conflict") as (process, _, _):
         stderr_line(process, "CONFLICT")
-    print("TERM-07: resize coalescing, signal delivery, blocked close and signal ownership conflict")
+    print("TERM-07: resize coalescing, signal delivery, termination restoration, blocked close and signal ownership conflict")
 
     streams = subprocess.run([program, "streams"], input=b"", capture_output=True, timeout=3, check=True)
     assert streams.stdout == b"ordinary output\n", streams.stdout

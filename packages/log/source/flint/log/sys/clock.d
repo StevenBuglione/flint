@@ -1,7 +1,6 @@
 module flint.log.sys.clock;
 
-import core.stdc.time : time_t, tm;
-import core.sys.posix.time : CLOCK_REALTIME, clock_gettime, gmtime_r, timespec;
+import core.sys.posix.time : CLOCK_REALTIME, clock_gettime, timespec;
 import flint.arena : Error, Result, Status;
 
 @safe:
@@ -16,11 +15,38 @@ package(flint.log) Result!ulong timestampMillis() @trusted nothrow @nogc
     return Result!ulong(cast(ulong) clock.tv_sec * 1000 + cast(ulong) clock.tv_nsec / 1_000_000);
 }
 
-// SAFETY: gmtime_r borrows one local input and writes the caller's local UTC fields synchronously.
-package(flint.log) bool timestampParts(ulong epochMillis, out tm utc) @trusted nothrow @nogc
+@("RFC 3339 text matches the C library UTC conversion from 1970 through 9999")
+@system unittest
 {
-    if (epochMillis / 1000 > time_t.max)
-        return false;
-    const seconds = cast(time_t)(epochMillis / 1000);
-    return gmtime_r(&seconds, &utc) !is null && utc.tm_year >= -1900 && utc.tm_year <= 8099;
+    import core.stdc.stdio : snprintf;
+    import core.stdc.time : time_t, tm;
+    import core.sys.posix.time : gmtime_r;
+    import flint.log.encoding : utcText;
+
+    void check(ulong millis)
+    {
+        char[24] text;
+        tm utc;
+        const seconds = cast(time_t)(millis / 1000);
+        assert(gmtime_r(&seconds, &utc) !is null);
+        assert(utcText(millis, text) == (utc.tm_year + 1900 <= 9999));
+        if (utc.tm_year + 1900 > 9999)
+            return;
+        char[64] expected;
+        const length = snprintf(expected.ptr, expected.length, "%04d-%02d-%02dT%02d:%02d:%02d.%03dZ",
+                utc.tm_year + 1900, utc.tm_mon + 1, utc.tm_mday, utc.tm_hour, utc.tm_min,
+                utc.tm_sec, cast(int)(millis % 1000));
+        assert(length == 24 && text[] == expected[0 .. 24]);
+    }
+
+    enum ulong day = 86_400_000;
+    foreach (ulong days; 0 .. 4 * 146_097 + 3)
+        check(days * day + (days * 7_919_993) % day);
+    foreach (ulong second; 0 .. 100_000)
+        check(second * 997 + second % 1000);
+    foreach (ulong millis; [
+        951_782_400_000UL, 4_107_542_399_999UL, 253_402_300_799_999UL, 253_402_300_800_000UL,
+        253_402_300_800_000UL + 365 * day
+    ])
+        check(millis);
 }

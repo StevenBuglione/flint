@@ -3,8 +3,6 @@ module flint.cli.emit;
 import flint.cli.internal.metadata : CommandNode;
 import flint.cli.scan : Binding, Field, missing;
 import flint.cli.types : Shell;
-import std.base64 : Base64;
-import std.conv : to;
 
 @safe:
 
@@ -194,6 +192,8 @@ private string quotePosix(scope const(char)[] source)
 
 private string quotePs(scope const(char)[] source)
 {
+    import std.base64 : Base64;
+
     // All metadata in PowerShell source is inert ASCII, including any curly quotes.
     const encoded = Base64.encode(cast(const(ubyte)[]) source).idup;
     return "([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('" ~ encoded ~ "')))";
@@ -222,6 +222,8 @@ private void forEachCandidate(scope const Field[] fields, scope void delegate(sc
 
 private void posixTransitions(scope const CommandNode[] nodes, scope Sink write)
 {
+    import std.conv : to;
+
     foreach (index, ref const node; nodes)
     {
         if (node.parent != missing)
@@ -244,6 +246,8 @@ private void posixTransitions(scope const CommandNode[] nodes, scope Sink write)
 
 private void posixChoice(scope const CommandNode[] nodes, scope Sink write)
 {
+    import std.conv : to;
+
     write("  case \"$node\" in\n");
     foreach (index, ref const node; nodes)
     {
@@ -296,6 +300,8 @@ private void psTransition(scope Sink write, scope const(char)[] key, string targ
 
 private void powershell(scope const CommandNode[] nodes, scope Sink write)
 {
+    import std.conv : to;
+
     write("Register-ArgumentCompleter -Native -CommandName " ~ quotePs(nodes[0].name) ~ " -ScriptBlock {\n"
             ~ "  param($wordToComplete, $commandAst, $cursorPosition)\n"
             ~ "  $steps = [Collections.Generic.Dictionary[string,int]]::new([StringComparer]::Ordinal)\n");
@@ -342,6 +348,8 @@ private void powershell(scope const CommandNode[] nodes, scope Sink write)
 
 private void psChoice(scope const CommandNode[] nodes, scope Sink write)
 {
+    import std.conv : to;
+
     foreach (index, ref const node; nodes)
     {
         write("    " ~ index.to!string ~ " { $matches = @(\n");

@@ -47,6 +47,9 @@ struct flint_term_native {
     struct termios original;
     struct sigaction previous_interrupt;
     struct sigaction previous_resize;
+    // Termination signals owned by this session, by index in termination_signals.
+    unsigned terminating;
+    struct sigaction previous_termination[2];
 };
 
 // This lock serializes changes to process-global dispositions and descriptor
@@ -57,12 +60,20 @@ static int resize_pipe[2] = { -1, -1 };
 static int interrupt_pipe[2] = { -1, -1 };
 static volatile sig_atomic_t resize_write = -1;
 static volatile sig_atomic_t interrupt_write = -1;
+// SIGTERM and SIGHUP still terminate the process. Their handler only records the signal; a
+// process-lifetime restorer thread restores the owner under the lifecycle lock, then delivers
+// the signal again with its default disposition.
+static const int termination_signals[2] = { SIGTERM, SIGHUP };
+static int termination_pipe[2] = { -1, -1 };
+static volatile sig_atomic_t termination_write = -1;
+static struct flint_term_native *active_owner;
 
 static void terminal_signal(int signal_number)
 {
     int saved = errno;
-    int fd = signal_number == SIGWINCH ? resize_write : interrupt_write;
-    unsigned char byte = 1;
+    int fd = signal_number == SIGWINCH ? resize_write
+        : signal_number == SIGINT ? interrupt_write : termination_write;
+    unsigned char byte = (unsigned char) signal_number;
     if (fd >= 0)
         (void) write(fd, &byte, 1);
     errno = saved;
@@ -150,6 +161,78 @@ static int restore_signal(int number, const struct sigaction *previous)
     return sigaction(number, previous, NULL) < 0 ? TERM_IO_ERROR : TERM_OK;
 }
 
+static int restore_terminal(struct flint_term_native *state);
+
+static void *restore_on_termination(void *unused)
+{
+    (void) unused;
+    sigset_t all;
+    sigfillset(&all);
+    (void) pthread_sigmask(SIG_BLOCK, &all, NULL);
+    for (;;) {
+        struct pollfd ready = { termination_pipe[0], POLLIN, 0 };
+        unsigned char number;
+        if (poll(&ready, 1, -1) <= 0 || read(termination_pipe[0], &number, 1) != 1)
+            continue;
+        pthread_mutex_lock(&lifecycle);
+        if (active_owner != NULL)
+            (void) restore_terminal(active_owner);
+        // The handler replaced only a default disposition, so default delivery terminates as before.
+        struct sigaction standard = { 0 };
+        standard.sa_handler = SIG_DFL;
+        sigemptyset(&standard.sa_mask);
+        (void) sigaction(number, &standard, NULL);
+        pthread_mutex_unlock(&lifecycle);
+        (void) kill(getpid(), number);
+    }
+    return NULL;
+}
+
+// Called with the lifecycle lock held. Failure leaves termination signals unobserved.
+static int start_restorer(void)
+{
+    static int started;
+    if (started)
+        return TERM_OK;
+    if (pipe2(termination_pipe, O_NONBLOCK | O_CLOEXEC) < 0)
+        return TERM_IO_ERROR;
+    pthread_attr_t attributes;
+    pthread_t thread;
+    int created = pthread_attr_init(&attributes) == 0
+        && pthread_attr_setdetachstate(&attributes, PTHREAD_CREATE_DETACHED) == 0
+        && pthread_create(&thread, &attributes, restore_on_termination, NULL) == 0;
+    (void) pthread_attr_destroy(&attributes);
+    if (!created) {
+        close(termination_pipe[0]);
+        close(termination_pipe[1]);
+        termination_pipe[0] = termination_pipe[1] = -1;
+        return TERM_IO_ERROR;
+    }
+    termination_write = termination_pipe[1];
+    started = 1;
+    return TERM_OK;
+}
+
+// Observe only termination signals that still have their default action; an application
+// handler or an ignored signal keeps its existing behavior.
+static void watch_termination(struct flint_term_native *state, const struct sigaction *action)
+{
+    state->terminating = 0;
+    if (start_restorer() != TERM_OK)
+        return;
+    clear_pipe(termination_pipe[0]);
+    for (unsigned index = 0; index < 2; ++index) {
+        int number = termination_signals[index];
+        struct sigaction *previous = &state->previous_termination[index];
+        if (sigaction(number, action, previous) < 0)
+            continue;
+        if (previous->sa_handler == SIG_DFL && !(previous->sa_flags & SA_SIGINFO))
+            state->terminating |= 1U << index;
+        else
+            (void) sigaction(number, previous, NULL);
+    }
+}
+
 static int watch_terminal(struct flint_term_native *state)
 {
     if (owner_active)
@@ -179,7 +262,9 @@ static int watch_terminal(struct flint_term_native *state)
         (void) restore_signal(SIGWINCH, &state->previous_resize);
         return TERM_CONFLICT;
     }
+    watch_termination(state, &action);
     owner_active = 1;
+    active_owner = state;
     state->watched = 1;
     return TERM_OK;
 }
@@ -190,8 +275,17 @@ static void unwatch_terminal(struct flint_term_native *state, int *first)
         return;
     int resize_status = restore_signal(SIGWINCH, &state->previous_resize);
     int interrupt_status = restore_signal(SIGINT, &state->previous_interrupt);
+    for (unsigned index = 0; index < 2; ++index) {
+        if (state->terminating & (1U << index)) {
+            int status = restore_signal(termination_signals[index], &state->previous_termination[index]);
+            if (interrupt_status == TERM_OK)
+                interrupt_status = status;
+        }
+    }
+    state->terminating = 0;
     state->watched = 0;
     owner_active = 0;
+    active_owner = NULL;
     if (*first == TERM_OK)
         *first = resize_status == TERM_OK ? interrupt_status : resize_status;
 }
