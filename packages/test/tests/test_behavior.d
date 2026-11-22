@@ -185,3 +185,64 @@ unittest
     const failure = collectException!AssertionFailure(mock.verify());
     assert(failure !is null && failure.msg.canFind("unexpected call to signal"), failure.msg);
 }
+
+@("runner UTF-8 decoding matches std.utf replacement decoding")
+unittest
+{
+    import flint.test.internal.runner : decodeReplacing;
+    import std.utf : UseReplacementDchar, decode;
+
+    static void same(scope const(char)[] text) @safe
+    {
+        size_t expectedIndex;
+        size_t actualIndex;
+        const expected = decode!(UseReplacementDchar.yes)(text, expectedIndex);
+        const actual = decodeReplacing(text, actualIndex);
+        assert(expected == actual && expectedIndex == actualIndex);
+    }
+
+    char[4] buffer;
+    foreach (first; 0 .. 256)
+    {
+        buffer[0] = cast(char) first;
+        same(buffer[0 .. 1]);
+        foreach (second; 0 .. 256)
+        {
+            buffer[1] = cast(char) second;
+            same(buffer[0 .. 2]);
+        }
+    }
+    // Lead, continuation and boundary bytes of every sequence length, including overlong, surrogate,
+    // beyond-U+10FFFF, truncated and five- and six-unit forms.
+    static immutable ubyte[] edges = [
+        0x00, 0x41, 0x7F, 0x80, 0x8F, 0x90, 0x9F, 0xA0, 0xBF, 0xC0, 0xC1, 0xC2, 0xDF, 0xE0, 0xED,
+        0xEF, 0xF0, 0xF4, 0xF5, 0xF7, 0xF8, 0xFB, 0xFC, 0xFE, 0xFF
+    ];
+    foreach (a; edges)
+        foreach (b; edges)
+            foreach (c; edges)
+            {
+                buffer[0] = cast(char) a;
+                buffer[1] = cast(char) b;
+                buffer[2] = cast(char) c;
+                same(buffer[0 .. 3]);
+                foreach (d; edges)
+                {
+                    buffer[3] = cast(char) d;
+                    same(buffer[0 .. 4]);
+                }
+            }
+}
+
+@("mock and runner decimal text matches std.conv")
+unittest
+{
+    import flint.test.internal.mocks : decimal;
+    import std.conv : to;
+
+    static immutable ulong[] values = [
+        0, 1, 9, 10, 99, 100, 479, 4_294_967_295, 4_294_967_296, ulong.max - 1, ulong.max
+    ];
+    foreach (value; values)
+        assert(decimal(value) == value.to!string, value.to!string);
+}

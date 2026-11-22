@@ -1,57 +1,196 @@
 module flint.test.internal.mocks;
 
-import std.conv : to;
-import std.format : format;
-import std.meta : AliasSeq, aliasSeqOf, staticMap;
-import std.traits : FA = FunctionAttribute, PSC = ParameterStorageClass, Parameters, ReturnType,
-    Variadic, functionAttributes, functionLinkage, ParameterStorageClassTuple, variadicFunctionStyle;
-
 @safe:
 
-// Flags each candidate that is the first virtual method with its name and type, in one pass per interface.
-private bool[Methods.length] firstVirtuals(Methods...)()
+// Built-in alias sequence: std.meta's helpers would add their own instantiations for every mock.
+private alias Seq(T...) = T;
+
+// The function attribute bits of std.traits.FunctionAttribute, decoded here without its per-method templates.
+private enum Attribute : uint
 {
-    bool[Methods.length] first;
-    static foreach (position; 0 .. Methods.length)
-    {
-        first[position] = __traits(isVirtualMethod, Methods[position]);
-        static foreach (prior; 0 .. position)
-        {
-            if (__traits(identifier, Methods[position]) == __traits(identifier, Methods[prior])
-                    && is(typeof(Methods[position]) == typeof(Methods[prior])))
-                first[position] = false;
-        }
-    }
-    return first;
+    pure_ = 1 << 0,
+    nothrow_ = 1 << 1,
+    ref_ = 1 << 2,
+    property = 1 << 3,
+    trusted = 1 << 4,
+    safe = 1 << 5,
+    nogc = 1 << 6,
+    system = 1 << 7,
+    const_ = 1 << 8,
+    immutable_ = 1 << 9,
+    inout_ = 1 << 10,
+    shared_ = 1 << 11,
+    return_ = 1 << 12,
+    scope_ = 1 << 13,
+    live = 1 << 14,
 }
 
-private size_t[] indices(size_t count)
+// The parameter storage bits of std.traits.ParameterStorageClass.
+private enum Storage : uint
 {
-    auto result = new size_t[count];
-    foreach (i, ref index; result)
-        index = i;
-    return result;
+    none = 0,
+    in_ = 1 << 0,
+    ref_ = 1 << 1,
+    out_ = 1 << 2,
+    lazy_ = 1 << 3,
+    scope_ = 1 << 4,
+    return_ = 1 << 5,
+}
+
+// Same mapping as std.traits.functionAttributes over `__traits(getFunctionAttributes)`.
+private uint attributeFlags(scope const string[] attributes...) pure nothrow
+{
+    uint flags;
+    foreach (attribute; attributes)
+    {
+        switch (attribute)
+        {
+        case "pure":
+            flags |= Attribute.pure_;
+            break;
+        case "nothrow":
+            flags |= Attribute.nothrow_;
+            break;
+        case "ref":
+            flags |= Attribute.ref_;
+            break;
+        case "@property":
+            flags |= Attribute.property;
+            break;
+        case "@trusted":
+            flags |= Attribute.trusted;
+            break;
+        case "@safe":
+            flags |= Attribute.safe;
+            break;
+        case "@nogc":
+            flags |= Attribute.nogc;
+            break;
+        case "@system":
+            flags |= Attribute.system;
+            break;
+        case "const":
+            flags |= Attribute.const_;
+            break;
+        case "immutable":
+            flags |= Attribute.immutable_;
+            break;
+        case "inout":
+            flags |= Attribute.inout_;
+            break;
+        case "shared":
+            flags |= Attribute.shared_;
+            break;
+        case "return":
+            flags |= Attribute.return_;
+            break;
+        case "scope":
+            flags |= Attribute.scope_;
+            break;
+        case "@live":
+            flags |= Attribute.live;
+            break;
+        default:
+            assert(0, attribute);
+        }
+    }
+    return flags;
+}
+
+// Same mapping as std.traits.ParameterStorageClassTuple over `__traits(getParameterStorageClasses)`.
+private uint storageFlags(scope const string[] classes...) pure nothrow
+{
+    uint flags;
+    foreach (storage; classes)
+    {
+        switch (storage)
+        {
+        case "scope":
+            flags |= Storage.scope_;
+            break;
+        case "in":
+            flags |= Storage.in_;
+            break;
+        case "out":
+            flags |= Storage.out_;
+            break;
+        case "ref":
+            flags |= Storage.ref_;
+            break;
+        case "lazy":
+            flags |= Storage.lazy_;
+            break;
+        case "return":
+            flags |= Storage.return_;
+            break;
+        default:
+            assert(0, storage);
+        }
+    }
+    if (flags == (Storage.ref_ | Storage.return_))
+        flags = Storage.return_;
+    return flags;
+}
+
+/// Decimal text of an unsigned value, shared by generated source and diagnostics.
+package(flint.test) string decimal(ulong value) pure nothrow
+{
+    char[20] digits;
+    size_t start = digits.length;
+    do
+    {
+        digits[--start] = "0123456789"[value % 10];
+        value /= 10;
+    }
+    while (value != 0);
+    return digits[start .. $].idup;
+}
+
+// `__traits(getOverloads, Contract, name)` for every member name, as one alias sequence.
+private string overloadList(scope const string[] names) pure
+{
+    string source;
+    foreach (index, name; names)
+        source ~= (index == 0 ? "" : ", ") ~ "__traits(getOverloads, Contract, \"" ~ name ~ "\")";
+    return source;
+}
+
+// Selects each candidate that is the first virtual method with its name and type. Function types are equal
+// exactly when their mangled names are, so the comparison needs no instantiation per pair.
+private string firstVirtuals(scope const string[] names, scope const string[] types, scope const bool[] virtuals) pure
+{
+    string selection;
+    foreach (position; 0 .. names.length)
+    {
+        bool first = virtuals[position];
+        foreach (prior; 0 .. position)
+        {
+            if (names[position] == names[prior] && types[position] == types[prior])
+                first = false;
+        }
+        if (first)
+            selection ~= (selection.length == 0 ? "" : ", ") ~ "candidates[" ~ decimal(position) ~ "]";
+    }
+    return selection;
 }
 
 private template methodsOf(Contract)
 {
     static assert(is(Contract == interface), "Mock requires an interface");
-    template overloads(string name)
-    {
-        alias overloads = __traits(getOverloads, Contract, name);
-    }
-
-    private alias candidates = staticMap!(overloads, __traits(allMembers, Contract));
-    private enum first = firstVirtuals!candidates();
-    template unique(size_t index)
-    {
-        static if (first[index])
-            alias unique = AliasSeq!(candidates[index]);
-        else
-            alias unique = AliasSeq!();
-    }
-
-    alias methodsOf = staticMap!(unique, aliasSeqOf!(indices(candidates.length)));
+    mixin("private alias candidates = Seq!(" ~ overloadList([__traits(allMembers, Contract)]) ~ ");");
+    private enum selection = () {
+        string[candidates.length] names;
+        string[candidates.length] types;
+        bool[candidates.length] virtuals;
+        static foreach (index, candidate; candidates)
+        {
+            names[index] = __traits(identifier, candidate);
+            types[index] = typeof(candidate).mangleof;
+            virtuals[index] = __traits(isVirtualMethod, candidate);
+        }
+        return firstVirtuals(names[], types[], virtuals[]);
+    }();
+    mixin("alias methodsOf = Seq!(" ~ selection ~ ");");
     static assert(methodsOf.length <= 64, "Mock supports up to 64 distinct methods");
 }
 
@@ -67,94 +206,118 @@ package(flint.test) struct SelectedMethod(Contract, string name, size_t overload
     enum explicitlySelected = true;
 }
 
-// Position of the method with the selected name and type: one flat scan per lookup, not a recursive
-// instantiation per remaining method.
-private template indexOf(alias selected, Methods...)
+// Position of the method with the selected name and mangled type: one flat scan per lookup.
+private size_t findMethod(scope const string[] names, scope const string[] types, string name, string type) pure
 {
-    enum indexOf = () {
-        size_t found = size_t.max;
-        static foreach (index; 0 .. Methods.length)
-        {
-            if (found == size_t.max && __traits(identifier, selected) == __traits(identifier,
-                    Methods[index]) && is(typeof(selected) == typeof(Methods[index])))
-                found = index;
-        }
-        return found;
-    }();
+    foreach (index; 0 .. names.length)
+    {
+        if (names[index] == name && types[index] == type)
+            return index;
+    }
+    return size_t.max;
 }
 
-package(flint.test) template methodIndex(Contract, alias selection)
+private enum unsupportedAttributes = Attribute.pure_ | Attribute.ref_ | Attribute.return_
+    | Attribute.scope_ | Attribute.immutable_ | Attribute.inout_ | Attribute.shared_ | Attribute.live;
+
+// Same acceptance as std.traits.variadicFunctionStyle == Variadic.no.
+private bool notVariadic(string style) pure nothrow
 {
-    static if (is(selection) && __traits(hasMember, selection, "explicitlySelected"))
+    return style != "stdarg" && style != "argptr" && style != "typesafe";
+}
+
+// Source of one override; `Plans[index]` carries the method's return and parameter types.
+private string methodSource(size_t index, string name, uint attributes, bool valued, scope const uint[] modes) pure
+{
+    const slot = decimal(index);
+    string source = "override Plans[" ~ slot ~ "].Value " ~ name ~ "(";
+    foreach (parameter, mode; modes)
     {
-        static assert(is(selection.Owner == Contract), "mock overload belongs to a different interface");
-        alias method = selection.Method;
+        if (parameter != 0)
+            source ~= ", ";
+        if (mode == Storage.ref_)
+            source ~= "ref ";
+        else if (mode == Storage.in_)
+            source ~= "in ";
+        const position = decimal(parameter);
+        source ~= "Plans[" ~ slot ~ "].Params[" ~ position ~ "] arg" ~ position;
     }
-    else
-    {
-        alias method = selection;
-        enum name = __traits(identifier, method);
-        static assert(__traits(getOverloads, Contract, name).length == 1,
-                "select overloaded methods with MockMethod!(Interface, name, overload)");
-    }
-    enum methodIndex = indexOf!(method, methodsOf!Contract);
-    static assert(methodIndex != size_t.max, "method is not in the mock interface");
+    source ~= ") @safe";
+    if (attributes & Attribute.const_)
+        source ~= " const";
+    if (attributes & Attribute.nothrow_)
+        source ~= " nothrow";
+    if (attributes & Attribute.nogc)
+        source ~= " @nogc";
+    if (attributes & Attribute.property)
+        source ~= " @property";
+    source ~= valued ? " { return " : " { ";
+    source ~= "flintState().invoke!(" ~ slot ~ ")(); }\n";
+    return source;
+}
+
+private string joined(scope const string[] parts) pure
+{
+    string source;
+    foreach (part; parts)
+        source ~= part;
+    return source;
 }
 
 private string emitMethods(Methods...)()
 {
-    string source;
+    string[Methods.length] sources;
     static foreach (index, method; Methods)
     {
         {
             enum name = __traits(identifier, method);
-            enum attributes = functionAttributes!method;
-            enum unsupported = FA.pure_ | FA.ref_ | FA.return_ | FA.scope_ | FA.immutable_
-                | FA.inout_ | FA.shared_ | FA.live;
-            static assert((attributes & unsupported) == 0 && variadicFunctionStyle!method == Variadic.no
-                    && functionLinkage!method == "D", "unsupported mock method qualifiers on " ~ name);
-            enum suffix = (attributes & FA.const_ ? " const" : "") ~ (attributes & FA.nothrow_
-                        ? " nothrow" : "") ~ (attributes & FA.nogc
-                        ? " @nogc" : "") ~ (attributes & FA.property ? " @property" : "");
-            enum idx = to!string(index);
-            source ~= "override ReturnType!(MethodList[" ~ idx ~ "]) " ~ name ~ "(";
-            static foreach (parameter, mode; ParameterStorageClassTuple!method)
+            enum attributes = attributeFlags(__traits(getFunctionAttributes, method));
+            static assert((attributes & unsupportedAttributes) == 0 && notVariadic(__traits(getFunctionVariadicStyle,
+                    typeof(method))) && __traits(getLinkage, typeof(method)) == "D",
+                    "unsupported mock method qualifiers on " ~ name);
+            static if (is(typeof(method) Return == return) && is(typeof(method) Arguments == __parameters))
             {
+                uint[Arguments.length] modes;
+                static foreach (parameter; 0 .. Arguments.length)
                 {
-                    static assert(mode == PSC.none || mode == PSC.ref_ || mode == PSC.in_,
-                            "mock parameters must be value, ref, or in");
-                    if (parameter != 0)
-                        source ~= ", ";
-                    static if (mode == PSC.ref_)
-                        source ~= "ref ";
-                    else static if (mode == PSC.in_)
-                        source ~= "in ";
-                    enum p = to!string(parameter);
-                    source ~= "Parameters!(MethodList[" ~ idx ~ "])[" ~ p ~ "] arg" ~ p;
+                    {
+                        enum mode = storageFlags(__traits(getParameterStorageClasses, typeof(method), parameter));
+                        static assert(mode == Storage.none || mode == Storage.ref_
+                                || mode == Storage.in_, "mock parameters must be value, ref, or in");
+                        modes[parameter] = mode;
+                    }
                 }
+                sources[index] = methodSource(index, name, attributes, !is(Return == void), modes[]);
             }
-            source ~= ") @safe" ~ suffix ~ " { ";
-            static if (!is(ReturnType!method == void))
-                source ~= "return ";
-            source ~= "flintState().invoke!(" ~ idx ~ ")(); }\n";
         }
     }
-    return source;
+    return joined(sources[]);
 }
 
 // One formatter shared by every mock instead of one per generated method.
 private string missedCalls(string name, size_t expected, size_t observed)
 {
-    return format!"%s expected %s call(s), received %s"(name, expected, observed);
+    return name ~ " expected " ~ decimal(expected) ~ " call(s), received " ~ decimal(observed);
 }
 
 private struct Plan(alias method)
 {
-    alias Value = ReturnType!method;
+    static if (is(typeof(method) Return == return))
+        alias Value = Return;
+    static if (is(typeof(method) Arguments == __parameters))
+        alias Params = Arguments;
     static if (!is(Value == void))
         Value[] values;
     size_t expected;
     size_t observed;
+}
+
+private string planList(size_t count) pure
+{
+    string source;
+    foreach (index; 0 .. count)
+        source ~= (index == 0 ? "Plan!(MethodList[" : ", Plan!(MethodList[") ~ decimal(index) ~ "])";
+    return source;
 }
 
 package(flint.test) final class MockState(Contract)
@@ -162,7 +325,40 @@ package(flint.test) final class MockState(Contract)
     private alias MethodList = methodsOf!Contract;
     // A built-in field sequence, one plan per method; std.typecons.Tuple would instantiate its comparison,
     // hashing and formatting machinery for every mock.
-    private alias Plans = staticMap!(Plan, MethodList);
+    mixin("private alias Plans = Seq!(" ~ planList(MethodList.length) ~ ");");
+
+    // Identifier and mangled type of each method, for overload lookups by `slotOf`.
+    private enum string[MethodList.length] methodNames = () {
+        string[MethodList.length] names;
+        static foreach (index, method; MethodList)
+            names[index] = __traits(identifier, method);
+        return names;
+    }();
+    private enum string[MethodList.length] methodTypes = () {
+        string[MethodList.length] types;
+        static foreach (index, method; MethodList)
+            types[index] = typeof(method).mangleof;
+        return types;
+    }();
+
+    /// Plan slot of a method symbol or of an explicit `MockMethod` selection.
+    template slotOf(alias selection)
+    {
+        static if (is(selection) && __traits(hasMember, selection, "explicitlySelected"))
+        {
+            static assert(is(selection.Owner == Contract), "mock overload belongs to a different interface");
+            alias method = selection.Method;
+        }
+        else
+        {
+            alias method = selection;
+            enum name = __traits(identifier, method);
+            static assert(__traits(getOverloads, Contract, name).length == 1,
+                    "select overloaded methods with MockMethod!(Interface, name, overload)");
+        }
+        enum slotOf = findMethod(methodNames[], methodTypes[], __traits(identifier, method), typeof(method).mangleof);
+        static assert(slotOf != size_t.max, "method is not in the mock interface");
+    }
 
     // TLS provides mutable state for const methods without casting away their qualifiers.
     private static MockState[] active;
@@ -247,7 +443,7 @@ package(flint.test) final class MockState(Contract)
 
     void configure(size_t index, T)(T result)
     {
-        alias Value = ReturnType!(MethodList[index]);
+        alias Value = Plans[index].Value;
         static assert(!is(Value == void) && is(T : Value), "return value must match the mock method type");
         requireConfiguration();
         plans[index].values ~= result;
@@ -257,15 +453,15 @@ package(flint.test) final class MockState(Contract)
 
     void configureVoid(size_t index)()
     {
-        static assert(is(ReturnType!(MethodList[index]) == void), "expects requires a void method");
+        static assert(is(Plans[index].Value == void), "expects requires a void method");
         requireConfiguration();
         ++plans[index].expected;
         ++expectedCount;
     }
 
-    ReturnType!(MethodList[index]) invoke(size_t index)()
+    Plans[index].Value invoke(size_t index)()
     {
-        alias Value = ReturnType!(MethodList[index]);
+        alias Value = Plans[index].Value;
         if (callCount == callLog.length)
         {
             violation = "mock call log capacity exceeded";

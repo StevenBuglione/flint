@@ -2,7 +2,7 @@ module flint.test;
 
 import std.format : format;
 import std.traits : isArray, isFloatingPoint, isSomeString;
-import flint.test.internal.mocks : MockState, SelectedMethod, methodIndex;
+import flint.test.internal.mocks : MockState, SelectedMethod;
 
 @safe:
 
@@ -124,14 +124,14 @@ struct Mock(Contract)
     /// Configure the next expected call and its typed return value.
     void returns(alias method, T)(T result)
     {
-        enum slot = methodIndex!(Contract, method);
+        enum slot = typeof(state).slotOf!method;
         ownedState().configure!slot(result);
     }
 
     /// Expect one call to a method returning void.
     void expects(alias method)()
     {
-        enum slot = methodIndex!(Contract, method);
+        enum slot = typeof(state).slotOf!method;
         ownedState().configureVoid!slot();
     }
 

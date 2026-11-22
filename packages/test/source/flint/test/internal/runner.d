@@ -5,12 +5,7 @@ module flint.test.internal.runner;
 version (unittest)
 {
     import flint.test : AssertionFailure;
-    import std.algorithm.searching : canFind;
-    import std.array : Appender, appender;
-    import std.format : format;
-    import std.random : rndGen;
-    import std.stdio : File, writeln;
-    import std.utf : UseReplacementDchar, decode;
+    import flint.test.internal.mocks : decimal;
 
     package(flint.test) struct TestCase
     {
@@ -58,38 +53,64 @@ version (unittest)
 
     private Planned[] planOf(Modules...)()
     {
-        Planned[] tests;
-        string[] modules;
+        // Every compiled test is recorded with the position of its module in the explicit list; repeated modules
+        // are dropped and the rest sorted by `ordered`, so nothing below is instantiated per module or test.
+        enum slots = () {
+            size_t count;
+            static foreach (source; Modules)
+                count += __traits(getUnitTests, source).length;
+            return count;
+        }();
+        auto tests = new Planned[slots];
+        auto positions = new size_t[slots];
+        string[Modules.length] modules;
         size_t slot;
-        static foreach (source; Modules)
+        static foreach (position, source; Modules)
         {
+            modules[position] = __traits(fullyQualifiedName, source);
+            static foreach (index, test; __traits(getUnitTests, source))
             {
-                enum moduleName = __traits(fullyQualifiedName, source);
-                // Deduplicate repeated modules in the explicit list.
-                const first = !modules.canFind(moduleName);
-                if (first)
-                    modules ~= moduleName;
-                static foreach (index, test; __traits(getUnitTests, source))
                 {
+                    const fallback = fallbackName(index);
+                    string name = fallback;
+                    static foreach (attribute; __traits(getAttributes, test))
                     {
-                        enum fallback = format!"test-%s"(index + 1);
-                        string name = fallback;
-                        static foreach (attribute; __traits(getAttributes, test))
                         {
+                            static if (is(typeof(attribute) == string))
                             {
-                                static if (is(typeof(attribute) == string))
-                                {
-                                    if (name == fallback && attribute.length != 0)
-                                        name = attribute;
-                                }
+                                if (name == fallback && attribute.length != 0)
+                                    name = attribute;
                             }
                         }
-                        if (first)
-                            tests ~= Planned(moduleName, name, index, slot);
-                        ++slot;
                     }
+                    tests[slot] = Planned(modules[position], name, index, slot);
+                    positions[slot] = position;
+                    ++slot;
                 }
             }
+        }
+        return ordered(tests, positions, modules[]);
+    }
+
+    private string fallbackName(size_t index) pure nothrow
+    {
+        return "test-" ~ decimal(index + 1);
+    }
+
+    // Keep the tests of each module's first occurrence in the explicit list, then sort them.
+    private Planned[] ordered(scope const Planned[] all, scope const size_t[] owners, scope const string[] modules) pure
+    {
+        Planned[] tests;
+        foreach (index, entry; all)
+        {
+            bool first = true;
+            foreach (prior; 0 .. owners[index])
+            {
+                if (modules[prior] == modules[owners[index]])
+                    first = false;
+            }
+            if (first)
+                tests ~= entry;
         }
         // Insertion sort by module, then declaration order; the keys are unique after deduplication.
         foreach (position; 1 .. tests.length)
@@ -108,84 +129,160 @@ version (unittest)
         return a.moduleName == b.moduleName ? a.ordinal < b.ordinal : a.moduleName < b.moduleName;
     }
 
-    private void xmlEscape(ref Appender!string output, scope const(char)[] source)
+    /// `std.utf.decode!(UseReplacementDchar.yes)` over UTF-8: the same scalar, and the same number of code
+    /// units consumed, for every valid and invalid sequence.
+    package(flint.test) dchar decodeReplacing(scope const(char)[] source, ref size_t index) pure nothrow @nogc
+    {
+        enum dchar replacement = 0xFFFD;
+        static immutable uint[4] mask = [(1 << 7) - 1, (1 << 11) - 1, (1 << 16) - 1, (1 << 21) - 1];
+        const ubyte lead = source[index];
+        if (lead < 0x80)
+        {
+            ++index;
+            return lead;
+        }
+        if ((lead & 0b1100_0000) != 0b1100_0000)
+        {
+            ++index;
+            return replacement;
+        }
+        const length = source.length - index;
+        uint scalar = lead;
+        ubyte control = lead;
+        control <<= 1;
+        foreach (i; 1 .. 4)
+        {
+            if (i == length)
+            {
+                index += i;
+                return replacement;
+            }
+            const ubyte next = source[index + i];
+            if ((next & 0xC0) != 0x80)
+            {
+                index += i + 1;
+                return replacement;
+            }
+            scalar = (scalar << 6) | (next & 0x3F);
+            control <<= 1;
+            if (!(control & 0x80))
+            {
+                scalar &= mask[i];
+                // Overlong (fits in fewer units), surrogate (three units) or beyond U+10FFFF (four units).
+                const invalid = (scalar & ~mask[i - 1]) == 0 || (i == 2 && !(scalar < 0xD800
+                        || (scalar > 0xDFFF && scalar <= 0x10FFFF))) || (i == 3 && scalar > dchar.max);
+                index += i + 1;
+                const dchar decoded = scalar;
+                return invalid ? replacement : decoded;
+            }
+        }
+        index += 4;
+        return replacement;
+    }
+
+    // Byte-wise substring test, as `std.algorithm.searching.canFind` on two UTF-8 strings.
+    private bool contains(scope const(char)[] text, scope const(char)[] part) pure nothrow @nogc
+    {
+        if (part.length > text.length)
+            return false;
+        foreach (start; 0 .. text.length - part.length + 1)
+        {
+            if (text[start .. start + part.length] == part)
+                return true;
+        }
+        return false;
+    }
+
+    private void xmlEscape(ref string output, scope const(char)[] source)
     {
         size_t offset;
         while (offset < source.length)
         {
             const start = offset;
-            const scalar = decode!(UseReplacementDchar.yes)(source, offset);
+            const scalar = decodeReplacing(source, offset);
             switch (scalar)
             {
             case '&':
-                output.put("&amp;");
+                output ~= "&amp;";
                 break;
             case '<':
-                output.put("&lt;");
+                output ~= "&lt;";
                 break;
             case '>':
-                output.put("&gt;");
+                output ~= "&gt;";
                 break;
             case '"':
-                output.put("&quot;");
+                output ~= "&quot;";
                 break;
             case '\'':
-                output.put("&apos;");
+                output ~= "&apos;";
                 break;
             case '\t':
-                output.put("&#9;");
+                output ~= "&#9;";
                 break;
             case '\n':
-                output.put("&#10;");
+                output ~= "&#10;";
                 break;
             case '\r':
-                output.put("&#13;");
+                output ~= "&#13;";
                 break;
             default:
                 if (scalar < 32 || scalar == 0xfffe || scalar == 0xffff || scalar == 0xfffd)
-                    output.put("\uFFFD");
+                    output ~= "\uFFFD";
                 else
-                    output.put(source[start .. offset]);
+                    output ~= source[start .. offset];
             }
         }
     }
 
-    private void recordCase(ref Appender!string xml, TestCase test, string tag, string detail)
+    private void recordCase(ref string xml, TestCase test, string tag, string detail)
     {
-        xml.put("  <testcase classname=\"");
+        xml ~= "  <testcase classname=\"";
         xmlEscape(xml, test.moduleName);
-        xml.put("\" name=\"");
+        xml ~= "\" name=\"";
         xmlEscape(xml, test.name);
         if (tag.length == 0)
         {
-            xml.put("\"/>\n");
+            xml ~= "\"/>\n";
             return;
         }
-        xml.put("\"><" ~ tag ~ ">");
+        xml ~= "\"><" ~ tag ~ ">";
         xmlEscape(xml, detail);
-        xml.put("</" ~ tag ~ "></testcase>\n");
+        xml ~= "</" ~ tag ~ "></testcase>\n";
     }
 
     // Write with exclusive creation so overlapping shards cannot overwrite an earlier receipt.
     private void writeReport(string path, uint seed, size_t total, size_t failed, size_t errors, string cases)
     {
+        import std.stdio : File;
+
         auto output = File(path, "wbx");
-        output.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-        output.write(`<testsuite name="Flint" tests="`, total, `" failures="`, failed, `" errors="`, errors, "\">\n");
-        output.write("  <properties><property name=\"seed\" value=\"", seed, "\"/></properties>\n");
-        output.write(cases, "</testsuite>\n");
+        output.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<testsuite name=\"Flint\" tests=\"" ~ decimal(
+                total) ~ "\" failures=\"" ~ decimal(failed) ~ "\" errors=\"" ~ decimal(
+                errors) ~ "\">\n  <properties><property name=\"seed\" value=\"" ~ decimal(
+                seed) ~ "\"/></properties>\n" ~ cases ~ "</testsuite>\n");
         output.close();
     }
 
     private string diagnostic(Throwable failure, uint seed)
     {
-        return format!"%s:%s: %s (seed %s)"(failure.file, failure.line, failure.msg, seed);
+        return failure.file ~ ":" ~ decimal(failure.line) ~ ": " ~ failure.msg ~ " (seed " ~ decimal(seed) ~ ")";
+    }
+
+    // One line on standard output through a single writer instance.
+    private void printLine(scope const(char)[] line)
+    {
+        import std.stdio : writeln;
+
+        writeln(line);
     }
 
     package(flint.test) int execute(TestCase[] tests, string filter, bool failFast, string junitPath,
             uint seed, bool allowEmpty)
     {
-        auto cases = appender!string;
+        import std.random : rndGen;
+
+        string cases;
         const saved = rndGen;
         scope (exit)
             rndGen = saved;
@@ -197,7 +294,7 @@ version (unittest)
         foreach (test; tests)
         {
             const qualified = test.moduleName ~ "." ~ test.name;
-            if (!qualified.canFind(filter))
+            if (!contains(qualified, filter))
                 continue;
             ++total;
             string tag;
@@ -217,23 +314,24 @@ version (unittest)
                 detail = diagnostic(failure, seed);
             }
             if (tag.length != 0)
-                writeln(qualified, ": ", tag, ": ", detail);
+                printLine(qualified ~ ": " ~ tag ~ ": " ~ detail);
             else
-                writeln(qualified, ": pass");
+                printLine(qualified ~ ": pass");
             if (junitPath.length != 0)
                 recordCase(cases, test, tag, detail);
             if (failFast && tag.length != 0)
                 break;
         }
 
-        writeln("tests=", total, " failures=", failed, " errors=", errors, " seed=", seed);
+        printLine("tests=" ~ decimal(total) ~ " failures=" ~ decimal(failed) ~ " errors=" ~ decimal(
+                errors) ~ " seed=" ~ decimal(seed));
         if (junitPath.length != 0)
         {
             try
-                writeReport(junitPath, seed, total, failed, errors, cases.data);
+                writeReport(junitPath, seed, total, failed, errors, cases);
             catch (Exception failure)
             {
-                writeln("cannot write JUnit report: ", diagnostic(failure, seed));
+                printLine("cannot write JUnit report: " ~ diagnostic(failure, seed));
                 return 3;
             }
         }
