@@ -8,6 +8,9 @@ dflags "-preview=dip1000"
 preBuildCommands "sh native/build.sh" platform="linux"
 sourceFiles "build/terminal-linux.o" platform="linux"
 extraDependencyFiles "native/linux.c" "native/build.sh" platform="linux"
+preBuildCommands "sh native/build.sh" platform="osx"
+sourceFiles "build/terminal-linux.o" platform="osx"
+extraDependencyFiles "native/linux.c" "native/build.sh" platform="osx"
 dependency "flint:arena" version="*"
 
 configuration "library" {

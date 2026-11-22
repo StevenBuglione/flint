@@ -6,14 +6,20 @@ public import flint.term.events : ColorProfile, Event, EventKind, KeyCode, KeyEv
 
 @safe:
 
-version (linux) import flint.term.sys.linux_session : LinuxSession;
+// The native terminal session (native/linux.c) is built for Linux and macOS.
+version (linux)
+    version = FlintTermNative;
+else version (OSX)
+    version = FlintTermNative;
+
+version (FlintTermNative) import flint.term.sys.linux_session : LinuxSession;
 
 /// Own a terminal session. Move only while no other caller is borrowing it.
 struct Session
 {
     @disable this(this);
 
-    version (linux)
+    version (FlintTermNative)
     {
         private LinuxSession state;
 
@@ -32,7 +38,7 @@ struct Session
     /// Open a session over the current standard input and output.
     static Result!Session open(Options options = Options.init)
     {
-        version (linux)
+        version (FlintTermNative)
         {
             auto result = LinuxSession.open(options);
             if (!result.ok())
@@ -48,7 +54,7 @@ struct Session
     /// Read one event. A negative timeout waits indefinitely and zero polls.
     Result!Event next(long timeoutNanos)
     {
-        version (linux)
+        version (FlintTermNative)
             return state is null ? Result!Event(Event.init, inactive()) : state.next(timeoutNanos);
         else
             return Result!Event(Event.init, unsupported());
@@ -57,7 +63,7 @@ struct Session
     /// Write trusted application formatting to the output stream.
     Error write(scope const(char)[] text)
     {
-        version (linux)
+        version (FlintTermNative)
             return state is null ? inactive() : state.write(text);
         else
             return unsupported();
@@ -66,7 +72,7 @@ struct Session
     /// Query current terminal dimensions.
     Result!Size size() const
     {
-        version (linux)
+        version (FlintTermNative)
             return state is null ? Result!Size(Size.init, inactive()) : state.size();
         else
             return Result!Size(Size.init, unsupported());
@@ -75,7 +81,7 @@ struct Session
     /// Report the color capability recorded at open.
     ColorProfile colors() const
     {
-        version (linux)
+        version (FlintTermNative)
             return state is null ? ColorProfile.none : state.colors();
         else
             return ColorProfile.none;
@@ -84,7 +90,7 @@ struct Session
     /// Wake blocked callers and restore owned modes. Repeated calls are safe.
     Error close()
     {
-        version (linux)
+        version (FlintTermNative)
             return state is null ? Error.init : state.close();
         else
             return Error.init;
@@ -114,7 +120,7 @@ struct StreamInfo
 StreamInfo describe(Stream stream)
 {
     StreamInfo info;
-    version (linux)
+    version (FlintTermNative)
     {
         import flint.term.sys.linux_session : detectColors, environmentValue;
         import flint.term.sys.output : probeStream;

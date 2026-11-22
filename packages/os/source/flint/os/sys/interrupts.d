@@ -2,7 +2,6 @@ module flint.os.sys.interrupts;
 
 import core.atomic : atomicStore, cas;
 import core.stdc.errno : errno;
-import core.sys.linux.sys.eventfd : EFD_CLOEXEC, EFD_NONBLOCK, eventfd;
 import core.sys.posix.signal : SA_RESTART, SIGINT, SIG_DFL, SIG_IGN, sigaction, sigaction_t, sigemptyset;
 import core.sys.posix.unistd : read;
 import core.thread : Thread;
@@ -11,6 +10,12 @@ import flint.os.sys.process : nativeStatus, waitForOutput;
 import flint.os.sys.threads : joinThread;
 
 @safe:
+
+version (OSX)
+{
+}
+else
+    import core.sys.linux.sys.eventfd : EFD_CLOEXEC, EFD_NONBLOCK, eventfd;
 
 private extern (C) @system nothrow @nogc
 {
@@ -65,11 +70,37 @@ private Error initializeLatch(ref Coordinator state) @trusted nothrow @nogc
 {
     if (state.descriptor >= 0)
         return Error.init;
-    const descriptor = eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK);
-    if (descriptor < 0)
-        return Error(nativeStatus(errno), "could not create interrupt notifier");
-    state.descriptor = descriptor;
-    flint_os_set_interrupt_fd(descriptor);
+    version (OSX)
+    {
+        // Darwin has no eventfd: the handler writes into a nonblocking pipe whose ends both live
+        // for the process. takeSignal drains every pending notification at once, as eventfd does.
+        import core.sys.posix.fcntl : FD_CLOEXEC, F_SETFD, F_SETFL, O_NONBLOCK, fcntl;
+        import core.sys.posix.unistd : close, pipe;
+
+        int[2] ends;
+        if (pipe(ends) != 0)
+            return Error(nativeStatus(errno), "could not create interrupt notifier");
+        foreach (end; ends)
+        {
+            if (fcntl(end, F_SETFD, FD_CLOEXEC) != 0 || fcntl(end, F_SETFL, O_NONBLOCK) != 0)
+            {
+                const status = nativeStatus(errno);
+                close(ends[0]);
+                close(ends[1]);
+                return Error(status, "could not configure interrupt notifier");
+            }
+        }
+        state.descriptor = ends[0];
+        flint_os_set_interrupt_fd(ends[1]);
+    }
+    else
+    {
+        const descriptor = eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK);
+        if (descriptor < 0)
+            return Error(nativeStatus(errno), "could not create interrupt notifier");
+        state.descriptor = descriptor;
+        flint_os_set_interrupt_fd(descriptor);
+    }
     return Error.init;
 }
 
@@ -134,10 +165,22 @@ private Error restore(ref Coordinator state) @trusted nothrow @nogc
 }
 
 // SAFETY: eventfd writes at most eight bytes to the local counter and borrows no storage.
+// On Darwin each read fills at most the local buffer from the nonblocking pipe.
 private bool takeSignal(int fd) @trusted nothrow @nogc
 {
-    ulong count;
-    return read(fd, &count, count.sizeof) == count.sizeof;
+    version (OSX)
+    {
+        ulong[8] counts;
+        bool any;
+        while (read(fd, counts.ptr, counts.sizeof) > 0)
+            any = true;
+        return any;
+    }
+    else
+    {
+        ulong count;
+        return read(fd, &count, count.sizeof) == count.sizeof;
+    }
 }
 
 package(flint.os) Result!ulong registerInterrupt(Callback callback)

@@ -35,7 +35,9 @@ def project_mixin_tokens(text, compiler):
     # DMD dumps Phobos and druntime template expansions in the same file as Flint's.
     # Skip only expansions located inside the bundled compiler's standard library sources.
     installation = Path(compiler).resolve().parents[2]
-    standard = (installation / 'src/phobos', installation / 'src/druntime/import')
+    # DMD keeps druntime and Phobos under src/; LDC (ldmd2, on hosts without DMD) under import/.
+    standard = (installation / 'src/phobos', installation / 'src/druntime/import',
+                Path(compiler).resolve().parents[1] / 'import')
     headers = list(re.finditer(r'^// expansion at(?: (.+)\([0-9]+\))?$', text, re.MULTILINE))
     if not headers:
         yield from tokens(text)
@@ -52,8 +54,9 @@ def project_mixin_tokens(text, compiler):
 
 def generated_dependencies(packages):
     if not packages:return {'packages':0}
-    compiler=shutil.which(os.environ.get('DMD','dmd'))
-    require(compiler,'approved string mixins require DMD on PATH or DMD=/absolute/path for compiler dependency audit')
+    # macOS arm64 has no DMD code generator (ADR-023); LDC's DMD-compatible driver runs the same front end.
+    compiler=shutil.which(os.environ['DMD']) if 'DMD' in os.environ else shutil.which('dmd') or shutil.which('ldmd2')
+    require(compiler,'approved string mixins require DMD (or ldmd2) on PATH or DMD=/absolute/path for compiler dependency audit')
     imports=['-I'+str(ROOT/'packages'/name/'source') for name in P]
     count=0
     with tempfile.TemporaryDirectory(prefix='flint-deps-') as temporary:

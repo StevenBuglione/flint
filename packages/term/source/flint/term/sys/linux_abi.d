@@ -2,7 +2,13 @@ module flint.term.sys.linux_abi;
 
 @system:
 
+// The native terminal session (native/linux.c) is built for Linux and macOS.
 version (linux)
+    version = FlintTermNative;
+else version (OSX)
+    version = FlintTermNative;
+
+version (FlintTermNative)
 {
 package(flint.term):
 extern (C) nothrow @nogc:

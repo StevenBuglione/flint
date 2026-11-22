@@ -2,7 +2,13 @@ module flint.term.sys.linux_session;
 
 @safe:
 
+// The native terminal session (native/linux.c) is built for Linux and macOS.
 version (linux)
+    version = FlintTermNative;
+else version (OSX)
+    version = FlintTermNative;
+
+version (FlintTermNative)
 {
     import core.sync.mutex : Mutex;
     import flint.arena : Error, Result, Status;

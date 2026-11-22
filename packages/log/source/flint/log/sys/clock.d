@@ -1,9 +1,20 @@
 module flint.log.sys.clock;
 
-import core.sys.posix.time : CLOCK_REALTIME, clock_gettime, timespec;
 import flint.arena : Error, Result, Status;
 
 @safe:
+
+version (OSX)
+{
+    import core.sys.posix.time : timespec;
+
+    // macOS 10.12+ <time.h>: clockid_t is a C enum (int ABI) and CLOCK_REALTIME is 0.
+    // druntime declares neither for Darwin.
+    private enum int CLOCK_REALTIME = 0;
+    private extern (C) int clock_gettime(int clock, timespec* value) @system nothrow @nogc;
+}
+else
+    import core.sys.posix.time : CLOCK_REALTIME, clock_gettime, timespec;
 
 // SAFETY: clock_gettime only writes into the local typed timespec.
 package(flint.log) Result!ulong timestampMillis() @trusted nothrow @nogc

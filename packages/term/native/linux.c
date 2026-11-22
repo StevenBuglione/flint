@@ -15,6 +15,28 @@
 #include <time.h>
 #include <unistd.h>
 
+#if defined(__APPLE__)
+/* Darwin has no pipe2. Every pipe here is created before any handler or thread that uses it,
+   so setting the flags afterwards is observable only to a concurrent fork and exec, which
+   could inherit the descriptors for that instant. */
+static int pipe2(int ends[2], int flags)
+{
+    if (pipe(ends) < 0)
+        return -1;
+    for (int index = 0; index < 2; ++index) {
+        if (((flags & O_CLOEXEC) && fcntl(ends[index], F_SETFD, FD_CLOEXEC) < 0)
+                || ((flags & O_NONBLOCK) && fcntl(ends[index], F_SETFL, O_NONBLOCK) < 0)) {
+            int saved = errno;
+            close(ends[0]);
+            close(ends[1]);
+            errno = saved;
+            return -1;
+        }
+    }
+    return 0;
+}
+#endif
+
 enum {
     TERM_OK,
     TERM_UNSUPPORTED,
@@ -97,9 +119,15 @@ static int duplicate_stream(int fd, int flags)
     }
 
     int tty = isatty(copy) == 1;
+#if defined(__APPLE__)
+    char pty_name[128];
+    if (tty && ioctl(copy, TIOCPTYGNAME, pty_name) == 0)
+        return copy; // Reopening a PTY master would create a different PTY.
+#else
     unsigned pty_number;
     if (tty && ioctl(copy, TIOCGPTN, &pty_number) == 0)
         return copy; // Reopening a PTY master would create a different PTY.
+#endif
 
     // Reopen nonseekable endpoints for a separate nonblocking description.
     // Ordinary files retain their existing stream offset.
@@ -303,6 +331,20 @@ static int update_termios(int fd, const struct termios *value)
     return result < 0 ? TERM_IO_ERROR : TERM_OK;
 }
 
+#if defined(__APPLE__)
+/* Darwin raises SIGPIPE for a pipe write at the whole process, so a thread's signal mask
+   cannot contain it. The output description is marked F_SETNOSIGPIPE when the session opens
+   (suppress_broken_pipe_signal), and a write to a closed reader fails with EPIPE. */
+static void suppress_broken_pipe_signal(int fd)
+{
+    (void) fcntl(fd, F_SETNOSIGPIPE, 1);
+}
+
+static ssize_t write_without_sigpipe(int fd, const void *bytes, size_t length)
+{
+    return write(fd, bytes, length);
+}
+#else
 static ssize_t write_without_sigpipe(int fd, const void *bytes, size_t length)
 {
     sigset_t blocked, before, pending;
@@ -325,6 +367,7 @@ static ssize_t write_without_sigpipe(int fd, const void *bytes, size_t length)
     errno = saved;
     return count;
 }
+#endif
 
 static int64_t clock_nanos(void)
 {
@@ -476,6 +519,10 @@ int flint_term_native_open(unsigned modes, struct flint_term_native **result)
     state->input = duplicate_stream(STDIN_FILENO, O_RDONLY);
     state->output = duplicate_stream(STDOUT_FILENO, O_WRONLY);
     state->wake[0] = state->wake[1] = -1;
+#if defined(__APPLE__)
+    if (state->output >= 0)
+        suppress_broken_pipe_signal(state->output);
+#endif
 
     int status = TERM_IO_ERROR;
     if (state->input >= 0 && state->output >= 0
@@ -530,8 +577,14 @@ int flint_term_native_poll(const struct flint_term_native *state, int64_t timeou
         { state->watched ? interrupt_pipe[0] : -1, POLLIN, 0 },
         { state->watched ? resize_pipe[0] : -1, POLLIN, 0 }
     };
+#if defined(__APPLE__)
+    /* Darwin has no ppoll. Round up to whole milliseconds so a wait never ends early. */
+    int64_t millis = timeout < 0 ? -1 : timeout / 1000000 + (timeout % 1000000 != 0);
+    int result = poll(ready, 4, millis > INT_MAX ? INT_MAX : (int) millis);
+#else
     struct timespec wait = { timeout / 1000000000, timeout % 1000000000 };
     int result = ppoll(ready, 4, timeout < 0 ? NULL : &wait, NULL);
+#endif
     if (result < 0)
         return errno == EINTR ? TERM_RETRY : TERM_IO_ERROR;
     if (result == 0)

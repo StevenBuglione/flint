@@ -41,6 +41,8 @@ private int duplicate(int descriptor) @trusted nothrow @nogc
 
     version (linux)
         enum command = 1030; // F_DUPFD_CLOEXEC in the Linux UAPI, even where druntime omits it.
+    else version (OSX)
+        enum command = 67; // F_DUPFD_CLOEXEC in <sys/fcntl.h>; druntime omits it for Darwin.
     else
         import core.sys.posix.fcntl : command = F_DUPFD_CLOEXEC;
 
@@ -51,8 +53,13 @@ private int duplicate(int descriptor) @trusted nothrow @nogc
 @trusted Result!NativeSink openSink(string path)
 {
     import core.stdc.errno : errno;
-    import core.sys.posix.fcntl : O_APPEND, O_CLOEXEC, O_CREAT, O_NONBLOCK, O_WRONLY, open;
+    import core.sys.posix.fcntl : O_APPEND, O_CREAT, O_NONBLOCK, O_WRONLY, open;
     import core.sys.posix.unistd : close;
+
+    version (OSX)
+        enum O_CLOEXEC = 0x0100_0000; // <sys/fcntl.h>; druntime omits it for Darwin.
+    else
+        import core.sys.posix.fcntl : O_CLOEXEC;
 
     enum flags = O_WRONLY | O_APPEND | O_NONBLOCK | O_CLOEXEC;
     if (path.length != 0)
@@ -61,6 +68,8 @@ private int duplicate(int descriptor) @trusted nothrow @nogc
         const descriptor = open(terminated.ptr, flags | O_CREAT, 0x180);
         if (descriptor < 0)
             return Result!NativeSink(NativeSink.init, Error(ioStatus(errno), "could not open logger file"));
+        version (OSX)
+            suppressBrokenPipeSignal(descriptor);
         return Result!NativeSink(NativeSink(Stream(descriptor), Stream(descriptor)));
     }
 
@@ -73,6 +82,11 @@ private int duplicate(int descriptor) @trusted nothrow @nogc
         const status = ioStatus(errno);
         close(output.descriptor);
         return Result!NativeSink(NativeSink.init, Error(status, "could not open logger stderr"));
+    }
+    version (OSX)
+    {
+        suppressBrokenPipeSignal(output.descriptor);
+        suppressBrokenPipeSignal(errors.descriptor);
     }
     return Result!NativeSink(NativeSink(output, errors));
 }
@@ -104,6 +118,22 @@ void closeSink(ref NativeSink sink) @trusted nothrow @nogc
     if (sink.errors.descriptor >= 0 && sink.errors.descriptor != sink.output.descriptor)
         close(sink.errors.descriptor);
     sink = NativeSink.init;
+}
+
+version (OSX)
+{
+    // Darwin raises SIGPIPE for a pipe write at the whole process, so the worker's signal mask
+    // (protectSink) cannot keep it from another thread. F_SETNOSIGPIPE marks the open file
+    // description instead: writes then fail with EPIPE. The mark is shared with every
+    // descriptor for that description, including an inherited standard stream.
+    // SAFETY: fcntl only sets a flag on a descriptor this sink owns; no memory is passed.
+    private void suppressBrokenPipeSignal(int descriptor) @trusted nothrow @nogc
+    {
+        import core.sys.posix.fcntl : fcntl;
+
+        enum setNoSigPipe = 73; // F_SETNOSIGPIPE in <sys/fcntl.h>
+        fcntl(descriptor, setNoSigPipe, 1);
+    }
 }
 
 // SAFETY: The mask affects only this sink worker, and local storage is not retained.
@@ -144,6 +174,8 @@ private ptrdiff_t writeInherited(int fd, scope const(char)[] bytes) @trusted not
 
     version (linux)
         import core.sys.linux.sys.socket : MSG_DONTWAIT;
+    else version (OSX)
+        enum MSG_DONTWAIT = 0x80; // <sys/socket.h>; druntime omits it for Darwin.
     else
         import core.sys.posix.sys.socket : MSG_DONTWAIT;
 
@@ -179,11 +211,27 @@ version (linux)
         private enum futexCall = 98;
 }
 
+version (OSX)
+{
+    // <os/os_sync_wait_on_address.h>, libSystem since macOS 14.4: the documented
+    // address-wait primitive. Flags 0 is OS_SYNC_WAIT_ON_ADDRESS_NONE (process private).
+    private enum osClockMachAbsoluteTime = 32; // OS_CLOCK_MACH_ABSOLUTE_TIME
+    private extern (C) int os_sync_wait_on_address_with_timeout(void* address, ulong value,
+            size_t size, uint flags, uint clock, ulong timeoutNanos) @system nothrow @nogc;
+    private extern (C) int os_sync_wake_by_address_all(void* address, size_t size, uint flags) @system nothrow @nogc;
+}
+
 // SAFETY: The kernel compares the aligned 32-bit word with expected and sleeps at most nanos.
 // It reads the word only during the call and retains neither address. Without a futex this sleeps.
 void park(ref shared uint word, uint expected, long nanos) @trusted nothrow @nogc
 {
-    static if (is(typeof(futexCall)))
+    version (OSX)
+    {
+        // EINTR, EFAULT and ETIMEDOUT all return to a caller that rechecks its condition.
+        cast(void) os_sync_wait_on_address_with_timeout(cast(void*)&word, expected, uint.sizeof,
+                0, osClockMachAbsoluteTime, nanos > 0 ? cast(ulong) nanos : 1);
+    }
+    else static if (is(typeof(futexCall)))
     {
         import core.sys.linux.unistd : syscall;
         import core.sys.posix.time : timespec;
@@ -202,7 +250,9 @@ void park(ref shared uint word, uint expected, long nanos) @trusted nothrow @nog
 // SAFETY: The kernel uses the word address only as a key for waking its current waiters.
 void wake(ref shared uint word) @trusted nothrow @nogc
 {
-    static if (is(typeof(futexCall)))
+    version (OSX)
+        cast(void) os_sync_wake_by_address_all(cast(void*)&word, uint.sizeof, 0);
+    else static if (is(typeof(futexCall)))
     {
         import core.sys.linux.unistd : syscall;
 
@@ -272,8 +322,13 @@ version (CRuntime_Musl)
 @("a regular-file standard stream shares the offset of the inherited description")
 @system unittest
 {
-    import core.sys.posix.fcntl : O_APPEND, O_CLOEXEC, O_NONBLOCK, O_WRONLY;
+    import core.sys.posix.fcntl : O_APPEND, O_NONBLOCK, O_WRONLY;
     import core.sys.posix.stdlib : mkstemp;
+
+    version (OSX)
+        enum O_CLOEXEC = 0x0100_0000;
+    else
+        import core.sys.posix.fcntl : O_CLOEXEC;
     import core.sys.posix.unistd : close, unlink, write;
 
     version (CRuntime_Musl)

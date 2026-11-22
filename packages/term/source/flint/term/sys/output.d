@@ -3,7 +3,13 @@ module flint.term.sys.output;
 
 @safe:
 
+// The native terminal session (native/linux.c) is built for Linux and macOS.
 version (linux)
+    version = FlintTermNative;
+else version (OSX)
+    version = FlintTermNative;
+
+version (FlintTermNative)
 {
     import flint.term.events : Size;
 

@@ -4,18 +4,30 @@ import core.stdc.stdlib : free, malloc;
 import core.stdc.string : memcpy;
 import core.stdc.errno : EACCES, EAGAIN, ECHILD, EINVAL, EINTR, EMFILE, ENFILE, ENOENT, ENOMEM,
     ENOSYS, ENOTDIR, EPERM, ESRCH, errno;
-import core.sys.linux.unistd : syscall;
-import core.sys.posix.fcntl : F_GETFL, F_SETFL, O_CLOEXEC, O_NONBLOCK, O_RDONLY, fcntl, open;
+import core.sys.posix.fcntl : F_GETFL, F_SETFL, O_NONBLOCK, O_RDONLY, fcntl, open;
 import core.sys.posix.poll : POLLIN, POLLNVAL, poll, pollfd;
 import core.sys.posix.signal : SA_NOCLDWAIT, SIGCHLD, SIGINT, SIGKILL, SIGPIPE, SIGTERM, SIG_DFL,
     SIG_IGN, SIG_SETMASK, kill, sigaction, sigaction_t, sigemptyset, siginfo_t, sigprocmask, sigset_t;
 import core.sys.posix.sys.wait : idtype_t, WEXITED, WEXITSTATUS, WIFEXITED, WNOHANG, WNOWAIT,
     WTERMSIG, waitid, waitpid;
-import core.sys.posix.unistd : _exit, chdir, close, dup2, execve, fork, getpgrp, pipe2, read, setpgid, write;
+import core.sys.posix.unistd : _exit, chdir, close, dup2, execve, fork, getpgrp, read, setpgid, write;
 import flint.arena : Error, Result, Status;
 import flint.os.types : ExitStatus;
 
 @safe:
+
+version (OSX)
+{
+    // <sys/fcntl.h> values druntime omits for Darwin.
+    private enum int O_CLOEXEC = 0x0100_0000;
+    private enum int searchDirectory = 0x4010_0000; // O_SEARCH: O_EXEC | O_DIRECTORY
+}
+else
+{
+    import core.sys.linux.unistd : syscall;
+    import core.sys.posix.fcntl : O_CLOEXEC;
+    import core.sys.posix.unistd : pipe2;
+}
 
 package(flint.os):
 
@@ -41,9 +53,14 @@ private struct Descriptors
     int input = -1;
 }
 
-private enum int duplicateCloexec = 1030;
-private enum long closeRangeNumber = 436;
-private enum uint closeRangeCloexec = 4;
+version (OSX)
+    private enum int duplicateCloexec = 67; // F_DUPFD_CLOEXEC in <sys/fcntl.h>
+else
+{
+    private enum int duplicateCloexec = 1030;
+    private enum long closeRangeNumber = 436;
+    private enum uint closeRangeCloexec = 4;
+}
 
 Status nativeStatus(int code) pure nothrow @nogc
 {
@@ -114,11 +131,37 @@ private bool moveAboveStdio(ref int fd) @trusted nothrow @nogc
     return true;
 }
 
+version (OSX)
+{
+    // Darwin has no pipe2. A concurrent fork and exec elsewhere could inherit both ends until
+    // FD_CLOEXEC is set; children this package starts never do (POSIX_SPAWN_CLOEXEC_DEFAULT).
+    // SAFETY: pipe initializes both local slots, and each is closed if it cannot be marked.
+    private int closeOnExecPipe(ref int[2] fds) @trusted nothrow @nogc
+    {
+        import core.sys.posix.fcntl : FD_CLOEXEC, F_SETFD;
+        import core.sys.posix.unistd : pipe;
+
+        if (pipe(fds) < 0)
+            return -1;
+        if (fcntl(fds[0], F_SETFD, FD_CLOEXEC) == 0 && fcntl(fds[1], F_SETFD, FD_CLOEXEC) == 0)
+            return 0;
+        const code = errno;
+        close(fds[0]);
+        close(fds[1]);
+        errno = code;
+        return -1;
+    }
+}
+
 // SAFETY: pipe2 initializes both local slots before ownership transfer and both are closed on failure.
 private Result!Pipe createPipe() @trusted nothrow @nogc
 {
     int[2] fds;
-    if (pipe2(fds, O_CLOEXEC) < 0)
+    version (OSX)
+        const created = closeOnExecPipe(fds);
+    else
+        const created = pipe2(fds, O_CLOEXEC);
+    if (created < 0)
         return Result!Pipe(Pipe.init, Error(nativeStatus(errno), "could not create child pipe"));
 
     auto pipe = Pipe(fds[0], fds[1]);
@@ -225,8 +268,11 @@ private extern (C) void enterChild(Descriptors fds, const(char)* directory,
         reportFailure(fds.startup.writer, errno);
     if (directory !is null && chdir(directory) != 0)
         reportFailure(fds.startup.writer, errno);
-    if (syscall(closeRangeNumber, 3U, uint.max, closeRangeCloexec) != 0)
-        reportFailure(fds.startup.writer, errno);
+    version (linux)
+    {
+        if (syscall(closeRangeNumber, 3U, uint.max, closeRangeCloexec) != 0)
+            reportFailure(fds.startup.writer, errno);
+    }
 
     int lastError = ENOENT;
     while (*candidates !is null)
@@ -242,8 +288,8 @@ private extern (C) void enterChild(Descriptors fds, const(char)* directory,
     reportFailure(fds.startup.writer, lastError);
 }
 
-// SAFETY: The child inherits privately owned native argv, environment, and cwd allocations via fork.
-// The parent releases only its own copy and keeps only the three reader descriptors.
+// SAFETY: The native argv, environment and cwd copies are private to this call and outlive the
+// fork or spawn that borrows them. The parent releases only its own copy.
 @trusted Result!Child launch(scope string[] paths, scope string[] args, scope string[] env, string directory)
 {
     auto candidates = copyVector(paths);
@@ -273,6 +319,138 @@ private extern (C) void enterChild(Descriptors fds, const(char)* directory,
         return Result!Child(Child.init, prepared.error);
 
     auto fds = prepared.value;
+    version (OSX)
+        return spawnChild(fds, cwd, candidates, argv, envp);
+    else
+        return forkChild(fds, cwd, candidates, argv, envp);
+}
+
+version (OSX)
+{
+    import core.sys.posix.spawn : posix_spawn, posix_spawn_file_actions_adddup2,
+        posix_spawn_file_actions_destroy,
+        posix_spawn_file_actions_init, posix_spawn_file_actions_t, posix_spawnattr_destroy,
+        posix_spawnattr_init,
+        posix_spawnattr_setflags,
+        posix_spawnattr_setpgroup,
+        posix_spawnattr_setsigdefault, posix_spawnattr_setsigmask, posix_spawnattr_t,
+        POSIX_SPAWN_SETPGROUP, POSIX_SPAWN_SETSIGDEF, POSIX_SPAWN_SETSIGMASK;
+
+    // <spawn.h> Apple extensions. CLOEXEC_DEFAULT closes every descriptor that is not a file
+    // action's target, which close_range gives the forked child on Linux.
+    private enum short spawnCloexecDefault = 0x4000; // POSIX_SPAWN_CLOEXEC_DEFAULT
+    private alias SpawnActions = posix_spawn_file_actions_t;
+    private extern (C) @system nothrow @nogc int posix_spawn_file_actions_addfchdir_np(
+            posix_spawn_file_actions_t*, int);
+
+    // Darwin reports a failed exec synchronously, so no child exists to send a startup receipt.
+    // The parent closes the receipt pipe's writer, and the supervisor reads a successful start.
+    // SAFETY: Only the parent's owned descriptors are closed; the readers move to the Child.
+    private Result!Child spawnChild(ref Descriptors fds, const(char)* directory,
+            const(char)** candidates, const(char)** argv, const(char)** envp) @trusted nothrow @nogc
+    {
+        int directoryFd = -1;
+        scope (exit)
+            closeFd(directoryFd);
+        // Opening first gives the chdir failure the Linux child reports; fchdir then cannot miss.
+        if (directory !is null && (directoryFd = open(directory, searchDirectory | O_CLOEXEC)) < 0)
+        {
+            const status = nativeStatus(errno);
+            closeDescriptors(fds);
+            return Result!Child(Child.init, Error(status, "could not start requested child"));
+        }
+        const spawned = spawnCandidates(fds, directoryFd, candidates, argv, envp);
+        closeFd(fds.stdoutPipe.writer);
+        closeFd(fds.stderrPipe.writer);
+        closeFd(fds.startup.writer);
+        closeFd(fds.input);
+        if (!spawned.ok)
+        {
+            closeDescriptors(fds);
+            return Result!Child(Child.init, spawned.error);
+        }
+        return Result!Child(Child(spawned.value, fds.stdoutPipe.reader, fds.stderrPipe.reader, fds.startup.reader));
+    }
+
+    // SAFETY: The signal sets are local and every call only stores them in the caller's live attributes.
+    private int configureAttributes(ref posix_spawnattr_t attributes) @trusted nothrow @nogc
+    {
+        import core.sys.posix.signal : sigaddset;
+
+        enum short flags = POSIX_SPAWN_SETPGROUP | POSIX_SPAWN_SETSIGDEF | POSIX_SPAWN_SETSIGMASK | spawnCloexecDefault;
+        sigset_t empty, defaults;
+        if (sigemptyset(&empty) != 0 || sigemptyset(&defaults) != 0 || sigaddset(&defaults,
+                SIGINT) != 0 || sigaddset(&defaults, SIGPIPE) != 0 || sigaddset(&defaults, SIGTERM) != 0)
+            return EINVAL;
+        int code = posix_spawnattr_setflags(&attributes, flags);
+        if (code == 0)
+            code = posix_spawnattr_setpgroup(&attributes, 0);
+        if (code == 0)
+            code = posix_spawnattr_setsigdefault(&attributes, &defaults);
+        return code == 0 ? posix_spawnattr_setsigmask(&attributes, &empty) : code;
+    }
+
+    // SAFETY: Each action records descriptor numbers in the caller's live action list.
+    @trusted private int configureActions(ref SpawnActions list, ref const Descriptors fds, int cwd) nothrow @nogc
+    {
+        int code = posix_spawn_file_actions_adddup2(&list, fds.input, 0);
+        if (code == 0)
+            code = posix_spawn_file_actions_adddup2(&list, fds.stdoutPipe.writer, 1);
+        if (code == 0)
+            code = posix_spawn_file_actions_adddup2(&list, fds.stderrPipe.writer, 2);
+        if (code == 0 && cwd >= 0)
+            code = posix_spawn_file_actions_addfchdir_np(&list, cwd);
+        return code;
+    }
+
+    // posix_spawn borrows the terminated candidate, argv and environment vectors only during each call.
+    // SAFETY: The attribute and action objects are local and destroyed on every path.
+    private Result!int spawnCandidates(ref const Descriptors fds, int directoryFd,
+            const(char)** candidates, const(char)** argv, const(char)** envp) @trusted nothrow @nogc
+    {
+        import core.sys.posix.sys.types : pid_t;
+
+        posix_spawnattr_t attributes;
+        posix_spawn_file_actions_t actions;
+        if (posix_spawnattr_init(&attributes) != 0)
+            return Result!int(-1, Error(Status.outOfMemory, "could not prepare child attributes"));
+        scope (exit)
+            posix_spawnattr_destroy(&attributes);
+        if (posix_spawn_file_actions_init(&actions) != 0)
+            return Result!int(-1, Error(Status.outOfMemory, "could not prepare child descriptors"));
+        scope (exit)
+            posix_spawn_file_actions_destroy(&actions);
+        int code = configureAttributes(attributes);
+        if (code == 0)
+            code = configureActions(actions, fds, directoryFd);
+        if (code != 0)
+            return Result!int(-1, Error(nativeStatus(code), "could not prepare child process"));
+
+        int lastError = ENOENT;
+        for (; *candidates !is null; ++candidates)
+        {
+            pid_t pid;
+            const failure = posix_spawn(&pid, *candidates, &actions, &attributes,
+                    cast(char**) argv, cast(char**) envp);
+            if (failure == 0)
+                return Result!int(pid);
+            if (failure == EACCES)
+                lastError = EACCES;
+            else if (failure != ENOENT && failure != ENOTDIR)
+            {
+                lastError = failure;
+                break;
+            }
+        }
+        return Result!int(-1, Error(nativeStatus(lastError), "could not start requested child"));
+    }
+}
+
+// The parent keeps only the three reader descriptors.
+// SAFETY: The child inherits privately owned native argv, environment, and cwd allocations via fork.
+private Result!Child forkChild(ref Descriptors fds, const(char)* cwd, const(char)** candidates,
+        const(char)** argv, const(char)** envp) @trusted nothrow @nogc
+{
     const pid = fork();
     if (pid < 0)
     {
@@ -330,13 +508,50 @@ Error signalGroup(int pid, bool force) @trusted nothrow @nogc
     const signal = force ? SIGKILL : SIGTERM;
     if (kill(-pid, signal) == 0 || errno == ESRCH)
         return Error.init;
+    version (OSX)
+    {
+        // Darwin reports EPERM, not ESRCH, for a group whose only members are zombies, such as
+        // the exited but unreaped leader. Any live member it may signal would have succeeded.
+        if (errno == EPERM)
+        {
+            const exited = childExited(pid);
+            if (exited.ok && exited.value)
+                return Error.init;
+            errno = EPERM;
+        }
+    }
     return Error(nativeStatus(errno), "could not signal child process group");
+}
+
+version (OSX)
+{
+    // <sys/signal.h> siginfo_t is 104 bytes on Darwin; druntime's declaration has only 72, so
+    // waitid would write past it. This layout matches the C structure.
+    private struct DarwinSigInfo
+    {
+        int si_signo;
+        int si_errno;
+        int si_code;
+        int si_pid;
+        uint si_uid;
+        int si_status;
+        void* si_addr;
+        void* si_value;
+        long si_band;
+        ulong[7] padding;
+    }
+
+    static assert(DarwinSigInfo.sizeof == 104);
+    private extern (C) int waitid(idtype_t type, uint id, DarwinSigInfo* info, int options) @system nothrow @nogc;
 }
 
 // SAFETY: waitid borrows one local struct and observes only this child without releasing its PID.
 Result!bool childExited(int pid) @trusted nothrow @nogc
 {
-    siginfo_t info;
+    version (OSX)
+        DarwinSigInfo info;
+    else
+        siginfo_t info;
     if (waitid(idtype_t.P_PID, pid, &info, WEXITED | WNOHANG | WNOWAIT) != 0)
     {
         if (errno == EINTR)
@@ -383,45 +598,105 @@ Result!uint waitForOutput(int first, int second, int milliseconds) @trusted noth
     return Result!uint(ready);
 }
 
-private enum long pidfdOpenNumber = 434;
-
-/// A descriptor that becomes readable when the unreaped child exits, or -1 when the kernel lacks pidfd.
-// SAFETY: pidfd_open takes two integers and returns a new close-on-exec descriptor owned by the caller.
-int openExitNotifier(int pid) @trusted nothrow @nogc
+version (OSX)
 {
-    const descriptor = syscall(pidfdOpenNumber, pid, 0U);
-    return descriptor >= 0 && descriptor <= int.max ? cast(int) descriptor : -1;
-}
+    import core.sys.darwin.sys.event : EVFILT_PROC, EVFILT_USER, EV_ADD, EV_CLEAR, NOTE_EXIT,
+        NOTE_TRIGGER, kevent, kevent_t, kqueue;
+    import core.sys.posix.time : timespec;
 
-/// A nonblocking counter that wakes the supervisor's poll, or -1 when unavailable.
-// SAFETY: eventfd takes only integers and returns a new descriptor owned by the caller.
-int openWake() @trusted nothrow @nogc
-{
-    import core.sys.linux.sys.eventfd : EFD_CLOEXEC, EFD_NONBLOCK, eventfd;
-
-    const descriptor = eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK);
-    return descriptor >= 0 ? descriptor : -1;
-}
-
-// SAFETY: write copies one local counter value into the caller's live eventfd and retains nothing.
-void signalWake(int descriptor) @trusted nothrow @nogc
-{
-    if (descriptor < 0)
-        return;
-    const ulong one = 1;
-    while (write(descriptor, &one, one.sizeof) < 0 && errno == EINTR)
+    // A kqueue descriptor is readable while it holds a pending event and is never inherited by a
+    // child, so one kqueue stands in for Linux's pidfd and eventfd.
+    // SAFETY: kevent reads one local change record and writes no event list.
+    private int kqueueWith(ref kevent_t change) @trusted nothrow @nogc
     {
+        const descriptor = kqueue();
+        if (descriptor < 0)
+            return -1;
+        if (kevent(descriptor, &change, 1, null, 0, null) == 0)
+            return descriptor;
+        close(descriptor);
+        return -1;
+    }
+
+    /// A descriptor that becomes readable when the unreaped child exits, or -1 when unavailable.
+    int openExitNotifier(int pid) nothrow @nogc
+    {
+        auto change = kevent_t(cast(size_t) pid, EVFILT_PROC, EV_ADD, NOTE_EXIT);
+        return pid > 0 ? kqueueWith(change) : -1;
+    }
+
+    /// A user event that wakes the supervisor's poll until drained, or -1 when unavailable.
+    int openWake() nothrow @nogc
+    {
+        auto change = kevent_t(1, EVFILT_USER, EV_ADD | EV_CLEAR);
+        return kqueueWith(change);
+    }
+
+    // SAFETY: kevent reads one local trigger record on the caller's live kqueue.
+    void signalWake(int descriptor) @trusted nothrow @nogc
+    {
+        if (descriptor < 0)
+            return;
+        auto trigger = kevent_t(1, EVFILT_USER, 0, NOTE_TRIGGER);
+        while (kevent(descriptor, &trigger, 1, null, 0, null) < 0 && errno == EINTR)
+        {
+        }
+    }
+
+    // SAFETY: kevent writes at most one local event record and never blocks with a zero timeout.
+    void drainWake(int descriptor) @trusted nothrow @nogc
+    {
+        if (descriptor < 0)
+            return;
+        kevent_t event;
+        timespec immediately;
+        while (kevent(descriptor, null, 0, &event, 1, &immediately) < 0 && errno == EINTR)
+        {
+        }
     }
 }
-
-// SAFETY: read writes one local counter value from the caller's live nonblocking eventfd.
-void drainWake(int descriptor) @trusted nothrow @nogc
+else
 {
-    if (descriptor < 0)
-        return;
-    ulong count;
-    while (read(descriptor, &count, count.sizeof) < 0 && errno == EINTR)
+    private enum long pidfdOpenNumber = 434;
+
+    /// A descriptor that becomes readable when the unreaped child exits, or -1 when the kernel lacks pidfd.
+    // SAFETY: pidfd_open takes two integers and returns a new close-on-exec descriptor owned by the caller.
+    int openExitNotifier(int pid) @trusted nothrow @nogc
     {
+        const descriptor = syscall(pidfdOpenNumber, pid, 0U);
+        return descriptor >= 0 && descriptor <= int.max ? cast(int) descriptor : -1;
+    }
+
+    /// A nonblocking counter that wakes the supervisor's poll, or -1 when unavailable.
+    // SAFETY: eventfd takes only integers and returns a new descriptor owned by the caller.
+    int openWake() @trusted nothrow @nogc
+    {
+        import core.sys.linux.sys.eventfd : EFD_CLOEXEC, EFD_NONBLOCK, eventfd;
+
+        const descriptor = eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK);
+        return descriptor >= 0 ? descriptor : -1;
+    }
+
+    // SAFETY: write copies one local counter value into the caller's live eventfd and retains nothing.
+    void signalWake(int descriptor) @trusted nothrow @nogc
+    {
+        if (descriptor < 0)
+            return;
+        const ulong one = 1;
+        while (write(descriptor, &one, one.sizeof) < 0 && errno == EINTR)
+        {
+        }
+    }
+
+    // SAFETY: read writes one local counter value from the caller's live nonblocking eventfd.
+    void drainWake(int descriptor) @trusted nothrow @nogc
+    {
+        if (descriptor < 0)
+            return;
+        ulong count;
+        while (read(descriptor, &count, count.sizeof) < 0 && errno == EINTR)
+        {
+        }
     }
 }
 

@@ -1,5 +1,10 @@
-/* Linux signal-only side of the coordinator. It never invokes druntime. */
+/* Linux and Darwin signal-only side of the coordinator. It never invokes druntime. */
+#if defined(__APPLE__)
+extern int *__error(void);
+#define __errno_location __error
+#else
 extern int *__errno_location(void);
+#endif
 extern long write(int descriptor, const void *buffer, unsigned long length);
 
 /* Assigned once, before installing the action, and never repurposed.

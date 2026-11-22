@@ -1,9 +1,8 @@
 module flint.os.sys.directories;
 
 import core.stdc.errno : EAGAIN, ELOOP, ENOENT, ENOTDIR, EXDEV, errno;
-import core.sys.linux.unistd : syscall;
 import core.sys.posix.dirent : DIR, DT_DIR, DT_LNK, DT_UNKNOWN, closedir, dirent, readdir;
-import core.sys.posix.fcntl : O_CLOEXEC, O_DIRECTORY, O_RDONLY, open;
+import core.sys.posix.fcntl : O_RDONLY, open;
 import core.sys.posix.sys.stat : fstat, stat_t;
 import flint.arena : Error, Result, Status;
 import flint.os.sys.process : closeFd, nativeStatus;
@@ -13,17 +12,41 @@ import flint.os.sys.process : closeFd, nativeStatus;
 package(flint.os):
 
 private extern (C) DIR* fdopendir(int fd) @system nothrow @nogc;
-private enum long openat2Number = 437;
-private enum ulong pathOnly = 0x20_0000;
-private enum ulong noMagicLinks = 0x02;
-private enum ulong noSymlinks = 0x04;
-private enum ulong beneathRoot = 0x08;
 
-private struct OpenHow
+version (OSX)
 {
-    ulong flags;
-    ulong mode;
-    ulong resolve;
+    // <sys/fcntl.h>. druntime omits O_CLOEXEC and O_DIRECTORY for Darwin. O_RESOLVE_BENEATH and
+    // O_NOFOLLOW_ANY give openat the containment openat2's RESOLVE_BENEATH and RESOLVE_NO_SYMLINKS
+    // give on Linux; Darwin has no magic links. An escape fails with ENOTCAPABLE instead of EXDEV.
+    private enum int O_CLOEXEC = 0x0100_0000;
+    private enum int O_DIRECTORY = 0x0010_0000;
+    private enum int resolveBeneath = 0x0000_1000; // O_RESOLVE_BENEATH
+    private enum int noSymlinksAnywhere = 0x2000_0000; // O_NOFOLLOW_ANY
+    private enum int atResolveBeneath = 0x2000; // AT_RESOLVE_BENEATH
+    private enum int notCapable = 107; // ENOTCAPABLE
+    private extern (C) @system nothrow @nogc
+    {
+        int openat(int directory, scope const(char)* path, int flags, ...);
+        int fstatat(int directory, scope const(char)* path, stat_t* details, int flags);
+    }
+}
+else
+{
+    import core.sys.linux.unistd : syscall;
+    import core.sys.posix.fcntl : O_CLOEXEC, O_DIRECTORY;
+
+    private enum long openat2Number = 437;
+    private enum ulong pathOnly = 0x20_0000;
+    private enum ulong noMagicLinks = 0x02;
+    private enum ulong noSymlinks = 0x04;
+    private enum ulong beneathRoot = 0x08;
+
+    private struct OpenHow
+    {
+        ulong flags;
+        ulong mode;
+        ulong resolve;
+    }
 }
 
 struct FileIdentity
@@ -82,20 +105,48 @@ Result!Directory openRoot(string terminatedPath) @trusted nothrow @nogc
     return adopt(fd);
 }
 
-// SAFETY: A live root fd anchors the kernel resolution. The local ABI struct and path are used synchronously.
-private Result!int openBeneath(ref const Directory root, string path, ulong flags, bool follow) @trusted nothrow @nogc
+// An entry that no longer resolves inside the root is absent, not a failure.
+private Error beneathError(int code) nothrow @nogc
 {
-    OpenHow how;
-    how.flags = flags | O_CLOEXEC;
-    how.resolve = beneathRoot | noMagicLinks | (follow ? 0 : noSymlinks);
-    const fd = syscall(openat2Number, root.fd, path.ptr, &how, how.sizeof);
-    if (fd >= 0)
-        return Result!int(cast(int) fd);
+    version (OSX)
+        const escaped = code == notCapable;
+    else
+        const escaped = false;
+    if (escaped || code == ELOOP || code == EXDEV || code == ENOTDIR || code == ENOENT || code == EAGAIN)
+        return Error(Status.notFound, "entry no longer resolves inside glob root");
+    return Error(nativeStatus(code), "could not resolve entry under glob root");
+}
 
-    const code = errno;
-    if (code == ELOOP || code == EXDEV || code == ENOTDIR || code == ENOENT || code == EAGAIN)
-        return Result!int(-1, Error(Status.notFound, "entry no longer resolves inside glob root"));
-    return Result!int(-1, Error(nativeStatus(code), "could not resolve entry under glob root"));
+version (OSX)
+{
+    // SAFETY: A live root fd anchors the kernel resolution. The terminated path is used synchronously.
+    private Result!int openBeneath(ref const Directory root, string path, int flags, bool follow) @trusted nothrow @nogc
+    {
+        const fd = openat(root.fd, path.ptr, flags | O_CLOEXEC | resolveBeneath | (follow ? 0 : noSymlinksAnywhere));
+        return fd >= 0 ? Result!int(fd) : Result!int(-1, beneathError(errno));
+    }
+
+    // SAFETY: fstatat writes one local stat_t. A live root fd anchors the kernel resolution and the
+    // terminated path is used synchronously. Like O_PATH, it needs only search permission.
+    private Error resolvesBeneath(ref const Directory root, string path) @trusted nothrow @nogc
+    {
+        stat_t details;
+        return fstatat(root.fd, path.ptr, &details, atResolveBeneath) == 0 ? Error.init : beneathError(errno);
+    }
+}
+else
+{
+    // SAFETY: A live root fd anchors the kernel resolution. The local ABI struct and path are used synchronously.
+    @trusted private Result!int openBeneath(ref const Directory root, string path, ulong mode, bool links) nothrow @nogc
+    {
+        OpenHow how;
+        how.flags = mode | O_CLOEXEC;
+        how.resolve = beneathRoot | noMagicLinks | (links ? 0 : noSymlinks);
+        const fd = syscall(openat2Number, root.fd, path.ptr, &how, how.sizeof);
+        if (fd >= 0)
+            return Result!int(cast(int) fd);
+        return Result!int(-1, beneathError(errno));
+    }
 }
 
 Result!Directory descend(ref const Directory root, string path, bool follow) nothrow @nogc
@@ -106,11 +157,16 @@ Result!Directory descend(ref const Directory root, string path, bool follow) not
 
 Error checkSymlink(ref const Directory root, string path) nothrow @nogc
 {
-    auto opened = openBeneath(root, path, pathOnly, true);
-    if (!opened.ok)
-        return opened.error;
-    closeFd(opened.value);
-    return Error.init;
+    version (OSX)
+        return resolvesBeneath(root, path);
+    else
+    {
+        auto opened = openBeneath(root, path, pathOnly, true);
+        if (!opened.ok)
+            return opened.error;
+        closeFd(opened.value);
+        return Error.init;
+    }
 }
 
 // SAFETY: One owned DIR cursor is closed once. closedir also releases the adopted descriptor.

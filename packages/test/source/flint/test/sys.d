@@ -14,8 +14,13 @@ module flint.test.sys;
 package(flint.test) int createExclusive(string path, scope const(char)[] content) @trusted nothrow @nogc
 {
     import core.stdc.errno : EINTR, ENAMETOOLONG, errno;
-    import core.sys.posix.fcntl : O_CLOEXEC, O_CREAT, O_EXCL, O_TRUNC, O_WRONLY, open;
+    import core.sys.posix.fcntl : O_CREAT, O_EXCL, O_TRUNC, O_WRONLY, open;
     import core.sys.posix.unistd : close, write;
+
+    version (OSX)
+        enum O_CLOEXEC = 0x0100_0000; // <sys/fcntl.h>; druntime omits it for Darwin.
+    else
+        import core.sys.posix.fcntl : O_CLOEXEC;
 
     char[4096] stack = void;
     if (path.length >= stack.length)

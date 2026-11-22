@@ -131,25 +131,32 @@ unittest
     const parent = fields[0].to!int;
     assert(waitpid(parent, null, WNOHANG) == -1 && errno == ECHILD);
 
-    const descendant = "/proc/" ~ fields[1].idup ~ "/stat";
-    foreach (_; 0 .. 1000)
+    version (OSX)
     {
-        if (!exists(descendant))
-            return;
-        try
-        {
-            const status = readText(descendant);
-            if (status.split(") ")[1][0] == 'Z')
-                return;
-        }
-        catch (Exception)
+        assertRetired(fields[1]);
+    }
+    else
+    {
+        const descendant = "/proc/" ~ fields[1].idup ~ "/stat";
+        foreach (_; 0 .. 1000)
         {
             if (!exists(descendant))
                 return;
+            try
+            {
+                const status = readText(descendant);
+                if (status.split(") ")[1][0] == 'Z')
+                    return;
+            }
+            catch (Exception)
+            {
+                if (!exists(descendant))
+                    return;
+            }
+            Thread.sleep(1.msecs);
         }
-        Thread.sleep(1.msecs);
+        assert(0, "descendant survived cancellation");
     }
-    assert(0, "descendant survived cancellation");
 }
 
 @("a stalled sink does not keep the child alive")
@@ -165,11 +172,11 @@ unittest
     bool retiredBeforeCallbackReturn;
     auto stalled = stream(context, ["/bin/sh", "-c", "printf '%s\\n' \"$$\"; sleep 30"],
             (scope const(ubyte)[] data) @safe {
-        const processPath = "/proc/" ~ (cast(const(char)[]) data).strip().idup;
+        const pid = (cast(const(char)[]) data).strip().idup;
         const limit = Deadline.afterMillis(2_000).monotonicNanoseconds;
         while (Deadline.afterMillis(0).monotonicNanoseconds < limit)
         {
-            if (!exists(processPath))
+            if (!processPresent(pid))
             {
                 retiredBeforeCallbackReturn = true;
                 break;
@@ -197,7 +204,7 @@ unittest
         const unexpected = stream(context, ["/bin/sh", "-c", "printf '%s\\n' \"$$\"; sleep 30"],
                 (scope const(ubyte)[] data) @safe {
             ++calls;
-            path = "/proc/" ~ (cast(const(char)[]) data).strip().idup;
+            path = (cast(const(char)[]) data).strip().idup;
             throw expected;
         }, null, options);
         assert(0, "sink exception was suppressed: " ~ unexpected.error.message);
@@ -205,7 +212,7 @@ unittest
     catch (Exception caught)
     {
         assert(caught is expected && calls == 1);
-        assert(!exists(path));
+        assert(!processPresent(path));
     }
 }
 
@@ -235,7 +242,8 @@ unittest
 
     options.environment[0].value = "";
     const result = run(context, [
-        "sh", "-c", "test ! -e /proc/self/fd/\"$1\" && printf ready", "probe", descriptor.to!string
+        "sh", "-c", "test ! -e " ~ descriptorDirectory ~ "/\"$1\" && printf ready", "probe",
+        descriptor.to!string
     ], options);
     assert(result.ok && result.value.code == 0);
     assert(result.value.stdoutBytes == cast(const(ubyte)[]) "ready");
@@ -299,6 +307,16 @@ private void assertRetired(scope const(char)[] pid)
     import std.file : exists, readText;
     import std.string : split;
 
+    version (OSX)
+    {
+        foreach (_; 0 .. 1000)
+        {
+            if (deadOrZombie(pid))
+                return;
+            Thread.sleep(1.msecs);
+        }
+        assert(0, "descendant survived termination");
+    }
     const path = "/proc/" ~ pid.idup ~ "/stat";
     foreach (_; 0 .. 1000)
     {
@@ -365,4 +383,52 @@ private void assertWallClock(bool within, lazy string measurement) @trusted
         return;
     }
     assert(within, measurement);
+}
+
+/// The directory listing the calling process's open descriptors.
+version (OSX)
+    private enum descriptorDirectory = "/dev/fd";
+else
+    private enum descriptorDirectory = "/proc/self/fd";
+
+/// Whether a process with this decimal ID exists, including as a zombie.
+private bool processPresent(string pid) @trusted
+{
+    version (OSX)
+    {
+        import core.stdc.errno : EPERM, errno;
+        import core.sys.posix.signal : kill;
+        import std.conv : to;
+
+        return kill(pid.to!int, 0) == 0 || errno == EPERM;
+    }
+    else
+    {
+        import std.file : exists;
+
+        return exists("/proc/" ~ pid);
+    }
+}
+
+version (OSX)
+{
+    private extern (C) @system nothrow @nogc
+    {
+        int sysctl(int* name, uint length, void* value, size_t* size, void* update, size_t updateSize);
+    }
+
+    /// Whether a process is gone or a zombie, from the kernel's kinfo_proc (<sys/sysctl.h>).
+    private bool deadOrZombie(scope const(char)[] pid) @trusted
+    {
+        import std.conv : to;
+
+        enum ctlKern = 1, kernProc = 14, kernProcPid = 1;
+        enum statOffset = 40; // kinfo_proc.kp_proc.p_stat
+        enum zombie = 5; // SZOMB
+        int[4] name = [ctlKern, kernProc, kernProcPid, pid.to!int];
+        ubyte[648] info; // sizeof(struct kinfo_proc) on arm64
+        size_t size = info.length;
+        assert(sysctl(name.ptr, name.length, info.ptr, &size, null, 0) == 0);
+        return size == 0 || info[statOffset] == zombie;
+    }
 }
