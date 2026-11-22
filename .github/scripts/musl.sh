@@ -4,7 +4,7 @@ set -eu
 # actions stay on the glibc host; no glibc compatibility shim masks musl testing.
 apk add --no-cache python3 build-base binutils clang cmake ninja meson perl pkgconf git coreutils curl \
   autoconf automake libtool bison flex linux-headers \
-  libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxfixes-dev libxscrnsaver-dev libxtst-dev
+  libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxfixes-dev libxscrnsaver-dev libxtst-dev libunwind-dev libunwind-static
 git config --global --add safe.directory /work
 python3 tools/install_toolchains.py --compiler ldc --musl --destination /opt/flint-tools
 arch=$(uname -m)
