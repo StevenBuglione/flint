@@ -323,6 +323,26 @@ struct GenerateArgs
     @Option("json", 0, "Emit flint.generate/1 JSON on stdout") bool json;
 }
 
+/// `flint config`.
+@Command("flint config", "Print every resolved configuration key with its value and source")
+struct ConfigArgs
+{
+    /// Profile.
+    @Option("profile", 'p', "Configuration profile (default dev)") string profile = "dev";
+    /// Project directory.
+    @Option("project", 'C', "Run in this project directory") string project;
+    /// JSON output.
+    @Option("json", 0, "Emit flint.config/1 JSON on stdout") bool json;
+}
+
+/// `flint mcp`.
+@Command("flint mcp", "Serve the Flint API, diagnostics and build loop to MCP clients over stdio")
+struct McpArgs
+{
+    /// Call log.
+    @Option("log", 0, "Append one JSON line per tool call to this file") string log;
+}
+
 /// `flint docs`.
 @Command("flint docs", "Search the pinned Flint API: signatures, documentation and tested examples")
 struct DocsArgs
@@ -409,6 +429,10 @@ struct FlintArgs
     @Subcommand("docs", "Search the pinned Flint API") DocsArgs docs;
     /// generate.
     @Subcommand("generate", "Write the canonical shape of a component") GenerateArgs generate;
+    /// config.
+    @Subcommand("config", "Print the resolved configuration") ConfigArgs config;
+    /// mcp.
+    @Subcommand("mcp", "Serve Flint knowledge and the build loop over MCP") McpArgs mcp;
     /// examples.
     @Subcommand("examples", "Show tested examples for a topic") ExamplesArgs examples;
     /// receipt.

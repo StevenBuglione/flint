@@ -700,8 +700,11 @@ Hit[] search(const ref ApiIndex index, string query, size_t limit)
         score -= cast(long)(symbol.qualified.length / 16);
         hits ~= Hit(score, i);
     }
-    sort!((a, b) => a.score > b.score || (a.score == b.score
-            && index.symbols[a.index].qualified < index.symbols[b.index].qualified))(hits);
+    // Ties fall back to the qualified name, then the source line, so the same query always answers the same.
+    sort!((a, b) => a.score != b.score ? a.score > b.score
+            : index.symbols[a.index].qualified != index.symbols[b.index].qualified
+            ? index.symbols[a.index].qualified < index.symbols[b.index].qualified
+            : index.symbols[a.index].line < index.symbols[b.index].line)(hits);
     return hits[0 .. hits.length < limit ? hits.length : limit];
 }
 

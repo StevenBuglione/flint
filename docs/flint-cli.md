@@ -46,6 +46,8 @@ flint check
 | `flint version [--verify]` | Print the tool, toolchain and source identities. `--verify` checks this executable against its receipt. |
 | `flint explain <code>\|--list` | Explain a diagnostic code with a correct example. |
 | `flint docs [words\|qualified.name] [--export DIR]` | Search the pinned Flint API, built offline by the pinned compiler: signatures, documentation and the tested examples from each package's own tests. `--export` writes `llms.txt` and `llms-full.txt`. |
+| `flint config [--profile P]` | Every key `config/application.toml` and its profile file set, with its value and `file:line`. |
+| `flint mcp [--log FILE]` | Serve the knowledge tools and the build loop to MCP clients over stdio (ADR-021 section 6): `search_api`, `get_symbol`, `get_example`, `explain_error`, `describe_project`, `resolved_config`, `dependency_graph`, `generate`, `build`, `test` and `check`. Each tool returns the matching command's `--json` document. `--log` records each call. |
 | `flint examples <topic>` | Compiled, tested examples for a topic, and matching golden applications. |
 | `flint generate <entity\|repository\|service\|controller\|config\|migration\|agents> <Name> [--plan]` | Write the canonical shape of a component (package-by-feature), add the core packages it needs and relock; `agents` refreshes `AGENTS.md`. Never overwrites. |
 | `flint receipt <artifact> [--canonical]` | Verify an artifact against its receipt and the current toolchain. |
@@ -141,6 +143,7 @@ Command fields:
 | `flint.explain/1` | `codes` (`code`, `exit_code_class`, `title`, `explanation`, `example`) |
 | `flint.docs/1` | `query`, `release`, `packages` (`name`, `module_name`, `description`, `symbols`, `with_examples`, `problem`), `symbols` (`qualified`, `name`, `kind`, `package_name`, `module_name`, `signature`, `comment`, `file`, `line`, `examples`), `exported` |
 | `flint.examples/1` | `topic`, `examples` (`symbol`, `signature`, `example` (`file`, `line`, `code`)), `applications` |
+| `flint.config/1` | `project`, `profile`, `files`, `keys` (`key`, `value`, `source`) |
 | `flint.generate/1` | `project`, `kind`, `name`, `files` (`path`, `content`), `dependencies_added`, `next`, `plan` |
 | `flint.receipt/1` | `artifact`, `receipt`, `canonical`, `non_canonical_reasons`, `profile`, `commit` |
 

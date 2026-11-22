@@ -40,6 +40,33 @@ Status: proposed by the Milestone 9 implementation, for the project owner's revi
    - **The code model:** `@safe:`, errors as values (`Result!T`, `Error`), structs, constructor injection, selective imports, and dependencies only in `flint.toml`.
    - **What not to do:** `@trusted` or `extern(C)` outside `ffi/`, mixins and home-made frameworks, flags outside profiles, editing generated files, and silent waivers.
 
+### 2. `flint mcp` on `flint:mcp`, and blocking tools
+
+1. **A separate executable.** `flint:mcp` depends on `http`, `web` and `reactor`, and through them on the native providers: curl, OpenSSL, nghttp2 and liburing.
+   - **Why separate:** linking those into the `flint` executable would make bootstrapping the CLI depend on a native install, on every platform.
+   - **How it starts:** the server is its own Flint project, `apps/flint-mcp`, built on `flint:mcp` itself. `flint mcp` builds it through flint (in under a second when it is current), sets `FLINT_EXECUTABLE`, and replaces itself with it, so the MCP client talks to `flint-mcp` on stdio in the client's directory. The build reports on standard error only, because standard output belongs to the protocol.
+
+2. **The tools are the commands.** Each ADR-021 section 6 tool runs the matching `flint` command with `--json` in the project directory and returns its document, as text and as structured content.
+   - **The mapping:**
+     - `search_api` runs `docs`, `get_symbol` runs `docs <name>` and `get_example` runs `examples`.
+     - `explain_error` runs `explain`.
+     - `describe_project` and `dependency_graph` run `deps tree`, and `resolved_config` runs the new `flint config`.
+     - `generate`, `build`, `test` and `check` run the commands of the same names.
+   - **One contract:** the tools and the CLI share the same schemas, so an agent's view and a person's view cannot drift.
+   - **Failures:** a failing command is a tool error (`isError`) carrying the full diagnostics. Invalid arguments are rejected by the DTO's schema and validation, as JSON-RPC -32602.
+   - **Call log:** `flint mcp --log FILE` appends one JSON line per call (tool, arguments, exit code and milliseconds). The vibe-coding benchmark counts build–fix iterations from it.
+
+3. **The library gap: blocking tools in `flint:mcp`.** `flint:mcp` required every tool to be `@safe nothrow @nogc` and to answer in the request arena, which is right for its hot path. A tool that runs a process cannot meet that.
+   - **The addition:** `McpTool.blocking` and `BlockingToolResult`. A blocking tool has the signature `BlockingToolResult name(Dto input) @safe`; it may allocate, block and throw.
+   - **How it runs:** the protocol path stays `nothrow @nogc`. It copies the call's arguments into storage owned by a `BlockingRunner`, publishes the call through an atomic state, and waits cooperatively, as the existing worker does.
+   - **The managed worker:** one worker (`startManagedBackground`) decodes the arguments with `flint.serde.owned`, validates them with `flint.validate`, runs the tool and publishes its owned result, which the protocol copies into the reply. An exception becomes a tool error. The runner is started with the first blocking tool and stopped by `McpServer.close`.
+   - **Scope:** one blocking call is in flight at a time, and blocking calls are not cancellable mid-run.
+   - **No `@trusted`:** no `@trusted` code was added. The runner is given a tool index and looks the tool up through a delegate fixed at start, because dip1000 rightly refused to store the registry's `scope` delegate in it.
+   - **Tests:** `packages/mcp/tests/blocking.d` covers decoding, validation failures, a thrown exception, the argument limit and the server lifecycle, on DMD and LDC.
+
+4. **`flint config [--profile P]`** prints every key that `config/application.toml` and `application-<profile>.toml` set, with its value and `file:line`. It is the build-time view of ADR-021 section 2. Environment and `--set` layers are applied by the application at startup and are not shown yet.
+
 ## Consequences
 
+- An MCP client gets the exact pinned API, the diagnostics catalogue and the build loop from `flint mcp`. `tests/test_flint_mcp.py` drives it as a real stdio client: the handshake, the tool list and schemas, knowledge, the configuration, a failing build as a tool error, generation, invalid arguments and the call log.
 - An agent or a person can ask the exact API of the pinned Flint version offline, see a tested example and generate canonical components. `tests/test_flint_knowledge.py` covers the index, search, export, examples, every generator and `AGENTS.md`.

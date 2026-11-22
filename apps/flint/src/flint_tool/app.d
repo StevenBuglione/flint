@@ -170,6 +170,7 @@ private int knowledgeCommand(ref Session session, string name, ref FlintArgs opt
     import std.array : join;
     import flint_tool.commands.generate : commandGenerate;
     import flint_tool.commands.knowledge : commandDocs, commandExamples;
+    import flint_tool.commands.mcp : commandConfig, commandMcp;
 
     switch (name)
     {
@@ -180,6 +181,10 @@ private int knowledgeCommand(ref Session session, string name, ref FlintArgs opt
     case "flint generate":
         return commandGenerate(session, options.generate.kind, options.generate.name,
                 options.generate.project, options.generate.plan);
+    case "flint config":
+        return commandConfig(session, options.config.project, options.config.profile);
+    case "flint mcp":
+        return commandMcp(session, options.mcp.log);
     default:
         return -1;
     }
@@ -338,6 +343,12 @@ private bool printKnowledgeHelp(string commandName, scope void delegate(scope co
         return true;
     case "flint examples":
         writeHelp!ExamplesArgs(sink);
+        return true;
+    case "flint config":
+        writeHelp!ConfigArgs(sink);
+        return true;
+    case "flint mcp":
+        writeHelp!McpArgs(sink);
         return true;
     default:
         return false;
