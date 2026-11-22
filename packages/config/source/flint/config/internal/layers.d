@@ -1,12 +1,11 @@
 module flint.config.internal.layers;
 
 import flint.arena : Error, Result, Status;
-import flint.config.internal.sources : InputValue, Inputs, Origin, SourceFile, joinKey,
+import flint.config.internal.sources : InputValue, Inputs, Origin, SourceFile, hasPrefix, joinKey,
     keyComponent, maxConfigDepth, putInput, readDotEnv, readJson, sourceFile;
 import flint.config.types : ConfigOptions;
 import flint.serde : DecodeOptions;
 import flint.serde.owned : readTomlEntries;
-import std.algorithm.searching : startsWith;
 
 @safe:
 
@@ -25,14 +24,14 @@ private Error readArguments(scope const(string)[] arguments, ref string profile,
     bool choseProfile;
     foreach (argument; arguments)
     {
-        if (argument.startsWith("--flint.profile="))
+        if (hasPrefix(argument, "--flint.profile="))
         {
             if (choseProfile)
                 return origin.report(Status.conflict, "flint.profile", "was specified more than once");
             profile = argument["--flint.profile=".length .. $].idup;
             choseProfile = true;
         }
-        else if (argument.startsWith("--set="))
+        else if (hasPrefix(argument, "--set="))
         {
             const valueAndKey = argument["--set=".length .. $];
             size_t equals;

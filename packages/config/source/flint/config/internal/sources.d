@@ -7,6 +7,62 @@ import flint.arena : Error, Result, Status;
 package(flint.config) enum size_t maxConfigDepth = 16;
 private enum size_t maxSourceBytes = 1_048_576;
 
+// Decimal text of a line or column number, as std.conv.to!string writes it.
+private string decimal(size_t value) pure nothrow
+{
+    char[20] digits;
+    size_t start = digits.length;
+    do
+    {
+        digits[--start] = cast(char)('0' + value % 10);
+        value /= 10;
+    }
+    while (value != 0);
+    return digits[start .. $].idup;
+}
+
+// Code units of the well-formed UTF-8 sequence that starts at `text[index]`, or 0 when it is truncated, overlong,
+// a surrogate, beyond U+10FFFF or a five- or six-unit form; the rules of std.utf.decode.
+private size_t sequenceUnits(scope const(char)[] text, size_t index) pure nothrow @nogc
+{
+    static immutable uint[4] mask = [(1 << 7) - 1, (1 << 11) - 1, (1 << 16) - 1, (1 << 21) - 1];
+    const ubyte lead = text[index];
+    if (lead < 0x80)
+        return 1;
+    if ((lead & 0b1100_0000) != 0b1100_0000)
+        return 0;
+    uint scalar = lead;
+    ubyte control = cast(ubyte)(lead << 1);
+    foreach (i; 1 .. 4)
+    {
+        if (index + i == text.length || (text[index + i] & 0xC0) != 0x80)
+            return 0;
+        scalar = (scalar << 6) | (text[index + i] & 0x3F);
+        control = cast(ubyte)(control << 1);
+        if (control & 0x80)
+            continue;
+        scalar &= mask[i];
+        const overlong = (scalar & ~mask[i - 1]) == 0;
+        const surrogate = i == 2 && scalar >= 0xD800 && scalar <= 0xDFFF;
+        return overlong || surrogate || (i == 3 && scalar > 0x10FFFF) ? 0 : i + 1;
+    }
+    return 0;
+}
+
+/// Whether the text is well-formed UTF-8, exactly as `std.utf.validate` accepts it.
+package(flint.config) bool validUtf8(scope const(char)[] text) pure nothrow @nogc
+{
+    size_t index;
+    while (index < text.length)
+    {
+        const units = sequenceUnits(text, index);
+        if (units == 0)
+            return false;
+        index += units;
+    }
+    return true;
+}
+
 package(flint.config) struct Origin
 {
     string name;
@@ -15,8 +71,6 @@ package(flint.config) struct Origin
 
     Error report(Status status, string key, string reason) const
     {
-        import std.conv : to;
-
         const label = key.length == 0 ? "configuration" : "configuration key " ~ key;
         if (offset != size_t.max && offset <= document.length)
         {
@@ -32,8 +86,8 @@ package(flint.config) struct Origin
                 else
                     ++column;
             }
-            return Error(status,
-                    label ~ " in " ~ name ~ " at " ~ line.to!string ~ ":" ~ column.to!string ~ " " ~ reason, offset);
+            return Error(status, label ~ " in " ~ name ~ " at " ~ decimal(line) ~ ":" ~ decimal(column) ~ " " ~ reason,
+                    offset);
         }
         return Error(status, label ~ " in " ~ name ~ " " ~ reason);
     }
@@ -75,7 +129,6 @@ private string sourcePath(string directory, string name)
 package(flint.config) Result!SourceFile sourceFile(string directory, string name)
 {
     import std.file : exists, read;
-    import std.utf : validate;
 
     const path = sourcePath(directory, name);
     if (!exists(path))
@@ -90,9 +143,7 @@ package(flint.config) Result!SourceFile sourceFile(string directory, string name
         return Result!SourceFile(SourceFile.init, origin.report(Status.resourceExhausted, "", "exceeds 1 MiB"));
     if (content.length >= 3 && content[0 .. 3] == "\xEF\xBB\xBF")
         content = content[3 .. $];
-    try
-        validate(content);
-    catch (Exception)
+    if (!validUtf8(content))
         return Result!SourceFile(SourceFile.init, origin.report(Status.invalidArgument, "", "contains invalid UTF-8"));
     return Result!SourceFile(SourceFile(true, content));
 }
@@ -110,6 +161,13 @@ package(flint.config) bool keyComponent(scope const(char)[] name) pure nothrow @
     return true;
 }
 
+/// Whether `text` begins with `prefix`, comparing code units as std.algorithm.searching.startsWith does for
+/// two UTF-8 strings.
+package(flint.config) bool hasPrefix(scope const(char)[] text, scope const(char)[] prefix) pure nothrow @nogc
+{
+    return text.length >= prefix.length && text[0 .. prefix.length] == prefix;
+}
+
 package(flint.config) string joinKey(string parent, string child)
 {
     return parent.length == 0 ? child : parent ~ "." ~ child;
@@ -123,10 +181,57 @@ package(flint.config) Error putInput(ref Inputs entries, string key, InputValue 
     return Error.init;
 }
 
+// Unicode White_Space, the set std.uni.isWhite tests.
+private bool whiteSpace(dchar ch) pure nothrow @nogc
+{
+    if (ch < 0x80)
+        return (ch >= 0x09 && ch <= 0x0D) || ch == 0x20;
+    return ch == 0x85 || ch == 0xA0 || ch == 0x1680 || (ch >= 0x2000 && ch <= 0x200A) || ch == 0x2028
+        || ch == 0x2029 || ch == 0x202F || ch == 0x205F || ch == 0x3000;
+}
+
+// Length of the well-formed UTF-8 sequence starting with `lead`.
+private size_t sequenceLength(char lead) pure nothrow @nogc
+{
+    return lead < 0x80 ? 1 : lead < 0xE0 ? 2 : lead < 0xF0 ? 3 : 4;
+}
+
+// Scalar of the well-formed UTF-8 sequence at `text[0 .. units]`.
+private dchar scalarAt(scope const(char)[] text, size_t units) pure nothrow @nogc
+{
+    static immutable ubyte[5] leadMask = [0, 0x7F, 0x1F, 0x0F, 0x07];
+    uint scalar = text[0] & leadMask[units];
+    foreach (index; 1 .. units)
+        scalar = (scalar << 6) | (text[index] & 0x3F);
+    return cast(dchar) scalar;
+}
+
+// std.string.strip for text already validated as UTF-8: remove leading and trailing Unicode white space.
+private inout(char)[] strip(return scope inout(char)[] text) pure nothrow @nogc
+{
+    size_t begin;
+    while (begin < text.length)
+    {
+        const units = sequenceLength(text[begin]);
+        if (!whiteSpace(scalarAt(text[begin .. $], units)))
+            break;
+        begin += units;
+    }
+    size_t end = text.length;
+    while (end > begin)
+    {
+        size_t start = end - 1;
+        while (start > begin && (text[start] & 0xC0) == 0x80)
+            --start;
+        if (!whiteSpace(scalarAt(text[start .. end], end - start)))
+            break;
+        end = start;
+    }
+    return text[begin .. end];
+}
+
 package(flint.config) Error readDotEnv(string text, ref Inputs entries)
 {
-    import std.string : strip;
-
     size_t start;
     foreach (index; 0 .. text.length + 1)
     {
@@ -397,4 +502,60 @@ private struct ObjectReader
 private bool tokenBoundary(char ch) pure nothrow @nogc
 {
     return ch == ',' || ch == '}' || ch == ']' || ch == ' ' || ch == '\n' || ch == '\r' || ch == '\t';
+}
+
+version (unittest)
+{
+    @("config text helpers match the Phobos functions they replace")
+    unittest
+    {
+        import std.conv : to;
+        import std.string : stdStrip = strip;
+        import std.uni : isWhite;
+        import std.utf : UTFException, validate;
+
+        foreach (dchar ch; 0 .. 0x110000)
+            assert(whiteSpace(ch) == isWhite(ch));
+        foreach (value; [0UL, 1, 9, 10, 4_294_967_296, ulong.max])
+            assert(decimal(cast(size_t) value) == (cast(size_t) value).to!string);
+        foreach (text; [
+            "", " ", "a", " a ", "\t\u00A0x\u3000\u2028", "\u0085 key = value \u202F\u205F", "\u1680",
+            "x\u2000\u200A", "\u200B x \u200B", "é ", " ü", "\U0001F600 \U0001F600", "\r\n"
+        ])
+            assert(strip(text) == stdStrip(text));
+
+        static bool phobosValid(scope const(char)[] text) @safe
+        {
+            try
+                validate(text);
+            catch (UTFException)
+                return false;
+            return true;
+        }
+
+        char[5] buffer;
+        static immutable ubyte[] edges = [
+            0x00, 0x41, 0x7F, 0x80, 0x8F, 0x90, 0x9F, 0xA0, 0xBF, 0xC0, 0xC1, 0xC2, 0xDF, 0xE0,
+            0xED, 0xEF, 0xF0, 0xF4, 0xF5, 0xF7, 0xF8, 0xFB, 0xFC, 0xFE, 0xFF
+        ];
+        foreach (first; 0 .. 256)
+            foreach (second; 0 .. 256)
+            {
+                buffer[0] = cast(char) first;
+                buffer[1] = cast(char) second;
+                assert(validUtf8(buffer[0 .. 1]) == phobosValid(buffer[0 .. 1]));
+                assert(validUtf8(buffer[0 .. 2]) == phobosValid(buffer[0 .. 2]));
+            }
+        foreach (a; edges)
+            foreach (b; edges)
+                foreach (c; edges)
+                    foreach (d; edges)
+                    {
+                        buffer[0 .. 4] = [cast(char) a, cast(char) b, cast(char) c, cast(char) d];
+                        assert(validUtf8(buffer[0 .. 3]) == phobosValid(buffer[0 .. 3]));
+                        assert(validUtf8(buffer[0 .. 4]) == phobosValid(buffer[0 .. 4]));
+                        buffer[4] = 'z';
+                        assert(validUtf8(buffer[0 .. 5]) == phobosValid(buffer[0 .. 5]));
+                    }
+    }
 }

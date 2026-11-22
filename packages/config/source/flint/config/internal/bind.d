@@ -2,12 +2,10 @@ module flint.config.internal.bind;
 
 import flint.arena : Error, Status;
 import flint.config.internal.layers : Layers;
-import flint.config.internal.sources : InputValue, Inputs, Origin, keyComponent, maxConfigDepth;
+import flint.config.internal.sources : InputValue, Inputs, Origin, hasPrefix, keyComponent, maxConfigDepth;
 import flint.config.internal.values : coerce;
 import flint.config.types : ConfigurationProperties, Default, Env, Required;
 import flint.validate : Violation, validate;
-import std.algorithm.searching : startsWith;
-import std.traits : FieldNameTuple;
 
 @safe:
 
@@ -34,26 +32,6 @@ private struct FieldRules
     string defaultText;
     bool defaulted;
     bool required;
-}
-
-private FieldRules rules(T, string name)()
-{
-    FieldRules result;
-    static foreach (attribute; __traits(getAttributes, __traits(getMember, T, name)))
-    {
-        {
-            static if (is(typeof(attribute) == Env))
-                result.environment = attribute.name;
-            else static if (is(typeof(attribute) == Default))
-            {
-                result.defaulted = true;
-                result.defaultText = attribute.value;
-            }
-            else static if (is(attribute == Required) || is(typeof(attribute) == Required))
-                result.required = true;
-        }
-    }
-    return result;
 }
 
 private string defaultEnvironment(string prefix, string key)
@@ -203,7 +181,7 @@ private struct Binding
                 continue;
             foreach (environmentScope; scopes)
             {
-                if (environmentScope.length != 0 && key.startsWith(environmentScope))
+                if (environmentScope.length != 0 && hasPrefix(key, environmentScope))
                 {
                     problem(Origin("process environment"), Status.invalidArgument, key, "is unknown");
                     break;
@@ -234,16 +212,35 @@ private void walk(T, string prefix, size_t depth)(ref T value, ref Binding bindi
     {
         if (prefix.length != 0)
             binding.consumeObject(prefix);
-        static foreach (name; FieldNameTuple!T)
+        static foreach (field; 0 .. T.tupleof.length)
         {
             {
+                enum name = __traits(identifier, T.tupleof[field]);
                 enum fullKey = prefix.length == 0 ? name : prefix ~ "." ~ name;
                 alias Field = typeof(__traits(getMember, T.init, name));
                 static if (is(Field == struct))
                     walk!(Field, fullKey, depth + 1)(__traits(getMember, value, name), binding);
                 else
                 {
-                    enum metadata = rules!(T, name)();
+                    // Read the field's attributes in place rather than through a template per field.
+                    enum metadata = () {
+                        FieldRules result;
+                        static foreach (attribute; __traits(getAttributes, __traits(getMember, T, name)))
+                        {
+                            {
+                                static if (is(typeof(attribute) == Env))
+                                    result.environment = attribute.name;
+                                else static if (is(typeof(attribute) == Default))
+                                {
+                                    result.defaulted = true;
+                                    result.defaultText = attribute.value;
+                                }
+                                else static if (is(attribute == Required) || is(typeof(attribute) == Required))
+                                    result.required = true;
+                            }
+                        }
+                        return result;
+                    }();
                     binding.leaf(__traits(getMember, value, name), fullKey, metadata);
                 }
             }
