@@ -1,0 +1,22 @@
+[project]
+name = "flint-tool"
+version = "0.7.0"
+flint = "1.0"
+type = "executable"
+description = "The flint command: create, build, run, test and check Flint projects with the pinned toolchain."
+
+[build]
+executable = "flint"
+
+[dependencies]
+"flint:arena" = {}
+"flint:cli" = {}
+"flint:conc" = {}
+"flint:config" = {}
+"flint:log" = {}
+"flint:os" = {}
+"flint:serde" = {}
+"flint:term" = {}
+
+[test-dependencies]
+"flint:test" = {}

@@ -1,0 +1,7 @@
+# The Flint platform version (ADR-021 section 2). A project's `flint = "x.y"` pins this
+# together with the toolchain in policy/toolchains.json, the core packages in
+# policy/packages.json, the profiles in policy/profiles.toml and the rules in
+# policy/safety-policy.json. Read by flint through flint.config.
+[platform]
+flint = "1.0"
+release = "0.7.0"

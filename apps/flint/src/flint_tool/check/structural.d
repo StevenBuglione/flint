@@ -1,0 +1,389 @@
+/// The Flint workspace's structural gate, ported from tools/gates.py `--gate structural`.
+///
+/// Verdicts match tools/gates.py: the same rules, applied to the same files, in the same order. Unlike the
+/// Python gate, flint reports every violation instead of stopping at the first.
+module flint_tool.check.structural;
+
+import flint_tool.check.lexer : DependencyEdge, LexFailure, Token, compilerDependencyEdges, importedModules, tokenize;
+import flint_tool.check.rules : SourceScan, checkAnnotations, checkDefault, checkMixin,
+    checkWorkspaceImport, expectedModule, importLine, scanSource;
+import flint_tool.diagnostics.report : Report, Severity, at, diagnostic;
+import flint_tool.home.policy : Home, matchesAny;
+
+@safe:
+
+/// The gate's JSON result, identical in shape to tools/gates.py's.
+struct StructuralSummary
+{
+    /// Packages whose sources were checked.
+    long packages;
+    /// Nodes of the policy graph.
+    long graph_nodes;
+    /// The compiler dependency audit.
+    GeneratedSummary generated_dependencies;
+}
+
+/// Compiler dependency audit counts.
+struct GeneratedSummary
+{
+    /// Packages with approved string mixins.
+    long packages;
+    /// Compiles audited (two profiles per package).
+    long compiler_profiles;
+}
+
+/// Run the structural gate over `selected` packages (all when empty). With `fast`, skip the compiler
+/// dependency audit: that is the subset `flint build` and `flint test` run before every workspace build.
+StructuralSummary structuralGate(const ref Home home, scope const(string)[] selected, string dmd,
+        ref Report report, bool fast = false)
+{
+    import std.path : buildPath;
+
+    StructuralSummary summary;
+    summary.graph_nodes = cast(long) home.packages.length;
+    checkGraph(home, report);
+    checkRootRecipe(home, report);
+    string[] names;
+    foreach (ref item; home.packages)
+    {
+        bool wanted = selected.length == 0;
+        foreach (name; selected)
+            wanted = wanted || name == item.name;
+        if (wanted)
+            names ~= item.name;
+    }
+    summary.packages = cast(long) names.length;
+    string[] mixinPackages;
+    foreach (name; names)
+    {
+        if (checkPackage(home, name, report))
+            mixinPackages ~= name;
+    }
+    if (!fast)
+        summary.generated_dependencies = generatedDependencies(home, mixinPackages, dmd, report);
+    return summary;
+}
+
+private void checkGraph(const ref Home home, ref Report report)
+{
+    bool[string] visited;
+    bool[string] active;
+    bool[string] reported;
+    void visit(string name)
+    {
+        if (name in active)
+        {
+            if (name !in reported)
+                report.error("FLINT-E0521", "dependency cycle at " ~ name,
+                        "remove one edge of the cycle in policy/packages.json");
+            reported[name] = true;
+            return;
+        }
+        if (name in visited)
+            return;
+        active[name] = true;
+        const meta = home.find(name);
+        foreach (dependency; meta.dependencies)
+        {
+            const target = home.find(dependency);
+            if (target is null)
+            {
+                report.error("FLINT-E0525", "unknown dependency " ~ dependency,
+                        "name a package from policy/packages.json");
+                continue;
+            }
+            if (target.tier > meta.tier)
+                report.error("FLINT-E0522", "higher-tier import " ~ name ~ " -> " ~ dependency,
+                        "move the shared code down a tier");
+            if (meta.tier == 4 && (target.tier == 2 || target.tier == 3))
+                report.error("FLINT-E0523", "CLI/web-data isolation", name ~ " may not depend on " ~ dependency);
+            visit(dependency);
+        }
+        active.remove(name);
+        visited[name] = true;
+    }
+
+    foreach (ref item; home.packages)
+        visit(item.name);
+}
+
+private void checkRootRecipe(const ref Home home, ref Report report)
+{
+    import std.path : buildPath;
+    import std.regex : matchAll, regex;
+    import flint_tool.support.files : readIfPresent;
+
+    const text = readIfPresent(buildPath(home.root, "dub.sdl"));
+    bool[string] listed;
+    foreach (match; matchAll(text, regex(`subPackage\s+"packages/([\w-]+)"`)))
+        listed[match[1].idup] = true;
+    bool same = listed.length == home.packages.length;
+    foreach (ref item; home.packages)
+        same = same && (item.name in listed) !is null;
+    if (!same)
+        report.add(at(diagnostic("FLINT-E0524", Severity.error, "root subpackage list differs",
+                "list every package of policy/packages.json as subPackage \"packages/<name>\""), "dub.sdl", 0));
+}
+
+/// Check one package's recipe and sources. Returns true when it contains approved string mixins.
+private bool checkPackage(const ref Home home, string name, ref Report report)
+{
+    import std.algorithm.sorting : sort;
+    import std.path : buildPath;
+    import std.regex : matchAll, regex;
+    import flint_tool.support.files : findFiles, readIfPresent;
+
+    const meta = home.find(name);
+    const directory = buildPath(home.root, "packages", name);
+    const recipePath = "packages/" ~ name ~ "/dub.sdl";
+    const recipe = readIfPresent(buildPath(directory, "dub.sdl"));
+    bool[string] declared;
+    foreach (match; matchAll(recipe, regex(`dependency\s+"flint:([\w-]+)"\s+version="\*"`)))
+        declared[match[1].idup] = true;
+    bool same = declared.length == meta.dependencies.length;
+    foreach (dependency; meta.dependencies)
+        same = same && (dependency in declared) !is null;
+    if (!same)
+        report.add(at(diagnostic("FLINT-E0525", Severity.error, name ~ ": SDL dependencies differ from policy",
+                "declare exactly the dependencies policy/packages.json lists"), recipePath, 0));
+    size_t dependencyWords;
+    foreach (match; matchAll(recipe, regex(`\bdependency\b`)))
+        ++dependencyWords;
+    if (dependencyWords != declared.length)
+        report.add(at(diagnostic("FLINT-E0526", Severity.error, name ~ ": noncanonical dependency recipe",
+                "declare Flint dependencies only, as dependency \"flint:<name>\" version=\"*\""), recipePath, 0));
+
+    const sourceRoot = buildPath(directory, "source");
+    const lowPrefixes = name in home.safety.unsafePrefixes ? home.safety.unsafePrefixes[name] : null;
+    bool mixins;
+    auto files = findFiles(sourceRoot, "**/*.d");
+    sort(files);
+    foreach (relative; files)
+    {
+        import std.file : readText;
+
+        const display = "packages/" ~ name ~ "/source/" ~ relative;
+        SourceScan scan;
+        if (!scanSource(display, readText(buildPath(sourceRoot, relative)), scan, report))
+            continue;
+        if (scan.moduleName != expectedModule(relative))
+            report.add(at(diagnostic("FLINT-E0401", Severity.error,
+                    "module/path mismatch: declares " ~ scan.moduleName ~ ", path names " ~ expectedModule(relative),
+                    "declare `module " ~ expectedModule(relative) ~ ";` or move the file"), display, 1, 0, scan.text));
+        const owner = home.owner(scan.moduleName);
+        if (owner is null || owner.name != name)
+            report.add(at(diagnostic("FLINT-E0410", Severity.error, "source belongs to another package",
+                    "modules of " ~ name ~ " live below " ~ meta.module_), display, 1, 0, scan.text));
+        const low = matchesAny(scan.moduleName, lowPrefixes);
+        checkDefault(scan, low, report);
+        if (scan.stringMixin && matchesAny(scan.moduleName, home.safety.generatorPrefixes))
+            mixins = true;
+        checkMixin(scan, home.safety.generatorPrefixes, report);
+        foreach (imported; scan.imports)
+            checkWorkspaceImport(home, name, imported, display, display, importLine(scan,
+                    imported), scan.text, report);
+        checkAnnotations(scan, low, home.safety.maxTrustedLines, report);
+    }
+    return mixins;
+}
+
+/// Compile every approved generator package with DMD -deps and -mixin, then audit expansions and edges.
+private GeneratedSummary generatedDependencies(const ref Home home, scope const(string)[] packages,
+        string dmd, ref Report report)
+{
+    import std.algorithm.sorting : sort;
+    import std.file : exists, mkdirRecurse, rmdirRecurse, tempDir;
+    import std.path : buildPath;
+    import std.uuid : randomUUID;
+    import flint_tool.support.files : findFiles;
+
+    GeneratedSummary summary;
+    summary.packages = cast(long) packages.length;
+    if (packages.length == 0)
+        return summary;
+    if (dmd.length == 0 || !exists(dmd))
+    {
+        report.error("FLINT-E0802", "approved string mixins require the pinned DMD for the compiler dependency audit",
+                "flint toolchain install");
+        return summary;
+    }
+    string[] imports;
+    foreach (ref item; home.packages)
+        imports ~= "-I" ~ buildPath(home.root, "packages", item.name, "source");
+    const temporary = buildPath(tempDir(), "flint-deps-" ~ randomUUID().toString());
+    mkdirRecurse(temporary);
+    scope (exit)
+        rmdirRecurse(temporary);
+    auto sorted = packages.dup;
+    sort(sorted);
+    foreach (name; sorted)
+    {
+        const sourceRoot = buildPath(home.root, "packages", name, "source");
+        auto files = findFiles(sourceRoot, "**/*.d");
+        sort(files);
+        string[] sources;
+        foreach (relative; files)
+            sources ~= buildPath(sourceRoot, relative);
+        foreach (profile; ["debug", "release"])
+        {
+            if (auditProfile(home, name, profile, sources, imports, temporary, dmd, report))
+                ++summary.compiler_profiles;
+        }
+    }
+    return summary;
+}
+
+/// Compile one generator package in one profile and audit its expansion and compiler edges.
+private bool auditProfile(const ref Home home, string name, string profile, scope const(string)[] sources,
+        scope const(string)[] imports, string temporary, string dmd, ref Report report)
+{
+    import std.file : exists, getSize, readText;
+    import std.path : buildPath;
+    import flint_tool.support.process : Launch, capture;
+
+    const destination = buildPath(temporary, name ~ "-" ~ profile ~ ".deps");
+    const expansion = buildPath(temporary, name ~ "-" ~ profile ~ ".mixins.d");
+    const command = [
+        dmd, "-o-", "-unittest", "-preview=dip1000", "-" ~ profile, "-deps=" ~ destination,
+        "-mixin=" ~ expansion
+    ] ~ imports ~ sources;
+    Launch launch;
+    launch.directory = home.root;
+    const outcome = capture(command, launch);
+    const where = "packages/" ~ name;
+    bool failed(string code, string message, string fix)
+    {
+        report.add(at(diagnostic(code, Severity.error, message, fix), where, 0));
+        return false;
+    }
+
+    if (!outcome.ok)
+        return failed("FLINT-E0527", "generated dependency compile failed: " ~ outcome.failure ~ outcome.combined(),
+                "fix the compile errors above");
+    if (!exists(destination))
+        return failed("FLINT-E0527", "compiler did not produce a dependency receipt", "check the pinned DMD");
+    if (!exists(expansion) || getSize(expansion) == 0)
+        return failed("FLINT-E0527", "string mixin has no instantiated expansion; add a positive unittest fixture",
+                "add a unittest that instantiates the generator");
+    Token[] expanded;
+    LexFailure failure;
+    if (!projectMixinTokens(readText(expansion), dmd, home.root, expanded, failure))
+        return failed("FLINT-E0511", failure.message, "generate checked code");
+    if (expanded.length == 0)
+        return failed("FLINT-E0527", "string mixin has no audited application expansion",
+                "add a unittest that instantiates the generator");
+    auditExpansion(expanded, where, report);
+    DependencyEdge[] edges;
+    if (!compilerDependencyEdges(readText(destination), edges, failure))
+        return failed("FLINT-E0527", failure.message, "check the pinned DMD");
+    foreach (edge; edges)
+    {
+        const owner = home.owner(edge.importing);
+        if (owner !is null)
+            checkWorkspaceImport(home, owner.name, edge.imported,
+                    "compiler-generated " ~ edge.importing, where, 0, null, report);
+    }
+    return true;
+}
+
+/// Mixin expansions contain neither import declarations nor unsafe annotations.
+private void auditExpansion(scope const Token[] expanded, string where, ref Report report)
+{
+    string[] generatedImports;
+    LexFailure failure;
+    if (!importedModules(expanded, generatedImports, failure) || generatedImports.length)
+        report.add(at(diagnostic("FLINT-E0511", Severity.error,
+                "generated import statements are prohibited", "generate data, not imports"), where, 0));
+    foreach (i; 1 .. expanded.length)
+    {
+        if (expanded[i - 1].value == "@" && (expanded[i].value == "trusted" || expanded[i].value == "system"))
+        {
+            report.add(at(diagnostic("FLINT-E0511", Severity.error, "generated unsafe annotations are prohibited",
+                    "keep @trusted code in handwritten sys/ modules"), where, 0));
+            return;
+        }
+    }
+}
+
+/// Tokens of a -mixin dump, skipping expansions located in the bundled compiler's druntime and Phobos sources.
+bool projectMixinTokens(string text, string compiler, string root, out Token[] tokens, out LexFailure failure)
+{
+    import std.file : exists, isFile;
+    import std.path : absolutePath, buildNormalizedPath, buildPath, dirName;
+    import std.regex : matchAll, regex;
+
+    const installation = dirName(dirName(dirName(realPath(compiler))));
+    const standard = [
+        buildPath(installation, "src", "phobos"), buildPath(installation, "src", "druntime", "import")
+    ];
+    size_t[] starts;
+    size_t[] ends;
+    string[] locations;
+    foreach (match; matchAll(text, regex(`^// expansion at(?: (.+)\([0-9]+\))?$`, "m")))
+    {
+        starts ~= match.pre.length;
+        ends ~= match.pre.length + match.hit.length;
+        locations ~= match[1].idup;
+    }
+    if (starts.length == 0)
+        return tokenize(text, tokens, failure);
+    Token[] part;
+    if (!tokenize(text[0 .. starts[0]], part, failure))
+        return false;
+    tokens ~= part;
+    foreach (index, start; starts)
+    {
+        const finish = index + 1 < starts.length ? starts[index + 1] : text.length;
+        const location = locations[index];
+        if (location.length)
+        {
+            const source = realPath(buildPath(root, location));
+            if (exists(source) && isFile(source) && (within(source, standard[0]) || within(source, standard[1])))
+                continue;
+        }
+        if (!tokenize(text[ends[index] .. finish], part, failure))
+            return false;
+        tokens ~= part;
+    }
+    return true;
+}
+
+private bool within(string path, string directory)
+{
+    return path.length > directory.length && path[0 .. directory.length] == directory && path[directory.length] == '/';
+}
+
+/// Canonical absolute path with symbolic links resolved, as Python's Path.resolve().
+string realPath(string path)
+{
+    import std.algorithm.iteration : splitter;
+    import std.file : exists, isSymlink, readLink;
+    import std.path : absolutePath, buildNormalizedPath, dirName, isAbsolute;
+
+    string current = buildNormalizedPath(absolutePath(path));
+    // Resolve one link per pass, from the root down, until no component is a link.
+    foreach (_; 0 .. 40)
+    {
+        string prefix = "/";
+        bool changed;
+        foreach (component; current.splitter('/'))
+        {
+            if (component.length == 0)
+                continue;
+            const candidate = buildNormalizedPath(prefix, component);
+            if (!changed && exists(candidate) && isSymlink(candidate))
+            {
+                const target = readLink(candidate);
+                prefix = isAbsolute(target) ? buildNormalizedPath(target) : buildNormalizedPath(dirName(candidate),
+                        target);
+                changed = true;
+                continue;
+            }
+            prefix = candidate;
+        }
+        current = prefix;
+        if (!changed)
+            break;
+    }
+    return current;
+}

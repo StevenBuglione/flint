@@ -1,0 +1,7 @@
+# The Flint workspace: the core packages listed in policy/packages.json.
+# Here `flint build`, `flint test` and `flint check` act on those packages with the
+# canonical profiles in policy/profiles.toml. Projects such as apps/flint have their
+# own flint.toml.
+[workspace]
+name = "flint"
+packages = "policy/packages.json"
