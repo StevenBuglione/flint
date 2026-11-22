@@ -1,0 +1,15 @@
+[project]
+name = "todo"
+version = "0.1.0"
+flint = "1.0"
+type = "executable"
+
+[dependencies]
+"flint:arena" = {}
+"flint:cli" = {}
+"flint:config" = {}
+"flint:serde" = {}
+"flint:term" = {}
+
+[test-dependencies]
+"flint:test" = {}

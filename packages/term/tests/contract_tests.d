@@ -336,3 +336,60 @@ version (Posix)
         assert(describe(Stream.error).colors == ColorProfile.none);
     }
 }
+
+version (Posix)
+{
+    // Point a standard descriptor at a temporary file, or at nothing, for the duration of `run`.
+    private string capturedStandard(int descriptor, bool closed, void delegate() @safe run) @system
+    {
+        import core.stdc.stdio : fflush, stderr, stdout;
+        import core.sys.posix.fcntl : O_CREAT, O_RDWR, O_TRUNC, open;
+        import core.sys.posix.unistd : close, dup, dup2;
+        import std.file : readText, remove, tempDir;
+        import std.path : buildPath;
+        import std.string : toStringz;
+        import std.uuid : randomUUID;
+
+        fflush(stdout);
+        fflush(stderr);
+        const path = buildPath(tempDir(), "flint-term-" ~ randomUUID().toString());
+        const saved = dup(descriptor);
+        const file = open(path.toStringz, O_CREAT | O_RDWR | O_TRUNC, octal!600);
+        assert(saved >= 0 && file >= 0);
+        if (closed)
+            close(descriptor);
+        else
+            dup2(file, descriptor);
+        run();
+        dup2(saved, descriptor);
+        close(saved);
+        close(file);
+        scope (exit)
+            remove(path);
+        return readText(path);
+    }
+
+    private import std.conv : octal;
+
+    @("writeStream writes standard output and standard error in order with std.stdio, and reports a failed write")
+    @system unittest
+    {
+        import flint.term : Stream, writeStream;
+        import std.stdio : stdout;
+
+        const output = capturedStandard(1, false, () @trusted {
+            stdout.write("std.stdio, ");
+            assert(writeStream(Stream.output, "then flint.term\n").code == Status.ok);
+            assert(writeStream(Stream.output, "").code == Status.ok);
+        });
+        assert(output == "std.stdio, then flint.term\n", output);
+        const error = capturedStandard(2, false, () @safe {
+            assert(writeStream(Stream.error, "todo: no item with id 9\n").code == Status.ok);
+        });
+        assert(error == "todo: no item with id 9\n", error);
+        capturedStandard(2, true, () @safe {
+            const failed = writeStream(Stream.error, "lost\n");
+            assert(failed.code == Status.ioError && failed.message == "could not write to standard error");
+        });
+    }
+}

@@ -144,8 +144,27 @@ Status: proposed by the Milestone 9 implementation, for the project owner's revi
    - **Until the rebuild:** the fork half of `tests/test_flint_diagnostics.py` fails and says so.
    - **The shared toolchain:** the shared `.tools` is rebuilt by its owner.
 
+### 6. The vibe-coding benchmark, and the library gaps it found
+
+1. **Black-box acceptance, one per task.** The task set in `benchmarks/vibe/tasks` matches ADR-021 section 11's examples: `rest-notes`, `cli-todo`, `queue-worker` and `tui-dashboard`.
+   - **The statement:** each task's `TASK.md` is the whole statement the agent sees. It fixes the observable contract (ports, endpoints, flags, file formats, exit codes, signals) and leaves the design to the agent.
+   - **The acceptance test:** `acceptance.py` runs the built program over HTTP, as commands, on a spool directory or in a pseudo-terminal. It checks only what it observes, so one test scores Flint, Go and Spring Boot alike.
+   - **A sound test:** a task counts as sound when a reference solution passes it and a fresh project fails most of it. `tests/test_vibe_bench.py` checks both for `cli-todo`.
+
+2. **The harness, `tools/vibe_bench.py`.** It prepares workspaces, runs an agent, scores the result and reports medians.
+   - **What a Flint agent gets:** the `flint` MCP server and file tools, and no shell. Its build–fix iterations come from the MCP call log.
+   - **What a Go or Spring Boot agent gets:** a shell. Logging shims of the build tools count its iterations.
+   - **The rest of the score:** wall time, and review size as source lines and attributes.
+   - **Cost:** agent runs use model capacity, so the harness never starts one by itself. `benchmarks/vibe/README.md` lists what a real run needs.
+
+3. **Library gaps found by writing the `cli-todo` reference, fixed in the libraries.** These are additions to the public API, recorded here because `handoff/` is frozen.
+   - **flint:config, relaxed binding as in Spring Boot:** `data_file`, `data-file`, `dataFile` and `DATAFILE` in a file or `--set` all bind the field `dataFile`. The exact spelling wins. Two other spellings of one key are a `conflict`, and the diagnostic names the schema key. Before this, `data_file` in a file forced a field name that the style lint rejects.
+   - **flint:cli, `writeHelp!T(commandName, sink)`:** this prints help for the command a parse selected, such as `todo add --help`: its path, its options, its arguments and its subcommands. `--version` and `--completion` stay on the root's help. Before this, only the root's help could be printed.
+   - **flint:term, `writeStream(Stream, text)`:** this writes to standard output or standard error from `@safe nothrow @nogc` code, through the C runtime's stream, so its order with `std.stdio` is kept, and flushes. `std.stdio.stderr` is `@system` (a `__gshared` global), so before this a `@safe` CLI could not print an error message. The one `@trusted` line is in `flint.term.sys.output`. Its test captures both streams and checks that a write to a closed descriptor reports `ioError`.
+
 ## Consequences
 
+- The vibe-coding benchmark can run: four tasks with black-box acceptance tests, a harness for Claude Code, Codex or any agent command, and a Flint reference for `cli-todo` that passes all 29 checks. Agent runs wait for a budget and a pinned model.
 - A framework misuse reads as one error at the line that caused it, naming the field, handler or service. `tests/test_flint_diagnostics.py` compiles the misuse corpus with and without the fork's condensing and checks that condensing changes no object byte.
 - Editors get Flint-aware diagnostics as they type, and API hover, definition and completion, from `flint lsp`. `tests/test_flint_lsp.py` drives it as an LSP client: diagnostics following unsaved edits (a compiler error, then a policy error, then clean), and hover, definition and completion against the pinned API.
 - Edit, save, see: `flint watch` rebuilds and restarts, or retests, in one incremental cycle per change, and `flint run --debug` and the generated launch configurations show Flint values readably. `tests/test_flint_watch.py` covers the watch cycles, recovery from a broken edit, the library mode, the launch configurations, the gdb printers and `flint run --debug` under gdb.

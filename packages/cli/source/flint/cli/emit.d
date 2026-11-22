@@ -11,10 +11,37 @@ private alias Sink = void delegate(scope const(char)[]) @safe;
 /// Emit the fixed-width, plain-text help for a command schema.
 package(flint.cli) void renderHelp(scope const CommandNode[] nodes, scope Sink write)
 {
-    const root = nodes[0];
-    wrapped(root.name ~ (root.description.length == 0 ? "" : " - " ~ root.description), 0, write);
+    renderNodeHelp(nodes, 0, write);
+}
+
+/// Emit help for the command a parse selected, named by its path such as `cloud service deploy`; the root's help
+/// when no command has that path.
+package(flint.cli) void renderSelectedHelp(scope const CommandNode[] nodes, scope const(char)[] path, scope Sink write)
+{
+    foreach (index; 0 .. nodes.length)
+    {
+        if (commandPath(nodes, index) == path)
+            return renderNodeHelp(nodes, index, write);
+    }
+    renderNodeHelp(nodes, 0, write);
+}
+
+/// A command's path from the root, separated by spaces, as `ParseResult.commandName` reports it.
+private string commandPath(scope const CommandNode[] nodes, size_t index)
+{
+    string path = nodes[index].name;
+    for (size_t parent = nodes[index].parent; parent != missing; parent = nodes[parent].parent)
+        path = nodes[parent].name ~ " " ~ path;
+    return path;
+}
+
+private void renderNodeHelp(scope const CommandNode[] nodes, size_t index, scope Sink write)
+{
+    const root = nodes[index];
+    const path = commandPath(nodes, index);
+    wrapped(path ~ (root.description.length == 0 ? "" : " - " ~ root.description), 0, write);
     write("\n");
-    string usage = "Usage " ~ root.name ~ " [options]";
+    string usage = "Usage " ~ path ~ " [options]";
     foreach (ref const field; root.fields)
     {
         if (field.binding == Binding.positional)
@@ -30,8 +57,11 @@ package(flint.cli) void renderHelp(scope const CommandNode[] nodes, scope Sink w
             optionRow(field, write);
     }
     row("-h, --help", "Show help", write);
-    row("--version", "Show version " ~ root.versionText, write);
-    row("--completion <shell>", "Generate completion for bash, zsh, or powershell", write);
+    if (index == 0)
+    {
+        row("--version", "Show version " ~ root.versionText, write);
+        row("--completion <shell>", "Generate completion for bash, zsh, or powershell", write);
+    }
 
     descriptionSection(root.fields, Binding.positional, "Arguments", write);
     descriptionSection(root.fields, Binding.command, "Commands", write);

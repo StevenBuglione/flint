@@ -1,7 +1,20 @@
-/// Non-owning capability probe of a standard output stream.
+/// Non-owning capability probe of a standard output stream, and line-oriented writes to it.
 module flint.term.sys.output;
 
 @safe:
+
+/// Write all of `text` to standard output, or standard error when `error`, through the C runtime's stream (the one
+/// std.stdio also writes through, so the order of output is kept), then flush it. False when either fails.
+// SAFETY: `text` is a live slice that fwrite only reads, for exactly `text.length` bytes, during the call; stdout
+// and stderr are the C runtime's own streams, valid for the life of the process, and are never stored.
+package(flint.term) bool writeStandard(bool error, scope const(char)[] text) @trusted nothrow @nogc
+{
+    import core.stdc.stdio : FILE, fflush, fwrite, stderr, stdout;
+
+    FILE* stream = error ? stderr : stdout;
+    const written = text.length == 0 ? 0 : fwrite(text.ptr, 1, text.length, stream);
+    return written == text.length && fflush(stream) == 0;
+}
 
 // The native terminal session (native/linux.c) is built for Linux and macOS.
 version (linux)

@@ -3,7 +3,7 @@ module flint.cli;
 
 import flint.cli.internal.parser : parseCore;
 import flint.cli.internal.metadata : CommandTree;
-import flint.cli.emit : renderHelp, renderCompletion;
+import flint.cli.emit : renderCompletion, renderHelp, renderSelectedHelp;
 public import flint.cli.types : Arg, Command, Environment, Option, ParseAction, ParseOptions,
     ParseResult, Required, Shell, Subcommand;
 
@@ -19,6 +19,13 @@ ParseResult!T parse(T)(scope const(char[])[] arguments, ParseOptions options = P
 void writeHelp(T)(scope void delegate(scope const(char)[]) @safe sink)
 {
     renderHelp(CommandTree!T.nodes, sink);
+}
+
+/// Write help for the command a parse selected, by its `ParseResult.commandName`, such as `todo add`: that
+/// command's usage, options, arguments and subcommands.
+void writeHelp(T)(scope const(char)[] commandName, scope void delegate(scope const(char)[]) @safe sink)
+{
+    renderSelectedHelp(CommandTree!T.nodes, commandName, sink);
 }
 
 /// Write completion data and a registration function for the selected shell.

@@ -219,6 +219,23 @@ unittest
     assert(invalid.error.code == Status.invalidArgument && invalid.error.offset == 3);
 }
 
+@("help for a selected subcommand shows its path, options and arguments")
+unittest
+{
+    const parsed = parse!Root(["service", "deploy", "--help"]);
+    string text;
+    writeHelp!Root(parsed.commandName, (scope const(char)[] chunk) @safe { text ~= chunk; });
+    assert(indexOf(text, "Usage cloud service deploy [options]\n") >= 0);
+    assert(indexOf(text, "-t, --target <text>") >= 0 && indexOf(text, "--config") < 0);
+    assert(indexOf(text, "--version") < 0);
+    string service;
+    writeHelp!Root("cloud service", (scope const(char)[] chunk) @safe { service ~= chunk; });
+    assert(indexOf(service, "Usage cloud service [options] [command]") >= 0 && indexOf(service, "deploy") >= 0);
+    string fallback;
+    writeHelp!Root("cloud nowhere", (scope const(char)[] chunk) @safe { fallback ~= chunk; });
+    assert(indexOf(fallback, "Usage cloud [options] [command]") >= 0);
+}
+
 @Command("help-snapshot",
         "One two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen")
 private struct HelpDto

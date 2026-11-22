@@ -51,6 +51,19 @@ private string defaultEnvironment(string prefix, string key)
     return prefix ~ normalized.idup;
 }
 
+/// A key with case, `-` and `_` removed, for relaxed binding.
+private string relaxedKey(string key) pure
+{
+    char[] relaxed;
+    foreach (ch; key)
+    {
+        if (ch == '-' || ch == '_')
+            continue;
+        relaxed ~= ch >= 'A' && ch <= 'Z' ? cast(char)(ch - 'A' + 'a') : ch;
+    }
+    return relaxed.idup;
+}
+
 /// Whether a configuration value can be coerced into `T`; probed without instantiating the failure.
 private enum configurable(T) = __traits(compiles, (InputValue input, ref T destination) => coerce(input, destination));
 
@@ -79,12 +92,36 @@ private struct Binding
 
     void consumeObject(string key)
     {
-        if (const input = key in layers.files)
+        const spelled = spelling(layers.files, key);
+        if (const input = spelled in layers.files)
         {
             if (input.text != "{}")
                 problem(input.origin, Status.invalidArgument, key, "must be an object");
-            consume(layers.files, key, claimedKeys);
+            consume(layers.files, spelled, claimedKeys);
         }
+    }
+
+    /// The key as a file or `--set` spells it. Binding is relaxed, as in Spring Boot: `data-file`, `data_file`,
+    /// `dataFile` and `DATAFILE` all name the field `dataFile`. The exact spelling wins; two other spellings of
+    /// one key are a conflict.
+    private string spelling(ref Inputs entries, string key)
+    {
+        if (key in entries)
+            return key;
+        const wanted = relaxedKey(key);
+        string found;
+        size_t matches;
+        foreach (candidate, value; entries)
+        {
+            if (relaxedKey(candidate) != wanted)
+                continue;
+            matches++;
+            if (found.length == 0 || candidate < found)
+                found = candidate;
+        }
+        if (matches > 1)
+            problem(entries[found].origin, Status.conflict, key, "is set under more than one spelling");
+        return matches ? found : key;
     }
 
     void leaf(T)(ref T destination, string key, FieldRules attributes)
@@ -120,7 +157,7 @@ private struct Binding
                     "has an ambiguous environment variable");
         envKeys[name] = key;
 
-        take(layers.files, key, input, present, claimedKeys);
+        take(layers.files, spelling(layers.files, key), input, present, claimedKeys);
         take(layers.dotenv, name, input, present, claimedNames);
         if (const value = name in layers.process)
         {
@@ -131,7 +168,7 @@ private struct Binding
             else
                 layers.process.remove(name);
         }
-        take(layers.arguments, key, input, present, claimedKeys);
+        take(layers.arguments, spelling(layers.arguments, key), input, present, claimedKeys);
 
         return present;
     }

@@ -10,6 +10,8 @@
   - `flint run --debug` and the generated launch configurations come with gdb pretty-printers.
   - `flint lsp` gives editors diagnostics, hover, go-to-definition and completion.
   - With the DMD fork's new `-verror-hide`, a framework misuse is one error at the user's line naming the field, handler or service. Object files stay byte-identical.
+  - The vibe-coding benchmark has four tasks with black-box acceptance tests and a harness for coding agents.
+  - Writing its first reference adds three library features: flint:config binds keys relaxed (`data_file` sets `dataFile`), flint:cli prints help for subcommands, and flint:term's `writeStream` writes to standard error from `@safe` code.
 - Bring Flint up natively on Windows x86-64 (ADR-026): the pinned DMD and LDC install and verify there, `flint` bootstraps itself, and 12 pure-D packages pass on both compilers, with Win32 process supervision (job objects, named pipes), console sessions over the shared terminal ABI, and Ctrl+C handling.
 - Implement the 37-package Flint library catalog, from scoped arenas and Linux reactors to typed HTTP, SQL, terminal, WASM, and application adapters.
 - Add Linux io_uring and epoll execution, linked HTTP/1.1 and HTTP/2, PostgreSQL and SQLite integration, gRPC, WebSocket support, middleware, and bounded cancellation.

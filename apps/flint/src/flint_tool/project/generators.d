@@ -457,6 +457,7 @@ Fix the first error first: each has a code, a location and a fix line.
   Do not throw for expected failures, and do not ignore a returned error.
 - Prefer structs; classes only for DI services (` ~ "`@Service final class`" ~ `). Inject through constructors.
 - Use explicit selective imports: ` ~ "`import flint.config : load;`" ~ `. Never ` ~ "`import std;`" ~ `.
+- Print errors with ` ~ "`flint.term.writeStream(Stream.error, text)`" ~ ` (` ~ "`std.stdio.stderr`" ~ ` is not @safe).
 - Dependencies go in ` ~ "`flint.toml`" ~ ` (` ~ "`\"flint:web\" = {}`" ~ `, a repository path with a version, or
   ` ~ "`\"dub:<name>\"`" ~ ` from the compatibility index), never a dub.sdl.
 

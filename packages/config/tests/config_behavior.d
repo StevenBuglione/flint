@@ -400,3 +400,39 @@ unittest
     options.baseName = "";
     assert(load!PolicyFixture(options).error.code == Status.invalidArgument);
 }
+
+@ConfigurationProperties("todo")
+private struct RelaxedFixture
+{
+    string dataFile;
+    string defaultPriority = "normal";
+    uint maxItems;
+}
+
+@("relaxed binding: kebab-case, snake_case and camelCase keys name the same field, and two spellings conflict")
+unittest
+{
+    const directory = scratch();
+    scope (exit)
+        rmdirRecurse(directory);
+    auto options = configFor(directory);
+    options.readEnvironment = false;
+    write(buildPath(directory, "application.toml"),
+            "[todo]\ndata_file = \"/tmp/list.json\"\ndefault-priority = \"high\"\nmaxItems = 3\n");
+    auto resolved = load!RelaxedFixture(options);
+    assert(resolved.ok && resolved.value.dataFile == "/tmp/list.json");
+    assert(resolved.value.defaultPriority == "high" && resolved.value.maxItems == 3);
+
+    options.arguments = ["--set=todo.MAX_ITEMS=7"];
+    resolved = load!RelaxedFixture(options);
+    assert(resolved.ok && resolved.value.maxItems == 7);
+
+    options.arguments = null;
+    write(buildPath(directory, "application.toml"), "[todo]\ndata_file = \"a\"\ndata-file = \"b\"\n");
+    resolved = load!RelaxedFixture(options);
+    assert(resolved.error.code == Status.conflict && resolved.error.message.canFind("todo.dataFile"));
+
+    write(buildPath(directory, "application.toml"), "[todo]\ncolour = \"red\"\n");
+    resolved = load!RelaxedFixture(options);
+    assert(resolved.error.code == Status.invalidArgument && resolved.error.message.canFind("todo.colour"));
+}

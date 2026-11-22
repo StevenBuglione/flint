@@ -107,6 +107,18 @@ enum Stream : ubyte
     error
 }
 
+/// Write text to standard output or standard error and flush it: a line-oriented tool's results, messages and
+/// errors, from `@safe` code and without a terminal session. Output keeps its order with std.stdio's.
+Error writeStream(Stream stream, scope const(char)[] text) nothrow @nogc
+{
+    import flint.term.sys.output : writeStandard;
+
+    if (writeStandard(stream == Stream.error, text))
+        return Error.init;
+    return Error(Status.ioError, stream == Stream.error
+            ? "could not write to standard error" : "could not write to standard output");
+}
+
 /// Capabilities of a standard output stream, read without owning the terminal.
 struct StreamInfo
 {
