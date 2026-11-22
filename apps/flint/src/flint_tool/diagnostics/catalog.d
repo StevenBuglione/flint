@@ -86,6 +86,14 @@ immutable CodeInfo[] catalog = [
     CodeInfo("FLINT-E0006", ExitCode.usage, "target directory already exists",
             "`flint new` never overwrites files. The directory for the new project already exists.",
             "flint new shop2\nflint new shop --path elsewhere/shop"),
+    CodeInfo("FLINT-E0007", ExitCode.usage,
+            "nothing matches the query",
+            "`flint docs` and `flint examples` search an index of the pinned Flint libraries, built from their "
+            ~ "sources by the pinned compiler. No public symbol or tested example matches every word of the query.",
+            "flint docs              # list the packages\nflint docs config load\nflint examples rest controller"),
+    CodeInfo("FLINT-E0008", ExitCode.usage, "the file to generate already exists",
+            "`flint generate` never overwrites a file (except AGENTS.md, which it owns). The component already "
+            ~ "exists, or another file has its path.", "flint generate entity OrderLine"),
 
     // 01xx: the manifest.
     CodeInfo("FLINT-E0101", ExitCode.usage, "not inside a Flint project",

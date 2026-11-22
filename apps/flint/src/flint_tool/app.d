@@ -158,11 +158,35 @@ private int packageCommand(ref Session session, const ref PackageArgs args)
             args.sbom, args.verify, args.locked));
 }
 
+/// Run a knowledge command (docs, examples, generate); -1 when `name` is not one.
+private int knowledgeCommand(ref Session session, string name, ref FlintArgs options)
+{
+    import std.array : join;
+    import flint_tool.commands.generate : commandGenerate;
+    import flint_tool.commands.knowledge : commandDocs, commandExamples;
+
+    switch (name)
+    {
+    case "flint docs":
+        return commandDocs(session, options.docs.query.join(" "), options.docs.exportDirectory, options.docs.limit);
+    case "flint examples":
+        return commandExamples(session, options.examples.topic.join(" "), options.examples.limit);
+    case "flint generate":
+        return commandGenerate(session, options.generate.kind, options.generate.name,
+                options.generate.project, options.generate.plan);
+    default:
+        return -1;
+    }
+}
+
 /// Run a toolchain or knowledge command; -1 when `name` is not one.
 private int toolingCommand(ref Session session, string name, ref FlintArgs options)
 {
     import flint_tool.commands.tooling : commandDoctor, commandExplain, commandReceipt, commandVersion;
 
+    const knowledge = knowledgeCommand(session, name, options);
+    if (knowledge >= 0)
+        return knowledge;
     switch (name)
     {
     case "flint deps tree":
@@ -296,8 +320,28 @@ private bool printProjectHelp(string commandName, scope void delegate(scope cons
     }
 }
 
+private bool printKnowledgeHelp(string commandName, scope void delegate(scope const(char)[]) @safe sink)
+{
+    switch (commandName)
+    {
+    case "flint docs":
+        writeHelp!DocsArgs(sink);
+        return true;
+    case "flint generate":
+        writeHelp!GenerateArgs(sink);
+        return true;
+    case "flint examples":
+        writeHelp!ExamplesArgs(sink);
+        return true;
+    default:
+        return false;
+    }
+}
+
 private void printToolingHelp(string commandName, scope void delegate(scope const(char)[]) @safe sink)
 {
+    if (printKnowledgeHelp(commandName, sink))
+        return;
     switch (commandName)
     {
     case "flint toolchain":

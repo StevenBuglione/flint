@@ -307,6 +307,48 @@ struct VersionArgs
     @Option("json", 0, "Emit flint.version/1 JSON on stdout") bool json;
 }
 
+/// `flint generate`.
+@Command("flint generate", "Write the canonical shape of a component, or AGENTS.md")
+struct GenerateArgs
+{
+    /// Kind.
+    @Arg(0, "entity, repository, service, controller, config, migration or agents") string kind;
+    /// Name.
+    @Arg(1, "PascalCase component name, such as Order (not for agents)") string name;
+    /// Plan.
+    @Option("plan", 0, "Print the files and flint.toml changes without writing") bool plan;
+    /// Project directory.
+    @Option("project", 'C', "Generate in this project directory") string project;
+    /// JSON output.
+    @Option("json", 0, "Emit flint.generate/1 JSON on stdout") bool json;
+}
+
+/// `flint docs`.
+@Command("flint docs", "Search the pinned Flint API: signatures, documentation and tested examples")
+struct DocsArgs
+{
+    /// Query words or a qualified name.
+    @Arg(0, "Words to search for, or a qualified name such as flint.config.load") string[] query;
+    /// Export.
+    @Option("export", 0, "Write llms.txt and llms-full.txt to this directory") string exportDirectory;
+    /// Limit.
+    @Option("limit", 'n', "Show at most this many symbols (default 10)") uint limit = 10;
+    /// JSON output.
+    @Option("json", 0, "Emit flint.docs/1 JSON on stdout") bool json;
+}
+
+/// `flint examples`.
+@Command("flint examples", "Show compiled, tested examples for a topic")
+struct ExamplesArgs
+{
+    /// Topic words.
+    @Arg(0, "Topic, such as \"rest controller\" or \"config load\"") string[] topic;
+    /// Limit.
+    @Option("limit", 'n', "Show at most this many examples (default 5)") uint limit = 5;
+    /// JSON output.
+    @Option("json", 0, "Emit flint.examples/1 JSON on stdout") bool json;
+}
+
 /// `flint explain`.
 @Command("flint explain", "Explain a diagnostic code, with a correct example")
 struct ExplainArgs
@@ -363,6 +405,12 @@ struct FlintArgs
     @Subcommand("version", "Print tool, toolchain and source identities") VersionArgs version_;
     /// explain.
     @Subcommand("explain", "Explain a diagnostic code") ExplainArgs explain;
+    /// docs.
+    @Subcommand("docs", "Search the pinned Flint API") DocsArgs docs;
+    /// generate.
+    @Subcommand("generate", "Write the canonical shape of a component") GenerateArgs generate;
+    /// examples.
+    @Subcommand("examples", "Show tested examples for a topic") ExamplesArgs examples;
     /// receipt.
     @Subcommand("receipt", "Verify an artifact against its receipt") ReceiptArgs receipt;
 }

@@ -1,0 +1,251 @@
+/// `flint docs` and `flint examples`: the pinned API, searched offline (ADR-021 section 6, ADR-026).
+module flint_tool.commands.knowledge;
+
+import flint_tool.commands.output : finish;
+import flint_tool.diagnostics.report : Diagnostic, Report;
+import flint_tool.engine.apiindex : Example, PackageEntry, Symbol;
+import flint_tool.engine.session : Session;
+
+@safe:
+
+/// `flint.docs/1`.
+struct DocsPayload
+{
+    /// Schema.
+    string schema = "flint.docs/1";
+    /// Success.
+    bool ok;
+    /// Exit code.
+    int exit_code;
+    /// Diagnostics.
+    Diagnostic[] diagnostics;
+    /// The query.
+    string query;
+    /// Flint release the index describes.
+    string release;
+    /// Packages (no query).
+    PackageEntry[] packages;
+    /// Matching symbols, best first; one, with examples, for an exact qualified name.
+    Symbol[] symbols;
+    /// Files written by --export.
+    string[] exported;
+}
+
+/// `flint.examples/1`.
+struct ExamplesPayload
+{
+    /// Schema.
+    string schema = "flint.examples/1";
+    /// Success.
+    bool ok;
+    /// Exit code.
+    int exit_code;
+    /// Diagnostics.
+    Diagnostic[] diagnostics;
+    /// The topic.
+    string topic;
+    /// Tested examples, each naming the symbol it shows.
+    ExampleHit[] examples;
+    /// Complete applications in examples/ that match the topic.
+    string[] applications;
+}
+
+/// One example with the symbol it shows.
+struct ExampleHit
+{
+    /// Qualified symbol name.
+    string symbol;
+    /// Its signature.
+    string signature;
+    /// The example.
+    Example example;
+}
+
+/// `flint docs [query] [--export DIR] [--limit N]`.
+int commandDocs(ref Session session, string query, string exportDirectory, size_t limit)
+{
+    import std.conv : to;
+    import flint_tool.engine.apiindex : ApiIndex, loadIndex, lookup, search;
+
+    Report report;
+    DocsPayload payload;
+    payload.query = query;
+    ApiIndex index;
+    if (!loadIndex(session, index, report))
+        return finish(session, report, payload);
+    payload.release = index.release;
+    if (exportDirectory.length)
+    {
+        payload.exported = exportLlms(index, exportDirectory);
+        foreach (path; payload.exported)
+            session.progress("Wrote", path);
+        return finish(session, report, payload);
+    }
+    if (query.length == 0)
+    {
+        payload.packages = index.packages.dup;
+        foreach (ref entry; index.packages)
+            session.say(pad(entry.module_name,
+                    18) ~ entry.description ~ "  (" ~ entry.symbols.to!string ~ " symbols, "
+                    ~ entry.with_examples.to!string ~ " with examples)");
+        return finish(session, report, payload);
+    }
+    const exact = lookup(index, query);
+    if (exact != size_t.max)
+    {
+        payload.symbols = [index.symbols[exact]];
+        describe(session, index.symbols[exact], true);
+        return finish(session, report, payload);
+    }
+    foreach (hit; search(index, query, limit))
+    {
+        payload.symbols ~= index.symbols[hit.index];
+        describe(session, index.symbols[hit.index], false);
+    }
+    if (payload.symbols.length == 0)
+        report.error("FLINT-E0007", "nothing in the Flint " ~ index.release ~ " API matches `" ~ query ~ "`",
+                "try fewer or other words, or `flint docs` to list the packages");
+    return finish(session, report, payload);
+}
+
+private void describe(ref Session session, const ref Symbol symbol, bool full)
+{
+    import std.conv : to;
+    import std.string : lineSplitter, strip;
+
+    session.say(symbol.qualified ~ "  (" ~ symbol.kind ~ ", " ~ symbol.file ~ ":" ~ symbol.line.to!string ~ ")");
+    session.say("    " ~ symbol.signature);
+    foreach (line; symbol.comment.lineSplitter)
+    {
+        session.say("    " ~ line.strip.idup);
+        if (!full)
+            break;
+    }
+    if (!full)
+        return;
+    foreach (ref example; symbol.examples)
+    {
+        session.say("\n  Example (" ~ example.file ~ ":" ~ example.line.to!string
+                ~ ", compiled and run by flint test):");
+        foreach (line; example.code.lineSplitter)
+            session.say("    " ~ line);
+    }
+    if (symbol.examples.length == 0)
+        session.say("  No tested example uses it yet.");
+}
+
+private string pad(string text, size_t width)
+{
+    string padded = text;
+    while (padded.length < width)
+        padded ~= " ";
+    return padded ~ " ";
+}
+
+/// Write llms.txt (packages and modules) and llms-full.txt (every symbol) for the docs site.
+string[] exportLlms(const ref imported!"flint_tool.engine.apiindex".ApiIndex index, string directory)
+{
+    import std.conv : to;
+    import std.file : mkdirRecurse;
+    import std.path : buildPath;
+    import flint_tool.support.files : writeIfChanged;
+
+    mkdirRecurse(directory);
+    string summary = "# Flint " ~ index.release ~ "\n\n> The Flint libraries for D: one public module per package, "
+        ~ "pinned by the `flint` platform version. Generated by `flint docs --export`.\n\n## Packages\n\n";
+    string full = summary;
+    foreach (ref entry; index.packages)
+        summary ~= "- `" ~ entry.module_name ~ "`: " ~ entry.description ~ " ("
+            ~ entry.symbols.to!string ~ " symbols)\n";
+    string current;
+    foreach (ref symbol; index.symbols)
+    {
+        if (symbol.module_name != current)
+        {
+            current = symbol.module_name;
+            full ~= "\n## " ~ current ~ "\n\n";
+        }
+        full ~= "### " ~ symbol.qualified ~ "\n\n```d\n" ~ symbol.signature ~ "\n```\n\n" ~ (symbol.comment.length
+                ? symbol.comment ~ "\n" : "");
+        foreach (ref example; symbol.examples[0 .. symbol.examples.length ? 1 : 0])
+            full ~= "\nExample (`" ~ example.file ~ "`):\n\n```d\n" ~ example.code ~ "\n```\n";
+        full ~= "\n";
+    }
+    const files = [buildPath(directory, "llms.txt"), buildPath(directory, "llms-full.txt")];
+    writeIfChanged(files[0], summary);
+    writeIfChanged(files[1], full);
+    return files.dup;
+}
+
+/// `flint examples <topic> [--limit N]`.
+int commandExamples(ref Session session, string topic, size_t limit)
+{
+    import std.conv : to;
+    import std.string : lineSplitter;
+    import flint_tool.engine.apiindex : ApiIndex, loadIndex, search;
+
+    Report report;
+    ExamplesPayload payload;
+    payload.topic = topic;
+    if (topic.length == 0)
+    {
+        report.error("FLINT-E0002", "flint examples needs a topic", "flint examples \"rest controller\"");
+        return finish(session, report, payload);
+    }
+    ApiIndex index;
+    if (!loadIndex(session, index, report))
+        return finish(session, report, payload);
+    foreach (hit; search(index, topic, 50))
+    {
+        const symbol = index.symbols[hit.index];
+        foreach (ref example; symbol.examples[0 .. symbol.examples.length ? 1 : 0])
+        {
+            if (payload.examples.length < limit)
+                payload.examples ~= ExampleHit(symbol.qualified, symbol.signature, example);
+        }
+    }
+    payload.applications = applications(session.home.root, topic);
+    foreach (ref hit; payload.examples)
+    {
+        session.say("// " ~ hit.symbol ~ ": " ~ hit.signature ~ "\n// " ~ hit.example.file ~ ":"
+                ~ hit.example.line.to!string);
+        foreach (line; hit.example.code.lineSplitter)
+            session.say(line);
+        session.say("");
+    }
+    foreach (application; payload.applications)
+        session.say("Complete application: " ~ application);
+    if (payload.examples.length == 0 && payload.applications.length == 0)
+        report.error("FLINT-E0007", "no tested example matches `" ~ topic ~ "`", "flint docs " ~ topic);
+    return finish(session, report, payload);
+}
+
+/// Golden applications whose name or README mentions every word of the topic.
+private string[] applications(string root, string topic)
+{
+    import std.algorithm.searching : all, canFind;
+    import std.array : split;
+    import std.file : dirEntries, exists, SpanMode;
+    import std.path : baseName, buildPath;
+    import std.uni : toLower;
+    import flint_tool.support.files : readIfPresent;
+
+    const words = topic.toLower.split;
+    string[] found;
+    const directory = buildPath(root, "examples");
+    if (!exists(directory))
+        return null;
+    foreach (entry; dirEntries(directory, SpanMode.shallow))
+    {
+        const name = baseName(entry.name);
+        if (!name.canFind("golden"))
+            continue;
+        const text = (name ~ " " ~ readIfPresent(buildPath(entry.name, "README.md"))).toLower;
+        if (words.all!(word => text.canFind(word)))
+            found ~= "examples/" ~ name;
+    }
+    import std.algorithm.sorting : sort;
+
+    sort(found);
+    return found;
+}

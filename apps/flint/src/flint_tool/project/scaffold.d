@@ -44,6 +44,11 @@ ScaffoldFile[] scaffold(const ref Home home, string name, string type, scope con
     ScaffoldFile[] files;
     files ~= ScaffoldFile("flint.toml", manifest(home, name, type, starters, dependencies));
     files ~= ScaffoldFile(".gitignore", ".flint/\n");
+    {
+        import flint_tool.project.generators : agentsGuide;
+
+        files ~= ScaffoldFile("AGENTS.md", agentsGuide(name, root, type));
+    }
     files ~= ScaffoldFile("config/application.toml",
             "# Base configuration, bound to @ConfigurationProperties(\"app\").\n"
             ~ "# Profile files override it: config/application-<profile>.toml, selected by FLINT_PROFILE.\n"
