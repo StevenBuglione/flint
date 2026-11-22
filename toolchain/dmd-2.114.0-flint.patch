@@ -1179,6 +1179,49 @@ diff -ruN a/dmd/flintserver.d b/dmd/flintserver.d
 +            return true;
 +    return false;
 +}
+diff -ruN a/dmd/hdrgen.d b/dmd/hdrgen.d
+--- a/dmd/hdrgen.d	2026-10-31 19:29:10.000000000 -0400
++++ b/dmd/hdrgen.d	2026-11-21 21:45:26.486488936 -0500
+@@ -3844,12 +3844,29 @@
+     }
+ }
+ 
++/**
++ * Set while `-ftime-trace` names an event. Event names are generated only for events slower
++ * than the trace granularity, so any semantic side effect of printing would make compilation
++ * depend on timing. While set, a template argument naming a variable whose analysis or
++ * initialization is still in progress is printed as written instead of being expanded:
++ * expanding it would run semantic or report a spurious "recursive initialization of constant".
++ * Ordinary diagnostics and generated names are unaffected.
++ */
++__gshared bool printingWithoutSemantic;
++
++private bool unexpandable(Expression e)
++{
++    auto v = e.isVarExp().var.isVarDeclaration();
++    return v && (v.inuse || (!v.originalType && v.semanticRun < PASS.semanticdone));
++}
++
+ private void sizeToBuffer(Expression e, ref OutBuffer buf, ref HdrGenState hgs)
+ {
+     if (e.type == Type.tsize_t)
+     {
+         Expression ex = (e.op == EXP.cast_ ? (cast(CastExp)e).e1 : e);
+-        ex = ex.optimize(WANTvalue);
++        if (!(printingWithoutSemantic && ex.op == EXP.variable && unexpandable(ex)))
++            ex = ex.optimize(WANTvalue);
+         const ulong uval = ex.op == EXP.int64 ? ex.isIntegerExp().value : cast(ulong)-1;
+         if (cast(long)uval >= 0)
+         {
+@@ -4101,7 +4118,7 @@
+     }
+     else if (auto e = isExpression(oarg))
+     {
+-        if (e.op == EXP.variable)
++        if (e.op == EXP.variable && !(printingWithoutSemantic && unexpandable(e)))
+             e = e.optimize(WANTvalue); // added to fix https://issues.dlang.org/show_bug.cgi?id=7375
+         expToBuffer(e, PREC.assign, buf, hgs);
+     }
 diff -ruN a/dmd/link.d b/dmd/link.d
 --- a/dmd/link.d	2026-10-31 19:29:10.000000000 -0400
 +++ b/dmd/link.d	2026-11-21 17:33:07.213802481 -0500
@@ -1481,3 +1524,19 @@ diff -ruN a/dmd/main.d b/dmd/main.d
   * Parses the command line arguments and configuration files
   *
   * Params:
+diff -ruN a/dmd/timetrace.d b/dmd/timetrace.d
+--- a/dmd/timetrace.d	2026-10-31 19:29:10.000000000 -0400
++++ b/dmd/timetrace.d	2026-11-21 21:45:16.706324905 -0500
+@@ -296,7 +296,11 @@
+         event.timeDuration = timeEnd - event.timeBegin;
+         if (event.timeDuration >= timeGranularity)
+         {
+-            // Event passes the logging threshold
++            // Event passes the logging threshold. Naming it must not change compilation.
++            import dmd.hdrgen : printingWithoutSemantic;
++            const printing = printingWithoutSemantic;
++            printingWithoutSemantic = true;
++            scope (exit) printingWithoutSemantic = printing;
+             if (name)
+                 event.name = eventPrefixes[eventType] ~ name();
+             else if (!event.name)
