@@ -1,4 +1,4 @@
-/// `flint generate <kind> <Name>`: canonical components and AGENTS.md (ADR-021 sections 1, 2 and 6, ADR-026).
+/// `flint generate <kind> <Name>`: canonical components and AGENTS.md (ADR-021 sections 1, 2 and 6, ADR-027).
 module flint_tool.commands.generate;
 
 import flint_tool.commands.output : finish;

@@ -1,4 +1,4 @@
-/// `flint config` and `flint mcp` (ADR-021 sections 2 and 6, ADR-026).
+/// `flint config` and `flint mcp` (ADR-021 sections 2 and 6, ADR-027).
 module flint_tool.commands.mcp;
 
 import flint_tool.commands.output : finish, finishBare;

@@ -1,5 +1,5 @@
 /// `flint generate`: the canonical shape of each component, so people and agents never invent structure (ADR-021
-/// sections 2 and 6, ADR-026). Output is deterministic for the same inputs.
+/// sections 2 and 6, ADR-027). Output is deterministic for the same inputs.
 module flint_tool.project.generators;
 
 @safe:

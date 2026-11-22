@@ -1,4 +1,4 @@
-"""flint docs, examples, generate and AGENTS.md (Milestone 9, ADR-026)."""
+"""flint docs, examples, generate and AGENTS.md (Milestone 9, ADR-027)."""
 import json
 import tempfile
 import unittest

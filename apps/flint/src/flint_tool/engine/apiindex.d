@@ -1,4 +1,4 @@
-/// The API index (ADR-021 section 6, ADR-026): every public symbol of the pinned Flint libraries, with its exact
+/// The API index (ADR-021 section 6, ADR-027): every public symbol of the pinned Flint libraries, with its exact
 /// signature, documentation, location and tested examples, generated offline by the pinned compiler.
 ///
 /// The forked DMD writes each package's symbols with `-X -D -o-` (signatures, DDoc and locations, from the same

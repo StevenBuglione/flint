@@ -1,4 +1,4 @@
-/// `flint docs` and `flint examples`: the pinned API, searched offline (ADR-021 section 6, ADR-026).
+/// `flint docs` and `flint examples`: the pinned API, searched offline (ADR-021 section 6, ADR-027).
 module flint_tool.commands.knowledge;
 
 import flint_tool.commands.output : finish;

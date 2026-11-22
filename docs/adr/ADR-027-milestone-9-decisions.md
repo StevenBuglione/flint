@@ -1,6 +1,6 @@
-# ADR-026: Milestone 9 decisions — knowledge, diagnostics and tooling
+# ADR-027: Milestone 9 decisions — knowledge, diagnostics and tooling
 
-Status: proposed by the Milestone 9 implementation, for the project owner's review. It implements the Milestone 9 row of [ADR-021](ADR-021-flint-platform.md) (sections 1, 6, 7 and 11) and builds on [ADR-022](ADR-022-milestone-7-decisions.md) and [ADR-023](ADR-023-milestone-8-decisions.md).
+Status: proposed by the Milestone 9 implementation, for the project owner's review. Numbered 027 because the Windows port took 026 at the same time. It implements the Milestone 9 row of [ADR-021](ADR-021-flint-platform.md) (sections 1, 6, 7 and 11) and builds on [ADR-022](ADR-022-milestone-7-decisions.md) and [ADR-023](ADR-023-milestone-8-decisions.md).
 
 ## Decisions
 
