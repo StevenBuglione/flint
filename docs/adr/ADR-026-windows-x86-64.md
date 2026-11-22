@@ -59,7 +59,7 @@ The DUB shared by `flint` and by `dub test` builds all 16 stage-2 packages on bo
 
 A traced cold pipeline build spends about 0.06 s planning, 0.31 s compiling 61 modules in 9 parallel jobs (0.97 s sequentially), 5 ms archiving, and about 0.75 s linking. The sequential build linked in a similar time, which the faster compile phase now exposes.
 
-#### Linking (next)
+#### Linking (measured; the default awaits a decision)
 
 The cold link is slow because it is a full link with debug information. The dev profile's `-g` makes DMD pass `/DEBUG`, and Windows debug information means a PDB, whose type records the linker merges. With the previous `.ilk` and `.pdb` present, `link.exe` links incrementally in about 0.03 s; a cold build never has them. Full links of the same `bench-cli` inputs into a new directory:
 
@@ -68,7 +68,14 @@ The cold link is slow because it is a full link with debug information. The dev 
 | MSVC `link.exe` 14.44 (`/OPT:REF`, `/DEBUG:FASTLINK` and `/INCREMENTAL:NO` change nothing) | 0.13 s | 0.67 s |
 | LLD 22, the one inside `ldc2` (`ldc2 -link-internally`, so this includes LDC start-up) | 0.11 s | 0.26 s |
 
-So the direct-linking stage links with a pinned LLVM 22 `lld-link` and caches the expanded command, as ADR-025 section 4 describes. The `lld-link` in DMD's Windows release is LLVM 9, which cannot link against the current MSVC runtime (`__guard_eh_cont_table`). `/DEBUG:GHASH` gains nothing, because DMD writes no precomputed type hashes.
+`install_toolchains.py --compiler lld` installs the pinned `lld-link` 22.1.8 on Windows: it streams the official `clang+llvm-22.1.8-x86_64-pc-windows-msvc.tar.xz` (GitHub release digest), keeps only `bin/lld-link.exe` and checks its version. DMD uses it for any link when `LINKCMD64` names it. On the VM, `bench-cli` with the Flint DUB and `LINKCMD64` set:
+
+| Linker | Cold | Incremental | Go cold | Go incremental |
+| --- | ---: | ---: | ---: | ---: |
+| `link.exe` (default) | 1.08 s | 0.237 s | 0.263 s | 0.271 s |
+| pinned `lld-link` | 0.656 s | 0.435 s | 0.273 s | 0.257 s |
+
+LLD wins the cold build but loses the incremental one: `link.exe` links incrementally from its `.ilk` in about 0.03 s, while LLD always does a full link (LLD's `/time`: 72 ms reading inputs, mostly `phobos64.lib`, and 117 ms writing the PDB). `-allinst` makes no difference to the link. The PDB is the cost either way, so the default stays `link.exe`, the better edit loop, and `lld-link` is an opt-in until the owner decides whether Windows dev builds may defer their PDB (link without one, and write it on demand, as in `flint run --debug`). The `lld-link` in DMD's Windows release is LLVM 9, which cannot link against the current MSVC runtime (`__guard_eh_cont_table`). `/DEBUG:GHASH` gains nothing, because DMD writes no precomputed type hashes.
 
 #### The compile server (after linking)
 
@@ -151,7 +158,7 @@ Two details of the MSVC build of Flint's C shims (`native/ffi`):
 
 Next, in ADR-025's order:
 
-- direct linking with a pinned LLVM 22 `lld-link` and a cached link command, then the compile server's warm worker pool;
+- the compile server's warm worker pool, then direct linking with a cached link command, once the PDB decision is made;
 - the IOCP reactor backend, then the packages above the reactor;
 - the remaining native providers under MSVC hardening (`/guard:cf`, `/GS`, `/sdl`, and `/W4 /WX` for Flint's own C);
 - the `windows-x86_64` platform lane for Gate 6.
