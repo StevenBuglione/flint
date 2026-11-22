@@ -297,11 +297,13 @@ private bool writeRecipes(ref Session session, const ref Manifest manifest,
             manifest, resolution));
     foreach (ref item; resolution.packages)
     {
-        if (item.kind != "path")
+        import flint_tool.engine.recipe : generatedRecipe;
+
+        if (!generatedRecipe(item.kind))
             continue;
         if (item.manifestType != "library")
         {
-            report.error("FLINT-E0302", "path dependency `" ~ item.name ~ "` is an executable project",
+            report.error("FLINT-E0302", "dependency `" ~ item.name ~ "` is an executable project",
                     "depend on library projects; set type = \"library\" in its flint.toml");
             return false;
         }

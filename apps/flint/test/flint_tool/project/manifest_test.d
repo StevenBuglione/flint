@@ -41,6 +41,31 @@ unittest
     expect(manifest.waivers[0].rule).toEqual("FLINT-E0502");
 }
 
+@("empty section tables are valid and declare nothing")
+unittest
+{
+    Manifest manifest;
+    const report = parse(header ~ "[dependencies]\n\n[test-dependencies]\n[build]\n", manifest);
+    expect(report.items.length).toEqual(0);
+    expect(manifest.dependencies.length).toEqual(0);
+}
+
+@("repository-path dependencies take a release version")
+unittest
+{
+    Manifest manifest;
+    auto report = parse(header ~ "[dependencies]\n\"github.com/acme/money\" = \"v1.2.0\"\n", manifest);
+    expect(report.items.length).toEqual(0);
+    expect(manifest.dependencies[0].version_).toEqual("1.2.0");
+    expect(codes(parse(header ~ "[dependencies]\n\"github.com/acme/money\" = \"1.2\"\n", manifest))).toEqual(
+            ["FLINT-E0105"]);
+    expect(codes(parse(header ~ "[dependencies]\n\"github.com/acme/money\" = \"2.0.0-rc.1\"\n", manifest))).toEqual(
+            ["FLINT-E0105"]);
+    expect(codes(parse(header ~ "[dependencies]\nmoney = \"1.2.0\"\n", manifest))).toEqual([
+        "FLINT-E0303"
+    ]);
+}
+
 @("unknown keys fail with a did-you-mean suggestion and a location")
 unittest
 {

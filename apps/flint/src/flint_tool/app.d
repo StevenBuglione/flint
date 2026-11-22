@@ -155,6 +155,11 @@ private int toolingCommand(ref Session session, string name, ref FlintArgs optio
 
     switch (name)
     {
+    case "flint deps tree":
+    case "flint deps why":
+    case "flint deps update":
+    case "flint deps vendor":
+        return depsCommand(session, name, options);
     case "flint doctor":
         return commandDoctor(session, options.doctor);
     case "flint version":
@@ -165,6 +170,23 @@ private int toolingCommand(ref Session session, string name, ref FlintArgs optio
         return commandReceipt(session, options.receipt);
     default:
         return toolchainCommand(session, name, options);
+    }
+}
+
+private int depsCommand(ref Session session, string name, ref FlintArgs options)
+{
+    import flint_tool.commands.deps : commandDepsTree, commandDepsUpdate, commandDepsVendor, commandDepsWhy;
+
+    switch (name)
+    {
+    case "flint deps tree":
+        return commandDepsTree(session, options.deps.tree.project);
+    case "flint deps why":
+        return commandDepsWhy(session, options.deps.why.project, options.deps.why.name);
+    case "flint deps update":
+        return commandDepsUpdate(session, options.deps.update.project, options.deps.update.names);
+    default:
+        return commandDepsVendor(session, options.deps.vendor.project);
     }
 }
 
@@ -261,6 +283,8 @@ private void printToolingHelp(string commandName, scope void delegate(scope cons
     {
     case "flint toolchain":
         return writeHelp!ToolchainArgs(sink);
+    case "flint deps":
+        return writeHelp!DepsArgs(sink);
     case "flint toolchain install":
         return writeHelp!ToolchainInstallArgs(sink);
     case "flint doctor":

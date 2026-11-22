@@ -45,6 +45,11 @@ CheckSummary checkProject(const ref Home home, const ref Manifest manifest, cons
                 "create src/" ~ root ~ "/app.d with `module " ~ root ~ ".app;`"), "src/" ~ root, 0));
     foreach (relative; dSources(manifest.root))
     {
+        import std.algorithm.searching : startsWith;
+
+        // Vendored modules are checked by hash, not as project sources.
+        if (relative.startsWith("vendor/"))
+            continue;
         ++summary.files;
         const text = readText(buildPath(manifest.root, relative));
         checkFile(home, manifest, resolution, relative, text, found);
@@ -138,7 +143,8 @@ private void checkImport(const ref Home home, const ref Manifest manifest, const
     }
     foreach (ref item; resolution.packages)
     {
-        if (item.kind != "path" || item.moduleRoot.length == 0 || !startsWithModule(imported, item.moduleRoot))
+        if ((item.kind != "path" && item.kind != "remote") || item.moduleRoot.length == 0
+                || !startsWithModule(imported, item.moduleRoot))
             continue;
         if (!declared(resolution, item.name, test))
             report.add(at(diagnostic("FLINT-E0507", Severity.error,

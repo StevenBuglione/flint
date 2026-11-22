@@ -1,11 +1,11 @@
-/// Dependency resolution for Milestone 7: Flint core packages and path dependencies.
-///
-/// Remote repository dependencies (minimal version selection) and native providers are Milestone 8.
+/// Dependency resolution: Flint core packages, path dependencies and repository-path dependencies resolved by
+/// minimal version selection (ADR-023). Native providers are resolved separately.
 module flint_tool.project.resolve;
 
 import flint_tool.diagnostics.report : Report, Severity, at, diagnostic;
 import flint_tool.home.policy : Home;
 import flint_tool.project.manifest : DependencyKind, DependencySpec, Manifest, manifestName, parseManifest;
+import flint_tool.project.remote : Requirement;
 
 @safe:
 
@@ -14,7 +14,7 @@ struct ResolvedPackage
 {
     /// Name: `flint:<package>` or the declared dependency name.
     string name;
-    /// "core", "path" (a Flint project) or "local" (a DUB package directory).
+    /// "core", "path" (a Flint project), "remote" (a repository path) or "local" (a DUB package directory).
     string kind;
     /// For core packages: "workspace" when the project lives in the Flint checkout, else "flint-home".
     string source;
@@ -32,6 +32,10 @@ struct ResolvedPackage
     bool testOnly;
     /// For path projects: the dependency's manifest.
     string manifestType;
+    /// For remote modules: the selected version.
+    string version_;
+    /// For remote modules: the tag's commit.
+    string commit;
 }
 
 /// The resolved graph of one project.
@@ -45,6 +49,8 @@ struct Resolution
     string[] directTest;
     /// The project lives inside the Flint checkout, whose commit pins core packages.
     bool workspace;
+    /// Every repository-path requirement seen during minimal version selection.
+    Requirement[] requirements;
 
     /// The package named `name`, or null.
     const(ResolvedPackage)* find(string name) const
@@ -76,12 +82,13 @@ bool resolve(const ref Home home, const ref Manifest manifest, out Resolution re
     resolution.workspace = inside(manifest.root, home.root);
     ResolvedPackage[string] found;
     string[] active = [manifest.root];
+    Requirement[] remotes;
     foreach (testScope; [false, true])
     {
         const list = testScope ? manifest.testDependencies : manifest.dependencies;
         foreach (ref spec; list)
         {
-            const name = resolveOne(home, manifest, spec, found, active, report);
+            const name = resolveOne(home, manifest, spec, found, active, remotes, report);
             if (name is null)
                 continue;
             if (testScope)
@@ -90,7 +97,20 @@ bool resolve(const ref Home home, const ref Manifest manifest, out Resolution re
                 resolution.direct ~= name;
         }
     }
-    // Core closures: every core package reachable from a direct or path dependency.
+    if (remotes.length && !resolveRemotes(home, manifest, remotes, found, resolution, report))
+        return false;
+    addCoreClosure(home, found, resolution.workspace);
+    markScopes(found, resolution);
+    import std.algorithm.sorting : sort;
+
+    sort!((a, b) => a.name < b.name)(resolution.packages);
+    checkRoots(manifest, resolution, report);
+    return report.errors() == before;
+}
+
+/// Add every core package reachable from a direct, path or remote dependency.
+private void addCoreClosure(const ref Home home, ref ResolvedPackage[string] found, bool workspace)
+{
     string[] coreRoots;
     foreach (name, ref item; found)
     {
@@ -106,9 +126,13 @@ bool resolve(const ref Home home, const ref Manifest manifest, out Resolution re
     {
         const key = "flint:" ~ coreName;
         if (key !in found)
-            found[key] = corePackage(home, coreName, resolution.workspace);
+            found[key] = corePackage(home, coreName, workspace);
     }
-    // A package is test-only unless a build dependency reaches it.
+}
+
+/// A package is test-only unless a build dependency reaches it; collect the packages.
+private void markScopes(ref ResolvedPackage[string] found, ref Resolution resolution)
+{
     bool[string] build;
     void mark(string name)
     {
@@ -126,11 +150,6 @@ bool resolve(const ref Home home, const ref Manifest manifest, out Resolution re
         item.testOnly = name !in build;
         resolution.packages ~= item;
     }
-    import std.algorithm.sorting : sort;
-
-    sort!((a, b) => a.name < b.name)(resolution.packages);
-    checkRoots(manifest, resolution, report);
-    return report.errors() == before;
 }
 
 private ResolvedPackage corePackage(const ref Home home, string name, bool workspace)
@@ -152,20 +171,49 @@ private ResolvedPackage corePackage(const ref Home home, string name, bool works
 }
 
 private string resolveOne(const ref Home home, const ref Manifest owner, const ref DependencySpec spec,
-        ref ResolvedPackage[string] found, ref string[] active, ref Report report)
+        ref ResolvedPackage[string] found, ref string[] active, ref Requirement[] remotes, ref Report report)
 {
     final switch (spec.kind)
     {
     case DependencyKind.core:
         return resolveCore(home, owner, spec, found, report);
     case DependencyKind.remote:
-        report.add(at(diagnostic("FLINT-E0303", Severity.error,
-                "`" ~ spec.name ~ "` needs the remote resolver",
-                "use a path dependency until Milestone 8"), displayManifest(owner), spec.line, 0, owner.text));
-        return null;
+        // Collected here; minimal version selection runs once over every requirement.
+        remotes ~= Requirement(active.length > 1 ? owner.name : null, spec.name, spec.version_);
+        return spec.name;
     case DependencyKind.path:
-        return resolvePath(home, owner, spec, found, active, report);
+        return resolvePath(home, owner, spec, found, active, remotes, report);
     }
+}
+
+/// Run minimal version selection and add the selected modules to the graph.
+private bool resolveRemotes(const ref Home home, const ref Manifest manifest,
+        scope const(Requirement)[] remotes, ref ResolvedPackage[string] found, ref Resolution resolution,
+        ref Report report)
+{
+    import flint_tool.project.remote : Fetcher, Selection, selectVersions;
+
+    auto fetcher = Fetcher.forProject(home.root, manifest.root);
+    Selection selection;
+    if (!selectVersions(fetcher, home, remotes, selection, report))
+        return false;
+    resolution.requirements = selection.edges;
+    foreach (path, ref module_; selection.modules)
+    {
+        ResolvedPackage item;
+        item.name = path;
+        item.kind = "remote";
+        item.directory = module_.directory;
+        item.moduleRoot = module_.moduleRoot;
+        item.manifestType = module_.type;
+        item.version_ = module_.version_;
+        item.commit = module_.commit;
+        item.contentSha256 = module_.contentSha256;
+        foreach (ref spec; module_.requirements)
+            item.dependencies ~= spec.name;
+        found[path] = item;
+    }
+    return true;
 }
 
 private string resolveCore(const ref Home home, const ref Manifest owner, const ref DependencySpec spec,
@@ -192,7 +240,7 @@ private string resolveCore(const ref Home home, const ref Manifest owner, const 
 }
 
 private string resolvePath(const ref Home home, const ref Manifest owner, const ref DependencySpec spec,
-        ref ResolvedPackage[string] found, ref string[] active, ref Report report)
+        ref ResolvedPackage[string] found, ref string[] active, ref Requirement[] remotes, ref Report report)
 {
     import std.file : exists;
     import std.path : absolutePath, buildNormalizedPath, buildPath;
@@ -244,7 +292,7 @@ private string resolvePath(const ref Home home, const ref Manifest owner, const 
     string[] dependencies;
     foreach (ref nestedSpec; nested.dependencies)
     {
-        const name = resolveOne(home, nested, nestedSpec, found, active, report);
+        const name = resolveOne(home, nested, nestedSpec, found, active, remotes, report);
         if (name !is null)
             dependencies ~= name;
     }
@@ -268,7 +316,7 @@ private void checkRoots(const ref Manifest manifest, const ref Resolution resolu
     roots[manifest.moduleRoot()] = manifest.name;
     foreach (ref item; resolution.packages)
     {
-        if (item.kind != "path" || item.moduleRoot.length == 0)
+        if ((item.kind != "path" && item.kind != "remote") || item.moduleRoot.length == 0)
             continue;
         if (item.moduleRoot in roots)
         {

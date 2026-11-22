@@ -158,6 +158,26 @@ immutable CodeInfo[] catalog = [
     CodeInfo("FLINT-E0306", ExitCode.dependency, "dependency name collides",
             "A dependency's module root equals the project's own module root or another dependency's.",
             "Rename one of the projects; module roots must be unique in a build."),
+    CodeInfo("FLINT-E0307", ExitCode.dependency,
+            "dependency not available offline",
+            "FLINT_PROXY=off or FLINT_OFFLINE=1 builds only from the content-addressed cache under the Flint home and "
+            ~ "from vendor/. The required module version is in neither.",
+            "flint lock        # once, online\nflint deps vendor # to build anywhere without a network"),
+    CodeInfo("FLINT-E0308", ExitCode.dependency,
+            "repository or version not found",
+            "flint fetches a repository-path dependency with git from https://<path>, or from FLINT_PROXY/<path>, and "
+            ~ "takes version x.y.z from tag vx.y.z. The repository could not be fetched or has no such tag.",
+            "\"github.com/acme/flint-stripe\" = \"1.4.2\"   # needs tag v1.4.2"),
+    CodeInfo("FLINT-E0309", ExitCode.dependency, "dependency content differs from its recorded hash",
+            "Cached and vendored module trees are content-addressed and verified on every use. A file changed after it "
+            ~ "was fetched, so the build would not be reproducible.",
+            "delete the cache entry or vendor/<path> and fetch again; never edit fetched sources"),
+    CodeInfo("FLINT-E0310", ExitCode.dependency, "published module has a path dependency",
+            "A repository-path module must resolve the same way on every machine, so it may depend only on Flint core "
+            ~ "packages and other repository paths.",
+            "[dependencies]\n\"github.com/acme/money\" = \"1.2.0\""),
+    CodeInfo("FLINT-E0311", ExitCode.dependency, "package not in the dependency graph",
+            "`flint deps why` explains a package the project actually depends on.", "flint deps tree"),
 
     // 04xx: project layout and module paths.
     CodeInfo("FLINT-E0401", ExitCode.user, "module name does not match its file path",

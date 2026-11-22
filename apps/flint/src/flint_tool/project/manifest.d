@@ -312,6 +312,8 @@ private struct Reader
 
     void entry(ref const TomlEntry entry, ref Manifest manifest)
     {
+        if (emptySection(entry))
+            return;
         const line = positionOf(text, entry.offset).line;
         switch (entry.path[0])
         {
@@ -322,20 +324,32 @@ private struct Reader
         case "starters":
             return starter(entry, manifest);
         case "dependencies":
-            return dependency(entry, manifest.dependencies, line);
         case "test-dependencies":
-            return dependency(entry, manifest.testDependencies, line);
+            return dependency(entry, entry.path[0] == "dependencies" ? manifest.dependencies
+                    : manifest.testDependencies, line);
         case "profile":
             return profile(entry, manifest);
         case "targets":
             return targets(entry, manifest);
-        case "waivers":
-            return waivers(entry, manifest);
-        case "unchecked":
-            return unchecked(entry, manifest);
         default:
-            unknown(entry, entry.path[0], sections, "flint.toml");
+            exceptions(entry, manifest);
         }
+    }
+
+    /// [[waivers]] and [unchecked], the visible escape hatches; anything else is unknown.
+    void exceptions(ref const TomlEntry entry, ref Manifest manifest)
+    {
+        if (entry.path[0] == "waivers")
+            return waivers(entry, manifest);
+        if (entry.path[0] == "unchecked")
+            return unchecked(entry, manifest);
+        unknown(entry, entry.path[0], sections, "flint.toml");
+    }
+
+    /// An empty table, such as a bare [dependencies] header, declares nothing.
+    static bool emptySection(ref const TomlEntry entry)
+    {
+        return entry.path.length == 1 && entry.json == "{}" && contains(sections, entry.path[0]);
     }
 
     void build(ref const TomlEntry entry, ref Manifest manifest)
@@ -458,11 +472,16 @@ private struct Reader
         if (declaredTwice(list, name))
             return fail("FLINT-E0105", entry.offset, "dependency `" ~ name ~ "` is declared twice", "keep one entry");
         const core = name.length > 6 && name[0 .. 6] == "flint:";
-        if (!core && !validName(name))
+        if (!core && !repositoryPath(name) && !validName(name))
             return fail("FLINT-E0105", entry.offset, "`" ~ name ~ "` is not a valid dependency name",
-                    "use lower-case letters, digits and hyphens");
+                    "use lower-case letters, digits and hyphens, or a repository path: github.com/acme/flint-stripe");
         if (entry.path.length == 2)
             return versioned(entry, list, name, core, line);
+        pathDependency(entry, list, name, core, line);
+    }
+
+    void pathDependency(ref const TomlEntry entry, ref DependencySpec[] list, string name, bool core, long line)
+    {
         if (entry.path.length != 3 || entry.path[2] != "path")
             return unknown(entry, entry.path[$ - 1], ["path"], "dependency `" ~ name ~ "`");
         string path;
@@ -503,9 +522,17 @@ private struct Reader
         if (core)
             return fail("FLINT-E0305", entry.offset,
                     "`" ~ name ~ "` = \"" ~ versionText ~ "\": core packages take no version", "\"" ~ name ~ "\" = {}");
-        fail("FLINT-E0303", entry.offset,
-                "`" ~ name ~ "` = \"" ~ versionText ~ "\" needs the remote resolver of Milestone 8",
-                "\"" ~ name ~ "\" = { path = \"../" ~ name ~ "\" }");
+        if (!repositoryPath(name))
+            return fail("FLINT-E0303", entry.offset,
+                    "`" ~ name ~ "` = \"" ~ versionText ~ "\": versioned dependencies are named by repository path",
+                    "\"github.com/acme/" ~ name ~ "\" = \"" ~ versionText ~ "\"");
+        import flint_tool.project.remote : Semver, parseSemver;
+
+        Semver parsed;
+        if (!parseSemver(versionText, parsed) || parsed.pre.length)
+            return fail("FLINT-E0105", entry.offset,
+                    "`" ~ versionText ~ "` is not a release semantic version", "\"" ~ name ~ "\" = \"1.4.2\"");
+        list ~= DependencySpec(name, DependencyKind.remote, null, parsed.text, line);
     }
 
     void profile(ref const TomlEntry entry, ref Manifest manifest)
@@ -561,6 +588,38 @@ private struct Reader
                 manifest.waivers ~= Waiver(lookup(waiver.rule).code, waiver.file, waiver.reason);
         }
     }
+}
+
+/// Whether `name` is a repository path such as `github.com/acme/flint-stripe`: a host with a dot, then at least
+/// one path segment of letters, digits, dots, underscores and hyphens.
+bool repositoryPath(string name)
+{
+    import std.algorithm.iteration : splitter;
+    import std.algorithm.searching : canFind;
+
+    size_t segments;
+    foreach (segment; name.splitter('/'))
+    {
+        if (!pathSegment(segment))
+            return false;
+        if (segments == 0 && (!segment.canFind('.') || segment[0] == '.' || segment[$ - 1] == '.'))
+            return false;
+        ++segments;
+    }
+    return segments >= 2;
+}
+
+private bool pathSegment(scope const(char)[] segment)
+{
+    if (segment.length == 0 || segment == "." || segment == "..")
+        return false;
+    foreach (ch; segment)
+    {
+        const word = (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9');
+        if (!word && ch != '.' && ch != '-' && ch != '_')
+            return false;
+    }
+    return true;
 }
 
 /// Whether a project or executable name is valid.
