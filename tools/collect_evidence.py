@@ -457,7 +457,7 @@ def collect(args):
     hardware_info = hardware()
     require(args.dependency_lock.is_file(), 'exact native dependency lock required')
     toolchain = {'build': builds['toolchains'], 'profiles': builds['profiles'], 'load_tool': {k:http['tool'][k] for k in ['version','sha256']}}
-    environment = {'runner_label': args.runner_label,
+    environment = {'runner_label': args.runner_label, 'runner_ephemeral': args.runner_ephemeral == '1',
                    'runner_fingerprint': canonical_hash(hardware_info),
                    'toolchain_fingerprint': canonical_hash(toolchain),
                    'dependency_lock_sha256': digest(args.dependency_lock),
@@ -493,6 +493,8 @@ def main(argv=None):
     for name in ['builds', 'http', 'micro', 'gc', 'receipts-dir', 'platform-receipts-dir', 'dependency-lock', 'output']:
         command.add_argument('--' + name, type=Path, required=True)
     command.add_argument('--runner-label', default='flint-perf-x86_64-v1')
+    command.add_argument('--runner-ephemeral', choices=('0', '1'), default='1',
+                         help='1 when the runner is a single-job ephemeral image, 0 otherwise')
     args = parser.parse_args(argv)
     if args.action == 'record':
         return record(args)

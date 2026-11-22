@@ -330,7 +330,9 @@ def perf(runner,args):
         implementation_required()
         require(native_target()=='linux-x86_64-glibc','performance requires Linux x86-64 glibc')
         require(os.environ.get('FLINT_RUNNER_LABEL')=='flint-perf-x86_64-v1','performance requires the approved runner label')
-        require(os.environ.get('FLINT_EPHEMERAL_RUNNER')=='1','runner image must attest single-job ephemeral provisioning')
+        # ADR-017 decision 1: the designated runner states whether it is a single-job ephemeral image;
+        # the evidence records the answer instead of assuming it.
+        require(os.environ.get('FLINT_EPHEMERAL_RUNNER') in ('0','1'),'runner must attest FLINT_EPHEMERAL_RUNNER=1 (single-job ephemeral) or 0')
         for name in ('micro','hot-gc'):
             require((ROOT/'benchmarks'/name/'dub.sdl').is_file(),name+' producer missing; implement REQUIRED_PRODUCERS.md')
     directory=args.artifacts.resolve()
@@ -347,7 +349,8 @@ def perf(runner,args):
     runner.run([PYTHON,'tools/collect_evidence.py','collect','--builds',directory/'builds.json',
                 '--http',directory/'http-load.json','--micro',directory/'micro.json','--gc',directory/'gc.json',
                 '--receipts-dir',args.receipts.resolve(),'--platform-receipts-dir',args.platforms.resolve(),
-                '--dependency-lock','policy/native-lock.json','--output',output,'--runner-label','flint-perf-x86_64-v1'])
+                '--dependency-lock','policy/native-lock.json','--output',output,'--runner-label','flint-perf-x86_64-v1',
+                '--runner-ephemeral',os.environ.get('FLINT_EPHEMERAL_RUNNER','1')])
 
 def pair(runner,args):
     base=args.base.resolve();candidate=args.candidate.resolve();out=args.output.resolve();evidence=args.evidence.resolve()
