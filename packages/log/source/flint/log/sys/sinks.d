@@ -261,12 +261,25 @@ void wake(ref shared uint word) @trusted nothrow @nogc
     assert(read(ends[0], bytes.ptr, bytes.length) == 4 && bytes[] == "test");
 }
 
+// druntime 2.113/2.114 declares pread for glibc and the BSDs but not for musl, whose libc exports it.
+version (CRuntime_Musl)
+{
+    import core.sys.posix.sys.types : off_t, ssize_t;
+
+    pragma(mangle, "pread") private extern (C) ssize_t muslPread(int, void*, size_t, off_t) nothrow @nogc @system;
+}
+
 @("a regular-file standard stream shares the offset of the inherited description")
 @system unittest
 {
     import core.sys.posix.fcntl : O_APPEND, O_CLOEXEC, O_NONBLOCK, O_WRONLY;
     import core.sys.posix.stdlib : mkstemp;
-    import core.sys.posix.unistd : close, pread, unlink, write;
+    import core.sys.posix.unistd : close, unlink, write;
+
+    version (CRuntime_Musl)
+        alias pread = muslPread;
+    else
+        import core.sys.posix.unistd : pread;
 
     char[32] name = "/tmp/flint-log-offset-XXXXXX\0";
     const file = mkstemp(name.ptr);
