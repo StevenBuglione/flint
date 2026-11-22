@@ -123,6 +123,9 @@ def native(runner,target,sanitize=False):
     if sanitize:
         # Rust's default host engine remains uninstrumented. Install it into the
         # cumulative prefix before rebuilding the C providers/shims with ASan/UBSan.
+        # Start from an empty prefix: the uninstrumented engine must never link the
+        # instrumented providers a previous sanitizer run installed there.
+        if not runner.plan:shutil.rmtree(ROOT/'.native-sanitized'/'install'/target,ignore_errors=True)
         runner.run([PYTHON,'tools/native_build.py','--profile','wasm-host','--target',target,
                     '--phase','build','--work-dir','.native-sanitized/engine-build',
                     '--prefix','.native-sanitized/install/'+target],env=env)
