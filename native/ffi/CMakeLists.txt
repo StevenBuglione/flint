@@ -9,6 +9,14 @@ target_include_directories(flint_ffi PRIVATE "${CMAKE_INSTALL_PREFIX}/include")
 # (and the providers behind them) rather than every function that shares a translation unit with one.
 if(NOT MSVC)
   target_compile_options(flint_ffi PRIVATE -ffunction-sections -fdata-sections)
+else()
+  # MSVC: C11 atomics are opt-in, and /Gy is its per-function sectioning.
+  target_compile_options(flint_ffi PRIVATE /experimental:c11atomics /Gy)
+endif()
+# The providers are static archives. Their Windows headers declare DLL imports unless told otherwise.
+if(WIN32)
+  target_compile_definitions(flint_ffi PRIVATE UTF8PROC_STATIC CURL_STATICLIB NGHTTP2_STATICLIB YAML_DECLARE_STATIC
+    LIBARCHIVE_STATIC SODIUM_STATIC)
 endif()
 # Wasmtime is a static archive in this profile; Windows headers must not emit DLL imports.
 if(WIN32 AND EXISTS "${CMAKE_INSTALL_PREFIX}/include/wasmtime.h")

@@ -102,18 +102,25 @@ Paths are compared with Windows separators and case rules: the workspace check (
 
 ## Status of the port
 
-Verified on the Windows VM at the commit that adds this ADR:
+Verified on the Windows VM:
 
 - `tools/install_toolchains.py --compiler dmd`, `--compiler ldc` and `--compiler flint`; `flint toolchain install`, `flint toolchain verify` (receipt verified) and `flint doctor` (exit 0);
 - `flint test --project apps/flint`: 15 of 15 modules;
-- `dub test` with DMD and with LDC for `:arena`, `:conc`, `:validate`, `:config`, `:serde`, `:di`, `:log`, `:cli`, `:os`, `:test`, `:ui-signals` and `:term`;
-- `tools/gates.py --gate structural` for those 12 packages, and `tools/quality.py` over the whole tree (0 issues).
+- `dub test` with DMD and with LDC for all 16 stage-2 packages: `:arena`, `:conc`, `:validate`, `:config`, `:serde`, `:di`, `:log`, `:cli`, `:style`, `:term`, `:os`, `:test`, `:ui-signals`, `:widgets`, `:tui` and `:prompt`;
+- `tools/native_build.py --profile tui --target windows-x86_64 --phase build --emit-dub` with MSVC: utf8proc, Flint's C shims and their ctest;
+- `tools/gates.py --gate structural` for those 16 packages, and `tools/quality.py` over the whole tree (0 issues).
+
+Two details of the MSVC build of Flint's C shims (`native/ffi`):
+
+- MSVC's C mode has no `max_align_t`, so `flint_codec_core.c` declares one for MSVC from the most strictly aligned scalar types, and C11 atomics need `/experimental:c11atomics`;
+- the providers are static archives whose Windows headers declare DLL imports by default, so the shims compile with `UTF8PROC_STATIC`, `CURL_STATICLIB`, `NGHTTP2_STATICLIB`, `YAML_DECLARE_STATIC`, `LIBARCHIVE_STATIC` and `SODIUM_STATIC`.
+
+`flint.prompt`'s secret store is `native/secret.c` on Linux and macOS. Windows has no C step in the package build, so `flint.prompt.sys.secret` defines the same functions in D there, wiping with volatile stores.
 
 Next:
 
-- `:style` links the utf8proc provider, so it waits for the MSVC native build, and `:tui`, `:widgets` and `:prompt` wait for `:style`;
 - the IOCP reactor backend, then the packages above the reactor;
-- the native providers under MSVC hardening (`/guard:cf`, `/GS`, `/sdl`, and `/W4 /WX` for Flint's own C);
+- the remaining native providers under MSVC hardening (`/guard:cf`, `/GS`, `/sdl`, and `/W4 /WX` for Flint's own C);
 - the `windows-x86_64` platform lane for Gate 6;
 - ADR-025's Windows speed features (compile server, pipeline, direct linking).
 
@@ -125,7 +132,8 @@ None. `flint.reactor.Backend.iocp` is already part of the frozen contract.
 
 The Linux and macOS behaviour of every changed module is unchanged by construction: their code moved into `else` branches, re-indented only, apart from the `Thread`/`Fiber` import modules and the environment lookups in `flint.term`, which now call `core.stdc.stdlib.getenv`, the function `core.sys.posix.stdlib` re-exported. Every changed package and the CLI were type-checked for `-os=linux`, `-os=osx` and `-os=windows` with DMD's front end. They still have to run on venus (Linux) and pluto (macOS):
 
-- `dub test` on both compilers for `:conc`, `:config`, `:log`, `:os`, `:term` and `:test`, and for every package whose `core.thread` imports changed (all of them compile, but the import change touches tests across `:actuator`, `:cache`, `:codec`, `:mcp`, `:mq`, `:sql`, `:storage` and `:web`);
+- `dub test` on both compilers for `:conc`, `:config`, `:log`, `:os`, `:prompt`, `:term` and `:test`, and for every package whose `core.thread` imports changed (all of them compile, but the import change touches tests across `:actuator`, `:cache`, `:codec`, `:mcp`, `:mq`, `:sql`, `:storage` and `:web`);
 - `flint test --project apps/flint`, and `python3 -m unittest discover -s tests -p 'test_*.py'`;
 - `python3 tools/gates.py --gate structural`;
+- `tools/native_build.py` with `ctest`, since `native/ffi/CMakeLists.txt` and `flint_codec_core.c` changed (both only under MSVC conditions);
 - `flint toolchain install --plan`, `flint toolchain verify` and `tools/install_toolchains.py --compiler flint`, since `tools/install_toolchains.py` and the toolchain modules changed.
