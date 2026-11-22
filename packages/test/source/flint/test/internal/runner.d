@@ -254,14 +254,15 @@ version (unittest)
     // Write with exclusive creation so overlapping shards cannot overwrite an earlier receipt.
     private void writeReport(string path, uint seed, size_t total, size_t failed, size_t errors, string cases)
     {
-        import std.stdio : File;
+        import flint.test.sys : createExclusive, errorText;
 
-        auto output = File(path, "wbx");
-        output.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<testsuite name=\"Flint\" tests=\"" ~ decimal(
+        const document = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<testsuite name=\"Flint\" tests=\"" ~ decimal(
                 total) ~ "\" failures=\"" ~ decimal(failed) ~ "\" errors=\"" ~ decimal(
                 errors) ~ "\">\n  <properties><property name=\"seed\" value=\"" ~ decimal(
-                seed) ~ "\"/></properties>\n" ~ cases ~ "</testsuite>\n");
-        output.close();
+                seed) ~ "\"/></properties>\n" ~ cases ~ "</testsuite>\n";
+        const code = createExclusive(path, document);
+        if (code != 0)
+            throw new Exception("Cannot write `" ~ path ~ "' exclusively (" ~ errorText(code) ~ ")");
     }
 
     private string diagnostic(Throwable failure, uint seed)
@@ -272,15 +273,25 @@ version (unittest)
     // One line on standard output through a single writer instance.
     private void printLine(scope const(char)[] line)
     {
-        import std.stdio : writeln;
+        import flint.test.sys : writeLine;
 
-        writeln(line);
+        writeLine(line);
     }
 
     package(flint.test) int execute(TestCase[] tests, string filter, bool failFast, string junitPath,
             uint seed, bool allowEmpty)
     {
+        import core.memory : pureFree;
         import std.random : rndGen;
+
+        // std.random's archive member references the druntime template instance `pureFree!()`, which the
+        // release Phobos archive only defines inside unrelated members. Without a definition already in the
+        // link, the static linker satisfies it with std.variant's member and, through that member's own
+        // references, std.net.curl, std.concurrency, std.datetime and std.encoding: about 500 KB in every
+        // test executable. Referencing the instance here emits it beside the runner, so seeding the
+        // generator links std.random alone. The behaviour is unchanged; only the archive members differ.
+        static immutable pureFreeInstance = &pureFree!();
+        assert(pureFreeInstance !is null);
 
         string cases;
         const saved = rndGen;

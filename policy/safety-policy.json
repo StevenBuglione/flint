@@ -24,7 +24,9 @@
       "flint.log.sys",
       "flint.log.ffi"
     ],
-    "test": [],
+    "test": [
+      "flint.test.sys"
+    ],
     "web": [
       "flint.web.sys",
       "flint.web.ffi"

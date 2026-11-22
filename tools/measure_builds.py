@@ -405,6 +405,25 @@ def main(argv=None):
         row = {}; peaks = []
         for label, compiler, profile in [('dmd', args.dmd, 'dmd'), ('ldc', args.ldc, 'O3')]:
             cold = []; incremental = []
+            if label == 'dmd':
+                # ADR-016: cold trials start with the toolchain compile server running for the measured flags,
+                # as Go's start from a primed standard library, and the report states the first build without a
+                # server. The server key includes each fixture's -version flags, so every fixture needs its own.
+                # Record that first build with the server disabled, then let two unscored builds start the server
+                # and pre-fork its workers before trial 0, so no trial overlaps server start-up.
+                for attempt, server in enumerate(['0', '1', '1']):
+                    with tempfile.TemporaryDirectory(prefix='flint-build-') as temporary:
+                        workspace = Path(temporary) / 'workspace'; copy_workspace(workspace)
+                        cmd, cwd, env = dub_command(workspace, fixture['fixture'], compiler, profile)
+                        env['FLINT_DMD_SERVER'] = server
+                        state = 'first' if attempt == 0 else 'prime'
+                        logfile = logs / f'{name}-{label}-{state}-{attempt}.log'
+                        observation = timed_process(cmd, cwd, env, logfile)
+                        if attempt == 0:
+                            row['dmd_first_build_seconds'] = observation['seconds']
+                        observation.update({'fixture': name, 'profile': label, 'state': state, 'edited_source': None,
+                                            'trial': attempt, 'log': str(logfile.relative_to(args.output.parent))})
+                        result['trials'].append(observation)
             for iteration in range(9):
                 with tempfile.TemporaryDirectory(prefix='flint-build-') as temporary:
                     workspace = Path(temporary) / 'workspace'; copy_workspace(workspace)
