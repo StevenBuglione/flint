@@ -38,3 +38,10 @@ The handoff archive under `handoff/` stays byte-identical to its `MANIFEST.sha25
   ```
 
   It reads the files, `.env`, environment and arguments once and binds every value from that one snapshot; types may share a prefix. With `rejectUnknownKeys`, a key is unknown only when no bound type's schema claims it, so a misspelt key inside a bound prefix is still rejected with the same diagnostic as `load!T`. On failure every value is reset to its initializer and the earliest diagnostic by key is returned. `load!T` keeps single-type semantics.
+
+## Measurement method changes
+
+Both changes were made before any baseline was recorded, and the milestone report shows counts under the old and new method.
+
+- **Template counts per target.** `tools/measure_builds.py` counts template instantiations in a separate instrumented build. That build now uses one compiler invocation per target (`FLINT_DUB_PIPELINE=0`), as upstream DUB does. The Flint DUB pipeline splits targets into chunks sized by the host's hardware threads, and every chunk re-instantiates the shared druntime templates. A chunked count therefore depended on the machine, not the code (arena's probe counted 9,946 chunked vs 6,646 per target). Timed builds still use the pipeline.
+- **Probe scaffolding without Phobos.** Package probes printed their reports with `std.stdio`/`std.format`/`std.conv`. That scaffolding alone was most of each probe's template count and much of its compile time: arena's probe counted 6,646 instantiations, of which the arena package contributed 21. The probes now print through `core.stdc` with byte-identical output apart from timing fields. Workloads, checksums and baselines are unchanged, and Phobos remains wherever it is part of a baseline's equivalent operation or of result validation. Feature and baseline share the harness, so size deltas are unaffected.
