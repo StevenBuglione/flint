@@ -155,7 +155,18 @@ def run_suite(program):
                        timeout=3, check=True)
     finally:
         os.close(write_fd)
-    print("TERM-06: redirected stdout, repeated EOF and broken-pipe error")
+    master, slave = os.openpty()
+    try:
+        size(slave, 80, 24)
+        initial = termios.tcgetattr(slave)
+        piped = subprocess.run([program, "piped-output"], stdin=slave, capture_output=True, timeout=3, check=True)
+        assert piped.stdout == b"ordinary output\n", piped.stdout
+        assert termios.tcgetattr(slave) == initial
+        assert read_snapshot(master) == b"", "redirected output must not send terminal modes"
+    finally:
+        os.close(master)
+        os.close(slave)
+    print("TERM-06: redirected stdout, terminal stdin with piped stdout, repeated EOF and broken-pipe error")
 
 
 def measure_idle(program):

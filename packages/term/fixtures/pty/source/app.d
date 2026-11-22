@@ -195,6 +195,20 @@ private void useStreams(bool broken)
     verify(plain.value.write("ordinary output\n").code == (broken ? Status.ioError : Status.ok));
 }
 
+private void useTerminalInputOnly()
+{
+    // TERM-06: a terminal on stdin with stdout redirected cannot enter raw mode.
+    auto raw = Session.open(Options(true, true, true, true));
+    verify(raw.error.code == Status.unsupported);
+    auto plain = Session.open(Options(false));
+    verify(plain.ok());
+    verify(plain.value.colors() == ColorProfile.none);
+    verify(plain.value.write("ordinary output\n").code == Status.ok);
+    verify(plain.value.close().code == Status.ok);
+    verify(plain.value.close().code == Status.ok);
+    verify(plain.value.write("late").code == Status.cancelled);
+}
+
 void main(string[] args)
 {
     verify(args.length == 2);
@@ -208,6 +222,9 @@ void main(string[] args)
         break;
     case "broken":
         useStreams(true);
+        break;
+    case "piped-output":
+        useTerminalInputOnly();
         break;
     case "conflict":
         claimInterrupt();

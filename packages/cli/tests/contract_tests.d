@@ -301,3 +301,90 @@ static assert(!CanParse!DuplicateChild);
 static assert(!CanParse!InverseCollision);
 static assert(!CanParse!UnboundRequired);
 static assert(!CanParse!Reserved);
+
+@("CLI-01 bare value option, overflow and trailing data fail with the argument index")
+unittest
+{
+    const bare = parse!Options(["--count"]);
+    assert(bare.error.code == Status.invalidArgument && bare.error.offset == 0);
+    assert(indexOf(bare.error.message, "--count") == 0);
+    const shortBare = parse!Options(["-n"]);
+    assert(shortBare.error.code == Status.invalidArgument && shortBare.error.offset == 0);
+    foreach (argument; ["2147483648", "2x"])
+    {
+        const separate = parse!Options(["--count", argument]);
+        assert(separate.error.code == Status.invalidArgument && separate.error.offset == 1, argument);
+        assert(indexOf(separate.error.message, argument) < 0);
+    }
+    assert(parse!Options(["--count", "2"]).options.count == 2);
+    assert(parse!Options(["-n2"]).options.count == 2 && parse!Options(["-n=2"]).options.count == 2);
+}
+
+@("CLI-02 a value alias consumes the rest of its cluster even when it spells other aliases")
+unittest
+{
+    const consumed = parse!Options(["-sabc"]);
+    assert(consumed.error.code == Status.ok && consumed.options.name == "abc");
+    assert(!consumed.options.a && !consumed.options.b && !consumed.options.c);
+    const counted = parse!Options(["-an5"]);
+    assert(counted.error.code == Status.ok && counted.options.a && counted.options.count == 5);
+    const next = parse!Options(["-abs", "-c"]);
+    assert(next.error.code == Status.ok && next.options.name == "-c" && !next.options.c);
+    const missingValue = parse!Options(["-abs"]);
+    assert(missingValue.error.code == Status.invalidArgument && missingValue.error.offset == 0);
+}
+
+private struct Hostile
+{
+    @Option("quoted ' `touch FLINT_CLI_TICK` $(touch FLINT_CLI_SUB) \"dq\" \\ end", 'q', "Quoted") bool quoted;
+    @Subcommand("child ' $(touch FLINT_CLI_CHILD)", "Child") Leaf child;
+}
+
+/// Return true when every marker occurrence is inside a POSIX single-quoted word.
+private bool singleQuotedOnly(string script, string marker)
+{
+    bool quoted;
+    size_t found;
+    for (size_t index = 0; index < script.length; ++index)
+    {
+        if (!quoted && script[index] == '\\')
+        {
+            ++index;
+            continue;
+        }
+        if (script[index] == '\'')
+        {
+            quoted = !quoted;
+            continue;
+        }
+        if (script[index .. $].length >= marker.length && script[index .. index + marker.length] == marker)
+        {
+            if (!quoted)
+                return false;
+            ++found;
+        }
+    }
+    return found != 0 && !quoted;
+}
+
+@("CLI-07 completion metadata is emitted only as quoted or encoded data")
+unittest
+{
+    string bash;
+    string zsh;
+    string ps;
+    writeCompletion!Hostile(Shell.bash, (scope const(char)[] chunk) @safe { bash ~= chunk; });
+    writeCompletion!Hostile(Shell.zsh, (scope const(char)[] chunk) @safe { zsh ~= chunk; });
+    writeCompletion!Hostile(Shell.powershell, (scope const(char)[] chunk) @safe { ps ~= chunk; });
+    static immutable markers = [
+        "touch FLINT_CLI_TICK", "touch FLINT_CLI_SUB", "touch FLINT_CLI_CHILD", "\"dq\""
+    ];
+    foreach (marker; markers)
+    {
+        assert(singleQuotedOnly(bash, marker), marker);
+        assert(singleQuotedOnly(zsh, marker), marker);
+        assert(indexOf(ps, marker) < 0, marker);
+    }
+    assert(indexOf(bash, "printf -v escaped '%q'") >= 0);
+    assert(indexOf(ps, "FromBase64String(") >= 0 && indexOf(ps, "Replace(\"'\", \"''\")") >= 0);
+}

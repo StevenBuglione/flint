@@ -168,3 +168,29 @@ unittest
     assert(session.size().error.code == Status.cancelled);
     assert(session.next(0).error.code == Status.cancelled);
 }
+
+@("TERM-02 escape sequences up to the 64-byte bound decode and longer ones are discarded")
+unittest
+{
+    char[66] text;
+    text[0 .. 2] = "\x1b[";
+    Event[2] events;
+    foreach (parameters; [3, 60, 61, 62, 63])
+    {
+        text[2 .. 2 + parameters - 3] = '0';
+        text[2 + parameters - 3 .. 2 + parameters] = "1;2";
+        text[2 + parameters] = 'A';
+        Decoder decoder;
+        const sequence = text[0 .. 3 + parameters];
+        const received = feed(decoder, sequence ~ "z", events[]);
+        if (sequence.length <= 64)
+        {
+            assert(received == 2 && events[0].key.code == KeyCode.up && events[0].key.shift);
+            assert(events[1].key.character == 'z');
+        }
+        else
+        {
+            assert(received == 1 && events[0].key.character == 'z');
+        }
+    }
+}
