@@ -490,6 +490,12 @@ struct TestRun
     string artifact;
     /// Its receipt.
     string receipt;
+    /// Fixture peers the suite also ran against.
+    string[] peers;
+    /// Declared peers that could not start.
+    string[] missing_peers;
+    /// Unittest summary line of the run with peers.
+    string peer_summary;
 }
 
 /// `flint.test/1`.
@@ -592,9 +598,12 @@ int commandTest(ref Session session, TestArgs args)
         foreach (run; workspaceRun(session, selectedPackages(session, args.packages, report),
                 "test", compilers, true, request, report))
         {
-            payload.runs ~= TestRun(run.name, run.compiler, run.ok, run.summary, run.artifact, run.receipt);
+            payload.runs ~= TestRun(run.name, run.compiler, run.ok, run.summary, run.artifact,
+                    run.receipt, run.peers.dup, run.missing_peers.dup, run.peer_summary);
             if (!session.json && run.ok)
-                session.progress("Passed", "flint:" ~ run.name ~ " (" ~ run.compiler ~ ") " ~ run.summary);
+                session.progress("Passed",
+                        "flint:" ~ run.name ~ " (" ~ run.compiler ~ ") " ~ run.summary ~ (run.peers.length
+                            ? "; with peers: " ~ run.peer_summary : ""));
         }
     }
     else

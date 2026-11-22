@@ -1,0 +1,74 @@
+# Fixture peers of the workspace test suites (ADR-018, ADR-022).
+#
+# `flint test` wraps each package's unittest command in the peers listed under [packages],
+# outermost first. A peer is a wrapper command that starts the peer, exports its address
+# through FLINT_* variables and runs the rest of the command line. Placeholders:
+#   {bin:NAME}       path of a pinned binary from [binary.NAME]
+#   {go-build:DIR}   a Go fixture server built from DIR with the pinned Go
+# When a binary is unavailable, flint still runs the package's offline tests, names the
+# missing peer and fails the run: peer-dependent suites are never skipped silently.
+# Paths are relative to the Flint checkout; {toolchain} is the toolchain directory.
+
+[binary.go]
+description = "Go 1.27.4 (policy/toolchains.json)"
+path = "{toolchain}/go/bin/go"
+install = "python3 tools/install_peers.py --peer go"
+
+[binary.postgres]
+description = "PostgreSQL 18.7 server built from the libpq source pinned in policy/native-lock.json"
+path = ".flint/peers/postgresql-18.7/bin"
+receipt = ".flint/peers/postgresql-18.7/flint-peer.json"
+install = "python3 tools/install_peers.py --peer postgres"
+
+[binary.valkey]
+description = "Valkey 9.1.2 server"
+path = ".flint/peers/valkey-9.1.2/bin/valkey-server"
+unpinned = "Valkey 9.1.2 has no pinned release in policy/ yet"
+
+[binary.minio]
+description = "MinIO server"
+path = ".flint/peers/minio/minio"
+unpinned = "MinIO has no pinned release in policy/ yet"
+
+[peer.ai]
+description = "loopback HTTP peer speaking the five AI dialects"
+command = ["python3", "packages/ai/tests/local_peer.py"]
+
+[peer.s3]
+description = "loopback S3 peer re-verifying every SigV4 signature"
+command = ["python3", "packages/storage/tests/local_peer.py"]
+
+[peer.minio]
+description = "real MinIO server"
+command = ["python3", "packages/storage/tests/minio_peer.py", "{bin:minio}"]
+
+[peer.http]
+description = "Go HTTP/1.1, HTTP/2 and TLS protocol peers"
+command = ["python3", "packages/http/tests/fixture/run.py", "--server", "{go-build:packages/http/tests/fixture}", "--"]
+
+[peer.jwks]
+description = "Go HTTPS JWKS peer"
+command = ["python3", "packages/security/tests/security_fixture/run.py", "--server", "{go-build:packages/security/tests/security_fixture}", "--"]
+
+[peer.smtp]
+description = "Go loopback SMTP and HTTPS provider peers"
+command = ["python3", "packages/mail/tests/fixture/run.py", "--server", "{go-build:packages/mail/tests/fixture}", "--"]
+
+[peer.redis]
+description = "authenticated Valkey and the scripted Go RESP3 peer"
+command = ["python3", "packages/cache/tests/redis_fixture/run.py", "--server", "{go-build:packages/cache/tests/redis_fixture}", "--valkey", "{bin:valkey}", "--"]
+
+[peer.postgres]
+description = "disposable PostgreSQL cluster"
+command = ["python3", "tools/pg_peer.py", "--bin", "{bin:postgres}", "--variable", "FLINT_SQL_PG_TEST_DSN", "--variable", "FLINT_DATA_PG_TEST_DSN", "--variable", "FLINT_MIGRATE_PG_TEST_DSN", "--"]
+
+[packages]
+ai = ["ai"]
+storage = ["s3", "minio"]
+http = ["http"]
+security = ["jwks"]
+mail = ["smtp"]
+cache = ["redis"]
+sql = ["postgres"]
+data = ["postgres"]
+migrate = ["postgres"]

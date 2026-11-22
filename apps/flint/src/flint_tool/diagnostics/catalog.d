@@ -340,6 +340,11 @@ immutable CodeInfo[] catalog = [
             "The pinned installer (tools/install_toolchains.py) failed. Its output follows the diagnostic.",
             "flint toolchain install --plan    # shows the exact commands"),
 
+    CodeInfo("FLINT-E0815", ExitCode.environment, "fixture peer unavailable",
+            "A package declares fixture peers in policy/test-peers.toml (ADR-018). A peer's pinned binary is missing "
+            ~ "or has no pinned release, so the package's offline tests ran but its peer-dependent suites did not. "
+            ~ "The run fails instead of skipping them silently.",
+            "python3 tools/install_peers.py --peer go --peer postgres"),
     // 09xx: receipts.
     CodeInfo("FLINT-E0901", ExitCode.environment, "receipt missing",
             "Every artifact flint builds has a JSON receipt next to it (<artifact>.receipt.json).",

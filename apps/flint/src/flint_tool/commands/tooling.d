@@ -69,10 +69,11 @@ private void describeToolchain(ref Session session, const ref Toolchain toolchai
     session.say("         dub patch " ~ toolchain.fork.dubPatch);
 }
 
+/// Spaces that align a column after `text`, always at least one.
 private string padding(string text, size_t width)
 {
-    string spaces;
-    foreach (_; text.length .. width)
+    string spaces = " ";
+    foreach (_; text.length + 1 .. width)
         spaces ~= " ";
     return spaces;
 }
@@ -102,13 +103,8 @@ int commandToolchainInspect(ref Session session, ToolchainCommon args, bool veri
 int commandToolchainInstall(ref Session session, ToolchainInstallArgs args)
 {
     import std.array : join;
-    import std.path : buildPath;
-    import flint.serde.owned : serialize;
-    import flint_tool.support.files : writeIfChanged;
-    import flint_tool.support.process : Launch, streamed;
-    import flint_tool.sys.posix : writeError;
-    import flint_tool.toolchain.toolchain : ToolchainReceipt, composeReceipt, installCommands,
-        inspect, receiptName, toolchainDirectory, verifyToolchain;
+    import flint_tool.toolchain.toolchain : installCommands, inspect, receiptName,
+        toolchainDirectory, verifyToolchain;
 
     Report report;
     ToolchainPayload payload;
@@ -123,40 +119,81 @@ int commandToolchainInstall(ref Session session, ToolchainInstallArgs args)
             session.say(command.join(" "));
         return finish(session, report, payload);
     }
+    // The installer replaces dmd in place; compile servers running it would make the file busy.
+    import std.conv : to;
+    import flint_tool.check.structural : realPath;
+    import flint_tool.toolchain.daemon : stopServers;
+
+    const stopped = stopServers(3000, realPath(directory) ~ "/");
+    if (stopped.length)
+        session.progress("Stopped",
+                stopped.length.to!string ~ " compile server(s) running the toolchain being replaced");
     string[] outputs;
-    foreach (command; payload.commands)
+    foreach (index, command; payload.commands)
     {
-        session.progress("Installing", command.join(" "));
         string output;
-        Launch launch;
-        launch.directory = session.home.root;
-        const json = session.json;
-        const outcome = streamed(command, launch, (scope const(char)[] text) @safe {
-            output ~= text;
-            if (!json)
-                writeError(text);
-        }, (scope const(char)[] text) @safe {
-            if (!json)
-                writeError(text);
-        });
-        if (!outcome.ok)
-        {
-            report.error("FLINT-E0814", command.join(" ") ~ " failed" ~ (outcome.failure.length
-                    ? ": " ~ outcome.failure : ""), "fix the installer error above and rerun the install");
+        if (!runInstaller(session, directory, command, output, report))
             return finish(session, report, payload);
-        }
         outputs ~= output;
+        // The receipt covers DMD, DUB and LDC; write it as soon as both are installed.
+        if (index == 1 && !writeToolchainReceipt(session, directory, outputs, report))
+            return finish(session, report, payload);
     }
-    ToolchainReceipt receipt;
-    if (!composeReceipt(session.home, directory, outputs[0], outputs[1], receipt, report))
-        return finish(session, report, payload);
-    writeIfChanged(buildPath(directory, receiptName), serialize(receipt).value ~ "\n");
     const toolchain = inspect(session.home, null, true, directory);
     fill(payload, toolchain);
     verifyToolchain(toolchain, ["dmd", "dub", "ldc2"], Severity.error, report);
     if (report.ok)
         session.progress("Installed", directory ~ " (receipt " ~ receiptName ~ ")");
     return finish(session, report, payload);
+}
+
+/// Run one installer command with the toolchain being installed first on PATH.
+private bool runInstaller(ref Session session, string directory, string[] command, out string output, ref Report report)
+{
+    import std.array : join;
+    import std.path : buildPath;
+    import std.process : environment;
+    import flint.os : EnvVar;
+    import flint_tool.support.process : Launch, streamed;
+    import flint_tool.sys.posix : writeError;
+
+    session.progress("Installing", command.join(" "));
+    Launch launch;
+    launch.directory = session.home.root;
+    const bins = buildPath(directory, "dmd2", "linux", "bin64") ~ ":" ~ buildPath(directory,
+            "bin") ~ ":" ~ buildPath(directory, "ldc2-" ~ session.home.versions["ldc"] ~ "-linux-x86_64", "bin");
+    launch.environment = [EnvVar("PATH", bins ~ ":" ~ environment.get("PATH", "/usr/bin:/bin"))];
+    const json = session.json;
+    string collected;
+    const outcome = streamed(command, launch, (scope const(char)[] text) @safe {
+        collected ~= text;
+        if (!json)
+            writeError(text);
+    }, (scope const(char)[] text) @safe {
+        if (!json)
+            writeError(text);
+    });
+    output = collected;
+    if (outcome.ok)
+        return true;
+    report.error("FLINT-E0814", command.join(" ") ~ " failed" ~ (outcome.failure.length
+            ? ": " ~ outcome.failure : ""), "fix the installer error above and rerun the install");
+    return false;
+}
+
+private bool writeToolchainReceipt(ref Session session, string directory, scope const(string)[] outputs,
+        ref Report report)
+{
+    import std.path : buildPath;
+    import flint.serde.owned : serialize;
+    import flint_tool.support.files : writeIfChanged;
+    import flint_tool.toolchain.toolchain : ToolchainReceipt, composeReceipt, receiptName;
+
+    ToolchainReceipt receipt;
+    if (!composeReceipt(session.home, directory, outputs[0], outputs[1], receipt, report))
+        return false;
+    writeIfChanged(buildPath(directory, receiptName), serialize(receipt).value ~ "\n");
+    return true;
 }
 
 // ---------------------------------------------------------------- doctor
@@ -202,6 +239,7 @@ int commandDoctor(ref Session session, DoctorArgs args)
     doctor.environmentSwitches();
     doctor.compileServer();
     doctor.native(session);
+    doctor.peers(session);
     doctor.project(session, args.project);
     if (!session.json)
     {
@@ -210,7 +248,7 @@ int commandDoctor(ref Session session, DoctorArgs args)
             const tone = check.status == "ok" ? Tone.success : check.status == "warning" ? Tone.warning : Tone.error;
             const label = check.status == "ok" ? "ok  " : check.status == "warning" ? "warn" : "FAIL";
             session.say(paint(label, session.outputPalette,
-                    tone) ~ "  " ~ check.name ~ padding(check.name, 17) ~ check.detail);
+                    tone) ~ "  " ~ check.name ~ padding(check.name, 20) ~ check.detail);
         }
     }
     return finish(session, doctor.report, doctor.payload);
@@ -321,6 +359,25 @@ private struct Doctor
         add("git", git.length ? "ok" : "warning", git.length ? git : "missing: receipts cannot name the source commit");
         if (!git.length)
             report.add(diagnostic("FLINT-E0813", Severity.warning, "git is not on PATH", "install git"));
+    }
+
+    void peers(ref Session session)
+    {
+        import std.algorithm.sorting : sort;
+        import flint_tool.engine.peers : PeerTable, binaryPath, loadPeers;
+        import flint_tool.toolchain.toolchain : toolchainDirectory;
+
+        PeerTable table;
+        if (!loadPeers(session.home, table, report))
+            return add("fixture peers", "error", "policy/test-peers.toml is invalid");
+        auto names = table.binaries.keys;
+        sort(names);
+        foreach (name; names)
+        {
+            string why;
+            const path = binaryPath(session.home, toolchainDirectory(session.home), table.binaries[name], why);
+            add("peer binary " ~ name, path.length ? "ok" : "warning", path.length ? path : why);
+        }
     }
 
     void project(ref Session session, string option)

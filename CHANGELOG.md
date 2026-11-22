@@ -13,6 +13,7 @@
 - Move the canonical build profiles into `policy/profiles.toml`, shared by `flint`, `tools/ci.py` and `tools/measure_builds.py` with unchanged flags, and add `policy/platform.toml`.
 - Write a build receipt next to every artifact. Added flags, a non-profile compiler or an unverified toolchain mark it non-canonical. `flint toolchain install` records the receipt that ties the installed DMD and DUB fork to `toolchain/*.patch`.
 - Port the structural gate, the dfmt and D-Scanner checks and the safety policy into `flint check`, with the fast subset in every build. Every `flint` error has a stable `FLINT-Ennnn` code with a location, cause and fix, and `flint explain` describes each one.
+- Start the fixture peers that workspace test suites declare in `policy/test-peers.toml`. The peers are the AI, S3, HTTP, JWKS and SMTP peers and a disposable PostgreSQL cluster, built with the pinned Go and from the pinned PostgreSQL source by `tools/install_peers.py`. A missing peer fails its package with FLINT-E0815 instead of being skipped.
 - Add `flint.config` named policy files without environment layers, `flint.serde.owned.serialize` and `flint.term.describe` (ADR-022).
 - Fix two link and build failures: `flint:os` failed to link in DMD library builds, and the `flint:term` C shim failed to compile under fortified GCC.
 

@@ -18,6 +18,8 @@ struct Server
     bool alive;
     /// The semantic flags in the server's key.
     string[] flags;
+    /// The dmd executable the server runs.
+    string executable;
 }
 
 /// The directory the compile servers use.
@@ -58,6 +60,7 @@ Server[] servers()
         {
             server.pid = process.pid;
             server.flags = process.flags.dup;
+            server.executable = process.executable;
         }
         found ~= server;
     }
@@ -68,6 +71,7 @@ private struct ServerProcess
 {
     long pid;
     string[] flags;
+    string executable;
 }
 
 /// Running `dmd -fork-server=` processes of this user, by socket.
@@ -99,7 +103,7 @@ private ServerProcess[string] serverProcesses()
                 flags ~= flag;
         }
         try
-            found[socket] = ServerProcess(entry.to!long, flags);
+            found[socket] = ServerProcess(entry.to!long, flags, argv[0].idup);
         catch (ConvException)
             continue;
     }
@@ -150,7 +154,7 @@ long processGroup(long pid)
 }
 
 /// Stop every live server: SIGTERM its process group, wait, then remove stale socket files.
-Server[] stopServers(long waitMillis = 3000)
+Server[] stopServers(long waitMillis = 3000, string executablePrefix = null)
 {
     import core.sys.posix.signal : SIGKILL, SIGTERM;
     import core.thread : Thread;
@@ -159,6 +163,14 @@ Server[] stopServers(long waitMillis = 3000)
     import flint_tool.sys.posix : processAlive, signalProcessGroup;
 
     auto running = servers();
+    if (executablePrefix.length)
+    {
+        import std.algorithm.iteration : filter;
+        import std.algorithm.searching : startsWith;
+        import std.array : array;
+
+        running = running.filter!(server => server.executable.startsWith(executablePrefix)).array;
+    }
     foreach (ref server; running)
     {
         if (server.pid == 0)

@@ -43,7 +43,16 @@ ADR-018 and ADR-021 fix what `flint` does. Building it forced choices they leave
 
 15. **Compile server management.** `flint daemon status` lists `$XDG_RUNTIME_DIR/flint-dmd/*.sock`, a server's liveness lock and its key flags. `start` compiles a probe with a profile's flags and waits for the server, and refuses a socket directory too long for a Unix socket path, where the fork silently compiles without a server. `stop` sends SIGTERM to each server's process group and removes stale sockets.
 
-16. **Library gaps closed in the libraries** (the public API additions below) rather than worked around in `flint`.
+16. **Fixture peers.** `policy/test-peers.toml` declares which workspace packages need which peers, how each peer is started and which pinned binaries it needs (ADR-018 resolved choice).
+    - **Wrappers.** A peer is a wrapper command: the package's own fixture runner from its `ACCEPTANCE.md`, or `tools/pg_peer.py` for a disposable PostgreSQL cluster. The wrapper starts the peer, exports its address through `FLINT_*` variables and runs the rest of the command line.
+    - **Test sequence.** `flint test` first runs the package's `dub test`, the offline pass, which also builds the test binary. It then runs the same binary inside the package's wrappers, outermost first.
+    - **Building peers.** Go fixture servers are built offline with the pinned Go 1.27.4. PostgreSQL 18.7 is built from the libpq source pinned in `policy/native-lock.json` by `tools/install_peers.py`, which writes a receipt.
+    - **Missing peers.** A peer whose binary is missing, or has no pinned release (Valkey, MinIO), is never taken from the system. The offline pass still runs, then FLINT-E0815 names the peer and fails the package.
+    - **`tools/ci.py`.** It never started peers; its `run_tests` lane is unchanged.
+
+    `flint toolchain install` also stops the compile servers running the DMD it replaces, which otherwise make the installer's in-place extraction fail with "Text file busy". It writes the toolchain receipt as soon as DMD, DUB and LDC are installed, before the quality tools.
+
+17. **Library gaps closed in the libraries** (the public API additions below) rather than worked around in `flint`.
 
 ## Public API additions
 

@@ -48,6 +48,22 @@ Every command accepts `--json` and `--help`. Commands acting on a project take `
 
 Inside the Flint checkout, the root `flint.toml` declares the workspace. There `flint build`, `flint test` and `flint check` act on the core packages. For example, `flint test cli config --compiler both` runs `dub test :cli` and `dub test :config` on both compilers with the canonical flags.
 
+## Fixture peers
+
+`policy/test-peers.toml` declares the peers of workspace test suites. `flint test` runs each such package twice. The first run is offline (`dub test`). The second runs the same test binary inside the package's peers.
+
+| Package | Peers |
+| --- | --- |
+| `ai` | loopback AI dialect peer |
+| `storage` | loopback S3 peer, MinIO |
+| `http` | Go HTTP/1.1, HTTP/2 and TLS peers |
+| `security` | Go HTTPS JWKS peer |
+| `mail` | Go SMTP and HTTPS provider peers |
+| `cache` | Valkey and the Go RESP3 peer |
+| `sql`, `data`, `migrate` | disposable PostgreSQL 18.7 cluster |
+
+Install the pinned peer binaries with `python3 tools/install_peers.py --peer go --peer postgres`. A peer without a pinned binary is never taken from the system. The offline tests still run, then FLINT-E0815 names the missing peer and fails the package. `flint doctor` lists each peer binary.
+
 ## Exit codes
 
 | Code | Meaning |
@@ -104,7 +120,7 @@ Command fields:
 | `flint.new/1` | `project`, `module_root`, `files`, `dependencies`, `starters`, `plan` |
 | `flint.build/1` | `project`, `profile`, `compiler`, `artifact` (`path`, `receipt`, `canonical`, `non_canonical_reasons`), `packages` (workspace), `files_checked`, `waivers` |
 | `flint.run/1` | `project`, `profile`, `artifact`, `program` (`command`, `exit_code`, `signalled`, `stdout_text`, `stderr_text`) |
-| `flint.test/1` | `project`, `runs` (`name`, `compiler`, `ok`, `summary`, `artifact`, `receipt`), `passed`, `failed` |
+| `flint.test/1` | `project`, `runs` (`name`, `compiler`, `ok`, `summary`, `artifact`, `receipt`, `peers`, `missing_peers`, `peer_summary`), `passed`, `failed` |
 | `flint.check/1` | `project`, `checks`, `files`, `waived`, `waivers`, `structural` (as `tools/gates.py` reports it), `quality` (`files`, `unformatted`, `issues`, `formatter`) |
 | `flint.fmt/1` | `files`, `changed`, `check` |
 | `flint.lock/1` | `path`, `state` (`written`, `unchanged`, `current`, `missing`, `stale`), `packages` |

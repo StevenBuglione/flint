@@ -173,6 +173,62 @@ class StructuralParityTests(unittest.TestCase):
                 self.assert_same(package, mutate, code)
 
 
+class FixturePeerTests(unittest.TestCase):
+    """flint test wraps a package's test binary in its declared peers and never skips a missing one (ADR-018)."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.temporary = tempfile.TemporaryDirectory(prefix='flint-peers-')
+        cls.work = Path(cls.temporary.name) / 'work'
+        ignore = shutil.ignore_patterns('.dub', 'build', '*.a', '*.o', 'flint-*-test-*', '__pycache__')
+        cls.work.mkdir()
+        for name in ('policy', 'packages', 'tools', 'toolchain'):
+            shutil.copytree(ROOT / name, cls.work / name, ignore=ignore, symlinks=True)
+        for name in ('dub.sdl', 'flint.toml', 'dscanner.ini', 'dfmt.ini', '.editorconfig'):
+            shutil.copy2(ROOT / name, cls.work / name)
+        (cls.work / '.tools').symlink_to((ROOT / '.tools').resolve())
+        cls.policy = cls.work / 'policy/test-peers.toml'
+        cls.original = cls.policy.read_text()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.temporary.cleanup()
+
+    def run_arena(self, peers, packages):
+        policy = self.original.replace('[packages]\n', peers + '[packages]\narena = ' + packages + '\n')
+        self.policy.write_text(policy)
+        return flint_json('test', 'arena', cwd=self.work, env=environment(FLINT_HOME=str(self.work)))
+
+    def test_declared_peers_wrap_the_test_binary_outermost_first(self):
+        log = Path(self.temporary.name) / 'peer-order'
+        log.write_text('')
+        # Each probe appends its name, exports a variable and runs the rest of the command line.
+        script = ('import os, subprocess, sys; open(sys.argv[1], "a").write(sys.argv[2] + "\\n"); '
+                  'sys.exit(subprocess.call(sys.argv[3:], env=dict(os.environ, FLINT_PROBE=sys.argv[2])))')
+        peers = ''.join('[peer.%s]\ndescription = "probe"\ncommand = ["python3", "-c", %s, "%s", "%s"]\n\n'
+                        % (name, json.dumps(script), log, name) for name in ('outer', 'inner'))
+        status, document = self.run_arena(peers, '["outer", "inner"]')
+        self.assertEqual(status, 0, document['diagnostics'])
+        run = document['runs'][0]
+        self.assertEqual((run['ok'], run['peers'], run['missing_peers']), (True, ['outer', 'inner'], []))
+        self.assertIn('modules passed unittests', run['peer_summary'])
+        self.assertEqual(log.read_text().split(), ['outer', 'inner'])
+
+    def test_a_failing_peer_run_fails_the_package(self):
+        peers = '[peer.broken]\ndescription = "probe"\ncommand = ["python3", "-c", "import sys; sys.exit(3)"]\n\n'
+        status, document = self.run_arena(peers, '["broken"]')
+        self.assertEqual((status, codes(document)), (1, ['FLINT-E0702']))
+        self.assertIn('against broken', document['diagnostics'][0]['message'])
+
+    def test_missing_peer_is_named_and_fails_the_run(self):
+        status, document = self.run_arena('', '["minio"]')
+        self.assertEqual((status, codes(document)), (2, ['FLINT-E0815']), document['diagnostics'])
+        run = document['runs'][0]
+        self.assertEqual((run['ok'], run['missing_peers'], run['peers']), (False, ['minio'], []))
+        self.assertIn('modules passed unittests', run['summary'])
+        self.assertIn('minio', document['diagnostics'][0]['message'])
+
+
 class ProjectLifecycleTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

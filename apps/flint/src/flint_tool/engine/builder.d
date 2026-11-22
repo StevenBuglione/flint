@@ -423,6 +423,51 @@ struct PackageRun
     string receipt;
     /// Unittest summary line, for tests.
     string summary;
+    /// Fixture peers the suite ran against (ADR-018).
+    string[] peers;
+    /// Declared peers that could not start.
+    string[] missing_peers;
+    /// Unittest summary line of the run with peers.
+    string peer_summary;
+}
+
+/// Run a workspace test binary again inside the fixture peers its package declares. The offline run has passed;
+/// a missing peer fails the run with FLINT-E0815 instead of skipping its suites.
+private void runWithPeers(ref Session session, ref PackageRun run, string artifact,
+        EnvVar[] environment, ref Report report)
+{
+    import std.array : join;
+    import flint_tool.engine.peers : PeerTable, loadPeers, planPeers;
+    import flint_tool.toolchain.toolchain : toolchainDirectory;
+
+    PeerTable table;
+    if (!loadPeers(session.home, table, report))
+    {
+        run.ok = false;
+        return;
+    }
+    const plan = planPeers(session.home, table, toolchainDirectory(session.home), run.name, report);
+    foreach (ref missing; plan.missing)
+    {
+        run.missing_peers ~= missing.peer;
+        run.ok = false;
+        report.error("FLINT-E0815", "flint:" ~ run.name ~ ": peer `" ~ missing.peer ~ "` cannot start: "
+                ~ missing.detail ~ "; its peer-dependent suites did not run", missing.install.length
+                ? missing.install : "pin a release in policy/ and install it");
+    }
+    if (plan.started.length == 0)
+        return;
+    run.peers = plan.started.dup;
+    session.progress("Peers", "flint:" ~ run.name ~ " (" ~ run.compiler ~ ") with " ~ plan.started.join(", "));
+    string output;
+    const ok = runDub(session, plan.prefix ~ artifact, environment, session.home.root, output);
+    run.peer_summary = unittestSummary(output);
+    if (ok)
+        return;
+    run.ok = false;
+    report.error("FLINT-E0702",
+            "flint:" ~ run.name ~ " tests failed with " ~ run.compiler ~ " against " ~ plan.started.join(", "),
+            "output:\n" ~ tail(output));
 }
 
 /// Build (`test == false`) or test workspace packages with DUB, writing a receipt per artifact.
@@ -496,6 +541,8 @@ private PackageRun runPackage(ref Session session, string name, string compiler,
         : libraryPath(session.home.root, name);
     if (!exists(artifact))
         return run;
+    if (test)
+        runWithPeers(session, run, artifact, environment, report);
     auto receipt = baseReceipt(session, session.home.root, toolchain, [compiler, "dub"]);
     receipt.project.name = "flint:" ~ name;
     receipt.project.version_number = session.home.platform.release;
