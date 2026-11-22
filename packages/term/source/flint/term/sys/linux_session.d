@@ -13,8 +13,6 @@ version (linux)
         flint_term_native_read,
         flint_term_native_write, flint_term_native_wake,
         flint_term_native_closing, flint_term_native_close, flint_term_native_destroy;
-    import std.process : environment;
-    import std.string : indexOf;
 
     private enum NativeStatus : int
     {
@@ -75,8 +73,8 @@ version (linux)
         {
             auto session = new LinuxSession;
             // Resolve environment policy before acquiring native state.
-            const capabilities = detectColors(environment.get("TERM", ""),
-                    environment.get("COLORTERM", ""), environment.get("NO_COLOR") != "");
+            const capabilities = detectColors(environmentValue("TERM", ""),
+                    environmentValue("COLORTERM", ""), environmentValue("NO_COLOR") != "");
             const opened = openNative(options, session.native);
             if (opened != NativeStatus.ok)
                 return Result!LinuxSession(null, failure(opened));
@@ -228,9 +226,39 @@ version (linux)
     {
         if (noColor || terminal == "" || terminal == "dumb")
             return ColorProfile.none;
-        if (colorterm == "truecolor" || colorterm == "24bit" || indexOf(terminal, "-direct") >= 0)
+        if (colorterm == "truecolor" || colorterm == "24bit" || containsBytes(terminal, "-direct"))
             return ColorProfile.trueColor;
-        return indexOf(terminal, "256color") >= 0 ? ColorProfile.ansi256 : ColorProfile.ansi16;
+        return containsBytes(terminal, "256color") ? ColorProfile.ansi256 : ColorProfile.ansi16;
+    }
+
+    // Byte-wise substring test, the case-sensitive std.string.indexOf(...) >= 0 on two UTF-8 strings.
+    private bool containsBytes(scope const(char)[] text, scope const(char)[] part) pure nothrow @nogc
+    {
+        if (part.length > text.length)
+            return false;
+        foreach (start; 0 .. text.length - part.length + 1)
+        {
+            if (text[start .. start + part.length] == part)
+                return true;
+        }
+        return false;
+    }
+
+    // std.process.environment.get without importing std.process (and std.uni): a copy of the variable's value,
+    // "" when it is set but empty, or `fallback` when it is unset.
+    // SAFETY: getenv receives a NUL-terminated copy of the name and returns null or a NUL-terminated string,
+    // which is read up to its terminator and copied before any other environment call.
+    private string environmentValue(string name, string fallback = null) @trusted nothrow
+    {
+        import core.stdc.string : strlen;
+        import core.sys.posix.stdlib : getenv;
+
+        const terminated = name ~ '\0';
+        const value = getenv(terminated.ptr);
+        if (value is null)
+            return fallback;
+        const length = strlen(value);
+        return length == 0 ? "" : value[0 .. length].idup;
     }
 
     // SAFETY: C initializes the output to null on every failure and returns an
