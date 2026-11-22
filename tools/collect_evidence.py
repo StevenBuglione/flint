@@ -414,7 +414,11 @@ def collect(args):
         verified_receipt(receipt, path.parent, commit)
         platforms[name] = True
         platform_records.append((receipt, path))
-    require(set(platforms) == PLATFORMS, 'all seven platform validation receipts required')
+    # ADR-017 decision 2: a platform without a validation receipt is recorded as failing, so Gate 6
+    # reports it explicitly instead of evidence collection stopping.
+    require(platforms, 'at least one platform validation receipt required')
+    for name in sorted(PLATFORMS - set(platforms)):
+        platforms[name] = False
     args.output = args.output.resolve()
     bundle = args.output.parent / (args.output.stem + '-artifacts')
     bundle.mkdir(parents=True, exist_ok=True)
