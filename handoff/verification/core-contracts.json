@@ -1,0 +1,224 @@
+{
+  "scope": "Core declaration-only API syntax, instantiated template contracts, DIP1000 misuse rejection, and native/WASM object emission. No Flint runtime implementation is linked, executed or benchmarked.",
+  "checked_at": "2026-11-21",
+  "status": "passed",
+  "sources": {
+    "contracts/source/flint/arena.d": "26ebcffe46150378b0466bad369298cd4f1073766aca234e2af248f39f5785a7",
+    "contracts/source/flint/conc.d": "8ff95816deb61459ebc28e52869eccf79ef02df6d0fad6b9ec87b02c95a8c0d3",
+    "contracts/source/flint/reactor.d": "857604eba8e0668973ed9972b63824b0241bae779fc3ab73097b0bbd01563a40",
+    "contracts/source/flint/di.d": "d2025c2d8f75ffdc73522a1891850450b5a828b4169ffffa85d6fdc9d47f29eb",
+    "contracts/source/flint/config.d": "c2c96d4449a999f7448746726bc8d4afe753c0219a5f3a48b0a13b459e9218f1",
+    "contracts/source/flint/validate.d": "64a8a3ffc75c5a817373261b2a789388e2be361b026cf05b22ea4ef7e4a39fc8",
+    "contracts/source/flint/log.d": "a95ce30a76032af717bc169530f6c623f04d3bb7c48481cdf891571b77c6a295",
+    "contracts/source/flint/test.d": "55b636e51cb39376a18aa0a9ef9f7ee72db43eb256df5d5291de4cd23ee3bbe8",
+    "contracts/source/flint/serde/package.d": "c7a8589849b6987d7e2c142b6cdaf0adab583b7f3ab67706d2b93e3494ba817e",
+    "contracts/source/flint/serde/owned.d": "13046444fcb41473aeefae5bee1fee14dcc76191d1910ddcfcf0dfe8f506b9c1",
+    "contracts/source/flint/serde/yaml.d": "5f9f50aeb255d7b250b1e8226bade2f6635b57dc6c0704fe51dd2423e1e20d17",
+    "verification/probes/core-betterc.d": "d5b90e33271a641f234a23e92bba3c4c3a7c837fc3402dfabb66bf395b24b788",
+    "verification/probes/core-negative-borrow.d": "abb29a26a5201c519462348ca26cb6b98d334b096956127dfb643767f1f285ac",
+    "verification/probes/core-negative-forge.d": "86eb5e820f231efab300f2d299b0dbc75fa31ca91ae196222970e7ce6c33e25c",
+    "verification/probes/core-negative-storage.d": "0eab6702247c2682ca1f205516f06640bb9e6a432434adcfdbd94682aef0a5bd",
+    "verification/probes/core-positive.d": "66c6fe79a3cf3d9505a223d688006060418bc54562b652a5d28504b32da04467"
+  },
+  "results": [
+    {
+      "compiler": "dmd",
+      "version": "DMD64 D Compiler v2.114.0\nCopyright (C) 1999-2026 by The D Language Foundation, All Rights Reserved written by Walter Bright",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+        "-preview=dip1000",
+        "-o-",
+        "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+        "-betterC",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/core-betterc.d"
+      ],
+      "expected": "accepted",
+      "returncode": 0,
+      "passed": true,
+      "source_sha256": "d5b90e33271a641f234a23e92bba3c4c3a7c837fc3402dfabb66bf395b24b788",
+      "diagnostics": ""
+    },
+    {
+      "compiler": "dmd",
+      "version": "DMD64 D Compiler v2.114.0\nCopyright (C) 1999-2026 by The D Language Foundation, All Rights Reserved written by Walter Bright",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+        "-preview=dip1000",
+        "-o-",
+        "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/core-negative-borrow.d"
+      ],
+      "expected": "specific misuse rejected",
+      "returncode": 1,
+      "passed": true,
+      "source_sha256": "abb29a26a5201c519462348ca26cb6b98d334b096956127dfb643767f1f285ac",
+      "diagnostics": "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/core-negative-borrow.d(5): Error: assigning scope variable `bytes` to global variable `leaked` is not allowed in a `@safe` function\n arena.read(b, (scope const(ubyte)[] bytes) @safe nothrow @nogc { leaked=bytes; });\n                                                                        ^\n"
+    },
+    {
+      "compiler": "dmd",
+      "version": "DMD64 D Compiler v2.114.0\nCopyright (C) 1999-2026 by The D Language Foundation, All Rights Reserved written by Walter Bright",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+        "-preview=dip1000",
+        "-o-",
+        "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/core-negative-forge.d"
+      ],
+      "expected": "specific misuse rejected",
+      "returncode": 1,
+      "passed": true,
+      "source_sha256": "86eb5e820f231efab300f2d299b0dbc75fa31ca91ae196222970e7ce6c33e25c",
+      "diagnostics": "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/core-negative-forge.d(3): Error: constructor `flint.arena.Buffer.this` of type `nothrow @nogc ref @safe Buffer(ulong owner, ulong epoch, ulong start, ulong count)` is not accessible from module `negative_forge`\nBuffer fabricate() @safe nothrow @nogc { return Buffer(1,1,0,10); }\n                                                      ^\n"
+    },
+    {
+      "compiler": "dmd",
+      "version": "DMD64 D Compiler v2.114.0\nCopyright (C) 1999-2026 by The D Language Foundation, All Rights Reserved written by Walter Bright",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+        "-preview=dip1000",
+        "-o-",
+        "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/core-negative-storage.d"
+      ],
+      "expected": "specific misuse rejected",
+      "returncode": 1,
+      "passed": true,
+      "source_sha256": "0eab6702247c2682ca1f205516f06640bb9e6a432434adcfdbd94682aef0a5bd",
+      "diagnostics": "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/core-negative-storage.d(5): Error: escaping a reference to local variable `backing` by returning `RequestArena(null, 0LU, 0u, 0LU, 0LU).this(backing[])`  is not allowed in a `@safe` function\n return RequestArena(backing[]);\n                    ^\n"
+    },
+    {
+      "compiler": "dmd",
+      "version": "DMD64 D Compiler v2.114.0\nCopyright (C) 1999-2026 by The D Language Foundation, All Rights Reserved written by Walter Bright",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+        "-preview=dip1000",
+        "-o-",
+        "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/core-positive.d"
+      ],
+      "expected": "accepted",
+      "returncode": 0,
+      "passed": true,
+      "source_sha256": "66c6fe79a3cf3d9505a223d688006060418bc54562b652a5d28504b32da04467",
+      "diagnostics": ""
+    },
+    {
+      "compiler": "dmd",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+        "-preview=dip1000",
+        "-betterC",
+        "-c",
+        "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+        "-of=/tmp/flint-core-final-xprmjjr2/dmd.o",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/core-betterc.d"
+      ],
+      "expected": "native relocatable object",
+      "returncode": 0,
+      "passed": true,
+      "diagnostics": "",
+      "object_sha256": "ac5c849a83d548e50c64d06619ab5654f77995f689555cc9f5d74114ac9e1344",
+      "object_magic_hex": "7f454c46"
+    },
+    {
+      "compiler": "ldc2",
+      "version": "LDC - the LLVM D compiler (1.43.0):\n  based on DMD v2.113.0 and LLVM 22.1.8\n  built with LDC - the LLVM D compiler (1.43.0)\n  Default target: x86_64-unknown-linux-gnu\n  Host CPU: emeraldrapids\n  https://dlang.org - https://wiki.dlang.org/LDC\n\n\n  Registered Targets:\n    aarch64     - AArch64 (little endian)\n    aarch64_32  - AArch64 (little endian ILP32)\n    aarch64_be  - AArch64 (big endian)\n    amdgcn      - AMD GCN GPUs\n    arm         - ARM\n    arm64       - ARM64 (little endian)\n    arm64_32    - ARM64 (little endian ILP32)\n    armeb       - ARM (big endian)\n    avr         - Atmel AVR Microcontroller\n    bpf         - BPF (host endian)\n    bpfeb       - BPF (big endian)\n    bpfel       - BPF (little endian)\n    hexagon     - Hexagon\n    lanai       - Lanai\n    loongarch32 - 32-bit LoongArch\n    loongarch64 - 64-bit LoongArch\n    mips        - MIPS (32-bit big endian)\n    mips64      - MIPS (64-bit big endian)\n    mips64el    - MIPS (64-bit little endian)\n    mipsel      - MIPS (32-bit little endian)\n    msp430      - MSP430 [experimental]\n    nvptx       - NVIDIA PTX 32-bit\n    nvptx64     - NVIDIA PTX 64-bit\n    ppc32       - PowerPC 32\n    ppc32le     - PowerPC 32 LE\n    ppc64       - PowerPC 64\n    ppc64le     - PowerPC 64 LE\n    r600        - AMD GPUs HD2XXX-HD6XXX\n    riscv32     - 32-bit RISC-V\n    riscv32be   - 32-bit big endian RISC-V\n    riscv64     - 64-bit RISC-V\n    riscv64be   - 64-bit big endian RISC-V\n    sparc       - Sparc\n    sparcel     - Sparc LE\n    sparcv9     - Sparc V9\n    spirv       - SPIR-V Logical\n    spirv32     - SPIR-V 32-bit\n    spirv64     - SPIR-V 64-bit\n    systemz     - SystemZ\n    thumb       - Thumb\n    thumbeb     - Thumb (big endian)\n    ve          - VE\n    wasm32      - WebAssembly 32-bit\n    wasm64      - WebAssembly 64-bit\n    x86         - 32-bit X86: Pentium-Pro and above\n    x86-64      - 64-bit X86: EM64T and AMD64\n    xcore       - XCore\n    xtensa      - Xtensa 32",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+        "-preview=dip1000",
+        "-o-",
+        "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+        "-betterC",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/core-betterc.d"
+      ],
+      "expected": "accepted",
+      "returncode": 0,
+      "passed": true,
+      "source_sha256": "d5b90e33271a641f234a23e92bba3c4c3a7c837fc3402dfabb66bf395b24b788",
+      "diagnostics": ""
+    },
+    {
+      "compiler": "ldc2",
+      "version": "LDC - the LLVM D compiler (1.43.0):\n  based on DMD v2.113.0 and LLVM 22.1.8\n  built with LDC - the LLVM D compiler (1.43.0)\n  Default target: x86_64-unknown-linux-gnu\n  Host CPU: emeraldrapids\n  https://dlang.org - https://wiki.dlang.org/LDC\n\n\n  Registered Targets:\n    aarch64     - AArch64 (little endian)\n    aarch64_32  - AArch64 (little endian ILP32)\n    aarch64_be  - AArch64 (big endian)\n    amdgcn      - AMD GCN GPUs\n    arm         - ARM\n    arm64       - ARM64 (little endian)\n    arm64_32    - ARM64 (little endian ILP32)\n    armeb       - ARM (big endian)\n    avr         - Atmel AVR Microcontroller\n    bpf         - BPF (host endian)\n    bpfeb       - BPF (big endian)\n    bpfel       - BPF (little endian)\n    hexagon     - Hexagon\n    lanai       - Lanai\n    loongarch32 - 32-bit LoongArch\n    loongarch64 - 64-bit LoongArch\n    mips        - MIPS (32-bit big endian)\n    mips64      - MIPS (64-bit big endian)\n    mips64el    - MIPS (64-bit little endian)\n    mipsel      - MIPS (32-bit little endian)\n    msp430      - MSP430 [experimental]\n    nvptx       - NVIDIA PTX 32-bit\n    nvptx64     - NVIDIA PTX 64-bit\n    ppc32       - PowerPC 32\n    ppc32le     - PowerPC 32 LE\n    ppc64       - PowerPC 64\n    ppc64le     - PowerPC 64 LE\n    r600        - AMD GPUs HD2XXX-HD6XXX\n    riscv32     - 32-bit RISC-V\n    riscv32be   - 32-bit big endian RISC-V\n    riscv64     - 64-bit RISC-V\n    riscv64be   - 64-bit big endian RISC-V\n    sparc       - Sparc\n    sparcel     - Sparc LE\n    sparcv9     - Sparc V9\n    spirv       - SPIR-V Logical\n    spirv32     - SPIR-V 32-bit\n    spirv64     - SPIR-V 64-bit\n    systemz     - SystemZ\n    thumb       - Thumb\n    thumbeb     - Thumb (big endian)\n    ve          - VE\n    wasm32      - WebAssembly 32-bit\n    wasm64      - WebAssembly 64-bit\n    x86         - 32-bit X86: Pentium-Pro and above\n    x86-64      - 64-bit X86: EM64T and AMD64\n    xcore       - XCore\n    xtensa      - Xtensa 32",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+        "-preview=dip1000",
+        "-o-",
+        "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/core-negative-borrow.d"
+      ],
+      "expected": "specific misuse rejected",
+      "returncode": 1,
+      "passed": true,
+      "source_sha256": "abb29a26a5201c519462348ca26cb6b98d334b096956127dfb643767f1f285ac",
+      "diagnostics": "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/core-negative-borrow.d(5): Error: assigning scope variable `bytes` to global variable `leaked` is not allowed in a `@safe` function\n arena.read(b, (scope const(ubyte)[] bytes) @safe nothrow @nogc { leaked=bytes; });\n                                                                        ^\n"
+    },
+    {
+      "compiler": "ldc2",
+      "version": "LDC - the LLVM D compiler (1.43.0):\n  based on DMD v2.113.0 and LLVM 22.1.8\n  built with LDC - the LLVM D compiler (1.43.0)\n  Default target: x86_64-unknown-linux-gnu\n  Host CPU: emeraldrapids\n  https://dlang.org - https://wiki.dlang.org/LDC\n\n\n  Registered Targets:\n    aarch64     - AArch64 (little endian)\n    aarch64_32  - AArch64 (little endian ILP32)\n    aarch64_be  - AArch64 (big endian)\n    amdgcn      - AMD GCN GPUs\n    arm         - ARM\n    arm64       - ARM64 (little endian)\n    arm64_32    - ARM64 (little endian ILP32)\n    armeb       - ARM (big endian)\n    avr         - Atmel AVR Microcontroller\n    bpf         - BPF (host endian)\n    bpfeb       - BPF (big endian)\n    bpfel       - BPF (little endian)\n    hexagon     - Hexagon\n    lanai       - Lanai\n    loongarch32 - 32-bit LoongArch\n    loongarch64 - 64-bit LoongArch\n    mips        - MIPS (32-bit big endian)\n    mips64      - MIPS (64-bit big endian)\n    mips64el    - MIPS (64-bit little endian)\n    mipsel      - MIPS (32-bit little endian)\n    msp430      - MSP430 [experimental]\n    nvptx       - NVIDIA PTX 32-bit\n    nvptx64     - NVIDIA PTX 64-bit\n    ppc32       - PowerPC 32\n    ppc32le     - PowerPC 32 LE\n    ppc64       - PowerPC 64\n    ppc64le     - PowerPC 64 LE\n    r600        - AMD GPUs HD2XXX-HD6XXX\n    riscv32     - 32-bit RISC-V\n    riscv32be   - 32-bit big endian RISC-V\n    riscv64     - 64-bit RISC-V\n    riscv64be   - 64-bit big endian RISC-V\n    sparc       - Sparc\n    sparcel     - Sparc LE\n    sparcv9     - Sparc V9\n    spirv       - SPIR-V Logical\n    spirv32     - SPIR-V 32-bit\n    spirv64     - SPIR-V 64-bit\n    systemz     - SystemZ\n    thumb       - Thumb\n    thumbeb     - Thumb (big endian)\n    ve          - VE\n    wasm32      - WebAssembly 32-bit\n    wasm64      - WebAssembly 64-bit\n    x86         - 32-bit X86: Pentium-Pro and above\n    x86-64      - 64-bit X86: EM64T and AMD64\n    xcore       - XCore\n    xtensa      - Xtensa 32",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+        "-preview=dip1000",
+        "-o-",
+        "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/core-negative-forge.d"
+      ],
+      "expected": "specific misuse rejected",
+      "returncode": 1,
+      "passed": true,
+      "source_sha256": "86eb5e820f231efab300f2d299b0dbc75fa31ca91ae196222970e7ce6c33e25c",
+      "diagnostics": "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/core-negative-forge.d(3): Error: constructor `flint.arena.Buffer.this` of type `nothrow @nogc ref @safe Buffer(ulong owner, ulong epoch, ulong start, ulong count)` is not accessible from module `negative_forge`\nBuffer fabricate() @safe nothrow @nogc { return Buffer(1,1,0,10); }\n                                                      ^\n"
+    },
+    {
+      "compiler": "ldc2",
+      "version": "LDC - the LLVM D compiler (1.43.0):\n  based on DMD v2.113.0 and LLVM 22.1.8\n  built with LDC - the LLVM D compiler (1.43.0)\n  Default target: x86_64-unknown-linux-gnu\n  Host CPU: emeraldrapids\n  https://dlang.org - https://wiki.dlang.org/LDC\n\n\n  Registered Targets:\n    aarch64     - AArch64 (little endian)\n    aarch64_32  - AArch64 (little endian ILP32)\n    aarch64_be  - AArch64 (big endian)\n    amdgcn      - AMD GCN GPUs\n    arm         - ARM\n    arm64       - ARM64 (little endian)\n    arm64_32    - ARM64 (little endian ILP32)\n    armeb       - ARM (big endian)\n    avr         - Atmel AVR Microcontroller\n    bpf         - BPF (host endian)\n    bpfeb       - BPF (big endian)\n    bpfel       - BPF (little endian)\n    hexagon     - Hexagon\n    lanai       - Lanai\n    loongarch32 - 32-bit LoongArch\n    loongarch64 - 64-bit LoongArch\n    mips        - MIPS (32-bit big endian)\n    mips64      - MIPS (64-bit big endian)\n    mips64el    - MIPS (64-bit little endian)\n    mipsel      - MIPS (32-bit little endian)\n    msp430      - MSP430 [experimental]\n    nvptx       - NVIDIA PTX 32-bit\n    nvptx64     - NVIDIA PTX 64-bit\n    ppc32       - PowerPC 32\n    ppc32le     - PowerPC 32 LE\n    ppc64       - PowerPC 64\n    ppc64le     - PowerPC 64 LE\n    r600        - AMD GPUs HD2XXX-HD6XXX\n    riscv32     - 32-bit RISC-V\n    riscv32be   - 32-bit big endian RISC-V\n    riscv64     - 64-bit RISC-V\n    riscv64be   - 64-bit big endian RISC-V\n    sparc       - Sparc\n    sparcel     - Sparc LE\n    sparcv9     - Sparc V9\n    spirv       - SPIR-V Logical\n    spirv32     - SPIR-V 32-bit\n    spirv64     - SPIR-V 64-bit\n    systemz     - SystemZ\n    thumb       - Thumb\n    thumbeb     - Thumb (big endian)\n    ve          - VE\n    wasm32      - WebAssembly 32-bit\n    wasm64      - WebAssembly 64-bit\n    x86         - 32-bit X86: Pentium-Pro and above\n    x86-64      - 64-bit X86: EM64T and AMD64\n    xcore       - XCore\n    xtensa      - Xtensa 32",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+        "-preview=dip1000",
+        "-o-",
+        "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/core-negative-storage.d"
+      ],
+      "expected": "specific misuse rejected",
+      "returncode": 1,
+      "passed": true,
+      "source_sha256": "0eab6702247c2682ca1f205516f06640bb9e6a432434adcfdbd94682aef0a5bd",
+      "diagnostics": "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/core-negative-storage.d(5): Error: escaping a reference to local variable `backing` by returning `RequestArena(null, 0LU, 0u, 0LU, 0LU).this(backing[])`  is not allowed in a `@safe` function\n return RequestArena(backing[]);\n                    ^\n"
+    },
+    {
+      "compiler": "ldc2",
+      "version": "LDC - the LLVM D compiler (1.43.0):\n  based on DMD v2.113.0 and LLVM 22.1.8\n  built with LDC - the LLVM D compiler (1.43.0)\n  Default target: x86_64-unknown-linux-gnu\n  Host CPU: emeraldrapids\n  https://dlang.org - https://wiki.dlang.org/LDC\n\n\n  Registered Targets:\n    aarch64     - AArch64 (little endian)\n    aarch64_32  - AArch64 (little endian ILP32)\n    aarch64_be  - AArch64 (big endian)\n    amdgcn      - AMD GCN GPUs\n    arm         - ARM\n    arm64       - ARM64 (little endian)\n    arm64_32    - ARM64 (little endian ILP32)\n    armeb       - ARM (big endian)\n    avr         - Atmel AVR Microcontroller\n    bpf         - BPF (host endian)\n    bpfeb       - BPF (big endian)\n    bpfel       - BPF (little endian)\n    hexagon     - Hexagon\n    lanai       - Lanai\n    loongarch32 - 32-bit LoongArch\n    loongarch64 - 64-bit LoongArch\n    mips        - MIPS (32-bit big endian)\n    mips64      - MIPS (64-bit big endian)\n    mips64el    - MIPS (64-bit little endian)\n    mipsel      - MIPS (32-bit little endian)\n    msp430      - MSP430 [experimental]\n    nvptx       - NVIDIA PTX 32-bit\n    nvptx64     - NVIDIA PTX 64-bit\n    ppc32       - PowerPC 32\n    ppc32le     - PowerPC 32 LE\n    ppc64       - PowerPC 64\n    ppc64le     - PowerPC 64 LE\n    r600        - AMD GPUs HD2XXX-HD6XXX\n    riscv32     - 32-bit RISC-V\n    riscv32be   - 32-bit big endian RISC-V\n    riscv64     - 64-bit RISC-V\n    riscv64be   - 64-bit big endian RISC-V\n    sparc       - Sparc\n    sparcel     - Sparc LE\n    sparcv9     - Sparc V9\n    spirv       - SPIR-V Logical\n    spirv32     - SPIR-V 32-bit\n    spirv64     - SPIR-V 64-bit\n    systemz     - SystemZ\n    thumb       - Thumb\n    thumbeb     - Thumb (big endian)\n    ve          - VE\n    wasm32      - WebAssembly 32-bit\n    wasm64      - WebAssembly 64-bit\n    x86         - 32-bit X86: Pentium-Pro and above\n    x86-64      - 64-bit X86: EM64T and AMD64\n    xcore       - XCore\n    xtensa      - Xtensa 32",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+        "-preview=dip1000",
+        "-o-",
+        "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/core-positive.d"
+      ],
+      "expected": "accepted",
+      "returncode": 0,
+      "passed": true,
+      "source_sha256": "66c6fe79a3cf3d9505a223d688006060418bc54562b652a5d28504b32da04467",
+      "diagnostics": ""
+    },
+    {
+      "compiler": "ldc2",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+        "-preview=dip1000",
+        "-betterC",
+        "-c",
+        "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+        "-of=/tmp/flint-core-final-xprmjjr2/ldc2.o",
+        "-mtriple=wasm32-unknown-unknown-wasm",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/core-betterc.d"
+      ],
+      "expected": "WASM relocatable object",
+      "returncode": 0,
+      "passed": true,
+      "diagnostics": "",
+      "object_sha256": "078e55c1bb0114857a90305fe4bc0c14eb266dde25916116889329cc26d7bb39",
+      "object_magic_hex": "0061736d"
+    }
+  ]
+}

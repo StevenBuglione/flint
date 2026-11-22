@@ -1,0 +1,15 @@
+{
+  "command": [
+    "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+    "-betterC",
+    "-mtriple=wasm32-unknown-unknown-wasm",
+    "-link-internally",
+    "-L--no-entry",
+    "-L--export=main",
+    "-of=/workspace/scratch/09fd6c26fd15/toolchains/probes/flags.wasm",
+    "/workspace/scratch/09fd6c26fd15/toolchains/probes/flags.d"
+  ],
+  "exit_code": 1,
+  "stdout": "",
+  "stderr": "lld: error: symbol exported via --export not found: main\nError: linking with LLD failed\n"
+}

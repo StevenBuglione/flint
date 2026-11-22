@@ -1,0 +1,116 @@
+{
+  "verified_at_utc": "2026-11-21T07:26:31.405321+00:00",
+  "scope": "Actual source builds of llhttp, zlib, liburing and Flint C ABI shim; two instrumented CTests on Linux x86_64 glibc. This is not complete framework behavior, all-library, D sanitizer, cross-platform or leak-check validation.",
+  "target": "linux-x86_64-glibc",
+  "compiler": {
+    "path": "/usr/bin/cc",
+    "resolved_path": "/usr/bin/x86_64-linux-gnu-gcc-14",
+    "id": "GNU",
+    "version": "14.2.0",
+    "version_output": "cc (Debian 14.2.0-19) 14.2.0",
+    "target": "x86_64-linux-gnu"
+  },
+  "cmake_version": "3.31.10",
+  "ninja_version": "1.11.1",
+  "flags": {
+    "CFLAGS": "-O2 -fPIC -fsanitize=address,undefined -fno-omit-frame-pointer",
+    "CMAKE_C_FLAGS_RELEASE": "-O3 -DNDEBUG",
+    "LDFLAGS": "-fsanitize=address,undefined",
+    "liburing_configuration": [
+      "--use-libc",
+      "--enable-sanitizer"
+    ]
+  },
+  "sanitizers": [
+    "address",
+    "undefined"
+  ],
+  "environment": {
+    "ASAN_OPTIONS": "detect_leaks=0"
+  },
+  "leak_check": {
+    "status": "not_executed",
+    "reason": "Executor ptrace restrictions prevent LeakSanitizer from running. Local rerun used ASAN_OPTIONS=detect_leaks=0; helper and CI retain default leak detection."
+  },
+  "tests": [
+    {
+      "name": "flint_abi_test",
+      "passed": true,
+      "behavior": "C ABI sizes, pointer/size_t agreement and invalid output pointer/size rejection; explicit return checks are not disabled by NDEBUG."
+    },
+    {
+      "name": "flint_native_library_test",
+      "passed": true,
+      "behavior": "llhttp HTTP request parse and callback, zlib compression/decompression exact byte roundtrip, C layout probe."
+    }
+  ],
+  "ctest_log": {
+    "path": "verification/ffi/native-sanitizer-ctest.log",
+    "sha256": "c48b660e937dee30733515b7c5eb2053d88b0956746b7699b98c6302a5979815"
+  },
+  "source_hashes": {
+    "scaffold/native/ffi/CMakeLists.txt": "ab6042fc75c81ed2e1311a70b4d5a1f33f21a9afe5036d2eadee9a66db705d65",
+    "scaffold/native/ffi/flint_abi_probe.c": "46ac3af559b0665a541f0d91dc86980b176a7c344035e742835579057c7a6c92",
+    "scaffold/native/ffi/flint_abi_probe.d": "59b40b664358230fb06c4b3247faaf1582a21f39d174ec07ebebc635f2c93976",
+    "scaffold/native/ffi/flint_abi_probe.h": "38d0f5fed25210367288055871a58028678c641a876a82de610c91d01bb5a350",
+    "scaffold/native/ffi/native_library_test.c": "497985c8a45c4a0551ccc4c55ed13a1ba0fc0ce48ebe7232748a621fe87fff22",
+    "scaffold/native/ffi/probe_main.c": "670e6c58bf5057b11bf270cdd4c9f1f63028e623c211973fd4a7b44aa3810257"
+  },
+  "native_install_receipt": {
+    "schema": 1,
+    "target": "linux-x86_64-glibc",
+    "libraries": {
+      "llhttp": {
+        "source_sha256": "b7b066789a497396aa6a49394fbe75dc8342bf71a29c5da6ac58c0075f3de3f9",
+        "revision": "816485216511b86459b2e6478190e14c38c14891",
+        "license": "MIT",
+        "requested_sanitizers": "address,undefined",
+        "archives": [
+          {
+            "path": "/workspace/scratch/09fd6c26fd15/ffi-buildqa-sanitized/install/linux-x86_64-glibc/lib/libllhttp.a",
+            "sha256": "9aee940db30ca08a2197c562ec4f2b866b06aeb770a074fbee82596404e3cc30"
+          }
+        ]
+      },
+      "zlib": {
+        "source_sha256": "f0d590dd90243a12f551ee13359bf6c634249c55b316fa2b7dbecabe7ae9a904",
+        "revision": "99623ef7097352da7993ba614161fd6a311e046e",
+        "license": "Zlib",
+        "requested_sanitizers": "address,undefined",
+        "archives": [
+          {
+            "path": "/workspace/scratch/09fd6c26fd15/ffi-buildqa-sanitized/install/linux-x86_64-glibc/lib/libz.a",
+            "sha256": "f800b3fb1e3e69446383c8b119f95a6908f4b25ade2547174b47a3f1748dd03a"
+          }
+        ]
+      },
+      "liburing": {
+        "source_sha256": "e4db39641298c90f42c29e264bd1057d0342380e712d56dfd9049da953637f48",
+        "revision": "d41bf9220ec39277ff235379e9089d9e0fd6c2a5",
+        "license": "MIT",
+        "requested_sanitizers": "address,undefined",
+        "archives": [
+          {
+            "path": "/workspace/scratch/09fd6c26fd15/ffi-buildqa-sanitized/install/linux-x86_64-glibc/lib/liburing-ffi.a",
+            "sha256": "cfc6cce3f7b422c7f616908441448a6591d4af724afae7a7a815bf467b1776db"
+          },
+          {
+            "path": "/workspace/scratch/09fd6c26fd15/ffi-buildqa-sanitized/install/linux-x86_64-glibc/lib/liburing.a",
+            "sha256": "da0f3920b7f76688b58c94156a0c805850d4882b1d85020aa8c106fa26da7bd9"
+          }
+        ]
+      }
+    },
+    "native_ctest_executed": true,
+    "sanitizers": "address,undefined",
+    "sanitizer_environment": {
+      "ASAN_OPTIONS": "detect_leaks=0"
+    },
+    "ffi_archive": {
+      "path": "/workspace/scratch/09fd6c26fd15/ffi-buildqa-sanitized/install/linux-x86_64-glibc/lib/libflint_ffi.a",
+      "sha256": "0893d61ef363aaa6847c0defe1144aeb409d00227dd50bc67e21291b18006eee"
+    },
+    "sanitizer_scope": "Flint C shims and libraries whose requested_sanitizers field is non-null. Separately prepared Rust archives are not instrumented by this helper."
+  },
+  "passed": true
+}

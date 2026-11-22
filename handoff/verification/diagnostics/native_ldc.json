@@ -1,0 +1,13 @@
+{
+  "command": [
+    "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+    "-O3",
+    "--flto=thin",
+    "-link-internally",
+    "-of=/workspace/scratch/09fd6c26fd15/toolchains/probes/native",
+    "/workspace/scratch/09fd6c26fd15/toolchains/probes/flags.d"
+  ],
+  "exit_code": 1,
+  "stdout": "",
+  "stderr": "lld: error: unable to find library -lrt\nlld: error: unable to find library -ldl\nlld: error: unable to find library -lpthread\nlld: error: unable to find library -lm\nError: linking with LLD failed\n"
+}

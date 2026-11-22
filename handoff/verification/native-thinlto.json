@@ -1,0 +1,30 @@
+[
+  {
+    "command": [
+      "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+      "-O3",
+      "--flto=thin",
+      "-of=/tmp/flint-native-lto-O3",
+      "/workspace/scratch/09fd6c26fd15/toolchains/probes/flags.d"
+    ],
+    "compile_exit_code": 0,
+    "compiler_stderr": "",
+    "run_exit_code": 0,
+    "binary_sha256": "ca10a151c414e3fdf1481c636986a944f7d3022843b2f9e7d0c1eedb0ff7c08d",
+    "scope": "real standalone D entrypoint link/run with ThinLTO; no framework performance claim"
+  },
+  {
+    "command": [
+      "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+      "-Oz",
+      "--flto=thin",
+      "-of=/tmp/flint-native-lto-Oz",
+      "/workspace/scratch/09fd6c26fd15/toolchains/probes/flags.d"
+    ],
+    "compile_exit_code": 0,
+    "compiler_stderr": "",
+    "run_exit_code": 0,
+    "binary_sha256": "ca10a151c414e3fdf1481c636986a944f7d3022843b2f9e7d0c1eedb0ff7c08d",
+    "scope": "real standalone D entrypoint link/run with ThinLTO; no framework performance claim"
+  }
+]

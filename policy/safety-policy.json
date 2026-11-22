@@ -1,0 +1,116 @@
+{
+  "schema": 1,
+  "unsafe_module_prefixes": {
+    "reactor": [
+      "flint.reactor.sys",
+      "flint.reactor.ffi"
+    ],
+    "arena": [
+      "flint.arena.sys",
+      "flint.arena.ffi"
+    ],
+    "conc": [
+      "flint.conc.sys",
+      "flint.conc.ffi"
+    ],
+    "di": [],
+    "config": ["flint.config.sys"],
+    "serde": [
+      "flint.serde.sys",
+      "flint.serde.ffi"
+    ],
+    "validate": [],
+    "log": [
+      "flint.log.sys",
+      "flint.log.ffi"
+    ],
+    "test": [
+      "flint.test.sys"
+    ],
+    "web": [
+      "flint.web.sys",
+      "flint.web.ffi"
+    ],
+    "http": [
+      "flint.http.sys",
+      "flint.http.ffi"
+    ],
+    "security": [
+      "flint.security.sys",
+      "flint.security.ffi"
+    ],
+    "actuator": [],
+    "schedule": [],
+    "rpc": [
+      "flint.rpc.sys",
+      "flint.rpc.ffi"
+    ],
+    "sql": [
+      "flint.sql.sys",
+      "flint.sql.ffi"
+    ],
+    "data": [],
+    "migrate": [],
+    "cache": [
+      "flint.cache.sys",
+      "flint.cache.ffi"
+    ],
+    "cli": [],
+    "term": [
+      "flint.term.sys",
+      "flint.term.ffi"
+    ],
+    "tui": ["flint.tui.sys.worker"],
+    "style": [
+      "flint.style.ffi"
+    ],
+    "widgets": [],
+    "prompt": ["flint.prompt.sys.secret"],
+    "os": [
+      "flint.os.sys",
+      "flint.os.ffi"
+    ],
+    "wasm-bridge": [
+      "flint.wasm_bridge.sys",
+      "flint.wasm_bridge.ffi"
+    ],
+    "ui-signals": [],
+    "wasi": [
+      "flint.wasi.sys",
+      "flint.wasi.ffi"
+    ],
+    "mq": [
+      "flint.mq.sys",
+      "flint.mq.ffi"
+    ],
+    "storage": [],
+    "mail": ["flint.mail.ffi"],
+    "ai": [],
+    "mcp": ["flint.mcp.sys.storage", "flint.mcp.sys.stdio"],
+    "template": [],
+    "codec": [
+      "flint.codec.sys",
+      "flint.codec.ffi"
+    ],
+    "desktop": [
+      "flint.desktop.sys",
+      "flint.desktop.ffi"
+    ]
+  },
+  "generator_module_prefixes": [
+    "flint.di.internal",
+    "flint.serde.internal",
+    "flint.web.internal",
+    "flint.http.internal",
+    "flint.data.internal",
+    "flint.cli.internal",
+    "flint.test.internal",
+    "flint.validate.internal",
+    "flint.templates.internal",
+    "flint.ai.internal",
+    "flint.mcp.internal"
+  ],
+  "module_default": "safe",
+  "max_trusted_lines": 60,
+  "generated_dependency_check": "DMD -deps and -mixin with -unittest are mandatory for packages containing approved string mixins; CI repeats on every native platform and build profile"
+}

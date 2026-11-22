@@ -1,0 +1,22 @@
+name "test"
+description "Flint test subpackage"
+license "Apache-2.0"
+targetType "library"
+sourcePaths "source"
+importPaths "source"
+dflags "-preview=dip1000"
+
+configuration "library" {
+    targetType "library"
+}
+
+configuration "runner" {
+    targetType "library"
+    buildOptions "unittests"
+}
+configuration "unittest" {
+    targetType "library"
+    sourcePaths "source" "tests"
+    importPaths "source" "tests"
+    excludedSourceFiles "tests/betterc.d"
+}

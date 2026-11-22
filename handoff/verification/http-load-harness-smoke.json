@@ -1,0 +1,420 @@
+{
+  "schema": 1,
+  "mode": "smoke",
+  "workload_sha256": "0c73ae572421a959115a64b7e1858ddeae5abd7cd60cafaeecdcd8d5e701bbbe",
+  "manifest": "../verification/oha-smoke-manifest.json",
+  "effective_workload": {
+    "runs": 1,
+    "duration_seconds": 2,
+    "capacity_seconds": 2,
+    "warmup_seconds": 1,
+    "fixed_rate_qps": 1000,
+    "connections": 8,
+    "request_timeout_seconds": 5,
+    "server_cpus": [
+      2,
+      3
+    ],
+    "load_cpus": [
+      4,
+      5,
+      6,
+      7
+    ]
+  },
+  "tool": {
+    "version": "oha 1.16.0",
+    "sha256": "620bb9e16fb53eabc9a3fc45f88bdb41fefa3fee5c05e75892011ce320391716"
+  },
+  "rest": {
+    "p50_ms": [
+      0.12603399999999998
+    ],
+    "p99_ms": [
+      1.587245
+    ],
+    "p999_ms": [
+      4.488036
+    ],
+    "peak_rss_bytes": [
+      12468224
+    ],
+    "cpu_ns_per_request": [
+      110000.0
+    ],
+    "requests_per_second": [
+      49235.470250451646
+    ]
+  },
+  "go": {
+    "rest": {
+      "p50_ms": [
+        0.105982
+      ],
+      "p99_ms": [
+        2.5548960000000003
+      ],
+      "p999_ms": [
+        5.734770999999999
+      ],
+      "peak_rss_bytes": [
+        12156928
+      ],
+      "cpu_ns_per_request": [
+        94905.0949050949
+      ],
+      "requests_per_second": [
+        52490.21863254948
+      ]
+    }
+  },
+  "trials": [
+    {
+      "target": "flint",
+      "trial": 0,
+      "server_command": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/workspace/scratch/09fd6c26fd15/oha-research/reference-go-rest",
+        "--listen",
+        "127.0.0.1:18080"
+      ],
+      "server_pid": 6,
+      "server_binary_sha256": "2c11e4330c0a28d9debcadac8c15092c299b6b70306a99ff3eb569c807cbe0c2",
+      "server_executable": "/workspace/scratch/09fd6c26fd15/oha-research/reference-go-rest",
+      "server_log": "../verification/http-load-harness-smoke-raw/00-flint-server.log",
+      "warmup": {
+        "count": 1000,
+        "duration_seconds": 1.000888886,
+        "requests_per_second": 999.1119034166196,
+        "p50_ms": 0.122567,
+        "p99_ms": 2.240562,
+        "p999_ms": 4.410545,
+        "cpu_ns_per_request": 109890.10989010989,
+        "peak_rss_bytes": 9465856,
+        "load_cpu_fraction": 0.021748479154239504,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/workspace/scratch/09fd6c26fd15/toolchains/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "8",
+            "-z",
+            "1s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "1000",
+            "--latency-correction",
+            "http://127.0.0.1:18080/json"
+          ],
+          "exit_code": 0,
+          "sha256": "0404080e4d23be84e971f1affcd829d70dd9ff98bc545a8982aee5e7fd45fd38",
+          "raw_file": "../verification/http-load-harness-smoke-raw/00-flint-warmup.json",
+          "stderr_file": "../verification/http-load-harness-smoke-raw/00-flint-warmup.stderr.txt",
+          "wall_seconds": 1.0169446719996813
+        },
+        "process": {
+          "cpu_nanoseconds": 110000000.0,
+          "peak_rss_bytes": 9465856,
+          "correctness_probes": 1,
+          "rss_samples": 49
+        }
+      },
+      "latency": {
+        "count": 1999,
+        "duration_seconds": 2.000573646,
+        "requests_per_second": 999.213402614222,
+        "p50_ms": 0.12603399999999998,
+        "p99_ms": 1.587245,
+        "p999_ms": 4.488036,
+        "cpu_ns_per_request": 110000.0,
+        "peak_rss_bytes": 12468224,
+        "load_cpu_fraction": 0.019065141528498315,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/workspace/scratch/09fd6c26fd15/toolchains/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "8",
+            "-z",
+            "2s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "1000",
+            "--latency-correction",
+            "http://127.0.0.1:18080/json"
+          ],
+          "exit_code": 0,
+          "sha256": "3a8c14686a9b672ce7c8cf406fdebbbaf8ec1a57bf0385a7054ca50c8d2b5edf",
+          "raw_file": "../verification/http-load-harness-smoke-raw/00-flint-latency.json",
+          "stderr_file": "../verification/http-load-harness-smoke-raw/00-flint-latency.stderr.txt",
+          "wall_seconds": 2.019588993999605
+        },
+        "process": {
+          "cpu_nanoseconds": 220000000.0,
+          "peak_rss_bytes": 12468224,
+          "correctness_probes": 1,
+          "rss_samples": 99
+        }
+      },
+      "capacity": {
+        "count": 98579,
+        "duration_seconds": 2.002194749,
+        "requests_per_second": 49235.470250451646,
+        "p50_ms": 0.11377000000000001,
+        "p99_ms": 0.936511,
+        "p999_ms": 4.340609,
+        "cpu_ns_per_request": 23229.62842738459,
+        "peak_rss_bytes": 13524992,
+        "load_cpu_fraction": 0.24232933757935818,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/workspace/scratch/09fd6c26fd15/toolchains/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "8",
+            "-z",
+            "2s",
+            "-w",
+            "-t",
+            "5s",
+            "http://127.0.0.1:18080/json"
+          ],
+          "exit_code": 0,
+          "sha256": "468ddca88cfbfc70812f15795301ff4d6c2c206f626953a37781e6347221dde7",
+          "raw_file": "../verification/http-load-harness-smoke-raw/00-flint-capacity.json",
+          "stderr_file": "../verification/http-load-harness-smoke-raw/00-flint-capacity.stderr.txt",
+          "wall_seconds": 2.119479238999702
+        },
+        "process": {
+          "cpu_nanoseconds": 2290000000.0,
+          "peak_rss_bytes": 13524992,
+          "correctness_probes": 2,
+          "rss_samples": 103
+        }
+      }
+    },
+    {
+      "target": "go",
+      "trial": 0,
+      "server_command": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/workspace/scratch/09fd6c26fd15/oha-research/reference-go-rest",
+        "--listen",
+        "127.0.0.1:18081"
+      ],
+      "server_pid": 36,
+      "server_binary_sha256": "2c11e4330c0a28d9debcadac8c15092c299b6b70306a99ff3eb569c807cbe0c2",
+      "server_executable": "/workspace/scratch/09fd6c26fd15/oha-research/reference-go-rest",
+      "server_log": "../verification/http-load-harness-smoke-raw/00-go-server.log",
+      "warmup": {
+        "count": 999,
+        "duration_seconds": 1.000629217,
+        "requests_per_second": 998.3718074864089,
+        "p50_ms": 0.112997,
+        "p99_ms": 1.409087,
+        "p999_ms": 2.8423599999999998,
+        "cpu_ns_per_request": 80000.0,
+        "peak_rss_bytes": 9441280,
+        "load_cpu_fraction": 0.019913722947199033,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/workspace/scratch/09fd6c26fd15/toolchains/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "8",
+            "-z",
+            "1s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "1000",
+            "--latency-correction",
+            "http://127.0.0.1:18081/json"
+          ],
+          "exit_code": 0,
+          "sha256": "ee535addd6f060c5a7c18e88dcf30045f4c4d9c0122edd10cdc8ef2d4e771c1e",
+          "raw_file": "../verification/http-load-harness-smoke-raw/00-go-warmup.json",
+          "stderr_file": "../verification/http-load-harness-smoke-raw/00-go-warmup.stderr.txt",
+          "wall_seconds": 1.0169369159998496
+        },
+        "process": {
+          "cpu_nanoseconds": 80000000.0,
+          "peak_rss_bytes": 9441280,
+          "correctness_probes": 1,
+          "rss_samples": 50
+        }
+      },
+      "latency": {
+        "count": 2000,
+        "duration_seconds": 2.002048948,
+        "requests_per_second": 998.9765744728435,
+        "p50_ms": 0.105982,
+        "p99_ms": 2.5548960000000003,
+        "p999_ms": 5.734770999999999,
+        "cpu_ns_per_request": 94905.0949050949,
+        "peak_rss_bytes": 12156928,
+        "load_cpu_fraction": 0.020395943867083304,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/workspace/scratch/09fd6c26fd15/toolchains/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "8",
+            "-z",
+            "2s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "1000",
+            "--latency-correction",
+            "http://127.0.0.1:18081/json"
+          ],
+          "exit_code": 0,
+          "sha256": "d3457cfa91a692ce2f2377060faa8f956c9642b545313e3d644be0db601d8a62",
+          "raw_file": "../verification/http-load-harness-smoke-raw/00-go-latency.json",
+          "stderr_file": "../verification/http-load-harness-smoke-raw/00-go-latency.stderr.txt",
+          "wall_seconds": 2.027719347999664
+        },
+        "process": {
+          "cpu_nanoseconds": 190000000.0,
+          "peak_rss_bytes": 12156928,
+          "correctness_probes": 2,
+          "rss_samples": 97
+        }
+      },
+      "capacity": {
+        "count": 105113,
+        "duration_seconds": 2.002525475,
+        "requests_per_second": 52490.21863254948,
+        "p50_ms": 0.107535,
+        "p99_ms": 0.814244,
+        "p999_ms": 4.264042,
+        "cpu_ns_per_request": 22356.466726918137,
+        "peak_rss_bytes": 13160448,
+        "load_cpu_fraction": 0.22877567759784576,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/workspace/scratch/09fd6c26fd15/toolchains/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "8",
+            "-z",
+            "2s",
+            "-w",
+            "-t",
+            "5s",
+            "http://127.0.0.1:18081/json"
+          ],
+          "exit_code": 0,
+          "sha256": "6b392f5c45b6f12c8085a82d27274f3aa70de443d17ea81f73100b319d021cd8",
+          "raw_file": "../verification/http-load-harness-smoke-raw/00-go-capacity.json",
+          "stderr_file": "../verification/http-load-harness-smoke-raw/00-go-capacity.stderr.txt",
+          "wall_seconds": 2.12249726500022
+        },
+        "process": {
+          "cpu_nanoseconds": 2350000000.0,
+          "peak_rss_bytes": 13160448,
+          "correctness_probes": 2,
+          "rss_samples": 103
+        }
+      }
+    }
+  ],
+  "servers": {
+    "flint": {
+      "executable": "/workspace/scratch/09fd6c26fd15/oha-research/reference-go-rest",
+      "sha256": "2c11e4330c0a28d9debcadac8c15092c299b6b70306a99ff3eb569c807cbe0c2",
+      "argv": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/workspace/scratch/09fd6c26fd15/oha-research/reference-go-rest",
+        "--listen",
+        "127.0.0.1:18080"
+      ],
+      "environment": {
+        "GOMAXPROCS": "2"
+      }
+    },
+    "go": {
+      "executable": "/workspace/scratch/09fd6c26fd15/oha-research/reference-go-rest",
+      "sha256": "2c11e4330c0a28d9debcadac8c15092c299b6b70306a99ff3eb569c807cbe0c2",
+      "argv": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/workspace/scratch/09fd6c26fd15/oha-research/reference-go-rest",
+        "--listen",
+        "127.0.0.1:18081"
+      ],
+      "environment": {
+        "GOMAXPROCS": "2"
+      }
+    }
+  },
+  "status": "passed"
+}

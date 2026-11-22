@@ -1,0 +1,315 @@
+{
+  "verified_at_utc": "2026-11-21T07:35:11.162923+00:00",
+  "scope": "Read-only code review plus actual plan generation. Confirms CLI compatibility, provider selection, retained all37 test commands and two-stage sanitizer prefix agreement. No Rust installation, Rust engine build, all-package runtime or cross-platform execution is claimed.",
+  "source_sha256": {
+    "scaffold/tools/ci.py": "2e231dd79945fd5ad554e601bd71289c85b384dc426d2f53db4a605b3c5d2d19",
+    "scaffold/tools/install_rust.py": "4c5acbef31ce50691052d6788d553abd74280c37d8e23ebbf0f0f0df486f9c05",
+    "scaffold/tools/native_build.py": "c0ba58f3e33b98f990997fa8cfa36ea08cec5feb123cf277f123e1fa2bcb0546",
+    "scaffold/.github/scripts/musl.sh": "43c6ca1418a4a55c44fcb811810faa024384d9f78aa1f11be2d207afc3016f70",
+    "scaffold/policy/toolchains.json": "6a049639e452c0e7b9b98175faf1abff69613bdc2d04e0602e0d71923e6111d6",
+    "research/rust-host-toolchain.json": "63eeff7fa951d53c8315d454352d6af5640ed162c55b94d6b5f91f3560414c1a"
+  },
+  "bootstrap_pins_match_research": true,
+  "default_provider": "Wasmtime51.0.0",
+  "optional_provider": "WAMR2.4.6 core/Preview1 only; separate selected acceptance required",
+  "native_checks": [
+    {
+      "target": "linux-x86_64-glibc",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "tools/ci.py",
+        "--plan",
+        "platform-run",
+        "--target",
+        "linux-x86_64-glibc"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "rust_install_command": [
+        [
+          "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+          "tools/install_rust.py",
+          "--target",
+          "linux-x86_64-glibc",
+          "--destination",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/.tools/rust"
+        ]
+      ],
+      "native_commands": [
+        [
+          "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+          "tools/native_build.py",
+          "--profile",
+          "ci",
+          "--target",
+          "linux-x86_64-glibc",
+          "--phase",
+          "build",
+          "--emit-dub",
+          "--library",
+          "wasmtime"
+        ]
+      ],
+      "package_test_count": 37,
+      "wasi_included": true,
+      "passed": true
+    },
+    {
+      "target": "linux-aarch64-glibc",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "tools/ci.py",
+        "--plan",
+        "platform-run",
+        "--target",
+        "linux-aarch64-glibc"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "rust_install_command": [
+        [
+          "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+          "tools/install_rust.py",
+          "--target",
+          "linux-aarch64-glibc",
+          "--destination",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/.tools/rust"
+        ]
+      ],
+      "native_commands": [
+        [
+          "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+          "tools/native_build.py",
+          "--profile",
+          "ci",
+          "--target",
+          "linux-aarch64-glibc",
+          "--phase",
+          "build",
+          "--emit-dub",
+          "--library",
+          "wasmtime"
+        ]
+      ],
+      "package_test_count": 37,
+      "wasi_included": true,
+      "passed": true
+    },
+    {
+      "target": "linux-x86_64-musl",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "tools/ci.py",
+        "--plan",
+        "platform-run",
+        "--target",
+        "linux-x86_64-musl"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "rust_install_command": [
+        [
+          "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+          "tools/install_rust.py",
+          "--target",
+          "linux-x86_64-musl",
+          "--destination",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/.tools/rust"
+        ]
+      ],
+      "native_commands": [
+        [
+          "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+          "tools/native_build.py",
+          "--profile",
+          "ci",
+          "--target",
+          "linux-x86_64-musl",
+          "--phase",
+          "build",
+          "--emit-dub",
+          "--library",
+          "wasmtime"
+        ]
+      ],
+      "package_test_count": 37,
+      "wasi_included": true,
+      "passed": true
+    },
+    {
+      "target": "linux-aarch64-musl",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "tools/ci.py",
+        "--plan",
+        "platform-run",
+        "--target",
+        "linux-aarch64-musl"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "rust_install_command": [
+        [
+          "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+          "tools/install_rust.py",
+          "--target",
+          "linux-aarch64-musl",
+          "--destination",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/.tools/rust"
+        ]
+      ],
+      "native_commands": [
+        [
+          "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+          "tools/native_build.py",
+          "--profile",
+          "ci",
+          "--target",
+          "linux-aarch64-musl",
+          "--phase",
+          "build",
+          "--emit-dub",
+          "--library",
+          "wasmtime"
+        ]
+      ],
+      "package_test_count": 37,
+      "wasi_included": true,
+      "passed": true
+    },
+    {
+      "target": "macos-arm64",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "tools/ci.py",
+        "--plan",
+        "platform-run",
+        "--target",
+        "macos-arm64"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "rust_install_command": [
+        [
+          "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+          "tools/install_rust.py",
+          "--target",
+          "macos-arm64",
+          "--destination",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/.tools/rust"
+        ]
+      ],
+      "native_commands": [
+        [
+          "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+          "tools/native_build.py",
+          "--profile",
+          "ci",
+          "--target",
+          "macos-arm64",
+          "--phase",
+          "build",
+          "--emit-dub",
+          "--library",
+          "wasmtime"
+        ]
+      ],
+      "package_test_count": 37,
+      "wasi_included": true,
+      "passed": true
+    },
+    {
+      "target": "windows-x86_64",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "tools/ci.py",
+        "--plan",
+        "platform-run",
+        "--target",
+        "windows-x86_64"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "rust_install_command": [
+        [
+          "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+          "tools/install_rust.py",
+          "--target",
+          "windows-x86_64",
+          "--destination",
+          "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/.tools/rust"
+        ]
+      ],
+      "native_commands": [
+        [
+          "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+          "tools/native_build.py",
+          "--profile",
+          "ci",
+          "--target",
+          "windows-x86_64",
+          "--phase",
+          "build",
+          "--emit-dub",
+          "--library",
+          "wasmtime"
+        ]
+      ],
+      "package_test_count": 37,
+      "wasi_included": true,
+      "passed": true
+    }
+  ],
+  "sanitizer_check": {
+    "command": [
+      "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+      "tools/ci.py",
+      "--plan",
+      "check",
+      "--gate",
+      "sanitizers"
+    ],
+    "exit_code": 0,
+    "stderr": "",
+    "native_commands": [
+      [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "tools/native_build.py",
+        "--profile",
+        "wasm-host",
+        "--target",
+        "linux-x86_64-glibc",
+        "--phase",
+        "build",
+        "--work-dir",
+        ".native-sanitized/engine-build",
+        "--prefix",
+        ".native-sanitized/install/linux-x86_64-glibc"
+      ],
+      [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "tools/native_build.py",
+        "--profile",
+        "ci",
+        "--target",
+        "linux-x86_64-glibc",
+        "--phase",
+        "build",
+        "--emit-dub",
+        "--sanitize",
+        "address,undefined",
+        "--cc",
+        "clang",
+        "--cxx",
+        "clang++",
+        "--work-dir",
+        ".native-sanitized"
+      ]
+    ],
+    "package_test_count": 37,
+    "wasi_included": true,
+    "engine_instrumented": false,
+    "passed": true
+  },
+  "passed": true
+}

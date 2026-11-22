@@ -1,0 +1,20 @@
+name "os"
+description "Flint os subpackage"
+license "Apache-2.0"
+targetType "library"
+sourcePaths "source"
+importPaths "source"
+sourceFiles "source/flint/os/ffi/interrupt_latch.c" platform="linux"
+dflags "-preview=dip1000"
+dependency "flint:arena" version="*"
+dependency "flint:conc" version="*"
+
+configuration "library" {
+    targetType "library"
+}
+configuration "unittest" {
+    targetType "library"
+    sourcePaths "source" "tests"
+    importPaths "source" "tests"
+    excludedSourceFiles "tests/betterc.d"
+}

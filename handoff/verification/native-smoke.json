@@ -1,0 +1,125 @@
+{
+  "verified_at_utc": "2026-11-21T06:42:05.679959+00:00",
+  "scope": "Linux native C source build plus actual ABI query, llhttp request parsing, zlib roundtrip and DMD/LDC C-ABI linkage. Does not establish any other library/platform acceptance.",
+  "native_install_receipt": {
+    "schema": 1,
+    "target": "linux-x86_64-glibc",
+    "libraries": {
+      "llhttp": {
+        "source_sha256": "b7b066789a497396aa6a49394fbe75dc8342bf71a29c5da6ac58c0075f3de3f9",
+        "revision": "816485216511b86459b2e6478190e14c38c14891",
+        "license": "MIT",
+        "archives": [
+          {
+            "path": "/workspace/scratch/09fd6c26fd15/ffi-buildqa/install/linux-x86_64-glibc/lib/libllhttp.a",
+            "sha256": "cc764ab6006c89cc33df8f04dc39d36a6bf87bb3cfde6d826f59e00ed7ff1d8e"
+          }
+        ]
+      },
+      "zlib": {
+        "source_sha256": "f0d590dd90243a12f551ee13359bf6c634249c55b316fa2b7dbecabe7ae9a904",
+        "revision": "99623ef7097352da7993ba614161fd6a311e046e",
+        "license": "Zlib",
+        "archives": [
+          {
+            "path": "/workspace/scratch/09fd6c26fd15/ffi-buildqa/install/linux-x86_64-glibc/lib/libz.a",
+            "sha256": "b5083c2b9f957ccaa9231aff80ddc619dbd0daedeb2b028d71a25fca5a7db95f"
+          }
+        ]
+      },
+      "liburing": {
+        "source_sha256": "e4db39641298c90f42c29e264bd1057d0342380e712d56dfd9049da953637f48",
+        "revision": "d41bf9220ec39277ff235379e9089d9e0fd6c2a5",
+        "license": "MIT",
+        "archives": [
+          {
+            "path": "/workspace/scratch/09fd6c26fd15/ffi-buildqa/install/linux-x86_64-glibc/lib/liburing-ffi.a",
+            "sha256": "2e3a85a1d54e5fc6d51aad3d6595b705561bf8d606ffa7f146bff43de8a8b820"
+          },
+          {
+            "path": "/workspace/scratch/09fd6c26fd15/ffi-buildqa/install/linux-x86_64-glibc/lib/liburing.a",
+            "sha256": "08dd22f70ce2519420d613bc8114cebd4da3638dd49e19f3b4454f1bd9fc10f2"
+          }
+        ]
+      }
+    },
+    "ffi_archive": {
+      "path": "/workspace/scratch/09fd6c26fd15/ffi-buildqa/install/linux-x86_64-glibc/lib/libflint_ffi.a",
+      "sha256": "e0eb7b7a890bc9009dc81b91a267ef19f62a764d2d47abe60c5692182450597f"
+    },
+    "native_ctest_executed": true,
+    "sanitizers": null
+  },
+  "checks": [
+    {
+      "name": "compile-C-smoke",
+      "command": [
+        "cc",
+        "-std=c11",
+        "-O2",
+        "-c",
+        "-I/workspace/scratch/09fd6c26fd15/ffi-buildqa/install/linux-x86_64-glibc/include",
+        "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/native/ffi",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/ffi/native_smoke.c",
+        "-o",
+        "/tmp/flint-native-smoke-uypg9xw6/smoke.o"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "DMD-C-link",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+        "-preview=dip1000",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/native/ffi/flint_abi_probe.d",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/ffi/native_smoke.d",
+        "/tmp/flint-native-smoke-uypg9xw6/smoke.o",
+        "-of=/tmp/flint-native-smoke-uypg9xw6/smoke-DMD",
+        "-L/workspace/scratch/09fd6c26fd15/ffi-buildqa/install/linux-x86_64-glibc/lib/libflint_ffi.a",
+        "-L/workspace/scratch/09fd6c26fd15/ffi-buildqa/install/linux-x86_64-glibc/lib/libllhttp.a",
+        "-L/workspace/scratch/09fd6c26fd15/ffi-buildqa/install/linux-x86_64-glibc/lib/libz.a"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "DMD-C-run",
+      "command": [
+        "/tmp/flint-native-smoke-uypg9xw6/smoke-DMD"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "LDC-C-link",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+        "-preview=dip1000",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/scaffold/native/ffi/flint_abi_probe.d",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/ffi/native_smoke.d",
+        "/tmp/flint-native-smoke-uypg9xw6/smoke.o",
+        "-of=/tmp/flint-native-smoke-uypg9xw6/smoke-LDC",
+        "-L/workspace/scratch/09fd6c26fd15/ffi-buildqa/install/linux-x86_64-glibc/lib/libflint_ffi.a",
+        "-L/workspace/scratch/09fd6c26fd15/ffi-buildqa/install/linux-x86_64-glibc/lib/libllhttp.a",
+        "-L/workspace/scratch/09fd6c26fd15/ffi-buildqa/install/linux-x86_64-glibc/lib/libz.a"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "LDC-C-run",
+      "command": [
+        "/tmp/flint-native-smoke-uypg9xw6/smoke-LDC"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "passed": true
+}

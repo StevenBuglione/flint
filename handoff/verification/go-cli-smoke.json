@@ -1,0 +1,19 @@
+{
+  "scope": "real Go CLI reference build and execution",
+  "passed": true,
+  "build_command": [
+    "/workspace/scratch/09fd6c26fd15/toolchains/go/bin/go",
+    "build",
+    "-buildvcs=false",
+    "-trimpath",
+    "-ldflags=-s -w",
+    "-o",
+    "/tmp/flint-go-cli-071ek22v/reference-cli",
+    "."
+  ],
+  "go_version": "go version go1.27.4 linux/amd64",
+  "binary_sha256": "c482bf08141842455fe4b6f14011bcebceb3ec9e6a6c68a81979cbc288063183",
+  "stdout": "Hello, Flint!\n",
+  "log_message": "greeting completed",
+  "exit_code": 0
+}

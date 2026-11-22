@@ -1,0 +1,4 @@
+# Alternate screen on, normal and SGR mouse on, bracketed paste on
+1b5b3f3130343968 1b5b3f3130303068 1b5b3f3130303668 1b5b3f3230303468
+# Bracketed paste off, SGR and normal mouse off, alternate screen off
+1b5b3f323030346c 1b5b3f313030366c 1b5b3f313030306c 1b5b3f313034396c

@@ -1,0 +1,16 @@
+{
+  "command": [
+    "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+    "-betterC",
+    "-mtriple=wasm32-unknown-unknown-wasm",
+    "-Oz",
+    "-link-internally",
+    "-L--no-entry",
+    "-L--export=flint_probe",
+    "-of=/workspace/scratch/09fd6c26fd15/toolchains/probes/probe.wasm",
+    "/workspace/scratch/09fd6c26fd15/toolchains/probes/wasm_export.d"
+  ],
+  "exit_code": 0,
+  "stdout": "",
+  "stderr": ""
+}

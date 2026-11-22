@@ -1,0 +1,9 @@
+{
+  "command": [
+    "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+    "--version"
+  ],
+  "exit_code": 0,
+  "stdout": "DMD64 D Compiler v2.114.0\nCopyright (C) 1999-2026 by The D Language Foundation, All Rights Reserved written by Walter Bright\n",
+  "stderr": ""
+}

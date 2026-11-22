@@ -1,0 +1,8 @@
+name "probe-serde"
+targetType "executable"
+sourcePaths "source" "harness"
+importPaths "source" "harness"
+targetPath "build"
+targetName "probe-serde"
+dflags "-preview=dip1000"
+dependency "flint:serde" path="../../.."

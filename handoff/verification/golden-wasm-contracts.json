@@ -1,0 +1,22 @@
+{
+  "name": "ldc2 golden-wasm-app",
+  "status": "pass",
+  "detail": {
+    "command": [
+      "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+      "-preview=dip1000",
+      "-o-",
+      "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/source",
+      "-betterC",
+      "-mtriple=wasm32-unknown-unknown-wasm",
+      "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/templates/golden-wasm-app/source",
+      "-I/workspace/scratch/09fd6c26fd15/flint-agent-handoff/templates/golden-wasm-app/source/flint_demo/sys",
+      "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/templates/golden-wasm-app/source/app.d",
+      "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/templates/golden-wasm-app/source/flint_demo/sys/exports.d"
+    ],
+    "returncode": 0,
+    "stdout": "",
+    "stderr": "",
+    "scope": "golden API typecheck; runtime linking waits for implemented packages"
+  }
+}

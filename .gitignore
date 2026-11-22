@@ -1,0 +1,15 @@
+.dub/
+.tools/
+artifacts/
+build/
+*.o
+*.obj
+*.a
+*.lib
+*.exe
+__pycache__/
+.dub-home/
+.ci-dub-home/
+.native/
+.native-sanitized/
+/packages/*/flint-*-test-unittest

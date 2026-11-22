@@ -1,0 +1,264 @@
+{
+  "schema": 1,
+  "samples": 9,
+  "native_linker": "default system cc/ld with bundled LLVMgold-ldc.so (verified ThinLTO); optional external LLD22; native -link-internally prohibited",
+  "cold_definition": "fresh copied project source and DUB_HOME build cache; immutable verified native install archives shared; precompiled toolchain runtimes retained; OS page cache not dropped",
+  "go_cache": "stdlib-only primed cache copied afresh per cold app trial",
+  "packages": {
+    "reactor": {
+      "fixture": "packages/reactor/bench",
+      "baseline": "packages/reactor/bench/baseline",
+      "edit_source": "packages/reactor/source/flint/reactor.d",
+      "size_basis": "framework_over_provider_equivalent_baseline"
+    },
+    "arena": {
+      "fixture": "packages/arena/bench",
+      "baseline": "packages/arena/bench/baseline",
+      "edit_source": "packages/arena/source/flint/arena.d",
+      "size_basis": "framework_over_provider_equivalent_baseline"
+    },
+    "conc": {
+      "fixture": "packages/conc/bench",
+      "baseline": "packages/conc/bench/baseline",
+      "edit_source": "packages/conc/source/flint/conc.d",
+      "size_basis": "framework_over_provider_equivalent_baseline"
+    },
+    "di": {
+      "fixture": "packages/di/bench",
+      "baseline": "packages/di/bench/baseline",
+      "edit_source": "packages/di/source/flint/di.d",
+      "size_basis": "framework_over_provider_equivalent_baseline"
+    },
+    "config": {
+      "fixture": "packages/config/bench",
+      "baseline": "packages/config/bench/baseline",
+      "edit_source": "packages/config/source/flint/config.d",
+      "size_basis": "framework_over_provider_equivalent_baseline"
+    },
+    "serde": {
+      "fixture": "packages/serde/bench",
+      "baseline": "packages/serde/bench/baseline",
+      "edit_source": "packages/serde/source/flint/serde/package.d",
+      "size_basis": "framework_over_provider_equivalent_baseline"
+    },
+    "validate": {
+      "fixture": "packages/validate/bench",
+      "baseline": "packages/validate/bench/baseline",
+      "edit_source": "packages/validate/source/flint/validate.d",
+      "size_basis": "framework_over_provider_equivalent_baseline"
+    },
+    "log": {
+      "fixture": "packages/log/bench",
+      "baseline": "packages/log/bench/baseline",
+      "edit_source": "packages/log/source/flint/log.d",
+      "size_basis": "framework_over_provider_equivalent_baseline"
+    },
+    "test": {
+      "fixture": "packages/test/bench",
+      "baseline": "packages/test/bench/baseline",
+      "edit_source": "packages/test/source/flint/test.d",
+      "size_basis": "framework_over_provider_equivalent_baseline"
+    },
+    "web": {
+      "fixture": "packages/web/bench",
+      "baseline": "packages/web/bench/baseline",
+      "edit_source": "packages/web/source/flint/web.d",
+      "size_basis": "framework_over_provider_equivalent_baseline"
+    },
+    "http": {
+      "fixture": "packages/http/bench",
+      "baseline": "packages/http/bench/baseline",
+      "edit_source": "packages/http/source/flint/http.d",
+      "size_basis": "framework_over_provider_equivalent_baseline"
+    },
+    "security": {
+      "fixture": "packages/security/bench",
+      "baseline": "packages/security/bench/baseline",
+      "edit_source": "packages/security/source/flint/security.d",
+      "size_basis": "framework_over_provider_equivalent_baseline"
+    },
+    "actuator": {
+      "fixture": "packages/actuator/bench",
+      "baseline": "packages/actuator/bench/baseline",
+      "edit_source": "packages/actuator/source/flint/actuator.d",
+      "size_basis": "framework_over_provider_equivalent_baseline"
+    },
+    "schedule": {
+      "fixture": "packages/schedule/bench",
+      "baseline": "packages/schedule/bench/baseline",
+      "edit_source": "packages/schedule/source/flint/schedule.d",
+      "size_basis": "framework_over_provider_equivalent_baseline"
+    },
+    "rpc": {
+      "fixture": "packages/rpc/bench",
+      "baseline": "packages/rpc/bench/baseline",
+      "edit_source": "packages/rpc/source/flint/rpc.d",
+      "size_basis": "framework_over_provider_equivalent_baseline"
+    },
+    "sql": {
+      "fixture": "packages/sql/bench",
+      "baseline": "packages/sql/bench/baseline",
+      "edit_source": "packages/sql/source/flint/sql.d",
+      "size_basis": "framework_over_provider_equivalent_baseline"
+    },
+    "data": {
+      "fixture": "packages/data/bench",
+      "baseline": "packages/data/bench/baseline",
+      "edit_source": "packages/data/source/flint/data.d",
+      "size_basis": "framework_over_provider_equivalent_baseline"
+    },
+    "migrate": {
+      "fixture": "packages/migrate/bench",
+      "baseline": "packages/migrate/bench/baseline",
+      "edit_source": "packages/migrate/source/flint/migrate.d",
+      "size_basis": "framework_over_provider_equivalent_baseline"
+    },
+    "cache": {
+      "fixture": "packages/cache/bench",
+      "baseline": "packages/cache/bench/baseline",
+      "edit_source": "packages/cache/source/flint/cache.d",
+      "size_basis": "framework_over_provider_equivalent_baseline"
+    },
+    "cli": {
+      "fixture": "packages/cli/bench",
+      "baseline": "packages/cli/bench/baseline",
+      "edit_source": "packages/cli/source/flint/cli.d",
+      "size_basis": "framework_over_provider_equivalent_baseline"
+    },
+    "term": {
+      "fixture": "packages/term/bench",
+      "baseline": "packages/term/bench/baseline",
+      "edit_source": "packages/term/source/flint/term.d",
+      "size_basis": "framework_over_provider_equivalent_baseline"
+    },
+    "tui": {
+      "fixture": "packages/tui/bench",
+      "baseline": "packages/tui/bench/baseline",
+      "edit_source": "packages/tui/source/flint/tui.d",
+      "size_basis": "framework_over_provider_equivalent_baseline"
+    },
+    "style": {
+      "fixture": "packages/style/bench",
+      "baseline": "packages/style/bench/baseline",
+      "edit_source": "packages/style/source/flint/style.d",
+      "size_basis": "framework_over_provider_equivalent_baseline"
+    },
+    "widgets": {
+      "fixture": "packages/widgets/bench",
+      "baseline": "packages/widgets/bench/baseline",
+      "edit_source": "packages/widgets/source/flint/widgets.d",
+      "size_basis": "framework_over_provider_equivalent_baseline"
+    },
+    "prompt": {
+      "fixture": "packages/prompt/bench",
+      "baseline": "packages/prompt/bench/baseline",
+      "edit_source": "packages/prompt/source/flint/prompt.d",
+      "size_basis": "framework_over_provider_equivalent_baseline"
+    },
+    "os": {
+      "fixture": "packages/os/bench",
+      "baseline": "packages/os/bench/baseline",
+      "edit_source": "packages/os/source/flint/os.d",
+      "size_basis": "framework_over_provider_equivalent_baseline"
+    },
+    "wasm-bridge": {
+      "fixture": "packages/wasm-bridge/bench",
+      "baseline": "packages/wasm-bridge/bench/baseline",
+      "edit_source": "packages/wasm-bridge/source/flint/wasm_bridge.d",
+      "size_basis": "framework_over_provider_equivalent_baseline"
+    },
+    "ui-signals": {
+      "fixture": "packages/ui-signals/bench",
+      "baseline": "packages/ui-signals/bench/baseline",
+      "edit_source": "packages/ui-signals/source/flint/ui_signals.d",
+      "size_basis": "framework_over_provider_equivalent_baseline"
+    },
+    "wasi": {
+      "fixture": "packages/wasi/bench",
+      "baseline": "packages/wasi/bench/baseline",
+      "edit_source": "packages/wasi/source/flint/wasi.d",
+      "size_basis": "framework_over_provider_equivalent_baseline"
+    },
+    "mq": {
+      "fixture": "packages/mq/bench",
+      "baseline": "packages/mq/bench/baseline",
+      "edit_source": "packages/mq/source/flint/mq.d",
+      "size_basis": "framework_over_provider_equivalent_baseline"
+    },
+    "storage": {
+      "fixture": "packages/storage/bench",
+      "baseline": "packages/storage/bench/baseline",
+      "edit_source": "packages/storage/source/flint/storage.d",
+      "size_basis": "framework_over_provider_equivalent_baseline"
+    },
+    "mail": {
+      "fixture": "packages/mail/bench",
+      "baseline": "packages/mail/bench/baseline",
+      "edit_source": "packages/mail/source/flint/mail.d",
+      "size_basis": "framework_over_provider_equivalent_baseline"
+    },
+    "ai": {
+      "fixture": "packages/ai/bench",
+      "baseline": "packages/ai/bench/baseline",
+      "edit_source": "packages/ai/source/flint/ai.d",
+      "size_basis": "framework_over_provider_equivalent_baseline"
+    },
+    "mcp": {
+      "fixture": "packages/mcp/bench",
+      "baseline": "packages/mcp/bench/baseline",
+      "edit_source": "packages/mcp/source/flint/mcp.d",
+      "size_basis": "framework_over_provider_equivalent_baseline"
+    },
+    "template": {
+      "fixture": "packages/template/bench",
+      "baseline": "packages/template/bench/baseline",
+      "edit_source": "packages/template/source/flint/templates.d",
+      "size_basis": "framework_over_provider_equivalent_baseline"
+    },
+    "codec": {
+      "fixture": "packages/codec/bench",
+      "baseline": "packages/codec/bench/baseline",
+      "edit_source": "packages/codec/source/flint/codec.d",
+      "size_basis": "framework_over_provider_equivalent_baseline"
+    },
+    "desktop": {
+      "fixture": "packages/desktop/bench",
+      "baseline": "packages/desktop/bench/baseline",
+      "edit_source": "packages/desktop/source/flint/desktop.d",
+      "size_basis": "framework_over_provider_equivalent_baseline"
+    }
+  },
+  "apps": {
+    "bench-cli": {
+      "fixture": "benchmarks/bench-cli",
+      "source": "benchmarks/bench-cli/source/app.d",
+      "edit_source": "benchmarks/bench-cli/source/app.d"
+    },
+    "bench-rest": {
+      "fixture": "benchmarks/bench-rest",
+      "source": "benchmarks/bench-rest/source/app.d",
+      "edit_source": "benchmarks/bench-rest/source/app.d"
+    },
+    "bench-wasm": {
+      "fixture": "benchmarks/bench-wasm",
+      "source": "benchmarks/bench-wasm/source/app.d",
+      "edit_source": "benchmarks/bench-wasm/source/flint_demo/sys/exports.d",
+      "exports": [
+        "flint_init",
+        "flint_tick",
+        "flint_buffer_ptr",
+        "flint_buffer_len"
+      ]
+    }
+  },
+  "go_apps": {
+    "bench-cli": {
+      "directory": "examples/reference-go-cli"
+    },
+    "bench-rest": {
+      "directory": "examples/reference-go-rest"
+    }
+  },
+  "wasm_incremental_definition": "change the exports implementation source and invoke the direct compiler again; this is an edited-source full rebuild, not an incremental object cache",
+  "package_size_definition": "Framework overhead over an exercised provider-equivalent and direct-Flint-dependency baseline; all full feature/baseline binary bytes and hashes retained; absolute application caps include native code."
+}

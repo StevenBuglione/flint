@@ -1,0 +1,20 @@
+completion fixture - Exercise literal shell completion candidates
+
+Usage completion fixture [options] [command]
+
+Options
+  -t, --text <text>
+    Option taking a value
+  -q, --quoted ' `touch FLINT_CLI_BACKTICK` $(touch FLINT_CLI_SUBSHELL) ’,
+  --no-quoted ' `touch FLINT_CLI_BACKTICK` $(touch FLINT_CLI_SUBSHELL) ’
+    Quoted option
+  -h, --help
+    Show help
+  --version
+    Show version 0.1.0
+  --completion <shell>
+    Generate completion for bash, zsh, or powershell
+
+Commands
+  child ' space
+    Typed child command

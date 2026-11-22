@@ -1,0 +1,8 @@
+name "probe-config"
+targetType "executable"
+sourcePaths "source" "harness"
+importPaths "source" "harness"
+targetPath "build"
+targetName "probe-config"
+dflags "-preview=dip1000"
+dependency "flint:config" path="../../.."

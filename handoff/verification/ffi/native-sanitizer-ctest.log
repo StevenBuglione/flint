@@ -1,0 +1,33 @@
+Start testing: Nov 21 02:25 EST
+----------------------------------------------------------
+1/2 Testing: flint_abi_test
+1/2 Test: flint_abi_test
+Command: "/workspace/scratch/09fd6c26fd15/ffi-buildqa-sanitized/build/linux-x86_64-glibc/flint-ffi/flint_abi_test"
+Directory: /workspace/scratch/09fd6c26fd15/ffi-buildqa-sanitized/build/linux-x86_64-glibc/flint-ffi
+"flint_abi_test" start time: Nov 21 02:25 EST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"flint_abi_test" end time: Nov 21 02:25 EST
+"flint_abi_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/2 Testing: flint_native_library_test
+2/2 Test: flint_native_library_test
+Command: "/workspace/scratch/09fd6c26fd15/ffi-buildqa-sanitized/build/linux-x86_64-glibc/flint-ffi/flint_native_library_test"
+Directory: /workspace/scratch/09fd6c26fd15/ffi-buildqa-sanitized/build/linux-x86_64-glibc/flint-ffi
+"flint_native_library_test" start time: Nov 21 02:25 EST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"flint_native_library_test" end time: Nov 21 02:25 EST
+"flint_native_library_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Nov 21 02:25 EST

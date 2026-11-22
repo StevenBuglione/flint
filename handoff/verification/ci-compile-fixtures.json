@@ -1,0 +1,175 @@
+{
+  "scope": "Compile-only fixture semantics against declaration contracts; not package runtime safety evidence",
+  "checks": [
+    {
+      "compiler": "dmd",
+      "fixture": "positive.d",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+        "-c",
+        "-o-",
+        "-preview=dip1000",
+        "-Icontracts/source",
+        "scaffold/tests/compile/positive.d"
+      ],
+      "exit_code": 0,
+      "expected": 0,
+      "matched": true,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "compiler": "dmd",
+      "fixture": "escape_borrow.d",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+        "-c",
+        "-o-",
+        "-preview=dip1000",
+        "-Icontracts/source",
+        "scaffold/tests/compile/escape_borrow.d"
+      ],
+      "exit_code": 1,
+      "expected": 1,
+      "matched": true,
+      "stdout": "",
+      "stderr": "scaffold/tests/compile/escape_borrow.d(5): Error: assigning scope variable `bytes` to global variable `leaked` is not allowed in a `@safe` function\n arena.read(b, (scope const(ubyte)[] bytes) @safe nothrow @nogc { leaked=bytes; });\n                                                                        ^\n"
+    },
+    {
+      "compiler": "dmd",
+      "fixture": "escape_storage.d",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+        "-c",
+        "-o-",
+        "-preview=dip1000",
+        "-Icontracts/source",
+        "scaffold/tests/compile/escape_storage.d"
+      ],
+      "exit_code": 1,
+      "expected": 1,
+      "matched": true,
+      "stdout": "",
+      "stderr": "scaffold/tests/compile/escape_storage.d(5): Error: escaping a reference to local variable `backing` by returning `RequestArena(null, 0LU, 0u, 0LU, 0LU).this(backing[])`  is not allowed in a `@safe` function\n return RequestArena(backing[]);\n                    ^\n"
+    },
+    {
+      "compiler": "dmd",
+      "fixture": "forge_buffer.d",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+        "-c",
+        "-o-",
+        "-preview=dip1000",
+        "-Icontracts/source",
+        "scaffold/tests/compile/forge_buffer.d"
+      ],
+      "exit_code": 1,
+      "expected": 1,
+      "matched": true,
+      "stdout": "",
+      "stderr": "scaffold/tests/compile/forge_buffer.d(3): Error: constructor `flint.arena.Buffer.this` of type `nothrow @nogc ref @safe Buffer(ulong owner, ulong epoch, ulong start, ulong count)` is not accessible from module `negative_forge`\nBuffer fabricate() @safe nothrow @nogc { return Buffer(1,1,0,10); }\n                                                      ^\n"
+    },
+    {
+      "compiler": "dmd",
+      "fixture": "gc_in_hot_path.d",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+        "-c",
+        "-o-",
+        "-preview=dip1000",
+        "-Icontracts/source",
+        "scaffold/tests/compile/gc_in_hot_path.d"
+      ],
+      "exit_code": 1,
+      "expected": 1,
+      "matched": true,
+      "stdout": "",
+      "stderr": "scaffold/tests/compile/gc_in_hot_path.d(5): Error: allocating with `new` causes a GC allocation in `@nogc` function `badAllocation`\n    return new int[4];\n           ^\n"
+    },
+    {
+      "compiler": "ldc",
+      "fixture": "positive.d",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+        "-c",
+        "-o-",
+        "-preview=dip1000",
+        "-Icontracts/source",
+        "scaffold/tests/compile/positive.d"
+      ],
+      "exit_code": 0,
+      "expected": 0,
+      "matched": true,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "compiler": "ldc",
+      "fixture": "escape_borrow.d",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+        "-c",
+        "-o-",
+        "-preview=dip1000",
+        "-Icontracts/source",
+        "scaffold/tests/compile/escape_borrow.d"
+      ],
+      "exit_code": 1,
+      "expected": 1,
+      "matched": true,
+      "stdout": "",
+      "stderr": "scaffold/tests/compile/escape_borrow.d(5): Error: assigning scope variable `bytes` to global variable `leaked` is not allowed in a `@safe` function\n arena.read(b, (scope const(ubyte)[] bytes) @safe nothrow @nogc { leaked=bytes; });\n                                                                        ^\n"
+    },
+    {
+      "compiler": "ldc",
+      "fixture": "escape_storage.d",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+        "-c",
+        "-o-",
+        "-preview=dip1000",
+        "-Icontracts/source",
+        "scaffold/tests/compile/escape_storage.d"
+      ],
+      "exit_code": 1,
+      "expected": 1,
+      "matched": true,
+      "stdout": "",
+      "stderr": "scaffold/tests/compile/escape_storage.d(5): Error: escaping a reference to local variable `backing` by returning `RequestArena(null, 0LU, 0u, 0LU, 0LU).this(backing[])`  is not allowed in a `@safe` function\n return RequestArena(backing[]);\n                    ^\n"
+    },
+    {
+      "compiler": "ldc",
+      "fixture": "forge_buffer.d",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+        "-c",
+        "-o-",
+        "-preview=dip1000",
+        "-Icontracts/source",
+        "scaffold/tests/compile/forge_buffer.d"
+      ],
+      "exit_code": 1,
+      "expected": 1,
+      "matched": true,
+      "stdout": "",
+      "stderr": "scaffold/tests/compile/forge_buffer.d(3): Error: constructor `flint.arena.Buffer.this` of type `nothrow @nogc ref @safe Buffer(ulong owner, ulong epoch, ulong start, ulong count)` is not accessible from module `negative_forge`\nBuffer fabricate() @safe nothrow @nogc { return Buffer(1,1,0,10); }\n                                                      ^\n"
+    },
+    {
+      "compiler": "ldc",
+      "fixture": "gc_in_hot_path.d",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+        "-c",
+        "-o-",
+        "-preview=dip1000",
+        "-Icontracts/source",
+        "scaffold/tests/compile/gc_in_hot_path.d"
+      ],
+      "exit_code": 1,
+      "expected": 1,
+      "matched": true,
+      "stdout": "",
+      "stderr": "scaffold/tests/compile/gc_in_hot_path.d(5): Error: allocating with `new` causes a GC allocation in `@nogc` function `badAllocation`\n    return new int[4];\n           ^\n"
+    }
+  ]
+}

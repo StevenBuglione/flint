@@ -1,0 +1,456 @@
+{
+  "verified_at_utc": "2026-11-21T07:25:04.175248+00:00",
+  "scope": "Semantic/type checking of declaration contracts, real main/usage/unittest fixture bodies, explicit @nogc/nothrow lifecycle and borrowing compile-fails. No framework implementation linkage, runtime benchmark or non-Linux execution is implied.",
+  "source_sha256": {
+    "contracts/source/flint/cli.d": "92e6c182c2048447e32eff2660b0e7e621b61f6f76738f429560c53b06b945de",
+    "contracts/source/flint/term.d": "bcc963b74fd782ea2ad60c33dde97880528f3cc69c87e19ea91bf00d682d1421",
+    "contracts/source/flint/style.d": "b6c84c6e7df644671543e38ec4b66a8e614a968e8fd404d792c8d0409eb3ebec",
+    "contracts/source/flint/tui.d": "56bb84bb0f284992c5e6c1493be3fdf5b4983302114b36fe629c3b8c256883f1",
+    "contracts/source/flint/widgets.d": "449a63b6b4bab9af1c681447dc92387246cd44805c45fd789045848e180d0f20",
+    "contracts/source/flint/prompt.d": "8b709a352afe73f156c3c2f5feea0f78273b05189df24b23645bee70aadb0bfb",
+    "contracts/source/flint/os.d": "22613c36fbc9aeb7020162ab5a11f46c732e77b3ab12b278a3f4fa20b135ef6b",
+    "contracts/source/flint/wasm_bridge.d": "4b0ce3319ae27caafe6369c6cc164c709d5934f710f08cf58da7a19725d7ab96",
+    "contracts/source/flint/ui_signals.d": "0689f6d4b0122b5be5f8ed3e182ee415f171d3dffbff67dee98aa5ae55e73d9d",
+    "contracts/source/flint/wasi.d": "d8813de29c5f15e4f0c87e42f0b169e061b354be8f2bd73092f7fba9eaea5ed7"
+  },
+  "checks": [
+    {
+      "name": "dmd-native-contracts",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+        "-c",
+        "-o-",
+        "-preview=dip1000",
+        "-Icontracts/source",
+        "contracts/source/flint/cli.d",
+        "contracts/source/flint/term.d",
+        "contracts/source/flint/style.d",
+        "contracts/source/flint/tui.d",
+        "contracts/source/flint/widgets.d",
+        "contracts/source/flint/prompt.d",
+        "contracts/source/flint/os.d",
+        "contracts/source/flint/wasm_bridge.d",
+        "contracts/source/flint/ui_signals.d",
+        "contracts/source/flint/wasi.d"
+      ],
+      "expected": "compile success",
+      "exit_code": 0,
+      "passed": true,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "dmd-cli_main_usage",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+        "-c",
+        "-o-",
+        "-preview=dip1000",
+        "-Icontracts/source",
+        "-unittest",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/tui-wasm/fixtures/cli_main_usage.d"
+      ],
+      "expected": "compile success",
+      "exit_code": 0,
+      "passed": true,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "dmd-cli_usage",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+        "-c",
+        "-o-",
+        "-preview=dip1000",
+        "-Icontracts/source",
+        "-unittest",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/tui-wasm/fixtures/cli_usage.d"
+      ],
+      "expected": "compile success",
+      "exit_code": 0,
+      "passed": true,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "dmd-style_usage",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+        "-c",
+        "-o-",
+        "-preview=dip1000",
+        "-Icontracts/source",
+        "-unittest",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/tui-wasm/fixtures/style_usage.d"
+      ],
+      "expected": "compile success",
+      "exit_code": 0,
+      "passed": true,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "dmd-tui_usage",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+        "-c",
+        "-o-",
+        "-preview=dip1000",
+        "-Icontracts/source",
+        "-unittest",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/tui-wasm/fixtures/tui_usage.d"
+      ],
+      "expected": "compile success",
+      "exit_code": 0,
+      "passed": true,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "dmd-ui_signals_usage",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+        "-c",
+        "-o-",
+        "-preview=dip1000",
+        "-Icontracts/source",
+        "-unittest",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/tui-wasm/fixtures/ui_signals_usage.d"
+      ],
+      "expected": "compile success",
+      "exit_code": 0,
+      "passed": true,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "dmd-wasi_usage",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+        "-c",
+        "-o-",
+        "-preview=dip1000",
+        "-Icontracts/source",
+        "-unittest",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/tui-wasm/fixtures/wasi_usage.d"
+      ],
+      "expected": "compile success",
+      "exit_code": 0,
+      "passed": true,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "dmd-wasm_bridge_usage",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+        "-c",
+        "-o-",
+        "-preview=dip1000",
+        "-Icontracts/source",
+        "-unittest",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/tui-wasm/fixtures/wasm_bridge_usage.d"
+      ],
+      "expected": "compile success",
+      "exit_code": 0,
+      "passed": true,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "dmd-wasm_lifetime_usage",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+        "-c",
+        "-o-",
+        "-preview=dip1000",
+        "-Icontracts/source",
+        "-unittest",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/tui-wasm/fixtures/wasm_lifetime_usage.d"
+      ],
+      "expected": "compile success",
+      "exit_code": 0,
+      "passed": true,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "dmd-buffer_escape.d",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+        "-c",
+        "-o-",
+        "-preview=dip1000",
+        "-Icontracts/source",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/tui-wasm/fixtures/buffer_escape.d"
+      ],
+      "expected": "borrowing rejection",
+      "exit_code": 1,
+      "passed": true,
+      "stdout": "",
+      "stderr": "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/tui-wasm/fixtures/buffer_escape.d(7): Error: returning scope variable `result` is not allowed in a `@safe` function\n    return move(result.value);\n               ^\n/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/tui-wasm/fixtures/buffer_escape.d(6):        `result` inferred `scope` because of `result = fromStorage(localMemory[], 1u)`\n    auto result = CommandBuffer.fromStorage(localMemory[]);\n         ^\n"
+    },
+    {
+      "name": "dmd-graph_escape.d",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+        "-c",
+        "-o-",
+        "-preview=dip1000",
+        "-Icontracts/source",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/tui-wasm/fixtures/graph_escape.d"
+      ],
+      "expected": "borrowing rejection",
+      "exit_code": 1,
+      "passed": true,
+      "stdout": "",
+      "stderr": "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/tui-wasm/fixtures/graph_escape.d(9): Error: returning scope variable `result` is not allowed in a `@safe` function\n    return move(result.value);\n               ^\n/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/tui-wasm/fixtures/graph_escape.d(8):        `result` inferred `scope` because of `result = fromStorage(signals[], observers[], queue[], nul...`\n    auto result = SignalGraph.fromStorage(signals[], observers[], queue[]);\n         ^\n"
+    },
+    {
+      "name": "dmd-callback_escape.d",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+        "-c",
+        "-o-",
+        "-preview=dip1000",
+        "-Icontracts/source",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/tui-wasm/fixtures/callback_escape.d"
+      ],
+      "expected": "borrowing rejection",
+      "exit_code": 1,
+      "passed": true,
+      "stdout": "",
+      "stderr": "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/tui-wasm/fixtures/callback_escape.d(5): Error: assigning scope variable `bytes` to global variable `retained` is not allowed in a `@safe` function\n    auto error = buffer.visit((scope const(ubyte)[] bytes) @safe nothrow @nogc { retained = bytes; });\n                                                                                          ^\n"
+    },
+    {
+      "name": "ldc2-native-contracts",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+        "-c",
+        "-o-",
+        "-preview=dip1000",
+        "-Icontracts/source",
+        "contracts/source/flint/cli.d",
+        "contracts/source/flint/term.d",
+        "contracts/source/flint/style.d",
+        "contracts/source/flint/tui.d",
+        "contracts/source/flint/widgets.d",
+        "contracts/source/flint/prompt.d",
+        "contracts/source/flint/os.d",
+        "contracts/source/flint/wasm_bridge.d",
+        "contracts/source/flint/ui_signals.d",
+        "contracts/source/flint/wasi.d"
+      ],
+      "expected": "compile success",
+      "exit_code": 0,
+      "passed": true,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "ldc2-cli_main_usage",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+        "-c",
+        "-o-",
+        "-preview=dip1000",
+        "-Icontracts/source",
+        "-unittest",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/tui-wasm/fixtures/cli_main_usage.d"
+      ],
+      "expected": "compile success",
+      "exit_code": 0,
+      "passed": true,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "ldc2-cli_usage",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+        "-c",
+        "-o-",
+        "-preview=dip1000",
+        "-Icontracts/source",
+        "-unittest",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/tui-wasm/fixtures/cli_usage.d"
+      ],
+      "expected": "compile success",
+      "exit_code": 0,
+      "passed": true,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "ldc2-style_usage",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+        "-c",
+        "-o-",
+        "-preview=dip1000",
+        "-Icontracts/source",
+        "-unittest",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/tui-wasm/fixtures/style_usage.d"
+      ],
+      "expected": "compile success",
+      "exit_code": 0,
+      "passed": true,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "ldc2-tui_usage",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+        "-c",
+        "-o-",
+        "-preview=dip1000",
+        "-Icontracts/source",
+        "-unittest",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/tui-wasm/fixtures/tui_usage.d"
+      ],
+      "expected": "compile success",
+      "exit_code": 0,
+      "passed": true,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "ldc2-ui_signals_usage",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+        "-c",
+        "-o-",
+        "-preview=dip1000",
+        "-Icontracts/source",
+        "-unittest",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/tui-wasm/fixtures/ui_signals_usage.d"
+      ],
+      "expected": "compile success",
+      "exit_code": 0,
+      "passed": true,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "ldc2-wasi_usage",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+        "-c",
+        "-o-",
+        "-preview=dip1000",
+        "-Icontracts/source",
+        "-unittest",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/tui-wasm/fixtures/wasi_usage.d"
+      ],
+      "expected": "compile success",
+      "exit_code": 0,
+      "passed": true,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "ldc2-wasm_bridge_usage",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+        "-c",
+        "-o-",
+        "-preview=dip1000",
+        "-Icontracts/source",
+        "-unittest",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/tui-wasm/fixtures/wasm_bridge_usage.d"
+      ],
+      "expected": "compile success",
+      "exit_code": 0,
+      "passed": true,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "ldc2-wasm_lifetime_usage",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+        "-c",
+        "-o-",
+        "-preview=dip1000",
+        "-Icontracts/source",
+        "-unittest",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/tui-wasm/fixtures/wasm_lifetime_usage.d"
+      ],
+      "expected": "compile success",
+      "exit_code": 0,
+      "passed": true,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "ldc2-buffer_escape.d",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+        "-c",
+        "-o-",
+        "-preview=dip1000",
+        "-Icontracts/source",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/tui-wasm/fixtures/buffer_escape.d"
+      ],
+      "expected": "borrowing rejection",
+      "exit_code": 1,
+      "passed": true,
+      "stdout": "",
+      "stderr": "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/tui-wasm/fixtures/buffer_escape.d(7): Error: returning scope variable `result` is not allowed in a `@safe` function\n    return move(result.value);\n               ^\n/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/tui-wasm/fixtures/buffer_escape.d(6):        `result` inferred `scope` because of `result = fromStorage(localMemory[], 1u)`\n    auto result = CommandBuffer.fromStorage(localMemory[]);\n         ^\n"
+    },
+    {
+      "name": "ldc2-graph_escape.d",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+        "-c",
+        "-o-",
+        "-preview=dip1000",
+        "-Icontracts/source",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/tui-wasm/fixtures/graph_escape.d"
+      ],
+      "expected": "borrowing rejection",
+      "exit_code": 1,
+      "passed": true,
+      "stdout": "",
+      "stderr": "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/tui-wasm/fixtures/graph_escape.d(9): Error: returning scope variable `result` is not allowed in a `@safe` function\n    return move(result.value);\n               ^\n/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/tui-wasm/fixtures/graph_escape.d(8):        `result` inferred `scope` because of `result = fromStorage(signals[], observers[], queue[], nul...`\n    auto result = SignalGraph.fromStorage(signals[], observers[], queue[]);\n         ^\n"
+    },
+    {
+      "name": "ldc2-callback_escape.d",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+        "-c",
+        "-o-",
+        "-preview=dip1000",
+        "-Icontracts/source",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/tui-wasm/fixtures/callback_escape.d"
+      ],
+      "expected": "borrowing rejection",
+      "exit_code": 1,
+      "passed": true,
+      "stdout": "",
+      "stderr": "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/tui-wasm/fixtures/callback_escape.d(5): Error: assigning scope variable `bytes` to global variable `retained` is not allowed in a `@safe` function\n    auto error = buffer.visit((scope const(ubyte)[] bytes) @safe nothrow @nogc { retained = bytes; });\n                                                                                          ^\n"
+    },
+    {
+      "name": "ldc-wasm-betterc-contracts",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+        "-c",
+        "-o-",
+        "-preview=dip1000",
+        "-betterC",
+        "-mtriple=wasm32-unknown-unknown-wasm",
+        "-Icontracts/source",
+        "contracts/source/flint/wasm_bridge.d",
+        "contracts/source/flint/ui_signals.d"
+      ],
+      "expected": "compile success",
+      "exit_code": 0,
+      "passed": true,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "passed": true
+}

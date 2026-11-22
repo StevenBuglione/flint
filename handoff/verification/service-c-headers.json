@@ -1,0 +1,155 @@
+[
+  {
+    "header": "contracts/c/web.h",
+    "command": [
+      "gcc",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-fsyntax-only",
+      "-x",
+      "c",
+      "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/c/web.h"
+    ],
+    "exit_code": 0,
+    "stderr": "",
+    "stdout": ""
+  },
+  {
+    "header": "contracts/c/http.h",
+    "command": [
+      "gcc",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-fsyntax-only",
+      "-x",
+      "c",
+      "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/c/http.h"
+    ],
+    "exit_code": 0,
+    "stderr": "",
+    "stdout": ""
+  },
+  {
+    "header": "contracts/c/security.h",
+    "command": [
+      "gcc",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-fsyntax-only",
+      "-x",
+      "c",
+      "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/c/security.h"
+    ],
+    "exit_code": 0,
+    "stderr": "",
+    "stdout": ""
+  },
+  {
+    "header": "contracts/c/rpc.h",
+    "command": [
+      "gcc",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-fsyntax-only",
+      "-x",
+      "c",
+      "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/c/rpc.h"
+    ],
+    "exit_code": 0,
+    "stderr": "",
+    "stdout": ""
+  },
+  {
+    "header": "contracts/c/sql.h",
+    "command": [
+      "gcc",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-fsyntax-only",
+      "-x",
+      "c",
+      "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/c/sql.h"
+    ],
+    "exit_code": 0,
+    "stderr": "",
+    "stdout": ""
+  },
+  {
+    "header": "contracts/c/cache.h",
+    "command": [
+      "gcc",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-fsyntax-only",
+      "-x",
+      "c",
+      "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/c/cache.h"
+    ],
+    "exit_code": 0,
+    "stderr": "",
+    "stdout": ""
+  },
+  {
+    "header": "contracts/c/mq.h",
+    "command": [
+      "gcc",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-fsyntax-only",
+      "-x",
+      "c",
+      "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/c/mq.h"
+    ],
+    "exit_code": 0,
+    "stderr": "",
+    "stdout": ""
+  },
+  {
+    "header": "contracts/c/codec.h",
+    "command": [
+      "gcc",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-fsyntax-only",
+      "-x",
+      "c",
+      "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/c/codec.h"
+    ],
+    "exit_code": 0,
+    "stderr": "",
+    "stdout": ""
+  },
+  {
+    "header": "contracts/c/desktop.h",
+    "command": [
+      "gcc",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-fsyntax-only",
+      "-x",
+      "c",
+      "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/contracts/c/desktop.h"
+    ],
+    "exit_code": 0,
+    "stderr": "",
+    "stdout": ""
+  }
+]

@@ -1,0 +1,40 @@
+{
+  "verified_at_utc": "2026-11-21T07:31:58.622835+00:00",
+  "scope": "Actual DUB SDL parsing of verified native provider/linker blocks in a disposable scaffold copy; baseline recipes receive the same verified block. No provider workload or D framework implementation linkage is implied.",
+  "source_sha256": "c0ba58f3e33b98f990997fa8cfa36ea08cec5feb123cf277f123e1fa2bcb0546",
+  "command": [
+    "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dub",
+    "describe",
+    ":web",
+    "--compiler=/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd"
+  ],
+  "exit_code": 0,
+  "stderr": "     Warning Invalid source/import path: /tmp/native-emission-oi67u7m5/scaffold/packages/web/tests\n     Warning Invalid source/import path: /tmp/native-emission-oi67u7m5/scaffold/packages/web/tests\n     Warning Invalid source/import path: /tmp/native-emission-oi67u7m5/scaffold/packages/conc/tests\n     Warning Invalid source/import path: /tmp/native-emission-oi67u7m5/scaffold/packages/conc/tests\n     Warning Invalid source/import path: /tmp/native-emission-oi67u7m5/scaffold/packages/di/tests\n     Warning Invalid source/import path: /tmp/native-emission-oi67u7m5/scaffold/packages/di/tests\n     Warning Invalid source/import path: /tmp/native-emission-oi67u7m5/scaffold/packages/log/tests\n     Warning Invalid source/import path: /tmp/native-emission-oi67u7m5/scaffold/packages/log/tests\n     Warning Invalid source/import path: /tmp/native-emission-oi67u7m5/scaffold/packages/reactor/tests\n     Warning Invalid source/import path: /tmp/native-emission-oi67u7m5/scaffold/packages/reactor/tests\n     Warning Configuration [library] of package flint:web contains no source files. Please add {\"targetType\": \"none\"} to its package description to avoid building it.\n     Warning Configuration [library] of package flint:conc contains no source files. Please add {\"targetType\": \"none\"} to its package description to avoid building it.\n     Warning Configuration [library] of package flint:di contains no source files. Please add {\"targetType\": \"none\"} to its package description to avoid building it.\n     Warning Configuration [library] of package flint:log contains no source files. Please add {\"targetType\": \"none\"} to its package description to avoid building it.\n     Warning Configuration [library] of package flint:validate contains no source files. Please add {\"targetType\": \"none\"} to its package description to avoid building it.\n     Warning Configuration [library] of package flint:reactor contains no source files. Please add {\"targetType\": \"none\"} to its package description to avoid building it.\n     Warning Configuration [library] of package flint:serde contains no source files. Please add {\"targetType\": \"none\"} to its package description to avoid building it.\n     Warning Configuration [library] of package flint:arena contains no source files. Please add {\"targetType\": \"none\"} to its package description to avoid building it.\n",
+  "blocks": {
+    "reactor": "\n// BEGIN FLINT NATIVE\nversions \"FlintNativeLiburing\" platform=\"linux-x86_64\"\nlflags \"/workspace/scratch/09fd6c26fd15/ffi-buildqa/install/linux-x86_64-glibc/lib/libflint_ffi.a\" platform=\"linux-x86_64\"\nlflags \"/workspace/scratch/09fd6c26fd15/ffi-buildqa/install/linux-x86_64-glibc/lib/liburing-ffi.a\" platform=\"linux-x86_64\"\nlflags \"/workspace/scratch/09fd6c26fd15/ffi-buildqa/install/linux-x86_64-glibc/lib/liburing.a\" platform=\"linux-x86_64\"\nlflags \"-pthread\" platform=\"linux-x86_64\"\nlflags \"-ldl\" platform=\"linux-x86_64\"\nlflags \"-lm\" platform=\"linux-x86_64\"\n// END FLINT NATIVE\n",
+    "web": "\n// BEGIN FLINT NATIVE\nversions \"FlintNativeLlhttp\" platform=\"linux-x86_64\"\nlflags \"/workspace/scratch/09fd6c26fd15/ffi-buildqa/install/linux-x86_64-glibc/lib/libflint_ffi.a\" platform=\"linux-x86_64\"\nlflags \"/workspace/scratch/09fd6c26fd15/ffi-buildqa/install/linux-x86_64-glibc/lib/libllhttp.a\" platform=\"linux-x86_64\"\nlflags \"-pthread\" platform=\"linux-x86_64\"\nlflags \"-ldl\" platform=\"linux-x86_64\"\nlflags \"-lm\" platform=\"linux-x86_64\"\n// END FLINT NATIVE\n",
+    "http": "\n// BEGIN FLINT NATIVE\nversions \"FlintNativeZlib\" platform=\"linux-x86_64\"\nlflags \"/workspace/scratch/09fd6c26fd15/ffi-buildqa/install/linux-x86_64-glibc/lib/libflint_ffi.a\" platform=\"linux-x86_64\"\nlflags \"/workspace/scratch/09fd6c26fd15/ffi-buildqa/install/linux-x86_64-glibc/lib/libz.a\" platform=\"linux-x86_64\"\nlflags \"-pthread\" platform=\"linux-x86_64\"\nlflags \"-ldl\" platform=\"linux-x86_64\"\nlflags \"-lm\" platform=\"linux-x86_64\"\n// END FLINT NATIVE\n",
+    "mq": "\n// BEGIN FLINT NATIVE\nversions \"FlintNativeZlib\" platform=\"linux-x86_64\"\nlflags \"/workspace/scratch/09fd6c26fd15/ffi-buildqa/install/linux-x86_64-glibc/lib/libflint_ffi.a\" platform=\"linux-x86_64\"\nlflags \"/workspace/scratch/09fd6c26fd15/ffi-buildqa/install/linux-x86_64-glibc/lib/libz.a\" platform=\"linux-x86_64\"\nlflags \"-pthread\" platform=\"linux-x86_64\"\nlflags \"-ldl\" platform=\"linux-x86_64\"\nlflags \"-lm\" platform=\"linux-x86_64\"\n// END FLINT NATIVE\n",
+    "codec": "\n// BEGIN FLINT NATIVE\nversions \"FlintNativeZlib\" platform=\"linux-x86_64\"\nlflags \"/workspace/scratch/09fd6c26fd15/ffi-buildqa/install/linux-x86_64-glibc/lib/libflint_ffi.a\" platform=\"linux-x86_64\"\nlflags \"/workspace/scratch/09fd6c26fd15/ffi-buildqa/install/linux-x86_64-glibc/lib/libz.a\" platform=\"linux-x86_64\"\nlflags \"-pthread\" platform=\"linux-x86_64\"\nlflags \"-ldl\" platform=\"linux-x86_64\"\nlflags \"-lm\" platform=\"linux-x86_64\"\n// END FLINT NATIVE\n"
+  },
+  "idempotent": true,
+  "baseline_blocks_identical": {
+    "reactor": true,
+    "web": true,
+    "http": true,
+    "mq": true,
+    "codec": true
+  },
+  "native_receipt": "/workspace/scratch/09fd6c26fd15/ffi-buildqa/install/linux-x86_64-glibc/flint-native-install.json",
+  "passed": true,
+  "described_packages": [
+    "flint:web",
+    "flint:arena",
+    "flint:conc",
+    "flint:di",
+    "flint:log",
+    "flint:reactor",
+    "flint:serde",
+    "flint:validate"
+  ]
+}

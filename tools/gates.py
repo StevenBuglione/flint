@@ -1,0 +1,249 @@
+#!/usr/bin/env python3
+"""Fail-closed structural and measured performance gates. No missing-data passes."""
+import argparse,json,re,statistics,subprocess,sys,os,shutil,tempfile,hashlib
+from pathlib import Path
+from d_source import tokens,imported_modules,declared_module,module_default,has_string_mixin,compiler_dependency_edges
+from perf_stats import finite_samples,median_ratio_interval
+ROOT=Path(__file__).resolve().parents[1]
+P=json.loads((ROOT/'policy/packages.json').read_text())['packages']
+B=json.loads((ROOT/'policy/budgets.json').read_text())
+S=json.loads((ROOT/'policy/safety-policy.json').read_text())
+
+def require(value,message):
+    if not value:raise ValueError(message)
+
+def owner(module):
+    matches=[n for n,m in P.items() if module==m['module'] or module.startswith(m['module']+'.')]
+    require(len(matches)<=1,'ambiguous module owner '+module)
+    return matches[0] if matches else None
+
+def prefix_match(module,prefixes):
+    return any(module==p or module.startswith(p+'.') for p in prefixes)
+
+def check_import(package,module,where):
+    meta=P[package]
+    if module in ['std','std.algorithm','std.range','std.all'] or module.startswith('std.regex'):
+        require(meta['tier']>1 and not meta['better_c'],where+': forbidden heavy core import '+module)
+    dep=owner(module)
+    require(not module.startswith('flint.') or dep is not None,where+': unknown Flint module '+module)
+    require(dep is None or dep==package or dep in meta['dependencies'],where+': undeclared import '+module)
+    if dep is not None and dep!=package:
+        private=[P[dep]['module']+'.'+part for part in ['internal','sys','ffi']]
+        require(not prefix_match(module,private),where+': cross-package private boundary import '+module)
+
+def project_mixin_tokens(text, compiler):
+    # DMD dumps Phobos and druntime template expansions in the same file as Flint's.
+    # Skip only expansions located inside the bundled compiler's standard library sources.
+    installation = Path(compiler).resolve().parents[2]
+    standard = (installation / 'src/phobos', installation / 'src/druntime/import')
+    headers = list(re.finditer(r'^// expansion at(?: (.+)\([0-9]+\))?$', text, re.MULTILINE))
+    if not headers:
+        yield from tokens(text)
+        return
+    yield from tokens(text[:headers[0].start()])
+    for index, header in enumerate(headers):
+        end = headers[index + 1].start() if index + 1 < len(headers) else len(text)
+        location = header.group(1)
+        if location:
+            source = (ROOT / location).resolve()
+            if source.is_file() and any(source.is_relative_to(root) for root in standard):
+                continue
+        yield from tokens(text[header.end():end])
+
+def generated_dependencies(packages):
+    if not packages:return {'packages':0}
+    compiler=shutil.which(os.environ.get('DMD','dmd'))
+    require(compiler,'approved string mixins require DMD on PATH or DMD=/absolute/path for compiler dependency audit')
+    imports=['-I'+str(ROOT/'packages'/name/'source') for name in P]
+    count=0
+    with tempfile.TemporaryDirectory(prefix='flint-deps-') as temporary:
+        for name in sorted(packages):
+            sources=sorted((ROOT/'packages'/name/'source').rglob('*.d'))
+            for profile in ['debug','release']:
+                destination=Path(temporary)/(name+'-'+profile+'.deps')
+                expansion=Path(temporary)/(name+'-'+profile+'.mixins.d')
+                command=[compiler,'-o-','-unittest','-preview=dip1000','-'+profile,'-deps='+str(destination),'-mixin='+str(expansion)]+imports+[str(p) for p in sources]
+                process=subprocess.run(command,cwd=ROOT,capture_output=True,text=True)
+                require(process.returncode==0,'generated dependency compile failed: '+process.stdout+process.stderr)
+                require(destination.is_file(),'compiler did not produce a dependency receipt')
+                require(expansion.is_file() and expansion.stat().st_size>0,'string mixin has no instantiated expansion; add a positive unittest fixture')
+                expanded=list(project_mixin_tokens(expansion.read_text(),compiler))
+                require(expanded,'string mixin has no audited application expansion')
+                require(not imported_modules(expanded),'generated import statements are prohibited')
+                values=[token.value for token in expanded]
+                require(not any(values[i]=='@' and values[i+1] in ['trusted','system'] for i in range(len(values)-1)),'generated unsafe annotations are prohibited')
+                for importing,imported in compiler_dependency_edges(destination.read_text()):
+                    package=owner(importing)
+                    if package is not None:check_import(package,imported,'compiler-generated '+importing)
+                count+=1
+    return {'packages':len(packages),'compiler_profiles':count}
+
+def structural(selected):
+    visited=set();active=set()
+    def visit(n):
+        require(n not in active,'dependency cycle at '+n)
+        if n in visited:return
+        active.add(n)
+        for d in P[n]['dependencies']:
+            require(d in P,'unknown dependency '+d)
+            require(P[d]['tier']<=P[n]['tier'],'higher-tier import '+n+' -> '+d)
+            require(not(P[n]['tier']==4 and P[d]['tier'] in [2,3]),'CLI/web-data isolation')
+            visit(d)
+        active.remove(n);visited.add(n)
+    for n in P:visit(n)
+    root_sdl=(ROOT/'dub.sdl').read_text()
+    require(set(re.findall(r'subPackage\s+"packages/([\w-]+)"',root_sdl))==set(P),'root subpackage list differs')
+    mixin_packages=set()
+    for n in selected:
+        meta=P[n];pkg=ROOT/'packages'/n;sdl=(pkg/'dub.sdl').read_text()
+        actual=set(re.findall(r'dependency\s+"flint:([\w-]+)"\s+version="\*"',sdl))
+        require(actual==set(meta['dependencies']),n+': SDL dependencies differ from policy')
+        require(len(re.findall(r'\bdependency\b',sdl))==len(actual),n+': noncanonical dependency recipe')
+        for f in (pkg/'source').rglob('*.d'):
+            text=f.read_text();ts=list(tokens(text));vals=[t.value for t in ts]
+            module=declared_module(ts)
+            relative=f.relative_to(pkg/'source').with_suffix('')
+            parts=list(relative.parts)
+            if parts[-1]=='package':parts.pop()
+            require(module=='.'.join(parts),str(f)+': module/path mismatch')
+            require(owner(module)==n,str(f)+': source belongs to another package')
+            low=prefix_match(module,S['unsafe_module_prefixes'].get(n,[]))
+            default=module_default(ts)
+            require(default=='safe' or (low and default=='system'),str(f)+': require module-scope @safe: before declarations; raw allowlisted FFI may use @system:')
+            if has_string_mixin(ts):
+                require(prefix_match(module,S['generator_module_prefixes']),str(f)+': string mixin outside approved generator module')
+                mixin_packages.add(n)
+            for mod in imported_modules(ts):
+                check_import(n,mod,str(f))
+            lines=text.splitlines()
+            for i,t in enumerate(ts[:-1]):
+                if t.value!='@' or ts[i+1].value not in ['trusted','system']:continue
+                require(low,str(f)+': unsafe annotation outside allowlisted low-level directory')
+                if ts[i+1].value=='trusted':
+                    require(i+2>=len(ts) or ts[i+2].value not in [':','{'],str(f)+': no @trusted scopes/blocks')
+                    nearby='\n'.join(lines[max(0,t.line-3):t.line])
+                    require('// SAFETY:' in nearby,str(f)+': @trusted missing adjacent SAFETY rationale')
+                    j=i+2
+                    while j<len(ts) and ts[j].value not in ['{',';']:j+=1
+                    if j<len(ts) and ts[j].value=='{':
+                        depth=1;k=j+1
+                        while k<len(ts) and depth:
+                            depth+=(ts[k].value=='{')-(ts[k].value=='}');k+=1
+                        require(depth==0,str(f)+': unbalanced trusted body')
+                        require(ts[k-1].line-ts[j].line<=S['max_trusted_lines'],str(f)+': trusted function exceeds 60 lines')
+    return {'packages':len(selected),'graph_nodes':len(P),'generated_dependencies':generated_dependencies(mixin_packages)}
+
+def compare_series(new,old,ceiling,label,minimum=9):
+    finite_samples(new,minimum);finite_samples(old,minimum)
+    med,lo,hi=median_ratio_interval(new,old)
+    require(med<=ceiling and hi<=ceiling,label+f': ratio median {med:.4f}, 99% upper {hi:.4f} exceeds {ceiling}')
+    return [med,lo,hi]
+
+def measured(current,baseline=None):
+    require(current['schema']==1 and (baseline is None or baseline['schema']==1),'evidence schema must equal 1')
+    if baseline is not None:
+        for key in ['runner_fingerprint','toolchain_fingerprint','dependency_lock_sha256','workload_sha256']:
+            require(current['environment'][key]==baseline['environment'][key],key+' differs; comparisons invalid')
+    require(current['environment']['runner_label']==B['runner'],'wrong performance runner')
+    if baseline is not None:require(current['commit']!=baseline['commit'],'baseline must identify a different base commit')
+    expected={'quality','safety','dag','betterc','sanitizers','cross_platform','hot_gc','runtime','compile','size'}
+    require(set(current['receipts'])==expected,'missing/unknown gate receipts')
+    for name,r in current['receipts'].items():
+        require(r['exit_code']==0 and isinstance(r['command'],list) and r['command'] and re.fullmatch(r'[0-9a-f]{64}',r['sha256']),name+': unsuccessful or malformed command receipt')
+    require(set(current['packages'])==set(P) and (baseline is None or set(baseline['packages'])==set(P)),'all 37 package measurements required')
+    for name,meta in P.items():
+        x=current['packages'][name];y=baseline['packages'][name] if baseline is not None else None
+        for k in ['dmd_cold_seconds','dmd_incremental_seconds','ldc_cold_seconds','ldc_incremental_seconds']:
+            finite_samples(x[k],9)
+            require(statistics.median(x[k])<meta['budget'][k],name+': '+k+' absolute ceiling')
+            if y is not None:compare_series(x[k],y[k],B['regression']['compile_ratio_max'],name+': '+k)
+        for k in ['compiler_peak_rss_bytes','template_instances']:
+            require(type(x[k]) is int and (x[k]>0 if k=='compiler_peak_rss_bytes' else x[k]>=0)
+                    and x[k]<=meta['budget'][k],name+': '+k+' absolute ceiling')
+            ratio=B['regression']['compiler_rss_ratio_max' if k=='compiler_peak_rss_bytes' else 'template_ratio_max']
+            if y is not None:require(x[k]<=y[k]*ratio,name+': '+k+' regression')
+        require(type(x['incremental_linked_bytes']) is int and 0<=x['incremental_linked_bytes']<=meta['budget']['incremental_linked_bytes'],name+': incremental size ceiling')
+        if y is not None:require(x['incremental_linked_bytes']<=y['incremental_linked_bytes']*B['regression']['binary_ratio_max'],name+': incremental size regression')
+    for app,caps in B['benchmark_apps'].items():
+        x=current['apps'][app];y=baseline['apps'][app] if baseline is not None else None
+        for k,cap in caps.items():
+            if k.endswith('seconds'):
+                finite_samples(x[k],9)
+                require(statistics.median(x[k])<cap,app+': '+k+' ceiling')
+                if y is not None:compare_series(x[k],y[k],B['regression']['compile_ratio_max'],app+': '+k)
+            else:
+                for profile in ['O3','Oz']:
+                    require(type(x[profile][k]) is int and 0<x[profile][k]<cap,app+': '+profile+' '+k+' ceiling')
+                    if y is not None:require(x[profile][k]<=y[profile][k]*B['regression']['binary_ratio_max'],app+': size regression')
+    require(current['gc']['worker_count']>0 and len(current['gc']['allocated_bytes_per_worker'])==current['gc']['worker_count'],'missing GC worker counters')
+    require(all(x==0 for x in current['gc']['allocated_bytes_per_worker']) and current['gc']['collection_delta']==0,'hot-path GC activity')
+    required_platforms={'linux-x86_64-glibc','linux-aarch64-glibc','linux-x86_64-musl','linux-aarch64-musl','macos-arm64','windows-x86_64','wasm32'}
+    require(set(current['platforms'])==required_platforms and all(value is True for value in current['platforms'].values()),'missing/failing cross-platform validation')
+    for metric in ['p50_ms','p99_ms','p999_ms','peak_rss_bytes','cpu_ns_per_request']:
+        finite_samples(current['rest'][metric],9)
+        if baseline is not None:compare_series(current['rest'][metric],baseline['rest'][metric],B['regression']['latency_ratio_max'],'REST '+metric)
+    finite_samples(current['rest']['requests_per_second'],9)
+    if baseline is not None:compare_series([1/x for x in current['rest']['requests_per_second']],[1/x for x in baseline['rest']['requests_per_second']],1/B['regression']['throughput_ratio_min'],'REST throughput')
+    for micro in ['arena','serde','validate','router','reactor_echo']:
+        finite_samples(current['micro'][micro],21)
+        if baseline is not None:compare_series(current['micro'][micro],baseline['micro'][micro],B['regression']['latency_ratio_max'],micro,21)
+    for metric in ['p99_ms','peak_rss_bytes','cpu_ns_per_request']:
+        compare_series(current['rest'][metric],current['go']['rest'][metric],.99,'Go comparison '+metric)
+    compare_series([1/x for x in current['rest']['requests_per_second']],[1/x for x in current['go']['rest']['requests_per_second']],1/1.01,'Go throughput')
+    for app in ['bench-cli','bench-rest']:
+        compare_series(current['apps'][app]['dmd_cold_seconds'],current['go']['apps'][app]['cold_seconds'],.99,'Go build '+app)
+        require(current['apps'][app]['Oz']['binary_bytes']<=current['go']['apps'][app]['binary_bytes']*B['go_relative']['binary_ratio_max'],'Go binary size '+app)
+    if baseline is None:
+        return {'initial_baseline_validation':'pass','regression_comparison':'not_run_no_prior_baseline','commit':current['commit']}
+    return {'all_six_gates':'pass','commit':current['commit']}
+
+def verify_evidence_artifacts(evidence,directory):
+    require(evidence.get('mode')=='production','only production evidence can pass the full gate')
+    directory=Path(directory).resolve()
+    def verify(item):
+        path=(directory/item['artifact']).resolve()
+        require(path.is_relative_to(directory),'receipt artifact leaves evidence bundle')
+        require(path.is_file(),'receipt artifact missing: '+str(path))
+        digest=hashlib.sha256()
+        with path.open('rb') as source:
+            for chunk in iter(lambda:source.read(1024*1024),b''):digest.update(chunk)
+        require(digest.hexdigest()==item['sha256'],'receipt artifact digest mismatch: '+str(path))
+    for name,receipt in evidence['receipts'].items():
+        require(receipt.get('schema')==1 and receipt.get('commit')==evidence['commit'],name+': receipt identity differs')
+        require(type(receipt.get('exit_code')) is int and receipt['exit_code']==0 and
+                isinstance(receipt.get('command'),list) and receipt['command'] and
+                all(isinstance(value,str) and value for value in receipt['command']),name+': unsuccessful command receipt')
+        verify(receipt)
+        for artifact in receipt.get('artifacts',[]):verify(artifact)
+    # Retained source receipts bind displayed metrics as well as their files.
+    def payload(name):return json.loads((directory/evidence['receipts'][name]['artifact']).read_text())
+    builds=payload('compile')
+    require(builds==payload('size'),'compile and size evidence came from different builds')
+    for key in ['packages','apps']:require(evidence[key]==builds[key],key+': summary differs from measured source artifact')
+    require(evidence['go']['apps']==builds['go']['apps'],'Go build summary differs from measured source artifact')
+    runtime=payload('runtime')
+    require(evidence['rest']==runtime['http']['rest'] and evidence['go']['rest']==runtime['http']['go']['rest'],
+            'HTTP summary differs from measured source artifact')
+    require(evidence['micro']==runtime['micro'],'micro summary differs from measured source artifact')
+    require(evidence['gc']==payload('hot_gc')['gc'],'GC summary differs from measured source artifact')
+    require(evidence['platforms']==payload('cross_platform')['platforms'],'platform summary differs from recorded source artifact')
+
+def main():
+    ap=argparse.ArgumentParser();ap.add_argument('--package',action='append',choices=sorted(P));ap.add_argument('--gate',choices=['structural','baseline','all'],required=True)
+    ap.add_argument('--evidence',type=Path);ap.add_argument('--baseline',type=Path);a=ap.parse_args()
+    result=structural(a.package or P)
+    if a.gate in ['baseline','all']:
+        require(a.evidence is not None,'measured evidence is required; missing evidence never passes')
+        require(a.gate!='all' or a.baseline is not None,'regression gates require measured base evidence')
+        require(a.gate!='baseline' or a.baseline is None,'initial baseline validation cannot silently accept a comparison baseline')
+        current=json.loads(a.evidence.read_text())
+        verify_evidence_artifacts(current,a.evidence.parent)
+        baseline=None
+        if a.baseline is not None:
+            baseline=json.loads(a.baseline.read_text())
+            verify_evidence_artifacts(baseline,a.baseline.parent)
+        result.update(measured(current,baseline))
+    print(json.dumps(result,indent=2))
+if __name__=='__main__':
+    try:main()
+    except (ValueError,KeyError,OSError) as e:print('GATE FAILED:',e,file=sys.stderr);sys.exit(1)

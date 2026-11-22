@@ -1,0 +1,688 @@
+diff --git a/build-files.txt b/build-files.txt
+index 79b38b3..9c66153 100644
+--- a/build-files.txt
++++ b/build-files.txt
+@@ -96,3 +96,5 @@ source/dub/recipe/selection.d
+ source/dub/recipe/sdl.d
+ source/dub/semver.d
+ source/dub/version_.d
++source/dub/internal/flinttrace.d
++source/dub/internal/flintar.d
+diff --git a/source/app.d b/source/app.d
+index 08f7d28..372da1a 100644
+--- a/source/app.d
++++ b/source/app.d
+@@ -25,5 +25,14 @@ version (DigitalMars) version (D_Coverage)
+ 
+ int main(string[] args)
+ {
+-	return runDubCommandLine(args);
++	const status = runDubCommandLine(args);
++	// Flint fork: all output files are closed; skip druntime teardown.
++	import core.stdc.stdio : fflush;
++	import core.sys.posix.unistd : _exit;
++	import std.stdio : stdout, stderr;
++	stdout.flush();
++	stderr.flush();
++	fflush(null);
++	_exit(status);
++	assert(0);
+ }
+diff --git a/source/dub/commandline.d b/source/dub/commandline.d
+index 7d05493..d6562af 100644
+--- a/source/dub/commandline.d
++++ b/source/dub/commandline.d
+@@ -387,6 +387,9 @@ unittest {
+ */
+ int runDubCommandLine(string[] args)
+ {
++	import dub.internal.flinttrace : ftrace;
++	ftrace("runDubCommandLine");
++	scope (exit) ftrace("runDubCommandLine exit");
+ 	static string[] toSinglePackageArgs (string args0, string file, string[] trailing)
+ 	{
+ 		return [args0, "run", "-q", "--temp-build", "--single", file, "--"] ~ trailing;
+@@ -938,7 +941,9 @@ class Command {
+ 			return false;
+ 		}
+ 
++		{ import dub.internal.flinttrace : ftrace; ftrace("loadPackage begin"); }
+ 		dub.loadPackage();
++		{ import dub.internal.flinttrace : ftrace; ftrace("loadPackage end"); }
+ 
+ 		return true;
+ 	}
+@@ -1357,7 +1362,9 @@ abstract class PackageBuildCommand : Command {
+ 		if (dub.defaultPreRunEnvironments) this.baseSettings.buildSettings.addPreRunEnvironments(dub.defaultPreRunEnvironments);
+ 		if (dub.defaultPostRunEnvironments) this.baseSettings.buildSettings.addPostRunEnvironments(dub.defaultPostRunEnvironments);
+ 		this.baseSettings.compiler = getCompiler(m_compilerName);
++		{ import dub.internal.flinttrace : ftrace; ftrace("determinePlatform begin"); }
+ 		this.baseSettings.platform = this.baseSettings.compiler.determinePlatform(this.baseSettings.buildSettings, m_compilerName, m_arch);
++		{ import dub.internal.flinttrace : ftrace; ftrace("determinePlatform end"); }
+ 		this.baseSettings.buildSettings.addDebugVersions(m_debugVersions);
+ 		this.baseSettings.buildSettings.addVersions(m_dVersions);
+ 
+@@ -1392,7 +1399,9 @@ abstract class PackageBuildCommand : Command {
+ 			}
+ 		}
+ 
++		{ import dub.internal.flinttrace : ftrace; ftrace("validate begin"); }
+ 		dub.project.validate();
++		{ import dub.internal.flinttrace : ftrace; ftrace("validate end"); }
+ 
+ 		foreach (sc; m_overrideConfigs) {
+ 			auto idx = sc.indexOf('/');
+@@ -1521,7 +1530,9 @@ class GenerateCommand : PackageBuildCommand {
+ 		gensettings.buildDeep = m_deep;
+ 
+ 		logDiagnostic("Generating using %s", m_generator);
++		{ import dub.internal.flinttrace : ftrace; ftrace("generateProject begin"); }
+ 		dub.generateProject(m_generator, gensettings);
++		{ import dub.internal.flinttrace : ftrace; ftrace("generateProject end"); }
+ 		if (this.baseSettings.buildType == "ddox") dub.runDdox(gensettings.run, app_args);
+ 		return 0;
+ 	}
+diff --git a/source/dub/compilers/compiler.d b/source/dub/compilers/compiler.d
+index ce97d38..737d806 100644
+--- a/source/dub/compilers/compiler.d
++++ b/source/dub/compilers/compiler.d
+@@ -186,9 +186,46 @@ interface Compiler {
+ 		import dub.compilers.utils : generatePlatformProbeFile, readPlatformSDLProbe;
+ 		import std.string : format, strip;
+ 
++		// Flint fork: the probe depends only on the compiler binary, its
++		// configuration file and the probe flags; cache it by their identity.
++		import std.process : environment;
++		import std.file : exists, readText, write, getSize, timeLastModified, mkdirRecurse;
++		import std.path : buildPath, dirName;
++		import std.digest.crc : crc64ECMAOf;
++		import std.digest : toHexString;
++		import std.conv : to;
++		string cacheFile;
++		try {
++			import std.process : executeShell;
++			string exe = compiler_binary;
++			if (!exe.canFind('/'))
++				foreach (dir; environment.get("PATH", "").splitter(':')) {
++					auto cand = buildPath(dir, compiler_binary);
++					if (exists(cand)) { exe = cand; break; }
++				}
++			string key = exe ~ "\0" ~ timeLastModified(exe).stdTime.to!string ~ "\0" ~ getSize(exe).to!string ~ "\0" ~ arch_flags.join(" ") ~ "\0" ~ defaultProbeArgs.join(" ");
++			const conf = buildPath(dirName(exe), "dmd.conf");
++			if (exists(conf)) key ~= "\0" ~ timeLastModified(conf).stdTime.to!string ~ getSize(conf).to!string;
++			const base = environment.get("XDG_CACHE_HOME", buildPath(environment.get("HOME", "/tmp"), ".cache"));
++			mkdirRecurse(buildPath(base, "flint-dub"));
++			cacheFile = buildPath(base, "flint-dub", "probe-" ~ crc64ECMAOf(key).toHexString.idup ~ ".txt");
++		} catch (Exception) cacheFile = null;
++		if (cacheFile.length && !exists("dmd.conf") && exists(cacheFile)) {
++			auto output = readText(cacheFile);
++			BuildPlatform cached = readPlatformSDLProbe(output);
++			cached.compilerBinary = compiler_binary;
++			string cver = determineVersion(cached, output).strip;
++			if (!cver.empty) {
++				cached.compilerVersion = cver;
++				return cached;
++			}
++		}
++
+ 		immutable fileArg = generatePlatformProbeFile().toNativeString;
+ 
+ 		auto result = execute(compiler_binary ~ defaultProbeArgs ~ arch_flags ~ fileArg);
++		if (result.status == 0 && cacheFile.length)
++			try { write(cacheFile ~ ".tmp", result.output); import std.file : rename; rename(cacheFile ~ ".tmp", cacheFile); } catch (Exception) {}
+ 		enforce!CompilerInvocationException(result.status == 0,
+ 				format("Failed to invoke the compiler %s to determine the build platform: %s",
+ 				compiler_binary, result.output));
+diff --git a/source/dub/compilers/dmd.d b/source/dub/compilers/dmd.d
+index 0345565..b143d55 100644
+--- a/source/dub/compilers/dmd.d
++++ b/source/dub/compilers/dmd.d
+@@ -368,6 +368,7 @@ config    /etc/dmd.conf
+ 
+ 	void invoke(in BuildSettings settings, in BuildPlatform platform, void delegate(int, string) output_callback, NativePath cwd)
+ 	{
++		import dub.internal.flinttrace : ftrace; ftrace("compile begin"); scope (exit) ftrace("compile end");
+ 		auto res_file = getTempFile("dub-build", ".rsp");
+ 		// clean-up early to avoid build-up of temporaries when invoke is called
+ 		// many times in one DUB session. (e.g. when using DUB as a library)
+@@ -387,6 +388,7 @@ config    /etc/dmd.conf
+ 
+ 	void invokeLinker(in BuildSettings settings, in BuildPlatform platform, string[] objects, void delegate(int, string) output_callback, NativePath cwd)
+ 	{
++		import dub.internal.flinttrace : ftrace; ftrace("link begin"); scope (exit) ftrace("link end");
+ 		import std.string;
+ 		auto tpath = NativePath(settings.targetPath) ~ getTargetFileName(settings, platform);
+ 		auto args = ["-of"~tpath.toNativeString()];
+diff --git a/source/dub/generators/build.d b/source/dub/generators/build.d
+index c4adc0d..e04a955 100644
+--- a/source/dub/generators/build.d
++++ b/source/dub/generators/build.d
+@@ -26,6 +26,9 @@ import std.file;
+ import std.process;
+ import std.string;
+ import std.encoding : sanitize;
++import std.path : isAbsolute;
++import std.typecons : Rebindable, Tuple, tuple;
++import std.path : baseName;
+ 
+ string getObjSuffix(const scope ref BuildPlatform platform)
+ {
+@@ -104,6 +107,13 @@ class BuildGenerator : ProjectGenerator {
+ 			return;
+ 		}
+ 
++		// Flint toolchain fork: plan every out-of-date target, compile balanced
++		// chunks of all of them concurrently, then archive and link.
++		if (canUseParallelPipeline(settings, targets)) {
++			generateParallel(settings, targets);
++			return;
++		}
++
+ 		// Recursive build starts here
+ 
+ 		bool any_cached = false;
+@@ -195,6 +205,261 @@ class BuildGenerator : ProjectGenerator {
+ 		}
+ 	}
+ 
++	/// True when the concurrent pipeline can reproduce the sequential build exactly.
++	private bool canUseParallelPipeline(GeneratorSettings settings, in TargetInfo[string] targets)
++	{
++		import std.process : environment;
++		if (environment.get("FLINT_DUB_PIPELINE", "1") == "0") return false;
++		if (settings.rdmd || settings.tempBuild || settings.compiler.name != "dmd") return false;
++		if (settings.buildMode != BuildMode.separate) return false;
++		if (settings.platform.isWindows()) return false;
++		foreach (name, ti; targets) {
++			const bs = ti.buildSettings;
++			if (bs.options & BuildOption.syntaxOnly) return false;
++			if (bs.preBuildCommands.length || bs.postBuildCommands.length) return false;
++			final switch (bs.targetType) {
++				case TargetType.executable:
++				case TargetType.library:
++				case TargetType.staticLibrary:
++				case TargetType.none:
++					break;
++				case TargetType.autodetect:
++				case TargetType.sourceLibrary:
++				case TargetType.dynamicLibrary:
++				case TargetType.object:
++					return false;
++			}
++			foreach (f; bs.sourceFiles)
++				if (!f.endsWith(".d") && !f.endsWith(".di") && !isLinkerFile(settings.platform, f))
++					return false;
++		}
++		return true;
++	}
++
++	private static struct PlannedTarget {
++		string name;
++		Rebindable!(const(Package)) pack;
++		string config;
++		const(Package)[] packages;
++		BuildSettings bs;
++		NativePath cacheDir;
++		NativePath binary;
++		NativePath[] additionalDeps;
++		bool rebuild;
++		string[] sources;
++		string[] compileArgs;
++		string[string] env;
++	}
++
++	private void generateParallel(GeneratorSettings settings, in TargetInfo[string] targets)
++	{
++		import std.parallelism : totalCPUs;
++		import std.process : spawnProcess, wait, Pid, environment;
++		import dub.internal.flinttrace : ftrace;
++
++		auto cwd = settings.toolWorkingDirectory;
++		string makeRelative(string path) { return shrinkPath(NativePath(path), cwd); }
++
++		// 1. Plan targets in dependency order, as the recursive build would.
++		PlannedTarget[] plan;
++		size_t[string] index;
++		void visit(string target)
++		{
++			if (target in index) return;
++			auto ti = targets[target];
++			foreach (dep; ti.dependencies) visit(dep);
++			PlannedTarget t;
++			t.name = target;
++			t.pack = ti.pack;
++			t.config = ti.config;
++			t.packages = ti.packages;
++			t.bs = ti.buildSettings.dup;
++			const tt = t.bs.targetType;
++			foreach (ldep; ti.linkDependencies) {
++				auto dep = &plan[index[ldep]];
++				if (dep.bs.targetType == TargetType.none) continue;
++				if (tt != TargetType.staticLibrary && tt != TargetType.library)
++					t.bs.addSourceFiles(dep.binary.toNativeString());
++				else
++					t.additionalDeps ~= dep.binary;
++			}
++			index[target] = plan.length;
++			if (tt != TargetType.none) {
++				const build_id = t.bs.computeBuildID(t.pack.path, t.config, settings);
++				foreach (ref f; t.bs.sourceFiles) f = makeRelative(f);
++				foreach (ref p; t.bs.importPaths) p = makeRelative(p);
++				foreach (ref p; t.bs.cImportPaths) p = makeRelative(p);
++				foreach (ref p; t.bs.stringImportPaths) p = makeRelative(p);
++				t.cacheDir = targetCacheDir(settings.cache, t.pack, build_id);
++				t.binary = t.cacheDir ~ settings.compiler.getTargetFileName(t.bs, settings.platform);
++				t.rebuild = settings.force || !isUpToDate(t.cacheDir, t.bs, settings, t.pack, t.packages, t.additionalDeps);
++				foreach (ldep; ti.linkDependencies)
++					if (plan[index[ldep]].rebuild) t.rebuild = true;
++				foreach (dep; ti.dependencies)
++					if (plan[index[dep]].rebuild) t.rebuild = true;
++			}
++			plan ~= t;
++		}
++		visit(m_project.rootPackage.name);
++		ftrace("pipeline planned");
++
++		// 2. Compile settings and source lists for each target to rebuild.
++		size_t totalCost;
++		size_t[string] fileCost;
++		foreach (ref t; plan) {
++			if (t.bs.targetType == TargetType.none) continue;
++			if (!t.rebuild) {
++				logInfo("Up-to-date", Color.green, "%s %s: target for configuration [%s] is up to date.",
++					t.pack.name.color(Mode.bold), t.pack.version_, t.config.color(Color.blue));
++				copyTargetFile(t.cacheDir, t.bs, settings);
++				continue;
++			}
++			logInfo("Building", Color.light_green, "%s %s: building configuration [%s]",
++				t.pack.name.color(Mode.bold), t.pack.version_, t.config.color(Color.blue));
++			auto cbs = t.bs.dup;
++			t.sources = cbs.sourceFiles.filter!(f => !isLinkerFile(settings.platform, f)).array;
++			cbs.sourceFiles = null;
++			cbs.libs = null;
++			cbs.frameworks = null;
++			cbs.lflags = null;
++			settings.compiler.prepareBuildSettings(cbs, settings.platform, BuildSetting.commandLine);
++			const objDir = t.cacheDir ~ "obj";
++			if (existsDirectory(objDir)) rmdirRecurse(objDir.toNativeString());
++			ensureDirectory(objDir);
++			t.compileArgs = cbs.dflags ~ ["-vcolumns", "-c", "-od" ~ objDir.toNativeString(), "-oq"];
++			foreach (aa; [cbs.environments, cbs.buildEnvironments])
++				foreach (k, v; aa) t.env[k] = v;
++			foreach (f; t.sources) {
++				size_t c = 4096; // fixed cost per module
++				try c += getSize(f.isAbsolute ? f : (cwd ~ f).toNativeString()); catch (Exception) {}
++				fileCost[f] = c;
++				totalCost += c;
++			}
++		}
++
++		// 3. Split every target into chunks sized for the available cores.
++		static struct Job { size_t target; string[] files; }
++		Job[] jobs;
++		// One chunk per hardware thread; more only adds startup and contention.
++		const workers = max(1, totalCPUs);
++		const chunkCost = max(1, totalCost / workers);
++		foreach (ti, ref t; plan) {
++			if (!t.rebuild || !t.sources.length) continue;
++			size_t cost;
++			foreach (f; t.sources) cost += fileCost[f];
++			auto k = max(1, min(t.sources.length, max(cost / chunkCost, (cost * 2 >= chunkCost * 3) ? 2 : 1)));
++			// Separate compilation must find every module through the import
++			// paths; otherwise compile the target as one unit, as DUB does.
++			if (k > 1 && !modulesResolvable(t.sources, t.bs.importPaths, cwd)) {
++				logDiagnostic("%s: module layout requires a single compiler invocation", t.name);
++				k = 1;
++			}
++			auto order = t.sources.dup;
++			order.sort!((a, b) => fileCost[a] > fileCost[b]);
++			auto bins = new string[][](k);
++			auto load = new size_t[](k);
++			foreach (f; order) {
++				size_t best = 0;
++				foreach (i; 1 .. k) if (load[i] < load[best]) best = i;
++				bins[best] ~= f;
++				load[best] += fileCost[f];
++			}
++			if (k > 1 && !t.compileArgs.canFind("-allinst")) t.compileArgs ~= "-allinst";
++			foreach (b; bins) if (b.length) jobs ~= Job(ti, b);
++		}
++		// Start the root target and the most expensive chunks first.
++		size_t jobCost(ref Job j) { return j.files.map!(f => fileCost[f]).sum + (j.target == plan.length - 1 ? totalCost : 0); }
++		jobs.sort!((a, b) => jobCost(a) > jobCost(b));
++		ftrace(format("pipeline %s compile jobs", jobs.length));
++
++		// 4. Run all compile jobs concurrently.
++		if (jobs.length) {
++			logInfo("Compiling", Color.light_green, "%s modules in %s parallel jobs",
++				jobs.map!(j => j.files.length).sum, jobs.length);
++			import core.sys.posix.sys.wait : waitpid, WIFEXITED, WEXITSTATUS;
++			import core.time : MonoTime;
++			size_t[int] running;
++			auto started = MonoTime.currTime;
++			foreach (ji, j; jobs) {
++				auto t = &plan[j.target];
++				auto args = [settings.platform.compilerBinary] ~ t.compileArgs ~ j.files;
++				logDiagnostic("[cwd=%s] %s", cwd, args.join(" "));
++				running[fastSpawn(args, t.env, cwd.toNativeString())] = ji;
++			}
++			int failed;
++			auto targetFailed = new bool[](plan.length);
++			while (running.length) {
++				int st;
++				const pid = waitpid(-1, &st, 0);
++				if (pid < 0) break;
++				auto ji = pid in running;
++				if (!ji) continue;
++				if (!WIFEXITED(st) || WEXITSTATUS(st) != 0) { failed++; targetFailed[jobs[*ji].target] = true; }
++				ftrace(format("job %s done after %.1fms: %s", *ji,
++					(MonoTime.currTime - started).total!"usecs" / 1000.0, jobs[*ji].files.map!(f => f.baseName).join(" ")));
++				running.remove(pid);
++			}
++			ftrace("pipeline compiled");
++			if (failed) {
++				// Keep every library that compiled completely, as the sequential build would.
++				import dub.internal.flintar : writeArchive;
++				foreach (ti, ref t; plan) {
++					const tt = t.bs.targetType;
++					if (!t.rebuild || targetFailed[ti] || (tt != TargetType.staticLibrary && tt != TargetType.library)) continue;
++					bool deps_ok = true;
++					foreach (dep; targets[t.name].dependencies) if (targetFailed[index[dep]]) deps_ok = false;
++					if (!deps_ok) continue;
++					auto objs = dirEntries((t.cacheDir ~ "obj").toNativeString(), "*.o", SpanMode.shallow).map!(e => e.name).array;
++					objs.sort();
++					writeArchive(t.binary.toNativeString(), objs);
++				}
++			}
++			enforce(failed == 0, format("%s of %s compile jobs failed", failed, jobs.length));
++		}
++
++		// 5. Archive all libraries concurrently, then link the root executable.
++		bool any_cached = false;
++		string[][size_t] objects;
++		Tuple!(string, string[])[] archiveJobs;
++		foreach (ti, ref t; plan) {
++			if (t.bs.targetType == TargetType.none) continue;
++			if (!t.rebuild) { any_cached = true; continue; }
++			auto objs = dirEntries((t.cacheDir ~ "obj").toNativeString(), "*.o", SpanMode.shallow)
++				.map!(e => e.name).array;
++			objs.sort();
++			objects[ti] = objs;
++			const tt = t.bs.targetType;
++			if (tt == TargetType.staticLibrary || tt == TargetType.library) {
++				archiveJobs ~= tuple(t.binary.toNativeString(), objs);
++			}
++		}
++		{
++			import std.parallelism : parallel;
++			import dub.internal.flintar : writeArchive;
++			foreach (job; archiveJobs.parallel(1))
++				writeArchive(job[0], job[1]);
++		}
++		ftrace("pipeline archived");
++		foreach (ti, ref t; plan) {
++			if (t.bs.targetType == TargetType.none || !t.rebuild) continue;
++			auto lbs = t.bs.dup;
++			lbs.targetPath = t.cacheDir.toNativeString();
++			const tt = t.bs.targetType;
++			if (tt != TargetType.staticLibrary && tt != TargetType.library) {
++				lbs.sourceFiles = lbs.sourceFiles.filter!(f => isLinkerFile(settings.platform, f)).array;
++				settings.compiler.setTarget(lbs, settings.platform);
++				settings.compiler.prepareBuildSettings(lbs, settings.platform, BuildSetting.commandLineSeparate|BuildSetting.sourceFiles);
++				logInfo("Linking", Color.light_green, "%s", t.bs.targetName.color(Mode.bold));
++				settings.compiler.invokeLinker(lbs, settings.platform, objects[ti], settings.linkCallback, cwd);
++			}
++			copyTargetFile(t.cacheDir, t.bs, settings);
++			updateCacheDatabase(settings, lbs, t.pack, t.config, t.cacheDir.head.name.idup, t.binary.toNativeString());
++		}
++		ftrace("pipeline linked");
++		if (any_cached)
++			logInfo("Finished", Color.green, "To force a rebuild of up-to-date targets, run again with --force");
++	}
++
+ 	override void performPostGenerateActions(GeneratorSettings settings, in TargetInfo[string] targets)
+ 	{
+ 		// run the generated executable
+@@ -504,7 +769,16 @@ class BuildGenerator : ProjectGenerator {
+ 		{
+ 			auto src = build_path ~ filename;
+ 			logDiagnostic("Copying target from %s to %s", src.toNativeString(), buildsettings.targetPath);
+-			copyFile(src, NativePath(buildsettings.targetPath) ~ filename, true);
++			const dst = NativePath(buildsettings.targetPath) ~ filename;
++			// Flint fork: a hard link is an atomic, instant copy of the immutable cache file.
++			import core.sys.posix.unistd : link, unlink;
++			import std.string : toStringz;
++			version (Posix) {
++				unlink(dst.toNativeString().toStringz);
++				if (link(src.toNativeString().toStringz, dst.toNativeString().toStringz) == 0)
++					continue;
++			}
++			copyFile(src, dst, true);
+ 		}
+ 	}
+ 
+@@ -751,6 +1025,66 @@ class BuildGenerator : ProjectGenerator {
+ 	}
+ }
+ 
++/// True when each source file is the file DMD would find for its module name.
++private bool modulesResolvable(const string[] sources, const string[] importPaths, NativePath cwd)
++{
++	import std.path : buildNormalizedPath, absolutePath;
++	import std.string : replace;
++	string abs(string p) { return buildNormalizedPath(absolutePath(p, cwd.toNativeString())); }
++	auto roots = importPaths.map!(p => abs(p)).array;
++	foreach (f; sources) {
++		const file = abs(f);
++		string name;
++		try name = getModuleNameFromFile(file); catch (Exception) return false;
++		if (!name.length) return false;
++		const rel = name.replace(".", "/");
++		bool found;
++		foreach (r; roots)
++			if (buildNormalizedPath(r, rel ~ ".d") == file || buildNormalizedPath(r, rel ~ ".di") == file
++				|| buildNormalizedPath(r, rel, "package.d") == file) { found = true; break; }
++		if (!found) return false;
++	}
++	return true;
++}
++
++import core.sys.posix.spawn : posix_spawn_file_actions_t;
++// glibc >= 2.29
++private extern (C) int posix_spawn_file_actions_addchdir_np(posix_spawn_file_actions_t*, const(char)*) nothrow @nogc;
++
++/// Spawn a child with posix_spawn (vfork semantics): no page-table copy of DUB.
++private int fastSpawn(string[] args, in string[string] extraEnv, string cwd)
++{
++	import core.sys.posix.spawn;
++	import core.sys.posix.unistd : chdir, getcwd;
++	import std.string : toStringz;
++	import std.process : environment;
++	import std.exception : enforce;
++	import core.stdc.errno : errno;
++	auto argv = new const(char)*[](args.length + 1);
++	foreach (i, a; args) argv[i] = a.toStringz;
++	argv[$ - 1] = null;
++	const(char)*[] envp;
++	auto env = environment.toAA();
++	foreach (k, v; extraEnv) env[k] = v;
++	foreach (k, v; env) envp ~= (k ~ "=" ~ v).toStringz;
++	envp ~= null;
++	// Resolve the program through PATH as execvp would.
++	string prog = args[0];
++	if (!prog.canFind('/'))
++		foreach (dir; env.get("PATH", "").splitter(':')) {
++			auto cand = dir ~ "/" ~ prog;
++			if (existsFile(cand)) { prog = cand; break; }
++		}
++	posix_spawn_file_actions_t actions;
++	posix_spawn_file_actions_init(&actions);
++	scope (exit) posix_spawn_file_actions_destroy(&actions);
++	enforce(posix_spawn_file_actions_addchdir_np(&actions, cwd.toStringz) == 0, "posix_spawn chdir");
++	pid_t pid;
++	const rc = posix_spawn(&pid, prog.toStringz, &actions, null, cast(char**) argv.ptr, cast(char**) envp.ptr);
++	enforce(rc == 0, "failed to spawn " ~ prog);
++	return pid;
++}
++
+ private NativePath getMainSourceFile(in Package prj)
+ {
+ 	foreach (f; ["source/app.d", "src/app.d", "source/"~prj.name~".d", "src/"~prj.name~".d"])
+diff --git a/source/dub/internal/flintar.d b/source/dub/internal/flintar.d
+new file mode 100644
+index 0000000..332ffe4
+--- /dev/null
++++ b/source/dub/internal/flintar.d
+@@ -0,0 +1,122 @@
++/**
++	In-process static library writer for the Flint DUB fork.
++
++	Produces a GNU/SysV `ar` archive with a `/` symbol index and a `//` long
++	name table, equivalent to `ar rcs` for ELF64 objects, without spawning a
++	process.  Members are stored in the given order with zero timestamps.
++*/
++module dub.internal.flintar;
++
++import std.array : appender, Appender;
++import std.bitmanip : nativeToBigEndian;
++import std.file : read, write, rename, remove, exists;
++import std.format : format;
++import std.path : baseName;
++
++/// Global symbols defined by an ELF64 relocatable object (empty for other formats).
++string[] definedSymbols(const(ubyte)[] obj)
++{
++	static T get(T)(const(ubyte)[] b, size_t off) {
++		if (off + T.sizeof > b.length) return T.init;
++		T v;
++		(cast(ubyte*) &v)[0 .. T.sizeof] = b[off .. off + T.sizeof];
++		return v;
++	}
++	string[] result;
++	if (obj.length < 64 || obj[0 .. 4] != [0x7f, 'E', 'L', 'F'] || obj[4] != 2 || obj[5] != 1)
++		return result;
++	const shoff = get!ulong(obj, 0x28);
++	const shentsize = get!ushort(obj, 0x3A);
++	const shnum = get!ushort(obj, 0x3C);
++	foreach (i; 0 .. shnum) {
++		const sh = shoff + i * shentsize;
++		if (get!uint(obj, sh + 4) != 2) continue; // SHT_SYMTAB
++		const symoff = get!ulong(obj, sh + 0x18);
++		const symsize = get!ulong(obj, sh + 0x20);
++		const link = get!uint(obj, sh + 0x28);
++		const entsize = get!ulong(obj, sh + 0x38);
++		const strsh = shoff + link * shentsize;
++		const stroff = get!ulong(obj, strsh + 0x18);
++		const strsize = get!ulong(obj, strsh + 0x20);
++		if (!entsize) continue;
++		foreach (s; 0 .. symsize / entsize) {
++			const e = symoff + s * entsize;
++			const name = get!uint(obj, e);
++			const info = obj[e + 4];
++			const shndx = get!ushort(obj, e + 6);
++			const bind = info >> 4;
++			const type = info & 0xf;
++			if ((bind != 1 && bind != 2 && bind != 10) || shndx == 0 || type == 4 /*FILE*/ || type == 3 /*SECTION*/)
++				continue;
++			if (name >= strsize) continue;
++			size_t end = stroff + name;
++			while (end < stroff + strsize && end < obj.length && obj[end]) end++;
++			result ~= cast(string) obj[stroff + name .. end].idup;
++		}
++	}
++	return result;
++}
++
++/// Write `objects` into the archive at `path` atomically.
++void writeArchive(string path, const string[] objects)
++{
++	static void header(ref Appender!(ubyte[]) o, string name, size_t size)
++	{
++		auto h = format("%-16s%-12s%-6s%-6s%-8s%-10s`\n", name, "0", "0", "0", "644", size);
++		assert(h.length == 60);
++		o ~= cast(const(ubyte)[]) h;
++	}
++
++	ubyte[][] data;
++	string[][] syms;
++	string[] names;
++	auto longNames = appender!string;
++	foreach (f; objects) {
++		auto bytes = cast(ubyte[]) read(f);
++		data ~= bytes;
++		syms ~= definedSymbols(bytes);
++		auto n = baseName(f);
++		if (n.length <= 15)
++			names ~= n ~ "/";
++		else {
++			names ~= format("/%s", longNames.data.length);
++			longNames ~= n ~ "/\n";
++		}
++	}
++	size_t nsyms;
++	size_t symNameBytes;
++	foreach (s; syms) foreach (n; s) { nsyms++; symNameBytes += n.length + 1; }
++	const symtabSize = 4 + 4 * nsyms + symNameBytes;
++	size_t pad(size_t n) { return n + (n & 1); }
++
++	// Member offsets.
++	size_t off = 8 + 60 + pad(symtabSize);
++	if (longNames.data.length) off += 60 + pad(longNames.data.length);
++	auto offsets = new size_t[](objects.length);
++	foreach (i, d; data) {
++		offsets[i] = off;
++		off += 60 + pad(d.length);
++	}
++
++	auto o = appender!(ubyte[]);
++	o.reserve(off);
++	o ~= cast(const(ubyte)[]) "!<arch>\n";
++	header(o, "/", symtabSize);
++	o ~= nativeToBigEndian(cast(uint) nsyms)[];
++	foreach (i, s; syms) foreach (n; s) o ~= nativeToBigEndian(cast(uint) offsets[i])[];
++	foreach (s; syms) foreach (n; s) { o ~= cast(const(ubyte)[]) n; o ~= cast(ubyte) 0; }
++	if (symtabSize & 1) o ~= cast(ubyte) '\n';
++	if (longNames.data.length) {
++		header(o, "//", longNames.data.length);
++		o ~= cast(const(ubyte)[]) longNames.data;
++		if (longNames.data.length & 1) o ~= cast(ubyte) '\n';
++	}
++	foreach (i, d; data) {
++		header(o, names[i], d.length);
++		o ~= d;
++		if (d.length & 1) o ~= cast(ubyte) '\n';
++	}
++	const tmp = path ~ ".tmp";
++	write(tmp, o.data);
++	rename(tmp, path);
++}
+diff --git a/source/dub/internal/flinttrace.d b/source/dub/internal/flinttrace.d
+new file mode 100644
+index 0000000..fcc3657
+--- /dev/null
++++ b/source/dub/internal/flinttrace.d
+@@ -0,0 +1,24 @@
++/// Lightweight phase timing for the Flint DUB fork (FLINT_DUB_TRACE=1).
++module dub.internal.flinttrace;
++
++import core.time : MonoTime;
++
++private __gshared MonoTime start;
++private __gshared int enabled = -1;
++
++shared static this() { start = MonoTime.currTime; }
++
++void ftrace(lazy string what) nothrow
++{
++	import core.stdc.stdlib : getenv;
++	import core.stdc.stdio : fprintf, stderr;
++	if (enabled < 0)
++		enabled = getenv("FLINT_DUB_TRACE") !is null;
++	if (!enabled)
++		return;
++	try {
++		const us = (MonoTime.currTime - start).total!"usecs";
++		auto w = what;
++		fprintf(stderr, "[flint-dub %6.1fms] %.*s\n", us / 1000.0, cast(int) w.length, w.ptr);
++	} catch (Exception) {}
++}

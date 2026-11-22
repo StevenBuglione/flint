@@ -1,0 +1,219 @@
+{
+  "package_count": 37,
+  "contract_module_count": 39,
+  "missing_direct_edges": [],
+  "tier_violations": [],
+  "topological_order": [
+    "arena",
+    "conc",
+    "reactor",
+    "di",
+    "serde",
+    "validate",
+    "config",
+    "log",
+    "test",
+    "web",
+    "http",
+    "security",
+    "actuator",
+    "schedule",
+    "rpc",
+    "sql",
+    "data",
+    "migrate",
+    "cache",
+    "cli",
+    "term",
+    "style",
+    "tui",
+    "widgets",
+    "prompt",
+    "os",
+    "wasm-bridge",
+    "ui-signals",
+    "wasi",
+    "mq",
+    "storage",
+    "mail",
+    "ai",
+    "mcp",
+    "template",
+    "codec",
+    "desktop"
+  ],
+  "actual_contract_imports": {
+    "actuator": [
+      "arena",
+      "conc",
+      "web"
+    ],
+    "ai": [
+      "arena",
+      "conc"
+    ],
+    "cache": [
+      "arena",
+      "conc"
+    ],
+    "cli": [
+      "arena"
+    ],
+    "codec": [
+      "arena"
+    ],
+    "conc": [
+      "arena"
+    ],
+    "config": [
+      "arena"
+    ],
+    "data": [
+      "arena",
+      "conc",
+      "sql"
+    ],
+    "desktop": [
+      "arena",
+      "conc"
+    ],
+    "di": [
+      "arena"
+    ],
+    "http": [
+      "arena",
+      "conc"
+    ],
+    "log": [
+      "arena"
+    ],
+    "mail": [
+      "arena",
+      "conc"
+    ],
+    "mcp": [
+      "arena",
+      "conc"
+    ],
+    "migrate": [
+      "arena",
+      "conc",
+      "sql"
+    ],
+    "mq": [
+      "arena",
+      "conc"
+    ],
+    "os": [
+      "arena",
+      "conc"
+    ],
+    "prompt": [
+      "arena"
+    ],
+    "reactor": [
+      "arena",
+      "conc"
+    ],
+    "rpc": [
+      "arena",
+      "conc"
+    ],
+    "schedule": [
+      "arena",
+      "conc"
+    ],
+    "security": [
+      "arena",
+      "conc"
+    ],
+    "serde": [
+      "arena"
+    ],
+    "sql": [
+      "arena",
+      "conc"
+    ],
+    "storage": [
+      "arena",
+      "conc",
+      "http"
+    ],
+    "template": [
+      "arena"
+    ],
+    "term": [
+      "arena"
+    ],
+    "tui": [
+      "arena",
+      "style",
+      "term"
+    ],
+    "ui-signals": [
+      "arena",
+      "wasm-bridge"
+    ],
+    "validate": [
+      "arena"
+    ],
+    "wasi": [
+      "arena"
+    ],
+    "wasm-bridge": [
+      "arena"
+    ],
+    "web": [
+      "arena",
+      "conc"
+    ],
+    "widgets": [
+      "arena",
+      "tui"
+    ]
+  },
+  "source_sha256": {
+    "contracts/source/flint/actuator.d": "48fb6f74f61805621fdcc71d131b181fd94cb81354ca6ba9be6165cd81437399",
+    "contracts/source/flint/ai.d": "a21effc939f50affa30a21a0faddf7a3047a6e8b54e0b32bbf2cf4dea9c735d1",
+    "contracts/source/flint/arena.d": "26ebcffe46150378b0466bad369298cd4f1073766aca234e2af248f39f5785a7",
+    "contracts/source/flint/cache.d": "3aad8a90e9f932f06a903e2146b80e2d5396830584555c7132345967b46313cb",
+    "contracts/source/flint/cli.d": "92e6c182c2048447e32eff2660b0e7e621b61f6f76738f429560c53b06b945de",
+    "contracts/source/flint/codec.d": "1f51529cdd9b007e7caae2d977c004e1d9865aff5cbe19f95567d324f762832e",
+    "contracts/source/flint/conc.d": "8ff95816deb61459ebc28e52869eccf79ef02df6d0fad6b9ec87b02c95a8c0d3",
+    "contracts/source/flint/config.d": "c2c96d4449a999f7448746726bc8d4afe753c0219a5f3a48b0a13b459e9218f1",
+    "contracts/source/flint/data.d": "0d573dc17bd550d1a832b01cba3f0df69ebcadc6d3985c067be7760b9a0dab69",
+    "contracts/source/flint/desktop.d": "c31857194e6b0b2bb287f1e6b31ca0ce3ae440bb6bc5cefca45ffe32958a2b44",
+    "contracts/source/flint/di.d": "d2025c2d8f75ffdc73522a1891850450b5a828b4169ffffa85d6fdc9d47f29eb",
+    "contracts/source/flint/http.d": "c5d1d4bfe853a624791e495f79dbb37cc1f877ae79d38b6dac9156910d2da7f9",
+    "contracts/source/flint/log.d": "a95ce30a76032af717bc169530f6c623f04d3bb7c48481cdf891571b77c6a295",
+    "contracts/source/flint/mail.d": "4f4d3a941056b73fecdf966c621eb915a592f6c17beea373bc34fd9593d1f583",
+    "contracts/source/flint/mcp.d": "e49ff9070d7884182ef2e95595b1db7e708dd54cbca470dcf135c38f3f50a8ba",
+    "contracts/source/flint/migrate.d": "e50e944801e189178d41dedb3df534dcf9383b789660e745f7b65ef4026eb4e0",
+    "contracts/source/flint/mq.d": "d1215322376587ca3e17d90332f38c45a41fb900961662d471d5cc3b9366e16e",
+    "contracts/source/flint/os.d": "22613c36fbc9aeb7020162ab5a11f46c732e77b3ab12b278a3f4fa20b135ef6b",
+    "contracts/source/flint/prompt.d": "8b709a352afe73f156c3c2f5feea0f78273b05189df24b23645bee70aadb0bfb",
+    "contracts/source/flint/reactor.d": "857604eba8e0668973ed9972b63824b0241bae779fc3ab73097b0bbd01563a40",
+    "contracts/source/flint/rpc.d": "29f33f9da63c7016581020b70c191cd76bea2be94c6dc7c25a7e607144deb496",
+    "contracts/source/flint/schedule.d": "ed87ab2e12d29254f260900cdce8163feb4a733c51daab9321cd0a48254805ca",
+    "contracts/source/flint/security.d": "54d4bf0cc46c7e5a37302d0bf0bee44f0d826a6b4a8dad78a61db68b1eac8c3f",
+    "contracts/source/flint/serde/owned.d": "13046444fcb41473aeefae5bee1fee14dcc76191d1910ddcfcf0dfe8f506b9c1",
+    "contracts/source/flint/serde/package.d": "c7a8589849b6987d7e2c142b6cdaf0adab583b7f3ab67706d2b93e3494ba817e",
+    "contracts/source/flint/serde/yaml.d": "5f9f50aeb255d7b250b1e8226bade2f6635b57dc6c0704fe51dd2423e1e20d17",
+    "contracts/source/flint/sql.d": "65d15c50f5ab151c483c4d29c942812afba8f180a6664ecd4eda697b10f2d52d",
+    "contracts/source/flint/storage.d": "98f081a33284beb6f71d84ef30d9fe8c1bfaea2addcc78144b5cde67bf8b1e62",
+    "contracts/source/flint/style.d": "b6c84c6e7df644671543e38ec4b66a8e614a968e8fd404d792c8d0409eb3ebec",
+    "contracts/source/flint/templates.d": "d9b32455a2441a550d5a3f54dc57a073d0eb57e31cfcab77f8700770e2bc6d94",
+    "contracts/source/flint/term.d": "bcc963b74fd782ea2ad60c33dde97880528f3cc69c87e19ea91bf00d682d1421",
+    "contracts/source/flint/test.d": "55b636e51cb39376a18aa0a9ef9f7ee72db43eb256df5d5291de4cd23ee3bbe8",
+    "contracts/source/flint/tui.d": "56bb84bb0f284992c5e6c1493be3fdf5b4983302114b36fe629c3b8c256883f1",
+    "contracts/source/flint/ui_signals.d": "0689f6d4b0122b5be5f8ed3e182ee415f171d3dffbff67dee98aa5ae55e73d9d",
+    "contracts/source/flint/validate.d": "64a8a3ffc75c5a817373261b2a789388e2be361b026cf05b22ea4ef7e4a39fc8",
+    "contracts/source/flint/wasi.d": "d8813de29c5f15e4f0c87e42f0b169e061b354be8f2bd73092f7fba9eaea5ed7",
+    "contracts/source/flint/wasm_bridge.d": "4b0ce3319ae27caafe6369c6cc164c709d5934f710f08cf58da7a19725d7ab96",
+    "contracts/source/flint/web.d": "3fd6a7d3f4420341ec4cda6a1c74a485cef9bb988835de11a5449a169dba78c3",
+    "contracts/source/flint/widgets.d": "449a63b6b4bab9af1c681447dc92387246cd44805c45fd789045848e180d0f20"
+  },
+  "status": "passed",
+  "checked_at_utc": "2026-11-21T07:37:58.538516+00:00",
+  "revalidation": "Recomputed all39 contract import sets with d_source lexer and gates.check_import; reran all37 structural graph/recipe checks. Contract imports equal the prior audited graph."
+}

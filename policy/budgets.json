@@ -1,0 +1,50 @@
+{
+  "schema": 1,
+  "regression": {
+    "compile_ratio_max": 1.1,
+    "binary_ratio_max": 1.05,
+    "latency_ratio_max": 1.05,
+    "throughput_ratio_min": 0.95,
+    "rss_ratio_max": 1.05,
+    "compiler_rss_ratio_max": 1.1,
+    "template_ratio_max": 1.1
+  },
+  "benchmark_apps": {
+    "bench-cli": {
+      "dmd_cold_seconds": 1.5,
+      "dmd_incremental_seconds": 1.0,
+      "ldc_cold_seconds": 12.0,
+      "ldc_incremental_seconds": 6.0,
+      "binary_bytes": 3000000
+    },
+    "bench-rest": {
+      "dmd_cold_seconds": 3.0,
+      "dmd_incremental_seconds": 1.0,
+      "ldc_cold_seconds": 25.0,
+      "ldc_incremental_seconds": 10.0,
+      "binary_bytes": 8000000
+    },
+    "bench-wasm": {
+      "ldc_cold_seconds": 3.0,
+      "ldc_incremental_seconds": 1.0,
+      "raw_bytes": 300000,
+      "gzip_bytes": 100000
+    }
+  },
+  "go_relative": {
+    "throughput_ratio_min": 1.01,
+    "p99_ratio_max": 0.99,
+    "peak_rss_ratio_max": 0.99,
+    "binary_ratio_max": 0.99,
+    "cli_build_ratio_max": 0.99,
+    "rest_build_ratio_max": 0.99
+  },
+  "samples": {
+    "builds": 9,
+    "load_runs": 9,
+    "micro_runs": 21,
+    "bootstrap_replicates": 10000,
+    "confidence": 0.99
+  },
+  "runner": "flint-perf-x86_64-v1"
+}

@@ -1,0 +1,17 @@
+{
+  "scope": "Synthetic DUB/LDC profile probe: -unittest reached compilation; linking failed because clang is not installed. No sanitizer runtime verification.",
+  "command": [
+    "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dub",
+    "test",
+    "--compiler=/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+    "--build=plain",
+    "--skip-registry=all",
+    "--verbose"
+  ],
+  "dflags": "-g -O1 -unittest -preview=dip1000 -boundscheck=on -fsanitize=address -gcc=clang -Xcc=-fsanitize=address,undefined",
+  "expected_assertion_rejected": false,
+  "exit_code": 2,
+  "stdout": "Note: Failed to determine version of package asan-plain-profile-probe at . Assuming ~master.\n             Generating test runner configuration 'asan-plain-profile-probe-test-library' for 'library' (library).\nGet module name from path: /tmp/flint-asan-unittest-zmswqyai/source/probe.d\nConfiguring dependent asan-plain-profile-probe, deps:\n    Starting Performing \"plain\" build using /workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2 for x86_64.\nTarget '/tmp/flint-asan-unittest-zmswqyai/.dub-home/cache/asan-plain-profile-probe/~master/build/asan-plain-profile-probe-test-library-plain-z6_tgRfbNei0BtzD-88Oyg/asan-plain-profile-probe-test-library' doesn't exist, need rebuild.\n    Building asan-plain-profile-probe ~master: building configuration [asan-plain-profile-probe-test-library]\nNot a darwin-derived platform, skipping frameworks...\nNot a darwin-derived platform, skipping frameworks...\n/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2 -g -unittest -w -d-version=Have_asan_plain_profile_probe -Isource/ -I.dub-home/cache/asan-plain-profile-probe/~master/code/asan-plain-profile-probe-test-library-plain-mZ8ryfCZJm__r5MceYQdHw/ .dub-home/cache/asan-plain-profile-probe/~master/code/asan-plain-profile-probe-test-library-plain-mZ8ryfCZJm__r5MceYQdHw/dub_test_root.d source/probe.d -O1 -preview=dip1000 -boundscheck=on -fsanitize=address -gcc=clang -Xcc=-fsanitize=address,undefined -c -of/tmp/flint-asan-unittest-zmswqyai/.dub-home/cache/asan-plain-profile-probe/~master/build/asan-plain-profile-probe-test-library-plain-z6_tgRfbNei0BtzD-88Oyg/asan-plain-profile-probe-test-library.o -vcolumns\n     Linking asan-plain-profile-probe-test-library\n/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2 -of/tmp/flint-asan-unittest-zmswqyai/.dub-home/cache/asan-plain-profile-probe/~master/build/asan-plain-profile-probe-test-library-plain-z6_tgRfbNei0BtzD-88Oyg/asan-plain-profile-probe-test-library /tmp/flint-asan-unittest-zmswqyai/.dub-home/cache/asan-plain-profile-probe/~master/build/asan-plain-profile-probe-test-library-plain-z6_tgRfbNei0BtzD-88Oyg/asan-plain-profile-probe-test-library.o -L--no-as-needed -g -fsanitize=address -gcc=clang -Xcc=-fsanitize=address,undefined\nFAIL /tmp/flint-asan-unittest-zmswqyai/.dub-home/cache/asan-plain-profile-probe/~master/build/asan-plain-profile-probe-test-library-plain-z6_tgRfbNei0BtzD-88Oyg asan-plain-profile-probe-test-library executable\n",
+  "stderr": "Error: cannot find program `clang`\nError /workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2 failed with exit code 1.\n",
+  "status": "not_run_runtime_missing_clang"
+}

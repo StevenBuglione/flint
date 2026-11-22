@@ -1,0 +1,168 @@
+{
+  "schema": 1,
+  "versions": {
+    "dmd": "2.114.0",
+    "ldc": "1.43.0",
+    "dub": "1.43.0",
+    "dfmt": "0.15.2",
+    "dscanner": "0.15.2",
+    "go": "1.27.4",
+    "oha": "1.16.0",
+    "rust": "1.97.0",
+    "rustup": "1.29.3",
+    "clang": "22.1.8"
+  },
+  "assets": {
+    "ldc2-1.43.0-addon-wasi.tar.xz": {
+      "url": "https://github.com/ldc-developers/ldc/releases/download/v1.43.0/ldc2-1.43.0-addon-wasi.tar.xz",
+      "sha256": "5c8079c44dbc35990380916214f11846ab0332b6e79f300e237120e5dd24a918"
+    },
+    "ldc2-1.43.0-alpine-aarch64.tar.xz": {
+      "url": "https://github.com/ldc-developers/ldc/releases/download/v1.43.0/ldc2-1.43.0-alpine-aarch64.tar.xz",
+      "sha256": "2ad9b985f66e05855cfd2581d7e9cf08d28c86afce02dbcd82aad531e0872979"
+    },
+    "ldc2-1.43.0-alpine-x86_64.tar.xz": {
+      "url": "https://github.com/ldc-developers/ldc/releases/download/v1.43.0/ldc2-1.43.0-alpine-x86_64.tar.xz",
+      "sha256": "734f1dbdcc5f6b478efb8c67e5bd7cd73c5c8f0023f45c696adba12618d8e510"
+    },
+    "ldc2-1.43.0-linux-aarch64.tar.xz": {
+      "url": "https://github.com/ldc-developers/ldc/releases/download/v1.43.0/ldc2-1.43.0-linux-aarch64.tar.xz",
+      "sha256": "f2b24edc254d4b9944234f641de3c4b3a36d5752639ec30cb2bbe122931b2283"
+    },
+    "ldc2-1.43.0-linux-x86_64.tar.xz": {
+      "url": "https://github.com/ldc-developers/ldc/releases/download/v1.43.0/ldc2-1.43.0-linux-x86_64.tar.xz",
+      "sha256": "35805db60f47fd1a162b2035da84d96beec37e6d1e7b1edf60498a90acfaedce"
+    },
+    "ldc2-1.43.0-osx-arm64.tar.xz": {
+      "url": "https://github.com/ldc-developers/ldc/releases/download/v1.43.0/ldc2-1.43.0-osx-arm64.tar.xz",
+      "sha256": "5e332349c784d4e0b1c4622284803880f89d97ef1ef97c6b25aa4d6b094c5fed"
+    },
+    "ldc2-1.43.0-windows-x64.7z": {
+      "url": "https://github.com/ldc-developers/ldc/releases/download/v1.43.0/ldc2-1.43.0-windows-x64.7z",
+      "sha256": "60ae3d5e34287aa25433c7550520060a52f9f212e3d5ff6472a9067d8d17e47e"
+    },
+    "dmd.2.114.0.linux.tar.xz": {
+      "url": "https://github.com/dlang/dmd/releases/download/v2.114.0/dmd.2.114.0.linux.tar.xz",
+      "sha256": "9bf481ccf099e56d2acbde45fdcab8bcad86d7e134ad1fd1faa8e00b807e13e9"
+    },
+    "go1.27.4.linux-amd64.tar.gz": {
+      "url": "https://go.dev/dl/go1.27.4.linux-amd64.tar.gz",
+      "sha256": "7226736c2339719cda28fbf3a54d71aa63bcefe376e98cef00034268dab24840"
+    },
+    "oha-linux-amd64": {
+      "url": "https://github.com/hatoo/oha/releases/download/v1.16.0/oha-linux-amd64",
+      "sha256": "620bb9e16fb53eabc9a3fc45f88bdb41fefa3fee5c05e75892011ce320391716"
+    },
+    "win_flex_bison-2.5.25.zip": {
+      "url": "https://github.com/lexxmark/winflexbison/releases/download/v2.5.25/win_flex_bison-2.5.25.zip",
+      "sha256": "8d324b62be33604b2c45ad1dd34ab93d722534448f55a16ca7292de32b6ac135"
+    },
+    "dub-1.43.0.tar.gz": {
+      "url": "https://github.com/dlang/dub/archive/refs/tags/v1.43.0.tar.gz",
+      "sha256": "f69ebd696d0e7c7d826fa835dc8594b20e62c475c0d7e60cfb2f342b4a5887b3"
+    },
+    "ldc-1.43.0-src.tar.gz": {
+      "url": "https://github.com/ldc-developers/ldc/releases/download/v1.43.0/ldc-1.43.0-src.tar.gz",
+      "sha256": "d655aad0daf0ce9a17b2ffffb947bb79ec6968bc7fb88bc918316dbe78c616e7",
+      "checksum_url": "https://github.com/ldc-developers/ldc/releases/download/v1.43.0/ldc2-1.43.0.sha256sums.txt",
+      "verification": "Downloaded into an empty directory on 2026-11-21; the digest matches the release ldc2-1.43.0.sha256sums.txt and the GitHub release asset digest."
+    },
+    "LLVM-22.1.8-Linux-X64.tar.xz": {
+      "url": "https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.8/LLVM-22.1.8-Linux-X64.tar.xz",
+      "sha256": "df0e1ecf16caf3489a272a5eea4eec9b0d82878f6477fa309504f918a0006384",
+      "checksum_url": "https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.8/LLVM-22.1.8-Linux-X64.tar.xz.jsonl",
+      "verification": "The digest matches the subject of the release SLSA provenance attestation (.jsonl) and the GitHub release asset digest. The attestation signature was not verified with sigstore tooling."
+    }
+  },
+  "actions": {
+    "checkout": "3d3c42e5aac5ba805825da76410c181273ba90b1",
+    "upload-artifact": "cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+    "download-artifact": "70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3"
+  },
+  "containers": {
+    "alpine-musl": {
+      "image": "docker.io/library/alpine:3.22@sha256:49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f",
+      "source": "https://registry-1.docker.io/v2/library/alpine/manifests/3.22",
+      "verified": "2026-11-21",
+      "architectures": [
+        "amd64",
+        "arm64"
+      ]
+    }
+  },
+  "rust": {
+    "manifest_url": "https://static.rust-lang.org/dist/channel-rust-1.97.0.toml",
+    "manifest_sha256": "3804d2666f7c12ce64205baa69b6be52f910b45b158091013264beb7aa1de7f5",
+    "version_detail": "1.97.0 (2d8144b78 2026-07-07)",
+    "hosts": {
+      "x86_64-unknown-linux-gnu": {
+        "url": "https://static.rust-lang.org/dist/2026-07-09/rust-1.97.0-x86_64-unknown-linux-gnu.tar.xz",
+        "sha256": "1cf17e4905b841d4c8e3f76467ac148d55fb3f54bf213c86f0d287a36471d904",
+        "available": true
+      },
+      "aarch64-unknown-linux-gnu": {
+        "url": "https://static.rust-lang.org/dist/2026-07-09/rust-1.97.0-aarch64-unknown-linux-gnu.tar.xz",
+        "sha256": "4c88fe30a748a8853c19f4e8876a64b32005bc4cbcde48e93732d06a430e808a",
+        "available": true
+      },
+      "x86_64-unknown-linux-musl": {
+        "url": "https://static.rust-lang.org/dist/2026-07-09/rust-1.97.0-x86_64-unknown-linux-musl.tar.xz",
+        "sha256": "4cebf1c593fcdccf40adb8bc5ef187c3e0dd99f465f9dab48d1a45310ba0de63",
+        "available": true
+      },
+      "aarch64-unknown-linux-musl": {
+        "url": "https://static.rust-lang.org/dist/2026-07-09/rust-1.97.0-aarch64-unknown-linux-musl.tar.xz",
+        "sha256": "dd9a8cc2d12ee790629143b22e6b83b0bd54b46b61356033f02fcafa944c5190",
+        "available": true
+      },
+      "aarch64-apple-darwin": {
+        "url": "https://static.rust-lang.org/dist/2026-07-09/rust-1.97.0-aarch64-apple-darwin.tar.xz",
+        "sha256": "44f35089605c8ab8cafb7d21e3497a57c24ae48e789729b5924fd2719dae0388",
+        "available": true
+      },
+      "x86_64-pc-windows-msvc": {
+        "url": "https://static.rust-lang.org/dist/2026-07-09/rust-1.97.0-x86_64-pc-windows-msvc.tar.xz",
+        "sha256": "6374dd33af5a875537c910f95d6c9c62ddea1a2b159cd89889af71eaa3c3972c",
+        "available": true
+      }
+    },
+    "bootstrap": {
+      "x86_64-unknown-linux-gnu": {
+        "url": "https://static.rust-lang.org/rustup/archive/1.29.3/x86_64-unknown-linux-gnu/rustup-init",
+        "sha256": "b1c8cb14e30889e7e2999e6b69e62d9e9b9ffc0f4df8180564d306d9680e6c55",
+        "checksum_url": "https://static.rust-lang.org/rustup/archive/1.29.3/x86_64-unknown-linux-gnu/rustup-init.sha256",
+        "verification": "Checksum observed from official upstream endpoint; artifact checksum must be verified after download before execution."
+      },
+      "aarch64-unknown-linux-gnu": {
+        "url": "https://static.rust-lang.org/rustup/archive/1.29.3/aarch64-unknown-linux-gnu/rustup-init",
+        "sha256": "9f608c142e0e38a78957d0661ba1dfaf0b6fb37184cfaa4b9a0aa57af6184282",
+        "checksum_url": "https://static.rust-lang.org/rustup/archive/1.29.3/aarch64-unknown-linux-gnu/rustup-init.sha256",
+        "verification": "Checksum observed from official upstream endpoint; artifact checksum must be verified after download before execution."
+      },
+      "x86_64-unknown-linux-musl": {
+        "url": "https://static.rust-lang.org/rustup/archive/1.29.3/x86_64-unknown-linux-musl/rustup-init",
+        "sha256": "1552169aba2836777136ccff7a381e95c17233b5d8250cd5e10ae3cb971bfcfc",
+        "checksum_url": "https://static.rust-lang.org/rustup/archive/1.29.3/x86_64-unknown-linux-musl/rustup-init.sha256",
+        "verification": "Checksum observed from official upstream endpoint; artifact checksum must be verified after download before execution."
+      },
+      "aarch64-unknown-linux-musl": {
+        "url": "https://static.rust-lang.org/rustup/archive/1.29.3/aarch64-unknown-linux-musl/rustup-init",
+        "sha256": "956deacdc27ab82ae7ac821d5d3e9e95e4795d476d17efe99743bb8531ca1031",
+        "checksum_url": "https://static.rust-lang.org/rustup/archive/1.29.3/aarch64-unknown-linux-musl/rustup-init.sha256",
+        "verification": "Checksum observed from official upstream endpoint; artifact checksum must be verified after download before execution."
+      },
+      "aarch64-apple-darwin": {
+        "url": "https://static.rust-lang.org/rustup/archive/1.29.3/aarch64-apple-darwin/rustup-init",
+        "sha256": "63752a1919a3a4793173ec70f8f212621a7ce38ba6a246095984482f4de20f9f",
+        "checksum_url": "https://static.rust-lang.org/rustup/archive/1.29.3/aarch64-apple-darwin/rustup-init.sha256",
+        "verification": "Checksum observed from official upstream endpoint; artifact checksum must be verified after download before execution."
+      },
+      "x86_64-pc-windows-msvc": {
+        "url": "https://static.rust-lang.org/rustup/archive/1.29.3/x86_64-pc-windows-msvc/rustup-init.exe",
+        "sha256": "38027d51d69a5d05493627a0634dbea52d6cd793c8f072d2373d3f4163eec7db",
+        "checksum_url": "https://static.rust-lang.org/rustup/archive/1.29.3/x86_64-pc-windows-msvc/rustup-init.exe.sha256",
+        "verification": "Checksum observed from official upstream endpoint; artifact checksum must be verified after download before execution."
+      }
+    }
+  }
+}

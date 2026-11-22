@@ -1,0 +1,7 @@
+name "probe-test-baseline"
+targetType "executable"
+sourcePaths "source"
+importPaths "source"
+targetPath "build"
+targetName "probe-test-baseline"
+dflags "-preview=dip1000"

@@ -1,0 +1,133 @@
+{
+  "go": {
+    "url": "https://go.dev/dl/?mode=json",
+    "value": [
+      {
+        "version": "go1.27.4",
+        "stable": true
+      },
+      {
+        "version": "go1.26.11",
+        "stable": true
+      }
+    ]
+  },
+  "checkout": {
+    "url": "https://api.github.com/repos/actions/checkout/commits/v7.0.1",
+    "value": "3d3c42e5aac5ba805825da76410c181273ba90b1"
+  },
+  "upload-artifact": {
+    "url": "https://api.github.com/repos/actions/upload-artifact/commits/v7.0.2",
+    "value": "cf430e030ddbb5b0abf93d22962f4752f3646cd9"
+  },
+  "ldc": {
+    "url": "https://api.github.com/repos/ldc-developers/ldc/releases/tags/v1.43.0",
+    "value": [
+      {
+        "name": "ldc-1.43.0-src.tar.gz",
+        "url": "https://github.com/ldc-developers/ldc/releases/download/v1.43.0/ldc-1.43.0-src.tar.gz",
+        "digest": "sha256:d655aad0daf0ce9a17b2ffffb947bb79ec6968bc7fb88bc918316dbe78c616e7"
+      },
+      {
+        "name": "ldc-1.43.0-src.zip",
+        "url": "https://github.com/ldc-developers/ldc/releases/download/v1.43.0/ldc-1.43.0-src.zip",
+        "digest": "sha256:9d589608ecf3a9d3dfb5cf22b2c77689431296fe751410f523d672886c6af340"
+      },
+      {
+        "name": "ldc2-1.43.0-addon-android.tar.xz",
+        "url": "https://github.com/ldc-developers/ldc/releases/download/v1.43.0/ldc2-1.43.0-addon-android.tar.xz",
+        "digest": "sha256:fb84c9b5e075877c1918beaaf574666e467424775b8dcc186fa3d619c6fcfdb1"
+      },
+      {
+        "name": "ldc2-1.43.0-addon-emscripten.tar.xz",
+        "url": "https://github.com/ldc-developers/ldc/releases/download/v1.43.0/ldc2-1.43.0-addon-emscripten.tar.xz",
+        "digest": "sha256:86af4b9ff3ba41e8e090e1a496213ca36f6b90afaaed62392d5e520d46bb0717"
+      },
+      {
+        "name": "ldc2-1.43.0-addon-wasi.tar.xz",
+        "url": "https://github.com/ldc-developers/ldc/releases/download/v1.43.0/ldc2-1.43.0-addon-wasi.tar.xz",
+        "digest": "sha256:5c8079c44dbc35990380916214f11846ab0332b6e79f300e237120e5dd24a918"
+      },
+      {
+        "name": "ldc2-1.43.0-addon-windows.tar.xz",
+        "url": "https://github.com/ldc-developers/ldc/releases/download/v1.43.0/ldc2-1.43.0-addon-windows.tar.xz",
+        "digest": "sha256:88c6679eccfcbbf82b90dc15b731d07eca74aea088fe0a20e1a2780e4c2bc45d"
+      },
+      {
+        "name": "ldc2-1.43.0-alpine-aarch64.tar.xz",
+        "url": "https://github.com/ldc-developers/ldc/releases/download/v1.43.0/ldc2-1.43.0-alpine-aarch64.tar.xz",
+        "digest": "sha256:2ad9b985f66e05855cfd2581d7e9cf08d28c86afce02dbcd82aad531e0872979"
+      },
+      {
+        "name": "ldc2-1.43.0-alpine-x86_64.tar.xz",
+        "url": "https://github.com/ldc-developers/ldc/releases/download/v1.43.0/ldc2-1.43.0-alpine-x86_64.tar.xz",
+        "digest": "sha256:734f1dbdcc5f6b478efb8c67e5bd7cd73c5c8f0023f45c696adba12618d8e510"
+      },
+      {
+        "name": "ldc2-1.43.0-android-aarch64.tar.xz",
+        "url": "https://github.com/ldc-developers/ldc/releases/download/v1.43.0/ldc2-1.43.0-android-aarch64.tar.xz",
+        "digest": "sha256:89b023abe708e43e8900516ce79751ccec8d76637dc0fe35c434a9ccf5aa4760"
+      },
+      {
+        "name": "ldc2-1.43.0-android-armv7a.tar.xz",
+        "url": "https://github.com/ldc-developers/ldc/releases/download/v1.43.0/ldc2-1.43.0-android-armv7a.tar.xz",
+        "digest": "sha256:1a175065a14ddac499acae35352c059bab0ce18f4c714d504d6074619daf47e5"
+      },
+      {
+        "name": "ldc2-1.43.0-freebsd-x86_64.tar.xz",
+        "url": "https://github.com/ldc-developers/ldc/releases/download/v1.43.0/ldc2-1.43.0-freebsd-x86_64.tar.xz",
+        "digest": "sha256:4cbc4c2b9845a288e1c4bb491ec31de67c95ad25a1d76d13dd1f3c06fa3f3420"
+      },
+      {
+        "name": "ldc2-1.43.0-linux-aarch64.tar.xz",
+        "url": "https://github.com/ldc-developers/ldc/releases/download/v1.43.0/ldc2-1.43.0-linux-aarch64.tar.xz",
+        "digest": "sha256:f2b24edc254d4b9944234f641de3c4b3a36d5752639ec30cb2bbe122931b2283"
+      },
+      {
+        "name": "ldc2-1.43.0-linux-x86_64.tar.xz",
+        "url": "https://github.com/ldc-developers/ldc/releases/download/v1.43.0/ldc2-1.43.0-linux-x86_64.tar.xz",
+        "digest": "sha256:35805db60f47fd1a162b2035da84d96beec37e6d1e7b1edf60498a90acfaedce"
+      },
+      {
+        "name": "ldc2-1.43.0-osx-arm64.tar.xz",
+        "url": "https://github.com/ldc-developers/ldc/releases/download/v1.43.0/ldc2-1.43.0-osx-arm64.tar.xz",
+        "digest": "sha256:5e332349c784d4e0b1c4622284803880f89d97ef1ef97c6b25aa4d6b094c5fed"
+      },
+      {
+        "name": "ldc2-1.43.0-osx-universal.tar.xz",
+        "url": "https://github.com/ldc-developers/ldc/releases/download/v1.43.0/ldc2-1.43.0-osx-universal.tar.xz",
+        "digest": "sha256:2ad786f17e0a31b985c362980762a17ef143101488cacf4a253612bff40a72d2"
+      },
+      {
+        "name": "ldc2-1.43.0-osx-x86_64.tar.xz",
+        "url": "https://github.com/ldc-developers/ldc/releases/download/v1.43.0/ldc2-1.43.0-osx-x86_64.tar.xz",
+        "digest": "sha256:dee787ee77363f189e71ebda8e80acebb735dc6fc190a38d1f90a016d0c01624"
+      },
+      {
+        "name": "ldc2-1.43.0-windows-multilib.7z",
+        "url": "https://github.com/ldc-developers/ldc/releases/download/v1.43.0/ldc2-1.43.0-windows-multilib.7z",
+        "digest": "sha256:5173d346eabf4c90cb861b97c54c41af1590c762a5f6c3b79b3aaa055bfc02e7"
+      },
+      {
+        "name": "ldc2-1.43.0-windows-multilib.exe",
+        "url": "https://github.com/ldc-developers/ldc/releases/download/v1.43.0/ldc2-1.43.0-windows-multilib.exe",
+        "digest": "sha256:729c16431c790c2090d2d2cab75a1b614f39feea2e47554556a98ee1326efa5d"
+      },
+      {
+        "name": "ldc2-1.43.0-windows-x64.7z",
+        "url": "https://github.com/ldc-developers/ldc/releases/download/v1.43.0/ldc2-1.43.0-windows-x64.7z",
+        "digest": "sha256:60ae3d5e34287aa25433c7550520060a52f9f212e3d5ff6472a9067d8d17e47e"
+      },
+      {
+        "name": "ldc2-1.43.0-windows-x86.7z",
+        "url": "https://github.com/ldc-developers/ldc/releases/download/v1.43.0/ldc2-1.43.0-windows-x86.7z",
+        "digest": "sha256:a062697d0324911c82c01a2a1810247de9423aca368390556ba7577bef4e07db"
+      },
+      {
+        "name": "ldc2-1.43.0.sha256sums.txt",
+        "url": "https://github.com/ldc-developers/ldc/releases/download/v1.43.0/ldc2-1.43.0.sha256sums.txt",
+        "digest": "sha256:01bbe9eb060d2607a728742459bd929bc3316f4253ac858e4ec44111f3066006"
+      }
+    ]
+  }
+}

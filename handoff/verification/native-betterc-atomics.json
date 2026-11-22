@@ -1,0 +1,36 @@
+{
+  "scope": "Actual standalone native core.atomic BetterC saturating owner-counter link/run probe, not a Flint arena implementation or concurrency stress test",
+  "source": "module native_owner_atomic_probe;\nimport core.atomic : atomicLoad, atomicStore, cas, MemoryOrder;\n@safe:\nprivate shared ulong ownerCounter;\nulong nextOwner() nothrow @nogc\n{\n    ulong seen = atomicLoad!(MemoryOrder.raw)(ownerCounter);\n    while (seen != ulong.max)\n    {\n        if (cas!(MemoryOrder.raw, MemoryOrder.raw)(&ownerCounter, seen, seen + 1))\n            return seen + 1;\n        seen = atomicLoad!(MemoryOrder.raw)(ownerCounter);\n    }\n    return 0;\n}\nextern(C) int main() nothrow @nogc\n{\n    assert(nextOwner() == 1);\n    assert(nextOwner() == 2);\n    atomicStore!(MemoryOrder.raw)(ownerCounter, ulong.max - 1);\n    assert(nextOwner() == ulong.max);\n    assert(nextOwner() == 0);\n    assert(nextOwner() == 0);\n    return 0;\n}\n",
+  "source_sha256": "699a978ae74d779d2acd987d227fff4eb1c0787969ab523c47a5ee7c201bf71f",
+  "results": [
+    {
+      "compiler": "dmd",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+        "-betterC",
+        "-preview=dip1000",
+        "/tmp/flint-atomic-6_r63bzp/probe.d",
+        "-of=/tmp/flint-atomic-6_r63bzp/dmd"
+      ],
+      "compile_exit_code": 0,
+      "diagnostics": "",
+      "run_exit_code": 0,
+      "binary_sha256": "faad5904fe77f3ebbd401aa637c95131e1ddd0ade837a7d97b268046aa1e92e8"
+    },
+    {
+      "compiler": "ldc2",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+        "-betterC",
+        "-preview=dip1000",
+        "/tmp/flint-atomic-6_r63bzp/probe.d",
+        "-of=/tmp/flint-atomic-6_r63bzp/ldc2"
+      ],
+      "compile_exit_code": 0,
+      "diagnostics": "",
+      "run_exit_code": 0,
+      "binary_sha256": "280084925588ace8db37f45c200a11b59bd7478d857deb7c21eb94b23131cfa6"
+    }
+  ],
+  "status": "passed"
+}

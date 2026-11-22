@@ -1,0 +1,241 @@
+{
+  "schema": 1,
+  "checked_at_utc": "2026-11-21T07:06:13.116863+00:00",
+  "scope": "standalone Linux native compiler capability probes; PGO profile is synthetic toolchain verification, not a production training workload",
+  "source": "verification/probes/toolchain_flags.d",
+  "source_sha256": "892fd8c13bdd069fb1a5a0d6257e257806bdf03b5fe9284d3aa5e883a6f8adaa",
+  "checks": [
+    {
+      "name": "DMD identity",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+        "--version"
+      ],
+      "exit_code": 0,
+      "passed": true,
+      "expected": "success",
+      "stdout": "DMD64 D Compiler v2.114.0\nCopyright (C) 1999-2026 by The D Language Foundation, All Rights Reserved written by Walter Bright\n",
+      "stderr": ""
+    },
+    {
+      "name": "LDC identity",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+        "--version"
+      ],
+      "exit_code": 0,
+      "passed": true,
+      "expected": "success",
+      "stdout": "LDC - the LLVM D compiler (1.43.0):\n  based on DMD v2.113.0 and LLVM 22.1.8\n  built with LDC - the LLVM D compiler (1.43.0)\n  Default target: x86_64-unknown-linux-gnu\n  Host CPU: emeraldrapids\n  https://dlang.org - https://wiki.dlang.org/LDC\n\n\n  Registered Targets:\n    aarch64     - AArch64 (little endian)\n    aarch64_32  - AArch64 (little endian ILP32)\n    aarch64_be  - AArch64 (big endian)\n    amdgcn      - AMD GCN GPUs\n    arm         - ARM\n    arm64       - ARM64 (little endian)\n    arm64_32    - ARM64 (little endian ILP32)\n    armeb       - ARM (big endian)\n    avr         - Atmel AVR Microcontroller\n    bpf         - BPF (host endian)\n    bpfeb       - BPF (big endian)\n    bpfel       - BPF (little endian)\n    hexagon     - Hexagon\n    lanai       - Lanai\n    loongarch32 - 32-bit LoongArch\n    loongarch64 - 64-bit LoongArch\n    mips        - MIPS (32-bit big endian)\n    mips64      - MIPS (64-bit big endian)\n    mips64el    - MIPS (64-bit little endian)\n    mipsel      - MIPS (32-bit little endian)\n    msp430      - MSP430 [experimental]\n    nvptx       - NVIDIA PTX 32-bit\n    nvptx64     - NVIDIA PTX 64-bit\n    ppc32       - PowerPC 32\n    ppc32le     - PowerPC 32 LE\n    ppc64       - PowerPC 64\n    ppc64le     - PowerPC 64 LE\n    r600        - AMD GPUs HD2XXX-HD6XXX\n    riscv32     - 32-bit RISC-V\n    riscv32be   - 32-bit big endian RISC-V\n    riscv64     - 64-bit RISC-V\n    riscv64be   - 64-bit big endian RISC-V\n    sparc       - Sparc\n    sparcel     - Sparc LE\n    sparcv9     - Sparc V9\n    spirv       - SPIR-V Logical\n    spirv32     - SPIR-V 32-bit\n    spirv64     - SPIR-V 64-bit\n    systemz     - SystemZ\n    thumb       - Thumb\n    thumbeb     - Thumb (big endian)\n    ve          - VE\n    wasm32      - WebAssembly 32-bit\n    wasm64      - WebAssembly 64-bit\n    x86         - 32-bit X86: Pentium-Pro and above\n    x86-64      - 64-bit X86: EM64T and AMD64\n    xcore       - XCore\n    xtensa      - Xtensa 32\n",
+      "stderr": ""
+    },
+    {
+      "name": "DMD development flags",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/dmd2/linux/bin64/dmd",
+        "-g",
+        "-w",
+        "-de",
+        "-preview=dip1000",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/toolchain_flags.d",
+        "-of=/tmp/flint-toolchain-h7m_g2gc/dmd-dev"
+      ],
+      "exit_code": 0,
+      "passed": true,
+      "expected": "success",
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "DMD native execution",
+      "command": [
+        "/tmp/flint-toolchain-h7m_g2gc/dmd-dev"
+      ],
+      "exit_code": 0,
+      "passed": true,
+      "expected": "success",
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "LDC O3 ThinLTO release link",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+        "-O3",
+        "--flto=thin",
+        "-release",
+        "-boundscheck=safeonly",
+        "-preview=dip1000",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/toolchain_flags.d",
+        "-of=/tmp/flint-toolchain-h7m_g2gc/O3"
+      ],
+      "exit_code": 0,
+      "passed": true,
+      "expected": "success",
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "LDC O3 native execution",
+      "command": [
+        "/tmp/flint-toolchain-h7m_g2gc/O3"
+      ],
+      "exit_code": 0,
+      "passed": true,
+      "expected": "success",
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "LDC Oz ThinLTO release link",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+        "-Oz",
+        "--flto=thin",
+        "-release",
+        "-boundscheck=safeonly",
+        "-preview=dip1000",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/toolchain_flags.d",
+        "-of=/tmp/flint-toolchain-h7m_g2gc/Oz"
+      ],
+      "exit_code": 0,
+      "passed": true,
+      "expected": "success",
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "LDC Oz native execution",
+      "command": [
+        "/tmp/flint-toolchain-h7m_g2gc/Oz"
+      ],
+      "exit_code": 0,
+      "passed": true,
+      "expected": "success",
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "LDC D AddressSanitizer flag",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+        "-c",
+        "-fsanitize=address",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/toolchain_flags.d",
+        "-of=/tmp/flint-toolchain-h7m_g2gc/asan.o"
+      ],
+      "exit_code": 0,
+      "passed": true,
+      "expected": "success",
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "LDC rejects unsupported UBSan flag",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+        "-c",
+        "-fsanitize=address,undefined",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/toolchain_flags.d",
+        "-of=/tmp/flint-toolchain-h7m_g2gc/undefined.o"
+      ],
+      "exit_code": 1,
+      "passed": true,
+      "expected": "Unrecognized -fsanitize value 'undefined'",
+      "stdout": "",
+      "stderr": "Error: Unrecognized -fsanitize value 'undefined'.\n"
+    },
+    {
+      "name": "LDC explicit time trace",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+        "-c",
+        "-ftime-trace",
+        "-ftime-trace-file=/tmp/flint-toolchain-h7m_g2gc/trace.json",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/toolchain_flags.d",
+        "-of=/tmp/flint-toolchain-h7m_g2gc/trace.o"
+      ],
+      "exit_code": 0,
+      "passed": true,
+      "expected": "success",
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "PGO instrumented link",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+        "-O3",
+        "--flto=thin",
+        "-fprofile-instr-generate",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/toolchain_flags.d",
+        "-of=/tmp/flint-toolchain-h7m_g2gc/pgo-generate"
+      ],
+      "exit_code": 0,
+      "passed": true,
+      "expected": "success",
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "PGO training execution",
+      "command": [
+        "/tmp/flint-toolchain-h7m_g2gc/pgo-generate"
+      ],
+      "exit_code": 0,
+      "passed": true,
+      "expected": "success",
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "PGO merge",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc-profdata",
+        "merge",
+        "-o",
+        "/tmp/flint-toolchain-h7m_g2gc/training.profdata",
+        "/tmp/flint-toolchain-h7m_g2gc/training.profraw"
+      ],
+      "exit_code": 0,
+      "passed": true,
+      "expected": "success",
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "PGO use link",
+      "command": [
+        "/workspace/scratch/09fd6c26fd15/toolchains/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+        "-O3",
+        "--flto=thin",
+        "-fprofile-instr-use=/tmp/flint-toolchain-h7m_g2gc/training.profdata",
+        "/workspace/scratch/09fd6c26fd15/flint-agent-handoff/verification/probes/toolchain_flags.d",
+        "-of=/tmp/flint-toolchain-h7m_g2gc/pgo-use"
+      ],
+      "exit_code": 0,
+      "passed": true,
+      "expected": "success",
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "PGO optimized execution",
+      "command": [
+        "/tmp/flint-toolchain-h7m_g2gc/pgo-use"
+      ],
+      "exit_code": 0,
+      "passed": true,
+      "expected": "success",
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "passed": true,
+  "failure": null,
+  "not_claimed": [
+    "D runtime ASan execution",
+    "D UBSan support",
+    "framework performance or binary-size results"
+  ]
+}

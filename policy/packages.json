@@ -1,0 +1,709 @@
+{
+  "schema": 1,
+  "packages": {
+    "reactor": {
+      "tier": 0,
+      "module": "flint.reactor",
+      "dependencies": [
+        "arena",
+        "conc"
+      ],
+      "better_c": false,
+      "budget": {
+        "dmd_cold_seconds": 0.9,
+        "dmd_incremental_seconds": 0.6,
+        "ldc_cold_seconds": 5.4,
+        "ldc_incremental_seconds": 2.7,
+        "incremental_linked_bytes": 262144,
+        "compiler_peak_rss_bytes": 536870912,
+        "template_instances": 2000
+      }
+    },
+    "arena": {
+      "tier": 0,
+      "module": "flint.arena",
+      "dependencies": [],
+      "better_c": true,
+      "budget": {
+        "dmd_cold_seconds": 0.35,
+        "dmd_incremental_seconds": 0.35,
+        "ldc_cold_seconds": 2.1,
+        "ldc_incremental_seconds": 1.05,
+        "incremental_linked_bytes": 262144,
+        "compiler_peak_rss_bytes": 536870912,
+        "template_instances": 2000
+      }
+    },
+    "conc": {
+      "tier": 0,
+      "module": "flint.conc",
+      "dependencies": [
+        "arena"
+      ],
+      "better_c": false,
+      "budget": {
+        "dmd_cold_seconds": 0.9,
+        "dmd_incremental_seconds": 0.6,
+        "ldc_cold_seconds": 5.4,
+        "ldc_incremental_seconds": 2.7,
+        "incremental_linked_bytes": 262144,
+        "compiler_peak_rss_bytes": 536870912,
+        "template_instances": 2000
+      }
+    },
+    "di": {
+      "tier": 1,
+      "module": "flint.di",
+      "dependencies": [
+        "arena"
+      ],
+      "better_c": false,
+      "budget": {
+        "dmd_cold_seconds": 0.8,
+        "dmd_incremental_seconds": 0.6,
+        "ldc_cold_seconds": 4.8,
+        "ldc_incremental_seconds": 2.4,
+        "incremental_linked_bytes": 262144,
+        "compiler_peak_rss_bytes": 536870912,
+        "template_instances": 2000
+      }
+    },
+    "config": {
+      "tier": 1,
+      "module": "flint.config",
+      "dependencies": [
+        "arena",
+        "serde",
+        "validate"
+      ],
+      "better_c": false,
+      "budget": {
+        "dmd_cold_seconds": 0.8,
+        "dmd_incremental_seconds": 0.6,
+        "ldc_cold_seconds": 4.8,
+        "ldc_incremental_seconds": 2.4,
+        "incremental_linked_bytes": 262144,
+        "compiler_peak_rss_bytes": 536870912,
+        "template_instances": 2000
+      }
+    },
+    "serde": {
+      "tier": 1,
+      "module": "flint.serde",
+      "dependencies": [
+        "arena"
+      ],
+      "better_c": true,
+      "budget": {
+        "dmd_cold_seconds": 0.8,
+        "dmd_incremental_seconds": 0.6,
+        "ldc_cold_seconds": 4.8,
+        "ldc_incremental_seconds": 2.4,
+        "incremental_linked_bytes": 262144,
+        "compiler_peak_rss_bytes": 536870912,
+        "template_instances": 2000
+      }
+    },
+    "validate": {
+      "tier": 1,
+      "module": "flint.validate",
+      "dependencies": [
+        "arena"
+      ],
+      "better_c": true,
+      "budget": {
+        "dmd_cold_seconds": 0.35,
+        "dmd_incremental_seconds": 0.35,
+        "ldc_cold_seconds": 2.1,
+        "ldc_incremental_seconds": 1.05,
+        "incremental_linked_bytes": 262144,
+        "compiler_peak_rss_bytes": 536870912,
+        "template_instances": 2000
+      }
+    },
+    "log": {
+      "tier": 1,
+      "module": "flint.log",
+      "dependencies": [
+        "arena",
+        "conc"
+      ],
+      "better_c": false,
+      "budget": {
+        "dmd_cold_seconds": 0.8,
+        "dmd_incremental_seconds": 0.6,
+        "ldc_cold_seconds": 4.8,
+        "ldc_incremental_seconds": 2.4,
+        "incremental_linked_bytes": 262144,
+        "compiler_peak_rss_bytes": 536870912,
+        "template_instances": 2000
+      }
+    },
+    "test": {
+      "tier": 1,
+      "module": "flint.test",
+      "dependencies": [],
+      "better_c": false,
+      "budget": {
+        "dmd_cold_seconds": 0.8,
+        "dmd_incremental_seconds": 0.6,
+        "ldc_cold_seconds": 4.8,
+        "ldc_incremental_seconds": 2.4,
+        "incremental_linked_bytes": 262144,
+        "compiler_peak_rss_bytes": 536870912,
+        "template_instances": 2000
+      }
+    },
+    "web": {
+      "tier": 2,
+      "module": "flint.web",
+      "dependencies": [
+        "arena",
+        "reactor",
+        "conc",
+        "di",
+        "serde",
+        "validate",
+        "log"
+      ],
+      "better_c": false,
+      "budget": {
+        "dmd_cold_seconds": 1.8,
+        "dmd_incremental_seconds": 0.6,
+        "ldc_cold_seconds": 10.8,
+        "ldc_incremental_seconds": 5.4,
+        "incremental_linked_bytes": 1048576,
+        "compiler_peak_rss_bytes": 536870912,
+        "template_instances": 2000
+      }
+    },
+    "http": {
+      "tier": 2,
+      "module": "flint.http",
+      "dependencies": [
+        "arena",
+        "reactor",
+        "conc",
+        "serde"
+      ],
+      "better_c": false,
+      "budget": {
+        "dmd_cold_seconds": 1.8,
+        "dmd_incremental_seconds": 0.6,
+        "ldc_cold_seconds": 10.8,
+        "ldc_incremental_seconds": 5.4,
+        "incremental_linked_bytes": 1048576,
+        "compiler_peak_rss_bytes": 536870912,
+        "template_instances": 2000
+      }
+    },
+    "security": {
+      "tier": 2,
+      "module": "flint.security",
+      "dependencies": [
+        "arena",
+        "http",
+        "serde",
+        "conc"
+      ],
+      "better_c": false,
+      "budget": {
+        "dmd_cold_seconds": 1.8,
+        "dmd_incremental_seconds": 0.6,
+        "ldc_cold_seconds": 10.8,
+        "ldc_incremental_seconds": 5.4,
+        "incremental_linked_bytes": 1048576,
+        "compiler_peak_rss_bytes": 536870912,
+        "template_instances": 2000
+      }
+    },
+    "actuator": {
+      "tier": 2,
+      "module": "flint.actuator",
+      "dependencies": [
+        "arena",
+        "reactor",
+        "web",
+        "http",
+        "log",
+        "serde",
+        "conc"
+      ],
+      "better_c": false,
+      "budget": {
+        "dmd_cold_seconds": 1.8,
+        "dmd_incremental_seconds": 0.6,
+        "ldc_cold_seconds": 10.8,
+        "ldc_incremental_seconds": 5.4,
+        "incremental_linked_bytes": 1048576,
+        "compiler_peak_rss_bytes": 536870912,
+        "template_instances": 2000
+      }
+    },
+    "schedule": {
+      "tier": 2,
+      "module": "flint.schedule",
+      "dependencies": [
+        "arena",
+        "reactor",
+        "conc",
+        "log"
+      ],
+      "better_c": false,
+      "budget": {
+        "dmd_cold_seconds": 1.8,
+        "dmd_incremental_seconds": 0.6,
+        "ldc_cold_seconds": 10.8,
+        "ldc_incremental_seconds": 5.4,
+        "incremental_linked_bytes": 1048576,
+        "compiler_peak_rss_bytes": 536870912,
+        "template_instances": 2000
+      }
+    },
+    "rpc": {
+      "tier": 2,
+      "module": "flint.rpc",
+      "dependencies": [
+        "arena",
+        "reactor",
+        "conc",
+        "web",
+        "http",
+        "serde"
+      ],
+      "better_c": false,
+      "budget": {
+        "dmd_cold_seconds": 1.8,
+        "dmd_incremental_seconds": 0.6,
+        "ldc_cold_seconds": 10.8,
+        "ldc_incremental_seconds": 5.4,
+        "incremental_linked_bytes": 1048576,
+        "compiler_peak_rss_bytes": 536870912,
+        "template_instances": 2000
+      }
+    },
+    "sql": {
+      "tier": 3,
+      "module": "flint.sql",
+      "dependencies": [
+        "arena",
+        "reactor",
+        "conc",
+        "log"
+      ],
+      "better_c": false,
+      "budget": {
+        "dmd_cold_seconds": 1.4,
+        "dmd_incremental_seconds": 0.6,
+        "ldc_cold_seconds": 8.4,
+        "ldc_incremental_seconds": 4.2,
+        "incremental_linked_bytes": 786432,
+        "compiler_peak_rss_bytes": 536870912,
+        "template_instances": 2000
+      }
+    },
+    "data": {
+      "tier": 3,
+      "module": "flint.data",
+      "dependencies": [
+        "arena",
+        "sql",
+        "serde",
+        "validate",
+        "di",
+        "conc"
+      ],
+      "better_c": false,
+      "budget": {
+        "dmd_cold_seconds": 1.4,
+        "dmd_incremental_seconds": 0.6,
+        "ldc_cold_seconds": 8.4,
+        "ldc_incremental_seconds": 4.2,
+        "incremental_linked_bytes": 786432,
+        "compiler_peak_rss_bytes": 536870912,
+        "template_instances": 2000
+      }
+    },
+    "migrate": {
+      "tier": 3,
+      "module": "flint.migrate",
+      "dependencies": [
+        "arena",
+        "sql",
+        "log",
+        "conc"
+      ],
+      "better_c": false,
+      "budget": {
+        "dmd_cold_seconds": 1.4,
+        "dmd_incremental_seconds": 0.6,
+        "ldc_cold_seconds": 8.4,
+        "ldc_incremental_seconds": 4.2,
+        "incremental_linked_bytes": 786432,
+        "compiler_peak_rss_bytes": 536870912,
+        "template_instances": 2000
+      }
+    },
+    "cache": {
+      "tier": 3,
+      "module": "flint.cache",
+      "dependencies": [
+        "arena",
+        "reactor",
+        "conc",
+        "serde"
+      ],
+      "better_c": false,
+      "budget": {
+        "dmd_cold_seconds": 1.4,
+        "dmd_incremental_seconds": 0.6,
+        "ldc_cold_seconds": 8.4,
+        "ldc_incremental_seconds": 4.2,
+        "incremental_linked_bytes": 786432,
+        "compiler_peak_rss_bytes": 536870912,
+        "template_instances": 2000
+      }
+    },
+    "cli": {
+      "tier": 4,
+      "module": "flint.cli",
+      "dependencies": [
+        "arena",
+        "validate"
+      ],
+      "better_c": false,
+      "budget": {
+        "dmd_cold_seconds": 0.9,
+        "dmd_incremental_seconds": 0.6,
+        "ldc_cold_seconds": 5.4,
+        "ldc_incremental_seconds": 2.7,
+        "incremental_linked_bytes": 262144,
+        "compiler_peak_rss_bytes": 536870912,
+        "template_instances": 2000
+      }
+    },
+    "term": {
+      "tier": 4,
+      "module": "flint.term",
+      "dependencies": [
+        "arena"
+      ],
+      "better_c": false,
+      "budget": {
+        "dmd_cold_seconds": 0.9,
+        "dmd_incremental_seconds": 0.6,
+        "ldc_cold_seconds": 5.4,
+        "ldc_incremental_seconds": 2.7,
+        "incremental_linked_bytes": 262144,
+        "compiler_peak_rss_bytes": 536870912,
+        "template_instances": 2000
+      }
+    },
+    "tui": {
+      "tier": 4,
+      "module": "flint.tui",
+      "dependencies": [
+        "arena",
+        "conc",
+        "term",
+        "style"
+      ],
+      "better_c": false,
+      "budget": {
+        "dmd_cold_seconds": 0.9,
+        "dmd_incremental_seconds": 0.6,
+        "ldc_cold_seconds": 5.4,
+        "ldc_incremental_seconds": 2.7,
+        "incremental_linked_bytes": 262144,
+        "compiler_peak_rss_bytes": 536870912,
+        "template_instances": 2000
+      }
+    },
+    "style": {
+      "tier": 4,
+      "module": "flint.style",
+      "dependencies": [],
+      "better_c": false,
+      "budget": {
+        "dmd_cold_seconds": 0.35,
+        "dmd_incremental_seconds": 0.35,
+        "ldc_cold_seconds": 2.1,
+        "ldc_incremental_seconds": 1.05,
+        "incremental_linked_bytes": 262144,
+        "compiler_peak_rss_bytes": 536870912,
+        "template_instances": 2000
+      }
+    },
+    "widgets": {
+      "tier": 4,
+      "module": "flint.widgets",
+      "dependencies": [
+        "arena",
+        "tui",
+        "style"
+      ],
+      "better_c": false,
+      "budget": {
+        "dmd_cold_seconds": 0.9,
+        "dmd_incremental_seconds": 0.6,
+        "ldc_cold_seconds": 5.4,
+        "ldc_incremental_seconds": 2.7,
+        "incremental_linked_bytes": 262144,
+        "compiler_peak_rss_bytes": 536870912,
+        "template_instances": 2000
+      }
+    },
+    "prompt": {
+      "tier": 4,
+      "module": "flint.prompt",
+      "dependencies": [
+        "arena",
+        "term",
+        "tui",
+        "widgets",
+        "validate"
+      ],
+      "better_c": false,
+      "budget": {
+        "dmd_cold_seconds": 0.9,
+        "dmd_incremental_seconds": 0.6,
+        "ldc_cold_seconds": 5.4,
+        "ldc_incremental_seconds": 2.7,
+        "incremental_linked_bytes": 262144,
+        "compiler_peak_rss_bytes": 536870912,
+        "template_instances": 2000
+      }
+    },
+    "os": {
+      "tier": 4,
+      "module": "flint.os",
+      "dependencies": [
+        "arena",
+        "conc"
+      ],
+      "better_c": false,
+      "budget": {
+        "dmd_cold_seconds": 0.9,
+        "dmd_incremental_seconds": 0.6,
+        "ldc_cold_seconds": 5.4,
+        "ldc_incremental_seconds": 2.7,
+        "incremental_linked_bytes": 262144,
+        "compiler_peak_rss_bytes": 536870912,
+        "template_instances": 2000
+      }
+    },
+    "wasm-bridge": {
+      "tier": 5,
+      "module": "flint.wasm_bridge",
+      "dependencies": [
+        "arena"
+      ],
+      "better_c": true,
+      "budget": {
+        "dmd_cold_seconds": 0.8,
+        "dmd_incremental_seconds": 0.6,
+        "ldc_cold_seconds": 4.8,
+        "ldc_incremental_seconds": 2.4,
+        "incremental_linked_bytes": 49152,
+        "compiler_peak_rss_bytes": 536870912,
+        "template_instances": 2000
+      }
+    },
+    "ui-signals": {
+      "tier": 5,
+      "module": "flint.ui_signals",
+      "dependencies": [
+        "arena",
+        "wasm-bridge"
+      ],
+      "better_c": true,
+      "budget": {
+        "dmd_cold_seconds": 0.8,
+        "dmd_incremental_seconds": 0.6,
+        "ldc_cold_seconds": 4.8,
+        "ldc_incremental_seconds": 2.4,
+        "incremental_linked_bytes": 49152,
+        "compiler_peak_rss_bytes": 536870912,
+        "template_instances": 2000
+      }
+    },
+    "wasi": {
+      "tier": 5,
+      "module": "flint.wasi",
+      "dependencies": [
+        "arena",
+        "conc"
+      ],
+      "better_c": false,
+      "budget": {
+        "dmd_cold_seconds": 0.8,
+        "dmd_incremental_seconds": 0.6,
+        "ldc_cold_seconds": 4.8,
+        "ldc_incremental_seconds": 2.4,
+        "incremental_linked_bytes": 49152,
+        "compiler_peak_rss_bytes": 536870912,
+        "template_instances": 2000
+      }
+    },
+    "mq": {
+      "tier": 6,
+      "module": "flint.mq",
+      "dependencies": [
+        "arena",
+        "reactor",
+        "conc",
+        "serde",
+        "log"
+      ],
+      "better_c": false,
+      "budget": {
+        "dmd_cold_seconds": 1.5,
+        "dmd_incremental_seconds": 0.6,
+        "ldc_cold_seconds": 9.0,
+        "ldc_incremental_seconds": 4.5,
+        "incremental_linked_bytes": 1048576,
+        "compiler_peak_rss_bytes": 536870912,
+        "template_instances": 2000
+      }
+    },
+    "storage": {
+      "tier": 6,
+      "module": "flint.storage",
+      "dependencies": [
+        "arena",
+        "http",
+        "security",
+        "conc"
+      ],
+      "better_c": false,
+      "budget": {
+        "dmd_cold_seconds": 1.5,
+        "dmd_incremental_seconds": 0.6,
+        "ldc_cold_seconds": 9.0,
+        "ldc_incremental_seconds": 4.5,
+        "incremental_linked_bytes": 1048576,
+        "compiler_peak_rss_bytes": 536870912,
+        "template_instances": 2000
+      }
+    },
+    "mail": {
+      "tier": 6,
+      "module": "flint.mail",
+      "dependencies": [
+        "arena",
+        "http",
+        "reactor",
+        "conc"
+      ],
+      "better_c": false,
+      "budget": {
+        "dmd_cold_seconds": 1.5,
+        "dmd_incremental_seconds": 0.6,
+        "ldc_cold_seconds": 9.0,
+        "ldc_incremental_seconds": 4.5,
+        "incremental_linked_bytes": 1048576,
+        "compiler_peak_rss_bytes": 536870912,
+        "template_instances": 2000
+      }
+    },
+    "ai": {
+      "tier": 7,
+      "module": "flint.ai",
+      "dependencies": [
+        "arena",
+        "http",
+        "serde",
+        "conc",
+        "validate"
+      ],
+      "better_c": false,
+      "budget": {
+        "dmd_cold_seconds": 1.4,
+        "dmd_incremental_seconds": 0.6,
+        "ldc_cold_seconds": 8.4,
+        "ldc_incremental_seconds": 4.2,
+        "incremental_linked_bytes": 524288,
+        "compiler_peak_rss_bytes": 536870912,
+        "template_instances": 2000
+      }
+    },
+    "mcp": {
+      "tier": 7,
+      "module": "flint.mcp",
+      "dependencies": [
+        "arena",
+        "http",
+        "web",
+        "serde",
+        "validate",
+        "conc"
+      ],
+      "better_c": false,
+      "budget": {
+        "dmd_cold_seconds": 1.4,
+        "dmd_incremental_seconds": 0.6,
+        "ldc_cold_seconds": 8.4,
+        "ldc_incremental_seconds": 4.2,
+        "incremental_linked_bytes": 524288,
+        "compiler_peak_rss_bytes": 536870912,
+        "template_instances": 2000
+      }
+    },
+    "template": {
+      "tier": 8,
+      "module": "flint.templates",
+      "dependencies": [
+        "arena",
+        "serde"
+      ],
+      "better_c": false,
+      "budget": {
+        "dmd_cold_seconds": 1.5,
+        "dmd_incremental_seconds": 0.6,
+        "ldc_cold_seconds": 9.0,
+        "ldc_incremental_seconds": 4.5,
+        "incremental_linked_bytes": 1048576,
+        "compiler_peak_rss_bytes": 536870912,
+        "template_instances": 2000
+      }
+    },
+    "codec": {
+      "tier": 8,
+      "module": "flint.codec",
+      "dependencies": [
+        "arena"
+      ],
+      "better_c": false,
+      "budget": {
+        "dmd_cold_seconds": 1.5,
+        "dmd_incremental_seconds": 0.6,
+        "ldc_cold_seconds": 9.0,
+        "ldc_incremental_seconds": 4.5,
+        "incremental_linked_bytes": 1048576,
+        "compiler_peak_rss_bytes": 536870912,
+        "template_instances": 2000
+      }
+    },
+    "desktop": {
+      "tier": 8,
+      "module": "flint.desktop",
+      "dependencies": [
+        "arena",
+        "conc",
+        "os",
+        "serde",
+        "wasm-bridge"
+      ],
+      "better_c": false,
+      "budget": {
+        "dmd_cold_seconds": 1.5,
+        "dmd_incremental_seconds": 0.6,
+        "ldc_cold_seconds": 9.0,
+        "ldc_incremental_seconds": 4.5,
+        "incremental_linked_bytes": 1048576,
+        "compiler_peak_rss_bytes": 536870912,
+        "template_instances": 2000
+      }
+    }
+  }
+}

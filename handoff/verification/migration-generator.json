@@ -1,0 +1,22 @@
+{
+  "generator": {
+    "command": [
+      "python3",
+      "tools/migration_manifest.py",
+      "--input",
+      "tests/fixtures/migrations",
+      "--output",
+      "../verification/generated_migrations.d",
+      "--module",
+      "generated_migrations"
+    ],
+    "exit_code": 0,
+    "stdout": "{\"status\": \"generated\", \"files\": 3}\n",
+    "stderr": ""
+  },
+  "unittests": {
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "test_checksum_covers_raw_line_endings (test_migration_manifest.MigrationManifestTests.test_checksum_covers_raw_line_endings) ... ok\ntest_deterministic_and_ordered_output (test_migration_manifest.MigrationManifestTests.test_deterministic_and_ordered_output) ... ok\ntest_module_injection_and_keyword_rejected (test_migration_manifest.MigrationManifestTests.test_module_injection_and_keyword_rejected) ... ok\ntest_nontransactional_requires_existing_version (test_migration_manifest.MigrationManifestTests.test_nontransactional_requires_existing_version) ... ok\ntest_numeric_version_collision_is_rejected (test_migration_manifest.MigrationManifestTests.test_numeric_version_collision_is_rejected) ... ok\ntest_output_cannot_overwrite_sql (test_migration_manifest.MigrationManifestTests.test_output_cannot_overwrite_sql) ... ok\ntest_roundtrip_and_check_detects_drift (test_migration_manifest.MigrationManifestTests.test_roundtrip_and_check_detects_drift) ... ok\ntest_symlink_escape_is_rejected (test_migration_manifest.MigrationManifestTests.test_symlink_escape_is_rejected) ... ok\n\n----------------------------------------------------------------------\nRan 8 tests in 0.007s\n\nOK\n"
+  }
+}
