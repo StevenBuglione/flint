@@ -412,6 +412,11 @@ def main(argv=None):
             traces = logs / (name + '-instrumentation')
             wrapper = instrumented_compiler(Path(temporary), args.dmd, traces)
             cmd, cwd, env = dub_command(workspace, fixture['fixture'], str(wrapper), 'dmd')
+            # Count templates with one compiler invocation per target, as upstream DUB builds. The
+            # Flint DUB pipeline splits targets into chunks sized by the host's hardware threads, and
+            # every chunk re-instantiates the shared druntime templates, so a chunked count would
+            # depend on the machine rather than on the code (ADR-017).
+            env['FLINT_DUB_PIPELINE'] = '0'
             driver_log = logs / (name + '-instrumentation-driver.log')
             observation = timed_process(cmd, cwd, env, driver_log)
             # DUB may suppress successful compiler stdout if it did not itself
