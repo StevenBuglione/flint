@@ -195,6 +195,21 @@ immutable CodeInfo[] catalog = [
             ~ "and its reason.",
             "[unchecked]\nlegacy-xml = \"vendored parser pending a Flint port\""),
 
+    CodeInfo("FLINT-E0314", ExitCode.dependency, "DUB package version not in the compatibility index",
+            "Third-party DUB packages are used through the curated compatibility index (policy/dub-index.toml), "
+            ~ "which pins each version's repository, tag commit, tree hash, licence, DUB dependencies and native "
+            ~ "recipes. A version it does not list cannot be resolved reproducibly.",
+            "[dependencies]\n\"dub:tinyendian\" = \"0.2.0\""),
+    CodeInfo("FLINT-E0315", ExitCode.dependency, "two versions of one DUB package",
+            "Two requesters need different versions of the same DUB package. Flint never picks one silently; the "
+            ~ "message names both requesters and both versions.", "require the same version in both places"),
+    CodeInfo("FLINT-E0316", ExitCode.user, "DUB package fails the safety checks",
+            "Flint runs its D safety rules (module @safe: defaults, @trusted confinement and SAFETY rationale, "
+            ~ "string mixins) over a DUB package's sources. A package that fails them is used only under an "
+            ~ "[unchecked] waiver that names it and gives a reason; the waiver appears in every build, its receipt, "
+            ~ "the SBOM and flint deps audit.",
+            "[unchecked]\n\"dub:dyaml\" = \"YAML parsing until flint:serde " ~ "reads YAML\""),
+
     // 04xx: project layout and module paths.
     CodeInfo("FLINT-E0401", ExitCode.user, "module name does not match its file path",
             "Module paths must match file paths under src/ and test/, so a reader can find any module from its "

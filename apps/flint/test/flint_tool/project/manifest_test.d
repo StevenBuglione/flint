@@ -170,3 +170,17 @@ unittest
             ["FLINT-E0105"]);
     expect(codes(parse(header ~ "[native.c]\nflags = [\"-O0\"]\n", manifest)).length).toEqual(1);
 }
+
+@("DUB packages are written dub:<name> with an exact version")
+unittest
+{
+    Manifest manifest;
+    const report = parse(header ~ "[dependencies]\n\"dub:dyaml\" = \"0.10.0\"\n[unchecked]\n\"dub:dyaml\" = \"YAML\"\n",
+            manifest);
+    expect(report.items.length).toEqual(0);
+    expect(manifest.dependencies[0].kind == DependencyKind.dub).toEqual(true);
+    expect(manifest.dependencies[0].version_).toEqual("0.10.0");
+    expect(manifest.unchecked[0].name).toEqual("dub:dyaml");
+    expect(codes(parse(header ~ "[dependencies]\n\"dub:dyaml\" = { path = \"../x\" }\n", manifest))).toEqual(
+            ["FLINT-E0105"]);
+}

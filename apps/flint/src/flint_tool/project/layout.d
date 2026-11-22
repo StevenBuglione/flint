@@ -22,6 +22,8 @@ struct CheckSummary
     long waived;
     /// Active waivers, as "rule file: reason".
     string[] waivers;
+    /// DUB packages used under an `[unchecked]` waiver, as "name version: reason (N findings)".
+    string[] unchecked;
 }
 
 /// Directories allowed at the top of a project.
@@ -62,6 +64,7 @@ CheckSummary checkProject(const ref Home home, const ref Manifest manifest, cons
         checkIgnored(manifest, found);
     foreach (waiver; manifest.waivers)
         summary.waivers ~= waiver.rule ~ " " ~ waiver.file ~ ": " ~ waiver.reason;
+    summary.unchecked = checkDubPackages(manifest, resolution, report);
     foreach (item; found.items)
     {
         if (waived(manifest.waivers, item))
@@ -70,6 +73,43 @@ CheckSummary checkProject(const ref Home home, const ref Manifest manifest, cons
             report.add(item);
     }
     return summary;
+}
+
+/// A DUB package that fails Flint's safety rules builds only under an `[unchecked]` waiver naming it with a reason
+/// (FLINT-E0316 otherwise). Returns the active waivers, which every build prints and records.
+private string[] checkDubPackages(const ref Manifest manifest, const ref Resolution resolution, ref Report report)
+{
+    import std.array : join;
+    import std.conv : to;
+
+    string[] active;
+    foreach (ref item; resolution.packages)
+    {
+        if ((item.kind != "dub" && item.kind != "local") || item.safetyFindings == 0)
+            continue;
+        const reason = uncheckedReason(manifest, item.name);
+        const label = item.name ~ (item.version_.length ? " " ~ item.version_ : "");
+        const findings = item.safetyFindings.to!string ~ (item.safetyFindings == 1 ? " finding" : " findings");
+        if (reason.length)
+        {
+            active ~= label ~ ": " ~ reason ~ " (" ~ findings ~ ")";
+            continue;
+        }
+        report.add(at(diagnostic("FLINT-E0316", Severity.error,
+                label ~ " fails Flint's safety checks (" ~ findings ~ "; first: " ~ item.safetySample.join("; ") ~ ")",
+                "[unchecked]\n\"" ~ item.name ~ "\" = \"<why it " ~ "is used anyway>\""), "flint.toml", 0));
+    }
+    return active;
+}
+
+private string uncheckedReason(const ref Manifest manifest, string name)
+{
+    foreach (ref waiver; manifest.unchecked)
+    {
+        if (waiver.name == name || "dub:" ~ waiver.name == name)
+            return waiver.reason;
+    }
+    return null;
 }
 
 private bool waived(scope const Waiver[] waivers, const ref Diagnostic item)

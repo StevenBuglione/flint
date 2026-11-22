@@ -1,0 +1,31 @@
+# The DUB compatibility index (ADR-021 sections 4 and 5, ADR-023).
+#
+# Curated DUB package versions that Flint projects may use as "dub:<name>" = "<version>". Each entry pins:
+#   repository    the repository path, fetched like a repository-path dependency (FLINT_PROXY applies)
+#   commit        the release tag's commit; a moved tag is refused
+#   tree_sha256   flint's content hash of the checkout at that commit
+#   license       the SPDX licence expression, checked by flint deps audit and written to SBOMs
+#   dependencies  the exact index versions of the DUB packages it needs, as name@version
+#   native        the Flint native recipes that replace its libs/systemDependencies, as name@version
+# flint runs its D safety rules over every package; one that fails them builds only under an
+# [unchecked] waiver in the project's flint.toml, shown in every build, its receipt, the SBOM and the audit.
+
+[[package]]
+name = "tinyendian"
+version = "0.2.0"
+repository = "github.com/dlang-community/tinyendian"
+commit = "ca7318f3d8043cff8b3e7dd9aa37ecf2ba545082"
+tree_sha256 = "d3315e07ed338b0ee4c0723c4a138132f236841841f492b95ffb6c4745e80f68"
+license = "BSL-1.0"
+dependencies = []
+native = []
+
+[[package]]
+name = "dyaml"
+version = "0.10.0"
+repository = "github.com/dlang-community/D-YAML"
+commit = "988132aa1f4b0f0b8207e786986a53372f1bfb4f"
+tree_sha256 = "075ff833ebb987a5ac657583e4338575cfe78d2857036b8c80a01571a22bd936"
+license = "BSL-1.0"
+dependencies = ["tinyendian@0.2.0"]
+native = []

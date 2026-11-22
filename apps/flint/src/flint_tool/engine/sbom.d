@@ -73,6 +73,8 @@ Inventory collect(const ref Home home, const ref Manifest manifest, const ref Re
         foreach (dependency; item.dependencies)
             component.dependsOn ~= referenceOf(resolution, dependency);
         describe(home, manifest, item.kind, item.version_, item.commit, item.license, component);
+        if (item.kind == "dub")
+            component.download = "git+https://" ~ item.declaredPath ~ "@" ~ item.commit;
         inventory.components ~= component;
     }
     foreach (pair; cSources)
@@ -108,14 +110,25 @@ private void describe(const ref Home home, const ref Manifest manifest, string k
         component.purl = "pkg:generic/" ~ encode(component.name) ~ "@" ~ version_ ~ "?vcs_url=" ~ encode(
                 "git+https://" ~ component.name ~ "@" ~ commit);
         break;
+    case "dub":
+        component.version_ = version_;
+        component.license = license;
+        component.purl = "pkg:generic/dub/" ~ encode(component.name[4 .. $]) ~ "@" ~ version_;
+        waiverOf(manifest, component);
+        break;
     default:
         component.license = license;
         component.purl = "pkg:generic/" ~ encode(component.name);
-        foreach (ref unchecked; manifest.unchecked)
-        {
-            if (unchecked.name == component.name)
-                component.waiver = unchecked.reason;
-        }
+        waiverOf(manifest, component);
+    }
+}
+
+private void waiverOf(const ref Manifest manifest, ref Component component)
+{
+    foreach (ref unchecked; manifest.unchecked)
+    {
+        if (unchecked.name == component.name || "dub:" ~ unchecked.name == component.name)
+            component.waiver = unchecked.reason;
     }
 }
 

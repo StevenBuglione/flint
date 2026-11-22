@@ -252,6 +252,8 @@ private bool prepareBuild(ref Session session, const ref Manifest manifest, cons
     if (request.sanitize && !sanitizerToolchain(session, report))
         return false;
     result.checks = checkProject(session.home, manifest, resolution, false, report);
+    foreach (waiver; result.checks.unchecked)
+        session.progress("Unchecked", waiver);
     return report.ok && compileNativeC(session, manifest, request.sanitize, request.targetCflags,
             result.native, report) && writeRecipes(session, manifest, resolution, result.native, report);
 }
@@ -402,6 +404,18 @@ private bool writeRecipes(ref Session session, const ref Manifest manifest,
     }
     writeIfChanged(buildPath(manifest.root, recipeDirectory, "dub.sdl"), renderRecipe(session.home,
             manifest, resolution, extras));
+    {
+        import std.file : exists, remove;
+        import flint_tool.engine.recipe : renderSelections;
+
+        syncDubPackages(manifest.root, resolution);
+        const selections = renderSelections(manifest.root, resolution);
+        const path = buildPath(manifest.root, recipeDirectory, "dub.selections.json");
+        if (selections.length)
+            writeIfChanged(path, selections);
+        else if (exists(path))
+            remove(path);
+    }
     foreach (ref item; resolution.packages)
     {
         import flint_tool.engine.recipe : generatedRecipe;
@@ -418,6 +432,37 @@ private bool writeRecipes(ref Session session, const ref Manifest manifest,
                 renderDependencyRecipe(session.home, item, resolution));
     }
     return true;
+}
+
+/// Refresh the working copy of each DUB package from its verified source when the source's hash changed.
+private void syncDubPackages(string root, const ref Resolution resolution)
+{
+    import std.file : copy, exists, mkdirRecurse, rmdirRecurse;
+    import std.path : buildPath, dirName;
+    import flint_tool.engine.recipe : dubPackagesDirectory, workingName;
+    import flint_tool.support.files : findFiles, readIfPresent, writeIfChanged;
+
+    foreach (ref item; resolution.packages)
+    {
+        if (item.kind != "dub" && item.kind != "local")
+            continue;
+        const destination = buildPath(root, dubPackagesDirectory, workingName(item));
+        const stamp = buildPath(destination, ".flint-source");
+        if (readIfPresent(stamp) == item.contentSha256 ~ "\n")
+            continue;
+        if (exists(destination))
+            rmdirRecurse(destination);
+        foreach (relative; findFiles(item.directory, "**"))
+        {
+            import std.algorithm.searching : canFind, startsWith;
+
+            if (relative.startsWith(".git/") || relative.startsWith(".dub/") || relative.canFind("/.dub/"))
+                continue;
+            mkdirRecurse(dirName(buildPath(destination, relative)));
+            copy(buildPath(item.directory, relative), buildPath(destination, relative));
+        }
+        writeIfChanged(stamp, item.contentSha256 ~ "\n");
+    }
 }
 
 private string artifactPath(const ref Manifest manifest, const ref BuildRequest request)
@@ -477,6 +522,7 @@ private Receipt projectReceipt(ref Session session, const ref Manifest manifest,
     receipt.additions = AdditionsRecord(flags.manifestDflags.dup, flags.manifestLflags.dup,
             request.dflags.dup, request.lflags.dup);
     receipt.waivers = result.checks.waivers.dup;
+    receipt.unchecked = result.checks.unchecked.dup;
     receipt.command = result.command.dup;
     receipt.outputs = [outputRecord(result.artifact, display(result.artifact))];
     receipt.target = request.target.length ? request.target : hostTarget();

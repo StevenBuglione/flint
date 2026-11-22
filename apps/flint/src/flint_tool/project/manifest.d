@@ -19,7 +19,9 @@ enum DependencyKind : ubyte
     /// A directory holding a Flint project or a local DUB package.
     path,
     /// A repository path with a semantic version (Milestone 8).
-    remote
+    remote,
+    /// A DUB package from the compatibility index, written `"dub:<name>" = "<version>"` (Milestone 8).
+    dub
 }
 
 /// One declared dependency.
@@ -594,12 +596,25 @@ private struct Reader
         if (declaredTwice(list, name))
             return fail("FLINT-E0105", entry.offset, "dependency `" ~ name ~ "` is declared twice", "keep one entry");
         const core = name.length > 6 && name[0 .. 6] == "flint:";
+        if (dubPackage(name))
+            return dubDependency(entry, list, name, line);
         if (!core && !repositoryPath(name) && !validName(name))
             return fail("FLINT-E0105", entry.offset, "`" ~ name ~ "` is not a valid dependency name",
                     "use lower-case letters, digits and hyphens, or a repository path: github.com/acme/flint-stripe");
         if (entry.path.length == 2)
             return versioned(entry, list, name, core, line);
         pathDependency(entry, list, name, core, line);
+    }
+
+    /// `"dub:<name>" = "<version>"`: an exact version the compatibility index lists.
+    void dubDependency(ref const TomlEntry entry, ref DependencySpec[] list, string name, long line)
+    {
+        string versionText;
+        if (entry.path.length != 2 || !str(entry, versionText) || versionText.length == 0)
+            return fail("FLINT-E0105", entry.offset,
+                    "a DUB package takes an exact version from the compatibility " ~ "index",
+                    "\"" ~ name ~ "\" = \"0.2.0\"");
+        list ~= DependencySpec(name, DependencyKind.dub, null, versionText, line);
     }
 
     void pathDependency(ref const TomlEntry entry, ref DependencySpec[] list, string name, bool core, long line)
@@ -710,6 +725,19 @@ private struct Reader
                 manifest.waivers ~= Waiver(lookup(waiver.rule).code, waiver.file, waiver.reason);
         }
     }
+}
+
+/// Whether a dependency name is `dub:<package>`, a DUB package from the compatibility index.
+bool dubPackage(string name)
+{
+    if (name.length <= 4 || name[0 .. 4] != "dub:")
+        return false;
+    foreach (ch; name[4 .. $])
+    {
+        if (!((ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '-' || ch == '_' || ch == ':'))
+            return false;
+    }
+    return true;
 }
 
 /// Whether `name` is a repository path such as `github.com/acme/flint-stripe`: a host with a dot, then at least

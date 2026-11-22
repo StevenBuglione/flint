@@ -14,7 +14,8 @@ struct ResolvedPackage
 {
     /// Name: `flint:<package>` or the declared dependency name.
     string name;
-    /// "core", "path" (a Flint project), "remote" (a repository path) or "local" (a DUB package directory).
+    /// "core", "path" (a Flint project), "remote" (a repository path), "dub" (a DUB package from the
+    /// compatibility index) or "local" (a DUB package directory).
     string kind;
     /// For core packages: "workspace" when the project lives in the Flint checkout, else "flint-home".
     string source;
@@ -38,6 +39,12 @@ struct ResolvedPackage
     string commit;
     /// SPDX licence expression from the dependency's flint.toml, or empty.
     string license;
+    /// For DUB packages: findings of Flint's safety rules over their D sources.
+    long safetyFindings;
+    /// For DUB packages: the first findings.
+    string[] safetySample;
+    /// For indexed DUB packages: the Flint native recipes they link, as name@version.
+    string[] nativeRecipes;
 }
 
 /// The resolved graph of one project.
@@ -99,7 +106,18 @@ bool resolve(const ref Home home, const ref Manifest manifest, out Resolution re
                 resolution.direct ~= name;
         }
     }
-    if (remotes.length && !resolveRemotes(home, manifest, remotes, found, resolution, report))
+    Requirement[] dubs;
+    Requirement[] repositories;
+    foreach (ref requirement; remotes)
+    {
+        if (requirement.path.length > 4 && requirement.path[0 .. 4] == "dub:")
+            dubs ~= requirement;
+        else
+            repositories ~= requirement;
+    }
+    if (repositories.length && !resolveRemotes(home, manifest, repositories, found, resolution, report))
+        return false;
+    if (dubs.length && !resolveDub(home, manifest, dubs, found, report))
         return false;
     addCoreClosure(home, found, resolution.workspace);
     markScopes(found, resolution);
@@ -183,9 +201,72 @@ private string resolveOne(const ref Home home, const ref Manifest owner, const r
         // Collected here; minimal version selection runs once over every requirement.
         remotes ~= Requirement(active.length > 1 ? owner.name : null, spec.name, spec.version_);
         return spec.name;
+    case DependencyKind.dub:
+        // Collected like repository paths; the compatibility index selects the versions.
+        remotes ~= Requirement(active.length > 1 ? owner.name : null, spec.name, spec.version_);
+        return spec.name;
     case DependencyKind.path:
         return resolvePath(home, owner, spec, found, active, remotes, report);
     }
+}
+
+/// Select DUB packages through the compatibility index, fetch them through the repository-path cache, verify the
+/// pinned commit and tree hash, and scan them with Flint's safety rules.
+private bool resolveDub(const ref Home home, const ref Manifest manifest,
+        scope const(Requirement)[] requested, ref ResolvedPackage[string] found, ref Report report)
+{
+    import flint_tool.project.dubindex : DubEntry, DubRequirement, loadIndex, scanPackage, selectDub;
+    import flint_tool.project.remote : Fetcher, RemoteModule;
+
+    DubEntry[] entries;
+    if (!loadIndex(home, entries, report))
+        return false;
+    DubRequirement[] roots;
+    foreach (ref requirement; requested)
+        roots ~= DubRequirement(requirement.from, requirement.path[4 .. $], requirement.version_);
+    DubEntry[] selected;
+    DubRequirement[] edges;
+    if (!selectDub(entries, roots, selected, edges, report))
+        return false;
+    auto fetcher = Fetcher.forProject(home.root, manifest.root);
+    foreach (ref entry; selected)
+    {
+        RemoteModule module_;
+        if (!fetcher.materialize(entry.repository, entry.version_, module_, report))
+            return false;
+        if (module_.commit != entry.commit || module_.contentSha256 != entry.treeSha256)
+        {
+            const actual = "commit " ~ module_.commit ~ " with tree " ~ module_.contentSha256;
+            const pinned = "commit " ~ entry.commit ~ " and tree " ~ entry.treeSha256;
+            report.error("FLINT-E0309", "dub:" ~ entry.name ~ " " ~ entry.version_ ~ " from "
+                    ~ entry.repository ~ " is " ~ actual ~ ", but the compatibility index pins " ~ pinned,
+                    "the release tag moved or the source changed; do not use it until the index entry is reviewed");
+            return false;
+        }
+        ResolvedPackage item;
+        item.name = "dub:" ~ entry.name;
+        item.kind = "dub";
+        item.directory = module_.directory;
+        item.declaredPath = entry.repository;
+        item.manifestType = "library";
+        item.version_ = entry.version_;
+        item.commit = entry.commit;
+        item.contentSha256 = entry.treeSha256;
+        item.license = entry.license;
+        item.nativeRecipes = entry.native.dup;
+        foreach (dependency; entry.dependencies)
+        {
+            import std.string : indexOf;
+
+            const at = dependency.indexOf('@');
+            item.dependencies ~= "dub:" ~ (at > 0 ? dependency[0 .. at] : dependency);
+        }
+        const scan = scanPackage(item.directory, home.safety.maxTrustedLines);
+        item.safetyFindings = scan.findings;
+        item.safetySample = scan.sample.dup;
+        found[item.name] = item;
+    }
+    return true;
 }
 
 /// Run minimal version selection and add the selected modules to the graph.
@@ -272,8 +353,13 @@ private string resolvePath(const ref Home home, const ref Manifest owner, const 
     {
         if (!exists(buildPath(directory, manifestName)))
         {
+            import flint_tool.project.dubindex : scanPackage;
+
             item.kind = "local";
             item.contentSha256 = contentHash(directory, ["**"]);
+            const scan = scanPackage(directory, home.safety.maxTrustedLines);
+            item.safetyFindings = scan.findings;
+            item.safetySample = scan.sample.dup;
             found[spec.name] = item;
             return spec.name;
         }

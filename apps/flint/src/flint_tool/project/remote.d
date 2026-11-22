@@ -164,21 +164,24 @@ struct Fetcher
     bool load(const ref Home flint, string path, string version_, string requiredBy,
             out RemoteModule module_, ref Report report)
     {
+        return materialize(path, version_, module_, report) && readManifest(flint, module_, requiredBy, report);
+    }
+
+    /// Materialize the tree of `path` at tag `version_` from vendor/, the cache or the network, verified by hash.
+    bool materialize(string path, string version_, out RemoteModule module_, ref Report report)
+    {
         module_.path = path;
         module_.version_ = version_;
-        if (!fromVendor(module_, report) && !fromCache(module_, report))
+        if (fromVendor(module_, report) || fromCache(module_, report))
+            return true;
+        if (offline)
         {
-            if (offline)
-            {
-                report.error("FLINT-E0307",
-                        path ~ " " ~ version_ ~ " is not in the dependency cache and the build is " ~ "offline",
-                        "fetch it once online, or run flint deps vendor while online");
-                return false;
-            }
-            if (!fetch(module_, report))
-                return false;
+            report.error("FLINT-E0307",
+                    path ~ " " ~ version_ ~ " is not in the dependency cache and the build is " ~ "offline",
+                    "fetch it once online, or run flint deps vendor while online");
+            return false;
         }
-        return readManifest(flint, module_, requiredBy, report);
+        return fetch(module_, report);
     }
 
     private bool fromVendor(ref RemoteModule module_, ref Report report)
@@ -464,6 +467,8 @@ struct VendorEntry
     string commit;
     /// Content hash.
     string contentSha256;
+    /// "dub" for DUB packages from the compatibility index; empty for repository-path modules.
+    string kind;
 }
 
 /// Read vendor/flint-vendor.toml.
@@ -480,6 +485,7 @@ VendorEntry[] readVendorIndex(string vendor)
         string version_number;
         string commit;
         string content_sha256;
+        string kind;
     }
 
     const text = readIfPresent(buildPath(vendor, vendorIndexName));
@@ -495,7 +501,7 @@ VendorEntry[] readVendorIndex(string vendor)
         if (!rows.ok)
             return null;
         foreach (ref row; rows.value)
-            result ~= VendorEntry(row.path, row.version_number, row.commit, row.content_sha256);
+            result ~= VendorEntry(row.path, row.version_number, row.commit, row.content_sha256, row.kind);
     }
     return result;
 }
@@ -566,6 +572,9 @@ private bool vendoredSelection(ref Fetcher fetcher, const ref Home home, scope c
 
     foreach (entry; readVendorIndex(fetcher.vendor))
     {
+        // Vendored DUB packages are selected by the compatibility index, not by minimal version selection.
+        if (entry.kind == "dub")
+            continue;
         RemoteModule module_;
         if (!fetcher.load(home, entry.path, entry.version_, "vendor/" ~ vendorIndexName, module_, report))
             return false;

@@ -83,6 +83,35 @@ string dubName(string name)
     return name.replace("/", "-").replace(".", "-").replace("_", "-");
 }
 
+/// `dub.selections.json` for the generated root recipe: every DUB package pinned to its checked-out directory,
+/// so DUB packages that depend on each other resolve to the compatibility index's versions. Null when there are
+/// none.
+string renderSelections(string root, const ref Resolution resolution)
+{
+    import std.path : buildPath;
+
+    string versions;
+    foreach (ref item; resolution.packages)
+    {
+        if (item.kind != "dub" && item.kind != "local")
+            continue;
+        const name = item.kind == "dub" ? item.name[4 .. $] : dubName(item.name);
+        const directory = buildPath(root, dubPackagesDirectory, workingName(item));
+        versions ~= (versions.length ? ",\n" : "") ~ "\t\t" ~ quoted(name) ~ ": {\"path\": " ~ quoted(directory) ~ "}";
+    }
+    return versions.length ? "{\n\t\"fileVersion\": 1,\n\t\"versions\": {\n" ~ versions ~ "\n\t}\n}\n" : null;
+}
+
+/// Where DUB packages are built, relative to the project root. DUB writes build outputs into a package's own
+/// directory, so it builds a disposable copy and never the verified cache or the user's checkout.
+enum dubPackagesDirectory = ".flint/generated/dub-packages";
+
+/// The working copy's directory name of a DUB package.
+string workingName(const ref ResolvedPackage item)
+{
+    return item.kind == "dub" ? item.name[4 .. $] ~ "-" ~ item.version_ : dubName(item.name);
+}
+
 /// Whether a resolved package is built from a generated recipe (a Flint project at a path or a remote module).
 bool generatedRecipe(string kind)
 {
@@ -110,8 +139,8 @@ private string dependencyLine(const ref Home home, const ref Resolution resoluti
     else if (generatedRecipe(item.kind))
         path = siblings ~ dubName(name);
     else
-        path = item.directory;
-    const dependency = item.kind == "core" ? name : dubName(name);
+        path = siblings ~ "../dub-packages/" ~ workingName(*item);
+    const dependency = item.kind == "core" ? name : item.kind == "dub" ? name[4 .. $] : dubName(name);
     return indent ~ "dependency " ~ quoted(dependency) ~ " path=" ~ quoted(path) ~ "\n";
 }
 

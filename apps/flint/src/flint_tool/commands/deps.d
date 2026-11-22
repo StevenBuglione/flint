@@ -291,9 +291,11 @@ int commandDepsVendor(ref Session session, string project)
         ~ "# Builds take these modules from vendor/ and verify their hashes.\n";
     foreach (ref item; target.resolution.packages)
     {
-        if (item.kind != "remote")
+        if (item.kind != "remote" && item.kind != "dub")
             continue;
-        const destination = buildPath(vendor, item.name);
+        // DUB packages are vendored under their repository path, which is how the fetcher finds them.
+        const path = item.kind == "dub" ? item.declaredPath : item.name;
+        const destination = buildPath(vendor, path);
         if (exists(destination))
             rmdirRecurse(destination);
         foreach (relative; findFiles(item.directory, "**"))
@@ -302,10 +304,11 @@ int commandDepsVendor(ref Session session, string project)
             copy(buildPath(item.directory, relative), buildPath(destination, relative));
         }
         if (contentHash(destination, ["**"]) != item.contentSha256)
-            report.error("FLINT-E0309", "vendor/" ~ item.name ~ " does not reproduce its content hash",
+            report.error("FLINT-E0309", "vendor/" ~ path ~ " does not reproduce its content hash",
                     "delete vendor/ and run flint deps vendor again");
-        index ~= "\n[[module]]\npath = \"" ~ item.name ~ "\"\nversion_number = \"" ~ item.version_
-            ~ "\"\ncommit = \"" ~ item.commit ~ "\"\ncontent_sha256 = \"" ~ item.contentSha256 ~ "\"\n";
+        index ~= "\n[[module]]\npath = \"" ~ path ~ "\"\nversion_number = \"" ~ item.version_ ~ "\"\ncommit = \""
+            ~ item.commit ~ "\"\ncontent_sha256 = \"" ~ item.contentSha256 ~ "\"\n" ~ (item.kind == "dub"
+                    ? "kind = \"dub\"\n" : "");
         payload.changes ~= item.name ~ " " ~ item.version_;
         session.progress("Vendored", item.name ~ " " ~ item.version_);
     }
@@ -399,8 +402,9 @@ private void verifiedRemotes(const ref Resolution resolution, ref DepsPayload pa
 {
     foreach (ref item; resolution.packages)
     {
-        // Resolution recomputes every repository module's tree hash before use (FLINT-E0309 otherwise).
-        if (item.kind == "remote")
+        // Resolution recomputes every repository module's tree hash before use (FLINT-E0309 otherwise), and checks
+        // DUB packages against the commit and tree the compatibility index pins.
+        if (item.kind == "remote" || item.kind == "dub")
             payload.verified ~= item.name ~ " " ~ item.version_ ~ " tree sha256 " ~ item.contentSha256;
     }
 }

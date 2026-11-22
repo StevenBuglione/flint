@@ -174,6 +174,8 @@ struct Receipt
     AdditionsRecord additions;
     /// Active waivers.
     string[] waivers;
+    /// DUB packages used under `[unchecked]` waivers, with their reasons.
+    string[] unchecked;
     /// The build command.
     string[] command;
     /// Environment that affects the build.

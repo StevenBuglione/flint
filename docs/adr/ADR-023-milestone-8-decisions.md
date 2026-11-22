@@ -127,9 +127,37 @@ Status: proposed by the Milestone 8 implementation, for the project owner's revi
    - `flint daemon stop` now sweeps until the process holding a server's lock has exited. The stale socket it could leave behind made a Milestone 7 test flaky.
    - The policy lexer reads `name(...) @trusted` followed by a line-initial `{` as a trusted block, so a `@trusted` function with no other trailing attribute puts `@trusted` before the return type.
 
+### 4. DUB packages and `[unchecked]`
+
+1. **Declaring a DUB package.** A third-party DUB package is written `"dub:<name>" = "<version>"`. The version must be listed in the DUB compatibility index, `policy/dub-index.toml`; an unlisted version is FLINT-E0314, and the error lists the versions the index has.
+
+2. **What an index entry pins.**
+   - The repository path, tag commit and tree hash.
+   - The SPDX licence.
+   - The exact index versions of the DUB packages it needs.
+   - The Flint native recipes that replace its `libs` or `systemDependencies`, which are informational in DUB itself.
+
+   The index ships with D-YAML 0.10.0 and tinyendian 0.2.0, measured from their release tags. An additional private index can be named with `FLINT_DUB_INDEX`, for private packages or tests; its entries are marked with their source.
+
+3. **Selection.** Entries are exact pins, so selection simply follows them transitively. Two requesters that need different versions of one package are FLINT-E0315, which names both requesters and both versions. Flint never picks one.
+
+4. **Fetching.** Packages are fetched through the repository-path cache, with mirrors, the content store, `FLINT_PROXY`, offline mode and vendoring.
+   - The fetched tag must be the pinned commit and reproduce the pinned tree hash, otherwise FLINT-E0309: a moved tag is refused.
+   - `flint.lock` records each package's kind, repository, version, commit and tree hash.
+
+5. **Building from a working copy.** DUB writes build outputs into a package's own directory. Flint therefore builds DUB packages, including local DUB directories, from a disposable copy in `.flint/generated/dub-packages/`, refreshed from the verified source when its hash changes.
+   - A generated `dub.selections.json` points DUB at those copies, so DUB packages that depend on each other resolve to the index's versions.
+   - The cache, vendored copies and the user's checkouts are never written.
+
+6. **The safety checks and `[unchecked]`.** Flint runs its D safety rules over every DUB package's `source/` and `src/`, whether indexed or a local directory. The rules are module `@safe:` defaults, `@trusted` confinement and rationale, and string mixins.
+   - **Failing:** a package that fails builds only under `[unchecked]`, with `"dub:<name>" = "<reason>"`. Otherwise it is FLINT-E0316, which shows the finding count and the first findings.
+   - **Visible everywhere:** the waiver is printed on every build (`Unchecked dub:dyaml 0.10.0: <reason> (69 findings)`). It is also recorded in the receipt's `unchecked` field, in both SBOMs, and as a FLINT-E0313 warning in `flint deps audit`.
+   - **Reality:** both seeded packages fail the rules, as almost every existing DUB package will, because none declares `@safe:` defaults. The waiver is the visible price of using them.
+
 ## Consequences
 
 - Repository-path dependencies resolve reproducibly. They work offline from the cache or from `vendor/`, and are tested only against local git fixture repositories (`tests/test_flint_deps.py`).
 - Embedded C builds, tests (including under ASan and UBSan) and checks through flint alone. `tests/test_flint_native_c.py` covers hardening, the cache, clang-tidy, the ffi rule, and a heap overflow and a signed overflow caught under `--sanitize`.
 - `flint package --container --sbom` produces a runnable scratch image and valid SBOMs from a plain Linux x86-64 host. `tests/test_flint_package.py` loads and runs the image in docker when one is available.
+- Real DUB packages (D-YAML on tinyendian) build and test on both compilers under visible waivers. `tests/test_flint_dub.py` covers selection, conflicts, moved tags, vendoring, waivers and local DUB directories against git fixtures.
 - Two latent Milestone 7 defects were fixed along the way. An empty manifest table such as a bare `[dependencies]` header, which `flint new --type library` writes, was rejected. Nested path dependencies got wrong relative recipe paths.
