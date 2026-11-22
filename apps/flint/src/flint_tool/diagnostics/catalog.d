@@ -470,6 +470,10 @@ immutable CodeInfo[] catalog = [
             "DMD expands %@P% (the directory of dmd.conf) before it splits DFLAGS at whitespace. A toolchain installed "
             ~ "before tools/install_toolchains.py quoted those arguments fails every DMD build once its path contains "
             ~ "a space. Reinstalling quotes them; nothing else changes.", "flint toolchain install"),
+    CodeInfo("FLINT-E0822", ExitCode.environment, "no debugger",
+            "`flint run --debug` starts gdb, or lldb when gdb is missing, with Flint's pretty-printers "
+            ~ "(tools/debug/flint_gdb.py, flint_lldb.py). Neither debugger is on PATH.",
+            "sudo apt-get install gdb      # or: xcode-select --install for lldb"),
     // 09xx: receipts.
     CodeInfo("FLINT-E0901", ExitCode.environment, "receipt missing",
             "Every artifact flint builds has a JSON receipt next to it (<artifact>.receipt.json).",

@@ -65,10 +65,26 @@ struct RunArgs
     @Option("locked", 0, "Fail when flint.lock is missing") bool locked;
     /// Project directory.
     @Option("project", 'C', "Run in this project directory") string project;
+    /// Debugger.
+    @Option("debug", 0, "Start the program under gdb (or lldb) with Flint's pretty-printers") bool debug_;
     /// Stream tool output.
     @Option("verbose", 'v', "Stream DUB and compiler output") bool verbose;
     /// JSON output.
     @Option("json", 0, "Capture the program's output in flint.run/1 JSON") bool json;
+}
+
+/// `flint watch`.
+@Command("flint watch", "Rebuild and restart, or retest, on every change; arguments after -- go to the program")
+struct WatchArgs
+{
+    /// Tests.
+    @Option("test", 0, "Run the tests on every change (the default for libraries)") bool test;
+    /// Build only.
+    @Option("build", 0, "Only build on every change") bool build;
+    /// Project directory.
+    @Option("project", 'C', "Watch this project directory") string project;
+    /// JSON output.
+    @Option("json", 0, "Emit one flint.watch/1 JSON line per cycle on stdout") bool json;
 }
 
 /// `flint test`.
@@ -335,6 +351,12 @@ struct ConfigArgs
     @Option("json", 0, "Emit flint.config/1 JSON on stdout") bool json;
 }
 
+/// `flint lsp`.
+@Command("flint lsp", "Serve the Language Server Protocol on stdio: diagnostics, hover, definition and completion")
+struct LspArgs
+{
+}
+
 /// `flint mcp`.
 @Command("flint mcp", "Serve the Flint API, diagnostics and build loop to MCP clients over stdio")
 struct McpArgs
@@ -431,8 +453,12 @@ struct FlintArgs
     @Subcommand("generate", "Write the canonical shape of a component") GenerateArgs generate;
     /// config.
     @Subcommand("config", "Print the resolved configuration") ConfigArgs config;
+    /// watch.
+    @Subcommand("watch", "Rebuild and restart, or retest, on every change") WatchArgs watch;
     /// mcp.
     @Subcommand("mcp", "Serve Flint knowledge and the build loop over MCP") McpArgs mcp;
+    /// lsp.
+    @Subcommand("lsp", "Serve the Language Server Protocol on stdio") LspArgs lsp;
     /// examples.
     @Subcommand("examples", "Show tested examples for a topic") ExamplesArgs examples;
     /// receipt.

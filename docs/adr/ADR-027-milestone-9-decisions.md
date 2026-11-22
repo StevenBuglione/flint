@@ -66,7 +66,55 @@ Status: proposed by the Milestone 9 implementation, for the project owner's revi
 
 4. **`flint config [--profile P]`** prints every key that `config/application.toml` and `application-<profile>.toml` set, with its value and `file:line`. It is the build-time view of ADR-021 section 2. Environment and `--set` layers are applied by the application at startup and are not shown yet.
 
+### 3. The fast feedback loop: `flint watch`, debugging and pretty-printers
+
+1. **`flint watch [--test | --build] [-- program arguments]`.** By default an executable is rebuilt and restarted on every change, and a library is retested.
+   - **Detecting changes:** the watcher compares a snapshot (path, size and modification time) of `src/`, `test/`, `config/`, `native/`, `resources/` and `flint.toml` four times a second. The snapshot works on every platform and costs microseconds for a project, so neither inotify nor kqueue nor ReadDirectoryChangesW is needed yet. A burst of saves settles into one cycle.
+   - **Incremental by construction:** each cycle runs `flint build` or `flint test`, which are already incremental (DUB's up-to-date checks, the content-hashed C cache and the resident compile server).
+   - **A failing cycle:** prints the diagnostics and keeps the previous program stopped until the code builds again.
+   - **Stopping:** the running program is stopped with SIGTERM, and SIGKILL after two seconds. Ctrl+C stops both.
+   - **`--json`:** prints one `flint.watch/1` line per cycle (cycle, changed paths, action, ok, exit code, restarted), and the program's output then goes to standard error so the events stay parseable.
+
+2. **Debugging.** `flint run --debug` builds the dev profile, which carries `-g`, and starts gdb, or lldb when gdb is missing (FLINT-E0822 when neither exists), with Flint's printers loaded. `flint generate debug` writes `.vscode/launch.json` (gdb and lldb configurations that build with `flint build` first and load the printers) and `.vscode/tasks.json` (build, test and watch).
+
+3. **Pretty-printers:** `tools/debug/flint_gdb.py` and its lldb twin `flint_lldb.py`.
+   - **What they print:**
+     - a `Result` is `ok: <value>` or `error: <Status> 'message'`;
+     - an `Error` gets its status name and byte offset;
+     - `Buffer` and `Text` handles get their size and arena identity;
+     - a `RequestArena` gets its use and peak;
+     - a `Context` gets its deadline;
+     - D strings are shown as text.
+   - **A DMD quirk:** DMD emits the `Status` enum as an incomplete type in DWARF, so the printer reads the status as the `int` at the field's offset.
+   - **Verified:** the gdb printers are tested against a real DMD `-g` build under gdb 15.1. The lldb summaries are written to the same layout but untested here, because the Linux host has no lldb; they are for the macOS port.
+
+4. **One new `@trusted` function.** A program restarted by `flint watch` inherits flint's standard streams. `std.stdio`'s global `File`s are `@system` (they are `__gshared`), so `flint_tool.sys.posix.standardStream` returns them behind a SAFETY rationale: druntime initialises them before `main`, they are only read, and the copy is reference-counted over the same descriptor. Killing the program uses the existing `signalProcessGroup`, which also has a Windows implementation.
+
+### 4. `flint lsp`
+
+1. **Inside the CLI.** `flint lsp` speaks the Language Server Protocol on stdio (`Content-Length` framing, full text synchronisation) from within the `flint` executable. It needs no web stack.
+
+2. **Diagnostics.** The open buffer is checked twice.
+   - **The compiler:** the pinned DMD's semantic check, `-o- -c` with the dev profile's flags and the project's resolved import paths (core packages, path, repository and DUB dependencies).
+   - **Flint's rules:** the policy rules for module `@safe:` defaults and `@trusted` confinement, with their `FLINT-Ennnn` codes.
+   - **Unsaved buffers:** these are written to a private overlay directory that comes first on the import path, so the file on disk is never touched and imports between open buffers see each other's edits.
+   - **Speed:** a check of a typical module takes 0.05–0.2 s.
+
+3. **Hover, go-to-definition and completion** answer from the API index of the pinned libraries.
+   - **Hover:** shows the signature, the documentation and the qualified name.
+   - **Go-to-definition:** opens the declaration in the pinned package source.
+   - **Completion:** offers the public names starting with the typed prefix, with their signatures.
+   - **Project symbols:** the project's own symbols are not indexed yet.
+
+4. **The compile server: measured, not assumed.** ADR-021 asks for a language server "on the resident compile server", so the fork's server was measured with the LSP's own work, on flint's `commands/project.d` (best of five, warm).
+   - **The numbers:** a served `-c` compile took 0.195 s and an unserved one 0.205 s. A `-o-` semantic check took 0.162 s, and the fork never serves `-o-`.
+   - **Why so little:** the server preloads only druntime and Phobos, while modules like these spend their time in the Flint packages they import.
+   - **Decision:** the language server therefore uses the faster plain check and does not start a server.
+   - **What would change it:** letting the server serve `-o-` checks, and preloading the pinned Flint packages as well as Phobos, would make it pay for editors. That is a change to ADR-016's "druntime and Phobos only" rule, so it is proposed for the owner rather than taken here.
+
 ## Consequences
 
+- Editors get Flint-aware diagnostics as they type, and API hover, definition and completion, from `flint lsp`. `tests/test_flint_lsp.py` drives it as an LSP client: diagnostics following unsaved edits (a compiler error, then a policy error, then clean), and hover, definition and completion against the pinned API.
+- Edit, save, see: `flint watch` rebuilds and restarts, or retests, in one incremental cycle per change, and `flint run --debug` and the generated launch configurations show Flint values readably. `tests/test_flint_watch.py` covers the watch cycles, recovery from a broken edit, the library mode, the launch configurations, the gdb printers and `flint run --debug` under gdb.
 - An MCP client gets the exact pinned API, the diagnostics catalogue and the build loop from `flint mcp`. `tests/test_flint_mcp.py` drives it as a real stdio client: the handshake, the tool list and schemas, knowledge, the configuration, a failing build as a tool error, generation, invalid arguments and the call log.
 - An agent or a person can ask the exact API of the pinned Flint version offline, see a tested example and generate canonical components. `tests/test_flint_knowledge.py` covers the index, search, export, examples, every generator and `AGENTS.md`.

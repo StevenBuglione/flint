@@ -77,7 +77,8 @@ int dispatch(scope const(string)[] arguments)
     const explainOnly = parsed.commandName == "flint explain";
     if (!session.homeLoaded && !explainOnly)
         return finishBare(session, report, "flint.error/1");
-    if (passthrough.length && parsed.commandName != "flint run" && parsed.commandName != "flint build")
+    if (passthrough.length && parsed.commandName != "flint run"
+            && parsed.commandName != "flint build" && parsed.commandName != "flint watch")
     {
         report.error("FLINT-E0001", "`--` passes arguments to the program of flint run, or flags to flint build",
                 "remove the arguments after --");
@@ -151,6 +152,8 @@ private int projectCommand(ref Session session, string name, ref FlintArgs optio
         return commandLock(session, options.lock);
     case "flint package":
         return packageCommand(session, options.package_);
+    case "flint watch":
+        return watchCommand(session, options.watch, passthrough);
     default:
         return -1;
     }
@@ -162,6 +165,14 @@ private int packageCommand(ref Session session, const ref PackageArgs args)
 
     return commandPackage(session, PackageRequest(args.project, args.target, args.container,
             args.sbom, args.verify, args.locked));
+}
+
+private int watchCommand(ref Session session, const ref WatchArgs args, string[] passthrough)
+{
+    import flint_tool.commands.watch : WatchMode, commandWatch;
+
+    const mode = args.test ? WatchMode.test : args.build ? WatchMode.build : WatchMode.run;
+    return commandWatch(session, args.project, mode, passthrough);
 }
 
 /// Run a knowledge command (docs, examples, generate); -1 when `name` is not one.
@@ -185,6 +196,12 @@ private int knowledgeCommand(ref Session session, string name, ref FlintArgs opt
         return commandConfig(session, options.config.project, options.config.profile);
     case "flint mcp":
         return commandMcp(session, options.mcp.log);
+    case "flint lsp":
+        {
+            import flint_tool.commands.lsp : commandLsp;
+
+            return commandLsp(session);
+        }
     default:
         return -1;
     }
@@ -347,8 +364,14 @@ private bool printKnowledgeHelp(string commandName, scope void delegate(scope co
     case "flint config":
         writeHelp!ConfigArgs(sink);
         return true;
+    case "flint watch":
+        writeHelp!WatchArgs(sink);
+        return true;
     case "flint mcp":
         writeHelp!McpArgs(sink);
+        return true;
+    case "flint lsp":
+        writeHelp!LspArgs(sink);
         return true;
     default:
         return false;

@@ -1,0 +1,278 @@
+/// `flint watch`: rebuild and restart, or retest, on every change (ADR-021 section 1, ADR-027).
+///
+/// The watcher compares a snapshot of the project's inputs (path, size and modification time of everything under
+/// src/, test/, config/, native/ and resources/, and flint.toml) four times a second, which works on every
+/// platform and costs microseconds for a project. A change waits until the files are still for a moment, so an
+/// editor's save of several files is one cycle. Builds are incremental: DUB's up-to-date checks, the content-hashed
+/// C cache and the resident compile server do the work.
+module flint_tool.commands.watch;
+
+import flint_tool.diagnostics.report : Report;
+import flint_tool.engine.session : Session;
+
+@safe:
+
+/// What a cycle does.
+enum WatchMode : ubyte
+{
+    /// Build, then (re)start the executable.
+    run,
+    /// Run the tests.
+    test,
+    /// Build only.
+    build
+}
+
+/// One file's identity in a snapshot.
+struct Stamp
+{
+    /// Size in bytes.
+    ulong size;
+    /// Modification time, in hnsecs.
+    long modified;
+}
+
+/// The project's inputs, by project-relative path.
+Stamp[string] snapshot(string root)
+{
+    import std.file : DirEntry, dirEntries, exists, isDir, SpanMode;
+    import std.path : buildPath;
+    import flint_tool.support.files : relativeTo;
+
+    Stamp[string] stamps;
+    foreach (top; ["src", "test", "config", "native", "resources"])
+    {
+        const directory = buildPath(root, top);
+        if (!exists(directory) || !isDir(directory))
+            continue;
+        foreach (DirEntry entry; dirEntries(directory, SpanMode.depth, false))
+        {
+            if (entry.isFile)
+                stamps[relativeTo(entry.name, root)] = Stamp(entry.size, entry.timeLastModified.stdTime);
+        }
+    }
+    const manifest = buildPath(root, "flint.toml");
+    if (exists(manifest))
+    {
+        auto entry = DirEntry(manifest);
+        stamps["flint.toml"] = Stamp(entry.size, entry.timeLastModified.stdTime);
+    }
+    return stamps;
+}
+
+/// Paths added, removed or changed between two snapshots, sorted.
+string[] changes(const Stamp[string] before, const Stamp[string] after)
+{
+    import std.algorithm.sorting : sort;
+
+    string[] changed;
+    foreach (path, stamp; after)
+    {
+        const previous = path in before;
+        if (previous is null || *previous != stamp)
+            changed ~= path;
+    }
+    foreach (path, stamp; before)
+    {
+        if (path !in after)
+            changed ~= path;
+    }
+    sort(changed);
+    return changed;
+}
+
+/// `flint watch [--test|--build] [-- program arguments]`.
+int commandWatch(ref Session session, string project, WatchMode mode, string[] programArguments)
+{
+    import core.thread : Thread;
+    import core.time : msecs;
+    import flint_tool.commands.output : finishBare;
+    import flint_tool.commands.project : Target, TargetKind, locate;
+    import flint_tool.support.process : interrupted;
+
+    Report report;
+    Target target;
+    if (!locate(session, project, target, report))
+        return finishBare(session, report, "flint.watch/1");
+    if (target.kind == TargetKind.workspace)
+    {
+        report.error("FLINT-E0004", "flint watch watches a project", "flint watch -C <project>");
+        return finishBare(session, report, "flint.watch/1");
+    }
+    if (mode == WatchMode.run && target.manifest.type != "executable")
+        mode = WatchMode.test;
+    Watcher watcher = Watcher(session.executable, target.root, mode, programArguments,
+            target.manifest.artifactName(), session.json);
+    auto current = snapshot(target.root);
+    watcher.cycle(session, null);
+    while (!interrupted())
+    {
+        Thread.sleep(250.msecs);
+        auto next = snapshot(target.root);
+        auto changed = changes(current, next);
+        if (changed.length == 0)
+        {
+            watcher.reap(session);
+            continue;
+        }
+        // Let a burst of saves settle into one cycle.
+        do
+        {
+            Thread.sleep(200.msecs);
+            current = next;
+            next = snapshot(target.root);
+        }
+        while (changes(current, next).length && !interrupted());
+        changed ~= changes(current, next);
+        current = next;
+        watcher.cycle(session, changed);
+    }
+    watcher.stop();
+    return 0;
+}
+
+/// The watch loop's state: the cycle count and the running program.
+private struct Watcher
+{
+    string flint;
+    string root;
+    WatchMode mode;
+    string[] arguments;
+    string executable;
+    bool json;
+    long cycles;
+    import std.process : Pid;
+
+    Pid program;
+
+    /// Build, test or restart for `changed` files (none on the first cycle).
+    void cycle(ref Session session, string[] changed)
+    {
+        import std.path : buildPath;
+        import flint_tool.support.process : Launch, streamed;
+
+        cycles++;
+        if (changed.length)
+            session.progress("Changed", describe(changed));
+        if (mode == WatchMode.run)
+            stop();
+        const command = mode == WatchMode.test ? "test" : "build";
+        Launch launch;
+        launch.directory = root;
+        int exitCode;
+        {
+            import flint_tool.sys.posix : writeError;
+
+            const outcome = streamed([flint, command, "-C", root], launch, (scope const(char)[] text) @safe {
+                if (!json)
+                    writeError(text);
+            }, (scope const(char)[] text) @safe {
+                if (!json)
+                    writeError(text);
+            });
+            exitCode = outcome.started ? outcome.code : -1;
+        }
+        const ok = exitCode == 0;
+        if (ok && mode == WatchMode.run)
+            start(session, buildPath(root, ".flint", "build", "dev", executable));
+        else if (!json)
+            session.progress(ok ? "Ready" : "Waiting", ok
+                    ? "watching for changes" : "fix the errors above; " ~ "watching for changes");
+        if (json)
+            event(changed, command, ok, exitCode);
+    }
+
+    private string describe(scope const string[] changed)
+    {
+        import std.array : join;
+        import std.conv : to;
+
+        if (changed.length <= 3)
+            return changed.join(", ");
+        const others = changed[3 .. $].length;
+        return changed[0 .. 3].join(", ") ~ " and " ~ others.to!string ~ " more";
+    }
+
+    private void event(scope const string[] changed, string action, bool ok, int exitCode)
+    {
+        import flint.serde.owned : serialize;
+        import flint_tool.sys.posix : writeOutput;
+
+        static struct Event
+        {
+            string schema = "flint.watch/1";
+            long cycle;
+            const(string)[] changed;
+            string action;
+            bool ok;
+            int exit_code;
+            bool restarted;
+        }
+
+        const record = Event("flint.watch/1", cycles, changed, action, ok, exitCode, program !is null);
+        const line = serialize(record);
+        if (line.ok)
+            writeOutput(line.value ~ "\n");
+    }
+
+    private void start(ref Session session, string artifact)
+    {
+        import std.process : Config, spawnProcess;
+        import flint_tool.sys.posix : StandardStream, standardStream;
+
+        // With --json, standard output carries the events: the program writes to standard error instead.
+        const output = json ? StandardStream.error : StandardStream.output;
+        program = spawnProcess([artifact] ~ arguments, standardStream(StandardStream.input),
+                standardStream(output), standardStream(StandardStream.error), null, Config.none, root);
+        if (!json)
+            session.progress("Running", executable ~ " (restarted on every change; Ctrl+C stops both)");
+    }
+
+    /// Collect a program that exited by itself.
+    void reap(ref Session session)
+    {
+        import std.conv : to;
+        import std.process : tryWait;
+
+        if (program is null)
+            return;
+        const status = tryWait(program);
+        if (!status.terminated)
+            return;
+        if (!json)
+            session.progress("Exited", executable ~ " with status " ~ status.status.to!string
+                    ~ "; watching for changes");
+        program = null;
+    }
+
+    /// Stop the running program: SIGTERM, then SIGKILL after two seconds.
+    void stop()
+    {
+        import core.thread : Thread;
+        import core.time : msecs;
+        import std.process : tryWait, wait;
+        import flint_tool.sys.posix : signalProcessGroup;
+
+        if (program is null)
+            return;
+        enum terminate = 15;
+        enum forceKill = 9;
+        const pid = program.processID;
+        if (!tryWait(program).terminated)
+        {
+            signalProcessGroup(pid, terminate);
+            foreach (_; 0 .. 40)
+            {
+                if (tryWait(program).terminated)
+                    break;
+                Thread.sleep(50.msecs);
+            }
+            if (!tryWait(program).terminated)
+            {
+                signalProcessGroup(pid, forceKill);
+                wait(program);
+            }
+        }
+        program = null;
+    }
+}

@@ -31,7 +31,8 @@ flint check
 | --- | --- |
 | `flint new <name> [--starter a,b] [--type executable\|library] [--path DIR] [--plan]` | Create a project in the canonical layout, with `flint.lock`. Never overwrites. `--plan` prints the files instead. |
 | `flint build [packages...] [--profile P] [--compiler C] [--dflags F]... [--lflags F]... [--verify] [--locked] [--force] [-- flags]` | Build the project, or workspace packages, with a canonical profile. Writes a receipt next to the artifact. |
-| `flint run [--profile P] [--dflags F]... [--verify] [--locked] [-- args]` | Build if needed, then run with the project root as working directory. |
+| `flint run [--profile P] [--dflags F]... [--debug] [--verify] [--locked] [-- args]` | Build if needed, then run with the project root as working directory. `--debug` starts gdb (or lldb) with Flint's pretty-printers. |
+| `flint watch [--test\|--build] [-- args]` | Rebuild and restart the executable (or retest a library) on every change to `src/`, `test/`, `config/`, `native/`, `resources/` or `flint.toml`. A failing cycle shows its diagnostics and waits. `--json` prints one `flint.watch/1` line per cycle. |
 | `flint test [packages...] [--compiler dmd\|ldc\|both] [--sanitize] [--scenarios] [--verify] [--locked] [--force]` | Build and run unittests: the project's `src/` and `test/`, or `dub test` for workspace packages. `--sanitize` builds a project's tests, embedded C and native packages with ASan and UBSan. |
 | `flint check [--gate structural] [--package P]...` | Every check CI runs: lock, layout, safety rules, configuration convention, dfmt, D-Scanner and clang-tidy over embedded C. In the workspace: `tools/gates.py`'s structural gate, then dfmt and D-Scanner. |
 | `flint fmt [--check]` | Format with the pinned dfmt and the repository's `.editorconfig`. |
@@ -47,9 +48,10 @@ flint check
 | `flint explain <code>\|--list` | Explain a diagnostic code with a correct example. |
 | `flint docs [words\|qualified.name] [--export DIR]` | Search the pinned Flint API, built offline by the pinned compiler: signatures, documentation and the tested examples from each package's own tests. `--export` writes `llms.txt` and `llms-full.txt`. |
 | `flint config [--profile P]` | Every key `config/application.toml` and its profile file set, with its value and `file:line`. |
+| `flint lsp` | A language server on stdio: diagnostics from the pinned compiler and Flint's rules as you type (unsaved buffers included), and hover, go-to-definition and completion for the pinned Flint API. |
 | `flint mcp [--log FILE]` | Serve the knowledge tools and the build loop to MCP clients over stdio (ADR-021 section 6): `search_api`, `get_symbol`, `get_example`, `explain_error`, `describe_project`, `resolved_config`, `dependency_graph`, `generate`, `build`, `test` and `check`. Each tool returns the matching command's `--json` document. `--log` records each call. |
 | `flint examples <topic>` | Compiled, tested examples for a topic, and matching golden applications. |
-| `flint generate <entity\|repository\|service\|controller\|config\|migration\|agents> <Name> [--plan]` | Write the canonical shape of a component (package-by-feature), add the core packages it needs and relock; `agents` refreshes `AGENTS.md`. Never overwrites. |
+| `flint generate <entity\|repository\|service\|controller\|config\|migration\|agents\|debug> <Name> [--plan]` | Write the canonical shape of a component (package-by-feature), add the core packages it needs and relock. `agents` refreshes `AGENTS.md`, and `debug` writes VS Code launch and task configurations that load Flint's pretty-printers. Never overwrites a component. |
 | `flint receipt <artifact> [--canonical]` | Verify an artifact against its receipt and the current toolchain. |
 
 Every command accepts `--json` and `--help`. Commands acting on a project take `--project DIR` (or `-C DIR`). `flint` never prompts.
@@ -143,6 +145,7 @@ Command fields:
 | `flint.explain/1` | `codes` (`code`, `exit_code_class`, `title`, `explanation`, `example`) |
 | `flint.docs/1` | `query`, `release`, `packages` (`name`, `module_name`, `description`, `symbols`, `with_examples`, `problem`), `symbols` (`qualified`, `name`, `kind`, `package_name`, `module_name`, `signature`, `comment`, `file`, `line`, `examples`), `exported` |
 | `flint.examples/1` | `topic`, `examples` (`symbol`, `signature`, `example` (`file`, `line`, `code`)), `applications` |
+| `flint.watch/1` | one line per cycle: `cycle`, `changed`, `action`, `ok`, `exit_code`, `restarted` |
 | `flint.config/1` | `project`, `profile`, `files`, `keys` (`key`, `value`, `source`) |
 | `flint.generate/1` | `project`, `kind`, `name`, `files` (`path`, `content`), `dependencies_added`, `next`, `plan` |
 | `flint.receipt/1` | `artifact`, `receipt`, `canonical`, `non_canonical_reasons`, `profile`, `commit` |

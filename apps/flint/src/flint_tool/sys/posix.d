@@ -160,3 +160,39 @@ else
         }
     }
 }
+
+/// Which standard stream a child process should inherit.
+enum StandardStream : ubyte
+{
+    /// Standard input.
+    input,
+    /// Standard output.
+    output,
+    /// Standard error.
+    error
+}
+
+/// This process's standard stream, as a File a spawned child can inherit.
+// SAFETY: druntime initialises std.stdio's global Files before main and they are only read here; the copy is a
+// reference-counted File over the same descriptor, which stays open for the whole process.
+@trusted imported!"std.stdio".File standardStream(StandardStream which)
+{
+    import std.stdio : stderr, stdin, stdout;
+
+    return which == StandardStream.input ? stdin : which == StandardStream.output ? stdout : stderr;
+}
+
+/// Read up to `buffer.length` bytes of standard input; 0 at end of input.
+size_t readInput(scope ubyte[] buffer)
+{
+    return buffer.length == 0 ? 0 : readStandardInput(buffer);
+}
+
+// SAFETY: fread writes at most buffer.length bytes into the caller's live, non-empty slice and keeps no pointer;
+// the C stdin stream is initialised by the C runtime before main.
+private size_t readStandardInput(scope ubyte[] buffer) @trusted nothrow @nogc
+{
+    import core.stdc.stdio : fread, stdin;
+
+    return fread(buffer.ptr, 1, buffer.length, stdin);
+}

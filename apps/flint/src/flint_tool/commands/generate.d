@@ -44,7 +44,7 @@ int commandGenerate(ref Session session, string kind, string name, string projec
     import std.file : exists;
     import std.path : buildPath;
     import flint_tool.commands.project : Target, TargetKind, info, locate;
-    import flint_tool.project.generators : Generation, agentsGuide, generate;
+    import flint_tool.project.generators : Generation, agentsGuide, debugConfigs, generate;
     import flint_tool.support.files : findFiles;
 
     Report report;
@@ -63,6 +63,8 @@ int commandGenerate(ref Session session, string kind, string name, string projec
         generation.files = [
         GeneratedFile("AGENTS.md", agentsGuide(target.manifest.name, root, target.manifest.type))
     ];
+    else if (kind == "debug")
+        generation.files = debugConfigs(target.manifest.artifactName(), session.home.root);
     else
         generation = generate(kind, name, root, nextMigration(target.root), findFiles(target.root, "src/**"));
     foreach (ref file; generation.files)
@@ -71,7 +73,7 @@ int commandGenerate(ref Session session, string kind, string name, string projec
     payload.next = generation.next;
     foreach (ref file; generation.files)
     {
-        if (kind != "agents" && exists(buildPath(target.root, file.path)))
+        if (kind != "agents" && kind != "debug" && exists(buildPath(target.root, file.path)))
         {
             report.error("FLINT-E0008", file.path ~ " already exists",
                     "generators never overwrite; choose another name");
@@ -145,7 +147,7 @@ private bool validRequest(string kind, string name, ref Report report)
 
     if (!generatorKinds.canFind(kind))
         report.error("FLINT-E0003", "unknown generator `" ~ kind ~ "`", "choose one of: " ~ generatorKinds.join(", "));
-    else if (kind != "agents" && !validTypeName(name))
+    else if (kind != "agents" && kind != "debug" && !validTypeName(name))
     {
         const fix = "flint generate " ~ kind ~ " Order";
         report.error("FLINT-E0003", "`" ~ name ~ "` is not a PascalCase type name", fix);

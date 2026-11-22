@@ -444,7 +444,10 @@ int commandRun(ref Session session, RunArgs args, string[] passthrough)
         return finish(session, report, payload);
     payload.artifact = ArtifactInfo(display(outcome.artifact), display(outcome.receipt),
             outcome.canonical, outcome.reasons);
-    const argv = [outcome.artifact] ~ passthrough;
+    const argv = args.debug_ ? debuggerCommand(session, outcome.artifact, passthrough,
+            report) : [outcome.artifact] ~ passthrough;
+    if (!report.ok)
+        return finish(session, report, payload);
     payload.program.command = argv.dup;
     if (!session.json)
     {
@@ -455,8 +458,8 @@ int commandRun(ref Session session, RunArgs args, string[] passthrough)
 
             writeError(renderHuman([item], session.errorPalette));
         }
-        session.progress("Running", display(outcome.artifact));
-        const failure = replaceProcess(outcome.artifact, argv, target.root);
+        session.progress(args.debug_ ? "Debugging" : "Running", display(outcome.artifact));
+        const failure = replaceProcess(argv[0], argv, target.root);
         report.items = null;
         report.error("FLINT-E0707", "could not start " ~ outcome.artifact ~ " (errno " ~ failure.to!string ~ ")",
                 "flint build --verbose");
@@ -602,6 +605,32 @@ private TestRun[] testProject(ref Session session, const ref Target target,
         runs ~= run;
     }
     return runs;
+}
+
+/// The debugger command line of `flint run --debug`: gdb, else lldb, with Flint's pretty-printers loaded.
+string[] debuggerCommand(ref Session session, string artifact, scope const string[] arguments, ref Report report)
+{
+    import std.path : buildPath;
+    import flint_tool.support.process : which;
+
+    if (session.json)
+    {
+        report.error("FLINT-E0004",
+                "--debug starts an interactive debugger; it cannot report JSON", "flint run --debug");
+        return null;
+    }
+    const printers = buildPath(session.home.root, "tools", "debug");
+    const gdb = which("gdb");
+    if (gdb.length)
+        return [gdb, "-q", "-x", buildPath(printers, "flint_gdb.py"), "--args", artifact] ~ arguments;
+    const lldb = which("lldb");
+    if (lldb.length)
+        return [
+        lldb, "-o", "command script import " ~ buildPath(printers, "flint_lldb.py"), "--", artifact
+    ] ~ arguments;
+    report.error("FLINT-E0822", "no debugger: neither gdb nor lldb is on PATH",
+            "install gdb (Linux) or lldb (macOS), then flint run --debug");
+    return null;
 }
 
 /// `flint test`.

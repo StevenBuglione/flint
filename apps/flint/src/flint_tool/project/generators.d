@@ -6,7 +6,7 @@ module flint_tool.project.generators;
 
 /// The generators.
 immutable string[] generatorKinds = [
-    "entity", "repository", "service", "controller", "config", "migration", "agents"
+    "entity", "repository", "service", "controller", "config", "migration", "agents", "debug"
 ];
 
 /// One generated file.
@@ -343,6 +343,62 @@ private string migration(string name, string feature)
 {
     return fill(migrationTemplate, names(name, null, feature));
 }
+
+/// VS Code launch and task configurations: build with flint, debug the dev build with gdb and Flint's
+/// pretty-printers (or lldb with its summaries).
+GeneratedFile[] debugConfigs(string executable, string home)
+{
+    const printers = home ~ "/tools/debug";
+    const launch = fill(launchTemplate, [["executable", executable], ["printers", printers]]);
+    return [
+        GeneratedFile(".vscode/launch.json", launch),
+        GeneratedFile(".vscode/tasks.json", tasksTemplate)
+    ];
+}
+
+private enum launchTemplate = `{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "flint: debug {executable} (gdb)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/.flint/build/dev/{executable}",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "MIMode": "gdb",
+            "preLaunchTask": "flint build",
+            "setupCommands": [
+                { "text": "-enable-pretty-printing", "ignoreFailures": true },
+                { "text": "source {printers}/flint_gdb.py", "ignoreFailures": false }
+            ]
+        },
+        {
+            "name": "flint: debug {executable} (lldb)",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/.flint/build/dev/{executable}",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "flint build",
+            "initCommands": ["command script import {printers}/flint_lldb.py"]
+        }
+    ]
+}
+`;
+
+private enum tasksTemplate = `{
+    "version": "2.0.0",
+    "tasks": [
+        { "label": "flint build", "type": "shell", "command": "flint build", "group": "build",
+          "problemMatcher": [] },
+        { "label": "flint test", "type": "shell", "command": "flint test", "group": "test",
+          "problemMatcher": [] },
+        { "label": "flint watch", "type": "shell", "command": "flint watch", "isBackground": true,
+          "problemMatcher": [] }
+    ]
+}
+`;
 
 /// AGENTS.md: the Flint way, for coding agents and people, specific to this project.
 string agentsGuide(string name, string root, string type)
