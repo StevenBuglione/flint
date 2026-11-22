@@ -155,7 +155,8 @@ class Builder:
 
     def cmake(self,name,src,build,relative,options,install=True,target=None):
         options=list(options)
-        if name == 'curl' and self.a.target.startswith('linux'):
+        # macOS gets the Linux protocol set (ADR-024); its curl also needs SystemConfiguration (dub_blocks).
+        if name == 'curl' and (self.a.target.startswith('linux') or self.a.target == 'macos-arm64'):
             options.remove('HTTP_ONLY=ON')  # The pinned CMake removed this option.
             smtp = self.a.profile in ('mail', 'ci', 'all')
             options += ['CURL_DISABLE_SMTP=' + ('OFF' if smtp else 'ON'), 'CURL_USE_LIBSSH=OFF']
@@ -299,7 +300,8 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
             self.env['CARGO_PROFILE_RELEASE_PANIC']='abort'
             args=['cargo','rustc','--lib','--crate-type','staticlib','--release','--locked','--jobs',str(self.a.jobs),'--target',triple]
             if name=='wasmtime':args+=['-p','wasmtime-c-api','--no-default-features','--features','cranelift,wasi,component-model,component-model-async']
-            flint_extensions=name=='wasmtime' and self.a.target.startswith('linux')
+            # The extension is portable Rust over the C API; macOS builds it too (ADR-024).
+            flint_extensions=name=='wasmtime' and (self.a.target.startswith('linux') or self.a.target=='macos-arm64')
             if flint_extensions:
                 extension=ROOT/'packages/wasi/native/install_extensions.py'
                 self.command([sys.executable,extension,src],src)
@@ -426,7 +428,7 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
         self.receipt['libraries'][name]={'source_sha256':row['archive_sha256'],'revision':row.get('commit',row.get('source_id')),'license':row['license_selected'],'requested_sanitizers':self.a.sanitize,'archives':[{'path':str(p),'sha256':digest(p)} for p in paths]}
         if self.sanitizer_exclusions(name):self.receipt['libraries'][name]['sanitizer_exclusions']=list(self.sanitizer_exclusions(name))
         if name=='sdl3':self.link_metadata[name]=self.sdl_link_metadata()
-        if name == 'curl' and self.a.target.startswith('linux'):
+        if name == 'curl' and (self.a.target.startswith('linux') or self.a.target == 'macos-arm64'):
             config = self.prefix / 'bin/curl-config'
             protocols = sorted(self.command([config, '--protocols'], ROOT).split())
             smtp = self.a.profile in ('mail', 'ci', 'all')
@@ -456,7 +458,7 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
             self.receipt['ffi_archive']={'path':str(paths[0]),'sha256':digest(paths[0])}
             if 'protobuf-c' in self.receipt['libraries']:
                 self.receipt['rpc_test_archive'] = self.rpc_test_archive_receipt()
-            if self.a.target.startswith('linux') and 'wasmtime' in self.receipt['libraries']:
+            if (self.a.target.startswith('linux') or self.a.target == 'macos-arm64') and 'wasmtime' in self.receipt['libraries']:
                 self.receipt['wasi_reference_archive'] = self.wasi_reference_archive_receipt()
             else:
                 self.receipt.pop('wasi_reference_archive', None)
@@ -544,6 +546,7 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
             elif self.a.target.startswith('windows'):flags+=['ws2_32.lib','advapi32.lib','crypt32.lib','bcrypt.lib','userenv.lib','ntdll.lib','shell32.lib','ole32.lib']
             else:
                 flags+=['-Wl,-framework,Security','-Wl,-framework,CoreFoundation']
+                if 'curl' in closure:flags+=['-Wl,-framework,SystemConfiguration']  # proxy settings (curl macos.c)
                 if 'webview' in closure:flags+=['-Wl,-framework,WebKit','-lc++','-lobjc']
             # SDL double-quoted string escapes are JSON-compatible for these paths.
             versions=['FlintNative'+''.join(part[:1].upper()+part[1:] for part in n.split('-')) for n in sorted(direct)]
@@ -562,7 +565,7 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
                 # the provider archives for single-pass static linkers.
                 block = block.replace('\nlflags ', '\n' + self.rpc_fixture_flag() + 'lflags ', 1)
                 recipes[root + '/bench/dub.sdl'] = block
-            if package == 'wasi' and self.a.target.startswith('linux') and 'wasmtime' in self.receipt['libraries']:
+            if package == 'wasi' and (self.a.target.startswith('linux') or self.a.target == 'macos-arm64') and 'wasmtime' in self.receipt['libraries']:
                 reference = self.receipt.get('wasi_reference_archive')
                 if not reference or reference != self.wasi_reference_archive_receipt():
                     raise RuntimeError('Installed WASI reference archive changed; rebuild the native shims')

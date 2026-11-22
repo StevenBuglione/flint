@@ -18,6 +18,11 @@ if(WIN32)
   target_compile_definitions(flint_ffi PRIVATE UTF8PROC_STATIC CURL_STATICLIB NGHTTP2_STATICLIB YAML_DECLARE_STATIC
     LIBARCHIVE_STATIC SODIUM_STATIC)
 endif()
+# The shims request POSIX.1-2008, which hides Darwin's own declarations (SO_NOSIGPIPE, F_SETNOSIGPIPE,
+# statfs's f_fstypename). Darwin keeps them visible alongside the POSIX set (ADR-024).
+if(APPLE)
+  target_compile_definitions(flint_ffi PRIVATE _DARWIN_C_SOURCE)
+endif()
 # Wasmtime is a static archive in this profile; Windows headers must not emit DLL imports.
 if(WIN32 AND EXISTS "${CMAKE_INSTALL_PREFIX}/include/wasmtime.h")
   target_compile_definitions(flint_ffi PRIVATE WASM_API_EXTERN= WASI_API_EXTERN=)
@@ -33,7 +38,7 @@ foreach(PAIR IN ITEMS "llhttp.h|LLHTTP" "nghttp2/nghttp2.h|NGHTTP2" "curl/curl.h
     target_compile_definitions(flint_ffi PRIVATE "FLINT_HAS_${SYMBOL}=1")
   endif()
 endforeach()
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND EXISTS "${CMAKE_INSTALL_PREFIX}/include/SDL3/SDL.h"
+if((CMAKE_SYSTEM_NAME STREQUAL "Linux" OR APPLE) AND EXISTS "${CMAKE_INSTALL_PREFIX}/include/SDL3/SDL.h"
     AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/flint_desktop.h")
   target_compile_definitions(flint_ffi PRIVATE FLINT_HAS_SDL3=1)
   install(FILES flint_desktop.h DESTINATION include)
@@ -116,13 +121,16 @@ if(EXISTS "${CMAKE_INSTALL_PREFIX}/include/llhttp.h" AND EXISTS "${CMAKE_INSTALL
   add_test(NAME flint_native_library_test COMMAND flint_native_library_test)
 endif()
 
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux" OR APPLE)
   # White-box socket option test; it compiles flint_mq_socket.c itself without TLS.
   add_executable(flint_mq_socket_test mq_socket_test.c)
+  if(APPLE)
+    target_compile_definitions(flint_mq_socket_test PRIVATE _DARWIN_C_SOURCE)
+  endif()
   add_test(NAME flint_mq_socket_test COMMAND flint_mq_socket_test)
 endif()
 
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND EXISTS "${CMAKE_INSTALL_PREFIX}/include/wasmtime.h" AND
+if((CMAKE_SYSTEM_NAME STREQUAL "Linux" OR APPLE) AND EXISTS "${CMAKE_INSTALL_PREFIX}/include/wasmtime.h" AND
     EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/flint_wasi.h")
   target_compile_definitions(flint_ffi PRIVATE FLINT_HAS_WASMTIME=1)
   if(EXISTS "${CMAKE_INSTALL_PREFIX}/include/flint_wasmtime_extensions.h")
@@ -134,7 +142,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND EXISTS "${CMAKE_INSTALL_PREFIX}/includ
   install(FILES flint_wasi.h DESTINATION include)
 endif()
 
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/flint_mail.h" AND
+if((CMAKE_SYSTEM_NAME STREQUAL "Linux" OR APPLE) AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/flint_mail.h" AND
     EXISTS "${CMAKE_INSTALL_PREFIX}/include/curl/curl.h")
   install(FILES flint_mail.h DESTINATION include)
   # Isolated pinned-ABI control. Static linking retains it only in the reference executable.

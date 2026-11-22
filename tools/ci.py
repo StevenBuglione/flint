@@ -188,6 +188,9 @@ def run_tests(runner,compiler,*,sanitize=False):
     env=os.environ.copy()
     env.pop('DFLAGS',None)
     env['DUB_HOME']=str(ROOT/'.ci-dub-home'/('sanitized' if sanitize else 'normal')/Path(compiler).name)
+    if sys.platform=='darwin':
+        # DUB treats ldmd2 as DMD, and the fork's pipeline writes ELF-style archives (ADR-024).
+        env['FLINT_DUB_PIPELINE']='0'
     if sanitize:
         if not runner.plan:
             require(verified_sanitizer_runtime(sanitizer_runtime_dir()),'LDC sanitizer runtime missing or changed: '+str(sanitizer_runtime_dir()))
@@ -209,7 +212,8 @@ def run_tests(runner,compiler,*,sanitize=False):
             # The ci closure builds the optional SDL canvas backend, whose pinned SDL has no Wayland
             # driver (ADR-020), so its suite runs on SDL's offscreen driver. The default WebKitGTK
             # backend is built by the desktop native profile and tested on a real display.
-            package_env={**env,'SDL_VIDEODRIVER':'offscreen'}
+            # macOS has no EGL for SDL's offscreen driver; its headless driver is dummy (ADR-024).
+            package_env={**env,'SDL_VIDEODRIVER':'dummy' if sys.platform=='darwin' else 'offscreen'}
             if sanitize:
                 # Software rendering without framebuffer acceleration never loads the host's
                 # uninstrumented EGL drivers, whose one-time internal allocations LeakSanitizer
@@ -318,11 +322,13 @@ def platform_run(runner,target):
         runner.run([PYTHON,'benchmarks/bench-wasm/build.py','--ldc','ldc2','--profile','Oz','--output','build/bench-wasm.wasm'])
         runner.run(['node','tests/wasm/run.mjs','build/bench-wasm.wasm'])
         return
+    # macOS has no DMD code generator; LDC's ldmd2 fills the DMD role of the dev and test profiles (ADR-024).
+    compilers=('ldmd2','ldc2') if target=='macos-arm64' else ('ldc2',)
     try:
         native(runner,target)
-        run_tests(runner,'ldc2')
-        negative_tests(runner,'ldc2')
-        betterc(runner,'ldc2')
+        for compiler in compilers:run_tests(runner,compiler)
+        for compiler in compilers:negative_tests(runner,compiler)
+        for compiler in compilers:betterc(runner,compiler)
         if target.endswith('-musl'):
             runner.run([PYTHON,'tools/static_smoke.py','--target',target,'--output','artifacts/static-'+target])
     finally:

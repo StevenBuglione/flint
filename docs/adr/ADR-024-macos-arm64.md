@@ -107,7 +107,63 @@ Tests that observed Linux-only state use Darwin equivalents with the same assert
 
 The reactor's tests that were Linux-only now run on macOS against `readinessBackend` (`tests/support.d`): epoll on Linux and kqueue on macOS. On Linux they still run against epoll, and against io_uring where liburing is linked.
 
-### 4. The flint CLI
+### 4. Native providers and the C shims
+
+`tools/native_build.py --target macos-arm64` builds all 17 C providers of the `ci` profile, plus wasmtime, with Apple clang (Xcode 26.6) and the existing per-library steps. That covers OpenSSL, libsodium, llhttp, nghttp2, curl, SQLite, libpq, librdkafka, zstd, zlib, brotli, libarchive, utf8proc, libyaml, SDL3, protobuf-c and hiredis. The macOS deployment target is 13.0, as the CMake recipe already set. There is no parallel build system, and Milestone 8's Conan recipes reuse the same steps.
+
+Two changes in `native_build.py` were needed:
+
+- curl gets the Linux protocol set: HTTP, HTTPS, WS, WSS, SMTP and SMTPS. It previously fell back to every protocol on macOS, including LDAP.
+- curl links Apple's SystemConfiguration framework for its proxy settings.
+
+The wasmtime extension overlay is portable Rust, so macOS builds it too, together with the WASI reference archive.
+
+Flint's own shims in `native/ffi` were gated on `__linux__`. They now also build under `__APPLE__`, and the Linux text is unchanged. Three private headers carry the Darwin pieces:
+
+- **`flint_wake.h`:** a nonblocking, close-on-exec pipe pair in place of `eventfd`, for the SQLite, PostgreSQL and Redis wake-ups. The read end is the descriptor exported for polling; the write end stays private. As with `eventfd`, a full pipe already holds a pending wake-up.
+- **`flint_socket.h`:** a nonblocking, close-on-exec stream socket with `SO_NOSIGPIPE`, in place of `SOCK_NONBLOCK | SOCK_CLOEXEC` and `MSG_NOSIGNAL`.
+- **`flint_clock.h`:** `FLINT_DEADLINE_CLOCK`, the clock that D's `MonoTime` reads:
+  - `CLOCK_MONOTONIC` on Linux;
+  - `CLOCK_UPTIME_RAW`, that is `mach_absolute_time`, on Darwin.
+
+  Darwin's `CLOCK_MONOTONIC` also counts time asleep. On pluto it ran 44 s ahead of `MonoTime`, so every deadline D passed to a shim looked already expired to the shim. The SQLite offload test showed it: a `ROLLBACK` was reported as cancelled.
+
+Where a shim uses a monotonic condition-variable clock (`pthread_condattr_setclock`), Darwin waits with `pthread_cond_timedwait_relative_np` instead, since it has no such attribute. The shims compile with `_DARWIN_C_SOURCE`, so Darwin's declarations stay visible next to the POSIX.1-2008 set.
+
+Platform differences the shims absorb:
+
+- **libarchive pathnames.** libarchive converts UTF-8 header names to NFC on Linux and to NFD on Darwin (`archive_string.c`), and has no option to change that. The archive reader recomposes them to NFC with CoreFoundation's `CFStringNormalize`, which every macOS native package already links, so a reader sees the same bytes on both platforms.
+- **SQLite and WAL.** The local file systems allowed to use WAL are identified by `f_fstypename` (`apfs`, `hfs`, `tmpfs`) instead of Linux magic numbers.
+- **Redis.** The connection socket gets `SO_NOSIGPIPE`, because the thread's SIGPIPE mask cannot contain a process-wide signal.
+- **Desktop.** The SDL3 canvas backend builds on macOS, and `flint_desktop_main_thread` uses `pthread_main_np`. Its tests use SDL's offscreen driver, as on Linux. The WebKitGTK backend stays Linux-only, and a WKWebView backend is future work.
+
+On the D side, each package's `ffi`/`sys` module enables its native path on macOS next to Linux. Pipe-based wake-ups replace `eventfd` in `flint.cache` and `flint.security`. `os_sync_wait_on_address` replaces the futex in `flint.sql`. `flint.mcp` starts children with `posix_spawn`. `flint.web` keeps its lazily zero-filled `mmap` connection slots, and `flint.conc` reads secure random bytes with `getentropy`, which previously returned `unsupported` on macOS.
+
+Tests that selected `Backend.epoll` select `Backend.kqueue` on macOS. The `cache` package's remote store does the same in its source. That keeps the readiness backend under test on Linux unchanged.
+
+Providers keep the flags `native_build.py` gives them on Linux. The embedded-C rules in `policy/native-c.toml`, which govern C inside a Flint project, need a Darwin variant before `flint build` compiles such C on macOS:
+
+- the pinned compiler is the Linux LLVM release;
+- Apple clang rejects `-fstack-clash-protection` on arm64;
+- `-z relro -z now` are ELF-only.
+
+That variant is follow-up work, coordinated with Milestone 8.
+
+### 5. The platform lane
+
+`python3 tools/ci.py platform --target macos-arm64` builds the providers and wasmtime with the pinned Rust. It then runs every package's `dub test`, the compile-negative fixtures and the BetterC fixtures. Each runs on both compilers available on macOS:
+
+- `ldmd2`, which fills the dev and test profiles' DMD role;
+- `ldc2`.
+
+Linux lanes keep running `ldc2` only. On macOS the lane sets `FLINT_DUB_PIPELINE=0`. Its receipt, `artifacts/platforms/macos-arm64.json`, is what Gate 6's `macos-arm64` entry reads. The lane expects `ldc2`, `ldmd2` and the Flint DUB first on `PATH`:
+
+```bash
+export PATH="$PWD/.tools/dub-1.43.0/bin:$PWD/.tools/ldc2-1.43.0-osx-arm64/bin:$PWD/.tools/bin:$PATH"
+python3 tools/ci.py platform --target macos-arm64
+```
+
+### 6. The flint CLI
 
 `apps/flint/src/flint_tool/toolchain/host.d` describes the toolchain layout per host. On macOS:
 
@@ -127,6 +183,9 @@ The Linux behaviour of every changed module is unchanged by construction. The Li
 
 - `dub test` on both compilers for `:log`, `:os`, `:term`, `:prompt` and `:test` (their C files changed under `#if defined(__APPLE__)` only);
 - `dub test :reactor` on both compilers, with and without liburing. The Linux-only test blocks became `version (Posix)` and use `readinessBackend` (epoll) where they named `Backend.epoll`, and the native-watch code moved under `version (ReactorNativeWatches)`;
+- `python3 tools/native_build.py --profile ci --phase build --emit-dub` and `ctest` of `native/ffi`, followed by `dub test` on both compilers for every package with a native provider: `:http`, `:web`, `:sql`, `:cache`, `:mq`, `:rpc`, `:mail`, `:security`, `:codec`, `:wasi` and `:desktop`. Every shim's Linux text is unchanged under `#if`, except that monotonic clock reads name `FLINT_DEADLINE_CLOCK`, which is `CLOCK_MONOTONIC` on Linux;
+- `dub test` on both compilers for `:conc`, `:mcp` and `:schedule`;
+- the platform and sanitizer lanes of `tools/ci.py` (its macOS-only branches do not run on Linux);
 - `flint test --project apps/flint`, and `python3 -m unittest discover -s tests -p 'test_*.py'`;
 - `python3 tools/gates.py --gate structural`, since `tools/gates.py` changed;
 - `flint toolchain install --plan`, `flint toolchain verify` and `tools/install_toolchains.py --compiler flint`, since `tools/install_toolchains.py` and the toolchain modules changed.
