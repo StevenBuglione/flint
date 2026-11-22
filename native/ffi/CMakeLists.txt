@@ -103,6 +103,12 @@ if(EXISTS "${CMAKE_INSTALL_PREFIX}/include/llhttp.h" AND EXISTS "${CMAKE_INSTALL
   add_test(NAME flint_native_library_test COMMAND flint_native_library_test)
 endif()
 
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  # White-box socket option test; it compiles flint_mq_socket.c itself without TLS.
+  add_executable(flint_mq_socket_test mq_socket_test.c)
+  add_test(NAME flint_mq_socket_test COMMAND flint_mq_socket_test)
+endif()
+
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND EXISTS "${CMAKE_INSTALL_PREFIX}/include/wasmtime.h" AND
     EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/flint_wasi.h")
   target_compile_definitions(flint_ffi PRIVATE FLINT_HAS_WASMTIME=1)
