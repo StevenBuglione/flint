@@ -78,6 +78,36 @@ DMD's x86-64 backend already targets Windows. The fork's speed features change a
 - **Parallel DUB pipeline:** `CreateProcess` instead of `posix_spawn`, and in-process COFF archiving.
 - **Direct linking:** cache the expanded link command, and use a pinned `lld-link` or MSVC `link.exe`, with no `cl`/driver chain per link.
 
+### 4a. Windows debug information in development builds
+
+Decided on 2026-11-22 under the project owner's direction that compile time, developer experience and debugging all come first.
+
+Measured on the Windows VM, with diagnostic numbers only, a cold `bench-cli` dev build is dominated by the link. The reason is that writing a full PDB merges every CodeView type and symbol:
+
+| Full link of the same inputs | With PDB | Without |
+| --- | ---: | ---: |
+| `link.exe` | 0.67 s | 0.13 s |
+| `lld-link` 22 | 0.25 s | 0.10 s |
+
+An incremental `link.exe` link from its `.ilk` takes 0.03 s.
+
+The decision:
+
+1. **Development builds always keep file-and-line stack traces.** Debugging is not traded away for a benchmark, so linking without debug information is never the default.
+2. **The default is the fastest configuration that keeps those traces.** The candidates are:
+   - `link.exe /DEBUG:FASTLINK /INCREMENTAL`: a partial PDB that references the objects' CodeView instead of merging it, read by dbghelp;
+   - `lld-link /DEBUG:GHASH` with parallel threads.
+
+   A candidate qualifies only if an uncaught exception in `flint run` and in `flint test` prints file and line. Among qualifying candidates, the fastest cold build wins, and a tie goes to `link.exe`, whose incremental links give the fastest edit loop. Today's default, a full PDB with `link.exe`, stays until the measurement is done.
+3. **Remaining cold-build time is removed by speed work, not by dropping debug information:**
+   - the compile server's warm worker pool (section 4);
+   - parallel compile jobs;
+   - reusing unchanged objects and archives between links.
+4. **Debugger and release builds:** `flint run --debug` and release builds always write a complete, self-contained PDB. A FASTLINK PDB depends on the object files staying in place, so it is never shipped.
+5. **Opting out:** `[profile.dev] debug = false` drops debug information for anyone who wants the raw speed. It is recorded in the build receipt and is never the default.
+
+Linux and macOS have no equivalent cost. DWARF stays in the objects and executables without a merge step, so their development builds keep `-g`.
+
 ### 5. Runners
 
 | Platform | Performance runner |
