@@ -133,3 +133,37 @@ unittest
             ++lines;
     assert(lines == 2);
 }
+
+@("mutating message, key and value storage after write leaves the emitted record unchanged")
+unittest
+{
+    char[4096] target;
+    size_t length;
+    LogOptions options;
+    options.sink = (scope const(char)[] line) @safe nothrow @nogc {
+        target[0 .. line.length] = line;
+        length = line.length;
+        return Status.ok;
+    };
+    auto created = Logger.create(options);
+    assert(created.ok, created.error.message);
+    scope (exit)
+        created.value.close();
+
+    auto message = "original message".dup;
+    auto keyStorage = "region".dup;
+    auto valueStorage = "eu-west".dup;
+    // Field holds strings, so the test aliases mutable buffers to model caller-owned scratch storage.
+    auto borrowed = [Field(cast(string) keyStorage, cast(string) valueStorage)];
+    assert(created.value.write(Level.warn, message, borrowed, LogContext(9)) == Status.ok);
+    message[] = 'm';
+    keyStorage[] = 'k';
+    valueStorage[] = 'v';
+    borrowed[0] = Field("changed", "changed");
+    assert(created.value.flush().code == Status.ok);
+    const record = parseJSON(target[0 .. length]);
+    assert(record["message"].str == "original message");
+    assert(record["level"].str == "warn");
+    assert(record["fields"].object.length == 1);
+    assert(record["fields"]["region"].str == "eu-west");
+}

@@ -95,6 +95,37 @@ package(flint.validate) bool scalarSize(scope const(ubyte)[] bytes, size_t minim
     return count >= minimum;
 }
 
+/// Count UTF-16 or UTF-32 scalars, failing on unpaired surrogates or values beyond U+10FFFF.
+package(flint.validate) bool wideScalarSize(Unit)(scope const(Unit)[] units, size_t low, size_t high) pure nothrow @nogc
+        if (is(Unit == wchar) || is(Unit == dchar))
+{
+    size_t count;
+    for (size_t offset; offset < units.length; ++offset)
+    {
+        if (count == high)
+            return false;
+        immutable uint unit = units[offset];
+        static if (is(Unit == wchar))
+        {
+            if (unit >= 0xDC00 && unit <= 0xDFFF)
+                return false;
+            if (unit >= 0xD800 && unit <= 0xDBFF)
+            {
+                if (offset + 1 == units.length || units[offset + 1] < 0xDC00 || units[offset + 1] > 0xDFFF)
+                    return false;
+                ++offset;
+            }
+        }
+        else
+        {
+            if (unit > 0x10_FFFF || (unit >= 0xD800 && unit <= 0xDFFF))
+                return false;
+        }
+        ++count;
+    }
+    return count >= low;
+}
+
 package(flint.validate) bool asciiEmail(scope const(ubyte)[] bytes) pure nothrow @nogc
 {
     if (bytes.length < 3 || bytes.length > 254)

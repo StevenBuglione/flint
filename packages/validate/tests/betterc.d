@@ -63,9 +63,23 @@ private void textBehavior() nothrow @nogc
     assert(stale.total == 7 && stale.written == 6);
 }
 
+private struct Wide
+{
+    @Size(1, 1) wstring glyph;
+}
+
+private void wideBehavior() nothrow @nogc
+{
+    Wide wide = Wide("🐈"w);
+    assert(validate(wide, []).valid);
+    wide.glyph = "ab"w;
+    assert(validate(wide, []).total == 1);
+}
+
 private int behaviorTest() nothrow @nogc
 {
     numericBehavior();
+    wideBehavior();
     textBehavior();
     return 0;
 }

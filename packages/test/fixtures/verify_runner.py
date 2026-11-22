@@ -41,8 +41,12 @@ def main():
         cases = root.findall('testcase')
         assert [case.attrib['classname'] for case in cases] == ['flint_runner_alpha'] * 3 + ['flint_runner_beta']
         assert cases[0].attrib['name'] == 'A&B <check> "quoted"'
-        assert '\uFFFD' in cases[1].find('failure').text
-        assert 'broken & interrupted' in cases[2].find('error').text
+        failure = cases[1].find('failure').text
+        assert 'alpha.d:18: ' in failure and failure.endswith('(seed 479)'), failure
+        assert 'expected "<actual>", received "x&y\\x01"' in failure, failure
+        assert '(seed 479)' in cases[2].find('error').text
+        assert root.find('properties/property').attrib == {'name': 'seed', 'value': '479'}
+        assert 'broken & interrupted\uFFFD\tend' in cases[2].find('error').text
 
         original = report.read_bytes()
         assert run(filter_text='last', report=report).returncode == 3
@@ -56,6 +60,13 @@ def main():
             exits = workers.map(lambda _: run(filter_text='last', report=same).returncode, range(2))
             assert sorted(exits) == [0, 3]
             assert xml.parse(same).getroot().attrib['tests'] == '1'
+
+        with ThreadPoolExecutor(max_workers=2) as workers:
+            shards = [(directory / 'shard-a.xml', 'last'), (directory / 'shard-b.xml', 'A&B')]
+            exits = list(workers.map(lambda shard: run(filter_text=shard[1], report=shard[0]).returncode, shards))
+            assert exits == [0, 0], exits
+            names = [xml.parse(path).getroot().find('testcase').attrib['name'] for path, _ in shards]
+            assert names == ['last', 'A&B <check> "quoted"'], names
 
         print('Runner ordering, assertion/error reporting, XML, filters, fail-fast and shard isolation passed.')
 

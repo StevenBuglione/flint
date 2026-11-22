@@ -261,3 +261,81 @@ unittest
     // The supervisor previously noticed a finished child only on its 5 ms polling tick.
     assert(elapsed[rounds / 2] < 3_000, "child reaping waited for the supervisor polling interval");
 }
+
+@("concurrent stdout and stderr each reach their sink in emission order")
+unittest
+{
+    import std.conv : to;
+
+    Context context;
+    char[] stdoutText, stderrText;
+    const result = stream(context, ["/bin/sh", "-c", "seq 1 100000 & seq 1 100000 >&2 & wait"],
+            (scope const(ubyte)[] bytes) @safe { stdoutText ~= cast(const(char)[]) bytes; },
+            (scope const(ubyte)[] bytes) @safe { stderrText ~= cast(const(char)[]) bytes; });
+    assert(result.ok, result.error.message);
+    assert(result.value.code == 0);
+    char[] expected;
+    foreach (value; 1 .. 100_001)
+        expected ~= value.to!string ~ "\n";
+    // Each stream is far larger than a pipe buffer, so both readers must have interleaved.
+    assert(expected.length > 512 * 1024);
+    assert(stdoutText == expected);
+    assert(stderrText == expected);
+}
+
+/// Wait for a descendant reparented away from the caller to be dead or a zombie owned by its new parent.
+private void assertRetired(scope const(char)[] pid)
+{
+    import core.thread : Thread;
+    import core.time : msecs;
+    import std.file : exists, readText;
+    import std.string : split;
+
+    const path = "/proc/" ~ pid.idup ~ "/stat";
+    foreach (_; 0 .. 1000)
+    {
+        if (!exists(path))
+            return;
+        try
+        {
+            if (readText(path).split(") ")[1][0] == 'Z')
+                return;
+        }
+        catch (Exception)
+        {
+            if (!exists(path))
+                return;
+        }
+        Thread.sleep(1.msecs);
+    }
+    assert(0, "descendant survived termination");
+}
+
+@("a deadline escalates past an ignored SIGTERM, kills the grandchild and reaps the direct child")
+unittest
+{
+    import core.stdc.errno : ECHILD, errno;
+    import core.sys.posix.sys.wait : WNOHANG, waitpid;
+    import std.conv : to;
+    import std.string : split;
+
+    auto source = CancelSource.create(Context.init, Deadline.afterMillis(500));
+    assert(source.ok);
+    auto context = source.value.context();
+    ProcessOptions options;
+    options.terminateGraceNanos = 20_000_000;
+    char[] receipt;
+    const timedOut = stream(context, [
+        "/bin/sh", "-c", "trap '' TERM; sleep 30 & printf '%s %s\\n' \"$$\" \"$!\"; wait"
+    ], (scope const(ubyte)[] data) @safe { receipt ~= cast(const(char)[]) data; }, null, options);
+    assert(timedOut.ok, timedOut.error.message);
+    assert(timedOut.value.timedOut && timedOut.value.signalled);
+    // The ignored SIGTERM forces the SIGKILL escalation.
+    enum sigkill = 9;
+    assert(timedOut.value.code == sigkill);
+
+    const fields = receipt.split();
+    assert(fields.length == 2);
+    assert(waitpid(fields[0].to!int, null, WNOHANG) == -1 && errno == ECHILD);
+    assertRetired(fields[1]);
+}

@@ -324,3 +324,288 @@ private struct NestedDepth(size_t depth)
 static assert(!CanValidate!MissingMinimum);
 static assert(CanValidate!(NestedDepth!63));
 static assert(!CanValidate!(NestedDepth!64));
+
+private struct WideWidths
+{
+    @Size(2, 2) wstring utf16;
+    @Size(2, 2) dstring utf32;
+    @Size(2, 2) const(wchar)[] mutable16;
+}
+
+@("Size counts scalars in UTF-16 and UTF-32 strings and rejects invalid code units")
+unittest
+{
+    wchar[2] loneHigh = [cast(wchar) 0xD83D, 'a'];
+    wchar[2] loneLow = ['a', cast(wchar) 0xDC08];
+    dchar[2] surrogate = ['a', cast(dchar) 0xD800];
+    dchar[2] beyond = ['a', cast(dchar) 0x11_0000];
+
+    WideWidths widths = WideWidths("🐈é"w, "🐈é"d, "猫🐈"w);
+    Violation[3] errors;
+    assert(validate(widths, errors[]).valid);
+
+    widths.utf16 = "🐈"w;
+    widths.utf32 = "🐈"d;
+    widths.mutable16 = "abc"w;
+    const counted = validate(widths, errors[]);
+    assert(counted.total == 3 && errors[0].field == "utf16" && errors[2].field == "mutable16");
+
+    widths = WideWidths(loneHigh.idup, surrogate.idup, loneLow[]);
+    assert(validate(widths, errors[]).total == 3);
+    widths.utf32 = beyond.idup;
+    widths.mutable16 = loneHigh[0 .. 1];
+    assert(validate(widths, errors[]).total == 3);
+}
+
+private struct NarrowNumeric
+{
+    @Min(int.min) @Max(int.min) int signedInt;
+    @Min(short.min) short signedShort;
+    @Max(ubyte.max) ubyte unsignedByte;
+    @Min(uint.max) uint unsignedInt;
+    @Max(0) float single;
+    @Min(0) real extended;
+}
+
+@("narrow signed minima, unsigned maxima and nonfinite float and real values")
+unittest
+{
+    NarrowNumeric values = NarrowNumeric(int.min, short.min, ubyte.max, uint.max, -1.0f, 0.0L);
+    Violation[6] errors;
+    assert(validate(values, errors[]).valid);
+    values.signedInt = int.min + 1;
+    const report = validate(values, errors[]);
+    assert(report.total == 1 && errors[0].field == "signedInt" && errors[0].constraint == "Max");
+
+    values.signedInt = int.min;
+    values.unsignedInt = uint.max - 1;
+    assert(validate(values, errors[]).total == 1 && errors[0].field == "unsignedInt");
+    values.unsignedInt = uint.max;
+
+    foreach (index; 0 .. 3)
+    {
+        values.single = [float.nan, float.infinity, -float.infinity][index];
+        values.extended = [real.nan, real.infinity, -real.infinity][index];
+        const nonfinite = validate(values, errors[]);
+        assert(nonfinite.total == 2 && errors[0].field == "single" && errors[1].field == "extended");
+    }
+}
+
+private bool referenceAlphanumeric(ubyte ch)
+{
+    return (ch >= '0' && ch <= '9') || ((ch | 0x20) >= 'a' && (ch | 0x20) <= 'z');
+}
+
+/// Independent model of the documented dot-atom local part: nonempty atoms of atext.
+private bool referenceLocal(scope const(ubyte)[] local)
+{
+    import std.algorithm.searching : canFind;
+    import std.array : split;
+
+    enum atext = cast(immutable(ubyte)[]) "!#$%&'*+-/=?^_`{|}~";
+    if (local.length == 0 || local.length > 64)
+        return false;
+    foreach (atom; local.split('.'))
+    {
+        if (atom.length == 0)
+            return false;
+        foreach (ch; atom)
+        {
+            if (!referenceAlphanumeric(ch) && !atext.canFind(ch))
+                return false;
+        }
+    }
+    return true;
+}
+
+/// Independent model of the documented domain: nonempty labels of at most 63 letters, digits or inner hyphens.
+private bool referenceDomain(scope const(ubyte)[] domain)
+{
+    import std.array : split;
+
+    if (domain.length == 0)
+        return false;
+    foreach (label; domain.split('.'))
+    {
+        if (label.length == 0 || label.length > 63 || label[0] == '-' || label[$ - 1] == '-')
+            return false;
+        foreach (ch; label)
+        {
+            if (!referenceAlphanumeric(ch) && ch != '-')
+                return false;
+        }
+    }
+    return true;
+}
+
+/// Independent model of the documented pragmatic ASCII addr-spec grammar.
+private bool referenceEmail(scope const(ubyte)[] input)
+{
+    import std.algorithm.searching : count, countUntil;
+
+    if (input.length > 254 || input.count('@') != 1)
+        return false;
+    immutable at = input.countUntil('@');
+    return referenceLocal(input[0 .. at]) && referenceDomain(input[at + 1 .. $]);
+}
+
+@("seeded mailbox fuzz agrees with the addr-spec model and never accepts beyond the bounds")
+unittest
+{
+    static immutable ubyte[] alphabet = cast(immutable(ubyte)[]) "aZ09.-@_+~\"\\ (\x00\xC3\xA9\x7F";
+    uint random = 0x5eed_e3a1;
+    uint next()
+    {
+        random ^= random << 13;
+        random ^= random >>> 17;
+        random ^= random << 5;
+        return random;
+    }
+
+    ubyte[320] scratch;
+    size_t accepted;
+    foreach (round; 0 .. 20_000)
+    {
+        size_t length;
+        if (round % 2 == 0)
+        {
+            // Structured candidates exercise the 64/63/254 limits and label punctuation.
+            immutable localLength = next() % 70;
+            foreach (_; 0 .. localLength)
+                scratch[length++] = (next() % 9 == 0) ? '.' : cast(ubyte)('a' + next() % 26);
+            scratch[length++] = '@';
+            immutable labels = 1 + next() % 5;
+            foreach (labelIndex; 0 .. labels)
+            {
+                if (labelIndex != 0)
+                    scratch[length++] = '.';
+                immutable labelLength = next() % 68;
+                foreach (_; 0 .. labelLength)
+                {
+                    if (length == scratch.length)
+                        break;
+                    scratch[length++] = (next() % 11 == 0) ? '-' : cast(ubyte)('0' + next() % 10);
+                }
+            }
+        }
+        else
+        {
+            length = next() % 300;
+            foreach (index; 0 .. length)
+                scratch[index] = alphabet[next() % alphabet.length];
+        }
+
+        const candidate = scratch[0 .. length];
+        const mailbox = Mailbox(cast(string) candidate.idup);
+        immutable verdict = validate(mailbox, []).valid;
+        assert(verdict == referenceEmail(candidate), cast(string) candidate.idup);
+        if (verdict)
+        {
+            ++accepted;
+            assert(candidate.length <= 254);
+        }
+    }
+    assert(accepted > 1_000 && accepted < 10_000);
+}
+
+private struct Budgeted
+{
+    @Pattern(r"(a{15}){17}") string exact;
+    @Pattern(r"((a|b)+)*c") string nested;
+    @Pattern(r"(a*)*(a|aa)*b") string ambiguous;
+}
+
+@("nested quantifiers stay within the state budget and linear on adversarial input")
+unittest
+{
+    Budgeted dto = Budgeted(repeated('a', 255), "ababbac", "aaab");
+    assert(validate(dto, []).valid);
+    dto.exact = repeated('a', 254);
+    dto.nested = repeated('a', 16_383) ~ "c";
+    dto.ambiguous = repeated('a', 16_383) ~ "b";
+    Violation[3] errors;
+    const report = validate(dto, errors[]);
+    assert(report.total == 1 && errors[0].field == "exact");
+
+    dto.exact = repeated('a', 255);
+    dto.nested = repeated('a', 16_384);
+    dto.ambiguous = repeated('a', 16_384) ~ "b";
+    const adversarial = validate(dto, errors[]);
+    assert(adversarial.total == 2 && errors[0].field == "nested" && errors[1].field == "ambiguous");
+}
+
+static assert(!CanValidate!(BadPattern!r"(a{16}){16}"));
+static assert(!CanValidate!(BadPattern!r"((a{4}){4}){17}"));
+static assert(!CanValidate!(BadPattern!r"(?:a)"));
+static assert(!CanValidate!(BadPattern!r"\k<name>"));
+
+private struct Pair
+{
+    @NotBlank string left;
+    @Min(1) int right;
+}
+
+@("one-slot and exactly-sized outputs report written and total separately")
+unittest
+{
+    Pair[3] rows = [Pair("", 0), Pair("x", 1), Pair(" ", 1)];
+    static struct Rows
+    {
+        @Valid Pair[] rows;
+    }
+
+    const dto = Rows(rows[]);
+    Violation[3] errors;
+    errors[1].field = "untouched";
+    const single = validate(dto, errors[0 .. 1]);
+    assert(single.written == 1 && single.total == 3 && !single.valid);
+    assert(errors[0].field == "rows[].left" && errors[0].indexes[0] == 0);
+    assert(errors[1].field == "untouched");
+
+    const exact = validate(dto, errors[]);
+    assert(exact.written == 3 && exact.total == 3);
+    assert(errors[1].field == "rows[].right" && errors[1].indexes[0] == 0);
+    assert(errors[2].field == "rows[].left" && errors[2].indexes[0] == 2 && errors[2].indexCount == 1);
+    foreach (attempt; 0 .. 3)
+    {
+        Violation[3] again;
+        assert(validate(dto, again[]) == exact && again == errors);
+    }
+}
+
+private struct ArenaRow
+{
+    @NotBlank Text label;
+}
+
+private struct ArenaTable
+{
+    @Valid ArenaRow[][] rows;
+}
+
+@("default, stale and foreign Text handles inside nested arrays fail without dereference")
+unittest
+{
+    ubyte[16] backing;
+    ubyte[16] otherBacking;
+    scope arena = RequestArena(backing[]);
+    scope other = RequestArena(otherBacking[]);
+    const label = arena.copyIn(cast(const(ubyte)[]) "ok");
+    const foreignLabel = other.copyIn(cast(const(ubyte)[]) "ok");
+    assert(label.ok() && foreignLabel.ok());
+
+    ArenaRow[][] outer = [
+        [ArenaRow(Text(label.value)), ArenaRow(Text.init)], [ArenaRow(Text(foreignLabel.value))]
+    ];
+    const table = ArenaTable(outer);
+    Violation[4] errors;
+    const report = validateIn(table, arena, errors[]);
+    assert(report.total == 2 && report.written == 2);
+    assert(errors[0].field == "rows[][].label" && errors[0].indexes[0 .. 2] == [0, 1]);
+    assert(errors[1].indexes[0 .. 2] == [1, 0] && errors[1].indexCount == 2);
+    assert(errors[0].message == "invalid or unavailable arena text handle");
+
+    assert(arena.reset() == Status.ok);
+    assert(validateIn(table, arena, errors[]).total == 3);
+    assert(validateIn(table, other, errors[]).total == 2);
+}

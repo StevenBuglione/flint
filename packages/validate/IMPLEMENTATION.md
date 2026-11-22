@@ -9,7 +9,8 @@ failures. A total of 4097 signals more than 4096 failures.
 `validate` reads ordinary UTF-8 strings and arrays. Use `validateIn` for arena
 `Text`. Each constraint on stale, foreign, or unavailable arena text reports
 a failure without exposing the borrowed storage. `Size` counts Unicode
-scalars for UTF-8 text and elements for other arrays. `NotBlank` uses Unicode
+scalars for UTF-8, UTF-16 and UTF-32 text, rejecting invalid encodings, and
+elements for other arrays. `NotBlank` uses Unicode
 17.0.0 White_Space. Numeric bounds are inclusive. Floating-point NaN and
 infinity fail numeric constraints.
 

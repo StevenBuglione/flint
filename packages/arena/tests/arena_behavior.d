@@ -222,3 +222,173 @@ unittest
         assert(arena.stats().resets == cycle + 1);
     }
 }
+
+private bool holds(ref scope RequestArena arena, Buffer handle, ubyte expected) nothrow @nogc
+{
+    bool same;
+    immutable status = arena.read(handle, (scope const(ubyte)[] bytes) @safe nothrow @nogc {
+        same = true;
+        foreach (byteValue; bytes)
+            same = same && byteValue == expected;
+    });
+    return status == Status.ok && same;
+}
+
+@("every outOfMemory path, including overflowing padding, preserves cursor, peak and live bytes")
+unittest
+{
+    ubyte[4_200] backing;
+    // An odd base address forces nonzero padding for every alignment above one.
+    scope arena = RequestArena(backing[1 .. 4_101]);
+    immutable capacity = arena.stats().capacity;
+    auto live = arena.copyIn(cast(const(ubyte)[]) "live");
+    assert(live.ok());
+    auto tail = arena.allocate(capacity - 16, 1);
+    assert(tail.ok());
+    assert(arena.write(tail.value, (scope ubyte[] bytes) @safe nothrow @nogc { bytes[] = 0x5A; }) == Status.ok);
+    immutable used = arena.stats().used;
+    immutable remaining = capacity - used;
+    assert(remaining > 0 && remaining < 16);
+
+    void unchanged()
+    {
+        const stats = arena.stats();
+        assert(stats.used == used && stats.peak == used && stats.capacity == capacity && stats.resets == 0);
+        assert(holds(arena, tail.value, 0x5A));
+        assert(arena.read(live.value, (scope const(ubyte)[] bytes) @safe nothrow @nogc {
+                assert(bytes == cast(const(ubyte)[]) "live");
+            }) == Status.ok);
+    }
+
+    assert(arena.allocate(capacity + 1, 1).error.code == Status.outOfMemory);
+    unchanged();
+    foreach (alignment; [1, 2, 8, 16, 4096])
+    {
+        assert(arena.allocate(size_t.max, alignment).error.code == Status.outOfMemory);
+        assert(arena.allocate(size_t.max - remaining + 1, alignment).error.code == Status.outOfMemory);
+        unchanged();
+    }
+    // The padding to the next 4096-byte boundary alone exceeds the remaining bytes.
+    assert(arena.allocate(1, 4096).error.code == Status.outOfMemory);
+    unchanged();
+    ubyte[16] large;
+    assert(arena.copyIn(large[0 .. remaining + 1]).error.code == Status.outOfMemory);
+    assert(arena.append(tail.value, large[]) == Status.outOfMemory);
+    assert(tail.value.length() == capacity - 16);
+    unchanged();
+
+    // The exact remainder is still usable after every failure.
+    auto exact = arena.allocate(remaining, 1);
+    assert(exact.ok() && arena.stats().used == capacity);
+    assert(arena.allocate(1, 1).error.code == Status.outOfMemory);
+    assert(arena.reset() == Status.ok && arena.allocate(capacity, 1).ok());
+}
+
+@("reentrant writes, reset during write and empty slices keep the borrow consistent")
+unittest
+{
+    ubyte[32] backing;
+    scope arena = RequestArena(backing[]);
+    auto block = arena.allocate(4, 1);
+    auto empty = arena.allocate(0, 1);
+    assert(block.ok() && empty.ok());
+
+    size_t visits;
+    assert(arena.write(block.value, (scope ubyte[] outer) @safe nothrow @nogc {
+            ++visits;
+            assert(arena.reset() == Status.conflict);
+            assert(arena.write(block.value, (scope ubyte[] inner) @safe nothrow @nogc {
+                ++visits;
+                inner[1] = 9;
+                assert(arena.reset() == Status.conflict);
+                assert(arena.write(empty.value, (scope ubyte[] none) @safe nothrow @nogc {
+                    ++visits;
+                    assert(none.length == 0);
+                }) == Status.ok);
+            }) == Status.ok);
+            assert(outer[1] == 9);
+            outer[0] = 7;
+            assert(arena.reset() == Status.conflict);
+        }) == Status.ok);
+    assert(visits == 3);
+    assert(arena.stats().resets == 0 && arena.stats().used == 4);
+
+    // A zero-length handle stays valid after later allocations and expires with its epoch.
+    assert(arena.allocate(8, 8).ok());
+    assert(arena.read(empty.value, (scope const(ubyte)[] none) @safe nothrow @nogc {
+            assert(none.length == 0);
+        }) == Status.ok);
+    assert(arena.reset() == Status.ok);
+    assert(arena.reset() == Status.ok);
+    foreach (stale; [block.value, empty.value])
+        assert(arena.write(stale, (scope ubyte[]) @safe nothrow @nogc {
+                assert(0, "stale handle entered the visitor");
+            }) == Status.invalidArgument);
+    assert(arena.stats().resets == 2);
+}
+
+@("poisoned and reused backing never exposes a previous request, and handles stay bound to their arena")
+unittest
+{
+    ubyte[512] backing;
+    backing[] = 0xA5;
+    uint random = 0x0dd_ba11;
+    Buffer previous;
+    {
+        scope first = RequestArena(backing[]);
+        auto copied = first.copyIn(backing[0 .. 40]);
+        assert(copied.ok() && holds(first, copied.value, 0xA5));
+        auto fresh = first.allocate(64, 16);
+        assert(fresh.ok() && holds(first, fresh.value, 0));
+        assert(first.append(fresh.value, backing[100 .. 200]) == Status.ok);
+
+        foreach (cycle; 0 .. 64)
+        {
+            // Each request fills everything it obtains with a request-specific pattern.
+            immutable secret = cast(ubyte)(0x10 + cycle);
+            while (true)
+            {
+                random ^= random << 13;
+                random ^= random >>> 17;
+                random ^= random << 5;
+                auto block = first.allocate(random % 97, cast(size_t) 1 << (random >> 8) % 7);
+                if (!block.ok())
+                    break;
+                assert(holds(first, block.value, 0));
+                assert(first.write(block.value, (scope ubyte[] bytes) @safe nothrow @nogc {
+                        bytes[] = secret;
+                    }) == Status.ok);
+                previous = block.value;
+            }
+            assert(first.reset() == Status.ok);
+            assert(!holds(first, previous, secret));
+        }
+    }
+
+    // A new arena over the same, still-poisoned bytes clears what it hands out.
+    ubyte[512] otherBacking;
+    scope reused = RequestArena(backing[]);
+    scope other = RequestArena(otherBacking[]);
+    auto whole = reused.allocate(backing.length, 1);
+    assert(whole.ok() && holds(reused, whole.value, 0));
+    assert(reused.read(previous, (scope const(ubyte)[]) @safe nothrow @nogc {
+            assert(0, "a retired arena handle was accepted at the same address");
+        }) == Status.invalidArgument);
+
+    // Same epoch, offset and length in two arenas: identity alone decides.
+    assert(reused.reset() == Status.ok && other.reset() == Status.ok);
+    auto mine = reused.allocate(8, 8);
+    auto theirs = other.allocate(8, 8);
+    assert(mine.ok() && theirs.ok());
+    immutable used = reused.stats().used;
+    bool entered;
+    scope reader = (scope const(ubyte)[]) @safe nothrow @nogc { entered = true; };
+    scope writer = (scope ubyte[]) @safe nothrow @nogc { entered = true; };
+    assert(reused.read(theirs.value, reader) == Status.invalidArgument);
+    assert(reused.write(theirs.value, writer) == Status.invalidArgument);
+    assert(other.read(mine.value, reader) == Status.invalidArgument);
+    assert(other.write(mine.value, writer) == Status.invalidArgument);
+    auto foreignTail = theirs.value;
+    assert(reused.append(foreignTail, cast(const(ubyte)[]) "x") == Status.invalidArgument);
+    assert(!entered && foreignTail.length() == 8 && reused.stats().used == used);
+}

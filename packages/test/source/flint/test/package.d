@@ -1,6 +1,7 @@
 module flint.test;
 
 import std.format : format;
+import std.traits : isArray, isFloatingPoint, isSomeString;
 import flint.test.internal.mocks : MockState, SelectedMethod, methodIndex;
 
 @safe:
@@ -22,7 +23,7 @@ struct Expectation(T)
     void toEqual(scope const T expected, string file = __FILE__, size_t line = __LINE__)
     {
         if (!(actual == expected))
-            throw new AssertionFailure(format!"expected %s, received %s"(expected, actual), file, line);
+            throw new AssertionFailure(mismatch(expected, actual), file, line);
     }
 
     static if (is(T == bool))
@@ -38,6 +39,33 @@ struct Expectation(T)
         {
             toEqual(false, file, line);
         }
+    }
+}
+
+// Format a mismatch with a quoted string, the first differing array element or a NaN note.
+private string mismatch(T)(scope const T expected, scope const T actual)
+{
+    static if (isSomeString!T)
+        return format!"expected %(%s%), received %(%s%)"([expected], [actual]);
+    else
+    {
+        string detail = format!"expected %s, received %s"(expected, actual);
+        static if (isArray!T)
+        {
+            size_t index;
+            while (index < expected.length && index < actual.length && expected[index] == actual[index])
+                ++index;
+            if (index < expected.length && index < actual.length)
+                detail ~= format!" (first difference at index %s)"(index);
+            else
+                detail ~= format!" (lengths %s and %s)"(expected.length, actual.length);
+        }
+        else static if (isFloatingPoint!T)
+        {
+            if (expected != expected || actual != actual)
+                detail ~= " (NaN never compares equal)";
+        }
+        return detail;
     }
 }
 

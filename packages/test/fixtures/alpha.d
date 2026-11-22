@@ -21,5 +21,5 @@ unittest
 @("uncaught exception")
 unittest
 {
-    throw new Exception("broken & interrupted");
+    throw new Exception("broken & interrupted\x01\tend");
 }

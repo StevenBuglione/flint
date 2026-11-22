@@ -80,3 +80,45 @@ unittest
     excessive[] = '?';
     assert(glob(root, excessive).error.code == Status.invalidArgument);
 }
+
+@("a deep tree fails at the depth bound and self-referential links are skipped when followed")
+unittest
+{
+    const root = temporaryRoot();
+    scope (exit)
+        rmdirRecurse(root);
+    string bounded = root;
+    foreach (_; 0 .. 63)
+        bounded = buildPath(bounded, "d");
+    mkdirRecurse(bounded);
+    write(buildPath(bounded, "edge.txt"), "");
+    write(buildPath(root, "top.txt"), "");
+    symlink("loop", buildPath(root, "loop"));
+    symlink("cycle-b", buildPath(root, "cycle-a"));
+    symlink("cycle-a", buildPath(root, "cycle-b"));
+
+    // A file 64 components below the root is within the default bound.
+    const edge = glob(root, "**/edge.txt");
+    assert(edge.ok, edge.error.message);
+    assert(edge.value.length == 1 && edge.value[0].length == 63 * 2 + "edge.txt".length);
+
+    string deeper = bounded;
+    foreach (_; 0 .. 17)
+        deeper = buildPath(deeper, "d");
+    mkdirRecurse(deeper);
+    write(buildPath(deeper, "deep.txt"), "");
+    // Iterative traversal reports the bound instead of recursing or silently truncating.
+    assert(glob(root, "**/*.txt").error.code == Status.resourceExhausted);
+    assert(glob(root, "**/*.txt", GlobOptions(true)).error.code == Status.resourceExhausted);
+    assert(glob(root, "**/*.txt", GlobOptions(false, 65)).error.code == Status.invalidArgument);
+    assert(glob(root, "*", GlobOptions(false, 64, 100_001)).error.code == Status.invalidArgument);
+
+    const direct = glob(root, "*");
+    assert(direct.ok, direct.error.message);
+    assert(direct.value == ["cycle-a", "cycle-b", "d", "loop", "top.txt"]);
+    const followed = glob(root, "*", GlobOptions(true));
+    assert(followed.ok, followed.error.message);
+    assert(followed.value == ["d", "top.txt"]);
+    const throughLoop = glob(root, "loop/**/*", GlobOptions(true));
+    assert(throughLoop.ok && throughLoop.value.length == 0);
+}

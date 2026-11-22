@@ -81,6 +81,62 @@ static assert(!Accepts!TextEnum);
 static assert(!Accepts!NestedArenaPair);
 static assert(!Accepts!(NestedArenaPair[2]));
 
+@("compile-fail channels of string, pointer, class, delegate, destructor struct and arena Buffer")
+unittest
+{
+    import flint.arena : Buffer;
+    import std.traits : hasIndirections;
+
+    static assert(!__traits(compiles, Channel!string.create(2)));
+    static assert(!__traits(compiles, Channel!(int*).create(2)));
+    static assert(!__traits(compiles, Channel!Reference.create(2)));
+    static assert(!__traits(compiles, Channel!(void delegate() @safe nothrow @nogc).create(2)));
+    static assert(!__traits(compiles, Channel!WithDestructor.create(2)));
+    static assert(!__traits(compiles, Channel!Buffer.create(2)));
+    static assert(!__traits(compiles, Channel!(const Buffer).create(2)));
+    static assert(!__traits(compiles, Channel!(Buffer, QueueKind.mpmc).create(2)));
+    static assert(!__traits(compiles, Channel!(Buffer[1]).create(2)));
+    // A Buffer is scalar, so only the explicit channel policy keeps it on its owner thread.
+    static assert(!hasIndirections!Buffer);
+    static assert(__traits(compiles, Channel!Flat.create(2)));
+    static assert(__traits(compiles, Channel!(Flat, QueueKind.mpmc).create(2)));
+}
+
+@("channel capacity outside 2 through 1,048,576 or not a power of two is rejected, not rounded")
+unittest
+{
+    const size_t[8] rejected = [0, 1, 3, 6, 1_048_575, 1_048_577, 2_097_152, size_t.max];
+    foreach (capacity; rejected)
+    {
+        assert(Channel!ubyte.create(capacity).error.code == Status.invalidArgument);
+        assert(Channel!(ubyte, QueueKind.mpmc).create(capacity).error.code == Status.invalidArgument);
+    }
+
+    auto smallest = Channel!ubyte.create(2);
+    assert(smallest.ok());
+    assert(smallest.value.trySend(1) == Status.ok && smallest.value.trySend(2) == Status.ok);
+    assert(smallest.value.trySend(3) == Status.resourceExhausted);
+
+    enum largestCapacity = 1_048_576;
+    auto largest = Channel!(ubyte, QueueKind.mpmc).create(largestCapacity);
+    assert(largest.ok());
+    foreach (index; 0 .. largestCapacity)
+        assert(largest.value.trySend(cast(ubyte) index) == Status.ok);
+    assert(largest.value.trySend(0) == Status.resourceExhausted);
+    assert(largest.value.tryReceive().value == 0);
+    assert(largest.value.trySend(0) == Status.ok);
+    assert(largest.value.trySend(0) == Status.resourceExhausted);
+    largest.value.close();
+    assert(largest.value.trySend(0) == Status.cancelled);
+    size_t drained;
+    for (auto received = largest.value.tryReceive(); received.ok(); received = largest.value.tryReceive())
+        assert(received.value == cast(ubyte)(++drained));
+    assert(drained == largestCapacity);
+    // Exhaustion after close is permanent.
+    assert(largest.value.tryReceive().error.code == Status.cancelled);
+    assert(largest.value.tryReceive().error.code == Status.cancelled);
+}
+
 @("earlier deadlines and cancellation precedence")
 unittest
 {
@@ -492,6 +548,36 @@ unittest
     atomicStore(workerReleased, true);
     assert(collect(result.value, ticket.value, [], written).code == Status.cancelled);
     assert(result.value.join(ticket.value, [], written).code == Status.notFound);
+}
+
+@("a queued job whose deadline elapses before a worker starts reports timedOut and never runs")
+unittest
+{
+    auto pool = WorkerPool.create(WorkerOptions(1, 2));
+    assert(pool.ok());
+    scope (exit)
+        atomicStore(workerReleased, true);
+    atomicStore(workerEntered, false);
+    atomicStore(workerReleased, false);
+    atomicStore(workerCopies, 0U);
+    const running = pool.value.submit(Context.init, [], &blockedWork);
+    assert(running.ok() && waitForFlag(workerEntered));
+
+    auto source = CancelSource.create(Context.init, Deadline.afterMillis(50));
+    assert(source.ok());
+    ubyte[3] data = [1, 2, 3];
+    const queued = pool.value.submit(source.value.context(), data[], &copyWork);
+    assert(queued.ok());
+    while (source.value.context().check().code == Status.ok)
+        yieldThread();
+
+    atomicStore(workerReleased, true);
+    ubyte[3] actual;
+    size_t written;
+    assert(collect(pool.value, running.value, actual[], written).code == Status.ok);
+    assert(collect(pool.value, queued.value, actual[], written).code == Status.timedOut);
+    assert(written == 0 && actual == [0, 0, 0]);
+    assert(atomicLoad(workerCopies) == 1U, "the expired job ran on a worker");
 }
 
 private struct ShutdownFixture

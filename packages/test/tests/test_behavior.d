@@ -111,3 +111,77 @@ unittest
     assert(relaxed.instance().value() == int.init);
     relaxed.verify();
 }
+
+@("type-specific equality diagnostics for strings, arrays and NaN")
+unittest
+{
+    const text = collectException!AssertionFailure(expect("a\nb").toEqual("a b"));
+    assert(text !is null && text.msg == `expected "a b", received "a\nb"`, text.msg);
+    const empty = collectException!AssertionFailure(expect("").toEqual(" "));
+    assert(empty !is null && empty.msg == `expected " ", received ""`, empty.msg);
+    const element = collectException!AssertionFailure(expect([1, 2, 3]).toEqual([1, 5, 3]));
+    assert(element !is null
+            && element.msg == "expected [1, 5, 3], received [1, 2, 3] (first difference at index 1)", element.msg);
+    const length = collectException!AssertionFailure(expect([1, 2]).toEqual([1, 2, 3]));
+    assert(length !is null && length.msg == "expected [1, 2, 3], received [1, 2] (lengths 3 and 2)", length.msg);
+    const words = collectException!AssertionFailure(expect(["x", "y"]).toEqual(["x", "z"]));
+    assert(words !is null
+            && words.msg == `expected ["x", "z"], received ["x", "y"] (first difference at index 1)`, words.msg);
+    const nan = collectException!AssertionFailure(expect(double.nan).toEqual(double.nan));
+    assert(nan !is null && nan.msg.canFind("NaN never compares equal"), nan.msg);
+    const real_ = collectException!AssertionFailure(expect(1.5f).toEqual(2.5f));
+    assert(real_ !is null && real_.msg == "expected 2.5, received 1.5", real_.msg);
+    expect(-0.0).toEqual(0.0);
+    expect(cast(string) null).toEqual("");
+}
+
+@("missing expectation, zero calls and verify after reset report the method")
+unittest
+{
+    auto mock = Mock!Base.create();
+    mock.verify();
+    mock.returns!(Base.value)(4);
+    const missing = collectException!AssertionFailure(mock.verify());
+    assert(missing !is null && missing.msg == "value expected 1 call(s), received 0", missing.msg);
+    mock.reset();
+    mock.verify();
+    auto instance = mock.instance();
+    assert(instance.value() == int.init);
+    const unconfigured = collectException!AssertionFailure(mock.verify());
+    assert(unconfigured !is null && unconfigured.msg == "unexpected call to value", unconfigured.msg);
+    mock.reset();
+    mock.verify();
+    mock.returns!(Base.value)(9);
+    mock.returns!(Base.value)(10);
+    assert(instance.value() == 9);
+    const short_ = collectException!AssertionFailure(mock.verify());
+    assert(short_ !is null && short_.msg == "value expected 2 call(s), received 1", short_.msg);
+    assert(instance.value() == 10);
+    mock.verify();
+    assertThrown!Exception(mock.returns!(Base.value)(11));
+}
+
+private interface NoGcService
+{
+    int next(int input) @safe nothrow @nogc;
+    void signal() @safe nothrow @nogc;
+}
+
+private int callNoGc(NoGcService service) @safe nothrow @nogc
+{
+    service.signal();
+    return service.next(1);
+}
+
+@("generated mocks keep @safe nothrow @nogc interface methods callable from @nogc code")
+unittest
+{
+    auto mock = Mock!NoGcService.create(MockOptions(true, 4));
+    mock.expects!(NoGcService.signal)();
+    mock.returns!(NoGcService.next)(12);
+    assert(callNoGc(mock.instance()) == 12);
+    mock.verify();
+    assert(callNoGc(mock.instance()) == int.init);
+    const failure = collectException!AssertionFailure(mock.verify());
+    assert(failure !is null && failure.msg.canFind("unexpected call to signal"), failure.msg);
+}

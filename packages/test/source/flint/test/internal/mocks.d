@@ -61,8 +61,11 @@ package(flint.test) struct SelectedMethod(Contract, string name, size_t overload
 {
     alias Owner = Contract;
     private alias Overloads = __traits(getOverloads, Contract, name);
-    static assert(overload < Overloads.length, "Mock overload index is out of range");
-    alias Method = Overloads[overload];
+    // Aliases resolve before struct-scope static asserts, so guard the index lookup itself.
+    static if (overload < Overloads.length)
+        alias Method = Overloads[overload];
+    else
+        static assert(false, "Mock overload index is out of range");
     enum explicitlySelected = true;
 }
 

@@ -323,3 +323,25 @@ unittest
     assert(arena.activeBorrows == uint.max);
     assert(arena.reset() == Status.conflict);
 }
+
+@("an arena constructed after owner identities are exhausted fails permanently")
+unittest
+{
+    ubyte[8] backing;
+    scope arena = RequestArena(backing[]);
+    auto issued = arena.allocate(1);
+    assert(issued.ok());
+    // nextOwner returns zero once ulong.max has been issued; model that construction outcome.
+    arena.owner = 0;
+    assert(arena.allocate(0).error.code == Status.resourceExhausted);
+    assert(arena.allocate(1).error.code == Status.resourceExhausted);
+    assert(arena.copyIn([cast(ubyte) 1]).error.code == Status.resourceExhausted);
+    auto handle = issued.value;
+    assert(arena.append(handle, [cast(ubyte) 2]) == Status.invalidArgument);
+    assert(arena.read(issued.value, (scope const(ubyte)[]) @safe nothrow @nogc {
+            assert(0, "exhausted arena unexpectedly accepted a handle");
+        }) == Status.invalidArgument);
+    assert(arena.reset() == Status.resourceExhausted);
+    assert(arena.reset() == Status.resourceExhausted);
+    assert(arena.stats().used == 1 && arena.stats().resets == 0);
+}

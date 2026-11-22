@@ -3,7 +3,7 @@ module flint.validate.internal.schema;
 import flint.arena : RequestArena, Status, Text;
 import flint.validate.internal.number : IsNumber, meetsBound;
 import flint.validate.internal.pattern : matchPattern, patternError;
-import flint.validate.internal.text : asciiEmail, nonBlank, scalarSize;
+import flint.validate.internal.text : asciiEmail, nonBlank, scalarSize, wideScalarSize;
 import std.meta : staticIndexOf;
 import std.traits : FieldNameTuple, Unqual, isDynamicArray, isStaticArray;
 
@@ -65,6 +65,7 @@ private template Element(T)
 }
 
 private enum IsText(T) = (IsArray!T && is(Unqual!(Element!T) == char)) || is(Unqual!T == Text);
+private enum IsWideText(T) = IsArray!T && (is(Unqual!(Element!T) == wchar) || is(Unqual!(Element!T) == dchar));
 
 private struct Bounds
 {
@@ -251,6 +252,10 @@ private string checkRule(Rule kind, alias attr, T)(scope ref const T value, ref 
     static if (kind == Rule.minimum || kind == Rule.maximum)
     {
         passes = meetsBound!(kind == Rule.minimum)(value, attr.value);
+    }
+    else static if (kind == Rule.size && IsWideText!T)
+    {
+        passes = wideScalarSize!(Unqual!(Element!T))(value[], attr.min, attr.max);
     }
     else static if (kind == Rule.size && !IsText!T)
     {

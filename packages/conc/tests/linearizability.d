@@ -1,8 +1,9 @@
 module flint.conc.linearizability_test;
 
 import core.atomic : atomicLoad, atomicOp, atomicStore;
-import flint.arena : Status;
+import flint.arena : Error, Result, Status;
 import flint.conc : Channel, QueueKind;
+import flint.conc.sys.ring : SequenceRing;
 import flint.conc.sys.atomics : yieldThread;
 import flint.conc.sys.workers : WorkerThreads;
 import std.algorithm.mutation : move;
@@ -106,9 +107,42 @@ private bool anyLinearization(scope const Event[] events) nothrow @nogc
     return replay(events, search.precedes[0 .. events.length], (1U << events.length) - 1, State.init, search.budget);
 }
 
-private struct History(QueueKind kind)
+// Channel counters are 64-bit. This adapter drives the same ring with an 8-bit counter, so
+// concurrent histories cross sequence wrap within a few operations.
+private struct ReducedQueue(QueueKind kind)
 {
-    Channel!(uint, kind) channel;
+    SequenceRing!(uint, kind == QueueKind.mpmc, ubyte) ring;
+
+    @disable this(this);
+
+    static Result!ReducedQueue create(size_t capacity, ubyte initial) nothrow @nogc
+    {
+        Result!ReducedQueue result;
+        immutable status = result.value.ring.initialize(capacity, initial);
+        if (status != Status.ok)
+            result.error = Error(status, "unable to create reduced ring");
+        return result;
+    }
+
+    Status trySend(uint value) nothrow @nogc
+    {
+        return ring.send(value);
+    }
+
+    Result!uint tryReceive() nothrow @nogc
+    {
+        return ring.receive();
+    }
+
+    void close() nothrow @nogc
+    {
+        ring.close();
+    }
+}
+
+private struct History(Queue)
+{
+    Queue channel;
     shared uint sequence;
     shared uint nextWriter;
     shared uint nextReader;
@@ -142,10 +176,20 @@ private struct History(QueueKind kind)
     }
 }
 
-private void verifyHistory(QueueKind kind)(uint producers, uint consumers)
+private void verifyHistory(QueueKind kind, bool reduced = false)(uint producers, uint consumers)
 {
-    auto state = new History!kind;
-    auto ring = Channel!(uint, kind).create(2);
+    static if (reduced)
+    {
+        alias Queue = ReducedQueue!kind;
+        // The prefilled item takes the last counter value, so the first concurrent send wraps.
+        auto ring = Queue.create(2, ubyte.max);
+    }
+    else
+    {
+        alias Queue = Channel!(uint, kind);
+        auto ring = Queue.create(2);
+    }
+    auto state = new History!Queue;
     assert(ring.ok());
     move(ring.value, state.channel);
     scope (exit)
@@ -178,6 +222,8 @@ unittest
             const consumers = producers;
             verifyHistory!(QueueKind.mpsc)(producers, 1);
             verifyHistory!(QueueKind.mpmc)(producers, consumers);
+            verifyHistory!(QueueKind.mpsc, true)(producers, 1);
+            verifyHistory!(QueueKind.mpmc, true)(producers, consumers);
         }
     }
 
@@ -187,4 +233,79 @@ unittest
         Event(5, 6, Action.receive, Status.unavailable)
     ];
     assert(!anyLinearization(impossible));
+}
+
+private enum wrapKeys = 256;
+
+private struct WrapTraffic(QueueKind kind)
+{
+    ReducedQueue!kind queue;
+    shared uint producerIndex;
+    shared uint[8 * wrapKeys] received;
+}
+
+private void produceAcrossWrap(QueueKind kind)(WrapTraffic!kind* state) nothrow @nogc
+{
+    const first = (atomicOp!"+="(state.producerIndex, 1U) - 1) * wrapKeys;
+    foreach (key; first .. first + wrapKeys)
+    {
+        for (Status status = state.queue.trySend(key); status != Status.ok; status = state.queue.trySend(key))
+        {
+            assert(status == Status.resourceExhausted);
+            yieldThread();
+        }
+    }
+}
+
+private void consumeAcrossWrap(QueueKind kind)(WrapTraffic!kind* state) nothrow @nogc
+{
+    uint[8] next;
+    for (;;)
+    {
+        const result = state.queue.tryReceive();
+        if (result.ok())
+        {
+            assert(result.value < state.received.length);
+            static if (kind == QueueKind.mpsc)
+                assert(next[result.value / wrapKeys]++ == result.value % wrapKeys);
+            assert(atomicOp!"+="(state.received[result.value], 1U) == 1);
+            continue;
+        }
+        if (result.error.code == Status.cancelled)
+            return;
+        assert(result.error.code == Status.unavailable);
+        yieldThread();
+    }
+}
+
+private void exerciseWrap(QueueKind kind)(uint producers, uint consumers)
+{
+    auto state = new WrapTraffic!kind;
+    auto created = ReducedQueue!kind.create(4, 250);
+    assert(created.ok());
+    move(created.value, state.queue);
+    scope (exit)
+        destroy(state.queue);
+
+    WorkerThreads senders;
+    WorkerThreads readers;
+    assert(readers.start(consumers, () @safe nothrow @nogc { consumeAcrossWrap(state); }));
+    assert(senders.start(producers, () @safe nothrow @nogc { produceAcrossWrap(state); }));
+    senders.join();
+    state.queue.close();
+    readers.join();
+    foreach (key, ref count; state.received)
+        assert(atomicLoad(count) == (key < producers * wrapKeys ? 1 : 0));
+    assert(state.queue.tryReceive().error.code == Status.cancelled);
+}
+
+@("concurrent traffic keeps every accepted item exactly once across repeated reduced-counter wrap")
+unittest
+{
+    // 2,048 items through four cells of an 8-bit counter wrap the sequence eight times.
+    foreach (count; [1U, 2U, 8U])
+    {
+        exerciseWrap!(QueueKind.mpsc)(count, 1);
+        exerciseWrap!(QueueKind.mpmc)(count, count);
+    }
 }
