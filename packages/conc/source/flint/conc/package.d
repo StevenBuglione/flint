@@ -15,18 +15,23 @@ Error fillSecureRandom(scope ubyte[] output) nothrow @nogc
     return secureRandom(output);
 }
 
-package(flint) Error startBackground(void delegate() @safe nothrow @nogc run)
+public import flint.conc.sys.background : Background;
+
+/// Start a daemon worker that has entered `run` by the time this returns. The owner joins it
+/// through `worker` once the worker has stopped.
+package(flint) Error startBackground(void delegate() @safe nothrow @nogc run, out Background worker)
 {
     import flint.conc.sys.background : startDaemon;
 
-    return startDaemon(run);
+    return startDaemon(run, worker);
 }
 
-package(flint) Error startManagedBackground(void delegate() @safe nothrow run)
+/// As `startBackground`, for a worker that may allocate from the GC.
+package(flint) Error startManagedBackground(void delegate() @safe nothrow run, out Background worker)
 {
     import flint.conc.sys.background : startDaemon;
 
-    return startDaemon(run);
+    return startDaemon(run, worker);
 }
 
 /// Absolute time on the process monotonic clock.
