@@ -1,0 +1,7 @@
+Flint
+Copyright 2026 Steven Buglione
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+Third-party native components keep their own licences; their notices are
+recorded with each provider in policy/native-lock.json and shipped by
+`flint package --sbom`.
