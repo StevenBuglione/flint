@@ -481,6 +481,7 @@ private PackageRun runPackage(ref Session session, string name, string compiler,
         command ~= "--force";
     const dubHome = buildPath(session.home.root, ".flint", "dub", compiler);
     auto environment = buildEnvironment(session, toolchain, spec, dubHome, flags.dflags.join(" "));
+    environment ~= packageEnvironment(name, test);
     session.progress(test ? "Testing" : "Building", "flint:" ~ name ~ " (" ~ request.profile ~ ", " ~ compiler ~ ")");
     string output;
     run.ok = runDub(session, command, environment, session.home.root, output);
@@ -512,6 +513,16 @@ private PackageRun runPackage(ref Session session, string name, string compiler,
     run.artifact = display(artifact);
     run.receipt = display(path);
     return run;
+}
+
+/// Per-package test environment, as tools/ci.py run_tests sets it. The CI closure builds desktop's SDL
+/// canvas backend, whose pinned SDL has no Wayland driver (ADR-020), so its suite runs on SDL's offscreen
+/// driver; the WebKitGTK backend is tested on a real display by its own profile.
+EnvVar[] packageEnvironment(string name, bool test)
+{
+    if (test && name == "desktop")
+        return [EnvVar("SDL_VIDEODRIVER", "offscreen")];
+    return null;
 }
 
 private string libraryPath(string root, string name)
