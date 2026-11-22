@@ -691,6 +691,7 @@
         "arena",
         "conc",
         "os",
+        "serde",
         "wasm-bridge"
       ],
       "better_c": false,

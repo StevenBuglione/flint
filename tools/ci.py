@@ -193,13 +193,16 @@ def run_tests(runner,compiler,*,sanitize=False):
     for name in PACKAGES:
         command=['dub','test',':'+name,'--compiler='+compiler,'--build=plain' if sanitize else '--build=unittest','--force']
         package_env=env
-        if sanitize and name=='desktop':
-            # SDL's offscreen video and software rendering exercise every Flint window, event and
-            # teardown path without loading the host's uninstrumented X11 and EGL drivers, whose
-            # one-time internal allocations LeakSanitizer reports after SDL unloads them. Real
-            # displays stay covered by the ordinary lanes; no leak suppressions are used.
-            package_env={**env,'SDL_VIDEODRIVER':'offscreen','SDL_RENDER_DRIVER':'software',
-                         'SDL_FRAMEBUFFER_ACCELERATION':'0'}
+        if name=='desktop':
+            # The ci closure builds the optional SDL canvas backend, whose pinned SDL has no Wayland
+            # driver (ADR-020), so its suite runs on SDL's offscreen driver. The default WebKitGTK
+            # backend is built by the desktop native profile and tested on a real display.
+            package_env={**env,'SDL_VIDEODRIVER':'offscreen'}
+            if sanitize:
+                # Software rendering without framebuffer acceleration never loads the host's
+                # uninstrumented EGL drivers, whose one-time internal allocations LeakSanitizer
+                # reports after SDL unloads them; no leak suppressions are used.
+                package_env.update({'SDL_RENDER_DRIVER':'software','SDL_FRAMEBUFFER_ACCELERATION':'0'})
         runner.run(command,env=package_env)
 
 def negative_tests(runner,compiler):

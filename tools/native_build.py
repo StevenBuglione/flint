@@ -15,7 +15,7 @@ TARGETS = ('linux-x86_64-glibc','linux-aarch64-glibc','linux-x86_64-musl','linux
 PROFILES = {
     'rest': ['openssl','libsodium','llhttp','nghttp2','curl'],
     'http': ['curl'], 'mail': ['curl'], 'sql':['sqlite','libpq'], 'mq':['librdkafka'],
-    'codec':['zstd','zlib','brotli','libarchive'], 'desktop':['sdl3'],
+    'codec':['zstd','zlib','brotli','libarchive'], 'desktop':['webkitgtk'], 'desktop-canvas':['sdl3'],
     'wasm-host':['wasmtime'], 'tui':['utf8proc'], 'yaml':['libyaml'],
     # C-provider closure; all-package CI adds --library wasmtime explicitly.
     'ci':['openssl','libsodium','llhttp','nghttp2','curl','sqlite','libpq','librdkafka','zstd','zlib','brotli','libarchive','utf8proc','libyaml','sdl3','protobuf-c','hiredis'],
@@ -60,7 +60,11 @@ ALIASES = {
  'protoc':[], 'sqlite':[('sqlite3',)], 'libpq':[('pq','libpq'),('pgcommon_shlib',),('pgport_shlib',)],
  'wasmtime':[('wasmtime',)], 'wamr':[('vmlib',)], 'sdl3':[('SDL3','SDL3-static')],
  'wgpu-native':[('wgpu_native',)], 'webview':[('webview','webview_core','webview_static')], 'stb':[('flint_stb',)], 'libarchive':[('archive','archive_static')],
+ 'webkitgtk':[],
 }
+# Dynamic system providers resolved through pkg-config and recorded, never downloaded or linked statically.
+SYSTEM = {'webkitgtk'}
+STANDARD_LIBRARY_DIRS = {'/lib','/lib64','/usr/lib','/usr/lib64','/usr/lib/x86_64-linux-gnu','/usr/lib/aarch64-linux-gnu'}
 
 def digest(path: Path) -> str:
     with path.open('rb') as f: return hashlib.file_digest(f,'sha256').hexdigest()
@@ -190,6 +194,9 @@ class Builder:
         if name=='webview' and not self.a.allow_webview:raise ValueError('webview needs --allow-webview; Linux runtime is outside strict permissive profile')
         if name=='webview' and self.a.phase!='fetch' and self.a.target!='macos-arm64':raise ValueError('webview source fetch only on this target: Windows needs a separately pinned WebView2 SDK; Linux needs a separate LGPL runtime inventory/linker profile')
         if self.a.phase=='build' and host_target()!=self.a.target and name not in CMAKE:raise ValueError(name+' requires a native target runner; refusing an unverified cross recipe')
+        if name in SYSTEM:
+            if self.a.phase!='fetch':self.system_provider(name)
+            return
         src=self.fetch(name); build=self.work/'build'/self.a.target/name
         if self.a.phase=='fetch': return
         exclusions=self.sanitizer_exclusions(name)
@@ -325,6 +332,44 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
             self.copy(build/filename,self.prefix/'lib'/filename);self.copy(src/'core/iwasm/include',self.prefix/'include')
         else:raise ValueError('No build recipe for '+name)
         if self.a.phase=='build':self.record(name)
+
+    def system_provider(self,name):
+        row=self.rows[name];modules=row['pkg_config_modules'];tool=self.a.pkg_config
+        # The system SDK, not the Flint prefix, provides these libraries.
+        env=dict(self.env)
+        for key in ('PKG_CONFIG_PATH','PKG_CONFIG_LIBDIR'):
+            if key in os.environ:env[key]=os.environ[key]
+            else:env.pop(key,None)
+        def query(*args):
+            self.plan.append({'argv':[tool,*args],'cwd':str(ROOT)})
+            if self.a.phase!='build':return ''
+            result=subprocess.run([tool,*args],env=env,text=True,capture_output=True)
+            if result.returncode:raise RuntimeError(name+' system SDK query failed: '+' '.join(args)+'\n'+result.stderr[-4000:])
+            return result.stdout.strip()
+        versions={module:query('--modversion',module) for module in modules}
+        libs=query('--libs',*modules)
+        if self.a.phase!='build':return
+        for module,minimum in modules.items():
+            if version_key(versions[module])<version_key(minimum):raise RuntimeError(module+' '+versions[module]+' is older than the locked minimum '+minimum)
+        pc_files=[]
+        for module in modules:
+            path=Path(query('--variable=pcfiledir',module))/(module+'.pc')
+            pc_files.append({'module':module,'path':str(path),'sha256':digest(path)})
+        flags=[];directories=[]
+        for token in shlex.split(libs):
+            if token=='-pthread':token='-lpthread'
+            if token.startswith('-L'):directories.append(token[2:])
+            if token.endswith('.a') or token=='-static':raise RuntimeError(name+' must link dynamically; pkg-config selected '+token)
+            if token not in flags:flags.append(token)
+        for directory in directories:
+            if directory not in STANDARD_LIBRARY_DIRS:flags.append('-rpath='+directory)
+        metadata=self.work/'build'/self.a.target/name/'system-link.json'
+        self.write(metadata,json.dumps({'modules':versions,'flags':flags},indent=2)+'\n')
+        self.link_metadata[name]={'path':str(metadata),'sha256':digest(metadata),'flags':flags}
+        self.receipt['libraries'][name]={'kind':'system','license':row['license_selected'],'linking':row['linking'],
+            'modules':versions,'pkg_config_files':pc_files,'archives':[],'requested_sanitizers':self.a.sanitize,
+            'system_link_metadata':self.link_metadata[name]}
+        self.prefix.mkdir(parents=True,exist_ok=True);self.receipt_path.write_text(json.dumps(self.receipt,indent=2)+'\n')
 
     def archive_paths(self,name):
         files=[p for p in self.prefix.rglob('*') if p.suffix in ('.a','.lib') and not p.name.endswith('.dll.a')]
@@ -485,7 +530,10 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
                     flags.append(item['path'])
             for name in reversed(closure):
                 metadata=self.receipt['libraries'][name].get('system_link_metadata')
-                if name in ('sdl3','wasmtime','wgpu-native') and not metadata:raise RuntimeError('Rebuild '+name+' to capture configured static system linker dependencies')
+                if name in ('sdl3','wasmtime','wgpu-native','webkitgtk') and not metadata:raise RuntimeError('Rebuild '+name+' to capture configured static system linker dependencies')
+                if name in SYSTEM:
+                    for item in self.receipt['libraries'][name]['pkg_config_files']:
+                        if digest(Path(item['path']))!=item['sha256']:raise RuntimeError('System SDK changed since it was recorded: '+item['path'])
                 if metadata:
                     if digest(Path(metadata['path']))!=metadata['sha256']:raise RuntimeError('Installed system linker metadata changed')
                     flags+=metadata['flags']
@@ -534,6 +582,9 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
                 text = self.emit_rpc_test_archive(text)
             path.write_text(text.rstrip() + '\n' + block)
 
+def version_key(text):
+    return tuple(int(part) for part in re.findall(r'[0-9]+',text)[:4])
+
 def dependency_order(names,rows,codegen):
     result=[];visiting=set();done=set()
     def visit(name):
@@ -555,12 +606,12 @@ def main():
     parser.add_argument('--phase',choices=('plan','fetch','build'),default='plan');parser.add_argument('--work-dir',default=str(ROOT/'.native'));parser.add_argument('--prefix')
     parser.add_argument('--jobs',type=int,default=min(os.cpu_count() or 2,8));parser.add_argument('--cc');parser.add_argument('--cxx');parser.add_argument('--cmake-toolchain')
     parser.add_argument('--sanitize',choices=('address','undefined','address,undefined'))
-    parser.add_argument('--with-codegen',action='store_true');parser.add_argument('--emit-dub',action='store_true');parser.add_argument('--allow-webview',action='store_true')
+    parser.add_argument('--with-codegen',action='store_true');parser.add_argument('--emit-dub',action='store_true');parser.add_argument('--allow-webview',action='store_true');parser.add_argument('--pkg-config',default=os.environ.get('PKG_CONFIG','pkg-config'),help='pkg-config for dynamic system providers such as WebKitGTK')
     args=parser.parse_args()
     if args.jobs<1:parser.error('--jobs must be positive')
     lock=json.loads(Path(args.lock).read_text());builder=Builder(args,lock)
     names=list(args.library)
-    if args.profile=='all':names += [n for n in builder.rows if n not in ('webview','protoc') and (n!='liburing' or args.target.startswith('linux'))]
+    if args.profile=='all':names += [n for n in builder.rows if n not in ('webview','protoc') and (n not in ('liburing','webkitgtk') or args.target.startswith('linux'))]
     elif args.profile:names += PROFILES[args.profile]
     if args.profile in ('rest','http','sql','mq') and args.target.startswith('linux'):names.append('liburing')
     if not names:parser.error('Select --profile or --library')
