@@ -5,6 +5,13 @@ module flint_tool.diagnostics.catalog;
 
 @safe:
 
+private enum ffiExplanation = "Embedded C (native/ or [native.c]) and native libraries are reached from D "
+    ~ "only through `<root>.ffi` modules (and `<root>.sys`), which wrap them in a safe D API. An extern(C) "
+    ~ "declaration elsewhere, or a C file among the D sources (ImportC), would let any module call C directly.";
+
+private enum ffiExample = "// src/shop/ffi/checksum.d\nmodule shop.ffi.checksum;\n\n"
+    ~ "extern (C) uint shop_crc32(scope const(ubyte)* data, size_t length) @system nothrow @nogc;";
+
 /// The stable process exit codes (ADR-021 section 1).
 enum ExitCode : int
 {
@@ -260,6 +267,8 @@ immutable CodeInfo[] catalog = [
     CodeInfo("FLINT-E0512", ExitCode.user, "unbalanced @trusted body",
             "The policy lexer could not find the end of a @trusted function body.",
             "check the braces of the function the location points at"),
+    CodeInfo("FLINT-E0513", ExitCode.user, "C reached outside an ffi module", ffiExplanation,
+            ffiExample),
 
     // 052x: workspace structure (the structural gate).
     CodeInfo("FLINT-E0521", ExitCode.user, "dependency cycle in the package graph",
@@ -292,6 +301,11 @@ immutable CodeInfo[] catalog = [
     CodeInfo("FLINT-E0602", ExitCode.user, "D-Scanner finding",
             "D-Scanner 0.15.2 with dscanner.ini reports a warning or error.",
             "fix the reported line; the message names the check"),
+    CodeInfo("FLINT-E0603", ExitCode.user, "clang-tidy finding",
+            "`flint check` runs the pinned clang-tidy over embedded C with the fixed profile in "
+            ~ "policy/native-c.toml (bugprone, cert, clang-analyzer, performance and portability checks). "
+            ~ "Every finding is an error.",
+            "fix the reported line; the message names the check"),
 
     // 07xx: build, test and run.
     CodeInfo("FLINT-E0701", ExitCode.user, "build failed",
@@ -311,6 +325,11 @@ immutable CodeInfo[] catalog = [
             "The command was interrupted; running children were stopped.", "run the command again"),
     CodeInfo("FLINT-E0707", ExitCode.user, "nothing to run",
             "`flint run` needs an executable project.", "[project]\ntype = \"executable\""),
+    CodeInfo("FLINT-E0708", ExitCode.user, "embedded C failed to compile",
+            "The pinned clang compiles native/ (or [native.c] sources) as C11 or C17 with -Wall -Wextra -Werror, "
+            ~ "_FORTIFY_SOURCE=3, the stack protector, stack-clash protection and zero-initialised automatic "
+            ~ "variables (policy/native-c.toml). Warnings are errors.",
+            "flint build --verbose"),
 
     // 08xx: toolchain and environment.
     CodeInfo("FLINT-E0801", ExitCode.environment, "Flint installation not found",
@@ -365,6 +384,11 @@ immutable CodeInfo[] catalog = [
             ~ "or has no pinned release, so the package's offline tests ran but its peer-dependent suites did not. "
             ~ "The run fails instead of skipping them silently.",
             "python3 tools/install_peers.py --peer go --peer postgres"),
+    CodeInfo("FLINT-E0816", ExitCode.environment, "C toolchain missing",
+            "Embedded C, clang-tidy and `flint test --sanitize` use the pinned LLVM release (and, for "
+            ~ "sanitizers, the sanitizer-aware LDC runtime) under the toolchain directory; a host compiler is "
+            ~ "never used.",
+            "flint toolchain install                # add --sanitizers for flint test --sanitize"),
     // 09xx: receipts.
     CodeInfo("FLINT-E0901", ExitCode.environment, "receipt missing",
             "Every artifact flint builds has a JSON receipt next to it (<artifact>.receipt.json).",

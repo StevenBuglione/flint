@@ -1,0 +1,16 @@
+# Rules for C embedded in Flint projects: native/ or [native.c] (ADR-021 section 5, ADR-023).
+# flint compiles it with the pinned clang, caches each object by content hash, links it into
+# the D build, runs clang-tidy with the fixed profile below in `flint check`, and builds it with
+# ASan and UBSan under `flint test --sanitize`. D reaches it only through <project>.ffi modules.
+# {toolchain} is the toolchain directory.
+
+[c]
+compiler = "{toolchain}/LLVM-22.1.8-Linux-X64/bin/clang"
+clang_tidy = "{toolchain}/LLVM-22.1.8-Linux-X64/bin/clang-tidy"
+standards = ["c11", "c17"]
+default_standard = "c17"
+warnings = ["-Wall", "-Wextra", "-Werror", "-Wformat=2", "-Wshadow", "-Wstrict-prototypes", "-Wmissing-prototypes", "-Wvla", "-Wnull-dereference", "-Wimplicit-fallthrough", "-Wcast-qual", "-Wpointer-arith", "-Wundef"]
+hardening = ["-O2", "-D_FORTIFY_SOURCE=3", "-fstack-protector-strong", "-fstack-clash-protection", "-ftrivial-auto-var-init=zero", "-fPIE"]
+link_hardening = ["-z", "relro", "-z", "now"]
+sanitize = ["-O1", "-g", "-fsanitize=address,undefined", "-fno-sanitize-recover=all", "-fno-omit-frame-pointer", "-fstack-protector-strong", "-ftrivial-auto-var-init=zero", "-fPIE"]
+clang_tidy_checks = "-*,bugprone-*,cert-*,clang-analyzer-*,performance-*,portability-*,-bugprone-easily-swappable-parameters,-cert-err33-c,-clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling"

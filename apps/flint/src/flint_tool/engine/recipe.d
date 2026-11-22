@@ -13,14 +13,28 @@ import flint_tool.project.resolve : ResolvedPackage, Resolution;
 /// Directory of the generated root recipe, relative to the project root.
 enum recipeDirectory = ".flint/generated/dub";
 
+/// Inputs of the root recipe that a build computes rather than reads from flint.toml.
+struct RecipeExtras
+{
+    /// Absolute paths of the embedded C objects (engine/cbuild.d).
+    string[] objects;
+    /// Linker hardening for executables that contain embedded C.
+    string[] linkHardening;
+}
+
 /// Render the root recipe for a project.
-string renderRecipe(const ref Home home, const ref Manifest manifest, const ref Resolution resolution)
+string renderRecipe(const ref Home home, const ref Manifest manifest, const ref Resolution resolution,
+        RecipeExtras extras = RecipeExtras.init)
 {
     string text = header() ~ field("name", manifest.name);
     if (manifest.description.length)
         text ~= field("description", manifest.description);
     text ~= field("targetName", manifest.artifactName()) ~ field("targetType", manifest.type) ~ field("sourcePaths",
             "../../../src") ~ field("importPaths", "../../../src") ~ field("dflags", "-preview=dip1000");
+    if (extras.objects.length)
+        text ~= fields("sourceFiles", extras.objects);
+    if (extras.objects.length && manifest.type == "executable")
+        text ~= fields("lflags", extras.linkHardening);
     foreach (name; resolution.direct)
         text ~= dependencyLine(home, resolution, name, "");
     foreach (profile; profileNames)
@@ -35,6 +49,8 @@ string renderRecipe(const ref Home home, const ref Manifest manifest, const ref 
             "    ") ~ field("importPaths", "../../../test",
             "    ") ~ "    buildOptions \"unittests\" \"debugInfo\"\n" ~ (manifest.type == "library"
             ? "    dflags \"-main\"\n" : "");
+    if (extras.objects.length && manifest.type == "library")
+        text ~= fields("lflags", extras.linkHardening, "    ");
     foreach (name; resolution.directTest)
         text ~= dependencyLine(home, resolution, name, "    ");
     return text ~ "}\n";
@@ -102,6 +118,16 @@ private string dependencyLine(const ref Home home, const ref Resolution resoluti
 private string field(string key, string value, string indent = "")
 {
     return indent ~ key ~ " " ~ quoted(value) ~ "\n";
+}
+
+private string fields(string key, scope const(string)[] values, string indent = "")
+{
+    if (values.length == 0)
+        return null;
+    string text = indent ~ key;
+    foreach (value; values)
+        text ~= " " ~ quoted(value);
+    return text ~ "\n";
 }
 
 /// An SDLang string literal.

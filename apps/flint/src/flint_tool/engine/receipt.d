@@ -136,6 +136,19 @@ struct OutputRecord
     long bytes;
 }
 
+/// Embedded C compiled into the artifact (ADR-023).
+struct EmbeddedCRecord
+{
+    /// Project-relative sources with their SHA-256.
+    OutputRecord[] sources;
+    /// Complete compile flags.
+    string[] flags;
+    /// SHA-256 of the pinned compiler.
+    string compiler_sha256;
+    /// SHA-256 of policy/native-c.toml.
+    string policy_sha256;
+}
+
 /// A complete build receipt.
 struct Receipt
 {
@@ -167,6 +180,8 @@ struct Receipt
     EnvironmentRecord[] environment;
     /// Output files.
     OutputRecord[] outputs;
+    /// Embedded C, when the project has any.
+    EmbeddedCRecord embedded_c;
 }
 
 /// Receipt path for an artifact.

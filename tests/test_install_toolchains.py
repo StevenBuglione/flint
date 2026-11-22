@@ -39,10 +39,10 @@ class ProjectLinkerTests(unittest.TestCase):
 class SanitizerToolchainTests(unittest.TestCase):
     def test_llvm_subset_keeps_driver_resources_and_symbolizer_only(self):
         keep = install_toolchains.keep_llvm_member
-        for name in ('bin/clang', 'bin/clang-22', 'bin/llvm-symbolizer', 'lib/clang/22/lib/x86_64-unknown-linux-gnu/libclang_rt.asan.a',
+        for name in ('bin/clang', 'bin/clang-22', 'bin/clang-tidy', 'bin/llvm-symbolizer', 'lib/clang/22/lib/x86_64-unknown-linux-gnu/libclang_rt.asan.a',
                      'lib/clang/22/include/stddef.h'):
             self.assertTrue(keep('LLVM-22.1.8-Linux-X64/' + name), name)
-        for name in ('LLVM-22.1.8-Linux-X64/bin/clang-tidy', 'LLVM-22.1.8-Linux-X64/lib/libLLVMCore.a',
+        for name in ('LLVM-22.1.8-Linux-X64/bin/clang-format', 'LLVM-22.1.8-Linux-X64/lib/libLLVMCore.a',
                      'LLVM-22.1.8-Linux-X64/bin/clang-22.backup', 'other/bin/clang'):
             self.assertFalse(keep(name), name)
 

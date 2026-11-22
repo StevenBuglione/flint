@@ -72,3 +72,22 @@ unittest
             true);
     expect(quoted("a\"b")).toEqual("\"a\\\"b\"");
 }
+
+@("embedded C objects become source files, and executables get the linker hardening")
+unittest
+{
+    import std.algorithm.searching : canFind;
+    import flint_tool.engine.recipe : RecipeExtras;
+
+    const home = fixtureHome();
+    Manifest manifest;
+    manifest.name = "shop";
+    Resolution resolution;
+    RecipeExtras extras;
+    extras.objects = ["/p/.flint/cache/c/ab.o", "/p/.flint/cache/c/cd.o"];
+    extras.linkHardening = ["-z", "relro", "-z", "now"];
+    const text = renderRecipe(home, manifest, resolution, extras);
+    expect(text.canFind("sourceFiles \"/p/.flint/cache/c/ab.o\" \"/p/.flint/cache/c/cd.o\"\n")).toEqual(true);
+    expect(text.canFind("\nlflags \"-z\" \"relro\" \"-z\" \"now\"\n")).toEqual(true);
+    expect(renderRecipe(home, manifest, resolution).canFind("sourceFiles")).toEqual(false);
+}

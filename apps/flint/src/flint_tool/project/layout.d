@@ -55,6 +55,7 @@ CheckSummary checkProject(const ref Home home, const ref Manifest manifest, cons
         checkFile(home, manifest, resolution, relative, text, found);
     }
     checkPackageDirectories(manifest, found);
+    checkImportC(manifest, found);
     checkConfiguration(manifest, found);
     checkGenerated(manifest, found);
     if (full)
@@ -110,6 +111,7 @@ private void checkFile(const ref Home home, const ref Manifest manifest, const r
                 "declare `module " ~ expected ~ ";` or move the file"), relative, scan.tokens[0].line, 0, text));
     const low = startsWithModule(scan.moduleName, root ~ ".sys") || startsWithModule(scan.moduleName, root ~ ".ffi");
     checkDefault(scan, low, report);
+    checkForeign(scan, low, root, report);
     checkMixin(scan, [], report);
     checkAnnotations(scan, low, home.safety.maxTrustedLines, report);
     foreach (imported; scan.imports)
@@ -154,6 +156,50 @@ private void checkImport(const ref Home home, const ref Manifest manifest, const
             report.add(at(diagnostic("FLINT-E0508", Severity.error, "imports the private module " ~ imported,
                     "import " ~ item.moduleRoot ~ "'s public modules"), scan.file, line, 0, scan.text));
         return;
+    }
+}
+
+/// C is reached only through `<root>.ffi` (and `<root>.sys`) modules: foreign linkage elsewhere is FLINT-E0513.
+private void checkForeign(const ref SourceScan scan, bool low, string root, ref Report report)
+{
+    static immutable string[] foreign = ["C", "C++", "System", "Windows", "Objective"];
+    if (low)
+        return;
+    const tokens = scan.tokens;
+    foreach (i; 2 .. tokens.length)
+    {
+        if (tokens[i - 2].value != "extern" || tokens[i - 1].value != "(")
+            continue;
+        foreach (linkage; foreign)
+        {
+            if (tokens[i].value == linkage || (linkage == "C++" && tokens[i].value == "C"
+                    && i + 1 < tokens.length && tokens[i + 1].value == "++"))
+            {
+                report.add(at(diagnostic("FLINT-E0513", Severity.error, "extern(" ~ linkage ~ ") outside an ffi module",
+                        "declare C functions in " ~ root ~ ".ffi.<name> and give the rest of the program a safe D API"),
+                        scan.file, tokens[i].line, 0, scan.text));
+                return;
+            }
+        }
+    }
+}
+
+/// ImportC files under src/ or test/ would let any module import C directly; C lives in native/.
+private void checkImportC(const ref Manifest manifest, ref Report report)
+{
+    import std.path : extension;
+    import flint_tool.support.files : findFiles;
+
+    foreach (directory; ["src", "test"])
+    {
+        foreach (relative; findFiles(manifest.root, directory ~ "/**"))
+        {
+            const ext = extension(relative);
+            if (ext == ".c" || ext == ".h" || ext == ".i")
+                report.add(at(diagnostic("FLINT-E0513", Severity.error, relative ~ " puts C among the D sources",
+                        "move it to native/ and declare its functions in " ~ manifest.moduleRoot() ~ ".ffi"),
+                        relative, 0));
+        }
     }
 }
 

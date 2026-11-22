@@ -4,6 +4,7 @@ module flint_tool.engine.builder;
 import flint.os : EnvVar;
 import flint_tool.engine.receipt : AdditionsRecord, ComponentRecord, EnvironmentRecord, OutputRecord, ProfileRecord,
     Receipt, ToolchainRecord, nativeIdentity, outputRecord, receiptPath, sourceIdentity, writeReceipt;
+import flint_tool.engine.cbuild : CBuild, compileNativeC;
 import flint_tool.engine.session : Session;
 import flint_tool.diagnostics.report : Report, Severity, at, diagnostic;
 import flint_tool.home.policy : ProfileSpec;
@@ -33,6 +34,9 @@ struct BuildRequest
     bool force;
     /// Build the unittest configuration.
     bool test;
+    /// Instrument with ASan and UBSan (`flint test --sanitize`): the sanitize profile, with embedded C
+    /// compiled with the policy's sanitizer flags.
+    bool sanitize;
 }
 
 /// One finished build.
@@ -56,6 +60,8 @@ struct BuildOutcome
     string compiler;
     /// Checks the fast subset ran.
     CheckSummary checks;
+    /// Embedded C.
+    CBuild native;
 }
 
 /// The project's root directory relative to the current directory, for display.
@@ -99,6 +105,8 @@ EnvVar[] buildEnvironment(ref Session session, const ref Toolchain toolchain, co
     variables ~= EnvVar("PATH", dirName(toolchain.dmd.path) ~ ":" ~ dirName(
             toolchain.ldc2.path) ~ ":" ~ environment.get("PATH", "/usr/bin:/bin"));
     variables ~= EnvVar("DUB_HOME", dubHome);
+    if (spec.native_sanitize.length)
+        variables = sanitizerBuildEnvironment(session, variables);
     if (dflags.length)
         variables ~= EnvVar("DFLAGS", dflags);
     if (!spec.compile_server)
@@ -167,6 +175,81 @@ string tail(string text, size_t lines = 40)
     return all.join("\n").strip.idup;
 }
 
+/// The sanitize profile links through `-gcc=clang` against the sanitizer-aware LDC runtime: the pinned clang
+/// goes first on PATH and the runtime's directory on LIBRARY_PATH, as tools/ci.py's sanitizer lane does.
+private EnvVar[] sanitizerBuildEnvironment(ref Session session, EnvVar[] variables)
+{
+    import std.path : buildPath;
+    import std.process : environment;
+    import flint_tool.toolchain.toolchain : toolchainDirectory;
+
+    const directory = toolchainDirectory(session.home);
+    EnvVar[] kept;
+    foreach (variable; variables)
+    {
+        if (variable.name == "PATH")
+            kept ~= EnvVar("PATH", buildPath(directory, llvmDirectory, "bin") ~ ":" ~ variable.value);
+        else if (variable.name != "LIBRARY_PATH")
+            kept ~= variable;
+    }
+    const existing = environment.get("LIBRARY_PATH", "");
+    kept ~= EnvVar("LIBRARY_PATH", buildPath(directory, sanitizerRuntime,
+            "lib") ~ (existing.length ? ":" ~ existing : ""));
+    return kept ~ sanitizerRunEnvironment(session);
+}
+
+/// The pinned LLVM release directory under the toolchain (tools/install_toolchains.py LLVM_ROOT).
+enum llvmDirectory = "LLVM-22.1.8-Linux-X64";
+/// The sanitizer-aware LDC runtime directory (tools/install_toolchains.py SANITIZER_RUNTIME).
+enum sanitizerRuntime = "ldc-1.43.0-sanitizer-runtime";
+
+/// Sanitizer options of instrumented test runs, as tools/ci.py sets them: leaks detected, the first error
+/// fatal, ASan fake stacks scanned by the sanitizer-aware runtime's GC.
+EnvVar[] sanitizerRunEnvironment(ref Session session)
+{
+    import std.path : buildPath;
+    import flint_tool.toolchain.toolchain : toolchainDirectory;
+
+    return [
+        EnvVar("ASAN_OPTIONS", "detect_leaks=1:abort_on_error=1:detect_stack_use_after_return=1"),
+        EnvVar("UBSAN_OPTIONS", "halt_on_error=1:print_stacktrace=1"),
+        EnvVar("ASAN_SYMBOLIZER_PATH", buildPath(toolchainDirectory(session.home), llvmDirectory,
+                "bin", "llvm-symbolizer"))
+    ];
+}
+
+/// Whether the sanitizer toolchain a `--sanitize` build needs is installed; FLINT-E0816 otherwise.
+bool sanitizerToolchain(ref Session session, ref Report report)
+{
+    import std.file : exists;
+    import std.path : buildPath;
+    import flint_tool.toolchain.toolchain : toolchainDirectory;
+
+    const directory = toolchainDirectory(session.home);
+    const clang = buildPath(directory, llvmDirectory, "bin", "clang");
+    const runtime = buildPath(directory, sanitizerRuntime, "flint-sanitizer-runtime.json");
+    if (exists(clang) && exists(runtime))
+        return true;
+    report.error("FLINT-E0816", "the sanitizer toolchain is not installed (" ~ (exists(clang)
+            ? runtime : clang) ~ ")", "flint toolchain install --sanitizers");
+    return false;
+}
+
+/// Everything before DUB runs: lock, toolchain, fast checks, embedded C and the generated recipes.
+private bool prepareBuild(ref Session session, const ref Manifest manifest, const ref Resolution resolution,
+        const ref BuildRequest request, out Toolchain toolchain, ref BuildOutcome result, ref Report report)
+{
+    if (!prepareLock(session, manifest, resolution, request.locked, report))
+        return false;
+    if (!usableToolchain(session, result.compiler, request.verify, toolchain, report))
+        return false;
+    if (request.sanitize && !sanitizerToolchain(session, report))
+        return false;
+    result.checks = checkProject(session.home, manifest, resolution, false, report);
+    return report.ok && compileNativeC(session, manifest, request.sanitize, result.native, report)
+        && writeRecipes(session, manifest, resolution, result.native, report);
+}
+
 /// Build a project with a profile: lock, toolchain, fast checks, recipe, DUB, receipt.
 bool buildProject(ref Session session, const ref Manifest manifest, const ref Resolution resolution,
         BuildRequest request, out BuildOutcome result, ref Report report)
@@ -180,13 +263,8 @@ bool buildProject(ref Session session, const ref Manifest manifest, const ref Re
         return false;
     const compiler = request.compiler.length ? request.compiler : spec.compiler;
     result.compiler = compiler;
-    if (!prepareLock(session, manifest, resolution, request.locked, report))
-        return false;
     Toolchain toolchain;
-    if (!usableToolchain(session, compiler, request.verify, toolchain, report))
-        return false;
-    result.checks = checkProject(session.home, manifest, resolution, false, report);
-    if (!report.ok || !writeRecipes(session, manifest, resolution, report))
+    if (!prepareBuild(session, manifest, resolution, request, toolchain, result, report))
         return false;
 
     const flags = composeFlags(spec, manifest.overrideFor(request.profile), request);
@@ -261,6 +339,18 @@ private Flags composeFlags(const ref ProfileSpec spec, ProfileOverride additions
     // are not rebuilt with their own unittests.
     if (spec.build_type == "plain")
         flags.dflags = spec.dflags.dup;
+    // A project's unittest configuration adds -unittest itself; the sanitize profile's own -unittest would
+    // also compile and run every dependency's unittests inside the project's test binary.
+    if (request.test && request.sanitize)
+    {
+        string[] kept;
+        foreach (flag; flags.dflags)
+        {
+            if (flag != "-unittest")
+                kept ~= flag;
+        }
+        flags.dflags = kept;
+    }
     flags.dflags ~= additions.dflags ~ request.dflags;
     flags.lflags = spec.lflags.dup ~ additions.lflags ~ request.lflags;
     foreach (flag; flags.lflags)
@@ -286,15 +376,26 @@ private bool prepareLock(ref Session session, const ref Manifest manifest, const
 }
 
 private bool writeRecipes(ref Session session, const ref Manifest manifest,
-        const ref Resolution resolution, ref Report report)
+        const ref Resolution resolution, const ref CBuild native, ref Report report)
 {
     import std.path : buildPath;
-    import flint_tool.engine.recipe : dependencyRecipeDirectory, recipeDirectory,
+    import flint_tool.engine.cbuild : NativeCPolicy, loadNativeCPolicy;
+    import flint_tool.engine.recipe : RecipeExtras, dependencyRecipeDirectory, recipeDirectory,
         renderDependencyRecipe, renderRecipe;
     import flint_tool.support.files : writeIfChanged;
 
+    RecipeExtras extras;
+    extras.objects = native.objects.dup;
+    if (native.objects.length)
+    {
+        NativeCPolicy policy;
+        string digest;
+        if (!loadNativeCPolicy(session.home, policy, digest, report))
+            return false;
+        extras.linkHardening = policy.link_hardening;
+    }
     writeIfChanged(buildPath(manifest.root, recipeDirectory, "dub.sdl"), renderRecipe(session.home,
-            manifest, resolution));
+            manifest, resolution, extras));
     foreach (ref item; resolution.packages)
     {
         import flint_tool.engine.recipe : generatedRecipe;
@@ -371,6 +472,11 @@ private Receipt projectReceipt(ref Session session, const ref Manifest manifest,
     receipt.waivers = result.checks.waivers.dup;
     receipt.command = result.command.dup;
     receipt.outputs = [outputRecord(result.artifact, display(result.artifact))];
+    foreach (source; result.native.sources)
+        receipt.embedded_c.sources ~= outputRecord(buildPath(manifest.root, source), source);
+    receipt.embedded_c.flags = result.native.flags.dup;
+    receipt.embedded_c.compiler_sha256 = result.native.compilerSha256;
+    receipt.embedded_c.policy_sha256 = result.native.policySha256;
     string[] reasons;
     if (flags.manifestDflags.length || flags.manifestLflags.length)
         reasons ~= "flint.toml adds flags to the " ~ request.profile ~ " profile";
