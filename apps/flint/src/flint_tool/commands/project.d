@@ -73,7 +73,10 @@ bool locate(ref Session session, string projectOption, out Target target, ref Re
     if (isWorkspaceManifest(text))
     {
         target.kind = TargetKind.workspace;
-        if (buildNormalizedPath(target.root) != buildNormalizedPath(session.home.root))
+        import flint_tool.check.structural : realPath;
+
+        // Compare resolved paths: macOS reaches /var and /tmp through /private symlinks.
+        if (realPath(target.root) != realPath(session.home.root))
         {
             report.error("FLINT-E0809",
                     target.root ~ " is another Flint checkout's workspace; this flint belongs to " ~ session.home.root,

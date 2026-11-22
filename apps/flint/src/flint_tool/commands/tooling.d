@@ -160,8 +160,11 @@ private bool runInstaller(ref Session session, string directory, string[] comman
     session.progress("Installing", command.join(" "));
     Launch launch;
     launch.directory = session.home.root;
-    const bins = buildPath(directory, "dmd2", "linux", "bin64") ~ ":" ~ buildPath(directory,
-            "bin") ~ ":" ~ buildPath(directory, "ldc2-" ~ session.home.versions["ldc"] ~ "-linux-x86_64", "bin");
+    import flint_tool.toolchain.host : dmdBin, ldcBin;
+
+    const ldc = session.home.versions["ldc"];
+    const bins = buildPath(directory, dmdBin(ldc)) ~ ":" ~ buildPath(directory,
+            "bin") ~ ":" ~ buildPath(directory, ldcBin(ldc));
     launch.environment = [EnvVar("PATH", bins ~ ":" ~ environment.get("PATH", "/usr/bin:/bin"))];
     const json = session.json;
     string collected;
@@ -266,7 +269,7 @@ private struct Doctor
 
     void toolchain(ref Session session)
     {
-        import std.path : buildPath;
+        import std.path : dirName;
         import flint_tool.support.process : which;
         import flint_tool.toolchain.toolchain : inspect, verifyToolchain;
 
@@ -291,8 +294,9 @@ private struct Doctor
             if (onPath.length == 0 || onPath == pinned)
                 continue;
             add("PATH " ~ name, "warning", "PATH selects " ~ onPath ~ "; flint uses " ~ pinned);
-            report.add(diagnostic("FLINT-E0812", Severity.warning, "PATH selects " ~ onPath ~ " instead of " ~ pinned,
-                    "export PATH=\"" ~ buildPath(found.directory, "dmd2/linux/bin64") ~ ":$PATH\""));
+            const fix = "export PATH=\"" ~ dirName(pinned) ~ ":$PATH\"";
+            report.add(diagnostic("FLINT-E0812", Severity.warning,
+                    "PATH selects " ~ onPath ~ " instead of " ~ pinned, fix));
         }
     }
 
@@ -456,6 +460,14 @@ int commandDaemon(ref Session session, string action, string profile)
         {
             report.error("FLINT-E0003", "the " ~ profile ~ " profile does not use the DMD compile server",
                     "flint daemon start --profile dev");
+            break;
+        }
+        import flint_tool.toolchain.host : dmdForkHost;
+
+        static if (!dmdForkHost)
+        {
+            report.error("FLINT-E0810", "the compile server belongs to the Linux DMD fork; this host fills the "
+                    ~ "DMD role with LDC's ldmd2, which has none (ADR-024)", "build without flint daemon");
             break;
         }
         const toolchain = inspect(session.home, ["dmd"], false);

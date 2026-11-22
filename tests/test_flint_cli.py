@@ -18,7 +18,9 @@ import install_toolchains  # noqa: E402
 import profiles  # noqa: E402
 
 FLINT = ROOT / '.flint' / 'bin' / 'flint'
-DMD_BIN = ROOT / '.tools' / 'dmd2' / 'linux' / 'bin64'
+# The executable that fills the DMD role: the forked DMD, or LDC's ldmd2 on macOS (ADR-024).
+DMD_BIN = (ROOT / '.tools' / install_toolchains.LDC_DARWIN / 'bin' if sys.platform == 'darwin'
+           else ROOT / '.tools' / 'dmd2' / 'linux' / 'bin64')
 
 
 def environment(**extra):
@@ -366,6 +368,11 @@ class KnowledgeTests(unittest.TestCase):
         status, doctor = flint_json('doctor')
         self.assertIn(status, (0, 2))
         self.assertTrue({'installation', 'dmd', 'fork', 'compile server'} <= {c['name'] for c in doctor['checks']})
+        if sys.platform == 'darwin':
+            # The compile server belongs to the Linux DMD fork (ADR-024).
+            status, refused = flint_json('daemon', 'start')
+            self.assertEqual((status, codes(refused)), (2, ['FLINT-E0810']))
+            return
         with tempfile.TemporaryDirectory(dir='/tmp') as runtime:
             env = environment(XDG_RUNTIME_DIR=runtime)
             status, started = flint_json('daemon', 'start', env=env)

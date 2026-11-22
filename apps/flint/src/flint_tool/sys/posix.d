@@ -36,13 +36,26 @@ bool lockHeld(string path)
     return probeLock(toStringz(path));
 }
 
+version (OSX) private extern (C) int flock(int descriptor, int operation) @system nothrow @nogc;
+
 // SAFETY: the path is a NUL-terminated GC copy; the descriptor is owned locally, released with LOCK_UN when the
 // probe acquired it, and always closed before returning.
 private bool probeLock(const(char)* path) @trusted nothrow
 {
-    import core.sys.posix.fcntl : O_CLOEXEC, O_RDONLY, open;
+    import core.sys.posix.fcntl : O_RDONLY, open;
     import core.sys.posix.unistd : close;
-    import core.sys.linux.sys.file : LOCK_EX, LOCK_NB, LOCK_UN, flock;
+
+    version (OSX)
+    {
+        // <sys/fcntl.h> and <sys/file.h>; druntime declares neither for Darwin.
+        enum O_CLOEXEC = 0x0100_0000;
+        enum LOCK_EX = 2, LOCK_NB = 4, LOCK_UN = 8;
+    }
+    else
+    {
+        import core.sys.posix.fcntl : O_CLOEXEC;
+        import core.sys.linux.sys.file : LOCK_EX, LOCK_NB, LOCK_UN, flock;
+    }
 
     const fd = open(path, O_RDONLY | O_CLOEXEC);
     if (fd < 0)
@@ -51,7 +64,7 @@ private bool probeLock(const(char)* path) @trusted nothrow
         close(fd);
     if (flock(fd, LOCK_EX | LOCK_NB) == 0)
     {
-        flock(fd, LOCK_UN);
+        cast(void) flock(fd, LOCK_UN);
         return false;
     }
     return true;

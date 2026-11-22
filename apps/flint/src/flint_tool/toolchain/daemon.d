@@ -115,7 +115,12 @@ private string[] listProcesses()
     import std.file : dirEntries, SpanMode;
     import std.path : baseName;
 
+    import std.file : exists;
+
     string[] pids;
+    // The compile server belongs to the Linux DMD fork; hosts without /proc run none (ADR-024).
+    if (!exists("/proc"))
+        return pids;
     foreach (entry; dirEntries("/proc", SpanMode.shallow, false))
     {
         const name = baseName(entry.name);

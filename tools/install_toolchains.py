@@ -256,16 +256,66 @@ def flint_recipe(manifest, home=ROOT):
     return '\n'.join(lines) + '\n}\n'
 
 
+LDC_DARWIN = 'ldc2-1.43.0-osx-arm64'
+FLINT_DUB = 'dub-1.43.0'
+
+
+def install_flint_dub(destination):
+    """Build the Flint-patched DUB 1.43.0 from its pinned source with the pinned LDC (ADR-024).
+
+    Hosts without the DMD fork use it with LDC: the pinned DUB version and the fork's DUB changes,
+    without the DMD-only pipeline, which the caller turns off with FLINT_DUB_PIPELINE=0.
+    """
+    if platform.system() != 'Darwin':
+        raise SystemExit('--compiler dub is the macOS DUB; Linux installs DUB with --compiler dmd --flint-fork')
+    ldc_bin = install(LDC_DARWIN + '.tar.xz', destination) / LDC_DARWIN / 'bin'
+    output = destination / FLINT_DUB / 'bin' / 'dub'
+    receipt = {'compiler': 'dub', 'version': LOCK['versions']['dub'], 'bin': str(output.parent),
+               'sha256': LOCK['assets']['dub-1.43.0.tar.gz']['sha256'], 'dub_patch_sha256': sha256_file(DUB_PATCH)}
+    stamp = destination / FLINT_DUB / 'flint-dub.json'
+    try:
+        previous = json.loads(stamp.read_text())
+    except (OSError, ValueError):
+        previous = None
+    if previous and output.is_file() and previous == {**receipt, 'dub_sha256': sha256_file(output)}:
+        return previous
+    with TemporaryDirectory(prefix='flint-dub-') as temporary:
+        work = Path(temporary)
+        source = install('dub-1.43.0.tar.gz', work / 'download') / 'dub-1.43.0'
+        stage = work / 'dub'
+        shutil.copytree(source, stage)
+        apply_patch(DUB_PATCH, stage)
+        env = dict(os.environ, PATH=str(ldc_bin) + os.pathsep + os.environ['PATH'], DMD='ldmd2', GITVER='1.43.0')
+        subprocess.run([str(ldc_bin / 'ldmd2'), '-run', 'build.d', '-O3', '-release'], cwd=stage, env=env, check=True,
+                       stdout=subprocess.DEVNULL)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        with TemporaryDirectory(dir=output.parent) as replacing:
+            target = Path(replacing) / 'dub'
+            shutil.copyfile(stage / 'bin' / 'dub', target)
+            target.chmod(0o755)
+            target.replace(output)
+    receipt['dub_sha256'] = sha256_file(output)
+    stamp.write_text(json.dumps(receipt, indent=2) + '\n')
+    return receipt
+
+
 def bootstrap_flint(toolchain):
     """ADR-018 bootstrap: DUB builds the first flint, which rebuilds itself and verifies its own receipt."""
     import tomllib
     import profiles
     manifest = tomllib.loads((FLINT_APP / 'flint.toml').read_text())
-    bin_dir = toolchain / 'dmd2' / 'linux' / 'bin64'
-    dmd, dub = bin_dir / 'dmd', bin_dir / 'dub'
+    if platform.system() == 'Darwin':
+        # ADR-024: LDC's ldmd2 fills the DMD role with the same flags; DUB is the Flint DUB built with LDC.
+        bin_dir = toolchain / LDC_DARWIN / 'bin'
+        dmd, dub = bin_dir / 'ldmd2', toolchain / FLINT_DUB / 'bin' / 'dub'
+        hint = '--compiler ldc and --compiler dub'
+    else:
+        bin_dir = toolchain / 'dmd2' / 'linux' / 'bin64'
+        dmd, dub = bin_dir / 'dmd', bin_dir / 'dub'
+        hint = '--compiler dmd --flint-fork'
     for tool in (dmd, dub):
         if not tool.is_file():
-            raise SystemExit('pinned toolchain missing: ' + str(tool) + '; install it with --compiler dmd --flint-fork first')
+            raise SystemExit('pinned toolchain missing: ' + str(tool) + '; install it with ' + hint + ' first')
     recipe_dir = FLINT_APP / '.flint' / 'generated' / 'dub'
     recipe_dir.mkdir(parents=True, exist_ok=True)
     recipe = recipe_dir / 'dub.sdl'
@@ -275,6 +325,8 @@ def bootstrap_flint(toolchain):
     env = {k: v for k, v in os.environ.items() if k not in ('DFLAGS', 'DUB_HOME')}
     env.update(PATH=str(bin_dir) + os.pathsep + env.get('PATH', ''), DUB_HOME=str(FLINT_APP / '.flint' / 'dub'),
                DFLAGS=' '.join(profiles.dflags('dev')))
+    if platform.system() == 'Darwin':
+        env['FLINT_DUB_PIPELINE'] = '0'  # The pipeline's in-process archives are ELF-only (ADR-024).
     subprocess.run([str(dub), 'build', '--root=' + str(recipe_dir), '--config=dev', '--compiler=' + str(dmd),
                     '--build=plain', '--skip-registry=all'], cwd=FLINT_APP, env=env, check=True)
     artifact = manifest.get('build', {}).get('executable', manifest['project']['name'])
@@ -484,7 +536,7 @@ def build_sanitizer_runtime(destination, build_root=None, jobs=None):
 
 
 def main():
-    ap=argparse.ArgumentParser();ap.add_argument('--compiler',choices=['dmd','ldc','go','oha','clang','ldc-sanitizer-runtime','musl-sysroot','conan','flint'],required=True);ap.add_argument('--musl',action='store_true');ap.add_argument('--destination',type=Path,default=ROOT/'.tools')
+    ap=argparse.ArgumentParser();ap.add_argument('--compiler',choices=['dmd','ldc','dub','go','oha','clang','ldc-sanitizer-runtime','musl-sysroot','conan','flint'],required=True);ap.add_argument('--musl',action='store_true');ap.add_argument('--destination',type=Path,default=ROOT/'.tools')
     ap.add_argument('--dmd-linker', metavar='LINKER', help='Use installed ld.lld or mold for project-local 64-bit DMD links')
     ap.add_argument('--flint-fork', action='store_true',
                     help='Build the Flint DMD/DUB fork (resident toolchain compile server, parallel DUB pipeline, direct linking)')
@@ -505,6 +557,10 @@ def main():
     if a.build_dir and a.compiler != 'ldc-sanitizer-runtime':
         ap.error('--build-dir applies only to --compiler ldc-sanitizer-runtime')
     a.destination=a.destination.resolve()
+    if a.compiler=='dub':
+        if a.flint_fork or a.dmd_linker or a.musl:ap.error('--compiler dub takes only --destination')
+        print(json.dumps(install_flint_dub(a.destination)))
+        return
     if a.compiler=='flint':
         if a.flint_fork or a.dmd_linker or a.musl:ap.error('--compiler flint takes only --destination (the installed toolchain)')
         print(json.dumps(bootstrap_flint(a.destination)))

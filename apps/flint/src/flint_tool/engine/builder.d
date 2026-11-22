@@ -120,7 +120,10 @@ EnvVar[] buildEnvironment(ref Session session, const ref Toolchain toolchain, co
         variables ~= EnvVar("DFLAGS", dflags);
     if (!spec.compile_server)
         variables ~= EnvVar("FLINT_DMD_SERVER", "0");
-    if (!spec.dub_pipeline)
+    import flint_tool.toolchain.host : dmdForkHost;
+
+    // The pipeline writes ELF-style archives, so hosts without the DMD fork build sequentially (ADR-024).
+    if (!spec.dub_pipeline || !dmdForkHost)
         variables ~= EnvVar("FLINT_DUB_PIPELINE", "0");
     return variables;
 }

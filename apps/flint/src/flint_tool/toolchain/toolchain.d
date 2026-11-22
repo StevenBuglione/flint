@@ -149,14 +149,16 @@ string toolchainDirectory(const ref Home home, string overrideDirectory = null)
 string componentPath(const ref Home home, string directory, string name)
 {
     import std.path : buildPath;
+    import flint_tool.toolchain.host : dmdBin, dmdExecutable, dubBin, ldcBin;
 
     switch (name)
     {
     case "dmd":
+        return buildPath(directory, dmdBin(home.versions["ldc"]), dmdExecutable);
     case "dub":
-        return buildPath(directory, "dmd2", "linux", "bin64", name);
+        return buildPath(directory, dubBin(home.versions["dub"]), name);
     case "ldc2":
-        return buildPath(directory, "ldc2-" ~ home.versions["ldc"] ~ "-linux-x86_64", "bin", "ldc2");
+        return buildPath(directory, ldcBin(home.versions["ldc"]), "ldc2");
     default:
         return buildPath(directory, "bin", name);
     }
@@ -164,6 +166,10 @@ string componentPath(const ref Home home, string directory, string name)
 
 private string pinnedVersion(const ref Home home, string name)
 {
+    import flint_tool.toolchain.host : dmdRoleVersion;
+
+    if (name == "dmd")
+        return dmdRoleVersion(home.versions["dmd"], home.versions["ldc"]);
     return name == "ldc2" ? home.versions["ldc"] : home.versions[name];
 }
 
@@ -196,9 +202,14 @@ Toolchain inspect(const ref Home home, scope const(string)[] names, bool hash, s
         }
         assign(toolchain, component);
     }
+    import flint_tool.toolchain.host : dmdForkHost;
+
     const bin = buildPath(toolchain.directory, "dmd2", "linux", "bin64");
-    toolchain.fork.installed = exists(buildPath(bin, "dmd.upstream")) && exists(buildPath(bin, "dub.upstream"));
-    toolchain.fork.dmdPatch = sha256File(buildPath(home.root, "toolchain", "dmd-2.114.0-flint.patch"));
+    // Without the DMD fork (ADR-024) the Flint-patched DUB is the whole fork.
+    toolchain.fork.installed = dmdForkHost ? exists(buildPath(bin, "dmd.upstream"))
+        && exists(buildPath(bin, "dub.upstream")) : toolchain.dub.present;
+    const dmdPatch = buildPath(home.root, "toolchain", "dmd-2.114.0-flint.patch");
+    toolchain.fork.dmdPatch = dmdForkHost ? sha256File(dmdPatch) : "";
     toolchain.fork.dubPatch = sha256File(buildPath(home.root, "toolchain", "dub-1.43.0-flint.patch"));
     toolchain.fork.receiptPath = buildPath(toolchain.directory, receiptName);
     ToolchainReceipt receipt;
@@ -357,7 +368,24 @@ string[][] installCommands(const ref Home home, string directory, bool pgo, stri
 {
     import std.path : buildPath;
 
+    import flint_tool.toolchain.host : dmdForkHost;
+
     const installer = buildPath(home.root, "tools", "install_toolchains.py");
+    static if (!dmdForkHost)
+    {
+        // ADR-024: LDC, then the Flint-patched DUB built with it. The receipt follows the second.
+        // Embedded C uses the host's Apple clang; sanitizer and musl lanes are Linux-only.
+        string[][] hostCommands = [
+            ["python3", installer, "--compiler", "ldc", "--destination", directory],
+            ["python3", installer, "--compiler", "dub", "--destination", directory]
+        ];
+        if (directory == buildPath(home.root, ".tools"))
+        {
+            const quality = buildPath(home.root, "tools", "install_quality_tools.py");
+            hostCommands ~= ["python3", quality, "--compiler", "ldc2"];
+        }
+        return hostCommands;
+    }
     string[] dmd = ["python3", installer, "--compiler", "dmd", "--flint-fork"];
     if (!pgo)
         dmd ~= "--no-pgo";
@@ -442,8 +470,12 @@ bool composeReceipt(const ref Home home, string directory, string dmdOutput, str
     import std.path : buildPath;
     import flint_tool.support.files : sha256File;
 
+    import flint_tool.toolchain.host : dmdForkHost;
+
     DecodeOptions lenient;
     lenient.unknownFields = UnknownFields.ignore;
+    static if (!dmdForkHost)
+        return composeHostReceipt(home, directory, dmdOutput, ldcOutput, receipt, report);
     auto dmd = deserialize!InstallerDmd(lastJsonLine(dmdOutput), lenient);
     auto ldc = deserialize!InstallerTool(lastJsonLine(ldcOutput), lenient);
     if (!dmd.ok || !ldc.ok || dmd.value.flint_fork.dmd_patch_sha256.length == 0)
@@ -456,6 +488,45 @@ bool composeReceipt(const ref Home home, string directory, string dmdOutput, str
             dmd.value.flint_fork.dmd_sha256, dmd.value.flint_fork.dub_sha256,
             dmd.value.flint_fork.dmd_patch_sha256, dmd.value.flint_fork.dub_patch_sha256,
             dmd.value.flint_fork.prelude_sha256, dmd.value.flint_fork.pgo);
+    receipt.ldc = ReceiptTool(home.versions["ldc"], ldc.value.sha256, sha256File(componentPath(home,
+            directory, "ldc2")));
+    return true;
+}
+
+/// What `install_toolchains.py --compiler dub` prints (ADR-024).
+struct InstallerDub
+{
+    /// Source archive checksum.
+    string sha256;
+    /// DUB fork patch hash.
+    string dub_patch_sha256;
+    /// Installed dub hash.
+    string dub_sha256;
+}
+
+/// The receipt on a host without the DMD fork, from the LDC and DUB installer outputs. The DMD role is
+/// LDC's ldmd2, so its fields record the LDC archive and the ldmd2 binary, and no DMD patch.
+private bool composeHostReceipt(const ref Home home, string directory, string firstOutput,
+        string secondOutput, out ToolchainReceipt receipt, ref Report report)
+{
+    import flint.serde : DecodeOptions, UnknownFields;
+    import flint.serde.owned : deserialize;
+    import std.path : buildPath;
+    import flint_tool.support.files : sha256File;
+
+    DecodeOptions lenient;
+    lenient.unknownFields = UnknownFields.ignore;
+    // The installer runs LDC first, then DUB (installCommands).
+    auto ldc = deserialize!InstallerTool(lastJsonLine(firstOutput), lenient);
+    auto dub = deserialize!InstallerDub(lastJsonLine(secondOutput), lenient);
+    if (!ldc.ok || !dub.ok || dub.value.dub_patch_sha256.length == 0)
+    {
+        report.error("FLINT-E0814", "the installer did not print its receipt", "flint toolchain install --plan");
+        return false;
+    }
+    receipt.installer_sha256 = sha256File(buildPath(home.root, "tools", "install_toolchains.py"));
+    receipt.dmd = ReceiptDmd(home.versions["ldc"], ldc.value.sha256, sha256File(componentPath(home,
+            directory, "dmd")), dub.value.dub_sha256, "", dub.value.dub_patch_sha256, "", false);
     receipt.ldc = ReceiptTool(home.versions["ldc"], ldc.value.sha256, sha256File(componentPath(home,
             directory, "ldc2")));
     return true;
