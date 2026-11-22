@@ -303,6 +303,63 @@ def install_clang(destination):
     return bin_dir
 
 
+MUSL_SYSROOT_RECEIPT = 'flint-musl-sysroot.json'
+
+
+def apk_members(data):
+    """Yield (member, tarfile) for the data members of an Alpine package: three concatenated gzip tars."""
+    import gzip, io
+    archive = tarfile.open(fileobj=io.BytesIO(gzip.decompress(data)), ignore_zeros=True)
+    for member in archive:
+        if not member.name.startswith('.'):
+            yield member, archive
+
+
+def musl_sysroot_inputs():
+    lock = LOCK['musl_sysroot']
+    return {'packages': {p['name'] + '-' + p['version']: p['sha256'] for p in lock['packages']}, 'drop': lock['drop']}
+
+
+def install_musl_sysroot(destination):
+    """Assemble the static musl sysroot from checksum-pinned Alpine packages (no container, no apk)."""
+    import posixpath
+    lock = LOCK['musl_sysroot']
+    output = destination / lock['directory']
+    receipt_path = output / MUSL_SYSROOT_RECEIPT
+    try:
+        if json.loads(receipt_path.read_text()).get('inputs') == musl_sysroot_inputs():
+            return json.loads(receipt_path.read_text())
+    except (OSError, ValueError):
+        pass
+    downloads = destination / 'musl-sysroot-downloads'
+    downloads.mkdir(parents=True, exist_ok=True)
+    if output.exists():
+        shutil.rmtree(output)
+    output.mkdir(parents=True)
+    for package in lock['packages']:
+        archive = downloads / (package['name'] + '-' + package['version'] + '.apk')
+        if not archive.exists() or sha256_file(archive) != package['sha256']:
+            with urllib.request.urlopen(package['url'], timeout=90) as response:
+                archive.write_bytes(response.read())
+        if sha256_file(archive) != package['sha256']:
+            raise SystemExit('checksum mismatch: ' + archive.name)
+        for member, tar in apk_members(archive.read_bytes()):
+            if any(member.name == d.rstrip('/') or member.name.startswith(d) for d in lock['drop']):
+                continue
+            if member.issym() and member.linkname.startswith('/'):
+                # Keep absolute links inside the sysroot.
+                member.linkname = posixpath.relpath(member.linkname.lstrip('/'), posixpath.dirname(member.name))
+            tar.extract(member, output, filter='data')
+    files = sorted(str(path.relative_to(output)) for path in output.rglob('*') if path.is_file() and not path.is_symlink())
+    tree = hashlib.sha256()
+    for relative in files:
+        tree.update(relative.encode() + b'\0' + sha256_file(output / relative).encode() + b'\n')
+    receipt = {'compiler': 'musl-sysroot', 'target': lock['target'], 'triple': lock['triple'], 'sysroot': str(output),
+               'inputs': musl_sysroot_inputs(), 'files': len(files), 'tree_sha256': tree.hexdigest()}
+    receipt_path.write_text(json.dumps(receipt, indent=2) + '\n')
+    return receipt
+
+
 SANITIZER_RUNTIME = 'ldc-1.43.0-sanitizer-runtime'
 SANITIZER_RUNTIME_RECEIPT = 'flint-sanitizer-runtime.json'
 # Upstream runtime CMake options. RT_SUPPORT_SANITIZERS adds -d-version=SupportSanitizers:
@@ -391,7 +448,7 @@ def build_sanitizer_runtime(destination, build_root=None, jobs=None):
 
 
 def main():
-    ap=argparse.ArgumentParser();ap.add_argument('--compiler',choices=['dmd','ldc','go','oha','clang','ldc-sanitizer-runtime','flint'],required=True);ap.add_argument('--musl',action='store_true');ap.add_argument('--destination',type=Path,default=ROOT/'.tools')
+    ap=argparse.ArgumentParser();ap.add_argument('--compiler',choices=['dmd','ldc','go','oha','clang','ldc-sanitizer-runtime','musl-sysroot','flint'],required=True);ap.add_argument('--musl',action='store_true');ap.add_argument('--destination',type=Path,default=ROOT/'.tools')
     ap.add_argument('--dmd-linker', metavar='LINKER', help='Use installed ld.lld or mold for project-local 64-bit DMD links')
     ap.add_argument('--flint-fork', action='store_true',
                     help='Build the Flint DMD/DUB fork (resident toolchain compile server, parallel DUB pipeline, direct linking)')
@@ -417,6 +474,10 @@ def main():
         print(json.dumps(bootstrap_flint(a.destination)))
         return
     osname=platform.system();arch=platform.machine().lower();arch='aarch64' if arch in ['arm64','aarch64'] else 'x86_64' if arch in ['amd64','x86_64'] else arch
+    if a.compiler == 'musl-sysroot':
+        if (osname,arch)!=('Linux','x86_64'):raise SystemExit('the musl sysroot pin is for Linux x86_64 hosts')
+        print(json.dumps(install_musl_sysroot(a.destination)))
+        return
     if a.compiler in ('clang','ldc-sanitizer-runtime'):
         if (osname,arch)!=('Linux','x86_64') or a.musl:raise SystemExit('the sanitizer lane toolchain pin is Linux x86_64 glibc')
         if a.compiler=='clang':

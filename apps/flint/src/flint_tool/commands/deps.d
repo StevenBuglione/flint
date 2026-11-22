@@ -24,6 +24,36 @@ struct DepNode
     string scope_name;
 }
 
+/// One component as `flint deps audit` reports it.
+struct AuditComponent
+{
+    /// Name.
+    string name;
+    /// Version.
+    string version_number;
+    /// Origin: flint, repository, path, dub, native, toolchain or embedded-c.
+    string origin;
+    /// SPDX licence expression, or empty when unknown.
+    string license;
+    /// static, bundled, dynamic or source.
+    string linkage;
+    /// Content hash.
+    string sha256;
+    /// `[unchecked]` waiver reason.
+    string waiver;
+}
+
+/// A licence obligation the packaged executable carries.
+struct Obligation
+{
+    /// Component name.
+    string component;
+    /// Its licence.
+    string license;
+    /// What distributing the executable requires.
+    string obligation;
+}
+
 /// `flint.deps/1`.
 struct DepsPayload
 {
@@ -45,6 +75,14 @@ struct DepsPayload
     string[][] paths;
     /// Changes made, such as "github.com/acme/x 1.2.0 -> 1.3.0" (update, vendor).
     string[] changes;
+    /// Target the audit describes (audit).
+    string target;
+    /// Every component of the executable (audit).
+    AuditComponent[] components;
+    /// Hash checks that passed (audit).
+    string[] verified;
+    /// Licence obligations (audit).
+    Obligation[] obligations;
 }
 
 private bool projectTarget(ref Session session, string project, out Target target, ref Report report)
@@ -273,4 +311,103 @@ int commandDepsVendor(ref Session session, string project)
     }
     writeIfChanged(buildPath(vendor, vendorIndexName), index);
     return finish(session, report, payload);
+}
+
+/// `flint deps audit`: verify every hash, list every licence, and state the LGPL and AGPL obligations of
+/// distributing the executable for `targetName` (default: the host).
+int commandDepsAudit(ref Session session, string project, string targetName)
+{
+    import std.path : buildPath;
+    import flint_tool.engine.cbuild : nativeSources;
+    import flint_tool.engine.sbom : collect;
+    import flint_tool.engine.target : hostTarget;
+    import flint_tool.project.lock : checkLock, renderLock;
+    import flint_tool.support.files : sha256File;
+
+    Report report;
+    DepsPayload payload;
+    payload.action = "audit";
+    Target target;
+    if (!projectTarget(session, project, target, report))
+        return finish(session, report, payload);
+    payload.project = info(session, target);
+    payload.target = targetName.length ? targetName : hostTarget();
+    checkLock(target.root, renderLock(session.home, target.manifest, target.resolution), true, report);
+    if (report.ok)
+        payload.verified ~= "flint.lock matches the resolved graph and its content hashes";
+    string[2][] sources;
+    foreach (source; nativeSources(target.manifest))
+        sources ~= [source, sha256File(buildPath(target.root, source))];
+    const inventory = collect(session.home, target.manifest, target.resolution, payload.target, null, sources);
+    foreach (ref component; inventory.components)
+    {
+        payload.components ~= AuditComponent(component.name, component.version_, component.origin,
+                component.license, component.linkage, component.sha256, component.waiver);
+        auditComponent(session, component.name, component.origin, component.license,
+                component.linkage, component.waiver, payload, report);
+    }
+    verifiedRemotes(target.resolution, payload);
+    session.say(target.manifest.name ~ " " ~ target.manifest.version_ ~ " for " ~ payload.target ~ ": " ~ countOf(
+            payload.components.length, "component") ~ ", " ~ countOf(payload.obligations.length, "obligation"));
+    foreach (line; payload.verified)
+        session.say("  verified  " ~ line);
+    foreach (ref obligation; payload.obligations)
+        session.say("  " ~ obligation.component ~ " (" ~ obligation.license ~ "): " ~ obligation.obligation);
+    return finish(session, report, payload);
+}
+
+private void auditComponent(ref Session session, string name, string origin, string license,
+        string linkage, string waiver, ref DepsPayload payload, ref Report report)
+{
+    import flint_tool.diagnostics.report : Severity, diagnostic;
+
+    if (waiver.length)
+        report.add(diagnostic("FLINT-E0313", Severity.warning, name ~ " is used without the safety checks: " ~ waiver,
+                "replace it with a checked Flint library, or keep the [unchecked] waiver"));
+    if (license.length == 0)
+    {
+        if (origin != "embedded-c")
+            report.add(diagnostic("FLINT-E0312", Severity.warning, name ~ " declares no licence",
+                    "ask its author to set [project] license, or review its terms before distributing"));
+        return;
+    }
+    const text = obligationOf(license, linkage);
+    if (text.length)
+        payload.obligations ~= Obligation(name, license, text);
+}
+
+/// What distributing an executable containing a component under `license`, linked `linkage`, requires: the LGPL
+/// and AGPL obligations, and the copyleft of a plain GPL. Empty for permissive licences and GCC-exception runtimes.
+string obligationOf(string license, string linkage)
+{
+    import std.algorithm.searching : canFind;
+
+    if (license.canFind("AGPL"))
+        return "users who interact with the program over a network must be offered its complete corresponding "
+            ~ "source (AGPL-3.0 section 13), and the whole executable is distributed under the AGPL";
+    if (license.canFind("LGPL"))
+        return linkage == "static" ? "statically linked: distribute the object files or source needed to relink "
+            ~ "the executable against a modified library (LGPL-2.1 section 6, LGPL-3.0 section 4), or use "
+            ~ "linkage = \"bundled\"; ship its licence and notices"
+            : "shared library: users may replace it; ship " ~ "its licence, notices and a source offer";
+    if (license.canFind("GPL") && !license.canFind("exception"))
+        return "copyleft: the whole executable must be distributed under GPL-compatible terms with its source";
+    return null;
+}
+
+private void verifiedRemotes(const ref Resolution resolution, ref DepsPayload payload)
+{
+    foreach (ref item; resolution.packages)
+    {
+        // Resolution recomputes every repository module's tree hash before use (FLINT-E0309 otherwise).
+        if (item.kind == "remote")
+            payload.verified ~= item.name ~ " " ~ item.version_ ~ " tree sha256 " ~ item.contentSha256;
+    }
+}
+
+private string countOf(size_t count, string noun)
+{
+    import std.conv : to;
+
+    return count.to!string ~ " " ~ noun ~ (count == 1 ? "" : "s");
 }

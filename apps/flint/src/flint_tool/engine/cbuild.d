@@ -150,7 +150,8 @@ string[] compileFlags(const ref NativeCPolicy policy, const ref Manifest manifes
 }
 
 /// Compile every embedded C source of a project, reusing cached objects. True when nothing failed.
-bool compileNativeC(ref Session session, const ref Manifest manifest, bool sanitize, out CBuild unit, ref Report report)
+bool compileNativeC(ref Session session, const ref Manifest manifest, bool sanitize,
+        scope const(string)[] targetFlags, out CBuild unit, ref Report report)
 {
     import std.file : exists, mkdirRecurse, rename;
     import std.path : buildPath;
@@ -163,7 +164,7 @@ bool compileNativeC(ref Session session, const ref Manifest manifest, bool sanit
     if (!loadNativeCPolicy(session.home, policy, unit.policySha256, report)
             || !cToolPresent(policy.compiler, "the pinned C compiler", report))
         return false;
-    unit.flags = compileFlags(policy, manifest, sanitize, report);
+    unit.flags = targetFlags.dup ~ compileFlags(policy, manifest, sanitize, report);
     if (!report.ok)
         return false;
     unit.compilerSha256 = sha256File(policy.compiler);

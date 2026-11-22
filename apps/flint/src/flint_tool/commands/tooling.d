@@ -112,7 +112,7 @@ int commandToolchainInstall(ref Session session, ToolchainInstallArgs args)
     payload.plan = args.plan;
     const directory = toolchainDirectory(session.home, args.directory);
     payload.directory = directory;
-    payload.commands = installCommands(session.home, directory, !args.noPgo, args.linker, args.sanitizers);
+    payload.commands = installCommands(session.home, directory, !args.noPgo, args.linker, args.sanitizers, args.musl);
     if (args.plan)
     {
         foreach (command; payload.commands)

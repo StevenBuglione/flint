@@ -115,6 +115,8 @@ struct Manifest
     string type = "executable";
     /// Summary.
     string description;
+    /// SPDX licence expression, for SBOMs and `flint deps audit`.
+    string license;
     /// Executable name override from [build].
     string executable;
     /// Starters, in manifest order.
@@ -204,7 +206,9 @@ private immutable string[] sections = [
     "waivers", "unchecked", "native"
 ];
 
-private immutable string[] projectKeys = ["name", "version", "flint", "type", "description"];
+private immutable string[] projectKeys = [
+    "name", "version", "flint", "type", "description", "license"
+];
 
 /// Find the nearest directory at or above `start` holding flint.toml, or null.
 string findProjectRoot(string start)
@@ -561,6 +565,9 @@ private struct Reader
                 return fail("FLINT-E0105", entry.offset, "`type` is `executable` or `library`",
                         "type = \"executable\"");
             manifest.type = value;
+            return;
+        case "license":
+            manifest.license = value;
             return;
         default:
             manifest.description = value;

@@ -153,13 +153,34 @@ long processGroup(long pid)
         return 0;
 }
 
+/// Remove the socket, lock and log of every server that is not alive; true while one of `stopped` still is.
+private bool removeStale(const bool[string] stopped)
+{
+    import std.file : exists, remove;
+
+    bool found;
+    foreach (server; servers())
+    {
+        if (server.alive)
+        {
+            found = found || (server.socket in stopped) !is null;
+            continue;
+        }
+        foreach (path; [server.socket, server.socket ~ ".lock", server.socket ~ ".log"])
+        {
+            if (exists(path))
+                remove(path);
+        }
+    }
+    return found;
+}
+
 /// Stop every live server: SIGTERM its process group, wait, then remove stale socket files.
 Server[] stopServers(long waitMillis = 3000, string executablePrefix = null)
 {
     import core.sys.posix.signal : SIGKILL, SIGTERM;
     import core.thread : Thread;
     import core.time : msecs;
-    import std.file : exists, remove;
     import flint_tool.sys.posix : processAlive, signalProcessGroup;
 
     auto running = servers();
@@ -189,15 +210,16 @@ Server[] stopServers(long waitMillis = 3000, string executablePrefix = null)
         if (server.pid && processAlive(cast(int) server.pid))
             signalProcessGroup(cast(int) server.pid, SIGKILL);
     }
-    foreach (server; servers())
+    // The process holding a server's lock can outlive the group leader by a moment, so sweep until none of the
+    // stopped servers is alive any more, removing the files of every dead server.
+    bool[string] stopped;
+    foreach (ref server; running)
+        stopped[server.socket] = true;
+    foreach (attempt; 0 .. 150)
     {
-        if (server.alive)
-            continue;
-        foreach (path; [server.socket, server.socket ~ ".lock", server.socket ~ ".log"])
-        {
-            if (exists(path))
-                remove(path);
-        }
+        if (!removeStale(stopped))
+            break;
+        Thread.sleep(20.msecs);
     }
     return running;
 }

@@ -34,6 +34,12 @@ struct BuildRequest
     bool force;
     /// Build the unittest configuration.
     bool test;
+    /// Target name for cross builds (engine/target.d); empty for the host's native builds.
+    string target;
+    /// Compiler flags the target adds.
+    string[] targetDflags;
+    /// Embedded C flags the target adds.
+    string[] targetCflags;
     /// Instrument with ASan and UBSan (`flint test --sanitize`): the sanitize profile, with embedded C
     /// compiled with the policy's sanitizer flags.
     bool sanitize;
@@ -246,8 +252,8 @@ private bool prepareBuild(ref Session session, const ref Manifest manifest, cons
     if (request.sanitize && !sanitizerToolchain(session, report))
         return false;
     result.checks = checkProject(session.home, manifest, resolution, false, report);
-    return report.ok && compileNativeC(session, manifest, request.sanitize, result.native, report)
-        && writeRecipes(session, manifest, resolution, result.native, report);
+    return report.ok && compileNativeC(session, manifest, request.sanitize, request.targetCflags,
+            result.native, report) && writeRecipes(session, manifest, resolution, result.native, report);
 }
 
 /// Build a project with a profile: lock, toolchain, fast checks, recipe, DUB, receipt.
@@ -270,7 +276,7 @@ bool buildProject(ref Session session, const ref Manifest manifest, const ref Re
     const flags = composeFlags(spec, manifest.overrideFor(request.profile), request);
     const command = projectCommand(toolchain, compiler, manifest.root, request);
     result.command = command.dup;
-    const dubHome = buildPath(manifest.root, ".flint", "dub");
+    const dubHome = buildPath(manifest.root, ".flint", request.target.length ? "dub-" ~ request.target : "dub");
     auto environment = buildEnvironment(session, toolchain, spec, dubHome, flags.dflags.join(" "));
     const label = request.test ? "test" : request.profile;
     session.progress(request.test ? "Compiling" : "Building",
@@ -351,7 +357,7 @@ private Flags composeFlags(const ref ProfileSpec spec, ProfileOverride additions
         }
         flags.dflags = kept;
     }
-    flags.dflags ~= additions.dflags ~ request.dflags;
+    flags.dflags ~= request.targetDflags ~ additions.dflags ~ request.dflags;
     flags.lflags = spec.lflags.dup ~ additions.lflags ~ request.lflags;
     foreach (flag; flags.lflags)
         flags.dflags ~= "-L" ~ flag;
@@ -454,6 +460,7 @@ private Receipt projectReceipt(ref Session session, const ref Manifest manifest,
         const ref BuildRequest request, const ref Flags flags, const ref BuildOutcome result)
 {
     import std.path : buildPath;
+    import flint_tool.engine.target : hostTarget;
     import flint_tool.project.lock : lockName;
     import flint_tool.support.files : sha256File;
 
@@ -472,6 +479,7 @@ private Receipt projectReceipt(ref Session session, const ref Manifest manifest,
     receipt.waivers = result.checks.waivers.dup;
     receipt.command = result.command.dup;
     receipt.outputs = [outputRecord(result.artifact, display(result.artifact))];
+    receipt.target = request.target.length ? request.target : hostTarget();
     foreach (source; result.native.sources)
         receipt.embedded_c.sources ~= outputRecord(buildPath(manifest.root, source), source);
     receipt.embedded_c.flags = result.native.flags.dup;

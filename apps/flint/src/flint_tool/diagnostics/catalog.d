@@ -185,6 +185,15 @@ immutable CodeInfo[] catalog = [
             "[dependencies]\n\"github.com/acme/money\" = \"1.2.0\""),
     CodeInfo("FLINT-E0311", ExitCode.dependency, "package not in the dependency graph",
             "`flint deps why` explains a package the project actually depends on.", "flint deps tree"),
+    CodeInfo("FLINT-E0312", ExitCode.dependency, "component licence unknown",
+            "`flint deps audit` lists every component's SPDX licence expression. A dependency whose flint.toml sets "
+            ~ "no `license` cannot be checked for obligations; review its terms before distributing.",
+            "[project]\nlicense = \"Apache-2.0\""),
+    CodeInfo("FLINT-E0313", ExitCode.dependency, "component used without the safety checks",
+            "A DUB package listed under [unchecked] skipped Flint's safety checks (@safe defaults, @trusted "
+            ~ "confinement, the ffi boundary). Every build, its receipt and `flint deps audit` show the waiver "
+            ~ "and its reason.",
+            "[unchecked]\nlegacy-xml = \"vendored parser pending a Flint port\""),
 
     // 04xx: project layout and module paths.
     CodeInfo("FLINT-E0401", ExitCode.user, "module name does not match its file path",
@@ -331,6 +340,19 @@ immutable CodeInfo[] catalog = [
             ~ "variables (policy/native-c.toml). Warnings are errors.",
             "flint build --verbose"),
 
+    CodeInfo("FLINT-E0709", ExitCode.user, "only executables are packaged",
+            "`flint package` builds and packages an executable project. Libraries are published as repositories "
+            ~ "with release tags and consumed by repository path.", "[project]\ntype = \"executable\""),
+    CodeInfo("FLINT-E0710", ExitCode.user, "a scratch image needs a static executable",
+            "`flint package --container` writes a FROM scratch image, which has no C library or loader, so the "
+            ~ "executable must be fully static: the linux-x86_64-musl target.",
+            "flint package --container --target linux-x86_64-musl"),
+    CodeInfo("FLINT-E0711", ExitCode.user, "the packaged executable is not static",
+            "Packages link Flint, the D runtime and native packages statically; only the C library of a glibc "
+            ~ "target is shared, and musl targets are fully static. The executable needs another shared library "
+            ~ "or a loader.",
+            "[native]\nzlib = { version = \"1.3.1\", linkage = \"bundled\" }   # ships lib/ with an rpath"),
+
     // 08xx: toolchain and environment.
     CodeInfo("FLINT-E0801", ExitCode.environment, "Flint installation not found",
             "flint finds its installation (policy/, packages/, toolchain/) by walking up from its own executable, or "
@@ -389,6 +411,11 @@ immutable CodeInfo[] catalog = [
             ~ "sanitizers, the sanitizer-aware LDC runtime) under the toolchain directory; a host compiler is "
             ~ "never used.",
             "flint toolchain install                # add --sanitizers for flint test --sanitize"),
+    CodeInfo("FLINT-E0817", ExitCode.environment, "target unavailable",
+            "`flint package --target` builds for the host target natively and, on Linux x86-64, for "
+            ~ "linux-x86_64-musl by cross-linking with the pinned clang, the Alpine LDC runtime and the pinned musl "
+            ~ "sysroot. Other targets build on their own runners.",
+            "flint toolchain install --musl"),
     // 09xx: receipts.
     CodeInfo("FLINT-E0901", ExitCode.environment, "receipt missing",
             "Every artifact flint builds has a JSON receipt next to it (<artifact>.receipt.json).",

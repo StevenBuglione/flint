@@ -78,8 +78,58 @@ Status: proposed by the Milestone 8 implementation, for the project owner's revi
 
    The `@trusted` rules (SAFETY comment, length, confinement) apply to the wrappers as before.
 
+### 3. Packaging
+
+1. **`flint package [--target T] [--container] [--sbom]`.**
+   - **The build:** the release profile, rebuilt from scratch for the target and stripped with `-L--strip-all`.
+   - **The check:** the executable's ELF headers are verified against the target's linkage rule.
+   - **Staging:** the executable goes under `bin/`, with the project's `config/` and `resources/` beside it.
+   - **Outputs:** in `.flint/package/`, `<name>-<version>-<target>.tar.gz`, with optional SBOMs and image. A `flint.package/1` receipt lists every output with its hash, the build receipt, the linkage facts and the image digest.
+
+2. **Static by default.** Flint packages, the D runtime and native packages are always linked statically.
+   - **musl targets** are fully static, with no interpreter and no `DT_NEEDED`.
+   - **glibc targets** keep only the C library shared, because glibc does not support static NSS or `dlopen`. Any other shared library is FLINT-E0711.
+   - **`linkage = "bundled"`** is the exception for a native package. It ships the library in `lib/` with an `$ORIGIN/../lib` run path, and it arrives with the native resolver.
+
+3. **musl without a container.** `linux-x86_64-musl` is cross-linked on any Linux x86-64 host. `flint toolchain install --musl` installs the pieces.
+   - **Compiling:** the pinned LDC compiles for `x86_64-alpine-linux-musl` against the pinned Alpine LDC release's druntime and Phobos.
+   - **Linking:** the pinned clang links a static PIE (`-static-pie`) against a musl sysroot.
+   - **The sysroot:** flint assembles it from six checksum-pinned Alpine 3.22 packages: musl, musl-dev, libgcc, gcc's crt files and libgcc archives, linux-headers, and libunwind-static. The packages are listed in `policy/toolchains.json`, `musl_sysroot`. They are extracted directly, without `apk`, and a receipt records the tree hash.
+   - **ImportC:** ImportC sources in dependencies, such as flint:os's C shim, are preprocessed against the same sysroot.
+   - **Why not a container:** Alpine containers are the musl CI lane's runtime test, but building through them would need a container engine for every package build. It would also tie the result to whatever apk serves on the day.
+
+4. **The OCI image.** `--container` writes a `FROM scratch` image as an OCI image-layout archive, `<stem>.oci.tar`, which `docker load` and `podman load` accept.
+   - **Built by flint:** flint writes the image itself, so no container engine is needed to build it.
+   - **The layer:** a single layer holds `/app/<executable>` with `config/` and `resources/`.
+   - **The config:** the entrypoint is the executable, the working directory is `/app`, and the user is `65532:65532`. It carries OCI labels for title, version, created date, licence and target.
+   - **The requirement:** a scratch image needs a fully static executable, so `--container` defaults to the musl target, and a glibc target is FLINT-E0710.
+
+5. **SBOMs.** `--sbom` writes SPDX 2.3 (`.spdx.json`) and CycloneDX 1.6 (`.cdx.json`). Both are validated by the reference tools: `pyspdxtools` and cyclonedx-python-lib's strict JSON-schema validator.
+   - **Components:** the application, with the executable's hash; every Flint package; every repository module, with version, commit and tree hash; path and DUB packages; embedded C files, with file hashes; native packages; and the runtime. The runtime is druntime and Phobos (BSL-1.0), plus musl and libgcc for musl targets, or a dynamic glibc for glibc targets.
+   - **Details:** each component records its licence expression, origin, linkage and any `[unchecked]` waiver, and the dependency graph is recorded too.
+   - **Licences:** `[project] license` is a new optional manifest key, so licences propagate from repository modules.
+
+6. **Reproducibility.** Every archive is written deterministically: root ownership, fixed modes, the given entry order, and gzip without a timestamp.
+   - **Timestamps:** SBOM, archive and image times come from `SOURCE_DATE_EPOCH` when it is set.
+   - **Result:** with it set, two forced rebuilds produce byte-identical executables, archives, SBOMs and image digests.
+
+7. **`flint deps audit [--target T]`.** The audit uses the SBOM's inventory for the target.
+   - **Hashes:** it verifies `flint.lock` against the resolved graph and its content hashes, and reports each repository module's verified tree hash.
+   - **Licences:** it lists every component's licence. A missing licence is a FLINT-E0312 warning, and an `[unchecked]` waiver is a FLINT-E0313 warning.
+   - **Obligations:** it states the obligations of distribution.
+     - LGPL, statically linked: relinking material, or `bundled`.
+     - LGPL, shared: replaceability, notices and a source offer.
+     - AGPL: the network source offer.
+     - A plain GPL without an exception: copyleft over the whole executable.
+     - GCC-exception runtimes carry no obligation.
+
+8. **Two incidental fixes.**
+   - `flint daemon stop` now sweeps until the process holding a server's lock has exited. The stale socket it could leave behind made a Milestone 7 test flaky.
+   - The policy lexer reads `name(...) @trusted` followed by a line-initial `{` as a trusted block, so a `@trusted` function with no other trailing attribute puts `@trusted` before the return type.
+
 ## Consequences
 
 - Repository-path dependencies resolve reproducibly. They work offline from the cache or from `vendor/`, and are tested only against local git fixture repositories (`tests/test_flint_deps.py`).
 - Embedded C builds, tests (including under ASan and UBSan) and checks through flint alone. `tests/test_flint_native_c.py` covers hardening, the cache, clang-tidy, the ffi rule, and a heap overflow and a signed overflow caught under `--sanitize`.
+- `flint package --container --sbom` produces a runnable scratch image and valid SBOMs from a plain Linux x86-64 host. `tests/test_flint_package.py` loads and runs the image in docker when one is available.
 - Two latent Milestone 7 defects were fixed along the way. An empty manifest table such as a bare `[dependencies]` header, which `flint new --type library` writes, was rejected. Nested path dependencies got wrong relative recipe paths.

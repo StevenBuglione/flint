@@ -101,6 +101,8 @@ struct RemoteModule
     string directory;
     /// The module's project name from its flint.toml.
     string projectName;
+    /// The module's SPDX licence expression, or empty.
+    string license;
     /// Its D module root.
     string moduleRoot;
     /// "library" or "executable".
@@ -383,6 +385,7 @@ struct Fetcher
             return false;
         }
         module_.projectName = manifest.name;
+        module_.license = manifest.license;
         module_.moduleRoot = manifest.moduleRoot();
         module_.type = manifest.type;
         foreach (ref spec; manifest.dependencies)

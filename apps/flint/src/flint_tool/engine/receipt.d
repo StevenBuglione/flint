@@ -182,6 +182,8 @@ struct Receipt
     OutputRecord[] outputs;
     /// Embedded C, when the project has any.
     EmbeddedCRecord embedded_c;
+    /// Build target, such as linux-x86_64-musl.
+    string target;
 }
 
 /// Receipt path for an artifact.

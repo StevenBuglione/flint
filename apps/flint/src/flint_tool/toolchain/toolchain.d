@@ -352,7 +352,8 @@ bool canonicalToolchain(const ref Toolchain toolchain, scope const(string)[] nam
 }
 
 /// The commands `flint toolchain install` runs.
-string[][] installCommands(const ref Home home, string directory, bool pgo, string linker, bool sanitizers = false)
+string[][] installCommands(const ref Home home, string directory, bool pgo, string linker,
+        bool sanitizers = false, bool musl = false)
 {
     import std.path : buildPath;
 
@@ -371,6 +372,12 @@ string[][] installCommands(const ref Home home, string directory, bool pgo, stri
     if (sanitizers)
         commands ~= [
         "python3", installer, "--compiler", "ldc-sanitizer-runtime", "--destination", directory
+    ];
+    // linux-x86_64-musl packages: the Alpine LDC runtime and the pinned musl sysroot (ADR-023).
+    if (musl)
+        commands ~= [
+        ["python3", installer, "--compiler", "ldc", "--musl", "--destination", directory],
+        ["python3", installer, "--compiler", "musl-sysroot", "--destination", directory]
     ];
     if (directory == buildPath(home.root, ".tools"))
         commands ~= ["python3", buildPath(home.root, "tools", "install_quality_tools.py")];

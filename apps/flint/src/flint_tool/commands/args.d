@@ -168,6 +168,40 @@ struct DepsUpdateArgs
     @Option("json", 0, "Emit flint.deps/1 JSON on stdout") bool json;
 }
 
+/// `flint package`.
+@Command("flint package", "Build a release executable for a target and package it, static by default")
+struct PackageArgs
+{
+    /// Target.
+    @Option("target", 't', "linux-x86_64-glibc or linux-x86_64-musl (default: the host; musl with --container)")
+    string target;
+    /// OCI image.
+    @Option("container", 0, "Also write a FROM scratch OCI image around the static musl executable") bool container;
+    /// SBOMs.
+    @Option("sbom", 0, "Also write SPDX 2.3 and CycloneDX 1.6 SBOMs") bool sbom;
+    /// Fail on toolchain mismatches.
+    @Option("verify", 0, "Turn toolchain mismatches into errors") bool verify;
+    /// Require a current lock.
+    @Option("locked", 0, "Fail when flint.lock is missing instead of writing it") bool locked;
+    /// Project directory.
+    @Option("project", 'C', "Package this project directory") string project;
+    /// Stream tool output.
+    @Option("verbose", 'v', "Stream DUB and compiler output") bool verbose;
+    /// JSON output.
+    @Option("json", 0, "Emit flint.package/1 JSON on stdout") bool json;
+}
+
+/// `flint deps audit`.
+struct DepsAuditArgs
+{
+    /// Target.
+    @Option("target", 't', "Audit the executable for this target (default: the host)") string target;
+    /// Project directory.
+    @Option("project", 'C', "Run in this project directory") string project;
+    /// JSON output.
+    @Option("json", 0, "Emit flint.deps/1 JSON on stdout") bool json;
+}
+
 /// `flint deps`.
 @Command("flint deps", "Inspect and change the dependency graph")
 struct DepsArgs
@@ -180,6 +214,8 @@ struct DepsArgs
     @Subcommand("update", "Raise repository-path dependencies to their latest release") DepsUpdateArgs update;
     /// vendor.
     @Subcommand("vendor", "Copy repository-path modules into vendor/ for offline builds") DepsCommon vendor;
+    /// audit.
+    @Subcommand("audit", "Verify hashes and list licences and LGPL/AGPL obligations") DepsAuditArgs audit;
 }
 
 /// Options every toolchain subcommand takes.
@@ -205,6 +241,8 @@ struct ToolchainInstallArgs
     @Option("dmd-linker", 0, "Configure DMD to link with this installed ld.lld or mold") string linker;
     /// Sanitizer runtime.
     @Option("sanitizers", 0, "Also build the LDC runtime flint test --sanitize links") bool sanitizers;
+    /// musl.
+    @Option("musl", 0, "Also install what flint package --target linux-x86_64-musl needs") bool musl;
     /// JSON output.
     @Option("json", 0, "Emit flint.toolchain/1 JSON on stdout") bool json;
 }
@@ -313,6 +351,8 @@ struct FlintArgs
     @Subcommand("lock", "Write or verify flint.lock") LockArgs lock;
     /// deps.
     @Subcommand("deps", "Inspect and change the dependency graph") DepsArgs deps;
+    /// package.
+    @Subcommand("package", "Package a release executable, with an OCI image and SBOMs") PackageArgs package_;
     /// toolchain.
     @Subcommand("toolchain", "Install, verify or describe the pinned toolchain") ToolchainArgs toolchain;
     /// doctor.

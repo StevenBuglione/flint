@@ -36,6 +36,8 @@ struct ResolvedPackage
     string version_;
     /// For remote modules: the tag's commit.
     string commit;
+    /// SPDX licence expression from the dependency's flint.toml, or empty.
+    string license;
 }
 
 /// The resolved graph of one project.
@@ -208,6 +210,7 @@ private bool resolveRemotes(const ref Home home, const ref Manifest manifest,
         item.manifestType = module_.type;
         item.version_ = module_.version_;
         item.commit = module_.commit;
+        item.license = module_.license;
         item.contentSha256 = module_.contentSha256;
         foreach (ref spec; module_.requirements)
             item.dependencies ~= spec.name;
@@ -284,6 +287,7 @@ private string resolvePath(const ref Home home, const ref Manifest owner, const 
         return failed("FLINT-E0302", "path dependency `" ~ spec.name ~ "` has an invalid flint.toml",
                 "run `flint check` in " ~ spec.path);
     item.kind = "path";
+    item.license = nested.license;
     item.moduleRoot = nested.moduleRoot();
     item.manifestType = nested.type;
     item.contentSha256 = contentHash(directory, ["flint.toml", "src/**", "native/**"]);

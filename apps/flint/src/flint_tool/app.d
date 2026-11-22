@@ -143,9 +143,19 @@ private int projectCommand(ref Session session, string name, ref FlintArgs optio
         return commandFmt(session, options.fmt);
     case "flint lock":
         return commandLock(session, options.lock);
+    case "flint package":
+        return packageCommand(session, options.package_);
     default:
         return -1;
     }
+}
+
+private int packageCommand(ref Session session, const ref PackageArgs args)
+{
+    import flint_tool.commands.packaging : PackageRequest, commandPackage;
+
+    return commandPackage(session, PackageRequest(args.project, args.target, args.container,
+            args.sbom, args.verify, args.locked));
 }
 
 /// Run a toolchain or knowledge command; -1 when `name` is not one.
@@ -159,6 +169,7 @@ private int toolingCommand(ref Session session, string name, ref FlintArgs optio
     case "flint deps why":
     case "flint deps update":
     case "flint deps vendor":
+    case "flint deps audit":
         return depsCommand(session, name, options);
     case "flint doctor":
         return commandDoctor(session, options.doctor);
@@ -175,7 +186,8 @@ private int toolingCommand(ref Session session, string name, ref FlintArgs optio
 
 private int depsCommand(ref Session session, string name, ref FlintArgs options)
 {
-    import flint_tool.commands.deps : commandDepsTree, commandDepsUpdate, commandDepsVendor, commandDepsWhy;
+    import flint_tool.commands.deps : commandDepsAudit, commandDepsTree, commandDepsUpdate,
+        commandDepsVendor, commandDepsWhy;
 
     switch (name)
     {
@@ -187,6 +199,8 @@ private int depsCommand(ref Session session, string name, ref FlintArgs options)
         return commandDepsUpdate(session, options.deps.update.project, options.deps.update.names);
     default:
         return commandDepsVendor(session, options.deps.vendor.project);
+    case "flint deps audit":
+        return commandDepsAudit(session, options.deps.audit.project, options.deps.audit.target);
     }
 }
 
@@ -226,6 +240,8 @@ private bool verbose(string commandName, const ref FlintArgs options)
         return options.test.verbose;
     case "flint check":
         return options.check.verbose;
+    case "flint package":
+        return options.package_.verbose;
     default:
         return false;
     }
@@ -271,6 +287,9 @@ private bool printProjectHelp(string commandName, scope void delegate(scope cons
         return true;
     case "flint lock":
         writeHelp!LockArgs(sink);
+        return true;
+    case "flint package":
+        writeHelp!PackageArgs(sink);
         return true;
     default:
         return false;
