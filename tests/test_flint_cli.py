@@ -47,6 +47,11 @@ def codes(document):
     return [item['code'] for item in document['diagnostics'] if item['severity'] == 'error']
 
 
+def error(document, code):
+    """The first error with `code`. Hosts without a toolchain receipt also report warnings, so never index."""
+    return next(item for item in document['diagnostics'] if item['severity'] == 'error' and item['code'] == code)
+
+
 def setUpModule():
     if not FLINT.is_file():
         subprocess.run([sys.executable, str(ROOT / 'tools/install_toolchains.py'), '--compiler', 'flint'],
@@ -218,7 +223,7 @@ class FixturePeerTests(unittest.TestCase):
         peers = '[peer.broken]\ndescription = "probe"\ncommand = ["python3", "-c", "import sys; sys.exit(3)"]\n\n'
         status, document = self.run_arena(peers, '["broken"]')
         self.assertEqual((status, codes(document)), (1, ['FLINT-E0702']))
-        self.assertIn('against broken', document['diagnostics'][0]['message'])
+        self.assertIn('against broken', error(document, 'FLINT-E0702')['message'])
 
     def test_missing_peer_is_named_and_fails_the_run(self):
         peers = ('[binary.absent]\ndescription = "an unpinned fixture"\npath = ".flint/peers/absent"\n'
@@ -229,7 +234,7 @@ class FixturePeerTests(unittest.TestCase):
         run = document['runs'][0]
         self.assertEqual((run['ok'], run['missing_peers'], run['peers']), (False, ['absent'], []))
         self.assertIn('modules passed unittests', run['summary'])
-        self.assertIn('absent has no pinned release', document['diagnostics'][0]['message'])
+        self.assertIn('absent has no pinned release', error(document, 'FLINT-E0815')['message'])
 
 
 class ProjectLifecycleTests(unittest.TestCase):
