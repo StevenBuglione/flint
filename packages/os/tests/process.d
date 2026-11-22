@@ -246,6 +246,7 @@ unittest
 {
     import core.time : MonoTime;
     import std.algorithm.sorting : sort;
+    import std.conv : to;
 
     Context context;
     enum rounds = 15;
@@ -265,7 +266,8 @@ unittest
     {
     }
     else
-        assert(elapsed[rounds / 2] < 3_000, "child reaping waited for the supervisor polling interval");
+        assertWallClock(elapsed[rounds / 2] < 3_000, "child reaping median " ~ elapsed[rounds / 2].to!string
+                ~ " us (bound 3000 us; above it, reaping waits for the supervisor poll)");
 }
 
 @("concurrent stdout and stderr each reach their sink in emission order")
@@ -344,4 +346,23 @@ unittest
     assert(fields.length == 2);
     assert(waitpid(fields[0].to!int, null, WNOHANG) == -1 && errno == ECHILD);
     assertRetired(fields[1]);
+}
+
+/// Wall-clock bounds are enforced on native hardware. A lane that runs these tests under full-system
+/// emulation sets `FLINT_EMULATED=1`, and the bound is then reported with its measurement instead of
+/// asserted, because emulated syscalls and context switches cost milliseconds (ADR-017).
+private void assertWallClock(bool within, lazy string measurement) @trusted
+{
+    import core.stdc.stdio : fflush, printf, stdout;
+    import std.process : environment;
+
+    if (environment.get("FLINT_EMULATED") == "1")
+    {
+        const text = measurement;
+        printf("FLINT-EMULATED wall-clock bound %s: %.*s\n", within ? "met".ptr : "not met".ptr,
+                cast(int) text.length, text.ptr);
+        fflush(stdout);
+        return;
+    }
+    assert(within, measurement);
 }

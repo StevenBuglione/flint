@@ -671,18 +671,21 @@ unittest
 @("a shared clock sample reports the same status check would at that instant")
 unittest
 {
+    // The deadline is a second away so that the cancellation below really precedes it, however slowly
+    // the host runs; a margin of microseconds made the outcome depend on scheduling.
+    enum margin = 1_000_000_000L;
     const now = Deadline.afterMillis(0).monotonicNanoseconds;
-    auto source = CancelSource.create(Context.init, Deadline(now + 1_000));
+    auto source = CancelSource.create(Context.init, Deadline(now + margin));
     assert(source.ok());
     auto context = source.value.context();
     assert(context.statusAt(now) == Status.ok);
-    assert(context.statusAt(now + 999) == Status.ok);
-    assert(context.statusAt(now + 1_000) == Status.timedOut);
+    assert(context.statusAt(now + margin - 1) == Status.ok);
+    assert(context.statusAt(now + margin) == Status.timedOut);
     assert(Context.init.statusAt(long.max - 1) == Status.ok);
     assert(Context.init.withDeadline(Deadline(now)).statusAt(now) == Status.timedOut);
     source.value.cancel();
     // The cancellation precedes the deadline, so it wins at every later sample.
-    assert(context.statusAt(now + 2_000) == Status.cancelled);
+    assert(context.statusAt(now + 2 * margin) == Status.cancelled);
     auto expired = CancelSource.create(Context.init, Deadline(0));
     expired.value.cancel();
     assert(expired.value.context().statusAt(now) == Status.timedOut);
