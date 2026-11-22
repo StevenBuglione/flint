@@ -1,8 +1,8 @@
 module probe;
 
+import core.stdc.stdio : printf;
 import core.time : MonoTime;
 import flint.arena : RequestArena, Status;
-import std.stdio : writefln;
 
 @safe:
 
@@ -125,9 +125,22 @@ private Digest sample(Replay replay, scope const(char)[] trace, size_t chunk, Di
 
     const allocated = allocationCounter() - before;
     const processed = passes * trace.length;
-    writefln("read-size=%s bytes=%s MiB/s=%s allocated=%s elapsed-ns=%s", chunk, processed,
-            cast(double) processed / (1024 * 1024) * 1_000_000_000 / elapsed, allocated, elapsed);
+    report(chunk, processed, cast(double) processed / (1024 * 1024) * 1_000_000_000 / elapsed, allocated, elapsed);
     return observed;
+}
+
+// SAFETY: The C format string is a fixed NUL-terminated literal with matching scalar arguments.
+private void report(size_t chunk, ulong processed, double rate, ulong allocated, long elapsed) @trusted nothrow @nogc
+{
+    printf("read-size=%zu bytes=%llu MiB/s=%g allocated=%llu elapsed-ns=%lld\n", chunk, processed,
+            rate, allocated, elapsed);
+}
+
+/// Emit the consumed checksum in both binaries.
+// SAFETY: The C format string is a fixed NUL-terminated literal with a matching scalar argument.
+void printChecksum(ulong checksum) @trusted nothrow @nogc
+{
+    printf("term checksum %llu\n", checksum);
 }
 
 /// Execute the full shared input workload and return the verified checksum.

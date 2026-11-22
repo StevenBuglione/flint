@@ -1,14 +1,16 @@
 module os_workload;
 
+import core.stdc.stdio : printf, snprintf;
+import core.stdc.stdlib : getenv, qsort;
+import core.stdc.string : strlen;
+import core.sys.posix.dirent : DIR, closedir, dirent, opendir, readdir;
+import core.sys.posix.fcntl : O_CREAT, O_TRUNC, O_WRONLY, open;
 import core.sys.posix.stdlib : mkdtemp;
 import core.sys.posix.sys.resource : RUSAGE_SELF, getrusage, rusage;
+import core.sys.posix.sys.stat : S_IFDIR, S_IFMT, lstat, mkdir, stat, stat_t;
+import core.sys.posix.unistd : close, getcwd, rmdir, unlink;
 import core.time : MonoTime;
-import std.algorithm.sorting : sort;
 import std.exception : enforce;
-import std.file : mkdirRecurse, rmdirRecurse, tempDir, write;
-import std.format : format;
-import std.path : buildPath;
-import std.stdio : writefln;
 
 /// A probe decoder can consume the data synchronously without retaining storage.
 alias ProbeSink = void delegate(scope const(ubyte)[]) @safe;
@@ -40,8 +42,8 @@ private ulong spawnWorkload(ExecuteProbe execute)
         elapsed = (MonoTime.currTime - started).total!"nsecs";
         ++exits;
     }
-    times[].sort;
-    writefln("empty_commands=%s startup_p50_ns=%s startup_p99_ns=%s", exits, times[499], times[989]);
+    qsort(times.ptr, times.length, long.sizeof, &compareTimes);
+    printf("empty_commands=%u startup_p50_ns=%lld startup_p99_ns=%lld\n", exits, times[499], times[989]);
     return exits;
 }
 
@@ -77,34 +79,105 @@ private ulong streamingWorkload(ExecuteProbe execute)
         storageChanges += changes;
     }
     const elapsed = (MonoTime.currTime - started).total!"nsecs";
-    writefln("stream_trials=%s bytes_per_trial=%s stream_elapsed_ns=%s read_buffer_changes=%s",
+    printf("stream_trials=%d bytes_per_trial=%llu stream_elapsed_ns=%lld read_buffer_changes=%zu\n",
             streamTrials, streamBytes, elapsed, storageChanges);
     return totalBytes;
 }
 
+private extern (C) int compareTimes(const void* left, const void* right) nothrow @nogc
+{
+    const first = *cast(const(long)*) left;
+    const second = *cast(const(long)*) right;
+    return (first > second) - (first < second);
+}
+
+private bool pathExists(scope const(char)[] path)
+{
+    stat_t status;
+    return stat((path ~ '\0').ptr, &status) == 0;
+}
+
+/// The same directory search order as the standard temporary directory lookup.
+private string temporaryBase()
+{
+    foreach (name; ["TMPDIR", "TEMP", "TMP"])
+    {
+        const value = getenv((name ~ '\0').ptr);
+        if (value !is null && *value != '\0' && pathExists(value[0 .. strlen(value)]))
+            return value[0 .. strlen(value)].idup;
+    }
+    foreach (fallback; ["/tmp", "/var/tmp", "/usr/tmp"])
+        if (pathExists(fallback))
+            return fallback;
+    char[4096] current;
+    enforce(getcwd(current.ptr, current.length) !is null, "no temporary directory");
+    return current[0 .. strlen(current.ptr)].idup;
+}
+
+private string join(string directory, scope const(char)[] name)
+{
+    const separator = directory.length && directory[$ - 1] == '/' ? "" : "/";
+    return (directory ~ separator ~ name).idup;
+}
+
 private string temporaryRoot()
 {
-    auto path = buildPath(tempDir(), "flint-os-probe-XXXXXX").dup ~ '\0';
+    auto path = join(temporaryBase(), "flint-os-probe-XXXXXX").dup ~ '\0';
     enforce(mkdtemp(path.ptr) !is null, "could not create probe fixture");
     return path[0 .. $ - 1].idup;
+}
+
+private const(char)[] formatted(return ref char[32] buffer, int length)
+{
+    enforce(length > 0 && length < buffer.length, "fixture name did not fit");
+    return buffer[0 .. length];
 }
 
 private void createEntries(string root)
 {
     foreach (bucket; 0 .. 100)
     {
-        const directory = buildPath(root, format("bucket-%02d", bucket));
-        mkdirRecurse(directory);
+        char[32] name;
+        const directory = join(root, formatted(name, snprintf(name.ptr, name.length, "bucket-%02d", bucket)));
+        enforce(mkdir((directory ~ '\0').ptr, 0x1ff) == 0, "could not create fixture bucket");
         foreach (index; 0 .. 1000)
-            write(buildPath(directory, format("entry-%03d.txt", index)), "");
+        {
+            const file = join(directory, formatted(name, snprintf(name.ptr, name.length, "entry-%03d.txt", index)));
+            const descriptor = open((file ~ '\0').ptr, O_WRONLY | O_CREAT | O_TRUNC, 0x1b6);
+            enforce(descriptor >= 0 && close(descriptor) == 0, "could not create fixture entry");
+        }
     }
+}
+
+private void removeTree(string path)
+{
+    stat_t status;
+    enforce(lstat((path ~ '\0').ptr, &status) == 0, "fixture entry vanished");
+    if ((status.st_mode & S_IFMT) != S_IFDIR)
+    {
+        enforce(unlink((path ~ '\0').ptr) == 0, "could not remove fixture entry");
+        return;
+    }
+    string[] children;
+    DIR* directory = opendir((path ~ '\0').ptr);
+    enforce(directory !is null, "could not open fixture directory");
+    for (dirent* entry = readdir(directory); entry !is null; entry = readdir(directory))
+    {
+        const name = entry.d_name.ptr[0 .. strlen(entry.d_name.ptr)];
+        if (name != "." && name != "..")
+            children ~= join(path, name);
+    }
+    enforce(closedir(directory) == 0, "could not close fixture directory");
+    foreach (child; children)
+        removeTree(child);
+    enforce(rmdir((path ~ '\0').ptr) == 0, "could not remove fixture directory");
 }
 
 private ulong globWorkload(GlobProbe glob)
 {
     const root = temporaryRoot();
     scope (exit)
-        rmdirRecurse(root);
+        removeTree(root);
     createEntries(root);
 
     const started = MonoTime.currTime;
@@ -126,7 +199,7 @@ private ulong globWorkload(GlobProbe glob)
         foreach (byteValue; entry)
             checksum = checksum * 33 + cast(ubyte) byteValue;
     }
-    writefln("glob_trials=%s results_per_trial=%s glob_elapsed_ns=%s", globTrials, entries.length, elapsed);
+    printf("glob_trials=%d results_per_trial=%zu glob_elapsed_ns=%lld\n", globTrials, entries.length, elapsed);
     return checksum;
 }
 
@@ -136,6 +209,6 @@ int runProbe(ExecuteProbe execute, GlobProbe glob)
     const checksum = spawnWorkload(execute) + streamingWorkload(execute) + globWorkload(glob);
     rusage use;
     enforce(getrusage(RUSAGE_SELF, &use) == 0, "peak RSS unavailable");
-    writefln("checksum=%s peak_rss_kib=%s", checksum, use.ru_maxrss);
+    printf("checksum=%llu peak_rss_kib=%ld\n", checksum, use.ru_maxrss);
     return 0;
 }

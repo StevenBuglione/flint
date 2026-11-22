@@ -1,9 +1,9 @@
 /// Shared fixed inputs and observable result consumption for Serde probes.
 module serde_probe;
 
+import core.stdc.stdio : printf;
 import core.time : MonoTime;
 import flint.arena : Buffer, RequestArena, Status;
-import std.stdio : writefln;
 
 @safe:
 
@@ -113,9 +113,17 @@ bool measure(string label, size_t size, size_t fields, scope Operation operation
         elapsed = (MonoTime.currTime - start).total!"nsecs";
     }
     while (elapsed < 150_000_000);
-    writefln("%s bytes=%s fields=%s ops=%s elapsed_ns=%s bytes_per_second=%.2f ns_per_field=%.2f peak=%s checksum=%s",
-            label, size, fields,
-            operations, elapsed, cast(double) size * operations * 1e9 / elapsed,
-            cast(double) elapsed / operations / fields, peak, checksum);
+    report(label, size, fields, operations, elapsed, peak, checksum);
     return true;
+}
+
+// SAFETY: The C format string is a fixed NUL-terminated literal; the label is printed with its
+// explicit length and every scalar matches its conversion.
+private void report(string label, size_t size, size_t fields, ulong operations, long elapsed,
+        size_t peak, ulong checksum) @trusted nothrow @nogc
+{
+    printf("%.*s bytes=%zu fields=%zu ops=%llu elapsed_ns=%lld bytes_per_second=%.2f ns_per_field=%.2f peak=%zu "
+            ~ "checksum=%llu\n", cast(int) label.length,
+            label.ptr, size, fields, operations, elapsed,
+            cast(double) size * operations * 1e9 / elapsed, cast(double) elapsed / operations / fields, peak, checksum);
 }

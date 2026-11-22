@@ -1,7 +1,6 @@
 module app;
 
-import probe : Digest, check, expectRecord, record, runProbe;
-import std.stdio : writefln;
+import probe : Digest, check, expectRecord, record, printChecksum, runProbe;
 
 @safe:
 
@@ -31,5 +30,5 @@ void main(string[] args)
 {
     check(args.length == 1 || (args.length == 2 && args[1] == "--measure"));
     const checksum = runProbe(&replay, args.length == 2);
-    writefln("term checksum %s", checksum);
+    printChecksum(checksum);
 }

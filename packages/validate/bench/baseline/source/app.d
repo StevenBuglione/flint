@@ -1,7 +1,6 @@
 module app;
 
-import probe : Receipt, consume, fieldName, runProbe, verify;
-import std.stdio : writefln;
+import probe : Receipt, consume, fieldName, printChecksum, runProbe, verify;
 
 @safe:
 
@@ -41,5 +40,5 @@ void main(string[] args)
     verify(args.length == 1 || (args.length == 2 && args[1] == "--measure"));
     const checksum = runProbe([&referenceFields, &referenceFields, &referenceFields],
             &referencePattern, args.length == 2);
-    writefln("validate checksum %s", checksum);
+    printChecksum(checksum);
 }

@@ -2,7 +2,7 @@
 module arena_probe_harness;
 
 import core.time : MonoTime;
-import std.stdio : writefln;
+import core.stdc.stdio : printf;
 
 @safe:
 
@@ -40,7 +40,15 @@ bool measure(string name, size_t zeroedBytes, ulong expected, scope Operation op
     }
     while (elapsed < 150_000_000);
 
-    writefln("%s operations=%s elapsed_ns=%s ns_per_op=%.3f bytes_zeroed_per_op=%s checksum=%s",
-            name, operations, elapsed, cast(double) elapsed / operations, zeroedBytes, checksum);
+    print(name, operations, elapsed, zeroedBytes, checksum);
     return true;
+}
+
+// SAFETY: The C format string is a fixed NUL-terminated literal; the name is printed with its
+// explicit length and every scalar matches its conversion.
+private void print(string name, ulong operations, long elapsed, size_t zeroedBytes, ulong checksum) @trusted
+{
+    printf("%.*s operations=%llu elapsed_ns=%lld ns_per_op=%.3f bytes_zeroed_per_op=%zu checksum=%llu\n",
+            cast(int) name.length, name.ptr, operations, elapsed, cast(double) elapsed / operations,
+            zeroedBytes, checksum);
 }

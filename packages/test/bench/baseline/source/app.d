@@ -1,9 +1,8 @@
 module app;
 
-import probe_fixture : One, Sixteen, SixtyFour, expectedInterfaces, expectedSuite, suiteChecksum;
+import probe_fixture : One, Sixteen, SixtyFour, decimal, expectedInterfaces, expectedSuite,
+    printChecksum, suiteChecksum;
 import probe_suites : Suites;
-import std.conv : to;
-import std.stdio : writeln;
 
 @safe:
 
@@ -11,7 +10,7 @@ private string overrides(Contract)()
 {
     string output;
     static foreach (index, name; __traits(allMembers, Contract))
-        output ~= "override int " ~ name ~ "() const @safe nothrow @nogc { return " ~ to!string(index + 1) ~ "; }";
+        output ~= "override int " ~ name ~ "() const @safe nothrow @nogc { return " ~ decimal(index + 1) ~ "; }";
     return output;
 }
 
@@ -38,6 +37,6 @@ int main()
     const tests = suiteChecksum();
     if (interfaces != expectedInterfaces || tests != expectedSuite)
         return 1;
-    writeln("checksum=", interfaces + tests);
+    printChecksum(interfaces + tests);
     return 0;
 }

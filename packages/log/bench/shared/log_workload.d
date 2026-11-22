@@ -1,11 +1,11 @@
 module log_workload;
 
 import core.atomic : atomicLoad, atomicStore;
+import core.stdc.stdio : printf;
+import core.stdc.stdlib : qsort;
 import core.sys.posix.time : CLOCK_MONOTONIC, clock_gettime, timespec;
 import flint.arena : Status;
-import std.algorithm.sorting : sort;
 import std.exception : enforce;
-import std.stdio : writefln;
 
 @safe:
 
@@ -142,28 +142,87 @@ private struct Run
     }
 }
 
+// SAFETY: getenv returns null or a NUL-terminated environment string, copied before returning.
+private string sampleDirectory() @trusted
+{
+    import core.stdc.stdlib : getenv;
+    import core.stdc.string : strlen;
+
+    const value = getenv("FLINT_LOG_PROBE_SAMPLE_DIR");
+    return value is null ? "" : value[0 .. strlen(value)].idup;
+}
+
+// SAFETY: Every path passed to mkdir is a NUL-terminated GC copy of a directory prefix.
+private void makeDirectories(string directory) @trusted
+{
+    import core.stdc.errno : EEXIST, errno;
+    import core.sys.posix.sys.stat : mkdir;
+
+    foreach (end; 1 .. directory.length + 1)
+    {
+        if (end != directory.length && directory[end] != '/')
+            continue;
+        const path = directory[0 .. end] ~ '\0';
+        enforce(mkdir(path.ptr, 0x1ff) == 0 || errno == EEXIST, "sample directory creation failed");
+    }
+}
+
+// SAFETY: The path is a NUL-terminated GC copy; fwrite reads exactly the live timing slice.
+private void writeSamples(string path, scope const(long)[] timings) @trusted
+{
+    import core.stdc.stdio : fclose, fopen, fwrite;
+
+    auto target = fopen((path ~ '\0').ptr, "wb");
+    enforce(target !is null, "sample file could not be opened");
+    const written = fwrite(timings.ptr, long.sizeof, timings.length, target);
+    enforce(fclose(target) == 0 && written == timings.length, "sample file write failed");
+}
+
 private void storeSamples(string name, scope const(long)[] timings)
 {
-    import std.file : mkdirRecurse;
-    import std.path : buildPath;
-    import std.process : environment;
-    import std.stdio : File;
-
-    const directory = environment.get("FLINT_LOG_PROBE_SAMPLE_DIR");
+    const directory = sampleDirectory();
     if (directory.length == 0)
         return;
-    mkdirRecurse(directory);
-    auto target = File(buildPath(directory, name ~ "-ns.i64"), "wb");
-    target.rawWrite(timings);
+    makeDirectories(directory);
+    const separator = directory[$ - 1] == '/' ? "" : "/";
+    writeSamples(directory ~ separator ~ name ~ "-ns.i64", timings);
+}
+
+// SAFETY: qsort passes this comparator two element addresses inside the slice given to sortTimings.
+private extern (C) int compareTimings(const void* left, const void* right) @trusted nothrow @nogc
+{
+    const first = *cast(const(long)*) left;
+    const second = *cast(const(long)*) right;
+    return (first > second) - (first < second);
+}
+
+// SAFETY: The base pointer, element count and element size describe exactly the live slice.
+private void sortTimings(scope long[] timings) @trusted nothrow @nogc
+{
+    qsort(timings.ptr, timings.length, long.sizeof, &compareTimings);
+}
+
+// SAFETY: Fixed NUL-terminated literal format; the name is printed with its explicit length and
+// every scalar matches its conversion.
+private void printCase(string name, size_t attempts, size_t dropped, long p99, long elapsed) @trusted nothrow @nogc
+{
+    printf("case=%.*s attempts=%zu dropped=%zu producer_p99_ns=%lld elapsed_ns=%lld\n",
+            cast(int) name.length, name.ptr, attempts, dropped, p99, elapsed);
+}
+
+// SAFETY: Fixed NUL-terminated literal format with matching scalar arguments.
+private void printDelivered(ulong delivered, ulong bytes, double rate, ulong checksum) @trusted nothrow @nogc
+{
+    printf("delivered=%llu bytes=%llu consumer_lines_per_second=%.2f checksum=%llu\n", delivered,
+            bytes, rate, checksum);
 }
 
 private void report(string name, scope long[] timings, size_t dropped, long elapsed)
 {
     storeSamples(name, timings);
-    timings.sort;
+    sortTimings(timings);
     const nearest = (timings.length * 99 + 99) / 100;
-    writefln("case=%s attempts=%s dropped=%s producer_p99_ns=%s elapsed_ns=%s", name,
-            timings.length, dropped, timings[nearest - 1], elapsed);
+    printCase(name, timings.length, dropped, timings[nearest - 1], elapsed);
 }
 
 /// Run the fixed filtering, accepted data, saturation and consumer throughput workloads.
@@ -181,7 +240,6 @@ int runProbe(Submit submit, Drain drain, Capture* capture)
     enforce(capture.count == expectedDeliveries, "fixture lost accepted records");
     const expectedBytes = 2048UL * (shortBody.length + longBody.length) + batchSize * shortBody.length;
     enforce(capture.bytes == expectedBytes, "emitted message sizes changed");
-    writefln("delivered=%s bytes=%s consumer_lines_per_second=%.2f checksum=%s", capture.count,
-            capture.bytes, 4096.0e9 / activeNanos, capture.checksum);
+    printDelivered(capture.count, capture.bytes, 4096.0e9 / activeNanos, capture.checksum);
     return 0;
 }

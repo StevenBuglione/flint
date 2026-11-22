@@ -1,8 +1,7 @@
 module app;
 
 import flint.validate : Min, Pattern, Violation, validate;
-import probe : Receipt, consume, runProbe, verify;
-import std.stdio : writefln;
+import probe : Receipt, consume, printChecksum, runProbe, verify;
 
 @safe:
 
@@ -253,5 +252,5 @@ void main(string[] args)
     const checksum = runProbe([
         &runDto!(load8, 8), &runDto!(load32, 32), &runDto!(load128, 128)
     ], &patternTrial, args.length == 2);
-    writefln("validate checksum %s", checksum);
+    printChecksum(checksum);
 }

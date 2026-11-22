@@ -2,8 +2,7 @@ module app;
 
 import core.sync.mutex : Mutex;
 import flint.arena : Error, Result, Status;
-import probe : check, runProbe;
-import std.stdio : writefln;
+import probe : check, printChecksum, runProbe;
 
 @safe:
 
@@ -75,5 +74,5 @@ void main(string[] args)
 {
     check(args.length == 1 || (args.length == 2 && args[1] == "--measure"));
     const checksum = runProbe!(ReferenceQueue, ReferenceQueue)(&roundTrip, &cancelled, args.length == 2);
-    writefln("conc checksum %s", checksum);
+    printChecksum(checksum);
 }

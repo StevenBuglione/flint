@@ -3,9 +3,8 @@ module app;
 import core.time : MonoTime;
 import flint.arena : Error, Result, Status;
 import flint.conc : CancelSource, Channel, Context, Deadline, QueueKind, WorkerOptions, WorkerPool;
-import probe : check, pauseWorker, runProbe;
-import std.algorithm.mutation : move;
-import std.stdio : writefln;
+import core.lifetime : move;
+import probe : check, pauseWorker, printCancellation, printChecksum, runProbe;
 
 @safe:
 
@@ -109,7 +108,7 @@ void main(string[] args)
             elapsed = (MonoTime.currTime - began).total!"nsecs";
         }
         while (elapsed < 100_000_000);
-        writefln("cancellation checked=%s ns=%s", checked, elapsed);
+        printCancellation(checked, elapsed);
     }
-    writefln("conc checksum %s", checksum);
+    printChecksum(checksum);
 }

@@ -3,9 +3,9 @@ module probe;
 import core.atomic : atomicLoad, atomicOp, atomicStore;
 import core.thread.osthread : Thread;
 import core.time : MonoTime, dur;
+import core.stdc.stdio : printf;
+import core.stdc.stdlib : qsort;
 import flint.arena : Error, RequestArena, Status;
-import std.algorithm.sorting : sort;
-import std.stdio : writefln;
 
 @safe:
 
@@ -169,10 +169,9 @@ private ulong sampleQueue(Adapter)(string name, uint producers, uint consumers, 
         rejected += repeat.rejected;
         waits ~= repeat.waits;
     }
-    sort(waits);
+    sortWaits(waits);
     immutable p99 = waits[(waits.length * 99 + 99) / 100 - 1];
-    writefln("%s producers=%s accepted=%s rejected=%s accepted-ops/s=%s p99-enqueue-ns=%s", name,
-            producers, accepted, rejected, cast(double) accepted * 1_000_000_000 / elapsed, p99);
+    printQueue(name, producers, accepted, rejected, cast(double) accepted * 1_000_000_000 / elapsed, p99);
     return first.checksum;
 }
 
@@ -222,7 +221,57 @@ private void samplePoll(Adapter)(string name, bool full)
         elapsed = (MonoTime.currTime - began).total!"nsecs";
     }
     while (elapsed < 100_000_000);
-    writefln("%s %s rejected=%s ns=%s", name, full ? "full" : "empty", count, elapsed);
+    printPoll(name, full ? "full" : "empty", count, elapsed);
+}
+
+// SAFETY: qsort passes this comparator two element addresses inside the slice given to sortWaits.
+private extern (C) int compareWaits(const void* left, const void* right) @trusted nothrow @nogc
+{
+    const first = *cast(const(long)*) left;
+    const second = *cast(const(long)*) right;
+    return (first > second) - (first < second);
+}
+
+// SAFETY: The base pointer, element count and element size describe exactly the live slice.
+private void sortWaits(scope long[] waits) @trusted nothrow @nogc
+{
+    qsort(waits.ptr, waits.length, long.sizeof, &compareWaits);
+}
+
+// SAFETY: Fixed NUL-terminated literal format; the name is printed with its explicit length and
+// every scalar matches its conversion.
+private void printQueue(string name, uint producers, ulong accepted, ulong rejected, double rate, long p99) @trusted
+{
+    printf("%.*s producers=%u accepted=%llu rejected=%llu accepted-ops/s=%g p99-enqueue-ns=%lld\n",
+            cast(int) name.length, name.ptr, producers, accepted, rejected, rate, p99);
+}
+
+// SAFETY: Fixed NUL-terminated literal format; both strings are printed with their explicit
+// lengths and every scalar matches its conversion.
+private void printPoll(string name, string state, ulong count, long elapsed) @trusted nothrow @nogc
+{
+    printf("%.*s %.*s rejected=%llu ns=%lld\n", cast(int) name.length, name.ptr,
+            cast(int) state.length, state.ptr, count, elapsed);
+}
+
+// SAFETY: Fixed NUL-terminated literal format with matching scalar arguments.
+private void printOffload(uint rounds, long elapsed) @trusted nothrow @nogc
+{
+    printf("offload-round-trips %u %lld ns\n", rounds, elapsed);
+}
+
+/// Report the measured cancellation checks.
+// SAFETY: Fixed NUL-terminated literal format with matching scalar arguments.
+void printCancellation(ulong checked, long elapsed) @trusted nothrow @nogc
+{
+    printf("cancellation checked=%llu ns=%lld\n", checked, elapsed);
+}
+
+/// Emit the consumed checksum in both binaries.
+// SAFETY: Fixed NUL-terminated literal format with a matching scalar argument.
+void printChecksum(ulong checksum) @trusted nothrow @nogc
+{
+    printf("conc checksum %llu\n", checksum);
 }
 
 private ulong offloadRoundTrip(Echo echo, uint round)
@@ -283,7 +332,7 @@ ulong runProbe(Mpsc, Mpmc)(Echo echo, ulong function() @safe cancellation, bool 
     }
     while (round < 64 || (measure && (MonoTime.currTime - began).total!"nsecs" < 100_000_000));
     if (measure)
-        writefln("offload-round-trips %s %s ns", round, (MonoTime.currTime - began).total!"nsecs");
+        printOffload(round, (MonoTime.currTime - began).total!"nsecs");
 
     return checksum + cancellation();
 }

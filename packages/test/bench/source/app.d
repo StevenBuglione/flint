@@ -1,9 +1,8 @@
 module app;
 
 import flint.test : Mock, TestOptions, runTests;
-import probe_fixture : One, Sixteen, SixtyFour, expectedInterfaces, expectedSuite, suiteChecksum;
+import probe_fixture : One, Sixteen, SixtyFour, expectedInterfaces, expectedSuite, printChecksum, suiteChecksum;
 import probe_suites : Suites;
-import std.stdio : writeln;
 
 @safe:
 
@@ -33,6 +32,6 @@ int main()
     const tests = suiteChecksum();
     if (result != 0 || interfaces != expectedInterfaces || tests != expectedSuite)
         return 1;
-    writeln("checksum=", interfaces + tests);
+    printChecksum(interfaces + tests);
     return 0;
 }

@@ -1,8 +1,8 @@
 module probe;
 
+import core.stdc.stdio : printf;
 import core.time : MonoTime;
 import flint.arena : RequestArena, Status;
-import std.stdio : writefln;
 
 @safe:
 
@@ -105,9 +105,31 @@ private ulong sampleFields(FieldCase workload, size_t width, bool measure)
         elapsed = (MonoTime.currTime - begin).total!"nsecs";
     }
     while (elapsed < 100_000_000);
-    writefln("fields=%s valid=%s full-output=%s iterations=%s ns=%s", width, workload.valid,
-            workload.full, iterations, elapsed);
+    printFields(width, workload.valid, workload.full, iterations, elapsed);
     return first;
+}
+
+// SAFETY: Fixed NUL-terminated literal format; both flags are printed as explicit-length literals
+// and every scalar matches its conversion.
+private void printFields(size_t width, bool valid, bool full, ulong iterations, long elapsed) @trusted nothrow @nogc
+{
+    const validText = valid ? "true" : "false";
+    const fullText = full ? "true" : "false";
+    printf("fields=%zu valid=%.*s full-output=%.*s iterations=%llu ns=%lld\n", width,
+            cast(int) validText.length, validText.ptr, cast(int) fullText.length, fullText.ptr, iterations, elapsed);
+}
+
+// SAFETY: The C format string is a fixed NUL-terminated literal with matching scalar arguments.
+private void printPattern(size_t bytes, ulong iterations, long elapsed, double perByte) @trusted nothrow @nogc
+{
+    printf("pattern-bytes=%zu iterations=%llu ns=%lld ns-per-byte=%g\n", bytes, iterations, elapsed, perByte);
+}
+
+/// Emit the consumed checksum in both binaries.
+// SAFETY: The C format string is a fixed NUL-terminated literal with a matching scalar argument.
+void printChecksum(ulong checksum) @trusted nothrow @nogc
+{
+    printf("validate checksum %llu\n", checksum);
 }
 
 private ulong matchPair(Match match, scope char[] input) nothrow @nogc
@@ -136,8 +158,7 @@ private double samplePattern(Match match, scope const(char)[] failing)
     }
     while (elapsed < 100_000_000);
     const nanosPerInputByte = cast(double) elapsed / iterations / failing.length;
-    writefln("pattern-bytes=%s iterations=%s ns=%s ns-per-byte=%s", failing.length, iterations,
-            elapsed, nanosPerInputByte);
+    printPattern(failing.length, iterations, elapsed, nanosPerInputByte);
     return nanosPerInputByte;
 }
 
