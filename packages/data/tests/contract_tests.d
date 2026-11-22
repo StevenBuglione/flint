@@ -285,3 +285,72 @@ version (FlintNativeLibpq)
             exercise(Driver.postgres, address);
     }
 }
+
+@Query("SELECT \"t:x\".display_name AS \"display\", \"t:x\".amount FROM records AS \"t:x\" "
+        ~ "WHERE \"t:x\".id = :key AND \"t:x\".amount = :amount AND \"t:x\".id = :key")
+private struct QuotedIdentifierColon
+{
+    long amount;
+    ulong key;
+}
+
+private void exerciseLexerAndOwnership(Driver driver, string address)
+{
+    auto pool = open(driver, address);
+    Context context;
+    scope (exit)
+        assert(pool.close(context).code == Status.ok);
+    auto repository = new SqlRepository!(Entity, ulong)(pool);
+    ubyte[8192] bytes;
+    scope arena = RequestArena(bytes[]);
+    const input = rowForTest(arena);
+    const created = repository.save(input, arena, context);
+    assert(created.ok(), created.error.message);
+    const second = repository.save(input, arena, context);
+    assert(second.ok() && second.value.id != 0 && second.value.id != created.value.id);
+
+    // query_lexer: a colon inside a quoted identifier is not a parameter; :key is repeated and bound once.
+    const arguments = QuotedIdentifierColon(long.min, created.value.id);
+    const projected = repository.queryOne!Projection(arguments, arena, context);
+    assert(projected.ok(), projected.error.message);
+    assert(projected.value.amount == long.min);
+    expectBytes(arena, projected.value.name.bytes, "Robert'); -- bound data");
+
+    // ownership: a raw struct copy shares the arena handles and fails the generation check after reset.
+    ubyte[4096] ownedBytes;
+    scope owned = RequestArena(ownedBytes[]);
+    const found = repository.findById(created.value.id, owned, context);
+    assert(found.ok());
+    const Entity cached = found.value;
+    expectBytes(owned, cached.name.bytes, "Robert'); -- bound data");
+    assert(owned.reset() == Status.ok);
+    assert(owned.read(cached.name.bytes, (scope const(ubyte)[]) @safe nothrow @nogc {}) != Status.ok);
+    assert(owned.read(cached.wire, (scope const(ubyte)[]) @safe nothrow @nogc {}) != Status.ok);
+    assert(owned.read(cached.label.bytes, (scope const(ubyte)[]) @safe nothrow @nogc {}) != Status.ok);
+    // The handle does not resolve against another live arena either.
+    assert(arena.read(cached.name.bytes, (scope const(ubyte)[]) @safe nothrow @nogc {}) != Status.ok);
+
+    // schema_drift: dropping a mapped column after generation fails startup validation.
+    runSql(pool, "ALTER TABLE records DROP COLUMN count");
+    expectSchemaFailure!Entity(pool);
+}
+
+version (FlintNativeSqlite)
+{
+    @("query_lexer, ownership, identity_policy and schema_drift (drop column) on SQLite")
+    unittest
+    {
+        exerciseLexerAndOwnership(Driver.sqlite, ":memory:");
+    }
+}
+
+version (FlintNativeLibpq)
+{
+    @("query_lexer, ownership, identity_policy and schema_drift (drop column) on PostgreSQL")
+    unittest
+    {
+        const address = environment.get("FLINT_DATA_PG_TEST_DSN");
+        if (address.length != 0)
+            exerciseLexerAndOwnership(Driver.postgres, address);
+    }
+}
