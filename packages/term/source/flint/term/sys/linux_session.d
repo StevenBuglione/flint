@@ -222,7 +222,7 @@ version (linux)
         return Result!Event(Event.init, failure(status));
     }
 
-    private ColorProfile detectColors(string terminal, string colorterm, bool noColor) nothrow
+    package(flint.term) ColorProfile detectColors(string terminal, string colorterm, bool noColor) nothrow
     {
         if (noColor || terminal == "" || terminal == "dumb")
             return ColorProfile.none;
@@ -248,7 +248,7 @@ version (linux)
     // "" when it is set but empty, or `fallback` when it is unset.
     // SAFETY: getenv receives a NUL-terminated copy of the name and returns null or a NUL-terminated string,
     // which is read up to its terminator and copied before any other environment call.
-    private string environmentValue(string name, string fallback = null) @trusted nothrow
+    package(flint.term) string environmentValue(string name, string fallback = null) @trusted nothrow
     {
         import core.stdc.string : strlen;
         import core.sys.posix.stdlib : getenv;

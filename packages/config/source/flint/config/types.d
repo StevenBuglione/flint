@@ -46,6 +46,11 @@ struct ConfigOptions
     string[] arguments;
     /// Reject keys outside the typed schema.
     bool rejectUnknownKeys = true;
+    /// File stem of the base and profile files: `<baseName>.toml` and `<baseName>-<profile>.toml`.
+    string baseName = "application";
+    /// Read `.env`, the process environment and `FLINT_PROFILE`. Checked-in policy files turn this off
+    /// so that nothing outside the files and explicit arguments can change them.
+    bool readEnvironment = true;
 }
 
 /// Location and category of a configuration failure.

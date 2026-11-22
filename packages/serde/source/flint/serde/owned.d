@@ -2,7 +2,7 @@
 module flint.serde.owned;
 
 import flint.arena : Result;
-import flint.serde.internal.types : DecodeOptions;
+import flint.serde.internal.types : DecodeOptions, EncodeOptions;
 public import flint.serde.internal.toml_entries : TomlEntry;
 
 @safe:
@@ -20,6 +20,15 @@ else
         Result!T result;
         result.error = readOwnedJson(cast(const(ubyte)[]) input, result.value, options);
         return result;
+    }
+
+    /// Encode strings, dynamic arrays and nested DTOs from native storage as compact UTF-8 JSON.
+    /// Field names, `JsonIgnore` and canonical ordering follow `encodeJson`; the text is GC-owned.
+    Result!string serialize(T)(scope const ref T value, EncodeOptions options = EncodeOptions.init)
+    {
+        import flint.serde.internal.json_codec : writeOwnedJson;
+
+        return writeOwnedJson(value, options);
     }
 
     /// Decode a TOML document into independent native strings and arrays.

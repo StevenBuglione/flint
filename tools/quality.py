@@ -4,11 +4,11 @@ import argparse,difflib,json,subprocess
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 def main():
-    ap=argparse.ArgumentParser();ap.add_argument('--dfmt',default='dfmt');ap.add_argument('--dscanner',default='dscanner');ap.add_argument('--path',type=Path,action='append',help='Optional explicit source trees; defaults to packages, benchmarks and examples.');a=ap.parse_args()
-    paths=a.path or [ROOT/name for name in ('packages','benchmarks','examples') if (ROOT/name).is_dir()]
+    ap=argparse.ArgumentParser();ap.add_argument('--dfmt',default='dfmt');ap.add_argument('--dscanner',default='dscanner');ap.add_argument('--path',type=Path,action='append',help='Optional explicit source trees; defaults to packages, apps, benchmarks and examples.');a=ap.parse_args()
+    paths=a.path or [ROOT/name for name in ('packages','apps','benchmarks','examples') if (ROOT/name).is_dir()]
     for path in paths:
         if not path.is_dir():raise SystemExit('quality source tree missing: '+str(path))
-    files=sorted({p for path in paths for p in path.rglob('*.d') if not any(part in ('.dub','build','artifacts') for part in p.relative_to(path).parts)})
+    files=sorted({p for path in paths for p in path.rglob('*.d') if not any(part in ('.dub','.flint','build','artifacts') for part in p.relative_to(path).parts)})
     if not files:raise SystemExit('quality gate has no implementation sources')
     failures=[]
     for p in files:

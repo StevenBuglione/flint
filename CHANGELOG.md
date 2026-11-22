@@ -37,4 +37,14 @@
 
 - Record the Flint platform direction (ADR-021) and license Flint under Apache-2.0.
 
-See [Linux certification](docs/milestones/06.md) for the evidence, run history and the deliberately failing macOS and Windows platform condition.
+- Add the `flint` command ([docs/flint-cli.md](docs/flint-cli.md)), written in D on Flint's own libraries. It provides `new`, `build`, `run`, `test`, `check`, `fmt`, `lock`, `toolchain install|verify|info`, `doctor`, `daemon start|stop|status`, `version`, `explain` and `receipt`, with versioned `--json` output, stable exit codes and no prompts.
+- Add the Flint project model: `flint.toml` with a closed schema, the deterministic and byte-verified `flint.lock`, the `config/application*.toml` and `src/<project>/` conventions, module paths checked against file paths, and `.flint/` for generated recipes, builds, receipts and caches.
+- Move the canonical build profiles into `policy/profiles.toml`, shared by `flint`, `tools/ci.py` and `tools/measure_builds.py` with unchanged flags, and add `policy/platform.toml`.
+- Write a build receipt next to every artifact. Added flags, a non-profile compiler or an unverified toolchain mark it non-canonical. `flint toolchain install` records the receipt that ties the installed DMD and DUB fork to `toolchain/*.patch`.
+- Port the structural gate, the dfmt and D-Scanner checks and the safety policy into `flint check`, with the fast subset in every build. Every `flint` error has a stable `FLINT-Ennnn` code with a location, cause and fix, and `flint explain` describes each one.
+- Start the fixture peers that workspace test suites declare in `policy/test-peers.toml`: the AI, S3, HTTP, JWKS and SMTP peers, MinIO, Valkey and a disposable PostgreSQL cluster. A missing peer fails its package with FLINT-E0815 instead of being skipped. `flint test --scenarios` runs `mq`'s live scenarios against real Kafka 4.1.2 and NATS JetStream 2.15.3.
+- Pin every peer in `policy/peer-lock.json`, with published checksums or recorded tag commits. `tools/install_peers.py` verifies each archive, builds Valkey, nats-server and MinIO, using the pinned Go for the Go programs, extracts Kafka and a Temurin JRE, and writes a receipt per peer.
+- Add `flint.config` named policy files without environment layers, `flint.serde.owned.serialize` and `flint.term.describe` (ADR-022).
+- Fix two link and build failures: `flint:os` failed to link in DMD library builds, and the `flint:term` C shim failed to compile under fortified GCC.
+
+See [Linux certification](docs/milestones/06.md) for the Milestone 6 evidence, run history and the deliberately failing macOS and Windows platform condition, and [Milestone 07](docs/milestones/07.md) for the `flint` CLI.

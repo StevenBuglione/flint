@@ -20,6 +20,8 @@ import sys
 import tempfile
 import time
 
+import profiles
+
 ROOT = Path(__file__).resolve().parents[1]
 NATIVE_BLOCK = re.compile(r'\n// BEGIN FLINT NATIVE\n.*?// END FLINT NATIVE\n', re.S)
 
@@ -155,11 +157,13 @@ def source_edit(root, relative, iteration):
 
 
 def native_profiles(lld=None):
+    # Flags come from the canonical profiles shared with flint and tools/ci.py (ADR-018).
     linker = ['-linker=' + lld] if lld else []
+    policy = profiles.load()
     return {
-        'dmd': ['-preview=dip1000', '-debug', '-g', '-boundscheck=on'],
-        'O3': ['-preview=dip1000', '-release', '-boundscheck=safeonly', '-O3', '--flto=thin', '-link-defaultlib-shared=false'] + linker,
-        'Oz': ['-preview=dip1000', '-release', '-boundscheck=safeonly', '-Oz', '--flto=thin', '-link-defaultlib-shared=false'] + linker}
+        'dmd': list(policy['dev']['dflags']),
+        'O3': list(policy['release']['dflags']) + linker,
+        'Oz': list(policy['size']['dflags']) + linker}
 
 
 def dub_invocation(dub, workspace, relative, compiler, flags, base_env):
@@ -384,7 +388,8 @@ def main(argv=None):
                       ('llvmgold_plugin',Path(args.ldc).parent.parent/'lib/LLVMgold-ldc.so')]:
         if path.is_file():tools[name]={'sha256':digest(path)}
     tools['measurement_protocol'] = {'version': 1, 'sha256': digest(__file__),
-                                     'statistics_sha256': digest(ROOT / 'tools/perf_stats.py')}
+                                     'statistics_sha256': digest(ROOT / 'tools/perf_stats.py'),
+                                     'profiles_sha256': digest(profiles.POLICY)}
     commit, native_inputs = source_identity(ROOT)
     args.output = args.output.resolve()
     args.output.parent.mkdir(parents=True, exist_ok=True)

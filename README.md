@@ -2,6 +2,18 @@
 
 Read `AGENTS.md` and `handoff/MILESTONES_EXECUTION_PLAN.md`. The initial checkout contains recipes and build policies, not fake implementations. Complete the assigned package before its tests/build can pass. Handoff contracts are documentation/typechecking references and are not on the production import path.
 
+## The `flint` command
+
+`flint` builds, runs, tests and checks Flint code with the pinned toolchain and the canonical profiles. It also writes a receipt for every artifact. With the toolchain installed (below), bootstrap it once:
+
+```bash
+python3 tools/install_toolchains.py --compiler flint
+export PATH="$PWD/.flint/bin:$PATH"
+flint new shop && cd shop && flint build && flint run && flint test
+```
+
+In this checkout, `flint test cli config --compiler both` and `flint check` act on the core packages. [Command reference](docs/flint-cli.md) · [ADR-022](docs/adr/ADR-022-milestone-7-decisions.md)
+
 ## Faster Linux development builds
 
 On x86-64 glibc, the project-local DMD toolchain can use mold or LLVM's ELF linker. With `mold` on your path and a C compiler driver that supports `-fuse-ld=mold`, run these commands from the checkout root.

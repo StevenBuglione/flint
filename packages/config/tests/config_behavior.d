@@ -345,3 +345,58 @@ unittest
     const failure = load(options, server, database);
     assert(failure.message == "configuration key " ~ misspelt ~ " in process environment is unknown");
 }
+
+@ConfigurationProperties("policy")
+private struct PolicyFixture
+{
+    @Required string compiler;
+    string[] flags;
+}
+
+@("a named file stem with the environment off reads only the files and explicit arguments")
+unittest
+{
+    const directory = scratch();
+    scope (exit)
+        rmdirRecurse(directory);
+    const previous = environment.toAA();
+    scope (exit)
+    {
+        foreach (key; ["FLINT_PROFILE", "FLINT_CONFIG_FIXTURE_POLICY__COMPILER"])
+        {
+            if (auto value = key in previous)
+                environment[key] = *value;
+            else
+                environment.remove(key);
+        }
+    }
+    write(buildPath(directory, "profiles.toml"), "[policy]\ncompiler = \"dmd\"\nflags = [\"-g\"]\n");
+    write(buildPath(directory, "profiles-ci.toml"), "[policy]\nflags = [\"-O\"]\n");
+    write(buildPath(directory, "application.toml"), "[policy]\ncompiler = \"ignored\"\n");
+    write(buildPath(directory, ".env"), "FLINT_CONFIG_FIXTURE_POLICY__COMPILER=dotenv\n");
+    environment["FLINT_CONFIG_FIXTURE_POLICY__COMPILER"] = "process";
+    environment["FLINT_PROFILE"] = "ci";
+
+    auto options = configFor(directory);
+    options.baseName = "profiles";
+    options.readEnvironment = false;
+    auto resolved = load!PolicyFixture(options);
+    assert(resolved.ok && resolved.value.compiler == "dmd" && resolved.value.flags == ["-g"]);
+
+    options.profile = "ci";
+    resolved = load!PolicyFixture(options);
+    assert(resolved.ok && resolved.value.flags == ["-O"]);
+    options.arguments = ["--set=policy.compiler=ldc2"];
+    resolved = load!PolicyFixture(options);
+    assert(resolved.ok && resolved.value.compiler == "ldc2");
+
+    options = configFor(directory);
+    options.baseName = "profiles";
+    resolved = load!PolicyFixture(options);
+    assert(resolved.ok && resolved.value.compiler == "process" && resolved.value.flags == ["-O"]);
+
+    options.baseName = "../profiles";
+    assert(load!PolicyFixture(options).error.code == Status.invalidArgument);
+    options.baseName = "";
+    assert(load!PolicyFixture(options).error.code == Status.invalidArgument);
+}

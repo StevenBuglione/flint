@@ -4,6 +4,7 @@ import core.memory : GC;
 import core.thread : Thread;
 import flint.arena : Status;
 import flint.log : Level, LogContext, LogOptions, Logger;
+import std.conv : to;
 import std.json : parseJSON;
 import std.string : splitLines;
 
@@ -164,12 +165,21 @@ unittest
 
     const lines = capture.bytes[0 .. capture.count].splitLines();
     assert(lines.length == 9);
+    // Each producer thread has its own ring and one consumer drains the rings in turn, so records keep their
+    // submission order per producer while records of different threads may interleave. The consumer assigns the
+    // monotonic sequence IDs that order the delivered records.
+    string[] mainThread;
+    string[] workerThread;
     string[] order;
+    ulong previousSequence;
     foreach (line; lines)
     {
         const record = parseJSON(line);
         const message = record["message"].str;
         order ~= message;
+        const sequence = record["seq"].str.to!ulong;
+        assert(sequence > previousSequence, format("%s", order));
+        previousSequence = sequence;
         LogContext expected;
         if (message == "fiber-a")
             expected = tasks[0].context;
@@ -179,9 +189,16 @@ unittest
             expected = workerContext;
         else
             assert(message == "worker-unscoped" || message == "standalone");
+        if (message == "worker" || message == "worker-unscoped")
+            workerThread ~= message;
+        else
+            mainThread ~= message;
         assert(record["requestId"].integer == expected.requestId);
         assert(record["traceId"].str == format("%016x%016x", expected.traceIdHigh, expected.traceIdLow));
         assert(record["spanId"].str == format("%016x", expected.spanId));
     }
-    assert(order[0 .. 6] == ["fiber-a", "fiber-b", "fiber-a", "fiber-b", "fiber-a", "fiber-b"]);
+    assert(mainThread == [
+        "fiber-a", "fiber-b", "fiber-a", "fiber-b", "fiber-a", "fiber-b", "standalone"
+    ], format("%s", order));
+    assert(workerThread == ["worker", "worker-unscoped"], format("%s", order));
 }

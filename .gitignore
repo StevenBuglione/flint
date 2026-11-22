@@ -1,5 +1,7 @@
 .dub/
 .tools/
+/.tools
+.flint/
 artifacts/
 build/
 *.o
