@@ -1,6 +1,6 @@
 # ADR-018: The `flint` command-line tool
 
-Status: proposed by the project owner on 2026-11-21. Implementation is Milestone 7, which starts after Milestone 6 passes.
+Status: accepted by the project owner on 2026-11-21. Implementation is Milestone 7, which starts after Milestone 6 passes.
 
 ## Context
 
@@ -61,7 +61,7 @@ It writes a build receipt (JSON) next to every artifact. The receipt records tho
 - The CLI-related libraries get a demanding real user before any external one. Any ergonomic gaps found while building `flint` are fixed in the libraries.
 - One more component must be maintained. Keeping profiles as data shared with the Python tools limits the duplication while both exist.
 
-## Open choices for Milestone 7
+## Resolved choices
 
-- The name and format of the profile policy file. A TOML file read through `flint.config` is the default proposal.
-- Whether `flint test` starts the external fixture peers (PostgreSQL, Valkey, S3 and similar) itself or only reports which ones it needs.
+- Profiles live in a TOML policy file read through `flint.config`.
+- `flint test` starts the local fixture peers a package declares (PostgreSQL, Valkey, the S3 and HTTP peers, and so on) when their pinned binaries are available. When one is missing, it names it and fails that package's peer-dependent suites instead of silently skipping them.
