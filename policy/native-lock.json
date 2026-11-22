@@ -768,6 +768,35 @@
       "notice_file": "research/licenses/wasmtime.txt"
     },
     {
+      "name": "webkitgtk",
+      "kind": "system",
+      "version": "webkit2gtk-4.1 >= 2.40.0 with gtk+-3.0 >= 3.24.0",
+      "pkg_config_modules": {
+        "webkit2gtk-4.1": "2.40.0",
+        "gtk+-3.0": "3.24.0"
+      },
+      "source_url": "https://webkitgtk.org/",
+      "license_url": "https://webkitgtk.org/reference/webkit2gtk/stable/",
+      "license_expression": "LGPL-2.1-or-later AND BSD-2-Clause",
+      "license_selected": "LGPL-2.1-or-later AND BSD-2-Clause (unmodified dynamic system libraries)",
+      "consumers": [
+        "desktop"
+      ],
+      "dependencies": [],
+      "header_strategy": "Direct extern(C) D declarations of the GLib, GTK 3 and WebKitGTK 4.1 functions used; no Flint C shim and no ImportC.",
+      "linking": "dynamic-system-library",
+      "targets": [
+        "linux-x86_64-glibc",
+        "linux-aarch64-glibc"
+      ],
+      "source_verification": "system provider: tools/native_build.py records the resolved pkg-config module versions, the SHA256 of each .pc file and the link flags in the install receipt, and refuses static archives or versions below the locked minimums",
+      "reviewed_on": "2026-11-21",
+      "runtime_matrix_status": "linux-x86_64-glibc executed on Hyprland/Wayland (WebKitGTK 2.54.1, GTK 3.24.52); other targets not executed",
+      "default_enabled": false,
+      "optional": true,
+      "license_selection_note": "Same libraries tao/wry use on Linux. Linked dynamically like glibc; never linked statically or redistributed modified. See docs/adr/ADR-017-desktop-webview-shell.md."
+    },
+    {
       "name": "webview",
       "repo": "webview/webview",
       "tag": "0.12.0",
