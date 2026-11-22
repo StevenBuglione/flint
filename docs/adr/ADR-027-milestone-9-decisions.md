@@ -150,6 +150,7 @@ Status: proposed by the Milestone 9 implementation, for the project owner's revi
    - **The statement:** each task's `TASK.md` is the whole statement the agent sees. It fixes the observable contract (ports, endpoints, flags, file formats, exit codes, signals) and leaves the design to the agent.
    - **The acceptance test:** `acceptance.py` runs the built program over HTTP, as commands, on a spool directory or in a pseudo-terminal. It checks only what it observes, so one test scores Flint, Go and Spring Boot alike.
    - **A sound test:** a task counts as sound when a reference solution passes it and a fresh project fails most of it. `tests/test_vibe_bench.py` checks both for `cli-todo`.
+   - **Tasks without a reference yet:** a minimal Python oracle passes the acceptance test of every other task. The oracles found two bugs in the tests themselves.
 
 2. **The harness, `tools/vibe_bench.py`.** It prepares workspaces, runs an agent, scores the result and reports medians.
    - **What a Flint agent gets:** the `flint` MCP server and file tools, and no shell. Its build–fix iterations come from the MCP call log.

@@ -27,6 +27,7 @@ python3 tools/vibe_bench.py report benchmarks/vibe/results/*.json
 ```
 
 - `reference` scores the checked-in solutions under `reference/<language>/<task>`. A reference proves its task can be done and that the acceptance test is sound.
+- `oracle` scores the minimal Python programs in `oracles/`. They prove each acceptance test sound where no reference exists yet, and are not benchmark entries.
 - `prepare` creates the agent's workspace:
   - for Flint, `flint new` with the matching core packages and the generated `AGENTS.md`;
   - for Go, `go mod init`.
@@ -55,6 +56,7 @@ For each run, the benchmark records the following.
 ## Status
 
 - **The task set, the acceptance tests and the harness are in place.**
+- **Oracles:** a Python oracle passes every acceptance test (42, 17 and 15 checks). Running them found and fixed two bugs in the tests themselves.
 - **References:** `cli-todo` has a Flint reference that passes all 29 checks. Writing it found three library gaps, each now fixed in the library: configuration keys bind relaxed, help covers subcommands, and `@safe` code can write to standard error (ADR-027 section 6).
 - **Still to write:** the other references, and the Go and Spring Boot references.
 

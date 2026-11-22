@@ -31,6 +31,13 @@ class VibeBenchTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout[-3000:] + result.stderr[-2000:])
         self.assertIn('cli-todo (flint): 29/29 checks — success', result.stdout)
 
+    def test_every_acceptance_test_is_passed_by_its_oracle(self):
+        # Minimal Python solutions prove the tests themselves sound where no reference exists yet.
+        result = bench('oracle', 'rest-notes', 'queue-worker', 'tui-dashboard')
+        self.assertEqual(result.returncode, 0, result.stdout[-3000:] + result.stderr[-2000:])
+        for task in ('rest-notes', 'queue-worker', 'tui-dashboard'):
+            self.assertRegex(result.stdout, task + r' \(oracle\): (\d+)/\1 checks — success')
+
     def test_a_fresh_project_fails_and_the_prompt_names_the_mcp_tools(self):
         with tempfile.TemporaryDirectory(prefix='vibe-test-') as temporary:
             workspace = Path(temporary) / 'work'

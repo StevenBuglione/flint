@@ -316,6 +316,8 @@ def main():
     sub = commands.add_parser('reference')
     sub.add_argument('tasks', nargs='*')
     sub.add_argument('--language', choices=LANGUAGES, default='flint')
+    sub = commands.add_parser('oracle', help='score the Python oracle that proves a task\'s acceptance test sound')
+    sub.add_argument('tasks', nargs='*')
     sub = commands.add_parser('run')
     sub.add_argument('task', choices=task_names())
     sub.add_argument('--language', choices=LANGUAGES, default='flint')
@@ -353,6 +355,22 @@ def main():
             record['review'] = review_size(arguments.language, directory)
             print_result(record)
             print(f"  review size: {record['review']}")
+            failed += not record['success']
+        return 1 if failed else 0
+    elif arguments.command == 'oracle':
+        sys.path.insert(0, str(BENCH))
+        from vibelib import Program
+        failed = 0
+        for task in arguments.tasks or task_names():
+            oracle = BENCH / 'oracles' / (task.replace('-', '_') + '.py')
+            if not oracle.is_file():
+                print(f'{task}: no oracle')
+                continue
+            results = load_acceptance(task).checks(Program([sys.executable, '-I', str(oracle)]))
+            record = {'task': task, 'language': 'oracle', 'built': True, 'passed': sum(c.passed for c in results),
+                      'total': len(results), 'checks': [vars(c) for c in results]}
+            record['success'] = record['passed'] == record['total'] > 0
+            print_result(record)
             failed += not record['success']
         return 1 if failed else 0
     elif arguments.command == 'run':

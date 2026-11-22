@@ -114,8 +114,9 @@ ANSI = re.compile(r'\x1b\[[0-?]*[ -/]*[@-~]|\x1b[()][0-9A-Za-z]|\x1b[=>78DEHMNOZ
 
 
 def visible_text(output):
-    """Terminal output without escape sequences, for presence checks."""
-    return ANSI.sub('', output)
+    """Terminal output without escape sequences, for presence checks. A cursor movement becomes a line break, so
+    text drawn at different places never runs together."""
+    return ANSI.sub(lambda match: '\n' if match.group(0)[-1] in 'HfABCDEFGd' else '', output)
 
 
 def write_atomically(path, text):

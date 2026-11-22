@@ -79,7 +79,8 @@ def run_checks(r, program, root):
     for name in bad:
         try:
             record = json.loads((failed / f'{name}.json').read_text())
-            shaped += record.get('file') == f'{name}.json' and isinstance(record.get('error'), str) and record['error']
+            shaped += bool(record.get('file') == f'{name}.json' and isinstance(record.get('error'), str)
+                           and record['error'])
         except (OSError, ValueError, AttributeError):
             pass
     r.equal('failed records name the file and the error', shaped, 5)
