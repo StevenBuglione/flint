@@ -5,6 +5,11 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 file(GLOB FLINT_SHIMS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/flint_*.c")
 add_library(flint_ffi STATIC ${FLINT_SHIMS})
 target_include_directories(flint_ffi PRIVATE "${CMAKE_INSTALL_PREFIX}/include")
+# One section per function and object, so a linked program keeps only the shim entry points it reaches
+# (and the providers behind them) rather than every function that shares a translation unit with one.
+if(NOT MSVC)
+  target_compile_options(flint_ffi PRIVATE -ffunction-sections -fdata-sections)
+endif()
 # Wasmtime is a static archive in this profile; Windows headers must not emit DLL imports.
 if(WIN32 AND EXISTS "${CMAKE_INSTALL_PREFIX}/include/wasmtime.h")
   target_compile_definitions(flint_ffi PRIVATE WASM_API_EXTERN= WASI_API_EXTERN=)
