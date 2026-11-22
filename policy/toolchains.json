@@ -79,6 +79,12 @@
       "checksum_url": "https://github.com/ldc-developers/ldc/releases/download/v1.43.0/ldc2-1.43.0.sha256sums.txt",
       "verification": "Downloaded into an empty directory on 2026-11-21; the digest matches the release ldc2-1.43.0.sha256sums.txt and the GitHub release asset digest."
     },
+    "clang+llvm-22.1.8-x86_64-pc-windows-msvc.tar.xz": {
+      "url": "https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.8/clang+llvm-22.1.8-x86_64-pc-windows-msvc.tar.xz",
+      "sha256": "d96c2cc1736f4eb7fa43cb9bbdf56d93551a9ae0a9aadb9c99c3c3b2b712a234",
+      "checksum_url": "https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.8/clang+llvm-22.1.8-x86_64-pc-windows-msvc.tar.xz.jsonl",
+      "verification": "The digest is the GitHub release asset digest, read on 2026-11-22. Only bin/lld-link.exe is extracted: the Windows dev link (ADR-026). The attestation signature was not verified with sigstore tooling."
+    },
     "LLVM-22.1.8-Linux-X64.tar.xz": {
       "url": "https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.8/LLVM-22.1.8-Linux-X64.tar.xz",
       "sha256": "df0e1ecf16caf3489a272a5eea4eec9b0d82878f6477fa309504f918a0006384",

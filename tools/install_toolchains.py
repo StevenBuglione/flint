@@ -517,6 +517,25 @@ def install_conan(destination):
             'sha256': LOCK['assets'][CONAN_ARCHIVE]['sha256']}
 
 
+LLVM_WINDOWS_ARCHIVE = 'clang+llvm-22.1.8-x86_64-pc-windows-msvc.tar.xz'
+LLVM_WINDOWS_ROOT = 'clang+llvm-22.1.8-x86_64-pc-windows-msvc'
+
+
+def install_lld_link(destination):
+    """Extract only lld-link.exe from the pinned LLVM Windows release: DMD links dev builds with it through
+    LINKCMD64, since a full link with a PDB takes LLD a third of link.exe's time (ADR-026)."""
+    binary = destination / LLVM_WINDOWS_ROOT / 'bin' / 'lld-link.exe'
+    if not binary.is_file():
+        install(LLVM_WINDOWS_ARCHIVE, destination, keep=lambda name: name == LLVM_WINDOWS_ROOT + '/bin/lld-link.exe')
+        # The 862 MB archive is needed only for this one file.
+        (destination / LLVM_WINDOWS_ARCHIVE).unlink(missing_ok=True)
+    version = subprocess.check_output([str(binary), '--version'], text=True)
+    if 'LLD ' + LOCK['versions']['clang'] not in version:
+        raise SystemExit('pinned LLVM archive did not provide lld-link ' + LOCK['versions']['clang'] + ': ' + version)
+    return {'compiler': 'lld', 'version': LOCK['versions']['clang'], 'bin': str(binary.parent),
+            'sha256': LOCK['assets'][LLVM_WINDOWS_ARCHIVE]['sha256'], 'lld_link_sha256': sha256_file(binary)}
+
+
 SANITIZER_RUNTIME = 'ldc-1.43.0-sanitizer-runtime'
 SANITIZER_RUNTIME_RECEIPT = 'flint-sanitizer-runtime.json'
 # Upstream runtime CMake options. RT_SUPPORT_SANITIZERS adds -d-version=SupportSanitizers:
@@ -605,7 +624,7 @@ def build_sanitizer_runtime(destination, build_root=None, jobs=None):
 
 
 def main():
-    ap=argparse.ArgumentParser();ap.add_argument('--compiler',choices=['dmd','ldc','dub','go','oha','clang','ldc-sanitizer-runtime','musl-sysroot','conan','flint'],required=True);ap.add_argument('--musl',action='store_true');ap.add_argument('--destination',type=Path,default=ROOT/'.tools')
+    ap=argparse.ArgumentParser();ap.add_argument('--compiler',choices=['dmd','ldc','dub','go','oha','clang','lld','ldc-sanitizer-runtime','musl-sysroot','conan','flint'],required=True);ap.add_argument('--musl',action='store_true');ap.add_argument('--destination',type=Path,default=ROOT/'.tools')
     ap.add_argument('--dmd-linker', metavar='LINKER', help='Use installed ld.lld or mold for project-local 64-bit DMD links')
     ap.add_argument('--flint-fork', action='store_true',
                     help='Build the Flint DMD/DUB fork (resident toolchain compile server, parallel DUB pipeline, direct linking)')
@@ -642,6 +661,10 @@ def main():
     if a.compiler == 'musl-sysroot':
         if (osname,arch)!=('Linux','x86_64'):raise SystemExit('the musl sysroot pin is for Linux x86_64 hosts')
         print(json.dumps(install_musl_sysroot(a.destination)))
+        return
+    if a.compiler=='lld':
+        if (osname,arch)!=('Windows','x86_64'):raise SystemExit('the pinned lld-link is the Windows dev linker (ADR-026)')
+        print(json.dumps(install_lld_link(a.destination)))
         return
     if a.compiler in ('clang','ldc-sanitizer-runtime'):
         if (osname,arch)!=('Linux','x86_64') or a.musl:raise SystemExit('the sanitizer lane toolchain pin is Linux x86_64 glibc')
