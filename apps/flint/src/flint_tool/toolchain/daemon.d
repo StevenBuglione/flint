@@ -28,12 +28,23 @@ string socketDirectory()
     import std.conv : to;
     import std.path : buildPath;
     import std.process : environment;
-    import core.sys.posix.unistd : getuid;
 
-    const runtime = environment.get("XDG_RUNTIME_DIR", "");
-    if (runtime.length)
-        return buildPath(runtime, "flint-dmd");
-    return "/tmp/flint-dmd-" ~ getuid().to!string;
+    version (Windows)
+    {
+        import std.file : tempDir;
+
+        // Windows runs no compile server (ADR-026); the directory is only reported.
+        return buildPath(tempDir(), "flint-dmd");
+    }
+    else
+    {
+        import core.sys.posix.unistd : getuid;
+
+        const runtime = environment.get("XDG_RUNTIME_DIR", "");
+        if (runtime.length)
+            return buildPath(runtime, "flint-dmd");
+        return "/tmp/flint-dmd-" ~ getuid().to!string;
+    }
 }
 
 /// Every server socket in the directory, with its process and flags when it is running.
@@ -183,8 +194,11 @@ private bool removeStale(const bool[string] stopped)
 /// Stop every live server: SIGTERM its process group, wait, then remove stale socket files.
 Server[] stopServers(long waitMillis = 3000, string executablePrefix = null)
 {
-    import core.sys.posix.signal : SIGKILL, SIGTERM;
-    import core.thread : Thread;
+    version (Windows)
+        enum SIGTERM = 15, SIGKILL = 9;
+    else
+        import core.sys.posix.signal : SIGKILL, SIGTERM;
+    import core.thread.osthread : Thread;
     import core.time : msecs;
     import flint_tool.sys.posix : processAlive, signalProcessGroup;
 
@@ -233,7 +247,7 @@ Server[] stopServers(long waitMillis = 3000, string executablePrefix = null)
 bool startServer(string dmd, scope const(string)[] flags, out Server started, out string failure,
         long waitMillis = 15_000)
 {
-    import core.thread : Thread;
+    import core.thread.osthread : Thread;
     import core.time : msecs;
     import std.file : mkdirRecurse, rmdirRecurse, tempDir, write;
     import std.path : buildPath;

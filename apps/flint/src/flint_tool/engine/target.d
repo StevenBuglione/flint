@@ -56,6 +56,13 @@ string hostTarget()
         else
             return "unknown";
     }
+    else version (Windows)
+    {
+        version (X86_64)
+            return "windows-x86_64";
+        else
+            return "unknown";
+    }
     else version (X86_64)
     {
         return exists("/lib/ld-musl-x86_64.so.1") ? muslTarget : glibcTarget;

@@ -1,26 +1,54 @@
 module flint.os.sys.interrupts;
 
 import core.atomic : atomicStore, cas;
-import core.stdc.errno : errno;
-import core.sys.posix.signal : SA_RESTART, SIGINT, SIG_DFL, SIG_IGN, sigaction, sigaction_t, sigemptyset;
-import core.sys.posix.unistd : read;
-import core.thread : Thread;
+import core.thread.osthread : Thread;
 import flint.arena : Error, Result, Status;
 import flint.os.sys.process : nativeStatus, waitForOutput;
 import flint.os.sys.threads : joinThread;
 
 @safe:
 
-version (OSX)
+version (Windows)
 {
+    import core.sys.windows.windef : BOOL, DWORD;
+    import flint.os.sys.process : openWake, takeWake, wakeHandle;
+
+    private alias ControlHandler = extern (Windows) BOOL function(DWORD) nothrow @nogc @system;
+    private extern (Windows) BOOL SetConsoleCtrlHandler(ControlHandler handler, BOOL add) nothrow @nogc @system;
+
+    // The console runs control handlers on a thread of its own; this one only sets the latch event, which
+    // lives for the process once created, exactly like the POSIX notifier descriptor.
+    private __gshared void* interruptEvent;
+
+    private extern (Windows) BOOL onConsoleControl(DWORD kind) nothrow @nogc @system
+    {
+        import core.sys.windows.winbase : SetEvent;
+
+        enum DWORD ctrlCEvent = 0;
+        auto event = interruptEvent;
+        if (kind != ctrlCEvent || event is null)
+            return 0; // Every other event keeps its default handling.
+        SetEvent(event);
+        return 1;
+    }
 }
 else
-    import core.sys.linux.sys.eventfd : EFD_CLOEXEC, EFD_NONBLOCK, eventfd;
-
-private extern (C) @system nothrow @nogc
 {
-    void flint_os_set_interrupt_fd(int descriptor);
-    void flint_os_notify_interrupt(int number);
+    import core.stdc.errno : errno;
+    import core.sys.posix.signal : SA_RESTART, SIGINT, SIG_DFL, SIG_IGN, sigaction, sigaction_t, sigemptyset;
+    import core.sys.posix.unistd : read;
+
+    version (OSX)
+    {
+    }
+    else
+        import core.sys.linux.sys.eventfd : EFD_CLOEXEC, EFD_NONBLOCK, eventfd;
+
+    private extern (C) @system nothrow @nogc
+    {
+        void flint_os_set_interrupt_fd(int descriptor);
+        void flint_os_notify_interrupt(int number);
+    }
 }
 
 private alias Callback = void delegate() @safe;
@@ -42,7 +70,7 @@ private struct Coordinator
     ulong lastId;
     ulong epoch;
     Thread worker;
-    sigaction_t previous;
+    version (Posix) sigaction_t previous;
     int descriptor = -1;
     bool ownsAction;
 }
@@ -64,44 +92,63 @@ private void unlock() nothrow @nogc
     atomicStore(locked, false);
 }
 
-// SAFETY: This fd is assigned to the native notifier once and lives for the process.
-// A signal frame may have captured the action before restoration, so the fd is never repurposed.
-private Error initializeLatch(ref Coordinator state) @trusted nothrow @nogc
+version (Windows)
 {
-    if (state.descriptor >= 0)
-        return Error.init;
-    version (OSX)
+    // SAFETY: The wake descriptor and its event live for the process once created; the control handler only
+    // signals that event, so it is never repurposed.
+    private Error initializeLatch(ref Coordinator state) @trusted nothrow @nogc
     {
-        // Darwin has no eventfd: the handler writes into a nonblocking pipe whose ends both live
-        // for the process. takeSignal drains every pending notification at once, as eventfd does.
-        import core.sys.posix.fcntl : FD_CLOEXEC, F_SETFD, F_SETFL, O_NONBLOCK, fcntl;
-        import core.sys.posix.unistd : close, pipe;
-
-        int[2] ends;
-        if (pipe(ends) != 0)
-            return Error(nativeStatus(errno), "could not create interrupt notifier");
-        foreach (end; ends)
-        {
-            if (fcntl(end, F_SETFD, FD_CLOEXEC) != 0 || fcntl(end, F_SETFL, O_NONBLOCK) != 0)
-            {
-                const status = nativeStatus(errno);
-                close(ends[0]);
-                close(ends[1]);
-                return Error(status, "could not configure interrupt notifier");
-            }
-        }
-        state.descriptor = ends[0];
-        flint_os_set_interrupt_fd(ends[1]);
-    }
-    else
-    {
-        const descriptor = eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK);
+        if (state.descriptor >= 0)
+            return Error.init;
+        const descriptor = openWake();
         if (descriptor < 0)
-            return Error(nativeStatus(errno), "could not create interrupt notifier");
+            return Error(Status.resourceExhausted, "could not create interrupt notifier");
         state.descriptor = descriptor;
-        flint_os_set_interrupt_fd(descriptor);
+        interruptEvent = wakeHandle(descriptor);
+        return Error.init;
     }
-    return Error.init;
+}
+else
+{
+    // SAFETY: This fd is assigned to the native notifier once and lives for the process.
+    // A signal frame may have captured the action before restoration, so the fd is never repurposed.
+    private Error initializeLatch(ref Coordinator state) @trusted nothrow @nogc
+    {
+        if (state.descriptor >= 0)
+            return Error.init;
+        version (OSX)
+        {
+            // Darwin has no eventfd: the handler writes into a nonblocking pipe whose ends both live
+            // for the process. takeSignal drains every pending notification at once, as eventfd does.
+            import core.sys.posix.fcntl : FD_CLOEXEC, F_SETFD, F_SETFL, O_NONBLOCK, fcntl;
+            import core.sys.posix.unistd : close, pipe;
+
+            int[2] ends;
+            if (pipe(ends) != 0)
+                return Error(nativeStatus(errno), "could not create interrupt notifier");
+            foreach (end; ends)
+            {
+                if (fcntl(end, F_SETFD, FD_CLOEXEC) != 0 || fcntl(end, F_SETFL, O_NONBLOCK) != 0)
+                {
+                    const status = nativeStatus(errno);
+                    close(ends[0]);
+                    close(ends[1]);
+                    return Error(status, "could not configure interrupt notifier");
+                }
+            }
+            state.descriptor = ends[0];
+            flint_os_set_interrupt_fd(ends[1]);
+        }
+        else
+        {
+            const descriptor = eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK);
+            if (descriptor < 0)
+                return Error(nativeStatus(errno), "could not create interrupt notifier");
+            state.descriptor = descriptor;
+            flint_os_set_interrupt_fd(descriptor);
+        }
+        return Error.init;
+    }
 }
 
 // SAFETY: The daemon captures only its immutable descriptor and epoch, and uses a safe D entry.
@@ -118,68 +165,107 @@ private @trusted void startCoordinator(ref Coordinator state)
     state.worker = worker;
 }
 
-// SAFETY: The raw C action runs only the event notifier. The application callback stays in the D registry.
-// This action only claims SIGINT when no independent custom handler currently owns it.
-private Error install(ref Coordinator state) @trusted nothrow @nogc
+version (Windows)
 {
-    if (state.ownsAction)
-        return Error.init;
-
-    sigaction_t previous;
-    if (sigaction(SIGINT, null, &previous) != 0)
-        return Error(nativeStatus(errno), "could not inspect SIGINT disposition");
-    if (previous.sa_handler != SIG_DFL && previous.sa_handler != SIG_IGN)
-        return Error(Status.conflict, "SIGINT already has an application handler");
-
-    cast(void) takeSignal(state.descriptor);
-    sigaction_t action;
-    if (sigemptyset(&action.sa_mask) != 0)
-        return Error(nativeStatus(errno), "could not prepare SIGINT disposition");
-    action.sa_handler = &flint_os_notify_interrupt;
-    action.sa_flags = SA_RESTART;
-
-    if (sigaction(SIGINT, &action, &state.previous) != 0)
-        return Error(nativeStatus(errno), "could not install SIGINT notifier");
-    state.ownsAction = true;
-    return Error.init;
-}
-
-// SAFETY: Only the previously saved action is restored, and only while the current action is ours.
-private Error restore(ref Coordinator state) @trusted nothrow @nogc
-{
-    if (!state.ownsAction)
-        return Error.init;
-
-    sigaction_t current;
-    if (sigaction(SIGINT, null, &current) != 0)
-        return Error(nativeStatus(errno), "could not inspect active SIGINT notifier");
-    if (current.sa_handler != &flint_os_notify_interrupt)
+    // Windows cannot list other control handlers, so one an application registers later runs first and may claim
+    // the event; Flint's handler then never sees it.
+    // SAFETY: Registers the handler above, which only signals the process-lifetime latch event.
+    private Error install(ref Coordinator state) @trusted nothrow @nogc
     {
+        import core.sys.windows.winbase : GetLastError;
+
+        if (state.ownsAction)
+            return Error.init;
+        cast(void) takeSignal(state.descriptor);
+        if (!SetConsoleCtrlHandler(&onConsoleControl, 1))
+            return Error(nativeStatus(GetLastError()), "could not install the Ctrl+C notifier");
+        state.ownsAction = true;
+        return Error.init;
+    }
+
+    // SAFETY: Removes only Flint's own handler.
+    private Error restore(ref Coordinator state) @trusted nothrow @nogc
+    {
+        import core.sys.windows.winbase : GetLastError;
+
+        if (!state.ownsAction)
+            return Error.init;
         state.ownsAction = false;
-        return Error(Status.conflict, "SIGINT action changed while subscribed");
+        if (!SetConsoleCtrlHandler(&onConsoleControl, 0))
+            return Error(nativeStatus(GetLastError()), "could not remove the Ctrl+C notifier");
+        return Error.init;
     }
-    if (sigaction(SIGINT, &state.previous, null) != 0)
-        return Error(nativeStatus(errno), "could not restore previous SIGINT action");
-    state.ownsAction = false;
-    return Error.init;
-}
 
-// SAFETY: eventfd writes at most eight bytes to the local counter and borrows no storage.
-// On Darwin each read fills at most the local buffer from the nonblocking pipe.
-private bool takeSignal(int fd) @trusted nothrow @nogc
-{
-    version (OSX)
+    private bool takeSignal(int fd) nothrow @nogc
     {
-        ulong[8] counts;
-        bool any;
-        while (read(fd, counts.ptr, counts.sizeof) > 0)
-            any = true;
-        return any;
+        return takeWake(fd);
     }
-    else
+}
+else
+{
+    // SAFETY: The raw C action runs only the event notifier. The application callback stays in the D registry.
+    // This action only claims SIGINT when no independent custom handler currently owns it.
+    private Error install(ref Coordinator state) @trusted nothrow @nogc
     {
-        ulong count;
-        return read(fd, &count, count.sizeof) == count.sizeof;
+        if (state.ownsAction)
+            return Error.init;
+
+        sigaction_t previous;
+        if (sigaction(SIGINT, null, &previous) != 0)
+            return Error(nativeStatus(errno), "could not inspect SIGINT disposition");
+        if (previous.sa_handler != SIG_DFL && previous.sa_handler != SIG_IGN)
+            return Error(Status.conflict, "SIGINT already has an application handler");
+
+        cast(void) takeSignal(state.descriptor);
+        sigaction_t action;
+        if (sigemptyset(&action.sa_mask) != 0)
+            return Error(nativeStatus(errno), "could not prepare SIGINT disposition");
+        action.sa_handler = &flint_os_notify_interrupt;
+        action.sa_flags = SA_RESTART;
+
+        if (sigaction(SIGINT, &action, &state.previous) != 0)
+            return Error(nativeStatus(errno), "could not install SIGINT notifier");
+        state.ownsAction = true;
+        return Error.init;
+    }
+
+    // SAFETY: Only the previously saved action is restored, and only while the current action is ours.
+    private Error restore(ref Coordinator state) @trusted nothrow @nogc
+    {
+        if (!state.ownsAction)
+            return Error.init;
+
+        sigaction_t current;
+        if (sigaction(SIGINT, null, &current) != 0)
+            return Error(nativeStatus(errno), "could not inspect active SIGINT notifier");
+        if (current.sa_handler != &flint_os_notify_interrupt)
+        {
+            state.ownsAction = false;
+            return Error(Status.conflict, "SIGINT action changed while subscribed");
+        }
+        if (sigaction(SIGINT, &state.previous, null) != 0)
+            return Error(nativeStatus(errno), "could not restore previous SIGINT action");
+        state.ownsAction = false;
+        return Error.init;
+    }
+
+    // SAFETY: eventfd writes at most eight bytes to the local counter and borrows no storage.
+    // On Darwin each read fills at most the local buffer from the nonblocking pipe.
+    private bool takeSignal(int fd) @trusted nothrow @nogc
+    {
+        version (OSX)
+        {
+            ulong[8] counts;
+            bool any;
+            while (read(fd, counts.ptr, counts.sizeof) > 0)
+                any = true;
+            return any;
+        }
+        else
+        {
+            ulong count;
+            return read(fd, &count, count.sizeof) == count.sizeof;
+        }
     }
 }
 

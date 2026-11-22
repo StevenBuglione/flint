@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Bring Flint up natively on Windows x86-64 (ADR-026): the pinned DMD and LDC install and verify there, `flint` bootstraps itself, and 12 pure-D packages pass on both compilers, with Win32 process supervision (job objects, named pipes), console sessions over the shared terminal ABI, and Ctrl+C handling.
 - Implement the 37-package Flint library catalog, from scoped arenas and Linux reactors to typed HTTP, SQL, terminal, WASM, and application adapters.
 - Add Linux io_uring and epoll execution, linked HTTP/1.1 and HTTP/2, PostgreSQL and SQLite integration, gRPC, WebSocket support, middleware, and bounded cancellation.
 - Add built-in terminal rendering with a BetterC browser bridge, signal graph, and pinned Wasmtime host for core, Preview1, and component programs.

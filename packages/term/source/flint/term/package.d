@@ -6,10 +6,13 @@ public import flint.term.events : ColorProfile, Event, EventKind, KeyCode, KeyEv
 
 @safe:
 
-// The native terminal session (native/linux.c) is built for Linux and macOS.
+// The native terminal session is native/linux.c on Linux and macOS, and flint.term.sys.windows_console on
+// Windows, both behind the ABI in flint.term.sys.linux_abi.
 version (linux)
     version = FlintTermNative;
 else version (OSX)
+    version = FlintTermNative;
+else version (Windows)
     version = FlintTermNative;
 
 version (FlintTermNative) import flint.term.sys.linux_session : LinuxSession;
@@ -122,13 +125,12 @@ StreamInfo describe(Stream stream)
     StreamInfo info;
     version (FlintTermNative)
     {
-        import flint.term.sys.linux_session : detectColors, environmentValue;
+        import flint.term.sys.linux_session : environmentColors;
         import flint.term.sys.output : probeStream;
 
         info.terminal = probeStream(stream == Stream.output ? 1 : 2, info.size);
         if (info.terminal)
-            info.colors = detectColors(environmentValue("TERM", ""), environmentValue("COLORTERM",
-                    ""), environmentValue("NO_COLOR") != "");
+            info.colors = environmentColors();
     }
     return info;
 }

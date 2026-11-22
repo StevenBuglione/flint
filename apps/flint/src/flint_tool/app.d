@@ -14,6 +14,12 @@ int main(string[] args)
 {
     import flint_tool.support.process : closeTrace, installInterruptHandling, installTrace;
 
+    version (Windows)
+    {
+        import flint_tool.sys.posix : prepareConsole;
+
+        prepareConsole();
+    }
     installInterruptHandling();
     installTrace();
     scope (exit)

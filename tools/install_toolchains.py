@@ -14,6 +14,42 @@ def sha256_file(path):
     return digest.hexdigest()
 
 
+def extract_7z(archive, destination):
+    """Extract a .7z release archive with 7-Zip, or with the bsdtar that ships in Windows 10 1803 and later.
+
+    A stamp records the archive digest after a complete extraction. Windows cannot replace an executable that is
+    running, such as the pinned dub.exe, so an unchanged archive is not extracted again.
+    """
+    stamp = destination / (archive.name + '.extracted')
+    digest = sha256_file(archive)
+    if stamp.is_file() and stamp.read_text().strip() == digest:
+        return
+    _extract_7z(archive, destination)
+    stamp.write_text(digest + '\n')
+
+
+def _extract_7z(archive, destination):
+    if shutil.which('7z'):
+        subprocess.run(['7z', 'x', '-y', str(archive), '-o' + str(destination)], check=True, stdout=subprocess.DEVNULL)
+        return
+    system_tar = Path(os.environ.get('SystemRoot', r'C:\Windows')) / 'System32' / 'tar.exe'
+    if platform.system() == 'Windows' and system_tar.is_file():
+        # libarchive reads 7z; GNU tar on other hosts does not, so only the Windows tar is used.
+        subprocess.run([str(system_tar), '-x', '-f', str(archive), '-C', str(destination)], check=True)
+        return
+    raise SystemExit('extracting ' + archive.name + ' needs 7z on PATH')
+
+
+def exe(name):
+    """Executable file name on this host."""
+    return name + '.exe' if platform.system() == 'Windows' else name
+
+
+def dmd_bin_relative(osname=None):
+    """The pinned DMD release's 64-bit bin directory, relative to the toolchain directory."""
+    return 'dmd2/windows/bin64' if (osname or platform.system()) == 'Windows' else 'dmd2/linux/bin64'
+
+
 def install(name,destination,keep=None):
     """Download, verify and extract a locked asset; `keep` selects archive members by name."""
     a=LOCK['assets'][name];destination.mkdir(parents=True,exist_ok=True);archive=destination/name
@@ -27,7 +63,7 @@ def install(name,destination,keep=None):
     if name=='oha-linux-amd64':
         binary=destination/'oha-1.16.0/oha';binary.parent.mkdir(parents=True,exist_ok=True)
         shutil.copyfile(archive,binary);binary.chmod(0o755)
-    elif name.endswith('.7z'):subprocess.run(['7z','x','-y',str(archive),'-o'+str(destination)],check=True)
+    elif name.endswith('.7z'):extract_7z(archive,destination)
     elif keep:
         # Stream the archive once; random access would decompress it again per member.
         with tarfile.open(archive,'r|*') as t:
@@ -309,6 +345,11 @@ def bootstrap_flint(toolchain):
         bin_dir = toolchain / LDC_DARWIN / 'bin'
         dmd, dub = bin_dir / 'ldmd2', toolchain / FLINT_DUB / 'bin' / 'dub'
         hint = '--compiler ldc and --compiler dub'
+    elif platform.system() == 'Windows':
+        # ADR-026: the upstream DMD and DUB of the pinned Windows release.
+        bin_dir = toolchain / dmd_bin_relative()
+        dmd, dub = bin_dir / exe('dmd'), bin_dir / exe('dub')
+        hint = '--compiler dmd'
     else:
         bin_dir = toolchain / 'dmd2' / 'linux' / 'bin64'
         dmd, dub = bin_dir / 'dmd', bin_dir / 'dub'
@@ -329,7 +370,7 @@ def bootstrap_flint(toolchain):
         env['FLINT_DUB_PIPELINE'] = '0'  # The pipeline's in-process archives are ELF-only (ADR-024).
     subprocess.run([str(dub), 'build', '--root=' + str(recipe_dir), '--config=dev', '--compiler=' + str(dmd),
                     '--build=plain', '--skip-registry=all'], cwd=FLINT_APP, env=env, check=True)
-    artifact = manifest.get('build', {}).get('executable', manifest['project']['name'])
+    artifact = exe(manifest.get('build', {}).get('executable', manifest['project']['name']))
     stage1 = FLINT_APP / '.flint' / 'bootstrap' / artifact
     stage1.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(FLINT_APP / '.flint' / 'build' / 'dev' / artifact, stage1)
@@ -586,8 +627,13 @@ def main():
         print(json.dumps(receipt))
         return
     if a.compiler=='dmd':
-        if (osname,arch)!=('Linux','x86_64') or a.musl:raise SystemExit('DMD development pin supports Linux x86_64 glibc; use LDC for this target')
-        name='dmd.2.114.0.linux.tar.xz';relative='dmd2/linux/bin64'
+        if (osname,arch)==('Windows','x86_64') and not a.musl:
+            # ADR-026: the compile server and the parallel DUB pipeline are POSIX-only; Windows uses upstream DMD and DUB.
+            if a.flint_fork or a.dmd_linker:raise SystemExit('the Flint DMD/DUB fork and --dmd-linker are Linux-only (ADR-026)')
+            name='dmd.2.114.0.windows.7z'
+        elif (osname,arch)!=('Linux','x86_64') or a.musl:raise SystemExit('DMD development pin supports Linux x86_64 glibc and Windows x86_64; use LDC for this target')
+        else:name='dmd.2.114.0.linux.tar.xz'
+        relative=dmd_bin_relative(osname)
     elif a.compiler=='oha':
         if (osname,arch)!=('Linux','x86_64'):raise SystemExit('oha benchmark pin is Linux x86_64')
         name='oha-linux-amd64';relative='oha-1.16.0'
@@ -603,8 +649,8 @@ def main():
     install(name,a.destination);binary_path=a.destination/relative
     if not binary_path.is_dir():raise SystemExit('archive layout did not contain '+str(binary_path))
     receipt = {'compiler':a.compiler,'version':LOCK['versions'][a.compiler],'bin':str(binary_path),'sha256':LOCK['assets'][name]['sha256']}
-    if a.compiler=='dmd':
-        quote_dmd_conf(binary_path)
+    if a.compiler=='dmd' and osname!='Windows':
+        quote_dmd_conf(binary_path)  # The Windows release's sc.ini already quotes its %@P% paths.
     if linker:
         configure_dmd_linker(binary_path, linker)
         receipt['linker'] = linker

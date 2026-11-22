@@ -4,13 +4,21 @@ import flint.test : expect;
 
 @safe:
 
-@("the loader probe finds libc and refuses a missing library")
+@("the loader probe finds the C library (kernel32 on Windows) and refuses a missing library")
 unittest
 {
     import flint_tool.sys.posix : loadableLibrary;
 
-    expect(loadableLibrary(["libflint-absent-test.so.9", "libc.so.6"])).toEqual("libc.so.6");
-    expect(loadableLibrary(["libflint-absent-test.so.9"]).length).toEqual(0);
+    version (Windows)
+    {
+        expect(loadableLibrary(["flint-absent-test.dll", "kernel32.dll"])).toEqual("kernel32.dll");
+        expect(loadableLibrary(["flint-absent-test.dll"]).length).toEqual(0);
+    }
+    else
+    {
+        expect(loadableLibrary(["libflint-absent-test.so.9", "libc.so.6"])).toEqual("libc.so.6");
+        expect(loadableLibrary(["libflint-absent-test.so.9"]).length).toEqual(0);
+    }
 }
 
 @("an installer failure is summarised by its last line")
@@ -48,8 +56,10 @@ unittest
     import std.ascii : isWhite;
     import flint_tool.commands.packaging : configurationPath;
 
-    expect(configurationPath("/work/shop", "linux-x86_64-musl", "x")).toEqual(
-            "/work/shop/.flint/generated/ldc2-linux-x86_64-musl.conf");
+    import std.path : buildPath;
+
+    expect(configurationPath("/work/shop", "linux-x86_64-musl", "x")).toEqual(buildPath("/work/shop",
+            ".flint", "generated", "ldc2-linux-x86_64-musl.conf"));
     const moved = configurationPath("/work/my shop", "linux-x86_64-musl", "x");
     expect(moved.any!isWhite).toEqual(false);
     expect(configurationPath("/work/my shop", "linux-x86_64-musl", "x")).toEqual(moved);

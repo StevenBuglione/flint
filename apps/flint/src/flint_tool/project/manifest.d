@@ -194,8 +194,16 @@ shared static this()
     ];
 }
 
-/// Targets this release builds.
-immutable string[] supportedTargets = ["linux-x86_64-glibc"];
+version (Windows)
+{
+    /// Targets this release builds. A Windows host also builds its own target (ADR-026).
+    immutable string[] supportedTargets = ["linux-x86_64-glibc", "windows-x86_64"];
+}
+else
+{
+    /// Targets this release builds.
+    immutable string[] supportedTargets = ["linux-x86_64-glibc"];
+}
 
 /// Every target name Flint knows.
 immutable string[] knownTargets = [

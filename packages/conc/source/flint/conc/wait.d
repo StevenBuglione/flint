@@ -1,7 +1,7 @@
 /// Thread-local cooperative waiting for native owner loops and blocking callers.
 module flint.conc.wait;
 
-import core.thread : Thread;
+import core.thread.osthread : Thread;
 import core.time : nsecs;
 import flint.arena : Error, Status;
 import flint.conc : Deadline;

@@ -9,7 +9,33 @@ version (linux)
 else version (OSX)
     version = FlintTermNative;
 
-version (FlintTermNative)
+version (Windows)
+{
+    import flint.term.events : Size;
+
+    /// Whether standard output (1) or standard error (2) is a console, and its window size. A console counts as
+    /// a terminal only while it interprets virtual-terminal sequences, which this probe never switches on.
+    // SAFETY: GetStdHandle borrows the process's own handle; the mode and buffer queries write only locals.
+    package(flint.term) bool probeStream(int descriptor, out Size size) @trusted nothrow @nogc
+    {
+        import core.sys.windows.wincon : CONSOLE_SCREEN_BUFFER_INFO, GetConsoleMode, GetConsoleScreenBufferInfo;
+        import core.sys.windows.winbase : GetStdHandle, STD_ERROR_HANDLE, STD_OUTPUT_HANDLE;
+
+        enum uint virtualTerminalProcessing = 0x0004;
+        if (descriptor != 1 && descriptor != 2)
+            return false;
+        auto handle = GetStdHandle(descriptor == 1 ? STD_OUTPUT_HANDLE : STD_ERROR_HANDLE);
+        uint mode;
+        if (handle is null || !GetConsoleMode(handle, &mode) || (mode & virtualTerminalProcessing) == 0)
+            return false;
+        CONSOLE_SCREEN_BUFFER_INFO information;
+        if (GetConsoleScreenBufferInfo(handle, &information))
+            size = Size(information.srWindow.Right - information.srWindow.Left + 1,
+                    information.srWindow.Bottom - information.srWindow.Top + 1);
+        return true;
+    }
+}
+else version (FlintTermNative)
 {
     import flint.term.events : Size;
 

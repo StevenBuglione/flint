@@ -206,18 +206,35 @@ string which(string name)
 
     if (name.length == 0)
         return null;
-    foreach (directory; environment.get("PATH", "").splitter(':'))
+    import flint_tool.toolchain.host : pathListSeparator;
+
+    foreach (directory; environment.get("PATH", "").splitter(pathListSeparator))
     {
         if (directory.length == 0)
             continue;
-        const candidate = buildPath(directory, name);
-        if (exists(candidate) && isFile(candidate) && executable(candidate))
-            return candidate;
+        version (Windows)
+        {
+            import std.path : extension;
+
+            // Only executables: flint never starts a batch file through cmd.exe.
+            foreach (suffix; extension(name).length ? [""] : [".exe", ".com"])
+            {
+                const candidate = buildPath(directory, name ~ suffix);
+                if (exists(candidate) && isFile(candidate))
+                    return candidate;
+            }
+        }
+        else
+        {
+            const candidate = buildPath(directory, name);
+            if (exists(candidate) && isFile(candidate) && executable(candidate))
+                return candidate;
+        }
     }
     return null;
 }
 
-private bool executable(string path)
+version (Posix) private bool executable(string path)
 {
     import std.file : getAttributes;
 

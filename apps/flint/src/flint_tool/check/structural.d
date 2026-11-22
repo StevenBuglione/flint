@@ -350,11 +350,42 @@ bool projectMixinTokens(string text, string compiler, string root, out Token[] t
 
 private bool within(string path, string directory)
 {
-    return path.length > directory.length && path[0 .. directory.length] == directory && path[directory.length] == '/';
+    version (Windows)
+        const separator = path.length > directory.length && (path[directory.length] == '/'
+                || path[directory.length] == '\\');
+    else
+        const separator = path.length > directory.length && path[directory.length] == '/';
+    return separator && path[0 .. directory.length] == directory;
 }
 
 /// Canonical absolute path with symbolic links resolved, as Python's Path.resolve().
 string realPath(string path)
+{
+    version (Windows)
+    {
+        import std.path : absolutePath, baseName, buildNormalizedPath, buildPath, dirName;
+        import flint_tool.sys.windows : finalPath;
+
+        // The longest existing prefix is resolved by the kernel; the rest is appended as written.
+        string current = buildNormalizedPath(absolutePath(path));
+        string rest;
+        while (true)
+        {
+            const resolved = finalPath(current);
+            if (resolved.length)
+                return rest.length ? buildPath(resolved, rest) : resolved;
+            const parent = dirName(current);
+            if (parent == current)
+                return buildNormalizedPath(absolutePath(path));
+            rest = rest.length ? buildPath(baseName(current), rest) : baseName(current);
+            current = parent;
+        }
+    }
+    else
+        return posixRealPath(path);
+}
+
+version (Posix) private string posixRealPath(string path)
 {
     import std.algorithm.iteration : splitter;
     import std.file : exists, isSymlink, readLink;

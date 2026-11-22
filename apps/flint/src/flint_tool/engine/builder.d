@@ -514,11 +514,16 @@ private void syncDubPackages(string root, const ref Resolution resolution)
 private string artifactPath(const ref Manifest manifest, const ref BuildRequest request)
 {
     import std.path : buildPath;
+    import flint_tool.toolchain.host : executable;
 
     const name = manifest.artifactName();
     if (request.test)
-        return buildPath(manifest.root, ".flint", "build", "test", name ~ "-test");
-    const file = manifest.type == "library" ? "lib" ~ name ~ ".a" : name;
+        return buildPath(manifest.root, ".flint", "build", "test", executable(name ~ "-test"));
+    version (Windows)
+        const library = name ~ ".lib";
+    else
+        const library = "lib" ~ name ~ ".a";
+    const file = manifest.type == "library" ? library : executable(name);
     return buildPath(manifest.root, ".flint", "build", request.profile, file);
 }
 

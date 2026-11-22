@@ -149,18 +149,18 @@ string toolchainDirectory(const ref Home home, string overrideDirectory = null)
 string componentPath(const ref Home home, string directory, string name)
 {
     import std.path : buildPath;
-    import flint_tool.toolchain.host : dmdBin, dmdExecutable, dubBin, ldcBin;
+    import flint_tool.toolchain.host : dmdBin, dmdExecutable, dubBin, executable, ldcBin;
 
     switch (name)
     {
     case "dmd":
         return buildPath(directory, dmdBin(home.versions["ldc"]), dmdExecutable);
     case "dub":
-        return buildPath(directory, dubBin(home.versions["dub"]), name);
+        return buildPath(directory, dubBin(home.versions["dub"]), executable(name));
     case "ldc2":
-        return buildPath(directory, ldcBin(home.versions["ldc"]), "ldc2");
+        return buildPath(directory, ldcBin(home.versions["ldc"]), executable("ldc2"));
     default:
-        return buildPath(directory, "bin", name);
+        return buildPath(directory, "bin", executable(name));
     }
 }
 
@@ -202,15 +202,20 @@ Toolchain inspect(const ref Home home, scope const(string)[] names, bool hash, s
         }
         assign(toolchain, component);
     }
-    import flint_tool.toolchain.host : dmdForkHost;
+    import flint_tool.toolchain.host : dmdForkHost, upstreamDmdHost;
 
     const bin = buildPath(toolchain.directory, "dmd2", "linux", "bin64");
-    // Without the DMD fork (ADR-024) the Flint-patched DUB is the whole fork.
-    toolchain.fork.installed = dmdForkHost ? exists(buildPath(bin, "dmd.upstream"))
-        && exists(buildPath(bin, "dub.upstream")) : toolchain.dub.present;
+    // Without the DMD fork (ADR-024) the Flint-patched DUB is the whole fork. With the upstream DMD and DUB
+    // (ADR-026) there is no fork: the receipt then only ties the installed binaries to the pinned archives.
+    static if (upstreamDmdHost)
+        toolchain.fork.installed = toolchain.dmd.present && toolchain.dub.present;
+    else
+        toolchain.fork.installed = dmdForkHost ? exists(buildPath(bin, "dmd.upstream"))
+            && exists(buildPath(bin, "dub.upstream")) : toolchain.dub.present;
     const dmdPatch = buildPath(home.root, "toolchain", "dmd-2.114.0-flint.patch");
     toolchain.fork.dmdPatch = dmdForkHost ? sha256File(dmdPatch) : "";
-    toolchain.fork.dubPatch = sha256File(buildPath(home.root, "toolchain", "dub-1.43.0-flint.patch"));
+    toolchain.fork.dubPatch = upstreamDmdHost ? "" : sha256File(buildPath(home.root, "toolchain",
+            "dub-1.43.0-flint.patch"));
     toolchain.fork.receiptPath = buildPath(toolchain.directory, receiptName);
     ToolchainReceipt receipt;
     if (readReceipt(toolchain.fork.receiptPath, receipt))
@@ -388,21 +393,45 @@ bool dmdConfSplits(string dmd)
     return false;
 }
 
-/// The libraries Phobos' std.net.curl tries, at run time, when DUB downloads from code.dlang.org.
-immutable string[] dubCurlLibraries = [
-    "libcurl.so", "libcurl.so.4", "libcurl-gnutls.so.4", "libcurl-nss.so.4", "libcurl.so.3"
-];
+version (Windows)
+{
+    /// The libraries Phobos' std.net.curl tries, at run time, when DUB downloads from code.dlang.org.
+    immutable string[] dubCurlLibraries = ["libcurl.dll", "curl.dll"];
 
-/// How to make libcurl loadable for DUB.
-enum dubCurlFix = "install libcurl (Debian/Ubuntu: sudo apt-get install libcurl4), or point LD_LIBRARY_PATH at the "
-    ~ "directory holding libcurl.so.4 (NixOS: export LD_LIBRARY_PATH=\"$(nix-build '<nixpkgs>' -A curl.out "
-    ~ "--no-out-link)/lib\")";
+    /// How to make libcurl loadable for DUB.
+    enum dubCurlFix = "DMD's Windows release ships libcurl.dll beside dub.exe: reinstall it with `flint toolchain "
+        ~ "install`, or put a libcurl.dll on PATH";
+}
+else
+{
+    /// The libraries Phobos' std.net.curl tries, at run time, when DUB downloads from code.dlang.org.
+    immutable string[] dubCurlLibraries = [
+        "libcurl.so", "libcurl.so.4", "libcurl-gnutls.so.4", "libcurl-nss.so.4", "libcurl.so.3"
+    ];
+
+    /// How to make libcurl loadable for DUB.
+    private enum curlPackage = "install libcurl (Debian/Ubuntu: sudo apt-get install libcurl4), or point ";
+    private enum curlPath = "LD_LIBRARY_PATH at the directory holding libcurl.so.4 (NixOS: export LD_LIBRARY_PATH=";
+    private enum curlNix = "\"$(nix-build '<nixpkgs>' -A curl.out --no-out-link)/lib\")";
+    /// How to make libcurl loadable for DUB.
+    enum dubCurlFix = curlPackage ~ curlPath ~ curlNix;
+}
 
 /// The libcurl DUB would load, or null when the loader finds none (FLINT-E0820 is then the caller's to raise).
-string dubCurl()
+/// On Windows DUB loads it from its own directory first, which `dubDirectory` names.
+string dubCurl(string dubDirectory = null)
 {
     import flint_tool.sys.posix : loadableLibrary;
 
+    version (Windows)
+    {
+        import std.file : exists;
+        import std.path : buildPath;
+
+        foreach (name; dubCurlLibraries)
+            if (dubDirectory.length && exists(buildPath(dubDirectory, name)))
+                return buildPath(dubDirectory, name);
+    }
     return loadableLibrary(dubCurlLibraries);
 }
 
@@ -412,10 +441,24 @@ string[][] installCommands(const ref Home home, string directory, bool pgo, stri
 {
     import std.path : buildPath;
 
-    import flint_tool.toolchain.host : dmdForkHost;
+    import flint_tool.toolchain.host : dmdForkHost, upstreamDmdHost;
 
     const installer = buildPath(home.root, "tools", "install_toolchains.py");
-    static if (!dmdForkHost)
+    static if (upstreamDmdHost)
+    {
+        // ADR-026: the upstream DMD and DUB, then LDC. The receipt follows both. Embedded C uses MSVC, so no
+        // clang is installed; the sanitizer and musl lanes are Linux-only. Windows names Python `python`.
+        string[][] upstreamCommands = [
+            ["python", installer, "--compiler", "dmd", "--destination", directory],
+            ["python", installer, "--compiler", "ldc", "--destination", directory]
+        ];
+        if (directory == buildPath(home.root, ".tools"))
+            upstreamCommands ~= [
+            "python", buildPath(home.root, "tools", "install_quality_tools.py")
+        ];
+        return upstreamCommands;
+    }
+    else static if (!dmdForkHost)
     {
         // ADR-024: LDC, then the Flint-patched DUB built with it. The receipt follows the second.
         // Embedded C uses the host's Apple clang; sanitizer and musl lanes are Linux-only.
@@ -514,11 +557,13 @@ bool composeReceipt(const ref Home home, string directory, string dmdOutput, str
     import std.path : buildPath;
     import flint_tool.support.files : sha256File;
 
-    import flint_tool.toolchain.host : dmdForkHost;
+    import flint_tool.toolchain.host : dmdForkHost, upstreamDmdHost;
 
     DecodeOptions lenient;
     lenient.unknownFields = UnknownFields.ignore;
-    static if (!dmdForkHost)
+    static if (upstreamDmdHost)
+        return composeUpstreamReceipt(home, directory, dmdOutput, ldcOutput, receipt, report);
+    else static if (!dmdForkHost)
         return composeHostReceipt(home, directory, dmdOutput, ldcOutput, receipt, report);
     auto dmd = deserialize!InstallerDmd(lastJsonLine(dmdOutput), lenient);
     auto ldc = deserialize!InstallerTool(lastJsonLine(ldcOutput), lenient);
@@ -571,6 +616,33 @@ private bool composeHostReceipt(const ref Home home, string directory, string fi
     receipt.installer_sha256 = sha256File(buildPath(home.root, "tools", "install_toolchains.py"));
     receipt.dmd = ReceiptDmd(home.versions["ldc"], ldc.value.sha256, sha256File(componentPath(home,
             directory, "dmd")), dub.value.dub_sha256, "", dub.value.dub_patch_sha256, "", false);
+    receipt.ldc = ReceiptTool(home.versions["ldc"], ldc.value.sha256, sha256File(componentPath(home,
+            directory, "ldc2")));
+    return true;
+}
+
+/// The receipt on a host with the upstream DMD and DUB (ADR-026), from the DMD and LDC installer outputs: the DMD
+/// archive and the installed dmd and dub binaries, and no patches.
+private bool composeUpstreamReceipt(const ref Home home, string directory, string dmdOutput,
+        string ldcOutput, out ToolchainReceipt receipt, ref Report report)
+{
+    import flint.serde : DecodeOptions, UnknownFields;
+    import flint.serde.owned : deserialize;
+    import std.path : buildPath;
+    import flint_tool.support.files : sha256File;
+
+    DecodeOptions lenient;
+    lenient.unknownFields = UnknownFields.ignore;
+    auto dmd = deserialize!InstallerTool(lastJsonLine(dmdOutput), lenient);
+    auto ldc = deserialize!InstallerTool(lastJsonLine(ldcOutput), lenient);
+    if (!dmd.ok || !ldc.ok || dmd.value.sha256.length == 0)
+    {
+        report.error("FLINT-E0814", "the installer did not print its receipt", "flint toolchain install --plan");
+        return false;
+    }
+    receipt.installer_sha256 = sha256File(buildPath(home.root, "tools", "install_toolchains.py"));
+    receipt.dmd = ReceiptDmd(home.versions["dmd"], dmd.value.sha256, sha256File(componentPath(home,
+            directory, "dmd")), sha256File(componentPath(home, directory, "dub")), "", "", "", false);
     receipt.ldc = ReceiptTool(home.versions["ldc"], ldc.value.sha256, sha256File(componentPath(home,
             directory, "ldc2")));
     return true;

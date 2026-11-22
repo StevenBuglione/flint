@@ -1,7 +1,7 @@
 module flint.log.concurrency_test;
 
 import core.memory : GC;
-import core.thread : Thread;
+import core.thread.osthread : Thread;
 import flint.arena : Status;
 import flint.log : Level, LogContext, LogOptions, Logger;
 import std.conv : to;
@@ -107,7 +107,7 @@ private struct Task
 
     void run()
     {
-        import core.thread : Fiber;
+        import core.thread.fiber : Fiber;
 
         foreach (_; 0 .. 3)
         {
@@ -120,7 +120,7 @@ private struct Task
 @("two interleaved fibers and an offloaded worker retain distinct request and trace identifiers")
 unittest
 {
-    import core.thread : Fiber;
+    import core.thread.fiber : Fiber;
     import std.format : format;
 
     auto capture = new Capture;

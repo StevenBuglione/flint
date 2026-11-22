@@ -60,6 +60,14 @@ private void describeToolchain(ref Session session, const ref Toolchain toolchai
         if (component.sha256.length)
             session.say("         sha256 " ~ component.sha256);
     }
+    version (Windows)
+    {
+        session.say("fork     none: upstream DMD and DUB (ADR-026), receipt " ~ (toolchain.fork.receiptPresent
+                ? (toolchain.fork.verified ? paint("verified", session.outputPalette,
+                Tone.success) : paint("mismatch", session.outputPalette, Tone.warning)) : paint("missing",
+                session.outputPalette, Tone.warning)));
+        return;
+    }
     session.say("fork     " ~ (toolchain.fork.installed
             ? "installed" : "absent") ~ ", receipt " ~ (toolchain.fork.receiptPresent
             ? (toolchain.fork.verified ? paint("verified", session.outputPalette,
@@ -149,6 +157,15 @@ int commandToolchainInstall(ref Session session, ToolchainInstallArgs args)
     return finish(session, report, payload);
 }
 
+/// The directory of the pinned DUB, where DUB looks for libcurl first on Windows.
+private string pinnedDubDirectory(ref Session session)
+{
+    import std.path : dirName;
+    import flint_tool.toolchain.toolchain : componentPath, toolchainDirectory;
+
+    return dirName(componentPath(session.home, toolchainDirectory(session.home), "dub"));
+}
+
 /// The quality tools are fetched with DUB, whose HTTP client loads libcurl at run time; check that before spending
 /// minutes on the compilers (FLINT-E0820).
 private bool downloadsWork(ref Session session, scope const string[][] commands, ref Report report)
@@ -158,7 +175,8 @@ private bool downloadsWork(ref Session session, scope const string[][] commands,
 
     foreach (command; commands)
     {
-        if (command.length > 1 && command[1].endsWith("install_quality_tools.py") && dubCurl().length == 0)
+        if (command.length > 1 && command[1].endsWith("install_quality_tools.py")
+                && dubCurl(pinnedDubDirectory(session)).length == 0)
         {
             report.error("FLINT-E0820",
                     "DUB cannot load libcurl, so it cannot fetch the pinned dfmt and D-Scanner", dubCurlFix);
@@ -181,12 +199,18 @@ private bool runInstaller(ref Session session, string directory, string[] comman
     session.progress("Installing", command.join(" "));
     Launch launch;
     launch.directory = session.home.root;
-    import flint_tool.toolchain.host : dmdBin, ldcBin;
+    import flint_tool.toolchain.host : dmdBin, ldcBin, pathListSeparator;
 
     const ldc = session.home.versions["ldc"];
-    const bins = buildPath(directory, dmdBin(ldc)) ~ ":" ~ buildPath(directory,
-            "bin") ~ ":" ~ buildPath(directory, ldcBin(ldc));
-    launch.environment = [EnvVar("PATH", bins ~ ":" ~ environment.get("PATH", "/usr/bin:/bin"))];
+    const bins = [
+        buildPath(directory, dmdBin(ldc)), buildPath(directory, "bin"),
+        buildPath(directory, ldcBin(ldc))
+    ].join(pathListSeparator);
+    version (Windows)
+        const inherited = environment.get("PATH", "");
+    else
+        const inherited = environment.get("PATH", "/usr/bin:/bin");
+    launch.environment = [EnvVar("PATH", bins ~ pathListSeparator ~ inherited)];
     const json = session.json;
     string collected;
     string errors;
@@ -292,7 +316,7 @@ int commandDoctor(ref Session session, DoctorArgs args)
     doctor.toolchain(session);
     doctor.environmentSwitches();
     doctor.compileServer();
-    doctor.dubDownloads();
+    doctor.dubDownloads(session);
     doctor.native(session);
     doctor.peers(session);
     doctor.project(session, args.project);
@@ -356,22 +380,30 @@ private struct Doctor
             if (onPath.length == 0 || onPath == pinned)
                 continue;
             add("PATH " ~ name, "warning", "PATH selects " ~ onPath ~ "; flint uses " ~ pinned);
-            const fix = "export PATH=\"" ~ dirName(pinned) ~ ":$PATH\"";
+            version (Windows)
+                const fix = "$env:Path = \"" ~ dirName(pinned) ~ ";$env:Path\"";
+            else
+                const fix = "export PATH=\"" ~ dirName(pinned) ~ ":$PATH\"";
             report.add(diagnostic("FLINT-E0812", Severity.warning,
                     "PATH selects " ~ onPath ~ " instead of " ~ pinned, fix));
         }
     }
 
-    void dubDownloads()
+    void dubDownloads(ref Session session)
     {
-        import flint_tool.toolchain.toolchain : dubCurl, dubCurlFix;
+        import std.array : join;
+        import flint_tool.toolchain.toolchain : dubCurl, dubCurlFix, dubCurlLibraries;
 
-        const curl = dubCurl();
+        const curl = dubCurl(pinnedDubDirectory(session));
         if (curl.length)
             return add("dub downloads", "ok", "DUB's HTTP client can load " ~ curl);
         add("dub downloads", "warning", "DUB cannot load libcurl, so dub fetch and flint toolchain install fail");
+        version (Windows)
+            const tried = dubCurlLibraries.join(", ");
+        else
+            const tried = "libcurl.so, libcurl.so.4 and its variants";
         report.add(diagnostic("FLINT-E0820", Severity.warning,
-                "DUB cannot load libcurl (tried " ~ "libcurl.so, libcurl.so.4 and its variants)", dubCurlFix));
+                "DUB cannot load libcurl (tried " ~ tried ~ ")", dubCurlFix));
     }
 
     void environmentSwitches()
@@ -479,6 +511,17 @@ private struct Doctor
 
 private string forkDetail(const ref ForkState fork)
 {
+    version (Windows)
+    {
+        // ADR-026: no fork; the receipt ties the upstream binaries to the pinned archives.
+        if (fork.verified)
+            return "upstream DMD and DUB (ADR-026), receipt verified";
+        if (!fork.installed)
+            return "upstream DMD and DUB not installed";
+        return "upstream DMD and DUB (ADR-026), " ~ (fork.receiptPresent
+                ? "but the receipt does not match" : "without a receipt")
+            ~ ": builds are non-canonical until `flint toolchain install` writes one";
+    }
     if (fork.verified)
         return "receipt verified against toolchain/*.patch";
     if (!fork.installed)
@@ -540,8 +583,12 @@ int commandDaemon(ref Session session, string action, string profile)
 
         static if (!dmdForkHost)
         {
-            report.error("FLINT-E0810", "the compile server belongs to the Linux DMD fork; this host fills the "
-                    ~ "DMD role with LDC's ldmd2, which has none (ADR-024)", "build without flint daemon");
+            version (Windows)
+                report.error("FLINT-E0810", "the compile server belongs to the Linux DMD fork; Windows builds with "
+                        ~ "the upstream DMD, which has none (ADR-026)", "build without flint daemon");
+            else
+                report.error("FLINT-E0810", "the compile server belongs to the Linux DMD fork; this host fills the "
+                        ~ "DMD role with LDC's ldmd2, which has none (ADR-024)", "build without flint daemon");
             break;
         }
         const toolchain = inspect(session.home, ["dmd"], false);

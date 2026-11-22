@@ -1,7 +1,7 @@
 module flint.conc.sys.background;
 
 import core.atomic : atomicLoad, atomicStore, cas;
-import core.thread : Thread;
+import core.thread.osthread : Thread;
 import flint.arena : Error, Status;
 
 @safe:

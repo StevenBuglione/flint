@@ -195,67 +195,70 @@ unittest
     }
 }
 
-@("describe reports a pipe as a colorless non-terminal without touching terminal modes")
-unittest
+version (Posix)
 {
-    import flint.term : Stream, describe;
-    import core.sys.posix.unistd : close, dup, dup2, pipe;
-
-    int[2] ends;
-    assert(() @trusted { return pipe(ends); }() == 0);
-    const saved = () @trusted { return dup(1); }();
-    assert(saved >= 0);
-    assert(() @trusted { return dup2(ends[1], 1); }() == 1);
-    const info = describe(Stream.output);
-    assert(() @trusted { return dup2(saved, 1); }() == 1);
-    () @trusted { close(saved); close(ends[0]); close(ends[1]); }();
-    assert(!info.terminal && info.size.columns == 0 && info.size.rows == 0);
-    assert(info.colors == ColorProfile.none);
-}
-
-/// A pseudo-terminal whose slave temporarily replaces stderr; restored and closed on destruction.
-private struct PseudoTerminal
-{
-    int master = -1;
-    int slave = -1;
-    int saved = -1;
-
-    @disable this(this);
-
-    static PseudoTerminal open(ushort columns, ushort rows) @trusted
+    @("describe reports a pipe as a colorless non-terminal without touching terminal modes")
+    unittest
     {
-        import core.sys.posix.fcntl : O_NOCTTY, O_RDWR, fcntlOpen = open;
-        import core.sys.posix.stdlib : grantpt, posix_openpt, ptsname, unlockpt;
-        import core.sys.posix.sys.ioctl : TIOCSWINSZ, ioctl, winsize;
-        import core.sys.posix.unistd : dup, dup2;
+        import flint.term : Stream, describe;
+        import core.sys.posix.unistd : close, dup, dup2, pipe;
 
-        PseudoTerminal terminal;
-        terminal.master = posix_openpt(O_RDWR | O_NOCTTY);
-        assert(terminal.master >= 0 && grantpt(terminal.master) == 0 && unlockpt(terminal.master) == 0);
-        terminal.slave = fcntlOpen(ptsname(terminal.master), O_RDWR | O_NOCTTY);
-        assert(terminal.slave >= 0);
-        winsize window;
-        window.ws_col = columns;
-        window.ws_row = rows;
-        assert(ioctl(terminal.slave, TIOCSWINSZ, &window) == 0);
-        terminal.saved = dup(2);
-        assert(terminal.saved >= 0 && dup2(terminal.slave, 2) == 2);
-        return terminal;
+        int[2] ends;
+        assert(() @trusted { return pipe(ends); }() == 0);
+        const saved = () @trusted { return dup(1); }();
+        assert(saved >= 0);
+        assert(() @trusted { return dup2(ends[1], 1); }() == 1);
+        const info = describe(Stream.output);
+        assert(() @trusted { return dup2(saved, 1); }() == 1);
+        () @trusted { close(saved); close(ends[0]); close(ends[1]); }();
+        assert(!info.terminal && info.size.columns == 0 && info.size.rows == 0);
+        assert(info.colors == ColorProfile.none);
     }
 
-    ~this() @trusted
+    /// A pseudo-terminal whose slave temporarily replaces stderr; restored and closed on destruction.
+    private struct PseudoTerminal
     {
-        import core.sys.posix.unistd : close, dup2;
+        int master = -1;
+        int slave = -1;
+        int saved = -1;
 
-        if (saved >= 0)
+        @disable this(this);
+
+        static PseudoTerminal open(ushort columns, ushort rows) @trusted
         {
-            dup2(saved, 2);
-            close(saved);
+            import core.sys.posix.fcntl : O_NOCTTY, O_RDWR, fcntlOpen = open;
+            import core.sys.posix.stdlib : grantpt, posix_openpt, ptsname, unlockpt;
+            import core.sys.posix.sys.ioctl : TIOCSWINSZ, ioctl, winsize;
+            import core.sys.posix.unistd : dup, dup2;
+
+            PseudoTerminal terminal;
+            terminal.master = posix_openpt(O_RDWR | O_NOCTTY);
+            assert(terminal.master >= 0 && grantpt(terminal.master) == 0 && unlockpt(terminal.master) == 0);
+            terminal.slave = fcntlOpen(ptsname(terminal.master), O_RDWR | O_NOCTTY);
+            assert(terminal.slave >= 0);
+            winsize window;
+            window.ws_col = columns;
+            window.ws_row = rows;
+            assert(ioctl(terminal.slave, TIOCSWINSZ, &window) == 0);
+            terminal.saved = dup(2);
+            assert(terminal.saved >= 0 && dup2(terminal.slave, 2) == 2);
+            return terminal;
         }
-        if (slave >= 0)
-            close(slave);
-        if (master >= 0)
-            close(master);
+
+        ~this() @trusted
+        {
+            import core.sys.posix.unistd : close, dup2;
+
+            if (saved >= 0)
+            {
+                dup2(saved, 2);
+                close(saved);
+            }
+            if (slave >= 0)
+                close(slave);
+            if (master >= 0)
+                close(master);
+        }
     }
 }
 
@@ -307,26 +310,29 @@ private struct ScopedEnvironment
     }
 }
 
-@("describe reads a pseudo-terminal's window size and honours TERM, COLORTERM and NO_COLOR")
-unittest
+version (Posix)
 {
-    import flint.term : Stream, describe;
+    @("describe reads a pseudo-terminal's window size and honours TERM, COLORTERM and NO_COLOR")
+    unittest
+    {
+        import flint.term : Stream, describe;
 
-    ScopedEnvironment variables;
-    const terminal = PseudoTerminal.open(97, 31);
-    assert(terminal.slave >= 0 && terminal.saved >= 0);
-    variables.set("TERM", "xterm-256color");
-    variables.set("COLORTERM", null);
-    variables.set("NO_COLOR", null);
-    auto info = describe(Stream.error);
-    assert(info.terminal && info.size.columns == 97 && info.size.rows == 31);
-    assert(info.colors == ColorProfile.ansi256);
-    variables.set("COLORTERM", "truecolor");
-    assert(describe(Stream.error).colors == ColorProfile.trueColor);
-    variables.set("NO_COLOR", "1");
-    info = describe(Stream.error);
-    assert(info.terminal && info.colors == ColorProfile.none);
-    variables.set("NO_COLOR", null);
-    variables.set("TERM", "dumb");
-    assert(describe(Stream.error).colors == ColorProfile.none);
+        ScopedEnvironment variables;
+        const terminal = PseudoTerminal.open(97, 31);
+        assert(terminal.slave >= 0 && terminal.saved >= 0);
+        variables.set("TERM", "xterm-256color");
+        variables.set("COLORTERM", null);
+        variables.set("NO_COLOR", null);
+        auto info = describe(Stream.error);
+        assert(info.terminal && info.size.columns == 97 && info.size.rows == 31);
+        assert(info.colors == ColorProfile.ansi256);
+        variables.set("COLORTERM", "truecolor");
+        assert(describe(Stream.error).colors == ColorProfile.trueColor);
+        variables.set("NO_COLOR", "1");
+        info = describe(Stream.error);
+        assert(info.terminal && info.colors == ColorProfile.none);
+        variables.set("NO_COLOR", null);
+        variables.set("TERM", "dumb");
+        assert(describe(Stream.error).colors == ColorProfile.none);
+    }
 }

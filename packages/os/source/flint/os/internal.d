@@ -83,6 +83,8 @@ private Result!string prepareEnvironment(ProcessOptions options, ref string[] en
     {
         if (item.name.length == 0 || !validNativeString(item.name, true) || !validNativeString(item.value))
             return Result!string(null, Error(Status.invalidArgument, "invalid environment override"));
+        version (Windows)
+            removeName(variables, item.name); // Names are case-insensitive: an override replaces `Path` with `PATH`.
         variables[item.name] = item.value;
     }
     foreach (name, value; variables)
@@ -92,21 +94,86 @@ private Result!string prepareEnvironment(ProcessOptions options, ref string[] en
         if (!appendCString(entries, name ~ "=" ~ value, bytesUsed))
             return Result!string(null, Error(Status.resourceExhausted, "environment exceeds process limit"));
     }
-    const path = "PATH" in variables;
-    return Result!string(path is null ? "/bin:/usr/bin" : *path);
+    return Result!string(searchPath(variables));
+}
+
+version (Windows)
+{
+    // The executable search covers PATH only, like execvp with an explicit PATH; Windows names it `Path`.
+    private string searchPath(string[string] variables)
+    {
+        foreach (name, value; variables)
+            if (sameName(name, "PATH"))
+                return value;
+        return "";
+    }
+}
+else
+{
+    private string searchPath(string[string] variables)
+    {
+        const path = "PATH" in variables;
+        return path is null ? "/bin:/usr/bin" : *path;
+    }
+}
+
+version (Windows)
+{
+    private enum char pathListSeparator = ';';
+    private enum string directorySeparator = "\\";
+
+    private bool sameName(scope const(char)[] left, scope const(char)[] right) pure nothrow @nogc
+    {
+        if (left.length != right.length)
+            return false;
+        foreach (index, character; left)
+        {
+            const other = right[index];
+            const a = character >= 'a' && character <= 'z' ? cast(char)(character - 32) : character;
+            const b = other >= 'a' && other <= 'z' ? cast(char)(other - 32) : other;
+            if (a != b)
+                return false;
+        }
+        return true;
+    }
+
+    private void removeName(ref string[string] variables, string name)
+    {
+        string[] matches;
+        foreach (existing, _; variables)
+            if (sameName(existing, name))
+                matches ~= existing;
+        foreach (existing; matches)
+            variables.remove(existing);
+    }
+
+    private bool separator(char character) pure nothrow @nogc
+    {
+        return character == '/' || character == '\\' || character == ':';
+    }
+}
+else
+{
+    private enum char pathListSeparator = ':';
+    private enum string directorySeparator = "/";
+
+    private bool separator(char character) pure nothrow @nogc
+    {
+        return character == '/';
+    }
 }
 
 private bool preparePaths(scope const(char)[] executable, string path, ref string[] candidates)
 {
     size_t used;
     foreach (character; executable)
-        if (character == '/')
+        if (separator(character))
             return appendCString(candidates, executable, used);
 
     size_t first;
     foreach (index, character; path)
     {
-        if (character == ':')
+        if (character == pathListSeparator)
         {
             if (!appendPath(candidates, path[first .. index], executable, used))
                 return false;
@@ -122,7 +189,11 @@ private bool appendPath(ref string[] candidates, string directory, scope const(c
         return appendCString(candidates, executable, used);
     if (directory.length + executable.length >= maxStringBytes)
         return false;
-    return appendCString(candidates, directory ~ "/" ~ executable, used);
+    version (Windows)
+        const joined = separator(directory[$ - 1]) ? "" : directorySeparator;
+    else
+        const joined = directorySeparator;
+    return appendCString(candidates, directory ~ joined ~ executable, used);
 }
 
 private enum StopReason : ubyte
@@ -263,6 +334,9 @@ private Error checkSetup(ref Child child, Supervisor* supervisor) nothrow @nogc
 {
     scope (exit)
         closeFd(child.startupFd);
+    // A platform whose process creation reports startup failures synchronously has no receipt to read.
+    if (child.startupFd < 0)
+        return Error.init;
     while (!atomicLoad(supervisor.done))
     {
         const ready = waitForOutput(child.startupFd, -1, pollMillis);

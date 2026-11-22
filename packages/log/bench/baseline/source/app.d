@@ -4,7 +4,7 @@ import core.atomic : atomicLoad, atomicStore;
 import core.stdc.stdio : snprintf;
 import core.stdc.time : time_t, tm;
 import core.sys.posix.time : CLOCK_REALTIME, clock_gettime, gmtime_r, timespec;
-import core.thread : Thread;
+import core.thread.osthread : Thread;
 import core.time : MonoTime, msecs;
 import flint.arena : Status;
 import log_workload : Capture, batchSize, longMessage, runProbe;

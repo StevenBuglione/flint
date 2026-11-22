@@ -1,6 +1,6 @@
 module flint.os.sys.threads;
 
-import core.thread : Thread;
+import core.thread.osthread : Thread;
 
 @safe:
 

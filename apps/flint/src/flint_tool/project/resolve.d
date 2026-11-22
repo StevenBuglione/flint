@@ -79,12 +79,14 @@ struct Resolution
 /// Whether `path` lies inside `directory`.
 bool inside(string path, string directory)
 {
-    import std.path : absolutePath, buildNormalizedPath;
+    import std.path : absolutePath, buildNormalizedPath, filenameCmp, isDirSeparator;
 
+    // filenameCmp ignores case where the file system does (Windows) and isDirSeparator accepts `\` there.
     const normalPath = buildNormalizedPath(absolutePath(path));
     const normalDirectory = buildNormalizedPath(absolutePath(directory));
-    return normalPath == normalDirectory || (normalPath.length > normalDirectory.length
-            && normalPath[0 .. normalDirectory.length] == normalDirectory && normalPath[normalDirectory.length] == '/');
+    return filenameCmp(normalPath, normalDirectory) == 0 || (normalPath.length > normalDirectory.length
+            && filenameCmp(normalPath[0 .. normalDirectory.length],
+                normalDirectory) == 0 && isDirSeparator(normalPath[normalDirectory.length]));
 }
 
 /// Resolve the manifest's dependencies.

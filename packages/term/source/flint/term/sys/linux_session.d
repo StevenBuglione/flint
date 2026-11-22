@@ -2,10 +2,13 @@ module flint.term.sys.linux_session;
 
 @safe:
 
-// The native terminal session (native/linux.c) is built for Linux and macOS.
+// The native terminal session is native/linux.c on Linux and macOS, and flint.term.sys.windows_console on
+// Windows, both behind the ABI in flint.term.sys.linux_abi.
 version (linux)
     version = FlintTermNative;
 else version (OSX)
+    version = FlintTermNative;
+else version (Windows)
     version = FlintTermNative;
 
 version (FlintTermNative)
@@ -79,8 +82,7 @@ version (FlintTermNative)
         {
             auto session = new LinuxSession;
             // Resolve environment policy before acquiring native state.
-            const capabilities = detectColors(environmentValue("TERM", ""),
-                    environmentValue("COLORTERM", ""), environmentValue("NO_COLOR") != "");
+            const capabilities = environmentColors();
             const opened = openNative(options, session.native);
             if (opened != NativeStatus.ok)
                 return Result!LinuxSession(null, failure(opened));
@@ -228,6 +230,20 @@ version (FlintTermNative)
         return Result!Event(Event.init, failure(status));
     }
 
+    /// The color profile TERM, COLORTERM and NO_COLOR select. A Windows console that interprets virtual-terminal
+    /// sequences renders 24-bit color and sets no TERM, so an unset TERM there means true color.
+    package(flint.term) ColorProfile environmentColors() nothrow
+    {
+        const terminal = environmentValue("TERM", "");
+        const noColor = environmentValue("NO_COLOR") != "";
+        version (Windows)
+        {
+            if (terminal == "")
+                return noColor ? ColorProfile.none : ColorProfile.trueColor;
+        }
+        return detectColors(terminal, environmentValue("COLORTERM", ""), noColor);
+    }
+
     package(flint.term) ColorProfile detectColors(string terminal, string colorterm, bool noColor) nothrow
     {
         if (noColor || terminal == "" || terminal == "dumb")
@@ -250,21 +266,53 @@ version (FlintTermNative)
         return false;
     }
 
-    // std.process.environment.get without importing std.process (and std.uni): a copy of the variable's value,
-    // "" when it is set but empty, or `fallback` when it is unset.
-    // SAFETY: getenv receives a NUL-terminated copy of the name and returns null or a NUL-terminated string,
-    // which is read up to its terminator and copied before any other environment call.
-    package(flint.term) string environmentValue(string name, string fallback = null) @trusted nothrow
+    version (Windows)
     {
-        import core.stdc.string : strlen;
-        import core.sys.posix.stdlib : getenv;
+        // std.process.environment.get without importing std.process: the process environment block, which
+        // std.process writes, rather than the C runtime's startup copy that getenv reads. A copy of the value,
+        // "" when it is set but empty, or `fallback` when it is unset.
+        // SAFETY: The name is a NUL-terminated UTF-16 copy; the value is written into a local buffer of the length
+        // passed, or a GC buffer of the reported length, and converted before returning.
+        package(flint.term) string environmentValue(string name, string fallback = null) @trusted nothrow
+        {
+            import core.sys.windows.winbase : GetEnvironmentVariableW;
+            import std.utf : toUTF16z, toUTF8;
 
-        const terminated = name ~ '\0';
-        const value = getenv(terminated.ptr);
-        if (value is null)
-            return fallback;
-        const length = strlen(value);
-        return length == 0 ? "" : value[0 .. length].idup;
+            try
+            {
+                const wide = toUTF16z(name);
+                wchar[256] buffer = void;
+                auto length = GetEnvironmentVariableW(wide, buffer.ptr, cast(uint) buffer.length);
+                if (length == 0)
+                    return GetEnvironmentVariableW(wide, null, 0) == 1 ? "" : fallback;
+                if (length < buffer.length)
+                    return toUTF8(buffer[0 .. length]);
+                auto larger = new wchar[length];
+                length = GetEnvironmentVariableW(wide, larger.ptr, cast(uint) larger.length);
+                return length != 0 && length < larger.length ? toUTF8(larger[0 .. length]) : fallback;
+            }
+            catch (Exception)
+                return fallback;
+        }
+    }
+    else
+    {
+        // std.process.environment.get without importing std.process (and std.uni): a copy of the variable's value,
+        // "" when it is set but empty, or `fallback` when it is unset.
+        // SAFETY: getenv receives a NUL-terminated copy of the name and returns null or a NUL-terminated string,
+        // which is read up to its terminator and copied before any other environment call.
+        package(flint.term) string environmentValue(string name, string fallback = null) @trusted nothrow
+        {
+            import core.stdc.string : strlen;
+            import core.stdc.stdlib : getenv;
+
+            const terminated = name ~ '\0';
+            const value = getenv(terminated.ptr);
+            if (value is null)
+                return fallback;
+            const length = strlen(value);
+            return length == 0 ? "" : value[0 .. length].idup;
+        }
     }
 
     // SAFETY: C initializes the output to null on every failure and returns an

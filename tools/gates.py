@@ -5,9 +5,9 @@ from pathlib import Path
 from d_source import tokens,imported_modules,declared_module,module_default,has_string_mixin,compiler_dependency_edges
 from perf_stats import finite_samples,median_ratio_interval
 ROOT=Path(__file__).resolve().parents[1]
-P=json.loads((ROOT/'policy/packages.json').read_text())['packages']
-B=json.loads((ROOT/'policy/budgets.json').read_text())
-S=json.loads((ROOT/'policy/safety-policy.json').read_text())
+P=json.loads((ROOT/'policy/packages.json').read_text(encoding='utf-8'))['packages']
+B=json.loads((ROOT/'policy/budgets.json').read_text(encoding='utf-8'))
+S=json.loads((ROOT/'policy/safety-policy.json').read_text(encoding='utf-8'))
 
 def require(value,message):
     if not value:raise ValueError(message)
@@ -70,12 +70,12 @@ def generated_dependencies(packages):
                 require(process.returncode==0,'generated dependency compile failed: '+process.stdout+process.stderr)
                 require(destination.is_file(),'compiler did not produce a dependency receipt')
                 require(expansion.is_file() and expansion.stat().st_size>0,'string mixin has no instantiated expansion; add a positive unittest fixture')
-                expanded=list(project_mixin_tokens(expansion.read_text(),compiler))
+                expanded=list(project_mixin_tokens(expansion.read_text(encoding='utf-8'),compiler))
                 require(expanded,'string mixin has no audited application expansion')
                 require(not imported_modules(expanded),'generated import statements are prohibited')
                 values=[token.value for token in expanded]
                 require(not any(values[i]=='@' and values[i+1] in ['trusted','system'] for i in range(len(values)-1)),'generated unsafe annotations are prohibited')
-                for importing,imported in compiler_dependency_edges(destination.read_text()):
+                for importing,imported in compiler_dependency_edges(destination.read_text(encoding='utf-8')):
                     package=owner(importing)
                     if package is not None:check_import(package,imported,'compiler-generated '+importing)
                 count+=1
@@ -94,16 +94,16 @@ def structural(selected):
             visit(d)
         active.remove(n);visited.add(n)
     for n in P:visit(n)
-    root_sdl=(ROOT/'dub.sdl').read_text()
+    root_sdl=(ROOT/'dub.sdl').read_text(encoding='utf-8')
     require(set(re.findall(r'subPackage\s+"packages/([\w-]+)"',root_sdl))==set(P),'root subpackage list differs')
     mixin_packages=set()
     for n in selected:
-        meta=P[n];pkg=ROOT/'packages'/n;sdl=(pkg/'dub.sdl').read_text()
+        meta=P[n];pkg=ROOT/'packages'/n;sdl=(pkg/'dub.sdl').read_text(encoding='utf-8')
         actual=set(re.findall(r'dependency\s+"flint:([\w-]+)"\s+version="\*"',sdl))
         require(actual==set(meta['dependencies']),n+': SDL dependencies differ from policy')
         require(len(re.findall(r'\bdependency\b',sdl))==len(actual),n+': noncanonical dependency recipe')
         for f in (pkg/'source').rglob('*.d'):
-            text=f.read_text();ts=list(tokens(text));vals=[t.value for t in ts]
+            text=f.read_text(encoding='utf-8');ts=list(tokens(text));vals=[t.value for t in ts]
             module=declared_module(ts)
             relative=f.relative_to(pkg/'source').with_suffix('')
             parts=list(relative.parts)
@@ -219,7 +219,7 @@ def verify_evidence_artifacts(evidence,directory):
         verify(receipt)
         for artifact in receipt.get('artifacts',[]):verify(artifact)
     # Retained source receipts bind displayed metrics as well as their files.
-    def payload(name):return json.loads((directory/evidence['receipts'][name]['artifact']).read_text())
+    def payload(name):return json.loads((directory/evidence['receipts'][name]['artifact']).read_text(encoding='utf-8'))
     builds=payload('compile')
     require(builds==payload('size'),'compile and size evidence came from different builds')
     for key in ['packages','apps']:require(evidence[key]==builds[key],key+': summary differs from measured source artifact')
@@ -239,11 +239,11 @@ def main():
         require(a.evidence is not None,'measured evidence is required; missing evidence never passes')
         require(a.gate!='all' or a.baseline is not None,'regression gates require measured base evidence')
         require(a.gate!='baseline' or a.baseline is None,'initial baseline validation cannot silently accept a comparison baseline')
-        current=json.loads(a.evidence.read_text())
+        current=json.loads(a.evidence.read_text(encoding='utf-8'))
         verify_evidence_artifacts(current,a.evidence.parent)
         baseline=None
         if a.baseline is not None:
-            baseline=json.loads(a.baseline.read_text())
+            baseline=json.loads(a.baseline.read_text(encoding='utf-8'))
             verify_evidence_artifacts(baseline,a.baseline.parent)
         result.update(measured(current,baseline))
     print(json.dumps(result,indent=2))

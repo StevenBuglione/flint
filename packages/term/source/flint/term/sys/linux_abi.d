@@ -8,7 +8,12 @@ version (linux)
 else version (OSX)
     version = FlintTermNative;
 
-version (FlintTermNative)
+version (Windows)
+    public import flint.term.sys.windows_console : TerminalHandle, flint_term_native_open,
+        flint_term_native_tty, flint_term_native_size, flint_term_native_poll,
+        flint_term_native_read, flint_term_native_write, flint_term_native_wake,
+        flint_term_native_closing, flint_term_native_close, flint_term_native_destroy;
+else version (FlintTermNative)
 {
 package(flint.term):
 extern (C) nothrow @nogc:
