@@ -223,3 +223,125 @@ unittest
     options.arguments = ["--flint.profile=dev", "--set=server.rate=1e400"];
     assert(load!Settings(options).error.code == Status.invalidArgument);
 }
+
+@ConfigurationProperties("server")
+private struct ServerProperties
+{
+    ushort port;
+    string host = "localhost";
+}
+
+@ConfigurationProperties("database")
+private struct DatabaseProperties
+{
+    string url;
+    @Secret string password;
+    uint pool = 4;
+}
+
+@ConfigurationProperties("server")
+private struct ServerTlsProperties
+{
+    bool tls;
+}
+
+@("several configuration types bind from one TOML file and one .env")
+unittest
+{
+    const directory = scratch();
+    scope (exit)
+        rmdirRecurse(directory);
+    auto options = configFor(directory);
+    options.arguments = ["--flint.profile=dev", "--set=database.password=hunter2"];
+    write(buildPath(directory, "application.toml"),
+            "[server]\nport=8080\ntls=true\n[database]\nurl=\"postgres://db/app\"\n");
+    write(buildPath(directory, ".env"),
+            "FLINT_CONFIG_FIXTURE_DATABASE__POOL=9\nFLINT_CONFIG_FIXTURE_SERVER__HOST=edge\n");
+
+    // A single-type load binds only its own prefix, so the other types' keys stay unknown to it.
+    const alone = load!ServerProperties(options).error.message;
+    assert(alone == "configuration key FLINT_CONFIG_FIXTURE_DATABASE__POOL in .env at 1:1 is unknown");
+
+    ServerProperties server;
+    DatabaseProperties database;
+    ServerTlsProperties tls;
+    const failure = load(options, server, database, tls);
+    assert(failure.code == Status.ok, failure.message);
+    assert(server.port == 8080 && server.host == "edge");
+    assert(database.url == "postgres://db/app" && database.password == "hunter2" && database.pool == 9);
+    assert(tls.tls);
+}
+
+@("keys that no bound type claims keep their exact unknown-key diagnostics")
+unittest
+{
+    const directory = scratch();
+    scope (exit)
+        rmdirRecurse(directory);
+    auto options = configFor(directory);
+    options.arguments = ["--flint.profile=dev"];
+    const toml = buildPath(directory, "application.toml");
+    const dotenv = buildPath(directory, ".env");
+    ServerProperties server;
+    DatabaseProperties database;
+
+    // A misspelt key inside a bound prefix: same text and offset as a single-type load.
+    write(toml, "[server]\nport=8080\nprot=1\n");
+    const single = load!ServerProperties(options).error;
+    assert(single.message == "configuration key server.prot in application.toml at 3:1 is unknown");
+    write(toml, "[server]\nport=8080\nprot=1\n[database]\nurl=\"postgres://db/app\"\n");
+    auto failure = load(options, server, database);
+    assert(failure.code == single.code && failure.message == single.message && failure.offset == single.offset);
+    assert(server == ServerProperties.init && database == DatabaseProperties.init);
+
+    // A misspelt prefix that no bound type claims, in a file, .env and --set.
+    write(toml, "[server]\nport=8080\n[databse]\nurl=\"postgres://db/app\"\n");
+    failure = load(options, server, database);
+    assert(failure.code == Status.invalidArgument);
+    assert(failure.message == "configuration key databse.url in application.toml at 4:1 is unknown");
+    remove(toml);
+
+    write(dotenv, "FLINT_CONFIG_FIXTURE_DATABASE__POOL=9\nFLINT_CONFIG_FIXTURE_DATABSE__URL=x\n");
+    failure = load(options, server, database);
+    write(dotenv, "FLINT_CONFIG_FIXTURE_DATABSE__URL=x\n");
+    const singleDotenv = load!ServerProperties(options).error;
+    assert(singleDotenv.message == "configuration key FLINT_CONFIG_FIXTURE_DATABSE__URL in .env at 1:1 is unknown");
+    assert(failure.message == "configuration key FLINT_CONFIG_FIXTURE_DATABSE__URL in .env at 2:1 is unknown");
+    remove(dotenv);
+
+    options.arguments = ["--flint.profile=dev", "--set=database.url=x", "--set=databse.pool=1"];
+    failure = load(options, server, database);
+    assert(failure.message == "configuration key databse.pool in command line is unknown");
+    assert(failure.message == load!DatabaseProperties(options).error.message);
+
+    options.arguments = ["--flint.profile=dev", "--set=database.ulr=x"];
+    assert(load(options, server, database).message == "configuration key database.ulr in command line is unknown");
+
+    options.rejectUnknownKeys = false;
+    assert(load(options, server, database).code == Status.ok);
+}
+
+@("process environment variables are unknown only outside every bound type")
+unittest
+{
+    const directory = scratch();
+    scope (exit)
+        rmdirRecurse(directory);
+    auto options = configFor(directory);
+    options.arguments = ["--flint.profile=dev"];
+    enum claimed = "FLINT_CONFIG_FIXTURE_DATABASE__URL";
+    enum misspelt = "FLINT_CONFIG_FIXTURE_SERVER__PROT";
+    scope (exit)
+    {
+        environment.remove(claimed);
+        environment.remove(misspelt);
+    }
+    environment[claimed] = "postgres://db/app";
+    ServerProperties server;
+    DatabaseProperties database;
+    assert(load(options, server, database).code == Status.ok);
+    assert(database.url == "postgres://db/app");
+    environment[misspelt] = "1";
+    const failure = load(options, server, database);
+    assert(failure.message == "configuration key " ~ misspelt ~ " in process environment is unknown");
+}

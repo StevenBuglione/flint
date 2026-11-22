@@ -2,6 +2,7 @@
 module flint.serde.internal.decimal;
 
 import flint.arena : Status;
+import flint.serde.internal.shortest : shortest;
 import flint.serde.internal.writer : Writer;
 
 @safe:
@@ -48,17 +49,6 @@ private struct Natural
         }
         foreach (index; 0 .. power)
             multiplyAdd(10);
-    }
-
-    void scaleFive(uint power) nothrow @nogc
-    {
-        while (power >= 13)
-        {
-            multiplyAdd(1_220_703_125);
-            power -= 13;
-        }
-        foreach (index; 0 .. power)
-            multiplyAdd(5);
     }
 
     int bits() const nothrow @nogc
@@ -121,19 +111,6 @@ private struct Natural
             borrow = original < subtrahend ? 1 : 0;
         }
         normalize();
-    }
-
-    uint divide(uint divisor) nothrow @nogc
-    {
-        ulong remainder;
-        foreach_reverse (index; 0 .. length)
-        {
-            remainder = (remainder << 32) | words[index];
-            words[index] = cast(uint)(remainder / divisor);
-            remainder %= divisor;
-        }
-        normalize();
-        return cast(uint) remainder;
     }
 
     private void normalize() nothrow @nogc
@@ -329,6 +306,136 @@ private ulong roundedQuotient(ref Natural dividend, scope const ref Natural divi
     return whole;
 }
 
+// Powers of ten that binary64 and binary32 represent exactly.
+private static immutable double[23] exactPowers = [
+    1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11, 1e12, 1e13, 1e14, 1e15, 1e16,
+    1e17, 1e18, 1e19, 1e20, 1e21, 1e22,
+];
+private static immutable float[11] exactSinglePowers = [
+    1e0f, 1e1f, 1e2f, 1e3f, 1e4f, 1e5f, 1e6f, 1e7f, 1e8f, 1e9f, 1e10f
+];
+
+// A token whose significant digits fit in 64 bits: value = mantissa * 10^power.
+private struct ShortDecimal
+{
+    ulong mantissa;
+    int power;
+    bool negative;
+    bool fits;
+}
+
+private ShortDecimal shortDecimal(scope const(ubyte)[] token) nothrow @nogc
+{
+    ShortDecimal decimal;
+    size_t offset;
+    if (token[0] == '-' || token[0] == '+')
+    {
+        decimal.negative = token[0] == '-';
+        ++offset;
+    }
+    uint digits;
+    bool fractional;
+    for (; offset < token.length; ++offset)
+    {
+        immutable letter = token[offset];
+        if (letter == 'e' || letter == 'E')
+            break;
+        if (letter == '.')
+        {
+            fractional = true;
+            continue;
+        }
+        if (letter == '_')
+            continue;
+        if (fractional)
+            --decimal.power;
+        if (digits == 0 && letter == '0')
+            continue;
+        if (++digits > 19)
+            return decimal;
+        decimal.mantissa = decimal.mantissa * 10 + (letter - '0');
+    }
+    if (offset != token.length)
+        decimal.power += decimalExponent(token[offset + 1 .. $]);
+    decimal.fits = true;
+    return decimal;
+}
+
+// Clinger's fast path: an exact significand and an exact power of ten give one
+// correctly rounded IEEE operation. Other inputs use the exact big-number path.
+private bool fastDouble(scope const(ubyte)[] token, out double value) nothrow @nogc
+{
+    enum ulong exactLimit = 1UL << 53;
+    const decimal = shortDecimal(token);
+    if (!decimal.fits || decimal.mantissa > exactLimit)
+        return false;
+    if (decimal.mantissa == 0)
+    {
+        value = decimal.negative ? -0.0 : 0.0;
+        return true;
+    }
+    if (decimal.power < -22)
+        return false;
+    ulong mantissa = decimal.mantissa;
+    int power = decimal.power;
+    // Move an excess power into the significand while the product stays exact.
+    for (; power > 22; --power)
+    {
+        if (mantissa > exactLimit / 10)
+            return false;
+        mantissa *= 10;
+    }
+    double magnitude = mantissa;
+    if (power < 0)
+        magnitude /= exactPowers[-power];
+    else
+        magnitude *= exactPowers[power];
+    value = decimal.negative ? -magnitude : magnitude;
+    return true;
+}
+
+private bool fastSingle(scope const(ubyte)[] token, out float value) nothrow @nogc
+{
+    enum ulong exactLimit = 1UL << 53;
+    const decimal = shortDecimal(token);
+    if (!decimal.fits)
+        return false;
+    if (decimal.mantissa == 0)
+    {
+        value = decimal.negative ? -0.0f : 0.0f;
+        return true;
+    }
+    if (decimal.power < -10)
+        return false;
+    float magnitude;
+    if (decimal.mantissa <= (1UL << 24) && decimal.power <= 10)
+    {
+        // Wider evaluation of this one operation still rounds correctly (2 * 24 + 2 <= 53).
+        magnitude = decimal.mantissa;
+        if (decimal.power < 0)
+            magnitude /= exactSinglePowers[-decimal.power];
+        else
+            magnitude *= exactSinglePowers[decimal.power];
+    }
+    else if (decimal.power >= 0 && decimal.mantissa <= exactLimit)
+    {
+        // An integer that binary64 holds exactly converts to binary32 with one rounding.
+        ulong integer = decimal.mantissa;
+        foreach (step; 0 .. decimal.power)
+        {
+            if (integer > exactLimit / 10)
+                return false;
+            integer *= 10;
+        }
+        immutable double exact = integer;
+        magnitude = cast(float) exact;
+    }
+    else
+        return false;
+    value = decimal.negative ? -magnitude : magnitude;
+    return true;
+}
+
 private union SingleBits
 {
     uint raw;
@@ -344,6 +451,8 @@ private union DoubleBits
 /// Convert a validated decimal number into the correctly rounded binary32 value.
 bool parseDecimal(scope const(ubyte)[] token, out float value) nothrow @nogc
 {
+    if (fastSingle(token, value))
+        return true;
     ulong raw;
     if (!readBits(token, binary32, raw))
         return false;
@@ -356,6 +465,8 @@ bool parseDecimal(scope const(ubyte)[] token, out float value) nothrow @nogc
 /// Convert a validated decimal number into the correctly rounded binary64 value.
 bool parseDecimal(scope const(ubyte)[] token, out double value) nothrow @nogc
 {
+    if (fastDouble(token, value))
+        return true;
     ulong raw;
     if (!readBits(token, binary64, raw))
         return false;
@@ -365,7 +476,7 @@ bool parseDecimal(scope const(ubyte)[] token, out double value) nothrow @nogc
     return true;
 }
 
-/// Emit an exact decimal representation of one finite binary32 value.
+/// Emit the shortest decimal that parses back to this finite binary32 value.
 void writeDecimal(ref scope Writer writer, float value, bool toml = false) nothrow @nogc
 {
     SingleBits parts;
@@ -373,7 +484,7 @@ void writeDecimal(ref scope Writer writer, float value, bool toml = false) nothr
     writeBits(writer, parts.raw, binary32, toml);
 }
 
-/// Emit an exact decimal representation of one finite binary64 value.
+/// Emit the shortest decimal that parses back to this finite binary64 value.
 void writeDecimal(ref scope Writer writer, double value, bool toml = false) nothrow @nogc
 {
     DoubleBits parts;
@@ -399,59 +510,25 @@ private void writeBits(ref scope Writer writer, ulong raw, IeeeFormat format, bo
     if ((raw & format.signMask()) != 0)
         writer.put('-');
 
-    ulong significand = raw & format.fractionMask();
-    int exponent = format.minimumExponent();
-    if (expBits != 0)
-    {
-        exponent = cast(int) expBits - format.bias;
-        significand |= 1UL << format.fractionBits;
-    }
-    if (significand == 0)
+    immutable fraction = raw & format.fractionMask();
+    if (expBits == 0 && fraction == 0)
     {
         writer.append(cast(const(ubyte)[])(toml ? "0.0" : "0"));
         return;
     }
 
-    exponent -= cast(int) format.fractionBits;
-    auto coefficient = Natural(significand);
-    if (exponent >= 0)
-    {
-        coefficient.shift(cast(uint) exponent);
-        exponent = 0;
-    }
-    else
-        coefficient.scaleFive(cast(uint)-exponent);
-
-    ubyte[significantLimit] digits;
+    const decimal = shortest(fraction, expBits, format.fractionBits, format.bias);
+    ubyte[20] digits;
     size_t first = digits.length;
+    ulong remaining = decimal.digits;
     do
     {
-        uint remainder = coefficient.divide(decimalChunk);
-        if (coefficient.length == 0)
-        {
-            do
-            {
-                digits[--first] = cast(ubyte)('0' + remainder % 10);
-                remainder /= 10;
-            }
-            while (remainder != 0);
-        }
-        else
-        {
-            foreach (index; 0 .. 9)
-            {
-                digits[--first] = cast(ubyte)('0' + remainder % 10);
-                remainder /= 10;
-            }
-        }
+        digits[--first] = cast(ubyte)('0' + remaining % 10);
+        remaining /= 10;
     }
-    while (coefficient.length != 0);
-
-    immutable point = cast(int)(digits.length - first) + exponent;
-    size_t end = digits.length;
-    while (end > first + 1 && digits[end - 1] == '0')
-        --end;
-    writeDigits(writer, digits[first .. end], point, toml);
+    while (remaining != 0);
+    immutable point = cast(int)(digits.length - first) + decimal.exponent;
+    writeDigits(writer, digits[first .. $], point, toml);
 }
 
 private void writeDigits(ref scope Writer writer, scope const(ubyte)[] digits, int point, bool toml) nothrow @nogc
@@ -486,4 +563,83 @@ private void writeDigits(ref scope Writer writer, scope const(ubyte)[] digits, i
         writer.put('e');
         writer.signedNumber(point - 1);
     }
+}
+
+// Every input the fast paths accept converts to the same bits as the exact path.
+unittest
+{
+    ubyte[48] buffer;
+    const(ubyte)[] spell(ulong mantissa, int power, bool point, bool negative)
+    {
+        size_t length = buffer.length;
+        immutable exponent = power;
+        uint fraction = point ? cast(uint)(mantissa % 7) : 0;
+        do
+        {
+            buffer[--length] = cast(ubyte)('0' + mantissa % 10);
+            mantissa /= 10;
+            if (fraction != 0 && --fraction == 0)
+                buffer[--length] = '.';
+        }
+        while (mantissa != 0 || fraction != 0);
+        if (buffer[length] == '.')
+            buffer[--length] = '0';
+        if (negative)
+            buffer[--length] = '-';
+        ubyte[16] suffix;
+        size_t used;
+        suffix[used++] = 'e';
+        if (exponent < 0)
+            suffix[used++] = '-';
+        uint magnitude = exponent < 0 ? -exponent : exponent;
+        ubyte[8] reversed;
+        size_t count;
+        do
+        {
+            reversed[count++] = cast(ubyte)('0' + magnitude % 10);
+            magnitude /= 10;
+        }
+        while (magnitude != 0);
+        while (count != 0)
+            suffix[used++] = reversed[--count];
+        // Shift left to make room for the exponent suffix.
+        immutable start = length - used;
+        foreach (index; length .. buffer.length)
+            buffer[index - used] = buffer[index];
+        foreach (index; 0 .. used)
+            buffer[buffer.length - used + index] = suffix[index];
+        return buffer[start .. $];
+    }
+
+    ulong state = 0x6a09_e667_f3bc_c909;
+    uint fastDoubles;
+    uint fastSingles;
+    foreach (index; 0 .. 200_000)
+    {
+        state ^= state << 13;
+        state ^= state >>> 7;
+        state ^= state << 17;
+        immutable ulong[4] ranges = [100, 16_777_217, 9_007_199_254_740_993, ulong.max];
+        immutable mantissa = state % ranges[index % 4];
+        immutable power = cast(int)((state >> 33) % 81) - 40;
+        const token = spell(mantissa, power, (index & 4) != 0, (index & 8) != 0);
+        ulong exact;
+        double[1] wide;
+        if (fastDouble(token, wide[0]))
+        {
+            ++fastDoubles;
+            DoubleBits parts;
+            parts.value = wide[0];
+            assert(readBits(token, binary64, exact) && parts.raw == exact);
+        }
+        float[1] narrow;
+        if (fastSingle(token, narrow[0]))
+        {
+            ++fastSingles;
+            SingleBits parts;
+            parts.value = narrow[0];
+            assert(readBits(token, binary32, exact) && parts.raw == exact);
+        }
+    }
+    assert(fastDoubles > 20_000 && fastSingles > 20_000);
 }

@@ -26,3 +26,15 @@ Milestone 6 freezes the API, runs the empirical gates and prepares a release. Se
 ## Consequences
 
 The full `tools/gates.py --gate all` cannot pass while two required platforms are out of scope; the milestone report states this explicitly instead of weakening the gate.
+
+## Public API additions
+
+The handoff archive under `handoff/` stays byte-identical to its `MANIFEST.sha256`; additions that the decisions require are recorded here instead of being edited into the frozen specifications and contracts.
+
+- **Decision 9:** `flint.config` adds one overload beside `load!T`:
+
+  ```d
+  Error load(T...)(scope const ref ConfigOptions options, ref T values) if (T.length != 0);
+  ```
+
+  It reads the files, `.env`, environment and arguments once and binds every value from that one snapshot; types may share a prefix. With `rejectUnknownKeys`, a key is unknown only when no bound type's schema claims it, so a misspelt key inside a bound prefix is still rejected with the same diagnostic as `load!T`. On failure every value is reset to its initializer and the earliest diagnostic by key is returned. `load!T` keeps single-type semantics.

@@ -82,6 +82,10 @@ private struct Binding
     Origin[string] applied;
     string firstKey;
     Error first;
+    // A multi-type load keeps consumed inputs for later types and records them here instead.
+    bool retainInputs;
+    string[string] claimedKeys;
+    string[string] claimedNames;
 
     void problem(Origin origin, Status status, string key, string message)
     {
@@ -98,7 +102,7 @@ private struct Binding
         {
             if (input.text != "{}")
                 problem(input.origin, Status.invalidArgument, key, "must be an object");
-            layers.files.remove(key);
+            consume(layers.files, key, claimedKeys);
         }
     }
 
@@ -135,43 +139,91 @@ private struct Binding
                     "has an ambiguous environment variable");
         envKeys[name] = key;
 
-        take(layers.files, key, input, present);
-        take(layers.dotenv, name, input, present);
+        take(layers.files, key, input, present, claimedKeys);
+        take(layers.dotenv, name, input, present, claimedNames);
         if (const value = name in layers.process)
         {
             input = InputValue(*value, Origin("process environment"));
             present = true;
-            layers.process.remove(name);
+            if (retainInputs)
+                claimedNames[name] = null;
+            else
+                layers.process.remove(name);
         }
-        take(layers.arguments, key, input, present);
+        take(layers.arguments, key, input, present, claimedKeys);
 
         return present;
     }
 
-    private void take(ref Inputs entries, string name, ref InputValue selected, ref bool present)
+    private void take(ref Inputs entries, string name, ref InputValue selected, ref bool present,
+            ref string[string] claimed)
     {
         if (const value = name in entries)
         {
             selected = *value;
             present = true;
-            entries.remove(name);
+            consume(entries, name, claimed);
         }
+    }
+
+    private void consume(ref Inputs entries, string name, ref string[string] claimed)
+    {
+        if (retainInputs)
+            claimed[name] = null;
+        else
+            entries.remove(name);
     }
 
     void unknown()
     {
+        const string[1] own = [processScope];
+        unknown(own[]);
+    }
+
+    void unknown(scope const(string)[] scopes)
+    {
         foreach (key, value; layers.files)
-            problem(value.origin, Status.invalidArgument, key, "is unknown");
+        {
+            if (key !in claimedKeys)
+                problem(value.origin, Status.invalidArgument, key, "is unknown");
+        }
         foreach (key, value; layers.arguments)
-            problem(value.origin, Status.invalidArgument, key, "is unknown");
+        {
+            if (key !in claimedKeys)
+                problem(value.origin, Status.invalidArgument, key, "is unknown");
+        }
         foreach (key, value; layers.dotenv)
-            problem(value.origin, Status.invalidArgument, key, "is unknown");
+        {
+            if (key !in claimedNames)
+                problem(value.origin, Status.invalidArgument, key, "is unknown");
+        }
         foreach (key, value; layers.process)
         {
-            if (processScope.length != 0 && key.startsWith(processScope))
-                problem(Origin("process environment"), Status.invalidArgument, key, "is unknown");
+            if (key in claimedNames)
+                continue;
+            foreach (environmentScope; scopes)
+            {
+                if (environmentScope.length != 0 && key.startsWith(environmentScope))
+                {
+                    problem(Origin("process environment"), Status.invalidArgument, key, "is unknown");
+                    break;
+                }
+            }
         }
     }
+
+    // Prepare the next type of a multi-type load; problems and claimed inputs accumulate.
+    void next(string keyPrefix)
+    {
+        processScope = environmentScope(envPrefix, keyPrefix);
+        envKeys = null;
+        applied = null;
+    }
+}
+
+private string environmentScope(string envPrefix, string keyPrefix)
+{
+    return keyPrefix.length == 0 ? envPrefix : defaultEnvironment(envPrefix, keyPrefix) ~ "__";
 }
 
 private void walk(T, string prefix, size_t depth)(ref T value, ref Binding binding)
@@ -221,14 +273,48 @@ package(flint.config) Error bind(T)(ref T value, ref Layers layers, string envPr
     enum valid = validConfigPrefix(keyPrefix);
     if (!valid)
         return Origin("schema").report(Status.invalidArgument, "", "has an invalid configuration prefix");
-    const environmentScope = keyPrefix.length == 0 ? envPrefix : defaultEnvironment(envPrefix, keyPrefix) ~ "__";
-    Binding binding = Binding(layers, envPrefix, environmentScope);
+    Binding binding = Binding(layers, envPrefix, environmentScope(envPrefix, keyPrefix));
     walk!(T, keyPrefix, 1)(value, binding);
     if (rejectUnknown)
         binding.unknown();
     if (binding.first.code != Status.ok)
         return binding.first;
     return check(value, binding.applied);
+}
+
+/// Bind several types from one snapshot; a key is unknown only when no bound type claims it.
+package(flint.config) Error bindAll(T...)(ref Layers layers, bool rejectUnknown, ref T values)
+{
+    Binding binding = Binding(layers, layers.envPrefix);
+    binding.retainInputs = true;
+    string[T.length] scopes;
+    Origin[string][T.length] applied;
+    static foreach (index, Type; T)
+    {
+        {
+            enum keyPrefix = configPrefix!Type;
+            enum valid = validConfigPrefix(keyPrefix);
+            if (!valid)
+                return Origin("schema").report(Status.invalidArgument, "", "has an invalid configuration prefix");
+            binding.next(keyPrefix);
+            walk!(Type, keyPrefix, 1)(values[index], binding);
+            scopes[index] = binding.processScope;
+            applied[index] = binding.applied;
+        }
+    }
+    if (rejectUnknown)
+        binding.unknown(scopes[]);
+    if (binding.first.code != Status.ok)
+        return binding.first;
+    static foreach (index; 0 .. T.length)
+    {
+        {
+            const invalid = check(values[index], applied[index]);
+            if (invalid.code != Status.ok)
+                return invalid;
+        }
+    }
+    return Error.init;
 }
 
 package(flint.config) Error check(T)(scope const ref T value, scope const(Origin[string]) origins = null)
