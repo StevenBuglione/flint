@@ -16,19 +16,19 @@ package(flint) struct Background
 
     /// Wait until the worker thread has exited. Idempotent and safe to race; call only after the
     /// worker has returned or been told to return, and never from the worker itself.
+    // SAFETY: `joinThread` allocates only on its failure path, which ends in assert(0); the cast
+    // adds @nogc to a call that performs no GC allocation when it returns.
     void join() @trusted nothrow @nogc
     {
         if (thread is null || !cas(&joined, false, true))
             return;
-        // SAFETY: `joinThread` allocates only on its failure path, which ends in assert(0); the cast
-        // adds @nogc to a call that performs no GC allocation when it returns.
         (cast(void function(Thread) nothrow @nogc)&joinThread)(thread);
     }
 }
 
-// SAFETY: pthread_join fails only for a thread that was never started, already joined or detached.
-// The thread is started before `Background` holds it, `joined` admits one caller, and the handle
-// keeps the Thread reachable so its finalizer cannot detach it first.
+// pthread_join fails only for a thread that was never started, already joined or detached.
+// SAFETY: The thread is started before `Background` holds it, `joined` admits one caller, and the
+// handle keeps the Thread reachable so its finalizer cannot detach it first.
 private @trusted void joinThread(Thread thread) nothrow
 {
     try
