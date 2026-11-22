@@ -562,6 +562,85 @@ private PackageRun runPackage(ref Session session, string name, string compiler,
     return run;
 }
 
+/// Run the live scenarios policy/test-peers.toml declares for `packages`, against their pinned peers.
+PackageRun[] runScenarios(ref Session session, scope const(string)[] packages, ref Report report)
+{
+    import std.algorithm.searching : canFind;
+    import flint_tool.engine.peers : MissingPeer, PeerTable, loadPeers, resolveCommand;
+    import flint_tool.toolchain.toolchain : toolchainDirectory;
+
+    PeerTable table;
+    if (!loadPeers(session.home, table, report))
+        return null;
+    PackageRun[] runs;
+    foreach (ref item; session.home.packages)
+    {
+        if (!packages.canFind(item.name) || item.name !in table.scenarios)
+            continue;
+        PackageRun run;
+        run.name = item.name;
+        run.compiler = "scenarios";
+        string[] command;
+        MissingPeer missing;
+        if (!resolveCommand(session.home, table, toolchainDirectory(session.home),
+                table.scenarios[item.name], command, missing, report))
+        {
+            run.missing_peers = [missing.binary];
+            report.error("FLINT-E0815", "flint:" ~ item.name ~ ": live scenarios cannot start: " ~ missing.detail,
+                    missing.install.length ? missing.install : "pin a release in policy/ and install it");
+            runs ~= run;
+            continue;
+        }
+        session.progress("Scenarios", "flint:" ~ item.name ~ " against its pinned brokers");
+        import std.process : environment;
+
+        EnvVar[] variables;
+        foreach (name, value; environment.toAA())
+        {
+            if (name != "DFLAGS")
+                variables ~= EnvVar(name, value);
+        }
+        string output;
+        run.ok = runDub(session, command, variables, session.home.root, output);
+        run.summary = scenarioSummary(output);
+        if (!run.ok)
+            report.error("FLINT-E0702", "flint:" ~ item.name ~ " live scenarios failed", "output:\n" ~ tail(output));
+        runs ~= run;
+    }
+    return runs;
+}
+
+/// "N of M scenarios passed" from a scenario runner's JSON summary line.
+string scenarioSummary(string output)
+{
+    import std.conv : to;
+    import std.string : lineSplitter, strip;
+    import flint.serde : DecodeOptions, UnknownFields;
+    import flint.serde.owned : deserialize;
+
+    static struct Summary
+    {
+        long passed;
+        long failed;
+    }
+
+    DecodeOptions lenient;
+    lenient.unknownFields = UnknownFields.ignore;
+    string found;
+    foreach (line; output.lineSplitter)
+    {
+        const text = line.strip;
+        if (text.length && text[0] == '{')
+        {
+            const decoded = deserialize!Summary(text, lenient);
+            if (decoded.ok)
+                found = decoded.value.passed.to!string ~ " of " ~ (decoded.value.passed + decoded.value.failed)
+                    .to!string ~ " scenarios passed";
+        }
+    }
+    return found;
+}
+
 /// Per-package test environment, as tools/ci.py run_tests sets it. The CI closure builds desktop's SDL
 /// canvas backend, whose pinned SDL has no Wayland driver (ADR-020), so its suite runs on SDL's offscreen
 /// driver; the WebKitGTK backend is tested on a real display by its own profile.

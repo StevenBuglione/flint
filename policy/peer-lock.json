@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "purpose": "Pinned fixture peers for workspace test suites and live scenarios (ADR-018, ADR-022). tools/install_peers.py verifies each archive before building or extracting it and writes a flint-peer.json receipt. Go is pinned in policy/toolchains.json and the PostgreSQL source in policy/native-lock.json.",
+  "peers": {
+    "valkey": {
+      "version": "9.1.2",
+      "kind": "make",
+      "url": "https://github.com/valkey-io/valkey/archive/refs/tags/9.1.2.tar.gz",
+      "sha256": "19c23908e7d57e8d91ef85b41f5646307582f10f4f0fb999bbf89ed24ec9c983",
+      "commit": "7f1dffedff6de73058b2c2a389422b6ecd56c8fb",
+      "checksum_url": "https://raw.githubusercontent.com/valkey-io/valkey-hashes/main/README",
+      "verification": "The digest equals the sha256 the Valkey project publishes for valkey-9.1.2.tar.gz in valkey-io/valkey-hashes (observed 2026-11-22).",
+      "license": "BSD-3-Clause",
+      "build": ["make", "-j", "BUILD_TLS=no", "USE_SYSTEMD=no"],
+      "binaries": {"valkey-server": "src/valkey-server"}
+    },
+    "nats": {
+      "version": "2.15.3",
+      "kind": "go",
+      "url": "https://github.com/nats-io/nats-server/archive/refs/tags/v2.15.3.tar.gz",
+      "sha256": "034a2a7535d67ae6f28962976a530dad1bd912dd2d9af05a3990f3b7e674008e",
+      "commit": "2a9066eb57ff4aa50d8e6a979bdfbd6a8b9db251",
+      "verification": "NATS publishes SHA256SUMS for release binaries, not for the tag archive. The archive digest was observed on 2026-11-22 for tag v2.15.3 (commit 2a9066eb); every module dependency is verified against the tree's go.sum and the Go checksum database.",
+      "license": "Apache-2.0",
+      "binaries": {"nats-server": "nats-server"}
+    },
+    "minio": {
+      "version": "RELEASE.2025-10-15T17-29-55Z",
+      "kind": "go",
+      "url": "https://github.com/minio/minio/archive/refs/tags/RELEASE.2025-10-15T17-29-55Z.tar.gz",
+      "sha256": "be6d0bd3696c3a13a35f02d3a0280b64319c67918b4501c5c3d87f96d000085c",
+      "commit": "9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a",
+      "verification": "MinIO no longer serves community release binaries (dl.min.io answers 410 Gone), so the last community release tag is built from source with the pinned Go. The archive digest was observed on 2026-11-22 for commit 9e49d5e7; every module dependency is verified against go.sum and the Go checksum database.",
+      "license": "AGPL-3.0-only (test peer only; never linked or distributed)",
+      "binaries": {"minio": "minio"}
+    },
+    "kafka": {
+      "version": "4.1.2",
+      "kind": "archive",
+      "url": "https://downloads.apache.org/kafka/4.1.2/kafka_2.13-4.1.2.tgz",
+      "sha256": "18795e0b9a89de0ed8443ad83365e26f6407813afec4fe139c1acb0c3364e6dc",
+      "sha512": "78ac6e488b1071122f9608dfdb363f6fe50e1dbbc492347002c0398dfbf77e0d8caa5bf794c5937379721004dfe92025937d238b0faf4eb715529417fd43b491",
+      "checksum_url": "https://downloads.apache.org/kafka/4.1.2/kafka_2.13-4.1.2.tgz.sha512",
+      "verification": "The SHA-512 equals the Apache-published kafka_2.13-4.1.2.tgz.sha512 (observed 2026-11-22); the SHA-256 is of the same verified bytes.",
+      "license": "Apache-2.0",
+      "binaries": {"kafka-server-start.sh": "bin/kafka-server-start.sh"}
+    },
+    "jre": {
+      "version": "21.0.13.1+2",
+      "kind": "archive",
+      "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.13.1%2B2/OpenJDK21U-jre_x64_linux_hotspot_21.0.13.1_2.tar.gz",
+      "sha256": "18f44fab9065217f3ba61d0eef8a7b5f3c3713aa7293001b0d4ac10ede3850f0",
+      "checksum_url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.13.1%2B2/OpenJDK21U-jre_x64_linux_hotspot_21.0.13.1_2.tar.gz.sha256.txt",
+      "verification": "The digest equals the Eclipse Temurin published .sha256.txt (observed 2026-11-22). Kafka 4.1 brokers require Java 17 or later.",
+      "license": "GPL-2.0-with-classpath-exception",
+      "binaries": {"java": "bin/java"}
+    }
+  }
+}

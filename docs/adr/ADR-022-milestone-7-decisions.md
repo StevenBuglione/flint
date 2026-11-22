@@ -46,8 +46,16 @@ ADR-018 and ADR-021 fix what `flint` does. Building it forced choices they leave
 16. **Fixture peers.** `policy/test-peers.toml` declares which workspace packages need which peers, how each peer is started and which pinned binaries it needs (ADR-018 resolved choice).
     - **Wrappers.** A peer is a wrapper command: the package's own fixture runner from its `ACCEPTANCE.md`, or `tools/pg_peer.py` for a disposable PostgreSQL cluster. The wrapper starts the peer, exports its address through `FLINT_*` variables and runs the rest of the command line.
     - **Test sequence.** `flint test` first runs the package's `dub test`, the offline pass, which also builds the test binary. It then runs the same binary inside the package's wrappers, outermost first.
-    - **Building peers.** Go fixture servers are built offline with the pinned Go 1.27.4. PostgreSQL 18.7 is built from the libpq source pinned in `policy/native-lock.json` by `tools/install_peers.py`, which writes a receipt.
-    - **Missing peers.** A peer whose binary is missing, or has no pinned release (Valkey, MinIO), is never taken from the system. The offline pass still runs, then FLINT-E0815 names the peer and fails the package.
+    - **Pins.** Peer pins live in `policy/peer-lock.json`, each with its source URL, its digest and how that digest was verified. `tools/install_peers.py` verifies every archive before use and writes a `flint-peer.json` receipt per peer.
+      - Valkey 9.1.2 is built with `make` from its tag archive, whose SHA-256 equals the project's published hash.
+      - nats-server v2.15.3 is built from its tag with the pinned Go 1.27.4, with modules verified by `go.sum` and the checksum database.
+      - MinIO `RELEASE.2025-10-15T17-29-55Z` is built from its tag with the pinned Go. MinIO no longer serves community binaries (`dl.min.io` answers 410), so a source build is the only reproducible choice.
+      - Apache Kafka 4.1.2 matches its Apache-published SHA-512.
+      - Eclipse Temurin JRE 21.0.13.1+2 matches its published SHA-256 and runs Kafka; no container is needed.
+      - PostgreSQL 18.7 is built from the libpq source pinned in `policy/native-lock.json`, and Go comes from `policy/toolchains.json`.
+    - **Go fixture servers** are built offline with the pinned Go.
+    - **Missing peers.** A peer whose binary is missing is never taken from the system. The offline pass still runs, then FLINT-E0815 names the peer and fails the package.
+    - **Live scenarios.** `[scenarios]` declares commands that `flint test --scenarios` runs after the unit tests. `mq`'s, `tools/mq_live.py`, starts a single-node KRaft Kafka on the pinned JRE and JetStream, plain and with TLS from a throwaway CA. It builds the scenario programs in `packages/mq/fixtures` and runs all seven against them.
     - **`tools/ci.py`.** It never started peers; its `run_tests` lane is unchanged.
 
     `flint toolchain install` also stops the compile servers running the DMD it replaces, which otherwise make the installer's in-place extraction fail with "Text file busy". It writes the toolchain receipt as soon as DMD, DUB and LDC are installed, before the quality tools.

@@ -85,6 +85,8 @@ struct TestArgs
     @Option("locked", 0, "Fail when flint.lock is missing") bool locked;
     /// Rebuild everything.
     @Option("force", 'f', "Rebuild even when up to date") bool force;
+    /// Live scenarios.
+    @Option("scenarios", 0, "Also run declared live scenarios (mq: Kafka, JetStream)") bool scenarios;
     /// Project directory.
     @Option("project", 'C', "Run in this project or workspace directory") string project;
     /// Stream tool output.

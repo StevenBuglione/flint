@@ -221,12 +221,15 @@ class FixturePeerTests(unittest.TestCase):
         self.assertIn('against broken', document['diagnostics'][0]['message'])
 
     def test_missing_peer_is_named_and_fails_the_run(self):
-        status, document = self.run_arena('', '["minio"]')
+        peers = ('[binary.absent]\ndescription = "an unpinned fixture"\npath = ".flint/peers/absent"\n'
+                 'unpinned = "absent has no pinned release"\n\n'
+                 '[peer.absent]\ndescription = "probe"\ncommand = ["python3", "-c", "pass", "{bin:absent}"]\n\n')
+        status, document = self.run_arena(peers, '["absent"]')
         self.assertEqual((status, codes(document)), (2, ['FLINT-E0815']), document['diagnostics'])
         run = document['runs'][0]
-        self.assertEqual((run['ok'], run['missing_peers'], run['peers']), (False, ['minio'], []))
+        self.assertEqual((run['ok'], run['missing_peers'], run['peers']), (False, ['absent'], []))
         self.assertIn('modules passed unittests', run['summary'])
-        self.assertIn('minio', document['diagnostics'][0]['message'])
+        self.assertIn('absent has no pinned release', document['diagnostics'][0]['message'])
 
 
 class ProjectLifecycleTests(unittest.TestCase):

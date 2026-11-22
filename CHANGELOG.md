@@ -13,7 +13,8 @@
 - Move the canonical build profiles into `policy/profiles.toml`, shared by `flint`, `tools/ci.py` and `tools/measure_builds.py` with unchanged flags, and add `policy/platform.toml`.
 - Write a build receipt next to every artifact. Added flags, a non-profile compiler or an unverified toolchain mark it non-canonical. `flint toolchain install` records the receipt that ties the installed DMD and DUB fork to `toolchain/*.patch`.
 - Port the structural gate, the dfmt and D-Scanner checks and the safety policy into `flint check`, with the fast subset in every build. Every `flint` error has a stable `FLINT-Ennnn` code with a location, cause and fix, and `flint explain` describes each one.
-- Start the fixture peers that workspace test suites declare in `policy/test-peers.toml`. The peers are the AI, S3, HTTP, JWKS and SMTP peers and a disposable PostgreSQL cluster, built with the pinned Go and from the pinned PostgreSQL source by `tools/install_peers.py`. A missing peer fails its package with FLINT-E0815 instead of being skipped.
+- Start the fixture peers that workspace test suites declare in `policy/test-peers.toml`: the AI, S3, HTTP, JWKS and SMTP peers, MinIO, Valkey and a disposable PostgreSQL cluster. A missing peer fails its package with FLINT-E0815 instead of being skipped. `flint test --scenarios` runs `mq`'s live scenarios against real Kafka 4.1.2 and NATS JetStream 2.15.3.
+- Pin every peer in `policy/peer-lock.json`, with published checksums or recorded tag commits. `tools/install_peers.py` verifies each archive, builds Valkey, nats-server and MinIO, using the pinned Go for the Go programs, extracts Kafka and a Temurin JRE, and writes a receipt per peer.
 - Add `flint.config` named policy files without environment layers, `flint.serde.owned.serialize` and `flint.term.describe` (ADR-022).
 - Fix two link and build failures: `flint:os` failed to link in DMD library builds, and the `flint:term` C shim failed to compile under fortified GCC.
 

@@ -49,6 +49,8 @@ struct PeerTable
     PeerSpec[string] peers;
     /// Peer names per package, outermost first.
     string[][string] packages;
+    /// Live scenario command templates per package.
+    string[][string] scenarios;
 }
 
 /// A peer that cannot start, and why.
@@ -113,14 +115,8 @@ private string readEntry(ref PeerTable table, scope const(string)[] path, string
 {
     import flint.serde.owned : deserialize;
 
-    if (path.length == 2 && path[0] == "packages")
-    {
-        const list = deserialize!(string[])(json);
-        if (!list.ok)
-            return "[packages] " ~ path[1] ~ " must list peer names";
-        table.packages[path[1]] = list.value.dup;
-        return null;
-    }
+    if (path.length == 2 && (path[0] == "scenarios" || path[0] == "packages"))
+        return readList(table, path, json);
     if (path.length != 3 || (path[0] != "binary" && path[0] != "peer"))
         return "unknown key " ~ joinPath(path);
     if (path[0] == "peer" && path[2] == "command")
@@ -134,6 +130,21 @@ private string readEntry(ref PeerTable table, scope const(string)[] path, string
     const value = deserialize!string(json);
     if (!value.ok || !assign(table, path, value.value))
         return "unknown or invalid key " ~ joinPath(path);
+    return null;
+}
+
+/// A [scenarios] command or a [packages] peer list.
+private string readList(ref PeerTable table, scope const(string)[] path, string json)
+{
+    import flint.serde.owned : deserialize;
+
+    const list = deserialize!(string[])(json);
+    if (!list.ok || list.value.length == 0)
+        return "[" ~ path[0] ~ "] " ~ path[1] ~ " must be a nonempty array of strings";
+    if (path[0] == "scenarios")
+        table.scenarios[path[1]] = list.value.dup;
+    else
+        table.packages[path[1]] = list.value.dup;
     return null;
 }
 
@@ -226,17 +237,9 @@ PeerPlan planPeers(const ref Home home, const ref PeerTable table, string toolch
         return plan;
     foreach (peerName; table.packages[packageName])
     {
-        const spec = table.peers[peerName];
         string[] command;
         MissingPeer missing;
-        foreach (argument; spec.command)
-        {
-            string resolved;
-            if (!resolveArgument(home, table, toolchainDirectory, argument, resolved, missing, report))
-                break;
-            command ~= resolved;
-        }
-        if (missing.binary.length)
+        if (!resolveCommand(home, table, toolchainDirectory, table.peers[peerName].command, command, missing, report))
         {
             missing.peer = peerName;
             plan.missing ~= missing;
@@ -246,6 +249,20 @@ PeerPlan planPeers(const ref Home home, const ref PeerTable table, string toolch
         plan.started ~= peerName;
     }
     return plan;
+}
+
+/// Substitute every placeholder of a command template; false with `missing` set when a binary is unavailable.
+bool resolveCommand(const ref Home home, const ref PeerTable table, string toolchainDirectory,
+        scope const(string)[] template_, out string[] command, out MissingPeer missing, ref Report report)
+{
+    foreach (argument; template_)
+    {
+        string resolved;
+        if (!resolveArgument(home, table, toolchainDirectory, argument, resolved, missing, report))
+            return false;
+        command ~= resolved;
+    }
+    return true;
 }
 
 private bool resolveArgument(const ref Home home, const ref PeerTable table, string toolchainDirectory,

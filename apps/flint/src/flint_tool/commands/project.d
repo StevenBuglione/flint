@@ -595,8 +595,15 @@ int commandTest(ref Session session, TestArgs args)
     auto request = requestOf("test", null, null, null, args.verify, args.locked, args.force);
     if (target.kind == TargetKind.workspace)
     {
-        foreach (run; workspaceRun(session, selectedPackages(session, args.packages, report),
-                "test", compilers, true, request, report))
+        const selected = selectedPackages(session, args.packages, report);
+        auto runs = workspaceRun(session, selected, "test", compilers, true, request, report);
+        if (args.scenarios)
+        {
+            import flint_tool.engine.builder : runScenarios;
+
+            runs ~= runScenarios(session, selected, report);
+        }
+        foreach (run; runs)
         {
             payload.runs ~= TestRun(run.name, run.compiler, run.ok, run.summary, run.artifact,
                     run.receipt, run.peers.dup, run.missing_peers.dup, run.peer_summary);

@@ -59,10 +59,12 @@ Inside the Flint checkout, the root `flint.toml` declares the workspace. There `
 | `http` | Go HTTP/1.1, HTTP/2 and TLS peers |
 | `security` | Go HTTPS JWKS peer |
 | `mail` | Go SMTP and HTTPS provider peers |
-| `cache` | Valkey and the Go RESP3 peer |
+| `cache` | Valkey 9.1.2 and the Go RESP3 peer |
 | `sql`, `data`, `migrate` | disposable PostgreSQL 18.7 cluster |
 
-Install the pinned peer binaries with `python3 tools/install_peers.py --peer go --peer postgres`. A peer without a pinned binary is never taken from the system. The offline tests still run, then FLINT-E0815 names the missing peer and fails the package. `flint doctor` lists each peer binary.
+`flint test --scenarios` also runs the live scenarios a package declares. `mq` runs seven scenarios against a real Apache Kafka 4.1.2 broker and against NATS JetStream 2.15.3, plain and over TLS.
+
+Install every pinned peer with `python3 tools/install_peers.py --peer all`. The pins and their checksum sources are in `policy/peer-lock.json`. A peer without a pinned binary is never taken from the system. The offline tests still run, then FLINT-E0815 names the missing peer and fails the package. `flint doctor` lists each peer binary.
 
 ## Exit codes
 
