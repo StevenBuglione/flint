@@ -77,6 +77,25 @@ def template_instances(text):
     return sum(counts)
 
 
+def package_template_instances(records, name):
+    """Instantiations in the compiler invocations that compile this package's own modules or probe.
+
+    Dependency libraries are compiled in separate invocations and counted under their own packages;
+    counting them here again would charge every dependent for the same druntime instantiations (ADR-019).
+    `records` are the instrumented wrapper's invocation receipts; their streams sit beside them.
+    """
+    marker = os.sep + 'packages' + os.sep + name + os.sep
+    total = 0
+    for record in sorted(records):
+        invocation = json.loads(record.read_text())
+        sources = [os.path.normpath(os.path.join(invocation['cwd'], value))
+                   for value in invocation['expanded_arguments'] if value.endswith('.d')]
+        if any(marker in source for source in sources):
+            total += template_instances(''.join((record.parent / invocation[stream]).read_text(errors='replace')
+                                                for stream in ('stdout', 'stderr')))
+    return total
+
+
 def copy_workspace(destination):
     def ignore(directory, names):
         excluded = {'.git', '.dub', '.dub-home', '.ci-dub-home', '.tools', '.native',
@@ -165,7 +184,7 @@ stdout.write_bytes(result.stdout)
 stderr.write_bytes(result.stderr)
 sys.stdout.buffer.write(result.stdout)
 sys.stderr.buffer.write(result.stderr)
-(traces / (identity + '.invocation.json')).write_text(json.dumps({'command': command, 'expanded_arguments': expanded, 'response_files': response_files, 'exit_code': result.returncode, 'trace': trace.name, 'stdout': stdout.name, 'stderr': stderr.name}) + '\\n')
+(traces / (identity + '.invocation.json')).write_text(json.dumps({'command': command, 'expanded_arguments': expanded, 'response_files': response_files, 'exit_code': result.returncode, 'trace': trace.name, 'stdout': stdout.name, 'stderr': stderr.name, 'cwd': os.getcwd()}) + '\\n')
 raise SystemExit(result.returncode)
 '''.replace('COMPILER', repr(str(compiler))).replace('TRACES', repr(str(traces)))
     wrapper.write_text(script)
@@ -424,7 +443,10 @@ def main(argv=None):
             log = logs / (name + '-templates.log')
             streams = sorted(traces.glob('*.stdout.txt')) + sorted(traces.glob('*.stderr.txt'))
             log.write_text(''.join(path.read_text(errors='replace') for path in streams))
-            row['template_instances'] = template_instances(log.read_text(errors='replace'))
+            # ADR-019: the budget counts the package's own library and probe compiles; the whole build
+            # closure, dependencies included, stays recorded for visibility.
+            row['template_instances'] = package_template_instances(traces.glob('*.invocation.json'), name)
+            row['template_instances_closure'] = template_instances(log.read_text(errors='replace'))
             row['template_receipt'] = {'command': observation['command'], 'log_sha256': digest(log),
                                        'log': str(log.relative_to(args.output.parent)),
                                        'zero_means': 'no vtemplate lines from an actual successful instrumented compiler invocation'}

@@ -252,7 +252,7 @@ def validate_published_binaries(builds):
 
 
 def validate_builds(builds, directory, commit):
-    from measure_builds import template_instances
+    from measure_builds import package_template_instances, template_instances
     require(builds.get('schema') == 1 and builds.get('mode') == 'production', 'build measurements must be production evidence')
     require(builds.get('commit') == commit and type(builds.get('exit_code')) is int and builds['exit_code'] == 0,
             'build measurements have wrong commit or failed')
@@ -289,14 +289,20 @@ def validate_builds(builds, directory, commit):
             require(row['compiler_peak_rss_bytes'] == max(peaks), 'compiler RSS differs from process samples')
             receipt = row['template_receipt']
             log = artifact_file(directory, receipt['log'], receipt['log_sha256'])
-            require(type(row['template_instances']) is int and row['template_instances'] >= 0 and
-                    row['template_instances'] == template_instances(log.read_text(errors='replace')),
-                    'template count differs from actual compiler statistics')
+            require(type(row.get('template_instances_closure')) is int and
+                    row['template_instances_closure'] == template_instances(log.read_text(errors='replace')),
+                    'closure template count differs from actual compiler statistics')
             artifacts.append((log, name + '-templates'))
             require(receipt['artifacts'], 'template measurement lacks compiler trace/invocation receipts')
+            records = []
             for i, item in enumerate(receipt['artifacts']):
                 path = artifact_file(directory, item['artifact'], item['sha256'])
                 artifacts.append((path, name + '-instrumentation-' + str(i)))
+                if path.name.endswith('.invocation.json'):
+                    records.append(path)
+            require(type(row['template_instances']) is int and row['template_instances'] >= 0 and
+                    row['template_instances'] == package_template_instances(records, name),
+                    'package template count differs from its own compiler invocations')
             deltas = [row['size_detail'][profile]['fixture'] - row['size_detail'][profile]['baseline'] for profile in ['O3', 'Oz']]
             require(row['incremental_linked_bytes'] == max(0, *deltas), 'marginal size differs from observed binaries')
     wasm = builds['apps']['bench-wasm']
