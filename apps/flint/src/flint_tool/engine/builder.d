@@ -101,18 +101,33 @@ EnvVar[] buildEnvironment(ref Session session, const ref Toolchain toolchain, co
     import std.path : dirName;
     import std.process : environment;
 
+    import flint_tool.toolchain.host : pathListSeparator;
+
     EnvVar[] variables;
     foreach (name, value; environment.toAA())
     {
-        if (name == "DFLAGS" || name == "DUB_HOME" || name == "PATH")
+        version (Windows)
+        {
+            import std.uni : toUpper;
+
+            const key = name.toUpper; // Windows names are case-insensitive: PATH arrives as `Path`.
+        }
+        else
+            const key = name;
+        if (key == "DFLAGS" || key == "DUB_HOME" || key == "PATH")
             continue;
         const disabledServer = name == "FLINT_DMD_SERVER" && !spec.compile_server;
         if (disabledServer || (name == "FLINT_DUB_PIPELINE" && !spec.dub_pipeline))
             continue;
         variables ~= EnvVar(name, value);
     }
-    variables ~= EnvVar("PATH", dirName(toolchain.dmd.path) ~ ":" ~ dirName(
-            toolchain.ldc2.path) ~ ":" ~ environment.get("PATH", "/usr/bin:/bin"));
+    version (Windows)
+        const inherited = environment.get("PATH", "");
+    else
+        const inherited = environment.get("PATH", "/usr/bin:/bin");
+    variables ~= EnvVar("PATH",
+            dirName(toolchain.dmd.path) ~ pathListSeparator ~ dirName(toolchain.ldc2.path)
+            ~ pathListSeparator ~ inherited);
     variables ~= EnvVar("DUB_HOME", dubHome);
     if (spec.native_sanitize.length)
         variables = sanitizerBuildEnvironment(session, variables);
@@ -120,10 +135,10 @@ EnvVar[] buildEnvironment(ref Session session, const ref Toolchain toolchain, co
         variables ~= EnvVar("DFLAGS", dflags);
     if (!spec.compile_server)
         variables ~= EnvVar("FLINT_DMD_SERVER", "0");
-    import flint_tool.toolchain.host : dmdForkHost;
+    import flint_tool.toolchain.host : dubPipelineHost;
 
-    // The pipeline writes ELF-style archives, so hosts without the DMD fork build sequentially (ADR-024).
-    if (!spec.dub_pipeline || !dmdForkHost)
+    // The pipeline writes ELF or COFF archives; macOS needs the Darwin format, so it builds sequentially (ADR-024).
+    if (!spec.dub_pipeline || !dubPipelineHost)
         variables ~= EnvVar("FLINT_DUB_PIPELINE", "0");
     return variables;
 }

@@ -6,8 +6,8 @@
 /// canonical flags. Its DUB is the Flint-patched DUB 1.43.0 built from source with LDC. The DUB
 /// pipeline writes ELF-style archives and stays off there; the compile server is a DMD feature.
 ///
-/// Windows x86-64 runs the upstream DMD and DUB of the pinned Windows release (ADR-026): the compile server and
-/// the DUB pipeline are built on fork and Unix sockets, so neither patch applies there.
+/// Windows x86-64 runs the upstream DMD of the pinned Windows release and the Flint DUB, built from source with
+/// LDC and the Windows overlay patch, whose pipeline spawns with CreateProcess and writes COFF archives (ADR-026).
 module flint_tool.toolchain.host;
 
 @safe:
@@ -16,8 +16,10 @@ version (OSX)
 {
     /// The forked DMD and its compile server are installed on this host.
     enum bool dmdForkHost = false;
-    /// The upstream DMD and DUB fill their own roles on this host.
+    /// The upstream DMD fills its own role on this host.
     enum bool upstreamDmdHost = false;
+    /// The Flint DUB's parallel pipeline builds on this host.
+    enum bool dubPipelineHost = false;
     /// The pinned LDC release directory name.
     enum string ldcPlatform = "osx-arm64";
     /// The suffix of an executable file name.
@@ -29,8 +31,10 @@ else version (Windows)
 {
     /// The forked DMD and its compile server are installed on this host.
     enum bool dmdForkHost = false;
-    /// The upstream DMD and DUB fill their own roles on this host.
+    /// The upstream DMD fills its own role on this host.
     enum bool upstreamDmdHost = true;
+    /// The Flint DUB's parallel pipeline builds on this host.
+    enum bool dubPipelineHost = true;
     /// The pinned LDC release directory name.
     enum string ldcPlatform = "windows-x64";
     /// The suffix of an executable file name.
@@ -42,8 +46,10 @@ else
 {
     /// The forked DMD and its compile server are installed on this host.
     enum bool dmdForkHost = true;
-    /// The upstream DMD and DUB fill their own roles on this host.
+    /// The upstream DMD fills its own role on this host.
     enum bool upstreamDmdHost = false;
+    /// The Flint DUB's parallel pipeline builds on this host.
+    enum bool dubPipelineHost = true;
     /// The pinned LDC release directory name.
     enum string ldcPlatform = "linux-x86_64";
     /// The suffix of an executable file name.
@@ -89,10 +95,8 @@ string dubBin(string dubVersion) pure
 
     static if (dmdForkHost)
         return buildPath("dmd2", "linux", "bin64");
-    else static if (upstreamDmdHost)
-        return buildPath("dmd2", "windows", "bin64");
     else
-        return buildPath("dub-" ~ dubVersion, "bin");
+        return buildPath("dub-" ~ dubVersion, "bin"); // The Flint DUB built from source (ADR-024, ADR-026).
 }
 
 /// The pinned version the DMD-role executable reports: DMD's, or LDC's for ldmd2.

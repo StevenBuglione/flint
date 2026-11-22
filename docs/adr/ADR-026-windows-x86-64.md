@@ -32,23 +32,54 @@ Everything was installed from official sources with its checksum or signature ch
 
 The DMD archive's digest is the GitHub release asset digest of `dlang/dmd` v2.114.0. downloads.dlang.org publishes only a GPG signature for it, which was not checked. Windows has no `7z`, so `install_toolchains.py` extracts `.7z` archives with the `tar.exe` (libarchive 3.7) that Windows ships.
 
-### 2. Toolchain: the upstream DMD and DUB first
+### 2. Toolchain: the upstream DMD, then the fork's speed features
 
-The first stage builds with the **upstream DMD 2.114.0 and its bundled DUB 1.43.0**, which matches the DUB pin, and LDC 1.43.0. `install_toolchains.py --compiler dmd` refuses `--flint-fork` and `--dmd-linker` on Windows for now.
+The first stage built with the **upstream DMD 2.114.0 and its bundled DUB 1.43.0**, which matches the DUB pin, and LDC 1.43.0. ADR-025 section 4 then ports the toolchain fork's speed features to Windows, one at a time, each measured against Go on the VM. The VM gives diagnostic numbers only (ADR-025 section 5): 4 vCPUs on a shared host.
 
-The Flint toolchain fork (ADR-016, `toolchain/README.md`) does not build on Windows as it stands:
+`install_toolchains.py --compiler dmd` still refuses `--flint-fork` and `--dmd-linker` on Windows, because the DMD half of the fork is not ported yet.
 
-- **The compile server** forks pre-analysed workers, which take over a caller's file descriptors through a Unix socket. Windows has no `fork`. ADR-025 section 4 replaces it there with a pool of pre-warmed, single-use worker processes reached through named pipes.
-- **The parallel DUB pipeline** spawns compilers with `posix_spawn` and archives in process in the GNU `ar` format. Windows needs `CreateProcessW` and COFF archives.
-- **Direct linking** caches the expansion of the `cc` → `collect2` → `ld` chain. On Windows the cached command is `lld-link` or `link.exe`.
+#### The Flint DUB and its pipeline (done)
 
-Those ports are later stages of this Windows track (ADR-025's order of work, item 3). Until they land and are measured, the Windows compile-speed gate reports failing. The Windows VM gives diagnostic numbers only (ADR-025 section 5).
+`install_toolchains.py --compiler dub` builds the Flint DUB on Windows, as on macOS, from the pinned source with the pinned LDC, into `.tools\dub-1.43.0\bin`. Windows applies a second patch, `toolchain/dub-1.43.0-flint-windows.patch`, over the shared `dub-1.43.0-flint.patch`. Keeping it separate leaves the Linux and macOS patch hashes, and so their installed toolchains, unchanged. The overlay:
 
-Consequences of the first stage:
+- runs the parallel pipeline on Windows. Each compile job starts with `CreateProcessW` through `std.process`, and jobs are reaped with `WaitForMultipleObjects`; the POSIX `posix_spawn`/`waitpid` path is unchanged;
+- archives libraries in process in the Microsoft COFF format `lib.exe` writes: the big-endian first linker member, the little-endian second linker member with its sorted symbol table, NUL-terminated long names, and two-byte member alignment. Symbols come from the COFF or big-object COFF symbol table (external symbols defined in a section, and common symbols);
+- reads `.obj` objects, hard-links targets with `CreateHardLinkW`, ends with `_Exit`, and caches the compiler probe under `%LOCALAPPDATA%\flint-dub`, keyed by `sc.ini`.
 
-- `flint_tool.toolchain.host` gains `upstreamDmdHost`. On Windows, `dmd` and `dub` resolve to `dmd2\windows\bin64`, executables carry `.exe`, and `PATH` lists use `;`.
-- There is no fork to verify. The toolchain receipt records the DMD archive digest and the hashes of the installed `dmd.exe`, `dub.exe` and `ldc2.exe`, with empty patch hashes, so canonical builds still trace every binary to a pinned archive.
-- `flint toolchain install` runs `--compiler dmd`, `--compiler ldc` and the quality tools, calling Python as `python`, the name python.org installs.
+The receipt records the Flint DUB's hash and the SHA-256 of both patches concatenated in order, and `flint toolchain install` runs `--compiler dmd`, `--compiler ldc`, `--compiler dub` and the quality tools. `flint_tool.toolchain.host` has `dubPipelineHost`, so flint leaves the pipeline on on Windows. `FLINT_DUB_PIPELINE=0` still turns it off.
+
+The DUB shared by `flint` and by `dub test` builds all 16 stage-2 packages on both compilers, and `flint test --project apps/flint` passes, through the pipeline.
+
+`bench-cli` with the dev profile on the VM, median of five trials (`tools/measure_dev_builds.py`; each Flint row is set against the Go run made beside it):
+
+| Toolchain | Cold | Incremental | Go cold | Go incremental | Cold ratio | Incremental ratio |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| upstream DMD and DUB | 1.44 s | 0.292 s | 0.342 s | 0.249 s | 4.22 | 1.17 |
+| upstream DMD, Flint DUB pipeline | 1.08 s | 0.237 s | 0.263 s | 0.271 s | 4.10 | 0.88 |
+
+A traced cold pipeline build spends about 0.06 s planning, 0.31 s compiling 61 modules in 9 parallel jobs (0.97 s sequentially), 5 ms archiving, and about 0.75 s linking. The sequential build linked in a similar time, which the faster compile phase now exposes.
+
+#### Linking (next)
+
+The cold link is slow because it is a full link with debug information. The dev profile's `-g` makes DMD pass `/DEBUG`, and Windows debug information means a PDB, whose type records the linker merges. With the previous `.ilk` and `.pdb` present, `link.exe` links incrementally in about 0.03 s; a cold build never has them. Full links of the same `bench-cli` inputs into a new directory:
+
+| Linker | No debug information | With a PDB |
+| --- | ---: | ---: |
+| MSVC `link.exe` 14.44 (`/OPT:REF`, `/DEBUG:FASTLINK` and `/INCREMENTAL:NO` change nothing) | 0.13 s | 0.67 s |
+| LLD 22, the one inside `ldc2` (`ldc2 -link-internally`, so this includes LDC start-up) | 0.11 s | 0.26 s |
+
+So the direct-linking stage links with a pinned LLVM 22 `lld-link` and caches the expanded command, as ADR-025 section 4 describes. The `lld-link` in DMD's Windows release is LLVM 9, which cannot link against the current MSVC runtime (`__guard_eh_cont_table`). `/DEBUG:GHASH` gains nothing, because DMD writes no precomputed type hashes.
+
+#### The compile server (after linking)
+
+ADR-025 section 4's pool of pre-warmed, single-use workers. Each compile job in the traced build pays DMD's start-up and the analysis of the druntime and Phobos modules it imports, which is what the server removes on Linux.
+
+Until these stages land and are measured, the Windows compile-speed gate reports failing.
+
+Consequences so far:
+
+- `flint_tool.toolchain.host` has `upstreamDmdHost` and `dubPipelineHost`. On Windows, `dmd` resolves to `dmd2\windows\bin64`, `dub` to the Flint DUB in `dub-1.43.0\bin`, executables carry `.exe`, and `PATH` lists use `;`, including the environment flint gives DUB.
+- The toolchain receipt records the DMD archive digest and the hashes of the installed `dmd.exe`, `dub.exe` and `ldc2.exe`, the DUB patch digest and an empty DMD patch, so canonical builds trace every binary to a pinned archive and patch.
 - `flint daemon start` reports FLINT-E0810, as on macOS.
 
 ### 3. Win32 platform layer
@@ -105,8 +136,9 @@ Paths are compared with Windows separators and case rules: the workspace check (
 Verified on the Windows VM:
 
 - `tools/install_toolchains.py --compiler dmd`, `--compiler ldc` and `--compiler flint`; `flint toolchain install`, `flint toolchain verify` (receipt verified) and `flint doctor` (exit 0);
-- `flint test --project apps/flint`: 15 of 15 modules;
+- `flint test --project apps/flint`: 16 of 16 modules;
 - `dub test` with DMD and with LDC for all 16 stage-2 packages: `:arena`, `:conc`, `:validate`, `:config`, `:serde`, `:di`, `:log`, `:cli`, `:style`, `:term`, `:os`, `:test`, `:ui-signals`, `:widgets`, `:tui` and `:prompt`;
+- `flint toolchain install` with the Flint DUB, and `dub test` through its pipeline for those 16 packages;
 - `tools/native_build.py --profile tui --target windows-x86_64 --phase build --emit-dub` with MSVC: utf8proc, Flint's C shims and their ctest;
 - `tools/gates.py --gate structural` for those 16 packages, and `tools/quality.py` over the whole tree (0 issues).
 
@@ -117,12 +149,12 @@ Two details of the MSVC build of Flint's C shims (`native/ffi`):
 
 `flint.prompt`'s secret store is `native/secret.c` on Linux and macOS. Windows has no C step in the package build, so `flint.prompt.sys.secret` defines the same functions in D there, wiping with volatile stores.
 
-Next:
+Next, in ADR-025's order:
 
+- direct linking with a pinned LLVM 22 `lld-link` and a cached link command, then the compile server's warm worker pool;
 - the IOCP reactor backend, then the packages above the reactor;
 - the remaining native providers under MSVC hardening (`/guard:cf`, `/GS`, `/sdl`, and `/W4 /WX` for Flint's own C);
-- the `windows-x86_64` platform lane for Gate 6;
-- ADR-025's Windows speed features (compile server, pipeline, direct linking).
+- the `windows-x86_64` platform lane for Gate 6.
 
 ## Public API additions
 
@@ -135,5 +167,7 @@ The Linux and macOS behaviour of every changed module is unchanged by constructi
 - `dub test` on both compilers for `:conc`, `:config`, `:log`, `:os`, `:prompt`, `:term` and `:test`, and for every package whose `core.thread` imports changed (all of them compile, but the import change touches tests across `:actuator`, `:cache`, `:codec`, `:mcp`, `:mq`, `:sql`, `:storage` and `:web`);
 - `flint test --project apps/flint`, and `python3 -m unittest discover -s tests -p 'test_*.py'`;
 - `python3 tools/gates.py --gate structural`;
+- nothing for the DUB pipeline: the Windows overlay patch applies on Windows only, and the shared patch is unchanged;
+- `flint build` and `flint test` for a project, since flint's DUB environment now skips `PATH` through a host check (identical on Linux);
 - `tools/native_build.py` with `ctest`, since `native/ffi/CMakeLists.txt` and `flint_codec_core.c` changed (both only under MSVC conditions);
 - `flint toolchain install --plan`, `flint toolchain verify` and `tools/install_toolchains.py --compiler flint`, since `tools/install_toolchains.py` and the toolchain modules changed.

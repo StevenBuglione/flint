@@ -64,6 +64,9 @@ def install(name,destination,keep=None):
         binary=destination/'oha-1.16.0/oha';binary.parent.mkdir(parents=True,exist_ok=True)
         shutil.copyfile(archive,binary);binary.chmod(0o755)
     elif name.endswith('.7z'):extract_7z(archive,destination)
+    elif name.endswith('.zip'):
+        import zipfile
+        with zipfile.ZipFile(archive) as bundle:bundle.extractall(destination)
     elif keep:
         # Stream the archive once; random access would decompress it again per member.
         with tarfile.open(archive,'r|*') as t:
@@ -142,7 +145,11 @@ PGO_TESTS = ('arena', 'conc', 'config', 'serde', 'validate', 'log', 'cli', 'web'
 
 
 def apply_patch(patch, directory):
-    subprocess.run(['patch', '-p1', '--forward', '--quiet', '-d', str(directory), '-i', str(patch)], check=True)
+    tool = 'patch'
+    if platform.system() == 'Windows' and shutil.which('patch') is None:
+        # Git for Windows ships GNU patch.
+        tool = str(Path(os.environ.get('ProgramFiles', r'C:\Program Files')) / 'Git' / 'usr' / 'bin' / 'patch.exe')
+    subprocess.run([tool, '-p1', '--forward', '--quiet', '-d', str(directory), '-i', str(patch)], check=True)
 
 
 def copy_sources(destination):
@@ -293,7 +300,23 @@ def flint_recipe(manifest, home=ROOT):
 
 
 LDC_DARWIN = 'ldc2-1.43.0-osx-arm64'
+LDC_WINDOWS = 'ldc2-1.43.0-windows-x64'
 FLINT_DUB = 'dub-1.43.0'
+# Windows applies a second patch over the shared one: the pipeline's CreateProcess jobs and COFF archives (ADR-026).
+DUB_WINDOWS_PATCH = FORK_DIR / 'dub-1.43.0-flint-windows.patch'
+
+
+def dub_patches():
+    """The DUB patches this host applies, in order."""
+    return [DUB_PATCH, DUB_WINDOWS_PATCH] if platform.system() == 'Windows' else [DUB_PATCH]
+
+
+def dub_patch_digest():
+    """SHA-256 of the concatenated DUB patches this host applies; the shared patch's own digest elsewhere."""
+    digest = hashlib.sha256()
+    for patch in dub_patches():
+        digest.update(patch.read_bytes())
+    return digest.hexdigest()
 
 
 def install_flint_dub(destination):
@@ -302,12 +325,16 @@ def install_flint_dub(destination):
     Hosts without the DMD fork use it with LDC: the pinned DUB version and the fork's DUB changes,
     without the DMD-only pipeline, which the caller turns off with FLINT_DUB_PIPELINE=0.
     """
-    if platform.system() != 'Darwin':
-        raise SystemExit('--compiler dub is the macOS DUB; Linux installs DUB with --compiler dmd --flint-fork')
-    ldc_bin = install(LDC_DARWIN + '.tar.xz', destination) / LDC_DARWIN / 'bin'
-    output = destination / FLINT_DUB / 'bin' / 'dub'
+    if platform.system() == 'Darwin':
+        ldc_bin = install(LDC_DARWIN + '.tar.xz', destination) / LDC_DARWIN / 'bin'
+    elif platform.system() == 'Windows':
+        # ADR-026: the Flint DUB with the parallel pipeline, beside the upstream DMD.
+        ldc_bin = install(LDC_WINDOWS + '.7z', destination) / LDC_WINDOWS / 'bin'
+    else:
+        raise SystemExit('--compiler dub is the macOS and Windows DUB; Linux installs DUB with --compiler dmd --flint-fork')
+    output = destination / FLINT_DUB / 'bin' / exe('dub')
     receipt = {'compiler': 'dub', 'version': LOCK['versions']['dub'], 'bin': str(output.parent),
-               'sha256': LOCK['assets']['dub-1.43.0.tar.gz']['sha256'], 'dub_patch_sha256': sha256_file(DUB_PATCH)}
+               'sha256': LOCK['assets']['dub-1.43.0.tar.gz']['sha256'], 'dub_patch_sha256': dub_patch_digest()}
     stamp = destination / FLINT_DUB / 'flint-dub.json'
     try:
         previous = json.loads(stamp.read_text())
@@ -320,14 +347,15 @@ def install_flint_dub(destination):
         source = install('dub-1.43.0.tar.gz', work / 'download') / 'dub-1.43.0'
         stage = work / 'dub'
         shutil.copytree(source, stage)
-        apply_patch(DUB_PATCH, stage)
+        for patch in dub_patches():
+            apply_patch(patch, stage)
         env = dict(os.environ, PATH=str(ldc_bin) + os.pathsep + os.environ['PATH'], DMD='ldmd2', GITVER='1.43.0')
-        subprocess.run([str(ldc_bin / 'ldmd2'), '-run', 'build.d', '-O3', '-release'], cwd=stage, env=env, check=True,
-                       stdout=subprocess.DEVNULL)
+        subprocess.run([str(ldc_bin / exe('ldmd2')), '-run', 'build.d', '-O3', '-release'], cwd=stage, env=env,
+                       check=True, stdout=subprocess.DEVNULL)
         output.parent.mkdir(parents=True, exist_ok=True)
         with TemporaryDirectory(dir=output.parent) as replacing:
-            target = Path(replacing) / 'dub'
-            shutil.copyfile(stage / 'bin' / 'dub', target)
+            target = Path(replacing) / exe('dub')
+            shutil.copyfile(stage / 'bin' / exe('dub'), target)
             target.chmod(0o755)
             target.replace(output)
     receipt['dub_sha256'] = sha256_file(output)
@@ -638,8 +666,10 @@ def main():
         if (osname,arch)!=('Linux','x86_64'):raise SystemExit('oha benchmark pin is Linux x86_64')
         name='oha-linux-amd64';relative='oha-1.16.0'
     elif a.compiler=='go':
-        if (osname,arch)!=('Linux','x86_64'):raise SystemExit('Go reference benchmark pin is Linux x86_64')
-        name='go1.27.4.linux-amd64.tar.gz';relative='go/bin'
+        if (osname,arch)==('Windows','x86_64'):name='go1.27.4.windows-amd64.zip'  # Diagnostic comparisons (ADR-025).
+        elif (osname,arch)!=('Linux','x86_64'):raise SystemExit('Go reference benchmark pin is Linux x86_64 and Windows x86_64')
+        else:name='go1.27.4.linux-amd64.tar.gz'
+        relative='go/bin'
     else:
         suffix={'Linux':('alpine' if a.musl else 'linux')+'-'+arch,'Darwin':'osx-arm64','Windows':'windows-x64'}.get(osname)
         if suffix is None:raise SystemExit('unsupported host '+osname)

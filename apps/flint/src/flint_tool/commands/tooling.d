@@ -62,7 +62,8 @@ private void describeToolchain(ref Session session, const ref Toolchain toolchai
     }
     version (Windows)
     {
-        session.say("fork     none: upstream DMD and DUB (ADR-026), receipt " ~ (toolchain.fork.receiptPresent
+        session.say("fork     the Flint DUB beside the upstream DMD (ADR-026), receipt " ~ (
+                toolchain.fork.receiptPresent
                 ? (toolchain.fork.verified ? paint("verified", session.outputPalette,
                 Tone.success) : paint("mismatch", session.outputPalette, Tone.warning)) : paint("missing",
                 session.outputPalette, Tone.warning)));
@@ -145,8 +146,11 @@ int commandToolchainInstall(ref Session session, ToolchainInstallArgs args)
         if (!runInstaller(session, directory, command, output, report))
             return finish(session, report, payload);
         outputs ~= output;
-        // The receipt covers DMD, DUB and LDC; write it as soon as both are installed.
-        if (index == 1 && !writeToolchainReceipt(session, directory, outputs, report))
+        // The receipt covers DMD, DUB and LDC; write it as soon as they are installed. On Windows the Flint DUB is
+        // the third command (ADR-026).
+        import flint_tool.toolchain.host : upstreamDmdHost;
+
+        if (index == (upstreamDmdHost ? 2 : 1) && !writeToolchainReceipt(session, directory, outputs, report))
             return finish(session, report, payload);
     }
     const toolchain = inspect(session.home, null, true, directory);
@@ -268,7 +272,8 @@ private bool writeToolchainReceipt(ref Session session, string directory, scope 
     import flint_tool.toolchain.toolchain : ToolchainReceipt, composeReceipt, receiptName;
 
     ToolchainReceipt receipt;
-    if (!composeReceipt(session.home, directory, outputs[0], outputs[1], receipt, report))
+    if (!composeReceipt(session.home, directory, outputs[0], outputs[1], receipt, report,
+            outputs.length > 2 ? outputs[2] : null))
         return false;
     writeIfChanged(buildPath(directory, receiptName), serialize(receipt).value ~ "\n");
     return true;
@@ -513,12 +518,12 @@ private string forkDetail(const ref ForkState fork)
 {
     version (Windows)
     {
-        // ADR-026: no fork; the receipt ties the upstream binaries to the pinned archives.
+        // ADR-026: the Flint DUB beside the upstream DMD; the receipt ties both to the pinned archives and patches.
         if (fork.verified)
-            return "upstream DMD and DUB (ADR-026), receipt verified";
+            return "upstream DMD and the Flint DUB (ADR-026), receipt verified";
         if (!fork.installed)
-            return "upstream DMD and DUB not installed";
-        return "upstream DMD and DUB (ADR-026), " ~ (fork.receiptPresent
+            return "upstream DMD or the Flint DUB not installed";
+        return "upstream DMD and the Flint DUB (ADR-026), " ~ (fork.receiptPresent
                 ? "but the receipt does not match" : "without a receipt")
             ~ ": builds are non-canonical until `flint toolchain install` writes one";
     }
@@ -585,7 +590,7 @@ int commandDaemon(ref Session session, string action, string profile)
         {
             version (Windows)
                 report.error("FLINT-E0810", "the compile server belongs to the Linux DMD fork; Windows builds with "
-                        ~ "the upstream DMD, which has none (ADR-026)", "build without flint daemon");
+                        ~ "the upstream DMD, which has none yet (ADR-025, ADR-026)", "build without flint daemon");
             else
                 report.error("FLINT-E0810", "the compile server belongs to the Linux DMD fork; this host fills the "
                         ~ "DMD role with LDC's ldmd2, which has none (ADR-024)", "build without flint daemon");

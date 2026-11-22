@@ -1,0 +1,391 @@
+diff --git c/source/app.d w/source/app.d
+index 372da1a..6e14804 100644
+--- c/source/app.d
++++ w/source/app.d
+@@ -28,11 +28,16 @@ int main(string[] args)
+ 	const status = runDubCommandLine(args);
+ 	// Flint fork: all output files are closed; skip druntime teardown.
+ 	import core.stdc.stdio : fflush;
+-	import core.sys.posix.unistd : _exit;
+ 	import std.stdio : stdout, stderr;
+ 	stdout.flush();
+ 	stderr.flush();
+ 	fflush(null);
+-	_exit(status);
++	version (Windows) {
++		import core.stdc.stdlib : _Exit;
++		_Exit(status);
++	} else {
++		import core.sys.posix.unistd : _exit;
++		_exit(status);
++	}
+ 	assert(0);
+ }
+diff --git c/source/dub/compilers/compiler.d w/source/dub/compilers/compiler.d
+index 737d806..7c17f88 100644
+--- c/source/dub/compilers/compiler.d
++++ w/source/dub/compilers/compiler.d
+@@ -197,20 +197,34 @@ interface Compiler {
+ 		string cacheFile;
+ 		try {
+ 			import std.process : executeShell;
++			import std.path : isAbsolute, pathSeparator;
+ 			string exe = compiler_binary;
+-			if (!exe.canFind('/'))
+-				foreach (dir; environment.get("PATH", "").splitter(':')) {
+-					auto cand = buildPath(dir, compiler_binary);
+-					if (exists(cand)) { exe = cand; break; }
++			version (Windows) const suffixes = ["", ".exe"]; else const suffixes = [""];
++			version (Windows) const separated = exe.canFind('/') || exe.canFind('\\'); else const separated = exe.canFind('/');
++			if (!separated)
++				foreach (dir; environment.get("PATH", "").splitter(pathSeparator)) {
++					string found;
++					foreach (suffix; suffixes) {
++						auto cand = buildPath(dir, compiler_binary ~ suffix);
++						if (exists(cand)) { found = cand; break; }
++					}
++					if (found.length) { exe = found; break; }
+ 				}
+ 			string key = exe ~ "\0" ~ timeLastModified(exe).stdTime.to!string ~ "\0" ~ getSize(exe).to!string ~ "\0" ~ arch_flags.join(" ") ~ "\0" ~ defaultProbeArgs.join(" ");
+-			const conf = buildPath(dirName(exe), "dmd.conf");
+-			if (exists(conf)) key ~= "\0" ~ timeLastModified(conf).stdTime.to!string ~ getSize(conf).to!string;
+-			const base = environment.get("XDG_CACHE_HOME", buildPath(environment.get("HOME", "/tmp"), ".cache"));
++			version (Windows) const configName = "sc.ini"; else const configName = "dmd.conf";
++			foreach (name; [configName]) {
++				const conf = buildPath(dirName(exe), name);
++				if (exists(conf)) key ~= "\0" ~ timeLastModified(conf).stdTime.to!string ~ getSize(conf).to!string;
++			}
++			version (Windows)
++				const base = environment.get("LOCALAPPDATA", environment.get("TEMP", "."));
++			else
++				const base = environment.get("XDG_CACHE_HOME", buildPath(environment.get("HOME", "/tmp"), ".cache"));
+ 			mkdirRecurse(buildPath(base, "flint-dub"));
+ 			cacheFile = buildPath(base, "flint-dub", "probe-" ~ crc64ECMAOf(key).toHexString.idup ~ ".txt");
+ 		} catch (Exception) cacheFile = null;
+-		if (cacheFile.length && !exists("dmd.conf") && exists(cacheFile)) {
++		version (Windows) const localConfig = "sc.ini"; else const localConfig = "dmd.conf";
++		if (cacheFile.length && !exists(localConfig) && exists(cacheFile)) {
+ 			auto output = readText(cacheFile);
+ 			BuildPlatform cached = readPlatformSDLProbe(output);
+ 			cached.compilerBinary = compiler_binary;
+diff --git c/source/dub/generators/build.d w/source/dub/generators/build.d
+index e04a955..8925003 100644
+--- c/source/dub/generators/build.d
++++ w/source/dub/generators/build.d
+@@ -212,7 +212,6 @@ class BuildGenerator : ProjectGenerator {
+ 		if (environment.get("FLINT_DUB_PIPELINE", "1") == "0") return false;
+ 		if (settings.rdmd || settings.tempBuild || settings.compiler.name != "dmd") return false;
+ 		if (settings.buildMode != BuildMode.separate) return false;
+-		if (settings.platform.isWindows()) return false;
+ 		foreach (name, ti; targets) {
+ 			const bs = ti.buildSettings;
+ 			if (bs.options & BuildOption.syntaxOnly) return false;
+@@ -376,28 +375,51 @@ class BuildGenerator : ProjectGenerator {
+ 		if (jobs.length) {
+ 			logInfo("Compiling", Color.light_green, "%s modules in %s parallel jobs",
+ 				jobs.map!(j => j.files.length).sum, jobs.length);
+-			import core.sys.posix.sys.wait : waitpid, WIFEXITED, WEXITSTATUS;
+ 			import core.time : MonoTime;
+-			size_t[int] running;
+ 			auto started = MonoTime.currTime;
+-			foreach (ji, j; jobs) {
+-				auto t = &plan[j.target];
+-				auto args = [settings.platform.compilerBinary] ~ t.compileArgs ~ j.files;
+-				logDiagnostic("[cwd=%s] %s", cwd, args.join(" "));
+-				running[fastSpawn(args, t.env, cwd.toNativeString())] = ji;
+-			}
+ 			int failed;
+ 			auto targetFailed = new bool[](plan.length);
+-			while (running.length) {
+-				int st;
+-				const pid = waitpid(-1, &st, 0);
+-				if (pid < 0) break;
+-				auto ji = pid in running;
+-				if (!ji) continue;
+-				if (!WIFEXITED(st) || WEXITSTATUS(st) != 0) { failed++; targetFailed[jobs[*ji].target] = true; }
+-				ftrace(format("job %s done after %.1fms: %s", *ji,
+-					(MonoTime.currTime - started).total!"usecs" / 1000.0, jobs[*ji].files.map!(f => f.baseName).join(" ")));
+-				running.remove(pid);
++			version (Windows) {
++				// CreateProcess for every job, then reap them as they finish.
++				import std.algorithm.mutation : remove;
++				Pid[] pids;
++				size_t[] jobOf;
++				foreach (ji, j; jobs) {
++					auto t = &plan[j.target];
++					auto args = [settings.platform.compilerBinary] ~ t.compileArgs ~ j.files;
++					logDiagnostic("[cwd=%s] %s", cwd, args.join(" "));
++					pids ~= spawnProcess(args, t.env, Config.none, cwd.toNativeString());
++					jobOf ~= ji;
++				}
++				while (pids.length) {
++					const done = waitAnyProcess(pids);
++					const ji = jobOf[done];
++					if (wait(pids[done]) != 0) { failed++; targetFailed[jobs[ji].target] = true; }
++					ftrace(format("job %s done after %.1fms: %s", ji,
++						(MonoTime.currTime - started).total!"usecs" / 1000.0, jobs[ji].files.map!(f => f.baseName).join(" ")));
++					pids = pids.remove(done);
++					jobOf = jobOf.remove(done);
++				}
++			} else {
++				import core.sys.posix.sys.wait : waitpid, WIFEXITED, WEXITSTATUS;
++				size_t[int] running;
++				foreach (ji, j; jobs) {
++					auto t = &plan[j.target];
++					auto args = [settings.platform.compilerBinary] ~ t.compileArgs ~ j.files;
++					logDiagnostic("[cwd=%s] %s", cwd, args.join(" "));
++					running[fastSpawn(args, t.env, cwd.toNativeString())] = ji;
++				}
++				while (running.length) {
++					int st;
++					const pid = waitpid(-1, &st, 0);
++					if (pid < 0) break;
++					auto ji = pid in running;
++					if (!ji) continue;
++					if (!WIFEXITED(st) || WEXITSTATUS(st) != 0) { failed++; targetFailed[jobs[*ji].target] = true; }
++					ftrace(format("job %s done after %.1fms: %s", *ji,
++						(MonoTime.currTime - started).total!"usecs" / 1000.0, jobs[*ji].files.map!(f => f.baseName).join(" ")));
++					running.remove(pid);
++				}
+ 			}
+ 			ftrace("pipeline compiled");
+ 			if (failed) {
+@@ -409,7 +431,7 @@ class BuildGenerator : ProjectGenerator {
+ 					bool deps_ok = true;
+ 					foreach (dep; targets[t.name].dependencies) if (targetFailed[index[dep]]) deps_ok = false;
+ 					if (!deps_ok) continue;
+-					auto objs = dirEntries((t.cacheDir ~ "obj").toNativeString(), "*.o", SpanMode.shallow).map!(e => e.name).array;
++					auto objs = dirEntries((t.cacheDir ~ "obj").toNativeString(), "*" ~ getObjSuffix(settings.platform), SpanMode.shallow).map!(e => e.name).array;
+ 					objs.sort();
+ 					writeArchive(t.binary.toNativeString(), objs);
+ 				}
+@@ -424,7 +446,7 @@ class BuildGenerator : ProjectGenerator {
+ 		foreach (ti, ref t; plan) {
+ 			if (t.bs.targetType == TargetType.none) continue;
+ 			if (!t.rebuild) { any_cached = true; continue; }
+-			auto objs = dirEntries((t.cacheDir ~ "obj").toNativeString(), "*.o", SpanMode.shallow)
++			auto objs = dirEntries((t.cacheDir ~ "obj").toNativeString(), "*" ~ getObjSuffix(settings.platform), SpanMode.shallow)
+ 				.map!(e => e.name).array;
+ 			objs.sort();
+ 			objects[ti] = objs;
+@@ -771,12 +793,18 @@ class BuildGenerator : ProjectGenerator {
+ 			logDiagnostic("Copying target from %s to %s", src.toNativeString(), buildsettings.targetPath);
+ 			const dst = NativePath(buildsettings.targetPath) ~ filename;
+ 			// Flint fork: a hard link is an atomic, instant copy of the immutable cache file.
+-			import core.sys.posix.unistd : link, unlink;
+ 			import std.string : toStringz;
+ 			version (Posix) {
++				import core.sys.posix.unistd : link, unlink;
+ 				unlink(dst.toNativeString().toStringz);
+ 				if (link(src.toNativeString().toStringz, dst.toNativeString().toStringz) == 0)
+ 					continue;
++			} else version (Windows) {
++				import core.sys.windows.winbase : CreateHardLinkW, DeleteFileW;
++				import std.utf : toUTF16z;
++				DeleteFileW(dst.toNativeString().toUTF16z);
++				if (CreateHardLinkW(dst.toNativeString().toUTF16z, src.toNativeString().toUTF16z, null))
++					continue;
+ 			}
+ 			copyFile(src, dst, true);
+ 		}
+@@ -1047,6 +1075,21 @@ private bool modulesResolvable(const string[] sources, const string[] importPath
+ 	return true;
+ }
+ 
++version (Windows) {
++	/// The index of a process among `pids` that has exited, waiting until one does.
++	private size_t waitAnyProcess(Pid[] pids)
++	{
++		import core.sys.windows.winbase : INFINITE, WAIT_OBJECT_0, WaitForMultipleObjects;
++		import core.sys.windows.windef : HANDLE;
++		HANDLE[64] handles;
++		const count = pids.length < handles.length ? pids.length : handles.length;
++		foreach (i; 0 .. count) handles[i] = pids[i].osHandle;
++		const status = WaitForMultipleObjects(cast(uint) count, handles.ptr, 0, INFINITE);
++		enforce(status >= WAIT_OBJECT_0 && status < WAIT_OBJECT_0 + count, "waiting for compiler processes failed");
++		return status - WAIT_OBJECT_0;
++	}
++} else version (Posix) {
++
+ import core.sys.posix.spawn : posix_spawn_file_actions_t;
+ // glibc >= 2.29
+ private extern (C) int posix_spawn_file_actions_addchdir_np(posix_spawn_file_actions_t*, const(char)*) nothrow @nogc;
+@@ -1084,6 +1127,7 @@ private int fastSpawn(string[] args, in string[string] extraEnv, string cwd)
+ 	enforce(rc == 0, "failed to spawn " ~ prog);
+ 	return pid;
+ }
++}
+ 
+ private NativePath getMainSourceFile(in Package prj)
+ {
+diff --git c/source/dub/internal/flintar.d w/source/dub/internal/flintar.d
+index 332ffe4..32be506 100644
+--- c/source/dub/internal/flintar.d
++++ w/source/dub/internal/flintar.d
+@@ -4,6 +4,11 @@
+ 	Produces a GNU/SysV `ar` archive with a `/` symbol index and a `//` long
+ 	name table, equivalent to `ar rcs` for ELF64 objects, without spawning a
+ 	process.  Members are stored in the given order with zero timestamps.
++
++	On Windows it produces the Microsoft COFF archive that `lib.exe` writes:
++	the big-endian first linker member, the little-endian second linker member
++	with its sorted symbol table, a NUL-terminated long name table, and
++	members aligned to two bytes.
+ */
+ module dub.internal.flintar;
+ 
+@@ -57,8 +62,68 @@ string[] definedSymbols(const(ubyte)[] obj)
+ 	return result;
+ }
+ 
+-/// Write `objects` into the archive at `path` atomically.
++/// External symbols defined by a Microsoft COFF or big-object COFF file (empty for other formats).
++string[] coffDefinedSymbols(const(ubyte)[] obj)
++{
++	static T get(T)(const(ubyte)[] b, size_t off) {
++		if (off + T.sizeof > b.length) return T.init;
++		T v;
++		(cast(ubyte*) &v)[0 .. T.sizeof] = b[off .. off + T.sizeof];
++		return v;
++	}
++	string[] result;
++	size_t symbols, count, entry;
++	bool big;
++	if (obj.length >= 56 && get!ushort(obj, 0) == 0 && get!ushort(obj, 2) == 0xFFFF && get!ushort(obj, 4) >= 2) {
++		// ANON_OBJECT_HEADER_BIGOBJ: 32-bit section numbers, 20-byte symbol records.
++		big = true;
++		symbols = get!uint(obj, 48);
++		count = get!uint(obj, 52);
++		entry = 20;
++	} else if (obj.length >= 20) {
++		symbols = get!uint(obj, 8);
++		count = get!uint(obj, 12);
++		entry = 18;
++	} else
++		return result;
++	const strings = symbols + count * entry;
++	if (symbols == 0 || strings > obj.length) return result;
++	for (size_t i = 0; i < count; i++) {
++		const e = symbols + i * entry;
++		const value = get!uint(obj, e + 8);
++		const long section = big ? get!int(obj, e + 12) : get!short(obj, e + 12);
++		const storage = obj[e + (big ? 18 : 16)];
++		const aux = obj[e + (big ? 19 : 17)];
++		// IMAGE_SYM_CLASS_EXTERNAL, defined in a section or as a common symbol.
++		if (storage == 2 && (section > 0 || (section == 0 && value != 0))) {
++			string name;
++			if (get!uint(obj, e) == 0) {
++				size_t start = strings + get!uint(obj, e + 4), end = start;
++				while (end < obj.length && obj[end]) end++;
++				if (start < obj.length) name = cast(string) obj[start .. end].idup;
++			} else {
++				size_t end = 0;
++				while (end < 8 && obj[e + end]) end++;
++				name = cast(string) obj[e .. e + end].idup;
++			}
++			if (name.length) result ~= name;
++		}
++		i += aux;
++	}
++	return result;
++}
++
++/// Write `objects` into the archive at `path` atomically: COFF on Windows, GNU elsewhere.
+ void writeArchive(string path, const string[] objects)
++{
++	version (Windows)
++		writeCoffArchive(path, objects);
++	else
++		writeGnuArchive(path, objects);
++}
++
++/// Write `objects` into a GNU archive at `path` atomically.
++void writeGnuArchive(string path, const string[] objects)
+ {
+ 	static void header(ref Appender!(ubyte[]) o, string name, size_t size)
+ 	{
+@@ -120,3 +185,84 @@ void writeArchive(string path, const string[] objects)
+ 	write(tmp, o.data);
+ 	rename(tmp, path);
+ }
++
++/// Write `objects` into a Microsoft COFF archive at `path` atomically.
++void writeCoffArchive(string path, const string[] objects)
++{
++	import std.algorithm.sorting : sort;
++	import std.bitmanip : nativeToLittleEndian;
++
++	static void header(ref Appender!(ubyte[]) o, string name, size_t size)
++	{
++		auto h = format("%-16s%-12s%-6s%-6s%-8s%-10s`\n", name, "0", "", "", "0", size);
++		assert(h.length == 60);
++		o ~= cast(const(ubyte)[]) h;
++	}
++	static size_t pad(size_t n) { return n + (n & 1); }
++
++	ubyte[][] data;
++	string[][] syms;
++	string[] names;
++	auto longNames = appender!string;
++	foreach (f; objects) {
++		auto bytes = cast(ubyte[]) read(f);
++		data ~= bytes;
++		syms ~= coffDefinedSymbols(bytes);
++		auto n = baseName(f);
++		if (n.length <= 15)
++			names ~= n ~ "/";
++		else {
++			names ~= format("/%s", longNames.data.length);
++			longNames ~= n ~ "\0";
++		}
++	}
++	static struct Entry { string name; size_t member; }
++	Entry[] entries;
++	size_t symNameBytes;
++	foreach (i, s; syms) foreach (n; s) { entries ~= Entry(n, i); symNameBytes += n.length + 1; }
++	const firstSize = 4 + 4 * entries.length + symNameBytes;
++	const secondSize = 4 + 4 * objects.length + 4 + 2 * entries.length + symNameBytes;
++
++	size_t off = 8 + 60 + pad(firstSize) + 60 + pad(secondSize);
++	if (longNames.data.length) off += 60 + pad(longNames.data.length);
++	auto offsets = new size_t[](objects.length);
++	foreach (i, d; data) {
++		offsets[i] = off;
++		off += 60 + pad(d.length);
++	}
++
++	auto o = appender!(ubyte[]);
++	o.reserve(off);
++	o ~= cast(const(ubyte)[]) "!<arch>\n";
++	// First linker member: symbols in member order, big-endian offsets.
++	header(o, "/", firstSize);
++	o ~= nativeToBigEndian(cast(uint) entries.length)[];
++	foreach (e; entries) o ~= nativeToBigEndian(cast(uint) offsets[e.member])[];
++	foreach (e; entries) { o ~= cast(const(ubyte)[]) e.name; o ~= cast(ubyte) 0; }
++	if (firstSize & 1) o ~= cast(ubyte) '\n';
++	// Second linker member: member offsets, then symbols sorted by name with 1-based member indices.
++	auto sorted = entries.dup;
++	sorted.sort!((a, b) => a.name < b.name);
++	header(o, "/", secondSize);
++	o ~= nativeToLittleEndian(cast(uint) objects.length)[];
++	foreach (offset; offsets) o ~= nativeToLittleEndian(cast(uint) offset)[];
++	o ~= nativeToLittleEndian(cast(uint) sorted.length)[];
++	foreach (e; sorted) o ~= nativeToLittleEndian(cast(ushort)(e.member + 1))[];
++	foreach (e; sorted) { o ~= cast(const(ubyte)[]) e.name; o ~= cast(ubyte) 0; }
++	if (secondSize & 1) o ~= cast(ubyte) '\n';
++	if (longNames.data.length) {
++		header(o, "//", longNames.data.length);
++		o ~= cast(const(ubyte)[]) longNames.data;
++		if (longNames.data.length & 1) o ~= cast(ubyte) '\n';
++	}
++	foreach (i, d; data) {
++		header(o, names[i], d.length);
++		o ~= d;
++		if (d.length & 1) o ~= cast(ubyte) '\n';
++	}
++	assert(o.data.length == off);
++	const tmp = path ~ ".tmp";
++	write(tmp, o.data);
++	if (exists(path)) remove(path);
++	rename(tmp, path);
++}

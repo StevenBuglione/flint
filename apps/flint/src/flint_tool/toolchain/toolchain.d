@@ -207,6 +207,7 @@ Toolchain inspect(const ref Home home, scope const(string)[] names, bool hash, s
     const bin = buildPath(toolchain.directory, "dmd2", "linux", "bin64");
     // Without the DMD fork (ADR-024) the Flint-patched DUB is the whole fork. With the upstream DMD and DUB
     // (ADR-026) there is no fork: the receipt then only ties the installed binaries to the pinned archives.
+    // On Windows the fork is the Flint DUB with its Windows overlay, beside the upstream DMD (ADR-026).
     static if (upstreamDmdHost)
         toolchain.fork.installed = toolchain.dmd.present && toolchain.dub.present;
     else
@@ -214,8 +215,8 @@ Toolchain inspect(const ref Home home, scope const(string)[] names, bool hash, s
             && exists(buildPath(bin, "dub.upstream")) : toolchain.dub.present;
     const dmdPatch = buildPath(home.root, "toolchain", "dmd-2.114.0-flint.patch");
     toolchain.fork.dmdPatch = dmdForkHost ? sha256File(dmdPatch) : "";
-    toolchain.fork.dubPatch = upstreamDmdHost ? "" : sha256File(buildPath(home.root, "toolchain",
-            "dub-1.43.0-flint.patch"));
+    toolchain.fork.dubPatch = upstreamDmdHost ? dubPatchDigest(home) : sha256File(buildPath(home.root,
+            "toolchain", "dub-1.43.0-flint.patch"));
     toolchain.fork.receiptPath = buildPath(toolchain.directory, receiptName);
     ToolchainReceipt receipt;
     if (readReceipt(toolchain.fork.receiptPath, receipt))
@@ -446,11 +447,12 @@ string[][] installCommands(const ref Home home, string directory, bool pgo, stri
     const installer = buildPath(home.root, "tools", "install_toolchains.py");
     static if (upstreamDmdHost)
     {
-        // ADR-026: the upstream DMD and DUB, then LDC. The receipt follows both. Embedded C uses MSVC, so no
-        // clang is installed; the sanitizer and musl lanes are Linux-only. Windows names Python `python`.
+        // ADR-026: the upstream DMD, LDC, then the Flint DUB built with LDC. The receipt follows all three. Embedded C
+        // uses MSVC, so no clang is installed; the sanitizer and musl lanes are Linux-only. Python is `python` there.
         string[][] upstreamCommands = [
             ["python", installer, "--compiler", "dmd", "--destination", directory],
-            ["python", installer, "--compiler", "ldc", "--destination", directory]
+            ["python", installer, "--compiler", "ldc", "--destination", directory],
+            ["python", installer, "--compiler", "dub", "--destination", directory]
         ];
         if (directory == buildPath(home.root, ".tools"))
             upstreamCommands ~= [
@@ -550,7 +552,7 @@ string lastJsonLine(string text)
 
 /// Build the toolchain receipt from the two installer outputs and the installed binaries.
 bool composeReceipt(const ref Home home, string directory, string dmdOutput, string ldcOutput,
-        out ToolchainReceipt receipt, ref Report report)
+        out ToolchainReceipt receipt, ref Report report, string dubOutput = null)
 {
     import flint.serde : DecodeOptions, UnknownFields;
     import flint.serde.owned : deserialize;
@@ -562,7 +564,7 @@ bool composeReceipt(const ref Home home, string directory, string dmdOutput, str
     DecodeOptions lenient;
     lenient.unknownFields = UnknownFields.ignore;
     static if (upstreamDmdHost)
-        return composeUpstreamReceipt(home, directory, dmdOutput, ldcOutput, receipt, report);
+        return composeUpstreamReceipt(home, directory, dmdOutput, ldcOutput, dubOutput, receipt, report);
     else static if (!dmdForkHost)
         return composeHostReceipt(home, directory, dmdOutput, ldcOutput, receipt, report);
     auto dmd = deserialize!InstallerDmd(lastJsonLine(dmdOutput), lenient);
@@ -621,10 +623,10 @@ private bool composeHostReceipt(const ref Home home, string directory, string fi
     return true;
 }
 
-/// The receipt on a host with the upstream DMD and DUB (ADR-026), from the DMD and LDC installer outputs: the DMD
-/// archive and the installed dmd and dub binaries, and no patches.
+/// The receipt on Windows (ADR-026), from the DMD, LDC and DUB installer outputs: the DMD archive and the installed
+/// dmd binary, the Flint DUB's binary and the digest of its two patches, and no DMD patch.
 private bool composeUpstreamReceipt(const ref Home home, string directory, string dmdOutput,
-        string ldcOutput, out ToolchainReceipt receipt, ref Report report)
+        string ldcOutput, string dubOutput, out ToolchainReceipt receipt, ref Report report)
 {
     import flint.serde : DecodeOptions, UnknownFields;
     import flint.serde.owned : deserialize;
@@ -635,15 +637,35 @@ private bool composeUpstreamReceipt(const ref Home home, string directory, strin
     lenient.unknownFields = UnknownFields.ignore;
     auto dmd = deserialize!InstallerTool(lastJsonLine(dmdOutput), lenient);
     auto ldc = deserialize!InstallerTool(lastJsonLine(ldcOutput), lenient);
-    if (!dmd.ok || !ldc.ok || dmd.value.sha256.length == 0)
+    auto dub = deserialize!InstallerDub(lastJsonLine(dubOutput), lenient);
+    if (!dmd.ok || !ldc.ok || !dub.ok || dmd.value.sha256.length == 0 || dub.value.dub_patch_sha256.length == 0)
     {
         report.error("FLINT-E0814", "the installer did not print its receipt", "flint toolchain install --plan");
         return false;
     }
     receipt.installer_sha256 = sha256File(buildPath(home.root, "tools", "install_toolchains.py"));
     receipt.dmd = ReceiptDmd(home.versions["dmd"], dmd.value.sha256, sha256File(componentPath(home,
-            directory, "dmd")), sha256File(componentPath(home, directory, "dub")), "", "", "", false);
+            directory, "dmd")), dub.value.dub_sha256, "", dub.value.dub_patch_sha256, "", false);
     receipt.ldc = ReceiptTool(home.versions["ldc"], ldc.value.sha256, sha256File(componentPath(home,
             directory, "ldc2")));
     return true;
+}
+
+/// SHA-256 of the DUB patches applied on Windows, concatenated in order, as install_toolchains.py computes it.
+string dubPatchDigest(const ref Home home)
+{
+    import std.digest.sha : SHA256, toHexString;
+    import std.file : exists, read;
+    import std.path : buildPath;
+    import std.string : toLower;
+
+    SHA256 digest;
+    foreach (name; ["dub-1.43.0-flint.patch", "dub-1.43.0-flint-windows.patch"])
+    {
+        const path = buildPath(home.root, "toolchain", name);
+        if (!exists(path))
+            return null;
+        digest.put(cast(const(ubyte)[]) read(path));
+    }
+    return toHexString(digest.finish()).toLower.idup;
 }

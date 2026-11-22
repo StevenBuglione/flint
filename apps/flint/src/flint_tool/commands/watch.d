@@ -84,7 +84,7 @@ string[] changes(const Stamp[string] before, const Stamp[string] after)
 /// `flint watch [--test|--build] [-- program arguments]`.
 int commandWatch(ref Session session, string project, WatchMode mode, string[] programArguments)
 {
-    import core.thread : Thread;
+    import core.thread.osthread : Thread;
     import core.time : msecs;
     import flint_tool.commands.output : finishBare;
     import flint_tool.commands.project : Target, TargetKind, locate;
@@ -248,7 +248,7 @@ private struct Watcher
     /// Stop the running program: SIGTERM, then SIGKILL after two seconds.
     void stop()
     {
-        import core.thread : Thread;
+        import core.thread.osthread : Thread;
         import core.time : msecs;
         import std.process : tryWait, wait;
         import flint_tool.sys.posix : signalProcessGroup;
