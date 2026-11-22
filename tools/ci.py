@@ -14,6 +14,7 @@ import sys
 import tempfile
 import urllib.request
 import zipfile
+import profiles
 from install_rust import environment as rust_environment
 from install_toolchains import (LLVM_ROOT, SANITIZER_DEFAULTLIB, SANITIZER_RUNTIME,
                                 SANITIZER_RUNTIME_RECEIPT, verified_sanitizer_runtime)
@@ -174,6 +175,14 @@ def preserve_native(target,sanitize=False,*,destination=None):
         runtime_receipt=sanitizer_runtime_dir()/SANITIZER_RUNTIME_RECEIPT
         if sanitize and runtime_receipt.is_file():shutil.copy2(runtime_receipt,destination/SANITIZER_RUNTIME_RECEIPT)
 
+def sanitizer_dflags():
+    """The sanitize profile's flags (policy/profiles.toml), checked against the installed runtime's names."""
+    flags=profiles.dflags('sanitize')
+    require('-defaultlib='+SANITIZER_DEFAULTLIB in flags,'sanitize profile must link '+SANITIZER_DEFAULTLIB)
+    # DUB splits DFLAGS on whitespace.
+    require(all(' ' not in flag for flag in flags),'sanitize profile flags must not contain spaces')
+    return flags
+
 def run_tests(runner,compiler,*,sanitize=False):
     if not runner.plan:implementation_required()
     env=os.environ.copy()
@@ -184,8 +193,7 @@ def run_tests(runner,compiler,*,sanitize=False):
             require(verified_sanitizer_runtime(sanitizer_runtime_dir()),'LDC sanitizer runtime missing or changed: '+str(sanitizer_runtime_dir()))
         # DUB splits DFLAGS on whitespace, so the runtime directory travels through
         # LIBRARY_PATH (honoured by the clang link driver) rather than -L-L.
-        env['DFLAGS']=('-g -O1 -unittest -preview=dip1000 -boundscheck=on -fsanitize=address '
-                       '-defaultlib='+SANITIZER_DEFAULTLIB+' -gcc=clang -Xcc=-fsanitize=address,undefined')
+        env['DFLAGS']=' '.join(sanitizer_dflags())
         env['LIBRARY_PATH']=os.pathsep.join([str(sanitizer_runtime_dir()/'lib'),*filter(None,[env.get('LIBRARY_PATH')])])
         # Stack-use-after-return keeps locals in ASan fake frames; only the sanitizer
         # runtime's GC scans them.
@@ -193,8 +201,9 @@ def run_tests(runner,compiler,*,sanitize=False):
         env['UBSAN_OPTIONS']='halt_on_error=1:print_stacktrace=1'
         symbolizer=None if runner.plan else llvm_symbolizer()
         if symbolizer:env['ASAN_SYMBOLIZER_PATH']=symbolizer
+    build_type=profiles.load()['sanitize' if sanitize else 'test']['build_type']
     for name in PACKAGES:
-        command=['dub','test',':'+name,'--compiler='+compiler,'--build=plain' if sanitize else '--build=unittest','--force']
+        command=['dub','test',':'+name,'--compiler='+compiler,'--build='+build_type,'--force']
         package_env=env
         if name=='desktop':
             # The ci closure builds the optional SDL canvas backend, whose pinned SDL has no Wayland
