@@ -403,6 +403,15 @@ version (Windows)
     enum dubCurlFix = "DMD's Windows release ships libcurl.dll beside dub.exe: reinstall it with `flint toolchain "
         ~ "install`, or put a libcurl.dll on PATH";
 }
+else version (OSX)
+{
+    /// The libraries Phobos' std.net.curl tries, at run time, when DUB downloads from code.dlang.org.
+    immutable string[] dubCurlLibraries = ["libcurl.4.dylib"];
+
+    /// How to make libcurl loadable for DUB.
+    enum dubCurlFix = "macOS ships /usr/lib/libcurl.4.dylib; restore it, or point DYLD_LIBRARY_PATH at a "
+        ~ "directory holding libcurl.4.dylib";
+}
 else
 {
     /// The libraries Phobos' std.net.curl tries, at run time, when DUB downloads from code.dlang.org.

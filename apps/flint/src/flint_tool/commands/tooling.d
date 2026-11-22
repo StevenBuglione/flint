@@ -405,6 +405,8 @@ private struct Doctor
         add("dub downloads", "warning", "DUB cannot load libcurl, so dub fetch and flint toolchain install fail");
         version (Windows)
             const tried = dubCurlLibraries.join(", ");
+        else version (OSX)
+            const tried = dubCurlLibraries.join(", ");
         else
             const tried = "libcurl.so, libcurl.so.4 and its variants";
         report.add(diagnostic("FLINT-E0820", Severity.warning,

@@ -14,6 +14,11 @@ unittest
         expect(loadableLibrary(["flint-absent-test.dll", "kernel32.dll"])).toEqual("kernel32.dll");
         expect(loadableLibrary(["flint-absent-test.dll"]).length).toEqual(0);
     }
+    else version (OSX)
+    {
+        expect(loadableLibrary(["libflint-absent-test.9.dylib", "libSystem.B.dylib"])).toEqual("libSystem.B.dylib");
+        expect(loadableLibrary(["libflint-absent-test.9.dylib"]).length).toEqual(0);
+    }
     else
     {
         expect(loadableLibrary(["libflint-absent-test.so.9", "libc.so.6"])).toEqual("libc.so.6");
