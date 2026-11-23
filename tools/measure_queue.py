@@ -655,14 +655,15 @@ def run(entry, force_busy=False, smoke=False):
     try:
         with WindowSampler() as sampler:
             summary = KINDS[entry['measure']['kind']](entry, built, outdir, smoke)
+        # The after-check runs while the lock is still held: sessions behind `hold` resume the moment it goes. The
+        # load average at the end includes the measurement itself (a start-up run launches hundreds of processes),
+        # so it judges foreign build processes only, like the samples during the run.
+        after = quiet_snapshot(own_load_ok=True)
     finally:
         if locking:
             LOCK.unlink(missing_ok=True)
         if pin:
             os.sched_setaffinity(0, set(range(os.cpu_count())))
-    # The load average at the end includes the measurement itself (a start-up run launches hundreds of processes),
-    # so the after-check, like the samples during the run, judges foreign build processes only.
-    after = quiet_snapshot(own_load_ok=True)
     foreign = sampler.foreign_activity()
     evidence = before['quiet'] and after['quiet'] and not foreign and not smoke
     receipt = {'time': now(), 'outcome': 'measured' if evidence else ('smoke' if smoke else 'busy'),
