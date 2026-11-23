@@ -242,7 +242,7 @@ private string[] dubCommand(const ref PlatformInputs inputs, string verb, string
 }
 
 /// Part of the description record: a change to its layout invalidates every record.
-private enum describeFormat = "flint.platform-describe/2";
+private enum describeFormat = "flint.platform-describe/3";
 
 /// The platform modules as DUB describes them, from the project's description record while it is current. The
 /// record holds what `dub describe` said and what it depends on: the describe root, the tools, flags and
@@ -254,14 +254,50 @@ private bool describe(const ref PlatformInputs inputs, string describeRoot, stri
 {
     import std.path : buildPath;
 
-    const record = buildPath(describeRoot, "description.txt");
+    // Shared by every project with the same platform, like the archives: a project's own build directory only
+    // appears in DUB's artifact paths, which the record keeps relative to DUB_HOME.
     const stamp = describeStamp(inputs, describeRoot, source);
+    const record = buildPath(inputs.cache, "platform", "descriptions", stamp ~ ".txt");
+    const dubHome = environmentValue(inputs.environment, "DUB_HOME");
     if (readDescription(record, stamp, modules))
+    {
+        foreach (ref item; modules)
+            item.artifact = fromDubHome(item.artifact, dubHome);
         return true;
+    }
     if (!runDescribe(inputs, describeRoot, modules, failure))
         return false;
-    writeDescription(record, stamp, modules);
+    auto portable = modules.dup;
+    foreach (ref item; portable)
+        item.artifact = toDubHome(item.artifact, dubHome);
+    writeDescription(record, stamp, portable);
     return true;
+}
+
+private string environmentValue(scope const EnvVar[] environment, string name)
+{
+    foreach (ref variable; environment)
+    {
+        if (variable.name == name)
+            return variable.value;
+    }
+    return null;
+}
+
+private enum dubHomeMark = "${DUB_HOME}";
+
+/// `path` with a DUB_HOME prefix written as `${DUB_HOME}`.
+string toDubHome(string path, string dubHome)
+{
+    return dubHome.length && path.length > dubHome.length && path[0 .. dubHome.length] == dubHome
+        ? dubHomeMark ~ path[dubHome.length .. $] : path;
+}
+
+/// `path` with `${DUB_HOME}` expanded.
+string fromDubHome(string path, string dubHome)
+{
+    return path.length >= dubHomeMark.length && path[0 .. dubHomeMark.length] == dubHomeMark
+        ? dubHome ~ path[dubHomeMark.length .. $] : path;
 }
 
 private string describeStamp(const ref PlatformInputs inputs, string describeRoot, string source)
@@ -277,8 +313,9 @@ private string describeStamp(const ref PlatformInputs inputs, string describeRoo
     string[] environment;
     foreach (ref variable; inputs.environment)
     {
-        if (variable.name.startsWith("DUB") || variable.name == "DFLAGS" || variable.name == "DC"
-                || variable.name == "PATH")
+        // DUB_HOME is the project's own; the record keeps artifact paths relative to it.
+        if ((variable.name.startsWith("DUB") && variable.name != "DUB_HOME")
+                || variable.name == "DFLAGS" || variable.name == "DC" || variable.name == "PATH")
             environment ~= variable.name ~ "=" ~ variable.value;
     }
     sort(environment);
@@ -392,6 +429,10 @@ private void writeDescription(string record, string stamp, scope const PlatformM
             text ~= field[0] ~ "\t" ~ field[1] ~ "\n";
         }
     }
+    import std.file : mkdirRecurse;
+    import std.path : dirName;
+
+    mkdirRecurse(dirName(record));
     const partial = record ~ "." ~ thisProcessID.to!string ~ ".partial";
     write(partial, text);
     rename(partial, record);
@@ -873,8 +914,18 @@ bool linkSharedPlatform(const ref PlatformPlan plan, scope const string[] extraA
     import std.array : join;
     import flint_tool.support.process : Launch, capture;
 
-    string text = "flint.platform-shared/2\nplatform " ~ plan.platformKey ~ "\n" ~ listed("extra",
+    import std.file : isFile;
+    import flint_tool.support.files : cachedSha256File;
+
+    string text = "flint.platform-shared/3\nplatform " ~ plan.platformKey ~ "\n" ~ listed("extra",
             extraKeys) ~ listed("native", nativeFlags);
+    // A native archive or object is linked into the shared object, so its content is part of the key: rebuilt
+    // shims make a new one.
+    foreach (flag; nativeFlags)
+    {
+        if (flag.length && flag[0] == '/' && exists(flag) && isFile(flag))
+            text ~= "native-file " ~ flag ~ " " ~ cachedSha256File(flag) ~ "\n";
+    }
     const key = sha256Hex(cast(const(ubyte)[]) text);
     const directory = buildPath(plan.cache, "platform", "shared-" ~ key);
     sharedObject = buildPath(directory, "libflint-platform.so");
@@ -1207,4 +1258,14 @@ version (Posix) @safe unittest  // The fixture spells POSIX paths.
     assert(readDescription(record, "stamp", read));
     write(buildPath(root, "web", "dub.sdl"), "name \"web\"\nversions \"C\"\n");
     assert(!readDescription(record, "stamp", read), "a package's dub.sdl is part of the record");
+}
+
+@safe unittest
+{
+    assert(toDubHome("/p/.flint/dub/cache/flint/web/libflint_web.a",
+            "/p/.flint/dub") == "${DUB_HOME}/cache/flint/web/libflint_web.a");
+    assert(fromDubHome("${DUB_HOME}/cache/flint/web/libflint_web.a",
+            "/q/.flint/dub") == "/q/.flint/dub/cache/flint/web/libflint_web.a");
+    assert(toDubHome("/elsewhere/lib.a", "/p/.flint/dub") == "/elsewhere/lib.a");
+    assert(fromDubHome("/elsewhere/lib.a", "/q") == "/elsewhere/lib.a");
 }
