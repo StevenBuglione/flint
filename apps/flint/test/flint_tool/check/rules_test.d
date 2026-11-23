@@ -1,7 +1,7 @@
 module flint_tool.check.rules_test;
 
-import flint_tool.check.rules : SourceScan, checkAnnotations, checkDefault, checkMixin, checkThreadLocals,
-    checkWorkspaceImport, expectedModule, scanSource;
+import flint_tool.check.rules : SourceScan, checkAnnotations, checkDefault, checkMixin,
+    checkThreadLocals, checkWorkspaceImport, expectedModule, scanSource;
 import flint_tool.diagnostics.report : Report;
 import flint_tool.fixtures : codes, fixtureHome;
 import flint.test : expect;
@@ -125,8 +125,9 @@ private string[] threadLocalCodes(string body, scope const(string)[] allowlist =
 unittest
 {
     foreach (body; [
-        "private ulong requestId;\n", "const(char)[] name;\n", "version (linux) { int fd = -1; }\n",
-        "private { Object principal; }\n", "static if (true) { auto cache = [1]; }\n", "void* handle;\n",
+        "private ulong requestId;\n", "const(char)[] name;\n",
+        "version (linux) { int fd = -1; }\n", "private { Object principal; }\n",
+        "static if (true) { auto cache = [1]; }\n", "void* handle;\n",
         "size_t f(int a = 1) { return a; }\nint[4] slots;\n"
     ])
         expect(threadLocalCodes(body)).toEqual(["FLINT-E0514"]);
@@ -135,7 +136,8 @@ unittest
 @("shared, immutable, const, enum, local and member state is not module thread-local state")
 unittest
 {
-    const body = "private shared ulong counter;\n__gshared int legacy;\nimmutable string name = \"x\";\n"
+    const 
+    body = "private shared ulong counter;\n__gshared int legacy;\nimmutable string name = \"x\";\n"
         ~ "const(size_t) none = size_t.max;\nenum limit = 4;\nshared { int a; }\n"
         ~ "alias Fn = void function();\nextern (C) int puts(const(char)* text) nothrow;\n"
         ~ "int value() { int local; static int calls; return local + calls; }\n"
@@ -149,6 +151,7 @@ unittest
     expect(threadLocalCodes("private uint ownerCounter;\n", ["flint.arena.ownerCounter"]).length).toEqual(0);
     expect(threadLocalCodes("private shared uint ownerCounter;\n", ["flint.arena.ownerCounter"])).toEqual(
             ["FLINT-E0514"]);
-    expect(threadLocalCodes("private uint other;\n", ["flint.arena.ownerCounter"])).toEqual(
-            ["FLINT-E0514", "FLINT-E0514"]);
+    expect(threadLocalCodes("private uint other;\n", ["flint.arena.ownerCounter"])).toEqual([
+        "FLINT-E0514", "FLINT-E0514"
+    ]);
 }

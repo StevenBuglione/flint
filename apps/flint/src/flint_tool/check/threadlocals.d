@@ -19,18 +19,18 @@ struct ThreadLocal
 }
 
 private immutable string[] scopeAttributes = [
-    "public", "private", "package", "protected", "export", "extern", "align", "deprecated", "static",
-    "nothrow", "pure", "override", "final", "abstract", "version", "debug", "else", "if", "foreach",
-    "__gshared", "synchronized", "auto", "ref"
+    "public", "private", "package", "protected", "export", "extern", "align", "deprecated",
+    "static", "nothrow", "pure", "override", "final", "abstract", "version", "debug", "else", "if",
+    "foreach", "__gshared", "synchronized", "auto", "ref"
 ];
 private immutable string[] globalStorage = ["shared", "__gshared", "immutable", "const", "enum"];
 private immutable string[] nonVariables = [
-    "import", "module", "alias", "struct", "class", "union", "interface", "template", "mixin", "unittest",
-    "invariant", "this", "~", "assert", "version", "debug"
+    "import", "module", "alias", "struct", "class", "union", "interface", "template", "mixin",
+    "unittest", "invariant", "this", "~", "assert", "version", "debug"
 ];
 private immutable string[] trailingFunction = [
-    ")", "nothrow", "pure", "nogc", "safe", "trusted", "system", "property", "const", "scope", "return",
-    "inout", "immutable", "shared", "live"
+    ")", "nothrow", "pure", "nogc", "safe", "trusted", "system", "property", "const", "scope",
+    "return", "inout", "immutable", "shared", "live"
 ];
 
 private bool among(scope const(string)[] list, scope const(char)[] value) pure nothrow @nogc
@@ -65,42 +65,46 @@ private struct Attributes
     bool only;
 }
 
+/// The index after the attribute starting at `index`, or `index` when none starts there.
+private size_t skipAttribute(scope const Token[] tokens, size_t index, ref bool storage) pure nothrow @nogc
+{
+    const value = tokens[index].value;
+    const following = index + 1 < tokens.length ? tokens[index + 1].value : null;
+    if (value == "@")
+    {
+        // @name, @name(...) or @(...).
+        size_t next = index + 2;
+        if (following == "(")
+            return skipGroup(tokens, index + 1, "(", ")");
+        if (next < tokens.length && tokens[next].value == "(")
+            next = skipGroup(tokens, next, "(", ")");
+        return next < tokens.length ? next : tokens.length;
+    }
+    if (among(globalStorage, value) && following != "(")
+    {
+        storage = true;
+        return index + 1;
+    }
+    if ((value == "version" || value == "debug") && following == "=")
+        return index;
+    if (!among(scopeAttributes, value))
+        return index;
+    return following == "(" ? skipGroup(tokens, index + 1, "(", ")") : index + 1;
+}
+
 private Attributes attributes(scope const Token[] tokens) pure nothrow @nogc
 {
     Attributes result;
-    size_t i;
-    while (i < tokens.length)
+    size_t index;
+    while (index < tokens.length)
     {
-        const value = tokens[i].value;
-        const following = i + 1 < tokens.length ? tokens[i + 1].value : null;
-        if (value == "@")
-        {
-            i += 2;
-            if (i < tokens.length && tokens[i].value == "(")
-                i = skipGroup(tokens, i, "(", ")");
-            else if (i - 1 < tokens.length && tokens[i - 1].value == "(")
-                i = skipGroup(tokens, i - 1, "(", ")");
-            continue;
-        }
-        if (among(globalStorage, value) && following != "(")
-        {
-            result.storage = true;
-            ++i;
-            continue;
-        }
-        if ((value == "version" || value == "debug") && following == "=")
+        const next = skipAttribute(tokens, index, result.storage);
+        if (next == index)
             break;
-        if (among(scopeAttributes, value))
-        {
-            ++i;
-            if (i < tokens.length && tokens[i].value == "(")
-                i = skipGroup(tokens, i, "(", ")");
-            continue;
-        }
-        break;
+        index = next;
     }
-    result.rest = i < tokens.length ? i : tokens.length;
-    result.only = result.rest == tokens.length;
+    result.rest = index;
+    result.only = index == tokens.length;
     return result;
 }
 
@@ -131,110 +135,140 @@ private bool identifier(scope const(char)[] text) pure nothrow @nogc
     return true;
 }
 
-/// Every module-scope variable of a lexed module that is thread-local and mutable.
-ThreadLocal[] moduleThreadLocals(scope const Token[] tokens)
+/// The tokens of `rest` before its top-level `=`.
+private const(Token)[] declarationHead(return scope const(Token)[] rest) pure nothrow @nogc
 {
-    ThreadLocal[] found;
-    bool[] blocks;
-    bool[] labelled = [false];
+    long depth;
+    foreach (index, ref token; rest)
+    {
+        depth += (token.value == "(" || token.value == "[") - (token.value == ")" || token.value == "]");
+        if (depth == 0 && token.value == "=")
+            return rest[0 .. index];
+    }
+    return rest;
+}
 
-    bool anyGlobalBlock()
+/// Whether `head`, with `stripped` attribute tokens before it and `rest` from the head on, names a variable.
+private bool namesVariable(scope const Token[] head, size_t restLength, size_t stripped) pure nothrow @nogc
+{
+    if (head.length == 0)
+        return false;
+    // A single name after stripped attributes is an inferred declaration such as `auto cache = [1];`.
+    const inferred = head.length == 1 && restLength > 1 && stripped > 0;
+    const name = head[$ - 1].value;
+    if ((head.length < 2 && !inferred) || among(trailingFunction, name) || !identifier(name))
+        return false;
+    // const(T) name, immutable(T) name and shared(T) name qualify the variable itself; a pointer or slice
+    // suffix after the group leaves the variable mutable.
+    return !(among(["const", "immutable", "shared"], head[0].value) && head.length > 1
+            && head[1].value == "(" && skipGroup(head, 1, "(", ")") + 1 == head.length);
+}
+
+private struct Scanner
+{
+    const(Token)[] tokens;
+    ThreadLocal[] found;
+    /// Per open transparent block, whether its own storage class makes its contents global.
+    bool[] blocks;
+    /// Per open block, whether a storage label such as `__gshared:` covers the rest of it.
+    bool[] labelled = [false];
+    size_t start;
+    size_t index;
+
+    bool globalScope() const pure nothrow @nogc
     {
         foreach (block; blocks)
             if (block)
                 return true;
-        return false;
+        return labelled[$ - 1];
     }
 
-    void classify(size_t begin, size_t end)
+    void declaration()
     {
-        const declaration = tokens[begin .. end];
-        const attrs = attributes(declaration);
-        const rest = declaration[attrs.rest .. $];
-        if (attrs.storage || anyGlobalBlock() || labelled[$ - 1] || rest.length == 0
-                || among(nonVariables, rest[0].value))
+        const tokens = this.tokens[start .. index];
+        const attrs = attributes(tokens);
+        const rest = tokens[attrs.rest .. $];
+        if (attrs.storage || globalScope() || rest.length == 0 || among(nonVariables, rest[0].value))
             return;
-        size_t headLength;
-        long depth;
-        foreach (ref token; rest)
-        {
-            depth += (token.value == "(" || token.value == "[") - (token.value == ")" || token.value == "]");
-            if (depth == 0 && token.value == "=")
-                break;
-            ++headLength;
-        }
-        const head = rest[0 .. headLength];
-        // A single name after stripped attributes is an inferred declaration such as `auto cache = [1];`.
-        const inferred = head.length == 1 && rest.length > 1 && rest.length < declaration.length;
-        if ((head.length < 2 && !inferred) || head.length == 0 || among(trailingFunction, head[$ - 1].value)
-                || !identifier(head[$ - 1].value))
-            return;
-        // const(T) name, immutable(T) name and shared(T) name qualify the variable itself.
-        if (among(["const", "immutable", "shared"], head[0].value) && head.length > 1 && head[1].value == "("
-                && skipGroup(head, 1, "(", ")") == head.length - 1)
-            return;
-        found ~= ThreadLocal(head[$ - 1].value, head[$ - 1].line);
+        const head = declarationHead(rest);
+        if (namesVariable(head, rest.length, attrs.rest))
+            found ~= ThreadLocal(head[$ - 1].value, head[$ - 1].line);
     }
 
-    // Skip the module declaration.
-    size_t i;
-    while (i < tokens.length && tokens[i].value != ";")
-        ++i;
-    size_t start = ++i;
-    while (i < tokens.length)
+    /// An attribute label such as `private:` or `__gshared:`. Returns false for any other colon.
+    bool label()
     {
-        const value = tokens[i].value;
-        if (value == "(" || value == "[")
-        {
-            i = skipGroup(tokens, i, value, value == "(" ? ")" : "]");
-            continue;
-        }
-        if (value == ";")
-        {
-            classify(start, i);
-            start = ++i;
-            continue;
-        }
-        if (value == ":" && i > start)
-        {
-            const attrs = attributes(tokens[start .. i]);
-            if (attrs.only)
-            {
-                if (attrs.storage)
-                    labelled[$ - 1] = true;
-                start = ++i;
-                continue;
-            }
-        }
-        if (value == "{")
-        {
-            const attrs = attributes(tokens[start .. i]);
-            if (hasTopLevel(tokens[start .. i], "="))
-            {
-                i = skipGroup(tokens, i, "{", "}");
-                continue;
-            }
-            if (attrs.only)
-            {
-                blocks ~= attrs.storage;
-                labelled ~= labelled[$ - 1];
-                start = ++i;
-                continue;
-            }
-            i = skipGroup(tokens, i, "{", "}");
-            start = i;
-            continue;
-        }
-        if (value == "}")
-        {
-            if (blocks.length == 0)
-                return found;
-            blocks = blocks[0 .. $ - 1];
-            labelled = labelled[0 .. $ - 1];
-            start = ++i;
-            continue;
-        }
-        ++i;
+        const attrs = attributes(tokens[start .. index]);
+        if (index == start || !attrs.only)
+            return false;
+        if (attrs.storage)
+            labelled[$ - 1] = true;
+        return true;
     }
-    return found;
+
+    /// Enter a transparent attribute block, or skip an initializer, function, aggregate or template body.
+    void openBlock()
+    {
+        const prefix = tokens[start .. index];
+        if (hasTopLevel(prefix, "="))
+        {
+            index = skipGroup(tokens, index, "{", "}");
+            return;
+        }
+        const attrs = attributes(prefix);
+        if (!attrs.only)
+        {
+            index = skipGroup(tokens, index, "{", "}");
+            start = index;
+            return;
+        }
+        blocks ~= attrs.storage;
+        labelled ~= labelled[$ - 1];
+        start = ++index;
+    }
+
+    /// Leave a transparent block. Returns false on an unbalanced brace.
+    bool closeBlock()
+    {
+        if (blocks.length == 0)
+            return false;
+        blocks = blocks[0 .. $ - 1];
+        labelled = labelled[0 .. $ - 1];
+        start = ++index;
+        return true;
+    }
+
+    void run()
+    {
+        while (index < tokens.length && tokens[index].value != ";")
+            ++index;
+        start = ++index;
+        while (index < tokens.length)
+        {
+            const value = tokens[index].value;
+            if (value == "(" || value == "[")
+                index = skipGroup(tokens, index, value, value == "(" ? ")" : "]");
+            else if (value == ";")
+            {
+                declaration();
+                start = ++index;
+            }
+            else if (value == ":" && label())
+                start = ++index;
+            else if (value == "{")
+                openBlock();
+            else if (value == "}" && !closeBlock())
+                return;
+            else if (value != "}")
+                ++index;
+        }
+    }
+}
+
+/// Every module-scope variable of a lexed module that is thread-local and mutable.
+ThreadLocal[] moduleThreadLocals(scope const Token[] tokens)
+{
+    auto scanner = Scanner(tokens.dup);
+    scanner.run();
+    return scanner.found;
 }

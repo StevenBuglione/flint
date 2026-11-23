@@ -319,8 +319,7 @@ immutable CodeInfo[] catalog = [
     CodeInfo("FLINT-E0512", ExitCode.user, "unbalanced @trusted body",
             "The policy lexer could not find the end of a @trusted function body.",
             "check the braces of the function the location points at"),
-    CodeInfo("FLINT-E0513", ExitCode.user, "C reached outside an ffi module", ffiExplanation,
-            ffiExample),
+    CodeInfo("FLINT-E0513", ExitCode.user, "C reached outside an ffi module", ffiExplanation, ffiExample),
     CodeInfo("FLINT-E0514", ExitCode.user, "module-level thread-local mutable variable",
             "A module-level mutable variable is thread-local in D, so task fibers that interleave on one thread "
             ~ "share it. Per-task state lives in FiberLocal!T; process state is shared or immutable. Reviewed "
