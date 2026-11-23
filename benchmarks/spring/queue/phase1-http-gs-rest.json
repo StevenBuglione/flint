@@ -4,7 +4,7 @@
   "created": "2026-11-23",
   "status": "blocked",
   "window": "natural",
-  "priority": 4,
+  "priority": 2,
   "blocked_on": "petclinic-rest scoring 109/109 in proof-harness's independent run, then a pin to one commit where all three ports pass exactly",
   "claim_when": "Claims a window only once the io_uring steps and the RSS and GC fixes land: a run that only confirms gs-rest-multicore's 0.75x throughput is not worth pausing everyone. Until then it runs only on natural quiet (coordinator, 2026-11-23 16:45Z)",
   "requested_by": "ADR-030 section 8, Phase 1 exit (coordinator's plan, 2026-11-23 15:20Z); split per application by the coordinator, 2026-11-23 16:45Z",

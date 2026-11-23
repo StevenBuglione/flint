@@ -4,7 +4,7 @@
   "id": "string-format-gs-builds",
   "status": "pending",
   "window": "natural",
-  "priority": 3,
+  "priority": 5,
   "requested_by": "framework-core, for the coordinator (priority 1: a non-templated String.format)",
   "report_to": "framework-core; the coordinator; dmd-arm64",
   "estimate_minutes": 40,
