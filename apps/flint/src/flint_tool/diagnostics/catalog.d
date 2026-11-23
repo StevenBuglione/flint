@@ -380,6 +380,11 @@ immutable CodeInfo[] catalog = [
             ~ "and policy/boot.json). Dependencies point only from portfolio repos to boot, framework and flint, as "
             ~ "policy/repos.json lists; an edge the coordinator is still deciding is listed under pending_edges.",
             "policy/repos.json:\n  \"framework\": { \"may_depend_on\": [\"flint\"] }"),
+    CodeInfo("FLINT-E0533", ExitCode.user, "a platform module is not fetched",
+            "After the repo split, packages outside the flint repo resolve from their repo's platform module: the "
+            ~ "checkout platform.lock pins, under `.flint/platform/<repo>-<commit>` in the Flint home (ADR-023, "
+            ~ "platform modules). Fetch the pinned checkouts once per platform.lock change.",
+            "python3 tools/platform_modules.py --fetch"),
     CodeInfo("FLINT-E0601", ExitCode.user, "source is not formatted",
             "One formatter: dfmt 0.15.2 with the repository's dfmt.ini. `flint check` compares its output byte for "
             ~ "byte.", "flint fmt"),

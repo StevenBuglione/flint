@@ -12,9 +12,18 @@ and the fixture peers its tests use.
 
     python3 tools/platform_modules.py --check     # platform.lock covers every repo; the generated files are current
     python3 tools/platform_modules.py --write     # regenerate the bill of materials and the lock partitions
+    python3 tools/platform_modules.py --fetch [--native linux-x86_64-glibc]
+
+`--fetch` makes a Flint home outside the monorepo buildable: it clones each platform module platform.lock pins at
+its commit (the repos that own packages and are not "monorepo") into `.flint/platform/<repo>-<commit>`, where flint
+resolves them (Home.repoRoot), and writes `.flint/platform/workspace.json`, a flint.workspace/1 file joining them
+with this home. `--native` then emits the native DUB blocks into those checkouts as into the home's own packages.
 """
 import argparse
 import json
+import os
+import shutil
+import subprocess
 import sys
 import tomllib
 from pathlib import Path
@@ -119,12 +128,56 @@ def problems(root=ROOT):
     return found
 
 
+def fetch(root=ROOT, url='https://github.com/{github}.git', native=None):
+    """Clone every pinned platform module that owns packages into `<root>/.flint/platform/<repo>-<commit>` and write
+    the workspace file joining them with this home. Returns {repo: checkout}."""
+    root = Path(root).resolve()
+    lock = platform_lock(root)
+    owners = {repo for repo, _ in package_repos(root).values()}
+    base = root / '.flint' / 'platform'
+    base.mkdir(parents=True, exist_ok=True)
+    workspace = base / 'workspace.json'
+    checkouts = {'flint': {'path': os.path.relpath(root, base)}}
+    fetched = {}
+    for repo, entry in sorted(lock['repos'].items()):
+        if repo not in owners or entry.get('source') == 'monorepo':
+            continue
+        commit = entry['commit']
+        target = base / f'{repo}-{commit}'
+        if not (target / '.git').is_dir():
+            partial = base / f'.{repo}-{commit}.partial'
+            shutil.rmtree(partial, ignore_errors=True)
+            subprocess.run(['git', 'clone', '--quiet', '--no-checkout', url.format(github=entry['github'], repo=repo),
+                            str(partial)], check=True)
+            subprocess.run(['git', '-C', str(partial), 'checkout', '--quiet', '--detach', commit], check=True)
+            partial.rename(target)
+        head = subprocess.run(['git', '-C', str(target), 'rev-parse', 'HEAD'], capture_output=True, text=True,
+                              check=True).stdout.strip()
+        if head != commit:
+            raise SystemExit(f'{target} is at {head}, not the {commit} platform.lock pins')
+        checkouts[repo] = {'path': target.name, 'commit': commit}
+        fetched[repo] = str(target)
+    workspace.write_text(json.dumps({'schema': 'flint.workspace/1', 'checkouts': checkouts}, indent=2) + '\n',
+                         encoding='utf-8')
+    if native:
+        subprocess.run([sys.executable, str(root / 'tools' / 'native_build.py'), '--target', native, '--phase',
+                        'build', '--shims-only', '--emit-dub', '--workspace', str(workspace)], check=True)
+    return fetched
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--check', action='store_true')
     group.add_argument('--write', action='store_true')
+    group.add_argument('--fetch', action='store_true', help='clone the pinned platform modules into .flint/platform')
+    parser.add_argument('--url', default='https://github.com/{github}.git',
+                        help='--fetch: clone URL; {github} is owner/name and {repo} the short name')
+    parser.add_argument('--native', metavar='TARGET', help='--fetch: then emit native DUB blocks for TARGET')
     arguments = parser.parse_args()
+    if arguments.fetch:
+        print(json.dumps(fetch(url=arguments.url, native=arguments.native)))
+        return 0
     if arguments.write:
         BOM.parent.mkdir(parents=True, exist_ok=True)
         BOM.write_text(json.dumps(bill_of_materials(), indent=2) + '\n', encoding='utf-8')

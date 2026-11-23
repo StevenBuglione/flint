@@ -230,3 +230,40 @@ class ExtractionTests(unittest.TestCase):
                                         text=True)
                 self.assertEqual(result.returncode, 2, args)
                 self.assertIn('name one repo, or --all', result.stderr)
+
+
+class PlatformFetchTests(unittest.TestCase):
+    def test_fetch_clones_each_pinned_repo_at_its_commit_and_joins_them_in_a_workspace(self):
+        import platform_modules
+
+        with tempfile.TemporaryDirectory() as temporary:
+            temporary = Path(temporary)
+            upstream = temporary / 'flint-framework'
+            git = ['git', '-C', str(upstream), '-c', 'user.name=t', '-c', 'user.email=t@t']
+            subprocess.run(['git', 'init', '-q', str(upstream)], check=True)
+            (upstream / 'engine/web').mkdir(parents=True)
+            (upstream / 'engine/web/dub.sdl').write_text('name "engine-web"\n')
+            subprocess.run([*git, 'add', '-A'], check=True)
+            subprocess.run([*git, 'commit', '-qm', 'one'], check=True)
+            commit = subprocess.run([*git, 'rev-parse', 'HEAD'], capture_output=True, text=True).stdout.strip()
+            (upstream / 'later').write_text('after the pin\n')
+            subprocess.run([*git, 'add', '-A'], check=True)
+            subprocess.run([*git, 'commit', '-qm', 'two'], check=True)
+            home = temporary / 'home'
+            (home / 'policy').mkdir(parents=True)
+            for name in ('packages.json', 'boot.json', 'framework.json', 'repos.json', 'apps.json'):
+                if (ROOT / 'policy' / name).is_file():
+                    (home / 'policy' / name).write_text((ROOT / 'policy' / name).read_text())
+            lock = json.loads((ROOT / 'platform.lock').read_text())
+            lock['repos']['framework'] = {'github': 'flint-projects/flint-framework', 'source': 'github',
+                                          'commit': commit}
+            (home / 'platform.lock').write_text(json.dumps(lock))
+            fetched = platform_modules.fetch(home, url=str(temporary) + '/flint-{repo}')
+            checkout = home / '.flint/platform' / f'framework-{commit}'
+            self.assertEqual(fetched, {'framework': str(checkout)})
+            self.assertTrue((checkout / 'engine/web/dub.sdl').is_file())
+            self.assertFalse((checkout / 'later').exists())
+            pinned = workspace.Workspace(home / '.flint/platform/workspace.json')
+            self.assertEqual(pinned.verify(), [])
+            self.assertEqual(pinned.package_dir('engine-web', home), checkout / 'engine/web')
+            self.assertEqual(platform_modules.fetch(home, url='/nonexistent/{repo}'), fetched)  # already fetched

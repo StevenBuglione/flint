@@ -96,9 +96,11 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/flint_rpc.h" AND
   install(FILES flint_rpc.h DESTINATION include)
 endif()
 
-# Test codecs and their benchmark control are separate from the production FFI archive.
-if(EXISTS "${CMAKE_INSTALL_PREFIX}/include/protobuf-c/protobuf-c.h")
-  set(FLINT_RPC_TEST_CODECS "${CMAKE_CURRENT_SOURCE_DIR}/../../packages/engine-rpc/tests/generated")
+# Test codecs and their benchmark control are separate from the production FFI archive. They and the reference
+# controls below build from the engine packages' sources, so a flint checkout without them (a Flint home that
+# takes the engines from the flint-framework platform module) builds the production archives alone.
+set(FLINT_RPC_TEST_CODECS "${CMAKE_CURRENT_SOURCE_DIR}/../../packages/engine-rpc/tests/generated")
+if(EXISTS "${CMAKE_INSTALL_PREFIX}/include/protobuf-c/protobuf-c.h" AND EXISTS "${FLINT_RPC_TEST_CODECS}/echo.pb-c.c")
   add_library(flint_rpc_fixture STATIC
     "${FLINT_RPC_TEST_CODECS}/echo.pb-c.c"
     "${FLINT_RPC_TEST_CODECS}/echo_flint.c"
@@ -144,6 +146,9 @@ if((CMAKE_SYSTEM_NAME STREQUAL "Linux" OR APPLE) AND EXISTS "${CMAKE_INSTALL_PRE
   target_compile_definitions(flint_ffi_framework PRIVATE FLINT_HAS_WASMTIME=1)
   if(EXISTS "${CMAKE_INSTALL_PREFIX}/include/flint_wasmtime_extensions.h")
     target_compile_definitions(flint_ffi_framework PRIVATE FLINT_HAS_WASMTIME_EXTENSIONS=1)
+  endif()
+  if(EXISTS "${CMAKE_INSTALL_PREFIX}/include/flint_wasmtime_extensions.h" AND
+      EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../packages/engine-wasi/bench/baseline/native/direct.c")
     add_library(flint_wasi_reference STATIC "../../packages/engine-wasi/bench/baseline/native/direct.c")
     target_include_directories(flint_wasi_reference PRIVATE "${CMAKE_INSTALL_PREFIX}/include")
     install(TARGETS flint_wasi_reference ARCHIVE DESTINATION lib)
@@ -155,7 +160,9 @@ if((CMAKE_SYSTEM_NAME STREQUAL "Linux" OR APPLE) AND EXISTS "${CMAKE_CURRENT_SOU
     EXISTS "${CMAKE_INSTALL_PREFIX}/include/curl/curl.h")
   install(FILES flint_mail.h DESTINATION include)
   # Isolated pinned-ABI control. Static linking retains it only in the reference executable.
-  add_library(flint_mail_reference STATIC "../../packages/engine-mail/bench/baseline/native/direct.c")
-  target_include_directories(flint_mail_reference PRIVATE "${CMAKE_INSTALL_PREFIX}/include")
-  install(TARGETS flint_mail_reference ARCHIVE DESTINATION lib)
+  if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../packages/engine-mail/bench/baseline/native/direct.c")
+    add_library(flint_mail_reference STATIC "../../packages/engine-mail/bench/baseline/native/direct.c")
+    target_include_directories(flint_mail_reference PRIVATE "${CMAKE_INSTALL_PREFIX}/include")
+    install(TARGETS flint_mail_reference ARCHIVE DESTINATION lib)
+  endif()
 endif()

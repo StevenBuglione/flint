@@ -98,6 +98,39 @@ string renderDependencyRecipe(const ref Home home, const ref ResolvedPackage ite
     return text;
 }
 
+/// Where the joined `flint` recipe is written, relative to the project root (see renderJoinedRoot).
+enum joinedRootDirectory = ".flint/generated/flint";
+
+/// Whether the core packages come from more than one checkout: this home and a platform module's checkout
+/// (`.flint/platform/<repo>-<commit>`, ADR-023 platform modules). Every repo's recipe is named `flint`, and DUB
+/// takes one package of a name, so the build then joins them in one generated recipe.
+bool joinsRepos(const ref Home home, const ref Resolution resolution)
+{
+    foreach (ref item; resolution.packages)
+    {
+        if (item.kind == "core" && item.repoRoot.length && item.repoRoot != home.root)
+            return true;
+    }
+    return false;
+}
+
+/// The joined `flint` recipe: one subpackage per resolved core package, at its directory in its repo's checkout,
+/// so `flint:engine-web` from flint-framework and `flint:arena` from this home resolve as one namespace.
+/// `directory` is where the recipe is written; DUB takes subpackage paths relative to it.
+string renderJoinedRoot(const ref Resolution resolution, string directory)
+{
+    import std.path : absolutePath, relativePath;
+
+    string text = header() ~ field("name", "flint") ~ field("targetType", "none");
+    foreach (ref item; resolution.packages)
+    {
+        if (item.kind == "core")
+            text ~= field("subPackage", recipePath(relativePath(absolutePath(item.directory),
+                    absolutePath(directory))));
+    }
+    return text;
+}
+
 /// Directory of a path or remote dependency's generated recipe, relative to the project root.
 string dependencyRecipeDirectory(string name)
 {
@@ -177,7 +210,9 @@ private string dependencyLine(const ref Home home, const ref Resolution resoluti
     if (item is null)
         return null;
     string path;
-    if (item.kind == "core")
+    if (item.kind == "core" && joinsRepos(home, resolution))
+        path = siblings ~ "../flint";
+    else if (item.kind == "core")
         path = recipePath(item.repoRoot.length ? item.repoRoot : home.root);
     else if (generatedRecipe(item.kind))
         path = siblings ~ dubName(name);

@@ -250,3 +250,9 @@ The repo split (ADR-030; the Spring-port plan, section 7) adds platform modules.
    - **Locating an app:** an app keeps its directory inside its repo. `flint mcp` locates flint-mcp through the ai repo's platform module.
    - **Its dependencies:** an app's `flint:*` dependencies follow the same edges (FLINT-E0532).
 
+7. **Building from platform modules** (an application whose Flint home lacks a repo's packages).
+   - **The layout:** an extracted repo mirrors Spring's own (`policy/repos.json` `layout`). Engines go under `engine/<name>`, Spring-layer modules to `flint-<artifact>`, and Boot to `core/`, `module/`, `platform/` and `starter/`; the pre-port Boot is `legacy/flint-boot`. flint finds a package at its monorepo path when the checkout has it, else at its extracted place (`Home.packagePath`).
+   - **Fetching:** `tools/platform_modules.py --fetch [--native <target>]` clones each pinned repo into `.flint/platform/<repo>-<commit>`, writes `.flint/platform/workspace.json`, and emits the native DUB blocks into those checkouts. A package whose checkout is missing fails resolution with FLINT-E0533.
+   - **One namespace:** every repo's recipe is named `flint`, and DUB takes one package of a name. When a build's core packages span checkouts, flint writes `.flint/generated/flint/dub.sdl`, which joins them as subpackages at relative paths, and depends on it.
+   - **The proof:** `tools/platform_proof.py` makes the home the `flint` repo becomes at the cutover, pins the mirrors, and builds and runs a starter-web app outside both.
+   - **Native shims:** `native/ffi` still builds the engines' C shims in the `flint` repo; it skips their test codecs and reference controls when their sources are absent. Moving those shims into `flint-framework` is still to do.

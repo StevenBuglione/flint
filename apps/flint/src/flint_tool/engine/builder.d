@@ -560,6 +560,13 @@ private bool writeRecipes(ref Session session, const ref Manifest manifest, cons
     writeIfChanged(buildPath(manifest.root, recipeDirectory, "dub.sdl"), renderRecipe(session.home,
             manifest, resolution, extras));
     {
+        import flint_tool.engine.recipe : joinedRootDirectory, joinsRepos, renderJoinedRoot;
+
+        if (joinsRepos(session.home, resolution))
+            writeIfChanged(buildPath(manifest.root, joinedRootDirectory, "dub.sdl"),
+                    renderJoinedRoot(resolution, buildPath(manifest.root, joinedRootDirectory)));
+    }
+    {
         import std.file : exists, remove;
         import flint_tool.engine.recipe : renderSelections;
 

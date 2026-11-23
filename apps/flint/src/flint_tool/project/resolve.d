@@ -135,6 +135,7 @@ bool resolve(const ref Home home, const ref Manifest manifest, out Resolution re
 
     sort!((a, b) => a.name < b.name)(resolution.packages);
     checkRoots(manifest, resolution, report);
+    checkPlatformModules(home, resolution, report);
     if (report.errors() == before)
         resolveProjectNatives(home, manifest, resolution, report);
     return report.errors() == before;
@@ -267,6 +268,24 @@ private void addExtensions(const ref Home home, ref ResolvedPackage[string] foun
             found[dependency] = starterPackage(home, *extension, workspace);
             added = true;
         }
+    }
+}
+
+/// Every core package outside this home sits in a fetched platform-module checkout (FLINT-E0533).
+private void checkPlatformModules(const ref Home home, const ref Resolution resolution, ref Report report)
+{
+    import std.file : exists;
+
+    bool[string] reported;
+    foreach (ref item; resolution.packages)
+    {
+        if (item.kind != "core" || !item.repoRoot.length || item.repoRoot == home.root
+                || exists(item.directory) || item.repoRoot in reported)
+            continue;
+        reported[item.repoRoot] = true;
+        report.error("FLINT-E0533",
+                item.name ~ " resolves from " ~ item.platform ~ ", whose checkout " ~ item.repoRoot ~ " is not fetched",
+                "python3 tools/platform_modules.py --fetch, in the Flint home");
     }
 }
 
