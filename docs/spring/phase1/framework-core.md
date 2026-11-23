@@ -114,8 +114,11 @@ annotation's module, as in Java, because applications import those types (`Annot
 ### The container
 
 - **Definitions** are `RootBeanDefinition`s over the generated `flint.engine.aot.bean.BeanDefinition` records.
-  `GenericApplicationContext.loadAotRegistry` runs the installed (or given) registry; each definition's condition is
-  evaluated against what is registered so far, in definition order (contract 5.4). `registerBean!T` registers a
+  `GenericApplicationContext.deferAotRegistry` (what `AnnotationConfigApplicationContext` uses) loads the installed
+  or given registry inside `refresh()`, just before the factory post-processors, as Spring's
+  `ConfigurationClassPostProcessor` does; `loadAotRegistry` loads it immediately. Each definition's condition is
+  evaluated against what is registered so far, in definition order (contract 5.4), so singletons registered before
+  `refresh()` (Boot's application arguments, banner, properties binder) are visible to the conditions. `registerBean!T` registers a
   hand-written definition for tests and code without generated definitions.
 - **Creation** follows Spring: `dependsOn` first, then create, `BeanNameAware`/`BeanFactoryAware`,
   `postProcessBeforeInitialization`, the generated `initialize` (injection, `@PostConstruct`, `afterPropertiesSet`),
