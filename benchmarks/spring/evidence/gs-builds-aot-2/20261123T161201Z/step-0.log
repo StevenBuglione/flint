@@ -1,0 +1,16 @@
+Measuring gs-rest-service
+gs-rest-service: Go std-primed cold 0.151s, -a 3.240s, binary 6634456 bytes
+  primary: platform cache vs std-primed GOCACHE: 3.982 FAIL
+  secondary: from scratch vs go build -a: 1.103 FAIL
+  incremental: dev profile as built: 2.885 FAIL
+Traceback (most recent call last):
+  File "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/561f399b9f90/tools/measure_builds.py", line 1012, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/561f399b9f90/tools/measure_builds.py", line 595, in main
+    return spring_builds.measure(args, timed_process)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/561f399b9f90/tools/spring_builds.py", line 337, in measure
+    print(f"  {label}: {verdict.get('median_ratio', verdict.get('ratio')):.3f}", 'pass' if verdict['pass'] else 'FAIL')
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: unsupported format string passed to NoneType.__format__

@@ -1,0 +1,7 @@
+   Generated 11 Flint AOT modules for com.example.restservice.RestServiceApplication (1 extracted in 76 ms, 22 from the shared cache, 12 written, 110 ms)
+     Priming 30 platform module(s) into the cache
+    Building gs-rest-service 0.0.1 (size, ldc2)
+    Finished .flint/build/size/gs-rest-service (non-canonical: the toolchain is not verified against its receipt)
+warning[FLINT-E0805] toolchain fork patches changed
+  cause: the installed fork was built from different patches than toolchain/ holds
+  fix: flint toolchain install
