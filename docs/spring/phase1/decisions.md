@@ -116,6 +116,7 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - user32 for OpenSSL;
   - `core.thread.osthread` imports;
   - a Python suite ported to Windows, with its skips listed in ADR-026.
+- 2026-11-23, m7-flint-cli (the coordinator's condition 2 for the cached-cold primary to gate): `<FLINT_CACHE>/digests.log` reuses a digest only while the file keeps its whole stat identity: size, modification time, change time (ctime), inode and device. ctime can't be set back, so an edit that keeps the size and restores the mtime is still re-hashed. Files whose mtime or ctime is under two seconds old are not recorded, because the kernel stamps ctime from a coarse clock. A unit test in support/files.d proves it. Remove ctime from the key and the test fails at "the change time catches the restored mtime". The log holds only toolchain, flint, home and platform files, never the project's, and proof-harness keeps it across cached cold trials (1235dc4b), pruning any port entry.
 
 ## Open for the owner
 

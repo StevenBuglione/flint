@@ -42,11 +42,13 @@ void useDigestCache(string cache)
     digestsLoaded = false;
 }
 
-/// SHA-256 of a file, reused while the file keeps its size, modification time and inode, as git's index trusts a
-/// file's stat data. It is for the files a build reads every time and verifies nothing against: the toolchain's
-/// executables, flint itself and the platform's sources. Downloads and lock verification hash in full
-/// (`sha256File`). A file modified in the last two seconds could change again within the same timestamp, so its
-/// digest is not recorded.
+/// SHA-256 of a file, reused while the file keeps its stat identity: size, modification time, change time, inode
+/// and device, as git's index trusts a file's stat data. The change time is the part nobody can set back: an edit
+/// that keeps the size and restores the modification time still changes it. It is for the files a build reads every
+/// time and verifies nothing against: the toolchain's executables, flint itself and the platform's sources.
+/// Downloads and lock verification hash in full (`sha256File`). The kernel stamps the change time from a coarse
+/// clock, so a file modified or changed in the last two seconds is not recorded: a second edit could share the
+/// stamp.
 string cachedSha256File(string path)
 {
     import std.conv : to;
@@ -56,14 +58,15 @@ string cachedSha256File(string path)
     if (digestLog is null)
         return sha256File(path);
     string stamp;
-    long modified;
+    long modified, changed;
     try
     {
         auto entry = DirEntry(path);
         if (!entry.isFile)
             return null;
         modified = entry.timeLastModified.stdTime;
-        stamp = entry.size.to!string ~ " " ~ modified.to!string ~ " " ~ inodeOf(entry);
+        changed = changeTimeOf(entry);
+        stamp = entry.size.to!string ~ " " ~ modified.to!string ~ " " ~ changed.to!string ~ " " ~ inodeOf(entry);
     }
     catch (FileException)
         return null;
@@ -74,7 +77,9 @@ string cachedSha256File(string path)
             return (*record)[stamp.length + 1 .. $];
     }
     const digest = sha256File(path);
-    if (digest.length && modified < Clock.currTime.stdTime - 20_000_000)
+    const recent = Clock.currTime.stdTime - 20_000_000; // two seconds, in hundred-nanosecond units
+    // The change time is in Unix nanoseconds; SysTime counts hundred nanoseconds from year 1.
+    if (digest.length && modified < recent && changed / 100 + 621_355_968_000_000_000 < recent)
     {
         digestRecords[path] = stamp ~ " " ~ digest;
         appendDigest(path ~ "\t" ~ stamp ~ " " ~ digest ~ "\n");
@@ -133,9 +138,23 @@ private string inodeOf(ref imported!"std.file".DirEntry entry)
     import std.conv : to;
 
     version (Posix)
-        return entry.statBuf.st_ino.to!string;
+        return entry.statBuf.st_ino.to!string ~ " " ~ entry.statBuf.st_dev.to!string;
     else
         return "0";
+}
+
+/// The change time in Unix nanoseconds: what a write, chmod or rename last did to the inode. Unlike the
+/// modification time, no call can set it to a chosen value.
+private long changeTimeOf(ref imported!"std.file".DirEntry entry)
+{
+    version (linux)
+        return cast(long) entry.statBuf.st_ctim.tv_sec * 1_000_000_000 + entry.statBuf.st_ctim.tv_nsec;
+    else version (OSX)
+        return cast(long) entry.statBuf.st_ctimespec.tv_sec * 1_000_000_000 + entry.statBuf.st_ctimespec.tv_nsec;
+    else version (Posix)
+        return cast(long) entry.statBuf.st_ctime * 1_000_000_000;
+    else
+        return entry.timeLastModified.stdTime; // Windows: no change time in DirEntry; the size and mtime remain
 }
 
 /// Read a UTF-8 text file, or return null when it is missing.
@@ -217,7 +236,9 @@ string relativeTo(string target, string base)
 
 @safe unittest
 {
-    import core.time : seconds;
+    import core.thread.osthread : Thread;
+    import core.time : msecs, seconds;
+    import std.algorithm.searching : canFind;
     import std.conv : to;
     import std.datetime.systime : Clock;
     import std.file : exists, mkdirRecurse, readText, rmdirRecurse, setTimes, tempDir, write;
@@ -233,19 +254,34 @@ string relativeTo(string target, string base)
     }
     mkdirRecurse(directory);
     const file = buildPath(directory, "a.d");
+    const stable = buildPath(directory, "stable.d");
     const old = Clock.currTime - 60.seconds;
     write(file, "one");
+    write(stable, "aaaa");
     setTimes(file, old, old);
+    setTimes(stable, old, old);
     useDigestCache(buildPath(directory, "cache"));
-    assert(cachedSha256File(file) == sha256File(file));
     const log = buildPath(directory, "cache", "digests.log");
-    assert(readText(log).length > 0, "an old file's digest is recorded");
+    assert(cachedSha256File(file) == sha256File(file));
+    assert(!exists(log), "a file whose change time is seconds old is not recorded, whatever its mtime says");
+    Thread.sleep(2100.msecs); // past the coarse change-time window
 
+    assert(cachedSha256File(file) == sha256File(file));
+    assert(cachedSha256File(stable) == sha256File(stable));
+    assert(readText(log).canFind(file) && readText(log).canFind(stable), "settled files are recorded");
     useDigestCache(buildPath(directory, "cache"));
     assert(cachedSha256File(file) == sha256File(file), "read back from the log");
     write(file, "two!");
     setTimes(file, old, old);
     assert(cachedSha256File(file) == sha256File(file), "a new size is hashed again");
+
+    // The staleness proof: an edit that keeps the size and restores the modification time still changes the
+    // change time, so the file is hashed again instead of answered from the log.
+    const recorded = sha256File(stable);
+    write(stable, "bbbb");
+    setTimes(stable, old, old);
+    assert(sha256File(stable) != recorded);
+    assert(cachedSha256File(stable) == sha256File(stable), "the change time catches the restored mtime");
 
     const fresh = buildPath(directory, "b.d");
     write(fresh, "new");
