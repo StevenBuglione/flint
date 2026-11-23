@@ -3,8 +3,9 @@ module flint_tool.engine.builder;
 
 import flint.os : EnvVar;
 import flint_tool.engine.receipt : AdditionsRecord, ComponentRecord, EnvironmentRecord,
-    NativePackageRecord, OutputRecord,
-    ProfileRecord, Receipt, ToolchainRecord, nativeIdentity, outputRecord, receiptPath, sourceIdentity, writeReceipt;
+    NativePackageRecord, OutputRecord, ProfileRecord,
+    Receipt, ToolchainRecord,
+    nativeIdentity, outputRecord, pendingOutputRecord, receiptPath, sourceIdentity, writeReceipt;
 import flint_tool.engine.cbuild : CBuild, compileNativeC;
 import flint_tool.engine.session : Session;
 import flint_tool.diagnostics.report : Report, Severity, at, diagnostic;
@@ -407,13 +408,15 @@ private bool buildWithDub(ref Session session, scope const(string)[] command, En
 }
 
 /// Whether flint may build the project itself, without DUB (engine/direct.d): a DMD dev build that links the
-/// shared platform object, with no dependency DUB would build (only core packages, and the AOT library, if any,
+/// platform cache (the shared object, or with --static the archives), with no dependency DUB would build (only core packages, and the AOT library, if any,
 /// from the platform cache) and no embedded C. `FLINT_DIRECT_BUILD=0` builds through DUB.
 private bool directEligible(const ref BuildRequest request, const ref Resolution graph, const ref BuildOutcome result)
 {
     import std.process : environment;
 
-    if (environment.get("FLINT_DIRECT_BUILD", "") == "0" || request.test || result.platformShared.length == 0)
+    // A DMD dev build that links the platform cache: the shared object, or with --static its archives.
+    if (environment.get("FLINT_DIRECT_BUILD", "") == "0" || request.test || !result.platform.active
+            || request.profile != "dev" || result.compiler != "dmd")
         return false;
     if (result.aotLibrary.key.length && result.aotLibrary.archive.length == 0)
         return false; // DUB builds the AOT library this time
@@ -427,12 +430,12 @@ private bool directEligible(const ref BuildRequest request, const ref Resolution
     return true;
 }
 
-private imported!"flint_tool.engine.direct".DirectResult buildDirectly(ref Session session, const ref Manifest manifest,
+private imported!"flint_tool.engine.direct".DirectBuild directBuildOf(const ref Manifest manifest,
         const ref Toolchain toolchain, string compiler, const ref BuildRequest request,
-        EnvVar[] environment, string dflags, ref BuildOutcome result)
+        EnvVar[] environment, string dflags, const ref BuildOutcome result)
 {
     import std.path : buildPath;
-    import flint_tool.engine.direct : DirectBuild, DirectResult, directBuild;
+    import flint_tool.engine.direct : DirectBuild, copySettings;
     import flint_tool.engine.recipe : recipeDirectory;
 
     DirectBuild build;
@@ -446,9 +449,28 @@ private imported!"flint_tool.engine.direct".DirectResult buildDirectly(ref Sessi
     build.artifact = artifactPath(manifest, request);
     build.environment = environment;
     build.dflags = dflags;
-    build.settings = result.rootSettings;
+    build.settings = copySettings(result.rootSettings);
     build.computed = result.rootSettings.sources.length > 0;
-    return directBuild(session, build, result.output, result.phases);
+    return build;
+}
+
+/// Build without DUB when the project allows it: a shared dev build compiles and links itself; a static one
+/// replays DUB's recorded commands. Otherwise build with DUB, and for a static dev build record what it ran.
+private bool buildEligible(ref Session session, const imported!"flint_tool.engine.direct".DirectBuild build,
+        scope const(string)[] command, EnvVar[] environment, bool hideTrace, ref BuildOutcome result)
+{
+    import flint_tool.engine.direct : DirectResult, directBuild, recordReplay, replayBuild;
+
+    const shared_ = result.platformShared.length > 0;
+    const direct = shared_ ? directBuild(session, build, result.output, result.phases) : replayBuild(session,
+            build, result.output, result.phases);
+    if (direct != DirectResult.unavailable)
+        return direct == DirectResult.built;
+    const built = buildWithDub(session, shared_ ? command : command ~ "-v", environment,
+            build.root, hideTrace, result);
+    if (built && !shared_)
+        recordReplay(build, result.output);
+    return built;
 }
 
 /// Close the phases: the total since the session opened, and flint's own share of it.
@@ -741,12 +763,10 @@ bool buildProject(ref Session session, const ref Manifest manifest, const ref Re
     const label = request.test ? "test" : request.profile;
     session.progress(request.test ? "Compiling" : "Building",
             manifest.name ~ " " ~ manifest.version_ ~ " (" ~ label ~ ", " ~ compiler ~ ")");
-    import flint_tool.engine.direct : DirectResult;
-
-    const direct = directEligible(request, resolution, result) ? buildDirectly(session, manifest,
-            toolchain, compiler, request, environment, settings.dflags, result) : DirectResult.unavailable;
-    const built = direct == DirectResult.unavailable ? buildWithDub(session, command, environment,
-            manifest.root, !userTrace, result) : direct == DirectResult.built;
+    const built = directEligible(request, resolution, result) ? buildEligible(session,
+            directBuildOf(manifest, toolchain,
+                compiler, request, environment, settings.dflags, result), command, environment, !userTrace, result)
+        : buildWithDub(session, command, environment, manifest.root, !userTrace, result);
     if (!built)
     {
         report.error("FLINT-E0701", request.test ? "the test build failed" : "the build failed",
@@ -968,22 +988,20 @@ private bool linkShared(ref BuildOutcome result,
     import std.path : dirName;
     import flint_tool.engine.platformcache : linkSharedPlatform, phobosDirectory, platformNativeFlags;
 
-    string[] extraArchives, extraKeys;
-    if (extras.aotArchive.length)
-    {
-        extraArchives ~= extras.aotArchive;
-        extraKeys ~= result.aotLibrary.key;
-    }
+    // The shared object holds the platform only. The AOT library is generated for the project's closure and may be
+    // cached only after the first build, so it is linked into the project: the object's key, and so the object a
+    // cold build finds, does not depend on whether the library existed yet.
     const native = platformNativeFlags(result.platform.modules) ~ result.natives.linkFlags;
     string failure;
-    if (!linkSharedPlatform(result.platform, extraArchives, extraKeys, native, result.platformShared, failure))
+    if (!linkSharedPlatform(result.platform, null, null, native, result.platformShared, failure))
     {
         report.error("FLINT-E0712",
                 "the platform cache could not be prepared: the shared platform object failed " ~ "to link",
                 "flint build --static links the archives instead; the linker said:\n" ~ tail(failure));
         return false;
     }
-    extras.platformLflags = [
+    extras.platformLflags = (extras.aotArchive.length
+            ? [extras.aotArchive] : null) ~ [
         result.platformShared, "-rpath=" ~ dirName(result.platformShared),
         "-rpath=" ~ phobosDirectory(result.platform.inputs.compiler)
     ];
@@ -1167,7 +1185,12 @@ private Receipt projectReceipt(ref Session session, const ref Manifest manifest,
     receipt.waivers = result.checks.waivers.dup;
     receipt.unchecked = result.checks.unchecked.dup;
     receipt.command = result.command.dup;
-    receipt.outputs = [outputRecord(result.artifact, display(result.artifact))];
+    // A dev build's artifact is hashed when something uses its receipt as evidence; release and size builds,
+    // and tests, hash it now.
+    receipt.outputs = [
+        request.profile == "dev" && !request.test ? pendingOutputRecord(result.artifact,
+                display(result.artifact)) : outputRecord(result.artifact, display(result.artifact))
+    ];
     receipt.target = request.target.length ? request.target : hostTarget();
     foreach (source; result.native.sources)
         receipt.embedded_c.sources ~= outputRecord(buildPath(manifest.root, source), source);

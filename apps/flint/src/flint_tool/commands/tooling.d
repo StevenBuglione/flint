@@ -877,7 +877,8 @@ struct ReceiptPayload
 /// `flint receipt <artifact>`.
 int commandReceipt(ref Session session, ReceiptArgs args)
 {
-    import flint_tool.engine.receipt : ComponentRecord, Receipt, readReceipt, receiptPath, verifyArtifact;
+    import flint_tool.engine.receipt : ComponentRecord, Receipt, readReceipt, receiptPath,
+        resolvePendingHash, verifyArtifact;
     import flint_tool.toolchain.toolchain : inspect;
 
     Report report;
@@ -890,7 +891,8 @@ int commandReceipt(ref Session session, ReceiptArgs args)
     payload.artifact = args.artifact;
     payload.receipt = receiptPath(args.artifact);
     Receipt receipt;
-    if (!readReceipt(payload.receipt, receipt, report))
+    if (!readReceipt(payload.receipt, receipt, report) || !resolvePendingHash(args.artifact,
+            payload.receipt, receipt, report))
         return finish(session, report, payload);
     payload.canonical = receipt.canonical;
     payload.non_canonical_reasons = receipt.non_canonical_reasons;

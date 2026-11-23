@@ -9,6 +9,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import tomllib
 import unittest
 from pathlib import Path
@@ -309,7 +310,9 @@ class ProjectLifecycleTests(unittest.TestCase):
         self.assertEqual(receipt['schema'], 'flint.receipt/1')
         # Linker flags reach the compiler as -L flags: on a glibc host, the profile's RELR glibc_lflags.
         self.assertEqual(receipt['profile']['effective_dflags'], profiles.dflags('dev') + profiles.link_dflags('dev'))
-        self.assertEqual(receipt['outputs'][0]['sha256'], install_toolchains.sha256_file(self.project / ('.flint/build/dev/demo' + EXE)))
+        # A dev build leaves its output's hash to the first use of the receipt as evidence, recording its stat identity.
+        self.assertEqual(receipt['outputs'][0]['sha256'], 'pending')
+        self.assertTrue(receipt['outputs'][0]['stat'])
 
         status, ran = flint_json('run', '--', '--name', 'Ada', cwd=self.project)
         self.assertEqual(status, 0, ran)
@@ -324,8 +327,29 @@ class ProjectLifecycleTests(unittest.TestCase):
         self.assertEqual(tested['passed'], 1)
         status, checked = flint_json('check', cwd=self.project)
         self.assertEqual(status, 0, checked)
-        status, verified = flint_json('receipt', str(self.project / ('.flint/build/dev/demo' + EXE)), cwd=self.project)
+        artifact = self.project / ('.flint/build/dev/demo' + EXE)
+        status, verified = flint_json('receipt', str(artifact), cwd=self.project)
         self.assertEqual(status, 0, verified)
+        resolved = json.loads((self.project / ('.flint/build/dev/demo' + EXE + '.receipt.json')).read_text(encoding='utf-8'))
+        self.assertEqual(resolved['outputs'][0]['sha256'], install_toolchains.sha256_file(artifact))
+
+    def test_a_dev_binary_changed_after_its_build_is_refused_not_hashed(self):
+        status, built = flint_json('build', cwd=self.project)
+        self.assertEqual(status, 0, built)
+        artifact = self.project / ('.flint/build/dev/demo' + EXE)
+        receipt_path = self.project / ('.flint/build/dev/demo' + EXE + '.receipt.json')
+        self.assertEqual(json.loads(receipt_path.read_text(encoding='utf-8'))['outputs'][0]['sha256'], 'pending')
+        stat = artifact.stat()
+        data = bytearray(artifact.read_bytes())
+        data[-1] ^= 0xFF  # same size
+        time.sleep(0.05)
+        artifact.write_bytes(bytes(data))
+        os.utime(artifact, ns=(stat.st_atime_ns, stat.st_mtime_ns))  # and the modification time put back
+        status, refused = flint_json('receipt', str(artifact), cwd=self.project)
+        self.assertNotEqual(status, 0, refused)
+        self.assertIn('FLINT-E0902', [item['code'] for item in refused['diagnostics']])
+        self.assertEqual(json.loads(receipt_path.read_text(encoding='utf-8'))['outputs'][0]['sha256'], 'pending')
+        flint('build', '--force', cwd=self.project)
 
     def test_new_is_deterministic_and_never_overwrites(self):
         status, first = flint_json('new', 'same', '--plan', cwd=self.directory)

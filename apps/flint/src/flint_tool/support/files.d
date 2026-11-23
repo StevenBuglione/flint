@@ -143,6 +143,25 @@ private string inodeOf(ref imported!"std.file".DirEntry entry)
         return "0";
 }
 
+/// A file's stat identity, as the digest log keys it: size, modification time, change time, inode and device.
+/// Null when the file cannot be read. A receipt whose output hash is pending records it.
+string statIdentity(string path)
+{
+    import std.conv : to;
+    import std.file : DirEntry, FileException;
+
+    try
+    {
+        auto entry = DirEntry(path);
+        if (!entry.isFile)
+            return null;
+        return entry.size.to!string ~ " " ~ entry.timeLastModified.stdTime.to!string ~ " " ~ changeTimeOf(entry)
+            .to!string ~ " " ~ inodeOf(entry);
+    }
+    catch (FileException)
+        return null;
+}
+
 /// The change time in Unix nanoseconds: what a write, chmod or rename last did to the inode. Unlike the
 /// modification time, no call can set it to a chosen value.
 private long changeTimeOf(ref imported!"std.file".DirEntry entry)

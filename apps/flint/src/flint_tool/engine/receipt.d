@@ -130,11 +130,18 @@ struct OutputRecord
 {
     /// Path relative to the project or workspace root.
     string path;
-    /// SHA-256.
+    /// SHA-256, or `pending` in a dev receipt: whatever uses the receipt as evidence computes it, after checking
+    /// `stat` (`verifyArtifact`).
     string sha256;
     /// Size in bytes.
     long bytes;
+    /// With a pending hash: the output's stat identity when the receipt was written (size, modification time,
+    /// change time, inode, device).
+    string stat;
 }
+
+/// The `sha256` of an output whose hash a dev build left to its first use.
+enum pendingHash = "pending";
 
 /// Embedded C compiled into the artifact (ADR-023).
 struct EmbeddedCRecord
@@ -287,6 +294,17 @@ bool readReceipt(string path, out Receipt receipt, ref Report report)
     return true;
 }
 
+/// One output whose hash is left to its first use: a dev build's artifact (the coordinator's approval, 2026-11-23).
+/// Hashing a 38 MB static dev binary took about 70 ms of every edit build. The receipt records the output's stat
+/// identity instead, and `verifyArtifact` refuses the output if it changed since.
+OutputRecord pendingOutputRecord(string path, string display)
+{
+    import std.file : getSize;
+    import flint_tool.support.files : statIdentity;
+
+    return OutputRecord(display, pendingHash, cast(long) getSize(path), statIdentity(path));
+}
+
 /// Hash one output file, in full: outputs are the project's own files, which never enter the digest log.
 OutputRecord outputRecord(string path, string display)
 {
@@ -294,6 +312,37 @@ OutputRecord outputRecord(string path, string display)
     import flint_tool.support.files : sha256File;
 
     return OutputRecord(display, sha256File(path), cast(long) getSize(path));
+}
+
+/// Fill in a dev receipt's pending output hash, for whatever uses the receipt as evidence: the output must still
+/// have the stat identity the build recorded, and is then hashed and the receipt rewritten. An output that
+/// changed since is refused (FLINT-E0902) and the receipt left as it was. True when nothing was pending or the
+/// hash is now in the receipt.
+bool resolvePendingHash(string artifact, string receiptFile, ref Receipt receipt, ref Report report)
+{
+    import std.path : baseName;
+    import flint_tool.support.files : sha256File, statIdentity;
+
+    bool changed;
+    foreach (ref output; receipt.outputs)
+    {
+        if (output.sha256 != pendingHash || baseName(output.path) != baseName(artifact))
+            continue;
+        const now = statIdentity(artifact);
+        if (output.stat.length == 0 || now != output.stat)
+        {
+            report.error("FLINT-E0902", artifact ~ " changed after its dev receipt was written (the receipt "
+                    ~ "recorded " ~ output.stat ~ ", the file is now " ~ now ~ "); its hash was pending",
+                    "rebuild it with flint build");
+            return false;
+        }
+        output.sha256 = sha256File(artifact);
+        output.stat = null;
+        changed = true;
+    }
+    if (changed)
+        writeReceipt(receiptFile, receipt);
+    return true;
 }
 
 /// Check an artifact against its receipt, and the receipt's toolchain against `current` (when given).
@@ -305,18 +354,30 @@ bool verifyArtifact(string artifact, const ref Receipt receipt, scope const Comp
     import std.path : baseName;
 
     const before = report.errors();
-    const actual = sha256File(artifact);
     bool matched;
     foreach (ref output; receipt.outputs)
     {
-        if (baseName(output.path) == baseName(artifact))
+        if (baseName(output.path) != baseName(artifact))
+            continue;
+        matched = true;
+        if (output.sha256 == pendingHash)
         {
-            matched = true;
-            if (output.sha256 != actual)
-                report.error("FLINT-E0902",
-                        artifact ~ " has SHA-256 " ~ actual ~ " but its receipt records " ~ output.sha256,
+            import flint_tool.support.files : statIdentity;
+
+            // A dev receipt left the hash to its first use. The output must be the file the build wrote; one that
+            // changed since is refused, never hashed into the receipt's word.
+            const now = statIdentity(artifact);
+            if (output.stat.length == 0 || now != output.stat)
+                report.error("FLINT-E0902", artifact ~ " changed after its dev receipt was written (the receipt "
+                        ~ "recorded " ~ output.stat ~ ", the file is now " ~ now ~ "); its hash was pending",
                         "rebuild it with flint build");
+            continue;
         }
+        const actual = sha256File(artifact);
+        const recorded = output.sha256;
+        if (recorded != actual)
+            report.error("FLINT-E0902", artifact ~ " has SHA-256 " ~ actual ~ " but its receipt records " ~ recorded,
+                    "rebuild it with flint build");
     }
     if (!matched)
         report.error("FLINT-E0905", "the receipt lists no output named " ~ baseName(artifact),
@@ -382,4 +443,46 @@ NativeRecord nativeIdentity(string home)
     record.receipt_sha256 = sha256File(receipt);
     record.present = record.receipt_sha256.length != 0;
     return record;
+}
+
+@safe unittest
+{
+    import core.thread.osthread : Thread;
+    import core.time : msecs, seconds;
+    import std.conv : to;
+    import std.datetime.systime : Clock;
+    import std.file : exists, mkdirRecurse, rmdirRecurse, setTimes, tempDir, write;
+    import std.path : buildPath;
+    import std.process : thisProcessID;
+    import flint_tool.support.files : sha256File;
+
+    const directory = buildPath(tempDir, "flint-pending-" ~ thisProcessID.to!string);
+    scope (exit)
+        if (exists(directory))
+            rmdirRecurse(directory);
+    mkdirRecurse(directory);
+    const artifact = buildPath(directory, "app");
+    write(artifact, "binary-1");
+    Receipt receipt;
+    receipt.outputs = [pendingOutputRecord(artifact, "app")];
+    assert(receipt.outputs[0].sha256 == pendingHash && receipt.outputs[0].stat.length);
+
+    // Untouched: the hash is computed and written into the receipt.
+    Report fine;
+    auto resolved = receipt;
+    resolved.outputs = receipt.outputs.dup;
+    assert(resolvePendingHash(artifact, buildPath(directory, "app.receipt.json"), resolved, fine));
+    assert(resolved.outputs[0].sha256 == sha256File(artifact) && fine.errors() == 0);
+
+    // Changed after the build, same size and the modification time put back: refused, never hashed.
+    const before = Clock.currTime - 60.seconds;
+    setTimes(artifact, before, before);
+    receipt.outputs = [pendingOutputRecord(artifact, "app")];
+    Thread.sleep(20.msecs); // past the coarse change-time tick
+    write(artifact, "binary-2");
+    setTimes(artifact, before, before);
+    Report stale;
+    assert(!resolvePendingHash(artifact, buildPath(directory, "app.receipt.json"), receipt, stale));
+    assert(stale.errors() == 1 && stale.items[0].code == "FLINT-E0902");
+    assert(receipt.outputs[0].sha256 == pendingHash, "a stale output is never hashed into the receipt");
 }

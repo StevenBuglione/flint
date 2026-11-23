@@ -258,7 +258,8 @@ private bool unexpected(out string failure)
     return false;
 }
 
-private RootSettings copySettings(const ref RootSettings from)
+/// A mutable copy of `from`.
+RootSettings copySettings(const ref RootSettings from)
 {
     RootSettings to;
     to.dflags = from.dflags.dup;
@@ -495,4 +496,255 @@ private bool link(const ref DirectBuild build, const ref RootSettings settings, 
     assert(settings.sources.length == 0);
     assert(linkFlag("-L-z") && linkFlag("-defaultlib=libphobos2.so") && linkFlag("-g")
             && !linkFlag("-debug") && !linkFlag("-preview=dip1000") && !linkFlag("-vcolumns"));
+}
+
+/// What DUB ran for a static dev build, recorded from its `-v` output: the compile commands, the link command and
+/// the target it links. Replaying them gives DUB's binary byte for byte, because they are DUB's own commands.
+struct Replay
+{
+    /// The working directory DUB ran them in.
+    string directory;
+    /// The compile commands, the compiler first.
+    string[][] compiles;
+    /// The link command, the compiler first.
+    string[] link;
+    /// The file the link writes (DUB's cache), copied to the artifact afterwards.
+    string target;
+}
+
+/// Part of the replay record: a change to its layout invalidates every record.
+private enum replayFormat = "flint.direct-replay/1";
+
+/// The compile and link commands in DUB's `-v` output: `[cwd=<directory>] <compiler> <arguments>` lines. False
+/// when there is not exactly one link, or an argument could hold a space (the pipeline does not quote them).
+bool parseReplay(string output, string compiler, out Replay replay)
+{
+    import std.algorithm.searching : canFind, findSplit, startsWith;
+    import std.array : split;
+    import std.string : lineSplitter, strip;
+
+    foreach (line; output.lineSplitter)
+    {
+        const text = line.strip;
+        if (!text.startsWith("[cwd="))
+            continue;
+        auto parts = text["[cwd=".length .. $].findSplit("] ");
+        if (!parts[1].length || !parts[2].startsWith(compiler ~ " "))
+            continue;
+        if (parts[2].canFind('"') || parts[0].canFind(' '))
+            return false;
+        if (!addReplayCommand(replay, parts[0], parts[2].split(" ")))
+            return false;
+    }
+    return replay.compiles.length && replay.link.length && replay.target.length;
+}
+
+/// One recorded command: a compile, or the one link and the target it writes.
+private bool addReplayCommand(ref Replay replay, string directory, string[] arguments)
+{
+    import std.algorithm.searching : canFind, startsWith;
+
+    if (replay.directory.length && replay.directory != directory)
+        return false;
+    replay.directory = directory;
+    if (arguments.canFind("-c"))
+    {
+        replay.compiles ~= arguments;
+        return true;
+    }
+    if (replay.link.length)
+        return false;
+    replay.link = arguments;
+    foreach (argument; arguments)
+    {
+        if (argument.startsWith("-of"))
+            replay.target = argument["-of".length .. $];
+    }
+    return true;
+}
+
+/// Record what DUB just ran, for the next static dev build.
+void recordReplay(const ref DirectBuild build, string dubOutput)
+{
+    import std.array : join;
+    import std.conv : to;
+    import std.file : rename, write;
+    import std.path : buildPath;
+    import std.process : thisProcessID;
+
+    Replay replay;
+    const record = buildPath(build.recipeDirectory, "replay-" ~ build.configuration ~ ".txt");
+    if (!parseReplay(dubOutput, build.compiler, replay))
+        return;
+    string text = replayFormat ~ "\n" ~ settingsStamp(build) ~ "\n";
+    foreach (line; watched(replaySources(replay)))
+        text ~= line ~ "\n";
+    text ~= "directory\t" ~ replay.directory ~ "\ntarget\t" ~ replay.target ~ "\nlink\t"
+        ~ replay.link.join("\x1f") ~ "\n";
+    foreach (command; replay.compiles)
+        text ~= "compile\t" ~ command.join("\x1f") ~ "\n";
+    const partial = record ~ "." ~ thisProcessID.to!string ~ ".partial";
+    write(partial, text);
+    rename(partial, record);
+}
+
+private bool readReplay(const ref DirectBuild build, string record, out Replay replay)
+{
+    import std.algorithm.searching : findSplit;
+    import std.array : split;
+    import std.string : lineSplitter;
+    import flint_tool.support.files : readIfPresent;
+
+    string[] lines;
+    foreach (line; readIfPresent(record).lineSplitter)
+        lines ~= line;
+    if (lines.length < 3 || lines[0] != replayFormat || lines[1] != settingsStamp(build))
+        return false;
+    string[] expected;
+    foreach (line; lines[2 .. $])
+    {
+        if (line.length > 2 && line[0 .. 2] == "d ")
+        {
+            expected ~= line;
+            continue;
+        }
+        auto parts = line.findSplit("\t");
+        if (!replayField(replay, parts[0], parts[2]))
+            return false;
+    }
+    return replay.compiles.length && replay.link.length && watched(replaySources(replay)) == expected;
+}
+
+private bool replayField(ref Replay replay, string name, string value)
+{
+    import std.array : split;
+
+    switch (name)
+    {
+    case "directory":
+        replay.directory = value;
+        return true;
+    case "target":
+        replay.target = value;
+        return true;
+    case "link":
+        replay.link = value.split("\x1f");
+        return true;
+    case "compile":
+        replay.compiles ~= value.split("\x1f");
+        return true;
+    default:
+        return false;
+    }
+}
+
+/// The D sources the recorded compiles name, as absolute paths.
+private string[] replaySources(const ref Replay replay)
+{
+    import std.path : absolutePath, extension;
+
+    string[] sources;
+    foreach (command; replay.compiles)
+    {
+        foreach (argument; command[1 .. $])
+        {
+            if (argument.length && argument[0] != '-' && argument.extension == ".d")
+                sources ~= absolutePath(argument, replay.directory);
+        }
+    }
+    return sources;
+}
+
+/// The files a replay reads besides its sources: the archives and objects of the link and the string-import
+/// directories' files.
+private string[] replayInputs(const ref Replay replay)
+{
+    import std.file : SpanMode, dirEntries, exists, isDir, isFile;
+    import std.path : absolutePath;
+
+    string[] inputs = replaySources(replay);
+    foreach (argument; replay.link[1 .. $])
+    {
+        const path = argument.length > 2 && argument[0 .. 2] == "-L" ? argument[2 .. $] : argument;
+        if (path.length && path[0] != '-' && exists(absolutePath(path, replay.directory))
+                && isFile(absolutePath(path, replay.directory)))
+            inputs ~= absolutePath(path, replay.directory);
+    }
+    foreach (command; replay.compiles)
+    {
+        foreach (argument; command)
+        {
+            if (argument.length > 2 && argument[0 .. 2] == "-J")
+            {
+                const directory = absolutePath(argument[2 .. $], replay.directory);
+                if (exists(directory) && isDir(directory))
+                    foreach (entry; dirEntries(directory, SpanMode.depth))
+                        if (entry.isFile)
+                            inputs ~= entry.name;
+            }
+        }
+    }
+    return inputs;
+}
+
+/// Rebuild a static dev build with DUB's recorded commands, or report that DUB must run (and be recorded).
+DirectResult replayBuild(ref Session session, const ref DirectBuild build, out string output,
+        ref imported!"flint_tool.engine.receipt".PhasesRecord phases)
+{
+    import core.time : MonoTime;
+    import std.file : FileException, exists, mkdirRecurse, rename, timeLastModified;
+    import std.path : absolutePath, buildPath, dirName;
+    import flint_tool.support.process : Launch, capture;
+
+    Replay replay;
+    const record = buildPath(build.recipeDirectory, "replay-" ~ build.configuration ~ ".txt");
+    if (!readReplay(build, record, replay))
+        return DirectResult.unavailable;
+    phases.plan = 0;
+    phases.compile = -1;
+    phases.link = -1;
+    if (exists(build.artifact))
+    {
+        try
+        {
+            const built = timeLastModified(build.artifact);
+            bool stale = timeLastModified(record) >= built;
+            foreach (input; replayInputs(replay))
+                stale = stale || timeLastModified(input) >= built;
+            if (!stale)
+                return DirectResult.built;
+        }
+        catch (FileException)
+        {
+        }
+    }
+    session.progress("Building", "directly, with DUB's recorded commands");
+    Launch launch;
+    launch.directory = replay.directory;
+    launch.environment = compilerEnvironment(build);
+    launch.inherit = false;
+    const compileStart = MonoTime.currTime;
+    foreach (command; replay.compiles)
+    {
+        const outcome = capture(command, launch);
+        output ~= outcome.combined;
+        if (!outcome.ok)
+            return DirectResult.failed;
+    }
+    phases.compile = (MonoTime.currTime - compileStart).total!"msecs";
+    const linkStart = MonoTime.currTime;
+    // DUB's link, written straight to the artifact: the output's name is not part of the binary, so this is DUB's
+    // binary without the copy out of its cache.
+    mkdirRecurse(dirName(build.artifact));
+    const partial = absolutePath(build.artifact) ~ ".partial";
+    string[] link;
+    foreach (argument; replay.link)
+        link ~= argument.length > 3 && argument[0 .. 3] == "-of" ? "-of" ~ partial : argument;
+    const linked = capture(link, launch);
+    output ~= linked.combined;
+    if (!linked.ok)
+        return DirectResult.failed;
+    phases.link = (MonoTime.currTime - linkStart).total!"msecs";
+    rename(partial, build.artifact);
+    return DirectResult.built;
 }

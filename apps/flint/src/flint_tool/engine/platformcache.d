@@ -168,7 +168,8 @@ bool planPlatform(ref Session session, string root, const ref Resolution resolut
     writeIfChanged(buildPath(describeRoot, "dub.sdl"), renderDescribeRoot(resolution, joined
             ? "../platform-source" : session.home.root));
     string failure;
-    if (!describe(inputs, describeRoot, source, plan.modules, failure))
+    const described = describe(inputs, describeRoot, source, plan.modules, failure);
+    if (described == Described.failed)
         return cacheFailed("DUB could not describe the platform modules", failure, report);
     assignKeys(plan.modules, inputs);
     size_t[] missing;
@@ -198,6 +199,8 @@ bool planPlatform(ref Session session, string root, const ref Resolution resolut
             plan.archives ~= item.archive;
     }
     writeIfChanged(buildPath(root, platformDirectory, "dub.sdl"), renderPlatformRoot(plan.modules, inputs.sharedLink));
+    if (described == Described.fresh)
+        recordDescription(inputs, describeRoot, source, plan.modules);
     plan.prelude = buildPath(root, preludeFile);
     plan.cache = inputs.cache;
     plan.inputs = inputs.copy();
@@ -249,7 +252,18 @@ private enum describeFormat = "flint.platform-describe/3";
 /// environment, every package's dub.sdl, and the modification time of every directory holding a file DUB lists.
 /// Adding or removing a source file changes its directory's time, and editing one changes nothing DUB describes,
 /// so an edit build skips DUB and the parse.
-private bool describe(const ref PlatformInputs inputs, string describeRoot, string source,
+/// How `describe` got the platform's description.
+private enum Described
+{
+    /// `dub describe` failed.
+    failed,
+    /// From the shared record.
+    recorded,
+    /// From `dub describe` just now: the caller records it.
+    fresh
+}
+
+private Described describe(const ref PlatformInputs inputs, string describeRoot, string source,
         out PlatformModule[] modules, out string failure)
 {
     import std.path : buildPath;
@@ -258,20 +272,33 @@ private bool describe(const ref PlatformInputs inputs, string describeRoot, stri
     // appears in DUB's artifact paths, which the record keeps relative to DUB_HOME.
     const stamp = describeStamp(inputs, describeRoot, source);
     const record = buildPath(inputs.cache, "platform", "descriptions", stamp ~ ".txt");
-    const dubHome = environmentValue(inputs.environment, "DUB_HOME");
     if (readDescription(record, stamp, modules))
     {
+        const dubHome = environmentValue(inputs.environment, "DUB_HOME");
         foreach (ref item; modules)
             item.artifact = fromDubHome(item.artifact, dubHome);
-        return true;
+        return Described.recorded;
     }
-    if (!runDescribe(inputs, describeRoot, modules, failure))
-        return false;
-    auto portable = modules.dup;
-    foreach (ref item; portable)
-        item.artifact = toDubHome(item.artifact, dubHome);
-    writeDescription(record, stamp, portable);
-    return true;
+    return runDescribe(inputs, describeRoot, modules, failure) ? Described.fresh : Described.failed;
+}
+
+/// Keep a fresh description for the next build. It is written after priming, because priming runs the packages'
+/// pre-build commands (flint:term's C shim), which change the build directories the record watches; a record
+/// written before them would be stale at once.
+private void recordDescription(const ref PlatformInputs inputs, string describeRoot, string source,
+        PlatformModule[] modules)
+{
+    import std.path : buildPath;
+
+    const stamp = describeStamp(inputs, describeRoot, source);
+    const dubHome = environmentValue(inputs.environment, "DUB_HOME");
+    PlatformModule[] portable;
+    foreach (item; modules)
+    {
+        item.artifact = toDubHome(item.artifact, dubHome); // a copy: the plan keeps its paths
+        portable ~= item;
+    }
+    writeDescription(buildPath(inputs.cache, "platform", "descriptions", stamp ~ ".txt"), stamp, portable);
 }
 
 private string environmentValue(scope const EnvVar[] environment, string name)
@@ -917,7 +944,7 @@ bool linkSharedPlatform(const ref PlatformPlan plan, scope const string[] extraA
     import std.file : isFile;
     import flint_tool.support.files : cachedSha256File;
 
-    string text = "flint.platform-shared/3\nplatform " ~ plan.platformKey ~ "\n" ~ listed("extra",
+    string text = "flint.platform-shared/4\nplatform " ~ plan.platformKey ~ "\n" ~ listed("extra",
             extraKeys) ~ listed("native", nativeFlags);
     // A native archive or object is linked into the shared object, so its content is part of the key: rebuilt
     // shims make a new one.
