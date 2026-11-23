@@ -235,6 +235,23 @@ druntime selects a collector by name: `registerGCFactory("flint", ...)` from a `
    - **Next, D1b: page release.** Return free pages with `madvise(MADV_DONTNEED)` after a sweep, with hysteresis so that pages reused at once are not released.
    - **Gating.** gc:flint and gc:conservative run on the same binary through proof-harness's queue. D3 (mostly-concurrent marking with soft-dirty tracking) follows only if the pause still loses.
 
+## 3a. D3: mostly-concurrent marking (design for the prototype)
+
+D3 is the collector step aimed at p99. Today every collection stops both reactors for its whole mark, about 0.5 ms on average and 3–5 ms at most. D3 moves the heap traversal off the pause and keeps only a short stop at the end. This is Boehm's mostly-parallel collection (bdwgc's `SOFT_VDB`). D emits no write barriers, so the kernel tracks the writes instead. On venus, writing `4` to `/proc/self/clear_refs` clears every page's soft-dirty bit, and bit 55 of `/proc/self/pagemap` shows which pages were written since (checked on venus, kernel 7.0).
+
+A collection under `gc:flint` with concurrent marking:
+1. **Start (under the GC lock).** Prepare the mark bits as now, clear the soft-dirty bits, and release the lock.
+2. **Concurrent mark.** Mutators keep running and allocating. The marker traces from the static data and the registered roots and ranges, over the heap as it finds it. Conservative marking only reads words, so a racing write can at worst leave an object unmarked, which step 3 repairs. While marking, an allocation that would collect or add a pool waits for the marker instead.
+3. **Final pause.** Stop the world, as now. Then:
+   - scan thread stacks, registers and TLS (the thread caches included);
+   - rescan every marked object on a page whose soft-dirty bit is set;
+   - mark to closure, and resume.
+
+   A pointer stored during step 2 lies either in a root, which is rescanned, or on a written page, which is also rescanned. So nothing live stays unmarked. An object allocated during step 2 is live only if a root or a written page points to it.
+4. **Sweep**, as now.
+
+The final pause costs the roots plus the dirty pages, not the whole heap. At gs-rest-service's ~12 MB heap, a few hundred dirty pages are expected, against ~3,000 in total. The risks are a missed write path (only kernel-recorded writes count, so memory written through `vmsplice`, io_uring buffers or another process is excluded) and pagemap read cost. The evidence is the same as for D1: the stress fuzzer with its shadow check (with collections forced mid-mark), druntime's GC tests, ASan, and a measured pause distribution. It is Linux-only; other targets keep the stop-the-world mark. The switch back is `gc:conservative`, or `gc:flint` without the concurrent option.
+
 ## 4. How p99 and RSS are measured
 
 - **Evidence.** Only proof-harness's queue (`tools/measure_queue.py`) produces evidence. It uses `policy/spring-http-benchmark.json`: 2 server CPUs, 4 load CPUs, 64 connections, a 10 s warm-up, 60 s capacity and fixed-rate phases, 9 trials interleaved with the Go comparator, and a quiet-window check.
