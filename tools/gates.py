@@ -6,6 +6,7 @@ from d_source import tokens,imported_modules,declared_module,module_default,has_
 from perf_stats import finite_samples,median_ratio_interval
 from workspace import Workspace,edge_violations,package_repos
 import module_budgets
+import framework_budgets
 ROOT=Path(__file__).resolve().parents[1]
 P=json.loads((ROOT/'policy/packages.json').read_text(encoding='utf-8'))['packages']
 B=json.loads((ROOT/'policy/budgets.json').read_text(encoding='utf-8'))
@@ -300,6 +301,8 @@ def measured(current,baseline=None):
     for app in ['bench-cli','bench-rest']:
         compare_series(current['apps'][app]['dmd_cold_seconds'],current['go']['apps'][app]['cold_seconds'],.99,'Go build '+app)
         require(current['apps'][app]['Oz']['binary_bytes']<=current['go']['apps'][app]['binary_bytes']*B['go_relative']['binary_ratio_max'],'Go binary size '+app)
+    # ADR-030 section 5: the Spring-layer modules of policy/framework.json, each against its own budget (framework_budgets.py).
+    problems=framework_budgets.check(current,baseline,B['regression'],compare_series);require(not problems,'; '.join(problems))
     if baseline is None:
         return {'initial_baseline_validation':'pass','regression_comparison':'not_run_no_prior_baseline','commit':current['commit']}
     return {'all_six_gates':'pass','commit':current['commit']}
@@ -327,6 +330,7 @@ def verify_evidence_artifacts(evidence,directory):
     builds=payload('compile')
     require(builds==payload('size'),'compile and size evidence came from different builds')
     for key in ['packages','apps','modules']:require(evidence[key]==builds[key],key+': summary differs from measured source artifact')
+    require(evidence.get('framework')==builds.get('framework'),'framework: summary differs from measured source artifact')
     require(evidence['go']['apps']==builds['go']['apps'],'Go build summary differs from measured source artifact')
     runtime=payload('runtime')
     require(evidence['rest']==runtime['http']['rest'] and evidence['go']['rest']==runtime['http']['go']['rest'],

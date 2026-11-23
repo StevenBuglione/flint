@@ -366,7 +366,9 @@ class MeasurementDefinitionTests(unittest.TestCase):
 
     def test_initial_baseline_is_not_regression_certification(self):
         document = synthetic_evidence('a' * 40, .8)
-        with patch.object(gates, 'median_ratio_interval', return_value=(.5, .5, .5)):
+        # The live policy/framework.json lists modules this synthetic document does not measure.
+        with patch.object(gates, 'median_ratio_interval', return_value=(.5, .5, .5)), \
+                patch.object(gates.framework_budgets, 'modules', return_value={}):
             result = gates.measured(document)
         self.assertEqual(result['initial_baseline_validation'], 'pass')
         self.assertEqual(result['regression_comparison'], 'not_run_no_prior_baseline')
@@ -377,6 +379,14 @@ class MeasurementDefinitionTests(unittest.TestCase):
         document['packages']['arena']['dmd_cold_seconds'] = [1000] * 9
         with self.assertRaisesRegex(ValueError, 'absolute ceiling'):
             gates.measured(document)
+
+    def test_framework_modules_need_their_measurements(self):
+        document = synthetic_evidence('a' * 40, .8)
+        listed = {'core': {'directory': 'framework/core', 'module': 'flint.core'}}
+        with patch.object(gates, 'median_ratio_interval', return_value=(.5, .5, .5)), \
+                patch.object(gates.framework_budgets, 'modules', return_value=listed):
+            with self.assertRaisesRegex(ValueError, 'framework modules measured'):
+                gates.measured(document)
 
     def test_initial_baseline_still_enforces_go_comparison(self):
         document = synthetic_evidence('a' * 40, .8)
