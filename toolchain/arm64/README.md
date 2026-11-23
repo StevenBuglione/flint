@@ -48,22 +48,25 @@ python3 toolchain/arm64/run.py --dmd <fork dmd> --druntime-import <druntime/impo
 
 | | druntime unittests | Phobos unittests | regression tests |
 | --- | --- | --- | --- |
-| Linux AArch64 (QEMU user mode) | 567/567 modules | 173/176 modules | 106/106 |
-| macOS arm64 (pluto, native) | 567/567 modules | 176/176 modules | 106/106 |
+| Linux AArch64 (native: Ubuntu 24.04 VM on pluto, 4 vCPUs) | 567/567 modules | 176/176 modules | 122/122 |
+| macOS arm64 (pluto, native) | 567/567 modules | 176/176 modules | 124/124 |
+| Linux AArch64 (QEMU user mode, cross from x86-64) | 567/567 modules | 173/176 modules | 122/122 |
 
-Both libraries pass natively on macOS arm64. The three Linux failures come from the QEMU cross sysroot, not the code generator:
+Both libraries pass natively on both systems. The fork builds natively on Linux AArch64 with `install_toolchains.py --compiler dmd` (3 minutes in the VM). The regression tests count two more on macOS: its direct-link and FDE checks. Under QEMU, three Phobos modules fail because of the cross sysroot, not the code generator; all three pass natively:
 
 - `std.stdio` opens a file in mode `ccs=UTF-16LE`, and the sysroot has no gconv modules;
 - `std.net.curl` finds no arm64 libcurl, and QEMU's `accept` fails;
 - `std.socket` stops in glibc's `fd_set` bounds check under QEMU.
 
-They are to be confirmed on real Linux AArch64 hardware, along with stage 2.
+In the 8 GB VM, building the unittests of Phobos's largest modules (`std.conv`, `std.algorithm.iteration` and five more) four at a time ran out of memory; one at a time, they build.
 
 ## Status (stage 2: Flint's packages)
 
 On macOS arm64 and Linux arm64, the forked DMD now fills the DMD role of the dev and test profiles. `flint toolchain install` runs `install_toolchains.py --compiler dmd`, then LDC and the Flint DUB.
 
-On pluto, `flint test --compiler dmd` passes 37 of the workspace's 38 packages, peers included (S3, MinIO, PostgreSQL, Valkey and the Go peers). The run used the native providers that `tools/ci.py` builds (`--profile ci --library wasmtime --library wkwebview`) and Homebrew's `python3`. Apple's `/usr/bin/python3` 3.9 rejects the S3 fixture's empty query strings. The 38th package, `engine-desktop`, passes when its test binary runs with `SDL_VIDEODRIVER=dummy`, as the lane does: `flint test` does not pass that variable through. Its WKWebView tests need the logged-in GUI session. Linux arm64 needs real hardware.
+On pluto, `flint test --compiler dmd` passes 37 of the workspace's 38 packages, peers included (S3, MinIO, PostgreSQL, Valkey and the Go peers). The run used the native providers that `tools/ci.py` builds (`--profile ci --library wasmtime --library wkwebview`) and Homebrew's `python3`. Apple's `/usr/bin/python3` 3.9 rejects the S3 fixture's empty query strings. The 38th package, `engine-desktop`, passes when its test binary runs with `SDL_VIDEODRIVER=dummy`, as the lane does: `flint test` does not pass that variable through. Its WKWebView tests need the logged-in GUI session.
+
+On Linux arm64 (the `flint-arm64` VM on pluto: Ubuntu 24.04, 4 vCPUs, 8 GB), Flint bootstraps with the fork, and `flint test --compiler dmd` passes 33 of the 37 packages in one run, peers included (PostgreSQL, Valkey, MinIO and the Go peers), with the `ci` providers and wasmtime. `os` and `engine-sql` failed in that run and pass when run alone. The other two pass every functional test but miss a CPU-time bound while the VM is loaded by another lane's build. `engine-http`'s HTTP worker used 18.9 to 24.3 ms against 15 ms, and passed 1 run in 3. `engine-web`'s delayed echoes used 41 ms against 30 ms. They are to be re-run on a quiet VM.
 
 ## Status (stages 3 to 5: speed on macOS arm64)
 
