@@ -23,11 +23,11 @@
 {"name":"spring-boot-test","upstream":"spring-boot@v4.2.0","module":"spring-boot-test"},
 {"name":"spring-boot-test-autoconfigure","upstream":"spring-boot@v4.2.0","module":"spring-boot-test-autoconfigure"},
 {"name":"spring-boot-webmvc-test","upstream":"spring-boot@v4.2.0","module":"spring-boot-webmvc-test"},
-{"name":"jakarta-annotation","upstream":"jakarta-annotation@3.0.0","module":"jakarta-annotation"},
-{"name":"jakarta-validation","upstream":"jakarta-validation@3.1.1","module":"jakarta-validation"},
+{"name":"jakarta-annotation","upstream":"jakarta-annotation@3.0.0","module":"jakarta-annotation","complete":true},
+{"name":"jakarta-validation","upstream":"jakarta-validation@3.1.1","module":"jakarta-validation","complete":true},
 {"name":"jakarta-servlet","upstream":"jakarta-servlet@6.1.0","module":"jakarta-servlet"},
-{"name":"jackson-core","upstream":"jackson-core@3.1.8","module":"jackson-core"},
-{"name":"jackson-databind","upstream":"jackson-databind@3.1.8","module":"jackson-databind"},
-{"name":"jackson-annotations","upstream":"jackson-annotations@2.21","module":"jackson-annotations"},
-{"name":"slf4j-api","upstream":"slf4j-api@2.0.20","module":"slf4j-api"}
+{"name":"jackson-core","upstream":"jackson-core@3.1.8","module":"jackson-core","complete":true},
+{"name":"jackson-databind","upstream":"jackson-databind@3.1.8","module":"jackson-databind","complete":true},
+{"name":"jackson-annotations","upstream":"jackson-annotations@2.21","module":"jackson-annotations","complete":true},
+{"name":"slf4j-api","upstream":"slf4j-api@2.0.20","module":"slf4j-api","complete":true}
 ]}
