@@ -281,7 +281,7 @@ Flint is free and open source under the **Apache License 2.0**, which gives an e
   - the wall time;
   - the review size: lines and attributes in the generated code.
 - **Comparison:** the same tasks run in Go and Spring Boot with the agents' usual tooling.
-- **Gate:** every Flint release reports these numbers, and a regression in success rate fails it. Milestone 13 publishes the results.
+- **Gate:** every Flint release reports these numbers, and a regression in success rate fails it. When the results are published is not yet planned.
 
 ## Proposed milestone plan
 
@@ -293,7 +293,8 @@ Flint is free and open source under the **Apache License 2.0**, which gives an e
 | 10 — Starters and the full-stack path | The DI conditional and auto-configuration addition. `flint-starter-web`, `-data`, `-security`, `-observability` first, then the rest. `flint add`. Attribute inference through the framework, so ordinary handlers need no `nothrow`/`@nogc`/`scope` annotations, with an attributes-per-handler metric. OpenAPI generated from controllers, typed TypeScript clients, SPA serving, and a complete auth starter: sessions, OAuth login, password hashing, email verification. Starters prefer structs and `Result`, and `flint check` flags nullable class fields in application code. |
 | 11 — Every OS | Native macOS arm64 and Windows x86-64 ports, and native Linux aarch64: reactor backends (kqueue, IOCP), recipes, platform lanes, with Gate 6 green per platform. The dev container path for any host. The macOS and Windows ports started early, in parallel with Milestones 8–9. |
 | 12 — Fast compiles everywhere | [ADR-025](ADR-025-fast-compiles-everywhere.md): the forked DMD as the development compiler on every platform. DMD's AArch64 backend completed in the fork for macOS and Linux arm64. The compile server, pipeline and direct linking ported to macOS and Windows. Per-platform compile-speed gates against Go on each runner. |
-| 13 — Adoption | A docs site, "Flint by Example", and migration guides from Go, Spring Boot and Express. A semver, deprecation and LTS policy. The vibe-coding benchmark and the per-platform build evidence published. Library breadth chosen by what the benchmark tasks need: payments, more cloud SDKs, GraphQL, search, an admin UI. |
+
+No milestone after 12 is planned yet. The project owner will define the next one; agents should not start work beyond Milestone 12.
 
 ## Decisions
 
