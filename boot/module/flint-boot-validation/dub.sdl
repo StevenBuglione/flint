@@ -11,6 +11,7 @@ dependency "flint:context" version="*"
 dependency "flint:jakarta-validation" version="*"
 dependency "flint:java" version="*"
 dependency "flint:engine-aot" version="*"
+dependency "flint:hibernate-validator" version="*"
 
 configuration "library" {
     targetType "library"
@@ -19,5 +20,4 @@ configuration "unittest" {
     targetType "library"
     sourcePaths "source" "tests"
     importPaths "source" "tests"
-    dependency "flint:hibernate-validator" version="*"
 }

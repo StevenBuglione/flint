@@ -25,10 +25,14 @@ import textwrap
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 class F:
-    def __init__(self, name, dtype, default, doc, ro=False, uda=None, setter=None):
+    def __init__(self, name, dtype, default, doc, ro=False, uda=None, setter=None, ctor=False, setter_body=None):
         self.name, self.dtype, self.default, self.doc, self.ro, self.uda = name, dtype, default, doc, ro, uda
         # setter: the D expression the setter stores, when Boot's setter does more than assign (cleanContextPath)
         self.setter = setter
+        # ctor: the default is a run-time value (Boot's UUID password), assigned in the constructor
+        self.ctor = ctor
+        # setter_body: the setter's statements, when Boot's setter does more than store a value
+        self.setter_body = setter_body
 
 
 class Enum:
@@ -86,14 +90,15 @@ def render_class(c, indent=0, static=False):
         body.append(render_class(n, indent + 4, static=True))
     fields = []
     for f in c.fields:
-        init = '' if f.default is None or f.ro else f' = {f.default}'
+        init = '' if f.default is None or f.ro or f.ctor else f' = {f.default}'
         fields.append(f'{pad}    {f.uda + " " if f.uda else ""}private {f.dtype} {field(f.name)}{init};')
     fields += [f'{pad}    {decl}' for decl in c.state]
     if fields:
         body.append('\n'.join(fields))
-    ros = [f for f in c.fields if f.ro]
+    ros = [f for f in c.fields if f.ro or f.ctor]
     if ros:
-        ctor = [f'{pad}    /// Boot\'s defaults.', f'{pad}    this() pure nothrow', f'{pad}    {{']
+        pure = '' if impure(c) else ' pure nothrow'
+        ctor = [f'{pad}    /// Boot\'s defaults.', f'{pad}    this(){pure}', f'{pad}    {{']
         for f in ros:
             ctor.append(f'{pad}        {field(f.name)} = {f.default};')
         ctor.append(f'{pad}    }}')
@@ -105,14 +110,23 @@ def render_class(c, indent=0, static=False):
         body.append('\n'.join([doc_lines(f.doc, indent + 4), f'{pad}    {f.uda + " " if f.uda else ""}{rtype} {getter}(){qual}', f'{pad}    {{',
                                f'{pad}        return {field(f.name)};', f'{pad}    }}']))
         if not f.ro:
+            statements = f.setter_body or [f'this.{field(f.name)} = {f.setter or field(f.name)};']
             body.append('\n'.join([f'{pad}    /// Set `{f.name}`.', f'{pad}    void set{cap(f.name)}({f.dtype} {field(f.name)}) pure nothrow @nogc',
-                                   f'{pad}    {{', f'{pad}        this.{field(f.name)} = {f.setter or field(f.name)};', f'{pad}    }}']))
+                                   f'{pad}    {{'] + [f'{pad}        {line}' if line else '' for line in statements] + [f'{pad}    }}']))
     out.append('\n\n'.join(body))
     out.append(f'{pad}}}')
     return '\n'.join(out)
 
 
+def impure(c):
+    """Whether `c`'s constructor runs run-time code (a `ctor` default, here or in a nested class it creates)."""
+    nested = {n.name: n for n in c.nested}
+    return any(f.ctor or (f.ro and f.dtype in nested and impure(nested[f.dtype])) for f in c.fields)
+
+
 def is_value(dtype):
+    if dtype.endswith('[]'):
+        return False
     return dtype in ('bool', 'int', 'long', 'string', 'Duration') or dtype.startswith('Optional!') or dtype[0].isupper() and '!' not in dtype and dtype not in ('Map',)
 
 
@@ -348,6 +362,7 @@ END = '// ---- end: generated region'
 
 
 WEB_SERVER = 'boot/module/flint-boot-web-server'
+SECURITY = 'boot/module/flint-boot-security'
 messages = Cls('MessageSourceProperties', 'Settings of the auto-configured `MessageSource`.', [
     F('basename', 'string[]', '["messages"]', 'List of basenames (essentially a fully-qualified classpath location), each following the ResourceBundle convention with relaxed support for slash based locations. If it does not contain a package qualifier (such as "org.mypackage"), it will be resolved from the classpath root.'),
     F('commonMessages', 'string[]', None, 'List of locale-independent property file resources containing common messages.'),
@@ -380,6 +395,25 @@ healthendpoint = Cls('HealthEndpointProperties', 'Settings of the health endpoin
     F('order', 'string[]', None, 'List of health statuses in order of severity.'),
     F('httpMapping', 'Map!(string, int)', 'new LinkedHashMap!(string, int)', 'Mapping of health statuses to HTTP status codes. By default, registered health statuses map to sensible defaults (for example, UP maps to 200).', ro=True),
 ])], enums=[show], prefix='management.endpoint.health')
+
+security = Cls('SecurityProperties', 'Settings of Spring Security\'s defaults.', [
+    F('user', 'User', 'new User', 'The default user (`user.*`).', ro=True),
+], nested=[Cls('User', 'The default user name and password.', [
+    F('name', 'string', '"user"', 'Default user name.'),
+    F('password', 'string', 'randomUUID().toString()', 'Password for the default user name.', ctor=True,
+      setter_body=['if (!password.length)', '    return;', 'this.passwordGenerated = false;', 'this.password = password;']),
+    F('roles', 'string[]', None, 'Granted roles for the default user name.'),
+], state=['private bool passwordGenerated = true;', '''/// Whether the password was generated (no `user.password` was set).
+bool isPasswordGenerated() const pure nothrow @nogc
+{
+    return passwordGenerated;
+}'''])], prefix='flint.security')
+securityfilter = Cls('SecurityFilterProperties', 'Settings of the Spring Security filter.', [
+    F('order', 'int', '-100', 'Security filter chain order for Servlet-based web applications.'),
+    F('dispatcherTypes', 'DispatcherType[]', '[EnumMembers!DispatcherType]', 'Security filter chain dispatcher types for Servlet-based web applications.', ctor=True),
+], state=['''/// The order of Boot's default `SecurityFilterChain` (`Ordered.LOWEST_PRECEDENCE - 5`).
+enum int BASIC_AUTH_ORDER = int.max - 5;''', '''/// The default order of the security filter (`OrderedFilter.REQUEST_WRAPPER_FILTER_MAX_ORDER - 100`).
+enum int DEFAULT_FILTER_ORDER = -100;'''], prefix='flint.security.filter')
 
 UNITS = [
     Unit(f'{WEB_SERVER}/source/flint/boot/web/server/package.d',
@@ -439,6 +473,16 @@ UNITS = [
          header('module/spring-boot-transaction/src/main/java/org/springframework/boot/transaction/autoconfigure/TransactionProperties.java'),
          'flint.boot.transaction.autoconfigure', '`org.springframework.boot.transaction.autoconfigure`: the transaction properties.',
          [CP, DU, DUR, OPT], [tx], 'boot/module/flint-boot-transaction'),
+    Unit(f'{SECURITY}/source/flint/boot/security/autoconfigure/package.d',
+         header('module/spring-boot-security/src/main/java/org/springframework/boot/security/autoconfigure/SecurityProperties.java\n// with SecurityAutoConfiguration.java and UserDetailsServiceAutoConfiguration.java from the same directory',
+                '`List<String> roles` is a string array'),
+         'flint.boot.security.autoconfigure', '`org.springframework.boot.security.autoconfigure`: Spring Security\'s properties and auto-configuration.',
+         [CP, 'import std.uuid : randomUUID;'], [security], SECURITY),
+    Unit(f'{SECURITY}/source/flint/boot/security/autoconfigure/web/servlet.d',
+         header('module/spring-boot-security/src/main/java/org/springframework/boot/security/autoconfigure/web/servlet/SecurityFilterProperties.java\n// with SecurityFilterAutoConfiguration.java and ServletWebSecurityAutoConfiguration.java from the same directory',
+                '`Set<DispatcherType>` is an array of Jakarta\'s `DispatcherType`, whose members Boot\'s enum mirrors'),
+         'flint.boot.security.autoconfigure.web.servlet', '`org.springframework.boot.security.autoconfigure.web.servlet`: the security filter\'s properties and the servlet web security auto-configurations.',
+         [CP, 'import flint.jakarta.servlet : DispatcherType;', 'import std.traits : EnumMembers;'], [securityfilter], SECURITY),
 ]
 
 # Properties Boot core reads directly (Boot's additional-spring-configuration-metadata.json for core/spring-boot).
@@ -479,7 +523,11 @@ ENUM_SOURCES = {
     'PropertyAccessor': ('framework/jackson-annotations/source/flint/jackson/annotation/package.d', 'PropertyAccessor'),
     'JsonAutoDetect.Visibility': ('framework/jackson-annotations/source/flint/jackson/annotation/package.d', 'Visibility'),
     'JsonInclude.Include': ('framework/jackson-annotations/source/flint/jackson/annotation/package.d', 'Include'),
+    'DispatcherType': ('framework/jakarta-servlet/source/flint/jakarta/servlet/package.d', 'DispatcherType'),
 }
+
+# The metadata names these enums by their module (Boot's `Set<DispatcherType>` is Jakarta's enum here).
+JAVA_ENUMS = {'DispatcherType': 'flint.jakarta.servlet.DispatcherType'}
 
 
 def kebab(name):
@@ -492,7 +540,7 @@ def enum_members(name, local):
     path, enum = ENUM_SOURCES[name]
     source = open(os.path.join(ROOT, path)).read()
     match = re.search(r'\benum ' + re.escape(enum) + r'\b[^{]*\{(.*?)\n\s*\}', source, re.S)
-    return re.findall(r'^\s*([A-Z][A-Z0-9_]*)\s*(?:=[^,\n]*)?,?\s*$', match.group(1), re.M)
+    return re.findall(r'^\s*([A-Z][A-Z0-9_]*)\s*(?:=[^,\n]*)?,?\s*(?://.*)?$', match.group(1), re.M)
 
 
 def enums_of(cls, local):
@@ -524,6 +572,9 @@ def value_schema(dtype, local, classes):
         value = {'type': 'boolean'} if match.group(2) == 'bool' else enum_schema(enum_members(match.group(2), local))
         return {'type': 'object', 'propertyNames': {'enum': [kebab_enum(k) for k in keys] + keys},
                 'additionalProperties': value}, f'java.util.Map<{match.group(1)},{match.group(2)}>'
+    if dtype.endswith('[]') and (dtype[:-2] in local or dtype[:-2] in ENUM_SOURCES):
+        return ({'oneOf': [{'type': 'array', 'items': enum_schema(enum_members(dtype[:-2], local))}, {'type': 'string'}]},
+                f'java.util.Set<{JAVA_ENUMS.get(dtype[:-2], dtype[:-2])}>')
     inner = dtype[len('Optional!('):-1] if dtype.startswith('Optional!(') else dtype[len('Optional!'):] if dtype.startswith('Optional!') else dtype
     if inner in local or inner in ENUM_SOURCES:
         return enum_schema(enum_members(inner, local)), inner
@@ -545,12 +596,16 @@ def default_value(f):
     if f.default is None or f.ro:
         return None
     text = f.default
+    if f.ctor and not text.startswith('[EnumMembers!'):
+        return None
     if text in ('true', 'false'):
         return text == 'true'
     if re.fullmatch(r'-?\d+', text):
         return int(text)
     if text.startswith('"'):
         return json.loads(text)
+    if text.startswith('[EnumMembers!'):
+        return sorted(kebab_enum(m) for m in enum_members(text[len('[EnumMembers!'):-1], {}))
     if text.startswith('['):
         return json.loads(text)
     if '.' in text:

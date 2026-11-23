@@ -55,6 +55,10 @@
       "repo": "boot",
       "version": "monorepo"
     },
+    "flint:boot-security": {
+      "repo": "boot",
+      "version": "monorepo"
+    },
     "flint:boot-sql": {
       "repo": "boot",
       "version": "monorepo"
@@ -72,6 +76,10 @@
       "version": "monorepo"
     },
     "flint:boot-starter-json": {
+      "repo": "boot",
+      "version": "monorepo"
+    },
+    "flint:boot-starter-security": {
       "repo": "boot",
       "version": "monorepo"
     },

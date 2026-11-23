@@ -1,0 +1,28 @@
+name "boot-security"
+description "Flint Boot security (spring-boot v4.2.0 module/spring-boot-security): Spring Security's defaults, the default user and the security filter's registration"
+license "Apache-2.0"
+targetType "library"
+sourcePaths "source"
+importPaths "source"
+dflags "-preview=dip1000"
+dependency "flint:boot-core" version="*"
+dependency "flint:boot-autoconfigure" version="*"
+dependency "flint:boot-web-server" version="*"
+dependency "flint:context" version="*"
+dependency "flint:core" version="*"
+dependency "flint:jakarta-servlet" version="*"
+dependency "flint:security-config" version="*"
+dependency "flint:security-core" version="*"
+dependency "flint:security-crypto" version="*"
+dependency "flint:security-web" version="*"
+dependency "flint:slf4j-api" version="*"
+dependency "flint:engine-aot" version="*"
+
+configuration "library" {
+    targetType "library"
+}
+configuration "unittest" {
+    targetType "library"
+    sourcePaths "source" "tests"
+    importPaths "source" "tests"
+}

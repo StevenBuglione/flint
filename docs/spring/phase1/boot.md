@@ -157,6 +157,21 @@ The actuator is three Boot packages and a starter: boot-actuate (`flint.boot.act
 
 The legacy `boot/actuator` (DUB `boot-actuator`) keeps its name until the cutover renames it `legacy-boot-actuator`; the new package is `boot-actuate` until then (asked of m7-flint-cli for the cutover's rename map).
 
+## Security
+
+boot-security (`flint.boot.security`, spring-boot-security) and `flint-boot-starter-security` sit on framework-core's Spring Security (`flint:security-*`):
+
+- `SecurityAutoConfiguration` binds `flint.security.*` (`SecurityProperties`: the default user, its generated password and roles).
+- `UserDetailsServiceAutoConfiguration` gives an `InMemoryUserDetailsManager` with that user. It applies unless the application defines an `AuthenticationManager`, `AuthenticationProvider` or `UserDetailsService`, and it logs a generated password as Boot does.
+- `ServletWebSecurityAutoConfiguration` imports Boot's default `SecurityFilterChain` (every request authenticated, HTTP Basic), unless the application defines a chain. It also imports `@EnableWebSecurity`, unless a `springSecurityFilterChain` bean exists. Boot's nested configurations are module-level classes that it `@Import`s, since Flint AOT reads top-level classes.
+- `SecurityFilterAutoConfiguration` registers `springSecurityFilterChain` through `DelegatingFilterProxyRegistrationBean` (boot-web-server), at `flint.security.filter.order` (-100) and for every dispatcher type by default. The proxy looks the bean up on the first request. `ServletContextInitializerBeans` does not adapt the target bean a second time.
+
+Deviations:
+- The default chain has no form login yet: Flint's Spring Security has no `formLogin`.
+- `DefaultAuthenticationEventPublisher`, `SecurityDataConfiguration` and `PathPatternRequestMatcher.Builder` follow with their types.
+- The OAuth2, SAML and `AuthenticationManagerResolver` back-offs always match, because Flint has none of those types.
+- The filter's proxy is a private class until flint.web has spring-web's `DelegatingFilterProxy`.
+
 ## Configuration properties: one spec, three outputs
 
 `boot/tools/configuration_properties.py` holds the specification of every Phase 1 `@ConfigurationProperties` class: Boot's field names, types, defaults and Javadoc. It renders three things from it:
@@ -195,10 +210,10 @@ spring-petclinic-rest (item 10, data-access) needs, from Boot, beyond what gs-re
 | `@DependsOnDatabaseInitialization` (7 uses) | `flint.boot.sql.init.dependency` | annotation done; the dependency configurer joins with SQL init |
 | `spring.messages.basename=messages/messages` | `MessageSourceAutoConfiguration` (`flint.messages.*`) over framework-core's `ResourceBundleMessageSource` | done; Boot's `ResourceBundleCondition` is not evaluated (startup conditions read properties and beans, not resources), which only matters without a bundle |
 | `@ConditionalOnProperty("petclinic.security.enable")` | Flint AOT's startup conditions | done |
-| Bean Validation of request bodies | `ValidationAutoConfiguration` (boot-validation) | `defaultValidator` done; Spring MVC's use of it waits on web-mvc, method validation on `MethodValidationPostProcessor` |
+| Bean Validation of request bodies | `ValidationAutoConfiguration` (boot-validation) | `defaultValidator` done, over the context's Flint AOT descriptors (Hibernate Validator's reflection); `methodValidationPostProcessor` registered over web-http's `MethodValidationPostProcessor` (`9b80a9e`) |
 | `extends SpringBootServletInitializer` | WAR deployment | not ported (no servlet container deployment in Flint); the port drops the superclass, a noted deviation |
 | The actuator's links, health and health groups | boot-actuate (spring-boot-actuator and its auto-configuration), boot-health (spring-boot-health), boot-webmvc's endpoint mapping, `flint-boot-starter-actuator` | done: `/actuator` links, `/actuator/health` with the `liveness` and `readiness` probe groups, Boot's media types, framing and default exposure (health); see "The actuator" below |
-| Spring Security headers, `@PreAuthorize` | `SecurityAutoConfiguration` over framework-core's security port | waits on framework-core's `security/` (asked) |
+| Spring Security headers, `@PreAuthorize` | boot-security over framework-core's Spring Security (`da3da94`) and Flint AOT's `@Import` (`15a340b`) | done; see "Security" below |
 
 ## Budgets
 

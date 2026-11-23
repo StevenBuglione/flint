@@ -1,0 +1,4 @@
+flint.boot.security.autoconfigure.SecurityAutoConfiguration
+flint.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration
+flint.boot.security.autoconfigure.web.servlet.ServletWebSecurityAutoConfiguration
+flint.boot.security.autoconfigure.web.servlet.SecurityFilterAutoConfiguration

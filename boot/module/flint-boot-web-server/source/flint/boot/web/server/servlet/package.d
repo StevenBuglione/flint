@@ -1,20 +1,24 @@
 // Ported from spring-boot v4.2.0: module/spring-boot-web-server/src/main/java/org/springframework/boot/web/server/servlet/ServletWebServerFactory.java
 // with ConfigurableServletWebServerFactory.java from the same directory, and
 // core/spring-boot/src/main/java/org/springframework/boot/web/servlet/ServletContextInitializer.java,
-// RegistrationBean.java, ServletRegistrationBean.java, AbstractFilterRegistrationBean.java and FilterRegistrationBean.java
+// RegistrationBean.java, ServletRegistrationBean.java, AbstractFilterRegistrationBean.java, FilterRegistrationBean.java and
+// DelegatingFilterProxyRegistrationBean.java
 // Copyright 2012-present the original author or authors.
 // Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
 // Modified by the Flint authors: `ServletContextInitializer` and `ServletRegistrationBean` live here rather than in
 // core, which keeps no servlet types in Flint; `ServletRegistrationBean` folds in its
 // `DynamicRegistrationBean` base into `RegistrationBean`; the configurable factory has the settings Flint's engine
-// supports.
+// supports; `DelegatingFilterProxyRegistrationBean`'s filter is a private lazy proxy, which is what Boot's subclass of
+// spring-web's `DelegatingFilterProxy` (with `initFilterBean` skipped) does, until flint.web has the proxy.
 
 /// `org.springframework.boot.web.server.servlet`: servlet web server support.
 module flint.boot.web.server.servlet;
 
 import flint.boot.web.server : Shutdown, WebServer;
+import flint.context : ApplicationContext, ApplicationContextAware;
 import flint.core : Ordered;
-import flint.jakarta.servlet : DispatcherType, Filter, Servlet, ServletContext;
+import flint.jakarta.servlet : DispatcherType, Filter, FilterChain, Servlet, ServletContext,
+    ServletRequest, ServletResponse;
 
 @safe:
 
@@ -174,6 +178,8 @@ abstract class AbstractFilterRegistrationBean : RegistrationBean
     /// The filter's registered name: the set name, else the filter class's simple name.
     string getFilterName()
     {
+        if (name.length)
+            return name;
         return deduceName(name, cast(Object) getFilter());
     }
 
@@ -285,6 +291,77 @@ class FilterRegistrationBean : AbstractFilterRegistrationBean
     private void addServletNames(string name)
     {
         setServletNames(getServletNames() ~ name);
+    }
+}
+
+/// Registers a filter that delegates to the bean named `targetBeanName`, looked up on the first request, so the bean is
+/// created with the rest of the context rather than when the server starts.
+class DelegatingFilterProxyRegistrationBean : AbstractFilterRegistrationBean, ApplicationContextAware
+{
+    private ApplicationContext applicationContext;
+    private string targetBeanName;
+
+    /// For the filter bean `targetBeanName`; `servletRegistrationBeans` restrict it to those servlets.
+    this(string targetBeanName, ServletRegistrationBean[] servletRegistrationBeans...)
+    {
+        import flint.java.lang : IllegalArgumentException;
+
+        if (targetBeanName.length == 0)
+            throw new IllegalArgumentException("'targetBeanName' must not be empty");
+        this.targetBeanName = targetBeanName;
+        setName(targetBeanName);
+        string[] names;
+        foreach (registration; servletRegistrationBeans)
+            names ~= registration.getServletName();
+        if (names.length)
+            setServletNames(names);
+    }
+
+    /// Set the context the filter bean is looked up in.
+    void setApplicationContext(ApplicationContext applicationContext)
+    {
+        this.applicationContext = applicationContext;
+    }
+
+    /// The name of the filter bean.
+    package(flint.boot.web.server) string getTargetBeanName() const pure nothrow @nogc
+    {
+        return targetBeanName;
+    }
+
+    /// A proxy to the filter bean.
+    override Filter getFilter()
+    {
+        import flint.java.lang : IllegalStateException;
+
+        if (applicationContext is null)
+            throw new IllegalStateException("ApplicationContext has not been injected");
+        return new DelegatingFilterProxy(targetBeanName, applicationContext);
+    }
+}
+
+// spring-web's DelegatingFilterProxy as Boot's registration bean uses it: the delegate is looked up on the first
+// request (initFilterBean is skipped), and its lifecycle stays with the context (targetFilterLifecycle is false).
+private final class DelegatingFilterProxy : Filter
+{
+    private string targetBeanName;
+    private ApplicationContext context;
+    private Filter delegate_;
+
+    this(string targetBeanName, ApplicationContext context) pure nothrow @nogc
+    {
+        this.targetBeanName = targetBeanName;
+        this.context = context;
+    }
+
+    // init skips initFilterBean; destroy leaves the delegate to the context.
+    mixin Filter.Defaults;
+
+    void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+    {
+        if (delegate_ is null)
+            delegate_ = cast(Filter) context.getBean(targetBeanName);
+        delegate_.doFilter(request, response, chain);
     }
 }
 

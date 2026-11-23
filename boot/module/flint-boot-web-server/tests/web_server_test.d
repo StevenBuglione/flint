@@ -139,6 +139,74 @@ private final class NamedFilter : imported!"flint.web.filter".OncePerRequestFilt
     assert(registration.getDispatcherTypes() == [DispatcherType.REQUEST]);
 }
 
+// Counts the requests it filters.
+private final class CountingFilter : imported!"flint.jakarta.servlet".Filter
+{
+    int calls;
+
+    mixin imported!"flint.jakarta.servlet".Filter.Defaults;
+
+    void doFilter(imported!"flint.jakarta.servlet".ServletRequest,
+            imported!"flint.jakarta.servlet".ServletResponse, imported!"flint.jakarta.servlet".FilterChain)
+    {
+        calls++;
+    }
+}
+
+// Ported from spring-boot v4.2.0: core/spring-boot/src/test/java/org/springframework/boot/web/servlet/DelegatingFilterProxyRegistrationBeanTests.java
+// (targetBeanNameMustNotBeEmpty, nameDefaultsToTargetBeanName, getFilterUsesDelegatingFilterProxy,
+// initShouldNotCauseEarlyInitialization). Copyright 2012-present the original author or authors. Apache License 2.0.
+// Modified by the Flint authors: the proxy is checked by delegation, since it is private.
+@("DelegatingFilterProxyRegistrationBean: target bean name must not be empty") unittest
+{
+    import flint.boot.web.server.servlet : DelegatingFilterProxyRegistrationBean;
+    import std.exception : assertThrown;
+
+    assertThrown!IllegalArgumentException(new DelegatingFilterProxyRegistrationBean(""));
+}
+
+@("DelegatingFilterProxyRegistrationBean: the name defaults to the target bean name") unittest
+{
+    import flint.boot.web.server.servlet : DelegatingFilterProxyRegistrationBean;
+
+    assert(new DelegatingFilterProxyRegistrationBean("mockFilter").getFilterName() == "mockFilter");
+}
+
+@("DelegatingFilterProxyRegistrationBean: the filter delegates to the bean, looked up on the first request") unittest
+{
+    import flint.boot.web.server.servlet : DelegatingFilterProxyRegistrationBean;
+
+    import flint.context.support : GenericApplicationContext;
+
+    auto context = new GenericApplicationContext;
+    auto registration = new DelegatingFilterProxyRegistrationBean("mockFilter");
+    registration.setApplicationContext(context);
+    auto filter = registration.getFilter();
+    filter.init(null);
+    auto target = new CountingFilter;
+    context.getBeanFactory().registerSingleton("mockFilter", target);
+    context.refresh();
+    scope (exit)
+        context.close();
+    filter.doFilter(null, null, null);
+    assert(target.calls == 1);
+}
+
+@("ServletContextInitializerBeans: a DelegatingFilterProxyRegistrationBean's target is not adapted again") unittest
+{
+    import flint.boot.web.server.servlet : AbstractFilterRegistrationBean, DelegatingFilterProxyRegistrationBean;
+    import flint.boot.web.server.servlet.context : ServletContextInitializerBeans;
+
+    auto context = new ServletWebServerApplicationContext;
+    context.getBeanFactory().registerSingleton("springSecurityFilterChain", new CountingFilter);
+    auto registration = new DelegatingFilterProxyRegistrationBean("springSecurityFilterChain");
+    registration.setApplicationContext(context);
+    context.getBeanFactory().registerSingleton("securityFilterChainRegistration", registration);
+    auto initializers = new ServletContextInitializerBeans(context).get();
+    assert(initializers.length == 1 && initializers[0] is registration);
+    assert((cast(AbstractFilterRegistrationBean) initializers[0]).getFilterName() == "springSecurityFilterChain");
+}
+
 version (FlintNativeLlhttp)
 {
     import flint.jakarta.servlet.http : HttpServlet;

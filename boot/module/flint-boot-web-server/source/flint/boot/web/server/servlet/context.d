@@ -147,19 +147,23 @@ final class ServletContextInitializerBeans
     this(ServletWebServerApplicationContext context)
     {
         import flint.boot.web.server.servlet : AbstractFilterRegistrationBean,
-            FilterRegistrationBean, ServletRegistrationBean;
+            DelegatingFilterProxyRegistrationBean, FilterRegistrationBean, ServletRegistrationBean;
         import flint.engine.aot.name : typeNameOf;
         import flint.jakarta.servlet : Filter, Servlet;
         import std.algorithm.searching : canFind;
 
         auto factory = context.getBeanFactory();
         Object[] seen;
+        // Beans a DelegatingFilterProxyRegistrationBean registers, by name, so they are not created here.
+        string[] seenNames;
         foreach (name; factory.getBeanNamesForTypeErased(typeNameOf!ServletContextInitializer))
         {
             auto initializer = cast(ServletContextInitializer) factory.getBean(name);
             initializers ~= initializer;
             if (auto servlet = cast(ServletRegistrationBean) initializer)
                 seen ~= cast(Object) servlet.getServlet();
+            else if (auto proxy = cast(DelegatingFilterProxyRegistrationBean) initializer)
+                seenNames ~= proxy.getTargetBeanName();
             else if (auto filter = cast(AbstractFilterRegistrationBean) initializer)
                 seen ~= cast(Object) filter.getFilter();
         }
@@ -182,6 +186,8 @@ final class ServletContextInitializerBeans
         }
         foreach (name; factory.getBeanNamesForTypeErased(typeNameOf!Filter))
         {
+            if (seenNames.canFind(name))
+                continue;
             auto bean = factory.getBean(name);
             if (seen.canFind!((a, b) => a is b)(bean))
                 continue;

@@ -1074,6 +1074,83 @@
             }
           }
         },
+        "security": {
+          "type": "object",
+          "properties": {
+            "user": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Default user name.",
+                  "default": "user"
+                },
+                "password": {
+                  "type": "string",
+                  "description": "Password for the default user name."
+                },
+                "roles": {
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ],
+                  "description": "Granted roles for the default user name."
+                }
+              }
+            },
+            "filter": {
+              "type": "object",
+              "properties": {
+                "order": {
+                  "type": "integer",
+                  "description": "Security filter chain order for Servlet-based web applications.",
+                  "default": -100
+                },
+                "dispatcher-types": {
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "forward",
+                          "include",
+                          "request",
+                          "async",
+                          "error",
+                          "FORWARD",
+                          "INCLUDE",
+                          "REQUEST",
+                          "ASYNC",
+                          "ERROR"
+                        ]
+                      }
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ],
+                  "description": "Security filter chain dispatcher types for Servlet-based web applications.",
+                  "default": [
+                    "async",
+                    "error",
+                    "forward",
+                    "include",
+                    "request"
+                  ]
+                }
+              }
+            }
+          }
+        },
         "application": {
           "type": "object",
           "properties": {

@@ -159,6 +159,26 @@
       ],
       "repo": "boot"
     },
+    "boot-security": {
+      "directory": "boot/module/flint-boot-security",
+      "module": "flint.boot.security",
+      "layer": "module",
+      "dependencies": [
+        "boot-core",
+        "boot-autoconfigure",
+        "boot-web-server",
+        "context",
+        "core",
+        "jakarta-servlet",
+        "security-config",
+        "security-core",
+        "security-crypto",
+        "security-web",
+        "slf4j-api",
+        "engine-aot"
+      ],
+      "repo": "boot"
+    },
     "boot-validation": {
       "directory": "boot/module/flint-boot-validation",
       "module": "flint.boot.validation",
@@ -169,7 +189,8 @@
         "context",
         "jakarta-validation",
         "java",
-        "engine-aot"
+        "engine-aot",
+        "hibernate-validator"
       ],
       "repo": "boot"
     },
@@ -360,6 +381,17 @@
       ],
       "section": "actuator",
       "summary": "Production-ready features: the actuator's endpoints and health (spring-boot-starter-actuator)",
+      "repo": "boot"
+    },
+    "boot-starter-security": {
+      "directory": "boot/starter/flint-boot-starter-security",
+      "layer": "starter",
+      "dependencies": [
+        "boot-starter",
+        "boot-security"
+      ],
+      "section": "security",
+      "summary": "Spring Security with Boot's defaults (spring-boot-starter-security)",
       "repo": "boot"
     },
     "boot-starter-jdbc": {

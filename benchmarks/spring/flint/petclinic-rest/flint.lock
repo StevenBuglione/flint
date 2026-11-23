@@ -131,7 +131,7 @@ name = "flint:boot-validation"
 kind = "core"
 source = "workspace"
 scope = "build"
-dependencies = ["flint:boot-autoconfigure", "flint:boot-core", "flint:context", "flint:engine-aot", "flint:jakarta-validation", "flint:java"]
+dependencies = ["flint:boot-autoconfigure", "flint:boot-core", "flint:context", "flint:engine-aot", "flint:hibernate-validator", "flint:jakarta-validation", "flint:java"]
 
 [[package]]
 name = "flint:boot-web-server"
