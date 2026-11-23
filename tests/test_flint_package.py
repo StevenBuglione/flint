@@ -154,10 +154,28 @@ class PackageTests(unittest.TestCase):
         self.assertEqual((status, codes(document)), (1, ['FLINT-E0710']))
         status, document = self.run_flint('package', '--target', 'windows-x86_64')
         self.assertEqual((status, codes(document)), (2, ['FLINT-E0817']))
+        status, document = self.run_flint('package', '--profile', 'dev')
+        self.assertEqual((status, codes(document)), (4, ['FLINT-E0003']))
         with tempfile.TemporaryDirectory() as directory:
             flint_json('new', 'lib', '--type', 'library', cwd=directory, env=self.env)
             status, document = flint_json('package', cwd=Path(directory) / 'lib', env=self.env)
             self.assertEqual((status, codes(document)), (1, ['FLINT-E0709']))
+
+    @unittest.skipUnless(MUSL, 'musl toolchain not installed (flint toolchain install --musl)')
+    def test_5b_a_size_package_is_static_and_sits_beside_the_release_one(self):
+        """`--profile size` packages the size profile (Oz) for a target: release-static-ab compares stripped O3
+        and Oz sizes of fully static binaries."""
+        status, document = self.run_flint('package', '--target', 'linux-x86_64-musl', '--profile', 'size')
+        self.assertEqual(status, 0, document['diagnostics'])
+        self.assertEqual((document['profile'], document['target']), ('size', 'linux-x86_64-musl'))
+        self.assertTrue(document['fully_static'])
+        files = self.outputs(document)
+        self.assertEqual(files['executable'], self.project / '.flint/build/size/demo')
+        self.assertTrue(files['archive'].name.endswith('-linux-x86_64-musl-size.tar.gz'), files['archive'])
+        headers, needed = elf_facts(files['executable'])
+        self.assertNotIn('INTERP', headers)
+        self.assertEqual(needed, [])
+        self.assertIn('Hello, pkg! crc=3421780262', self.run_staged(files['archive'], 'demo-0.1.0').stdout)
 
     def test_6_audit_lists_licences_and_obligations(self):
         status, document = self.run_flint('deps', 'audit')

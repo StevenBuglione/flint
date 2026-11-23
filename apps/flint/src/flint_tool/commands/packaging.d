@@ -40,6 +40,8 @@ struct PackagePayload
     ProjectInfo project;
     /// Target.
     string target;
+    /// Build profile: release or size.
+    string profile;
     /// The C library.
     string libc;
     /// No interpreter and no shared libraries.
@@ -73,13 +75,13 @@ struct PackageRequest
     bool verify;
     /// Require a current lock.
     bool locked;
+    /// Build profile: release (empty) or size.
+    string profile;
 }
 
 /// `flint package`.
 int commandPackage(ref Session session, PackageRequest request)
 {
-    import std.file : mkdirRecurse;
-    import std.path : buildPath;
     import flint_tool.commands.project : TargetKind, info, locate;
     import flint_tool.engine.target : hostTarget, muslTarget, selectTarget;
 
@@ -92,19 +94,37 @@ int commandPackage(ref Session session, PackageRequest request)
     if (!packageable(project.kind == TargetKind.workspace, project.manifest.type, report))
         return finish(session, report, payload);
     payload.target = request.target.length ? request.target : request.container ? muslTarget : hostTarget();
+    if (!packageProfile(request.profile, payload.profile, report))
+        return finish(session, report, payload);
     BuildTarget target;
     if (!selectTarget(session.home, payload.target, target, report) || !containable(request, target, report))
         return finish(session, report, payload);
     payload.libc = target.libc;
     BuildOutcome outcome;
-    if (!releaseBuild(session, project, request, target, outcome, report))
+    if (!releaseBuild(session, project, request, target, payload.profile, outcome, report))
         return finish(session, report, payload);
     payload.build_receipt = displayed(outcome.receipt);
     if (!verifyLinkage(outcome.artifact, target, outcome.natives.bundled, payload, report))
         return finish(session, report, payload);
+    writeOutputs(session, project, request, target, outcome, payload);
+    foreach (ref item; payload.outputs[1 .. $])
+        session.progress("Packaged", item.path);
+    return finish(session, report, payload);
+}
+
+/// The archive, the SBOMs and image when asked for, and the package receipt, recorded in `payload.outputs`.
+private void writeOutputs(ref Session session, const ref Target project, const ref PackageRequest request,
+        const ref BuildTarget target, ref BuildOutcome outcome, ref PackagePayload payload)
+{
+    import std.file : mkdirRecurse;
+    import std.path : buildPath;
+
     const directory = buildPath(project.root, ".flint", "package");
     mkdirRecurse(directory);
-    const stem = buildPath(directory, project.manifest.name ~ "-" ~ project.manifest.version_ ~ "-" ~ target.name);
+    // A size package sits beside the release one rather than replacing it.
+    const stem = buildPath(directory,
+            project.manifest.name ~ "-" ~ project.manifest.version_ ~ "-" ~ target.name ~ (
+                payload.profile == "release" ? "" : "-" ~ payload.profile));
     const created = sourceDateEpoch();
     auto files = stagedFiles(project.root, outcome.artifact, project.manifest.artifactName(), outcome.natives.bundled);
     writeArchive(stem, project.manifest.name ~ "-" ~ project.manifest.version_, files, created, payload);
@@ -115,9 +135,16 @@ int commandPackage(ref Session session, PackageRequest request)
     payload.outputs = [output("executable", outcome.artifact)] ~ payload.outputs;
     writeReceiptFile(stem ~ ".package.json", payload);
     payload.outputs ~= output("receipt", stem ~ ".package.json");
-    foreach (ref item; payload.outputs[1 .. $])
-        session.progress("Packaged", item.path);
-    return finish(session, report, payload);
+}
+
+/// The profile `flint package` builds: release unless `requested` names size.
+private bool packageProfile(string requested, out string profile, ref Report report)
+{
+    profile = requested.length ? requested : "release";
+    if (profile != "release" && profile != "size")
+        report.error("FLINT-E0003", "flint package builds the release or size profile, not `" ~ profile ~ "`",
+                "flint package --profile size");
+    return report.ok;
 }
 
 private bool packageable(bool workspace, string type, ref Report report)
@@ -142,9 +169,9 @@ private bool containable(const ref PackageRequest request, const ref BuildTarget
     return false;
 }
 
-/// The release profile for `target`, rebuilt from scratch, stripped.
+/// The release or size profile for `target`, rebuilt from scratch, stripped.
 private bool releaseBuild(ref Session session, const ref Target project, const ref PackageRequest request,
-        const ref BuildTarget target, out BuildOutcome outcome, ref Report report)
+        const ref BuildTarget target, string profile, out BuildOutcome outcome, ref Report report)
 {
     import std.path : buildPath;
     import flint_tool.engine.builder : BuildRequest, buildProject;
@@ -152,7 +179,7 @@ private bool releaseBuild(ref Session session, const ref Target project, const r
     import flint_tool.support.files : writeIfChanged;
 
     BuildRequest build;
-    build.profile = "release";
+    build.profile = profile;
     build.verify = request.verify;
     build.locked = request.locked;
     // DUB's up-to-date check does not see a change of target, so packaging always rebuilds.

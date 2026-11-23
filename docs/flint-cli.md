@@ -39,7 +39,7 @@ flint check
 | `flint lock [--check]` | Write `flint.lock`, or verify it. |
 | `flint deps tree\|why <package>\|update [packages...]\|vendor` | Print the graph, explain why a package is in it, raise repository-path requirements to their latest release, or copy repository modules and DUB packages into `vendor/` for offline builds. |
 | `flint deps audit [--target T]` | Verify the lock and every module, DUB and native hash; list each component's licence and the LGPL/AGPL obligations; show `[unchecked]` waivers. |
-| `flint package [--target T] [--container] [--sbom]` | Build the release executable for a target, verify it is static, and write a reproducible `tar.gz` with `bin/`, `config/` and `resources/`; `--container` adds a `FROM scratch` OCI image, `--sbom` SPDX 2.3 and CycloneDX 1.6 SBOMs. |
+| `flint package [--target T] [--profile release\|size] [--container] [--sbom]` | Build the release executable for a target, verify it is static, and write a reproducible `tar.gz` with `bin/`, `config/` and `resources/`; `--profile size` packages the size profile instead, as `<name>-<version>-<target>-size.tar.gz` beside the release package; `--container` adds a `FROM scratch` OCI image, `--sbom` SPDX 2.3 and CycloneDX 1.6 SBOMs. |
 | `flint toolchain install [--toolchain-dir D] [--no-pgo] [--dmd-linker L] [--sanitizers] [--musl] [--plan]` | Install the pinned DMD/DUB fork, LDC, clang (embedded C, clang-tidy) and the native package engine, and write the toolchain receipt. On Linux x86-64, DMD links with the pinned mold unless `--dmd-linker` names another linker (`system` keeps the C compiler's default). `--sanitizers` adds the sanitizer-aware LDC runtime, `--musl` the static musl target. |
 | `flint toolchain verify\|info [--toolchain-dir D]` | Check the toolchain against `policy/toolchains.json` and `toolchain/*.patch`, or describe it. |
 | `flint doctor [--project D]` | Explain environment problems that would make a build fail or non-canonical. |
@@ -157,7 +157,7 @@ Command fields:
 | `flint.fmt/1` | `files`, `changed`, `check` |
 | `flint.lock/1` | `path`, `state` (`written`, `unchanged`, `current`, `missing`, `stale`), `packages` |
 | `flint.deps/1` | `action`, `project`, `nodes` (tree), `paths` (why), `changes` (update, vendor), `target`, `components`, `verified`, `obligations` (audit) |
-| `flint.package/1` | `project`, `target`, `libc`, `fully_static`, `needed`, `build_receipt`, `image`, `image_digest`, `components`, `outputs` (`kind`, `path`, `sha256`, `bytes`) |
+| `flint.package/1` | `project`, `target`, `profile`, `libc`, `fully_static`, `needed`, `build_receipt`, `image`, `image_digest`, `components`, `outputs` (`kind`, `path`, `sha256`, `bytes`) |
 | `flint.toolchain/1` | `action`, `directory`, `components`, `fork`, `commands`, `plan` |
 | `flint.doctor/1` | `checks` (`name`, `status`, `detail`) |
 | `flint.daemon/1` | `action`, `directory`, `servers` (`socket`, `pid`, `alive`, `flags`) |

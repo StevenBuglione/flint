@@ -183,7 +183,7 @@ private int packageCommand(ref Session session, const ref PackageArgs args)
     import flint_tool.commands.packaging : PackageRequest, commandPackage;
 
     return commandPackage(session, PackageRequest(args.project, args.target, args.container,
-            args.sbom, args.verify, args.locked));
+            args.sbom, args.verify, args.locked, args.profile));
 }
 
 private int watchCommand(ref Session session, const ref WatchArgs args, string[] passthrough)

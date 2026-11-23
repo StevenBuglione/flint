@@ -261,6 +261,9 @@ struct PackageArgs
     /// Target.
     @Option("target", 't', "linux-x86_64-glibc or linux-x86_64-musl (default: the host; musl with --container)")
     string target;
+    /// Profile.
+    @Option("profile", 'p', "release (the default) or size")
+    string profile;
     /// OCI image.
     @Option("container", 0, "Also write a FROM scratch OCI image around the static musl executable")
     bool container;
