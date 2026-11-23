@@ -213,7 +213,7 @@ same fields for generated descriptors.
 | context.event.ApplicationContextEventTests | 37 | 15 | 22: wildcard generics, task executors, AOP proxies, listener beans looked up by name per event, threads |
 | context.event.PayloadApplicationEventTests | 14 | 12 | 2: `ResolvableType` introspection |
 | context.support.DefaultLifecycleProcessorTests | 24 | 20 | 4: `FactoryBean`, bootstrap executor, Spring 7 `restart`/`pause` |
-| context.event.AnnotationDrivenEventListenerTests | 35 | 12 | 23: `@EventListener` replies, AOP and scoped proxies, `@Async`, SpEL conditions, XML |
+| context.event.AnnotationDrivenEventListenerTests | 35 | 14 | 21: `@EventListener` replies, AOP and scoped proxies, `@Async`, XML |
 
 Each test file lists its skipped Java tests and the reason.
 
