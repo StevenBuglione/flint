@@ -474,3 +474,17 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - runtime-library build flags such as -fno-moduleinfo-localclasses.
   - **The boundary:** these features must not change the D language. That means no new syntax, no changed semantics of valid D programs, and no compiler-inserted write barriers. Changing the language stays owner-only (coordination.md, rule 5).
   - **The evidence standard:** every such feature must produce output identical to the existing path (playbook B-7). A served or native result must match the in-process or CTFE result byte for byte, and missing instances fail loudly (FLINT-E0701). It keeps the unforked fallback, and has regression tests in the fork.
+- 2026-11-23, proof-harness: **The per-endpoint AOT fast path passes its gate. With it on, gs-rest-service beats Go on throughput and p99** (queue entry `fast-path-ab`, fast-path-spike's A/B, owner priority `74a746d1`, 22:17–22:44Z, a claimed window with no foreign build in 144 samples).
+  - **Setup:** branch `spring/fast-path-proto` at `139e4fc4`, with the tree's own flint and `flint build --profile release --no-debug`. Arm off is as built. Arm on adds `FLINT_AOT_FAST_PATH=1`, and its generated module contains `fast_com_example_restservice_GreetingController_greeting` (checked). Both arms pass 18/18 exact.
+  - **Workload:** the Spring workload unchanged, with Go interleaved (Go, off, on / on, off, Go), 4 trials per arm (`tools/spring_binary_ab.py`).
+  - Ratios of medians, with bootstrap 99% intervals; they are wide at 4 trials:
+
+    | | throughput | p50 | p99 | p999 | peak RSS | CPU per request |
+    | --- | --- | --- | --- | --- | --- | --- |
+    | on / off | **1.394 (1.379–1.401)** | 0.639 (0.574–0.865) | **0.507 (0.366–0.672)** | 0.608 | 0.999 (0.986–1.014) | **0.659 (0.603–0.868)** |
+    | off / Go | 0.927 | 1.589 | 1.437 | 1.802 | 1.451 | 1.278 |
+    | on / Go | **1.293 (1.285–1.299)** | 1.016 (0.961–1.329) | **0.729 (0.548–0.934)** | 1.095 | 1.450 | 0.843 (0.783–1.061) |
+
+    Medians: on 319k req/s and p99 0.198 ms; off 229k and 0.390 ms; Go 247k and 0.272 ms. Peak RSS: 19.9 MB both, against Go's 13.7 MB.
+  - **Decision rule (fast-path.md section 9):** on beats off on throughput, CPU per request and p99 beyond the intervals, no metric is worse, and both arms pass 18/18. So the mechanism lands opt-in, then default on. Against Go, the on arm wins throughput and p99 beyond their intervals. p50 is at parity and CPU per request is ahead at the median, though its interval reaches 1.06. Peak RSS (1.45) remains the gap.
+  - Evidence: `benchmarks/spring/evidence/fast-path-ab/`.
