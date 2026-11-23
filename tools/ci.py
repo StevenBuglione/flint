@@ -219,9 +219,10 @@ def run_tests(runner,compiler,*,sanitize=False):
     env.pop('DFLAGS',None)
     env['DUB_HOME']=str(ROOT/'.ci-dub-home'/('sanitized' if sanitize else 'normal')/Path(compiler).name)
     if sys.platform=='win32' and not runner.plan:
-        # engine-web's HTTP/2 suite runs the pinned curl (windows-tools), not the one Windows ships (ADR-026).
+        # engine-web's HTTP/2 suite runs the pinned curl (windows-tools), not the one Windows ships, which lacks
+        # HTTP/2 and which CreateProcess finds in System32 before anything on PATH (ADR-026).
         require((windows_curl_bin()/'curl.exe').is_file(),'run tools/ci.py windows-tools for the pinned curl')
-        env['PATH']=str(windows_curl_bin())+os.pathsep+env.get('PATH','')
+        env['FLINT_TEST_CURL']=str(windows_curl_bin()/'curl.exe')
     if sanitize:
         if not runner.plan:
             require(verified_sanitizer_runtime(sanitizer_runtime_dir()),'LDC sanitizer runtime missing or changed: '+str(sanitizer_runtime_dir()))
