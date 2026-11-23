@@ -1,0 +1,14 @@
+{
+  "schema": "flint.apps/1",
+  "note": "The applications of the Flint repos and the repo each belongs to after the split (plan section 7). An app keeps its directory inside its repo; flint finds it through that repo's platform module, and the gates check its dependencies against policy/repos.json.",
+  "apps": {
+    "flint": {
+      "directory": "apps/flint",
+      "repo": "flint"
+    },
+    "flint-mcp": {
+      "directory": "apps/flint-mcp",
+      "repo": "ai"
+    }
+  }
+}
