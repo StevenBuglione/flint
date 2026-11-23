@@ -36,7 +36,7 @@ AotStep runAotStep(ref Session session, const ref Manifest manifest, const ref R
         return AotStep(true, false);
     AotRequest request;
     request.root = manifest.root;
-    // The extraction compile runs on the forked DMD, whose compile server serves `-o-` compiles; LDC only when the
+    // The extraction compile runs on the forked DMD, whose compile server serves its `-c` compile; LDC only when the
     // toolchain has no DMD.
     const dmd = toolchain.component("dmd");
     request.compiler = dmd.present ? dmd.path : toolchain.component(compiler).path;

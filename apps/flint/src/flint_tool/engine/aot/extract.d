@@ -1,8 +1,9 @@
 /// The extraction compile (docs/spring/aot-contract.md section 1.1): the compiler evaluates a describer over the
 /// modules Flint AOT needs and prints their models, so the generator sees real types and evaluated attributes.
 ///
-/// The describer is written next to a generated root module and compiled with `-o-`, which the forked DMD's compile
-/// server serves. Nothing it produces is linked.
+/// The describer is written next to a generated root module and compiled with `-c` into a throwaway object: the
+/// forked DMD's compile server serves `-c` compiles (with druntime, Phobos and the platform prelude analysed) but
+/// not `-o-` ones, and the root holds no code, so the object costs nothing. Nothing it produces is linked.
 module flint_tool.engine.aot.extract;
 
 import flint_tool.engine.aot.model : AnnotationType, ModuleModel;
@@ -98,9 +99,10 @@ ExtractionResult extract(const ref ExtractionRequest request)
     Launch launch;
     launch.directory = request.workingDirectory;
     const started = MonoTime.currTime;
-    const outcome = capture([request.compiler, "-o-", "-I" ~ request.directory] ~ request.flags ~ [
-        root
-    ], launch);
+    const object = buildPath(request.directory, "flint_aot_extract.o");
+    const outcome = capture([request.compiler, "-c", "-of=" ~ object,
+        "-I" ~ request.directory] ~ request.flags ~ [root], launch);
+    removeObject(object);
     result.milliseconds = (MonoTime.currTime - started).total!"msecs";
     if (!outcome.started)
     {
@@ -114,6 +116,21 @@ ExtractionResult extract(const ref ExtractionRequest request)
     if (!result.ok && result.errors.length == 0)
         result.errors = "the compiler exited with status " ~ outcomeCode(outcome.code);
     return result;
+}
+
+private void removeObject(string path)
+{
+    import std.file : FileException, exists, remove;
+
+    try
+    {
+        if (exists(path))
+            remove(path);
+    }
+    catch (FileException)
+    {
+        // A leftover object in .flint is harmless.
+    }
 }
 
 private string outcomeCode(int code)
