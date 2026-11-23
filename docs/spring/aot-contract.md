@@ -243,7 +243,7 @@ struct BeanDefinition
     string name;
     string type;                               // the bean's declared type
     string[] types;                            // every type it can be injected as: class chain and interfaces
-    string[] dependsOn;                        // @DependsOn plus every bean name the generator saw it require
+    string[] dependsOn;                        // @DependsOn, plus a @Bean method's configuration bean; strict
     string[] qualifiers;                       // @Qualifier values on the definition
     ScopeKind scope_;
     bool primary, fallback, lazyInit;
@@ -448,6 +448,8 @@ The default bean name is the class name with its first letter lowered, keeping S
 With `proxyBeanMethods` true (the default), the generator emits `<Name>__FlintConfiguration : <Name>`, which overrides every `@Bean` method to return the container's instance, so inter-bean method calls see singletons exactly as Spring's CGLIB-enhanced configuration does. The bean's own factory calls the original through `super`. A `final` or non-public `@Bean` method in such a class is FLINT-E1109, Spring's "@Bean method must not be private or final". Static `@Bean` methods are called directly and need no instance. With `proxyBeanMethods: false` the class is used as written.
 
 ### 5.4 Definition order and conditions
+
+`dependsOn` names only `@DependsOn` values and, for a `@Bean` method, its configuration bean. A `@Bean` method's condition includes its class's, so its configuration bean exists whenever it does, and the runtime treats a missing name as an error, as Spring does for `@DependsOn`. Startup per bean: `create`, the `Aware` callbacks, `BeanPostProcessor.before`, `initialize(target)`, `BeanPostProcessor.after`, then `proxy(target)`.
 
 The registry adds definitions in Spring's order: user components by module name and then source order, then the `@Bean` methods of each configuration class after the class itself, then auto-configurations sorted by `@AutoConfigureOrder`, `@AutoConfigureAfter` and `@AutoConfigureBefore`, then their `@Bean` methods. Registration order is that order: the registry calls the generated modules in the order of their first definition, and each module registers its definitions in order. (Two auto-configuration modules whose classes interleave in that order would register out of order; a `rank` field in a later contract version would remove the limit.)
 
