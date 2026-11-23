@@ -1054,6 +1054,58 @@ unittest
     expect(outputs[1]).toEqual(outputs[0]);
 }
 
+@("a cached cold build (a clean .flint, the shared cache kept) extracts nothing and restores the output")
+unittest
+{
+    import std.conv : to;
+    import std.file : exists, readText, rmdirRecurse, tempDir;
+    import std.path : buildPath;
+    import std.process : thisProcessID;
+    import flint_tool.engine.aot.driver : AotOutcome, AotRequest, runAot;
+
+    const shared_ = buildPath(tempDir, "flint-aot-cold-" ~ thisProcessID.to!string);
+    if (exists(shared_))
+        rmdirRecurse(shared_);
+    scope (exit)
+        if (exists(shared_))
+            rmdirRecurse(shared_);
+    const project = copyFixture("sample");
+    scope (exit)
+        remove(project);
+    const root = repositoryRoot();
+    AotRequest request;
+    request.root = project;
+    request.compiler = compiler();
+    request.importPaths = [
+        "-I" ~ buildPath(root, "tests", "aot", "annotations"), "-I" ~ runtimeSource()
+    ];
+    request.flags = ["-preview=dip1000"];
+    request.environmentKey = "test";
+    request.sharedCache = shared_;
+    const generated = buildPath(project, ".flint", "generated", "aot", "flint_aot", "shop", "web.d");
+    AotOutcome[2] outcomes;
+    string[2] texts;
+    foreach (run; 0 .. 2)
+    {
+        if (exists(buildPath(project, ".flint")))
+            rmdirRecurse(buildPath(project, ".flint"));
+        outcomes[run] = runAot(request);
+        expect(outcomes[run].extractionErrors).toEqual("");
+        expect(outcomes[run].ok).toBeTrue();
+        texts[run] = readText(generated);
+    }
+    expect(outcomes[0].extracted > 0).toBeTrue();
+    // The project's models come from the shared cache too (keyed with the project root), and the generated
+    // output is restored, with what the step reports about it.
+    expect(outcomes[1].extracted).toEqual(0);
+    expect(outcomes[1].reused).toEqual(outcomes[0].extracted);
+    expect(outcomes[1].application).toEqual(outcomes[0].application);
+    expect(outcomes[1].generated).toEqual(outcomes[0].generated);
+    expect(outcomes[1].removed).toEqual(outcomes[0].removed);
+    expect(texts[1]).toEqual(texts[0]);
+    expect(exists(buildPath(project, ".flint", "generated", "aot", "flint_aot_registry.d"))).toBeTrue();
+}
+
 /// Source directories of the DUB closure of `roots` (repository-relative package directories), following each
 /// dub.sdl's `dependency` lines, so the list follows packages when they move. `flint:x` names resolve to
 /// framework/x or packages/x, whichever has a dub.sdl. framework/java comes first: while framework/p1-interim exists it shadows

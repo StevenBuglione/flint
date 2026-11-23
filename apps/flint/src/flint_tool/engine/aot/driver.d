@@ -140,25 +140,45 @@ AotOutcome runAot(const ref AotRequest request)
         return finish(outcome, started);
     if (stale.length && !extractImports(request, cache, sources, keys, state, outcome))
         return finish(outcome, started);
+    outcome.ok = produceOutput(request, sources, autoConfigurations, keys, stale.length > 0, state, outcome);
+    if (!outcome.ok)
+        saveState(cache, state);
+    return finish(outcome, started);
+}
+
+/// The generated output for the current models: kept when its key is unchanged, restored from the shared cache
+/// on a cached cold build, else generated (and stored there). False when generation failed.
+private bool produceOutput(const ref AotRequest request, scope const SourceModule[] sources,
+        scope const string[] autoConfigurations, const string[string] keys, bool extracted,
+        ref State state, ref AotOutcome outcome)
+{
+    import std.file : exists;
+    import std.path : buildPath;
+
+    const cache = buildPath(request.root, cacheDirectory);
     const outputKey = outputKeyOf(sources, state, request.environmentKey, autoConfigurations);
     if (state.outputKey == outputKey && exists(buildPath(request.root, aotDirectory, "flint_aot_registry.d")))
     {
         // Nothing to regenerate, also when the re-extracted models came out the same.
-        if (stale.length)
+        if (extracted)
             saveState(cache, state);
-        outcome.ok = true;
-        return finish(outcome, started);
+        return true;
+    }
+    // A cached cold build: the same generated output for these models and this project was generated before.
+    if (request.sharedCache.length && restoreOutput(request, outputKey, outcome))
+    {
+        state.outputKey = outputKey;
+        saveState(cache, state);
+        return true;
     }
     if (!generate(request, sources, autoConfigurations, keys, state, outcome))
-    {
-        saveState(cache, state);
-        return finish(outcome, started);
-    }
+        return false;
+    if (request.sharedCache.length)
+        storeOutput(request, outputKey, outcome);
     // Generation may have answered presence probes, which the key covers.
     state.outputKey = outputKeyOf(sources, state, request.environmentKey, autoConfigurations);
     saveState(cache, state);
-    outcome.ok = true;
-    return finish(outcome, started);
+    return true;
 }
 
 private AotOutcome finish(ref AotOutcome outcome, imported!"core.time".MonoTime started)
@@ -478,11 +498,16 @@ private bool extractInto(const ref AotRequest request, scope const SourceModule[
     import flint_tool.support.files : sha256Hex;
 
     const cache = buildPath(request.root, cacheDirectory);
-    bool[string] shareable;
+    // Shared-cache keys: a platform module's extraction key; a project module's with the project root too, since
+    // its model records absolute source paths. A cached cold build (a clean .flint) then extracts nothing.
+    string[string] shareable;
     foreach (ref source; sources)
     {
-        if (!source.user && request.sharedCache.length)
-            shareable[source.name] = true;
+        if (request.sharedCache.length && source.name in keys)
+        {
+            const key = keys[source.name];
+            shareable[source.name] = source.user ? sharedProjectKey(key, request.root) : key;
+        }
     }
     string[] modules = reuseShared(request.sharedCache, requested, shareable, keys, cache, state, outcome);
     string[] classes = request.sharedCache.length ? sharedPresence(request, probes, state) : probes.dup;
@@ -506,13 +531,18 @@ private bool extractInto(const ref AotRequest request, scope const SourceModule[
         return false;
     }
     mkdirRecurse(buildPath(cache, "models"));
+    string annotationSet;
     foreach (index, ref model; result.models)
     {
         write(modelPath(cache, model.name), result.documents[index]);
         state.models[model.name] = sha256Hex(cast(const(ubyte)[]) result.documents[index]);
         state.keys[model.name] = keys.get(model.name, null);
-        if (model.name in shareable)
-            storeShared(request.sharedCache, keys.get(model.name, null), result.documents[index], result);
+        if (const sharedKey = model.name in shareable)
+        {
+            if (annotationSet.length == 0)
+                annotationSet = storeAnnotationSet(request.sharedCache, result);
+            storeShared(request.sharedCache, *sharedKey, result.documents[index], annotationSet);
+        }
     }
     if (request.sharedCache.length && result.present.length)
         storePresence(request, result.present);
@@ -725,6 +755,110 @@ private void saveState(string cache, const ref State state)
     write(buildPath(cache, "state.json"), root.toString);
 }
 
+/// The shared-cache key of a project module's model: its extraction key and the project root.
+private string sharedProjectKey(string key, string root)
+{
+    import flint_tool.support.files : sha256Hex;
+
+    return sha256Hex(cast(const(ubyte)[])(key ~ "\n" ~ root));
+}
+
+/// The shared cache's entry for the generated output of `outputKey` in this project.
+private string outputEntry(const ref AotRequest request, string outputKey)
+{
+    import std.path : buildPath;
+
+    return buildPath(request.sharedCache, "outputs", sharedProjectKey(outputKey, request.root) ~ ".json");
+}
+
+/// Keep the generated files, and what the step reports about them, for a later cold build of this project.
+private void storeOutput(const ref AotRequest request, string outputKey, const ref AotOutcome outcome)
+{
+    import std.file : SpanMode, dirEntries, isFile, readText;
+    import std.json : JSONValue;
+    import std.path : buildPath, relativePath;
+    import flint_tool.diagnostics.report : portablePath;
+
+    const directory = buildPath(request.root, aotDirectory);
+    JSONValue[string] files;
+    foreach (entry; dirEntries(directory, "*.d", SpanMode.depth))
+    {
+        if (isFile(entry.name))
+            files[portablePath(relativePath(entry.name, directory))] = JSONValue(readText(entry.name));
+    }
+    JSONValue[] diagnostics;
+    foreach (ref item; outcome.diagnostics)
+        diagnostics ~= JSONValue([
+        "code": JSONValue(item.code),
+        "message": JSONValue(item.message),
+        "file": JSONValue(item.file),
+        "line": JSONValue(item.line),
+        "warning": JSONValue(item.warning)
+    ]);
+    JSONValue[string] root;
+    root["files"] = JSONValue(files);
+    root["application"] = JSONValue(outcome.application);
+    root["generated"] = JSONValue(outcome.generated);
+    root["removed"] = JSONValue(outcome.removed);
+    root["diagnostics"] = JSONValue(diagnostics);
+    writeAtomically(outputEntry(request, outputKey), JSONValue(root).toString);
+}
+
+/// Write a stored generated output (removing other generated files); false when there is none or it is unreadable.
+private bool restoreOutput(const ref AotRequest request, string outputKey, ref AotOutcome outcome)
+{
+    import std.algorithm.searching : canFind;
+    import std.file : SpanMode, dirEntries, exists, isFile, mkdirRecurse, readText, remove;
+    import std.json : JSONType, parseJSON;
+    import std.path : buildNormalizedPath, buildPath, dirName;
+    import flint_tool.engine.aot.plan : Diagnostic;
+    import flint_tool.support.files : writeIfChanged;
+
+    const path = outputEntry(request, outputKey);
+    if (!exists(path))
+        return false;
+    string[string] files;
+    AotOutcome restored;
+    try
+    {
+        const root = parseJSON(readText(path));
+        foreach (name, value; root["files"].objectNoRef)
+            files[name] = value.str;
+        restored.application = root["application"].str;
+        restored.generated = cast(size_t) root["generated"].integer;
+        foreach (ref item; root["removed"].arrayNoRef)
+            restored.removed ~= item.str;
+        foreach (ref item; root["diagnostics"].arrayNoRef)
+            restored.diagnostics ~= Diagnostic(item["code"].str, item["message"].str,
+                    item["file"].str, item["line"].integer, item["warning"].type == JSONType.true_);
+    }
+    catch (Exception)
+        return false; // unreadable or half-written: generate instead
+    const directory = buildPath(request.root, aotDirectory);
+    string[] written;
+    foreach (name, text; files)
+    {
+        const target = buildPath(directory, name);
+        mkdirRecurse(dirName(target));
+        if (writeIfChanged(target, text))
+            ++outcome.written;
+        written ~= buildNormalizedPath(target);
+    }
+    if (exists(directory))
+    {
+        foreach (entry; dirEntries(directory, "*.d", SpanMode.depth))
+        {
+            if (isFile(entry.name) && !written.canFind(buildNormalizedPath(entry.name)))
+                remove(entry.name);
+        }
+    }
+    outcome.application = restored.application;
+    outcome.generated = restored.generated;
+    outcome.removed = restored.removed;
+    outcome.diagnostics = restored.diagnostics;
+    return true;
+}
+
 /// The shared cache's entry for a model key.
 private string sharedEntry(string sharedCache, string key)
 {
@@ -733,16 +867,19 @@ private string sharedEntry(string sharedCache, string key)
     return buildPath(sharedCache, "models", key ~ ".json");
 }
 
-/// Take the shareable requested modules' models from the shared cache; the modules left to extract.
+/// Take the requested modules' models from the shared cache (`keyed`: their shared-cache keys); the modules
+/// left to extract.
 private string[] reuseShared(string sharedCache, scope const string[] requested,
-        const bool[string] shareable, const string[string] keys, string cache, ref State state, ref AotOutcome outcome)
+        const string[string] keyed, const string[string] keys, string cache, ref State state, ref AotOutcome outcome)
 {
     string[] modules;
     string[string] reusedAnnotations;
+    bool[string] sets;
     foreach (name; requested)
     {
-        if (name !in shareable || !reuseShared(sharedCache, name, keys.get(name, null), cache,
-                state, reusedAnnotations))
+        const sharedKey = name in keyed;
+        if (sharedKey is null || !reuseShared(sharedCache, name, *sharedKey, keys.get(name, null),
+                cache, state, reusedAnnotations, sets))
             modules ~= name;
         else
             outcome.reused++;
@@ -758,29 +895,40 @@ private string[] reuseShared(string sharedCache, scope const string[] requested,
 }
 
 /// Take a module's model, and the annotation types its extraction announced, from the shared cache.
-private bool reuseShared(string sharedCache, string name, string key, string cache, ref State state,
-        ref string[string] annotations)
+private bool reuseShared(string sharedCache, string name, string sharedKey, string key, string cache,
+        ref State state, ref string[string] annotations, ref bool[string] sets)
 {
     import std.file : exists, mkdirRecurse, readText, write;
     import std.json : JSONException, JSONType, parseJSON;
     import std.path : buildPath;
 
-    const path = sharedEntry(sharedCache, key);
-    if (key.length == 0 || !exists(path))
+    const path = sharedEntry(sharedCache, sharedKey);
+    if (sharedKey.length == 0 || key.length == 0 || !exists(path))
         return false;
-    string[string] found;
     string document;
+    string set;
     try
     {
         const root = parseJSON(readText(path));
         document = root["model"].str;
-        foreach (type, value; root["annotations"].objectNoRef)
-            found[type] = value.str;
+        set = root["annotationSet"].str;
     }
     catch (Exception)
-        return false; // unreadable or half-written: extract instead
-    foreach (type, value; found)
-        annotations[type] = value;
+        return false; // unreadable, half-written or an older entry: extract instead
+    if (set !in sets)
+    {
+        string[string] found;
+        try
+        {
+            foreach (type, value; parseJSON(readText(annotationSetPath(sharedCache, set))).objectNoRef)
+                found[type] = value.str;
+        }
+        catch (Exception)
+            return false;
+        foreach (type, value; found)
+            annotations[type] = value;
+        sets[set] = true;
+    }
     mkdirRecurse(buildPath(cache, "models"));
     write(modelPath(cache, name), document);
     state.keys[name] = key;
@@ -789,20 +937,42 @@ private bool reuseShared(string sharedCache, string name, string key, string cac
 }
 
 /// Keep a model, with the annotation types of its extraction compile, in the shared cache.
-private void storeShared(string sharedCache, string key, string document,
-        const ref imported!"flint_tool.engine.aot.extract".ExtractionResult result)
+private void storeShared(string sharedCache, string key, string document, string annotationSet)
 {
     import std.json : JSONValue;
 
-    if (key.length == 0)
+    if (key.length == 0 || annotationSet.length == 0)
         return;
+    JSONValue[string] root;
+    root["model"] = JSONValue(document);
+    root["annotationSet"] = JSONValue(annotationSet);
+    writeAtomically(sharedEntry(sharedCache, key), JSONValue(root).toString);
+}
+
+/// Keep the annotation types one extraction compile announced, once, by content: the models of that compile
+/// refer to the set by its hash, so a cold build parses each set once. Returns the hash.
+private string storeAnnotationSet(string sharedCache,
+        const ref imported!"flint_tool.engine.aot.extract".ExtractionResult result)
+{
+    import std.file : exists;
+    import std.json : JSONValue;
+    import flint_tool.support.files : sha256Hex;
+
     JSONValue[string] annotations;
     foreach (index, ref type; result.annotationTypes)
         annotations[type.name] = JSONValue(result.annotationDocuments[index]);
-    JSONValue[string] root;
-    root["model"] = JSONValue(document);
-    root["annotations"] = JSONValue(annotations);
-    writeAtomically(sharedEntry(sharedCache, key), JSONValue(root).toString);
+    const text = JSONValue(annotations).toString;
+    const hash = sha256Hex(cast(const(ubyte)[]) text);
+    if (!exists(annotationSetPath(sharedCache, hash)))
+        writeAtomically(annotationSetPath(sharedCache, hash), text);
+    return hash;
+}
+
+private string annotationSetPath(string sharedCache, string hash)
+{
+    import std.path : buildPath;
+
+    return buildPath(sharedCache, "annotations", hash ~ ".json");
 }
 
 /// The shared class-presence answers of this environment.
