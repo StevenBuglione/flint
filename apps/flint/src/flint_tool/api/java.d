@@ -812,7 +812,7 @@ private struct Parser
                 fail("unterminated field initializer");
             if (isAt(";"))
                 return;
-            if (isAt(",") && peek(1).tok == Tok.word && (isAt("=", 2) || isAt(",", 2) || isAt(";", 2) || isAt("[", 2)))
+            if (isAt(",") && startsDeclarator(1))
                 return;
             if (isAt("("))
                 skipBalanced("(", ")");
@@ -823,6 +823,29 @@ private struct Parser
             else
                 at++;
         }
+    }
+
+    /// Whether a further field declarator starts `ahead` tokens on: a name that is not a primitive type, then any
+    /// `[]` pairs, then `=`, `,` or `;`. `new HashMap<String, byte[]>()` has `, byte[]` followed by `>`, so its
+    /// comma does not end the initializer.
+    bool startsDeclarator(size_t ahead) const
+    {
+        if (peek(ahead).tok != Tok.word || isPrimitive(peek(ahead).text))
+            return false;
+        size_t next = ahead + 1;
+        while (isAt("[", next) && isAt("]", next + 1))
+            next += 2;
+        return isAt("=", next) || isAt(",", next) || isAt(";", next);
+    }
+
+    static bool isPrimitive(string word)
+    {
+        foreach (primitive; primitiveWords)
+        {
+            if (primitive == word)
+                return true;
+        }
+        return false;
     }
 
     /// The tokens of an annotation attribute default, up to the `;`.

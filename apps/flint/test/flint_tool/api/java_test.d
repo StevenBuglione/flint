@@ -250,6 +250,7 @@ public final class Tricky {
         """;
     public static final long MASK = 0x7FFF_FFFFL >>> 1, OTHER = 1.5e-3 > 0 ? 1 : 0;
     public int[] matrix[];
+    public Map<String, byte[]> tokens = new HashMap<String, byte[]>(), copy = Map.of();
     public sealed interface Shape permits Circle, Square { }
     public non-sealed class Circle implements Shape { }
     public java.util.@Nullable List<? extends Number> numbers() { return null; }
@@ -260,7 +261,7 @@ public final class Tricky {
     const tricky = type(unit, "Tricky");
     expect(signatures(tricky)).toEqual([
         "<init>()", "TABLE", "EMPTY", "task", "anonymous", "QUERY", "MASK", "OTHER", "matrix",
-        "numbers()", "first(T...)"
+        "tokens", "copy", "numbers()", "first(T...)"
     ]);
     expect(member(tricky, "TABLE").type).toEqual("Map<String, List<Integer>>");
     expect(member(tricky, "EMPTY").type).toEqual("Map<String, List<Integer>>");
