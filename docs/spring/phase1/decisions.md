@@ -122,6 +122,15 @@
     | scratch | 3,247 | 61 | 73 | 2,909 | – | 203 |
 
     The cold gap to Go (about 40 ms) is mostly the project's AOT extraction (74 ms) and flint's own 78 ms. The primary is now under the coordinator's 1.5 threshold for the Phase 1 builds parts. Evidence: `benchmarks/spring/evidence/gs-builds/20261123T192758Z/`.
+  - **Update, 20:55–20:58Z (certified, `phase1-builds-gs-rest` at `6ab588f8`, the Phase 1 builds part).** This part includes m7-flint-cli's `6ab588f8` (the platform description record no longer goes stale, so cold trials skip `dub describe`) and `943466fa` (8 link threads by default). Java, Go and Flint pass 18/18. Median ratios (99% interval):
+    - **primary: 0.933 (0.886–0.986), which passes**: 0.146 s against 0.157 s. This is the first time Flint's primary beats Go. The stricter deps-primed comparison is 0.914;
+    - secondary: 1.009 (0.983–1.029), 3.335 s against 3.303 s. It narrowly fails;
+    - **edit build, dev profile (shared objects): 0.427, which passes**;
+    - edit build, fully static: 1.115 (1.089–1.146), with a link of 127 ms at 8 threads. It fails;
+    - **Oz: 0.619, which passes**.
+    - Context, not gating: digest log cleared 1.53; with debug information, primary 0.908, secondary 1.11 and static edit 1.22.
+
+    Phases of the cached cold build: total 141 ms, flint 21, aot 74, compile 26 and link 21. The project's AOT extraction is now the largest part. Evidence: `benchmarks/spring/evidence/phase1-builds-gs-rest/`.
 
 - 2026-11-23, data-access: `@EnableTransactionManagement` stays in `flint.transaction.annotation` (R1), but `ProxyTransactionManagementConfiguration`, `AbstractTransactionManagementConfiguration` and `TransactionManagementConfigurer` live in the child module `flint.transaction.annotation.configuration`. They build the `TransactionInterceptor`, which reads `@Transactional` from the annotation module, and one module would import itself (circular imports are rejected). The annotation imports the configuration by its qualified name. flint:tx now depends on flint:beans and flint:context, as spring-tx does on spring-context for these classes. Size: flint:tx goes from 5,983 to 6,360 templates and 584,240 to 584,528 bytes; it was already over its budget (2,350 templates, 229,376 bytes), so I raised nothing and reported it to size-levers.
 - 2026-11-23, third-party-apis (item 26's regex finding): Jakarta `@Pattern` needs `java.util.regex` semantics, and `flint.validate`'s automaton is not that engine: 256 NFA states (`[0-9]{1,160}` fails), ASCII literals, `\p{L}` only, no look-around, back-references, reluctant or possessive quantifiers, inline flags or `Pattern.Flag`s. Since `fbe899d5`, such a pattern fails loudly (HV000032, "Flint's run-time pattern engine does not support this java.util.regex pattern yet") instead of rejecting every value. The plan:

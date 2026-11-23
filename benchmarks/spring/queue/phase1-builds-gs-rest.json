@@ -2,7 +2,7 @@
   "schema": "flint.measure-queue/1",
   "id": "phase1-builds-gs-rest",
   "created": "2026-11-23",
-  "status": "pending",
+  "status": "done",
   "window": "claim",
   "priority": 5,
   "requested_by": "ADR-030 section 8, Phase 1 exit (coordinator's plan, 2026-11-23 15:20Z); split per application by the coordinator, 2026-11-23 16:45Z",
@@ -82,5 +82,266 @@
         "in": "tree"
       }
     ]
-  }
+  },
+  "attempts": [
+    {
+      "time": "2026-11-23T20:58:20Z",
+      "outcome": "measured",
+      "evidence": true,
+      "host": "venus",
+      "builds": {
+        "tree": {
+          "commit": "6ab588f8340cc1d93249208b0ba124b32aa23a59",
+          "worktree": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6ab588f8340c"
+        }
+      },
+      "window_before": {
+        "time": "2026-11-23T20:55:17Z",
+        "load_average": [
+          3.0732421875,
+          5.607421875,
+          6.48486328125
+        ],
+        "running_tasks": 0,
+        "instant": true,
+        "busy_processes": [],
+        "idle_build_processes": 1564,
+        "quiet": true,
+        "problems": []
+      },
+      "window_during": [
+        {
+          "time": "2026-11-23T20:55:28Z",
+          "load_average": [
+            3.12255859375,
+            5.53759765625,
+            6.4521484375
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-23T20:55:39Z",
+          "load_average": [
+            4.4296875,
+            5.74755859375,
+            6.51171875
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-23T20:55:50Z",
+          "load_average": [
+            4.0634765625,
+            5.59716796875,
+            6.44921875
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-23T20:56:01Z",
+          "load_average": [
+            3.74560546875,
+            5.47802734375,
+            6.4013671875
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-23T20:56:12Z",
+          "load_average": [
+            3.55029296875,
+            5.37939453125,
+            6.35888671875
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-23T20:56:23Z",
+          "load_average": [
+            3.2314453125,
+            5.25146484375,
+            6.306640625
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-23T20:56:35Z",
+          "load_average": [
+            3.11181640625,
+            5.12451171875,
+            6.24755859375
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-23T20:56:46Z",
+          "load_average": [
+            3.02734375,
+            5.0380859375,
+            6.20703125
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-23T20:56:57Z",
+          "load_average": [
+            2.869140625,
+            4.9375,
+            6.1611328125
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-23T20:57:08Z",
+          "load_average": [
+            2.8154296875,
+            4.85693359375,
+            6.12158203125
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-23T20:57:19Z",
+          "load_average": [
+            2.9111328125,
+            4.8115234375,
+            6.0927734375
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-23T20:57:30Z",
+          "load_average": [
+            2.62841796875,
+            4.65673828125,
+            6.02099609375
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-23T20:57:41Z",
+          "load_average": [
+            2.61181640625,
+            4.58544921875,
+            5.98291015625
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-23T20:57:52Z",
+          "load_average": [
+            2.51708984375,
+            4.5,
+            5.93994140625
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-23T20:58:04Z",
+          "load_average": [
+            2.591796875,
+            4.4501953125,
+            5.90771484375
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-23T20:58:15Z",
+          "load_average": [
+            2.38623046875,
+            4.3134765625,
+            5.83935546875
+          ],
+          "busy_processes": []
+        }
+      ],
+      "foreign_activity_during": 0,
+      "window_after": {
+        "time": "2026-11-23T20:58:20Z",
+        "load_average": [
+          2.35498046875,
+          4.27490234375,
+          5.818359375
+        ],
+        "running_tasks": 2,
+        "instant": false,
+        "busy_processes": [],
+        "idle_build_processes": 1564,
+        "quiet": true,
+        "problems": []
+      },
+      "results_directory": ".flint/measure/results/phase1-builds-gs-rest/20261123T205451Z",
+      "summary": {
+        "steps": [
+          {
+            "command": [
+              "/usr/bin/python3",
+              "tools/spring_bench.py",
+              "accept",
+              "gs-rest-service",
+              "--impl",
+              "java",
+              "--json",
+              "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-builds-gs-rest/20261123T205451Z/acceptance-java.json"
+            ],
+            "cwd": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6ab588f8340c",
+            "exit_code": 0,
+            "log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-builds-gs-rest/20261123T205451Z/step-0.log"
+          },
+          {
+            "command": [
+              "/usr/bin/python3",
+              "tools/spring_bench.py",
+              "accept",
+              "gs-rest-service",
+              "--impl",
+              "go",
+              "--json",
+              "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-builds-gs-rest/20261123T205451Z/acceptance-go.json"
+            ],
+            "cwd": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6ab588f8340c",
+            "exit_code": 0,
+            "log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-builds-gs-rest/20261123T205451Z/step-1.log"
+          },
+          {
+            "command": [
+              "/usr/bin/python3",
+              "tools/spring_bench.py",
+              "accept",
+              "gs-rest-service",
+              "--impl",
+              "flint",
+              "--json",
+              "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-builds-gs-rest/20261123T205451Z/acceptance-flint.json"
+            ],
+            "cwd": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6ab588f8340c",
+            "exit_code": 0,
+            "log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-builds-gs-rest/20261123T205451Z/step-2.log"
+          },
+          {
+            "command": [
+              "/usr/bin/python3",
+              "tools/measure_builds.py",
+              "--spring",
+              "--spring-app",
+              "gs-rest-service",
+              "--no-context",
+              "--output",
+              "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-builds-gs-rest/20261123T205451Z/builds.json"
+            ],
+            "cwd": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6ab588f8340c",
+            "exit_code": 1,
+            "log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-builds-gs-rest/20261123T205451Z/step-3.log",
+            "measured": true
+          }
+        ],
+        "outputs": {
+          "acceptance-flint.json": "a6ec7e5bb4370120916bc007994dcc62e52c3c80a0db529b2fa7cd746a21273a",
+          "acceptance-go.json": "a5384f17f5c351e13ab43a3b3dabcb8bc0643aac8997ea2d595bb2bdbc899bd7",
+          "acceptance-java.json": "718fe7d2309df485592b6a34bc44f8189b8aaa8318700986e59d451fb79a2ed5",
+          "builds.json": "87e3cc49bd1d717c8abfa23aac1ca5c6694318df31d0cfdf545a018cfffad0f6"
+        }
+      }
+    }
+  ]
 }
