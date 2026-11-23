@@ -695,8 +695,9 @@ private bool composeArm64Receipt(const ref Home home, string directory, string d
         return false;
     }
     receipt.installer_sha256 = sha256File(buildPath(home.root, "tools", "install_toolchains.py"));
-    receipt.dmd = ReceiptDmd(home.versions["dmd"], dmd.value.sha256, dmd.value.flint_fork.dmd_sha256,
-            dub.value.dub_sha256, dmd.value.flint_fork.dmd_patch_sha256, dub.value.dub_patch_sha256,
+    receipt.dmd = ReceiptDmd(home.versions["dmd"], dmd.value.sha256,
+            dmd.value.flint_fork.dmd_sha256, dub.value.dub_sha256,
+            dmd.value.flint_fork.dmd_patch_sha256, dub.value.dub_patch_sha256,
             dmd.value.flint_fork.prelude_sha256, false);
     receipt.ldc = ReceiptTool(home.versions["ldc"], ldc.value.sha256, sha256File(componentPath(home,
             directory, "ldc2")));

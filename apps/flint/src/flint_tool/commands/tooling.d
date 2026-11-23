@@ -150,7 +150,8 @@ int commandToolchainInstall(ref Session session, ToolchainInstallArgs args)
         // the third command (ADR-026); on arm64 hosts the forked DMD comes first (ADR-025 section 3).
         import flint_tool.toolchain.host : dmdArm64Host, upstreamDmdHost;
 
-        if (index == (upstreamDmdHost || dmdArm64Host ? 2 : 1) && !writeToolchainReceipt(session, directory, outputs, report))
+        if (index == (upstreamDmdHost || dmdArm64Host ? 2 : 1) && !writeToolchainReceipt(session,
+                directory, outputs, report))
             return finish(session, report, payload);
     }
     const toolchain = inspect(session.home, null, true, directory);
