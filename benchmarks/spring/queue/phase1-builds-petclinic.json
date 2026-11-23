@@ -452,5 +452,5 @@
       }
     }
   ],
-  "blocked_on": "owner priority (decisions.md 74a746d1, coordinator 21:52Z): re-run pinned at or after flint-aot's describer memoization once it lands (waiting beats measuring twice), after the fast-path A/B and gc-pools-ab; then smoke and pending at priority 5"
+  "blocked_on": "after fast-path-ab, gs-rest-multicore-5 and gc-pools-ab: pin at the latest main at or after flint-aot's 30cebc6a (describer memoization) but not at b520e07a (that worktree carries the non-fork toolchain of the runtime entries), smoke under hold, then pending at priority 5"
 }

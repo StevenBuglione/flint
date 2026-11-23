@@ -561,6 +561,10 @@ def prepare_checkout(spec, logs):
         tools = directory / '.tools'
         if not tools.exists() and (spec.get('linker') or spec.get('fork')):
             private_tools(tools, spec.get('linker', 'mold'), spec.get('fork', False), directory, logs)
+        elif tools.is_dir() and not tools.is_symlink() and (tools / 'flint-fork-build').exists() != bool(spec.get('fork')):
+            # Worktrees are keyed by commit: an entry wanting the other toolchain flavour must not reuse this one.
+            raise SystemExit(f"{full[:12]}: its worktree's toolchain is {'' if spec.get('fork') else 'not '}"
+                             "missing the fork build this entry needs; pin it at another commit")
         elif not tools.exists():
             tools.symlink_to(shared_tools())
         # The pinned peers (JDK, Maven, PostgreSQL) installed in this checkout, for spring_bench and load_bench there.
