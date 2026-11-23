@@ -1,11 +1,11 @@
 {
   "schema": "flint.measure-queue/1",
   "created": "2026-11-23",
-  "status": "blocked",
+  "status": "pending",
   "builds": {
     "tree": {
       "app": "checkout",
-      "commit": "b7c8891dfe8a",
+      "commit": "c473ea7b6f93",
       "flint": true,
       "linker": "mold"
     }
@@ -13,7 +13,7 @@
   "requested_by": "web-http (local_16478490), for the coordinator: the multi-core servlet default",
   "id": "gs-rest-multicore",
   "summary": "gs-rest-service throughput with the servlet engine on every allowed CPU (55a5e264), Flint against the registered Go comparator",
-  "why": "55a5e264 made ServletEngineOptions.cores default to every CPU in the affinity mask (2 under the workload's server_cpus), where it was 1 reactor thread; third-party-apis' unofficial cores=2 run gave 113-144k against 69-75k req/s. 9fb8972c makes the shared handler caches safe on several reactors and 99646772 drops OpenSSL from plain-HTTP servers. This entry gives the official number and the CPU per request against Go's. Suite first, then the Spring REST workload for gs-rest-service only. Re-pinned to c64c12abe750, which adds c64c12ab's per-request cuts (callgrind 109k to 85k instructions per request). Re-pinned to b7c8891dfe8a: 32dd21b6 and b7c8891d bring callgrind to 77.1k instructions per request (109.4k before c64c12ab); gs-rest-service passes 18/18 exact there.",
+  "why": "55a5e264 made ServletEngineOptions.cores default to every CPU in the affinity mask (2 under the workload's server_cpus), where it was 1 reactor thread; third-party-apis' unofficial cores=2 run gave 113-144k against 69-75k req/s. 9fb8972c makes the shared handler caches safe on several reactors and 99646772 drops OpenSSL from plain-HTTP servers. This entry gives the official number and the CPU per request against Go's. Suite first, then the Spring REST workload for gs-rest-service only. Re-pinned to c64c12abe750, which adds c64c12ab's per-request cuts (callgrind 109k to 85k instructions per request). Re-pinned to b7c8891dfe8a: 32dd21b6 and b7c8891d bring callgrind to 77.1k instructions per request (109.4k before c64c12ab); gs-rest-service passes 18/18 exact there. Re-pinned to c473ea7b6f93 (after proof-harness's 693886e2, so load_bench defers to the queue's window checks): adds 98e97ba4 (no nghttp2) and 51314f2b (76.1k instructions per request); gs-rest-service 18/18 exact.",
   "measure": {
     "kind": "command",
     "ports": [],
