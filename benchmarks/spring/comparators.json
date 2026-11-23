@@ -1,0 +1,24 @@
+{
+  "schema": "flint.spring-comparators/1",
+  "description": "Go comparators registered before any Flint measurement (ADR-030 section 8). measure_builds.py --spring and load_bench.py refuse a comparator whose source differs from its registered digest. Changing a comparator after Flint measurements exist needs its own reviewed ADR and remeasurement of both sides (AGENTS.md).",
+  "comparators": {
+    "gs-rest-service": {
+      "directory": "benchmarks/spring/go/gs-rest-service",
+      "commit": "f88554cfc7049d059e942130f77616b0d8eac4ed",
+      "sha256": "d33e8488448a0a4692e048d57b22ec362426e9f3d5ff723fcce64e3cf06be73b",
+      "go": "1.27.4",
+      "wire": "semantic",
+      "registered": "2026-11-23",
+      "measured": false
+    },
+    "gs-relational-data-access": {
+      "directory": "benchmarks/spring/go/gs-relational-data-access",
+      "commit": "f88554cfc7049d059e942130f77616b0d8eac4ed",
+      "sha256": "b295d3b02ac6a61b2da3744e221d49a85f9a5be703bb22473c128339431e5527",
+      "go": "1.27.4",
+      "wire": "semantic",
+      "registered": "2026-11-23",
+      "measured": false
+    }
+  }
+}
