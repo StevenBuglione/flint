@@ -2,7 +2,7 @@
 """Fail-closed structural and measured performance gates. No missing-data passes."""
 import argparse,json,re,statistics,subprocess,sys,os,shutil,tempfile,hashlib
 from pathlib import Path
-from d_source import tokens,imported_modules,declared_module,module_default,has_string_mixin,compiler_dependency_edges
+from d_source import tokens,imported_modules,declared_module,module_default,has_string_mixin,compiler_dependency_edges,module_thread_locals
 from perf_stats import finite_samples,median_ratio_interval
 from workspace import Workspace,edge_violations,package_repos
 ROOT=Path(__file__).resolve().parents[1]
@@ -31,6 +31,18 @@ def check_import(package,module,where):
     if dep is not None and dep!=package:
         private=[P[dep]['module']+'.'+part for part in ['internal','sys','ffi']]
         require(not prefix_match(module,private),where+': cross-package private boundary import '+module)
+
+def check_thread_locals(module,ts,where):
+    """Per-task state lives in FiberLocal!T (ADR-030), process state is shared or immutable. A module-level
+    mutable variable is thread-local in D, so fibers that migrate or interleave would share it silently."""
+    allowed=set(S['thread_local_allowlist'])
+    found=set()
+    for name,line in module_thread_locals(ts):
+        found.add(module+'.'+name)
+        require(module+'.'+name in allowed,where+':'+str(line)+': module-level thread-local mutable variable '+name
+                +'; use FiberLocal!T for per-task state or shared/immutable storage, or allowlist a runtime root in policy/safety-policy.json')
+    stale=sorted(entry for entry in allowed if entry.rsplit('.',1)[0]==module and entry not in found)
+    require(not stale,where+': stale thread_local_allowlist entries '+', '.join(stale))
 
 def project_mixin_tokens(text, compiler):
     # DMD dumps Phobos and druntime template expansions in the same file as Flint's.
@@ -147,6 +159,7 @@ def structural(selected):
                 mixin_packages.add(n)
             for mod in imported_modules(ts):
                 check_import(n,mod,str(f))
+            check_thread_locals(module,ts,str(f))
             lines=text.splitlines()
             for i,t in enumerate(ts[:-1]):
                 if t.value!='@' or ts[i+1].value not in ['trusted','system']:continue

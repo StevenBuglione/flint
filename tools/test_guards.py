@@ -69,6 +69,28 @@ class SourcePolicyTests(unittest.TestCase):
         self.source('arena', 'flint.arena', '@safe:\nmixin("im" ~ "port flint.web;");\n')
         with self.assertRaisesRegex(ValueError, 'outside approved generator'):
             gates.structural(['arena'])
+    def test_module_thread_local_state_rejected(self):
+        for body in ['private ulong requestId;\n', 'const(char)[] name;\n', 'version (linux) { int fd = -1; }\n',
+                     'private { Object principal; }\n', 'static if (true) { auto cache = [1]; }\n',
+                     'void* handle;\n', 'size_t f(int a = 1) { return a; }\nint[4] slots;\n']:
+            with self.subTest(body=body):
+                self.source('arena', 'flint.arena', '@safe:\n' + body)
+                with self.assertRaisesRegex(ValueError, 'thread-local mutable'):
+                    gates.structural(['arena'])
+    def test_global_and_scoped_state_allowed(self):
+        body = ('private shared ulong counter;\n__gshared int legacy;\nimmutable string name = "x";\n'
+                'const(size_t) none = size_t.max;\nenum limit = 4;\nshared { int a; }\n'
+                'alias Fn = void function();\nextern (C) int puts(const(char)* text) nothrow;\n'
+                'int value() { int local; static int calls; return local + calls; }\n'
+                'struct S { int field; static int count; }\nimmutable made = () { int x; return x; }();\n')
+        self.source('arena', 'flint.arena', '@safe:\n' + body)
+        self.assertEqual(gates.structural(['arena'])['packages'], 1)
+    def test_thread_local_allowlist_is_exact(self):
+        self.source('arena', 'flint.arena.sys.owner', '@safe:\nprivate uint ownerCounter;\n')
+        self.assertEqual(gates.structural(['arena'])['packages'], 1)
+        self.source('arena', 'flint.arena.sys.owner', '@safe:\nprivate shared uint ownerCounter;\n')
+        with self.assertRaisesRegex(ValueError, 'stale thread_local_allowlist'):
+            gates.structural(['arena'])
     def test_comments_strings_and_nested_comments_do_not_invent_imports(self):
         source = ('module example; /+ nested /+ import flint.web; +/ +/\n'
                   'import a = flint.arena : Buffer;\n@safe:\n'
