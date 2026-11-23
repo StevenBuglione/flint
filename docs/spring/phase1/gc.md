@@ -44,7 +44,14 @@ A conservative collection reads every registered range word by word, whether or 
 | reactor connection, operation and fiber tables | under 0.5 MB | data-access |
 | 2 × 1,088 fiber contexts (only the used part of each stack) | small | data-access |
 
-The connection slots dominate. The benchmark holds 64 connections, but the GC reads all 8,192 slots, about 600,000 words, on every collection. This is the first thing to measure.
+The connection slots dominate. The benchmark holds 64 connections, but the GC reads all 8,192 slots, about 600,000 words, on every collection. Limiting the table to 128 slots per core measured that cost (same build, with the io_uring fix, 10 s each):
+
+| connection slots per core | peak RSS | collections | total pause | per collection | max pause |
+|---|---|---|---|---|---|
+| 4,096 (the default) | 22.1 MB | 907 | 0.87 s | 0.96 ms | 5.1 ms |
+| 128 | 19.0 MB | 1,126 | 0.44 s | 0.39 ms | 3.6 ms |
+
+The slot range is about 60% of every pause and about 3 MB of peak RSS. There are more collections with 128 slots only because the server serves more requests in the same 10 s. The fix keeps the 4,096-connection capacity: register only the chunks of slots a worker has used, in doubling chunks, each with its own base address (section 3, item 2).
 
 ### 1.3 Peak RSS, by mapping
 
@@ -69,7 +76,7 @@ Idle after startup, the server holds 14.2 MB, or 11.7 MB after the fix. The roug
 
 `benchmarks/spring/gc-matrix.json` and `tools/spring_gc_matrix.py` already define the matrix. The local sweep above says the settings trade a little RSS against pause and never close either gap. The matrix still has to run on the certified runner, on both gs-rest-service and petclinic-rest, to pick the shipped setting.
 
-The harness cannot read druntime's `profile:1` report today. The Boot server does not leave `main` through druntime on SIGTERM, so the report is never printed and every run would show no GC data. That is fixed first (section 3, item 3).
+The harness cannot read druntime's `profile:1` report today. The Boot server has no signal handler and dies from SIGTERM's default action, so the report is never printed and every run would show no GC data. That is fixed first (section 3, item 3).
 
 ### B. Allocate less per request (the largest lever, shared)
 
@@ -105,8 +112,8 @@ druntime selects a collector by name: `registerGCFactory("flint", ...)` from a `
 ## 3. Plan
 
 1. **Done locally, measured.** The reactor's io_uring submission queue is capped at 256 entries and the completion queue sized separately (`IORING_SETUP_CQSIZE`). That takes 1.27 MB per worker, 2.5 MB at 2 workers (24.5 → 21.5 MB peak locally), with no change to in-flight limits. The C wrapper test covers more operations than the submission queue holds, and the rings' resident size.
-2. **Root ranges (C).** Measure the pause with the connection-slot range limited to the slots in use. Propose the change to web-http, then shrink the fiber-local cells.
-3. **GC profile in the harness.** Make druntime's exit report reachable on shutdown, so `spring_gc_matrix.py` records collections and pauses. Then queue the matrix with proof-harness for gs-rest-service and petclinic-rest.
+2. **Root ranges (C).** The connection-slot range is measured (section 1.2) and proposed to web-http (their file): register 64, 128, 256 … slots per worker as the reactor first uses them. The reactor hands out the lowest free slot, so a server at 64 connections registers one chunk. Then shrink the fiber-local cells.
+3. **GC profile in the harness.** Boot apps have no SIGTERM or SIGINT handler. They die from the default action (exit 143 or 130), so neither graceful shutdown nor druntime's exit report runs, and `spring_gc_matrix.py` would record no collections or pauses. This is filed with boot, and proof-harness is told to hold the `phase1-gc-matrix-*` entries until it lands. Then queue the matrix for gs-rest-service and petclinic-rest.
 4. **Allocation table (B).** Record bytes and allocations per request per call site, as framework-core and web-http report them.
 5. **Collector prototype (D).** Start with D1 (per-thread caches) plus page release, measured against druntime's collector on the same binary through `rt_options`. Then D3 if the pause still loses. Each step goes through proof-harness's queue before any claim.
 
