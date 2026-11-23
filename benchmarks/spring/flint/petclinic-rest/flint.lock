@@ -362,7 +362,7 @@ name = "flint:tx"
 kind = "core"
 source = "workspace"
 scope = "build"
-dependencies = ["flint:core", "flint:engine-aot", "flint:engine-reactor", "flint:java", "flint:slf4j-api"]
+dependencies = ["flint:beans", "flint:context", "flint:core", "flint:engine-aot", "flint:engine-reactor", "flint:java", "flint:slf4j-api"]
 
 [[package]]
 name = "flint:validate"
