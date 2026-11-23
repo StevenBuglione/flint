@@ -37,7 +37,7 @@ Run a package's tests with `dub test --root boot/core/flint-boot --compiler=dmd`
 | Starters: `flint-boot-starter`, `-web`, `-jdbc`, `-validation`, `-json`, `-test` | done as dependency lists over what exists (`boot/starter/README.md` lists what joins each) | |
 | Boot's error path: `ErrorAttributeOptions` (core) and `ErrorProperties` (`flint.web.error.*`; Boot 4 deprecated `server.error.*` at error level) | done; `ErrorAttributes`, `DefaultErrorAttributes`, `BasicErrorController` and the Whitelabel view follow in `module/flint-boot-webmvc` on web-mvc's servlet API (agreed with web-mvc) | 5 Flint tests |
 | Phase 1 properties classes with Boot's keys and defaults: `ServerProperties` (`server.*`), `WebProperties` (`flint.web.*`), `WebMvcProperties` (`flint.mvc.*`), `JacksonProperties` (`flint.jackson.*`, on flint.jackson's feature enums), `DataSourceProperties` (`flint.datasource.*`), `JdbcProperties` (`flint.jdbc.*`), `SqlInitializationProperties` (`flint.sql.init.*`), `TransactionProperties` (`flint.transaction.*`) | done in `boot/module/flint-boot-{web-server,webmvc,jackson,jdbc,sql,transaction}` and core autoconfigure; `@DurationUnit` honoured; nested read-only groups bind into their getter's object. Groups that need `DataSize`, `MediaType` or later modules are listed in each file's header. `flint.datasource.hikari.*` binds onto the pool the data-access module provides | 13 Flint tests |
-| Phase 1 auto-configurations (web/MVC, Jackson, `DataSource` with `hikari`, transactions, validation, SQL init) | `JacksonAutoConfiguration`, `DataSourceAutoConfiguration` (a `FlintDataSource` pool bound with `flint.datasource.hikari.*`; the embedded default is in-memory SQLite `jdbc:sqlite:file:<name>?mode=memory&cache=shared`, user `sa`) `DataSourceTransactionManagerAutoConfiguration` (`JdbcTransactionManager`) and `JdbcTemplateAutoConfiguration` (`flint.jdbc.template.*`; `NamedParameterJdbcTemplate` joins when flint:jdbc has it) done, each listed in its module's `AutoConfiguration.imports`. Web/MVC waits on p1-interim's retirement; validation and SQL init are next | 3 Jackson + 11 `DataSourcePropertiesTests` + 7 auto-configuration tests + 5 `JdbcTemplateAutoConfigurationTests` (2 of the auto-configuration tests need `FlintNativeSqlite`, run locally against the pinned SQLite) |
+| Phase 1 auto-configurations (web/MVC, Jackson, `DataSource` with `hikari`, transactions, validation, SQL init) | `JacksonAutoConfiguration`, `DataSourceAutoConfiguration` (a `FlintDataSource` pool bound with `flint.datasource.hikari.*`; the embedded default is in-memory SQLite `jdbc:sqlite:file:<name>?mode=memory&cache=shared`, user `sa`) `DataSourceTransactionManagerAutoConfiguration` (`JdbcTransactionManager`) and `JdbcTemplateAutoConfiguration` (`flint.jdbc.template.*`; `NamedParameterJdbcTemplate` joins when flint:jdbc has it) done, each listed in its module's `AutoConfiguration.imports`. `DispatcherServletAutoConfiguration`, `WebMvcAutoConfiguration` (over Flint AOT's request mappings, the `JsonMapper` bean and the resolver beans) and `ErrorMvcAutoConfiguration` (`DefaultErrorAttributes`, `BasicErrorController` at `flint.web.error.path`, the Whitelabel page) in boot-webmvc; `FlintServletWebServerAutoConfiguration` (`FlintServletWebServerFactory` customised by `server.*`) and `ServletWebServerApplicationContext` in boot-web-server. Validation and SQL init are next | 3 Jackson + 11 `DataSourcePropertiesTests` + 7 auto-configuration tests + 5 `JdbcTemplateAutoConfigurationTests` (2 of the auto-configuration tests need `FlintNativeSqlite`, run locally against the pinned SQLite) |
 | `@MockitoBean` | deferred: spring-test's `org.springframework.test` maps to `flint.test`, which the base test library already owns, and Mockito needs a mock engine (generated subclasses); raised with the coordinating session | |
 
 Excluded upstream tests, each with its reason:
@@ -158,55 +158,16 @@ python3 boot/tools/configuration_properties.py --check   # CI: fail when an outp
 
 The schema covers the module properties and the keys Boot core reads, such as `flint.main.*`, `flint.profiles.*`, `flint.config.*` and `logging.level.*`. It accepts every `flint.*` key under `spring.*` too. Enum values are offered in kebab case and as constants, because Boot binds them leniently. Editors that use yaml-language-server pick it up from a first line of `# yaml-language-server: $schema=<path or URL>/application.schema.json`, or from a `yaml.schemas` setting that maps `application*.yaml` to it.
 
-## gs-rest-service: the target port
+## gs-rest-service: the port
 
-The Flint port lands in `benchmarks/spring/flint/gs-rest-service/` (with its `flint-spring.json`) once web-mvc's dispatcher and server, framework-core's context and Flint AOT's generator can build it. It is the guide's `complete/` project, file for file, under rulebook R1 (one D module per Java package):
+`benchmarks/spring/flint/gs-rest-service/` is the guide's `complete/` project as a Flint Boot application: `@FlintBootApplication`, `mixin FlintMain` (D-1), the guide's `Greeting` and `GreetingController`, and `flint:boot-starter-web`. `flint build` runs Flint AOT and links Boot's auto-configurations from the starters' `AutoConfiguration.imports`; `flint-spring.json` gives the harness its build.
 
-```d
-// src/com/example/restservice.d
-module com.example.restservice;
+- The Java package `com.example.restservice` is the module `gs_rest_service.app`: `flint build` requires modules below the project's module root (FLINT-E0403).
+- `flint.toml` lists the packages the source imports besides the starter (`flint:boot-core`, `flint:boot-autoconfigure`, `flint:java`, `flint:web`), because Flint requires a direct dependency for every import (FLINT-E0507).
+- `@RequestParam(value = "name", defaultValue = "World")` is a CTFE constant until the pinned linters parse named arguments (below).
+- The engine needs the pinned llhttp: locally, a native block in `packages/engine-web/dub.sdl` (never committed), as engine-servlet's socket tests do.
 
-import flint.boot : FlintMain;
-import flint.boot.autoconfigure : FlintBootApplication;
-import flint.java.util.concurrent.atomic : AtomicLong;
-import flint.web.bind.annotation : GetMapping, RequestParam, RestController;
-import std.format : format;
-
-@FlintBootApplication
-class RestServiceApplication
-{
-}
-
-mixin FlintMain!RestServiceApplication; // deviation D-1
-
-/// `record Greeting(long id, String content)` (rulebook R11).
-struct Greeting
-{
-    long id;
-    string content;
-}
-
-@RestController
-class GreetingController
-{
-    private enum template_ = "Hello, %s!";
-    private AtomicLong counter = new AtomicLong();
-
-    @GetMapping("/greeting")
-    Greeting greeting(@RequestParam(defaultValue: "World") string name)
-    {
-        return Greeting(counter.incrementAndGet(), format(template_, name));
-    }
-}
-```
-
-`resources/application.yaml` is empty in the guide; the port keeps an empty file, so the config-data path runs. The test is the guide's `GreetingControllerTests` with `@FlintBootTest` and `@AutoConfigureRestTestClient` over MockMvc (`RestTestClient.bindTo(mockMvc)`). A MockMvc variant asserts `jsonPath("$.content").value("Hello, World!")` and `"Hello, Spring Community!"`.
-
-Still needed from the other sessions:
-- `flint.java.util.concurrent.atomic.AtomicLong` (framework-core);
-- `@RestController`, `@GetMapping`, `@RequestParam`, the dispatcher and the server (web-mvc);
-- the JSON converter (third-party-apis);
-- the generated registry (flint-aot).
+`python3 tools/spring_bench.py accept gs-rest-service --start <binary> --url http://127.0.0.1:<port>` passes 17/18 cases in exact wire mode (2026-11-23, the DMD dev build and the LDC release build). The remaining case is the Whitelabel page's `Content-Language: en-US`, which web-http adds through `ServletResponse.setLocale` and `DispatcherServlet.render`.
 
 ## Tooling gap: named arguments
 

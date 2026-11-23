@@ -506,6 +506,17 @@ final class DefaultApplicationContextFactory : ApplicationContextFactory
             throw new IllegalStateException("No reactive web server context in the build");
         }
     }
+
+    /// Boot's `WebApplicationType.deduceFromClasspath`: `SERVLET` when a servlet web server module registered its
+    /// factory, else `REACTIVE` when a reactive one did, else `NONE`.
+    static WebApplicationType deduceWebApplicationType()
+    {
+        if (servlet.get() !is null)
+            return WebApplicationType.SERVLET;
+        if (reactive.get() !is null)
+            return WebApplicationType.REACTIVE;
+        return WebApplicationType.NONE;
+    }
 }
 
 /// A context that keeps the process alive, as Java's non-daemon server threads do: `mixin FlintMain` waits on it
@@ -586,7 +597,7 @@ class FlintApplication
 
     /// Run `App` from `main`: Java's process stays alive while non-daemon server threads run, so this waits for
     /// the context to close. Returns the process exit code: 0, or 1 after a startup failure.
-    static int main(App)(string[] args)
+    static int runMain(App)(string[] args)
     {
         try
         {
@@ -754,8 +765,8 @@ private:
         if (!webApplicationTypeSet)
         {
             const type = environment.getProperty("flint.main.web-application-type");
-            if (type !is null)
-                webApplicationType = parseEnum!WebApplicationType(type, "flint.main.web-application-type");
+            webApplicationType = type !is null ? parseEnum!WebApplicationType(type, "flint.main.web-application-type")
+                : DefaultApplicationContextFactory.deduceWebApplicationType();
         }
     }
 
@@ -971,7 +982,7 @@ mixin template FlintMain(App)
         static if (__traits(compiles, App.main(args)))
             return App.main(args);
         else
-            return FlintApplication.main!App(args);
+            return imported!"flint.boot".FlintApplication.runMain!App(args);
     }
 }
 

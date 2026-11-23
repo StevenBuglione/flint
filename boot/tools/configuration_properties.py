@@ -352,7 +352,7 @@ UNITS = [
          header('core/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/web/ErrorProperties.java\n// with WebProperties.java from the same directory', '`Locale locale` is a language tag'),
          'flint.boot.autoconfigure.web', '`org.springframework.boot.autoconfigure.web`: web properties shared by the server modules.',
          [CP], [error, web], 'boot/core/flint-boot-autoconfigure'),
-    Unit('boot/module/flint-boot-webmvc/source/flint/boot/webmvc/autoconfigure.d',
+    Unit('boot/module/flint-boot-webmvc/source/flint/boot/webmvc/autoconfigure/package.d',
          header('module/spring-boot-webmvc/src/main/java/org/springframework/boot/webmvc/autoconfigure/WebMvcProperties.java',
                 'media types are text until `flint.http.MediaType` can be combined with `flint:java`; `apiversion.*` follows with API versioning'),
          'flint.boot.webmvc.autoconfigure', '`org.springframework.boot.webmvc.autoconfigure`: the MVC properties. The auto-configurations (`WebMvcAutoConfiguration`, `DispatcherServletAutoConfiguration`) join this module on web-mvc\'s `WebMvcConfigurationSupport`.',

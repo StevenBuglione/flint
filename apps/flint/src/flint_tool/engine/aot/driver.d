@@ -200,38 +200,61 @@ string[] readAutoConfigurations(scope const string[] directories)
 
 private SourceModule[] autoConfigurationModules(scope const string[] classes, scope const string[] importPaths)
 {
-    import std.algorithm.searching : canFind;
-    import std.array : replace;
-    import std.file : exists, readText;
-    import std.path : buildPath;
-    import flint_tool.engine.aot.iface : ModuleInterface, readInterface;
+    import std.algorithm.searching : canFind, startsWith;
     import flint_tool.engine.aot.names : packageOf;
 
     SourceModule[] result;
     string[] seen;
-    foreach (name; classes)
+    void add(string moduleName)
     {
-        const moduleName = packageOf(name);
         if (moduleName.length == 0 || seen.canFind(moduleName))
-            continue;
+            return;
         seen ~= moduleName;
-        foreach (flag; importPaths)
+        SourceModule found;
+        if (findModule(moduleName, importPaths, found))
+            result ~= found;
+    }
+
+    foreach (name; classes)
+        add(packageOf(name));
+    // The Boot modules the auto-configurations import declare the types their bean methods return and the
+    // @ConfigurationProperties classes they enable: the plan reads those types' supertypes and properties.
+    const configurationModules = result.length;
+    foreach (index; 0 .. configurationModules)
+    {
+        foreach (imported; result[index].imports)
         {
-            const directory = flag.length > 2 && flag[0 .. 2] == "-I" ? flag[2 .. $] : flag;
-            const base = buildPath(directory, moduleName.replace(".", "/"));
-            foreach (candidate; [base ~ ".d", buildPath(base, "package.d")])
-            {
-                if (!exists(candidate))
-                    continue;
-                ModuleInterface found;
-                if (readInterface(readText(candidate), found))
-                    result ~= SourceModule(moduleName, candidate,
-                            candidate[$ - 9 .. $] == "package.d", found.hash, found.imports, false);
-                break;
-            }
+            if (imported.startsWith("flint.boot."))
+                add(imported);
         }
     }
     return result;
+}
+
+private bool findModule(string moduleName, scope const string[] importPaths, out SourceModule module_)
+{
+    import std.array : replace;
+    import std.file : exists, readText;
+    import std.path : buildPath;
+    import flint_tool.engine.aot.iface : ModuleInterface, readInterface;
+
+    foreach (flag; importPaths)
+    {
+        const directory = flag.length > 2 && flag[0 .. 2] == "-I" ? flag[2 .. $] : flag;
+        const base = buildPath(directory, moduleName.replace(".", "/"));
+        foreach (candidate; [base ~ ".d", buildPath(base, "package.d")])
+        {
+            if (!exists(candidate))
+                continue;
+            ModuleInterface found;
+            if (!readInterface(readText(candidate), found))
+                return false;
+            module_ = SourceModule(moduleName, candidate, candidate[$ - 9 .. $] == "package.d",
+                    found.hash, found.imports, false);
+            return true;
+        }
+    }
+    return false;
 }
 
 /// The extraction key of each module: its interface, the interfaces of the extracted modules it imports

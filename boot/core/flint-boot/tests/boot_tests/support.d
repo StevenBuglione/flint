@@ -60,7 +60,13 @@ shared static this() @trusted
     import core.runtime : Runtime, UnitTestResult;
 
     Runtime.extendedModuleUnitTester = () {
+        import std.file : chdir;
+        import std.path : dirName;
         import std.stdio : stderr, writefln;
+
+        // Resources are relative to the package (tests/resources/...): `dub test :boot-core` runs from the
+        // repository root.
+        chdir(__FILE_FULL_PATH__.dirName.dirName.dirName);
 
         UnitTestResult result;
         foreach (test; registered)

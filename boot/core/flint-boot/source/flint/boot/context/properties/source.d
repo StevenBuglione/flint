@@ -890,7 +890,8 @@ struct SystemEnvironmentPropertyMapper
             else
                 canonical ~= (canonical.length ? "." : "") ~ part.toLower;
         }
-        return ConfigurationPropertyName.adapt(canonical, '.');
+        // A key of underscores only (the shell's `_`) maps to the empty name, as Boot's does.
+        return ConfigurationPropertyName.adapt(canonical is null ? "" : canonical, '.');
     }
 
     private static string[] splitUnderscores(string key) pure

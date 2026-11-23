@@ -7,7 +7,15 @@
 /// `org.springframework.boot.web.server.autoconfigure`: the web server properties.
 module flint.boot.web.server.autoconfigure;
 
-import flint.boot.context.properties : ConfigurationProperties;
+import flint.boot.autoconfigure : AutoConfiguration, AutoConfigureOrder;
+import flint.boot.autoconfigure.condition : ConditionalOnClass, ConditionalOnMissingBean, ConditionalOnWebApplication;
+import flint.boot.context.properties : ClassRef, ConfigurationProperties, EnableConfigurationProperties;
+import flint.boot.web.server : WebServerFactoryCustomizer;
+import flint.boot.web.server.engine : FlintServletWebServerFactory;
+import flint.boot.web.server.servlet : ConfigurableServletWebServerFactory;
+import flint.boot.web.server.servlet.context : ServletWebServerApplicationContext;
+import flint.context.annotation : Bean;
+import flint.engine.aot.name : typeNameOf;
 import flint.boot.web.server : Compression, Http2, Shutdown;
 import flint.java.util : LinkedHashMap, Map;
 import flint.java.util : Optional;
@@ -161,3 +169,59 @@ final class ServerProperties
 }
 
 // ---- end: generated region
+
+/// Applies `server.*` to the servlet web server factory: the port, the address and the context path (Boot's
+/// `ServletWebServerFactoryCustomizer`).
+class ServletWebServerFactoryCustomizer : WebServerFactoryCustomizer
+{
+    private ServerProperties serverProperties;
+
+    /// Over `serverProperties`.
+    this(ServerProperties serverProperties) pure nothrow @nogc
+    {
+        this.serverProperties = serverProperties;
+    }
+
+    /// Apply the properties that are set.
+    void customize(ConfigurableServletWebServerFactory factory)
+    {
+        if (serverProperties.getPort().isPresent())
+            factory.setPort(serverProperties.getPort().get());
+        if (serverProperties.getAddress().length)
+            factory.setAddress(serverProperties.getAddress());
+        if (auto contextPath = serverProperties.getServlet().getContextPath())
+            factory.setContextPath(contextPath);
+    }
+}
+
+/// Auto-configuration of Flint's embedded servlet web server (Boot's `TomcatServletWebServerAutoConfiguration` with
+/// `ServletWebServerConfiguration`): a `FlintServletWebServerFactory`, customised by `server.*` and every
+/// `WebServerFactoryCustomizer` bean, unless the application defines a `ServletWebServerFactory`.
+@AutoConfiguration @AutoConfigureOrder(int.min)
+@ConditionalOnClass(null, ["flint.engine.servlet.ServletEngine"])
+@ConditionalOnWebApplication(ConditionalOnWebApplication.Type.SERVLET)
+@EnableConfigurationProperties([ClassRef(typeNameOf!ServerProperties)])
+final class FlintServletWebServerAutoConfiguration
+{
+    /// The customizer that applies `server.*`.
+    @Bean ServletWebServerFactoryCustomizer servletWebServerFactoryCustomizer(ServerProperties serverProperties)
+    {
+        return new ServletWebServerFactoryCustomizer(serverProperties);
+    }
+
+    /// The servlet web server factory.
+    @Bean @ConditionalOnMissingBean([
+        ClassRef("flint.boot.web.server.servlet.ServletWebServerFactory")
+    ])
+    FlintServletWebServerFactory flintServletWebServerFactory(WebServerFactoryCustomizer[] customizers)
+    {
+        auto factory = new FlintServletWebServerFactory;
+        foreach (customizer; customizers)
+            customizer.customize(factory);
+        return factory;
+    }
+}
+
+// The servlet web server context registers itself with Boot's context factory from its module constructor; this
+// reference links it whenever the auto-configuration is linked.
+private alias servletContext = ServletWebServerApplicationContext;

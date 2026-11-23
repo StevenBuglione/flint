@@ -15,6 +15,7 @@ module flint.boot.jackson.autoconfigure;
 import flint.boot.autoconfigure : AutoConfiguration;
 import flint.boot.autoconfigure.condition : ConditionalOnClass, ConditionalOnMissingBean;
 import flint.boot.context.properties : ClassRef, ConfigurationProperties, EnableConfigurationProperties;
+import flint.context : ApplicationContext;
 import flint.context.annotation : Bean, Primary, Scope;
 import flint.engine.aot.name : typeNameOf;
 import flint.jackson.databind : ConstructorDetector, JsonMapper, PropertyNamingStrategies, PropertyNamingStrategy;
@@ -305,11 +306,16 @@ interface JsonMapperBuilderCustomizer
 @EnableConfigurationProperties([ClassRef(typeNameOf!JacksonProperties)])
 final class JacksonAutoConfiguration
 {
-    /// A new builder for each injection point, customised in order by every `JsonMapperBuilderCustomizer`.
+    /// A new builder for each injection point, over the context's Flint AOT descriptors (Jackson's reflection),
+    /// customised in order by every `JsonMapperBuilderCustomizer`.
     @Bean @Scope("prototype") @ConditionalOnMissingBean JsonMapper.Builder jsonMapperBuilder(
-            JsonMapperBuilderCustomizer[] customizers)
+            JsonMapperBuilderCustomizer[] customizers, ApplicationContext context = null)
     {
+        import flint.context.support : GenericApplicationContext;
+
         auto builder = JsonMapper.builder();
+        if (auto generic = cast(GenericApplicationContext) context)
+            builder.descriptors(generic.getDescriptorTable());
         foreach (customizer; customizers)
             customizer.customize(builder);
         return builder;

@@ -1,20 +1,17 @@
 # gs-rest-service, ported to Flint
 
-This is the Flint side of the gs-rest-service side-by-side application (`benchmarks/spring/README.md`). The guide's three Java files are ported here under the rulebook, with Java → D syntax changes only. Each file's header names its upstream path at commit `e15fec6`.
+This is the Flint side of the gs-rest-service side-by-side application (`benchmarks/spring/README.md`): the guide's `complete/` project (commit `e15fec6`) as a Flint Boot application. `RestServiceApplication`, `Greeting` and `GreetingController` are in `src/gs_rest_service/app.d`, one module for the guide's one Java package (rulebook R1). The module root follows the project name, as `flint build` requires (FLINT-E0403).
 
-## Status
-
-This is a skeleton. Proof-harness wrote it for work-queue item 14 (`docs/spring/phase1/coordination.md`), and boot may rework it under item 3.
-
-What it needs to pass the suite:
-1. **It must build.** That needs Boot's servlet web server auto-configuration and the Flint AOT build of a Boot application. `flint-spring.json`'s commands are the harness's expectations, and are replaced by what `flint build` offers then.
-2. **Spring MVC's `/error` handling** (Boot's `BasicErrorController`). web-http's servlet proof (`framework/engine-servlet/proof/gs-rest-service`) serves the same controller and passes 12 of the 18 cases in exact wire mode. The other six are the JSON and Whitelabel 404 bodies and the 405 and 406 responses that go through `/error`.
-
-To score it, or any build of it:
+## Build and score
 
 ```bash
+flint build --profile release
 python3 tools/spring_bench.py accept gs-rest-service --impl flint
 python3 tools/spring_bench.py accept gs-rest-service --start '<binary>' --url http://127.0.0.1:<port>
 ```
 
-The binary reads its port from `SERVER_PORT`.
+`flint build` runs Flint AOT over the application and the auto-configurations its starters list, then links the servlet web server. The binary reads its port from `SERVER_PORT`. The servlet engine needs the pinned llhttp; until native packages reach `flint build`, link it locally with the native block that engine-servlet's socket tests use (never committed).
+
+## Status
+
+17 of the 18 cases pass in exact wire mode (2026-11-23, the DMD dev build and the LDC release build). The Whitelabel page still lacks `Content-Language: en-US`, which web-http adds through `ServletResponse.setLocale`. Design notes are in `docs/spring/phase1/boot.md`, "gs-rest-service: the port".

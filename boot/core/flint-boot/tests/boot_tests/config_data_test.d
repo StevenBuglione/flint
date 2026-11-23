@@ -212,6 +212,14 @@ private ConfigDataResult run(string[string] files, string[] args = null,
     assert(springResult.getProfiles().getActive() == ["dev"]);
 }
 
+@("flint.environmentVariableOfUnderscoresOnly") unittest
+{
+    // A real process environment holds `_` (the shell's last argument): it maps to no property.
+    auto result = run(["resources/application.properties": "my.property=fromfile\n"], null,
+            ["_": "/usr/bin/env", "__": "x", "MY_PROPERTY": "fromenv"]);
+    assert(result.getProperty("my.property") == "fromenv");
+}
+
 @("loadWhenHasConfigLocationAsFile") unittest
 {
     auto result = run(["specific.properties": "my.property=fromspecificlocation\n"],

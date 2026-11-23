@@ -1,15 +1,27 @@
 // Ported from spring-boot v4.2.0: module/spring-boot-webmvc/src/main/java/org/springframework/boot/webmvc/autoconfigure/WebMvcProperties.java
+// with WebMvcAutoConfiguration.java, DispatcherServletAutoConfiguration.java and DispatcherServletRegistrationBean.java
+// from the same directory
 // Copyright 2012-present the original author or authors.
 // Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
 // Modified by the Flint authors: Java Beans getters and setters are kept (rulebook R6); `spring.*` keys
 // become `flint.*` with `spring.*` accepted as an alias (ADR-030); media types are text until `flint.http.MediaType` can be combined with `flint:java`; `apiversion.*` follows with API versioning.
 
-/// `org.springframework.boot.webmvc.autoconfigure`: the MVC properties. The auto-configurations
-/// (`WebMvcAutoConfiguration`, `DispatcherServletAutoConfiguration`) join this module on web-mvc's
-/// `WebMvcConfigurationSupport`.
+/// `org.springframework.boot.webmvc.autoconfigure`: the MVC properties, `WebMvcAutoConfiguration` and
+/// `DispatcherServletAutoConfiguration`.
 module flint.boot.webmvc.autoconfigure;
 
-import flint.boot.context.properties : ConfigurationProperties;
+import flint.boot.autoconfigure : AutoConfiguration, AutoConfigureOrder;
+import flint.boot.autoconfigure.condition : ConditionalOnClass, ConditionalOnMissingBean, ConditionalOnWebApplication;
+import flint.boot.context.properties : ClassRef, ConfigurationProperties, EnableConfigurationProperties;
+import flint.boot.web.server.servlet : ServletRegistrationBean;
+import flint.boot.webmvc.autoconfigure.error : BasicErrorController;
+import flint.context : ApplicationContext;
+import flint.context.support : GenericApplicationContext;
+import flint.context.annotation : Bean;
+import flint.engine.aot.name : typeNameOf;
+import flint.jackson.databind : JsonMapper;
+import flint.web.servlet : DispatcherServlet, HandlerExceptionResolver, ViewResolver;
+import flint.web.servlet.config.annotation : WebMvcConfigurationSupport, WebMvcConfigurer;
 import core.time : Duration;
 import flint.java.util : Optional;
 import flint.java.util : LinkedHashMap, Map;
@@ -419,3 +431,158 @@ final class WebMvcProperties
 }
 
 // ---- end: generated region
+
+/// The `DispatcherServlet`'s registration with the embedded web server, at `flint.mvc.servlet.path`.
+class DispatcherServletRegistrationBean : ServletRegistrationBean
+{
+    private string path;
+
+    /// `servlet` at `path`.
+    this(DispatcherServlet servlet, string path)
+    {
+        super(servlet, urlMapping(path));
+        this.path = path;
+        setName("dispatcherServlet");
+    }
+
+    /// The servlet path.
+    string getPath() const pure nothrow @nogc
+    {
+        return path;
+    }
+
+    // Boot's `DispatcherServletPath.getServletUrlMapping`: `/` and empty map `/`, otherwise `<path>/*`.
+    private static string urlMapping(string path) pure
+    {
+        if (path.length == 0 || path == "/")
+            return "/";
+        return (path[$ - 1] == '/' ? path[0 .. $ - 1] : path) ~ "/*";
+    }
+}
+
+/// Auto-configuration of the `DispatcherServlet` and its registration.
+@dispatcherServletAutoConfiguration @AutoConfigureOrder(int.min)
+@ConditionalOnWebApplication(ConditionalOnWebApplication.Type.SERVLET)
+@ConditionalOnClass(null, ["flint.web.servlet.DispatcherServlet"])
+@EnableConfigurationProperties([ClassRef(typeNameOf!WebMvcProperties)])
+final class DispatcherServletAutoConfiguration
+{
+    /// The `DispatcherServlet`, over Spring MVC's strategies.
+    @Bean @ConditionalOnMissingBean([ClassRef("flint.web.servlet.DispatcherServlet")])
+    DispatcherServlet dispatcherServlet(WebMvcConfigurationSupport webMvcConfigurationSupport)
+    {
+        return new DispatcherServlet(webMvcConfigurationSupport.build());
+    }
+
+    /// The servlet's registration at `flint.mvc.servlet.path`.
+    @Bean @ConditionalOnMissingBean([ClassRef(typeNameOf!DispatcherServletRegistrationBean)])
+    DispatcherServletRegistrationBean dispatcherServletRegistration(DispatcherServlet dispatcherServlet,
+            WebMvcProperties webMvcProperties)
+    {
+        return new DispatcherServletRegistrationBean(dispatcherServlet, webMvcProperties.getServlet().getPath());
+    }
+}
+
+/// Auto-configuration of Spring MVC (Boot's `WebMvcAutoConfiguration` with `EnableWebMvcConfiguration`): the
+/// strategies over Flint AOT's request mappings, the application's `WebMvcConfigurer`s, the exception and view
+/// resolver beans (Boot's `DefaultErrorAttributes` first), and JSON through the application's `JsonMapper`.
+@webMvcAutoConfiguration @ConditionalOnWebApplication(ConditionalOnWebApplication.Type.SERVLET)
+@ConditionalOnClass(null, ["flint.jakarta.servlet.Servlet", "flint.web.servlet.DispatcherServlet"])
+@EnableConfigurationProperties([ClassRef(typeNameOf!WebMvcProperties)])
+final class WebMvcAutoConfiguration
+{
+    /// Spring MVC's configuration, unless the application defines one.
+    @Bean @ConditionalOnMissingBean([
+        ClassRef("flint.web.servlet.config.annotation.WebMvcConfigurationSupport")
+    ])
+    WebMvcConfigurationSupport webMvcConfigurationSupport(ApplicationContext context, WebMvcConfigurer[] configurers,
+            HandlerExceptionResolver[] exceptionResolvers, ViewResolver[] viewResolvers, JsonMapper[] jsonMappers)
+    {
+        import flint.java.lang : IllegalStateException;
+
+        auto generic = cast(GenericApplicationContext) context;
+        if (generic is null)
+            throw new IllegalStateException("Spring MVC needs a context that holds Flint AOT's request mappings");
+        auto mappings = generic.getAotHandlerMappings();
+        auto handlers = generic.getAotExceptionHandlers();
+        auto descriptors = generic.getDescriptorTable();
+        addErrorController(generic, mappings, handlers);
+        auto support = new WebMvcConfigurationSupport(mappings, handlers, aotBeanFactory(generic),
+                configurers, descriptors);
+        auto mapper = jsonMappers.length == 1 ? jsonMappers[0] : JsonMapper.builder().descriptors(descriptors).build();
+        support.setMessageConverters(withJsonMapper(support.getMessageConverters(), mapper));
+        if (exceptionResolvers.length)
+            support.addFirstExceptionResolvers(exceptionResolvers);
+        if (viewResolvers.length)
+            support.addViewResolvers(viewResolvers);
+        return support;
+    }
+
+    // The error controller is an auto-configured bean, outside the application's scanned packages, so its mapping
+    // rows are built here, at the error path.
+    private static void addErrorController(GenericApplicationContext context,
+            ref imported!"flint.engine.aot.mapping".HandlerMapping[] mappings,
+            ref imported!"flint.engine.aot.mapping".ExceptionHandlerSpec[] handlers)
+    {
+        import flint.boot.autoconfigure.web : WebProperties;
+        import flint.engine.aot.any : Any;
+        import flint.engine.aot.descriptor : descriptorOf;
+        import flint.java.util : LinkedHashMap;
+        import flint.web.servlet.mvc.method.aot : exceptionHandlersOf, handlerDescriptorsOf, requestMappingsOf;
+
+        auto names = context.getBeanFactory().getBeanNamesForTypeErased(typeNameOf!BasicErrorController);
+        if (names.length != 1)
+            return;
+        string errorPath = "/error";
+        auto webProperties = context.getBeanFactory().getBeanNamesForTypeErased(typeNameOf!WebProperties);
+        if (webProperties.length == 1)
+            errorPath = (cast(WebProperties) context.getBeanFactory().getBean(webProperties[0])).getError().getPath();
+        foreach (row; requestMappingsOf!BasicErrorController(names[0]))
+        {
+            row.paths = [errorPath];
+            mappings ~= row;
+        }
+        handlers ~= exceptionHandlersOf!BasicErrorController(names[0]);
+        auto descriptors = context.getDescriptorTable();
+        foreach (descriptor; handlerDescriptorsOf!BasicErrorController())
+            descriptors.add(descriptor);
+        descriptors.add(descriptorOf!(LinkedHashMap!(string, Any))());
+    }
+
+    private static imported!"flint.engine.aot.bean".BeanFactory aotBeanFactory(GenericApplicationContext context)
+    {
+        import flint.beans.factory.support : DefaultListableBeanFactory;
+
+        return (cast(DefaultListableBeanFactory) context.getBeanFactory()).aotBeanFactory();
+    }
+
+    private static imported!"flint.http.converter".HttpMessageConverter[] withJsonMapper(
+            imported!"flint.http.converter".HttpMessageConverter[] converters, JsonMapper mapper)
+    {
+        import flint.http.converter.json : JacksonJsonHttpMessageConverter;
+
+        foreach (ref converter; converters)
+        {
+            if (cast(JacksonJsonHttpMessageConverter) converter)
+                converter = new JacksonJsonHttpMessageConverter(mapper);
+        }
+        return converters;
+    }
+}
+
+// `@AutoConfiguration(after = FlintServletWebServerAutoConfiguration.class)` and
+// `@AutoConfiguration(after = { DispatcherServletAutoConfiguration.class, ... })`, as constants (dfmt 0.15 cannot
+// parse named UDA arguments).
+private enum AutoConfiguration dispatcherServletAutoConfiguration = () {
+    AutoConfiguration configuration;
+    configuration.afterName = [
+        "flint.boot.web.server.autoconfigure.FlintServletWebServerAutoConfiguration"
+    ];
+    return configuration;
+}();
+
+private enum AutoConfiguration webMvcAutoConfiguration = () {
+    AutoConfiguration configuration;
+    configuration.afterName = ["flint.boot.webmvc.autoconfigure.DispatcherServletAutoConfiguration"];
+    return configuration;
+}();

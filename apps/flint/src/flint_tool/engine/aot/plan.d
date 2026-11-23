@@ -242,6 +242,8 @@ struct PropertyPlan
     string name;
     /// Type, as D source.
     string type;
+    /// Modules the type's spelling needs.
+    string[] modules;
     /// Merged annotations of the field, getter and setter.
     MergedSet annotations;
     /// "field" (public), "tuple" (private, by `tupleof`) or "accessor" (getter and setter).
@@ -446,12 +448,17 @@ struct ModulePlan
     QueryPlan[] queries;
     /// Other extracted modules whose models this one's output depends on.
     string[] consulted;
+    /// Container types (`Optional!T`, `Map!(K, V)`, `List!T`) of bound properties, described by engine-aot's
+    /// `descriptorOf`, which fills their erased builders; with the modules their spelling needs.
+    string[] containerDescriptors;
+    /// ditto
+    string[] containerModules;
 
     /// Whether the module contributes anything.
     bool empty() const
     {
-        return beans.length == 0 && descriptors.length == 0 && handlers.length == 0
-            && exceptionHandlers.length == 0 && listeners.length == 0 && queries.length == 0;
+        return beans.length == 0 && descriptors.length == 0 && containerDescriptors.length == 0
+            && handlers.length == 0 && exceptionHandlers.length == 0 && listeners.length == 0 && queries.length == 0;
     }
 }
 
@@ -522,6 +529,10 @@ private final class Analysis
     BeanPlan[] allBeans;
     /// Auto-configurations the application excludes at build time.
     bool[string] excluded;
+    /// Modules whose types are described.
+    bool[string] described;
+    /// Types `describeProperties` has visited.
+    bool[string] describedTypes;
 
     this(const Model model, const ref AnalysisInput input)
     {
@@ -560,7 +571,7 @@ private final class Analysis
         foreach (name; input.userModules)
         {
             if (scanned(name))
-                describeModule(name);
+                describeOnce(name);
         }
     }
 
@@ -812,8 +823,102 @@ private final class Analysis
         bean.rank = rank++;
         addBean(decl.module_, bean);
         defineBeanMethods(candidate, bean, outcome.terms, proxyConfiguration);
+        enableConfigurationProperties(candidate, outcome.terms);
         if (bean.proxied || candidate.merged.has(imported!"flint_tool.engine.aot.names".controller))
             moduleFor(decl.module_).consulted ~= decl.module_;
+    }
+
+    /// Boot's `@EnableConfigurationProperties`: each listed `@ConfigurationProperties` class becomes a bean named
+    /// `<prefix>-<fully qualified name>`, under the enabling configuration's conditions, bound at creation; its
+    /// module's types are described for the binder. A class enabled twice is registered once.
+    void enableConfigurationProperties(ref Candidate candidate, string[] terms)
+    {
+        import flint_tool.engine.aot.names : configurationProperties,
+            enableConfigurationProperties_ = enableConfigurationProperties;
+
+        const annotation = candidate.merged.get(enableConfigurationProperties_);
+        if (annotation is null)
+            return;
+        foreach (type; annotation.get("value").strings)
+        {
+            if (hasCandidate(type))
+                continue;
+            const decl = model.type(type);
+            if (decl is null)
+            {
+                error("FLINT-E1106",
+                        "@EnableConfigurationProperties names " ~ type ~ ", which no module in the closure declares",
+                        candidate.decl.file, candidate.decl.line);
+                continue;
+            }
+            auto merged = mergedOf(*decl);
+            const properties = merged.get(configurationProperties);
+            string prefix = properties is null ? null : properties.text("prefix");
+            if (prefix.length == 0 && properties !is null)
+                prefix = properties.text("value");
+            BeanPlan bean;
+            bean.name = prefix.length ? prefix ~ "-" ~ decl.fqn : decl.fqn;
+            bean.type = decl.fqn;
+            bean.types = typesOf(*decl);
+            bean.className = decl.fqn;
+            bean.source = location(decl.file, decl.line);
+            bean.file = relative(decl.file);
+            bean.line = decl.line;
+            bean.condition = joinTerms(terms);
+            definitionAttributes(merged, bean);
+            constructorOf(*decl, bean);
+            fieldsOf(*decl, bean);
+            lifecycleOf(*decl, bean);
+            propertiesOf(merged, bean);
+            bean.rank = rank++;
+            addBean(decl.module_, bean);
+            describeProperties(decl.fqn);
+        }
+    }
+
+    /// Describe a user module's types once.
+    void describeOnce(string moduleName)
+    {
+        if (moduleName in described)
+            return;
+        described[moduleName] = true;
+        describeModule(moduleName);
+    }
+
+    /// Describe a `@ConfigurationProperties` class and, through its properties, every type the binder reaches:
+    /// nested groups, enums and the types in other modules. Template instances (`Optional!T`, `Map!(K, V)`) are
+    /// described by their arguments.
+    void describeProperties(string type)
+    {
+        import std.algorithm.searching : canFind;
+        import std.ascii : isAlphaNum;
+
+        // The dotted names in the spelling: `flint.java.util.Optional!(core.time.Duration)` names both.
+        size_t start;
+        foreach (index; 0 .. type.length + 1)
+        {
+            if (index < type.length && (isAlphaNum(type[index]) || type[index] == '_' || type[index] == '.'))
+                continue;
+            const name = type[start .. index];
+            start = index + 1;
+            if (!name.canFind('.') || name in describedTypes)
+                continue;
+            describedTypes[name] = true;
+            const decl = model.type(name);
+            if (decl is null || (decl.kind == "class" && decl.abstract_))
+                continue;
+            auto descriptor = dataDescriptor(*decl, mergedOf(*decl));
+            addDescriptor(moduleFor(decl.module_), descriptor);
+            foreach (ref property; descriptor.properties)
+            {
+                if (property.type.canFind("!(") && !moduleFor(decl.module_).containerDescriptors.canFind(property.type))
+                {
+                    moduleFor(decl.module_).containerDescriptors ~= property.type;
+                    moduleFor(decl.module_).containerModules ~= property.modules;
+                }
+                describeProperties(property.type);
+            }
+        }
     }
 
     bool acceptOutcome(ref imported!"flint_tool.engine.aot.conditions".ConditionOutcome outcome,
@@ -1597,6 +1702,7 @@ private final class Analysis
             PropertyPlan property;
             property.name = field.name;
             property.type = field.type.name;
+            property.modules = field.type.modules.dup;
             property.annotations = fieldMerged;
             property.access = isPublic ? "field" : "tuple";
             property.field = field.name;
@@ -1680,6 +1786,7 @@ private final class Analysis
             PropertyPlan item;
             item.name = property;
             item.type = method.returns.name;
+            item.modules = method.returns.modules.dup;
             item.annotations = mergedOf(method);
             item.access = "accessor";
             item.getter = method.name;

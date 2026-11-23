@@ -1,7 +1,7 @@
 // Ported from spring-boot v4.2.0: core/spring-boot/src/main/java/org/springframework/boot/web/error/ErrorAttributeOptions.java
 // Copyright 2012-present the original author or authors.
 // Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
-// Modified by the Flint authors: the `EnumSet` is a bit set; `Map<String, Object>` is `flint.java.util.Map!(string, Object)`.
+// Modified by the Flint authors: the `EnumSet` is a bit set; `Map<String, Object>` is `flint.java.util.Map!(string, V)` with `V` `Object` or `Any`.
 
 /// `org.springframework.boot.web.error`: which attributes an error response includes.
 module flint.boot.web.error;
@@ -85,8 +85,9 @@ final class ErrorAttributeOptions
         return new ErrorAttributeOptions(updated);
     }
 
-    /// Remove from `map` the keys of the attributes that are not included.
-    void retainIncluded(Map!(string, Object) map) const
+    /// Remove from `map` the keys of the attributes that are not included. `V` is `Object`, or `Any` for the
+    /// attribute maps of Flint's web layer.
+    void retainIncluded(V)(Map!(string, V) map) const
     {
         foreach (index, attributeKey; keys)
         {

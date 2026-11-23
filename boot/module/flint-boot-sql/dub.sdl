@@ -5,8 +5,8 @@ targetType "library"
 sourcePaths "source"
 importPaths "source"
 dflags "-preview=dip1000"
-dependency "boot-core" path="../../core/flint-boot"
-dependency "flint:engine-aot" path="../../.."
+dependency "flint:boot-core" version="*"
+dependency "flint:engine-aot" version="*"
 
 configuration "library" {
     targetType "library"

@@ -1,5 +1,6 @@
 // Ported from spring-boot v4.2.0: module/spring-boot-web-server/src/main/java/org/springframework/boot/web/server/Shutdown.java
-// with Compression.java and Http2.java from the same directory
+// with Compression.java, Http2.java, WebServer.java, WebServerException.java, PortInUseException.java and
+// PortInUseFailureAnalyzer.java from the same directory, and WebServerFactoryCustomizer.java from ./servlet's parent
 // Copyright 2012-present the original author or authors.
 // Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
 // Modified by the Flint authors: Java Beans getters and setters are kept (rulebook R6); `spring.*` keys
@@ -7,6 +8,9 @@
 
 /// `org.springframework.boot.web.server`: embedded web server support.
 module flint.boot.web.server;
+
+import flint.boot.diagnostics : AbstractFailureAnalyzer, FailureAnalysis;
+import flint.java.lang : RuntimeException;
 
 @safe:
 
@@ -100,3 +104,71 @@ final class Http2
 }
 
 // ---- end: generated region
+
+/// A running embedded web server, started and stopped by its application context.
+interface WebServer
+{
+    /// Start the server; does nothing when it already runs.
+    void start();
+    /// Stop the server; does nothing when it is stopped.
+    void stop();
+    /// The port the server listens on, or -1 before it starts.
+    int getPort();
+    /// Release the server's resources; by default, `stop`.
+    void destroy();
+}
+
+/// Customises the servlet web server factory before the server is created (Boot's
+/// `WebServerFactoryCustomizer<ConfigurableServletWebServerFactory>`; Flint's is not generic, and the
+/// auto-configured factory applies every customizer bean, which Boot's `WebServerFactoryCustomizerBeanPostProcessor`
+/// does).
+interface WebServerFactoryCustomizer
+{
+    /// Customise `factory`.
+    void customize(imported!"flint.boot.web.server.servlet".ConfigurableServletWebServerFactory factory);
+}
+
+/// Thrown when a web server cannot start or stop.
+class WebServerException : RuntimeException
+{
+    /// `message`, caused by `cause`.
+    this(string message, Throwable cause = null)
+    {
+        super(message, cause);
+    }
+}
+
+/// Thrown when a web server's port is already in use.
+class PortInUseException : WebServerException
+{
+    private int port;
+
+    /// The port `port` is in use, as `cause` reported.
+    this(int port, Throwable cause = null)
+    {
+        import std.conv : to;
+
+        super("Port " ~ port.to!string ~ " is already in use", cause);
+        this.port = port;
+    }
+
+    /// The port that is in use.
+    int getPort() const pure nothrow @nogc
+    {
+        return port;
+    }
+}
+
+/// Explains a `PortInUseException`: Boot's "Web server failed to start" report.
+final class PortInUseFailureAnalyzer : AbstractFailureAnalyzer!PortInUseException
+{
+    protected override FailureAnalysis analyze(Throwable rootFailure, PortInUseException cause)
+    {
+        import std.conv : to;
+
+        const port = cause.getPort().to!string;
+        return new FailureAnalysis("Web server failed to start. Port " ~ port ~ " was already in use.",
+                "Identify and stop the process that's listening on port "
+                ~ port ~ " or configure this application to listen on another port.", cause);
+    }
+}

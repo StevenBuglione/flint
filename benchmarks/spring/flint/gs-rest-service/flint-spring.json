@@ -1,14 +1,12 @@
 {
   "schema": "flint.spring-port/1",
-  "status": "skeleton",
-  "note": "A skeleton by proof-harness (item 14) for boot to rework (item 3): the guide's three files ported, and the build commands the harness expects. It does not build until Boot's web server auto-configuration and the Flint AOT build of a Boot application land; until then spring_bench.py build --impl flint fails, which every claim treats as a failure. Replace the commands with what flint build offers then.",
-  "build": ["flint", "build", "--release"],
-  "binary": "build/gs-rest-service",
+  "build": ["flint", "build", "--profile", "release"],
+  "binary": ".flint/build/release/gs-rest-service",
   "measure": {
     "cached": ["flint", "build"],
-    "scratch": ["flint", "build", "--no-platform-cache"],
-    "edit_source": "src/com/example/restservice/greeting_controller.d",
-    "O3": {"command": ["flint", "build", "--profile", "release"], "binary": "build/gs-rest-service"},
-    "Oz": {"command": ["flint", "build", "--profile", "size"], "binary": "build/gs-rest-service"}
+    "scratch": ["flint", "build", "--force"],
+    "edit_source": "src/gs_rest_service/app.d",
+    "O3": {"command": ["flint", "build", "--profile", "release"], "binary": ".flint/build/release/gs-rest-service"},
+    "Oz": {"command": ["flint", "build", "--profile", "size"], "binary": ".flint/build/size/gs-rest-service"}
   }
 }

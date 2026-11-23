@@ -630,6 +630,26 @@ unittest
 /// dub.sdl's `dependency` lines, so the list follows packages when they move. `flint:x` names resolve to
 /// framework/x or packages/x, whichever has a dub.sdl. framework/java comes first: while framework/p1-interim exists it shadows
 /// flint.java.lang for packages that do not depend on it.
+/// The directory of each root DUB sub-package, by its `name`.
+private string[string] subPackageDirectories(string root)
+{
+    import std.file : exists, readText;
+    import std.path : buildPath;
+    import std.regex : matchFirst, matchAll, regex;
+
+    string[string] directories;
+    foreach (match; matchAll(readText(buildPath(root, "dub.sdl")), regex(`(?m)^subPackage\s+"([^"]+)"`)))
+    {
+        const recipe = buildPath(root, match[1], "dub.sdl");
+        if (!exists(recipe))
+            continue;
+        const name = matchFirst(readText(recipe), regex(`(?m)^name\s+"([^"]+)"`));
+        if (!name.empty)
+            directories[name[1]] = buildPath(root, match[1]);
+    }
+    return directories;
+}
+
 private string[] closureImports(scope const string[] roots)
 {
     import std.algorithm.searching : canFind, startsWith;
@@ -655,14 +675,23 @@ private string[] closureImports(scope const string[] roots)
             {
                 // Only a directory with a recipe is a package: a checkout can keep a stale directory where a package
                 // used to live (packages/engine-aot before framework/engine-aot).
+                bool found;
                 foreach (base; ["framework", "packages"])
                 {
                     const candidate = buildPath(root, base, name[6 .. $]);
                     if (exists(buildPath(candidate, "dub.sdl")))
                     {
                         visit(candidate);
+                        found = true;
                         break;
                     }
+                }
+                // Boot's packages are root sub-packages whose directories do not spell their names
+                // (flint:boot-core is boot/core/flint-boot).
+                if (!found)
+                {
+                    if (auto subPackage = name[6 .. $] in subPackageDirectories(root))
+                        visit(*subPackage);
                 }
             }
             else if (match[2].length)

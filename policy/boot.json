@@ -97,6 +97,11 @@
       "layer": "module",
       "dependencies": [
         "boot-core",
+        "boot-autoconfigure",
+        "beans",
+        "context",
+        "engine-servlet",
+        "jakarta-servlet",
         "java",
         "engine-aot"
       ],
@@ -108,7 +113,16 @@
       "layer": "module",
       "dependencies": [
         "boot-core",
+        "boot-autoconfigure",
+        "boot-web-server",
+        "beans",
+        "context",
+        "core",
+        "jackson-databind",
+        "jakarta-servlet",
         "java",
+        "web",
+        "webmvc",
         "engine-aot"
       ],
       "repo": "boot"

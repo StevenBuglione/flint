@@ -215,7 +215,7 @@ template describeModule(alias M, string name)
     pragma(msg, "FLINT-AOT-MODULE " ~ name);
     static foreach (member; __traits(allMembers, M))
     {
-        static if (isLocalType!(M, member))
+        static if (isLocalType!(M, member, name))
         {
             static if (describeTypes!(__traits(getMember, M, member), name))
             {
@@ -250,15 +250,18 @@ private template announce(T)
     enum announce = true;
 }
 
-private template isLocalType(alias M, string member)
+private template isLocalType(alias M, string member, string moduleName = null)
 {
     static if (__traits(compiles, __traits(getMember, M, member)))
     {
         alias symbol = __traits(getMember, M, member);
+        // A package.d module's alias is its package, which __traits(isSame) never equates with the module that
+        // declares the type: module-level members compare by the module's name.
         static if (is(symbol) && (is(symbol == class) || is(symbol == struct) || is(symbol == interface)
                 || is(symbol == enum) || is(symbol == union)))
             enum isLocalType = __traits(compiles, __traits(parent, symbol))
-                && __traits(isSame, __traits(parent, symbol), M);
+                && (__traits(isSame, __traits(parent, symbol), M) || (moduleName.length
+                    && __traits(fullyQualifiedName, __traits(parent, symbol)) == moduleName));
         else
             enum isLocalType = false;
     }
@@ -577,7 +580,12 @@ private string function_(T, string name, size_t index)()
         {
             static if (i)
                 r ~= ",";
-            r ~= "{\"name\":" ~ quote(__traits(identifier, P[i .. i + 1])) ~ ",\"type\":" ~ typeRef!(P[i])()
+            // An unnamed parameter, as in void f(int), is named by its position.
+            static if (__traits(compiles, __traits(identifier, P[i .. i + 1])))
+                r ~= "{\"name\":" ~ quote(__traits(identifier, P[i .. i + 1]));
+            else
+                r ~= "{\"name\":" ~ quote("_param_" ~ number(i));
+            r ~= ",\"type\":" ~ typeRef!(P[i])()
                 ~ ",\"storage\":" ~ words!(__traits(getParameterStorageClasses, F, i))() ~ ",\"annotations\":"
                 ~ attributes!(__traits(getAttributes, P[i .. i + 1]))() ~ "}";
         }

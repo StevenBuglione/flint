@@ -97,6 +97,8 @@ private struct Emitter
         import std.conv : to;
 
         imports[plan.name] = true;
+        foreach (name; plan.containerModules)
+            imports[name] = true;
         string declarations;
         foreach (ref config; plan.configurations)
             declarations ~= configuration(config);
@@ -148,6 +150,16 @@ private struct Emitter
         if (plan.queries.length)
             text ~= "import flint.engine.aot.query : DerivedQuery, QueryKind;\n";
         return text ~ "import flint.engine.aot.registry : AotRegistry;\n";
+    }
+
+    /// The type name a descriptor looks a property's type up by. A template instance is spelled by engine-aot's
+    /// `typeNameOf` (`Optional!int`, not the source's `Optional!(int)`), as `descriptorOf` registers it.
+    string typeNameText(string type)
+    {
+        import std.algorithm.searching : canFind;
+        import flint_tool.engine.aot.conditions : literal;
+
+        return type.canFind("!(") ? "imported!\"flint.engine.aot.name\".typeNameOf!(" ~ type ~ ")" : literal(type);
     }
 
     /// Note the modules a type needs.
@@ -597,7 +609,11 @@ private struct Emitter
         descriptorLocal[descriptor.type] = "descriptor_" ~ id;
         string text;
         foreach (ref property; descriptor.properties)
+        {
+            foreach (name; property.modules)
+                imports[name] = true;
             text ~= accessors(descriptor, property, id);
+        }
         if (descriptor.create.length)
             text ~= "private Any new_" ~ id ~ "()\n{\n    return Any.of(" ~ (descriptor.create == "init"
                     ? descriptor.type ~ ".init" : "new " ~ descriptor.type ~ "()") ~ ");\n}\n\n";
@@ -615,7 +631,7 @@ private struct Emitter
         {
             text ~= "    descriptor.properties = [\n";
             foreach (ref property; descriptor.properties)
-                text ~= "        PropertyDescriptor(" ~ literal(property.name) ~ ", " ~ literal(
+                text ~= "        PropertyDescriptor(" ~ literal(property.name) ~ ", " ~ typeNameText(
                         property.type) ~ ", " ~ mergedArray(property.annotations,
                         "        ") ~ ", &get_" ~ id ~ "_" ~ sanitize(property.name) ~ ", " ~ (property.writable
                         ? "&set_" ~ id ~ "_" ~ sanitize(property.name) : "null") ~ "),\n";
@@ -910,6 +926,9 @@ private struct Emitter
             text ~= "    auto descriptor_" ~ id ~ " = describe_" ~ id
                 ~ "();\n    registry.descriptor(descriptor_" ~ id ~ ");\n";
         }
+        enum describe = "    registry.descriptor(imported!\"flint.engine.aot.descriptor\".descriptorOf!(";
+        foreach (type; plan.containerDescriptors)
+            text ~= describe ~ type ~ ")());\n";
         foreach (ref bean; plan.beans)
             text ~= beanDefinition(bean);
         foreach (ref handler; plan.handlers)
