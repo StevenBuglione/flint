@@ -151,6 +151,10 @@
       "repo": "framework",
       "version": "monorepo"
     },
+    "flint:jackson-annotations": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:jackson-core": {
       "repo": "framework",
       "version": "monorepo"
@@ -175,6 +179,10 @@
       "repo": "flint",
       "version": "monorepo"
     },
+    "flint:slf4j-api": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:starter": {
       "repo": "boot",
       "version": "monorepo"
@@ -197,6 +205,10 @@
     },
     "flint:test": {
       "repo": "flint",
+      "version": "monorepo"
+    },
+    "flint:tx": {
+      "repo": "framework",
       "version": "monorepo"
     },
     "flint:validate": {
