@@ -1,5 +1,6 @@
 module flint.validate.internal.pattern;
 
+import flint.validate.internal.letters : isUnicodeLetter;
 import flint.validate.internal.text : decodeScalar;
 
 @safe:
@@ -22,10 +23,19 @@ private enum Op : ubyte
     repeat
 }
 
+// Which non-ASCII code points a selection contains.
+private enum Wide : ubyte
+{
+    none,
+    all,
+    letters, // \p{L}
+    nonLetters, // \P{L}
+}
+
 private struct Selection
 {
     ulong[2] bits;
-    bool nonAscii;
+    Wide wide;
 
     void include(uint first, uint last) pure nothrow @nogc
     {
@@ -37,19 +47,36 @@ private struct Selection
     {
         bits[0] |= other.bits[0];
         bits[1] |= other.bits[1];
-        nonAscii = nonAscii || other.nonAscii;
+        // Letters with non-letters, or anything with all, is every code point.
+        if (wide == Wide.none || other.wide == Wide.all)
+            wide = other.wide;
+        else if (other.wide != Wide.none && other.wide != wide)
+            wide = Wide.all;
     }
 
     void invert() pure nothrow @nogc
     {
+        static immutable Wide[4] inverse = [Wide.all, Wide.none, Wide.nonLetters, Wide.letters];
         bits[0] = ~bits[0];
         bits[1] = ~bits[1];
-        nonAscii = !nonAscii;
+        wide = inverse[wide];
     }
 
     bool contains(uint cp) const pure nothrow @nogc
     {
-        return cp < 128 ? (bits[cp >> 6] & (1UL << (cp & 63))) != 0 : nonAscii;
+        if (cp < 128)
+            return (bits[cp >> 6] & (1UL << (cp & 63))) != 0;
+        final switch (wide)
+        {
+        case Wide.none:
+            return false;
+        case Wide.all:
+            return true;
+        case Wide.letters:
+            return isUnicodeLetter(cp);
+        case Wide.nonLetters:
+            return !isUnicodeLetter(cp);
+        }
     }
 }
 
@@ -79,6 +106,9 @@ private struct RegexParser(size_t capacity)
     Term[capacity] terms;
     ushort termCount;
     string error;
+    // \p{L} and \P{L}: only for run-time patterns (Jakarta `@Pattern`, which follows java.util.regex). The
+    // compile-time pattern contract (handoff/specs/tier-1/validate.md) rejects Unicode property escapes.
+    bool unicodeProperties;
 
     int peek() const pure nothrow @nogc
     {
@@ -281,9 +311,16 @@ private struct RegexParser(size_t capacity)
         immutable lower = ch | 0x20;
         if (lower == 'd' || lower == 'w' || lower == 's')
             return Leaf(-1, shorthand(ch));
+        if (lower == 'p' && unicodeProperties)
+            return Leaf(-1, category(ch == 'P'));
         if (ch == 'x')
             return Leaf(hexByte());
+        return plainEscape(ch, lower);
+    }
 
+    // A control-character mnemonic or an escaped punctuation character.
+    private Leaf plainEscape(int ch, int lower)
+    {
         enum mnemonic = "nrtfv";
         enum escaped = "\n\r\t\f\v";
         foreach (index, letter; mnemonic)
@@ -296,6 +333,36 @@ private struct RegexParser(size_t capacity)
         else if (lower >= 'a' && lower <= 'z')
             fail("unsupported pattern escape");
         return Leaf(ch);
+    }
+
+    // \p{L} and \P{L} (also \pL, \p{IsL} and \p{IsLetter}): java.util.regex's Unicode letter category.
+    private Selection category(bool negated)
+    {
+        size_t start = offset, end = offset + 1;
+        if (take('{'))
+        {
+            start = offset;
+            while (peek() >= 0 && peek() != '}')
+                ++offset;
+            end = offset;
+            if (!take('}'))
+                fail("unclosed pattern property name");
+        }
+        else
+            ++offset;
+        const name = end <= expression.length ? expression[start .. end] : "";
+        Selection letters;
+        if (name == "L" || name == "IsL" || name == "IsLetter")
+        {
+            letters.include('A', 'Z');
+            letters.include('a', 'z');
+            letters.wide = Wide.letters;
+        }
+        else if (error is null)
+            fail("unsupported pattern property: only \\p{L} is supported");
+        if (negated)
+            letters.invert();
+        return letters;
     }
 
     private int hexByte()
@@ -477,7 +544,8 @@ private template PatternCode(string expression)
 }
 
 /// A pattern compiled at run time, for expressions that arrive as data (Flint AOT descriptors of
-/// Jakarta `@Pattern`). Same syntax, limits and automaton as the compile-time patterns.
+/// Jakarta `@Pattern`). Same syntax, limits and automaton as the compile-time patterns, plus java.util.regex's
+/// `\p{L}`/`\P{L}` letter category.
 package(flint) struct RuntimePattern
 {
     private Instruction[] code;
@@ -505,6 +573,7 @@ package(flint) RuntimePattern compileRuntimePattern()(string expression)
     }
     auto parser = new RegexParser!(2 * 4_096 + 1);
     parser.expression = expression;
+    parser.unicodeProperties = true;
     parser.add(Term(Op.empty));
     immutable syntax = parser.parse();
     if (parser.error !is null || parser.offset != expression.length)
@@ -636,4 +705,22 @@ private bool match(scope const(Instruction)[] instructions, ushort entry, scope 
         slot = next;
     }
     return active[slot].contains(0);
+}
+
+@("run-time patterns match java.util.regex's \\p{L} and \\P{L}; compile-time patterns still reject them")
+unittest
+{
+    static assert(patternError!`\p{L}` !is null);
+    auto name = compileRuntimePattern(`^[\p{L}]+([ '-][\p{L}]+){0,2}$`);
+    assert(name.error is null);
+    foreach (accepted; ["Ada", "José María", "李", "\U0001D49Cda", "O'Brien-Núñez"])
+        assert(name.matches(cast(const(ubyte)[]) accepted), accepted);
+    foreach (rejected; ["Ada2", "Ελένη 2", "Renée", "", "a  b"])
+        assert(!name.matches(cast(const(ubyte)[]) rejected), rejected);
+    auto others = compileRuntimePattern(`\P{L}+`);
+    assert(others.matches(cast(const(ubyte)[]) "12 ́") && !others.matches(cast(const(ubyte)[]) "12é"));
+    auto mixed = compileRuntimePattern(`[\p{L}\P{L}]`);
+    assert(mixed.matches(cast(const(ubyte)[]) " ") && mixed.matches(cast(const(ubyte)[]) "é"));
+    assert(compileRuntimePattern(`\p{Lu}`).error !is null);
+    assert(compileRuntimePattern(`\pL+`).matches(cast(const(ubyte)[]) "Zoë"));
 }
