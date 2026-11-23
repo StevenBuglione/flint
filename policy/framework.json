@@ -749,6 +749,7 @@
    "upstream": "spring-security@7.2.0",
    "dependencies": [
     "conc",
+    "engine-security",
     "java"
    ],
    "bench": {

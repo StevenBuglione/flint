@@ -20,7 +20,7 @@ One D module per Java package (rulebook R1), under `src/` with the Java package 
 | `.rest.api`, `.rest.dto` | the interfaces and models openapi-generator writes from `openapi.yml` |
 | `.rest.controller.v1`, `.v2` | the controllers |
 | `.rest.advice`, `.rest.validation` | the exception handler and `@PetAgeValidation` |
-| `.security` | `Roles` |
+| `.security` | `Roles`, `DisableSecurityConfig`, `BasicAuthenticationConfig` |
 | `org.springframework.data.jdbc.core` | `OneToManyResultSetExtractor`, from spring-data-jdbc-ext (petclinic's `spring-data-jdbc-core` 1.2.1), written clean-room |
 
 `flint.toml` sets `base-package = "org.springframework"`, so both roots are inside the module root. `resources/` has
@@ -46,4 +46,4 @@ POSTGRES_URL=jdbc:postgresql://127.0.0.1:5432/petclinic POSTGRES_USER=petclinic 
 
 `spring_bench.py accept petclinic-rest`: 109 of 109 cases on PostgreSQL, wire-exact. Not ported yet:
 
-- `BasicAuthenticationConfig` (`petclinic.security.enable=true`) is not ported.
+- `BasicAuthenticationConfig` (`petclinic.security.enable=true`) is ported, but the secured mode is not verified yet. It needs `crypt-blowfish` in the native prefix (BCrypt) and the secured-mode goldens.

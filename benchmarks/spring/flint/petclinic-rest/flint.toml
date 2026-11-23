@@ -29,6 +29,7 @@ executable = "petclinic-rest"
 "flint:java" = {}
 "flint:jdbc" = {}
 "flint:security-config" = {}
+"flint:security-crypto" = {}
 "flint:security-web" = {}
 "flint:slf4j-api" = {}
 "flint:tx" = {}
