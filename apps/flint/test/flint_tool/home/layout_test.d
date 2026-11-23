@@ -32,6 +32,17 @@ unittest
     expect(home.repoLayout("boot", "examples/framework/golden-tui")).toEqual("examples/framework/golden-tui");
 }
 
+@("a path built with the host's separator finds its layout rule, as buildPath gives `packages\\engine-web` on Windows")
+unittest
+{
+    import std.path : buildPath;
+
+    auto home = fixtureHome();
+    home.layout = rules.dup;
+    expect(home.repoLayout("framework", buildPath("packages", "engine-web"))).toEqual("engine/web");
+    expect(home.repoLayout("boot", buildPath("boot", "core", "flint-boot"))).toEqual("core/flint-boot");
+}
+
 @("a package resolves to the monorepo path when the checkout has it, else to its extracted place")
 unittest
 {

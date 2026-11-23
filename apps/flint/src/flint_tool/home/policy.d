@@ -206,11 +206,18 @@ struct Home
     }
 
     /// `directory` in the extracted `repo`'s layout: `engine/web`, `core/flint-boot`. Each rule rewrites the
-    /// first two path components; one ending in `/` or `-` is a prefix, any other must match whole.
+    /// first two path components; one ending in `/` or `-` is a prefix, any other must match whole. Rules are
+    /// written with `/`, so a Windows path from `buildPath` (`packages\engine-web`) is read with `/` too.
     string repoLayout(string repo, string directory) const
     {
         import std.algorithm.searching : countUntil, endsWith, startsWith;
 
+        version (Windows)
+        {
+            import std.array : replace;
+
+            directory = directory.replace("\\", "/");
+        }
         if (repo == "flint")
             return directory;
         const first = directory.countUntil('/');
