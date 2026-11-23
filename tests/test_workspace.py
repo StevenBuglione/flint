@@ -32,8 +32,8 @@ class RepoPolicyTests(unittest.TestCase):
         self.assertIn('engine-security', workspace.packages_of('framework'))
         self.assertEqual(workspace.packages_of('ai'), ['engine-ai', 'engine-mcp'])
         self.assertEqual(workspace.packages_of('data-jdbc'), ['engine-data'])
-        self.assertIn('boot-autoconfigure-web', workspace.packages_of('boot'))
-        self.assertIn('starter-web', workspace.packages_of('boot'))
+        self.assertIn('boot-core', workspace.packages_of('boot'))
+        self.assertIn('boot-starter-web', workspace.packages_of('boot'))
         for name, (repo, _) in owners.items():
             self.assertIn(repo, repos, name)
 
@@ -96,7 +96,7 @@ class PlatformModuleTests(unittest.TestCase):
         import platform_modules as module
         self.assertEqual(module.problems(), [])
         bom = json.loads((ROOT / 'flint-dependencies.json').read_text())
-        self.assertEqual(bom['artifacts']['flint:starter-web'], {'repo': 'boot', 'version': pinned('boot')})
+        self.assertEqual(bom['artifacts']['flint:boot-core'], {'repo': 'boot', 'version': pinned('boot')})
         self.assertEqual(bom['artifacts']['flint:arena'], {'repo': 'flint', 'version': pinned('flint')})
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -122,7 +122,9 @@ class PlatformModuleTests(unittest.TestCase):
             added = subprocess.run([str(flint), 'add', 'web'], cwd=project, capture_output=True, text=True)
             self.assertEqual(added.returncode, 0, added.stderr)
             lock = (project / 'flint.lock').read_text()
-            self.assertIn('name = "flint:starter-web"\nkind = "core"\nsource = "flint-home"\nplatform = "boot@'
+            # flint:starter-web before the cutover; Spring Boot's flint:boot-starter-web once it is legacy-starter-web.
+            starter = 'starter-web' if MONOREPO else 'boot-starter-web'
+            self.assertIn('name = "flint:' + starter + '"\nkind = "core"\nsource = "flint-home"\nplatform = "boot@'
                           + pinned('boot') + '"', lock)
             self.assertIn('name = "flint:arena"\nkind = "core"\nsource = "flint-home"\nplatform = "flint@'
                           + pinned('flint') + '"', lock)

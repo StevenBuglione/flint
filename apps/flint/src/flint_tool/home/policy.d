@@ -232,6 +232,8 @@ struct Home
     {
         import std.path : buildPath;
 
+        if (repo == "flint")
+            return root; // the home is the flint repo; a workspace only redirects the other repos
         if (auto checkout = repo in workspaceCheckouts)
             return *checkout;
         foreach (ref entry; platformRepos)

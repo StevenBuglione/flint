@@ -78,7 +78,11 @@ private bool collect(ref Session session, const ref imported!"flint_tool.command
 {
     foreach (name; names)
     {
-        const starter = session.home.findStarter(starterName(name));
+        auto starter = session.home.findStarter(starterName(name));
+        // After the cutover the pre-port starters carry legacy names; `web` then means Spring Boot's
+        // flint:boot-starter-web.
+        if (starter is null)
+            starter = session.home.findStarter(bootStarterName(name));
         if (starter is null)
         {
             report.error("FLINT-E0009", "`" ~ name ~ "` is not a starter", "flint add " ~ starterList(session));
@@ -134,6 +138,17 @@ string starterName(string name)
 
     const bare = name.startsWith("flint:") ? name[6 .. $] : name;
     return bare.startsWith("starter-") ? bare : "starter-" ~ bare;
+}
+
+/// `web` names Spring Boot's flint:boot-starter-web when no flint:starter-web is left.
+string bootStarterName(string name)
+{
+    import std.algorithm.searching : startsWith;
+
+    const bare = name.startsWith("flint:") ? name[6 .. $] : name;
+    if (bare.startsWith("boot-starter-"))
+        return bare;
+    return "boot-starter-" ~ (bare.startsWith("starter-") ? bare[8 .. $] : bare);
 }
 
 /// Whether TOML text has the table `[section]` or a table below it.
@@ -205,6 +220,8 @@ unittest
 {
     assert(starterName("web") == "starter-web" && starterName("starter-data") == "starter-data");
     assert(starterName("flint:starter-security") == "starter-security");
+    assert(bootStarterName("web") == "boot-starter-web" && bootStarterName("starter-web") == "boot-starter-web");
+    assert(bootStarterName("flint:boot-starter-jdbc") == "boot-starter-jdbc");
     assert(hasSection("[app]\nx = 1\n[database.pool]\n", "database"));
     assert(hasSection("[server]\n", "server") && !hasSection("[servers]\n", "server"));
 }

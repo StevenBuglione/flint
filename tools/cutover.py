@@ -195,8 +195,8 @@ def checks(flint, target):
     tools = (flint / '.tools').resolve()
     env['PATH'] = os.pathsep.join([str(tools / 'dmd2' / 'linux' / 'bin64'), str(tools / 'bin'), env['PATH']])
     env.setdefault('SDL_VIDEODRIVER', 'offscreen')
+    # platform.lock alone resolves the fetched repos; FLINT_WORKSPACE would also redirect the suites' own homes.
     workspace = flint / '.flint' / 'platform' / 'workspace.json'
-    env['FLINT_WORKSPACE'] = str(workspace)
     flint_bin = str(flint / '.flint' / 'bin' / 'flint')
     results = []
     check('gates.py structural (fetched workspace)', [PYTHON, 'tools/gates.py', '--gate', 'structural', '--workspace',
