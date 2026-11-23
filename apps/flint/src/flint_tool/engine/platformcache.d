@@ -164,10 +164,11 @@ bool planPlatform(ref Session session, string root, const ref Resolution resolut
     if (joined)
         writeIfChanged(buildPath(root, sourceDirectory, "dub.sdl"), renderJoinedRoot(session.home,
                 resolution, buildPath(root, sourceDirectory)));
+    const source = joined ? buildPath(root, sourceDirectory) : session.home.root;
     writeIfChanged(buildPath(describeRoot, "dub.sdl"), renderDescribeRoot(resolution, joined
             ? "../platform-source" : session.home.root));
     string failure;
-    if (!describe(inputs, describeRoot, plan.modules, failure))
+    if (!describe(inputs, describeRoot, source, plan.modules, failure))
         return cacheFailed("DUB could not describe the platform modules", failure, report);
     assignKeys(plan.modules, inputs);
     size_t[] missing;
@@ -240,7 +241,216 @@ private string[] dubCommand(const ref PlatformInputs inputs, string verb, string
     ];
 }
 
-private bool describe(const ref PlatformInputs inputs, string describeRoot,
+/// Part of the description record: a change to its layout invalidates every record.
+private enum describeFormat = "flint.platform-describe/1";
+
+/// The platform modules as DUB describes them, from the project's description record while it is current. The
+/// record holds what `dub describe` said and what it depends on: the describe root, the tools, flags and
+/// environment, every package's dub.sdl, and the modification time of every directory holding a file DUB lists.
+/// Adding or removing a source file changes its directory's time, and editing one changes nothing DUB describes,
+/// so an edit build skips DUB and the parse.
+private bool describe(const ref PlatformInputs inputs, string describeRoot, string source,
+        out PlatformModule[] modules, out string failure)
+{
+    import std.path : buildPath;
+
+    const record = buildPath(describeRoot, "description.txt");
+    const stamp = describeStamp(inputs, describeRoot, source);
+    if (readDescription(record, stamp, modules))
+        return true;
+    if (!runDescribe(inputs, describeRoot, modules, failure))
+        return false;
+    writeDescription(record, stamp, modules);
+    return true;
+}
+
+private string describeStamp(const ref PlatformInputs inputs, string describeRoot, string source)
+{
+    import std.algorithm.sorting : sort;
+    import std.path : buildPath;
+    import flint_tool.support.files : readIfPresent, sha256Hex;
+
+    string[] environment;
+    foreach (ref variable; inputs.environment)
+        environment ~= variable.name ~ "=" ~ variable.value;
+    sort(environment);
+    string text = describeFormat ~ "\n" ~ inputs.dub ~ "\n" ~ inputs.dubSha256 ~ "\n" ~ inputs.compiler
+        ~ "\n" ~ inputs.compilerSha256 ~ "\n" ~ inputs.dflags ~ "\n" ~ inputs.target ~ "\n"
+        ~ inputs.workingDirectory ~ "\n" ~ listed("env", environment) ~ readIfPresent(buildPath(describeRoot,
+                "dub.sdl")) ~ "\n" ~ readIfPresent(buildPath(source, "dub.sdl"));
+    return sha256Hex(cast(const(ubyte)[]) text);
+}
+
+/// What a description depends on besides its stamp: `f <dub.sdl> <sha256>` and `d <directory> <mtime>` lines.
+private string[] watched(scope const PlatformModule[] modules)
+{
+    import std.algorithm.sorting : sort;
+    import std.algorithm.iteration : uniq;
+    import std.array : array;
+    import std.conv : to;
+    import std.file : FileException, timeLastModified;
+    import std.path : buildPath, dirName;
+    import flint_tool.support.files : cachedSha256File;
+
+    string[] directories;
+    string[] lines;
+    foreach (ref item; modules)
+    {
+        lines ~= "f " ~ buildPath(item.directory,
+                "dub.sdl") ~ " " ~ cachedSha256File(buildPath(item.directory, "dub.sdl"));
+        directories ~= item.directory;
+        directories ~= item.importPaths;
+        directories ~= item.stringImportPaths;
+        foreach (file; item.files)
+            directories ~= dirName(file);
+    }
+    sort(directories);
+    foreach (directory; directories.uniq.array)
+    {
+        long time = -1;
+        try
+            time = timeLastModified(directory).stdTime;
+        catch (FileException)
+        {
+        }
+        lines ~= "d " ~ directory ~ " " ~ time.to!string;
+    }
+    return lines;
+}
+
+private bool readDescription(string record, string stamp, out PlatformModule[] modules)
+{
+    import std.algorithm.searching : findSplit, startsWith;
+    import std.string : lineSplitter;
+    import flint_tool.support.files : readIfPresent;
+
+    const text = readIfPresent(record);
+    if (text.length == 0)
+        return false;
+    string[] lines;
+    foreach (line; text.lineSplitter)
+        lines ~= line;
+    if (lines.length < 2 || lines[0] != describeFormat || lines[1] != stamp)
+        return false;
+    string[] expected;
+    size_t index = 2;
+    for (; index < lines.length && (lines[index].startsWith("f ") || lines[index].startsWith("d ")); ++index)
+        expected ~= lines[index];
+    PlatformModule[] parsed;
+    for (; index < lines.length; ++index)
+    {
+        auto parts = lines[index].findSplit("\t");
+        if (parts[0] == "module")
+        {
+            parsed ~= PlatformModule.init;
+            parsed[$ - 1].name = parts[2];
+        }
+        else if (parsed.length == 0 || !setField(parsed[$ - 1], parts[0], parts[2]))
+            return false;
+    }
+    if (watched(parsed) != expected)
+        return false;
+    modules = parsed;
+    return true;
+}
+
+private void writeDescription(string record, string stamp, scope const PlatformModule[] modules)
+{
+    import std.algorithm.searching : canFind;
+    import std.array : join;
+    import std.conv : to;
+    import std.file : rename, write;
+    import std.process : thisProcessID;
+
+    string text = describeFormat ~ "\n" ~ stamp ~ "\n";
+    foreach (line; watched(modules))
+        text ~= line ~ "\n";
+    foreach (ref item; modules)
+    {
+        string[2][] fields = [
+            ["targetType", item.targetType], ["directory", item.directory],
+            ["targetFileName", item.targetFileName], ["artifact", item.artifact],
+            ["importPaths", item.importPaths.join("\x1f")],
+            ["stringImportPaths", item.stringImportPaths.join("\x1f")],
+            ["versions", item.versions.join("\x1f")], ["dflags", item.dflags.join("\x1f")],
+            ["lflags", item.lflags.join("\x1f")], ["libs", item.libs.join("\x1f")],
+            ["dependencies", item.dependencies.join("\x1f")], ["files", item.files.join("\x1f")]
+        ];
+        text ~= "module\t" ~ item.name ~ "\n";
+        foreach (field; fields)
+        {
+            if (field[1].canFind('\n') || field[1].canFind('\t'))
+                return; // not representable: describe again next time
+            text ~= field[0] ~ "\t" ~ field[1] ~ "\n";
+        }
+    }
+    const partial = record ~ "." ~ thisProcessID.to!string ~ ".partial";
+    write(partial, text);
+    rename(partial, record);
+}
+
+private bool setField(ref PlatformModule item, string name, string value)
+{
+    switch (name)
+    {
+    case "targetType":
+        item.targetType = value;
+        return true;
+    case "directory":
+        item.directory = value;
+        return true;
+    case "targetFileName":
+        item.targetFileName = value;
+        return true;
+    case "artifact":
+        item.artifact = value;
+        return true;
+    default:
+        return setList(item, name, splitList(value));
+    }
+}
+
+private bool setList(ref PlatformModule item, string name, string[] list)
+{
+    switch (name)
+    {
+    case "importPaths":
+        item.importPaths = list;
+        return true;
+    case "stringImportPaths":
+        item.stringImportPaths = list;
+        return true;
+    case "versions":
+        item.versions = list;
+        return true;
+    case "dflags":
+        item.dflags = list;
+        return true;
+    case "lflags":
+        item.lflags = list;
+        return true;
+    case "libs":
+        item.libs = list;
+        return true;
+    case "dependencies":
+        item.dependencies = list;
+        return true;
+    case "files":
+        item.files = list;
+        return true;
+    default:
+        return false;
+    }
+}
+
+private string[] splitList(string value)
+{
+    import std.array : split;
+
+    return value.length ? value.split("\x1f") : null;
+}
+
+private bool runDescribe(const ref PlatformInputs inputs, string describeRoot,
         out PlatformModule[] modules, out string failure)
 {
     import flint_tool.support.process : Launch, capture;
@@ -947,4 +1157,46 @@ version (Posix) @safe unittest  // The fixture spells POSIX paths.
     foreach (index; 0 .. 6)
         assert(exists(buildPath(cache, "platform", "web" ~ index.to!string)) == (index >= 2));
     assert(exists(buildPath(cache, "platform", "core")));
+}
+
+@safe unittest
+{
+    import core.time : seconds;
+    import std.conv : to;
+    import std.datetime.systime : Clock;
+    import std.file : exists, mkdirRecurse, rmdirRecurse, setTimes, tempDir, write;
+    import std.path : buildPath;
+    import std.process : thisProcessID;
+
+    const root = buildPath(tempDir, "flint-describe-" ~ thisProcessID.to!string);
+    scope (exit)
+        if (exists(root))
+            rmdirRecurse(root);
+    const source = buildPath(root, "web", "source", "flint", "web");
+    mkdirRecurse(source);
+    write(buildPath(root, "web", "dub.sdl"), "name \"web\"\n");
+    write(buildPath(source, "a.d"), "module flint.web.a;\n");
+    const old = Clock.currTime - 60.seconds;
+    setTimes(source, old, old);
+    PlatformModule web;
+    web.name = "flint:web";
+    web.targetType = "library";
+    web.directory = buildPath(root, "web");
+    web.importPaths = [buildPath(root, "web", "source")];
+    web.files = [buildPath(source, "a.d")];
+    web.versions = ["A", "B"];
+    const record = buildPath(root, "description.txt");
+    writeDescription(record, "stamp", [web]);
+    PlatformModule[] read;
+    assert(readDescription(record, "stamp", read));
+    assert(read.length == 1 && read[0].name == "flint:web" && read[0].versions == ["A", "B"]
+            && read[0].files == web.files && read[0].stringImportPaths.length == 0);
+    assert(!readDescription(record, "other stamp", read), "the stamp covers the tools, flags and recipes");
+
+    write(buildPath(source, "b.d"), "module flint.web.b;\n");
+    assert(!readDescription(record, "stamp", read), "a new file changes its directory's time");
+    writeDescription(record, "stamp", [web]);
+    assert(readDescription(record, "stamp", read));
+    write(buildPath(root, "web", "dub.sdl"), "name \"web\"\nversions \"C\"\n");
+    assert(!readDescription(record, "stamp", read), "a package's dub.sdl is part of the record");
 }
