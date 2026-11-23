@@ -27,7 +27,8 @@ the processes found, go into the receipt. A step that ends in a busy window is r
 as evidence. `--force-busy` measures anyway and marks the receipt `busy`, for harness checks only.
 
 Builds happen in detached worktrees under .flint/measure/worktrees/<commit> with their own native prefix; the
-shared .native is never written. Raw outputs go to .flint/measure/results/<id>/; the entry file keeps the receipt.
+shared .native is never written. Raw outputs and every attempt go to .flint/measure/results/<id>/ (attempts.jsonl); the entry file changes only
+when a run counts as evidence, which receives its receipt and status done.
 """
 from __future__ import annotations
 
@@ -216,6 +217,14 @@ def load_entry(name):
 
 def save_entry(entry):
     entry_path(entry['id']).write_text(json.dumps(entry, indent=2, ensure_ascii=False) + '\n')
+
+
+def log_attempt(entry, row):
+    """Every attempt, refused or measured, in .flint/measure/results/<id>/attempts.jsonl."""
+    directory = WORK / 'results' / entry['id']
+    directory.mkdir(parents=True, exist_ok=True)
+    with (directory / 'attempts.jsonl').open('a') as stream:
+        stream.write(json.dumps(row) + '\n')
 
 
 def entries():
@@ -514,9 +523,7 @@ def run(entry, force_busy=False, smoke=False):
         raise SystemExit(f"{entry['id']}: " + '; '.join(port_problems))
     before = quiet_snapshot()
     if not before['quiet'] and not force_busy:
-        entry.setdefault('attempts', []).append({'time': before['time'], 'outcome': 'not run: busy',
-                                                 'problems': before['problems']})
-        save_entry(entry)
+        log_attempt(entry, {'time': before['time'], 'outcome': 'not run: busy', 'problems': before['problems']})
         raise SystemExit(f"{entry['id']}: venus is busy: " + '; '.join(before['problems']))
     print(f"{entry['id']}: measuring ({entry['measure']['kind']})", flush=True)
     pin = entry['measure']['kind'] == 'startup'  # load_bench and measure_builds pin their own processes
@@ -535,10 +542,13 @@ def run(entry, force_busy=False, smoke=False):
                'evidence': evidence, 'host': os.uname().nodename, 'builds': built, 'window_before': before,
                'window_during': sampler.samples, 'foreign_activity_during': len(foreign), 'window_after': after, 'results_directory': str(outdir.relative_to(ROOT)), 'summary': summary}
     (outdir / 'receipt.json').write_text(json.dumps(receipt, indent=2) + '\n')
-    entry.setdefault('attempts', []).append(receipt)
+    log_attempt(entry, {'time': receipt['time'], 'outcome': receipt['outcome'], 'evidence': evidence,
+                        'receipt': str((outdir / 'receipt.json').relative_to(ROOT))})
     if evidence:
+        # Only evidence changes the entry file, so the queue's files change when there is something to commit.
+        entry.setdefault('attempts', []).append(receipt)
         entry['status'] = 'done'
-    save_entry(entry)
+        save_entry(entry)
     return receipt
 
 
@@ -562,7 +572,9 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if args.command == 'list':
         for entry in entries():
-            last = entry.get('attempts', [{}])[-1].get('outcome', '-') if entry.get('attempts') else '-'
+            log = WORK / 'results' / entry['id'] / 'attempts.jsonl'
+            lines = log.read_text().splitlines() if log.is_file() else []
+            last = json.loads(lines[-1])['outcome'] if lines else '-'
             print(f"{entry['id']:34} {entry['status']:8} {entry['measure']['kind']:10} last: {last:16} {entry['summary'][:70]}")
         return 0
     if args.command == 'quiet':
