@@ -25,11 +25,19 @@ The installer extracts the checksum-locked DMD, LDC and DUB sources, applies the
 
 **Resident toolchain compile server.** The first compile starts a background server for its compiler flags and compiles normally. The server parses and semantically analyses the modules in `dmd-server-prelude.txt`, then keeps two pre-forked workers per hardware thread waiting on a private Unix socket under `$XDG_RUNTIME_DIR/flint-dmd`. Later compiles with the same flags hand their arguments, working directory, environment and standard streams to a worker. The worker continues the ordinary driver as if earlier imports had already loaded those toolchain modules, then reports the exit status. Diagnostics go to the caller's terminal unchanged.
 
-The server only ever holds druntime and Phobos. Project and application modules are compiled from source by every build. A worker refuses the request before producing output, and the caller compiles in-process with the upstream driver path, when:
+The server holds druntime and Phobos, plus the platform modules a build names in `FLINT_DMD_SERVER_PRELUDE` (below). Project and application modules are compiled from source by every build. A worker refuses the request before producing output, and the caller compiles in-process with the upstream driver path, when:
 
-- a `-version=` or `-debug=` identifier was evaluated while the prelude loaded,
+- a `-version=` or `-debug=` identifier was evaluated while the prelude loaded, unless the platform prelude defines it,
 - an extra import path contains an entry that could shadow a preloaded package,
-- a root module belongs to a preloaded package.
+- a root module belongs to a preloaded package,
+- the request lacks one of the platform prelude's import paths or version identifiers.
+
+**Platform prelude (ADR-030 section 5).** `flint build` writes `.flint/generated/platform/dmd-server-prelude.txt` and passes it as `FLINT_DMD_SERVER_PRELUDE`: `-I<dir>` and `-version=<id>` lines, the build's DFLAGS, then the platform's module names. The server applies the paths and versions, then analyses those modules after the toolchain's, so an edit build analyses only the project's own modules. Windows' worker pool does not read it yet. The file's content and `DFLAGS` are part of the server key, so a platform change starts a new server. A request may name the prelude's import paths by any spelling that resolves to the same directory, as DUB's relative paths do. Two rules keep a served compile's objects equivalent to an in-process compile's:
+
+- `-allinst` compiles (packages DUB splits into chunks, and Flint AOT's generated platform library) use the toolchain-only server. Under `-allinst` an import makes the root module emit every instance the imported module instantiates, and a preloaded module's instances would escape that.
+- DMD skips an instance that a non-root module also instantiates, because that module's object emits it. The server ignores such instantiations by preloaded modules the request does not import, directly or not, because those modules would not have been loaded in-process.
+
+A server that cannot load its prelude, for example a missing module, leaves `<socket>.failed`. Clients then compile in-process for ten minutes instead of starting it again. gs-rest-service's edit build compiles its one project job in 72 ms instead of 141 ms with the toolchain-only server (186 ms in-process).
 
 The caller never uses the server for `-v`, `-deps`, `-makedeps`, `-X`, `-H`, `-D`, `-i`, `-run`, `-mixin`, `-mv`, `-lowmem`, `-conf`, `-vtemplates`, standard input, ImportC sources, or when a `dmd.conf` exists in the working directory or `$HOME`. The server key includes the compiler executable's identity, its configuration file and every semantic flag. Servers exit after 30 idle minutes.
 
@@ -56,7 +64,8 @@ The caller never uses the server for `-v`, `-deps`, `-makedeps`, `-X`, `-H`, `-D
 | `FLINT_DMD_SERVER=0` | Never use or start the compile server |
 | `FLINT_DMD_SERVER_IDLE=<seconds>` | Server idle lifetime (default 1800) |
 | `FLINT_DMD_SERVER_POOL=<n>` | Pre-forked workers per server |
-| `FLINT_DMD_SERVER_TRACE=<file>` | Append worker timing events |
+| `FLINT_DMD_SERVER_TRACE=<file>` | Append worker timing events (`compiled` or `refused` per request) |
+| `FLINT_DMD_SERVER_PRELUDE=<file>` | Platform prelude: import paths, versions and modules the server also preloads |
 | `FLINT_DMD_DIRECT_LINK=0` | Always link through `cc` |
 | `FLINT_LINK_THREADS=<n>` | mold thread count (default 4) |
 | `FLINT_DUB_PIPELINE=0` | Use DUB's sequential build |

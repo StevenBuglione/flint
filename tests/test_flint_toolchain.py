@@ -6,6 +6,7 @@ import subprocess
 import sys
 import tarfile
 import tempfile
+import time
 import unittest
 from pathlib import Path
 
@@ -45,11 +46,12 @@ class ForkSourcesTests(unittest.TestCase):
     def test_dmd_patch_touches_driver_condition_recording_trace_naming_and_diagnostics_only(self):
         # hdrgen.d and timetrace.d: -ftime-trace event naming without semantic side effects.
         # errors.d, flintdiag.d and mars.d: -verror-hide, confined to the diagnostic sink (ADR-027 section 5).
+        # templatesem.d: a served compile emits the template instances an in-process one would (platform prelude).
         files = [f for f in patched_files(TOOLCHAIN / 'dmd-2.114.0-flint.patch') if f not in AARCH64_FILES]
         self.assertEqual(files,
                          ['build.d', 'dmd/cond.d', 'dmd/errors.d', 'dmd/expressionsem.d', 'dmd/flintdiag.d',
                           'dmd/flintlink.d', 'dmd/flintserver.d', 'dmd/hdrgen.d', 'dmd/link.d', 'dmd/main.d',
-                          'dmd/mars.d', 'dmd/timetrace.d'])
+                          'dmd/mars.d', 'dmd/templatesem.d', 'dmd/timetrace.d'])
 
     def test_dmd_patch_leaves_out_local_classes_on_request(self):
         # ADR-030 section 5: -fno-moduleinfo-localclasses, named as LDC's, empties ModuleInfo.localClasses.
@@ -169,6 +171,133 @@ class FlintDubTests(unittest.TestCase):
                                     capture_output=True, text=True, encoding='utf-8', env=env, timeout=300)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertEqual(json.loads(result.stdout)['compiler'], 'ldc')
+
+
+def fork_dmd():
+    """The installed DMD fork when it serves a platform prelude (FLINT_DMD_SERVER_PRELUDE), else None."""
+    for host in ('linux', 'osx'):
+        dmd = ROOT / '.tools' / 'dmd2' / host / 'bin64' / 'dmd'
+        if dmd.is_file() and b'FLINT_DMD_SERVER_PRELUDE' in dmd.read_bytes():
+            return dmd
+    return None
+
+
+class CompileServerPreludeTests(unittest.TestCase):
+    """The compile server's platform prelude (item 23, ADR-030 section 5): FLINT_DMD_SERVER_PRELUDE names a file of
+    -I and -version= lines and module names that the server analyses once, beside druntime and Phobos."""
+
+    PLATFORM = {
+        # twice!int is instantiated at module level by a module the app never imports (CTFE in an initializer).
+        'plat/twice.d': 'module plat.twice;\nT twice(T)(T x) { return x * 2; }\n',
+        'plat/boot.d': 'module plat.boot;\npublic import plat.twice;\nversion (PlatformOn) enum platformOn = true;\n',
+        'plat/unused.d': 'module plat.unused;\nimport plat.twice;\nenum int doubled = twice!int(21);\n'
+                         '__gshared int[doubled] table;\n',
+    }
+    APP = 'import plat.boot;\nstatic assert(platformOn);\nint main() { return twice!int(21) == 42 ? 0 : 1; }\n'
+
+    def setUp(self):
+        self.dmd = fork_dmd()
+        if self.dmd is None or sys.platform == 'win32':
+            self.skipTest('the installed DMD fork predates the platform prelude (install_toolchains.py --compiler dmd '
+                          '--flint-fork)')
+        self.temp = Path(tempfile.mkdtemp(prefix='flint-prelude-'))
+        self.addCleanup(shutil.rmtree, self.temp, True)
+        self.addCleanup(self.stop_servers)
+        for name, text in self.PLATFORM.items():
+            (self.temp / 'lib' / name).parent.mkdir(parents=True, exist_ok=True)
+            (self.temp / 'lib' / name).write_text(text, encoding='utf-8')
+        (self.temp / 'app.d').write_text(self.APP, encoding='utf-8')
+        self.prelude = self.temp / 'prelude.txt'
+        self.write_prelude()
+        self.runtime = self.temp / 'run'
+        self.runtime.mkdir()
+        self.trace = self.temp / 'trace.txt'
+        self.env = dict(os.environ, XDG_RUNTIME_DIR=str(self.runtime), FLINT_DMD_SERVER_IDLE='60',
+                        FLINT_DMD_SERVER_PRELUDE=str(self.prelude), FLINT_DMD_SERVER_TRACE=str(self.trace))
+        self.env.pop('FLINT_DMD_SERVER', None)
+        self.env.pop('DFLAGS', None)
+
+    def write_prelude(self, extra=''):
+        self.prelude.write_text(f'-I{self.temp / "lib"}\n-version=PlatformOn\nplat.boot\nplat.unused\n{extra}',
+                                encoding='utf-8')
+
+    def stop_servers(self):
+        for proc in Path('/proc').glob('[0-9]*'):
+            try:
+                if str(self.runtime).encode() in (proc / 'cmdline').read_bytes():
+                    os.kill(int(proc.name), 9)
+            except (OSError, ValueError):
+                pass
+
+    def sockets(self):
+        return sorted((self.runtime / 'flint-dmd').glob('*.sock'))
+
+    def compile(self, *args, env=None):
+        return subprocess.run([str(self.dmd), *args], cwd=self.temp, env=env or self.env, capture_output=True,
+                              text=True, timeout=300)
+
+    def served(self, *args, env=None, sockets=1):
+        """Compiles until a server answers: the first request starts it and compiles in-process. Returns the
+        result and the server's verdict, 'compiled' or 'refused'."""
+        result = self.compile(*args, env=env)
+        for _ in range(600):
+            if len(self.sockets()) >= sockets:
+                break
+            time.sleep(0.1)
+        self.assertGreaterEqual(len(self.sockets()), sockets, (self.runtime / 'flint-dmd').iterdir())
+        before = self.trace.read_text().count('\n') if self.trace.exists() else 0
+        result = self.compile(*args, env=env)
+        events = self.trace.read_text().splitlines()[before:] if self.trace.exists() else []
+        verdicts = [line.split()[-1] for line in events if line.split()[-1] in ('compiled', 'refused')]
+        self.assertEqual(len(verdicts), 1, events)
+        return result, verdicts[0]
+
+    def test_served_compile_emits_what_an_in_process_compile_emits(self):
+        # The server analysed plat.unused, which instantiates twice!int; this compile does not import it, so app.o
+        # must still define twice!int, as without the server (DMD elides an instance a non-root module instantiates).
+        result, verdict = self.served('-I' + str(self.temp / 'lib'), '-version=PlatformOn', '-c', 'app.d')
+        self.assertEqual((result.returncode, verdict), (0, 'compiled'), result.stderr)
+        link = self.compile('app.o', '-ofapp', env=dict(self.env, FLINT_DMD_SERVER='0'))
+        self.assertEqual(link.returncode, 0, link.stderr)
+        self.assertEqual(subprocess.run([str(self.temp / 'app')]).returncode, 0)
+
+    def test_a_request_without_the_platform_paths_or_versions_compiles_in_process(self):
+        # A relative spelling of the platform path is the same path (DUB passes them relative to the package).
+        result, verdict = self.served('-Ilib', '-version=PlatformOn', '-c', 'app.d')
+        self.assertEqual((result.returncode, verdict), (0, 'compiled'), result.stderr)
+        result, verdict = self.served('-Ilib', '-c', 'app.d')
+        self.assertEqual(verdict, 'refused')
+        self.assertNotEqual(result.returncode, 0)       # in-process: static assert(platformOn) fails, as it should
+        (self.temp / 'other.d').write_text('int main() { return 0; }\n', encoding='utf-8')
+        result, verdict = self.served('-version=PlatformOn', '-c', 'other.d')
+        self.assertEqual((result.returncode, verdict), (0, 'refused'), result.stderr)
+
+    def test_allinst_compiles_use_the_toolchain_only_server(self):
+        # -allinst makes a root module emit the instances its imports instantiate, which a preloaded module's would
+        # escape: such compiles (Flint AOT's generated platform modules) keep the toolchain-only server.
+        (self.temp / 'other.d').write_text('int main() { return 0; }\n', encoding='utf-8')
+        result, verdict = self.served('-allinst', '-c', 'other.d')
+        self.assertEqual((result.returncode, verdict), (0, 'compiled'), result.stderr)
+
+    def test_the_prelude_content_and_dflags_select_the_server(self):
+        args = ('-Ilib', '-version=PlatformOn', '-c', 'app.d')
+        self.assertEqual(self.served(*args)[1], 'compiled')
+        self.write_prelude('# changed\n')
+        self.assertEqual(self.served(*args, sockets=2)[1], 'compiled')
+        self.assertEqual(self.served(*args, env=dict(self.env, DFLAGS='-w'), sockets=3)[1], 'compiled')
+
+    def test_a_prelude_that_cannot_load_stops_further_servers(self):
+        self.write_prelude('plat.missing\n')
+        result = self.compile('-Ilib', '-version=PlatformOn', '-c', 'app.d')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        for _ in range(600):
+            if list((self.runtime / 'flint-dmd').glob('*.sock.failed')):
+                break
+            time.sleep(0.1)
+        self.assertTrue(list((self.runtime / 'flint-dmd').glob('*.sock.failed')))
+        result = self.compile('-Ilib', '-version=PlatformOn', '-c', 'app.d')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.sockets(), [])
 
 
 class InstallerArgumentTests(unittest.TestCase):

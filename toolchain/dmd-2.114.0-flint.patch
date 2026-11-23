@@ -748,17 +748,25 @@ diff -ruN a/dmd/flintlink.d b/dmd/flintlink.d
 diff -ruN a/dmd/flintserver.d b/dmd/flintserver.d
 --- a/dmd/flintserver.d	1969-12-31 19:00:00.000000000 -0500
 +++ b/dmd/flintserver.d	2026-11-21 17:52:11.090753585 -0500
-@@ -0,0 +1,690 @@
+@@ -0,0 +1,980 @@
 +/**
 + * Resident toolchain compile server ("zygote") for the DMD driver.
 + *
 + * A server process parses and semantically analyses a fixed prelude of
-+ * toolchain modules (druntime and Phobos only), then forks one child per
++ * toolchain modules (druntime and Phobos), plus the platform modules a
++ * build names in `FLINT_DMD_SERVER_PRELUDE`, then forks one child per
 + * compile request.  Each child continues the ordinary driver from the
 + * point where the command line has been parsed, reusing the already
 + * analysed toolchain modules exactly as if an earlier import had loaded
 + * them.  Project and application modules are never preloaded, so every
 + * project build still compiles all of its own sources.
++ *
++ * The platform prelude is a file of lines: `-I<dir>` import paths and
++ * `-version=<id>` identifiers the server applies before loading anything,
++ * other switches (the build's DFLAGS, already part of the server key), and
++ * module names the server loads after the toolchain prelude.  The file's
++ * content is part of the server key, so each platform state has its own
++ * server.
 + *
 + * The client side runs at the start of the normal `dmd` entry point.  When
 + * no compatible server is running it starts one in the background and
@@ -767,6 +775,7 @@ diff -ruN a/dmd/flintserver.d b/dmd/flintserver.d
 + * A child refuses (exit status `zygoteIncompatible`) before producing any
 + * output whenever the request could observe the preloaded state:
 + *  - a `-version=`/`-debug=` identifier that the prelude queried,
++ *  - a missing `-version=` identifier that the platform prelude defines,
 + *  - an extra import path that could shadow a preloaded package,
 + *  - a root module inside a preloaded package.
 + * The client then compiles in-process with the stock driver.
@@ -774,6 +783,10 @@ diff -ruN a/dmd/flintserver.d b/dmd/flintserver.d
 + * Environment:
 + *   FLINT_DMD_SERVER=0         disable the client entirely
 + *   FLINT_DMD_SERVER_IDLE=<s>  idle seconds before a server exits (default 1800)
++ *   FLINT_DMD_SERVER_PRELUDE=<file>  platform prelude (see above)
++ *
++ * A server that cannot load its prelude leaves `<socket>.failed`; clients
++ * then compile in-process for ten minutes instead of starting it again.
 + */
 +module dmd.flintserver;
 +
@@ -1023,6 +1036,27 @@ diff -ruN a/dmd/flintserver.d b/dmd/flintserver.d
 +        h = fnv(h, &cmtime, cmtime.sizeof);
 +        h = fnv(h, &cst.st_size, cst.st_size.sizeof);
 +    }
++    // DFLAGS changes the server's own flags (the child re-reads it per request, the preloaded modules do not).
++    if (const dflags = getenv("DFLAGS"))
++        h = fnv(h, dflags, strlen(dflags) + 1);
++    // The platform prelude: its content decides what the server preloads. No server when it cannot be read.
++    // -allinst compiles (Flint AOT's generated platform modules) keep the toolchain-only server: under -allinst an
++    // import makes the root module emit every instance the imported module instantiates, which preloading would
++    // move out of the request's reach.
++    const prelude = getenv("FLINT_DMD_SERVER_PRELUDE");
++    bool usePrelude = prelude && *prelude;
++    foreach (i; 1 .. args.length)
++        if (equals(args[i], "-allinst"))
++            usePrelude = false;
++    if (usePrelude)
++        {
++            size_t length;
++            auto text = readWholeFile(prelude, length);
++            if (!text)
++                return false;
++            h = fnv(h, text, length);
++            free(text);
++        }
 +    Strings keyArgs;
 +    bool haveSource;
 +    foreach (i; 1 .. args.length)
@@ -1063,7 +1097,8 @@ diff -ruN a/dmd/flintserver.d b/dmd/flintserver.d
 +    strcpy(cast(char*) addr.sun_path.ptr, sock.ptr);
 +    if (connect(fd, cast(sockaddr*) &addr, addr.sizeof) != 0)
 +    {
-+        spawnServer(exe, sock.ptr, keyArgs);
++        if (!recentlyFailed(sock.ptr))
++            spawnServer(exe, sock.ptr, keyArgs, usePrelude);
 +        return false;
 +    }
 +
@@ -1121,7 +1156,49 @@ diff -ruN a/dmd/flintserver.d b/dmd/flintserver.d
 +    return true;
 +}
 +
-+private void spawnServer(const(char)* exe, const(char)* sock, ref Strings keyArgs)
++/// Reads a whole file into malloc'd memory (NUL terminated), or returns null.
++private char* readWholeFile(const(char)* path, out size_t length)
++{
++    auto f = fopen(path, "rb");
++    if (!f)
++        return null;
++    scope (exit) fclose(f);
++    size_t capacity = 4096;
++    auto buf = cast(char*) malloc(capacity + 1);
++    while (buf)
++    {
++        const n = fread(buf + length, 1, capacity - length, f);
++        length += n;
++        if (length < capacity)
++            break;
++        capacity *= 2;
++        auto grown = cast(char*) realloc(buf, capacity + 1);
++        if (!grown)
++            free(buf);
++        buf = grown;
++    }
++    if (!buf || ferror(f))
++    {
++        free(buf);
++        return null;
++    }
++    buf[length] = 0;
++    return buf;
++}
++
++/// True when the server for `sock` failed to load its prelude in the last ten minutes.
++private bool recentlyFailed(const(char)* sock)
++{
++    char[1200] marker;
++    snprintf(marker.ptr, marker.length, "%s.failed", sock);
++    stat_t st;
++    if (stat(marker.ptr, &st) != 0)
++        return false;
++    import core.stdc.time : time;
++    return time(null) - mtimeOf(st).tv_sec < 600;
++}
++
++private void spawnServer(const(char)* exe, const(char)* sock, ref Strings keyArgs, bool usePrelude)
 +{
 +    const pid = fork();
 +    if (pid < 0)
@@ -1153,6 +1230,8 @@ diff -ruN a/dmd/flintserver.d b/dmd/flintserver.d
 +        argv[2 + i] = a;
 +    argv[keyArgs.length + 2] = null;
 +    putenv(cast(char*) "FLINT_DMD_SERVER=0".ptr);
++    if (!usePrelude)
++        { import core.sys.posix.stdlib : unsetenv; unsetenv("FLINT_DMD_SERVER_PRELUDE"); }
 +    execv(exe, cast(char**) argv);
 +    _exit(127);
 +}
@@ -1203,6 +1282,86 @@ diff -ruN a/dmd/flintserver.d b/dmd/flintserver.d
 +    reportStatus(1); // the driver only calls exit() on failure
 +}
 +
++/// Leaves `<socket>.failed`, so clients stop starting this server for a while, and exits.
++private void preludeFailed(const(char)* what, const(char)* name = null)
++{
++    fprintf(stderr, "flint-dmd-server: %s%s%s\n", what, name ? " ".ptr : "".ptr, name ? name : "".ptr);
++    markFailed();
++    _exit(1);
++}
++
++/// True while the server loads its preludes: an exit then (the driver's fatal() on a missing module) is a failure.
++private __gshared bool preloading;
++
++extern (C) private void markFailedOnExit()
++{
++    if (preloading)
++        markFailed();
++}
++
++private void markFailed()
++{
++    char[1200] marker;
++    snprintf(marker.ptr, marker.length, "%s.failed", serverSocketPath);
++    const fd = open(marker.ptr, O_WRONLY | O_CREAT | O_TRUNC, octal600);
++    if (fd >= 0)
++        close(fd);
++}
++
++/**
++ * Applies the platform prelude named by FLINT_DMD_SERVER_PRELUDE: its import paths go before the toolchain's, its
++ * version identifiers are defined, and its module names are returned for loading after the toolchain prelude.
++ * Other switches are the build's DFLAGS, which the server already has (they are part of its key).
++ * Returns: false when the file cannot be read
++ */
++private bool applyPlatformPrelude(ref Strings modules)
++{
++    import core.sys.posix.stdlib : realpath;
++    import dmd.cond : VersionCondition;
++
++    const file = getenv("FLINT_DMD_SERVER_PRELUDE");
++    if (!file || !*file)
++        return true;
++    size_t length;
++    auto text = readWholeFile(file, length);
++    if (!text)
++        return false;
++    size_t inserted;
++    for (char* line = text; line < text + length;)
++    {
++        auto end = cast(char*) memchr(line, '\n', text + length - line);
++        if (!end)
++            end = text + length;
++        *end = 0;
++        auto n = end - line;
++        while (n && (line[n - 1] == '\r' || line[n - 1] == ' '))
++            line[--n] = 0;
++        if (n > 2 && line[0 .. 2] == "-I")
++        {
++            ImportPathInfo info;
++            info.path = line + 2;
++            global.path.insert(inserted, info);
++            global.importPaths.insert(inserted, line + 2);
++            ++inserted;
++            zygoteImportPaths.push(line + 2);
++            if (auto resolved = realpath(line + 2, null))
++                zygotePlatformPaths.push(resolved);
++        }
++        else if (n > 9 && line[0 .. 9] == "-version=")
++        {
++            try
++                VersionCondition.addGlobalIdent(line[9 .. n]);
++            catch (Exception)
++                return false;               // a reserved identifier
++            zygotePreludeVersions.push(Identifier.idPool(line[9 .. n]));
++        }
++        else if (n && line[0] != '-' && line[0] != '#')
++            modules.push(line);
++        line = end + 1;
++    }
++    return true;
++}
++
 +/**
 + * Load the prelude, then serve requests until idle.  Never returns.
 + *
@@ -1219,6 +1378,14 @@ diff -ruN a/dmd/flintserver.d b/dmd/flintserver.d
 +    const lock = open(lockPath.ptr, O_CREAT | O_RDWR, octal600);
 +    if (lock < 0 || flock(lock, LOCK_EX | LOCK_NB) != 0)
 +        _exit(0);
++
++    // The platform prelude's import paths and versions apply before anything loads; its modules load after the
++    // toolchain's.
++    Strings platformModules;
++    preloading = true;
++    atexit(&markFailedOnExit);
++    if (!applyPlatformPrelude(platformModules))
++        preludeFailed("cannot read FLINT_DMD_SERVER_PRELUDE");
 +
 +    // Prelude list next to the executable.
 +    const exe = selfExe();
@@ -1246,18 +1413,25 @@ diff -ruN a/dmd/flintserver.d b/dmd/flintserver.d
 +        catch (Throwable)
 +            ok = false;
 +        if (!ok)
-+        {
-+            fprintf(stderr, "flint-dmd-server: cannot preload %s\n", line.ptr);
-+            _exit(1);
-+        }
++            preludeFailed("cannot preload", line.ptr);
 +        if (global.errors)
-+        {
-+            fprintf(stderr, "flint-dmd-server: errors while preloading %s\n", line.ptr);
-+            _exit(1);
-+        }
++            preludeFailed("errors while preloading", line.ptr);
 +    }
 +    fclose(f);
++    foreach (name; platformModules)
++    {
++        bool ok;
++        try
++            ok = preload(name[0 .. strlen(name)].dup);
++        catch (Throwable)
++            ok = false;
++        if (!ok)
++            preludeFailed("cannot preload platform module", name);
++        if (global.errors)
++            preludeFailed("errors while preloading platform module", name);
++    }
 +
++    preloading = false;
 +    zygoteVersionCount = global.versionids.length;
 +    zygoteDebugCount = global.debugids.length;
 +
@@ -1393,7 +1567,7 @@ diff -ruN a/dmd/flintserver.d b/dmd/flintserver.d
 +        status = entry(argv);
 +    catch (Throwable)
 +        status = 1;
-+    traceMark("compiled");
++    traceMark(status == zygoteIncompatible ? "refused" : "compiled");
 +    reportStatus(status);
 +    traceMark("reported");
 +    _exit(status);
@@ -1438,6 +1612,122 @@ diff -ruN a/dmd/flintserver.d b/dmd/flintserver.d
 +        if (strlen(top) == name.length && strncmp(top, name.ptr, name.length) == 0)
 +            return true;
 +    return false;
++}
++
++/*********************************************************************
++ * Platform prelude: child-side checks
++ */
++
++import dmd.dmodule : Module;
++import dmd.root.aav : AssocArray;
++
++/// The platform prelude's import paths, resolved: a request may spell them differently (DUB passes them relative to
++/// the project).
++__gshared Strings zygotePlatformPaths;
++/// Version identifiers the platform prelude defines; every request must define them too.
++__gshared Array!Identifier zygotePreludeVersions;
++
++/// The platform prelude's import paths a request has named (see platformImportPath).
++private __gshared Array!bool zygotePlatformPathSeen;
++
++/// True when `dir` resolves to one of the platform prelude's import paths.
++bool platformImportPath(const(char)* dir)
++{
++    version (Posix)
++        import core.sys.posix.stdlib : realpath;
++    else
++        static char* realpath(const(char)*, char*) { return null; } // no platform prelude on Windows yet
++    auto resolved = realpath(dir, null);
++    if (!resolved)
++        return false;
++    scope (exit) free(resolved);
++    zygotePlatformPathSeen.setDim(zygotePlatformPaths.length);
++    foreach (i, p; zygotePlatformPaths)
++        if (strcmp(p, resolved) == 0)
++        {
++            zygotePlatformPathSeen[i] = true;
++            return true;
++        }
++    return false;
++}
++
++/// True when the request named every platform import path: without one, a preloaded module could resolve where an
++/// in-process compile would fail to find it.
++bool namesPlatformPaths()
++{
++    zygotePlatformPathSeen.setDim(zygotePlatformPaths.length);
++    foreach (seen; zygotePlatformPathSeen[])
++        if (!seen)
++            return false;
++    return true;
++}
++
++/// The preloaded modules a request imports, directly or not (computed before code generation).
++private __gshared AssocArray!(Module, bool) zygoteImported;
++private __gshared bool zygoteImportedKnown;
++
++/**
++ * Records which preloaded modules the request's root modules import, directly or through other modules. Called once
++ * semantic analysis is complete, before code generation.
++ */
++void notePreludeImports(ref Modules roots)
++{
++    Modules work;
++    foreach (r; roots)
++        work.push(r);
++    while (work.length)
++    {
++        auto m = work.pop();
++        foreach (imported; m.aimports)
++            if (!zygoteImported[imported])
++            {
++                *zygoteImported.getLvalue(imported) = true;
++                work.push(imported);
++            }
++    }
++    zygoteImportedKnown = true;
++}
++
++/**
++ * True when `m` is a preloaded module the request does not import. Without the server it would not have been loaded,
++ * so its template instantiations must not decide code generation (see needsCodegen): a root module elides an instance
++ * that a non-root module also instantiates, and the instance has to stay emitted as it would be without the server.
++ */
++bool preludeUnimported(Module m)
++{
++    if (!zygoteChild || !zygoteImportedKnown || zygoteImported[m])
++        return false;
++    foreach (z; zygoteModules)
++        if (z is m)
++            return true;
++    return false;
++}
++
++/// True when the platform prelude defines the version identifier `id`.
++bool preludeDefines(Identifier id)
++{
++    foreach (v; zygotePreludeVersions)
++        if (v is id)
++            return true;
++    return false;
++}
++
++/// True when every version identifier the platform prelude defined is also among the request's own (from `first`).
++bool definesPreludeVersions(size_t first)
++{
++    foreach (v; zygotePreludeVersions)
++    {
++        bool given;
++        foreach (i; first .. global.versionids.length)
++            if (global.versionids[i] is v)
++            {
++                given = true;
++                break;
++            }
++        if (!given)
++            return false;
++    }
++    return true;
 +}
 diff -ruN a/dmd/glue/package.d b/dmd/glue/package.d
 --- a/dmd/glue/package.d	2026-10-31 19:29:10.000000000 -0400
@@ -1542,10 +1832,11 @@ diff -ruN a/dmd/link.d b/dmd/link.d
          OutBuffer buf;
          foreach (i; 0 .. argv.length)
          {
-diff -ruN a/dmd/main.d b/dmd/main.d
---- a/dmd/main.d	2026-10-31 19:29:10.000000000 -0400
-+++ b/dmd/main.d	2026-11-21 17:13:04.055801639 -0500
-@@ -73,6 +73,8 @@
+diff --git a/dmd/main.d b/dmd/main.d
+index 2d7f373..196fa05 100644
+--- a/dmd/main.d
++++ b/dmd/main.d
+@@ -73,6 +73,8 @@ import dmd.target;
  import dmd.timetrace;
  import dmd.utils;
  import dmd.vsoptions;
@@ -1554,7 +1845,7 @@ diff -ruN a/dmd/main.d b/dmd/main.d
  
  /**
   * DMD's entry point, C main.
-@@ -148,9 +150,40 @@
+@@ -148,9 +150,40 @@ extern (C) int _Dmain(const(char)[][] dargs)
              fputs(buf.peekChars(), stderr);
          }
  
@@ -1595,7 +1886,7 @@ diff -ruN a/dmd/main.d b/dmd/main.d
  /************************************************************************************/
  
  private:
-@@ -176,7 +209,8 @@
+@@ -176,7 +209,8 @@ private int tryMain(const(char)[][] argv, out Param params)
  
      Strings files;
      Strings libmodules;
@@ -1605,7 +1896,7 @@ diff -ruN a/dmd/main.d b/dmd/main.d
  
      ErrorSink eSink = global.errorSink;
  
-@@ -187,11 +221,23 @@
+@@ -187,11 +221,26 @@ private int tryMain(const(char)[][] argv, out Param params)
          global.plugErrorSinks();
      }
  
@@ -1618,19 +1909,22 @@ diff -ruN a/dmd/main.d b/dmd/main.d
  
 +    if (zygoteChild)
 +    {
-+        // Identifiers the prelude evaluated must keep the server's answer.
++        // Identifiers the prelude evaluated must keep the server's answer (those the platform prelude defines do).
 +        foreach (i; zygoteVersionCount .. global.versionids.length)
-+            if (queriedByPrelude(recordedVersionQueries, global.versionids[i]))
++            if (queriedByPrelude(recordedVersionQueries, global.versionids[i]) && !preludeDefines(global.versionids[i]))
 +                return zygoteIncompatible;
 +        foreach (i; zygoteDebugCount .. global.debugids.length)
 +            if (queriedByPrelude(recordedDebugQueries, global.debugids[i]))
 +                return zygoteIncompatible;
++        // The platform modules were analysed with the platform prelude's versions.
++        if (!definesPreludeVersions(zygoteVersionCount))
++            return zygoteIncompatible;
 +    }
 +
      if (global.params.v.messageStyle == MessageStyle.sarif)
      {
          // Hand off the settings the CLI wrote into the original sink so the
-@@ -376,7 +422,7 @@
+@@ -376,7 +425,7 @@ private int tryMain(const(char)[][] argv, out Param params)
      {
          fatal();
      }
@@ -1639,7 +1933,7 @@ diff -ruN a/dmd/main.d b/dmd/main.d
      {
          if (params.jsonFieldFlags)
          {
-@@ -395,13 +441,16 @@
+@@ -395,13 +444,16 @@ private int tryMain(const(char)[][] argv, out Param params)
      setDefaultLibraries(target, driverParams.defaultlibname, driverParams.debuglibname);
  
      // Initialization
@@ -1663,7 +1957,7 @@ diff -ruN a/dmd/main.d b/dmd/main.d
  
      reconcileLinkRunLib(params, files.length, target.obj_ext, eSink);
      version(CRuntime_Microsoft)
-@@ -410,10 +459,13 @@
+@@ -410,10 +462,13 @@ private int tryMain(const(char)[][] argv, out Param params)
          initFPU();
      }
      import dmd.root.ctfloat : CTFloat;
@@ -1680,7 +1974,7 @@ diff -ruN a/dmd/main.d b/dmd/main.d
  
      if (params.v.verbose)
      {
-@@ -465,8 +517,31 @@
+@@ -465,8 +520,33 @@ private int tryMain(const(char)[][] argv, out Param params)
          atexit(&flushMixins); // see comment for flushMixins
      }
      scope(exit) flushMixins();
@@ -1698,7 +1992,7 @@ diff -ruN a/dmd/main.d b/dmd/main.d
 +        // could resolve a preloaded package differently.
 +        foreach (p; global.importPaths)
 +        {
-+            bool known;
++            bool known = platformImportPath(p);
 +            foreach (z; zygoteImportPaths)
 +                if (strcmp(z, p) == 0)
 +                {
@@ -1708,11 +2002,13 @@ diff -ruN a/dmd/main.d b/dmd/main.d
 +            if (!known && shadowsPrelude(p))
 +                return zygoteIncompatible;
 +        }
++        if (!namesPlatformPaths())
++            return zygoteIncompatible;
 +    }
  
      if (params.timeTrace)
      {
-@@ -474,6 +549,13 @@
+@@ -474,6 +554,13 @@ private int tryMain(const(char)[][] argv, out Param params)
          initializeTimeTrace(params.timeTraceGranularityUs, toCString(argv[0]).ptr);
      }
  
@@ -1726,7 +2022,7 @@ diff -ruN a/dmd/main.d b/dmd/main.d
      // Create Modules
      Modules modules;
      if (createModules(files, libmodules, params, target, eSink, modules))
-@@ -580,6 +662,21 @@
+@@ -580,6 +667,21 @@ private int tryMain(const(char)[][] argv, out Param params)
      }
      }
  
@@ -1748,10 +2044,22 @@ diff -ruN a/dmd/main.d b/dmd/main.d
      if (anydocfiles && modules.length && (driverParams.oneobj || params.objname))
      {
          eSink.error(Loc.initial, "conflicting Ddoc and obj generation options");
-@@ -912,6 +1009,63 @@
+@@ -802,6 +904,10 @@ private int tryMain(const(char)[][] argv, out Param params)
+             params.objfiles.push(mainModule.objfile.toChars());
+     }
+ 
++    // Code generation must not count template instantiations of preloaded modules this compile does not import.
++    if (zygoteChild)
++        notePreludeImports(modules);
++
+     {
+         ObjcGlue_initialize();
+         timeTraceBeginEvent(TimeTraceEventType.codegenGlobal);
+@@ -911,6 +1017,63 @@ private int tryMain(const(char)[][] argv, out Param params)
+     return status;
  }
  
- /**
++/**
 + * Load and analyse one prelude module exactly as an import would.
 + */
 +bool preloadModule(const(char)[] name)
@@ -1808,10 +2116,9 @@ diff -ruN a/dmd/main.d b/dmd/main.d
 +    return true;
 +}
 +
-+/**
+ /**
   * Parses the command line arguments and configuration files
   *
-  * Params:
 diff -ruN a/dmd/mars.d b/dmd/mars.d
 --- a/dmd/mars.d	2026-10-31 19:29:10.000000000 -0400
 +++ b/dmd/mars.d	2026-11-23 04:00:00.000000000 -0500
@@ -1834,6 +2141,21 @@ diff -ruN a/dmd/mars.d b/dmd/mars.d
          else if (startsWith(p + 1, "verror-supplements"))
          {
              if (!params.v.errorSupplementLimit.parseDigits(p.toDString()[20 .. $]))
+diff --git a/dmd/templatesem.d b/dmd/templatesem.d
+index fdb78e5..a57b192 100644
+--- a/dmd/templatesem.d
++++ b/dmd/templatesem.d
+@@ -3456,7 +3456,9 @@ bool needsCodegen(TemplateInstance ti)
+         }
+ 
+         // Elide codegen if `this` doesn't need it.
+-        if (tithis.minst && !tithis.minst.isRoot() && !tithis.minst.rootImports())
++        // Flint: not for a module only the compile server preloaded, which this compile does not import.
++        import dmd.flintserver : preludeUnimported;
++        if (tithis.minst && !tithis.minst.isRoot() && !tithis.minst.rootImports() && !preludeUnimported(tithis.minst))
+             return ThreeState.no;
+ 
+         return ThreeState.none;
 diff -ruN a/dmd/timetrace.d b/dmd/timetrace.d
 --- a/dmd/timetrace.d	2026-10-31 19:29:10.000000000 -0400
 +++ b/dmd/timetrace.d	2026-11-21 21:45:16.706324905 -0500
@@ -6548,10 +6870,10 @@ index 820f7b3..84baf07 100644
          // merge #define's with output
          argv.push("-dD");       // https://gcc.gnu.org/onlinedocs/cpp/Invocation.html#index-dD
 diff --git a/dmd/main.d b/dmd/main.d
-index aad33ac..48d9be7 100644
+index 196fa05..e538976 100644
 --- a/dmd/main.d
 +++ b/dmd/main.d
-@@ -1174,7 +1174,8 @@ bool parseCommandlineAndConfig(const(char)[][] argv, out Param params, ref Strin
+@@ -1183,7 +1183,8 @@ bool parseCommandlineAndConfig(const(char)[][] argv, out Param params, ref Strin
      if (char* p = getenv("DDOCFILE"))
          global.params.ddoc.files.shift(p);
  

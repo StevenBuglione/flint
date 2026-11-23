@@ -13,10 +13,10 @@ index ae18049..3bf4724 100644
  
  import core.stdc.errno;
 diff --git c/dmd/flintserver.d w/dmd/flintserver.d
-index d374bfc..b149061 100644
+index 370792d..e5b3e86 100644
 --- c/dmd/flintserver.d
 +++ w/dmd/flintserver.d
-@@ -30,6 +30,8 @@ import core.stdc.errno;
+@@ -43,6 +43,8 @@ import core.stdc.errno;
  import core.stdc.stdio;
  import core.stdc.stdlib;
  import core.stdc.string;
@@ -25,7 +25,7 @@ index d374bfc..b149061 100644
  import core.sys.posix.fcntl;
  import core.sys.posix.poll;
  import core.sys.posix.signal;
-@@ -39,6 +41,7 @@ import core.sys.posix.sys.un;
+@@ -52,6 +54,7 @@ import core.sys.posix.sys.un;
  import core.sys.posix.sys.wait;
  import core.sys.posix.unistd;
  import core.sys.posix.time : timespec;
@@ -33,7 +33,7 @@ index d374bfc..b149061 100644
  import core.stdc.stdlib : atexit;
  
  import dmd.arraytypes : Modules, Strings;
-@@ -71,6 +74,8 @@ __gshared Strings zygoteImportPaths;
+@@ -84,6 +87,8 @@ __gshared Strings zygoteImportPaths;
  /// Top level packages (or modules) of the prelude, e.g. `std`, `core`, `object`.
  __gshared Strings zygoteTopLevel;
  
@@ -42,7 +42,7 @@ index d374bfc..b149061 100644
  extern (C) private
  {
      int flock(int fd, int operation);
-@@ -82,6 +87,7 @@ extern (C) private
+@@ -95,6 +100,7 @@ extern (C) private
  }
  private enum LOCK_EX = 2, LOCK_NB = 4;
  private enum SYS_pidfd_open = 434;
@@ -50,7 +50,7 @@ index d374bfc..b149061 100644
  private enum uint magic = 0x464C4E54; // "FLNT"
  
  /*********************************************************************
-@@ -136,6 +142,8 @@ private ulong fnv(ulong h, const(void)* data, size_t n)
+@@ -149,6 +155,8 @@ private ulong fnv(ulong h, const(void)* data, size_t n)
      return h;
  }
  
@@ -59,7 +59,7 @@ index d374bfc..b149061 100644
  private bool fileExists(const(char)* path)
  {
      stat_t st;
-@@ -648,6 +656,661 @@ private void handleRequest(int conn, ChildEntry entry)
+@@ -822,6 +830,661 @@ private void handleRequest(int conn, ChildEntry entry)
      _exit(status);
  }
  
