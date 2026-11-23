@@ -194,6 +194,8 @@ Application code may only apply UDAs and call documented APIs.
 
 ## `api/mapping.json` entries
 
+An element key is an element id from the manifest, as `flint api extract` writes it, or a pattern over ids. In a pattern, `*` matches within one name and `**` matches anything, so `"org.springframework.jmx.**"` excludes a whole package. An exact id wins over any pattern, and a more specific pattern wins over a broader one. `upstream` may list several manifests. `docs/flint-cli.md` (API manifests) gives the precise rules.
+
 ```json
 { "rulebook": 1,
   "upstream": "spring-framework@v7.1.0",

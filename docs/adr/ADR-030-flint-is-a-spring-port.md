@@ -164,6 +164,13 @@ Creating the GitHub repositories is an outward step and waits for the owner's go
   - `api/mapping.json` classifies each element as ported, adapted (with a rule ID) or excluded (with a reason).
   - `flint api coverage` fails on any unclassified element.
   - `flint api diff` schedules the work of following a new upstream release.
+  - **The parser is a small Java declaration parser written in D** (`apps/flint/src/flint_tool/api/java.d`), not tree-sitter-java:
+    - **Closure.** The `flint` closure stays free of native code. It bootstraps from DUB with only the core D packages, and tree-sitter would make it the first CLI dependency to need a native recipe.
+    - **Scope.** A manifest needs declarations only. A lexer that understands comments, strings, characters and text blocks, plus bracket balancing over bodies and initializers, recovers them without a full grammar.
+    - **Size and speed.** It is about 1,000 lines, and it extracts Spring Framework's 4,789 files in under a second.
+    - **Verified.** On the pinned tags it parses every file of both trees. The published Maven Central jars, read with `javap -protected`, give the same set of types and the same member names and arities: 33,111 members for Framework v7.1.0 and 12,611 for Boot v4.2.0. The only differences are classes javac writes but no source declares (bridge methods, public methods inherited from package-private superclasses, and Kotlin and AspectJ types), and the repackaged ASM, CGLIB and Objenesis sources, which the check leaves out on the jar side.
+
+    `flint port-spring` translates method bodies, which a declaration parser cannot read, so it still uses tree-sitter-java.
 - **Behaviour.** Each module ports its upstream JUnit tests and publishes counts of ported, passing and excluded tests.
 - **Side by side.** Spring Guides applications, spring-petclinic-rest, classic spring-petclinic and the vibe benchmark's Spring Boot references (`benchmarks/vibe/reference/spring`) are ported to Flint. One black-box suite runs against the Java and Flint applications and requires identical status codes, headers, JSON (including Spring's error and `ProblemDetail` bodies) and actuator output.
 - **Mechanical translation.** A deterministic translator, `flint port-spring` (tree-sitter-java, MIT), applies only rules with an ID. Its score is the share of Guides files that compile and pass without edits. It tests the rulebook; the hand ports stay the acceptance artifacts.
