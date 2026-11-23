@@ -86,6 +86,11 @@ struct PlatformPlan
     size_t primed;
     /// The compile server's prelude for the project's platform modules: FLINT_DMD_SERVER_PRELUDE.
     string prelude;
+    /// The cache root.
+    string cache;
+    /// Hash of the tools, flags, target and every platform module's key: what an archive compiled against the
+    /// platform depends on besides its own sources (`aotLibraryModule`).
+    string platformKey;
 }
 
 /// What keys and builds the platform modules: the tools, flags and environment of the project's build.
@@ -151,7 +156,7 @@ bool planPlatform(ref Session session, string root, const ref Resolution resolut
     size_t[] missing;
     foreach (position, ref item; plan.modules)
     {
-        if (built(item) && !cached(item, inputs.cache))
+        if (built(item) && !cachedArchive(item, inputs.cache))
             missing ~= position;
     }
     if (missing.length)
@@ -163,7 +168,7 @@ bool planPlatform(ref Session session, string root, const ref Resolution resolut
             return cacheFailed("the platform modules failed to build", failure, report);
         foreach (position; missing)
         {
-            if (!store(plan.modules[position], inputs.cache, failure))
+            if (!storeArchive(plan.modules[position], inputs.cache, failure))
                 return cacheFailed("a platform archive could not be stored", failure, report);
         }
         plan.primed = missing.length;
@@ -176,6 +181,8 @@ bool planPlatform(ref Session session, string root, const ref Resolution resolut
     }
     writeIfChanged(buildPath(root, platformDirectory, "dub.sdl"), renderPlatformRoot(plan.modules));
     plan.prelude = buildPath(root, preludeFile);
+    plan.cache = inputs.cache;
+    plan.platformKey = platformKeyOf(plan.modules, inputs);
     writeIfChanged(plan.prelude, renderPrelude(plan.modules, resolution.direct, inputs.dflags));
     plan.active = true;
     return true;
@@ -380,7 +387,8 @@ string entryDirectory(string cache, const ref PlatformModule item)
 }
 
 /// Whether a module's archive is in the cache; sets its path and digest when it is.
-private bool cached(ref PlatformModule item, string cache)
+/// Whether `item`'s archive is in the cache; sets its `archive` and `archiveSha256` when it is.
+bool cachedArchive(ref PlatformModule item, string cache)
 {
     import std.file : exists;
     import std.json : JSONException, parseJSON;
@@ -419,7 +427,7 @@ private bool prime(const ref PlatformInputs inputs, string describeRoot, out str
 
 /// Copy a module's freshly built archive into the cache with normalized member headers, then record its digest.
 /// The archive and its record are written under temporary names and renamed, so a reader never sees half of one.
-private bool store(ref PlatformModule item, string cache, out string failure)
+bool storeArchive(ref PlatformModule item, string cache, out string failure)
 {
     import std.file : exists, mkdirRecurse, read, rename, write;
     import std.path : buildPath;
@@ -573,6 +581,43 @@ private string replaceDollars(string value)
     import std.array : replace;
 
     return value.replace("$", "$$");
+}
+
+private string platformKeyOf(scope const PlatformModule[] modules, const ref PlatformInputs inputs)
+{
+    import flint_tool.support.files : sha256Hex;
+
+    string text = cacheFormat ~ "\nworking-directory " ~ inputs.workingDirectory ~ "\nrelease " ~ inputs.release
+        ~ "\ncompiler " ~ inputs.compilerSha256 ~ "\ndub " ~ inputs.dubSha256 ~ "\ndflags "
+        ~ inputs.dflags ~ "\ntarget " ~ inputs.target ~ "\n";
+    foreach (ref item; modules) // sorted by name (parseDescription)
+        text ~= "module " ~ item.name ~ " " ~ item.key ~ "\n";
+    return sha256Hex(cast(const(ubyte)[]) text);
+}
+
+/// The AOT library (engine/recipe.d `renderAotLibraryRecipe`) as a cacheable archive. Its generated modules import no
+/// project module (FLINT-E1116), so its archive depends only on their text, the diagnostic flags and what the
+/// platform's archives depend on (`PlatformPlan.platformKey`). `files` are absolute paths below `aotDirectory`;
+/// `artifact` is where DUB writes the library.
+PlatformModule aotLibraryModule(const ref PlatformPlan plan, string aotDirectory,
+        scope const string[] files, scope const string[] diagnosticFlags, string artifact)
+{
+    import std.array : replace;
+    import std.path : baseName, dirSeparator, relativePath;
+    import flint_tool.engine.recipe : aotLibraryName;
+    import flint_tool.support.files : sha256File, sha256Hex;
+
+    PlatformModule item;
+    item.name = aotLibraryName;
+    item.targetType = "library";
+    item.targetFileName = baseName(artifact);
+    item.artifact = artifact;
+    string text = "flint.aot-library/1\nplatform " ~ plan.platformKey ~ "\n" ~ listed("diagnostic", diagnosticFlags);
+    foreach (file; files)
+        text ~= "file " ~ relativePath(file, aotDirectory).replace(dirSeparator, "/") ~ " " ~ sha256File(file) ~ "\n";
+    item.files = files.dup;
+    item.key = sha256Hex(cast(const(ubyte)[]) text);
+    return item;
 }
 
 /// The linker flags that link the cached archives: one group on ELF linkers, which resolve archives in one pass,

@@ -78,6 +78,9 @@ struct BuildOutcome
     imported!"flint_tool.project.native".NativeResolution natives;
     /// The platform cache's archives the artifact links.
     imported!"flint_tool.engine.platformcache".PlatformPlan platform;
+    /// The AOT library as a platform-cache entry: linked from the cache when `archive` is set, else stored there
+    /// after the build compiled it (engine/platformcache.d `aotLibraryModule`).
+    imported!"flint_tool.engine.platformcache".PlatformModule aotLibrary;
 }
 
 /// The profile, flags and DUB home a project build uses, settled before it prepares anything.
@@ -497,6 +500,7 @@ bool buildProject(ref Session session, const ref Manifest manifest, const ref Re
     result.artifact = artifactPath(manifest, request);
     if (!artifactExists(result.artifact, report))
         return false;
+    storeAotArchive(session, result);
     auto receipt = projectReceipt(session, manifest, toolchain, request, flags, result);
     result.receipt = receiptPath(result.artifact);
     writeReceipt(result.receipt, receipt);
@@ -614,7 +618,7 @@ private bool prepareLock(ref Session session, const ref Manifest manifest, const
 }
 
 private bool writeRecipes(ref Session session, const ref Manifest manifest, const ref Resolution resolution,
-        const ref BuildOutcome result, string[] diagnosticFlags, bool aot, ref Report report)
+        ref BuildOutcome result, string[] diagnosticFlags, bool aot, ref Report report)
 {
     import std.path : buildPath;
     import flint_tool.engine.cbuild : NativeCPolicy, loadNativeCPolicy;
@@ -641,12 +645,15 @@ private bool writeRecipes(ref Session session, const ref Manifest manifest, cons
                     renderAotLibraryRecipe(session.home, resolution, library, diagnosticFlags, result.platform.active));
             writeIfChanged(buildPath(manifest.root, aotLibraryDirectory, "flint_aot_library.d"),
                     renderAotLibraryLink(modules));
+            if (result.platform.active)
+                extras.aotArchive = planAotArchive(manifest.root, library, diagnosticFlags, result);
         }
         else
             extras.aotOwn = null;
     }
     extras.platform = result.platform.active;
-    extras.platformLflags = linkGroup(result.platform.archives);
+    extras.platformLflags = linkGroup(extras.aotArchive.length
+            ? result.platform.archives ~ extras.aotArchive : result.platform.archives);
     if (result.native.objects.length)
     {
         NativeCPolicy policy;
@@ -689,6 +696,39 @@ private bool writeRecipes(ref Session session, const ref Manifest manifest, cons
                 resolution, result.platform.active, directory));
     }
     return true;
+}
+
+/// Key the AOT library in the platform cache, and return its cached archive, or null when the build compiles it
+/// (`storeAotArchive` keeps it afterwards).
+private string planAotArchive(string root, scope const string[] library,
+        scope const string[] diagnosticFlags, ref BuildOutcome result)
+{
+    import std.path : buildNormalizedPath, buildPath;
+    import flint_tool.engine.aot.driver : aotDirectory;
+    import flint_tool.engine.platformcache : aotLibraryModule, cachedArchive;
+    import flint_tool.engine.recipe : recipeDirectory;
+
+    string[] files;
+    foreach (relative; library)
+        files ~= buildNormalizedPath(root, recipeDirectory, relative);
+    result.aotLibrary = aotLibraryModule(result.platform, buildNormalizedPath(root, aotDirectory), files,
+            diagnosticFlags, buildPath(root, ".flint", "build", "aot-library", "libflint-aot-library.a"));
+    return cachedArchive(result.aotLibrary, result.platform.cache) ? result.aotLibrary.archive : null;
+}
+
+/// After a build that compiled the AOT library, keep its archive in the platform cache for the next cold build of
+/// any project with the same closure. A failure to store it only costs that reuse.
+private void storeAotArchive(ref Session session, ref BuildOutcome result)
+{
+    import flint_tool.engine.platformcache : keptPerModule, prune, storeArchive;
+
+    if (result.aotLibrary.key.length == 0 || result.aotLibrary.archive.length)
+        return;
+    string failure;
+    if (storeArchive(result.aotLibrary, result.platform.cache, failure))
+        prune(result.platform.cache, keptPerModule);
+    else
+        session.progress("Uncached", "the AOT library: " ~ failure);
 }
 
 /// Split Flint AOT's modules, relative to the root recipe: `own` are the registry and the modules generated for the
@@ -849,6 +889,13 @@ private Receipt projectReceipt(ref Session session, const ref Manifest manifest,
 
         if (item.archive.length)
             receipt.platform_archives ~= PlatformArchiveRecord(item.name, item.key, item.archiveSha256);
+    }
+    if (result.aotLibrary.archive.length)
+    {
+        import flint_tool.engine.receipt : PlatformArchiveRecord;
+
+        receipt.platform_archives ~= PlatformArchiveRecord(result.aotLibrary.name,
+                result.aotLibrary.key, result.aotLibrary.archiveSha256);
     }
     receipt.portable = result.natives.nonPortable.length == 0;
     receipt.non_portable_reasons = result.natives.nonPortable.dup;

@@ -31,6 +31,9 @@ struct RecipeExtras
     /// Flint AOT's modules for the project's own source and its registry, relative to the recipe, when the rest
     /// build as the AOT library (`aotLibraryDirectory`). Empty: the project compiles every generated module.
     string[] aotOwn;
+    /// The AOT library's archive from the platform cache: the project links it instead of depending on the
+    /// library's recipe (engine/platformcache.d `aotLibraryModule`).
+    string aotArchive;
     /// The core packages come from `.flint/generated/platform`, the platform cache's recipe (ADR-030 section 5).
     bool platform;
     /// The linker flags that link the platform cache's archives.
@@ -110,8 +113,8 @@ string renderAotLibraryLink(scope const string[] modules)
 string renderAotLibraryRecipe(const ref Home home, const ref Resolution resolution,
         scope const string[] files, scope const string[] diagnosticFlags, bool platform)
 {
-    string text = header() ~ field("name", aotLibraryName) ~ field("targetType",
-            "library") ~ field("importPaths", "../aot") ~ fields("sourceFiles",
+    string text = header() ~ field("name", aotLibraryName) ~ field("targetType", "library") ~ field("targetPath",
+            "../../build/aot-library") ~ field("importPaths", "../aot") ~ fields("sourceFiles",
             files) ~ field("dflags", "-preview=dip1000");
     if (diagnosticFlags.length)
         text ~= fields("dflags", dubEscaped(diagnosticFlags));
@@ -127,8 +130,10 @@ private string aotFields(const ref RecipeExtras extras)
         return null;
     if (extras.aotOwn.length == 0)
         return field("sourcePaths", "../aot") ~ field("importPaths", "../aot");
-    return field("importPaths", "../aot") ~ fields("sourceFiles", extras.aotOwn ~ aotLibraryLink)
-        ~ "dependency " ~ quoted(aotLibraryName) ~ " path=" ~ quoted("../aot-library") ~ "\n";
+    const own = field("importPaths", "../aot") ~ fields("sourceFiles", extras.aotOwn ~ aotLibraryLink);
+    if (extras.aotArchive.length)
+        return own; // linked from the platform cache, with the platform's archives
+    return own ~ "dependency " ~ quoted(aotLibraryName) ~ " path=" ~ quoted("../aot-library") ~ "\n";
 }
 
 /// Whether a project has config/application.toml, which DI's compile-time conditions read.
