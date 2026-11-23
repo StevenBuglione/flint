@@ -179,6 +179,8 @@ identifiers, dollar-quoted strings and comments alone. Returns the rewritten SQL
 +/
 string numberParameters(string sql, out size_t count)
 {
+    if (indexOf(sql, '?') < 0)
+        return sql; // nothing to number: no copy
     string result;
     size_t i;
     while (i < sql.length)
@@ -763,8 +765,12 @@ final class FlintPreparedStatement : PreparedStatement
 
     private string nativeSql(string text)
     {
+        if (connection.driver != Driver.postgres)
+            return text;
+        if (connection.source !is null)
+            return connection.source.numberedSql(text);
         size_t count;
-        return connection.driver == Driver.postgres ? numberParameters(text, count) : text;
+        return numberParameters(text, count);
     }
 
     /// Bind the parameters into the arena as engine values.
@@ -2206,6 +2212,8 @@ final class FlintDataSource : DataSource
     private bool closed_;
     /// Statement buffers closed connections gave back; the first `freeScratch` are free.
     private ubyte[][] scratchBuffers;
+    /// `numberedSql`'s cache: each statement's text with numbered placeholders. Guarded by this object's monitor.
+    private string[string] numberedStatements;
     private size_t freeScratch;
 
     /// Create an unconfigured data source.
@@ -2372,6 +2380,29 @@ final class FlintDataSource : DataSource
 
     private void returned()
     {
+    }
+
+    /++
+    `sql` with its `?` placeholders numbered for PostgreSQL (`$1`, `$2`, ...), from a cache of the statements this
+    data source ran: an application runs the same few statements again and again, as Spring's
+    NamedParameterJdbcTemplate parses each once. Up to 256 statements are kept; past that the cache starts again.
+    +/
+    package(flint.engine) string numberedSql(string sql)
+    {
+        synchronized (this)
+        {
+            if (auto found = sql in numberedStatements)
+                return *found;
+        }
+        size_t count;
+        auto numbered = numberParameters(sql, count);
+        synchronized (this)
+        {
+            if (numberedStatements.length >= 256)
+                numberedStatements = null;
+            numberedStatements[sql] = numbered;
+        }
+        return numbered;
     }
 
     /// A statement buffer a closed connection gave back, or null.

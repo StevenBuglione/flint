@@ -52,6 +52,19 @@ unittest
     assert(numberParameters("select 1", count) == "select 1" && count == 0);
 }
 
+@("a statement without placeholders is not copied, and a data source numbers each statement once")
+unittest
+{
+    size_t count;
+    const plain = "select name from owners";
+    assert(numberParameters(plain, count) is plain, "a statement with no ? was copied");
+    auto source = new FlintDataSource;
+    const first = source.numberedSql("select * from t where a = ?");
+    const again = source.numberedSql("select * from t where a = ?".idup);
+    assert(first == "select * from t where a = $1");
+    assert(again is first, "the data source numbered the same statement twice");
+}
+
 @("parseUrl maps JDBC URLs to engine settings and rejects other drivers")
 unittest
 {
