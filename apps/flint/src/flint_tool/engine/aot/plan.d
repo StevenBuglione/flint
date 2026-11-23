@@ -817,11 +817,14 @@ private final class Analysis
         plan.diagnostics ~= Diagnostic(code, message, relative(file), line);
     }
 
+    /// A file relative to the project root, with '/' on every host, as Report shows diagnostics' files.
     string relative(string file)
     {
+        import flint_tool.diagnostics.report : portablePath;
+
         if (input.root.length && file.length > input.root.length && file[0 .. input.root.length] == input.root)
-            return file[input.root.length + 1 .. $];
-        return file;
+            return portablePath(file[input.root.length + 1 .. $]);
+        return portablePath(file);
     }
 
     string location(string file, long line)

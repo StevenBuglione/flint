@@ -634,6 +634,7 @@ private bool separable(string name, string source, string text, scope const Sour
         ref AotOutcome outcome)
 {
     import std.algorithm.searching : canFind;
+    import flint_tool.diagnostics.report : portablePath;
     import flint_tool.engine.aot.plan : Diagnostic;
 
     bool platform;
@@ -645,8 +646,9 @@ private bool separable(string name, string source, string text, scope const Sour
     {
         if (item.user && text.canFind("static import " ~ item.name ~ ";"))
         {
-            outcome.diagnostics ~= Diagnostic("FLINT-E1116", "the generated code of " ~ name
-                    ~ ", which is outside src/, would import the project " ~ "module " ~ item.name, source, 1);
+            const message = "the generated code of " ~ name
+                ~ ", which is outside src/, would import the project " ~ "module " ~ item.name;
+            outcome.diagnostics ~= Diagnostic("FLINT-E1116", message, portablePath(source), 1);
             return false;
         }
     }
