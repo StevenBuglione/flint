@@ -60,7 +60,16 @@ The lane runs these steps:
 4. the 7 live `mq` scenarios;
 5. the five compile-negative fixtures and the BetterC fixtures, on both compilers.
 
-**No passing receipt exists yet, so Gate 6's `linux-aarch64-glibc` entry is still false.** Every recording so far ran on a busy shared host, and each one stopped at a step after the 37 suites:
+**At `b758925`, the receipt `artifacts/platforms/linux-aarch64-glibc.json` records exit code 0 after 973 s.** The artifact `linux-aarch64-glibc.log` has sha256 `de9434b13e2a0514b664f29bff294ec8d5cee41d8fce7bfab5f66080c1016982`. The run covered every step:
+
+- the 37 packages on the fork's `dmd` and on `ldc2`, with every wall-clock bound asserted and no `FLINT_EMULATED`;
+- all 18 peered runs;
+- 7 of 7 live `mq` scenarios;
+- the compile-negative and BetterC fixtures on both compilers.
+
+`tools/collect_evidence.py`'s receipt check (`verified_receipt` against the commit) accepts that receipt, so Gate 6's `linux-aarch64-glibc` entry is true.
+
+The run took a window in which the macOS and DMD arm64 work held off heavy builds on `pluto`. `pluto`'s 1-minute load was 4.7 at the start and 7.2 at the end, and the VM process ran at `nice -10`. The earlier recordings ran on a busier host, and each stopped at a step after the 37 suites:
 
 | Commit | Exit | Time | Where it stopped | `pluto` load (1 min) |
 | --- | ---: | ---: | --- | --- |
@@ -69,14 +78,15 @@ The lane runs these steps:
 | `af56e50` | 1 | 1021 s | peered `flint:http` on `ldc2`: median exchange 803.6 µs against 800 µs | 8 at start, 17 at end |
 | `931ff7e` | 1 | 589 s | peered step: `flint test --verify` stops on FLINT-E0529, undeclared Boot-layer imports in `boot/core` | 3 at start, 8 at end |
 | `b989a48` | 1 | 1447 s | peered `flint:engine-http` on the fork: 15.389 ms of worker CPU against 15 ms | about 6 throughout |
+| `b758925` | **0** | 973 s | passed | 4.7 at start, 7.2 at end |
 
 Every functional assertion passed in every attempt. The first three each missed a different wall-clock bound, by 1–40%, under host contention (see below). The fourth passed the native providers and all 37 suites at the rebased head with every bound asserted, then stopped on a workspace check unrelated to arm64. The check came from a transient upstream state: the pre-port Boot packages under `boot/` imported modules that `policy/boot.json` did not declare. `10ae6c3` moved those packages to `legacy/`, and the macOS lane's peered step passes there.
 
 The fifth recording is the first with the fork. It passed the native providers and all 74 suite runs: the 37 packages on the fork's `dmd`, with every bound asserted, and on `ldc2`. It then passed 8 of the 9 peered packages on the fork. `engine-http` missed its worker-CPU bound by 2.6%, so the peered `ldc2` runs and the `mq` scenarios did not run. On a quiet VM, the dmd-arm64 work measured `engine-http` and `engine-web` passing 3 of 3 runs on the fork, and `engine-http` passed 3 of 3 on `ldc2`.
 
-Each failed receipt is kept with its log in the guest under `~/evidence/<commit>-attempt<n>/`. As with the other platforms (ADR-017 decision 4), receipts and logs stay on the runner rather than being committed. A receipt is bound to its commit, so the lane must be re-run after every rebase. Once a run passes, `tools/collect_evidence.py`'s receipt check (`verified_receipt` against the commit) makes Gate 6's entry true.
+Each receipt is kept with its log in the guest: the passing one under `~/evidence/b758925-pass/`, and the failed ones under `~/evidence/<commit>-attempt<n>/`. As with the other platforms (ADR-017 decision 4), receipts and logs stay on the runner rather than being committed. A receipt is bound to its commit, so the lane must be re-run after every rebase.
 
-To record it on a quiet host:
+To record it again, on a quiet host:
 
 ```bash
 ~/flint-work/lima/quiet-lane.sh lane   # on pluto
