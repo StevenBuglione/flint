@@ -19,7 +19,7 @@ struct Import
 struct Configuration
 {
     /// Bean name.
-    @AliasFor(annotation : ClassRef("flint.stereotype.Component"))
+    @AliasFor(annotation: ClassRef("flint.stereotype.Component"))
     string value;
     /// Whether `@Bean` methods return the container's instances when called directly.
     bool proxyBeanMethods = true;

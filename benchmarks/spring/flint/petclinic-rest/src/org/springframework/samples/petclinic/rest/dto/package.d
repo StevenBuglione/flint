@@ -50,9 +50,8 @@ class PetTypeFieldsDto
 
     ///
     @NotNull
-    @Pattern(regexp : "^[\\p{L}][\\p{L}\\s\\-']{0,79}$")
-    @Size(min : 1, max:
-            80)
+    @Pattern(regexp: "^[\\p{L}][\\p{L}\\s\\-']{0,79}$")
+    @Size(min: 1, max: 80)
     @JsonProperty("name")
     string getName()
     {
@@ -94,9 +93,8 @@ class PetTypeDto
 
     ///
     @NotNull
-    @Pattern(regexp : "^[\\p{L}][\\p{L}\\s\\-']{0,79}$")
-    @Size(min : 1, max:
-            80)
+    @Pattern(regexp: "^[\\p{L}][\\p{L}\\s\\-']{0,79}$")
+    @Size(min: 1, max: 80)
     @JsonProperty("name")
     string getName()
     {
@@ -183,9 +181,8 @@ class VisitFieldsDto
 
     ///
     @NotNull
-    @Pattern(regexp : "[\\s\\S]*\\S[\\s\\S]*")
-    @Size(min : 1, max:
-            255)
+    @Pattern(regexp: "[\\s\\S]*\\S[\\s\\S]*")
+    @Size(min: 1, max: 255)
     @JsonProperty("description")
     string getDescription()
     {
@@ -253,9 +250,8 @@ class VisitDto
 
     ///
     @NotNull
-    @Pattern(regexp : "[\\s\\S]*\\S[\\s\\S]*")
-    @Size(min : 1, max:
-            255)
+    @Pattern(regexp: "[\\s\\S]*\\S[\\s\\S]*")
+    @Size(min: 1, max: 255)
     @JsonProperty("description")
     string getDescription()
     {
@@ -345,9 +341,8 @@ class PetFieldsDto
 
     ///
     @NotNull
-    @Pattern(regexp : "[\\s\\S]*\\S[\\s\\S]*")
-    @Size(min : 1, max:
-            30)
+    @Pattern(regexp: "[\\s\\S]*\\S[\\s\\S]*")
+    @Size(min: 1, max: 30)
     @JsonProperty("name")
     string getName()
     {
@@ -444,9 +439,8 @@ class PetDto
 
     ///
     @NotNull
-    @Pattern(regexp : "[\\s\\S]*\\S[\\s\\S]*")
-    @Size(min : 1, max:
-            30)
+    @Pattern(regexp: "[\\s\\S]*\\S[\\s\\S]*")
+    @Size(min: 1, max: 30)
     @JsonProperty("name")
     string getName()
     {
@@ -615,9 +609,8 @@ class OwnerFieldsDto
 
     ///
     @NotNull
-    @Pattern(regexp : "^[\\p{L}]+([ '-][\\p{L}]+){0,2}$")
-    @Size(min : 1, max:
-            30)
+    @Pattern(regexp: "^[\\p{L}]+([ '-][\\p{L}]+){0,2}$")
+    @Size(min: 1, max: 30)
     @JsonProperty("firstName")
     string getFirstName()
     {
@@ -640,9 +633,8 @@ class OwnerFieldsDto
 
     ///
     @NotNull
-    @Pattern(regexp : "^[\\p{L}]+([ '-][\\p{L}]+){0,2}\\.?$")
-    @Size(min : 1, max:
-            30)
+    @Pattern(regexp: "^[\\p{L}]+([ '-][\\p{L}]+){0,2}\\.?$")
+    @Size(min: 1, max: 30)
     @JsonProperty("lastName")
     string getLastName()
     {
@@ -665,9 +657,8 @@ class OwnerFieldsDto
 
     ///
     @NotNull
-    @Pattern(regexp : "[\\s\\S]*\\S[\\s\\S]*")
-    @Size(min : 1, max:
-            255)
+    @Pattern(regexp: "[\\s\\S]*\\S[\\s\\S]*")
+    @Size(min: 1, max: 255)
     @JsonProperty("address")
     string getAddress()
     {
@@ -690,9 +681,8 @@ class OwnerFieldsDto
 
     ///
     @NotNull
-    @Pattern(regexp : "[\\s\\S]*\\S[\\s\\S]*")
-    @Size(min : 1, max:
-            80)
+    @Pattern(regexp: "[\\s\\S]*\\S[\\s\\S]*")
+    @Size(min: 1, max: 80)
     @JsonProperty("city")
     string getCity()
     {
@@ -715,9 +705,8 @@ class OwnerFieldsDto
 
     ///
     @NotNull
-    @Pattern(regexp : "^[0-9]{10}$")
-    @Size(min : 10, max:
-            10)
+    @Pattern(regexp: "^[0-9]{10}$")
+    @Size(min: 10, max: 10)
     @JsonProperty("telephone")
     string getTelephone()
     {
@@ -769,9 +758,8 @@ class OwnerDto
 
     ///
     @NotNull
-    @Pattern(regexp : "^[\\p{L}]+([ '-][\\p{L}]+){0,2}$")
-    @Size(min : 1, max:
-            30)
+    @Pattern(regexp: "^[\\p{L}]+([ '-][\\p{L}]+){0,2}$")
+    @Size(min: 1, max: 30)
     @JsonProperty("firstName")
     string getFirstName()
     {
@@ -794,9 +782,8 @@ class OwnerDto
 
     ///
     @NotNull
-    @Pattern(regexp : "^[\\p{L}]+([ '-][\\p{L}]+){0,2}\\.?$")
-    @Size(min : 1, max:
-            30)
+    @Pattern(regexp: "^[\\p{L}]+([ '-][\\p{L}]+){0,2}\\.?$")
+    @Size(min: 1, max: 30)
     @JsonProperty("lastName")
     string getLastName()
     {
@@ -819,9 +806,8 @@ class OwnerDto
 
     ///
     @NotNull
-    @Pattern(regexp : "[\\s\\S]*\\S[\\s\\S]*")
-    @Size(min : 1, max:
-            255)
+    @Pattern(regexp: "[\\s\\S]*\\S[\\s\\S]*")
+    @Size(min: 1, max: 255)
     @JsonProperty("address")
     string getAddress()
     {
@@ -844,9 +830,8 @@ class OwnerDto
 
     ///
     @NotNull
-    @Pattern(regexp : "[\\s\\S]*\\S[\\s\\S]*")
-    @Size(min : 1, max:
-            80)
+    @Pattern(regexp: "[\\s\\S]*\\S[\\s\\S]*")
+    @Size(min: 1, max: 80)
     @JsonProperty("city")
     string getCity()
     {
@@ -869,9 +854,8 @@ class OwnerDto
 
     ///
     @NotNull
-    @Pattern(regexp : "^[0-9]{10}$")
-    @Size(min : 10, max:
-            10)
+    @Pattern(regexp: "^[0-9]{10}$")
+    @Size(min: 10, max: 10)
     @JsonProperty("telephone")
     string getTelephone()
     {
@@ -1288,9 +1272,8 @@ class SpecialtyDto
 
     ///
     @NotNull
-    @Pattern(regexp : "^[\\p{L}][\\p{L}\\s\\-&/]{0,79}$")
-    @Size(min : 1, max:
-            80)
+    @Pattern(regexp: "^[\\p{L}][\\p{L}\\s\\-&/]{0,79}$")
+    @Size(min: 1, max: 80)
     @JsonProperty("name")
     string getName()
     {
@@ -1335,9 +1318,8 @@ class VetFieldsDto
 
     ///
     @NotNull
-    @Pattern(regexp : "^[\\p{L}]+([ '-][\\p{L}]+){0,2}$")
-    @Size(min : 1, max:
-            30)
+    @Pattern(regexp: "^[\\p{L}]+([ '-][\\p{L}]+){0,2}$")
+    @Size(min: 1, max: 30)
     @JsonProperty("firstName")
     string getFirstName()
     {
@@ -1360,9 +1342,8 @@ class VetFieldsDto
 
     ///
     @NotNull
-    @Pattern(regexp : "^[\\p{L}]+([ '-][\\p{L}]+){0,2}\\.?$")
-    @Size(min : 1, max:
-            30)
+    @Pattern(regexp: "^[\\p{L}]+([ '-][\\p{L}]+){0,2}\\.?$")
+    @Size(min: 1, max: 30)
     @JsonProperty("lastName")
     string getLastName()
     {
@@ -1441,9 +1422,8 @@ class VetDto
 
     ///
     @NotNull
-    @Pattern(regexp : "^[\\p{L}]+([ '-][\\p{L}]+){0,2}$")
-    @Size(min : 1, max:
-            30)
+    @Pattern(regexp: "^[\\p{L}]+([ '-][\\p{L}]+){0,2}$")
+    @Size(min: 1, max: 30)
     @JsonProperty("firstName")
     string getFirstName()
     {
@@ -1466,9 +1446,8 @@ class VetDto
 
     ///
     @NotNull
-    @Pattern(regexp : "^[\\p{L}]+([ '-][\\p{L}]+){0,2}\\.?$")
-    @Size(min : 1, max:
-            30)
+    @Pattern(regexp: "^[\\p{L}]+([ '-][\\p{L}]+){0,2}\\.?$")
+    @Size(min: 1, max: 30)
     @JsonProperty("lastName")
     string getLastName()
     {
@@ -1562,9 +1541,8 @@ class RoleDto
 
     ///
     @NotNull
-    @Pattern(regexp : "^ROLE_[A-Z][A-Z0-9_]{1,74}$")
-    @Size(min : 1, max:
-            80)
+    @Pattern(regexp: "^ROLE_[A-Z][A-Z0-9_]{1,74}$")
+    @Size(min: 1, max: 80)
     @JsonProperty("name")
     string getName()
     {
@@ -1609,8 +1587,7 @@ class UserDto
 
     ///
     @NotNull
-    @Size(min : 1, max:
-            80)
+    @Size(min: 1, max: 80)
     @JsonProperty("username")
     string getUsername()
     {
@@ -1632,8 +1609,7 @@ class UserDto
     }
 
     ///
-    @Size(min : 1, max:
-            80)
+    @Size(min: 1, max: 80)
     @JsonProperty("password")
     string getPassword()
     {

@@ -37,8 +37,7 @@ class Roles
 /// Spring Security's default headers are written, with `X-Frame-Options: SAMEORIGIN`.
 @Configuration
 @EnableWebSecurity
-@ConditionalOnProperty(name : ["petclinic.security.enable"], havingValue:
-        "false")
+@ConditionalOnProperty(name: ["petclinic.security.enable"], havingValue: "false")
 class DisableSecurityConfig
 {
     private alias Registry = AuthorizeHttpRequestsConfigurer.AuthorizationManagerRequestMatcherRegistry;
@@ -59,9 +58,8 @@ class DisableSecurityConfig
 /// Security on (`petclinic.security.enable=true`): HTTP Basic against the `users` and `roles` tables with BCrypt
 /// passwords, and `@PreAuthorize` method security.
 @Configuration
-@EnableMethodSecurity(prePostEnabled : true)  // Enable @PreAuthorize method-level security
-@ConditionalOnProperty(name : ["petclinic.security.enable"], havingValue:
-        "true")
+@EnableMethodSecurity(prePostEnabled: true)  // Enable @PreAuthorize method-level security
+@ConditionalOnProperty(name: ["petclinic.security.enable"], havingValue: "true")
 class BasicAuthenticationConfig
 {
     private alias Registry = AuthorizeHttpRequestsConfigurer.AuthorizationManagerRequestMatcherRegistry;

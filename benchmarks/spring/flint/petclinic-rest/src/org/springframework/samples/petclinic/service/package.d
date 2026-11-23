@@ -110,13 +110,13 @@ class ClinicServiceImpl : ClinicService
         this.petTypeRepository = petTypeRepository;
     }
 
-    @Transactional(readOnly : true)
+    @Transactional(readOnly: true)
     override Collection!Pet findAllPets()
     {
         return petRepository.findAll();
     }
 
-    @Transactional(readOnly : true)
+    @Transactional(readOnly: true)
     override Page!Pet findPets(Pageable pageable)
     {
         return petRepository.findAll(pageable);
@@ -128,13 +128,13 @@ class ClinicServiceImpl : ClinicService
         petRepository.delete_(pet);
     }
 
-    @Transactional(readOnly : true)
+    @Transactional(readOnly: true)
     override Visit findVisitById(int visitId)
     {
         return findEntityById(() => visitRepository.findById(visitId));
     }
 
-    @Transactional(readOnly : true)
+    @Transactional(readOnly: true)
     override Collection!Visit findAllVisits()
     {
         return visitRepository.findAll();
@@ -146,13 +146,13 @@ class ClinicServiceImpl : ClinicService
         visitRepository.delete_(visit);
     }
 
-    @Transactional(readOnly : true)
+    @Transactional(readOnly: true)
     override Vet findVetById(int id)
     {
         return findEntityById(() => vetRepository.findById(id));
     }
 
-    @Transactional(readOnly : true)
+    @Transactional(readOnly: true)
     override Collection!Vet findAllVets()
     {
         return vetRepository.findAll();
@@ -170,13 +170,13 @@ class ClinicServiceImpl : ClinicService
         vetRepository.delete_(vet);
     }
 
-    @Transactional(readOnly : true)
+    @Transactional(readOnly: true)
     override Collection!Owner findAllOwners()
     {
         return ownerRepository.findAll();
     }
 
-    @Transactional(readOnly : true)
+    @Transactional(readOnly: true)
     override Page!Owner findOwners(string lastName, Pageable pageable)
     {
         if (lastName !is null)
@@ -190,13 +190,13 @@ class ClinicServiceImpl : ClinicService
         ownerRepository.delete_(owner);
     }
 
-    @Transactional(readOnly : true)
+    @Transactional(readOnly: true)
     override PetType findPetTypeById(int petTypeId)
     {
         return findEntityById(() => petTypeRepository.findById(petTypeId));
     }
 
-    @Transactional(readOnly : true)
+    @Transactional(readOnly: true)
     override Collection!PetType findAllPetTypes()
     {
         return petTypeRepository.findAll();
@@ -214,13 +214,13 @@ class ClinicServiceImpl : ClinicService
         petTypeRepository.delete_(petType);
     }
 
-    @Transactional(readOnly : true)
+    @Transactional(readOnly: true)
     override Specialty findSpecialtyById(int specialtyId)
     {
         return findEntityById(() => specialtyRepository.findById(specialtyId));
     }
 
-    @Transactional(readOnly : true)
+    @Transactional(readOnly: true)
     override Collection!Specialty findAllSpecialties()
     {
         return specialtyRepository.findAll();
@@ -238,19 +238,19 @@ class ClinicServiceImpl : ClinicService
         specialtyRepository.delete_(specialty);
     }
 
-    @Transactional(readOnly : true)
+    @Transactional(readOnly: true)
     override Collection!PetType findPetTypes()
     {
         return petRepository.findPetTypes();
     }
 
-    @Transactional(readOnly : true)
+    @Transactional(readOnly: true)
     override Owner findOwnerById(int id)
     {
         return findEntityById(() => ownerRepository.findById(id));
     }
 
-    @Transactional(readOnly : true)
+    @Transactional(readOnly: true)
     override Pet findPetById(int id)
     {
         return findEntityById(() => petRepository.findById(id));
@@ -269,7 +269,7 @@ class ClinicServiceImpl : ClinicService
         visitRepository.save(visit);
     }
 
-    @Transactional(readOnly : true)
+    @Transactional(readOnly: true)
     override Collection!Vet findVets()
     {
         return vetRepository.findAll();
@@ -281,19 +281,19 @@ class ClinicServiceImpl : ClinicService
         ownerRepository.save(owner);
     }
 
-    @Transactional(readOnly : true)
+    @Transactional(readOnly: true)
     override Collection!Owner findOwnerByLastName(string lastName)
     {
         return ownerRepository.findByLastName(lastName);
     }
 
-    @Transactional(readOnly : true)
+    @Transactional(readOnly: true)
     override Collection!Visit findVisitsByPetId(int petId)
     {
         return visitRepository.findByPetId(petId);
     }
 
-    @Transactional(readOnly : true)
+    @Transactional(readOnly: true)
     override List!Specialty findSpecialtiesByNameIn(Set!string names)
     {
         return findEntityById(() => specialtyRepository.findSpecialtiesByNameIn(names));

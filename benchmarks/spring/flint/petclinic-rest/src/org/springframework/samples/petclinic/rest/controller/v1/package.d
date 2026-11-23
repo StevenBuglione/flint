@@ -41,7 +41,7 @@ private HttpHeaders locationOf(string path, int id)
 
 /// `OwnerRestControllerV1`.
 @RestController
-@CrossOrigin(exposedHeaders : ["errors, content-type"])
+@CrossOrigin(exposedHeaders: ["errors, content-type"])
 @RequestMapping("/api")
 class OwnerRestControllerV1 : OwnersApi
 {
@@ -166,7 +166,7 @@ class OwnerRestControllerV1 : OwnersApi
 
 /// `PetRestControllerV1`.
 @RestController
-@CrossOrigin(exposedHeaders : ["errors, content-type"])
+@CrossOrigin(exposedHeaders: ["errors, content-type"])
 @RequestMapping("api")
 class PetRestControllerV1 : PetsApi
 {
@@ -220,7 +220,7 @@ class PetRestControllerV1 : PetsApi
 
 /// `VisitRestControllerV1`.
 @RestController
-@CrossOrigin(exposedHeaders : ["errors, content-type"])
+@CrossOrigin(exposedHeaders: ["errors, content-type"])
 @RequestMapping("api")
 class VisitRestControllerV1 : VisitsApi
 {
@@ -283,7 +283,7 @@ class VisitRestControllerV1 : VisitsApi
 
 /// `PetTypeRestControllerV1`.
 @RestController
-@CrossOrigin(exposedHeaders : ["errors, content-type"])
+@CrossOrigin(exposedHeaders: ["errors, content-type"])
 @RequestMapping("api")
 class PetTypeRestControllerV1 : PettypesApi
 {
@@ -344,7 +344,7 @@ class PetTypeRestControllerV1 : PettypesApi
 
 /// `SpecialtyRestControllerV1`.
 @RestController
-@CrossOrigin(exposedHeaders : ["errors, content-type"])
+@CrossOrigin(exposedHeaders: ["errors, content-type"])
 @RequestMapping("api")
 class SpecialtyRestControllerV1 : SpecialtiesApi
 {
@@ -406,7 +406,7 @@ class SpecialtyRestControllerV1 : SpecialtiesApi
 
 /// `VetRestControllerV1`.
 @RestController
-@CrossOrigin(exposedHeaders : ["errors, content-type"])
+@CrossOrigin(exposedHeaders: ["errors, content-type"])
 @RequestMapping("api")
 class VetRestControllerV1 : VetsApi
 {
@@ -486,7 +486,7 @@ class VetRestControllerV1 : VetsApi
 
 /// `UserRestControllerV1`.
 @RestController
-@CrossOrigin(exposedHeaders : ["errors, content-type"])
+@CrossOrigin(exposedHeaders: ["errors, content-type"])
 @RequestMapping("api")
 class UserRestControllerV1 : UsersApi
 {
@@ -510,12 +510,12 @@ class UserRestControllerV1 : UsersApi
 
 /// `RootRestControllerV1`: the root redirects to the Swagger UI.
 @RestController
-@CrossOrigin(exposedHeaders : ["errors, content-type"])
+@CrossOrigin(exposedHeaders: ["errors, content-type"])
 @RequestMapping("/")
 class RootRestControllerV1
 {
     /// `response.sendRedirect(servletContextPath + "/swagger-ui/index.html")`.
-    @RequestMapping(value : ["/"])
+    @RequestMapping(value: ["/"])
     void redirectToSwagger(HttpServletRequest request, HttpServletResponse response)
     {
         response.sendRedirect(request.getContextPath() ~ "/swagger-ui/index.html");

@@ -27,7 +27,7 @@ struct Owner
     string firstName;
     /// Last name.
     @NotBlank
-    @Size(max : 30)
+    @Size(max: 30)
     @Column("surname")
     string lastName;
     /// City.

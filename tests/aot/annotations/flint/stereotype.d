@@ -17,7 +17,7 @@ struct Component
 struct Service
 {
     /// Bean name.
-    @AliasFor(annotation : ClassRef("flint.stereotype.Component"))
+    @AliasFor(annotation: ClassRef("flint.stereotype.Component"))
     string value;
 }
 
@@ -26,7 +26,7 @@ struct Service
 struct Repository
 {
     /// Bean name.
-    @AliasFor(annotation : ClassRef("flint.stereotype.Component"))
+    @AliasFor(annotation: ClassRef("flint.stereotype.Component"))
     string value;
 }
 
@@ -35,6 +35,6 @@ struct Repository
 struct Controller
 {
     /// Bean name.
-    @AliasFor(annotation : ClassRef("flint.stereotype.Component"))
+    @AliasFor(annotation: ClassRef("flint.stereotype.Component"))
     string value;
 }
