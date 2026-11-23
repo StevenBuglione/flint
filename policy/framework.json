@@ -12,6 +12,16 @@
     "java"
    ]
   },
+  "jackson-core": {
+   "directory": "framework/jackson-core",
+   "module": "flint.jackson.core",
+   "repo": "framework",
+   "licence": "Apache-2.0",
+   "upstream": "jackson-core@3.1.8",
+   "dependencies": [
+    "serde"
+   ]
+  },
   "jakarta-annotation": {
    "directory": "framework/jakarta-annotation",
    "module": "flint.jakarta.annotation",
@@ -33,14 +43,19 @@
     "engine-aot"
    ]
   },
-  "jackson-core": {
-   "directory": "framework/jackson-core",
-   "module": "flint.jackson.core",
+  "tx": {
+   "directory": "framework/tx",
+   "module": "flint.dao",
+   "also": [
+    "flint.transaction"
+   ],
    "repo": "framework",
    "licence": "Apache-2.0",
-   "upstream": "jackson-core@3.1.8",
+   "upstream": "spring-framework@v7.1.0",
    "dependencies": [
-    "serde"
+    "core",
+    "engine-aot",
+    "java"
    ]
   },
   "slf4j-api": {
