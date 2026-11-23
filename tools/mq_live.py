@@ -76,9 +76,6 @@ def build_d(args, work, name, files, versions=(), lflags=()):
     (project / 'dub.sdl').write_text('\n'.join(recipe) + '\n')
     env = dict(os.environ, DUB_HOME=str(ROOT / '.flint' / 'dub' / 'dmd'))
     env.pop('DFLAGS', None)
-    if sys.platform == 'darwin':
-        # DUB treats ldmd2 as DMD; its pipeline's archives are ELF-style until the Darwin archiver lands (ADR-024).
-        env['FLINT_DUB_PIPELINE'] = '0'
     subprocess.run([args.dub, 'build', '--root=' + str(project), '--compiler=' + args.dmd, '--build=debug',
                     '--skip-registry=all'], env=env, check=True, stdout=subprocess.DEVNULL)
     return project / ('mq-' + name)

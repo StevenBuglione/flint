@@ -3,8 +3,8 @@
 /// Linux x86-64 runs the Flint DMD/DUB fork: the forked DMD with its compile server, the parallel
 /// DUB pipeline and direct linking. macOS arm64 has no DMD code generator, so the DMD role of the
 /// dev and test profiles is filled by LDC's DMD-compatible driver `ldmd2`, which takes the same
-/// canonical flags. Its DUB is the Flint-patched DUB 1.43.0 built from source with LDC. The DUB
-/// pipeline writes ELF-style archives and stays off there; the compile server is a DMD feature.
+/// canonical flags. Its DUB is the Flint-patched DUB 1.43.0 built from source with LDC and the macOS
+/// overlay patch, whose pipeline writes Darwin archives; the compile server is a DMD feature.
 ///
 /// Windows x86-64 runs the upstream DMD of the pinned Windows release and the Flint DUB, built from source with
 /// LDC and the Windows overlay patch, whose pipeline spawns with CreateProcess and writes COFF archives (ADR-026).
@@ -22,7 +22,7 @@ version (OSX)
     /// The upstream DMD fills its own role on this host.
     enum bool upstreamDmdHost = false;
     /// The Flint DUB's parallel pipeline builds on this host.
-    enum bool dubPipelineHost = false;
+    enum bool dubPipelineHost = true;
     /// The pinned LDC release directory name.
     enum string ldcPlatform = "osx-arm64";
     /// The suffix of an executable file name.

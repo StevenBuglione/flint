@@ -479,11 +479,14 @@ LDC_WINDOWS = 'ldc2-1.43.0-windows-x64'
 FLINT_DUB = 'dub-1.43.0'
 # Windows applies a second patch over the shared one: the pipeline's CreateProcess jobs and COFF archives (ADR-026).
 DUB_WINDOWS_PATCH = FORK_DIR / 'dub-1.43.0-flint-windows.patch'
+# macOS applies one too: the pipeline's archiver writes Apple's BSD format with 8-byte-aligned members (ADR-024).
+DUB_DARWIN_PATCH = FORK_DIR / 'dub-1.43.0-flint-darwin.patch'
 
 
 def dub_patches():
     """The DUB patches this host applies, in order."""
-    return [DUB_PATCH, DUB_WINDOWS_PATCH] if platform.system() == 'Windows' else [DUB_PATCH]
+    overlay = {'Windows': [DUB_WINDOWS_PATCH], 'Darwin': [DUB_DARWIN_PATCH]}.get(platform.system(), [])
+    return [DUB_PATCH] + overlay
 
 
 def dub_patch_digest():
@@ -503,8 +506,9 @@ def linux_arm64_glibc():
 def install_flint_dub(destination):
     """Build the Flint-patched DUB 1.43.0 from its pinned source with the pinned LDC (ADR-024).
 
-    Hosts without the DMD fork use it with LDC: the pinned DUB version and the fork's DUB changes,
-    without the DMD-only pipeline, which the caller turns off with FLINT_DUB_PIPELINE=0.
+    Hosts without the DMD fork use it with LDC: the pinned DUB version and the fork's DUB changes. The
+    parallel pipeline runs with ldmd2 on macOS, whose overlay writes Darwin archives; Linux arm64 turns it
+    off with FLINT_DUB_PIPELINE=0.
     """
     if platform.system() == 'Darwin':
         ldc_bin = install(LDC_DARWIN + '.tar.xz', destination) / LDC_DARWIN / 'bin'
@@ -584,8 +588,8 @@ def bootstrap_flint(toolchain):
     env = {k: v for k, v in os.environ.items() if k not in ('DFLAGS', 'DUB_HOME')}
     env.update(PATH=str(bin_dir) + os.pathsep + env.get('PATH', ''), DUB_HOME=str(FLINT_APP / '.flint' / 'dub'),
                DFLAGS=' '.join(profiles.dflags('dev') + profiles.link_dflags('dev')))
-    if platform.system() == 'Darwin' or linux_arm64_glibc():
-        # The pipeline's in-process archives are ELF-only (ADR-024); it is untried with ldmd2 on Linux arm64.
+    if linux_arm64_glibc():
+        # The pipeline is untried with ldmd2 on Linux arm64; macOS runs it with the Darwin archiver (ADR-024).
         env['FLINT_DUB_PIPELINE'] = '0'
     subprocess.run([str(dub), 'build', '--root=' + str(recipe_dir), '--config=dev', '--compiler=' + str(dmd),
                     '--build=plain', '--skip-registry=all'], cwd=FLINT_APP, env=env, check=True)

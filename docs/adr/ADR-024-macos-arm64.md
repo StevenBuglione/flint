@@ -52,12 +52,13 @@ The development profile keeps `-g`. Debug information costs 0.18 s of a cold bui
 
 **DUB is the Flint-patched DUB 1.43.0**, built from the pinned source archive with LDC (`--compiler dub`, into `.tools/dub-1.43.0`). The DUB bundled with LDC is 1.42.0, which does not match the pin.
 
-The fork's parallel DUB pipeline stays off on macOS (`FLINT_DUB_PIPELINE=0`):
+The fork's parallel DUB pipeline runs on macOS (ADR-025 section 3, stage 4). DUB treats `ldmd2` as DMD, so the pipeline engages for the dev and test profiles. It plans every out-of-date target, compiles balanced chunks of all of them concurrently, archives in process, then links. The shared patch's archiver writes the GNU format, with a `/` symbol index, which Apple's linker rejects. The macOS overlay, `toolchain/dub-1.43.0-flint-darwin.patch`, therefore writes the BSD archive that Apple's `libtool -static` produces:
 
-- DUB treats `ldmd2` as DMD, so the pipeline would engage;
-- it archives in process in the GNU format, with a `/` symbol index member, which Apple ld rejects.
+- a `__.SYMDEF SORTED` table of contents over each Mach-O object's external definitions, as `ranlib` lists them;
+- `#1/N` member names;
+- every member's data aligned to 8 bytes, which ld-prime requires of 64-bit objects (DMD's own `-lib` writer got the same fix in the fork, ede5d80).
 
-Sequential `ldmd2` builds are as fast as plain LDC builds (table above). Porting the pipeline's archiver to the Darwin format is possible future work.
+`flint_tool.toolchain.host` sets `dubPipelineHost` on macOS, and the receipt records the digest of both DUB patches concatenated, as on Windows. `FLINT_DUB_PIPELINE=0` still selects DUB's sequential build. On pluto, `bench-cli` built with `--force` takes 1.5 s with the pipeline against 3.0 s sequentially. `ldc2` builds keep DUB's sequential path, because the pipeline engages only for the DMD front end.
 
 There is no compile server on macOS. It is a feature of the forked DMD. `flint daemon start` reports FLINT-E0810 there instead of trying to start one.
 
@@ -159,7 +160,7 @@ ld64 drops C functions that the executable never calls. The native-C test theref
 
 On macOS it then runs `flint test` for the packages with fixture peers and `flint test mq --scenarios`, after installing those peers, NATS, Kafka and the Temurin aarch64 macOS JRE. The JRE is a `macos-arm64` host override in `policy/peer-lock.json`, and `policy/test-peers.toml` names scenario binaries through the `{dub}`, `{dmd}` and `{host}` placeholders that `flint` expands.
 
-Linux lanes keep running `ldc2` only. On macOS the lane sets `FLINT_DUB_PIPELINE=0`. Its receipt, `artifacts/platforms/macos-arm64.json`, is what Gate 6's `macos-arm64` entry reads. The lane expects `ldc2`, `ldmd2` and the Flint DUB first on `PATH`:
+Linux lanes keep running `ldc2` only. On macOS the `ldmd2` runs use the DUB pipeline. Its receipt, `artifacts/platforms/macos-arm64.json`, is what Gate 6's `macos-arm64` entry reads. The lane expects `ldc2`, `ldmd2` and the Flint DUB first on `PATH`:
 
 ```bash
 export PATH="$PWD/.tools/dub-1.43.0/bin:$PWD/.tools/ldc2-1.43.0-osx-arm64/bin:$PWD/.tools/bin:$PATH"
@@ -213,5 +214,6 @@ The Linux behaviour of every changed module is unchanged by construction. The Li
 - `flint test --project apps/flint`, and `python3 -m unittest discover -s tests -p 'test_*.py'`;
 - `python3 tools/gates.py --gate structural`, since `tools/gates.py` changed;
 - `flint toolchain install --plan`, `flint toolchain verify` and `tools/install_toolchains.py --compiler flint`, since `tools/install_toolchains.py` and the toolchain modules changed;
+- on Windows, `flint toolchain verify`, since `dubPatchDigest` now takes the host's overlay name (Windows passes its own, so the digest is unchanged); and `python3 -m unittest tests.test_flint_toolchain`. Linux x86-64 keeps the shared DUB patch alone. `tools/install_quality_tools.py` tries the macOS libcurl names only on Darwin;
 - `dub test :desktop` on both compilers, with and without the `desktop` profile's WebKitGTK provider. `platform.d` and the tests now select the webview through `FlintSystemWebView`, which `FlintNativeWebkitgtk` sets on Linux, so the Linux text is equivalent. The `native/conan-index` recipes were regenerated for the new `native_build.py` hash, so Conan rebuilds its packages;
 - `python3 -m unittest tests.test_flint_native_c` and `flint check` on a project with embedded C, since `cbuild.d` reads the new `[macos]` table (ignored on Linux) and `tools/install_toolchains.py --compiler clang` gained the Darwin download.

@@ -6,6 +6,7 @@ This directory holds the Flint fork of the pinned D toolchain as patches against
 - `dub-1.43.0-flint.patch` applies to the DUB v1.43.0 source archive pinned in `policy/toolchains.json`.
 - `dmd-server-prelude.txt` lists the druntime and Phobos modules the compile server keeps analysed.
 - `dmd-2.114.0-flint-darwin.patch`, `druntime-2.114.0-flint.patch` and `phobos-2.114.0-flint.patch` support arm64 hosts. The first is the macOS overlay of the compile server and direct linking; the other two apply to the runtime libraries built for AArch64. `arm64/` holds the AArch64 regression tests and their documentation.
+- `dub-1.43.0-flint-darwin.patch` is the macOS overlay of the DUB patch: the parallel pipeline's in-process archiver writes Apple's BSD format, with a sorted `__.SYMDEF SORTED` table of contents and every member's data aligned to 8 bytes, which Apple's linker requires. `tools/install_toolchains.py --compiler dub` applies it on macOS after the shared patch.
 
 The D language and the build commands developers run do not change. The compiler's diagnostics change only with the fork's own `-verror-hide` switch. Applications still run `dub build`. The fork changes how the toolchain schedules and reuses work.
 

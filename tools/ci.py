@@ -193,9 +193,6 @@ def run_tests(runner,compiler,*,sanitize=False):
     env=os.environ.copy()
     env.pop('DFLAGS',None)
     env['DUB_HOME']=str(ROOT/'.ci-dub-home'/('sanitized' if sanitize else 'normal')/Path(compiler).name)
-    if sys.platform=='darwin':
-        # DUB treats ldmd2 as DMD, and the fork's pipeline writes ELF-style archives (ADR-024).
-        env['FLINT_DUB_PIPELINE']='0'
     if sanitize:
         if not runner.plan:
             require(verified_sanitizer_runtime(sanitizer_runtime_dir()),'LDC sanitizer runtime missing or changed: '+str(sanitizer_runtime_dir()))

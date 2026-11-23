@@ -75,7 +75,7 @@ DUB runs eight compiler invocations in sequence, one per library and one for the
 
 Findings for ADR-025:
 
-- **Parallel compilation is the largest available gain.** Running the eight compiles concurrently on the 8 cores, then linking, takes 0.67 s against 1.65 s sequentially. That is what the fork's DUB pipeline does on Linux. On macOS the pipeline is off only because its in-process archiver writes the GNU format. A Darwin archiver (ADR-025 section 3, stage 3) would give `ldmd2` builds most of that gain, before DMD arm64 exists.
+- **Parallel compilation is the largest available gain.** Running the eight compiles concurrently on the 8 cores, then linking, takes 0.67 s against 1.65 s sequentially. That is what the fork's DUB pipeline does on Linux. Its in-process archiver wrote only the GNU format. The macOS overlay now writes Darwin archives, so the pipeline runs on macOS too (ADR-024 section 1, ADR-025 section 3, stage 4).
 - **Each invocation pays about 0.09 s of front end** to re-analyse druntime and Phobos (`flint:arena`'s whole front end is 0.094 s). That is about 0.7 s of the 0.97 s, the cost the compile server's preloaded prelude removes on Linux.
 - **The link is not the bottleneck.** LDC's built-in LLD links the same objects in 0.126 s against ld-prime's 0.153 s, saving about 27 ms or 2% of the build. `ld64.lld` is worth adopting only together with the fork's direct linking.
 

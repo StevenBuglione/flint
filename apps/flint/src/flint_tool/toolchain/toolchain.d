@@ -215,8 +215,12 @@ Toolchain inspect(const ref Home home, scope const(string)[] names, bool hash, s
             && exists(buildPath(bin, "dub.upstream")) : toolchain.dub.present;
     const dmdPatch = buildPath(home.root, "toolchain", "dmd-2.114.0-flint.patch");
     toolchain.fork.dmdPatch = dmdForkHost ? sha256File(dmdPatch) : "";
-    toolchain.fork.dubPatch = upstreamDmdHost ? dubPatchDigest(home) : sha256File(buildPath(home.root,
-            "toolchain", "dub-1.43.0-flint.patch"));
+    version (OSX)
+        toolchain.fork.dubPatch = dubPatchDigest(home, "dub-1.43.0-flint-darwin.patch");
+    else
+        toolchain.fork.dubPatch = upstreamDmdHost ? dubPatchDigest(home,
+                "dub-1.43.0-flint-windows.patch") : sha256File(buildPath(home.root, "toolchain",
+                "dub-1.43.0-flint.patch"));
     toolchain.fork.receiptPath = buildPath(toolchain.directory, receiptName);
     ToolchainReceipt receipt;
     if (readReceipt(toolchain.fork.receiptPath, receipt))
@@ -660,8 +664,9 @@ private bool composeUpstreamReceipt(const ref Home home, string directory, strin
     return true;
 }
 
-/// SHA-256 of the DUB patches applied on Windows, concatenated in order, as install_toolchains.py computes it.
-string dubPatchDigest(const ref Home home)
+/// SHA-256 of the shared DUB patch and a host's overlay (Windows, macOS) concatenated in order, as
+/// install_toolchains.py computes it.
+string dubPatchDigest(const ref Home home, string overlay)
 {
     import std.digest.sha : SHA256, toHexString;
     import std.file : exists, read;
@@ -669,7 +674,7 @@ string dubPatchDigest(const ref Home home)
     import std.string : toLower;
 
     SHA256 digest;
-    foreach (name; ["dub-1.43.0-flint.patch", "dub-1.43.0-flint-windows.patch"])
+    foreach (name; ["dub-1.43.0-flint.patch", overlay])
     {
         const path = buildPath(home.root, "toolchain", name);
         if (!exists(path))

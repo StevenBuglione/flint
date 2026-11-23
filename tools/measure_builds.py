@@ -654,9 +654,6 @@ def main(argv=None):
               'packages': {}, 'modules': {}, 'apps': {}, 'go': {'apps': {}}, 'trials': [], 'size_trials': []}
     base_env = os.environ.copy()
     base_env.pop('DFLAGS', None)
-    if darwin:
-        # DUB treats ldmd2 as DMD, and the fork's pipeline writes ELF-style archives (ADR-024).
-        base_env['FLINT_DUB_PIPELINE'] = '0'
     # A fully qualified LDC linker path is accepted by -linker; no shell is involved.
     native = native_profiles(args.lld)
     workload_files={}

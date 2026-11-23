@@ -85,6 +85,14 @@ class ForkSourcesTests(unittest.TestCase):
             with mock.patch.object(install_toolchains.platform, 'system', return_value=system):
                 self.assertEqual(install_toolchains.dmd_patches(), [install_toolchains.DMD_PATCH] + overlay)
 
+    def test_dub_patches_per_host(self):
+        from unittest import mock
+        for system, overlay in (('Linux', []), ('Windows', [install_toolchains.DUB_WINDOWS_PATCH]),
+                                ('Darwin', [install_toolchains.DUB_DARWIN_PATCH])):
+            with mock.patch.object(install_toolchains.platform, 'system', return_value=system):
+                self.assertEqual(install_toolchains.dub_patches(), [install_toolchains.DUB_PATCH] + overlay)
+        self.assertEqual(patched_files(TOOLCHAIN / 'dub-1.43.0-flint-darwin.patch'), ['source/dub/internal/flintar.d'])
+
     def test_dub_patch_files(self):
         self.assertEqual(patched_files(TOOLCHAIN / 'dub-1.43.0-flint.patch'),
                          ['build-files.txt', 'source/app.d', 'source/dub/commandline.d',

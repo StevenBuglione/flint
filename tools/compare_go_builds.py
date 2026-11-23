@@ -117,9 +117,6 @@ def trial(kind, app, toolbin, scratch, combined, check):
             copy_repo(REPO, w)
             env.update(PATH=toolbin + ':' + env['PATH'], DUB_HOME=str(w / '.dub-home'),
                        DFLAGS='-preview=dip1000 -debug -g -boundscheck=on')
-            if sys.platform == 'darwin':
-                # DUB treats ldmd2 as DMD, and the fork's pipeline writes ELF-style archives (ADR-024).
-                env['FLINT_DUB_PIPELINE'] = '0'
             cmd = ['dub', 'build', '--compiler=' + COMPILER, '--build=plain', '--skip-registry=all'] + (['--combined'] if combined else [])
             cwd, binary = w / f'benchmarks/bench-{app}', w / f'build/bench-{app}'
             edit = cwd / 'source/app.d'

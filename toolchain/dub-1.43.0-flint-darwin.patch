@@ -1,0 +1,147 @@
+diff --git a/source/dub/internal/flintar.d b/source/dub/internal/flintar.d
+index 332ffe4..373049d 100644
+--- a/source/dub/internal/flintar.d
++++ b/source/dub/internal/flintar.d
+@@ -4,6 +4,11 @@
+ 	Produces a GNU/SysV `ar` archive with a `/` symbol index and a `//` long
+ 	name table, equivalent to `ar rcs` for ELF64 objects, without spawning a
+ 	process.  Members are stored in the given order with zero timestamps.
++
++	On macOS it produces the BSD archive that Apple's `libtool -static` writes:
++	a `__.SYMDEF SORTED` table of contents over the Mach-O objects' external
++	definitions, `#1/N` member names, and every member's data aligned to eight
++	bytes, which Apple's linker requires of 64-bit objects.
+ */
+ module dub.internal.flintar;
+ 
+@@ -57,8 +62,129 @@ string[] definedSymbols(const(ubyte)[] obj)
+ 	return result;
+ }
+ 
+-/// Write `objects` into the archive at `path` atomically.
++/// Write `objects` into the archive at `path` atomically: BSD on macOS, GNU elsewhere.
+ void writeArchive(string path, const string[] objects)
++{
++	version (OSX)
++		writeDarwinArchive(path, objects);
++	else
++		writeGnuArchive(path, objects);
++}
++
++/// External symbols defined by a 64-bit Mach-O object (empty for other formats).
++string[] machoDefinedSymbols(const(ubyte)[] obj)
++{
++	static T get(T)(const(ubyte)[] b, size_t off) {
++		if (off + T.sizeof > b.length) return T.init;
++		T v;
++		(cast(ubyte*) &v)[0 .. T.sizeof] = b[off .. off + T.sizeof];
++		return v;
++	}
++	string[] result;
++	if (obj.length < 32 || get!uint(obj, 0) != 0xFEEDFACF) return result;
++	const ncmds = get!uint(obj, 16);
++	size_t cmd = 32;
++	foreach (_; 0 .. ncmds) {
++		const kind = get!uint(obj, cmd);
++		const size = get!uint(obj, cmd + 4);
++		if (size < 8) break;
++		if (kind == 0x2) { // LC_SYMTAB
++			const symoff = get!uint(obj, cmd + 8);
++			const nsyms = get!uint(obj, cmd + 12);
++			const stroff = get!uint(obj, cmd + 16);
++			const strsize = get!uint(obj, cmd + 20);
++			foreach (i; 0 .. nsyms) {
++				const e = symoff + i * 16;
++				if (e + 16 > obj.length) break;
++				const strx = get!uint(obj, e);
++				const type = obj[e + 4];
++				// Not a debugging entry, external, and defined (not N_UNDF): what `ranlib` lists.
++				if ((type & 0xE0) || !(type & 0x01) || !(type & 0x0E) || strx >= strsize) continue;
++				size_t start = stroff + strx, end = start;
++				while (end < stroff + strsize && end < obj.length && obj[end]) end++;
++				if (end > start) result ~= cast(string) obj[start .. end].idup;
++			}
++		}
++		cmd += size;
++	}
++	return result;
++}
++
++/// Write `objects` into a BSD archive with a sorted table of contents at `path` atomically.
++void writeDarwinArchive(string path, const string[] objects)
++{
++	import std.algorithm.sorting : sort;
++	import std.bitmanip : nativeToLittleEndian;
++
++	enum symdef = "__.SYMDEF SORTED";
++	static size_t align8(size_t n) { return (n + 7) & ~cast(size_t) 7; }
++	// A `#1/N` name length that ends the 60-byte header and the name on an 8-byte boundary.
++	static size_t nameLength(size_t n) { size_t l = n + 1; while ((60 + l) % 8) l++; return l; }
++	static void header(ref Appender!(ubyte[]) o, string name, size_t size)
++	{
++		const length = nameLength(name.length);
++		auto h = format("%-16s%-12s%-6s%-6s%-8s%-10s`\n", format("#1/%s", length), "0", "0", "0", "100644", length + size);
++		assert(h.length == 60);
++		o ~= cast(const(ubyte)[]) h;
++		o ~= cast(const(ubyte)[]) name;
++		foreach (_; name.length .. length) o ~= cast(ubyte) 0;
++	}
++
++	ubyte[][] data;
++	string[] names;
++	static struct Entry { string name; size_t member; }
++	Entry[] entries;
++	foreach (i, f; objects) {
++		auto bytes = cast(ubyte[]) read(f);
++		data ~= bytes;
++		names ~= baseName(f);
++		foreach (n; machoDefinedSymbols(bytes)) entries ~= Entry(n, i);
++	}
++	// Sorted by name; the first member defining a name wins, as the linker would load it.
++	entries.sort!((a, b) => a.name < b.name || (a.name == b.name && a.member < b.member));
++	Entry[] unique;
++	foreach (e; entries) if (!unique.length || unique[$ - 1].name != e.name) unique ~= e;
++	size_t strtab;
++	foreach (e; unique) strtab += e.name.length + 1;
++	strtab = align8(strtab);
++	const tocSize = 4 + 8 * unique.length + 4 + strtab;
++
++	size_t off = 8 + 60 + nameLength(symdef.length) + tocSize;
++	auto offsets = new size_t[](objects.length);
++	foreach (i, d; data) {
++		offsets[i] = off;
++		off += 60 + nameLength(names[i].length) + align8(d.length);
++	}
++
++	auto o = appender!(ubyte[]);
++	o.reserve(off);
++	o ~= cast(const(ubyte)[]) "!<arch>\n";
++	header(o, symdef, tocSize);
++	o ~= nativeToLittleEndian(cast(uint)(8 * unique.length))[];
++	size_t strx;
++	foreach (e; unique) {
++		o ~= nativeToLittleEndian(cast(uint) strx)[];
++		o ~= nativeToLittleEndian(cast(uint) offsets[e.member])[];
++		strx += e.name.length + 1;
++	}
++	o ~= nativeToLittleEndian(cast(uint) strtab)[];
++	foreach (e; unique) { o ~= cast(const(ubyte)[]) e.name; o ~= cast(ubyte) 0; }
++	foreach (_; strx .. strtab) o ~= cast(ubyte) 0;
++	foreach (i, d; data) {
++		assert(o.data.length == offsets[i]);
++		header(o, names[i], align8(d.length));
++		assert(o.data.length % 8 == 0);
++		o ~= d;
++		foreach (_; d.length .. align8(d.length)) o ~= cast(ubyte) 0;
++	}
++	assert(o.data.length == off);
++	const tmp = path ~ ".tmp";
++	write(tmp, o.data);
++	rename(tmp, path);
++}
++
++/// Write `objects` into a GNU archive at `path` atomically.
++void writeGnuArchive(string path, const string[] objects)
+ {
+ 	static void header(ref Appender!(ubyte[]) o, string name, size_t size)
+ 	{

@@ -5,6 +5,8 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 # The names Phobos' std.net.curl tries when DUB downloads from code.dlang.org (it loads libcurl at run time).
 CURL_LIBRARIES=('libcurl.so','libcurl.so.4','libcurl-gnutls.so.4','libcurl-nss.so.4','libcurl.so.3')
+# On macOS Phobos loads the system libcurl by its install name (ADR-024).
+if os.name!='nt' and os.uname().sysname=='Darwin':CURL_LIBRARIES=('libcurl.4.dylib','libcurl.dylib')
 CURL_FIX=('DUB loads libcurl at run time and the dynamic loader cannot find it. Install libcurl '
           '(Debian/Ubuntu: sudo apt-get install libcurl4), or point LD_LIBRARY_PATH at the directory that holds '
           'libcurl.so.4 (NixOS: export LD_LIBRARY_PATH="$(nix-build \'<nixpkgs>\' -A curl.out --no-out-link)/lib")')
