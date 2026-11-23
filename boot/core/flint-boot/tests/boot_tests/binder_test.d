@@ -9,6 +9,7 @@
 module boot_tests.binder_test;
 
 import boot_tests.support : assertThrows;
+import flint.engine.aot.any : Any;
 import flint.boot.context.properties.bind : BindException, BindResult, Bindable, Binder,
     DefaultValue, PropertySourcesPlaceholdersResolver, parseDuration, toDashedForm;
 import flint.boot.context.properties.source : ConfigurationPropertySource, MapConfigurationPropertySource;
@@ -632,3 +633,60 @@ private auto descriptorOfValueBean()
 import boot_tests.support : RegisterTests;
 
 mixin RegisterTests;
+
+// ---- Erased container descriptors (flint.java.util.descriptors, decision 2670d5be) --------------------------
+
+/// A properties class whose map is read-only (Boot's `final Map` fields) and whose list has a setter.
+final class ErasedContainersProperties
+{
+    import flint.java.util : LinkedHashMap, List, Map;
+
+    private Map!(string, bool) features;
+    private List!string names;
+
+    this()
+    {
+        features = new LinkedHashMap!(string, bool)();
+    }
+
+    Map!(string, bool) getFeatures()
+    {
+        return features;
+    }
+
+    List!string getNames()
+    {
+        return names;
+    }
+
+    void setNames(List!string value)
+    {
+        names = value;
+    }
+}
+
+private Any newNames()
+{
+    import flint.java.util : ArrayList, List;
+
+    return Any.of(cast(List!string) new ArrayList!string());
+}
+
+@("a read-only map and a list described by the erased builders bind as with descriptorOf")
+unittest
+{
+    import flint.engine.aot.name : typeNameOf;
+    import flint.java.util : List, Map;
+    import flint.java.util.descriptors : rawListDescriptor, rawMapDescriptor;
+
+    auto b = binder(source([
+            ["app.features.indent-output", "true"], ["app.features.fail-on-empty-beans", "false"],
+            ["app.names[0]", "a"], ["app.names[1]", "b"]
+    ]));
+    b.getDescriptors().add(rawMapDescriptor(typeNameOf!(Map!(string, bool)), "string", "bool"));
+    b.getDescriptors().add(rawListDescriptor(typeNameOf!(List!string), "string", &newNames));
+    auto bound = b.bind!ErasedContainersProperties("app").get();
+    assert(bound.getFeatures().size() == 2 && bound.getFeatures().get("indent-output"));
+    assert(!bound.getFeatures().get("fail-on-empty-beans"));
+    assert(bound.getNames().size() == 2 && bound.getNames().get(1) == "b");
+}

@@ -25,6 +25,7 @@ import flint.boot.context.properties.source : ConfigurationProperty, Configurati
     ConfigurationPropertySource, ConfigurationPropertySources;
 import flint.java.lang : IllegalStateException, RuntimeException;
 import flint.java.util : NoSuchElementException;
+import flint.java.util.descriptors : buildElements, buildEntries, isListLike, isMapLike;
 import flint.beans.factory.config : ConfigurationPropertiesBinder;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : Descriptor, DescriptorTable, PropertyDescriptor, TypeKind, descriptorOf;
@@ -491,9 +492,9 @@ private:
             return bindScalar(name, type, instance, durationUnit);
         if (type.unwrap !is null && type.wrap !is null)
             return bindOptional(name, type, instance, durationUnit);
-        if (type.fromEntries !is null)
+        if (isMapLike(type))
             return bindMap(name, type, instance);
-        if (type.fromElements !is null)
+        if (isListLike(type))
             return bindCollection(name, type, instance, durationUnit);
         final switch (type.kind)
         {
@@ -565,7 +566,7 @@ private:
                 if (!isValueType(elementType))
                     continue;
                 lastProperty = direct;
-                instance = type.fromElements(splitElements(direct.getValue(), elementType, durationUnit));
+                instance = buildElements(type, splitElements(direct.getValue(), elementType, durationUnit), instance);
                 return true;
             }
             if (!ConfigurationPropertySources.containsDescendantOf(one, name))
@@ -581,7 +582,7 @@ private:
             }
             if (elements.length == 0)
                 continue;
-            instance = type.fromElements(elements);
+            instance = buildElements(type, elements, instance);
             return true;
         }
         return false;
@@ -614,7 +615,7 @@ private:
         if (hasEmptyValue(name))
         {
             // `map=` (an empty value) binds an empty map, as in Boot.
-            instance = type.fromEntries(keys, values);
+            instance = buildEntries(type, keys, values, instance);
             return true;
         }
         string[] keyTexts;
@@ -636,7 +637,7 @@ private:
         }
         if (!bound)
             return false;
-        instance = type.fromEntries(keys, values);
+        instance = buildEntries(type, keys, values, instance);
         return true;
     }
 
@@ -703,7 +704,7 @@ private:
         if (propertyType is null || !bindable(property, propertyType))
             return false;
         const intoExisting = property.set is null;
-        if (intoExisting && propertyType.fromEntries !is null)
+        if (intoExisting && isMapLike(propertyType))
             return bindIntoExistingMap(name.append(toDashedForm(property.name)), propertyType, property, target, type);
         if (target.isNull())
             target = create(name, type);
@@ -723,7 +724,7 @@ private:
     {
         if (property.set !is null)
             return true;
-        return property.get !is null && (propertyType.fromEntries !is null || propertyType.kind == TypeKind.class_);
+        return property.get !is null && (isMapLike(propertyType) || propertyType.kind == TypeKind.class_);
     }
 
     // A read-only map property (Boot's `final Map` fields): bind the entries, then put them into the map the getter
@@ -739,7 +740,8 @@ private:
         auto map = cast(RawMap) existing.asObject();
         if (map is null)
             return false;
-        Any entries;
+        // Erased map descriptors (flint.java.util.descriptors) have no fromEntries: bind into the map itself.
+        Any entries = existing;
         if (!bindMap(name, mapType, entries))
             return false;
         auto keys = mapType.toKeys(entries);
