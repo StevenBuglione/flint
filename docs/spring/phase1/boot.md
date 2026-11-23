@@ -26,7 +26,7 @@ Run a package's tests with `dub test --root boot/core/flint-boot --compiler=dmd`
 | `MapConfigurationPropertySource`, `SystemEnvironmentPropertyMapper` | first cut | Flint tests only so far |
 | `.properties` loader (`OriginTrackedPropertiesLoader`, `PropertiesPropertySourceLoader`) | done | 45 of 46 `OriginTrackedPropertiesLoaderTests` (1 excluded) |
 | YAML loader (`OriginTrackedYamlLoader`, `YamlPropertySourceLoader`) on Flint's D YAML engine | done | 13 / 13 `OriginTrackedYamlLoaderTests`, 5 / 5 `YamlPropertySourceLoaderTests`, plus 3 Flint YAML tests |
-| `Binder`, `Bindable`, `BindResult`, `@ConfigurationProperties` | next | |
+| `Binder`, `Bindable`, `BindResult`, `@DefaultValue`, `@ConfigurationProperties`, placeholders, `BindConverter` (booleans, numbers, `Duration`) | done for scalars, strings, JavaBeans and value objects; enums, arrays and maps wait on `flint:engine-aot` builders (requested) | 13 `BinderTests`, 13 `JavaBeanBinderTests`, 3 `ValueObjectBinderTests`, 12 `BindResultTests`, 3 `PropertySourcesPlaceholdersResolverTests`, 2 `DataObjectPropertyNameTests`, 3 `DurationStyleTests`; plus 3 Flint tests |
 | Config data: `application.{properties,yaml}`, location groups, profile files, `---` with `flint.config.activate.on-profile`, profile groups and includes, `FLINT_PROFILES_ACTIVE`, `spring.*` aliases | done | 23 of 87 `ConfigDataEnvironmentPostProcessorIntegrationTests` (in-memory resources), plus 8 Flint tests |
 | `FlintApplication`, `FlintApplicationBuilder`, runners, `ApplicationArguments`, banner, `mixin FlintMain` | after the binder | |
 | `FailureAnalyzer`, Boot's console log format through `flint.slf4j` | after the binder | |
@@ -36,13 +36,31 @@ Excluded upstream tests, each with its reason:
 - `ConfigurationPropertyNameTests.hashCodeIsStored` (`runtime-reflection`): reads a private field with `ReflectionTestUtils`.
 - `OriginTrackedPropertiesLoaderTests.compareToJavaProperties` (`jvm-platform`): compares against `java.util.Properties`.
 
-Total so far: **187 tests pass on DMD 2.114 and LDC 1.43**: 176 ported upstream tests and 11 Flint tests. The runner in `tests/boot_tests/support.d` runs each `unittest` on its own and prints the count.
+Total so far: **239 tests pass on DMD 2.114 and LDC 1.43**: 225 ported upstream tests and 14 Flint tests. The runner in `tests/boot_tests/support.d` runs each `unittest` on its own and prints the count.
 
 ## Design decisions
 
 ### Configuration values are text, typed by Flint AOT descriptors
 
 Spring keeps `Object` values in property sources and converts them while binding. In Flint, every property source holds strings, and so does YAML: the engine resolves scalars as SnakeYAML's YAML 1.1 resolver does (`True`, `yes` and `on` become `true`; `~` becomes empty; `0x1A` becomes `26`; `1_000` becomes `1000`) and returns the text. Typed values come from binding: the `Binder` converts text to the target property's type, using the target's Flint AOT `Descriptor` (`flint.engine.aot.descriptor`, contract §4.2). This matches what `Environment.getProperty(key)` returns in Boot, and Boot's string-to-type conversion rules decide the result.
+
+### Binding on descriptors
+
+`Binder` is an erased engine. `bind(name, Descriptor, ref Any)` walks the type's Flint AOT descriptor:
+- value types (scalars, strings, enums, `Duration`) convert from text;
+- JavaBeans get each settable property bound under its dashed name (`maxPoolSize` binds `max-pool-size` and every relaxed spelling);
+- value objects, whose preferred constructor takes parameters, are built through that constructor, with `@DefaultValue` for absent parameters.
+
+`bind!T`, `bindOrCreate!T` and `Bindable!T` are one-line façades that look up or build `T`'s descriptor. Nested types are found in the binder's `DescriptorTable`, which the AOT registry fills.
+
+Erased construction of enums, arrays and maps needs builders that `Descriptor` does not have yet. Boot asked framework-core and flint-aot for `Any.ofEnum`, `fromElements`/`toElements` and `fromEntries`/`toEntries`. Until they land, binding those types reports an `IllegalStateException` that names the gap.
+
+Converted value types follow Boot's `ApplicationConversionService`:
+- booleans accept `true`/`false`, `on`/`off`, `yes`/`no` and `1`/`0`;
+- integers follow `NumberUtils.parseNumber` (sign, `0x`, `#`), and an out-of-range value fails;
+- a `Duration` takes Boot's simple style (`10s`, `500ms`; a bare number means milliseconds) or ISO-8601.
+
+`java.time.Duration` maps to `core.time.Duration` until `flint.java.time` exists.
 
 ### YAML engine
 
