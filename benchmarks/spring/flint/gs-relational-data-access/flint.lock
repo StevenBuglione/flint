@@ -40,7 +40,7 @@ name = "flint:boot-core"
 kind = "core"
 source = "workspace"
 scope = "build"
-dependencies = ["flint:beans", "flint:conc", "flint:context", "flint:core", "flint:engine-aot", "flint:java", "flint:slf4j-api", "flint:term"]
+dependencies = ["flint:beans", "flint:conc", "flint:context", "flint:core", "flint:engine-aot", "flint:java", "flint:os", "flint:slf4j-api", "flint:term"]
 
 [[package]]
 name = "flint:boot-jdbc"
@@ -156,6 +156,13 @@ dependencies = ["flint:beans", "flint:core", "flint:engine-aot", "flint:java", "
 
 [[package]]
 name = "flint:log"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = ["flint:arena", "flint:conc"]
+
+[[package]]
+name = "flint:os"
 kind = "core"
 source = "workspace"
 scope = "build"

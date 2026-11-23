@@ -129,6 +129,17 @@ Deviations:
 - Failure analyzers are listed explicitly: Boot core's own, plus `addFailureAnalyzers` from modules. Flint's closed world has no `spring.factories` scan.
 - `@FlintApplication` (the ADR-029 alias of `@FlintBootApplication`) is the class `flint.boot.FlintApplication` used as a bare UDA. Flint AOT reads that type UDA as `@FlintBootApplication`.
 
+### Shutdown
+
+`mixin FlintMain`'s `FlintApplication.runMain` installs Boot's shutdown hook for the process: SIGTERM and SIGINT (Ctrl+Break and Ctrl+C on Windows), through `flint.os.onShutdownSignal`. The signal callback only records the request. The main thread then closes the context: the web server drains as `server.shutdown=graceful` asks (30 s grace) and the beans are destroyed. `main` returns 0, so druntime finishes and prints its GC report. A context with no web server is closed when `run` returns, as Boot's hook closes it at JVM exit. Signals that already have a custom handler keep it.
+
+Deviations:
+- Java exits with 143 or 130 after its hooks run; Flint exits 0 (ADR-028).
+- A second signal does not cut the drain short: flint:os has no safe immediate exit yet, so the grace period bounds it.
+- `flint.main.register-shutdown-hook` and `flint.lifecycle.timeout-per-shutdown-phase` are not read yet.
+
+`tests/boot/test_boot_shutdown.py` stops gs-rest-service with each signal. It expects exit 0 and the GC report, and skips, visibly, in a checkout that does not link the pinned llhttp.
+
 ### Origins
 
 `flint.boot.origin` ports `Origin`, `OriginProvider`, `OriginTrackedValue` and `TextResourceOrigin` with its `Location`. A resource is described by its Boot-style text (`class path resource [application.yaml]`), because Flint has no class path.

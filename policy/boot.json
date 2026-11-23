@@ -64,7 +64,8 @@
         "core",
         "beans",
         "context",
-        "conc"
+        "conc",
+        "os"
       ],
       "repo": "boot"
     },

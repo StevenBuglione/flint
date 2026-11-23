@@ -533,6 +533,83 @@ interface KeepAliveApplicationContext
 {
     /// Block until the context is closed by a shutdown signal.
     void awaitTermination();
+
+    /// Whether the context has been closed (or failed to start).
+    bool isTerminated();
+}
+
+/// Boot's `SpringApplicationShutdownHook` for a process: SIGTERM and SIGINT (Ctrl+Break and Ctrl+C on Windows),
+/// through `flint.os.onShutdownSignal`, ask `FlintApplication.runMain` to close the context on its own thread. The
+/// signal callback only records the request. A second signal is counted but does not cut the web server's drain
+/// short (it is bounded by the grace period): flint:os has no safe immediate exit yet.
+final class ShutdownHook
+{
+    import flint.os : InterruptSubscription, ShutdownSignal;
+
+    private shared uint received;
+    private InterruptSubscription subscription;
+    private bool installed;
+
+    /// Watch SIGTERM and SIGINT; a signal that already has a custom handler keeps it, and nothing is watched.
+    void install()
+    {
+        import core.lifetime : move;
+        import flint.os : onShutdownSignal;
+
+        auto subscribed = onShutdownSignal(&receive);
+        if (!subscribed.ok)
+            return;
+        move(subscribed.value, subscription);
+        installed = true;
+    }
+
+    /// Stop watching and restore the signals' previous dispositions.
+    void uninstall() nothrow
+    {
+        if (!installed)
+            return;
+        installed = false;
+        cast(void) subscription.close();
+    }
+
+    /// Whether SIGTERM and SIGINT are watched.
+    bool isInstalled() const pure nothrow @nogc
+    {
+        return installed;
+    }
+
+    /// Whether a shutdown signal has been received.
+    bool isShutdownRequested() const nothrow @nogc
+    {
+        import core.atomic : atomicLoad;
+
+        return atomicLoad(received) > 0;
+    }
+
+    /// The number of shutdown signals received.
+    uint getSignalCount() const nothrow @nogc
+    {
+        import core.atomic : atomicLoad;
+
+        return atomicLoad(received);
+    }
+
+    /// Wait until `context` terminates or a shutdown signal arrives.
+    void await(KeepAliveApplicationContext context)
+    {
+        import core.thread.osthread : Thread;
+        import core.time : msecs;
+
+        while (!context.isTerminated() && !isShutdownRequested())
+            Thread.sleep(50.msecs);
+    }
+
+    private void receive(ShutdownSignal) @safe nothrow @nogc
+    {
+        import core.atomic : atomicOp;
+
+        atomicOp!"+="(received, 1U);
+    }
 }
 
 /// Bootstraps and runs a Flint application.
@@ -609,13 +686,23 @@ class FlintApplication
     }
 
     /// Run `App` from `main`: Java's process stays alive while non-daemon server threads run, so this waits for
-    /// the context to close. Returns the process exit code: 0, or 1 after a startup failure.
+    /// the context to close, or for SIGTERM or SIGINT, on which Boot's shutdown hook closes it: the web server
+    /// drains (`server.shutdown=graceful`) and the beans are destroyed. A context that does not keep the process
+    /// alive (no web server) is closed when `run` returns, as the shutdown hook closes it at JVM exit. Returns the
+    /// process exit code: 0, or 1 after a startup failure; `main` returning lets druntime finish (its GC report).
     static int runMain(App)(string[] args)
     {
+        auto hook = new ShutdownHook;
+        hook.install();
+        scope (exit)
+            hook.uninstall();
         try
         {
-            if (auto keepAlive = cast(KeepAliveApplicationContext) run!App(args.length ? args[1 .. $] : null))
-                keepAlive.awaitTermination();
+            auto context = run!App(args.length ? args[1 .. $] : null);
+            if (auto keepAlive = cast(KeepAliveApplicationContext) context)
+                hook.await(keepAlive);
+            if (context !is null && context.isActive())
+                context.close();
             return 0;
         }
         catch (Exception)

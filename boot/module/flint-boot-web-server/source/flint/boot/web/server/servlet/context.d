@@ -91,6 +91,14 @@ class ServletWebServerApplicationContext : GenericApplicationContext, KeepAliveA
         return webServer;
     }
 
+    /// Whether the context has been closed, or failed to start.
+    bool isTerminated()
+    {
+        import core.atomic : atomicLoad;
+
+        return atomicLoad(terminated);
+    }
+
     /// Block until the context is closed.
     void awaitTermination()
     {

@@ -13,6 +13,7 @@ dependency "flint:core" version="*"
 dependency "flint:beans" version="*"
 dependency "flint:context" version="*"
 dependency "flint:conc" version="*"
+dependency "flint:os" version="*"
 
 configuration "library" {
     targetType "library"
