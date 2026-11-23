@@ -163,7 +163,7 @@ The schema covers the module properties and the keys Boot core reads, such as `f
 
 `benchmarks/spring/flint/gs-rest-service/` is the guide's `complete/` project as a Flint Boot application: `@FlintBootApplication`, `mixin FlintMain` (D-1), the guide's `Greeting` and `GreetingController`, and `flint:boot-starter-web`. `flint build` runs Flint AOT and links Boot's auto-configurations from the starters' `AutoConfiguration.imports`; `flint-spring.json` gives the harness its build.
 
-- The Java package `com.example.restservice` is the module `gs_rest_service.app`: `flint build` requires modules below the project's module root (FLINT-E0403).
+- The Java package `com.example.restservice` is the module `com.example.restservice` (`src/com/example/restservice/package.d`), through `flint.toml`'s `base-package` (`7b3963e`).
 - `flint.toml` lists the packages the source imports besides the starter (`flint:boot-core`, `flint:boot-autoconfigure`, `flint:java`, `flint:web`), because Flint requires a direct dependency for every import (FLINT-E0507).
 - `@RequestParam(value = "name", defaultValue = "World")` is a CTFE constant until the pinned linters parse named arguments (below).
 - The engine needs the pinned llhttp: locally, a native block in `packages/engine-web/dub.sdl` (never committed), as engine-servlet's socket tests do.

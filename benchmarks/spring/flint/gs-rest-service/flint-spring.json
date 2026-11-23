@@ -5,7 +5,7 @@
   "measure": {
     "cached": ["flint", "build"],
     "scratch": ["flint", "build", "--force"],
-    "edit_source": "src/gs_rest_service/app.d",
+    "edit_source": "src/com/example/restservice/package.d",
     "O3": {"command": ["flint", "build", "--profile", "release"], "binary": ".flint/build/release/gs-rest-service"},
     "Oz": {"command": ["flint", "build", "--profile", "size"], "binary": ".flint/build/size/gs-rest-service"}
   }

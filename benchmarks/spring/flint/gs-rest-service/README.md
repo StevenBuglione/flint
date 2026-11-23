@@ -1,6 +1,6 @@
 # gs-rest-service, ported to Flint
 
-This is the Flint side of the gs-rest-service side-by-side application (`benchmarks/spring/README.md`): the guide's `complete/` project (commit `e15fec6`) as a Flint Boot application. `RestServiceApplication`, `Greeting` and `GreetingController` are in `src/gs_rest_service/app.d`, one module for the guide's one Java package (rulebook R1). The module root follows the project name, as `flint build` requires (FLINT-E0403).
+This is the Flint side of the gs-rest-service side-by-side application (`benchmarks/spring/README.md`): the guide's `complete/` project (commit `e15fec6`) as a Flint Boot application. `RestServiceApplication`, `Greeting` and `GreetingController` are in `src/com/example/restservice/package.d`, one module for the guide's one Java package (rulebook R1); `flint.toml`'s `base-package` keeps Spring's package as the module root.
 
 ## Build and score
 

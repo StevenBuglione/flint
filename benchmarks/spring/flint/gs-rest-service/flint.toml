@@ -3,6 +3,7 @@ name = "gs-rest-service"
 version = "0.0.1"
 flint = "1.0"
 type = "executable"
+base-package = "com.example.restservice"
 description = "spring-guides/gs-rest-service complete/, ported to Flint Boot"
 
 [build]
