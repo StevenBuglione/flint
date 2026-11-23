@@ -262,9 +262,9 @@ def native_profiles(lld=None):
     linker = ['-linker=' + lld] if lld else []
     policy = profiles.load()
     return {
-        'dmd': list(policy['dev']['dflags']),
-        'O3': list(policy['release']['dflags']) + linker,
-        'Oz': list(policy['size']['dflags']) + linker}
+        'dmd': list(policy['dev']['dflags']) + profiles.link_dflags('dev'),
+        'O3': list(policy['release']['dflags']) + profiles.link_dflags('release') + linker,
+        'Oz': list(policy['size']['dflags']) + profiles.link_dflags('size') + linker}
 
 
 def dub_invocation(dub, workspace, relative, compiler, flags, base_env):

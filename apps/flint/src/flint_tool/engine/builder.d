@@ -463,6 +463,8 @@ struct Flags
 
 private Flags composeFlags(const ref ProfileSpec spec, ProfileOverride additions, const ref BuildRequest request)
 {
+    import flint_tool.engine.target : linksGlibcPie;
+
     Flags flags;
     // A "plain" profile's flags are the complete flag set (through DFLAGS). Other build types, such as the
     // test profile's, apply only to the project: its unittest configuration adds -unittest, so dependencies
@@ -485,7 +487,10 @@ private Flags composeFlags(const ref ProfileSpec spec, ProfileOverride additions
     flags.noDebug = additions.noDebug && !request.debugger;
     if (flags.noDebug)
         flags.dflags = withoutDebugInformation(flags.dflags);
-    flags.lflags = spec.lflags.dup ~ additions.lflags ~ request.lflags;
+    flags.lflags = spec.lflags.dup;
+    if (linksGlibcPie(request.target))
+        flags.lflags ~= spec.glibc_lflags;
+    flags.lflags ~= additions.lflags ~ request.lflags;
     foreach (flag; flags.lflags)
         flags.dflags ~= "-L" ~ flag;
     flags.manifestDflags = additions.dflags;

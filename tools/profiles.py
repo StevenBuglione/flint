@@ -1,4 +1,7 @@
 """Canonical build profiles shared with the flint CLI (policy/profiles.toml, ADR-018)."""
+import os
+import platform
+import sys
 import tomllib
 from pathlib import Path
 
@@ -6,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 POLICY = ROOT / 'policy/profiles.toml'
 NAMES = ('dev', 'test', 'release', 'size', 'sanitize')
 FIELDS = {'description': str, 'compiler': str, 'compilers': list, 'build_type': str, 'dflags': list,
-          'lflags': list, 'compile_server': bool, 'dub_pipeline': bool, 'native_profile': str,
+          'lflags': list, 'glibc_lflags': list, 'compile_server': bool, 'dub_pipeline': bool, 'native_profile': str,
           'native_sanitize': str}
 
 
@@ -24,7 +27,7 @@ def load(path=POLICY):
         for key, kind in FIELDS.items():
             if not isinstance(profile[key], kind):
                 raise ValueError(name + '.' + key + ': expected ' + kind.__name__)
-        for key in ('compilers', 'dflags', 'lflags'):
+        for key in ('compilers', 'dflags', 'lflags', 'glibc_lflags'):
             if not all(isinstance(value, str) and value for value in profile[key]):
                 raise ValueError(name + '.' + key + ': expected nonempty strings')
         if profile['compiler'] not in ('dmd', 'ldc2') or profile['compiler'] not in profile['compilers']:
@@ -34,3 +37,20 @@ def load(path=POLICY):
 
 def dflags(name, path=POLICY):
     return list(load(path)[name]['dflags'])
+
+
+def glibc_host():
+    """This host builds Linux glibc position-independent executables natively (flint's hostTarget)."""
+    if not sys.platform.startswith('linux'):
+        return False
+    machine = platform.machine()
+    return not os.path.exists('/lib/ld-musl-' + ('aarch64' if machine in ('aarch64', 'arm64') else machine) + '.so.1')
+
+
+def link_dflags(name, path=POLICY, glibc=None):
+    """The profile's linker flags as -L compiler flags, with glibc_lflags on a glibc host, as flint builds."""
+    profile = load(path)[name]
+    flags = list(profile['lflags'])
+    if glibc_host() if glibc is None else glibc:
+        flags += profile['glibc_lflags']
+    return ['-L' + flag for flag in flags]

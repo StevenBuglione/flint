@@ -64,7 +64,7 @@ def append_go(path, iteration):
 
 def flint_trials(app, trials, dub, dmd, extra_env, extra_dflags=()):
     fixture = POLICY['apps'][app]
-    flags = profiles.dflags('dev') + list(extra_dflags)
+    flags = profiles.dflags('dev') + profiles.link_dflags('dev') + list(extra_dflags)
     cold, incremental = [], []
     for iteration in range(trials):
         with tempfile.TemporaryDirectory(prefix='flint-dev-') as temporary:

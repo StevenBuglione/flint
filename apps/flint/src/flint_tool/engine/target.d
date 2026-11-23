@@ -75,6 +75,15 @@ string hostTarget()
         return "unknown";
 }
 
+/// A build for `target` (empty for the host's native build) links a Linux glibc position-independent executable,
+/// which takes a profile's glibc_lflags. Cross builds are musl static-PIE executables and never do.
+bool linksGlibcPie(string target)
+{
+    import std.algorithm.searching : endsWith;
+
+    return target.length == 0 && hostTarget().endsWith("-glibc");
+}
+
 /// Targets flint can package for from this host.
 string[] availableTargets()
 {

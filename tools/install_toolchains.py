@@ -583,7 +583,7 @@ def bootstrap_flint(toolchain):
         recipe.write_text(text)
     env = {k: v for k, v in os.environ.items() if k not in ('DFLAGS', 'DUB_HOME')}
     env.update(PATH=str(bin_dir) + os.pathsep + env.get('PATH', ''), DUB_HOME=str(FLINT_APP / '.flint' / 'dub'),
-               DFLAGS=' '.join(profiles.dflags('dev')))
+               DFLAGS=' '.join(profiles.dflags('dev') + profiles.link_dflags('dev')))
     if platform.system() == 'Darwin' or linux_arm64_glibc():
         # The pipeline's in-process archives are ELF-only (ADR-024); it is untried with ldmd2 on Linux arm64.
         env['FLINT_DUB_PIPELINE'] = '0'
