@@ -30,7 +30,8 @@ Flint AOT emits `fast_<id>` only when all of these hold:
 - exactly one path, a literal starting with `/`, with no `{`, `}`, `*`, `?`, `%`, `;` or `\`;
 - `@RequestMapping(method = GET)` exactly, with no `params`, `headers`, `consumes` or `produces`;
 - `@ResponseBody` (directly or through `@RestController`), with no `@ResponseStatus` and no reason;
-- a non-void return type that Flint AOT describes, so the Jackson converter writes it by its descriptor;
+- no `@CrossOrigin` on the class or the method;
+- a return type that Flint AOT describes, so the Jackson converter writes it by its descriptor, and that is a plain value: not `void`, `Object`, `Any`, `ResponseEntity`, `HttpEntity`, `HttpHeaders` or `ProblemDetail`;
 - every parameter is `@RequestParam string`, neither `@Valid` nor an exception parameter.
 
 The prototype stops here on purpose. Path variables, `ResponseEntity`, `@RequestHeader`, `@CrossOrigin` and `@RequestBody` are the next shapes (section 9).
@@ -41,6 +42,7 @@ A row's fast route is registered only when the strategies make generic dispatch 
 - **Nothing per request around the mappings.** The table needs no interceptors (`InterceptorRegistry` empty), no CORS configuration source, and no custom argument resolvers or return-value handlers. Content negotiation must use the header-only manager. Otherwise there is no table at all.
 - **No filters.** The container offers requests only when no filter is mapped (`chainOrder` empty), because a filter receives the servlet objects of every request it maps. gs-rest-service registers none. Spring Boot's own `CharacterEncodingFilter`, `FormContentFilter` and `RequestContextFilter` are not ported yet. When they are, the proof has to show they leave a `GET` without a body unchanged, or name them as known no-ops for such a request; otherwise the fast path stays off (web-http's warning).
 - **The lookup chooses this handler.** `RequestMappingHandlerMapping` is the first handler mapping. Its direct-path registrations for the literal path, the ones `lookupHandlerMethod` reads before it scans any pattern, hold exactly this handler and nothing else. The handler carries no `@CrossOrigin` on its type or method, and its effective `@ResponseStatus`, type level included, is none.
+- **The same return handling.** No return-value handler of the adapter that `invokeAndHandle` consults before `@ResponseBody` (`HttpEntityMethodProcessor`, `HttpHeadersReturnValueHandler`) supports the return type. The handler has no response-status reason and is not void, and the declared type is not `Object`, `Any` or `ProblemDetail` (or a subtype, by the descriptor). A null value of a class return type is answered as `writeWithMessageConverters` answers it: 200, no `Content-Type`, an empty body (web-http's review).
 - **The same arguments.** For every parameter, the adapter's resolver composite (`getArgumentResolver`, the very lookup the generic path uses) answers exactly `RequestParamMethodArgumentResolver`, and the parameter type is `string`.
 - **The same response.** For each `Accept` key, the table runs the generic negotiation: `HeaderContentNegotiationStrategy`'s parse and sort, then `producibleTypes` and `selectMediaType`. These two are pure functions extracted from `writeWithMessageConverters`, which the generic path now calls too. The first converter that can write the value with the selected type must be exactly `JacksonJsonHttpMessageConverter`. The selected type must be concrete, not octet-stream, and without parameters, so the `Content-Type` value is its own `toString()`, as `ServletServerHttpResponse.writeHeaders` passes it to the servlet response. A key that fails any of this, such as a 406, another converter or a charset, gets no table entry, and its requests are declined.
 
@@ -68,6 +70,7 @@ The fast path writes only what the generic path writes for the requests it accep
 - **404.** Unknown paths and `/greeting/` are declined by the byte comparison, so the JSON 404 and the Whitelabel page are the generic ones.
 - **`Accept` edge cases.** `application/xml`, quality values, wildcards other than `*/*`, several `Accept` fields, and an unparsable `Accept` are all declined, so 406 and its `Accept` header come from the generic resolver.
 - **Parameters.** Values are bound as `RequestParamMethodArgumentResolver` binds them, with `name[]` as the fallback, an absent or single empty value replaced by the default, and several values joined with `,` by the conversion service. Decoding goes through `decodeComponentInto`, the request's only decoder: `decodeComponent` now calls it too. So `+`, percent-encoded UTF-8 and malformed escapes, which Tomcat skips, behave identically by construction. A single empty value without a default binds the literal `""`, not null, as the generic slice of the frozen query does.
+- **A client gone mid-body.** Once the response is on the wire (`respond` began), an I/O failure leaves the exchange as the generic path's `complete()` lets its `IOException` leave. No error page is attempted on a started transport.
 - **Exceptions and error bodies, including `ProblemDetail`.** An exception from the handler, or from the write, goes through `exchange.materialize()`. The container then builds the same `ServletEngineRequest` (its `capture`) and `ServletEngineResponse`. `DispatcherServlet.completeFastDispatch` re-runs the handler mappings, which are pure and set the request attributes the generic lookup sets, and calls `processDispatchResult` with the exception. The exception reaches the resolvers, `@ControllerAdvice` and the error page with the objects the generic path would have had. A write failure first replays what the generic converter would already have streamed into the response, `Content-Type` and the partial body, and wraps the exception as `JacksonJsonHttpMessageConverter.writeInternal` does. An exception that escapes the dispatcher is finished by the container's own valves, as an uncaught exception of the generic path is.
 
 **Proof.** proof-harness's black-box suite passes 18/18 exact with the fast path on and off (section 8).
@@ -208,7 +211,17 @@ The Go comparator measured only about 170–175k req/s here, against 247k in the
 
 **RSS does not move.** Idle, both builds hold 11.1–11.2 MB. Under load, both reach about 21.5 MB, although the fast path allocates 64 bytes per request. Peak RSS is therefore not per-request garbage. It is what the server and the collector reserve under load: GC pools, the 36 threads including druntime's mark threads, fiber stacks touched by 64 connections, and the connection slots. These are `gc.md` §1.3's items, and the fast path does not touch them.
 
-**Size.** Stripped (playbook S-4), at `c0aafbbf`: main 4,746,584 B; off 4,764,576 B (+17,992 B, +0.38%, the always-linked table and hook); on 4,760,480 B; Go's comparator 6,634,456 B. At `eaa27d1d`: main 4,750,720 B; off 4,768,712 B (+17,992 B); on 4,764,616 B.
+**Size, pay-for-use (playbook S-1, the coordinator's merge condition).** Stripped, at `eaa27d1d` with the two generated beans (section 9, stage 1):
+
+| build | stripped bytes | against main |
+|---|---|---|
+| main | 4,746,624 | — |
+| off: no endpoint qualifies, or the option is not set | 4,739,176 | **−7,448** |
+| on: gs-rest-service's `/greeting` specialised | 4,769,288 | +22,664 |
+
+With the option off nothing of the fast path is linked. The build is smaller than main because the media-type selection is now one shared function. With the option on, gs-rest-service carries the table, the offer and one `fast_<id>` (+0.48%). Setting the option on gs-relational-data-access or petclinic-rest, which have no qualifying endpoint, changes their generated output by 0 lines.
+
+Earlier, before pay-for-use, stripped at `c0aafbbf`: main 4,746,584 B; off 4,764,576 B (+17,992 B, +0.38%, the always-linked table and hook); on 4,760,480 B; Go's comparator 6,634,456 B. At `eaa27d1d`: main 4,750,720 B; off 4,768,712 B (+17,992 B); on 4,764,616 B.
 
 ## 9. Recommendation
 
@@ -229,7 +242,7 @@ The Go comparator measured only about 170–175k req/s here, against 247k in the
 
 **Stages.**
 1. **Land the mechanism, opt-in (R-14).** That means the framework hook, the table and the generator option, default off, after the owners' review (section 11). The coordinator's condition comes first: the always-linked 18 KB becomes pay-for-use (playbook S-1), with **zero added bytes when no endpoint qualifies**. From `nm`, the 18 KB is webmvc's `FastPathTable` (prove, serve, binding, buffer pool: about 11 KB) and engine-servlet's `serveFast` with its parameter visitor and decoder (about 6 KB).
-   The design follows the generated `JavaUtilDateModule` customizer (`20493652`). When the option generates at least one `fast` row, Flint AOT also adds two beans to the application's own generated module:
+   **Done on the branch** (size table in §8.4: an off build is 7,448 B smaller than main). The design follows the generated `JavaUtilDateModule` customizer (`20493652`). When the option generates at least one `fast` row, Flint AOT also adds two beans to the application's own generated module:
    - **`flintAotFastPathConfigurer`**, a `FastPathConfigurer`: a `WebMvcConfigurer` that implements a small `FastPathFactory` interface in `flint.web.servlet`. `WebMvcConfigurationSupport.build` asks any configurer that implements it for the table. Nothing else references `FastPathTable`.
    - **`flintAotFastPathOffer`**, a `WebServerFactoryCustomizer`. It hands `FlintServletWebServerFactory` the address of `flint.engine.servlet.fast.serveFast` (a new `setFastOffer`, which reaches `ServletEngineOptions`). `ServletEngine.serve` calls the offer through that pointer only when it is set, so nothing else references `serveFast`.
    Without the beans, `--gc-sections` drops both, and the only residue is the null check and the `FastDispatch` interface on `DispatcherServlet`, which the size table must show. Owners: boot (the factory setter), flint-aot (the planner's two beans, probed like the date customizer), web-http (the hooks).

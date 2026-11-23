@@ -459,5 +459,7 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **Allocations.** gs-rest-service `/greeting` drops from 16 to 1 GC allocation per request at `eaa27d1d`: the user's `String.format` result only. 18/18 exact with the fast path on and off.
   - **CPU.** 71.1k → 43.2k instructions per request.
   - **Local load.** Throughput about 1.4× and CPU per request about 0.73× against main, with RSS unchanged.
-  - **Next.** Land opt-in once its owners agree, then a certified on-against-off run (proposed queue entry), then default on.
+  - **Pay-for-use (the coordinator's merge condition).** Two beans Flint AOT generates only when an endpoint qualifies bring in the table (a `WebMvcConfigurer`) and the container's offer (a `WebServerFactoryCustomizer` calling `FlintServletWebServerFactory.setFastOffer`, boot's agreed Flint addition). Stripped, an off build is 7,448 B smaller than main; gs-rest-service on is +22,664 B.
+  - **Reviews.** web-http (after its return-value-handler fix), flint-aot and framework-core approved. boot agreed `setFastOffer`. The A/B is fast-path-ab in proof-harness's queue (9fbbcb07).
+  - **Next.** Land opt-in after the coordinator's OK, then the certified on-against-off run, then default on.
   - **petclinic-rest.** Estimated +2–5% capacity at most. Its request costs 1,655 allocations, mostly in the data path.
