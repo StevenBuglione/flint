@@ -172,6 +172,20 @@ Levers, each with a local before and after:
 | releasing freed pages after a sweep (D1b) | none at steady load: every page is reused within a collection cycle | | Only in gc:flint; not a peak-RSS lever while the heap is fully cycled. |
 | static link (`flint build --static`, an existing profile) | libc's 1.75 MB of shared text becomes only the functions linked | a build-mode decision | For the owner and size-levers: it changes how the binary is built, not the workload. |
 
+**Is the heap size the allocation rate or druntime's policy?** It's the policy, scaled by the live set. A synthetic program with a fixed live set (local, LDC) ends at the same heap whatever its garbage rate:
+
+| live set | heap | collections at 1.2 / 4.8 KB garbage per request |
+|---|---|---|
+| 200 KB | 5 MB | 346 / 1,390 |
+| 1 MB | 12 MB | 40 / 151 |
+| 3 MB | 22 MB | 21 / 74 |
+
+Quadrupling the garbage changed only the collection count. gs-rest-service's live set after a collection is 1.87 MB in a 12 MB heap (measured in-process). Fixed small pools on the real server under load:
+- `minPoolSize:1 incPoolSize:0`: heap 6 MB, peak RSS 16.8–17.0 MB;
+- `minPoolSize:2 incPoolSize:0` or `minPoolSize:4 incPoolSize:0`: heap 8 MB, peak RSS 17.8–18.1 MB.
+
+Against 21.6–22.0 MB by default, that saves 4–5 MB, more than any single allocation cut. It costs 2–4× the total pause today, because the collection count follows the allocation rate. To stay under Go's 13.8 MB with about 10 MB of non-GC memory, the heap must stay under about 4 MB. That takes small fixed pools plus a live set nearer 1 MB (the floor is about twice the live set) plus allocation cuts deep enough to make the extra collections cheap. Each `rt_options` step goes to proof-harness with its own before and after.
+
 So most of the gap is the GC heap: about 12 MB of pools against Go's whole 13.8 MB process. Smaller pools cost pauses at today's allocation rate. Fewer allocations per request reduce both together, so item 28's cuts lead. `incPoolSize:1` and `parallel:1` follow once `/greeting` is near 14.
 
 ## 2. Options
