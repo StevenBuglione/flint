@@ -1,0 +1,58 @@
+{
+  "schema": "flint.measure-queue/1",
+  "created": "2026-11-23",
+  "status": "pending",
+  "priority": 1,
+  "window": "claim",
+  "builds": {
+    "tree": {
+      "app": "checkout",
+      "commit": "27e8d10b469d",
+      "flint": true,
+      "linker": "mold"
+    }
+  },
+  "requested_by": "the coordinator (2026-11-23 19:50Z), on the allocation trigger: web-http's 27e8d10b takes /greeting from 31 to 19 GC allocations per request (callgrind, LDC release), a 39% drop",
+  "id": "gs-rest-multicore-4",
+  "summary": "gs-rest-service runtime after allocation cuts to 19/request (27e8d10b)",
+  "why": "Allocation cuts to 19/request (27e8d10b), measured at 27e8d10b469d (fp/main), with druntime's default GC and no gcopt, on the same workload as gs-rest-multicore-3 (policy/spring-http-benchmark.json, gs-rest-service, Flint against the registered Go comparator). Baseline: gs-rest-multicore-3 at 1141a9bc, 31 allocations per request. Also includes 6a48c768 (lookup path), 852b8a8e (Jackson writes) and 943466fa (link threads, build-only).",
+  "measure": {
+    "kind": "command",
+    "ports": [],
+    "steps": [
+      {
+        "argv": [
+          "{python}",
+          "tools/spring_bench.py",
+          "accept",
+          "gs-rest-service",
+          "--impl",
+          "flint",
+          "--json",
+          "{out}/acceptance-flint.json"
+        ],
+        "in": "tree"
+      },
+      {
+        "argv": [
+          "{python}",
+          "tools/load_bench.py",
+          "--manifest",
+          "policy/spring-http-benchmark.json",
+          "--app",
+          "gs-rest-service",
+          "--no-context",
+          "--output",
+          "{out}/http.json"
+        ],
+        "in": "tree",
+        "smoke_args": [
+          "--smoke"
+        ]
+      }
+    ]
+  },
+  "report_to": "web-http and the coordinator (coordination inboxes); decisions.md",
+  "estimate_minutes": 45,
+  "blocked_on": "a re-pin by its requester to a commit at or after 693886e2: at b7c8891dfe8a the checkout's load_bench applies its own 1-minute-load check, which refuses inside a claimed window (proof-harness, 2026-11-23)"
+}
