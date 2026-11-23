@@ -225,13 +225,39 @@ Status: proposed by the Milestone 10 implementation, for the project owner's rev
 
 5. **The OpenAPI document leaves out the front end:** the SPA controller's routes are not part of the API.
 
+### 10. Graceful shutdown on SIGTERM and SIGINT
+
+Spring Boot's `server.shutdown=graceful` and `spring.lifecycle.timeout-per-shutdown-phase` are the model.
+
+1. **flint:os dispatches both signals.**
+   - **The latch carries the signal:** the native action adds 1 for SIGINT and 1 << 32 for SIGTERM to the eventfd (or the Darwin pipe), so one read reports both counts. On Windows, Ctrl+C is SIGINT and Ctrl+Break is SIGTERM.
+   - **Ownership is per signal:** each disposition is claimed while a subscription wants it and restored when the last one leaves. A custom handler on either signal keeps it, and the subscription fails with `conflict`.
+   - **The API:** `onShutdownSignal(void delegate(ShutdownSignal))` runs once per signal received. Two signals that arrive together are two calls, so a second signal is never lost. `watchShutdownSignals()` turns them into two contexts: the first signal cancels `graceful` and a second one cancels `forced`. `onInterrupt` is unchanged.
+2. **flint:web drains.**
+   - **`Server.drain(deadline, forced)`:** the drain stops admission and closes the listener, so new connections are refused. Each owner loop then closes its idle keep-alive connections. Admitted requests finish with `Connection: close`, and the server stops once none remain.
+   - **When it gives up:** if the deadline passes, the drain cancels the remaining requests and returns `timedOut`. If `forced` is cancelled first, it does the same and returns `cancelled`.
+   - **HTTP/2:** an HTTP/2 session gets REFUSED_STREAM for any new stream. The drain waits for admitted streams, not for idle sessions, which then receive GOAWAY at the stop.
+   - **The options:** `ServerOptions.shutdown` (`ShutdownMode.graceful` by default, or `immediate`) and `shutdownTimeoutNanos` (30 seconds, as Spring's default).
+   - **`serve` and `runApplication`:** both take `shutdown` and `forced` contexts. `runApplication` returns 0 after an orderly drain, `ShutdownExit.graceExpired` (124) when the grace period expired, and `ShutdownExit.forced` (130) after a second signal.
+   - **A handler that ignores cancellation:** a worker-controller handler that ignores cancellation can keep a forced stop from finishing. `runApplication` then exits the process at once with that code instead of waiting for the thread.
+3. **The listener is closed explicitly.**
+   - **Why:** section 7.5 found that io_uring keeps a listener alive while an accept is pending on it.
+   - **`Reactor.stopAccepting()`:** each owner retires its accept. A completion owner cancels its pending accept and waits for that completion, and a readiness owner drops its interest. The last owner then closes the socket. `acceptStopped()` reports when every owner has done this.
+   - **Windows:** Windows retires the IOCP accept but keeps the socket until release, because closing it would also give up the process's Winsock reference.
+4. **The composition is the application's for now.** flint:web (tier 2) cannot import flint:os (tier 4). The two meet in the application: `runApplication(app, options, null, signals.graceful, signals.forced)`. Flint Boot will make that call, with the shutdown phase running `@PreDestroy`, once the owner resumes starter work.
+5. **Tests.**
+   - **The reactor:** `packages/reactor/tests/stop_accepting.d` shows a refused connection after `stopAccepting` while an admitted one keeps serving, over epoll with two owners and over io_uring.
+   - **flint:os:** `packages/os/tests/interrupts.d` covers SIGTERM and SIGINT with their kinds, per-signal ownership and restoration, a coalesced second signal, and a custom SIGTERM handler.
+   - **flint:web:** `packages/web/tests/graceful_shutdown.d` covers an in-flight request finishing while new connections are refused and an idle keep-alive connection is closed. It also covers grace expiry, a forced drain, the three exit codes, and `ShutdownMode.immediate`.
+   - **The whole process:** `tests/test_graceful_shutdown.py` sends real signals to `tests/integration/graceful-shutdown`. It covers SIGTERM and SIGINT exiting 0 after the in-flight request, exit 124 on expiry, exit 130 on a second signal, and a stuck worker handler that does not hold the process.
+
 ## Consequences
 
 - `flint add web data`, one migration and about forty lines give a validated CRUD API over SQLite. `tests/test_flint_starters.py` creates, validates, fetches, restarts against the same database and deletes.
 - `flint add web observability` gives health, readiness and metrics endpoints with no wiring. The example counts accepted jobs from a worker-thread handler, and `tests/test_flint_starters.py` reads the count back from `/actuator/metrics`.
 - A starter application has a typed front-end contract: `flint openapi --typescript client.ts` turns its controllers into a document and a client, and a `[spa]` section serves the front end beside the API. `tests/test_flint_starters.py` checks the document, the client, the front-end routes and a 100 KB asset served by a worker-thread handler.
 - `flint add web` and twenty lines of application code give a configured REST service with DI, ordinary handlers and string path variables. `tests/test_flint_starters.py` covers `flint add` (dependency, section, lock, a repeated add and an unknown starter), and the example serving a request and refusing a misspelt key with exit code 3.
-- **Known limit:** SIGTERM and SIGINT stop a starter application without running `@PreDestroy` hooks, because flint:web's run loop does not yet watch for signals (flint:os dispatches only SIGINT, to callbacks). A worker-thread controller has one thread with 16 queued requests.
+- flint:web drains gracefully on SIGTERM and SIGINT when the application passes `watchShutdownSignals()`'s contexts to `runApplication` (section 10). **Known limit:** a starter application does not do this yet, so it still stops without running `@PreDestroy` hooks, until Flint Boot wires the signals in. A worker-thread controller has one thread with 16 queued requests.
 - A starter can register its beans by default, an application can override any of them by registering the same key, and a starter's optional parts switch on with a configuration section. `packages/di/tests/context_behavior.d` covers auto-configured wiring, replacement by an explicit binding, `@ConditionalOnMissingBean`, the compile-time error for a disabled dependency, and the TOML section reader. The 17 negative fixtures are rejected as before.
 
 ## Remaining for Milestone 10
@@ -240,6 +266,6 @@ Status: proposed by the Milestone 10 implementation, for the project owner's rev
 - **The rest of ADR-029:** the entry point, the Spring names, `application.yaml`, and the Spring-shaped `flint new`, generators and examples (section 8.6).
 - **flint:starter-security and the auth starter:** sessions, OAuth login, password hashing and email verification.
 - **The second wave of starters:** cache, messaging, mail, storage, ai, mcp, cli, tui and desktop.
-- **Graceful SIGTERM and SIGINT:** this needs flint:os to dispatch SIGTERM and flint:web's run loop to watch for it.
+- **Graceful SIGTERM and SIGINT in Flint Boot:** flint:os and flint:web are done (section 10). What remains is for `flint:boot` to pass the signal contexts to the web launcher and run `@PreDestroy` in the shutdown phase, once starter work resumes.
 - **The benchmark's Flint references:** Flint references for `rest-notes`, `queue-worker` and `tui-dashboard`. They are on hold while the owner settles the application model. The Go and Spring Boot references are done: all eight pass their acceptance tests, built with the pinned Go 1.27.4, Temurin JDK 21.0.13.1+2, Maven 3.9.16 and Spring Boot 4.2.0.
 
