@@ -635,8 +635,9 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
                 # DUB passes lflags to the linker. -pthread is a compiler-driver option.
                 flags=['-lpthread' if flag=='-pthread' else flag for flag in flags]
                 flags+=['-lpthread','-ldl','-lm']
-            # secur32: libpq's SSPI; xmllite: libarchive's XAR writer; iphlpapi: curl's interface lookups (ADR-026).
-            elif self.a.target.startswith('windows'):flags+=['ws2_32.lib','advapi32.lib','crypt32.lib','bcrypt.lib','userenv.lib','ntdll.lib','shell32.lib','ole32.lib','secur32.lib','xmllite.lib','iphlpapi.lib']
+            # secur32: libpq's SSPI; xmllite: libarchive's XAR writer; iphlpapi: curl's interface lookups; user32: static
+            # libcrypto's MessageBoxW and GetProcessWindowStation, which LDC links by default and DMD does not (ADR-026).
+            elif self.a.target.startswith('windows'):flags+=['ws2_32.lib','advapi32.lib','crypt32.lib','bcrypt.lib','userenv.lib','ntdll.lib','shell32.lib','ole32.lib','secur32.lib','xmllite.lib','iphlpapi.lib','user32.lib']
             else:
                 flags+=['-Wl,-framework,Security','-Wl,-framework,CoreFoundation']
                 if 'curl' in closure:flags+=['-Wl,-framework,SystemConfiguration']  # proxy settings (curl macos.c)

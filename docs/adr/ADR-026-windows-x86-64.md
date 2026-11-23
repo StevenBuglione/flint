@@ -330,10 +330,7 @@ Both now pass:
   - **Refused paths.** UNC and device paths, drive-relative paths, alternate data streams, and components that Win32 would rewrite (a trailing dot or space).
   - **Bench reference.** The direct-provider reference archive stays Linux and macOS only, because no Windows bench lane uses it.
 - **The UCRT's inline stdio.** The UCRT headers define `snprintf` and its relatives as external inline COMDATs. druntime references `snprintf`, so link.exe loaded the first shim object that defined it, together with that shim's provider: `engine-wasi`'s test pulled in libpq and SQLite. Both shim projects now build with `_NO_CRT_STDIO_INLINE`, so their printf-family calls bind to `legacy_stdio_definitions.lib`.
-
-Still open:
-
-- **DMD.** It does not add `user32.lib` by default, as LDC does, and static libcrypto needs it (`MessageBoxW`, `GetProcessWindowStation`). Packages that link OpenSSL therefore link only with LDC, the Windows lane's compiler.
+- **DMD and OpenSSL.** Static libcrypto calls `MessageBoxW` and `GetProcessWindowStation`. LDC links `user32.lib` by default and DMD does not, so the DUB blocks that `--emit-dub` writes for Windows now name `user32.lib` with the other system libraries. Packages that link OpenSSL then link with both compilers, which the cutover's `flint build` (DMD) needs.
 
 ### 4. The flint CLI
 

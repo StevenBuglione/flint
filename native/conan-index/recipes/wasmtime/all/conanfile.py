@@ -11,7 +11,7 @@ from conan.tools.files import download
 
 NAME = 'wasmtime'
 DEPENDENCIES = []
-BUILD_ENGINE_SHA256 = '1a9742e78c9de329bb67af4113f1ad8618e6d08e5608a4515afcd0c97de4d0f3'
+BUILD_ENGINE_SHA256 = '5ca461624d827863a091fa5e7caa6b3638255cedca0c1ec3bb7c6a02cd5314ca'
 TARGETS = ['linux-aarch64-glibc', 'linux-aarch64-musl', 'linux-x86_64-glibc', 'linux-x86_64-musl', 'macos-arm64', 'windows-x86_64']
 
 
