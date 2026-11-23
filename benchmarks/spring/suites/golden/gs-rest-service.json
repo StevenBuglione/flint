@@ -1,0 +1,502 @@
+{
+ "schema": "flint.spring-golden/1",
+ "app": "gs-rest-service",
+ "kind": "http",
+ "reference": {
+  "repo": "https://github.com/spring-guides/gs-rest-service",
+  "commit": "e15fec6773dc1eb6028055630e3e68cbd8653240",
+  "spring_boot": "4.2.0",
+  "jdk": "21.0.13.1+2",
+  "profiles": null
+ },
+ "observations": [
+  {
+   "name": "default name",
+   "request": {
+    "method": "GET",
+    "path": "/greeting"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "content-length",
+      "34"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "id": 1,
+     "content": "Hello, World!"
+    }
+   }
+  },
+  {
+   "name": "name parameter",
+   "request": {
+    "method": "GET",
+    "path": "/greeting?name=User"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "content-length",
+      "33"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "id": 2,
+     "content": "Hello, User!"
+    }
+   }
+  },
+  {
+   "name": "percent-encoded UTF-8 name",
+   "request": {
+    "method": "GET",
+    "path": "/greeting?name=%C3%A9t%C3%A9"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "content-length",
+      "34"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "id": 3,
+     "content": "Hello, été!"
+    }
+   }
+  },
+  {
+   "name": "name with spaces and plus",
+   "request": {
+    "method": "GET",
+    "path": "/greeting?name=Jane+Q%20Public"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "content-length",
+      "42"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "id": 4,
+     "content": "Hello, Jane Q Public!"
+    }
+   }
+  },
+  {
+   "name": "empty name takes the default",
+   "request": {
+    "method": "GET",
+    "path": "/greeting?name="
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "content-length",
+      "34"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "id": 5,
+     "content": "Hello, World!"
+    }
+   }
+  },
+  {
+   "name": "repeated name parameter joins with a comma",
+   "request": {
+    "method": "GET",
+    "path": "/greeting?name=a&name=b"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "content-length",
+      "32"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "id": 6,
+     "content": "Hello, a,b!"
+    }
+   }
+  },
+  {
+   "name": "JSON escaping",
+   "request": {
+    "method": "GET",
+    "path": "/greeting?name=%22quoted%22%5Cslash%3C%3E"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "content-length",
+      "48"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "id": 7,
+     "content": "Hello, \"quoted\"\\slash<>!"
+    }
+   }
+  },
+  {
+   "name": "unknown parameter is ignored",
+   "request": {
+    "method": "GET",
+    "path": "/greeting?other=1"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "content-length",
+      "34"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "id": 8,
+     "content": "Hello, World!"
+    }
+   }
+  },
+  {
+   "name": "Accept application/json",
+   "request": {
+    "method": "GET",
+    "path": "/greeting"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "content-length",
+      "34"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "id": 9,
+     "content": "Hello, World!"
+    }
+   }
+  },
+  {
+   "name": "Accept application/xml is not acceptable",
+   "request": {
+    "method": "GET",
+    "path": "/greeting"
+   },
+   "response": {
+    "status": 406,
+    "reason": "",
+    "headers": [
+     [
+      "accept",
+      "application/json, application/*+json"
+     ],
+     [
+      "content-length",
+      "0"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "HEAD reaches the handler",
+   "request": {
+    "method": "HEAD",
+    "path": "/greeting"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "content-length",
+      "35"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "OPTIONS lists the allowed methods",
+   "request": {
+    "method": "OPTIONS",
+    "path": "/greeting"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "allow",
+      "GET,HEAD,OPTIONS"
+     ],
+     [
+      "accept-patch",
+      ""
+     ],
+     [
+      "accept-query",
+      ""
+     ],
+     [
+      "content-length",
+      "0"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "POST is not allowed",
+   "request": {
+    "method": "POST",
+    "path": "/greeting"
+   },
+   "response": {
+    "status": 405,
+    "reason": "",
+    "headers": [
+     [
+      "allow",
+      "GET"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "timestamp": {
+      "$match": "instant"
+     },
+     "status": 405,
+     "error": "Method Not Allowed",
+     "path": "/greeting"
+    }
+   }
+  },
+  {
+   "name": "DELETE is not allowed",
+   "request": {
+    "method": "DELETE",
+    "path": "/greeting"
+   },
+   "response": {
+    "status": 405,
+    "reason": "",
+    "headers": [
+     [
+      "allow",
+      "GET"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "timestamp": {
+      "$match": "instant"
+     },
+     "status": 405,
+     "error": "Method Not Allowed",
+     "path": "/greeting"
+    }
+   }
+  },
+  {
+   "name": "unknown path is a JSON 404",
+   "request": {
+    "method": "GET",
+    "path": "/nope"
+   },
+   "response": {
+    "status": 404,
+    "reason": "",
+    "headers": [
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "timestamp": {
+      "$match": "instant"
+     },
+     "status": 404,
+     "error": "Not Found",
+     "path": "/nope"
+    }
+   }
+  },
+  {
+   "name": "trailing slash does not match",
+   "request": {
+    "method": "GET",
+    "path": "/greeting/"
+   },
+   "response": {
+    "status": 404,
+    "reason": "",
+    "headers": [
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "timestamp": {
+      "$match": "instant"
+     },
+     "status": 404,
+     "error": "Not Found",
+     "path": "/greeting/"
+    }
+   }
+  },
+  {
+   "name": "unknown path for a browser is the Whitelabel page",
+   "request": {
+    "method": "GET",
+    "path": "/nope"
+   },
+   "response": {
+    "status": 404,
+    "reason": "",
+    "headers": [
+     [
+      "content-type",
+      "text/html;charset=UTF-8"
+     ],
+     [
+      "content-language",
+      "en-US"
+     ],
+     [
+      "content-length",
+      "275"
+     ]
+    ],
+    "text": "<html><body><h1>Whitelabel Error Page</h1><p>This application has no explicit mapping for /error, so you are seeing this as a fallback.</p><div id='created'>*</div><div>There was an unexpected error (type=Not Found, status=404).</div></body></html>"
+   }
+  },
+  {
+   "name": "counter after the errors",
+   "request": {
+    "method": "GET",
+    "path": "/greeting?name=again"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "content-length",
+      "35"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "id": 12,
+     "content": "Hello, again!"
+    }
+   }
+  }
+ ]
+}

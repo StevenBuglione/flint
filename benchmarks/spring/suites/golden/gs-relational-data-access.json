@@ -1,0 +1,25 @@
+{
+ "schema": "flint.spring-golden/1",
+ "app": "gs-relational-data-access",
+ "kind": "command",
+ "reference": {
+  "repo": "https://github.com/spring-guides/gs-relational-data-access",
+  "commit": "39ee6416cdc511d5d92cdeb63b2b73129013888e",
+  "spring_boot": "4.2.0",
+  "jdk": "21.0.13.1+2",
+  "profiles": null
+ },
+ "observations": {
+  "exit_code": 0,
+  "events": [
+   " INFO --- [           main] c.e.r.RelationalDataAccessApplication    : Creating tables",
+   " INFO --- [           main] c.e.r.RelationalDataAccessApplication    : Inserting customer record for John Woo",
+   " INFO --- [           main] c.e.r.RelationalDataAccessApplication    : Inserting customer record for Jeff Dean",
+   " INFO --- [           main] c.e.r.RelationalDataAccessApplication    : Inserting customer record for Josh Bloch",
+   " INFO --- [           main] c.e.r.RelationalDataAccessApplication    : Inserting customer record for Josh Long",
+   " INFO --- [           main] c.e.r.RelationalDataAccessApplication    : Querying for customer records where first_name = 'Josh':",
+   " INFO --- [           main] c.e.r.RelationalDataAccessApplication    : Customer[id=3, firstName='Josh', lastName='Bloch']",
+   " INFO --- [           main] c.e.r.RelationalDataAccessApplication    : Customer[id=4, firstName='Josh', lastName='Long']"
+  ]
+ }
+}

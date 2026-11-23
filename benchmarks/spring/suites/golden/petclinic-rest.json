@@ -1,0 +1,8216 @@
+{
+ "schema": "flint.spring-golden/1",
+ "app": "petclinic-rest",
+ "kind": "http",
+ "reference": {
+  "repo": "https://github.com/spring-petclinic/spring-petclinic-rest",
+  "commit": "220f4ba8e92cec9ad1faa03324723a3e9da63d95",
+  "spring_boot": "4.2.0",
+  "jdk": "21.0.13.1+2",
+  "profiles": "postgres,jdbc"
+ },
+ "observations": [
+  {
+   "name": "root redirects to the Swagger UI",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/"
+   },
+   "response": {
+    "status": 302,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "location",
+      "/petclinic/swagger-ui/index.html"
+     ],
+     [
+      "content-length",
+      "0"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "actuator links",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/actuator"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/vnd.spring-boot.actuator.v3+json"
+     ],
+     [
+      "content-length",
+      "276"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "_links": {
+      "self": {
+       "href": "{origin}/petclinic/actuator",
+       "templated": false
+      },
+      "health": {
+       "href": "{origin}/petclinic/actuator/health",
+       "templated": false
+      },
+      "health-path": {
+       "href": "{origin}/petclinic/actuator/health/{*path}",
+       "templated": true
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "actuator health",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/actuator/health"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/vnd.spring-boot.actuator.v3+json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "groups": [
+      "liveness",
+      "readiness"
+     ],
+     "status": "UP"
+    }
+   }
+  },
+  {
+   "name": "actuator liveness group",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/actuator/health/liveness"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/vnd.spring-boot.actuator.v3+json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "status": "UP"
+    }
+   }
+  },
+  {
+   "name": "actuator readiness group",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/actuator/health/readiness"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/vnd.spring-boot.actuator.v3+json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "status": "UP"
+    }
+   }
+  },
+  {
+   "name": "actuator endpoint that is not exposed",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/actuator/info"
+   },
+   "response": {
+    "status": 500,
+    "reason": "",
+    "headers": [
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/problem+json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ],
+     [
+      "connection",
+      "close"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "detail": "An unexpected error occurred while processing your request",
+     "status": 500,
+     "title": "NoResourceFoundException",
+     "type": "{origin}/petclinic/actuator/info",
+     "timestamp": {
+      "$match": "instant"
+     },
+     "schemaValidationErrors": []
+    }
+   }
+  },
+  {
+   "name": "actuator health with an explicit Accept",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/actuator/health"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "groups": [
+      "liveness",
+      "readiness"
+     ],
+     "status": "UP"
+    }
+   }
+  },
+  {
+   "name": "list owners",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/owners"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": [
+     {
+      "firstName": "George",
+      "lastName": "Franklin",
+      "address": "110 W. Liberty St.",
+      "city": "Madison",
+      "telephone": "6085551023",
+      "pets": [
+       {
+        "name": "Leo",
+        "birthDate": "2000-09-07",
+        "type": {
+         "name": "cat",
+         "id": 1
+        },
+        "id": 1,
+        "visits": [],
+        "ownerId": 1
+       }
+      ],
+      "id": 1
+     },
+     {
+      "firstName": "Betty",
+      "lastName": "Davis",
+      "address": "638 Cardinal Ave.",
+      "city": "Sun Prairie",
+      "telephone": "6085551749",
+      "pets": [
+       {
+        "name": "Basil",
+        "birthDate": "2002-08-06",
+        "type": {
+         "name": "hamster",
+         "id": 6
+        },
+        "id": 2,
+        "visits": [],
+        "ownerId": 2
+       }
+      ],
+      "id": 2
+     },
+     {
+      "firstName": "Eduardo",
+      "lastName": "Rodriquez",
+      "address": "2693 Commerce St.",
+      "city": "McFarland",
+      "telephone": "6085558763",
+      "pets": [
+       {
+        "name": "Jewel",
+        "birthDate": "2000-03-07",
+        "type": {
+         "name": "dog",
+         "id": 2
+        },
+        "id": 4,
+        "visits": [],
+        "ownerId": 3
+       },
+       {
+        "name": "Rosy",
+        "birthDate": "2001-04-17",
+        "type": {
+         "name": "dog",
+         "id": 2
+        },
+        "id": 3,
+        "visits": [],
+        "ownerId": 3
+       }
+      ],
+      "id": 3
+     },
+     {
+      "firstName": "Harold",
+      "lastName": "Davis",
+      "address": "563 Friendly St.",
+      "city": "Windsor",
+      "telephone": "6085553198",
+      "pets": [
+       {
+        "name": "Iggy",
+        "birthDate": "2000-11-30",
+        "type": {
+         "name": "lizard",
+         "id": 3
+        },
+        "id": 5,
+        "visits": [],
+        "ownerId": 4
+       }
+      ],
+      "id": 4
+     },
+     {
+      "firstName": "Peter",
+      "lastName": "McTavish",
+      "address": "2387 S. Fair Way",
+      "city": "Madison",
+      "telephone": "6085552765",
+      "pets": [
+       {
+        "name": "George",
+        "birthDate": "2000-01-20",
+        "type": {
+         "name": "snake",
+         "id": 4
+        },
+        "id": 6,
+        "visits": [],
+        "ownerId": 5
+       }
+      ],
+      "id": 5
+     },
+     {
+      "firstName": "Jean",
+      "lastName": "Coleman",
+      "address": "105 N. Lake St.",
+      "city": "Monona",
+      "telephone": "6085552654",
+      "pets": [
+       {
+        "name": "Max",
+        "birthDate": "1995-09-04",
+        "type": {
+         "name": "cat",
+         "id": 1
+        },
+        "id": 8,
+        "visits": [
+         {
+          "date": "2011-03-04",
+          "description": "rabies shot",
+          "id": 2,
+          "petId": 8
+         },
+         {
+          "date": "2009-06-04",
+          "description": "neutered",
+          "id": 3,
+          "petId": 8
+         }
+        ],
+        "ownerId": 6
+       },
+       {
+        "name": "Samantha",
+        "birthDate": "1995-09-04",
+        "type": {
+         "name": "cat",
+         "id": 1
+        },
+        "id": 7,
+        "visits": [
+         {
+          "date": "2010-03-04",
+          "description": "rabies shot",
+          "id": 1,
+          "petId": 7
+         },
+         {
+          "date": "2008-09-04",
+          "description": "spayed",
+          "id": 4,
+          "petId": 7
+         }
+        ],
+        "ownerId": 6
+       }
+      ],
+      "id": 6
+     },
+     {
+      "firstName": "Jeff",
+      "lastName": "Black",
+      "address": "1450 Oak Blvd.",
+      "city": "Monona",
+      "telephone": "6085555387",
+      "pets": [
+       {
+        "name": "Lucky",
+        "birthDate": "1999-08-06",
+        "type": {
+         "name": "bird",
+         "id": 5
+        },
+        "id": 9,
+        "visits": [],
+        "ownerId": 7
+       }
+      ],
+      "id": 7
+     },
+     {
+      "firstName": "Maria",
+      "lastName": "Escobito",
+      "address": "345 Maple St.",
+      "city": "Madison",
+      "telephone": "6085557683",
+      "pets": [
+       {
+        "name": "Mulligan",
+        "birthDate": "1997-02-24",
+        "type": {
+         "name": "dog",
+         "id": 2
+        },
+        "id": 10,
+        "visits": [],
+        "ownerId": 8
+       }
+      ],
+      "id": 8
+     },
+     {
+      "firstName": "David",
+      "lastName": "Schroeder",
+      "address": "2749 Blackhawk Trail",
+      "city": "Madison",
+      "telephone": "6085559435",
+      "pets": [
+       {
+        "name": "Freddy",
+        "birthDate": "2000-03-09",
+        "type": {
+         "name": "bird",
+         "id": 5
+        },
+        "id": 11,
+        "visits": [],
+        "ownerId": 9
+       }
+      ],
+      "id": 9
+     },
+     {
+      "firstName": "Carlos",
+      "lastName": "Estaban",
+      "address": "2335 Independence La.",
+      "city": "Waunakee",
+      "telephone": "6085555487",
+      "pets": [
+       {
+        "name": "Lucky",
+        "birthDate": "2000-06-24",
+        "type": {
+         "name": "dog",
+         "id": 2
+        },
+        "id": 12,
+        "visits": [],
+        "ownerId": 10
+       },
+       {
+        "name": "Sly",
+        "birthDate": "2002-06-08",
+        "type": {
+         "name": "cat",
+         "id": 1
+        },
+        "id": 13,
+        "visits": [],
+        "ownerId": 10
+       }
+      ],
+      "id": 10
+     }
+    ]
+   }
+  },
+  {
+   "name": "owners by last name",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/owners?lastName=Davis"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": [
+     {
+      "firstName": "Betty",
+      "lastName": "Davis",
+      "address": "638 Cardinal Ave.",
+      "city": "Sun Prairie",
+      "telephone": "6085551749",
+      "pets": [
+       {
+        "name": "Basil",
+        "birthDate": "2002-08-06",
+        "type": {
+         "name": "hamster",
+         "id": 6
+        },
+        "id": 2,
+        "visits": [],
+        "ownerId": 2
+       }
+      ],
+      "id": 2
+     },
+     {
+      "firstName": "Harold",
+      "lastName": "Davis",
+      "address": "563 Friendly St.",
+      "city": "Windsor",
+      "telephone": "6085553198",
+      "pets": [
+       {
+        "name": "Iggy",
+        "birthDate": "2000-11-30",
+        "type": {
+         "name": "lizard",
+         "id": 3
+        },
+        "id": 5,
+        "visits": [],
+        "ownerId": 4
+       }
+      ],
+      "id": 4
+     }
+    ]
+   }
+  },
+  {
+   "name": "owners by last name prefix",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/owners?lastName=Da"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": [
+     {
+      "firstName": "Betty",
+      "lastName": "Davis",
+      "address": "638 Cardinal Ave.",
+      "city": "Sun Prairie",
+      "telephone": "6085551749",
+      "pets": [
+       {
+        "name": "Basil",
+        "birthDate": "2002-08-06",
+        "type": {
+         "name": "hamster",
+         "id": 6
+        },
+        "id": 2,
+        "visits": [],
+        "ownerId": 2
+       }
+      ],
+      "id": 2
+     },
+     {
+      "firstName": "Harold",
+      "lastName": "Davis",
+      "address": "563 Friendly St.",
+      "city": "Windsor",
+      "telephone": "6085553198",
+      "pets": [
+       {
+        "name": "Iggy",
+        "birthDate": "2000-11-30",
+        "type": {
+         "name": "lizard",
+         "id": 3
+        },
+        "id": 5,
+        "visits": [],
+        "ownerId": 4
+       }
+      ],
+      "id": 4
+     }
+    ]
+   }
+  },
+  {
+   "name": "owners by an unknown last name",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/owners?lastName=Nobody"
+   },
+   "response": {
+    "status": 404,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-length",
+      "0"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "owner with pets and visits",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/owners/6"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "firstName": "Jean",
+     "lastName": "Coleman",
+     "address": "105 N. Lake St.",
+     "city": "Monona",
+     "telephone": "6085552654",
+     "pets": [
+      {
+       "name": "Max",
+       "birthDate": "1995-09-04",
+       "type": {
+        "name": "cat",
+        "id": 1
+       },
+       "id": 8,
+       "visits": [
+        {
+         "date": "2011-03-04",
+         "description": "rabies shot",
+         "id": 2,
+         "petId": 8
+        },
+        {
+         "date": "2009-06-04",
+         "description": "neutered",
+         "id": 3,
+         "petId": 8
+        }
+       ],
+       "ownerId": 6
+      },
+      {
+       "name": "Samantha",
+       "birthDate": "1995-09-04",
+       "type": {
+        "name": "cat",
+        "id": 1
+       },
+       "id": 7,
+       "visits": [
+        {
+         "date": "2010-03-04",
+         "description": "rabies shot",
+         "id": 1,
+         "petId": 7
+        },
+        {
+         "date": "2008-09-04",
+         "description": "spayed",
+         "id": 4,
+         "petId": 7
+        }
+       ],
+       "ownerId": 6
+      }
+     ],
+     "id": 6
+    }
+   }
+  },
+  {
+   "name": "unknown owner",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/owners/999"
+   },
+   "response": {
+    "status": 404,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-length",
+      "0"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "owner id that is not a number",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/owners/abc"
+   },
+   "response": {
+    "status": 500,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/problem+json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ],
+     [
+      "connection",
+      "close"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "detail": "An unexpected error occurred while processing your request",
+     "status": 500,
+     "title": "MethodArgumentTypeMismatchException",
+     "type": "{origin}/petclinic/api/owners/abc",
+     "timestamp": {
+      "$match": "instant"
+     },
+     "schemaValidationErrors": []
+    }
+   }
+  },
+  {
+   "name": "owner pet",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/owners/6/pets/7"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "name": "Samantha",
+     "birthDate": "1995-09-04",
+     "type": {
+      "name": "cat",
+      "id": 1
+     },
+     "id": 7,
+     "visits": [
+      {
+       "date": "2010-03-04",
+       "description": "rabies shot",
+       "id": 1,
+       "petId": 7
+      },
+      {
+       "date": "2008-09-04",
+       "description": "spayed",
+       "id": 4,
+       "petId": 7
+      }
+     ],
+     "ownerId": 6
+    }
+   }
+  },
+  {
+   "name": "pet of another owner",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/owners/1/pets/7"
+   },
+   "response": {
+    "status": 404,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-length",
+      "0"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "list pets",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/pets"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": [
+     {
+      "name": "Leo",
+      "birthDate": "2000-09-07",
+      "type": {
+       "name": "cat",
+       "id": 1
+      },
+      "id": 1,
+      "visits": [],
+      "ownerId": 1
+     },
+     {
+      "name": "Basil",
+      "birthDate": "2002-08-06",
+      "type": {
+       "name": "hamster",
+       "id": 6
+      },
+      "id": 2,
+      "visits": [],
+      "ownerId": 2
+     },
+     {
+      "name": "Rosy",
+      "birthDate": "2001-04-17",
+      "type": {
+       "name": "dog",
+       "id": 2
+      },
+      "id": 3,
+      "visits": [],
+      "ownerId": 3
+     },
+     {
+      "name": "Jewel",
+      "birthDate": "2000-03-07",
+      "type": {
+       "name": "dog",
+       "id": 2
+      },
+      "id": 4,
+      "visits": [],
+      "ownerId": 3
+     },
+     {
+      "name": "Iggy",
+      "birthDate": "2000-11-30",
+      "type": {
+       "name": "lizard",
+       "id": 3
+      },
+      "id": 5,
+      "visits": [],
+      "ownerId": 4
+     },
+     {
+      "name": "George",
+      "birthDate": "2000-01-20",
+      "type": {
+       "name": "snake",
+       "id": 4
+      },
+      "id": 6,
+      "visits": [],
+      "ownerId": 5
+     },
+     {
+      "name": "Samantha",
+      "birthDate": "1995-09-04",
+      "type": {
+       "name": "cat",
+       "id": 1
+      },
+      "id": 7,
+      "visits": [],
+      "ownerId": 6
+     },
+     {
+      "name": "Max",
+      "birthDate": "1995-09-04",
+      "type": {
+       "name": "cat",
+       "id": 1
+      },
+      "id": 8,
+      "visits": [],
+      "ownerId": 6
+     },
+     {
+      "name": "Lucky",
+      "birthDate": "1999-08-06",
+      "type": {
+       "name": "bird",
+       "id": 5
+      },
+      "id": 9,
+      "visits": [],
+      "ownerId": 7
+     },
+     {
+      "name": "Mulligan",
+      "birthDate": "1997-02-24",
+      "type": {
+       "name": "dog",
+       "id": 2
+      },
+      "id": 10,
+      "visits": [],
+      "ownerId": 8
+     },
+     {
+      "name": "Freddy",
+      "birthDate": "2000-03-09",
+      "type": {
+       "name": "bird",
+       "id": 5
+      },
+      "id": 11,
+      "visits": [],
+      "ownerId": 9
+     },
+     {
+      "name": "Lucky",
+      "birthDate": "2000-06-24",
+      "type": {
+       "name": "dog",
+       "id": 2
+      },
+      "id": 12,
+      "visits": [],
+      "ownerId": 10
+     },
+     {
+      "name": "Sly",
+      "birthDate": "2002-06-08",
+      "type": {
+       "name": "cat",
+       "id": 1
+      },
+      "id": 13,
+      "visits": [],
+      "ownerId": 10
+     }
+    ]
+   }
+  },
+  {
+   "name": "pet",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/pets/8"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "name": "Max",
+     "birthDate": "1995-09-04",
+     "type": {
+      "name": "cat",
+      "id": 1
+     },
+     "id": 8,
+     "visits": [
+      {
+       "date": "2011-03-04",
+       "description": "rabies shot",
+       "id": 2,
+       "petId": 8
+      },
+      {
+       "date": "2009-06-04",
+       "description": "neutered",
+       "id": 3,
+       "petId": 8
+      }
+     ],
+     "ownerId": 6
+    }
+   }
+  },
+  {
+   "name": "unknown pet",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/pets/999"
+   },
+   "response": {
+    "status": 404,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-length",
+      "0"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "list visits",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/visits"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": [
+     {
+      "date": "2010-03-04",
+      "description": "rabies shot",
+      "id": 1,
+      "petId": 7
+     },
+     {
+      "date": "2011-03-04",
+      "description": "rabies shot",
+      "id": 2,
+      "petId": 8
+     },
+     {
+      "date": "2009-06-04",
+      "description": "neutered",
+      "id": 3,
+      "petId": 8
+     },
+     {
+      "date": "2008-09-04",
+      "description": "spayed",
+      "id": 4,
+      "petId": 7
+     }
+    ]
+   }
+  },
+  {
+   "name": "visit",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/visits/2"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "date": "2011-03-04",
+     "description": "rabies shot",
+     "id": 2,
+     "petId": 8
+    }
+   }
+  },
+  {
+   "name": "unknown visit",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/visits/999"
+   },
+   "response": {
+    "status": 404,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-length",
+      "0"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "list pet types",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/pettypes"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": [
+     {
+      "name": "cat",
+      "id": 1
+     },
+     {
+      "name": "dog",
+      "id": 2
+     },
+     {
+      "name": "lizard",
+      "id": 3
+     },
+     {
+      "name": "snake",
+      "id": 4
+     },
+     {
+      "name": "bird",
+      "id": 5
+     },
+     {
+      "name": "hamster",
+      "id": 6
+     }
+    ]
+   }
+  },
+  {
+   "name": "pet type",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/pettypes/3"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "name": "lizard",
+     "id": 3
+    }
+   }
+  },
+  {
+   "name": "unknown pet type",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/pettypes/999"
+   },
+   "response": {
+    "status": 404,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-length",
+      "0"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "list specialties",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/specialties"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": [
+     {
+      "id": 1,
+      "name": "radiology"
+     },
+     {
+      "id": 2,
+      "name": "surgery"
+     },
+     {
+      "id": 3,
+      "name": "dentistry"
+     }
+    ]
+   }
+  },
+  {
+   "name": "specialty",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/specialties/2"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "id": 2,
+     "name": "surgery"
+    }
+   }
+  },
+  {
+   "name": "unknown specialty",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/specialties/999"
+   },
+   "response": {
+    "status": 404,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-length",
+      "0"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "list vets",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/vets"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": [
+     {
+      "firstName": "James",
+      "lastName": "Carter",
+      "specialties": [],
+      "id": 1
+     },
+     {
+      "firstName": "Linda",
+      "lastName": "Douglas",
+      "specialties": [
+       {
+        "id": 3,
+        "name": "dentistry"
+       },
+       {
+        "id": 2,
+        "name": "surgery"
+       }
+      ],
+      "id": 3
+     },
+     {
+      "firstName": "Sharon",
+      "lastName": "Jenkins",
+      "specialties": [],
+      "id": 6
+     },
+     {
+      "firstName": "Helen",
+      "lastName": "Leary",
+      "specialties": [
+       {
+        "id": 1,
+        "name": "radiology"
+       }
+      ],
+      "id": 2
+     },
+     {
+      "firstName": "Rafael",
+      "lastName": "Ortega",
+      "specialties": [
+       {
+        "id": 2,
+        "name": "surgery"
+       }
+      ],
+      "id": 4
+     },
+     {
+      "firstName": "Henry",
+      "lastName": "Stevens",
+      "specialties": [
+       {
+        "id": 1,
+        "name": "radiology"
+       }
+      ],
+      "id": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "vet with specialties",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/vets/3"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "firstName": "Linda",
+     "lastName": "Douglas",
+     "specialties": [
+      {
+       "id": 3,
+       "name": "dentistry"
+      },
+      {
+       "id": 2,
+       "name": "surgery"
+      }
+     ],
+     "id": 3
+    }
+   }
+  },
+  {
+   "name": "unknown vet",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/vets/999"
+   },
+   "response": {
+    "status": 404,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-length",
+      "0"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "v2 owners default page",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/v2/owners"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "content": [
+      {
+       "firstName": "George",
+       "lastName": "Franklin",
+       "address": "110 W. Liberty St.",
+       "city": "Madison",
+       "telephone": "6085551023",
+       "pets": [
+        {
+         "name": "Leo",
+         "birthDate": "2000-09-07",
+         "type": {
+          "name": "cat",
+          "id": 1
+         },
+         "id": 1,
+         "visits": [],
+         "ownerId": 1
+        }
+       ],
+       "id": 1
+      },
+      {
+       "firstName": "Betty",
+       "lastName": "Davis",
+       "address": "638 Cardinal Ave.",
+       "city": "Sun Prairie",
+       "telephone": "6085551749",
+       "pets": [
+        {
+         "name": "Basil",
+         "birthDate": "2002-08-06",
+         "type": {
+          "name": "hamster",
+          "id": 6
+         },
+         "id": 2,
+         "visits": [],
+         "ownerId": 2
+        }
+       ],
+       "id": 2
+      },
+      {
+       "firstName": "Eduardo",
+       "lastName": "Rodriquez",
+       "address": "2693 Commerce St.",
+       "city": "McFarland",
+       "telephone": "6085558763",
+       "pets": [
+        {
+         "name": "Jewel",
+         "birthDate": "2000-03-07",
+         "type": {
+          "name": "dog",
+          "id": 2
+         },
+         "id": 4,
+         "visits": [],
+         "ownerId": 3
+        },
+        {
+         "name": "Rosy",
+         "birthDate": "2001-04-17",
+         "type": {
+          "name": "dog",
+          "id": 2
+         },
+         "id": 3,
+         "visits": [],
+         "ownerId": 3
+        }
+       ],
+       "id": 3
+      },
+      {
+       "firstName": "Harold",
+       "lastName": "Davis",
+       "address": "563 Friendly St.",
+       "city": "Windsor",
+       "telephone": "6085553198",
+       "pets": [
+        {
+         "name": "Iggy",
+         "birthDate": "2000-11-30",
+         "type": {
+          "name": "lizard",
+          "id": 3
+         },
+         "id": 5,
+         "visits": [],
+         "ownerId": 4
+        }
+       ],
+       "id": 4
+      },
+      {
+       "firstName": "Peter",
+       "lastName": "McTavish",
+       "address": "2387 S. Fair Way",
+       "city": "Madison",
+       "telephone": "6085552765",
+       "pets": [
+        {
+         "name": "George",
+         "birthDate": "2000-01-20",
+         "type": {
+          "name": "snake",
+          "id": 4
+         },
+         "id": 6,
+         "visits": [],
+         "ownerId": 5
+        }
+       ],
+       "id": 5
+      },
+      {
+       "firstName": "Jean",
+       "lastName": "Coleman",
+       "address": "105 N. Lake St.",
+       "city": "Monona",
+       "telephone": "6085552654",
+       "pets": [
+        {
+         "name": "Max",
+         "birthDate": "1995-09-04",
+         "type": {
+          "name": "cat",
+          "id": 1
+         },
+         "id": 8,
+         "visits": [
+          {
+           "date": "2011-03-04",
+           "description": "rabies shot",
+           "id": 2,
+           "petId": 8
+          },
+          {
+           "date": "2009-06-04",
+           "description": "neutered",
+           "id": 3,
+           "petId": 8
+          }
+         ],
+         "ownerId": 6
+        },
+        {
+         "name": "Samantha",
+         "birthDate": "1995-09-04",
+         "type": {
+          "name": "cat",
+          "id": 1
+         },
+         "id": 7,
+         "visits": [
+          {
+           "date": "2010-03-04",
+           "description": "rabies shot",
+           "id": 1,
+           "petId": 7
+          },
+          {
+           "date": "2008-09-04",
+           "description": "spayed",
+           "id": 4,
+           "petId": 7
+          }
+         ],
+         "ownerId": 6
+        }
+       ],
+       "id": 6
+      },
+      {
+       "firstName": "Jeff",
+       "lastName": "Black",
+       "address": "1450 Oak Blvd.",
+       "city": "Monona",
+       "telephone": "6085555387",
+       "pets": [
+        {
+         "name": "Lucky",
+         "birthDate": "1999-08-06",
+         "type": {
+          "name": "bird",
+          "id": 5
+         },
+         "id": 9,
+         "visits": [],
+         "ownerId": 7
+        }
+       ],
+       "id": 7
+      },
+      {
+       "firstName": "Maria",
+       "lastName": "Escobito",
+       "address": "345 Maple St.",
+       "city": "Madison",
+       "telephone": "6085557683",
+       "pets": [
+        {
+         "name": "Mulligan",
+         "birthDate": "1997-02-24",
+         "type": {
+          "name": "dog",
+          "id": 2
+         },
+         "id": 10,
+         "visits": [],
+         "ownerId": 8
+        }
+       ],
+       "id": 8
+      },
+      {
+       "firstName": "David",
+       "lastName": "Schroeder",
+       "address": "2749 Blackhawk Trail",
+       "city": "Madison",
+       "telephone": "6085559435",
+       "pets": [
+        {
+         "name": "Freddy",
+         "birthDate": "2000-03-09",
+         "type": {
+          "name": "bird",
+          "id": 5
+         },
+         "id": 11,
+         "visits": [],
+         "ownerId": 9
+        }
+       ],
+       "id": 9
+      },
+      {
+       "firstName": "Carlos",
+       "lastName": "Estaban",
+       "address": "2335 Independence La.",
+       "city": "Waunakee",
+       "telephone": "6085555487",
+       "pets": [
+        {
+         "name": "Lucky",
+         "birthDate": "2000-06-24",
+         "type": {
+          "name": "dog",
+          "id": 2
+         },
+         "id": 12,
+         "visits": [],
+         "ownerId": 10
+        },
+        {
+         "name": "Sly",
+         "birthDate": "2002-06-08",
+         "type": {
+          "name": "cat",
+          "id": 1
+         },
+         "id": 13,
+         "visits": [],
+         "ownerId": 10
+        }
+       ],
+       "id": 10
+      }
+     ],
+     "page": 0,
+     "size": 20,
+     "totalElements": 10,
+     "totalPages": 1
+    }
+   }
+  },
+  {
+   "name": "v2 owners page and size",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/v2/owners?page=1&size=3"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "content": [
+      {
+       "firstName": "Harold",
+       "lastName": "Davis",
+       "address": "563 Friendly St.",
+       "city": "Windsor",
+       "telephone": "6085553198",
+       "pets": [
+        {
+         "name": "Iggy",
+         "birthDate": "2000-11-30",
+         "type": {
+          "name": "lizard",
+          "id": 3
+         },
+         "id": 5,
+         "visits": [],
+         "ownerId": 4
+        }
+       ],
+       "id": 4
+      },
+      {
+       "firstName": "Peter",
+       "lastName": "McTavish",
+       "address": "2387 S. Fair Way",
+       "city": "Madison",
+       "telephone": "6085552765",
+       "pets": [
+        {
+         "name": "George",
+         "birthDate": "2000-01-20",
+         "type": {
+          "name": "snake",
+          "id": 4
+         },
+         "id": 6,
+         "visits": [],
+         "ownerId": 5
+        }
+       ],
+       "id": 5
+      },
+      {
+       "firstName": "Jean",
+       "lastName": "Coleman",
+       "address": "105 N. Lake St.",
+       "city": "Monona",
+       "telephone": "6085552654",
+       "pets": [
+        {
+         "name": "Max",
+         "birthDate": "1995-09-04",
+         "type": {
+          "name": "cat",
+          "id": 1
+         },
+         "id": 8,
+         "visits": [
+          {
+           "date": "2011-03-04",
+           "description": "rabies shot",
+           "id": 2,
+           "petId": 8
+          },
+          {
+           "date": "2009-06-04",
+           "description": "neutered",
+           "id": 3,
+           "petId": 8
+          }
+         ],
+         "ownerId": 6
+        },
+        {
+         "name": "Samantha",
+         "birthDate": "1995-09-04",
+         "type": {
+          "name": "cat",
+          "id": 1
+         },
+         "id": 7,
+         "visits": [
+          {
+           "date": "2010-03-04",
+           "description": "rabies shot",
+           "id": 1,
+           "petId": 7
+          },
+          {
+           "date": "2008-09-04",
+           "description": "spayed",
+           "id": 4,
+           "petId": 7
+          }
+         ],
+         "ownerId": 6
+        }
+       ],
+       "id": 6
+      }
+     ],
+     "page": 1,
+     "size": 3,
+     "totalElements": 10,
+     "totalPages": 4
+    }
+   }
+  },
+  {
+   "name": "v2 owners past the end",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/v2/owners?page=9&size=5"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "content": [],
+     "page": 9,
+     "size": 5,
+     "totalElements": 10,
+     "totalPages": 2
+    }
+   }
+  },
+  {
+   "name": "v2 owners by last name",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/v2/owners?lastName=Davis&size=1"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "content": [
+      {
+       "firstName": "Betty",
+       "lastName": "Davis",
+       "address": "638 Cardinal Ave.",
+       "city": "Sun Prairie",
+       "telephone": "6085551749",
+       "pets": [
+        {
+         "name": "Basil",
+         "birthDate": "2002-08-06",
+         "type": {
+          "name": "hamster",
+          "id": 6
+         },
+         "id": 2,
+         "visits": [],
+         "ownerId": 2
+        }
+       ],
+       "id": 2
+      }
+     ],
+     "page": 0,
+     "size": 1,
+     "totalElements": 2,
+     "totalPages": 2
+    }
+   }
+  },
+  {
+   "name": "v2 pets page",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/v2/pets?page=2&size=4"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "content": [
+      {
+       "name": "Lucky",
+       "birthDate": "1999-08-06",
+       "type": {
+        "name": "bird",
+        "id": 5
+       },
+       "id": 9,
+       "visits": [],
+       "ownerId": 7
+      },
+      {
+       "name": "Mulligan",
+       "birthDate": "1997-02-24",
+       "type": {
+        "name": "dog",
+        "id": 2
+       },
+       "id": 10,
+       "visits": [],
+       "ownerId": 8
+      },
+      {
+       "name": "Freddy",
+       "birthDate": "2000-03-09",
+       "type": {
+        "name": "bird",
+        "id": 5
+       },
+       "id": 11,
+       "visits": [],
+       "ownerId": 9
+      },
+      {
+       "name": "Lucky",
+       "birthDate": "2000-06-24",
+       "type": {
+        "name": "dog",
+        "id": 2
+       },
+       "id": 12,
+       "visits": [],
+       "ownerId": 10
+      }
+     ],
+     "page": 2,
+     "size": 4,
+     "totalElements": 13,
+     "totalPages": 4
+    }
+   }
+  },
+  {
+   "name": "v2 size below the minimum",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/v2/pets?size=0"
+   },
+   "response": {
+    "status": 500,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/problem+json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ],
+     [
+      "connection",
+      "close"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "detail": "An unexpected error occurred while processing your request",
+     "status": 500,
+     "title": "ConstraintViolationException",
+     "type": "{origin}/petclinic/api/v2/pets",
+     "timestamp": {
+      "$match": "instant"
+     },
+     "schemaValidationErrors": []
+    }
+   }
+  },
+  {
+   "name": "create owner",
+   "request": {
+    "method": "POST",
+    "path": "/petclinic/api/owners"
+   },
+   "response": {
+    "status": 201,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "location",
+      "/api/owners/11"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "firstName": "Ada",
+     "lastName": "Lovelace",
+     "address": "12 St James Sq.",
+     "city": "London",
+     "telephone": "0123456789",
+     "pets": [],
+     "id": 11
+    }
+   }
+  },
+  {
+   "name": "created owner reads back",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/owners/11"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "firstName": "Ada",
+     "lastName": "Lovelace",
+     "address": "12 St James Sq.",
+     "city": "London",
+     "telephone": "0123456789",
+     "pets": [],
+     "id": 11
+    }
+   }
+  },
+  {
+   "name": "create owner with UTF-8 names",
+   "request": {
+    "method": "POST",
+    "path": "/petclinic/api/owners"
+   },
+   "response": {
+    "status": 201,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "location",
+      "/api/owners/12"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "firstName": "Zoë",
+     "lastName": "O'Brien-Núñez",
+     "address": "12 St James Sq.",
+     "city": "São Paulo",
+     "telephone": "0123456789",
+     "pets": [],
+     "id": 12
+    }
+   }
+  },
+  {
+   "name": "create owner: telephone with letters",
+   "request": {
+    "method": "POST",
+    "path": "/petclinic/api/owners"
+   },
+   "response": {
+    "status": 400,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/problem+json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ],
+     [
+      "connection",
+      "close"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "detail": "The request contains invalid or missing parameters",
+     "status": 400,
+     "title": "MethodArgumentNotValidException",
+     "type": "{origin}/petclinic/api/owners",
+     "timestamp": {
+      "$match": "instant"
+     },
+     "schemaValidationErrors": [
+      {
+       "message": "Field 'telephone' must match \"^[0-9]{10}$\" (rejected value: 01234abcde)",
+       "field": "telephone",
+       "defaultMessage": "must match \"^[0-9]{10}$\"",
+       "rejectedValue": "01234abcde"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "name": "create owner: blank city",
+   "request": {
+    "method": "POST",
+    "path": "/petclinic/api/owners"
+   },
+   "response": {
+    "status": 400,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/problem+json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ],
+     [
+      "connection",
+      "close"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "detail": "The request contains invalid or missing parameters",
+     "status": 400,
+     "title": "MethodArgumentNotValidException",
+     "type": "{origin}/petclinic/api/owners",
+     "timestamp": {
+      "$match": "instant"
+     },
+     "schemaValidationErrors": [
+      {
+       "message": "Field 'city' must match \"[\\s\\S]*\\S[\\s\\S]*\" (rejected value:    )",
+       "field": "city",
+       "defaultMessage": "must match \"[\\s\\S]*\\S[\\s\\S]*\"",
+       "rejectedValue": "   "
+      }
+     ]
+    }
+   }
+  },
+  {
+   "name": "create owner: missing first name",
+   "request": {
+    "method": "POST",
+    "path": "/petclinic/api/owners"
+   },
+   "response": {
+    "status": 400,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/problem+json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ],
+     [
+      "connection",
+      "close"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "detail": "The request contains invalid or missing parameters",
+     "status": 400,
+     "title": "MethodArgumentNotValidException",
+     "type": "{origin}/petclinic/api/owners",
+     "timestamp": {
+      "$match": "instant"
+     },
+     "schemaValidationErrors": [
+      {
+       "message": "Field 'firstName' must not be null (rejected value: null)",
+       "field": "firstName",
+       "defaultMessage": "must not be null",
+       "rejectedValue": "null"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "name": "create owner: first name with digits",
+   "request": {
+    "method": "POST",
+    "path": "/petclinic/api/owners"
+   },
+   "response": {
+    "status": 400,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/problem+json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ],
+     [
+      "connection",
+      "close"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "detail": "The request contains invalid or missing parameters",
+     "status": 400,
+     "title": "MethodArgumentNotValidException",
+     "type": "{origin}/petclinic/api/owners",
+     "timestamp": {
+      "$match": "instant"
+     },
+     "schemaValidationErrors": [
+      {
+       "message": "Field 'firstName' must match \"^[\\p{L}]+([ '-][\\p{L}]+){0,2}$\" (rejected value: Ada2)",
+       "field": "firstName",
+       "defaultMessage": "must match \"^[\\p{L}]+([ '-][\\p{L}]+){0,2}$\"",
+       "rejectedValue": "Ada2"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "name": "create owner: malformed JSON",
+   "request": {
+    "method": "POST",
+    "path": "/petclinic/api/owners"
+   },
+   "response": {
+    "status": 500,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/problem+json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ],
+     [
+      "connection",
+      "close"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "detail": "An unexpected error occurred while processing your request",
+     "status": 500,
+     "title": "HttpMessageNotReadableException",
+     "type": "{origin}/petclinic/api/owners",
+     "timestamp": {
+      "$match": "instant"
+     },
+     "schemaValidationErrors": []
+    }
+   }
+  },
+  {
+   "name": "create owner: wrong content type",
+   "request": {
+    "method": "POST",
+    "path": "/petclinic/api/owners"
+   },
+   "response": {
+    "status": 500,
+    "reason": "",
+    "headers": [
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/problem+json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ],
+     [
+      "connection",
+      "close"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "detail": "An unexpected error occurred while processing your request",
+     "status": 500,
+     "title": "HttpMediaTypeNotSupportedException",
+     "type": "{origin}/petclinic/api/owners",
+     "timestamp": {
+      "$match": "instant"
+     },
+     "schemaValidationErrors": []
+    }
+   }
+  },
+  {
+   "name": "update owner",
+   "request": {
+    "method": "PUT",
+    "path": "/petclinic/api/owners/11"
+   },
+   "response": {
+    "status": 204,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "updated owner reads back",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/owners/11"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "firstName": "Ada",
+     "lastName": "Lovelace",
+     "address": "12 St James Sq.",
+     "city": "Marylebone",
+     "telephone": "0987654321",
+     "pets": [],
+     "id": 11
+    }
+   }
+  },
+  {
+   "name": "update unknown owner",
+   "request": {
+    "method": "PUT",
+    "path": "/petclinic/api/owners/999"
+   },
+   "response": {
+    "status": 404,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-length",
+      "0"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "update owner: last name with four parts",
+   "request": {
+    "method": "PUT",
+    "path": "/petclinic/api/owners/11"
+   },
+   "response": {
+    "status": 400,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/problem+json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ],
+     [
+      "connection",
+      "close"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "detail": "The request contains invalid or missing parameters",
+     "status": 400,
+     "title": "MethodArgumentNotValidException",
+     "type": "{origin}/petclinic/api/owners/11",
+     "timestamp": {
+      "$match": "instant"
+     },
+     "schemaValidationErrors": [
+      {
+       "message": "Field 'lastName' must match \"^[\\p{L}]+([ '-][\\p{L}]+){0,2}\\.?$\" (rejected value: Van Der Berg Smith)",
+       "field": "lastName",
+       "defaultMessage": "must match \"^[\\p{L}]+([ '-][\\p{L}]+){0,2}\\.?$\"",
+       "rejectedValue": "Van Der Berg Smith"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "name": "add pet to owner",
+   "request": {
+    "method": "POST",
+    "path": "/petclinic/api/owners/11/pets"
+   },
+   "response": {
+    "status": 201,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "location",
+      "/api/pets/14"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "name": "Babbage",
+     "birthDate": "2020-02-02",
+     "type": {
+      "name": "dog",
+      "id": 2
+     },
+     "id": 14,
+     "visits": [],
+     "ownerId": 11
+    }
+   }
+  },
+  {
+   "name": "added pet reads back through the owner",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/owners/11/pets/14"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "name": "Babbage",
+     "birthDate": "2020-02-02",
+     "type": {
+      "name": "dog",
+      "id": 2
+     },
+     "id": 14,
+     "visits": [],
+     "ownerId": 11
+    }
+   }
+  },
+  {
+   "name": "add pet to unknown owner",
+   "request": {
+    "method": "POST",
+    "path": "/petclinic/api/owners/999/pets"
+   },
+   "response": {
+    "status": 404,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-length",
+      "0"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "add pet: birth date in the future",
+   "request": {
+    "method": "POST",
+    "path": "/petclinic/api/owners/11/pets"
+   },
+   "response": {
+    "status": 400,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/problem+json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ],
+     [
+      "connection",
+      "close"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "detail": "The request contains invalid or missing parameters",
+     "status": 400,
+     "title": "MethodArgumentNotValidException",
+     "type": "{origin}/petclinic/api/owners/11/pets",
+     "timestamp": {
+      "$match": "instant"
+     },
+     "schemaValidationErrors": [
+      {
+       "message": "Field 'birthDate' Birth date cannot be in the future (rejected value: 2999-01-01)",
+       "field": "birthDate",
+       "defaultMessage": "Birth date cannot be in the future",
+       "rejectedValue": "2999-01-01"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "name": "add pet: birth date older than 50 years",
+   "request": {
+    "method": "POST",
+    "path": "/petclinic/api/owners/11/pets"
+   },
+   "response": {
+    "status": 400,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/problem+json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ],
+     [
+      "connection",
+      "close"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "detail": "The request contains invalid or missing parameters",
+     "status": 400,
+     "title": "MethodArgumentNotValidException",
+     "type": "{origin}/petclinic/api/owners/11/pets",
+     "timestamp": {
+      "$match": "instant"
+     },
+     "schemaValidationErrors": [
+      {
+       "message": "Field 'birthDate' Birth date cannot be older than 50 years (rejected value: 1900-01-01)",
+       "field": "birthDate",
+       "defaultMessage": "Birth date cannot be older than 50 years",
+       "rejectedValue": "1900-01-01"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "name": "add pet: blank name",
+   "request": {
+    "method": "POST",
+    "path": "/petclinic/api/owners/11/pets"
+   },
+   "response": {
+    "status": 400,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/problem+json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ],
+     [
+      "connection",
+      "close"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "detail": "The request contains invalid or missing parameters",
+     "status": 400,
+     "title": "MethodArgumentNotValidException",
+     "type": "{origin}/petclinic/api/owners/11/pets",
+     "timestamp": {
+      "$match": "instant"
+     },
+     "schemaValidationErrors": [
+      {
+       "message": "Field 'name' must match \"[\\s\\S]*\\S[\\s\\S]*\" (rejected value:  )",
+       "field": "name",
+       "defaultMessage": "must match \"[\\s\\S]*\\S[\\s\\S]*\"",
+       "rejectedValue": " "
+      }
+     ]
+    }
+   }
+  },
+  {
+   "name": "add pet: unknown pet type",
+   "request": {
+    "method": "POST",
+    "path": "/petclinic/api/owners/11/pets"
+   },
+   "response": {
+    "status": 500,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/problem+json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ],
+     [
+      "connection",
+      "close"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "detail": "An unexpected error occurred while processing your request",
+     "status": 500,
+     "title": "NullPointerException",
+     "type": "{origin}/petclinic/api/owners/11/pets",
+     "timestamp": {
+      "$match": "instant"
+     },
+     "schemaValidationErrors": []
+    }
+   }
+  },
+  {
+   "name": "update owner pet",
+   "request": {
+    "method": "PUT",
+    "path": "/petclinic/api/owners/11/pets/14"
+   },
+   "response": {
+    "status": 204,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "update pet of unknown owner",
+   "request": {
+    "method": "PUT",
+    "path": "/petclinic/api/owners/999/pets/14"
+   },
+   "response": {
+    "status": 404,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-length",
+      "0"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "add visit through the owner",
+   "request": {
+    "method": "POST",
+    "path": "/petclinic/api/owners/11/pets/14/visits"
+   },
+   "response": {
+    "status": 201,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "location",
+      "/api/visits/5"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "date": "2026-01-15",
+     "description": "annual check-up",
+     "id": 5,
+     "petId": 14
+    }
+   }
+  },
+  {
+   "name": "owner with the new pet and visit",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/owners/11"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "firstName": "Ada",
+     "lastName": "Lovelace",
+     "address": "12 St James Sq.",
+     "city": "Marylebone",
+     "telephone": "0987654321",
+     "pets": [
+      {
+       "name": "Analytical",
+       "birthDate": "2020-02-02",
+       "type": {
+        "name": "cat",
+        "id": 1
+       },
+       "id": 14,
+       "visits": [
+        {
+         "date": "2026-01-15",
+         "description": "annual check-up",
+         "id": 5,
+         "petId": 14
+        }
+       ],
+       "ownerId": 11
+      }
+     ],
+     "id": 11
+    }
+   }
+  },
+  {
+   "name": "update pet",
+   "request": {
+    "method": "PUT",
+    "path": "/petclinic/api/pets/14"
+   },
+   "response": {
+    "status": 204,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "updated pet reads back",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/pets/14"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "name": "Engine",
+     "birthDate": "2021-03-03",
+     "type": {
+      "name": "bird",
+      "id": 5
+     },
+     "id": 14,
+     "visits": [
+      {
+       "date": "2026-01-15",
+       "description": "annual check-up",
+       "id": 5,
+       "petId": 14
+      }
+     ],
+     "ownerId": 11
+    }
+   }
+  },
+  {
+   "name": "update unknown pet",
+   "request": {
+    "method": "PUT",
+    "path": "/petclinic/api/pets/999"
+   },
+   "response": {
+    "status": 404,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-length",
+      "0"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "create visit",
+   "request": {
+    "method": "POST",
+    "path": "/petclinic/api/visits"
+   },
+   "response": {
+    "status": 201,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "location",
+      "/api/visits/6"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "date": "2026-01-15",
+     "description": "first visit for Leo",
+     "id": 6,
+     "petId": 1
+    }
+   }
+  },
+  {
+   "name": "create visit: whitespace description",
+   "request": {
+    "method": "POST",
+    "path": "/petclinic/api/visits"
+   },
+   "response": {
+    "status": 400,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/problem+json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ],
+     [
+      "connection",
+      "close"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "detail": "The request contains invalid or missing parameters",
+     "status": 400,
+     "title": "MethodArgumentNotValidException",
+     "type": "{origin}/petclinic/api/visits",
+     "timestamp": {
+      "$match": "instant"
+     },
+     "schemaValidationErrors": [
+      {
+       "message": "Field 'description' must match \"[\\s\\S]*\\S[\\s\\S]*\" (rejected value:  )",
+       "field": "description",
+       "defaultMessage": "must match \"[\\s\\S]*\\S[\\s\\S]*\"",
+       "rejectedValue": " "
+      }
+     ]
+    }
+   }
+  },
+  {
+   "name": "create visit for an unknown pet",
+   "request": {
+    "method": "POST",
+    "path": "/petclinic/api/visits"
+   },
+   "response": {
+    "status": 404,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/problem+json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "detail": "The requested resource could not be processed due to a data constraint violation",
+     "status": 404,
+     "title": "DataIntegrityViolationException",
+     "type": "{origin}/petclinic/api/visits",
+     "timestamp": {
+      "$match": "instant"
+     },
+     "schemaValidationErrors": []
+    }
+   }
+  },
+  {
+   "name": "update visit",
+   "request": {
+    "method": "PUT",
+    "path": "/petclinic/api/visits/6"
+   },
+   "response": {
+    "status": 204,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "updated visit reads back",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/visits/6"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "date": "2026-02-01",
+     "description": "follow-up",
+     "id": 6,
+     "petId": 1
+    }
+   }
+  },
+  {
+   "name": "update unknown visit",
+   "request": {
+    "method": "PUT",
+    "path": "/petclinic/api/visits/999"
+   },
+   "response": {
+    "status": 404,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-length",
+      "0"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "delete visit",
+   "request": {
+    "method": "DELETE",
+    "path": "/petclinic/api/visits/6"
+   },
+   "response": {
+    "status": 204,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "delete unknown visit",
+   "request": {
+    "method": "DELETE",
+    "path": "/petclinic/api/visits/6"
+   },
+   "response": {
+    "status": 404,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-length",
+      "0"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "create pet type",
+   "request": {
+    "method": "POST",
+    "path": "/petclinic/api/pettypes"
+   },
+   "response": {
+    "status": 201,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "location",
+      "/api/pettypes/7"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "name": "ferret",
+     "id": 7
+    }
+   }
+  },
+  {
+   "name": "create pet type: name starting with a digit",
+   "request": {
+    "method": "POST",
+    "path": "/petclinic/api/pettypes"
+   },
+   "response": {
+    "status": 400,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/problem+json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ],
+     [
+      "connection",
+      "close"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "detail": "The request contains invalid or missing parameters",
+     "status": 400,
+     "title": "MethodArgumentNotValidException",
+     "type": "{origin}/petclinic/api/pettypes",
+     "timestamp": {
+      "$match": "instant"
+     },
+     "schemaValidationErrors": [
+      {
+       "message": "Field 'name' must match \"^[\\p{L}][\\p{L}\\s\\-']{0,79}$\" (rejected value: 9cats)",
+       "field": "name",
+       "defaultMessage": "must match \"^[\\p{L}][\\p{L}\\s\\-']{0,79}$\"",
+       "rejectedValue": "9cats"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "name": "update pet type without an id",
+   "request": {
+    "method": "PUT",
+    "path": "/petclinic/api/pettypes/7"
+   },
+   "response": {
+    "status": 400,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/problem+json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ],
+     [
+      "connection",
+      "close"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "detail": "The request contains invalid or missing parameters",
+     "status": 400,
+     "title": "MethodArgumentNotValidException",
+     "type": "{origin}/petclinic/api/pettypes/7",
+     "timestamp": {
+      "$match": "instant"
+     },
+     "schemaValidationErrors": [
+      {
+       "message": "Field 'id' must not be null (rejected value: null)",
+       "field": "id",
+       "defaultMessage": "must not be null",
+       "rejectedValue": "null"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "name": "update pet type",
+   "request": {
+    "method": "PUT",
+    "path": "/petclinic/api/pettypes/7"
+   },
+   "response": {
+    "status": 204,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "updated pet type reads back",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/pettypes/7"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "name": "weasel",
+     "id": 7
+    }
+   }
+  },
+  {
+   "name": "update unknown pet type",
+   "request": {
+    "method": "PUT",
+    "path": "/petclinic/api/pettypes/999"
+   },
+   "response": {
+    "status": 404,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-length",
+      "0"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "delete pet type",
+   "request": {
+    "method": "DELETE",
+    "path": "/petclinic/api/pettypes/7"
+   },
+   "response": {
+    "status": 204,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "delete pet type in use deletes its pets",
+   "request": {
+    "method": "DELETE",
+    "path": "/petclinic/api/pettypes/6"
+   },
+   "response": {
+    "status": 204,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "delete unknown pet type",
+   "request": {
+    "method": "DELETE",
+    "path": "/petclinic/api/pettypes/7"
+   },
+   "response": {
+    "status": 404,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-length",
+      "0"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "create specialty",
+   "request": {
+    "method": "POST",
+    "path": "/petclinic/api/specialties"
+   },
+   "response": {
+    "status": 201,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "location",
+      "/api/specialties/4"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "id": 4,
+     "name": "oncology"
+    }
+   }
+  },
+  {
+   "name": "create specialty: name with digits",
+   "request": {
+    "method": "POST",
+    "path": "/petclinic/api/specialties"
+   },
+   "response": {
+    "status": 400,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/problem+json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ],
+     [
+      "connection",
+      "close"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "detail": "The request contains invalid or missing parameters",
+     "status": 400,
+     "title": "MethodArgumentNotValidException",
+     "type": "{origin}/petclinic/api/specialties",
+     "timestamp": {
+      "$match": "instant"
+     },
+     "schemaValidationErrors": [
+      {
+       "message": "Field 'name' must match \"^[\\p{L}][\\p{L}\\s\\-&/]{0,79}$\" (rejected value: 9lives)",
+       "field": "name",
+       "defaultMessage": "must match \"^[\\p{L}][\\p{L}\\s\\-&/]{0,79}$\"",
+       "rejectedValue": "9lives"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "name": "update specialty",
+   "request": {
+    "method": "PUT",
+    "path": "/petclinic/api/specialties/4"
+   },
+   "response": {
+    "status": 204,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "updated specialty reads back",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/specialties/4"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "id": 4,
+     "name": "cardiology"
+    }
+   }
+  },
+  {
+   "name": "update unknown specialty",
+   "request": {
+    "method": "PUT",
+    "path": "/petclinic/api/specialties/999"
+   },
+   "response": {
+    "status": 404,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-length",
+      "0"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "create vet with a specialty",
+   "request": {
+    "method": "POST",
+    "path": "/petclinic/api/vets"
+   },
+   "response": {
+    "status": 201,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "location",
+      "/api/vets/7"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "firstName": "Grace",
+     "lastName": "Hopper",
+     "specialties": [
+      {
+       "id": 4,
+       "name": "cardiology"
+      }
+     ],
+     "id": 7
+    }
+   }
+  },
+  {
+   "name": "create vet: last name too long",
+   "request": {
+    "method": "POST",
+    "path": "/petclinic/api/vets"
+   },
+   "response": {
+    "status": 400,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/problem+json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ],
+     [
+      "connection",
+      "close"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "detail": "The request contains invalid or missing parameters",
+     "status": 400,
+     "title": "MethodArgumentNotValidException",
+     "type": "{origin}/petclinic/api/vets",
+     "timestamp": {
+      "$match": "instant"
+     },
+     "schemaValidationErrors": [
+      {
+       "message": "Field 'lastName' size must be between 1 and 30 (rejected value: HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH)",
+       "field": "lastName",
+       "defaultMessage": "size must be between 1 and 30",
+       "rejectedValue": "HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "name": "update vet",
+   "request": {
+    "method": "PUT",
+    "path": "/petclinic/api/vets/7"
+   },
+   "response": {
+    "status": 204,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "updated vet reads back",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/vets/7"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "firstName": "Grace",
+     "lastName": "Brewster",
+     "specialties": [
+      {
+       "id": 1,
+       "name": "radiology"
+      }
+     ],
+     "id": 7
+    }
+   }
+  },
+  {
+   "name": "update unknown vet",
+   "request": {
+    "method": "PUT",
+    "path": "/petclinic/api/vets/999"
+   },
+   "response": {
+    "status": 404,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-length",
+      "0"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "delete vet",
+   "request": {
+    "method": "DELETE",
+    "path": "/petclinic/api/vets/7"
+   },
+   "response": {
+    "status": 204,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "delete unknown vet",
+   "request": {
+    "method": "DELETE",
+    "path": "/petclinic/api/vets/7"
+   },
+   "response": {
+    "status": 404,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-length",
+      "0"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "delete specialty",
+   "request": {
+    "method": "DELETE",
+    "path": "/petclinic/api/specialties/4"
+   },
+   "response": {
+    "status": 204,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "delete unknown specialty",
+   "request": {
+    "method": "DELETE",
+    "path": "/petclinic/api/specialties/4"
+   },
+   "response": {
+    "status": 404,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-length",
+      "0"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "create user",
+   "request": {
+    "method": "POST",
+    "path": "/petclinic/api/users"
+   },
+   "response": {
+    "status": 201,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "username": "clerk",
+     "enabled": true,
+     "password": "secret",
+     "roles": [
+      {
+       "name": "ROLE_OWNER_ADMIN"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "name": "create user: role without the ROLE_ prefix",
+   "request": {
+    "method": "POST",
+    "path": "/petclinic/api/users"
+   },
+   "response": {
+    "status": 400,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/problem+json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ],
+     [
+      "connection",
+      "close"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "detail": "The request contains invalid or missing parameters",
+     "status": 400,
+     "title": "MethodArgumentNotValidException",
+     "type": "{origin}/petclinic/api/users",
+     "timestamp": {
+      "$match": "instant"
+     },
+     "schemaValidationErrors": [
+      {
+       "message": "Field 'roles[0].name' must match \"^ROLE_[A-Z][A-Z0-9_]{1,74}$\" (rejected value: OWNER_ADMIN)",
+       "field": "roles[0].name",
+       "defaultMessage": "must match \"^ROLE_[A-Z][A-Z0-9_]{1,74}$\"",
+       "rejectedValue": "OWNER_ADMIN"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "name": "create user: missing roles",
+   "request": {
+    "method": "POST",
+    "path": "/petclinic/api/users"
+   },
+   "response": {
+    "status": 500,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/problem+json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ],
+     [
+      "connection",
+      "close"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "detail": "An unexpected error occurred while processing your request",
+     "status": 500,
+     "title": "IllegalArgumentException",
+     "type": "{origin}/petclinic/api/users",
+     "timestamp": {
+      "$match": "instant"
+     },
+     "schemaValidationErrors": []
+    }
+   }
+  },
+  {
+   "name": "delete pet",
+   "request": {
+    "method": "DELETE",
+    "path": "/petclinic/api/pets/14"
+   },
+   "response": {
+    "status": 204,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "delete unknown pet",
+   "request": {
+    "method": "DELETE",
+    "path": "/petclinic/api/pets/14"
+   },
+   "response": {
+    "status": 404,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-length",
+      "0"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "delete owner",
+   "request": {
+    "method": "DELETE",
+    "path": "/petclinic/api/owners/12"
+   },
+   "response": {
+    "status": 204,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "delete unknown owner",
+   "request": {
+    "method": "DELETE",
+    "path": "/petclinic/api/owners/12"
+   },
+   "response": {
+    "status": 404,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-length",
+      "0"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "owners after the changes",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/owners"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": [
+     {
+      "firstName": "George",
+      "lastName": "Franklin",
+      "address": "110 W. Liberty St.",
+      "city": "Madison",
+      "telephone": "6085551023",
+      "pets": [
+       {
+        "name": "Leo",
+        "birthDate": "2000-09-07",
+        "type": {
+         "name": "cat",
+         "id": 1
+        },
+        "id": 1,
+        "visits": [],
+        "ownerId": 1
+       }
+      ],
+      "id": 1
+     },
+     {
+      "firstName": "Betty",
+      "lastName": "Davis",
+      "address": "638 Cardinal Ave.",
+      "city": "Sun Prairie",
+      "telephone": "6085551749",
+      "pets": [],
+      "id": 2
+     },
+     {
+      "firstName": "Eduardo",
+      "lastName": "Rodriquez",
+      "address": "2693 Commerce St.",
+      "city": "McFarland",
+      "telephone": "6085558763",
+      "pets": [
+       {
+        "name": "Jewel",
+        "birthDate": "2000-03-07",
+        "type": {
+         "name": "dog",
+         "id": 2
+        },
+        "id": 4,
+        "visits": [],
+        "ownerId": 3
+       },
+       {
+        "name": "Rosy",
+        "birthDate": "2001-04-17",
+        "type": {
+         "name": "dog",
+         "id": 2
+        },
+        "id": 3,
+        "visits": [],
+        "ownerId": 3
+       }
+      ],
+      "id": 3
+     },
+     {
+      "firstName": "Harold",
+      "lastName": "Davis",
+      "address": "563 Friendly St.",
+      "city": "Windsor",
+      "telephone": "6085553198",
+      "pets": [
+       {
+        "name": "Iggy",
+        "birthDate": "2000-11-30",
+        "type": {
+         "name": "lizard",
+         "id": 3
+        },
+        "id": 5,
+        "visits": [],
+        "ownerId": 4
+       }
+      ],
+      "id": 4
+     },
+     {
+      "firstName": "Peter",
+      "lastName": "McTavish",
+      "address": "2387 S. Fair Way",
+      "city": "Madison",
+      "telephone": "6085552765",
+      "pets": [
+       {
+        "name": "George",
+        "birthDate": "2000-01-20",
+        "type": {
+         "name": "snake",
+         "id": 4
+        },
+        "id": 6,
+        "visits": [],
+        "ownerId": 5
+       }
+      ],
+      "id": 5
+     },
+     {
+      "firstName": "Jean",
+      "lastName": "Coleman",
+      "address": "105 N. Lake St.",
+      "city": "Monona",
+      "telephone": "6085552654",
+      "pets": [
+       {
+        "name": "Max",
+        "birthDate": "1995-09-04",
+        "type": {
+         "name": "cat",
+         "id": 1
+        },
+        "id": 8,
+        "visits": [
+         {
+          "date": "2011-03-04",
+          "description": "rabies shot",
+          "id": 2,
+          "petId": 8
+         },
+         {
+          "date": "2009-06-04",
+          "description": "neutered",
+          "id": 3,
+          "petId": 8
+         }
+        ],
+        "ownerId": 6
+       },
+       {
+        "name": "Samantha",
+        "birthDate": "1995-09-04",
+        "type": {
+         "name": "cat",
+         "id": 1
+        },
+        "id": 7,
+        "visits": [
+         {
+          "date": "2010-03-04",
+          "description": "rabies shot",
+          "id": 1,
+          "petId": 7
+         },
+         {
+          "date": "2008-09-04",
+          "description": "spayed",
+          "id": 4,
+          "petId": 7
+         }
+        ],
+        "ownerId": 6
+       }
+      ],
+      "id": 6
+     },
+     {
+      "firstName": "Jeff",
+      "lastName": "Black",
+      "address": "1450 Oak Blvd.",
+      "city": "Monona",
+      "telephone": "6085555387",
+      "pets": [
+       {
+        "name": "Lucky",
+        "birthDate": "1999-08-06",
+        "type": {
+         "name": "bird",
+         "id": 5
+        },
+        "id": 9,
+        "visits": [],
+        "ownerId": 7
+       }
+      ],
+      "id": 7
+     },
+     {
+      "firstName": "Maria",
+      "lastName": "Escobito",
+      "address": "345 Maple St.",
+      "city": "Madison",
+      "telephone": "6085557683",
+      "pets": [
+       {
+        "name": "Mulligan",
+        "birthDate": "1997-02-24",
+        "type": {
+         "name": "dog",
+         "id": 2
+        },
+        "id": 10,
+        "visits": [],
+        "ownerId": 8
+       }
+      ],
+      "id": 8
+     },
+     {
+      "firstName": "David",
+      "lastName": "Schroeder",
+      "address": "2749 Blackhawk Trail",
+      "city": "Madison",
+      "telephone": "6085559435",
+      "pets": [
+       {
+        "name": "Freddy",
+        "birthDate": "2000-03-09",
+        "type": {
+         "name": "bird",
+         "id": 5
+        },
+        "id": 11,
+        "visits": [],
+        "ownerId": 9
+       }
+      ],
+      "id": 9
+     },
+     {
+      "firstName": "Carlos",
+      "lastName": "Estaban",
+      "address": "2335 Independence La.",
+      "city": "Waunakee",
+      "telephone": "6085555487",
+      "pets": [
+       {
+        "name": "Lucky",
+        "birthDate": "2000-06-24",
+        "type": {
+         "name": "dog",
+         "id": 2
+        },
+        "id": 12,
+        "visits": [],
+        "ownerId": 10
+       },
+       {
+        "name": "Sly",
+        "birthDate": "2002-06-08",
+        "type": {
+         "name": "cat",
+         "id": 1
+        },
+        "id": 13,
+        "visits": [],
+        "ownerId": 10
+       }
+      ],
+      "id": 10
+     },
+     {
+      "firstName": "Ada",
+      "lastName": "Lovelace",
+      "address": "12 St James Sq.",
+      "city": "Marylebone",
+      "telephone": "0987654321",
+      "pets": [],
+      "id": 11
+     }
+    ]
+   }
+  },
+  {
+   "name": "unknown API path",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/nothing-here"
+   },
+   "response": {
+    "status": 500,
+    "reason": "",
+    "headers": [
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/problem+json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ],
+     [
+      "connection",
+      "close"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "detail": "An unexpected error occurred while processing your request",
+     "status": 500,
+     "title": "NoResourceFoundException",
+     "type": "{origin}/petclinic/api/nothing-here",
+     "timestamp": {
+      "$match": "instant"
+     },
+     "schemaValidationErrors": []
+    }
+   }
+  },
+  {
+   "name": "wrong method",
+   "request": {
+    "method": "PATCH",
+    "path": "/petclinic/api/owners/1"
+   },
+   "response": {
+    "status": 500,
+    "reason": "",
+    "headers": [
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/problem+json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ],
+     [
+      "connection",
+      "close"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "detail": "An unexpected error occurred while processing your request",
+     "status": 500,
+     "title": "HttpRequestMethodNotSupportedException",
+     "type": "{origin}/petclinic/api/owners/1",
+     "timestamp": {
+      "$match": "instant"
+     },
+     "schemaValidationErrors": []
+    }
+   }
+  },
+  {
+   "name": "path outside the context path",
+   "request": {
+    "method": "GET",
+    "path": "/api/owners"
+   },
+   "response": {
+    "status": 404,
+    "reason": "",
+    "headers": [
+     [
+      "content-type",
+      "text/html;charset=utf-8"
+     ],
+     [
+      "content-language",
+      "en"
+     ],
+     [
+      "content-length",
+      "431"
+     ]
+    ],
+    "text": "<!doctype html><html lang=\"en\"><head><title>HTTP Status 404 – Not Found</title><style type=\"text/css\">body {font-family:Tahoma,Arial,sans-serif;} h1, h2, h3, b {color:white;background-color:#525D76;} h1 {font-size:22px;} h2 {font-size:16px;} h3 {font-size:14px;} p {font-size:12px;} a {color:black;} .line {height:1px;background-color:#525D76;border:none;}</style></head><body><h1>HTTP Status 404 – Not Found</h1></body></html>"
+   }
+  },
+  {
+   "name": "CORS simple request",
+   "request": {
+    "method": "GET",
+    "path": "/petclinic/api/pettypes/2"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "access-control-allow-origin",
+      "*"
+     ],
+     [
+      "access-control-expose-headers",
+      "errors, content-type"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-type",
+      "application/json"
+     ],
+     [
+      "transfer-encoding",
+      "chunked"
+     ]
+    ],
+    "compact": true,
+    "json": {
+     "name": "dog",
+     "id": 2
+    }
+   }
+  },
+  {
+   "name": "CORS preflight",
+   "request": {
+    "method": "OPTIONS",
+    "path": "/petclinic/api/owners"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "vary",
+      "Origin"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Method"
+     ],
+     [
+      "vary",
+      "Access-Control-Request-Headers"
+     ],
+     [
+      "access-control-allow-origin",
+      "*"
+     ],
+     [
+      "access-control-allow-methods",
+      "POST"
+     ],
+     [
+      "access-control-allow-headers",
+      "content-type"
+     ],
+     [
+      "access-control-expose-headers",
+      "errors, content-type"
+     ],
+     [
+      "access-control-max-age",
+      "1800"
+     ],
+     [
+      "allow",
+      "GET, HEAD, PATCH, POST, PUT, DELETE, OPTIONS, TRACE"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-length",
+      "0"
+     ]
+    ],
+    "text": ""
+   }
+  },
+  {
+   "name": "CORS preflight for a method that is not mapped",
+   "request": {
+    "method": "OPTIONS",
+    "path": "/petclinic/api/owners"
+   },
+   "response": {
+    "status": 200,
+    "reason": "",
+    "headers": [
+     [
+      "allow",
+      "GET, HEAD, PATCH, POST, PUT, DELETE, OPTIONS, TRACE"
+     ],
+     [
+      "x-content-type-options",
+      "nosniff"
+     ],
+     [
+      "x-xss-protection",
+      "0"
+     ],
+     [
+      "cache-control",
+      "no-cache, no-store, max-age=0, must-revalidate"
+     ],
+     [
+      "pragma",
+      "no-cache"
+     ],
+     [
+      "expires",
+      "0"
+     ],
+     [
+      "x-frame-options",
+      "SAMEORIGIN"
+     ],
+     [
+      "content-length",
+      "0"
+     ]
+    ],
+    "text": ""
+   }
+  }
+ ]
+}

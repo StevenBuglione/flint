@@ -1,0 +1,64 @@
+{
+  "schema": "flint.spring-apps/1",
+  "description": "The side-by-side applications of ADR-030 section 8 (Phase 1). Each Java reference is fetched by commit and checksum, never vendored; the only edit applied is the spring-boot-starter-parent version, from 'boot_parent' to the pinned Spring Boot. Implementations take their port from SERVER_PORT and the application's own configuration keys from the environment, as Spring Boot's relaxed binding does.",
+  "spring_boot": "4.2.0",
+  "spring_framework": "7.1.0",
+  "apps": {
+    "gs-rest-service": {
+      "kind": "http",
+      "suite": "gs_rest_service",
+      "upstream": {
+        "repo": "https://github.com/spring-guides/gs-rest-service",
+        "commit": "e15fec6773dc1eb6028055630e3e68cbd8653240",
+        "archive_url": "https://github.com/spring-guides/gs-rest-service/archive/e15fec6773dc1eb6028055630e3e68cbd8653240.tar.gz",
+        "sha256": "8c96f483cdc2aded83ed53596d024c94f1649c1e640c60143272e876593876ad",
+        "directory": "complete",
+        "boot_parent": "4.0.9",
+        "licence": "Apache-2.0",
+        "observed": "2026-11-23: main at that commit (2026-11-01); the archive digest is of GitHub's tarball of the commit."
+      },
+      "java": {"jar": "target/rest-service-complete-0.0.1-SNAPSHOT.jar"},
+      "go": {"directory": "benchmarks/spring/go/gs-rest-service", "executable": "gs-rest-service"},
+      "flint": {"directory": "benchmarks/spring/flint/gs-rest-service", "executable": "gs-rest-service"},
+      "load": {"path": "/greeting?name=Flint", "body": "^\\{\"id\":[1-9][0-9]*,\"content\":\"Hello, Flint!\"\\}$"}
+    },
+    "gs-relational-data-access": {
+      "kind": "command",
+      "suite": "gs_relational_data_access",
+      "upstream": {
+        "repo": "https://github.com/spring-guides/gs-relational-data-access",
+        "commit": "39ee6416cdc511d5d92cdeb63b2b73129013888e",
+        "archive_url": "https://github.com/spring-guides/gs-relational-data-access/archive/39ee6416cdc511d5d92cdeb63b2b73129013888e.tar.gz",
+        "sha256": "3bda2b62c710a84c1d4894c86251d3210600e0f3e287410acaef972300714ef1",
+        "directory": "complete",
+        "boot_parent": "4.0.9",
+        "licence": "Apache-2.0",
+        "observed": "2026-11-23: main at that commit (2026-11-01)."
+      },
+      "java": {"jar": "target/relational-data-access-complete-0.0.1-SNAPSHOT.jar"},
+      "go": {"directory": "benchmarks/spring/go/gs-relational-data-access", "executable": "gs-relational-data-access"},
+      "flint": {"directory": "benchmarks/spring/flint/gs-relational-data-access", "executable": "gs-relational-data-access"},
+      "database": "embedded: H2 in memory for Java (the guide's choice), SQLite in memory for Go and Flint, the embedded engine each ecosystem ships"
+    },
+    "petclinic-rest": {
+      "kind": "http",
+      "suite": "petclinic_rest",
+      "upstream": {
+        "repo": "https://github.com/spring-petclinic/spring-petclinic-rest",
+        "commit": "220f4ba8e92cec9ad1faa03324723a3e9da63d95",
+        "archive_url": "https://github.com/spring-petclinic/spring-petclinic-rest/archive/220f4ba8e92cec9ad1faa03324723a3e9da63d95.tar.gz",
+        "sha256": "5a1bdfcee509811addfcfc2fa7903ad356dac3b97b5f82d1611bdd9f0987caa8",
+        "directory": ".",
+        "boot_parent": "4.1.2",
+        "licence": "Apache-2.0",
+        "observed": "2026-11-23: master at that commit (2026-11-22, 'Reject blank values in model and API validation'); newer than tag v4.0.2, which is on Boot 4.0."
+      },
+      "java": {"jar": "target/spring-petclinic-rest-4.0.2.jar"},
+      "go": {"directory": "benchmarks/spring/go/petclinic-rest", "executable": "petclinic-rest"},
+      "flint": {"directory": "benchmarks/spring/flint/petclinic-rest", "executable": "petclinic-rest"},
+      "database": "postgres",
+      "profiles": "postgres,jdbc",
+      "load": {"path": "/petclinic/api/owners/1", "body": "^\\{\"firstName\":\"George\",\"lastName\":\"Franklin\".*\"id\":1\\}$"}
+    }
+  }
+}
