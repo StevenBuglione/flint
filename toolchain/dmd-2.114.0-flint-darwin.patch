@@ -1,8 +1,53 @@
 diff --git a/dmd/flintlink.d b/dmd/flintlink.d
-index f4e30b1..86f40db 100644
+index f4e30b1..d4a71f7 100644
 --- a/dmd/flintlink.d
 +++ b/dmd/flintlink.d
-@@ -316,11 +316,35 @@ bool directLinkCommand(ref Strings argv, ref Array!bool ccSwitchFlags, ref Strin
+@@ -36,7 +36,16 @@ nothrow:
+ extern (C) private extern __gshared char** environ;
+ 
+ private enum markerDir = "-L/__flint_marker_dir__";
+-private enum markerObj = "/__flint_marker_obj__.o";
++/* Apple's driver checks that its inputs exist even with -###, so on macOS the marker object is a
++ * real, empty file, named relative to the temporary directory the expansion runs in.
++ */
++version (OSX)
++{
++    private enum markerObj = "__flint_marker_obj__.o";
++    private extern (C) char* mkdtemp(char*) nothrow @nogc;
++}
++else
++    private enum markerObj = "/__flint_marker_obj__.o";
+ private enum markerLib = "-l__flint_marker_lib__";
+ 
+ private bool startsWith(const(char)* s, string p)
+@@ -121,6 +130,26 @@ private bool expand(ref Strings ccPrefix, ref Strings ccSwitches, ref Template t
+ {
+     import dmd.common.outbuffer : OutBuffer;
+     OutBuffer cmd;
++    version (OSX)
++    {
++        char[64] tmp = "/tmp/flint-link-XXXXXX\0";
++        if (!mkdtemp(tmp.ptr))
++            return false;
++        char[128] marker;
++        snprintf(marker.ptr, marker.length, "%s/%s", tmp.ptr, markerObj.ptr);
++        if (auto mf = fopen(marker.ptr, "w"))
++            fclose(mf);
++        else
++            return false;
++        scope (exit)
++        {
++            unlink(marker.ptr);
++            rmdir(tmp.ptr);
++        }
++        cmd.writestring("cd '");
++        cmd.writestring(tmp[0 .. strlen(tmp.ptr)]);
++        cmd.writestring("' && ");
++    }
+     foreach (a; ccPrefix)
+     {
+         cmd.writeByte('\'');
+@@ -316,11 +345,35 @@ bool directLinkCommand(ref Strings argv, ref Array!bool ccSwitchFlags, ref Strin
          }
          if (eq(a, "-g") || eq(a, "-m64"))
              continue;
@@ -38,7 +83,7 @@ index f4e30b1..86f40db 100644
          if (startsWith(a, "-L"))
          {
              lpaths.push(a);
-@@ -373,7 +397,7 @@ bool directLinkCommand(ref Strings argv, ref Array!bool ccSwitchFlags, ref Strin
+@@ -373,7 +426,7 @@ bool directLinkCommand(ref Strings argv, ref Array!bool ccSwitchFlags, ref Strin
          return false;
      {
          char[64] m;
@@ -47,7 +92,7 @@ index f4e30b1..86f40db 100644
          h = fnv(h, m.ptr);
      }
      foreach (s; ccSwitches)
-@@ -402,9 +426,9 @@ bool directLinkCommand(ref Strings argv, ref Array!bool ccSwitchFlags, ref Strin
+@@ -402,9 +455,9 @@ bool directLinkCommand(ref Strings argv, ref Array!bool ccSwitchFlags, ref Strin
          if (auto slash = strrchr(parent.ptr, '/'))
          {
              *slash = 0;

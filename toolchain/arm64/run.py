@@ -78,8 +78,12 @@ def main():
         link = [str(Path(dmd).resolve()), '-conf=', '-marm64', '-os=' + a.os, '-betterC',
                 '-I' + str(Path(a.druntime_import).resolve()), *(['-fPIC'] if a.os == 'linux' else []),
                 str(source), wl, '-of' + str(Path(tmp) / 'wl')]
-        env = dict(os.environ, CC=a.cc) if a.cc != 'cc' else None
+        # On macOS the fork links with ld directly, from the cached expansion of `cc -###` (flintlink)
+        cache = Path(tmp) / 'cache'
+        env = dict(os.environ, XDG_CACHE_HOME=str(cache), **({'CC': a.cc} if a.cc != 'cc' else {}))
         r = subprocess.run(link, capture_output=True, text=True, timeout=120, env=env, cwd=tmp)
+        if r.returncode == 0 and a.os == 'osx' and not list(cache.glob('flint-dmd/link-*.txt')):
+            failed.append('dmd links with ' + wl + ' through cc, not directly with ld')
         if r.returncode == 0:
             r = subprocess.run(shlex.split(a.run_prefix) + [str(Path(tmp) / 'wl')], capture_output=True, text=True,
                                timeout=60)
