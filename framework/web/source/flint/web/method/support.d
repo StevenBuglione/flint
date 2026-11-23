@@ -102,7 +102,8 @@ class HandlerMethodArgumentResolverComposite : HandlerMethodArgumentResolver
         return resolver.resolveArgument(parameter, mavContainer, webRequest, binderFactory);
     }
 
-    private HandlerMethodArgumentResolver getArgumentResolver(MethodParameter parameter)
+    // package(flint): the fast path proves which resolver the generic path would use (fast-path.md).
+    package(flint) HandlerMethodArgumentResolver getArgumentResolver(MethodParameter parameter)
     {
         if (auto found = parameter in cache)
             return *found;

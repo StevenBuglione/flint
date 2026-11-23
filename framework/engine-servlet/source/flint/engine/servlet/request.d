@@ -734,6 +734,24 @@ package(flint.engine.servlet) string decodeComponent(string text) pure nothrow
     if (plain)
         return text;
     auto output = new char[text.length];
+    const length = decodeComponentInto(text, output);
+    return length < 0 ? null : output[0 .. length].idup;
+}
+
+/// `decodeComponentInto`: `text` is not valid percent-encoding.
+package(flint.engine.servlet) enum ptrdiff_t malformedComponent = -1;
+/// `decodeComponentInto`: the decoded text does not fit `output`.
+package(flint.engine.servlet) enum ptrdiff_t componentTooLong = -2;
+
+/++
+The one decoder of `application/x-www-form-urlencoded` text, into `output` without allocating: the decoded length,
+`malformedComponent` or `componentTooLong`. `decodeComponent` and the fast path's parameters both use it.
++/
+package(flint.engine.servlet) ptrdiff_t decodeComponentInto(scope const(char)[] text, scope char[] output)
+    pure nothrow @nogc
+{
+    if (text.length > output.length)
+        return componentTooLong;
     size_t length;
     for (size_t index; index < text.length; ++index)
     {
@@ -743,18 +761,18 @@ package(flint.engine.servlet) string decodeComponent(string text) pure nothrow
         else if (c == '%')
         {
             if (index + 2 >= text.length)
-                return null;
+                return malformedComponent;
             const high = hexValue(text[index + 1]);
             const low = hexValue(text[index + 2]);
             if (high < 0 || low < 0)
-                return null;
+                return malformedComponent;
             output[length++] = cast(char)(high * 16 + low);
             index += 2;
         }
         else
             output[length++] = c;
     }
-    return output[0 .. length].idup;
+    return length;
 }
 
 private int hexValue(char c) pure nothrow @nogc

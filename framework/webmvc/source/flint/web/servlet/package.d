@@ -15,6 +15,7 @@ It runs on the request's reactor fiber (ADR-030 section 4).
 module flint.web.servlet;
 
 import flint.engine.aot.any : Any;
+import flint.engine.aot.fast : FastDispatch, FastExchange, FastOutcome;
 import flint.http : HttpHeaders, HttpMethod, HttpStatus, HttpStatusCode, MediaType, ProblemDetail;
 import flint.jakarta.servlet : RequestDispatcher, ServletException, ServletRequest, ServletResponse;
 import flint.jakarta.servlet.http : HttpServlet, HttpServletRequest, HttpServletResponse;
@@ -409,13 +410,38 @@ struct DispatcherStrategies
     ViewResolver[] viewResolvers; ///
     /// `null` falls back to `request.getLocale()`, as in Spring.
     LocaleResolver localeResolver;
+    /// Flint: the per-endpoint fast path (docs/spring/phase1/fast-path.md); `null` serves every request generically.
+    FastPath fastPath;
+}
+
+/++
+Flint: answers the requests whose endpoint Flint AOT specialised and whose dispatch the strategies prove equal to
+the generic one (docs/spring/phase1/fast-path.md). The container offers it each request before it builds servlet
+objects; it declines whatever it cannot answer exactly as `doDispatch` would.
++/
+interface FastPath
+{
+    /// Decline, answer, or materialize the exchange and finish the dispatch through `servlet`.
+    FastOutcome dispatch(DispatcherServlet servlet, ref scope FastExchange exchange);
+}
+
+/++
+Flint: builds a `FastPath` over finished strategies. A `WebMvcConfigurer` bean that Flint AOT generates only when an
+endpoint qualifies implements it (`FastPathConfigurer`), so an application without one links no fast path at all
+(fast-path.md, section 9; playbook S-1).
++/
+interface FastPathFactory
+{
+    /// The fast path for `rows`, or `null`. `plain`: nothing configured acts on every request (fast-path.md 3.2).
+    FastPath buildFastPath(ref DispatcherStrategies strategies,
+            const(imported!"flint.engine.aot.mapping".HandlerMapping)[] rows, bool plain);
 }
 
 /++
 `DispatcherServlet` (with `FrameworkServlet`'s request processing): dispatches to handlers, resolves
 exceptions and renders views.
 +/
-class DispatcherServlet : HttpServlet
+class DispatcherServlet : HttpServlet, FastDispatch
 {
     /// The request attribute naming the servlet's web application context (none in Flint).
     enum string WEB_APPLICATION_CONTEXT_ATTRIBUTE = "org.springframework.web.servlet.DispatcherServlet.CONTEXT";
@@ -549,6 +575,33 @@ class DispatcherServlet : HttpServlet
     protected void doService(HttpServletRequest request, HttpServletResponse response)
     {
         doDispatch(request, response);
+    }
+
+    /// Flint: whether Flint AOT and the strategies gave this servlet a fast path (fast-path.md).
+    final bool hasFastPath()
+    {
+        return strategies.fastPath !is null;
+    }
+
+    /// Flint: the container's offer of a request before any servlet object exists (fast-path.md).
+    final FastOutcome dispatchFast(ref scope FastExchange exchange)
+    {
+        return strategies.fastPath is null ? FastOutcome.declined : strategies.fastPath.dispatch(this, exchange);
+    }
+
+    /++
+    Flint: the rest of `doDispatch` for a fast-path request whose handler ran and threw `ex`, on the materialized
+    request and response. The handler mappings run again first, so the request carries the attributes the generic
+    lookup sets (the fast path's mapping proof makes them choose `handler`); then `processDispatchResult` resolves
+    the exception as `doDispatch` does. The fast path only serves handlers without interceptors.
+    +/
+    package(flint.web) final void completeFastDispatch(HttpServletRequest request, HttpServletResponse response,
+            Object handler, Exception ex)
+    {
+        auto mappedHandler = getHandler(request);
+        if (mappedHandler is null || mappedHandler.getHandler() !is handler)
+            throw new IllegalStateException("fast path: the handler mappings no longer choose the specialised handler");
+        processDispatchResult(request, response, mappedHandler, null, ex);
     }
 
     /// Spring's `doDispatch`.

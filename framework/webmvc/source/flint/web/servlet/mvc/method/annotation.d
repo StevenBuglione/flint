@@ -371,33 +371,17 @@ abstract class AbstractMessageConverterMethodProcessor : HandlerMethodArgumentRe
             auto producibleTypes = getProducibleMediaTypes(request, valueType);
             if (!value.isNull() && producibleTypes.length == 0)
                 throw new HttpMessageNotWritableException("No converter found for return value of type: " ~ valueType);
-            MediaType[] compatibleMediaTypes;
-            determineCompatibleMediaTypes(acceptableTypes, producibleTypes, compatibleMediaTypes);
-            if (compatibleMediaTypes.length == 0 && valueType == "flint.http.ProblemDetail")
-                determineCompatibleMediaTypes(cast(MediaType[]) problemMediaTypes.dup,
-                        producibleTypes, compatibleMediaTypes);
-            if (compatibleMediaTypes.length == 0)
+            final switch (selectMediaType(acceptableTypes, producibleTypes, valueType, selectedMediaType))
             {
+            case Selection.notAcceptable:
                 if (!value.isNull())
                     throw new HttpMediaTypeNotAcceptableException(producibleTypes);
                 return;
-            }
-            MimeTypeUtils.sortBySpecificity(compatibleMediaTypes);
-            foreach (mediaType; compatibleMediaTypes)
-            {
-                if (mediaType.isConcrete())
-                {
-                    selectedMediaType = mediaType;
-                    selected = true;
-                    break;
-                }
-                else if (mediaType.equalsTypeAndSubtype(MediaType.ALL)
-                        || mediaType.equalsTypeAndSubtype(MediaType("application")))
-                {
-                    selectedMediaType = MediaType.APPLICATION_OCTET_STREAM;
-                    selected = true;
-                    break;
-                }
+            case Selection.none:
+                break;
+            case Selection.selected:
+                selected = true;
+                break;
             }
         }
         if (selected)
@@ -427,6 +411,49 @@ abstract class AbstractMessageConverterMethodProcessor : HandlerMethodArgumentRe
         }
     }
 
+    /// What `selectMediaType` found.
+    package(flint) enum Selection
+    {
+        /// No acceptable type is compatible with a producible one: 406 for a value.
+        notAcceptable,
+        /// Compatible types exist, but none is concrete, `*/*` or `application`: no converter is asked.
+        none,
+        /// `selected` holds the type to write, quality value still on it.
+        selected,
+    }
+
+    /++
+    The middle of Spring's `writeWithMessageConverters`, from the acceptable and producible types to the selected
+    type. Pure, so Flint's fast path fills its Accept table with this very code (fast-path.md).
+    +/
+    package(flint) static Selection selectMediaType(MediaType[] acceptableTypes, MediaType[] producibleTypes,
+            string valueType, out MediaType selectedMediaType)
+    {
+        MediaType[] compatibleMediaTypes;
+        determineCompatibleMediaTypes(acceptableTypes, producibleTypes, compatibleMediaTypes);
+        if (compatibleMediaTypes.length == 0 && valueType == "flint.http.ProblemDetail")
+            determineCompatibleMediaTypes(cast(MediaType[]) problemMediaTypes.dup,
+                    producibleTypes, compatibleMediaTypes);
+        if (compatibleMediaTypes.length == 0)
+            return Selection.notAcceptable;
+        MimeTypeUtils.sortBySpecificity(compatibleMediaTypes);
+        foreach (mediaType; compatibleMediaTypes)
+        {
+            if (mediaType.isConcrete())
+            {
+                selectedMediaType = mediaType;
+                return Selection.selected;
+            }
+            else if (mediaType.equalsTypeAndSubtype(MediaType.ALL)
+                    || mediaType.equalsTypeAndSubtype(MediaType("application")))
+            {
+                selectedMediaType = MediaType.APPLICATION_OCTET_STREAM;
+                return Selection.selected;
+            }
+        }
+        return Selection.none;
+    }
+
     /// The producible types: the mapping's `produces`, else the types of the converters that can write
     /// `valueType`, else `*/*`.
     protected MediaType[] getProducibleMediaTypes(HttpServletRequest request, string valueType)
@@ -434,6 +461,12 @@ abstract class AbstractMessageConverterMethodProcessor : HandlerMethodArgumentRe
         auto attribute = request.getAttribute(HandlerMapping.PRODUCIBLE_MEDIA_TYPES_ATTRIBUTE);
         if (!attribute.isNull() && attribute.get!(MediaType[]).length != 0)
             return attribute.get!(MediaType[]);
+        return producibleTypes(messageConverters, valueType);
+    }
+
+    /// The converters' part of `getProducibleMediaTypes`, for a mapping without `produces`.
+    package(flint) static MediaType[] producibleTypes(HttpMessageConverter[] messageConverters, string valueType)
+    {
         // Usually one converter can write the value: its list is the result as it is (Spring's LinkedHashSet
         // copy only matters when lists are merged or repeat a type).
         MediaType[] result;
