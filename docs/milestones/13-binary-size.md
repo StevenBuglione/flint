@@ -134,6 +134,7 @@ Each Spring-layer module of `policy/framework.json` now has two things:
 | context | 766,936 | 966,656 | 890 | 1,150 |
 | core | 59,384 | 81,920 | 577 | 750 |
 | engine-aot | 61,744 | 81,920 | 308 | 400 |
+| engine-jdbc | 5,674,656 | 7,094,272 | 399 | 500 |
 | hibernate-validator | 348,016 | 442,368 | 837 | 1,050 |
 | jackson-annotations | 0 | 4,096 | 273 | 350 |
 | jackson-core | 92,760 | 131,072 | 277 | 350 |
@@ -144,6 +145,8 @@ Each Spring-layer module of `policy/framework.json` now has two things:
 | jdbc | 376,216 | 475,136 | 577 | 750 |
 | slf4j-api | 371,368 | 475,136 | 720 | 900 |
 | tx | 176,408 | 229,376 | 1,874 | 2,350 |
+
+**engine-jdbc** is measured at `3b88673842`. Its 5.7 MB is mostly `flint:engine-sql` and its native providers: SQLite, libpq and OpenSSL. Registering `FlintDriver` with `DriverManager` reaches both engine drivers, so an application that links the JDBC driver links both databases, whichever URL it uses. Making registration pay only for the driver a URL selects is a design question for the module's owner, and the budget will move with it.
 
 How the budgets were set:
 - **Linked bytes:** the measured value plus 25%, rounded up to 16 KiB. The annotation-only modules link nothing and get 4,096 bytes, so any runtime code they gain is caught.
