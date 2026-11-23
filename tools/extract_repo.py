@@ -69,6 +69,13 @@ def renames(repo, checkout, paths, root=ROOT):
             target = repo_layout(directory, repo, root)
             if target != directory:
                 pairs.append((directory, target))
+    # Two directories at one place would merge silently in filter-repo (the pre-port starters/web and Spring's
+    # boot/starter/flint-boot-starter-web once did); the layout must keep them apart.
+    targets = {}
+    for directory, target in pairs:
+        if target in targets:
+            raise SystemExit(f'layout collision: {targets[target]} and {directory} both map to {target} in {repo}')
+        targets[target] = directory
     return pairs
 
 

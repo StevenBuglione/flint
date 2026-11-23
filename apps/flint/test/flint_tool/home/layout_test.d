@@ -7,8 +7,9 @@ import flint.test : expect;
 
 private enum string[2][] rules = [
     ["packages/engine-", "engine/"], ["framework/", "flint-"], ["boot/core", "core"],
-    ["boot/boot", "legacy/flint-boot"], ["boot/", "module/flint-boot-"],
-    ["starters/starter", "starter/flint-boot-starter"], ["starters/", "starter/flint-boot-starter-"]
+    ["boot/boot", "legacy/flint-boot"], ["boot/actuator", "legacy/flint-boot-actuator"],
+    ["boot/", "module/flint-boot-"], ["starters/starter", "legacy/flint-boot-starter"],
+    ["starters/", "legacy/flint-boot-starter-"]
 ];
 
 @("an extracted repo places engines under engine/, modules as flint-<module> and Boot in spring-boot's layout")
@@ -22,8 +23,8 @@ unittest
     expect(home.repoLayout("boot", "boot/core/flint-boot")).toEqual("core/flint-boot");
     expect(home.repoLayout("boot", "boot/boot")).toEqual("legacy/flint-boot");
     expect(home.repoLayout("boot", "boot/autoconfigure-web")).toEqual("module/flint-boot-autoconfigure-web");
-    expect(home.repoLayout("boot", "starters/starter")).toEqual("starter/flint-boot-starter");
-    expect(home.repoLayout("boot", "starters/web")).toEqual("starter/flint-boot-starter-web");
+    expect(home.repoLayout("boot", "starters/starter")).toEqual("legacy/flint-boot-starter");
+    expect(home.repoLayout("boot", "starters/web")).toEqual("legacy/flint-boot-starter-web");
     expect(home.repoLayout("ai", "apps/flint-mcp")).toEqual("apps/flint-mcp");
     expect(home.repoLayout("flint", "packages/arena")).toEqual("packages/arena");
     expect(home.repoLayout("framework", "examples/framework/golden-tui")).toEqual("examples/golden-tui");
@@ -48,7 +49,7 @@ unittest
     home.workspaceCheckouts["boot"] = buildPath(root, "boot");
     mkdirRecurse(buildPath(root, "framework", "engine", "web"));
     mkdirRecurse(buildPath(root, "boot", "boot", "boot"));
-    expect(home.packagePath("boot", "boot/actuator")).toEqual(buildPath(root, "boot", "module", "flint-boot-actuator"));
+    expect(home.packagePath("boot", "boot/actuator")).toEqual(buildPath(root, "boot", "legacy", "flint-boot-actuator"));
     expect(home.packagePath("framework", "packages/engine-web")).toEqual(buildPath(root, "framework", "engine", "web"));
     expect(home.packagePath("boot", "boot/boot")).toEqual(buildPath(root, "boot", "boot", "boot"));
 }
