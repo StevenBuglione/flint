@@ -5,6 +5,7 @@ This directory holds the Flint fork of the pinned D toolchain as patches against
 - `dmd-2.114.0-flint.patch` applies to the compiler source bundled in the pinned `dmd.2.114.0.linux.tar.xz` release (`dmd2/src/dmd`).
 - `dub-1.43.0-flint.patch` applies to the DUB v1.43.0 source archive pinned in `policy/toolchains.json`.
 - `dmd-server-prelude.txt` lists the druntime and Phobos modules the compile server keeps analysed.
+- `dmd-2.114.0-flint-darwin.patch`, `druntime-2.114.0-flint.patch` and `phobos-2.114.0-flint.patch` support arm64 hosts. The first is the macOS overlay of the compile server and direct linking; the other two apply to the runtime libraries built for AArch64. `arm64/` holds the AArch64 regression tests and their documentation.
 
 The D language and the build commands developers run do not change. The compiler's diagnostics change only with the fork's own `-verror-hide` switch. Applications still run `dub build`. The fork changes how the toolchain schedules and reuses work.
 
@@ -36,6 +37,8 @@ The caller never uses the server for `-v`, `-deps`, `-makedeps`, `-X`, `-H`, `-D
 **Side-effect-free `-ftime-trace` names.** Upstream DMD 2.114.0 names an event only when it lasted longer than the trace granularity. Naming a template instance prints its arguments, and printing a variable argument expands its value. When that variable is a manifest constant whose initializer is still being evaluated, as `core.lifetime.hasContextPointers` is while `move` instantiates over a struct's fields, the expansion reports a spurious "recursive initialization of constant" and the compile fails. Whether it fails depends on how long the instantiation took, so it struck about one traced compile in 250 under load and nearly every compile with `-ftime-trace-granularity=0`. While the profiler names an event, the fork prints such an argument as written instead of expanding it. Nothing changes without `-ftime-trace`: object files are byte-identical to the previous build.
 
 **Condensed library errors: `-verror-hide=<directory>`.** An error raised inside a hidden directory is reported at the innermost frame of its instantiation trace outside the hidden directories, which is the user's line. The hidden frames collapse into one line naming where the error was raised, and a library `static assert` message loses DMD's `static assert:  "…"` wrapper. flint passes the switch for druntime, Phobos and the Flint packages unless `--verbose` is given. Only diagnostic text changes: object files are byte-identical with and without the switch, and with the previous build (ADR-027 section 5).
+
+**AArch64 code generator (ADR-025 section 3).** Upstream DMD 2.114.0's unfinished `-marm64` back end is completed for Linux AArch64 (ELF) and macOS arm64 (Mach-O). The changes include object files, relocations, DWARF exception handling, thread-local storage, the AAPCS64 and Apple calling conventions, and code generation fixes, each with a regression test in `arm64/`. On arm64 hosts, `tools/install_toolchains.py --compiler dmd` builds the fork, druntime and Phobos from source. x86-64 code generation is unchanged. [arm64/README.md](arm64/README.md) gives the status, the decisions and the list of fixes offered upstream.
 
 ## What the DUB fork changes
 

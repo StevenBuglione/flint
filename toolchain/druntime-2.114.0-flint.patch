@@ -1,0 +1,940 @@
+diff --git a/import/core/atomic.d b/import/core/atomic.d
+index 778cf99..460076e 100644
+--- a/import/core/atomic.d
++++ b/import/core/atomic.d
+@@ -608,6 +608,21 @@ else version (D_InlineAsm_X86_64)
+     enum has64BitCAS = true;
+     enum has128BitCAS = true;
+ }
++else version (DigitalMars)
++{
++    version (AArch64)   // core/internal/atomic_aarch64.c
++    {
++        enum has64BitXCHG = true;
++        enum has64BitCAS = true;
++        enum has128BitCAS = true;
++    }
++    else
++    {
++        enum has64BitXCHG = false;
++        enum has64BitCAS = false;
++        enum has128BitCAS = false;
++    }
++}
+ else version (GNU)
+ {
+     import gcc.config;
+diff --git a/import/core/internal/atomic.d b/import/core/internal/atomic.d
+index 9a819a2..6331c8e 100644
+--- a/import/core/internal/atomic.d
++++ b/import/core/internal/atomic.d
+@@ -15,41 +15,111 @@ import core.atomic : has128BitCAS, MemoryOrder;
+ version (DigitalMars)
+ version (AArch64)
+ {
+-    /* These functions are all stubbed out. They await someone who knows what
+-       they are doing with AArch64 atomics.
+-       TODO AArch64
++    /* DMD has no AArch64 atomic intrinsics, so these call the lock free
++     * implementations in core/internal/atomic_aarch64.c. MemoryOrder uses the
++     * C11 numbering, so the order is passed through unchanged.
+      */
++    private extern (C) pure nothrow @nogc @trusted
++    {
++        ubyte  _d_atomic_load_1(const(void)* p, int order);
++        ushort _d_atomic_load_2(const(void)* p, int order);
++        uint   _d_atomic_load_4(const(void)* p, int order);
++        ulong  _d_atomic_load_8(const(void)* p, int order);
++        void   _d_atomic_load_16(const(void)* p, void* result, int order);
++
++        void _d_atomic_store_1(void* p, ubyte v, int order);
++        void _d_atomic_store_2(void* p, ushort v, int order);
++        void _d_atomic_store_4(void* p, uint v, int order);
++        void _d_atomic_store_8(void* p, ulong v, int order);
++        void _d_atomic_store_16(void* p, const(void)* v, int order);
++
++        ubyte  _d_atomic_fetch_add_1(void* p, ubyte v, int order);
++        ushort _d_atomic_fetch_add_2(void* p, ushort v, int order);
++        uint   _d_atomic_fetch_add_4(void* p, uint v, int order);
++        ulong  _d_atomic_fetch_add_8(void* p, ulong v, int order);
++
++        ubyte  _d_atomic_exchange_1(void* p, ubyte v, int order);
++        ushort _d_atomic_exchange_2(void* p, ushort v, int order);
++        uint   _d_atomic_exchange_4(void* p, uint v, int order);
++        ulong  _d_atomic_exchange_8(void* p, ulong v, int order);
++
++        bool _d_atomic_cas_1(void* p, void* expected, ubyte desired, int succ, int fail);
++        bool _d_atomic_cas_2(void* p, void* expected, ushort desired, int succ, int fail);
++        bool _d_atomic_cas_4(void* p, void* expected, uint desired, int succ, int fail);
++        bool _d_atomic_cas_8(void* p, void* expected, ulong desired, int succ, int fail);
++        bool _d_atomic_cas_16(void* p, void* expected, const(void)* desired, int succ, int fail);
++
++        void _d_atomic_fence(int order);
++        void _d_atomic_pause();
++    }
++
++    // The unsigned integer type with the size of T, for 1, 2, 4 and 8 byte T
++    private template RawOf(T)
++    {
++        static if (T.sizeof == 1)      alias RawOf = ubyte;
++        else static if (T.sizeof == 2) alias RawOf = ushort;
++        else static if (T.sizeof == 4) alias RawOf = uint;
++        else static if (T.sizeof == 8) alias RawOf = ulong;
++        else static assert(0, "no atomic operations for " ~ T.stringof);
++    }
++
++    private enum sizeSuffix(T) = T.sizeof == 1 ? "1" : T.sizeof == 2 ? "2" : T.sizeof == 4 ? "4" :
++                                 T.sizeof == 8 ? "8" : "16";
++
+     enum IsAtomicLockFree(T) = T.sizeof <= size_t.sizeof * 2;
+ 
+     inout(T) atomicLoad(MemoryOrder order = MemoryOrder.seq, T)(inout(T)* src) pure nothrow @nogc @trusted
+         if (CanCAS!T)
+     {
+-        return *src;
++        static if (T.sizeof == 16)
++        {
++            T result = void;
++            _d_atomic_load_16(cast(const(void)*) src, cast(void*) &result, order);
++            return *cast(inout(T)*) &result;
++        }
++        else
++        {
++            RawOf!T raw = mixin("_d_atomic_load_" ~ sizeSuffix!T)(cast(const(void)*) src, order);
++            return *cast(inout(T)*) &raw;
++        }
+     }
+ 
+     void atomicStore(MemoryOrder order = MemoryOrder.seq, T)(T* dest, T value) pure nothrow @nogc @trusted
+         if (CanCAS!T)
+     {
+-        *dest = value;
++        static if (T.sizeof == 16)
++            _d_atomic_store_16(cast(void*) dest, cast(const(void)*) &value, order);
++        else
++            mixin("_d_atomic_store_" ~ sizeSuffix!T)(cast(void*) dest, *cast(RawOf!T*) &value, order);
+     }
+ 
+     T atomicFetchAdd(MemoryOrder order = MemoryOrder.seq, bool result = true, T)(T* dest, T value) pure nothrow @nogc @trusted
+         if (is(T : ulong))
+     {
+-	    return *dest + value;
++        RawOf!T raw = mixin("_d_atomic_fetch_add_" ~ sizeSuffix!T)(cast(void*) dest, cast(RawOf!T) value, order);
++        return cast(T) raw;
+     }
+ 
+     T atomicFetchSub(MemoryOrder order = MemoryOrder.seq, bool result = true, T)(T* dest, T value) pure nothrow @nogc @trusted
+         if (is(T : ulong))
+     {
+-        return atomicFetchAdd(dest, cast(T)-cast(IntOrLong!T)value);
++        return atomicFetchAdd!(order, result)(dest, cast(T)-cast(IntOrLong!T)value);
+     }
+ 
+     T atomicExchange(MemoryOrder order = MemoryOrder.seq, bool result = true, T)(T* dest, T value) pure nothrow @nogc @trusted
+-    if (CanCAS!T)
++        if (CanCAS!T)
+     {
+-        size_t storage = void;
+-        return *cast(T*)&storage;
++        static if (T.sizeof == 16)
++        {
++            T old = atomicLoad!(MemoryOrder.raw)(dest);
++            while (!atomicCompareExchangeStrong!(order, order)(dest, &old, value)) {}
++            return old;
++        }
++        else
++        {
++            RawOf!T raw = mixin("_d_atomic_exchange_" ~ sizeSuffix!T)(cast(void*) dest, *cast(RawOf!T*) &value, order);
++            return *cast(T*) &raw;
++        }
+     }
+ 
+     alias atomicCompareExchangeWeak = atomicCompareExchangeStrong;
+@@ -57,13 +127,11 @@ version (AArch64)
+     bool atomicCompareExchangeStrong(MemoryOrder succ = MemoryOrder.seq, MemoryOrder fail = MemoryOrder.seq, T)(T* dest, T* compare, T value) pure nothrow @nogc @trusted
+         if (CanCAS!T)
+     {
+-        if (*dest != *compare)
+-        {
+-            *compare = *dest;
+-            return false;
+-        }
+-        *dest = value;
+-        return true;
++        static if (T.sizeof == 16)
++            return _d_atomic_cas_16(cast(void*) dest, cast(void*) compare, cast(const(void)*) &value, succ, fail);
++        else
++            return mixin("_d_atomic_cas_" ~ sizeSuffix!T)(cast(void*) dest, cast(void*) compare,
++                                                          *cast(RawOf!T*) &value, succ, fail);
+     }
+ 
+     alias atomicCompareExchangeWeakNoResult = atomicCompareExchangeStrongNoResult;
+@@ -71,14 +139,13 @@ version (AArch64)
+     bool atomicCompareExchangeStrongNoResult(MemoryOrder succ = MemoryOrder.seq, MemoryOrder fail = MemoryOrder.seq, T)(T* dest, const T compare, T value) pure nothrow @nogc @trusted
+         if (CanCAS!T)
+     {
+-        if (*dest != compare)
+-            return false;
+-        *dest = value;
+-        return true;
++        T expected = *cast(T*) &compare;
++        return atomicCompareExchangeStrong!(succ, fail)(dest, &expected, value);
+     }
+ 
+     void atomicFence(MemoryOrder order = MemoryOrder.seq)() pure nothrow @nogc @trusted
+     {
++        _d_atomic_fence(order);
+     }
+ 
+     void atomicSignalFence(MemoryOrder order = MemoryOrder.seq)() pure nothrow @nogc @trusted
+@@ -88,6 +155,7 @@ version (AArch64)
+ 
+     void pause() pure nothrow @nogc @trusted
+     {
++        _d_atomic_pause();
+     }
+ }
+ else // X86 and X86_64
+diff --git a/import/core/math.d b/import/core/math.d
+index 941b5de..317ad93 100644
+--- a/import/core/math.d
++++ b/import/core/math.d
+@@ -43,6 +43,56 @@ pure:
+  *      Results are undefined if |x| >= $(POWER 2,64).
+  */
+ 
++version (DigitalMars) version (AArch64) version = DmdAArch64;
++
++version (DmdAArch64)
++{
++    /* DMD's AArch64 code generator has no intrinsics for these (they map to
++     * x87 instructions on x86), so they are implemented with the C library.
++     * `real` is `double` on AArch64.
++     */
++    private extern (C) pure nothrow @nogc @trusted
++    {
++        pragma(mangle, "cosf")    float  c_cosf(float x);
++        pragma(mangle, "cos")     double c_cos(double x);
++        pragma(mangle, "sinf")    float  c_sinf(float x);
++        pragma(mangle, "sin")     double c_sin(double x);
++        pragma(mangle, "llrintf") long   c_llrintf(float x);
++        pragma(mangle, "llrint")  long   c_llrint(double x);
++        pragma(mangle, "sqrtf")   float  c_sqrtf(float x);
++        pragma(mangle, "sqrt")    double c_sqrt(double x);
++        pragma(mangle, "ldexpf")  float  c_ldexpf(float x, int exp);
++        pragma(mangle, "ldexp")   double c_ldexp(double x, int exp);
++        pragma(mangle, "fabsf")   float  c_fabsf(float x);
++        pragma(mangle, "fabs")    double c_fabs(double x);
++        pragma(mangle, "rintf")   float  c_rintf(float x);
++        pragma(mangle, "rint")    double c_rint(double x);
++        pragma(mangle, "log2")    double c_log2(double x);
++        pragma(mangle, "log1p")   double c_log1p(double x);
++    }
++
++    float  cos(float x)  { return c_cosf(x); }
++    double cos(double x) { return c_cos(x); }  /// ditto
++    real   cos(real x)   { return c_cos(x); }  /// ditto
++
++    float  sin(float x)  { return c_sinf(x); }
++    double sin(double x) { return c_sin(x); }  /// ditto
++    real   sin(real x)   { return c_sin(x); }  /// ditto
++
++    long rndtol(float x)  { return c_llrintf(x); }
++    long rndtol(double x) { return c_llrint(x); }  /// ditto
++    long rndtol(real x)   { return c_llrint(x); }  /// ditto
++
++    float  sqrt(float x)  { return c_sqrtf(x); }
++    double sqrt(double x) { return c_sqrt(x); }  /// ditto
++    real   sqrt(real x)   { return c_sqrt(x); }  /// ditto
++
++    float  ldexp(float n, int exp)  { return c_ldexpf(n, exp); }
++    double ldexp(double n, int exp) { return c_ldexp(n, exp); }  /// ditto
++    real   ldexp(real n, int exp)   { return c_ldexp(n, exp); }  /// ditto
++}
++else
++{
+ float cos(float x);     /* intrinsic */
+ double cos(double x);   /* intrinsic */ /// ditto
+ real cos(real x);       /* intrinsic */ /// ditto
+@@ -99,6 +149,8 @@ float ldexp(float n, int exp);   /* intrinsic */
+ double ldexp(double n, int exp); /* intrinsic */ /// ditto
+ real ldexp(real n, int exp);     /* intrinsic */ /// ditto
+ 
++}
++
+ unittest {
+     static if (real.mant_dig == 113)
+     {
+@@ -139,6 +191,28 @@ unittest {
+  * Returns: |x|
+  * References: equivalent to `std.math.fabs`
+  */
++version (DmdAArch64)
++{
++    float  fabs(float  x) { return c_fabsf(x); }
++    double fabs(double x) { return c_fabs(x); }  /// ditto
++    real   fabs(real   x) { return c_fabs(x); }  /// ditto
++
++    float  rint(float x)  { return c_rintf(x); }
++    double rint(double x) { return c_rint(x); }  /// ditto
++    real   rint(real x)   { return c_rint(x); }  /// ditto
++
++    // y * log2(x)
++    float  yl2x(float x, float y)   { return y * cast(float) c_log2(x); }
++    double yl2x(double x, double y) { return y * c_log2(x); }  /// ditto
++    real   yl2x(real x, real y)     { return y * c_log2(x); }  /// ditto
++    // y * log2(x +1)
++    enum double LOG2E = 0x1.71547652b82fep+0;   // 1/ln(2)
++    float  yl2xp1(float x, float y)   { return y * cast(float)(c_log1p(x) * LOG2E); }
++    double yl2xp1(double x, double y) { return y * (c_log1p(x) * LOG2E); }  /// ditto
++    real   yl2xp1(real x, real y)     { return y * (c_log1p(x) * LOG2E); }  /// ditto
++}
++else
++{
+ @safe pure nothrow @nogc
+ {
+     float  fabs(float  x);
+@@ -170,6 +244,7 @@ real yl2x(real x, real y);      /* intrinsic */ /// ditto
+ float yl2xp1(float x, float y);    /* intrinsic */
+ double yl2xp1(double x, double y);  /* intrinsic */ /// ditto
+ real yl2xp1(real x, real y);      /* intrinsic */ /// ditto
++}
+ 
+ unittest
+ {
+diff --git a/import/core/thread/osthread.d b/import/core/thread/osthread.d
+index 3c7c03e..4a20969 100644
+--- a/import/core/thread/osthread.d
++++ b/import/core/thread/osthread.d
+@@ -907,22 +907,10 @@ in (fn)
+     {
+         // Callee-save registers, x19-x28 according to AAPCS64, section
+         // 5.1.1.  Include x29 fp because it optionally can be a callee
+-        // saved reg
++        // saved reg. The helper (switch_context_asm.S) stores them in regs,
++        // which lies above the returned stack pointer, so the GC scans them.
+         size_t[11] regs = void;
+-        // store the registers in pairs
+-        asm pure nothrow @nogc
+-        {
+-        /*
+-            stp x19, x20, regs[0];
+-            stp x21, x22, regs[2];
+-            stp x23, x24, regs[4];
+-            stp x25, x26, regs[6];
+-            stp x27, x28, regs[8];
+-            str x29, regs[10];
+-            mov [sp], sp;
+-         */
+-        }
+-        assert(0, "implement AArch64 inline assembler for callWithStackShell()"); // TODO AArch64
++        sp = _d_aarch64_save_callee_regs(regs.ptr);
+     }
+     else
+     {
+@@ -969,6 +957,13 @@ extern (C) @nogc nothrow
+ }
+ 
+ 
++version (AArch64)
++{
++    // switch_context_asm.S
++    private extern (C) void* _d_aarch64_save_callee_regs(size_t* regs) nothrow @nogc;
++    private extern (C) void* _d_aarch64_stack_pointer() nothrow @nogc;
++}
++
+ private extern(D) void* getStackTop() nothrow @nogc
+ {
+     version (D_InlineAsm_X86)
+@@ -976,10 +971,7 @@ private extern(D) void* getStackTop() nothrow @nogc
+     else version (D_InlineAsm_X86_64)
+         asm pure nothrow @nogc { naked; mov RAX, RSP; ret; }
+     else version (AArch64)
+-        //asm pure nothrow @nogc { naked; mov x0, SP; ret; }    // TODO AArch64
+-    {
+-        return null;
+-    }
++        return _d_aarch64_stack_pointer();     // switch_context_asm.S
+     else version (GNU)
+         return __builtin_frame_address(0);
+     else
+diff --git a/src/core/atomic.d b/src/core/atomic.d
+index 778cf99..460076e 100644
+--- a/src/core/atomic.d
++++ b/src/core/atomic.d
+@@ -608,6 +608,21 @@ else version (D_InlineAsm_X86_64)
+     enum has64BitCAS = true;
+     enum has128BitCAS = true;
+ }
++else version (DigitalMars)
++{
++    version (AArch64)   // core/internal/atomic_aarch64.c
++    {
++        enum has64BitXCHG = true;
++        enum has64BitCAS = true;
++        enum has128BitCAS = true;
++    }
++    else
++    {
++        enum has64BitXCHG = false;
++        enum has64BitCAS = false;
++        enum has128BitCAS = false;
++    }
++}
+ else version (GNU)
+ {
+     import gcc.config;
+diff --git a/src/core/internal/atomic.d b/src/core/internal/atomic.d
+index 9a819a2..6331c8e 100644
+--- a/src/core/internal/atomic.d
++++ b/src/core/internal/atomic.d
+@@ -15,41 +15,111 @@ import core.atomic : has128BitCAS, MemoryOrder;
+ version (DigitalMars)
+ version (AArch64)
+ {
+-    /* These functions are all stubbed out. They await someone who knows what
+-       they are doing with AArch64 atomics.
+-       TODO AArch64
++    /* DMD has no AArch64 atomic intrinsics, so these call the lock free
++     * implementations in core/internal/atomic_aarch64.c. MemoryOrder uses the
++     * C11 numbering, so the order is passed through unchanged.
+      */
++    private extern (C) pure nothrow @nogc @trusted
++    {
++        ubyte  _d_atomic_load_1(const(void)* p, int order);
++        ushort _d_atomic_load_2(const(void)* p, int order);
++        uint   _d_atomic_load_4(const(void)* p, int order);
++        ulong  _d_atomic_load_8(const(void)* p, int order);
++        void   _d_atomic_load_16(const(void)* p, void* result, int order);
++
++        void _d_atomic_store_1(void* p, ubyte v, int order);
++        void _d_atomic_store_2(void* p, ushort v, int order);
++        void _d_atomic_store_4(void* p, uint v, int order);
++        void _d_atomic_store_8(void* p, ulong v, int order);
++        void _d_atomic_store_16(void* p, const(void)* v, int order);
++
++        ubyte  _d_atomic_fetch_add_1(void* p, ubyte v, int order);
++        ushort _d_atomic_fetch_add_2(void* p, ushort v, int order);
++        uint   _d_atomic_fetch_add_4(void* p, uint v, int order);
++        ulong  _d_atomic_fetch_add_8(void* p, ulong v, int order);
++
++        ubyte  _d_atomic_exchange_1(void* p, ubyte v, int order);
++        ushort _d_atomic_exchange_2(void* p, ushort v, int order);
++        uint   _d_atomic_exchange_4(void* p, uint v, int order);
++        ulong  _d_atomic_exchange_8(void* p, ulong v, int order);
++
++        bool _d_atomic_cas_1(void* p, void* expected, ubyte desired, int succ, int fail);
++        bool _d_atomic_cas_2(void* p, void* expected, ushort desired, int succ, int fail);
++        bool _d_atomic_cas_4(void* p, void* expected, uint desired, int succ, int fail);
++        bool _d_atomic_cas_8(void* p, void* expected, ulong desired, int succ, int fail);
++        bool _d_atomic_cas_16(void* p, void* expected, const(void)* desired, int succ, int fail);
++
++        void _d_atomic_fence(int order);
++        void _d_atomic_pause();
++    }
++
++    // The unsigned integer type with the size of T, for 1, 2, 4 and 8 byte T
++    private template RawOf(T)
++    {
++        static if (T.sizeof == 1)      alias RawOf = ubyte;
++        else static if (T.sizeof == 2) alias RawOf = ushort;
++        else static if (T.sizeof == 4) alias RawOf = uint;
++        else static if (T.sizeof == 8) alias RawOf = ulong;
++        else static assert(0, "no atomic operations for " ~ T.stringof);
++    }
++
++    private enum sizeSuffix(T) = T.sizeof == 1 ? "1" : T.sizeof == 2 ? "2" : T.sizeof == 4 ? "4" :
++                                 T.sizeof == 8 ? "8" : "16";
++
+     enum IsAtomicLockFree(T) = T.sizeof <= size_t.sizeof * 2;
+ 
+     inout(T) atomicLoad(MemoryOrder order = MemoryOrder.seq, T)(inout(T)* src) pure nothrow @nogc @trusted
+         if (CanCAS!T)
+     {
+-        return *src;
++        static if (T.sizeof == 16)
++        {
++            T result = void;
++            _d_atomic_load_16(cast(const(void)*) src, cast(void*) &result, order);
++            return *cast(inout(T)*) &result;
++        }
++        else
++        {
++            RawOf!T raw = mixin("_d_atomic_load_" ~ sizeSuffix!T)(cast(const(void)*) src, order);
++            return *cast(inout(T)*) &raw;
++        }
+     }
+ 
+     void atomicStore(MemoryOrder order = MemoryOrder.seq, T)(T* dest, T value) pure nothrow @nogc @trusted
+         if (CanCAS!T)
+     {
+-        *dest = value;
++        static if (T.sizeof == 16)
++            _d_atomic_store_16(cast(void*) dest, cast(const(void)*) &value, order);
++        else
++            mixin("_d_atomic_store_" ~ sizeSuffix!T)(cast(void*) dest, *cast(RawOf!T*) &value, order);
+     }
+ 
+     T atomicFetchAdd(MemoryOrder order = MemoryOrder.seq, bool result = true, T)(T* dest, T value) pure nothrow @nogc @trusted
+         if (is(T : ulong))
+     {
+-	    return *dest + value;
++        RawOf!T raw = mixin("_d_atomic_fetch_add_" ~ sizeSuffix!T)(cast(void*) dest, cast(RawOf!T) value, order);
++        return cast(T) raw;
+     }
+ 
+     T atomicFetchSub(MemoryOrder order = MemoryOrder.seq, bool result = true, T)(T* dest, T value) pure nothrow @nogc @trusted
+         if (is(T : ulong))
+     {
+-        return atomicFetchAdd(dest, cast(T)-cast(IntOrLong!T)value);
++        return atomicFetchAdd!(order, result)(dest, cast(T)-cast(IntOrLong!T)value);
+     }
+ 
+     T atomicExchange(MemoryOrder order = MemoryOrder.seq, bool result = true, T)(T* dest, T value) pure nothrow @nogc @trusted
+-    if (CanCAS!T)
++        if (CanCAS!T)
+     {
+-        size_t storage = void;
+-        return *cast(T*)&storage;
++        static if (T.sizeof == 16)
++        {
++            T old = atomicLoad!(MemoryOrder.raw)(dest);
++            while (!atomicCompareExchangeStrong!(order, order)(dest, &old, value)) {}
++            return old;
++        }
++        else
++        {
++            RawOf!T raw = mixin("_d_atomic_exchange_" ~ sizeSuffix!T)(cast(void*) dest, *cast(RawOf!T*) &value, order);
++            return *cast(T*) &raw;
++        }
+     }
+ 
+     alias atomicCompareExchangeWeak = atomicCompareExchangeStrong;
+@@ -57,13 +127,11 @@ version (AArch64)
+     bool atomicCompareExchangeStrong(MemoryOrder succ = MemoryOrder.seq, MemoryOrder fail = MemoryOrder.seq, T)(T* dest, T* compare, T value) pure nothrow @nogc @trusted
+         if (CanCAS!T)
+     {
+-        if (*dest != *compare)
+-        {
+-            *compare = *dest;
+-            return false;
+-        }
+-        *dest = value;
+-        return true;
++        static if (T.sizeof == 16)
++            return _d_atomic_cas_16(cast(void*) dest, cast(void*) compare, cast(const(void)*) &value, succ, fail);
++        else
++            return mixin("_d_atomic_cas_" ~ sizeSuffix!T)(cast(void*) dest, cast(void*) compare,
++                                                          *cast(RawOf!T*) &value, succ, fail);
+     }
+ 
+     alias atomicCompareExchangeWeakNoResult = atomicCompareExchangeStrongNoResult;
+@@ -71,14 +139,13 @@ version (AArch64)
+     bool atomicCompareExchangeStrongNoResult(MemoryOrder succ = MemoryOrder.seq, MemoryOrder fail = MemoryOrder.seq, T)(T* dest, const T compare, T value) pure nothrow @nogc @trusted
+         if (CanCAS!T)
+     {
+-        if (*dest != compare)
+-            return false;
+-        *dest = value;
+-        return true;
++        T expected = *cast(T*) &compare;
++        return atomicCompareExchangeStrong!(succ, fail)(dest, &expected, value);
+     }
+ 
+     void atomicFence(MemoryOrder order = MemoryOrder.seq)() pure nothrow @nogc @trusted
+     {
++        _d_atomic_fence(order);
+     }
+ 
+     void atomicSignalFence(MemoryOrder order = MemoryOrder.seq)() pure nothrow @nogc @trusted
+@@ -88,6 +155,7 @@ version (AArch64)
+ 
+     void pause() pure nothrow @nogc @trusted
+     {
++        _d_atomic_pause();
+     }
+ }
+ else // X86 and X86_64
+diff --git a/src/core/internal/atomic_aarch64.c b/src/core/internal/atomic_aarch64.c
+new file mode 100644
+index 0000000..0f472ea
+--- /dev/null
++++ b/src/core/internal/atomic_aarch64.c
+@@ -0,0 +1,134 @@
++/**
++ * Atomic operations for DMD's AArch64 code generator, which has no atomic
++ * intrinsics and no AArch64 inline assembler. core.internal.atomic calls these.
++ *
++ * The memory order argument uses the C11 numbering, which core.atomic.MemoryOrder
++ * shares (raw = relaxed = 0, acq = 2, rel = 3, acq_rel = 4, seq = 5). A
++ * non-constant order is treated as sequentially consistent by the compiler,
++ * which is always correct.
++ *
++ * Copyright: The D Language Foundation and the Flint authors.
++ * License:   $(LINK2 http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0)
++ */
++#if defined(__aarch64__) || defined(__arm64__)
++#include <stdint.h>
++#include <stdbool.h>
++
++#define DEFINE(N, T)                                                                 \
++    T _d_atomic_load_##N(const volatile T *p, int order)                             \
++    { (void)order; return __atomic_load_n(p, __ATOMIC_SEQ_CST); }                    \
++    void _d_atomic_store_##N(volatile T *p, T v, int order)                          \
++    { (void)order; __atomic_store_n(p, v, __ATOMIC_SEQ_CST); }                       \
++    T _d_atomic_fetch_add_##N(volatile T *p, T v, int order)                         \
++    { (void)order; return __atomic_fetch_add(p, v, __ATOMIC_SEQ_CST); }              \
++    T _d_atomic_exchange_##N(volatile T *p, T v, int order)                          \
++    { (void)order; return __atomic_exchange_n(p, v, __ATOMIC_SEQ_CST); }             \
++    bool _d_atomic_cas_##N(volatile T *p, T *expected, T desired, int succ, int fail) \
++    {                                                                                \
++        (void)succ; (void)fail;                                                      \
++        return __atomic_compare_exchange_n(p, expected, desired, false,              \
++                                           __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);      \
++    }
++
++DEFINE(1, uint8_t)
++DEFINE(2, uint16_t)
++DEFINE(4, uint32_t)
++DEFINE(8, uint64_t)
++
++/* 16 byte compare-and-swap with an exclusive pair loop, which every ARMv8 core
++ * supports and which the C compilers would otherwise route to libatomic.
++ */
++typedef unsigned __int128 u128;
++
++static bool cas16(volatile u128 *p, uint64_t *expected, uint64_t dlo, uint64_t dhi)
++{
++    uint64_t olo, ohi;
++    uint32_t failed;
++    __asm__ __volatile__(
++        "1: ldaxp   %0, %1, [%3]\n"
++        "   cmp     %0, %4\n"
++        "   ccmp    %1, %5, #0, eq\n"
++        "   b.ne    2f\n"
++        "   stlxp   %w2, %6, %7, [%3]\n"
++        "   cbnz    %w2, 1b\n"
++        "   b       3f\n"
++        "2: stlxp   %w2, %0, %1, [%3]\n"     /* store back what was read, so the read is atomic */
++        "   cbnz    %w2, 1b\n"
++        "   mov     %w2, #1\n"
++        "3:\n"
++        : "=&r"(olo), "=&r"(ohi), "=&r"(failed)
++        : "r"(p), "r"(expected[0]), "r"(expected[1]), "r"(dlo), "r"(dhi)
++        : "cc", "memory");
++    if (failed)
++    {
++        expected[0] = olo;
++        expected[1] = ohi;
++        return false;
++    }
++    return true;
++}
++
++bool _d_atomic_cas_16(volatile u128 *p, u128 *expected, const u128 *desired, int succ, int fail)
++{
++    (void)succ; (void)fail;
++    const uint64_t *d = (const uint64_t *)desired;
++    return cas16(p, (uint64_t *)expected, d[0], d[1]);
++}
++
++void _d_atomic_load_16(volatile u128 *p, u128 *result, int order)
++{
++    (void)order;
++    uint64_t e[2] = {0, 0};
++    cas16(p, e, 0, 0);          /* fails and loads the value, or stores the 0 that is there */
++    ((uint64_t *)result)[0] = e[0];
++    ((uint64_t *)result)[1] = e[1];
++}
++
++void _d_atomic_store_16(volatile u128 *p, const u128 *value, int order)
++{
++    (void)order;
++    const uint64_t *v = (const uint64_t *)value;
++    uint64_t e[2] = {0, 0};
++    while (!cas16(p, e, v[0], v[1]))
++    {
++    }
++}
++
++void _d_atomic_fence(int order)
++{
++    (void)order;
++    __atomic_thread_fence(__ATOMIC_SEQ_CST);
++}
++
++void _d_atomic_pause(void)
++{
++    __asm__ __volatile__("yield");
++}
++
++/* Floating point status (FPSR) and control (FPCR) registers, for
++ * std.math.hardware under DMD.
++ */
++uint32_t _d_aarch64_get_fpsr(void)
++{
++    uint64_t v;
++    __asm__ __volatile__("mrs %0, fpsr" : "=r"(v));
++    return (uint32_t)v;
++}
++
++void _d_aarch64_set_fpsr(uint32_t v)
++{
++    __asm__ __volatile__("msr fpsr, %0" : : "r"((uint64_t)v));
++}
++
++uint32_t _d_aarch64_get_fpcr(void)
++{
++    uint64_t v;
++    __asm__ __volatile__("mrs %0, fpcr" : "=r"(v));
++    return (uint32_t)v;
++}
++
++void _d_aarch64_set_fpcr(uint32_t v)
++{
++    __asm__ __volatile__("msr fpcr, %0" : : "r"((uint64_t)v));
++}
++#endif
+diff --git a/src/core/math.d b/src/core/math.d
+index 941b5de..317ad93 100644
+--- a/src/core/math.d
++++ b/src/core/math.d
+@@ -43,6 +43,56 @@ pure:
+  *      Results are undefined if |x| >= $(POWER 2,64).
+  */
+ 
++version (DigitalMars) version (AArch64) version = DmdAArch64;
++
++version (DmdAArch64)
++{
++    /* DMD's AArch64 code generator has no intrinsics for these (they map to
++     * x87 instructions on x86), so they are implemented with the C library.
++     * `real` is `double` on AArch64.
++     */
++    private extern (C) pure nothrow @nogc @trusted
++    {
++        pragma(mangle, "cosf")    float  c_cosf(float x);
++        pragma(mangle, "cos")     double c_cos(double x);
++        pragma(mangle, "sinf")    float  c_sinf(float x);
++        pragma(mangle, "sin")     double c_sin(double x);
++        pragma(mangle, "llrintf") long   c_llrintf(float x);
++        pragma(mangle, "llrint")  long   c_llrint(double x);
++        pragma(mangle, "sqrtf")   float  c_sqrtf(float x);
++        pragma(mangle, "sqrt")    double c_sqrt(double x);
++        pragma(mangle, "ldexpf")  float  c_ldexpf(float x, int exp);
++        pragma(mangle, "ldexp")   double c_ldexp(double x, int exp);
++        pragma(mangle, "fabsf")   float  c_fabsf(float x);
++        pragma(mangle, "fabs")    double c_fabs(double x);
++        pragma(mangle, "rintf")   float  c_rintf(float x);
++        pragma(mangle, "rint")    double c_rint(double x);
++        pragma(mangle, "log2")    double c_log2(double x);
++        pragma(mangle, "log1p")   double c_log1p(double x);
++    }
++
++    float  cos(float x)  { return c_cosf(x); }
++    double cos(double x) { return c_cos(x); }  /// ditto
++    real   cos(real x)   { return c_cos(x); }  /// ditto
++
++    float  sin(float x)  { return c_sinf(x); }
++    double sin(double x) { return c_sin(x); }  /// ditto
++    real   sin(real x)   { return c_sin(x); }  /// ditto
++
++    long rndtol(float x)  { return c_llrintf(x); }
++    long rndtol(double x) { return c_llrint(x); }  /// ditto
++    long rndtol(real x)   { return c_llrint(x); }  /// ditto
++
++    float  sqrt(float x)  { return c_sqrtf(x); }
++    double sqrt(double x) { return c_sqrt(x); }  /// ditto
++    real   sqrt(real x)   { return c_sqrt(x); }  /// ditto
++
++    float  ldexp(float n, int exp)  { return c_ldexpf(n, exp); }
++    double ldexp(double n, int exp) { return c_ldexp(n, exp); }  /// ditto
++    real   ldexp(real n, int exp)   { return c_ldexp(n, exp); }  /// ditto
++}
++else
++{
+ float cos(float x);     /* intrinsic */
+ double cos(double x);   /* intrinsic */ /// ditto
+ real cos(real x);       /* intrinsic */ /// ditto
+@@ -99,6 +149,8 @@ float ldexp(float n, int exp);   /* intrinsic */
+ double ldexp(double n, int exp); /* intrinsic */ /// ditto
+ real ldexp(real n, int exp);     /* intrinsic */ /// ditto
+ 
++}
++
+ unittest {
+     static if (real.mant_dig == 113)
+     {
+@@ -139,6 +191,28 @@ unittest {
+  * Returns: |x|
+  * References: equivalent to `std.math.fabs`
+  */
++version (DmdAArch64)
++{
++    float  fabs(float  x) { return c_fabsf(x); }
++    double fabs(double x) { return c_fabs(x); }  /// ditto
++    real   fabs(real   x) { return c_fabs(x); }  /// ditto
++
++    float  rint(float x)  { return c_rintf(x); }
++    double rint(double x) { return c_rint(x); }  /// ditto
++    real   rint(real x)   { return c_rint(x); }  /// ditto
++
++    // y * log2(x)
++    float  yl2x(float x, float y)   { return y * cast(float) c_log2(x); }
++    double yl2x(double x, double y) { return y * c_log2(x); }  /// ditto
++    real   yl2x(real x, real y)     { return y * c_log2(x); }  /// ditto
++    // y * log2(x +1)
++    enum double LOG2E = 0x1.71547652b82fep+0;   // 1/ln(2)
++    float  yl2xp1(float x, float y)   { return y * cast(float)(c_log1p(x) * LOG2E); }
++    double yl2xp1(double x, double y) { return y * (c_log1p(x) * LOG2E); }  /// ditto
++    real   yl2xp1(real x, real y)     { return y * (c_log1p(x) * LOG2E); }  /// ditto
++}
++else
++{
+ @safe pure nothrow @nogc
+ {
+     float  fabs(float  x);
+@@ -170,6 +244,7 @@ real yl2x(real x, real y);      /* intrinsic */ /// ditto
+ float yl2xp1(float x, float y);    /* intrinsic */
+ double yl2xp1(double x, double y);  /* intrinsic */ /// ditto
+ real yl2xp1(real x, real y);      /* intrinsic */ /// ditto
++}
+ 
+ unittest
+ {
+diff --git a/src/core/thread/fiber/switch_context_asm.S b/src/core/thread/fiber/switch_context_asm.S
+index ca44874..96d0702 100644
+--- a/src/core/thread/fiber/switch_context_asm.S
++++ b/src/core/thread/fiber/switch_context_asm.S
+@@ -24,6 +24,15 @@
+ .section .note.GNU-stack,"",%progbits
+ #endif
+ 
++/* C symbol names: Mach-O prefixes an underscore. */
++#ifndef CSYM
++#if defined(__APPLE__)
++#define CSYM(name) _##name
++#else
++#define CSYM(name) name
++#endif
++#endif
++
+ /************************************************************************************
+  * POWER PC ASM BITS
+  ************************************************************************************/
+@@ -540,6 +549,42 @@ CSYM(fiber_switchContext):
+         ldp     d15, d14, [sp], #20*8
+         ret
+ 
++/**
++ * void* _d_aarch64_save_callee_regs(size_t* regs)
++ * Stores the callee-saved registers x19-x29 into regs[0 .. 11] and returns the
++ * caller's stack pointer, for core.thread.osthread.callWithStackShell. DMD's
++ * AArch64 inline assembler cannot express this.
++ */
++        .text
++        .global CSYM(_d_aarch64_save_callee_regs)
++        .p2align  2
++#ifndef __APPLE__
++        .type   _d_aarch64_save_callee_regs, %function
++#endif
++CSYM(_d_aarch64_save_callee_regs):
++        stp     x19, x20, [x0]
++        stp     x21, x22, [x0, #16]
++        stp     x23, x24, [x0, #32]
++        stp     x25, x26, [x0, #48]
++        stp     x27, x28, [x0, #64]
++        str     x29,      [x0, #80]
++        mov     x0, sp
++        ret
++
++/**
++ * void* _d_aarch64_stack_pointer()
++ * Returns the caller's stack pointer.
++ */
++        .text
++        .global CSYM(_d_aarch64_stack_pointer)
++        .p2align  2
++#ifndef __APPLE__
++        .type   _d_aarch64_stack_pointer, %function
++#endif
++CSYM(_d_aarch64_stack_pointer):
++        mov     x0, sp
++        ret
++
+ /**
+  * When generating any kind of backtrace (gdb, exception handling) for
+  * a function called in a Fiber, we need to tell the unwinder to stop
+diff --git a/src/core/thread/osthread.d b/src/core/thread/osthread.d
+index 3c7c03e..4a20969 100644
+--- a/src/core/thread/osthread.d
++++ b/src/core/thread/osthread.d
+@@ -907,22 +907,10 @@ in (fn)
+     {
+         // Callee-save registers, x19-x28 according to AAPCS64, section
+         // 5.1.1.  Include x29 fp because it optionally can be a callee
+-        // saved reg
++        // saved reg. The helper (switch_context_asm.S) stores them in regs,
++        // which lies above the returned stack pointer, so the GC scans them.
+         size_t[11] regs = void;
+-        // store the registers in pairs
+-        asm pure nothrow @nogc
+-        {
+-        /*
+-            stp x19, x20, regs[0];
+-            stp x21, x22, regs[2];
+-            stp x23, x24, regs[4];
+-            stp x25, x26, regs[6];
+-            stp x27, x28, regs[8];
+-            str x29, regs[10];
+-            mov [sp], sp;
+-         */
+-        }
+-        assert(0, "implement AArch64 inline assembler for callWithStackShell()"); // TODO AArch64
++        sp = _d_aarch64_save_callee_regs(regs.ptr);
+     }
+     else
+     {
+@@ -969,6 +957,13 @@ extern (C) @nogc nothrow
+ }
+ 
+ 
++version (AArch64)
++{
++    // switch_context_asm.S
++    private extern (C) void* _d_aarch64_save_callee_regs(size_t* regs) nothrow @nogc;
++    private extern (C) void* _d_aarch64_stack_pointer() nothrow @nogc;
++}
++
+ private extern(D) void* getStackTop() nothrow @nogc
+ {
+     version (D_InlineAsm_X86)
+@@ -976,10 +971,7 @@ private extern(D) void* getStackTop() nothrow @nogc
+     else version (D_InlineAsm_X86_64)
+         asm pure nothrow @nogc { naked; mov RAX, RSP; ret; }
+     else version (AArch64)
+-        //asm pure nothrow @nogc { naked; mov x0, SP; ret; }    // TODO AArch64
+-    {
+-        return null;
+-    }
++        return _d_aarch64_stack_pointer();     // switch_context_asm.S
+     else version (GNU)
+         return __builtin_frame_address(0);
+     else
+diff --git a/src/test_runner.d b/src/test_runner.d
+index 8accf81..2f6c8c1 100644
+--- a/src/test_runner.d
++++ b/src/test_runner.d
+@@ -4,7 +4,11 @@ import core.stdc.stdio : printf;
+ version (ARM)     version = ARM_Any;
+ version (AArch64) version = ARM_Any;
+ 
+-version (ARM_Any) version (D_HardFloat) version = ARM_Any_HardFloat;
++/* DMD has no GNU inline assembler for the FPCR helpers below. Linux and macOS
++ * start with the FPCR fast mode bits clear, so DMD does not need them.
++ */
++version (DigitalMars) {}
++else version (ARM_Any) version (D_HardFloat) version = ARM_Any_HardFloat;
+ 
+ ModuleInfo* getModuleInfo(string name)
+ {

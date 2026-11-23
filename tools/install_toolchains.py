@@ -208,11 +208,14 @@ def train_profile(bin_dir, instrumented, work, profiles):
 
 
 DMD_WINDOWS_PATCH = FORK_DIR / 'dmd-2.114.0-flint-windows.patch'
+# macOS applies a second patch over the shared one: the compile server and direct linking on Darwin (ADR-025).
+DMD_DARWIN_PATCH = FORK_DIR / 'dmd-2.114.0-flint-darwin.patch'
 
 
 def dmd_patches():
-    """The DMD patches this host applies, in order: Windows adds the warm worker pool (ADR-026)."""
-    return [DMD_PATCH, DMD_WINDOWS_PATCH] if platform.system() == 'Windows' else [DMD_PATCH]
+    """The DMD patches this host applies, in order: Windows adds the warm worker pool (ADR-026), macOS the
+    Darwin system interfaces of the compile server and direct linking (ADR-025)."""
+    return [DMD_PATCH] + {'Windows': [DMD_WINDOWS_PATCH], 'Darwin': [DMD_DARWIN_PATCH]}.get(platform.system(), [])
 
 
 def dmd_patch_digest():
@@ -309,6 +312,118 @@ def install_flint_fork(bin_dir, destination, pgo):
     return {'dmd_patch_sha256': sha256_file(DMD_PATCH), 'dub_patch_sha256': sha256_file(DUB_PATCH),
             'prelude_sha256': sha256_file(PRELUDE), 'pgo': pgo,
             'dmd_sha256': sha256_file(bin_dir / 'dmd'), 'dub_sha256': sha256_file(bin_dir / 'dub')}
+
+
+# ADR-025 section 3: DMD's AArch64 code generator, completed by the fork. No DMD release runs on arm64, so
+# arm64 hosts build the fork from the pinned release's sources with the pinned LDC, and druntime and Phobos
+# with `dmd -marm64`, using the fork's patches for them.
+DRUNTIME_PATCH = FORK_DIR / 'druntime-2.114.0-flint.patch'
+PHOBOS_PATCH = FORK_DIR / 'phobos-2.114.0-flint.patch'
+LDC_LINUX_AARCH64 = 'ldc2-1.43.0-linux-aarch64'
+ARM64_DFLAGS = ['-conf=', '-marm64', '-O', '-release', '-inline', '-preview=dip1000', '-preview=fieldwise',
+                '-preview=dtorfields']
+
+
+def build_arm64_runtime(dmd, src, work, osname):
+    """Patch druntime and Phobos from the release sources in `src` and build them with `dmd -marm64` into one
+    static libphobos2.a, with druntime's assembly and C parts and Phobos's zlib. Returns (library, sources)
+    where `sources` holds the patched druntime and phobos directories for the import paths.
+    """
+    import concurrent.futures
+    sources = work / 'runtime-src'
+    if sources.exists():
+        shutil.rmtree(sources)
+    for name, patch in (('druntime', DRUNTIME_PATCH), ('phobos', PHOBOS_PATCH)):
+        shutil.copytree(src / name, sources / name)
+        apply_patch(patch, sources / name)
+    objects = work / 'runtime-obj'
+    if objects.exists():
+        shutil.rmtree(objects)
+    objects.mkdir(parents=True)
+    target = ['-os=osx'] if osname == 'Darwin' else ['-os=linux', '-fPIC']
+    druntime = sources / 'druntime'
+    listed = (druntime / 'mak' / 'SRCS').read_text().replace('\\\n', ' ').split('=', 1)[1].split()
+    jobs = [(druntime, s.replace('\\', '/'), ['-Isrc', '-Iimport', '-w', '-de']) for s in listed if s.endswith('.d')]
+    phobos = sources / 'phobos'
+    jobs += [(phobos, str(p.relative_to(phobos)), ['-I' + str(druntime / 'import'), '-I.', '-w'])
+             for top in ('std', 'etc') for p in sorted((phobos / top).rglob('*.d'))]
+
+    def compile_module(job):
+        root, module, flags = job
+        obj = objects / (root.name + '.' + module.replace('/', '.')[:-2] + '.o')
+        r = subprocess.run([str(dmd)] + ARM64_DFLAGS + target + flags + ['-c', module, '-of' + str(obj)],
+                           cwd=root, capture_output=True, text=True)
+        return module, r.returncode, r.stdout + r.stderr
+
+    with concurrent.futures.ThreadPoolExecutor(max(1, min(os.cpu_count() or 2, 16))) as pool:
+        for module, code, output in pool.map(compile_module, jobs):
+            if code != 0:
+                raise SystemExit('dmd -marm64 failed on ' + module + ':\n' + output[-4000:])
+    cc = shutil.which('cc') or 'cc'
+    c_sources = [druntime / 'src/core/thread/fiber/switch_context_asm.S', druntime / 'src/core/stdc/errno.c',
+                 druntime / 'src/core/internal/atomic_aarch64.c'] + sorted((phobos / 'etc/c/zlib').glob('*.c'))
+    for c in c_sources:
+        # zlib's gz files use read/write/close without including <unistd.h>
+        include = ['-include', 'unistd.h'] if c.parent.name == 'zlib' else []
+        subprocess.run([cc, '-O2', '-fPIC'] + include + ['-c', str(c), '-o', str(objects / ('c.' + c.stem + '.o'))],
+                       check=True)
+    library = work / 'libphobos2.a'
+    if library.exists():
+        library.unlink()
+    members = sorted(str(o) for o in objects.glob('*.o'))
+    if osname == 'Darwin':
+        subprocess.run(['libtool', '-static', '-no_warning_for_no_symbols', '-o', str(library)] + members, check=True)
+    else:
+        subprocess.run(['ar', 'rcs', str(library)] + members, check=True)
+    return library, sources
+
+
+def install_dmd_arm64(destination):
+    """Install the Flint DMD fork on an arm64 host (macOS or Linux glibc): build it from the pinned release's
+    compiler sources with the pinned LDC, then druntime and Phobos for arm64 (ADR-025 section 3). The release's
+    own binaries are x86-64 Linux and are replaced or unused.
+    """
+    osname = platform.system()
+    dmd2 = install('dmd.2.114.0.linux.tar.xz', destination) / 'dmd2'
+    ldc_name = LDC_DARWIN if osname == 'Darwin' else LDC_LINUX_AARCH64
+    ldc_bin = install(ldc_name + '.tar.xz', destination) / ldc_name / 'bin'
+    osdir = 'osx' if osname == 'Darwin' else 'linux'
+    work = destination / 'flint-fork-build'
+    stage = work / 'dmd'
+    if stage.exists():
+        shutil.rmtree(stage)
+    (stage / 'compiler').mkdir(parents=True)
+    shutil.copytree(dmd2 / 'src' / 'dmd', stage / 'compiler' / 'src')
+    shutil.copyfile(dmd2 / 'src' / 'VERSION', stage / 'VERSION')
+    for patch in dmd_patches():
+        apply_patch(patch, stage / 'compiler' / 'src')
+    env = dict(os.environ, PATH=str(ldc_bin) + os.pathsep + os.environ['PATH'])
+    subprocess.run([str(ldc_bin / 'ldmd2'), '-run', 'build.d', 'HOST_DMD=ldmd2', 'ENABLE_RELEASE=1',
+                    '-j' + str(min(os.cpu_count() or 2, 16)), 'dmd'], cwd=stage / 'compiler' / 'src', env=env,
+                   check=True, stdout=subprocess.DEVNULL)
+    built = stage / 'generated' / osdir / 'release' / '64' / 'dmd'
+    library, sources = build_arm64_runtime(built, dmd2 / 'src', work, osname)
+
+    bin_dir = dmd2 / osdir / 'bin64'
+    lib_dir = dmd2 / osdir / 'lib64'
+    for directory in (bin_dir, lib_dir):
+        if directory.exists():
+            shutil.rmtree(directory)        # the release's x86-64 Linux binaries
+        directory.mkdir(parents=True)
+    for name in ('druntime', 'phobos'):
+        shutil.rmtree(dmd2 / 'src' / name)
+        shutil.copytree(sources / name, dmd2 / 'src' / name)
+    shutil.copyfile(built, bin_dir / 'dmd')
+    (bin_dir / 'dmd').chmod(0o755)
+    shutil.copyfile(library, lib_dir / 'libphobos2.a')
+    shutil.copyfile(PRELUDE, bin_dir / 'dmd-server-prelude.txt')
+    flags = ['"-I%@P%/../../src/phobos"', '"-I%@P%/../../src/druntime/import"', '"-L-L%@P%/../lib64"', '-marm64']
+    if osname != 'Darwin':
+        flags += ['-fPIC', '-L--export-dynamic']
+    (bin_dir / 'dmd.conf').write_text('[Environment]\nDFLAGS=' + ' '.join(flags) + '\n')
+    return bin_dir, {'dmd_patch_sha256': dmd_patch_digest(), 'druntime_patch_sha256': sha256_file(DRUNTIME_PATCH),
+                     'phobos_patch_sha256': sha256_file(PHOBOS_PATCH), 'prelude_sha256': sha256_file(PRELUDE),
+                     'dmd_sha256': sha256_file(bin_dir / 'dmd'), 'libphobos2_sha256': sha256_file(lib_dir / 'libphobos2.a')}
 
 
 FLINT_APP = ROOT / 'apps' / 'flint'
@@ -756,6 +871,13 @@ def main():
             receipt={'compiler':'ldc-sanitizer-runtime','version':LOCK['versions']['ldc'],
                      'lib':str(a.destination/SANITIZER_RUNTIME/'lib'),**runtime}
         print(json.dumps(receipt))
+        return
+    if a.compiler=='dmd' and arch=='aarch64' and osname in ('Darwin','Linux') and not a.musl:
+        # ADR-025 section 3: arm64 hosts build the fork with its AArch64 code generator; there is no upstream binary.
+        if a.dmd_linker:raise SystemExit('--dmd-linker is not supported on arm64 hosts yet')
+        bin_dir,fork=install_dmd_arm64(a.destination)
+        print(json.dumps({'compiler':'dmd','version':LOCK['versions']['dmd'],'bin':str(bin_dir),
+                          'sha256':LOCK['assets']['dmd.2.114.0.linux.tar.xz']['sha256'],'flint_fork':fork}))
         return
     if a.compiler=='dmd':
         if (osname,arch)==('Windows','x86_64') and not a.musl:

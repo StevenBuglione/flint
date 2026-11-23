@@ -1,0 +1,105 @@
+# DMD's AArch64 code generator in the Flint fork
+
+[ADR-025](../../docs/adr/ADR-025-fast-compiles-everywhere.md) section 3 makes the forked DMD the development compiler on arm64. Upstream DMD 2.114.0 contains an unfinished AArch64 back end, selected with `-marm64`. The fork completes it for Linux AArch64 (ELF) and macOS arm64 (Mach-O).
+
+## Patches
+
+| File | Applies to | Hosts |
+| --- | --- | --- |
+| `../dmd-2.114.0-flint.patch` | compiler sources (`dmd2/src/dmd`) | all. The AArch64 changes are their own file sections after the fork's other changes. |
+| `../dmd-2.114.0-flint-darwin.patch` | compiler sources, after the shared patch | macOS: the compile server and direct linking on Darwin's system interfaces |
+| `../druntime-2.114.0-flint.patch` | `dmd2/src/druntime` (sources and `import/`) | arm64 runtime builds |
+| `../phobos-2.114.0-flint.patch` | `dmd2/src/phobos` | arm64 runtime builds |
+
+The AArch64 changes leave x86-64 code generation unchanged. On 2026-11-23, `bench-cli` and `bench-rest` were built in debug and release mode with the fork with and without them, installed at the same path. Of 5,700 objects, archive members and executables, the debug builds were byte-identical. In the release builds, one object of `flint:log` (`package_e2_260.o`) differed, along with the `bench-cli` executable that contains it. That object also differs between two runs of the same compiler: a 64-bit immediate carries uninitialised upper bytes. This is an existing nondeterminism and is not caused by these changes.
+
+## Install
+
+On macOS arm64 and Linux AArch64 (glibc), from the checkout root:
+
+```bash
+python3 tools/install_toolchains.py --compiler dmd
+```
+
+No DMD release runs on arm64, so the installer does the following:
+
+1. It extracts the pinned `dmd.2.114.0.linux.tar.xz` for its sources.
+2. It applies the patches and builds the fork with the pinned LDC for the host.
+3. It builds druntime and Phobos with `dmd -marm64` into `lib64/libphobos2.a`. The library includes druntime's assembly and C parts and Phobos's zlib.
+4. It writes a `dmd.conf` that adds `-marm64`.
+
+The compiler is installed in `.tools/dmd2/osx/bin64` on macOS and in `.tools/dmd2/linux/bin64` on Linux. On pluto, the whole install takes about 80 seconds.
+
+## Regression tests
+
+Every code generator defect fixed in the fork has a test here. Each test is a self-checking D program that exits 0, and some have a C companion. `run.py` compiles each test three ways (no flags, `-O`, `-O -release -inline`), links it against druntime for the target, and runs it.
+
+```bash
+# natively on an arm64 host, with the installed toolchain
+python3 toolchain/arm64/run.py --dmd .tools/dmd2/osx/bin64/dmd \
+    --druntime-import .tools/dmd2/src/druntime/import --druntime .tools/dmd2/osx/lib64/libphobos2.a --os osx
+
+# on Linux x86-64, for Linux AArch64 under QEMU user mode
+python3 toolchain/arm64/run.py --dmd <fork dmd> --druntime-import <druntime/import> --druntime <arm64 libphobos2.a> \
+    --cc aarch64-linux-gnu-gcc --run-prefix "qemu-aarch64 -L /usr/aarch64-linux-gnu"
+```
+
+## Status (stage 1: runtime libraries)
+
+| | druntime unittests | Phobos unittests | regression tests |
+| --- | --- | --- | --- |
+| Linux AArch64 (QEMU user mode) | 567/567 modules | 122/176 modules | 57/57 |
+| macOS arm64 (pluto, native) | 566/567 modules | 127/175 modules | 57/57 |
+
+The remaining Phobos failures are code generator defects that are still being fixed. Stage 1 is complete only when both libraries pass on both platforms. The macOS druntime failure is `core.thread.osthread`, which stops with a trap.
+
+## Decisions and known ABI gaps
+
+- **`real` is `double` on all AArch64 targets**, as it already was for macOS. The back end has no 128-bit floating point. On Linux, C's `long double` is 128-bit, so `extern(C)` functions that take or return `long double` are not compatible.
+- **Homogeneous floating point aggregates of 3 or 4 elements** are passed and returned by the general aggregate rules: in general registers, or in memory above 16 bytes. AAPCS64 uses SIMD registers for them. Calls between D functions agree. C functions that take or return such a struct do not, and neither does `va_arg` of one through a C `va_list`. HFAs of 1 or 2 elements follow AAPCS64.
+- On macOS, stack arguments follow Apple's rules:
+  - scalars are packed at their natural alignment;
+  - composites of up to 16 bytes take 8-byte aligned slots;
+  - the variadic part of a call goes on the stack.
+
+## Fixes offered upstream (dlang/dmd)
+
+The changes below are independent of Flint and are candidates for upstream pull requests. The test that covers each one is named where there is one.
+
+Object files and relocations:
+
+- ELF: relocations chosen from the instruction (B/BL, ADRP, ADD, scaled LDR/STR). The GOT is used for extern data and for function addresses in PIC. TLS uses local-exec and initial-exec. Data relocations are ABS64, ABS32 or PREL32. `.init_array`/`.fini_array` and `__d_dso_init` use the right relocations and call `_d_dso_registry`. (`function_address_got`, `tls_access`)
+- ELF: the x86 PIC/PIE rewrites (GOT, `__tls_get_addr`) are skipped in `elpicpie`.
+- Mach-O: relocations chosen from the instruction (BRANCH26, PAGE21/PAGEOFF12 with `ARM64_RELOC_ADDEND`, GOT_LOAD, TLVP_LOAD). Non-local symbols go through the GOT. Extern symbols forwarded to a public or local definition use its index. Thread-local template variables get weak TLV descriptors. (`tls_template`)
+- Mach-O `__eh_frame`: a `zPLR` CIE with an `ARM64_RELOC_POINTER_TO_GOT` personality. FDE addresses and the LSDA are `pcrel|sdata4` `SUBTRACTOR`/`UNSIGNED` pairs. (`exceptions`)
+- Mach-O: the TLV init-symbol name buffer freed the stack buffer for long names.
+- DWARF EH on ELF uses PC-relative personality, LSDA and TType encodings. Debug info uses ABS32/ABS64 relocations.
+
+Code generation:
+
+- Struct copies: the destination pointer register could be the source pointer's (`struct_copy_recursive`). Copy loops left a stale constant in their index register (`struct_copy_loop_regs`). Copies to and from register-pair variables, tail stores, and memset store sizes and limits are fixed.
+- Over-aligned frames rewrote every base register, not just x29, to SP (`overaligned_nested`). Stack alignment, `fixesp`, the epilog and local addressing for aligned frames are fixed.
+- Stack arguments take 8-byte slots on Linux and Apple's packing on macOS (`c_abi_stack`). Enregistered stack parameters referenced by nested functions are loaded in the prolog (`stack_params_nested`). Prolog stores reach any offset.
+- Narrow integers stay in canonical form after arithmetic, shifts, `neg`, `com`, `mul` and op-assign (`narrow_extend`):
+  - LDRSB and LDRSH used the wrong register width;
+  - a 64-bit constant was loaded 32-bit into a register variable;
+  - widening loads used the wrong size.
+- Integer and floating point painting of register variables: the x86 `XMMREGS` mask unregistered every variable in x16 to x31. Loads, stores and FMOV between the register classes are fixed (`paint_int_float`).
+- HFAs of 2 elements in V0/V1 for arguments, returns and parameter spills; the MSW of pairs loaded from register variables (`hfa_pairs`, `register_pair_struct`).
+- Floating point: compare operand swap, NaN-correct condition codes (`float_compare_nan`), constants loaded with FMOV/MOV, single-precision FMOV general, double-long conversions, `fmod` argument order and `%=`, mixed real/imaginary/complex add and subtract (`complex_mixed`). `real` is `double` in the back end tables and in array fills (`real_double`).
+- `alloca` expanded inline without re-evaluating its argument; the macOS stack probe goes through the GOT (`alloca_inline`).
+- Static data referenced directly is addressed with ADRP (`static_data_direct`).
+- Variadic calls on macOS: D-linkage parameter order, the hidden `_arguments` of D-style variadics, typesafe variadics passed as a slice (`Eflags` shares its storage with `numParams`), and the last stack parameter aligned only for variadic calls (`variadics`).
+- `assert(encodeNImmrImms(...))` computed the encoding inside the assert, so release builds of DMD emitted `AND #1` for `AND #0xFF`.
+- Smaller items:
+  - x86 helper misdispatch (`getlvalue`), `getregs` given a register number instead of a mask;
+  - the x86 scheduler and NOP running on AArch64;
+  - CSE spill sizes, `OPremquo` size, `cdabs` condition, `cdnot` compare size;
+  - thunk tail calls, `finally` blocks under DWARF EH, `log_imm` encodings;
+  - the 16-byte limit on the scaled load/store offset assert.
+
+druntime and Phobos:
+
+- Atomics through `core/internal/atomic_aarch64.c` (they were empty stubs); `callWithStackShell` and `getStackTop` through assembly helpers.
+- `core.math` bodies for the x87-only intrinsics; the `test_runner` floating point control register asm is skipped under DMD.
+- `std.math.hardware`: FPSR and FPCR access through C helpers under DMD AArch64.

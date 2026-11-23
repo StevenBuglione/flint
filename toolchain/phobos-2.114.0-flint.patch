@@ -1,0 +1,65 @@
+diff --git a/std/math/hardware.d b/std/math/hardware.d
+index e4556cc..6a50624 100644
+--- a/std/math/hardware.d
++++ b/std/math/hardware.d
+@@ -23,6 +23,16 @@ version (PPC64)     version = PPC_Any;
+ version (MIPS32)    version = MIPS_Any;
+ version (MIPS64)    version = MIPS_Any;
+ version (AArch64)   version = ARM_Any;
++
++// DMD's AArch64 code generator has no inline assembler for these: druntime's C helpers
++version (DigitalMars) version (AArch64) version = DmdAArch64;
++version (DmdAArch64) private extern (C) pure nothrow @nogc @trusted
++{
++    uint _d_aarch64_get_fpsr();
++    void _d_aarch64_set_fpsr(uint);
++    uint _d_aarch64_get_fpcr();
++    void _d_aarch64_set_fpcr(uint);
++}
+ version (ARM)       version = ARM_Any;
+ version (S390)      version = IBMZ_Any;
+ version (SPARC)     version = SPARC_Any;
+@@ -182,6 +192,10 @@ private:
+         {
+             assert(false, "Not yet supported.");
+         }
++        else version (DmdAArch64)
++        {
++            return _d_aarch64_get_fpsr() & EXCEPTIONS_MASK;
++        }
+         else version (RISCV_Any)
+         {
+             uint result = void;
+@@ -237,6 +251,10 @@ private:
+                 "movgr2fcsr $fcsr2,$r0";
+             }
+         }
++        else version (DmdAArch64)
++        {
++            _d_aarch64_set_fpsr(_d_aarch64_get_fpsr() & ~EXCEPTIONS_MASK);
++        }
+         else
+         {
+             /* SPARC:
+@@ -951,6 +969,10 @@ private:
+             cont &= (roundingMask | allExceptions);
+             return cont;
+         }
++        else version (DmdAArch64)
++        {
++            return _d_aarch64_get_fpcr();
++        }
+         else
+             assert(0, "Not yet supported");
+     }
+@@ -1000,6 +1022,10 @@ private:
+                 : "r" (newState & (roundingMask | allExceptions));
+             }
+         }
++        else version (DmdAArch64)
++        {
++            _d_aarch64_set_fpcr(newState);
++        }
+         else
+             assert(0, "Not yet supported");
+     }

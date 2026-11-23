@@ -1,0 +1,154 @@
+diff --git a/dmd/flintlink.d b/dmd/flintlink.d
+index f4e30b1..e908ac4 100644
+--- a/dmd/flintlink.d
++++ b/dmd/flintlink.d
+@@ -373,7 +373,7 @@ bool directLinkCommand(ref Strings argv, ref Array!bool ccSwitchFlags, ref Strin
+         return false;
+     {
+         char[64] m;
+-        snprintf(m.ptr, m.length, "%lld.%lld.%lld", cast(long) st.st_mtim.tv_sec, cast(long) st.st_ino, cast(long) st.st_size);
++        snprintf(m.ptr, m.length, "%lld.%lld.%lld", cast(long) (){ version (OSX) return st.st_mtimespec.tv_sec; else return st.st_mtim.tv_sec; }(), cast(long) st.st_ino, cast(long) st.st_size);
+         h = fnv(h, m.ptr);
+     }
+     foreach (s; ccSwitches)
+@@ -402,9 +402,9 @@ bool directLinkCommand(ref Strings argv, ref Array!bool ccSwitchFlags, ref Strin
+         if (auto slash = strrchr(parent.ptr, '/'))
+         {
+             *slash = 0;
+-            mkdir(parent.ptr, octal(755));
++            mkdir(parent.ptr, cast(mode_t) octal(755));
+         }
+-        mkdir(dir.ptr, octal(700));
++        mkdir(dir.ptr, cast(mode_t) octal(700));
+     }
+     char[4200] cache;
+     snprintf(cache.ptr, cache.length, "%s/link-%016llx.txt", dir.ptr, h);
+diff --git a/dmd/flintserver.d b/dmd/flintserver.d
+index d7b6893..614daf6 100644
+--- a/dmd/flintserver.d
++++ b/dmd/flintserver.d
+@@ -38,6 +38,7 @@ import core.sys.posix.sys.stat;
+ import core.sys.posix.sys.un;
+ import core.sys.posix.sys.wait;
+ import core.sys.posix.unistd;
++version (OSX) import core.sys.posix.time : timespec;
+ import core.stdc.stdlib : atexit;
+ 
+ import dmd.arraytypes : Modules, Strings;
+@@ -74,11 +75,43 @@ extern (C) private
+ {
+     int flock(int fd, int operation);
+     long syscall(long number, ...);
+-    int clearenv();
++    version (OSX) {} else
++        int clearenv();
+     int putenv(char*);
+     ssize_t readlink(const(char)* path, char* buf, size_t len);
+     extern __gshared char** environ;
+ }
++
++version (OSX)
++{
++    extern (C) private int _NSGetExecutablePath(char* buf, uint* bufsize) nothrow @nogc;
++    extern (C) private int clock_gettime(int clock, timespec* ts) nothrow @nogc;   // macOS 10.12+
++    private enum CLOCK_MONOTONIC = 6;
++    extern (C) private int unsetenv(const(char)* name) nothrow @nogc;
++
++    /// glibc's clearenv(): remove every environment variable.
++    private int clearenv()
++    {
++        char[4096] name;
++        while (environ && *environ)
++        {
++            const(char)* e = *environ;
++            const eq = strchr(e, '=');
++            size_t n = eq ? eq - e : strlen(e);
++            if (n >= name.length)
++                n = name.length - 1;
++            memcpy(name.ptr, e, n);
++            name[n] = 0;
++            if (unsetenv(name.ptr) != 0 || (environ && *environ == e))
++            {
++                __gshared char*[1] empty;
++                environ = empty.ptr;    // cannot unset it: drop the whole environment
++                break;
++            }
++        }
++        return 0;
++    }
++}
+ private enum LOCK_EX = 2, LOCK_NB = 4;
+ private enum SYS_pidfd_open = 434;
+ private enum uint magic = 0x464C4E54; // "FLNT"
+@@ -144,11 +177,30 @@ private bool fileExists(const(char)* path)
+ private const(char)* selfExe()
+ {
+     __gshared char[4096] buf;
+-    const n = readlink("/proc/self/exe", buf.ptr, buf.length - 1);
+-    if (n <= 0)
+-        return null;
+-    buf[n] = 0;
+-    return buf.ptr;
++    version (OSX)
++    {
++        uint size = cast(uint) buf.length;
++        if (_NSGetExecutablePath(buf.ptr, &size) != 0)
++            return null;
++        return buf.ptr;
++    }
++    else
++    {
++        const n = readlink("/proc/self/exe", buf.ptr, buf.length - 1);
++        if (n <= 0)
++            return null;
++        buf[n] = 0;
++        return buf.ptr;
++    }
++}
++
++/// The modification time field of `stat_t`, whose name differs on Darwin.
++private ref auto mtimeOf(ref stat_t st)
++{
++    version (OSX)
++        return st.st_mtimespec;
++    else
++        return st.st_mtim;
+ }
+ 
+ private const(char)* socketDirectory()
+@@ -159,7 +211,7 @@ private const(char)* socketDirectory()
+         snprintf(dir.ptr, dir.length, "%s/flint-dmd", runtime);
+     else
+         snprintf(dir.ptr, dir.length, "/tmp/flint-dmd-%u", cast(uint) getuid());
+-    mkdir(dir.ptr, octal700);
++    mkdir(dir.ptr, cast(mode_t) octal700);
+     return dir.ptr;
+ }
+ private enum octal700 = 448;
+@@ -246,12 +298,12 @@ bool tryCompileServer(const(char)[][] dargs, out int status)
+     ulong h = 0xcbf29ce484222325UL;
+     h = fnv(h, exe, strlen(exe));
+     h = fnv(h, &est.st_ino, est.st_ino.sizeof);
+-    h = fnv(h, &est.st_mtim, est.st_mtim.sizeof);
++    h = fnv(h, &mtimeOf(est), mtimeOf(est).sizeof);
+     h = fnv(h, &est.st_size, est.st_size.sizeof);
+     if (haveConf)
+     {
+         h = fnv(h, &cst.st_ino, cst.st_ino.sizeof);
+-        h = fnv(h, &cst.st_mtim, cst.st_mtim.sizeof);
++        h = fnv(h, &mtimeOf(cst), mtimeOf(cst).sizeof);
+         h = fnv(h, &cst.st_size, cst.st_size.sizeof);
+     }
+     Strings keyArgs;
+@@ -399,7 +451,10 @@ private __gshared int traceFd = -2;
+ /// Append a timestamped event for this worker when FLINT_DMD_SERVER_TRACE names a file.
+ private void traceMark(const(char)* what)
+ {
+-    import core.sys.posix.time : clock_gettime, timespec, CLOCK_MONOTONIC;
++    version (OSX)
++        import core.sys.posix.time : timespec;
++    else
++        import core.sys.posix.time : clock_gettime, timespec, CLOCK_MONOTONIC;
+     if (traceFd == -2)
+     {
+         const path = getenv("FLINT_DMD_SERVER_TRACE");
