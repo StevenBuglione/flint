@@ -128,6 +128,13 @@ class ForkSourcesTests(unittest.TestCase):
                 shutil.copytree(dmd_src, temp / 'dmd')
                 subprocess.run(['patch', '-p1', '--dry-run', '--quiet', '-d', str(temp / 'dmd'),
                                 '-i', str(TOOLCHAIN / 'dmd-2.114.0-flint.patch')], check=True)
+                # Each host's overlay applies on top of the shared patch (f3419a15 changed the shared patch's
+                # compile server imports, and Windows' overlay stopped applying).
+                subprocess.run(['patch', '-p1', '--quiet', '-d', str(temp / 'dmd'),
+                                '-i', str(TOOLCHAIN / 'dmd-2.114.0-flint.patch')], check=True)
+                for overlay in ('dmd-2.114.0-flint-windows.patch', 'dmd-2.114.0-flint-darwin.patch'):
+                    subprocess.run(['patch', '-p1', '--dry-run', '--quiet', '-d', str(temp / 'dmd'),
+                                    '-i', str(TOOLCHAIN / overlay)], check=True)
                 checked += 1
             if dub_archive.is_file():
                 with tarfile.open(dub_archive) as archive:
