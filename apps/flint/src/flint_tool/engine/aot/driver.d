@@ -236,7 +236,7 @@ AotOutcome runAot(const ref AotRequest request)
     string[] stale = staleModules(sources, keys, state, cache);
     if (stale.length && !extractInto(request, sources, stale, null, keys, state, outcome))
         return finish(outcome, started);
-    if (stale.length && !extractImports(request, cache, sources, keys, state, outcome))
+    if (stale.length && !extractImports(request, cache, sources, stale, keys, state, outcome))
         return finish(outcome, started);
     outcome.ok = produceOutput(request, sources, autoConfigurations, services, keys, stale.length > 0, state, outcome);
     if (!outcome.ok)
@@ -534,19 +534,52 @@ private string[] addModules(scope const string[] names, scope const string[] imp
 /// Extract the modules whose classes an `@Import` names (directly or through meta-annotations such as
 /// `@EnableMethodSecurity`), transitively, since imported configurations may import further ones.
 private bool extractImports(const ref AotRequest request, string cache, ref SourceModule[] sources,
-        ref string[string] keys, ref State state, ref AotOutcome outcome)
+        scope const string[] extracted, ref string[string] keys, ref State state, ref AotOutcome outcome)
 {
+    string[] done = extracted.dup;
     foreach (round; 0 .. 8)
     {
         const added = addModules(importTargets(cache, sources, state), request.importPaths, sources, state);
         if (added.length == 0)
             return true;
         state.importedModules ~= added;
+        const previous = keys.dup;
         keys = extractionKeys(sources, request.environmentKey);
+        rekey(request, sources, done, previous, keys, state);
         if (!extractInto(request, sources, added, null, keys, state, outcome))
             return false;
+        done ~= added;
     }
     return true;
+}
+
+/// The modules this run extracted (or took from the shared cache) before an `@Import` added modules to the sources
+/// keep their models: those came from the same sources, and only the set of tracked interfaces grew, which the
+/// environment key already covers for platform modules. Store them under their new keys, in the state and in the
+/// shared cache, as the next build computes them with the imported modules present from the start. Otherwise every
+/// build after a cold one re-extracted each module whose imports reach an imported one (petclinic-rest's security
+/// configuration and Boot's servlet security auto-configuration, 90 ms of its edit build).
+private void rekey(const ref AotRequest request, scope const SourceModule[] sources,
+        scope const string[] done, const string[string] previous, const string[string] keys, ref State state)
+{
+    import std.algorithm.searching : canFind;
+    import std.file : exists, readText;
+
+    foreach (ref source; sources)
+    {
+        const before = previous.get(source.name, null);
+        const after = keys.get(source.name, null);
+        if (before == after || after.length == 0 || !done.canFind(source.name)
+                || state.keys.get(source.name, null) != before)
+            continue;
+        state.keys[source.name] = after;
+        if (request.sharedCache.length == 0)
+            continue;
+        const root = source.user ? projectCacheOf(request) : request.sharedCache;
+        const from = sharedEntry(root, before);
+        if (exists(from))
+            writeAtomically(sharedEntry(root, after), readText(from));
+    }
 }
 
 /// Modules declaring the classes that the cached models' `@Import`s name.

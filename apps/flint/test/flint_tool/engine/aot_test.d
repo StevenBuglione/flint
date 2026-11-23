@@ -869,6 +869,40 @@ private size_t countOccurrences(string text, string needle)
     return text.count(needle);
 }
 
+@("a build after a cold one extracts nothing when an @Import pulled in a module from outside src/")
+unittest
+{
+    import std.file : mkdirRecurse, rename;
+    import std.path : buildPath, dirName;
+    import flint_tool.engine.aot.driver : AotRequest, runAot;
+
+    // shared_.things leaves src/ for a library directory on the import path: imp.configs imports it, and its
+    // configurations are only reachable through @Import, so the first build adds it to the sources mid-run.
+    const project = copyFixture("imports");
+    scope (exit)
+        remove(project);
+    const library = buildPath(dirName(project), "library");
+    mkdirRecurse(library);
+    rename(buildPath(project, "src", "shared_"), buildPath(library, "shared_"));
+    AotRequest request;
+    request.root = project;
+    request.compiler = compiler();
+    request.importPaths = [
+        "-I" ~ buildPath(repositoryRoot(), "tests", "aot", "annotations"), "-I" ~ runtimeSource(),
+        "-I" ~ library
+    ];
+    request.flags = ["-preview=dip1000"];
+    request.environmentKey = "test";
+    auto cold = runAot(request);
+    expect(cold.extractionErrors).toEqual("");
+    expect(cold.ok).toBeTrue();
+    expect(cold.extracted > 0).toBeTrue();
+    auto next = runAot(request);
+    expect(next.ok).toBeTrue();
+    expect(next.extracted).toEqual(0);
+    expect(next.written).toEqual(0);
+}
+
 @("every generator diagnostic names its declaration")
 unittest
 {
