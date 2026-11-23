@@ -47,11 +47,18 @@ class ComplexityAllowlistTests(unittest.TestCase):
         if not allowed and not (ROOT / 'framework').is_dir():
             self.skipTest('every listed tree left this checkout at the cutover')
         self.assertTrue(allowed)
+        matrix = json.loads((ROOT / 'policy/upstream-licences.json').read_text(encoding='utf-8'))['projects']
+        registered = {project['name'] for project in matrix}
         for (file, function), entry in allowed.items():
             source = (ROOT / file).read_text(encoding='utf-8')
             self.assertIn(function + '(', source, file)
-            self.assertIn('Ported from', source[:2000], f'{file} is not a ported module')
-            self.assertTrue(entry['upstream']['file'].endswith('.java'), entry)
+            # Ported from a registered upstream: the header names that project and carries the modification notice.
+            upstream = entry['upstream']
+            self.assertIn(upstream['project'], registered, entry)
+            header = source[:source.find('module ')] if 'module ' in source else source[:2000]
+            self.assertIn(upstream['project'], header, f'{file}: the header does not name {upstream["project"]}')
+            self.assertIn('Modified by the Flint authors', header, f'{file} is not a ported module')
+            self.assertTrue(upstream['file'] and upstream['method'], entry)
 
     def test_an_entry_without_a_citation_is_refused(self):
         import shutil
