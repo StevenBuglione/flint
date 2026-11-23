@@ -18,6 +18,8 @@ and process-tree peak RSS sampled every millisecond), nine trials of:
   - `flint_static_cold_seconds` and `flint_static_incremental_seconds`: the same build linked fully static
     (`measure.cached_static`), the secondary edit-build headline;
   - `flint_scratch_seconds`: the same build with every module compiled from source and no platform cache;
+  - `flint_cached_cold_digests_cleared_seconds`: the cached cold build with flint's digest log cleared too, published
+    as context beside the primary (decisions.md, 2026-11-23 17:00Z);
   - `phase_medians_ms` per series: the median wall time of each build phase (total, flint, aot, plan, compile,
     link; -1 means absent) from flint's build receipt (phases_ms, d2a929cd), beside the coordinator's budget (`phase_budget_ms`);
   - `O3` and `Oz` binary sizes after GNU strip (flint's artifacts keep their symbol tables), as for Go.
@@ -136,7 +138,8 @@ def measure_flint(name, trials, timed, logs, temporary, result):
     # Owner decision 2 (decisions.md, 2026-11-23): edit builds report the dev profile as built (shared-object linking
     # of the platform cache) as the primary headline, and the same build linked fully static as the secondary. A
     # port declares the static command as measure.cached_static.
-    flavours = ['cached', 'scratch'] + (['cached_static'] if spec.get('cached_static') else [])
+    flavours = ['cached', 'cached_cleared', 'scratch'] + (['cached_static'] if spec.get('cached_static') else [])
+    row['flint_cached_cold_digests_cleared_seconds'] = []
     if 'cached_static' in flavours:
         row.update(flint_static_cold_seconds=[], flint_static_incremental_seconds=[])
     # A flint cache of this measurement's own (the platform archives and the digest log), primed by the first build.
@@ -145,34 +148,52 @@ def measure_flint(name, trials, timed, logs, temporary, result):
     edit = directory / spec['edit_source']
     original = edit.read_bytes()
 
-    def clean():
+    pruned = [0]
+    port_prefixes = tuple({str(directory) + os.sep, str(directory.resolve()) + os.sep})
+
+    def clean(digests='project'):
+        """A cold project: no .flint. flint's digest log (stat-keyed sha256 of the toolchain executables, flint and
+        the platform sources) lives in the cache and is platform and toolchain state, like Go's std-primed GOCACHE,
+        so cached cold trials keep it; any entry under the port is pruned, because an in-place port keeps its files'
+        stat data between trials, which Go's fresh source copies do not. Scratch trials and the context series clear
+        it (decisions.md, 2026-11-23 17:00Z)."""
         shutil.rmtree(directory / '.flint', ignore_errors=True)
-        # Cold means a cold digest log too: its entries are keyed by stat data, and an in-place port keeps its
-        # files' stat data between trials, which Go's fresh source copies do not (decisions.md, 2026-11-23).
-        (cache / 'digests.log').unlink(missing_ok=True)
+        digest_log = cache / 'digests.log'
+        if digests == 'all':
+            digest_log.unlink(missing_ok=True)
+        elif digest_log.is_file():
+            lines = digest_log.read_text().splitlines(keepends=True)
+            kept = [line for line in lines if not line.startswith(port_prefixes)]
+            if len(kept) != len(lines):
+                pruned[0] += len(lines) - len(kept)
+                digest_log.write_text(''.join(kept))
 
     phases = {}
     try:
         # The platform cache (ADR-030 section 5) lives outside the port, so clearing the port's .flint keeps it. One
         # unscored build primes it, as measure_builds primes the DMD compile server, and its time is recorded.
-        clean()
+        clean('all')
         log = logs / f'{name}-flint-prime.log'
         observed = timed(spec['cached'], directory, env, log)
         row['flint_first_build_seconds'] = observed['seconds']
         row['dev_linker'] = dev_linker(env)
-        row['flint_cache'] = {'platform_cache_primed': True, 'digest_log_cleared_before_cold_trials': True}
+        row['flint_cache'] = {'platform_cache_primed': True,
+                              'digest_log': 'kept across cached cold trials (platform and toolchain state), entries '
+                                            'under the port pruned before every trial; cleared before scratch trials '
+                                            'and the digests-cleared context series'}
         for trial in range(trials):
             for flavour in flavours:
-                clean()
-                states = ['cold'] if flavour == 'scratch' else ['cold', 'incremental']
+                clean('all' if flavour in ('scratch', 'cached_cleared') else 'project')
+                states = ['cold'] if flavour in ('scratch', 'cached_cleared') else ['cold', 'incremental']
                 for state in states:
                     if state == 'incremental':
                         with edit.open('a', encoding='utf-8') as output:
                             output.write(f'\nenum flintMeasureEdit{trial} = {trial};\n')
                     log = logs / f'{name}-flint-{flavour}-{state}-{trial}.log'
                     began = time.time() - 1
-                    observed = timed(spec[flavour], directory, env, log)
+                    observed = timed(spec['cached' if flavour == 'cached_cleared' else flavour], directory, env, log)
                     key = {'scratch': 'flint_scratch_seconds', 'cached': f'flint_cached_{state}_seconds',
+                           'cached_cleared': 'flint_cached_cold_digests_cleared_seconds',
                            'cached_static': f'flint_static_{state}_seconds'}[flavour]
                     row[key].append(observed['seconds'])
                     phases.setdefault(key, []).append(build_phases(directory, began))
@@ -193,6 +214,7 @@ def measure_flint(name, trials, timed, logs, temporary, result):
             row[profile] = dict(stripped(binary, temporary), sha256=spring_bench.sha256(binary))
     finally:
         edit.write_bytes(original)
+    row['flint_cache']['port_entries_pruned'] = pruned[0]
     # Per-phase medians (flint, AOT, plan, compile, link) per series, beside the build-time budget.
     row['phase_medians_ms'] = {key: phase_medians(trials) for key, trials in phases.items() if any(trials)}
     row['phase_budget_ms'] = PHASE_BUDGET_MS
@@ -304,6 +326,8 @@ def verdicts(name, flint, go, ceiling):
         'incremental: dev profile as built': ('flint_cached_incremental_seconds', 'go_std_incremental_seconds', True),
         'incremental: fully static': ('flint_static_incremental_seconds', 'go_std_incremental_seconds', True),
         'stricter: platform cache vs deps-primed GOCACHE': ('flint_cached_cold_seconds', 'go_deps_cold_seconds', False),
+        'context: primary with the digest log cleared': ('flint_cached_cold_digests_cleared_seconds',
+                                                         'go_std_cold_seconds', False),
     }
     out = {}
     for label, (mine, theirs, gating) in pairs.items():

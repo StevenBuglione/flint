@@ -64,6 +64,7 @@ WORK = ROOT / '.flint' / 'measure'
 LOCK = WORK / 'MEASURING'
 # A natural-quiet run's marker. `hold` does not honour it: nobody pauses for a long run, which stops instead.
 NATURAL = WORK / 'MEASURING-NATURAL'
+LAST_CLAIM = WORK / 'last-claim'  # when the last claimed run ended (Unix time), for the gap between claims
 CLAIM_MAX_MINUTES = 30  # the longest entry that may claim a window (coordination.md "Measurement")
 BUSY_COMMANDS = {'dmd', 'ldc2', 'ldmd2', 'cargo', 'cmake', 'rustc', 'cc1', 'cc1plus', 'native-image', 'ninja',
                  'dub', 'mvn', 'gradle'}
@@ -903,7 +904,14 @@ def main(argv=None):
         # A run that is interrupted is recorded as not evidence and stays pending.
         deadline = time.monotonic() + args.hours * 3600
         streak = 0
+        # The gap survives a restart of the watcher: the end of the last claimed run is kept in LAST_CLAIM.
         last_claim = {'ended': None}
+        with contextlib.suppress(OSError, ValueError):
+            last_claim['ended'] = time.monotonic() - (time.time() - float(LAST_CLAIM.read_text()))
+
+        def claim_ended():
+            last_claim['ended'] = time.monotonic()
+            LAST_CLAIM.write_text(f'{time.time()}\n')
 
         def run_round(round_entries, claim):
             for entry in round_entries:
@@ -926,11 +934,11 @@ def main(argv=None):
                     print(now(), entry['id'], receipt['outcome'], 'evidence' if receipt['evidence'] else 'not evidence',
                           flush=True)
                     if claim:
-                        last_claim['ended'] = time.monotonic()
+                        claim_ended()
                 except SystemExit as exc:
                     print(now(), entry['id'], 'stopped:', exc, flush=True)
                     if claim:
-                        last_claim['ended'] = time.monotonic()
+                        claim_ended()
                     # Back off after any stopped run: a window that did not settle (someone is not behind `hold`),
                     # a natural run that gave way, or an entry that measured nothing. Retrying at once would keep
                     # pausing or crowding everyone else's work.
