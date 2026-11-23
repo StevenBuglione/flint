@@ -432,6 +432,24 @@ final class WebMvcProperties
     }
 }
 
+/// Flint AOT's descriptors of this module's properties types and their container property types, compiled
+/// once with the platform instead of in each application's generated module (aot-contract.md section 3).
+imported!"flint.engine.aot.descriptor".Descriptor[] flintAotDescriptors()
+{
+    import flint.engine.aot.descriptor : descriptorOf;
+
+    return [
+        descriptorOf!(WebMvcProperties)(), descriptorOf!(WebMvcProperties.MatchingStrategy)(),
+        descriptorOf!(WebMvcProperties.Async)(), descriptorOf!(WebMvcProperties.Servlet)(),
+        descriptorOf!(WebMvcProperties.View)(), descriptorOf!(WebMvcProperties.Contentnegotiation)(),
+        descriptorOf!(WebMvcProperties.Pathmatch)(), descriptorOf!(WebMvcProperties.Format)(),
+        descriptorOf!(WebMvcProperties.Problemdetails)(),
+        descriptorOf!(typeof(WebMvcProperties.Async.requestTimeout))(),
+        descriptorOf!(typeof(WebMvcProperties.Contentnegotiation.mediaTypes))(),
+        descriptorOf!(typeof(WebMvcProperties.Contentnegotiation.defaultContentTypes))(),
+    ];
+}
+
 // ---- end: generated region
 
 /// The `DispatcherServlet`'s registration with the embedded web server, at `flint.mvc.servlet.path`.

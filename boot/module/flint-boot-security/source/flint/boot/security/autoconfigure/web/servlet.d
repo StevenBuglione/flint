@@ -77,6 +77,19 @@ final class SecurityFilterProperties
     }
 }
 
+/// Flint AOT's descriptors of this module's properties types and their container property types, compiled
+/// once with the platform instead of in each application's generated module (aot-contract.md section 3).
+imported!"flint.engine.aot.descriptor".Descriptor[] flintAotDescriptors()
+{
+    import flint.engine.aot.descriptor : descriptorOf;
+
+    return [
+        descriptorOf!(SecurityFilterProperties)(),
+        descriptorOf!(typeof(SecurityFilterProperties.dispatcherTypes))(),
+        descriptorOf!(typeof(SecurityFilterProperties.dispatcherTypes.init[0]))(),
+    ];
+}
+
 // ---- end: generated region
 
 /// The conditions of Boot's default `SecurityFilterChain`: Spring Security's web support is present and the

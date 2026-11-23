@@ -185,7 +185,7 @@ Deviations:
 ## Configuration properties: one spec, three outputs
 
 `boot/tools/configuration_properties.py` holds the specification of every Phase 1 `@ConfigurationProperties` class: Boot's field names, types, defaults and Javadoc. It renders three things from it:
-- the D classes;
+- the D classes, and each module's `flintAotDescriptors()`;
 - Boot's configuration metadata per module (`META-INF/flint/flint-configuration-metadata.json`, the format of Boot's `spring-configuration-metadata.json`);
 - `boot/configuration-metadata/application.schema.json`, a JSON Schema for `application.yaml`.
 
@@ -195,6 +195,8 @@ python3 boot/tools/configuration_properties.py --check   # CI: fail when an outp
 ```
 
 The schema covers the module properties and the keys Boot core reads, such as `flint.main.*`, `flint.profiles.*`, `flint.config.*` and `logging.level.*`. It accepts every `flint.*` key under `spring.*` too. Enum values are offered in kebab case and as constants, because Boot binds them leniently. Editors that use yaml-language-server pick it up from a first line of `# yaml-language-server: $schema=<path or URL>/application.schema.json`, or from a `yaml.schemas` setting that maps `application*.yaml` to it.
+
+`flintAotDescriptors()` exports the module's descriptors to Flint AOT (aot-contract.md section 3, flint-aot's `5aafcf4`, owner decision `2670d5b`). It covers the properties classes, their nested classes and enums, the container types of their fields, and those containers' enum elements. The generated module then registers what the export returns, instead of instantiating `descriptorOf!T`, the accessors and the container descriptors in every application's build. The descriptors compile once, with the platform. petclinic-rest's generated `flint_aot.flint.boot.jackson.autoconfigure` went from 427 lines to 145, with no descriptor instances left.
 
 ## gs-rest-service: the port
 

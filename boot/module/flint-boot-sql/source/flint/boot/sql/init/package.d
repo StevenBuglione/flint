@@ -29,6 +29,15 @@ enum DatabaseInitializationMode
     NEVER
 }
 
+/// Flint AOT's descriptors of this module's properties types and their container property types, compiled
+/// once with the platform instead of in each application's generated module (aot-contract.md section 3).
+imported!"flint.engine.aot.descriptor".Descriptor[] flintAotDescriptors()
+{
+    import flint.engine.aot.descriptor : descriptorOf;
+
+    return [descriptorOf!(DatabaseInitializationMode)(),];
+}
+
 // ---- end: generated region
 
 /// The settings of a script-based database initializer: script locations, error handling, separator, encoding and

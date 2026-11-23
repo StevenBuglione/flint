@@ -105,6 +105,18 @@ final class SecurityProperties
     }
 }
 
+/// Flint AOT's descriptors of this module's properties types and their container property types, compiled
+/// once with the platform instead of in each application's generated module (aot-contract.md section 3).
+imported!"flint.engine.aot.descriptor".Descriptor[] flintAotDescriptors()
+{
+    import flint.engine.aot.descriptor : descriptorOf;
+
+    return [
+        descriptorOf!(SecurityProperties)(), descriptorOf!(SecurityProperties.User)(),
+        descriptorOf!(typeof(SecurityProperties.User.roles))(),
+    ];
+}
+
 // ---- end: generated region
 
 /// Auto-configuration of Spring Security's defaults: binds `flint.security.*`.

@@ -115,6 +115,20 @@ final class WebEndpointProperties
     }
 }
 
+/// Flint AOT's descriptors of this module's properties types and their container property types, compiled
+/// once with the platform instead of in each application's generated module (aot-contract.md section 3).
+imported!"flint.engine.aot.descriptor".Descriptor[] flintAotDescriptors()
+{
+    import flint.engine.aot.descriptor : descriptorOf;
+
+    return [
+        descriptorOf!(WebEndpointProperties)(), descriptorOf!(WebEndpointProperties.Exposure)(),
+        descriptorOf!(WebEndpointProperties.Discovery)(),
+        descriptorOf!(typeof(WebEndpointProperties.pathMapping))(),
+        descriptorOf!(typeof(WebEndpointProperties.Exposure.include))(),
+    ];
+}
+
 // ---- end: generated region
 
 /// Filters endpoints by id: `include` (or the defaults when it is empty) less `exclude`, `*` matching every id (Boot's

@@ -127,6 +127,74 @@ def render_class(c, indent=0, static=False):
     return '\n'.join(out)
 
 
+def is_container(dtype):
+    """Whether a property of `dtype` needs a container descriptor (a map, an optional or an array)."""
+    return dtype.startswith(('Map!', 'Optional!')) or dtype.endswith('[]')
+
+
+BUILTIN_ELEMENTS = {'bool', 'int', 'long', 'string', 'Duration'}
+
+
+def element_type(dtype):
+    """The element type of an optional or array property type; None for maps (their keys and values are scalars)."""
+    if dtype.startswith('Optional!('):
+        return dtype[len('Optional!('):-1]
+    if dtype.startswith('Optional!'):
+        return dtype[len('Optional!'):]
+    if dtype.endswith('[]'):
+        return dtype[:-2]
+    return None
+
+
+def exported_types(items):
+    """The D type expressions a unit's exporter describes: every class, nested class and enum it declares, then
+    the container type of every field, as `typeof(Class.field)` so nested names resolve at module level."""
+    types, containers = [], []
+
+    def walk_class(c, path):
+        types.append(path)
+        for e in c.enums:
+            types.append(f'{path}.{e.name}')
+        for f in c.fields:
+            if is_container(f.dtype):
+                member = f'{path}.{field(f.name)}'
+                containers.append((f.dtype, f'typeof({member})'))
+                # The element type, when the binder needs its descriptor too (an enum, not a scalar or string).
+                element = element_type(f.dtype)
+                if element is not None and element not in BUILTIN_ELEMENTS:
+                    access = '.init.get()' if f.dtype.startswith('Optional!') else '.init[0]'
+                    containers.append((element, f'typeof({member}{access})'))
+        for n in c.nested:
+            walk_class(n, f'{path}.{n.name}')
+
+    for item in items:
+        if isinstance(item, Enum):
+            types.append(item.name)
+        else:
+            walk_class(item, item.name)
+    seen, unique = set(), []
+    for dtype, expression in containers:
+        if dtype not in seen:
+            seen.add(dtype)
+            unique.append(expression)
+    return types + unique
+
+
+def render_exporter(items):
+    """The module's `flintAotDescriptors`: Flint AOT calls it instead of generating these descriptors, so their
+    template instances compile once with the platform (aot-contract.md section 3; owner's template diet)."""
+    entries = [f'        descriptorOf!({t})(),' for t in exported_types(items)]
+    return '\n'.join([
+        '/// Flint AOT\'s descriptors of this module\'s properties types and their container property types, compiled',
+        '/// once with the platform instead of in each application\'s generated module (aot-contract.md section 3).',
+        'imported!"flint.engine.aot.descriptor".Descriptor[] flintAotDescriptors()',
+        '{',
+        '    import flint.engine.aot.descriptor : descriptorOf;',
+        '',
+        '    return [',
+    ] + entries + ['    ];', '}'])
+
+
 def impure(c):
     """Whether `c`'s constructor runs run-time code (a `ctor` default, here or in a nested class it creates)."""
     nested = {n.name: n for n in c.nested}
@@ -369,6 +437,7 @@ class Unit:
         """The module text. When `existing` carries the generated-region markers, only that region is replaced, so
         hand-written code (an auto-configuration beside its properties) and its imports survive regeneration."""
         rendered = [render_enum(i, 0) if isinstance(i, Enum) else render_class(i) for i in self.items]
+        rendered.append(render_exporter(self.items))
         region = BEGIN + '\n\n' + '\n\n'.join(rendered) + '\n\n' + END
         if existing is not None and BEGIN in existing and END in existing:
             head, rest = existing.split(BEGIN, 1)

@@ -338,6 +338,21 @@ final class JdbcProperties
     }
 }
 
+/// Flint AOT's descriptors of this module's properties types and their container property types, compiled
+/// once with the platform instead of in each application's generated module (aot-contract.md section 3).
+imported!"flint.engine.aot.descriptor".Descriptor[] flintAotDescriptors()
+{
+    import flint.engine.aot.descriptor : descriptorOf;
+
+    return [
+        descriptorOf!(EmbeddedDatabaseConnection)(), descriptorOf!(DataSourceProperties)(),
+        descriptorOf!(DataSourceProperties.Xa)(), descriptorOf!(JdbcProperties)(),
+        descriptorOf!(JdbcProperties.Template)(),
+        descriptorOf!(typeof(DataSourceProperties.Xa.properties))(),
+        descriptorOf!(typeof(JdbcProperties.Template.queryTimeout))(),
+    ];
+}
+
 // ---- end: generated region
 
 /// The JDBC URL of an embedded database named `databaseName`, or `null` for `NONE` and the JVM-only engines.

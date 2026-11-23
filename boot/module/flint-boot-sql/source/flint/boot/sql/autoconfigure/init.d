@@ -139,6 +139,18 @@ final class SqlInitializationProperties
     }
 }
 
+/// Flint AOT's descriptors of this module's properties types and their container property types, compiled
+/// once with the platform instead of in each application's generated module (aot-contract.md section 3).
+imported!"flint.engine.aot.descriptor".Descriptor[] flintAotDescriptors()
+{
+    import flint.engine.aot.descriptor : descriptorOf;
+
+    return [
+        descriptorOf!(SqlInitializationProperties)(),
+        descriptorOf!(typeof(SqlInitializationProperties.schemaLocations))(),
+    ];
+}
+
 // ---- end: generated region
 
 /// The application's script-based database initializer, configured from `flint.sql.init.*`.

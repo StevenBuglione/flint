@@ -295,6 +295,24 @@ final class JacksonProperties
     }
 }
 
+/// Flint AOT's descriptors of this module's properties types and their container property types, compiled
+/// once with the platform instead of in each application's generated module (aot-contract.md section 3).
+imported!"flint.engine.aot.descriptor".Descriptor[] flintAotDescriptors()
+{
+    import flint.engine.aot.descriptor : descriptorOf;
+
+    return [
+        descriptorOf!(JacksonProperties)(),
+        descriptorOf!(JacksonProperties.ConstructorDetectorStrategy)(),
+        descriptorOf!(JacksonProperties.Datatype)(), descriptorOf!(JacksonProperties.Json)(),
+        descriptorOf!(typeof(JacksonProperties.visibility))(),
+        descriptorOf!(typeof(JacksonProperties.serialization))(),
+        descriptorOf!(typeof(JacksonProperties.defaultPropertyInclusion))(),
+        descriptorOf!(typeof(JacksonProperties.defaultPropertyInclusion.init.get()))(),
+        descriptorOf!(typeof(JacksonProperties.defaultLeniency))(),
+    ];
+}
+
 // ---- end: generated region
 
 /// Callback interface that can be implemented by beans wishing to further customize the `JsonMapper` through

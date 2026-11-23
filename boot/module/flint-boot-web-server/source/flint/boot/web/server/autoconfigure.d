@@ -203,6 +203,19 @@ final class ServerProperties
     }
 }
 
+/// Flint AOT's descriptors of this module's properties types and their container property types, compiled
+/// once with the platform instead of in each application's generated module (aot-contract.md section 3).
+imported!"flint.engine.aot.descriptor".Descriptor[] flintAotDescriptors()
+{
+    import flint.engine.aot.descriptor : descriptorOf;
+
+    return [
+        descriptorOf!(ServerProperties)(), descriptorOf!(ServerProperties.Flint)(),
+        descriptorOf!(ServerProperties.Servlet)(), descriptorOf!(typeof(ServerProperties.port))(),
+        descriptorOf!(typeof(ServerProperties.Servlet.contextParameters))(),
+    ];
+}
+
 // ---- end: generated region
 
 /// Applies `server.*` to the servlet web server factory: the port, the address, the context path and the shutdown (Boot's
