@@ -308,17 +308,21 @@ struct Home
             if (moduleName == item.module_ || startsWithModule(moduleName, item.module_))
                 return &item;
         }
+        // The longest root wins among framework modules: webmvc's flint.web.servlet under web's flint.web.
+        const(CorePackage)* best;
+        size_t length;
         foreach (ref item; frameworkModules)
         {
-            if (moduleName == item.module_ || startsWithModule(moduleName, item.module_))
-                return &item;
-            foreach (root; item.also)
+            foreach (root; [item.module_] ~ item.also)
             {
-                if (moduleName == root || startsWithModule(moduleName, root))
-                    return &item;
+                if ((moduleName == root || startsWithModule(moduleName, root)) && root.length > length)
+                {
+                    best = &item;
+                    length = root.length;
+                }
             }
         }
-        return null;
+        return best;
     }
 
     /// The Spring-layer module named `name` (`java`, `context`), or null.

@@ -158,10 +158,13 @@ def framework_layers():
     modules=json.loads(path.read_text(encoding='utf-8'))['modules']
     root_sdl=(ROOT/'dub.sdl').read_text(encoding='utf-8')
     def layer_owner(module):
-        # A module may own further package roots ("also"): spring-tx is both flint.dao and flint.transaction.
+        # A module may own further package roots ("also"): spring-tx is both flint.dao and flint.transaction. The
+        # longest root wins, so webmvc owns flint.web.servlet under web's flint.web whatever framework.json's order.
+        best,length=None,-1
         for name,meta in modules.items():
-            if any(module==root or module.startswith(root+'.') for root in [meta['module']]+meta.get('also',[])):return name
-        return None
+            for root in [meta['module']]+meta.get('also',[]):
+                if (module==root or module.startswith(root+'.')) and len(root)>length:best,length=name,len(root)
+        return best
     for name,meta in modules.items():
         # After the cutover a module of another repo is checked there, or through --workspace here.
         if not WORKSPACE.file and not in_home(meta.get('repo','framework')):continue

@@ -240,6 +240,12 @@ def checks(flint, target):
                              str(workspace), '--output', str(flint / '.flint' / 'cutover' / example.name)],
                       flint, env, results)
     check('python suite', [PYTHON, '-m', 'unittest', 'discover', '-s', 'tests', '-p', 'test_*.py'], flint, env, results)
+    # Each extracted repo's own suites, run by the flint repo's tooling (coordinator's decision 3).
+    for repo, entry in sorted(checkouts.items()):
+        suites = workspace.parent / entry['path'] / 'tests'
+        if repo != 'flint' and suites.is_dir():
+            check(f'{repo} suites', [PYTHON, '-m', 'unittest', 'discover', '-s', str(suites), '-p', 'test_*.py'],
+                  flint, dict(env, FLINT_ROOT=str(flint)), results)
     return results
 
 

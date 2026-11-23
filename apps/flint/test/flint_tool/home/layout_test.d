@@ -72,4 +72,12 @@ unittest
     expect(home.owner("flint.dao").name).toEqual("tx");
     expect(home.owner("flint.daos") is null).toEqual(true);
     expect(home.owner("flint.arena").name).toEqual("arena");
+    CorePackage web, webmvc;
+    web.name = "web";
+    web.module_ = "flint.web";
+    webmvc.name = "webmvc";
+    webmvc.module_ = "flint.web.servlet";
+    home.frameworkModules ~= [web, webmvc];
+    expect(home.owner("flint.web.servlet.mvc").name).toEqual("webmvc");
+    expect(home.owner("flint.web.bind").name).toEqual("web");
 }
