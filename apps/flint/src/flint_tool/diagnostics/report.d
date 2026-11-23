@@ -50,10 +50,24 @@ Diagnostic diagnostic(string code, Severity severity, string message, string fix
     return result;
 }
 
+/// A diagnostic's file with `/` on every host, so the JSON report (a public schema) reads the same on Windows, as
+/// receipts and recipes do.
+string portablePath(string file) pure
+{
+    version (Windows)
+    {
+        import std.array : replace;
+
+        return file.replace("\\", "/");
+    }
+    else
+        return file;
+}
+
 /// Attach a file location, filling the snippet from `source` when given.
 Diagnostic at(Diagnostic value, string file, long line, long column = 0, string source = null)
 {
-    value.file = file;
+    value.file = portablePath(file);
     value.line = line;
     value.column = column;
     if (source !is null && line > 0)
@@ -116,6 +130,7 @@ struct Report
     /// Add one diagnostic.
     void add(Diagnostic value)
     {
+        value.file = portablePath(value.file);
         items ~= value;
     }
 

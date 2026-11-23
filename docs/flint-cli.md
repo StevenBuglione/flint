@@ -143,7 +143,7 @@ With `--json`, a command prints exactly one JSON document on stdout. Every docum
 | `schema` | string | Command schema and version, such as `flint.build/1`. |
 | `ok` | bool | No errors. |
 | `exit_code` | int | The process exit code. |
-| `diagnostics` | array | Diagnostics, each with `code`, `severity` (`error`, `warning`, `note`), `title`, `message`, `file`, `line`, `column`, `snippet` and `fix`. |
+| `diagnostics` | array | Diagnostics, each with `code`, `severity` (`error`, `warning`, `note`), `title`, `message`, `file`, `line`, `column`, `snippet` and `fix`. `file` uses `/` on every host, Windows included. |
 
 Command fields:
 
