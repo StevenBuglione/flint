@@ -472,11 +472,17 @@ def spring_main(a, raw, m):
                     result["context_errors"].append(f"{app} [{target}] did not build: {str(exc)[:500]}")
                     available.remove(target);continue
                 impl="java" if target=="java-jvm" else target
-                record=spring.accept(app,impl,spring.WIRE_DEFAULT[impl])
+                try:
+                    record=spring.accept(app,impl,spring.WIRE_DEFAULT[impl])
+                except (RuntimeError,OSError) as exc:
+                    if target not in context:raise
+                    result["context_errors"].append(f"{app} [{target}] did not run: {str(exc)[:500]}")
+                    available.remove(target);continue
                 result["acceptance"].append(record)
                 if not record["success"]:
                     require(target in context,f"{app} [{target}] fails its black-box suite; it is not measured")
                     result["context_errors"].append(f"{app} [{target}] fails its suite")
+                    available.remove(target)
             series={t:{k:[] for k in FIELDS} for t in measured+available}
             with spring.postgres_cluster(workload["database_cpus"]) if spring.app_row(app).get("database")=="postgres" \
                     else contextlib.nullcontext() as database:

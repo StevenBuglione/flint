@@ -31,8 +31,8 @@
         "status": 200,
         "content_type": "application/json",
         "body_regex": "\\{\"firstName\":\"George\",\"lastName\":\"Franklin\",\"address\":\"110 W\\. Liberty St\\.\",\"city\":\"Madison\",\"telephone\":\"6085551023\",\"pets\":\\[\\{\"name\":\"Leo\",\"birthDate\":\"2000-09-07\",\"type\":\\{\"name\":\"cat\",\"id\":1\\},\"id\":1,\"visits\":\\[\\],\"ownerId\":1\\}\\],\"id\":1\\}\\n?",
-        "min_body_bytes": 227,
-        "max_body_bytes": 228
+        "min_body_bytes": 233,
+        "max_body_bytes": 234
       }
     }
   },
