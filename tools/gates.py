@@ -7,6 +7,7 @@ from perf_stats import finite_samples,median_ratio_interval
 from workspace import Workspace,edge_violations,package_repos
 import module_budgets
 import framework_budgets
+import request_allocation_ratchet
 import template_budget_ratchet
 ROOT=Path(__file__).resolve().parents[1]
 P=json.loads((ROOT/'policy/packages.json').read_text(encoding='utf-8'))['packages']
@@ -306,6 +307,10 @@ def structural(selected):
     skipped=template_budget_ratchet.not_applicable(ROOT,B)
     if skipped:print(skipped,file=sys.stderr)
     ratchet=template_budget_ratchet.check(ROOT,B);require(not ratchet,'; '.join(ratchet))
+    # Owner decision 9a9aefa0: per-request allocation budgets only go down (tools/request_allocation_ratchet.py).
+    skipped=request_allocation_ratchet.not_applicable(ROOT)
+    if skipped:print(skipped,file=sys.stderr)
+    raised=request_allocation_ratchet.check(ROOT);require(not raised,'; '.join(raised))
     framework=framework_layers()
     layer_registration()
     mixin_packages=set()
