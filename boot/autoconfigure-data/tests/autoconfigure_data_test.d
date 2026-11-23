@@ -7,6 +7,15 @@ import flint.boot_autoconfigure_data : Context, DataSourceAutoConfiguration, Dat
 
 @safe:
 
+// Engine-level programs compose their SQL drivers (performance playbook S-1); these tests use both.
+shared static this()
+{
+    import flint.engine.sql : Driver, enable;
+
+    cast(void) enable(Driver.sqlite);
+    cast(void) enable(Driver.postgres);
+}
+
 @("migration file names give the version and the description")
 unittest
 {

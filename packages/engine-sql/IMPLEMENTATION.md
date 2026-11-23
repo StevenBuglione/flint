@@ -6,6 +6,17 @@ Acquire takes exclusive possession of one slot until release. The queue grants
 leases oldest first, and a release invalidates copies of its handle.
 The process-wide directory holds up to 64 open pools.
 
+A pool opens only for an enabled driver. `enablePostgres()` and `enableSqlite()`
+install the driver's entry points in the native core's table
+(`flint_sql_enable_postgres`, `flint_sql_enable_sqlite`). They are the only
+references to a driver's code, so a program links libpq and OpenSSL only if it
+enables PostgreSQL, and SQLite only if it enables SQLite (performance playbook
+S-1). Opening a pool for a driver that is not enabled fails with
+`Status.unsupported` and a message naming the enabler. `enable(Driver)` refers to
+both and is for programs that choose the driver at run time. Applications declare
+the driver: `flint:postgresql` or `flint:sqlite-jdbc`, which Boot's DataSource
+auto-configuration enables.
+
 Use execute or query for one statement at a time. Supply all data through
 SqlValue parameters. Text and bytes refer to handles in the given request
 arena. The native boundary copies them before submitting the operation.

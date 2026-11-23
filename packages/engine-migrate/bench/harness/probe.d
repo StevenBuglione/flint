@@ -5,7 +5,7 @@ import core.stdc.stdio : printf;
 import core.time : MonoTime;
 import flint.arena : Status;
 import flint.conc : Context;
-import flint.engine.sql : Driver, Pool, PoolOptions;
+import flint.engine.sql : Driver, enable, Pool, PoolOptions;
 import std.digest.sha : sha256Of;
 
 @safe:
@@ -146,6 +146,7 @@ void benchmark(string[] args, Replay replay)
     auto entries = load();
     Context context;
     Pool pool;
+    require(enable(settings.driver) == Status.ok);
     require(pool.open(settings).code == Status.ok);
     scope (exit)
         require(pool.close(context).code == Status.ok);

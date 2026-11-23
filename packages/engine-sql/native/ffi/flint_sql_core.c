@@ -17,7 +17,7 @@
 #include <string.h>
 
 enum { MAX_POOLS = 64, MAX_CONNECTIONS = 16, MAX_WAITERS = 256, MAX_PREPARED = 128 };
-enum { DRIVER_POSTGRES, DRIVER_SQLITE };
+enum { DRIVER_POSTGRES = FLINT_SQL_DRIVER_POSTGRES, DRIVER_SQLITE = FLINT_SQL_DRIVER_SQLITE };
 
 typedef struct {
     void *native;
@@ -73,17 +73,29 @@ static connection_slot *connection_at(uint64_t slot, pool_slot **owner)
     return &pool->connections[(slot - 1) % MAX_CONNECTIONS];
 }
 
-static int backend_available(int driver)
+/* Written once per driver under the gate and never cleared; read with acquire ordering. */
+static _Atomic(const flint_sql_driver *) drivers[FLINT_SQL_DRIVER_COUNT];
+
+static const flint_sql_driver *driver_at(int driver)
 {
-#ifdef FLINT_HAS_SQLITE
-    if (driver == DRIVER_SQLITE)
-        return flint_sqlite_available();
-#endif
-#ifdef FLINT_HAS_LIBPQ
-    if (driver == DRIVER_POSTGRES)
-        return flint_pg_available();
-#endif
-    return 0;
+    if (driver < 0 || driver >= FLINT_SQL_DRIVER_COUNT)
+        return NULL;
+    return atomic_load_explicit(&drivers[driver], memory_order_acquire);
+}
+
+int flint_sql_register_driver(int index, const flint_sql_driver *driver)
+{
+    if (index < 0 || index >= FLINT_SQL_DRIVER_COUNT || !driver)
+        return FLINT_SQL_INVALID;
+    pthread_mutex_lock(&gate);
+    atomic_store_explicit(&drivers[index], driver, memory_order_release);
+    pthread_mutex_unlock(&gate);
+    return FLINT_SQL_OK;
+}
+
+int flint_sql_driver_enabled(int driver)
+{
+    return driver_at(driver) != NULL;
 }
 
 int flint_sql_pool_open(int driver, const char *address, size_t length, unsigned capacity,
@@ -93,7 +105,7 @@ int flint_sql_pool_open(int driver, const char *address, size_t length, unsigned
         !address || !length || length > INT_MAX || memchr(address, 0, length) ||
         (driver != DRIVER_SQLITE && driver != DRIVER_POSTGRES))
         return FLINT_SQL_INVALID;
-    if (!backend_available(driver))
+    if (!driver_at(driver))
         return FLINT_SQL_UNSUPPORTED;
     size_t bytes = driver == DRIVER_SQLITE && length == 8 && !memcmp(address, ":memory:", 8)
                    ? 80 : length + 1;
@@ -205,16 +217,9 @@ void flint_sql_retired(flint_sql_retirement receipt)
 
 static void close_native(int driver, void *native, flint_sql_retirement receipt)
 {
-    if (!native)
-        return;
-#ifdef FLINT_HAS_SQLITE
-    if (driver == DRIVER_SQLITE)
-        flint_sqlite_retire(native, receipt);
-#endif
-#ifdef FLINT_HAS_LIBPQ
-    if (driver == DRIVER_POSTGRES)
-        flint_pg_retire(native, receipt);
-#endif
+    const flint_sql_driver *entry = driver_at(driver);
+    if (native && entry)
+        entry->retire(native, receipt);
 }
 
 int flint_sql_pool_close(uint64_t slot, uint64_t identity)
@@ -449,17 +454,9 @@ void flint_sql_operation_free(flint_sql_operation *operation)
 
 static void *open_native(const pool_slot *pool)
 {
-#ifdef FLINT_HAS_SQLITE
-    if (pool->driver == DRIVER_SQLITE)
-        return flint_sqlite_worker(pool->address, pool->prepared);
-#endif
-#ifdef FLINT_HAS_LIBPQ
-    if (pool->driver == DRIVER_POSTGRES) {
-        const flint_sql_backend_options options = {pool->address, pool->prepared};
-        return flint_pg_open(&options);
-    }
-#endif
-    return NULL;
+    const flint_sql_driver *entry = driver_at(pool->driver);
+    const flint_sql_backend_options options = {pool->address, pool->prepared};
+    return entry ? entry->open(&options) : NULL;
 }
 
 int flint_sql_operation_start(flint_sql_operation *operation, uint64_t slot, uint64_t identity)
@@ -486,20 +483,19 @@ int flint_sql_operation_start(flint_sql_operation *operation, uint64_t slot, uin
         connection->native = open_native(owner);
     operation->connection = connection->native;
     operation->driver = owner->driver;
+    const flint_sql_driver *entry = driver_at(operation->driver);
     if (!operation->connection) {
         operation->reusable = 0;
         operation->status = FLINT_SQL_UNAVAILABLE;
     }
-#ifdef FLINT_HAS_SQLITE
-    else if (operation->driver == DRIVER_SQLITE) {
-        const int status = flint_sqlite_begin(operation->connection, operation);
+    else if (entry->begin) {
+        const int status = entry->begin(operation->connection, operation);
         if (status != FLINT_SQL_OK) {
             operation->status = status;
             operation->reusable = 0;
         } else
             operation->started = 1;
     }
-#endif
     else
         operation->started = 1;
     return FLINT_SQL_OK;
@@ -511,24 +507,16 @@ int flint_sql_operation_drive(flint_sql_operation *operation, int *fd, unsigned 
     *interest = 0;
     if (!operation->started && operation->status != FLINT_SQL_OK)
         return FLINT_SQL_COMPLETE;
-#ifdef FLINT_HAS_SQLITE
-    if (operation->driver == DRIVER_SQLITE)
-        return flint_sqlite_drive(operation->connection, operation, fd, interest);
-#endif
-#ifdef FLINT_HAS_LIBPQ
-    if (operation->driver == DRIVER_POSTGRES)
-        return flint_pg_drive(operation->connection, operation, fd, interest);
-#endif
-    return FLINT_SQL_COMPLETE;
+    const flint_sql_driver *entry = driver_at(operation->driver);
+    return entry ? entry->drive(operation->connection, operation, fd, interest) : FLINT_SQL_COMPLETE;
 }
 
 void flint_sql_operation_cancel(flint_sql_operation *operation)
 {
     atomic_store(&operation->cancelled, 1);
-#ifdef FLINT_HAS_SQLITE
-    if (operation->driver == DRIVER_SQLITE && operation->connection)
-        flint_sqlite_interrupt(operation->connection);
-#endif
+    const flint_sql_driver *entry = driver_at(operation->driver);
+    if (entry && entry->interrupt && operation->connection)
+        entry->interrupt(operation->connection);
 }
 
 void flint_sql_operation_abort(flint_sql_operation *operation)
@@ -552,31 +540,21 @@ void flint_sql_operation_abort(flint_sql_operation *operation)
     }
     pthread_mutex_unlock(&gate);
 
-#ifdef FLINT_HAS_SQLITE
-    if (operation->driver == DRIVER_SQLITE && native) {
-        flint_sqlite_abandon(native, operation, receipt);
+    const flint_sql_driver *entry = driver_at(operation->driver);
+    if (entry && entry->abandon && native) {
+        entry->abandon(native, operation, receipt);
         return;
     }
-#endif
-#ifdef FLINT_HAS_LIBPQ
-    if (operation->driver == DRIVER_POSTGRES)
-        flint_pg_discard(operation);
-#endif
+    if (entry && entry->discard)
+        entry->discard(operation);
     close_native(operation->driver, native, receipt);
     flint_sql_operation_free(operation);
 }
 
 static uint32_t row_columns(const flint_sql_operation *operation)
 {
-#ifdef FLINT_HAS_SQLITE
-    if (operation->driver == DRIVER_SQLITE)
-        return flint_sqlite_columns(operation);
-#endif
-#ifdef FLINT_HAS_LIBPQ
-    if (operation->driver == DRIVER_POSTGRES)
-        return flint_pg_columns(operation);
-#endif
-    return 0;
+    const flint_sql_driver *entry = driver_at(operation->driver);
+    return entry ? entry->columns(operation) : 0;
 }
 
 uint64_t flint_sql_operation_publish_row(flint_sql_operation *operation)
@@ -603,14 +581,9 @@ void flint_sql_operation_next(flint_sql_operation *operation)
     if (connection && connection->active == operation)
         connection->row = 0;
     pthread_mutex_unlock(&gate);
-#ifdef FLINT_HAS_SQLITE
-    if (operation->driver == DRIVER_SQLITE)
-        flint_sqlite_next(operation->connection, operation);
-#endif
-#ifdef FLINT_HAS_LIBPQ
-    if (operation->driver == DRIVER_POSTGRES)
-        flint_pg_next(operation);
-#endif
+    const flint_sql_driver *entry = driver_at(operation->driver);
+    if (entry)
+        entry->next(operation->connection, operation);
 }
 
 int flint_sql_operation_finish(flint_sql_operation *operation, uint64_t *affected)
@@ -680,15 +653,8 @@ static int read_cell(uint64_t slot, uint64_t row, uint32_t index, flint_sql_cell
         return FLINT_SQL_NOT_FOUND;
     if (index >= connection->columns)
         return FLINT_SQL_INVALID;
-#ifdef FLINT_HAS_SQLITE
-    if (owner->driver == DRIVER_SQLITE)
-        return flint_sqlite_cell(connection->active, index, cell, data);
-#endif
-#ifdef FLINT_HAS_LIBPQ
-    if (owner->driver == DRIVER_POSTGRES)
-        return flint_pg_cell(connection->active, index, cell, data);
-#endif
-    return FLINT_SQL_UNSUPPORTED;
+    const flint_sql_driver *entry = driver_at(owner->driver);
+    return entry ? entry->cell(connection->active, index, cell, data) : FLINT_SQL_UNSUPPORTED;
 }
 
 uint32_t flint_sql_row_columns(uint64_t slot, uint64_t generation)
@@ -736,14 +702,9 @@ int flint_sql_row_name(uint64_t slot, uint64_t row, uint32_t index, char *output
     int status = FLINT_SQL_NOT_FOUND;
     if (connection && row && row == connection->row && connection->active) {
         status = index < connection->columns ? FLINT_SQL_OK : FLINT_SQL_INVALID;
-#ifdef FLINT_HAS_SQLITE
-        if (status == FLINT_SQL_OK && owner->driver == DRIVER_SQLITE)
-            name = flint_sqlite_name(connection->active, index);
-#endif
-#ifdef FLINT_HAS_LIBPQ
-        if (status == FLINT_SQL_OK && owner->driver == DRIVER_POSTGRES)
-            name = flint_pg_name(connection->active, index);
-#endif
+        const flint_sql_driver *entry = driver_at(owner->driver);
+        if (status == FLINT_SQL_OK && entry)
+            name = entry->name(connection->active, index);
         if (status == FLINT_SQL_OK && !name)
             status = FLINT_SQL_NOMEM;
     }

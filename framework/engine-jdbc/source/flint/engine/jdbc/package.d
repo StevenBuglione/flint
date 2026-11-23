@@ -22,8 +22,8 @@ import flint.arena : ArenaError = Error, Buffer, RequestArena, Result, Status;
 import flint.conc : CancelSource, Context, Deadline;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.objects : objectToString;
-import flint.engine.sql : Driver, EngineConnection = Connection, Pool, PoolOptions, Row,
-    SqlFailure, SqlValue, ValueKind;
+import flint.engine.sql : Driver, EngineConnection = Connection, enabled, enablePostgresEngine = enablePostgres,
+    enableSqliteEngine = enableSqlite, Pool, PoolOptions, Row, SqlFailure, SqlValue, ValueKind;
 import flint.java.sql;
 import flint.java.util : Properties;
 import flint.javax.sql : DataSource;
@@ -62,6 +62,62 @@ JdbcTarget parseUrl(string url, string[string] info)
     if (startsWith(url, postgres))
         return JdbcTarget(Driver.postgres, postgresConninfo(url[postgres.length .. $], info));
     throw new SQLException("No suitable driver found for " ~ url, "08001");
+}
+
+/++
+Enable the engine's PostgreSQL driver (libpq) for `jdbc:postgresql:` URLs. A program links libpq and OpenSSL only
+if something calls this: `flint:postgresql`'s `Driver`, or Boot's DataSource auto-configuration when the
+application declares that dependency (performance playbook S-1). Idempotent; throws `SQLException` (08001) when
+this build has no libpq.
++/
+void enablePostgres()
+{
+    if (enablePostgresEngine() != Status.ok)
+        throw new SQLException("The PostgreSQL driver is not available in this build", "08001");
+}
+
+/// Enable the engine's SQLite driver for `jdbc:sqlite:` URLs; see `enablePostgres`.
+void enableSqlite()
+{
+    if (enableSqliteEngine() != Status.ok)
+        throw new SQLException("The SQLite driver is not available in this build", "08001");
+}
+
+/++
+Whether the engine driver that `url` needs is enabled in this process (`flint.engine.sql.enablePostgres` or
+`enableSqlite`, which an application's composition calls: performance playbook S-1). False for a URL no Flint
+driver accepts. Boot's DataSource auto-configuration checks it at startup, so a missing driver fails there and not
+at the first query.
++/
+bool driverEnabled(string url)
+{
+    enum sqlite = "jdbc:sqlite:";
+    enum postgres = "jdbc:postgresql:";
+    if (startsWith(url, sqlite))
+        return enabled(Driver.sqlite);
+    if (startsWith(url, postgres))
+        return enabled(Driver.postgres);
+    return false;
+}
+
+/// The driver class for `url` and the dependency that declares it (Boot's `DatabaseDriver.fromJdbcUrl`, with
+/// Flint's names), for diagnostics. Both are null for a URL no Flint driver accepts.
+struct DriverDependency
+{
+    /// PgJDBC's `org.postgresql.Driver` or sqlite-jdbc's `org.sqlite.JDBC`, as `flint.*` classes.
+    string driverClassName;
+    /// The DUB package an application declares for it.
+    string dependency;
+}
+
+/// ditto
+DriverDependency driverDependency(string url)
+{
+    if (startsWith(url, "jdbc:sqlite:"))
+        return DriverDependency("flint.sqlite.JDBC", "flint:sqlite-jdbc");
+    if (startsWith(url, "jdbc:postgresql:"))
+        return DriverDependency("flint.postgresql.Driver", "flint:postgresql");
+    return DriverDependency.init;
 }
 
 private string postgresConninfo(string rest, string[string] info)
@@ -2023,6 +2079,12 @@ final class FlintDatabaseMetaData : DatabaseMetaData
 /// Open an engine pool for `target`, or throw `SQLException`.
 private Pool openPool(JdbcTarget target, uint size, long acquireTimeoutNanos)
 {
+    if (!enabled(target.driver))
+        throw new SQLException(target.driver == Driver.postgres
+                ? "No suitable driver: the PostgreSQL driver is not enabled (declare the flint:postgresql dependency, "
+                ~ "or call flint.engine.jdbc.enablePostgres() at startup)"
+                : "No suitable driver: the SQLite driver is not enabled (declare the flint:sqlite-jdbc dependency, "
+                ~ "or call flint.engine.jdbc.enableSqlite() at startup)", "08001");
     PoolOptions options;
     options.driver = target.driver;
     options.connectionString = target.connectionString;

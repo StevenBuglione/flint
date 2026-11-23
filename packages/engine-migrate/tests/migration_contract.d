@@ -11,6 +11,15 @@ import std.uuid : randomUUID;
 
 @safe:
 
+// Engine-level programs compose their SQL drivers (performance playbook S-1); these tests use both.
+shared static this()
+{
+    import flint.engine.sql : Driver, enable;
+
+    cast(void) enable(Driver.sqlite);
+    cast(void) enable(Driver.postgres);
+}
+
 private Migration program(ulong number, string text, bool transactional = true)
 {
     return Migration(number, "fixture", text, sha256Of(cast(const(ubyte)[]) text), transactional);

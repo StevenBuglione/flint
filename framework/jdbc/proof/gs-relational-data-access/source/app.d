@@ -110,6 +110,13 @@ else
         logging.cleanUp();
 
     const url = environment.get("FLINT_DATASOURCE_URL", "jdbc:sqlite::memory:");
+    // The URL picks the driver at run time, so this proof enables the one it names (performance playbook S-1).
+    import flint.engine.jdbc : enablePostgres, enableSqlite;
+
+    if (url.length >= 16 && url[0 .. 16] == "jdbc:postgresql:")
+        enablePostgres();
+    else
+        enableSqlite();
     auto dataSource = new FlintDataSource(url);
     dataSource.setUsername(environment.get("FLINT_DATASOURCE_USERNAME", null));
     dataSource.setPassword(environment.get("FLINT_DATASOURCE_PASSWORD", null));

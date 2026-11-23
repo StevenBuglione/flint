@@ -55,7 +55,7 @@ final class DataSource
     @PostConstruct
     Error open()
     {
-        import flint.engine.sql : Driver, PoolOptions;
+        import flint.engine.sql : Driver, enable, PoolOptions;
 
         PoolOptions options;
         if (properties.driver == "sqlite")
@@ -64,6 +64,8 @@ final class DataSource
             return Error(Status.invalidArgument, "database.driver must be sqlite or postgres");
         options.connectionString = properties.url;
         options.maxConnections = properties.maxConnections;
+        // The driver is chosen by configuration at run time, so this legacy configuration links both.
+        cast(void) enable(options.driver);
         const started = store.open(options);
         if (started.code != Status.ok)
             return started;

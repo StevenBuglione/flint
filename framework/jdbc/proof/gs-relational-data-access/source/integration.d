@@ -17,6 +17,23 @@ import flint.orm : ObjectRetrievalFailureException;
 
 @safe:
 
+// These cases use both drivers (performance playbook S-1: a program enables the drivers it uses).
+shared static this()
+{
+    import flint.engine.jdbc : enablePostgres, enableSqlite;
+    import flint.java.sql : SQLException;
+
+    try
+    {
+        enableSqlite();
+        enablePostgres();
+    }
+    catch (SQLException ex)
+    {
+        // A build without one of the native libraries: its cases fail with "No suitable driver".
+    }
+}
+
 /// An owner, as petclinic's `Owner` bean.
 class Owner
 {

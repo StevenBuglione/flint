@@ -8,6 +8,15 @@ import std.process : environment;
 
 @safe:
 
+// Engine-level programs compose their SQL drivers (performance playbook S-1); these tests use both.
+shared static this()
+{
+    import flint.engine.sql : Driver, enable;
+
+    cast(void) enable(Driver.sqlite);
+    cast(void) enable(Driver.postgres);
+}
+
 @Table("records")
 private struct Entity
 {

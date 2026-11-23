@@ -883,4 +883,54 @@ void flint_pg_next(flint_sql_operation *operation)
         flint_pg_discard(operation);
 }
 
+/* The driver table: the core reaches libpq only through it, and only flint_sql_enable_postgres refers to it. */
+static void *driver_open(const flint_sql_backend_options *options)
+{
+    return flint_pg_open(options);
+}
+
+static int driver_drive(void *connection, flint_sql_operation *operation, int *fd, unsigned *interest)
+{
+    return flint_pg_drive(connection, operation, fd, interest);
+}
+
+static void driver_next(void *connection, flint_sql_operation *operation)
+{
+    (void)connection;
+    flint_pg_next(operation);
+}
+
+static void driver_retire(void *connection, flint_sql_retirement receipt)
+{
+    flint_pg_retire(connection, receipt);
+}
+
+static const flint_sql_driver postgres_driver = {
+    .open = driver_open,
+    .begin = NULL,
+    .drive = driver_drive,
+    .interrupt = NULL,
+    .abandon = NULL,
+    .discard = flint_pg_discard,
+    .columns = flint_pg_columns,
+    .cell = flint_pg_cell,
+    .name = flint_pg_name,
+    .next = driver_next,
+    .retire = driver_retire,
+};
+
+int flint_sql_enable_postgres(void)
+{
+    if (!flint_pg_available())
+        return FLINT_SQL_UNSUPPORTED;
+    return flint_sql_register_driver(FLINT_SQL_DRIVER_POSTGRES, &postgres_driver);
+}
+
+#else
+
+int flint_sql_enable_postgres(void)
+{
+    return FLINT_SQL_UNSUPPORTED;
+}
+
 #endif

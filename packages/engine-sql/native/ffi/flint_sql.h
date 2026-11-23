@@ -54,6 +54,14 @@ typedef struct {
     char message[FLINT_SQL_MESSAGE_CAPACITY];
 } flint_sql_failure;
 
+/* Enable a driver before opening a pool for it. Each is the only reference to its driver's code, so an
+   application links libpq and OpenSSL only when it enables PostgreSQL, and SQLite only when it enables SQLite.
+   FLINT_SQL_OK, or FLINT_SQL_UNSUPPORTED when this build has no such library. Safe to call more than once. */
+int flint_sql_enable_postgres(void);
+int flint_sql_enable_sqlite(void);
+/* 1 when the driver (0 PostgreSQL, 1 SQLite) is enabled, else 0. */
+int flint_sql_driver_enabled(int driver);
+
 int flint_sql_pool_open(int driver, const char *address, size_t length, unsigned capacity,
                         unsigned waiters, unsigned prepared, uint64_t *slot, uint64_t *identity);
 int flint_sql_pool_acquire(uint64_t slot, uint64_t identity, uint64_t *ticket,
