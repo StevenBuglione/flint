@@ -150,7 +150,7 @@ def framework_layers():
         epl=meta['licence']=='EPL-2.0'
         require(epl==(base/'LICENSE').is_file(),name+': an EPL-2.0 module carries its own LICENSE, and only it')
         for f in sorted((base/'source').rglob('*.d')):
-            text=f.read_text(encoding='utf-8');ts=list(tokens(text));where=str(f.relative_to(ROOT))
+            text=f.read_text(encoding='utf-8');ts=list(tokens(text));where=str(f.relative_to(ROOT) if f.is_relative_to(ROOT) else f)
             module=declared_module(ts)
             parts=list(f.relative_to(base/'source').with_suffix('').parts)
             if parts[-1]=='package':parts.pop()
