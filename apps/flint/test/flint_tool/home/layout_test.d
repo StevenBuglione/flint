@@ -49,3 +49,24 @@ unittest
     expect(home.packagePath("framework", "packages/engine-web")).toEqual(buildPath(root, "framework", "engine", "web"));
     expect(home.packagePath("boot", "boot/boot")).toEqual(buildPath(root, "boot", "boot", "boot"));
 }
+
+@("a Spring-layer module of policy/framework.json owns its module roots and resolves by name")
+unittest
+{
+    import flint_tool.home.policy : CorePackage;
+
+    auto home = fixtureHome();
+    CorePackage tx;
+    tx.name = "tx";
+    tx.module_ = "flint.dao";
+    tx.also = ["flint.transaction"];
+    tx.directory = "framework/tx";
+    tx.repo = "framework";
+    tx.framework = true;
+    home.frameworkModules ~= tx;
+    expect(home.findFramework("tx") !is null).toEqual(true);
+    expect(home.owner("flint.transaction.annotation").name).toEqual("tx");
+    expect(home.owner("flint.dao").name).toEqual("tx");
+    expect(home.owner("flint.daos") is null).toEqual(true);
+    expect(home.owner("flint.arena").name).toEqual("arena");
+}

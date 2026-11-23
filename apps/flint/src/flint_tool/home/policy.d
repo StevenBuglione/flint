@@ -29,6 +29,10 @@ struct CorePackage
     bool starter;
     /// A Flint Boot library (policy/boot.json): the runner, an auto-configuration or the actuator (ADR-029).
     bool boot;
+    /// A Spring-layer module of policy/framework.json (framework/<artifact>).
+    bool framework;
+    /// Further module roots it owns (`also`: spring-tx is both flint.dao and flint.transaction).
+    string[] also;
     /// For a starter: the configuration section it reads, and the one-line summary `flint add` shows.
     string section;
     /// For a starter: what it wires.
@@ -160,6 +164,8 @@ struct Home
     CorePackage[] packages;
     /// Flint Boot libraries from policy/boot.json, in policy order (ADR-029 section 8).
     CorePackage[] bootLibraries;
+    /// The Spring-layer modules of policy/framework.json, which resolve like Boot libraries (ADR-030).
+    CorePackage[] frameworkModules;
     /// Starters from policy/boot.json, in policy order (ADR-029 section 8).
     CorePackage[] starters;
     /// The repos of the split (policy/repos.json), and the edges pending a decision.
@@ -289,6 +295,27 @@ struct Home
         foreach (ref item; bootLibraries)
         {
             if (moduleName == item.module_ || startsWithModule(moduleName, item.module_))
+                return &item;
+        }
+        foreach (ref item; frameworkModules)
+        {
+            if (moduleName == item.module_ || startsWithModule(moduleName, item.module_))
+                return &item;
+            foreach (root; item.also)
+            {
+                if (moduleName == root || startsWithModule(moduleName, root))
+                    return &item;
+            }
+        }
+        return null;
+    }
+
+    /// The Spring-layer module named `name` (`java`, `context`), or null.
+    const(CorePackage)* findFramework(string name) const
+    {
+        foreach (ref item; frameworkModules)
+        {
+            if (item.name == name)
                 return &item;
         }
         return null;
@@ -421,6 +448,7 @@ bool loadHome(string root, out Home home, ref Report report)
     home.root = root;
     bool ok = loadPackages(home, report);
     ok = loadStarters(home, report) && ok;
+    ok = loadFramework(home, report) && ok;
     ok = loadRepos(home, report) && ok;
     ok = loadPlatformModules(home, report) && ok;
     ok = loadApps(home, report) && ok;
@@ -518,6 +546,50 @@ private bool loadStarters(ref Home home, ref Report report)
         }
     }
     return failure.length == 0 || invalid(report, "policy/boot.json", failure);
+}
+
+// policy/framework.json: the Spring-layer modules under framework/<artifact> (ADR-030). An application resolves them
+// like Boot libraries, from the framework repo's platform module after the cutover.
+private bool loadFramework(ref Home home, ref Report report)
+{
+    import std.file : exists;
+    import std.path : buildPath;
+
+    if (!exists(buildPath(home.root, "policy", "framework.json")))
+        return true;
+    const text = policyText(home, "policy/framework.json", report);
+    string failure;
+    const members = member(objectMembers(text, failure), "modules");
+    if (failure.length || members is null)
+        return invalid(report, "policy/framework.json", failure.length ? failure : "has no modules object");
+    foreach (entry; objectMembers(members, failure))
+    {
+        auto decoded = deserialize!FrameworkRecordJson(entry.value, lenient());
+        if (!decoded.ok)
+            return invalid(report, "policy/framework.json", entry.name ~ ": " ~ decoded.error.message);
+        CorePackage item;
+        item.name = entry.name;
+        item.module_ = decoded.value.module_;
+        item.also = decoded.value.also;
+        item.dependencies = decoded.value.dependencies;
+        item.directory = decoded.value.directory;
+        item.repo = decoded.value.repo.length ? decoded.value.repo : "framework";
+        item.framework = true;
+        item.tier = 5;
+        home.frameworkModules ~= item;
+    }
+    return failure.length == 0 || invalid(report, "policy/framework.json", failure);
+}
+
+private struct FrameworkRecordJson
+{
+    import flint.serde : JsonName;
+
+    @JsonName("module") string module_;
+    string[] also;
+    string directory;
+    string[] dependencies;
+    string repo;
 }
 
 private struct BootRecordJson

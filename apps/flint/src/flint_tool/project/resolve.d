@@ -263,6 +263,8 @@ private void addExtensions(const ref Home home, ref ResolvedPackage[string] foun
             auto extension = home.findStarter(dependency[6 .. $]);
             if (extension is null)
                 extension = home.findBoot(dependency[6 .. $]);
+            if (extension is null)
+                extension = home.findFramework(dependency[6 .. $]);
             if (extension is null || dependency in found)
                 continue;
             found[dependency] = starterPackage(home, *extension, workspace);
@@ -474,6 +476,8 @@ private string resolveCore(const ref Home home, const ref Manifest owner, const 
     auto extension = home.findStarter(coreName);
     if (extension is null)
         extension = home.findBoot(coreName);
+    if (extension is null)
+        extension = home.findFramework(coreName);
     if (extension !is null)
     {
         if (spec.name !in found)

@@ -26,8 +26,10 @@ It is reversible:
   else wrote;
 - the cut is one commit on the `cutover` branch of a scratch clone, so nothing touches flint main.
 
-With `--push` it force-pushes the four repos, then fetches them from GitHub and checks. It leaves the `cutover`
-commit for the coordinator to push to flint main, or to throw away.
+With `--push` it first refuses unless the preconditions hold: policy/unregistered-packages.json is empty and
+framework/p1-interim is gone. A rehearsal reports them in report.json instead. It then force-pushes the extracted
+repos, fetches them from GitHub and checks. It leaves the `cutover` commit for the coordinator to push to flint
+main, or to throw away.
 """
 import argparse
 import json
@@ -48,6 +50,27 @@ PYTHON = sys.executable
 
 def run(command, cwd=None, env=None, check=True):
     return subprocess.run(command, cwd=cwd, env=env, check=check, capture_output=not check, text=True)
+
+
+def preconditions(flint):
+    """What must hold before the real cutover (coordinator's decision 6): every DUB package under framework/ and
+    boot/ is registered (policy/unregistered-packages.json empty) and the Phase 1 interim module is gone."""
+    problems = []
+    allowlist = flint / 'policy' / 'unregistered-packages.json'
+    if allowlist.is_file():
+        document = json.loads(allowlist.read_text())
+        entries = document.get('paths', []) if isinstance(document, dict) else document
+        if entries:
+            problems.append(f'policy/unregistered-packages.json still lists {len(entries)} packages')
+    if (flint / 'framework' / 'p1-interim').exists():
+        problems.append('framework/p1-interim still exists')
+    return problems
+
+
+def push_mirrors(summary, remote, policy):
+    for repo in summary['repos']:
+        checkout = Path(summary['workspace']).parent / f'flint-{repo}'
+        run(['git', 'push', '--quiet', '--force', remote.format(github=policy[repo]['github']), 'main:main'], checkout)
 
 
 def cut(flint, extracted, github):
@@ -110,7 +133,8 @@ def checks(flint, target):
     projects = run(['git', 'ls-files', '*flint.toml'], flint, check=False).stdout.split()
     for manifest in sorted(projects):
         project = (flint / manifest).parent
-        if project == flint:
+        # tests/ holds fixtures the suites compile themselves (tests/aot/*), not buildable applications.
+        if project == flint or manifest.startswith('tests/'):
             continue
         check(f'flint build {project.relative_to(flint)}', [flint_bin, 'build'], project, env, results)
     for recipe in sorted(flint.glob('examples/*/dub.sdl')):
@@ -132,10 +156,16 @@ def main():
     parser.add_argument('--skip-checks', action='store_true', help='stop after the fetch')
     arguments = parser.parse_args()
     into = arguments.into.resolve()
-    summary = refresh(arguments.source, arguments.commit or 'origin/main', into / 'extract', arguments.push,
-                      arguments.remote)
+    # Extract and gate without pushing; the mirrors are pushed only once the preconditions hold.
+    summary = refresh(arguments.source, arguments.commit or 'origin/main', into / 'extract', False, arguments.remote)
     extracted = summary['repos']
     source_flint = into / 'extract' / 'flint'
+    blocked = preconditions(source_flint)
+    if arguments.push:
+        if blocked:
+            raise SystemExit('refusing the cutover: ' + '; '.join(blocked))
+        push_mirrors(summary, arguments.remote, repo_policy(source_flint)['repos'])
+        summary['pushed'] = sorted(extracted)
     flint = into / 'flint'
     run(['git', 'clone', '--quiet', '--no-local', str(source_flint), str(flint)])
     run(['git', 'checkout', '--quiet', '--detach', summary['source_commit']], flint)
@@ -150,11 +180,13 @@ def main():
     run([PYTHON, 'tools/platform_modules.py', '--fetch', '--native', arguments.target, '--url', url], flint)
     results = [] if arguments.skip_checks else checks(flint, arguments.target)
     report = {'source_commit': summary['source_commit'], 'extracted': extracted, 'pushed': summary['pushed'],
+              'preconditions': blocked,
               'cutover_commit': run(['git', 'rev-parse', 'HEAD'], flint, check=False).stdout.strip(),
               'removed': removed, 'passed': sum(r['ok'] for r in results),
               'failed': [r['check'] for r in results if not r['ok']], 'results': results}
     (into / 'report.json').write_text(json.dumps(report, indent=2) + '\n')
-    print(json.dumps({k: report[k] for k in ('source_commit', 'extracted', 'cutover_commit', 'passed', 'failed')},
+    print(json.dumps({k: report[k] for k in ('source_commit', 'extracted', 'cutover_commit', 'preconditions',
+                                             'passed', 'failed')},
                      indent=2))
     return 0 if not report['failed'] else 1
 
