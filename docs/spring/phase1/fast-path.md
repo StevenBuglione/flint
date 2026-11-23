@@ -278,7 +278,7 @@ Medians: on 319k req/s and p99 0.198 ms; off 229k and 0.390 ms; Go 247k and 0.27
    - `@RequestBody` through Jackson's recycled parser;
    - filters and interceptors whose patterns provably exclude a route, proved at startup.
 
-**petclinic-rest: estimate a small gain only (section 9.1).** Its measured request, `GET /petclinic/api/owners/1` ("owner with pets and visits"), costs **1,655 GC allocations and 91.6 KB** per request (the allocation gate, `policy/request-allocations.json`). The layers a fast path can skip, dispatch plus the security chain and CORS, cost about 70 of them: about 4%. One JDBC lookup that finds no row costs about 1,170. **Estimate: capacity +2–5%, p99 slightly better, RSS unchanged,** and only after five new shapes. petclinic's lever is the data path.
+**petclinic-rest: worth it now (section 9.1).** When the spike measured it, the benchmarked request (`GET /petclinic/api/owners/1`, "owner with pets and visits") cost 1,655 GC allocations, almost all in the data path, so the fast path would have saved about 4%. data-access's cuts have since brought it to **360 allocations and 34 KB** (`policy/request-allocations.json` at `0017b3f3`, the `beanDescriptorOf` memo). The layers a fast path skips (dispatch, the security chain and CORS: a CORS preflight costs 69) are now about 19% of the request. **Estimate after shapes S1–S4: capacity +8–15%, CPU per request −10–15%, p99 better, RSS unchanged.** This scales gs-rest-service's certified 1.39× by the share of the request that is framework rather than database.
 
 ### 9.1 Extending to petclinic-rest: plan, and which endpoints must fall back
 
@@ -298,9 +298,16 @@ From the generated mapping rows: petclinic-rest has 37 mappings, all `ResponseEn
 
 **A rule the later shapes need: materialise with the return value.** `ResponseEntity` can carry headers or bodies the fast writer doesn't produce. The handler has already run by then, so the fast path can't decline. It must materialise the servlet objects and hand the return value to the generic `HandlerMethodReturnValueHandler`, the same escape `completeFastDispatch` gives exceptions today.
 
-**Estimate.** Even with S1–S5, the fast path removes at most the dispatch, security-chain and CORS objects. The allocation gate measures that layer at about 70 allocations: a CORS preflight, which runs the chain and no handler, costs 70. That is against 1,655 for `GET /owners/1`. A zero-row lookup (`unknown owner`) already costs 1,241, so **about 1,170 allocations per request come from one JDBC query** with no row. Gain on petclinic's measured endpoint: **about 4% of allocations, capacity +2–5%**, for five new shapes. S4 is the large one, and it depends on framework-core's Spring Security port.
+**Estimate.** The fast path removes the dispatch, security-chain and CORS objects. The allocation gate measures that layer at about 69 allocations: a CORS preflight, which runs the chain and no handler.
+- **When measured (`f11b7e01`):** that was against 1,655 for `GET /owners/1`, about 4%. One zero-row JDBC lookup cost about 1,170.
+- **At `0017b3f3`:** data-access's cuts brought the request to 360 and the zero-row lookup (`unknown owner`, 148, chain included) to about 80. The skippable layer is now **about 19%**.
 
-**Recommendation for petclinic: data path first.** The lever is the ~1,170 allocations of a single JDBC query (data-access: the engine-jdbc and `JdbcTemplate` path, row mapping, `ResultSet` values). That gets the gate's per-site cuts first. S1–S3 come after gs-rest-service's certified A/B, since they are cheap and serve every REST port. S4 and S5 wait until the data path stops dominating.
+**Plan (owner decision `7206d97d`: extend the shapes so petclinic-rest uses the fast path).**
+- **S1–S3**, path variables, `ResponseEntity` (including materialising with the return value) and `@CrossOrigin` `Vary`, with web-http and framework-core.
+- **S4**, the security chain's static headers for permitted requests, with boot and framework-core (the Spring Security port).
+- **S5**, `@RequestBody` with validation, last.
+
+Each shape lands with its own black-box cases on the default, gate entries, and a petclinic A/B (on against `FLINT_AOT_FAST_PATH=0`).
 
 ## 10. Checklist for a new fast-path shape or a new Spring hook
 

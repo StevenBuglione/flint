@@ -465,7 +465,7 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **Pay-for-use (the coordinator's merge condition).** Two beans Flint AOT generates only when an endpoint qualifies bring in the table (a `WebMvcConfigurer`) and the container's offer (a `WebServerFactoryCustomizer` calling `FlintServletWebServerFactory.setFastOffer`, boot's agreed Flint addition). Stripped gs-rest-service: on is +22,664 B. Off keeps about 1.1 KB of interface residue (type info and cast helpers), +744 B net against main at `e77bc654`.
   - **Reviews.** web-http (after its return-value-handler fix), flint-aot and framework-core approved. boot agreed `setFastOffer`. The A/B is fast-path-ab in proof-harness's queue (9fbbcb07).
   - **Landed default-on** (owner decision `7206d97d`): every build emits it for qualifying endpoints, and `FLINT_AOT_FAST_PATH=0` opts out. Next: petclinic-rest's shapes (fast-path.md §9.1) with web-http, boot and framework-core.
-  - **petclinic-rest.** Estimated +2–5% capacity at most. Its request costs 1,655 allocations, mostly in the data path.
+  - **petclinic-rest.** At the spike's measurement its request cost 1,655 allocations, almost all data path (about +2–5% from the fast path). After data-access's cuts it costs 360 (`0017b3f3`), so the skippable framework layer is about 19%. Estimate after shapes S1–S4: capacity +8–15% (fast-path.md §9.1).
 - 2026-11-23, owner (via the coordinator): **the two top priorities are the per-endpoint fast-path spike and petclinic-rest's cold build.**
   - Together they decide most of the mission risk.
     - The fast path is the main lever for gs-rest-service's throughput, CPU, p99 and RSS against Go.
