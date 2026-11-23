@@ -586,8 +586,9 @@ def main(argv=None):
                            'cross-platform correctness uses its separate matrix')
     manifest = json.loads(args.manifest.read_text())
     packages = json.loads((ROOT / 'policy/packages.json').read_text())['packages']
-    if manifest['schema'] != 1 or set(manifest['packages']) != set(packages):
-        raise RuntimeError('build manifest must specify all 37 packages')
+    # --app-sizes builds only the apps, so it does not need every package's probes.
+    if manifest['schema'] != 1 or (set(manifest['packages']) != set(packages) and not args.app_sizes):
+        raise RuntimeError('build manifest must specify every package of policy/packages.json')
     if manifest['samples'] != 9:
         raise RuntimeError('production build evidence requires exactly 9 samples')
     missing = []
