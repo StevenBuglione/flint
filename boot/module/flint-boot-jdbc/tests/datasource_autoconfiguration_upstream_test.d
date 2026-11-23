@@ -106,54 +106,135 @@ unittest
                 static assert(!is(ReturnType!overload : DataSourceScriptDatabaseInitializer));
 }
 
-// Flint's DataSourceProperties binds `driver-class-name` but nothing reads it: Flint's one driver is chosen by the URL.
-version (FlintDataSourceDriverClassName)
+// FlintDataSource takes no driver class (it finds its driver by URL), so these cases check the class Boot determines
+// and the data source's creation; `DatabaseTestDriver` is registered with the DriverManager for the case that names it,
+// and accepts only `jdbc:foo:` URLs so that it does not hide the other cases' missing drivers.
+
+/// `DatabaseTestDriver`: a driver the test registers (see testExplicitDriverClassClearsUsername).
+final class DatabaseTestDriver : imported!"flint.java.sql".Driver
 {
-    @("DataSourceAutoConfigurationTests.testBadDriverClass")
-    unittest
-    {
-        import flint.beans.factory : BeanCreationException;
-        import std.algorithm.searching : canFind;
+    import flint.java.sql : Connection;
+    import flint.java.util : Properties;
 
-        bool thrown;
+    override Connection connect(string url, Properties info)
+    {
+        return null;
+    }
+
+    override bool acceptsURL(string url)
+    {
+        import std.algorithm.searching : startsWith;
+
+        return url.startsWith("jdbc:foo:");
+    }
+
+    override int getMajorVersion()
+    {
+        return 1;
+    }
+
+    override int getMinorVersion()
+    {
+        return 0;
+    }
+
+    override bool jdbcCompliant()
+    {
+        return false;
+    }
+}
+
+private imported!"flint.java.sql".Driver supplyTestDriver()
+{
+    return new DatabaseTestDriver;
+}
+
+@("DataSourceAutoConfigurationTests.testBadDriverClass")
+unittest
+{
+    import flint.java.lang : IllegalStateException;
+    import std.algorithm.searching : canFind;
+
+    // Boot's Assert.state throws IllegalStateException, which the context reports inside a BeanCreationException.
+    bool thrown;
+    try
+        new DataSourceAutoConfiguration().dataSource(properties([
+                ["spring.datasource.url", "jdbc:sqlite::memory:"],
+                ["spring.datasource.driverClassName", "org.none.jdbcDriver"]
+    ]));
+    catch (IllegalStateException e)
+        thrown = e.msg.canFind("org.none.jdbcDriver");
+    assert(thrown);
+}
+
+@("DataSourceAutoConfigurationTests.testEmbeddedTypeDefaultsUsername")
+unittest
+{
+    import flint.boot.jdbc.autoconfigure : determineDriverClassName;
+    import flint.java.sql : DriverManager;
+
+    DriverManager.registerDriver(&supplyTestDriver);
+    scope (exit)
+        DriverManager.deregisterDriver(&supplyTestDriver);
+    auto settings = properties([
+        ["spring.datasource.driverClassName", typeNameOf!DatabaseTestDriver],
+        ["spring.datasource.url", "jdbc:sqlite::memory:"]
+    ]);
+    auto pool = new DataSourceAutoConfiguration().dataSource(settings);
+    scope (exit)
+        pool.close();
+    assert(settings.determineDriverClassName() == typeNameOf!DatabaseTestDriver);
+    assert(pool.getUsername() == "sa");
+}
+
+@("DataSourceAutoConfigurationTests.testExplicitDriverClassClearsUsername")
+unittest
+{
+    import flint.boot.jdbc.autoconfigure : determineDriverClassName;
+    import flint.java.sql : DriverManager;
+
+    DriverManager.registerDriver(&supplyTestDriver);
+    scope (exit)
+        DriverManager.deregisterDriver(&supplyTestDriver);
+    auto settings = properties([
+        ["spring.datasource.driverClassName", typeNameOf!DatabaseTestDriver],
+        ["spring.datasource.url", "jdbc:foo://localhost"]
+    ]);
+    auto dataSource = new DataSourceAutoConfiguration().dataSource(settings);
+    scope (exit)
+        dataSource.close();
+    assert(settings.determineDriverClassName() == "datasource_autoconfiguration_upstream_test.DatabaseTestDriver");
+    assert(dataSource.getUsername() is null);
+}
+
+// Flint: a URL no registered driver accepts fails when the data source is created, at startup, naming the driver
+// class Boot determines; for a database Flint has a driver for, the message names the package to add.
+@("FlintDataSourceWithoutItsDriverFailsAtStartup") unittest
+{
+    import flint.beans.factory : BeanCreationException;
+    import flint.java.sql : DriverManager, SQLException;
+
+    string failure(string url)
+    {
         try
-            new DataSourceAutoConfiguration().dataSource(properties([
-                    ["spring.datasource.url", "jdbc:sqlite::memory:"],
-                    ["spring.datasource.driverClassName", "org.none.jdbcDriver"]
-        ]));
+            new DataSourceAutoConfiguration().dataSource(properties([["spring.datasource.url", url]])).close();
         catch (BeanCreationException e)
-            thrown = e.msg.canFind("org.none.jdbcDriver");
-        assert(thrown);
+            return e.msg.idup;
+        return null;
     }
 
-    @("DataSourceAutoConfigurationTests.testEmbeddedTypeDefaultsUsername")
-    unittest
-    {
-        auto pool = new DataSourceAutoConfiguration().dataSource(properties([
-                ["spring.datasource.driverClassName", "flint.engine.jdbc.FlintDriver"],
-                ["spring.datasource.url", "jdbc:sqlite::memory:"]
-        ]));
-        scope (exit)
-            pool.close();
-        assert(pool.getDriverClassName() == "flint.engine.jdbc.FlintDriver");
-        assert(pool.getUsername() == "sa");
-    }
-
-    @("DataSourceAutoConfigurationTests.testExplicitDriverClassClearsUsername")
-    unittest
-    {
-        auto dataSource = new DataSourceAutoConfiguration().dataSource(
-                properties([
-            [
-                "spring.datasource.driverClassName",
-                "datasource_autoconfiguration_upstream_test.DatabaseTestDriver"
-            ], ["spring.datasource.url", "jdbc:foo://localhost"]
-        ]));
-        scope (exit)
-            dataSource.close();
-        assert(dataSource.getDriverClassName() == "datasource_autoconfiguration_upstream_test.DatabaseTestDriver");
-        assert(dataSource.getUsername() is null);
-    }
+    assert(failure("jdbc:mysql://localhost/db") == "Cannot load driver class: com.mysql.cj.jdbc.Driver");
+    // While a registered driver accepts postgresql URLs, the data source is created.
+    bool accepted = true;
+    try
+        DriverManager.getDriver("jdbc:postgresql://localhost/db");
+    catch (SQLException)
+        accepted = false;
+    if (accepted)
+        assert(failure("jdbc:postgresql://localhost/db") is null);
+    else
+        assert(failure("jdbc:postgresql://localhost/db")
+                == "Cannot load driver class: flint.postgresql.Driver (add the flint:postgresql dependency)");
 }
 
 // FlintDataSource has Hikari's core settings only: no connectionTestQuery, maxLifetime or dataSourceProperties.

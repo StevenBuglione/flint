@@ -9,6 +9,10 @@
 // Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
 // Modified by the Flint authors: Java Beans getters and setters are kept (rulebook R6); `spring.*` keys
 // become `flint.*` with `spring.*` accepted as an alias (ADR-030); `type` is the class name; `jndiName` is excluded (jvm-platform); the `hikari` keys bind onto the pool data-access provides.
+// A driver class "loads" when a driver of that class is registered with the DriverManager (a driver package registers
+// its driver when it is linked). Flint's pool finds its driver by URL rather than taking the class Boot determines, so
+// the data source checks at creation, as Hikari's setDriverClassName does, that the class is registered or that a
+// registered driver accepts the URL; the message names the package to add.
 
 /// `org.springframework.boot.jdbc.autoconfigure`: the JDBC configuration properties. `flint.datasource.hikari.*` (alias
 /// `pool`) binds onto the pool `DataSource` the data-access module provides, as Boot binds `spring.datasource.hikari.*`
@@ -20,6 +24,7 @@ import flint.boot.autoconfigure.condition : ConditionalOnClass, ConditionalOnMis
     ConditionalOnSingleCandidate;
 import flint.boot.context.properties : ClassRef, ConfigurationProperties, EnableConfigurationProperties;
 public import flint.boot.jdbc.init : isEmbeddedUrl;
+import flint.boot.jdbc : DatabaseDriver;
 import flint.boot.jdbc.init : DataSourceScriptDatabaseInitializer;
 import flint.boot.sql.autoconfigure.init : ApplicationScriptDatabaseInitializer, SqlInitializationProperties;
 import flint.boot.sql.init : DatabaseInitializationSettings;
@@ -365,6 +370,91 @@ string getUrl(EmbeddedDatabaseConnection connection, string databaseName) pure
     return "jdbc:sqlite:file:" ~ databaseName ~ "?mode=memory&cache=shared";
 }
 
+/// The driver class of an embedded database, or `null` for `NONE` (Boot's `EmbeddedDatabaseConnection.getDriverClassName`).
+string getDriverClassName(EmbeddedDatabaseConnection connection) pure nothrow @nogc
+{
+    final switch (connection)
+    {
+    case EmbeddedDatabaseConnection.NONE:
+        return null;
+    case EmbeddedDatabaseConnection.H2:
+        return DatabaseDriver.H2.getDriverClassName();
+    case EmbeddedDatabaseConnection.DERBY:
+        return DatabaseDriver.DERBY.getDriverClassName();
+    case EmbeddedDatabaseConnection.HSQLDB:
+        return DatabaseDriver.HSQLDB.getDriverClassName();
+    case EmbeddedDatabaseConnection.SQLITE:
+        return DatabaseDriver.SQLITE.getDriverClassName();
+    }
+}
+
+/// The driver class: `driver-class-name`, else the one the URL names, else the embedded database's (Boot's
+/// `DataSourceProperties.determineDriverClassName`). Throws `DataSourceBeanCreationException` when there is none, and
+/// `IllegalStateException` when an explicit `driver-class-name` cannot be loaded.
+string determineDriverClassName(DataSourceProperties properties)
+{
+    const driverClassName = findDriverClassName(properties);
+    if (driverClassName.length == 0)
+        throw new DataSourceBeanCreationException("Failed to determine a suitable driver class",
+                properties, properties.getEmbeddedDatabaseConnection());
+    return driverClassName;
+}
+
+// Boot's findDriverClassName.
+package string findDriverClassName(DataSourceProperties properties)
+{
+    import flint.java.lang : IllegalStateException;
+
+    if (properties.getDriverClassName().length)
+    {
+        if (!driverClassIsLoadable(properties.getDriverClassName()))
+            throw new IllegalStateException("Cannot load driver class: " ~ properties.getDriverClassName());
+        return properties.getDriverClassName();
+    }
+    string driverClassName;
+    if (properties.getUrl().length)
+        driverClassName = DatabaseDriver.fromJdbcUrl(properties.getUrl()).getDriverClassName();
+    if (driverClassName.length == 0)
+        driverClassName = properties.getEmbeddedDatabaseConnection().getDriverClassName();
+    return driverClassName;
+}
+
+// Java's `ClassUtils.forName(driverClassName)` for a driver: the class is present when the program registered a
+// driver of that class with the DriverManager (a driver package registers its driver when it is linked).
+private bool driverClassIsLoadable(string driverClassName)
+{
+    import flint.java.sql : DriverManager;
+
+    foreach (driver; DriverManager.getDrivers())
+        if (typeid(cast(Object) driver).name == driverClassName)
+            return true;
+    return false;
+}
+
+// Hikari's `setDriverClassName`, which fails when the class does not load, for Flint's pool, which finds its driver
+// by URL: the data source fails at creation, at startup, unless the driver class is registered or a registered driver
+// accepts the URL. The message names the package providing the driver.
+private void requireDriver(DataSourceProperties properties, string driverClassName, string url)
+{
+    import flint.java.sql : DriverManager, SQLException;
+
+    if (driverClassIsLoadable(driverClassName))
+        return;
+    try
+    {
+        DriverManager.getDriver(url);
+        return;
+    }
+    catch (SQLException)
+    {
+    }
+    string message = "Cannot load driver class: " ~ driverClassName;
+    foreach (driver; DatabaseDriver.values())
+        if (driver.getDriverClassName() == driverClassName && driver.flintDependency().length)
+            message ~= " (add the " ~ driver.flintDependency() ~ " dependency)";
+    throw new DataSourceBeanCreationException(message, properties, properties.getEmbeddedDatabaseConnection());
+}
+
 /// The database name: a unique one when `generate-unique-name` holds, else `name`, else `testdb` for an embedded
 /// database, else `null` (Boot's `DataSourceProperties.determineDatabaseName`).
 string determineDatabaseName(DataSourceProperties properties)
@@ -459,8 +549,10 @@ final class DataSourceAutoConfiguration
     @ConfigurationProperties("flint.datasource.hikari")
     FlintDataSource dataSource(DataSourceProperties properties)
     {
+        const url = properties.determineUrl();
+        requireDriver(properties, properties.determineDriverClassName(), url);
         auto dataSource = new FlintDataSource();
-        dataSource.setJdbcUrl(properties.determineUrl());
+        dataSource.setJdbcUrl(url);
         if (auto username = properties.determineUsername())
             dataSource.setUsername(username);
         if (auto password = properties.determinePassword())

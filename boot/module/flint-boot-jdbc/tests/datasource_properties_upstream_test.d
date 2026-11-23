@@ -29,27 +29,49 @@ unittest
     assert(properties.determineUsername() == "sa");
 }
 
-// Flint's DataSourceProperties has no determineDriverClassName: Flint's one driver is chosen by the URL.
-version (FlintDataSourceDriverClassName)
+@("DataSourcePropertiesTests.determineDriver")
+unittest
 {
     import flint.boot.jdbc.autoconfigure : determineDriverClassName;
 
-    @("DataSourcePropertiesTests.determineDriver")
-    unittest
-    {
-        auto properties = new DataSourceProperties;
-        properties.setUrl("jdbc:mysql://mydb");
-        assert(properties.getDriverClassName() is null);
-        assert(properties.determineDriverClassName() == "com.mysql.cj.jdbc.Driver");
-    }
+    auto properties = new DataSourceProperties;
+    properties.setUrl("jdbc:mysql://mydb");
+    assert(properties.getDriverClassName() is null);
+    assert(properties.determineDriverClassName() == "com.mysql.cj.jdbc.Driver");
+}
 
-    @("DataSourcePropertiesTests.determineDriverWithExplicitConfig")
-    unittest
-    {
-        auto properties = new DataSourceProperties;
-        properties.setUrl("jdbc:mysql://mydb");
-        properties.setDriverClassName("org.hsqldb.jdbcDriver");
-        assert(properties.getDriverClassName() == "org.hsqldb.jdbcDriver");
-        assert(properties.determineDriverClassName() == "org.hsqldb.jdbcDriver");
-    }
+// The explicit class must load: upstream names HSQLDB's driver, on its test class path; here it is the driver Flint's
+// JDBC engine registers.
+@("DataSourcePropertiesTests.determineDriverWithExplicitConfig")
+unittest
+{
+    import flint.boot.jdbc.autoconfigure : determineDriverClassName;
+    import flint.java.sql : DriverManager;
+
+    const registered = typeid(cast(Object) DriverManager.getDriver("jdbc:sqlite::memory:")).name;
+    auto properties = new DataSourceProperties;
+    properties.setUrl("jdbc:mysql://mydb");
+    properties.setDriverClassName(registered);
+    assert(properties.getDriverClassName() == registered);
+    assert(properties.determineDriverClassName() == registered);
+}
+
+// Flint: with no URL, the embedded database's driver (Boot's EmbeddedDatabaseConnection.getDriverClassName); with
+// neither, Boot's failure.
+@("FlintDetermineDriverClassNameEmbeddedAndNone")
+unittest
+{
+    import flint.boot.jdbc.autoconfigure : DataSourceBeanCreationException, determineDriverClassName,
+        getDriverClassName;
+
+    auto properties = new DataSourceProperties;
+    assert(properties.determineDriverClassName() == "flint.sqlite.JDBC");
+    assert(EmbeddedDatabaseConnection.H2.getDriverClassName() == "org.h2.Driver");
+    properties.setEmbeddedDatabaseConnection(EmbeddedDatabaseConnection.NONE);
+    bool thrown;
+    try
+        properties.determineDriverClassName();
+    catch (DataSourceBeanCreationException e)
+        thrown = e.msg == "Failed to determine a suitable driver class";
+    assert(thrown);
 }

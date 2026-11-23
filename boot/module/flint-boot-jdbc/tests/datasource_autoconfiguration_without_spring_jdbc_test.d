@@ -44,21 +44,20 @@ unittest
     assert(requires(typeNameOf!FlintDataSource));
 }
 
-// Flint's pool has no driver class name: Flint's one driver is chosen by the URL.
-version (FlintDataSourceDriverClassName)
+// FlintDataSource takes no driver class (it finds its driver by URL): the case checks the class Boot determines.
+@("DataSourceAutoConfigurationWithoutSpringJdbcTests.pooledDataSourceCanBeAutoConfigured")
+unittest
 {
-    @("DataSourceAutoConfigurationWithoutSpringJdbcTests.pooledDataSourceCanBeAutoConfigured")
-    unittest
-    {
-        import std.algorithm.searching : startsWith;
+    import flint.boot.jdbc.autoconfigure : determineDriverClassName;
+    import std.algorithm.searching : startsWith;
 
-        // spring-jdbc excluded: the auto-configuration requires nothing from flint.jdbc.
-        foreach (name; requiredClasses())
-            assert(!name.startsWith("flint.jdbc."));
-        auto dataSource = new DataSourceAutoConfiguration().dataSource(new DataSourceProperties);
-        scope (exit)
-            dataSource.close();
-        assert(dataSource.getJdbcUrl() !is null);
-        assert(dataSource.getDriverClassName() !is null);
-    }
+    // spring-jdbc excluded: the auto-configuration requires nothing from flint.jdbc.
+    foreach (name; requiredClasses())
+        assert(!name.startsWith("flint.jdbc."));
+    auto properties = new DataSourceProperties;
+    auto dataSource = new DataSourceAutoConfiguration().dataSource(properties);
+    scope (exit)
+        dataSource.close();
+    assert(dataSource.getJdbcUrl() !is null);
+    assert(properties.determineDriverClassName() !is null);
 }
