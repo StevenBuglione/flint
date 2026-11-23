@@ -65,7 +65,8 @@
         "beans",
         "context",
         "conc",
-        "os"
+        "os",
+        "arena"
       ],
       "repo": "boot"
     },

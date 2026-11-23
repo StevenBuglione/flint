@@ -45,6 +45,9 @@ import flint.boot.internal.core_env : CommandLineArgs, parseCommandLine;
 import flint.java.lang : IllegalArgumentException, IllegalStateException;
 import flint.boot.internal.log : Log, LogSettings;
 import flint.boot.logging : LogLevel;
+// Links the Flint collector (registered with druntime as "flint"), so a Boot binary can select it with
+// --DRT-gcopt=gc:flint or rt_options and otherwise keeps druntime's (docs/spring/phase1/gc.md, ADR-030).
+static import flint.arena.gc;
 
 public import flint.boot.context.properties : ClassRef;
 

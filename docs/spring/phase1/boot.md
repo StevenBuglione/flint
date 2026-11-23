@@ -138,6 +138,8 @@ Deviations:
 - A second signal does not cut the drain short: flint:os has no safe immediate exit yet, so the grace period bounds it.
 - `flint.main.register-shutdown-hook` and `flint.lifecycle.timeout-per-shutdown-phase` are not read yet.
 
+`flint.boot` also links the Flint collector (`static import flint.arena.gc`, registered with druntime as `flint`). A Boot binary can select it with `--DRT-gcopt=gc:flint` or `rt_options`, and keeps druntime's collector otherwise (docs/spring/phase1/gc.md).
+
 `tests/boot/test_boot_shutdown.py` stops gs-rest-service with each signal. It expects exit 0 and the GC report, and skips, visibly, in a checkout that does not link the pinned llhttp.
 
 ### Origins
