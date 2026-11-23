@@ -35,7 +35,7 @@ A module's interface text is its token stream with every function body removed, 
 - bodies of functions whose name appears anywhere else in the interface text (in an attribute argument, an enum or static initializer, a template constraint or a mixin), repeated until no new name appears, because CTFE may run them;
 - function literals inside initializers, which are kept with their initializer.
 
-`unittest` blocks are removed, and string literals keep their full text. A module's **extraction key** hashes its interface text, the interface texts of the project modules it imports (transitively), the generator version, the compiler identity, the platform version and the closure's package hashes. The **output key** hashes every extraction key and the class-presence answers: while it is unchanged, nothing is analysed or written. When it changes, every generated module is re-rendered, but a file is rewritten only when its text changed, so DUB recompiles only those. The keys and the cached models live in `.flint/cache/aot/state.json`.
+`unittest` blocks are removed, and string literals keep their full text. A module's **extraction key** hashes its interface text, the interface texts of the project modules it imports (transitively), the generator version, the compiler identity, the platform version and the closure's package hashes. The **output key** hashes every extraction key and the class-presence answers: while it is unchanged, nothing is analysed or written. When it changes, every generated module is re-rendered, but a file is rewritten only when its text changed, so DUB recompiles only those. The keys and the cached models live in `.flint/cache/aot/state.json`. **The shared cache.** `flint build` also keeps, in `<FLINT_CACHE>/aot/` beside the platform cache (else `<home>/.flint/cache/aot/`), the models of modules outside `src/` (Boot's auto-configurations, imported configurations) by extraction key, each with the annotation types its extraction compile announced, and the class-presence answers by environment key. A cold build of any project with the same toolchain and closure takes them from there and extracts only its own modules. Entries are written through a rename, so concurrent builds never read half a file; an unreadable entry is extracted again.
 
 ## 2. Annotation conventions the generator relies on
 
@@ -667,6 +667,8 @@ Measured on 2026-11-23 on a 32-thread AMD Ryzen AI MAX+ 395 workstation (Linux x
 | `tests/aot/sample` (5 modules) | 78.7 ms | 2.1 ms | 2.0 ms, nothing extracted or written | 36.9 ms: 1 module extracted (28 ms compile), 1 file written |
 | synthetic, 21 modules, each importing the previous | 131.9 ms | 3.2 ms | 3.3 ms | 146.6 ms: the edited module and its 19 transitive importers extracted |
 | synthetic, 101 modules, the same chain | 532.9 ms | 20.4 ms | 20.5 ms | 530.7 ms: 100 modules extracted (439 ms compile) |
+
+**Cold builds and the shared cache.** gs-rest-service's cold step extracts 23 modules: its own, and 22 Boot auto-configuration modules that import most of the web stack. That compile is 0.52 s, 38% of the cached cold `flint build` m7 measured. With the shared cache warm, the step extracts only the app module: 604 ms becomes 143 ms (59 ms of compile; non-optimized tool, median of three), with byte-identical output.
 
 A regenerated module compiles in about 10 ms (`dmd -c`, checked profile), in parallel with the rest of the build.
 

@@ -679,6 +679,53 @@ private int rankOf(string text, string name)
     return text[rank .. rank + text[rank .. $].indexOf(';')].to!int;
 }
 
+@("The shared cache serves platform modules' models and presence answers to a cold build of another copy")
+unittest
+{
+    import std.conv : to;
+    import std.file : exists, readText, rmdirRecurse, tempDir;
+    import std.path : buildPath;
+    import std.process : thisProcessID;
+    import flint_tool.engine.aot.driver : AotOutcome, AotRequest, runAot;
+
+    const shared_ = buildPath(tempDir, "flint-aot-shared-" ~ thisProcessID.to!string);
+    if (exists(shared_))
+        rmdirRecurse(shared_);
+    scope (exit)
+        if (exists(shared_))
+            rmdirRecurse(shared_);
+    const root = repositoryRoot();
+    string[2] outputs;
+    AotOutcome[2] outcomes;
+    foreach (run; 0 .. 2)
+    {
+        const project = copyFixture("sample");
+        scope (exit)
+            remove(project);
+        AotRequest request;
+        request.root = project;
+        request.compiler = compiler();
+        request.importPaths = [
+            "-I" ~ buildPath(root, "tests", "aot", "annotations"),
+            "-I" ~ buildPath(root, "tests", "aot", "autoconfig", "source")
+        ];
+        request.flags = ["-preview=dip1000"];
+        request.packageDirectories = [buildPath(root, "tests", "aot", "autoconfig")];
+        request.environmentKey = "test";
+        request.sharedCache = shared_;
+        outcomes[run] = runAot(request);
+        expect(outcomes[run].extractionErrors).toEqual("");
+        expect(outcomes[run].ok).toBeTrue();
+        outputs[run] = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot",
+                "flintsample", "autoconfig.d"));
+    }
+    // The auto-configuration modules are outside src/: extracted once, then reused; the user modules are extracted.
+    expect(outcomes[0].reused).toEqual(0);
+    expect(outcomes[1].reused > 0).toBeTrue();
+    expect(outcomes[1].extracted + outcomes[1].reused).toEqual(outcomes[0].extracted);
+    expect(outputs[1]).toEqual(outputs[0]);
+}
+
 /// Source directories of the DUB closure of `roots` (repository-relative package directories), following each
 /// dub.sdl's `dependency` lines, so the list follows packages when they move. `flint:x` names resolve to
 /// framework/x or packages/x, whichever has a dub.sdl. framework/java comes first: while framework/p1-interim exists it shadows

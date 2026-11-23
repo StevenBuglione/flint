@@ -44,6 +44,7 @@ AotStep runAotStep(ref Session session, const ref Manifest manifest, const ref R
     foreach (ref item; resolution.packages)
         request.packageDirectories ~= item.directory;
     request.environmentKey = environmentKey(session, toolchain, request.compiler, resolution);
+    request.sharedCache = sharedCache(session);
     auto outcome = runAot(request);
     if (!outcome.active)
         return AotStep(true, false);
@@ -62,8 +63,9 @@ AotStep runAotStep(ref Session session, const ref Manifest manifest, const ref R
     if (outcome.extracted || outcome.written)
         session.progress("Generated", outcome.generated.to!string ~ " Flint AOT modules for "
                 ~ outcome.application ~ " (" ~ outcome.extracted.to!string ~ " extracted in "
-                ~ outcome.extractMilliseconds.to!string ~ " ms, " ~ outcome.written.to!string
-                ~ " written, " ~ outcome.totalMilliseconds.to!string ~ " ms)");
+                ~ outcome.extractMilliseconds.to!string ~ " ms, " ~ outcome.reused.to!string
+                ~ " from the shared cache, " ~ outcome.written.to!string ~ " written, "
+                ~ outcome.totalMilliseconds.to!string ~ " ms)");
     return AotStep(outcome.ok, true);
 }
 
@@ -97,6 +99,19 @@ string[] importPaths(const ref Resolution resolution)
 }
 
 /// Everything that invalidates every cached model: the compiler, the platform and the closure.
+/// `<cache>/aot`, beside the platform cache (FLINT_CACHE, else `<home>/.flint/cache`, as engine/builder.d's
+/// platformCacheRoot): platform modules' models and class-presence answers, shared by every project.
+private string sharedCache(ref Session session)
+{
+    import std.path : absolutePath, buildNormalizedPath, buildPath;
+    import std.process : environment;
+
+    const relocated = environment.get("FLINT_CACHE", "");
+    const root = relocated.length
+        ? buildNormalizedPath(absolutePath(relocated)) : buildPath(session.home.root, ".flint", "cache");
+    return buildPath(root, "aot");
+}
+
 private string environmentKey(ref Session session, const ref Toolchain toolchain, string compiler,
         const ref Resolution resolution)
 {

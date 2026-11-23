@@ -41,6 +41,10 @@ struct AotRequest
     string[] packageDirectories;
     /// Compiler identity, platform version and anything else that invalidates every key.
     string environmentKey;
+    /// A directory shared by projects (`<FLINT_CACHE>/aot`), or empty. The models of modules outside `src/` (Boot's
+    /// auto-configurations, imported configurations) and class-presence answers are kept there by extraction key,
+    /// so a cold build of any project with the same closure reuses them.
+    string sharedCache;
 }
 
 /// What it did.
@@ -56,6 +60,8 @@ struct AotOutcome
     size_t modules;
     /// ditto
     size_t extracted;
+    /// Models taken from the shared cache this run.
+    size_t reused;
     /// ditto
     size_t written;
     /// Generated modules in the current output.
@@ -125,7 +131,7 @@ AotOutcome runAot(const ref AotRequest request)
     addModules(state.importedModules, request.importPaths, sources);
     auto keys = extractionKeys(sources, request.environmentKey);
     string[] stale = staleModules(sources, keys, state, cache);
-    if (stale.length && !extractInto(request, stale, null, keys, state, outcome))
+    if (stale.length && !extractInto(request, sources, stale, null, keys, state, outcome))
         return finish(outcome, started);
     if (stale.length && !extractImports(request, cache, sources, keys, state, outcome))
         return finish(outcome, started);
@@ -295,7 +301,7 @@ private bool extractImports(const ref AotRequest request, string cache, ref Sour
             return true;
         state.importedModules ~= added;
         keys = extractionKeys(sources, request.environmentKey);
-        if (!extractInto(request, added, null, keys, state, outcome))
+        if (!extractInto(request, sources, added, null, keys, state, outcome))
             return false;
     }
     return true;
@@ -420,13 +426,25 @@ private string outputKeyOf(scope const SourceModule[] sources, ref State state)
     return sha256Hex(cast(const(ubyte)[]) text);
 }
 
-private bool extractInto(const ref AotRequest request, scope const string[] modules,
-        scope const string[] classes, const string[string] keys, ref State state, ref AotOutcome outcome)
+private bool extractInto(const ref AotRequest request, scope const SourceModule[] sources,
+        scope const string[] requested, scope const string[] probes, const string[string] keys,
+        ref State state, ref AotOutcome outcome)
 {
     import std.file : mkdirRecurse, write;
     import std.path : buildPath;
     import flint_tool.engine.aot.extract : ExtractionRequest, ExtractionResult, extract;
 
+    const cache = buildPath(request.root, cacheDirectory);
+    bool[string] shareable;
+    foreach (ref source; sources)
+    {
+        if (!source.user && request.sharedCache.length)
+            shareable[source.name] = true;
+    }
+    string[] modules = reuseShared(request.sharedCache, requested, shareable, keys, cache, state, outcome);
+    string[] classes = request.sharedCache.length ? sharedPresence(request, probes, state) : probes.dup;
+    if (modules.length == 0 && classes.length == 0)
+        return true;
     ExtractionRequest extraction;
     extraction.compiler = request.compiler;
     extraction.flags = request.flags.dup ~ request.importPaths.dup ~ [
@@ -444,13 +462,16 @@ private bool extractInto(const ref AotRequest request, scope const string[] modu
         outcome.extractionErrors = result.errors;
         return false;
     }
-    const cache = buildPath(request.root, cacheDirectory);
     mkdirRecurse(buildPath(cache, "models"));
     foreach (index, ref model; result.models)
     {
         write(modelPath(cache, model.name), result.documents[index]);
         state.keys[model.name] = keys.get(model.name, null);
+        if (model.name in shareable)
+            storeShared(request.sharedCache, keys.get(model.name, null), result.documents[index], result);
     }
+    if (request.sharedCache.length && result.present.length)
+        storePresence(request, result.present);
     if (result.annotationDocuments.length)
     {
         auto annotations = loadAnnotations(cache);
@@ -497,7 +518,7 @@ private bool generate(const ref AotRequest request, scope const SourceModule[] s
     Plan plan = analyze(model, input);
     if (plan.unknownClasses.length)
     {
-        if (!extractInto(request, null, plan.unknownClasses, keys, state, outcome))
+        if (!extractInto(request, sources, null, plan.unknownClasses, keys, state, outcome))
             return false;
         model.present = state.present.dup;
         plan = analyze(model, input);
@@ -611,6 +632,153 @@ private void saveState(string cache, const ref State state)
     ]);
     mkdirRecurse(cache);
     write(buildPath(cache, "state.json"), root.toString);
+}
+
+/// The shared cache's entry for a model key.
+private string sharedEntry(string sharedCache, string key)
+{
+    import std.path : buildPath;
+
+    return buildPath(sharedCache, "models", key ~ ".json");
+}
+
+/// Take the shareable requested modules' models from the shared cache; the modules left to extract.
+private string[] reuseShared(string sharedCache, scope const string[] requested,
+        const bool[string] shareable, const string[string] keys, string cache, ref State state, ref AotOutcome outcome)
+{
+    string[] modules;
+    string[string] reusedAnnotations;
+    foreach (name; requested)
+    {
+        if (name !in shareable || !reuseShared(sharedCache, name, keys.get(name, null), cache,
+                state, reusedAnnotations))
+            modules ~= name;
+        else
+            outcome.reused++;
+    }
+    if (reusedAnnotations.length)
+    {
+        auto merged = loadAnnotations(cache);
+        foreach (type, value; reusedAnnotations)
+            merged[type] = value;
+        saveAnnotations(cache, merged);
+    }
+    return modules;
+}
+
+/// Take a module's model, and the annotation types its extraction announced, from the shared cache.
+private bool reuseShared(string sharedCache, string name, string key, string cache, ref State state,
+        ref string[string] annotations)
+{
+    import std.file : exists, mkdirRecurse, readText, write;
+    import std.json : JSONException, JSONType, parseJSON;
+    import std.path : buildPath;
+
+    const path = sharedEntry(sharedCache, key);
+    if (key.length == 0 || !exists(path))
+        return false;
+    string[string] found;
+    string document;
+    try
+    {
+        const root = parseJSON(readText(path));
+        document = root["model"].str;
+        foreach (type, value; root["annotations"].objectNoRef)
+            found[type] = value.str;
+    }
+    catch (Exception)
+        return false; // unreadable or half-written: extract instead
+    foreach (type, value; found)
+        annotations[type] = value;
+    mkdirRecurse(buildPath(cache, "models"));
+    write(modelPath(cache, name), document);
+    state.keys[name] = key;
+    return true;
+}
+
+/// Keep a model, with the annotation types of its extraction compile, in the shared cache.
+private void storeShared(string sharedCache, string key, string document,
+        const ref imported!"flint_tool.engine.aot.extract".ExtractionResult result)
+{
+    import std.json : JSONValue;
+
+    if (key.length == 0)
+        return;
+    JSONValue[string] annotations;
+    foreach (index, ref type; result.annotationTypes)
+        annotations[type.name] = JSONValue(result.annotationDocuments[index]);
+    JSONValue[string] root;
+    root["model"] = JSONValue(document);
+    root["annotations"] = JSONValue(annotations);
+    writeAtomically(sharedEntry(sharedCache, key), JSONValue(root).toString);
+}
+
+/// The shared class-presence answers of this environment.
+private string presencePath(const ref AotRequest request)
+{
+    import std.path : buildPath;
+
+    return buildPath(request.sharedCache, "presence", request.environmentKey ~ ".json");
+}
+
+private bool[string] loadPresence(const ref AotRequest request)
+{
+    import std.file : exists, readText;
+    import std.json : JSONType, parseJSON;
+
+    bool[string] answers;
+    const path = presencePath(request);
+    if (!exists(path))
+        return answers;
+    try
+    {
+        foreach (name, value; parseJSON(readText(path)).objectNoRef)
+            answers[name] = value.type == JSONType.true_;
+    }
+    catch (Exception)
+        return null;
+    return answers;
+}
+
+/// The probes the shared answers do not settle; the settled ones go into `state`.
+private string[] sharedPresence(const ref AotRequest request, scope const string[] probes, ref State state)
+{
+    const answers = loadPresence(request);
+    string[] open;
+    foreach (name; probes)
+    {
+        if (const answer = name in answers)
+            state.present[name] = *answer;
+        else
+            open ~= name;
+    }
+    return open;
+}
+
+private void storePresence(const ref AotRequest request, const bool[string] found)
+{
+    import std.json : JSONValue;
+
+    JSONValue[string] values;
+    foreach (name, answer; loadPresence(request))
+        values[name] = JSONValue(answer);
+    foreach (name, answer; found)
+        values[name] = JSONValue(answer);
+    writeAtomically(presencePath(request), JSONValue(values).toString);
+}
+
+/// Write through a temporary file and a rename, so a concurrent build never reads half a file.
+private void writeAtomically(string path, string text)
+{
+    import std.conv : to;
+    import std.file : mkdirRecurse, rename, write;
+    import std.path : dirName;
+    import std.process : thisProcessID;
+
+    mkdirRecurse(dirName(path));
+    const temporary = path ~ "." ~ thisProcessID.to!string ~ ".tmp";
+    write(temporary, text);
+    rename(temporary, path);
 }
 
 /// Annotation types by name, as their JSON documents.
