@@ -954,7 +954,9 @@ def main(argv=None):
                 return 0
             claimed = [e for e in pending if window_mode(e) == 'claim'] if args.claim else []
             if claimed:
-                run_round(claimed, claim=True)
+                # One claim per round: priorities are re-read before every claim, so an entry queued during a long run
+                # (a runtime re-measure ahead of build runs) takes the next window.
+                run_round(claimed[:1], claim=True)
                 streak = 0
                 continue
             streak = streak + 1 if (quiet_snapshot()['quiet'] and not held_work()) else 0
