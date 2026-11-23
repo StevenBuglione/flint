@@ -86,6 +86,8 @@ struct BuildOutcome
     imported!"flint_tool.engine.platformcache".PlatformModule aotLibrary;
     /// The shared platform object a dev build links (`linkShared`), or empty when it links archives.
     string platformShared;
+    /// The root package's settings for a direct build (`rootSettingsOf`).
+    imported!"flint_tool.engine.direct".RootSettings rootSettings;
     /// Where the build's time went (receipt `phases_ms`).
     imported!"flint_tool.engine.receipt".PhasesRecord phases;
 }
@@ -298,6 +300,98 @@ private bool projectEnvironment(const ref BuildRequest request, const ref Profil
     return userTrace;
 }
 
+/// The root package's settings as DUB would describe them, from the recipe flint wrote and the platform's
+/// description: the recipe's flags, `Have_<package>` for the project and every package of its closure, the
+/// closure's versions, import and string import paths, and every D source the recipe names. A direct build then
+/// needs no `dub describe`, which a cold build would otherwise run.
+private imported!"flint_tool.engine.direct".RootSettings rootSettingsOf(const ref Manifest manifest,
+        const ref Resolution resolution,
+        const ref imported!"flint_tool.engine.recipe".RecipeExtras extras,
+        const ref imported!"flint_tool.engine.platformcache".PlatformPlan plan)
+{
+    import std.array : replace;
+    import std.path : absolutePath, buildNormalizedPath, buildPath;
+    import flint_tool.engine.direct : RootSettings;
+    import flint_tool.engine.recipe : hasApplicationConfig, recipeDirectory;
+    import flint_tool.support.files : findFiles;
+
+    static string have(string name)
+    {
+        return "Have_" ~ name.replace(":", "_").replace("-", "_");
+    }
+
+    RootSettings settings;
+    settings.dflags = ["-preview=dip1000"] ~ extras.diagnosticFlags.dup ~ extras.platformDflags.dup;
+    settings.versions = [have(manifest.name)];
+    const root = buildNormalizedPath(absolutePath(manifest.root));
+    const recipe = buildPath(root, recipeDirectory);
+    settings.importPaths = [buildPath(root, "src") ~ "/"];
+    if (extras.aot)
+        settings.importPaths ~= buildPath(root, ".flint", "generated", "aot") ~ "/";
+    if (hasApplicationConfig(root))
+        settings.stringImportPaths ~= buildPath(root, "config") ~ "/";
+    foreach (relative; findFiles(buildPath(root, "src"), "**/*.d"))
+        settings.sources ~= buildPath(root, "src", relative);
+    if (extras.scanned)
+        settings.sources ~= buildNormalizedPath(recipe, "../scan/flint_scan.d");
+    foreach (relative; extras.aotOwn.length ? extras.aotOwn ~ "../aot-library/flint_aot_library.d" : null)
+        settings.sources ~= buildNormalizedPath(recipe, relative);
+    if (extras.aot && extras.aotOwn.length == 0)
+    {
+        foreach (relative; findFiles(buildPath(root, ".flint", "generated", "aot"), "**/*.d"))
+            settings.sources ~= buildPath(root, ".flint", "generated", "aot", relative);
+    }
+    settings.lflags = extras.platformLflags.dup;
+    addClosure(settings, resolution.direct, plan);
+    return settings;
+}
+
+/// For a shared dev build, the root settings a direct build compiles with (`rootSettingsOf`).
+private void noteRootSettings(const ref Manifest manifest, const ref Resolution resolution,
+        const ref imported!"flint_tool.engine.recipe".RecipeExtras extras, ref BuildOutcome result)
+{
+    if (result.platform.active && result.platform.inputs.sharedLink)
+        result.rootSettings = rootSettingsOf(manifest, resolution, extras, result.platform);
+}
+
+/// The closure's versions and import paths, as DUB walks it: the root's direct dependencies and theirs.
+private void addClosure(ref imported!"flint_tool.engine.direct".RootSettings settings,
+        scope const string[] direct, const ref imported!"flint_tool.engine.platformcache".PlatformPlan plan)
+{
+    import std.algorithm.searching : canFind;
+    import std.array : replace;
+
+    static string have(string name)
+    {
+        return "Have_" ~ name.replace(":", "_").replace("-", "_");
+    }
+
+    bool[string] seen;
+    string[] pending = direct.dup;
+    while (pending.length)
+    {
+        const name = pending[0];
+        pending = pending[1 .. $];
+        if (name in seen)
+            continue;
+        seen[name] = true;
+        settings.versions ~= have(name);
+        foreach (ref item; plan.modules)
+        {
+            if (item.name != name)
+                continue;
+            foreach (identifier; item.versions)
+                if (!settings.versions.canFind(identifier))
+                    settings.versions ~= identifier;
+            foreach (path; item.importPaths)
+                settings.importPaths ~= path ~ "/";
+            foreach (path; item.stringImportPaths)
+                settings.stringImportPaths ~= path ~ "/";
+            pending ~= item.dependencies.dup;
+        }
+    }
+}
+
 /// Build through DUB, reading its phases from the Flint DUB's trace.
 private bool buildWithDub(ref Session session, scope const(string)[] command, EnvVar[] environment,
         string root, bool hideTrace, ref BuildOutcome result)
@@ -352,6 +446,8 @@ private imported!"flint_tool.engine.direct".DirectResult buildDirectly(ref Sessi
     build.artifact = artifactPath(manifest, request);
     build.environment = environment;
     build.dflags = dflags;
+    build.settings = result.rootSettings;
+    build.computed = result.rootSettings.sources.length > 0;
     return directBuild(session, build, result.output, result.phases);
 }
 
@@ -828,6 +924,7 @@ private bool writeRecipes(ref Session session, const ref Manifest manifest, cons
     }
     writeIfChanged(buildPath(manifest.root, recipeDirectory, "dub.sdl"), renderRecipe(session.home,
             manifest, resolution, extras));
+    noteRootSettings(manifest, resolution, extras, result);
     {
         import flint_tool.engine.recipe : joinedRootDirectory, joinsRepos, renderJoinedRoot;
 

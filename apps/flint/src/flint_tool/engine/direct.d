@@ -36,6 +36,11 @@ struct DirectBuild
     EnvVar[] environment;
     /// The profile's flags, as DUB receives them in DFLAGS.
     string dflags;
+    /// The root package's settings when flint computed them from its own recipe and the platform's description;
+    /// otherwise `dub describe` reports them.
+    RootSettings settings;
+    /// ditto
+    bool computed;
 }
 
 /// How a direct build ended.
@@ -91,7 +96,14 @@ DirectResult directBuild(ref Session session, const ref DirectBuild build, out s
     RootSettings settings;
     string failure;
     const record = buildPath(build.recipeDirectory, "direct.txt");
-    if (!rootSettings(build, record, settings, failure))
+    if (build.computed)
+    {
+        import flint_tool.support.files : writeIfChanged;
+
+        settings = copySettings(build.settings);
+        writeIfChanged(record, dataText(settings)); // its time says when the settings last changed
+    }
+    else if (!rootSettings(build, record, settings, failure))
         return DirectResult.unavailable;
     phases.plan = 0;
     phases.compile = -1;
@@ -246,8 +258,23 @@ private bool unexpected(out string failure)
     return false;
 }
 
+private RootSettings copySettings(const ref RootSettings from)
+{
+    RootSettings to;
+    to.dflags = from.dflags.dup;
+    to.versions = from.versions.dup;
+    to.debugVersions = from.debugVersions.dup;
+    to.importPaths = from.importPaths.dup;
+    to.stringImportPaths = from.stringImportPaths.dup;
+    to.sources = from.sources.dup;
+    to.linkerFiles = from.linkerFiles.dup;
+    to.lflags = from.lflags.dup;
+    to.libs = from.libs.dup;
+    return to;
+}
+
 /// The settings in `dub describe --data-list` form.
-private string dataText(const ref RootSettings settings)
+string dataText(const ref RootSettings settings)
 {
     string text;
     foreach (index, list; [
