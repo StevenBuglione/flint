@@ -52,7 +52,8 @@
           "--native-context",
           "--output",
           "{out}/builds.json"
-        ]
+        ],
+        "may_fail": true
       },
       {
         "argv": [
@@ -63,7 +64,8 @@
           "--output",
           "{out}/http.json",
           "--no-context"
-        ]
+        ],
+        "may_fail": true
       },
       {
         "argv": [
@@ -74,7 +76,8 @@
           "--output",
           "{out}/http-error-paths.json",
           "--no-context"
-        ]
+        ],
+        "may_fail": true
       },
       {
         "argv": [
@@ -84,7 +87,8 @@
           "petclinic-rest",
           "--output",
           "{out}/gc-matrix-petclinic-rest.json"
-        ]
+        ],
+        "may_fail": true
       },
       {
         "argv": [
@@ -94,7 +98,8 @@
           "spring",
           "--evidence",
           "{out}"
-        ]
+        ],
+        "may_fail": true
       }
     ],
     "ports": []

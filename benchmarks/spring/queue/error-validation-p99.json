@@ -22,7 +22,8 @@
           "petclinic-rest:validation-error",
           "--output",
           "{out}/http-error-validation.json"
-        ]
+        ],
+        "may_fail": true
       }
     ]
   },

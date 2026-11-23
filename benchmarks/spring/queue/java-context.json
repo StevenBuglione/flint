@@ -21,7 +21,8 @@
           "--output",
           "{out}/http-context.json",
           "--allow-missing-flint"
-        ]
+        ],
+        "may_fail": true
       },
       {
         "argv": [
@@ -32,7 +33,8 @@
           "--output",
           "{out}/http-error-paths-context.json",
           "--allow-missing-flint"
-        ]
+        ],
+        "may_fail": true
       }
     ]
   },

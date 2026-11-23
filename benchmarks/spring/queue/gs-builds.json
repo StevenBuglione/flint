@@ -34,7 +34,8 @@
           "--smoke",
           "--trials",
           "1"
-        ]
+        ],
+        "may_fail": true
       }
     ]
   },

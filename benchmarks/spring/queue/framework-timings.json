@@ -23,7 +23,8 @@
           "--framework-builds",
           "--output",
           "{out}/framework-builds.json"
-        ]
+        ],
+        "may_fail": true
       }
     ],
     "ports": []

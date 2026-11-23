@@ -50,7 +50,8 @@
           "--smoke",
           "--trials",
           "1"
-        ]
+        ],
+        "may_fail": true
       },
       {
         "argv": [
@@ -67,7 +68,8 @@
         "in": "tree",
         "smoke_args": [
           "--smoke"
-        ]
+        ],
+        "may_fail": true
       }
     ]
   },

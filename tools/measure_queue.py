@@ -557,7 +557,9 @@ def measure_rest_pair(entry, built, outdir, smoke):
 
 def measure_command(entry, built, outdir, smoke):
     """Each step runs in this checkout, or in a build's worktree when it names one (`in`). `{out}` is the results
-    directory. A failing step stops the entry."""
+    directory. A failing step stops the entry, except a `may_fail` step: measure_builds, load_bench, the GC matrix
+    and the gates exit 1 when a verdict fails, which is a result, not a crash. Its exit code goes into the receipt
+    and its verdicts are in its own output."""
     receipts = []
     for index, step in enumerate(entry['measure']['steps']):
         cwd, env = ROOT, toolchain_environment()

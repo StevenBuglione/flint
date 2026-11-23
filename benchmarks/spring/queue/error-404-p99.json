@@ -32,7 +32,8 @@
         "in": "tree",
         "smoke_args": [
           "--smoke"
-        ]
+        ],
+        "may_fail": true
       }
     ]
   },
