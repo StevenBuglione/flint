@@ -249,6 +249,23 @@ def worktree(commit):
     return directory, full
 
 
+def checkout_roots():
+    roots = [ROOT]
+    common = subprocess.run(['git', 'rev-parse', '--path-format=absolute', '--git-common-dir'], cwd=ROOT,
+                            capture_output=True, text=True).stdout.strip()
+    if common and Path(common).name == '.git':
+        roots.append(Path(common).parent)
+    return roots
+
+
+def shared_tools():
+    """The toolchain directory that holds the pinned DMD: this checkout's, or the main checkout's."""
+    for root in checkout_roots():
+        if (root / '.tools' / 'dmd2' / 'linux' / 'bin64' / 'dmd').is_file():
+            return root / '.tools'
+    raise SystemExit('no checkout holds the pinned toolchain (tools/install_toolchains.py --compiler dmd)')
+
+
 def toolchain_environment():
     """The pinned toolchain on PATH: the forked DMD, LDC and the tools bin directory of the main checkout (this
     checkout first, for worktrees that carry their own .tools)."""
@@ -260,6 +277,7 @@ def toolchain_environment():
     paths = []
     for root in roots:
         tools = root / '.tools'
+        paths += [str(p) for p in sorted(tools.glob('oha-*')) if p.is_dir()]
         paths += [str(p) for p in (tools / 'bin', tools / 'dmd2' / 'linux' / 'bin64', tools / 'ldc2-1.43.0-linux-x86_64' / 'bin',
                                    tools / 'go' / 'bin') if p.is_dir()]
     return dict(os.environ, PATH=os.pathsep.join(paths + [os.environ.get('PATH', '')]))
@@ -360,6 +378,25 @@ def prepare_checkout(spec, logs):
         if completed.returncode:
             raise SystemExit(f'the native build at {full[:12]} failed; see {log}')
         marker.write_text(now() + '\n')
+    if spec.get('flint'):
+        # The flint CLI at this commit, for steps that build Flint ports; the pinned compilers come from the main
+        # checkout's toolchain directory, linked read-only.
+        tools = directory / '.tools'
+        if not tools.exists():
+            tools.symlink_to(shared_tools())
+        # The pinned peers (JDK, Maven, PostgreSQL) installed in this checkout, for spring_bench and load_bench there.
+        peers = directory / '.flint' / 'peers'
+        if not peers.exists() and (ROOT / '.flint' / 'peers').is_dir():
+            peers.parent.mkdir(parents=True, exist_ok=True)
+            peers.symlink_to(ROOT / '.flint' / 'peers')
+        if not (directory / '.flint' / 'bin' / 'flint').is_file():
+            log = logs / f'flint-{full[:12]}.log'
+            with log.open('wb') as stream:
+                completed = subprocess.run([sys.executable, 'tools/install_toolchains.py', '--compiler', 'flint'],
+                                           cwd=directory, env=toolchain_environment(), stdout=stream,
+                                           stderr=subprocess.STDOUT)
+            if completed.returncode:
+                raise SystemExit(f'bootstrapping flint at {full[:12]} failed; see {log}')
     return {'commit': full, 'worktree': str(directory)}
 
 
@@ -499,15 +536,16 @@ def measure_command(entry, built, outdir, smoke):
     directory. A failing step stops the entry."""
     receipts = []
     for index, step in enumerate(entry['measure']['steps']):
-        cwd = ROOT
+        cwd, env = ROOT, toolchain_environment()
         if step.get('in'):
             cwd = worktree(built[step['in']]['commit'])[0]
+            env['PATH'] = str(cwd / '.flint' / 'bin') + os.pathsep + env['PATH']
         command = [part.replace('{out}', str(outdir)).replace('{python}', sys.executable) for part in step['argv']]
         if smoke and step.get('smoke_args'):
             command += step['smoke_args']
         log = outdir / f'step-{index}.log'
         with log.open('wb') as stream:
-            completed = subprocess.run(command, cwd=cwd, env=toolchain_environment(), stdout=stream,
+            completed = subprocess.run(command, cwd=cwd, env=env, stdout=stream,
                                        stderr=subprocess.STDOUT)
         receipts.append({'command': command, 'cwd': str(cwd), 'exit_code': completed.returncode, 'log': str(log)})
         if completed.returncode and not step.get('may_fail'):
@@ -533,8 +571,11 @@ def run(entry, force_busy=False, smoke=False):
         raise SystemExit(f"{entry['id']}: venus is busy: " + '; '.join(before['problems']))
     print(f"{entry['id']}: measuring ({entry['measure']['kind']})", flush=True)
     # The signal other sessions watch: while MEASURING exists, a timed run is in progress and compiles would void it.
+    # Smoke and forced runs are never evidence, so they do not ask anyone to hold builds.
+    locking = not (smoke or force_busy)
     LOCK.parent.mkdir(parents=True, exist_ok=True)
-    LOCK.write_text(json.dumps({'id': entry['id'], 'started': now(), 'pid': os.getpid(),
+    if locking:
+        LOCK.write_text(json.dumps({'id': entry['id'], 'started': now(), 'pid': os.getpid(),
                                 'results': str(outdir)}) + '\n')
     pin = entry['measure']['kind'] == 'startup'  # load_bench and measure_builds pin their own processes
     if pin:
@@ -543,7 +584,8 @@ def run(entry, force_busy=False, smoke=False):
         with WindowSampler() as sampler:
             summary = KINDS[entry['measure']['kind']](entry, built, outdir, smoke)
     finally:
-        LOCK.unlink(missing_ok=True)
+        if locking:
+            LOCK.unlink(missing_ok=True)
         if pin:
             os.sched_setaffinity(0, set(range(os.cpu_count())))
     # The load average at the end includes the measurement itself (a start-up run launches hundreds of processes),

@@ -120,41 +120,50 @@ def measure_go(name, trials, timed, logs, temporary, result):
 
 
 def measure_flint(name, trials, timed, logs, temporary, result):
-    directory = spring_bench.app_row(name)['flint']['directory']
-    manifest = ROOT / directory / 'flint-spring.json'
-    spec = json.loads(manifest.read_text())['measure']
+    """The Flint port, built in place. flint.lock records where the platform packages are, so a copy of the checkout
+    at another path resolves a different graph (FLINT-E0202); instead every cold trial starts from a project with no
+    .flint state (no objects, no generated AOT code, no build cache), and the edited source is restored after each
+    trial."""
+    directory = ROOT / spring_bench.app_row(name)['flint']['directory']
+    spec = json.loads((directory / 'flint-spring.json').read_text())['measure']
     row = {'flint_cached_cold_seconds': [], 'flint_cached_incremental_seconds': [], 'flint_scratch_seconds': []}
     env = dict(os.environ)
-    for trial in range(trials):
-        for flavour in ('cached', 'scratch'):
-            workspace = temporary / f'{name}-flint-{flavour}-{trial}'
-            copy_checkout(workspace)
-            states = ['cold', 'incremental'] if flavour == 'cached' else ['cold']
-            for state in states:
-                if state == 'incremental':
-                    with (workspace / directory / spec['edit_source']).open('a', encoding='utf-8') as output:
-                        output.write(f'\nenum flintMeasureEdit{trial} = {trial};\n')
-                log = logs / f'{name}-flint-{flavour}-{state}-{trial}.log'
-                observed = timed(spec[flavour], workspace / directory, env, log)
-                key = 'flint_scratch_seconds' if flavour == 'scratch' else f'flint_cached_{state}_seconds'
-                row[key].append(observed['seconds'])
-                result['trials'].append(dict(observed, app=name, implementation='flint', flavour=flavour, state=state,
-                                             trial=trial, log=str(log.relative_to(logs.parent))))
-            shutil.rmtree(workspace)
-    for profile in ('O3', 'Oz'):
-        workspace = temporary / f'{name}-flint-{profile}'
-        copy_checkout(workspace)
-        log = logs / f'{name}-flint-{profile}.log'
-        timed(spec[profile]['command'], workspace / directory, env, log)
-        if spec[profile].get('binary'):
-            binary = workspace / directory / spec[profile]['binary']
-        else:
-            # The profile's command ends in --json; ask the same build, now up to date, where its artifact is.
-            reported = subprocess.run(spec[profile]['command'], cwd=workspace / directory, env=env, capture_output=True,
-                                      text=True)
-            binary = spring_bench.flint_artifact(reported.stdout, workspace / directory)
-        row[profile] = {'binary_bytes': binary.stat().st_size, 'sha256': spring_bench.sha256(binary)}
-        shutil.rmtree(workspace)
+    edit = directory / spec['edit_source']
+    original = edit.read_bytes()
+
+    def clean():
+        shutil.rmtree(directory / '.flint', ignore_errors=True)
+
+    try:
+        for trial in range(trials):
+            for flavour in ('cached', 'scratch'):
+                clean()
+                states = ['cold', 'incremental'] if flavour == 'cached' else ['cold']
+                for state in states:
+                    if state == 'incremental':
+                        with edit.open('a', encoding='utf-8') as output:
+                            output.write(f'\nenum flintMeasureEdit{trial} = {trial};\n')
+                    log = logs / f'{name}-flint-{flavour}-{state}-{trial}.log'
+                    observed = timed(spec[flavour], directory, env, log)
+                    key = 'flint_scratch_seconds' if flavour == 'scratch' else f'flint_cached_{state}_seconds'
+                    row[key].append(observed['seconds'])
+                    result['trials'].append(dict(observed, app=name, implementation='flint', flavour=flavour,
+                                                 state=state, trial=trial, log=str(log.relative_to(logs.parent))))
+                edit.write_bytes(original)
+        for profile in ('O3', 'Oz'):
+            clean()
+            log = logs / f'{name}-flint-{profile}.log'
+            timed(spec[profile]['command'], directory, env, log)
+            if spec[profile].get('binary'):
+                binary = directory / spec[profile]['binary']
+            else:
+                # The profile's command ends in --json; ask the same build, now up to date, where its artifact is.
+                reported = subprocess.run(spec[profile]['command'], cwd=directory, env=env, capture_output=True,
+                                          text=True)
+                binary = spring_bench.flint_artifact(reported.stdout, directory)
+            row[profile] = {'binary_bytes': binary.stat().st_size, 'sha256': spring_bench.sha256(binary)}
+    finally:
+        edit.write_bytes(original)
     return row
 
 

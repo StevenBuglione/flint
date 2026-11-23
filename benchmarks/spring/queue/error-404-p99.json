@@ -1,13 +1,18 @@
 {
   "schema": "flint.measure-queue/1",
   "created": "2026-11-23",
-  "status": "blocked",
-  "builds": {},
+  "status": "pending",
+  "builds": {
+    "tree": {
+      "app": "checkout",
+      "commit": "e171856e4a12",
+      "flint": true
+    }
+  },
   "requested_by": "Spring port P1: real HTTP for webmvc (web-http, local_16478490)",
   "id": "error-404-p99",
-  "blocked_on": "Boot's BasicErrorController serving /error for the gs-rest-service Flint port (item 3); benchmarks/spring/flint/gs-rest-service with its flint-spring.json (item 14)",
   "summary": "p99 of the 404 path: gs-rest-service GET /nope, Flint against the registered Go comparator (ADR-030 section 4)",
-  "why": "ADR-030 section 4: the 404 path gets its own p99 test. Workload: policy/spring-error-paths-benchmark.json 'gs-rest-service:not-found'. Change status to pending when the Flint port passes all 18 gs-rest-service cases.",
+  "why": "ADR-030 section 4: the 404 path gets its own p99 test. Workload: policy/spring-error-paths-benchmark.json 'gs-rest-service:not-found'. Change status to pending when the Flint port passes all 18 gs-rest-service cases. Unblocked 2026-11-23: the gs-rest-service Flint port passes 18/18 in exact mode at main (5208873d). Measured in a worktree at e171856e4a12 (both Guides' ports pass there) with its own native prefix and flint.",
   "measure": {
     "kind": "command",
     "ports": [],
@@ -22,6 +27,10 @@
           "gs-rest-service:not-found",
           "--output",
           "{out}/http-error-404.json"
+        ],
+        "in": "tree",
+        "smoke_args": [
+          "--smoke"
         ]
       }
     ]
