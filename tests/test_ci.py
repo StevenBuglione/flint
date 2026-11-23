@@ -143,7 +143,9 @@ class CiBoundaryTests(unittest.TestCase):
         self.assertEqual(len(compiles),5)
         paths=[next(x for x in command if x.endswith('/tests/betterc.d')) for command in compiles]
         for package in ['arena','serde','validate','engine-wasm-bridge','engine-ui-signals']:
-            self.assertTrue(any('/'+package+'/tests/betterc.d' in path for path in paths))
+            # packages/<name> before the cutover; an engine's engine/<name> in flint-framework after it.
+            spellings=['/'+package+'/tests/betterc.d','/'+package.replace('engine-','engine/',1)+'/tests/betterc.d']
+            self.assertTrue(any(spelling in path for path in paths for spelling in spellings),package)
         for command in compiles:
             self.assertIn('-L--export=flint_test',command)
             self.assertIn('-boundscheck=on',command)

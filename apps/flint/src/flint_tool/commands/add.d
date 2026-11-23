@@ -76,9 +76,14 @@ int commandAdd(ref Session session, scope const string[] names, string project, 
 private bool collect(ref Session session, const ref imported!"flint_tool.commands.project".Target target,
         scope const string[] names, ref AddPayload payload, ref string configuration, ref Report report)
 {
+    import std.algorithm.searching : startsWith;
+
     foreach (name; names)
     {
-        auto starter = session.home.findStarter(starterName(name));
+        // An exact starter name first (flint:legacy-starter-web, boot-starter-web), then `web` as flint:starter-web.
+        auto starter = session.home.findStarter(name.startsWith("flint:") ? name[6 .. $] : name);
+        if (starter is null)
+            starter = session.home.findStarter(starterName(name));
         // After the cutover the pre-port starters carry legacy names; `web` then means Spring Boot's
         // flint:boot-starter-web.
         if (starter is null)

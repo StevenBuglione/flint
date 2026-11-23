@@ -129,9 +129,10 @@ private bool usesStarter(const ref Manifest manifest)
 {
     import std.algorithm.searching : startsWith;
 
+    // The pre-port starters, by either name (they are flint:legacy-starter-* after the repo split's cutover).
     foreach (ref dependency; manifest.dependencies)
     {
-        if (dependency.name.startsWith("flint:starter-"))
+        if (dependency.name.startsWith("flint:starter-") || dependency.name.startsWith("flint:legacy-starter-"))
             return true;
     }
     return false;
@@ -316,7 +317,9 @@ private bool throughStarter(const ref Resolution resolution, string direct, stri
 {
     import std.algorithm.searching : startsWith;
 
-    if (!direct.startsWith("flint:starter"))
+    // Every starter is a bundle: the pre-port ones under either name, and Spring Boot's flint:boot-starter-*.
+    if (!direct.startsWith("flint:starter") && !direct.startsWith("flint:legacy-starter")
+            && !direct.startsWith("flint:boot-starter"))
         return false;
     foreach (ref item; resolution.packages)
     {

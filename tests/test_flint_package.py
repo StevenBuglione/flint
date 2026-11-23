@@ -2,6 +2,7 @@
 import json
 import shutil
 import subprocess
+import sys
 import tarfile
 import tempfile
 import unittest
@@ -26,6 +27,8 @@ def elf_facts(path):
 
 
 @unittest.skipUnless(CLANG.is_file(), 'pinned clang not installed (flint toolchain install)')
+@unittest.skipUnless(sys.platform.startswith('linux'), 'flint package builds Linux packages; macOS and Windows '
+                     'refuse its Linux targets first')
 class PackageTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

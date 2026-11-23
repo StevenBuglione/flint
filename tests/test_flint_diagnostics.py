@@ -85,7 +85,7 @@ class MisuseTests(unittest.TestCase):
                 self.assertRegex(found[0]['message'], expectation(source), output)
                 # The library's own message, without DMD's `static assert:  "..."` wrapper.
                 self.assertFalse(found[0]['message'].startswith('static assert:'), output)
-                self.assertRegex(output, r'raised in library code at .*packages/.*, through \d+ hidden frames?')
+                self.assertRegex(output, r'raised in library code at .*/source/.*, through \d+ hidden frames?')
                 self.assertNotIn('instantiated from here', output)
 
     def test_condensing_changes_no_object_byte(self):

@@ -99,7 +99,9 @@ class DocsTests(unittest.TestCase):
         self.assertTrue(document['examples'])
         self.assertIn('unittest', document['examples'][0]['example']['code'])
         status, document = flint_json('examples', 'rest', 'service')
-        self.assertIn('examples/framework/golden-rest-service', document['applications'])
+        # examples/framework/ here; the framework platform module's examples/ after the cutover.
+        self.assertTrue(any(path.endswith('golden-rest-service') for path in document['applications']),
+                        document['applications'])
 
 
 class GenerateTests(unittest.TestCase):

@@ -87,7 +87,7 @@ string renderScan(const ref Home home, const ref Resolution resolution, const re
     string[] lists;
     foreach (ref item; resolution.packages)
     {
-        if (!item.name.startsWith("flint:starter"))
+        if (!item.name.startsWith("flint:"))
             continue;
         const starter = home.findStarter(item.name[6 .. $]);
         if (starter is null)

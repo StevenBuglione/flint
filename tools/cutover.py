@@ -105,10 +105,26 @@ def rename_references(checkout, names):
         except UnicodeDecodeError:
             continue
         new = pattern.sub(lambda match: 'flint:' + names[match[1]], text)
+        if new != text and path.name == 'flint.lock':
+            new = sort_lock(new)
         if new != text:
             path.write_text(new)
             changed.append(name)
     return changed
+
+
+def sort_lock(text):
+    """A renamed flint.lock in the order flint writes one (project/lock.d): [[package]] tables by name, then the
+    [[native]] tables, and every dependencies list sorted."""
+    def sorted_list(match):
+        items = [item.strip() for item in match[1].split(',') if item.strip()]
+        return 'dependencies = [' + ', '.join(sorted(items, key=lambda item: item.strip('"'))) + ']'
+    text = re.sub(r'^dependencies = \[(.*)\]$', sorted_list, text, flags=re.M)
+    head, *tables = re.split(r'\n(?=\[\[(?:package|native)\]\]\n)', text)
+    packages = [table for table in tables if table.startswith('[[package]]')]
+    natives = [table for table in tables if table.startswith('[[native]]')]
+    packages.sort(key=lambda table: re.search(r'^name = "(.*)"$', table, re.M)[1])
+    return '\n'.join([head, *packages, *natives])
 
 
 def rename_recipes(checkout, flint, names):

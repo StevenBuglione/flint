@@ -216,7 +216,7 @@ class ExtractionTests(unittest.TestCase):
         self.assertEqual(layout('native/framework', 'framework'), 'native')
         self.assertEqual(layout('packages/arena', 'flint'), 'packages/arena')
         with tempfile.TemporaryDirectory() as temporary:
-            checkout = Path(temporary) / 'flint-framework'
+            checkout = Path(temporary).resolve() / 'flint-framework'  # macOS: /var -> /private/var
             (checkout / 'engine/web').mkdir(parents=True)
             (checkout / 'engine/web/dub.sdl').write_text('name "engine-web"\n')
             (checkout / 'engine/web/README.md').write_text('See packages/engine-web/source and '
@@ -272,7 +272,7 @@ class PlatformFetchTests(unittest.TestCase):
         import platform_modules
 
         with tempfile.TemporaryDirectory() as temporary:
-            temporary = Path(temporary)
+            temporary = Path(temporary).resolve()  # macOS: /var -> /private/var
             upstream = temporary / 'flint-framework'
             git = ['git', '-C', str(upstream), '-c', 'user.name=t', '-c', 'user.email=t@t']
             subprocess.run(['git', 'init', '-q', str(upstream)], check=True)

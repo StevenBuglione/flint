@@ -84,14 +84,16 @@ class StarterWebTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix='flint-add-') as temporary:
             self.assertEqual(flint_json('new', 'shop', cwd=temporary)[0], 0)
             project = Path(temporary) / 'shop'
-            status, document = flint_json('add', 'web', cwd=project)
+            # The pre-port web starter by its full name, which the cutover renames flint:legacy-starter-web; after
+            # it, `flint add web` means Spring Boot's flint:boot-starter-web.
+            status, document = flint_json('add', 'flint:starter-web', cwd=project)
             self.assertEqual(status, 0, document)
             self.assertEqual(document['added'], ['flint:starter-web'])
             self.assertEqual(document['sections'], ['server'])
             self.assertIn('"flint:starter-web" = {}', (project / 'flint.toml').read_text())
             self.assertIn('[server]\naddress = "127.0.0.1"', (project / 'config/application.toml').read_text())
             self.assertIn('name = "flint:starter-web"', (project / 'flint.lock').read_text())
-            status, document = flint_json('add', 'starter-web', cwd=project)
+            status, document = flint_json('add', 'flint:starter-web', cwd=project)
             self.assertEqual((status, document['added'], document['present']), (0, [], ['flint:starter-web']))
             status, document = flint_json('add', 'webb', cwd=project)
             self.assertEqual((status, codes(document)), (4, ['FLINT-E0009']))
