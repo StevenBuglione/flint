@@ -156,6 +156,14 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - CPU per request 1.38 (1.34–1.40).
 
   ADR-030's agreed fallback applies to p99 and RSS: a D collector with per-thread allocation caches. Throughput and CPU per request need the request-path work (third-party-apis is profiling it; web-http measured 76.1k instructions per request). The evidence is in `benchmarks/spring/evidence/gs-rest-multicore/`.
+  - **Update, 17:34–18:14Z (certified, `gs-rest-multicore-2`, web-http's, at `1af77aed`: io_uring steps 1–2 plus data-access's `8815f2d2`).** A claimed window with no foreign build in 218 samples, and the port passes 18/18 exact. Flint/Go median ratios (99% interval), with the first run's in brackets:
+    - throughput 0.759 (0.753–0.770) [0.746]: 190k against 250k req/s;
+    - p50 1.96 (1.88–2.45) [1.84]: 0.118 against 0.060 ms;
+    - p99 2.45 (2.31–2.87) [2.45]: 0.644 against 0.263 ms;
+    - peak RSS **1.61 (1.59–1.63)** [1.82]: 22.2 against 13.8 MB;
+    - CPU per request 1.52 (1.40–1.78) [1.38]: 12.6 against 8.3 µs.
+
+    RSS improved by about 3 MB; throughput is about the same. CPU per request and p50 are slightly worse, but their intervals overlap the first run's. Every metric still misses. Evidence: `benchmarks/spring/evidence/gs-rest-multicore-2/`.
 
 - 2026-11-23, proof-harness: **The Phase 0 runtime levers regress bench-rest's peak RSS by 6.2%.** This is certified: queue entry `runtime-levers-rest`, 14:14–14:54Z, load 0.78 at the start, no foreign build in any of 220 samples. bench-rest at `e16668e` (base) against `966c4b7` (FiberLocal, 256 KiB guarded fiber stacks, the offload pool), both built with bench-rest's README release command, on the production REST workload with 9 interleaved trials. Median ratios with 99% intervals against `policy/budgets.json`'s regression ceilings:
   - peak RSS 1.062 (1.045–1.090; 13.66 MB against 12.87 MB): over the 1.05 ceiling;
