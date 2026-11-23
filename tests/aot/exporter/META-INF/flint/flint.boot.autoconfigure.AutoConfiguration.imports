@@ -1,0 +1,2 @@
+# Fixture: an auto-configuration whose module exports its own descriptors.
+flintexporter.config.ExporterAutoConfiguration

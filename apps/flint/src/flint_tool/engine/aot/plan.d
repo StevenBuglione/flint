@@ -455,6 +455,8 @@ struct ModulePlan
 {
     /// The extracted module.
     string name;
+    /// The module exports its own descriptors (`flintAotDescriptors`), which the registration calls.
+    bool exportsDescriptors;
     /// Its source file.
     string source;
     /// Contents.
@@ -484,8 +486,9 @@ struct ModulePlan
     /// Whether the module contributes anything.
     bool empty() const
     {
-        return beans.length == 0 && descriptors.length == 0 && containerDescriptors.length == 0
-            && handlers.length == 0 && exceptionHandlers.length == 0 && listeners.length == 0 && queries.length == 0;
+        return !exportsDescriptors && beans.length == 0 && descriptors.length == 0
+            && containerDescriptors.length == 0 && handlers.length == 0
+            && exceptionHandlers.length == 0 && listeners.length == 0 && queries.length == 0;
     }
 }
 
@@ -1245,6 +1248,16 @@ private final class Analysis
         import std.algorithm.searching : canFind, endsWith;
 
         auto target = &moduleFor(moduleName);
+        // A platform module that exports its descriptors (compiled once, with the platform) describes its own data
+        // types: the generated module calls it instead of instantiating descriptorOf and accessors here.
+        if (const declaring = model.module_(moduleName))
+        {
+            if (declaring.exportsDescriptors)
+            {
+                target.exportsDescriptors = true;
+                return;
+            }
+        }
         foreach (ref property; descriptor.properties)
         {
             const container = property.type.canFind("!(") || property.type.endsWith("[]");

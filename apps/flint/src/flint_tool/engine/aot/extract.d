@@ -133,6 +133,7 @@ void readOutput(string output, ref ExtractionResult result)
     string[] modules;
     string[][string] types;
     bool[string] announced;
+    bool[string] exporters;
     foreach (raw; output.splitter('\n'))
     {
         // Windows compilers end lines with CRLF; a module name keeping the CR is an invalid file name there, and
@@ -140,7 +141,11 @@ void readOutput(string output, ref ExtractionResult result)
         const line = raw.length && raw[$ - 1] == '\r' ? raw[0 .. $ - 1] : raw;
         if (line.startsWith(modulePrefix))
         {
-            const name = line[modulePrefix.length .. $];
+            const rest = line[modulePrefix.length .. $];
+            const space = rest.indexOf(' ');
+            const name = space < 0 ? rest : rest[0 .. space];
+            if (space >= 0 && rest[space + 1 .. $] == "descriptors")
+                exporters[name] = true;
             if (name !in types)
             {
                 modules ~= name;
@@ -167,7 +172,7 @@ void readOutput(string output, ref ExtractionResult result)
             result.errors ~= line ~ "\n";
     }
     foreach (name; modules)
-        readModule(name, types[name], result);
+        readModule(name, types[name], (name in exporters) !is null, result);
 }
 
 private void readAnnotation(string document, ref bool[string] announced, ref ExtractionResult result)
@@ -188,13 +193,14 @@ private void readAnnotation(string document, ref bool[string] announced, ref Ext
     result.annotationDocuments ~= document;
 }
 
-private void readModule(string name, scope const string[] types, ref ExtractionResult result)
+private void readModule(string name, scope const string[] types, bool exporter, ref ExtractionResult result)
 {
     import std.array : join;
     import flint_tool.engine.aot.conditions : literal;
     import flint_tool.engine.aot.model : parseModule;
 
-    const document = `{"schema":"flint.aot.model/1","module":` ~ literal(name) ~ `,"types":[` ~ types.join(",") ~ `]}`;
+    const document = `{"schema":"flint.aot.model/1","module":` ~ literal(name) ~ (exporter
+            ? `,"exportsDescriptors":true` : "") ~ `,"types":[` ~ types.join(",") ~ `]}`;
     ModuleModel model;
     string error;
     if (parseModule(document, model, error))
@@ -215,7 +221,9 @@ module flint_aot_describe;
 /// FLINT-AOT-TYPE line per type. Every annotation type reached prints once per compile, from announce.
 template describeModule(alias M, string name)
 {
-    pragma(msg, "FLINT-AOT-MODULE " ~ name);
+    // A platform module exporting its own descriptors (Descriptor[] flintAotDescriptors()) is marked: the
+    // generator calls it instead of describing the module's data types (aot-contract.md section 3).
+    pragma(msg, "FLINT-AOT-MODULE " ~ name ~ (__traits(hasMember, M, "flintAotDescriptors") ? " descriptors" : ""));
     static foreach (member; __traits(allMembers, M))
     {
         static if (isLocalType!(M, member, name))

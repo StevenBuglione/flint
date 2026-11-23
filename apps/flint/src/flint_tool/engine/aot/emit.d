@@ -1032,6 +1032,13 @@ private struct Emitter
 
         string text = "/// Registers this module's definitions, descriptors and tables (aot-contract.md section 3).\n"
             ~ "extern (C) void " ~ entryPoint(plan.name) ~ "(scope AotRegistry registry)\n{\n";
+        if (plan.exportsDescriptors)
+        {
+            // Compiled once with the platform module: no descriptorOf or accessor instances here.
+            imports[plan.name] = true;
+            text ~= "    foreach (descriptor; " ~ plan.name ~ ".flintAotDescriptors())\n"
+                ~ "        registry.descriptor(descriptor);\n";
+        }
         foreach (ref descriptor; plan.descriptors)
         {
             const id = sanitize(descriptor.simple);

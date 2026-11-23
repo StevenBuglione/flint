@@ -397,6 +397,8 @@ struct ModuleModel
     TypeDecl[] types;
     /// Annotation types the module's UDAs reach.
     AnnotationType[] annotationTypes;
+    /// The module declares `Descriptor[] flintAotDescriptors()`: it describes its own data types.
+    bool exportsDescriptors;
 }
 
 /// Every extracted module, with the annotation types and class-presence answers they share.
@@ -465,6 +467,7 @@ bool parseModule(string text, out ModuleModel result, out string error)
         return false;
     }
     result.name = str(root, "module");
+    result.exportsDescriptors = flag(root, "exportsDescriptors");
     foreach (ref item; list(root, "types"))
     {
         auto decl = readType(item);

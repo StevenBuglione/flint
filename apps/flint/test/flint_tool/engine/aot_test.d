@@ -927,6 +927,40 @@ unittest
     }
 }
 
+@("a platform module exporting flintAotDescriptors is called instead of described (template diet)")
+unittest
+{
+    import std.algorithm.searching : canFind;
+    import std.file : readText;
+    import std.path : buildPath;
+    import flint_tool.engine.aot.driver : AotRequest, runAot;
+
+    const project = copyFixture("sample");
+    scope (exit)
+        remove(project);
+    const root = repositoryRoot();
+    AotRequest request;
+    request.root = project;
+    request.compiler = compiler();
+    request.importPaths = [
+        "-I" ~ buildPath(root, "tests", "aot", "annotations"), "-I" ~ runtimeSource(),
+        "-I" ~ buildPath(root, "tests", "aot", "exporter", "source")
+    ];
+    request.flags = ["-preview=dip1000"];
+    request.packageDirectories = [buildPath(root, "tests", "aot", "exporter")];
+    request.environmentKey = "test";
+    auto outcome = runAot(request);
+    expect(outcome.extractionErrors).toEqual("");
+    expect(outcome.ok).toBeTrue();
+    const generated = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot",
+            "flintexporter", "config.d"));
+    expect(generated.canFind("foreach (descriptor; flintexporter.config.flintAotDescriptors())")).toBeTrue();
+    expect(generated.canFind("describe_ExporterProperties")).toBeFalse();
+    expect(generated.canFind("descriptorOf!(string[])")).toBeFalse();
+    // The properties bean is still generated: beans and conditions stay with the application.
+    expect(generated.canFind(`"exporter-flintexporter.config.ExporterProperties"`)).toBeTrue();
+}
+
 @("a platform module's generated code may not import a project module (FLINT-E1116)")
 unittest
 {
