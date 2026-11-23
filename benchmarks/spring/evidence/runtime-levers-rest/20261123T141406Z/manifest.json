@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "description": "26-byte JSON over HTTP/1.1 keep-alive. Fixed-rate latency and separate matched-concurrency capacity phases.",
+  "workload": {
+    "runs": 9,
+    "duration_seconds": 60,
+    "capacity_seconds": 60,
+    "warmup_seconds": 10,
+    "fixed_rate_qps": 20000,
+    "connections": 64,
+    "request_timeout_seconds": 5,
+    "server_cpus": [
+      2,
+      3
+    ],
+    "load_cpus": [
+      4,
+      5,
+      6,
+      7
+    ]
+  },
+  "expected": {
+    "status": 200,
+    "content_type": "application/json",
+    "body": "{\"message\":\"hello\",\"n\":42}"
+  },
+  "targets": {
+    "flint": {
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/bin/bench-rest-966c4b7cb2dc-dub-release",
+        "--listen",
+        "127.0.0.1:18080"
+      ],
+      "url": "http://127.0.0.1:18080/json",
+      "environment": {
+        "FLINT_CORES": "2"
+      }
+    },
+    "go": {
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/bin/bench-rest-e16668e1b771-dub-release",
+        "--listen",
+        "127.0.0.1:18081"
+      ],
+      "url": "http://127.0.0.1:18081/json",
+      "environment": {
+        "FLINT_CORES": "2"
+      }
+    }
+  }
+}
