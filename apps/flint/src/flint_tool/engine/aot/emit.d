@@ -333,9 +333,27 @@ private struct Emitter
         return parts.join(", ");
     }
 
+    /// The id of a bean's generated functions: its name, unless an earlier bean in the module has the same one
+    /// (two configurations with mutually exclusive conditions may define `@Bean filterChain`), then with its class.
+    string beanId(const ref BeanPlan bean)
+    {
+        bool[string] taken;
+        foreach (ref other; plan.beans)
+        {
+            const plain = sanitize(other.name);
+            const owner = other.configBean.length ? other.configBean : other.className;
+            const id = plain in taken ? plain ~ "_" ~ sanitize(owner) : plain;
+            if (&other is &bean)
+                return id;
+            taken[id] = true;
+            taken[plain] = true;
+        }
+        return sanitize(bean.name);
+    }
+
     string beanFunctions(const ref BeanPlan bean)
     {
-        const id = sanitize(bean.name);
+        const id = beanId(bean);
         string text = "private Object create_" ~ id ~ "(BeanFactory factory)\n{\n    return " ~ creation(
                 bean) ~ ";\n}\n\n";
         if (needsInitialize(bean))
@@ -446,7 +464,7 @@ private struct Emitter
         import std.conv : to;
         import flint_tool.engine.aot.conditions : literal;
 
-        const id = sanitize(bean.name);
+        const id = beanId(bean);
         string text = "    {\n        BeanDefinition definition;\n        definition.name = " ~ literal(
                 bean.name) ~ ";\n        definition.type = " ~ literal(
                 bean.type) ~ ";\n        definition.types = " ~ stringArray(bean.types) ~ ";\n";

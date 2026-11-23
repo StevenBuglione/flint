@@ -115,3 +115,25 @@ final class Missing
         return new Missing;
     }
 }
+
+/// Two configurations defining a bean method of the same name under exclusive conditions, as petclinic-rest's
+/// DisableSecurityConfig and BasicAuthenticationConfig define `filterChain`: their generated helpers must not
+/// collide. Neither profile is ever active, so the sample's output is unchanged.
+@Configuration @Profile(["markers-a"]) class MarkerConfigA
+{
+    /// One `marker`.
+    @Bean FriendlyGreeter marker()
+    {
+        return new FriendlyGreeter;
+    }
+}
+
+/// ditto
+@Configuration @Profile(["markers-b"]) class MarkerConfigB
+{
+    /// The other `marker`.
+    @Bean FriendlyGreeter marker()
+    {
+        return new FriendlyGreeter;
+    }
+}
