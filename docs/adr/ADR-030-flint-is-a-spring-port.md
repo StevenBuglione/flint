@@ -212,7 +212,7 @@ Sources are fetched by checksum into a reference cache and never compiled.
 
 ## Open decisions
 
-- ~~Whether to patch LDC to leave out `localClasses`.~~ Settled: no patch, since LDC's own `-fno-moduleinfo-localclasses` does it (section 5).
+- ~~Whether to patch LDC to leave out `localClasses`.~~ Settled: LDC needs no patch. LDC 1.43's own `-fno-moduleinfo-localclasses` does it, and the `release` and `size` profiles of `policy/profiles.toml` pass it (section 5, `docs/milestones/13-binary-size.md`).
 - Whether to build the shipped druntime and Phobos with `-fno-moduleinfo-localclasses` too. The prebuilt runtime libraries keep their own class lists, so linked runtime classes stay alive. LDC's `ldc-build-runtime` can rebuild them without a fork, as the sanitizer lane already does.
 - Whether musl static-PIE outputs also take `-z pack-relative-relocs`. The pinned Alpine 3.22 musl (1.2.5) relocates RELR, and it saves 143,288 to 147,384 bytes on bench-cli and bench-rest built without native providers. Today only glibc outputs use it.
 - The JPA engine: persistence context, dirty checking, lazy loading, JPQL compiled at build time, Criteria. It is ported from Hibernate ORM (Apache-2.0 since March 2025) and gets its own ADR.
