@@ -39,8 +39,9 @@ private struct ThreadCounts
     ThreadBase owner;
     bool registered;
     size_t recorded;
-    /// Return addresses of recorded allocations: `siteCapacity` rows, malloc'd on the first recording.
-    void*[siteDepth]* sites;
+    /// Return addresses of recorded allocations: `siteCapacity` rows, malloc'd on the first recording; the last slot
+    /// of a row holds the allocation's bytes.
+    void*[siteDepth + 1]* sites;
 }
 
 private ThreadCounts threadCounts; // thread-local by design (policy/safety-policy.json)
@@ -73,7 +74,7 @@ final class CountingGC : GC
             return;
         atomicStore!(MemoryOrder.raw)(threadCounts.count, atomicLoad!(MemoryOrder.raw)(threadCounts.count) + 1);
         if (atomicLoad!(MemoryOrder.raw)(recordSites) && threadCounts.recorded < siteCapacity)
-            record();
+            record(added);
     }
 
     void enable()
@@ -318,7 +319,7 @@ private void releaseSites(ref ThreadCounts counts) nothrow @nogc
 }
 
 /// Keep the return addresses of the allocation being counted, past `record` and `counted` (Linux only).
-private void record() nothrow @nogc
+private void record(size_t bytes) nothrow @nogc
 {
     version (linux)
     {
@@ -327,7 +328,7 @@ private void record() nothrow @nogc
 
         if (threadCounts.sites is null)
         {
-            threadCounts.sites = cast(void*[siteDepth]*) cmalloc(siteCapacity * (void*[siteDepth]).sizeof);
+            threadCounts.sites = cast(void*[siteDepth + 1]*) cmalloc(siteCapacity * (void*[siteDepth + 1]).sizeof);
             if (threadCounts.sites is null)
                 return;
         }
@@ -338,6 +339,7 @@ private void record() nothrow @nogc
         foreach (i; 0 .. siteDepth)
             if (i + 2 < found)
                 frames[i] = raw[i + 2];
+        frames[siteDepth] = cast(void*) bytes;
     }
 }
 
@@ -426,44 +428,65 @@ private void record() nothrow @nogc
 /// The `limit` most frequent first frames outside druntime and this module among the allocations other threads
 /// recorded, as "count  function" lines.
 // SAFETY: Copies the recorded return addresses under the registry lock, then symbolizes copies only.
-@trusted string[] topSites(size_t limit)
+@trusted string[] topSites(size_t limit, bool includeCaller = false)
 {
-    size_t[string] tally;
+    size_t[2][string] tally;
     version (linux)
-        tallySites(tally);
+        tallySites(tally, includeCaller);
     string[] lines;
-    foreach (name, count; tally)
-        lines ~= rightAligned(count) ~ "  " ~ name;
+    foreach (name, counts; tally)
+        lines ~= rightAligned(counts[0]) ~ rightAligned(counts[1], 11) ~ " B  " ~ name;
     sortDescending(lines);
     return lines.length > limit ? lines[0 .. limit] : lines;
 }
 
-version (linux) private void tallySites(ref size_t[string] tally)
+/// The same tally ordered by bytes.
+// SAFETY: As topSites: symbolizes copies of the recorded addresses.
+@trusted string[] topSitesByBytes(size_t limit, bool includeCaller = false)
+{
+    size_t[2][string] tally;
+    version (linux)
+        tallySites(tally, includeCaller);
+    string[] lines;
+    foreach (name, counts; tally)
+        lines ~= rightAligned(counts[1], 11) ~ " B" ~ rightAligned(counts[0]) ~ "  " ~ name;
+    sortDescending(lines);
+    return lines.length > limit ? lines[0 .. limit] : lines;
+}
+
+version (linux) private void tallySites(ref size_t[2][string] tally, bool includeCaller)
 {
     if (!threadCounts.registered)
         register(); // the helpers allocate; a first registration under the lock would wait on itself
-    auto rows = recordedRows();
+    auto rows = recordedRows(includeCaller);
     const names = symbolize(executableOffsets(rows));
     foreach (ref frames; rows)
-        foreach (frame; frames)
+        foreach (frame; frames[0 .. siteDepth])
         {
             const name = names.get(frame, null);
             if (frame is null || runtimeFrame(name))
                 continue;
-            tally[name] = tally.get(name, 0) + 1;
+            auto counts = name in tally;
+            if (counts is null)
+            {
+                tally[name] = [0, 0];
+                counts = name in tally;
+            }
+            (*counts)[0] += 1;
+            (*counts)[1] += cast(size_t) frames[siteDepth];
             break;
         }
 }
 
 /// Every other thread's recorded frames, copied out under the registry lock.
-version (linux) private void*[siteDepth][] recordedRows()
+version (linux) private void*[siteDepth + 1][] recordedRows(bool includeCaller)
 {
-    void*[siteDepth][] rows;
+    void*[siteDepth + 1][] rows;
     registryLock.lock();
     scope (exit)
         registryLock.unlock();
     for (auto counts = registry; counts !is null; counts = counts.next)
-        if (counts !is &threadCounts && counts.sites !is null)
+        if ((includeCaller || counts !is &threadCounts) && counts.sites !is null)
             rows ~= counts.sites[0 .. counts.recorded];
     return rows;
 }
@@ -471,7 +494,7 @@ version (linux) private void*[siteDepth][] recordedRows()
 /// The address of each distinct frame in the executable itself, as addr2line reads it: relative to the load base of
 /// a position-independent executable, absolute in a fixed one, and one byte back, on the call rather than the return.
 /// A shared library's frames are left out: their offsets are relative to their own base.
-version (linux) private size_t[const(void)* ] executableOffsets(const(void*[siteDepth])[] rows)
+version (linux) private size_t[const(void)* ] executableOffsets(const(void*[siteDepth + 1])[] rows)
 {
     import core.sys.linux.dlfcn : Dl_info, dladdr;
 
@@ -481,7 +504,7 @@ version (linux) private size_t[const(void)* ] executableOffsets(const(void*[site
     const base = positionIndependent() ? cast(size_t) self.dli_fbase : 0;
     size_t[const(void)* ] offsets;
     foreach (ref frames; rows)
-        foreach (frame; frames)
+        foreach (frame; frames[0 .. siteDepth])
         {
             Dl_info info;
             if (frame is null || frame in offsets || dladdr(frame, &info) == 0 || info.dli_fbase !is self.dli_fbase)
@@ -594,12 +617,12 @@ private ptrdiff_t indexOf(const(char)[] text, char c) nothrow @nogc
     return -1;
 }
 
-private string rightAligned(size_t value)
+private string rightAligned(size_t value, size_t width = 6)
 {
     import std.conv : to;
 
     auto text = value.to!string;
-    while (text.length < 6)
+    while (text.length < width)
         text = " " ~ text;
     return text;
 }

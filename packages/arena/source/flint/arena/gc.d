@@ -74,9 +74,15 @@ void recordAllocationSites(bool on) nothrow @nogc
     flint.arena.sys.gc.counting.recordCallSites(on);
 }
 
-/// The `limit` functions that made the most recorded allocations on other threads, as "count  function" lines.
-/// Stop recording first.
-string[] topAllocationSites(size_t limit)
+/// The `limit` functions that made the most recorded allocations on other threads (and the caller's, with
+/// `includeCaller`), as "count  bytes B  function" lines. Stop recording first.
+string[] topAllocationSites(size_t limit, bool includeCaller = false)
 {
-    return flint.arena.sys.gc.counting.topSites(limit);
+    return flint.arena.sys.gc.counting.topSites(limit, includeCaller);
+}
+
+/// The same, ordered by the bytes they allocated, as "bytes B  count  function" lines.
+string[] topAllocationSitesByBytes(size_t limit, bool includeCaller = false)
+{
+    return flint.arena.sys.gc.counting.topSitesByBytes(limit, includeCaller);
 }
