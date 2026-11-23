@@ -71,7 +71,7 @@ When your assigned work is done, don't stop.
 | 3 | Boot on `flint.context`; web-server auto-configuration on the servlet adapter; the gs-rest-service Flint port passing `spring_bench.py accept` | boot | |
 | 4 | `engine-jdbc`, `JdbcTemplate`/`JdbcClient`; the gs-relational-data-access Flint port passing its suite | data-access | |
 | 5 | Beans and context complete for Phase 1 (`@Configuration`/`@Bean`, `@Value`, profiles, events, lifecycle) with upstream tests ported | framework-core | `0ef8a7b`, `c12b3c3`, `4f280e5` (gaps listed in `framework-core.md`: listener replies, FactoryBean, `@Priority`) |
-| 6 | jackson-databind subset byte-equal with Jackson, SLF4J, Jakarta Validation with Hibernate Validator messages | third-party-apis | |
+| 6 | jackson-databind subset byte-equal with Jackson, SLF4J, Jakarta Validation with Hibernate Validator messages | third-party-apis | `01947a2` (java.time), `daa0b85`, `d13b99b` (arrays, Optional, enums, records, `@JsonNaming`), `51756be`, `6e870d2` (validation), `12277d6` (checklists complete); goldens and gaps in `third-party.md` |
 | 7 | AOT contract 2 emission; mapping and descriptor tables for the three Phase 1 apps | flint-aot | |
 | 8 | Framework module budgets and probes for every `framework.json` module | size-levers | `01d5802`..`2e021fd` (timings provisional until proof-harness's quiet-window run) |
 | 9 | Cutover decisions 1–7 in `tools/cutover.py` and the CLI | m7-flint-cli | |
@@ -84,6 +84,6 @@ When your assigned work is done, don't stop.
 | 16 | macOS platform lane receipt in a quiet window | macOS session | |
 | 17 | linux-aarch64 platform lane receipt | linux-arm64-vm | |
 | 18 | DMD arm64 stage 2 (Flint on DMD arm64) | dmd-arm64 | |
-| 19 | `examples/framework/golden-wasm-app` compiles again: `flint_demo/sys/exports.d` assigns `CommandBuffer` and `SignalGraph`, whose `opAssign` engine-wasm-bridge and engine-ui-signals now `@disable` (found by m7-flint-cli; `build.py` itself is fixed) | | |
+| 19 | `examples/framework/golden-wasm-app` compiles again: `flint_demo/sys/exports.d` assigns `CommandBuffer` and `SignalGraph`, whose `opAssign` engine-wasm-bridge and engine-ui-signals now `@disable` (found by m7-flint-cli; `build.py` itself is fixed) | third-party-apis | |
 | 20 | Toolchain PGO training after the cutover: `install_toolchains.py` `PGO_APPS` trains on `examples/framework/golden-rest-service` and `benchmarks/bench-rest`, which are engine applications that leave the flint repo. Train through the fetched framework platform module, or choose flint-repo apps (found by m7-flint-cli) | | |
 | 21 | **Priority.** Template diet for the framework modules before any budget is raised: find where each module's instances come from (druntime hooks, Phobos, `flint.java` generics), cut them by the erased-core rule (ADR-030 section 5): non-template engines, no Phobos in the API layer, and generic façades that are one-liners. Report per module before and after in `decisions.md`, so the owner decides budgets on the reduced counts | size-levers | |
