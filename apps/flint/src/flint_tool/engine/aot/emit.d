@@ -420,6 +420,8 @@ private struct Emitter
         string text = "    {\n        BeanDefinition definition;\n        definition.name = " ~ literal(
                 bean.name) ~ ";\n        definition.type = " ~ literal(
                 bean.type) ~ ";\n        definition.types = " ~ stringArray(bean.types) ~ ";\n";
+        if (bean.objectTypes.length)
+            text ~= "        definition.objectTypes = " ~ stringArray(bean.objectTypes) ~ ";\n";
         text ~= "        definition.rank = " ~ (bean.rank + 1).to!string ~ ";\n";
         if (bean.dependsOn.length)
             text ~= "        definition.dependsOn = " ~ stringArray(bean.dependsOn) ~ ";\n";
@@ -792,8 +794,12 @@ private struct Emitter
     string listenerInvoker(const ref ListenerPlan listener)
     {
         const id = sanitize(listener.className) ~ "_" ~ sanitize(listener.method);
-        string text = "private void listen_" ~ id ~ "(Object bean, ref Any event)\n{\n    (cast("
-            ~ listener.className ~ ") bean)." ~ listener.method ~ "(event.get!(" ~ listener.eventType ~ ")());\n}\n\n";
+        const call = "(cast(" ~ listener.className ~ ") bean)." ~ listener.method ~ "(event.get!("
+            ~ listener.eventType ~ ")())";
+        // A non-void listener's result is published as replies (contract 3, invokeForResult).
+        string text = listener.returnType == "void"
+            ? "private void listen_" ~ id ~ "(Object bean, ref Any event)\n{\n    " ~ call ~ ";\n}\n\n"
+            : "private Any listen_" ~ id ~ "(Object bean, ref Any event)\n{\n    return Any.of(" ~ call ~ ");\n}\n\n";
         if (listener.conditionCode.length)
         {
             used["expression"] = true;
@@ -950,7 +956,8 @@ private struct Emitter
         return "    {\n        EventListenerSpec listener;\n        listener.bean = " ~ literal(
                 listener.bean) ~ ";\n        listener.eventType = " ~ literal(
                 listener.eventType) ~ ";\n        listener.condition = " ~ literal(
-                listener.condition) ~ ";\n        listener.order = " ~ order ~ ";\n        listener.invoke = &listen_"
+                listener.condition) ~ ";\n        listener.order = " ~ order ~ ";\n        listener." ~ (
+                listener.returnType == "void" ? "invoke" : "invokeForResult") ~ " = &listen_"
             ~ id ~ ";\n" ~ condition ~ "        registry.listener(listener);\n    }\n";
     }
 

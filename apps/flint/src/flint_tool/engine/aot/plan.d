@@ -94,6 +94,8 @@ struct BeanPlan
     string type;
     /// Every type it can be injected as.
     string[] types;
+    /// Contract 3: for a `FactoryBean!T`, the types of the object it makes: `T` first, then T's supertypes.
+    string[] objectTypes;
     /// Position in definition order.
     uint rank;
     /// How it is created.
@@ -414,6 +416,8 @@ struct ListenerPlan
     string[] conditionModules;
     /// The listener method, for compiling its condition: zero or one entry.
     Method[] conditionMethod;
+    /// The method's return type; a non-void listener's result is published as replies (`invokeForResult`).
+    string returnType;
 }
 
 /// A derived query.
@@ -870,6 +874,7 @@ private final class Analysis
         bean.name = componentName(candidate);
         bean.type = decl.fqn;
         bean.types = typesOf(*decl);
+        bean.objectTypes = factoryObjectTypes(*decl);
         bean.autoConfiguration = candidate.autoConfiguration;
         bean.className = decl.fqn;
         bean.source = location(decl.file, decl.line);
@@ -1014,6 +1019,17 @@ private final class Analysis
             "c.property(" ~ literal(enableAutoConfigurationProperty) ~ ", \"true\", true)",
             "!c.isAutoConfigurationExcluded(" ~ literal(type) ~ ")"
         ];
+    }
+
+    /// The types of the object a `FactoryBean!T` makes, so `getBean(T)` finds it before the factory exists.
+    string[] factoryObjectTypes(const ref TypeDecl decl)
+    {
+        foreach (ref supertype; decl.supertypes)
+        {
+            if (supertype.template_ == "flint.beans.factory.FactoryBean" && supertype.arguments.length == 1)
+                return typesOf(supertype.arguments[0]);
+        }
+        return null;
     }
 
     string componentName(ref Candidate candidate)
@@ -2255,6 +2271,7 @@ private final class Analysis
             listener.className = decl.fqn;
             listener.method = method.name;
             listener.eventType = method.parameters[0].type.name;
+            listener.returnType = method.returns.name;
             listener.condition = annotation.text("condition");
             if (listener.condition.length)
                 listener.conditionMethod = [clone(method)];
@@ -2529,6 +2546,24 @@ private final class MethodScope : imported!"flint_tool.engine.aot.spel".SpelScop
 
     bool member(string type, string name, Compiled[] arguments, bool call, string target, out Compiled result)
     {
+        // A member of a root property (`authentication.name`, `principal.getUsername()`) is a longer root path
+        // the runtime resolves: contract 3's rootProperty takes dotted names.
+        enum prefix = `context.rootProperty("`;
+        if (type == "Any" && target.length > prefix.length && target[0 .. prefix.length] == prefix
+                && arguments.length == 0)
+        {
+            import std.ascii : toLower;
+            import flint_tool.engine.aot.conditions : literal;
+
+            const path = target[prefix.length .. $ - 2];
+            string property = name;
+            if (call && name.length > 3 && name[0 .. 3] == "get")
+                property = toLower(name[3]) ~ name[4 .. $];
+            else if (call)
+                return false;
+            result = Compiled("context.rootProperty(" ~ literal(path ~ "." ~ property) ~ ")", "Any");
+            return true;
+        }
         if (type == "flint.engine.aot.expression.EvaluationContext")
         {
             if (name != "methodName" || call)

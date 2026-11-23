@@ -28,8 +28,8 @@ class OwnerRestController : OwnersApi
         return ResponseEntity.ok().build();
     }
 
-    /// POST /api/owners.
-    @PreAuthorize("hasRole(@roles.OWNER_ADMIN)") ResponseEntity addOwner(OwnerFieldsDto ownerFieldsDto)
+    /// POST /api/owners: also allowed for the user named admin.
+    @PreAuthorize("hasRole(@roles.OWNER_ADMIN) or authentication.name == 'admin'") ResponseEntity addOwner(OwnerFieldsDto ownerFieldsDto)
     {
         return ResponseEntity.ok().build();
     }

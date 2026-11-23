@@ -539,6 +539,8 @@ unittest
     const pricing = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot", "shop", "pricing.d"));
     expect(pricing.canFind("return Any.of((context.argument(0).get!(long)() > 10L));")).toBeTrue();
     expect(pricing.canFind("listener.conditionExpression = &condition_shop_pricing_Pricing_onNumber;")).toBeTrue();
+    expect(pricing.canFind("listener.invokeForResult = &listen_shop_pricing_Pricing_onGreeting;")).toBeTrue();
+    expect(pricing.canFind("listener.invoke = &listen_shop_pricing_Pricing_onNumber;")).toBeTrue();
     const data = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot", "shop", "data.d"));
     expect(data.canFind("&construct_Owner_0, true)")).toBeTrue();
     expect(data.canFind("descriptor.enumValue = &enum_OwnerStatus;")).toBeTrue();
@@ -804,6 +806,12 @@ unittest
     expect(controller.canFind(`ExpressionSpec("flint.security.access.prepost.PreAuthorize", "value", `
             ~ `"hasRole(@roles.OWNER_ADMIN)", &spel_OwnerRestController_`)).toBeTrue();
     expect(controller.canFind("final class OwnerRestController__FlintProxy")).toBeTrue();
+    // A root property's member is a dotted root path the runtime resolves.
+    expect(controller.canFind(`(context.rootProperty("authentication.name")).get!(string)() == "admin"`)).toBeTrue();
+    // A FactoryBean's object types come first, so getBean(Vets) finds the factory's object.
+    const vets = readText(buildPath(generated, "model", "vets.d"));
+    expect(vets.canFind(`definition.objectTypes = ["org.springframework.samples.petclinic.model.vets.Vets"];`))
+        .toBeTrue();
     // Properties inherited through getters: Owner : Person : BaseEntity.
     const model = readText(buildPath(generated, "model", "baseentity.d"));
     foreach (property; [`"telephone"`, `"firstName"`, `"id"`])

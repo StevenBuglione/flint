@@ -27,6 +27,12 @@ import flint.stereotype : Component;
         this.premium = premium;
     }
 
+    /// A listener with a result: the runtime publishes it as a reply (invokeForResult).
+    @EventListener string onGreeting(string text)
+    {
+        return "re: " ~ text;
+    }
+
     /// Large numbers only: the condition compiles to `context.argument(0).get!(long)() > 10L`.
     @EventListener(condition: "#event > 10") void onNumber(long event)
     {
