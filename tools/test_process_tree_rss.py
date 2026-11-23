@@ -10,8 +10,18 @@ import measure_builds  # noqa: E402
 
 
 def resident(pid):
+    if sys.platform == 'darwin':
+        # ps reads the same task info as libproc (ADR-024), in KiB.
+        return int(subprocess.check_output(['ps', '-o', 'rss=', '-p', str(pid)], text=True)) * 1024
     with open(f'/proc/{pid}/statm') as stream:
         return int(stream.read().split()[1]) * measure_builds.PAGE_BYTES
+
+
+def children_of(pid):
+    if sys.platform == 'darwin':
+        found = subprocess.run(['pgrep', '-P', str(pid)], capture_output=True, text=True).stdout
+        return [int(child) for child in found.split()]
+    return [int(p) for p in os.listdir('/proc') if p.isdigit() and ProcessTreeRssTest.parent(int(p)) == pid]
 
 
 class ProcessTreeRssTest(unittest.TestCase):
@@ -24,7 +34,7 @@ class ProcessTreeRssTest(unittest.TestCase):
         try:
             children = []
             for _ in range(200):
-                children = [int(p) for p in os.listdir('/proc') if p.isdigit() and self.parent(int(p)) == tree.pid]
+                children = children_of(tree.pid)
                 if children and resident(children[0]) > 60 << 20:
                     break
                 time.sleep(.02)

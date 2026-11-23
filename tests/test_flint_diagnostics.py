@@ -16,7 +16,13 @@ import ci  # noqa: E402
 
 MISUSE = ROOT / 'tests' / 'compile' / 'misuse'
 TOOLS = Path(os.environ.get('FLINT_TOOLCHAIN_DIR') or ROOT / '.tools')
-DMD = TOOLS / 'dmd2' / 'linux' / 'bin64' / 'dmd'
+if sys.platform == 'darwin':
+    import install_toolchains  # noqa: E402
+
+    # LDC's ldmd2 fills the DMD role on macOS (ADR-024).
+    DMD = TOOLS / install_toolchains.LDC_DARWIN / 'bin' / 'ldmd2'
+else:
+    DMD = TOOLS / 'dmd2' / 'linux' / 'bin64' / 'dmd'
 # The DMD fork exists on Linux x86-64 only (ADR-024, ADR-026); elsewhere `dmd` is LDC's ldmd2 or upstream DMD.
 FORK_HOST = sys.platform == 'linux' and os.uname().machine in ('x86_64', 'amd64')
 ERROR = re.compile(r'^(?P<file>.+?)\((?P<line>\d+)(?:,\d+)?\): Error: (?P<message>.*)$')

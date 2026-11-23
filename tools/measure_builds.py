@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Produce actual build/size evidence; absent implementations or probes fail closed.
 
-Measurements run sequentially on the dedicated Linux x86-64 performance runner.
+Measurements run sequentially on the dedicated Linux x86-64 performance runner, or on the macOS arm64
+runner (ADR-025), where LDC's ldmd2 fills the dev profile's DMD role until DMD arm64 lands (ADR-024).
 Cold means source/build-cache cold with prebuilt toolchain runtimes and native C
 libraries already prepared. It does not mean dropping the OS page cache.
 """
@@ -75,6 +76,34 @@ def process_tree_rss(root, floor):
     return total
 
 
+if sys.platform == 'darwin':
+    import ctypes
+
+    _LIBPROC = ctypes.CDLL('/usr/lib/libproc.dylib')
+    _PROC_PIDTASKINFO = 4
+
+    class _TaskInfo(ctypes.Structure):
+        # struct proc_taskinfo (<sys/proc_info.h>): virtual and resident sizes, then 80 more bytes.
+        _fields_ = [('virtual_size', ctypes.c_uint64), ('resident_size', ctypes.c_uint64),
+                    ('rest', ctypes.c_uint8 * 80)]
+
+    def process_tree_rss(root, floor):
+        """Resident bytes of `root` and its live descendants, from libproc's task info, which is the value
+        psutil reports as memory_info().rss on macOS. Only the tree is walked; `floor` is unused."""
+        total = 0
+        pending = [root]
+        children = (ctypes.c_int * 1024)()
+        info = _TaskInfo()
+        while pending:
+            pid = pending.pop()
+            if _LIBPROC.proc_pidinfo(pid, _PROC_PIDTASKINFO, ctypes.c_uint64(0), ctypes.byref(info),
+                                     ctypes.sizeof(info)) == ctypes.sizeof(info):
+                total += info.resident_size
+            count = _LIBPROC.proc_listchildpids(pid, children, ctypes.sizeof(children))
+            pending.extend(children[i] for i in range(max(0, min(count, len(children)))) if children[i] > 0)
+        return total
+
+
 def timed_process(command, cwd, env, log_path):
     peak = 0
     start = time.perf_counter_ns()
@@ -84,7 +113,7 @@ def timed_process(command, cwd, env, log_path):
         floor = process.pid
         while process.poll() is None:
             # A PID wrap during the build hands out numbers below the root's; scan every process from then on.
-            if floor:
+            if floor and sys.platform == 'linux':
                 try:
                     with open('/proc/sys/kernel/ns_last_pid') as stream:
                         if int(stream.read()) < floor:
@@ -255,10 +284,11 @@ def source_identity(root):
     prefix = run_checked(['git', 'rev-parse', '--show-prefix'], root).stdout.strip()
     native = None
     expected = {}
-    receipt_path = root / '.native/install/linux-x86_64-glibc/flint-native-install.json'
+    target = 'macos-arm64' if sys.platform == 'darwin' else 'linux-x86_64-glibc'
+    receipt_path = root / '.native/install' / target / 'flint-native-install.json'
     if receipt_path.is_file():
         import native_build
-        args = argparse.Namespace(work_dir=root / '.native', target='linux-x86_64-glibc',
+        args = argparse.Namespace(work_dir=root / '.native', target=target,
                                   prefix=None, cc=None, cxx=None, sanitize=None, phase='build')
         builder = native_build.Builder(args, json.loads((root / 'policy/native-lock.json').read_text()))
         expected = builder.dub_recipe_blocks()  # Rehashes every referenced installed archive.
@@ -305,6 +335,8 @@ def workload_digest(root, path, native_inputs):
 
 
 def stripped_size(target, strip, readelf, workspace, log):
+    if sys.platform == 'darwin':
+        return stripped_size_macho(target, strip, readelf, workspace, log)
     strip_command = [strip, '--strip-all', target]
     run_checked(strip_command, workspace)
     audit_command = [readelf, '--wide', '--dynamic', target]
@@ -324,20 +356,44 @@ def stripped_size(target, strip, readelf, workspace, log):
             'dynamic_system_dependencies': needed, 'log_sha256': digest(log)}
 
 
+def stripped_size_macho(target, strip, otool, workspace, log):
+    """Mach-O: Apple strip removes every symbol of an executable, and otool -L lists its dylibs."""
+    strip_command = [strip, target]
+    run_checked(strip_command, workspace)
+    audit_command = [otool, '-L', target]
+    audit = run_checked(audit_command, workspace)
+    needed = sorted(line.strip().split(' (')[0] for line in audit.stdout.splitlines()[1:] if line.strip())
+    # Only the operating system's own libraries and frameworks may remain dynamic (ADR-021 section 4).
+    unexpected = [name for name in needed if not name.startswith(('/usr/lib/', '/System/Library/Frameworks/'))]
+    if unexpected:
+        raise RuntimeError('uncounted shared dependency; static profile or full closure measurement required: '
+                           + str(unexpected))
+    with log.open('a', encoding='utf-8') as output:
+        output.write('\n' + json.dumps({'strip_command': [str(x) for x in strip_command],
+                                       'audit_command': [str(x) for x in audit_command]}) + '\n' + audit.stdout + audit.stderr)
+    return {'binary_bytes': target.stat().st_size, 'sha256': digest(target),
+            'dynamic_system_dependencies': needed, 'log_sha256': digest(log)}
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--manifest', type=Path, default=ROOT / 'policy/build-benchmarks.json')
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--dmd', default='dmd')
+    darwin = sys.platform == 'darwin'
+    parser.add_argument('--dmd', default='ldmd2' if darwin else 'dmd',
+                        help='the dev-profile compiler: the forked DMD, or ldmd2 on macOS (ADR-024)')
     parser.add_argument('--ldc', default='ldc2')
     parser.add_argument('--dub', default='dub')
     parser.add_argument('--go', default='go')
     parser.add_argument('--strip', default='strip')
-    parser.add_argument('--readelf', default='readelf')
+    parser.add_argument('--readelf', default='otool' if darwin else 'readelf',
+                        help='the dynamic-dependency audit tool: readelf, or otool on macOS')
     parser.add_argument('--lld', default=None, help='Optional external LLD22; default uses system cc/ld with bundled LLVMgold plugin')
     args = parser.parse_args(argv)
-    if sys.platform != 'linux' or os.uname().machine != 'x86_64':
-        raise RuntimeError('measurement policy is Linux x86-64; cross-platform correctness uses its separate matrix')
+    host = (sys.platform, os.uname().machine)
+    if host not in (('linux', 'x86_64'), ('darwin', 'arm64')):
+        raise RuntimeError('measurement runners are Linux x86-64 and macOS arm64 (ADR-025); '
+                           'cross-platform correctness uses its separate matrix')
     manifest = json.loads(args.manifest.read_text())
     packages = json.loads((ROOT / 'policy/packages.json').read_text())['packages']
     if manifest['schema'] != 1 or set(manifest['packages']) != set(packages):
@@ -375,7 +431,11 @@ def main(argv=None):
         if not found:
             raise RuntimeError('required executable missing: ' + getattr(args, name))
         setattr(args, name, str(Path(found).resolve()))
-        command = [getattr(args, name), 'version' if name == 'go' else '--version']
+        if darwin and name == 'strip':
+            # Apple's strip has no version option; it ships with the cctools otool reports.
+            command = [shutil.which('otool') or 'otool', '--version']
+        else:
+            command = [getattr(args, name), 'version' if name == 'go' else '--version']
         version = run_checked(command, ROOT).stdout
         tools[name] = {'sha256': digest(getattr(args, name)), 'version': version.strip()}
     if args.lld and not re.search(r'LLD\s+22\.', tools['lld']['version']):
@@ -383,7 +443,8 @@ def main(argv=None):
     for name in ['cc', 'ld']:
         executable=shutil.which(name)
         if not executable:raise RuntimeError('native compiler driver/linker missing: '+name)
-        tools[name]={'sha256':digest(executable),'version':run_checked([executable,'--version'],ROOT).stdout.strip()}
+        probe=run_checked([executable,'-v' if darwin and name=='ld' else '--version'],ROOT)
+        tools[name]={'sha256':digest(executable),'version':(probe.stdout or probe.stderr).strip()}
     for name,path in [('ldc_config',Path(args.ldc).parent.parent/'etc/ldc2.conf'),
                       ('llvmgold_plugin',Path(args.ldc).parent.parent/'lib/LLVMgold-ldc.so')]:
         if path.is_file():tools[name]={'sha256':digest(path)}
@@ -402,6 +463,9 @@ def main(argv=None):
               'packages': {}, 'apps': {}, 'go': {'apps': {}}, 'trials': [], 'size_trials': []}
     base_env = os.environ.copy()
     base_env.pop('DFLAGS', None)
+    if darwin:
+        # DUB treats ldmd2 as DMD, and the fork's pipeline writes ELF-style archives (ADR-024).
+        base_env['FLINT_DUB_PIPELINE'] = '0'
     # A fully qualified LDC linker path is accepted by -linker; no shell is involved.
     native = native_profiles(args.lld)
     workload_files={}

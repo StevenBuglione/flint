@@ -739,7 +739,8 @@ def main():
         name='oha-linux-amd64';relative='oha-1.16.0'
     elif a.compiler=='go':
         if (osname,arch)==('Windows','x86_64'):name='go1.27.4.windows-amd64.zip'  # Diagnostic comparisons (ADR-025).
-        elif (osname,arch)!=('Linux','x86_64'):raise SystemExit('Go reference benchmark pin is Linux x86_64 and Windows x86_64')
+        elif (osname,arch)==('Darwin','aarch64'):name='go1.27.4.darwin-arm64.tar.gz'  # The macOS gate's comparator (ADR-025).
+        elif (osname,arch)!=('Linux','x86_64'):raise SystemExit('Go reference benchmark pin is Linux x86_64, macOS arm64 and Windows x86_64')
         else:name='go1.27.4.linux-amd64.tar.gz'
         relative='go/bin'
     else:

@@ -23,6 +23,8 @@ EXCLUDE = {'.git', '.dub', '.dub-home', '.ci-dub-home', '.tools', '.native', '.n
 
 
 NATIVE_TREE = None
+# The executable filling the dev profile's DMD role: the forked DMD, or LDC's ldmd2 on macOS (ADR-024).
+COMPILER = 'dmd'
 
 
 def native_blocks():
@@ -115,7 +117,10 @@ def trial(kind, app, toolbin, scratch, combined, check):
             copy_repo(REPO, w)
             env.update(PATH=toolbin + ':' + env['PATH'], DUB_HOME=str(w / '.dub-home'),
                        DFLAGS='-preview=dip1000 -debug -g -boundscheck=on')
-            cmd = ['dub', 'build', '--compiler=dmd', '--build=plain', '--skip-registry=all'] + (['--combined'] if combined else [])
+            if sys.platform == 'darwin':
+                # DUB treats ldmd2 as DMD, and the fork's pipeline writes ELF-style archives (ADR-024).
+                env['FLINT_DUB_PIPELINE'] = '0'
+            cmd = ['dub', 'build', '--compiler=' + COMPILER, '--build=plain', '--skip-registry=all'] + (['--combined'] if combined else [])
             cwd, binary = w / f'benchmarks/bench-{app}', w / f'build/bench-{app}'
             edit = cwd / 'source/app.d'
             line = '\nprivate enum uint __flint_measure_edit_1 = 1;\n'
@@ -132,9 +137,11 @@ def trial(kind, app, toolbin, scratch, combined, check):
 
 
 def main():
-    global GO, GO_PRIME, NATIVE_TREE, BLOCKS
+    global GO, GO_PRIME, NATIVE_TREE, BLOCKS, COMPILER
     ap = argparse.ArgumentParser()
     ap.add_argument('--toolbin', required=True)
+    ap.add_argument('--compiler', default='ldmd2' if sys.platform == 'darwin' else 'dmd',
+                    help='the dev-profile compiler on --toolbin: dmd, or ldmd2 on macOS (ADR-024)')
     ap.add_argument('--trials', type=int, default=9)
     ap.add_argument('--apps', default='cli,rest')
     ap.add_argument('--combined', action='store_true')
@@ -146,7 +153,7 @@ def main():
     ap.add_argument('--native-tree', type=Path)
     ap.add_argument('--scratch', type=Path, default=Path(tempfile.gettempdir()))
     a = ap.parse_args()
-    GO, GO_PRIME, NATIVE_TREE = a.go_bin, a.go_cache, a.native_tree
+    GO, GO_PRIME, NATIVE_TREE, COMPILER = a.go_bin, a.go_cache, a.native_tree, a.compiler
     BLOCKS = native_blocks()
     scratch = a.scratch
     scratch.mkdir(parents=True, exist_ok=True)
