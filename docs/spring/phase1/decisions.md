@@ -227,6 +227,21 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - CPU per request **1.17 (1.14–1.19)** [1.46]: 9.7 against 8.3 µs.
 
     Cutting allocations by 39% moved throughput, latency and CPU by 10–20% each, while RSS is flat. Every metric still misses. Evidence: `benchmarks/spring/evidence/gs-rest-multicore-4/`.
+  - **Update, 22:57–23:37Z (certified, `gs-rest-multicore-5` at `b520e07a`).** This batch has:
+    - `73d9ecbf` (/greeting at 16 allocations per request);
+    - `7938d402` (servlet handler limit 200, 100 fibers per reactor);
+    - `46d21e28` (inline Any);
+    - flint-aot's `30cebc6a`;
+    - the rebuilt shared toolchain (DMD `0aae4c32`; multicore-4 ran on `1a894e5e`).
+
+    The collector is druntime's default with no gcopt, on the same workload. A claimed window with no foreign build in 217 samples, and the port passes 18/18 exact. (The 21:25Z attempt was voided by a foreign compile.) Flint/Go median ratios (99% interval), with multicore-4's in brackets:
+    - throughput **0.916 (0.910–0.922)** [0.885]: 227k against 248k req/s;
+    - p50 1.69 (1.54–1.78) [1.48]: 0.102 against 0.061 ms. **Worse**;
+    - p99 **1.57 (1.38–1.68)** [1.93]: 0.405 against 0.258 ms;
+    - peak RSS **1.44 (1.42–1.47)** [1.62]: 19.9 against 13.8 MB;
+    - CPU per request 1.33 (1.22–1.39) [1.17 (1.14–1.19)]: 11.0 against 8.3 µs. **Worse beyond the intervals.**
+
+    RSS fell about 2.3 MB (the handler limit), and p99 and throughput improved. CPU per request rose about 13% and p50 rose. The batch can't attribute that rise to one change. The handler limit (fewer fibers per reactor, with queueing past the limit) is a candidate, as is the toolchain change for anything DMD-built; the release build itself is LDC. Every metric still misses. Evidence: `benchmarks/spring/evidence/gs-rest-multicore-5/`.
 
 - 2026-11-23, proof-harness: **The Phase 0 runtime levers regress bench-rest's peak RSS by 6.2%.** This is certified: queue entry `runtime-levers-rest`, 14:14–14:54Z, load 0.78 at the start, no foreign build in any of 220 samples. bench-rest at `e16668e` (base) against `966c4b7` (FiberLocal, 256 KiB guarded fiber stacks, the offload pool), both built with bench-rest's README release command, on the production REST workload with 9 interleaved trials. Median ratios with 99% intervals against `policy/budgets.json`'s regression ceilings:
   - peak RSS 1.062 (1.045–1.090; 13.66 MB against 12.87 MB): over the 1.05 ceiling;
