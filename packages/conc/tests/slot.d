@@ -1,7 +1,7 @@
 /// ProcessSlot across threads: concurrent setIfAbsent calls leave the published object in place.
 module slot;
 
-import core.thread : Thread;
+import core.thread.osthread : Thread; // DMD on Windows resolves Thread only from its declaring module (ADR-026)
 import flint.conc.slot : ProcessSlot;
 
 private final class Box
