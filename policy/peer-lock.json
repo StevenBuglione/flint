@@ -60,6 +60,12 @@
       "license": "GPL-2.0-with-classpath-exception",
       "binaries": {"java": "bin/java"},
       "hosts": {
+        "linux-aarch64-glibc": {
+          "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.13.1%2B2/OpenJDK21U-jre_aarch64_linux_hotspot_21.0.13.1_2.tar.gz",
+          "sha256": "52bc58323d9266538a6361a3cf8365fc1186dd9510d7f33f623681c4aabb7e72",
+          "checksum_url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.13.1%2B2/OpenJDK21U-jre_aarch64_linux_hotspot_21.0.13.1_2.tar.gz.sha256.txt",
+          "verification": "The digest equals the Eclipse Temurin published .sha256.txt and the GitHub release asset digest (observed 2026-11-23); the same release's x64 Linux digest equals the entry above."
+        },
         "macos-arm64": {
           "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.13.1%2B2/OpenJDK21U-jre_aarch64_mac_hotspot_21.0.13.1_2.tar.gz",
           "sha256": "848feb1906c7de79de4f8391636042193fbd46eff86e26299506c4656f62c260",
