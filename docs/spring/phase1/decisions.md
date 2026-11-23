@@ -71,6 +71,10 @@
     - scratch trials still clear the log.
 
     The old method stays published, not gating, as `flint_cached_cold_digests_cleared_seconds` ("context: primary with the digest log cleared"), so the effect of this change is visible in every run. The coordinator or the owner can restore the old gating method by swapping the two series.
+  - **Confirmed by the coordinator, on conditions (16:57Z, `5221ad67`, and their message to proof-harness; this supersedes `f35a12b3`'s "keep wiping digests.log").** The log already lives in `FLINT_CACHE`, and one that holds only digests of the toolchain, flint and the platform sources is platform cache state. ADR-030 section 5 defines the primary as the platform cache against a std-primed `GOCACHE`, so keeping it is within the definition, not a workload change. Conditions before the primary gates:
+    1. Every project-keyed entry is pruned, and the run fails on a project-keyed hit. Met in `bf57dc9f`, below.
+    2. m7-flint-cli's staleness test: an edited platform or toolchain file is re-hashed despite an unchanged size and a restored mtime (ctime and inode in the stat key). This is m7's to deliver.
+    3. The context verdict "primary with the digest log cleared" is in every run. Met in `bf57dc9f`.
   - **Platform-only cold trials (proof-harness, 17:30Z; the coordinator's condition 1 of 16:57Z).** The primed cache keeps the project's own AOT models, their annotation sets and generated output (since `7907be4e`), which flint-aot moved under `projects/<root hash>/` in `64b85d08`. Cold trials reused them: the `2018e5e5` logs say "0 extracted, 23 from the shared cache". Go's cold trials never reuse the app's own work.
 
     Now `measure_builds --spring` builds a platform-only cache once, after the prime: a hard-link copy without `projects/`, with the digest log pruned of the port's entries and copied, not linked. Each cold trial (cached, static, scratch, context) then gets a fresh hard-link clone of it, deleted after the trial; the trial's edit build runs in the same clone. The run fails in three cases:

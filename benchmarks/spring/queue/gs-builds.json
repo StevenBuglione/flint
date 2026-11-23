@@ -2,7 +2,7 @@
   "schema": "flint.measure-queue/1",
   "id": "gs-builds",
   "created": "2026-11-23",
-  "status": "pending",
+  "status": "blocked",
   "priority": 1,
   "requested_by": "m7-flint-cli (local_b3b0e1d4), after the platform cache (9655843b)",
   "summary": "gs-rest-service builds against both ADR-030 headlines: platform cache vs std-primed GOCACHE, and --no-platform-cache vs go build -a",
@@ -10,7 +10,7 @@
   "builds": {
     "tree": {
       "app": "checkout",
-      "commit": "1235dc4b8a68",
+      "commit": "bf57dc9f8113",
       "flint": true,
       "linker": "mold",
       "fork": true
@@ -757,5 +757,6 @@
         }
       }
     }
-  ]
+  ],
+  "blocked_on": "m7-flint-cli's cold-path step 2 (no app-side dub describe); step 1 (the platform description in FLINT_CACHE) is 804c2b6c. Then re-pin and run with the platform-only cold trials of bf57dc9f (coordinator, 2026-11-23)."
 }
