@@ -657,6 +657,9 @@ def main(argv=None):
         raise RuntimeError('Build measurement requires implemented benchmark fixtures:\n' + '\n'.join(missing))
     tools = {}
     required = ['dmd', 'dub', 'go'] if args.apps_only else ['dmd', 'ldc', 'dub', 'go', 'strip', 'readelf']
+    if args.app_sizes or args.framework_sizes:
+        # The size-only modes build no Go reference.
+        required.remove('go')
     for name in required + (['lld'] if args.lld else []):
         found = shutil.which(getattr(args, name))
         if not found:
