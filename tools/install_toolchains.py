@@ -357,10 +357,16 @@ ARM64_DFLAGS = ['-conf=', '-marm64', '-O', '-release', '-inline', '-preview=dip1
                 '-preview=dtorfields']
 
 
+PHOBOS_SONAME = 'libphobos2.so.0.114'
+
+
 def build_arm64_runtime(dmd, src, work, osname):
     """Patch druntime and Phobos from the release sources in `src` and build them with `dmd -marm64` into one
-    static libphobos2.a, with druntime's assembly and C parts and Phobos's zlib. Returns (library, sources)
-    where `sources` holds the patched druntime and phobos directories for the import paths.
+    static libphobos2.a, with druntime's assembly and C parts and Phobos's zlib. On Linux, also the shared
+    libphobos2.so (PHOBOS_SONAME), as the release ships for x86-64: druntime compiled again with -version=Shared,
+    as its Makefile does for the shared library, and linked with Phobos. Dev builds link it (ADR-030).
+    Returns (library, sources, shared) where `sources` holds the patched druntime and phobos directories for the
+    import paths and `shared` is the shared library, or None on macOS.
     """
     import concurrent.futures
     sources = work / 'runtime-src'
@@ -377,13 +383,19 @@ def build_arm64_runtime(dmd, src, work, osname):
     druntime = sources / 'druntime'
     listed = (druntime / 'mak' / 'SRCS').read_text().replace('\\\n', ' ').split('=', 1)[1].split()
     jobs = [(druntime, s.replace('\\', '/'), ['-Isrc', '-Iimport', '-w', '-de']) for s in listed if s.endswith('.d')]
+    shared_objects = work / 'runtime-obj-shared'
+    if shared_objects.exists():
+        shutil.rmtree(shared_objects)
+    if osname != 'Darwin':
+        shared_objects.mkdir(parents=True)
+        jobs += [(druntime, module, flags + ['-version=Shared'], shared_objects) for _, module, flags in list(jobs)]
     phobos = sources / 'phobos'
     jobs += [(phobos, str(p.relative_to(phobos)), ['-I' + str(druntime / 'import'), '-I.', '-w'])
              for top in ('std', 'etc') for p in sorted((phobos / top).rglob('*.d'))]
 
     def compile_module(job):
-        root, module, flags = job
-        obj = objects / (root.name + '.' + module.replace('/', '.')[:-2] + '.o')
+        root, module, flags, *into = job
+        obj = (into[0] if into else objects) / (root.name + '.' + module.replace('/', '.')[:-2] + '.o')
         r = subprocess.run([str(dmd)] + ARM64_DFLAGS + target + flags + ['-c', module, '-of' + str(obj)],
                            cwd=root, capture_output=True, text=True)
         return module, r.returncode, r.stdout + r.stderr
@@ -408,7 +420,15 @@ def build_arm64_runtime(dmd, src, work, osname):
         subprocess.run(['libtool', '-static', '-no_warning_for_no_symbols', '-o', str(library)] + members, check=True)
     else:
         subprocess.run(['ar', 'rcs', str(library)] + members, check=True)
-    return library, sources
+    if osname == 'Darwin':
+        return library, sources, None
+    # The shared library: druntime's -version=Shared objects in place of the static ones, Phobos and the C parts
+    shared = work / (PHOBOS_SONAME + '.0')
+    members = sorted(str(o) for o in shared_objects.glob('*.o')) + \
+        sorted(str(o) for o in objects.glob('*.o') if not o.name.startswith('druntime.'))
+    subprocess.run([cc, '-shared', '-Wl,-soname,' + PHOBOS_SONAME, '-o', str(shared)] + members
+                   + ['-lpthread', '-lm', '-ldl'], check=True)
+    return library, sources, shared
 
 
 def install_dmd_arm64(destination):
@@ -443,7 +463,7 @@ def install_dmd_arm64(destination):
                     *tuned, '-j' + str(min(os.cpu_count() or 2, 16)), 'dmd'], cwd=stage / 'compiler' / 'src', env=env,
                    check=True, stdout=subprocess.DEVNULL)
     built = stage / 'generated' / osdir / 'release' / '64' / 'dmd'
-    library, sources = build_arm64_runtime(built, dmd2 / 'src', work, osname)
+    library, sources, shared = build_arm64_runtime(built, dmd2 / 'src', work, osname)
 
     bin_dir = dmd2 / osdir / 'bin64'
     lib_dir = dmd2 / osdir / 'lib64'
@@ -457,6 +477,11 @@ def install_dmd_arm64(destination):
     shutil.copyfile(built, bin_dir / 'dmd')
     (bin_dir / 'dmd').chmod(0o755)
     shutil.copyfile(library, lib_dir / 'libphobos2.a')
+    if shared:
+        # As the x86-64 release lays it out: the file, then its soname and the link name as symlinks
+        shutil.copyfile(shared, lib_dir / shared.name)
+        (lib_dir / PHOBOS_SONAME).symlink_to(shared.name)
+        (lib_dir / 'libphobos2.so').symlink_to(PHOBOS_SONAME)
     shutil.copyfile(PRELUDE, bin_dir / 'dmd-server-prelude.txt')
     flags = ['"-I%@P%/../../src/phobos"', '"-I%@P%/../../src/druntime/import"', '"-L-L%@P%/../lib64"', '-marm64']
     if osname != 'Darwin':
@@ -464,7 +489,8 @@ def install_dmd_arm64(destination):
     (bin_dir / 'dmd.conf').write_text('[Environment]\nDFLAGS=' + ' '.join(flags) + '\n')
     return bin_dir, {'dmd_patch_sha256': dmd_patch_digest(), 'druntime_patch_sha256': sha256_file(DRUNTIME_PATCH),
                      'phobos_patch_sha256': sha256_file(PHOBOS_PATCH), 'prelude_sha256': sha256_file(PRELUDE),
-                     'dmd_sha256': sha256_file(bin_dir / 'dmd'), 'libphobos2_sha256': sha256_file(lib_dir / 'libphobos2.a')}
+                     'dmd_sha256': sha256_file(bin_dir / 'dmd'), 'libphobos2_sha256': sha256_file(lib_dir / 'libphobos2.a'),
+                     **({'libphobos2_so_sha256': sha256_file(lib_dir / shared.name)} if shared else {})}
 
 
 FLINT_APP = ROOT / 'apps' / 'flint'

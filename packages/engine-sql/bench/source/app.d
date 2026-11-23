@@ -2,7 +2,7 @@ module app;
 
 import flint.arena : Error, RequestArena, Status;
 import flint.conc : Context;
-import flint.engine.sql : Driver, Pool, PoolOptions, Row, SqlValue, ValueKind;
+import flint.engine.sql : Driver, enable, Pool, PoolOptions, Row, SqlValue, ValueKind;
 import probe : measureTrial, nanos, require, rows, schema;
 
 @safe:
@@ -14,6 +14,7 @@ private ulong trial(string address, out long queue, out long driver)
     options.driver = address.length != 0 ? Driver.postgres : Driver.sqlite;
     options.connectionString = address.length != 0 ? address : ":memory:";
     Pool pool;
+    require(enable(options.driver) == Status.ok);
     require(pool.open(options).code == Status.ok);
     Context context;
     scope (exit)

@@ -24,7 +24,7 @@ This file lets the Spring port sessions (ADR-030) keep moving when neither the o
 ## Rules for deciding without waiting
 
 1. **The documents decide first.** `AGENTS.md`, ADR-030, ADR-031, the rulebook, `aot-contract.md` and this file. If they answer the question, act on them.
-2. **The owner decides inside its area.** Ask the owner directly with `SendMessage`, not through the coordinator.
+2. **The owner decides inside its area.** Ask the owner directly with `python3 tools/agentctl.py send` (a Claude `SendMessage` may go alongside as a doorbell), not through the coordinator. Every role also writes its hand-off state with `agentctl handoff` at the end of every turn, so an agent in any harness can take the role over (`docs/agents/README.md`).
 3. **Never wait more than 30 minutes for a peer.** If the owner hasn't answered and you're blocked, take the smallest reversible step that unblocks you:
    - add new files in the owner's package rather than editing its existing ones;
    - keep the change in a commit of its own;
@@ -82,6 +82,12 @@ Queue policy (coordinator, 2026-11-23). A claimed window pauses everyone, so it 
 
 - **Claimed windows.** Only entries of about 30 minutes or less that gate a decision claim one. They are gs-builds (per-phase timings and the prelude), gs-rest-multicore-2, the error-path p99s once boot's Date-based error timestamp lands, and the per-application Phase 1 parts under the conditions below. Each entry file says `"window": "claim"` or `"natural"`; without one, an entry estimated at 30 minutes or less claims and anything longer is natural. An entry over 30 minutes claims only when the coordinator names it.
 - **Natural quiet.** Long, low-priority entries run only after 5 minutes of natural quiet with no `hold`-wrapped work alive, and never take the lock: they are framework-timings, the GC matrix, java-context and phase1-guides. While one runs, `.flint/measure/MEASURING-NATURAL` exists. `hold` ignores it, so nobody pauses. The moment another session's build or `hold`-wrapped command appears, the run stops and records the attempt as interrupted, not evidence.
+- **Owner priority (decisions.md `74a746d1`, coordinator 21:52Z).** The fast-path spike and petclinic-rest's cold build come first. The order from 21:52Z:
+  1. gs-rest-multicore-5, already running;
+  2. the fast-path A/B as soon as fast-path-spike says it's ready, with its first window ahead of everything else (priority 0);
+  3. gc-pools-ab;
+  4. the phase1-builds-petclinic re-run, pinned at or after flint-aot's describer memoization once it lands;
+  5. everything else, in the order below.
 - **Order (coordinator, 2026-11-23 19:25Z: runtime is the Phase 1 blocker).** Each entry's `priority` (lower first) comes before its estimate, and natural entries wait while any claimed entry is pending. The gs-builds run pinned at `aa17876b` finishes first, uninterrupted. After it, runtime runs take claimed windows ahead of build runs:
   - **priority 1:** a gs-rest-multicore re-measure. Add one per meaningful batch of allocation cuts on main, not per commit: roughly every 25% drop in allocations per request, by data-access's per-request allocation gate (`policy/request-allocations.json` once it lands). The baseline is gs-rest-multicore-3 at `1141a9bc`, at 31 allocations per request (web-http's `bc808cca`), so the next one is due at about 23 or fewer.
   - **priority 2:** the error-path p99 entries, once boot's Date timestamp lands, and the per-application Phase 1 HTTP parts under their conditions below.

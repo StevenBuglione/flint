@@ -7,7 +7,7 @@
   "builds": {
     "tree": {
       "app": "checkout",
-      "commit": "259a864d05ea",
+      "commit": "b520e07a7ff4",
       "flint": true,
       "linker": "mold"
     }
@@ -15,7 +15,7 @@
   "requested_by": "the coordinator (2026-11-23 20:55Z): after the phase1-builds parts, at the latest main, batching what landed meanwhile",
   "id": "gs-rest-multicore-5",
   "summary": "gs-rest-service runtime after allocation cuts to 16/request, the servlet handler limit and inline Any (latest main)",
-  "why": "Measured at 259a864d05ea (fp/main after m7-flint-cli's shared-toolchain switch: DMD sha256 0aae4c32…, was 1a894e5e…; DUB 08e46558…; PGO on, prelude and LDC unchanged). Batches 73d9ecbf (/greeting 19 to 16 allocations per request), 7938d402 (servlet handler limit 200, 100 fibers per reactor; local idle RSS 11.7 to 10.2 MB), 46d21e28 (Any stores small plain structs inline) and b481428a, with druntime's default GC and no gcopt, on the same workload as gs-rest-multicore-3 and -4. Baseline: gs-rest-multicore-4 at 27e8d10b (19 per request, toolchain 1a894e5e…).",
+  "why": "Measured at 259a864d05ea (fp/main after m7-flint-cli's shared-toolchain switch: DMD sha256 0aae4c32…, was 1a894e5e…; DUB 08e46558…; PGO on, prelude and LDC unchanged). Batches 73d9ecbf (/greeting 19 to 16 allocations per request), 7938d402 (servlet handler limit 200, 100 fibers per reactor; local idle RSS 11.7 to 10.2 MB), 46d21e28 (Any stores small plain structs inline) and b481428a, with druntime's default GC and no gcopt, on the same workload as gs-rest-multicore-3 and -4. Baseline: gs-rest-multicore-4 at 27e8d10b (19 per request, toolchain 1a894e5e…). Re-pinned at b520e07a7ff4 after the 21:25Z run was voided by a foreign compile: adds flint-aot's 30cebc6a (describer memoization, build-time) and b520e07a (--no-go), and shares its pin with gc-pools-ab.",
   "measure": {
     "kind": "command",
     "ports": [],

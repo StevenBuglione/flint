@@ -4,7 +4,7 @@ module migration_startup;
 import flint.arena : Error, RequestArena, Status;
 import flint.conc : Context;
 import flint.engine.migrate : Migration, MigrationOptions, migrate;
-import flint.engine.sql : Driver, Pool, PoolOptions, Row, ValueKind;
+import flint.engine.sql : Driver, enable, Pool, PoolOptions, Row, ValueKind;
 import generated_plan : migrations;
 import std.digest.sha : sha256Of;
 import std.stdio : stdin, stdout, writeln;
@@ -23,6 +23,7 @@ int main(string[] args) @system
     config.maxConnections = 1;
     Context context;
     Pool pool;
+    cast(void) enable(config.driver);
     const opened = pool.open(config);
     if (opened.code != Status.ok)
         return failure(opened);

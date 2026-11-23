@@ -21,7 +21,9 @@ int main(string[] args)
     const settings = parseUrl(url, null);
     size_t count;
     const sql = numberParameters(args.length > 1 ? "select ? from t where a = ?" : "select ?", count);
-    const registered = DriverManager.getDriver(url) !is null && new FlintDriver().acceptsURL(url);
+    // FlintDriver is registered; it accepts a URL only once its engine driver is enabled, which this probe does not
+    // do, so the module's linked bytes exclude the native drivers (performance playbook S-1).
+    const registered = DriverManager.getDrivers().length != 0 && !new FlintDriver().acceptsURL(url);
     emit(settings.connectionString ~ " | " ~ sql ~ (registered ? " | registered" : " | missing"));
     return 0;
 }

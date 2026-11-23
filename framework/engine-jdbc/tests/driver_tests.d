@@ -8,6 +8,34 @@ import std.process : environment;
 
 @safe:
 
+// Engine-level programs compose their SQL drivers (performance playbook S-1); these tests use both.
+shared static this()
+{
+    import flint.engine.sql : Driver, enable;
+
+    cast(void) enable(Driver.sqlite);
+    cast(void) enable(Driver.postgres);
+}
+
+@("driverDependency names Boot's driver class and the dependency that declares it")
+unittest
+{
+    assert(driverDependency("jdbc:postgresql://db/app") == DriverDependency("flint.postgresql.Driver",
+            "flint:postgresql"));
+    assert(driverDependency("jdbc:sqlite::memory:") == DriverDependency("flint.sqlite.JDBC", "flint:sqlite-jdbc"));
+    assert(driverDependency("jdbc:h2:mem:testdb") == DriverDependency.init);
+    assert(!driverEnabled("jdbc:h2:mem:testdb"));
+}
+
+@("driverEnabled follows the engine's enabled drivers")
+unittest
+{
+    import flint.engine.sql : Driver, enabled;
+
+    assert(driverEnabled("jdbc:sqlite::memory:") == enabled(Driver.sqlite));
+    assert(driverEnabled("jdbc:postgresql://db/app") == enabled(Driver.postgres));
+}
+
 @("numberParameters rewrites ? markers outside literals, identifiers, comments and dollar quotes")
 unittest
 {

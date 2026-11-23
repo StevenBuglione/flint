@@ -22,6 +22,15 @@ Each implementation lives under `packages/<dub-name>/source/flint/`. A module wi
 - No request storage escapes into a cache, queue, detached task, singleton, retained C callback or future. Copy into a specifically owned buffer before transfer. Cancellation does not release storage until the kernel/C library reports final completion.
 - No new cryptographic algorithm, HTTP/2 parser, database engine, PostgreSQL wire protocol or Kafka protocol implementation. Use the pinned wrappers.
 
+## Working as one of several agents (any harness)
+
+Flint is built by parallel agents, each holding one role, in Claude Code, Codex CLI or another harness. Before working, read `docs/agents/README.md` and follow its protocol with `python3 tools/agentctl.py`. Every turn:
+- claim your role and read its inbox;
+- message other roles through `agentctl send`;
+- end by writing your hand-off state with `agentctl handoff`.
+
+Nothing an agent needs to continue may live only inside one harness's own messaging or history. `docs/agents/codex.md` covers running the roles in Codex.
+
 ## Spring port (ADR-030)
 
 Flint is a port of the Spring ecosystem. Read `docs/adr/ADR-030-flint-is-a-spring-port.md` and `docs/spring/api-mapping.md` before touching any public API.

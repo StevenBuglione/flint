@@ -763,4 +763,68 @@ int flint_sqlite_close(flint_sqlite_connection *connection)
     return FLINT_SQL_OK;
 }
 
+/* The driver table: the core reaches SQLite only through it, and only flint_sql_enable_sqlite refers to it. */
+static void *driver_open(const flint_sql_backend_options *options)
+{
+    return flint_sqlite_worker(options->address, options->prepared);
+}
+
+static int driver_begin(void *connection, flint_sql_operation *operation)
+{
+    return flint_sqlite_begin(connection, operation);
+}
+
+static int driver_drive(void *connection, flint_sql_operation *operation, int *fd, unsigned *interest)
+{
+    return flint_sqlite_drive(connection, operation, fd, interest);
+}
+
+static void driver_interrupt(void *connection)
+{
+    flint_sqlite_interrupt(connection);
+}
+
+static void driver_abandon(void *connection, flint_sql_operation *operation, flint_sql_retirement receipt)
+{
+    flint_sqlite_abandon(connection, operation, receipt);
+}
+
+static void driver_next(void *connection, flint_sql_operation *operation)
+{
+    flint_sqlite_next(connection, operation);
+}
+
+static void driver_retire(void *connection, flint_sql_retirement receipt)
+{
+    flint_sqlite_retire(connection, receipt);
+}
+
+static const flint_sql_driver sqlite_driver = {
+    .open = driver_open,
+    .begin = driver_begin,
+    .drive = driver_drive,
+    .interrupt = driver_interrupt,
+    .abandon = driver_abandon,
+    .discard = NULL,
+    .columns = flint_sqlite_columns,
+    .cell = flint_sqlite_cell,
+    .name = flint_sqlite_name,
+    .next = driver_next,
+    .retire = driver_retire,
+};
+
+int flint_sql_enable_sqlite(void)
+{
+    if (!flint_sqlite_available())
+        return FLINT_SQL_UNSUPPORTED;
+    return flint_sql_register_driver(FLINT_SQL_DRIVER_SQLITE, &sqlite_driver);
+}
+
+#else
+
+int flint_sql_enable_sqlite(void)
+{
+    return FLINT_SQL_UNSUPPORTED;
+}
+
 #endif

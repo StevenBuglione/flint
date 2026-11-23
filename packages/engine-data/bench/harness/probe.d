@@ -4,7 +4,7 @@ import core.stdc.stdio : printf;
 import core.time : MonoTime;
 import flint.arena : RequestArena, Status;
 import flint.conc : Context;
-import flint.engine.sql : Driver, Pool, PoolOptions;
+import flint.engine.sql : Driver, enable, Pool, PoolOptions;
 
 @safe:
 
@@ -28,6 +28,7 @@ private ulong replay(Driver driver, string address, Workload workload, out long 
     settings.connectionString = address;
     settings.maxConnections = 1;
     Pool pool;
+    require(enable(settings.driver) == Status.ok);
     require(pool.open(settings).code == Status.ok);
     Context context;
     scope (exit)

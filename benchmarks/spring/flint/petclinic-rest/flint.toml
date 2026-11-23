@@ -12,6 +12,7 @@ executable = "petclinic-rest"
 [dependencies]
 "flint:boot-starter-web" = {}
 "flint:boot-starter-jdbc" = {}
+"flint:postgresql" = {}
 "flint:boot-starter-actuator" = {}
 "flint:boot-starter-validation" = {}
 "flint:boot-starter-security" = {}

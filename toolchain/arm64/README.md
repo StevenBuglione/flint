@@ -143,6 +143,13 @@ The gate's ratios (median, 99% upper bound):
   - composites of up to 16 bytes take 8-byte aligned slots;
   - the variadic part of a call goes on the stack.
 
+- **Shared libraries on Linux AArch64.** `-fPIC` code is valid in a shared object:
+  - Every externally visible symbol, global or COMDAT, defined here or elsewhere, is reached through the GOT, as on x86-64. Linkers turn those loads back into addresses for symbols an executable defines. The back end used to address a symbol defined in the same object PC-relatively, which ld rejects in a shared object.
+  - Thread-local variables use initial-exec, through the GOT (`shared_tls`). Before, a module's own TLS was addressed with local-exec offsets even under `-fPIC`. GNU ld accepted those into a shared object, where they addressed the executable's thread-local block: the library's counter overwrote the executable's variable.
+  - The installer builds `libphobos2.so` (soname `libphobos2.so.0.114`) beside `libphobos2.a`, as the x86-64 release ships it, so `flint build`'s dev builds link Phobos as a shared library on arm64 too. Release, size and test builds stay static. Its druntime is compiled with `-version=Shared`, as druntime's Makefile does.
+- **Known limit: initial-exec TLS in shared libraries.** glibc serves initial-exec TLS from the static TLS block. A library loaded at start-up (`DT_NEEDED`, as `libphobos2.so` and flint's platform object are) always has room. A `-fPIC` D library opened later with `dlopen` takes its TLS from the block's small surplus: if that runs out, `dlopen` fails with "cannot allocate memory in static TLS block". It never runs with wrong addresses (`dlopen_tls`). The general-dynamic model (TLSDESC), which lifts the limit, is not implemented yet.
+- **macOS is unaffected.** Mach-O uses thread-local variable descriptors and its own GOT rules; macOS objects are byte-identical before and after these changes.
+
 ## Fixes offered upstream (dlang/dmd)
 
 The changes below are independent of Flint and are candidates for upstream pull requests. The test that covers each one is named where there is one.

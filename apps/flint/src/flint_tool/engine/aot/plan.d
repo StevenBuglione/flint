@@ -532,6 +532,8 @@ struct Plan
     string[] unknownClasses;
     /// Definitions removed at build time, as "name: reason".
     string[] removed;
+    /// Modules declaring `META-INF/services` providers: the registry imports them (set by the driver).
+    string[] serviceModules;
     /// The runtime's canonical name (`typeNameOf`) of each template instance the model spells, by its spelling:
     /// generated code names those with a literal instead of instantiating them.
     string[string] canonicalNames;
@@ -2642,15 +2644,19 @@ private final class Analysis
         handler.source = location(method.file, method.line);
         const mapping = merged.get(requestMapping);
         handler.paths = combinePaths(classMapping is null ? null : pathsOf(*classMapping), pathsOf(*mapping));
-        foreach (ref item; mapping.get("method").items)
-            handler.methods ~= item.text;
-        if (handler.methods.length == 0 && classMapping !is null)
+        // RequestMappingInfo.combine: methods, params and headers are the union of the class's and the method's
+        // conditions (class first, each once); consumes and produces of the method replace the class's.
+        if (classMapping !is null)
         {
             foreach (ref item; classMapping.get("method").items)
-                handler.methods ~= item.text;
+                handler.methods = union_(handler.methods, [item.text]);
+            handler.params = classMapping.get("params").strings;
+            handler.headers = classMapping.get("headers").strings;
         }
-        handler.params = mapping.get("params").strings;
-        handler.headers = mapping.get("headers").strings;
+        foreach (ref item; mapping.get("method").items)
+            handler.methods = union_(handler.methods, [item.text]);
+        handler.params = union_(handler.params, mapping.get("params").strings);
+        handler.headers = union_(handler.headers, mapping.get("headers").strings);
         handler.consumes = mapping.get("consumes").strings;
         handler.produces = mapping.get("produces").strings;
         if (classMapping !is null)
@@ -3177,6 +3183,18 @@ string parameterTypes(const ref Method method)
     foreach (ref parameter; method.parameters)
         types ~= parameter.type.name;
     return types.join(",");
+}
+
+/// `left` followed by the items of `right` it lacks, as Spring's condition sets combine.
+private string[] union_(const string[] left, const string[] right) pure
+{
+    import std.algorithm.searching : canFind;
+
+    string[] result = left.dup;
+    foreach (item; right)
+        if (!result.canFind(item))
+            result ~= item;
+    return result;
 }
 
 /// Combine class-level and method-level paths with Spring's `PathPattern` rules.

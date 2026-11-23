@@ -450,6 +450,11 @@ immutable CodeInfo[] catalog = [
             ~ "platform version and target (ADR-030 section 5). DUB could not describe or build them, or an "
             ~ "archive could not be stored in the cache (FLINT_CACHE, else <home>/.flint/cache).",
             "flint build --no-platform-cache --verbose"),
+    CodeInfo("FLINT-E0713", ExitCode.user, "native packages retargeted to another target",
+            "`tools/native_build.py --retarget-dub` points a checkout's native DUB blocks at another target's install, "
+            ~ "so `flint package --target linux-x86_64-musl` links musl's libraries. Until it is pointed back, a build "
+            ~ "for any other target would link them too, so it refuses. Retarget only a disposable checkout.",
+            "python3 tools/native_build.py --target linux-x86_64-glibc --retarget-dub"),
 
     // 08xx: toolchain and environment.
     CodeInfo("FLINT-E0801", ExitCode.environment, "Flint installation not found",
@@ -678,4 +683,9 @@ immutable CodeInfo[] catalog = [
             ~ "cannot refer to the project's types. Usually a SpEL @bean reference in an auto-configuration names a "
             ~ "project bean; reference a platform type, or move the expression into the project.",
             "@Value(\"#{@settings.limit}\") in a project @Configuration instead of an auto-configuration"),
+    CodeInfo("FLINT-E1117", ExitCode.user, "a META-INF/services provider is outside the build closure",
+            "Flint AOT imports the module of every class a package lists in META-INF/services/<interface>, as "
+            ~ "java.util.ServiceLoader would load it, so a static link keeps the provider. The listed class's "
+            ~ "module must be in a package of the closure: fix the listing, or add the package to flint.toml.",
+            "META-INF/services/flint.java.sql.Driver listing flint.postgresql.Driver with flint:postgresql declared"),
 ];

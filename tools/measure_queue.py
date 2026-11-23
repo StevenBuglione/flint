@@ -402,9 +402,21 @@ def private_tools(tools, linker, fork=False, checkout=None, logs=None):
     toolchain other sessions use is never changed."""
     shared = shared_tools()
     tools.mkdir()
-    # The fork build extracts the pinned LDC into this directory again; a link to the shared extraction would point
-    # outside it, which tarfile's data filter refuses, so the archive is linked and the extraction stays private.
-    private = {'dmd2', 'flint-toolchain.json'} | ({'flint-fork-build', 'ldc2-1.43.0-linux-x86_64'} if fork else set())
+    try:
+        _private_tools(shared, tools, linker, fork, checkout, logs)
+    except BaseException:
+        # A half-made toolchain would be taken as ready by the next prepare (it checks only that .tools exists).
+        shutil.rmtree(tools, ignore_errors=True)
+        raise
+
+
+def _private_tools(shared, tools, linker, fork, checkout, logs):
+    # The installers extract the pinned mold (and, for a fork build, LDC) into this directory again; a link to the
+    # shared extraction would point outside it, which tarfile's data filter refuses, so the archive is linked and the
+    # extraction stays private.
+    extracted = {entry.name for entry in shared.iterdir() if entry.is_dir() and entry.name.startswith('mold-')}
+    private = ({'dmd2', 'flint-toolchain.json'} | extracted
+               | ({'flint-fork-build', 'ldc2-1.43.0-linux-x86_64'} if fork else set()))
     for entry in shared.iterdir():
         if entry.name in private:
             if not fork and entry.name == 'dmd2':
@@ -420,8 +432,6 @@ def private_tools(tools, linker, fork=False, checkout=None, logs=None):
                                         '--destination', str(tools)], cwd=checkout, env=toolchain_environment(),
                                        stdout=stream, stderr=subprocess.STDOUT)
         if completed.returncode:
-            # A half-made toolchain would be taken as ready by the next prepare (it checks only that .tools exists).
-            shutil.rmtree(tools)
             raise SystemExit(f'building the DMD fork for {checkout} failed; see {log}')
         return  # install_toolchains configures the pinned mold on Linux x86-64 itself (4112de26)
     sys.path.insert(0, str(ROOT / 'tools'))
@@ -551,6 +561,12 @@ def prepare_checkout(spec, logs):
         tools = directory / '.tools'
         if not tools.exists() and (spec.get('linker') or spec.get('fork')):
             private_tools(tools, spec.get('linker', 'mold'), spec.get('fork', False), directory, logs)
+        elif tools.is_dir() and not tools.is_symlink() and (
+                ((tools / 'flint-fork-build').is_dir() and not (tools / 'flint-fork-build').is_symlink())
+                != bool(spec.get('fork'))):
+            # Worktrees are keyed by commit: an entry wanting the other toolchain flavour must not reuse this one.
+            raise SystemExit(f"{full[:12]}: its worktree's toolchain is {'' if spec.get('fork') else 'not '}"
+                             "missing the fork build this entry needs; pin it at another commit")
         elif not tools.exists():
             tools.symlink_to(shared_tools())
         # The pinned peers (JDK, Maven, PostgreSQL) installed in this checkout, for spring_bench and load_bench there.
@@ -937,6 +953,17 @@ def main(argv=None):
                           flush=True)
                     if claim:
                         claim_ended()
+                except Exception as exc:  # a crash while preparing or measuring stops this entry, not the watcher
+                    import traceback
+                    traceback.print_exc()
+                    log_attempt(entry, {'time': now(), 'outcome': f'crashed: {type(exc).__name__}: {exc}'[:500],
+                                        'evidence': False})
+                    exc = SystemExit(f'crashed: {type(exc).__name__}: {exc}')
+                    print(now(), entry['id'], 'stopped:', exc, flush=True)
+                    if claim:
+                        claim_ended()
+                    time.sleep(args.retry_minutes * 60)
+                    return
                 except SystemExit as exc:
                     print(now(), entry['id'], 'stopped:', exc, flush=True)
                     if claim:

@@ -22,8 +22,8 @@ import flint.arena : ArenaError = Error, Buffer, RequestArena, Result, Status;
 import flint.conc : CancelSource, Context, Deadline;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.objects : objectToString;
-import flint.engine.sql : Driver, EngineConnection = Connection, Pool, PoolOptions, Row,
-    SqlFailure, SqlValue, ValueKind;
+import flint.engine.sql : Driver, EngineConnection = Connection, enabled, enablePostgresEngine = enablePostgres,
+    enableSqliteEngine = enableSqlite, Pool, PoolOptions, Row, SqlFailure, SqlValue, ValueKind;
 import flint.java.sql;
 import flint.java.util : Properties;
 import flint.javax.sql : DataSource;
@@ -62,6 +62,62 @@ JdbcTarget parseUrl(string url, string[string] info)
     if (startsWith(url, postgres))
         return JdbcTarget(Driver.postgres, postgresConninfo(url[postgres.length .. $], info));
     throw new SQLException("No suitable driver found for " ~ url, "08001");
+}
+
+/++
+Enable the engine's PostgreSQL driver (libpq) for `jdbc:postgresql:` URLs. A program links libpq and OpenSSL only
+if something calls this: `flint:postgresql`'s `Driver`, or Boot's DataSource auto-configuration when the
+application declares that dependency (performance playbook S-1). Idempotent; throws `SQLException` (08001) when
+this build has no libpq.
++/
+void enablePostgres()
+{
+    if (enablePostgresEngine() != Status.ok)
+        throw new SQLException("The PostgreSQL driver is not available in this build", "08001");
+}
+
+/// Enable the engine's SQLite driver for `jdbc:sqlite:` URLs; see `enablePostgres`.
+void enableSqlite()
+{
+    if (enableSqliteEngine() != Status.ok)
+        throw new SQLException("The SQLite driver is not available in this build", "08001");
+}
+
+/++
+Whether the engine driver that `url` needs is enabled in this process (`flint.engine.sql.enablePostgres` or
+`enableSqlite`, which an application's composition calls: performance playbook S-1). False for a URL no Flint
+driver accepts. Boot's DataSource auto-configuration checks it at startup, so a missing driver fails there and not
+at the first query.
++/
+bool driverEnabled(string url)
+{
+    enum sqlite = "jdbc:sqlite:";
+    enum postgres = "jdbc:postgresql:";
+    if (startsWith(url, sqlite))
+        return enabled(Driver.sqlite);
+    if (startsWith(url, postgres))
+        return enabled(Driver.postgres);
+    return false;
+}
+
+/// The driver class for `url` and the dependency that declares it (Boot's `DatabaseDriver.fromJdbcUrl`, with
+/// Flint's names), for diagnostics. Both are null for a URL no Flint driver accepts.
+struct DriverDependency
+{
+    /// PgJDBC's `org.postgresql.Driver` or sqlite-jdbc's `org.sqlite.JDBC`, as `flint.*` classes.
+    string driverClassName;
+    /// The DUB package an application declares for it.
+    string dependency;
+}
+
+/// ditto
+DriverDependency driverDependency(string url)
+{
+    if (startsWith(url, "jdbc:sqlite:"))
+        return DriverDependency("flint.sqlite.JDBC", "flint:sqlite-jdbc");
+    if (startsWith(url, "jdbc:postgresql:"))
+        return DriverDependency("flint.postgresql.Driver", "flint:postgresql");
+    return DriverDependency.init;
 }
 
 private string postgresConninfo(string rest, string[string] info)
@@ -1220,7 +1276,11 @@ final class FlintResultSet : ResultSet
 {
     private FlintPreparedStatement statement;
     private string[] labels;
-    private Cell[][] rows;
+    /// Every row's cells, row after row: one block that grows, not one per row.
+    private Cell[] cells;
+    private size_t rowCount_;
+    /// `getMetaData`'s object, made once: a row mapper asks for it on every row.
+    private FlintResultSetMetaData metaData;
     private size_t position;
     private bool closed_;
     private bool lastWasNull;
@@ -1244,7 +1304,6 @@ final class FlintResultSet : ResultSet
                 labels[column] = readText(arena, label.value);
             }
         }
-        auto cells = new Cell[count];
         foreach (column; 0 .. count)
         {
             auto value = row.value(column, arena);
@@ -1255,21 +1314,24 @@ final class FlintResultSet : ResultSet
                 cell.text = readText(arena, value.value.bytes);
             else if (cell.kind == ValueKind.bytes)
                 cell.bytes = readBytes(arena, value.value.bytes);
-            cells[column] = cell;
+            cells ~= cell;
         }
-        rows ~= cells;
+        ++rowCount_;
     }
 
     private void limit(int maxRows)
     {
-        if (rows.length > maxRows)
-            rows = rows[0 .. maxRows];
+        if (rowCount_ > maxRows)
+        {
+            rowCount_ = maxRows;
+            cells = cells[0 .. rowCount_ * labels.length];
+        }
     }
 
     /// The number of rows.
     size_t rowCount() const pure nothrow @nogc
     {
-        return rows.length;
+        return rowCount_;
     }
 
     private void checkOpen()
@@ -1281,11 +1343,11 @@ final class FlintResultSet : ResultSet
     private Cell cell(int columnIndex)
     {
         checkOpen();
-        if (position == 0 || position > rows.length)
+        if (position == 0 || position > rowCount_)
             throw new SQLException("No current row: call next() first", "24000");
         if (columnIndex < 1 || columnIndex > labels.length)
             throw new SQLException("Column index out of range: " ~ decimal(columnIndex), "07009");
-        auto found = rows[position - 1][columnIndex - 1];
+        auto found = cells[(position - 1) * labels.length + columnIndex - 1];
         lastWasNull = found.kind == ValueKind.null_;
         return found;
     }
@@ -1293,9 +1355,9 @@ final class FlintResultSet : ResultSet
     override bool next()
     {
         checkOpen();
-        if (position <= rows.length)
+        if (position <= rowCount_)
             ++position;
-        return position <= rows.length;
+        return position <= rowCount_;
     }
 
     override void close()
@@ -1498,13 +1560,15 @@ final class FlintResultSet : ResultSet
     override ResultSetMetaData getMetaData()
     {
         checkOpen();
-        return new FlintResultSetMetaData(this);
+        if (metaData is null)
+            metaData = new FlintResultSetMetaData(this);
+        return metaData;
     }
 
     override int getRow()
     {
         checkOpen();
-        return position > rows.length ? 0 : cast(int) position;
+        return position > rowCount_ ? 0 : cast(int) position;
     }
 
     override bool isClosed()
@@ -1553,9 +1617,9 @@ final class FlintResultSet : ResultSet
     /// The JDBC type of a column, from its first non-null value; `Types.NULL` when every value is null.
     private int columnType(int column)
     {
-        foreach (row; rows)
+        foreach (row; 0 .. rowCount_)
         {
-            final switch (row[column - 1].kind)
+            final switch (cells[row * labels.length + column - 1].kind)
             {
             case ValueKind.null_:
                 continue;
@@ -2023,6 +2087,12 @@ final class FlintDatabaseMetaData : DatabaseMetaData
 /// Open an engine pool for `target`, or throw `SQLException`.
 private Pool openPool(JdbcTarget target, uint size, long acquireTimeoutNanos)
 {
+    if (!enabled(target.driver))
+        throw new SQLException(target.driver == Driver.postgres
+                ? "No suitable driver: the PostgreSQL driver is not enabled (declare the flint:postgresql dependency, "
+                ~ "or call flint.engine.jdbc.enablePostgres() at startup)"
+                : "No suitable driver: the SQLite driver is not enabled (declare the flint:sqlite-jdbc dependency, "
+                ~ "or call flint.engine.jdbc.enableSqlite() at startup)", "08001");
     PoolOptions options;
     options.driver = target.driver;
     options.connectionString = target.connectionString;
@@ -2079,9 +2149,11 @@ final class FlintDriver : Driver_
         return connection;
     }
 
+    /// Whether `url` is a `jdbc:sqlite:` or `jdbc:postgresql:` URL whose engine driver is enabled: an application
+    /// that did not declare a driver has no driver for its URLs, as a Java application without the jar.
     override bool acceptsURL(string url)
     {
-        return startsWith(url, "jdbc:sqlite:") || startsWith(url, "jdbc:postgresql:");
+        return driverEnabled(url);
     }
 
     override int getMajorVersion()
@@ -2461,9 +2533,18 @@ private ubyte[] readBytes(ref RequestArena arena, Buffer buffer)
     return result;
 }
 
+/// A text value, copied once: through a stack buffer when it is short, the common case.
 private string readText(ref RequestArena arena, Buffer buffer)
 {
-    return (cast(const(char)[]) readBytes(arena, buffer)).idup;
+    char[256] small = void;
+    char[] target = buffer.length <= small.length ? small[0 .. buffer.length] : new char[buffer.length];
+    // The visitor is @nogc: it fills the buffer chosen beforehand.
+    const status = arena.read(buffer, (scope const(ubyte)[] bytes) @safe nothrow @nogc {
+        target[0 .. bytes.length] = cast(const(char)[]) bytes;
+    });
+    if (status != Status.ok)
+        throw new SQLException("Could not read a value from the statement buffer", "HY000");
+    return target.idup;
 }
 
 private string decimal(long value) pure nothrow

@@ -13,7 +13,7 @@
   "builds": {
     "tree": {
       "app": "checkout",
-      "commit": "259a864d05ea",
+      "commit": "TBD",
       "flint": true,
       "linker": "mold",
       "fork": true
@@ -452,5 +452,5 @@
       }
     }
   ],
-  "blocked_on": "its smoke run at 259a864d (the corrected measure block); then pending at priority 5, after gs-rest-multicore-5 and gc-pools-ab"
+  "blocked_on": "after fast-path-ab, gs-rest-multicore-5 and gc-pools-ab: pin at the latest main at or after flint-aot's 30cebc6a (describer memoization) but not at b520e07a (that worktree carries the non-fork toolchain of the runtime entries), smoke under hold, then pending at priority 5"
 }

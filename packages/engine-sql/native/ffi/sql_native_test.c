@@ -210,8 +210,30 @@ static void failures_and_names(void)
     assert(closed == FLINT_SQL_OK);
 }
 
+/* A driver is reachable only once enabled: before that, a pool for it does not open. */
+static void driver_composition(void)
+{
+    uint64_t slot = 0, pool = 0;
+    assert(!flint_sql_driver_enabled(0));
+    assert(!flint_sql_driver_enabled(1));
+    assert(!flint_sql_driver_enabled(-1));
+    assert(!flint_sql_driver_enabled(2));
+    assert(flint_sql_pool_open(1, ":memory:", 8, 1, 1, 0, &slot, &pool) == FLINT_SQL_UNSUPPORTED);
+    assert(flint_sql_pool_open(0, "dbname=x", 8, 1, 1, 0, &slot, &pool) == FLINT_SQL_UNSUPPORTED);
+    assert(flint_sql_enable_sqlite() == FLINT_SQL_OK);
+    assert(flint_sql_enable_sqlite() == FLINT_SQL_OK);
+    assert(flint_sql_driver_enabled(1));
+    assert(!flint_sql_driver_enabled(0));
+    assert(flint_sql_pool_open(0, "dbname=x", 8, 1, 1, 0, &slot, &pool) == FLINT_SQL_UNSUPPORTED);
+    assert(flint_sql_pool_open(1, ":memory:", 8, 1, 1, 0, &slot, &pool) == FLINT_SQL_OK);
+    assert(flint_sql_pool_close(slot, pool) == FLINT_SQL_OK);
+    assert(flint_sql_enable_postgres() == FLINT_SQL_OK);
+    assert(flint_sql_driver_enabled(0));
+}
+
 int main(void)
 {
+    driver_composition();
     saturation();
     invalid_native_input();
     boundary_values();

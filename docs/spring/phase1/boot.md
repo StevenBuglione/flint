@@ -163,6 +163,8 @@ Boot's exceptions extend `flint.java.lang`'s `RuntimeException`, `IllegalArgumen
 - `JacksonProperties`' feature maps (`Map<SerializationFeature, Boolean>` and the other eight) are `Map!(string, bool)` and `visibility` is `Map!(string, string)`, keyed by the name as bound. One map type for every enum keeps Flint AOT's generated module from instantiating a map per feature enum, part of the owner's template diet (`2670d5b`). `StandardJsonMapperBuilderCustomizer` converts the names as Boot's binder does, and the metadata keeps the enum keys. The generated `flint_aot.flint.boot.jackson.autoconfigure` went from about 0.41 s and a 16.8 MB object to 0.115 s and 3.3 MB (petclinic-rest's module, three paired DMD `-g` compiles on venus; indicative, not evidence).
 - `TransactionManagerCustomizer<T>` is an abstract class template over `AnyTransactionManagerCustomizer`, Boot's `TransactionManagerCustomizer<?>`. Its final `customizeIfApplicable` does LambdaSafe's generic check with a cast that a D interface cannot hold, so `TransactionManagerCustomizers` applies a customizer only to the manager types it accepts.
 
+- JDBC drivers: Flint AOT links each declared driver package's `META-INF/services` provider (`30cebc6a`), whose registration Boot's `determineDriverClassName` check finds, so boot-jdbc has no driver auto-configurations and `DataSourceAutoConfiguration.dataSource` takes only the properties, as in Boot. The temporary auto-configurations of D-JDBC-1 are gone; what remains of D-JDBC-1 is that a program without Boot (no Flint AOT) enables its driver itself.
+
 ## Contracts needed from the other Phase 1 sessions
 
 | From | What Boot needs | Status |

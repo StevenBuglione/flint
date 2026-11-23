@@ -695,6 +695,7 @@ def main(argv=None):
     p.add_argument('--smoke', action='store_true'); p.add_argument('--setting', action='append')
     p.add_argument('--gcopt', action='append', help='an arm outside the matrix, <name>=<options>; makes an ab record')
     p.add_argument('--runs', type=int, help="override the manifest's trials; makes an ab record")
+    p.add_argument('--no-go', action='store_true', help='leave out the Go comparator; makes an ab record')
     p.add_argument('--binary', help='a stand-in executable for harness checks; never evidence')
     args = parser.parse_args(argv)
     names = getattr(args, 'apps', None) or list(registry()['apps'])

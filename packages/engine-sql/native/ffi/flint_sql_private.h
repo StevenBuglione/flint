@@ -56,6 +56,34 @@ typedef struct {
     uint64_t pool_identity;
 } flint_sql_retirement;
 
+/* The drivers' indices in the registration table; the D binding's Driver enum has the same order. */
+enum { FLINT_SQL_DRIVER_POSTGRES, FLINT_SQL_DRIVER_SQLITE, FLINT_SQL_DRIVER_COUNT };
+
+/* One driver's entry points. The core reaches a driver only through the table that
+   flint_sql_enable_postgres and flint_sql_enable_sqlite fill, so a program that enables one driver
+   links neither the other's code nor its native library (libpq and OpenSSL, or SQLite). */
+typedef struct {
+    void *(*open)(const flint_sql_backend_options *options);
+    /* Start an operation on the connection; NULL when the driver starts it on the first drive. */
+    int (*begin)(void *connection, flint_sql_operation *operation);
+    int (*drive)(void *connection, flint_sql_operation *operation, int *fd, unsigned *interest);
+    /* Interrupt the connection's running statement; NULL when cancellation is driven instead. */
+    void (*interrupt)(void *connection);
+    /* Take over an aborted operation and its connection; NULL when the core frees both. */
+    void (*abandon)(void *connection, flint_sql_operation *operation, flint_sql_retirement receipt);
+    /* Release the operation's driver-owned row storage before the core frees it; may be NULL. */
+    void (*discard)(flint_sql_operation *operation);
+    uint32_t (*columns)(const flint_sql_operation *operation);
+    int (*cell)(const flint_sql_operation *operation, uint32_t index, flint_sql_cell *cell, const void **data);
+    const char *(*name)(const flint_sql_operation *operation, uint32_t index);
+    void (*next)(void *connection, flint_sql_operation *operation);
+    void (*retire)(void *connection, flint_sql_retirement receipt);
+} flint_sql_driver;
+
+/* Install a driver: FLINT_SQL_OK, or FLINT_SQL_INVALID for a bad index or table. Idempotent. Entries are never
+   cleared. The availability check is flint_sql_enable_postgres's and flint_sql_enable_sqlite's. */
+int flint_sql_register_driver(int index, const flint_sql_driver *driver);
+
 void flint_sql_retired(flint_sql_retirement receipt);
 int flint_sql_utf8(const void *data, size_t length);
 /* Keep the first failure an operation reports; later ones are consequences of it. */

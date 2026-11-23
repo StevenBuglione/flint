@@ -75,6 +75,9 @@ version (FlintSqlNative)
 {
     extern (C) nothrow @nogc @system
     {
+        private int flint_sql_enable_postgres();
+        private int flint_sql_enable_sqlite();
+        private int flint_sql_driver_enabled(int);
         private int flint_sql_pool_open(int, const(char)*, size_t, uint, uint, uint, ulong*, ulong*);
         private int flint_sql_pool_acquire(ulong, ulong, ulong*, ulong*, ulong*);
         private void flint_sql_pool_withdraw(ulong, ulong, ulong);
@@ -104,6 +107,33 @@ version (FlintSqlNative)
         private int flint_sql_lease_failure(ulong, ulong, Failure*);
         private int flint_sql_poll(int, uint, uint);
     }
+}
+
+// SAFETY: A scalar call: the shim installs its own static driver table under its lock and reads no caller memory.
+package(flint.engine.sql) Status enablePostgresDriver() @trusted nothrow @nogc
+{
+    version (FlintSqlNative)
+        return cast(Status) flint_sql_enable_postgres();
+    else
+        return Status.unsupported;
+}
+
+// SAFETY: A scalar call: the shim installs its own static driver table under its lock and reads no caller memory.
+package(flint.engine.sql) Status enableSqliteDriver() @trusted nothrow @nogc
+{
+    version (FlintSqlNative)
+        return cast(Status) flint_sql_enable_sqlite();
+    else
+        return Status.unsupported;
+}
+
+// SAFETY: A scalar call: the shim range-checks the index and reads one atomic table slot.
+package(flint.engine.sql) bool driverEnabled(int driver) @trusted nothrow @nogc
+{
+    version (FlintSqlNative)
+        return flint_sql_driver_enabled(driver) != 0;
+    else
+        return false;
 }
 
 // SAFETY: The shim validates the bounds, copies the address synchronously, and writes two scalar outputs.

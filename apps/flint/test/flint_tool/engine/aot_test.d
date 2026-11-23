@@ -812,6 +812,97 @@ unittest
     expect(stores.combined().find("scope variable `arguments` to global variable `kept`").length > 0).toBeTrue();
 }
 
+@("META-INF/services providers: the registry imports each listed provider's module once, as ServiceLoader finds them")
+unittest
+{
+    import std.algorithm.searching : canFind, countUntil;
+    import std.file : mkdirRecurse, readText, write;
+    import std.path : buildPath;
+    import flint_tool.engine.aot.driver : AotRequest, runAot;
+
+    const project = copyFixture("sample");
+    scope (exit)
+        remove(project);
+    // A package of the closure lists a provider found on the import paths; the project lists one of its own
+    // modules, again under a second service, with comments and blank lines.
+    const package_ = buildPath(project, "..", "driver-package");
+    mkdirRecurse(buildPath(package_, "META-INF", "services"));
+    write(buildPath(package_, "META-INF", "services", "flint.java.sql.Driver"),
+            "# The engine driver.\nflint.web.bind.annotation.RestController\n");
+    mkdirRecurse(buildPath(project, "META-INF", "services"));
+    write(buildPath(project, "META-INF", "services", "shop.Codec"),
+            "shop.data.Owner # the project's own\n\n# a comment line\nshop.data.OwnerStatus\n");
+    write(buildPath(project, "META-INF", "services", "shop.Format"), "shop.data.Owner\n");
+    AotRequest request;
+    request.root = project;
+    request.compiler = compiler();
+    request.importPaths = [
+        "-I" ~ buildPath(repositoryRoot(), "tests", "aot", "annotations"), "-I" ~ runtimeSource()
+    ];
+    request.flags = ["-preview=dip1000"];
+    request.environmentKey = "test";
+    request.packageDirectories = [package_];
+    auto outcome = runAot(request);
+    expect(outcome.ok).toBeTrue();
+    const registry = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot_registry.d"));
+    const platform = registry.countUntil("static import flint.web.bind.annotation;\n");
+    const own = registry.countUntil("static import shop.data;\n");
+    expect(platform >= 0 && own > platform).toBeTrue();
+    expect(countOccurrences(registry, "static import shop.data;")).toEqual(1);
+
+    // A provider whose module is nowhere in the closure: FLINT-E1117 at the listing's line.
+    write(buildPath(project, "META-INF", "services", "shop.Format"), "# first\nshop.missing.Formatter\n");
+    auto failed = runAot(request);
+    expect(failed.ok).toBeFalse();
+    expect(failed.diagnostics.length).toEqual(1);
+    expect(failed.diagnostics[0].code).toEqual("FLINT-E1117");
+    expect(failed.diagnostics[0].line).toEqual(2);
+    expect(failed.diagnostics[0].message.canFind("shop.missing.Formatter")).toBeTrue();
+    expect(failed.diagnostics[0].file.canFind("shop.Format")).toBeTrue();
+}
+
+/// How often `needle` occurs in `text`.
+private size_t countOccurrences(string text, string needle)
+{
+    import std.algorithm.searching : count;
+
+    return text.count(needle);
+}
+
+@("a build after a cold one extracts nothing when an @Import pulled in a module from outside src/")
+unittest
+{
+    import std.file : mkdirRecurse, rename;
+    import std.path : buildPath, dirName;
+    import flint_tool.engine.aot.driver : AotRequest, runAot;
+
+    // shared_.things leaves src/ for a library directory on the import path: imp.configs imports it, and its
+    // configurations are only reachable through @Import, so the first build adds it to the sources mid-run.
+    const project = copyFixture("imports");
+    scope (exit)
+        remove(project);
+    const library = buildPath(dirName(project), "library");
+    mkdirRecurse(library);
+    rename(buildPath(project, "src", "shared_"), buildPath(library, "shared_"));
+    AotRequest request;
+    request.root = project;
+    request.compiler = compiler();
+    request.importPaths = [
+        "-I" ~ buildPath(repositoryRoot(), "tests", "aot", "annotations"), "-I" ~ runtimeSource(),
+        "-I" ~ library
+    ];
+    request.flags = ["-preview=dip1000"];
+    request.environmentKey = "test";
+    auto cold = runAot(request);
+    expect(cold.extractionErrors).toEqual("");
+    expect(cold.ok).toBeTrue();
+    expect(cold.extracted > 0).toBeTrue();
+    auto next = runAot(request);
+    expect(next.ok).toBeTrue();
+    expect(next.extracted).toEqual(0);
+    expect(next.written).toEqual(0);
+}
+
 @("every generator diagnostic names its declaration")
 unittest
 {
@@ -960,6 +1051,11 @@ unittest
     const web = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot", "hier", "web.d"));
     expect(web.canFind(`mapping.paths = ["/api/ping"];`)).toBeTrue();
     expect(web.canFind(`mapping.paths = ["/api/version"];`)).toBeTrue();
+    // RequestMappingInfo.combine: the class's methods, params and headers join the method's, each once.
+    expect(web.canFind(`mapping.paths = ["/v2/status"];`)).toBeTrue();
+    expect(web.canFind(`mapping.methods = ["GET", "HEAD"];`)).toBeTrue();
+    expect(web.canFind(`mapping.params = ["version=2", "full"];`)).toBeTrue();
+    expect(web.canFind(`mapping.headers = ["X-Api=1"];`)).toBeTrue();
     // Contract 3: the controller's descriptor carries PingApi's @RequestMapping as aggregate 1.
     expect(web.canFind(`MergedAnnotation("flint.web.bind.annotation.RequestMapping", Any.of(`)).toBeTrue();
     expect(web.canFind(`), 0, 1),`)).toBeTrue();

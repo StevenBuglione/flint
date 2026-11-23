@@ -467,12 +467,17 @@ class Role : BaseEntity
 /// A sorted, read-only copy of `items` as a `List` (Java's `Collections.unmodifiableList` of a sorted copy).
 private List!T sortedList(T)(T[] items, bool delegate(T, T) @safe less)
 {
-    import std.algorithm.mutation : SwapStrategy;
-    import std.algorithm.sorting : sort;
-
+    // Java's List.sort is stable. An insertion sort is, too: a few pets, visits or specialties per entity, and no
+    // std.algorithm sort instantiated per element type (petclinic's compile profile, size-levers).
     auto copy = items.dup;
-    // Java's List.sort is stable.
-    sort!((a, b) => less(a, b), SwapStrategy.stable)(copy);
+    foreach (i; 1 .. copy.length)
+    {
+        auto item = copy[i];
+        size_t j = i;
+        for (; j > 0 && less(item, copy[j - 1]); --j)
+            copy[j] = copy[j - 1];
+        copy[j] = item;
+    }
     auto list = new ArrayList!T;
     foreach (item; copy)
         list.add(item);

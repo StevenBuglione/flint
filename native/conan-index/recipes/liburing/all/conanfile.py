@@ -11,7 +11,7 @@ from conan.tools.files import download
 
 NAME = 'liburing'
 DEPENDENCIES = []
-BUILD_ENGINE_SHA256 = '3cb8b36c7f524a34e1d70f961a91c56fabb676d1da57b912f6e396d00eab29f3'
+BUILD_ENGINE_SHA256 = '612bf90277838d4e575940d39e67c1da851afc65df7884b535c2aee72bc62a49'
 TARGETS = ['linux-aarch64-glibc', 'linux-aarch64-musl', 'linux-x86_64-glibc', 'linux-x86_64-musl']
 
 

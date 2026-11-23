@@ -4,6 +4,7 @@ import core.atomic : MemoryOrder, atomicLoad, atomicOp, atomicStore;
 import core.time : MonoTime;
 import flint.arena : Status;
 import flint.conc.sys.atomics : SpinLock;
+import std.traits : hasIndirections;
 
 @safe:
 
@@ -25,8 +26,7 @@ private align(64) struct Node
     ulong generation;
     ulong parent;
     shared ulong references;
-    // A slot has no live deadline before createSource initializes it. Keep
-    // unused slab storage zero-initialized so it can reside in BSS.
+    // A slot has no live deadline before createSource initializes it. Zeroed storage is a valid empty slab.
     long deadline;
     shared long cancelledAt;
     uint nextFree;
@@ -49,22 +49,50 @@ private struct Slab
     }
 }
 
-private __gshared Slab slab;
+// The slab holds IDs, counts and times, never a pointer: it lives outside the GC heap and the program's static
+// data, which every collection scans whole, so collections never read its megabyte (playbook R-20). A pointer field
+// would have to be a GC root; this assert keeps that from happening unnoticed.
+static assert(!hasIndirections!Slab, "the cancellation slab must stay pointer-free: collections never scan it");
+
+private enum slabAlignment = 64;
+// Allocated zeroed, cache-line aligned, on the first use under the lock, and kept for the process's lifetime.
+private __gshared Slab* slabStorage;
 private __gshared SpinLock slabLock;
+
+// SAFETY: Called with the slab lock held. calloc returns zeroed memory of at least Slab.sizeof + 63 bytes, so the
+// aligned address leaves room for the whole slab; the block is never freed or moved, so the pointer stays valid.
+private @trusted bool allocateSlab() nothrow @nogc
+{
+    import core.stdc.stdlib : calloc;
+
+    auto raw = cast(size_t) calloc(1, Slab.sizeof + slabAlignment - 1);
+    if (raw == 0)
+        return false;
+    slabStorage = cast(Slab*)((raw + slabAlignment - 1) & ~cast(size_t)(slabAlignment - 1));
+    return true;
+}
 
 package(flint.conc) long monotonicNanoseconds() nothrow @nogc
 {
     return (MonoTime.currTime - MonoTime.zero).total!"nsecs";
 }
 
-// SAFETY: The slab stays at one process-wide address. The lock protects every
-// access, and the scoped callback can only borrow the slab during this call.
+// Without memory for the slab no source exists, so every operation sees an empty table: R.init, as for an unknown ID.
+// SAFETY: The slab stays at one process-wide address once allocated. The lock protects every access,
+// and the scoped callback can only borrow the slab during this call.
 private R locked(R)(scope R delegate(ref scope Slab) @safe nothrow @nogc operation) @trusted nothrow @nogc
 {
     slabLock.lock();
     scope (exit)
         slabLock.unlock();
-    return operation(slab);
+    if (slabStorage is null && !allocateSlab())
+    {
+        static if (is(R == void))
+            return;
+        else
+            return R.init;
+    }
+    return operation(*slabStorage);
 }
 
 // Callers read only the fixed generation and parent fields and touch the shared fields through core.atomic.
@@ -74,7 +102,9 @@ private ref Node referenced(ulong id) @trusted nothrow @nogc
 {
     immutable slot = cast(uint)(id & slotMask);
     assert(slot != 0);
-    ref Node node = slab.nodes[slot - 1];
+    // A referenced ID was created under the lock after the slab was allocated, and reached this thread
+    // through whatever synchronization handed it over, so the pointer is visible here.
+    ref Node node = slabStorage.nodes[slot - 1];
     assert(node.generation == id >> slotBits);
     return node;
 }
@@ -226,4 +256,18 @@ package(flint.conc) Status contextStatusAt(ulong id, long deadline, long now) no
     if (cancelledBefore(id, deadline))
         return Status.cancelled;
     return deadline != noDeadline && now >= deadline ? Status.timedOut : Status.ok;
+}
+
+@("the cancellation slab is pointer-free, allocated outside the GC heap and the static data, and cache-line aligned")
+@system unittest
+{
+    import core.memory : GC;
+
+    static assert(!hasIndirections!Node && !hasIndirections!Slab);
+    const id = createSource(0, noDeadline);
+    assert(id != 0);
+    scope (exit)
+        closeSource(id);
+    assert(cast(size_t) slabStorage % slabAlignment == 0);
+    assert(GC.addrOf(slabStorage) is null, "the slab is on the GC heap, where collections would scan it");
 }

@@ -319,65 +319,60 @@ unittest
     assert(same(ti.determineTransactionManager(attribute, null), defaultTransactionManager));
 }
 
-version (FlintTransactionManagerCache)
+// TransactionAspectSupport caches the managers it looks up, as Spring's transactionManagerCache does.
+@("TransactionInterceptorTests.determineTransactionManagerWithQualifierSeveralTimes")
+unittest
 {
-    // Behaviour: TransactionAspectSupport does not cache the transaction managers it looks up, so every call asks
-    // the BeanFactory again (two lookups where Spring's transactionManagerCache makes one).
+    auto beanFactory = new MockBeanFactory;
+    auto ti = simpleTransactionInterceptor(beanFactory);
 
-    @("TransactionInterceptorTests.determineTransactionManagerWithQualifierSeveralTimes")
-    unittest
-    {
-        auto beanFactory = new MockBeanFactory;
-        auto ti = simpleTransactionInterceptor(beanFactory);
+    auto txManager = associateTransactionManager(beanFactory, "fooTransactionManager");
 
-        auto txManager = associateTransactionManager(beanFactory, "fooTransactionManager");
+    auto attribute = new DefaultTransactionAttribute();
+    attribute.setQualifier("fooTransactionManager");
+    auto actual = ti.determineTransactionManager(attribute, null);
+    assert(same(actual, txManager));
 
-        auto attribute = new DefaultTransactionAttribute();
-        attribute.setQualifier("fooTransactionManager");
-        auto actual = ti.determineTransactionManager(attribute, null);
-        assert(same(actual, txManager));
+    // Call again, should be cached
+    auto actual2 = ti.determineTransactionManager(attribute, null);
+    assert(same(actual2, txManager));
+    assert(beanFactory.containsBeanCalls["fooTransactionManager"] == 1);
+    assert(beanFactory.getBeanCalls["fooTransactionManager"] == 1);
+}
 
-        // Call again, should be cached
-        auto actual2 = ti.determineTransactionManager(attribute, null);
-        assert(same(actual2, txManager));
-        assert(beanFactory.containsBeanCalls["fooTransactionManager"] == 1);
-        assert(beanFactory.getBeanCalls["fooTransactionManager"] == 1);
-    }
+@("TransactionInterceptorTests.determineTransactionManagerWithBeanNameSeveralTimes")
+unittest
+{
+    auto beanFactory = new MockBeanFactory;
+    auto ti = transactionInterceptorWithTransactionManagerName("fooTransactionManager", beanFactory);
 
-    @("TransactionInterceptorTests.determineTransactionManagerWithBeanNameSeveralTimes")
-    unittest
-    {
-        auto beanFactory = new MockBeanFactory;
-        auto ti = transactionInterceptorWithTransactionManagerName("fooTransactionManager", beanFactory);
+    auto txManager = associateTransactionManager(beanFactory, "fooTransactionManager");
 
-        auto txManager = associateTransactionManager(beanFactory, "fooTransactionManager");
+    auto attribute = new DefaultTransactionAttribute();
+    auto actual = ti.determineTransactionManager(attribute, null);
+    assert(same(actual, txManager));
 
-        auto attribute = new DefaultTransactionAttribute();
-        auto actual = ti.determineTransactionManager(attribute, null);
-        assert(same(actual, txManager));
+    // Call again, should be cached
+    auto actual2 = ti.determineTransactionManager(attribute, null);
+    assert(same(actual2, txManager));
+    assert(beanFactory.getBeanCalls["fooTransactionManager"] == 1);
+}
 
-        // Call again, should be cached
-        auto actual2 = ti.determineTransactionManager(attribute, null);
-        assert(same(actual2, txManager));
-        assert(beanFactory.getBeanCalls["fooTransactionManager"] == 1);
-    }
+@("TransactionInterceptorTests.determineTransactionManagerDefaultSeveralTimes")
+unittest
+{
+    auto beanFactory = new MockBeanFactory;
+    auto ti = simpleTransactionInterceptor(beanFactory);
 
-    @("TransactionInterceptorTests.determineTransactionManagerDefaultSeveralTimes")
-    unittest
-    {
-        auto beanFactory = new MockBeanFactory;
-        auto ti = simpleTransactionInterceptor(beanFactory);
+    auto txManager = mockTransactionManager();
+    beanFactory.defaultTransactionManager = txManager;
 
-        auto txManager = mockTransactionManager();
-        beanFactory.defaultTransactionManager = txManager;
+    auto attribute = new DefaultTransactionAttribute();
+    auto actual = ti.determineTransactionManager(attribute, null);
+    assert(same(actual, txManager));
 
-        auto attribute = new DefaultTransactionAttribute();
-        auto actual = ti.determineTransactionManager(attribute, null);
-        assert(same(actual, txManager));
-
-        // Call again, should be cached
-        auto actual2 = ti.determineTransactionManager(attribute, null);
-        assert(same(actual2, txManager));
-        assert(beanFactory.getBeanOfTypeCalls == 1);
-    }
+    // Call again, should be cached
+    auto actual2 = ti.determineTransactionManager(attribute, null);
+    assert(same(actual2, txManager));
+    assert(beanFactory.getBeanOfTypeCalls == 1);
 }

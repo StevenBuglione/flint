@@ -54,6 +54,7 @@ import flint.core.convert : ConversionService, TypeDescriptor;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.bean : AotBeanDefinition = BeanDefinition, AotBeanFactory = BeanFactory, ScopeKind;
 import flint.engine.aot.descriptor : findAnnotation, MergedAnnotation;
+import flint.conc.slot : ProcessSlot;
 import flint.engine.aot.name : canonicalTypeName, typeNameOf;
 import flint.java.lang : IllegalStateException, UnsupportedOperationException, valueOf;
 import flint.java.util : stableSort;
@@ -434,6 +435,9 @@ class DefaultListableBeanFactory : SimpleAliasRegistry, ConfigurableListableBean
     private Object[string] resolvableDependencies;
     private BeanFactory parent;
     private bool frozen;
+    // Spring's allBeanNamesByType: the names by type once the configuration is frozen, cleared by any registration.
+    // An immutable snapshot replaced whole, so reactor threads read it without a lock (playbook R-4, R-7).
+    private shared ProcessSlot!ByTypeNames byType;
     private bool allowOverriding = true;
     private bool destroying;
     private AotAdapter adapter;
@@ -526,6 +530,7 @@ class DefaultListableBeanFactory : SimpleAliasRegistry, ConfigurableListableBean
     /// Register `beanDefinition` under `beanName`.
     void registerBeanDefinition(string beanName, BeanDefinition beanDefinition)
     {
+        byType.set(null);
         Assert.hasText(beanName, "Bean name must not be empty");
         Assert.notNull(beanDefinition, "BeanDefinition must not be null");
         auto root = cast(RootBeanDefinition) beanDefinition;
@@ -553,6 +558,7 @@ class DefaultListableBeanFactory : SimpleAliasRegistry, ConfigurableListableBean
     /// Remove the definition `beanName`.
     void removeBeanDefinition(string beanName)
     {
+        byType.set(null);
         if ((beanName in definitions) is null)
             throw new NoSuchBeanDefinitionException(beanName);
         definitions.remove(beanName);
@@ -623,6 +629,7 @@ class DefaultListableBeanFactory : SimpleAliasRegistry, ConfigurableListableBean
     /// Register a fully initialized singleton.
     void registerSingleton(string beanName, Object singletonObject)
     {
+        byType.set(null);
         Assert.notNull(beanName, "Bean name must not be null");
         Assert.notNull(singletonObject, "Singleton object must not be null");
         if (auto existing = beanName in singletons)
@@ -1015,6 +1022,28 @@ class DefaultListableBeanFactory : SimpleAliasRegistry, ConfigurableListableBean
     /// The names of beans injectable as `typeName`, in registration order (definitions, then manual singletons).
     string[] getBeanNamesForTypeErased(string typeName, bool includeNonSingletons = true, bool = true)
     {
+        return namesForType(typeName, includeNonSingletons).dup;
+    }
+
+    /// `getBeanNamesForTypeErased` without a copy: from the snapshot once the configuration is frozen (read-only).
+    private const(string)[] namesForType(string typeName, bool includeNonSingletons)
+    {
+        if (!frozen)
+            return computeNamesForType(typeName, includeNonSingletons);
+        auto cache = byType.get();
+        if (cache !is null)
+            foreach (ref entry; cache.entries)
+                if (entry.includeNonSingletons == includeNonSingletons && entry.typeName == typeName)
+                    return entry.names;
+        auto names = computeNamesForType(typeName, includeNonSingletons);
+        // Publish a grown copy. Two threads missing at once each publish one; the other entry is computed again.
+        byType.set(new ByTypeNames((cache is null ? null : cache.entries) ~ ByTypeNames.Entry(typeName,
+                includeNonSingletons, names)));
+        return names;
+    }
+
+    private string[] computeNamesForType(string typeName, bool includeNonSingletons)
+    {
         string[] result;
         foreach (name; definitionNames)
         {
@@ -1399,7 +1428,7 @@ class DefaultListableBeanFactory : SimpleAliasRegistry, ConfigurableListableBean
     private string[] candidateNames(string type, string qualifier)
     {
         string[] result;
-        foreach (name; getBeanNamesForTypeErased(type))
+        foreach (name; namesForType(type, true))
         {
             auto definition = name in definitions;
             if (definition !is null && !definition.isAutowireCandidate())
@@ -1688,6 +1717,24 @@ private final class NullBean
 private bool isNullBean(Object bean) pure nothrow @nogc
 {
     return cast(NullBean) bean !is null;
+}
+
+/// A published, never-modified snapshot of by-type name lookups.
+private final class ByTypeNames
+{
+    static struct Entry
+    {
+        string typeName;
+        bool includeNonSingletons;
+        const(string)[] names;
+    }
+
+    const Entry[] entries;
+
+    this(const Entry[] entries) pure nothrow @nogc
+    {
+        this.entries = entries;
+    }
 }
 
 /// Whether `object`'s class is `typeName` or derives from or implements it (by canonical names).

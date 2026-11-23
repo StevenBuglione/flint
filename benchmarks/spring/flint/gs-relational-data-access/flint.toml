@@ -11,6 +11,7 @@ executable = "gs-relational-data-access"
 
 [dependencies]
 "flint:boot-starter-jdbc" = {}
+"flint:sqlite-jdbc" = {}
 "flint:boot-core" = {}
 "flint:boot-autoconfigure" = {}
 "flint:java" = {}

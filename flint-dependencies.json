@@ -311,6 +311,10 @@
       "repo": "flint",
       "version": "monorepo"
     },
+    "flint:postgresql": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:security-config": {
       "repo": "security",
       "version": "monorepo"
@@ -332,6 +336,10 @@
       "version": "monorepo"
     },
     "flint:slf4j-api": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
+    "flint:sqlite-jdbc": {
       "repo": "framework",
       "version": "monorepo"
     },

@@ -13,6 +13,9 @@
 // its driver when it is linked). Flint's pool finds its driver by URL rather than taking the class Boot determines, so
 // the data source checks at creation, as Hikari's setDriverClassName does, that the class is registered or that a
 // registered driver accepts the URL; the message names the package to add.
+// Flint links only the drivers an application declares (performance playbook S-1): Flint AOT links each declared
+// driver package's META-INF/services provider, whose registration enables the engine driver when the DriverManager
+// first constructs it, and engine-jdbc's FlintDriver accepts only the URLs of enabled drivers.
 
 /// `org.springframework.boot.jdbc.autoconfigure`: the JDBC configuration properties. `flint.datasource.hikari.*` (alias
 /// `pool`) binds onto the pool `DataSource` the data-access module provides, as Boot binds `spring.datasource.hikari.*`

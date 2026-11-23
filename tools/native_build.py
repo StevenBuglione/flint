@@ -714,6 +714,52 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
                 text = self.emit_rpc_test_archive(text)
             path.write_text(text.rstrip() + '\n' + block)
 
+RETARGET_MARKER = 'dub-target'
+
+def native_recipes():
+    """Every dub.sdl under the packages' directories that holds a native block (the package and its benches)."""
+    packages = json.loads((ROOT/'policy/packages.json').read_text())['packages']
+    found = []
+    for name in sorted(packages):
+        directory = package_path(name)
+        for recipe in sorted(directory.rglob('dub.sdl')) if directory.is_dir() else []:
+            if not ({'.dub', '.flint'} & set(recipe.relative_to(directory).parts)) and \
+                    '// BEGIN FLINT NATIVE' in recipe.read_text(encoding='utf-8'):
+                found.append(recipe)
+    return found
+
+def retarget_dub(work_dir, target, recipes=None, host=None):
+    """Point the native blocks of this checkout's recipes at `target`'s install under `work_dir`, as a cross
+    build for that target needs (flint package --target linux-x86_64-musl; DUB has no libc platform to choose a
+    block by). Only for a disposable checkout. The marker is written first and removed last, so a retarget that
+    stops half-way still makes every flint build for another target refuse (FLINT-E0713)."""
+    work = Path(work_dir).resolve()
+    install = work/'install'/target
+    if not (install/'flint-native-install.json').is_file():
+        raise ValueError(f'{install} has no native install receipt: build {target} first'
+                         + (' (python3 tools/native_musl.py)' if target.endswith('-musl') else ''))
+    marker = work/RETARGET_MARKER
+    host = host or host_target()
+    if target != host:
+        marker.write_text(target + '\n', encoding='utf-8')
+    prefix = re.escape(str(work/'install')) + '/'
+    paths = re.compile('(' + prefix + r')([A-Za-z0-9_.-]+)(/)')
+    changed, missing = [], set()
+    for recipe in native_recipes() if recipes is None else recipes:
+        text = recipe.read_text(encoding='utf-8')
+        new = re.sub(r'\n// BEGIN FLINT NATIVE\n.*?// END FLINT NATIVE\n',
+                     lambda block: paths.sub(lambda p: p.group(1) + target + p.group(3), block.group(0)), text,
+                     flags=re.S)
+        missing.update(p for p in re.findall(prefix + re.escape(target) + r'/[^"\s]+', new) if not Path(p).exists())
+        if new != text:
+            recipe.write_text(new, encoding='utf-8')
+            changed.append(str(recipe))
+    if target == host:
+        marker.unlink(missing_ok=True)
+    return {'target': target, 'marker': str(marker) if target != host else None, 'recipes_changed': len(changed),
+            # A link that needs one of these fails loudly rather than mixing two C libraries.
+            'missing_in_install': sorted(missing)}
+
 def before_first_link_line(block, line):
     """`line` inserted before the block's first link input, where a single-pass static linker needs it."""
     found = re.search(r'\n(?:lflags|libs) ', block)
@@ -747,6 +793,7 @@ def main():
     # dependencies' packages already merged into --prefix, and the Flint shims once over the deployed closure.
     parser.add_argument('--no-dependencies',action='store_true',help='Build only the --library names; their dependencies are already in --prefix. --profile then only selects provider variants such as curl SMTP')
     parser.add_argument('--no-shims',action='store_true',help='Do not build the Flint C shims (native/ffi)')
+    parser.add_argument('--retarget-dub',action='store_true',help='Point the checkout\'s native DUB blocks at --target\'s install (a disposable checkout only); --target of the host points them back')
     parser.add_argument('--shims-only',action='store_true',help='Build only the Flint C shims (and --emit-dub) over the libraries the prefix receipt records')
     parser.add_argument('--workspace',type=Path,help='flint.workspace/1 file pinning each repo\'s checkout (plan section 7): native/ffi comes from the flint checkout, and --emit-dub writes each package\'s recipe in its own checkout')
     parser.add_argument('--with-codegen',action='store_true');parser.add_argument('--emit-dub',action='store_true');parser.add_argument('--allow-webview',action='store_true');parser.add_argument('--pkg-config',default=os.environ.get('PKG_CONFIG','pkg-config'),help='pkg-config for dynamic system providers such as WebKitGTK')
@@ -756,6 +803,9 @@ def main():
     WORKSPACE=Workspace(args.workspace)
     problems=WORKSPACE.verify()
     if problems:parser.error('workspace: '+'; '.join(problems))
+    if args.retarget_dub:
+        print(json.dumps(retarget_dub(args.work_dir, args.target)))
+        return
     lock=json.loads(Path(args.lock).read_text());builder=Builder(args,lock)
     names=list(args.library)
     if args.shims_only or args.no_dependencies:

@@ -5,7 +5,9 @@ import core.thread.fiber : Fiber;
 import flint.arena : Buffer, Error, RequestArena, Result, Status;
 import flint.conc : CancelSource, Context, Deadline;
 import flint.engine.sql.ffi.shim : Cell, Failure, Identity, Interest, Operation, Progress,
-    acquirePool, claimTransaction, closePool, copyCell, dirtyLease, endTransaction, inspectCell,
+    acquirePool, claimTransaction, closePool, copyCell, dirtyLease, driverEnabled,
+    enablePostgresDriver, enableSqliteDriver,
+    endTransaction, inspectCell,
     leaseFailure, nameCell, openPool, releasePool, retireLease, rowColumns, withdrawPool;
 import flint.engine.sql.sys.wait : admit, admitStartup, joinLeaseQueue, leaseChanged, leaseMark,
     leaveLeaseQueue, pause, pauseForLease, waitFor;
@@ -17,6 +19,40 @@ enum Driver : ubyte
 {
     postgres,
     sqlite
+}
+
+/++
+Enable PostgreSQL (libpq) for this process. A pool can open only for an enabled driver, and these two functions
+are the only references to the drivers' native code, so a program links libpq and OpenSSL only if it calls
+`enablePostgres`, and SQLite only if it calls `enableSqlite` (performance playbook S-1). Idempotent and
+thread-safe; call it during startup, before opening a pool. Returns `Status.unsupported` when this build has no
+libpq.
++/
+Status enablePostgres() nothrow @nogc
+{
+    return enablePostgresDriver();
+}
+
+/// Enable SQLite for this process; see `enablePostgres`.
+Status enableSqlite() nothrow @nogc
+{
+    return enableSqliteDriver();
+}
+
+/++
+Enable `driver`. This refers to both drivers, so it links both native libraries: use it only in programs that
+choose the driver at run time (tests, benchmarks, configuration-driven tools). Applications that know their driver
+call `enablePostgres` or `enableSqlite`.
++/
+Status enable(Driver driver) nothrow @nogc
+{
+    return driver == Driver.postgres ? enablePostgres() : enableSqlite();
+}
+
+/// Whether `driver` has been enabled in this process.
+bool enabled(Driver driver) nothrow @nogc
+{
+    return driverEnabled(driver);
 }
 
 /// Isolation levels accepted by the transaction helper.
@@ -454,6 +490,10 @@ struct Pool
             return Error(Status.conflict, "SQL pool is already open");
         if (options.acquireTimeoutNanos < 0)
             return Error(Status.invalidArgument, "SQL pool timeout cannot be negative");
+        if (!enabled(options.driver))
+            return Error(Status.unsupported, options.driver == Driver.postgres
+                    ? "the PostgreSQL driver is not enabled: call flint.engine.sql.enablePostgres() at startup"
+                    : "the SQLite driver is not enabled: call flint.engine.sql.enableSqlite() at startup");
         Identity created;
         const status = openPool(cast(int) options.driver, options.connectionString,
                 options.maxConnections, options.maxWaiters, options.maxPreparedPerConnection, created);

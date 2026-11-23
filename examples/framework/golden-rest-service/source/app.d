@@ -9,7 +9,7 @@ import flint.serde : JsonName;
 import flint.validate : Valid, NotBlank;
 import flint.engine.web : RestController, Get, Post, PathVariable, RequestBody, RequestContext,
     ServerOptions, runApplication;
-import flint.engine.sql : Pool, PoolOptions, Driver;
+import flint.engine.sql : enableSqlite, Pool, PoolOptions, Driver;
 import std.conv : ConvException, to;
 
 @safe:
@@ -108,6 +108,7 @@ int main(string[] arguments)
     PoolOptions database;
     database.driver = Driver.sqlite;
     database.connectionString = "file:users.db";
+    cast(void) enableSqlite();
     const opened = pool.open(database);
     if (opened.code != Status.ok)
         return 1;

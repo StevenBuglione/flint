@@ -587,6 +587,12 @@ abstract class TransactionAspectSupport
     private TransactionManager transactionManager;
     private TransactionAttributeSource transactionAttributeSource;
     private BeanFactory beanFactory;
+    /// Spring's `transactionManagerCache`: the managers looked up by qualifier or bean name, and the default one under
+    /// `defaultTransactionManagerKey`, so a transactional call does not search the bean factory again. Guarded by
+    /// this object's monitor: one interceptor serves every thread.
+    private TransactionManager[string] transactionManagerCache;
+    /// Spring's `DEFAULT_TRANSACTION_MANAGER_KEY`; no bean is named with an empty string.
+    private enum string defaultTransactionManagerKey = "";
 
     ///
     this()
@@ -729,20 +735,35 @@ abstract class TransactionAspectSupport
             return getTransactionManager();
         const qualifier = txAttr.getQualifier();
         if (hasText(qualifier))
-            return lookupManager(qualifier);
+            return cachedManager(qualifier, () => lookupManager(qualifier));
         if (hasText(transactionManagerBeanName))
-        {
-            auto named = cast(TransactionManager) beanFactory.getBean(transactionManagerBeanName);
-            if (named is null)
-            {
-                const message = "Bean '" ~ transactionManagerBeanName ~ "' is not a TransactionManager";
-                throw new IllegalStateException(message);
-            }
-            return named;
-        }
+            return cachedManager(transactionManagerBeanName, () => namedManager(transactionManagerBeanName));
         if (auto defaultTransactionManager = getTransactionManager())
             return defaultTransactionManager;
-        return lookupManager(null);
+        return cachedManager(defaultTransactionManagerKey, () => lookupManager(null));
+    }
+
+    /// The manager cached under `key`, or the one `lookup` finds, cached for the next call (Spring's
+    /// `transactionManagerCache.get`, then `putIfAbsent`). The lookup runs outside the lock; a racing caller's
+    /// result wins if it was stored first.
+    private TransactionManager cachedManager(string key, scope TransactionManager delegate() @safe lookup)
+    {
+        synchronized (this)
+        {
+            if (auto cached = key in transactionManagerCache)
+                return *cached;
+        }
+        auto found = lookup();
+        synchronized (this)
+            return transactionManagerCache.require(key, found);
+    }
+
+    private TransactionManager namedManager(string name)
+    {
+        auto named = cast(TransactionManager) beanFactory.getBean(name);
+        if (named is null)
+            throw new IllegalStateException("Bean '" ~ name ~ "' is not a TransactionManager");
+        return named;
     }
 
     private TransactionManager lookupManager(string qualifier)
