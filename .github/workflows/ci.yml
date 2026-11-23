@@ -63,7 +63,7 @@ jobs:
       - name: Native build prerequisites
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential cmake ninja-build meson pkg-config autoconf automake libtool bison flex perl libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxfixes-dev libxss-dev
+          sudo apt-get install -y build-essential cmake ninja-build meson pkg-config autoconf automake libtool bison flex perl libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxfixes-dev libxss-dev libxtst-dev
       - name: Install verified compiler archives
         run: |
           python3 tools/install_toolchains.py --compiler ldc
@@ -151,7 +151,7 @@ jobs:
         if: runner.os == 'Linux' && matrix.mode == 'native'
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential cmake ninja-build meson pkg-config autoconf automake libtool bison flex perl libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxfixes-dev libxss-dev
+          sudo apt-get install -y build-essential cmake ninja-build meson pkg-config autoconf automake libtool bison flex perl libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxfixes-dev libxss-dev libxtst-dev
       - name: macOS build prerequisites
         if: runner.os == 'macOS'
         env:

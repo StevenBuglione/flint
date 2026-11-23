@@ -374,7 +374,8 @@ def platform_run(runner,target):
     try:
         native(runner,target)
         for compiler in compilers:run_tests(runner,compiler)
-        if target=='macos-arm64':peer_tests(runner)
+        # The native arm64 lanes also run the peered packages through flint test (ADR-024, Milestone 11).
+        if target in ('macos-arm64','linux-aarch64-glibc'):peer_tests(runner)
         for compiler in compilers:negative_tests(runner,compiler)
         for compiler in compilers:betterc(runner,compiler)
         if target.endswith('-musl'):
