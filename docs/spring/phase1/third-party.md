@@ -107,13 +107,64 @@ The tests compare Flint's output with golden files that the real Jackson 3.1.8 w
 - **Engine.** Text checks reuse the `flint.validate` engine (`NotBlank` whitespace, scalar counts for `@Size`, the e-mail grammar, the regular-expression automaton) through an engine-facing module, not its internals.
 - **Messages.** The default messages are Hibernate Validator's English bundle, interpolated with its rules: `{min}`-style parameters, and the `${validatedValue}` and ternary expression subset that the built-in messages use.
 
+## Deviations
+
+| ID | Deviation | Reason |
+| --- | --- | --- |
+| D-JACKSON-1 | Java's `null` `JsonToken` (no token, end of input) is `JsonToken.NOT_AVAILABLE` | A D enum has no null; blocking parsers never otherwise report `NOT_AVAILABLE` |
+| D-JACKSON-2 | `JsonNode.properties()`, `propertyNames()` and `values()` return D arrays | Cheaper than `flint.java.util` sets; R10 allows conversion |
+| D-JACKSON-3 | `JsonMapper.Builder.changeDefaultPropertyInclusion(valueInclusion, contentInclusion)` takes the two settings instead of an operator over `JsonInclude.Value` | `JsonInclude.Value` is not ported; Boot sets exactly these two |
+| D-JACKSON-4 | `JsonFormat.with` is `with_` | `with` is a D keyword |
+| D-JACKSON-5 | Generators write to an `OutputSink` delegate (or a `ByteArrayBuilder`) | Stands in for `java.io.OutputStream` (R9) |
+| D-SLF4J-1 | `LoggerFactory.installProvider` binds a provider; the default writes through `flint.log` | Closed world: no `ServiceLoader`; Java's default would be the NOP logger |
+| D-SLF4J-2 | `Logger.debug` is `debug_` | `debug` is a D keyword |
+| D-VALIDATION-1 | Hibernate Validator registers itself with `Validation` when linked in | Replaces `META-INF/services` discovery |
+| D-VALIDATION-2 | `ConstraintViolation<T>` is erased: beans and values are `Any`, classes are Flint type names | Erased core (ADR-030 section 5, R4) |
+
+## Evidence
+
+All commands run from the repository root with the toolchain on `PATH`.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Java number text | `java Gen` (JDK 21.0.13) then the D comparer, two seeds | 11,986,636 values, 0 mismatches |
+| Jackson streaming | `dub test :jackson-core --compiler=dmd` and `=ldc2` | 10 golden files byte-equal; 33 ported upstream cases |
+| Jackson databind | `dub test :jackson-databind --compiler=dmd` and `=ldc2` | 21 golden files byte-equal; TestNamingStrategyStd's tables |
+| Jackson annotations | `dub test :jackson-annotations --compiler=dmd` and `=ldc2` | defaults and shorthand |
+| SLF4J | `dub test :slf4j-api --compiler=dmd` and `=ldc2` | MessageFormatterTest, BasicMarkerTest, MDCAdapterTestBase ported; logger behaviour |
+| Validation | `dub test :jakarta-validation` and `:hibernate-validator`, both compilers | 23 violations identical to Hibernate Validator's |
+| Annotations | `dub test :jakarta-annotation`, both compilers | defaults, repetition |
+| ProcessSlot | `dub test :conc`, both compilers, and LDC `-fsanitize=thread` | no reports |
+| Structure | `python3 tools/gates.py --gate structural`; `python3 -m unittest test_guards` (in `tools/`) | pass; the framework-layer tests pass |
+| Lint | `python3 tools/quality.py --path framework/<module>/source` | 0 issues for every module |
+| API | `flint api coverage --repo framework` | jakarta-annotation, jackson-core, jackson-databind, jackson-annotations, slf4j-api, jakarta-validation and hibernate-validator at 100% classified |
+
+The classification is name-based: an element counts as ported when the Flint module declares its type and member name, so overload-level gaps (for example the `BigDecimal` overloads) show up as deferred only when the name itself is missing.
+
+## Pending, with their owners
+
+- **framework-core (`flint:engine-aot`, `flint:java`):**
+  - descriptor access for D arrays, `Optional!T` and enum values (`Any` can't build an enum from a type name);
+  - `create()` on the descriptors of `ArrayList!T`, `HashSet!T` and `LinkedHashMap!(K, V)`;
+  - `@safe` equality and hash on `Any`, so `flint.java.util` collections can hold it;
+  - `flint.java.time`, and `ClassRef` in `flint.java.lang`;
+  - `doubleToString` should call `flint.serde.java_number`.
+
+  Until these land, Jackson serializes and reads beans, records, scalars, `List`, `Set` and `Map`; it has no D arrays, `Optional`, enum reading, `java.time` or `@JsonNaming`. Validation has no `@Past`/`@Future`, groups or custom constraints.
+- **flint-aot:**
+  - a record's field-wise constructor as `constructors[0]` for structs;
+  - descriptors for the concrete collection types of collection-typed properties.
+- **web-mvc:** the message converter calls `ObjectMapper.writeValue(OutputSink, Any)` and `readValue(const(ubyte)[], string type)`.
+- **boot:** `JacksonAutoConfiguration` builds `JsonMapper.builder().descriptors(table)` and maps `flint.jackson.*` keys onto the builder. The logging system calls `FlintLogServiceProvider.loggers().setLevel(...)` and `setAppender(...)` for `logging.level.*` and the console pattern.
+
 ## Status
 
 | Module | State |
 | --- | --- |
-| `flint.jakarta.annotation` | on `main` (DMD and LDC) |
-| `flint.serde.java_number` | on `main`, JDK-checked |
-| `flint.jackson.core` | in progress |
-| `flint.slf4j` | waiting for `flint.engine.aot.Any` |
-| `flint.jackson.databind` | waiting for `flint.engine.aot` and `flint.java` |
-| `flint.jakarta.validation`, `flint.hibernate.validator` | next |
+| `flint.jakarta.annotation` | on `main` (EPL-2.0 module) |
+| `flint.serde.java_number`, `flint.serde.json_read`, `flint.validate.patterns`, `flint.conc.slot` | on `main` (engine additions) |
+| `flint.jackson.annotation` | on `main` |
+| `flint.jackson.core` | on `main`, byte-equal with Jackson 3.1.8 |
+| `flint.jackson.databind` | on `main`, byte-equal with Jackson 3.1.8 under Boot's default mapper |
+| `flint.slf4j` | on `main` |
+| `flint.jakarta.validation`, `flint.hibernate.validator` | on `main`, messages identical to Hibernate Validator 9.1.6 |
