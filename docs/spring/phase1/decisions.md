@@ -85,7 +85,12 @@
   - engine-aot: 5,464 → 591 (`f4e67e7`, by framework-core).
   - jackson-core: 5,317 → 1,185 (`ad07ae0`).
   - hibernate-validator: 9,724 → 2,587 (`9912d12`); one `to!string` of an enum had instantiated most of `std.format`.
-  - Next: jackson-databind (`std.uni` case mapping), slf4j-api, tx and context (`std.datetime.Clock`), engine-jdbc and java (`to!double`/`to!long`), core (`std.process`, `std.utf`, `std.string`).
+  - jackson-databind: 5,118 → 4,277 (`c1bd5708`); `std.uni` case mapping, `std.utf` and `std.base64` remain.
+  - slf4j-api: 4,355 → 3,448 (`9d502838`), with `flint.engine.aot.clock` replacing `std.datetime`'s `Clock`.
+  - engine-jdbc, tx and jdbc: data-access moved them to `flint.engine.aot.text` itself (`e3d38a8`).
+  - core: 11,969 → 6,847 in a patch with framework-core (`std.conv` and `std.format` gone; `std.utf`, `std.process` and `std.uni` remain).
+  - `flint.engine.aot.text` grew `stripWhite`, `tryParseInt`, `tryParseULong`, `tryParseFloat`, `scientific` and `enumName`, each checked against Phobos.
+  - Next: java (`std.conv`, `std.file`, `std.datetime`), context, beans, and core's remaining `std.utf`, `std.process` and `std.uni`.
 - 2026-11-23, size-levers: linked-bytes budgets were set with probes that printed through `writeln` in both the fixture and the baseline. The Phobos `std.format` code that `writeln` links was then part of the baseline, and the size delta hid the Phobos code each module pulls in itself. With the probes printing through C (`a67dfeb`, `55f6747`), the delta shows it, and most modules now exceed their budgets without any code growth (`f51a733`). Raising them is the owner's decision. The template diet lowers them as it removes Phobos: engine-aot fell from 61,744 to 12,720 bytes once `std.conv` was gone. The earlier tx entry is answered: measured with today's tools, tx at `00b2749` already linked 231,720 bytes, so its overage came from the tooling, not from tx code.
 
   | Module | Budget | Linked now | Over |
