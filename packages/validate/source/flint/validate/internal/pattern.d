@@ -493,8 +493,9 @@ package(flint) struct RuntimePattern
 }
 
 /// Compile `expression` at run time. The parser's term buffer is sized for the 4,096-byte limit and lives on
-/// the GC heap, so callers compile each expression once and keep the result.
-package(flint) RuntimePattern compileRuntimePattern(string expression)
+/// the GC heap, so callers compile each expression once and keep the result. A template, so its GC allocations
+/// are generated only where it is called: DMD otherwise emits them in every -betterC build of this module.
+package(flint) RuntimePattern compileRuntimePattern()(string expression)
 {
     RuntimePattern result;
     if (expression.length > 4_096)
