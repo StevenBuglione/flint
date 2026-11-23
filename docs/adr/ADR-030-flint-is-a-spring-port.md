@@ -33,7 +33,9 @@ Every public name is identical to Spring's, with one exception: where an identif
   - `com.fasterxml.jackson.databind` → `flint.jackson.databind`;
   - `org.slf4j` → `flint.slf4j`;
   - `io.micrometer` → `flint.micrometer`;
-  - `reactor.core` → `flint.reactor.core`.
+  - `reactor.core` → `flint.reactor.core`;
+  - Java's standard library `java.X` → `flint.java.X`.
+- **Namespaces have one owner each** (rulebook, "Namespaces"). `flint.X` holds only Spring's `org.springframework.X`. Flint's engines move to `flint.engine.X` (DUB `flint:engine-X`), because several of them (`flint.http`, `flint.web`, `flint.cache`, `flint.mail`, `flint.data`, `flint.security`, `flint.ai`) occupy names Spring's packages need. The rename is mechanical, done once, before the repositories are split. Spring modules take Spring's artifact names with `spring` → `flint` (`flint:core`, `flint:web`, `flint:webmvc`, `flint:jdbc`, `flint:tx`).
 - **Superseded ADR-029 names.** Where ADR-029 chose a different name, the Spring name now wins and the ADR-029 name stays as an alias:
   - `@FlintApplication` stays as an alias of `@FlintBootApplication`;
   - `@FlintTest` stays as an alias of `@FlintBootTest`;

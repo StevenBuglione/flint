@@ -9,7 +9,7 @@ Every element in `api/mapping.json` is classified as one of:
 
 `flint api coverage` fails on anything unclassified. A rule changes only through this file, with a version bump, and every element citing that rule is re-checked.
 
-Rulebook version: **1**.
+Rulebook version: **2**. Version 2 moves Java's standard types to `flint.java.*` and Flint's own machinery to `flint.engine.*`, so that `flint.*` is free for Spring's packages (see "Namespaces" below).
 
 ## Rules
 
@@ -22,7 +22,8 @@ A Java package becomes a D module, and type names stay identical.
   - `com.fasterxml.jackson.databind` → `flint.jackson.databind`;
   - `org.slf4j` → `flint.slf4j`;
   - `io.micrometer.core.instrument` → `flint.micrometer.core.instrument`;
-  - `reactor.core.publisher` → `flint.reactor.core.publisher`.
+  - `reactor.core.publisher` → `flint.reactor.core.publisher`;
+  - Java's standard library, `java.X` (`java.lang`, `java.util`, `java.util.function`, `java.util.stream`, `java.time`), → `flint.java.X`.
 
 Where the word "Spring" appears in an identifier or a configuration key, it becomes "Flint" (`SpringApplication` → `FlintApplication`, `spring.datasource.url` → `flint.datasource.url`, with `spring.*` accepted as an alias). Nothing else is renamed.
 
@@ -75,7 +76,7 @@ A template wrapper stays a one-liner over an erased engine that takes `T`'s Flin
 
 ### R5: `Optional` and nullable values
 
-- **`Optional<T>`** → `flint.util.Optional!T`, a struct with Java's methods: `of`, `ofNullable`, `empty`, `isPresent`, `isEmpty`, `get`, `orElse`, `orElseGet`, `orElseThrow`, `map`, `filter`, `ifPresent`.
+- **`Optional<T>`** → `flint.java.util.Optional!T`, a struct with Java's methods: `of`, `ofNullable`, `empty`, `isPresent`, `isEmpty`, `get`, `orElse`, `orElseGet`, `orElseThrow`, `map`, `filter`, `ifPresent`.
 - **A `String` that may be `null` distinctly from `""`** → `Nullable!string`. D's `null` and `""` compare equal, so `@Nullable String` parameters must use `Nullable!string`.
 
 ### R6: Java Beans properties
@@ -94,7 +95,7 @@ Overloads are kept as written.
 ### R8: Exceptions
 
 - **The hierarchy keeps Java's names and shape:**
-  - `flint.lang.RuntimeException : Exception`;
+  - `flint.java.lang.RuntimeException : Exception`;
   - `DataAccessException : NestedRuntimeException : RuntimeException`;
   - `ResponseStatusException`, `MethodArgumentNotValidException` and so on.
 - **`throws` clauses** are dropped from signatures and kept in DDoc. D has no checked exceptions (deviation D-8).
@@ -111,7 +112,7 @@ A functional interface stays an interface, and every API that takes one also acc
 
 | Java | D |
 | --- | --- |
-| `List<T>`, `Set<T>`, `Map<K,V>` in signatures | `flint.util.List!T`, `Set!T`, `Map!(K, V)`: thin wrappers with Java's methods (`add`, `get`, `size`, `isEmpty`, `contains`, `forEach`, `stream`), convertible to and from D arrays and associative arrays |
+| `List<T>`, `Set<T>`, `Map<K,V>` in signatures | `flint.java.util.List!T`, `Set!T`, `Map!(K, V)`: thin wrappers with Java's methods (`add`, `get`, `size`, `isEmpty`, `contains`, `forEach`, `stream`), convertible to and from D arrays and associative arrays |
 | `Stream<T>` | a range façade with Java's method names (`filter`, `map`, `collect`, `toList`, `findFirst`, `anyMatch`) |
 
 `Collectors` gets the common collectors.
@@ -143,13 +144,27 @@ Builders keep Java's method chain exactly (`ResponseEntity.ok().header(...).body
 
 Java strings index UTF-16 code units, and D strings index UTF-8 bytes. Every ported routine that does index arithmetic, such as `AntPathMatcher`, `UriComponentsBuilder`, `StringUtils` and `PathPattern`, is reviewed for this and tested with non-ASCII input. Public methods that return an index document the unit, and keep Java's unit wherever the index crosses the API.
 
+## Namespaces
+
+Each D namespace has one owner, so a Spring package never collides with Flint's own code:
+
+| Namespace | Holds | DUB names |
+| --- | --- | --- |
+| `flint.X` | Spring's package `org.springframework.X`, and only that (`flint.http`, `flint.web`, `flint.cache`, `flint.data`, `flint.security`, `flint.ai`, `flint.util`, …) | Spring's artifact name with `spring` → `flint`: `flint:core`, `flint:beans`, `flint:context`, `flint:web`, `flint:webmvc`, `flint:jdbc`, `flint:tx`, `flint:boot`, `flint:boot-autoconfigure`, `flint:boot-starter-web` |
+| `flint.java.X` | Java's standard types the APIs expose (`Optional`, `List`, `Map`, `RuntimeException`, functional interfaces, streams, `java.time`) | `flint:java` |
+| `flint.jakarta.X`, `flint.jackson.X`, `flint.slf4j`, `flint.micrometer.X`, `flint.reactor.core.X` | the third-party APIs of R1 | one package per upstream artifact |
+| `flint.engine.X` | Flint's engines: reactor, web transport, HTTP client transport, SQL, cache, mq, mail, storage, security primitives, AOT runtime (`Any`, `Descriptor`), and the rest | `flint:engine-X` |
+| base libraries in the `flint` repository (`flint.arena`, `flint.conc`, `flint.cli`, `flint.config`, `flint.log`, `flint.os`, `flint.serde`, `flint.term`, `flint.test`, `flint.validate`) | the CLI's closure | unchanged |
+
+The framework-side engines that today use `flint.<name>` (`flint.web`, `flint.http`, `flint.reactor`, `flint.data`, `flint.security`, `flint.cache`, `flint.mail`, `flint.ai`, …) move to `flint.engine.<name>`, and their DUB names to `flint:engine-<name>`. This is a mechanical rename, done once, before the split. Base libraries that Spring has no package for keep their names.
+
 ## Erased types used by the rules
 
 | Type | Purpose |
 | --- | --- |
-| `flint.lang.Any` | erased value for `Object`-typed APIs: a descriptor and a small inline buffer, with no `std.variant` |
-| `flint.lang.Descriptor` | Flint AOT's per-type table: fields, accessors, constructors, annotations. It replaces runtime reflection. |
-| `flint.util.Optional!T`, `List!T`, `Map!(K, V)` | façades from R5 and R10 |
+| `flint.engine.aot.Any` | erased value for `Object`-typed APIs: a descriptor and a small inline buffer, with no `std.variant` |
+| `flint.engine.aot.Descriptor` | Flint AOT's per-type table: fields, accessors, constructors, annotations. It replaces runtime reflection. |
+| `flint.java.util.Optional!T`, `List!T`, `Map!(K, V)` | façades from R5 and R10 |
 
 ## Deviations
 
