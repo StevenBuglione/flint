@@ -141,6 +141,10 @@ void scenario(string label, string[] profiles, string[string] properties)
             descriptor.properties[1].set(value, Any.of("set through the descriptor"));
             writeln("descriptor: ", descriptor.properties.length, " properties, content = ",
                     descriptor.properties[1].get(value).get!string);
+            auto made = descriptor.constructors[0].invoke([Any.of(7L), Any.of("built by the canonical constructor")]);
+            writeln("creator: ", descriptor.constructors.length, " constructor(s), parameters ",
+                    descriptor.constructors[0].parameters[0].name, ", ", descriptor.constructors[0].parameters[1].name,
+                    " -> ", made.get!Greeting.id, " ", made.get!Greeting.content);
         }
     }
     auto store = cast(OwnerStore) context.getBean("ownerStore");

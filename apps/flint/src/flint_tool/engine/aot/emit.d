@@ -134,8 +134,8 @@ private struct Emitter
         if ("condition" in used)
             text ~= "import flint.engine.aot.condition : ConditionContext;\n";
         if (plan.descriptors.length)
-            text ~= "import flint.engine.aot.descriptor : Descriptor, MergedAnnotation, MethodDescriptor, "
-                ~ "ParameterDescriptor, PropertyDescriptor, TypeKind;\n";
+            text ~= "import flint.engine.aot.descriptor : ConstructorDescriptor, Descriptor, MergedAnnotation, "
+                ~ "MethodDescriptor, ParameterDescriptor, PropertyDescriptor, TypeKind;\n";
         else if ("merged" in used)
             text ~= "import flint.engine.aot.descriptor : MergedAnnotation;\n";
         if (plan.listeners.length)
@@ -598,6 +598,8 @@ private struct Emitter
         if (descriptor.create.length)
             text ~= "private Any new_" ~ id ~ "()\n{\n    return Any.of(" ~ (descriptor.create == "init"
                     ? descriptor.type ~ ".init" : "new " ~ descriptor.type ~ "()") ~ ");\n}\n\n";
+        foreach (index, ref constructor; descriptor.constructors)
+            text ~= constructorFunction(descriptor, constructor, id, index);
         text ~= "private Descriptor describe_" ~ id ~ "()\n{\n    auto descriptor = new Descriptor(" ~ literal(
                 descriptor.type) ~ ", TypeKind." ~ descriptor.kind ~ ");\n";
         if (descriptor.supertypes.length)
@@ -623,11 +625,53 @@ private struct Emitter
                         method.annotations, "        ") ~ ", " ~ index.to!string ~ "),\n";
             text ~= "    ];\n";
         }
+        if (descriptor.constructors.length)
+        {
+            text ~= "    descriptor.constructors = [\n";
+            foreach (index, ref constructor; descriptor.constructors)
+                text ~= "        ConstructorDescriptor(" ~ constructorParameters(
+                        constructor) ~ ", " ~ mergedArray(constructor.annotations,
+                        "        ") ~ ", &construct_" ~ id ~ "_" ~ index.to!string ~ "),\n";
+            text ~= "    ];\n";
+        }
         if (descriptor.create.length)
             text ~= "    descriptor.create = &new_" ~ id ~ ";\n";
         if (descriptor.constants.length)
             text ~= "    descriptor.enumConstants = " ~ stringArray(descriptor.constants) ~ ";\n";
         return text ~ "    return descriptor;\n}\n\n";
+    }
+
+    string constructorParameters(const ref imported!"flint_tool.engine.aot.plan".ConstructorPlan constructor)
+    {
+        import flint_tool.engine.aot.conditions : literal;
+
+        if (constructor.parameters.length == 0)
+            return "null";
+        string text = "[";
+        foreach (index, ref parameter; constructor.parameters)
+        {
+            const annotations = mergedArray(constructor.parameterAnnotations[index], "        ");
+            text ~= (index ? ", " : "") ~ "ParameterDescriptor(" ~ literal(
+                    parameter.name) ~ ", " ~ literal(parameter.type.name) ~ ", " ~ annotations ~ ")";
+        }
+        return text ~ "]";
+    }
+
+    string constructorFunction(const ref DescriptorPlan descriptor,
+            const ref imported!"flint_tool.engine.aot.plan".ConstructorPlan constructor, string id, size_t index)
+    {
+        import std.array : join;
+        import std.conv : to;
+
+        string[] arguments;
+        foreach (position, ref parameter; constructor.parameters)
+        {
+            need(parameter.type);
+            arguments ~= "arguments[" ~ position.to!string ~ "].get!(" ~ parameter.type.name ~ ")()";
+        }
+        const call = (constructor.kind == "class" ? "new " : "") ~ descriptor.type ~ "(" ~ arguments.join(", ") ~ ")";
+        return "private Any construct_" ~ id ~ "_" ~ index.to!string
+            ~ "(scope Any[] arguments)\n{\n    return Any.of(" ~ call ~ ");\n}\n\n";
     }
 
     string parameterDescriptors(const ref imported!"flint_tool.engine.aot.plan".MethodPlan method)

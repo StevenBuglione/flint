@@ -457,6 +457,22 @@ unittest
         expect(codes.canFind(code)).toBeTrue();
 }
 
+@("ADR-029's @FlintApplication is an alias of @FlintBootApplication")
+unittest
+{
+    import std.path : buildPath;
+
+    const project = copyFixture("sample");
+    scope (exit)
+        remove(project);
+    edit(buildPath(project, "src", "shop", "app.d"),
+            "import flint.boot.autoconfigure : FlintBootApplication;", "import flint.boot : FlintApplication;");
+    edit(buildPath(project, "src", "shop", "app.d"), "@FlintBootApplication", "@FlintApplication");
+    auto outcome = generate(project);
+    expect(outcome.ok).toBeTrue();
+    expect(outcome.application).toEqual("shop.app.ShopApplication");
+}
+
 @("a project without @FlintBootApplication runs no extraction")
 unittest
 {

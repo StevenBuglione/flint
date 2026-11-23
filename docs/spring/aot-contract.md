@@ -217,6 +217,8 @@ final class Descriptor
 }
 ```
 
+`constructors` lists every public constructor of a struct or class, with parameter names and merged annotations. For a struct without a constructor (a Java record, rule R11) whose fields are all public, `constructors[0]` is its field-wise canonical constructor, with parameters named after the fields in declaration order. That is how message conversion and row mapping find a record's creator; contract 2 may add an explicit flag.
+
 Descriptors exist for the types the generator found reachable: every request-body, response and `@ConfigurationProperties` type, every type with a constraint or Jackson annotation, every entity, every user struct and every non-bean user class, and their property types transitively. Built-in scalars, `string`, arrays, `flint.java.util.Optional!T` and `Nullable!T` are the runtime's own descriptors, looked up by the same type names.
 
 ### 4.3 `flint.engine.aot.bean`
@@ -421,6 +423,7 @@ RegistryPopulator installedRegistry() nothrow @nogc;              // null when t
 
 ### 5.1 What becomes a bean
 
+- The application class carries `@FlintBootApplication`, or ADR-029's `@FlintApplication` (`flint.boot.FlintApplication`, a class used as a bare UDA), which is its alias. Flint AOT runs only when the closure contains `flint:engine-aot`, so ADR-029 applications on the legacy `flint.boot.application` keep their scan module.
 - A class with a merged `@Component` (so also `@Service`, `@Repository`, `@Controller`, `@RestController`, `@Configuration`, `@ControllerAdvice`) in a scanned module. The scanned modules are those under the `@FlintBootApplication` class's package, or under `scanBasePackages`, exactly as `@ComponentScan` would see them.
 - Each `@Bean` method of a `@Configuration` (or lite `@Component`) class, named after the method unless `@Bean(name)` says otherwise.
 - A `@ConfigurationProperties` class listed by `@EnableConfigurationProperties` or found by `@ConfigurationPropertiesScan`, named `<prefix>-<fully qualified name>` as Boot names it.
@@ -595,7 +598,7 @@ Implemented and tested on DMD and LDC: extraction (section 1.1), interface keys 
 
 The legacy `flint:engine-di` container keeps its compile-time `import("application.toml")` for ADR-028 applications. Flint AOT applications do not use it: their `@ConditionalOnConfig` and `@ConditionalOnProperty` are startup conditions (section 5.5). Removing the legacy path waits for the ADR-028 golden applications to move to `@FlintBootApplication`.
 
-Not yet: `@ConfigurationProperties` constructor binding (JavaBean binding is generated), constructor descriptors, `@Retryable`'s and `@Cacheable`'s SpEL, `@Inherited` and interface-method annotations (section 2.1), and repository implementation classes (Phase 2, with `flint-data-jdbc`).
+Not yet: `@ConfigurationProperties` constructor binding (JavaBean binding is generated), `@Retryable`'s and `@Cacheable`'s SpEL, `@Inherited` and interface-method annotations (section 2.1), and repository implementation classes (Phase 2, with `flint-data-jdbc`).
 
 ## 13. Measured cost in the edit loop
 

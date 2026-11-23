@@ -243,6 +243,21 @@ struct DescriptorPlan
     string[] constants;
     /// Advised, mapped and listener methods.
     MethodPlan[] methods;
+    /// Constructors: for a struct without one, its field-wise (canonical) constructor first.
+    ConstructorPlan[] constructors;
+}
+
+/// A descriptor constructor.
+struct ConstructorPlan
+{
+    /// "literal" (a struct's field-wise constructor), "struct" or "class".
+    string kind;
+    /// Parameters, named after the fields for "literal".
+    Parameter[] parameters;
+    /// Merged parameter annotations (the field's for "literal").
+    MergedSet[] parameterAnnotations;
+    /// Merged constructor annotations (`@JsonCreator`).
+    MergedSet annotations;
 }
 
 /// A handler argument.
@@ -466,7 +481,7 @@ private final class Analysis
 
     void run()
     {
-        import flint_tool.engine.aot.names : flintBootApplication;
+        import flint_tool.engine.aot.names : flintApplication, flintBootApplication;
 
         foreach (name; input.userModules)
         {
@@ -475,7 +490,9 @@ private final class Analysis
                 continue;
             foreach (ref decl; item.types)
             {
-                if (decl.kind == "class" && mergedOf(decl).has(flintBootApplication) && plan.application.length == 0)
+                const merged = mergedOf(decl);
+                const isApplication = merged.has(flintBootApplication) || merged.has(flintApplication);
+                if (decl.kind == "class" && isApplication && plan.application.length == 0)
                 {
                     plan.application = decl.fqn;
                     scanPackagesOf(decl);
@@ -548,7 +565,8 @@ private final class Analysis
 
         const merged = mergedOf(decl);
         const annotation = merged.get(flintBootApplication);
-        plan.scanPackages = annotation.get("scanBasePackages").strings;
+        if (annotation !is null)
+            plan.scanPackages = annotation.get("scanBasePackages").strings;
         if (plan.scanPackages.length == 0)
             plan.scanPackages = [packageOf(decl.module_)];
     }
@@ -1403,7 +1421,43 @@ private final class Analysis
             result.properties ~= property;
         }
         accessorProperties(decl, result);
+        constructorsOf(decl, result);
         return result;
+    }
+
+    /// Creators for message conversion and row mapping: every public constructor, and for a struct without one
+    /// (a Java record, rule R11) its field-wise constructor, listed first.
+    void constructorsOf(const ref TypeDecl decl, ref DescriptorPlan result)
+    {
+        import flint_tool.engine.aot.merge : merge;
+
+        const constructors = decl.constructors;
+        if (decl.kind == "struct" && constructors.length == 0)
+        {
+            ConstructorPlan canonical;
+            canonical.kind = "literal";
+            bool accessible = true;
+            foreach (ref field; decl.fields)
+            {
+                accessible = accessible && (field.visibility == "public" || field.visibility == "export");
+                canonical.parameters ~= Parameter(field.name, clone(field.type));
+                canonical.parameterAnnotations ~= merge(field.annotations, model.annotationTypes);
+            }
+            if (accessible)
+                result.constructors ~= canonical;
+        }
+        foreach (ref constructor; constructors)
+        {
+            if (constructor.visibility != "public" || (decl.kind == "class" && decl.abstract_))
+                continue;
+            ConstructorPlan item;
+            item.kind = decl.kind == "class" ? "class" : "struct";
+            item.parameters = clone(constructor.parameters);
+            foreach (ref parameter; constructor.parameters)
+                item.parameterAnnotations ~= mergedOf(parameter);
+            item.annotations = mergedOf(constructor);
+            result.constructors ~= item;
+        }
     }
 
     bool defaultConstructible(const ref TypeDecl decl)

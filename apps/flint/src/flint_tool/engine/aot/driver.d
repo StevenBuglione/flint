@@ -167,7 +167,8 @@ private SourceModule[] userModules(string root)
         if (!readInterface(text, found) || found.name.length == 0)
             continue;
         result ~= SourceModule(found.name, path, baseName(relative) == "package.d", found.hash,
-                found.imports, true, found.text.indexOf("FlintBootApplication") >= 0);
+                found.imports, true, found.text.indexOf("FlintBootApplication") >= 0
+                || found.text.indexOf("FlintApplication") >= 0);
     }
     return result;
 }

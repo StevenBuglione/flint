@@ -26,6 +26,13 @@ AotStep runAotStep(ref Session session, const ref Manifest manifest, const ref R
     import std.conv : to;
     import flint_tool.engine.aot.driver : AotOutcome, AotRequest, runAot;
 
+    // Only applications whose closure has the AOT runtime are AOT applications; ADR-029 applications that use the
+    // legacy @FlintApplication keep the scan module.
+    bool runtime;
+    foreach (ref item; resolution.packages)
+        runtime = runtime || item.name == "flint:engine-aot";
+    if (!runtime)
+        return AotStep(true, false);
     AotRequest request;
     request.root = manifest.root;
     // The extraction compile runs on the forked DMD, whose compile server serves `-o-` compiles; LDC only when the
