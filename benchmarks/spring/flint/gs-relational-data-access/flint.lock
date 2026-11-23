@@ -47,14 +47,14 @@ name = "flint:boot-jdbc"
 kind = "core"
 source = "workspace"
 scope = "build"
-dependencies = ["flint:beans", "flint:boot-autoconfigure", "flint:boot-core", "flint:context", "flint:engine-aot", "flint:engine-jdbc", "flint:java", "flint:jdbc", "flint:tx"]
+dependencies = ["flint:beans", "flint:boot-autoconfigure", "flint:boot-core", "flint:boot-sql", "flint:context", "flint:engine-aot", "flint:engine-jdbc", "flint:java", "flint:jdbc", "flint:tx"]
 
 [[package]]
 name = "flint:boot-sql"
 kind = "core"
 source = "workspace"
 scope = "build"
-dependencies = ["flint:boot-core", "flint:engine-aot"]
+dependencies = ["flint:beans", "flint:boot-core", "flint:context", "flint:core", "flint:engine-aot"]
 
 [[package]]
 name = "flint:boot-starter"
