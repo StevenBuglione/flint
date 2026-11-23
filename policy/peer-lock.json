@@ -80,6 +80,22 @@
       "license": "GPL-2.0-with-classpath-exception",
       "binaries": {"java": "bin/java", "javac": "bin/javac"}
     },
+    "graalvm": {
+      "consumers": [
+        "tools/spring_bench.py"
+      ],
+      "version": "25.0.5.0.3",
+      "kind": "archive",
+      "url": "https://github.com/graalvm/graalvm-ce-builds/releases/download/graal-25.5.5.0.3/graalvm-community-jdk-25i5-25.0.5.0.3_linux-x64_bin.tar.gz",
+      "sha256": "c6438dee6c3ade2220d40b7ccdcad24b512d30e233e61bb4fc70519522de34ef",
+      "checksum_url": "https://github.com/graalvm/graalvm-ce-builds/releases/download/graal-25.5.5.0.3/graalvm-community-jdk-25i5-25.0.5.0.3_linux-x64_bin.tar.gz.sha256",
+      "verification": "The digest equals the published .sha256 and the GitHub release asset digest (observed 2026-11-23; release graal-25.5.5.0.3 of 2026-11-03). GraalVM Community for JDK 25 builds the Spring Boot native images that benchmarks/spring reports as context only (ADR-030 section 8); Spring Boot 4 requires GraalVM 25 for native images.",
+      "license": "GPL-2.0-with-classpath-exception",
+      "binaries": {
+        "java": "bin/java",
+        "native-image": "bin/native-image"
+      }
+    },
     "maven": {
       "consumers": ["tools/vibe_bench.py"],
       "version": "3.9.16",

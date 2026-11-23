@@ -345,7 +345,7 @@ def parse_spring_oha(payload, expected):
 def validate_spring_manifest(m, smoke):
     require(m.get("schema")==2,"Spring HTTP manifest schema must be 2")
     require(m["targets"]==["flint","go"],"the Spring workload measures exactly flint and go")
-    require(set(m.get("context",[]))<={"java-jvm"},"context targets: java-jvm")
+    require(set(m.get("context",[]))<={"java-jvm","java-native"},"context targets: java-jvm, java-native")
     w=m["workload"]
     if not smoke:
         require(w["runs"]==9 and w["duration_seconds"]>=60 and w["capacity_seconds"]>=60
@@ -378,6 +378,7 @@ def spring_quiet(smoke):
 def spring_server(spring, app, target, port, database, workload, environment, smoke, extra_args=(), binary=None):
     """argv, environment and identity of one implementation, pinned to the server CPUs."""
     argv,env,cwd=spring.launch(app,"java" if target=="java-jvm" else target,port,database,extra_args,binary)
+    if target=="java-native":env.pop("JAVA_TOOL_OPTIONS",None)
     env.update(environment.get(target,{}))
     executable=Path(argv[0])
     identity={"executable":str(executable),"sha256":file_hash(executable)}
@@ -386,6 +387,8 @@ def spring_server(spring, app, target, port, database, workload, environment, sm
     else:
         with executable.open("rb") as stream:
             require(stream.read(4)==b"\x7fELF","benchmark requires a directly executed native ELF server")
+    if target=="java-native":
+        identity["note"]="Spring Boot native image (GraalVM), context only"
     argv=["taskset","--cpu-list",",".join(map(str,workload["server_cpus"]))]+argv
     return argv,env,cwd,identity
 
@@ -416,7 +419,7 @@ def spring_measure(spring, app, spec, target, workload, oha, trial, outdir, envi
                 # Context targets are reported, never compared: a JVM that cannot hold the fixed rate is recorded
                 # as unsustained rather than dropped.
                 phases[phase]=run_oha(oha,url,workload,seconds,rate,outdir/f"{prefix}-{phase}.json",process,expected,
-                                      spring_verifier,parse_spring_oha,require_sustained=target!="java-jvm")
+                                      spring_verifier,parse_spring_oha,require_sustained=not target.startswith("java-"))
                 spring_verifier(url,expected)
             if not smoke:
                 require(phases["latency"]["load_cpu_fraction"]<.85 and phases["capacity"]["load_cpu_fraction"]<.85,
@@ -458,21 +461,28 @@ def spring_main(a, raw, m):
         for app in apps:
             spec=m["apps"][app]
             measured=[t for t in targets if not (t=="flint" and app in missing)]
-            builds={"go":spring.build_go,"flint":spring.build_flint,"java-jvm":spring.build_java}
+            builds={"go":spring.build_go,"flint":spring.build_flint,"java-jvm":spring.build_java,
+                    "java-native":spring.build_java_native}
+            available=list(context)
             for target in measured+context:
-                builds[target](app)
+                try:
+                    builds[target](app)
+                except SystemExit as exc:
+                    if target not in context:raise
+                    result["context_errors"].append(f"{app} [{target}] did not build: {str(exc)[:500]}")
+                    available.remove(target);continue
                 impl="java" if target=="java-jvm" else target
                 record=spring.accept(app,impl,spring.WIRE_DEFAULT[impl])
                 result["acceptance"].append(record)
                 if not record["success"]:
                     require(target in context,f"{app} [{target}] fails its black-box suite; it is not measured")
                     result["context_errors"].append(f"{app} [{target}] fails its suite")
-            series={t:{k:[] for k in FIELDS} for t in measured+context}
+            series={t:{k:[] for k in FIELDS} for t in measured+available}
             with spring.postgres_cluster(workload["database_cpus"]) if spring.app_row(app).get("database")=="postgres" \
                     else contextlib.nullcontext() as database:
                 for trial in range(workload["runs"]):
                     order=measured if trial%2==0 else list(reversed(measured))
-                    for target in order+context:
+                    for target in order+available:
                         try:
                             row=spring_measure(spring,app,spec,target,workload,oha,trial,outdir,m.get("environment",{}),database,a.smoke)
                         except ValueError as exc:
@@ -482,7 +492,7 @@ def spring_main(a, raw, m):
                         for key in FIELDS:
                             series[target][key].append(row["capacity" if key=="requests_per_second" else "latency"][key])
                         print(json.dumps({"app":app,"trial":trial,"target":target,"status":"measured"}),flush=True)
-            result["apps"][app]={"measured":{t:series[t] for t in measured},"context":{t:series[t] for t in context}}
+            result["apps"][app]={"measured":{t:series[t] for t in measured},"context":{t:series[t] for t in available}}
         result["status"]="incomplete" if missing else "passed"
         a.output.write_text(json.dumps(result,indent=2)+"\n")
         return 0

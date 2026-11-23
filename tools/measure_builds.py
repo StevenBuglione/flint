@@ -566,6 +566,8 @@ def main(argv=None):
     parser.add_argument('--allow-missing-flint', action='store_true',
                         help='with --spring: record the Go and Java sides when a Flint port is missing (incomplete)')
     parser.add_argument('--no-context', action='store_true', help='with --spring: skip the Java context builds')
+    parser.add_argument('--native-context', action='store_true',
+                        help='with --spring: also build each Java reference as a GraalVM native image once (context)')
     parser.add_argument('--workspace', type=Path,
                         help='flint.workspace/1 file pinning each repo\'s checkout (plan section 7); default: this '
                              'monorepo. Its commits are recorded in the evidence.')

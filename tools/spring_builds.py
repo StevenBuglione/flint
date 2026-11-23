@@ -16,7 +16,8 @@ and process-tree peak RSS sampled every millisecond), nine trials of:
     cache (the pinned flint-framework and flint-boot analysis and archives, ADR-030 section 5);
   - `flint_scratch_seconds`: the same build with every module compiled from source and no platform cache;
   - `O3` and `Oz` binary sizes.
-- **Java, context only**: `mvn -o package` cold (no target/) and after a one-line edit, and the jar size.
+- **Java, context only**: `mvn -o package` cold (no target/) and after a one-line edit, and the jar size; with
+  --native-context, one Spring Boot native-image build with the pinned GraalVM, for its time and executable size.
 
 The two headlines of ADR-030 section 5, each a median ratio with its bootstrap 99% interval and a 0.99 ceiling:
 - primary: `flint_cached_cold_seconds` against `go_std_cold_seconds`;
@@ -151,7 +152,7 @@ def measure_flint(name, trials, timed, logs, temporary, result):
     return row
 
 
-def measure_java(name, trials, timed, logs, temporary, result):
+def measure_java(name, trials, timed, logs, temporary, result, native=False):
     """Context only: Maven builds of the reference, offline from the verified repository."""
     source = spring_bench.fetch(name)
     spring_bench.build_java(name)  # resolves every artifact once, with --strict-checksums
@@ -175,6 +176,16 @@ def measure_java(name, trials, timed, logs, temporary, result):
         jar = work / spring_bench.app_row(name)['java']['jar']
         row['jar_bytes'] = jar.stat().st_size
         shutil.rmtree(work)
+    if native:
+        # One native-image build, for its time and executable size: minutes per build, and context only.
+        started = time.monotonic()
+        try:
+            binary = spring_bench.build_java_native(name)
+            row['native'] = {'build_seconds_single': time.monotonic() - started, 'binary_bytes': binary.stat().st_size,
+                             'sha256': spring_bench.sha256(binary), 'graalvm': json.loads(
+                                 (ROOT / 'policy' / 'peer-lock.json').read_text())['peers']['graalvm']['version']}
+        except SystemExit as exc:
+            row['native'] = {'error': str(exc)[:1000]}
     return row
 
 
@@ -229,7 +240,8 @@ def measure(args, timed):
                     row['flint'] = measure_flint(name, args.trials, timed, logs, temporary, result)
                     row['verdicts'] = verdicts(name, row['flint'], row['go'], budgets['rest_build_ratio_max'])
                 if not args.no_context:
-                    row['context'] = {'java': measure_java(name, args.trials, timed, logs, temporary, result)}
+                    row['context'] = {'java': measure_java(name, args.trials, timed, logs, temporary, result,
+                                                           native=args.native_context)}
                 result['apps'][name] = row
         gating = [v['pass'] for row in result['apps'].values() for v in row.get('verdicts', {}).values() if v['gating']]
         result['status'] = 'incomplete' if missing else ('passed' if all(gating) else 'failed')

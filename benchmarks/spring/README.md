@@ -102,7 +102,9 @@ The origin is recorded as `{origin}`, because `ProblemDetail.type` and the actua
 **Results today:**
 - The Java references pass all their cases in `exact` mode: 18, 1 and 109.
 - The gs-rest-service and gs-relational-data-access Go comparators pass in `semantic` mode: 18/18 and 1/1.
-- The petclinic-rest comparator is being completed in the same change series. Its status is recorded in `comparators.json` once it is registered.
+- The petclinic-rest Go comparator passes 109/109.
+
+All three Go comparators are registered in `comparators.json`.
 
 Behaviours the suites pin down that a port must reproduce:
 - **gs-rest-service** runs its handler before content negotiation, so a 406 still consumes a counter value.
@@ -232,13 +234,23 @@ For each setting, the suite must still pass. The Spring workload then measures l
 
 ### Java native image
 
-Spring Boot native needs GraalVM's `native-image`. No GraalVM is pinned in `policy/peer-lock.json` yet. The context reports therefore cover the JVM only, until a GraalVM peer is pinned with a checksum like the JDK.
+The Spring Boot native images are context, like the JVM. They are built with `-Pnative native:compile` and GraalVM Community 25.0.5, which is pinned with its checksum in `policy/peer-lock.json` (`install_peers.py --peer graalvm`). Spring Boot 4 requires GraalVM 25 for native images. `native-image` runs with `--parallelism=8`, to leave the runner to other work.
+
+- `spring_bench.py build <app> --impl java-native` builds the image.
+- `accept --impl java-native` scores it in `exact` mode.
+- The HTTP workload lists `java-native` as a context target.
+- `measure_builds.py --spring --native-context` adds one native build per application, with its time and executable size.
+
+The gs-rest-service image builds in 53 s on venus, is 67 MB, and passes 18/18. gs-relational-data-access passes 1/1.
+
+spring-petclinic-rest's image builds, but exits at start-up with `NoClassDefFoundError: Could not initialize class org.slf4j.MarkerFactory`. Its log4j-to-SLF4J bridge fails to initialise in the image. Fixing that would need upstream edits beyond the parent version. The harness therefore records it as a context error, and petclinic-rest's context is the JVM only.
 
 ## Status
 
 **In place:**
 - the references, the suites and the golden files;
-- the gs-rest-service and gs-relational-data-access Go comparators, with their registration;
+- the three Go comparators, with their registration;
+- the Java native-image context for the two guides;
 - the build, HTTP and GC-matrix tooling;
 - the gate.
 

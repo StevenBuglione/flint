@@ -37,7 +37,7 @@
     }
   },
   "targets": ["flint", "go"],
-  "context": ["java-jvm"],
+  "context": ["java-jvm", "java-native"],
   "environment": {
     "flint": {"FLINT_CORES": "2"},
     "go": {"GOMAXPROCS": "2"},

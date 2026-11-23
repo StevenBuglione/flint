@@ -43,7 +43,9 @@ REGISTRY = BENCH / 'comparators.json'
 CACHE = ROOT / '.flint' / 'spring'
 BUILD = ROOT / 'build' / 'spring'
 IMPLEMENTATIONS = ('java', 'go', 'flint')
-WIRE_DEFAULT = {'java': 'exact', 'flint': 'exact', 'go': 'semantic'}
+# Context only: reported next to the measured implementations, never compared or gated.
+CONTEXT_IMPLEMENTATIONS = ('java-native',)
+WIRE_DEFAULT = {'java': 'exact', 'flint': 'exact', 'go': 'semantic', 'java-native': 'exact'}
 
 sys.path.insert(0, str(SUITES))
 sys.path.insert(0, str(ROOT / 'tools'))
@@ -150,6 +152,30 @@ def build_java(name):
     return jar
 
 
+def native_binary(name):
+    row = app_row(name)
+    return source_directory(name) / row['upstream']['directory'] / row['java']['native']
+
+
+def build_java_native(name):
+    """The Spring Boot native image (`-Pnative native:compile`), with the pinned GraalVM and Maven. Context only."""
+    directory = fetch(name)
+    graalvm = vibe_bench.pinned_peer('graalvm')
+    _, maven, env = vibe_bench.java_environment()
+    env.update({'JAVA_HOME': str(graalvm), 'GRAALVM_HOME': str(graalvm),
+                'PATH': str(graalvm / 'bin') + os.pathsep + env['PATH'],
+                # Leave most of the runner to other work: native-image otherwise takes every core.
+                'NATIVE_IMAGE_OPTIONS': '--parallelism=8'})
+    repository = ROOT / '.flint' / 'peers' / 'm2'
+    BUILD.mkdir(parents=True, exist_ok=True)
+    run([maven, '--strict-checksums', '-B', '-q', '-Dmaven.repo.local=' + str(repository), '-DskipTests', '-Pnative',
+         'native:compile'], directory, env, timeout=3600, log=BUILD / f'{name}-java-native-build.log')
+    binary = native_binary(name)
+    if not binary.is_file():
+        raise SystemExit(f'{name}: native-image did not produce {binary}')
+    return binary
+
+
 # ---------------------------------------------------------------------------------------------------------------
 # The Go comparators and the Flint ports
 
@@ -196,7 +222,7 @@ def build_flint(name):
 
 
 def build(name, implementation):
-    return {'java': build_java, 'go': build_go, 'flint': build_flint}[implementation](name)
+    return {'java': build_java, 'go': build_go, 'flint': build_flint, 'java-native': build_java_native}[implementation](name)
 
 
 # ---------------------------------------------------------------------------------------------------------------
@@ -286,6 +312,8 @@ def launch(name, implementation, port, database=None, extra_args=(), binary=None
         if not jar.is_file():
             raise SystemExit(f'{name}: build the Java reference first (spring_bench.py build {name} --impl java)')
         return [str(jdk / 'bin' / 'java'), '-jar', str(jar), *extra_args], env, jar.parent.parent
+    if implementation == 'java-native':
+        binary = binary or native_binary(name)
     binary = Path(binary) if binary else (go_binary(name) if implementation == 'go' else flint_binary(name))
     if not binary.is_file():
         raise SystemExit(f'{name}: build the {implementation} implementation first '
@@ -455,10 +483,10 @@ def main(argv=None):
     sub = parser.add_subparsers(dest='command', required=True)
     sub.add_parser('list')
     p = sub.add_parser('fetch'); p.add_argument('apps', nargs='*')
-    p = sub.add_parser('build'); p.add_argument('apps', nargs='+'); p.add_argument('--impl', choices=IMPLEMENTATIONS, required=True)
+    p = sub.add_parser('build'); p.add_argument('apps', nargs='+'); p.add_argument('--impl', choices=IMPLEMENTATIONS + CONTEXT_IMPLEMENTATIONS, required=True)
     p = sub.add_parser('record'); p.add_argument('apps', nargs='*')
     p = sub.add_parser('accept'); p.add_argument('apps', nargs='*')
-    p.add_argument('--impl', choices=IMPLEMENTATIONS)
+    p.add_argument('--impl', choices=IMPLEMENTATIONS + CONTEXT_IMPLEMENTATIONS)
     p.add_argument('--wire', choices=['exact', 'semantic'])
     p.add_argument('--start', help='start command of an implementation built elsewhere')
     p.add_argument('--url', help='the origin it listens on, http://127.0.0.1:<port>')

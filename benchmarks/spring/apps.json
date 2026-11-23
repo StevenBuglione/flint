@@ -17,7 +17,7 @@
         "licence": "Apache-2.0",
         "observed": "2026-11-23: main at that commit (2026-11-01); the archive digest is of GitHub's tarball of the commit."
       },
-      "java": {"jar": "target/rest-service-complete-0.0.1-SNAPSHOT.jar"},
+      "java": {"jar": "target/rest-service-complete-0.0.1-SNAPSHOT.jar", "native": "target/rest-service-complete"},
       "go": {"directory": "benchmarks/spring/go/gs-rest-service", "executable": "gs-rest-service"},
       "flint": {"directory": "benchmarks/spring/flint/gs-rest-service", "executable": "gs-rest-service"},
       "load": {"path": "/greeting?name=Flint", "body": "^\\{\"id\":[1-9][0-9]*,\"content\":\"Hello, Flint!\"\\}$"}
@@ -35,7 +35,7 @@
         "licence": "Apache-2.0",
         "observed": "2026-11-23: main at that commit (2026-11-01)."
       },
-      "java": {"jar": "target/relational-data-access-complete-0.0.1-SNAPSHOT.jar"},
+      "java": {"jar": "target/relational-data-access-complete-0.0.1-SNAPSHOT.jar", "native": "target/relational-data-access-complete"},
       "go": {"directory": "benchmarks/spring/go/gs-relational-data-access", "executable": "gs-relational-data-access"},
       "flint": {"directory": "benchmarks/spring/flint/gs-relational-data-access", "executable": "gs-relational-data-access"},
       "database": "embedded: H2 in memory for Java (the guide's choice), SQLite in memory for Go and Flint, the embedded engine each ecosystem ships"
@@ -53,7 +53,7 @@
         "licence": "Apache-2.0",
         "observed": "2026-11-23: master at that commit (2026-11-22, 'Reject blank values in model and API validation'); newer than tag v4.0.2, which is on Boot 4.0."
       },
-      "java": {"jar": "target/spring-petclinic-rest-4.0.2.jar"},
+      "java": {"jar": "target/spring-petclinic-rest-4.0.2.jar", "native": "target/spring-petclinic-rest"},
       "go": {"directory": "benchmarks/spring/go/petclinic-rest", "executable": "petclinic-rest"},
       "flint": {"directory": "benchmarks/spring/flint/petclinic-rest", "executable": "petclinic-rest"},
       "database": "postgres",
