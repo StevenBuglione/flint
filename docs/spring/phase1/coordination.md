@@ -68,7 +68,14 @@ A session should end its turn only when every queue item it could take is claime
 
 ## Measurement
 
-Timing evidence is taken only by the proof-harness watcher when venus has been quiet for 5 minutes (`tools/measure_queue.py`). While a timed run is in progress, `/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/MEASURING` exists. It holds the entry id, start time and pid. Hold compiles while it exists, and build freely when it doesn't: the watcher refuses to start a run while other sessions' builds use CPU. Queue timing runs with proof-harness rather than measuring yourself. Byte sizes and template counts are deterministic and may be measured any time. On pluto, the macOS, linux-arm64-vm and dmd-arm64 sessions agree quiet windows among themselves.
+Timing evidence is taken only by the proof-harness watcher when venus has been quiet for 5 minutes (`tools/measure_queue.py`). While a timed run is in progress, `/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/MEASURING` exists. It holds the entry id, start time and pid. Hold compiles while it exists, and build freely when it doesn't: the watcher refuses to start a run while other sessions' builds use CPU. The easiest way is to run heavy builds and test suites through the queue's pause wrapper, from any checkout:
+
+```bash
+export FLINT_MEASURE_LOCK=/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/MEASURING
+python3 tools/measure_queue.py hold -- flint test --compiler both
+```
+
+The wrapper stops the command's whole process group (SIGSTOP) while the lock exists and continues it afterwards, so a build that is already running pauses too. A paused build uses no CPU, so the queue ignores it. Queue timing runs with proof-harness rather than measuring yourself. Byte sizes and template counts are deterministic and may be measured any time. On pluto, the macOS, linux-arm64-vm and dmd-arm64 sessions agree quiet windows among themselves.
 
 ## Work queue
 
