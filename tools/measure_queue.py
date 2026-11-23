@@ -540,6 +540,9 @@ def main(argv=None):
     p.add_argument('--force-busy', action='store_true', help='measure in a busy window; the receipt is never evidence')
     p.add_argument('--smoke', action='store_true', help='a short harness check; never evidence')
     sub.add_parser('next')
+    p = sub.add_parser('watch', help='wait for quiet, run the pending entries, repeat until none is pending')
+    p.add_argument('--quiet-minutes', type=int, default=5)
+    p.add_argument('--hours', type=float, default=12, help='give up after this long')
     args = parser.parse_args(argv)
     if args.command == 'list':
         for entry in entries():
@@ -568,6 +571,35 @@ def main(argv=None):
             receipt = run(load_entry(name), args.force_busy, args.smoke)
             print(json.dumps({'id': name, 'outcome': receipt['outcome'], 'summary': receipt['summary']}, indent=2))
         return 0
+    if args.command == 'watch':
+        # Natural quiet (the fiber-wake session's procedure): run when venus has been quiet for --quiet-minutes in a
+        # row; a run interrupted by other sessions is recorded as not evidence and stays pending for the next window.
+        deadline = time.monotonic() + args.hours * 3600
+        streak = 0
+        while time.monotonic() < deadline:
+            pending = [e for e in entries() if e['status'] == 'pending']
+            if not pending:
+                print(now(), 'no pending entries; done', flush=True)
+                return 0
+            snapshot = quiet_snapshot()
+            streak = streak + 1 if snapshot['quiet'] else 0
+            if streak < args.quiet_minutes:
+                time.sleep(59)
+                continue
+            for entry in pending:
+                if not quiet_snapshot()['quiet']:
+                    print(now(), 'window closed before', entry['id'], flush=True)
+                    break
+                print(now(), 'running', entry['id'], flush=True)
+                try:
+                    receipt = run(entry)
+                    print(now(), entry['id'], receipt['outcome'], 'evidence' if receipt['evidence'] else 'not evidence',
+                          flush=True)
+                except SystemExit as exc:
+                    print(now(), entry['id'], 'stopped:', exc, flush=True)
+            streak = 0
+        print(now(), 'gave up after', args.hours, 'hours', flush=True)
+        return 1
     if args.command == 'next':
         for entry in [e for e in entries() if e['status'] == 'pending']:
             snapshot = quiet_snapshot()
