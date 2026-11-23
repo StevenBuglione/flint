@@ -88,6 +88,26 @@ Generic façades are one-liners over an erased engine (ADR-030 section 5): `read
 
 The streaming layer is `flint.jackson.core`'s `JsonGenerator` and `JsonParser`. The generator writes to a caller-supplied sink, so the web layer's message converter can write straight into its response buffer. The parser tokenizes with serde's scanner rules and keeps Jackson's token model (`JsonToken`, `currentName`, `getNumberType`).
 
+### java.time
+
+`flint.jackson.databind.ext.javatime` ports Jackson 3's built-in java.time support (`tools.jackson.databind.ext.javatime`) over `flint.java.time`:
+
+- **Writing.** By default values are ISO-8601 strings: `ISO_LOCAL_DATE`, `ISO_LOCAL_TIME` (seconds always printed, minimal fraction), `ISO_LOCAL_DATE_TIME`, `ISO_INSTANT`, `ISO_OFFSET_DATE_TIME`, and `ISO_OFFSET_DATE_TIME` for `ZonedDateTime` (`ISO_ZONED_DATE_TIME` with `WRITE_DATES_WITH_ZONE_ID`). `Duration` prints as `PT…`, and zone offsets and IDs as their IDs.
+- **Timestamps.** `WRITE_DATES_AS_TIMESTAMPS` writes local values as arrays and instants as `DecimalUtils` decimals (`1700000000.005000000`, `5E-9`), or as milliseconds when `WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS` is off. `WRITE_DURATIONS_AS_TIMESTAMPS` does the same for durations.
+- **`@JsonFormat`.** `pattern` formats and parses with `DateTimeFormatter.ofPattern`. `shape` NUMBER or ARRAY forces timestamps, and STRING forces text.
+- **Reading.** Reading accepts what Jackson accepts:
+  - ISO strings, trimmed, with "" read as null;
+  - an ISO date-time where a date or time is expected;
+  - a trailing `Z` on a `LocalDateTime`;
+  - epoch days for `LocalDate`;
+  - decimal or integer epoch seconds for instants and durations, including digit-only strings for instants;
+  - the timestamp arrays.
+
+  Offset and zoned values are adjusted to the context zone, UTC (`ADJUST_DATES_TO_CONTEXT_TIME_ZONE`). Errors carry Jackson's messages, including the formatter description that Java's `DateTimeFormatter.toString` prints.
+- **Zones.** Region zones need the time-zone database, which `flint.java.time` has not ported yet. Until then `ZoneId.of("Europe/Paris")` throws, and only UTC and fixed offsets work.
+
+`flint.java.time` itself (framework-core owns it) is clean-room from the Java SE 21 specification. Its proof is `framework/java/tests/golden/time_format.tsv`: 542 format, parse and error results from JDK 21.
+
 ### Byte-equality proof
 
 The tests compare Flint's output with golden files that the real Jackson 3.1.8 wrote. `framework/jackson-databind/tests/golden/` holds the Java generator, run on OpenJDK 21 with the jars Boot 4.2.0 resolves, next to the JSON it produced. A test fails on any byte difference. The generator source is committed so anyone can regenerate the files.
@@ -130,6 +150,8 @@ All commands run from the repository root with the toolchain on `PATH`.
 | Java number text | `java Gen` (JDK 21.0.13) then the D comparer, two seeds | 11,986,636 values, 0 mismatches |
 | Jackson streaming | `dub test :jackson-core --compiler=dmd` and `=ldc2` | 10 golden files byte-equal; 33 ported upstream cases |
 | Jackson databind | `dub test :jackson-databind --compiler=dmd` and `=ldc2` | 21 golden files byte-equal; TestNamingStrategyStd's tables |
+| Jackson java.time | same | `javatime.tsv`: 23 writes and 59 reads (values and messages) identical to Jackson 3.1.8 |
+| java.time | `dub test :java --compiler=dmd` and `=ldc2` | `time.tsv` and `time_format.tsv` identical to JDK 21; epoch days walked over 1600–2400 |
 | Jackson annotations | `dub test :jackson-annotations --compiler=dmd` and `=ldc2` | defaults and shorthand |
 | SLF4J | `dub test :slf4j-api --compiler=dmd` and `=ldc2` | MessageFormatterTest, BasicMarkerTest, MDCAdapterTestBase ported; logger behaviour |
 | Validation | `dub test :jakarta-validation` and `:hibernate-validator`, both compilers | 23 violations identical to Hibernate Validator's |
@@ -147,10 +169,9 @@ The classification is name-based: an element counts as ported when the Flint mod
   - descriptor access for D arrays, `Optional!T` and enum values (`Any` can't build an enum from a type name);
   - `create()` on the descriptors of `ArrayList!T`, `HashSet!T` and `LinkedHashMap!(K, V)`;
   - `@safe` equality and hash on `Any`, so `flint.java.util` collections can hold it;
-  - `flint.java.time`, and `ClassRef` in `flint.java.lang`;
-  - `doubleToString` should call `flint.serde.java_number`.
+  - the time-zone database for region `ZoneId`s.
 
-  Until these land, Jackson serializes and reads beans, records, scalars, `List`, `Set` and `Map`; it has no D arrays, `Optional`, enum reading, `java.time` or `@JsonNaming`. Validation has no `@Past`/`@Future`, groups or custom constraints.
+  `flint.java.time` and `ClassRef` have landed. Next on the third-party side: D arrays, `Optional` and enum reading over the new descriptor thunks, then `@JsonNaming`. Validation still lacks `@Past`/`@Future`, groups and custom constraints.
 - **flint-aot:**
   - a record's field-wise constructor as `constructors[0]` for structs;
   - descriptors for the concrete collection types of collection-typed properties.
