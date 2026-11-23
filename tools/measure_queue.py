@@ -800,6 +800,10 @@ def main(argv=None):
                     time.sleep(59)
                     continue
             for entry in pending:
+                # The round's list may be stale: another session can block, re-pin or finish an entry meanwhile.
+                entry = load_entry(entry['id'])
+                if entry['status'] != 'pending':
+                    continue
                 if not args.claim and not quiet_snapshot()['quiet']:
                     print(now(), 'window closed before', entry['id'], flush=True)
                     break
