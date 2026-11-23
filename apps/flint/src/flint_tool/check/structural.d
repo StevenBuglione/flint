@@ -302,12 +302,20 @@ private void checkRootRecipe(const ref Home home, ref Report report)
     bool[string] listed;
     foreach (match; matchAll(text, regex(`subPackage\s+"packages/([\w-]+)"`)))
         listed[match[1].idup] = true;
-    bool same = listed.length == home.packages.length;
+    // The packages of the repos that live in this home (all of them before the cutover, flint's after).
+    size_t expected;
+    bool same = true;
     foreach (ref item; home.packages)
+    {
+        if (!home.inHome(item.repo))
+            continue;
+        ++expected;
         same = same && (item.name in listed) !is null;
-    if (!same)
+    }
+    if (!same || listed.length != expected)
         report.add(at(diagnostic("FLINT-E0524", Severity.error, "root subpackage list differs",
-                "list every package of policy/packages.json as subPackage \"packages/<name>\""), "dub.sdl", 0));
+                "list every package of policy/packages.json in this home's repos as subPackage \"packages/<name>\""),
+                "dub.sdl", 0));
 }
 
 /// Check one package's recipe and sources. Returns true when it contains approved string mixins.
@@ -319,7 +327,7 @@ private bool checkPackage(const ref Home home, string name, ref Report report)
     import flint_tool.support.files : findFiles, readIfPresent;
 
     const meta = home.find(name);
-    const directory = buildPath(home.root, "packages", name);
+    const directory = home.packagePath(meta.repo, buildPath("packages", name));
     const recipePath = "packages/" ~ name ~ "/dub.sdl";
     const recipe = readIfPresent(buildPath(directory, "dub.sdl"));
     bool[string] declared;
@@ -395,7 +403,7 @@ private GeneratedSummary generatedDependencies(const ref Home home, scope const(
     }
     string[] imports;
     foreach (ref item; home.packages)
-        imports ~= "-I" ~ buildPath(home.root, "packages", item.name, "source");
+        imports ~= "-I" ~ buildPath(home.packagePath(item.repo, buildPath("packages", item.name)), "source");
     const temporary = buildPath(tempDir(), "flint-deps-" ~ randomUUID().toString());
     mkdirRecurse(temporary);
     scope (exit)
@@ -404,7 +412,7 @@ private GeneratedSummary generatedDependencies(const ref Home home, scope const(
     sort(sorted);
     foreach (name; sorted)
     {
-        const sourceRoot = buildPath(home.root, "packages", name, "source");
+        const sourceRoot = buildPath(home.packagePath(home.find(name).repo, buildPath("packages", name)), "source");
         auto files = findFiles(sourceRoot, "**/*.d");
         sort(files);
         string[] sources;

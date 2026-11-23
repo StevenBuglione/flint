@@ -1,0 +1,163 @@
+#!/usr/bin/env python3
+"""The repo-split cutover as one scripted operation (ADR-030; plan section 7), and its rehearsal.
+
+    python3 tools/cutover.py --into /tmp/cutover            # rehearse: nothing leaves this machine
+    python3 tools/cutover.py --into /tmp/cutover --push     # the real cutover, on the coordinator's call
+
+Both run the same steps:
+
+1. **Extract.** It clones flint at `--commit` (default: origin/main of `--source`) and extracts every repo that has
+   paths (tools/extract_repo.py refresh), gated through a workspace of the fresh checkouts.
+2. **Cut.** On a `cutover` branch of that flint clone it removes every path that moved, keeps only the remaining
+   subpackages in the root dub.sdl, and pins each extracted repo in platform.lock at its extracted commit, as
+   "source": "github". Then it commits.
+3. **Fetch.** As a Flint home it installs its flint CLI and fetches the pinned repos with their native DUB blocks
+   (tools/platform_modules.py --fetch). A rehearsal fetches them from the local extracted checkouts; the real
+   cutover fetches them from GitHub after pushing.
+4. **Check.** It checks that everything still in flint builds against the fetched repos:
+   - the structural gate (gates.py and flint check) through the fetched workspace;
+   - every flint package's unittests;
+   - `flint build` of every app, example and benchmark project (flint.toml);
+   - the Python suite.
+   It writes `report.json` with each check's result and the failures' output tails.
+
+It is reversible:
+- the extracted repos are force-pushed mirrors until the cutover, so pushing them again replaces nothing anybody
+  else wrote;
+- the cut is one commit on the `cutover` branch of a scratch clone, so nothing touches flint main.
+
+With `--push` it force-pushes the four repos, then fetches them from GitHub and checks. It leaves the `cutover`
+commit for the coordinator to push to flint main, or to throw away.
+"""
+import argparse
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / 'tools'))
+from extract_repo import moving_paths, refresh  # noqa: E402
+from workspace import repo_policy  # noqa: E402
+
+PYTHON = sys.executable
+
+
+def run(command, cwd=None, env=None, check=True):
+    return subprocess.run(command, cwd=cwd, env=env, check=check, capture_output=not check, text=True)
+
+
+def cut(flint, extracted, github):
+    """Remove the moved paths, keep the remaining subpackages, pin platform.lock and commit."""
+    run(['git', 'checkout', '--quiet', '-B', 'cutover'], flint)
+    removed = []
+    for repo in extracted:
+        for path in moving_paths(repo, flint):
+            if (flint / path).exists():
+                run(['git', 'rm', '-r', '--quiet', path], flint)
+                removed.append(path)
+    recipe = flint / 'dub.sdl'
+    recipe.write_text('\n'.join(line for line in recipe.read_text().splitlines()
+                                if not line.startswith('subPackage ')
+                                or (flint / re.search(r'"(.*)"', line)[1]).is_dir()) + '\n')
+    lock_path = flint / 'platform.lock'
+    lock = json.loads(lock_path.read_text())
+    for repo, commit in extracted.items():
+        lock['repos'][repo] = {'github': lock['repos'][repo]['github'], 'source': 'github', 'commit': commit}
+    lock_path.write_text(json.dumps(lock, indent=2) + '\n')
+    run([PYTHON, 'tools/platform_modules.py', '--write'], flint)
+    run(['git', 'add', '-A'], flint)
+    run(['git', '-c', 'user.name=flint cutover', '-c', 'user.email=cutover@flint.invalid', 'commit', '--quiet', '-m',
+         'Cutover: the extracted repos leave the monorepo (ADR-030)\n\n'
+         f'Removed {len(removed)} paths that moved: {", ".join(removed)}. platform.lock pins '
+         + ', '.join(f'{github[r]}@{c[:12]}' for r, c in sorted(extracted.items())) + '.'], flint)
+    return removed
+
+
+def check(name, command, cwd, env, results, timeout=3600):
+    try:
+        done = subprocess.run(command, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout)
+        ok, tail = done.returncode == 0, (done.stdout + done.stderr)[-3000:]
+    except subprocess.TimeoutExpired:
+        ok, tail = False, f'timed out after {timeout}s'
+    results.append({'check': name, 'ok': ok, 'cwd': str(cwd), 'tail': '' if ok else tail})
+    print(('PASS ' if ok else 'FAIL ') + name, flush=True)
+    return ok
+
+
+def checks(flint, target):
+    env = dict(os.environ)
+    tools = (flint / '.tools').resolve()
+    env['PATH'] = os.pathsep.join([str(tools / 'dmd2' / 'linux' / 'bin64'), str(tools / 'bin'), env['PATH']])
+    env.setdefault('SDL_VIDEODRIVER', 'offscreen')
+    workspace = flint / '.flint' / 'platform' / 'workspace.json'
+    env['FLINT_WORKSPACE'] = str(workspace)
+    flint_bin = str(flint / '.flint' / 'bin' / 'flint')
+    results = []
+    check('gates.py structural (fetched workspace)', [PYTHON, 'tools/gates.py', '--gate', 'structural', '--workspace',
+                                                      str(workspace)], flint, env, results)
+    check('flint check structural', [flint_bin, 'check', '--gate', 'structural'], flint, env, results)
+    check('platform outputs', [PYTHON, 'tools/platform_modules.py', '--check'], flint, env, results)
+    for line in (flint / 'dub.sdl').read_text().splitlines():
+        if line.startswith('subPackage '):
+            directory = flint / re.search(r'"(.*)"', line)[1]
+            name = re.search(r'^name "(.*)"', (directory / 'dub.sdl').read_text(), re.M)[1]
+            check(f'dub test :{name}', ['dub', 'test', ':' + name, '--compiler=dmd', '--skip-registry=all'], flint, env,
+                  results)
+    projects = run(['git', 'ls-files', '*flint.toml'], flint, check=False).stdout.split()
+    for manifest in sorted(projects):
+        project = (flint / manifest).parent
+        if project == flint:
+            continue
+        check(f'flint build {project.relative_to(flint)}', [flint_bin, 'build'], project, env, results)
+    for recipe in sorted(flint.glob('examples/*/dub.sdl')):
+        check(f'dub build {recipe.parent.relative_to(flint)}', ['dub', 'build', '--root', str(recipe.parent),
+                                                                '--compiler=dmd', '--skip-registry=all'],
+              flint, env, results)
+    check('python suite', [PYTHON, '-m', 'unittest', 'discover', '-s', 'tests', '-p', 'test_*.py'], flint, env, results)
+    return results
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('--into', type=Path, required=True, help='fresh directory for the clones and the report')
+    parser.add_argument('--source', default='git@github.com:flint-projects/flint.git')
+    parser.add_argument('--commit', default=None, help='flint commit to cut over (default: origin/main)')
+    parser.add_argument('--push', action='store_true', help='the real cutover: force-push the extracted repos')
+    parser.add_argument('--remote', default='git@github.com:{github}.git')
+    parser.add_argument('--target', default='linux-x86_64-glibc', help='native target of this checkout\'s install')
+    parser.add_argument('--skip-checks', action='store_true', help='stop after the fetch')
+    arguments = parser.parse_args()
+    into = arguments.into.resolve()
+    summary = refresh(arguments.source, arguments.commit or 'origin/main', into / 'extract', arguments.push,
+                      arguments.remote)
+    extracted = summary['repos']
+    source_flint = into / 'extract' / 'flint'
+    flint = into / 'flint'
+    run(['git', 'clone', '--quiet', '--no-local', str(source_flint), str(flint)])
+    run(['git', 'checkout', '--quiet', '--detach', summary['source_commit']], flint)
+    policy = repo_policy(flint)['repos']
+    github = {repo: policy[repo]['github'] for repo in extracted}
+    removed = cut(flint, extracted, github)
+    (flint / '.tools').symlink_to((ROOT / '.tools').resolve())
+    shutil.copytree(ROOT / '.native' / 'install' / arguments.target, flint / '.native' / 'install' / arguments.target,
+                    symlinks=True)
+    run([PYTHON, 'tools/install_toolchains.py', '--compiler', 'flint'], flint)
+    url = arguments.remote if arguments.push else str(into / 'extract') + '/flint-{repo}'
+    run([PYTHON, 'tools/platform_modules.py', '--fetch', '--native', arguments.target, '--url', url], flint)
+    results = [] if arguments.skip_checks else checks(flint, arguments.target)
+    report = {'source_commit': summary['source_commit'], 'extracted': extracted, 'pushed': summary['pushed'],
+              'cutover_commit': run(['git', 'rev-parse', 'HEAD'], flint, check=False).stdout.strip(),
+              'removed': removed, 'passed': sum(r['ok'] for r in results),
+              'failed': [r['check'] for r in results if not r['ok']], 'results': results}
+    (into / 'report.json').write_text(json.dumps(report, indent=2) + '\n')
+    print(json.dumps({k: report[k] for k in ('source_commit', 'extracted', 'cutover_commit', 'passed', 'failed')},
+                     indent=2))
+    return 0 if not report['failed'] else 1
+
+
+if __name__ == '__main__':
+    sys.exit(main())

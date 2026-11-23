@@ -11,6 +11,17 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'tools'))
 import workspace  # noqa: E402
 
+# Before the cutover every repo is this checkout; after it the flint repo resolves the others from platform modules
+# (ADR-023), and the checks that read the moved packages here skip.
+MONOREPO = (ROOT / 'packages/engine-web').is_dir()
+monorepo_only = unittest.skipUnless(MONOREPO, 'the moved packages live in their own repos after the cutover')
+
+
+def pinned(repo):
+    """`repo`'s platform version in platform.lock: `monorepo` before the cutover, its commit or tag after."""
+    import platform_modules
+    return platform_modules.version(platform_modules.platform_lock()['repos'][repo])
+
 
 class RepoPolicyTests(unittest.TestCase):
     def test_every_package_boot_library_and_starter_has_a_known_repo(self):
@@ -51,6 +62,7 @@ class WorkspaceTests(unittest.TestCase):
         path.write_text(json.dumps({'schema': 'flint.workspace/1', 'checkouts': checkouts}))
         return path
 
+    @monorepo_only
     def test_pinned_checkouts_resolve_packages_and_verify(self):
         head = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=ROOT, capture_output=True, text=True).stdout.strip()
         with tempfile.TemporaryDirectory() as temporary:
@@ -61,6 +73,7 @@ class WorkspaceTests(unittest.TestCase):
             stale = workspace.Workspace(self.write(temporary, '0000000'))
             self.assertEqual(len(stale.verify()), len(workspace.repo_policy()['repos']))
 
+    @monorepo_only
     def test_the_gate_checks_one_repo_and_refuses_a_stale_workspace(self):
         with tempfile.TemporaryDirectory() as temporary:
             gate = subprocess.run([sys.executable, str(ROOT / 'tools/gates.py'), '--gate', 'structural',
@@ -83,8 +96,8 @@ class PlatformModuleTests(unittest.TestCase):
         import platform_modules as module
         self.assertEqual(module.problems(), [])
         bom = json.loads((ROOT / 'boot/dependencies/flint-dependencies.json').read_text())
-        self.assertEqual(bom['artifacts']['flint:starter-web'], {'repo': 'boot', 'version': 'monorepo'})
-        self.assertEqual(bom['artifacts']['flint:arena'], {'repo': 'flint', 'version': 'monorepo'})
+        self.assertEqual(bom['artifacts']['flint:starter-web'], {'repo': 'boot', 'version': pinned('boot')})
+        self.assertEqual(bom['artifacts']['flint:arena'], {'repo': 'flint', 'version': pinned('flint')})
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             for name in ('policy', 'boot/dependencies'):
@@ -109,10 +122,10 @@ class PlatformModuleTests(unittest.TestCase):
             added = subprocess.run([str(flint), 'add', 'web'], cwd=project, capture_output=True, text=True)
             self.assertEqual(added.returncode, 0, added.stderr)
             lock = (project / 'flint.lock').read_text()
-            self.assertIn('name = "flint:starter-web"\nkind = "core"\nsource = "flint-home"\nplatform = "boot@monorepo"',
-                          lock)
-            self.assertIn('name = "flint:arena"\nkind = "core"\nsource = "flint-home"\nplatform = "flint@monorepo"',
-                          lock)
+            self.assertIn('name = "flint:starter-web"\nkind = "core"\nsource = "flint-home"\nplatform = "boot@'
+                          + pinned('boot') + '"', lock)
+            self.assertIn('name = "flint:arena"\nkind = "core"\nsource = "flint-home"\nplatform = "flint@'
+                          + pinned('flint') + '"', lock)
 
 
 class LockPartitionTests(unittest.TestCase):
@@ -133,6 +146,7 @@ class LockPartitionTests(unittest.TestCase):
 
 
 class AppRepoTests(unittest.TestCase):
+    @monorepo_only
     def test_flint_mcp_belongs_to_ai_and_an_app_edge_is_checked(self):
         apps = json.loads((ROOT / 'policy/apps.json').read_text())['apps']
         self.assertEqual(apps['flint-mcp'], {'directory': 'apps/flint-mcp', 'repo': 'ai'})
@@ -152,6 +166,7 @@ class AppRepoTests(unittest.TestCase):
 
 
 class ExtractionTests(unittest.TestCase):
+    @monorepo_only
     def test_each_repo_takes_its_packages_boot_and_starters_and_its_apps(self):
         import extract_repo
 
@@ -167,6 +182,7 @@ class ExtractionTests(unittest.TestCase):
         self.assertEqual(len(framework), len(workspace.packages_of('framework')) + 2)
         self.assertEqual(extract_repo.moving_paths('batch'), [])
 
+    @monorepo_only
     def test_the_workspace_root_recipe_joins_every_checkout_under_the_flint_name(self):
         with tempfile.TemporaryDirectory() as temporary:
             recipe = workspace.dub_root(workspace.Workspace(), Path(temporary) / 'root').read_text()
@@ -258,6 +274,8 @@ class PlatformFetchTests(unittest.TestCase):
                 if (ROOT / 'policy' / name).is_file():
                     (home / 'policy' / name).write_text((ROOT / 'policy' / name).read_text())
             lock = json.loads((ROOT / 'platform.lock').read_text())
+            for repo, entry in lock['repos'].items():  # only framework is fetched here
+                lock['repos'][repo] = {'github': entry['github'], 'source': 'monorepo'}
             lock['repos']['framework'] = {'github': 'flint-projects/flint-framework', 'source': 'github',
                                           'commit': commit}
             (home / 'platform.lock').write_text(json.dumps(lock))

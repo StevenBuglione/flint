@@ -234,6 +234,18 @@ struct Home
         return root;
     }
 
+    /// Whether `repo`'s packages live in this home: its platform.lock entry is "source": "monorepo", or there is
+    /// none. After the cutover only the flint repo's are; the others resolve from platform modules.
+    bool inHome(string repo) const
+    {
+        foreach (ref entry; platformRepos)
+        {
+            if (entry.name == repo)
+                return entry.source == "monorepo";
+        }
+        return true;
+    }
+
     /// `repo@version`: the platform version a repo's packages resolve at (its tag, commit, or `monorepo`).
     string platformVersion(string repo) const
     {

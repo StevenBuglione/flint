@@ -92,7 +92,7 @@ private bool collect(ref Session session, const ref imported!"flint_tool.command
         if (starter.section.length && !hasSection(configuration, starter.section))
         {
             const separator = configuration.length == 0 ? "" : configuration[$ - 1] == '\n' ? "\n" : "\n\n";
-            configuration ~= separator ~ sectionTemplate(session.home.root, starter.directory);
+            configuration ~= separator ~ sectionTemplate(session.home.packagePath(starter.repo, starter.directory));
             payload.sections ~= starter.section;
         }
     }
@@ -151,12 +151,13 @@ bool hasSection(string text, string section)
     return false;
 }
 
-private string sectionTemplate(string home, string directory)
+/// The starter's config.toml, from its directory in its repo's checkout (a platform module after the cutover).
+private string sectionTemplate(string directory)
 {
     import std.path : buildPath;
     import flint_tool.support.files : readIfPresent;
 
-    return readIfPresent(buildPath(home, directory, "config.toml"));
+    return readIfPresent(buildPath(directory, "config.toml"));
 }
 
 private string readConfiguration(string root)

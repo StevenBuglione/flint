@@ -161,7 +161,7 @@ def framework_layers():
         # With --workspace, a framework module is checked in its repo's checkout, in that repo's layout.
         base=WORKSPACE.locate(meta.get('repo','framework'),meta['directory']) if WORKSPACE.file else ROOT/meta['directory']
         require(meta['directory']=='framework/'+name,name+': a framework module lives in framework/'+name)
-        require(('subPackage "'+meta['directory']+'"') in root_sdl,name+': missing from the root subPackage list')
+        require(not in_home(meta.get('repo','framework')) or ('subPackage "'+meta['directory']+'"') in root_sdl,name+': missing from the root subPackage list')
         sdl=(base/'dub.sdl').read_text(encoding='utf-8')
         require(re.search(r'^name "'+re.escape(name)+'"$',sdl,re.MULTILINE),name+': dub.sdl name differs')
         require(re.search(r'^license "'+re.escape(meta['licence'])+'"$',sdl,re.MULTILINE),name+': dub.sdl license differs from policy')
@@ -203,6 +203,12 @@ def framework_layers():
             check_thread_locals(module,ts,where)
     return len(modules)
 
+def in_home(repo):
+    """Whether `repo`'s packages live in this checkout: platform.lock pins it "source": "monorepo", or has no lock."""
+    path=ROOT/'platform.lock'
+    if not path.is_file():return True
+    return json.loads(path.read_text(encoding='utf-8'))['repos'].get(repo,{}).get('source','monorepo')=='monorepo'
+
 def platform_outputs():
     """The bill of materials and the lock partitions are current (ADR-023 platform modules): a policy edit
     regenerates them in the same commit, and a rebase that touches policy regenerates them again."""
@@ -229,7 +235,8 @@ def structural(selected):
         violations,_=edge_violations(ROOT)
         require(not violations,'repo edge: '+(violations[0][2] if violations else ''))
     root_sdl=(ROOT/'dub.sdl').read_text(encoding='utf-8')
-    require(set(re.findall(r'subPackage\s+"packages/([\w-]+)"',root_sdl))==set(P),'root subpackage list differs')
+    # The packages of the repos that live in this checkout: all of them before the cutover, flint's after.
+    require(set(re.findall(r'subPackage\s+"packages/([\w-]+)"',root_sdl))=={n for n,m in P.items() if in_home(m.get('repo','flint'))},'root subpackage list differs')
     boot_layers()
     platform_outputs()
     module_budgets.load(B,P,ROOT)
