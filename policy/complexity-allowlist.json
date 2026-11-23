@@ -1,0 +1,96 @@
+{
+ "schema": "flint.complexity-allowlist/1",
+ "description": "Ported functions that may exceed D-Scanner's cyclomatic complexity limit (owner decision 4, 2026-11-23; docs/spring/phase1/decisions.md). Only a function ported from an upstream project of policy/upstream-licences.json may be listed, by its file and name, citing the upstream file and method it ports. New Flint code stays under the limit. tools/quality.py rejects an entry without a citation and one whose function no longer exceeds the limit.",
+ "functions": [
+  {
+   "file": "framework/framework-test/source/flint/mock/web.d",
+   "function": "acceptLanguageLocales",
+   "upstream": {
+    "project": "spring-framework",
+    "file": "spring-web/src/main/java/org/springframework/http/HttpHeaders.java",
+    "method": "getAcceptLanguageAsLocales"
+   }
+  },
+  {
+   "file": "framework/jackson-core/source/flint/jackson/core/io.d",
+   "function": "parseDouble",
+   "upstream": {
+    "project": "jackson-core",
+    "file": "src/main/java/tools/jackson/core/io/NumberInput.java",
+    "method": "parseDouble"
+   }
+  },
+  {
+   "file": "framework/web/source/flint/http/package.d",
+   "function": "parseHttpDate",
+   "upstream": {
+    "project": "spring-framework",
+    "file": "spring-web/src/main/java/org/springframework/http/HttpHeaders.java",
+    "method": "getFirstZonedDateTime"
+   }
+  },
+  {
+   "file": "framework/web/source/flint/web/util/package.d",
+   "function": "fromUriString",
+   "upstream": {
+    "project": "spring-framework",
+    "file": "spring-web/src/main/java/org/springframework/web/util/UriComponentsBuilder.java",
+    "method": "fromUriString"
+   }
+  },
+  {
+   "file": "framework/web/source/flint/web/util/package.d",
+   "function": "isAllowed",
+   "upstream": {
+    "project": "spring-framework",
+    "file": "spring-web/src/main/java/org/springframework/web/util/HierarchicalUriComponents.java",
+    "method": "Type.isAllowed"
+   }
+  },
+  {
+   "file": "framework/web/source/flint/web/util/pattern.d",
+   "function": "match",
+   "upstream": {
+    "project": "spring-framework",
+    "file": "spring-web/src/main/java/org/springframework/web/util/pattern/PathPattern.java",
+    "method": "matches"
+   }
+  },
+  {
+   "file": "framework/web/source/flint/web/util/pattern.d",
+   "function": "parse",
+   "upstream": {
+    "project": "spring-framework",
+    "file": "spring-web/src/main/java/org/springframework/web/util/pattern/InternalPathPatternParser.java",
+    "method": "parse"
+   }
+  },
+  {
+   "file": "framework/webmvc/source/flint/web/servlet/mvc/method/annotation.d",
+   "function": "isApplicableToBeanType",
+   "upstream": {
+    "project": "spring-framework",
+    "file": "spring-web/src/main/java/org/springframework/web/method/ControllerAdviceBean.java",
+    "method": "isApplicableToBeanType"
+   }
+  },
+  {
+   "file": "framework/webmvc/source/flint/web/servlet/mvc/method/annotation.d",
+   "function": "writeWithMessageConverters",
+   "upstream": {
+    "project": "spring-framework",
+    "file": "spring-webmvc/src/main/java/org/springframework/web/servlet/mvc/method/annotation/AbstractMessageConverterMethodProcessor.java",
+    "method": "writeWithMessageConverters"
+   }
+  },
+  {
+   "file": "framework/webmvc/source/flint/web/servlet/mvc/method/package.d",
+   "function": "handleNoMatch",
+   "upstream": {
+    "project": "spring-framework",
+    "file": "spring-webmvc/src/main/java/org/springframework/web/servlet/mvc/method/RequestMappingInfoHandlerMapping.java",
+    "method": "handleNoMatch"
+   }
+  }
+ ]
+}
