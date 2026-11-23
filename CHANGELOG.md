@@ -10,6 +10,8 @@
   - Ordinary handlers need no `nothrow`/`@nogc`/`scope`: flint:web runs them on a worker thread, with replies of any size.
   - `flint openapi` writes the controllers' OpenAPI 3.1 document and a typed TypeScript client.
   - `flint check` flags nullable class fields (FLINT-E0530) and handler attributes the framework makes unneeded (FLINT-E0531), and reports attributes per handler.
+  - The vibe-coding benchmark has Go and Spring Boot references for all four tasks, and each passes its acceptance test.
+    - They build with the pinned Go 1.27.4, and with a Temurin JDK 21.0.13.1+2, Maven 3.9.16 and Spring Boot 4.2.0 newly pinned with checksums in `policy/peer-lock.json`.
 - Milestone 9 (ADR-027) adds knowledge and tooling for people and agents:
   - `flint docs`, `flint examples` and `flint explain` answer from an offline index of the pinned API.
   - `flint generate` produces canonical components, and new projects get an `AGENTS.md`.
