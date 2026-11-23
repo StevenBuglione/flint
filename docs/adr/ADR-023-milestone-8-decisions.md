@@ -219,3 +219,29 @@ These are two findings from installing on the NixOS performance runner, whose ch
 - Native packages resolve, build, lock and link through `flint` alone, with Conan never visible. The workspace passes 74/74, plus mq's 7 live scenarios, against the Conan-built providers. The golden REST service's verifier passes against both provider builds. [Milestone 08](../milestones/08.md) has the evidence.
 - `tools/native_build.py` stays the workspace's default native path until the owner accepts the equivalence. Its per-library steps are the recipes' build steps, so retiring it means moving those steps into the recipes.
 - Two latent Milestone 7 defects were fixed along the way. An empty manifest table such as a bare `[dependencies]` header, which `flint new --type library` writes, was rejected. Nested path dependencies got wrong relative recipe paths.
+
+## Amendment (2026-11-23): platform modules, for the repo split
+
+The repo split (ADR-030; the Spring-port plan, section 7) adds platform modules. These are a second kind of dependency beside repository paths.
+
+1. **A platform module is one Flint repo.** Examples are `flint`, `flint-framework`, `flint-boot`, `flint-security`, `flint-data-jdbc` and `flint-ai`.
+   - **Its packages:** the set of `flint:*` packages, Boot libraries and starters that share one tag. Each one's `repo` field in `policy/packages.json` and `policy/boot.json` names its repo.
+   - **How it resolves:** by platform version, never by minimal version selection, so every package of one repo always comes from the same commit. MVS (section 1) stays the rule for applications' own repository-path dependencies.
+2. **Edges between platform modules follow Spring's own,** as `policy/repos.json` lists them (ADR-030):
+   - boot → integrated (security, data) → framework → flint;
+   - Boot-based repos (ai, cloud) → boot.
+
+   The structural gate fails any other edge (FLINT-E0532). `flint check --gate structural --repo <name>` and `tools/gates.py --repo <name>` check one repo's packages, as that repo's own CI will.
+3. **`platform.lock`, in the `flint` repo, pins every repo.**
+   - **Before the split:** each entry is `"source": "monorepo"`.
+   - **After it:** each entry carries the repo's `commit` and `tag`. flint then resolves that repo's packages, Boot libraries and starters from its checkout under `.flint/platform/<repo>-<commit>`.
+   - **`FLINT_WORKSPACE`:** this names a `flint.workspace/1` file of local checkouts, which overrides those checkouts for development.
+   - **The project lock:** outside the workspace, a project's `flint.lock` records each Flint package's `platform = "<repo>@<version>"`.
+4. **`flint-dependencies`, the bill of materials, as `spring-boot-dependencies`.**
+   - **The file:** `boot/dependencies/flint-dependencies.json` pins the coordinated set of `flint:*` artifacts and their platform versions for applications.
+   - **How it is kept current:** `tools/platform_modules.py --write` generates it from policy and `platform.lock`, and `--check` fails when it is stale or when `platform.lock` misses a repo.
+5. **Workspaces.**
+   - **The file:** a `flint.workspace/1` file pins each repo's checkout and commit.
+   - **The tools:** `tools/gates.py`, `tools/measure_builds.py` and `tools/native_build.py` take `--workspace`. They verify the pinned commits and find each package in its repo's checkout. `measure_builds` records the commits in its evidence.
+   - **The current limit:** `measure_builds` builds only a single-checkout workspace until the split rewrites the probes' recipes.
+   - **Without the flag:** the monorepo is the workspace, and every gate behaves as before.
