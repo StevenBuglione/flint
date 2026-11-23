@@ -85,6 +85,15 @@ On 2026-11-23, `tools/measure_builds.py --apps-only` on pluto (9 trials, load av
 
 `bench-rest` is at or below Go; `bench-cli` is not yet.
 
+Again at 05:50 on 2026-11-24 (fork at 556fbc08), with the other Flint sessions on pluto stopped but load average 7.7 to 8.5 from Linguum's two `serve-sim` processes and two macOS services:
+
+| | dev build cold | Go cold | dev build incremental | Go incremental |
+| --- | --- | --- | --- | --- |
+| bench-cli | 0.251 s | 0.180 s | 0.196 s | 0.172 s |
+| bench-rest | 0.307 s | 0.353 s | 0.240 s | 0.304 s |
+
+Only `bench-rest` incremental passes the gate's 99% bound (ratio 0.79, upper bound 0.91); `bench-rest` cold has a median ratio of 0.87, but its upper bound is 1.12. `bench-cli` stays about 70 ms behind Go, so a quiet window alone will not pass it.
+
 - A cold `bench-cli` build spends 12 ms in DUB, about 120 ms on its longest compile job (`flint:config`, 61 ms when the machine is quiet) and about 70 ms linking.
 - Of the link, 60 ms is the fixed cost of druntime, Phobos and the system libraries: an empty D program takes that long to link.
 - druntime does not support D shared libraries on macOS, which would remove that cost.
