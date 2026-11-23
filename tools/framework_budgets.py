@@ -46,11 +46,25 @@ def modules(root):
     return json.loads(path.read_text(encoding='utf-8'))['modules'] if path.is_file() else {}
 
 
-def load(root):
-    """{name: fixture} for measure_builds, validated; a module without a budget or a probe fails."""
+def load(root, require_budget=True):
+    """{name: fixture} for measure_builds, validated; a module without a budget or a probe fails.
+
+    `require_budget=False` (measure_builds --framework-sizes) measures the probes before their budgets exist: it
+    returns every module that has a probe and leaves out, for the caller to report, a module with neither probe nor
+    budget. The full measurement and the gate keep requiring both.
+    """
     fixtures = {}
     for name, meta in modules(root).items():
         budget, bench = meta.get('budget'), meta.get('bench')
+        if not require_budget and budget is None:
+            if bench is None:
+                continue
+            require(isinstance(bench, dict) and {'fixture', 'baseline', 'edit_source'} <= set(bench),
+                    f'framework module {name}: "bench" must name fixture, baseline and edit_source')
+            fixtures[name] = {'fixture': bench['fixture'], 'baseline': bench['baseline'],
+                              'edit_source': bench['edit_source'], 'directory': meta['directory'],
+                              'size_basis': 'framework_over_provider_equivalent_baseline'}
+            continue
         require(isinstance(budget, dict) and set(budget) == set(KEYS),
                 f'framework module {name}: "budget" must hold exactly ' + ', '.join(KEYS))
         for key in KEYS:
