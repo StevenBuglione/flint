@@ -1,0 +1,54 @@
+{
+  "schema": "flint.measure-queue/1",
+  "id": "adr031-rest",
+  "created": "2026-11-23",
+  "status": "pending",
+  "requested_by": "Spring port P0: RELR and class-metadata size levers (local_8b7074aa), for ADR-031",
+  "summary": "REST regression check of the TLS-only OpenSSL build: bench-rest at 440d72d^ vs 440d72d on the existing production workload",
+  "why": "ADR-031 builds OpenSSL for TLS 1.2 and 1.3 only (tools/native_build.py OPENSSL_TLS_ONLY), saving 899,216 bytes on bench-rest. Each side rebuilds its own native prefix in its worktree, and configuration.h is checked, so the two sides cannot link the same libcrypto. bench-rest serves plain HTTP: OpenSSL is linked but not exercised, so both timings are regression checks, expected neutral. No TLS throughput workload is requested; one would need its own reviewed workload and Go comparator.",
+  "builds": {
+    "base": {
+      "app": "bench-rest",
+      "commit": "440d72d^",
+      "expect_bytes": {
+        "O3": 5904304,
+        "Oz": 5855152
+      },
+      "expect_openssl_disabled": {
+        "legacy": false,
+        "des": false,
+        "rc4": false,
+        "tls1": false
+      }
+    },
+    "candidate": {
+      "app": "bench-rest",
+      "commit": "440d72d",
+      "expect_bytes": {
+        "O3": 5005088,
+        "Oz": 4955936
+      },
+      "expect_openssl_disabled": {
+        "legacy": true,
+        "des": true,
+        "rc4": true,
+        "tls1": true
+      }
+    }
+  },
+  "measure": {
+    "kind": "rest-pair",
+    "manifest": "policy/http-benchmark.json",
+    "base": "base",
+    "candidate": "candidate",
+    "ports": [
+      18082,
+      18083
+    ],
+    "environment": {
+      "FLINT_CORES": "2"
+    }
+  },
+  "report_to": "docs/adr/ADR-031-tls-only-openssl.md, 'Verification'; and the requester",
+  "note": "The requester asked to check that configuration.h defines OPENSSL_NO_DES and OPENSSL_NO_LEGACY after and neither before. OpenSSL's no-legacy emits no OPENSSL_NO_LEGACY macro, so the check reads Configure's own record, configdata.pm %disabled: after disables legacy, des, rc4 and tls1; before disables none of them."
+}

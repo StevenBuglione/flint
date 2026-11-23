@@ -283,9 +283,12 @@ The window is sampled before the measurement, every 10 s during it, and after it
 - `relr-startup`: bench-rest at `13d5d62` against `3eef2dc`, built with `measure_builds --app-sizes`. The result goes into `docs/milestones/13-binary-size.md`.
   - The queue's builds reproduce that document's sizes exactly: 6,670,024 and 5,904,144 bytes at O3.
   - Their sha256 values differ from the requester's, and from build to build when the environment differs. The bytes are deterministic, but the binaries are not bit-identical.
+- `adr031-startup` and `adr031-rest`: bench-rest before (`440d72d^`, which is `48b8f52`) and after ADR-031's TLS-only OpenSSL (`440d72d`). The first measures start-up, the second is a REST regression check.
+  - Each side rebuilds its own native prefix. The build checks OpenSSL Configure's `%disabled` record in `configdata.pm`: after disables `legacy`, `des`, `rc4` and `tls1`, and before disables none of them. `no-legacy` emits no `OPENSSL_NO_LEGACY` macro, so `configuration.h` cannot show it.
+  - Sizes: O3 5,904,384 to 5,005,088, and Oz 5,855,232 to 4,955,936. That is 899,296 bytes saved; the base on `main` is 80 bytes larger than the requester's.
 - `phase1-spring-apps`: the whole Phase 1 evidence run of the section above. It is blocked on the Flint ports.
 
-Both pending entries are built, and their smoke runs pass. They wait for a quiet window.
+Every pending entry is built, and its smoke run passes. They wait for a quiet window.
 
 ## Status
 

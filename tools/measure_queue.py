@@ -228,6 +228,33 @@ def toolchain_environment():
     return dict(os.environ, PATH=os.pathsep.join(paths + [os.environ.get('PATH', '')]))
 
 
+def openssl_disabled(directory):
+    """The features OpenSSL's Configure disabled, from the `%disabled` hash of its configdata.pm: the record of every
+    `no-<feature>` switch. configuration.h is not enough, because some switches (no-legacy) emit no macro."""
+    import re
+    path = directory / '.native' / 'build' / 'linux-x86_64-glibc' / 'openssl' / 'configdata.pm'
+    if not path.is_file():
+        raise SystemExit(f'{path} is missing after the native build')
+    text = path.read_text(errors='replace')
+    start = text.index('our %disabled = (')
+    block = text[start:text.index('\n);', start)]
+    return set(re.findall(r'^\s*"([^"]+)"\s*=>', block, re.M))
+
+
+def check_native(spec, directory, full):
+    """`expect_openssl_disabled` maps an OpenSSL feature to whether this side's native build must have it disabled
+    (ADR-031: the TLS-only build passes no-legacy, no-des, ...). A side that links the other side's libcrypto would
+    time the same library twice, so a mismatch fails the build."""
+    expected = spec.get('expect_openssl_disabled')
+    if not expected:
+        return
+    disabled = openssl_disabled(directory)
+    for feature, want in expected.items():
+        if (feature in disabled) != want:
+            raise SystemExit(f"{full[:12]}: OpenSSL feature '{feature}' is {'disabled' if feature in disabled else 'enabled'}, "
+                             f"expected {'disabled' if want else 'enabled'} (configdata.pm %disabled)")
+
+
 def build_bench_rest(spec, logs):
     """bench-rest as the size and REST measurements build it: LDC O3 + ThinLTO, stripped (measure_builds
     --app-sizes), in a detached worktree at the commit with that worktree's own native prefix."""
@@ -235,7 +262,9 @@ def build_bench_rest(spec, logs):
     method = spec.get('method', 'app-sizes')
     output = WORK / 'bin' / f"bench-rest-{full[:12]}-{method}"
     if output.is_file():
-        return {'commit': full, 'method': method, 'binary': str(output), 'sha256': sha256(output), 'reused': True}
+        check_native(spec, directory, full)
+        return {'commit': full, 'method': method, 'binary': str(output), 'sha256': sha256(output),
+                'bytes': output.stat().st_size, 'reused': True}
     steps = [[sys.executable, 'tools/native_build.py', '--profile', 'ci', '--target', 'linux-x86_64-glibc',
               '--phase', 'build', '--emit-dub']]
     if method == 'app-sizes':
@@ -256,6 +285,8 @@ def build_bench_rest(spec, logs):
                                        stderr=subprocess.STDOUT)
         if completed.returncode:
             raise SystemExit(f'building bench-rest at {full[:12]} failed; see {log}')
+        if index == 0:
+            check_native(spec, directory, full)
     if built is None:
         candidates = [directory / 'benchmarks' / 'bench-rest' / 'build' / 'bench-rest', directory / 'build' / 'bench-rest']
         built = next((path for path in candidates if path.is_file()), None)
@@ -263,8 +294,18 @@ def build_bench_rest(spec, logs):
             raise SystemExit(f'the bench-rest build at {full[:12]} produced no executable')
     output.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(built, output)
-    return {'commit': full, 'method': method, 'binary': str(output), 'sha256': sha256(output),
-            'bytes': output.stat().st_size, 'reused': False}
+    receipt = {'commit': full, 'method': method, 'binary': str(output), 'sha256': sha256(output),
+               'bytes': output.stat().st_size, 'reused': False}
+    if spec.get('expect_openssl_disabled'):
+        receipt['openssl_disabled_checked'] = spec['expect_openssl_disabled']
+    sizes_file = WORK / 'results' / f'sizes-{full[:12]}.json'
+    if method == 'app-sizes' and sizes_file.is_file():
+        app = json.loads(sizes_file.read_text())['apps']['bench-rest']
+        receipt['sizes'] = {profile: app[profile]['binary_bytes'] for profile in ('O3', 'Oz')}
+        expected = spec.get('expect_bytes')
+        if expected and expected != receipt['sizes']:
+            receipt['size_note'] = f"sizes {receipt['sizes']} differ from the requester's {expected} (main may have moved)"
+    return receipt
 
 
 RECIPES = {'bench-rest': build_bench_rest}
