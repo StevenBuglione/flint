@@ -912,6 +912,77 @@ final class SystemEnvironmentPropertySource : MapConfigurationPropertySource
     }
 }
 
+/// Lookup across an ordered list of sources, highest precedence first, with Flint's one alias: a name under
+/// `flint` is also found under `spring` (ADR-030 section 1), and the `flint` spelling wins inside one source.
+struct ConfigurationPropertySources
+{
+    /// The `spring.*` alias of a `flint.*` name, or `null`.
+    static ConfigurationPropertyName aliasOf(ConfigurationPropertyName name) pure
+    {
+        if (name is null || name.isEmpty() || name.getElement(0, ConfigurationPropertyName.Form.UNIFORM) != "flint")
+            return null;
+        return ConfigurationPropertyName.of("spring").append(name.subName(1));
+    }
+
+    /// A `spring.*` name in its canonical `flint.*` form; any other name unchanged.
+    static ConfigurationPropertyName canonical(ConfigurationPropertyName name) pure
+    {
+        if (name is null || name.isEmpty() || name.getElement(0, ConfigurationPropertyName.Form.UNIFORM) != "spring")
+            return name;
+        return ConfigurationPropertyName.of("flint").append(name.subName(1));
+    }
+
+    /// The first property for `name` (or its alias) in `sources`, or `null`.
+    static ConfigurationProperty find(ConfigurationPropertySource[] sources, ConfigurationPropertyName name)
+    {
+        auto alias_ = aliasOf(name);
+        foreach (source; sources)
+        {
+            if (auto property = source.getConfigurationProperty(name))
+                return property;
+            if (alias_ !is null)
+            {
+                if (auto property = source.getConfigurationProperty(alias_))
+                    return property;
+            }
+        }
+        return null;
+    }
+
+    /// Whether any source holds a descendant of `name` (or of its alias).
+    static bool containsDescendantOf(ConfigurationPropertySource[] sources, ConfigurationPropertyName name)
+    {
+        auto alias_ = aliasOf(name);
+        foreach (source; sources)
+        {
+            if (source.containsDescendantOf(name) == ConfigurationPropertyState.PRESENT)
+                return true;
+            if (alias_ !is null && source.containsDescendantOf(alias_) == ConfigurationPropertyState.PRESENT)
+                return true;
+        }
+        return false;
+    }
+
+    /// Every name the sources list, in canonical `flint.*` form, without duplicates, in precedence order.
+    static ConfigurationPropertyName[] names(ConfigurationPropertySource[] sources)
+    {
+        ConfigurationPropertyName[] result;
+        foreach (source; sources)
+        {
+            foreach (name; source.iterator())
+            {
+                auto canonicalName = canonical(name);
+                bool seen;
+                foreach (existing; result)
+                    seen = seen || existing.equals(canonicalName);
+                if (!seen)
+                    result ~= canonicalName;
+            }
+        }
+        return result;
+    }
+}
+
 private:
 
 char lower(char ch) pure nothrow @nogc

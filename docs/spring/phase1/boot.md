@@ -27,7 +27,7 @@ Run a package's tests with `dub test --root boot/core/flint-boot --compiler=dmd`
 | `.properties` loader (`OriginTrackedPropertiesLoader`, `PropertiesPropertySourceLoader`) | done | 45 of 46 `OriginTrackedPropertiesLoaderTests` (1 excluded) |
 | YAML loader (`OriginTrackedYamlLoader`, `YamlPropertySourceLoader`) on Flint's D YAML engine | done | 13 / 13 `OriginTrackedYamlLoaderTests`, 5 / 5 `YamlPropertySourceLoaderTests`, plus 3 Flint YAML tests |
 | `Binder`, `Bindable`, `BindResult`, `@ConfigurationProperties` | next | |
-| Config data: `application.{properties,yaml}`, profile files, `---` with `flint.config.activate.on-profile`, `spring.*` aliases | next | |
+| Config data: `application.{properties,yaml}`, location groups, profile files, `---` with `flint.config.activate.on-profile`, profile groups and includes, `FLINT_PROFILES_ACTIVE`, `spring.*` aliases | done | 23 of 87 `ConfigDataEnvironmentPostProcessorIntegrationTests` (in-memory resources), plus 8 Flint tests |
 | `FlintApplication`, `FlintApplicationBuilder`, runners, `ApplicationArguments`, banner, `mixin FlintMain` | after the binder | |
 | `FailureAnalyzer`, Boot's console log format through `flint.slf4j` | after the binder | |
 | autoconfigure, boot-test, starters | after flint-context and webmvc land | |
@@ -36,7 +36,7 @@ Excluded upstream tests, each with its reason:
 - `ConfigurationPropertyNameTests.hashCodeIsStored` (`runtime-reflection`): reads a private field with `ReflectionTestUtils`.
 - `OriginTrackedPropertiesLoaderTests.compareToJavaProperties` (`jvm-platform`): compares against `java.util.Properties`.
 
-Total so far: **156 tests pass on DMD 2.114 and LDC 1.43**: 153 ported upstream tests and 3 Flint tests. The runner in `tests/boot_tests/support.d` runs each `unittest` on its own and prints the count.
+Total so far: **187 tests pass on DMD 2.114 and LDC 1.43**: 176 ported upstream tests and 11 Flint tests. The runner in `tests/boot_tests/support.d` runs each `unittest` on its own and prints the count.
 
 ## Design decisions
 
@@ -55,6 +55,12 @@ Boot reads YAML with SnakeYAML, which is Java. `flint.boot.internal.yaml` is a D
 - the core `!!` tags.
 
 Unknown tags are rejected, as Boot's restricted constructor rejects them. The engine was written from the YAML 1.1/1.2 specification; no SnakeYAML code was copied. Origins are tracked per scalar, so a binding failure names `application.yaml - line:column`, as Boot's does.
+
+### Config data
+
+`flint.boot.context.config.ConfigDataEnvironment` follows Boot's `processAndApply`: the initial contributors (command line, environment, default properties), the plain documents of every location group, the profiles (additional, then included, then `flint.profiles.active`, expanded through groups), and then the profile files and `on-profile` documents. Boot's contributor tree is flattened into one ordered list per location group, giving the documented order. A group's plain files sit below its profile files, a later location and a later profile win, and a later group wins over an earlier one. `flint.config.import`, `on-cloud-platform` detection, `random.*` and config trees are deferred to Phase 2; a document with `on-cloud-platform` stays inactive. JVM system properties have no native counterpart, so Boot's system-property tests use command-line arguments.
+
+The `spring.*` alias is resolved in one place, `ConfigurationPropertySources.find`. A `flint.*` name is also looked up as `spring.*` in each source, and the `flint` spelling wins inside one source. `FLINT_PROFILES_ACTIVE` and `SPRING_PROFILES_ACTIVE` both work, through the environment mapper.
 
 ### Origins
 
