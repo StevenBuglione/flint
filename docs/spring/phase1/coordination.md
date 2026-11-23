@@ -75,7 +75,7 @@ export FLINT_MEASURE_LOCK=/home/olfa/flint-work/flint/.claude/worktrees/jolly-me
 python3 tools/measure_queue.py hold -- flint test --compiler both
 ```
 
-The wrapper stops the command's whole process group (SIGSTOP) while the lock exists and continues it afterwards, so a build that is already running pauses too. A paused build uses no CPU, so the queue ignores it. Queue timing runs with proof-harness rather than measuring yourself. Byte sizes and template counts are deterministic and may be measured any time. On pluto, the macOS, linux-arm64-vm and dmd-arm64 sessions agree quiet windows among themselves.
+The wrapper stops the command's whole process group (SIGSTOP) while the lock exists and continues it afterwards, so a build that is already running pauses too. A paused build uses no CPU, so the queue ignores it. The watcher claims windows: it takes the lock, waits up to 90 s for wrapped work to pause (three quiet samples 5 s apart), and then measures. If the window does not settle, because some build is not behind `hold`, it releases the lock and tries again 5 minutes later. Queue timing runs with proof-harness rather than measuring yourself. Byte sizes and template counts are deterministic and may be measured any time. On pluto, the macOS, linux-arm64-vm and dmd-arm64 sessions agree quiet windows among themselves.
 
 ## Work queue
 

@@ -302,6 +302,8 @@ python3 tools/measure_queue.py next
   - `command`: steps run in this checkout or in a build's worktree.
 - **Status.** `pending` runs with `next`; `blocked` waits on `blocked_on`; `done` has a receipt that counts as evidence.
 
+**Claimed windows.** `watch` takes the `MEASURING` lock before a run. Sessions behind `measure_queue.py hold` pause, and the run starts once the window settles: three quiet samples 5 s apart, with no build process using CPU and at most 2 runnable tasks. If it doesn't settle within 90 s, the lock is released and the watcher retries in 5 minutes. `--no-claim` waits for natural quiet instead.
+
 **The quiet window.** Every measuring step checks it:
 - the 1-minute load average is below 1.5;
 - no `dmd`, `ldc2`, `ldmd2`, `cargo`, `cmake`, `rustc`, `cc1`, `cc1plus`, `ninja`, `dub`, `mvn`, `gradle` or `native-image` uses CPU anywhere on the host, outside the run's own process tree. A process counts if it uses at least 2 CPU ticks in a 1 s sample. The DMD compile servers keep pre-forked workers asleep between builds, over 2,000 of them on venus, and those idle workers are counted in the receipt but do not block;
