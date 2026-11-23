@@ -9,15 +9,16 @@
 // abstract class template over the type-erased `AnyTransactionManagerCustomizer` (Boot's
 // `TransactionManagerCustomizer<?>`), whose `customizeIfApplicable` is LambdaSafe's generic check: D interfaces
 // cannot hold the cast that a customizer of another manager type needs. `ObjectProvider`s are arrays. The reactive
-// `transactionalOperator` waits for `transaction.reactive` (Phase 2), the AspectJ mode for AspectJ, and
-// `EnableTransactionManagementConfiguration` for flint:tx's `@EnableTransactionManagement`.
+// `transactionalOperator` waits for `transaction.reactive` (Phase 2) and the AspectJ mode for AspectJ.
+// `EnableTransactionManagementConfiguration`'s JDK and CGLIB variants are one configuration: Flint AOT's proxies are
+// always subclasses, so `flint.aop.proxy-target-class` has nothing to choose.
 
 /// `org.springframework.boot.transaction.autoconfigure`: the transaction auto-configuration and properties.
 module flint.boot.transaction.autoconfigure;
 
 import flint.boot.autoconfigure : AutoConfiguration;
-import flint.boot.autoconfigure.condition : ConditionalOnClass, ConditionalOnMissingBean,
-    ConditionalOnSingleCandidate;
+import flint.boot.autoconfigure.condition : ConditionalOnBean, ConditionalOnClass,
+    ConditionalOnMissingBean, ConditionalOnSingleCandidate;
 import flint.boot.context.properties : ClassRef, ConfigurationProperties, EnableConfigurationProperties;
 import flint.boot.convert : ChronoUnit, DurationUnit;
 import core.time : Duration;
@@ -27,6 +28,7 @@ import flint.engine.aot.name : typeNameOf;
 import flint.java.util : Optional;
 import flint.transaction : ConfigurableTransactionManager, PlatformTransactionManager,
     TransactionExecutionListener, TransactionManager;
+import flint.transaction.annotation : EnableTransactionManagement;
 import flint.transaction.support : AbstractPlatformTransactionManager, TransactionTemplate;
 
 @safe:
@@ -132,9 +134,12 @@ final class TransactionManagerCustomizationAutoConfiguration
 }
 
 /// Auto-configuration of Spring transactions: a `TransactionTemplate` over the single
-/// `PlatformTransactionManager`, unless the application defines `TransactionOperations`.
+/// `PlatformTransactionManager`, unless the application defines `TransactionOperations`, and
+/// `@EnableTransactionManagement` when there is a transaction manager and the application has not enabled it.
 @AutoConfiguration @ConditionalOnClass(null, ["flint.transaction.PlatformTransactionManager"])
-@Import([classOf!TransactionTemplateConfiguration])
+@Import([
+    classOf!TransactionTemplateConfiguration, classOf!EnableTransactionManagementConfiguration
+])
 final class TransactionAutoConfiguration
 {
 }
@@ -156,6 +161,18 @@ private enum Configuration liteConfiguration = () {
     configuration.proxyBeanMethods = false;
     return configuration;
 }();
+
+/// Boot's `TransactionAutoConfiguration.EnableTransactionManagementConfiguration` (hoisted, R13): `@Transactional`
+/// methods run through flint:tx's `TransactionInterceptor`, unless the application enables transaction management
+/// itself.
+@liteConfiguration @ConditionalOnBean([ClassRef("flint.transaction.TransactionManager")])
+@ConditionalOnMissingBean(
+        [
+    ClassRef("flint.transaction.annotation.configuration.AbstractTransactionManagementConfiguration")
+])
+@EnableTransactionManagement final class EnableTransactionManagementConfiguration
+{
+}
 
 // `@AutoConfiguration(before = TransactionAutoConfiguration.class)`, as constants (dfmt 0.15 cannot parse named
 // UDA arguments).

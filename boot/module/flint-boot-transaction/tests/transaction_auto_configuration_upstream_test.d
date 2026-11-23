@@ -4,8 +4,8 @@
 // Modified by the Flint authors: the bean-presence cases assert the conditions Flint AOT compiles (the template's
 // configuration needs a single PlatformTransactionManager candidate, the template backs off for a user's
 // TransactionOperations), and the template bean is called directly, as Flint AOT's generated definitions call it.
-// The reactive TransactionalOperator cases wait for `transaction.reactive` (Phase 2); the proxy cases for flint:tx's
-// `@EnableTransactionManagement`.
+// The reactive TransactionalOperator cases wait for `transaction.reactive` (Phase 2). The proxy cases assert the
+// conditions of EnableTransactionManagementConfiguration; JDK and CGLIB proxies are one kind in Flint AOT.
 module transaction_auto_configuration_upstream_test;
 
 import flint.boot.autoconfigure.condition : ConditionalOnMissingBean, ConditionalOnSingleCandidate;
@@ -65,4 +65,32 @@ unittest
         foreach (type; condition.value)
             missing ~= type.name;
     assert(missing == [typeNameOf!TransactionOperations]);
+}
+
+@("TransactionAutoConfigurationTests.transactionManagementIsEnabledWhenThereIsATransactionManager")
+unittest
+{
+    import flint.boot.autoconfigure.condition : ConditionalOnBean;
+    import flint.boot.transaction.autoconfigure : EnableTransactionManagementConfiguration;
+    import flint.transaction : TransactionManager;
+    import flint.transaction.annotation : EnableTransactionManagement;
+    import flint.transaction.annotation.configuration : AbstractTransactionManagementConfiguration;
+    import std.traits : hasUDA;
+
+    bool imported;
+    static foreach (annotation; getUDAs!(TransactionAutoConfiguration, Import))
+        foreach (type; annotation.value)
+            imported |= type.name == typeNameOf!EnableTransactionManagementConfiguration;
+    assert(imported);
+    static assert(hasUDA!(EnableTransactionManagementConfiguration, EnableTransactionManagement));
+    string[] present, missing;
+    static foreach (condition; getUDAs!(EnableTransactionManagementConfiguration, ConditionalOnBean))
+        foreach (type; condition.value)
+            present ~= type.name;
+    static foreach (condition; getUDAs!(EnableTransactionManagementConfiguration, ConditionalOnMissingBean))
+        foreach (type; condition.value)
+            missing ~= type.name;
+    assert(present == [typeNameOf!TransactionManager]);
+    // A user's @EnableTransactionManagement (ProxyTransactionManagementConfiguration) backs it off.
+    assert(missing == [typeNameOf!AbstractTransactionManagementConfiguration]);
 }
