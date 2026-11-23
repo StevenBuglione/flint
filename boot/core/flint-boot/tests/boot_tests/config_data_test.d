@@ -287,6 +287,15 @@ private ConfigDataResult run(string[string] files, string[] args = null,
     assert(prod.getProperty("greeting") is null);
 }
 
+@("flint.serverPortFromEnvironment") unittest
+{
+    // The proof harness starts every port with SERVER_PORT, as Boot's relaxed binding reads it.
+    auto result = run(["resources/application.yaml": "server:\n  port: 8080\n"], null, [
+        "SERVER_PORT": "18081"
+    ]);
+    assert(result.getProperty("server.port") == "18081");
+}
+
 @("flint.springKeysAreAliases") unittest
 {
     auto result = run([
