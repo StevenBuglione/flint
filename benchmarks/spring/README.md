@@ -272,7 +272,7 @@ python3 tools/measure_queue.py next
 
 **The quiet window.** Every measuring step checks it:
 - the 1-minute load average is below 1.5;
-- no `dmd`, `ldc2`, `ldmd2`, `cargo`, `cmake`, `rustc`, `cc1`, `cc1plus`, `ninja`, `dub`, `mvn`, `gradle` or `native-image` runs anywhere on the host, outside the run's own process tree;
+- no `dmd`, `ldc2`, `ldmd2`, `cargo`, `cmake`, `rustc`, `cc1`, `cc1plus`, `ninja`, `dub`, `mvn`, `gradle` or `native-image` uses CPU anywhere on the host, outside the run's own process tree. A process counts if it uses at least 2 CPU ticks in a 1 s sample. The DMD compile servers keep pre-forked workers asleep between builds, over 2,000 of them on venus, and those idle workers are counted in the receipt but do not block;
 - every port is outside 8080–8099, and free. Entries use 18080 and up, and `rest-pair` writes a manifest copy with its ports;
 - servers are pinned with `taskset`, and load generators to their CPU sets, as the evidence rules require. The `startup` client runs on CPUs 4–7 and the server on 2–3. `load_bench` and `measure_builds` pin their own processes.
 

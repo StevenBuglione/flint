@@ -18,8 +18,8 @@ An entry names what to build (`builds`: an app at a commit) and how to measure i
 
 The quiet window (benchmarks/spring/README.md, "The measurement queue"):
 - the 1-minute load average is below 1.5;
-- no compiler or build-system process (dmd, ldc2, ldmd2, cargo, cmake, and the heavier helpers they start) runs
-  outside this run, in any worktree;
+- no compiler or build-system process (dmd, ldc2, ldmd2, cargo, cmake, and the heavier helpers they start) uses
+  CPU outside this run, in any worktree (idle DMD compile-server workers do not count);
 - every port is outside 8080-8099, which other sessions' services and the default manifests use, and is free;
 - servers and load generators are pinned to the CPU sets of their manifests, as the evidence rules require.
 The window is checked before every measuring step and again after it, and both snapshots, with the load averages and
@@ -50,6 +50,7 @@ BUSY_COMMANDS = {'dmd', 'ldc2', 'ldmd2', 'cargo', 'cmake', 'rustc', 'cc1', 'cc1p
                  'dub', 'mvn', 'gradle'}
 LOAD_LIMIT = 1.5
 RESERVED_PORTS = range(8080, 8100)
+ACTIVE_TICKS = 2  # CPU ticks (1/100 s) in the sampling second that make a build process active
 SERVER_CPUS = [2, 3]
 LOAD_CPUS = [4, 5, 6, 7]
 
@@ -98,8 +99,14 @@ def own_tree():
     return mine
 
 
-def busy_processes():
-    """Compiler and build-system processes running anywhere on the host, with where they run."""
+def cpu_ticks(pid):
+    stat = Path(f'/proc/{pid}/stat').read_text()
+    fields = stat[stat.rindex(')') + 2:].split()
+    return int(fields[11]) + int(fields[12])
+
+
+def build_processes():
+    """Compiler and build-system processes on the host outside this run's own tree, with where they run."""
     mine = own_tree()
     found = []
     for name in os.listdir('/proc'):
@@ -109,11 +116,28 @@ def busy_processes():
             command = Path(f'/proc/{name}/comm').read_text().strip()
             if command not in BUSY_COMMANDS:
                 continue
-            cwd = os.readlink(f'/proc/{name}/cwd')
+            found.append({'pid': int(name), 'command': command, 'cwd': os.readlink(f'/proc/{name}/cwd'),
+                          'ticks': cpu_ticks(name)})
         except OSError:
             continue
-        found.append({'pid': int(name), 'command': command, 'cwd': cwd})
     return found
+
+
+def busy_processes(interval=1.0):
+    """The build processes that use CPU during `interval` seconds. The DMD compile servers keep pre-forked workers
+    asleep between builds, often thousands of them on a shared host; those are idle, not load."""
+    first = build_processes()
+    time.sleep(interval)
+    busy = []
+    for row in first:
+        try:
+            used = cpu_ticks(row['pid']) - row['ticks']
+        except OSError:
+            continue
+        if used >= ACTIVE_TICKS:
+            busy.append({'pid': row['pid'], 'command': row['command'], 'cwd': row['cwd'], 'cpu_ticks': used})
+    busy_processes.idle = len(first) - len(busy)
+    return busy
 
 
 class WindowSampler:
@@ -152,10 +176,10 @@ def quiet_snapshot(own_load_ok=False):
         problems.append(f'1-minute load average {load[0]:.2f} is not below {LOAD_LIMIT}')
     if processes:
         where = sorted({row['cwd'] for row in processes})
-        problems.append(f"{len(processes)} build process(es) running: "
+        problems.append(f"{len(processes)} build process(es) using CPU: "
                         + ', '.join(sorted({row['command'] for row in processes})) + ' in ' + '; '.join(where[:6]))
-    return {'time': now(), 'load_average': list(load), 'busy_processes': processes, 'quiet': not problems,
-            'problems': problems}
+    return {'time': now(), 'load_average': list(load), 'busy_processes': processes,
+            'idle_build_processes': getattr(busy_processes, 'idle', None), 'quiet': not problems, 'problems': problems}
 
 
 def port_free(port):

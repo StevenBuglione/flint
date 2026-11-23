@@ -42,6 +42,18 @@ class QuietWindow(unittest.TestCase):
                 mock.patch.object(measure_queue, 'busy_processes', return_value=build):
             self.assertFalse(measure_queue.quiet_snapshot()['quiet'])
 
+    def test_sleeping_build_processes_are_idle(self):
+        sleeper = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(5)'])
+        try:
+            rows = [{'pid': sleeper.pid, 'command': 'dmd', 'cwd': '/elsewhere',
+                     'ticks': measure_queue.cpu_ticks(sleeper.pid)}]
+            with mock.patch.object(measure_queue, 'build_processes', return_value=rows):
+                self.assertEqual(measure_queue.busy_processes(.3), [])
+                self.assertEqual(measure_queue.busy_processes.idle, 1)
+        finally:
+            sleeper.kill()
+            sleeper.wait()
+
     def test_entries_are_well_formed(self):
         for entry in measure_queue.entries():
             self.assertIn(entry['status'], ('pending', 'blocked', 'done'))
