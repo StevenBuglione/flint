@@ -128,3 +128,22 @@ class LockPartitionTests(unittest.TestCase):
         native = json.loads((ROOT / 'policy/native-lock.json').read_text())['libraries']
         covered = set().union(*map(set, partitions['native'].values()))
         self.assertEqual(covered, {row['name'] for row in native})
+
+
+class AppRepoTests(unittest.TestCase):
+    def test_flint_mcp_belongs_to_ai_and_an_app_edge_is_checked(self):
+        apps = json.loads((ROOT / 'policy/apps.json').read_text())['apps']
+        self.assertEqual(apps['flint-mcp'], {'directory': 'apps/flint-mcp', 'repo': 'ai'})
+        self.assertEqual(apps['flint']['repo'], 'flint')
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / 'policy').mkdir()
+            for name in ('packages.json', 'boot.json', 'repos.json'):
+                (root / 'policy' / name).write_text((ROOT / 'policy' / name).read_text())
+            moved = dict(apps, **{'flint-mcp': {'directory': 'apps/flint-mcp', 'repo': 'flint'}})
+            (root / 'policy/apps.json').write_text(json.dumps({'schema': 'flint.apps/1', 'apps': moved}))
+            (root / 'apps/flint-mcp').mkdir(parents=True)
+            (root / 'apps/flint-mcp/flint.toml').write_text((ROOT / 'apps/flint-mcp/flint.toml').read_text())
+            violations, _ = workspace.edge_violations(root)
+            self.assertEqual([message for _, _, message in violations],
+                             ['app flint-mcp (flint) -> mcp (ai): flint may not depend on ai'])

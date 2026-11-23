@@ -156,10 +156,43 @@ private string[] checkRepoEdges(const ref Home home, ref Report report)
         check(item);
     foreach (ref item; home.starters)
         check(item);
+    checkAppEdges(home, report);
     import std.algorithm.sorting : sort;
 
     sort(pending);
     return pending;
+}
+
+/// An application's flint:* dependencies follow the same edges, from its repo in policy/apps.json.
+private void checkAppEdges(const ref Home home, ref Report report)
+{
+    import std.algorithm.searching : startsWith;
+    import std.file : exists;
+    import std.path : buildPath;
+    import flint_tool.project.manifest : Manifest, parseManifest;
+
+    foreach (name, app; home.apps)
+    {
+        const directory = buildPath(home.root, app[1]);
+        const source = repoOf(home, app[0]);
+        Manifest manifest;
+        Report ignored;
+        if (source is null || !exists(buildPath(directory, "flint.toml"))
+                || !parseManifest(directory, home, manifest, ignored))
+            continue;
+        foreach (ref dependency; manifest.dependencies ~ manifest.testDependencies)
+        {
+            if (!dependency.name.startsWith("flint:"))
+                continue;
+            const target = home.find(dependency.name[6 .. $]);
+            if (target is null || target.repo == app[0] || allowed(*source, target.repo))
+                continue;
+            report.add(at(diagnostic("FLINT-E0532", Severity.error,
+                    "app " ~ name ~ " (" ~ app[0] ~ ") -> " ~ dependency.name[6 .. $] ~ " ("
+                    ~ target.repo ~ "): " ~ app[0] ~ " may not depend on " ~ target.repo,
+                    "move the app to a repo that may depend on it in policy/apps.json"), "policy/apps.json", 0));
+        }
+    }
 }
 
 private const(imported!"flint_tool.home.policy".RepoPolicy)* repoOf(const ref Home home, string name)

@@ -165,6 +165,18 @@ struct Home
     PlatformRepo[] platformRepos;
     /// Checkouts by repo from `FLINT_WORKSPACE` (a flint.workspace/1 file), overriding platform.lock.
     string[string] workspaceCheckouts;
+    /// Each application's repo and its directory inside that repo (policy/apps.json), by name.
+    string[2][string] apps;
+
+    /// The directory of the application `name` (`flint-mcp`), in its repo's platform module.
+    string appDirectory(string name) const
+    {
+        import std.path : buildPath;
+
+        if (auto app = name in apps)
+            return buildPath(repoRoot((*app)[0]), (*app)[1]);
+        return buildPath(root, "apps", name);
+    }
 
     /// The checkout that holds `repo`'s packages: this home before the split (or with no platform.lock), the
     /// `FLINT_WORKSPACE` checkout when one is named, else the platform module's pinned checkout under
@@ -360,6 +372,7 @@ bool loadHome(string root, out Home home, ref Report report)
     ok = loadStarters(home, report) && ok;
     ok = loadRepos(home, report) && ok;
     ok = loadPlatformModules(home, report) && ok;
+    ok = loadApps(home, report) && ok;
     ok = loadSafety(home, report) && ok;
     ok = loadVersions(home, report) && ok;
     ok = loadProfiles(home, report) && ok;
@@ -467,6 +480,32 @@ private struct BootRecordJson
     string summary;
     string[] autoconfiguration;
     string repo;
+}
+
+private struct AppJson
+{
+    string directory;
+    string repo;
+}
+
+// policy/apps.json: each application's repo after the split (plan section 7).
+private bool loadApps(ref Home home, ref Report report)
+{
+    import std.file : exists;
+    import std.path : buildPath;
+
+    if (!exists(buildPath(home.root, "policy", "apps.json")))
+        return true;
+    const text = policyText(home, "policy/apps.json", report);
+    string failure;
+    foreach (entry; objectMembers(member(objectMembers(text, failure), "apps"), failure))
+    {
+        auto decoded = deserialize!AppJson(entry.value, lenient());
+        if (!decoded.ok)
+            return invalid(report, "policy/apps.json", entry.name ~ ": " ~ decoded.error.message);
+        home.apps[entry.name] = [decoded.value.repo, decoded.value.directory];
+    }
+    return failure.length == 0 || invalid(report, "policy/apps.json", failure);
 }
 
 private struct PlatformRepoJson

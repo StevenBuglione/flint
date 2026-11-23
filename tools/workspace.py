@@ -57,6 +57,23 @@ def dependencies(root=ROOT):
     return edges
 
 
+def app_dependencies(root=ROOT):
+    """Each app's repo (policy/apps.json) and the flint:* packages its flint.toml depends on."""
+    import tomllib
+    root = Path(root)
+    path = root / 'policy' / 'apps.json'
+    apps = {}
+    for name, meta in (_load(path)['apps'].items() if path.is_file() else []):
+        manifest = root / meta['directory'] / 'flint.toml'
+        if not manifest.is_file():
+            continue
+        document = tomllib.loads(manifest.read_text(encoding='utf-8'))
+        names = [d[6:] for section in ('dependencies', 'test-dependencies')
+                 for d in document.get(section, {}) if d.startswith('flint:')]
+        apps[name] = (meta['repo'], names)
+    return apps
+
+
 def edge_violations(root=ROOT):
     """(from, to, message) for every dependency that points the wrong way between repos. Pending edges that
     policy/repos.json lists with a reason are reported separately and do not fail."""
@@ -78,6 +95,13 @@ def edge_violations(root=ROOT):
                 continue
             message = f'{name} ({source}) -> {target} ({destination}): {source} may not depend on {destination}'
             (deferred if (name, target) in pending else violations).append((name, target, message))
+    for name, (source, targets) in sorted(app_dependencies(root).items()):
+        for target in targets:
+            destination = owners[target][0] if target in owners else None
+            if destination is None or destination == source or destination in repos.get(source, {}).get('may_depend_on', []):
+                continue
+            violations.append((name, target, f'app {name} ({source}) -> {target} ({destination}): {source} may not '
+                               f'depend on {destination}'))
     return violations, deferred
 
 

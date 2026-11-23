@@ -98,7 +98,8 @@ private bool readConfig(string path, string display, ref ConfigKey[string] keys,
     return true;
 }
 
-/// `flint mcp [--log FILE]`: build apps/flint-mcp through flint (fast when current), then become it, serving MCP
+/// `flint mcp [--log FILE]`: build flint-mcp (the ai repo's apps/flint-mcp) through flint (fast when current), then
+/// become it, serving MCP
 /// on stdio in the current directory.
 int commandMcp(ref Session session, string log)
 {
@@ -112,7 +113,8 @@ int commandMcp(ref Session session, string log)
     Report report;
     const directory = getcwd();
     Target server;
-    if (!locate(session, buildPath(session.home.root, "apps", "flint-mcp"), server, report))
+    // flint-mcp belongs to the ai repo (policy/apps.json): it is found through that repo's platform module.
+    if (!locate(session, session.home.appDirectory("flint-mcp"), server, report))
         return finishBare(session, report, "flint.mcp/1");
     BuildRequest request;
     BuildOutcome outcome;
