@@ -621,6 +621,7 @@ def measure_command(entry, built, outdir, smoke):
     receipts = []
     for index, step in enumerate(entry['measure']['steps']):
         cwd, env = ROOT, toolchain_environment()
+        env['FLINT_MEASURE_WINDOW_CERTIFIED'] = '1'  # the queue's own window checks replace the tools' load checks
         if step.get('in'):
             cwd = worktree(built[step['in']]['commit'])[0]
             private = [cwd / '.flint' / 'bin', cwd / '.tools' / 'dmd2' / 'linux' / 'bin64']
@@ -632,7 +633,19 @@ def measure_command(entry, built, outdir, smoke):
         with log.open('wb') as stream:
             completed = subprocess.run(command, cwd=cwd, env=env, stdout=stream,
                                        stderr=subprocess.STDOUT)
-        receipts.append({'command': command, 'cwd': str(cwd), 'exit_code': completed.returncode, 'log': str(log)})
+        receipt = {'command': command, 'cwd': str(cwd), 'exit_code': completed.returncode, 'log': str(log)}
+        if completed.returncode and step.get('may_fail'):
+            # A failed verdict is a result only if the step wrote its output and that output records no error: a step
+            # that refused or crashed measured nothing.
+            outputs = [part for part in command if part.startswith(str(outdir)) and part.endswith('.json')]
+            written = [Path(path) for path in outputs if Path(path).is_file()]
+            errors = [path.name for path in written if 'error' in json.loads(path.read_text())]
+            if not written or errors:
+                receipts.append(dict(receipt, measured=False))
+                raise SystemExit(f'step {index} measured nothing (exit {completed.returncode}, '
+                                 f"{'error in ' + ', '.join(errors) if errors else 'no output'}); see {log}")
+            receipt['measured'] = True
+        receipts.append(receipt)
         if completed.returncode and not step.get('may_fail'):
             raise SystemExit(f'step {index} exited with {completed.returncode}; see {log}')
     return {'steps': receipts,

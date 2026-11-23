@@ -293,7 +293,8 @@ def measure(args, timed):
         raise SystemExit('the Flint port is missing for ' + ', '.join(missing) + '; a missing port fails its claim '
                          '(pass --allow-missing-flint to record the Go and Java sides as an incomplete record)')
     load = os.getloadavg()[0]
-    if load >= 1.0 and not args.smoke:
+    # Under tools/measure_queue.py the queue certifies the window (see load_bench.spring_quiet).
+    if load >= 1.0 and not args.smoke and os.environ.get('FLINT_MEASURE_WINDOW_CERTIFIED') != '1':
         raise SystemExit(f'the runner is busy (1-minute load {load:.2f}); measure when it is otherwise quiet')
     args.output.parent.mkdir(parents=True, exist_ok=True)
     logs = args.output.parent / (args.output.stem + '-logs')

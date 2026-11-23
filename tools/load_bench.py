@@ -413,7 +413,9 @@ def validate_spring_manifest(m, smoke):
 def spring_quiet(smoke):
     """ADR-030 measurements run only when the runner is otherwise quiet."""
     load=os.getloadavg()[0]
-    if not smoke:
+    # Under tools/measure_queue.py the queue certifies the window itself (claimed or naturally quiet, sampled before,
+    # during and after), and in a claimed window the 1-minute average still carries the paused builds' history.
+    if not smoke and os.environ.get("FLINT_MEASURE_WINDOW_CERTIFIED")!="1":
         require(load<1.0,f"the runner is busy (1-minute load {load:.2f}); measure when it is otherwise quiet")
     return load
 
