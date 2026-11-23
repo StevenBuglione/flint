@@ -12,6 +12,8 @@ async queued: 1 calls=2
 async drained: calls=102
 advice: findName: flint.transaction.annotation.Transactional flint.cache.annotation.Cacheable | key #id * 2 = findName#2 | findName: flint.transaction.annotation.Transactional flint.cache.annotation.Cacheable | key #id * 2 = findName#2 | notifyOwner: flint.scheduling.annotation.Async
 mapping: GET /owners/{id} -> 2 Hello, Grace (2 arguments, Hello)
+mapping over an array: Hi, Grace
+exception handler: object.Exception -> no owner 9 at /owners/9
 query: findByLastNameIgnoreCaseOrderByFirstNameAsc: SELECT id, first_name, surname, city FROM owners WHERE UPPER(surname) = UPPER(?) ORDER BY first_name ASC
 query: findFirst2ByCityAndFirstNameStartingWith: SELECT id, first_name, surname, city FROM owners WHERE city = ? AND first_name LIKE ? LIMIT 2
 query: existsByCity: SELECT 1 FROM owners WHERE city = ? LIMIT 1
@@ -35,6 +37,8 @@ async queued: 1 calls=2
 async drained: calls=102
 advice: findName: flint.transaction.annotation.Transactional flint.cache.annotation.Cacheable | key #id * 2 = findName#2 | findName: flint.transaction.annotation.Transactional flint.cache.annotation.Cacheable | key #id * 2 = findName#2 | notifyOwner: flint.scheduling.annotation.Async
 mapping: GET /owners/{id} -> 2 Hello, Grace (2 arguments, Hello)
+mapping over an array: Hi, Grace
+exception handler: object.Exception -> no owner 9 at /owners/9
 query: findByLastNameIgnoreCaseOrderByFirstNameAsc: SELECT id, first_name, surname, city FROM owners WHERE UPPER(surname) = UPPER(?) ORDER BY first_name ASC
 query: findFirst2ByCityAndFirstNameStartingWith: SELECT id, first_name, surname, city FROM owners WHERE city = ? AND first_name LIKE ? LIMIT 2
 query: existsByCity: SELECT 1 FROM owners WHERE city = ? LIMIT 1

@@ -471,6 +471,8 @@ Generated registries call `registry.begin(3, ...)`.
 
 Both are null in older generated code; callers then use `invoke`.
 
+Flint AOT emits both forms for every mapping and exception handler: `handle_<id>` and `handleArray_<id>` (`exception_<id>` and `exceptionArray_<id>`) share one call expression and differ only in reading argument `i` as `arguments[i]` instead of `arguments.get(i)`. The array form's parameter is `scope Any[] arguments` in an `@safe` module, so under `-preview=dip1000` a generated body cannot keep the slice; the CLI suite compiles the emitted signatures with a body that stores it and expects the compile to fail. The runtime still declares `aotContractVersion = 3`, so generated registries still call `registry.begin(3, ...)`; code that sets the fields needs flint:engine-aot from b181a524 on.
+
 ## 5. Beans
 
 ### 5.1 What becomes a bean

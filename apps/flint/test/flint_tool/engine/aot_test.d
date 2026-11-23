@@ -766,6 +766,52 @@ unittest
             "tests", "aot", "sample", "expected.txt")));
 }
 
+@("the array invokers' scope is DIP1000-checked: a body that keeps the argument slice does not compile")
+unittest
+{
+    import std.algorithm.searching : find;
+    import std.array : join;
+    import std.file : readText, write;
+    import std.path : buildPath;
+    import std.string : lineSplitter, startsWith;
+    import flint_tool.support.process : Launch, capture;
+
+    const project = copyFixture("sample");
+    scope (exit)
+        remove(project);
+    expect(generate(project).ok).toBeTrue();
+    const web = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot", "shop", "web.d"));
+    // The emitted signatures, verbatim, with bodies that keep the slice or only read it.
+    string[] signatures;
+    foreach (line; web.lineSplitter)
+        if (line.startsWith("private void handleArray_") || line.startsWith("private void exceptionArray_"))
+            signatures ~= line;
+    expect(signatures.length).toEqual(2);
+    expect(signatures.join("\n").find("scope Any[] arguments").length > 0).toBeTrue();
+    string probe(string statement)
+    {
+        string text = "module flint_aot_scope_probe;\nimport flint.engine.aot.any : Any;\nAny[] kept;\nAny last;\n"
+            ~ "@safe:\n";
+        foreach (signature; signatures)
+            text ~= signature ~ "\n{\n    " ~ statement ~ "\n}\n";
+        return text;
+    }
+
+    Launch launch;
+    launch.directory = project;
+    const file = buildPath(project, "scope_probe.d");
+    string[] check = [compiler(), "-o-", "-preview=dip1000", "-I" ~ runtimeSource(), file];
+    write(file, probe("last = arguments[0];"));
+    const reads = capture(check, launch);
+    expect(reads.combined()).toEqual("");
+    expect(reads.ok).toBeTrue();
+    write(file, probe("kept = arguments;"));
+    const stores = capture(check, launch);
+    expect(stores.ok).toBeFalse();
+    // DMD 2.11x: "assigning scope variable `arguments` to global variable `kept` is not allowed in a `@safe` function".
+    expect(stores.combined().find("scope variable `arguments` to global variable `kept`").length > 0).toBeTrue();
+}
+
 @("every generator diagnostic names its declaration")
 unittest
 {

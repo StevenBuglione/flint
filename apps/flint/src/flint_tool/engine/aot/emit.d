@@ -825,11 +825,16 @@ private struct Emitter
     {
         const id = sanitize(handler.className) ~ "_" ~ sanitize(handler.method.name);
         const callee = "(cast(" ~ handler.className ~ ") bean)." ~ handler.method.name;
+        // Two forms: the HandlerArguments one, and invokeArguments' (b181a524), which takes the resolved arguments
+        // as a scope slice, so the runtime needs no wrapper object or heap array per request.
+        const boxed = invocation(callee, handler.method, handler.arguments);
+        const slice = invocation(callee, handler.method, handler.arguments, true);
         return "private void handle_" ~ id ~ "(Object bean, HandlerArguments arguments, ref Any result)\n{\n    "
-            ~ invocation(callee, handler.method, handler.arguments) ~ "\n}\n\n";
+            ~ boxed ~ "\n}\n\nprivate void handleArray_"
+            ~ id ~ "(Object bean, scope Any[] arguments, ref Any result)\n{\n    " ~ slice ~ "\n}\n\n";
     }
 
-    string invocation(string callee, const ref Method method, const ArgumentPlan[] arguments)
+    string invocation(string callee, const ref Method method, const ArgumentPlan[] arguments, bool slice = false)
     {
         import std.array : join;
         import std.conv : to;
@@ -839,8 +844,9 @@ private struct Emitter
         foreach (index, ref argument; arguments)
         {
             need(method.parameters[index].type);
-            parts ~= argument.exception ? "cast(" ~ argument.type ~ ") exception" : "arguments.get("
-                ~ index.to!string ~ ").get!(" ~ argument.type ~ ")()";
+            const value = slice ? "arguments[" ~ index.to!string ~ "]" : "arguments.get(" ~ index.to!string ~ ")";
+            parts ~= argument.exception ? "cast(" ~ argument.type ~ ") exception" : value ~ ".get!("
+                ~ argument.type ~ ")()";
         }
         const call = callee ~ "(" ~ parts.join(", ") ~ ")";
         return method.returns.name == "void" ? call ~ ";\n    result = Any.init;" : "result = Any.of(" ~ call ~ ");";
@@ -850,8 +856,12 @@ private struct Emitter
     {
         const id = sanitize(handler.className) ~ "_" ~ sanitize(handler.method.name);
         const callee = "(cast(" ~ handler.className ~ ") bean)." ~ handler.method.name;
+        const boxed = invocation(callee, handler.method, handler.arguments);
+        const slice = invocation(callee, handler.method, handler.arguments, true);
         return "private void exception_" ~ id ~ "(Object bean, Exception exception, HandlerArguments arguments, "
-            ~ "ref Any result)\n{\n    " ~ invocation(callee, handler.method, handler.arguments) ~ "\n}\n\n";
+            ~ "ref Any result)\n{\n    " ~ boxed ~ "\n}\n\nprivate void exceptionArray_"
+            ~ id ~ "(Object bean, Exception exception, scope Any[] arguments, ref Any result)\n{\n    "
+            ~ slice ~ "\n}\n\n";
     }
 
     string listenerInvoker(const ref ListenerPlan listener)
@@ -1020,7 +1030,9 @@ private struct Emitter
             text ~= "        mapping.reason = " ~ literal(handler.reason) ~ ";\n";
         if (auto local = handler.className in descriptorLocal)
             text ~= "        mapping.method = &" ~ *local ~ ".methods[" ~ handler.index.to!string ~ "];\n";
-        return text ~ "        mapping.invoke = &handle_" ~ id ~ ";\n        mapping.source = " ~ literal(
+        text ~= "        mapping.invoke = &handle_" ~ id ~ ";\n";
+        text ~= "        mapping.invokeArguments = &handleArray_" ~ id ~ ";\n";
+        return text ~ "        mapping.source = " ~ literal(
                 handler.source) ~ ";\n        registry.mapping(mapping);\n    }\n";
     }
 
@@ -1050,7 +1062,9 @@ private struct Emitter
                 ? "true" : "false") ~ ";\n";
         if (handler.status)
             text ~= "        handler.responseStatus = " ~ handler.status.to!string ~ ";\n";
-        return text ~ "        handler.invoke = &exception_" ~ id ~ ";\n        handler.source = " ~ literal(
+        text ~= "        handler.invoke = &exception_" ~ id ~ ";\n";
+        text ~= "        handler.invokeArguments = &exceptionArray_" ~ id ~ ";\n";
+        return text ~ "        handler.source = " ~ literal(
                 handler.source) ~ ";\n        registry.exceptionHandler(handler);\n    }\n";
     }
 

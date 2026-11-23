@@ -1,7 +1,8 @@
 /// A REST controller, as in gs-rest-service.
 module shop.web;
 
-import flint.web.bind.annotation : GetMapping, PathVariable, RequestMapping, RequestParam, RestController;
+import flint.web.bind.annotation : ExceptionHandler, GetMapping, PathVariable, RequestMapping, RequestParam,
+    RestController;
 import shop.owners : OwnerService;
 
 @safe:
@@ -31,5 +32,11 @@ struct Greeting
             @RequestParam(value: "greeting", defaultValue: "Hello") string greeting)
     {
         return Greeting(id, greeting ~ ", " ~ owners.findName(id));
+    }
+
+    /// Answers a failed lookup; the second argument is resolved by type.
+    @ExceptionHandler Greeting failed(Exception error, string path)
+    {
+        return Greeting(0, error.msg ~ " at " ~ path);
     }
 }

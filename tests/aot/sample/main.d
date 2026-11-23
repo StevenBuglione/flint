@@ -183,6 +183,18 @@ void scenario(string label, string[] profiles, string[string] properties)
         writeln("mapping: ", mapping.methods.join(","), " ", mapping.paths.join(","), " -> ", greeting.id, " ",
                 greeting.content, " (", mapping.arguments.length.to!string, " arguments, ",
                 mapping.arguments[1].defaultValue, ")");
+        // Contract 4: the same call over a stack array, which the scope parameter lets the caller keep off the heap.
+        Any[2] values = [Any.of(3L), Any.of("Hi")];
+        Any direct;
+        mapping.invokeArguments(context.getBean(mapping.bean), values[], direct);
+        writeln("mapping over an array: ", direct.get!Greeting.content);
+    }
+    foreach (ref handler; context.exceptionHandlers)
+    {
+        Any[2] values = [Any.init, Any.of("/owners/9")];
+        Any result;
+        handler.invokeArguments(context.getBean(handler.bean), new Exception("no owner 9"), values[], result);
+        writeln("exception handler: ", handler.exceptionTypes.join(","), " -> ", result.get!Greeting.content);
     }
     foreach (ref query; context.queries)
         writeln("query: ", query.method, ": ", query.sql);
