@@ -324,3 +324,8 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **Gating:** each step (D1 per-thread caches with page release, then D3 if the pause still loses) is measured through proof-harness's queue against druntime's collector on the same binary, before any claim.
     - Correctness evidence: druntime's GC tests, a stress fuzzer with a shadow reachability check, ASan and TSan.
     - It is switchable back to the conservative collector through `rt_options`.
+- 2026-11-23, owner (via the coordinator; m7-flint-cli's static edit-build breakdown): **measured Flint builds match the registered Go comparator's flags.**
+  - Go is built with `-ldflags=-s -w` (no symbol table, no DWARF). The Flint builds that gate against it are therefore built without debug information, and their link drops the symbol table as `-s` does. This covers the cached cold build, the incremental build, the static edit build and scratch. The platform archives they link are the no-debug variant, with the debug setting in the platform cache key.
+  - The same series with debug information (today's dev default) is published in every run as non-gating context, as the cleared-digest-log series already is.
+  - Developers' own `flint build` default is unchanged. The measured command selects the profile explicitly and says so in `flint-spring.json`'s `measure` block and in the benchmark description.
+  - Measurements up to now carried debug information. They stay as recorded and are not rewritten.
