@@ -256,6 +256,19 @@ class FixturePeerTests(unittest.TestCase):
         self.policy.write_text(policy, encoding='utf-8', newline='\n')
         return flint_json('test', 'arena', cwd=self.work, env=environment(FLINT_HOME=str(self.work)))
 
+    def test_a_home_retargeted_to_another_target_refuses_to_build(self):
+        """tools/native_build.py --retarget-dub leaves .native/dub-target; a build for any other target would link
+        that target's C libraries, so it refuses (FLINT-E0713) until the blocks are pointed back."""
+        marker = self.work / '.native' / 'dub-target'
+        marker.parent.mkdir(exist_ok=True)
+        marker.write_text('linux-x86_64-musl\n', encoding='utf-8')
+        self.policy.write_text(self.original, encoding='utf-8', newline='\n')
+        try:
+            status, document = flint_json('test', 'arena', cwd=self.work, env=environment(FLINT_HOME=str(self.work)))
+        finally:
+            marker.unlink()
+        self.assertEqual((status, [d['code'] for d in document['diagnostics']]), (1, ['FLINT-E0713']))
+
     def test_declared_peers_wrap_the_test_binary_outermost_first(self):
         log = Path(self.temporary.name) / 'peer-order'
         log.write_text('', encoding='utf-8', newline='\n')

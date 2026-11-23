@@ -385,6 +385,21 @@ The receipt's `platform_archives` lists each linked module with its key and arch
 
 A Boot application's Flint AOT modules (docs/spring/aot-contract.md) build in two parts. The project compiles the registry and the modules generated for its own `src/` modules. The modules generated for the platform and for dependencies, such as Boot's auto-configuration, are in `.flint/generated/aot-library`. They import no project module and change only with the platform or the closure, so they build as a library that DUB keeps across edits. Without the split, a one-line edit to gs-rest-service recompiled all eleven generated modules, and its edit build took 0.98 s. With the split it recompiles three and takes 0.69 s. When the build links the platform cache, the AOT library is cached there too. Its key covers the generated files' text, the diagnostic flags and the platform cache's inputs and module keys. A cold build of any project with the same closure then links the archive without compiling the library, and the receipt lists it under `platform_archives` as `flint-aot-library`. `flint_aot_library.d`, compiled with the project, imports each library module. When DMD archives the library with `-lib`, each function becomes its own archive member, so a module's `ModuleInfo` reaches the link only through an import. The `ModuleInfo` in turn brings the static constructors of the platform modules the module imports.
 
+### Fully static packages
+
+A glibc package keeps only the C library shared (ADR-023). A fully static executable is the linux-x86_64-musl target: `flint package --target linux-x86_64-musl` builds the release profile, and `--profile size` builds Oz. The pinned LDC compiles for musl, and the pinned clang links a static PIE against the pinned musl sysroot (`flint toolchain install --musl`).
+
+A project that links the platform's native packages, such as every Boot application, needs those packages built for musl. Its native DUB blocks must also point at them, because DUB cannot tell two C libraries apart. Do this in a disposable checkout only:
+
+```bash
+python3 tools/native_musl.py                                             # musl packages, in the pinned Alpine image
+python3 tools/native_build.py --target linux-x86_64-musl --retarget-dub   # this checkout's blocks → musl
+python3 tools/musl_smoke.py gs-rest-service                               # O3 and Oz packages, audit, acceptance
+python3 tools/native_build.py --target linux-x86_64-glibc --retarget-dub  # back
+```
+
+`tools/native_musl.py` writes `.native/install/linux-x86_64-musl` and changes nothing for any other target. While the blocks are retargeted, `.native/dub-target` names the target. Every flint build or package test for another target then refuses with FLINT-E0713, instead of linking musl's libraries. `tools/musl_smoke.py` fails, rather than skipping, when the musl install or the retarget is missing. musl's allocator differs from glibc's (playbook M-5), so record that with any runtime comparison.
+
 ### Receipts
 
 Every artifact has `<artifact>.receipt.json` (`flint.receipt/1`) next to it. Workspace package artifacts have theirs in `.flint/receipts/`. A receipt records the identities behind the artifact: tool, project, manifest and lock hashes, source commit and dirtiness, toolchain components and hashes, native install receipt, profile, flags actually passed, additions, waivers, command, influential environment and output hashes. A dev build leaves its artifact's SHA-256 to the first use of the receipt as evidence. The output's `sha256` is `pending`, and its `stat` records the size, modification time, change time, inode and device. `flint receipt` checks that the artifact still has that identity, then computes the hash and writes it into the receipt. An artifact that changed since its build is refused (FLINT-E0902) and never hashed into the receipt. Release, size and test builds hash at write time. `phases_ms` says where the build's wall time went, in integer milliseconds:

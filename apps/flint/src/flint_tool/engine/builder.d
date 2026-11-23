@@ -775,6 +775,26 @@ private string countNatives(const ref imported!"flint_tool.project.native".Nativ
     return names.join(", ");
 }
 
+/// Whether the checkout's native DUB blocks are this build's. `tools/native_build.py --retarget-dub` points them at
+/// another target's install (a musl package from a glibc host) and leaves `.native/dub-target` naming it; a build
+/// for any other target would then link that target's C libraries, so it refuses.
+private bool nativeBlocksMatch(string home, string target, ref Report report)
+{
+    import std.path : buildPath;
+    import std.string : strip;
+    import flint_tool.engine.target : hostTarget;
+    import flint_tool.support.files : readIfPresent;
+
+    const marked = readIfPresent(buildPath(home, ".native", "dub-target")).strip;
+    const building = target.length ? target : hostTarget();
+    if (marked.length == 0 || marked == building)
+        return true;
+    report.error("FLINT-E0713",
+            "this checkout's native packages are retargeted to " ~ marked ~ ", and this build is for " ~ building,
+            "python3 tools/native_build.py --target " ~ building ~ " --retarget-dub");
+    return false;
+}
+
 /// Build a project with a profile: lock, toolchain, fast checks, recipe, DUB, receipt.
 bool buildProject(ref Session session, const ref Manifest manifest, const ref Resolution resolution,
         BuildRequest request, out BuildOutcome result, ref Report report)
@@ -783,6 +803,8 @@ bool buildProject(ref Session session, const ref Manifest manifest, const ref Re
     import std.path : buildPath;
     import flint_tool.engine.recipe : recipeDirectory;
 
+    if (!nativeBlocksMatch(session.home.root, request.target, report))
+        return false;
     ProfileSpec spec;
     if (!selectProfile(session, request.profile, spec, report))
         return false;
@@ -1387,6 +1409,8 @@ PackageRun[] workspaceRun(ref Session session, scope const(string)[] packages, s
     import std.algorithm.searching : canFind;
     import flint_tool.check.structural : structuralGate;
 
+    if (!nativeBlocksMatch(session.home.root, request.target, report))
+        return null;
     ProfileSpec spec;
     if (!selectProfile(session, profileName, spec, report))
         return null;

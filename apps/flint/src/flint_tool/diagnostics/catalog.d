@@ -450,6 +450,11 @@ immutable CodeInfo[] catalog = [
             ~ "platform version and target (ADR-030 section 5). DUB could not describe or build them, or an "
             ~ "archive could not be stored in the cache (FLINT_CACHE, else <home>/.flint/cache).",
             "flint build --no-platform-cache --verbose"),
+    CodeInfo("FLINT-E0713", ExitCode.user, "native packages retargeted to another target",
+            "`tools/native_build.py --retarget-dub` points a checkout's native DUB blocks at another target's install, "
+            ~ "so `flint package --target linux-x86_64-musl` links musl's libraries. Until it is pointed back, a build "
+            ~ "for any other target would link them too, so it refuses. Retarget only a disposable checkout.",
+            "python3 tools/native_build.py --target linux-x86_64-glibc --retarget-dub"),
 
     // 08xx: toolchain and environment.
     CodeInfo("FLINT-E0801", ExitCode.environment, "Flint installation not found",
