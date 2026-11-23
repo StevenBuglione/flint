@@ -10,6 +10,7 @@
 - Phase 0 binary-size levers (ADR-030 section 5, `docs/milestones/13-binary-size.md`):
   - Linux glibc PIE outputs link with RELR packed relocations. This takes 765,880 bytes off bench-rest and 147,384 off bench-cli, with PIE, relro and now kept.
   - The release and size profiles pass LDC's `-fno-moduleinfo-localclasses`, so `--gc-sections` drops unused classes: 2,000 classes with 50 used shrink from 2.46 MB to 0.49 MB. The DMD fork gains the same switch.
+  - OpenSSL is built for TLS 1.2 and 1.3 only (ADR-031). This takes 899,216 bytes off bench-rest, and every handshake of Flint's TLS profile negotiates as before (`tools/tls_profile_matrix.py`).
   - `policy/budgets.json` gives framework modules linked-bytes budgets, checked by the gates. `measure_builds.py --app-sizes` measures the apps' release sizes alone.
 - Milestone 10, in progress (ADR-028):
   - flint:engine-di gains compile-time conditional registration: `@ConditionalOnConfig`, `@ConditionalOnMissingBean` and `AutoConfiguration` lists, driven by `config/application.toml`.

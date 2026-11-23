@@ -122,7 +122,7 @@ Creating the GitHub repositories is an outward step and waits for the owner's go
   - Value types (`HttpHeaders`, `MediaType`, `HttpStatus`, `ResponseEntity`) are structs. Classes are used only where Spring users subclass or implement, and are `final` by default.
 - **Linking.**
   - Linux glibc outputs link with packed relative relocations (`-z pack-relative-relocs`), through each profile's `glibc_lflags`. PIE, relro and now are unchanged. This takes 765,880 bytes off bench-rest at O3 and at Oz.
-  - A TLS-only OpenSSL build, keeping the benchmark's TLS profile, needs its own ADR.
+  - A TLS-only OpenSSL build keeps the TLS profile, so every handshake negotiates as before. [ADR-031](ADR-031-tls-only-openssl.md) records it: 899,216 bytes off bench-rest at O3 and at Oz.
 - **Imports.**
   - Framework modules have no `package.d` aggregators.
   - Annotation modules are leaves that import only UDA structs.
@@ -216,7 +216,7 @@ Sources are fetched by checksum into a reference cache and never compiled.
 - Whether to build the shipped druntime and Phobos with `-fno-moduleinfo-localclasses` too. The prebuilt runtime libraries keep their own class lists, so linked runtime classes stay alive. LDC's `ldc-build-runtime` can rebuild them without a fork, as the sanitizer lane already does.
 - Whether musl static-PIE outputs also take `-z pack-relative-relocs`. The pinned Alpine 3.22 musl (1.2.5) relocates RELR, and it saves 143,288 to 147,384 bytes on bench-cli and bench-rest built without native providers. Today only glibc outputs use it.
 - The JPA engine: persistence context, dirty checking, lazy loading, JPQL compiled at build time, Criteria. It is ported from Hibernate ORM (Apache-2.0 since March 2025) and gets its own ADR.
-- The TLS-only OpenSSL build, which gets its own ADR.
+- ~~The TLS-only OpenSSL build, which gets its own ADR.~~ Settled in [ADR-031](ADR-031-tls-only-openssl.md).
 - The ADR-023 amendment for platform modules, written with the split's preparation.
 
 ## Phases
