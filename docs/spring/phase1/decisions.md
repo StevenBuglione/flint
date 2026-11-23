@@ -164,6 +164,14 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - CPU per request 1.52 (1.40–1.78) [1.38]: 12.6 against 8.3 µs.
 
     RSS improved by about 3 MB; throughput is about the same. CPU per request and p50 are slightly worse, but their intervals overlap the first run's. Every metric still misses. Evidence: `benchmarks/spring/evidence/gs-rest-multicore-2/`.
+  - **Update, 18:27–19:07Z (certified, `gs-rest-multicore-3` at `1141a9bc`).** This build has io_uring steps 1–3 plus the allocation cuts: `bc808cca` (servlet path, 37 to 31 allocations), `08b19d2f` (Accept parsing) and `b7c8891d` (writeValueAsBytes). The coordinator asked that this attribution be kept. The collector is druntime's default. A claimed window with no foreign build in 218 samples, and the port passes 18/18 exact. Flint/Go median ratios (99% interval), with multicore-2's in brackets:
+    - throughput **0.801 (0.796–0.808)** [0.759]: 200k against 249k req/s;
+    - p50 1.83 (1.69–1.97) [1.96]: 0.111 against 0.061 ms;
+    - p99 **2.27 (2.01–2.50)** [2.45]: 0.595 against 0.262 ms;
+    - peak RSS 1.66 (1.65–1.68) [1.61]: 23.0 against 13.8 MB;
+    - CPU per request 1.46 (1.33–1.58) [1.52]: 12.0 against 8.2 µs.
+
+    Throughput rose about 5% and p99 fell. RSS and CPU per request are within noise of multicore-2. Every metric still misses. Evidence: `benchmarks/spring/evidence/gs-rest-multicore-3/`.
 
 - 2026-11-23, proof-harness: **The Phase 0 runtime levers regress bench-rest's peak RSS by 6.2%.** This is certified: queue entry `runtime-levers-rest`, 14:14–14:54Z, load 0.78 at the start, no foreign build in any of 220 samples. bench-rest at `e16668e` (base) against `966c4b7` (FiberLocal, 256 KiB guarded fiber stacks, the offload pool), both built with bench-rest's README release command, on the production REST workload with 9 interleaved trials. Median ratios with 99% intervals against `policy/budgets.json`'s regression ceilings:
   - peak RSS 1.062 (1.045–1.090; 13.66 MB against 12.87 MB): over the 1.05 ceiling;
