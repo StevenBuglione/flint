@@ -125,6 +125,7 @@ The tests compare Flint's output with golden files that the real Jackson 3.1.8 w
 - **API.** `flint.jakarta.validation` ports the API: `Validator`, `ValidatorFactory`, `Validation`, `ConstraintViolation`, `ConstraintValidator`, `ConstraintValidatorContext`, `Path`, `@Valid` and `@Constraint`, plus the constraint UDAs in `.constraints`.
 - **Implementation.** `flint.hibernate.validator` ports Hibernate Validator's implementation: the built-in validators, `ResourceBundleMessageInterpolator` semantics over the English `ValidationMessages.properties`, and the path and violation model.
 - **Engine.** Text checks reuse the `flint.validate` engine (`NotBlank` whitespace, scalar counts for `@Size`, the e-mail grammar, the regular-expression automaton) through an engine-facing module, not its internals.
+- **Temporal constraints.** `@Past`, `@PastOrPresent`, `@Future` and `@FutureOrPresent` validate `Instant`, `LocalDate`, `LocalDateTime`, `LocalTime`, `OffsetDateTime` and `ZonedDateTime` against the system clock (UTC), with Hibernate's zero tolerance. Any other type raises HV000030.
 - **Messages.** The default messages are Hibernate Validator's English bundle, interpolated with its rules: `{min}`-style parameters, and the `${validatedValue}` and ternary expression subset that the built-in messages use.
 
 ## Deviations
@@ -154,7 +155,7 @@ All commands run from the repository root with the toolchain on `PATH`.
 | java.time | `dub test :java --compiler=dmd` and `=ldc2` | `time.tsv` and `time_format.tsv` identical to JDK 21; epoch days walked over 1600–2400 |
 | Jackson annotations | `dub test :jackson-annotations --compiler=dmd` and `=ldc2` | defaults and shorthand |
 | SLF4J | `dub test :slf4j-api --compiler=dmd` and `=ldc2` | MessageFormatterTest, BasicMarkerTest, MDCAdapterTestBase ported; logger behaviour |
-| Validation | `dub test :jakarta-validation` and `:hibernate-validator`, both compilers | 23 violations identical to Hibernate Validator's |
+| Validation | `dub test :jakarta-validation` and `:hibernate-validator`, both compilers | 28 violations identical to Hibernate Validator's, `@Past`/`@Future` on java.time included |
 | Annotations | `dub test :jakarta-annotation`, both compilers | defaults, repetition |
 | ProcessSlot | `dub test :conc`, both compilers, and LDC `-fsanitize=thread` | no reports |
 | Structure | `python3 tools/gates.py --gate structural`; `python3 -m unittest test_guards` (in `tools/`) | pass; the framework-layer tests pass |
@@ -171,7 +172,7 @@ The classification is name-based: an element counts as ported when the Flint mod
   - `@safe` equality and hash on `Any`, so `flint.java.util` collections can hold it;
   - the time-zone database for region `ZoneId`s.
 
-  `flint.java.time` and `ClassRef` have landed. Next on the third-party side: D arrays, `Optional` and enum reading over the new descriptor thunks, then `@JsonNaming`. Validation still lacks `@Past`/`@Future`, groups and custom constraints.
+  `flint.java.time` and `ClassRef` have landed. Next on the third-party side: D arrays, `Optional` and enum reading over the new descriptor thunks, then `@JsonNaming`. Validation still lacks groups and custom constraints.
 - **flint-aot:**
   - a record's field-wise constructor as `constructors[0]` for structs;
   - descriptors for the concrete collection types of collection-typed properties.
