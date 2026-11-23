@@ -1,7 +1,8 @@
 /// `flint api headers`: every D file ported from an upstream carries the header ADR-030 section 7 requires, for an
 /// upstream whose entry in `policy/upstream-licences.json` allows porting its source.
 ///
-/// A file is ported when the header before its `module` declaration has a line
+/// A file is ported when a line of the header before its `module` declaration starts with `Ported from`; the
+/// canonical form is
 ///
 /// ---
 /// // Ported from spring-framework v7.1.0: spring-core/src/main/java/org/springframework/util/StringUtils.java
@@ -11,12 +12,14 @@
 /// ---
 ///
 /// The checks:
-/// - `<project> <version>` must be pinned in `api/upstreams.json`.
+/// - The marker line must name a pin of `api/upstreams.json`, by its project (or `owner/repo`, or Maven artifact
+///   id), and the pinned version.
 /// - The pin's licence entry (`matrix`) must allow porting (`port-source`, `port-source-bsd-option` or
 ///   `epl-module`), at the same tag.
 /// - The header must carry the entry's copyright line, or a `Copyright` line when the entry names none.
 /// - It must carry the licence line for the licence and use (Apache License 2.0, MIT, the BSD 3-Clause option, or
-///   the Eclipse Public License 2.0), or an `SPDX-License-Identifier:` line naming that licence.
+///   the Eclipse Public License 2.0), the licence's own standard wording (the MIT grant; the Eclipse Public License
+///   by name or `EPL-2.0`; the BSD 3-Clause option), or an `SPDX-License-Identifier:` line naming that licence.
 /// - It must say "Modified by the Flint authors", as Apache-2.0 §4(b) requires.
 /// - An `epl-module` port must live in a package whose `dub.sdl` declares `license "EPL-2.0"`.
 module flint_tool.api.headers;
@@ -112,9 +115,10 @@ bool opensWithMarker(string line)
     import std.string : stripLeft;
 
     size_t index;
+    // Inside a block comment the marker may stand without any comment character.
     while (index < line.length && (line[index] == '/' || line[index] == '*' || line[index] == '+'))
         index++;
-    return index > 0 && line[index .. $].stripLeft.startsWith(portedMarker);
+    return line[index .. $].stripLeft.startsWith(portedMarker);
 }
 
 /// The licence line a ported file must carry for `entry`, or empty when its source may not be ported.
@@ -147,35 +151,131 @@ HeaderProblem[] checkHeader(string file, string source, const(Upstream)[] upstre
     const header = headerOf(source, markerLine);
     if (markerLine == 0)
         return null;
-    string project, version_, path, failure;
+    string failure;
     const(LicenceEntry)* entry;
-    if (!parseMarker(header, project, version_, path))
-        failure = "the marker must read `Ported from <project> <version>: <upstream path>`";
-    else
-        entry = licenceFor(project, version_, upstreams, matrix, failure);
+    const pin = pinOf(markerText(header), upstreams, failure);
+    if (pin !is null)
+        entry = licenceFor(*pin, matrix, failure);
     if (entry is null)
         return [HeaderProblem(file, markerLine, failure)];
     HeaderProblem[] problems;
-    foreach (message; contentProblems(header, *entry, version_, packageLicence))
+    foreach (message; contentProblems(header, *entry, pin.version_, packageLicence))
         problems ~= HeaderProblem(file, markerLine, message);
     return problems;
 }
 
-/// The licence entry of a pinned upstream whose source may be ported, or null with `failure` set.
-const(LicenceEntry)* licenceFor(string project, string version_, const(Upstream)[] upstreams,
-        const(LicenceEntry)[] matrix, out string failure)
+/// The text of the marker line, after `Ported from `.
+string markerText(string header)
 {
-    const(Upstream)* pin;
+    import std.string : indexOf, lineSplitter, strip, stripLeft;
+
+    foreach (line; header.lineSplitter)
+    {
+        if (opensWithMarker(line.stripLeft))
+            return line[line.indexOf(portedMarker) + portedMarker.length .. $].strip;
+    }
+    return null;
+}
+
+/// The names a marker may give a pin by: its project, the `owner/repo` of a GitHub archive, or the Maven
+/// artifact id of a sources jar (`jakarta.servlet-api`).
+string[] pinNames(const ref Upstream upstream)
+{
+    import std.algorithm.searching : endsWith, startsWith;
+    import std.string : indexOf, lastIndexOf;
+
+    string[] names = [upstream.project];
+    enum github = "https://github.com/";
+    if (upstream.url.startsWith(github))
+    {
+        const path = upstream.url[github.length .. $];
+        const archive = path.indexOf("/archive/");
+        if (archive > 0)
+            names ~= path[0 .. archive];
+    }
+    const suffix = "-" ~ upstream.version_ ~ "-sources.jar";
+    if (upstream.url.endsWith(suffix))
+    {
+        const file = upstream.url[upstream.url.lastIndexOf('/') + 1 .. $];
+        names ~= file[0 .. $ - suffix.length];
+    }
+    return names;
+}
+
+/// The pin a marker names: one of its names and its version both appear as words of the marker line (a version
+/// may also read `v7.1.0` or end a tag such as `jackson-annotations-2.21`). The longest matching name wins.
+const(Upstream)* pinOf(string marker, const(Upstream)[] upstreams, out string failure)
+{
+    import std.algorithm.searching : endsWith;
+
+    const words = markerWords(marker);
+    bool hasWord(string word)
+    {
+        foreach (candidate; words)
+        {
+            if (candidate == word)
+                return true;
+        }
+        return false;
+    }
+
+    bool hasVersion(string version_)
+    {
+        foreach (candidate; words)
+        {
+            if (candidate == version_ || candidate == "v" ~ version_
+                    || candidate.endsWith("-" ~ version_) || candidate.endsWith("_" ~ version_))
+                return true;
+        }
+        return false;
+    }
+
+    const(Upstream)* best;
+    size_t bestLength;
+    string named;
     foreach (ref upstream; upstreams)
     {
-        if (upstream.project == project && upstream.version_ == version_)
-            pin = &upstream;
+        foreach (name; pinNames(upstream))
+        {
+            if (!hasWord(name))
+                continue;
+            named = name;
+            if (hasVersion(upstream.version_) && name.length > bestLength)
+            {
+                best = &upstream;
+                bestLength = name.length;
+            }
+        }
     }
-    if (pin is null)
+    if (best is null)
+        failure = named.length ? "the marker names " ~ named ~ " at a version api/upstreams.json does not pin"
+            : "the marker must name an upstream pinned in api/upstreams.json and its version: "
+            ~ "`Ported from <project> <version>: <upstream path>`";
+    return best;
+}
+
+/// The words of a marker line, split at spaces and punctuation that never occurs inside a name or version.
+string[] markerWords(string marker)
+{
+    string[] words;
+    size_t start;
+    foreach (index, c; marker)
     {
-        failure = project ~ " " ~ version_ ~ " is not pinned in api/upstreams.json";
-        return null;
+        const separator = c == ' ' || c == ',' || c == '(' || c == ')' || c == ':' || c == ';' || c == '\t';
+        if (!separator)
+            continue;
+        if (index > start)
+            words ~= marker[start .. index];
+        start = index + 1;
     }
+    if (marker.length > start)
+        words ~= marker[start .. $];
+    return words;
+}
+
+/// The licence entry of a pin whose source may be ported, or null with `failure` set.
+const(LicenceEntry)* licenceFor(const ref Upstream pin, const(LicenceEntry)[] matrix, out string failure)
+{
     foreach (ref candidate; matrix)
     {
         if (candidate.name != pin.matrix)
@@ -201,7 +301,7 @@ private string[] contentProblems(string header, const ref LicenceEntry entry, st
     const copyright = entry.header.length ? entry.header : "Copyright";
     if (header.indexOf(copyright) < 0)
         problems ~= "the header lacks the upstream copyright line" ~ (entry.header.length ? ": " ~ entry.header : "");
-    if (header.indexOf(line) < 0 && !spdxNames(header, spdxOf(entry)))
+    if (!statesLicence(header, entry))
         problems ~= "the header lacks the licence line (" ~ line
             ~ ", or an SPDX-License-Identifier naming " ~ spdxOf(entry) ~ ")";
     if (header.indexOf(modifiedNotice) < 0)
@@ -210,6 +310,56 @@ private string[] contentProblems(string header, const ref LicenceEntry entry, st
         problems ~= entry.name ~ " is ported only into EPL-2.0 packages, but the package declares `" ~ (
                 packageLicence.length ? packageLicence : "no licence") ~ "`";
     return problems;
+}
+
+/// Whether the header states the licence the port is made under: the licence line, the licence's own standard
+/// wording (the MIT grant, the Eclipse Public License by name or identifier, the BSD 3-Clause option), or an SPDX
+/// line naming it. Runs of spaces are collapsed first, as upstream notices often align their text.
+bool statesLicence(string header, const ref LicenceEntry entry)
+{
+    import std.string : indexOf;
+
+    const text = collapseSpaces(header);
+    string[] evidence = [licenceLine(entry)];
+    switch (spdxOf(entry))
+    {
+    case "MIT":
+        evidence ~= "Permission is hereby granted, free of charge";
+        break;
+    case "EPL-2.0":
+        evidence ~= ["Eclipse Public License", "EPL-2.0"];
+        break;
+    case "BSD-3-Clause":
+        evidence ~= ["BSD-3-Clause", "BSD 3-Clause"];
+        break;
+    default:
+        break;
+    }
+    foreach (phrase; evidence)
+    {
+        if (phrase.length && text.indexOf(phrase) >= 0)
+            return true;
+    }
+    return spdxNames(header, spdxOf(entry));
+}
+
+private string collapseSpaces(string text)
+{
+    string collapsed;
+    bool space;
+    foreach (c; text)
+    {
+        if (c == ' ' || c == '\t')
+        {
+            if (!space)
+                collapsed ~= ' ';
+            space = true;
+            continue;
+        }
+        space = false;
+        collapsed ~= c;
+    }
+    return collapsed;
 }
 
 /// The SPDX identifier of the licence a port is made under: the BSD or EPL option of a dual licence.
@@ -258,33 +408,6 @@ private string[] splitWords(string text)
     if (text.length > start)
         words ~= text[start .. $];
     return words;
-}
-
-/// Parse `Ported from <project> <version>: <path>` out of a header.
-bool parseMarker(string header, out string project, out string version_, out string path)
-{
-    import std.string : indexOf, lineSplitter, strip, stripLeft;
-
-    string rest;
-    foreach (line; header.lineSplitter)
-    {
-        if (opensWithMarker(line.stripLeft))
-        {
-            rest = line[line.indexOf(portedMarker) + portedMarker.length .. $].strip;
-            break;
-        }
-    }
-    if (rest.length == 0)
-        return false;
-    // `<project> <version>:`, then the upstream path, on this line or the lines that follow.
-    const space = rest.indexOf(' ');
-    const colon = rest.indexOf(':');
-    if (space <= 0 || colon <= space + 1)
-        return false;
-    project = rest[0 .. space];
-    version_ = rest[space + 1 .. colon];
-    path = rest[colon + 1 .. $].strip;
-    return version_.indexOf(' ') < 0;
 }
 
 /// The `license` of the nearest `dub.sdl` above `file`, up to `root`.

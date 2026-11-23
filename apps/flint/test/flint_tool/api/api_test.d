@@ -458,7 +458,7 @@ unittest
             "the header lacks \"Modified by the Flint authors\" (Apache-2.0 §4(b))"
     ]);
     expect(check("// Ported from spring-framework v7.0.0: a/B.java\n")).toEqual(
-            ["spring-framework v7.0.0 is not pinned in api/upstreams.json"]);
+            ["the marker names spring-framework at a version api/upstreams.json does not pin"]);
     expect(check("// Ported from liquibase 4.0: a/B.java\n")).toEqual(
             [
         "liquibase is `clean-room` (FSL-1.1-ALv2) in policy/upstream-licences.json: its source may not be ported"
@@ -475,8 +475,13 @@ unittest
             [
         "jakarta-servlet is ported only into EPL-2.0 packages, but the package declares `Apache-2.0`"
     ]);
-    expect(check("// Ported from spring-framework: no version\n")).toEqual(
-            ["the marker must read `Ported from <project> <version>: <upstream path>`"]);
+    expect(check("// Ported from spring-framework: no version
+")).toEqual(["the marker names spring-framework at a version api/upstreams.json does not pin"]);
+    expect(check("// Ported from somewhere 1.0: x
+")).toEqual([
+        "the marker must name an upstream pinned in api/upstreams.json and its version: "
+        ~ "`Ported from <project> <version>: <upstream path>`"
+    ]);
     expect(sdlLicence("name \"x\"\nlicense \"EPL-2.0\"\n")).toEqual("EPL-2.0");
     // An SPDX line naming the licence the port is made under stands for the licence sentence, and the upstream
     // paths may continue on the lines after the marker.
@@ -586,4 +591,60 @@ unittest
     parseMapping(`{"elements":{"org.x.core.**":{"status":"adapted","rules":["R6"]}}}`, mapping, error);
     const done = Classifier(mapping);
     expect(unfinished(slice.checklists[0], manifest, done).length).toEqual(0);
+}
+
+@("a marker names its pin by project, owner/repo or Maven artifact id, with the pinned version anywhere on the line")
+unittest
+{
+    import std.array : replicate;
+    import flint_tool.api.headers : markerText, pinOf;
+
+    Upstream[] upstreams;
+    string error;
+    enum central = "https://repo1.maven.org/maven2/";
+    parseUpstreams(`{"schema":"flint.api-upstreams/1","upstreams":[
+        {"project":"spring-framework","version":"v7.1.0","url":
+         "https://github.com/spring-projects/spring-framework/archive/refs/tags/v7.1.0.tar.gz",
+         "format":"tar.gz","sha256":"` ~ "a".replicate(64) ~ `"},
+        {"project":"jackson-annotations","version":"2.21","format":"jar","sha256":"` ~ "b".replicate(64) ~ `",
+         "url":"` ~ central ~ `com/fasterxml/jackson/core/jackson-annotations/2.21/`
+            ~ `jackson-annotations-2.21-sources.jar"},
+        {"project":"jakarta-servlet","version":"6.1.0","format":"jar","sha256":"` ~ "c".replicate(64) ~ `",
+         "url":"` ~ central ~ `jakarta/servlet/jakarta.servlet-api/6.1.0/jakarta.servlet-api-6.1.0-sources.jar"}]}`,
+            upstreams, error);
+    expect(error).toEqual("");
+
+    string pinned(string header)
+    {
+        string failure;
+        const pin = pinOf(markerText(header), upstreams, failure);
+        return pin is null ? failure : pin.project;
+    }
+
+    expect(pinned("/++\nPorted from spring-projects/spring-framework v7.1.0, spring-web/src/main/java/X.java\n+/\n"))
+        .toEqual("spring-framework");
+    expect(pinned(" * Ported from Jackson (jackson-annotations) 2.21, https://github.com/FasterXML/x, tag x\n"))
+        .toEqual("jackson-annotations");
+    expect(pinned(" * Ported from Jackson (jackson-annotations), tag jackson-annotations-2.21:\n")).toEqual(
+            "jackson-annotations");
+    expect(pinned("Ported from jakartaee/servlet, jakarta.servlet-api 6.1.0 (the sources jar)\n")).toEqual(
+            "jakarta-servlet");
+    expect(pinned("// Ported from jakarta-servlet 6.0.0: x\n")).toEqual(
+            "the marker names jakarta-servlet at a version api/upstreams.json does not pin");
+}
+
+@("a licence may be stated by its own standard wording: the MIT grant, the EPL by name or identifier")
+unittest
+{
+    import flint_tool.api.headers : LicenceEntry, statesLicence;
+
+    const mit = LicenceEntry("slf4j", "MIT", "port-source", "2.0.20");
+    expect(statesLicence(" * Permission is hereby granted, free  of charge, to any person\n", mit)).toEqual(true);
+    expect(statesLicence(" * Licensed under the MIT License.\n", mit)).toEqual(true);
+    expect(statesLicence(" * Copyright (c) 2004 QOS.ch\n", mit)).toEqual(false);
+    const epl = LicenceEntry("jakarta-servlet", "EPL-2.0 OR GPL-2.0-with-classpath-exception", "epl-module", "6.1.0");
+    expect(statesLicence("Flint distributes this module under EPL-2.0 only.\n", epl)).toEqual(true);
+    expect(statesLicence("Licensed under the Apache License, Version 2.0\n", epl)).toEqual(false);
+    const apache = LicenceEntry("spring-framework", "Apache-2.0", "port-source", "v7.1.0");
+    expect(statesLicence("Licensed under the Apache License, Version 2.0 (the \"License\")\n", apache)).toEqual(true);
 }
