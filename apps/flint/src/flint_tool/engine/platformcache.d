@@ -335,7 +335,7 @@ private string moduleKey(const ref PlatformModule item, const ref PlatformInputs
         scope const string[] dependencyKeys, ref string[string] fileDigests)
 {
     import std.algorithm.sorting : sort;
-    import flint_tool.support.files : sha256File, sha256Hex;
+    import flint_tool.support.files : cachedSha256File, sha256Hex;
 
     string text = cacheFormat ~ "\nworking-directory " ~ inputs.workingDirectory ~ "\nrelease " ~ inputs.release
         ~ "\ncompiler " ~ inputs.compilerSha256 ~ "\ndub " ~ inputs.dubSha256 ~ "\ndflags "
@@ -347,7 +347,7 @@ private string moduleKey(const ref PlatformModule item, const ref PlatformInputs
     foreach (file; item.files)
     {
         if (file !in fileDigests)
-            fileDigests[file] = sha256File(file);
+            fileDigests[file] = cachedSha256File(file);
         text ~= "file " ~ file ~ " " ~ fileDigests[file] ~ "\n";
     }
     auto keys = dependencyKeys.dup;

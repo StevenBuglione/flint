@@ -266,13 +266,14 @@ bool readReceipt(string path, out Receipt receipt, ref Report report)
     return true;
 }
 
-/// Hash one output file.
+/// Hash one output file. An artifact a no-op build left in place keeps its digest (`cachedSha256File`); a new
+/// link is always hashed, because it was written moments ago.
 OutputRecord outputRecord(string path, string display)
 {
     import std.file : getSize;
-    import flint_tool.support.files : sha256File;
+    import flint_tool.support.files : cachedSha256File;
 
-    return OutputRecord(display, sha256File(path), cast(long) getSize(path));
+    return OutputRecord(display, cachedSha256File(path), cast(long) getSize(path));
 }
 
 /// Check an artifact against its receipt, and the receipt's toolchain against `current` (when given).

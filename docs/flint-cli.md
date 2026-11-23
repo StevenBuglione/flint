@@ -396,7 +396,7 @@ Every artifact has `<artifact>.receipt.json` (`flint.receipt/1`) next to it. Wor
 | `FLINT_LOG` | Append a JSON line per child process `flint` runs (argv, directory, status, duration). |
 | `FLINT_PROFILE` | Read by applications: selects `config/application-<profile>.toml`. |
 | `FLINT_PROXY` | Fetch repository-path modules and DUB packages from `<proxy>/<path>` instead of `https://<path>`; `off` never fetches. |
-| `FLINT_CACHE` | The module and platform cache, instead of `<installation>/.flint/cache`. |
+| `FLINT_CACHE` | The module and platform cache, instead of `<installation>/.flint/cache`. Its `digests.log` keeps the SHA-256 of files every build reads, such as toolchain executables, flint itself, platform sources and an unchanged artifact. Each digest is reused while the file keeps its size, modification time and inode, as git's index does. Downloads and lock verification always hash in full. |
 | `FLINT_PLATFORM_CACHE` | `0`: compile the platform modules from source, as `--no-platform-cache` does. |
 | `FLINT_OFFLINE` | `1`: never touch the network; use the cache or `vendor/`. |
 | `FLINT_DUB_INDEX` | An additional DUB compatibility index, for private packages. |

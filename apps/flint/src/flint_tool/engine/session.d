@@ -51,10 +51,10 @@ struct Session
     /// SHA-256 of the running executable.
     string toolSha()
     {
-        import flint_tool.support.files : sha256File;
+        import flint_tool.support.files : cachedSha256File;
 
         if (executableSha.length == 0)
-            executableSha = sha256File(executable);
+            executableSha = cachedSha256File(executable);
         return executableSha;
     }
 }
@@ -86,5 +86,13 @@ Session openSession(bool json, bool verbose, ref Report report)
         return session;
     }
     session.homeLoaded = loadHome(root, session.home, report);
+    {
+        import std.path : absolutePath, buildNormalizedPath, buildPath;
+        import flint_tool.support.files : useDigestCache;
+
+        const relocated = environment.get("FLINT_CACHE", "");
+        useDigestCache(relocated.length
+                ? buildNormalizedPath(absolutePath(relocated)) : buildPath(root, ".flint", "cache"));
+    }
     return session;
 }

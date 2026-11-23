@@ -329,7 +329,7 @@ private ResolvedPackage corePackage(const ref Home home, string name, bool works
     foreach (dependency; meta.dependencies)
         item.dependencies ~= "flint:" ~ dependency;
     if (!workspace)
-        item.contentSha256 = contentHash(item.directory, ["dub.sdl", "source/**", "native/**"]);
+        item.contentSha256 = homeContentHash(item.directory, ["dub.sdl", "source/**", "native/**"]);
     return item;
 }
 
@@ -352,7 +352,7 @@ private ResolvedPackage starterPackage(const ref Home home,
     foreach (dependency; meta.dependencies)
         item.dependencies ~= "flint:" ~ dependency;
     if (!workspace)
-        item.contentSha256 = contentHash(item.directory, ["dub.sdl", "source/**", "config.toml"]);
+        item.contentSha256 = homeContentHash(item.directory, ["dub.sdl", "source/**", "config.toml"]);
     return item;
 }
 
@@ -611,11 +611,22 @@ private void checkRoots(const ref Manifest manifest, const ref Resolution resolu
 /// "relative-path NUL file-sha256 LF" records. Build and cache directories are excluded.
 string contentHash(string directory, scope const(string)[] patterns)
 {
+    import std.path : buildPath;
+    import flint_tool.support.files : sha256File, sha256Hex;
+
+    string records;
+    foreach (relative; contentFiles(directory, patterns))
+        records ~= relative ~ "\0" ~ sha256File(buildPath(directory, relative)) ~ "\n";
+    return sha256Hex(cast(const(ubyte)[]) records);
+}
+
+/// The files `contentHash` reads, sorted and unique.
+private string[] contentFiles(string directory, scope const(string)[] patterns)
+{
     import std.algorithm.sorting : sort;
     import std.algorithm.iteration : uniq;
     import std.array : array;
-    import std.path : buildPath;
-    import flint_tool.support.files : findFiles, sha256File, sha256Hex, skipped;
+    import flint_tool.support.files : findFiles, skipped;
 
     string[] files;
     foreach (pattern; patterns)
@@ -627,9 +638,20 @@ string contentHash(string directory, scope const(string)[] patterns)
         }
     }
     sort(files);
+    return files.uniq.array;
+}
+
+/// `contentHash` of a package of the Flint home, from the digest cache (`cachedSha256File`): building a project
+/// outside the checkout would otherwise hash every platform package's source on every build. Remote modules are
+/// always hashed in full, because their digest verifies them against the lock.
+private string homeContentHash(string directory, scope const(string)[] patterns)
+{
+    import std.path : buildPath;
+    import flint_tool.support.files : cachedSha256File, sha256Hex;
+
     string records;
-    foreach (relative; files.uniq.array)
-        records ~= relative ~ "\0" ~ sha256File(buildPath(directory, relative)) ~ "\n";
+    foreach (relative; contentFiles(directory, patterns))
+        records ~= relative ~ "\0" ~ cachedSha256File(buildPath(directory, relative)) ~ "\n";
     return sha256Hex(cast(const(ubyte)[]) records);
 }
 

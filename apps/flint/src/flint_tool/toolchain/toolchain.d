@@ -178,7 +178,7 @@ Toolchain inspect(const ref Home home, scope const(string)[] names, bool hash, s
 {
     import std.file : exists;
     import std.path : buildPath;
-    import flint_tool.support.files : sha256File;
+    import flint_tool.support.files : cachedSha256File;
 
     Toolchain toolchain;
     toolchain.directory = toolchainDirectory(home, overrideDirectory);
@@ -198,7 +198,7 @@ Toolchain inspect(const ref Home home, scope const(string)[] names, bool hash, s
             component.reported = versionLine(component.path);
             component.versionMatches = reportsVersion(component.reported, component.expected);
             if (hash)
-                component.sha256 = sha256File(component.path);
+                component.sha256 = cachedSha256File(component.path);
         }
         assign(toolchain, component);
     }
