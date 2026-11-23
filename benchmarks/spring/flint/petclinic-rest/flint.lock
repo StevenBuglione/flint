@@ -71,6 +71,13 @@ scope = "build"
 dependencies = ["flint:beans", "flint:boot-autoconfigure", "flint:boot-core", "flint:boot-sql", "flint:context", "flint:engine-aot", "flint:engine-jdbc", "flint:java", "flint:jdbc", "flint:tx"]
 
 [[package]]
+name = "flint:boot-security"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = ["flint:boot-autoconfigure", "flint:boot-core", "flint:boot-web-server", "flint:context", "flint:core", "flint:engine-aot", "flint:jakarta-servlet", "flint:security-config", "flint:security-core", "flint:security-crypto", "flint:security-web", "flint:slf4j-api"]
+
+[[package]]
 name = "flint:boot-sql"
 kind = "core"
 source = "workspace"
@@ -104,6 +111,13 @@ kind = "core"
 source = "workspace"
 scope = "build"
 dependencies = ["flint:boot-jackson", "flint:boot-starter"]
+
+[[package]]
+name = "flint:boot-starter-security"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = ["flint:boot-security", "flint:boot-starter"]
 
 [[package]]
 name = "flint:boot-starter-validation"
@@ -293,6 +307,34 @@ kind = "core"
 source = "workspace"
 scope = "build"
 dependencies = ["flint:arena", "flint:conc"]
+
+[[package]]
+name = "flint:security-config"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = ["flint:beans", "flint:context", "flint:core", "flint:engine-aot", "flint:jakarta-servlet", "flint:java", "flint:security-core", "flint:security-crypto", "flint:security-web"]
+
+[[package]]
+name = "flint:security-core"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = ["flint:beans", "flint:context", "flint:core", "flint:engine-aot", "flint:engine-reactor", "flint:java", "flint:jdbc", "flint:security-crypto"]
+
+[[package]]
+name = "flint:security-crypto"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = ["flint:conc", "flint:java"]
+
+[[package]]
+name = "flint:security-web"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = ["flint:engine-aot", "flint:jakarta-servlet", "flint:java", "flint:security-core"]
 
 [[package]]
 name = "flint:serde"

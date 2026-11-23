@@ -6,6 +6,8 @@ Modified by the Flint authors:
 - `BindingErrorsResponse`, which the validation handler fills but never writes, is omitted.
 - Flint's `HashMap` keeps insertion order, while Java's prints `field`, `defaultMessage`, `rejectedValue` for these
   three keys; the additional properties go in that order, so the body is the same.
+- `String.valueOf` of a rejected value is `valueOf`: a boxed `LocalDate` (the only non-scalar one the DTOs reject)
+  prints its ISO text, which `Any.toString` replaces by the type name.
 +/
 module org.springframework.samples.petclinic.rest.advice;
 
@@ -14,7 +16,8 @@ import flint.http : HttpStatus, ProblemDetail, ResponseEntity;
 import flint.jakarta.servlet.http : HttpServletRequest;
 import flint.java.lang : classOf;
 import flint.java.net : URI;
-import flint.java.time : Instant;
+import flint.engine.aot.any : Any;
+import flint.java.time : Instant, LocalDate;
 import flint.java.util : ArrayList, List;
 import flint.slf4j : Logger, LoggerFactory;
 import flint.web.bind : MethodArgumentNotValidException;
@@ -89,7 +92,7 @@ import org.springframework.samples.petclinic.rest.dto : ValidationMessageDto;
             foreach (fieldError; bindingResult.getFieldErrors())
             {
                 auto rejected = fieldError.getRejectedValue();
-                string rejectedValue = rejected.isNull ? "null" : rejected.toString();
+                string rejectedValue = valueOf(rejected);
                 string defaultMessage = fieldError.getDefaultMessage() is null
                     ? "Validation failed" : fieldError.getDefaultMessage();
                 string message = "Field '" ~ fieldError.getField() ~ "' " ~ defaultMessage
@@ -117,4 +120,14 @@ import org.springframework.samples.petclinic.rest.dto : ValidationMessageDto;
         const dot = name.lastIndexOf('.');
         return dot < 0 ? name : name[dot + 1 .. $];
     }
+}
+
+/// Java's `String.valueOf(Object)` for a rejected value: `"null"`, a `LocalDate`'s ISO text, or the value's text.
+private string valueOf(const Any value)
+{
+    if (value.isNull)
+        return "null";
+    if (value.holds!LocalDate)
+        return value.get!LocalDate.toString();
+    return value.toString();
 }

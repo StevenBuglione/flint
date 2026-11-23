@@ -36,19 +36,21 @@ models and interfaces, and the MapStruct implementations. Each module header lis
 ```
 
 Flint Boot reads `./resources` and `./config` from the working directory, so start the app from this directory.
-Until Boot resolves `${POSTGRES_URL}` from the environment, pass the datasource directly:
+Pass the datasource through the environment, as the `postgres` profile reads it:
 
 ```bash
-FLINT_DATASOURCE_URL=jdbc:postgresql://127.0.0.1:5432/petclinic FLINT_DATASOURCE_USERNAME=petclinic FLINT_DATASOURCE_PASSWORD=petclinic SERVER_PORT=9966 .flint/build/dev/petclinic-rest
+POSTGRES_URL=jdbc:postgresql://127.0.0.1:5432/petclinic POSTGRES_USER=petclinic POSTGRES_PASS=petclinic SERVER_PORT=9966 .flint/build/dev/petclinic-rest
 ```
 
 ## Status
 
-`spring_bench.py accept petclinic-rest`: 0 of 109 cases. Every case expects Spring Security's default response
-headers. Ignoring only those headers, 56 of 109 match. Open pieces:
+`spring_bench.py accept petclinic-rest`: 66 of 109 cases, with `DisableSecurityConfig` writing Spring Security's
+headers. Open pieces:
 
-- Security: `DisableSecurityConfig` needs Boot's `SecurityAutoConfiguration` to provide `HttpSecurity`.
-- Validation: the auto-configured validator has no AOT descriptors, and method validation is missing.
-- Top-level `List` response bodies have no descriptor.
-- A 204 with a body fails in the servlet engine.
-- The harness runs ports from the repository root.
+- Error responses: an `@ExceptionHandler`'s `ProblemDetail` goes out as `application/json`, not
+  `application/problem+json`, and without Tomcat's `Connection: close` (14 cases fail on only these two).
+- Flint AOT registers no descriptor for a data class's `List!X` and `Nullable!int` properties, so `PetDto.visits`,
+  `VetDto.specialties` and `UserDto.roles` cannot be read, and the DTOs' `Integer` fields stay `int`.
+- An `@ExceptionHandler` for a wrapping exception receives its cause (null after the cast), which crashes the app.
+- `NoResourceFoundException`, paths outside the context path, a 204 with a body, and method validation.
+- `BasicAuthenticationConfig` (`petclinic.security.enable=true`) is not ported.
