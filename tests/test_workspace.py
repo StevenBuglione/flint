@@ -147,3 +147,27 @@ class AppRepoTests(unittest.TestCase):
             violations, _ = workspace.edge_violations(root)
             self.assertEqual([message for _, _, message in violations],
                              ['app flint-mcp (flint) -> mcp (ai): flint may not depend on ai'])
+
+
+class ExtractionTests(unittest.TestCase):
+    def test_each_repo_takes_its_packages_boot_and_starters_and_its_apps(self):
+        import extract_repo
+
+        self.assertEqual(extract_repo.moving_paths('boot'), ['boot', 'starters'])
+        self.assertEqual(extract_repo.moving_paths('ai'), ['apps/flint-mcp', 'packages/ai', 'packages/mcp'])
+        self.assertEqual(extract_repo.moving_paths('data-jdbc'), ['packages/data'])
+        framework = extract_repo.moving_paths('framework')
+        self.assertIn('packages/security', framework)
+        self.assertNotIn('packages/arena', framework)
+        self.assertEqual(len(framework), len(workspace.packages_of('framework')))
+        self.assertEqual(extract_repo.moving_paths('batch'), [])
+
+    def test_the_workspace_root_recipe_joins_every_checkout_under_the_flint_name(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            recipe = workspace.dub_root(workspace.Workspace(), Path(temporary) / 'root').read_text()
+            self.assertIn('name "flint"\ntargetType "none"\n', recipe)
+            lines = [line for line in recipe.splitlines() if line.startswith('subPackage ')]
+            self.assertEqual(len(lines), len([n for n, (_, d) in workspace.package_repos().items()
+                                              if (ROOT / d / 'dub.sdl').is_file()]))
+            self.assertTrue(any(line.endswith('packages/web"') for line in lines))
+            self.assertTrue(any(line.endswith('starters/web"') for line in lines))

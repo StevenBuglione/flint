@@ -1,0 +1,96 @@
+#!/usr/bin/env python3
+"""Extract one repo of the split from a fresh clone of the monorepo, keeping history (plan section 7, step 5).
+
+    python3 tools/extract_repo.py framework --source git@github.com:flint-projects/flint.git --into /tmp/split
+
+It clones the monorepo afresh (never the working checkout), keeps the paths that move to the repo with
+`git filter-repo`, and commits the repo's root files: a `dub.sdl` named `flint` listing its subpackages (every
+repo keeps the `flint:*` names; a workspace joins them, see tools/workspace.py dub-root), the licence files, a
+README and a .gitignore. It never pushes: the extracted checkout is built and gated through a workspace first.
+"""
+import argparse
+import json
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / 'tools'))
+from workspace import package_repos, repo_policy  # noqa: E402
+
+
+def moving_paths(repo, root=ROOT):
+    """The monorepo paths that move to `repo`: its packages, Boot libraries, starters and applications."""
+    paths = [directory for _, (owner, directory) in sorted(package_repos(root).items()) if owner == repo]
+    apps = root / 'policy' / 'apps.json'
+    if apps.is_file():
+        paths += [meta['directory'] for meta in json.loads(apps.read_text())['apps'].values() if meta['repo'] == repo]
+    if repo == 'boot':
+        # boot/ and starters/ move whole: the bill of materials and anything else under them.
+        paths = ['boot', 'starters']
+    return sorted(set(paths))
+
+
+def run(command, cwd=None):
+    subprocess.run(command, cwd=cwd, check=True)
+
+
+def root_files(repo, checkout, root=ROOT):
+    meta = repo_policy(root)['repos'][repo]
+    subpackages = []
+    for name, (owner, directory) in sorted(package_repos(root).items()):
+        if owner == repo and (checkout / directory / 'dub.sdl').is_file():
+            subpackages.append('subPackage ' + json.dumps(directory))
+    (checkout / 'dub.sdl').write_text('\n'.join([
+        f'// {meta["github"]}: the {repo} repo of Flint. Its packages keep the flint:* names; build them in a',
+        '// workspace with the repos they depend on (python3 tools/workspace.py dub-root, in the flint repo).',
+        'name "flint"', 'description "Flint ' + repo + ' (' + meta['kind'] + ' repo)"', 'license "Apache-2.0"',
+        'targetType "none"', *subpackages]) + '\n')
+    for name in ('LICENSE', 'NOTICE'):
+        shutil.copyfile(root / name, checkout / name)
+    shutil.copyfile(root / '.gitignore', checkout / '.gitignore')
+    depends = ', '.join(f'`{d}`' for d in meta['may_depend_on']) or 'nothing'
+    (checkout / 'README.md').write_text(
+        f'# {meta["github"].split("/")[1]}\n\n'
+        f'The {repo} repo of [Flint](https://github.com/flint-projects/flint), a {meta["kind"]} repo. It was '
+        f'extracted from the Flint monorepo with its history (ADR-030; the ADR-023 amendment on platform modules).\n\n'
+        f'Its packages keep their `flint:*` names and resolve at this repo\'s platform version, which the flint '
+        f'repo\'s `platform.lock` pins. It may depend on {depends}.\n\n'
+        '## Building\n\n'
+        'Check out the repos it depends on and describe them in a `flint.workspace/1` file, then, from the flint '
+        'repo:\n\n```bash\npython3 tools/workspace.py dub-root --workspace workspace.json --output .flint/workspace\n'
+        'dub test flint:<package> --root=.flint/workspace\n'
+        f'python3 tools/gates.py --gate structural --workspace workspace.json --repo {repo}\n```\n')
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('repo', choices=sorted(repo_policy()['repos']))
+    parser.add_argument('--source', default='git@github.com:flint-projects/flint.git')
+    parser.add_argument('--commit', default='HEAD', help='the monorepo commit to extract')
+    parser.add_argument('--into', type=Path, required=True, help='directory for the fresh clone')
+    arguments = parser.parse_args()
+    paths = moving_paths(arguments.repo)
+    if not paths:
+        raise SystemExit(f'nothing moves to {arguments.repo}')
+    checkout = (arguments.into / ('flint-' + arguments.repo)).resolve()
+    if checkout.exists():
+        raise SystemExit(f'{checkout} exists; extraction starts from a fresh clone')
+    run(['git', 'clone', '--no-local', '--quiet', arguments.source, str(checkout)])
+    run(['git', 'checkout', '--quiet', '-B', 'main', arguments.commit], checkout)
+    source_commit = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=checkout, capture_output=True, text=True,
+                                   check=True).stdout.strip()
+    run(['git', 'filter-repo', '--force', '--refs', 'main', *sum((['--path', p] for p in paths), [])], checkout)
+    root_files(arguments.repo, checkout)
+    run(['git', 'add', '-A'], checkout)
+    run(['git', 'commit', '--quiet', '-m', f'Extract the {arguments.repo} repo from flint-projects/flint at '
+         f'{source_commit[:12]}\n\nKept with history: {", ".join(paths)}. Root files: dub.sdl (the flint '
+         f'namespace\'s subpackages of this repo), LICENSE, NOTICE, README.md and .gitignore.'], checkout)
+    print(json.dumps({'repo': arguments.repo, 'checkout': str(checkout), 'source_commit': source_commit,
+                      'paths': paths}))
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())
