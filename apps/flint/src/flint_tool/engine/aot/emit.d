@@ -257,8 +257,9 @@ private struct Emitter
             {
                 any = true;
                 const index = aggregate == 0 ? "" : ", " ~ aggregate.to!string;
-                text ~= indent ~ "    MergedAnnotation(" ~ literal(item.annotation.type) ~ ", Any.of(" ~ annotationLiteral(
-                        item.annotation) ~ "), " ~ item.distance.to!string ~ index ~ "),\n";
+                const value = annotationLiteral(item.annotation);
+                text ~= indent ~ "    MergedAnnotation(" ~ literal(
+                        item.annotation.type) ~ ", Any.of(" ~ value ~ "), " ~ item.distance.to!string ~ index ~ "),\n";
             }
         }
         if (!any)
@@ -646,7 +647,16 @@ private struct Emitter
         text ~= expressionFunctions(descriptor, id);
         if (descriptor.constants.length)
             text ~= enumFunction(descriptor, id);
-        text ~= "private Descriptor describe_" ~ id ~ "()\n{\n    auto descriptor = new Descriptor(" ~ literal(
+        return text ~ describeFunction(descriptor, id);
+    }
+
+    /// `describe_<id>`, which builds the descriptor.
+    string describeFunction(const ref DescriptorPlan descriptor, string id)
+    {
+        import std.conv : to;
+        import flint_tool.engine.aot.conditions : literal;
+
+        string text = "private Descriptor describe_" ~ id ~ "()\n{\n    auto descriptor = new Descriptor(" ~ literal(
                 descriptor.type) ~ ", TypeKind." ~ descriptor.kind ~ ");\n";
         if (descriptor.supertypes.length)
             text ~= "    descriptor.supertypes = " ~ stringArray(descriptor.supertypes) ~ ";\n";
