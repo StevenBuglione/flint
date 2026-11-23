@@ -179,6 +179,8 @@ Tomcat's error-page forward (`StandardHostValve`) is reproduced by the servlet b
 | `HttpHeadersTests` | 45 | 45 | 29 deferred on unported types: Charset lists, `InetSocketAddress`, `ETag`, `CacheControl`, `ContentDisposition`, `Locale`, `java.time`, Java collection views |
 | `ResponseEntityTests` | 22 | 22 | 3 deferred on `CacheControl` |
 | `ProblemDetailTests` | 1 | 1 | the Jackson round trip waits for flint.jackson.databind |
+| `UriComponentsBuilderTests` | 7 | 7 | the remaining 60 (opaque URIs, `fromHttpRequest`, forwarded headers, `cloneBuilder` variants, regex variables) are deferred to web slice 3 |
+| `UriUtilsTests` | 2 | 2 | none for encode/decode; `extractFileExtension` deferred |
 | gs-rest-service `GreetingControllerTests` | 2 | 2 | none (standalone MockMvc until Boot's `@AutoConfigureMockMvc`) |
 
 Flint's own tests cover the R15/D-15 adaptations, the exceptions' messages and backtrace-free throwing, and every gs-rest-service golden case MockMvc can observe.
@@ -192,6 +194,7 @@ Flint's own tests cover the R15/D-15 adaptations, the exceptions' messages and b
 | `DispatcherServlet`, `RequestMappingHandlerMapping`/`Adapter`, processors, exception resolvers, `WebMvcConfigurer`, `WebMvcConfigurationSupport` | in `packages/framework-webmvc` |
 | MockMvc (`flint.test.web.servlet.*`, `flint.mock.web`) | in `packages/framework-test` |
 | `api/framework/mapping.json` | 1,391 elements classified for the ported types: spring-web 14.1%, spring-webmvc 22.7%, jakarta-servlet 33.5%; a member is classified only when the D type declares it |
-| Next | the servlet bridge over `flint.engine.web` (after the rename), CORS (`flint.web.cors`), `UriComponentsBuilder`, `ResponseEntityExceptionHandler`, `@RequestBody` with Jackson reading |
+| `flint.web.util` | `UriComponentsBuilder`, `UriComponents`, `UriUtils` (R14: UTF-8 bytes, identical encoded output) |
+| Next | the servlet bridge over `flint.engine.web` (after the rename), CORS (`flint.web.cors`), `ResponseEntityExceptionHandler`, `@RequestBody` with Jackson reading |
 
 The packages are not yet in `policy/framework.json` or the root `dub.sdl`: their DUB names (`web`, `webmvc`) and module roots (`flint.web`, `flint.http`) are held by the engines until the rename, and `framework_layers` gives each module one root while spring-web needs two (`flint.http`, `flint.web`). Until then they build with path dependencies and `dub test` from each package directory.
