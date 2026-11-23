@@ -412,7 +412,8 @@
    "directory": "framework/context",
    "module": "flint.context",
    "also": [
-    "flint.stereotype"
+    "flint.stereotype",
+    "flint.validation"
    ],
    "repo": "framework",
    "licence": "Apache-2.0",
@@ -421,6 +422,7 @@
     "beans",
     "core",
     "engine-aot",
+    "jakarta-validation",
     "java"
    ],
    "bench": {

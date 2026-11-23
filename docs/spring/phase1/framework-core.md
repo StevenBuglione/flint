@@ -14,14 +14,14 @@ contract 1). Where it needs a rule the rulebook doesn't have yet, it proposes on
 | AOT contract section 4 (contract 2) | `flint:engine-aot` | `framework/engine-aot` | `flint.engine.aot.{any,descriptor,name,bean,condition,mapping,event,proxy,query,registry,objects}` |
 | spring-core | `flint:core` | `framework/core` | `flint.core`, `flint.core.annotation` (leaf), `flint.core.annotation.types`, `flint.core.convert`, `flint.core.convert.converter`, `flint.core.convert.support`, `flint.core.env`, `flint.core.io`, `flint.util` |
 | spring-beans | `flint:beans` | `framework/beans` | `flint.beans`, `flint.beans.factory`, `flint.beans.factory.annotation` (leaf), `flint.beans.factory.config`, `flint.beans.factory.support` |
-| spring-context | `flint:context` | `framework/context` | `flint.context`, `flint.context.annotation`, `flint.context.event`, `flint.context.support`, `flint.stereotype` (leaf) |
+| spring-context | `flint:context` | `framework/context` | `flint.context`, `flint.context.annotation`, `flint.context.event`, `flint.context.support`, `flint.stereotype` (leaf), `flint.validation`, `flint.validation.annotation` (leaf), `flint.validation.beanvalidation` |
 
 `@PostConstruct` and `@PreDestroy` are `flint.jakarta.annotation` (third-party-apis, `framework/jakarta-annotation`).
 
 Dependency edges: `engine-aot` depends on nothing; `java` on `engine-aot` and `serde` (Java's `Double.toString`
-rendering); `core` on `java` and `engine-aot`; `beans` on `core`; `context` on `beans`. In `policy/framework.json`,
+rendering); `core` on `java` and `engine-aot`; `beans` on `core`; `context` on `beans` and `jakarta-validation`. In `policy/framework.json`,
 `also` lists the further package roots a module owns: spring-core holds `flint.core`, `flint.util` and `flint.lang`,
-spring-context `flint.context` and `flint.stereotype`. engine-aot's entry carries `unsafe`, the one audited `sys`
+spring-context `flint.context`, `flint.stereotype` and `flint.validation`. engine-aot's entry carries `unsafe`, the one audited `sys`
 directory of the Spring layer; `tools/gates.py` applies the package `@trusted` rules there and nowhere else.
 
 ## The AOT runtime
@@ -149,6 +149,28 @@ annotation's module, as in Java, because applications import those types (`Annot
   SIGINT. `FactoryBean` and `@Bean` metadata on `BeanDefinition` (`getFactoryBeanName`) are not supported: generated
   code wires `@Bean` methods.
 
+### Validation
+
+`org.springframework.validation` is `flint.validation` in `flint:context`, as upstream ships it in spring-context.
+
+- **Errors.** `Errors` keeps Java's methods; its Java default methods are implemented once in `AbstractErrors` (R3),
+  which `AbstractBindingResult` and `SimpleErrors` extend. Values are `Any`; field types and `supports` take type
+  names (R4). `failOnError` and `validateObject` are `final` interface methods over the abstract ones.
+- **Property access.** `BeanPropertyBindingResult` and `SimpleErrors` read fields, including nested `a.b` paths,
+  through Flint AOT descriptors in a `DescriptorTable` (the context's table, or `descriptorOf!T` for the typed
+  constructors) instead of a `BeanWrapper`. An unknown property reads as `Any.init`.
+- **Message codes.** `DefaultMessageCodesResolver` is Spring's algorithm, including the gh-37642 limit of 8 stripped
+  keys. D enums cannot implement interfaces, so `Format` is passed to its own `setMessageCodeFormatter` overload and
+  `toDelimitedString` is on the resolver.
+- **Bean validation.** `SpringValidatorAdapter` maps each Jakarta `ConstraintViolation` to a `ViolationFieldError`
+  or `ViolationObjectError` with Spring's field, codes, arguments and rejected value. `LocalValidatorFactoryBean`
+  bootstraps from the provider registered with `Validation.registerProvider` (Flint has no `ServiceLoader`).
+  `setConfigurationInitializer` customizes that configuration, which is how Boot hands Hibernate Validator its
+  descriptor table without making `flint:context` depend on Hibernate. `OptionalValidatorFactoryBean` stays inactive
+  without a provider. Validation groups are not applied, because the Jakarta port validates the default group only.
+- `Validator.forInstanceOf` matches the type name, so it does not accept subtypes. `DataBinder`, method validation
+  and `MessageSource` rendering are deferred to Phase 2.
+
 ## Erased builders (contract 2)
 
 `Descriptor` carries erased builders that Boot's binder, Jackson and validation use: `enumValue(ordinal)`,
@@ -179,6 +201,10 @@ same fields for generated descriptors.
 | core.convert GenericConversionServiceTests | 67 | 35 | 32: `Class` tokens, primitives versus wrappers, reflection, unported converters |
 | core.convert DefaultConversionServiceTests | 157 | 37 | 120: converters not registered in Phase 1 (BigDecimal, time, Locale, UUID...), reflection |
 | core.io ClassPathResourceTests, ResourceTests | 58 | 20 | 38: class loaders, `UrlResource`, NIO, `InputStreamResource` |
+| validation.DefaultMessageCodesResolverTests | 14 | 14 | |
+| validation.ValidationUtilsTests | 9 | 9 | |
+| validation.ValidatorTests | 2 | 1 | 1: `supports` of a subclass needs the class hierarchy |
+| validation.beanvalidation SpringValidatorAdapterTests, ValidatorFactoryTests | 25 | 0 | 25: need Hibernate Validator and a `MessageSource`; the adapter is tested against a stub provider |
 
 Each test file lists its skipped Java tests and the reason. The beans and context test ports are in progress.
 
