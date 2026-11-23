@@ -94,19 +94,19 @@ int commandApiExtract(ref Session session, const ref ExtractCommand command)
 }
 
 /// `flint api fetch [PROJECT...]`.
-int commandApiFetch(ref Session session, const(string)[] projects, string cacheOverride)
+int commandApiFetch(ref Session session, const(string)[] projects, string cacheOverride, bool tests = false)
 {
     import std.process : environment;
-    import flint_tool.api.upstreams : Upstream, fetchUpstream, loadUpstreams, referenceCache;
+    import flint_tool.api.upstreams : Upstream, fetchUpstream, loadUpstreamTests, loadUpstreams, referenceCache;
     import flint_tool.commands.output : finish;
 
     Report report;
     FetchReport payload;
     string error;
-    auto upstreams = loadUpstreams(session.home.root, error);
+    auto upstreams = tests ? loadUpstreamTests(session.home.root, error) : loadUpstreams(session.home.root, error);
     if (error.length)
     {
-        report.error("FLINT-E1004", error, "restore api/upstreams.json in the Flint home");
+        report.error("FLINT-E1004", error, "restore the pins in the Flint home's api/ directory");
         return finish(session, report, payload);
     }
     payload.cache = cacheOverride.length ? cacheOverride : referenceCache(session.home.root);
@@ -114,7 +114,8 @@ int commandApiFetch(ref Session session, const(string)[] projects, string cacheO
     foreach (project; projects)
     {
         if (!known(upstreams, project))
-            report.error("FLINT-E0001", "`" ~ project ~ "` is not pinned in api/upstreams.json",
+            report.error("FLINT-E0001", "`" ~ project ~ "` is not pinned in api/" ~ (tests
+                    ? "upstream-tests.json" : "upstreams.json"),
                     "flint api fetch without arguments fetches every pinned project");
     }
     if (!report.ok)

@@ -476,6 +476,9 @@ struct ApiFetchArgs
     @Arg(0, "Pinned projects to fetch (default: all of api/upstreams.json)") string[] projects;
     /// Cache override.
     @Option("cache", 0, "Reference cache directory (default: <flint home>/.flint/cache/api)") string cache;
+    /// Test-source archives.
+    @Option("tests", 0, "Fetch the test-source archives of api/upstream-tests.json, into <project>-<version>-tests")
+    bool tests;
     /// JSON output.
     @Option("json", 0, "Emit flint.api-fetch/1 JSON on stdout") bool json;
 }

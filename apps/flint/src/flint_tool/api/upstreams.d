@@ -32,10 +32,13 @@ struct Upstream
     /// Root-relative prefixes `flint api extract` leaves out.
     string[] exclude;
 
-    /// Directory name in the cache: `<project>-<version>`.
+    /// Test-source archive (api/upstream-tests.json): cached apart, as `<project>-<version>-tests`.
+    bool tests;
+
+    /// Directory name in the cache: `<project>-<version>`, or `<project>-<version>-tests` for a test archive.
     string key() const
     {
-        return project ~ "-" ~ version_;
+        return project ~ "-" ~ version_ ~ (tests ? "-tests" : "");
     }
 }
 
@@ -85,6 +88,58 @@ bool parseUpstreams(string text, out Upstream[] upstreams, out string error)
         return false;
     }
     return true;
+}
+
+/// Parse `api/upstream-tests.json`: the pinned archives that carry the upstream test suites, for porting tests.
+bool parseUpstreamTests(string text, out Upstream[] archives, out string error)
+{
+    import std.json : JSONException, parseJSON;
+
+    try
+    {
+        auto root = parseJSON(text);
+        foreach (ref item; root["archives"].arrayNoRef)
+        {
+            Upstream archive;
+            archive.tests = true;
+            archive.project = item["project"].str;
+            archive.version_ = item["version"].str;
+            archive.matrix = "matrix" in item ? item["matrix"].str : archive.project;
+            archive.url = item["url"].str;
+            archive.sha256 = item["sha256"].str;
+            archive.format = item["format"].str;
+            if (archive.sha256.length != 64 || (archive.format != "tar.gz" && archive.format != "jar"))
+            {
+                error = archive.key ~ ": a test archive needs a 64-digit sha256 and format tar.gz or jar";
+                return false;
+            }
+            archives ~= archive;
+        }
+    }
+    catch (JSONException failure)
+    {
+        error = "malformed upstream tests: " ~ failure.msg;
+        return false;
+    }
+    return true;
+}
+
+/// Read the test-archive pins from the Flint home; empty with `error` when they cannot be read.
+Upstream[] loadUpstreamTests(string homeRoot, out string error)
+{
+    import std.file : exists, readText;
+    import std.path : buildPath;
+
+    const path = buildPath(homeRoot, "api", "upstream-tests.json");
+    if (!exists(path))
+    {
+        error = path ~ " is missing";
+        return null;
+    }
+    Upstream[] archives;
+    if (!parseUpstreamTests(readText(path), archives, error))
+        error = path ~ ": " ~ error;
+    return archives;
 }
 
 /// Read the pins from the Flint home; empty with `error` when they cannot be read.

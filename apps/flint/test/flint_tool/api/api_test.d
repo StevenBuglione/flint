@@ -676,3 +676,21 @@ unittest
         ~ " * Modified by the Flint authors.\n */\nmodule flint.jakarta.validation;\n";
     expect(checkHeader("f.d", header, upstreams, [apache], "Apache-2.0").length).toEqual(0);
 }
+
+@("test-source archives parse from api/upstream-tests.json and cache apart from the sources jars")
+unittest
+{
+    import std.array : replicate;
+    import flint_tool.api.upstreams : parseUpstreamTests;
+
+    Upstream[] archives;
+    string error;
+    expect(parseUpstreamTests(`{"schema":1,"archives":[{"project":"jackson-databind","version":"3.1.8",
+        "matrix":"jackson-databind","url":"u","sha256":"` ~ "a".replicate(64) ~ `","format":"tar.gz",
+        "tests":"src/test/java"}]}`, archives, error)).toEqual(true);
+    expect(error).toEqual("");
+    expect(archives[0].key).toEqual("jackson-databind-3.1.8-tests");
+    expect(archives[0].tests).toEqual(true);
+    expect(parseUpstreamTests(`{"archives":[{"project":"x","version":"1","url":"u","sha256":"short",
+        "format":"tar.gz"}]}`, archives, error)).toEqual(false);
+}

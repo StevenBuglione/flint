@@ -300,7 +300,7 @@ private int apiCommand(ref Session session, string name, ref ApiArgs args)
     switch (name)
     {
     case "flint api fetch":
-        return commandApiFetch(session, args.fetch.projects, args.fetch.cache);
+        return commandApiFetch(session, args.fetch.projects, args.fetch.cache, args.fetch.tests);
     case "flint api extract":
         const command = ExtractCommand(args.extract.source, args.extract.project, args.extract.tag,
                 args.extract.output, args.extract.excludes);
