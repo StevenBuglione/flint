@@ -303,6 +303,87 @@ class CompileServerPreludeTests(unittest.TestCase):
         self.assertEqual(self.sockets(), [])
 
 
+def server_dmd():
+    """The installed DMD fork when it has the compile server, else None."""
+    for host in ('linux', 'osx'):
+        dmd = ROOT / '.tools' / 'dmd2' / host / 'bin64' / 'dmd'
+        if dmd.is_file() and b'-fork-server=' in dmd.read_bytes():
+            return dmd
+    return None
+
+
+class CompileServerStatusTests(unittest.TestCase):
+    """A served request fails exactly as the same request in-process does: same exit status, same diagnostics. The
+    workers inherited the server's ignored SIGCHLD, so the driver's waitpid for the linker failed and a failed link
+    (shared library or executable) exited 0 without its output."""
+
+    def setUp(self):
+        self.dmd = server_dmd()
+        if self.dmd is None or sys.platform == 'win32':
+            self.skipTest('the installed DMD fork has no compile server')
+        self.temp = Path(tempfile.mkdtemp(prefix='flint-status-'))
+        self.addCleanup(shutil.rmtree, self.temp, True)
+        self.runtime = Path(tempfile.mkdtemp(prefix='fs-', dir='/tmp'))     # within macOS's sun_path
+        self.addCleanup(shutil.rmtree, self.runtime, True)
+        self.addCleanup(self.stop_servers)
+        (self.temp / 'bad.d').write_text('module bad;\nint x = ;\n', encoding='utf-8')
+        (self.temp / 'app.d').write_text('module app;\nvoid main() {}\n', encoding='utf-8')
+        (self.temp / 'lib.d').write_text('module lib;\nextern (C) int f() { return 1; }\n', encoding='utf-8')
+        self.trace = self.temp / 'trace.txt'
+        self.env = dict(os.environ, XDG_RUNTIME_DIR=str(self.runtime), FLINT_DMD_SERVER_IDLE='60',
+                        FLINT_DMD_SERVER_TRACE=str(self.trace))
+        for name in ('FLINT_DMD_SERVER', 'FLINT_DMD_SERVER_PRELUDE', 'DFLAGS'):
+            self.env.pop(name, None)
+
+    def stop_servers(self):
+        listing = subprocess.run(['ps', '-axo', 'pid=,command='], capture_output=True, text=True).stdout
+        for line in listing.splitlines():
+            pid, _, command = line.strip().partition(' ')
+            if str(self.runtime) in command and pid.isdigit():
+                try:
+                    os.kill(int(pid), 9)
+                except OSError:
+                    pass
+
+    def run_dmd(self, args, served):
+        env = dict(self.env) if served else dict(self.env, FLINT_DMD_SERVER='0')
+        return subprocess.run([str(self.dmd), *args], cwd=self.temp, env=env, capture_output=True, text=True,
+                              timeout=300)
+
+    def assert_same_failure(self, args, diagnostic):
+        local = self.run_dmd(args, served=False)
+        self.assertNotEqual(local.returncode, 0, local.stderr)
+        self.run_dmd(args, served=True)                         # starts the server, compiles in-process
+        for _ in range(600):
+            if list((self.runtime / 'flint-dmd').glob('*.sock')):
+                break
+            time.sleep(0.1)
+        before = self.trace.read_text().count('\n') if self.trace.exists() else 0
+        served = self.run_dmd(args, served=True)
+        verdicts = [line.split()[-1] for line in self.trace.read_text().splitlines()[before:]] if self.trace.exists() else []
+        self.assertIn('received', verdicts, 'the request was not served')     # a worker took it
+        self.assertEqual(served.returncode, local.returncode, served.stdout + served.stderr)
+        self.assertIn(diagnostic, served.stdout + served.stderr)
+        self.assertIn(diagnostic, local.stdout + local.stderr)
+
+    def test_a_failing_compile(self):
+        self.assert_same_failure(['-c', 'bad.d'], 'Error: expression expected')
+
+    def test_a_failing_link(self):
+        self.assert_same_failure(['app.d', '-L-lflint_no_such_library', '-ofapp'], 'linker exited with status')
+        self.assertFalse((self.temp / 'app').exists())
+
+    def test_a_failing_shared_library_link(self):
+        self.assert_same_failure(['-shared', 'lib.d', '-L-lflint_no_such_library', '-oflib.so'],
+                                 'linker exited with status')
+        self.assertFalse((self.temp / 'lib.so').exists())
+
+    def test_a_successful_link_is_served(self):
+        result = self.run_dmd(['app.d', '-ofapp'], served=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue((self.temp / 'app').exists())
+
+
 class InstallerArgumentTests(unittest.TestCase):
     def test_fork_requires_dmd(self):
         result = subprocess.run([sys.executable, str(ROOT / 'tools' / 'install_toolchains.py'), '--compiler', 'ldc',

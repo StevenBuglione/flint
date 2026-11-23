@@ -748,7 +748,7 @@ diff -ruN a/dmd/flintlink.d b/dmd/flintlink.d
 diff -ruN a/dmd/flintserver.d b/dmd/flintserver.d
 --- a/dmd/flintserver.d	1969-12-31 19:00:00.000000000 -0500
 +++ b/dmd/flintserver.d	2026-11-21 17:52:11.090753585 -0500
-@@ -0,0 +1,980 @@
+@@ -0,0 +1,984 @@
 +/**
 + * Resident toolchain compile server ("zygote") for the DMD driver.
 + *
@@ -1469,6 +1469,10 @@ diff -ruN a/dmd/flintserver.d b/dmd/flintserver.d
 +        const pid = fork();
 +        if (pid != 0)
 +            return;
++        // The server ignores SIGCHLD to reap its workers, and ignoring is inherited: with it, the driver's waitpid
++        // for the linker fails (ECHILD) and leaves the status 0, so a failed link reported success. A worker
++        // waits for its own children.
++        signal(SIGCHLD, SIG_DFL);
 +        close(notify[0]);
 +        int conn;
 +        do
