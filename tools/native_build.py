@@ -738,6 +738,11 @@ def retarget_dub(work_dir, target, recipes=None, host=None):
     if not (install/'flint-native-install.json').is_file():
         raise ValueError(f'{install} has no native install receipt: build {target} first'
                          + (' (python3 tools/native_musl.py)' if target.endswith('-musl') else ''))
+    recipes = native_recipes() if recipes is None else recipes
+    if not recipes:
+        # Nothing would point at the target: a package built now would link no native packages at all.
+        raise ValueError('no recipe holds a native DUB block to retarget: build and emit the host target first '
+                         '(tools/native_build.py --profile ci --target ' + host_target() + ' --phase build --emit-dub)')
     marker = work/RETARGET_MARKER
     host = host or host_target()
     if target != host:
@@ -745,7 +750,7 @@ def retarget_dub(work_dir, target, recipes=None, host=None):
     prefix = re.escape(str(work/'install')) + '/'
     paths = re.compile('(' + prefix + r')([A-Za-z0-9_.-]+)(/)')
     changed, missing = [], set()
-    for recipe in native_recipes() if recipes is None else recipes:
+    for recipe in recipes:
         text = recipe.read_text(encoding='utf-8')
         new = re.sub(r'\n// BEGIN FLINT NATIVE\n.*?// END FLINT NATIVE\n',
                      lambda block: paths.sub(lambda p: p.group(1) + target + p.group(3), block.group(0)), text,

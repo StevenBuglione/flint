@@ -56,6 +56,12 @@ class RetargetTests(unittest.TestCase):
         self.assertEqual(self.recipe.read_text(encoding='utf-8'), self.original)
         self.assertFalse((self.work / 'dub-target').exists())
 
+    def test_a_checkout_without_native_blocks_is_refused(self):
+        """A retarget that changes nothing would let a cross package link no native packages and still build."""
+        with self.assertRaisesRegex(ValueError, 'emit-dub'):
+            native_build.retarget_dub(self.work, MUSL, recipes=[], host=GLIBC)
+        self.assertFalse((self.work / 'dub-target').exists())
+
     def test_the_command_line_takes_retarget_dub(self):
         import subprocess
         done = subprocess.run([sys.executable, str(ROOT / 'tools/native_build.py'), '--help'], capture_output=True,

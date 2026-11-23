@@ -11,7 +11,7 @@ from conan.tools.files import download
 
 NAME = 'curl'
 DEPENDENCIES = ['openssl/3.5.9', 'nghttp2/1.71.0', 'zlib/1.4']
-BUILD_ENGINE_SHA256 = '612bf90277838d4e575940d39e67c1da851afc65df7884b535c2aee72bc62a49'
+BUILD_ENGINE_SHA256 = '022ebf1cfa9f36003ed37f4d58388182d2b30a8b1f1452f5d2765d9c5d9a2dde'
 TARGETS = ['linux-aarch64-glibc', 'linux-aarch64-musl', 'linux-x86_64-glibc', 'linux-x86_64-musl', 'macos-arm64', 'windows-x86_64']
 
 
