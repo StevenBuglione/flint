@@ -89,7 +89,7 @@ When your assigned work is done, don't stop.
 | 9 | Cutover decisions 1–7 in `tools/cutover.py` and the CLI | m7-flint-cli | `ce402cc`..`f228c76`. Linux and macOS rehearsals pass, except the known items 19 (golden-wasm-app) and 14 (gs-rest-service, in progress); the Windows report is pending |
 | 10 | spring-petclinic-rest (JDBC) Flint port passing its suite | data-access (`local_958a603d`) | |
 | 11 | Classification sweeps: lower the coverage baselines by classifying excluded and adapted elements in the Phase 1 checklists, with the module owners' agreement | api-coverage (`local_7afcbe30`) | |
-| 12 | SpEL subset compiled to D for `@Value("#{…}")`, `@Cacheable(key=…)` and `@PreAuthorize` | flint-aot | |
+| 12 | SpEL subset compiled to D for `@Value("#{…}")`, `@Cacheable(key=…)` and `@PreAuthorize` | flint-aot | b3ac47b, ed9f870, e171856 |
 | 13 | Port the upstream JUnit tests for spring-web and spring-webmvc classes already ported | macOS session (from size-levers) | |
 | 14 | Spring-style REST benchmark app (Flint) for `load_bench`'s Spring workload. Scope (proof-harness): the workload measures the side-by-side ports themselves, so this is the gs-rest-service and petclinic-rest Flint apps under `benchmarks/spring/flint/<app>/` with their `flint-spring.json` (build, cached, scratch, O3 and Oz commands), written against the framework as items 2, 3, 4 and 10 land; the framework and auto-configuration stay with their owners | proof-harness | |
 | 15 | Windows platform lane receipt (Gate 6) | Windows session | receipt at `3988927` (exit 0, 455 s, LDC; 37 of 37 packages, the negative fixtures and the betterC runs; `verified_receipt` passes against that commit) |
