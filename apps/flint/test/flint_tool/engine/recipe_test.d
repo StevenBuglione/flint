@@ -194,4 +194,18 @@ unittest
     expect(joined.canFind("subPackage \"../boot/module/flint-boot-webmvc\"\n")).toEqual(true);
     expect(joined.canFind("packages/test\"\n")).toEqual(true);
     expect(joined.canFind("packages/log\"\nsubPackage")).toEqual(true);
+
+    // A Spring-layer module named only by a unittest configuration (flint:framework-test) is found too.
+    import flint_tool.home.policy : CorePackage;
+
+    auto withFramework = fixtureHome();
+    CorePackage frameworkTest;
+    frameworkTest.name = "framework-test";
+    frameworkTest.directory = "framework/framework-test";
+    frameworkTest.framework = true;
+    withFramework.frameworkModules = [frameworkTest];
+    write(buildPath(webmvc, "dub.sdl"), "name \"boot-webmvc\"\nconfiguration \"unittest\" {\n"
+            ~ "    dependency \"flint:framework-test\" version=\"*\"\n}\n");
+    expect(renderJoinedRoot(withFramework, resolution, buildPath(work, "joined"))
+            .canFind("framework/framework-test\"\n")).toEqual(true);
 }

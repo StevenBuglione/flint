@@ -128,7 +128,11 @@ class StarterWebTests(unittest.TestCase):
                 self.assertEqual(got[0], status, path)
                 self.assertTrue(got[1].startswith(media), (path, got))
         finally:
-            process.send_signal(signal.SIGINT)
+            # Only stops the server; Windows has no SIGINT for a child (os.kill there is TerminateProcess).
+            if sys.platform == 'win32':
+                process.terminate()
+            else:
+                process.send_signal(signal.SIGINT)
             try:
                 process.wait(10)
             except subprocess.TimeoutExpired:

@@ -216,7 +216,7 @@ string renderJoinedRoot(const ref Home home, const ref Resolution resolution, st
             if ("flint:" ~ name in listed)
                 continue;
             listed["flint:" ~ name] = true;
-            const meta = home.find(name);
+            const meta = knownPackage(home, name);
             if (meta is null)
                 continue;
             const located = home.packagePath(meta.repo, meta.directory.length ? meta.directory : "packages/" ~ name);
@@ -230,6 +230,19 @@ string renderJoinedRoot(const ref Home home, const ref Resolution resolution, st
     foreach (path; resolved ~ extra)
         text ~= field("subPackage", recipePath(relativePath(absolutePath(path), absolutePath(directory))));
     return text;
+}
+
+/// A core package, starter, Boot library or Spring-layer module by name, or null.
+private const(imported!"flint_tool.home.policy".CorePackage)* knownPackage(const ref Home home, string name)
+{
+    auto found = home.find(name);
+    if (found is null)
+        found = home.findStarter(name);
+    if (found is null)
+        found = home.findBoot(name);
+    if (found is null)
+        found = home.findFramework(name);
+    return found;
 }
 
 /// The `flint:` packages a package's dub.sdl names, in any configuration.
