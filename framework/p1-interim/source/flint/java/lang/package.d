@@ -12,8 +12,10 @@ module flint.java.lang;
 class RuntimeException : Exception
 {
     /// Java's `(String message, Throwable cause)` constructor.
-    this(string message = null, Throwable cause = null, string file = __FILE__, size_t line = __LINE__)
-        pure nothrow @nogc
+    // dfmt off
+    this(string message = null, Throwable cause = null, string file = __FILE__, size_t line =
+            __LINE__) pure nothrow @nogc
+     // dfmt on
     {
         super(message, file, line, cause);
     }
@@ -35,8 +37,10 @@ class RuntimeException : Exception
 class IllegalArgumentException : RuntimeException
 {
     /// Java's constructors.
-    this(string message = null, Throwable cause = null, string file = __FILE__, size_t line = __LINE__)
-        pure nothrow @nogc
+    // dfmt off
+    this(string message = null, Throwable cause = null, string file = __FILE__, size_t line =
+            __LINE__) pure nothrow @nogc
+     // dfmt on
     {
         super(message, cause, file, line);
     }
@@ -46,8 +50,10 @@ class IllegalArgumentException : RuntimeException
 class IllegalStateException : RuntimeException
 {
     /// Java's constructors.
-    this(string message = null, Throwable cause = null, string file = __FILE__, size_t line = __LINE__)
-        pure nothrow @nogc
+    // dfmt off
+    this(string message = null, Throwable cause = null, string file = __FILE__, size_t line =
+            __LINE__) pure nothrow @nogc
+     // dfmt on
     {
         super(message, cause, file, line);
     }
@@ -57,8 +63,10 @@ class IllegalStateException : RuntimeException
 class UnsupportedOperationException : RuntimeException
 {
     /// Java's constructors.
-    this(string message = null, Throwable cause = null, string file = __FILE__, size_t line = __LINE__)
-        pure nothrow @nogc
+    // dfmt off
+    this(string message = null, Throwable cause = null, string file = __FILE__, size_t line =
+            __LINE__) pure nothrow @nogc
+     // dfmt on
     {
         super(message, cause, file, line);
     }
@@ -68,8 +76,10 @@ class UnsupportedOperationException : RuntimeException
 class NumberFormatException : IllegalArgumentException
 {
     /// Java's constructors.
-    this(string message = null, Throwable cause = null, string file = __FILE__, size_t line = __LINE__)
-        pure nothrow @nogc
+    // dfmt off
+    this(string message = null, Throwable cause = null, string file = __FILE__, size_t line =
+            __LINE__) pure nothrow @nogc
+     // dfmt on
     {
         super(message, cause, file, line);
     }
@@ -82,8 +92,10 @@ so test failures stay catchable and run cleanup.
 class AssertionError : Exception
 {
     ///
-    this(string message = null, Throwable cause = null, string file = __FILE__, size_t line = __LINE__)
-        pure nothrow @nogc
+    // dfmt off
+    this(string message = null, Throwable cause = null, string file = __FILE__, size_t line =
+            __LINE__) pure nothrow @nogc
+     // dfmt on
     {
         super(message, file, line, cause);
     }

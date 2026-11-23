@@ -152,9 +152,9 @@ struct SimpleConversion
     {
         switch (targetType)
         {
-        case "string", "bool", "byte", "ubyte", "short", "ushort", "int", "uint", "long", "ulong", "float",
-                "double", "char", "string[]", "int[]", "long[]":
-            return true;
+        case "string", "bool", "byte", "ubyte", "short", "ushort", "int", "uint", "long", "ulong",
+                "float", "double", "char", "string[]", "int[]", "long[]":
+                return true;
         default:
             return false;
         }
@@ -201,25 +201,26 @@ struct SimpleConversion
             case "string[]":
                 return Any.of(splitComma(value));
             case "int[]":
-            {
-                int[] result;
-                foreach (part; splitComma(value))
-                    result ~= part.strip.to!int;
-                return Any.of(result);
-            }
+                {
+                    int[] result;
+                    foreach (part; splitComma(value))
+                        result ~= part.strip.to!int;
+                    return Any.of(result);
+                }
             case "long[]":
-            {
-                long[] result;
-                foreach (part; splitComma(value))
-                    result ~= part.strip.to!long;
-                return Any.of(result);
-            }
+                {
+                    long[] result;
+                    foreach (part; splitComma(value))
+                        result ~= part.strip.to!long;
+                    return Any.of(result);
+                }
             default:
                 throw new ConversionFailedException("String", targetType, value, null);
             }
         }
         catch (ConvException e)
-            throw new ConversionFailedException("String", targetType, value, new imported!"flint.java.lang".NumberFormatException(forInput(value)));
+            throw new ConversionFailedException("String", targetType, value,
+                    new imported!"flint.java.lang".NumberFormatException(forInput(value)));
     }
 
     private static string forInput(string value) pure nothrow
@@ -269,8 +270,8 @@ class ConversionFailedException : NestedRuntimeException
     this(string sourceType, string targetType, string value, Throwable cause, string file = __FILE__,
             size_t line = __LINE__) pure nothrow
     {
-        super("Failed to convert from type [java.lang." ~ sourceType ~ "] to type [" ~ javaTypeName(targetType)
-                ~ "] for value [" ~ value ~ "]", cause, file, line);
+        super("Failed to convert from type [java.lang." ~ sourceType ~ "] to type [" ~ javaTypeName(
+                targetType) ~ "] for value [" ~ value ~ "]", cause, file, line);
         this.sourceType = sourceType;
         this.targetType = targetType;
         this.value = value;

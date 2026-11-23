@@ -289,9 +289,9 @@ class ObjectMapper
     {
         switch (name)
         {
-        case "bool", "byte", "ubyte", "short", "ushort", "int", "uint", "long", "ulong", "float", "double", "string",
-                "string[]", "int[]", "long[]":
-            return true;
+        case "bool", "byte", "ubyte", "short", "ushort", "int", "uint", "long", "ulong", "float",
+                "double", "string", "string[]", "int[]", "long[]":
+                return true;
         default:
             return false;
         }
@@ -370,13 +370,13 @@ class ObjectMapper
     {
         static foreach (T; imported!"std.meta".AliasSeq!(byte, short, int, long))
             if (value.holds!T)
-            {
+                {
                 generator.writeNumber(cast(long) value.get!T);
                 return true;
             }
         static foreach (T; imported!"std.meta".AliasSeq!(ubyte, ushort, uint, ulong))
             if (value.holds!T)
-            {
+                {
                 generator.writeNumber(cast(ulong) value.get!T);
                 return true;
             }

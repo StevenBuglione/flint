@@ -175,8 +175,8 @@ struct MimeType
         foreach (ch; token)
         {
             if (!isTokenChar(ch))
-                throw new IllegalArgumentException("Invalid token character '" ~ ch ~ "' in token \""
-                        ~ token.idup ~ "\"");
+                throw new IllegalArgumentException("Invalid token character '" ~ ch ~ "' in token \"" ~ token.idup
+                        ~ "\"");
         }
     }
 
@@ -277,7 +277,9 @@ struct MimeType
     }
 
     /// The charset parameter, or `null` (R5: a nullable value becomes a pointer).
+    // dfmt off
     const(Charset)* getCharset() const pure nothrow @nogc return
+    // dfmt on
     {
         return resolvedCharset == Charset.init ? null : &resolvedCharset;
     }
@@ -381,8 +383,8 @@ struct MimeType
     /// Java's `equals`: type and subtype ignoring case, and equal parameters (charsets compared as charsets).
     bool equals(const MimeType other) const pure nothrow @nogc
     {
-        return equalsIgnoreCase(mimeType, other.mimeType) && equalsIgnoreCase(mimeSubtype, other.mimeSubtype)
-            && parametersAreEqual(other);
+        return equalsIgnoreCase(mimeType, other.mimeType) && equalsIgnoreCase(mimeSubtype,
+                other.mimeSubtype) && parametersAreEqual(other);
     }
 
     bool opEquals(const MimeType other) const pure nothrow @nogc
@@ -435,9 +437,8 @@ struct MimeType
         int result = 0;
         foreach (ref entry; parameterList)
         {
-            const valueHash = equalsIgnoreCase(PARAM_CHARSET, entry.key)
-                ? (resolvedCharset == Charset.init ? 0 : javaHash(resolvedCharset.name()))
-                : javaHash(unquote(entry.value));
+            const valueHash = equalsIgnoreCase(PARAM_CHARSET, entry.key) ? (resolvedCharset == Charset.init
+                    ? 0 : javaHash(resolvedCharset.name())) : javaHash(unquote(entry.value));
             result += javaHash(toLowerAscii(entry.key)) ^ valueHash;
         }
         return result;
@@ -573,8 +574,9 @@ class InvalidMimeTypeException : IllegalArgumentException
     ///
     this(string mimeType, string message, string file = __FILE__, size_t line = __LINE__) pure nothrow
     {
-        super(message is null ? "Invalid mime type \"" ~ mimeType ~ "\""
-                : "Invalid mime type \"" ~ mimeType ~ "\": " ~ message, null, file, line);
+        super(message is null
+                ? "Invalid mime type \"" ~ mimeType ~ "\"" : "Invalid mime type \"" ~ mimeType ~ "\": " ~ message,
+                null, file, line);
         invalidMimeType = mimeType;
     }
 
@@ -729,8 +731,17 @@ private struct MimeTypeParser
 {
     private enum State : ubyte
     {
-        INITIAL, TYPE, SUBTYPE, PARAM_SEPARATOR, WHITESPACE, PARAM_NAME, PARAM_NAME_END, PARAM_VALUE_START,
-        PARAM_VALUE_TOKEN, PARAM_VALUE_QUOTED, PARAM_VALUE_ESCAPED
+        INITIAL,
+        TYPE,
+        SUBTYPE,
+        PARAM_SEPARATOR,
+        WHITESPACE,
+        PARAM_NAME,
+        PARAM_NAME_END,
+        PARAM_VALUE_START,
+        PARAM_VALUE_TOKEN,
+        PARAM_VALUE_QUOTED,
+        PARAM_VALUE_ESCAPED
     }
 
     string input;

@@ -24,11 +24,13 @@ struct Charset
 
     private static immutable Known[6] known = [
         Known("UTF-8", ["UTF8", "unicode-1-1-utf-8"]),
-        Known("US-ASCII", ["ASCII", "us", "ISO646-US", "iso-ir-6", "ANSI_X3.4-1968", "cp367", "csASCII"]),
-        Known("ISO-8859-1", ["ISO8859_1", "ISO8859-1", "latin1", "l1", "8859_1", "cp819", "csISOLatin1"]),
-        Known("UTF-16", ["UTF_16", "utf16", "unicode"]),
-        Known("UTF-16BE", ["UTF_16BE", "X-UTF-16BE"]),
-        Known("UTF-16LE", ["UTF_16LE", "X-UTF-16LE"]),
+        Known("US-ASCII", [
+            "ASCII", "us", "ISO646-US", "iso-ir-6", "ANSI_X3.4-1968", "cp367", "csASCII"
+        ]),
+        Known("ISO-8859-1", [
+            "ISO8859_1", "ISO8859-1", "latin1", "l1", "8859_1", "cp819", "csISOLatin1"
+        ]), Known("UTF-16", ["UTF_16", "utf16", "unicode"]),
+        Known("UTF-16BE", ["UTF_16BE", "X-UTF-16BE"]), Known("UTF-16LE", ["UTF_16LE", "X-UTF-16LE"]),
     ];
 
     /// The canonical name (`"UTF-8"`).

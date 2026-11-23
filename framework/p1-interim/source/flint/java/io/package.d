@@ -10,8 +10,10 @@ module flint.java.io;
 class IOException : Exception
 {
     ///
-    this(string message = null, Throwable cause = null, string file = __FILE__, size_t line = __LINE__)
-        pure nothrow @nogc
+    // dfmt off
+    this(string message = null, Throwable cause = null, string file = __FILE__, size_t line =
+            __LINE__) pure nothrow @nogc
+     // dfmt on
     {
         super(message, file, line, cause);
     }

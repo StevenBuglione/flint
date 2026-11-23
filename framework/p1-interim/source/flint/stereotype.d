@@ -17,19 +17,19 @@ struct Component
 /// `@Controller`.
 @Component struct Controller
 {
-    @AliasFor(annotation: classOfComponent) string value; ///
+    @AliasFor(annotation : classOfComponent) string value; ///
 }
 
 /// `@Service`.
 @Component struct Service
 {
-    @AliasFor(annotation: classOfComponent) string value; ///
+    @AliasFor(annotation : classOfComponent) string value; ///
 }
 
 /// `@Repository`.
 @Component struct Repository
 {
-    @AliasFor(annotation: classOfComponent) string value; ///
+    @AliasFor(annotation : classOfComponent) string value; ///
 }
 
 private enum classOfComponent = imported!"flint.core.annotation".ClassRef("flint.stereotype.Component");

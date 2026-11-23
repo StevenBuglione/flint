@@ -17,8 +17,8 @@ struct URI
     static URI create(string str) pure
     {
         foreach (c; str)
-            if (c == ' ' || c == '"' || c == '<' || c == '>' || c == '\\' || c == '^' || c == '`' || c == '{'
-                    || c == '|' || c == '}')
+            if (c == ' ' || c == '"' || c == '<' || c == '>' || c == '\\' || c == '^' || c == '`'
+                    || c == '{' || c == '|' || c == '}')
                 throw new IllegalArgumentException("Illegal character in URI: " ~ str);
         return URI(str);
     }
