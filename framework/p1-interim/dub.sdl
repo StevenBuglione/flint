@@ -1,8 +1,0 @@
-name "p1-interim"
-description "Interim stand-ins for framework-core's flint.java, flint.core, flint.util and flint.engine.aot names the web packages use. Deleted module by module as flint:java, flint:core and flint:engine-aot land."
-license "Apache-2.0"
-targetType "library"
-sourcePaths "source"
-importPaths "source"
-dflags "-preview=dip1000"
-dependency "engine-aot" path="../engine-aot"
