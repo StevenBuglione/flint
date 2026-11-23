@@ -71,7 +71,7 @@
   - primary, the platform cache against a std-primed `GOCACHE`: 6.72 (6.34–6.87), 1.066 s against 0.159 s;
   - secondary, `--no-platform-cache` against `go build -a`: 1.30 (1.29–1.32), 4.192 s against 3.232 s;
   - incremental: 3.99 (3.84–4.17), 0.632 s against 0.158 s;
-  - Oz binary size: 1.775, 11,778,984 bytes against 6,635,680.
+  - Oz binary size: 1.245, 8,259,192 bytes against 6,634,456, both stripped. The run recorded 1.775 because flint's artifact was unstripped; corrected in `correction.json` beside the evidence.
 
   ADR-030 says to take the fallback or redesign before Phase 2. The agreed fallback (a D collector) addresses p99 and RSS, not builds or size, so for these metrics only a redesign or an amended target remains, and that decision is the owner's.
   - **Levers that remain** (m7-flint-cli, 2026-11-23): flint-aot's template diet for the generated Jackson auto-configuration module, the 448 ms critical-path compile; splitting that module across compile jobs; and the dev link, through shared-object dev builds, which is the owner's call. The binary size is with size-levers. The compile-server preload of the platform modules is ruled out: dmd-arm64's prototype gained 13 ms once correct (9f1a1d8b).

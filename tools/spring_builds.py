@@ -10,12 +10,12 @@ and process-tree peak RSS sampled every millisecond), nine trials of:
   - `go_deps_cold_seconds`: as cold, but the cache is also primed with the comparator's third-party packages (the
     PostgreSQL or SQLite driver), the analogue of the native C libraries Flint's builds find prepared;
   - `go_scratch_seconds`: `go build -a` with an empty GOCACHE;
-  - `binary_bytes` of the stripped executable.
+  - `binary_bytes` of the executable after GNU strip (built with -s -w, so strip takes little).
 - **Flint, the port**, with the commands its `flint-spring.json` declares under `measure`:
   - `flint_cached_cold_seconds` and `flint_cached_incremental_seconds`: the development build with the platform
     cache (the pinned flint-framework and flint-boot analysis and archives, ADR-030 section 5);
   - `flint_scratch_seconds`: the same build with every module compiled from source and no platform cache;
-  - `O3` and `Oz` binary sizes.
+  - `O3` and `Oz` binary sizes after GNU strip (flint's artifacts keep their symbol tables), as for Go.
 - **Java, context only**: `mvn -o package` cold (no target/) and after a one-line edit, and the jar size; with
   --native-context, one Spring Boot native-image build with the pinned GraalVM, for its time and executable size.
 
@@ -110,7 +110,7 @@ def measure_go(name, trials, timed, logs, temporary, result):
                 row[key].append(observed['seconds'])
                 result['trials'].append(dict(observed, app=name, implementation='go', flavour=flavour, state=state,
                                              trial=trial, log=str(log.relative_to(logs.parent))))
-            sizes.add((work / 'comparator').stat().st_size)
+            sizes.add(stripped(work / 'comparator', temporary)['binary_bytes'])
             shutil.rmtree(work)
             shutil.rmtree(cache)
     if len(sizes) != 1:
@@ -174,10 +174,26 @@ def measure_flint(name, trials, timed, logs, temporary, result):
                 reported = subprocess.run(spec[profile]['command'], cwd=directory, env=env, capture_output=True,
                                           text=True)
                 binary = spring_bench.flint_artifact(reported.stdout, directory)
-            row[profile] = {'binary_bytes': binary.stat().st_size, 'sha256': spring_bench.sha256(binary)}
+            row[profile] = dict(stripped(binary, temporary), sha256=spring_bench.sha256(binary))
     finally:
         edit.write_bytes(original)
     return row
+
+
+def stripped(binary, temporary):
+    """Sizes compare stripped against stripped: a copy of the executable goes through the same GNU strip for Flint
+    and Go (flint's release and size artifacts keep their symbol tables; the Go comparator is built with
+    -ldflags=-s -w, and strip takes little more from it)."""
+    strip = shutil.which('strip')
+    if not strip:
+        raise RuntimeError('strip is required for size measurements')
+    copy = Path(temporary) / ('stripped-' + Path(binary).name)
+    shutil.copy2(binary, copy)
+    subprocess.run([strip, str(copy)], check=True)
+    version = subprocess.run([strip, '--version'], capture_output=True, text=True).stdout.splitlines()[0]
+    size = copy.stat().st_size
+    copy.unlink()
+    return {'binary_bytes': size, 'unstripped_bytes': Path(binary).stat().st_size, 'strip': version}
 
 
 def dev_linker(env):

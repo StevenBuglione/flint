@@ -1,0 +1,24 @@
+{
+  "schema": "flint.measure-correction/1",
+  "date": "2026-11-23",
+  "by": "proof-harness",
+  "corrects": "builds.json apps.gs-rest-service: the 'Oz binary size' verdict and flint.Oz.binary_bytes",
+  "reason": "spring_builds recorded flint's size artifact as built, with its symbol table, against the Go comparator built with -ldflags=-s -w. Sizes must compare stripped against stripped. Fixed in tools/spring_builds.py: both sides now go through the same GNU strip.",
+  "method": "The Oz executable this run measured, sha256 09597f0b4616dcb1..., still in the measurement checkout, and the Go comparator, each copied and stripped with GNU strip 2.42. Sizes are deterministic, so recomputing from the same binary is valid.",
+  "flint_oz": {
+    "sha256_prefix": "09597f0b4616dcb1",
+    "unstripped_bytes": 11778984,
+    "stripped_bytes": 8259192
+  },
+  "go": {
+    "ldflags_s_w_bytes": 6635680,
+    "stripped_bytes": 6634456
+  },
+  "oz_size_ratio": {
+    "recorded": 1.775,
+    "corrected": 1.245,
+    "target": 0.99,
+    "pass": false
+  },
+  "o3": "not correctable after the fact: the run's O3 executable was removed before its Oz build; the next run records it stripped"
+}
