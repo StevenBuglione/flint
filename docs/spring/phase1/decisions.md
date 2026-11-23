@@ -294,3 +294,9 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - Project files are always hashed on a cold build.
   - The build benchmark's description records this.
   - Context: gs-builds at `2018e5e5` (`65d17a19`) has the shared-object edit build at 0.758 of Go, primary 2.52 and secondary 1.06. m7-flint-cli's cold-path steps, all approved: the platform description in `FLINT_CACHE`, then no app-side `dub describe`; `bf7b7b97` already took the edit build's plan step to 0. flint-aot is asked to serve the app's AOT extraction from the platform prelude (about 65 ms on cold builds).
+- 2026-11-23, coordinator (supersedes the cold-trial entry at `f35a12b3`): proof-harness's `1235dc4b` is confirmed. Cached cold trials keep `digests.log` in `FLINT_CACHE`, with the port's entries pruned.
+  - **Why it holds:** the log already lives in `FLINT_CACHE`, and its retained entries cover only the toolchain, `flint` and the platform sources. That is platform cache state, inside ADR-030 section 5's definition ("platform cache vs std-primed GOCACHE"), so it is not a workload change.
+  - **Conditions before the primary gates:**
+    1. Every project-keyed entry is pruned or excluded for each cold trial, not only the log's port entries: AOT models and generated output (kept by project root since `7907be4e`), objects, and anything else the port owns. The harness fails a cold trial that gets a project-keyed hit. The `2018e5e5` primary (2.52) reused the port's AOT output ("23 from the shared cache, 0 extracted") and is optimistic. Its incremental and edit series are unaffected.
+    2. m7-flint-cli adds a test: an edited platform or toolchain file is re-hashed despite an unchanged size and a restored mtime (ctime and inode in the stat key).
+    3. Every run keeps publishing the non-gating "primary with the digest log cleared".
