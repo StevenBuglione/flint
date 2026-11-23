@@ -9,7 +9,7 @@ against the configured strategies.
 +/
 module flint_tool.engine.aot.fast;
 
-import flint_tool.engine.aot.plan : HandlerPlan;
+import flint_tool.engine.aot.plan : BeanPlan, FactoryKind, HandlerPlan, Plan;
 
 @safe:
 
@@ -32,7 +32,34 @@ private bool simpleMapping(const ref HandlerPlan handler) pure nothrow
         return false;
     if (!handler.responseBody || handler.status != 0 || handler.reason.length != 0)
         return false;
-    return handler.returnDescribed && handler.method.returns.name != "void";
+    return !crossOrigin(handler) && handler.returnDescribed && plainReturn(handler.method.returns.name);
+}
+
+// `@CrossOrigin` on the class (merged) or the method: CORS processing adds Vary fields (fast-path.md 4).
+private bool crossOrigin(const ref HandlerPlan handler) pure nothrow
+{
+    enum name = "flint.web.bind.annotation.CrossOrigin";
+    foreach (ref item; handler.typeAnnotations.items)
+        if (item.annotation.type == name)
+            return true;
+    foreach (ref annotation; handler.method.annotations)
+        if (annotation.type == name)
+            return true;
+    return false;
+}
+
+// A value @ResponseBody writes as it is: not void, and not a type with its own return value handler or status
+// (ResponseEntity, HttpEntity, HttpHeaders, ProblemDetail), nor Object or Any (fast-path.md 3.1).
+private bool plainReturn(string type) pure nothrow @nogc
+{
+    switch (type)
+    {
+    case "void", "object.Object", "flint.engine.aot.any.Any", "flint.http.ResponseEntity",
+            "flint.http.HttpEntity", "flint.http.HttpHeaders", "flint.http.ProblemDetail":
+            return false;
+    default:
+        return true;
+    }
 }
 
 // A path the request's raw bytes can be compared with: no pattern syntax, no escapes, no matrix parameters.
@@ -74,6 +101,60 @@ string fastHandler(const ref HandlerPlan handler, string id)
     }
     return text ~ "    result = Any.of((cast(" ~ handler.className ~ ") bean)." ~ handler.method.name
         ~ "(" ~ call ~ "));\n    return true;\n}\n\n";
+}
+
+/// The classes the fast path's beans need, probed for presence like the date customizer's.
+immutable string[] fastPathClasses = [
+    "flint.web.servlet.mvc.method.fast.FastPathConfigurer",
+    "flint.boot.web.server.WebServerFactoryCustomizer",
+    "flint.boot.web.server.engine.FlintServletWebServerFactory",
+];
+
+/// Whether the plan holds at least one handler `fastShape` accepts.
+bool hasFastHandler(const ref Plan plan) pure nothrow
+{
+    foreach (ref item; plan.modules)
+        foreach (ref handler; item.handlers)
+            if (fastShape(handler))
+                return true;
+    return false;
+}
+
+/++
+The two beans that make the fast path pay-for-use (fast-path.md, section 9): a `WebMvcConfigurer` that gives
+`WebMvcConfigurationSupport` its table, and a `WebServerFactoryCustomizer` that gives the servlet engine its offer.
+Nothing else references the table or the offer, so a build without these beans links neither.
++/
+BeanPlan[] fastPathBeans()
+{
+    enum configurer = "flint.web.servlet.mvc.method.fast.FastPathConfigurer";
+    enum customizer = "flint.boot.web.server.WebServerFactoryCustomizer";
+    enum factory = "flint.boot.web.server.engine.FlintServletWebServerFactory";
+    BeanPlan table;
+    table.name = "flintAotFastPathConfigurer";
+    table.type = configurer;
+    table.types = [configurer, "flint.web.servlet.config.annotation.WebMvcConfigurer"];
+    table.className = configurer;
+    table.factory = FactoryKind.expression;
+    table.expression = "new " ~ configurer ~ "()";
+    table.expressionModules = ["flint.web.servlet.mvc.method.fast"];
+    table.source = "Flint AOT: an endpoint qualifies for the fast path";
+    BeanPlan offer;
+    offer.name = "flintAotFastPathOffer";
+    offer.type = customizer;
+    offer.types = [customizer];
+    offer.className = customizer;
+    offer.factory = FactoryKind.expression;
+    offer.expression = "new class " ~ customizer ~ " {\n        void customize("
+        ~ "flint.boot.web.server.servlet.ConfigurableServletWebServerFactory factory) @safe\n        {\n"
+        ~ "            if (auto server = cast(" ~ factory ~ ") factory)\n"
+        ~ "                server.setFastOffer(&flint.engine.servlet.fast.serveFast);\n        }\n    }";
+    offer.expressionModules = [
+        "flint.boot.web.server", "flint.boot.web.server.engine", "flint.boot.web.server.servlet",
+        "flint.engine.servlet.fast"
+    ];
+    offer.source = table.source;
+    return [table, offer];
 }
 
 @("fastShape accepts gs-rest-service's greeting and refuses every other shape; fastHandler binds by literal")
@@ -123,6 +204,8 @@ unittest
     refuses((ref HandlerPlan h) { h.status = 201; });
     refuses((ref HandlerPlan h) { h.returnDescribed = false; });
     refuses((ref HandlerPlan h) { h.method.returns.name = "void"; });
+    refuses((ref HandlerPlan h) { h.method.returns.name = "flint.http.ResponseEntity"; });
+    refuses((ref HandlerPlan h) { h.method.returns.name = "flint.http.ProblemDetail"; });
     refuses((ref HandlerPlan h) { h.arguments[0].kind = "pathVariable"; });
     refuses((ref HandlerPlan h) { h.arguments[0].type = "int"; });
     refuses((ref HandlerPlan h) { h.arguments[0].validate = true; });

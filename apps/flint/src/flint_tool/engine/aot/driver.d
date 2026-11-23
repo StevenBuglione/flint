@@ -669,6 +669,7 @@ private bool generate(const ref AotRequest request, scope const SourceModule[] s
         model.annotationTypes[name] = type;
     AnalysisInput input;
     input.root = request.root;
+    input.fastPath = request.fastPath;
     input.autoConfigurations = autoConfigurations.dup;
     foreach (ref source; sources)
     {
