@@ -105,7 +105,14 @@ def spring_gate(directory):
                 'secondary': ratio(flint['flint_scratch_seconds'], go['go_scratch_seconds'], ceiling,
                                    f'build {app} secondary (scratch vs go build -a)', failures),
                 'incremental': ratio(flint['flint_cached_incremental_seconds'], go['go_std_incremental_seconds'], ceiling,
-                                     f'build {app} incremental', failures)}
+                                     f'build {app} incremental (dev profile as built)', failures)}
+            # Owner decision 2: edit builds also report the fully static build, as the secondary headline.
+            if 'flint_static_incremental_seconds' in flint:
+                report[f'build {app}']['incremental static'] = ratio(
+                    flint['flint_static_incremental_seconds'], go['go_std_incremental_seconds'], ceiling,
+                    f'build {app} incremental (fully static)', failures)
+            else:
+                failures.append(f'builds.json: {app} has no fully static edit build (measure.cached_static)')
             size = flint['Oz']['binary_bytes'] / go['binary_bytes']
             report[f'build {app}']['Oz size'] = size
             if size > budgets['binary_ratio_max']:

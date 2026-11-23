@@ -13,7 +13,10 @@ and process-tree peak RSS sampled every millisecond), nine trials of:
   - `binary_bytes` of the executable after GNU strip (built with -s -w, so strip takes little).
 - **Flint, the port**, with the commands its `flint-spring.json` declares under `measure`:
   - `flint_cached_cold_seconds` and `flint_cached_incremental_seconds`: the development build with the platform
-    cache (the pinned flint-framework and flint-boot analysis and archives, ADR-030 section 5);
+    cache (the pinned flint-framework and flint-boot analysis and archives, ADR-030 section 5), as built: the
+    primary edit-build headline (owner decision 2, decisions.md);
+  - `flint_static_cold_seconds` and `flint_static_incremental_seconds`: the same build linked fully static
+    (`measure.cached_static`), the secondary edit-build headline;
   - `flint_scratch_seconds`: the same build with every module compiled from source and no platform cache;
   - `O3` and `Oz` binary sizes after GNU strip (flint's artifacts keep their symbol tables), as for Go.
 - **Java, context only**: `mvn -o package` cold (no target/) and after a one-line edit, and the jar size; with
@@ -127,6 +130,12 @@ def measure_flint(name, trials, timed, logs, temporary, result):
     directory = ROOT / spring_bench.app_row(name)['flint']['directory']
     spec = json.loads((directory / 'flint-spring.json').read_text())['measure']
     row = {'flint_cached_cold_seconds': [], 'flint_cached_incremental_seconds': [], 'flint_scratch_seconds': []}
+    # Owner decision 2 (decisions.md, 2026-11-23): edit builds report the dev profile as built (shared-object linking
+    # of the platform cache) as the primary headline, and the same build linked fully static as the secondary. A
+    # port declares the static command as measure.cached_static.
+    flavours = ['cached', 'scratch'] + (['cached_static'] if spec.get('cached_static') else [])
+    if 'cached_static' in flavours:
+        row.update(flint_static_cold_seconds=[], flint_static_incremental_seconds=[])
     # A flint cache of this measurement's own (the platform archives and the digest log), primed by the first build.
     cache = temporary / f'{name}-flint-cache'
     env = dict(os.environ, FLINT_CACHE=str(cache))
@@ -149,16 +158,17 @@ def measure_flint(name, trials, timed, logs, temporary, result):
         row['dev_linker'] = dev_linker(env)
         row['flint_cache'] = {'platform_cache_primed': True, 'digest_log_cleared_before_cold_trials': True}
         for trial in range(trials):
-            for flavour in ('cached', 'scratch'):
+            for flavour in flavours:
                 clean()
-                states = ['cold', 'incremental'] if flavour == 'cached' else ['cold']
+                states = ['cold'] if flavour == 'scratch' else ['cold', 'incremental']
                 for state in states:
                     if state == 'incremental':
                         with edit.open('a', encoding='utf-8') as output:
                             output.write(f'\nenum flintMeasureEdit{trial} = {trial};\n')
                     log = logs / f'{name}-flint-{flavour}-{state}-{trial}.log'
                     observed = timed(spec[flavour], directory, env, log)
-                    key = 'flint_scratch_seconds' if flavour == 'scratch' else f'flint_cached_{state}_seconds'
+                    key = {'scratch': 'flint_scratch_seconds', 'cached': f'flint_cached_{state}_seconds',
+                           'cached_static': f'flint_static_{state}_seconds'}[flavour]
                     row[key].append(observed['seconds'])
                     result['trials'].append(dict(observed, app=name, implementation='flint', flavour=flavour,
                                                  state=state, trial=trial, log=str(log.relative_to(logs.parent))))
@@ -252,11 +262,16 @@ def verdicts(name, flint, go, ceiling):
     pairs = {
         'primary: platform cache vs std-primed GOCACHE': ('flint_cached_cold_seconds', 'go_std_cold_seconds', True),
         'secondary: from scratch vs go build -a': ('flint_scratch_seconds', 'go_scratch_seconds', True),
-        'incremental': ('flint_cached_incremental_seconds', 'go_std_incremental_seconds', True),
+        'incremental: dev profile as built': ('flint_cached_incremental_seconds', 'go_std_incremental_seconds', True),
+        'incremental: fully static': ('flint_static_incremental_seconds', 'go_std_incremental_seconds', True),
         'stricter: platform cache vs deps-primed GOCACHE': ('flint_cached_cold_seconds', 'go_deps_cold_seconds', False),
     }
     out = {}
     for label, (mine, theirs, gating) in pairs.items():
+        if mine not in flint:
+            out[label] = {'gating': gating, 'pass': False,
+                          'note': 'not measured: the port declares no measure.cached_static command'}
+            continue
         median, lower, upper = median_ratio_interval(flint[mine], go[theirs])
         out[label] = {'median_ratio': median, 'lower_99': lower, 'upper_99': upper, 'gating': gating,
                       'pass': median <= ceiling and upper <= ceiling}

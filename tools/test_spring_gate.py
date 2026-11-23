@@ -27,7 +27,8 @@ class SpringGate(unittest.TestCase):
         go = {'go_std_cold_seconds': series(1.0), 'go_scratch_seconds': series(10.0),
               'go_std_incremental_seconds': series(0.5), 'binary_bytes': 1000}
         flint = {'flint_cached_cold_seconds': series(flint_factor), 'flint_scratch_seconds': series(10 * flint_factor),
-                 'flint_cached_incremental_seconds': series(0.5 * flint_factor), 'Oz': {'binary_bytes': 500}}
+                 'flint_cached_incremental_seconds': series(0.5 * flint_factor),
+                 'flint_static_incremental_seconds': series(0.5 * flint_factor), 'Oz': {'binary_bytes': 500}}
         (directory / 'builds.json').write_text(json.dumps({
             'mode': mode, 'status': 'passed', 'trials_per_series': 9, 'comparators': registered,
             'apps': {'gs-rest-service': {'go': go, 'flint': flint}}}))
