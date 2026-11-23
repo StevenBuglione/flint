@@ -210,6 +210,17 @@ One change applies to every package: `Thread` is imported from `core.thread.osth
 
 Where Windows semantics differ, this is what Flint does:
 
+- **The reactor (`flint.reactor`).**
+  - Windows has one backend, the I/O completion port (`Backend.iocp`). It runs through the same completion path as io_uring.
+  - Accepts use `AcceptEx` on worker 0, and reads and writes use overlapped `WSARecv` and `WSASend` into the worker's stable slots.
+  - Cancellation is `CancelIoEx`, and storage is released only when the original packet is dequeued.
+  - Completion tokens use the operation table's encoding (the generation above 13 slot bits). The first draft of `sys/windows.d` assumed a 32-bit slot field and refused every read and write.
+  - `GetQueuedCompletionStatus` rounds its timeout to the system timer tick, 15.6 ms by default. While a completion port is open, the process asks for 1 ms ticks with `timeBeginPeriod`, loaded from winmm at run time. Since Windows 10 2004 the request affects only this process.
+  - Accepted sockets get `TCP_NODELAY`, as on Linux and macOS.
+  - Native descriptor watches stay Linux and macOS only (`Status.unsupported`).
+  - Tests that asked for "the readiness backend" use IOCP on Windows. The cancellation race, the backpressured write drain, the foreign-worker close and the `TCP_NODELAY` check now run there, on DMD and LDC. Descriptor exhaustion has no Windows counterpart to `RLIMIT_NOFILE` and stays POSIX.
+  - With a completion port, an OVERLAPPED's status is written only when its packet is dequeued. The low-level test of "a read completed before `CancelIoEx`" therefore waits for the loopback receive instead of observing it.
+
 - **Child processes (`flint.os`).** The supervisor and output pump stay unchanged. They wait on small integer descriptors, which on Windows name slots in a static table: an overlapped named-pipe reader with its own buffer, a process handle, or a manual-reset event.
   - Output pipes are named pipes, because anonymous pipes cannot be waited on. Each reader keeps one overlapped read outstanding. A read is cancelled with `CancelIoEx`, and its final completion is observed before the buffer and `OVERLAPPED` are released.
   - A child starts suspended with `CreateProcessW`, joins its own job object, the counterpart of the owned process group, and then resumes. The job kills every member when its last handle closes, and lets a deliberate daemon started with `CREATE_BREAKAWAY_FROM_JOB` leave, as `setsid` leaves a group.
@@ -272,7 +283,7 @@ Two details of the MSVC build of Flint's C shims (`native/ffi`):
 Next, in ADR-025's order:
 
 - the remaining cold-build levers of ADR-025 section 4a, with a breakdown after each: the warm worker pool and its template-instance ownership, parallel jobs, DMD's CodeView emission, process creation and a cached link command;
-- the IOCP reactor backend, then the packages above the reactor;
+- the packages above the reactor (the IOCP backend is done);
 - the remaining native providers under MSVC hardening (`/guard:cf`, `/GS`, `/sdl`, and `/W4 /WX` for Flint's own C);
 - the `windows-x86_64` platform lane for Gate 6.
 
@@ -291,5 +302,6 @@ The Linux and macOS behaviour of every changed module is unchanged by constructi
 - `flint build` and `flint test` for a project, since flint's DUB environment now skips `PATH` through a host check (identical on Linux);
 - `flint test --project apps/flint` and a project build with `[profile.dev] debug = false`, since the manifest parser and the flag composition gained that key (a manifest without it builds exactly as before);
 - `tools/native_build.py` with `ctest`, since `native/ffi/CMakeLists.txt` and `flint_codec_core.c` changed (both only under MSVC conditions);
+- `dub test :reactor` on both compilers, since the accepted-socket `TCP_NODELAY` call and its test probe lost their POSIX guards and `accept_exhaustion.d` moved its watchdog out of the POSIX block (behaviour on Linux and macOS is unchanged);
 - `flint toolchain install --plan`, `flint toolchain verify` and `tools/install_toolchains.py --compiler flint`, since `tools/install_toolchains.py` and the toolchain modules changed.
 - one full `tools/measure_builds.py` run on the performance runner, to confirm unchanged output: the timing function now dispatches on the platform, the page size is read only where `os.sysconf` exists, and the native receipt path comes from `host_native_target()` (still `linux-x86_64-glibc` there);
