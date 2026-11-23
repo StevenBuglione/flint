@@ -174,7 +174,7 @@ private string dependencyLine(const ref Home home, const ref Resolution resoluti
         return null;
     string path;
     if (item.kind == "core")
-        path = recipePath(home.root);
+        path = recipePath(item.repoRoot.length ? item.repoRoot : home.root);
     else if (generatedRecipe(item.kind))
         path = siblings ~ dubName(name);
     else

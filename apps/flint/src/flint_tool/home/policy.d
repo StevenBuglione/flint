@@ -49,6 +49,19 @@ struct RepoPolicy
     string[] mayDependOn;
 }
 
+/// One repo as platform.lock pins it (ADR-023 amendment): a platform module.
+struct PlatformRepo
+{
+    /// Short name: flint, framework, boot, ...
+    string name;
+    /// "monorepo" before the split: every repo is this checkout.
+    string source;
+    /// The pinned commit after the split.
+    string commit;
+    /// The pinned tag after the split.
+    string tag;
+}
+
 /// A dependency that crosses repos the wrong way while the coordinator decides it.
 struct PendingEdge
 {
@@ -148,6 +161,38 @@ struct Home
     RepoPolicy[] repos;
     /// ditto
     PendingEdge[] pendingEdges;
+    /// Every repo's platform version (platform.lock).
+    PlatformRepo[] platformRepos;
+    /// Checkouts by repo from `FLINT_WORKSPACE` (a flint.workspace/1 file), overriding platform.lock.
+    string[string] workspaceCheckouts;
+
+    /// The checkout that holds `repo`'s packages: this home before the split (or with no platform.lock), the
+    /// `FLINT_WORKSPACE` checkout when one is named, else the platform module's pinned checkout under
+    /// `.flint/platform/<repo>-<commit>`.
+    string repoRoot(string repo) const
+    {
+        import std.path : buildPath;
+
+        if (auto checkout = repo in workspaceCheckouts)
+            return *checkout;
+        foreach (ref entry; platformRepos)
+        {
+            if (entry.name == repo && entry.source != "monorepo" && entry.commit.length)
+                return buildPath(root, ".flint", "platform", repo ~ "-" ~ entry.commit);
+        }
+        return root;
+    }
+
+    /// `repo@version`: the platform version a repo's packages resolve at (its tag, commit, or `monorepo`).
+    string platformVersion(string repo) const
+    {
+        foreach (ref entry; platformRepos)
+        {
+            if (entry.name == repo)
+                return repo ~ "@" ~ (entry.tag.length ? entry.tag : entry.commit.length ? entry.commit : entry.source);
+        }
+        return repo ~ "@monorepo";
+    }
     /// Safety rules.
     SafetyPolicy safety;
     /// Pinned tool versions by name.
@@ -314,6 +359,7 @@ bool loadHome(string root, out Home home, ref Report report)
     bool ok = loadPackages(home, report);
     ok = loadStarters(home, report) && ok;
     ok = loadRepos(home, report) && ok;
+    ok = loadPlatformModules(home, report) && ok;
     ok = loadSafety(home, report) && ok;
     ok = loadVersions(home, report) && ok;
     ok = loadProfiles(home, report) && ok;
@@ -421,6 +467,57 @@ private struct BootRecordJson
     string summary;
     string[] autoconfiguration;
     string repo;
+}
+
+private struct PlatformRepoJson
+{
+    string source;
+    string commit;
+    string tag;
+}
+
+// platform.lock: every repo's platform version; FLINT_WORKSPACE names checkouts that override it.
+private bool loadPlatformModules(ref Home home, ref Report report)
+{
+    import std.file : exists;
+    import std.path : absolutePath, buildNormalizedPath, buildPath, dirName, isAbsolute;
+    import std.process : environment;
+    import flint_tool.support.files : readIfPresent;
+
+    if (exists(buildPath(home.root, "platform.lock")))
+    {
+        const text = policyText(home, "platform.lock", report);
+        string failure;
+        foreach (entry; objectMembers(member(objectMembers(text, failure), "repos"), failure))
+        {
+            auto decoded = deserialize!PlatformRepoJson(entry.value, lenient());
+            if (!decoded.ok)
+                return invalid(report, "platform.lock", entry.name ~ ": " ~ decoded.error.message);
+            home.platformRepos ~= PlatformRepo(entry.name, decoded.value.source,
+                    decoded.value.commit, decoded.value.tag);
+        }
+        if (failure.length)
+            return invalid(report, "platform.lock", failure);
+    }
+    const workspace = environment.get("FLINT_WORKSPACE", "");
+    if (workspace.length == 0)
+        return true;
+    const text = readIfPresent(workspace);
+    string failure;
+    foreach (entry; objectMembers(member(objectMembers(text, failure), "checkouts"), failure))
+    {
+        const path = unquoteValue(member(objectMembers(entry.value, failure), "path"));
+        home.workspaceCheckouts[entry.name] = buildNormalizedPath(isAbsolute(path) ? path
+                : buildPath(dirName(absolutePath(workspace)), path));
+    }
+    if (failure.length || text is null)
+        return invalid(report, "FLINT_WORKSPACE " ~ workspace, failure.length ? failure : "is unreadable");
+    return true;
+}
+
+private string unquoteValue(string json)
+{
+    return json.length >= 2 && json[0] == '"' ? json[1 .. $ - 1] : json;
 }
 
 private struct RepoRecordJson

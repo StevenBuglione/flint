@@ -1,0 +1,30 @@
+{
+  "schema": "flint.platform/1",
+  "note": "Pins every Flint repo (ADR-023 amendment, plan section 7). Before the split every repo is this checkout (\"source\": \"monorepo\"); afterwards each entry gains \"commit\" and \"tag\", and flint resolves a repo's packages, Boot libraries and starters from that platform version.",
+  "repos": {
+    "flint": {
+      "github": "StevenBuglione/flint",
+      "source": "monorepo"
+    },
+    "framework": {
+      "github": "StevenBuglione/flint-framework",
+      "source": "monorepo"
+    },
+    "security": {
+      "github": "StevenBuglione/flint-security",
+      "source": "monorepo"
+    },
+    "data-jdbc": {
+      "github": "StevenBuglione/flint-data-jdbc",
+      "source": "monorepo"
+    },
+    "boot": {
+      "github": "StevenBuglione/flint-boot",
+      "source": "monorepo"
+    },
+    "ai": {
+      "github": "StevenBuglione/flint-ai",
+      "source": "monorepo"
+    }
+  }
+}

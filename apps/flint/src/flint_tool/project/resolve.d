@@ -46,6 +46,11 @@ struct ResolvedPackage
     /// Native packages it needs, as name@version: a path or repository dependency's `[native]`, or the recipes an
     /// indexed DUB package's entry names.
     string[] nativeRecipes;
+    /// For core packages, Boot libraries and starters: the checkout of their platform module, whose root
+    /// dub.sdl lists them (ADR-023 amendment), and its version, `repo@version`.
+    string repoRoot;
+    /// ditto
+    string platform;
 }
 
 /// The resolved graph of one project.
@@ -296,7 +301,9 @@ private ResolvedPackage corePackage(const ref Home home, string name, bool works
     item.name = "flint:" ~ name;
     item.kind = "core";
     item.source = workspace ? "workspace" : "flint-home";
-    item.directory = buildPath(home.root, "packages", name);
+    item.repoRoot = home.repoRoot(meta.repo);
+    item.platform = home.platformVersion(meta.repo);
+    item.directory = buildPath(item.repoRoot, "packages", name);
     item.moduleRoot = meta.module_;
     foreach (dependency; meta.dependencies)
         item.dependencies ~= "flint:" ~ dependency;
@@ -316,7 +323,10 @@ private ResolvedPackage starterPackage(const ref Home home,
     item.name = "flint:" ~ meta.name;
     item.kind = "core";
     item.source = workspace ? "workspace" : "flint-home";
-    item.directory = buildPath(home.root, meta.directory);
+    // Boot libraries and starters resolve from the boot platform module, never by version selection.
+    item.repoRoot = home.repoRoot(meta.repo);
+    item.platform = home.platformVersion(meta.repo);
+    item.directory = buildPath(item.repoRoot, meta.directory);
     item.moduleRoot = meta.module_;
     foreach (dependency; meta.dependencies)
         item.dependencies ~= "flint:" ~ dependency;

@@ -52,6 +52,9 @@ string renderLock(const ref Home home, const ref Manifest manifest, const ref Re
         text ~= "\n[[package]]\n" ~ pair("name", item.name) ~ pair("kind", item.kind);
         if (item.source.length)
             text ~= pair("source", item.source);
+        // Outside the workspace a Flint package resolves at its repo's platform version (ADR-023 amendment).
+        if (item.platform.length && !resolution.workspace)
+            text ~= pair("platform", item.platform);
         if (item.declaredPath.length)
             text ~= pair("path", item.declaredPath);
         if (item.version_.length)

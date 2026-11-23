@@ -76,3 +76,38 @@ class WorkspaceTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class PlatformModuleTests(unittest.TestCase):
+    def test_platform_lock_covers_every_repo_and_the_bill_of_materials_is_current(self):
+        import platform_modules as module
+        self.assertEqual(module.problems(), [])
+        bom = json.loads((ROOT / 'boot/dependencies/flint-dependencies.json').read_text())
+        self.assertEqual(bom['artifacts']['flint:starter-web'], {'repo': 'boot', 'version': 'monorepo'})
+        self.assertEqual(bom['artifacts']['flint:arena'], {'repo': 'flint', 'version': 'monorepo'})
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            for name in ('policy', 'boot/dependencies'):
+                (root / name).mkdir(parents=True)
+            for name in ('packages.json', 'boot.json', 'repos.json', 'platform.toml'):
+                (root / 'policy' / name).write_text((ROOT / 'policy' / name).read_text())
+            (root / 'platform.lock').write_text((ROOT / 'platform.lock').read_text())
+            stale = dict(bom, artifacts=dict(bom['artifacts']))
+            del stale['artifacts']['flint:web']
+            (root / 'boot/dependencies/flint-dependencies.json').write_text(json.dumps(stale))
+            self.assertEqual(module.problems(root), ['boot/dependencies/flint-dependencies.json is stale: run '
+                                                     'python3 tools/platform_modules.py --write'])
+
+    def test_a_project_outside_the_checkout_locks_each_package_at_its_platform_version(self):
+        flint = ROOT / '.flint/bin/flint'
+        with tempfile.TemporaryDirectory(prefix='flint-platform-') as temporary:
+            created = subprocess.run([str(flint), 'new', 'shop'], cwd=temporary, capture_output=True, text=True)
+            self.assertEqual(created.returncode, 0, created.stderr)
+            project = Path(temporary) / 'shop'
+            added = subprocess.run([str(flint), 'add', 'web'], cwd=project, capture_output=True, text=True)
+            self.assertEqual(added.returncode, 0, added.stderr)
+            lock = (project / 'flint.lock').read_text()
+            self.assertIn('name = "flint:starter-web"\nkind = "core"\nsource = "flint-home"\nplatform = "boot@monorepo"',
+                          lock)
+            self.assertIn('name = "flint:arena"\nkind = "core"\nsource = "flint-home"\nplatform = "flint@monorepo"',
+                          lock)
