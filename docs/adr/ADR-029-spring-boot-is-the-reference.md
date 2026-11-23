@@ -101,7 +101,7 @@ Configuration keys follow Spring Boot's, with `flint.` where Spring uses `spring
 - `logging.level.<package>`, `logging.pattern.*`;
 - `management.endpoints.web.exposure.include`, `management.server.port`.
 
-Relaxed binding works as in Spring: `server.port`, `SERVER_PORT` and `--server.port=8081` all address the same key. The configuration file format is decided separately in section 6.
+Relaxed binding works as in Spring: `server.port`, `SERVER_PORT` and `--server.port=8081` all address the same key. The file format is `application.yaml` (section 6).
 
 ### 5. Required deviations
 
@@ -114,14 +114,14 @@ Each deviation exists because D or Flint's performance contract requires it:
 
 ### 6. The configuration file format
 
-**Open: the project owner decides.** The proposal is **`application.yaml`**, with Spring Boot's shape and keys, because that is what a Spring developer expects to open. It holds the base configuration, `application-<profile>.yaml` holds the profile overrides, and `---` documents with `flint.config.activate.on-profile` act as Spring's multi-document files.
+Decided by the project owner on 2026-11-22: **`application.yaml`**, with Spring Boot's shape and keys. It is what a Spring developer expects to open, and the format coding agents write most reliably for Spring-style configuration. It holds the base configuration, `application-<profile>.yaml` holds the profile overrides, and `---` documents with `flint.config.activate.on-profile` act as Spring's multi-document files.
 
 ADR-021 rejected YAML because of its implicit typing. That risk is contained here:
 - the parser follows the YAML 1.2 core schema, so only `true` and `false` are booleans; `no` is a string;
 - every value binds to a declared field type, so a mismatch is a located compile-time or start-up error;
 - anchors, tags and multi-line scalar tricks are rejected, with a diagnostic naming the construct.
 
-If it is adopted, TOML (`application.toml`) stays readable for existing projects, with the same keys. `flint new` and the generators write YAML, and `flint config migrate` converts TOML to YAML. If it is not, `application.toml` stays canonical with the Spring keys of section 4.
+TOML (`application.toml`) stays readable for existing projects, with the same keys. Having both base files is an error, as `flint.config` already rules for TOML and JSON. `flint new` and the generators write YAML, and `flint config migrate` converts TOML to YAML. `flint` generates a JSON Schema from the bound `@ConfigurationProperties` types, so editors complete and validate keys, as Spring's configuration metadata does.
 
 ### 7. What developers see
 

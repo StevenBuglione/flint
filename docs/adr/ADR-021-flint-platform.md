@@ -112,10 +112,10 @@ default = ["linux-x86_64-musl"]
 
 ### Configuration
 
-Configuration has exactly one shape: `config/application.toml` plus `application-<profile>.toml`, bound to typed `@ConfigurationProperties` structs through `flint.config`.
+Configuration has exactly one shape: `config/application.yaml` plus `application-<profile>.yaml` (ADR-029), bound to typed `@ConfigurationProperties` structs through `flint.config`.
 
 - The precedence and profile rules are the existing `flint.config` specification: base file, then profile file, then `.env`, then environment, then `--set`.
-- Flint projects use TOML only. The library still reads JSON for non-project users. YAML is deliberately not offered: its implicit typing (`no` becoming false, `3.10` becoming 3.1, untagged dates) is exactly the ambiguity this ADR removes.
+- **Superseded by [ADR-029](ADR-029-spring-boot-is-the-reference.md) section 6:** Flint projects use `config/application.yaml` with Spring Boot's keys, in a strict YAML 1.2 subset bound to typed fields, which removes the implicit-typing ambiguity that first ruled YAML out. TOML stays readable, and the library still reads JSON for non-project users.
 - `flint config` prints every resolved key with its source, its type and the struct that binds it. This is the equivalent of Spring Boot's `/actuator/configprops`, available at build time.
 - Unknown keys are errors with a "did you mean" suggestion.
 
