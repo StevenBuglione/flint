@@ -9,7 +9,8 @@
  * Authors:   Walter Bright, David Friedman, Sean Kelly
  *
  * Modified by the Flint authors.
- * Changes: the module name, so the Flint collector can use the package-visible pool list.
+ * Changes: the module name, so the Flint collector can use the package-visible pool list; the unittest frees its
+ * mock pools (marked "Flint:").
  */
 module flint.arena.sys.gc.pooltable;
 
@@ -227,6 +228,11 @@ unittest
     }
 
     PoolTable!MockPool pooltable;
+    // Flint: free every mock pool at the end, so LeakSanitizer passes; upstream leaks them.
+    MockPool*[] allocated;
+    scope (exit)
+        foreach (pool; allocated)
+            cstdlib.free(pool);
 
     void reset()
     {
@@ -238,6 +244,7 @@ unittest
         foreach (i; 0 .. NPOOLS)
         {
             auto pool = cast(MockPool*) cstdlib.malloc(MockPool.sizeof);
+            allocated ~= pool; // Flint: freed at scope exit
             *pool = MockPool.init;
             assert(pooltable.insert(pool));
         }

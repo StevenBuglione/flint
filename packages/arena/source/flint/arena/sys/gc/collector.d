@@ -179,6 +179,45 @@ version (LDC)
 else
     private enum scansStacks = 0;
 
+/* ===================== Flint: per-thread allocation caches (docs/spring/phase1/gc.md, D1) ===================== */
+
+/// Attribute classes a thread cache serves: none, NO_SCAN, APPENDABLE, and both. Any other attribute (a finalizer,
+/// an alignment, NO_INTERIOR) takes druntime's locked path.
+private enum cacheClasses = 4;
+
+/// Cached objects per bin and class.
+private enum cacheSlots = 32;
+
+/// Bytes a refill takes for one bin and class: at least one object, at most `cacheSlots`.
+private enum cacheRefillBytes = 2048;
+
+/// The class of `bits` in a thread cache, or -1 when the cache does not serve it.
+private int cacheClass(uint bits) pure nothrow @nogc
+{
+    enum served = BlkAttr.NO_SCAN | BlkAttr.APPENDABLE;
+    if (bits & ~served)
+        return -1;
+    return ((bits & BlkAttr.NO_SCAN) ? 1 : 0) | ((bits & BlkAttr.APPENDABLE) ? 2 : 0);
+}
+
+/++
+A thread's cached small objects, taken from the bins under the GC lock a refill at a time, so most allocations
+take no lock.
+
+Each cached object is already allocated: its free bit is clear and its attribute bits are set, exactly as the locked
+path leaves an object it returns. The slots are thread-local, and every collection scans each thread's TLS, so a
+cached object is always referenced and survives a collection, with no flush; a thread stopped halfway through a pop
+still holds the object in a slot or a register. When a thread exits its cached objects are garbage, which the next
+collection frees. Allocation pops a slot and writes no shared state.
++/
+private struct ThreadCache
+{
+    void*[cacheSlots][cacheClasses][Bins.B_NUMSMALL] slots;
+    ubyte[cacheClasses][Bins.B_NUMSMALL] count;
+}
+
+private ThreadCache threadCache; // Flint: thread-local by design (policy/safety-policy.json)
+
 private
 {
     extern (C)
@@ -273,7 +312,13 @@ class ConservativeGC : GC
             gcx.reserve(config.initReserve);
         if (config.disable)
             gcx.disabled++;
+        // Flint: the precise collector records a pointer bitmap and a forked collection marks new objects, both
+        // under the lock at each allocation, so only the conservative, non-forking collector uses thread caches.
+        threadCaches = !isPrecise && !config.fork;
     }
+
+    /// Flint: whether allocations go through the per-thread caches.
+    private bool threadCaches;
 
     ~this()
     {
@@ -575,7 +620,7 @@ class ConservativeGC : GC
 
         size_t localAllocSize = void;
 
-        auto p = runLocked!(mallocNoSync, mallocTime, numMallocs)(needed, bits, localAllocSize, ti);
+        auto p = cachedMalloc(needed, bits, localAllocSize, ti); // Flint: per-thread caches
 
         invalidate(p[0 .. localAllocSize], 0xF0, true);
 
@@ -592,6 +637,53 @@ class ConservativeGC : GC
     //
     // Implementation for malloc and calloc.
     //
+    /++
+    Flint: allocate from this thread's cache when it serves `size` and `bits`, refilling the cache under the lock when
+    it is empty; otherwise, or when the bins have no free object without a collection, take druntime's locked path.
+    +/
+    private void* cachedMalloc(size_t size, uint bits, ref size_t alloc_size, const TypeInfo ti) nothrow
+    {
+        if (threadCaches && size <= PAGESIZE / 2 && !_inFinalizer)
+        {
+            const cls = cacheClass(bits);
+            if (cls >= 0)
+            {
+                const bin = Gcx.binTable[size];
+                uint n = threadCache.count[bin][cls];
+                if (n == 0)
+                    n = runLocked!(refillCache, otherTime, numOthers)(bin, cast(uint) cls, bits);
+                if (n != 0)
+                {
+                    --n;
+                    threadCache.count[bin][cls] = cast(ubyte) n;
+                    auto p = threadCache.slots[bin][cls][n];
+                    threadCache.slots[bin][cls][n] = null;
+                    alloc_size = binsize[bin];
+                    bytesAllocated += alloc_size;
+                    return p;
+                }
+            }
+        }
+        return runLocked!(mallocNoSync, mallocTime, numMallocs)(size, bits, alloc_size, ti);
+    }
+
+    /// Flint: fill this thread's cache for `bin` and `cls` from the bins, under the lock; the count taken.
+    private uint refillCache(Bins bin, uint cls, uint bits) nothrow
+    {
+        const want = binsize[bin] >= cacheRefillBytes ? 1 : cacheRefillBytes / binsize[bin];
+        const limit = want < cacheSlots ? want : cacheSlots;
+        uint n;
+        while (n < limit)
+        {
+            auto p = gcx.takeSmall(bin, bits);
+            if (p is null)
+                break;
+            threadCache.slots[bin][cls][n++] = p;
+        }
+        threadCache.count[bin][cls] = cast(ubyte) n;
+        return n;
+    }
+
     private void* mallocNoSync(size_t size, uint bits, ref size_t alloc_size, const TypeInfo ti = null) nothrow
     {
         assert(size != 0);
@@ -632,7 +724,7 @@ class ConservativeGC : GC
 
         BlkInfo retval;
 
-        retval.base = runLocked!(mallocNoSync, mallocTime, numMallocs)(size, bits, retval.size, ti);
+        retval.base = cachedMalloc(size, bits, retval.size, ti); // Flint: per-thread caches
 
         if (!(bits & BlkAttr.NO_SCAN))
         {
@@ -682,7 +774,7 @@ class ConservativeGC : GC
 
         size_t localAllocSize = void;
 
-        auto p = runLocked!(mallocNoSync, mallocTime, numMallocs)(needed, bits, localAllocSize, ti);
+        auto p = cachedMalloc(needed, bits, localAllocSize, ti); // Flint: per-thread caches
 
         debug (VALGRIND)
             makeMemUndefined(p[0 .. size]);
@@ -2513,6 +2605,33 @@ struct Gcx
     * Returns:
     *           head of a single linked list of new entries
     */
+    /++
+    Flint: the next free object of `bin`, allocated as smallAlloc allocates it (free bit cleared, `bits` set), from the
+    bin's list, a recovered page or a free page of an existing pool; null rather than collecting or adding a pool.
+    +/
+    void* takeSmall(Bins bin, uint bits) nothrow
+    {
+        void* p = bucket[bin];
+        if (!p && recoverPool[bin])
+        {
+            recoverNextPage(bin);
+            p = bucket[bin];
+        }
+        if (!p)
+            p = bucket[bin] = allocPage(bin);
+        if (!p)
+            return null;
+        bucket[bin] = undefinedRead((cast(List*) p).next);
+        auto pool = undefinedRead((cast(List*) p).pool);
+        auto biti = (p - pool.baseAddr) >> pool.shiftBy;
+        assert(pool.freebits.test(biti));
+        pool.freebits.clear(biti);
+        if (bits)
+            pool.setBits(biti, bits);
+        invalidate(p[0 .. binsize[bin]], 0xF0, true);
+        return p;
+    }
+
     List* allocPage(Bins bin) nothrow
     {
         //debug(PRINTF) printf("Gcx::allocPage(bin = %d)\n", bin);
