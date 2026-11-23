@@ -42,6 +42,24 @@ void splitPassthrough(scope const(string)[] arguments, out string[] own, out str
     own = arguments.dup;
 }
 
+/// `flint api extract --version TAG`: flint.cli reserves `--version`, so it becomes `--tag` for this subcommand.
+string[] tagAlias(string[] own)
+{
+    import std.algorithm.searching : startsWith;
+
+    if (own.length < 2 || own[0] != "api" || own[1] != "extract")
+        return own;
+    auto rewritten = own.dup;
+    foreach (ref argument; rewritten)
+    {
+        if (argument == "--version")
+            argument = "--tag";
+        else if (argument.startsWith("--version="))
+            argument = "--tag=" ~ argument["--version=".length .. $];
+    }
+    return rewritten;
+}
+
 /// Whether --json appears among flint's own arguments, so usage errors can also be reported as JSON.
 bool wantsJson(scope const(string)[] arguments)
 {
@@ -62,6 +80,7 @@ int dispatch(scope const(string)[] arguments)
     string[] own;
     string[] passthrough;
     splitPassthrough(arguments, own, passthrough);
+    own = tagAlias(own);
     auto parsed = parse!FlintArgs(own);
     auto options = parsed.options;
     Report report;
@@ -228,6 +247,9 @@ private int toolingCommand(ref Session session, string name, ref FlintArgs optio
     const knowledge = knowledgeCommand(session, name, options);
     if (knowledge >= 0)
         return knowledge;
+    const api = apiCommand(session, name, options.api);
+    if (api >= 0)
+        return api;
     switch (name)
     {
     case "flint deps tree":
@@ -266,6 +288,29 @@ private int depsCommand(ref Session session, string name, ref FlintArgs options)
         return commandDepsVendor(session, options.deps.vendor.project);
     case "flint deps audit":
         return commandDepsAudit(session, options.deps.audit.project, options.deps.audit.target);
+    }
+}
+
+/// Run a `flint api` command; -1 when `name` is not one.
+private int apiCommand(ref Session session, string name, ref ApiArgs args)
+{
+    import flint_tool.commands.api : ExtractCommand, commandApiCoverage, commandApiDiff,
+        commandApiExtract, commandApiFetch;
+
+    switch (name)
+    {
+    case "flint api fetch":
+        return commandApiFetch(session, args.fetch.projects, args.fetch.cache);
+    case "flint api extract":
+        const command = ExtractCommand(args.extract.source, args.extract.project, args.extract.tag,
+                args.extract.output, args.extract.excludes);
+        return commandApiExtract(session, command);
+    case "flint api coverage":
+        return commandApiCoverage(session, args.coverage.manifests, args.coverage.mapping, args.coverage.show);
+    case "flint api diff":
+        return commandApiDiff(session, args.diff.older, args.diff.newer);
+    default:
+        return -1;
     }
 }
 
@@ -324,7 +369,7 @@ private void printHelp(string commandName)
     void delegate(scope const(char)[]) @safe sink = (scope const(char)[] text) @safe {
         writeOutput(text);
     };
-    if (!printProjectHelp(commandName, sink))
+    if (!printProjectHelp(commandName, sink) && !printApiHelp(commandName, sink))
         printToolingHelp(commandName, sink);
 }
 
@@ -385,6 +430,30 @@ private bool printKnowledgeHelp(string commandName, scope void delegate(scope co
         return true;
     case "flint lsp":
         writeHelp!LspArgs(sink);
+        return true;
+    default:
+        return false;
+    }
+}
+
+private bool printApiHelp(string commandName, scope void delegate(scope const(char)[]) @safe sink)
+{
+    switch (commandName)
+    {
+    case "flint api":
+        writeHelp!ApiArgs(sink);
+        return true;
+    case "flint api fetch":
+        writeHelp!ApiFetchArgs(sink);
+        return true;
+    case "flint api extract":
+        writeHelp!ApiExtractArgs(sink);
+        return true;
+    case "flint api coverage":
+        writeHelp!ApiCoverageArgs(sink);
+        return true;
+    case "flint api diff":
+        writeHelp!ApiDiffArgs(sink);
         return true;
     default:
         return false;

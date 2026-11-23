@@ -527,4 +527,33 @@ immutable CodeInfo[] catalog = [
             "flint build --profile release      # without --dflags or [profile] overrides"),
     CodeInfo("FLINT-E0905", ExitCode.environment, "receipt malformed",
             "The receipt is not valid JSON of the flint.receipt/1 schema.", "flint build"),
+    // 10xx: API manifests of the Spring port (ADR-030).
+    CodeInfo("FLINT-E1001", ExitCode.user, "a Java source file did not parse",
+            "`flint api extract` reads Java declarations: types, their members and annotations. It skips method "
+            ~ "bodies and initializers by balanced brackets. A file whose declarations it cannot follow is left out "
+            ~ "of the manifest, so the manifest is incomplete until the parser handles the construct.",
+            "flint api extract --source ~/.flint/cache/api/spring-framework-v7.1.0 --project spring-framework "
+            ~ "--version v7.1.0"),
+    CodeInfo("FLINT-E1002", ExitCode.user, "API elements are unclassified",
+            "Every type, method, constructor, field, enum constant, annotation attribute and record component of "
+            ~ "an upstream manifest must be classified in api/mapping.json: ported (with its D symbol), adapted "
+            ~ "(with the rulebook rules R1-R14 it follows) or excluded (with a rulebook category).",
+            `"org.springframework.http.HttpStatus": ` ~ `{"status": "ported", "d": "flint.http.HttpStatus"}`),
+    CodeInfo("FLINT-E1003", ExitCode.user, "the API mapping is invalid",
+            "api/mapping.json has the shape docs/spring/api-mapping.md describes. A ported element needs its D "
+            ~ "symbol `d` under `flint.`, an adapted one its `rules` (R1 to R14), an excluded one a rulebook "
+            ~ "`category`, and a deferred one its `phase`. The mapping's `rulebook` must be the rulebook's current "
+            ~ "version, and its `upstream` list must name each manifest classified.",
+            `"org.springframework.jmx.**": ` ~ `{"status": "excluded", "category": "jvm-platform"}`),
+    CodeInfo("FLINT-E1004", ExitCode.usage,
+            "API input missing or malformed",
+            "A source tree, manifest (flint.api-manifest/1) or pin file (api/upstreams.json, "
+            ~ "flint.api-upstreams/1) named on the command line or in the Flint home cannot be read.",
+            "flint api fetch spring-boot\nflint api extract --source DIR --project spring-boot --version v4.2.0"),
+    CodeInfo("FLINT-E1005", ExitCode.dependency,
+            "an upstream archive cannot be fetched",
+            "`flint api fetch` downloads each archive pinned in api/upstreams.json, verifies its SHA-256 and "
+            ~ "unpacks it into the reference cache. The download failed, the digest differs from the pin, or the "
+            ~ "archive did not unpack. A digest mismatch is never ignored: re-pin only after checking the upstream.",
+            "flint api fetch spring-framework\nFLINT_CACHE=/tmp/cache flint api fetch"),
 ];

@@ -446,6 +446,79 @@ struct ReceiptArgs
     @Option("json", 0, "Emit flint.receipt/1 JSON on stdout") bool json;
 }
 
+/// `flint api extract`.
+@Command("flint api extract", "Write the API manifest of an upstream Java source tree")
+struct ApiExtractArgs
+{
+    /// Source tree.
+    @Option("source", 's', "Root of the upstream Java source tree") string source;
+    /// Project.
+    @Option("project", 'p', "Upstream project name, such as spring-framework") string project;
+    /// Tag; `--version` is accepted for it (flint.cli reserves --version for itself).
+    @Option("tag", 0, "Upstream tag, such as v7.1.0 (also --version TAG)") string tag;
+    /// Output.
+    @Option("output", 'o', "Manifest to write (default: api/upstream/<project>-<tag>.json)") string output;
+    /// Extra exclusions.
+    @Option("exclude", 0, "Leave out this root-relative path prefix (repeatable; adds to api/upstreams.json)")
+    string[] excludes;
+    /// JSON output.
+    @Option("json", 0, "Emit flint.api-extract/1 JSON on stdout") bool json;
+}
+
+/// `flint api fetch`.
+@Command("flint api fetch", "Download the pinned upstream sources into the reference cache, verified by SHA-256")
+struct ApiFetchArgs
+{
+    /// Projects.
+    @Arg(0, "Pinned projects to fetch (default: all of api/upstreams.json)") string[] projects;
+    /// Cache override.
+    @Option("cache", 0, "Reference cache directory (default: <flint home>/.flint/cache/api)") string cache;
+    /// JSON output.
+    @Option("json", 0, "Emit flint.api-fetch/1 JSON on stdout") bool json;
+}
+
+/// `flint api coverage`.
+@Command("flint api coverage", "Classify manifest elements against api/mapping.json; fail on unclassified ones")
+struct ApiCoverageArgs
+{
+    /// Manifests.
+    @Option("manifest", 'm', "Upstream manifest to classify (repeatable)") string[] manifests;
+    /// Mapping.
+    @Option("mapping", 0, "The repo's mapping (default: api/mapping.json)") string mapping = "api/mapping.json";
+    /// How many unclassified ids to print.
+    @Option("show", 0, "Unclassified element ids to print per manifest (default: 20)") uint show = 20;
+    /// JSON output.
+    @Option("json", 0, "Emit flint.api-coverage/1 JSON on stdout, with every unclassified id") bool json;
+}
+
+/// `flint api diff`.
+@Command("flint api diff", "List API elements added, removed or changed between two manifests")
+struct ApiDiffArgs
+{
+    /// Older manifest.
+    @Arg(0, "The older manifest") string older;
+    /// Newer manifest.
+    @Arg(1, "The newer manifest") string newer;
+    /// JSON output.
+    @Option("json", 0, "Emit flint.api-diff/1 JSON on stdout") bool json;
+}
+
+/// `flint api`.
+@Command("flint api", "Extract, compare and classify the upstream Java APIs that Flint ports")
+struct ApiArgs
+{
+    /// fetch.
+    @Subcommand("fetch", "Download the pinned upstream sources into the reference cache, verified by SHA-256")
+    ApiFetchArgs fetch;
+    /// extract.
+    @Subcommand("extract", "Write the API manifest of an upstream Java source tree") ApiExtractArgs extract;
+    /// coverage.
+    @Subcommand("coverage", "Classify manifest elements against api/mapping.json; fail on unclassified ones")
+    ApiCoverageArgs coverage;
+    /// diff.
+    @Subcommand("diff", "List API elements added, removed or changed between two manifests") ApiDiffArgs diff;
+}
+
 /// The root command.
 @Command("flint", "One tool to create, build, run, test and check Flint projects with the pinned toolchain.", "0.7.0")
 struct FlintArgs
@@ -498,4 +571,6 @@ struct FlintArgs
     @Subcommand("examples", "Show tested examples for a topic") ExamplesArgs examples;
     /// receipt.
     @Subcommand("receipt", "Verify an artifact against its receipt") ReceiptArgs receipt;
+    /// api.
+    @Subcommand("api", "Upstream API manifests, coverage and diffs") ApiArgs api;
 }
