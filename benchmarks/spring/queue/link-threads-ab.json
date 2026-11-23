@@ -1,0 +1,50 @@
+{
+  "schema": "flint.measure-queue/1",
+  "id": "link-threads-ab",
+  "created": "2026-11-23",
+  "status": "pending",
+  "window": "claim",
+  "priority": 3,
+  "requested_by": "m7-flint-cli, approved by the coordinator as a short decision-gating A/B (2026-11-23)",
+  "report_to": "m7-flint-cli; the coordinator",
+  "estimate_minutes": 10,
+  "summary": "gs-rest-service static dev edit build: FLINT_LINK_THREADS=4 (default) vs 8, alternating; shared edit build as a secondary series",
+  "why": "The static edit build's link is about 190 ms of mold writing a 38 MB image. m7 changes the default to 8 only if the bootstrap 99% interval of the difference of link-phase medians (phases_ms.link) excludes zero; the edit total and the wall time are reported the same way. 15 trials per arm, the arms alternating within each trial (A, B, B, A, ...). Measured at 36c2924886ae, the same worktree as gs-builds, with tools/spring_link_ab.py from the harness checkout ({harness}) building the worktree's port (--root).",
+  "builds": {
+    "tree": {
+      "app": "checkout",
+      "commit": "36c2924886ae",
+      "flint": true,
+      "linker": "mold",
+      "fork": true
+    }
+  },
+  "measure": {
+    "kind": "command",
+    "ports": [],
+    "steps": [
+      {
+        "in": "tree",
+        "argv": [
+          "{python}",
+          "{harness}/tools/spring_link_ab.py",
+          "--app",
+          "gs-rest-service",
+          "--arms",
+          "4",
+          "8",
+          "--trials",
+          "15",
+          "--shared",
+          "--root",
+          ".",
+          "--output",
+          "{out}/link-ab.json"
+        ],
+        "smoke_args": [
+          "--smoke"
+        ]
+      }
+    ]
+  }
+}

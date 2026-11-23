@@ -713,7 +713,9 @@ def measure_command(entry, built, outdir, smoke):
             cwd = worktree(built[step['in']]['commit'])[0]
             private = [cwd / '.flint' / 'bin', cwd / '.tools' / 'dmd2' / 'linux' / 'bin64']
             env['PATH'] = os.pathsep.join(str(p) for p in private if p.is_dir()) + os.pathsep + env['PATH']
-        command = [part.replace('{out}', str(outdir)).replace('{python}', sys.executable) for part in step['argv']]
+        # {harness}: this checkout, for a measuring tool newer than the pinned commit (it builds the worktree's port).
+        command = [part.replace('{out}', str(outdir)).replace('{python}', sys.executable).replace('{harness}', str(ROOT))
+                   for part in step['argv']]
         if smoke and step.get('smoke_args'):
             command += step['smoke_args']
         log = outdir / f'step-{index}.log'
