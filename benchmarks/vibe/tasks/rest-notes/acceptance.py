@@ -1,4 +1,5 @@
 """Acceptance test for the notes REST API (TASK.md)."""
+import contextlib
 import sqlite3
 import subprocess
 import tempfile
@@ -41,7 +42,8 @@ def checks(program):
             content = database.read_bytes()
             r.check('stores no plain-text password', b'correct horse battery' not in content)
             try:
-                with sqlite3.connect(database) as connection:
+                # closing(): a connection's own context manager only commits, and Windows cannot delete an open file.
+                with contextlib.closing(sqlite3.connect(database)) as connection:
                     tables = {row[0] for row in connection.execute("select name from sqlite_master where type='table'")}
                 r.check('the database holds tables', len(tables) >= 2, tables)
             except sqlite3.Error as error:

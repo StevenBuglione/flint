@@ -14,7 +14,10 @@ import math
 import os
 from pathlib import Path
 import re as _re
-import resource
+try:
+    import resource
+except ImportError:  # Windows: the load run is POSIX-only, and the parsers stay importable (ADR-026)
+    resource=None
 import shutil
 import signal
 import socket
@@ -223,6 +226,7 @@ def run_oha(oha,url,workload,duration,rate,raw_path,process,expected,verifier=No
     command += [url]
     stderr_path=raw_path.with_suffix(".stderr.txt")
     monitor=Monitor(process,url,expected,verifier);monitor.start()
+    require(resource is not None,"load_bench measures on Linux and macOS only (ADR-026)")
     before=resource.getrusage(resource.RUSAGE_CHILDREN)
     began=time.monotonic()
     try:

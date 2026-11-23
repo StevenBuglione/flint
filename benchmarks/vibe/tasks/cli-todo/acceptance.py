@@ -80,7 +80,8 @@ def run_checks(r, todo, home):
 
     data = home / 'elsewhere' / 'list.json'
     config = home / 'custom.toml'
-    config.write_text(f'[todo]\ndata_file = "{data}"\ndefault_priority = "high"\n')
+    # as_posix(): a Windows path's backslashes would be escapes in a TOML basic string.
+    config.write_text(f'[todo]\ndata_file = "{data.as_posix()}"\ndefault_priority = "high"\n')
     code, out, _ = todo('add', 'configured', config=str(config))
     r.check('TODO_CONFIG: data_file is used and created', code == 0 and out.strip() == 'added 1' and data.is_file(),
             (code, out))

@@ -484,13 +484,13 @@ def flint_recipe(manifest, home=ROOT):
         lines.append('description ' + sdl_string(project['description']))
     lines += ['targetName ' + sdl_string(artifact), 'targetType ' + sdl_string(kind),
               'sourcePaths "../../../src"', 'importPaths "../../../src"', 'dflags "-preview=dip1000"']
-    lines += ['dependency ' + sdl_string(d) + ' path=' + sdl_string(str(home)) for d in manifest.get('dependencies', {})]
+    lines += ['dependency ' + sdl_string(d) + ' path=' + sdl_string(Path(home).as_posix()) for d in manifest.get('dependencies', {})]
     for profile in FLINT_PROFILES:
         lines += ['configuration ' + sdl_string(profile) + ' {', '    targetPath ' + sdl_string('../../build/' + profile), '}']
     lines += ['configuration "unittest" {', '    targetType "executable"', '    targetName ' + sdl_string(artifact + '-test'),
               '    targetPath "../../build/test"', '    sourcePaths "../../../test"', '    importPaths "../../../test"',
               '    buildOptions "unittests" "debugInfo"'] + (['    dflags "-main"'] if kind == 'library' else [])
-    lines += ['    dependency ' + sdl_string(d) + ' path=' + sdl_string(str(home)) for d in manifest.get('test-dependencies', {})]
+    lines += ['    dependency ' + sdl_string(d) + ' path=' + sdl_string(Path(home).as_posix()) for d in manifest.get('test-dependencies', {})]
     return '\n'.join(lines) + '\n}\n'
 
 

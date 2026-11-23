@@ -194,7 +194,8 @@ def dub_root(workspace, output, root=ROOT):
     for name, (repo, directory) in sorted(package_repos(root).items()):
         path = workspace.locate(repo, directory, root)
         if (path / 'dub.sdl').is_file():
-            lines.append('subPackage ' + json.dumps(os.path.relpath(path, output)))
+            # DUB reads '/' on every host, and the recipe stays the same text on Windows (ADR-026).
+            lines.append('subPackage ' + json.dumps(Path(os.path.relpath(path, output)).as_posix()))
     (output / 'dub.sdl').write_text('\n'.join(lines) + '\n', encoding='utf-8')
     return output / 'dub.sdl'
 
