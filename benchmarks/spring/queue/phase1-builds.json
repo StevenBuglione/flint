@@ -1,0 +1,79 @@
+{
+  "schema": "flint.measure-queue/1",
+  "created": "2026-11-23",
+  "status": "blocked",
+  "blocked_on": "petclinic-rest scoring 109/109 in proof-harness's independent run, then a pin to one commit where all three ports pass exactly",
+  "requested_by": "ADR-030 section 8, Phase 1 exit (coordinator's plan, 2026-11-23 15:20Z)",
+  "builds": {
+    "tree": {
+      "app": "checkout",
+      "commit": "TBD",
+      "flint": true,
+      "linker": "mold"
+    }
+  },
+  "report_to": "the coordinator; docs/milestones/13.md",
+  "id": "phase1-builds",
+  "estimate_minutes": 50,
+  "summary": "Phase 1: the three apps' suites (Java, Go, Flint) and builds against Go (both headlines, edit builds, Oz stripped)",
+  "why": "One claimed window (~50 min) of the split Phase 1 run; spring_bench.py assemble gathers its outputs for the gate.",
+  "measure": {
+    "kind": "command",
+    "ports": [],
+    "steps": [
+      {
+        "argv": [
+          "{python}",
+          "tools/spring_bench.py",
+          "accept",
+          "--impl",
+          "java",
+          "--json",
+          "{out}/acceptance-java.json"
+        ],
+        "in": "tree"
+      },
+      {
+        "argv": [
+          "{python}",
+          "tools/spring_bench.py",
+          "accept",
+          "--impl",
+          "go",
+          "--json",
+          "{out}/acceptance-go.json"
+        ],
+        "in": "tree"
+      },
+      {
+        "argv": [
+          "{python}",
+          "tools/spring_bench.py",
+          "accept",
+          "--impl",
+          "flint",
+          "--json",
+          "{out}/acceptance-flint.json"
+        ],
+        "in": "tree"
+      },
+      {
+        "argv": [
+          "{python}",
+          "tools/measure_builds.py",
+          "--spring",
+          "--no-context",
+          "--output",
+          "{out}/builds.json"
+        ],
+        "may_fail": true,
+        "smoke_args": [
+          "--smoke",
+          "--trials",
+          "1"
+        ],
+        "in": "tree"
+      }
+    ]
+  }
+}

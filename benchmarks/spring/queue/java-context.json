@@ -3,7 +3,7 @@
   "id": "java-context",
   "created": "2026-11-23",
   "status": "blocked",
-  "blocked_on": "phase1-spring-apps having run (the Java context is reported next to its evidence)",
+  "blocked_on": "phase1-http having run (the Java context is reported next to its evidence)",
   "requested_by": "ADR-030 section 8 (context only)",
   "summary": "Java Spring Boot on the JVM and as native images, the Spring workload and the error paths, as context next to the Phase 1 evidence",
   "why": "Context is reported, never compared or gated (benchmarks/spring/README.md). It doubles the HTTP runs, so it runs in its own window, under the same quiet rules, rather than inside the coordinator's paused window.",

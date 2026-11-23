@@ -516,6 +516,93 @@ def check_registry(names=None):
 
 
 # ---------------------------------------------------------------------------------------------------------------
+# Assembling the Phase 1 evidence from the queue's certified runs
+
+PHASE1_FILES = {
+    'phase1-builds': ['acceptance-java.json', 'acceptance-go.json', 'acceptance-flint.json', 'builds.json'],
+    'phase1-http': ['http.json'],
+    'error-404-p99': ['http-error-404.json'],
+    'error-validation-p99': ['http-error-validation.json'],
+}
+PHASE1_GC_PREFIX = 'phase1-gc-matrix-'  # parts of the GC matrix, one claimed window each
+
+
+def certified_results(entry_id):
+    """The newest results directory of a queue entry whose receipt counts as evidence, or None."""
+    base = ROOT / '.flint' / 'measure' / 'results' / entry_id
+    for directory in sorted(base.glob('2*/'), reverse=True) if base.is_dir() else []:
+        receipt = directory / 'receipt.json'
+        if receipt.is_file() and json.loads(receipt.read_text()).get('evidence'):
+            return directory
+    return None
+
+
+def merge_http(records):
+    """One schema-2 load_bench record from several, one workload each (the error-path entries)."""
+    merged = {'schema': 2, 'mode': 'production', 'apps': {}, 'acceptance': [], 'comparators': {}, 'parts': []}
+    for path, record in records:
+        merged['apps'].update(record['apps'])
+        merged['acceptance'] += record.get('acceptance', [])
+        merged['comparators'].update(record.get('comparators', {}))
+        merged['parts'].append({'source': str(path), 'sha256': sha256(path), 'status': record['status'],
+                                'mode': record['mode']})
+        if record['mode'] != 'production':
+            merged['mode'] = record['mode']
+    merged['status'] = 'passed' if all(p['status'] == 'passed' for p in merged['parts']) else 'failed'
+    return merged
+
+
+def merge_gc(records):
+    """One GC-matrix record from parts that each measured some settings with Go interleaved; every setting keeps
+    the ratios against its own part's Go."""
+    merged = {'schema': 'flint.spring-gc-matrix-result/1', 'settings': {}, 'parts': []}
+    for path, record in records:
+        merged.setdefault('app', record['app'])
+        merged['settings'].update(record['settings'])
+        merged['parts'].append({'source': str(path), 'sha256': sha256(path), 'status': record['status'],
+                                'mode': record['mode'], 'settings': sorted(record['settings'])})
+    merged['mode'] = 'production' if all(p['mode'] == 'production' for p in merged['parts']) else 'mixed'
+    merged['status'] = 'passed' if all(p['status'] == 'passed' for p in merged['parts']) else 'failed'
+    return merged
+
+
+def assemble(output):
+    """Copy the newest certified outputs of the Phase 1 entries into `output`, as gates.py --gate spring reads it.
+    Entries with no certified run are reported; the gate then fails on the missing files."""
+    output = Path(output)
+    output.mkdir(parents=True, exist_ok=True)
+    manifest = {'schema': 'flint.spring-evidence/1', 'assembled': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
+                'sources': {}, 'missing': []}
+    errors = []
+    for entry_id, files in PHASE1_FILES.items():
+        directory = certified_results(entry_id)
+        if directory is None:
+            manifest['missing'].append(entry_id)
+            continue
+        manifest['sources'][entry_id] = str(directory.relative_to(ROOT))
+        for name in files:
+            if (directory / name).is_file():
+                if entry_id.startswith('error-'):
+                    errors.append((directory / name, json.loads((directory / name).read_text())))
+                else:
+                    shutil.copy2(directory / name, output / name)
+    if errors:
+        (output / 'http-error-paths.json').write_text(json.dumps(merge_http(errors), indent=2) + '\n')
+    parts = []
+    queue = ROOT / 'benchmarks' / 'spring' / 'queue'
+    for entry in sorted(queue.glob(PHASE1_GC_PREFIX + '*.json')):
+        directory = certified_results(entry.stem)
+        if directory is None:
+            manifest['missing'].append(entry.stem)
+            continue
+        manifest['sources'][entry.stem] = str(directory.relative_to(ROOT))
+        for path in directory.glob('gc-matrix-*.json'):
+            parts.append((path, json.loads(path.read_text())))
+    if parts:
+        merged = merge_gc(parts)
+        (output / f"gc-matrix-{merged['app']}.json").write_text(json.dumps(merged, indent=2) + '\n')
+    (output / 'assembled.json').write_text(json.dumps(manifest, indent=2) + '\n')
+    return manifest
 
 
 def main(argv=None):
@@ -535,6 +622,8 @@ def main(argv=None):
     p.add_argument('--json', type=Path)
     p = sub.add_parser('register'); p.add_argument('apps', nargs='*')
     sub.add_parser('check-registry')
+    p = sub.add_parser('assemble', help="gather the Phase 1 entries' newest certified outputs for gates.py --gate spring")
+    p.add_argument('output', type=Path)
     p = sub.add_parser('profile', help='a reproducible local load recipe for profiling (never evidence)')
     p.add_argument('workload'); p.add_argument('--manifest', default='policy/spring-http-benchmark.json')
     p.add_argument('--impl', action='append', choices=['flint', 'go'])
@@ -591,6 +680,10 @@ def main(argv=None):
         return 1 if failed else 0
     if args.command == 'register':
         register(names)
+        return 0
+    if args.command == 'assemble':
+        manifest = assemble(args.output)
+        print(json.dumps(manifest, indent=2))
         return 0
     if args.command == 'check-registry':
         problems = check_registry()

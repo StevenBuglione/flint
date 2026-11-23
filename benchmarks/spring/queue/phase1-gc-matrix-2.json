@@ -1,0 +1,47 @@
+{
+  "schema": "flint.measure-queue/1",
+  "created": "2026-11-23",
+  "status": "blocked",
+  "blocked_on": "petclinic-rest scoring 109/109 in proof-harness's independent run, then a pin to one commit where all three ports pass exactly",
+  "requested_by": "ADR-030 section 8, Phase 1 exit (coordinator's plan, 2026-11-23 15:20Z)",
+  "builds": {
+    "tree": {
+      "app": "checkout",
+      "commit": "TBD",
+      "flint": true,
+      "linker": "mold"
+    }
+  },
+  "report_to": "the coordinator; docs/milestones/13.md",
+  "id": "phase1-gc-matrix-2",
+  "estimate_minutes": 61,
+  "summary": "Phase 1 GC matrix, part 2: petclinic-rest under precise-serial-mark, conservative-fork, precise-fork, Go interleaved",
+  "why": "Part of the GC matrix (ADR-030 section 4) split into claimed windows of about an hour; assemble merges the parts.",
+  "measure": {
+    "kind": "command",
+    "ports": [],
+    "steps": [
+      {
+        "argv": [
+          "{python}",
+          "tools/spring_bench.py",
+          "gc-matrix",
+          "petclinic-rest",
+          "--output",
+          "{out}/gc-matrix-petclinic-rest.json",
+          "--setting",
+          "precise-serial-mark",
+          "--setting",
+          "conservative-fork",
+          "--setting",
+          "precise-fork"
+        ],
+        "may_fail": true,
+        "smoke_args": [
+          "--smoke"
+        ],
+        "in": "tree"
+      }
+    ]
+  }
+}
