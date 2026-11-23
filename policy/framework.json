@@ -42,6 +42,22 @@
    "dependencies": [
     "serde"
    ]
+  },
+  "slf4j-api": {
+   "directory": "framework/slf4j-api",
+   "module": "flint.slf4j",
+   "repo": "framework",
+   "licence": "Apache-2.0",
+   "upstream": "slf4j-api@2.0.20",
+   "dependencies": [
+    "arena",
+    "conc",
+    "engine-aot",
+    "engine-reactor",
+    "java",
+    "log",
+    "serde"
+   ]
   }
  }
 }
