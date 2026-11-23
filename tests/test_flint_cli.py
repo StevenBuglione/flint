@@ -112,11 +112,13 @@ class StructuralParityTests(unittest.TestCase):
         cls.base = Path(cls.temporary.name) / 'base'
         ignore = shutil.ignore_patterns('.dub', 'build', '*.a', '*.o', 'flint-*-test-*', '__pycache__')
         cls.base.mkdir()
-        # framework/ and boot/ whole: the registration check (FLINT-E0535) scans both against the policies.
-        for name in ('policy', 'packages', 'framework', 'boot', 'tools', 'toolchain'):
-            shutil.copytree(ROOT / name, cls.base / name, ignore=ignore, symlinks=True)
+        for name in ('policy', 'packages', 'framework', 'boot', 'starters', 'tools', 'toolchain'):
+            if (ROOT / name).is_dir():  # framework/, boot/ and starters/ leave the flint repo at the cutover
+                shutil.copytree(ROOT / name, cls.base / name, ignore=ignore, symlinks=True)
         for name in ('dub.sdl', 'flint.toml', 'dscanner.ini', 'dfmt.ini', '.editorconfig', 'platform.lock'):
             shutil.copy2(ROOT / name, cls.base / name)
+        (cls.base / 'boot/dependencies').mkdir(parents=True, exist_ok=True)
+        shutil.copy2(ROOT / 'boot/dependencies/flint-dependencies.json', cls.base / 'boot/dependencies')
         (cls.base / '.tools').symlink_to((ROOT / '.tools').resolve())
 
     @classmethod
@@ -222,8 +224,9 @@ class FixturePeerTests(unittest.TestCase):
         ignore = shutil.ignore_patterns('.dub', 'build', '*.a', '*.o', 'flint-*-test-*', '__pycache__')
         cls.work.mkdir()
         for name in ('policy', 'packages', 'framework', 'tools', 'toolchain'):
-            shutil.copytree(ROOT / name, cls.work / name, ignore=ignore, symlinks=True)
-        for name in ('dub.sdl', 'flint.toml', 'dscanner.ini', 'dfmt.ini', '.editorconfig'):
+            if (ROOT / name).is_dir():  # framework/ leaves the flint repo at the cutover
+                shutil.copytree(ROOT / name, cls.work / name, ignore=ignore, symlinks=True)
+        for name in ('dub.sdl', 'flint.toml', 'dscanner.ini', 'dfmt.ini', '.editorconfig', 'platform.lock'):
             shutil.copy2(ROOT / name, cls.work / name)
         (cls.work / '.tools').symlink_to((ROOT / '.tools').resolve())
         cls.policy = cls.work / 'policy/test-peers.toml'

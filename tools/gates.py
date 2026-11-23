@@ -162,6 +162,8 @@ def framework_layers():
             if any(module==root or module.startswith(root+'.') for root in [meta['module']]+meta.get('also',[])):return name
         return None
     for name,meta in modules.items():
+        # After the cutover a module of another repo is checked there, or through --workspace here.
+        if not WORKSPACE.file and not in_home(meta.get('repo','framework')):continue
         # With --workspace, a framework module is checked in its repo's checkout, in that repo's layout.
         base=WORKSPACE.locate(meta.get('repo','framework'),meta['directory']) if WORKSPACE.file else ROOT/meta['directory']
         require(meta['directory']=='framework/'+name,name+': a framework module lives in framework/'+name)
