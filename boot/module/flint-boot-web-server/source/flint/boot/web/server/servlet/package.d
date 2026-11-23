@@ -164,6 +164,8 @@ abstract class AbstractFilterRegistrationBean : RegistrationBean
     private string[] urlPatterns;
     private string[] servletNames;
     private DispatcherType[] dispatcherTypes;
+    // Boot's `dispatcherTypes != null`: D has no null array distinct from an empty one, and Boot keeps an empty set.
+    private bool dispatcherTypesSet;
     private bool matchAfter;
     private string[string] initParameters;
 
@@ -214,10 +216,12 @@ abstract class AbstractFilterRegistrationBean : RegistrationBean
         return servletNames.dup;
     }
 
-    /// Set the dispatcher types; when none are set, `getDispatcherTypes` decides from the filter.
+    /// Set the dispatcher types, an empty set included; until they are set, `getDispatcherTypes` decides from the
+    /// filter.
     void setDispatcherTypes(DispatcherType[] dispatcherTypes...) pure nothrow
     {
         this.dispatcherTypes = dispatcherTypes.dup;
+        this.dispatcherTypesSet = true;
     }
 
     /// The dispatcher types: those set, else Boot's `determineDispatcherTypes`: every type for a
@@ -227,7 +231,7 @@ abstract class AbstractFilterRegistrationBean : RegistrationBean
     {
         import std.traits : EnumMembers;
 
-        if (dispatcherTypes.length)
+        if (dispatcherTypesSet)
             return dispatcherTypes.dup;
         if (isOncePerRequestFilter(cast(Object) getFilter()))
             return [EnumMembers!DispatcherType].dup;

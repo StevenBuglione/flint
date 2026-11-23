@@ -151,13 +151,10 @@ unittest
 
 // Flint's AbstractFilterRegistrationBean.getDispatcherTypes reports [REQUEST] for an empty set (the binding itself
 // yields []), where Boot keeps the empty set it was given.
-version (FlintFilterRegistrationEmptyDispatcherTypes)
+@("ServletWebSecurityAutoConfigurationTests.emptyFilterDispatcherTypesDoNotThrowException")
+unittest
 {
-    @("ServletWebSecurityAutoConfigurationTests.emptyFilterDispatcherTypesDoNotThrowException")
-    unittest
-    {
-        assert(registration([["spring.security.filter.dispatcher-types", ""]]).getDispatcherTypes().length == 0);
-    }
+    assert(registration([["spring.security.filter.dispatcher-types", ""]]).getDispatcherTypes().length == 0);
 }
 
 // Boot's PathPatternRequestMatcherBuilderConfiguration is not ported (it joins with PathPatternRequestMatcher.Builder
