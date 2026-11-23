@@ -1197,6 +1197,25 @@ private final class Analysis
         }
     }
 
+    /// Add a data descriptor, and register the descriptors of its container-typed properties (`List!X`,
+    /// `Nullable!int`, arrays) in the same module, so Jackson and the binder can read and write them.
+    void addDataDescriptor(string moduleName, DescriptorPlan descriptor)
+    {
+        import std.algorithm.searching : canFind, endsWith;
+
+        auto target = &moduleFor(moduleName);
+        foreach (ref property; descriptor.properties)
+        {
+            const container = property.type.canFind("!(") || property.type.endsWith("[]");
+            if (container && !target.containerDescriptors.canFind(property.type))
+            {
+                target.containerDescriptors ~= property.type;
+                target.containerModules ~= property.modules;
+            }
+        }
+        addDescriptor(*target, descriptor);
+    }
+
     /// Describe a user module's types once.
     void describeOnce(string moduleName)
     {
@@ -1211,7 +1230,7 @@ private final class Analysis
     /// described by their arguments.
     void describeProperties(string type)
     {
-        import std.algorithm.searching : canFind, endsWith;
+        import std.algorithm.searching : canFind;
         import std.ascii : isAlphaNum;
 
         // The dotted names in the spelling: `flint.java.util.Optional!(core.time.Duration)` names both.
@@ -1229,17 +1248,9 @@ private final class Analysis
             if (decl is null || (decl.kind == "class" && decl.abstract_))
                 continue;
             auto descriptor = dataDescriptor(*decl, mergedOf(*decl));
-            addDescriptor(moduleFor(decl.module_), descriptor);
+            addDataDescriptor(decl.module_, descriptor);
             foreach (ref property; descriptor.properties)
-            {
-                const container = property.type.canFind("!(") || property.type.endsWith("[]");
-                if (container && !moduleFor(decl.module_).containerDescriptors.canFind(property.type))
-                {
-                    moduleFor(decl.module_).containerDescriptors ~= property.type;
-                    moduleFor(decl.module_).containerModules ~= property.modules;
-                }
                 describeProperties(property.type);
-            }
         }
     }
 
@@ -2052,7 +2063,7 @@ private final class Analysis
                 webOf(decl, merged);
                 listenersOf(decl, merged);
                 if (merged.has(configurationProperties))
-                    addDescriptor(moduleFor(name), dataDescriptor(decl, merged));
+                    addDataDescriptor(name, dataDescriptor(decl, merged));
                 continue;
             }
             if (decl.kind == "interface" && decl.isA(repository))
@@ -2063,7 +2074,7 @@ private final class Analysis
             if (decl.kind == "struct" || decl.kind == "enum" || (decl.kind == "class" && !decl.abstract_))
             {
                 if (decl.visibility == "public" || decl.visibility == "export")
-                    addDescriptor(moduleFor(name), dataDescriptor(decl, merged));
+                    addDataDescriptor(name, dataDescriptor(decl, merged));
             }
         }
     }

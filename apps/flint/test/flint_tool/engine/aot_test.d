@@ -1207,6 +1207,13 @@ unittest
     const vets = readText(buildPath(generated, "model", "vets.d"));
     expect(vets.canFind(`definition.objectTypes = ["org.springframework.samples.petclinic.model.vets.Vets"];`))
         .toBeTrue();
+    // A DTO's container-typed properties have their descriptors registered (data-access: List!(VisitDto),
+    // Nullable!int in petclinic-rest's DTOs).
+    const dto = readText(buildPath(generated, "rest", "dto", "ownerdto.d"));
+    expect(dto.canFind(
+            `descriptorOf!(flint.java.util.List!(org.springframework.samples.petclinic.rest.dto.`
+            ~ `ownerdto.PetDto))()`)).toBeTrue();
+    expect(dto.canFind(`descriptorOf!(std.typecons.Nullable!(int))()`)).toBeTrue();
     // Properties inherited through getters: Owner : Person : BaseEntity.
     const model = readText(buildPath(generated, "model", "baseentity.d"));
     foreach (property; [`"telephone"`, `"firstName"`, `"id"`])
