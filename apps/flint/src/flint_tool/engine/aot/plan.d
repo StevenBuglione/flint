@@ -686,16 +686,31 @@ private final class Analysis
         return merge(parameter.annotations, model.annotationTypes);
     }
 
-    /// The methods a class method overrides or implements in its model supertypes: same name and parameter types.
+    /// The model supertypes of a class in Spring's TYPE_HIERARCHY aggregate order: its interfaces, then its
+    /// superclasses.
+    const(TypeDecl)*[] aggregateOrder(const ref TypeDecl decl)
+    {
+        const(TypeDecl)*[] result;
+        foreach (interfaces; [true, false])
+        {
+            foreach (ref supertype; decl.supertypes)
+            {
+                const base = model.type(supertype.name);
+                if (base !is null && (base.kind == "interface") == interfaces)
+                    result ~= base;
+            }
+        }
+        return result;
+    }
+
+    /// The methods a class method overrides or implements in its model supertypes (same name and parameter types),
+    /// in aggregate order.
     const(Method)*[] overridden(const ref TypeDecl decl, const ref Method method)
     {
         const(Method)*[] result;
         const signature = parameterTypes(method);
-        foreach (ref supertype; decl.supertypes)
+        foreach (base; aggregateOrder(decl))
         {
-            const base = model.type(supertype.name);
-            if (base is null)
-                continue;
             foreach (ref candidate; base.methods)
             {
                 if (candidate.name == method.name && !candidate.inherited && parameterTypes(candidate) == signature)
@@ -705,66 +720,58 @@ private final class Analysis
         return result;
     }
 
+    /// Merge each aggregate (the element, then each supertype or overridden method) on its own, and take each
+    /// annotation type from the first aggregate that has it, nearest within it: Spring's MergedAnnotationFinder
+    /// stops at the first aggregate with a match, so a subclass's meta-annotation beats a superclass's direct one.
+    MergedSet aggregatesMerged(const Annotation[][] aggregates)
+    {
+        import flint_tool.engine.aot.merge : merge;
+
+        MergedSet result;
+        foreach (aggregate; aggregates)
+        {
+            auto merged = merge(aggregate, model.annotationTypes);
+            result.conflicts ~= merged.conflicts;
+            foreach (ref item; merged.items)
+            {
+                if (!result.has(item.annotation.type))
+                    result.items ~= item;
+            }
+        }
+        return result;
+    }
+
     /// A method's merged annotations searched through its type hierarchy, as Spring's TYPE_HIERARCHY strategy
     /// does: its own first, then those of the interface and superclass methods it implements or overrides.
     MergedSet hierarchyMerged(const ref TypeDecl decl, const ref Method method)
     {
-        import flint_tool.engine.aot.merge : merge;
-
-        Annotation[] declared;
-        foreach (ref annotation; method.annotations)
-            declared ~= clone(annotation);
+        const(Annotation)[][] aggregates = [method.annotations];
         foreach (base; overridden(decl, method))
-        {
-            foreach (ref annotation; base.annotations)
-                declared ~= clone(annotation);
-        }
-        auto result = merge(declared, model.annotationTypes);
+            aggregates ~= base.annotations;
+        auto result = aggregatesMerged(aggregates);
         foreach (conflict; result.conflicts)
             error("FLINT-E1103", conflict, method.file, method.line);
         return result;
     }
 
-    /// A class's merged annotations with those of its model supertypes after its own, as an inherited pointcut sees
-    /// them: `@Validated` on petclinic-rest's generated `OwnersApi` advises the implementing controller.
+    /// A class's merged annotations through its type hierarchy (TYPE_HIERARCHY): `@Validated` on petclinic-rest's
+    /// generated `OwnersApi` advises the implementing controller, and Spring MVC finds class-level mappings.
     MergedSet typeHierarchyMerged(const ref TypeDecl decl)
     {
-        import flint_tool.engine.aot.merge : merge;
-
-        Annotation[] declared;
-        foreach (ref annotation; decl.annotations)
-            declared ~= clone(annotation);
-        // Spring's aggregate order: the class, its interfaces, then its superclasses (at equal distance the
-        // earlier one wins).
-        foreach (interfaces; [true, false])
-        {
-            foreach (ref supertype; decl.supertypes)
-            {
-                const base = model.type(supertype.name);
-                if (base is null || (base.kind == "interface") != interfaces)
-                    continue;
-                foreach (ref annotation; base.annotations)
-                    declared ~= clone(annotation);
-            }
-        }
-        return merge(declared, model.annotationTypes);
+        const(Annotation)[][] aggregates = [decl.annotations];
+        foreach (base; aggregateOrder(decl))
+            aggregates ~= base.annotations;
+        return aggregatesMerged(aggregates);
     }
 
     /// A parameter's merged annotations with those of the same parameter in overridden methods, as Spring MVC's
     /// HandlerMethodParameter finds `@PathVariable` and `@RequestBody` on an implemented interface.
     MergedSet hierarchyMerged(const ref TypeDecl decl, const ref Method method, size_t index)
     {
-        import flint_tool.engine.aot.merge : merge;
-
-        Annotation[] declared;
-        foreach (ref annotation; method.parameters[index].annotations)
-            declared ~= clone(annotation);
+        const(Annotation)[][] aggregates = [method.parameters[index].annotations];
         foreach (base; overridden(decl, method))
-        {
-            foreach (ref annotation; base.parameters[index].annotations)
-                declared ~= clone(annotation);
-        }
-        return merge(declared, model.annotationTypes);
+            aggregates ~= base.parameters[index].annotations;
+        return aggregatesMerged(aggregates);
     }
 
     void error(string code, string message, string file, long line)

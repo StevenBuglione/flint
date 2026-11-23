@@ -99,6 +99,11 @@ private struct State
     string outputKey;
     /// Modules extracted because an `@Import` names their classes (security configurations).
     string[] importedModules;
+    /// SHA-256 of each cached model and of the annotation types: the output key hashes these, so an extraction
+    /// that reproduces the same models regenerates nothing (early cutoff).
+    string[string] models;
+    /// ditto
+    string annotations;
 }
 
 /// Run Flint AOT for a project.
@@ -135,10 +140,12 @@ AotOutcome runAot(const ref AotRequest request)
         return finish(outcome, started);
     if (stale.length && !extractImports(request, cache, sources, keys, state, outcome))
         return finish(outcome, started);
-    const outputKey = outputKeyOf(sources, state);
-    if (stale.length == 0 && state.outputKey == outputKey && exists(buildPath(request.root,
-            aotDirectory, "flint_aot_registry.d")))
+    const outputKey = outputKeyOf(sources, state, request.environmentKey, autoConfigurations);
+    if (state.outputKey == outputKey && exists(buildPath(request.root, aotDirectory, "flint_aot_registry.d")))
     {
+        // Nothing to regenerate, also when the re-extracted models came out the same.
+        if (stale.length)
+            saveState(cache, state);
         outcome.ok = true;
         return finish(outcome, started);
     }
@@ -147,7 +154,8 @@ AotOutcome runAot(const ref AotRequest request)
         saveState(cache, state);
         return finish(outcome, started);
     }
-    state.outputKey = outputKey;
+    // Generation may have answered presence probes, which the key covers.
+    state.outputKey = outputKeyOf(sources, state, request.environmentKey, autoConfigurations);
     saveState(cache, state);
     outcome.ok = true;
     return finish(outcome, started);
@@ -170,6 +178,7 @@ private SourceModule[] userModules(string root)
     import flint_tool.support.files : dSources;
 
     SourceModule[] result;
+    ModuleInterface[] interfaces;
     foreach (relative; dSources(root))
     {
         if (relative.length < 4 || relative[0 .. 4] != "src/")
@@ -182,8 +191,33 @@ private SourceModule[] userModules(string root)
         result ~= SourceModule(found.name, path, baseName(relative) == "package.d", found.hash,
                 found.imports, true, found.text.indexOf("FlintBootApplication") >= 0
                 || found.text.indexOf("FlintApplication") >= 0);
+        interfaces ~= found;
     }
+    typeKeys(interfaces, result);
     return result;
+}
+
+/// Key each project module on its interface text without the constants, variables and functions nothing else in
+/// the project names (`typeKeyText`): adding such a declaration, the build benchmark's incremental edit, neither
+/// re-extracts nor regenerates anything.
+private void typeKeys(const imported!"flint_tool.engine.aot.iface".ModuleInterface[] interfaces, SourceModule[] sources)
+{
+    import flint_tool.engine.aot.iface : countOccurrences, typeKeyText;
+    import flint_tool.support.files : sha256Hex;
+
+    string[] names;
+    foreach (ref item; interfaces)
+    {
+        foreach (ref value; item.values)
+            names ~= value.name;
+    }
+    if (names.length == 0)
+        return;
+    size_t[string] occurrences;
+    foreach (ref item; interfaces)
+        countOccurrences(item.text, names, occurrences);
+    foreach (index, ref item; interfaces)
+        sources[index].hash = sha256Hex(cast(const(ubyte)[]) typeKeyText(item, occurrences));
 }
 
 /// Every auto-configuration class the closure's packages list, in order, without duplicates.
@@ -406,21 +440,29 @@ private string[] staleModules(scope const SourceModule[] sources, const string[s
 }
 
 /// A key over every module's extraction key: the generated output can only change when this does.
-private string outputKeyOf(scope const SourceModule[] sources, ref State state)
+private string outputKeyOf(scope const SourceModule[] sources, ref State state, string environment,
+        scope const string[] autoConfigurations)
 {
     import std.algorithm.sorting : sort;
+    import std.array : join;
     import flint_tool.support.files : sha256Hex;
 
+    // The generated code is a function of the models (by content), the annotation types, the presence answers,
+    // which modules are the project's, the auto-configuration order and the environment.
     string[] parts;
     foreach (ref source; sources)
     {
-        if (auto cached = source.name in state.keys)
-            parts ~= source.name ~ "=" ~ *cached;
+        const model = source.name in state.models;
+        const cached = source.name in state.keys;
+        if (model !is null || cached !is null)
+            parts ~= source.name ~ (source.user ? "+" : "-") ~ (source.packageModule
+                    ? "p" : "m") ~ "=" ~ (model !is null ? *model : "key " ~ *cached);
     }
     foreach (name, answer; state.present)
         parts ~= "?" ~ name ~ (answer ? "=1" : "=0");
     sort(parts);
-    string text = generatorVersion;
+    string text = generatorVersion ~ "\n" ~ environment ~ "\n" ~ state.annotations ~ "\n" ~ autoConfigurations.join(
+            ",");
     foreach (part; parts)
         text ~= "\n" ~ part;
     return sha256Hex(cast(const(ubyte)[]) text);
@@ -433,6 +475,7 @@ private bool extractInto(const ref AotRequest request, scope const SourceModule[
     import std.file : mkdirRecurse, write;
     import std.path : buildPath;
     import flint_tool.engine.aot.extract : ExtractionRequest, ExtractionResult, extract;
+    import flint_tool.support.files : sha256Hex;
 
     const cache = buildPath(request.root, cacheDirectory);
     bool[string] shareable;
@@ -466,6 +509,7 @@ private bool extractInto(const ref AotRequest request, scope const SourceModule[
     foreach (index, ref model; result.models)
     {
         write(modelPath(cache, model.name), result.documents[index]);
+        state.models[model.name] = sha256Hex(cast(const(ubyte)[]) result.documents[index]);
         state.keys[model.name] = keys.get(model.name, null);
         if (model.name in shareable)
             storeShared(request.sharedCache, keys.get(model.name, null), result.documents[index], result);
@@ -477,7 +521,7 @@ private bool extractInto(const ref AotRequest request, scope const SourceModule[
         auto annotations = loadAnnotations(cache);
         foreach (index, ref type; result.annotationTypes)
             annotations[type.name] = result.annotationDocuments[index];
-        saveAnnotations(cache, annotations);
+        state.annotations = saveAnnotations(cache, annotations);
     }
     foreach (name, answer; result.present)
         state.present[name] = answer;
@@ -628,6 +672,13 @@ private State loadState(string cache, string environment)
         foreach (name, value; root["present"].objectNoRef)
             state.present[name] = value.type == JSONType.true_;
         state.outputKey = root["output"].str;
+        if (const models = "models" in root.objectNoRef)
+        {
+            foreach (name, value; models.objectNoRef)
+                state.models[name] = value.str;
+        }
+        if (const annotations = "annotations" in root.objectNoRef)
+            state.annotations = annotations.str;
         if (const imported = "imported" in root.objectNoRef)
         {
             foreach (ref item; imported.arrayNoRef)
@@ -651,7 +702,12 @@ private void saveState(string cache, const ref State state)
     JSONValue[string] present;
     foreach (name, answer; state.present)
         present[name] = JSONValue(answer);
+    JSONValue[string] models;
+    foreach (name, hash; state.models)
+        models[name] = JSONValue(hash);
     JSONValue root = JSONValue([
+        "models": JSONValue(models),
+        "annotations": JSONValue(state.annotations),
         "schema": JSONValue("flint.aot.state/2"),
         "environment": JSONValue(state.environmentKey),
         "output": JSONValue(state.outputKey),
@@ -690,7 +746,7 @@ private string[] reuseShared(string sharedCache, scope const string[] requested,
         auto merged = loadAnnotations(cache);
         foreach (type, value; reusedAnnotations)
             merged[type] = value;
-        saveAnnotations(cache, merged);
+        state.annotations = saveAnnotations(cache, merged);
     }
     return modules;
 }
@@ -722,6 +778,7 @@ private bool reuseShared(string sharedCache, string name, string key, string cac
     mkdirRecurse(buildPath(cache, "models"));
     write(modelPath(cache, name), document);
     state.keys[name] = key;
+    state.models[name] = imported!"flint_tool.support.files".sha256Hex(cast(const(ubyte)[]) document);
     return true;
 }
 
@@ -837,15 +894,19 @@ private string[string] loadAnnotations(string cache)
     return result;
 }
 
-private void saveAnnotations(string cache, const string[string] annotations)
+/// Write the annotation types; their SHA-256.
+private string saveAnnotations(string cache, const string[string] annotations)
 {
     import std.file : mkdirRecurse, write;
     import std.json : JSONValue;
     import std.path : buildPath;
+    import flint_tool.support.files : sha256Hex;
 
     JSONValue[string] values;
     foreach (name, document; annotations)
         values[name] = JSONValue(document);
     mkdirRecurse(cache);
-    write(buildPath(cache, "annotations.json"), JSONValue(values).toString);
+    const text = JSONValue(values).toString;
+    write(buildPath(cache, "annotations.json"), text);
+    return sha256Hex(cast(const(ubyte)[]) text);
 }

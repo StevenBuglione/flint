@@ -213,7 +213,22 @@ private Annotation normalized(const ref Annotation annotation, const AnnotationT
             mirror(result, *type, field.name, other.name, target.length != 0, errors);
         }
     }
+    foreach (ref value; result.values)
+        normalizeNested(value, types, errors);
     return result;
+}
+
+/// Resolve the aliases of annotations nested in attribute values (`@ComponentScan(excludeFilters:
+/// [Filter(...)])`), as Spring synthesizes nested annotations.
+private void normalizeNested(ref Value value, const AnnotationType[string] types, ref string[] errors)
+{
+    if (value.kind == Value.Kind.annotation && value.nested.length)
+        value.nested[0] = normalized(value.nested[0], types, errors);
+    else if (value.kind == Value.Kind.array)
+    {
+        foreach (ref item; value.items)
+            normalizeNested(item, types, errors);
+    }
 }
 
 /// Whether `field` aliases `partner` (an intra-annotation alias when `target` is empty), or, for an explicit

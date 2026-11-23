@@ -267,6 +267,20 @@ unittest
     expect(conflicting.conflicts.length > 0).toBeTrue();
 }
 
+@("aliases inside nested annotation values are resolved")
+unittest
+{
+    const filter = annotationType("m.Filter", "[]", attribute("value", "string[]", "[]", null,
+            "classes"), attribute("classes", "string[]", "[]", null, "value"));
+    const scan = annotationType("m.Scan", "[]", attribute("excludeFilters", "m.Filter[]", "[]"));
+    const nested = `{"type":"m.Filter","modules":["m"],"values":{"value":["m.Skipped"],"classes":[]}}`;
+    const merged = mergedWith(filter ~ "," ~ scan, `[` ~ use("m.Scan", `"excludeFilters":[` ~ nested ~ `]`) ~ `]`);
+    expect(merged.conflicts).toEqual(cast(string[]) null);
+    const filters = merged.get("m.Scan").get("excludeFilters");
+    expect(filters.items.length).toEqual(1);
+    expect(filters.items[0].nested[0].get("classes").strings).toEqual(["m.Skipped"]);
+}
+
 @("misconfigured @AliasFor declarations are reported, as Spring throws AnnotationConfigurationException")
 unittest
 {
@@ -638,6 +652,61 @@ unittest
     expect(mapping.written).toEqual(1);
 }
 
+@("a constant nothing names skips the extraction compile; same models regenerate nothing (early cutoff)")
+unittest
+{
+    import std.file : append;
+    import std.path : buildPath;
+
+    const project = copyFixture("sample");
+    scope (exit)
+        remove(project);
+    auto first = generate(project);
+    expect(first.ok).toBeTrue();
+    // The build benchmark's incremental edit: a new module-level constant nothing refers to.
+    append(buildPath(project, "src", "shop", "web.d"), "\nenum flintMeasureEdit0 = 0;\n");
+    auto unreferenced = generate(project);
+    expect(unreferenced.ok).toBeTrue();
+    expect(unreferenced.extracted).toEqual(0);
+    expect(unreferenced.written).toEqual(0);
+    // The same name in two modules: each may refer to the other's, so both are extracted again, but their models
+    // are unchanged and nothing is regenerated.
+    append(buildPath(project, "src", "shop", "pricing.d"), "\nprivate int flintMeasureEdit0() { return 1; }\n");
+    auto twice = generate(project);
+    expect(twice.ok).toBeTrue();
+    expect(twice.extracted > 0).toBeTrue();
+    expect(twice.written).toEqual(0);
+    // A constant an annotation uses is part of the key: changing it re-extracts and regenerates.
+    edit(buildPath(project, "src", "shop", "web.d"), `@GetMapping("/{id}")`, `@GetMapping(greetingPath)`);
+    append(buildPath(project, "src", "shop", "web.d"), "\nenum greetingPath = \"/{id}\";\n");
+    auto named = generate(project);
+    expect(named.extracted).toEqual(1);
+    edit(buildPath(project, "src", "shop", "web.d"), `enum greetingPath = "/{id}";`,
+            `enum greetingPath = "/{id}/hello";`);
+    auto changed = generate(project);
+    expect(changed.extracted).toEqual(1);
+    expect(changed.written).toEqual(1);
+}
+
+@("top-level value and function declarations are found in the interface text")
+unittest
+{
+    import flint_tool.engine.aot.iface : ModuleInterface, readInterface;
+
+    ModuleInterface found;
+    assert(readInterface("module m;\n@safe:\nimport a.b;\nenum limit = 3;\nprivate immutable string[] names = "
+            ~ "[\"a\"];\nint twice(int x) { return x * 2; }\nT id(T)(T x) { return x; }\nalias L = int;\n"
+            ~ "enum Color { red }\nstruct S { int f() { return 1; } }\nenum f = () { return 1; }();\n"
+            ~ "int a = 1, b = 2;\nstatic if (true) { enum hidden = 1; }\n", found));
+    string[] names;
+    foreach (ref value; found.values)
+    {
+        names ~= value.name;
+        expect(found.text[value.start .. value.end].length > 0).toBeTrue();
+    }
+    expect(names).toEqual(["limit", "names", "twice", "f"]);
+}
+
 @("the sample's generated code compiles with flint:engine-aot and behaves as Spring does")
 unittest
 {
@@ -835,6 +904,10 @@ unittest
     const web = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot", "hier", "web.d"));
     expect(web.canFind(`mapping.paths = ["/api/ping"];`)).toBeTrue();
     expect(web.canFind(`mapping.paths = ["/api/version"];`)).toBeTrue();
+    // The first aggregate with a match wins: ReportService's meta-annotated @Transactional, not BaseService's.
+    const service = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot", "hier", "service.d"));
+    expect(service.canFind(`a.value = "readOnlyManager";`)).toBeTrue();
+    expect(service.canFind(`"baseManager"`)).toBeFalse();
 }
 
 @("a platform module's generated code may not import a project module (FLINT-E1116)")
