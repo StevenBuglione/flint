@@ -5,6 +5,10 @@ Measurements run sequentially on the dedicated Linux x86-64 performance runner, 
 runner (ADR-025), where LDC's ldmd2 fills the dev profile's DMD role until DMD arm64 lands (ADR-024).
 Cold means source/build-cache cold with prebuilt toolchain runtimes and native C
 libraries already prepared. It does not mean dropping the OS page cache.
+
+--apps-only measures ADR-025's compile-speed gate on any tier-1 host, Windows
+included: the development builds of bench-cli and bench-rest and the Go
+references, cold and incremental, with the same method and statistics.
 """
 from __future__ import annotations
 import argparse
@@ -39,7 +43,7 @@ def run_checked(command, cwd, env=None):
     return result
 
 
-PAGE_BYTES = os.sysconf('SC_PAGE_SIZE')
+PAGE_BYTES = os.sysconf('SC_PAGE_SIZE') if hasattr(os, 'sysconf') else None
 
 
 def process_tree_rss(root, floor):
@@ -104,7 +108,75 @@ if sys.platform == 'darwin':
         return total
 
 
+class WindowsJob:
+    """A job object holding a build's process tree on Windows, for its kernel-tracked peak memory.
+
+    Windows has no /proc. The job records the peak committed memory of every process in it, so nothing is
+    sampled while the build runs. Processes that break away from the job, such as the DMD compile server's
+    warm workers, are not counted, just as the Linux sampler does not count the forked server's workers."""
+    EXTENDED_LIMIT_INFORMATION = 9
+
+    def __init__(self):
+        import ctypes
+        from ctypes import wintypes
+        self.ctypes = ctypes
+        self.kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+        self.kernel32.CreateJobObjectW.restype = wintypes.HANDLE
+        self.kernel32.CreateJobObjectW.argtypes = [ctypes.c_void_p, wintypes.LPCWSTR]
+        self.kernel32.AssignProcessToJobObject.argtypes = [wintypes.HANDLE, wintypes.HANDLE]
+        self.kernel32.QueryInformationJobObject.argtypes = [wintypes.HANDLE, ctypes.c_int, ctypes.c_void_p,
+                                                            wintypes.DWORD, ctypes.c_void_p]
+        self.kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+        self.handle = self.kernel32.CreateJobObjectW(None, None)
+        if not self.handle:
+            raise RuntimeError('CreateJobObjectW failed: ' + str(ctypes.get_last_error()))
+
+    def assign(self, process):
+        if not self.kernel32.AssignProcessToJobObject(self.handle, int(process._handle)):
+            raise RuntimeError('AssignProcessToJobObject failed: ' + str(self.ctypes.get_last_error()))
+
+    def peak_bytes(self):
+        ctypes = self.ctypes
+        # JOBOBJECT_EXTENDED_LIMIT_INFORMATION: the basic limits (64 bytes on x64), I/O counters (48 bytes),
+        # then ProcessMemoryLimit, JobMemoryLimit, PeakProcessMemoryUsed and PeakJobMemoryUsed.
+        buffer = (ctypes.c_uint64 * 18)()
+        if not self.kernel32.QueryInformationJobObject(self.handle, self.EXTENDED_LIMIT_INFORMATION, buffer,
+                                                       ctypes.sizeof(buffer), None):
+            raise RuntimeError('QueryInformationJobObject failed: ' + str(ctypes.get_last_error()))
+        return int(buffer[17])
+
+    def close(self):
+        self.kernel32.CloseHandle(self.handle)
+
+
+def timed_windows_process(command, cwd, env, log_path):
+    """Windows counterpart of timed_process: wall time and the job's peak committed memory."""
+    job = WindowsJob()
+    try:
+        start = time.perf_counter_ns()
+        with open(log_path, 'wb') as log:
+            process = subprocess.Popen([str(x) for x in command], cwd=cwd, env=env,
+                                       stdout=log, stderr=subprocess.STDOUT)
+            # DUB starts its first child only after loading the project, well after this assignment.
+            job.assign(process)
+            exit_code = process.wait()
+        elapsed = (time.perf_counter_ns() - start) / 1e9
+        peak = job.peak_bytes()
+    finally:
+        job.close()
+    if exit_code:
+        raise RuntimeError('build failed: ' + str(command) + '\n' + Path(log_path).read_text(errors='replace')[-20000:])
+    if peak <= 0:
+        raise RuntimeError('no peak memory reported; measurement is incomplete')
+    return {'seconds': elapsed, 'peak_rss_bytes': peak,
+            'command': [str(x) for x in command], 'exit_code': exit_code,
+            'log_sha256': digest(log_path),
+            'memory_method': 'peak committed memory of the build\'s job object, tracked by the kernel'}
+
+
 def timed_process(command, cwd, env, log_path):
+    if sys.platform == 'win32':
+        return timed_windows_process(command, cwd, env, log_path)
     peak = 0
     start = time.perf_counter_ns()
     with open(log_path, 'wb') as log:
@@ -273,6 +345,15 @@ def native_profile_hash(blocks, prefix):
     return hashlib.sha256(json.dumps(normalized, sort_keys=True).encode()).hexdigest()
 
 
+def host_native_target():
+    """The native install target of this host, as tools/native_build.py names it."""
+    if sys.platform == 'win32':
+        return 'windows-x86_64'
+    if sys.platform == 'darwin':
+        return 'macos-arm64'
+    return 'linux-aarch64-glibc' if os.uname().machine in ('aarch64', 'arm64') else 'linux-x86_64-glibc'
+
+
 def source_identity(root):
     """Reject uncommitted code; allow only exactly verified generated native flags."""
     commit = run_checked(['git', 'rev-parse', 'HEAD'], root).stdout.strip()
@@ -284,7 +365,7 @@ def source_identity(root):
     prefix = run_checked(['git', 'rev-parse', '--show-prefix'], root).stdout.strip()
     native = None
     expected = {}
-    target = 'macos-arm64' if sys.platform == 'darwin' else 'linux-x86_64-glibc'
+    target = host_native_target()
     receipt_path = root / '.native/install' / target / 'flint-native-install.json'
     if receipt_path.is_file():
         import native_build
@@ -375,6 +456,69 @@ def stripped_size_macho(target, strip, otool, workspace, log):
             'dynamic_system_dependencies': needed, 'log_sha256': digest(log)}
 
 
+def go_compile_gate_trials(go, name, source, go_env, temporary, logs, result):
+    """Go's cold and incremental builds for the compile-speed gate: a fresh copy of the reference app and a fresh
+    clone of the standard-library-primed cache per trial, then the same app rebuilt after appending a declaration
+    to main.go, as the D app's edit source is edited."""
+    cold, incremental = [], []
+    go_build = [go, 'build', '-buildvcs=false', '-trimpath']
+    for iteration in range(9):
+        work = temporary / (name + '-' + str(iteration))
+        shutil.copytree(source, work, ignore=shutil.ignore_patterns('.git', 'build'))
+        cache = temporary / (name + '-cache-' + str(iteration))
+        shutil.copytree(temporary / 'prime', cache, copy_function=os.link)
+        env = go_env.copy(); env['GOCACHE'] = str(cache)
+        command = go_build + ['-ldflags=-s -w', '-o', work / 'reference', '.']
+        for state in ['cold', 'incremental']:
+            if state == 'incremental':
+                with (work / 'main.go').open('a', encoding='utf-8') as output:
+                    output.write('\nconst flintMeasureEdit' + str(iteration) + ' = ' + str(iteration) + '\n')
+            logfile = logs / f'{name}-go-{state}-{iteration}.log'
+            measured = timed_process(command, work, env, logfile)
+            (cold if state == 'cold' else incremental).append(measured['seconds'])
+            result['trials'].append(dict(measured, fixture=name, profile='go', state=state, trial=iteration,
+                                         log=str(logfile.relative_to(logs.parent))))
+    return cold, incremental
+
+
+def measure_compile_gate(args, manifest, result, measured_native, go_sources, base_env, logs):
+    """ADR-025 section 1: the development builds of the apps against Go on the same machine, cold and
+    incremental, each ratio's median and bootstrap 99% upper bound at most 0.99."""
+    from perf_stats import median_ratio_interval
+    result['mode'] = 'compile-gate'
+    result['host'] = {'platform': sys.platform, 'machine': __import__('platform').machine(), 'cpus': os.cpu_count()}
+    apps = args.app or ['bench-cli', 'bench-rest']
+    for name in apps:
+        print('Measuring app', name, flush=True)
+        row = measured_native(name, manifest['apps'][name], apps_only=True)
+        row.pop('compiler_peak_rss_bytes')
+        result['apps'][name] = row
+    go_env = base_env.copy()
+    go_env.update({'GOTOOLCHAIN': 'local', 'GOPROXY': 'off', 'GOSUMDB': 'off', 'GOWORK': 'off', 'CGO_ENABLED': '0'})
+    with tempfile.TemporaryDirectory(prefix='flint-go-') as temporary:
+        temporary = Path(temporary); (temporary / 'prime').mkdir()
+        run_checked([args.go, 'build', '-buildvcs=false', '-trimpath', 'std'], ROOT,
+                    dict(go_env, GOCACHE=str(temporary / 'prime')))
+        for name in apps:
+            cold, incremental = go_compile_gate_trials(args.go, name, go_sources[name], go_env, temporary, logs, result)
+            result['go']['apps'][name] = {'cold_seconds': cold, 'incremental_seconds': incremental}
+    verdicts = {}
+    for name in apps:
+        for state in ['cold', 'incremental']:
+            median, lower, upper = median_ratio_interval(result['apps'][name]['dmd_' + state + '_seconds'],
+                                                         result['go']['apps'][name][state + '_seconds'])
+            verdicts[name + ' ' + state] = {'median_ratio': median, 'lower_99': lower, 'upper_99': upper,
+                                            'pass': median <= .99 and upper <= .99}
+    result['compile_gate'] = {'ceiling': .99, 'ratios': verdicts,
+                              'pass': set(apps) == {'bench-cli', 'bench-rest'} and all(v['pass'] for v in verdicts.values())}
+    args.output.write_text(json.dumps(result, indent=2) + '\n')
+    for label, verdict in verdicts.items():
+        print(f"{label}: median ratio {verdict['median_ratio']:.3f}, 99% upper {verdict['upper_99']:.3f}",
+              'pass' if verdict['pass'] else 'FAIL')
+    print('Wrote compile-gate evidence', args.output, '(gate', 'passes)' if result['compile_gate']['pass'] else 'fails)')
+    return 0
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--manifest', type=Path, default=ROOT / 'policy/build-benchmarks.json')
@@ -389,9 +533,15 @@ def main(argv=None):
     parser.add_argument('--readelf', default='otool' if darwin else 'readelf',
                         help='the dynamic-dependency audit tool: readelf, or otool on macOS')
     parser.add_argument('--lld', default=None, help='Optional external LLD22; default uses system cc/ld with bundled LLVMgold plugin')
+    parser.add_argument('--apps-only', action='store_true',
+                        help='ADR-025 compile-speed gate on any tier-1 host: dev builds of the apps and Go, cold and incremental')
+    parser.add_argument('--app', action='append', choices=['bench-cli', 'bench-rest'],
+                        help='with --apps-only, measure only this app (the gate needs both)')
     args = parser.parse_args(argv)
-    host = (sys.platform, os.uname().machine)
-    if host not in (('linux', 'x86_64'), ('darwin', 'arm64')):
+    if args.app and not args.apps_only:
+        raise RuntimeError('--app applies only to --apps-only')
+    host = (sys.platform, os.uname().machine if hasattr(os, 'uname') else '')
+    if not args.apps_only and host not in (('linux', 'x86_64'), ('darwin', 'arm64')):
         raise RuntimeError('measurement runners are Linux x86-64 and macOS arm64 (ADR-025); '
                            'cross-platform correctness uses its separate matrix')
     manifest = json.loads(args.manifest.read_text())
@@ -426,7 +576,8 @@ def main(argv=None):
     if missing:
         raise RuntimeError('Build measurement requires implemented benchmark fixtures:\n' + '\n'.join(missing))
     tools = {}
-    for name in ['dmd', 'ldc', 'dub', 'go', 'strip', 'readelf'] + (['lld'] if args.lld else []):
+    required = ['dmd', 'dub', 'go'] if args.apps_only else ['dmd', 'ldc', 'dub', 'go', 'strip', 'readelf']
+    for name in required + (['lld'] if args.lld else []):
         found = shutil.which(getattr(args, name))
         if not found:
             raise RuntimeError('required executable missing: ' + getattr(args, name))
@@ -440,7 +591,7 @@ def main(argv=None):
         tools[name] = {'sha256': digest(getattr(args, name)), 'version': version.strip()}
     if args.lld and not re.search(r'LLD\s+22\.', tools['lld']['version']):
         raise RuntimeError('LDC1.43 LLVM22 ThinLTO requires external LLD22 for these native profiles')
-    for name in ['cc', 'ld']:
+    for name in [] if args.apps_only else ['cc', 'ld']:
         executable=shutil.which(name)
         if not executable:raise RuntimeError('native compiler driver/linker missing: '+name)
         probe=run_checked([executable,'-v' if darwin and name=='ld' else '--version'],ROOT)
@@ -501,9 +652,10 @@ def main(argv=None):
         if not path.is_relative_to(workspace.resolve()) or not path.is_file():
             raise RuntimeError('DUB target missing or outside isolated workspace: ' + str(path))
         return path
-    def measured_native(name, fixture):
+    def measured_native(name, fixture, apps_only=False):
         row = {}; peaks = []
-        for label, compiler, profile in [('dmd', args.dmd, 'dmd'), ('ldc', args.ldc, 'O3')]:
+        compilers = [('dmd', args.dmd, 'dmd')] + ([] if apps_only else [('ldc', args.ldc, 'O3')])
+        for label, compiler, profile in compilers:
             cold = []; incremental = []
             if label == 'dmd':
                 # ADR-016: cold trials start with the toolchain compile server running for the measured flags,
@@ -543,6 +695,8 @@ def main(argv=None):
             row[label + '_cold_seconds'] = cold
             row[label + '_incremental_seconds'] = incremental
         row['compiler_peak_rss_bytes'] = max(peaks)
+        if apps_only:
+            return row
         # Template statistics and time traces use a separate build; instrumentation
         # overhead is not included in developer-loop timing samples.
         with tempfile.TemporaryDirectory(prefix='flint-templates-') as temporary:
@@ -577,6 +731,8 @@ def main(argv=None):
                 {'artifact': str(path.relative_to(args.output.parent)), 'sha256': digest(path)}
                 for path in sorted(trace_files + invocations + streams + list(traces.glob('*.response.txt')) + [driver_log])]
         return row
+    if args.apps_only:
+        return measure_compile_gate(args, manifest, result, measured_native, go_sources, base_env, logs)
     published = ROOT / 'build'; published.mkdir(exist_ok=True)
     for name, fixture in manifest['packages'].items():
         print('Measuring package', name, flush=True)
