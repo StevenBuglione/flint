@@ -1,0 +1,5 @@
+    Building gs-rest-service 0.0.1 (dev, dmd)
+    Finished .flint/build/dev/gs-rest-service (non-canonical: the toolchain is not verified against its receipt)
+warning[FLINT-E0804] toolchain receipt missing
+  cause: no toolchain receipt at /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/2018e5e52cba/.tools/flint-toolchain.json, so the installed fork cannot be traced to toolchain/*.patch
+  fix: flint toolchain install

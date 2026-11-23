@@ -1,0 +1,14 @@
+Measuring gs-rest-service
+gs-rest-service flint_cached_cold_seconds phase medians (ms): total 391 (budget 100), flint 276 (budget 20), aot 18, plan 22, compile 59 (budget 60), link 17 (budget 20)
+gs-rest-service flint_cached_incremental_seconds phase medians (ms): total 118 (budget 100), flint 22 (budget 20), aot 0, plan 20, compile 57 (budget 60), link 18 (budget 20)
+gs-rest-service flint_scratch_seconds phase medians (ms): total 3512 (budget 100), flint 127 (budget 20), aot 17, plan 3111, link 242 (budget 20)
+gs-rest-service flint_static_cold_seconds phase medians (ms): total 487 (budget 100), flint 211 (budget 20), aot 17, plan 23, compile 59 (budget 60), link 176 (budget 20)
+gs-rest-service flint_static_incremental_seconds phase medians (ms): total 340 (budget 100), flint 89 (budget 20), aot 0, plan 21, compile 58 (budget 60), link 170 (budget 20)
+gs-rest-service: Go std-primed cold 0.154s, -a 3.235s, binary 6634456 bytes
+  primary: platform cache vs std-primed GOCACHE: 2.521 FAIL
+  secondary: from scratch vs go build -a: 1.062 FAIL
+  incremental: dev profile as built: 0.758 pass
+  incremental: fully static: 2.149 FAIL
+  stricter: platform cache vs deps-primed GOCACHE: 2.455 FAIL
+  Oz binary size: 0.612 pass
+Wrote Spring build evidence /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/gs-builds/20261123T164458Z/builds.json (failed)

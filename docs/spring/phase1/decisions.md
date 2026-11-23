@@ -140,6 +140,23 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - Oz: 0.609, which passes.
 
     Evidence: `benchmarks/spring/evidence/gs-builds/20261123T160701Z/`.
+  - **Update, 16:48–16:51Z (certified, `gs-builds` at `2018e5e5`, no foreign build during the run).** This run has the DMD fork with dmd-arm64's compile-server prelude, built from the checkout's own patch (PGO). It also has m7-flint-cli's cached platform description (`c2ae7990`, `2018e5e5`) and flint-aot's `2cd5ce4d`. Median ratios (99% interval):
+    - primary: 2.52 (2.38–2.65), 0.402 s against 0.160 s;
+    - secondary: 1.06 (1.01–1.08), 3.519 s against 3.313 s;
+    - edit build, dev profile as built (shared objects): **0.758 (0.704–0.799), which passes**: 0.123 s against Go's 0.162 s;
+    - edit build, fully static: 2.15 (2.04–2.25), 0.348 s;
+    - Oz: 0.612, which passes.
+
+    Per-phase medians in ms, against the edit-build budget of 100 total, 20 flint, 60 compile and 20 link:
+
+    | Series | total | flint | aot | plan | compile | link |
+    | --- | --- | --- | --- | --- | --- | --- |
+    | edit, shared objects | 118 | 22 | 0 | 20 | 57 | 18 |
+    | edit, static | 340 | 89 | 0 | 21 | 58 | 170 |
+    | cached cold | 391 | 276 | 18 | 22 | 59 | 17 |
+    | scratch | 3,512 | 127 | 17 | 3,111 | – | 242 |
+
+    In the shared-object edit build, compile and link are within budget. The 118 ms total is over the 100 ms budget by DUB's plan (20 ms, which m7 is taking off the dev path) and flint's 2 ms. In the cold build, flint's own 276 ms is the description run again, because cold trials clear `.flint`. In the static edit build, the 170 ms link dominates. Evidence: `benchmarks/spring/evidence/gs-builds/20261123T164458Z/`.
   - **Not yet certified:** the runtime metrics. A smoke run gave Flint about 0.26–0.4x Go's throughput. `phase1-guides` measures them in the next window.
 
 - 2026-11-23, coordinator: the edit-build floor. After m7-flint-cli's cut (`19390bd1`: 0.98 s → 0.69 s), gs-rest-service's edit build is link 0.2 s, compile 0.13 s and flint's own overhead about 0.3 s. Even with every planned lever (the compile-server prelude, flint overhead cuts), m7 estimates a floor near 0.35 s against Go's 0.154 s. Closing it likely needs dev builds that link the platform cache as shared objects, so an edit relinks only the app; release and size builds stay static. That changes what the edit-build gate compares (a dynamically linked dev binary against Go's static one), so it's the owner's call. m7 is prototyping and measuring it, plus split debug info (which needs no decision), and won't make shared-object dev builds the default without a yes.
