@@ -1,0 +1,6 @@
+static  link   4:    174.0 8:    136.0  diff -38.0 [-42.0, -30.0] excludes 0
+static  total  4:    312.0 8:    274.0  diff -38.0 [-46.0, -26.0] excludes 0
+static  wall   4:    318.5 8:    280.1  diff -38.4 [-45.1, -27.7] excludes 0
+shared  link   4:     16.0 8:     14.0  diff -2.0 [-4.0, 3.0]
+shared  total  4:     60.0 8:     60.0  diff +0.0 [-4.0, 3.0]
+shared  wall   4:     62.6 8:     62.4  diff -0.2 [-4.0, 3.6]

@@ -1,0 +1,1046 @@
+{
+  "schema": "flint.spring-link-ab/1",
+  "mode": "production",
+  "app": "gs-rest-service",
+  "root": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/36c2924886ae",
+  "arms": {
+    "first": "4",
+    "second": "8"
+  },
+  "trials_per_arm": 15,
+  "variable": "FLINT_LINK_THREADS",
+  "series": {
+    "static": {
+      "medians_ms": {
+        "4": {
+          "link": 174,
+          "total": 312,
+          "wall": 318.4829065576196
+        },
+        "8": {
+          "link": 136,
+          "total": 274,
+          "wall": 280.0550367683172
+        }
+      },
+      "difference_ms": {
+        "link": {
+          "difference": -38,
+          "lower_99": -42,
+          "upper_99": -30,
+          "excludes_zero": true
+        },
+        "total": {
+          "difference": -38,
+          "lower_99": -46,
+          "upper_99": -26,
+          "excludes_zero": true
+        },
+        "wall": {
+          "difference": -38.42786978930235,
+          "lower_99": -45.07865197956562,
+          "upper_99": -27.73477230221033,
+          "excludes_zero": true
+        }
+      }
+    },
+    "shared": {
+      "medians_ms": {
+        "4": {
+          "link": 16,
+          "total": 60,
+          "wall": 62.609581276774406
+        },
+        "8": {
+          "link": 14,
+          "total": 60,
+          "wall": 62.41988856345415
+        }
+      },
+      "difference_ms": {
+        "link": {
+          "difference": -2,
+          "lower_99": -4,
+          "upper_99": 3,
+          "excludes_zero": false
+        },
+        "total": {
+          "difference": 0,
+          "lower_99": -4,
+          "upper_99": 3,
+          "excludes_zero": false
+        },
+        "wall": {
+          "difference": -0.18969271332025528,
+          "lower_99": -4.036378115415573,
+          "upper_99": 3.6220448091626167,
+          "excludes_zero": false
+        }
+      }
+    }
+  },
+  "trials": [
+    {
+      "wall": 372.7103350684047,
+      "link": 174,
+      "total": 366,
+      "phases_ms": {
+        "total": 366,
+        "flint": 144,
+        "aot": 1,
+        "plan": 25,
+        "compile": 22,
+        "link": 174
+      },
+      "series": "static",
+      "arm": "4",
+      "trial": 0
+    },
+    {
+      "wall": 278.50532811135054,
+      "link": 140,
+      "total": 272,
+      "phases_ms": {
+        "total": 272,
+        "flint": 91,
+        "aot": 1,
+        "plan": 21,
+        "compile": 19,
+        "link": 140
+      },
+      "series": "static",
+      "arm": "8",
+      "trial": 0
+    },
+    {
+      "wall": 272.3054448142648,
+      "link": 134,
+      "total": 267,
+      "phases_ms": {
+        "total": 267,
+        "flint": 91,
+        "aot": 1,
+        "plan": 22,
+        "compile": 19,
+        "link": 134
+      },
+      "series": "static",
+      "arm": "8",
+      "trial": 1
+    },
+    {
+      "wall": 313.20122350007296,
+      "link": 172,
+      "total": 307,
+      "phases_ms": {
+        "total": 307,
+        "flint": 91,
+        "aot": 1,
+        "plan": 22,
+        "compile": 21,
+        "link": 172
+      },
+      "series": "static",
+      "arm": "4",
+      "trial": 1
+    },
+    {
+      "wall": 313.95215168595314,
+      "link": 173,
+      "total": 307,
+      "phases_ms": {
+        "total": 307,
+        "flint": 90,
+        "aot": 1,
+        "plan": 22,
+        "compile": 21,
+        "link": 173
+      },
+      "series": "static",
+      "arm": "4",
+      "trial": 2
+    },
+    {
+      "wall": 276.0941544547677,
+      "link": 135,
+      "total": 270,
+      "phases_ms": {
+        "total": 270,
+        "flint": 90,
+        "aot": 1,
+        "plan": 23,
+        "compile": 21,
+        "link": 135
+      },
+      "series": "static",
+      "arm": "8",
+      "trial": 2
+    },
+    {
+      "wall": 279.6741407364607,
+      "link": 136,
+      "total": 273,
+      "phases_ms": {
+        "total": 273,
+        "flint": 94,
+        "aot": 1,
+        "plan": 22,
+        "compile": 20,
+        "link": 136
+      },
+      "series": "static",
+      "arm": "8",
+      "trial": 3
+    },
+    {
+      "wall": 317.9962122812867,
+      "link": 175,
+      "total": 311,
+      "phases_ms": {
+        "total": 311,
+        "flint": 91,
+        "aot": 1,
+        "plan": 23,
+        "compile": 21,
+        "link": 175
+      },
+      "series": "static",
+      "arm": "4",
+      "trial": 3
+    },
+    {
+      "wall": 309.87704545259476,
+      "link": 172,
+      "total": 305,
+      "phases_ms": {
+        "total": 305,
+        "flint": 90,
+        "aot": 1,
+        "plan": 21,
+        "compile": 21,
+        "link": 172
+      },
+      "series": "static",
+      "arm": "4",
+      "trial": 4
+    },
+    {
+      "wall": 274.5416769757867,
+      "link": 136,
+      "total": 269,
+      "phases_ms": {
+        "total": 269,
+        "flint": 90,
+        "aot": 1,
+        "plan": 23,
+        "compile": 19,
+        "link": 136
+      },
+      "series": "static",
+      "arm": "8",
+      "trial": 4
+    },
+    {
+      "wall": 317.2742109745741,
+      "link": 178,
+      "total": 311,
+      "phases_ms": {
+        "total": 311,
+        "flint": 92,
+        "aot": 0,
+        "plan": 22,
+        "compile": 19,
+        "link": 178
+      },
+      "series": "static",
+      "arm": "8",
+      "trial": 5
+    },
+    {
+      "wall": 319.9730245396495,
+      "link": 173,
+      "total": 313,
+      "phases_ms": {
+        "total": 313,
+        "flint": 95,
+        "aot": 1,
+        "plan": 23,
+        "compile": 21,
+        "link": 173
+      },
+      "series": "static",
+      "arm": "4",
+      "trial": 5
+    },
+    {
+      "wall": 319.53126192092896,
+      "link": 178,
+      "total": 315,
+      "phases_ms": {
+        "total": 315,
+        "flint": 93,
+        "aot": 1,
+        "plan": 22,
+        "compile": 21,
+        "link": 178
+      },
+      "series": "static",
+      "arm": "4",
+      "trial": 6
+    },
+    {
+      "wall": 280.0550367683172,
+      "link": 138,
+      "total": 274,
+      "phases_ms": {
+        "total": 274,
+        "flint": 91,
+        "aot": 0,
+        "plan": 23,
+        "compile": 22,
+        "link": 138
+      },
+      "series": "static",
+      "arm": "8",
+      "trial": 6
+    },
+    {
+      "wall": 276.03105921298265,
+      "link": 136,
+      "total": 270,
+      "phases_ms": {
+        "total": 270,
+        "flint": 91,
+        "aot": 1,
+        "plan": 22,
+        "compile": 20,
+        "link": 136
+      },
+      "series": "static",
+      "arm": "8",
+      "trial": 7
+    },
+    {
+      "wall": 320.3819775953889,
+      "link": 183,
+      "total": 316,
+      "phases_ms": {
+        "total": 316,
+        "flint": 90,
+        "aot": 1,
+        "plan": 22,
+        "compile": 20,
+        "link": 183
+      },
+      "series": "static",
+      "arm": "4",
+      "trial": 7
+    },
+    {
+      "wall": 323.58398009091616,
+      "link": 178,
+      "total": 317,
+      "phases_ms": {
+        "total": 317,
+        "flint": 94,
+        "aot": 1,
+        "plan": 24,
+        "compile": 20,
+        "link": 178
+      },
+      "series": "static",
+      "arm": "4",
+      "trial": 8
+    },
+    {
+      "wall": 281.99770115315914,
+      "link": 136,
+      "total": 275,
+      "phases_ms": {
+        "total": 275,
+        "flint": 94,
+        "aot": 1,
+        "plan": 24,
+        "compile": 20,
+        "link": 136
+      },
+      "series": "static",
+      "arm": "8",
+      "trial": 8
+    },
+    {
+      "wall": 282.89774619042873,
+      "link": 136,
+      "total": 276,
+      "phases_ms": {
+        "total": 276,
+        "flint": 91,
+        "aot": 1,
+        "plan": 26,
+        "compile": 22,
+        "link": 136
+      },
+      "series": "static",
+      "arm": "8",
+      "trial": 9
+    },
+    {
+      "wall": 325.9595660492778,
+      "link": 181,
+      "total": 319,
+      "phases_ms": {
+        "total": 319,
+        "flint": 96,
+        "aot": 1,
+        "plan": 21,
+        "compile": 20,
+        "link": 181
+      },
+      "series": "static",
+      "arm": "4",
+      "trial": 9
+    },
+    {
+      "wall": 314.94641676545143,
+      "link": 171,
+      "total": 307,
+      "phases_ms": {
+        "total": 307,
+        "flint": 92,
+        "aot": 1,
+        "plan": 22,
+        "compile": 21,
+        "link": 171
+      },
+      "series": "static",
+      "arm": "4",
+      "trial": 10
+    },
+    {
+      "wall": 282.91826508939266,
+      "link": 143,
+      "total": 277,
+      "phases_ms": {
+        "total": 277,
+        "flint": 92,
+        "aot": 1,
+        "plan": 22,
+        "compile": 19,
+        "link": 143
+      },
+      "series": "static",
+      "arm": "8",
+      "trial": 10
+    },
+    {
+      "wall": 275.5206096917391,
+      "link": 135,
+      "total": 269,
+      "phases_ms": {
+        "total": 269,
+        "flint": 91,
+        "aot": 1,
+        "plan": 21,
+        "compile": 21,
+        "link": 135
+      },
+      "series": "static",
+      "arm": "8",
+      "trial": 11
+    },
+    {
+      "wall": 313.3623292669654,
+      "link": 172,
+      "total": 307,
+      "phases_ms": {
+        "total": 307,
+        "flint": 91,
+        "aot": 1,
+        "plan": 22,
+        "compile": 21,
+        "link": 172
+      },
+      "series": "static",
+      "arm": "4",
+      "trial": 11
+    },
+    {
+      "wall": 312.7621738240123,
+      "link": 173,
+      "total": 307,
+      "phases_ms": {
+        "total": 307,
+        "flint": 91,
+        "aot": 1,
+        "plan": 22,
+        "compile": 20,
+        "link": 173
+      },
+      "series": "static",
+      "arm": "4",
+      "trial": 12
+    },
+    {
+      "wall": 289.55291118472815,
+      "link": 147,
+      "total": 283,
+      "phases_ms": {
+        "total": 283,
+        "flint": 93,
+        "aot": 1,
+        "plan": 21,
+        "compile": 21,
+        "link": 147
+      },
+      "series": "static",
+      "arm": "8",
+      "trial": 12
+    },
+    {
+      "wall": 287.2116444632411,
+      "link": 139,
+      "total": 281,
+      "phases_ms": {
+        "total": 281,
+        "flint": 97,
+        "aot": 1,
+        "plan": 23,
+        "compile": 21,
+        "link": 139
+      },
+      "series": "static",
+      "arm": "8",
+      "trial": 13
+    },
+    {
+      "wall": 318.4829065576196,
+      "link": 178,
+      "total": 312,
+      "phases_ms": {
+        "total": 312,
+        "flint": 90,
+        "aot": 1,
+        "plan": 24,
+        "compile": 19,
+        "link": 178
+      },
+      "series": "static",
+      "arm": "4",
+      "trial": 13
+    },
+    {
+      "wall": 328.16730067133904,
+      "link": 178,
+      "total": 321,
+      "phases_ms": {
+        "total": 321,
+        "flint": 95,
+        "aot": 1,
+        "plan": 25,
+        "compile": 22,
+        "link": 178
+      },
+      "series": "static",
+      "arm": "4",
+      "trial": 14
+    },
+    {
+      "wall": 289.2454145476222,
+      "link": 143,
+      "total": 283,
+      "phases_ms": {
+        "total": 283,
+        "flint": 95,
+        "aot": 1,
+        "plan": 25,
+        "compile": 19,
+        "link": 143
+      },
+      "series": "static",
+      "arm": "8",
+      "trial": 14
+    },
+    {
+      "wall": 59.640370309352875,
+      "link": 14,
+      "total": 57,
+      "phases_ms": {
+        "total": 57,
+        "flint": 20,
+        "aot": 1,
+        "plan": 0,
+        "compile": 22,
+        "link": 14
+      },
+      "series": "shared",
+      "arm": "4",
+      "trial": 0
+    },
+    {
+      "wall": 62.41988856345415,
+      "link": 14,
+      "total": 60,
+      "phases_ms": {
+        "total": 60,
+        "flint": 20,
+        "aot": 1,
+        "plan": 0,
+        "compile": 25,
+        "link": 14
+      },
+      "series": "shared",
+      "arm": "8",
+      "trial": 0
+    },
+    {
+      "wall": 66.46397616714239,
+      "link": 18,
+      "total": 64,
+      "phases_ms": {
+        "total": 64,
+        "flint": 21,
+        "aot": 1,
+        "plan": 0,
+        "compile": 24,
+        "link": 18
+      },
+      "series": "shared",
+      "arm": "8",
+      "trial": 1
+    },
+    {
+      "wall": 64.7266460582614,
+      "link": 18,
+      "total": 62,
+      "phases_ms": {
+        "total": 62,
+        "flint": 21,
+        "aot": 1,
+        "plan": 0,
+        "compile": 22,
+        "link": 18
+      },
+      "series": "shared",
+      "arm": "4",
+      "trial": 1
+    },
+    {
+      "wall": 64.00320492684841,
+      "link": 18,
+      "total": 61,
+      "phases_ms": {
+        "total": 61,
+        "flint": 20,
+        "aot": 1,
+        "plan": 0,
+        "compile": 22,
+        "link": 18
+      },
+      "series": "shared",
+      "arm": "4",
+      "trial": 2
+    },
+    {
+      "wall": 61.3629212602973,
+      "link": 14,
+      "total": 59,
+      "phases_ms": {
+        "total": 59,
+        "flint": 20,
+        "aot": 1,
+        "plan": 0,
+        "compile": 24,
+        "link": 14
+      },
+      "series": "shared",
+      "arm": "8",
+      "trial": 2
+    },
+    {
+      "wall": 63.001965172588825,
+      "link": 15,
+      "total": 60,
+      "phases_ms": {
+        "total": 60,
+        "flint": 20,
+        "aot": 1,
+        "plan": 0,
+        "compile": 24,
+        "link": 15
+      },
+      "series": "shared",
+      "arm": "8",
+      "trial": 3
+    },
+    {
+      "wall": 61.66182830929756,
+      "link": 14,
+      "total": 59,
+      "phases_ms": {
+        "total": 59,
+        "flint": 21,
+        "aot": 1,
+        "plan": 0,
+        "compile": 23,
+        "link": 14
+      },
+      "series": "shared",
+      "arm": "4",
+      "trial": 3
+    },
+    {
+      "wall": 62.25693505257368,
+      "link": 15,
+      "total": 60,
+      "phases_ms": {
+        "total": 60,
+        "flint": 19,
+        "aot": 1,
+        "plan": 0,
+        "compile": 25,
+        "link": 15
+      },
+      "series": "shared",
+      "arm": "4",
+      "trial": 4
+    },
+    {
+      "wall": 58.7841235101223,
+      "link": 14,
+      "total": 56,
+      "phases_ms": {
+        "total": 56,
+        "flint": 19,
+        "aot": 1,
+        "plan": 0,
+        "compile": 22,
+        "link": 14
+      },
+      "series": "shared",
+      "arm": "8",
+      "trial": 4
+    },
+    {
+      "wall": 61.565712094306946,
+      "link": 13,
+      "total": 59,
+      "phases_ms": {
+        "total": 59,
+        "flint": 21,
+        "aot": 1,
+        "plan": 0,
+        "compile": 24,
+        "link": 13
+      },
+      "series": "shared",
+      "arm": "8",
+      "trial": 5
+    },
+    {
+      "wall": 61.641549691557884,
+      "link": 15,
+      "total": 59,
+      "phases_ms": {
+        "total": 59,
+        "flint": 19,
+        "aot": 1,
+        "plan": 0,
+        "compile": 24,
+        "link": 15
+      },
+      "series": "shared",
+      "arm": "4",
+      "trial": 5
+    },
+    {
+      "wall": 60.63215900212526,
+      "link": 13,
+      "total": 58,
+      "phases_ms": {
+        "total": 58,
+        "flint": 21,
+        "aot": 1,
+        "plan": 0,
+        "compile": 23,
+        "link": 13
+      },
+      "series": "shared",
+      "arm": "4",
+      "trial": 6
+    },
+    {
+      "wall": 65.43545797467232,
+      "link": 17,
+      "total": 63,
+      "phases_ms": {
+        "total": 63,
+        "flint": 21,
+        "aot": 1,
+        "plan": 0,
+        "compile": 24,
+        "link": 17
+      },
+      "series": "shared",
+      "arm": "8",
+      "trial": 6
+    },
+    {
+      "wall": 64.56103269010782,
+      "link": 18,
+      "total": 62,
+      "phases_ms": {
+        "total": 62,
+        "flint": 20,
+        "aot": 1,
+        "plan": 0,
+        "compile": 23,
+        "link": 18
+      },
+      "series": "shared",
+      "arm": "8",
+      "trial": 7
+    },
+    {
+      "wall": 64.00257535278797,
+      "link": 16,
+      "total": 61,
+      "phases_ms": {
+        "total": 61,
+        "flint": 21,
+        "aot": 1,
+        "plan": 0,
+        "compile": 23,
+        "link": 16
+      },
+      "series": "shared",
+      "arm": "4",
+      "trial": 7
+    },
+    {
+      "wall": 63.30441311001778,
+      "link": 17,
+      "total": 61,
+      "phases_ms": {
+        "total": 61,
+        "flint": 21,
+        "aot": 1,
+        "plan": 0,
+        "compile": 22,
+        "link": 17
+      },
+      "series": "shared",
+      "arm": "4",
+      "trial": 8
+    },
+    {
+      "wall": 66.26549456268549,
+      "link": 19,
+      "total": 63,
+      "phases_ms": {
+        "total": 63,
+        "flint": 20,
+        "aot": 1,
+        "plan": 0,
+        "compile": 23,
+        "link": 19
+      },
+      "series": "shared",
+      "arm": "8",
+      "trial": 8
+    },
+    {
+      "wall": 60.394369065761566,
+      "link": 13,
+      "total": 58,
+      "phases_ms": {
+        "total": 58,
+        "flint": 21,
+        "aot": 1,
+        "plan": 0,
+        "compile": 23,
+        "link": 13
+      },
+      "series": "shared",
+      "arm": "8",
+      "trial": 9
+    },
+    {
+      "wall": 62.609581276774406,
+      "link": 16,
+      "total": 60,
+      "phases_ms": {
+        "total": 60,
+        "flint": 19,
+        "aot": 1,
+        "plan": 0,
+        "compile": 24,
+        "link": 16
+      },
+      "series": "shared",
+      "arm": "4",
+      "trial": 9
+    },
+    {
+      "wall": 62.47902661561966,
+      "link": 15,
+      "total": 60,
+      "phases_ms": {
+        "total": 60,
+        "flint": 21,
+        "aot": 1,
+        "plan": 0,
+        "compile": 23,
+        "link": 15
+      },
+      "series": "shared",
+      "arm": "4",
+      "trial": 10
+    },
+    {
+      "wall": 58.40442795306444,
+      "link": 13,
+      "total": 56,
+      "phases_ms": {
+        "total": 56,
+        "flint": 20,
+        "aot": 1,
+        "plan": 0,
+        "compile": 22,
+        "link": 13
+      },
+      "series": "shared",
+      "arm": "8",
+      "trial": 10
+    },
+    {
+      "wall": 66.7451461777091,
+      "link": 18,
+      "total": 64,
+      "phases_ms": {
+        "total": 64,
+        "flint": 20,
+        "aot": 1,
+        "plan": 0,
+        "compile": 25,
+        "link": 18
+      },
+      "series": "shared",
+      "arm": "8",
+      "trial": 11
+    },
+    {
+      "wall": 59.13887079805136,
+      "link": 14,
+      "total": 57,
+      "phases_ms": {
+        "total": 57,
+        "flint": 20,
+        "aot": 1,
+        "plan": 0,
+        "compile": 22,
+        "link": 14
+      },
+      "series": "shared",
+      "arm": "4",
+      "trial": 11
+    },
+    {
+      "wall": 62.64344975352287,
+      "link": 17,
+      "total": 60,
+      "phases_ms": {
+        "total": 60,
+        "flint": 20,
+        "aot": 1,
+        "plan": 0,
+        "compile": 22,
+        "link": 17
+      },
+      "series": "shared",
+      "arm": "4",
+      "trial": 12
+    },
+    {
+      "wall": 57.873839512467384,
+      "link": 12,
+      "total": 55,
+      "phases_ms": {
+        "total": 55,
+        "flint": 19,
+        "aot": 1,
+        "plan": 0,
+        "compile": 23,
+        "link": 12
+      },
+      "series": "shared",
+      "arm": "8",
+      "trial": 12
+    },
+    {
+      "wall": 59.2680349946022,
+      "link": 14,
+      "total": 57,
+      "phases_ms": {
+        "total": 57,
+        "flint": 19,
+        "aot": 1,
+        "plan": 0,
+        "compile": 23,
+        "link": 14
+      },
+      "series": "shared",
+      "arm": "8",
+      "trial": 13
+    },
+    {
+      "wall": 65.96022751182318,
+      "link": 19,
+      "total": 63,
+      "phases_ms": {
+        "total": 63,
+        "flint": 20,
+        "aot": 1,
+        "plan": 0,
+        "compile": 23,
+        "link": 19
+      },
+      "series": "shared",
+      "arm": "4",
+      "trial": 13
+    },
+    {
+      "wall": 64.970837906003,
+      "link": 19,
+      "total": 62,
+      "phases_ms": {
+        "total": 62,
+        "flint": 20,
+        "aot": 1,
+        "plan": 0,
+        "compile": 22,
+        "link": 19
+      },
+      "series": "shared",
+      "arm": "4",
+      "trial": 14
+    },
+    {
+      "wall": 63.31153307110071,
+      "link": 17,
+      "total": 61,
+      "phases_ms": {
+        "total": 61,
+        "flint": 21,
+        "aot": 1,
+        "plan": 0,
+        "compile": 22,
+        "link": 17
+      },
+      "series": "shared",
+      "arm": "8",
+      "trial": 14
+    }
+  ],
+  "dev_linker": "mold",
+  "status": "passed"
+}

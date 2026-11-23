@@ -2,7 +2,7 @@
   "schema": "flint.measure-queue/1",
   "id": "link-threads-ab",
   "created": "2026-11-23",
-  "status": "pending",
+  "status": "done",
   "window": "claim",
   "priority": 3,
   "requested_by": "m7-flint-cli, approved by the coordinator as a short decision-gating A/B (2026-11-23)",
@@ -46,5 +46,88 @@
         ]
       }
     ]
-  }
+  },
+  "attempts": [
+    {
+      "time": "2026-11-23T19:17:58Z",
+      "outcome": "measured",
+      "evidence": true,
+      "host": "venus",
+      "builds": {
+        "tree": {
+          "commit": "36c2924886ae69297f7ef4039ebf1b08e5da2392",
+          "worktree": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/36c2924886ae"
+        }
+      },
+      "window_before": {
+        "time": "2026-11-23T19:17:40Z",
+        "load_average": [
+          1.64892578125,
+          3.0009765625,
+          2.84130859375
+        ],
+        "running_tasks": 0,
+        "instant": true,
+        "busy_processes": [],
+        "idle_build_processes": 2098,
+        "quiet": true,
+        "problems": []
+      },
+      "window_during": [
+        {
+          "time": "2026-11-23T19:17:51Z",
+          "load_average": [
+            1.62939453125,
+            2.951171875,
+            2.826171875
+          ],
+          "busy_processes": []
+        }
+      ],
+      "foreign_activity_during": 0,
+      "window_after": {
+        "time": "2026-11-23T19:17:58Z",
+        "load_average": [
+          1.6591796875,
+          2.93505859375,
+          2.8212890625
+        ],
+        "running_tasks": 0,
+        "instant": false,
+        "busy_processes": [],
+        "idle_build_processes": 2098,
+        "quiet": true,
+        "problems": []
+      },
+      "results_directory": ".flint/measure/results/link-threads-ab/20261123T191727Z",
+      "summary": {
+        "steps": [
+          {
+            "command": [
+              "/usr/bin/python3",
+              "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/tools/spring_link_ab.py",
+              "--app",
+              "gs-rest-service",
+              "--arms",
+              "4",
+              "8",
+              "--trials",
+              "15",
+              "--shared",
+              "--root",
+              ".",
+              "--output",
+              "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/link-threads-ab/20261123T191727Z/link-ab.json"
+            ],
+            "cwd": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/36c2924886ae",
+            "exit_code": 0,
+            "log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/link-threads-ab/20261123T191727Z/step-0.log"
+          }
+        ],
+        "outputs": {
+          "link-ab.json": "4f7d4f70e3d4309fa5e7b5ec2a98ddce9e7fb7d1f0e09b1b05bc4bd107aee9e3"
+        }
+      }
+    }
+  ]
 }

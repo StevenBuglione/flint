@@ -379,3 +379,9 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **Failure output:** the gate names the top call sites.
   - **Where it runs:** deterministic, in `dub test` and CI on DMD and LDC.
   - **Owner:** data-access, with proof-harness for the app fixtures. Work-queue item 28 in coordination.md.
+- 2026-11-23, proof-harness: **FLINT_LINK_THREADS=8 beats the default 4 for gs-rest-service's static dev edit build** (queue entry `link-threads-ab`, m7-flint-cli's A/B approved by the coordinator, 19:17Z, a claimed window with no foreign build). Setup: gs-rest-service at `36c29248` with mold, 15 edit builds per arm, the arms alternating within each trial (`tools/spring_link_ab.py`). The difference of medians (8 minus 4), with a bootstrap 99% interval:
+  - static edit build, link phase: 174 → 136 ms, −38 ms (−42 to −30), which excludes zero;
+  - static edit build, total (phases_ms.total): 312 → 274 ms, −38 ms (−46 to −26), which excludes zero;
+  - shared-object edit build, link: 16 → 14 ms, −2 ms (−4 to +3), and total 60 → 60 ms, 0 (−4 to +3); neither excludes zero.
+
+  By m7's rule (change the default only if the interval excludes zero), 8 qualifies for static dev links. The shared-object dev build is indifferent. Evidence: `benchmarks/spring/evidence/link-threads-ab/`.
