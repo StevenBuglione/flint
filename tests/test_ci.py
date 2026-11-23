@@ -122,6 +122,37 @@ class CiBoundaryTests(unittest.TestCase):
             args.sanitize='address'
             self.assertEqual(builder.sanitizer_exclusions('openssl'),())
 
+    def test_crypt_blowfish_builds_only_bcrypt_with_the_flint_c_hardening_set(self):
+        def project(target, sanitize=None):
+            with tempfile.TemporaryDirectory() as temporary:
+                args=SimpleNamespace(target=target,work_dir=temporary,prefix=None,cc=None,cxx=None,sanitize=sanitize,
+                                     phase='plan',cmake_toolchain=None,jobs=1,profile='ci',with_codegen=False,
+                                     allow_webview=False)
+                builder=native_build.Builder(args,json.loads((TOOLS.parent/'policy/native-lock.json').read_text(encoding='utf-8')))
+                written={}
+                with patch.object(builder,'write',side_effect=lambda path,text:written.update({Path(path).name:text})):
+                    builder.build('crypt-blowfish')
+                return written['CMakeLists.txt']
+        linux=project('linux-x86_64-glibc')
+        self.assertIn('/crypt_blowfish.c"',linux)
+        self.assertIn('/crypt_blowfish.h" DESTINATION include',linux)
+        # wrapper.c would define crypt, crypt_r and crypt_gensalt over the C library's.
+        self.assertNotIn('wrapper.c',linux)
+        self.assertNotIn('x86.S',linux)
+        for flag in ('"-U_FORTIFY_SOURCE" "-D_FORTIFY_SOURCE=3"','"-fstack-protector-strong"',
+                     '"-fstack-clash-protection"','"-ftrivial-auto-var-init=zero"','"-ffunction-sections"'):
+            self.assertIn(flag,linux)
+        self.assertNotIn('-fPIE',linux)
+        macos=project('macos-arm64')
+        self.assertIn('"-fstack-protector-strong"',macos)
+        self.assertNotIn('-fstack-clash-protection',macos)
+        sanitized=project('linux-x86_64-glibc','address,undefined')
+        self.assertNotIn('_FORTIFY_SOURCE',sanitized)
+        self.assertIn('"-ftrivial-auto-var-init=zero"',sanitized)
+        # MSVC's hardening set reaches every provider through CFLAGS.
+        self.assertNotIn('target_compile_options',project('windows-x86_64'))
+        self.assertIn('crypt-blowfish',native_build.PROFILES['ci'])
+
     def test_ruleset_preparation_never_calls_github(self):
         with tempfile.TemporaryDirectory() as temporary,patch.object(configure,'api',side_effect=AssertionError('network mutation')):
             output=Path(temporary)/'ruleset.json'

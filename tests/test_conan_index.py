@@ -21,7 +21,7 @@ class RecipeIndexTests(unittest.TestCase):
     def test_every_recipe_pins_the_lock_and_the_build_steps(self):
         rows = {r['name']: r for r in json.loads((ROOT / 'policy/native-lock.json').read_text(encoding='utf-8'))['libraries']}
         engine = hashlib.sha256((ROOT / 'tools/native_build.py').read_bytes()).hexdigest()
-        self.assertEqual(len(PROVIDERS), 19)
+        self.assertEqual(len(PROVIDERS), 20)
         for name in PROVIDERS:
             row = rows[name]
             data = (INDEX / 'recipes' / name / 'all' / 'conandata.yml').read_text(encoding='utf-8')

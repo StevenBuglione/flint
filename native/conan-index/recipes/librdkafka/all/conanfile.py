@@ -11,7 +11,7 @@ from conan.tools.files import download
 
 NAME = 'librdkafka'
 DEPENDENCIES = ['openssl/3.5.9', 'zlib/1.4', 'zstd/1.5.7']
-BUILD_ENGINE_SHA256 = 'e63ee77bb9a6b22837b0dc637f6b1bb70ebd93bf1945ed2f69f36f94b0677b3c'
+BUILD_ENGINE_SHA256 = '79f10cc1949423f4ad4df8bc17b534dee66d7401b53ea7c84365ee33b845e99b'
 TARGETS = ['linux-aarch64-glibc', 'linux-aarch64-musl', 'linux-x86_64-glibc', 'linux-x86_64-musl', 'macos-arm64', 'windows-x86_64']
 
 

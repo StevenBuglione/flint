@@ -7,7 +7,7 @@ No command is executed through a shell. Native source/build/cache directories
 are disposable; this script never resets the Flint repository.
 """
 from __future__ import annotations
-import argparse, hashlib, json, os, platform, re, shlex, shutil, subprocess, sys, tarfile, tempfile, urllib.request
+import argparse, hashlib, json, os, platform, re, shlex, shutil, subprocess, sys, tarfile, tempfile, tomllib, urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -47,7 +47,7 @@ PROFILES = {
     'codec':['zstd','zlib','brotli','libarchive'], 'desktop':['webkitgtk'], 'desktop-canvas':['sdl3'],
     'wasm-host':['wasmtime'], 'tui':['utf8proc'], 'yaml':['libyaml'],
     # C-provider closure; all-package CI adds --library wasmtime explicitly.
-    'ci':['openssl','libsodium','llhttp','nghttp2','curl','sqlite','libpq','librdkafka','zstd','zlib','brotli','libarchive','utf8proc','libyaml','sdl3','protobuf-c','hiredis'],
+    'ci':['openssl','libsodium','llhttp','nghttp2','curl','sqlite','libpq','librdkafka','zstd','zlib','brotli','libarchive','utf8proc','libyaml','sdl3','protobuf-c','hiredis','crypt-blowfish'],
 }
 # UBSan checks disabled per vendored provider in sanitizer builds. Every other
 # requested check stays on, and Flint's own shims (native/ffi) keep full UBSan.
@@ -100,7 +100,7 @@ ALIASES = {
  'protoc':[], 'sqlite':[('sqlite3',)], 'libpq':[('pq','libpq'),('pgcommon_shlib',),('pgport_shlib',)],
  'wasmtime':[('wasmtime',)], 'wamr':[('vmlib',)], 'sdl3':[('SDL3','SDL3-static')],
  'wgpu-native':[('wgpu_native',)], 'webview':[('webview','webview_core','webview_static')], 'stb':[('flint_stb',)], 'libarchive':[('archive','archive_static')],
- 'webkitgtk':[], 'wkwebview':[],
+ 'webkitgtk':[], 'wkwebview':[], 'crypt-blowfish':[('crypt_blowfish',)],
 }
 # Dynamic system providers, never downloaded or linked statically: resolved through pkg-config on Linux,
 # and from the macOS SDK's framework stubs on macOS (ADR-024).
@@ -331,6 +331,16 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
                 files='"'+unit.as_posix()+'"';extra='target_include_directories(flint_stb PRIVATE "'+src.as_posix()+'")\n';headers='"'+(src/'stb_image.h').as_posix()+'"'
             project='cmake_minimum_required(VERSION 3.20)\nproject(flint_native C)\nadd_library('+library+' STATIC '+files+')\n'+extra+'\ninstall(TARGETS '+library+' ARCHIVE DESTINATION lib)\ninstall(FILES '+headers+' DESTINATION include)\n'
             self.write(build/'project/CMakeLists.txt',project);self.cmake(name,build/'project',build/'cmake','.',[])
+        elif name=='crypt-blowfish':
+            # Openwall ships a Makefile only. crypt_blowfish.c holds bcrypt and its salt encoder; wrapper.c is left out
+            # because it defines crypt, crypt_r and crypt_gensalt, the C library's names, and x86.S is i386-only.
+            source=(src/'crypt_blowfish.c').as_posix();header=(src/'crypt_blowfish.h').as_posix()
+            flags=' '.join(json.dumps(flag) for flag in self.provider_hardening())
+            project=('cmake_minimum_required(VERSION 3.20)\nproject(flint_native C)\n'
+                     'add_library(crypt_blowfish STATIC "'+source+'")\n'
+                     +('target_compile_options(crypt_blowfish PRIVATE '+flags+')\n' if flags else '')
+                     +'install(TARGETS crypt_blowfish ARCHIVE DESTINATION lib)\ninstall(FILES "'+header+'" DESTINATION include)\n')
+            self.write(build/'project/CMakeLists.txt',project);self.cmake(name,build/'project',build/'cmake','.',[])
         elif name=='libpq':
             options=['docs','gssapi','icu','ldap','libcurl','libnuma','liburing','libxml','libxslt','llvm','lz4','nls','pam','plperl','plpython','pltcl','readline','selinux','systemd','tap_tests','zstd']
             reconfigure=['--reconfigure'] if (build/'meson-private/coredata.dat').is_file() and self.a.phase=='build' else []
@@ -396,6 +406,19 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
             self.copy(build/filename,self.prefix/'lib'/filename);self.copy(src/'core/iwasm/include',self.prefix/'include')
         else:raise ValueError('No build recipe for '+name)
         if self.a.phase=='build':self.record(name)
+
+    def provider_hardening(self):
+        """The hardening set of policy/native-c.toml for a provider built from a project Flint writes: [c] on Linux,
+        [macos] on macOS, and nothing more on Windows, whose MSVC set is already in CFLAGS. Only the protector and
+        _FORTIFY_SOURCE flags are taken: -O2 is in CFLAGS, and every provider archive is built -fPIC rather than -fPIE.
+        A sanitizer build takes the sanitize set's flags, without _FORTIFY_SOURCE, which ASan does not combine with.
+        -U first, because a compiler may predefine _FORTIFY_SOURCE at another level."""
+        if self.a.target.startswith('windows'):return []
+        policy=tomllib.loads((ROOT/'policy/native-c.toml').read_text(encoding='utf-8'))
+        table=policy['macos'] if self.a.target.startswith('macos') else policy['c']
+        flags=[f for f in table['sanitize' if self.a.sanitize else 'hardening'] if f.startswith(('-fstack-','-ftrivial-','-D_FORTIFY_SOURCE'))]
+        fortify=['-U_FORTIFY_SOURCE'] if any(f.startswith('-D_FORTIFY_SOURCE') for f in flags) else []
+        return fortify+flags+['-ffunction-sections','-fdata-sections']
 
     def system_provider(self,name):
         if 'frameworks' in self.rows[name]:return self.sdk_provider(name)

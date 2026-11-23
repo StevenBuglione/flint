@@ -8,6 +8,7 @@
     ],
     "framework": [
       "brotli",
+      "crypt-blowfish",
       "curl",
       "hiredis",
       "libarchive",
