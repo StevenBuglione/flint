@@ -170,7 +170,6 @@ Measure only on the designated runner, when it is otherwise quiet. The productio
 python3 tools/measure_builds.py --spring --output artifacts/spring/builds.json
 python3 tools/load_bench.py --manifest policy/spring-http-benchmark.json --output artifacts/spring/http.json
 python3 tools/spring_bench.py gc-matrix petclinic-rest --output artifacts/spring/gc-matrix-petclinic-rest.json
-python3 tools/spring_bench.py gc-matrix gs-rest-service --output artifacts/spring/gc-matrix-gs-rest-service.json
 python3 tools/spring_bench.py accept --impl java --json artifacts/spring/acceptance-java.json
 python3 tools/spring_bench.py accept --impl go --json artifacts/spring/acceptance-go.json
 python3 tools/spring_bench.py accept --impl flint --json artifacts/spring/acceptance-flint.json
@@ -239,7 +238,7 @@ Both bodies verify against the Go comparators and the Java references: 88 bytes 
 - larger pools;
 - a heap-size factor.
 
-For each setting, the suite must still pass. The Spring workload then measures latency, RSS, CPU and capacity, with the Go comparator interleaved in every trial. druntime's exit profile gives the collections and the maximum pause.
+The gate's matrix is petclinic-rest's, because ADR-030 section 4 asks for idiomatic PetClinic code. Other applications can be run by hand. For each setting, the suite must still pass. The Spring workload then measures latency, RSS, CPU and capacity, with the Go comparator interleaved in every trial. druntime's exit profile gives the collections and the maximum pause.
 
 **What happens with the result:**
 - The winning setting is baked into the port through `rt_options`.

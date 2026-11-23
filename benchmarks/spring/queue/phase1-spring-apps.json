@@ -6,7 +6,7 @@
   "blocked_on": "the Flint ports of benchmarks/spring/apps.json (benchmarks/spring/flint/<app>/flint-spring.json)",
   "requested_by": "ADR-030 section 8, Phase 1 exit",
   "summary": "Phase 1 side-by-side evidence: suites, both build headlines, the Spring REST workload, the GC matrix, then the spring gate",
-  "why": "benchmarks/spring/README.md, 'Measuring'. Change status to pending when every port has landed.",
+  "why": "benchmarks/spring/README.md, 'Measuring'. Change status to pending when every port has landed. The Java context (JVM and native) is measured outside the evidence window by the java-context entry, so the paused window runs only what the gate reads.",
   "builds": {},
   "measure": {
     "kind": "command",
@@ -61,7 +61,8 @@
           "--manifest",
           "policy/spring-http-benchmark.json",
           "--output",
-          "{out}/http.json"
+          "{out}/http.json",
+          "--no-context"
         ]
       },
       {
@@ -71,7 +72,8 @@
           "--manifest",
           "policy/spring-error-paths-benchmark.json",
           "--output",
-          "{out}/http-error-paths.json"
+          "{out}/http-error-paths.json",
+          "--no-context"
         ]
       },
       {
@@ -82,16 +84,6 @@
           "petclinic-rest",
           "--output",
           "{out}/gc-matrix-petclinic-rest.json"
-        ]
-      },
-      {
-        "argv": [
-          "{python}",
-          "tools/spring_bench.py",
-          "gc-matrix",
-          "gs-rest-service",
-          "--output",
-          "{out}/gc-matrix-gs-rest-service.json"
         ]
       },
       {
