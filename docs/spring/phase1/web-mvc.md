@@ -116,7 +116,7 @@ immutable RequestMappingInfo[1] mappings = [
 
 Each `MethodParameter` row names its resolver kind, the binding name, `required`, `defaultValue` and the descriptor of its declared type. The invoker thunk takes the controller object and an `Any[]` of resolved arguments and returns an `Any`. `RequestMappingHandlerMapping` builds its `PathPattern` lookup from all tables at startup.
 
-The table types live in `flint.web.method` (`HandlerMethod`, `MethodParameter`) and `flint.web.servlet.mvc.method` (`RequestMappingInfo`). They are the contract with the flint-aot session. Until the generator emits them, `flint.web.servlet.mvc.method.annotation.internal` builds the identical rows at compile time from a controller's UDAs. That template is one of the request-mapping internals the rulebook allows to reflect, and it is deleted when the generator lands.
+The rows are contract 1's `HandlerMapping` and `ExceptionHandlerSpec` (`flint.engine.aot.mapping`, docs/spring/aot-contract.md section 4.5). `RequestMappingHandlerMapping` turns each row into a `RequestMappingInfo` and a `HandlerMethod` whose bean comes from the AOT `BeanFactory`. Until the generator emits rows, `flint.web.servlet.mvc.method.aot` builds identical ones at compile time from a controller's UDAs, through engine-aot's `mergedAnnotations`. It is one of the request-mapping internals the rulebook allows to reflect, and it is deleted when the generator lands. Requested from flint-aot for contract 2: `beanType`, class-level annotations for `@CrossOrigin` combination, advice `assignableTypes`/`annotations`, `@ExceptionHandler(produces)`, and descriptors for exception classes carrying `@ResponseStatus`.
 
 ### Message conversion
 
@@ -126,22 +126,29 @@ Content negotiation follows `AbstractMessageConverterMethodProcessor.writeWithMe
 
 ## Byte-identical output
 
-The proof-harness suites compare status, headers and bodies with Spring Boot on Tomcat. What Flint must reproduce, and where it comes from:
+The proof-harness suites (`benchmarks/spring/suites`) compare status, every header except `Date`, and bodies with Spring Boot v4.2.0 on Tomcat, from goldens recorded off the Java reference. What Flint must reproduce, and where it comes from:
 
-| Output | Spring Boot v4.2.0 on Tomcat | Owner in Flint |
+| Output | Spring Boot v4.2.0 on Tomcat (from `golden/gs-rest-service.json`) | Owner in Flint |
 | --- | --- | --- |
-| Status line | `HTTP/1.1 200 ` (Tomcat writes no reason phrase) | engine transport |
-| Message-converter bodies | `Transfer-Encoding: chunked`, because the converter flushes and commits the response before it completes | servlet bridge |
-| Bodies set without a converter flush (`sendError` with no error page, empty bodies) | `Content-Length` | servlet bridge |
-| Header order | application headers in insertion order, then `Content-Type`, `Content-Language`, `Content-Length` or `Transfer-Encoding`, `Date`, `Connection` | servlet bridge and transport |
-| `Content-Type` for JSON | `application/json` | Jackson converter |
-| 404 for an unmapped path | `NoResourceFoundException` → `sendError(404)` → error dispatch to `/error` → `{"timestamp":"…","status":404,"error":"Not Found","path":"/nope"}` | webmvc, Boot error controller |
-| 405 | `HttpRequestMethodNotSupportedException` → `Allow` header → error body with status 405 | webmvc |
-| 400 for a validation failure | `MethodArgumentNotValidException` → error body; `"errors"` and `"message"` only when `server.error.include-binding-errors` and `include-message` say so | webmvc, Boot error controller |
-| `ProblemDetail` (`flint.mvc.problemdetails.enabled=true`, or an `ErrorResponse` returned from `@ExceptionHandler`) | `application/problem+json`, `{"type":"about:blank","title":"Not Found","status":404,"detail":"…","instance":"/nope"}` | webmvc, Jackson |
-| Error `timestamp` | `java.util.Date` through Jackson 3: `yyyy-MM-dd'T'HH:mm:ss.SSSXXX` in UTC, so `+00:00` | Boot error controller, Jackson |
+| Status line | `HTTP/1.1 200 ` (no reason phrase) | engine transport |
+| `@ResponseBody` bodies | `Content-Length`: Spring 7's `ServletServerHttpResponse` makes `getBody().flush()` a no-op, so the container sees the whole body before committing | servlet bridge |
+| `ResponseEntity`, `ProblemDetail` and Boot error bodies | `Transfer-Encoding: chunked`: `HttpEntityMethodProcessor` ends with `outputMessage.flush()`, which commits once a body was written | servlet bridge |
+| Empty bodies (406 from the error controller, OPTIONS) | `Content-Length: 0`: no body was written, so `flush()` does not commit | servlet bridge |
+| Header order | application headers in insertion order, then `Content-Type`, `Content-Language`, `Content-Length` or `Transfer-Encoding` (Tomcat's `prepareResponse`) | servlet bridge |
+| `Content-Type` for JSON | `application/json`, no charset | Jackson converter |
+| JSON property order | a record's (D struct's) properties in declaration order; a class's alphabetically (Jackson 3); `ProblemDetail`: `detail`, `instance`, `status`, `title`, `type`, then its extension properties | Jackson (third-party-apis) |
+| Query parameters | the servlet container decodes `+` as a space (`Jane+Q%20Public` → `Jane Q Public`); MockMvc does not, as in Spring | servlet bridge / MockMvc |
+| Repeated `@RequestParam String` | joined with `,` (`ArrayToStringConverter`) | webmvc |
+| Empty `@RequestParam` with a default | the default | webmvc |
+| 406 (`Accept: application/xml`) | the handler runs first; then `Accept: application/json, application/*+json`, `Content-Length: 0` | webmvc, Boot error controller |
+| HEAD | the GET handler runs; `Content-Length` of the body that is not sent | webmvc, servlet bridge |
+| OPTIONS | `Allow: GET,HEAD,OPTIONS`, empty `Accept-Patch` and `Accept-Query` (`HttpOptionsHandler`), `Content-Length: 0` | webmvc |
+| 404 for an unmapped path or a trailing slash | `NoResourceFoundException` → `sendError(404)` → error dispatch → `{"timestamp":"…Z","status":404,"error":"Not Found","path":"/nope"}`, chunked | webmvc, Boot error controller |
+| 405 | `Allow: GET`, then the error body with status 405, chunked | webmvc, Boot error controller |
+| Browser 404 (`Accept: text/html`) | the Whitelabel page: `text/html;charset=UTF-8`, `Content-Language: en-US`, `Content-Length: 275` | Boot error view, servlet bridge |
+| Error `timestamp` | an ISO-8601 UTC instant ending in `Z` | Boot error controller, Jackson |
 
-Tomcat's error-page forward (`StandardHostValve`) is reproduced by the servlet bridge: `sendError` records the status and message, and when the handler returns the bridge dispatches once to the error controller with the `jakarta.servlet.error.*` request attributes set, as Tomcat does.
+Tomcat's error-page forward (`StandardHostValve`) is reproduced by the servlet bridge: `sendError` records the status and message, and when the handler returns the bridge dispatches once to the error controller with the `jakarta.servlet.error.*` request attributes set, as Tomcat does. The error controller itself (`BasicErrorController`, `DefaultErrorAttributes`, the Whitelabel view) is spring-boot-webmvc, owned by the boot session.
 
 ## Proof
 
@@ -151,6 +158,8 @@ Tomcat's error-page forward (`StandardHostValve`) is reproduced by the servlet b
 - **API coverage.** `api/mapping.json` classifies every element of the ported packages; whole subpackages outside Phase 1 are `deferred` with their phase.
 
 ## Rulebook proposals
+
+- **D-15: single-element array attributes.** Java accepts `@GetMapping(path = "/x")` for a `String[]` attribute. D's named arguments cannot accept both a string and an array, so the positional `value` keeps the shorthand (`@GetMapping("/greeting")`) and named array attributes take array literals (`@GetMapping(path: ["/greeting"], produces: [MediaType.APPLICATION_JSON_VALUE])`). Annotation structs provide `static opCall` overloads, because a struct constructor cannot have only default parameters.
 
 - **R15: Java enums.** An enum with only constants becomes a D `enum` with the same member names. An enum with fields, methods or interfaces becomes a struct with `static immutable` constants and Java's `name()`, `ordinal()`, `values()`, `valueOf(String)` and `toString()`. If it implements a Java interface that other types also implement (`HttpStatus implements HttpStatusCode`), the interface becomes a struct too and the enum struct converts to it through `alias this`.
 
@@ -162,6 +171,26 @@ Tomcat's error-page forward (`StandardHostValve`) is reproduced by the servlet b
 
 ## Upstream test counts
 
-| Upstream test class | Ported | Passing | Excluded (reason) |
+| Upstream test class | Ported | Passing | Excluded or deferred (reason) |
 | --- | --- | --- | --- |
-| (filled in as each slice lands) | | | |
+| `HttpStatusTests` | 3 | 3 | none |
+| `HttpMethodTests` | 5 | 5 | none (`isNotSameAs` on a value struct is checked as equality, R11) |
+| `MediaTypeTests` | 24 | 24 | `withConversionService` (spring-core `DefaultConversionService`, framework-core), `serialize` (Java serialization, `jvm-platform`) |
+| `HttpHeadersTests` | 45 | 45 | 29 deferred on unported types: Charset lists, `InetSocketAddress`, `ETag`, `CacheControl`, `ContentDisposition`, `Locale`, `java.time`, Java collection views |
+| `ResponseEntityTests` | 22 | 22 | 3 deferred on `CacheControl` |
+| `ProblemDetailTests` | 1 | 1 | the Jackson round trip waits for flint.jackson.databind |
+| gs-rest-service `GreetingControllerTests` | 2 | 2 | none (standalone MockMvc until Boot's `@AutoConfigureMockMvc`) |
+
+Flint's own tests cover the R15/D-15 adaptations, the exceptions' messages and backtrace-free throwing, and every gs-rest-service golden case MockMvc can observe.
+
+## Status
+
+| Piece | State |
+| --- | --- |
+| `flint.http`, `flint.web`, `flint.web.bind(.annotation)`, `flint.web.server`, `flint.web.util.pattern`, converters, `flint.web.method.*`, `flint.web.accept` | in `packages/framework-web` |
+| `flint.jakarta.servlet(.http)` | in `packages/jakarta-servlet` (EPL-2.0) |
+| `DispatcherServlet`, `RequestMappingHandlerMapping`/`Adapter`, processors, exception resolvers, `WebMvcConfigurer`, `WebMvcConfigurationSupport` | in `packages/framework-webmvc` |
+| MockMvc (`flint.test.web.servlet.*`, `flint.mock.web`) | in `packages/framework-test` |
+| Next | the servlet bridge over `flint.engine.web` (after the rename), CORS (`flint.web.cors`), `UriComponentsBuilder`, `ResponseEntityExceptionHandler`, `@RequestBody` with Jackson reading, `api/mapping.json` classification |
+
+The packages are not yet in `policy/framework.json` or the root `dub.sdl`: their DUB names (`web`, `webmvc`) and module roots (`flint.web`, `flint.http`) are held by the engines until the rename, and `framework_layers` gives each module one root while spring-web needs two (`flint.http`, `flint.web`). Until then they build with path dependencies and `dub test` from each package directory.

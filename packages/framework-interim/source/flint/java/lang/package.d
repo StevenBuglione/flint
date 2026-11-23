@@ -74,3 +74,23 @@ class NumberFormatException : IllegalArgumentException
         super(message, cause, file, line);
     }
 }
+
+/++
+`java.lang.AssertionError`. Java's `Error`s that application code catches map to D `Exception`s (rulebook R8),
+so test failures stay catchable and run cleanup.
++/
+class AssertionError : Exception
+{
+    ///
+    this(string message = null, Throwable cause = null, string file = __FILE__, size_t line = __LINE__)
+        pure nothrow @nogc
+    {
+        super(message, file, line, cause);
+    }
+
+    /// Java's `getMessage()`.
+    string getMessage() const pure nothrow @nogc
+    {
+        return msg;
+    }
+}
