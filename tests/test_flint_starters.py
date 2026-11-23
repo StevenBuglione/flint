@@ -169,6 +169,60 @@ class StarterObservabilityTests(unittest.TestCase):
             process.wait()
 
 
+class StarterDataTests(unittest.TestCase):
+    def test_the_notes_example_migrates_validates_and_keeps_data_across_restarts(self):
+        project = ROOT / 'starters/data/example'
+        built = subprocess.run([str(FLINT), 'build', '--json'], cwd=project, capture_output=True, text=True,
+                               env=environment())
+        self.assertEqual(built.returncode, 0, built.stdout[-3000:])
+        with tempfile.TemporaryDirectory(prefix='flint-notes-') as temporary:
+            port = free_port()
+            command = [str(project / '.flint/build/dev/notes'), f'--set=server.port={port}',
+                       f'--set=database.url=file:{temporary}/notes.db']
+
+            def call(path, method='GET', body=None):
+                data = json.dumps(body).encode() if body is not None else None
+                request = urllib.request.Request(f'http://127.0.0.1:{port}{path}', method=method, data=data,
+                                                 headers={'Content-Type': 'application/json'} if data else {})
+                try:
+                    with urllib.request.urlopen(request, timeout=5) as response:
+                        return response.status, json.loads(response.read() or b'null')
+                except urllib.error.HTTPError as error:
+                    return error.code, json.loads(error.read() or b'null')
+
+            def started():
+                process = subprocess.Popen(command, cwd=project, stdout=subprocess.DEVNULL,
+                                           stderr=subprocess.DEVNULL)
+                for _ in range(100):
+                    try:
+                        call('/api/notes/0')
+                        return process
+                    except OSError:
+                        time.sleep(0.05)
+                process.kill()
+                self.fail('the notes example did not start')
+
+            process = started()
+            try:
+                self.assertEqual(call('/api/notes', 'POST', {'title': 'First', 'body': 'hello'}),
+                                 (201, {'id': 1, 'title': 'First', 'body': 'hello'}))
+                status, body = call('/api/notes', 'POST', {'title': '', 'body': 'x'})
+                self.assertEqual((status, body['field']), (400, 'title'))
+                self.assertEqual(call('/api/notes/1')[0], 200)
+                self.assertEqual(call('/api/notes/99')[0], 404)
+            finally:
+                process.kill()
+                process.wait()
+            process = started()
+            try:
+                self.assertEqual(call('/api/notes/1'), (200, {'id': 1, 'title': 'First', 'body': 'hello'}))
+                self.assertEqual(call('/api/notes/1', 'DELETE')[0], 204)
+                self.assertEqual(call('/api/notes/1')[0], 404)
+            finally:
+                process.kill()
+                process.wait()
+
+
 class OpenApiTests(unittest.TestCase):
     def test_flint_openapi_documents_the_controllers_and_writes_a_typescript_client(self):
         with tempfile.TemporaryDirectory(prefix='flint-openapi-') as temporary:

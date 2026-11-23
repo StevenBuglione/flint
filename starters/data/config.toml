@@ -1,0 +1,5 @@
+# flint:starter-data (ADR-028). Migrations in resources/migrations apply at start-up.
+[database]
+driver = "sqlite"
+url = "file:data.db"
+max_connections = 4

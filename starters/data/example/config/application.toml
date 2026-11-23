@@ -1,0 +1,12 @@
+# The notes example. Its data lives in data.db, created on first start.
+
+# flint:starter-web (ADR-028). Every key is optional.
+[server]
+address = "127.0.0.1"
+port = 8080
+
+# flint:starter-data (ADR-028). Migrations in resources/migrations apply at start-up.
+[database]
+driver = "sqlite"
+url = "file:data.db"
+max_connections = 4

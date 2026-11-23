@@ -135,8 +135,34 @@ Status: proposed by the Milestone 10 implementation, for the project owner's rev
    - **The registry:** `registry()` hands it to the application for counters, histograms and health probes. The starter re-exports `Counter`, `Histogram`, `Health` and `HealthProbe`.
    - **Loopback only:** the actuator refuses a non-loopback listener without a `ManagementPolicy`. That policy stays the actuator's.
 
+### 7. `flint:starter-data`
+
+1. **What it registers.** `DataAutoConfiguration` registers two things, both conditional on `[database]`:
+   - `DatabaseProperties`: `driver`, `url`, `max_connections`, `migrate` and `migrations`;
+   - `DataSource`: it opens the flint:sql pool in `@PostConstruct`, applies the migrations, and closes the pool in `@PreDestroy`.
+
+2. **Migrations are read at start-up, not compiled in.**
+   - **The files:** every `V<version>__<description>.sql` in `resources/migrations` (configurable), in version order, with SHA-256 for flint:migrate's history check. This mirrors how `config/` is read, and `flint package` ships `resources/`.
+   - **Why not a string import:** a starter's ordinary functions compile inside the starter package, without the application's string-import paths. A compile-time plan would need the application to instantiate it.
+
+3. **`Repository!(E, ID)`** is a `CrudRepository` bean over `SqlRepository`, constructed from the `DataSource`. It checks the table and columns at construction, after the migrations have run.
+
+4. **Text stays `Text`.**
+   - **Why:** flint:data is allocation-free from end to end; even its row callbacks are typed `nothrow @nogc`. `string` columns would mean redesigning that core, not wiring it.
+   - **How it reads:** entities therefore keep `Text` columns in the request arena, and a CRUD handler passes `context.arena` and returns the entity within the request.
+   - **Conversion helpers:** `toString(arena, text)` and `toText(arena, value)` convert at the edges.
+   - **Revisit:** whether flint:data should gain GC-owned `string` columns is a question for the owner.
+
+5. **Restarts no longer fail on the port.**
+   - **The fault:** an application killed and started again at once failed with "could not bind listener" in about 5 of 8 tries, even with `SO_REUSEADDR`. The reactor's io_uring keeps the old listener alive until the kernel finishes the ring's teardown, after the process is reaped.
+   - **The fix:** flint:reactor now retries a bind on `EADDRINUSE` for up to a second. Over the same scenario, 0 of 10 restarts failed.
+   - **Seeing the error:** flint:web gains `serve`, which returns why serving stopped, and `runApplication` keeps its exit codes on top of it. starter-web prints the error, such as "server: could not bind listener", where before it exited 1 without a word.
+
+6. **DI start-up errors name the cause.** An exception from a bean's constructor or `@PostConstruct` now appears in the start-up error, for example "could not verify SQL repository schema for notes", where before it was only "raised an exception".
+
 ## Consequences
 
+- `flint add web data`, one migration and about forty lines give a validated CRUD API over SQLite. `tests/test_flint_starters.py` creates, validates, fetches, restarts against the same database and deletes.
 - `flint add web observability` gives health, readiness and metrics endpoints with no wiring. The example counts accepted jobs from a worker-thread handler, and `tests/test_flint_starters.py` reads the count back from `/actuator/metrics`.
 - A starter application has a typed front-end contract: `flint openapi --typescript client.ts` turns its controllers into a document and a client, and a `[spa]` section serves the front end beside the API. `tests/test_flint_starters.py` checks the document, the client, the front-end routes and a 100 KB asset served by a worker-thread handler.
 - `flint add web` and twenty lines of application code give a configured REST service with DI, ordinary handlers and string path variables. `tests/test_flint_starters.py` covers `flint add` (dependency, section, lock, a repeated add and an unknown starter), and the example serving a request and refusing a misspelt key with exit code 3.
@@ -145,9 +171,7 @@ Status: proposed by the Milestone 10 implementation, for the project owner's rev
 
 ## Remaining for Milestone 10
 
-- **flint:starter-data.**
-  - **What it adds:** a pool from `[database]`, migrations discovered from `resources/migrations` at build time, and repository registration.
-  - **Its design point:** flint:data is allocation-free from end to end, with `Text` fields in the request arena, so the starter needs `Text`/`string` helpers rather than `string` columns.
+- **flint:data `string` columns:** an owner decision (section 7.4).
 - **flint:starter-security and the auth starter:** sessions, OAuth login, password hashing and email verification.
 - **The second wave of starters:** cache, messaging, mail, storage, ai, mcp, cli, tui and desktop.
 - **Graceful SIGTERM and SIGINT:** this needs flint:os to dispatch SIGTERM and flint:web's run loop to watch for it.

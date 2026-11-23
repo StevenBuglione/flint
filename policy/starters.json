@@ -28,6 +28,21 @@
       ],
       "section": "management",
       "summary": "Health, readiness and Prometheus metrics endpoints on the application's server, and OTLP export"
+    },
+    "starter-data": {
+      "directory": "starters/data",
+      "module": "flint.starter_data",
+      "dependencies": [
+        "arena",
+        "conc",
+        "di",
+        "config",
+        "data",
+        "sql",
+        "migrate"
+      ],
+      "section": "database",
+      "summary": "A configured SQL pool, the project's migrations applied at start-up, and repositories as beans"
     }
   }
 }

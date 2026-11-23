@@ -61,23 +61,14 @@ int runApplication(Beans...)(string[] args)
 {
     import flint.arena : Status;
     import flint.di : AppContext;
-    import flint.web : Server, ServerOptions, run = runApplication;
+    import flint.web : Server, ServerOptions, serve;
 
     AppContext!(WebAutoConfiguration, Beans) context;
     alias Registered = typeof(context).Registered;
     alias Served = Controllers!Registered;
     // `--openapi` prints the OpenAPI document of the controllers and exits; `flint openapi` calls it.
-    foreach (argument; args.length > 1 ? args[1 .. $] : null)
-    {
-        if (argument == "--openapi")
-        {
-            import flint.term : Stream, writeStream;
-            import flint.web : openApiDocument;
-
-            enum document = openApiDocument!Served("Flint application", "0.0.0");
-            return writeStream(Stream.output, document ~ "\n").code == Status.ok ? 0 : 1;
-        }
-    }
+    if (asksForOpenApi(args))
+        return printOpenApi!Served();
     const configured = bindConfiguration(context, args.length > 1 ? args[1 .. $] : null);
     if (configured.code != Status.ok)
         return report(StartupExit.configuration, "configuration: " ~ configured.message);
@@ -108,7 +99,29 @@ int runApplication(Beans...)(string[] args)
         }
         return imported!"flint.arena".Error.init;
     };
-    return run(application, server, customize);
+    const served = serve(application, server, customize);
+    if (served.code == Status.ok || served.code == Status.cancelled)
+        return 0;
+    return report(1, "server: " ~ served.message);
+}
+
+private bool asksForOpenApi(scope const string[] args)
+{
+    foreach (argument; args.length > 1 ? args[1 .. $] : null)
+    {
+        if (argument == "--openapi")
+            return true;
+    }
+    return false;
+}
+
+private int printOpenApi(Served)()
+{
+    import flint.term : Stream, writeStream;
+    import flint.web : openApiDocument;
+
+    enum document = openApiDocument!Served("Flint application", "0.0.0");
+    return writeStream(Stream.output, document ~ "\n").code == Status.ok ? 0 : 1;
 }
 
 /// Bind every `Provided!T` registration whose `T` is a `@ConfigurationProperties` struct, from one snapshot of the
