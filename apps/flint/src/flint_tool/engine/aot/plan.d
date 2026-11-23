@@ -218,6 +218,22 @@ struct MethodPlan
     ExpressionPlan[] expressions;
 }
 
+/// A `flint.java.util` collection or map registered through an erased builder.
+struct ContainerPlan
+{
+    /// The type, as spelled in D source.
+    string type;
+    /// "list", "set" or "map".
+    string kind;
+    /// The runtime's canonical name of the type and of its type arguments.
+    string canonical;
+    /// ditto
+    string[] arguments;
+    /// The concrete type `create` instantiates (`ArrayList!(X)`), when a binder or reader must create one: a writable
+    /// property or a handler argument; empty for getter-only properties, which are filled in place.
+    string create;
+}
+
 /// One compiled method-level expression.
 struct ExpressionPlan
 {
@@ -482,6 +498,9 @@ struct ModulePlan
     string[] containerDescriptors;
     /// ditto
     string[] containerModules;
+    /// The `flint.java.util` lists, sets and maps among them, registered through `flint.java.util.descriptors`'
+    /// erased builders instead of `descriptorOf` (no per-type instance; owner decision 2670d5be).
+    ContainerPlan[] containers;
 
     /// Whether the module contributes anything.
     bool empty() const
@@ -612,6 +631,14 @@ private final class Analysis
     DefinedClass[string] definedClasses;
     /// Classes whose configuration is processed (or left out).
     bool[string] finished;
+    /// Container property and argument types a binder or reader creates (ContainerPlan.create).
+    bool[string] createdContainers;
+    /// Each template instance's template and argument spellings, by its spelling.
+    string[string] templateOf;
+    /// ditto
+    string[][string] argumentsOf;
+    /// ditto, as the runtime names them (typeNameOf).
+    string[][string] canonicalArgumentsOf;
     /// Classes whose class definition is decided (defined or left out).
     bool[string] decided;
     /// Importing classes of each imported class.
@@ -633,8 +660,18 @@ private final class Analysis
     {
         void visit(const ref TypeRef type)
         {
-            if (type.canonical.length)
+            if (type.canonical.length && type.name !in templateOf)
+            {
                 plan.canonicalNames[type.name] = type.canonical;
+                templateOf[type.name] = type.template_;
+                foreach (ref argument; type.arguments)
+                {
+                    argumentsOf[type.name] ~= argument.name;
+                    // typeNameOf!(argument): its own canonical name for a template instance, else its spelling
+                    // (fully qualified for aggregates; an instance's canonical name leaves its arguments short).
+                    canonicalArgumentsOf[type.name] ~= argument.canonical.length ? argument.canonical : argument.name;
+                }
+            }
             foreach (ref item; type.element)
                 visit(item);
             foreach (ref item; type.arguments)
@@ -707,6 +744,31 @@ private final class Analysis
         }
         compileMethodExpressions();
         markDescribed();
+        planContainers();
+    }
+
+    /// Which registered container types the erased builders describe (`ContainerPlan`).
+    void planContainers()
+    {
+        import std.array : join;
+
+        foreach (ref item; plan.modules)
+        {
+            foreach (type; item.containerDescriptors)
+            {
+                const canonical = type in plan.canonicalNames;
+                const template_ = templateOf.get(type, null);
+                const kind = containerKind(template_);
+                const arguments = canonicalArgumentsOf.get(type, null);
+                if (canonical is null || kind.length == 0 || arguments.length != (kind == "map" ? 2 : 1))
+                    continue;
+                ContainerPlan container = ContainerPlan(type, kind, *canonical, arguments.dup);
+                const spelled = argumentsOf.get(type, null).join(", ");
+                if (type in createdContainers)
+                    container.create = concreteTemplate(template_) ~ "!(" ~ spelled ~ ")";
+                item.containers ~= container;
+            }
+        }
     }
 
     /// Contract 3: request bodies and response bodies whose types the generated tables register get their
@@ -1304,6 +1366,8 @@ private final class Analysis
                 target.containerDescriptors ~= property.type;
                 target.containerModules ~= property.modules;
             }
+            if (container && property.writable)
+                createdContainers[property.type] = true;
         }
         addDescriptor(*target, descriptor);
     }
@@ -2497,6 +2561,7 @@ private final class Analysis
             return;
         target.containerDescriptors ~= type.name;
         target.containerModules ~= modulesOf(type);
+        createdContainers[type.name] = true;
     }
 
     long statusCode(const ref imported!"flint_tool.engine.aot.model".Annotation status)
@@ -3016,4 +3081,36 @@ private string combine(string left, string right)
     if (!leftSlash && !rightSlash)
         return left ~ "/" ~ right;
     return left ~ right;
+}
+
+/// "list", "set" or "map" for a `flint.java.util` collection or map template; empty otherwise.
+private string containerKind(string template_)
+{
+    switch (template_)
+    {
+    case "flint.java.util.List", "flint.java.util.ArrayList", "flint.java.util.Collection":
+        return "list";
+    case "flint.java.util.Set", "flint.java.util.HashSet", "flint.java.util.LinkedHashSet":
+        return "set";
+    case "flint.java.util.Map", "flint.java.util.HashMap", "flint.java.util.LinkedHashMap":
+        return "map";
+    default:
+        return null;
+    }
+}
+
+/// The class `create` instantiates for a declared collection or map type, as Flint's descriptor hooks do.
+private string concreteTemplate(string template_)
+{
+    switch (template_)
+    {
+    case "flint.java.util.List", "flint.java.util.Collection":
+        return "flint.java.util.ArrayList";
+    case "flint.java.util.Set":
+        return "flint.java.util.LinkedHashSet";
+    case "flint.java.util.Map":
+        return "flint.java.util.LinkedHashMap";
+    default:
+        return template_;
+    }
 }

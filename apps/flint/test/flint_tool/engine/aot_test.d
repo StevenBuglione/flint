@@ -1309,7 +1309,10 @@ unittest
     expect(controller.canFind(`a.type = "flint.java.util.Optional!string"; a.required = false;`)).toBeTrue();
     expect(controller.canFind(`typeNameOf!(`)).toBeFalse();
     expect(controller.canFind(`descriptorOf!(flint.java.util.Optional!(string))()`)).toBeTrue();
-    expect(controller.canFind(`descriptorOf!(flint.java.util.List!(int))()`)).toBeTrue();
+    // A flint.java.util list goes through the erased builder (no descriptorOf instance), with a create function
+    // because the binder builds the argument.
+    expect(controller.canFind(`rawListDescriptor("flint.java.util.List!int", "int", &newContainer_`)).toBeTrue();
+    expect(controller.canFind(`descriptorOf!(flint.java.util.List!(int))`)).toBeFalse();
     // A root property's member is a dotted root path the runtime resolves.
     expect(controller.canFind(`(context.rootProperty("authentication.name")).get!(string)() == "admin"`)).toBeTrue();
     // @EnableMethodSecurity's @Import: the imported configuration and its advisor bean register only where
@@ -1329,9 +1332,13 @@ unittest
     // A DTO's container-typed properties have their descriptors registered (data-access: List!(VisitDto),
     // Nullable!int in petclinic-rest's DTOs).
     const dto = readText(buildPath(generated, "rest", "dto", "ownerdto.d"));
-    expect(dto.canFind(
-            `descriptorOf!(flint.java.util.List!(org.springframework.samples.petclinic.rest.dto.`
-            ~ `ownerdto.PetDto))()`)).toBeTrue();
+    // Named as typeNameOf names them: the instance with its arguments short (DMD and LDC agree), the element fully
+    // qualified, as its own descriptor is registered.
+    expect(dto.canFind(`rawListDescriptor("flint.java.util.List!(PetDto)", `
+            ~ `"org.springframework.samples.petclinic.rest.dto.ownerdto.PetDto", &newContainer_`)).toBeTrue();
+    expect(dto.canFind(`return Any.of(cast(flint.java.util.List!(org.springframework.samples.petclinic.rest.dto.`
+            ~ `ownerdto.PetDto)) new flint.java.util.ArrayList!(org.springframework.samples.petclinic.rest.dto.`
+            ~ `ownerdto.PetDto)());`)).toBeTrue();
     expect(dto.canFind(`descriptorOf!(std.typecons.Nullable!(int))()`)).toBeTrue();
     // Properties inherited through getters: Owner : Person : BaseEntity.
     const model = readText(buildPath(generated, "model", "baseentity.d"));
