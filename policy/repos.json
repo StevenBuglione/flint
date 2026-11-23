@@ -1,29 +1,74 @@
 {
   "schema": "flint.repos/1",
-  "note": "Repo split (plan section 7, ADR-030): every flint:* package belongs to one repo, and edges follow Spring's own: integrated repos (security, the data family, batch) sit between boot and framework, so boot -> integrated -> framework -> flint; Boot-based repos (ai, the cloud family, later shell) ship their own auto-configuration and depend on boot.",
+  "note": "Repo split (plan section 7, ADR-030 section 2): every flint:* package belongs to one repo. Integrated repos (security, the data family, batch) sit between boot and framework, so boot -> integrated -> framework -> flint, and depend on each other only in Spring's own direction (data-* and security -> data-commons). Boot-based repos (ai, the cloud family, later shell) ship their own auto-configuration and depend on boot.",
   "repos": {
     "flint": {
-      "github": "flint",
+      "github": "flint-projects/flint",
       "kind": "tooling",
       "may_depend_on": []
     },
     "framework": {
-      "github": "flint-framework",
+      "github": "flint-projects/flint-framework",
       "kind": "framework",
       "may_depend_on": [
         "flint"
       ]
     },
-    "security": {
-      "github": "flint-security",
+    "data-commons": {
+      "github": "flint-projects/flint-data-commons",
       "kind": "integrated",
       "may_depend_on": [
         "framework",
         "flint"
       ]
     },
+    "security": {
+      "github": "flint-projects/flint-security",
+      "kind": "integrated",
+      "may_depend_on": [
+        "data-commons",
+        "framework",
+        "flint"
+      ]
+    },
     "data-jdbc": {
-      "github": "flint-data-jdbc",
+      "github": "flint-projects/flint-data-jdbc",
+      "kind": "integrated",
+      "may_depend_on": [
+        "data-commons",
+        "framework",
+        "flint"
+      ]
+    },
+    "data-jpa": {
+      "github": "flint-projects/flint-data-jpa",
+      "kind": "integrated",
+      "may_depend_on": [
+        "data-commons",
+        "framework",
+        "flint"
+      ]
+    },
+    "data-redis": {
+      "github": "flint-projects/flint-data-redis",
+      "kind": "integrated",
+      "may_depend_on": [
+        "data-commons",
+        "framework",
+        "flint"
+      ]
+    },
+    "data-mongodb": {
+      "github": "flint-projects/flint-data-mongodb",
+      "kind": "integrated",
+      "may_depend_on": [
+        "data-commons",
+        "framework",
+        "flint"
+      ]
+    },
+    "batch": {
+      "github": "flint-projects/flint-batch",
       "kind": "integrated",
       "may_depend_on": [
         "framework",
@@ -31,22 +76,112 @@
       ]
     },
     "boot": {
-      "github": "flint-boot",
+      "github": "flint-projects/flint-boot",
       "kind": "boot",
       "may_depend_on": [
+        "data-commons",
         "security",
         "data-jdbc",
+        "data-jpa",
+        "data-redis",
+        "data-mongodb",
+        "batch",
         "framework",
         "flint"
       ]
     },
     "ai": {
-      "github": "flint-ai",
+      "github": "flint-projects/flint-ai",
       "kind": "boot-based",
       "may_depend_on": [
         "boot",
+        "data-commons",
         "security",
         "data-jdbc",
+        "data-jpa",
+        "data-redis",
+        "data-mongodb",
+        "batch",
+        "framework",
+        "flint"
+      ]
+    },
+    "cloud-gateway": {
+      "github": "flint-projects/flint-cloud-gateway",
+      "kind": "boot-based",
+      "may_depend_on": [
+        "boot",
+        "data-commons",
+        "security",
+        "data-jdbc",
+        "data-jpa",
+        "data-redis",
+        "data-mongodb",
+        "batch",
+        "framework",
+        "flint"
+      ]
+    },
+    "cloud-config": {
+      "github": "flint-projects/flint-cloud-config",
+      "kind": "boot-based",
+      "may_depend_on": [
+        "boot",
+        "data-commons",
+        "security",
+        "data-jdbc",
+        "data-jpa",
+        "data-redis",
+        "data-mongodb",
+        "batch",
+        "framework",
+        "flint"
+      ]
+    },
+    "cloud-stream": {
+      "github": "flint-projects/flint-cloud-stream",
+      "kind": "boot-based",
+      "may_depend_on": [
+        "boot",
+        "data-commons",
+        "security",
+        "data-jdbc",
+        "data-jpa",
+        "data-redis",
+        "data-mongodb",
+        "batch",
+        "framework",
+        "flint"
+      ]
+    },
+    "cloud-openfeign": {
+      "github": "flint-projects/flint-cloud-openfeign",
+      "kind": "boot-based",
+      "may_depend_on": [
+        "boot",
+        "data-commons",
+        "security",
+        "data-jdbc",
+        "data-jpa",
+        "data-redis",
+        "data-mongodb",
+        "batch",
+        "framework",
+        "flint"
+      ]
+    },
+    "cloud-function": {
+      "github": "flint-projects/flint-cloud-function",
+      "kind": "boot-based",
+      "may_depend_on": [
+        "boot",
+        "data-commons",
+        "security",
+        "data-jdbc",
+        "data-jpa",
+        "data-redis",
+        "data-mongodb",
+        "batch",
         "framework",
         "flint"
       ]

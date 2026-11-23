@@ -1,30 +1,81 @@
 {
   "schema": "flint.platform/1",
-  "note": "Pins every Flint repo (ADR-023 amendment, plan section 7). Before the split every repo is this checkout (\"source\": \"monorepo\"); afterwards each entry gains \"commit\" and \"tag\", and flint resolves a repo's packages, Boot libraries and starters from that platform version.",
+  "note": "Pins every Flint repo (ADR-023 amendment, plan section 7) at github.com/flint-projects. Repos whose packages still live in this checkout are \"source\": \"monorepo\"; the others are pinned at their commit. After the extraction each entry carries its commit and tag, and flint resolves that repo's packages, Boot libraries and starters from that platform version.",
   "repos": {
     "flint": {
-      "github": "StevenBuglione/flint",
+      "github": "flint-projects/flint",
       "source": "monorepo"
     },
     "framework": {
-      "github": "StevenBuglione/flint-framework",
+      "github": "flint-projects/flint-framework",
       "source": "monorepo"
+    },
+    "data-commons": {
+      "github": "flint-projects/flint-data-commons",
+      "source": "github",
+      "commit": "dd0cecaebd252502ba97504fbafa3f48b608c943"
     },
     "security": {
-      "github": "StevenBuglione/flint-security",
-      "source": "monorepo"
+      "github": "flint-projects/flint-security",
+      "source": "github",
+      "commit": "21d3bc4450c306d87d799df40198639b845d700e"
     },
     "data-jdbc": {
-      "github": "StevenBuglione/flint-data-jdbc",
+      "github": "flint-projects/flint-data-jdbc",
       "source": "monorepo"
     },
+    "data-jpa": {
+      "github": "flint-projects/flint-data-jpa",
+      "source": "github",
+      "commit": "1c7f3e79e9bb9620a5bb54eeb1a25bdcf86ca914"
+    },
+    "data-redis": {
+      "github": "flint-projects/flint-data-redis",
+      "source": "github",
+      "commit": "02547be7057140244ddbaf74a08a7de3588db508"
+    },
+    "data-mongodb": {
+      "github": "flint-projects/flint-data-mongodb",
+      "source": "github",
+      "commit": "801e47e141466dcb11e85754774f52d4065a2f19"
+    },
+    "batch": {
+      "github": "flint-projects/flint-batch",
+      "source": "github",
+      "commit": "8b0bb9afeb28108db5fef192e5a20d26409e52df"
+    },
     "boot": {
-      "github": "StevenBuglione/flint-boot",
+      "github": "flint-projects/flint-boot",
       "source": "monorepo"
     },
     "ai": {
-      "github": "StevenBuglione/flint-ai",
+      "github": "flint-projects/flint-ai",
       "source": "monorepo"
+    },
+    "cloud-gateway": {
+      "github": "flint-projects/flint-cloud-gateway",
+      "source": "github",
+      "commit": "5b29c3de084587db2d31542c634864e0e9020b51"
+    },
+    "cloud-config": {
+      "github": "flint-projects/flint-cloud-config",
+      "source": "github",
+      "commit": "d5abf2eee70f6c049ce27144bdc8debe9f4e13fe"
+    },
+    "cloud-stream": {
+      "github": "flint-projects/flint-cloud-stream",
+      "source": "github",
+      "commit": "4ca190163b075caa20e02addff4d526377cf2284"
+    },
+    "cloud-openfeign": {
+      "github": "flint-projects/flint-cloud-openfeign",
+      "source": "github",
+      "commit": "771f72736886d0c98d1b28b6ad1f48ad903f6116"
+    },
+    "cloud-function": {
+      "github": "flint-projects/flint-cloud-function",
+      "source": "github",
+      "commit": "1217076671766168d39481cf4bf9a7023623b22d"
     }
   }
 }
