@@ -753,6 +753,8 @@ private bool extractInto(const ref AotRequest request, scope const SourceModule[
     {
         write(modelPath(cache, model.name), result.documents[index]);
         state.models[model.name] = sha256Hex(cast(const(ubyte)[]) result.documents[index]);
+        // readOutput parsed it already: cachedModel would parse the file again (13% of a petclinic cold step).
+        state.parsed[model.name] = ParsedModel(state.models[model.name], model);
         state.keys[model.name] = keys.get(model.name, null);
         if (const sharedKey = model.name in shareable)
         {
