@@ -4,13 +4,14 @@
 Each test is a self-checking D program that exits 0 on success. It is compiled with
 `dmd -marm64` three ways (no flags, -O, -O -release -inline), linked against druntime
 for the target, and run natively on arm64 or under QEMU user mode elsewhere. A test
-`name.d` may have a C companion `name.c`, and a directory `name/` of D modules that
-`dmd -lib` builds into a static library the test links with.
+`name.d` may have a C companion `name.c`, and a directory `name/` of D modules (and C
+files, which DMD compiles as ImportC) that `dmd -lib` builds into a static library the
+test links with.
 
     python3 toolchain/arm64/run.py --dmd DMD --druntime-import DIR --druntime LIB
         [--os linux|osx] [--cc CC] [--run-prefix "qemu-aarch64 -L /usr/aarch64-linux-gnu"]
 """
-import argparse, os, shlex, subprocess, sys, tempfile
+import argparse, os, shlex, shutil, subprocess, sys, tempfile
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -29,16 +30,20 @@ def main():
     tests = [HERE / t for t in a.tests] if a.tests else sorted(HERE.glob('*.d'))
     libs = ['-lpthread', '-lm'] + (['-ldl'] if a.os == 'linux' else [])
     failed = []
+    # The C preprocessor for ImportC: the cross compiler's when one is given (aarch64-linux-gnu-gcc -> -cpp)
+    cc = shlex.split(a.cc)[0]
+    cpp = ['-cpp=' + cc[:-3] + 'cpp'] if a.os == 'linux' and cc.endswith('-gcc') else []
     with tempfile.TemporaryDirectory() as tmp:
         for t in tests:
             for flags in FLAGS:
                 name = t.stem + ''.join(flags).replace('-', '_')
                 obj, exe = Path(tmp) / (name + '.o'), Path(tmp) / name
                 common = [a.dmd, '-conf=', '-marm64', '-os=' + a.os, '-I' + a.druntime_import, *flags,
-                          *(['-fPIC'] if a.os == 'linux' else [])]
+                          *(['-fPIC'] if a.os == 'linux' else []), *cpp]
                 steps = []
                 library = []
-                modules = sorted(t.with_suffix('').glob('*.d')) if t.with_suffix('').is_dir() else []
+                directory = t.with_suffix('')
+                modules = sorted(directory.glob('*.d')) + sorted(directory.glob('*.c')) if directory.is_dir() else []
                 if modules:
                     lib = Path(tmp) / (name + '.a')
                     steps.append(common + ['-lib', *map(str, modules), '-of' + str(lib)])
@@ -49,7 +54,9 @@ def main():
                              + library + [a.druntime] + libs + ['-o', str(exe)])
                 steps.append(shlex.split(a.run_prefix) + [str(exe)])
                 for step in steps:
-                    r = subprocess.run(step, capture_output=True, text=True, timeout=300)
+                    # DMD preprocesses ImportC files and links with $CC
+                    r = subprocess.run(step, capture_output=True, text=True, timeout=300,
+                                       env=dict(os.environ, CC=a.cc) if a.cc != 'cc' else None)
                     if r.returncode != 0:
                         failed.append(f'{t.name} {" ".join(flags) or "(no flags)"}: {Path(step[0]).name} '
                                       f'exited {r.returncode}\n{(r.stdout + r.stderr)[-2000:]}')
@@ -61,7 +68,23 @@ def main():
         r = subprocess.run([a.dmd, '-conf=' + str(conf), '--version'], capture_output=True, text=True, timeout=60)
         if r.returncode != 0 or 'Error' in r.stdout + r.stderr:
             failed.append('dmd --version with -marm64 in dmd.conf:\n' + (r.stdout + r.stderr)[-2000:])
-    total = len(tests) * len(FLAGS) + 1
+        # The driver: -L-Wl,... is a C compiler driver switch, passed to cc without -Xlinker
+        # (native packages give Apple frameworks as -Wl,-framework,NAME).
+        source = Path(tmp) / 'wl.d'
+        source.write_text('extern(C) int main() { return 0; }\n')
+        wl = '-L-Wl,-framework,CoreFoundation' if a.os == 'osx' else '-L-Wl,--as-needed'
+        dmd = shutil.which(a.dmd) or a.dmd
+        link = [str(Path(dmd).resolve()), '-conf=', '-marm64', '-os=' + a.os, '-betterC',
+                '-I' + str(Path(a.druntime_import).resolve()), *(['-fPIC'] if a.os == 'linux' else []),
+                str(source), wl, '-of' + str(Path(tmp) / 'wl')]
+        env = dict(os.environ, CC=a.cc) if a.cc != 'cc' else None
+        r = subprocess.run(link, capture_output=True, text=True, timeout=120, env=env, cwd=tmp)
+        if r.returncode == 0:
+            r = subprocess.run(shlex.split(a.run_prefix) + [str(Path(tmp) / 'wl')], capture_output=True, text=True,
+                               timeout=60)
+        if r.returncode != 0:
+            failed.append('dmd links with ' + wl + ':\n' + (r.stdout + r.stderr)[-2000:])
+    total = len(tests) * len(FLAGS) + 2
     for f in failed:
         print('FAIL', f)
     print(f'{total - len(failed)}/{total} passed')

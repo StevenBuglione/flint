@@ -59,10 +59,17 @@ Both libraries pass natively on macOS arm64. The three Linux failures come from 
 
 They are to be confirmed on real Linux AArch64 hardware, along with stage 2.
 
+## Status (stage 2: Flint's packages)
+
+On macOS arm64 and Linux arm64, the forked DMD now fills the DMD role of the dev and test profiles. `flint toolchain install` runs `install_toolchains.py --compiler dmd`, then LDC and the Flint DUB.
+
+On pluto, `flint test --compiler dmd` passes 37 of the workspace's 38 packages, peers included (S3, MinIO, PostgreSQL, Valkey and the Go peers). The run used the native providers that `tools/ci.py` builds (`--profile ci --library wasmtime --library wkwebview`) and Homebrew's `python3`. Apple's `/usr/bin/python3` 3.9 rejects the S3 fixture's empty query strings. The 38th package, `engine-desktop`, passes when its test binary runs with `SDL_VIDEODRIVER=dummy`, as the lane does: `flint test` does not pass that variable through. Its WKWebView tests need the logged-in GUI session. Linux arm64 needs real hardware.
+
 ## Decisions and known ABI gaps
 
 - **`real` is `double` on all AArch64 targets**, as it already was for macOS. The back end has no 128-bit floating point. On Linux, C's `long double` is 128-bit, so `extern(C)` functions that take or return `long double` are not compatible. druntime binds the C library's `long double` functions in `core.stdc.math`, and `strtold`, to their `double` versions there (`long_double_libm`). `printf("%Lf")` and other C code that passes `long double` still disagree.
-- **Homogeneous floating point aggregates of 3 or 4 elements** are passed and returned by the general aggregate rules: in general registers, or in memory above 16 bytes. AAPCS64 uses SIMD registers for them. Calls between D functions agree. C functions that take or return such a struct do not, and neither does `va_arg` of one through a C `va_list`. HFAs of 1 or 2 elements follow AAPCS64.
+- **Homogeneous floating point aggregates (HFAs) of 3 or 4 float or double elements**, such as `CGRect`, follow AAPCS64 in calls with C (and C++, Objective-C) linkage: they are passed and returned in SIMD registers (`hfa_c_abi`). The back end has register pairs only, so the glue lowers them: the caller passes such an argument as its elements, and stores a result from v0.. into a temporary; a D function with C linkage gets the elements as parameters and returns through a temporary that its return loads into v0... Two cases still differ from AAPCS64. An HFA argument that no longer fits in the remaining SIMD registers goes partly in registers instead of whole on the stack. `va_arg` of an HFA through a C `va_list` uses the general rules. D linkage keeps the general rules: in general registers, or in memory above 16 bytes. HFAs of 1 or 2 elements follow AAPCS64 for every linkage.
+- **A result returned in memory** has its address passed in x8 for every linkage (AAPCS64), and the address is not returned (`c_struct_return`).
 - On macOS, stack arguments follow Apple's rules:
   - scalars are packed at their natural alignment;
   - composites of up to 16 bytes take 8-byte aligned slots;
@@ -112,6 +119,9 @@ Code generation:
 - String literals with the same bytes but different character sizes shared a symbol: `""w` and `""d` got the 1-byte terminator of `""`. The same pooling is in the x86 back end (`string_literal_sizes`).
 - The prolog's CFI took effect at 1 and 4 bytes into the function instead of after `STP` and `MOV x29,sp`. The CIE's code alignment factor is 1 (`prolog_cfi`).
 - The driver: `-marm64` in `dmd.conf`'s DFLAGS made `dmd --version` report a change of architecture (`run.py` checks it).
+- A result returned in memory had its address passed as a hidden first argument in x0, so C functions returning a struct over 16 bytes got their first argument in its place (`c_struct_return`).
+- HFAs of 3 or 4 elements in C calls (`hfa_c_abi`, see above).
+- The driver: `-L-Wl,...` (how native packages name Apple frameworks) went to the linker behind `-Xlinker`; it now goes to `cc`, and the direct link splits it. Linux AArch64 links got Apple's `-arch arm64`, and its ImportC preprocessing `-m64`, which GCC for AArch64 rejects (`run.py` checks the first two, `importc_preprocess` the last).
 - Smaller items:
   - x86 helper misdispatch (`getlvalue`), `getregs` given a register number instead of a mask;
   - the x86 scheduler and NOP running on AArch64;

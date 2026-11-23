@@ -1833,7 +1833,7 @@ diff -ruN a/dmd/timetrace.d b/dmd/timetrace.d
                  event.name = eventPrefixes[eventType] ~ name();
              else if (!event.name)
 diff --git a/dmd/argtypes_aarch64.d b/dmd/argtypes_aarch64.d
-index 7c01e17..af961f9 100644
+index 7c01e17..d040f8c 100644
 --- a/dmd/argtypes_aarch64.d
 +++ b/dmd/argtypes_aarch64.d
 @@ -47,7 +47,12 @@ TypeTuple toArgTypes_aarch64(Type t)
@@ -1850,8 +1850,40 @@ index 7c01e17..af961f9 100644
      const isHFVA = size > maxNumHFVAElements * 16 ? false : isHFVA(tb, maxNumHFVAElements, &hfvaType);
  
      // non-PODs and larger non-HFVA PODs are passed indirectly by value (pointer to caller-allocated copy)
+@@ -107,6 +112,31 @@ bool isHFVA(Type t, int maxNumElements = 4, Type* rewriteType = null)
+     return true;
+ }
+ 
++/**
++ * The shape of a homogeneous floating point aggregate of 3 or 4 float or double elements,
++ * which AAPCS64 passes and returns in 3 or 4 SIMD registers: the number of elements, plus 8
++ * when they are doubles. 0 for any other type.
++ * The back end has register pairs only, so C calls lower these (dmd.glue.e2ir, dmd.glue).
++ */
++uint hfaShape(Type t)
++{
++    Type rewrite;
++    if (!isHFVA(t, 4, &rewrite))
++        return 0;
++    auto sa = rewrite.isTypeSArray();
++    if (!sa)
++        return 0;
++    const n = cast(uint) sa.dim.toUInteger();
++    if (n < 3)
++        return 0;
++    switch (sa.nextOf().toBasetype().ty)
++    {
++        case Tfloat32: return n;
++        case Tfloat64: return n | 8;
++        default:       return 0;        // vectors
++    }
++}
++
+ private:
+ 
+ bool isPOD(Type t)
 diff --git a/dmd/backend/arm/cod1.d b/dmd/backend/arm/cod1.d
-index 8d11dc0..ff94bcb 100644
+index 8d11dc0..a87359b 100644
 --- a/dmd/backend/arm/cod1.d
 +++ b/dmd/backend/arm/cod1.d
 @@ -40,7 +40,8 @@ import dmd.backend.symbol;
@@ -2025,7 +2057,17 @@ index 8d11dc0..ff94bcb 100644
  
      //printf("loadea() sz: %d Voffset: %d loadea.offset: %d\n", sz, cast(int)cs.IEV1.Voffset, cast(int)offset);
      assert(op != LEA);                  // AArch64 does not have LEA
-@@ -1114,7 +1159,7 @@ void getlvalue(ref CGstate cg,ref CodeBuilder cdb,ref code pcs,elem* e,regm_t ke
+@@ -1075,7 +1120,8 @@ void getlvalue(ref CGstate cg,ref CodeBuilder cdb,ref code pcs,elem* e,regm_t ke
+ 
+         case FL.auto_:
+         case FL.fast:
+-            if (regParamInPreg(*s))
++            // not x8, the result address, which calls do not preserve and nothing tracks
++            if (regParamInPreg(*s) && !(s.Spregm() & ~INSTR.ALLREGS & ~INSTR.FLOATREGS))
+             {
+ //printf("regParamInPreg()\n");
+                 regm_t pregm = s.Spregm();
+@@ -1114,7 +1160,7 @@ void getlvalue(ref CGstate cg,ref CodeBuilder cdb,ref code pcs,elem* e,regm_t ke
                                          }
                                       */
                                  }
@@ -2034,7 +2076,7 @@ index 8d11dc0..ff94bcb 100644
                                  {
                                      pcs.reg = preg;
                                      cg.regcon.used |= mask(preg);
-@@ -1175,6 +1220,25 @@ void getlvalue(ref CGstate cg,ref CodeBuilder cdb,ref code pcs,elem* e,regm_t ke
+@@ -1175,6 +1221,25 @@ void getlvalue(ref CGstate cg,ref CodeBuilder cdb,ref code pcs,elem* e,regm_t ke
          case FL.got:
          case FL.gotoff:
          L3:
@@ -2060,7 +2102,7 @@ index 8d11dc0..ff94bcb 100644
              pcs.base = BP;
          L2:
              if (rm != RM.store)                    // if not store only
-@@ -1193,8 +1257,8 @@ void getlvalue(ref CGstate cg,ref CodeBuilder cdb,ref code pcs,elem* e,regm_t ke
+@@ -1193,8 +1258,8 @@ void getlvalue(ref CGstate cg,ref CodeBuilder cdb,ref code pcs,elem* e,regm_t ke
                   * the opcode. The only way to deal with this is to prevent enregistering
                   * such variables.
                   */
@@ -2071,7 +2113,7 @@ index 8d11dc0..ff94bcb 100644
                      cgreg_unregister(cg,s.Sregm);
  
                  if (
-@@ -1212,6 +1276,10 @@ void getlvalue(ref CGstate cg,ref CodeBuilder cdb,ref code pcs,elem* e,regm_t ke
+@@ -1212,6 +1277,10 @@ void getlvalue(ref CGstate cg,ref CodeBuilder cdb,ref code pcs,elem* e,regm_t ke
                      off = tysize(ty) / 2;
                  if (e.Voffset == off && sz == off)
                      pcs.reg = s.Sregmsw;
@@ -2082,7 +2124,7 @@ index 8d11dc0..ff94bcb 100644
  
                  break;
              }
-@@ -1238,7 +1306,7 @@ void getlvalue(ref CGstate cg,ref CodeBuilder cdb,ref code pcs,elem* e,regm_t ke
+@@ -1238,7 +1307,7 @@ void getlvalue(ref CGstate cg,ref CodeBuilder cdb,ref code pcs,elem* e,regm_t ke
                  debug if (debugr) printf("'%s' not XMM reg cand due to short access\n", s.Sident.ptr);
                  s.Sflags &= ~GTregcand;
              }
@@ -2091,7 +2133,7 @@ index 8d11dc0..ff94bcb 100644
              {
                  debug if (debugr) printf("'%s' not reg cand due to offset or size\n", s.Sident.ptr);
                  s.Sflags &= ~GTregcand;
-@@ -1365,6 +1433,15 @@ void tstresult(ref CGstate cg, ref CodeBuilder cdb, regm_t regm, tym_t tym, bool
+@@ -1365,6 +1434,15 @@ void tstresult(ref CGstate cg, ref CodeBuilder cdb, regm_t regm, tym_t tym, bool
              cdb.gen1(INSTR.fcmp_float(ftype,0,reg));    // FCMP Vn,#0.0
          }
      }
@@ -2107,7 +2149,7 @@ index 8d11dc0..ff94bcb 100644
      else
          gentstreg(cdb,reg,sz == 8);                 // CMP reg,#0
      code_orflag(cdb.last(),CF.psw);
-@@ -1433,6 +1510,17 @@ void fixresult(ref CGstate cg, ref CodeBuilder cdb, elem* e, regm_t retregs, ref
+@@ -1433,6 +1511,17 @@ void fixresult(ref CGstate cg, ref CodeBuilder cdb, elem* e, regm_t retregs, ref
                  cdb.gen1(INSTR.mov_register(sz == 8,lsreg,lsrreg));  // MOV lsrreg,lsreg
              }
          }
@@ -2125,7 +2167,7 @@ index 8d11dc0..ff94bcb 100644
          else if (tyfloating(tym))
          {
              assert(outretregs & INSTR.FLOATREGS);
-@@ -1442,7 +1530,7 @@ void fixresult(ref CGstate cg, ref CodeBuilder cdb, elem* e, regm_t retregs, ref
+@@ -1442,7 +1531,7 @@ void fixresult(ref CGstate cg, ref CodeBuilder cdb, elem* e, regm_t retregs, ref
              uint ftype = INSTR.szToFtype(sz);
              if (Vn < 32) // move integer to float
              {
@@ -2134,11 +2176,53 @@ index 8d11dc0..ff94bcb 100644
              }
              else // move float to float
              {
-@@ -1791,7 +1879,10 @@ void cdfunc(ref CGstate cg, ref CodeBuilder cdb, elem* e, ref regm_t pretregs)
+@@ -1744,6 +1833,7 @@ void cdfunc(ref CGstate cg, ref CodeBuilder cdb, elem* e, ref regm_t pretregs)
+         Parameter* parameters = cast(Parameter*)alloca(np * Parameter.sizeof);
+     }
+     memset(parameters, 0, Parameter.sizeof * np);
++    reg_t hiddenScratch = NOREG;            // holds the address of a result returned in memory
+ 
+     if (np)
+     {
+@@ -1752,6 +1842,19 @@ void cdfunc(ref CGstate cg, ref CodeBuilder cdb, elem* e, ref regm_t pretregs)
+         assert(n == np);
+     }
+ 
++    /* An HFA of 3 or 4 elements is returned in v0..: the hidden argument is the address of the
++     * temporary that receives it, and is not passed (dmd.glue.e2ir)
++     */
++    elem* hfaResult = null;
++    if (e.Nflags & NFLhfaResult)
++    {
++        const hidx = e.Nflags & NFLhiddenLast ? np - 1 : np - 2;
++        hfaResult = parameters[hidx].e;
++        foreach (k; hidx .. np - 1)
++            parameters[k] = parameters[k + 1];
++        --np;
++    }
++
+     Symbol* sf = null;                  // symbol of the function being called
+     if (e.E1.Eoper == OPvar)
+         sf = e.E1.Vsym;
+@@ -1786,12 +1889,24 @@ void cdfunc(ref CGstate cg, ref CodeBuilder cdb, elem* e, ref regm_t pretregs)
+     {
+         FuncParamRegs fpr = FuncParamRegs_create(tyf);
+         int apIdx = -1;
++        // the address of a result returned in memory goes in x8 (dmd.glue.e2ir marks it)
++        const hiddenIdx = e.Nflags & NFLhfaResult ? -1 :     // stripped above
++            e.Nflags & NFLhiddenLast ? np - 1 : e.Nflags & NFLhiddenBefore ? np - 2 : -1;
+         for (int i = np; --i >= 0;)
+         {
              Parameter* p = &parameters[i];
              elem* ep = p.e;
              p.reg = NOREG;
 -            p.isVariadic = numExplicitParams && np - i + 1 > numExplicitParams;
++            if (i == hiddenIdx)
++            {
++                p.reg = 8;
++                p.reg2 = NOREG;
++                continue;
++            }
 +            // position from the left: parameters[] is right to left, except for
 +            // functions taking their parameters in reverse (extern(D))
 +            const left = tyrevfunc(tyf) ? i : np - 1 - i;
@@ -2146,7 +2230,7 @@ index 8d11dc0..ff94bcb 100644
              if (p.isVariadic)      // osx_aapcs64 does not pass variadic args in registers
                  continue;
              if (FuncParamRegs_alloc(cg, fpr, ep.ET, ep.Ety, p.reg, p.reg2))
-@@ -1801,8 +1892,8 @@ void cdfunc(ref CGstate cg, ref CodeBuilder cdb, elem* e, ref regm_t pretregs)
+@@ -1801,8 +1916,8 @@ void cdfunc(ref CGstate cg, ref CodeBuilder cdb, elem* e, ref regm_t pretregs)
               */
              apIdx = i;
          }
@@ -2157,7 +2241,7 @@ index 8d11dc0..ff94bcb 100644
  
          /* Print what we have discovered
           */
-@@ -1839,15 +1930,23 @@ void cdfunc(ref CGstate cg, ref CodeBuilder cdb, elem* e, ref regm_t pretregs)
+@@ -1839,15 +1954,23 @@ void cdfunc(ref CGstate cg, ref CodeBuilder cdb, elem* e, ref regm_t pretregs)
  
          /* Alignment on OSX64 AArch64 is the same as for struct fields.
           * If it is a variadic function, the last parameter (lastPar) is aligned on 8 bytes.
@@ -2183,7 +2267,24 @@ index 8d11dc0..ff94bcb 100644
          numpara += sz;
      }
  
-@@ -1998,11 +2097,7 @@ void cdfunc(ref CGstate cg, ref CodeBuilder cdb, elem* e, ref regm_t pretregs)
+@@ -1989,6 +2112,16 @@ void cdfunc(ref CGstate cg, ref CodeBuilder cdb, elem* e, ref regm_t pretregs)
+             cdb.append(cdbsave);
+             cdb.append(cdbparams);
+         }
++        else if (preg == 8)
++        {
++            /* The address of the result goes in x8, which is not allocated: compute it into
++             * a scratch register kept like a parameter register, and move it just before the call
++             */
++            regm_t retregs = 0xFE00 & ~keepmsk;     // x9..x15
++            scodelem(cg,cdb, ep, retregs, keepmsk, false);
++            hiddenScratch = findreg(retregs);
++            keepmsk |= retregs;
++        }
+         else
+         {
+             // Goes in register preg, not stack
+@@ -1998,11 +2131,7 @@ void cdfunc(ref CGstate cg, ref CodeBuilder cdb, elem* e, ref regm_t pretregs)
              if (preg2 != NOREG || tybasic(ep.Ety) == TYcfloat)
              {
                  assert(ep.Eoper != OPstrthis);
@@ -2196,7 +2297,7 @@ index 8d11dc0..ff94bcb 100644
                  {
                      lreg = mask(preg ) & INSTR.LSW ? cast(reg_t)preg  : 0;
                      mreg = mask(preg2) & INSTR.MSW ? cast(reg_t)preg2 : 1;
-@@ -2060,12 +2155,10 @@ void cdfunc(ref CGstate cg, ref CodeBuilder cdb, elem* e, ref regm_t pretregs)
+@@ -2060,12 +2189,10 @@ void cdfunc(ref CGstate cg, ref CodeBuilder cdb, elem* e, ref regm_t pretregs)
                      ty1 = ty2 = TYllong;
                  else if (tybasic(ty1) == TYcdouble)
                      ty1 = ty2 = TYdouble;
@@ -2212,7 +2313,54 @@ index 8d11dc0..ff94bcb 100644
                  {
                      if (v ^ (preg != mreg))
                          genmovreg(cdb, preg, lreg, ty1);
-@@ -2167,46 +2260,47 @@ private void funccall(ref CGstate cg, ref CodeBuilder cdb, elem* e, uint numpara
+@@ -2117,7 +2244,28 @@ void cdfunc(ref CGstate cg, ref CodeBuilder cdb, elem* e, ref regm_t pretregs)
+ 
+     cg.stackclean--;
+ 
+-    funccall(cg,cdb,e,numpara,numalign,pretregs,keepmsk,false);
++    funccall(cg,cdb,e,numpara,numalign,pretregs,keepmsk,false,hiddenScratch);
++
++    if (hfaResult)
++    {
++        // STR s/d<k>,[Rt,#k*esize]: the address is of a float[N] or double[N] temporary
++        assert(hfaResult.Eoper == OPrelconst);
++        type* t = hfaResult.Vsym.Stype;
++        const uint esize = cast(uint)type_size(t.Tnext);
++        const uint count = cast(uint)(type_size(t) / esize);
++        regm_t aregs = INSTR.ALLREGS;
++        cdrelconst(cg,cdb,hfaResult,aregs);
++        freenode(hfaResult);
++        code cs;
++        cs.base = findreg(aregs);
++        cs.index = NOREG;
++        cs.reg = NOREG;
++        foreach (k; 0 .. count)
++        {
++            storeToEA(cs, cast(reg_t)(32 + k), esize);
++            cdb.genc1(cs.Iop,0,FL.offset,k * esize);
++        }
++    }
+ }
+ 
+ /******************************
+@@ -2134,8 +2282,15 @@ void cdfunc(ref CGstate cg, ref CodeBuilder cdb, elem* e, ref regm_t pretregs)
+ 
+ @trusted
+ private void funccall(ref CGstate cg, ref CodeBuilder cdb, elem* e, uint numpara, uint numalign,
+-                      ref regm_t pretregs,regm_t keepmsk, bool usefuncarg)
++                      ref regm_t pretregs,regm_t keepmsk, bool usefuncarg, reg_t hiddenScratch = NOREG)
+ {
++    // MOV x8,hiddenScratch: the address of a result returned in memory (cdfunc)
++    void moveResultAddress(ref CodeBuilder c)
++    {
++        if (hiddenScratch != NOREG)
++            genmovreg(c, 8, hiddenScratch);
++    }
++
+     //printf("funccall(e = %p, pretregs = %s, numpara = %d, numalign = %d, usefuncarg=%d)\n",e,regm_str(pretregs),numpara,numalign,usefuncarg);
+     //printf("  from %s\n", funcsym_p.Sident.ptr);
+     //elem_print(e);
+@@ -2167,46 +2322,47 @@ private void funccall(ref CGstate cg, ref CodeBuilder cdb, elem* e, uint numpara
  
          if (strcmp(s.Sident.ptr, "alloca") == 0)
          {
@@ -2247,11 +2395,11 @@ index 8d11dc0..ff94bcb 100644
 -            regm_t regm = INSTR.ALLREGS & ~DESREGS;
 -            reg_t r = allocreg(cdbe, regm, TYnptr); // r becomes amount to allocate
 -            genmovreg(cdbe,r,R9,TYMAX);             // MOV r,R9  since r is preserved by ___chkstk_darwin
--
--            enum reg_t R16 = 16;                    // scratch register
 +            if (!encodeNImmrImms(0xFFFF_FFFF_FFFF_FFF0,N,immr,imms)) assert(0);   // (outside assert(): its out parameters are needed)
 +            cdbe.gen1(INSTR.log_imm(1,0,N,immr,imms,R0,R0));   // AND x0,x0,#0xFFFF_FFFF_FFFF_FFF0
  
+-            enum reg_t R16 = 16;                    // scratch register
+-
 -            uint ins = INSTR.adr(1,0,R16);          // ADRP R16,0x0 GOT_LOAD_PAGE21
 -            cdbe.gencs1(ins,0,fl,schkstk);
 -            ins = INSTR.ldr_imm_gen(1,R16,R16,0);   // LDR  R16,[R16] GOT_LOAD_PAGEOFF12
@@ -2290,7 +2438,7 @@ index 8d11dc0..ff94bcb 100644
              genmovreg(cdbe,INSTR.SP,r2,TYMAX);                 // MOV  SP,r2
  
              cdb.append(cdbe);
-@@ -2214,9 +2308,6 @@ private void funccall(ref CGstate cg, ref CodeBuilder cdb, elem* e, uint numpara
+@@ -2214,9 +2370,6 @@ private void funccall(ref CGstate cg, ref CodeBuilder cdb, elem* e, uint numpara
  
              fixresult(cg,cdb,e,retregs,pretregs);
              return;
@@ -2300,7 +2448,31 @@ index 8d11dc0..ff94bcb 100644
          }
  
          if (s.Sflags & SFLexit)
-@@ -2421,10 +2512,12 @@ static if (0)
+@@ -2237,6 +2390,7 @@ private void funccall(ref CGstate cg, ref CodeBuilder cdb, elem* e, uint numpara
+             cdrelconst(cg,cdbe,e1,retregs);
+ 
+             const reg = findreg(retregs);
++            moveResultAddress(cdbe);
+             cdbe.gen1(INSTR.blr(reg));               // BLR reg
+         }
+         else
+@@ -2244,6 +2398,7 @@ private void funccall(ref CGstate cg, ref CodeBuilder cdb, elem* e, uint numpara
+             FL fl = FL.func;
+             if (!tyfunc(s.ty()))
+                 fl = el_fl(e1);
++            moveResultAddress(cdbe);
+             if (config.exe & (EX_windos | EX_OSX | EX_OSX64))
+             {
+                 cdbe.gencs1(INSTR.branch_imm(1, 0), 0, fl, s);    // CALL extern
+@@ -2296,6 +2451,7 @@ private void funccall(ref CGstate cg, ref CodeBuilder cdb, elem* e, uint numpara
+         getregs(cdbe,desmsk);
+         const reg = findreg(retregs);
+ 
++        moveResultAddress(cdbe);
+         cdbe.gen1(INSTR.blr(reg));  // BLR reg
+ 
+         s = null;
+@@ -2421,10 +2577,12 @@ static if (0)
  
      /* Special handling for functions which return complex float in XMM0 or RAX. */
  
@@ -2315,7 +2487,7 @@ index 8d11dc0..ff94bcb 100644
          static if (0)
          {
          assert(reg2 == NOREG);
-@@ -2453,6 +2546,14 @@ static if (0)
+@@ -2453,6 +2611,14 @@ static if (0)
          }
      }
  
@@ -2330,7 +2502,7 @@ index 8d11dc0..ff94bcb 100644
      fixresult(cg, cdb, e, retregs, pretregs);
  }
  
-@@ -2482,11 +2583,71 @@ private void movParams(ref CGstate cg, ref CodeBuilder cdb, elem* e, uint funcar
+@@ -2482,11 +2648,71 @@ private void movParams(ref CGstate cg, ref CodeBuilder cdb, elem* e, uint funcar
              assert(0);
  
          case OPstrpar:
@@ -2405,7 +2577,7 @@ index 8d11dc0..ff94bcb 100644
  
          default:
              break;
-@@ -2497,22 +2658,22 @@ private void movParams(ref CGstate cg, ref CodeBuilder cdb, elem* e, uint funcar
+@@ -2497,22 +2723,22 @@ private void movParams(ref CGstate cg, ref CodeBuilder cdb, elem* e, uint funcar
      scodelem(cg,cdb, e, retregs, 0, true);
      if (isPair)
      {
@@ -2433,7 +2605,7 @@ index 8d11dc0..ff94bcb 100644
          cdb.gen(&cs);
      }
      else
-@@ -2595,9 +2756,15 @@ void loaddata(ref CGstate cg, ref CodeBuilder cdb, elem* e, ref regm_t outretreg
+@@ -2595,9 +2821,15 @@ void loaddata(ref CGstate cg, ref CodeBuilder cdb, elem* e, ref regm_t outretreg
              {
                  const vreg_im = allocreg(cdb, forregs, tym);     // allocate floating point register
                  const vreg_re = findreg(forregs & INSTR.LSW);
@@ -2450,7 +2622,7 @@ index 8d11dc0..ff94bcb 100644
                  {
                      value_re = e.Vcdouble.re;
                      value_im = e.Vcdouble.im;
-@@ -2610,12 +2777,9 @@ void loaddata(ref CGstate cg, ref CodeBuilder cdb, elem* e, ref regm_t outretreg
+@@ -2610,12 +2842,9 @@ void loaddata(ref CGstate cg, ref CodeBuilder cdb, elem* e, ref regm_t outretreg
                  return;
              }
              const vreg = allocreg(cdb, forregs, tym);     // allocate floating point register
@@ -2466,17 +2638,18 @@ index 8d11dc0..ff94bcb 100644
              loadFloatRegConst(cdb,vreg,value,sz);
              fixresult(cg, cdb, e, forregs, outretregs);
              return;
-@@ -2674,7 +2838,8 @@ void loaddata(ref CGstate cg, ref CodeBuilder cdb, elem* e, ref regm_t outretreg
+@@ -2674,7 +2903,9 @@ void loaddata(ref CGstate cg, ref CodeBuilder cdb, elem* e, ref regm_t outretreg
              !cg.anyiasm &&   // may have written to the memory for the parameter
              (cg.regcon.params & mask(e.Vsym.Spreg) && e.Voffset == 0 ||
               cg.regcon.params & mask(e.Vsym.Spreg2) && e.Voffset == REGSIZE) &&
 -            sz <= REGSIZE)                  // make sure no 'paint' to a larger size happened
 +            sz <= REGSIZE &&                // make sure no 'paint' to a larger size happened
-+            !partialRegisterAccess(e.Vsym, sz, e.Voffset))  // nor a field of a struct in the register
++            !partialRegisterAccess(e.Vsym, sz, e.Voffset) &&  // nor a field of a struct in the register
++            mask(e.Voffset ? e.Vsym.Spreg2 : e.Vsym.Spreg) & INSTR.ALLREGS) // not x8, the result address
          {
              const reg_t preg = e.Voffset ? e.Vsym.Spreg2 : e.Vsym.Spreg;
              const regm_t pregm = mask(preg);
-@@ -2689,6 +2854,20 @@ void loaddata(ref CGstate cg, ref CodeBuilder cdb, elem* e, ref regm_t outretreg
+@@ -2689,6 +2920,20 @@ void loaddata(ref CGstate cg, ref CodeBuilder cdb, elem* e, ref regm_t outretreg
  
                  cg.mfuncreg &= ~pregm;
                  cg.regcon.used |= pregm;
@@ -2497,7 +2670,7 @@ index 8d11dc0..ff94bcb 100644
                  //printf("pregm: %s outretregs: %s\n", regm_str(pregm), regm_str(outretregs));
                  fixresult(cg, cdb,e,pregm,outretregs);
                  return;
-@@ -2765,7 +2944,8 @@ void loaddata(ref CGstate cg, ref CodeBuilder cdb, elem* e, ref regm_t outretreg
+@@ -2765,7 +3010,8 @@ void loaddata(ref CGstate cg, ref CodeBuilder cdb, elem* e, ref regm_t outretreg
          else if (isPair)
          {
              reg = findreg(forregs & INSTR.MSW);
@@ -2507,7 +2680,7 @@ index 8d11dc0..ff94bcb 100644
              reg = findreg(forregs & INSTR.LSW);
              loadea(cg, cdb, e, cs, 0x8B, reg, 0, forregs, 0);       // MOV reg,data
          }
-@@ -2815,3 +2995,49 @@ void loaddata(ref CGstate cg, ref CodeBuilder cdb, elem* e, ref regm_t outretreg
+@@ -2815,3 +3061,49 @@ void loaddata(ref CGstate cg, ref CodeBuilder cdb, elem* e, ref regm_t outretreg
          return;
      }
  }
@@ -4117,6 +4290,18 @@ index a6f6d76..af7f406 100644
      {
          _tyalignsize[TYreal] = 8;
          _tyalignsize[TYireal] = 8;
+diff --git a/dmd/backend/cc.d b/dmd/backend/cc.d
+index c3f66b7..c91a4c7 100644
+--- a/dmd/backend/cc.d
++++ b/dmd/backend/cc.d
+@@ -394,6 +394,7 @@ enum
+ struct func_t
+ {
+     block* Fstartblock;         // list of blocks comprising function
++    ubyte FhfaReturn;           // AArch64: returns an HFA in v0..: its number of elements, plus 8 for doubles
+     symtab_t Flocsym;           // local Symbol table
+     Srcpos Fstartline;          // starting line # of function
+     Srcpos Fendline;            // line # of closing brace of function
 diff --git a/dmd/backend/cgelem.d b/dmd/backend/cgelem.d
 index 827dbe5..8dcca70 100644
 --- a/dmd/backend/cgelem.d
@@ -4478,10 +4663,21 @@ index 8b9453d..3828154 100644
                                  : DW_EH_PE_absptr | DW_EH_PE_udata4;
      et.writeByte(TType);
 diff --git a/dmd/backend/el.d b/dmd/backend/el.d
-index 93f07be..e507352 100644
+index 93f07be..a9bc7df 100644
 --- a/dmd/backend/el.d
 +++ b/dmd/backend/el.d
-@@ -1541,10 +1541,14 @@ elem* el_convert(ref GlobalOptimizer go, elem* e)
+@@ -72,6 +72,10 @@ enum
+     NFLassign = 8,     // unambiguous assignment elem
+     NFLdelcse = 0x40,  // this is not the generating CSE
+     NFLtouns  = 0x80,  // relational operator was changed from signed to unsigned
++    // AArch64 calls: the argument that is the hidden pointer to the result, passed in x8
++    NFLhiddenLast   = 0x10,  // the last of the call's OPparam list
++    NFLhiddenBefore = 0x20,  // the one before the last ('this' or the context pointer)
++    NFLhfaResult    = 0x04,  // the hidden argument is not passed: it receives the HFA in v0.. after the call
+ }
+ 
+ /******************************************
+@@ -1541,10 +1545,14 @@ elem* el_convert(ref GlobalOptimizer go, elem* e)
                  e = el_convxmm(go, e);
              else if (tyfloating(e.Ety))
              {
@@ -5398,7 +5594,7 @@ index e9088e7..7f06517 100644
          {
              uint sz1 = tysize(e.Ety);
 diff --git a/dmd/backend/x86/cod3.d b/dmd/backend/x86/cod3.d
-index c9c6158..b73e934 100644
+index c9c6158..9ddbeb4 100644
 --- a/dmd/backend/x86/cod3.d
 +++ b/dmd/backend/x86/cod3.d
 @@ -620,9 +620,21 @@ void cod3_stackadj(ref CodeBuilder cdb, int nbytes)
@@ -5443,7 +5639,39 @@ index c9c6158..b73e934 100644
      CodeBuilder cdbs; cdbs.ctor();
      CodeBuilder cdbr; cdbr.ctor();
      int nalign = 0;
-@@ -1882,7 +1906,7 @@ private void cmpval(ref CGstate cg, ref CodeBuilder cdb, ulong val, uint sz, reg
+@@ -1306,6 +1330,31 @@ static if (NTEXCEPTIONS)
+ }
+ 
+         case BC.retexp:
++            if (AArch64 && funcsym_p.Sfunc.FhfaReturn)
++            {
++                /* e is the address of the result, an HFA of 3 or 4 elements: AAPCS64 returns it in
++                 * v0.. (dmd.glue)
++                 */
++                const shape = funcsym_p.Sfunc.FhfaReturn;
++                const uint esize = shape & 8 ? 8 : 4;
++                regm_t aregs = INSTR.ALLREGS;
++                gencodelem(cdb,e,aregs,true);
++                retregs = 0;
++                foreach (k; 0 .. shape & 7)
++                    retregs |= mask(cast(reg_t)(32 + k));
++                getregs(cdb,retregs);
++                code cs;
++                cs.base = findreg(aregs);
++                cs.index = NOREG;
++                cs.reg = NOREG;
++                foreach (k; 0 .. shape & 7)
++                {
++                    import dmd.backend.arm.cod1 : loadFromEA;
++                    loadFromEA(cs, cast(reg_t)(32 + k), esize, esize);
++                    cdb.genc1(cs.Iop,0,FL.offset,k * esize);
++                }
++                goto L4;
++            }
+             reg_t reg1, reg2;
+             retregs = allocretregs(cg, e.Ety, e.ET, funcsym_p.ty(), reg1, reg2);
+             //printf("reg1: %d, reg2: %d\n", reg1, reg2);
+@@ -1882,7 +1931,7 @@ private void cmpval(ref CGstate cg, ref CodeBuilder cdb, ulong val, uint sz, reg
              movregconst(cg,cdb,sreg,val,sz == 8  ? 64 : 0);
              getregsNoSave(retregs);
              assert(reg2 == NOREG);
@@ -5452,7 +5680,7 @@ index c9c6158..b73e934 100644
          }
      }
      else if (I64 && sz == 8)
-@@ -3916,6 +3940,18 @@ void prolog_stackalign(ref CGstate cg, ref CodeBuilder cdb)
+@@ -3916,6 +3965,18 @@ void prolog_stackalign(ref CGstate cg, ref CodeBuilder cdb)
      if (!cg.enforcealign)
          return;
  
@@ -5471,7 +5699,7 @@ index c9c6158..b73e934 100644
      const offset = (cg.hasframe ? 2 : 1) * REGSIZE;   // 1 for the return address + 1 for the PUSH EBP
      if (offset & (STACKALIGN - 1) || TARGET_STACKALIGN < STACKALIGN)
          cod3_stackalign(cdb, STACKALIGN);
-@@ -4519,6 +4555,35 @@ void prolog_gen_win64_varargs(ref CodeBuilder cdb)
+@@ -4519,6 +4580,35 @@ void prolog_gen_win64_varargs(ref CodeBuilder cdb)
      return namedargs;
  }
  
@@ -5507,7 +5735,7 @@ index c9c6158..b73e934 100644
  /************************************
   * Take the parameters passed in registers, and put them into the function's local
   * symbol table.
-@@ -4611,6 +4676,11 @@ void prolog_loadparams(ref CGstate cg, ref CodeBuilder cdb, tym_t tyf, bool push
+@@ -4611,6 +4701,11 @@ void prolog_loadparams(ref CGstate cg, ref CodeBuilder cdb, tym_t tyf, bool push
          {
              //printf("i: %d t: %s offset: %d\n", i, tym_str(t.Tty), cast(int)offset);
              uint sz = cast(uint)type_size(t);
@@ -5519,7 +5747,7 @@ index c9c6158..b73e934 100644
              static type* type_arrayBase(type* ta)
              {
                  while (tybasic(ta.Tty) == TYarray)
-@@ -4627,29 +4697,9 @@ void prolog_loadparams(ref CGstate cg, ref CodeBuilder cdb, tym_t tyf, bool push
+@@ -4627,29 +4722,9 @@ void prolog_loadparams(ref CGstate cg, ref CodeBuilder cdb, tym_t tyf, bool push
                  {
                      if (AArch64)
                      {
@@ -5552,7 +5780,7 @@ index c9c6158..b73e934 100644
                      }
                      else
                      {
-@@ -4675,16 +4725,8 @@ void prolog_loadparams(ref CGstate cg, ref CodeBuilder cdb, tym_t tyf, bool push
+@@ -4675,16 +4750,8 @@ void prolog_loadparams(ref CGstate cg, ref CodeBuilder cdb, tym_t tyf, bool push
                          // STR preg,[sp,#offset]
  //printf("prolog_loadparams sz=%d preg:%d\n", sz, preg);
  //printf("offset(%d) = Fast.size(%d) + BPoff(%d) + EBPtoESP(%d)\n",cast(int)offset,cast(int)cg.Fast.size,cast(int)cg.BPoff,cast(int)cg.EBPtoESP);
@@ -5571,7 +5799,7 @@ index c9c6158..b73e934 100644
                      }
                      else
                      {
-@@ -4710,7 +4752,10 @@ void prolog_loadparams(ref CGstate cg, ref CodeBuilder cdb, tym_t tyf, bool push
+@@ -4710,7 +4777,10 @@ void prolog_loadparams(ref CGstate cg, ref CodeBuilder cdb, tym_t tyf, bool push
                  break;
              if (t2)
                  t = t2;
@@ -5583,7 +5811,7 @@ index c9c6158..b73e934 100644
          }
      }
  
-@@ -4828,6 +4873,35 @@ void prolog_loadparams(ref CGstate cg, ref CodeBuilder cdb, tym_t tyf, bool push
+@@ -4828,6 +4898,35 @@ void prolog_loadparams(ref CGstate cg, ref CodeBuilder cdb, tym_t tyf, bool push
          }
          // MOV reg,param[BP]
          //assert(refparam);
@@ -5619,7 +5847,7 @@ index c9c6158..b73e934 100644
          if (mask(s.Sreglsw) & XMMREGS)
          {
              const op = xmmload(s.Stype.Tty);  // MOVSS/D xreg,mem
-@@ -5645,7 +5719,11 @@ void cod3_adjSymOffsets(ref CGstate cg)
+@@ -5645,7 +5744,11 @@ void cod3_adjSymOffsets(ref CGstate cg)
              case SC.regpar:
              case SC.shadowreg:
  //printf("s = '%s', Soffset = x%x, Para.size = x%x, EBPtoESP = x%x\n", s.Sident, s.Soffset, cg.Para.size, cg.EBPtoESP);
@@ -5633,22 +5861,31 @@ index c9c6158..b73e934 100644
                  {
                      if (!cg.hasframe)
 diff --git a/dmd/glue/e2ir.d b/dmd/glue/e2ir.d
-index ca39388..78611a9 100644
+index ca39388..83cfc58 100644
 --- a/dmd/glue/e2ir.d
 +++ b/dmd/glue/e2ir.d
-@@ -122,8 +122,9 @@ bool ISX64REF(Declaration var)
+@@ -122,8 +122,18 @@ bool ISX64REF(Declaration var)
          }
          else if (target.os & Target.OS.Posix)
          {
 -            return !(var.storage_class & STC.lazy_) && var.type.isTypeStruct() && !var.type.isTypeStruct().sym.isPOD() ||
 -                passTypeByRef(target, var.type);
++            // AArch64: a C function's HFA of 3 or 4 elements comes in SIMD registers, by value (dmd.glue)
++            if (target.isAArch64 && !(var.storage_class & STC.lazy_))
++            {
++                import dmd.argtypes_aarch64 : hfaShape;
++                auto fd = var.toParent2().isFuncDeclaration();
++                auto tf = fd ? fd.type.isTypeFunction() : null;
++                if (tf && tf.linkage != LINK.d && hfaShape(var.type))
++                    return false;
++            }
 +            // a lazy parameter is a delegate, whatever the size of its expression's type
 +            return !(var.storage_class & STC.lazy_) &&
 +                (var.type.isTypeStruct() && !var.type.isTypeStruct().sym.isPOD() || passTypeByRef(target, var.type));
          }
      }
  
-@@ -216,7 +217,14 @@ package(dmd.glue)
+@@ -216,7 +226,14 @@ package(dmd.glue)
  Symbol* toStringSymbol(const(char)* str, size_t len, size_t sz)
  {
      //printf("toStringSymbol() %s\n", str);
@@ -5664,7 +5901,7 @@ index ca39388..78611a9 100644
      if (sv.value)
          return sv.value;
  
-@@ -486,8 +494,19 @@ void clearStringTab()
+@@ -486,8 +503,19 @@ void clearStringTab()
          stringTab = new StringTable!(Symbol*)();
          stringTab._init(1000);
      }
@@ -5684,7 +5921,7 @@ index ca39388..78611a9 100644
  
  /*********************************************
   * Figure out whether a data symbol should be dllimported
-@@ -1911,7 +1930,9 @@ elem* toElem(Expression e, ref IRState irs)
+@@ -1911,7 +1939,9 @@ elem* toElem(Expression e, ref IRState irs)
                  default: rtlsym = RTLSYM.FMODL; break;  // real
              }
  
@@ -5695,7 +5932,7 @@ index ca39388..78611a9 100644
          }
          else
          {
-@@ -2027,7 +2048,7 @@ elem* toElem(Expression e, ref IRState irs)
+@@ -2027,7 +2057,7 @@ elem* toElem(Expression e, ref IRState irs)
              }
  
              tym_t tym = totym(e.type);
@@ -5704,7 +5941,7 @@ index ca39388..78611a9 100644
              elem_setLoc(eresult, e.loc);
              return eresult;
          }
-@@ -4784,7 +4805,7 @@ elem* toElemCast(CastExp ce, elem* e, bool isLvalue, ref IRState irs)
+@@ -4784,7 +4814,7 @@ elem* toElemCast(CastExp ce, elem* e, bool isLvalue, ref IRState irs)
      }
  
      // OSX AArch64 long doubles are 64 bits
@@ -5713,7 +5950,168 @@ index ca39388..78611a9 100644
  
      /* Reduce combinatorial explosion by rewriting the 'to' and 'from' types to a
       * generic equivalent (as far as casting goes)
-@@ -5975,13 +5996,17 @@ elem* callfunc(Loc loc,
+@@ -5599,6 +5629,12 @@ elem* callfunc(Loc loc,
+         const int j = tf.isDstyleVariadic();
+         const osx_aapcs64 = irs.target.isAArch64 && irs.target.os == Target.OS.OSX;
+ 
++        /* AArch64 C calls: an HFA of 3 or 4 elements goes in as many SIMD registers. The back end
++         * has register pairs only, so such an argument is passed as its elements (below).
++         */
++        import dmd.argtypes_aarch64 : hfaShape;
++        uint[] hfaArgs = irs.target.isAArch64 && tf.linkage != LINK.d && op == NotIntrinsic ? new uint[n] : null;
++
+         foreach (const i, arg; *arguments)
+         {
+             elem* ea = toElem(arg, irs);
+@@ -5620,6 +5656,16 @@ elem* callfunc(Loc loc,
+                 continue;
+             }
+ 
++            if (hfaArgs && param)       // not the variadic part
++            {
++                if (const shape = hfaShape(arg.type))
++                {
++                    hfaArgs[i] = shape;
++                    elems[i] = ea;
++                    continue;
++                }
++            }
++
+             if (ISX64REF(irs, arg) && op == NotIntrinsic)
+             {
+                 /* Copy to a temporary, and make the argument a pointer
+@@ -5717,6 +5763,54 @@ elem* callfunc(Loc loc,
+             eside = fixArgumentEvaluationOrder(elems);
+         }
+ 
++        elem*[] expanded;
++        if (hfaArgs)
++        {
++            foreach (i, e; elems)
++            {
++                if (!hfaArgs[i])
++                {
++                    expanded ~= e;
++                    continue;
++                }
++                /* Pass the HFA as its elements, in consecutive SIMD registers. Its side effects
++                 * go before the arguments: fixArgumentEvaluationOrder() left at most this one.
++                 */
++                const count = hfaArgs[i] & 7;
++                const esize = hfaArgs[i] & 8 ? 8 : 4;
++                const tyelem = esize == 8 ? TYdouble : TYfloat;
++                while (e.Eoper == OPcomma)
++                {
++                    eside = el_combine(eside, e.E1);
++                    e = e.E2;
++                }
++                if (e.Eoper != OPvar && !(e.Eoper == OPind && !el_sideeffect(e.E1)))
++                {
++                    type* targ = Type_toCtype((*arguments)[i].type);
++                    Symbol* stmp = symbol_genauto(targ);
++                    elem* ecopy = el_bin(OPstreq, TYstruct, el_var(stmp), e);
++                    ecopy.ET = targ;
++                    eside = el_combine(eside, ecopy);
++                    e = el_var(stmp);
++                }
++                foreach (k; 0 .. count)
++                {
++                    elem* ek;
++                    if (e.Eoper == OPvar)
++                    {
++                        ek = el_copytree(e);
++                        ek.Voffset += k * esize;
++                    }
++                    else
++                        ek = el_una(OPind, tyelem, el_bin(OPadd, TYnptr, el_copytree(e.E1), el_long(TYsize_t, k * esize)));
++                    ek.Ety = tyelem;
++                    expanded ~= ek;
++                }
++                el_free(e);
++            }
++            elems = expanded;
++        }
++
+         foreach (ref e; elems)
+         {
+             e = useOPstrpar(e);
+@@ -5725,15 +5819,39 @@ elem* callfunc(Loc loc,
+         if (!left_to_right)   // swap order if right-to-left
+             reverse(elems);
+ 
+-        ep = el_params(cast(void**)elems.ptr, cast(int)n);
++        ep = el_params(cast(void**)elems.ptr, cast(int)elems.length);
+     }
+ 
+     objc.setupMethodSelector(fd, &esel);
+     objc.setupEp(esel, &ep, left_to_right);
+ 
+     const retmethod = retStyle(tf, fd && fd.needThis());
++    int hiddenFromEnd = -1;     // position of the hidden result pointer in ep, counted from the end
++    import dmd.argtypes_aarch64 : hfaShape;
++    const hfaResult = irs.target.isAArch64 && tf.linkage != LINK.d && retmethod == RET.stack ? hfaShape(tf.next) : 0;
++    elem* hfaDest = null;       // where the caller wants an HFA result constructed
++    if (hfaResult)
++    {
++        /* AAPCS64 returns an HFA of 3 or 4 elements in SIMD registers: the back end stores them in
++         * a temporary, passed as the hidden argument but not to the function
++         */
++        const tyelem = hfaResult & 8 ? TYdouble : TYfloat;
++        Symbol* stmp = symbol_genauto(type_static_array(hfaResult & 7, type_fake(tyelem)));
++        hfaDest = ehidden;
++        ehidden = el_ptr(stmp);
++        eresult = el_ptr(stmp);
++    }
+     if (retmethod == RET.stack)
+     {
++        /* AAPCS64 does not return the result's address: keep it. A D function returns it in x0,
++         * but a C function need not.
++         */
++        if (irs.target.isAArch64 && tf.linkage != LINK.d && ehidden && !eresult && !hfaResult)
++        {
++            Symbol* stmp = symbol_genauto(TYnptr);
++            ehidden = el_bin(OPeq, TYnptr, el_var(stmp), ehidden);
++            eresult = el_var(stmp);
++        }
+         if (!ehidden)
+         {
+             // Don't have one, so create one
+@@ -5767,6 +5885,7 @@ elem* callfunc(Loc loc,
+             else
+                 ep = ehidden;
+             ehidden = null;
++            hiddenFromEnd = 0;
+         }
+     }
+ 
+@@ -5850,8 +5969,13 @@ elem* callfunc(Loc loc,
+     }
+ 
+     ep = el_param(ep, ethis2 ? ethis2 : ethis);
++    if (hiddenFromEnd == 0 && (ethis2 || ethis))
++        hiddenFromEnd = 1;
+     if (ehidden)
++    {
+         ep = el_param(ep, ehidden);     // if ehidden goes last
++        hiddenFromEnd = 0;
++    }
+ 
+     const tyret = totym(tret);
+ 
+@@ -5972,16 +6096,30 @@ elem* callfunc(Loc loc,
+             e = el_bin(OPcall, tyret, ec, ep);
+         else
+             e = el_una(OPucall, tyret, ec);
++        // AAPCS64 passes the address of a result returned in memory in x8 (dmd.backend.arm.cod1)
++        if (irs.target.isAArch64 && hiddenFromEnd >= 0 && e.Eoper == OPcall)
++        {
++            e.Nflags |= hiddenFromEnd == 0 ? NFLhiddenLast : NFLhiddenBefore;
++            if (hfaResult)
++            {
++                e.Nflags |= NFLhfaResult;   // the hidden argument receives v0.. after the call
++                e.Ety = TYvoid;
++            }
++        }
  
          if (tf.parameterList.varargs != VarArg.none)
          {
@@ -5733,7 +6131,36 @@ index ca39388..78611a9 100644
              }
          }
      }
-@@ -6389,9 +6414,13 @@ Lagain:
+@@ -5996,9 +6134,9 @@ elem* callfunc(Loc loc,
+     }
+     else if (retmethod == RET.stack)
+     {
+-        if (irs.target.os == Target.OS.OSX && eresult)
++        if ((irs.target.os == Target.OS.OSX || irs.target.isAArch64) && eresult)
+         {
+-            /* ABI quirk: hidden pointer is not returned in registers
++            /* ABI quirk: hidden pointer is not returned in registers (AAPCS64 does not return it either)
+              */
+             if (tyaggregate(tyret))
+                 e.ET = Type_toCtype(tret);
+@@ -6006,6 +6144,16 @@ elem* callfunc(Loc loc,
+         }
+         e.Ety = TYnptr;
+         e = el_una(OPind, tyret, e);
++        if (hfaDest)
++        {
++            // construct the HFA result where the caller wants it
++            type* tr = Type_toCtype(tret);
++            e.ET = tr;
++            elem* edest = el_una(OPind, TYstruct, hfaDest);
++            edest.ET = tr;
++            e = el_bin(OPstreq, TYstruct, edest, e);
++            e.ET = tr;
++        }
+     }
+ 
+     if (tf.isRef)
+@@ -6389,9 +6537,13 @@ Lagain:
      {
          case Tfloat80:
          case Timaginary80:
@@ -5748,7 +6175,7 @@ index ca39388..78611a9 100644
              break;
          case Tcomplex64:
 diff --git a/dmd/glue/package.d b/dmd/glue/package.d
-index e11dc02..41ffdc9 100644
+index e11dc02..9b65705 100644
 --- a/dmd/glue/package.d
 +++ b/dmd/glue/package.d
 @@ -244,7 +244,7 @@ Symbol* getBzeroSymbol()
@@ -5760,6 +6187,146 @@ index e11dc02..41ffdc9 100644
  
      tym_t t;
      switch (tx.ty)
+@@ -652,6 +652,19 @@ void FuncDeclaration_toObjFile(FuncDeclaration fd, bool multiobj)
+         }
+         shidden = symbol_name(name, SC.parameter, thidden);
+         shidden.Sflags |= SFLtrue | SFLfree | SFLhidden;
++        /* AAPCS64: a C function returns an HFA of 3 or 4 elements in SIMD registers. The result goes
++         * to a local temporary, and the return loads it into v0.. (dmd.backend.x86.cod3)
++         */
++        if (target.isAArch64 && tf.linkage != LINK.d)
++        {
++            import dmd.argtypes_aarch64 : hfaShape;
++            if (const shape = hfaShape(tf.next))
++            {
++                f.FhfaReturn = cast(ubyte)shape;
++                shidden.Sclass = SC.auto_;
++                shidden.Sflags &= ~SFLhidden;
++            }
++        }
+         if (fd.isNRVO && fd.nrvo_var && fd.nrvo_var.nestedrefs.length)
+             type_setcv(&shidden.Stype, shidden.Stype.Tty | mTYvolatile);
+         irs.shidden = shidden;
+@@ -679,6 +692,17 @@ void FuncDeclaration_toObjFile(FuncDeclaration fd, bool multiobj)
+     size_t pi = (fd.v_arguments !is null);
+     if (fd.parameters)
+         pi += fd.parameters.length;
++    /* AAPCS64: a C function takes an HFA of 3 or 4 elements in as many SIMD registers. Such a
++     * parameter comes in as its elements, copied into it on entry.
++     */
++    import dmd.argtypes_aarch64 : hfaShape;
++    static struct HfaParam { Symbol* s; Symbol*[4] parts; uint shape; }
++    HfaParam[] hfaParams;
++    const lowerHfa = target.isAArch64 && tf.linkage != LINK.d && fd.parameters;
++    if (lowerHfa)
++        foreach (v; *fd.parameters)
++            if (!v.isReference() && !(v.storage_class & STC.lazy_) && hfaShape(v.type))
++                pi += 3;
+     if (fd.objc.selector)
+         pi++; // Extra argument for Objective-C selector
+     // Create a temporary buffer, params[], to hold function parameters
+@@ -699,14 +723,31 @@ void FuncDeclaration_toObjFile(FuncDeclaration fd, bool multiobj)
+     Symbol* lastParam;
+     if (fd.parameters)
+     {
++        size_t k = pi;
+         foreach (i, v; *fd.parameters)
+         {
+             //printf("param[%d] = %p, %s\n", cast(int)i, v, v.toChars());
+             assert(!v.csym);
+             lastParam = toSymbol(v);
+-            params[pi + i] = lastParam;
++            const shape = lowerHfa && !v.isReference() && !(v.storage_class & STC.lazy_) ? hfaShape(v.type) : 0;
++            if (shape)
++            {
++                HfaParam hp;
++                hp.s = lastParam;
++                hp.shape = shape;
++                const tyelem = shape & 8 ? TYdouble : TYfloat;
++                foreach (n; 0 .. shape & 7)
++                {
++                    hp.parts[n] = symbol_name("__hfa", SC.parameter, type_fake(tyelem));
++                    params[k++] = hp.parts[n];
++                }
++                lastParam = hp.parts[(shape & 7) - 1];
++                hfaParams ~= hp;
++                continue;
++            }
++            params[k++] = lastParam;
+         }
+-        pi += fd.parameters.length;
++        pi = k;
+     }
+ 
+     if (reverse)
+@@ -719,7 +760,7 @@ void FuncDeclaration_toObjFile(FuncDeclaration fd, bool multiobj)
+         }
+     }
+ 
+-    if (shidden)
++    if (shidden && !f.FhfaReturn)
+     {
+         // shidden becomes last parameter
+         //params[pi] = shidden;
+@@ -745,7 +786,7 @@ void FuncDeclaration_toObjFile(FuncDeclaration fd, bool multiobj)
+         pi++;
+     }
+ 
+-    if (target.isPOSIX && fd._linkage != LINK.d && shidden && sthis)
++    if (target.isPOSIX && fd._linkage != LINK.d && shidden && sthis && !f.FhfaReturn)
+     {
+         /* swap shidden and sthis
+          */
+@@ -769,6 +810,15 @@ void FuncDeclaration_toObjFile(FuncDeclaration fd, bool multiobj)
+ 
+         foreach (sp; params[0 .. pi])
+         {
++            if (target.isAArch64 && sp == shidden)
++            {
++                // AAPCS64: the address of a result returned in memory comes in x8
++                sp.Spreg = 8;
++                sp.Spreg2 = NOREG;
++                sp.Sclass = SC.fastpar;
++                sp.Sfl = FL.fast;
++                continue;
++            }
+             if (fpr.alloc(sp.Stype, sp.Stype.Tty, sp.Spreg, sp.Spreg2))
+             {
+                 // successful allocation
+@@ -798,6 +848,33 @@ void FuncDeclaration_toObjFile(FuncDeclaration fd, bool multiobj)
+     bx._module = cast(void*)fd.getModule();
+     irs.blx = &bx;
+ 
++    // AArch64 HFA parameters and result in SIMD registers: see above
++    foreach (ref hp; hfaParams)
++    {
++        hp.s.Sclass = SC.auto_;
++        hp.s.Sfl = FL.auto_;
++        symbol_add(hp.s);
++        const esize = hp.shape & 8 ? 8 : 4;
++        const tyelem = hp.shape & 8 ? TYdouble : TYfloat;
++        foreach (n; 0 .. hp.shape & 7)
++        {
++            elem* ev = el_var(hp.s);
++            ev.Ety = tyelem;
++            ev.Voffset = n * esize;
++            block_appendexp(irs.blx.curblock, el_bin(OPeq, tyelem, ev, el_var(hp.parts[n])));
++        }
++    }
++    if (f.FhfaReturn)
++    {
++        shidden.Sfl = FL.auto_;
++        symbol_add(shidden);
++        // volatile: the return's loads into v0.. are the only reads, and the optimizer does not see them
++        type* tr = Type_toCtype(tf.next);
++        type_setcv(&tr, tr.Tty | mTYvolatile);
++        Symbol* stmp = symbol_genauto(tr);
++        block_appendexp(irs.blx.curblock, el_bin(OPeq, TYnptr, el_var(shidden), el_ptr(stmp)));
++    }
++
+     // Initialize argptr
+     if (fd.v_argptr)   // created for variadic functions
+     {
 diff --git a/dmd/glue/todt.d b/dmd/glue/todt.d
 index 174f5be..cae891a 100644
 --- a/dmd/glue/todt.d
@@ -5848,6 +6415,46 @@ index 5552182..59a1555 100644
          static if (LOG)
          {
              printf("\tlibbuf.moffset = x%x\n", libbuf.length);
+diff --git a/dmd/link.d b/dmd/link.d
+index 820f7b3..84baf07 100644
+--- a/dmd/link.d
++++ b/dmd/link.d
+@@ -460,8 +460,13 @@ public int runLINK(bool verbose, ErrorSink eSink)
+             argv.push("-g");
+         if (target.isAArch64)
+         {
+-            argv.push("-arch");
+-            argv.push("arm64");
++            // Apple's cc selects the architecture with -arch; GCC and clang for Linux AArch64 have no -arch
++            // (nor -m64), and target AArch64 already
++            if (target.os == Target.OS.OSX)
++            {
++                argv.push("-arch");
++                argv.push("arm64");
++            }
+         }
+         else if (target.isX86_64)
+             argv.push("-m64");
+@@ -552,7 +557,8 @@ public int runLINK(bool verbose, ErrorSink eSink)
+         {
+             if (p && p[0] && !flagIsLibraryRelated(p))
+             {
+-                if (!global.params.linkswitchIsForCC[pi])
++                // -Wl,... is already the C compiler driver's way of passing a linker switch
++                if (!global.params.linkswitchIsForCC[pi] && !startsWith(p, "-Wl,"))
+                     argv.push("-Xlinker");
+                 argv.push(p);
+             }
+@@ -1218,7 +1224,8 @@ public int runPreprocessor(Loc loc, const(char)[] cpp, const(char)[] filename, c
+         }
+ 
+         // Set memory model
+-        argv.push(target.isX86_64 || target.isAArch64 ? "-m64" : "-m32");
++        if (!target.isAArch64)      // GCC for AArch64 has no -m64
++            argv.push(target.isX86_64 ? "-m64" : "-m32");
+ 
+         // merge #define's with output
+         argv.push("-dD");       // https://gcc.gnu.org/onlinedocs/cpp/Invocation.html#index-dD
 diff --git a/dmd/main.d b/dmd/main.d
 index aad33ac..48d9be7 100644
 --- a/dmd/main.d
@@ -5863,7 +6470,7 @@ index aad33ac..48d9be7 100644
                envsection.ptr, cast(int)global.inifilename.length, global.inifilename.ptr);
  
 diff --git a/dmd/target.d b/dmd/target.d
-index e697db0..3fcd9a8 100644
+index e697db0..79a62cc 100644
 --- a/dmd/target.d
 +++ b/dmd/target.d
 @@ -492,11 +492,18 @@ extern (C++) struct Target
@@ -5886,3 +6493,17 @@ index e697db0..3fcd9a8 100644
          }
  
          c.initialize(params, this);
+@@ -1103,7 +1110,12 @@ extern (C++) struct Target
+         }
+         else if (isAArch64 && isPOSIX)
+         {
+-            import dmd.argtypes_aarch64 : toArgTypes_aarch64;
++            import dmd.argtypes_aarch64 : hfaShape, toArgTypes_aarch64;
++
++            // A C function returns an HFA of 3 or 4 elements in SIMD registers; the glue lowers it as
++            // a result in memory filled from them (dmd.glue.e2ir, dmd.glue)
++            if (tf.linkage != LINK.d && hfaShape(tn))
++                return true;
+ 
+             TypeTuple tt = toArgTypes_aarch64(tn);
+             if (!tt)

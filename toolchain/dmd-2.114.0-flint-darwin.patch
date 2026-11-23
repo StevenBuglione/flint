@@ -1,8 +1,32 @@
 diff --git a/dmd/flintlink.d b/dmd/flintlink.d
-index f4e30b1..e908ac4 100644
+index f4e30b1..7fcf3a4 100644
 --- a/dmd/flintlink.d
 +++ b/dmd/flintlink.d
-@@ -373,7 +373,7 @@ bool directLinkCommand(ref Strings argv, ref Array!bool ccSwitchFlags, ref Strin
+@@ -321,6 +321,23 @@ bool directLinkCommand(ref Strings argv, ref Array!bool ccSwitchFlags, ref Strin
+             inputs.push(argv[++i]);
+             continue;
+         }
++        if (startsWith(a, "-Wl,"))
++        {
++            // -Wl,x,y passes x and y to the linker
++            for (auto p = a + 4; *p;)
++            {
++                auto e = strchr(p, ',');
++                const len = e ? cast(size_t)(e - p) : strlen(p);
++                auto piece = cast(char*) malloc(len + 1);
++                memcpy(piece, p, len);
++                piece[len] = 0;
++                inputs.push(piece);
++                if (!e)
++                    break;
++                p = e + 1;
++            }
++            continue;
++        }
+         if (startsWith(a, "-L"))
+         {
+             lpaths.push(a);
+@@ -373,7 +390,7 @@ bool directLinkCommand(ref Strings argv, ref Array!bool ccSwitchFlags, ref Strin
          return false;
      {
          char[64] m;
@@ -11,7 +35,7 @@ index f4e30b1..e908ac4 100644
          h = fnv(h, m.ptr);
      }
      foreach (s; ccSwitches)
-@@ -402,9 +402,9 @@ bool directLinkCommand(ref Strings argv, ref Array!bool ccSwitchFlags, ref Strin
+@@ -402,9 +419,9 @@ bool directLinkCommand(ref Strings argv, ref Array!bool ccSwitchFlags, ref Strin
          if (auto slash = strrchr(parent.ptr, '/'))
          {
              *slash = 0;
