@@ -265,6 +265,46 @@ final class PropertySourcesPlaceholdersResolver : PlaceholdersResolver
         return result;
     }
 
+    private string rawProperty(string key)
+    {
+        import flint.boot.context.properties.source : MapConfigurationPropertySource, SystemEnvironmentPropertySource;
+
+        foreach (source; sources)
+        {
+            auto map = cast(MapConfigurationPropertySource) source;
+            if (map is null)
+                continue;
+            if (cast(SystemEnvironmentPropertySource) source)
+            {
+                foreach (variant; environmentVariants(key))
+                {
+                    if (auto value = map.getProperty(variant))
+                        return value;
+                }
+            }
+            else if (auto value = map.getProperty(key))
+                return value;
+        }
+        return null;
+    }
+
+    // SystemEnvironmentPropertySource.checkPropertyName: the name, with `.` then `-` as `_`, each also upper case.
+    private static string[] environmentVariants(string name) pure
+    {
+        import std.array : replace;
+        import std.uni : toUpper;
+
+        string[] variants;
+        foreach (candidate; [name, name.toUpper])
+        {
+            variants ~= candidate;
+            variants ~= candidate.replace(".", "_");
+            variants ~= candidate.replace("-", "_");
+            variants ~= candidate.replace(".", "_").replace("-", "_");
+        }
+        return variants;
+    }
+
     private string placeholder(string value, size_t start, long end, string[] visiting)
     {
         import std.string : indexOf;
@@ -277,8 +317,10 @@ final class PropertySourcesPlaceholdersResolver : PlaceholdersResolver
             if (seen == key)
                 throw new IllegalStateException("Circular placeholder reference '" ~ key ~ "' in property definitions");
         }
-        string found;
-        if (ConfigurationPropertyName.isValid(key))
+        // Spring's PropertySourcesPlaceholdersResolver asks each source for the raw key, in order; the system
+        // environment also matches its variants (SystemEnvironmentPropertySource: `POSTGRES_URL`, `a.b` as `A_B`).
+        string found = rawProperty(key);
+        if (found is null && ConfigurationPropertyName.isValid(key))
         {
             auto property = ConfigurationPropertySources.find(sources, ConfigurationPropertyName.of(key));
             if (property !is null)

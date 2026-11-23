@@ -603,6 +603,32 @@ private auto descriptorOfValueBean()
     return descriptorOf!ExampleValueBean();
 }
 
+@("flint.placeholderFromRawEnvironmentVariable: ${POSTGRES_URL:...} reads the variable, as Spring does") unittest
+{
+    import flint.boot.context.properties.source : SystemEnvironmentPropertySource;
+
+    auto environment = new SystemEnvironmentPropertySource([
+        "POSTGRES_URL": "jdbc:postgresql://db:5432/petclinic"
+    ]);
+    auto file = new MapConfigurationPropertySource("application-postgres.properties",
+            [
+                ["flint.datasource.url", "${POSTGRES_URL:jdbc:postgresql://localhost/petclinic}"],
+                ["flint.datasource.username", "${POSTGRES_USER:petclinic}"],
+                ["app.name", "${app.title}"], ["app.title", "fromfile"]
+    ]);
+    auto binder = new Binder([cast(ConfigurationPropertySource) environment, file]);
+    assert(binder.bind!string("flint.datasource.url").get() == "jdbc:postgresql://db:5432/petclinic");
+    assert(binder.bind!string("flint.datasource.username").get() == "petclinic");
+    // A dotted key also matches its environment form, as SystemEnvironmentPropertySource does.
+    auto withOverride = new Binder(
+            [
+        cast(ConfigurationPropertySource) new SystemEnvironmentPropertySource([
+            "APP_TITLE": "fromenv"
+        ]), file
+    ]);
+    assert(withOverride.bind!string("app.name").get() == "fromenv");
+}
+
 import boot_tests.support : RegisterTests;
 
 mixin RegisterTests;
