@@ -511,6 +511,19 @@ def linux_arm64_glibc():
             and not list(Path('/lib').glob('ld-musl-*.so.1')))
 
 
+def dub_build_flags():
+    """Compiler flags for the Flint DUB build.
+
+    On macOS the executable exports only `_main`. A D executable otherwise exports every template instance
+    as a weak definition, and dyld coalesces each one against every loaded image at start-up: DUB exported
+    10,596 symbols and took 28 ms to print its version, against 5 ms with one export. Every build runs DUB.
+    """
+    flags = ['-O3', '-release']
+    if platform.system() == 'Darwin':
+        flags += ['-L-exported_symbol', '-L_main']
+    return flags
+
+
 def install_flint_dub(destination):
     """Build the Flint-patched DUB 1.43.0 from its pinned source with the pinned LDC (ADR-024).
 
@@ -531,7 +544,8 @@ def install_flint_dub(destination):
                          '--compiler dmd --flint-fork')
     output = destination / FLINT_DUB / 'bin' / exe('dub')
     receipt = {'compiler': 'dub', 'version': LOCK['versions']['dub'], 'bin': str(output.parent),
-               'sha256': LOCK['assets']['dub-1.43.0.tar.gz']['sha256'], 'dub_patch_sha256': dub_patch_digest()}
+               'sha256': LOCK['assets']['dub-1.43.0.tar.gz']['sha256'], 'dub_patch_sha256': dub_patch_digest(),
+               'build_flags': dub_build_flags()}
     stamp = destination / FLINT_DUB / 'flint-dub.json'
     try:
         previous = json.loads(stamp.read_text())
@@ -547,7 +561,7 @@ def install_flint_dub(destination):
         for patch in dub_patches():
             apply_patch(patch, stage)
         env = dict(os.environ, PATH=str(ldc_bin) + os.pathsep + os.environ['PATH'], DMD='ldmd2', GITVER='1.43.0')
-        subprocess.run([str(ldc_bin / exe('ldmd2')), '-run', 'build.d', '-O3', '-release'], cwd=stage, env=env,
+        subprocess.run([str(ldc_bin / exe('ldmd2')), '-run', 'build.d', *dub_build_flags()], cwd=stage, env=env,
                        check=True, stdout=subprocess.DEVNULL)
         output.parent.mkdir(parents=True, exist_ok=True)
         with TemporaryDirectory(dir=output.parent) as replacing:
