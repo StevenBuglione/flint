@@ -55,7 +55,9 @@
    "dependencies": [
     "core",
     "engine-aot",
-    "java"
+    "engine-reactor",
+    "java",
+    "slf4j-api"
    ]
   },
   "slf4j-api": {
