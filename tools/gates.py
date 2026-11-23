@@ -385,8 +385,10 @@ def measured(current,baseline=None):
     # ADR-030 section 5: the Spring-layer modules of policy/framework.json, each against its own budget (framework_budgets.py).
     problems=framework_budgets.check(current,baseline,B['regression'],compare_series);require(not problems,'; '.join(problems))
     if baseline is None:
-        return {'initial_baseline_validation':'pass','regression_comparison':'not_run_no_prior_baseline','commit':current['commit']}
-    return {'all_six_gates':'pass','commit':current['commit']}
+        return {'initial_baseline_validation':'pass','regression_comparison':'not_run_no_prior_baseline','commit':current['commit'],
+                'framework_provisional':framework_budgets.provisional_report()}
+    # Provisional framework budgets stay in the gate's output until quiet-window timings replace them.
+    return {'all_six_gates':'pass','commit':current['commit'],'framework_provisional':framework_budgets.provisional_report()}
 
 def verify_evidence_artifacts(evidence,directory):
     require(evidence.get('mode')=='production','only production evidence can pass the full gate')

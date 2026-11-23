@@ -53,6 +53,38 @@ class FrameworkBudgets(unittest.TestCase):
             with self.assertRaises(ValueError):
                 framework_budgets.load('.')
 
+    def test_provisional_skips_only_the_ceiling(self):
+        listed = {'core': dict(LISTED['core'], provisional=['dmd_cold_seconds', 'compiler_peak_rss_bytes'])}
+        slow = dict(row(), compiler_peak_rss_bytes=2 * 10 ** 9)
+        slow['dmd_cold_seconds'] = [3.0 * (1 + .001 * i) for i in range(9)]
+        with mock.patch.object(framework_budgets, 'modules', return_value=listed):
+            # Over the placeholder ceilings, and still clean: only the absolute test is skipped.
+            self.assertEqual(framework_budgets.check({'framework': {'core': slow}}, None, REGRESSION, compare_series), [])
+            # The regression ratio against a base still applies to a provisional key.
+            regressed = framework_budgets.check({'framework': {'core': slow}}, {'framework': {'core': row()}},
+                                                REGRESSION, compare_series)
+            self.assertTrue(any('dmd_cold_seconds' in p for p in regressed))
+            # So does the nine-finite-samples rule.
+            short = dict(slow, dmd_cold_seconds=[1.0])
+            self.assertTrue(any('9 finite samples' in p for p in
+                                framework_budgets.check({'framework': {'core': short}}, None, REGRESSION, compare_series)))
+            # A non-provisional key keeps its ceiling.
+            over = dict(slow, template_instances=600)
+            self.assertTrue(any('template_instances' in p for p in
+                                framework_budgets.check({'framework': {'core': over}}, None, REGRESSION, compare_series)))
+            self.assertEqual(framework_budgets.provisional_report('.'),
+                             {'core': ['compiler_peak_rss_bytes', 'dmd_cold_seconds']})
+
+    def test_provisional_is_validated(self):
+        for bad in ([], ['incremental_linked_bytes'], ['template_instances'], ['dmd_cold_seconds', 'dmd_cold_seconds'],
+                    ['unknown'], 'dmd_cold_seconds'):
+            listed = {'core': dict(LISTED['core'], provisional=bad)}
+            with mock.patch.object(framework_budgets, 'modules', return_value=listed):
+                with self.assertRaises(ValueError, msg=repr(bad)):
+                    framework_budgets.load('.')
+        with mock.patch.object(framework_budgets, 'modules', return_value=LISTED):
+            self.assertEqual(framework_budgets.provisional_report('.'), {})
+
 
 if __name__ == '__main__':
     unittest.main()
