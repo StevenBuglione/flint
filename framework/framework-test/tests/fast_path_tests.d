@@ -9,6 +9,7 @@ import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : DescriptorTable;
 import flint.engine.aot.fast : FastArguments, FastExchange, FastOutcome, FastValueVisitor;
 import flint.engine.aot.mapping : AotHandlerMapping = HandlerMapping;
+import flint.http : HttpStatus, ResponseEntity;
 import flint.http.converter.json : JacksonJsonHttpMessageConverter;
 import flint.jakarta.servlet.http : HttpServletRequest, HttpServletResponse;
 import flint.test.web.servlet.setup : StaticBeanFactory;
@@ -16,6 +17,7 @@ import flint.web.bind.annotation : CrossOrigin, GetMapping, RequestParam, RestCo
 import flint.web.servlet : DispatcherServlet, HandlerInterceptor;
 import flint.web.servlet.config.annotation : InterceptorRegistry, WebMvcConfigurationSupport, WebMvcConfigurer;
 import flint.web.servlet.mvc.method.aot : handlerDescriptorsOf, requestMappingsOf;
+import flint.web.servlet.mvc.method.fast : FastPathConfigurer;
 
 @safe:
 
@@ -48,6 +50,34 @@ class CorsController
     }
 }
 
+@RestController
+class EntityController
+{
+    @GetMapping("/entity")
+    ResponseEntity entity()
+    {
+        return ResponseEntity.of(Hello(1, "x"), HttpStatus.CREATED);
+    }
+}
+
+final class Box
+{
+    string text; ///
+}
+
+@RestController
+class NullController
+{
+    long calls;
+
+    @GetMapping("/nothing")
+    Box nothing()
+    {
+        ++calls;
+        return null;
+    }
+}
+
 // What Flint AOT emits for these handlers (apps/flint/src/flint_tool/engine/aot/fast.d).
 private bool fastHello(Object bean, ref scope FastArguments arguments, ref Any result)
 {
@@ -67,14 +97,29 @@ private bool fastCors(Object bean, ref scope FastArguments arguments, ref Any re
     return true;
 }
 
+private bool fastEntity(Object bean, ref scope FastArguments arguments, ref Any result)
+{
+    result = Any.of((cast(EntityController) bean).entity());
+    return true;
+}
+
+private bool fastNothing(Object bean, ref scope FastArguments arguments, ref Any result)
+{
+    result = Any.of((cast(NullController) bean).nothing());
+    return true;
+}
+
 private final class CountingInterceptor : HandlerInterceptor
 {
 }
 
-/// A dispatcher over `controller`'s rows, the fast invoker set on every row when `fast` is given.
+/// A dispatcher over `controller`'s rows, the fast invoker set on every row when `fast` is given, with the
+/// configurer Flint AOT generates for a qualifying endpoint unless `generated` is false.
 private DispatcherServlet dispatcher(C)(C controller, string beanName, typeof(&fastHello) fast,
-        WebMvcConfigurer[] configurers = null)
+        WebMvcConfigurer[] configurers = null, bool generated = true)
 {
+    if (generated)
+        configurers ~= new FastPathConfigurer;
     auto beans = new StaticBeanFactory;
     beans.addBean(beanName, controller);
     auto rows = requestMappingsOf!C(beanName);
@@ -206,6 +251,32 @@ unittest
     assert(offer(dispatcher(controller, "helloController", &fastHello, [interceptors]), "GET", "/hello").outcome
             == FastOutcome.declined);
     assert(offer(dispatcher(new CorsController, "corsController", &fastCors), "GET", "/cors").outcome
+            == FastOutcome.declined);
+    assert(controller.calls == 0);
+}
+
+@("fast path: a ResponseEntity return is HttpEntityMethodProcessor's, so the proof leaves the row out")
+unittest
+{
+    assert(offer(dispatcher(new EntityController, "entityController", &fastEntity), "GET", "/entity").outcome
+            == FastOutcome.declined);
+}
+
+@("fast path: a null @ResponseBody value is a 200 without Content-Type or body, as writeWithMessageConverters")
+unittest
+{
+    auto controller = new NullController;
+    auto answer = offer(dispatcher(controller, "nullController", &fastNothing), "GET", "/nothing");
+    assert(answer.outcome == FastOutcome.written && answer.status == 200);
+    assert(answer.contentType is null && answer.content.length == 0);
+    assert(controller.calls == 1);
+}
+
+@("fast path: pay-for-use; without the generated configurer there is no table, even for a fast row")
+unittest
+{
+    auto controller = new HelloController;
+    assert(offer(dispatcher(controller, "helloController", &fastHello, null, false), "GET", "/hello").outcome
             == FastOutcome.declined);
     assert(controller.calls == 0);
 }

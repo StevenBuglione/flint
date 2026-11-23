@@ -49,8 +49,8 @@ struct FastExchange
     /// Visits every value of query parameter `name`, in order, decoded as the servlet request decodes it. Returns
     /// `false` when the fast path cannot decode the query within its bounds, so the caller declines.
     bool delegate(scope const(char)[] name, scope FastValueVisitor visit) @safe parameter;
-    /// Sends a whole response: `status`, one `Content-Type` field, and `content`, framed as the servlet response
-    /// would frame the same bytes written without a flush.
+    /// Sends a whole response: `status`, one `Content-Type` field (none when `contentType` is null), and
+    /// `content`, framed as the servlet response would frame the same bytes written without a flush.
     void delegate(int status, string contentType, scope const(ubyte)[] content) @safe respond;
     /// Builds the request and response the generic path would have built (the container's own classes, as
     /// `Object`s for this low-level package); the outcome is then `FastOutcome.materialized`.

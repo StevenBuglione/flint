@@ -23,10 +23,11 @@ import flint.jakarta.servlet.http : HttpServletRequest, HttpServletResponse;
 import flint.util : MimeTypeUtils;
 import flint.web.method : HandlerMethod;
 import flint.web.method.annotation : RequestParamMethodArgumentResolver;
-import flint.web.servlet : DispatcherServlet, FastPath;
+import flint.web.servlet : DispatcherStrategies, DispatcherServlet, FastPath, FastPathFactory;
+import flint.web.servlet.config.annotation : WebMvcConfigurer;
 import flint.web.servlet.mvc.method : RequestMappingInfo, RequestMappingInfoHandlerMapping;
 import flint.web.servlet.mvc.method.annotation : AbstractMessageConverterMethodProcessor,
-    RequestMappingHandlerAdapter;
+    HttpEntityMethodProcessor, HttpHeadersReturnValueHandler, RequestMappingHandlerAdapter;
 
 @safe:
 
@@ -36,6 +37,25 @@ request without one. Any other value, or several `Accept` fields, takes the gene
 the table never grows while requests run.
 +/
 private immutable string[3] acceptKeys = [null, "*/*", "application/json"];
+
+/++
+The `WebMvcConfigurer` bean Flint AOT generates (`flintAotFastPathConfigurer`) when an endpoint qualifies: it is the
+only path to `FastPathTable`, so an application without it links none of the fast path (fast-path.md, section 9).
++/
+final class FastPathConfigurer : WebMvcConfigurer, FastPathFactory
+{
+    FastPath buildFastPath(ref DispatcherStrategies strategies, const(AotHandlerMapping)[] rows, bool plain)
+    {
+        // The proof reads the mapping and adapter WebMvcConfigurationSupport put first (fast-path.md 3.2).
+        if (strategies.handlerMappings.length == 0 || strategies.handlerAdapters.length == 0)
+            return null;
+        auto mappings = cast(RequestMappingInfoHandlerMapping) strategies.handlerMappings[0];
+        auto adapter = cast(RequestMappingHandlerAdapter) strategies.handlerAdapters[0];
+        if (mappings is null || adapter is null)
+            return null;
+        return FastPathTable.build(rows, mappings, adapter, plain);
+    }
+}
 
 /// The fast path's routes; `null` from `build` when no row qualifies.
 final class FastPathTable : FastPath
@@ -116,6 +136,12 @@ final class FastPathTable : FastPath
         catch (Exception ex)
             return complete(servlet, exchange, route, ex, null, null);
 
+        // writeWithMessageConverters writes no body and no Content-Type for a null value: a 200 with Content-Length 0.
+        if (result.isNull())
+        {
+            exchange.respond(200, null, null);
+            return FastOutcome.written;
+        }
         auto buffer = pool.acquire();
         scope (exit)
             pool.release(buffer);
@@ -203,7 +229,18 @@ private bool prove(ref const AotHandlerMapping row, RequestMappingInfoHandlerMap
         ++found;
         handler = candidate;
     });
-    if (found != 1 || handler.getFastInvoker() !is row.fast || handler.getResponseStatus() != 0)
+    if (found != 1 || handler.getFastInvoker() !is row.fast || handler.getResponseStatus() != 0
+            || handler.getResponseStatusReason() !is null || handler.isVoid())
+        return false;
+    // invokeAndHandle sends ResponseEntity, HttpEntity and HttpHeaders returns to their own handlers before
+    // @ResponseBody, and those take status and headers from the value; ProblemDetail takes its own status and
+    // application/problem+json. Only a plain @ResponseBody value is the fast path's (web-http's review).
+    auto returnType = handler.getReturnType();
+    foreach (returnHandler; adapter.getReturnValueHandlers().getHandlers())
+        if (returnHandler.supportsReturnType(returnType) && (cast(HttpEntityMethodProcessor) returnHandler
+                || cast(HttpHeadersReturnValueHandler) returnHandler))
+            return false;
+    if (!plainBody(row))
         return false;
     foreach (parameter; handler.getMethodParameters())
     {
@@ -270,6 +307,19 @@ private bool prove(ref const AotHandlerMapping row, RequestMappingInfoHandlerMap
     route.invoke = row.fast;
     route.jackson = jackson;
     return route.bean !is null;
+}
+
+/// Whether the declared return type is a plain value: not `Object`, `Any` or `ProblemDetail` (or a subtype).
+private bool plainBody(ref const AotHandlerMapping row)
+{
+    enum problem = "flint.http.ProblemDetail";
+    if (row.returnType == "object.Object" || row.returnType == "flint.engine.aot.any.Any" || row.returnType == problem)
+        return false;
+    if (row.returnDescriptor !is null)
+        foreach (supertype; row.returnDescriptor.supertypes)
+            if (supertype == problem)
+                return false;
+    return true;
 }
 
 /++

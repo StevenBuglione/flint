@@ -75,7 +75,16 @@ struct ServletEngineOptions
     /// order, until a handler finishes, as Tomcat's executor queues it. 0 gives each reactor thread one handler
     /// per connection slot, up to 1,088 (the sizing before this setting).
     uint maxHandlers = 200;
+    /// Flint's per-endpoint fast path (docs/spring/phase1/fast-path.md): `flint.engine.servlet.fast.serveFast`,
+    /// set only by the customizer Flint AOT generates when an endpoint qualifies; null serves every request
+    /// generically and links none of the fast path.
+    FastOffer fastOffer;
 }
+
+/// The fast path's offer of one exchange to a servlet (`flint.engine.servlet.fast.serveFast`).
+alias FastOffer = FastOutcome function(ServletEngine engine, FastDispatch dispatch, ref scope Request request,
+        ref scope RequestContext context, FiberResponse transport, out ServletEngineRequest servletRequest,
+        out ServletEngineResponse servletResponse, out Exception failure) @safe;
 
 /// The reactor threads for `cores`: `cores` itself, or for 0 the CPUs this process may run on (on Linux, its
 /// affinity mask), at most the engine's 16.
@@ -236,7 +245,7 @@ final class ServletEngine : RequestHost
             entry.servlet.init(new EngineConfig(entry.name, servletContext, entry.parameters));
         foreach (entry; filters)
             entry.filter.init(new EngineFilterConfig(entry.name, servletContext, entry.parameters));
-        if (chainOrder.length == 0)
+        if (options.fastOffer !is null && chainOrder.length == 0)
             if (auto candidate = cast(FastDispatch) defaultServlet.servlet)
                 if (candidate.hasFastPath())
                     fastDispatch = candidate;
@@ -304,13 +313,12 @@ final class ServletEngine : RequestHost
     {
         if (fastDispatch !is null)
         {
-            import flint.engine.servlet.fast : serveFast;
-
+            // Called through the option, so a server without the fast path never references serveFast.
             ServletEngineRequest fastRequest;
             ServletEngineResponse fastResponse;
             Exception fastFailure;
-            final switch (serveFast(this, fastDispatch, request, context, transport, fastRequest, fastResponse,
-                    fastFailure))
+            final switch (options.fastOffer(this, fastDispatch, request, context, transport, fastRequest,
+                    fastResponse, fastFailure))
             {
             case FastOutcome.declined:
                 break;

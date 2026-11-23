@@ -34,9 +34,10 @@ private enum size_t valueLimit = 1024;
 /++
 Offer one exchange to `dispatch`. `declined`: nothing ran and nothing was sent. `written`: the response is complete.
 `materialized`: `servletRequest` and `servletResponse` are set, and `failure` holds what escaped the dispatcher, if
-anything; the caller finishes them as it finishes the generic path.
+anything; the caller finishes them as it finishes the generic path. This is `ServletEngineOptions.fastOffer`, which
+only Flint AOT's generated customizer sets; it is public for that customizer alone.
 +/
-package(flint.engine.servlet) FastOutcome serveFast(ServletEngine engine, FastDispatch dispatch,
+FastOutcome serveFast(ServletEngine engine, FastDispatch dispatch,
         ref scope Request request, ref scope RequestContext context, FiberResponse transport,
         out ServletEngineRequest servletRequest, out ServletEngineResponse servletResponse, out Exception failure)
 {
@@ -105,18 +106,21 @@ package(flint.engine.servlet) FastOutcome serveFast(ServletEngine engine, FastDi
         return visitParameter(query, name, visit);
     }
 
+    bool began;
     void respond(int status, string contentType, scope const(ubyte)[] content)
     {
         Context transportContext;
-        StreamField[1] fields = [StreamField("Content-Type", contentType)];
+        StreamField[1] storage = [StreamField("Content-Type", contentType)];
+        const fields = contentType is null ? storage[0 .. 0] : storage[];
+        began = true;
         // As the servlet response frames the same bytes written without a flush: buffered up to its buffer size
         // and sent with Content-Length, else committed when the buffer overflows and sent chunked.
         if (content.length <= defaultBufferSize)
         {
-            check(transport.respond(cast(ushort) status, fields[], content, false, transportContext));
+            check(transport.respond(cast(ushort) status, fields, content, false, transportContext));
             return;
         }
-        check(transport.begin(cast(ushort) status, fields[], unknownLength, transportContext));
+        check(transport.begin(cast(ushort) status, fields, unknownLength, transportContext));
         check(transport.send(content, transportContext));
         check(transport.finish(transportContext));
     }
@@ -140,6 +144,10 @@ package(flint.engine.servlet) FastOutcome serveFast(ServletEngine engine, FastDi
         outcome = dispatch.dispatchFast(exchange);
     catch (Exception e)
     {
+        // Once the response is on the wire (the client went away mid-body), the generic path's committed response
+        // would forward nowhere: the exception leaves the exchange as complete()'s IOException does (web-http).
+        if (began)
+            throw e;
         // Whatever escapes the dispatcher is an uncaught exception of the generic path: the container answers it
         // with its servlet objects, built now if the dispatcher had not.
         failure = e;

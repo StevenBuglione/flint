@@ -426,6 +426,18 @@ interface FastPath
 }
 
 /++
+Flint: builds a `FastPath` over finished strategies. A `WebMvcConfigurer` bean that Flint AOT generates only when an
+endpoint qualifies implements it (`FastPathConfigurer`), so an application without one links no fast path at all
+(fast-path.md, section 9; playbook S-1).
++/
+interface FastPathFactory
+{
+    /// The fast path for `rows`, or `null`. `plain`: nothing configured acts on every request (fast-path.md 3.2).
+    FastPath buildFastPath(ref DispatcherStrategies strategies,
+            const(imported!"flint.engine.aot.mapping".HandlerMapping)[] rows, bool plain);
+}
+
+/++
 `DispatcherServlet` (with `FrameworkServlet`'s request processing): dispatches to handlers, resolves
 exceptions and renders views.
 +/
