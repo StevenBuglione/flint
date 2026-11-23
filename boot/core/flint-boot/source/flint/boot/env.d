@@ -12,7 +12,7 @@
 /// column a value came from.
 module flint.boot.env;
 
-import flint.boot.internal.lang : IllegalStateException;
+import flint.java.lang : IllegalStateException;
 import flint.boot.origin : Origin, OriginTrackedValue, TextResourceOrigin;
 
 @safe:

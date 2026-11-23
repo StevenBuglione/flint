@@ -113,7 +113,7 @@ Boot's loaders take a spring-core `Resource`. Until framework-core's `flint.core
 
 ### Exceptions
 
-Boot's exceptions extend `RuntimeException`, `IllegalArgumentException` and `IllegalStateException` (rulebook R8). Until `flint:java` lands, `flint.boot.internal.lang` declares those names privately. The day framework-core publishes `flint.java.lang`, that file is deleted and its importers switch over.
+Boot's exceptions extend `flint.java.lang`'s `RuntimeException`, `IllegalArgumentException` and `IllegalStateException` (rulebook R8). `BindResult.get` throws `flint.java.util.NoSuchElementException`. Cause chains follow Java's `getCause()`, through `flint.boot.diagnostics.causeOf`, not D's `Throwable.next`.
 
 ### Deviations in this slice
 
@@ -125,7 +125,7 @@ Boot's exceptions extend `RuntimeException`, `IllegalArgumentException` and `Ill
 
 | From | What Boot needs | Status |
 | --- | --- | --- |
-| framework-core | `flint.java.lang` exception roots; `flint.core.env` (`PropertySource`, `EnumerablePropertySource`, `MapPropertySource`, `MutablePropertySources`, `ConfigurableEnvironment`/`StandardEnvironment`, `Profiles`, `SimpleCommandLinePropertySource`); `flint.core.io.Resource`; `flint.context.ConfigurableApplicationContext`; `flint.engine.aot` per the AOT contract | asked; `flint:java` and `flint:engine-aot` in progress |
+| framework-core | `flint.java.lang` exception roots (in use);  `flint.core.env` (`PropertySource`, `EnumerablePropertySource`, `MapPropertySource`, `MutablePropertySources`, `ConfigurableEnvironment`/`StandardEnvironment`, `Profiles`, `SimpleCommandLinePropertySource`); `flint.core.io.Resource`; `flint.context.ConfigurableApplicationContext`; `flint.engine.aot` per the AOT contract | asked; `flint:java` and `flint:engine-aot` in progress |
 | flint-aot | `@ConfigurationProperties` descriptors and `BeanFactory.bind`/`bindConstructor` hooks (contract §4.3); auto-configuration ordering and the `@ConditionalOn*` emission (contract §5.4, §5.5); `FlintBootApplication` detected as `flint.boot.autoconfigure.FlintBootApplication` | contract 1 published; Boot declares the annotations under exactly those names |
 | web-mvc | `DispatcherServlet` and `WebMvcConfigurer` beans for `WebMvcAutoConfiguration`; `MockMvc` (spring-test) for `@AutoConfigureMockMvc` | to coordinate |
 | third-party-apis | `flint.slf4j` `Logger`/`LoggerFactory` and a binding point for Boot's console appender; `flint.jackson.databind.ObjectMapper` (`JsonMapper` in Jackson 3) for `JacksonAutoConfiguration`; `flint.jakarta.validation.Validator` | to coordinate |

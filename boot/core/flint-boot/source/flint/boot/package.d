@@ -35,7 +35,7 @@ import flint.boot.diagnostics : FailureAnalysisReporter, FailureAnalyzer, Failur
     LoggingFailureAnalysisReporter;
 import flint.boot.internal.context : ConfigurableApplicationContext;
 import flint.boot.internal.core_env : CommandLineArgs, parseCommandLine;
-import flint.boot.internal.lang : IllegalArgumentException, IllegalStateException;
+import flint.java.lang : IllegalArgumentException, IllegalStateException;
 import flint.boot.internal.log : Log, LogSettings;
 import flint.boot.logging : LogLevel;
 

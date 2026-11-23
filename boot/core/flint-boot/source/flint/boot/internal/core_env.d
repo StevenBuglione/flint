@@ -10,7 +10,7 @@
 /// uses these, and the day those land, this file is deleted and its importers switch over.
 module flint.boot.internal.core_env;
 
-import flint.boot.internal.lang : IllegalArgumentException;
+import flint.java.lang : IllegalArgumentException;
 
 @safe:
 

@@ -236,7 +236,7 @@ private ConfigDataResult run(string[string] files, string[] args = null,
 
 @("runWhenConfigLocationHasUnknownFileExtensionFailsFast") unittest
 {
-    import flint.boot.internal.lang : IllegalStateException;
+    import flint.java.lang : IllegalStateException;
 
     assertThrows!IllegalStateException(() {
         run(["application.unknown": "x=y\n"], ["--flint.config.location=file:application.unknown"]);

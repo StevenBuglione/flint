@@ -9,7 +9,7 @@
 /// `org.springframework.boot.diagnostics`: turning a startup failure into the "APPLICATION FAILED TO START" report.
 module flint.boot.diagnostics;
 
-import flint.boot.internal.lang : RuntimeException;
+import flint.java.lang : RuntimeException;
 
 @safe:
 
@@ -71,12 +71,20 @@ abstract class AbstractFailureAnalyzer(T : Throwable) : FailureAnalyzer
 /// The first `E` in `failure`'s cause chain, or `null`.
 E findCause(E : Throwable)(Throwable failure)
 {
-    for (Throwable current = failure; current !is null; current = current.next)
+    for (Throwable current = failure; current !is null; current = causeOf(current))
     {
         if (auto found = cast(E) current)
             return found;
     }
     return null;
+}
+
+/// Java's `getCause()`: a `RuntimeException`'s cause, else D's chained throwable.
+Throwable causeOf(Throwable failure)
+{
+    if (auto runtime = cast(RuntimeException) failure)
+        return runtime.getCause();
+    return failure.next;
 }
 
 /// Reports a failure analysis.

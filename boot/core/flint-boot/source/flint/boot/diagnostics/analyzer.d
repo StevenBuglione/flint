@@ -11,7 +11,7 @@ module flint.boot.diagnostics.analyzer;
 import flint.boot.context.config : ConfigDataLocationNotFoundException;
 import flint.boot.context.properties.bind : BindException, ConversionFailedException;
 import flint.boot.context.properties.source : InvalidConfigurationPropertyNameException;
-import flint.boot.diagnostics : AbstractFailureAnalyzer, FailureAnalysis, FailureAnalyzer, findCause;
+import flint.boot.diagnostics : AbstractFailureAnalyzer, FailureAnalysis, FailureAnalyzer, causeOf, findCause;
 
 @safe:
 
@@ -33,7 +33,7 @@ final class BindFailureAnalyzer : AbstractFailureAnalyzer!BindException
 
     private static string reason(BindException cause)
     {
-        auto root = rootCause(cause.next);
+        auto root = rootCause(causeOf(cause));
         if (auto conversion = findCause!ConversionFailedException(cause))
             return "failed to convert " ~ conversion.getSourceType() ~ " to " ~ conversion.getTargetType() ~ (
                     conversion.getReason().length ? " (caused by " ~ conversion.getReason() ~ ")" : "");
@@ -88,8 +88,8 @@ FailureAnalyzer[] bootFailureAnalyzers()
 private Throwable rootCause(Throwable cause)
 {
     auto root = cause;
-    while (root !is null && root.next !is null)
-        root = root.next;
+    while (root !is null && causeOf(root) !is null)
+        root = causeOf(root);
     return root;
 }
 

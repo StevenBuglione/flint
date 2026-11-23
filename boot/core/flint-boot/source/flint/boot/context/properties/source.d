@@ -18,7 +18,7 @@
 /// case and every non-alphanumeric character, which is Spring Boot's relaxed binding.
 module flint.boot.context.properties.source;
 
-import flint.boot.internal.lang : IllegalArgumentException, IndexOutOfBoundsException, RuntimeException;
+import flint.java.lang : IllegalArgumentException, IndexOutOfBoundsException, RuntimeException;
 
 @safe:
 

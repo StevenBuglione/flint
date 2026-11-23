@@ -9,9 +9,10 @@
 module boot_tests.binder_test;
 
 import boot_tests.support : assertThrows;
-import flint.boot.context.properties.bind : BindException, BindResult, Bindable, Binder, DefaultValue,
-    NoSuchElementException, PropertySourcesPlaceholdersResolver, parseDuration, toDashedForm;
+import flint.boot.context.properties.bind : BindException, BindResult, Bindable, Binder,
+    DefaultValue, PropertySourcesPlaceholdersResolver, parseDuration, toDashedForm;
 import flint.boot.context.properties.source : ConfigurationPropertySource, MapConfigurationPropertySource;
+import flint.java.util : NoSuchElementException;
 
 @safe:
 

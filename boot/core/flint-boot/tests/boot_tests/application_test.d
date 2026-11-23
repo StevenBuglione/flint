@@ -467,7 +467,7 @@ private final class FixedExitCode : ExitCodeGenerator
 
 @("noApplicationContextFactoryFails") unittest
 {
-    import flint.boot.internal.lang : IllegalStateException;
+    import flint.java.lang : IllegalStateException;
 
     auto application = new FlintApplication(ClassRef("x.App"));
     application.setResourceReader(new MemoryReader(null));

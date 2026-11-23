@@ -119,7 +119,9 @@ final class Log
 string render(Throwable failure)
 {
     string text;
-    for (Throwable current = failure; current !is null; current = current.next)
+    import flint.boot.diagnostics : causeOf;
+
+    for (Throwable current = failure; current !is null; current = causeOf(current))
     {
         text ~= (text.length ? "Caused by: " : "") ~ typeid(current).name ~ ": " ~ current.message.idup ~ "\n";
         text ~= "\tat " ~ current.file ~ ":" ~ lineText(current.line) ~ "\n";

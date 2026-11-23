@@ -10,7 +10,7 @@
 /// rejected, as Boot's restricted constructor rejects them. Timestamps stay text, as Boot's resolver leaves them.
 module flint.boot.internal.yaml;
 
-import flint.boot.internal.lang : RuntimeException;
+import flint.java.lang : RuntimeException;
 
 @safe:
 

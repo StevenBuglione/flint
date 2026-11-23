@@ -23,7 +23,8 @@ module flint.boot.context.properties.bind;
 
 import flint.boot.context.properties.source : ConfigurationProperty, ConfigurationPropertyName,
     ConfigurationPropertySource, ConfigurationPropertySources;
-import flint.boot.internal.lang : IllegalStateException, RuntimeException;
+import flint.java.lang : IllegalStateException, RuntimeException;
+import flint.java.util : NoSuchElementException;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : Descriptor, DescriptorTable, TypeKind, descriptorOf;
 import flint.engine.aot.name : typeNameOf;
@@ -86,16 +87,6 @@ struct BindResult(T)
     BindResult!U map(U)(scope U delegate(T) @safe mapper)
     {
         return bound ? BindResult!U.of(mapper(value)) : BindResult!U.init;
-    }
-}
-
-/// `java.util.NoSuchElementException`, thrown by `BindResult.get` when nothing was bound.
-class NoSuchElementException : RuntimeException
-{
-    /// A message.
-    this(string message) pure nothrow
-    {
-        super(message);
     }
 }
 

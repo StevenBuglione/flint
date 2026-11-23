@@ -7,7 +7,7 @@ module boot_tests.origin_tracked_properties_loader_test;
 
 import boot_tests.support : assertThrows;
 import flint.boot.env : Document, OriginTrackedPropertiesLoader;
-import flint.boot.internal.lang : IllegalStateException;
+import flint.java.lang : IllegalStateException;
 import flint.boot.origin : OriginTrackedValue, TextResourceOrigin;
 
 @safe:

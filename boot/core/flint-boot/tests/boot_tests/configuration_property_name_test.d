@@ -6,7 +6,7 @@ module boot_tests.configuration_property_name_test;
 
 import boot_tests.support : assertThrows;
 import flint.boot.context.properties.source : ConfigurationPropertyName, InvalidConfigurationPropertyNameException;
-import flint.boot.internal.lang : IllegalArgumentException, IndexOutOfBoundsException;
+import flint.java.lang : IllegalArgumentException, IndexOutOfBoundsException;
 
 @safe:
 

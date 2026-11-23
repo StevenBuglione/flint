@@ -33,7 +33,7 @@ import flint.boot.context.properties.source : ConfigurationPropertyName, Configu
 import flint.boot.env : OriginTrackedMapPropertySource, PropertiesPropertySourceLoader,
     PropertySourceLoader, YamlPropertySourceLoader;
 import flint.boot.internal.core_env : CommandLineArgs;
-import flint.boot.internal.lang : IllegalStateException, RuntimeException;
+import flint.java.lang : IllegalStateException, RuntimeException;
 
 @safe:
 
