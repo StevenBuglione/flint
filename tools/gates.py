@@ -67,16 +67,20 @@ def project_mixin_tokens(text, compiler):
                 continue
         yield from tokens(text[header.end():end])
 
+def package_root(name):
+    """A package's directory: in its repo's checkout with --workspace, else in this checkout."""
+    return WORKSPACE.package_dir(name,ROOT) if WORKSPACE.file else ROOT/'packages'/name
+
 def generated_dependencies(packages):
     if not packages:return {'packages':0}
     # macOS arm64 has no DMD code generator (ADR-023); LDC's DMD-compatible driver runs the same front end.
     compiler=shutil.which(os.environ['DMD']) if 'DMD' in os.environ else shutil.which('dmd') or shutil.which('ldmd2')
     require(compiler,'approved string mixins require DMD (or ldmd2) on PATH or DMD=/absolute/path for compiler dependency audit')
-    imports=['-I'+str(ROOT/'packages'/name/'source') for name in P]
+    imports=['-I'+str(package_root(name)/'source') for name in P]
     count=0
     with tempfile.TemporaryDirectory(prefix='flint-deps-') as temporary:
         for name in sorted(packages):
-            sources=sorted((ROOT/'packages'/name/'source').rglob('*.d'))
+            sources=sorted((package_root(name)/'source').rglob('*.d'))
             for profile in ['debug','release']:
                 destination=Path(temporary)/(name+'-'+profile+'.deps')
                 expansion=Path(temporary)/(name+'-'+profile+'.mixins.d')
@@ -274,7 +278,7 @@ def structural(selected):
     layer_registration()
     mixin_packages=set()
     for n in selected:
-        meta=P[n];pkg=WORKSPACE.package_dir(n,ROOT) if WORKSPACE.file else ROOT/'packages'/n;sdl=(pkg/'dub.sdl').read_text(encoding='utf-8')
+        meta=P[n];pkg=package_root(n);sdl=(pkg/'dub.sdl').read_text(encoding='utf-8')
         actual=set(re.findall(r'dependency\s+"flint:([\w-]+)"\s+version="\*"',sdl))
         require(actual==set(meta['dependencies']),n+': SDL dependencies differ from policy')
         require(len(re.findall(r'\bdependency\b',sdl))==len(actual),n+': noncanonical dependency recipe')
