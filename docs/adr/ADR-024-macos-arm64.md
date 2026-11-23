@@ -163,7 +163,28 @@ export PATH="$PWD/.tools/dub-1.43.0/bin:$PWD/.tools/ldc2-1.43.0-osx-arm64/bin:$P
 python3 tools/ci.py platform --target macos-arm64
 ```
 
-### 6. The flint CLI
+### 6. Build measurements on pluto
+
+ADR-025 names pluto (`flint-perf-macos-arm64-v1`) as the macOS measurement runner, so the measurement tools run there.
+
+- **Go.** `install_toolchains.py --compiler go` installs the pinned Go 1.27.4 darwin-arm64 archive. Its digest comes from go.dev's listing, whose linux-amd64 digest equals the existing lock entry.
+- **`tools/compare_go_builds.py`.** It uses `ldmd2` on macOS and turns the DUB pipeline off.
+- **`tools/measure_builds.py`.** It accepts the macOS runner and changes these pieces:
+  - process-tree RSS comes from libproc's task info, which is what psutil reports as RSS on macOS;
+  - the size audit uses Apple `strip` and `otool -L`, and only `/usr/lib` and system frameworks may stay dynamic;
+  - `ldmd2` is the default DMD-role compiler.
+- **Benchmark probes.** All of them build on both profiles. The reactor's provider-equivalent baseline gained a kqueue branch, and it echoes the same checksum as the Flint probe. The security probe counts native allocations through libSystem's `malloc_logger` hook, because Apple's linker has no `--wrap`.
+
+Baseline on pluto, 9 paired trials, medians. Flint is the `ldmd2` dev profile; Go builds from a primed standard-library cache:
+
+| App | Flint cold | Go cold | Ratio | Flint edit | Go edit | Ratio |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `bench-cli` | 1736 ms | 163 ms | 10.66 | 376 ms | 169 ms | 2.23 |
+| `bench-rest` | 2067 ms | 431 ms | 4.79 | 460 ms | 296 ms | 1.56 |
+
+This is the baseline the DMD arm64 work (ADR-025 section 3) has to beat. `ldmd2` misses the compile-speed gate by a wide margin, which is why ADR-025 keeps it as an interim setting only.
+
+### 7. The flint CLI
 
 `apps/flint/src/flint_tool/toolchain/host.d` describes the toolchain layout per host. On macOS:
 

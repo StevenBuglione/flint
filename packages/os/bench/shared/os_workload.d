@@ -209,6 +209,12 @@ int runProbe(ExecuteProbe execute, GlobProbe glob)
     const checksum = spawnWorkload(execute) + streamingWorkload(execute) + globWorkload(glob);
     rusage use;
     enforce(getrusage(RUSAGE_SELF, &use) == 0, "peak RSS unavailable");
-    printf("checksum=%llu peak_rss_kib=%ld\n", checksum, use.ru_maxrss);
+    version (OSX)
+    {
+        // druntime names only the times of Darwin's rusage; ru_maxrss is the first opaque word, in bytes.
+        printf("checksum=%llu peak_rss_kib=%ld\n", checksum, use.ru_opaque[0] / 1024);
+    }
+    else
+        printf("checksum=%llu peak_rss_kib=%ld\n", checksum, use.ru_maxrss);
     return 0;
 }

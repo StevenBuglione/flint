@@ -3,7 +3,17 @@ module log_workload;
 import core.atomic : atomicLoad, atomicStore;
 import core.stdc.stdio : printf;
 import core.stdc.stdlib : qsort;
-import core.sys.posix.time : CLOCK_MONOTONIC, clock_gettime, timespec;
+
+version (OSX)
+{
+    import core.sys.posix.time : timespec;
+
+    // <time.h>: druntime declares neither for Darwin; CLOCK_MONOTONIC is 6 there (ADR-024).
+    private enum int CLOCK_MONOTONIC = 6;
+    private extern (C) int clock_gettime(int clock, timespec* value) @system nothrow @nogc;
+}
+else
+    import core.sys.posix.time : CLOCK_MONOTONIC, clock_gettime, timespec;
 import flint.arena : Status;
 import std.exception : enforce;
 

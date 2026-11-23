@@ -3,7 +3,17 @@ module app;
 import core.atomic : atomicLoad, atomicStore;
 import core.stdc.stdio : snprintf;
 import core.stdc.time : time_t, tm;
-import core.sys.posix.time : CLOCK_REALTIME, clock_gettime, gmtime_r, timespec;
+
+version (OSX)
+{
+    import core.sys.posix.time : gmtime_r, timespec;
+
+    // <time.h>: druntime declares neither for Darwin; CLOCK_REALTIME is 0, as flint.log uses (ADR-024).
+    private enum int CLOCK_REALTIME = 0;
+    private extern (C) int clock_gettime(int clock, timespec* value) @system nothrow @nogc;
+}
+else
+    import core.sys.posix.time : CLOCK_REALTIME, clock_gettime, gmtime_r, timespec;
 import core.thread.osthread : Thread;
 import core.time : MonoTime, msecs;
 import flint.arena : Status;
