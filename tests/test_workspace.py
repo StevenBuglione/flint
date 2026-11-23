@@ -221,3 +221,12 @@ class ExtractionTests(unittest.TestCase):
             self.assertEqual(extract_repo.earlier_names(checkout, ['packages/engine-web']),
                              {'packages/web': 'packages/engine-web'})
             self.assertEqual(extract_repo.earlier_names(checkout, ['packages/engine-mq']), {})
+
+    def test_the_refresh_needs_all_to_push_and_one_repo_otherwise(self):
+        script = str(ROOT / 'tools/extract_repo.py')
+        with tempfile.TemporaryDirectory() as temporary:
+            for args in (['--push', 'ai'], [], ['--all', 'ai']):
+                result = subprocess.run([sys.executable, script, *args, '--into', temporary], capture_output=True,
+                                        text=True)
+                self.assertEqual(result.returncode, 2, args)
+                self.assertIn('name one repo, or --all', result.stderr)

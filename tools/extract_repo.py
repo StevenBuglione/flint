@@ -6,7 +6,16 @@
 It clones the monorepo afresh (never the working checkout), keeps the paths that move to the repo with
 `git filter-repo`, and commits the repo's root files: a `dub.sdl` named `flint` listing its subpackages (every
 repo keeps the `flint:*` names; a workspace joins them, see tools/workspace.py dub-root), the licence files, a
-README and a .gitignore. It never pushes: the extracted checkout is built and gated through a workspace first.
+README and a .gitignore. One repo is never pushed: the extracted checkout is built and gated through a workspace
+first.
+
+Until the Phase 1 cutover (ADR-030) the extracted repos are mirrors of the monorepo. One command refreshes them:
+
+    python3 tools/extract_repo.py --all --push --into /tmp/mirrors
+
+It clones flint's main afresh, extracts every repo that has paths using that commit's own policy, runs the
+structural gate per repo through a flint.workspace/1 file of the fresh checkouts, and only then force-pushes each
+mirror's main. Each mirror's commit message records the flint source commit.
 """
 import argparse
 import json
@@ -131,6 +140,7 @@ def root_files(repo, checkout, root=ROOT):
         f'# {meta["github"].split("/")[1]}\n\n'
         f'The {repo} repo of [Flint](https://github.com/flint-projects/flint), a {meta["kind"]} repo. It was '
         f'extracted from the Flint monorepo with its history (ADR-030; the ADR-023 amendment on platform modules).\n\n'
+        'Mirror of `flint-projects/flint` until the Phase 1 cutover (ADR-030); do not push here directly.\n\n'
         f'Its packages keep their `flint:*` names and resolve at this repo\'s platform version, which the flint '
         f'repo\'s `platform.lock` pins. It may depend on {depends}.\n\n'
         '## Building\n\n'
@@ -140,38 +150,92 @@ def root_files(repo, checkout, root=ROOT):
         f'python3 tools/gates.py --gate structural --workspace workspace.json --repo {repo}\n```\n')
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('repo', choices=sorted(repo_policy()['repos']))
-    parser.add_argument('--source', default='git@github.com:flint-projects/flint.git')
-    parser.add_argument('--commit', default='HEAD', help='the monorepo commit to extract')
-    parser.add_argument('--into', type=Path, required=True, help='directory for the fresh clone')
-    arguments = parser.parse_args()
-    paths = moving_paths(arguments.repo)
+def extract(repo, source, commit, into, root=ROOT):
+    """Clone `source` afresh into `into`/flint-<repo>, keep `repo`'s paths with their history in its layout, and
+    commit the root files. Returns the summary printed as JSON."""
+    paths = moving_paths(repo, root)
     if not paths:
-        raise SystemExit(f'nothing moves to {arguments.repo}')
-    checkout = (arguments.into / ('flint-' + arguments.repo)).resolve()
+        raise SystemExit(f'nothing moves to {repo}')
+    checkout = (into / ('flint-' + repo)).resolve()
     if checkout.exists():
         raise SystemExit(f'{checkout} exists; extraction starts from a fresh clone')
-    run(['git', 'clone', '--no-local', '--quiet', arguments.source, str(checkout)])
-    run(['git', 'checkout', '--quiet', '-B', 'main', arguments.commit], checkout)
+    run(['git', 'clone', '--no-local', '--quiet', source, str(checkout)])
+    run(['git', 'checkout', '--quiet', '-B', 'main', commit], checkout)
     source_commit = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=checkout, capture_output=True, text=True,
                                    check=True).stdout.strip()
-    moves = renames(arguments.repo, checkout, paths)
+    moves = renames(repo, checkout, paths, root)
     # Earlier names come along with their history, renamed to where their later name goes.
     earlier = [(old, dict(moves).get(new, new)) for old, new in earlier_names(checkout, paths).items()]
-    run(['git', 'filter-repo', '--force', '--refs', 'main',
+    run(['git', 'filter-repo', '--force', '--quiet', '--refs', 'main',
          *sum((['--path', p] for p in paths + [old for old, _ in earlier]), []),
          *sum((['--path-rename', f'{old}/:{new}/'] for old, new in moves + earlier), [])], checkout)
     rewritten = rewrite_references(checkout, moves)
-    root_files(arguments.repo, checkout)
+    root_files(repo, checkout, root)
     run(['git', 'add', '-A'], checkout)
-    run(['git', 'commit', '--quiet', '-m', f'Extract the {arguments.repo} repo from flint-projects/flint at '
-         f'{source_commit[:12]}\n\nKept with history: {", ".join(paths)}, in the layout of policy/repos.json '
-         f'({len(moves)} directories moved, {len(rewritten)} files\' references updated). Root files: dub.sdl '
-         f'(the flint namespace\'s subpackages of this repo), LICENSE, NOTICE, README.md and .gitignore.'], checkout)
-    print(json.dumps({'repo': arguments.repo, 'checkout': str(checkout), 'source_commit': source_commit,
-                      'paths': paths, 'moves': dict(moves), 'earlier': dict(earlier), 'rewritten': rewritten}))
+    run(['git', 'commit', '--quiet', '-m', f'Extract the {repo} repo from flint-projects/flint at '
+         f'{source_commit[:12]}\n\nSource commit: flint-projects/flint@{source_commit}. Kept with history: '
+         f'{", ".join(paths)}, in the layout of policy/repos.json ({len(moves)} directories moved, '
+         f'{len(rewritten)} files\' references updated). Root files: dub.sdl (the flint namespace\'s subpackages '
+         'of this repo), LICENSE, NOTICE, README.md and .gitignore.'], checkout)
+    return {'repo': repo, 'checkout': str(checkout), 'source_commit': source_commit, 'paths': paths,
+            'moves': dict(moves), 'earlier': dict(earlier), 'rewritten': rewritten}
+
+
+def refresh(source, commit, into, push, remote):
+    """Extract every repo that has paths from one flint commit, gate each through a workspace of the fresh
+    checkouts, and with `push` force-push their mains. The extracted repos are mirrors until the Phase 1 cutover
+    (ADR-030), so nobody else pushes to them and a force-push loses nothing."""
+    into = into.resolve()
+    if into.exists():
+        raise SystemExit(f'{into} exists; a refresh starts from fresh clones')
+    flint = into / 'flint'
+    run(['git', 'clone', '--no-local', '--quiet', source, str(flint)])
+    run(['git', 'checkout', '--quiet', commit], flint)
+    sha = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=flint, capture_output=True, text=True,
+                         check=True).stdout.strip()
+    # The flint commit's own policy decides what moves where.
+    policy = repo_policy(flint)['repos']
+    repos = [repo for repo in sorted(policy) if repo != 'flint' and moving_paths(repo, flint)]
+    summaries = [extract(repo, source, sha, into, flint) for repo in repos]
+    checkouts = {'flint': {'path': 'flint', 'commit': sha}}
+    for summary in summaries:
+        head = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=summary['checkout'], capture_output=True, text=True,
+                              check=True).stdout.strip()
+        checkouts[summary['repo']] = {'path': Path(summary['checkout']).name, 'commit': head}
+    workspace = into / 'workspace.json'
+    workspace.write_text(json.dumps({'schema': 'flint.workspace/1', 'checkouts': checkouts}, indent=2) + '\n')
+    for repo in repos:
+        run([sys.executable, str(flint / 'tools' / 'gates.py'), '--gate', 'structural', '--workspace', str(workspace),
+             '--repo', repo], flint)
+    pushed = []
+    if push:
+        for summary in summaries:
+            url = remote.format(github=policy[summary['repo']]['github'])
+            run(['git', 'push', '--quiet', '--force', url, 'main:main'], summary['checkout'])
+            pushed.append(url)
+    return {'source_commit': sha, 'workspace': str(workspace),
+            'repos': {repo: checkouts[repo]['commit'] for repo in repos}, 'pushed': pushed}
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('repo', nargs='?', choices=sorted(repo_policy()['repos']))
+    parser.add_argument('--all', action='store_true', help='every repo with paths, gated through one workspace')
+    parser.add_argument('--push', action='store_true', help='with --all: force-push each mirror\'s main')
+    parser.add_argument('--remote', default='git@github.com:{github}.git', help='push URL; {github} is owner/name')
+    parser.add_argument('--source', default='git@github.com:flint-projects/flint.git')
+    parser.add_argument('--commit', default=None, help='the monorepo commit to extract (default: HEAD, or '
+                        'origin/main with --all)')
+    parser.add_argument('--into', type=Path, required=True, help='directory for the fresh clones')
+    arguments = parser.parse_args()
+    if arguments.all == bool(arguments.repo) or (arguments.push and not arguments.all):
+        parser.error('name one repo, or --all (with --push to update the mirrors)')
+    if arguments.all:
+        result = refresh(arguments.source, arguments.commit or 'origin/main', arguments.into, arguments.push,
+                         arguments.remote)
+    else:
+        result = extract(arguments.repo, arguments.source, arguments.commit or 'HEAD', arguments.into)
+    print(json.dumps(result))
     return 0
 
 

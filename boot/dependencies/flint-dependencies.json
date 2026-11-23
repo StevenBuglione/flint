@@ -35,6 +35,10 @@
       "repo": "flint",
       "version": "monorepo"
     },
+    "flint:core": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:engine-actuator": {
       "repo": "framework",
       "version": "monorepo"
