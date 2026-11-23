@@ -1,3 +1,4 @@
 flint.boot.webmvc.autoconfigure.DispatcherServletAutoConfiguration
 flint.boot.webmvc.autoconfigure.WebMvcAutoConfiguration
 flint.boot.webmvc.autoconfigure.error.ErrorMvcAutoConfiguration
+flint.boot.webmvc.autoconfigure.actuate.web.WebMvcEndpointManagementContextConfiguration

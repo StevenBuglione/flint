@@ -15,6 +15,10 @@
       "repo": "boot",
       "version": "monorepo"
     },
+    "flint:boot-actuate": {
+      "repo": "boot",
+      "version": "monorepo"
+    },
     "flint:boot-actuator": {
       "repo": "boot",
       "version": "monorepo"
@@ -39,6 +43,10 @@
       "repo": "boot",
       "version": "monorepo"
     },
+    "flint:boot-health": {
+      "repo": "boot",
+      "version": "monorepo"
+    },
     "flint:boot-jackson": {
       "repo": "boot",
       "version": "monorepo"
@@ -52,6 +60,10 @@
       "version": "monorepo"
     },
     "flint:boot-starter": {
+      "repo": "boot",
+      "version": "monorepo"
+    },
+    "flint:boot-starter-actuator": {
       "repo": "boot",
       "version": "monorepo"
     },

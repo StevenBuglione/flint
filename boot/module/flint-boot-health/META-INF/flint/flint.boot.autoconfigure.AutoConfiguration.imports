@@ -1,0 +1,3 @@
+flint.boot.health.autoconfigure.PingHealthContributorAutoConfiguration
+flint.boot.health.autoconfigure.AvailabilityProbesAutoConfiguration
+flint.boot.health.autoconfigure.HealthEndpointAutoConfiguration

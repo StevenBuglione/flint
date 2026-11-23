@@ -34,6 +34,7 @@ import flint.boot.context.properties.source : ConfigurationPropertyName,
 import flint.boot.diagnostics : FailureAnalysisReporter, FailureAnalyzer, FailureAnalyzers,
     LoggingFailureAnalysisReporter;
 import flint.conc.slot : ProcessSlot;
+import flint.boot.availability : AvailabilityChangeEvent, LivenessState, ReadinessState;
 import flint.context : ConfigurableApplicationContext;
 import flint.context.annotation : Configuration;
 import flint.core.annotation : AliasFor;
@@ -592,7 +593,10 @@ class FlintApplication
             context.refresh();
             if (logStartupInfo)
                 logStarted(startNanos);
+            // EventPublishingRunListener.started and .ready: live once refreshed, ready once the runners ran.
+            AvailabilityChangeEvent!LivenessState.publish(context, LivenessState.CORRECT);
             callRunners(context, applicationArguments);
+            AvailabilityChangeEvent!ReadinessState.publish(context, ReadinessState.ACCEPTING_TRAFFIC);
             return context;
         }
         catch (Exception failure)

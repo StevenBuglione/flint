@@ -1,0 +1,48 @@
+{
+  "groups": [
+    {
+      "name": "management.endpoint.health",
+      "type": "flint.boot.health.autoconfigure.HealthEndpointProperties",
+      "sourceType": "flint.boot.health.autoconfigure.HealthEndpointProperties"
+    },
+    {
+      "name": "management.endpoint.health.status",
+      "type": "flint.boot.health.autoconfigure.HealthEndpointProperties$Status",
+      "sourceType": "flint.boot.health.autoconfigure.HealthEndpointProperties$Status"
+    }
+  ],
+  "properties": [
+    {
+      "name": "management.endpoint.health.show-components",
+      "type": "Show",
+      "description": "When to show components. If not specified the 'show-details' setting will be used.",
+      "sourceType": "flint.boot.health.autoconfigure.HealthEndpointProperties"
+    },
+    {
+      "name": "management.endpoint.health.show-details",
+      "type": "Show",
+      "description": "When to show full health details.",
+      "sourceType": "flint.boot.health.autoconfigure.HealthEndpointProperties",
+      "defaultValue": "never"
+    },
+    {
+      "name": "management.endpoint.health.roles",
+      "type": "java.util.List<java.lang.String>",
+      "description": "Roles used to determine whether a user is authorized to be shown details. When empty, all authenticated users are authorized.",
+      "sourceType": "flint.boot.health.autoconfigure.HealthEndpointProperties"
+    },
+    {
+      "name": "management.endpoint.health.status.order",
+      "type": "java.util.List<java.lang.String>",
+      "description": "List of health statuses in order of severity.",
+      "sourceType": "flint.boot.health.autoconfigure.HealthEndpointProperties$Status"
+    },
+    {
+      "name": "management.endpoint.health.status.http-mapping",
+      "type": "java.util.Map<java.lang.String,java.lang.Integer>",
+      "description": "Mapping of health statuses to HTTP status codes. By default, registered health statuses map to sensible defaults (for example, UP maps to 200).",
+      "sourceType": "flint.boot.health.autoconfigure.HealthEndpointProperties$Status"
+    }
+  ],
+  "hints": []
+}

@@ -29,6 +29,13 @@ scope = "build"
 dependencies = ["flint:core", "flint:engine-aot", "flint:jakarta-annotation", "flint:java"]
 
 [[package]]
+name = "flint:boot-actuate"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = ["flint:boot-autoconfigure", "flint:boot-core", "flint:context", "flint:engine-aot", "flint:java"]
+
+[[package]]
 name = "flint:boot-autoconfigure"
 kind = "core"
 source = "workspace"
@@ -82,7 +89,7 @@ name = "flint:boot-webmvc"
 kind = "core"
 source = "workspace"
 scope = "build"
-dependencies = ["flint:beans", "flint:boot-autoconfigure", "flint:boot-core", "flint:boot-web-server", "flint:context", "flint:core", "flint:engine-aot", "flint:jackson-databind", "flint:jakarta-servlet", "flint:java", "flint:web", "flint:webmvc"]
+dependencies = ["flint:beans", "flint:boot-actuate", "flint:boot-autoconfigure", "flint:boot-core", "flint:boot-web-server", "flint:context", "flint:core", "flint:engine-aot", "flint:jackson-databind", "flint:jakarta-servlet", "flint:java", "flint:web", "flint:webmvc"]
 
 [[package]]
 name = "flint:conc"

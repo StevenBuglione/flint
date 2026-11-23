@@ -1,0 +1,54 @@
+{
+  "groups": [
+    {
+      "name": "management.endpoints.web",
+      "type": "flint.boot.actuate.autoconfigure.endpoint.web.WebEndpointProperties",
+      "sourceType": "flint.boot.actuate.autoconfigure.endpoint.web.WebEndpointProperties"
+    },
+    {
+      "name": "management.endpoints.web.exposure",
+      "type": "flint.boot.actuate.autoconfigure.endpoint.web.WebEndpointProperties$Exposure",
+      "sourceType": "flint.boot.actuate.autoconfigure.endpoint.web.WebEndpointProperties$Exposure"
+    },
+    {
+      "name": "management.endpoints.web.discovery",
+      "type": "flint.boot.actuate.autoconfigure.endpoint.web.WebEndpointProperties$Discovery",
+      "sourceType": "flint.boot.actuate.autoconfigure.endpoint.web.WebEndpointProperties$Discovery"
+    }
+  ],
+  "properties": [
+    {
+      "name": "management.endpoints.web.exposure.include",
+      "type": "java.util.List<java.lang.String>",
+      "description": "Endpoint IDs that should be included or \"*\" for all.",
+      "sourceType": "flint.boot.actuate.autoconfigure.endpoint.web.WebEndpointProperties$Exposure"
+    },
+    {
+      "name": "management.endpoints.web.exposure.exclude",
+      "type": "java.util.List<java.lang.String>",
+      "description": "Endpoint IDs that should be excluded or \"*\" for all.",
+      "sourceType": "flint.boot.actuate.autoconfigure.endpoint.web.WebEndpointProperties$Exposure"
+    },
+    {
+      "name": "management.endpoints.web.base-path",
+      "type": "java.lang.String",
+      "description": "Base path for Web endpoints. Relative to the servlet context path (server.servlet.context-path) or WebFlux base path (spring.webflux.base-path) when the management server is sharing the main server port. Relative to the management server base path (management.server.base-path) when a separate management server port (management.server.port) is configured.",
+      "sourceType": "flint.boot.actuate.autoconfigure.endpoint.web.WebEndpointProperties",
+      "defaultValue": "/actuator"
+    },
+    {
+      "name": "management.endpoints.web.path-mapping",
+      "type": "java.util.Map<java.lang.String,java.lang.String>",
+      "description": "Mapping between endpoint IDs and the path that should expose them.",
+      "sourceType": "flint.boot.actuate.autoconfigure.endpoint.web.WebEndpointProperties"
+    },
+    {
+      "name": "management.endpoints.web.discovery.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Whether the discovery page is enabled.",
+      "sourceType": "flint.boot.actuate.autoconfigure.endpoint.web.WebEndpointProperties$Discovery",
+      "defaultValue": true
+    }
+  ],
+  "hints": []
+}

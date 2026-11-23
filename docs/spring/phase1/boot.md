@@ -145,6 +145,17 @@ Boot's exceptions extend `flint.java.lang`'s `RuntimeException`, `IllegalArgumen
 | third-party-apis | `flint.slf4j` `Logger`/`LoggerFactory` and a binding point for Boot's console appender; `flint.jackson.databind.ObjectMapper` (`JsonMapper` in Jackson 3) for `JacksonAutoConfiguration`; `flint.jakarta.validation.Validator` | to coordinate |
 | data-access | `flint.jdbc.datasource` (`DataSource`), `JdbcTemplate`, `NamedParameterJdbcTemplate`, `JdbcClient`, `DataSourceTransactionManager` for the JDBC, transaction and SQL-init auto-configurations | to coordinate |
 
+## The actuator
+
+The actuator is three Boot packages and a starter: boot-actuate (`flint.boot.actuate`: endpoint ids, API versions, links, `management.endpoints.web.*` and the exposure filter), boot-health (`flint.boot.health`: statuses, indicators, the registry, aggregation, groups, the probes, `HealthEndpoint` and its web extension) and boot-webmvc's `flint.boot.webmvc.actuate` (the endpoints as Spring MVC handlers). `flint.boot.availability` (core) tracks liveness and readiness, which `FlintApplication` publishes as Boot does.
+
+- **No discovery.** Boot discovers `@Endpoint` beans and their `@ReadOperation` methods by reflection, which the rulebook leaves to Flint AOT. Until the generator emits endpoint operations, an endpoint's web side is an `ExposableWebEndpoint` bean (health's is `HealthWebEndpoint`). `WebMvcEndpointHandlerMapping` turns each exposed operation, and the links resource, into Flint AOT request-mapping rows.
+- **Framing follows Spring:** the links resource is a `@ResponseBody` return (`Content-Length`), the operations `ResponseEntity`s (chunked).
+- **JSON.** flint.jackson does not yet unwrap (`@JsonUnwrapped`), write map values as their runtime class, or keep a renamed property whose name an ignored one also has. The health descriptors therefore declare `status`, `description`, `components` and `details` through their own getters (each class's, since descriptors list a class's own members). Reported to third-party-apis.
+- **Groups.** The primary group and the probe groups (`management.endpoint.health.probes.enabled`, on by default) are configured; `management.endpoint.health.group.*`, additional paths, `WHEN_AUTHORIZED` (no security context yet) and the slow-indicator log follow.
+
+The legacy `boot/actuator` (DUB `boot-actuator`) keeps its name until the cutover renames it `legacy-boot-actuator`; the new package is `boot-actuate` until then (asked of m7-flint-cli for the cutover's rename map).
+
 ## Configuration properties: one spec, three outputs
 
 `boot/tools/configuration_properties.py` holds the specification of every Phase 1 `@ConfigurationProperties` class: Boot's field names, types, defaults and Javadoc. It renders three things from it:
@@ -185,7 +196,8 @@ spring-petclinic-rest (item 10, data-access) needs, from Boot, beyond what gs-re
 | `@ConditionalOnProperty("petclinic.security.enable")` | Flint AOT's startup conditions | done |
 | Bean Validation of request bodies | `ValidationAutoConfiguration` (boot-validation) | `defaultValidator` done; Spring MVC's use of it waits on web-mvc, method validation on `MethodValidationPostProcessor` |
 | `extends SpringBootServletInitializer` | WAR deployment | not ported (no servlet container deployment in Flint); the port drops the superclass, a noted deviation |
-| Spring Security headers, `@PreAuthorize`, the actuator's links and health groups | spring-security and spring-boot-actuator ports | outside Boot's Phase 1 modules; to be assigned |
+| The actuator's links, health and health groups | boot-actuate (spring-boot-actuator and its auto-configuration), boot-health (spring-boot-health), boot-webmvc's endpoint mapping, `flint-boot-starter-actuator` | done: `/actuator` links, `/actuator/health` with the `liveness` and `readiness` probe groups, Boot's media types, framing and default exposure (health); see "The actuator" below |
+| Spring Security headers, `@PreAuthorize` | `SecurityAutoConfiguration` over framework-core's security port | waits on framework-core's `security/` (asked) |
 
 ## Budgets
 

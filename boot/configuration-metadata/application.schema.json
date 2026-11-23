@@ -1350,6 +1350,154 @@
         }
       }
     },
+    "management": {
+      "type": "object",
+      "properties": {
+        "endpoints": {
+          "type": "object",
+          "properties": {
+            "web": {
+              "type": "object",
+              "properties": {
+                "exposure": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "include": {
+                      "oneOf": [
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        {
+                          "type": "string"
+                        }
+                      ],
+                      "description": "Endpoint IDs that should be included or \"*\" for all."
+                    },
+                    "exclude": {
+                      "oneOf": [
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        {
+                          "type": "string"
+                        }
+                      ],
+                      "description": "Endpoint IDs that should be excluded or \"*\" for all."
+                    }
+                  }
+                },
+                "base-path": {
+                  "type": "string",
+                  "description": "Base path for Web endpoints. Relative to the servlet context path (server.servlet.context-path) or WebFlux base path (spring.webflux.base-path) when the management server is sharing the main server port. Relative to the management server base path (management.server.base-path) when a separate management server port (management.server.port) is configured.",
+                  "default": "/actuator"
+                },
+                "path-mapping": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "description": "Mapping between endpoint IDs and the path that should expose them."
+                },
+                "discovery": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean",
+                      "description": "Whether the discovery page is enabled.",
+                      "default": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "endpoint": {
+          "type": "object",
+          "properties": {
+            "health": {
+              "type": "object",
+              "properties": {
+                "show-components": {
+                  "type": "string",
+                  "enum": [
+                    "never",
+                    "when-authorized",
+                    "always",
+                    "NEVER",
+                    "WHEN_AUTHORIZED",
+                    "ALWAYS"
+                  ],
+                  "description": "When to show components. If not specified the 'show-details' setting will be used."
+                },
+                "show-details": {
+                  "type": "string",
+                  "enum": [
+                    "never",
+                    "when-authorized",
+                    "always",
+                    "NEVER",
+                    "WHEN_AUTHORIZED",
+                    "ALWAYS"
+                  ],
+                  "description": "When to show full health details.",
+                  "default": "never"
+                },
+                "roles": {
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ],
+                  "description": "Roles used to determine whether a user is authorized to be shown details. When empty, all authenticated users are authorized."
+                },
+                "status": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "order": {
+                      "oneOf": [
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        {
+                          "type": "string"
+                        }
+                      ],
+                      "description": "List of health statuses in order of severity."
+                    },
+                    "http-mapping": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "integer"
+                      },
+                      "description": "Mapping of health statuses to HTTP status codes. By default, registered health statuses map to sensible defaults (for example, UP maps to 200)."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "server": {
       "type": "object",
       "properties": {

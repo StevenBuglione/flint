@@ -20,6 +20,8 @@ import flint.context.support : GenericApplicationContext;
 import flint.context.annotation : Bean;
 import flint.engine.aot.name : typeNameOf;
 import flint.jackson.databind : JsonMapper;
+import flint.boot.webmvc.actuate.endpoint.web : WebMvcEndpointHandlerMapping;
+import flint.validation : Validator;
 import flint.web.servlet : DispatcherServlet, HandlerExceptionResolver, ViewResolver;
 import flint.web.servlet.config.annotation : WebMvcConfigurationSupport, WebMvcConfigurer;
 import core.time : Duration;
@@ -498,8 +500,10 @@ final class WebMvcAutoConfiguration
     @Bean @ConditionalOnMissingBean([
         ClassRef("flint.web.servlet.config.annotation.WebMvcConfigurationSupport")
     ])
-    WebMvcConfigurationSupport webMvcConfigurationSupport(ApplicationContext context, WebMvcConfigurer[] configurers,
-            HandlerExceptionResolver[] exceptionResolvers, ViewResolver[] viewResolvers, JsonMapper[] jsonMappers)
+    WebMvcConfigurationSupport webMvcConfigurationSupport(ApplicationContext context,
+            WebMvcConfigurer[] configurers, HandlerExceptionResolver[] exceptionResolvers,
+            ViewResolver[] viewResolvers, JsonMapper[] jsonMappers, Validator[] validators,
+            WebMvcEndpointHandlerMapping[] endpointMappings)
     {
         import flint.java.lang : IllegalStateException;
 
@@ -510,6 +514,8 @@ final class WebMvcAutoConfiguration
         auto handlers = generic.getAotExceptionHandlers();
         auto descriptors = generic.getDescriptorTable();
         addErrorController(generic, mappings, handlers);
+        foreach (endpointMapping; endpointMappings)
+            addEndpoints(generic, endpointMapping, mappings);
         auto support = new WebMvcConfigurationSupport(mappings, handlers, aotBeanFactory(generic),
                 configurers, descriptors);
         auto mapper = jsonMappers.length == 1 ? jsonMappers[0] : JsonMapper.builder().descriptors(descriptors).build();
@@ -518,6 +524,9 @@ final class WebMvcAutoConfiguration
             support.addFirstExceptionResolvers(exceptionResolvers);
         if (viewResolvers.length)
             support.addViewResolvers(viewResolvers);
+        // Boot's mvcValidator: the application's Validator (the auto-configured LocalValidatorFactoryBean).
+        if (validators.length)
+            support.setValidator(validators[0]);
         return support;
     }
 
@@ -550,6 +559,23 @@ final class WebMvcAutoConfiguration
         foreach (descriptor; handlerDescriptorsOf!BasicErrorController())
             descriptors.add(descriptor);
         descriptors.add(descriptorOf!(LinkedHashMap!(string, Any))());
+    }
+
+    // The actuator's endpoint handlers are singletons the rows name, with the descriptors their bodies need.
+    private static void addEndpoints(GenericApplicationContext context, WebMvcEndpointHandlerMapping endpointMapping,
+            ref imported!"flint.engine.aot.mapping".HandlerMapping[] mappings)
+    {
+        import flint.boot.actuate.endpoint.web : Link;
+        import flint.engine.aot.descriptor : descriptorOf;
+        import flint.java.util : LinkedHashMap;
+
+        endpointMapping.contribute((name, handler) {
+            context.getBeanFactory().registerSingleton(name, handler);
+        }, mappings);
+        auto descriptors = context.getDescriptorTable();
+        descriptors.add(descriptorOf!Link());
+        descriptors.add(descriptorOf!(LinkedHashMap!(string, Link))());
+        descriptors.add(descriptorOf!(LinkedHashMap!(string, LinkedHashMap!(string, Link)))());
     }
 
     private static imported!"flint.engine.aot.bean".BeanFactory aotBeanFactory(GenericApplicationContext context)

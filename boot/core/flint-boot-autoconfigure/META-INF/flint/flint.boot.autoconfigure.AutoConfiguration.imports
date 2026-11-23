@@ -1,1 +1,2 @@
 flint.boot.autoconfigure.context.MessageSourceAutoConfiguration
+flint.boot.autoconfigure.availability.ApplicationAvailabilityAutoConfiguration

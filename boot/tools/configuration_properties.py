@@ -358,6 +358,29 @@ messages = Cls('MessageSourceProperties', 'Settings of the auto-configured `Mess
     F('useCodeAsDefaultMessage', 'bool', 'false', 'Whether to use the message code as the default message instead of throwing a "NoSuchMessageException". Recommended during development only.'),
 ], prefix='flint.messages')
 
+webendpoint = Cls('WebEndpointProperties', 'Settings of the actuator\'s web endpoints.', [
+    F('exposure', 'Exposure', 'new Exposure', 'Which endpoints are exposed (`exposure.*`).', ro=True),
+    F('basePath', 'string', '"/actuator"', 'Base path for Web endpoints. Relative to the servlet context path (server.servlet.context-path) or WebFlux base path (spring.webflux.base-path) when the management server is sharing the main server port. Relative to the management server base path (management.server.base-path) when a separate management server port (management.server.port) is configured.'),
+    F('pathMapping', 'Map!(string, string)', 'new LinkedHashMap!(string, string)', 'Mapping between endpoint IDs and the path that should expose them.', ro=True),
+    F('discovery', 'Discovery', 'new Discovery', 'Discovery page (`discovery.*`).', ro=True),
+], nested=[Cls('Exposure', 'Endpoint exposure over the web.', [
+    F('include', 'string[]', None, 'Endpoint IDs that should be included or "*" for all.'),
+    F('exclude', 'string[]', None, 'Endpoint IDs that should be excluded or "*" for all.'),
+]), Cls('Discovery', 'The discovery page.', [
+    F('enabled', 'bool', 'true', 'Whether the discovery page is enabled.'),
+])], prefix='management.endpoints.web')
+
+show = Enum('Show', 'When to show components or details.', [('NEVER', 'Never show details in the health endpoint.'), ('WHEN_AUTHORIZED', 'Show details in the health endpoint to authorized users.'), ('ALWAYS', 'Always show details in the health endpoint.')])
+healthendpoint = Cls('HealthEndpointProperties', 'Settings of the health endpoint.', [
+    F('showComponents', 'Optional!Show', None, 'When to show components. If not specified the \'show-details\' setting will be used.'),
+    F('showDetails', 'Show', 'Show.NEVER', 'When to show full health details.'),
+    F('roles', 'string[]', None, 'Roles used to determine whether a user is authorized to be shown details. When empty, all authenticated users are authorized.'),
+    F('status', 'Status', 'new Status', 'Health status settings (`status.*`).', ro=True),
+], nested=[Cls('Status', 'Health status settings.', [
+    F('order', 'string[]', None, 'List of health statuses in order of severity.'),
+    F('httpMapping', 'Map!(string, int)', 'new LinkedHashMap!(string, int)', 'Mapping of health statuses to HTTP status codes. By default, registered health statuses map to sensible defaults (for example, UP maps to 200).', ro=True),
+])], enums=[show], prefix='management.endpoint.health')
+
 UNITS = [
     Unit(f'{WEB_SERVER}/source/flint/boot/web/server/package.d',
          header('module/spring-boot-web-server/src/main/java/org/springframework/boot/web/server/Shutdown.java\n// with Compression.java and Http2.java from the same directory', '`DataSize minResponseSize` waits on spring-core\'s `DataSize`'),
@@ -367,6 +390,16 @@ UNITS = [
                 '`InetAddress address` is the address text; the deprecated `forward-headers-strategy`, `max-http-request-header-size` (`DataSize`), `ssl`, `mime-mappings`, `reactive.*`, `request.*` and the servlet `jsp`, `session` and `encoding` groups follow with their modules'),
          'flint.boot.web.server.autoconfigure', '`org.springframework.boot.web.server.autoconfigure`: the web server properties.',
          [CP, 'import flint.boot.web.server : Compression, Http2, Shutdown;', MAP, OPT], [server], WEB_SERVER),
+    Unit('boot/module/flint-boot-actuator/source/flint/boot/actuate/autoconfigure/endpoint/web.d',
+         header('module/spring-boot-actuator-autoconfigure/src/main/java/org/springframework/boot/actuate/autoconfigure/endpoint/web/WebEndpointProperties.java\n// with ../expose/IncludeExcludeEndpointFilter.java',
+                '`Map<EndpointId, String>` is keyed by the id text; the endpoint filter matches ids as Boot does, `*` for all'),
+         'flint.boot.actuate.autoconfigure.endpoint.web', '`org.springframework.boot.actuate.autoconfigure.endpoint.web`: the web endpoint properties and exposure filter.',
+         [CP, MAP], [webendpoint], 'boot/module/flint-boot-actuator'),
+    Unit('boot/module/flint-boot-health/source/flint/boot/health/autoconfigure.d',
+         header('module/spring-boot-health/src/main/java/org/springframework/boot/health/autoconfigure/actuate/endpoint/HealthEndpointProperties.java\n// with HealthProperties.java, HealthEndpointAutoConfiguration.java, HealthEndpointConfiguration.java,\n// AutoConfiguredHealthEndpointGroup(s).java, AvailabilityProbesAutoConfiguration.java and\n// AvailabilityProbesHealthEndpointGroups.java from the same directory, and\n// ../../contributor/PingHealthContributorAutoConfiguration.java',
+                '`group.*`, `logging.*` and the reactive registry follow with health groups configuration and WebFlux'),
+         'flint.boot.health.autoconfigure', '`org.springframework.boot.health.autoconfigure`: the health endpoint auto-configuration.',
+         [CP, OPT, MAP], [healthendpoint], 'boot/module/flint-boot-health'),
     Unit('boot/core/flint-boot-autoconfigure/source/flint/boot/autoconfigure/context.d',
          header('core/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/context/MessageSourceProperties.java\n// with MessageSourceAutoConfiguration.java and ResourceBasedMessageSourceConfigurer.java from the same directory',
                 '`Charset encoding` is a charset name; `List<Resource> commonMessages` are resource locations'),
@@ -483,13 +516,15 @@ def value_schema(dtype, local, classes):
         return {'oneOf': [{'type': 'array', 'items': {'type': 'string'}}, {'type': 'string'}]}, 'java.util.List<java.lang.String>'
     if dtype == 'Map!(string, string)':
         return {'type': 'object', 'additionalProperties': {'type': 'string'}}, 'java.util.Map<java.lang.String,java.lang.String>'
+    if dtype == 'Map!(string, int)':
+        return {'type': 'object', 'additionalProperties': {'type': 'integer'}}, 'java.util.Map<java.lang.String,java.lang.Integer>'
     match = re.match(r'Map!\((.+), (.+)\)$', dtype)
     if match:
         keys = enum_members(match.group(1), local)
         value = {'type': 'boolean'} if match.group(2) == 'bool' else enum_schema(enum_members(match.group(2), local))
         return {'type': 'object', 'propertyNames': {'enum': [kebab_enum(k) for k in keys] + keys},
                 'additionalProperties': value}, f'java.util.Map<{match.group(1)},{match.group(2)}>'
-    inner = dtype[len('Optional!('):-1] if dtype.startswith('Optional!(') else dtype
+    inner = dtype[len('Optional!('):-1] if dtype.startswith('Optional!(') else dtype[len('Optional!'):] if dtype.startswith('Optional!') else dtype
     if inner in local or inner in ENUM_SOURCES:
         return enum_schema(enum_members(inner, local)), inner
     if inner in classes:

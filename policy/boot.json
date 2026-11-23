@@ -116,6 +116,7 @@
         "boot-core",
         "boot-autoconfigure",
         "boot-web-server",
+        "boot-actuate",
         "beans",
         "context",
         "core",
@@ -124,6 +125,34 @@
         "java",
         "web",
         "webmvc",
+        "engine-aot"
+      ],
+      "repo": "boot"
+    },
+    "boot-actuate": {
+      "directory": "boot/module/flint-boot-actuator",
+      "module": "flint.boot.actuate",
+      "layer": "module",
+      "dependencies": [
+        "boot-core",
+        "boot-autoconfigure",
+        "context",
+        "java",
+        "engine-aot"
+      ],
+      "repo": "boot"
+    },
+    "boot-health": {
+      "directory": "boot/module/flint-boot-health",
+      "module": "flint.boot.health",
+      "layer": "module",
+      "dependencies": [
+        "boot-core",
+        "boot-autoconfigure",
+        "boot-actuate",
+        "context",
+        "jackson-annotations",
+        "java",
         "engine-aot"
       ],
       "repo": "boot"
@@ -316,6 +345,18 @@
       ],
       "section": "web",
       "summary": "Web applications with Flint MVC on Flint's embedded server (spring-boot-starter-web)",
+      "repo": "boot"
+    },
+    "boot-starter-actuator": {
+      "directory": "boot/starter/flint-boot-starter-actuator",
+      "layer": "starter",
+      "dependencies": [
+        "boot-starter",
+        "boot-actuate",
+        "boot-health"
+      ],
+      "section": "actuator",
+      "summary": "Production-ready features: the actuator's endpoints and health (spring-boot-starter-actuator)",
       "repo": "boot"
     },
     "boot-starter-jdbc": {
