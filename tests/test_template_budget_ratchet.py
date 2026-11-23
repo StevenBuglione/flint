@@ -94,6 +94,31 @@ class TemplateBudgetRatchet(unittest.TestCase):
             self.assertEqual(len(problems), 1)
             self.assertIn('shallow', problems[0])
 
+    def test_a_real_checkout_is_always_checked(self):
+        policy = {'template_budget_ratchet': {'after': self.anchor}}
+        self.assertIsNone(ratchet.not_applicable(self.repo.root, policy))
+        self.repo.write({'arena': 201}, {'core': 8900})
+        self.assertEqual(len(ratchet.check(self.repo.root, policy)), 1)
+
+    def test_outside_a_git_checkout_the_rule_says_it_is_not_applicable(self):
+        policy = {'template_budget_ratchet': {'after': self.anchor}}
+        with tempfile.TemporaryDirectory() as directory:
+            # A copied workspace: the policy files without the history (flint check's parity tests).
+            copy = Repository.__new__(Repository)
+            copy.root = Path(directory)
+            (copy.root / 'policy').mkdir()
+            copy.write({'arena': 10 ** 6}, {'core': 10 ** 6})
+            note = ratchet.not_applicable(copy.root, policy)
+            self.assertIn('not applicable: no git history', note)
+            self.assertIn(self.anchor[:12], note)
+            self.assertEqual(ratchet.check(copy.root, policy), [])
+        # A tree inside another checkout is not that checkout: its history is not the tree's.
+        nested = self.repo.root / 'workspace'
+        (nested / 'policy').mkdir(parents=True)
+        self.assertIn('not applicable', ratchet.not_applicable(nested, policy))
+        # Without an anchor there is nothing to report.
+        self.assertIsNone(ratchet.not_applicable(nested, {}))
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -302,6 +302,9 @@ def structural(selected):
     platform_outputs()
     module_budgets.load(B,P,ROOT)
     # Owner decision 3: after the reset, template budgets only go down (tools/template_budget_ratchet.py).
+    # Outside a git checkout there is no history: say so on stderr (stdout is the parity-checked report).
+    skipped=template_budget_ratchet.not_applicable(ROOT,B)
+    if skipped:print(skipped,file=sys.stderr)
     ratchet=template_budget_ratchet.check(ROOT,B);require(not ratchet,'; '.join(ratchet))
     framework=framework_layers()
     layer_registration()

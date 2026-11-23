@@ -13,6 +13,10 @@ removed later is ignored. Lowering a budget and then raising it back counts as a
 
 The walk needs the history since the anchor: a shallow checkout fails rather than passing unchecked. A checkout whose
 HEAD does not descend from the anchor (a base commit older than the reset) is not subject to the rule.
+
+A tree that is not a git checkout of its own (a copied workspace, such as flint check's parity tests use) has no
+history to walk. `not_applicable` says so, and the structural gate prints that on stderr rather than passing
+silently. Every git checkout, CI's included, is checked.
 """
 from __future__ import annotations
 
@@ -71,11 +75,26 @@ def working_tree(root):
                     for path in FILES])
 
 
+def not_applicable(root, policy):
+    """Why the rule cannot be checked in `root`, or None when it can (or is not configured): `root` is not the top of
+    a git checkout, so there is no history to walk."""
+    anchor = policy.get('template_budget_ratchet', {}).get('after')
+    if not anchor:
+        return None
+    try:
+        top = git(root, 'rev-parse', '--show-toplevel', check=False)
+    except OSError:
+        return f'template budget ratchet not applicable: no git history (git is not installed); anchor {anchor[:12]}'
+    if top.returncode or Path(top.stdout.strip()).resolve() != Path(root).resolve():
+        return f'template budget ratchet not applicable: no git history ({root} is not a git checkout); anchor {anchor[:12]}'
+    return None
+
+
 def check(root, policy):
     """Messages for every template budget raised since the anchor in `policy` (policy/budgets.json), or [] when the
     rule is not configured or does not apply to this checkout."""
     anchor = policy.get('template_budget_ratchet', {}).get('after')
-    if not anchor:
+    if not anchor or not_applicable(root, policy):
         return []
     root = Path(root)
     if git(root, 'rev-parse', '--is-shallow-repository').stdout.strip() == 'true':
