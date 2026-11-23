@@ -80,14 +80,25 @@ LEGACY_DIRECTORIES = ('boot/boot', 'boot/autoconfigure-', 'boot/actuator', 'star
 UNTOUCHED = ('docs/adr/', 'docs/spring/', 'handoff/', 'CHANGELOG.md')
 
 
+# Once the pre-port flint:boot is flint:legacy-boot, Spring Boot's core takes Spring's artifact name, spring-boot ->
+# flint:boot (boot's request; registered until then as flint:boot-core).
+SPRING = {'boot-core': 'boot'}
+
+
 def legacy_names(flint):
-    """LEGACY, for the packages policy/boot.json still has in their pre-port directories."""
+    """The cutover's renames: LEGACY for the packages policy/boot.json still has in their pre-port directories, and
+    SPRING for the Spring Boot packages that take the names those free. One map, applied in one pass, so boot-core
+    -> boot and boot -> legacy-boot never chain."""
     policy = json.loads((flint / 'policy' / 'boot.json').read_text())
     found = {}
     for group in ('libraries', 'starters'):
         for name, meta in policy.get(group, {}).items():
             if name in LEGACY and meta['directory'].startswith(LEGACY_DIRECTORIES):
                 found[name] = LEGACY[name]
+    for group in ('libraries', 'starters'):
+        for name in policy.get(group, {}):
+            if name in SPRING and SPRING[name] in found:
+                found[name] = SPRING[name]
     return found
 
 
