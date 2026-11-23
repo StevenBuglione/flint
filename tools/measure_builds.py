@@ -569,6 +569,10 @@ def main(argv=None):
                              'edited DMD and LDC builds, compiler peak RSS, template instances and linked bytes')
     parser.add_argument('--framework', action='append',
                         help='with --framework-sizes or --framework-builds, measure only this module')
+    parser.add_argument('--package-templates', action='store_true',
+                        help='only the template instances (own library plus probe) of the policy/packages.json '
+                             'packages, the input of their template budgets')
+    parser.add_argument('--package', action='append', help='with --package-templates, measure only this package')
     parser.add_argument('--app', action='append', choices=['bench-cli', 'bench-rest'],
                         help='with --apps-only or --app-sizes, measure only this app (the gate needs both)')
     parser.add_argument('--spring', action='store_true',
@@ -592,10 +596,13 @@ def main(argv=None):
     workspace_commits = pinned_workspace(args.workspace)
     if args.app and not (args.apps_only or args.app_sizes):
         raise RuntimeError('--app applies only to --apps-only and --app-sizes')
-    if sum((args.apps_only, args.app_sizes, args.framework_sizes, args.framework_builds)) > 1:
-        raise RuntimeError('--apps-only, --app-sizes, --framework-sizes and --framework-builds are separate measurements')
+    if sum((args.apps_only, args.app_sizes, args.framework_sizes, args.framework_builds, args.package_templates)) > 1:
+        raise RuntimeError('--apps-only, --app-sizes, --framework-sizes, --framework-builds and --package-templates '
+                           'are separate measurements')
     if args.framework and not (args.framework_sizes or args.framework_builds):
         raise RuntimeError('--framework applies only to --framework-sizes and --framework-builds')
+    if args.package and not args.package_templates:
+        raise RuntimeError('--package applies only to --package-templates')
     host = (sys.platform, os.uname().machine if hasattr(os, 'uname') else '')
     if not args.apps_only and host not in (('linux', 'x86_64'), ('darwin', 'arm64')):
         raise RuntimeError('measurement runners are Linux x86-64 and macOS arm64 (ADR-025); '
@@ -624,7 +631,7 @@ def main(argv=None):
     # ADR-030 section 5: the Spring-layer modules of policy/framework.json, each with its own budget and probe.
     import framework_budgets
     try:
-        framework_fixtures = ({} if args.apps_only or args.app_sizes else
+        framework_fixtures = ({} if args.apps_only or args.app_sizes or args.package_templates else
                               framework_budgets.load(ROOT, require_budget=not args.framework_sizes))
         if (args.framework_sizes or args.framework_builds) and args.framework:
             unknown = sorted(set(args.framework) - set(framework_fixtures))
@@ -657,7 +664,7 @@ def main(argv=None):
         raise RuntimeError('Build measurement requires implemented benchmark fixtures:\n' + '\n'.join(missing))
     tools = {}
     required = ['dmd', 'dub', 'go'] if args.apps_only else ['dmd', 'ldc', 'dub', 'go', 'strip', 'readelf']
-    if args.app_sizes or args.framework_sizes:
+    if args.app_sizes or args.framework_sizes or args.package_templates:
         # The size-only modes build no Go reference.
         required.remove('go')
     for name in required + (['lld'] if args.lld else []):
@@ -904,6 +911,19 @@ def main(argv=None):
         args.output.write_text(json.dumps(result, indent=2) + '\n')
         for name, row in result['framework'].items():
             print(name, 'linked', row['incremental_linked_bytes'], 'templates', row['template_instances'])
+        return 0
+    if args.package_templates:
+        # The template budget input of each package alone (owner decision 3 resets the budgets from it).
+        result['mode'] = 'package-templates'
+        unknown = sorted(set(args.package or ()) - set(manifest['packages']))
+        if unknown:
+            raise SystemExit('not a measured package: ' + ', '.join(unknown))
+        for name in args.package or list(manifest['packages']):
+            print('Measuring package templates', name, flush=True)
+            result['packages'][name] = templates(name, manifest['packages'][name], {})
+        args.output.write_text(json.dumps(result, indent=2) + '\n')
+        for name, row in result['packages'].items():
+            print(name, 'templates', row['template_instances'])
         return 0
     for name, fixture in manifest['packages'].items():
         print('Measuring package', name, flush=True)

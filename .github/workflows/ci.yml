@@ -60,6 +60,8 @@ jobs:
         with:
           ref: ${{ matrix.role == 'base' && needs.refs.outputs.base || needs.refs.outputs.candidate }}
           persist-credentials: false
+          # The structural gate walks the policy history since the template budget reset (owner decision 3).
+          fetch-depth: 0
       - name: Native build prerequisites
         run: |
           sudo apt-get update
@@ -215,6 +217,8 @@ jobs:
           ref: ${{ needs.refs.outputs.candidate }}
           path: candidate
           persist-credentials: false
+          # gates.py --gate all runs the structural gate, which walks the template budget history (owner decision 3).
+          fetch-depth: 0
       - name: Check out the exact base separately
         if: needs.refs.outputs.mode == 'compare'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1

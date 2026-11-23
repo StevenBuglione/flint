@@ -7,6 +7,7 @@ from perf_stats import finite_samples,median_ratio_interval
 from workspace import Workspace,edge_violations,package_repos
 import module_budgets
 import framework_budgets
+import template_budget_ratchet
 ROOT=Path(__file__).resolve().parents[1]
 P=json.loads((ROOT/'policy/packages.json').read_text(encoding='utf-8'))['packages']
 B=json.loads((ROOT/'policy/budgets.json').read_text(encoding='utf-8'))
@@ -300,6 +301,8 @@ def structural(selected):
     boot_layers()
     platform_outputs()
     module_budgets.load(B,P,ROOT)
+    # Owner decision 3: after the reset, template budgets only go down (tools/template_budget_ratchet.py).
+    ratchet=template_budget_ratchet.check(ROOT,B);require(not ratchet,'; '.join(ratchet))
     framework=framework_layers()
     layer_registration()
     mixin_packages=set()
