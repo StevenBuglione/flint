@@ -489,3 +489,10 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     Medians: on 319k req/s and p99 0.198 ms; off 229k and 0.390 ms; Go 247k and 0.272 ms. Peak RSS: 19.9 MB both, against Go's 13.7 MB.
   - **Decision rule (fast-path.md section 9):** on beats off on throughput, CPU per request and p99 beyond the intervals, no metric is worse, and both arms pass 18/18. So the mechanism lands opt-in, then default on. Against Go, the on arm wins throughput and p99 beyond their intervals. p50 is at parity and CPU per request is ahead at the median, though its interval reaches 1.06. Peak RSS (1.45) remains the gap.
   - Evidence: `benchmarks/spring/evidence/fast-path-ab/`.
+- 2026-11-23, owner (via the coordinator): **the AOT fast path is the default way Flint runs, for everything.** This follows the certified fast-path-ab (6b7125e2): on against off, throughput 1.394, p99 0.507, CPU 0.659; on against Go, throughput 1.293 and p99 0.729.
+  - **Default on.** Every endpoint that qualifies gets a generated direct handler by default, with no flag. The generic Spring path is the fallback for whatever doesn't qualify.
+  - **The rules don't change:** responses stay byte-identical to Spring's, the fall-back rules in fast-path.md §3–4 apply, and it stays pay-for-use. An opt-out setting stays available for diagnosis.
+  - **"For everything" is the direction for every module.**
+    - Phase 1 extends the qualifying shapes so petclinic-rest's endpoints use it: path variables, ResponseEntity, @CrossOrigin, static security headers.
+    - Later modules (Security, Data repositories, JPA, Thymeleaf and others) design a build-time, generated direct path from the start, with the Spring-shaped objects materialised only when asked for. This becomes a performance-playbook rule.
+  - Certified measurements use the default, so the fast path is part of every Flint/Go result from now on.
