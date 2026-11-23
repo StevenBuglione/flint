@@ -31,6 +31,9 @@ import flint_tool.api.upstreams : Upstream;
 /// The marker of a ported file.
 enum portedMarker = "Ported from ";
 
+/// The other wording of the marker, used for runtime (non-API) ports such as druntime's collector.
+enum portMarker = "Port of ";
+
 /// The modification notice.
 enum modifiedNotice = "Modified by the Flint authors";
 
@@ -108,8 +111,15 @@ string headerOf(string source, out size_t markerLine)
     return source[0 .. length];
 }
 
-/// Whether a comment line starts with the marker: `// Ported from`, ` * Ported from`, `/++ Ported from`.
+/// Whether a comment line starts with the marker: `// Ported from`, ` * Ported from`, `/++ Ported from`, or the
+/// same with `Port of`.
 bool opensWithMarker(string line)
+{
+    return markerLength(line) != 0;
+}
+
+/// The length of the marker that opens a comment line (after its comment characters), or zero.
+private size_t markerLength(string line)
 {
     import std.algorithm.searching : startsWith;
     import std.string : stripLeft;
@@ -118,7 +128,10 @@ bool opensWithMarker(string line)
     // Inside a block comment the marker may stand without any comment character.
     while (index < line.length && (line[index] == '/' || line[index] == '*' || line[index] == '+'))
         index++;
-    return line[index .. $].stripLeft.startsWith(portedMarker);
+    const rest = line[index .. $].stripLeft;
+    if (rest.startsWith(portedMarker))
+        return portedMarker.length;
+    return rest.startsWith(portMarker) ? portMarker.length : 0;
 }
 
 /// The licence line a ported file must carry for `entry`, or empty when its source may not be ported.
@@ -133,6 +146,8 @@ string licenceLine(const ref LicenceEntry entry)
             return "Licensed under the MIT License";
         if (entry.licence.length >= 4 && entry.licence[0 .. 4] == "BSD-")
             return "Licensed under the BSD";
+        if (entry.licence == "BSL-1.0")
+            return "Distributed under the Boost Software License, Version 1.0";
         return null;
     case "port-source-bsd-option":
         return "Licensed under the BSD 3-Clause License";
@@ -171,8 +186,12 @@ string markerText(string header)
 
     foreach (line; header.lineSplitter)
     {
-        if (opensWithMarker(line.stripLeft))
-            return line[line.indexOf(portedMarker) + portedMarker.length .. $].strip;
+        const stripped = line.stripLeft;
+        const length = markerLength(stripped);
+        if (length == 0)
+            continue;
+        const marker = stripped.indexOf(portedMarker) >= 0 ? portedMarker : portMarker;
+        return stripped[stripped.indexOf(marker) + length .. $].strip;
     }
     return null;
 }
@@ -330,6 +349,10 @@ bool statesLicence(string header, const ref LicenceEntry entry)
         break;
     case "MIT":
         evidence ~= "Permission is hereby granted, free of charge";
+        break;
+    case "BSL-1.0":
+        // druntime's own form: "License: $(HTTP www.boost.org/LICENSE_1_0.txt, Boost License 1.0)".
+        evidence ~= ["Boost License 1.0", "Boost Software License"];
         break;
     case "EPL-2.0":
         evidence ~= ["Eclipse Public License", "EPL-2.0"];

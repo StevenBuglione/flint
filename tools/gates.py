@@ -469,7 +469,8 @@ def api_gate(repos,flint,release=False):
     require(flint.is_file(),f'flint api gate: {flint} is missing; bootstrap it with python3 tools/install_toolchains.py --compiler flint')
     home=WORKSPACE.checkout('flint')
     pins=json.loads((home/'api'/'upstreams.json').read_text(encoding='utf-8'))['upstreams']
-    owners={u['repo'] for u in pins if (home/'api'/'upstream'/(u['project']+'-'+u['version']+'.json')).is_file()}
+    # A pin with "api": false (runtime sources such as druntime) only resolves ported-file headers; it is never classified.
+    owners={u['repo'] for u in pins if u.get('api',True) and (home/'api'/'upstream'/(u['project']+'-'+u['version']+'.json')).is_file()}
     report,failures={},[]
     for repo in repos:
         checkout=WORKSPACE.checkout(repo)

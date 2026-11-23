@@ -709,3 +709,26 @@ private string fileUrl(string path)
     else
         return "file://" ~ path;
 }
+
+@("a runtime port resolves an api:false pin, and BSL-1.0 is stated by druntime's own wording")
+unittest
+{
+    import std.array : replicate;
+    import flint_tool.api.headers : LicenceEntry, checkHeader;
+
+    Upstream[] upstreams;
+    string error;
+    expect(parseUpstreams(`{"schema":"flint.api-upstreams/1","upstreams":[{"project":"druntime","version":"v2.114.0",
+        "repo":"flint","api":false,"url":"https://github.com/dlang/dmd/archive/refs/tags/v2.114.0.tar.gz",
+        "sha256":"` ~ "a".replicate(64) ~ `","format":"tar.gz"}]}`, upstreams, error)).toEqual(true);
+    expect(upstreams[0].api).toEqual(false);
+    const druntime = LicenceEntry("druntime", "BSL-1.0", "port-source", "v2.114.0");
+    enum header = "/**\n * Port of druntime v2.114.0 (https://github.com/dlang/dmd, tag v2.114.0), the D runtime:\n"
+        ~ " * druntime/src/core/internal/gc/pooltable.d\n *\n * Copyright: D Language Foundation 2001 - 2021.\n"
+        ~ " * License:   $(HTTP www.boost.org/LICENSE_1_0.txt, Boost License 1.0).\n *\n"
+        ~ " * Modified by the Flint authors.\n */\nmodule flint.arena.sys.gc.pooltable;\n";
+    expect(checkHeader("f.d", header, upstreams, [druntime], "BSL-1.0").length).toEqual(0);
+    enum unlicensed = "/**\n * Port of druntime v2.114.0: x.d\n * Copyright: D Language Foundation.\n"
+        ~ " * Modified by the Flint authors.\n */\nmodule m;\n";
+    expect(checkHeader("f.d", unlicensed, upstreams, [druntime], "").length).toEqual(1);
+}

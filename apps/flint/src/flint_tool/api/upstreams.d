@@ -34,6 +34,9 @@ struct Upstream
 
     /// Test-source archive (api/upstream-tests.json): cached apart, as `<project>-<version>-tests`.
     bool tests;
+    /// Whether its API is ported: false for runtime sources (druntime), pinned only so ported files' headers resolve;
+    /// they are never extracted into a manifest or classified.
+    bool api = true;
 
     /// Directory name in the cache: `<project>-<version>`, or `<project>-<version>-tests` for a test archive.
     string key() const
@@ -62,6 +65,7 @@ bool parseUpstreams(string text, out Upstream[] upstreams, out string error)
             upstream.version_ = item["version"].str;
             upstream.repo = "repo" in item ? item["repo"].str : null;
             upstream.matrix = "matrix" in item ? item["matrix"].str : upstream.project;
+            upstream.api = !("api" in item) || item["api"].boolean;
             upstream.url = item["url"].str;
             upstream.sha256 = item["sha256"].str;
             upstream.format = item["format"].str;

@@ -177,7 +177,7 @@ bool coverageInputs(ref Session session, const ref CoverageCommand command, ref 
         foreach (ref upstream; loadUpstreams(session.home.root, error))
         {
             const path = buildPath(session.home.root, "api", "upstream", upstream.key ~ ".json");
-            if (upstream.repo == command.repo && exists(path))
+            if (upstream.repo == command.repo && upstream.api && exists(path))
                 manifests ~= path;
         }
         if (manifests.length == 0)
