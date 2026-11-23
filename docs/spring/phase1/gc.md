@@ -268,6 +268,28 @@ A collection under `gc:flint` with concurrent marking:
 
 The final pause costs the roots plus the dirty pages, not the whole heap. At gs-rest-service's ~12 MB heap, a few hundred dirty pages are expected, against ~3,000 in total. The risks are a missed write path (only kernel-recorded writes count, so memory written through `vmsplice`, io_uring buffers or another process is excluded) and pagemap read cost. The evidence is the same as for D1: the stress fuzzer with its shadow check (with collections forced mid-mark), druntime's GC tests, ASan, and a measured pause distribution. It is Linux-only; other targets keep the stop-the-world mark. The switch back is `gc:conservative`, or `gc:flint` without the concurrent option.
 
+**Prototype, 259a864d: built, tested, and slower on gs-rest-service.** `gc:flint-concurrent` (or `flint.arena.gc.setConcurrentMarking`) implements steps 1–4. The concurrent part runs on the collecting thread under the GC lock it already holds: other threads keep running and allocating from their D1 caches, and anything that touches the pools waits. The stress test passes under it, and so does a mover thread that shuttles objects between heap arrays during marking; that test fails 3 of 3 runs with the dirty-page rescan disabled. ASan passes. Local diagnosis, gs-rest-service release, 64 connections, 3 interleaved runs per arm, on a loaded box:
+
+| collector | rps | p99 | pause per collection | max pause |
+|---|---|---|---|---|
+| `gc:conservative` (druntime) | 179k | 0.91–1.06 ms | 361–380 µs | 1–3 ms |
+| `gc:flint` (D1) | 173–189k | 1.09–1.25 ms | 583–643 µs | 1–2 ms |
+| `gc:flint-concurrent` (D3) | 137–143k | 2.65–2.75 ms | 1,190–1,300 µs | 4–7 ms |
+
+Why it loses here:
+- The live set is now 440 KB (R-20). So the concurrent part saves little: about 0.7 ms of 1.7 ms of marking per collection.
+- The stopped part still rescans every range whole. That covers the binary's data and the reactor's chunks.
+- At 180k requests/s, most heap pages are written during the concurrent part, so they are rescanned too.
+- `clear_refs` write-protects every page each collection. The first write to each page then faults, which costs throughput.
+- The concurrent part marks on one thread, where druntime's stopped mark is parallel.
+
+D3 pays off for a large live set with little mutation, which is not gs-rest-service after R-20. It stays opt-in and unmeasured by proof-harness. Before any further D3 work:
+- track ranges by soft-dirty too;
+- mark the concurrent part in parallel;
+- measure petclinic-rest, whose live set is larger.
+
+The lead lever for RSS and pauses is the pool A/B, gc-pools-ab. Separately, `gc:flint`'s stopped mark is about 1.7× druntime's. That is a D1 regression to find before the collector is measured again.
+
 ## 4. How p99 and RSS are measured
 
 - **Evidence.** Only proof-harness's queue (`tools/measure_queue.py`) produces evidence. It uses `policy/spring-http-benchmark.json`: 2 server CPUs, 4 load CPUs, 64 connections, a 10 s warm-up, 60 s capacity and fixed-rate phases, 9 trials interleaved with the Go comparator, and a quiet-window check.
