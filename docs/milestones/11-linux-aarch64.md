@@ -31,7 +31,7 @@ The apt prerequisites are the CI list (`.github/workflows/ci.yml`). `libxtst-dev
 
 ## What was built
 
-- **Toolchain.** The forked DMD's AArch64 code generator is not finished on Linux yet (ADR-025 section 3), so Linux arm64 takes the macOS arrangement (ADR-024):
+- **Toolchain.** At first, Linux arm64 took the macOS arrangement of the time (ADR-024), because the forked DMD's AArch64 code generator was not finished. Since `8db06a3`, the fork fills the DMD role on arm64 hosts; see "Not done". The arrangement used for the runs below was:
   - LDC's `ldmd2` fills the DMD role of the dev and test profiles.
   - The Flint DUB is built from source with LDC; its pipeline is off.
   - `install_toolchains.py --compiler dub` and the `flint` bootstrap accept a Linux arm64 glibc host, and `--compiler go` installs the new `go1.27.4.linux-arm64.tar.gz` pin.
@@ -69,11 +69,11 @@ The lane runs these steps:
 | `af56e50` | 1 | 1021 s | peered `flint:http` on `ldc2`: median exchange 803.6 µs against 800 µs | 8 at start, 17 at end |
 | `931ff7e` | 1 | 589 s | peered step: `flint test --verify` stops on FLINT-E0529, undeclared Boot-layer imports in `boot/core` | 3 at start, 8 at end |
 
-Every functional assertion passed in every attempt. The first three each missed a different wall-clock bound, by 1–40%, under host contention (see below). The fourth passed the native providers and all 37 suites at the rebased head with every bound asserted, then stopped on a workspace check unrelated to arm64. That check comes from `89e274b` ("policy/boot.json: register Boot's 17 Phase 1 packages"): its Boot packages import modules that `policy/boot.json` does not declare. It fails the same way for any `flint test --verify` in the workspace, on any platform, so the macOS lane's peered step is blocked too until it is fixed.
+Every functional assertion passed in every attempt. The first three each missed a different wall-clock bound, by 1–40%, under host contention (see below). The fourth passed the native providers and all 37 suites at the rebased head with every bound asserted, then stopped on a workspace check unrelated to arm64. The check came from a transient upstream state: the pre-port Boot packages under `boot/` imported modules that `policy/boot.json` did not declare. `10ae6c3` moved those packages to `legacy/`, and the macOS lane's peered step passes there.
 
 Each failed receipt is kept with its log in the guest under `~/evidence/<commit>-attempt<n>/`. As with the other platforms (ADR-017 decision 4), receipts and logs stay on the runner rather than being committed. A receipt is bound to its commit, so the lane must be re-run after every rebase. Once a run passes, `tools/collect_evidence.py`'s receipt check (`verified_receipt` against the commit) makes Gate 6's entry true.
 
-To record it once the Boot check passes:
+To record it once `flint` bootstraps on Linux arm64 again (see "Not done"):
 
 ```bash
 ~/flint-work/lima/quiet-lane.sh lane   # on pluto
@@ -99,7 +99,7 @@ At rest, Flint on arm64 meets both bounds with room to spare. A saturated host b
 ## Not done
 
 - **linux-aarch64-musl.** Not run natively. The container lane needs Docker in the guest and a second provider build for musl, and `pluto` had under 10 GB of free disk. Its Gate 6 entry rests on the Milestone 6 QEMU receipt until it is re-recorded.
-- **DMD arm64.** The packages run on `ldmd2` until the dmd-arm64 work lands the forked DMD's AArch64 code generator on Linux (ADR-025 section 3). This VM is the native machine for its stage 2 on Linux and for stage 5's measurement.
+- **DMD arm64 on Linux.** Since `8db06a3`, `flint` bootstraps with the forked DMD on arm64 hosts, but the fork does not build on Linux AArch64 yet. `flintserver.d` and `flintlink.d` read `stat_t.st_mtim`, and LDC's druntime gives Linux AArch64 `st_mtime` and `st_mtimensec` instead. This was reported to the dmd-arm64 work; until it is fixed, `install_toolchains.py --compiler dmd` fails here and the lane cannot start. This VM is the native machine for that work's stage 2 on Linux and for stage 5's measurement.
 - **The DUB pipeline with `ldmd2`.** It stays off on Linux arm64 (`host.d`, the `flint` bootstrap). macOS now runs it with a Darwin archiver (`442591f`), and Linux's ELF archives need no new archiver, so turning it on here is a small follow-up to measure.
 - **Build measurement.** `tools/measure_builds.py` was not run on this guest. A run on a shared host would not be a fair baseline.
 
