@@ -401,7 +401,7 @@ immutable CodeInfo[] catalog = [
             "One formatter: dfmt 0.15.2 with the repository's dfmt.ini. `flint check` compares its output byte for "
             ~ "byte.", "flint fmt"),
     CodeInfo("FLINT-E0602", ExitCode.user, "D-Scanner finding",
-            "D-Scanner 0.15.2 with dscanner.ini reports a warning or error.",
+            "D-Scanner 0.16.0-beta.5 with dscanner.ini reports a warning or error.",
             "fix the reported line; the message names the check"),
     CodeInfo("FLINT-E0603", ExitCode.user, "clang-tidy finding",
             "`flint check` runs the pinned clang-tidy over embedded C with the fixed profile in "
@@ -466,8 +466,8 @@ immutable CodeInfo[] catalog = [
             "An installed binary's SHA-256 differs from the one recorded when it was installed.",
             "flint toolchain install"),
     CodeInfo("FLINT-E0807", ExitCode.environment, "quality tool missing",
-            "dfmt and D-Scanner 0.15.2 are installed into .tools/bin by tools/install_quality_tools.py.",
-            "python3 tools/install_quality_tools.py"),
+            "dfmt 0.15.2 and D-Scanner 0.16.0-beta.5, both on Flint's patched libdparse, are installed into .tools/bin "
+            ~ "by tools/install_quality_tools.py.", "python3 tools/install_quality_tools.py"),
     CodeInfo("FLINT-E0808", ExitCode.environment, "native providers not installed",
             "Packages that link C providers need the native install receipt for this target under .native/install. "
             ~ "Pure-D packages build without it.",
