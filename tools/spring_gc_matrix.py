@@ -1,6 +1,10 @@
 """The GC matrix: a Flint port under each druntime GC setting of benchmarks/spring/gc-matrix.json (ADR-030 section 4).
 
     spring_bench.py gc-matrix <app> --output <file> [--setting <name>]... [--smoke] [--binary <stand-in>]
+    spring_bench.py gc-matrix <app> --output <file> --setting conservative --gcopt <name>=<options> --runs <n>
+
+`--gcopt` adds an arm that is not in the matrix, and `--runs` overrides the manifest's trial count; either makes
+the record an `ab` record (a decision-gating A/B), which spring_gate never counts as the Phase 1 matrix.
 
 For each setting the same Flint binary runs with `--DRT-gcopt=<setting> profile:1`:
 1. the black-box suite must still pass (a GC setting may not change behaviour);
@@ -49,6 +53,25 @@ def summary(values):
     return {'median': statistics.median(values), 'min': min(values), 'max': max(values)} if values else None
 
 
+def arms(matrix_settings, chosen, gcopts, runs):
+    """The settings to measure in order, every setting's gcopt options, and whether the record is an `ab` record."""
+    options = dict(matrix_settings)
+    extra = {}
+    for arm in gcopts or []:
+        name, _, value = arm.partition('=')
+        if not name or not value or name in options or name in extra:
+            raise SystemExit(f'--gcopt needs a new <name>=<druntime gcopt options>: {arm}')
+        extra[name] = value
+    if runs is not None and runs < 1:
+        raise SystemExit('--runs must be at least 1')
+    settings = (chosen or ([] if extra else list(matrix_settings))) + list(extra)
+    unknown = set(settings) - set(options) - set(extra)
+    if unknown:
+        raise SystemExit('unknown GC settings: ' + ', '.join(sorted(unknown)))
+    options.update(extra)
+    return settings, options, bool(extra) or runs is not None
+
+
 def main(args):
     matrix = json.loads((ROOT / 'benchmarks' / 'spring' / 'gc-matrix.json').read_text())
     manifest_path = ROOT / 'policy' / 'spring-http-benchmark.json'
@@ -57,11 +80,10 @@ def main(args):
     app = args.app
     if app not in manifest['apps']:
         raise SystemExit(f'{app} has no Spring workload in {manifest_path.relative_to(ROOT)}')
-    settings = args.setting or list(matrix['settings'])
-    unknown = set(settings) - set(matrix['settings'])
-    if unknown:
-        raise SystemExit('unknown GC settings: ' + ', '.join(sorted(unknown)))
+    settings, options, ab = arms(matrix['settings'], args.setting, args.gcopt, args.runs)
     workload = load_bench.validate_spring_manifest(manifest, args.smoke).copy()
+    if args.runs is not None:
+        workload['runs'] = args.runs
     if args.smoke:
         workload.update(runs=1, duration_seconds=2, capacity_seconds=2, warmup_seconds=1,
                         connections=min(workload['connections'], 8))
@@ -82,12 +104,13 @@ def main(args):
     outdir = args.output.parent / (args.output.stem + '-raw')
     outdir.mkdir(exist_ok=True)
     result = {'schema': 'flint.spring-gc-matrix-result/1', 'app': app,
-              'mode': 'stand-in' if stand_in else ('smoke' if args.smoke else 'production'), 'status': 'running',
+              'mode': 'stand-in' if stand_in else ('smoke' if args.smoke else ('ab' if ab else 'production')),
+              'status': 'running',
               'stand_in': str(stand_in) if stand_in else None, 'workload_sha256': load_bench.hashlib.sha256(raw).hexdigest(),
               'effective_workload': workload, 'load_average_at_start': load, 'settings': {}, 'trials': []}
 
     def gcopt(name):
-        return [f"--DRT-gcopt={matrix['settings'][name]} {matrix['profile']}"]
+        return [f"--DRT-gcopt={options[name]} {matrix['profile']}"]
 
     try:
         for name in settings:
@@ -95,7 +118,7 @@ def main(args):
             if not record['success']:
                 if not stand_in:
                     raise ValueError(f'{app} fails its black-box suite under GC setting {name}')
-            result['settings'][name] = {'gcopt': matrix['settings'][name], 'suite': {
+            result['settings'][name] = {'gcopt': options[name], 'suite': {
                 'passed': record['passed'], 'total': record['total']}, 'series': {k: [] for k in load_bench.FIELDS},
                 'gc_profiles': []}
         result['go'] = {'series': {k: [] for k in load_bench.FIELDS}}
