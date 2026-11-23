@@ -810,11 +810,10 @@ def main(argv=None):
                           flush=True)
                 except SystemExit as exc:
                     print(now(), entry['id'], 'stopped:', exc, flush=True)
-                    if args.claim and 'venus is busy' in str(exc):
-                        # The window did not settle: someone is not behind `hold`. Back off rather than keep
-                        # pausing everyone else's work.
-                        time.sleep(args.retry_minutes * 60)
-                        break
+                    # Back off after any stopped run: a window that did not settle (someone is not behind `hold`), or
+                    # an entry that measured nothing. Retrying at once would keep pausing everyone else's work.
+                    time.sleep(args.retry_minutes * 60)
+                    break
             streak = 0
         print(now(), 'gave up after', args.hours, 'hours', flush=True)
         return 1

@@ -1,7 +1,7 @@
 {
   "schema": "flint.measure-queue/1",
   "created": "2026-11-23",
-  "status": "pending",
+  "status": "blocked",
   "builds": {
     "tree": {
       "app": "checkout",
@@ -51,5 +51,6 @@
     ]
   },
   "report_to": "web-http and the coordinator (coordination inboxes); decisions.md",
-  "estimate_minutes": 45
+  "estimate_minutes": 45,
+  "blocked_on": "a re-pin by its requester to a commit at or after 693886e2: at b7c8891dfe8a the checkout's load_bench applies its own 1-minute-load check, which refuses inside a claimed window (proof-harness, 2026-11-23)"
 }
