@@ -19,7 +19,7 @@ and process-tree peak RSS sampled every millisecond), nine trials of:
     (`measure.cached_static`), the secondary edit-build headline;
   - `flint_scratch_seconds`: the same build with every module compiled from source and no platform cache;
   - `phase_medians_ms` per series: the median wall time of each build phase (total, flint, aot, plan, compile,
-    link) from flint's build receipt (phases_ms), beside the coordinator's budget (`phase_budget_ms`);
+    link; -1 means absent) from flint's build receipt (phases_ms, d2a929cd), beside the coordinator's budget (`phase_budget_ms`);
   - `O3` and `Oz` binary sizes after GNU strip (flint's artifacts keep their symbol tables), as for Go.
 - **Java, context only**: `mvn -o package` cold (no target/) and after a one-line edit, and the jar size; with
   --native-context, one Spring Boot native-image build with the pinned GraalVM, for its time and executable size.
@@ -213,7 +213,9 @@ def build_phases(directory, since):
     for path in sorted(receipts, key=lambda p: p.stat().st_mtime, reverse=True):
         phases = json.loads(path.read_text()).get('phases_ms')
         if isinstance(phases, dict):
-            return {key: value for key, value in phases.items() if key in PHASES and isinstance(value, int)}
+            # compile and link are -1 when DUB reported neither (plan then holds the whole DUB process): absent.
+            return {key: value for key, value in phases.items()
+                    if key in PHASES and isinstance(value, int) and value >= 0}
     return None
 
 
