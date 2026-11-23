@@ -1,7 +1,7 @@
 {
   "schema": "flint.measure-queue/1",
   "created": "2026-11-23",
-  "status": "pending",
+  "status": "blocked",
   "builds": {
     "tree": {
       "app": "checkout",
@@ -38,5 +38,6 @@
     ]
   },
   "report_to": "the requester; docs/milestones/13.md",
-  "estimate_minutes": 45
+  "estimate_minutes": 45,
+  "blocked_on": "boot's switch of DefaultErrorAttributes to a java.util.Date written with StdDateFormat (.SSS always), which needs java.util.Date (framework-core, flint:java) and a Date serializer (third-party-apis, jackson-databind). Until then about 1 in 1000 Flint 404 bodies drops '.000' and load_bench's body-size check fails, so each attempt would claim a window for nothing."
 }
