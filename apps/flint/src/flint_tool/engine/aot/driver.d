@@ -104,6 +104,10 @@ private struct State
     string[string] models;
     /// ditto
     string annotations;
+    /// Platform modules found on the import paths, with their interfaces (findModule).
+    SourceModule[string] platform;
+    /// Something worth saving was learnt this run although nothing was extracted (a platform module found).
+    bool dirty;
 }
 
 /// Run Flint AOT for a project.
@@ -129,11 +133,11 @@ AotOutcome runAot(const ref AotRequest request)
     }
     outcome.active = true;
     const autoConfigurations = readAutoConfigurations(request.packageDirectories);
-    sources ~= autoConfigurationModules(autoConfigurations, request.importPaths);
-    outcome.modules = sources.length;
     const cache = buildPath(request.root, cacheDirectory);
     State state = loadState(cache, request.environmentKey);
-    addModules(state.importedModules, request.importPaths, sources);
+    sources ~= autoConfigurationModules(autoConfigurations, request.importPaths, state);
+    outcome.modules = sources.length;
+    addModules(state.importedModules, request.importPaths, sources, state);
     auto keys = extractionKeys(sources, request.environmentKey);
     string[] stale = staleModules(sources, keys, state, cache);
     if (stale.length && !extractInto(request, sources, stale, null, keys, state, outcome))
@@ -160,7 +164,7 @@ private bool produceOutput(const ref AotRequest request, scope const SourceModul
     if (state.outputKey == outputKey && exists(buildPath(request.root, aotDirectory, "flint_aot_registry.d")))
     {
         // Nothing to regenerate, also when the re-extracted models came out the same.
-        if (extracted)
+        if (extracted || state.dirty)
             saveState(cache, state);
         return true;
     }
@@ -265,7 +269,8 @@ string[] readAutoConfigurations(scope const string[] directories)
     return result;
 }
 
-private SourceModule[] autoConfigurationModules(scope const string[] classes, scope const string[] importPaths)
+private SourceModule[] autoConfigurationModules(scope const string[] classes,
+        scope const string[] importPaths, ref State state)
 {
     import std.algorithm.searching : canFind, startsWith;
     import flint_tool.engine.aot.names : packageOf;
@@ -278,7 +283,7 @@ private SourceModule[] autoConfigurationModules(scope const string[] classes, sc
             return;
         seen ~= moduleName;
         SourceModule found;
-        if (findModule(moduleName, importPaths, found))
+        if (findModule(moduleName, importPaths, state, found))
             result ~= found;
     }
 
@@ -298,7 +303,24 @@ private SourceModule[] autoConfigurationModules(scope const string[] classes, sc
     return result;
 }
 
-private bool findModule(string moduleName, scope const string[] importPaths, out SourceModule module_)
+/// A platform module's source and interface. The state remembers them: it is reset whenever the environment key
+/// changes, which covers every package's contents, so within one state a platform module neither moves nor
+/// changes, and an edit build neither searches the import paths nor lexes the platform sources again.
+private bool findModule(string moduleName, scope const string[] importPaths, ref State state, out SourceModule module_)
+{
+    if (const known = moduleName in state.platform)
+    {
+        module_ = SourceModule(known.name, known.path, known.packageModule, known.hash, known.imports.dup, false);
+        return true;
+    }
+    if (!searchModule(moduleName, importPaths, module_))
+        return false;
+    state.platform[moduleName] = module_;
+    state.dirty = true;
+    return true;
+}
+
+private bool searchModule(string moduleName, scope const string[] importPaths, out SourceModule module_)
 {
     import std.array : replace;
     import std.file : exists, readText;
@@ -325,7 +347,8 @@ private bool findModule(string moduleName, scope const string[] importPaths, out
 }
 
 /// Add the modules `names` that are not sources yet, found on the import paths; returns the ones added.
-private string[] addModules(scope const string[] names, scope const string[] importPaths, ref SourceModule[] sources)
+private string[] addModules(scope const string[] names, scope const string[] importPaths,
+        ref SourceModule[] sources, ref State state)
 {
     string[] added;
     foreach (name; names)
@@ -334,7 +357,7 @@ private string[] addModules(scope const string[] names, scope const string[] imp
         foreach (ref source; sources)
             known = known || source.name == name;
         SourceModule found;
-        if (!known && findModule(name, importPaths, found))
+        if (!known && findModule(name, importPaths, state, found))
         {
             sources ~= found;
             added ~= name;
@@ -350,7 +373,7 @@ private bool extractImports(const ref AotRequest request, string cache, ref Sour
 {
     foreach (round; 0 .. 8)
     {
-        const added = addModules(importTargets(cache, sources), request.importPaths, sources);
+        const added = addModules(importTargets(cache, sources), request.importPaths, sources, state);
         if (added.length == 0)
             return true;
         state.importedModules ~= added;
@@ -720,6 +743,7 @@ private State loadState(string cache, string environment)
             foreach (ref item; imported.arrayNoRef)
                 state.importedModules ~= item.str;
         }
+        readPlatform(root, state);
     }
     catch (JSONException)
         return State(environment);
@@ -749,10 +773,44 @@ private void saveState(string cache, const ref State state)
         "output": JSONValue(state.outputKey),
         "keys": JSONValue(keys),
         "present": JSONValue(present),
-        "imported": JSONValue(state.importedModules)
+        "imported": JSONValue(state.importedModules),
+        "platform": platformJson(state)
     ]);
     mkdirRecurse(cache);
     write(buildPath(cache, "state.json"), root.toString);
+}
+
+/// The platform modules a state remembers (findModule).
+private void readPlatform(const ref imported!"std.json".JSONValue root, ref State state)
+{
+    import std.json : JSONType;
+
+    const platform = "platform" in root.objectNoRef;
+    if (platform is null)
+        return;
+    foreach (name, item; platform.objectNoRef)
+    {
+        string[] imports;
+        foreach (ref entry; item["imports"].arrayNoRef)
+            imports ~= entry.str;
+        state.platform[name] = SourceModule(name, item["path"].str,
+                item["package"].type == JSONType.true_, item["hash"].str, imports, false);
+    }
+}
+
+private imported!"std.json".JSONValue platformJson(const ref State state)
+{
+    import std.json : JSONValue;
+
+    JSONValue[string] modules;
+    foreach (name, ref item; state.platform)
+        modules[name] = JSONValue([
+        "path": JSONValue(item.path),
+        "package": JSONValue(item.packageModule),
+        "hash": JSONValue(item.hash),
+        "imports": JSONValue(item.imports)
+    ]);
+    return JSONValue(modules);
 }
 
 /// The shared-cache key of a project module's model: its extraction key and the project root.
