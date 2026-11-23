@@ -202,6 +202,28 @@ def flint_binary(name):
     return BUILD / f"{name}-flint"
 
 
+def flint_artifact(stdout, directory):
+    """The executable `flint build --json` reports (flint.build/1 `artifact.path`), when a port's flint-spring.json
+    names no `binary`, as tools/vibe_bench.py reads it."""
+    document = None
+    for line in reversed(stdout.splitlines()):
+        if line.startswith('{'):
+            try:
+                document = json.loads(line)
+                break
+            except ValueError:
+                continue
+    if document is None:
+        try:
+            document = json.loads(stdout)
+        except ValueError:
+            raise SystemExit('flint build printed no flint.build/1 document; add --json to the command')
+    artifact = (document.get('artifact') or {}).get('path')
+    if not artifact:
+        raise SystemExit('flint build reported no artifact path')
+    return Path(artifact) if Path(artifact).is_absolute() else Path(directory) / artifact
+
+
 def flint_port_ready(name):
     """A Flint port the harness may build: its flint-spring.json exists and is not a skeleton (benchmarks/spring/
     flint/<app>/README.md). A skeleton counts as missing, which every claim treats as a failure."""
@@ -223,10 +245,10 @@ def build_flint(name):
         raise SystemExit(f'{name}: the Flint port is a skeleton that does not build yet ({manifest}); a missing port '
                          'is a failure of its claim, never a pass')
     try:
-        run(spec['build'], directory, dict(os.environ))
+        result = run(spec['build'], directory, dict(os.environ))
     except OSError as exc:
         raise SystemExit(f'{name}: the Flint build command could not run: {exc}') from exc
-    produced = directory / spec['binary']
+    produced = directory / spec['binary'] if spec.get('binary') else flint_artifact(result.stdout, directory)
     if not produced.is_file():
         raise SystemExit(f'{name}: the Flint build did not produce {produced}')
     BUILD.mkdir(parents=True, exist_ok=True)

@@ -146,7 +146,13 @@ def measure_flint(name, trials, timed, logs, temporary, result):
         copy_checkout(workspace)
         log = logs / f'{name}-flint-{profile}.log'
         timed(spec[profile]['command'], workspace / directory, env, log)
-        binary = workspace / directory / spec[profile]['binary']
+        if spec[profile].get('binary'):
+            binary = workspace / directory / spec[profile]['binary']
+        else:
+            # The profile's command ends in --json; ask the same build, now up to date, where its artifact is.
+            reported = subprocess.run(spec[profile]['command'], cwd=workspace / directory, env=env, capture_output=True,
+                                      text=True)
+            binary = spring_bench.flint_artifact(reported.stdout, workspace / directory)
         row[profile] = {'binary_bytes': binary.stat().st_size, 'sha256': spring_bench.sha256(binary)}
         shutil.rmtree(workspace)
     return row

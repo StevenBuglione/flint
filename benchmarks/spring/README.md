@@ -138,14 +138,13 @@ A port lives in `benchmarks/spring/flint/<app>/`, next to its `flint-spring.json
 ```json
 {
   "schema": "flint.spring-port/1",
-  "build": ["flint", "build", "--release"],
-  "binary": "build/gs-rest-service",
+  "build": ["flint", "build", "--profile", "release", "--json"],
   "measure": {
     "cached": ["flint", "build"],
-    "scratch": ["flint", "build", "--no-platform-cache"],
-    "edit_source": "src/app.d",
-    "O3": {"command": ["flint", "build", "--profile", "release"], "binary": "build/gs-rest-service"},
-    "Oz": {"command": ["flint", "build", "--profile", "size"], "binary": "build/gs-rest-service"}
+    "scratch": ["flint", "build", "--force"],
+    "edit_source": "src/com/example/restservice/greeting_controller.d",
+    "O3": {"command": ["flint", "build", "--profile", "release", "--json"]},
+    "Oz": {"command": ["flint", "build", "--profile", "size", "--json"]}
   }
 }
 ```
@@ -157,7 +156,9 @@ A port lives in `benchmarks/spring/flint/<app>/`, next to its `flint-spring.json
 - `edit_source` is the file that the incremental build appends a declaration to.
 - `O3` and `Oz` give the size profiles.
 
-The command names above are placeholders. The port's owner fills in whatever `flint build` offers once Flint AOT and the platform cache land.
+Without a `binary`, the harness reads the executable from `flint build --json` (`artifact.path`). A port's `flint.toml` keeps its upstream package as `base-package` (for example `com.example.restservice`) and declares Boot starters as dependencies (`"flint:boot-starter-web" = {}`).
+
+flint has no platform cache yet (ADR-030 section 5). `cached` therefore also compiles the platform modules from source, so until the cache lands the primary headline is measured conservatively. When it lands, `scratch` gains its `--no-platform-cache` switch.
 
 **A `flint-spring.json` with `"status": "skeleton"` counts as no port.** It holds sources that do not build yet. **Without a port, every claim about that application fails closed.** `accept --impl flint` exits non-zero. The measuring tools refuse to run unless `--allow-missing-flint` is given, which writes an `incomplete` record. The gate never accepts such a record.
 
