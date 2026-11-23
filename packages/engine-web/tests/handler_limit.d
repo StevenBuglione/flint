@@ -1,6 +1,7 @@
 /// `ServerOptions.maxHandlers`: requests past the handler limit wait on their connections, in arrival order, and
 /// start as handlers finish, as Tomcat's executor queues requests past `server.tomcat.threads.max`. None is
-/// refused for want of a handler.
+/// refused for want of a handler. `ServerOptions.acceptCount`: past the connection limit, new connections wait in
+/// the listen backlog until a connection closes, as Tomcat leaves them past `maxConnections`.
 module flint.engine.web.handler_limit;
 
 import core.atomic : atomicLoad, atomicOp, atomicStore;
@@ -10,7 +11,7 @@ import flint.conc : Context, Deadline;
 import flint.engine.web.fiber : FiberResponse, FiberRoute;
 import flint.engine.web.runtime : Server;
 import flint.engine.web.types : Request, RequestContext, ServerOptions;
-import std.socket : InternetAddress, Socket, SocketOption, SocketOptionLevel, TcpSocket;
+import std.socket : InternetAddress, Socket, SocketOption, SocketOptionLevel, TcpSocket, wouldHaveBlocked;
 
 @safe:
 
@@ -57,13 +58,14 @@ private struct Fixture
     ushort port;
     Handlers handlers;
 
-    void open(uint maxHandlers, uint connections)
+    void open(uint maxHandlers, uint connections, uint acceptCount = 1024)
     {
         ServerOptions options;
         options.port = 0;
         options.cores = 1;
         options.maxConnectionsPerCore = connections;
         options.maxHandlers = maxHandlers;
+        options.acceptCount = acceptCount;
         options.http2 = false;
         options.idleTimeoutNanos = 60_000_000_000L;
         const started = server.start(options);
@@ -265,4 +267,35 @@ unittest
         }
     assert(atomicLoad(fixture.handlers.served) == 300);
     assert(atomicLoad(fixture.handlers.mostRunning) <= 6);
+}
+
+@("accept-count: past the connection limit a new connection waits in the backlog, and is served once a slot frees")
+unittest
+{
+    Fixture fixture;
+    fixture.open(8, 1, 4);
+    scope (exit)
+        fixture.close();
+
+    // A keep-alive client holds the only connection slot.
+    auto first = fixture.connect();
+    string status;
+    assert(exchange(first, "/ok", status) == "ok" && status == "200");
+
+    // The kernel completes the next handshake into the backlog; the server does not take the connection yet,
+    // so the request gets no answer, and the connection is neither closed nor reset.
+    auto second = fixture.connect();
+    scope (exit)
+        second.close();
+    sendAll(second, "GET /ok HTTP/1.1\r\nHost: localhost\r\n\r\n");
+    second.setOption(SocketOptionLevel.SOCKET, SocketOption.RCVTIMEO, dur!"msecs"(300));
+    ubyte[16] probe;
+    const early = receiveSome(second, probe[]);
+    assert(early == Socket.ERROR && wouldHaveBlocked(), "a connection past the limit was answered, closed or reset");
+    assert(atomicLoad(fixture.handlers.served) == 1);
+
+    // Closing the first frees the slot: the waiting connection is accepted and its request served.
+    second.setOption(SocketOptionLevel.SOCKET, SocketOption.RCVTIMEO, dur!"msecs"(10_000));
+    first.close();
+    assert(readResponse(second, status) == "ok" && status == "200");
 }

@@ -115,8 +115,12 @@ struct ServerOptions
     ushort port = 8080;
     /// Number of HTTP reactor workers.
     uint cores = 1;
-    /// Maximum active connection records per worker.
+    /// Maximum active connection records per worker. A worker whose records are all in use takes no new
+    /// connection until one closes; meanwhile they wait in the listen backlog (`acceptCount`).
     uint maxConnectionsPerCore = 4096;
+    /// Connections the operating system queues while every worker's records are in use, as Tomcat's
+    /// `server.tomcat.accept-count`: the listen backlog. Past it the kernel refuses or drops new connections.
+    uint acceptCount = 1024;
     /// Maximum admitted HTTP/2 streams per connection.
     uint maxStreamsPerConnection = 100;
     /// HTTP/1 request handlers running at once across all workers, as Tomcat's `server.tomcat.threads.max`:

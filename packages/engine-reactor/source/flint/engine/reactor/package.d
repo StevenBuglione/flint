@@ -982,6 +982,11 @@ private struct Worker
     long acceptResumeAt;
     /// This owner no longer touches the listener: `stopAccepting` retired its accept.
     bool acceptClosed;
+    /// Every connection slot is in use: this owner leaves new connections in the listen backlog, as Tomcat does
+    /// at `maxConnections`, until one closes.
+    bool acceptFull;
+    /// `acceptFull` dropped the readiness listener's interest, which `releaseAcceptHold` restores.
+    bool acceptHeldInterest;
     /// Earliest wake of a suspended fiber, long.min when one may be due, or long.max when none waits.
     long nextWake = long.max;
     /// Last task lifetime issued on this worker.
@@ -1528,8 +1533,8 @@ private struct Worker
         }
         version (Posix)
         {
-            // A paused owner already dropped its readiness interest.
-            if (readiness.valid && runtime.listener.valid && acceptResumeAt == 0
+            // A paused owner, or one holding accepts while full, already dropped its readiness interest.
+            if (readiness.valid && runtime.listener.valid && acceptResumeAt == 0 && !acceptHeldInterest
                     && setInterest(readiness, runtime.listener, listenToken, Interest.read, Interest.none) != Status.ok)
                 fail(Error(Status.ioError, "could not retire listener readiness"));
         }
@@ -1560,10 +1565,51 @@ private struct Worker
         }
     }
 
+    /// Every slot is taken: stop taking connections from the listener until `closeIdle` frees one, so they wait
+    /// in the kernel's backlog (`ListenOptions.backlog`) rather than being accepted and closed.
+    private void holdAcceptWhileFull() nothrow @nogc
+    {
+        if (acceptClosed || acceptFull)
+            return;
+        acceptFull = true;
+        version (ReactorReadinessOnly)
+            enum readinessListener = true;
+        else
+            const readinessListener = !completions.valid;
+        version (Posix)
+        {
+            // A listener paused for descriptor exhaustion has already dropped its interest.
+            if (!readinessListener || acceptResumeAt != 0 || !readiness.valid)
+                return;
+            if (setInterest(readiness, runtime.listener, listenToken, Interest.read, Interest.none) != Status.ok)
+                fail(Error(Status.ioError, "could not pause listener readiness"));
+            else
+                acceptHeldInterest = true;
+        }
+    }
+
+    /// A slot is free again: take connections from the listener. A completion backend arms its next accept on
+    /// its own (`advanceAccept`).
+    private void releaseAcceptHold() nothrow @nogc
+    {
+        if (!acceptFull)
+            return;
+        acceptFull = false;
+        if (!acceptHeldInterest)
+            return;
+        acceptHeldInterest = false;
+        version (Posix)
+        {
+            if (!acceptClosed && setInterest(readiness, runtime.listener, listenToken, Interest.none,
+                    Interest.read) != Status.ok)
+                fail(Error(Status.ioError, "could not resume listener readiness"));
+        }
+    }
+
     /// Whether the accept backoff has elapsed. Rearms readiness listeners when it has.
     private bool acceptResumed() nothrow @nogc
     {
-        if (acceptClosed)
+        if (acceptClosed || acceptFull)
             return false;
         if (acceptResumeAt == 0)
             return true;
@@ -1645,6 +1691,7 @@ private struct Worker
         *connection = Connection.init;
         connection.next = nextFree;
         nextFree = slot;
+        releaseAcceptHold();
     }
 
     Result!IoId queueIo(ConnectionId id, size_t length, scope const(ubyte)[] input, Context context,
@@ -1932,6 +1979,11 @@ private struct Worker
         {
             if (acceptClosed)
                 return;
+            if (nextFree == noSlot)
+            {
+                holdAcceptWhileFull();
+                return;
+            }
             auto incoming = acceptConnection(runtime.listener);
             if (incoming.ok)
                 admit(incoming.value);
@@ -1987,6 +2039,13 @@ private struct Worker
             if (acceptPending || acceptClosed || atomicLoad(runtime.acceptStopping)
                     || !runtime.listener.valid || !acceptResumed())
                 return;
+            // A completed accept always finds a slot: none is armed while every slot is in use, and only this
+            // owner takes its slots.
+            if (nextFree == noSlot)
+            {
+                acceptFull = true;
+                return;
+            }
             version (Windows)
             {
                 if (index != 0)

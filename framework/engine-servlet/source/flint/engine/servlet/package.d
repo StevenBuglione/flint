@@ -74,6 +74,10 @@ struct ServletEngineOptions
     /// order, until a handler finishes, as Tomcat's executor queues it. 0 gives each reactor thread one handler
     /// per connection slot, up to 1,088 (the sizing before this setting).
     uint maxHandlers = 200;
+    /// `server.flint.accept-count`: connections the operating system queues once every connection slot is in
+    /// use, Tomcat's `server.tomcat.accept-count` and its default of 100 (the listen backlog). Past it the kernel
+    /// refuses or drops new connections, as for Tomcat.
+    uint acceptCount = 100;
 }
 
 /// The reactor threads for `cores`: `cores` itself, or for 0 the CPUs this process may run on (on Linux, its
@@ -196,6 +200,7 @@ final class ServletEngine : RequestHost
         serverOptions.maxBodyBytes = options.maxBodyBytes;
         serverOptions.maxConnectionsPerCore = options.maxConnectionsPerCore;
         serverOptions.maxHandlers = options.maxHandlers;
+        serverOptions.acceptCount = options.acceptCount;
         serverOptions.shutdown = options.shutdown;
         const opened = server.start(serverOptions);
         if (opened.code != Status.ok)

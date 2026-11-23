@@ -594,7 +594,7 @@ private final class RuntimeDriver() : StreamEndpoint, FiberEndpoint
             if (http2 !is null)
                 http2.setTls(tls);
         }
-        return reactor.listenWith(ListenOptions(limits.address, limits.port, 1024), acceptedCallback);
+        return reactor.listenWith(ListenOptions(limits.address, limits.port, limits.acceptCount), acceptedCallback);
     }
 
     private void execute() nothrow
