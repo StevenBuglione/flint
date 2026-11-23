@@ -26,6 +26,8 @@ Each implementation lives under `packages/<dub-name>/source/flint/`. A module wi
 
 Flint is a port of the Spring ecosystem. Read `docs/adr/ADR-030-flint-is-a-spring-port.md` and `docs/spring/api-mapping.md` before touching any public API.
 
+- **Performance.** Before porting a module, read `docs/spring/performance-playbook.md` and check the finished port against its checklist. Any commit that improves or regresses build time, binary size or runtime adds or updates a playbook entry in the same commit.
+
 - **Names.** Public names are Spring's, with only the word "Spring" replaced by "Flint". `org.springframework.X` becomes the D module `flint.X`. Configuration keys are Spring's, with `spring.` becoming `flint.`. Do not invent a name where Spring has one.
 - **The API layer:** the Spring-shaped public types of the framework, Boot and portfolio libraries.
   - It follows the rulebook: classes, interfaces, exceptions, the GC, getters and setters, and overloads, mapped by rule ID.

@@ -64,6 +64,7 @@ A session should end its turn only when every queue item it could take is claime
 - **Policy edits** regenerate the platform outputs in the same commit (`python3 tools/platform_modules.py --write`, FLINT-E0534).
 - **New packages** under `framework/` or `boot/` are registered in `policy/framework.json` or `policy/boot.json` in the commit that adds them (FLINT-E0535). When registering an allowlisted package, delete its line from `policy/unregistered-packages.json` in the same commit.
 - **Push each verified step.** Never force-push. Never push to the mirror repos (`flint-framework`, `flint-boot`, `flint-ai`, `flint-data-jdbc`); m7-flint-cli refreshes them with `tools/extract_repo.py --all --push`.
+- **Performance findings go into `docs/spring/performance-playbook.md`** in the same commit as the change: the rule, the evidence (numbers, commit and how they were measured) and what enforces it. The playbook is the master list of what every port must do to stay fast, small and quick to build.
 - **If you break `main`, fix it first,** before anything else. If someone else broke it and isn't responding within 30 minutes, the smallest fix that restores green is allowed, in a commit of its own, with a note to them.
 
 ## Measurement
