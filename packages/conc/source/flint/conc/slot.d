@@ -1,0 +1,67 @@
+/// A process-wide slot holding one object reference, published safely to every thread.
+module flint.conc.slot;
+
+import flint.conc.sys.slot : exchangeSlot, loadSlot, storeSlot;
+
+@safe:
+
+/**
+ * One class or interface reference shared by every thread and fiber: what a Java `static` field
+ * holding a thread-safe object is. Declare it `shared` at module level; `get` sees the reference a
+ * `set` or `setIfAbsent` published, with the object fully constructed. The slot synchronizes only the
+ * reference: the object guards its own state, as Java's `LoggerFactory` provider does.
+ */
+struct ProcessSlot(T) if (is(T == class) || is(T == interface))
+{
+    private Object value;
+
+    /// The published reference, or null.
+    T get() shared nothrow @nogc
+    {
+        return cast(T) loadSlot(value);
+    }
+
+    /// Publish `reference`, replacing any earlier one.
+    void set(T reference) shared nothrow @nogc
+    {
+        storeSlot(value, cast(Object) reference);
+    }
+
+    /// Publish `reference` unless one is already there; return whichever the slot holds afterwards.
+    T setIfAbsent(T reference) shared nothrow @nogc
+    {
+        if (exchangeSlot(value, null, cast(Object) reference))
+            return reference;
+        return get();
+    }
+}
+
+private interface Greeter
+{
+    string greet();
+}
+
+private final class English : Greeter
+{
+    string greet()
+    {
+        return "hello";
+    }
+}
+
+private shared ProcessSlot!Greeter testSlot;
+
+@("ProcessSlot publishes once with setIfAbsent and replaces with set")
+unittest
+{
+    assert(testSlot.get() is null);
+    auto first = new English();
+    assert(testSlot.setIfAbsent(first) is first);
+    auto second = new English();
+    assert(testSlot.setIfAbsent(second) is first, "a second setIfAbsent must not replace the first");
+    assert(testSlot.get().greet() == "hello");
+    testSlot.set(second);
+    assert(testSlot.get() is second);
+    testSlot.set(null);
+    assert(testSlot.get() is null);
+}
