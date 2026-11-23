@@ -74,7 +74,7 @@ When your assigned work is done, don't stop.
 | 6 | jackson-databind subset byte-equal with Jackson, SLF4J, Jakarta Validation with Hibernate Validator messages | third-party-apis | `01947a2` (java.time), `daa0b85`, `d13b99b` (arrays, Optional, enums, records, `@JsonNaming`), `51756be`, `6e870d2` (validation), `12277d6` (checklists complete); goldens and gaps in `third-party.md` |
 | 7 | AOT contract 2 emission; mapping and descriptor tables for the three Phase 1 apps | flint-aot | |
 | 8 | Framework module budgets and probes for every `framework.json` module | size-levers | `01d5802`..`2e021fd` (timings provisional until proof-harness's quiet-window run) |
-| 9 | Cutover decisions 1–7 in `tools/cutover.py` and the CLI | m7-flint-cli | |
+| 9 | Cutover decisions 1–7 in `tools/cutover.py` and the CLI | m7-flint-cli | `ce402cc`..`f228c76`. Linux and macOS rehearsals pass, except the known items 19 (golden-wasm-app) and 14 (gs-rest-service, in progress); the Windows report is pending |
 | 10 | spring-petclinic-rest (JDBC) Flint port passing its suite | | |
 | 11 | Classification sweeps: lower the coverage baselines by classifying excluded and adapted elements in the Phase 1 checklists, with the module owners' agreement | api-coverage (`local_7afcbe30`) | |
 | 12 | SpEL subset compiled to D for `@Value("#{…}")`, `@Cacheable(key=…)` and `@PreAuthorize` | flint-aot | |
