@@ -408,3 +408,74 @@ unittest
     expect(declaration(unit.types[0].members[0], "Pool")).toEqual("protected Pool(int size) throws Exception");
     expect(declaration(unit.types[0])).toEqual("public class Pool");
 }
+
+@("a ported file needs a pinned upstream that may be ported, its copyright and licence lines and the notice")
+unittest
+{
+    import std.array : replicate;
+    import flint_tool.api.headers : LicenceEntry, checkHeader, parseLicenceMatrix, sdlLicence;
+
+    Upstream[] upstreams;
+    string error;
+    parseUpstreams(`{"schema":"flint.api-upstreams/1","upstreams":[
+        {"project":"spring-framework","version":"v7.1.0","repo":"framework","url":"u","format":"tar.gz",
+         "sha256":"` ~ "a".replicate(64) ~ `"},
+        {"project":"jakarta-servlet","version":"6.1.0","repo":"framework","url":"u","format":"jar",
+         "sha256":"` ~ "b".replicate(64) ~ `"},
+        {"project":"liquibase","version":"4.0","repo":"boot","url":"u","format":"jar","sha256":"` ~ "c".replicate(
+            64) ~ `"},
+        {"project":"spring-security","version":"7.2.0","repo":"security","url":"u","format":"tar.gz",
+         "sha256":"` ~ "d".replicate(64) ~ `"}]}`, upstreams, error);
+    expect(error).toEqual("");
+    LicenceEntry[] matrix;
+    expect(parseLicenceMatrix(`{"projects":[
+        {"name":"spring-framework","licence":"Apache-2.0","use":"port-source","tag":"v7.1.0",
+         "header":"Copyright 2002-present the original author or authors."},
+        {"name":"jakarta-servlet","licence":"EPL-2.0 OR GPL-2.0-with-classpath-exception","use":"epl-module",
+         "tag":"6.1.0"},
+        {"name":"liquibase","licence":"FSL-1.1-ALv2","use":"clean-room","tag":null},
+        {"name":"spring-security","licence":"Apache-2.0","use":"port-source","tag":"to pin at port start"}]}`,
+            matrix, error)).toEqual(true);
+
+    string[] check(string header, string licence = "Apache-2.0")
+    {
+        string[] messages;
+        foreach (problem; checkHeader("f.d", header ~ "module flint.util.assert_;\n", upstreams, matrix, licence))
+            messages ~= problem.message;
+        return messages;
+    }
+
+    enum source = "spring-core/src/main/java/org/springframework/util/Assert.java";
+    enum good = "// Ported from spring-framework v7.1.0: " ~ source ~ "\n"
+        ~ "// Copyright 2002-present the original author or authors.\n"
+        ~ "// Licensed under the Apache License, Version 2.0.\n// Modified by the Flint authors.\n";
+    expect(check(good)).toEqual(cast(string[]) null);
+    expect(check("/// Not ported; it quotes `// Ported from x y: z` in prose.\n")).toEqual(cast(string[]) null);
+    expect(check(
+            "// Ported from spring-framework v7.1.0: a/B.java\n// Licensed under the Apache License, Version 2.0\n"))
+        .toEqual([
+            "the header lacks the upstream copyright line: Copyright 2002-present the original author or authors.",
+            "the header lacks \"Modified by the Flint authors\" (Apache-2.0 §4(b))"
+    ]);
+    expect(check("// Ported from spring-framework v7.0.0: a/B.java\n")).toEqual(
+            ["spring-framework v7.0.0 is not pinned in api/upstreams.json"]);
+    expect(check("// Ported from liquibase 4.0: a/B.java\n")).toEqual(
+            [
+        "liquibase is `clean-room` (FSL-1.1-ALv2) in policy/upstream-licences.json: its source may not be ported"
+    ]);
+    expect(check("// Ported from spring-security 7.2.0: a/B.java\n// Copyright 2004 x\n"
+            ~ "// Licensed under the Apache License, Version 2.0\n// Modified by the Flint authors.\n")).toEqual(
+            [
+        "policy/upstream-licences.json pins spring-security at `to pin at port start`, not 7.2.0"
+    ]);
+    enum servlet = "// Ported from jakarta-servlet 6.1.0: jakarta/servlet/Filter.java\n// Copyright (c) 1997 Oracle\n"
+        ~ "// Licensed under the Eclipse Public License 2.0.\n// Modified by the Flint authors.\n";
+    expect(check(servlet, "EPL-2.0")).toEqual(cast(string[]) null);
+    expect(check(servlet)).toEqual(
+            [
+        "jakarta-servlet is ported only into EPL-2.0 packages, but the package declares `Apache-2.0`"
+    ]);
+    expect(check("// Ported from spring-framework: no version\n")).toEqual(
+            ["the marker must read `Ported from <project> <version>: <upstream path>`"]);
+    expect(sdlLicence("name \"x\"\nlicense \"EPL-2.0\"\n")).toEqual("EPL-2.0");
+}

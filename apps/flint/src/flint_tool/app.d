@@ -295,7 +295,7 @@ private int depsCommand(ref Session session, string name, ref FlintArgs options)
 private int apiCommand(ref Session session, string name, ref ApiArgs args)
 {
     import flint_tool.commands.api : CoverageCommand, ExtractCommand, commandApiChecklist,
-        commandApiCoverage, commandApiDiff, commandApiExtract, commandApiFetch;
+        commandApiCoverage, commandApiDiff, commandApiExtract, commandApiFetch, commandApiHeaders;
 
     switch (name)
     {
@@ -313,6 +313,8 @@ private int apiCommand(ref Session session, string name, ref ApiArgs args)
         return commandApiDiff(session, args.diff.older, args.diff.newer);
     case "flint api checklist":
         return commandApiChecklist(session, args.checklist.slice, args.checklist.output);
+    case "flint api headers":
+        return commandApiHeaders(session, args.headers.paths);
     default:
         return -1;
     }
@@ -461,6 +463,9 @@ private bool printApiHelp(string commandName, scope void delegate(scope const(ch
         return true;
     case "flint api checklist":
         writeHelp!ApiChecklistArgs(sink);
+        return true;
+    case "flint api headers":
+        writeHelp!ApiHeadersArgs(sink);
         return true;
     default:
         return false;

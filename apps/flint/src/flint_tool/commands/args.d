@@ -517,6 +517,16 @@ struct ApiChecklistArgs
     @Option("json", 0, "Emit flint.api-checklist/1 JSON on stdout") bool json;
 }
 
+/// `flint api headers`.
+@Command("flint api headers", "Check the ADR-030 header of every D file ported from an upstream")
+struct ApiHeadersArgs
+{
+    /// Paths.
+    @Arg(0, "Source directories or D files (default: .)") string[] paths;
+    /// JSON output.
+    @Option("json", 0, "Emit flint.api-headers/1 JSON on stdout") bool json;
+}
+
 /// `flint api`.
 @Command("flint api", "Extract, compare and classify the upstream Java APIs that Flint ports")
 struct ApiArgs
@@ -533,6 +543,9 @@ struct ApiArgs
     @Subcommand("diff", "List API elements added, removed or changed between two manifests") ApiDiffArgs diff;
     /// checklist.
     @Subcommand("checklist", "Write per-module checklists of a porting slice") ApiChecklistArgs checklist;
+    /// headers.
+    @Subcommand("headers", "Check the header of every ported D file against the licence matrix")
+    ApiHeadersArgs headers;
 }
 
 /// The root command.

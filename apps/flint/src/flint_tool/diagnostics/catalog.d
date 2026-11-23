@@ -550,10 +550,17 @@ immutable CodeInfo[] catalog = [
             "A source tree, manifest (flint.api-manifest/1) or pin file (api/upstreams.json, "
             ~ "flint.api-upstreams/1) named on the command line or in the Flint home cannot be read.",
             "flint api fetch spring-boot\nflint api extract --source DIR --project spring-boot --version v4.2.0"),
-    CodeInfo("FLINT-E1005", ExitCode.dependency,
-            "an upstream archive cannot be fetched",
+    CodeInfo("FLINT-E1005", ExitCode.dependency, "an upstream archive cannot be fetched",
             "`flint api fetch` downloads each archive pinned in api/upstreams.json, verifies its SHA-256 and "
             ~ "unpacks it into the reference cache. The download failed, the digest differs from the pin, or the "
             ~ "archive did not unpack. A digest mismatch is never ignored: re-pin only after checking the upstream.",
             "flint api fetch spring-framework\nFLINT_CACHE=/tmp/cache flint api fetch"),
+    CodeInfo("FLINT-E1006", ExitCode.user, "a ported file's header is wrong",
+            "A D file whose header says `Ported from <project> <version>: <path>` carries upstream code, so it "
+            ~ "must name a pinned upstream (api/upstreams.json) whose licence entry allows porting at that tag, "
+            ~ "and carry the upstream copyright line, the licence line and \"Modified by the Flint authors\" "
+            ~ "(ADR-030 section 7). EPL-2.0 upstreams are ported only into packages licensed EPL-2.0.",
+            "// Ported from spring-framework v7.1.0: spring-core/src/main/java/org/springframework/util/Assert.java\n"
+            ~ "// Copyright 2002-present the original author or authors.\n"
+            ~ "// Licensed under the Apache License, Version 2.0.\n// Modified by the Flint authors."),
 ];

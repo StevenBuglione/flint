@@ -59,6 +59,7 @@ flint check
 | `flint api extract --source DIR --project P --version TAG [-o FILE] [--exclude PREFIX]...` | Write the API manifest of an upstream Java source tree: every public and protected type and member ([API manifests](#api-manifests)). |
 | `flint api coverage [--repo R] [--manifest FILE...] [--mapping FILE] [--show N]` | Classify every manifest element against the repo's mapping, print per-module percentages, and fail on unclassified elements. `--repo` takes every manifest `api/upstreams.json` assigns to the repo. |
 | `flint api diff <old> <new>` | List the API elements added, removed or changed between two manifests. |
+| `flint api headers [paths...]` | Check that every D file ported from an upstream carries ADR-030's header, for an upstream the licence matrix lets Flint port at that tag. |
 | `flint api checklist --slice FILE --output DIR` | Write one Markdown checklist per module of a porting slice, each element with the status the repo's mapping gives it, and an index `README.md`. |
 
 Every command accepts `--json` and `--help`. Commands acting on a project take `--project DIR` (or `-C DIR`). `flint` never prompts.
@@ -171,6 +172,7 @@ Command fields:
 | `flint.api-fetch/1` | `cache`, `fetched` (`project`, `version`, `directory`, `cached`, `licence`) |
 | `flint.api-extract/1` | `project`, `version`, `output`, `files`, `types`, `methods`, `excludes`, `modules` (`name`, `types`, `methods`, `constructors`, `fields`, `constants`, `attributes`, `components`) |
 | `flint.api-coverage/1` | `mapping`, `repo`, `rulebook`, `unclassified`, `manifests` (`manifest`, `project`, `version`, `summary`, `modules`; each tally has `name`, `total`, `ported`, `adapted`, `excluded`, `unclassified`, `classified_percent`), `unclassified_ids` (`project@version` → element ids) |
+| `flint.api-headers/1` | `files`, `ported`, `problems` |
 | `flint.api-checklist/1` | `checklists` (`name`, `file`, `types`, `elements`, `open`) |
 | `flint.api-diff/1` | `older`, `newer`, `added`, `removed`, `changed`, `differences` (`change`, `kind`, `id`, `details`) |
 
@@ -243,6 +245,29 @@ The entries follow these rules:
 ```
 
 `flint api checklist --slice FILE --output DIR` writes `DIR/<name>.md` for each entry and an index, `DIR/README.md`, with per-checklist counts. A checklist has one table per type: the status, the element as Java declares it, and its id, which is the key a mapping entry uses. Statuses come from the upstream's repo mapping. A checklist is a view, so never edit it: classify in the mapping and regenerate. Phase 1's slice is [`docs/spring/phase1/slice.json`](spring/phase1/slice.json), and its checklists are in [`docs/spring/phase1/checklists/`](spring/phase1/checklists/README.md).
+
+**Ported headers.** A file that carries upstream code says so before its `module` declaration (ADR-030 section 7):
+
+```d
+// Ported from spring-framework v7.1.0: spring-core/src/main/java/org/springframework/util/Assert.java
+// Copyright 2002-present the original author or authors.
+// Licensed under the Apache License, Version 2.0.
+// Modified by the Flint authors.
+```
+
+`flint api headers` checks every such file. It fails with FLINT-E1006 when:
+- the project and version are not pinned in `api/upstreams.json`;
+- the pin's licence entry (`matrix`) in `policy/upstream-licences.json` is `clean-room` or `native-c`, or pins another tag;
+- the upstream's copyright line is missing (the entry's `header`, or any `Copyright` line when the entry names none);
+- the licence line for the licence and use is missing: the Apache License 2.0, the MIT License, the BSD 3-Clause option, or the Eclipse Public License 2.0;
+- "Modified by the Flint authors" is missing;
+- an `epl-module` upstream is ported into a package whose `dub.sdl` does not declare `license "EPL-2.0"`.
+
+**Gate.** `python3 tools/gates.py --gate api [--repo R] [--workspace W] [--flint PATH]` runs both proofs for each repo, at the repo's checkout in the workspace:
+- `flint api headers` over the repo's packages;
+- `flint api coverage` of its mapping over every manifest `api/upstreams.json` assigns to it, with the manifests and pins read from the `flint` checkout.
+
+It fails on any header problem, invalid mapping or unclassified element. Until the port classifies every element, it reports the open counts and fails, as a release blocker should.
 
 **Follow upstream.** `flint api diff old.json new.json` lists added (`+`), removed (`-`) and changed (`~`) elements. For a changed element it names each property that differs, such as `type: int -> long` or `annotations: (none) -> @Deprecated(since = "7.0.5")`. Parameter names and member order are not API. From v7.0.0 to v7.1.0, Spring Framework added 687 elements, removed 151 and changed 257.
 

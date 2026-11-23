@@ -5,6 +5,7 @@
 /// - `flint api coverage` classifies manifest elements against `api/mapping.json` and fails on unclassified ones.
 /// - `flint api diff` lists the elements added, removed or changed between two manifests.
 /// - `flint api checklist` writes per-module checklists of a porting slice, with statuses from the mapping.
+/// - `flint api headers` checks the header of every file ported from an upstream against the licence matrix.
 module flint_tool.commands.api;
 
 import flint.serde : JsonIgnore, JsonName;
@@ -400,6 +401,65 @@ private bool renderOne(ref Session session, ref ChecklistSources sources,
     return true;
 }
 
+/// `flint api headers [PATH...]`.
+int commandApiHeaders(ref Session session, const(string)[] paths)
+{
+    import std.file : exists, isDir, readText;
+    import std.path : buildPath;
+    import flint_tool.api.headers : LicenceEntry, checkHeader, packageLicence, parseLicenceMatrix;
+    import flint_tool.api.upstreams : loadUpstreams;
+    import flint_tool.commands.output : finish;
+    import flint_tool.diagnostics.report : Severity, at, diagnostic;
+    import flint_tool.support.files : dSources;
+
+    Report report;
+    HeadersReport payload;
+    string error;
+    const upstreams = loadUpstreams(session.home.root, error);
+    LicenceEntry[] matrix;
+    const matrixPath = buildPath(session.home.root, "policy", "upstream-licences.json");
+    if (error.length || !exists(matrixPath) || !parseLicenceMatrix(readText(matrixPath), matrix, error))
+    {
+        report.error("FLINT-E1004", error.length ? error : matrixPath ~ " is missing",
+                "restore api/upstreams.json and policy/upstream-licences.json in the Flint home");
+        return finish(session, report, payload);
+    }
+    foreach (root; paths.length ? paths : ["."])
+    {
+        if (!exists(root))
+        {
+            report.error("FLINT-E1004", "no such path: " ~ root, "name source directories or D files");
+            continue;
+        }
+        const files = isDir(root) ? dSources(root, true) : [""];
+        foreach (relative; files)
+        {
+            const file = relative.length ? buildPath(root, relative) : root;
+            const source = readText(file);
+            const problems = checkHeader(file, source, upstreams, matrix, packageLicence(file, root));
+            payload.files++;
+            if (hasMarker(source))
+                payload.ported++;
+            foreach (ref problem; problems)
+                report.add(at(diagnostic("FLINT-E1006", Severity.error, problem.message,
+                        "write the header ADR-030 section 7 requires; see docs/flint-cli.md"),
+                        problem.file, problem.line, 1));
+        }
+    }
+    payload.problems = report.items.length;
+    session.progress("Checked", count(payload.files) ~ " D files, " ~ count(payload.ported) ~ " ported");
+    return finish(session, report, payload);
+}
+
+private bool hasMarker(string source)
+{
+    import flint_tool.api.headers : headerOf;
+
+    size_t line;
+    headerOf(source, line);
+    return line != 0;
+}
+
 /// `flint api diff OLD NEW`.
 int commandApiDiff(ref Session session, string older, string newer)
 {
@@ -569,6 +629,17 @@ private struct ChecklistReport
     int exit_code;
     Diagnostic[] diagnostics;
     ChecklistRow[] checklists;
+}
+
+private struct HeadersReport
+{
+    string schema = "flint.api-headers/1";
+    bool ok;
+    int exit_code;
+    Diagnostic[] diagnostics;
+    size_t files;
+    size_t ported;
+    size_t problems;
 }
 
 private struct DiffRow

@@ -333,8 +333,48 @@ def verify_evidence_artifacts(evidence,directory):
     require(evidence['gc']==payload('hot_gc')['gc'],'GC summary differs from measured source artifact')
     require(evidence['platforms']==payload('cross_platform')['platforms'],'platform summary differs from recorded source artifact')
 
+def api_mapping(checkout,repo):
+    """A repo's API mapping: api/<repo>/mapping.json in the monorepo, api/mapping.json in an extracted repo."""
+    nested=checkout/'api'/repo/'mapping.json'
+    return nested if nested.is_file() else checkout/'api'/'mapping.json'
+
+def run_flint_json(flint,arguments,home):
+    """Run `flint <arguments> --json` with the Flint home at `home`; the parsed document."""
+    out=subprocess.run([str(flint),*arguments,'--json'],capture_output=True,text=True,env=dict(os.environ,FLINT_HOME=str(home)))
+    try:return json.loads(out.stdout)
+    except ValueError:raise ValueError('flint '+' '.join(arguments[:2])+' printed no JSON: '+(out.stderr or out.stdout)[-400:])
+
+def api_gate(repos,flint):
+    """ADR-030 section 8: per repo, `flint api headers` over its packages (every ported file carries the section 7
+    header for an upstream the licence matrix lets Flint port) and `flint api coverage` of its mapping over every
+    manifest api/upstreams.json assigns to it. Any header problem, invalid mapping or unclassified element fails."""
+    require(flint.is_file(),f'flint api gate: {flint} is missing; bootstrap it with python3 tools/install_toolchains.py --compiler flint')
+    home=WORKSPACE.checkout('flint')
+    pins=json.loads((home/'api'/'upstreams.json').read_text(encoding='utf-8'))['upstreams']
+    owners={u['repo'] for u in pins if (home/'api'/'upstream'/(u['project']+'-'+u['version']+'.json')).is_file()}
+    report,failures={},[]
+    for repo in repos:
+        checkout=WORKSPACE.checkout(repo)
+        dirs=[str(WORKSPACE.package_dir(n)) for n in sorted(package_repos(ROOT)) if package_repos(ROOT)[n][0]==repo and WORKSPACE.package_dir(n).is_dir()]
+        entry={}
+        if dirs:
+            headers=run_flint_json(flint,['api','headers',*dirs],home)
+            entry['headers']={'files':headers.get('files',0),'ported':headers.get('ported',0),'problems':headers.get('problems',0)}
+            if not headers.get('ok'):failures.append(f'{repo}: {len(headers.get("diagnostics",[]))} ported-header problems, first: '+
+                                                    next((d['file']+': '+d['message'] for d in headers.get('diagnostics',[])),'flint api headers failed'))
+        if repo in owners:
+            mapping=api_mapping(checkout,repo)
+            if not mapping.is_file():failures.append(f'{repo}: owns upstream manifests but has no {mapping.relative_to(checkout)}')
+            else:
+                coverage=run_flint_json(flint,['api','coverage','--repo',repo,'--mapping',str(mapping),'--show','0'],home)
+                entry['coverage']={m['project']+'@'+m['version']:{k:m['summary'][k] for k in ('total','ported','adapted','excluded','unclassified')} for m in coverage.get('manifests',[])}
+                if not coverage.get('ok'):failures.append(f'{repo}: '+'; '.join(d['message'] for d in coverage.get('diagnostics',[]) if d['severity']=='error'))
+        report[repo]=entry
+    return report,failures
+
 def main():
-    ap=argparse.ArgumentParser();ap.add_argument('--package',action='append',choices=sorted(P));ap.add_argument('--gate',choices=['structural','baseline','all'],required=True)
+    ap=argparse.ArgumentParser();ap.add_argument('--package',action='append',choices=sorted(P));ap.add_argument('--gate',choices=['structural','baseline','all','api'],required=True)
+    ap.add_argument('--flint',type=Path,default=ROOT/'.flint'/'bin'/'flint',help='api gate: the flint executable (default: .flint/bin/flint)')
     ap.add_argument('--evidence',type=Path);ap.add_argument('--baseline',type=Path)
     ap.add_argument('--repo',help='check only this repo\'s packages (policy/repos.json), as its own CI will after the split')
     ap.add_argument('--workspace',type=Path,help='flint.workspace/1 file: the checkouts of each repo at pinned commits; default: this monorepo')
@@ -345,6 +385,12 @@ def main():
     require(not problems,'workspace: '+'; '.join(problems))
     selected=a.package or [n for n in P if a.repo is None or package_repos(ROOT)[n][0]==a.repo]
     require(a.repo is None or a.repo in {r for r,_ in package_repos(ROOT).values()},'unknown repo '+str(a.repo))
+    if a.gate=='api':
+        repos=[a.repo] if a.repo else sorted({r for r,_ in package_repos(ROOT).values()}|{u['repo'] for u in json.loads((ROOT/'api'/'upstreams.json').read_text(encoding='utf-8'))['upstreams']})
+        report,failures=api_gate(repos,a.flint.resolve())
+        print(json.dumps({'api':report,'failures':failures},indent=2))
+        require(not failures,'api: '+' | '.join(failures))
+        return
     result=structural(selected)
     if a.repo:result['repo']=a.repo
     _,deferred=edge_violations(ROOT)
