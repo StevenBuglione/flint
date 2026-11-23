@@ -275,6 +275,33 @@ class CompileServerPreludeTests(unittest.TestCase):
         result, verdict = self.served('-version=PlatformOn', '-c', 'other.d')
         self.assertEqual((result.returncode, verdict), (0, 'refused'), result.stderr)
 
+    def test_a_root_module_beside_preloaded_modules_of_its_package_is_served(self):
+        # A DUB package compiles its own modules (flint.config.*) while modules of other packages under the same top
+        # level name (flint.arena.*) are preloaded: only a preloaded module of the same name, or a file of one in an
+        # extra import path, could change what the compile sees.
+        (self.temp / 'own' / 'plat').mkdir(parents=True)
+        (self.temp / 'own' / 'plat' / 'app.d').write_text(
+            'module plat.app;\nimport plat.boot;\nint main() { return twice!int(21) == 42 ? 0 : 1; }\n', encoding='utf-8')
+        result, verdict = self.served('-Ilib', '-Iown', '-version=PlatformOn', '-c', 'own/plat/app.d', '-ofown.o')
+        self.assertEqual((result.returncode, verdict), (0, 'compiled'), result.stderr)
+        link = self.compile('own.o', '-ofownapp', env=dict(self.env, FLINT_DMD_SERVER='0'))
+        self.assertEqual(link.returncode, 0, link.stderr)
+        self.assertEqual(subprocess.run([str(self.temp / 'ownapp')]).returncode, 0)
+
+    def test_an_import_path_holding_a_preloaded_module_is_refused(self):
+        # The request's own copy of plat.twice would be found before the preloaded one in-process
+        (self.temp / 'copy' / 'plat').mkdir(parents=True)
+        (self.temp / 'copy' / 'plat' / 'twice.d').write_text('module plat.twice;\nT twice(T)(T x) { return x * 3; }\n',
+                                                            encoding='utf-8')
+        result, verdict = self.served('-Icopy', '-Ilib', '-version=PlatformOn', '-c', 'app.d')
+        self.assertEqual(verdict, 'refused')
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_a_root_module_the_server_preloaded_is_refused(self):
+        result, verdict = self.served('-Ilib', '-version=PlatformOn', '-c', 'lib/plat/unused.d')
+        self.assertEqual(verdict, 'refused')
+        self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_allinst_compiles_use_the_toolchain_only_server(self):
         # -allinst makes a root module emit the instances its imports instantiate, which a preloaded module's would
         # escape: such compiles (Flint AOT's generated platform modules) keep the toolchain-only server.

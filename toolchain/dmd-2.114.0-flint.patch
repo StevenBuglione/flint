@@ -748,7 +748,7 @@ diff -ruN a/dmd/flintlink.d b/dmd/flintlink.d
 diff -ruN a/dmd/flintserver.d b/dmd/flintserver.d
 --- a/dmd/flintserver.d	1969-12-31 19:00:00.000000000 -0500
 +++ b/dmd/flintserver.d	2026-11-21 17:52:11.090753585 -0500
-@@ -0,0 +1,984 @@
+@@ -0,0 +1,1036 @@
 +/**
 + * Resident toolchain compile server ("zygote") for the DMD driver.
 + *
@@ -1590,22 +1590,74 @@ diff -ruN a/dmd/flintserver.d b/dmd/flintserver.d
 +    return false;
 +}
 +
-+/// True when `dir` contains an entry that could shadow a preloaded package.
++/// True when `dir` holds a source file for a preloaded module, which an in-process compile importing that module
++/// could find there first. Only modules under a top-level name the directory holds are looked for.
 +bool shadowsPrelude(const(char)* dir)
 +{
 +    char[4096] path;
 +    foreach (top; zygoteTopLevel)
 +    {
 +        snprintf(path.ptr, path.length, "%s/%s", dir, top);
-+        if (fileExists(path.ptr))
-+            return true;
++        bool present = fileExists(path.ptr);
 +        snprintf(path.ptr, path.length, "%s/%s.d", dir, top);
-+        if (fileExists(path.ptr))
-+            return true;
++        present = present || fileExists(path.ptr);
 +        snprintf(path.ptr, path.length, "%s/%s.di", dir, top);
-+        if (fileExists(path.ptr))
-+            return true;
++        present = present || fileExists(path.ptr);
++        if (!present)
++            continue;
++        foreach (m; zygoteModules)
++        {
++            char[1024] name;
++            if (!moduleFilePath(m, name) || strncmp(name.ptr, top, strlen(top)) != 0
++                || (name[strlen(top)] != '/' && name[strlen(top)] != 0))
++                continue;
++            static immutable string[4] suffixes = [".d", ".di", "/package.d", "/package.di"];
++            foreach (suffix; suffixes)
++            {
++                snprintf(path.ptr, path.length, "%s/%s%.*s", dir, name.ptr, cast(int) suffix.length, suffix.ptr);
++                if (fileExists(path.ptr))
++                    return true;
++            }
++        }
 +    }
++    return false;
++}
++
++/// The path of module `m` relative to an import directory, without extension ("flint/arena/pool").
++private bool moduleFilePath(Module m, ref char[1024] buf)
++{
++    size_t n;
++    void add(const(char)[] part)
++    {
++        if (n + part.length + 2 > buf.length)
++            return;
++        if (n)
++            buf[n++] = '/';
++        buf[n .. n + part.length] = part[];
++        n += part.length;
++    }
++    if (m.md)
++    {
++        foreach (p; m.md.packages)
++            add(p.toString());
++        add(m.md.id.toString());
++    }
++    else
++        add(m.ident.toString());
++    buf[n] = 0;
++    return n > 0;
++}
++
++/// True when `root` has the fully qualified name of a preloaded module: the request compiles a module the server
++/// already analysed as an import.
++bool preloadedModuleNamed(Module root)
++{
++    char[1024] want, have;
++    if (!moduleFilePath(root, want))
++        return false;
++    foreach (m; zygoteModules)
++        if (moduleFilePath(m, have) && strcmp(want.ptr, have.ptr) == 0)
++            return true;
 +    return false;
 +}
 +
@@ -1837,7 +1889,7 @@ diff -ruN a/dmd/link.d b/dmd/link.d
          foreach (i; 0 .. argv.length)
          {
 diff --git a/dmd/main.d b/dmd/main.d
-index 2d7f373..196fa05 100644
+index 2d7f373..b0c2fd7 100644
 --- a/dmd/main.d
 +++ b/dmd/main.d
 @@ -73,6 +73,8 @@ import dmd.target;
@@ -2026,20 +2078,16 @@ index 2d7f373..196fa05 100644
      // Create Modules
      Modules modules;
      if (createModules(files, libmodules, params, target, eSink, modules))
-@@ -580,6 +667,21 @@ private int tryMain(const(char)[][] argv, out Param params)
+@@ -580,6 +667,17 @@ private int tryMain(const(char)[][] argv, out Param params)
      }
      }
  
 +    if (zygoteChild && modules.length)
 +    {
-+        // Root modules must not collide with preloaded toolchain packages.
++        // Root modules must not be modules the server already analysed as imports.
 +        foreach (m; modules)
-+        {
-+            const(char)[] top = m.md && m.md.packages.length ? m.md.packages[0].toString()
-+                : m.md ? m.md.id.toString() : m.ident.toString();
-+            if (preloadedTopLevel(top))
++            if (preloadedModuleNamed(m))
 +                return zygoteIncompatible;
-+        }
 +        // As if the first root module had imported the prelude.
 +        foreach (m; zygoteModules)
 +            m.importedFrom = modules[0];
@@ -2048,7 +2096,7 @@ index 2d7f373..196fa05 100644
      if (anydocfiles && modules.length && (driverParams.oneobj || params.objname))
      {
          eSink.error(Loc.initial, "conflicting Ddoc and obj generation options");
-@@ -802,6 +904,10 @@ private int tryMain(const(char)[][] argv, out Param params)
+@@ -802,6 +900,10 @@ private int tryMain(const(char)[][] argv, out Param params)
              params.objfiles.push(mainModule.objfile.toChars());
      }
  
@@ -2059,7 +2107,7 @@ index 2d7f373..196fa05 100644
      {
          ObjcGlue_initialize();
          timeTraceBeginEvent(TimeTraceEventType.codegenGlobal);
-@@ -911,6 +1017,63 @@ private int tryMain(const(char)[][] argv, out Param params)
+@@ -911,6 +1013,63 @@ private int tryMain(const(char)[][] argv, out Param params)
      return status;
  }
  
@@ -3075,7 +3123,7 @@ index 8d11dc0..a87359b 100644
 +    return true;
 +}
 diff --git a/dmd/backend/arm/cod2.d b/dmd/backend/arm/cod2.d
-index bf6fcf7..e71bbb3 100644
+index bf6fcf7..02bddf4 100644
 --- a/dmd/backend/arm/cod2.d
 +++ b/dmd/backend/arm/cod2.d
 @@ -39,7 +39,7 @@ import dmd.backend.symbol;
@@ -3679,7 +3727,23 @@ index bf6fcf7..e71bbb3 100644
                  if (log) printf("OSX AArch64 threaded\n");
                  uint ins = INSTR.adr(1,0,reg);          // ADRP reg,0x0 RELOC_TLVP_LOAD_PAGE21
                  cdb.gencs1(ins,0,fl,e.Vsym);
-@@ -2074,12 +2258,15 @@ void getoffset(ref CGstate cg, ref CodeBuilder cdb,elem* e,reg_t reg)
+@@ -2068,18 +2252,31 @@ void getoffset(ref CGstate cg, ref CodeBuilder cdb,elem* e,reg_t reg)
+                 cdb.last.Iflags |= CF.add;
+                 return;
+             }
++            if (config.exe & EX_posix && config.flags3 & CFG3pic)
++            {
++                /* Position-independent code may end up in a shared library, whose thread-local block is not
++                 * the executable's: local-exec offsets would address the executable's variables. Use
++                 * initial-exec, through the GOT, as for an extern thread-local variable (glibc places the
++                 * TLS of libraries loaded at start-up in the static block).
++                 */
++                if (log) printf("posix threaded pic\n");
++                goto case FL.extern_;
++            }
+             if (config.exe & EX_posix)
+             {
+                 if (log) printf("posix threaded\n");
                  uint ins = INSTR.systemmove(1,INSTR.tpidr_el0,reg); // MRS reg,tpidr_el0
                  cdb.gen1(ins);
  
@@ -3695,7 +3759,7 @@ index bf6fcf7..e71bbb3 100644
                  return;
              }
              assert(0);
-@@ -2215,6 +2402,8 @@ static if (0)
+@@ -2215,6 +2412,8 @@ static if (0)
              goto L4;
  
          case FL.extern_:
@@ -3704,7 +3768,7 @@ index bf6fcf7..e71bbb3 100644
              if (config.exe & EX_posix && (e.Vsym.ty() & mTYthread))
              {
                  if (log) printf("posix extern threaded\n");
-@@ -2231,6 +2420,12 @@ static if (0)
+@@ -2231,6 +2430,12 @@ static if (0)
                  cdb.last.Iflags |= CF.add;
  
                  cdb.gen1(INSTR.addsub_shift(1,0,0,0,reg,0,r,reg)); // ADD reg,r,reg
@@ -3717,20 +3781,22 @@ index bf6fcf7..e71bbb3 100644
                  return;
              }
  //            if (config.exe & EX_WIN64 && e.Vsym.ty() & mTYthread)
-@@ -2261,15 +2456,59 @@ static if (0)
+@@ -2261,15 +2466,61 @@ static if (0)
              }
              else
              {
 +                Symbol* s = e.Vsym;
-+                /* In position independent ELF code a symbol defined elsewhere may be
-+                 * in a shared library, so its address comes from the GOT.
-+                 * A function's address goes through the GOT too, since SC.global
-+                 * also marks functions declared here and defined in a shared library.
++                /* In position independent ELF code every symbol another module could
++                 * define or use goes through the GOT: one defined elsewhere may be in a
++                 * shared library, and one defined here, global or a COMDAT template
++                 * instance, may be preempted when this code is a shared library (the
++                 * linker rejects a PC-relative reference to it there). Linkers turn the
++                 * GOT load back into an address for a symbol an executable defines.
 +                 */
 +                const bool viaGOT = config.objfmt == OBJ_ELF ?
 +                                    config.flags3 & CFG3pic &&
 +                                    (s.Sclass == SC.extern_ || s.Sclass == SC.comdef ||
-+                                     (s.Sclass == SC.global && tyfunc(s.ty()))) :
++                                     s.Sclass == SC.global || s.Sclass == SC.comdat) :
 +                                    // Mach-O: the linker turns a GOT load of a symbol in
 +                                    // the image into an ADR, so use it for any non-local
 +                                    config.objfmt == OBJ_MACH &&
@@ -3784,7 +3850,7 @@ index bf6fcf7..e71bbb3 100644
              }
              break;
  
-@@ -2300,6 +2539,7 @@ static if (0)
+@@ -2300,6 +2551,7 @@ static if (0)
              }
              else
              {
@@ -3792,7 +3858,7 @@ index bf6fcf7..e71bbb3 100644
                  uint sh = 0;
                  uint base = 0;
                  cs.Iop = INSTR.addsub_imm(1,0,0,sh,base,cg.BP,reg); // ADD reg,BP,base
-@@ -2390,7 +2630,7 @@ void cdneg(ref CGstate cg, ref CodeBuilder cdb,elem* e,ref regm_t pretregs)
+@@ -2390,7 +2642,7 @@ void cdneg(ref CGstate cg, ref CodeBuilder cdb,elem* e,ref regm_t pretregs)
              // https://www.scs.stanford.edu/~zyedidia/arm64/fmov_float_gen.html
              cdb.gen1(INSTR.fmov_float_gen(1,2,1,6,Vn,Xn)); // Top half of 128-bit to 64-bit
              uint N, immr, imms;
@@ -3801,7 +3867,7 @@ index bf6fcf7..e71bbb3 100644
              uint sf = 1, opc = 2;
              cdb.gen1(INSTR.log_imm(sf,opc,N,immr,imms,Xn,Xn)); // https://www.scs.stanford.edu/~zyedidia/arm64/eor_log_imm.html
              cdb.gen1(INSTR.fmov_float_gen(1,2,1,7,Xn,Vn)); // 64-bit to top half of 128-bit
-@@ -2420,10 +2660,12 @@ void cdneg(ref CGstate cg, ref CodeBuilder cdb,elem* e,ref regm_t pretregs)
+@@ -2420,10 +2672,12 @@ void cdneg(ref CGstate cg, ref CodeBuilder cdb,elem* e,ref regm_t pretregs)
       */
  
      uint sf = sz == 8;
@@ -3817,7 +3883,7 @@ index bf6fcf7..e71bbb3 100644
      fixresult(cg,cdb,e,retregs,pretregs);
  }
  
-@@ -2467,7 +2709,7 @@ void cdabs(ref CGstate cg, ref CodeBuilder cdb,elem* e, ref regm_t pretregs)
+@@ -2467,7 +2721,7 @@ void cdabs(ref CGstate cg, ref CodeBuilder cdb,elem* e, ref regm_t pretregs)
              // https://www.scs.stanford.edu/~zyedidia/arm64/fmov_float_gen.html
              cdb.gen1(INSTR.fmov_float_gen(1,2,1,6,Vn,Xn)); // Top half of 128-bit to 64-bit
              uint N, immr, imms;
@@ -3826,7 +3892,7 @@ index bf6fcf7..e71bbb3 100644
              uint sf = 1, opc = 0;
              cdb.gen1(INSTR.log_imm(sf,opc,N,immr,imms,Xn,Xn)); // https://www.scs.stanford.edu/~zyedidia/arm64/eor_log_imm.html
              cdb.gen1(INSTR.fmov_float_gen(1,2,1,7,Xn,Vn)); // 64-bit to top half of 128-bit
-@@ -2518,7 +2760,7 @@ void cdabs(ref CGstate cg, ref CodeBuilder cdb,elem* e, ref regm_t pretregs)
+@@ -2518,7 +2772,7 @@ void cdabs(ref CGstate cg, ref CodeBuilder cdb,elem* e, ref regm_t pretregs)
      op = 1;
      S = 0;
      uint Rm = Rn;
@@ -3835,7 +3901,7 @@ index bf6fcf7..e71bbb3 100644
      uint o2 = 1;
      ins = (sf     << 31) |
            (op     << 30) |
-@@ -2582,7 +2824,7 @@ void cdpost(ref CGstate cg, ref CodeBuilder cdb,elem* e,ref regm_t pretregs)
+@@ -2582,7 +2836,7 @@ void cdpost(ref CGstate cg, ref CodeBuilder cdb,elem* e,ref regm_t pretregs)
          gentstreg(cdb,cs.reg,sz == 8);          // CMP cs.reg,#0
  
          // If lvalue is a register variable, we must mark it as modified
@@ -3844,7 +3910,7 @@ index bf6fcf7..e71bbb3 100644
  
          const n = e2.Vint;
          uint opx = e.Eoper == OPpostinc ? 0 : 1;
-@@ -2611,13 +2853,15 @@ void cdpost(ref CGstate cg, ref CodeBuilder cdb,elem* e,ref regm_t pretregs)
+@@ -2611,13 +2865,15 @@ void cdpost(ref CGstate cg, ref CodeBuilder cdb,elem* e,ref regm_t pretregs)
          }
  
          /* If lvalue is a register variable, we must mark it as modified */
@@ -6874,10 +6940,10 @@ index 820f7b3..84baf07 100644
          // merge #define's with output
          argv.push("-dD");       // https://gcc.gnu.org/onlinedocs/cpp/Invocation.html#index-dD
 diff --git a/dmd/main.d b/dmd/main.d
-index 196fa05..e538976 100644
+index b0c2fd7..9d092df 100644
 --- a/dmd/main.d
 +++ b/dmd/main.d
-@@ -1183,7 +1183,8 @@ bool parseCommandlineAndConfig(const(char)[][] argv, out Param params, ref Strin
+@@ -1179,7 +1179,8 @@ bool parseCommandlineAndConfig(const(char)[][] argv, out Param params, ref Strin
      if (char* p = getenv("DDOCFILE"))
          global.params.ddoc.files.shift(p);
  

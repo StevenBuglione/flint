@@ -6,7 +6,9 @@ Each test is a self-checking D program that exits 0 on success. It is compiled w
 for the target, and run natively on arm64 or under QEMU user mode elsewhere. A test
 `name.d` may have a C companion `name.c`, and a directory `name/` of D modules (and C
 files, which DMD compiles as ImportC) that `dmd -lib` builds into a static library the
-test links with. A test `betterc_*.d` is compiled with -betterC and linked without druntime.
+test links with. A test `betterc_*.d` is compiled with -betterC and linked without druntime. On Linux, the directory
+of a test `shared_*.d` is built (-betterC) into a shared library the test links with, through its run path; that of a
+`dlopen_*.d` too, but the test only finds it at run time (dlopen).
 
     python3 toolchain/arm64/run.py --dmd DMD --druntime-import DIR --druntime LIB
         [--os linux|osx] [--cc CC] [--run-prefix "qemu-aarch64 -L /usr/aarch64-linux-gnu"]
@@ -74,6 +76,8 @@ def main():
     ap.add_argument('tests', nargs='*')
     a = ap.parse_args()
     tests = [HERE / t for t in a.tests] if a.tests else sorted(HERE.glob('*.d'))
+    if a.os != 'linux':     # ELF shared libraries
+        tests = [t for t in tests if not t.name.startswith(('shared_', 'dlopen_'))]
     libs = ['-lpthread', '-lm'] + (['-ldl'] if a.os == 'linux' else [])
     failed = []
     # The C preprocessor for ImportC: the cross compiler's when one is given (aarch64-linux-gnu-gcc -> -cpp)
@@ -90,7 +94,16 @@ def main():
                 library = []
                 directory = t.with_suffix('')
                 modules = sorted(directory.glob('*.d')) + sorted(directory.glob('*.c')) if directory.is_dir() else []
-                if modules:
+                shared = t.name.startswith(('shared_', 'dlopen_'))
+                if modules and shared:
+                    libdir = Path(tmp) / (name + '.so.d')
+                    libdir.mkdir()
+                    steps.append(common + ['-betterC', '-c', *map(str, modules), '-od' + str(libdir)])
+                    objects = [str(libdir / (m.stem + '.o')) for m in modules]
+                    steps.append(shlex.split(a.cc) + ['-shared', *objects, '-o', str(libdir / ('lib' + t.stem + '.so'))])
+                    library = (['-L' + str(libdir), '-l' + t.stem] if t.name.startswith('shared_') else []) \
+                        + ['-Wl,-rpath,' + str(libdir)]
+                elif modules:
                     lib = Path(tmp) / (name + '.a')
                     steps.append(common + ['-lib', *map(str, modules), '-of' + str(lib)])
                     library = [str(lib)]
