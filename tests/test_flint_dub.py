@@ -2,12 +2,13 @@
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import tempfile
 import unittest
 from pathlib import Path
 
-from test_flint_cli import codes, environment, error, flint, flint_json, setUpModule  # noqa: F401
+from test_flint_cli import EXE, codes, environment, error, flint, flint_json, setUpModule  # noqa: F401
 from test_flint_deps import git
 
 
@@ -31,12 +32,12 @@ def publish_dub(proxy, name, version, source, dependencies=''):
     if not directory.exists():
         (directory / 'source').mkdir(parents=True)
         git(directory, 'init', '-q', '-b', 'main')
-    (directory / 'dub.sdl').write_text(f'name "{name}"\nlicense "MIT"\ntargetType "library"\n{dependencies}')
-    (directory / 'source' / (name + '.d')).write_text(source.format(module=name))
+    (directory / 'dub.sdl').write_text(f'name "{name}"\nlicense "MIT"\ntargetType "library"\n{dependencies}', encoding='utf-8')
+    (directory / 'source' / (name + '.d')).write_text(source.format(module=name), encoding='utf-8')
     git(directory, 'add', '-A')
     git(directory, 'commit', '-q', '-m', f'{name} {version}')
     git(directory, 'tag', '-f', 'v' + version)
-    commit = subprocess.run(['git', '-C', str(directory), 'rev-parse', 'HEAD'], capture_output=True, text=True).stdout.strip()
+    commit = subprocess.run(['git', '-C', str(directory), 'rev-parse', 'HEAD'], capture_output=True, text=True, encoding='utf-8').stdout.strip()
     return commit, tree_hash(directory)
 
 
@@ -60,7 +61,7 @@ class DubIndexTests(unittest.TestCase):
         raw = publish_dub(proxy, 'rawlib', '0.3.0', RAW, 'dependency "cleanlib" version="~>1.0"\n')
         index += entry('rawlib', '0.3.0', *raw, dependencies=['cleanlib@1.0.0'])
         cls.index = base / 'index.toml'
-        cls.index.write_text(index)
+        cls.index.write_text(index, encoding='utf-8')
         cls.proxy = proxy
         cls.env = environment(FLINT_PROXY='file://' + str(proxy), FLINT_CACHE=str(base / 'cache'),
                               FLINT_DUB_INDEX=str(cls.index))
@@ -68,10 +69,10 @@ class DubIndexTests(unittest.TestCase):
         assert status == 0, document
         cls.project = base / 'app'
         cls.manifest = cls.project / 'flint.toml'
-        cls.original = cls.manifest.read_text()
+        cls.original = cls.manifest.read_text(encoding='utf-8')
         (cls.project / 'test' / 'app' / 'dub_test.d').write_text(
             'module app.dub_test;\n\nimport cleanlib : twice;\n\n@safe:\n\n@("an indexed DUB package links")\nunittest\n'
-            '{\n    assert(twice(21) == 42);\n}\n')
+            '{\n    assert(twice(21) == 42);\n}\n', encoding='utf-8')
 
     @classmethod
     def tearDownClass(cls):
@@ -79,7 +80,7 @@ class DubIndexTests(unittest.TestCase):
 
     def use(self, dependencies, unchecked=''):
         self.manifest.write_text(self.original.replace('[dependencies]\n', '[dependencies]\n' + dependencies)
-                                 + ('\n[unchecked]\n' + unchecked if unchecked else ''))
+                                 + ('\n[unchecked]\n' + unchecked if unchecked else ''), encoding='utf-8')
         (self.project / 'flint.lock').unlink(missing_ok=True)
 
     def run_flint(self, *arguments, env=None):
@@ -89,7 +90,7 @@ class DubIndexTests(unittest.TestCase):
         self.use('"dub:cleanlib" = "1.1.0"\n')
         status, document = self.run_flint('test', '--compiler', 'both')
         self.assertEqual(status, 0, document['diagnostics'])
-        lock = (self.project / 'flint.lock').read_text()
+        lock = (self.project / 'flint.lock').read_text(encoding='utf-8')
         self.assertIn('name = "dub:cleanlib"\nkind = "dub"\npath = "example.test/dub/cleanlib"\nversion = "1.1.0"', lock)
         cache = Path(self.env['FLINT_CACHE']) / 'content'
         # DUB builds a working copy; the verified cache keeps exactly the fetched tree.
@@ -105,7 +106,7 @@ class DubIndexTests(unittest.TestCase):
         result = flint('build', cwd=self.project, env=self.env)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn('Unchecked dub:rawlib 0.3.0: legacy maths pending a port', result.stderr)
-        receipt = json.loads((self.project / '.flint/build/dev/app.receipt.json').read_text())
+        receipt = json.loads((self.project / ('.flint/build/dev/app' + EXE + '.receipt.json')).read_text(encoding='utf-8'))
         self.assertTrue(receipt['unchecked'][0].startswith('dub:rawlib 0.3.0: legacy maths pending a port'))
         status, audit = self.run_flint('deps', 'audit')
         self.assertEqual(status, 0, audit['diagnostics'])
@@ -139,7 +140,7 @@ class DubIndexTests(unittest.TestCase):
                 self.assertIn('compatibility index pins commit', document['diagnostics'][0]['message'])
             finally:
                 first = subprocess.run(['git', '-C', str(directory), 'rev-list', '--max-parents=0', 'HEAD'],
-                                       capture_output=True, text=True).stdout.strip()
+                                       capture_output=True, text=True, encoding='utf-8').stdout.strip()
                 git(directory, 'tag', '-f', 'v1.0.0', first)
 
     def test_5_vendored_dub_packages_build_offline(self):
@@ -151,13 +152,13 @@ class DubIndexTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as empty:
             status, document = self.run_flint('build', env=dict(self.env, FLINT_CACHE=empty, FLINT_OFFLINE='1'))
             self.assertEqual(status, 0, document['diagnostics'])
-        subprocess.run(['rm', '-rf', str(self.project / 'vendor')], check=True)
+        shutil.rmtree(self.project / 'vendor')
 
     def test_6_local_dub_directories_follow_the_same_rule(self):
         local = Path(self.temporary.name) / 'localraw'
         (local / 'source').mkdir(parents=True, exist_ok=True)
-        (local / 'dub.sdl').write_text('name "localraw"\ntargetType "library"\n')
-        (local / 'source' / 'localraw.d').write_text('module localraw;\n\n/// One.\nint one() @trusted\n{\n    return 1;\n}\n')
+        (local / 'dub.sdl').write_text('name "localraw"\ntargetType "library"\n', encoding='utf-8')
+        (local / 'source' / 'localraw.d').write_text('module localraw;\n\n/// One.\nint one() @trusted\n{\n    return 1;\n}\n', encoding='utf-8')
         before = tree_hash(local)
         self.use('localraw = { path = "../localraw" }\n')
         status, document = self.run_flint('build')

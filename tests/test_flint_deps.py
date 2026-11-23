@@ -23,9 +23,9 @@ def publish(proxy, name, version, requirements='', body='', imports=''):
         (directory / 'src' / name).mkdir(parents=True)
         git(directory, 'init', '-q', '-b', 'main')
     (directory / 'flint.toml').write_text(f'[project]\nname = "{name}"\nversion = "{version}"\nflint = "1.0"\n'
-                                          f'type = "library"\n\n[dependencies]\n{requirements}')
+                                          f'type = "library"\n\n[dependencies]\n{requirements}', encoding='utf-8')
     (directory / 'src' / name / 'package.d').write_text(
-        f'module {name};\n\n{imports}@safe:\n\n/// Release.\nenum string release = "{version}";\n{body}')
+        f'module {name};\n\n{imports}@safe:\n\n/// Release.\nenum string release = "{version}";\n{body}', encoding='utf-8')
     git(directory, 'add', '-A')
     git(directory, 'commit', '-q', '-m', f'{name} {version}')
     git(directory, 'tag', 'v' + version)
@@ -54,12 +54,12 @@ class RemoteDependencyTests(unittest.TestCase):
         assert status == 0, document
         cls.project = base / 'app'
         manifest = cls.project / 'flint.toml'
-        manifest.write_text(manifest.read_text().replace('[dependencies]\n', '[dependencies]\n'
+        manifest.write_text(manifest.read_text(encoding='utf-8').replace('[dependencies]\n', '[dependencies]\n'
                             '"example.test/acme/money" = "1.0.0"\n"example.test/acme/ledger" = "1.0.0"\n'
-                            '"example.test/acme/invoice" = "1.0.0"\n'))
+                            '"example.test/acme/invoice" = "1.0.0"\n'), encoding='utf-8')
         greeting = cls.project / 'src/app/greeting.d'
-        greeting.write_text(greeting.read_text().replace('@safe:\n', 'import invoice : total;\n\n@safe:\n', 1)
-                            .replace('"!";', '"! " ~ total();'))
+        greeting.write_text(greeting.read_text(encoding='utf-8').replace('@safe:\n', 'import invoice : total;\n\n@safe:\n', 1)
+                            .replace('"!";', '"! " ~ total();'), encoding='utf-8')
 
     @classmethod
     def tearDownClass(cls):
@@ -73,7 +73,7 @@ class RemoteDependencyTests(unittest.TestCase):
         self.assertEqual(status, 0, document['diagnostics'])
         locked = {p['name']: p for p in document['packages']}
         self.assertEqual(locked['example.test/acme/money']['kind'], 'remote')
-        text = (self.project / 'flint.lock').read_text()
+        text = (self.project / 'flint.lock').read_text(encoding='utf-8')
         self.assertIn('name = "example.test/acme/money"\nkind = "remote"\nversion = "1.2.0"', text)
         self.assertNotIn('2.0.0-rc.1', text)
         status, why = self.run_flint('deps', 'why', 'example.test/acme/money')
@@ -94,16 +94,16 @@ class RemoteDependencyTests(unittest.TestCase):
         self.assertEqual(status, 0, tested['diagnostics'])
 
     def test_3_tampering_and_unavailable_modules_fail(self):
-        lock = (self.project / 'flint.lock').read_text()
+        lock = (self.project / 'flint.lock').read_text(encoding='utf-8')
         content = lock.split('name = "example.test/acme/money"')[1].split('content_sha256 = "')[1].split('"')[0]
         source = self.cache / 'content' / content / 'src' / 'money' / 'package.d'
-        original = source.read_text()
-        source.write_text(original + '// edited\n')
+        original = source.read_text(encoding='utf-8')
+        source.write_text(original + '// edited\n', encoding='utf-8')
         try:
             status, document = self.run_flint('build')
             self.assertEqual((status, codes(document)[:1]), (3, ['FLINT-E0309']))
         finally:
-            source.write_text(original)
+            source.write_text(original, encoding='utf-8')
         empty = dict(self.env, FLINT_PROXY='off', FLINT_CACHE=str(Path(self.temporary.name) / 'empty-cache'))
         status, document = self.run_flint('build', env=empty)
         self.assertEqual((status, codes(document)[:1]), (3, ['FLINT-E0307']))
@@ -125,19 +125,19 @@ class RemoteDependencyTests(unittest.TestCase):
         status, updated = flint_json('deps', 'update', cwd=work, env=self.env)
         self.assertEqual(status, 0, updated['diagnostics'])
         self.assertIn('example.test/acme/money 1.0.0 -> 1.2.0', updated['changes'])
-        self.assertIn('"example.test/acme/money" = "1.2.0"', (work / 'flint.toml').read_text())
+        self.assertIn('"example.test/acme/money" = "1.2.0"', (work / 'flint.toml').read_text(encoding='utf-8'))
 
     def test_6_missing_tags_and_path_dependencies_in_published_modules_fail(self):
         work = Path(self.temporary.name) / 'missing'
         shutil.copytree(self.project, work, ignore=shutil.ignore_patterns('.flint'))
         manifest = work / 'flint.toml'
-        manifest.write_text(manifest.read_text().replace('"example.test/acme/money" = "1.0.0"',
-                                                         '"example.test/acme/money" = "9.0.0"'))
+        manifest.write_text(manifest.read_text(encoding='utf-8').replace('"example.test/acme/money" = "1.0.0"',
+                                                         '"example.test/acme/money" = "9.0.0"'), encoding='utf-8')
         status, document = flint_json('lock', cwd=work, env=self.env)
         self.assertEqual((status, codes(document)[:1]), (3, ['FLINT-E0308']))
         publish(self.proxy, 'leaky', '1.0.0', 'local = { path = "../local" }\n')
-        manifest.write_text(manifest.read_text().replace('"example.test/acme/money" = "9.0.0"',
-                                                         '"example.test/acme/leaky" = "1.0.0"'))
+        manifest.write_text(manifest.read_text(encoding='utf-8').replace('"example.test/acme/money" = "9.0.0"',
+                                                         '"example.test/acme/leaky" = "1.0.0"'), encoding='utf-8')
         status, document = flint_json('lock', cwd=work, env=self.env)
         self.assertEqual((status, codes(document)[:1]), (3, ['FLINT-E0310']))
 

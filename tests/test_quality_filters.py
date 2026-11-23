@@ -15,9 +15,9 @@ def spring_roots():
     roots = set()
     framework = ROOT / 'policy/framework.json'
     if framework.is_file():
-        for meta in json.loads(framework.read_text())['modules'].values():
+        for meta in json.loads(framework.read_text(encoding='utf-8'))['modules'].values():
             roots.update([meta['module'], *meta.get('also', [])])
-    for meta in json.loads((ROOT / 'policy/boot.json').read_text())['libraries'].values():
+    for meta in json.loads((ROOT / 'policy/boot.json').read_text(encoding='utf-8'))['libraries'].values():
         if meta['directory'].startswith(('boot/core', 'boot/module', 'boot/starter')):
             roots.add(meta['module'])
     return {root for root in roots if not root.startswith('flint.engine.')}

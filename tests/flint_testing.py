@@ -35,7 +35,7 @@ WORKSPACE = _workspace.Workspace(_workspace_file())
 def _renamed():
     import json
     path = FLINT_ROOT / 'policy' / 'renamed-packages.json'
-    return json.loads(path.read_text())['renamed'] if path.is_file() else {}
+    return json.loads(path.read_text(encoding='utf-8'))['renamed'] if path.is_file() else {}
 
 
 def package_dir(name):

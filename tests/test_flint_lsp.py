@@ -85,7 +85,7 @@ class LspTests(unittest.TestCase):
         self.assertTrue(capabilities['hoverProvider'] and capabilities['definitionProvider'])
 
     def test_2_diagnostics_follow_the_unsaved_buffer(self):
-        text = self.app.read_text()
+        text = self.app.read_text(encoding='utf-8')
         self.assertEqual(self.open(text), [])
         broken = text.replace('    writeln(greet(', '    int lsp = undefinedName;\n    writeln(greet(')
         started = time.monotonic()
@@ -99,7 +99,7 @@ class LspTests(unittest.TestCase):
         self.assertIn('undefinedName', found[0]['message'])
         self.assertEqual(found[0]['severity'], 1)
         self.assertLess(elapsed, 30)
-        self.assertEqual(self.app.read_text(), text)  # the file on disk is untouched
+        self.assertEqual(self.app.read_text(encoding='utf-8'), text)  # the file on disk is untouched
         unsafe = text.replace('@safe:\n', '', 1)
         self.client.notify('textDocument/didChange', {'textDocument': {'uri': self.uri, 'version': 3},
                                                       'contentChanges': [{'text': unsafe}]})
@@ -110,7 +110,7 @@ class LspTests(unittest.TestCase):
         self.assertEqual(self.client.diagnostics(self.uri), [])
 
     def test_3_hover_definition_and_completion_answer_from_the_pinned_api(self):
-        text = self.app.read_text()
+        text = self.app.read_text(encoding='utf-8')
         self.open(text)
         line = next(i for i, l in enumerate(text.splitlines()) if 'import flint.config' in l)
         column = text.splitlines()[line].index(' load') + 2

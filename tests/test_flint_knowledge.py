@@ -8,7 +8,7 @@ from test_flint_cli import ROOT, codes, environment, flint, flint_json, setUpMod
 
 # Web and data applications link the native providers through the workspace recipes' generated blocks.
 from flint_testing import package_dir  # noqa: E402
-NATIVE_LINKED = 'BEGIN FLINT NATIVE' in (package_dir('engine-web') / 'dub.sdl').read_text()
+NATIVE_LINKED = 'BEGIN FLINT NATIVE' in (package_dir('engine-web') / 'dub.sdl').read_text(encoding='utf-8')
 
 WIRING = '''module shop.order.wiring_test;
 
@@ -73,7 +73,7 @@ class DocsTests(unittest.TestCase):
         self.assertTrue(symbol['examples'])
         example = symbol['examples'][0]
         self.assertTrue(example['file'].startswith('packages/os/tests/'))
-        source = (ROOT / example['file']).read_text().splitlines()
+        source = (ROOT / example['file']).read_text(encoding='utf-8').splitlines()
         self.assertIn(source[example['line'] - 1].strip(), example['code'])
 
     def test_search_finds_templates_and_reports_misses(self):
@@ -88,8 +88,8 @@ class DocsTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             status, document = flint_json('docs', '--export', directory)
             self.assertEqual(status, 0, document['diagnostics'])
-            summary = (Path(directory) / 'llms.txt').read_text()
-            full = (Path(directory) / 'llms-full.txt').read_text()
+            summary = (Path(directory) / 'llms.txt').read_text(encoding='utf-8')
+            full = (Path(directory) / 'llms-full.txt').read_text(encoding='utf-8')
             self.assertIn('`flint.engine.di`', summary)
             self.assertIn('### flint.os.run', full)
 
@@ -120,7 +120,7 @@ class GenerateTests(unittest.TestCase):
         return flint_json(*arguments, cwd=self.project)
 
     def test_1_new_projects_carry_agents_md(self):
-        guide = (self.project / 'AGENTS.md').read_text()
+        guide = (self.project / 'AGENTS.md').read_text(encoding='utf-8')
         self.assertIn('# shop: working in a Flint project', guide)
         self.assertIn('module shop.order.service;', guide)
         self.assertIn('flint docs', guide)
@@ -138,7 +138,7 @@ class GenerateTests(unittest.TestCase):
             status, document = self.run_flint('generate', kind, 'Order')
             self.assertEqual(status, 0, (kind, document['diagnostics']))
         self.assertTrue((self.project / 'resources/migrations/V000001__order.sql').is_file())
-        manifest = (self.project / 'flint.toml').read_text()
+        manifest = (self.project / 'flint.toml').read_text(encoding='utf-8')
         for package in ('engine-data', 'engine-di', 'engine-web', 'config', 'engine-migrate', 'engine-sql'):
             self.assertIn('"flint:' + package + '"', manifest)
         status, document = self.run_flint('lock', '--check')
@@ -149,7 +149,7 @@ class GenerateTests(unittest.TestCase):
         self.assertEqual((status, codes(document)), (4, ['FLINT-E0008']))
         if NATIVE_LINKED:
             (self.project / 'test/shop/order').mkdir(parents=True, exist_ok=True)
-            (self.project / 'test/shop/order/wiring_test.d').write_text(WIRING)
+            (self.project / 'test/shop/order/wiring_test.d').write_text(WIRING, encoding='utf-8')
             status, document = self.run_flint('test')
             self.assertEqual(status, 0, document['diagnostics'])
 
@@ -160,10 +160,10 @@ class GenerateTests(unittest.TestCase):
         self.assertEqual((status, codes(document)), (4, ['FLINT-E0003']))
 
     def test_5_generate_agents_refreshes_agents_md(self):
-        (self.project / 'AGENTS.md').write_text('stale\n')
+        (self.project / 'AGENTS.md').write_text('stale\n', encoding='utf-8')
         status, document = self.run_flint('generate', 'agents')
         self.assertEqual(status, 0, document['diagnostics'])
-        self.assertIn('Flint way', (self.project / 'AGENTS.md').read_text())
+        self.assertIn('Flint way', (self.project / 'AGENTS.md').read_text(encoding='utf-8'))
 
 
 if __name__ == '__main__':

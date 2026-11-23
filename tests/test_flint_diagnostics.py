@@ -19,7 +19,7 @@ TOOLS = Path(os.environ.get('FLINT_TOOLCHAIN_DIR') or ROOT / '.tools')
 import install_toolchains  # noqa: E402
 
 # The forked DMD fills the DMD role; on macOS and Linux arm64 with its AArch64 code generator (ADR-025 section 3).
-DMD = TOOLS / 'dmd2' / ('osx' if sys.platform == 'darwin' else 'linux') / 'bin64' / 'dmd'
+DMD = TOOLS / 'dmd2' / {'darwin': 'osx', 'win32': 'windows'}.get(sys.platform, 'linux') / 'bin64' / ('dmd.exe' if sys.platform == 'win32' else 'dmd')
 # flint condenses the fork's diagnostics on Linux x86-64 only (flint_tool.engine.builder.condensedDiagnostics).
 FORK_HOST = sys.platform == 'linux' and os.uname().machine in ('x86_64', 'amd64')
 ERROR = re.compile(r'^(?P<file>.+?)\((?P<line>\d+)(?:,\d+)?\): Error: (?P<message>.*)$')
@@ -36,7 +36,7 @@ def hide_flags():
 
 def compile_fixture(source, extra=()):
     command = [str(DMD), '-c', '-o-', '-preview=dip1000', *ci.import_flags(), *extra, str(source)]
-    result = subprocess.run(command, cwd=ROOT, capture_output=True, text=True)
+    result = subprocess.run(command, cwd=ROOT, capture_output=True, text=True, encoding='utf-8')
     return result.returncode, result.stdout + result.stderr
 
 
@@ -45,7 +45,7 @@ def errors(output):
 
 
 def expectation(source):
-    line = source.read_text().splitlines()[1]
+    line = source.read_text(encoding='utf-8').splitlines()[1]
     assert line.startswith('// expect: '), source
     return re.compile(line[len('// expect: '):])
 
@@ -107,9 +107,9 @@ class MisuseTests(unittest.TestCase):
     def probe_hide_support(self):
         with tempfile.TemporaryDirectory(prefix='flint-diagnostics-') as temporary:
             empty = Path(temporary) / 'empty.d'
-            empty.write_text('module empty;\n')
+            empty.write_text('module empty;\n', encoding='utf-8')
             result = subprocess.run([str(DMD), '-c', '-o-', '-verror-hide=/nonexistent/', str(empty)],
-                                    capture_output=True, text=True)
+                                    capture_output=True, text=True, encoding='utf-8')
             return result.returncode, result.stdout + result.stderr
 
 

@@ -23,7 +23,7 @@ native_build=load('native_build')
 class CiBoundaryTests(unittest.TestCase):
     def event(self,kind,payload,**environment):
         with tempfile.TemporaryDirectory() as temporary:
-            path=Path(temporary)/'event.json';path.write_text(json.dumps(payload))
+            path=Path(temporary)/'event.json';path.write_text(json.dumps(payload), encoding='utf-8')
             env={'GITHUB_EVENT_PATH':str(path),'GITHUB_EVENT_NAME':kind,**environment}
             with patch.dict(os.environ,env,clear=True),contextlib.redirect_stdout(io.StringIO()) as output:
                 ci.refs(None)
@@ -108,7 +108,7 @@ class CiBoundaryTests(unittest.TestCase):
             args=SimpleNamespace(target='linux-x86_64-glibc',work_dir=temporary,prefix=None,cc='clang',cxx='clang++',
                                  sanitize='address,undefined',phase='plan',cmake_toolchain=None,jobs=1,
                                  profile='ci',with_codegen=False,allow_webview=False)
-            builder=native_build.Builder(args,json.loads((TOOLS.parent/'policy/native-lock.json').read_text()))
+            builder=native_build.Builder(args,json.loads((TOOLS.parent/'policy/native-lock.json').read_text(encoding='utf-8')))
             seen={}
             def build_source(name,src,build):seen[name]=builder.env['CFLAGS'].split()
             with patch.object(builder,'build_source',side_effect=build_source):
@@ -127,7 +127,7 @@ class CiBoundaryTests(unittest.TestCase):
             output=Path(temporary)/'ruleset.json'
             with contextlib.redirect_stdout(io.StringIO()):
                 self.assertEqual(configure.main(['--repo','example/flint','--output',str(output)]),0)
-            rules=json.loads(output.read_text())
+            rules=json.loads(output.read_text(encoding='utf-8'))
             required=rules['rules'][0]['parameters']
             self.assertEqual(required['required_status_checks'],[{'context':'Flint / all six gates'}])
             self.assertTrue(required['strict_required_status_checks_policy'])
@@ -137,7 +137,7 @@ class CiBoundaryTests(unittest.TestCase):
         calls=[]
         class Recorder:
             plan=True
-            def run(self,command,**kwargs):calls.append([str(x) for x in command])
+            def run(self,command,**kwargs):calls.append([str(x).replace(os.sep,'/') for x in command])
         ci.wasm_betterc(Recorder())
         compiles=[command for command in calls if command[0]=='ldc2']
         self.assertEqual(len(compiles),5)
@@ -190,12 +190,12 @@ class CiBoundaryTests(unittest.TestCase):
                 ('.native-sanitized/logs/'+target+'/shims.log','instrumented output'),
                 ('.native-sanitized/install/'+target+'/flint-native-install.json','{}'),
                 ('.tools/rust/flint-rust-install.json','{"rust_version":"1.97.0"}')]:
-                path=root/relative;path.parent.mkdir(parents=True,exist_ok=True);path.write_text(content)
+                path=root/relative;path.parent.mkdir(parents=True,exist_ok=True);path.write_text(content, encoding='utf-8')
             ci.preserve_native(target,sanitize=True)
             output=root/'artifacts/native-sanitizers'
-            self.assertEqual((output/'engine-logs/wasmtime.log').read_text(),'engine output')
+            self.assertEqual((output/'engine-logs/wasmtime.log').read_text(encoding='utf-8'),'engine output')
             self.assertTrue((output/'logs/shims.log').is_file())
             self.assertTrue((output/(target+'-install.json')).is_file())
-            self.assertEqual(json.loads((output/'rust-toolchain-install.json').read_text())['rust_version'],'1.97.0')
+            self.assertEqual(json.loads((output/'rust-toolchain-install.json').read_text(encoding='utf-8'))['rust_version'],'1.97.0')
 
 if __name__=='__main__':unittest.main()

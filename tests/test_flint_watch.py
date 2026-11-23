@@ -3,6 +3,7 @@ import json
 import shutil
 import signal
 import subprocess
+import sys
 import tempfile
 import time
 import unittest
@@ -21,6 +22,9 @@ def wait_for(predicate, timeout=60):
     return None
 
 
+# flint watch stops on Ctrl+C. A test cannot deliver Ctrl+C to a child on Windows without sharing a console with it,
+# and Ctrl+Break is SIGTERM, which flint watch leaves to the default handler (ADR-026, known gaps).
+@unittest.skipIf(sys.platform == 'win32', 'flint watch is stopped with SIGINT, which Windows cannot send to a child')
 class WatchTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -35,9 +39,9 @@ class WatchTests(unittest.TestCase):
 
     def test_watch_rebuilds_restarts_and_survives_errors(self):
         greeting = self.project / 'src/w/greeting.d'
-        original = greeting.read_text()
+        original = greeting.read_text(encoding='utf-8')
         process = subprocess.Popen([str(FLINT), 'watch', '--json'], cwd=self.project, stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE, text=True, env=environment())
+                                   stderr=subprocess.PIPE, text=True, encoding='utf-8', env=environment())
         events = []
 
         def next_event():
@@ -49,15 +53,15 @@ class WatchTests(unittest.TestCase):
             self.assertTrue(wait_for(next_event))
             self.assertEqual((events[0]['cycle'], events[0]['action'], events[0]['ok']), (1, 'build', True))
             self.assertTrue(events[0]['restarted'])
-            greeting.write_text(original.replace('"world"', '"planet"'))
+            greeting.write_text(original.replace('"world"', '"planet"'), encoding='utf-8')
             self.assertTrue(wait_for(next_event))
             self.assertEqual(events[1]['changed'], ['src/w/greeting.d'])
             self.assertTrue(events[1]['ok'])
-            greeting.write_text(original + '\nint broken(\n')
+            greeting.write_text(original + '\nint broken(\n', encoding='utf-8')
             self.assertTrue(wait_for(next_event))
             self.assertFalse(events[2]['ok'])
             self.assertFalse(events[2]['restarted'])
-            greeting.write_text(original)
+            greeting.write_text(original, encoding='utf-8')
             self.assertTrue(wait_for(next_event))
             self.assertTrue(events[3]['ok'])
         finally:
@@ -65,14 +69,14 @@ class WatchTests(unittest.TestCase):
             self.assertEqual(process.wait(timeout=30), 0)
             process.stdout.close()
             process.stderr.close()
-            greeting.write_text(original)
+            greeting.write_text(original, encoding='utf-8')
         self.assertEqual([e['cycle'] for e in events], [1, 2, 3, 4])
 
     def test_libraries_are_retested(self):
         with tempfile.TemporaryDirectory() as directory:
             flint_json('new', 'lib', '--type', 'library', cwd=directory)
             process = subprocess.Popen([str(FLINT), 'watch', '--json'], cwd=Path(directory) / 'lib',
-                                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=environment())
+                                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding='utf-8', env=environment())
             try:
                 event = json.loads(wait_for(process.stdout.readline))
                 self.assertEqual((event['action'], event['ok'], event['restarted']), ('test', True, False))
@@ -91,11 +95,11 @@ class DebugTests(unittest.TestCase):
             project = Path(directory) / 'd'
             status, document = flint_json('generate', 'debug', cwd=project)
             self.assertEqual(status, 0, document['diagnostics'])
-            launch = json.loads((project / '.vscode/launch.json').read_text())
+            launch = json.loads((project / '.vscode/launch.json').read_text(encoding='utf-8'))
             gdb = launch['configurations'][0]
             self.assertEqual(gdb['program'], '${workspaceFolder}/.flint/build/dev/d')
             self.assertIn('source ' + str(ROOT / 'tools/debug/flint_gdb.py'), gdb['setupCommands'][1]['text'])
-            tasks = json.loads((project / '.vscode/tasks.json').read_text())
+            tasks = json.loads((project / '.vscode/tasks.json').read_text(encoding='utf-8'))
             self.assertEqual(tasks['tasks'][0]['command'], 'flint build')
 
     def test_the_gdb_printers_show_flint_values(self):
@@ -118,7 +122,7 @@ void main()
     auto text = Text(arena.copyIn(cast(const(ubyte)[]) "hello").value);
     inspect(good, bad, error, arena, text);
 }
-''')
+''', encoding='utf-8')
             dmd = DMD_BIN / 'dmd' if (DMD_BIN / 'dmd').is_file() else DMD_BIN / 'ldmd2'
             subprocess.run([str(dmd), '-g', '-i', '-preview=dip1000', '-I' + str(ROOT / 'packages/arena/source'),
                             str(source), '-of=' + str(Path(directory) / 'probe')], check=True, cwd=directory)
@@ -126,7 +130,7 @@ void main()
                                      str(ROOT / 'tools/debug/flint_gdb.py'), '-ex', 'break probe.inspect', '-ex', 'run',
                                      '-ex', 'print good', '-ex', 'print bad', '-ex', 'print error', '-ex', 'print arena',
                                      '-ex', 'print text', str(Path(directory) / 'probe')],
-                                    capture_output=True, text=True, timeout=120)
+                                    capture_output=True, text=True, encoding='utf-8', timeout=120)
             printed = [line.split('= ', 1)[1] for line in result.stdout.splitlines() if line.startswith('$')]
             self.assertEqual(printed[0], 'ok: 42')
             self.assertEqual(printed[1], "error: notFound 'no such user'")
@@ -139,7 +143,7 @@ void main()
             flint_json('new', 'r', cwd=directory)
             project = Path(directory) / 'r'
             result = subprocess.run([str(FLINT), 'run', '--debug', '--', '--name', 'gdb'], cwd=project,
-                                    input='set debuginfod enabled off\nrun\nquit\n', capture_output=True, text=True,
+                                    input='set debuginfod enabled off\nrun\nquit\n', capture_output=True, text=True, encoding='utf-8',
                                     timeout=180, env=environment())
             self.assertIn('Hello, gdb!', result.stdout)
             status, document = flint_json('run', '--debug', cwd=project)

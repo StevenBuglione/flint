@@ -22,13 +22,14 @@ class ProjectLinkerTests(unittest.TestCase):
             linker.touch()
             for driver in ('lld', 'mold'):
                 with self.subTest(driver=driver):
-                    config.write_text(section32 + '[Environment64]\nDFLAGS=-I%@P%/phobos -L-L%@P%/lib -fPIC\n')
+                    config.write_text(section32 + '[Environment64]\nDFLAGS=-I%@P%/phobos -L-L%@P%/lib -fPIC\n', encoding='utf-8')
                     configure_dmd_linker(bin_dir, {'driver': driver, 'path': linker})
-                    header, flags = config.read_text().split('[Environment64]\nDFLAGS=')
+                    header, flags = config.read_text(encoding='utf-8').split('[Environment64]\nDFLAGS=')
                     self.assertEqual(header, section32)
                     args = shlex.split(flags.replace('%@P%', str(bin_dir)))
-                    self.assertEqual(args, ['-I' + str(bin_dir / 'phobos'), '-L-L' + str(bin_dir / 'lib'), '-fPIC',
-                                            '-Xcc=-B' + str(bin_dir / 'flint-linker') + '/', '-Xcc=-fuse-ld=' + driver])
+                    # dmd.conf joins %@P% and the rest with '/', whatever the host's separator.
+                    self.assertEqual(args, ['-I' + str(bin_dir) + '/phobos', '-L-L' + str(bin_dir) + '/lib', '-fPIC',
+                                            '-Xcc=-B' + str(bin_dir) + '/flint-linker/', '-Xcc=-fuse-ld=' + driver])
                     self.assertTrue((bin_dir / 'flint-linker' / ('ld.' + driver)).samefile(linker))
 
     def test_unrecognized_linker_is_rejected(self):
@@ -56,7 +57,7 @@ class SanitizerToolchainTests(unittest.TestCase):
                 path.write_bytes(name.encode())
                 libraries[name] = {'sha256': install_toolchains.sha256_file(path), 'size': path.stat().st_size}
             receipt = {'inputs': install_toolchains.sanitizer_runtime_inputs(), 'libraries': libraries}
-            (output / install_toolchains.SANITIZER_RUNTIME_RECEIPT).write_text(json.dumps(receipt))
+            (output / install_toolchains.SANITIZER_RUNTIME_RECEIPT).write_text(json.dumps(receipt), encoding='utf-8')
             self.assertEqual(install_toolchains.verified_sanitizer_runtime(output), receipt)
             self.assertIn('RT_SUPPORT_SANITIZERS=ON', receipt['inputs']['cmake'])
             (output / 'lib' / 'libdruntime-ldc-sanitizers.a').write_bytes(b'changed')

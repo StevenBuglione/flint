@@ -33,7 +33,7 @@ def entries(cache):
     """key -> (module, archive sha256 recorded, archive sha256 on disk)."""
     found = {}
     for record in sorted((Path(cache) / 'platform').glob('*/module.json')):
-        data = json.loads(record.read_text())
+        data = json.loads(record.read_text(encoding='utf-8'))
         archives = [p for p in record.parent.iterdir() if p.name != 'module.json']
         found[record.parent.name] = (data['module'], data['sha256'], sha256(archives[0]))
     return found
@@ -57,7 +57,7 @@ class PlatformCacheTests(unittest.TestCase):
         cls.temporary.cleanup()
 
     def receipt(self, project):
-        return json.loads((project / '.flint/build/dev/demo.receipt.json').read_text())
+        return json.loads((project / '.flint/build/dev/demo.receipt.json').read_text(encoding='utf-8'))
 
     def test_the_first_build_primes_the_cache_and_links_its_archives(self):
         self.assertIn('Priming', self.first.stderr)
@@ -69,13 +69,13 @@ class PlatformCacheTests(unittest.TestCase):
         self.assertTrue(linked)
         self.assertEqual({(item['key'], item['sha256']) for item in linked},
                          {(key, recorded) for key, (_, recorded, _) in stored.items()})
-        recipe = (self.project / '.flint/generated/dub/dub.sdl').read_text()
+        recipe = (self.project / '.flint/generated/dub/dub.sdl').read_text(encoding='utf-8')
         self.assertIn('dependency "flint:arena" path="../deps/../platform"', recipe)
         self.assertIn('"--start-group"', recipe)
-        platform = (self.project / '.flint/generated/platform/dub.sdl').read_text()
+        platform = (self.project / '.flint/generated/platform/dub.sdl').read_text(encoding='utf-8')
         self.assertIn('targetType "sourceLibrary"', platform)
         self.assertNotIn('sourcePaths', platform)
-        prelude = (self.project / '.flint/generated/platform/dmd-server-prelude.txt').read_text().splitlines()
+        prelude = (self.project / '.flint/generated/platform/dmd-server-prelude.txt').read_text(encoding='utf-8').splitlines()
         self.assertTrue(any(line.startswith('-I') for line in prelude), prelude)
         self.assertIn('flint.arena', prelude)
 
@@ -86,7 +86,7 @@ class PlatformCacheTests(unittest.TestCase):
         self.assertEqual(built.returncode, 0, built.stdout + built.stderr)
         self.assertNotIn('Priming', built.stderr)
         self.assertEqual(self.receipt(other)['platform_archives'], self.receipt(self.project)['platform_archives'])
-        ran = subprocess.run([str(other / '.flint/build/dev/demo')], cwd=other, capture_output=True, text=True,
+        ran = subprocess.run([str(other / '.flint/build/dev/demo')], cwd=other, capture_output=True, text=True, encoding='utf-8',
                              timeout=60)
         self.assertEqual(ran.returncode, 0, ran.stdout + ran.stderr)
 
@@ -105,7 +105,7 @@ class PlatformCacheTests(unittest.TestCase):
         built = flint('build', '--no-platform-cache', cwd=plain, env=environment(FLINT_CACHE=str(self.cache)))
         self.assertEqual(built.returncode, 0, built.stdout + built.stderr)
         self.assertEqual(self.receipt(plain)['platform_archives'], [])
-        self.assertNotIn('/platform"', (plain / '.flint/generated/dub/dub.sdl').read_text())
+        self.assertNotIn('/platform"', (plain / '.flint/generated/dub/dub.sdl').read_text(encoding='utf-8'))
 
     def test_flint_platform_cache_0_turns_it_off(self):
         off = self.directory / 'off'

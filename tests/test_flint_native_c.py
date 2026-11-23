@@ -137,11 +137,11 @@ class EmbeddedCTests(unittest.TestCase):
         assert status == 0, document
         cls.project = base / 'demo'
         (cls.project / 'native').mkdir()
-        (cls.project / 'native' / 'crc.c').write_text(CRC)
-        (cls.project / 'native' / 'crc.h').write_text(HEADER)
+        (cls.project / 'native' / 'crc.c').write_text(CRC, encoding='utf-8')
+        (cls.project / 'native' / 'crc.h').write_text(HEADER, encoding='utf-8')
         (cls.project / 'src' / 'demo' / 'ffi').mkdir()
-        (cls.project / 'src' / 'demo' / 'ffi' / 'crc.d').write_text(FFI)
-        (cls.project / 'test' / 'demo' / 'crc_test.d').write_text(TEST)
+        (cls.project / 'src' / 'demo' / 'ffi' / 'crc.d').write_text(FFI, encoding='utf-8')
+        (cls.project / 'test' / 'demo' / 'crc_test.d').write_text(TEST, encoding='utf-8')
 
     @classmethod
     def tearDownClass(cls):
@@ -151,7 +151,7 @@ class EmbeddedCTests(unittest.TestCase):
         return flint_json(*arguments, cwd=self.project, env=self.env)
 
     def receipt(self, document):
-        return json.loads((self.project / '.flint/build/dev/demo.receipt.json').read_text())
+        return json.loads((self.project / '.flint/build/dev/demo.receipt.json').read_text(encoding='utf-8'))
 
     def test_1_build_hardens_and_records_the_c(self):
         status, document = self.run_flint('build')
@@ -159,19 +159,19 @@ class EmbeddedCTests(unittest.TestCase):
         binary = self.project / '.flint/build/dev/demo'
         if sys.platform == 'darwin':
             # Mach-O (ADR-024): a PIE executable whose fixups ld64 resolves at load (chained fixups).
-            header = subprocess.run(['otool', '-hv', str(binary)], capture_output=True, text=True).stdout
-            commands = subprocess.run(['otool', '-l', str(binary)], capture_output=True, text=True).stdout
+            header = subprocess.run(['otool', '-hv', str(binary)], capture_output=True, text=True, encoding='utf-8').stdout
+            commands = subprocess.run(['otool', '-l', str(binary)], capture_output=True, text=True, encoding='utf-8').stdout
             self.assertIn('PIE', header)
             self.assertIn('LC_DYLD_CHAINED_FIXUPS', commands)
         else:
-            headers = subprocess.run(['readelf', '-lW', str(binary)], capture_output=True, text=True).stdout
-            dynamic = subprocess.run(['readelf', '-dW', str(binary)], capture_output=True, text=True).stdout
+            headers = subprocess.run(['readelf', '-lW', str(binary)], capture_output=True, text=True, encoding='utf-8').stdout
+            dynamic = subprocess.run(['readelf', '-dW', str(binary)], capture_output=True, text=True, encoding='utf-8').stdout
             self.assertIn('GNU_RELRO', headers)
             self.assertIn('Position-Independent Executable', headers)
             self.assertIn('BIND_NOW', dynamic)
         # ld64 dead-strips functions the executable never calls, as main here never calls the C (ADR-024).
         built = [str(binary)] if sys.platform != 'darwin' else [str(p) for p in (self.project / '.flint/cache/c').glob('*.o')]
-        symbols = subprocess.run(['nm', *built], capture_output=True, text=True).stdout
+        symbols = subprocess.run(['nm', *built], capture_output=True, text=True, encoding='utf-8').stdout
         self.assertIn('demo_crc32', symbols)
         embedded = self.receipt(document)['embedded_c']
         self.assertEqual([s['path'] for s in embedded['sources']], ['native/crc.c'])
@@ -189,14 +189,14 @@ class EmbeddedCTests(unittest.TestCase):
         self.assertEqual(self.run_flint('build')[0], 0)
         self.assertEqual(sorted(p.name for p in cache.glob('*.o')), before)
         header = self.project / 'native' / 'crc.h'
-        header.write_text(HEADER.replace('#endif', 'int demo_version(void);\n#endif'))
+        header.write_text(HEADER.replace('#endif', 'int demo_version(void);\n#endif'), encoding='utf-8')
         try:
             self.assertEqual(self.run_flint('build')[0], 0)
             # A header change that alters the preprocessed unit gives a new key; a cached object is never
             # reused for a different translation unit.
             self.assertEqual(len(list(cache.glob('*.o'))), len(before) + 1)
         finally:
-            header.write_text(HEADER)
+            header.write_text(HEADER, encoding='utf-8')
 
     def test_3_tests_run_on_both_compilers(self):
         for compiler in ('dmd', 'ldc'):
@@ -207,14 +207,14 @@ class EmbeddedCTests(unittest.TestCase):
     def test_4_warnings_are_errors(self):
         source = self.project / 'native' / 'crc.c'
         source.write_text(CRC + '\nint demo_unused(int value);\nint demo_unused(int value)\n{\n    int x;\n'
-                          '    return value;\n}\n')
+                          '    return value;\n}\n', encoding='utf-8')
         try:
             status, document = self.run_flint('build')
             self.assertEqual(status, 1)
             self.assertEqual(codes(document), ['FLINT-E0708'])
             self.assertIn('-Wunused-variable', error(document, 'FLINT-E0708')['fix'])
         finally:
-            source.write_text(CRC)
+            source.write_text(CRC, encoding='utf-8')
 
     def test_5_check_runs_the_fixed_clang_tidy_profile(self):
         status, document = self.run_flint('check')
@@ -223,7 +223,7 @@ class EmbeddedCTests(unittest.TestCase):
         self.assertEqual(document['c_files'], 1)
         source = self.project / 'native' / 'crc.c'
         source.write_text('#include <string.h>\n' + CRC + '\nvoid demo_copy(char *to, const char *from);\n'
-                          'void demo_copy(char *to, const char *from)\n{\n    strcpy(to, from);\n}\n')
+                          'void demo_copy(char *to, const char *from)\n{\n    strcpy(to, from);\n}\n', encoding='utf-8')
         try:
             status, document = self.run_flint('check')
             self.assertEqual(status, 1)
@@ -232,14 +232,14 @@ class EmbeddedCTests(unittest.TestCase):
             self.assertEqual(tidy[0]['file'], 'native/crc.c')
             self.assertIn('strcpy', tidy[0]['message'])
         finally:
-            source.write_text(CRC)
+            source.write_text(CRC, encoding='utf-8')
 
     def test_6_c_is_reached_only_through_ffi_modules(self):
         rogue = self.project / 'src' / 'demo' / 'rogue.d'
         rogue.write_text('/// Rogue.\nmodule demo.rogue;\n\n@safe:\n\nextern (C) int puts(scope const(char)* text) '
-                         '@system nothrow @nogc;\n')
+                         '@system nothrow @nogc;\n', encoding='utf-8')
         imported = self.project / 'src' / 'demo' / 'direct.c'
-        imported.write_text('int demo_direct(void);\nint demo_direct(void) { return 1; }\n')
+        imported.write_text('int demo_direct(void);\nint demo_direct(void) { return 1; }\n', encoding='utf-8')
         try:
             status, document = self.run_flint('build')
             self.assertEqual(status, 1)
@@ -256,7 +256,7 @@ class EmbeddedCTests(unittest.TestCase):
         self.assertEqual(status, 0, document['diagnostics'])
         self.assertEqual(document['runs'][0]['compiler'], 'ldc2')
         overflow = self.project / 'test' / 'demo' / 'overflow_test.d'
-        overflow.write_text(OVERFLOW_TEST)
+        overflow.write_text(OVERFLOW_TEST, encoding='utf-8')
         try:
             status, document = self.run_flint('test', '--sanitize')
             self.assertEqual(status, 1)
@@ -268,7 +268,7 @@ class EmbeddedCTests(unittest.TestCase):
         finally:
             overflow.unlink()
         signed = self.project / 'test' / 'demo' / 'signed_test.d'
-        signed.write_text(SIGNED_OVERFLOW_TEST)
+        signed.write_text(SIGNED_OVERFLOW_TEST, encoding='utf-8')
         try:
             status, document = self.run_flint('test', '--sanitize')
             self.assertEqual(status, 1)

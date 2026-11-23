@@ -45,11 +45,11 @@ class RepoPolicyTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             (root / 'policy').mkdir()
-            packages = json.loads((ROOT / 'policy/packages.json').read_text())
+            packages = json.loads((ROOT / 'policy/packages.json').read_text(encoding='utf-8'))
             packages['packages']['log']['dependencies'].append('engine-web')
-            (root / 'policy/packages.json').write_text(json.dumps(packages))
+            (root / 'policy/packages.json').write_text(json.dumps(packages), encoding='utf-8')
             for name in ('boot.json', 'repos.json'):
-                (root / 'policy' / name).write_text((ROOT / 'policy' / name).read_text())
+                (root / 'policy' / name).write_text((ROOT / 'policy' / name).read_text(encoding='utf-8'), encoding='utf-8')
             violations, _ = workspace.edge_violations(root)
             self.assertEqual([message for _, _, message in violations],
                              ['log (flint) -> engine-web (framework): flint may not depend on framework'])
@@ -59,12 +59,12 @@ class WorkspaceTests(unittest.TestCase):
     def write(self, directory, commit):
         path = Path(directory) / 'workspace.json'
         checkouts = {repo: {'path': str(ROOT), 'commit': commit} for repo in workspace.repo_policy()['repos']}
-        path.write_text(json.dumps({'schema': 'flint.workspace/1', 'checkouts': checkouts}))
+        path.write_text(json.dumps({'schema': 'flint.workspace/1', 'checkouts': checkouts}), encoding='utf-8')
         return path
 
     @monorepo_only
     def test_pinned_checkouts_resolve_packages_and_verify(self):
-        head = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=ROOT, capture_output=True, text=True).stdout.strip()
+        head = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=ROOT, capture_output=True, text=True, encoding='utf-8').stdout.strip()
         with tempfile.TemporaryDirectory() as temporary:
             pinned = workspace.Workspace(self.write(temporary, head))
             self.assertEqual(pinned.verify(), [])
@@ -77,12 +77,12 @@ class WorkspaceTests(unittest.TestCase):
     def test_the_gate_checks_one_repo_and_refuses_a_stale_workspace(self):
         with tempfile.TemporaryDirectory() as temporary:
             gate = subprocess.run([sys.executable, str(ROOT / 'tools/gates.py'), '--gate', 'structural',
-                                   '--repo', 'ai', '--package', 'engine-ai'], cwd=ROOT, capture_output=True, text=True)
+                                   '--repo', 'ai', '--package', 'engine-ai'], cwd=ROOT, capture_output=True, text=True, encoding='utf-8')
             self.assertEqual(gate.returncode, 0, gate.stderr)
             self.assertEqual(json.loads(gate.stdout)['repo'], 'ai')
             stale = subprocess.run([sys.executable, str(ROOT / 'tools/gates.py'), '--gate', 'structural',
                                     '--workspace', str(self.write(temporary, '0000000'))],
-                                   cwd=ROOT, capture_output=True, text=True)
+                                   cwd=ROOT, capture_output=True, text=True, encoding='utf-8')
             self.assertEqual(stale.returncode, 1)
             self.assertIn('workspace:', stale.stderr)
 
@@ -95,7 +95,7 @@ class PlatformModuleTests(unittest.TestCase):
     def test_platform_lock_covers_every_repo_and_the_bill_of_materials_is_current(self):
         import platform_modules as module
         self.assertEqual(module.problems(), [])
-        bom = json.loads((ROOT / 'flint-dependencies.json').read_text())
+        bom = json.loads((ROOT / 'flint-dependencies.json').read_text(encoding='utf-8'))
         self.assertEqual(bom['artifacts']['flint:boot-core'], {'repo': 'boot', 'version': pinned('boot')})
         self.assertEqual(bom['artifacts']['flint:arena'], {'repo': 'flint', 'version': pinned('flint')})
         with tempfile.TemporaryDirectory() as temporary:
@@ -103,11 +103,11 @@ class PlatformModuleTests(unittest.TestCase):
             for name in ('policy',):
                 (root / name).mkdir(parents=True)
             for name in ('packages.json', 'boot.json', 'repos.json', 'platform.toml'):
-                (root / 'policy' / name).write_text((ROOT / 'policy' / name).read_text())
-            (root / 'platform.lock').write_text((ROOT / 'platform.lock').read_text())
+                (root / 'policy' / name).write_text((ROOT / 'policy' / name).read_text(encoding='utf-8'), encoding='utf-8')
+            (root / 'platform.lock').write_text((ROOT / 'platform.lock').read_text(encoding='utf-8'), encoding='utf-8')
             stale = dict(bom, artifacts=dict(bom['artifacts']))
             del stale['artifacts']['flint:engine-web']
-            (root / 'flint-dependencies.json').write_text(json.dumps(stale))
+            (root / 'flint-dependencies.json').write_text(json.dumps(stale), encoding='utf-8')
             self.assertEqual(module.problems(root), ['flint-dependencies.json is stale: '
                                                      + module.REGENERATE])
             self.assertIn('python3 tools/platform_modules.py --write', module.REGENERATE)
@@ -117,12 +117,12 @@ class PlatformModuleTests(unittest.TestCase):
         flint = ROOT / '.flint/bin/flint'
         with tempfile.TemporaryDirectory(prefix='flint-platform-') as temporary:
             temporary = str(Path(temporary).resolve())  # macOS: /var is a symlink to /private/var
-            created = subprocess.run([str(flint), 'new', 'shop'], cwd=temporary, capture_output=True, text=True)
+            created = subprocess.run([str(flint), 'new', 'shop'], cwd=temporary, capture_output=True, text=True, encoding='utf-8')
             self.assertEqual(created.returncode, 0, created.stderr)
             project = Path(temporary) / 'shop'
-            added = subprocess.run([str(flint), 'add', 'web'], cwd=project, capture_output=True, text=True)
+            added = subprocess.run([str(flint), 'add', 'web'], cwd=project, capture_output=True, text=True, encoding='utf-8')
             self.assertEqual(added.returncode, 0, added.stderr)
-            lock = (project / 'flint.lock').read_text()
+            lock = (project / 'flint.lock').read_text(encoding='utf-8')
             # flint:starter-web before the cutover; Spring Boot's flint:boot-starter-web once it is legacy-starter-web.
             starter = 'starter-web' if MONOREPO else 'boot-starter-web'
             self.assertIn('name = "flint:' + starter + '"\nkind = "core"\nsource = "flint-home"\nplatform = "boot@'
@@ -136,14 +136,14 @@ class LockPartitionTests(unittest.TestCase):
         import platform_modules
 
         partitions = platform_modules.lock_partitions()
-        self.assertEqual(partitions, json.loads((ROOT / 'policy/lock-partitions.json').read_text()))
+        self.assertEqual(partitions, json.loads((ROOT / 'policy/lock-partitions.json').read_text(encoding='utf-8')))
         self.assertEqual(partitions['native']['flint'], ['libyaml', 'utf8proc'])
         framework = set(partitions['native']['framework'])
         self.assertTrue({'openssl', 'sqlite', 'llhttp', 'zlib', 'zstd'} <= framework)
         self.assertNotIn('libyaml', framework)
         self.assertEqual(partitions['peers']['framework'], ['jre', 'kafka', 'minio', 'nats', 'valkey'])
         self.assertEqual(partitions['peers']['flint'], ['graalvm', 'jdk', 'maven', 'spring-boot'])
-        native = json.loads((ROOT / 'policy/native-lock.json').read_text())['libraries']
+        native = json.loads((ROOT / 'policy/native-lock.json').read_text(encoding='utf-8'))['libraries']
         covered = set().union(*map(set, partitions['native'].values()))
         self.assertEqual(covered, {row['name'] for row in native})
 
@@ -151,18 +151,18 @@ class LockPartitionTests(unittest.TestCase):
 class AppRepoTests(unittest.TestCase):
     @monorepo_only
     def test_flint_mcp_belongs_to_ai_and_an_app_edge_is_checked(self):
-        apps = json.loads((ROOT / 'policy/apps.json').read_text())['apps']
+        apps = json.loads((ROOT / 'policy/apps.json').read_text(encoding='utf-8'))['apps']
         self.assertEqual(apps['flint-mcp'], {'directory': 'apps/flint-mcp', 'repo': 'ai'})
         self.assertEqual(apps['flint']['repo'], 'flint')
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             (root / 'policy').mkdir()
             for name in ('packages.json', 'boot.json', 'repos.json'):
-                (root / 'policy' / name).write_text((ROOT / 'policy' / name).read_text())
+                (root / 'policy' / name).write_text((ROOT / 'policy' / name).read_text(encoding='utf-8'), encoding='utf-8')
             moved = dict(apps, **{'flint-mcp': {'directory': 'apps/flint-mcp', 'repo': 'flint'}})
-            (root / 'policy/apps.json').write_text(json.dumps({'schema': 'flint.apps/1', 'apps': moved}))
+            (root / 'policy/apps.json').write_text(json.dumps({'schema': 'flint.apps/1', 'apps': moved}), encoding='utf-8')
             (root / 'apps/flint-mcp').mkdir(parents=True)
-            (root / 'apps/flint-mcp/flint.toml').write_text((ROOT / 'apps/flint-mcp/flint.toml').read_text())
+            (root / 'apps/flint-mcp/flint.toml').write_text((ROOT / 'apps/flint-mcp/flint.toml').read_text(encoding='utf-8'), encoding='utf-8')
             violations, _ = workspace.edge_violations(root)
             self.assertEqual([message for _, _, message in violations],
                              ['app flint-mcp (flint) -> engine-mcp (ai): flint may not depend on ai'])
@@ -191,7 +191,7 @@ class ExtractionTests(unittest.TestCase):
     @monorepo_only
     def test_the_workspace_root_recipe_joins_every_checkout_under_the_flint_name(self):
         with tempfile.TemporaryDirectory() as temporary:
-            recipe = workspace.dub_root(workspace.Workspace(), Path(temporary) / 'root').read_text()
+            recipe = workspace.dub_root(workspace.Workspace(), Path(temporary) / 'root').read_text(encoding='utf-8')
             self.assertIn('name "flint"\ntargetType "none"\n', recipe)
             lines = [line for line in recipe.splitlines() if line.startswith('subPackage ')]
             self.assertEqual(len(lines), len([n for n, (_, d) in workspace.package_repos().items()
@@ -220,18 +220,18 @@ class ExtractionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             checkout = Path(temporary).resolve() / 'flint-framework'  # macOS: /var -> /private/var
             (checkout / 'engine/web').mkdir(parents=True)
-            (checkout / 'engine/web/dub.sdl').write_text('name "engine-web"\n')
+            (checkout / 'engine/web/dub.sdl').write_text('name "engine-web"\n', encoding='utf-8')
             (checkout / 'engine/web/README.md').write_text('See packages/engine-web/source and '
-                                                           'packages/engine-webx.\n')
+                                                           'packages/engine-webx.\n', encoding='utf-8')
             subprocess.run(['git', 'init', '-q', str(checkout)], check=True)
             subprocess.run(['git', '-C', str(checkout), 'add', '-A'], check=True)
             file = Path(temporary) / 'workspace.json'
             file.write_text(json.dumps({'schema': 'flint.workspace/1',
-                                        'checkouts': {'framework': {'path': 'flint-framework'}}}))
+                                        'checkouts': {'framework': {'path': 'flint-framework'}}}), encoding='utf-8')
             self.assertEqual(workspace.Workspace(file).package_dir('engine-web'), checkout / 'engine/web')
             pairs = [('packages/engine-web', 'engine/web')]
             self.assertEqual(extract_repo.rewrite_references(checkout, pairs), ['engine/web/README.md'])
-            self.assertEqual((checkout / 'engine/web/README.md').read_text(),
+            self.assertEqual((checkout / 'engine/web/README.md').read_text(encoding='utf-8'),
                              'See engine/web/source and packages/engine-webx.\n')
 
     def test_extraction_keeps_the_history_of_a_directorys_earlier_name(self):
@@ -242,11 +242,11 @@ class ExtractionTests(unittest.TestCase):
             git = ['git', '-C', str(checkout), '-c', 'user.name=t', '-c', 'user.email=t@t']
             subprocess.run(['git', 'init', '-q', str(checkout)], check=True)
             (checkout / 'packages/web/source').mkdir(parents=True)
-            (checkout / 'packages/web/source/router.d').write_text('module flint.web.router;\n' * 20)
+            (checkout / 'packages/web/source/router.d').write_text('module flint.web.router;\n' * 20, encoding='utf-8')
             subprocess.run([*git, 'add', '-A'], check=True)
             subprocess.run([*git, 'commit', '-qm', 'web'], check=True)
             (checkout / 'examples/golden-tui').mkdir(parents=True)
-            (checkout / 'examples/golden-tui/dub.sdl').write_text('name "golden-tui"\n' * 20)
+            (checkout / 'examples/golden-tui/dub.sdl').write_text('name "golden-tui"\n' * 20, encoding='utf-8')
             subprocess.run([*git, 'add', '-A'], check=True)
             subprocess.run([*git, 'commit', '-qm', 'example'], check=True)
             subprocess.run([*git, 'mv', 'packages/web', 'packages/engine-web'], check=True)
@@ -264,7 +264,7 @@ class ExtractionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             for args in (['--push', 'ai'], [], ['--all', 'ai']):
                 result = subprocess.run([sys.executable, script, *args, '--into', temporary], capture_output=True,
-                                        text=True)
+                                        text=True, encoding='utf-8')
                 self.assertEqual(result.returncode, 2, args)
                 self.assertIn('name one repo, or --all', result.stderr)
 
@@ -279,24 +279,24 @@ class PlatformFetchTests(unittest.TestCase):
             git = ['git', '-C', str(upstream), '-c', 'user.name=t', '-c', 'user.email=t@t']
             subprocess.run(['git', 'init', '-q', str(upstream)], check=True)
             (upstream / 'engine/web').mkdir(parents=True)
-            (upstream / 'engine/web/dub.sdl').write_text('name "engine-web"\n')
+            (upstream / 'engine/web/dub.sdl').write_text('name "engine-web"\n', encoding='utf-8')
             subprocess.run([*git, 'add', '-A'], check=True)
             subprocess.run([*git, 'commit', '-qm', 'one'], check=True)
-            commit = subprocess.run([*git, 'rev-parse', 'HEAD'], capture_output=True, text=True).stdout.strip()
-            (upstream / 'later').write_text('after the pin\n')
+            commit = subprocess.run([*git, 'rev-parse', 'HEAD'], capture_output=True, text=True, encoding='utf-8').stdout.strip()
+            (upstream / 'later').write_text('after the pin\n', encoding='utf-8')
             subprocess.run([*git, 'add', '-A'], check=True)
             subprocess.run([*git, 'commit', '-qm', 'two'], check=True)
             home = temporary / 'home'
             (home / 'policy').mkdir(parents=True)
             for name in ('packages.json', 'boot.json', 'framework.json', 'repos.json', 'apps.json'):
                 if (ROOT / 'policy' / name).is_file():
-                    (home / 'policy' / name).write_text((ROOT / 'policy' / name).read_text())
-            lock = json.loads((ROOT / 'platform.lock').read_text())
+                    (home / 'policy' / name).write_text((ROOT / 'policy' / name).read_text(encoding='utf-8'), encoding='utf-8')
+            lock = json.loads((ROOT / 'platform.lock').read_text(encoding='utf-8'))
             for repo, entry in lock['repos'].items():  # only framework is fetched here
                 lock['repos'][repo] = {'github': entry['github'], 'source': 'monorepo'}
             lock['repos']['framework'] = {'github': 'flint-projects/flint-framework', 'source': 'github',
                                           'commit': commit}
-            (home / 'platform.lock').write_text(json.dumps(lock))
+            (home / 'platform.lock').write_text(json.dumps(lock), encoding='utf-8')
             fetched = platform_modules.fetch(home, url=str(temporary) + '/flint-{repo}')
             checkout = home / '.flint/platform' / f'framework-{commit}'
             self.assertEqual(fetched, {'framework': str(checkout)})

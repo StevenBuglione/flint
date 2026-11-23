@@ -29,12 +29,12 @@ AARCH64_FILES = {
 def patched_files(patch):
     # A file may have two sections: dmd/glue/package.d has a Flint one (-fno-moduleinfo-localclasses) and an
     # AArch64 one.
-    return sorted(set(re.findall(r'^\+\+\+ b/(\S+)', patch.read_text(), flags=re.M)))
+    return sorted(set(re.findall(r'^\+\+\+ b/(\S+)', patch.read_text(encoding='utf-8'), flags=re.M)))
 
 
 class ForkSourcesTests(unittest.TestCase):
     def test_prelude_holds_only_toolchain_modules(self):
-        names = [line.strip() for line in (TOOLCHAIN / 'dmd-server-prelude.txt').read_text().splitlines()
+        names = [line.strip() for line in (TOOLCHAIN / 'dmd-server-prelude.txt').read_text(encoding='utf-8').splitlines()
                  if line.strip() and not line.startswith('#')]
         self.assertIn('object', names)
         self.assertEqual(len(names), len(set(names)))
@@ -53,7 +53,7 @@ class ForkSourcesTests(unittest.TestCase):
 
     def test_dmd_patch_leaves_out_local_classes_on_request(self):
         # ADR-030 section 5: -fno-moduleinfo-localclasses, named as LDC's, empties ModuleInfo.localClasses.
-        text = (TOOLCHAIN / 'dmd-2.114.0-flint.patch').read_text()
+        text = (TOOLCHAIN / 'dmd-2.114.0-flint.patch').read_text(encoding='utf-8')
         self.assertIn('+        else if (arg == "-fno-moduleinfo-localclasses")', text)
         self.assertIn('+public __gshared bool flintNoLocalClasses;', text)
         self.assertIn('+    if (!flintNoLocalClasses)\n+        getLocalClasses(m, aclasses);', text)
@@ -85,7 +85,7 @@ class ForkSourcesTests(unittest.TestCase):
         # LDC's druntime for Linux AArch64 has st_mtime and st_mtimensec, not st_mtim: the fork reads st_mtim only
         # where stat_t has it, or Flint cannot bootstrap there.
         for patch in ('dmd-2.114.0-flint.patch', 'dmd-2.114.0-flint-darwin.patch'):
-            added = [line[1:] for line in (TOOLCHAIN / patch).read_text().splitlines() if line.startswith('+')]
+            added = [line[1:] for line in (TOOLCHAIN / patch).read_text(encoding='utf-8').splitlines() if line.startswith('+')]
             for i, line in enumerate(added):
                 if re.search(r'\.st_mtim\b', line):
                     self.assertIn('__traits(hasMember, stat_t, "st_mtim")', added[i - 1], f'{patch}: {line.strip()}')
@@ -154,12 +154,12 @@ class FlintDubTests(unittest.TestCase):
             (temp / 'dmd-tools' / 'ldc2').symlink_to(ldc)
             package = temp / 'probe'
             (package / 'source').mkdir(parents=True)
-            (package / 'dub.sdl').write_text('name "probe"\n')
-            (package / 'source' / 'app.d').write_text('void main() {}\n')
+            (package / 'dub.sdl').write_text('name "probe"\n', encoding='utf-8')
+            (package / 'source' / 'app.d').write_text('void main() {}\n', encoding='utf-8')
             env = dict(os.environ, DUB_HOME=str(temp / 'dub-home'), HOME=str(temp))
             result = subprocess.run([str(dub), 'describe', '--root', str(package), '--skip-registry=all',
                                      '--compiler=' + str(temp / 'dmd-tools' / 'ldc2')],
-                                    capture_output=True, text=True, env=env, timeout=300)
+                                    capture_output=True, text=True, encoding='utf-8', env=env, timeout=300)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertEqual(json.loads(result.stdout)['compiler'], 'ldc')
 
@@ -167,7 +167,7 @@ class FlintDubTests(unittest.TestCase):
 class InstallerArgumentTests(unittest.TestCase):
     def test_fork_requires_dmd(self):
         result = subprocess.run([sys.executable, str(ROOT / 'tools' / 'install_toolchains.py'), '--compiler', 'ldc',
-                                 '--flint-fork'], capture_output=True, text=True)
+                                 '--flint-fork'], capture_output=True, text=True, encoding='utf-8')
         self.assertEqual(result.returncode, 2)
         self.assertIn('--flint-fork applies only to --compiler dmd', result.stderr)
 

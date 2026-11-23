@@ -47,21 +47,21 @@ class MilestoneEightTests(unittest.TestCase):
         assert status == 0, document
         cls.project = base / 'done'
         manifest = cls.project / 'flint.toml'
-        manifest.write_text(manifest.read_text().replace('version = "0.1.0"\n', 'version = "0.1.0"\nlicense = "MIT"\n')
+        manifest.write_text(manifest.read_text(encoding='utf-8').replace('version = "0.1.0"\n', 'version = "0.1.0"\nlicense = "MIT"\n')
                             .replace('[dependencies]\n', '[dependencies]\n"example.test/acme/checksum" = "1.0.0"\n')
-                            + '\n[native]\nzlib = "1.4"\n')
+                            + '\n[native]\nzlib = "1.4"\n', encoding='utf-8')
         (cls.project / 'native').mkdir()
-        (cls.project / 'native' / 'crc.c').write_text(CRC_C)
-        (cls.project / 'native' / 'crc.h').write_text(CRC_H)
+        (cls.project / 'native' / 'crc.c').write_text(CRC_C, encoding='utf-8')
+        (cls.project / 'native' / 'crc.h').write_text(CRC_H, encoding='utf-8')
         (cls.project / 'src' / 'done' / 'ffi').mkdir()
-        (cls.project / 'src' / 'done' / 'ffi' / 'crc.d').write_text(FFI.replace('module demo.ffi.crc', 'module done.ffi.crc'))
-        (cls.project / 'test' / 'done' / 'app_test.d').write_text(APP_TEST.replace('{version}', LOCK['zlib']['version']))
+        (cls.project / 'src' / 'done' / 'ffi' / 'crc.d').write_text(FFI.replace('module demo.ffi.crc', 'module done.ffi.crc'), encoding='utf-8')
+        (cls.project / 'test' / 'done' / 'app_test.d').write_text(APP_TEST.replace('{version}', LOCK['zlib']['version']), encoding='utf-8')
         app = cls.project / 'src' / 'done' / 'app.d'
-        app.write_text(app.read_text().replace('import done.greeting : greet;\n',
+        app.write_text(app.read_text(encoding='utf-8').replace('import done.greeting : greet;\n',
                                                'import checksum : hex;\nimport done.ffi.crc : crc32;\nimport done.greeting : greet;\n')
                        .replace('    writeln(greet(settings.value.greeting, parsed.options.name));\n',
                                 '    writeln(greet(settings.value.greeting, parsed.options.name), " crc32=",\n'
-                                '            hex(crc32(cast(const(ubyte)[]) "123456789")));\n'))
+                                '            hex(crc32(cast(const(ubyte)[]) "123456789")));\n'), encoding='utf-8')
 
     @classmethod
     def tearDownClass(cls):
@@ -84,7 +84,7 @@ class MilestoneEightTests(unittest.TestCase):
         status, document = self.call('check')
         self.assertEqual(status, 0, document['diagnostics'])
         self.assertIn('clang-tidy', document['checks'])
-        lock = (self.project / 'flint.lock').read_text()
+        lock = (self.project / 'flint.lock').read_text(encoding='utf-8')
         self.assertIn('name = "example.test/acme/checksum"\nkind = "remote"', lock)
         self.assertIn('[[native]]\nname = "zlib"', lock)
 
@@ -92,25 +92,25 @@ class MilestoneEightTests(unittest.TestCase):
         self.assertEqual(status, 0, document['diagnostics'])
         self.assertTrue(document['fully_static'])
         files = {o['kind']: self.project / o['path'] for o in document['outputs']}
-        spdx = json.loads(files['spdx'].read_text())
+        spdx = json.loads(files['spdx'].read_text(encoding='utf-8'))
         names = {p['name']: p for p in spdx['packages']}
         for name in ('done', 'example.test/acme/checksum', 'zlib', 'native/crc.c', 'musl', 'druntime'):
             self.assertIn(name, names)
         self.assertEqual(names['zlib']['licenseDeclared'], 'Zlib')
         self.assertEqual(names['zlib']['checksums'][0]['checksumValue'], LOCK['zlib']['archive_sha256'])
-        cdx = json.loads(files['cyclonedx'].read_text())
+        cdx = json.loads(files['cyclonedx'].read_text(encoding='utf-8'))
         self.assertIn('zlib', {c['name'] for c in cdx['components']})
         with tempfile.TemporaryDirectory() as directory, tarfile.open(files['archive']) as tar:
             tar.extractall(directory, filter='data')
             top = Path(directory) / 'done-0.1.0'
-            ran = subprocess.run([str(top / 'bin' / 'done'), '--name', 'm8'], cwd=top, capture_output=True, text=True)
+            ran = subprocess.run([str(top / 'bin' / 'done'), '--name', 'm8'], cwd=top, capture_output=True, text=True, encoding='utf-8')
             self.assertIn('Hello, m8! crc32=cbf43926', ran.stdout, ran.stderr)
         if docker_available():
-            loaded = subprocess.run(['docker', 'load', '-i', str(files['image'])], capture_output=True, text=True)
+            loaded = subprocess.run(['docker', 'load', '-i', str(files['image'])], capture_output=True, text=True, encoding='utf-8')
             self.assertEqual(loaded.returncode, 0, loaded.stderr)
             try:
                 ran = subprocess.run(['docker', 'run', '--rm', 'done:0.1.0', '--name', 'scratch'], capture_output=True,
-                                     text=True, timeout=120)
+                                     text=True, encoding='utf-8', timeout=120)
                 self.assertIn('Hello, scratch! crc32=cbf43926', ran.stdout, ran.stderr)
             finally:
                 subprocess.run(['docker', 'image', 'rm', '-f', 'done:0.1.0'], capture_output=True)

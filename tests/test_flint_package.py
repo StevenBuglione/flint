@@ -20,8 +20,8 @@ def docker_available():
 
 
 def elf_facts(path):
-    headers = subprocess.run(['readelf', '-lW', str(path)], capture_output=True, text=True).stdout
-    dynamic = subprocess.run(['readelf', '-dW', str(path)], capture_output=True, text=True).stdout
+    headers = subprocess.run(['readelf', '-lW', str(path)], capture_output=True, text=True, encoding='utf-8').stdout
+    dynamic = subprocess.run(['readelf', '-dW', str(path)], capture_output=True, text=True, encoding='utf-8').stdout
     needed = [line.split('[')[1].rstrip(']') for line in dynamic.splitlines() if '(NEEDED)' in line]
     return headers, needed
 
@@ -40,18 +40,18 @@ class PackageTests(unittest.TestCase):
         cls.project = base / 'demo'
         manifest = cls.project / 'flint.toml'
         # flint:os brings ImportC C of its own, which the musl cross build must preprocess against the sysroot.
-        manifest.write_text(manifest.read_text().replace('version = "0.1.0"\n', 'version = "0.1.0"\nlicense = "MIT"\n')
-                            .replace('"flint:log" = {}\n', '"flint:log" = {}\n"flint:os" = {}\n'))
+        manifest.write_text(manifest.read_text(encoding='utf-8').replace('version = "0.1.0"\n', 'version = "0.1.0"\nlicense = "MIT"\n')
+                            .replace('"flint:log" = {}\n', '"flint:log" = {}\n"flint:os" = {}\n'), encoding='utf-8')
         (cls.project / 'native').mkdir()
-        (cls.project / 'native' / 'crc.c').write_text(CRC)
-        (cls.project / 'native' / 'crc.h').write_text(HEADER)
+        (cls.project / 'native' / 'crc.c').write_text(CRC, encoding='utf-8')
+        (cls.project / 'native' / 'crc.h').write_text(HEADER, encoding='utf-8')
         (cls.project / 'src' / 'demo' / 'ffi').mkdir()
-        (cls.project / 'src' / 'demo' / 'ffi' / 'crc.d').write_text(FFI)
+        (cls.project / 'src' / 'demo' / 'ffi' / 'crc.d').write_text(FFI, encoding='utf-8')
         app = cls.project / 'src' / 'demo' / 'app.d'
-        app.write_text(app.read_text().replace(
+        app.write_text(app.read_text(encoding='utf-8').replace(
             'import demo.greeting : greet;\n', 'import demo.ffi.crc : crc32;\nimport demo.greeting : greet;\n').replace(
             '    writeln(greet(settings.value.greeting, parsed.options.name));\n',
-            '    writeln(greet(settings.value.greeting, parsed.options.name), " crc=", crc32(cast(const(ubyte)[]) "123456789"));\n'))
+            '    writeln(greet(settings.value.greeting, parsed.options.name), " crc=", crc32(cast(const(ubyte)[]) "123456789"));\n'), encoding='utf-8')
         status, document = flint_json('lock', cwd=cls.project, env=cls.env)
         assert status == 0, document
         cls.packages = cls.project / '.flint' / 'package'
@@ -70,7 +70,7 @@ class PackageTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory, tarfile.open(archive) as tar:
             tar.extractall(directory, filter='data')
             return subprocess.run([str(Path(directory) / top / 'bin' / 'demo'), '--name', 'pkg'], cwd=Path(directory) / top,
-                                  capture_output=True, text=True)
+                                  capture_output=True, text=True, encoding='utf-8')
 
     def test_1_host_package_links_only_the_c_library_dynamically(self):
         status, document = self.run_flint('package')
@@ -87,7 +87,7 @@ class PackageTests(unittest.TestCase):
         result = self.run_staged(files['archive'], 'demo-0.1.0')
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn('Hello, pkg! crc=3421780262', result.stdout)
-        receipt = json.loads(files['receipt'].read_text())
+        receipt = json.loads(files['receipt'].read_text(encoding='utf-8'))
         self.assertEqual(receipt['schema'], 'flint.package/1')
 
     @unittest.skipUnless(MUSL, 'musl toolchain not installed (flint toolchain install --musl)')
@@ -102,7 +102,7 @@ class PackageTests(unittest.TestCase):
         self.assertEqual(needed, [])
         self.assertIn('Position-Independent Executable', headers)
         self.assertIn('Hello, pkg! crc=3421780262', self.run_staged(files['archive'], 'demo-0.1.0').stdout)
-        spdx = json.loads(files['spdx'].read_text())
+        spdx = json.loads(files['spdx'].read_text(encoding='utf-8'))
         self.assertEqual(spdx['spdxVersion'], 'SPDX-2.3')
         names = {p['name']: p for p in spdx['packages']}
         for name in ('demo', 'flint:os', 'druntime', 'phobos', 'musl', 'native/crc.c'):
@@ -113,7 +113,7 @@ class PackageTests(unittest.TestCase):
         self.assertEqual(names['demo']['checksums'][0]['checksumValue'], executable_sha)
         described = [r for r in spdx['relationships'] if r['relationshipType'] == 'DESCRIBES']
         self.assertEqual(described[0]['relatedSpdxElement'], names['demo']['SPDXID'])
-        cdx = json.loads(files['cyclonedx'].read_text())
+        cdx = json.loads(files['cyclonedx'].read_text(encoding='utf-8'))
         self.assertEqual((cdx['bomFormat'], cdx['specVersion']), ('CycloneDX', '1.6'))
         refs = {c['bom-ref'] for c in cdx['components']}
         for dependency in cdx['dependencies']:
@@ -139,11 +139,11 @@ class PackageTests(unittest.TestCase):
         status, document = self.run_flint('package', '--container')
         self.assertEqual(status, 0, document['diagnostics'])
         image = self.outputs(document)['image']
-        loaded = subprocess.run(['docker', 'load', '-i', str(image)], capture_output=True, text=True)
+        loaded = subprocess.run(['docker', 'load', '-i', str(image)], capture_output=True, text=True, encoding='utf-8')
         self.assertEqual(loaded.returncode, 0, loaded.stderr)
         try:
             ran = subprocess.run(['docker', 'run', '--rm', 'demo:0.1.0', '--name', 'scratch'], capture_output=True,
-                                 text=True, timeout=120)
+                                 text=True, encoding='utf-8', timeout=120)
             self.assertEqual(ran.returncode, 0, ran.stderr)
             self.assertIn('Hello, scratch! crc=3421780262', ran.stdout)
         finally:

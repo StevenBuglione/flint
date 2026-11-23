@@ -369,6 +369,25 @@ Next, in ADR-025's order:
 - the remaining cold-build levers of ADR-025 section 4a, with a breakdown after each: the warm worker pool and its template-instance ownership, parallel jobs, DMD's CodeView emission, process creation and a cached link command;
 - the `windows-x86_64` platform lane for Gate 6.
 
+### The Python suite on Windows
+
+`python -m unittest discover -s tests` runs on Windows, the cutover rehearsal's `python suite`.
+- Every text read, write and subprocess in `tests/` names UTF-8, because Windows' default code page is not UTF-8.
+- Executables are `<name>.exe`, and an artifact's receipt is `<name>.exe.receipt.json` (`test_flint_cli.EXE`).
+- DMD lives under `dmd2/windows/bin64`.
+- Probe commands use the running interpreter, because Windows has no `python3` command.
+- Recipes and DUB paths are written with `/`.
+
+Known gaps: these tests are skipped on Windows, each with its reason.
+
+| Test | Reason |
+| --- | --- |
+| `test_flint_watch.WatchTests` (2 tests) | `flint watch` stops on Ctrl+C. A test cannot send Ctrl+C to a child without sharing its console, and Ctrl+Break is SIGTERM, which `flint watch` leaves to the default handler. |
+| `test_install_quality_tools`: the two libcurl tests | `install_quality_tools.py` checks for libcurl only off Windows, where DUB loads it at run time. |
+| `test_vibe_bench`: the queue-worker and tui-dashboard oracles | Their acceptance tests send SIGTERM and drive a pty. On Windows the test runs only the rest-notes oracle. |
+
+`tools/load_bench.py` imports on Windows, so its parsers stay testable, but a load run stops with a plain error there: it uses `getrusage` and process groups.
+
 ## Public API additions
 
 None. `flint.engine.reactor.Backend.iocp` is already part of the frozen contract.

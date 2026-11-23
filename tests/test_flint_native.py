@@ -12,7 +12,7 @@ from test_flint_cli import ROOT, codes, environment, flint, flint_json, setUpMod
 from test_flint_native_c import CLANG
 
 CONAN = ROOT / '.tools' / 'conan-2.34.0' / 'bin' / 'conan'
-LOCK = {row['name']: row for row in json.loads((ROOT / 'policy/native-lock.json').read_text())['libraries']}
+LOCK = {row['name']: row for row in json.loads((ROOT / 'policy/native-lock.json').read_text(encoding='utf-8'))['libraries']}
 
 CRC_C = '''#include "crc.h"
 
@@ -83,20 +83,20 @@ class NativePackageTests(unittest.TestCase):
         assert status == 0, document
         cls.project = base / 'demo'
         cls.manifest = cls.project / 'flint.toml'
-        cls.original = cls.manifest.read_text()
+        cls.original = cls.manifest.read_text(encoding='utf-8')
         (cls.project / 'native').mkdir()
-        (cls.project / 'native' / 'crc.c').write_text(CRC_C)
-        (cls.project / 'native' / 'crc.h').write_text(CRC_H)
+        (cls.project / 'native' / 'crc.c').write_text(CRC_C, encoding='utf-8')
+        (cls.project / 'native' / 'crc.h').write_text(CRC_H, encoding='utf-8')
         (cls.project / 'src' / 'demo' / 'ffi').mkdir()
-        (cls.project / 'src' / 'demo' / 'ffi' / 'crc.d').write_text(FFI)
-        (cls.project / 'test' / 'demo' / 'crc_test.d').write_text(TEST.replace('{version}', LOCK['zlib']['version']))
+        (cls.project / 'src' / 'demo' / 'ffi' / 'crc.d').write_text(FFI, encoding='utf-8')
+        (cls.project / 'test' / 'demo' / 'crc_test.d').write_text(TEST.replace('{version}', LOCK['zlib']['version']), encoding='utf-8')
 
     @classmethod
     def tearDownClass(cls):
         cls.temporary.cleanup()
 
     def use(self, native):
-        self.manifest.write_text(self.original + '\n[native]\n' + native)
+        self.manifest.write_text(self.original + '\n[native]\n' + native, encoding='utf-8')
         (self.project / 'flint.lock').unlink(missing_ok=True)
 
     def run_flint(self, *arguments):
@@ -106,12 +106,12 @@ class NativePackageTests(unittest.TestCase):
         self.use('zlib = "1.4"\n')
         status, document = self.run_flint('test', '--compiler', 'both')
         self.assertEqual(status, 0, document['diagnostics'])
-        lock = (self.project / 'flint.lock').read_text()
+        lock = (self.project / 'flint.lock').read_text(encoding='utf-8')
         self.assertIn('[[native]]\nname = "zlib"\nversion = "1.4"\nlinkage = "static"\ntarget = "linux-x86_64-glibc"\n', lock)
         self.assertIn('source_sha256 = "' + LOCK['zlib']['archive_sha256'] + '"', lock)
         for key in ('recipe_revision', 'package_id', 'binary_sha256'):
             self.assertRegex(lock, key + ' = "[0-9a-f]{32,64}"')
-        receipt = json.loads((self.project / '.flint/build/test/demo-test.receipt.json').read_text())
+        receipt = json.loads((self.project / '.flint/build/test/demo-test.receipt.json').read_text(encoding='utf-8'))
         self.assertEqual(receipt['native_packages'][0]['name'], 'zlib')
         self.assertTrue(receipt['portable'])
 
@@ -131,9 +131,9 @@ class NativePackageTests(unittest.TestCase):
         library = self.base / 'zipper'
         if not library.exists():
             flint_json('new', 'zipper', '--type', 'library', cwd=self.base, env=self.env)
-            (library / 'flint.toml').write_text((library / 'flint.toml').read_text() + '\n[native]\nzlib = "1.3.1"\n')
+            (library / 'flint.toml').write_text((library / 'flint.toml').read_text(encoding='utf-8') + '\n[native]\nzlib = "1.3.1"\n', encoding='utf-8')
         self.manifest.write_text(self.original.replace('[dependencies]\n', '[dependencies]\nzipper = { path = "../zipper" }\n')
-                                 + '\n[native]\nzlib = "1.4"\n')
+                                 + '\n[native]\nzlib = "1.4"\n', encoding='utf-8')
         status, document = self.run_flint('lock')
         self.assertEqual((status, codes(document)), (3, ['FLINT-E0320']))
         message = document['diagnostics'][0]['message']
@@ -143,9 +143,9 @@ class NativePackageTests(unittest.TestCase):
     def test_4_a_changed_binary_fails_the_lock(self):
         self.use('zlib = "1.4"\n')
         self.assertEqual(self.run_flint('lock')[0], 0)
-        lock = (self.project / 'flint.lock').read_text()
+        lock = (self.project / 'flint.lock').read_text(encoding='utf-8')
         tampered = lock.replace('binary_sha256 = "', 'binary_sha256 = "0', 1)
-        (self.project / 'flint.lock').write_text(tampered)
+        (self.project / 'flint.lock').write_text(tampered, encoding='utf-8')
         status, document = self.run_flint('build', '--locked')
         self.assertEqual((status, codes(document)), (3, ['FLINT-E0202']))
         self.assertIn('changed native zlib', document['diagnostics'][0]['message'])
@@ -160,21 +160,22 @@ class NativePackageTests(unittest.TestCase):
             tar.extractall(directory, filter='data')
             top = Path(directory) / 'demo-0.1.0'
             self.assertTrue((top / 'lib' / 'libzlib-flint.so').is_file())
-            dynamic = subprocess.run(['readelf', '-dW', str(top / 'bin' / 'demo')], capture_output=True, text=True).stdout
+            dynamic = subprocess.run(['readelf', '-dW', str(top / 'bin' / 'demo')], capture_output=True, text=True, encoding='utf-8').stdout
             self.assertIn('$ORIGIN/../lib', dynamic)
-            ran = subprocess.run([str(top / 'bin' / 'demo'), '--name', 'bundled'], cwd=top, capture_output=True, text=True)
+            ran = subprocess.run([str(top / 'bin' / 'demo'), '--name', 'bundled'], cwd=top, capture_output=True, text=True, encoding='utf-8')
             self.assertEqual(ran.returncode, 0, ran.stderr)
 
-    @unittest.skipUnless(subprocess.run(['pkg-config', '--exists', 'zlib']).returncode == 0, 'host has no zlib.pc')
+    @unittest.skipUnless(shutil.which('pkg-config') and subprocess.run(['pkg-config', '--exists', 'zlib']).returncode == 0,
+                         'host has no zlib.pc')
     def test_6_system_true_uses_the_host_library_and_is_not_portable(self):
         self.use('zlib = { version = "1.2", system = true }\n')
         result = flint('build', cwd=self.project, env=self.env)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn('Non-portable', result.stderr)
-        receipt = json.loads((self.project / '.flint/build/dev/demo.receipt.json').read_text())
+        receipt = json.loads((self.project / '.flint/build/dev/demo.receipt.json').read_text(encoding='utf-8'))
         self.assertFalse(receipt['portable'])
         self.assertIn("uses the host's zlib", receipt['non_portable_reasons'][0])
-        lock = (self.project / 'flint.lock').read_text()
+        lock = (self.project / 'flint.lock').read_text(encoding='utf-8')
         self.assertIn('linkage = "system"', lock)
         self.assertNotIn('package_id', lock)
 
@@ -196,8 +197,8 @@ class NativePackageTests(unittest.TestCase):
         self.assertEqual(self.run_flint('lock')[0], 0)
         status, document = self.run_flint('test', '--sanitize')
         self.assertEqual(status, 0, document['diagnostics'])
-        receipt = json.loads((self.project / '.flint/build/test/demo-test.receipt.json').read_text())
-        locked = (self.project / 'flint.lock').read_text()
+        receipt = json.loads((self.project / '.flint/build/test/demo-test.receipt.json').read_text(encoding='utf-8'))
+        locked = (self.project / 'flint.lock').read_text(encoding='utf-8')
         sanitized = receipt['native_packages'][0]
         # The instrumented variant is another binary package of the same locked recipe and source.
         self.assertIn('recipe_revision = "' + sanitized['recipe_revision'] + '"', locked)

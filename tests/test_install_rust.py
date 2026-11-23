@@ -14,7 +14,7 @@ rust=importlib.util.module_from_spec(spec);spec.loader.exec_module(rust)
 
 class RustProvisioningTests(unittest.TestCase):
     def test_six_native_hosts_have_immutable_bootstrap_and_manifest_pins(self):
-        lock=json.loads((TOOLS.parent/'policy/toolchains.json').read_text())
+        lock=json.loads((TOOLS.parent/'policy/toolchains.json').read_text(encoding='utf-8'))
         self.assertEqual(len(rust.TRIPLES),6)
         self.assertRegex(lock['rust']['manifest_sha256'],r'^[a-f0-9]{64}$')
         for triple in rust.TRIPLES.values():

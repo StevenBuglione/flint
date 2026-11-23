@@ -11,11 +11,11 @@ LINE = 'x.d(1,1): vtemplate: {} ({} distinct) instantiation(s) of template `T(U)
 
 
 def invocation(directory, identity, cwd, sources, count):
-    (directory / (identity + '.stdout.txt')).write_text('')
-    (directory / (identity + '.stderr.txt')).write_text(LINE.format(count, 1))
+    (directory / (identity + '.stdout.txt')).write_text('', encoding='utf-8')
+    (directory / (identity + '.stderr.txt')).write_text(LINE.format(count, 1), encoding='utf-8')
     record = directory / (identity + '.invocation.json')
     record.write_text(json.dumps({'cwd': cwd, 'expanded_arguments': ['-c', *sources],
-                                  'stdout': identity + '.stdout.txt', 'stderr': identity + '.stderr.txt'}))
+                                  'stdout': identity + '.stdout.txt', 'stderr': identity + '.stderr.txt'}), encoding='utf-8')
     return record
 
 
@@ -31,7 +31,7 @@ class PackageTemplateCounts(unittest.TestCase):
                 invocation(traces, 'd', workspace + '/packages/webview/bench', ['source/app.d'], 7),
             ]
             self.assertEqual(package_template_instances(records, 'engine-web'), 340)
-            closure = ''.join((traces / (i + '.stderr.txt')).read_text() for i in 'abcd')
+            closure = ''.join((traces / (i + '.stderr.txt')).read_text(encoding='utf-8') for i in 'abcd')
             self.assertEqual(template_instances(closure), 1247)
 
     def test_no_matching_invocation_counts_zero(self):
