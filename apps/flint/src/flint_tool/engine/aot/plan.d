@@ -559,6 +559,8 @@ struct AnalysisInput
     string[] autoConfigurations;
     /// Project root, to shorten source paths.
     string root;
+    /// The per-endpoint fast path is on (`AotRequest.fastPath`, docs/spring/phase1/fast-path.md).
+    bool fastPath;
 }
 
 /// Analyse the model.
@@ -659,7 +661,7 @@ private final class Analysis
     this(const Model model, const ref AnalysisInput input)
     {
         this.model = model;
-        this.input = AnalysisInput(input.userModules.dup, input.autoConfigurations.dup, input.root);
+        this.input = AnalysisInput(input.userModules.dup, input.autoConfigurations.dup, input.root, input.fastPath);
         collectCanonicalNames();
     }
 
@@ -754,6 +756,38 @@ private final class Analysis
         markDescribed();
         planContainers();
         planDateModule();
+        planFastPath();
+    }
+
+    /// The fast path's two beans (flint_tool.engine.aot.fast), when the option is on, an endpoint qualifies and the
+    /// closure has the classes they need; otherwise nothing, so the build links none of the fast path.
+    void planFastPath()
+    {
+        import flint_tool.engine.aot.fast : fastPathBeans, fastPathClasses, hasFastHandler;
+        import flint_tool.engine.aot.names : packageOf;
+
+        if (!input.fastPath || plan.application.length == 0 || !hasFastHandler(plan))
+            return;
+        bool unknown;
+        foreach (name; fastPathClasses)
+        {
+            if (name !in model.present)
+            {
+                plan.unknownClasses ~= name;
+                unknown = true;
+            }
+            else if (!model.present[name])
+                return;
+        }
+        if (unknown)
+            return;
+        const application = model.type(plan.application);
+        const target = application is null ? packageOf(plan.application) : application.module_;
+        foreach (bean; fastPathBeans())
+        {
+            bean.rank = rank++;
+            addBean(target, bean);
+        }
     }
 
     /// The canonical names of Jackson's java.util.Date module and of Boot's builder customizer.

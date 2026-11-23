@@ -65,6 +65,9 @@ struct AotRequest
     /// generated output, kept apart from the platform entries so the platform part can be copied alone (the cold
     /// build benchmark starts from a platform-only cache). Empty: `<sharedCache>/projects/<root hash>`.
     string projectCache;
+    /// Emit the per-endpoint fast path (docs/spring/phase1/fast-path.md): on unless the build opts out. Part of
+    /// the output key, so a build with it never restores one generated without it.
+    bool fastPath;
 }
 
 /// What it did.
@@ -257,7 +260,7 @@ private bool produceOutput(const ref AotRequest request, scope const SourceModul
     import std.path : buildPath;
 
     const cache = buildPath(request.root, cacheDirectory);
-    const outputKey = outputKeyOf(sources, state, request.environmentKey, autoConfigurations, services);
+    const outputKey = outputKeyOf(sources, state, outputEnvironment(request), autoConfigurations, services);
     if (state.outputKey == outputKey && exists(buildPath(request.root, aotDirectory, "flint_aot_registry.d")))
     {
         // Nothing to regenerate, also when the re-extracted models came out the same.
@@ -277,7 +280,7 @@ private bool produceOutput(const ref AotRequest request, scope const SourceModul
     if (request.sharedCache.length)
         storeOutput(request, outputKey, outcome);
     // Generation may have answered presence probes, which the key covers.
-    state.outputKey = outputKeyOf(sources, state, request.environmentKey, autoConfigurations, services);
+    state.outputKey = outputKeyOf(sources, state, outputEnvironment(request), autoConfigurations, services);
     saveState(cache, state);
     return true;
 }
@@ -674,6 +677,12 @@ private string[] staleModules(scope const SourceModule[] sources, const string[s
 }
 
 /// A key over every module's extraction key: the generated output can only change when this does.
+// The environment the generated output depends on: the request's, plus the generator options that change it.
+private string outputEnvironment(const ref AotRequest request) pure nothrow
+{
+    return request.fastPath ? request.environmentKey ~ "\nfast-path" : request.environmentKey;
+}
+
 private string outputKeyOf(scope const SourceModule[] sources, ref State state, string environment,
         scope const string[] autoConfigurations, scope const string[] services)
 {
@@ -796,6 +805,7 @@ private bool generate(const ref AotRequest request, scope const SourceModule[] s
         model.annotationTypes[name] = type;
     AnalysisInput input;
     input.root = request.root;
+    input.fastPath = request.fastPath;
     input.autoConfigurations = autoConfigurations.dup;
     foreach (ref source; sources)
     {
@@ -821,11 +831,11 @@ private bool generate(const ref AotRequest request, scope const SourceModule[] s
     if (plan.failed)
         return false;
     plan.serviceModules = services.dup;
-    return writeOutput(request.root, plan, sources, outcome);
+    return writeOutput(request.root, plan, sources, outcome, request.fastPath);
 }
 
 private bool writeOutput(string root, const ref imported!"flint_tool.engine.aot.plan".Plan plan,
-        scope const SourceModule[] sources, ref AotOutcome outcome)
+        scope const SourceModule[] sources, ref AotOutcome outcome, bool fastPath = false)
 {
     import std.algorithm.searching : canFind;
     import std.algorithm.sorting : sort;
@@ -847,7 +857,7 @@ private bool writeOutput(string root, const ref imported!"flint_tool.engine.aot.
         foreach (ref source; sources)
             packageModule = packageModule || (source.name == item.name && source.packageModule);
         const path = buildPath(directory, generatedPath(item.name, packageModule));
-        const text = renderModule(item, plan.canonicalNames);
+        const text = renderModule(item, plan.canonicalNames, fastPath);
         if (!separable(item.name, item.source, text, sources, outcome))
             return false;
         mkdirRecurse(dirName(path));

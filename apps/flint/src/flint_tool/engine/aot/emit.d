@@ -34,9 +34,10 @@ string generatedPath(string moduleName, bool packageModule)
 }
 
 /// Render one generated module.
-string renderModule(const ref ModulePlan plan, const string[string] canonicalNames = null)
+string renderModule(const ref ModulePlan plan, const string[string] canonicalNames = null, bool fastPath = false)
 {
     auto emitter = Emitter(plan, canonicalNames);
+    emitter.fastPath = fastPath;
     return emitter.render();
 }
 
@@ -98,6 +99,8 @@ private struct Emitter
     bool[string] used;
     string[string] descriptorLocal;
     string body_;
+    /// Emit fast-path handlers (fast-path.md) for the mappings `fastShape` accepts.
+    bool fastPath;
 
     string render()
     {
@@ -117,7 +120,7 @@ private struct Emitter
         foreach (ref bean; plan.beans)
             declarations ~= beanFunctions(bean);
         foreach (ref handler; plan.handlers)
-            declarations ~= handlerInvoker(handler);
+            declarations ~= handlerInvoker(handler) ~ fastInvoker(handler);
         foreach (ref handler; plan.exceptionHandlers)
             declarations ~= exceptionInvoker(handler);
         foreach (ref listener; plan.listeners)
@@ -152,6 +155,8 @@ private struct Emitter
             text ~= "import flint.engine.aot.event : EventListenerSpec;\n";
         if ("expression" in used)
             text ~= "import flint.engine.aot.expression : EvaluationContext, ExpressionSpec;\n";
+        if ("fast" in used)
+            text ~= "import flint.engine.aot.fast : FastArguments;\n";
         if (plan.handlers.length || plan.exceptionHandlers.length)
             text ~= "import flint.engine.aot.mapping : ArgumentKind, ArgumentSpec, ExceptionHandlerSpec, "
                 ~ "HandlerArguments, HandlerMapping;\n";
@@ -838,6 +843,17 @@ private struct Emitter
             ~ id ~ "(Object bean, scope Any[] arguments, ref Any result)\n{\n    " ~ slice ~ "\n}\n\n";
     }
 
+    // The fast path's handler, when the build asks for it and the mapping has the shape (flint_tool.engine.aot.fast).
+    string fastInvoker(const ref HandlerPlan handler)
+    {
+        import flint_tool.engine.aot.fast : fastHandler, fastShape;
+
+        if (!fastPath || !fastShape(handler))
+            return null;
+        used["fast"] = true;
+        return fastHandler(handler, sanitize(handler.className) ~ "_" ~ sanitize(handler.method.name));
+    }
+
     string invocation(string callee, const ref Method method, const ArgumentPlan[] arguments, bool slice = false)
     {
         import std.array : join;
@@ -1036,6 +1052,8 @@ private struct Emitter
             text ~= "        mapping.method = &" ~ *local ~ ".methods[" ~ handler.index.to!string ~ "];\n";
         text ~= "        mapping.invoke = &handle_" ~ id ~ ";\n";
         text ~= "        mapping.invokeArguments = &handleArray_" ~ id ~ ";\n";
+        if (fastPath && imported!"flint_tool.engine.aot.fast".fastShape(handler))
+            text ~= "        mapping.fast = &fast_" ~ id ~ ";\n";
         return text ~ "        mapping.source = " ~ literal(
                 handler.source) ~ ";\n        registry.mapping(mapping);\n    }\n";
     }
