@@ -9,6 +9,16 @@
    "licence": "EPL-2.0",
    "upstream": "jakarta-annotation@3.0.0",
    "dependencies": []
+  },
+  "java": {
+   "directory": "framework/java",
+   "module": "flint.java",
+   "repo": "framework",
+   "licence": "Apache-2.0",
+   "upstream": "openjdk-api (clean-room from the Java SE specification)",
+   "dependencies": [
+    "engine-aot"
+   ]
   }
  }
 }
