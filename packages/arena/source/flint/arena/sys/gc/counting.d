@@ -30,6 +30,10 @@ private enum siteDepth = 8;
 /// Recorded allocations kept per thread.
 private enum siteCapacity = 4_096;
 
+/// Rows each thread records, `siteCapacity` unless `recordCallSites` asks for more (a live-set census records a whole
+/// start-up).
+private __gshared size_t recordCapacity = siteCapacity;
+
 /// One thread's totals, linked into the registry under `registryLock`.
 private struct ThreadCounts
 {
@@ -39,13 +43,17 @@ private struct ThreadCounts
     ThreadBase owner;
     bool registered;
     size_t recorded;
-    /// Return addresses of recorded allocations: `siteCapacity` rows, malloc'd on the first recording; the last slot
-    /// of a row holds the allocation's bytes.
-    void*[siteDepth + 1]* sites;
+    /// Recorded allocations, `capacity` rows malloc'd on the first recording: each row's return addresses, then the
+    /// allocation's bytes, then its address. The buffer is not a GC root, so recording keeps nothing alive.
+    void*[siteDepth + 2]* sites;
+    size_t capacity;
 }
 
 private ThreadCounts threadCounts; // thread-local by design (policy/safety-policy.json)
 private __gshared ThreadCounts* registry;
+/// Rows recorded by threads that have exited, kept for a census (malloc'd, under `registryLock`).
+private __gshared void*[siteDepth + 2]* retired;
+private __gshared size_t retiredCount;
 private shared SpinLock registryLock = SpinLock(SpinLock.Contention.brief);
 private __gshared CountingGC installed;
 private shared bool recordSites;
@@ -62,7 +70,7 @@ final class CountingGC : GC
         this.inner = inner;
     }
 
-    private void counted(size_t before, bool newBlock) nothrow
+    private void counted(size_t before, bool newBlock, void* block = null) nothrow
     {
         import core.atomic : MemoryOrder, atomicLoad, atomicStore;
 
@@ -73,8 +81,8 @@ final class CountingGC : GC
         if (!newBlock)
             return;
         atomicStore!(MemoryOrder.raw)(threadCounts.count, atomicLoad!(MemoryOrder.raw)(threadCounts.count) + 1);
-        if (atomicLoad!(MemoryOrder.raw)(recordSites) && threadCounts.recorded < siteCapacity)
-            record(added);
+        if (atomicLoad!(MemoryOrder.raw)(recordSites))
+            record(added, block);
     }
 
     void enable()
@@ -116,7 +124,7 @@ final class CountingGC : GC
     {
         const before = inner.allocatedInCurrentThread();
         auto p = inner.malloc(size, bits, ti);
-        counted(before, p !is null);
+        counted(before, p !is null, p);
         return p;
     }
 
@@ -124,7 +132,7 @@ final class CountingGC : GC
     {
         const before = inner.allocatedInCurrentThread();
         auto info = inner.qalloc(size, bits, ti);
-        counted(before, info.base !is null);
+        counted(before, info.base !is null, info.base);
         return info;
     }
 
@@ -132,7 +140,7 @@ final class CountingGC : GC
     {
         const before = inner.allocatedInCurrentThread();
         auto p = inner.calloc(size, bits, ti);
-        counted(before, p !is null);
+        counted(before, p !is null, p);
         return p;
     }
 
@@ -140,7 +148,7 @@ final class CountingGC : GC
     {
         const before = inner.allocatedInCurrentThread();
         auto moved = inner.realloc(p, size, bits, ti);
-        counted(before, moved !is null && moved !is p);
+        counted(before, moved !is null && moved !is p, moved);
         return moved;
     }
 
@@ -302,10 +310,38 @@ private void unregister(ThreadBase owner) nothrow @nogc
             *link = counts.next;
             counts.registered = false;
             counts.next = null;
+            retire(*counts);
             releaseSites(*counts);
             return;
         }
     }
+}
+
+/// Keep an exiting thread's recorded rows for a census; the caller holds the registry lock.
+private void retire(ref ThreadCounts counts) nothrow @nogc
+{
+    import core.stdc.stdlib : crealloc = realloc;
+    import core.stdc.string : memcpy;
+
+    if (counts.sites is null || counts.recorded == 0)
+        return;
+    auto grown = cast(void*[siteDepth + 2]*) crealloc(retired,
+            (retiredCount + counts.recorded) * (void*[siteDepth + 2]).sizeof);
+    if (grown is null)
+        return;
+    retired = grown;
+    memcpy(retired + retiredCount, counts.sites, counts.recorded * (void*[siteDepth + 2]).sizeof);
+    retiredCount += counts.recorded;
+}
+
+/// Free the retired rows; the caller holds the registry lock.
+private void freeRetired() nothrow @nogc
+{
+    import core.stdc.stdlib : cfree = free;
+
+    cfree(retired);
+    retired = null;
+    retiredCount = 0;
 }
 
 /// Free a record's call-site buffer.
@@ -319,7 +355,7 @@ private void releaseSites(ref ThreadCounts counts) nothrow @nogc
 }
 
 /// Keep the return addresses of the allocation being counted, past `record` and `counted` (Linux only).
-private void record(size_t bytes) nothrow @nogc
+private void record(size_t bytes, void* block) nothrow @nogc
 {
     version (linux)
     {
@@ -328,10 +364,14 @@ private void record(size_t bytes) nothrow @nogc
 
         if (threadCounts.sites is null)
         {
-            threadCounts.sites = cast(void*[siteDepth + 1]*) cmalloc(siteCapacity * (void*[siteDepth + 1]).sizeof);
+            threadCounts.capacity = recordCapacity;
+            threadCounts.sites = cast(void*[siteDepth + 2]*) cmalloc(threadCounts.capacity * (void*[siteDepth + 2])
+                    .sizeof);
             if (threadCounts.sites is null)
                 return;
         }
+        if (threadCounts.recorded >= threadCounts.capacity)
+            return;
         void*[siteDepth + 2] raw;
         const found = backtrace(raw.ptr, cast(int) raw.length);
         auto frames = threadCounts.sites[threadCounts.recorded++][];
@@ -340,6 +380,7 @@ private void record(size_t bytes) nothrow @nogc
             if (i + 2 < found)
                 frames[i] = raw[i + 2];
         frames[siteDepth] = cast(void*) bytes;
+        frames[siteDepth + 1] = block;
     }
 }
 
@@ -371,6 +412,7 @@ private void record(size_t bytes) nothrow @nogc
     registryLock.lock();
     for (auto counts = registry; counts !is null; counts = counts.next)
         releaseSites(*counts);
+    freeRetired();
     registryLock.unlock();
 }
 
@@ -411,7 +453,7 @@ private void record(size_t bytes) nothrow @nogc
 
 /// Turn call-site recording on (clearing what every thread recorded) or off. Turn it off before `topSites`.
 // SAFETY: Resets each linked record's count under the registry lock; the site buffers stay owned by their records.
-@trusted void recordCallSites(bool on) nothrow @nogc
+@trusted void recordCallSites(bool on, size_t capacity = siteCapacity) nothrow @nogc
 {
     import core.atomic : atomicStore;
 
@@ -419,7 +461,12 @@ private void record(size_t bytes) nothrow @nogc
     {
         registryLock.lock();
         for (auto counts = registry; counts !is null; counts = counts.next)
-            counts.recorded = 0;
+            if (counts.capacity == capacity)
+                counts.recorded = 0;
+            else
+                releaseSites(*counts); // reallocated at the new capacity on the next recording
+        recordCapacity = capacity;
+        freeRetired();
         registryLock.unlock();
     }
     atomicStore(recordSites, on);
@@ -438,6 +485,84 @@ private void record(size_t bytes) nothrow @nogc
         lines ~= rightAligned(counts[0]) ~ rightAligned(counts[1], 11) ~ " B  " ~ name;
     sortDescending(lines);
     return lines.length > limit ? lines[0 .. limit] : lines;
+}
+
+/++
+The live set by allocation site: of the allocations recorded, those whose block is still allocated (at the same
+address, at least as large), tallied by the first frame outside druntime and the counter, as
+"bytes B  count  scanned-bytes B  function" lines ordered by bytes. Collect first. Blocks marked NO_SCAN are skipped
+by marking; the scanned column is what each collection reads.
++/
+// SAFETY: As topSites; the liveness and attribute queries go to the inner collector with recorded addresses only.
+@trusted string[] liveSites(size_t limit, bool includeCaller = true)
+{
+    size_t[3][string] tally;
+    version (linux)
+        tallyLive(tally, includeCaller);
+    string[] lines;
+    foreach (name, counts; tally)
+        lines ~= rightAligned(counts[1], 11) ~ " B" ~ rightAligned(counts[0],
+                7) ~ rightAligned(counts[2], 11) ~ " B  " ~ name;
+    sortDescending(lines);
+    return lines.length > limit ? lines[0 .. limit] : lines;
+}
+
+version (linux) private void tallyLive(ref size_t[3][string] tally, bool includeCaller)
+{
+    if (!threadCounts.registered)
+        register();
+    auto rows = recordedRows(includeCaller);
+    void*[siteDepth + 2][] live;
+    foreach (ref row; rows)
+    {
+        auto block = row[siteDepth + 1];
+        // Still allocated at the same base, or just before it: a large appendable array's pointer is its data, past
+        // a prefix of up to 64 bytes. A different block reusing the address is possible but rare in a census.
+        if (block is null || installed is null)
+            continue;
+        const base = installed.inner.addrOf(block);
+        if (base is null || block - base > 64)
+            continue;
+        live ~= row;
+    }
+    const names = symbolize(executableOffsets(live));
+    foreach (ref frames; live)
+        foreach (i, frame; frames[0 .. siteDepth])
+        {
+            string name = names.get(frame, null);
+            if (frame is null || runtimeFrame(name))
+            {
+                // Every recorded frame is druntime's or the counter's: attribute the block to its first resolved one.
+                if (i + 1 < siteDepth && frames[i + 1]!is null)
+                    continue;
+                name = "runtime: " ~ firstResolved(frames[0 .. siteDepth], names);
+            }
+            auto counts = name in tally;
+            if (counts is null)
+            {
+                tally[name] = [0, 0, 0];
+                counts = name in tally;
+            }
+            const bytes = cast(size_t) frames[siteDepth];
+            (*counts)[0] += 1;
+            (*counts)[1] += bytes;
+            if (!(installed.inner.getAttr(installed.inner.addrOf(frames[siteDepth + 1])) & core
+                    .memory.GC.BlkAttr.NO_SCAN))
+                (*counts)[2] += bytes;
+            break;
+        }
+}
+
+/// The first frame of a row that symbolized to a name other than the counter's own.
+version (linux) private string firstResolved(const(void*)[] frames, const string[const(void)* ] names)
+{
+    foreach (frame; frames)
+    {
+        const name = names.get(frame, null);
+        if (name.length && name != "??" && !(name.length > 19 && name[0 .. 19] == "flint.arena.sys.gc."))
+            return name;
+    }
+    return "??";
 }
 
 /// The same tally ordered by bytes.
@@ -479,22 +604,24 @@ version (linux) private void tallySites(ref size_t[2][string] tally, bool includ
 }
 
 /// Every other thread's recorded frames, copied out under the registry lock.
-version (linux) private void*[siteDepth + 1][] recordedRows(bool includeCaller)
+version (linux) private void*[siteDepth + 2][] recordedRows(bool includeCaller)
 {
-    void*[siteDepth + 1][] rows;
+    void*[siteDepth + 2][] rows;
     registryLock.lock();
     scope (exit)
         registryLock.unlock();
     for (auto counts = registry; counts !is null; counts = counts.next)
         if ((includeCaller || counts !is &threadCounts) && counts.sites !is null)
             rows ~= counts.sites[0 .. counts.recorded];
+    if (retired !is null)
+        rows ~= retired[0 .. retiredCount]; // threads that exited while recording
     return rows;
 }
 
 /// The address of each distinct frame in the executable itself, as addr2line reads it: relative to the load base of
 /// a position-independent executable, absolute in a fixed one, and one byte back, on the call rather than the return.
 /// A shared library's frames are left out: their offsets are relative to their own base.
-version (linux) private size_t[const(void)* ] executableOffsets(const(void*[siteDepth + 1])[] rows)
+version (linux) private size_t[const(void)* ] executableOffsets(const(void*[siteDepth + 2])[] rows)
 {
     import core.sys.linux.dlfcn : Dl_info, dladdr;
 

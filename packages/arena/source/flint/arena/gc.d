@@ -68,10 +68,18 @@ bool thisThreadAllocations(out Allocations totals) nothrow @nogc
     return true;
 }
 
-/// Record the call site of every counted allocation (Linux), clearing earlier records; or stop recording.
-void recordAllocationSites(bool on) nothrow @nogc
+/// Record the call site of every counted allocation (Linux), up to `capacity` per thread, clearing earlier
+/// records; or stop recording.
+void recordAllocationSites(bool on, size_t capacity = 4_096) nothrow @nogc
 {
-    flint.arena.sys.gc.counting.recordCallSites(on);
+    flint.arena.sys.gc.counting.recordCallSites(on, capacity);
+}
+
+/// The live set by allocation site, after a collection: the recorded allocations still allocated, as
+/// "bytes B  count  scanned-bytes B  function" lines, largest first. Record from start-up with enough capacity.
+string[] liveAllocationSites(size_t limit, bool includeCaller = true)
+{
+    return flint.arena.sys.gc.counting.liveSites(limit, includeCaller);
 }
 
 /// The `limit` functions that made the most recorded allocations on other threads (and the caller's, with
