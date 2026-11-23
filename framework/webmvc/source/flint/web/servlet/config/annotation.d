@@ -414,6 +414,19 @@ class WebMvcConfigurationSupport
         strategies.handlerExceptionResolvers = firstResolvers ~ resolvers;
         strategies.viewResolvers = viewResolvers;
         strategies.localeResolver = localeResolver !is null ? localeResolver : new AcceptHeaderLocaleResolver;
+        // Flint's per-endpoint fast path (fast-path.md): built only by the configurer Flint AOT generates when an
+        // endpoint qualifies, and only when nothing configured here acts on every request; otherwise every request
+        // stays on the generic path, and nothing of the fast path is linked.
+        const plain = interceptors.length == 0 && corsSource is null && customResolvers.length == 0
+            && customHandlers.length == 0;
+        foreach (configurer; configurers)
+        {
+            if (auto factory = cast(imported!"flint.web.servlet".FastPathFactory) configurer)
+            {
+                strategies.fastPath = factory.buildFastPath(strategies, mappings, plain);
+                break;
+            }
+        }
         return strategies;
     }
 }
