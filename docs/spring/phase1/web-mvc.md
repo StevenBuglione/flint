@@ -191,6 +191,7 @@ Flint's own tests cover the R15/D-15 adaptations, the exceptions' messages and b
 | `flint.jakarta.servlet(.http)` | in `packages/jakarta-servlet` (EPL-2.0) |
 | `DispatcherServlet`, `RequestMappingHandlerMapping`/`Adapter`, processors, exception resolvers, `WebMvcConfigurer`, `WebMvcConfigurationSupport` | in `packages/framework-webmvc` |
 | MockMvc (`flint.test.web.servlet.*`, `flint.mock.web`) | in `packages/framework-test` |
-| Next | the servlet bridge over `flint.engine.web` (after the rename), CORS (`flint.web.cors`), `UriComponentsBuilder`, `ResponseEntityExceptionHandler`, `@RequestBody` with Jackson reading, `api/mapping.json` classification |
+| `api/framework/mapping.json` | 1,391 elements classified for the ported types: spring-web 14.1%, spring-webmvc 22.7%, jakarta-servlet 33.5%; a member is classified only when the D type declares it |
+| Next | the servlet bridge over `flint.engine.web` (after the rename), CORS (`flint.web.cors`), `UriComponentsBuilder`, `ResponseEntityExceptionHandler`, `@RequestBody` with Jackson reading |
 
 The packages are not yet in `policy/framework.json` or the root `dub.sdl`: their DUB names (`web`, `webmvc`) and module roots (`flint.web`, `flint.http`) are held by the engines until the rename, and `framework_layers` gives each module one root while spring-web needs two (`flint.http`, `flint.web`). Until then they build with path dependencies and `dub test` from each package directory.
