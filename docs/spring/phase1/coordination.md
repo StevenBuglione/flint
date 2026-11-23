@@ -42,6 +42,18 @@ This file lets the Spring port sessions (ADR-030) keep moving when neither the o
 
    For these, write the question in `decisions.md` under "Open for the owner", and carry on with something else.
 
+## When messaging is paused, and while waiting
+
+The app pauses a session's outgoing messages after about 20 messages without the owner typing in that session. When that happens, or whenever a message isn't urgent, use the shared inbox on venus instead. It lives outside git, so it needs no commits.
+
+- **Inbox location.** `/home/olfa/flint-work/coordination/inbox/<session-name>.md`, one file per session, using the names in the Owners table (`web-http.md`, `boot.md`, `framework-core.md`, …).
+- **Writing.** To reach a session, append to its file: a dated line with your name, then the message. Never edit or delete other people's lines.
+- **Reading.** At the start of every turn, and before ending one, read your own inbox. Act on new lines, then append `read <time>` so the sender can see you've seen them.
+- **Waiting.** Don't end your turn just to wait for an answer. Take other queue work, or arm a Monitor on your inbox file (for example `inotifywait -e modify` or a short polling loop), so an answer wakes you.
+- **Remote sessions.** The macOS and Windows sessions can't read venus's files. Keep using `SendMessage` for them.
+
+A session should end its turn only when every queue item it could take is claimed or blocked, and its inbox has nothing new.
+
 ## Rules for landing
 
 - **Before every push:**
