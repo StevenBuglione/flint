@@ -12,6 +12,7 @@
   - `flint check` flags nullable class fields (FLINT-E0530) and handler attributes the framework makes unneeded (FLINT-E0531), and reports attributes per handler.
   - The vibe-coding benchmark has Go and Spring Boot references for all four tasks, and each passes its acceptance test.
     - They build with the pinned Go 1.27.4, and with a Temurin JDK 21.0.13.1+2, Maven 3.9.16 and Spring Boot 4.2.0 newly pinned with checksums in `policy/peer-lock.json`.
+  - Graceful shutdown: flint:os dispatches SIGTERM as well as SIGINT, and flint:web drains on it. The listener closes, in-flight requests finish within a grace period, and the process exits 0, 124 when the grace period expires, or 130 after a second signal.
 - Milestone 9 (ADR-027) adds knowledge and tooling for people and agents:
   - `flint docs`, `flint examples` and `flint explain` answer from an offline index of the pinned API.
   - `flint generate` produces canonical components, and new projects get an `AGENTS.md`.
