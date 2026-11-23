@@ -3,7 +3,8 @@
 // Copyright 2012-present the original author or authors.
 // Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
 // Modified by the Flint authors: clean-room over the Boot types it implements; Tomcat's connector, valves and
-// session settings have no counterpart in the engine.
+// session settings have no counterpart in the engine. Flint addition: FlintServletWebServerFactory's fast-path offer
+// (setFastOffer, docs/spring/phase1/fast-path.md), set only by Flint AOT's generated customizer.
 
 /// Flint's embedded servlet web server: `FlintWebServer` and `FlintServletWebServerFactory`.
 module flint.boot.web.server.engine;
@@ -106,6 +107,10 @@ class FlintServletWebServerFactory : ConfigurableServletWebServerFactory
     private Shutdown shutdown = Shutdown.GRACEFUL;
     private int threads;
     private int maxHandlers = 200;
+    private FastOffer fastOffer;
+
+    /// The engine's fast-path offer type, named through its options, as the shutdown mode is.
+    alias FastOffer = typeof(ServletEngineOptions.init.fastOffer);
 
     /// The default factory.
     this() pure nothrow @nogc
@@ -133,6 +138,8 @@ class FlintServletWebServerFactory : ConfigurableServletWebServerFactory
         options.shutdown = shutdown == Shutdown.GRACEFUL ? ShutdownMode.graceful : ShutdownMode.immediate;
         options.cores = threads;
         options.maxHandlers = cast(uint) maxHandlers; // setMaxHandlers keeps it non-negative
+        if (fastOffer !is null)
+            options.fastOffer = fastOffer;
         auto engine = new ServletEngine(options);
         foreach (initializer; initializers)
             initializer.onStartup(engine.getServletContext());
@@ -238,5 +245,21 @@ class FlintServletWebServerFactory : ConfigurableServletWebServerFactory
         if (maxHandlers < 0)
             throw new IllegalArgumentException("Max handlers must not be negative");
         this.maxHandlers = maxHandlers;
+    }
+
+    /// Flint addition: the per-endpoint fast path's offer (docs/spring/phase1/fast-path.md), or null for none.
+    FastOffer getFastOffer() const pure nothrow @nogc
+    {
+        return fastOffer;
+    }
+
+    /++
+    Flint addition: the per-endpoint fast path's offer, `flint.engine.servlet.fast.serveFast`. Only the
+    `WebServerFactoryCustomizer` Flint AOT generates when an endpoint qualifies calls it, so a server without one
+    links none of the fast path; there is no configuration property. Null keeps every request generic.
+    +/
+    void setFastOffer(FastOffer fastOffer) pure nothrow @nogc
+    {
+        this.fastOffer = fastOffer;
     }
 }
