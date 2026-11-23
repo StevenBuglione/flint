@@ -53,7 +53,9 @@ def implementation_required():
     for name,meta in PACKAGES.items():
         module=Path(*meta['module'].split('.'))
         source=ROOT/'packages'/name/'source'
-        if not (source/module.with_suffix('.d')).is_file() and not (source/module/'package.d').is_file():
+        # A package whose root holds only leaf modules (flint:engine-aot, AOT contract section 4) has no package.d.
+        if not (source/module.with_suffix('.d')).is_file() and not (source/module/'package.d').is_file() \
+                and not any((source/module).glob('*.d')):
             missing.append(name)
     require(not missing,'implementation milestone incomplete; public source modules missing: '+', '.join(missing))
 
