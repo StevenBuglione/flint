@@ -1026,10 +1026,14 @@ def main():
         return
     if a.compiler=='dmd' and arch=='aarch64' and osname in ('Darwin','Linux') and not a.musl:
         # ADR-025 section 3: arm64 hosts build the fork with its AArch64 code generator; there is no upstream binary.
-        if a.dmd_linker:raise SystemExit('--dmd-linker is not supported on arm64 hosts yet')
         bin_dir,fork=install_dmd_arm64(a.destination)
-        print(json.dumps({'compiler':'dmd','version':LOCK['versions']['dmd'],'bin':str(bin_dir),
-                          'sha256':LOCK['assets']['dmd.2.114.0.linux.tar.xz']['sha256'],'flint_fork':fork}))
+        receipt={'compiler':'dmd','version':LOCK['versions']['dmd'],'bin':str(bin_dir),
+                 'sha256':LOCK['assets']['dmd.2.114.0.linux.tar.xz']['sha256'],'flint_fork':fork}
+        if linker:
+            # Linux AArch64 links with the pinned mold by default (0fcf7d0c), configured in the fork's own dmd.conf
+            configure_dmd_linker(bin_dir, linker)
+            receipt['linker'] = linker
+        print(json.dumps(receipt))
         return
     if a.compiler=='dmd':
         if (osname,arch)==('Windows','x86_64') and not a.musl:
