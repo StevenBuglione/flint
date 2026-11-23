@@ -30,15 +30,6 @@ struct Greeting
     string content; ///
 }
 
-/// `@RequestParam(value = "name", defaultValue = "World")`. A constant until the pinned dfmt and D-Scanner parse D's
-/// named arguments (docs/spring/phase1/boot.md, "Tooling gap: named arguments").
-private enum RequestParam nameParameter = () {
-    RequestParam parameter;
-    parameter.value = "name";
-    parameter.defaultValue = "World";
-    return parameter;
-}();
-
 /// The guide's controller.
 @RestController class GreetingController
 {
@@ -52,7 +43,8 @@ private enum RequestParam nameParameter = () {
     }
 
     ///
-    @GetMapping("/greeting") Greeting greeting(@nameParameter string name)
+    @GetMapping("/greeting") Greeting greeting(@RequestParam(value : "name", defaultValue:
+            "World") string name)
     {
         return Greeting(counter.incrementAndGet(), format(template_, name));
     }
