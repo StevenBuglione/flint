@@ -163,7 +163,8 @@ class ExtractionTests(unittest.TestCase):
         self.assertIn('packages/engine-security', framework)
         self.assertIn('api/framework', framework)
         self.assertNotIn('packages/arena', framework)
-        self.assertEqual(len(framework), len(workspace.packages_of('framework')) + 1)
+        self.assertIn('native/framework', framework)  # flint_ffi_framework's project, native/ once extracted
+        self.assertEqual(len(framework), len(workspace.packages_of('framework')) + 2)
         self.assertEqual(extract_repo.moving_paths('batch'), [])
 
     def test_the_workspace_root_recipe_joins_every_checkout_under_the_flint_name(self):

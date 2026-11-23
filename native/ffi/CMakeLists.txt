@@ -2,16 +2,13 @@ cmake_minimum_required(VERSION 3.20)
 project(flint_ffi C)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
-# One archive per repo of the split (plan section 7): flint_ffi_base holds the shims of the flint repo's closure
-# (libyaml, utf8proc and the ABI probe); flint_ffi_framework holds the engines'. tools/native_build.py records both,
-# and FLINT_FFI_BASE_SHIMS must match its BASE_SHIMS.
+# The flint repo's Flint C shims (plan section 7): flint_ffi_base wraps libyaml, utf8proc and the ABI probe, the
+# closure of the flint repo's packages. The engines' shims live beside their packages and build into
+# flint_ffi_framework from native/framework (flint-framework's native/ after the split). tools/native_build.py builds
+# this project first, and FLINT_FFI_BASE_SHIMS must match its BASE_SHIMS.
 set(FLINT_FFI_BASE_SHIMS flint_abi_probe.c flint_utf8proc.c flint_yaml.c)
-file(GLOB FLINT_SHIMS CONFIGURE_DEPENDS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/flint_*.c")
-set(FLINT_FFI_FRAMEWORK_SHIMS ${FLINT_SHIMS})
-list(REMOVE_ITEM FLINT_FFI_FRAMEWORK_SHIMS ${FLINT_FFI_BASE_SHIMS})
 add_library(flint_ffi_base STATIC ${FLINT_FFI_BASE_SHIMS})
-add_library(flint_ffi_framework STATIC ${FLINT_FFI_FRAMEWORK_SHIMS})
-foreach(flint_ffi IN ITEMS flint_ffi_base flint_ffi_framework)
+set(flint_ffi flint_ffi_base)
 target_include_directories(${flint_ffi} PRIVATE "${CMAKE_INSTALL_PREFIX}/include")
 # One section per function and object, so a linked program keeps only the shim entry points it reaches
 # (and the providers behind them) rather than every function that shares a translation unit with one.
@@ -46,123 +43,15 @@ foreach(PAIR IN ITEMS "llhttp.h|LLHTTP" "nghttp2/nghttp2.h|NGHTTP2" "curl/curl.h
     target_compile_definitions(${flint_ffi} PRIVATE "FLINT_HAS_${SYMBOL}=1")
   endif()
 endforeach()
-endforeach()
-if((CMAKE_SYSTEM_NAME STREQUAL "Linux" OR APPLE) AND EXISTS "${CMAKE_INSTALL_PREFIX}/include/SDL3/SDL.h"
-    AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/flint_desktop.h")
-  target_compile_definitions(flint_ffi_framework PRIVATE FLINT_HAS_SDL3=1)
-  install(FILES flint_desktop.h DESTINATION include)
-endif()
 add_executable(flint_abi_test probe_main.c)
-target_link_libraries(flint_abi_test PRIVATE flint_ffi_framework flint_ffi_base)
+target_link_libraries(flint_abi_test PRIVATE flint_ffi_base)
 enable_testing()
 add_test(NAME flint_abi_test COMMAND flint_abi_test)
-install(TARGETS flint_ffi_base flint_ffi_framework ARCHIVE DESTINATION lib)
+install(TARGETS flint_ffi_base ARCHIVE DESTINATION lib)
 install(FILES flint_abi_probe.h DESTINATION include)
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/flint_codec.h" AND
-    (EXISTS "${CMAKE_INSTALL_PREFIX}/include/zlib.h" OR EXISTS "${CMAKE_INSTALL_PREFIX}/include/zstd.h" OR
-     EXISTS "${CMAKE_INSTALL_PREFIX}/include/brotli/decode.h" OR EXISTS "${CMAKE_INSTALL_PREFIX}/include/archive.h"))
-  install(FILES flint_codec.h DESTINATION include)
-endif()
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/flint_yaml.h" AND EXISTS "${CMAKE_INSTALL_PREFIX}/include/yaml.h")
   install(FILES flint_yaml.h DESTINATION include)
 endif()
 if(EXISTS "${CMAKE_INSTALL_PREFIX}/include/utf8proc.h")
   install(FILES flint_utf8proc.h DESTINATION include)
-endif()
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/flint_http.h" AND EXISTS "${CMAKE_INSTALL_PREFIX}/include/curl/curl.h")
-  install(FILES flint_http.h DESTINATION include)
-endif()
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/flint_web.h" AND EXISTS "${CMAKE_INSTALL_PREFIX}/include/llhttp.h")
-  install(FILES flint_web.h DESTINATION include)
-endif()
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/flint_sql.h" AND
-    (EXISTS "${CMAKE_INSTALL_PREFIX}/include/sqlite3.h" OR EXISTS "${CMAKE_INSTALL_PREFIX}/include/libpq-fe.h"))
-  install(FILES flint_sql.h DESTINATION include)
-endif()
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/flint_cache.h" AND
-    EXISTS "${CMAKE_INSTALL_PREFIX}/include/hiredis/hiredis_ssl.h")
-  install(FILES flint_cache.h DESTINATION include)
-endif()
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/flint_security.h" AND
-    (EXISTS "${CMAKE_INSTALL_PREFIX}/include/openssl/evp.h" OR EXISTS "${CMAKE_INSTALL_PREFIX}/include/sodium.h"))
-  install(FILES flint_security.h DESTINATION include)
-endif()
-if(EXISTS "${CMAKE_INSTALL_PREFIX}/include/librdkafka/rdkafka.h")
-  install(FILES flint_mq.h flint_mq_socket.h DESTINATION include)
-endif()
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/flint_rpc.h" AND
-    (EXISTS "${CMAKE_INSTALL_PREFIX}/include/openssl/evp.h" OR
-     EXISTS "${CMAKE_INSTALL_PREFIX}/include/protobuf-c/protobuf-c.h"))
-  install(FILES flint_rpc.h DESTINATION include)
-endif()
-
-# Test codecs and their benchmark control are separate from the production FFI archive. They and the reference
-# controls below build from the engine packages' sources, so a flint checkout without them (a Flint home that
-# takes the engines from the flint-framework platform module) builds the production archives alone.
-set(FLINT_RPC_TEST_CODECS "${CMAKE_CURRENT_SOURCE_DIR}/../../packages/engine-rpc/tests/generated")
-if(EXISTS "${CMAKE_INSTALL_PREFIX}/include/protobuf-c/protobuf-c.h" AND EXISTS "${FLINT_RPC_TEST_CODECS}/echo.pb-c.c")
-  add_library(flint_rpc_fixture STATIC
-    "${FLINT_RPC_TEST_CODECS}/echo.pb-c.c"
-    "${FLINT_RPC_TEST_CODECS}/echo_flint.c"
-    "../../packages/engine-rpc/bench/baseline/source/probe.c")
-  target_include_directories(flint_rpc_fixture PRIVATE
-    "${FLINT_RPC_TEST_CODECS}" "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_INSTALL_PREFIX}/include")
-  install(TARGETS flint_rpc_fixture ARCHIVE DESTINATION lib)
-endif()
-
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND EXISTS "${CMAKE_INSTALL_PREFIX}/include/liburing.h")
-  target_compile_definitions(flint_ffi_framework PRIVATE FLINT_HAS_LIBURING=1)
-  install(FILES flint_reactor_uring.h DESTINATION include)
-  find_library(FLINT_URING NAMES liburing.a PATHS "${CMAKE_INSTALL_PREFIX}/lib" NO_DEFAULT_PATH REQUIRED)
-  add_executable(flint_reactor_uring_test reactor_uring_test.c)
-  target_link_libraries(flint_reactor_uring_test PRIVATE flint_ffi_framework flint_ffi_base "${FLINT_URING}")
-  add_test(NAME flint_reactor_uring_test COMMAND flint_reactor_uring_test)
-  set_tests_properties(flint_reactor_uring_test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 10)
-  add_test(NAME flint_reactor_uring_denied COMMAND flint_reactor_uring_test --deny-setup)
-  set_tests_properties(flint_reactor_uring_denied PROPERTIES TIMEOUT 10)
-endif()
-
-if(EXISTS "${CMAKE_INSTALL_PREFIX}/include/llhttp.h" AND EXISTS "${CMAKE_INSTALL_PREFIX}/include/zlib.h")
-  find_library(FLINT_LLHTTP NAMES llhttp llhttp_static PATHS "${CMAKE_INSTALL_PREFIX}/lib" "${CMAKE_INSTALL_PREFIX}/lib64" NO_DEFAULT_PATH REQUIRED)
-  find_library(FLINT_ZLIB NAMES z zlibstatic zlib PATHS "${CMAKE_INSTALL_PREFIX}/lib" "${CMAKE_INSTALL_PREFIX}/lib64" NO_DEFAULT_PATH REQUIRED)
-  add_executable(flint_native_library_test native_library_test.c)
-  target_compile_definitions(flint_native_library_test PRIVATE FLINT_SMOKE_MAIN=1)
-  target_include_directories(flint_native_library_test PRIVATE "${CMAKE_INSTALL_PREFIX}/include")
-  target_link_libraries(flint_native_library_test PRIVATE flint_ffi_framework flint_ffi_base "${FLINT_LLHTTP}" "${FLINT_ZLIB}")
-  add_test(NAME flint_native_library_test COMMAND flint_native_library_test)
-endif()
-
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux" OR APPLE)
-  # White-box socket option test; it compiles flint_mq_socket.c itself without TLS.
-  add_executable(flint_mq_socket_test mq_socket_test.c)
-  if(APPLE)
-    target_compile_definitions(flint_mq_socket_test PRIVATE _DARWIN_C_SOURCE)
-  endif()
-  add_test(NAME flint_mq_socket_test COMMAND flint_mq_socket_test)
-endif()
-
-if((CMAKE_SYSTEM_NAME STREQUAL "Linux" OR APPLE) AND EXISTS "${CMAKE_INSTALL_PREFIX}/include/wasmtime.h" AND
-    EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/flint_wasi.h")
-  target_compile_definitions(flint_ffi_framework PRIVATE FLINT_HAS_WASMTIME=1)
-  if(EXISTS "${CMAKE_INSTALL_PREFIX}/include/flint_wasmtime_extensions.h")
-    target_compile_definitions(flint_ffi_framework PRIVATE FLINT_HAS_WASMTIME_EXTENSIONS=1)
-  endif()
-  if(EXISTS "${CMAKE_INSTALL_PREFIX}/include/flint_wasmtime_extensions.h" AND
-      EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../packages/engine-wasi/bench/baseline/native/direct.c")
-    add_library(flint_wasi_reference STATIC "../../packages/engine-wasi/bench/baseline/native/direct.c")
-    target_include_directories(flint_wasi_reference PRIVATE "${CMAKE_INSTALL_PREFIX}/include")
-    install(TARGETS flint_wasi_reference ARCHIVE DESTINATION lib)
-  endif()
-  install(FILES flint_wasi.h DESTINATION include)
-endif()
-
-if((CMAKE_SYSTEM_NAME STREQUAL "Linux" OR APPLE) AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/flint_mail.h" AND
-    EXISTS "${CMAKE_INSTALL_PREFIX}/include/curl/curl.h")
-  install(FILES flint_mail.h DESTINATION include)
-  # Isolated pinned-ABI control. Static linking retains it only in the reference executable.
-  if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../packages/engine-mail/bench/baseline/native/direct.c")
-    add_library(flint_mail_reference STATIC "../../packages/engine-mail/bench/baseline/native/direct.c")
-    target_include_directories(flint_mail_reference PRIVATE "${CMAKE_INSTALL_PREFIX}/include")
-    install(TARGETS flint_mail_reference ARCHIVE DESTINATION lib)
-  endif()
 endif()

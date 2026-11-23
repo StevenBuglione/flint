@@ -11,7 +11,7 @@ from conan.tools.files import download
 
 NAME = 'zstd'
 DEPENDENCIES = []
-BUILD_ENGINE_SHA256 = '66eb737cb7b25716c235d11aeb841714b065212a60dcb4a3083188e54a3fc332'
+BUILD_ENGINE_SHA256 = '9e127757ec867f98ed7d4ab9f6dd1df1eb853b2c54d4e0c94efc6a90de32dcb8'
 TARGETS = ['linux-aarch64-glibc', 'linux-aarch64-musl', 'linux-x86_64-glibc', 'linux-x86_64-musl', 'macos-arm64', 'windows-x86_64']
 
 

@@ -42,6 +42,9 @@ def moving_paths(repo, root=ROOT):
     if (root / 'api' / repo / 'mapping.json').is_file():
         # The repo's API mapping (flint api coverage); renamed to api/mapping.json on extraction.
         paths.append(api_mapping_dir(repo))
+    if repo != 'flint' and (root / 'native' / repo).is_dir():
+        # The repo's native project, as native/framework builds flint_ffi_framework; native/ once extracted.
+        paths.append('native/' + repo)
     return sorted(set(paths))
 
 
@@ -87,9 +90,34 @@ def earlier_names(checkout, paths):
         # Git pairs an occasional identical small file across directories; the directory's rename is the target
         # most of its files went to.
         new, count = max(counts.items(), key=lambda item: item[1])
+        # A renamed directory is gone; one that still exists (native/ffi) only gave some files away.
+        if (checkout / old).exists():
+            continue
         if count * 2 > sum(counts.values()) and any(new == path or new.startswith(path + '/') for path in paths):
             found[old] = new
     return dict(sorted(found.items()))
+
+
+def earlier_files(checkout, paths, earlier):
+    """[(earlier file, later file)] for files git saw move into a moving directory from outside every moving and
+    earlier directory, one by one (native/ffi/flint_web.c -> packages/engine-web/native/ffi/flint_web.c), so their
+    history comes along too."""
+    log = subprocess.run(['git', 'log', '--format=', '--name-status', '-M', '--diff-filter=R', 'HEAD'], cwd=checkout,
+                         capture_output=True, text=True, check=True).stdout
+    kept = list(paths) + list(earlier)
+    found, claimed = {}, set()
+    for line in log.splitlines():  # newest first
+        fields = line.split('\t')
+        if len(fields) != 3:
+            continue
+        old, new = fields[1], fields[2]
+        if any(old == path or old.startswith(path + '/') for path in kept):
+            continue
+        # One earlier name per file and per earlier path, the latest move, so no two land on one name.
+        if any(new.startswith(path + '/') for path in paths) and new not in claimed and old not in found:
+            found[old] = new
+            claimed.add(new)
+    return sorted(found.items())
 
 
 def rewrite_references(checkout, pairs):
@@ -166,9 +194,17 @@ def extract(repo, source, commit, into, root=ROOT):
     moves = renames(repo, checkout, paths, root)
     # Earlier names come along with their history, renamed to where their later name goes.
     earlier = [(old, dict(moves).get(new, new)) for old, new in earlier_names(checkout, paths).items()]
+
+    def placed(path):
+        for old, new in moves:
+            if path.startswith(old + '/'):
+                return new + path[len(old):]
+        return path
+    files = [(old, placed(new)) for old, new in earlier_files(checkout, paths, dict(earlier))]
     run(['git', 'filter-repo', '--force', '--quiet', '--refs', 'main',
-         *sum((['--path', p] for p in paths + [old for old, _ in earlier]), []),
-         *sum((['--path-rename', f'{old}/:{new}/'] for old, new in moves + earlier), [])], checkout)
+         *sum((['--path', p] for p in paths + [old for old, _ in earlier] + [old for old, _ in files]), []),
+         *sum((['--path-rename', f'{old}/:{new}/'] for old, new in moves + earlier), []),
+         *sum((['--path-rename', f'{old}:{new}'] for old, new in files), [])], checkout)
     rewritten = rewrite_references(checkout, moves)
     root_files(repo, checkout, root)
     run(['git', 'add', '-A'], checkout)
@@ -178,7 +214,7 @@ def extract(repo, source, commit, into, root=ROOT):
          f'{len(rewritten)} files\' references updated). Root files: dub.sdl (the flint namespace\'s subpackages '
          'of this repo), LICENSE, NOTICE, README.md and .gitignore.'], checkout)
     return {'repo': repo, 'checkout': str(checkout), 'source_commit': source_commit, 'paths': paths,
-            'moves': dict(moves), 'earlier': dict(earlier), 'rewritten': rewritten}
+            'moves': dict(moves), 'earlier': dict(earlier), 'files': dict(files), 'rewritten': rewritten}
 
 
 def refresh(source, commit, into, push, remote):

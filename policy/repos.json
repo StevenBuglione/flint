@@ -1,9 +1,10 @@
 {
   "schema": "flint.repos/1",
   "note": "Repo split (plan section 7, ADR-030 section 2): every flint:* package belongs to one repo. Integrated repos (security, the data family, batch) sit between boot and framework, so boot -> integrated -> framework -> flint, and depend on each other only in Spring's own direction (data-* and security -> data-commons). Boot-based repos (ai, the cloud family, later shell) ship their own auto-configuration and depend on boot.",
-  "layout_note": "Where a monorepo directory sits in its extracted repo, mirroring Spring's repos: engines under engine/<name>; Spring-layer modules (framework/<artifact>) at the top as flint-<artifact>, like spring-framework's spring-<module>; Boot in spring-boot's core/, module/, platform/ and starter/, where boot/core, boot/module, boot/platform and boot/starter keep their place and the pre-port Boot libraries (boot/boot, boot/autoconfigure-*, boot/actuator) move to legacy/ and module/; the repo's API mapping (api/<repo>) becomes api/. Each rule rewrites a directory's first two path components; a rule ending in / or - is a prefix, any other must match whole. The first match wins; the flint repo keeps the monorepo layout.",
+  "layout_note": "Where a monorepo directory sits in its extracted repo, mirroring Spring's repos: engines under engine/<name>; Spring-layer modules (framework/<artifact>) at the top as flint-<artifact>, like spring-framework's spring-<module>; Boot in spring-boot's core/, module/, platform/ and starter/, where boot/core, boot/module, boot/platform and boot/starter keep their place and the pre-port Boot libraries (boot/boot, boot/autoconfigure-*, boot/actuator) move to legacy/ and module/; the repo's API mapping (api/<repo>) becomes api/, and its native project (native/<repo>) native/. Each rule rewrites a directory's first two path components; a rule ending in / or - is a prefix, any other must match whole. The first match wins; the flint repo keeps the monorepo layout.",
   "layout": [
     ["packages/engine-", "engine/"],
+    ["native/framework", "native"],
     ["framework/", "flint-"],
     ["boot/core", "core"],
     ["boot/module", "module"],

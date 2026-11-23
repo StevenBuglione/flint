@@ -17,7 +17,8 @@ from workspace import Workspace  # noqa: E402
 # The checkouts of each repo (plan section 7): the monorepo unless --workspace names a flint.workspace/1 file.
 WORKSPACE = Workspace()
 
-# The Flint C shims split by repo (plan section 7), as native/ffi/CMakeLists.txt builds them: the flint repo's
+# The Flint C shims split by repo (plan section 7): native/ffi builds the flint repo's flint_ffi_base, and
+# native/framework the engines' flint_ffi_framework from their packages' native/ffi. The flint repo's
 # closure links only flint_ffi_base; framework and portfolio packages link flint_ffi_framework first, then base.
 BASE_SHIMS = ('flint_abi_probe.c', 'flint_utf8proc.c', 'flint_yaml.c')
 FFI_ARCHIVES = {'base': ('libflint_ffi_base.a', 'flint_ffi_base.lib'),
@@ -34,6 +35,11 @@ def package_path(package):
 def flint_checkout():
     """The flint repo's checkout, which holds native/ffi and the Conan recipe index."""
     return WORKSPACE.checkout('flint') if WORKSPACE.file else ROOT
+
+def framework_shims():
+    """The engines' shim project (flint_ffi_framework): native/framework here, native/ in flint-framework."""
+    return WORKSPACE.locate('framework','native/framework',ROOT) if WORKSPACE.file else ROOT/'native/framework'
+
 TARGETS = ('linux-x86_64-glibc','linux-aarch64-glibc','linux-x86_64-musl','linux-aarch64-musl','macos-arm64','windows-x86_64')
 PROFILES = {
     'rest': ['openssl','libsodium','llhttp','nghttp2','curl'],
@@ -501,9 +507,11 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
         self.prefix.mkdir(parents=True,exist_ok=True);self.receipt_path.write_text(json.dumps(self.receipt,indent=2)+'\n')
 
     def shims(self):
-        source=flint_checkout()/'native/ffi';build=self.work/'build'/self.a.target/'flint-ffi'
-        self.cmake('flint-ffi',source,build,'.',[])
-        if host_target()==self.a.target:self.command(['ctest','--test-dir',build,'--output-on-failure'],ROOT)
+        # flint_ffi_base first: the engines' project links its tests against the installed archive.
+        for name,source in (('flint-ffi',flint_checkout()/'native/ffi'),('flint-ffi-framework',framework_shims())):
+            build=self.work/'build'/self.a.target/name
+            self.cmake(name,source,build,'.',[])
+            if host_target()==self.a.target:self.command(['ctest','--test-dir',build,'--output-on-failure'],ROOT)
         if self.a.phase=='build':
             self.receipt['native_ctest_executed']=host_target()==self.a.target
             self.receipt['sanitizers']=self.a.sanitize

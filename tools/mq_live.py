@@ -3,7 +3,7 @@
 
 Starts a single-node KRaft Apache Kafka on the pinned JRE and NATS JetStream, plain and with TLS
 from a throwaway CA. Builds the scenario programs in packages/engine-mq/fixtures, the D ones with DUB
-against flint:engine-mq and the C ones against native/ffi/flint_mq.c and the pinned librdkafka. Then runs:
+against flint:engine-mq and the C ones against packages/engine-mq/native/ffi/flint_mq.c and the pinned librdkafka. Then runs:
 
   kafka          receipts, local redelivery with a fresh token, processing and confirmed drain
   kafka_state    a real rebalance revokes a held delivery; the stale acknowledgement is rejected
@@ -89,8 +89,10 @@ def build_c(args, work, name):
     shim = [] if '#include "flint_mq.c"' in source.read_text() else ['libflint_ffi_framework.a', 'libflint_ffi_base.a']
     libraries = [str(prefix / 'lib' / library) for library in
                  (*shim, 'librdkafka.a', 'libzstd.a', 'libz.a', 'libssl.a', 'libcrypto.a')]
-    darwin = ['-D_DARWIN_C_SOURCE'] if sys.platform == 'darwin' else []  # as native/ffi/CMakeLists.txt
-    subprocess.run([args.cc, '-std=c11', '-g', '-O1', '-D_GNU_SOURCE', *darwin, '-DFLINT_HAS_LIBRDKAFKA', '-I' + str(ROOT / 'native' / 'ffi'),
+    darwin = ['-D_DARWIN_C_SOURCE'] if sys.platform == 'darwin' else []  # as native/framework/CMakeLists.txt
+    shims = ['-I' + str(ROOT / 'packages' / 'engine-mq' / 'native' / 'ffi'),
+             '-I' + str(ROOT / 'native' / 'framework' / 'include')]
+    subprocess.run([args.cc, '-std=c11', '-g', '-O1', '-D_GNU_SOURCE', *darwin, '-DFLINT_HAS_LIBRDKAFKA', *shims,
                     '-I' + str(prefix / 'include'), str(source), '-o', str(output), *libraries,
                     *SYSTEM_LIBRARIES], check=True)
     return output
