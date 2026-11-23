@@ -21,6 +21,7 @@ It is the macOS track of [ADR-021](../adr/ADR-021-flint-platform.md) section 9, 
 - **The reactor** has a kqueue backend with the epoll backend's semantics, including native descriptor watches.
 - **Native providers.** `tools/native_build.py` builds all 17 C providers of the `ci` closure and wasmtime with Apple clang. Flint's C shims build on Darwin; ADR-024 section 4 lists the differences they absorb.
 - **Embedded C in projects** builds with the pinned LLVM 22.1.8 for macOS arm64 under the Darwin rules in `policy/native-c.toml` (ADR-024 section 4).
+- **The desktop system webview** is WKWebView on macOS, bound from D through the Objective-C runtime (ADR-020, ADR-024 section 4). The desktop suite (typed commands, events both ways, capability and navigation denial, and shutdown under load) passes on both compilers in real AppKit windows. The SDL canvas backend builds too.
 - **Build measurement.** `tools/measure_builds.py` and `tools/compare_go_builds.py` run on pluto against the pinned Go 1.27.4 darwin-arm64.
 
 ## Evidence
@@ -80,7 +81,6 @@ Findings for ADR-025:
 
 ## Not done
 
-- **The desktop WebView backend** is GTK and WebKitGTK only. macOS runs the SDL canvas backend, and a WKWebView backend is future work.
 - **WASI preopens** keep a narrow rename race on macOS until the Wasmtime C API can take a directory descriptor (ADR-024 section 4).
 - **DMD arm64** is the dmd-arm64 session's work. These packages will be run on it as soon as druntime and Phobos land for macOS.
 

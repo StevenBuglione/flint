@@ -797,6 +797,38 @@
       "license_selection_note": "Same libraries tao/wry use on Linux. Linked dynamically like glibc; never linked statically or redistributed modified. See docs/adr/ADR-020-desktop-webview-shell.md."
     },
     {
+      "consumers": [
+        "desktop"
+      ],
+      "default_enabled": false,
+      "dependencies": [],
+      "frameworks": [
+        "WebKit",
+        "AppKit",
+        "Foundation"
+      ],
+      "system_libraries": [
+        "-lobjc"
+      ],
+      "header_strategy": "Direct D calls through the Objective-C runtime C ABI (objc_msgSend cast to each exact prototype, sel_registerName, objc_allocateClassPair); no Flint C shim, no ImportC and no Objective-C source.",
+      "kind": "system",
+      "license_expression": "LicenseRef-Apple-SDK",
+      "license_selected": "LicenseRef-Apple-SDK (macOS system frameworks, linked dynamically, never redistributed)",
+      "license_selection_note": "WKWebView and AppKit are macOS platform components under Apple's terms, as ADR-020 records; they are linked dynamically from the SDK stubs and ship with the OS. See docs/adr/ADR-020-desktop-webview-shell.md and docs/adr/ADR-024-macos-arm64.md.",
+      "license_url": "https://developer.apple.com/documentation/webkit/wkwebview",
+      "linking": "dynamic-system-library",
+      "name": "wkwebview",
+      "optional": true,
+      "reviewed_on": "2026-11-23",
+      "runtime_matrix_status": "macos-arm64 executed on macOS 26.4 (pluto); other targets not applicable",
+      "source_url": "https://developer.apple.com/documentation/webkit",
+      "source_verification": "system provider: tools/native_build.py records the macOS SDK path and the SHA256 of each framework's .tbd linker stub in the install receipt, and refuses a build whose stubs changed since",
+      "targets": [
+        "macos-arm64"
+      ],
+      "version": "WebKit, AppKit and Foundation from the macOS SDK (deployment target 13.0)"
+    },
+    {
       "name": "webview",
       "repo": "webview/webview",
       "tag": "0.12.0",

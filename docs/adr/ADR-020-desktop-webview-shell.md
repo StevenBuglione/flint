@@ -30,9 +30,11 @@ Rebuild `flint:desktop` on the Tauri v2 architecture, implemented in D, binding 
 | --- | --- | --- | --- |
 | Linux (implemented) | GTK 3 (`libgtk-3`, GDK picks Wayland or X11) | WebKitGTK `webkit2gtk-4.1` | `extern(C)` declarations in `flint.desktop.ffi.webkit` |
 | Windows (later) | Win32 | WebView2 through its COM C ABI (`ICoreWebView2*` vtables) | `extern(Windows)` vtable structs in D |
-| macOS (later) | AppKit | WKWebView | Objective-C runtime C ABI (`objc_msgSend`, `sel_registerName`) from D |
+| macOS (implemented, ADR-024) | AppKit | WKWebView | Objective-C runtime C ABI (`objc_msgSend`, `sel_registerName`) from D, in `flint.desktop.ffi.wkwebview` |
 
 These are the same libraries `tao` and `wry` use on each platform. Only GLib, GObject, GTK and WebKitGTK functions are declared, each with the exact C signature. Raw pointers and callbacks stay in `flint.desktop.ffi`, already an allowlisted low-level prefix. Every `@trusted` function carries its adjacent `// SAFETY:` note and stays under 60 lines. GTK signal callbacks are `extern(C) nothrow @nogc` D functions. They do not call application code: they copy the IPC message or window event into a window-owned ring, and the owner loop dispatches it after the GTK iteration returns. A D exception therefore cannot unwind through GTK.
+
+On macOS the same contract is implemented without Objective-C source. `objc_msgSend` is cast to each call's exact C prototype, as arm64 requires. One `NSObject` subclass, registered at run time with `objc_allocateClassPair`, is the script message handler, the `flint` URL scheme handler, and the navigation, UI and window delegate. Its methods are `extern(C) nothrow @nogc` D functions that only copy into the window-owned ring or record an event, as the GTK callbacks do. Decision handlers are Objective-C blocks; Flint calls each one exactly once through the block's `invoke` slot. Assets are served from `flint://localhost` with the same headers and content-security policy. Downloads, new windows and media-capture requests are refused. The owner loop drains queued AppKit events and one run-loop pass on every poll. The bridge script is unchanged, because WKWebView exposes the same `window.webkit.messageHandlers` interface as WebKitGTK. WKWebView has no setting that copies console output to stdout, so `FLINT_DESKTOP_CONSOLE` has no effect there. `FLINT_DESKTOP_DEVTOOLS=1` makes the view inspectable.
 
 The webview path still links the existing generation-checked C queue in `libflint_ffi.a` (`flint_desktop_queue.c`), which carries `postMessage` and worker results across threads for both backends.
 
@@ -142,5 +144,6 @@ Bundling follows Tauri's targets: a later `flint desktop bundle` CLI writes `.de
   - navigation denial, with the page origin and location checked;
   - external script and stylesheet assets served under `nosniff`;
   - a 300-call invoke burst with queued messages and worker tickets that ends in a close while frames are still in flight.
+- The same suite passes on macOS 26.4 arm64 with the WKWebView backend, on `ldmd2` and `ldc2` (LDC 1.43), in pluto's AppKit session. It asserts that the backend is AppKit (ADR-024).
 - `python3 tools/gates.py --package desktop --gate structural` and `python3 tools/quality.py` are clean.
 - `examples/golden-desktop` builds and completes its scripted session on the same desktop.

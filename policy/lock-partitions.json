@@ -29,6 +29,7 @@
       "webkitgtk",
       "webview",
       "wgpu-native",
+      "wkwebview",
       "zlib",
       "zstd"
     ]

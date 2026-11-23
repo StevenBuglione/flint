@@ -121,6 +121,7 @@
     "flint.codec.runtime.streams",
     "flint.conc.wait.current",
     "flint.desktop.ffi.webkit.initialized",
+    "flint.desktop.ffi.wkwebview.initialized",
     "flint.desktop.runtime.windows",
     "flint.desktop.runtime.generation",
     "flint.desktop.runtime.workers",

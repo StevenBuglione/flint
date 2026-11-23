@@ -83,10 +83,11 @@ ALIASES = {
  'protoc':[], 'sqlite':[('sqlite3',)], 'libpq':[('pq','libpq'),('pgcommon_shlib',),('pgport_shlib',)],
  'wasmtime':[('wasmtime',)], 'wamr':[('vmlib',)], 'sdl3':[('SDL3','SDL3-static')],
  'wgpu-native':[('wgpu_native',)], 'webview':[('webview','webview_core','webview_static')], 'stb':[('flint_stb',)], 'libarchive':[('archive','archive_static')],
- 'webkitgtk':[],
+ 'webkitgtk':[], 'wkwebview':[],
 }
-# Dynamic system providers resolved through pkg-config and recorded, never downloaded or linked statically.
-SYSTEM = {'webkitgtk'}
+# Dynamic system providers, never downloaded or linked statically: resolved through pkg-config on Linux,
+# and from the macOS SDK's framework stubs on macOS (ADR-024).
+SYSTEM = {'webkitgtk','wkwebview'}
 STANDARD_LIBRARY_DIRS = {'/lib','/lib64','/usr/lib','/usr/lib64','/usr/lib/x86_64-linux-gnu','/usr/lib/aarch64-linux-gnu'}
 
 def digest(path: Path) -> str:
@@ -359,6 +360,7 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
         if self.a.phase=='build':self.record(name)
 
     def system_provider(self,name):
+        if 'frameworks' in self.rows[name]:return self.sdk_provider(name)
         row=self.rows[name];modules=row['pkg_config_modules'];tool=self.a.pkg_config
         # The system SDK, not the Flint prefix, provides these libraries.
         env=dict(self.env)
@@ -393,6 +395,27 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
         self.link_metadata[name]={'path':str(metadata),'sha256':digest(metadata),'flags':flags}
         self.receipt['libraries'][name]={'kind':'system','license':row['license_selected'],'linking':row['linking'],
             'modules':versions,'pkg_config_files':pc_files,'archives':[],'requested_sanitizers':self.a.sanitize,
+            'system_link_metadata':self.link_metadata[name]}
+        self.prefix.mkdir(parents=True,exist_ok=True);self.receipt_path.write_text(json.dumps(self.receipt,indent=2)+'\n')
+
+    def sdk_provider(self,name):
+        """Record an Apple framework provider: the SDK and the SHA256 of each framework's linker stub."""
+        row=self.rows[name];argv=['xcrun','--show-sdk-path']
+        self.plan.append({'argv':argv,'cwd':str(ROOT)})
+        if self.a.phase!='build':return
+        sdk=Path(subprocess.run(argv,check=True,text=True,capture_output=True).stdout.strip())
+        stubs=[];flags=[]
+        for framework in row['frameworks']:
+            stub=sdk/'System/Library/Frameworks'/(framework+'.framework')/(framework+'.tbd')
+            if not stub.is_file():raise RuntimeError(name+' needs '+framework+'.framework in the macOS SDK: '+str(stub))
+            stubs.append({'framework':framework,'path':str(stub),'sha256':digest(stub)})
+            flags.append('-Wl,-framework,'+framework)
+        flags+=row.get('system_libraries',[])
+        metadata=self.work/'build'/self.a.target/name/'system-link.json'
+        self.write(metadata,json.dumps({'sdk':str(sdk),'frameworks':row['frameworks'],'flags':flags},indent=2)+'\n')
+        self.link_metadata[name]={'path':str(metadata),'sha256':digest(metadata),'flags':flags}
+        self.receipt['libraries'][name]={'kind':'system','license':row['license_selected'],'linking':row['linking'],
+            'sdk':str(sdk),'sdk_files':stubs,'archives':[],'requested_sanitizers':self.a.sanitize,
             'system_link_metadata':self.link_metadata[name]}
         self.prefix.mkdir(parents=True,exist_ok=True);self.receipt_path.write_text(json.dumps(self.receipt,indent=2)+'\n')
 
@@ -559,9 +582,10 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
                     flags.append(item['path'])
             for name in reversed(closure):
                 metadata=self.receipt['libraries'][name].get('system_link_metadata')
-                if name in ('sdl3','wasmtime','wgpu-native','webkitgtk') and not metadata:raise RuntimeError('Rebuild '+name+' to capture configured static system linker dependencies')
+                if name in ('sdl3','wasmtime','wgpu-native','webkitgtk','wkwebview') and not metadata:raise RuntimeError('Rebuild '+name+' to capture configured static system linker dependencies')
                 if name in SYSTEM:
-                    for item in self.receipt['libraries'][name]['pkg_config_files']:
+                    recorded=self.receipt['libraries'][name]
+                    for item in recorded.get('pkg_config_files',[])+recorded.get('sdk_files',[]):
                         if digest(Path(item['path']))!=item['sha256']:raise RuntimeError('System SDK changed since it was recorded: '+item['path'])
                 if metadata:
                     if digest(Path(metadata['path']))!=metadata['sha256']:raise RuntimeError('Installed system linker metadata changed')
@@ -663,8 +687,10 @@ def main():
             if args.emit_dub:builder.emit_dub()
         print(json.dumps({'phase':args.phase,'target':args.target,'prefix':str(builder.prefix),'receipt':str(builder.receipt_path) if args.phase=='build' else None}))
         return
-    if args.profile=='all':names += [n for n in builder.rows if n not in ('webview','protoc') and (n not in ('liburing','webkitgtk') or args.target.startswith('linux'))]
+    if args.profile=='all':names += [n for n in builder.rows if n not in ('webview','protoc') and (n not in ('liburing','webkitgtk') or args.target.startswith('linux')) and (n!='wkwebview' or args.target=='macos-arm64')]
     elif args.profile:names += PROFILES[args.profile]
+    # The desktop profile's system webview is WKWebView on macOS (ADR-020, ADR-024).
+    if args.target=='macos-arm64':names=['wkwebview' if n=='webkitgtk' else n for n in names]
     if args.profile in ('rest','http','sql','mq') and args.target.startswith('linux'):names.append('liburing')
     if not names:parser.error('Select --profile or --library')
     if args.target.startswith('linux'):

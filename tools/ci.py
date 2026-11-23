@@ -131,7 +131,10 @@ def native(runner,target,sanitize=False):
                     '--phase','build','--work-dir','.native-sanitized/engine-build',
                     '--prefix','.native-sanitized/install/'+target],env=env)
         command+=['--sanitize','address,undefined','--cc','clang','--cxx','clang++','--work-dir','.native-sanitized']
-    else:command+=['--library','wasmtime']
+    else:
+        command+=['--library','wasmtime']
+        # macOS also tests the WKWebView backend: the lane runs in the user's GUI session (ADR-024).
+        if target=='macos-arm64':command+=['--library','wkwebview']
     runner.run(command,env=env)
 
 def sanitizer_runtime_dir():
@@ -212,7 +215,8 @@ def run_tests(runner,compiler,*,sanitize=False):
             # The ci closure builds the optional SDL canvas backend, whose pinned SDL has no Wayland
             # driver (ADR-020), so its suite runs on SDL's offscreen driver. The default WebKitGTK
             # backend is built by the desktop native profile and tested on a real display.
-            # macOS has no EGL for SDL's offscreen driver; its headless driver is dummy (ADR-024).
+            # macOS has no EGL for SDL's offscreen driver; its headless driver is dummy. The WKWebView
+            # backend is built there and opens real AppKit windows (ADR-024).
             package_env={**env,'SDL_VIDEODRIVER':'dummy' if sys.platform=='darwin' else 'offscreen'}
             if sanitize:
                 # Software rendering without framebuffer acceleration never loads the host's
