@@ -8,18 +8,33 @@ Modified by the Flint authors:
   them in the same Java package. Flint has no annotation processor, so the generated code is written out.
 - A default method is a `final` interface method (R3); `@Autowired` fields are constructor-injected.
 - `User.roles` is a `List` here (see the model module), so `Set<Role>` is `List!Role`.
+- A DTO's `Integer` is a `Nullable!int` and an entity's an `int` with 0 for new (see the model and dto modules):
+  `boxedId` and `unboxedId` convert between them where MapStruct copies the `Integer`.
 +/
 module org.springframework.samples.petclinic.mapper;
 
 import flint.data.domain : Page;
 import flint.java.util : ArrayList, Collection, List;
 import flint.stereotype : Component;
+import std.typecons : Nullable;
 import org.springframework.samples.petclinic.model : Owner, Pet, PetType, Role, Specialty, User, Vet, Visit;
 import org.springframework.samples.petclinic.rest.dto : OwnerDto, OwnerFieldsDto, OwnerPageDto,
     PetDto, PetFieldsDto, PetPageDto, PetTypeDto, PetTypeFieldsDto, RoleDto, SpecialtyDto, UserDto,
     VetDto, VetFieldsDto, VisitDto, VisitFieldsDto;
 
 @safe:
+
+/// An entity id as a DTO's `Integer`: 0, a new entity's id, is null.
+private Nullable!int boxedId(int id)
+{
+    return id == 0 ? Nullable!int.init : Nullable!int(id);
+}
+
+/// A DTO's `Integer` id as an entity id: null is 0, a new entity's id.
+private int unboxedId(Nullable!int id)
+{
+    return id.isNull ? 0 : id.get;
+}
 
 /// `OwnerMapper`.
 interface OwnerMapper
@@ -44,10 +59,10 @@ interface OwnerMapper
     {
         auto ownerPageDto = new OwnerPageDto();
         ownerPageDto.setContent(toOwnerDtoCollection(ownerPage.getContent()));
-        ownerPageDto.setPage(ownerPage.getNumber());
-        ownerPageDto.setSize(ownerPage.getSize());
+        ownerPageDto.setPage(Nullable!int(ownerPage.getNumber()));
+        ownerPageDto.setSize(Nullable!int(ownerPage.getSize()));
         ownerPageDto.setTotalElements(ownerPage.getTotalElements());
-        ownerPageDto.setTotalPages(ownerPage.getTotalPages());
+        ownerPageDto.setTotalPages(Nullable!int(ownerPage.getTotalPages()));
         return ownerPageDto;
     }
 }
@@ -75,7 +90,7 @@ interface OwnerMapper
         ownerDto.setAddress(owner.getAddress());
         ownerDto.setCity(owner.getCity());
         ownerDto.setTelephone(owner.getTelephone());
-        ownerDto.setId(owner.getId());
+        ownerDto.setId(boxedId(owner.getId()));
         ownerDto.setPets(petListToPetDtoList(owner.getPets()));
         return ownerDto;
     }
@@ -87,7 +102,7 @@ interface OwnerMapper
             return null;
         }
         auto owner = new Owner();
-        owner.setId(ownerDto.getId());
+        owner.setId(unboxedId(ownerDto.getId()));
         owner.setFirstName(ownerDto.getFirstName());
         owner.setLastName(ownerDto.getLastName());
         owner.setAddress(ownerDto.getAddress());
@@ -201,10 +216,10 @@ interface PetMapper
     {
         auto petPageDto = new PetPageDto();
         petPageDto.setContent(toPetsDto(petPage.getContent()).stream().toList());
-        petPageDto.setPage(petPage.getNumber());
-        petPageDto.setSize(petPage.getSize());
+        petPageDto.setPage(Nullable!int(petPage.getNumber()));
+        petPageDto.setSize(Nullable!int(petPage.getSize()));
         petPageDto.setTotalElements(petPage.getTotalElements());
-        petPageDto.setTotalPages(petPage.getTotalPages());
+        petPageDto.setTotalPages(Nullable!int(petPage.getTotalPages()));
         return petPageDto;
     }
 }
@@ -227,11 +242,11 @@ interface PetMapper
             return null;
         }
         auto petDto = new PetDto();
-        petDto.setOwnerId(petOwnerId(pet));
+        petDto.setOwnerId(boxedId(petOwnerId(pet)));
         petDto.setName(pet.getName());
         petDto.setBirthDate(pet.getBirthDate());
         petDto.setType(toPetTypeDto(pet.getType()));
-        petDto.setId(pet.getId());
+        petDto.setId(boxedId(pet.getId()));
         petDto.setVisits(visitListToVisitDtoList(pet.getVisits()));
         return petDto;
     }
@@ -272,7 +287,7 @@ interface PetMapper
         }
         auto pet = new Pet();
         pet.setOwner(petDtoToOwner(petDto));
-        pet.setId(petDto.getId());
+        pet.setId(unboxedId(petDto.getId()));
         pet.setName(petDto.getName());
         pet.setBirthDate(petDto.getBirthDate());
         pet.setType(toPetType(petDto.getType()));
@@ -301,7 +316,7 @@ interface PetMapper
         }
         auto petTypeDto = new PetTypeDto();
         petTypeDto.setName(petType.getName());
-        petTypeDto.setId(petType.getId());
+        petTypeDto.setId(boxedId(petType.getId()));
         return petTypeDto;
     }
 
@@ -312,7 +327,7 @@ interface PetMapper
             return null;
         }
         auto petType = new PetType();
-        petType.setId(petTypeDto.getId());
+        petType.setId(unboxedId(petTypeDto.getId()));
         petType.setName(petTypeDto.getName());
         return petType;
     }
@@ -362,7 +377,7 @@ interface PetMapper
             return null;
         }
         auto owner = new Owner();
-        owner.setId(petDto.getOwnerId());
+        owner.setId(unboxedId(petDto.getOwnerId()));
         return owner;
     }
 
@@ -411,7 +426,7 @@ interface PetTypeMapper
             return null;
         }
         auto petType = new PetType();
-        petType.setId(petTypeDto.getId());
+        petType.setId(unboxedId(petTypeDto.getId()));
         petType.setName(petTypeDto.getName());
         return petType;
     }
@@ -435,7 +450,7 @@ interface PetTypeMapper
         }
         auto petTypeDto = new PetTypeDto();
         petTypeDto.setName(petType.getName());
-        petTypeDto.setId(petType.getId());
+        petTypeDto.setId(boxedId(petType.getId()));
         return petTypeDto;
     }
 
@@ -492,7 +507,7 @@ interface SpecialtyMapper
             return null;
         }
         auto specialty = new Specialty();
-        specialty.setId(specialtyDto.getId());
+        specialty.setId(unboxedId(specialtyDto.getId()));
         specialty.setName(specialtyDto.getName());
         return specialty;
     }
@@ -504,7 +519,7 @@ interface SpecialtyMapper
             return null;
         }
         auto specialtyDto = new SpecialtyDto();
-        specialtyDto.setId(specialty.getId());
+        specialtyDto.setId(boxedId(specialty.getId()));
         specialtyDto.setName(specialty.getName());
         return specialtyDto;
     }
@@ -705,7 +720,7 @@ interface VetMapper
             return null;
         }
         auto vet = new Vet();
-        vet.setId(vetDto.getId());
+        vet.setId(unboxedId(vetDto.getId()));
         vet.setFirstName(vetDto.getFirstName());
         vet.setLastName(vetDto.getLastName());
         vet.setSpecialties(specialtyDtoListToSpecialtyList(vetDto.getSpecialties()));
@@ -735,7 +750,7 @@ interface VetMapper
         vetDto.setFirstName(vet.getFirstName());
         vetDto.setLastName(vet.getLastName());
         vetDto.setSpecialties(specialtyListToSpecialtyDtoList(vet.getSpecialties()));
-        vetDto.setId(vet.getId());
+        vetDto.setId(boxedId(vet.getId()));
         return vetDto;
     }
 
@@ -810,7 +825,7 @@ interface VisitMapper
         }
         auto visit = new Visit();
         visit.setPet(visitDtoToPet(visitDto));
-        visit.setId(visitDto.getId());
+        visit.setId(unboxedId(visitDto.getId()));
         visit.setDate(visitDto.getDate());
         visit.setDescription(visitDto.getDescription());
         return visit;
@@ -835,10 +850,10 @@ interface VisitMapper
             return null;
         }
         auto visitDto = new VisitDto();
-        visitDto.setPetId(visitPetId(visit));
+        visitDto.setPetId(boxedId(visitPetId(visit)));
         visitDto.setDate(visit.getDate());
         visitDto.setDescription(visit.getDescription());
-        visitDto.setId(visit.getId());
+        visitDto.setId(boxedId(visit.getId()));
         return visitDto;
     }
 
@@ -863,7 +878,7 @@ interface VisitMapper
             return null;
         }
         auto pet = new Pet();
-        pet.setId(visitDto.getPetId());
+        pet.setId(unboxedId(visitDto.getPetId()));
         return pet;
     }
 

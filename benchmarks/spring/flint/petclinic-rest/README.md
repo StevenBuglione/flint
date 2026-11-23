@@ -44,13 +44,14 @@ POSTGRES_URL=jdbc:postgresql://127.0.0.1:5432/petclinic POSTGRES_USER=petclinic 
 
 ## Status
 
-`spring_bench.py accept petclinic-rest`: 66 of 109 cases, with `DisableSecurityConfig` writing Spring Security's
+`spring_bench.py accept petclinic-rest`: 70 of 109 cases, with `DisableSecurityConfig` writing Spring Security's
 headers. Open pieces:
 
 - Error responses: an `@ExceptionHandler`'s `ProblemDetail` goes out as `application/json`, not
-  `application/problem+json`, and without Tomcat's `Connection: close` (14 cases fail on only these two).
-- Flint AOT registers no descriptor for a data class's `List!X` and `Nullable!int` properties, so `PetDto.visits`,
-  `VetDto.specialties` and `UserDto.roles` cannot be read, and the DTOs' `Integer` fields stay `int`.
-- An `@ExceptionHandler` for a wrapping exception receives its cause (null after the cast), which crashes the app.
-- `NoResourceFoundException`, paths outside the context path, a 204 with a body, and method validation.
+  `application/problem+json`, and without Tomcat's `Connection: close` (16 cases fail on only these two).
+- Jackson builds a DTO through its required-arguments constructor, as Java's Jackson does not for these generated
+  models, and fails when the `Nullable!int` id is absent: creating visits, specialties and vets, and updating pet
+  types, specialties and vets (about 18 cases, with the follow-up reads).
+- A `@Valid` violation on a list element (`roles[0].name`) reports a null rejected value.
+- `NoResourceFoundException` and paths outside the context path.
 - `BasicAuthenticationConfig` (`petclinic.security.enable=true`) is not ported.

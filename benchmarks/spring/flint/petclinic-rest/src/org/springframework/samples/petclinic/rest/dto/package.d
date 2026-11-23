@@ -5,7 +5,7 @@ Copyright the original author or authors. Licensed under the Apache License, Ver
 Modified by the Flint authors:
 - One module for the generated package (R1). Fields carry a trailing underscore, since D cannot name a field and
   the generator's fluent setter alike.
-- Types: `Integer` is `int` (an absent id reads as 0, as BaseEntity's "new"), `Boolean` `bool`, `Long` `long`;
+- Types: `Integer` is `Nullable!int` (R5; an absent or null value reads as null), `Boolean` `bool`, `Long` `long`;
   `URI` and `OffsetDateTime` are their ISO text.
 - `@Schema` (springdoc) is dropped; the generated `equals`, `hashCode` and `toString` are omitted, since nothing in
   the application calls them.
@@ -21,6 +21,7 @@ import flint.jakarta.validation.constraints : Max, Min, NotNull, Pattern, Size;
 import flint.java.time : LocalDate;
 import flint.java.util : ArrayList, LinkedHashMap, List, Map;
 import org.springframework.samples.petclinic.rest.validation : PetAgeValidation;
+import std.typecons : Nullable;
 
 @safe:
 
@@ -65,7 +66,7 @@ class PetTypeFieldsDto
 class PetTypeDto
 {
     private string name_;
-    private int id_;
+    private Nullable!int id_;
 
     ///
     this()
@@ -73,7 +74,7 @@ class PetTypeDto
     }
 
     /// Constructor with only required parameters.
-    this(string name, int id)
+    this(string name, Nullable!int id)
     {
         this.name_ = name;
         this.id_ = id;
@@ -100,20 +101,20 @@ class PetTypeDto
     }
 
     ///
-    PetTypeDto id(int id)
+    PetTypeDto id(Nullable!int id)
     {
         this.id_ = id;
         return this;
     }
 
     ///
-    @NotNull @Min(0) @JsonProperty("id") int getId()
+    @NotNull @Min(0) @JsonProperty("id") Nullable!int getId()
     {
         return id_;
     }
 
     ///
-    @JsonProperty("id") void setId(int id)
+    @JsonProperty("id") void setId(Nullable!int id)
     {
         this.id_ = id;
     }
@@ -182,8 +183,8 @@ class VisitDto
 {
     private LocalDate date_;
     private string description_;
-    private int id_;
-    private int petId_;
+    private Nullable!int id_;
+    private Nullable!int petId_;
 
     ///
     this()
@@ -191,7 +192,7 @@ class VisitDto
     }
 
     /// Constructor with only required parameters.
-    this(LocalDate date, string description, int id, int petId)
+    this(LocalDate date, string description, Nullable!int id, Nullable!int petId)
     {
         this.date_ = date;
         this.description_ = description;
@@ -239,39 +240,39 @@ class VisitDto
     }
 
     ///
-    VisitDto id(int id)
+    VisitDto id(Nullable!int id)
     {
         this.id_ = id;
         return this;
     }
 
     ///
-    @Min(0) @JsonProperty("id") int getId()
+    @Min(0) @JsonProperty("id") Nullable!int getId()
     {
         return id_;
     }
 
     ///
-    @JsonProperty("id") void setId(int id)
+    @JsonProperty("id") void setId(Nullable!int id)
     {
         this.id_ = id;
     }
 
     ///
-    VisitDto petId(int petId)
+    VisitDto petId(Nullable!int petId)
     {
         this.petId_ = petId;
         return this;
     }
 
     ///
-    @NotNull @Min(0) @JsonProperty("petId") int getPetId()
+    @NotNull @Min(0) @JsonProperty("petId") Nullable!int getPetId()
     {
         return petId_;
     }
 
     ///
-    @JsonProperty("petId") void setPetId(int petId)
+    @JsonProperty("petId") void setPetId(Nullable!int petId)
     {
         this.petId_ = petId;
     }
@@ -363,8 +364,8 @@ class PetDto
     private string name_;
     private LocalDate birthDate_;
     private PetTypeDto type_;
-    private int id_;
-    private int ownerId_;
+    private Nullable!int id_;
+    private Nullable!int ownerId_;
     private List!VisitDto visits_;
 
     ///
@@ -375,7 +376,7 @@ class PetDto
     }
 
     /// Constructor with only required parameters.
-    this(string name, LocalDate birthDate, PetTypeDto type, int id, List!VisitDto visits)
+    this(string name, LocalDate birthDate, PetTypeDto type, Nullable!int id, List!VisitDto visits)
     {
         this.name_ = name;
         this.birthDate_ = birthDate;
@@ -443,39 +444,39 @@ class PetDto
     }
 
     ///
-    PetDto id(int id)
+    PetDto id(Nullable!int id)
     {
         this.id_ = id;
         return this;
     }
 
     ///
-    @Min(0) @JsonProperty("id") int getId()
+    @Min(0) @JsonProperty("id") Nullable!int getId()
     {
         return id_;
     }
 
     ///
-    @JsonProperty("id") void setId(int id)
+    @JsonProperty("id") void setId(Nullable!int id)
     {
         this.id_ = id;
     }
 
     ///
-    PetDto ownerId(int ownerId)
+    PetDto ownerId(Nullable!int ownerId)
     {
         this.ownerId_ = ownerId;
         return this;
     }
 
     ///
-    @Min(0) @JsonProperty("ownerId") int getOwnerId()
+    @Min(0) @JsonProperty("ownerId") Nullable!int getOwnerId()
     {
         return ownerId_;
     }
 
     ///
-    @JsonProperty("ownerId") void setOwnerId(int ownerId)
+    @JsonProperty("ownerId") void setOwnerId(Nullable!int ownerId)
     {
         this.ownerId_ = ownerId;
     }
@@ -642,7 +643,7 @@ class OwnerDto
     private string address_;
     private string city_;
     private string telephone_;
-    private int id_;
+    private Nullable!int id_;
     private List!PetDto pets_;
 
     ///
@@ -763,20 +764,20 @@ class OwnerDto
     }
 
     ///
-    OwnerDto id(int id)
+    OwnerDto id(Nullable!int id)
     {
         this.id_ = id;
         return this;
     }
 
     ///
-    @Min(0) @JsonProperty("id") int getId()
+    @Min(0) @JsonProperty("id") Nullable!int getId()
     {
         return id_;
     }
 
     ///
-    @JsonProperty("id") void setId(int id)
+    @JsonProperty("id") void setId(Nullable!int id)
     {
         this.id_ = id;
     }
@@ -814,10 +815,10 @@ class OwnerDto
 class OwnerPageDto
 {
     private List!OwnerDto content_;
-    private int page_;
-    private int size_;
+    private Nullable!int page_;
+    private Nullable!int size_;
     private long totalElements_;
-    private int totalPages_;
+    private Nullable!int totalPages_;
 
     ///
     this()
@@ -826,7 +827,7 @@ class OwnerPageDto
     }
 
     /// Constructor with only required parameters.
-    this(List!OwnerDto content, int page, int size, long totalElements, int totalPages)
+    this(List!OwnerDto content, Nullable!int page, Nullable!int size, long totalElements, Nullable!int totalPages)
     {
         this.content_ = content;
         this.page_ = page;
@@ -864,39 +865,39 @@ class OwnerPageDto
     }
 
     ///
-    OwnerPageDto page(int page)
+    OwnerPageDto page(Nullable!int page)
     {
         this.page_ = page;
         return this;
     }
 
     ///
-    @NotNull @Min(0) @JsonProperty("page") int getPage()
+    @NotNull @Min(0) @JsonProperty("page") Nullable!int getPage()
     {
         return page_;
     }
 
     ///
-    @JsonProperty("page") void setPage(int page)
+    @JsonProperty("page") void setPage(Nullable!int page)
     {
         this.page_ = page;
     }
 
     ///
-    OwnerPageDto size(int size)
+    OwnerPageDto size(Nullable!int size)
     {
         this.size_ = size;
         return this;
     }
 
     ///
-    @NotNull @Min(1) @JsonProperty("size") int getSize()
+    @NotNull @Min(1) @JsonProperty("size") Nullable!int getSize()
     {
         return size_;
     }
 
     ///
-    @JsonProperty("size") void setSize(int size)
+    @JsonProperty("size") void setSize(Nullable!int size)
     {
         this.size_ = size;
     }
@@ -921,20 +922,20 @@ class OwnerPageDto
     }
 
     ///
-    OwnerPageDto totalPages(int totalPages)
+    OwnerPageDto totalPages(Nullable!int totalPages)
     {
         this.totalPages_ = totalPages;
         return this;
     }
 
     ///
-    @NotNull @Min(0) @JsonProperty("totalPages") int getTotalPages()
+    @NotNull @Min(0) @JsonProperty("totalPages") Nullable!int getTotalPages()
     {
         return totalPages_;
     }
 
     ///
-    @JsonProperty("totalPages") void setTotalPages(int totalPages)
+    @JsonProperty("totalPages") void setTotalPages(Nullable!int totalPages)
     {
         this.totalPages_ = totalPages;
     }
@@ -944,10 +945,10 @@ class OwnerPageDto
 class PetPageDto
 {
     private List!PetDto content_;
-    private int page_;
-    private int size_;
+    private Nullable!int page_;
+    private Nullable!int size_;
     private long totalElements_;
-    private int totalPages_;
+    private Nullable!int totalPages_;
 
     ///
     this()
@@ -956,7 +957,7 @@ class PetPageDto
     }
 
     /// Constructor with only required parameters.
-    this(List!PetDto content, int page, int size, long totalElements, int totalPages)
+    this(List!PetDto content, Nullable!int page, Nullable!int size, long totalElements, Nullable!int totalPages)
     {
         this.content_ = content;
         this.page_ = page;
@@ -994,39 +995,39 @@ class PetPageDto
     }
 
     ///
-    PetPageDto page(int page)
+    PetPageDto page(Nullable!int page)
     {
         this.page_ = page;
         return this;
     }
 
     ///
-    @NotNull @Min(0) @JsonProperty("page") int getPage()
+    @NotNull @Min(0) @JsonProperty("page") Nullable!int getPage()
     {
         return page_;
     }
 
     ///
-    @JsonProperty("page") void setPage(int page)
+    @JsonProperty("page") void setPage(Nullable!int page)
     {
         this.page_ = page;
     }
 
     ///
-    PetPageDto size(int size)
+    PetPageDto size(Nullable!int size)
     {
         this.size_ = size;
         return this;
     }
 
     ///
-    @NotNull @Min(1) @JsonProperty("size") int getSize()
+    @NotNull @Min(1) @JsonProperty("size") Nullable!int getSize()
     {
         return size_;
     }
 
     ///
-    @JsonProperty("size") void setSize(int size)
+    @JsonProperty("size") void setSize(Nullable!int size)
     {
         this.size_ = size;
     }
@@ -1051,20 +1052,20 @@ class PetPageDto
     }
 
     ///
-    PetPageDto totalPages(int totalPages)
+    PetPageDto totalPages(Nullable!int totalPages)
     {
         this.totalPages_ = totalPages;
         return this;
     }
 
     ///
-    @NotNull @Min(0) @JsonProperty("totalPages") int getTotalPages()
+    @NotNull @Min(0) @JsonProperty("totalPages") Nullable!int getTotalPages()
     {
         return totalPages_;
     }
 
     ///
-    @JsonProperty("totalPages") void setTotalPages(int totalPages)
+    @JsonProperty("totalPages") void setTotalPages(Nullable!int totalPages)
     {
         this.totalPages_ = totalPages;
     }
@@ -1073,7 +1074,7 @@ class PetPageDto
 /// `SpecialtyDto`: Fields of specialty of vets.
 class SpecialtyDto
 {
-    private int id_;
+    private Nullable!int id_;
     private string name_;
 
     ///
@@ -1082,27 +1083,27 @@ class SpecialtyDto
     }
 
     /// Constructor with only required parameters.
-    this(int id, string name)
+    this(Nullable!int id, string name)
     {
         this.id_ = id;
         this.name_ = name;
     }
 
     ///
-    SpecialtyDto id(int id)
+    SpecialtyDto id(Nullable!int id)
     {
         this.id_ = id;
         return this;
     }
 
     ///
-    @Min(0) @JsonProperty("id") int getId()
+    @Min(0) @JsonProperty("id") Nullable!int getId()
     {
         return id_;
     }
 
     ///
-    @JsonProperty("id") void setId(int id)
+    @JsonProperty("id") void setId(Nullable!int id)
     {
         this.id_ = id;
     }
@@ -1224,7 +1225,7 @@ class VetDto
     private string firstName_;
     private string lastName_;
     private List!SpecialtyDto specialties_;
-    private int id_;
+    private Nullable!int id_;
 
     ///
     this()
@@ -1233,7 +1234,7 @@ class VetDto
     }
 
     /// Constructor with only required parameters.
-    this(string firstName, string lastName, List!SpecialtyDto specialties, int id)
+    this(string firstName, string lastName, List!SpecialtyDto specialties, Nullable!int id)
     {
         this.firstName_ = firstName;
         this.lastName_ = lastName;
@@ -1310,20 +1311,20 @@ class VetDto
     }
 
     ///
-    VetDto id(int id)
+    VetDto id(Nullable!int id)
     {
         this.id_ = id;
         return this;
     }
 
     ///
-    @Min(0) @JsonProperty("id") int getId()
+    @Min(0) @JsonProperty("id") Nullable!int getId()
     {
         return id_;
     }
 
     ///
-    @JsonProperty("id") void setId(int id)
+    @JsonProperty("id") void setId(Nullable!int id)
     {
         this.id_ = id;
     }
@@ -1480,7 +1481,7 @@ class ProblemDetailDto
 {
     private string type_;
     private string title_;
-    private int status_;
+    private Nullable!int status_;
     private string detail_;
     private string timestamp_;
     private List!ValidationMessageDto schemaValidationErrors_;
@@ -1492,7 +1493,7 @@ class ProblemDetailDto
     }
 
     /// Constructor with only required parameters.
-    this(string type, string title, int status, string detail, string timestamp,
+    this(string type, string title, Nullable!int status, string detail, string timestamp,
             List!ValidationMessageDto schemaValidationErrors)
     {
         this.type_ = type;
@@ -1542,20 +1543,20 @@ class ProblemDetailDto
     }
 
     ///
-    ProblemDetailDto status(int status)
+    ProblemDetailDto status(Nullable!int status)
     {
         this.status_ = status;
         return this;
     }
 
     ///
-    @Min(400) @Max(600) @JsonProperty("status") int getStatus()
+    @Min(400) @Max(600) @JsonProperty("status") Nullable!int getStatus()
     {
         return status_;
     }
 
     ///
-    @JsonProperty("status") void setStatus(int status)
+    @JsonProperty("status") void setStatus(Nullable!int status)
     {
         this.status_ = status;
     }
