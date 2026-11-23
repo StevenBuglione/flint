@@ -1,0 +1,6 @@
+[project]
+name = "gs-rest-service"
+version = "0.0.1"
+flint = "1.0"
+type = "executable"
+description = "spring-guides/gs-rest-service ported to Flint: the side-by-side app of benchmarks/spring (ADR-030 section 8)."
