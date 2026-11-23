@@ -137,6 +137,7 @@ The tests compare Flint's output with golden files that the real Jackson 3.1.8 w
 - **Implementation.** `flint.hibernate.validator` ports Hibernate Validator's implementation: the built-in validators, `ResourceBundleMessageInterpolator` semantics over the English `ValidationMessages.properties`, and the path and violation model.
 - **Engine.** Text checks reuse the `flint.validate` engine (`NotBlank` whitespace, scalar counts for `@Size`, the e-mail grammar, the regular-expression automaton) through an engine-facing module, not its internals.
 - **Temporal constraints.** `@Past`, `@PastOrPresent`, `@Future` and `@FutureOrPresent` validate `Instant`, `LocalDate`, `LocalDateTime`, `LocalTime`, `OffsetDateTime` and `ZonedDateTime` against the system clock (UTC), with Hibernate's zero tolerance. Any other type raises HV000030.
+- **Containers.** `@Size` and `@NotEmpty` count D arrays and associative arrays through their descriptors. `@Valid` cascades into array elements (`petArray[0].type`), map values (`petsByName[tom].type`) and an `Optional`'s value (`maybePet.name`). A D array is never null for `@NotNull`/`@Null`, since `[]` is null (as D-JACKSON-6).
 - **Messages.** The default messages are Hibernate Validator's English bundle, interpolated with its rules: `{min}`-style parameters, and the `${validatedValue}` and ternary expression subset that the built-in messages use.
 
 ## Deviations
@@ -169,7 +170,7 @@ All commands run from the repository root with the toolchain on `PATH`.
 | java.time | `dub test :java --compiler=dmd` and `=ldc2` | `time.tsv` and `time_format.tsv` identical to JDK 21; epoch days walked over 1600–2400 |
 | Jackson annotations | `dub test :jackson-annotations --compiler=dmd` and `=ldc2` | defaults and shorthand |
 | SLF4J | `dub test :slf4j-api --compiler=dmd` and `=ldc2` | MessageFormatterTest, BasicMarkerTest, MDCAdapterTestBase ported; logger behaviour |
-| Validation | `dub test :jakarta-validation` and `:hibernate-validator`, both compilers | 28 violations identical to Hibernate Validator's, `@Past`/`@Future` on java.time included |
+| Validation | `dub test :jakarta-validation` and `:hibernate-validator`, both compilers | 34 violations identical to Hibernate Validator's: `@Past`/`@Future` on java.time, `@Size`/`@NotEmpty` on arrays and maps, `@Valid` into arrays, maps and `Optional` |
 | Annotations | `dub test :jakarta-annotation`, both compilers | defaults, repetition |
 | ProcessSlot | `dub test :conc`, both compilers, and LDC `-fsanitize=thread` | no reports |
 | Structure | `python3 tools/gates.py --gate structural`; `python3 -m unittest test_guards` (in `tools/`) | pass; the framework-layer tests pass |
