@@ -156,14 +156,25 @@ def verify_body(url, expected):
     finally:
         conn.close()
 
-def ensure_port_unused(url):
-    target=urlsplit(url)
+def port_listening(hostname, port):
     try:
-        connection=socket.create_connection((target.hostname,target.port),timeout=.2)
+        connection=socket.create_connection((hostname,port),timeout=.2)
     except OSError:
-        return
+        return False
     connection.close()
-    raise ValueError("benchmark endpoint is already listening: "+url)
+    return True
+
+def ensure_port_unused(url, grace_seconds=3):
+    """The endpoint must be free before a server starts. A server that used io_uring leaves its listening socket
+    open for a few milliseconds after the process has been reaped, while the kernel tears the rings down
+    asynchronously, so the next trial on the same port waits up to `grace_seconds` for that to finish. A listener
+    still present after that fails."""
+    target=urlsplit(url)
+    deadline=time.monotonic()+grace_seconds
+    while port_listening(target.hostname,target.port):
+        if time.monotonic()>=deadline:
+            raise ValueError("benchmark endpoint is already listening: "+url)
+        time.sleep(.05)
 
 class Monitor:
     def __init__(self, process, url, expected, verifier=None):
