@@ -14,6 +14,7 @@ module flint.web.method;
 import flint.core : MethodParameter;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : MergedAnnotation, findAnnotation;
+import flint.engine.aot.fast : FastInvoker;
 import flint.engine.aot.mapping : ArgumentKind, ArgumentSpec, ExceptionArrayInvoker, ExceptionHandlerSpec,
     ExceptionInvoker, HandlerArguments, HandlerArrayInvoker, HandlerInvoker, HandlerMapping;
 
@@ -29,6 +30,7 @@ class HandlerMethod
     private MethodParameter[] parameters;
     private MethodParameter returnType;
     private HandlerInvoker handlerInvoker;
+    private FastInvoker fastInvoker;
     private ExceptionInvoker exceptionInvoker;
     // Contract 4's invokers over the argument array itself; null in older generated code.
     private HandlerArrayInvoker handlerArrayInvoker;
@@ -51,6 +53,7 @@ class HandlerMethod
         methodName = mapping.method !is null ? mapping.method.name : "";
         handlerInvoker = mapping.invoke;
         handlerArrayInvoker = mapping.invokeArguments;
+        fastInvoker = mapping.fast;
         responseStatus = mapping.responseStatus;
         responseStatusReason = mapping.reason;
         responseBody = mapping.responseBody;
@@ -129,6 +132,12 @@ class HandlerMethod
     string getMethodName() const pure nothrow @nogc
     {
         return methodName;
+    }
+
+    /// Flint: the fast-path invoker Flint AOT generated for this handler (fast-path.md), or `null`.
+    package(flint) FastInvoker getFastInvoker() pure nothrow @nogc
+    {
+        return fastInvoker;
     }
 
     /// The method parameters.

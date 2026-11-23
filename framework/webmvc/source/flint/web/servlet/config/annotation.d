@@ -414,6 +414,14 @@ class WebMvcConfigurationSupport
         strategies.handlerExceptionResolvers = firstResolvers ~ resolvers;
         strategies.viewResolvers = viewResolvers;
         strategies.localeResolver = localeResolver !is null ? localeResolver : new AcceptHeaderLocaleResolver;
+        // Flint's per-endpoint fast path (fast-path.md): only rows Flint AOT specialised, and only when nothing
+        // configured here acts on every request; null keeps every request on the generic path.
+        {
+            import flint.web.servlet.mvc.method.fast : FastPathTable;
+
+            strategies.fastPath = FastPathTable.build(mappings, requestMappings, adapter, interceptors.length == 0
+                    && corsSource is null && customResolvers.length == 0 && customHandlers.length == 0);
+        }
         return strategies;
     }
 }

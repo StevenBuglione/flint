@@ -18,6 +18,7 @@ module flint.engine.servlet;
 import flint.arena : Status;
 import flint.conc : Context, Deadline;
 import flint.engine.aot.any : Any;
+import flint.engine.aot.fast : FastDispatch, FastOutcome;
 import flint.engine.servlet.request : DispatchState, RequestHost, ServletEngineRequest, decimal, methodName;
 import flint.engine.servlet.response : ServletEngineResponse;
 import flint.engine.web.fiber : FiberResponse, FiberRoute;
@@ -107,6 +108,9 @@ final class ServletEngine : RequestHost
     private FilterEntry[] filters;
     private ServletEntry defaultServlet;
     private FilterEntry[] chainOrder;
+    // The servlet's fast path (fast-path.md), offered each request before capture; null when the servlet has
+    // none or any filter is mapped, since a filter sees the servlet objects of every request it maps.
+    private FastDispatch fastDispatch;
     private Server server;
     private bool started;
     private bool stopped;
@@ -232,6 +236,10 @@ final class ServletEngine : RequestHost
             entry.servlet.init(new EngineConfig(entry.name, servletContext, entry.parameters));
         foreach (entry; filters)
             entry.filter.init(new EngineFilterConfig(entry.name, servletContext, entry.parameters));
+        if (chainOrder.length == 0)
+            if (auto candidate = cast(FastDispatch) defaultServlet.servlet)
+                if (candidate.hasFastPath())
+                    fastDispatch = candidate;
     }
 
     /// Stop at once: admitted requests are cancelled. Idempotent.
@@ -294,6 +302,25 @@ final class ServletEngine : RequestHost
     /// The fiber route: one exchange from request bytes to the finished response.
     private void serve(ref scope Request request, ref scope RequestContext context, FiberResponse transport)
     {
+        if (fastDispatch !is null)
+        {
+            import flint.engine.servlet.fast : serveFast;
+
+            ServletEngineRequest fastRequest;
+            ServletEngineResponse fastResponse;
+            Exception fastFailure;
+            final switch (serveFast(this, fastDispatch, request, context, transport, fastRequest, fastResponse,
+                    fastFailure))
+            {
+            case FastOutcome.declined:
+                break;
+            case FastOutcome.written:
+                return;
+            case FastOutcome.materialized:
+                finishExchange(fastRequest, fastResponse, fastFailure);
+                return;
+            }
+        }
         auto servletRequest = capture(request, context);
         auto servletResponse = new ServletEngineResponse(transport);
         if (!withinContext(servletRequest.getRequestURI()))
@@ -308,11 +335,38 @@ final class ServletEngine : RequestHost
             new Chain(this, DispatcherType.REQUEST).doFilter(servletRequest, servletResponse);
         catch (Exception e)
             failure = e;
+        finishExchange(servletRequest, servletResponse, failure);
+    }
+
+    /// Tomcat's valves after the filter chain: an uncaught exception or `sendError` goes to the error page, then
+    /// the response completes.
+    private void finishExchange(ServletEngineRequest servletRequest, ServletEngineResponse servletResponse,
+            Exception failure)
+    {
         if (failure !is null)
             throwable(servletRequest, servletResponse, failure);
         else if (servletResponse.isError())
             status(servletRequest, servletResponse);
         servletResponse.complete();
+    }
+
+    /// The fast path's materialization: the request the generic path captures, and a new response.
+    package(flint.engine.servlet) ServletEngineRequest captureRequest(ref scope Request request,
+            ref scope RequestContext context)
+    {
+        return capture(request, context);
+    }
+
+    /// ditto
+    package(flint.engine.servlet) ServletEngineResponse newResponse(FiberResponse transport)
+    {
+        return new ServletEngineResponse(transport);
+    }
+
+    /// `server.servlet.context-path`, for the fast path's own context check.
+    package(flint.engine.servlet) string contextPathOf() const pure nothrow @nogc
+    {
+        return options.contextPath;
     }
 
     /// Whether `uri` is inside this engine's one context (Tomcat maps `/ctx` itself, and `/ctx/...`).

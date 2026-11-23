@@ -644,6 +644,16 @@ abstract class RequestMappingInfoHandlerMapping : AbstractHandlerMapping
         registrations ~= Registration(info, handlerMethod);
     }
 
+    /// Flint's fast path: every registration found by its plain path `path`, as `lookupHandlerMethod` reads
+    /// them before it scans the patterns (fast-path.md, "The mapping proof").
+    package(flint) void visitDirectPath(string path,
+            scope void delegate(RequestMappingInfo info, HandlerMethod handlerMethod) @safe visit)
+    {
+        if (auto direct = path in directPathRegistrations)
+            foreach (index; *direct)
+                visit(registrations[index].info, registrations[index].handlerMethod);
+    }
+
     // The parameters of every registered handler method, for the adapter's resolver cache.
     package(flint) MethodParameter[] mappedParameters()
     {

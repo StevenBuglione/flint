@@ -7,6 +7,7 @@ module flint.engine.aot.mapping;
 
 import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : Descriptor, MergedAnnotation, MethodDescriptor;
+import flint.engine.aot.fast : FastInvoker;
 
 @safe:
 
@@ -102,6 +103,9 @@ struct HandlerMapping
     Descriptor returnDescriptor;
     /// Contract 4: `invoke` over an argument array; null in older generated code (callers then use `invoke`).
     HandlerArrayInvoker invokeArguments;
+    /// The per-endpoint fast path (docs/spring/phase1/fast-path.md): set only when Flint AOT proved the handler's
+    /// shape; null means today's generic path.
+    FastInvoker fast;
 }
 
 /// A generated exception-handler invoker: `(bean, exception, arguments, ref result)`.
