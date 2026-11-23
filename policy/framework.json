@@ -5,10 +5,15 @@
   "core": {
    "directory": "framework/core",
    "module": "flint.core",
+   "also": [
+    "flint.util",
+    "flint.lang"
+   ],
    "repo": "framework",
    "licence": "Apache-2.0",
    "upstream": "spring-framework@v7.1.0",
    "dependencies": [
+    "engine-aot",
     "java"
    ]
   },
@@ -73,7 +78,8 @@
    "licence": "Apache-2.0",
    "upstream": "openjdk-api (clean-room from the Java SE specification)",
    "dependencies": [
-    "engine-aot"
+    "engine-aot",
+    "serde"
    ]
   },
   "jdbc": {
@@ -121,6 +127,34 @@
     "engine-reactor",
     "java",
     "slf4j-api"
+   ]
+  },
+  "beans": {
+   "directory": "framework/beans",
+   "module": "flint.beans",
+   "repo": "framework",
+   "licence": "Apache-2.0",
+   "upstream": "spring-framework@v7.1.0",
+   "dependencies": [
+    "core",
+    "engine-aot",
+    "java"
+   ]
+  },
+  "context": {
+   "directory": "framework/context",
+   "module": "flint.context",
+   "also": [
+    "flint.stereotype"
+   ],
+   "repo": "framework",
+   "licence": "Apache-2.0",
+   "upstream": "spring-framework@v7.1.0",
+   "dependencies": [
+    "beans",
+    "core",
+    "engine-aot",
+    "java"
    ]
   }
  }

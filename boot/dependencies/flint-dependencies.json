@@ -7,6 +7,10 @@
       "repo": "flint",
       "version": "monorepo"
     },
+    "flint:beans": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:boot": {
       "repo": "boot",
       "version": "monorepo"
@@ -33,6 +37,10 @@
     },
     "flint:config": {
       "repo": "flint",
+      "version": "monorepo"
+    },
+    "flint:context": {
+      "repo": "framework",
       "version": "monorepo"
     },
     "flint:core": {
