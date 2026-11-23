@@ -6,7 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 JAVA_SHAPED = ('unused_parameter_check', 'builtin_property_names_check', 'undocumented_declaration_check',
-               'vcall_in_ctor')
+               'vcall_in_ctor', 'could_be_immutable_check', 'object_const_check')
 
 
 def spring_roots():
