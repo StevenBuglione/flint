@@ -965,9 +965,13 @@ private struct Emitter
                 text ~= "a.elementType = " ~ typeNameText(argument.elementType) ~ "; ";
             if (argument.validate)
                 text ~= "a.validate = true; ";
+            // The descriptor this module builds (no descriptorOf!(T) instance); a type described elsewhere is
+            // looked up by name at dispatch, as before contract 3.
             if (argument.described)
-                text ~= "a.descriptor = imported!\"flint.engine.aot.descriptor\".descriptorOf!("
-                    ~ argument.type ~ ")(); ";
+            {
+                if (const local = argument.type in descriptorLocal)
+                    text ~= "a.descriptor = " ~ *local ~ "; ";
+            }
             if (argument.annotations.items.length)
                 text ~= "a.annotations = " ~ mergedArray(argument.annotations, "            ") ~ "; ";
             text ~= "return a; }(),\n";
@@ -1003,9 +1007,8 @@ private struct Emitter
                 ? "true" : "false") ~ ";\n";
         if (handler.returnDescribed)
         {
-            need(handler.method.returns);
-            text ~= "        mapping.returnDescriptor = imported!\"flint.engine.aot.descriptor\".descriptorOf!("
-                ~ handler.method.returns.name ~ ")();\n";
+            if (const local = handler.method.returns.name in descriptorLocal)
+                text ~= "        mapping.returnDescriptor = " ~ *local ~ ";\n";
         }
         if (handler.status)
             text ~= "        mapping.responseStatus = " ~ handler.status.to!string ~ ";\n";
