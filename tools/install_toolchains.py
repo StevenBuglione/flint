@@ -574,6 +574,19 @@ def install_flint_dub(destination):
     return receipt
 
 
+def pinned_ldc(toolchain):
+    """The pinned ldc2 of this host, which may not be installed."""
+    if platform.system() == 'Darwin':
+        name = LDC_DARWIN
+    elif platform.system() == 'Windows':
+        name = LDC_WINDOWS
+    elif linux_arm64_glibc():
+        name = LDC_LINUX_AARCH64
+    else:
+        name = 'ldc2-1.43.0-linux-x86_64'
+    return toolchain / name / 'bin' / exe('ldc2')
+
+
 def bootstrap_flint(toolchain):
     """ADR-018 bootstrap: DUB builds the first flint, which rebuilds itself and verifies its own receipt."""
     import tomllib
@@ -617,9 +630,13 @@ def bootstrap_flint(toolchain):
     shutil.copy2(FLINT_APP / '.flint' / 'build' / 'dev' / artifact, stage1)
     clean = {k: v for k, v in os.environ.items() if k not in ('DFLAGS', 'FLINT_HOME')}
     clean['FLINT_TOOLCHAIN_DIR'] = str(toolchain)
-    # Stage 1 rebuilds flint from scratch through flint itself, then the result checks its own receipt.
-    subprocess.run([str(stage1), 'build', '--project', str(FLINT_APP), '--force'], env=clean, check=True)
-    built = FLINT_APP / '.flint' / 'build' / 'dev' / artifact
+    # Stage 1 rebuilds flint from scratch through flint itself, then the result checks its own receipt. The installed
+    # flint is optimized when the pinned LDC is present: unoptimized, its SHA-256 and JSON work cost about a second
+    # of every build (ADR-030 section 5).
+    profile = 'release' if pinned_ldc(toolchain).is_file() else 'dev'
+    subprocess.run([str(stage1), 'build', '--project', str(FLINT_APP), '--profile', profile, '--force'], env=clean,
+                   check=True)
+    built = FLINT_APP / '.flint' / 'build' / profile / artifact
     subprocess.run([str(built), 'version', '--verify'], env=clean, check=True, stdout=subprocess.DEVNULL)
     installed = ROOT / '.flint' / 'bin'
     installed.mkdir(parents=True, exist_ok=True)
