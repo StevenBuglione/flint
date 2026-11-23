@@ -624,9 +624,13 @@ immutable CodeInfo[] catalog = [
             ~ "type, so the context could never start. Optional injection takes Optional!T, Nullable!T or "
             ~ "@Autowired(required: false).",
             "@Service class OwnerRepositoryImpl : OwnerRepository { ... }"),
-    CodeInfo("FLINT-E1107", ExitCode.user, "SpEL is not compiled yet",
-            "Flint AOT will compile SpEL to D. Until then #{...} in @Value is rejected; ${...} placeholders work.",
-            `@Value("${server.port:8080}") int port`),
+    CodeInfo("FLINT-E1107", ExitCode.user, "a SpEL expression cannot be compiled",
+            "Flint AOT compiles SpEL to D at build time (docs/spring/aot-contract.md section 9): literals, ${...} "
+            ~ "placeholders, @bean references, properties, getters and methods of known types, String's common "
+            ~ "methods, arithmetic, comparisons, and, or, not, the ternary and the Elvis operator. The expression "
+            ~ "uses a construct outside that subset (T(...), new, selection, projection, matches, instanceof), names "
+            ~ "a bean or member that does not exist, or mixes types SpEL would reject.",
+            `@Value("#{@clock.now() * 2 + ${shop.bonus:1}}") long doubled`),
     CodeInfo("FLINT-E1108", ExitCode.user, "a lifecycle or injected member is not public",
             "Generated code lives in its own module, so it can call only public methods: @PostConstruct, @PreDestroy "
             ~ "and @EventListener methods, and @Component classes, must be public (a deviation from Spring, which "

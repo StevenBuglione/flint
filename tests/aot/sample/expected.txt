@@ -1,6 +1,6 @@
 == default profile, audit on
 application: shop.app.ShopApplication
-beans: shopApplication greetingConfig friendlyGreeter auditLog clock clockReport ownerStore ownerService ownerController
+beans: shopApplication greetingConfig friendlyGreeter auditLog clock clockReport ownerStore ownerService pricing ownerController
 greeter: Hello, Ada!
 audit: true
 clock: singleton
@@ -18,10 +18,11 @@ query: existsByCity: SELECT 1 FROM owners WHERE city = ? LIMIT 1
 descriptor: 2 properties, content = set through the descriptor
 creator: 1 constructor(s), parameters id, content -> 7 built by the canonical constructor
 enum: 2 constants, ordinal 1 = archived, ordinal 9 null = true
+spel: doubled=85 label="Shop FLINT is open" premium=true
 shutdown: service stopped, store destroyed
 == prod profile
 application: shop.app.ShopApplication
-beans: shopApplication greetingConfig formalGreeter clock clockReport ownerStore ownerService ownerController
+beans: shopApplication greetingConfig formalGreeter clock clockReport ownerStore ownerService pricing ownerController
 greeter: Good day, Ada.
 audit: false
 clock: singleton
@@ -39,4 +40,5 @@ query: existsByCity: SELECT 1 FROM owners WHERE city = ? LIMIT 1
 descriptor: 2 properties, content = set through the descriptor
 creator: 1 constructor(s), parameters id, content -> 7 built by the canonical constructor
 enum: 2 constants, ordinal 1 = archived, ordinal 9 null = true
+spel: doubled=85 label="Shop FLINT is open" premium=true
 shutdown: service stopped, store destroyed

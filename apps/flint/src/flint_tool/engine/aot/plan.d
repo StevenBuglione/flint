@@ -8,6 +8,7 @@ module flint_tool.engine.aot.plan;
 import flint_tool.engine.aot.merge : MergedSet;
 import flint_tool.engine.aot.model : Method, Model, Parameter, TypeDecl, TypeRef, clone;
 import flint_tool.engine.aot.query : DerivedQuery;
+import std.algorithm.searching : canFind;
 
 @safe:
 
@@ -32,7 +33,9 @@ enum PointKind
     bean,
     beans,
     optional,
-    value
+    value,
+    /// `@Value("#{...}")`: `expression` holds the compiled D expression, already of the parameter's type.
+    spel
 }
 
 /// One constructor, bean-method or field injection point.
@@ -50,6 +53,12 @@ struct Point
     string expression;
     /// Modules declaring the types it names.
     string[] modules;
+    /// For `spel` before compilation: the `@Value` text, and where it was declared.
+    string template_;
+    /// ditto
+    string file;
+    /// ditto
+    long line;
 }
 
 /// A field set during `initialize`.
@@ -516,6 +525,7 @@ private final class Analysis
         Candidate[] candidates = userCandidates() ~ autoConfigurationCandidates();
         foreach (ref candidate; candidates)
             defineComponent(candidate);
+        compileExpressions();
         checkInjection();
         checkCycles();
         foreach (name; input.userModules)
@@ -865,10 +875,10 @@ private final class Analysis
 
     Point pointOf(const ref Parameter parameter, const MergedSet merged, string file, long line)
     {
-        return pointFor(parameter.type, merged, file, line, parameter.name);
+        return pointFor(parameter.type, merged, file, line);
     }
 
-    Point pointFor(const ref TypeRef type, const MergedSet merged, string file, long line, string name)
+    Point pointFor(const ref TypeRef type, const MergedSet merged, string file, long line)
     {
         import std.algorithm.searching : startsWith;
         import flint_tool.engine.aot.names : autowired, qualifier, value;
@@ -883,9 +893,14 @@ private final class Analysis
         {
             point.kind = PointKind.value;
             point.expression = annotation.text("value");
-            if (point.expression.startsWith("#{"))
-                error("FLINT-E1107", "@Value(\"" ~ point.expression ~ "\") on `" ~ name
-                        ~ "` is SpEL, which Flint AOT " ~ "does not compile yet; use a ${...} placeholder", file, line);
+            if (point.expression.canFind("#{"))
+            {
+                // Compiled once every bean is defined, so @bean references resolve (compileExpressions).
+                point.kind = PointKind.spel;
+                point.template_ = point.expression;
+                point.file = file;
+                point.line = line;
+            }
             return point;
         }
         const required = merged.get(autowired) is null || merged.get(autowired).flag("required", true);
@@ -987,7 +1002,7 @@ private final class Analysis
                 if (!merged.hasAny([autowired, inject, value]))
                     continue;
                 bean.fields ~= FieldPoint(owner.fqn, field.index, pointFor(field.type, merged,
-                        owner.file, owner.line, field.name));
+                        owner.file, owner.line));
             }
         }
     }
@@ -1322,6 +1337,65 @@ private final class Analysis
         import std.array : join;
 
         return terms.join(" && ");
+    }
+
+    /// Compile every `@Value("#{...}")` to D (aot-contract.md section 9).
+    void compileExpressions()
+    {
+        foreach (ref item; plan.modules)
+        {
+            foreach (ref bean; item.beans)
+            {
+                foreach (ref point; bean.arguments)
+                    compilePoint(point);
+                foreach (ref field; bean.fields)
+                    compilePoint(field.point);
+            }
+        }
+    }
+
+    void compilePoint(ref Point point)
+    {
+        import std.array : join;
+        import flint_tool.engine.aot.conditions : literal;
+        import flint_tool.engine.aot.spel : Compiled, SpelError, compileSpel, convert, splitTemplate;
+
+        if (point.kind != PointKind.spel || point.template_.length == 0)
+            return;
+        string[] parts;
+        SpelError failure;
+        if (!splitTemplate(point.template_, parts, failure))
+        {
+            error("FLINT-E1107", failure.message, point.file, point.line);
+            return;
+        }
+        auto scope_ = new ValueScope(this);
+        string[] pieces;
+        Compiled single;
+        foreach (index, part; parts)
+        {
+            if (index % 2 == 0)
+            {
+                if (part.length)
+                    pieces ~= part.canFind("${")
+                        ? "factory.resolveValue(" ~ literal(part) ~ ", \"string\").get!(string)()" : literal(part);
+                continue;
+            }
+            Compiled compiled;
+            if (!compileSpel(part, scope_, compiled, failure))
+            {
+                error("FLINT-E1107", failure.message, point.file, point.line);
+                return;
+            }
+            single = compiled;
+            pieces ~= convert(compiled, "string");
+        }
+        // A template that is one expression keeps its type; text around it makes a string.
+        const lone = parts.length == 3 && parts[0].length == 0 && parts[2].length == 0;
+        const value = lone ? single : Compiled("(" ~ pieces.join(" ~ ") ~ ")", "string");
+        point.expression = convert(value, point.type);
+        point.modules ~= scope_.modules;
+        point.template_ = null;
     }
 
     void checkInjection()
@@ -1911,6 +1985,109 @@ private final class Analysis
         }
         return domain;
     }
+}
+
+/// What `@Value("#{...}")` sees: beans by name, placeholders, and the members of model types.
+private final class ValueScope : imported!"flint_tool.engine.aot.spel".SpelScope
+{
+    import flint_tool.engine.aot.spel : Compiled;
+
+    private Analysis analysis;
+    string[] modules;
+
+    this(Analysis analysis)
+    {
+        this.analysis = analysis;
+    }
+
+    bool variable(string, out Compiled)
+    {
+        return false;
+    }
+
+    bool bean(string name, out Compiled result)
+    {
+        import flint_tool.engine.aot.conditions : literal;
+        import flint_tool.engine.aot.names : packageOf;
+
+        foreach (ref item; analysis.allBeans)
+        {
+            if (item.name != name)
+                continue;
+            if (const decl = analysis.model.type(item.type))
+                modules ~= decl.module_;
+            else
+                modules ~= packageOf(item.type);
+            result = Compiled("(cast(" ~ item.type ~ ") factory.getBean(" ~ literal(name) ~ "))", item.type);
+            return true;
+        }
+        return false;
+    }
+
+    Compiled placeholder(string expression)
+    {
+        import flint_tool.engine.aot.conditions : literal;
+
+        return Compiled("factory.resolveValue(" ~ literal(expression) ~ ", \"string\").get!(string)()", "string");
+    }
+
+    bool root(string, Compiled[], bool, out Compiled)
+    {
+        return false;
+    }
+
+    bool member(string type, string name, Compiled[] arguments, bool call, string target, out Compiled result)
+    {
+        return memberOf(analysis.model, type, name, arguments, call, target, result, modules);
+    }
+}
+
+/// A model type's member for SpEL: a public field, a Java Beans getter's property, or a public method.
+bool memberOf(const imported!"flint_tool.engine.aot.model".Model model, string type, string name,
+        imported!"flint_tool.engine.aot.spel".Compiled[] arguments, bool call, string target,
+        out imported!"flint_tool.engine.aot.spel".Compiled result, ref string[] modules)
+{
+    import flint_tool.engine.aot.spel : Compiled;
+
+    const decl = model.type(type);
+    if (decl is null)
+        return false;
+    if (!call)
+    {
+        foreach (ref field; decl.fields)
+        {
+            if (field.name == name && (field.visibility == "public" || field.visibility == "export"))
+            {
+                modules ~= field.type.modules;
+                result = Compiled("(" ~ target ~ ")." ~ name, field.type.name);
+                return true;
+            }
+        }
+    }
+    return methodOf(*decl, name, arguments, call, target, result, modules);
+}
+
+private bool methodOf(const ref TypeDecl decl, string name, imported!"flint_tool.engine.aot.spel".Compiled[] arguments,
+        bool call, string target, out imported!"flint_tool.engine.aot.spel".Compiled result, ref string[] modules)
+{
+    import std.array : join;
+    import std.ascii : toUpper;
+    import flint_tool.engine.aot.spel : Compiled, convert;
+
+    const capital = name.length ? toUpper(name[0]) ~ name[1 .. $] : null;
+    foreach (ref method; decl.methods)
+    {
+        const wanted = call ? method.name == name : (method.name == "get" ~ capital || method.name == "is" ~ capital);
+        if (!wanted || method.visibility != "public" || method.static_ || method.parameters.length != arguments.length)
+            continue;
+        string[] converted;
+        foreach (index, ref parameter; method.parameters)
+            converted ~= convert(arguments[index], parameter.type.name);
+        modules ~= method.returns.modules;
+        result = Compiled("(" ~ target ~ ")." ~ method.name ~ "(" ~ converted.join(", ") ~ ")", method.returns.name);
+        return true;
+    }
+    return false;
 }
 
 /// Parameter types of a method, comma-separated, for overload identity.

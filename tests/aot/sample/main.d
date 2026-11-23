@@ -10,6 +10,7 @@ import flint.engine.aot.proxy : Advisor, DetachedExecutor, Invocation, Proceed;
 import flint.engine.aot.registry : installedRegistry;
 import shop.config : AuditLog, ClockReport, Greeter;
 import shop.data : OwnerStatus;
+import shop.pricing : Pricing;
 import shop.owners : OwnerService, OwnerStore;
 import shop.web : Greeting;
 import std.stdio : writeln;
@@ -154,6 +155,8 @@ void scenario(string label, string[] profiles, string[string] properties)
             writeln("enum: ", descriptor.enumConstants.length, " constants, ordinal 1 = ",
                     descriptor.enumValue(1).get!OwnerStatus, ", ordinal 9 null = ", descriptor.enumValue(9).isNull);
     }
+    auto pricing = cast(Pricing) context.getBean("pricing");
+    writeln("spel: doubled=", pricing.doubled, " label=\"", pricing.label, "\" premium=", pricing.premium);
     auto store = cast(OwnerStore) context.getBean("ownerStore");
     context.close();
     writeln("shutdown: ", store.events.join(", "));

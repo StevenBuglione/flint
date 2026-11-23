@@ -580,7 +580,26 @@ Table and column names follow Spring Data Relational's default naming (snake cas
 
 ## 9. SpEL
 
-Expressions in `#{...}` (`@Value`), `@Cacheable(key, condition, unless)`, `@EventListener(condition)` and `@PreAuthorize` will be compiled to D later in Phase 1. Until then the generator reports FLINT-E1107 for `#{...}` in `@Value`, and passes the other expression strings through in the merged annotations for a runtime interpreter. `${...}` placeholders are not SpEL and work now.
+SpEL is compiled to typed D at build time (`engine/aot/spel.d`); nothing interprets it at runtime.
+
+- **`@Value("#{...}")`** compiles completely today, including templates that mix text and several `#{...}` (`"Shop #{...} is #{...}"`). The generated factory computes the value inline and converts it to the parameter's or field's type.
+- **The subset:**
+  - literals: integers (`L` suffix optional), reals, `'text'` with `''` escapes, `true`, `false`, `null`;
+  - `${key:default}` placeholders. Spring resolves them before parsing, so a placeholder takes the type its use needs: a number beside a number, `true`/`false` in a boolean context, a string elsewhere, including inside quotes;
+  - `@bean` references, typed from the bean definitions by name, with their public fields, Java Beans getters (`@clock.time` → `getTime()`) and public methods;
+  - `#variables` and root functions where the use site provides them (section 9.1);
+  - the arithmetic operators `+ - * / % ^` (also `div`, `mod`), with `+` concatenating when either side is text;
+  - comparisons `== != < <= > >=` (also `eq ne lt le gt ge`) and `null` tests;
+  - `and`, `or`, `not`, `&&`, `||`, `!`;
+  - `?:` ternary, `?:` Elvis and `?.` safe navigation;
+  - indexing of arrays and strings;
+  - `length()`, `size()`, `isEmpty()`, `toUpperCase()`, `toLowerCase()`, `trim()`, `startsWith()`, `endsWith()` and `contains()` on strings.
+- **Outside the subset** (`T(...)`, `new`, `.?[...]` selection, `.![...]` projection, `matches`, `instanceof`, `between`, unknown names): FLINT-E1107 with the construct named. Expressions in the subset never fail at runtime for a reason the build could have seen.
+- **Generated code** may call `std.conv.to`, `std.uni.toUpper`/`toLower`, `std.string.strip` and `std.algorithm.searching.startsWith`/`endsWith`/`canFind`, through `imported!`.
+
+### 9.1 Method-level expressions
+
+`@Cacheable(key, condition, unless)`, `@CacheEvict`, `@CachePut`, `@PreAuthorize`, `@PostAuthorize` and `@EventListener(condition)` use the same compiler. There `#name`, `#p0` and `#a0` are the method's arguments (typed from its signature), `#result` is its result, `#root.methodName` and `#root.args` are available, and the security root's functions (`hasRole`, `hasAnyRole`, `hasAuthority`, `isAuthenticated`, `principal`, `authentication`) are runtime calls whose results are converted where used. Emitting them needs an evaluation context and a per-method expression table in the runtime, proposed as contract 3. Until it lands, those attributes stay as strings in the merged annotations, and the runtime rejects them as framework-core's context does today.
 
 ## 10. Diagnostics
 
@@ -593,7 +612,7 @@ Expressions in `#{...}` (`@Value`), `@Cacheable(key, condition, unless)`, `@Even
 | FLINT-E1104 | a user identifier contains `__Flint`, which generated code reserves |
 | FLINT-E1105 | a bean class has several constructor candidates and none is `@Autowired` |
 | FLINT-E1106 | an injection point has no potential candidate in the closure |
-| FLINT-E1107 | SpEL is not compiled yet |
+| FLINT-E1107 | a SpEL expression is outside the compiled subset, or names something that does not exist |
 | FLINT-E1108 | a lifecycle or injected method is not public |
 | FLINT-E1109 | a `@Bean` method of a proxied configuration is final or not public |
 | FLINT-E1110 | unconditional beans form a constructor-injection cycle |
@@ -618,7 +637,7 @@ Implemented and tested on DMD and LDC: extraction (section 1.1), interface keys 
 
 The legacy `flint:engine-di` container keeps its compile-time `import("application.toml")` for ADR-028 applications. Flint AOT applications do not use it: their `@ConditionalOnConfig` and `@ConditionalOnProperty` are startup conditions (section 5.5). Removing the legacy path waits for the ADR-028 golden applications to move to `@FlintBootApplication`.
 
-Not yet: `@ConfigurationProperties` constructor binding (JavaBean binding is generated), `@Retryable`'s and `@Cacheable`'s SpEL, `@Inherited` and interface-method annotations (section 2.1), and repository implementation classes (Phase 2, with `flint-data-jdbc`).
+Not yet: `@ConfigurationProperties` constructor binding (JavaBean binding is generated), method-level SpEL (section 9.1, contract 3), `@Inherited` and interface-method annotations (section 2.1), and repository implementation classes (Phase 2, with `flint-data-jdbc`).
 
 ## 13. Measured cost in the edit loop
 

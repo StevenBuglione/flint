@@ -258,6 +258,8 @@ private struct Emitter
         {
         case PointKind.bean:
             return "cast(" ~ item.type ~ ") factory.getBeanOfType(" ~ literal(item.lookup) ~ ", " ~ qualifier ~ ")";
+        case PointKind.spel:
+            return item.expression;
         case PointKind.value:
             return "factory.resolveValue(" ~ literal(
                     item.expression) ~ ", " ~ literal(item.type) ~ ").get!(" ~ item.type ~ ")()";

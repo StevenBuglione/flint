@@ -48,8 +48,8 @@ interface Missing
 /// FLINT-E1107 and FLINT-E1102.
 @Component @Profile("a & b | c") class Expressions
 {
-    /// SpEL.
-    this(@Value("#{1 + 1}") int two)
+    /// SpEL that Flint AOT does not compile yet: a type reference.
+    this(@Value("#{T(java.lang.Math).random()}") double random)
     {
     }
 }

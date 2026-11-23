@@ -256,6 +256,100 @@ unittest
 
 // ---- names and paths ----
 
+// ---- SpEL ----
+
+private final class TestScope : imported!"flint_tool.engine.aot.spel".SpelScope
+{
+    import flint_tool.engine.aot.spel : Compiled;
+
+    bool variable(string name, out Compiled result)
+    {
+        if (name != "id")
+            return false;
+        result = Compiled("id", "long");
+        return true;
+    }
+
+    bool bean(string name, out Compiled result)
+    {
+        if (name != "clock")
+            return false;
+        result = Compiled("clock", "shop.Clock");
+        return true;
+    }
+
+    Compiled placeholder(string expression)
+    {
+        return Compiled("p(\"" ~ expression ~ "\")", "string");
+    }
+
+    bool root(string name, Compiled[] arguments, bool call, out Compiled result)
+    {
+        if (name != "hasRole" || !call)
+            return false;
+        result = Compiled("ctx.hasRole(" ~ arguments[0].code ~ ")", "Any");
+        return true;
+    }
+
+    bool member(string type, string name, Compiled[], bool, string target, out Compiled result)
+    {
+        if (type != "shop.Clock" || name != "now")
+            return false;
+        result = Compiled(target ~ ".now()", "long");
+        return true;
+    }
+}
+
+private string spel(string source)
+{
+    import flint_tool.engine.aot.spel : Compiled, SpelError, compileSpel;
+
+    Compiled result;
+    SpelError error;
+    assert(compileSpel(source, new TestScope, result, error), error.message);
+    return result.code ~ " : " ~ result.type;
+}
+
+private string spelError(string source)
+{
+    import flint_tool.engine.aot.spel : Compiled, SpelError, compileSpel;
+
+    Compiled result;
+    SpelError error;
+    assert(!compileSpel(source, new TestScope, result, error), source);
+    return error.message;
+}
+
+@("SpEL compiles to typed D: literals, arithmetic, strings, logic, ternary and Elvis")
+unittest
+{
+    expect(spel("1 + 2 * 3")).toEqual("(1L + (2L * 3L)) : long");
+    expect(spel("10 / 4.0")).toEqual("(cast(double) (10L) / 4.0) : double");
+    expect(spel("2 ^ 10")).toEqual("(2L ^^ 10L) : long");
+    expect(spel("'a' + 1")).toEqual(`("a" ~ imported!"std.conv".to!(string)(1L)) : string`);
+    expect(spel("'it''s'")).toEqual(`"it's" : string`);
+    expect(spel("#id > 10 and not (#id == 99)")).toEqual("((id > 10L) && !((id == 99L))) : bool");
+    expect(spel("#id gt 1 ? 'big' : 'small'")).toEqual(`((id > 1L) ? "big" : "small") : string`);
+    expect(spel("'x'.toUpperCase().length()")).toEqual(`cast(long) (imported!"std.uni".toUpper("x")).length : long`);
+    expect(spel("${a} ?: 'none'")).toEqual(`((p("${a}")).length ? p("${a}") : "none") : string`);
+    expect(spel("${port} + 1")).toEqual(`(imported!"std.conv".to!(long)(p("${port}")) + 1L) : long`);
+    expect(spel("@clock.now() * 2")).toEqual("(clock.now() * 2L) : long");
+    expect(spel("hasRole('ADMIN') or #id == 1")).toEqual(`((ctx.hasRole("ADMIN")).get!(bool)() || (id == 1L)) : bool`);
+    expect(spel("#id == null")).toEqual("((id) is null) : bool");
+}
+
+@("SpEL outside the compiled subset is reported, never interpreted at runtime")
+unittest
+{
+    expect(spelError("T(java.lang.Math).random()").canFind("type references")).toBeTrue();
+    expect(spelError("#missing").canFind("unknown variable `#missing`")).toBeTrue();
+    expect(spelError("@nobody").canFind("no bean named `nobody`")).toBeTrue();
+    expect(spelError("@clock.later()").canFind("has no method `later`")).toBeTrue();
+    expect(spelError("'a' - 1").canFind("is not a number")).toBeTrue();
+    expect(spelError("#id > ").canFind("ends early")).toBeTrue();
+    expect(spelError("names.?[length() > 1]").length > 0).toBeTrue();
+}
+
 @("Spring's naming rules: bean names, table names, entry points and path combination")
 unittest
 {
@@ -383,8 +477,8 @@ unittest
     expect(first.extractionErrors).toEqual("");
     expect(first.ok).toBeTrue();
     expect(first.application).toEqual("shop.app.ShopApplication");
-    expect(first.extracted).toEqual(5);
-    expect(first.generated).toEqual(5);
+    expect(first.extracted).toEqual(6);
+    expect(first.generated).toEqual(6);
     expect(first.removed).toEqual([
         "missing: @ConditionalOnClass: flint.does.not.Exist is not in the closure"
     ]);
