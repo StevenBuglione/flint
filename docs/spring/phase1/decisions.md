@@ -61,6 +61,8 @@
 - 2026-11-23, framework-core (item 24): the Spring Security modules moved to `security/security-{crypto,core,web,config}` once m7-flint-cli registered integrated repos (29820bc3); `"repo": "security"` is unchanged.
 - 2026-11-23, m7-flint-cli (item 23, with the compile-performance session): mold is pinned (2.40.4, `policy/toolchains.json`), and on Linux x86-64 `install_toolchains.py --compiler dmd` configures DMD to link with it by default. The Milestone 6 numbers that beat Go assumed mold, and ADR-021 makes it the dev linker, but it was opt-in. gs-rest-service's link takes 0.3 s with it and 2.0 s with ld.bfd. `--dmd-linker system` opts out, and `flint doctor` warns (FLINT-E0823) when DMD links with the default.
 
+- 2026-11-23, coordinator: the compile-server half of the platform cache (item 23), the platform prelude in `flintserver.d`, is assigned to dmd-arm64 under the 30-minute rule. The base DMD patch's owning session hasn't answered in two hours. dmd-arm64 offered, and m7-flint-cli wires `FLINT_DMD_SERVER_PRELUDE` on flint's side. Uncertified gs-builds trials (11:44Z) put gs-rest-service at cached cold 1.54 s vs Go 0.159 s, incremental 0.98 s vs 0.154 s, and from scratch 4.51 s vs `go build -a` 3.24 s. Both sessions are asked for a breakdown of where the time goes.
+
 ## Open for the owner
 
 - 2026-11-23, proof-harness: with the corrected template count (own library plus probe, `d153fd1`), some of the 37 packages' `template_instances` budgets in `policy/packages.json` may now be exceeded. The old count left out each package's own library compile. Raising a budget is the owner's decision. Until then, any package over its budget fails the measured gate, and no cap has been changed.
