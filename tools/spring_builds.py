@@ -253,7 +253,11 @@ def measure(args, timed):
                 row = {'go': measure_go(name, args.trials, timed, logs, temporary, result)}
                 if name not in missing:
                     row['flint'] = measure_flint(name, args.trials, timed, logs, temporary, result)
-                    row['verdicts'] = verdicts(name, row['flint'], row['go'], budgets['rest_build_ratio_max'])
+                    if args.trials >= 9:
+                        row['verdicts'] = verdicts(name, row['flint'], row['go'], budgets['rest_build_ratio_max'])
+                    else:
+                        row['verdicts'] = {}
+                        row['note'] = 'fewer than 9 trials: no ratios or verdicts (a smoke run is never evidence)'
                 if not args.no_context:
                     row['context'] = {'java': measure_java(name, args.trials, timed, logs, temporary, result,
                                                            native=args.native_context)}
