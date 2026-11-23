@@ -11,6 +11,19 @@ import argparse, hashlib, json, os, platform, re, shlex, shutil, subprocess, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / 'tools'))
+from workspace import Workspace  # noqa: E402
+
+# The checkouts of each repo (plan section 7): the monorepo unless --workspace names a flint.workspace/1 file.
+WORKSPACE = Workspace()
+
+def package_path(package):
+    """A package's directory: in its repo's checkout with --workspace, else under ROOT."""
+    return WORKSPACE.package_dir(package, ROOT) if WORKSPACE.file else ROOT/'packages'/package
+
+def flint_checkout():
+    """The flint repo's checkout, which holds native/ffi and the Conan recipe index."""
+    return WORKSPACE.checkout('flint') if WORKSPACE.file else ROOT
 TARGETS = ('linux-x86_64-glibc','linux-aarch64-glibc','linux-x86_64-musl','linux-aarch64-musl','macos-arm64','windows-x86_64')
 PROFILES = {
     'rest': ['openssl','libsodium','llhttp','nghttp2','curl'],
@@ -303,7 +316,7 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
             # The extension is portable Rust over the C API; macOS builds it too (ADR-024).
             flint_extensions=name=='wasmtime' and (self.a.target.startswith('linux') or self.a.target=='macos-arm64')
             if flint_extensions:
-                extension=ROOT/'packages/wasi/native/install_extensions.py'
+                extension=package_path('wasi')/'native/install_extensions.py'
                 self.command([sys.executable,extension,src],src)
                 args[-1]+=',flint-wasi-extensions'
             output=self.command(args+['--','--print','native-static-libs'],src)
@@ -443,7 +456,7 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
         self.prefix.mkdir(parents=True,exist_ok=True);self.receipt_path.write_text(json.dumps(self.receipt,indent=2)+'\n')
 
     def shims(self):
-        source=ROOT/'native/ffi';build=self.work/'build'/self.a.target/'flint-ffi'
+        source=flint_checkout()/'native/ffi';build=self.work/'build'/self.a.target/'flint-ffi'
         self.cmake('flint-ffi',source,build,'.',[])
         if host_target()==self.a.target:self.command(['ctest','--test-dir',build,'--output-on-failure'],ROOT)
         if self.a.phase=='build':
@@ -579,7 +592,9 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
             self.plan.append({'emit_dub': 'verified installed archives only'})
             return
         for relative, block in self.dub_recipe_blocks().items():
-            path = ROOT / relative
+            # packages/<name>/... lives in the checkout of the package's repo.
+            package = relative.split('/')[1]
+            path = package_path(package) / '/'.join(relative.split('/')[2:])
             text = re.sub(r'\n// BEGIN FLINT NATIVE\n.*?// END FLINT NATIVE\n', '\n', path.read_text(), flags=re.S)
             if relative == 'packages/rpc/dub.sdl':
                 text = self.emit_rpc_test_archive(text)
@@ -614,9 +629,14 @@ def main():
     parser.add_argument('--no-dependencies',action='store_true',help='Build only the --library names; their dependencies are already in --prefix. --profile then only selects provider variants such as curl SMTP')
     parser.add_argument('--no-shims',action='store_true',help='Do not build the Flint C shims (native/ffi)')
     parser.add_argument('--shims-only',action='store_true',help='Build only the Flint C shims (and --emit-dub) over the libraries the prefix receipt records')
+    parser.add_argument('--workspace',type=Path,help='flint.workspace/1 file pinning each repo\'s checkout (plan section 7): native/ffi comes from the flint checkout, and --emit-dub writes each package\'s recipe in its own checkout')
     parser.add_argument('--with-codegen',action='store_true');parser.add_argument('--emit-dub',action='store_true');parser.add_argument('--allow-webview',action='store_true');parser.add_argument('--pkg-config',default=os.environ.get('PKG_CONFIG','pkg-config'),help='pkg-config for dynamic system providers such as WebKitGTK')
     args=parser.parse_args()
     if args.jobs<1:parser.error('--jobs must be positive')
+    global WORKSPACE
+    WORKSPACE=Workspace(args.workspace)
+    problems=WORKSPACE.verify()
+    if problems:parser.error('workspace: '+'; '.join(problems))
     lock=json.loads(Path(args.lock).read_text());builder=Builder(args,lock)
     names=list(args.library)
     if args.shims_only or args.no_dependencies:

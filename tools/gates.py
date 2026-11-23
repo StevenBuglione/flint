@@ -119,14 +119,15 @@ def structural(selected):
             visit(d)
         active.remove(n);visited.add(n)
     for n in P:visit(n)
-    violations,_=edge_violations(ROOT)
-    require(not violations,'repo edge: '+(violations[0][2] if violations else ''))
+    if (ROOT/'policy/packages.json').is_file():
+        violations,_=edge_violations(ROOT)
+        require(not violations,'repo edge: '+(violations[0][2] if violations else ''))
     root_sdl=(ROOT/'dub.sdl').read_text(encoding='utf-8')
     require(set(re.findall(r'subPackage\s+"packages/([\w-]+)"',root_sdl))==set(P),'root subpackage list differs')
     boot_layers()
     mixin_packages=set()
     for n in selected:
-        meta=P[n];pkg=WORKSPACE.package_dir(n);sdl=(pkg/'dub.sdl').read_text(encoding='utf-8')
+        meta=P[n];pkg=WORKSPACE.package_dir(n,ROOT) if WORKSPACE.file else ROOT/'packages'/n;sdl=(pkg/'dub.sdl').read_text(encoding='utf-8')
         actual=set(re.findall(r'dependency\s+"flint:([\w-]+)"\s+version="\*"',sdl))
         require(actual==set(meta['dependencies']),n+': SDL dependencies differ from policy')
         require(len(re.findall(r'\bdependency\b',sdl))==len(actual),n+': noncanonical dependency recipe')

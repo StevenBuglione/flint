@@ -519,6 +519,23 @@ def measure_compile_gate(args, manifest, result, measured_native, go_sources, ba
     return 0
 
 
+def pinned_workspace(path):
+    """Each repo's commit in the measured workspace (plan section 7). A workspace whose checkouts are not all this
+    checkout cannot be measured yet: the probes' recipes reach their packages through this checkout's root
+    dub.sdl until the split rewrites them."""
+    sys.path.insert(0, str(ROOT / 'tools'))
+    from workspace import Workspace, repo_policy
+    workspace = Workspace(path)
+    problems = workspace.verify()
+    if problems:
+        raise RuntimeError('workspace: ' + '; '.join(problems))
+    if workspace.file and {checkout for checkout, _ in workspace.checkouts.values()} != {ROOT}:
+        raise RuntimeError('measure_builds measures one checkout until the split rewrites the probes\' recipes '
+                           '(plan section 7, step 5); every checkout of this workspace must be ' + str(ROOT))
+    head = run_checked(['git', 'rev-parse', 'HEAD'], ROOT).stdout.strip()
+    return {repo: head for repo in sorted(repo_policy(ROOT)['repos'])}
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--manifest', type=Path, default=ROOT / 'policy/build-benchmarks.json')
@@ -537,7 +554,11 @@ def main(argv=None):
                         help='ADR-025 compile-speed gate on any tier-1 host: dev builds of the apps and Go, cold and incremental')
     parser.add_argument('--app', action='append', choices=['bench-cli', 'bench-rest'],
                         help='with --apps-only, measure only this app (the gate needs both)')
+    parser.add_argument('--workspace', type=Path,
+                        help='flint.workspace/1 file pinning each repo\'s checkout (plan section 7); default: this '
+                             'monorepo. Its commits are recorded in the evidence.')
     args = parser.parse_args(argv)
+    workspace_commits = pinned_workspace(args.workspace)
     if args.app and not args.apps_only:
         raise RuntimeError('--app applies only to --apps-only')
     host = (sys.platform, os.uname().machine if hasattr(os, 'uname') else '')
@@ -610,7 +631,7 @@ def main(argv=None):
     result = {'schema': 1, 'mode': 'production', 'commit': commit,
               'producer': 'tools/measure_builds.py', 'command': [sys.executable] + sys.argv,
               'exit_code': 0, 'toolchains': tools, 'manifest_sha256': digest(args.manifest),
-              'native_inputs': native_inputs,
+              'native_inputs': native_inputs, 'workspace': workspace_commits,
               'packages': {}, 'apps': {}, 'go': {'apps': {}}, 'trials': [], 'size_trials': []}
     base_env = os.environ.copy()
     base_env.pop('DFLAGS', None)
