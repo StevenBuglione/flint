@@ -44,6 +44,8 @@ class ComplexityAllowlistTests(unittest.TestCase):
         sys.path.insert(0, str(ROOT / 'tools'))
         import quality
         allowed = quality.complexity_allowlist()
+        if not allowed and not (ROOT / 'framework').is_dir():
+            self.skipTest('every listed tree left this checkout at the cutover')
         self.assertTrue(allowed)
         for (file, function), entry in allowed.items():
             source = (ROOT / file).read_text(encoding='utf-8')
@@ -65,6 +67,25 @@ class ComplexityAllowlistTests(unittest.TestCase):
             (root / 'policy/complexity-allowlist.json').write_text(json.dumps({'functions': [
                 {'file': 'a.d', 'function': 'f', 'upstream': {'project': 'spring-framework', 'file': 'A.java'}}]}),
                 encoding='utf-8')
+            with self.assertRaises(SystemExit):
+                quality.complexity_allowlist(root)
+
+    def test_an_entry_whose_tree_left_with_its_repo_is_skipped(self):
+        import shutil
+        import sys
+        import tempfile
+        sys.path.insert(0, str(ROOT / 'tools'))
+        import quality
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / 'policy').mkdir()
+            shutil.copy(ROOT / 'policy/upstream-licences.json', root / 'policy')
+            entry = {'file': 'framework/web/a.d', 'function': 'f',
+                     'upstream': {'project': 'spring-framework', 'file': 'A.java', 'method': 'f'}}
+            (root / 'policy/complexity-allowlist.json').write_text(json.dumps({'functions': [entry]}),
+                                                                   encoding='utf-8')
+            self.assertEqual(quality.complexity_allowlist(root), {})
+            (root / 'framework').mkdir()
             with self.assertRaises(SystemExit):
                 quality.complexity_allowlist(root)
 

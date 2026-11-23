@@ -28,6 +28,8 @@ def complexity_allowlist(root=ROOT):
         missing=[k for k in ('file','function') if not entry.get(k)]+[k for k in ('project','file','method') if not upstream.get(k)]
         if missing:raise SystemExit(f'{path.name}: {entry} lacks {missing}')
         if upstream['project'] not in projects:raise SystemExit(f"{path.name}: {entry['function']}: unknown upstream project {upstream['project']} (policy/upstream-licences.json)")
+        if not (root/Path(entry['file']).parts[0]).is_dir():
+            continue  # its tree left this checkout with its repo at the cutover (framework/, boot/, security/)
         if not (root/entry['file']).is_file():raise SystemExit(f"{path.name}: {entry['file']} does not exist")
         allowed[(entry['file'],entry['function'])]=entry
     return allowed
