@@ -35,6 +35,7 @@ Run a package's tests with `dub test --root boot/core/flint-boot --compiler=dmd`
 | `@FlintBootTest`, `@TestConfiguration`, `FlintBootTestContext` | done over the context stand-in | 6 Flint tests modelled on Boot's `SpringBootTest*Tests` |
 | `@WebMvcTest`, `@AutoConfigureMockMvc` (module `flint-boot-webmvc-test`), `@DataJdbcTest` (module `flint-boot-data-jdbc-test`) | annotations done; the slices run when MockMvc and Data JDBC land | |
 | Starters: `flint-boot-starter`, `-web`, `-jdbc`, `-validation`, `-json`, `-test` | done as dependency lists over what exists (`boot/starter/README.md` lists what joins each) | |
+| Boot's error path: `ErrorAttributeOptions` (core) and `ErrorProperties` (`server.error.*`) | done; `ErrorAttributes`, `DefaultErrorAttributes`, `BasicErrorController` and the Whitelabel view follow in `module/flint-boot-webmvc` on web-mvc's servlet API (agreed with web-mvc) | 5 Flint tests |
 | Phase 1 auto-configurations (web/MVC, Jackson, `DataSource` with `hikari`, transactions, validation, SQL init) | waiting on the framework types they create | |
 | `@MockitoBean` | deferred: spring-test's `org.springframework.test` maps to `flint.test`, which the base test library already owns, and Mockito needs a mock engine (generated subclasses); raised with the coordinating session | |
 
@@ -42,7 +43,7 @@ Excluded upstream tests, each with its reason:
 - `ConfigurationPropertyNameTests.hashCodeIsStored` (`runtime-reflection`): reads a private field with `ReflectionTestUtils`.
 - `OriginTrackedPropertiesLoaderTests.compareToJavaProperties` (`jvm-platform`): compares against `java.util.Properties`.
 
-Total so far: **297 tests pass on DMD 2.114 and LDC 1.43** (290 in flint-boot, 1 in flint-boot-autoconfigure, 6 in flint-boot-test): 271 ported upstream tests and 26 Flint tests. The runner in `tests/boot_tests/support.d` runs each `unittest` on its own and prints the count.
+Total so far: **302 tests pass on DMD 2.114 and LDC 1.43** (293 in flint-boot, 3 in flint-boot-autoconfigure, 6 in flint-boot-test): 271 ported upstream tests and 31 Flint tests. The runner in `tests/boot_tests/support.d` runs each `unittest` on its own and prints the count.
 
 ## Design decisions
 
