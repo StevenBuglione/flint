@@ -63,7 +63,7 @@ def earlier_names(checkout, paths):
     tree (packages/web -> packages/engine-web), so filter-repo keeps the history from before the rename too."""
     log = subprocess.run(['git', 'log', '--format=', '--name-status', '-M', '--diff-filter=R', 'HEAD'], cwd=checkout,
                          capture_output=True, text=True, check=True).stdout
-    found = {}
+    votes = {}
     for line in log.splitlines():
         fields = line.split('\t')
         if len(fields) != 3:
@@ -71,8 +71,15 @@ def earlier_names(checkout, paths):
         old, new = fields[1].split('/'), fields[2].split('/')
         if len(old) < 3 or len(new) < 3 or old[0] != new[0] or old[:2] == new[:2]:
             continue
-        if any(fields[2].startswith(path + '/') for path in paths):
-            found.setdefault('/'.join(old[:2]), '/'.join(new[:2]))
+        counts = votes.setdefault('/'.join(old[:2]), {})
+        counts['/'.join(new[:2])] = counts.get('/'.join(new[:2]), 0) + 1
+    found = {}
+    for old, counts in votes.items():
+        # Git pairs an occasional identical small file across directories; the directory's rename is the target
+        # most of its files went to.
+        new, count = max(counts.items(), key=lambda item: item[1])
+        if count * 2 > sum(counts.values()) and any(new == path or new.startswith(path + '/') for path in paths):
+            found[old] = new
     return dict(sorted(found.items()))
 
 

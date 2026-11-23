@@ -147,6 +147,10 @@
       "repo": "framework",
       "version": "monorepo"
     },
+    "flint:jackson-core": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:jakarta-annotation": {
       "repo": "framework",
       "version": "monorepo"
