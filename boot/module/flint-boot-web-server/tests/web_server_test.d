@@ -378,3 +378,18 @@ version (FlintNativeLlhttp)
         assert(!get(server.getPort(), "/other").canFind("X-Filtered"));
     }
 }
+
+@("the factory has no fast-path offer by default; setFastOffer keeps the one Flint AOT's customizer gives it") unittest
+{
+    import flint.engine.servlet.fast : serveFast;
+
+    auto factory = new FlintServletWebServerFactory;
+    assert(factory.getFastOffer() is null);
+    // ServerProperties' customizer never sets it: only the generated customizer does (fast-path.md, section 9).
+    new ServletWebServerFactoryCustomizer(new ServerProperties).customize(factory);
+    assert(factory.getFastOffer() is null);
+    factory.setFastOffer(&serveFast);
+    assert(factory.getFastOffer() is &serveFast);
+    factory.setFastOffer(null);
+    assert(factory.getFastOffer() is null);
+}
