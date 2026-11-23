@@ -560,6 +560,7 @@
     "context",
     "core",
     "engine-aot",
+    "jackson-core",
     "jackson-databind",
     "jakarta-servlet",
     "java"
