@@ -116,6 +116,12 @@ struct Value
     {
         if (kind == Kind.text)
             return text.length ? [text] : null;
+        // A single ClassRef (`@ConditionalOnSingleCandidate(ClassRef(...))`): its type name.
+        if (kind == Kind.annotation && nested.length)
+        {
+            const name = nested[0].text("name");
+            return name.length ? [name] : null;
+        }
         string[] result;
         if (kind == Kind.array)
         {
@@ -212,6 +218,9 @@ struct TypeRef
     string template_;
     /// Template arguments.
     TypeRef[] arguments;
+    /// For a method's return type: the fully qualified names of its base classes and interfaces, so a bean whose
+    /// type is declared in a module the extraction did not describe still has its supertypes.
+    string[] supertypes;
 }
 
 /// A function parameter.
@@ -674,6 +683,7 @@ private Method readMethod(const JSONValue value)
     result.inherited = flag(value, "inherited");
     result.annotations = readAnnotations(value, "annotations");
     result.returns = readTypeRef(member(value, "returns"));
+    result.returns.supertypes = strings(value, "returnSupertypes");
     foreach (ref item; list(value, "parameters"))
         result.parameters ~= Parameter(str(item, "name"), readTypeRef(member(item, "type")),
                 readAnnotations(item, "annotations"), strings(item, "storage"));
@@ -753,6 +763,7 @@ TypeRef clone(const ref TypeRef type)
     result.modules = type.modules.dup;
     result.kind = type.kind;
     result.template_ = type.template_;
+    result.supertypes = type.supertypes.dup;
     foreach (ref item; type.element)
         result.element ~= clone(item);
     foreach (ref item; type.arguments)

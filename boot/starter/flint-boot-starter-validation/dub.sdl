@@ -3,3 +3,5 @@ description "Jakarta Validation with Hibernate Validator's behaviour (spring-boo
 license "Apache-2.0"
 targetType "none"
 dependency "flint:boot-starter" version="*"
+dependency "flint:boot-validation" version="*"
+dependency "flint:hibernate-validator" version="*"

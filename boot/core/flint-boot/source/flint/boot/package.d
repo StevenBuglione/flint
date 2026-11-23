@@ -35,6 +35,8 @@ import flint.boot.diagnostics : FailureAnalysisReporter, FailureAnalyzer, Failur
     LoggingFailureAnalysisReporter;
 import flint.conc.slot : ProcessSlot;
 import flint.context : ConfigurableApplicationContext;
+import flint.context.annotation : Configuration;
+import flint.core.annotation : AliasFor;
 import flint.core.convert : TypeDescriptor;
 import flint.core.env : EnumerablePropertySource, MutablePropertySources, StandardEnvironment;
 import flint.engine.aot.any : Any;
@@ -156,11 +158,16 @@ enum WebApplicationType
     REACTIVE
 }
 
-/// Marks the application's `@Configuration` class; `@FlintBootApplication` carries it.
-struct FlintBootConfiguration
+// `@AliasFor(annotation = Configuration.class)`, as a constant (dfmt 0.15 cannot parse named UDA arguments).
+private enum aliasOfConfiguration = AliasFor("proxyBeanMethods",
+            imported!"flint.java.lang".ClassRef("flint.context.annotation.Configuration"));
+
+/// Marks the application's `@Configuration` class; `@FlintBootApplication` carries it, so the application class is
+/// a bean (its runners run, its `@Bean` methods register).
+@Configuration struct FlintBootConfiguration
 {
-    /// Whether `@Bean` methods are proxied to enforce singleton semantics.
-    bool proxyBeanMethods = true;
+    /// Whether `@Bean` methods are proxied to enforce singleton semantics; an alias of `Configuration.proxyBeanMethods`.
+    @aliasOfConfiguration bool proxyBeanMethods = true;
 }
 
 /// The environment Boot prepares: spring-core's `StandardEnvironment` over Boot's config data.

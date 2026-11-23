@@ -973,9 +973,16 @@ private final class Analysis
 
     string[] typesOf(const ref TypeRef type)
     {
+        import std.algorithm.searching : canFind;
+
         string[] types = [type.name];
         if (const decl = model.type(type.name))
-            types = typesOf(*decl);
+            return typesOf(*decl);
+        foreach (supertype; type.supertypes)
+        {
+            if (!types.canFind(supertype))
+                types ~= supertype;
+        }
         return types;
     }
 

@@ -25,8 +25,10 @@ import textwrap
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 class F:
-    def __init__(self, name, dtype, default, doc, ro=False, uda=None):
+    def __init__(self, name, dtype, default, doc, ro=False, uda=None, setter=None):
         self.name, self.dtype, self.default, self.doc, self.ro, self.uda = name, dtype, default, doc, ro, uda
+        # setter: the D expression the setter stores, when Boot's setter does more than assign (cleanContextPath)
+        self.setter = setter
 
 
 class Enum:
@@ -104,7 +106,7 @@ def render_class(c, indent=0, static=False):
                                f'{pad}        return {field(f.name)};', f'{pad}    }}']))
         if not f.ro:
             body.append('\n'.join([f'{pad}    /// Set `{f.name}`.', f'{pad}    void set{cap(f.name)}({f.dtype} {field(f.name)}) pure nothrow @nogc',
-                                   f'{pad}    {{', f'{pad}        this.{field(f.name)} = {field(f.name)};', f'{pad}    }}']))
+                                   f'{pad}    {{', f'{pad}        this.{field(f.name)} = {f.setter or field(f.name)};', f'{pad}    }}']))
     out.append('\n\n'.join(body))
     out.append(f'{pad}}}')
     return '\n'.join(out)
@@ -195,10 +197,17 @@ server = Cls('ServerProperties', 'Settings of the embedded web server.', [
     F('servlet', 'Servlet', 'new Servlet', 'Servlet settings (`server.servlet.*`).', ro=True),
 ], nested=[Cls('Servlet', 'Servlet properties.', [
     F('contextParameters', 'Map!(string, string)', 'new LinkedHashMap!(string, string)', 'Servlet context init parameters.', ro=True),
-    F('contextPath', 'string', None, 'Context path of the application.'),
+    F('contextPath', 'string', None, 'Context path of the application.', setter='cleanContextPath(contextPath)'),
     F('applicationDisplayName', 'string', '"application"', 'Display name of the application.'),
     F('registerDefaultServlet', 'bool', 'false', 'Whether to register the default Servlet with the container.'),
-])], prefix='server')
+], state=['''// Boot's cleanContextPath: trimmed, without a trailing slash ("/petclinic/" is "/petclinic", "/" is "").
+private static string cleanContextPath(string contextPath) pure nothrow @nogc
+{
+    import std.string : strip;
+
+    const candidate = contextPath.length ? contextPath.strip : null;
+    return candidate.length && candidate[$ - 1] == '/' ? candidate[0 .. $ - 1] : candidate;
+}'''])], prefix='server')
 shutdown = Enum('Shutdown', 'Types of server shutdown.', [
     ('GRACEFUL', 'The server supports graceful shutdown: in-flight requests finish, new ones are refused.'),
     ('IMMEDIATE', 'The server shuts down immediately.')])
@@ -371,7 +380,7 @@ UNITS = [
          'flint.boot.jdbc.autoconfigure',
          '`org.springframework.boot.jdbc.autoconfigure`: the JDBC configuration properties. `flint.datasource.hikari.*` (alias `pool`) binds onto the pool `DataSource` the data-access module provides, as Boot binds `spring.datasource.hikari.*` onto `HikariDataSource`.',
          [CP, DU, DUR, OPT, MAP], [edc, datasource, jdbc], 'boot/module/flint-boot-jdbc'),
-    Unit('boot/module/flint-boot-sql/source/flint/boot/sql/init.d',
+    Unit('boot/module/flint-boot-sql/source/flint/boot/sql/init/package.d',
          header('module/spring-boot-sql/src/main/java/org/springframework/boot/sql/init/DatabaseInitializationMode.java'),
          'flint.boot.sql.init', '`org.springframework.boot.sql.init`: SQL database initialization support.', [], [mode], 'boot/module/flint-boot-sql'),
     Unit('boot/module/flint-boot-sql/source/flint/boot/sql/autoconfigure/init.d',

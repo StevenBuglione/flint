@@ -1,0 +1,18 @@
+[project]
+name = "gs-relational-data-access"
+version = "0.0.1"
+flint = "1.0"
+type = "executable"
+base-package = "com.example.relationaldataaccess"
+description = "spring-guides/gs-relational-data-access complete/, ported to Flint Boot"
+
+[build]
+executable = "gs-relational-data-access"
+
+[dependencies]
+"flint:boot-starter-jdbc" = {}
+"flint:boot-core" = {}
+"flint:boot-autoconfigure" = {}
+"flint:java" = {}
+"flint:jdbc" = {}
+"flint:slf4j-api" = {}

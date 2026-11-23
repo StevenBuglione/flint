@@ -1,0 +1,12 @@
+{
+  "schema": "flint.spring-port/1",
+  "build": ["flint", "build", "--profile", "release"],
+  "binary": ".flint/build/release/gs-relational-data-access",
+  "measure": {
+    "cached": ["flint", "build"],
+    "scratch": ["flint", "build", "--force"],
+    "edit_source": "src/com/example/relationaldataaccess/package.d",
+    "O3": {"command": ["flint", "build", "--profile", "release"], "binary": ".flint/build/release/gs-relational-data-access"},
+    "Oz": {"command": ["flint", "build", "--profile", "size"], "binary": ".flint/build/size/gs-relational-data-access"}
+  }
+}

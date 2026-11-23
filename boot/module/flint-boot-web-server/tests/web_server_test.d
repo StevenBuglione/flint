@@ -62,6 +62,19 @@ import flint.java.util : Optional;
     assert(factory.getContextPath() == "/app");
 }
 
+@("server.servlet.context-path is cleaned as Boot cleans it: trimmed, without a trailing slash") unittest
+{
+    auto servlet = new ServerProperties().getServlet();
+    servlet.setContextPath("/petclinic/");
+    assert(servlet.getContextPath() == "/petclinic");
+    servlet.setContextPath(" /api ");
+    assert(servlet.getContextPath() == "/api");
+    servlet.setContextPath("/");
+    assert(servlet.getContextPath() == "");
+    servlet.setContextPath(null);
+    assert(servlet.getContextPath() is null);
+}
+
 @("linking the module registers the servlet context factory, so SERVLET is deduced") unittest
 {
     assert(DefaultApplicationContextFactory.deduceWebApplicationType() == WebApplicationType.SERVLET);

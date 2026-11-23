@@ -35,6 +35,14 @@ final class ServerProperties
         private string contextPath;
         private string applicationDisplayName = "application";
         private bool registerDefaultServlet = false;
+        // Boot's cleanContextPath: trimmed, without a trailing slash ("/petclinic/" is "/petclinic", "/" is "").
+        private static string cleanContextPath(string contextPath) pure nothrow @nogc
+        {
+            import std.string : strip;
+
+            const candidate = contextPath.length ? contextPath.strip : null;
+            return candidate.length && candidate[$ - 1] == '/' ? candidate[0 .. $ - 1] : candidate;
+        }
 
         /// Boot's defaults.
         this() pure nothrow
@@ -57,7 +65,7 @@ final class ServerProperties
         /// Set `contextPath`.
         void setContextPath(string contextPath) pure nothrow @nogc
         {
-            this.contextPath = contextPath;
+            this.contextPath = cleanContextPath(contextPath);
         }
 
         /// Display name of the application.

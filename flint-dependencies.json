@@ -83,6 +83,10 @@
       "repo": "boot",
       "version": "monorepo"
     },
+    "flint:boot-validation": {
+      "repo": "boot",
+      "version": "monorepo"
+    },
     "flint:boot-web-server": {
       "repo": "boot",
       "version": "monorepo"

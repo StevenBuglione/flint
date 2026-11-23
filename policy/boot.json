@@ -127,6 +127,20 @@
       ],
       "repo": "boot"
     },
+    "boot-validation": {
+      "directory": "boot/module/flint-boot-validation",
+      "module": "flint.boot.validation",
+      "layer": "module",
+      "dependencies": [
+        "boot-core",
+        "boot-autoconfigure",
+        "context",
+        "jakarta-validation",
+        "java",
+        "engine-aot"
+      ],
+      "repo": "boot"
+    },
     "boot-jackson": {
       "directory": "boot/module/flint-boot-jackson",
       "module": "flint.boot.jackson",
@@ -316,7 +330,9 @@
       "directory": "boot/starter/flint-boot-starter-validation",
       "layer": "starter",
       "dependencies": [
-        "boot-starter"
+        "boot-starter",
+        "boot-validation",
+        "hibernate-validator"
       ],
       "section": "validation",
       "summary": "Jakarta Validation with Hibernate Validator's behaviour (spring-boot-starter-validation)",

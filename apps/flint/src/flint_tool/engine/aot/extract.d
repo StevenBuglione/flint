@@ -571,7 +571,11 @@ private string function_(T, string name, size_t index)()
         ~ ",\"override\":" ~ (__traits(isOverrideFunction, F) ? "true" : "false")
         ~ ",\"annotations\":" ~ attributes!(__traits(getAttributes, F))();
     static if (is(typeof(F) R == return))
+    {
         r ~= ",\"returns\":" ~ typeRef!R();
+        static if (is(R == class) || is(R == interface))
+            r ~= ",\"returnSupertypes\":[" ~ supertypeNames!R() ~ "]";
+    }
     r ~= ",\"attributes\":" ~ words!(__traits(getFunctionAttributes, F))();
     r ~= ",\"parameters\":[";
     static if (is(typeof(F) P == __parameters))
@@ -603,6 +607,24 @@ private string words(names...)()
         r ~= quote(name);
     }
     return r ~ "]";
+}
+
+private string supertypeNames(T)()
+{
+    string r;
+    static if (is(T S == super))
+    {
+        static foreach (B; S)
+        {
+            static if (!is(B == Object))
+            {
+                r ~= (r.length ? "," : "") ~ quote(typeName!B);
+                static if (supertypeNames!B().length)
+                    r ~= "," ~ supertypeNames!B();
+            }
+        }
+    }
+    return r;
 }
 
 private string supertypes(T)()

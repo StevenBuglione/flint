@@ -170,6 +170,23 @@ The schema covers the module properties and the keys Boot core reads, such as `f
 
 `python3 tools/spring_bench.py accept gs-rest-service --start <binary> --url http://127.0.0.1:<port>` passes 17/18 cases in exact wire mode (2026-11-23, the DMD dev build and the LDC release build). The remaining case is the Whitelabel page's `Content-Language: en-US`, which web-http adds through `ServletResponse.setLocale` and `DispatcherServlet.render`.
 
+## gs-relational-data-access and petclinic-rest: Boot's part
+
+gs-relational-data-access (`benchmarks/spring/flint/gs-relational-data-access/`) is the guide's `CommandLineRunner` on `flint:boot-starter-jdbc`: `DataSourceAutoConfiguration` gives the embedded SQLite data source, `JdbcTemplateAutoConfiguration` the template the runner's constructor takes. The one change from the guide is SQLite's `id INTEGER PRIMARY KEY` for H2's `id SERIAL`, as in the Go comparator. It passes its suite, 1/1 in exact mode (2026-11-23, DMD dev and LDC release builds). It needed `FlintBootConfiguration` to carry `@Configuration`, as Boot's `@SpringBootConfiguration` does, so the application class is a bean whose runner runs.
+
+spring-petclinic-rest (item 10, data-access) needs, from Boot, beyond what gs-rest-service and gs-relational-data-access use:
+
+| Need | Where it comes from | State |
+| --- | --- | --- |
+| `server.servlet.context-path=/petclinic/` | `ServerProperties.Servlet.setContextPath` cleans a trailing slash, as Boot's does | done |
+| `spring.sql.init.*` with `platform`, `mode=always` and `classpath*:db/${platform}/schema.sql` | `DataSourceInitializationAutoConfiguration` over `ApplicationDataSourceScriptDatabaseInitializer` and `AbstractScriptDatabaseInitializer` | waits on spring-jdbc's `ResourceDatabasePopulator`/`ScriptUtils` in flint:jdbc (asked of data-access) |
+| `@DependsOnDatabaseInitialization` (7 uses) | `flint.boot.sql.init.dependency` | annotation done; the dependency configurer joins with SQL init |
+| `spring.messages.basename=messages/messages` | `MessageSourceAutoConfiguration` | next, over flint:context's `ResourceBundleMessageSource` |
+| `@ConditionalOnProperty("petclinic.security.enable")` | Flint AOT's startup conditions | done |
+| Bean Validation of request bodies | `ValidationAutoConfiguration` | next |
+| `extends SpringBootServletInitializer` | WAR deployment | not ported (no servlet container deployment in Flint); the port drops the superclass, a noted deviation |
+| Spring Security headers, `@PreAuthorize`, the actuator's links and health groups | spring-security and spring-boot-actuator ports | outside Boot's Phase 1 modules; to be assigned |
+
 ## Tooling gap: named arguments
 
 dfmt and dscanner 0.15.2, pinned in `policy/toolchains.json`, cannot parse D's named arguments (`@RequestParam(defaultValue: "World")`). dfmt rewrites them as `defaultValue : "World"` and reports a formatter difference, and dscanner reports a parse error. Rulebook R2 writes annotations with named arguments, so every Spring-style source under a root `tools/quality.py` lints (`packages`, `apps`, `benchmarks`, `examples`, `starters`) fails the quality gate. Boot's own sources avoid named arguments for now: its test annotations are CTFE constants. The gs-rest-service port cannot, so the pinned linters need a libdparse with named-argument support before Spring-style applications pass the gate.
