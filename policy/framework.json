@@ -73,6 +73,14 @@
     "log",
     "serde"
    ]
+  },
+  "jackson-annotations": {
+   "directory": "framework/jackson-annotations",
+   "module": "flint.jackson.annotation",
+   "repo": "framework",
+   "licence": "Apache-2.0",
+   "upstream": "jackson-annotations@2.21",
+   "dependencies": []
   }
  }
 }
