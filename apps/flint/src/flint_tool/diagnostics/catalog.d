@@ -575,4 +575,70 @@ immutable CodeInfo[] catalog = [
             ~ "deferred, keeps it from being complete.",
             `{"name": "spring-jdbc", "upstream": "spring-framework@v7.1.0", "module": "spring-jdbc", `
             ~ `"complete": true}`),
+    // 11xx: Flint AOT, the build-time generator of the Spring port (ADR-030 section 3, docs/spring/aot-contract.md).
+    CodeInfo("FLINT-E1100", ExitCode.user, "the Flint AOT extraction compile failed",
+            "Flint AOT reads the application's modules with the compiler: it compiles a describer over them with "
+            ~ "`-o-` and reads the models it prints. That compile failed, so the modules do not compile on their own; "
+            ~ "the compiler's errors follow.",
+            "flint build --verbose"),
+    CodeInfo("FLINT-E1101", ExitCode.user, "a derived query is invalid",
+            "A repository method without @Query is parsed with Spring Data's PartTree grammar (find/count/exists/"
+            ~ "delete...By<Property><Operator>[And|Or...][OrderBy...]). Its subject, a property or its parameter count "
+            ~ "does not match the domain type.",
+            "Owner[] findByLastNameIgnoreCase(string lastName);"),
+    CodeInfo("FLINT-E1102", ExitCode.user, "a @Profile expression is malformed",
+            "Profile expressions use !, & and | with parentheses, and may not mix & and | without parentheses, as "
+            ~ "Spring's Profiles.of requires.", `@Profile("prod & (eu | us)")`),
+    CodeInfo("FLINT-E1103", ExitCode.user,
+            "@AliasFor attributes disagree",
+            "Two attributes that alias each other (explicitly, or implicitly through the same meta-annotation "
+            ~ "attribute) were given different values, or an @AliasFor names an attribute that does not exist.",
+            `@RequestMapping(path: ["/owners"])      // not value: and path: with different values`),
+    CodeInfo("FLINT-E1104", ExitCode.user, "an identifier uses the __Flint prefix",
+            "Generated proxy and configuration subclasses are named <Class>__FlintProxy and "
+            ~ "<Class>__FlintConfiguration, and their members start with __flint. User identifiers may not contain "
+            ~ "__Flint.", "final class OwnerServiceProxy {}"),
+    CodeInfo("FLINT-E1105", ExitCode.user, "a bean class has several constructor candidates",
+            "Flint AOT uses the @Autowired constructor, else the only constructor, else the default constructor, "
+            ~ "as Spring does. Mark the one the container should call.",
+            "@Autowired this(OwnerRepository owners) { ... }"),
+    CodeInfo("FLINT-E1106", ExitCode.user, "an injection point has no candidate",
+            "No bean definition in the closure (components, @Bean methods and auto-configurations) can provide the "
+            ~ "type, so the context could never start. Optional injection takes Optional!T, Nullable!T or "
+            ~ "@Autowired(required: false).",
+            "@Service class OwnerRepositoryImpl : OwnerRepository { ... }"),
+    CodeInfo("FLINT-E1107", ExitCode.user, "SpEL is not compiled yet",
+            "Flint AOT will compile SpEL to D. Until then #{...} in @Value is rejected; ${...} placeholders work.",
+            `@Value("${server.port:8080}") int port`),
+    CodeInfo("FLINT-E1108", ExitCode.user, "a lifecycle or injected member is not public",
+            "Generated code lives in its own module, so it can call only public methods: @PostConstruct, @PreDestroy "
+            ~ "and @EventListener methods, and @Component classes, must be public (a deviation from Spring, which "
+            ~ "also calls private ones by reflection).",
+            "@PostConstruct void start() { ... }"),
+    CodeInfo("FLINT-E1109", ExitCode.user, "a @Bean method of a proxied configuration is final or not public",
+            "With proxyBeanMethods true (the default), Flint AOT subclasses the configuration class so that "
+            ~ "inter-bean calls return the container's instances, as Spring's CGLIB enhancement does. The subclass "
+            ~ "must override every instance @Bean method.",
+            "@Configuration(proxyBeanMethods: false) class AppConfig"),
+    CodeInfo("FLINT-E1110", ExitCode.user, "beans form a constructor-injection cycle",
+            "Unconditional beans require each other through their constructors, so none can be created first. "
+            ~ "Spring fails the same way at startup with BeanCurrentlyInCreationException.",
+            "inject one side through an @Autowired setter or field instead"),
+    CodeInfo("FLINT-E1111", ExitCode.user, "a final method of a proxied class is not advised",
+            "A warning. A final method cannot be overridden by the proxy subclass, so it runs on the proxy instance, "
+            ~ "whose fields were never initialized, and its advice is skipped, as with Spring's CGLIB proxies.",
+            "remove final from the advised method"),
+    CodeInfo("FLINT-E1112", ExitCode.user, "an advised method cannot be proxied",
+            "An advised method must be public, @safe, and not nothrow, @nogc or pure: the proxy calls the target "
+            ~ "from another module, through the advice chain, which may throw and allocate.",
+            "@Transactional void save(Owner owner) { ... }"),
+    CodeInfo("FLINT-E1113", ExitCode.user, "an @Async method returns a value",
+            "@Async methods must return void until flint.java.util.concurrent provides CompletableFuture.",
+            "@Async void notifyOwner(long id) { ... }"),
+    CodeInfo("FLINT-E1114", ExitCode.user, "a derived query uses a nested property path",
+            "Nested paths (findByAddressCity) need Spring Data JDBC's joins, which arrive with flint-data-jdbc.",
+            "@Query(\"SELECT ... JOIN ...\") Owner[] findByCity(string city);"),
+    CodeInfo("FLINT-E1115", ExitCode.user, "a bean is not a class or interface instance",
+            "Beans are D objects. A @Bean method returning a struct, array or scalar has no object to register; "
+            ~ "wrap the value in a class.", "@Bean OwnerSettings settings() { return new OwnerSettings(...); }"),
 ];
