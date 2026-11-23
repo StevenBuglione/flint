@@ -353,7 +353,10 @@ def launch(name, implementation, port, database=None, extra_args=(), binary=None
     if not binary.is_file():
         raise SystemExit(f'{name}: build the {implementation} implementation first '
                          f'(spring_bench.py build {name} --impl {implementation})')
-    return [str(binary), *extra_args], env, ROOT
+    # A Flint port runs from its own directory, as Boot runs from the project root: application.properties,
+    # schema.sql and data.sql are found relative to it.
+    cwd = ROOT / row['flint']['directory'] if implementation == 'flint' else ROOT
+    return [str(binary), *extra_args], env, cwd
 
 
 def load_suite(name):
@@ -369,7 +372,8 @@ def maybe_postgres(name):
         yield None
 
 
-def observe(name, implementation=None, start=None, url=None, logs=None, mask=True, extra_args=(), binary=None):
+def observe(name, implementation=None, start=None, url=None, logs=None, mask=True, extra_args=(), binary=None,
+            start_cwd=None):
     """Run the suite once and return (observations, seconds)."""
     row = app_row(name)
     module = load_suite(name)
@@ -380,9 +384,9 @@ def observe(name, implementation=None, start=None, url=None, logs=None, mask=Tru
         if start:
             command = shlex.split(start)
             env = pinned_environment()
+            cwd = Path(start_cwd) if start_cwd else ROOT
             if database is not None:
                 env.update(database())
-            cwd = ROOT
             port = int(url.rsplit(':', 1)[1].split('/')[0]) if url else free_port()
             env.setdefault('SERVER_PORT', str(port))
         else:
@@ -426,9 +430,10 @@ def record(name):
     print(f'{name}: recorded {count} observations from the Java reference into {golden_path(name).relative_to(ROOT)}')
 
 
-def accept(name, implementation, wire, start=None, url=None, extra_args=(), binary=None):
+def accept(name, implementation, wire, start=None, url=None, extra_args=(), binary=None, start_cwd=None):
     golden = json.loads(golden_path(name).read_text())
-    observed, seconds = observe(name, implementation, start, url, mask=False, extra_args=extra_args, binary=binary)
+    observed, seconds = observe(name, implementation, start, url, mask=False, extra_args=extra_args, binary=binary,
+                                start_cwd=start_cwd)
     if golden['kind'] == 'command':
         problems = springsuite.compare_command(golden['observations'], observed)
         cases = [{'name': 'run to completion', 'problems': problems}]
@@ -525,10 +530,19 @@ def main(argv=None):
     p.add_argument('--wire', choices=['exact', 'semantic'])
     p.add_argument('--start', help='start command of an implementation built elsewhere')
     p.add_argument('--url', help='the origin it listens on, http://127.0.0.1:<port>')
+    p.add_argument('--cwd', help='with --start: the working directory (a Flint port runs from its own directory)')
     p.add_argument('--no-build', action='store_true', help='use what build/spring already holds')
     p.add_argument('--json', type=Path)
     p = sub.add_parser('register'); p.add_argument('apps', nargs='*')
     sub.add_parser('check-registry')
+    p = sub.add_parser('profile', help='a reproducible local load recipe for profiling (never evidence)')
+    p.add_argument('workload'); p.add_argument('--manifest', default='policy/spring-http-benchmark.json')
+    p.add_argument('--impl', action='append', choices=['flint', 'go'])
+    p.add_argument('--flint-binary'); p.add_argument('--go-binary')
+    p.add_argument('--runs', type=int, default=3); p.add_argument('--seconds', type=int, default=15)
+    p.add_argument('--warmup', type=int, default=5); p.add_argument('--rate', type=int)
+    p.add_argument('--server-cpus'); p.add_argument('--load-cpus'); p.add_argument('--database-cpus')
+    p.add_argument('--oha'); p.add_argument('--output')
     p = sub.add_parser('gc-matrix'); p.add_argument('app'); p.add_argument('--output', type=Path, required=True)
     p.add_argument('--smoke', action='store_true'); p.add_argument('--setting', action='append')
     p.add_argument('--binary', help='a stand-in executable for harness checks; never evidence')
@@ -564,7 +578,7 @@ def main(argv=None):
             if args.impl and not args.no_build:
                 build(name, args.impl)
             wire = args.wire or WIRE_DEFAULT.get(args.impl, 'exact')
-            result = accept(name, args.impl, wire, args.start, args.url)
+            result = accept(name, args.impl, wire, args.start, args.url, start_cwd=args.cwd)
             records.append(result)
             failed |= not result['success']
             print(f"{name} [{result['implementation']}, wire {wire}]: {result['passed']}/{result['total']} cases pass")
@@ -584,6 +598,9 @@ def main(argv=None):
             print(problem)
         print('registry consistent' if not problems else f'{len(problems)} problem(s)')
         return 1 if problems else 0
+    if args.command == 'profile':
+        import spring_profile
+        return spring_profile.main(args)
     if args.command == 'gc-matrix':
         import spring_gc_matrix
         return spring_gc_matrix.main(args)

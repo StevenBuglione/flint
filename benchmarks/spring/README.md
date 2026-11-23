@@ -216,6 +216,25 @@ The incremental build and the Oz size are verdicts too.
 
 **The fixed rates** are 20,000 and 5,000 requests per second. They are initial values, to be confirmed by the first baseline on the designated runner before any Flint measurement. After that, changing them needs an ADR.
 
+### Profiling locally
+
+For before-and-after comparisons while optimising, use the profiling recipe rather than ad-hoc load:
+
+```bash
+python3 tools/spring_bench.py profile gs-rest-service --flint-binary <your build> --runs 3 --seconds 15
+python3 tools/spring_bench.py profile gs-rest-service:not-found --manifest policy/spring-error-paths-benchmark.json
+```
+
+It is the evidence run's own code, with shorter phases:
+- it uses `load_bench`'s Spring measurement, with the workload's request and response checks;
+- it uses the pinned oha and its flags (HTTP/1.1, 64 connections, a fixed-rate phase with latency correction, then a capacity phase);
+- it uses the manifest's CPU sets: server on 2–3, oha on 4–7, PostgreSQL on 8–9;
+- Flint is interleaved with the registered Go comparator in every run.
+
+It prints the medians of p50, p99, p99.9, peak RSS, CPU per request and throughput, with the Flint/Go ratios, and writes `build/spring/profile/<workload>/profile.json`.
+
+It refuses to run while `.flint/measure/MEASURING` exists. It does not require a quiet machine, so run both sides of a comparison back to back. Its numbers are comparable with each other, and never evidence.
+
 ### Error paths
 
 ADR-030 section 4 gives the 404 and validation-error paths their own p99 tests. `policy/spring-error-paths-benchmark.json` is a separate manifest, so the Spring-style workload's digest stays unchanged:
