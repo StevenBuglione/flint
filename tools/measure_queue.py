@@ -685,7 +685,10 @@ def main(argv=None):
         deadline = time.monotonic() + args.hours * 3600
         streak = 0
         while time.monotonic() < deadline:
-            pending = [e for e in entries() if e['status'] == 'pending']
+            # Shortest first: venus's quiet gaps are short, and a long run that loses its window should not keep
+            # the one-minute timings from ever running.
+            pending = sorted((e for e in entries() if e['status'] == 'pending'),
+                             key=lambda e: (e.get('estimate_minutes', 60), e['created'], e['id']))
             if not pending:
                 print(now(), 'no pending entries; done', flush=True)
                 return 0

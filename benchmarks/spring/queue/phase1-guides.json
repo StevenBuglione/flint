@@ -71,5 +71,6 @@
       }
     ]
   },
-  "report_to": "docs/milestones/13.md; the coordinator"
+  "report_to": "docs/milestones/13.md; the coordinator",
+  "estimate_minutes": 90
 }

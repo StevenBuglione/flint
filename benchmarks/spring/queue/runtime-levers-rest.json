@@ -32,5 +32,6 @@
     },
     "note": "Both commits predate measure_builds --app-sizes, so both are built with bench-rest's README command (dub build --build=release); base and candidate share the method."
   },
-  "report_to": "the requester; docs/milestones/13.md when it exists"
+  "report_to": "the requester; docs/milestones/13.md when it exists",
+  "estimate_minutes": 41
 }

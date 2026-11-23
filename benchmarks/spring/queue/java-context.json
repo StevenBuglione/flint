@@ -36,5 +36,6 @@
       }
     ]
   },
-  "report_to": "docs/milestones/13.md, beside the Phase 1 evidence"
+  "report_to": "docs/milestones/13.md, beside the Phase 1 evidence",
+  "estimate_minutes": 165
 }

@@ -86,5 +86,6 @@
       18149
     ]
   },
-  "report_to": "docs/milestones/13-binary-size.md, 'Start-up and the REST suite'; and the requester"
+  "report_to": "docs/milestones/13-binary-size.md, 'Start-up and the REST suite'; and the requester",
+  "estimate_minutes": 2
 }

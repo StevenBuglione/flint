@@ -26,5 +26,6 @@
       }
     ]
   },
-  "report_to": "the requester; docs/milestones/13.md"
+  "report_to": "the requester; docs/milestones/13.md",
+  "estimate_minutes": 45
 }

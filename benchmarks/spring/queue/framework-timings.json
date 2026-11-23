@@ -28,5 +28,6 @@
     ],
     "ports": []
   },
-  "report_to": "policy/framework.json via framework_budgets.py apply; the requester"
+  "report_to": "policy/framework.json via framework_budgets.py apply; the requester",
+  "estimate_minutes": 80
 }

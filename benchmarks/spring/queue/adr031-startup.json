@@ -106,5 +106,6 @@
     ]
   },
   "report_to": "docs/adr/ADR-031-tls-only-openssl.md, 'Verification'; and the requester",
-  "note": "The requester asked to check that configuration.h defines OPENSSL_NO_DES and OPENSSL_NO_LEGACY after and neither before. OpenSSL's no-legacy emits no OPENSSL_NO_LEGACY macro, so the check reads Configure's own record, configdata.pm %disabled: after disables legacy, des, rc4 and tls1; before disables none of them."
+  "note": "The requester asked to check that configuration.h defines OPENSSL_NO_DES and OPENSSL_NO_LEGACY after and neither before. OpenSSL's no-legacy emits no OPENSSL_NO_LEGACY macro, so the check reads Configure's own record, configdata.pm %disabled: after disables legacy, des, rc4 and tls1; before disables none of them.",
+  "estimate_minutes": 2
 }
