@@ -14,4 +14,4 @@ python3 tools/spring_bench.py accept gs-rest-service --start '<binary>' --url ht
 
 ## Status
 
-17 of the 18 cases pass in exact wire mode (2026-11-23, the DMD dev build and the LDC release build). The Whitelabel page still lacks `Content-Language: en-US`, which web-http adds through `ServletResponse.setLocale`. Design notes are in `docs/spring/phase1/boot.md`, "gs-rest-service: the port".
+All 18 cases pass in exact wire mode (2026-11-23: `spring_bench.py accept gs-rest-service --impl flint`, LDC release build, main `3d49760`). The Whitelabel page's `Content-Language: en-US` comes from `DispatcherServlet.render` through `AcceptHeaderLocaleResolver` and `ServletResponse.setLocale`. Design notes are in `docs/spring/phase1/boot.md`, "gs-rest-service: the port".
