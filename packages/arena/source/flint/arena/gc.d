@@ -1,7 +1,9 @@
 /++
 Flint's garbage collector (ADR-030 section 4, owner decision b515505b).
 
-Importing this module links the collector into the program, registered with druntime under the name `flint`.
+When flint:arena is compiled with `-version=FlintCollector`, importing this module links the collector into the
+program, registered with druntime under the name `flint`; without that version (the default until the collector is
+measured to beat druntime's, gc.md) the program carries no second collector, and the functions below report it.
 druntime still starts its own collector unless the program selects this one, either at run time with
 `--DRT-gcopt=gc:flint` or in the binary with `extern (C) __gshared string[] rt_options = ["gcopt=gc:flint"];`.
 Selecting `gc:conservative` switches back.
@@ -35,5 +37,8 @@ client's requests, which a server answers on its own threads. A thread counts an
 +/
 bool otherThreadsAllocations(out Allocations totals) nothrow @nogc
 {
-    return flint.arena.sys.gc.collector.otherThreadsAllocations(totals.count, totals.bytes);
+    version (FlintCollector)
+        return flint.arena.sys.gc.collector.otherThreadsAllocations(totals.count, totals.bytes);
+    else
+        return false;
 }

@@ -16,7 +16,10 @@ module flint.arena.sys.gc.pooltable;
 
 @system:
 
-static import cstdlib = core.stdc.stdlib;
+// Flint: opt-in. The collector is linked into a program only when it is compiled with `-version=FlintCollector`
+// (flint:arena's unittest configuration does; an application adds it to a profile's dflags), until it has been
+// measured to beat druntime's collector (docs/spring/phase1/gc.md). Without it this module is empty.
+version (FlintCollector)  : static import cstdlib = core.stdc.stdlib;
 
 struct PoolTable(Pool)
 {
