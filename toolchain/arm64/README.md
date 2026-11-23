@@ -99,6 +99,40 @@ Only `bench-rest` incremental passes the gate's 99% bound (ratio 0.79, upper bou
 - druntime does not support D shared libraries on macOS, which would remove that cost.
 - The gate needs a quiet measurement window. Pluto's background load moves Go's own times between 0.17 and 0.47 s.
 
+**Quiet window, 12:41 to 12:46 EST on 2026-11-23** (the owner approved pausing Linguum's two `serve-sim` processes with SIGSTOP for it; they were resumed straight after). Nothing else from Flint was running, the VM was idle during the macOS run, pluto's load was 1.3 to 1.4 at the start, and Spotlight and Time Machine were idle. `tools/measure_builds.py --apps-only`, 9 trials, `TMPDIR=/private/tmp/…`.
+
+On macOS arm64 (pluto, 8 cores, the fork with the compile-server prelude, main at 2018e5e5 plus 475c8610):
+
+| | dev build cold | Go cold | dev build incremental | Go incremental |
+| --- | --- | --- | --- | --- |
+| bench-cli | 0.137 s | 0.125 s | 0.119 s | 0.123 s |
+| bench-rest | 0.170 s | 0.220 s | 0.136 s | 0.215 s |
+
+The gate's ratios (median, 99% upper bound):
+
+| | cold | incremental |
+| --- | --- | --- |
+| bench-cli | 1.10, 1.16: fails | 0.97, 1.009: fails |
+| bench-rest | 0.77, 0.80: passes | 0.63, 0.71: passes |
+
+On Linux aarch64 (M11's Lima VM on pluto, 4 vCPUs, the fork linking with the pinned mold from 0fcf7d0c, main at 64b85d08):
+
+| | dev build cold | Go cold | dev build incremental | Go incremental |
+| --- | --- | --- | --- | --- |
+| bench-cli | 0.106 s | 0.080 s | 0.064 s | 0.081 s |
+| bench-rest | 0.147 s | 0.157 s | 0.098 s | 0.156 s |
+
+The gate's ratios (median, 99% upper bound):
+
+| | cold | incremental |
+| --- | --- | --- |
+| bench-cli | 1.31, 1.37: fails | 0.79, 1.04: fails |
+| bench-rest | 0.94, 1.007: fails | 0.63, 0.79: passes |
+
+- **Spotlight.** `measure_builds.py` copies a workspace into `$TMPDIR` for every trial. With the default `/var/folders/…`, Spotlight indexed each copy at up to 120% CPU and DMD trials came out 4 to 6 times slower than Go. Use a `TMPDIR` under `/private/tmp`.
+- **Linker.** Before 0fcf7d0c, Linux aarch64 linked through the system's BFD ld, at 0.35 to 1.3 s a link.
+- **What's left is bench-cli's cold build** on both hosts: its longest compile job plus the fixed cost of linking druntime and Phobos.
+
 ## Decisions and known ABI gaps
 
 - **`real` is `double` on all AArch64 targets**, as it already was for macOS. The back end has no 128-bit floating point. On Linux, C's `long double` is 128-bit, so `extern(C)` functions that take or return `long double` are not compatible. druntime binds the C library's `long double` functions in `core.stdc.math`, and `strtold`, to their `double` versions there (`long_double_libm`). `printf("%Lf")` and other C code that passes `long double` still disagree.
