@@ -526,28 +526,43 @@ version (linux) private string[const(void)* ] symbolize(size_t[const(void)* ] of
     return names;
 }
 
-/// The qualified function name of a demangled symbol: without its attributes, return type and parameters.
-private string qualifiedName(string symbol) pure nothrow @nogc
+/// The qualified function name of a demangled symbol, without its attributes, return type and parameters: the first
+/// top-level word whose text before its parameter list is qualified (`a.b.f(...)`), so a return type such as
+/// `immutable(char)[]` is skipped.
+private string qualifiedName(string symbol) @safe pure nothrow @nogc
 {
-    size_t end = symbol.length;
-    foreach (i, c; symbol)
-        if (c == '(' && (i == 0 || symbol[i - 1] != '!'))
-        {
-            end = i;
-            break;
-        }
     size_t start;
     int depth;
-    foreach (i, c; symbol[0 .. end])
+    foreach (i; 0 .. symbol.length + 1)
     {
+        const c = i < symbol.length ? symbol[i] : ' ';
         if (c == '(')
             ++depth;
         else if (c == ')')
             --depth;
         else if (c == ' ' && depth == 0)
+        {
+            const name = functionPart(symbol[start .. i]);
+            if (name.length)
+                return name;
             start = i + 1;
+        }
     }
-    return symbol[start .. end];
+    return symbol;
+}
+
+/// `word` up to its parameter list when that part is a qualified name, else null.
+private string functionPart(string word) @safe pure nothrow @nogc
+{
+    foreach (i, c; word)
+        if (c == '(' && (i == 0 || word[i - 1] != '!'))
+        {
+            foreach (d; word[0 .. i])
+                if (d == '.')
+                    return word[0 .. i];
+            return null;
+        }
+    return null;
 }
 
 /// Whether the running executable is position-independent (ELF type ET_DYN rather than ET_EXEC).
@@ -598,4 +613,15 @@ private void sortDescending(string[] lines)
             lines[j] = lines[j - 1];
             lines[j - 1] = swapped;
         }
+}
+
+@("call-site names drop attributes, return types and parameters")
+@safe unittest
+{
+    assert(qualifiedName("nothrow void* flint.arena.sys.gc.counting.CountingGC.malloc(ulong, uint, const(TypeInfo))")
+            == "flint.arena.sys.gc.counting.CountingGC.malloc");
+    assert(qualifiedName(
+            "immutable(char)[] flint.java.lang.String.format(immutable(char)[], Any[])") == "flint.java.lang.String.format");
+    assert(qualifiedName("const(flint.http.MediaType)[] flint.web.f!(int).g(int)") == "flint.web.f!(int).g");
+    assert(qualifiedName("_d_newarrayT") == "_d_newarrayT");
 }
