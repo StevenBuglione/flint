@@ -48,8 +48,8 @@ python3 toolchain/arm64/run.py --dmd <fork dmd> --druntime-import <druntime/impo
 
 | | druntime unittests | Phobos unittests | regression tests |
 | --- | --- | --- | --- |
-| Linux AArch64 (QEMU user mode) | 567/567 modules | 122/176 modules | 57/57 |
-| macOS arm64 (pluto, native) | 566/567 modules | 127/175 modules | 57/57 |
+| Linux AArch64 (QEMU user mode) | 567/567 modules | 151/176 modules | 75/75 |
+| macOS arm64 (pluto, native) | 566/567 modules | 161/176 modules | 75/75 |
 
 The remaining Phobos failures are code generator defects that are still being fixed. Stage 1 is complete only when both libraries pass on both platforms. The macOS druntime failure is `core.thread.osthread`, which stops with a trap.
 
@@ -90,6 +90,12 @@ Code generation:
 - `alloca` expanded inline without re-evaluating its argument; the macOS stack probe goes through the GOT (`alloca_inline`).
 - Static data referenced directly is addressed with ADRP (`static_data_direct`).
 - Variadic calls on macOS: D-linkage parameter order, the hidden `_arguments` of D-style variadics, typesafe variadics passed as a slice (`Eflags` shares its storage with `numParams`), and the last stack parameter aligned only for variadic calls (`variadics`).
+- A field of a small struct held in a register was read as the whole register: such variables now stay in memory, since AArch64 has no sub-registers (`struct_field_in_register`).
+- Load/store offsets that are misaligned and 256 or more, or too large for the scaled immediate, went through a broken x16 fallback that dropped the low 12 bits (`large_frame_offsets`).
+- A register pair is zero only if both halves are: `is null`, `!a` and `if (a)` tested only the length (`array_is_null`).
+- `x = -x` on a variable in memory negated into the wrong register (`neg_assign_divmod`).
+- `++`/`--` of a register variable left its tracked constant valid (`postinc_register_constant`).
+- `lazy` parameters were treated as passed by reference when their expression's type is larger than 16 bytes (`lazy_large_result`).
 - `assert(encodeNImmrImms(...))` computed the encoding inside the assert, so release builds of DMD emitted `AND #1` for `AND #0xFF`.
 - Smaller items:
   - x86 helper misdispatch (`getlvalue`), `getregs` given a register number instead of a mask;
