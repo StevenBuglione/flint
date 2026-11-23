@@ -5,7 +5,7 @@ module flint_tool.sys.posix;
 
 version (Windows)
     public import flint_tool.sys.windows : loadableLibrary, lockHeld, prepareConsole, processAlive,
-        replaceProcess, signalProcessGroup, writeError, writeOutput;
+        readInput, replaceProcess, signalProcessGroup, writeError, writeOutput;
 else
 {
     /// Replace this process with `argv` run in `directory`. Returns only on failure, with errno.
@@ -182,17 +182,23 @@ enum StandardStream : ubyte
     return which == StandardStream.input ? stdin : which == StandardStream.output ? stdout : stderr;
 }
 
-/// Read up to `buffer.length` bytes of standard input; 0 at end of input.
-size_t readInput(scope ubyte[] buffer)
+version (Windows)
 {
-    return buffer.length == 0 ? 0 : readStandardInput(buffer);
 }
-
-// SAFETY: fread writes at most buffer.length bytes into the caller's live, non-empty slice and keeps no pointer;
-// the C stdin stream is initialised by the C runtime before main.
-private size_t readStandardInput(scope ubyte[] buffer) @trusted nothrow @nogc
+else
 {
-    import core.stdc.stdio : fread, stdin;
+    /// Read up to `buffer.length` bytes of standard input; 0 at end of input.
+    size_t readInput(scope ubyte[] buffer)
+    {
+        return buffer.length == 0 ? 0 : readStandardInput(buffer);
+    }
 
-    return fread(buffer.ptr, 1, buffer.length, stdin);
+    // SAFETY: fread writes at most buffer.length bytes into the caller's live, non-empty slice and keeps no
+    // pointer; the C stdin stream is initialised by the C runtime before main.
+    private size_t readStandardInput(scope ubyte[] buffer) @trusted nothrow @nogc
+    {
+        import core.stdc.stdio : fread, stdin;
+
+        return fread(buffer.ptr, 1, buffer.length, stdin);
+    }
 }

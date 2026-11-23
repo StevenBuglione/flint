@@ -137,6 +137,29 @@ version (Windows)
         return true;
     }
 
+    /// Read up to `buffer.length` bytes of standard input; 0 at end of input. The bytes arrive as sent: the C
+    /// runtime opens stdin in text mode, which would turn the CRLF of `flint lsp`'s framing into LF (ADR-026).
+    size_t readInput(scope ubyte[] buffer)
+    {
+        return buffer.length == 0 ? 0 : readStandardInput(buffer);
+    }
+
+    // SAFETY: ReadFile writes at most `take` <= buffer.length bytes into the caller's live, non-empty slice and
+    // keeps no pointer; the standard input handle stays open for the whole process. A closed pipe reports end.
+    private size_t readStandardInput(scope ubyte[] buffer) @trusted nothrow @nogc
+    {
+        import core.sys.windows.winbase : GetStdHandle, INVALID_HANDLE_VALUE, ReadFile, STD_INPUT_HANDLE;
+
+        auto handle = GetStdHandle(STD_INPUT_HANDLE);
+        if (handle is null || handle == INVALID_HANDLE_VALUE)
+            return 0;
+        const take = buffer.length > uint.max ? uint.max : cast(uint) buffer.length;
+        uint got;
+        if (!ReadFile(handle, buffer.ptr, take, &got, null))
+            return 0;
+        return got;
+    }
+
     /// Write all of `text` to standard output.
     void writeOutput(scope const(char)[] text)
     {

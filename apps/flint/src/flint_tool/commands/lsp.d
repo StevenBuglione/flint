@@ -97,21 +97,40 @@ private bool identifierChar(char ch)
     return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || ch == '_';
 }
 
-/// A file URI's path.
+/// A file URI's path. On Windows `file:///C:/a/b.d` is `C:\a\b.d` (ADR-026).
 string uriPath(string uri)
 {
     import std.algorithm.searching : startsWith;
     import std.uri : decodeComponent;
 
-    return uri.startsWith("file://") ? decodeComponent(uri["file://".length .. $]) : uri;
+    if (!uri.startsWith("file://"))
+        return uri;
+    const path = decodeComponent(uri["file://".length .. $]);
+    version (Windows)
+    {
+        import std.array : replace;
+
+        const local = path.length >= 3 && path[0] == '/' && path[2] == ':' ? path[1 .. $] : path;
+        return local.replace("/", `\`);
+    }
+    else
+        return path;
 }
 
-/// The file URI of a path.
+/// The file URI of a path. On Windows `C:\a\b.d` is `file:///C:/a/b.d` (ADR-026).
 string pathUri(string path)
 {
     import std.uri : encode;
 
-    return "file://" ~ encode(path);
+    version (Windows)
+    {
+        import std.array : replace;
+
+        const forward = path.replace(`\`, "/");
+        return "file://" ~ (forward.length >= 2 && forward[1] == ':' ? "/" : "") ~ encode(forward);
+    }
+    else
+        return "file://" ~ encode(path);
 }
 
 /// `flint lsp`: serve the Language Server Protocol on stdio until `exit`.
@@ -333,7 +352,7 @@ private struct Server
     {
         import std.algorithm.searching : startsWith;
         import std.file : mkdirRecurse, tempDir, write;
-        import std.path : buildPath, dirName;
+        import std.path : buildPath, dirName, dirSeparator;
         import std.process : thisProcessID;
         import std.conv : to;
         import flint_tool.check.rules : SourceScan, checkAnnotations, checkDefault, scanSource;
@@ -362,7 +381,7 @@ private struct Server
         {
             const file = uriPath(open);
             const source = buildPath(root, "src");
-            if (!file.startsWith(source ~ "/"))
+            if (!file.startsWith(source ~ dirSeparator))
                 continue;
             const shadow = buildPath(overlay, "src", file[source.length + 1 .. $]);
             mkdirRecurse(dirName(shadow));

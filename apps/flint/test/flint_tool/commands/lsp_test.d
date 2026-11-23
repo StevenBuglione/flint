@@ -30,9 +30,18 @@ unittest
     expect(wordAt(text, 5, 0).length).toEqual(0);
 }
 
-@("file URIs round-trip, including spaces")
+version (Posix) @("file URIs round-trip, including spaces")
 unittest
 {
     expect(uriPath("file:///work/my%20shop/src/a.d")).toEqual("/work/my shop/src/a.d");
     expect(uriPath(pathUri("/work/my shop/a.d"))).toEqual("/work/my shop/a.d");
+}
+
+version (Windows) @("Windows file URIs carry the drive after a slash and map to backslash paths")
+unittest
+{
+    expect(uriPath("file:///C:/work/my%20shop/src/a.d")).toEqual(`C:\work\my shop\src\a.d`);
+    expect(uriPath("file:///c%3A/work/a.d")).toEqual(`c:\work\a.d`);
+    expect(pathUri(`C:\work\my shop\a.d`)).toEqual("file:///C:/work/my%20shop/a.d");
+    expect(uriPath(pathUri(`C:\work\my shop\a.d`))).toEqual(`C:\work\my shop\a.d`);
 }

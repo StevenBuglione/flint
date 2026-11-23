@@ -6,6 +6,8 @@ import tempfile
 import time
 import unittest
 from pathlib import Path
+from urllib.parse import urlparse
+from urllib.request import url2pathname
 
 from test_flint_cli import FLINT, ROOT, environment, flint_json, setUpModule  # noqa: F401
 
@@ -117,7 +119,7 @@ class LspTests(unittest.TestCase):
         self.assertIn('load(T)(ref scope const ConfigOptions options)', hover['contents']['value'])
         definition = self.client.request('textDocument/definition', position)['result']
         self.assertTrue(definition['uri'].endswith('packages/config/source/flint/config/package.d'))
-        self.assertTrue(Path(definition['uri'][len('file://'):]).is_file())
+        self.assertTrue(Path(url2pathname(urlparse(definition['uri']).path)).is_file())
         typing = text.replace('    ConfigOptions config;', '    ConfigOptions config;\n    ConfigurationPro', 1)
         self.client.notify('textDocument/didChange', {'textDocument': {'uri': self.uri, 'version': 9},
                                                       'contentChanges': [{'text': typing}]})

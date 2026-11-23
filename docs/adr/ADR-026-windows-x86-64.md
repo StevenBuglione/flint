@@ -339,6 +339,8 @@ Both now pass:
 - Windows has no `exec`, so `flint run` starts the program with flint's standard handles and console, waits, and exits with its code. Ctrl+C reaches the program through the shared console, and flint's own handler keeps flint waiting.
 - Output to a console is converted to UTF-16, and flint enables VT processing on its own consoles at start.
 - The compile-server helpers report that no server exists.
+- Standard input is read with `ReadFile` on the standard handle, not the C runtime's `stdin`. The C runtime opens `stdin` in text mode, which turns CRLF into LF, and `flint lsp`'s `Content-Length` framing ends its headers with CRLF CRLF. Over a text-mode `stdin`, `flint lsp` never answered `initialize`.
+- `flint lsp` maps `file:///C:/a/b.d` to `C:\a\b.d` and back. It finds open buffers under the project's `src` with the platform separator.
 
 Paths are compared with Windows separators and case rules: the workspace check (`filenameCmp`, `isDirSeparator`), the structural checker's `realPath` (the final path of the longest existing prefix) and `within`. Executables, test executables and libraries carry `.exe` and `.lib`. The host target is `windows-x86_64`, and a project may name it.
 
