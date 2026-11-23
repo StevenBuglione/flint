@@ -80,7 +80,8 @@ typedef struct {
     void (*retire)(void *connection, flint_sql_retirement receipt);
 } flint_sql_driver;
 
-/* Install a driver; FLINT_SQL_UNSUPPORTED when its library is not available. Idempotent. */
+/* Install a driver: FLINT_SQL_OK, or FLINT_SQL_INVALID for a bad index or table. Idempotent. Entries are never
+   cleared. The availability check is flint_sql_enable_postgres's and flint_sql_enable_sqlite's. */
 int flint_sql_register_driver(int index, const flint_sql_driver *driver);
 
 void flint_sql_retired(flint_sql_retirement receipt);

@@ -483,6 +483,7 @@ int flint_sql_operation_start(flint_sql_operation *operation, uint64_t slot, uin
         connection->native = open_native(owner);
     operation->connection = connection->native;
     operation->driver = owner->driver;
+    /* A non-NULL connection came from this driver's open, and entries are never cleared, so entry is set below. */
     const flint_sql_driver *entry = driver_at(operation->driver);
     if (!operation->connection) {
         operation->reusable = 0;
