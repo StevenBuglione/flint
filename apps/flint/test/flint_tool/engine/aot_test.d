@@ -773,11 +773,10 @@ unittest
     const project = copyFixture("petclinic-rest");
     scope (exit)
         remove(project);
-    // flint-security does not exist yet: @PreAuthorize comes from tests/aot/security.
     auto imports = closureImports([
         "framework/web", "framework/webmvc", "framework/tx", "framework/jakarta-validation",
-        "boot/core/flint-boot-autoconfigure"
-    ]) ~ ["-I" ~ buildPath(repositoryRoot(), "tests", "aot", "security")];
+        "framework/security-config", "boot/core/flint-boot-autoconfigure"
+    ]);
     AotRequest request;
     request.root = project;
     request.compiler = compiler();
@@ -813,6 +812,14 @@ unittest
     expect(controller.canFind(`descriptorOf!(flint.java.util.List!(int))()`)).toBeTrue();
     // A root property's member is a dotted root path the runtime resolves.
     expect(controller.canFind(`(context.rootProperty("authentication.name")).get!(string)() == "admin"`)).toBeTrue();
+    // @EnableMethodSecurity's @Import: the imported configuration and its advisor bean register only where
+    // BasicAuthenticationConfig's condition holds.
+    const imported = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot",
+            "flint", "security", "config", "annotation", "method", "configuration.d"));
+    expect(imported.canFind(`definition.name = "flint.security.config.annotation.method.configuration.`
+            ~ `PrePostMethodSecurityConfiguration";`)).toBeTrue();
+    expect(imported.canFind(`definition.name = "preAuthorizeAuthorizationMethodInterceptor";`)).toBeTrue();
+    expect(imported.canFind(`return c.property("petclinic.security.enable", "true", false);`)).toBeTrue();
     // A FactoryBean's object types come first, so getBean(Vets) finds the factory's object.
     const vets = readText(buildPath(generated, "model", "vets.d"));
     expect(vets.canFind(`definition.objectTypes = ["org.springframework.samples.petclinic.model.vets.Vets"];`))

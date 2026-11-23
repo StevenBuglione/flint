@@ -91,6 +91,8 @@ private struct State
     string[string] keys;
     bool[string] present;
     string outputKey;
+    /// Modules extracted because an `@Import` names their classes (security configurations).
+    string[] importedModules;
 }
 
 /// Run Flint AOT for a project.
@@ -120,9 +122,12 @@ AotOutcome runAot(const ref AotRequest request)
     outcome.modules = sources.length;
     const cache = buildPath(request.root, cacheDirectory);
     State state = loadState(cache, request.environmentKey);
-    const keys = extractionKeys(sources, request.environmentKey);
+    addModules(state.importedModules, request.importPaths, sources);
+    auto keys = extractionKeys(sources, request.environmentKey);
     string[] stale = staleModules(sources, keys, state, cache);
     if (stale.length && !extractInto(request, stale, null, keys, state, outcome))
+        return finish(outcome, started);
+    if (stale.length && !extractImports(request, cache, sources, keys, state, outcome))
         return finish(outcome, started);
     const outputKey = outputKeyOf(sources, state);
     if (stale.length == 0 && state.outputKey == outputKey && exists(buildPath(request.root,
@@ -257,6 +262,81 @@ private bool findModule(string moduleName, scope const string[] importPaths, out
         }
     }
     return false;
+}
+
+/// Add the modules `names` that are not sources yet, found on the import paths; returns the ones added.
+private string[] addModules(scope const string[] names, scope const string[] importPaths, ref SourceModule[] sources)
+{
+    string[] added;
+    foreach (name; names)
+    {
+        bool known;
+        foreach (ref source; sources)
+            known = known || source.name == name;
+        SourceModule found;
+        if (!known && findModule(name, importPaths, found))
+        {
+            sources ~= found;
+            added ~= name;
+        }
+    }
+    return added;
+}
+
+/// Extract the modules whose classes an `@Import` names (directly or through meta-annotations such as
+/// `@EnableMethodSecurity`), transitively, since imported configurations may import further ones.
+private bool extractImports(const ref AotRequest request, string cache, ref SourceModule[] sources,
+        ref string[string] keys, ref State state, ref AotOutcome outcome)
+{
+    foreach (round; 0 .. 8)
+    {
+        const added = addModules(importTargets(cache, sources), request.importPaths, sources);
+        if (added.length == 0)
+            return true;
+        state.importedModules ~= added;
+        keys = extractionKeys(sources, request.environmentKey);
+        if (!extractInto(request, added, null, keys, state, outcome))
+            return false;
+    }
+    return true;
+}
+
+/// Modules declaring the classes that the cached models' `@Import`s name.
+private string[] importTargets(string cache, scope const SourceModule[] sources)
+{
+    import std.algorithm.searching : canFind;
+    import std.file : exists, readText;
+    import flint_tool.engine.aot.model : AnnotationType, ModuleModel, parseAnnotationType, parseModule;
+    import flint_tool.engine.aot.names : packageOf;
+    import flint_tool.engine.aot.plan : importedClasses;
+
+    AnnotationType[string] types;
+    foreach (name, document; loadAnnotations(cache))
+    {
+        AnnotationType type;
+        string error;
+        if (parseAnnotationType(document, type, error))
+            types[name] = type;
+    }
+    string[] modules;
+    foreach (ref source; sources)
+    {
+        const path = modelPath(cache, source.name);
+        ModuleModel model;
+        string error;
+        if (!exists(path) || !parseModule(readText(path), model, error))
+            continue;
+        foreach (ref decl; model.types)
+        {
+            foreach (name; importedClasses(decl.annotations, types))
+            {
+                const moduleName = packageOf(name);
+                if (moduleName.length && !modules.canFind(moduleName))
+                    modules ~= moduleName;
+            }
+        }
+    }
+    return modules;
 }
 
 /// The extraction key of each module: its interface, the interfaces of the extracted modules it imports
@@ -498,6 +578,11 @@ private State loadState(string cache, string environment)
         foreach (name, value; root["present"].objectNoRef)
             state.present[name] = value.type == JSONType.true_;
         state.outputKey = root["output"].str;
+        if (const imported = "imported" in root.objectNoRef)
+        {
+            foreach (ref item; imported.arrayNoRef)
+                state.importedModules ~= item.str;
+        }
     }
     catch (JSONException)
         return State(environment);
@@ -521,7 +606,8 @@ private void saveState(string cache, const ref State state)
         "environment": JSONValue(state.environmentKey),
         "output": JSONValue(state.outputKey),
         "keys": JSONValue(keys),
-        "present": JSONValue(present)
+        "present": JSONValue(present),
+        "imported": JSONValue(state.importedModules)
     ]);
     mkdirRecurse(cache);
     write(buildPath(cache, "state.json"), root.toString);

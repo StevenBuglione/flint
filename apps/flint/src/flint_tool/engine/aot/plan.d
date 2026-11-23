@@ -6,7 +6,7 @@
 module flint_tool.engine.aot.plan;
 
 import flint_tool.engine.aot.merge : MergedSet;
-import flint_tool.engine.aot.model : Annotation, Method, Model, Parameter, TypeDecl, TypeRef, clone;
+import flint_tool.engine.aot.model : Annotation, AnnotationType, Method, Model, Parameter, TypeDecl, TypeRef, clone;
 import flint_tool.engine.aot.query : DerivedQuery;
 import std.algorithm.searching : canFind;
 
@@ -529,6 +529,46 @@ private struct Candidate
     const(TypeDecl)* decl;
     MergedSet merged;
     bool autoConfiguration;
+    /// Imported by another configuration's `@Import`: named by its fully qualified name, and registered only
+    /// when the importer's startup conditions hold.
+    bool imported;
+    /// ditto
+    string[] importerTerms;
+}
+
+/// The classes the `@Import`s on an element name: declared directly or carried by its annotations'
+/// meta-annotations at any depth (`@EnableMethodSecurity` is `@Import(PrePostMethodSecurityConfiguration)`),
+/// every occurrence kept, unlike merging, which keeps the nearest one per type.
+string[] importedClasses(const Annotation[] annotations, const AnnotationType[string] types)
+{
+    import std.algorithm.searching : canFind;
+    import flint_tool.engine.aot.names : import_;
+
+    string[] result;
+    bool[string] visited;
+    void walk(const Annotation[] items)
+    {
+        foreach (ref annotation; items)
+        {
+            if (annotation.type == import_)
+            {
+                foreach (name; annotation.get("value").strings)
+                {
+                    if (!result.canFind(name))
+                        result ~= name;
+                }
+                continue;
+            }
+            if (annotation.type in visited)
+                continue;
+            visited[annotation.type] = true;
+            if (const type = annotation.type in types)
+                walk(type.meta);
+        }
+    }
+
+    walk(annotations);
+    return result;
 }
 
 private final class Analysis
@@ -541,6 +581,8 @@ private final class Analysis
     BeanPlan[] allBeans;
     /// Auto-configurations the application excludes at build time.
     bool[string] excluded;
+    /// Classes already defined through `@Import`.
+    bool[string] importedOnce;
     /// Modules whose types are described.
     bool[string] described;
     /// Types `describeProperties` has visited.
@@ -872,6 +914,8 @@ private final class Analysis
         // Boot's spring.boot.enableautoconfiguration=false turns every auto-configuration off at startup.
         if (candidate.autoConfiguration)
             outcome.terms = autoConfigurationTerms(decl.fqn) ~ outcome.terms;
+        // An imported configuration registers only where its importer does.
+        outcome.terms = candidate.importerTerms ~ outcome.terms;
         BeanPlan bean;
         bean.name = componentName(candidate);
         bean.type = decl.fqn;
@@ -898,6 +942,37 @@ private final class Analysis
         defineBeanMethods(candidate, bean, outcome.terms, proxyConfiguration);
         if (bean.proxied || candidate.merged.has(imported!"flint_tool.engine.aot.names".controller))
             moduleFor(decl.module_).consulted ~= decl.module_;
+        defineImports(*decl, outcome.terms);
+    }
+
+    /// `@Import`: each imported class is a configuration bean, defined once, after its importer and under its
+    /// importer's conditions, with its own `@Bean` methods and imports.
+    void defineImports(const ref TypeDecl decl, string[] terms)
+    {
+        foreach (name; importedClasses(decl.annotations, model.annotationTypes))
+        {
+            if (name in importedOnce || definesClass(name))
+                continue;
+            importedOnce[name] = true;
+            const target = model.type(name);
+            if (target is null)
+            {
+                error("FLINT-E1106", "@Import names " ~ name ~ ", which is not in the closure", decl.file, decl.line);
+                continue;
+            }
+            auto candidate = Candidate(target, mergedOf(*target), false, true, terms.dup);
+            defineComponent(candidate);
+        }
+    }
+
+    bool definesClass(string name)
+    {
+        foreach (ref bean; allBeans)
+        {
+            if (bean.className == name && bean.method.length == 0)
+                return true;
+        }
+        return false;
     }
 
     /// Boot's `@EnableConfigurationProperties`: each listed `@ConfigurationProperties` class becomes a bean named
@@ -1043,7 +1118,7 @@ private final class Analysis
         if (explicit.length)
             return explicit;
         // Auto-configurations are named by their fully qualified class name, as Boot names them.
-        return candidate.autoConfiguration ? candidate.decl.fqn : beanName(candidate.decl.name);
+        return candidate.autoConfiguration || candidate.imported ? candidate.decl.fqn : beanName(candidate.decl.name);
     }
 
     string[] typesOf(const ref TypeDecl decl)

@@ -28,6 +28,8 @@ enum controller = "flint.stereotype.Controller";
 enum configuration = "flint.context.annotation.Configuration";
 /// `@Bean`.
 enum bean = "flint.context.annotation.Bean";
+/// `@Import`.
+enum import_ = "flint.context.annotation.Import";
 /// `@Primary`.
 enum primary = "flint.context.annotation.Primary";
 /// `@Fallback`.
