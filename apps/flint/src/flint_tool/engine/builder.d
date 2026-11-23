@@ -1193,14 +1193,22 @@ private Receipt projectReceipt(ref Session session, const ref Manifest manifest,
     }
     if (result.platformShared.length)
     {
-        import std.path : baseName, dirName;
+        import std.json : JSONException, parseJSON;
+        import std.path : baseName, buildPath, dirName;
         import flint_tool.engine.receipt : PlatformArchiveRecord;
-        import flint_tool.support.files : cachedSha256File;
+        import flint_tool.support.files : readIfPresent;
 
-        // The shared object a dev build loads at run time: its directory is `shared-<key>`.
+        // The shared object a dev build loads at run time: its directory is `shared-<key>`, and its digest is the
+        // one recorded when it was linked. Cache entries stay out of the digest log: the measurement harness
+        // clones the cache with hard links, which changes every file's change time.
+        string digest;
+        try
+            digest = parseJSON(readIfPresent(buildPath(dirName(result.platformShared), "module.json")))["sha256"].str;
+        catch (JSONException)
+        {
+        }
         receipt.platform_archives ~= PlatformArchiveRecord("flint-platform-shared",
-                baseName(dirName(result.platformShared))["shared-".length .. $],
-                cachedSha256File(result.platformShared));
+                baseName(dirName(result.platformShared))["shared-".length .. $], digest);
     }
     receipt.portable = result.natives.nonPortable.length == 0;
     receipt.non_portable_reasons = result.natives.nonPortable.dup;
