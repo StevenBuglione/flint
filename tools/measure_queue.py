@@ -725,6 +725,10 @@ def measure_command(entry, built, outdir, smoke):
     for index, step in enumerate(entry['measure']['steps']):
         cwd, env = ROOT, toolchain_environment()
         env['FLINT_MEASURE_WINDOW_CERTIFIED'] = '1'  # the queue's own window checks replace the tools' load checks
+        # The pinned oha lives in this checkout's .tools (not the shared toolchain); tools that read OHA find it there.
+        oha = ROOT / '.tools' / 'oha-1.16.0' / 'oha'
+        if oha.is_file():
+            env.setdefault('OHA', str(oha))
         if step.get('in'):
             cwd = worktree(built[step['in']]['commit'])[0]
             private = [cwd / '.flint' / 'bin', cwd / '.tools' / 'dmd2' / 'linux' / 'bin64']
