@@ -44,10 +44,8 @@ POSTGRES_URL=jdbc:postgresql://127.0.0.1:5432/petclinic POSTGRES_USER=petclinic 
 
 ## Status
 
-`spring_bench.py accept petclinic-rest`: 89 of 109 cases. Open pieces:
+`spring_bench.py accept petclinic-rest`: 108 of 109 cases. Open pieces:
 
-- Jackson builds a DTO through its required-arguments constructor, as Java's Jackson does not for these generated
-  models, and fails when the `Nullable!int` id is absent: creating visits, specialties and vets, and updating pet
-  types, specialties and vets, with the follow-up reads and deletes (19 cases).
-- A `@Valid` violation on a list element (`roles[0].name`) reports a null rejected value (1 case).
+- A `@Valid` violation on a list element (`roles[0].name`) reports a null rejected value, since `flint.validation`
+  does not read indexed property paths (1 case).
 - `BasicAuthenticationConfig` (`petclinic.security.enable=true`) is not ported.
