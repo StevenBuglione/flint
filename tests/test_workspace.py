@@ -1,6 +1,7 @@
 """The repo split's policy and workspaces (plan section 7, ADR-030): every package has a repo, edges follow
 policy/repos.json, and a flint.workspace/1 file pins each repo's checkout."""
 import json
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -259,6 +260,35 @@ class ExtractionTests(unittest.TestCase):
                              {'examples/golden-tui': 'examples/framework/golden-tui',
                               'packages/web': 'packages/engine-web'})
             self.assertEqual(extract_repo.earlier_names(checkout, ['packages/engine-mq']), {})
+
+    def test_an_extracted_repo_ignores_its_packages_build_outputs(self):
+        """flint's .gitignore anchors test binaries to its own layout; boot/.gitignore, alone once boot/ moves child
+        by child, folds into the extracted repo's root .gitignore."""
+        import extract_repo
+        with tempfile.TemporaryDirectory() as directory:
+            checkout = Path(directory)
+            (checkout / 'boot').mkdir()
+            (checkout / 'boot/.gitignore').write_text('.dub/\n*-test-library\ndub.selections.json\n', encoding='utf-8')
+            (checkout / 'core/flint-boot').mkdir(parents=True)
+            (checkout / 'core/flint-boot/.gitignore').write_text('keep-me\n', encoding='utf-8')
+            shutil.copyfile(ROOT / '.gitignore', checkout / '.gitignore')
+            extract_repo.ignore_build_outputs(checkout)
+            lines = (checkout / '.gitignore').read_text(encoding='utf-8').splitlines()
+            self.assertFalse((checkout / 'boot').exists(), 'the lone boot/.gitignore folds into the root one')
+            self.assertTrue((checkout / 'core/flint-boot/.gitignore').is_file(), "a package's own .gitignore stays")
+            for pattern in ('*-test-unittest', '*-test-library', 'dub.selections.json'):
+                self.assertIn(pattern, lines)
+            self.assertEqual(lines.count('.dub/'), 1)
+
+    def test_an_extracted_repos_readme_points_at_the_porting_rules_in_flint(self):
+        import extract_repo
+        with tempfile.TemporaryDirectory() as directory:
+            checkout = Path(directory)
+            extract_repo.root_files('security', checkout)
+            readme = (checkout / 'README.md').read_text(encoding='utf-8')
+            self.assertIn('https://github.com/flint-projects/flint/blob/main/docs/spring/performance-playbook.md', readme)
+            self.assertIn('https://github.com/flint-projects/flint/blob/main/AGENTS.md', readme)
+            self.assertTrue((ROOT / 'docs/spring/performance-playbook.md').is_file(), 'the link names a real file')
 
     def test_the_refresh_needs_all_to_push_and_one_repo_otherwise(self):
         script = str(ROOT / 'tools/extract_repo.py')

@@ -195,18 +195,31 @@ See ADR-023 for why the index is checked in.
 '''
 
 
+def index_state():
+    """(build engine SHA-256, the index's files as generated, the index's files on disk)."""
+    engine = hashlib.sha256((ROOT / 'tools' / 'native_build.py').read_bytes()).hexdigest()
+    expected = recipe_files(lock_rows(), engine)
+    actual = {p.relative_to(INDEX).as_posix(): p.read_text() for p in INDEX.rglob('*') if p.is_file()} \
+        if INDEX.is_dir() else {}
+    return engine, expected, actual
+
+
+def stale_files():
+    """The index files that differ from policy/native-lock.json and tools/native_build.py. Every recipe embeds
+    native_build.py's SHA-256, so an edit to it without --write makes every native build refuse to run."""
+    _, expected, actual = index_state()
+    return sorted(set(expected) ^ set(actual) | {k for k in expected if actual.get(k) != expected[k]})
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument('--write', action='store_true')
     mode.add_argument('--check', action='store_true')
     args = parser.parse_args()
-    engine = hashlib.sha256((ROOT / 'tools' / 'native_build.py').read_bytes()).hexdigest()
-    expected = recipe_files(lock_rows(), engine)
-    actual = {p.relative_to(INDEX).as_posix(): p.read_text() for p in INDEX.rglob('*') if p.is_file()} \
-        if INDEX.is_dir() else {}
+    engine, expected, actual = index_state()
     if args.check:
-        stale = sorted(set(expected) ^ set(actual) | {k for k in expected if actual.get(k) != expected[k]})
+        stale = stale_files()
         if stale:
             print('native/conan-index differs from policy/native-lock.json and tools/native_build.py: '
                   + ', '.join(stale) + '\nrun: python3 tools/conan_index.py --write', file=sys.stderr)

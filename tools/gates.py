@@ -235,6 +235,12 @@ def platform_outputs():
     if not (ROOT/'platform.lock').is_file():return
     import platform_modules
     for problem in platform_modules.problems(ROOT):require(False,problem)
+    # The Conan recipe index embeds tools/native_build.py's SHA-256: an edit without --write breaks every native
+    # build in a fresh checkout (c4a5a8b2 did, found by the cutover rehearsal).
+    if (ROOT/'native'/'conan-index').is_dir():
+        import conan_index
+        stale=conan_index.stale_files()
+        require(not stale,'native/conan-index is stale ('+', '.join(stale[:3])+(', ...' if len(stale)>3 else '')+'): run python3 tools/conan_index.py --write')
 
 WORKSPACE=Workspace()
 

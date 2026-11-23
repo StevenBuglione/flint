@@ -235,7 +235,11 @@ def checks(flint, target):
     env = dict(os.environ)
     tools = (flint / '.tools').resolve()
     host = {'darwin': 'osx', 'win32': 'windows'}.get(sys.platform, 'linux')
-    env['PATH'] = os.pathsep.join([str(tools / 'dmd2' / host / 'bin64'), str(tools / 'bin'), env['PATH']])
+    # The pinned LDC too: a browser example's build.py compiles with it (wasm32), as CI's does.
+    from install_toolchains import pinned_ldc
+    ldc = pinned_ldc(tools)
+    env['PATH'] = os.pathsep.join([str(tools / 'dmd2' / host / 'bin64'), str(ldc.parent), str(tools / 'bin'),
+                                   env['PATH']])
     # SDL's offscreen driver needs EGL, which macOS lacks; its headless driver there is dummy (ADR-024).
     env.setdefault('SDL_VIDEODRIVER', 'dummy' if sys.platform == 'darwin' else 'offscreen')
     # platform.lock alone resolves the fetched repos; FLINT_WORKSPACE would also redirect the suites' own homes.
@@ -274,7 +278,7 @@ def checks(flint, target):
             example = recipe.parent
             name = f'{repo} example {example.name}'
             if (example / 'build.py').is_file():
-                check(name, [PYTHON, str(example / 'build.py'), '--ldc', 'ldc2', '--output',
+                check(name, [PYTHON, str(example / 'build.py'), '--ldc', str(ldc), '--output',
                              str(flint / '.flint' / 'cutover' / example.name / 'app.wasm')], flint,
                       dict(env, FLINT_ROOT=str(flint)), results)
             else:

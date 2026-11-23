@@ -11,7 +11,7 @@ from conan.tools.files import download
 
 NAME = 'libsodium'
 DEPENDENCIES = []
-BUILD_ENGINE_SHA256 = '79f10cc1949423f4ad4df8bc17b534dee66d7401b53ea7c84365ee33b845e99b'
+BUILD_ENGINE_SHA256 = '3cb8b36c7f524a34e1d70f961a91c56fabb676d1da57b912f6e396d00eab29f3'
 TARGETS = ['linux-aarch64-glibc', 'linux-aarch64-musl', 'linux-x86_64-glibc', 'linux-x86_64-musl', 'macos-arm64', 'windows-x86_64']
 
 

@@ -36,5 +36,22 @@ class RecipeIndexTests(unittest.TestCase):
                                       (INDEX / 'recipes' / name / 'config.yml').read_text(encoding='utf-8')))
 
 
+    def test_a_stale_recipe_is_reported_for_the_structural_gate(self):
+        """tools/gates.py fails the structural gate on stale_files(): an edit to native_build.py without --write
+        would make every native build in a fresh checkout refuse to run."""
+        import shutil
+        import tempfile
+        from unittest import mock
+
+        import conan_index
+        self.assertEqual(conan_index.stale_files(), [])
+        with tempfile.TemporaryDirectory() as directory:
+            copy = Path(directory) / 'conan-index'
+            shutil.copytree(INDEX, copy)
+            recipe = copy / 'recipes/zlib/all/conanfile.py'
+            recipe.write_text(recipe.read_text(encoding='utf-8') + '# edited\n', encoding='utf-8')
+            with mock.patch.object(conan_index, 'INDEX', copy):
+                self.assertEqual(conan_index.stale_files(), ['recipes/zlib/all/conanfile.py'])
+
 if __name__ == '__main__':
     unittest.main()

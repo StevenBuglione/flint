@@ -164,6 +164,24 @@ def run(command, cwd=None):
     subprocess.run(command, cwd=cwd, check=True)
 
 
+def ignore_build_outputs(checkout):
+    """flint's .gitignore anchors the packages' test binaries to the monorepo layout (/boot/*/...), which an
+    extracted repo does not have: the patterns are added unanchored. A .gitignore left alone in a directory whose
+    contents moved elsewhere (boot/.gitignore, once boot/ moved child by child) folds into the root one."""
+    path = checkout / '.gitignore'
+    lines = path.read_text(encoding='utf-8').splitlines()
+    extra = ['*-test-unittest', '*-test-library']
+    for stray in sorted(checkout.glob('*/.gitignore')):
+        if [entry.name for entry in stray.parent.iterdir()] == ['.gitignore']:
+            extra += stray.read_text(encoding='utf-8').splitlines()
+            stray.unlink()
+            stray.parent.rmdir()
+    added = [line for line in dict.fromkeys(extra) if line and line not in lines]
+    if added:
+        path.write_text('\n'.join(lines + ['', '# Build outputs inside each package, wherever this repo keeps it.']
+                                   + added) + '\n', encoding='utf-8')
+
+
 def root_files(repo, checkout, root=ROOT):
     meta = repo_policy(root)['repos'][repo]
     subpackages = []
@@ -179,6 +197,7 @@ def root_files(repo, checkout, root=ROOT):
     for name in ('LICENSE', 'NOTICE'):
         shutil.copyfile(root / name, checkout / name)
     shutil.copyfile(root / '.gitignore', checkout / '.gitignore')
+    ignore_build_outputs(checkout)
     depends = ', '.join(f'`{d}`' for d in meta['may_depend_on']) or 'nothing'
     (checkout / 'README.md').write_text(
         f'# {meta["github"].split("/")[1]}\n\n'
@@ -187,6 +206,11 @@ def root_files(repo, checkout, root=ROOT):
         'Mirror of `flint-projects/flint` until the Phase 1 cutover (ADR-030); do not push here directly.\n\n'
         f'Its packages keep their `flint:*` names and resolve at this repo\'s platform version, which the flint '
         f'repo\'s `platform.lock` pins. It may depend on {depends}.\n\n'
+        '## Porting\n\n'
+        'The rules are the flint repo\'s: [AGENTS.md](https://github.com/flint-projects/flint/blob/main/AGENTS.md) '
+        'and, before porting a module and again before committing it, the [performance playbook]'
+        '(https://github.com/flint-projects/flint/blob/main/docs/spring/performance-playbook.md). A `docs/` path '
+        'that a source file here cites is in the flint repo.\n\n'
         '## Building\n\n'
         'Check out the repos it depends on and describe them in a `flint.workspace/1` file, then, from the flint '
         'repo:\n\n```bash\npython3 tools/workspace.py dub-root --workspace workspace.json --output .flint/workspace\n'
