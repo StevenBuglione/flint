@@ -152,7 +152,7 @@ name = "flint:jdbc"
 kind = "core"
 source = "workspace"
 scope = "build"
-dependencies = ["flint:beans", "flint:core", "flint:engine-aot", "flint:java", "flint:slf4j-api", "flint:tx"]
+dependencies = ["flint:beans", "flint:conc", "flint:core", "flint:engine-aot", "flint:java", "flint:slf4j-api", "flint:tx"]
 
 [[package]]
 name = "flint:log"

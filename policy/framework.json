@@ -338,6 +338,7 @@
    "upstream": "spring-framework@v7.1.0",
    "dependencies": [
     "beans",
+    "conc",
     "core",
     "engine-aot",
     "java",

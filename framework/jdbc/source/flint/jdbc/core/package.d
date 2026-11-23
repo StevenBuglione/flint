@@ -2181,6 +2181,19 @@ underscored form (`first_name` for `firstName`).
 /// class declares, and a JavaBean's setters may be declared by a superclass (petclinic's `Owner.setFirstName`).
 package(flint.jdbc) imported!"flint.engine.aot.descriptor".Descriptor beanDescriptorOf(T)()
 {
+    import flint.conc.slot : ProcessSlot;
+
+    // Built once per T and then only read (playbook R-4): callers make a mapper per query
+    // (BeanPropertyRowMapper!T.newInstance()), and descriptorOf builds a new descriptor on every call. Two threads
+    // racing here both build one; the slot keeps the first, and the other becomes garbage.
+    static shared ProcessSlot!(imported!"flint.engine.aot.descriptor".Descriptor) slot;
+    if (auto built = slot.get())
+        return built;
+    return slot.setIfAbsent(buildBeanDescriptor!T());
+}
+
+private imported!"flint.engine.aot.descriptor".Descriptor buildBeanDescriptor(T)()
+{
     import flint.engine.aot.descriptor : descriptorOf;
 
     auto descriptor = descriptorOf!T();
@@ -2687,6 +2700,9 @@ unittest
     import core.memory : GC;
 
     auto descriptor = beanDescriptorOf!RowMappingBean();
+    const describing = GC.stats().allocatedInCurrentThread;
+    assert(beanDescriptorOf!RowMappingBean() is descriptor, "the descriptor is built once per type");
+    assert(GC.stats().allocatedInCurrentThread == describing, "looking the descriptor up again allocated");
     size_t index(string name)
     {
         foreach (i, ref property; descriptor.properties)
