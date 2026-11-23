@@ -217,6 +217,9 @@ Where Windows semantics differ, this is what Flint does:
   - Completion tokens use the operation table's encoding (the generation above 13 slot bits). The first draft of `sys/windows.d` assumed a 32-bit slot field and refused every read and write.
   - `GetQueuedCompletionStatus` rounds its timeout to the system timer tick, 15.6 ms by default. While a completion port is open, the process asks for 1 ms ticks with `timeBeginPeriod`, loaded from winmm at run time. Since Windows 10 2004 the request affects only this process.
   - Accepted sockets get `TCP_NODELAY`, as on Linux and macOS.
+  - **`stopAccepting` closes the listener, as on Linux and macOS.** The kernel then refuses new connections while admitted ones drain (ADR-028 section 10).
+    - The listener holds the process's Winsock reference, which those connections still need. So its socket closes when the last owner retires its accept, and the reference is released only at `release`.
+    - Before this, the listener stayed open until release, and the backlog kept admitting connections during a graceful drain.
   - Native descriptor watches stay Linux and macOS only (`Status.unsupported`).
   - Tests that asked for "the readiness backend" use IOCP on Windows. The cancellation race, the backpressured write drain, the foreign-worker close and the `TCP_NODELAY` check now run there, on DMD and LDC. Descriptor exhaustion has no Windows counterpart to `RLIMIT_NOFILE` and stays POSIX.
   - With a completion port, an OVERLAPPED's status is written only when its packet is dequeued. The low-level test of "a read completed before `CancelIoEx`" therefore waits for the loopback receive instead of observing it.
@@ -388,7 +391,7 @@ Known gaps: these tests are skipped on Windows, each with its reason.
 | --- | --- |
 | `test_flint_watch.WatchTests` (2 tests) | `flint watch` stops on Ctrl+C. A test cannot send Ctrl+C to a child without sharing its console, and Ctrl+Break is SIGTERM, which `flint watch` leaves to the default handler. |
 | `test_install_quality_tools`: the two libcurl tests | `install_quality_tools.py` checks for libcurl only off Windows, where DUB loads it at run time. |
-| `framework/test_graceful_shutdown.GracefulShutdownTests` | `os.kill` on Windows is `TerminateProcess`, so the application exits at once instead of draining. A graceful stop needs `CTRL_BREAK_EVENT` to a child started with `CREATE_NEW_PROCESS_GROUP`, which flint.os maps to SIGTERM. Porting the test to that is open. |
+| `framework/test_graceful_shutdown`: `test_sigint_behaves_the_same` | Ctrl+C cannot be sent to a single process group. The other graceful-shutdown tests run on Windows: they start the fixture with `CREATE_NEW_PROCESS_GROUP` and stop it with `CTRL_BREAK_EVENT`, which flint.os reads as SIGTERM. Exit codes 124 and 130 do not depend on which signal arrived. |
 | `test_vibe_bench`: the queue-worker and tui-dashboard oracles | Their acceptance tests send SIGTERM and drive a pty. On Windows the test runs only the rest-notes oracle. |
 
 `tools/load_bench.py` imports on Windows, so its parsers stay testable, but a load run stops with a plain error there: it uses `getrusage` and process groups.
