@@ -189,6 +189,7 @@ The classification is name-based: an element counts as ported when the Flint mod
 
 ## Pending, with their owners
 
+- **framework-core and third-party-apis: `flint.java.util.regex`.** A clean-room `java.util.regex` engine for run-time `@Pattern`: look-around, back-references, counted repetition beyond 256 states, Unicode categories and `Pattern.Flag`s. The plan is in `decisions.md` (2026-11-23, third-party-apis, item 26's regex finding).
 - **framework-core (`flint:engine-aot`, `flint:java`):**
   - descriptor access for D arrays, `Optional!T` and enum values (`Any` can't build an enum from a type name);
   - `create()` on the descriptors of `ArrayList!T`, `HashSet!T` and `LinkedHashMap!(K, V)`;
