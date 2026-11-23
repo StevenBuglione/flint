@@ -29,7 +29,8 @@ private ulong allocationCounter() @trusted nothrow
 
 private struct Seed
 {
-    @Min(1) int value;
+    @Min(1)
+    int value;
 }
 
 private struct Call

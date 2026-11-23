@@ -136,7 +136,9 @@ private enum RequestMapping htmlMapping = () {
 }();
 
 /// Boot's default error controller: an HTML page for browsers, the error attributes as JSON otherwise.
-@Controller @errorPath class BasicErrorController : AbstractErrorController
+@Controller
+@errorPath
+class BasicErrorController : AbstractErrorController
 {
     private ErrorProperties errorProperties;
 
@@ -152,7 +154,8 @@ private enum RequestMapping htmlMapping = () {
     }
 
     /// The HTML error page: a resolved error view, else the `error` view.
-    @htmlMapping ModelAndView errorHtml(HttpServletRequest request, HttpServletResponse response)
+    @htmlMapping
+    ModelAndView errorHtml(HttpServletRequest request, HttpServletResponse response)
     {
         const status = getStatus(request);
         auto model = getErrorAttributes(request, getErrorAttributeOptions(request, MediaType.TEXT_HTML_VALUE));
@@ -162,7 +165,8 @@ private enum RequestMapping htmlMapping = () {
     }
 
     /// The error attributes, as the response body.
-    @anyMapping ResponseEntity error(HttpServletRequest request)
+    @anyMapping
+    ResponseEntity error(HttpServletRequest request)
     {
         const status = getStatus(request);
         if (status == HttpStatus.NO_CONTENT)
@@ -345,7 +349,8 @@ final class ErrorViewBeanNameResolver : ViewResolver
 
 /// Auto-configuration of Spring MVC's error handling: `DefaultErrorAttributes`, `BasicErrorController`, the error
 /// page forward and the Whitelabel page.
-@errorMvcAutoConfiguration @ConditionalOnWebApplication(ConditionalOnWebApplication.Type.SERVLET)
+@errorMvcAutoConfiguration
+@ConditionalOnWebApplication(ConditionalOnWebApplication.Type.SERVLET)
 @ConditionalOnClass(null, ["flint.jakarta.servlet.Servlet", "flint.web.servlet.DispatcherServlet"])
 @EnableConfigurationProperties([ClassRef(typeNameOf!WebProperties)])
 final class ErrorMvcAutoConfiguration
@@ -359,36 +364,42 @@ final class ErrorMvcAutoConfiguration
     }
 
     /// The error attributes, unless the application defines `ErrorAttributes`.
-    @Bean @ConditionalOnMissingBean([ClassRef("flint.boot.webmvc.error.ErrorAttributes")])
+    @Bean
+    @ConditionalOnMissingBean([ClassRef("flint.boot.webmvc.error.ErrorAttributes")])
     DefaultErrorAttributes errorAttributes()
     {
         return new DefaultErrorAttributes;
     }
 
     /// The error controller, unless the application defines an `ErrorController`.
-    @Bean @ConditionalOnMissingBean([ClassRef("flint.boot.webmvc.error.ErrorController")])
+    @Bean
+    @ConditionalOnMissingBean([ClassRef("flint.boot.webmvc.error.ErrorController")])
     BasicErrorController basicErrorController(ErrorAttributes errorAttributes, ErrorViewResolver[] errorViewResolvers)
     {
         return new BasicErrorController(errorAttributes, webProperties.getError(), errorViewResolvers);
     }
 
     /// Forwards errors to `flint.web.error.path`.
-    @Bean ErrorPageCustomizer errorPageCustomizer()
+    @Bean
+    ErrorPageCustomizer errorPageCustomizer()
     {
         return new ErrorPageCustomizer(webProperties);
     }
 
     /// The Whitelabel page, as the `error` view, unless `flint.web.error.whitelabel.enabled` is false or the
     /// application defines an `error` bean.
-    @errorBean @whitelabelEnabled @missingErrorBean WhitelabelErrorView defaultErrorView()
+    @errorBean
+    @whitelabelEnabled
+    @missingErrorBean
+    WhitelabelErrorView defaultErrorView()
     {
         return new WhitelabelErrorView;
     }
 
     /// Resolves the `error` view by bean name.
-    @Bean @whitelabelEnabled @ConditionalOnMissingBean([
-        ClassRef(typeNameOf!ErrorViewBeanNameResolver)
-    ])
+    @Bean
+    @whitelabelEnabled
+    @ConditionalOnMissingBean([ClassRef(typeNameOf!ErrorViewBeanNameResolver)])
     ErrorViewBeanNameResolver errorViewBeanNameResolver(ApplicationContext context)
     {
         return new ErrorViewBeanNameResolver(context);

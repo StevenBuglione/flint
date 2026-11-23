@@ -14,9 +14,11 @@ import std.traits : getUDAs;
 
 @safe:
 
-@ConditionalOnDefaultServletWebSecurity private final class TestConfiguration
+@ConditionalOnDefaultServletWebSecurity
+private final class TestConfiguration
 {
-    @Bean string testBean()
+    @Bean
+    string testBean()
     {
         return "test";
     }

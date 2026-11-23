@@ -40,7 +40,8 @@ struct JobController
 }
 
 /// The application.
-@FlintApplication final class StatusApplication
+@FlintApplication
+final class StatusApplication
 {
     /// Start the application.
     static int main(string[] args)

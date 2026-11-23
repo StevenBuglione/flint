@@ -7,7 +7,9 @@ import flint.validate : Email, Max, Min, NotBlank, Pattern, Size, Valid, Violati
 struct Value
 {
     /// Small range with explicit success and failure fixtures.
-    @Min(1) @Max(9) int n;
+    @Min(1)
+    @Max(9)
+    int n;
 }
 
 private void numericBehavior() nothrow @nogc
@@ -23,15 +25,21 @@ private void numericBehavior() nothrow @nogc
 
 private struct Row
 {
-    @Pattern(r"^([ab]+)+\d$") @NotBlank Text caption;
-    @Size(2, 2) string glyphs;
-    @Email string contact;
-    @Min(16_777_217) float amount;
+    @Pattern(r"^([ab]+)+\d$")
+    @NotBlank
+    Text caption;
+    @Size(2, 2)
+    string glyphs;
+    @Email
+    string contact;
+    @Min(16_777_217)
+    float amount;
 }
 
 private struct Form
 {
-    @Valid Row[2] rows;
+    @Valid
+    Row[2] rows;
 }
 
 private void textBehavior() nothrow @nogc
@@ -65,7 +73,8 @@ private void textBehavior() nothrow @nogc
 
 private struct Wide
 {
-    @Size(1, 1) wstring glyph;
+    @Size(1, 1)
+    wstring glyph;
 }
 
 private void wideBehavior() nothrow @nogc

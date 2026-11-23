@@ -249,22 +249,23 @@ class ServletWebServerFactoryCustomizer : WebServerFactoryCustomizer
 /// Auto-configuration of Flint's embedded servlet web server (Boot's `TomcatServletWebServerAutoConfiguration` with
 /// `ServletWebServerConfiguration`): a `FlintServletWebServerFactory`, customised by `server.*` and every
 /// `WebServerFactoryCustomizer` bean, unless the application defines a `ServletWebServerFactory`.
-@AutoConfiguration @AutoConfigureOrder(int.min)
+@AutoConfiguration
+@AutoConfigureOrder(int.min)
 @ConditionalOnClass(null, ["flint.engine.servlet.ServletEngine"])
 @ConditionalOnWebApplication(ConditionalOnWebApplication.Type.SERVLET)
 @EnableConfigurationProperties([ClassRef(typeNameOf!ServerProperties)])
 final class FlintServletWebServerAutoConfiguration
 {
     /// The customizer that applies `server.*`.
-    @Bean ServletWebServerFactoryCustomizer servletWebServerFactoryCustomizer(ServerProperties serverProperties)
+    @Bean
+    ServletWebServerFactoryCustomizer servletWebServerFactoryCustomizer(ServerProperties serverProperties)
     {
         return new ServletWebServerFactoryCustomizer(serverProperties);
     }
 
     /// The servlet web server factory.
-    @Bean @ConditionalOnMissingBean([
-        ClassRef("flint.boot.web.server.servlet.ServletWebServerFactory")
-    ])
+    @Bean
+    @ConditionalOnMissingBean([ClassRef("flint.boot.web.server.servlet.ServletWebServerFactory")])
     FlintServletWebServerFactory flintServletWebServerFactory(WebServerFactoryCustomizer[] customizers)
     {
         auto factory = new FlintServletWebServerFactory;

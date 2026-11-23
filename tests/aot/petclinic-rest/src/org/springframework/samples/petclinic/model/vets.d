@@ -12,7 +12,8 @@ class Vets
 }
 
 /// A factory bean for `Vets`.
-@Component final class VetsFactory : FactoryBean!Vets
+@Component
+final class VetsFactory : FactoryBean!Vets
 {
     mixin FactoryBean!Vets.Defaults;
 

@@ -6,6 +6,7 @@ import flint.boot.autoconfigure : FlintBootApplication;
 @safe:
 
 /// `@SpringBootApplication public class PetClinicApplication`.
-@FlintBootApplication class PetClinicApplication
+@FlintBootApplication
+class PetClinicApplication
 {
 }

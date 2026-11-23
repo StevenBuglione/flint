@@ -13,20 +13,25 @@ class Widget
 }
 
 /// Left out by the sample's excludeName.
-@AutoConfiguration class ExcludedAutoConfiguration
+@AutoConfiguration
+class ExcludedAutoConfiguration
 {
     /// Never registered.
-    @Bean Widget excludedWidget()
+    @Bean
+    Widget excludedWidget()
     {
         return new Widget;
     }
 }
 
 /// Kept; conditional on flint.boot.enableautoconfiguration at startup.
-@AutoConfiguration class WidgetAutoConfiguration
+@AutoConfiguration
+class WidgetAutoConfiguration
 {
     /// Unless the application defines one.
-    @Bean @ConditionalOnMissingBean Widget widget()
+    @Bean
+    @ConditionalOnMissingBean
+    Widget widget()
     {
         return new Widget;
     }

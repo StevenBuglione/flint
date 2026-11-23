@@ -917,7 +917,8 @@ version (FlintNameAnnotation)
     struct NamedRecordComponent
     {
         /// The component bound as `import`.
-        @Name("import") string importName;
+        @Name("import")
+        string importName;
     }
 
     @("ValueObject.bindToAnnotationNamedConstructorParameter") unittest

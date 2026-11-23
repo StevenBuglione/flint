@@ -13,7 +13,8 @@ private struct GreetingProperties
     string text = "Hello";
 }
 
-@Service private final class Greeter
+@Service
+private final class Greeter
 {
     GreetingProperties properties;
     this(GreetingProperties properties)

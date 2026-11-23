@@ -28,18 +28,24 @@ private ConfigOptions configFor(string directory)
 
 private struct Credentials
 {
-    @Secret @Min(5) uint token = 10;
+    @Secret
+    @Min(5)
+    uint token = 10;
 }
 
 @ConfigurationProperties("server")
 private struct Settings
 {
-    @Default("13") ushort port = 12;
-    @Required bool tls;
-    @Env("FLINT_CONFIG_FIXTURE_GREETING") string greeting = "initial";
+    @Default("13")
+    ushort port = 12;
+    @Required
+    bool tls;
+    @Env("FLINT_CONFIG_FIXTURE_GREETING")
+    string greeting = "initial";
     string[] labels;
     double rate = 1;
-    @Valid Credentials credentials;
+    @Valid
+    Credentials credentials;
 }
 
 @("D initializer, default, file, profile, dotenv, process and CLI in precedence order")
@@ -235,7 +241,8 @@ private struct ServerProperties
 private struct DatabaseProperties
 {
     string url;
-    @Secret string password;
+    @Secret
+    string password;
     uint pool = 4;
 }
 
@@ -349,7 +356,8 @@ unittest
 @ConfigurationProperties("policy")
 private struct PolicyFixture
 {
-    @Required string compiler;
+    @Required
+    string compiler;
     string[] flags;
 }
 

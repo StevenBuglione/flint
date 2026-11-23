@@ -15,10 +15,12 @@ struct Import
 }
 
 /// `@Configuration`.
-@Component struct Configuration
+@Component
+struct Configuration
 {
     /// Bean name.
-    @AliasFor(annotation : ClassRef("flint.stereotype.Component")) string value;
+    @AliasFor(annotation : ClassRef("flint.stereotype.Component"))
+    string value;
     /// Whether `@Bean` methods return the container's instances when called directly.
     bool proxyBeanMethods = true;
 }
@@ -27,9 +29,11 @@ struct Import
 struct Bean
 {
     /// Alias of `name`.
-    @AliasFor("name") string[] value;
+    @AliasFor("name")
+    string[] value;
     /// Bean names; the first is the name, the others aliases.
-    @AliasFor("value") string[] name;
+    @AliasFor("value")
+    string[] name;
     /// Initialization method.
     string initMethod;
     /// Destroy method; "(inferred)" looks for close or shutdown.

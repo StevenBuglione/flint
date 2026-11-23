@@ -13,7 +13,8 @@ class OwnerFieldsDto
     private string firstName_;
 
     /// First name.
-    @NotNull string getFirstName()
+    @NotNull
+    string getFirstName()
     {
         return firstName_;
     }

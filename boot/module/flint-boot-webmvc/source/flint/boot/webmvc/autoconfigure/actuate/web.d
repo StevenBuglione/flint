@@ -23,7 +23,8 @@ import flint.engine.aot.name : typeNameOf;
 
 /// Auto-configuration of the actuator's web endpoints in Spring MVC: the exposed endpoints at
 /// `management.endpoints.web.base-path`, with the links resource.
-@AutoConfiguration @ConditionalOnWebApplication(ConditionalOnWebApplication.Type.SERVLET)
+@AutoConfiguration
+@ConditionalOnWebApplication(ConditionalOnWebApplication.Type.SERVLET)
 @ConditionalOnClass(null, [
     "flint.web.servlet.DispatcherServlet", "flint.boot.actuate.endpoint.web.ExposableWebEndpoint"
 ])
@@ -31,8 +32,10 @@ import flint.engine.aot.name : typeNameOf;
 final class WebMvcEndpointManagementContextConfiguration
 {
     /// The mapping of the exposed endpoints.
-    @Bean @ConditionalOnMissingBean WebMvcEndpointHandlerMapping webEndpointServletHandlerMapping(
-            ExposableWebEndpoint[] endpoints, WebEndpointProperties properties)
+    @Bean
+    @ConditionalOnMissingBean
+    WebMvcEndpointHandlerMapping webEndpointServletHandlerMapping(ExposableWebEndpoint[] endpoints,
+            WebEndpointProperties properties)
     {
         auto filter = new IncludeExcludeEndpointFilter(properties.getExposure().getInclude(),
                 properties.getExposure().getExclude(), "health");

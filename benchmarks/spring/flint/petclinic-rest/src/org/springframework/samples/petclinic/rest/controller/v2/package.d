@@ -18,7 +18,9 @@ import org.springframework.samples.petclinic.service : ClinicService;
 @safe:
 
 /// `OwnerRestControllerV2`.
-@RestController @CrossOrigin(exposedHeaders : ["errors, content-type"]) @RequestMapping("/api")
+@RestController
+@CrossOrigin(exposedHeaders : ["errors, content-type"])
+@RequestMapping("/api")
 class OwnerRestControllerV2 : OwnerV2Api
 {
     private ClinicService clinicService;
@@ -39,7 +41,9 @@ class OwnerRestControllerV2 : OwnerV2Api
 }
 
 /// `PetRestControllerV2`.
-@RestController @CrossOrigin(exposedHeaders : ["errors, content-type"]) @RequestMapping("/api")
+@RestController
+@CrossOrigin(exposedHeaders : ["errors, content-type"])
+@RequestMapping("/api")
 class PetRestControllerV2 : PetV2Api
 {
     private ClinicService clinicService;

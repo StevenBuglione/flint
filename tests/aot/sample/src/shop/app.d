@@ -6,6 +6,7 @@ import flint.boot.autoconfigure : FlintBootApplication;
 @safe:
 
 /// The sample application.
-@FlintBootApplication final class ShopApplication
+@FlintBootApplication
+final class ShopApplication
 {
 }

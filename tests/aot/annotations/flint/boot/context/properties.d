@@ -9,9 +9,11 @@ import flint.core.annotation : AliasFor, ClassRef;
 struct ConfigurationProperties
 {
     /// Alias of `prefix`.
-    @AliasFor("prefix") string value;
+    @AliasFor("prefix")
+    string value;
     /// Property prefix.
-    @AliasFor("value") string prefix;
+    @AliasFor("value")
+    string prefix;
 }
 
 /// `@EnableConfigurationProperties`.

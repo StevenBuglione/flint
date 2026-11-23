@@ -114,19 +114,22 @@ final class ExecutionListenersTransactionManagerCustomizer
 
 /// Auto-configuration of the transaction manager customizers: `flint.transaction.*` (TransactionProperties) and the
 /// execution listeners.
-@beforeTransaction @ConditionalOnClass(null, ["flint.transaction.PlatformTransactionManager"])
+@beforeTransaction
+@ConditionalOnClass(null, ["flint.transaction.PlatformTransactionManager"])
 @EnableConfigurationProperties([ClassRef(typeNameOf!TransactionProperties)])
 final class TransactionManagerCustomizationAutoConfiguration
 {
     /// Every `TransactionManagerCustomizer` bean, in order.
-    @Bean @ConditionalOnMissingBean([ClassRef(typeNameOf!TransactionManagerCustomizers)])
+    @Bean
+    @ConditionalOnMissingBean([ClassRef(typeNameOf!TransactionManagerCustomizers)])
     TransactionManagerCustomizers platformTransactionManagerCustomizers(AnyTransactionManagerCustomizer[] customizers)
     {
         return TransactionManagerCustomizers.of(customizers);
     }
 
     /// The `TransactionExecutionListener` beans, as a customizer.
-    @Bean ExecutionListenersTransactionManagerCustomizer transactionExecutionListeners(
+    @Bean
+    ExecutionListenersTransactionManagerCustomizer transactionExecutionListeners(
             TransactionExecutionListener[] listeners)
     {
         return new ExecutionListenersTransactionManagerCustomizer(listeners);
@@ -136,7 +139,8 @@ final class TransactionManagerCustomizationAutoConfiguration
 /// Auto-configuration of Spring transactions: a `TransactionTemplate` over the single
 /// `PlatformTransactionManager`, unless the application defines `TransactionOperations`, and
 /// `@EnableTransactionManagement` when there is a transaction manager and the application has not enabled it.
-@AutoConfiguration @ConditionalOnClass(null, ["flint.transaction.PlatformTransactionManager"])
+@AutoConfiguration
+@ConditionalOnClass(null, ["flint.transaction.PlatformTransactionManager"])
 @Import([
     classOf!TransactionTemplateConfiguration, classOf!EnableTransactionManagementConfiguration
 ])
@@ -145,11 +149,13 @@ final class TransactionAutoConfiguration
 }
 
 /// Boot's `TransactionAutoConfiguration.TransactionTemplateConfiguration` (hoisted, R13).
-@liteConfiguration @ConditionalOnSingleCandidate(ClassRef("flint.transaction.PlatformTransactionManager"))
+@liteConfiguration
+@ConditionalOnSingleCandidate(ClassRef("flint.transaction.PlatformTransactionManager"))
 final class TransactionTemplateConfiguration
 {
     /// The transaction template.
-    @Bean @ConditionalOnMissingBean([ClassRef("flint.transaction.support.TransactionOperations")])
+    @Bean
+    @ConditionalOnMissingBean([ClassRef("flint.transaction.support.TransactionOperations")])
     TransactionTemplate transactionTemplate(PlatformTransactionManager transactionManager)
     {
         return new TransactionTemplate(transactionManager);
@@ -165,12 +171,14 @@ private enum Configuration liteConfiguration = () {
 /// Boot's `TransactionAutoConfiguration.EnableTransactionManagementConfiguration` (hoisted, R13): `@Transactional`
 /// methods run through flint:tx's `TransactionInterceptor`, unless the application enables transaction management
 /// itself.
-@liteConfiguration @ConditionalOnBean([ClassRef("flint.transaction.TransactionManager")])
+@liteConfiguration
+@ConditionalOnBean([ClassRef("flint.transaction.TransactionManager")])
 @ConditionalOnMissingBean(
         [
     ClassRef("flint.transaction.annotation.configuration.AbstractTransactionManagementConfiguration")
 ])
-@EnableTransactionManagement final class EnableTransactionManagementConfiguration
+@EnableTransactionManagement
+final class EnableTransactionManagementConfiguration
 {
 }
 
@@ -189,11 +197,13 @@ private enum AutoConfiguration beforeTransaction = () {
 @ConfigurationProperties("flint.transaction")
 final class TransactionProperties : TransactionManagerCustomizer!AbstractPlatformTransactionManager
 {
-    @DurationUnit(ChronoUnit.SECONDS) private Optional!Duration defaultTimeout;
+    @DurationUnit(ChronoUnit.SECONDS)
+    private Optional!Duration defaultTimeout;
     private Optional!bool rollbackOnCommitFailure;
 
     /// Default transaction timeout. If a duration suffix is not specified, seconds will be used.
-    @DurationUnit(ChronoUnit.SECONDS) Optional!Duration getDefaultTimeout() const pure nothrow @nogc
+    @DurationUnit(ChronoUnit.SECONDS)
+    Optional!Duration getDefaultTimeout() const pure nothrow @nogc
     {
         return defaultTimeout;
     }

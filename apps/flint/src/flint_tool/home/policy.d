@@ -94,13 +94,16 @@ struct SafetyPolicy
 struct ProfileSpec
 {
     /// What the profile is for.
-    @Required string description;
+    @Required
+    string description;
     /// Default compiler executable name.
-    @Required string compiler;
+    @Required
+    string compiler;
     /// Compilers `--compiler both` covers.
     string[] compilers;
     /// DUB build type.
-    @Required string build_type;
+    @Required
+    string build_type;
     /// Compiler flags.
     string[] dflags;
     /// Linker flags.
@@ -147,9 +150,11 @@ struct ProfilePolicy
 struct PlatformPolicy
 {
     /// Platform version a project pins with `flint = "x.y"`.
-    @Required string flint;
+    @Required
+    string flint;
     /// Flint release.
-    @Required string release;
+    @Required
+    string release;
 }
 
 /// Profile names in policy order.
@@ -639,7 +644,8 @@ private struct FrameworkRecordJson
 {
     import flint.serde : JsonName;
 
-    @JsonName("module") string module_;
+    @JsonName("module")
+    string module_;
     string[] also;
     string directory;
     string[] dependencies;
@@ -650,7 +656,8 @@ private struct BootRecordJson
 {
     import flint.serde : JsonName;
 
-    @JsonName("module") string module_;
+    @JsonName("module")
+    string module_;
     string directory;
     string[] dependencies;
     string section;
@@ -797,7 +804,8 @@ private struct PackageRecordJson
     import flint.serde : JsonName;
 
     long tier;
-    @JsonName("module") string module_;
+    @JsonName("module")
+    string module_;
     string[] dependencies;
     bool better_c;
     string repo;

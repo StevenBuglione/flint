@@ -491,7 +491,8 @@ version (FlintOrderAnnotationOnBeans)
 {
     import flint.core.annotation : Order;
 
-    @Order(10) private final class OrderedFilter : TestFilter
+    @Order(10)
+    private final class OrderedFilter : TestFilter
     {
     }
 

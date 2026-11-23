@@ -9,9 +9,11 @@ import flint.core.annotation : AliasFor;
 struct Cacheable
 {
     /// Alias of `cacheNames`.
-    @AliasFor("cacheNames") string[] value;
+    @AliasFor("cacheNames")
+    string[] value;
     /// Cache names.
-    @AliasFor("value") string[] cacheNames;
+    @AliasFor("value")
+    string[] cacheNames;
     /// SpEL key.
     string key;
 

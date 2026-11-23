@@ -228,7 +228,8 @@ final class JdbcProperties
         private bool ignoreWarnings = true;
         private int fetchSize = -1;
         private int maxRows = -1;
-        @DurationUnit(ChronoUnit.SECONDS) private Optional!Duration queryTimeout;
+        @DurationUnit(ChronoUnit.SECONDS)
+        private Optional!Duration queryTimeout;
         private bool skipResultsProcessing = false;
         private bool skipUndeclaredResults = false;
         private bool resultsMapCaseInsensitive = false;
@@ -273,7 +274,8 @@ final class JdbcProperties
 
         /// Query timeout. Default is to use the JDBC driver's default configuration. If a duration suffix is not
         /// specified, seconds will be used.
-        @DurationUnit(ChronoUnit.SECONDS) Optional!Duration getQueryTimeout() const pure nothrow @nogc
+        @DurationUnit(ChronoUnit.SECONDS)
+        Optional!Duration getQueryTimeout() const pure nothrow @nogc
         {
             return queryTimeout;
         }
@@ -446,14 +448,14 @@ private string uniqueName(DataSourceProperties properties)
 /// Auto-configuration of the `DataSource`: Flint's pooled `FlintDataSource` (Boot's `HikariDataSource`), configured
 /// from `flint.datasource.*` and bound with `flint.datasource.hikari.*` (Hikari's property names), unless the
 /// application defines a `DataSource`.
-@AutoConfiguration @ConditionalOnClass(null, [
-    "flint.javax.sql.DataSource", "flint.engine.jdbc.FlintDataSource"
-])
+@AutoConfiguration
+@ConditionalOnClass(null, ["flint.javax.sql.DataSource", "flint.engine.jdbc.FlintDataSource"])
 @EnableConfigurationProperties([ClassRef(typeNameOf!DataSourceProperties)])
 final class DataSourceAutoConfiguration
 {
     /// The pooled data source.
-    @Bean @ConditionalOnMissingBean([ClassRef("flint.javax.sql.DataSource")])
+    @Bean
+    @ConditionalOnMissingBean([ClassRef("flint.javax.sql.DataSource")])
     @ConfigurationProperties("flint.datasource.hikari")
     FlintDataSource dataSource(DataSourceProperties properties)
     {
@@ -471,13 +473,15 @@ final class DataSourceAutoConfiguration
 
 /// Auto-configuration of a `JdbcTransactionManager` for the single `DataSource`, unless the application defines a
 /// `TransactionManager`; the `TransactionManagerCustomizers` (`flint.transaction.*`, execution listeners) apply to it.
-@transactionManagerOrder @ConditionalOnClass(null, [
+@transactionManagerOrder
+@ConditionalOnClass(null, [
     "flint.jdbc.support.JdbcTransactionManager", "flint.transaction.TransactionManager"
 ])
 final class DataSourceTransactionManagerAutoConfiguration
 {
     /// The transaction manager.
-    @Bean @ConditionalOnMissingBean([ClassRef("flint.transaction.TransactionManager")])
+    @Bean
+    @ConditionalOnMissingBean([ClassRef("flint.transaction.TransactionManager")])
     @ConditionalOnSingleCandidate(ClassRef("flint.javax.sql.DataSource"))
     JdbcTransactionManager transactionManager(DataSource dataSource,
             TransactionManagerCustomizers[] transactionManagerCustomizers = null)
@@ -512,15 +516,16 @@ private enum AutoConfiguration afterDataSource = () {
 /// Auto-configuration of a `JdbcTemplate` over the single `DataSource`, configured from `flint.jdbc.template.*`,
 /// unless the application defines `JdbcOperations`, and of a `NamedParameterJdbcTemplate` over it. Boot's
 /// `JdbcTemplateConfiguration` and `NamedParameterJdbcTemplateConfiguration` are folded in.
-@afterDataSource @ConditionalOnClass(null, [
-    "flint.javax.sql.DataSource", "flint.jdbc.core.JdbcTemplate"
-])
+@afterDataSource
+@ConditionalOnClass(null, ["flint.javax.sql.DataSource", "flint.jdbc.core.JdbcTemplate"])
 @ConditionalOnSingleCandidate(ClassRef("flint.javax.sql.DataSource"))
 @EnableConfigurationProperties([ClassRef(typeNameOf!JdbcProperties)])
 final class JdbcTemplateAutoConfiguration
 {
     /// The primary `JdbcTemplate`. A single `SQLExceptionTranslator` bean replaces the default translator.
-    @Bean @Primary @ConditionalOnMissingBean([ClassRef("flint.jdbc.core.JdbcOperations")])
+    @Bean
+    @Primary
+    @ConditionalOnMissingBean([ClassRef("flint.jdbc.core.JdbcOperations")])
     JdbcTemplate jdbcTemplate(DataSource dataSource, JdbcProperties properties,
             SQLExceptionTranslator[] sqlExceptionTranslators)
     {
@@ -541,7 +546,9 @@ final class JdbcTemplateAutoConfiguration
 
     /// The primary `NamedParameterJdbcTemplate` over the single `JdbcTemplate`, unless the application defines
     /// `NamedParameterJdbcOperations`.
-    @Bean @Primary @ConditionalOnSingleCandidate(ClassRef("flint.jdbc.core.JdbcTemplate"))
+    @Bean
+    @Primary
+    @ConditionalOnSingleCandidate(ClassRef("flint.jdbc.core.JdbcTemplate"))
     @ConditionalOnMissingBean([ClassRef("flint.jdbc.core.namedparam.NamedParameterJdbcOperations")])
     NamedParameterJdbcTemplate namedParameterJdbcTemplate(JdbcTemplate jdbcTemplate)
     {
@@ -551,12 +558,14 @@ final class JdbcTemplateAutoConfiguration
 
 /// Auto-configuration of a `JdbcClient` over the single `NamedParameterJdbcTemplate`, unless the application defines
 /// one.
-@afterJdbcTemplate @ConditionalOnSingleCandidate(ClassRef("flint.jdbc.core.namedparam.NamedParameterJdbcTemplate"))
+@afterJdbcTemplate
+@ConditionalOnSingleCandidate(ClassRef("flint.jdbc.core.namedparam.NamedParameterJdbcTemplate"))
 @ConditionalOnMissingBean([ClassRef("flint.jdbc.core.simple.JdbcClient")])
 final class JdbcClientAutoConfiguration
 {
     /// The client.
-    @Bean JdbcClient jdbcClient(NamedParameterJdbcTemplate jdbcTemplate)
+    @Bean
+    JdbcClient jdbcClient(NamedParameterJdbcTemplate jdbcTemplate)
     {
         return JdbcClient.create(jdbcTemplate);
     }
@@ -590,7 +599,8 @@ class ApplicationDataSourceScriptDatabaseInitializer : DataSourceScriptDatabaseI
 /// data scripts when the context creates the initializer, unless the application defines its own initializer.
 /// Boot's `DataSourceBuilder` for `flint.sql.init.username`/`password` joins with `DataSourceBuilder`; the scripts run
 /// on the application's data source until then.
-@AutoConfiguration @ConditionalOnSingleCandidate(ClassRef("flint.javax.sql.DataSource"))
+@AutoConfiguration
+@ConditionalOnSingleCandidate(ClassRef("flint.javax.sql.DataSource"))
 @ConditionalOnMissingBean([
     ClassRef("flint.boot.sql.autoconfigure.init.ApplicationScriptDatabaseInitializer")
 ])
@@ -599,8 +609,9 @@ class ApplicationDataSourceScriptDatabaseInitializer : DataSourceScriptDatabaseI
 final class DataSourceInitializationAutoConfiguration
 {
     /// The initializer, which runs the scripts once its properties are set.
-    @Bean ApplicationDataSourceScriptDatabaseInitializer dataSourceScriptDatabaseInitializer(
-            DataSource dataSource, SqlInitializationProperties properties)
+    @Bean
+    ApplicationDataSourceScriptDatabaseInitializer dataSourceScriptDatabaseInitializer(DataSource dataSource,
+            SqlInitializationProperties properties)
     {
         return new ApplicationDataSourceScriptDatabaseInitializer(dataSource, properties);
     }

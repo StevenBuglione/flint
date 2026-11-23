@@ -96,7 +96,8 @@ unittest
 
     static struct Reference
     {
-        @Size(0, size_t.max) const(char)[] text;
+        @Size(0, size_t.max)
+        const(char)[] text;
     }
 
     immutable string[] samples = [

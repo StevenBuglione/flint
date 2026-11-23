@@ -7,15 +7,19 @@ import std.stdio : write;
 
 private struct Leaf
 {
-    @Option("leaf", 'l', "Leaf option") bool leaf;
+    @Option("leaf", 'l', "Leaf option")
+    bool leaf;
 }
 
 @Command("completion fixture", "Exercise literal shell completion candidates")
 private struct Fixture
 {
-    @Option("text", 't', "Option taking a value") string text;
-    @Option("quoted ' `touch FLINT_CLI_BACKTICK` $(touch FLINT_CLI_SUBSHELL) ’", 'q', "Quoted option") bool quoted;
-    @Subcommand("child ' space", "Typed child command") Leaf child;
+    @Option("text", 't', "Option taking a value")
+    string text;
+    @Option("quoted ' `touch FLINT_CLI_BACKTICK` $(touch FLINT_CLI_SUBSHELL) ’", 'q', "Quoted option")
+    bool quoted;
+    @Subcommand("child ' space", "Typed child command")
+    Leaf child;
 }
 
 void main(string[] args)

@@ -16,10 +16,12 @@ import flint.context.annotation : Bean;
 
 /// Auto-configuration of `ApplicationAvailability`: an `ApplicationAvailabilityBean` tracking the context's
 /// availability events, unless the application defines one.
-@AutoConfiguration final class ApplicationAvailabilityAutoConfiguration
+@AutoConfiguration
+final class ApplicationAvailabilityAutoConfiguration
 {
     /// The application's availability.
-    @Bean @ConditionalOnMissingBean([ClassRef("flint.boot.availability.ApplicationAvailability")])
+    @Bean
+    @ConditionalOnMissingBean([ClassRef("flint.boot.availability.ApplicationAvailability")])
     ApplicationAvailabilityBean applicationAvailability()
     {
         return new ApplicationAvailabilityBean;

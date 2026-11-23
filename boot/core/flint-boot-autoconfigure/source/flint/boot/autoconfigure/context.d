@@ -33,7 +33,8 @@ final class MessageSourceProperties
     private string[] basename = ["messages"];
     private string[] commonMessages;
     private string encoding = "UTF-8";
-    @DurationUnit(ChronoUnit.SECONDS) private Optional!Duration cacheDuration;
+    @DurationUnit(ChronoUnit.SECONDS)
+    private Optional!Duration cacheDuration;
     private bool fallbackToSystemLocale = true;
     private bool alwaysUseMessageFormat = false;
     private bool useCodeAsDefaultMessage = false;
@@ -78,7 +79,8 @@ final class MessageSourceProperties
 
     /// Loaded resource bundle files cache duration. When not set, bundles are cached forever. If a duration suffix is
     /// not specified, seconds will be used.
-    @DurationUnit(ChronoUnit.SECONDS) Optional!Duration getCacheDuration() const pure nothrow @nogc
+    @DurationUnit(ChronoUnit.SECONDS)
+    Optional!Duration getCacheDuration() const pure nothrow @nogc
     {
         return cacheDuration;
     }
@@ -179,20 +181,23 @@ class ResourceBasedMessageSourceConfigurer
 
 /// Auto-configuration of the `messageSource` bean: a `ResourceBundleMessageSource` over `flint.messages.*`, unless
 /// the application defines a bean named `messageSource`.
-@AutoConfiguration @AutoConfigureOrder(int.min)
+@AutoConfiguration
+@AutoConfigureOrder(int.min)
 @EnableConfigurationProperties([ClassRef(typeNameOf!MessageSourceProperties)])
 final class MessageSourceAutoConfiguration
 {
     /// The configurer.
-    @Bean @ConditionalOnMissingBean ResourceBasedMessageSourceConfigurer resourceBasedMessageSourceConfigurer(
-            MessageSourceProperties properties)
+    @Bean
+    @ConditionalOnMissingBean
+    ResourceBasedMessageSourceConfigurer resourceBasedMessageSourceConfigurer(MessageSourceProperties properties)
     {
         return new ResourceBasedMessageSourceConfigurer(properties);
     }
 
     /// The message source.
-    @Bean @missingMessageSource ResourceBundleMessageSource messageSource(
-            ResourceBasedMessageSourceConfigurer configurer)
+    @Bean
+    @missingMessageSource
+    ResourceBundleMessageSource messageSource(ResourceBasedMessageSourceConfigurer configurer)
     {
         auto messageSource = new ResourceBundleMessageSource;
         configurer.configure(messageSource);

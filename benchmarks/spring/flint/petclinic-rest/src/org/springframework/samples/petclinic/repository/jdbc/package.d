@@ -46,7 +46,9 @@ private enum ownerColumns = "SELECT id, first_name, last_name, address, city, te
 // Owners
 
 /// A simple JDBC-based implementation of the `OwnerRepository` interface.
-@DependsOnDatabaseInitialization @Repository @Profile(["jdbc"])
+@DependsOnDatabaseInitialization
+@Repository
+@Profile(["jdbc"])
 class JdbcOwnerRepositoryImpl : OwnerRepository
 {
     private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
@@ -169,7 +171,8 @@ class JdbcOwnerRepositoryImpl : OwnerRepository
         return new PageImpl!Owner(owners, pageable, total);
     }
 
-    @Transactional override void delete_(Owner owner)
+    @Transactional
+    override void delete_(Owner owner)
     {
         auto ownerParams = params();
         ownerParams.put("id", Any.of(owner.getId()));
@@ -285,7 +288,9 @@ class JdbcPetVisitExtractor : OneToManyResultSetExtractor!(JdbcPet, Visit, int)
 private enum petColumns = "SELECT pets.id as pets_id, name, birth_date, type_id, owner_id FROM pets";
 
 /// A simple JDBC-based implementation of the `PetRepository` interface.
-@DependsOnDatabaseInitialization @Repository @Profile(["jdbc"])
+@DependsOnDatabaseInitialization
+@Repository
+@Profile(["jdbc"])
 class JdbcPetRepositoryImpl : PetRepository
 {
     private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
@@ -403,7 +408,9 @@ class JdbcPetRepositoryImpl : PetRepository
 // Pet types and specialties
 
 /// A simple JDBC-based implementation of the `PetTypeRepository` interface.
-@DependsOnDatabaseInitialization @Repository @Profile(["jdbc"])
+@DependsOnDatabaseInitialization
+@Repository
+@Profile(["jdbc"])
 class JdbcPetTypeRepositoryImpl : PetTypeRepository
 {
     private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
@@ -485,7 +492,9 @@ class JdbcPetTypeRepositoryImpl : PetTypeRepository
 }
 
 /// A simple JDBC-based implementation of the `SpecialtyRepository` interface.
-@DependsOnDatabaseInitialization @Repository @Profile(["jdbc"])
+@DependsOnDatabaseInitialization
+@Repository
+@Profile(["jdbc"])
 class JdbcSpecialtyRepositoryImpl : SpecialtyRepository
 {
     private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
@@ -550,7 +559,9 @@ class JdbcSpecialtyRepositoryImpl : SpecialtyRepository
 // Users, vets and visits
 
 /// A simple JDBC-based implementation of the `UserRepository` interface.
-@DependsOnDatabaseInitialization @Repository @Profile(["jdbc"])
+@DependsOnDatabaseInitialization
+@Repository
+@Profile(["jdbc"])
 class JdbcUserRepositoryImpl : UserRepository
 {
     private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
@@ -602,7 +613,9 @@ class JdbcUserRepositoryImpl : UserRepository
 }
 
 /// A simple JDBC-based implementation of the `VetRepository` interface.
-@DependsOnDatabaseInitialization @Repository @Profile(["jdbc"])
+@DependsOnDatabaseInitialization
+@Repository
+@Profile(["jdbc"])
 class JdbcVetRepositoryImpl : VetRepository
 {
     private JdbcTemplate jdbcTemplate;
@@ -690,7 +703,9 @@ class JdbcVetRepositoryImpl : VetRepository
 }
 
 /// A simple JDBC-based implementation of the `VisitRepository` interface.
-@DependsOnDatabaseInitialization @Repository @Profile(["jdbc"])
+@DependsOnDatabaseInitialization
+@Repository
+@Profile(["jdbc"])
 class JdbcVisitRepositoryImpl : VisitRepository
 {
     protected SimpleJdbcInsert insertVisit;

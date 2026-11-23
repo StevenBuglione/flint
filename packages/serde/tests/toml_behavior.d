@@ -10,7 +10,8 @@ import flint.serde.owned : deserializeToml;
 
 private struct Server
 {
-    @JsonRequired ushort port;
+    @JsonRequired
+    ushort port;
     @JsonName("server name")
     Text name;
     @JsonDefault("true")
@@ -294,7 +295,8 @@ unittest
     static struct Payload
     {
         int value;
-        @JsonIgnore void* context;
+        @JsonIgnore
+        void* context;
     }
 
     ubyte[128] backing;

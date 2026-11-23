@@ -14,12 +14,14 @@ import flint.stereotype : Component, Service;
 @safe:
 
 /// The application.
-@FlintBootApplication final class BadApplication
+@FlintBootApplication
+final class BadApplication
 {
 }
 
 /// FLINT-E1105: two constructors, none @Autowired.
-@Component class TwoConstructors
+@Component
+class TwoConstructors
 {
     /// One.
     this(int a)
@@ -38,7 +40,8 @@ interface Missing
 }
 
 /// ditto
-@Component class NeedsMissing
+@Component
+class NeedsMissing
 {
     /// Injection point.
     this(Missing missing)
@@ -47,7 +50,9 @@ interface Missing
 }
 
 /// FLINT-E1107 and FLINT-E1102.
-@Component @Profile("a & b | c") class Expressions
+@Component
+@Profile("a & b | c")
+class Expressions
 {
     /// SpEL that Flint AOT does not compile yet: a type reference.
     this(@Value("#{T(java.lang.Math).random()}") double random)
@@ -56,45 +61,54 @@ interface Missing
 }
 
 /// FLINT-E1108: a private lifecycle method.
-@Component class PrivateLifecycle
+@Component
+class PrivateLifecycle
 {
-    @PostConstruct private void start()
+    @PostConstruct
+    private void start()
     {
     }
 }
 
 /// FLINT-E1109: a final bean method in a proxied configuration.
-@Configuration class FinalBeanMethod
+@Configuration
+class FinalBeanMethod
 {
     /// Final.
-    @Bean final PrivateLifecycle lifecycle()
+    @Bean
+    final PrivateLifecycle lifecycle()
     {
         return null;
     }
 }
 
 /// FLINT-E1112, FLINT-W1111 and FLINT-E1113.
-@Service class Advised
+@Service
+class Advised
 {
-    @Cacheable("x") protected int hidden()
+    @Cacheable("x")
+    protected int hidden()
     {
         return 1;
     }
 
     /// Final, so not advised.
-    @Cacheable("y") final int sealed()
+    @Cacheable("y")
+    final int sealed()
     {
         return 2;
     }
 
     /// Returns a value.
-    @Async int later()
+    @Async
+    int later()
     {
         return 3;
     }
 
     /// FLINT-E1107: a security function that does not exist.
-    @PreAuthorize("frobnicate('x')") void guarded()
+    @PreAuthorize("frobnicate('x')")
+    void guarded()
     {
     }
 }
@@ -127,7 +141,8 @@ interface PetRepository : CrudRepository!(Pet, long)
 }
 
 /// FLINT-E1110: a constructor-injection cycle.
-@Component class Chicken
+@Component
+class Chicken
 {
     /// Needs an egg.
     this(Egg egg)
@@ -136,7 +151,8 @@ interface PetRepository : CrudRepository!(Pet, long)
 }
 
 /// ditto
-@Component class Egg
+@Component
+class Egg
 {
     /// Needs a chicken.
     this(Chicken chicken)
@@ -145,10 +161,12 @@ interface PetRepository : CrudRepository!(Pet, long)
 }
 
 /// FLINT-E1115: a bean that is not a class.
-@Configuration class ScalarBean
+@Configuration
+class ScalarBean
 {
     /// An int.
-    @Bean int answer()
+    @Bean
+    int answer()
     {
         return 42;
     }

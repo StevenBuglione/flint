@@ -17,7 +17,8 @@ else version (FlintDataMissingTable)
 {
     private struct Record
     {
-        @Id long id;
+        @Id
+        long id;
     }
 }
 else version (FlintDataDuplicateId)
@@ -25,8 +26,10 @@ else version (FlintDataDuplicateId)
     @Table("records")
     private struct Record
     {
-        @Id long id;
-        @Id long duplicate;
+        @Id
+        long id;
+        @Id
+        long duplicate;
     }
 }
 else version (FlintDataDuplicateColumn)
@@ -34,9 +37,12 @@ else version (FlintDataDuplicateColumn)
     @Table("records")
     private struct Record
     {
-        @Id long id;
-        @Column("label") long first;
-        @Column("LABEL") long duplicate;
+        @Id
+        long id;
+        @Column("label")
+        long first;
+        @Column("LABEL")
+        long duplicate;
     }
 }
 else version (FlintDataPointer)
@@ -44,7 +50,8 @@ else version (FlintDataPointer)
     @Table("records")
     private struct Record
     {
-        @Id long id;
+        @Id
+        long id;
         int* pointer;
     }
 }
@@ -57,7 +64,8 @@ else version (FlintDataClass)
     @Table("records")
     private struct Record
     {
-        @Id long id;
+        @Id
+        long id;
         Unsupported object;
     }
 }
@@ -66,7 +74,8 @@ else version (FlintDataDelegate)
     @Table("records")
     private struct Record
     {
-        @Id long id;
+        @Id
+        long id;
         void delegate() callback;
     }
 }
@@ -75,7 +84,8 @@ else version (FlintDataInvalidTable)
     @Table("invalid-table")
     private struct Record
     {
-        @Id long id;
+        @Id
+        long id;
     }
 }
 else version (FlintDataInvalidColumn)
@@ -83,8 +93,10 @@ else version (FlintDataInvalidColumn)
     @Table("records")
     private struct Record
     {
-        @Id long id;
-        @Column("invalid-column") long value;
+        @Id
+        long id;
+        @Column("invalid-column")
+        long value;
     }
 }
 else version (FlintDataDuplicateVersion)
@@ -92,9 +104,12 @@ else version (FlintDataDuplicateVersion)
     @Table("records")
     private struct Record
     {
-        @Id long id;
-        @Version long first;
-        @Version long duplicate;
+        @Id
+        long id;
+        @Version
+        long first;
+        @Version
+        long duplicate;
     }
 }
 else version (FlintDataWrongKey)
@@ -102,7 +117,8 @@ else version (FlintDataWrongKey)
     @Table("records")
     private struct Record
     {
-        @Id ulong id;
+        @Id
+        ulong id;
     }
 }
 

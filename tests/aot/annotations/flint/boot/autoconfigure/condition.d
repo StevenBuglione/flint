@@ -9,11 +9,13 @@ import flint.core.annotation : AliasFor, ClassRef;
 struct ConditionalOnProperty
 {
     /// Alias of `name`.
-    @AliasFor("name") string[] value;
+    @AliasFor("name")
+    string[] value;
     /// Prefix applied to each name.
     string prefix;
     /// Property names.
-    @AliasFor("value") string[] name;
+    @AliasFor("value")
+    string[] name;
     /// Expected value; empty means "present and not false".
     string havingValue;
     /// Whether a missing property matches.

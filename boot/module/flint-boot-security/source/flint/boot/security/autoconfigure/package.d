@@ -120,7 +120,8 @@ imported!"flint.engine.aot.descriptor".Descriptor[] flintAotDescriptors()
 // ---- end: generated region
 
 /// Auto-configuration of Spring Security's defaults: binds `flint.security.*`.
-@AutoConfiguration @ConditionalOnClass(null, ["flint.security.authentication.AuthenticationManager"])
+@AutoConfiguration
+@ConditionalOnClass(null, ["flint.security.authentication.AuthenticationManager"])
 @EnableConfigurationProperties([ClassRef(typeNameOf!SecurityProperties)])
 final class SecurityAutoConfiguration
 {
@@ -128,7 +129,8 @@ final class SecurityAutoConfiguration
 
 /// Auto-configuration of an `InMemoryUserDetailsManager` holding the `flint.security.user.*` user, unless the
 /// application defines its own way to authenticate.
-@AutoConfiguration @ConditionalOnClass(null, ["flint.security.authentication.AuthenticationManager"])
+@AutoConfiguration
+@ConditionalOnClass(null, ["flint.security.authentication.AuthenticationManager"])
 @ConditionalOnMissingBean([
     ClassRef("flint.security.authentication.AuthenticationManager"),
     ClassRef("flint.security.authentication.AuthenticationProvider"),
@@ -140,7 +142,8 @@ final class UserDetailsServiceAutoConfiguration
     private enum NOOP_PASSWORD_PREFIX = "{noop}";
 
     /// The default user; its password is logged when it was generated.
-    @Bean InMemoryUserDetailsManager inMemoryUserDetailsManager(SecurityProperties properties,
+    @Bean
+    InMemoryUserDetailsManager inMemoryUserDetailsManager(SecurityProperties properties,
             PasswordEncoder[] passwordEncoder)
     {
         auto user = properties.getUser();

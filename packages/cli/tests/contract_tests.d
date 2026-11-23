@@ -18,16 +18,26 @@ private enum Mode
 @Command("probe", "Parse a typed command", "2.0")
 private struct Options
 {
-    @Option("count", 'n', "Item count") int count = 1;
-    @Option("max", '\0', "Maximum") ulong latest;
-    @Option("rate", 'r', "Rate") double rate;
-    @Option("mode", 'm', "Mode") Mode mode;
-    @Option("name", 's', "Name") string name = "default";
-    @Option("values", 'v', "Value") string[] values;
-    @Option("along", 'a', "A") bool a;
-    @Option("below", 'b', "B") bool b;
-    @Option("clear", 'c', "C") bool c;
-    @Arg(0, "Files") string[] files;
+    @Option("count", 'n', "Item count")
+    int count = 1;
+    @Option("max", '\0', "Maximum")
+    ulong latest;
+    @Option("rate", 'r', "Rate")
+    double rate;
+    @Option("mode", 'm', "Mode")
+    Mode mode;
+    @Option("name", 's', "Name")
+    string name = "default";
+    @Option("values", 'v', "Value")
+    string[] values;
+    @Option("along", 'a', "A")
+    bool a;
+    @Option("below", 'b', "B")
+    bool b;
+    @Option("clear", 'c', "C")
+    bool c;
+    @Arg(0, "Files")
+    string[] files;
 }
 
 @("CLI-01 checked integer and float conversions, enum names and scalar duplication")
@@ -84,7 +94,8 @@ unittest
 
 private struct Offset
 {
-    @Arg(0, "Signed offset") int amount;
+    @Arg(0, "Signed offset")
+    int amount;
 }
 
 @("CLI-04 option terminator preserves dash-prefixed text and negative positionals")
@@ -116,8 +127,14 @@ unittest
 
 private struct RequiredEnvironment
 {
-    @Option("value", 'v', "Value") @Required @Environment("FLINT_CLI_TEST_VALUE_C95D") @Min(2) int value = 91;
-    @Option("text", 's', "Text") @Environment("FLINT_CLI_TEST_TEXT_C95D") string text = "default";
+    @Option("value", 'v', "Value")
+    @Required
+    @Environment("FLINT_CLI_TEST_VALUE_C95D")
+    @Min(2)
+    int value = 91;
+    @Option("text", 's', "Text")
+    @Environment("FLINT_CLI_TEST_TEXT_C95D")
+    string text = "default";
 }
 
 private void withEnvironment(string variable, string text, scope void delegate() @safe run)
@@ -171,7 +188,8 @@ unittest
 
 private struct Defaults
 {
-    @Option("names", 'n', "Names") string[] names = ["base"];
+    @Option("names", 'n', "Names")
+    string[] names = ["base"];
 }
 
 @("defaults are owned and explicit repeated options replace the default source")
@@ -186,21 +204,29 @@ unittest
 
 private struct Leaf
 {
-    @Option("target", 't', "Deploy target") @Required @NotBlank string target;
+    @Option("target", 't', "Deploy target")
+    @Required
+    @NotBlank
+    string target;
 }
 
 private struct Service
 {
-    @Subcommand("deploy", "Deploy service") Leaf deploy;
-    @Option("server", 's', "Server") string server = "local";
+    @Subcommand("deploy", "Deploy service")
+    Leaf deploy;
+    @Option("server", 's', "Server")
+    string server = "local";
 }
 
 @Command("cloud", "Manage services")
 private struct Root
 {
-    @Option("config", 'c', "Config path") string config = "application.toml";
-    @Subcommand("service", "Service operations") Service service;
-    @Subcommand("inactive", "This leaf is never selected") Leaf inactive;
+    @Option("config", 'c', "Config path")
+    string config = "application.toml";
+    @Subcommand("service", "Service operations")
+    Service service;
+    @Subcommand("inactive", "This leaf is never selected")
+    Leaf inactive;
 }
 
 @("nested command paths select explicit child DTOs and validate the active path only")
@@ -240,9 +266,13 @@ unittest
         "One two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen")
 private struct HelpDto
 {
-    @Option("beta", 'b', "Beta flag") bool beta;
-    @Option("alpha", 'a', "Alpha text") @Required string alpha;
-    @Arg(0, "Name") string name;
+    @Option("beta", 'b', "Beta flag")
+    bool beta;
+    @Option("alpha", 'a', "Alpha text")
+    @Required
+    string alpha;
+    @Arg(0, "Name")
+    string name;
 }
 
 @("help uses schema order, stable built-ins, and an 80-byte line limit")
@@ -272,42 +302,54 @@ private enum CanParse(T) = __traits(compiles, () @safe { parse!T([]); });
 
 private struct DuplicateLong
 {
-    @Option("name", 'a', "") int first;
-    @Option("name", 'b', "") int second;
+    @Option("name", 'a', "")
+    int first;
+    @Option("name", 'b', "")
+    int second;
 }
 
 private struct DuplicateShort
 {
-    @Option("first", 'a', "") int first;
-    @Option("second", 'a', "") int second;
+    @Option("first", 'a', "")
+    int first;
+    @Option("second", 'a', "")
+    int second;
 }
 
 private struct DuplicatePosition
 {
-    @Arg(0, "") int first;
-    @Arg(0, "") int second;
+    @Arg(0, "")
+    int first;
+    @Arg(0, "")
+    int second;
 }
 
 private struct DuplicateChild
 {
-    @Subcommand("common", "") Leaf first;
-    @Subcommand("common", "") Leaf second;
+    @Subcommand("common", "")
+    Leaf first;
+    @Subcommand("common", "")
+    Leaf second;
 }
 
 private struct InverseCollision
 {
-    @Option("first", 'a', "") bool first;
-    @Option("no-first", 'b', "") bool second;
+    @Option("first", 'a', "")
+    bool first;
+    @Option("no-first", 'b', "")
+    bool second;
 }
 
 private struct UnboundRequired
 {
-    @Required string value;
+    @Required
+    string value;
 }
 
 private struct Reserved
 {
-    @Option("help", '\0', "") string value;
+    @Option("help", '\0', "")
+    string value;
 }
 
 static assert(CanParse!Options);
@@ -353,8 +395,10 @@ unittest
 
 private struct Hostile
 {
-    @Option("quoted ' `touch FLINT_CLI_TICK` $(touch FLINT_CLI_SUB) \"dq\" \\ end", 'q', "Quoted") bool quoted;
-    @Subcommand("child ' $(touch FLINT_CLI_CHILD)", "Child") Leaf child;
+    @Option("quoted ' `touch FLINT_CLI_TICK` $(touch FLINT_CLI_SUB) \"dq\" \\ end", 'q', "Quoted")
+    bool quoted;
+    @Subcommand("child ' $(touch FLINT_CLI_CHILD)", "Child")
+    Leaf child;
 }
 
 /// Return true when every marker occurrence is inside a POSIX single-quoted word.

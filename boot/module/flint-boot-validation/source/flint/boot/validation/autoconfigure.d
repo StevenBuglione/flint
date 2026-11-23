@@ -36,13 +36,15 @@ interface ValidationConfigurationCustomizer
 /// Auto-configuration of the default `Validator`: a `LocalValidatorFactoryBean` with Boot's message interpolator,
 /// over the context's Flint AOT descriptors and customised by every `ValidationConfigurationCustomizer`, unless the
 /// application defines a `Validator`.
-@AutoConfiguration @ConditionalOnClass(null, [
+@AutoConfiguration
+@ConditionalOnClass(null, [
     "flint.jakarta.validation.Validator", "flint.hibernate.validator.HibernateValidator"
 ])
 final class ValidationAutoConfiguration
 {
     /// The default validator.
-    @Bean @ConditionalOnMissingBean([ClassRef("flint.jakarta.validation.Validator")])
+    @Bean
+    @ConditionalOnMissingBean([ClassRef("flint.jakarta.validation.Validator")])
     LocalValidatorFactoryBean defaultValidator(ValidationConfigurationCustomizer[] customizers,
             ApplicationContext context = null)
     {
@@ -59,8 +61,9 @@ final class ValidationAutoConfiguration
 
     /// Method validation of `@Validated` beans, with the context's Jakarta `Validator` (the default validator unless
     /// the application defines one), asked for when the post-processor is initialised.
-    @Bean @ConditionalOnMissingBean MethodValidationPostProcessor methodValidationPostProcessor(
-            ApplicationContext context)
+    @Bean
+    @ConditionalOnMissingBean
+    MethodValidationPostProcessor methodValidationPostProcessor(ApplicationContext context)
     {
         auto processor = new MethodValidationPostProcessor;
         auto environment = context.getEnvironment();

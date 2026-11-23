@@ -820,8 +820,8 @@ unittest
     const project = copyFixture("sample");
     scope (exit)
         remove(project);
-    edit(buildPath(project, "src", "shop", "app.d"), "@FlintBootApplication final class",
-            `@FlintBootApplication(excludeName: ["flintsample.autoconfig.ExcludedAutoConfiguration"]) final class`);
+    const excluding = `@FlintBootApplication(excludeName: ["flintsample.autoconfig.ExcludedAutoConfiguration"])`;
+    edit(buildPath(project, "src", "shop", "app.d"), "@FlintBootApplication\nfinal class", excluding ~ "\nfinal class");
     const root = repositoryRoot();
     AotRequest request;
     request.root = project;

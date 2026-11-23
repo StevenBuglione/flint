@@ -22,13 +22,16 @@ private struct Nested
 
 private struct Record
 {
-    @JsonRequired @JsonName("display")
+    @JsonRequired
+    @JsonName("display")
     Text name;
     int[2] sample;
-    @JsonFlatten Nested nested;
+    @JsonFlatten
+    Nested nested;
     @JsonDefault("42")
     ubyte count;
-    @JsonIgnore uint ignored;
+    @JsonIgnore
+    uint ignored;
 }
 
 private bool equal(ref scope RequestArena arena, Buffer buffer, scope const(char)[] expected) nothrow @nogc
@@ -324,9 +327,11 @@ unittest
 
     static struct SchemaValue
     {
-        @JsonRequired @JsonName("count")
+        @JsonRequired
+        @JsonName("count")
         byte amount;
-        @JsonIgnore int hidden;
+        @JsonIgnore
+        int hidden;
         Kind kind;
     }
 
@@ -389,7 +394,8 @@ unittest
         string[] names;
         Location[] where;
         Kind kind;
-        @JsonIgnore string hidden = "secret";
+        @JsonIgnore
+        string hidden = "secret";
     }
 
     Report report = Report("flint.check/1", true, ["a", "b\"c\n"], [Location("src/x.d", 3)], Kind.secondary);
@@ -471,7 +477,8 @@ unittest
     static struct Known
     {
         int known;
-        @JsonIgnore int skipped;
+        @JsonIgnore
+        int skipped;
     }
 
     static struct Open

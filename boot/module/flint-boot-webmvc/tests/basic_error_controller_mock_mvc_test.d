@@ -25,7 +25,8 @@ private enum ResponseStatus notFound = ResponseStatus(HttpStatus.NOT_FOUND, Http
 private enum ResponseStatus noContent = ResponseStatus(HttpStatus.NO_CONTENT, HttpStatus.NO_CONTENT);
 
 /// `@ResponseStatus(HttpStatus.NOT_FOUND)`.
-@notFound class NotFoundException : RuntimeException
+@notFound
+class NotFoundException : RuntimeException
 {
     /// With `message`.
     this(string message) pure nothrow
@@ -35,7 +36,8 @@ private enum ResponseStatus noContent = ResponseStatus(HttpStatus.NO_CONTENT, Ht
 }
 
 /// `@ResponseStatus(HttpStatus.NO_CONTENT)`.
-@noContent class NoContentException : RuntimeException
+@noContent
+class NoContentException : RuntimeException
 {
     /// With `message`.
     this(string message) pure nothrow
@@ -45,22 +47,26 @@ private enum ResponseStatus noContent = ResponseStatus(HttpStatus.NO_CONTENT, Ht
 }
 
 /// The test configuration's `Errors` controller.
-@RestController class MockMvcErrors
+@RestController
+class MockMvcErrors
 {
     /// Fails.
-    @RequestMapping("/") string home()
+    @RequestMapping("/")
+    string home()
     {
         throw new IllegalStateException("Expected!");
     }
 
     /// Fails with a 404.
-    @RequestMapping("/bang") string bang()
+    @RequestMapping("/bang")
+    string bang()
     {
         throw new NotFoundException("Expected!");
     }
 
     /// Fails binding `foo`.
-    @RequestMapping("/bind") string bind()
+    @RequestMapping("/bind")
+    string bind()
     {
         Map!(string, Any) target = new HashMap!(string, Any);
         target.put("foo", Any.of("foo"));
@@ -70,7 +76,8 @@ private enum ResponseStatus noContent = ResponseStatus(HttpStatus.NO_CONTENT, Ht
     }
 
     /// Fails with a 204.
-    @RequestMapping("/noContent") void noContentHandler()
+    @RequestMapping("/noContent")
+    void noContentHandler()
     {
         throw new NoContentException("Expected!");
     }

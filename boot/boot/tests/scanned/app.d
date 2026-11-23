@@ -12,7 +12,8 @@ struct JobProperties
     uint batch = 10;
 }
 
-@Service final class Jobs
+@Service
+final class Jobs
 {
     JobProperties properties;
     this(JobProperties properties)
@@ -21,7 +22,8 @@ struct JobProperties
     }
 }
 
-@Service final class StartupReport : CommandLineRunner
+@Service
+final class StartupReport : CommandLineRunner
 {
     static string[] seen;
     private Jobs jobs;
@@ -54,7 +56,9 @@ final class Unwanted
 
 alias UnwantedAutoConfiguration = AutoConfiguration!(Unwanted);
 
-@FlintApplication @Exclude!(UnwantedAutoConfiguration) final class ScannedApplication
+@FlintApplication
+@Exclude!(UnwantedAutoConfiguration)
+final class ScannedApplication
 {
     static int main(string[] args)
     {

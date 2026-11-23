@@ -8,8 +8,10 @@ import flint.serde : JsonName, decodeInto;
 
 private struct Invalid
 {
-    @JsonName("same") int first;
-    @JsonName("same") int second;
+    @JsonName("same")
+    int first;
+    @JsonName("same")
+    int second;
 }
 
 /// Instantiating the hot decoder must reject this DTO shape.

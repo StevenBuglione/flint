@@ -18,7 +18,8 @@ unittest
 @Table("notes")
 private struct Note
 {
-    @Id ulong id;
+    @Id
+    ulong id;
     Text title;
 }
 

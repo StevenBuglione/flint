@@ -726,7 +726,8 @@ version (FlintDelimiter)
     /// `ExampleCollectionBeanWithDelimiter`.
     final class ExampleCollectionBeanWithDelimiter
     {
-        @Delimiter("|") private Collection!ExampleEnum collection;
+        @Delimiter("|")
+        private Collection!ExampleEnum collection;
 
         Collection!ExampleEnum getCollection()
         {
@@ -951,7 +952,8 @@ version (FlintJavaTimeConversion)
     /// `ConverterAnnotatedExampleBean`.
     final class ConverterAnnotatedExampleBean
     {
-        @DateTimeFormat(ISO.DATE) private LocalDate date;
+        @DateTimeFormat(ISO.DATE)
+        private LocalDate date;
 
         LocalDate getDate()
         {

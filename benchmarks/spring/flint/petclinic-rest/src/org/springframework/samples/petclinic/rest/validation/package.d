@@ -20,7 +20,8 @@ import JakartaValidation = flint.jakarta.validation;
 @safe:
 
 /// Validates that a pet's birth date is neither in the future nor more than 50 years ago.
-@Constraint(validatedBy : [classOf!PetAgeValidator]) struct PetAgeValidation
+@Constraint(validatedBy : [classOf!PetAgeValidator])
+struct PetAgeValidation
 {
     /// The default message.
     string message = "Birth date must not be in the future or older than 50 years";
@@ -58,10 +59,12 @@ class PetAgeValidator : ConstraintValidator!(PetAgeValidation, LocalDate)
 }
 
 /// Binds `PetAgeValidator` to `PetAgeValidation` (see the module header).
-@Configuration class PetAgeValidationConfiguration
+@Configuration
+class PetAgeValidationConfiguration
 {
     /// The binding, applied to the application's validator configuration.
-    @Bean ValidationConfigurationCustomizer petAgeValidation()
+    @Bean
+    ValidationConfigurationCustomizer petAgeValidation()
     {
         return new PetAgeValidationBinding();
     }

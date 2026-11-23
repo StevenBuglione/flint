@@ -128,7 +128,9 @@ class SimpleHttpCodeStatusMapper : HttpCodeStatusMapper
 abstract class HealthDescriptor : OperationResponseBody
 {
     /// The status.
-    @JsonIgnore @JsonProperty("statusObject") abstract Status getStatus();
+    @JsonIgnore
+    @JsonProperty("statusObject")
+    abstract Status getStatus();
 }
 
 /// The descriptor of a health indicator: its status and details.
@@ -148,25 +150,31 @@ final class IndicatedHealthDescriptor : HealthDescriptor
         return new IndicatedHealthDescriptor(Health.up().build());
     }
 
-    @JsonIgnore @JsonProperty("statusObject") override Status getStatus()
+    @JsonIgnore
+    @JsonProperty("statusObject")
+    override Status getStatus()
     {
         return health.getStatus();
     }
 
     /// The status code, written as `status`.
-    @JsonProperty("status") string getStatusCode()
+    @JsonProperty("status")
+    string getStatusCode()
     {
         return getStatus().getCode();
     }
 
     /// The status description, written as `description` when not empty.
-    @JsonProperty("description") @nonEmpty string getStatusDescription()
+    @JsonProperty("description")
+    @nonEmpty
+    string getStatusDescription()
     {
         return getStatus().getDescription();
     }
 
     /// The details, written when not empty.
-    @nonEmpty LinkedHashMap!(string, Any) getDetails()
+    @nonEmpty
+    LinkedHashMap!(string, Any) getDetails()
     {
         return health.getDetails();
     }
@@ -196,43 +204,56 @@ class CompositeHealthDescriptor : HealthDescriptor
         }
     }
 
-    @JsonIgnore @JsonProperty("statusObject") override Status getStatus()
+    @JsonIgnore
+    @JsonProperty("statusObject")
+    override Status getStatus()
     {
         return status;
     }
 
     /// The status code, written as `status`.
-    @JsonProperty("status") string getStatusCode()
+    @JsonProperty("status")
+    string getStatusCode()
     {
         return getStatus().getCode();
     }
 
     /// The status description, written as `description` when not empty.
-    @JsonProperty("description") @nonEmpty string getStatusDescription()
+    @JsonProperty("description")
+    @nonEmpty
+    string getStatusDescription()
     {
         return getStatus().getDescription();
     }
 
     /// The components, for API v3.
-    @JsonIgnore @JsonProperty("componentsObject") LinkedHashMap!(string, HealthDescriptor) getComponents()
+    @JsonIgnore
+    @JsonProperty("componentsObject")
+    LinkedHashMap!(string, HealthDescriptor) getComponents()
     {
         return apiVersion == ApiVersion.V3 ? components : null;
     }
 
     /// The components, for API v2.
-    @JsonIgnore @JsonProperty("detailsObject") LinkedHashMap!(string, HealthDescriptor) getDetails()
+    @JsonIgnore
+    @JsonProperty("detailsObject")
+    LinkedHashMap!(string, HealthDescriptor) getDetails()
     {
         return apiVersion == ApiVersion.V2 ? components : null;
     }
 
     /// `getComponents` as Jackson writes it: each value as its runtime class, `components` when not empty.
-    @JsonProperty("components") @nonEmpty JsonMap getComponentsJson()
+    @JsonProperty("components")
+    @nonEmpty
+    JsonMap getComponentsJson()
     {
         return runtimeTyped(getComponents());
     }
 
     /// `getDetails` as Jackson writes it, `details` when not empty.
-    @JsonProperty("details") @nonEmpty JsonMap getDetailsJson()
+    @JsonProperty("details")
+    @nonEmpty
+    JsonMap getDetailsJson()
     {
         return runtimeTyped(getDetails());
     }
@@ -265,49 +286,63 @@ final class SystemHealthDescriptor : CompositeHealthDescriptor
         this.groups = groups;
     }
 
-    @JsonIgnore @JsonProperty("statusObject") override Status getStatus()
+    @JsonIgnore
+    @JsonProperty("statusObject")
+    override Status getStatus()
     {
         return super.getStatus();
     }
 
     /// The status code, written as `status`.
-    @JsonProperty("status") override string getStatusCode()
+    @JsonProperty("status")
+    override string getStatusCode()
     {
         return super.getStatusCode();
     }
 
     /// The status description, written as `description` when not empty.
-    @JsonProperty("description") @nonEmpty override string getStatusDescription()
+    @JsonProperty("description")
+    @nonEmpty
+    override string getStatusDescription()
     {
         return super.getStatusDescription();
     }
 
     /// The components, for API v3.
-    @JsonIgnore @JsonProperty("componentsObject") override LinkedHashMap!(string, HealthDescriptor) getComponents()
+    @JsonIgnore
+    @JsonProperty("componentsObject")
+    override LinkedHashMap!(string, HealthDescriptor) getComponents()
     {
         return super.getComponents();
     }
 
     /// The components, for API v2.
-    @JsonIgnore @JsonProperty("detailsObject") override LinkedHashMap!(string, HealthDescriptor) getDetails()
+    @JsonIgnore
+    @JsonProperty("detailsObject")
+    override LinkedHashMap!(string, HealthDescriptor) getDetails()
     {
         return super.getDetails();
     }
 
     /// `components`, when not empty.
-    @JsonProperty("components") @nonEmpty override JsonMap getComponentsJson()
+    @JsonProperty("components")
+    @nonEmpty
+    override JsonMap getComponentsJson()
     {
         return super.getComponentsJson();
     }
 
     /// `details`, when not empty.
-    @JsonProperty("details") @nonEmpty override JsonMap getDetailsJson()
+    @JsonProperty("details")
+    @nonEmpty
+    override JsonMap getDetailsJson()
     {
         return super.getDetailsJson();
     }
 
     /// The group names, sorted, written when not empty.
-    @nonEmpty string[] getGroups() pure nothrow @nogc
+    @nonEmpty
+    string[] getGroups() pure nothrow @nogc
     {
         return groups;
     }

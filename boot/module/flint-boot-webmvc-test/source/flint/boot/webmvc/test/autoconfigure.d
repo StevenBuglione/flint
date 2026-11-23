@@ -33,7 +33,8 @@ enum MockMvcPrint
 }
 
 /// Auto-configures a `MockMvc` bean in the test's context (`flint.test.mockmvc.*`).
-@ImportAutoConfiguration struct AutoConfigureMockMvc
+@ImportAutoConfiguration
+struct AutoConfigureMockMvc
 {
     /// HtmlUnit settings (`flint.test.mockmvc.htmlunit.*`).
     struct HtmlUnit
@@ -57,7 +58,9 @@ enum MockMvcPrint
 }
 
 /// A test of the MVC layer only: controllers, advice and converters, with MockMvc auto-configured.
-@AutoConfigureMockMvc @ImportAutoConfiguration struct WebMvcTest
+@AutoConfigureMockMvc
+@ImportAutoConfiguration
+struct WebMvcTest
 {
     /// Properties in `key=value` form.
     string[] properties;

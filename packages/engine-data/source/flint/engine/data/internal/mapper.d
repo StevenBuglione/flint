@@ -198,7 +198,8 @@ private Error assignRaw(T)(ref T field, ref scope RequestArena arena, scope cons
 
 private struct Utf8Value
 {
-    @Size(0, size_t.max) const(char)[] value;
+    @Size(0, size_t.max)
+    const(char)[] value;
 }
 
 private Error rawScalar(T)(ref T field, ref scope RequestArena arena, scope const(ubyte)[] input) nothrow @nogc

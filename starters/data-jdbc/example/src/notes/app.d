@@ -16,15 +16,18 @@ import flint.engine.web : Delete, Get, PathVariable, Post, RequestBody, RequestC
 struct Note
 {
     /// Primary key, generated on insert.
-    @Id ulong id;
+    @Id
+    ulong id;
     /// Required title.
-    @NotBlank Text title;
+    @NotBlank
+    Text title;
     /// Text of the note.
     Text body;
 }
 
 /// The notes repository.
-@Repository final class Notes : JdbcRepository!(Note, ulong)
+@Repository
+final class Notes : JdbcRepository!(Note, ulong)
 {
     /// Check the table against the migrated schema.
     this(DataSource source)
@@ -71,7 +74,8 @@ struct NoteController
 }
 
 /// The application.
-@FlintApplication final class NotesApplication
+@FlintApplication
+final class NotesApplication
 {
     /// Start the application.
     static int main(string[] args)

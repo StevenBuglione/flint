@@ -17,7 +17,8 @@ import flint.boot.context.properties : ClassRef;
 @safe:
 
 /// A test of the Data JDBC layer only.
-@ImportAutoConfiguration struct DataJdbcTest
+@ImportAutoConfiguration
+struct DataJdbcTest
 {
     /// Properties in `key=value` form.
     string[] properties;

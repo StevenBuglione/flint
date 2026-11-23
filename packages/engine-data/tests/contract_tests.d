@@ -11,41 +11,52 @@ import std.process : environment;
 @Table("records")
 private struct Entity
 {
-    @Id ulong id;
-    @Column("display_name") Text name;
+    @Id
+    ulong id;
+    @Column("display_name")
+    Text name;
     bool active;
     long amount;
     Nullable!Text alias_;
     Nullable!long count;
     Buffer wire;
-    @ReadOnly Text label;
-    @Version ulong revision;
+    @ReadOnly
+    Text label;
+    @Version
+    ulong revision;
 }
 
 @Table("records")
 private struct WrongType
 {
-    @Id ulong id;
-    @Column("display_name") int textAsInteger;
+    @Id
+    ulong id;
+    @Column("display_name")
+    int textAsInteger;
 }
 
 @Table("records")
 private struct NonNullable
 {
-    @Id ulong id;
-    @Column("alias_") Text required;
+    @Id
+    ulong id;
+    @Column("alias_")
+    Text required;
 }
 
 @Table("records")
 private struct AbsentColumn
 {
-    @Id ulong id;
-    @Column("missing_column") Text unavailable;
+    @Id
+    ulong id;
+    @Column("missing_column")
+    Text unavailable;
 }
 
 private struct Projection
 {
-    @Column("display") Text name;
+    @Column("display")
+    Text name;
     long amount;
 }
 

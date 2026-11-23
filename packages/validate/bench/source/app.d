@@ -7,14 +7,22 @@ import probe : Receipt, consume, printChecksum, runProbe, verify;
 
 private struct Fields8
 {
-    @Min(1) int v000;
-    @Min(1) int v001;
-    @Min(1) int v002;
-    @Min(1) int v003;
-    @Min(1) int v004;
-    @Min(1) int v005;
-    @Min(1) int v006;
-    @Min(1) int v007;
+    @Min(1)
+    int v000;
+    @Min(1)
+    int v001;
+    @Min(1)
+    int v002;
+    @Min(1)
+    int v003;
+    @Min(1)
+    int v004;
+    @Min(1)
+    int v005;
+    @Min(1)
+    int v006;
+    @Min(1)
+    int v007;
 }
 
 private Fields8 load8(scope const(int)[] data) nothrow @nogc
@@ -24,38 +32,70 @@ private Fields8 load8(scope const(int)[] data) nothrow @nogc
 
 private struct Fields32
 {
-    @Min(1) int v000;
-    @Min(1) int v001;
-    @Min(1) int v002;
-    @Min(1) int v003;
-    @Min(1) int v004;
-    @Min(1) int v005;
-    @Min(1) int v006;
-    @Min(1) int v007;
-    @Min(1) int v008;
-    @Min(1) int v009;
-    @Min(1) int v010;
-    @Min(1) int v011;
-    @Min(1) int v012;
-    @Min(1) int v013;
-    @Min(1) int v014;
-    @Min(1) int v015;
-    @Min(1) int v016;
-    @Min(1) int v017;
-    @Min(1) int v018;
-    @Min(1) int v019;
-    @Min(1) int v020;
-    @Min(1) int v021;
-    @Min(1) int v022;
-    @Min(1) int v023;
-    @Min(1) int v024;
-    @Min(1) int v025;
-    @Min(1) int v026;
-    @Min(1) int v027;
-    @Min(1) int v028;
-    @Min(1) int v029;
-    @Min(1) int v030;
-    @Min(1) int v031;
+    @Min(1)
+    int v000;
+    @Min(1)
+    int v001;
+    @Min(1)
+    int v002;
+    @Min(1)
+    int v003;
+    @Min(1)
+    int v004;
+    @Min(1)
+    int v005;
+    @Min(1)
+    int v006;
+    @Min(1)
+    int v007;
+    @Min(1)
+    int v008;
+    @Min(1)
+    int v009;
+    @Min(1)
+    int v010;
+    @Min(1)
+    int v011;
+    @Min(1)
+    int v012;
+    @Min(1)
+    int v013;
+    @Min(1)
+    int v014;
+    @Min(1)
+    int v015;
+    @Min(1)
+    int v016;
+    @Min(1)
+    int v017;
+    @Min(1)
+    int v018;
+    @Min(1)
+    int v019;
+    @Min(1)
+    int v020;
+    @Min(1)
+    int v021;
+    @Min(1)
+    int v022;
+    @Min(1)
+    int v023;
+    @Min(1)
+    int v024;
+    @Min(1)
+    int v025;
+    @Min(1)
+    int v026;
+    @Min(1)
+    int v027;
+    @Min(1)
+    int v028;
+    @Min(1)
+    int v029;
+    @Min(1)
+    int v030;
+    @Min(1)
+    int v031;
 }
 
 private Fields32 load32(scope const(int)[] data) nothrow @nogc
@@ -68,134 +108,262 @@ private Fields32 load32(scope const(int)[] data) nothrow @nogc
 
 private struct Fields128
 {
-    @Min(1) int v000;
-    @Min(1) int v001;
-    @Min(1) int v002;
-    @Min(1) int v003;
-    @Min(1) int v004;
-    @Min(1) int v005;
-    @Min(1) int v006;
-    @Min(1) int v007;
-    @Min(1) int v008;
-    @Min(1) int v009;
-    @Min(1) int v010;
-    @Min(1) int v011;
-    @Min(1) int v012;
-    @Min(1) int v013;
-    @Min(1) int v014;
-    @Min(1) int v015;
-    @Min(1) int v016;
-    @Min(1) int v017;
-    @Min(1) int v018;
-    @Min(1) int v019;
-    @Min(1) int v020;
-    @Min(1) int v021;
-    @Min(1) int v022;
-    @Min(1) int v023;
-    @Min(1) int v024;
-    @Min(1) int v025;
-    @Min(1) int v026;
-    @Min(1) int v027;
-    @Min(1) int v028;
-    @Min(1) int v029;
-    @Min(1) int v030;
-    @Min(1) int v031;
-    @Min(1) int v032;
-    @Min(1) int v033;
-    @Min(1) int v034;
-    @Min(1) int v035;
-    @Min(1) int v036;
-    @Min(1) int v037;
-    @Min(1) int v038;
-    @Min(1) int v039;
-    @Min(1) int v040;
-    @Min(1) int v041;
-    @Min(1) int v042;
-    @Min(1) int v043;
-    @Min(1) int v044;
-    @Min(1) int v045;
-    @Min(1) int v046;
-    @Min(1) int v047;
-    @Min(1) int v048;
-    @Min(1) int v049;
-    @Min(1) int v050;
-    @Min(1) int v051;
-    @Min(1) int v052;
-    @Min(1) int v053;
-    @Min(1) int v054;
-    @Min(1) int v055;
-    @Min(1) int v056;
-    @Min(1) int v057;
-    @Min(1) int v058;
-    @Min(1) int v059;
-    @Min(1) int v060;
-    @Min(1) int v061;
-    @Min(1) int v062;
-    @Min(1) int v063;
-    @Min(1) int v064;
-    @Min(1) int v065;
-    @Min(1) int v066;
-    @Min(1) int v067;
-    @Min(1) int v068;
-    @Min(1) int v069;
-    @Min(1) int v070;
-    @Min(1) int v071;
-    @Min(1) int v072;
-    @Min(1) int v073;
-    @Min(1) int v074;
-    @Min(1) int v075;
-    @Min(1) int v076;
-    @Min(1) int v077;
-    @Min(1) int v078;
-    @Min(1) int v079;
-    @Min(1) int v080;
-    @Min(1) int v081;
-    @Min(1) int v082;
-    @Min(1) int v083;
-    @Min(1) int v084;
-    @Min(1) int v085;
-    @Min(1) int v086;
-    @Min(1) int v087;
-    @Min(1) int v088;
-    @Min(1) int v089;
-    @Min(1) int v090;
-    @Min(1) int v091;
-    @Min(1) int v092;
-    @Min(1) int v093;
-    @Min(1) int v094;
-    @Min(1) int v095;
-    @Min(1) int v096;
-    @Min(1) int v097;
-    @Min(1) int v098;
-    @Min(1) int v099;
-    @Min(1) int v100;
-    @Min(1) int v101;
-    @Min(1) int v102;
-    @Min(1) int v103;
-    @Min(1) int v104;
-    @Min(1) int v105;
-    @Min(1) int v106;
-    @Min(1) int v107;
-    @Min(1) int v108;
-    @Min(1) int v109;
-    @Min(1) int v110;
-    @Min(1) int v111;
-    @Min(1) int v112;
-    @Min(1) int v113;
-    @Min(1) int v114;
-    @Min(1) int v115;
-    @Min(1) int v116;
-    @Min(1) int v117;
-    @Min(1) int v118;
-    @Min(1) int v119;
-    @Min(1) int v120;
-    @Min(1) int v121;
-    @Min(1) int v122;
-    @Min(1) int v123;
-    @Min(1) int v124;
-    @Min(1) int v125;
-    @Min(1) int v126;
-    @Min(1) int v127;
+    @Min(1)
+    int v000;
+    @Min(1)
+    int v001;
+    @Min(1)
+    int v002;
+    @Min(1)
+    int v003;
+    @Min(1)
+    int v004;
+    @Min(1)
+    int v005;
+    @Min(1)
+    int v006;
+    @Min(1)
+    int v007;
+    @Min(1)
+    int v008;
+    @Min(1)
+    int v009;
+    @Min(1)
+    int v010;
+    @Min(1)
+    int v011;
+    @Min(1)
+    int v012;
+    @Min(1)
+    int v013;
+    @Min(1)
+    int v014;
+    @Min(1)
+    int v015;
+    @Min(1)
+    int v016;
+    @Min(1)
+    int v017;
+    @Min(1)
+    int v018;
+    @Min(1)
+    int v019;
+    @Min(1)
+    int v020;
+    @Min(1)
+    int v021;
+    @Min(1)
+    int v022;
+    @Min(1)
+    int v023;
+    @Min(1)
+    int v024;
+    @Min(1)
+    int v025;
+    @Min(1)
+    int v026;
+    @Min(1)
+    int v027;
+    @Min(1)
+    int v028;
+    @Min(1)
+    int v029;
+    @Min(1)
+    int v030;
+    @Min(1)
+    int v031;
+    @Min(1)
+    int v032;
+    @Min(1)
+    int v033;
+    @Min(1)
+    int v034;
+    @Min(1)
+    int v035;
+    @Min(1)
+    int v036;
+    @Min(1)
+    int v037;
+    @Min(1)
+    int v038;
+    @Min(1)
+    int v039;
+    @Min(1)
+    int v040;
+    @Min(1)
+    int v041;
+    @Min(1)
+    int v042;
+    @Min(1)
+    int v043;
+    @Min(1)
+    int v044;
+    @Min(1)
+    int v045;
+    @Min(1)
+    int v046;
+    @Min(1)
+    int v047;
+    @Min(1)
+    int v048;
+    @Min(1)
+    int v049;
+    @Min(1)
+    int v050;
+    @Min(1)
+    int v051;
+    @Min(1)
+    int v052;
+    @Min(1)
+    int v053;
+    @Min(1)
+    int v054;
+    @Min(1)
+    int v055;
+    @Min(1)
+    int v056;
+    @Min(1)
+    int v057;
+    @Min(1)
+    int v058;
+    @Min(1)
+    int v059;
+    @Min(1)
+    int v060;
+    @Min(1)
+    int v061;
+    @Min(1)
+    int v062;
+    @Min(1)
+    int v063;
+    @Min(1)
+    int v064;
+    @Min(1)
+    int v065;
+    @Min(1)
+    int v066;
+    @Min(1)
+    int v067;
+    @Min(1)
+    int v068;
+    @Min(1)
+    int v069;
+    @Min(1)
+    int v070;
+    @Min(1)
+    int v071;
+    @Min(1)
+    int v072;
+    @Min(1)
+    int v073;
+    @Min(1)
+    int v074;
+    @Min(1)
+    int v075;
+    @Min(1)
+    int v076;
+    @Min(1)
+    int v077;
+    @Min(1)
+    int v078;
+    @Min(1)
+    int v079;
+    @Min(1)
+    int v080;
+    @Min(1)
+    int v081;
+    @Min(1)
+    int v082;
+    @Min(1)
+    int v083;
+    @Min(1)
+    int v084;
+    @Min(1)
+    int v085;
+    @Min(1)
+    int v086;
+    @Min(1)
+    int v087;
+    @Min(1)
+    int v088;
+    @Min(1)
+    int v089;
+    @Min(1)
+    int v090;
+    @Min(1)
+    int v091;
+    @Min(1)
+    int v092;
+    @Min(1)
+    int v093;
+    @Min(1)
+    int v094;
+    @Min(1)
+    int v095;
+    @Min(1)
+    int v096;
+    @Min(1)
+    int v097;
+    @Min(1)
+    int v098;
+    @Min(1)
+    int v099;
+    @Min(1)
+    int v100;
+    @Min(1)
+    int v101;
+    @Min(1)
+    int v102;
+    @Min(1)
+    int v103;
+    @Min(1)
+    int v104;
+    @Min(1)
+    int v105;
+    @Min(1)
+    int v106;
+    @Min(1)
+    int v107;
+    @Min(1)
+    int v108;
+    @Min(1)
+    int v109;
+    @Min(1)
+    int v110;
+    @Min(1)
+    int v111;
+    @Min(1)
+    int v112;
+    @Min(1)
+    int v113;
+    @Min(1)
+    int v114;
+    @Min(1)
+    int v115;
+    @Min(1)
+    int v116;
+    @Min(1)
+    int v117;
+    @Min(1)
+    int v118;
+    @Min(1)
+    int v119;
+    @Min(1)
+    int v120;
+    @Min(1)
+    int v121;
+    @Min(1)
+    int v122;
+    @Min(1)
+    int v123;
+    @Min(1)
+    int v124;
+    @Min(1)
+    int v125;
+    @Min(1)
+    int v126;
+    @Min(1)
+    int v127;
 }
 
 private Fields128 load128(scope const(int)[] data) nothrow @nogc
@@ -239,7 +407,8 @@ pragma(inline, false) private bool patternTrial(scope const(char)[] data) nothro
 {
     struct Expression
     {
-        @Pattern("(a+)+b") const(char)[] value;
+        @Pattern("(a+)+b")
+        const(char)[] value;
     }
 
     scope dto = Expression(data);

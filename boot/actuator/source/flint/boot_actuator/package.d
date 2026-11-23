@@ -31,7 +31,8 @@ struct ManagementProperties
 }
 
 /// The actuator registry, opened at start-up, attached to the server, and closed at shutdown.
-@Service final class Observability : ServerCustomizer
+@Service
+final class Observability : ServerCustomizer
 {
     private ManagementProperties properties;
     private Registry store;
@@ -43,7 +44,8 @@ struct ManagementProperties
     }
 
     /// Open the registry, and the OTLP exporter when an endpoint is configured.
-    @PostConstruct Error open()
+    @PostConstruct
+    Error open()
     {
         import flint.engine.actuator : ActuatorOptions;
 
@@ -68,7 +70,8 @@ struct ManagementProperties
     }
 
     /// Report not-ready, and finish a bounded export.
-    @PreDestroy void close() nothrow
+    @PreDestroy
+    void close() nothrow
     {
         import flint.conc : Context;
 

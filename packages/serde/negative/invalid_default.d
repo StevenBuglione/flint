@@ -8,7 +8,8 @@ import flint.serde : JsonDefault, decodeInto;
 
 private struct Invalid
 {
-    @JsonDefault("256") ubyte value;
+    @JsonDefault("256")
+    ubyte value;
 }
 
 /// Instantiating the hot decoder must reject this DTO shape.

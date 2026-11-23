@@ -16,14 +16,20 @@ enum OwnerStatus
 }
 
 /// An owner row.
-@Table("owners") struct Owner
+@Table("owners")
+struct Owner
 {
     /// Primary key.
-    @Id long id;
+    @Id
+    long id;
     /// First name.
-    @NotBlank string firstName;
+    @NotBlank
+    string firstName;
     /// Last name.
-    @NotBlank @Size(max : 30) @Column("surname") string lastName;
+    @NotBlank
+    @Size(max : 30)
+    @Column("surname")
+    string lastName;
     /// City.
     string city;
 }

@@ -34,7 +34,8 @@ struct Customer
 
 /// `@SpringBootApplication public class RelationalDataAccessApplication implements CommandLineRunner`; its `main`,
 /// which runs `SpringApplication.run(RelationalDataAccessApplication.class, args)`, is the mixin's.
-@FlintBootApplication class RelationalDataAccessApplication : CommandLineRunner
+@FlintBootApplication
+class RelationalDataAccessApplication : CommandLineRunner
 {
     private JdbcTemplate jdbcTemplate;
 

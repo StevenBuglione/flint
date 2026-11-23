@@ -18,7 +18,8 @@ import flint.web.bind.annotation : GetMapping, RequestParam, RestController;
 
 /// `@SpringBootApplication public class RestServiceApplication`; its `main`, which runs
 /// `SpringApplication.run(RestServiceApplication.class, args)`, is the mixin's.
-@FlintBootApplication final class RestServiceApplication
+@FlintBootApplication
+final class RestServiceApplication
 {
 }
 
@@ -32,7 +33,8 @@ struct Greeting
 }
 
 /// The guide's controller.
-@RestController class GreetingController
+@RestController
+class GreetingController
 {
     private enum string template_ = "Hello, %s!";
     private AtomicLong counter;
@@ -44,7 +46,8 @@ struct Greeting
     }
 
     ///
-    @GetMapping("/greeting") Greeting greeting(@RequestParam(value : "name", defaultValue:
+    @GetMapping("/greeting")
+    Greeting greeting(@RequestParam(value : "name", defaultValue:
             "World") string name)
     {
         return Greeting(counter.incrementAndGet(), String.format(template_, name));

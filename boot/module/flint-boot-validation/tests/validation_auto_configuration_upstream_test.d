@@ -129,7 +129,8 @@ version (FlintMethodValidationProxies)
     import flint.validation.annotation : Validated;
 
     /// `SampleService`.
-    @Validated class SampleService
+    @Validated
+    class SampleService
     {
         /// `@Size(min = 3, max = 10) String name`.
         void doSomething(@(imported!"flint.jakarta.validation.constraints".Size(3, 10)) string)

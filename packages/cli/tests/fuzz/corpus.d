@@ -7,10 +7,14 @@ import flint.cli : Arg, Option, ParseOptions, parse;
 
 private struct Inputs
 {
-    @Option("count", 'n', "Count") int count;
-    @Option("name", 's', "Name") string name;
-    @Option("enable", 'e', "Flag") bool enable;
-    @Arg(0, "Trailing text") string[] paths;
+    @Option("count", 'n', "Count")
+    int count;
+    @Option("name", 's', "Name")
+    string name;
+    @Option("enable", 'e', "Flag")
+    bool enable;
+    @Arg(0, "Trailing text")
+    string[] paths;
 }
 
 private uint random(ref uint seed) pure nothrow @nogc

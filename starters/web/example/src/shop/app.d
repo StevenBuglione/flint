@@ -11,7 +11,8 @@ import shop.greeting : greet;
 @safe:
 
 /// The application: its package, src/shop/, is scanned for beans at compile time.
-@FlintApplication final class ShopApplication
+@FlintApplication
+final class ShopApplication
 {
     /// Start the application.
     static int main(string[] args)
@@ -27,7 +28,8 @@ mixin FlintMain!ShopApplication;
 struct AppSettings
 {
     /// Greeting prefix.
-    @Required string greeting;
+    @Required
+    string greeting;
 }
 
 /// A greeting.
@@ -38,7 +40,8 @@ struct Message
 }
 
 /// Greets people.
-@Service final class Greeter
+@Service
+final class Greeter
 {
     private AppSettings settings;
 

@@ -581,7 +581,8 @@ struct TimeoutSettings
     import flint.boot.convert : ChronoUnit, DurationUnit;
 
     /// Bare numbers are seconds.
-    @DurationUnit(ChronoUnit.SECONDS) Duration timeout;
+    @DurationUnit(ChronoUnit.SECONDS)
+    Duration timeout;
     /// Bare numbers are milliseconds.
     Duration delay;
 }

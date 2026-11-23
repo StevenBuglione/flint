@@ -12,7 +12,8 @@ import std.stdio : write, writeln;
 struct Options
 {
     /// Name printed in the greeting.
-    @Option("name", 'n', "Name to greet") string name = "world";
+    @Option("name", 'n', "Name to greet")
+    string name = "world";
 }
 
 /// Required application configuration bound at startup.
@@ -20,7 +21,8 @@ struct Options
 struct Settings
 {
     /// Localized greeting prefix.
-    @Required string greeting;
+    @Required
+    string greeting;
 }
 
 int main(string[] args)

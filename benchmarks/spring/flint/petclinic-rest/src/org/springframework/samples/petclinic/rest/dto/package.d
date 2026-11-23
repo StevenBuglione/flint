@@ -49,14 +49,19 @@ class PetTypeFieldsDto
     }
 
     ///
-    @NotNull @Pattern(regexp : "^[\\p{L}][\\p{L}\\s\\-']{0,79}$") @Size(min : 1, max:
-            80) @JsonProperty("name") string getName()
+    @NotNull
+    @Pattern(regexp : "^[\\p{L}][\\p{L}\\s\\-']{0,79}$")
+    @Size(min : 1, max:
+            80)
+    @JsonProperty("name")
+    string getName()
     {
         return name_;
     }
 
     ///
-    @JsonProperty("name") void setName(string name)
+    @JsonProperty("name")
+    void setName(string name)
     {
         this.name_ = name;
     }
@@ -88,14 +93,19 @@ class PetTypeDto
     }
 
     ///
-    @NotNull @Pattern(regexp : "^[\\p{L}][\\p{L}\\s\\-']{0,79}$") @Size(min : 1, max:
-            80) @JsonProperty("name") string getName()
+    @NotNull
+    @Pattern(regexp : "^[\\p{L}][\\p{L}\\s\\-']{0,79}$")
+    @Size(min : 1, max:
+            80)
+    @JsonProperty("name")
+    string getName()
     {
         return name_;
     }
 
     ///
-    @JsonProperty("name") void setName(string name)
+    @JsonProperty("name")
+    void setName(string name)
     {
         this.name_ = name;
     }
@@ -108,13 +118,17 @@ class PetTypeDto
     }
 
     ///
-    @NotNull @Min(0) @JsonProperty("id") Nullable!int getId()
+    @NotNull
+    @Min(0)
+    @JsonProperty("id")
+    Nullable!int getId()
     {
         return id_;
     }
 
     ///
-    @JsonProperty("id") void setId(Nullable!int id)
+    @JsonProperty("id")
+    void setId(Nullable!int id)
     {
         this.id_ = id;
     }
@@ -146,13 +160,16 @@ class VisitFieldsDto
     }
 
     ///
-    @NotNull @JsonProperty("date") LocalDate getDate()
+    @NotNull
+    @JsonProperty("date")
+    LocalDate getDate()
     {
         return date_;
     }
 
     ///
-    @JsonProperty("date") void setDate(LocalDate date)
+    @JsonProperty("date")
+    void setDate(LocalDate date)
     {
         this.date_ = date;
     }
@@ -165,14 +182,19 @@ class VisitFieldsDto
     }
 
     ///
-    @NotNull @Pattern(regexp : "[\\s\\S]*\\S[\\s\\S]*") @Size(min : 1, max:
-            255) @JsonProperty("description") string getDescription()
+    @NotNull
+    @Pattern(regexp : "[\\s\\S]*\\S[\\s\\S]*")
+    @Size(min : 1, max:
+            255)
+    @JsonProperty("description")
+    string getDescription()
     {
         return description_;
     }
 
     ///
-    @JsonProperty("description") void setDescription(string description)
+    @JsonProperty("description")
+    void setDescription(string description)
     {
         this.description_ = description;
     }
@@ -208,13 +230,16 @@ class VisitDto
     }
 
     ///
-    @NotNull @JsonProperty("date") LocalDate getDate()
+    @NotNull
+    @JsonProperty("date")
+    LocalDate getDate()
     {
         return date_;
     }
 
     ///
-    @JsonProperty("date") void setDate(LocalDate date)
+    @JsonProperty("date")
+    void setDate(LocalDate date)
     {
         this.date_ = date;
     }
@@ -227,14 +252,19 @@ class VisitDto
     }
 
     ///
-    @NotNull @Pattern(regexp : "[\\s\\S]*\\S[\\s\\S]*") @Size(min : 1, max:
-            255) @JsonProperty("description") string getDescription()
+    @NotNull
+    @Pattern(regexp : "[\\s\\S]*\\S[\\s\\S]*")
+    @Size(min : 1, max:
+            255)
+    @JsonProperty("description")
+    string getDescription()
     {
         return description_;
     }
 
     ///
-    @JsonProperty("description") void setDescription(string description)
+    @JsonProperty("description")
+    void setDescription(string description)
     {
         this.description_ = description;
     }
@@ -247,13 +277,16 @@ class VisitDto
     }
 
     ///
-    @Min(0) @JsonProperty("id") Nullable!int getId()
+    @Min(0)
+    @JsonProperty("id")
+    Nullable!int getId()
     {
         return id_;
     }
 
     ///
-    @JsonProperty("id") void setId(Nullable!int id)
+    @JsonProperty("id")
+    void setId(Nullable!int id)
     {
         this.id_ = id;
     }
@@ -266,13 +299,17 @@ class VisitDto
     }
 
     ///
-    @NotNull @Min(0) @JsonProperty("petId") Nullable!int getPetId()
+    @NotNull
+    @Min(0)
+    @JsonProperty("petId")
+    Nullable!int getPetId()
     {
         return petId_;
     }
 
     ///
-    @JsonProperty("petId") void setPetId(Nullable!int petId)
+    @JsonProperty("petId")
+    void setPetId(Nullable!int petId)
     {
         this.petId_ = petId;
     }
@@ -307,14 +344,19 @@ class PetFieldsDto
     }
 
     ///
-    @NotNull @Pattern(regexp : "[\\s\\S]*\\S[\\s\\S]*") @Size(min : 1, max:
-            30) @JsonProperty("name") string getName()
+    @NotNull
+    @Pattern(regexp : "[\\s\\S]*\\S[\\s\\S]*")
+    @Size(min : 1, max:
+            30)
+    @JsonProperty("name")
+    string getName()
     {
         return name_;
     }
 
     ///
-    @JsonProperty("name") void setName(string name)
+    @JsonProperty("name")
+    void setName(string name)
     {
         this.name_ = name;
     }
@@ -327,13 +369,17 @@ class PetFieldsDto
     }
 
     ///
-    @NotNull @PetAgeValidation @JsonProperty("birthDate") LocalDate getBirthDate()
+    @NotNull
+    @PetAgeValidation
+    @JsonProperty("birthDate")
+    LocalDate getBirthDate()
     {
         return birthDate_;
     }
 
     ///
-    @JsonProperty("birthDate") void setBirthDate(LocalDate birthDate)
+    @JsonProperty("birthDate")
+    void setBirthDate(LocalDate birthDate)
     {
         this.birthDate_ = birthDate;
     }
@@ -346,13 +392,17 @@ class PetFieldsDto
     }
 
     ///
-    @NotNull @Valid @JsonProperty("type") PetTypeDto getType()
+    @NotNull
+    @Valid
+    @JsonProperty("type")
+    PetTypeDto getType()
     {
         return type_;
     }
 
     ///
-    @JsonProperty("type") void setType(PetTypeDto type)
+    @JsonProperty("type")
+    void setType(PetTypeDto type)
     {
         this.type_ = type;
     }
@@ -393,14 +443,19 @@ class PetDto
     }
 
     ///
-    @NotNull @Pattern(regexp : "[\\s\\S]*\\S[\\s\\S]*") @Size(min : 1, max:
-            30) @JsonProperty("name") string getName()
+    @NotNull
+    @Pattern(regexp : "[\\s\\S]*\\S[\\s\\S]*")
+    @Size(min : 1, max:
+            30)
+    @JsonProperty("name")
+    string getName()
     {
         return name_;
     }
 
     ///
-    @JsonProperty("name") void setName(string name)
+    @JsonProperty("name")
+    void setName(string name)
     {
         this.name_ = name;
     }
@@ -413,13 +468,17 @@ class PetDto
     }
 
     ///
-    @NotNull @PetAgeValidation @JsonProperty("birthDate") LocalDate getBirthDate()
+    @NotNull
+    @PetAgeValidation
+    @JsonProperty("birthDate")
+    LocalDate getBirthDate()
     {
         return birthDate_;
     }
 
     ///
-    @JsonProperty("birthDate") void setBirthDate(LocalDate birthDate)
+    @JsonProperty("birthDate")
+    void setBirthDate(LocalDate birthDate)
     {
         this.birthDate_ = birthDate;
     }
@@ -432,13 +491,17 @@ class PetDto
     }
 
     ///
-    @NotNull @Valid @JsonProperty("type") PetTypeDto getType()
+    @NotNull
+    @Valid
+    @JsonProperty("type")
+    PetTypeDto getType()
     {
         return type_;
     }
 
     ///
-    @JsonProperty("type") void setType(PetTypeDto type)
+    @JsonProperty("type")
+    void setType(PetTypeDto type)
     {
         this.type_ = type;
     }
@@ -451,13 +514,16 @@ class PetDto
     }
 
     ///
-    @Min(0) @JsonProperty("id") Nullable!int getId()
+    @Min(0)
+    @JsonProperty("id")
+    Nullable!int getId()
     {
         return id_;
     }
 
     ///
-    @JsonProperty("id") void setId(Nullable!int id)
+    @JsonProperty("id")
+    void setId(Nullable!int id)
     {
         this.id_ = id;
     }
@@ -470,13 +536,16 @@ class PetDto
     }
 
     ///
-    @Min(0) @JsonProperty("ownerId") Nullable!int getOwnerId()
+    @Min(0)
+    @JsonProperty("ownerId")
+    Nullable!int getOwnerId()
     {
         return ownerId_;
     }
 
     ///
-    @JsonProperty("ownerId") void setOwnerId(Nullable!int ownerId)
+    @JsonProperty("ownerId")
+    void setOwnerId(Nullable!int ownerId)
     {
         this.ownerId_ = ownerId;
     }
@@ -498,13 +567,16 @@ class PetDto
     }
 
     ///
-    @Valid @JsonProperty("visits") List!VisitDto getVisits()
+    @Valid
+    @JsonProperty("visits")
+    List!VisitDto getVisits()
     {
         return visits_;
     }
 
     ///
-    @JsonProperty("visits") void setVisits(List!VisitDto visits)
+    @JsonProperty("visits")
+    void setVisits(List!VisitDto visits)
     {
         this.visits_ = visits;
     }
@@ -542,14 +614,19 @@ class OwnerFieldsDto
     }
 
     ///
-    @NotNull @Pattern(regexp : "^[\\p{L}]+([ '-][\\p{L}]+){0,2}$") @Size(min : 1, max:
-            30) @JsonProperty("firstName") string getFirstName()
+    @NotNull
+    @Pattern(regexp : "^[\\p{L}]+([ '-][\\p{L}]+){0,2}$")
+    @Size(min : 1, max:
+            30)
+    @JsonProperty("firstName")
+    string getFirstName()
     {
         return firstName_;
     }
 
     ///
-    @JsonProperty("firstName") void setFirstName(string firstName)
+    @JsonProperty("firstName")
+    void setFirstName(string firstName)
     {
         this.firstName_ = firstName;
     }
@@ -562,14 +639,19 @@ class OwnerFieldsDto
     }
 
     ///
-    @NotNull @Pattern(regexp : "^[\\p{L}]+([ '-][\\p{L}]+){0,2}\\.?$") @Size(min : 1, max:
-            30) @JsonProperty("lastName") string getLastName()
+    @NotNull
+    @Pattern(regexp : "^[\\p{L}]+([ '-][\\p{L}]+){0,2}\\.?$")
+    @Size(min : 1, max:
+            30)
+    @JsonProperty("lastName")
+    string getLastName()
     {
         return lastName_;
     }
 
     ///
-    @JsonProperty("lastName") void setLastName(string lastName)
+    @JsonProperty("lastName")
+    void setLastName(string lastName)
     {
         this.lastName_ = lastName;
     }
@@ -582,14 +664,19 @@ class OwnerFieldsDto
     }
 
     ///
-    @NotNull @Pattern(regexp : "[\\s\\S]*\\S[\\s\\S]*") @Size(min : 1, max:
-            255) @JsonProperty("address") string getAddress()
+    @NotNull
+    @Pattern(regexp : "[\\s\\S]*\\S[\\s\\S]*")
+    @Size(min : 1, max:
+            255)
+    @JsonProperty("address")
+    string getAddress()
     {
         return address_;
     }
 
     ///
-    @JsonProperty("address") void setAddress(string address)
+    @JsonProperty("address")
+    void setAddress(string address)
     {
         this.address_ = address;
     }
@@ -602,14 +689,19 @@ class OwnerFieldsDto
     }
 
     ///
-    @NotNull @Pattern(regexp : "[\\s\\S]*\\S[\\s\\S]*") @Size(min : 1, max:
-            80) @JsonProperty("city") string getCity()
+    @NotNull
+    @Pattern(regexp : "[\\s\\S]*\\S[\\s\\S]*")
+    @Size(min : 1, max:
+            80)
+    @JsonProperty("city")
+    string getCity()
     {
         return city_;
     }
 
     ///
-    @JsonProperty("city") void setCity(string city)
+    @JsonProperty("city")
+    void setCity(string city)
     {
         this.city_ = city;
     }
@@ -622,14 +714,19 @@ class OwnerFieldsDto
     }
 
     ///
-    @NotNull @Pattern(regexp : "^[0-9]{10}$") @Size(min : 10, max:
-            10) @JsonProperty("telephone") string getTelephone()
+    @NotNull
+    @Pattern(regexp : "^[0-9]{10}$")
+    @Size(min : 10, max:
+            10)
+    @JsonProperty("telephone")
+    string getTelephone()
     {
         return telephone_;
     }
 
     ///
-    @JsonProperty("telephone") void setTelephone(string telephone)
+    @JsonProperty("telephone")
+    void setTelephone(string telephone)
     {
         this.telephone_ = telephone;
     }
@@ -671,14 +768,19 @@ class OwnerDto
     }
 
     ///
-    @NotNull @Pattern(regexp : "^[\\p{L}]+([ '-][\\p{L}]+){0,2}$") @Size(min : 1, max:
-            30) @JsonProperty("firstName") string getFirstName()
+    @NotNull
+    @Pattern(regexp : "^[\\p{L}]+([ '-][\\p{L}]+){0,2}$")
+    @Size(min : 1, max:
+            30)
+    @JsonProperty("firstName")
+    string getFirstName()
     {
         return firstName_;
     }
 
     ///
-    @JsonProperty("firstName") void setFirstName(string firstName)
+    @JsonProperty("firstName")
+    void setFirstName(string firstName)
     {
         this.firstName_ = firstName;
     }
@@ -691,14 +793,19 @@ class OwnerDto
     }
 
     ///
-    @NotNull @Pattern(regexp : "^[\\p{L}]+([ '-][\\p{L}]+){0,2}\\.?$") @Size(min : 1, max:
-            30) @JsonProperty("lastName") string getLastName()
+    @NotNull
+    @Pattern(regexp : "^[\\p{L}]+([ '-][\\p{L}]+){0,2}\\.?$")
+    @Size(min : 1, max:
+            30)
+    @JsonProperty("lastName")
+    string getLastName()
     {
         return lastName_;
     }
 
     ///
-    @JsonProperty("lastName") void setLastName(string lastName)
+    @JsonProperty("lastName")
+    void setLastName(string lastName)
     {
         this.lastName_ = lastName;
     }
@@ -711,14 +818,19 @@ class OwnerDto
     }
 
     ///
-    @NotNull @Pattern(regexp : "[\\s\\S]*\\S[\\s\\S]*") @Size(min : 1, max:
-            255) @JsonProperty("address") string getAddress()
+    @NotNull
+    @Pattern(regexp : "[\\s\\S]*\\S[\\s\\S]*")
+    @Size(min : 1, max:
+            255)
+    @JsonProperty("address")
+    string getAddress()
     {
         return address_;
     }
 
     ///
-    @JsonProperty("address") void setAddress(string address)
+    @JsonProperty("address")
+    void setAddress(string address)
     {
         this.address_ = address;
     }
@@ -731,14 +843,19 @@ class OwnerDto
     }
 
     ///
-    @NotNull @Pattern(regexp : "[\\s\\S]*\\S[\\s\\S]*") @Size(min : 1, max:
-            80) @JsonProperty("city") string getCity()
+    @NotNull
+    @Pattern(regexp : "[\\s\\S]*\\S[\\s\\S]*")
+    @Size(min : 1, max:
+            80)
+    @JsonProperty("city")
+    string getCity()
     {
         return city_;
     }
 
     ///
-    @JsonProperty("city") void setCity(string city)
+    @JsonProperty("city")
+    void setCity(string city)
     {
         this.city_ = city;
     }
@@ -751,14 +868,19 @@ class OwnerDto
     }
 
     ///
-    @NotNull @Pattern(regexp : "^[0-9]{10}$") @Size(min : 10, max:
-            10) @JsonProperty("telephone") string getTelephone()
+    @NotNull
+    @Pattern(regexp : "^[0-9]{10}$")
+    @Size(min : 10, max:
+            10)
+    @JsonProperty("telephone")
+    string getTelephone()
     {
         return telephone_;
     }
 
     ///
-    @JsonProperty("telephone") void setTelephone(string telephone)
+    @JsonProperty("telephone")
+    void setTelephone(string telephone)
     {
         this.telephone_ = telephone;
     }
@@ -771,13 +893,16 @@ class OwnerDto
     }
 
     ///
-    @Min(0) @JsonProperty("id") Nullable!int getId()
+    @Min(0)
+    @JsonProperty("id")
+    Nullable!int getId()
     {
         return id_;
     }
 
     ///
-    @JsonProperty("id") void setId(Nullable!int id)
+    @JsonProperty("id")
+    void setId(Nullable!int id)
     {
         this.id_ = id;
     }
@@ -799,13 +924,16 @@ class OwnerDto
     }
 
     ///
-    @Valid @JsonProperty("pets") List!PetDto getPets()
+    @Valid
+    @JsonProperty("pets")
+    List!PetDto getPets()
     {
         return pets_;
     }
 
     ///
-    @JsonProperty("pets") void setPets(List!PetDto pets)
+    @JsonProperty("pets")
+    void setPets(List!PetDto pets)
     {
         this.pets_ = pets;
     }
@@ -853,13 +981,17 @@ class OwnerPageDto
     }
 
     ///
-    @NotNull @Valid @JsonProperty("content") List!OwnerDto getContent()
+    @NotNull
+    @Valid
+    @JsonProperty("content")
+    List!OwnerDto getContent()
     {
         return content_;
     }
 
     ///
-    @JsonProperty("content") void setContent(List!OwnerDto content)
+    @JsonProperty("content")
+    void setContent(List!OwnerDto content)
     {
         this.content_ = content;
     }
@@ -872,13 +1004,17 @@ class OwnerPageDto
     }
 
     ///
-    @NotNull @Min(0) @JsonProperty("page") Nullable!int getPage()
+    @NotNull
+    @Min(0)
+    @JsonProperty("page")
+    Nullable!int getPage()
     {
         return page_;
     }
 
     ///
-    @JsonProperty("page") void setPage(Nullable!int page)
+    @JsonProperty("page")
+    void setPage(Nullable!int page)
     {
         this.page_ = page;
     }
@@ -891,13 +1027,17 @@ class OwnerPageDto
     }
 
     ///
-    @NotNull @Min(1) @JsonProperty("size") Nullable!int getSize()
+    @NotNull
+    @Min(1)
+    @JsonProperty("size")
+    Nullable!int getSize()
     {
         return size_;
     }
 
     ///
-    @JsonProperty("size") void setSize(Nullable!int size)
+    @JsonProperty("size")
+    void setSize(Nullable!int size)
     {
         this.size_ = size;
     }
@@ -910,13 +1050,17 @@ class OwnerPageDto
     }
 
     ///
-    @NotNull @Min(0) @JsonProperty("totalElements") long getTotalElements()
+    @NotNull
+    @Min(0)
+    @JsonProperty("totalElements")
+    long getTotalElements()
     {
         return totalElements_;
     }
 
     ///
-    @JsonProperty("totalElements") void setTotalElements(long totalElements)
+    @JsonProperty("totalElements")
+    void setTotalElements(long totalElements)
     {
         this.totalElements_ = totalElements;
     }
@@ -929,13 +1073,17 @@ class OwnerPageDto
     }
 
     ///
-    @NotNull @Min(0) @JsonProperty("totalPages") Nullable!int getTotalPages()
+    @NotNull
+    @Min(0)
+    @JsonProperty("totalPages")
+    Nullable!int getTotalPages()
     {
         return totalPages_;
     }
 
     ///
-    @JsonProperty("totalPages") void setTotalPages(Nullable!int totalPages)
+    @JsonProperty("totalPages")
+    void setTotalPages(Nullable!int totalPages)
     {
         this.totalPages_ = totalPages;
     }
@@ -983,13 +1131,17 @@ class PetPageDto
     }
 
     ///
-    @NotNull @Valid @JsonProperty("content") List!PetDto getContent()
+    @NotNull
+    @Valid
+    @JsonProperty("content")
+    List!PetDto getContent()
     {
         return content_;
     }
 
     ///
-    @JsonProperty("content") void setContent(List!PetDto content)
+    @JsonProperty("content")
+    void setContent(List!PetDto content)
     {
         this.content_ = content;
     }
@@ -1002,13 +1154,17 @@ class PetPageDto
     }
 
     ///
-    @NotNull @Min(0) @JsonProperty("page") Nullable!int getPage()
+    @NotNull
+    @Min(0)
+    @JsonProperty("page")
+    Nullable!int getPage()
     {
         return page_;
     }
 
     ///
-    @JsonProperty("page") void setPage(Nullable!int page)
+    @JsonProperty("page")
+    void setPage(Nullable!int page)
     {
         this.page_ = page;
     }
@@ -1021,13 +1177,17 @@ class PetPageDto
     }
 
     ///
-    @NotNull @Min(1) @JsonProperty("size") Nullable!int getSize()
+    @NotNull
+    @Min(1)
+    @JsonProperty("size")
+    Nullable!int getSize()
     {
         return size_;
     }
 
     ///
-    @JsonProperty("size") void setSize(Nullable!int size)
+    @JsonProperty("size")
+    void setSize(Nullable!int size)
     {
         this.size_ = size;
     }
@@ -1040,13 +1200,17 @@ class PetPageDto
     }
 
     ///
-    @NotNull @Min(0) @JsonProperty("totalElements") long getTotalElements()
+    @NotNull
+    @Min(0)
+    @JsonProperty("totalElements")
+    long getTotalElements()
     {
         return totalElements_;
     }
 
     ///
-    @JsonProperty("totalElements") void setTotalElements(long totalElements)
+    @JsonProperty("totalElements")
+    void setTotalElements(long totalElements)
     {
         this.totalElements_ = totalElements;
     }
@@ -1059,13 +1223,17 @@ class PetPageDto
     }
 
     ///
-    @NotNull @Min(0) @JsonProperty("totalPages") Nullable!int getTotalPages()
+    @NotNull
+    @Min(0)
+    @JsonProperty("totalPages")
+    Nullable!int getTotalPages()
     {
         return totalPages_;
     }
 
     ///
-    @JsonProperty("totalPages") void setTotalPages(Nullable!int totalPages)
+    @JsonProperty("totalPages")
+    void setTotalPages(Nullable!int totalPages)
     {
         this.totalPages_ = totalPages;
     }
@@ -1097,13 +1265,16 @@ class SpecialtyDto
     }
 
     ///
-    @Min(0) @JsonProperty("id") Nullable!int getId()
+    @Min(0)
+    @JsonProperty("id")
+    Nullable!int getId()
     {
         return id_;
     }
 
     ///
-    @JsonProperty("id") void setId(Nullable!int id)
+    @JsonProperty("id")
+    void setId(Nullable!int id)
     {
         this.id_ = id;
     }
@@ -1116,14 +1287,19 @@ class SpecialtyDto
     }
 
     ///
-    @NotNull @Pattern(regexp : "^[\\p{L}][\\p{L}\\s\\-&/]{0,79}$") @Size(min : 1, max:
-            80) @JsonProperty("name") string getName()
+    @NotNull
+    @Pattern(regexp : "^[\\p{L}][\\p{L}\\s\\-&/]{0,79}$")
+    @Size(min : 1, max:
+            80)
+    @JsonProperty("name")
+    string getName()
     {
         return name_;
     }
 
     ///
-    @JsonProperty("name") void setName(string name)
+    @JsonProperty("name")
+    void setName(string name)
     {
         this.name_ = name;
     }
@@ -1158,14 +1334,19 @@ class VetFieldsDto
     }
 
     ///
-    @NotNull @Pattern(regexp : "^[\\p{L}]+([ '-][\\p{L}]+){0,2}$") @Size(min : 1, max:
-            30) @JsonProperty("firstName") string getFirstName()
+    @NotNull
+    @Pattern(regexp : "^[\\p{L}]+([ '-][\\p{L}]+){0,2}$")
+    @Size(min : 1, max:
+            30)
+    @JsonProperty("firstName")
+    string getFirstName()
     {
         return firstName_;
     }
 
     ///
-    @JsonProperty("firstName") void setFirstName(string firstName)
+    @JsonProperty("firstName")
+    void setFirstName(string firstName)
     {
         this.firstName_ = firstName;
     }
@@ -1178,14 +1359,19 @@ class VetFieldsDto
     }
 
     ///
-    @NotNull @Pattern(regexp : "^[\\p{L}]+([ '-][\\p{L}]+){0,2}\\.?$") @Size(min : 1, max:
-            30) @JsonProperty("lastName") string getLastName()
+    @NotNull
+    @Pattern(regexp : "^[\\p{L}]+([ '-][\\p{L}]+){0,2}\\.?$")
+    @Size(min : 1, max:
+            30)
+    @JsonProperty("lastName")
+    string getLastName()
     {
         return lastName_;
     }
 
     ///
-    @JsonProperty("lastName") void setLastName(string lastName)
+    @JsonProperty("lastName")
+    void setLastName(string lastName)
     {
         this.lastName_ = lastName;
     }
@@ -1207,13 +1393,17 @@ class VetFieldsDto
     }
 
     ///
-    @NotNull @Valid @JsonProperty("specialties") List!SpecialtyDto getSpecialties()
+    @NotNull
+    @Valid
+    @JsonProperty("specialties")
+    List!SpecialtyDto getSpecialties()
     {
         return specialties_;
     }
 
     ///
-    @JsonProperty("specialties") void setSpecialties(List!SpecialtyDto specialties)
+    @JsonProperty("specialties")
+    void setSpecialties(List!SpecialtyDto specialties)
     {
         this.specialties_ = specialties;
     }
@@ -1250,14 +1440,19 @@ class VetDto
     }
 
     ///
-    @NotNull @Pattern(regexp : "^[\\p{L}]+([ '-][\\p{L}]+){0,2}$") @Size(min : 1, max:
-            30) @JsonProperty("firstName") string getFirstName()
+    @NotNull
+    @Pattern(regexp : "^[\\p{L}]+([ '-][\\p{L}]+){0,2}$")
+    @Size(min : 1, max:
+            30)
+    @JsonProperty("firstName")
+    string getFirstName()
     {
         return firstName_;
     }
 
     ///
-    @JsonProperty("firstName") void setFirstName(string firstName)
+    @JsonProperty("firstName")
+    void setFirstName(string firstName)
     {
         this.firstName_ = firstName;
     }
@@ -1270,14 +1465,19 @@ class VetDto
     }
 
     ///
-    @NotNull @Pattern(regexp : "^[\\p{L}]+([ '-][\\p{L}]+){0,2}\\.?$") @Size(min : 1, max:
-            30) @JsonProperty("lastName") string getLastName()
+    @NotNull
+    @Pattern(regexp : "^[\\p{L}]+([ '-][\\p{L}]+){0,2}\\.?$")
+    @Size(min : 1, max:
+            30)
+    @JsonProperty("lastName")
+    string getLastName()
     {
         return lastName_;
     }
 
     ///
-    @JsonProperty("lastName") void setLastName(string lastName)
+    @JsonProperty("lastName")
+    void setLastName(string lastName)
     {
         this.lastName_ = lastName;
     }
@@ -1299,13 +1499,17 @@ class VetDto
     }
 
     ///
-    @NotNull @Valid @JsonProperty("specialties") List!SpecialtyDto getSpecialties()
+    @NotNull
+    @Valid
+    @JsonProperty("specialties")
+    List!SpecialtyDto getSpecialties()
     {
         return specialties_;
     }
 
     ///
-    @JsonProperty("specialties") void setSpecialties(List!SpecialtyDto specialties)
+    @JsonProperty("specialties")
+    void setSpecialties(List!SpecialtyDto specialties)
     {
         this.specialties_ = specialties;
     }
@@ -1318,13 +1522,16 @@ class VetDto
     }
 
     ///
-    @Min(0) @JsonProperty("id") Nullable!int getId()
+    @Min(0)
+    @JsonProperty("id")
+    Nullable!int getId()
     {
         return id_;
     }
 
     ///
-    @JsonProperty("id") void setId(Nullable!int id)
+    @JsonProperty("id")
+    void setId(Nullable!int id)
     {
         this.id_ = id;
     }
@@ -1354,14 +1561,19 @@ class RoleDto
     }
 
     ///
-    @NotNull @Pattern(regexp : "^ROLE_[A-Z][A-Z0-9_]{1,74}$") @Size(min : 1, max:
-            80) @JsonProperty("name") string getName()
+    @NotNull
+    @Pattern(regexp : "^ROLE_[A-Z][A-Z0-9_]{1,74}$")
+    @Size(min : 1, max:
+            80)
+    @JsonProperty("name")
+    string getName()
     {
         return name_;
     }
 
     ///
-    @JsonProperty("name") void setName(string name)
+    @JsonProperty("name")
+    void setName(string name)
     {
         this.name_ = name;
     }
@@ -1396,14 +1608,18 @@ class UserDto
     }
 
     ///
-    @NotNull @Size(min : 1, max:
-            80) @JsonProperty("username") string getUsername()
+    @NotNull
+    @Size(min : 1, max:
+            80)
+    @JsonProperty("username")
+    string getUsername()
     {
         return username_;
     }
 
     ///
-    @JsonProperty("username") void setUsername(string username)
+    @JsonProperty("username")
+    void setUsername(string username)
     {
         this.username_ = username;
     }
@@ -1417,13 +1633,16 @@ class UserDto
 
     ///
     @Size(min : 1, max:
-            80) @JsonProperty("password") string getPassword()
+            80)
+    @JsonProperty("password")
+    string getPassword()
     {
         return password_;
     }
 
     ///
-    @JsonProperty("password") void setPassword(string password)
+    @JsonProperty("password")
+    void setPassword(string password)
     {
         this.password_ = password;
     }
@@ -1436,13 +1655,15 @@ class UserDto
     }
 
     ///
-    @JsonProperty("enabled") bool getEnabled()
+    @JsonProperty("enabled")
+    bool getEnabled()
     {
         return enabled_;
     }
 
     ///
-    @JsonProperty("enabled") void setEnabled(bool enabled)
+    @JsonProperty("enabled")
+    void setEnabled(bool enabled)
     {
         this.enabled_ = enabled;
     }
@@ -1464,13 +1685,16 @@ class UserDto
     }
 
     ///
-    @Valid @JsonProperty("roles") List!RoleDto getRoles()
+    @Valid
+    @JsonProperty("roles")
+    List!RoleDto getRoles()
     {
         return roles_;
     }
 
     ///
-    @JsonProperty("roles") void setRoles(List!RoleDto roles)
+    @JsonProperty("roles")
+    void setRoles(List!RoleDto roles)
     {
         this.roles_ = roles;
     }
@@ -1512,13 +1736,15 @@ class ProblemDetailDto
     }
 
     ///
-    @JsonProperty("type") string getType()
+    @JsonProperty("type")
+    string getType()
     {
         return type_;
     }
 
     ///
-    @JsonProperty("type") void setType(string type)
+    @JsonProperty("type")
+    void setType(string type)
     {
         this.type_ = type;
     }
@@ -1531,13 +1757,15 @@ class ProblemDetailDto
     }
 
     ///
-    @JsonProperty("title") string getTitle()
+    @JsonProperty("title")
+    string getTitle()
     {
         return title_;
     }
 
     ///
-    @JsonProperty("title") void setTitle(string title)
+    @JsonProperty("title")
+    void setTitle(string title)
     {
         this.title_ = title;
     }
@@ -1550,13 +1778,17 @@ class ProblemDetailDto
     }
 
     ///
-    @Min(400) @Max(600) @JsonProperty("status") Nullable!int getStatus()
+    @Min(400)
+    @Max(600)
+    @JsonProperty("status")
+    Nullable!int getStatus()
     {
         return status_;
     }
 
     ///
-    @JsonProperty("status") void setStatus(Nullable!int status)
+    @JsonProperty("status")
+    void setStatus(Nullable!int status)
     {
         this.status_ = status;
     }
@@ -1569,13 +1801,15 @@ class ProblemDetailDto
     }
 
     ///
-    @JsonProperty("detail") string getDetail()
+    @JsonProperty("detail")
+    string getDetail()
     {
         return detail_;
     }
 
     ///
-    @JsonProperty("detail") void setDetail(string detail)
+    @JsonProperty("detail")
+    void setDetail(string detail)
     {
         this.detail_ = detail;
     }
@@ -1588,13 +1822,15 @@ class ProblemDetailDto
     }
 
     ///
-    @JsonProperty("timestamp") string getTimestamp()
+    @JsonProperty("timestamp")
+    string getTimestamp()
     {
         return timestamp_;
     }
 
     ///
-    @JsonProperty("timestamp") void setTimestamp(string timestamp)
+    @JsonProperty("timestamp")
+    void setTimestamp(string timestamp)
     {
         this.timestamp_ = timestamp;
     }
@@ -1616,14 +1852,16 @@ class ProblemDetailDto
     }
 
     ///
-    @NotNull @JsonProperty("schemaValidationErrors") List!ValidationMessageDto getSchemaValidationErrors()
+    @NotNull
+    @JsonProperty("schemaValidationErrors")
+    List!ValidationMessageDto getSchemaValidationErrors()
     {
         return schemaValidationErrors_;
     }
 
     ///
-    @JsonProperty("schemaValidationErrors") void setSchemaValidationErrors(
-            List!ValidationMessageDto schemaValidationErrors)
+    @JsonProperty("schemaValidationErrors")
+    void setSchemaValidationErrors(List!ValidationMessageDto schemaValidationErrors)
     {
         this.schemaValidationErrors_ = schemaValidationErrors;
     }
@@ -1654,20 +1892,23 @@ class ValidationMessageDto
     }
 
     ///
-    @JsonProperty("message") string getMessage()
+    @JsonProperty("message")
+    string getMessage()
     {
         return message_;
     }
 
     ///
-    @JsonProperty("message") void setMessage(string message)
+    @JsonProperty("message")
+    void setMessage(string message)
     {
         this.message_ = message;
     }
 
     /// Set the additional (undeclared) property with the specified name and value. If the property does not
     /// already exist, create it otherwise replace it.
-    @JsonAnySetter ValidationMessageDto putAdditionalProperty(string key, string value)
+    @JsonAnySetter
+    ValidationMessageDto putAdditionalProperty(string key, string value)
     {
         if (this.additionalProperties is null)
             this.additionalProperties = new LinkedHashMap!(string, string)();
@@ -1676,7 +1917,8 @@ class ValidationMessageDto
     }
 
     /// The additional (undeclared) properties.
-    @JsonAnyGetter Map!(string, string) getAdditionalProperties()
+    @JsonAnyGetter
+    Map!(string, string) getAdditionalProperties()
     {
         return additionalProperties;
     }

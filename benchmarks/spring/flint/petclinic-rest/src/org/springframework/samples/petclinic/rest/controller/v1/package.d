@@ -40,7 +40,9 @@ private HttpHeaders locationOf(string path, int id)
 }
 
 /// `OwnerRestControllerV1`.
-@RestController @CrossOrigin(exposedHeaders : ["errors, content-type"]) @RequestMapping("/api")
+@RestController
+@CrossOrigin(exposedHeaders : ["errors, content-type"])
+@RequestMapping("/api")
 class OwnerRestControllerV1 : OwnersApi
 {
     private ClinicService clinicService;
@@ -96,7 +98,8 @@ class OwnerRestControllerV1 : OwnersApi
         return ResponseEntity.of(ownerMapper.toOwnerDto(currentOwner), HttpStatus.NO_CONTENT);
     }
 
-    @Transactional override ResponseEntity deleteOwner(int ownerId)
+    @Transactional
+    override ResponseEntity deleteOwner(int ownerId)
     {
         Owner owner = this.clinicService.findOwnerById(ownerId);
         if (owner is null)
@@ -162,7 +165,9 @@ class OwnerRestControllerV1 : OwnersApi
 }
 
 /// `PetRestControllerV1`.
-@RestController @CrossOrigin(exposedHeaders : ["errors, content-type"]) @RequestMapping("api")
+@RestController
+@CrossOrigin(exposedHeaders : ["errors, content-type"])
+@RequestMapping("api")
 class PetRestControllerV1 : PetsApi
 {
     private ClinicService clinicService;
@@ -214,7 +219,9 @@ class PetRestControllerV1 : PetsApi
 }
 
 /// `VisitRestControllerV1`.
-@RestController @CrossOrigin(exposedHeaders : ["errors, content-type"]) @RequestMapping("api")
+@RestController
+@CrossOrigin(exposedHeaders : ["errors, content-type"])
+@RequestMapping("api")
 class VisitRestControllerV1 : VisitsApi
 {
     private ClinicService clinicService;
@@ -263,7 +270,8 @@ class VisitRestControllerV1 : VisitsApi
         return ResponseEntity.of(visitMapper.toVisitDto(currentVisit), HttpStatus.NO_CONTENT);
     }
 
-    @Transactional override ResponseEntity deleteVisit(int visitId)
+    @Transactional
+    override ResponseEntity deleteVisit(int visitId)
     {
         Visit visit = this.clinicService.findVisitById(visitId);
         if (visit is null)
@@ -274,7 +282,9 @@ class VisitRestControllerV1 : VisitsApi
 }
 
 /// `PetTypeRestControllerV1`.
-@RestController @CrossOrigin(exposedHeaders : ["errors, content-type"]) @RequestMapping("api")
+@RestController
+@CrossOrigin(exposedHeaders : ["errors, content-type"])
+@RequestMapping("api")
 class PetTypeRestControllerV1 : PettypesApi
 {
     private ClinicService clinicService;
@@ -321,7 +331,8 @@ class PetTypeRestControllerV1 : PettypesApi
         return ResponseEntity.of(petTypeMapper.toPetTypeDto(currentPetType), HttpStatus.NO_CONTENT);
     }
 
-    @Transactional override ResponseEntity deletePetType(int petTypeId)
+    @Transactional
+    override ResponseEntity deletePetType(int petTypeId)
     {
         PetType petType = this.clinicService.findPetTypeById(petTypeId);
         if (petType is null)
@@ -332,7 +343,9 @@ class PetTypeRestControllerV1 : PettypesApi
 }
 
 /// `SpecialtyRestControllerV1`.
-@RestController @CrossOrigin(exposedHeaders : ["errors, content-type"]) @RequestMapping("api")
+@RestController
+@CrossOrigin(exposedHeaders : ["errors, content-type"])
+@RequestMapping("api")
 class SpecialtyRestControllerV1 : SpecialtiesApi
 {
     private ClinicService clinicService;
@@ -380,7 +393,8 @@ class SpecialtyRestControllerV1 : SpecialtiesApi
         return ResponseEntity.of(specialtyMapper.toSpecialtyDto(currentSpecialty), HttpStatus.NO_CONTENT);
     }
 
-    @Transactional override ResponseEntity deleteSpecialty(int specialtyId)
+    @Transactional
+    override ResponseEntity deleteSpecialty(int specialtyId)
     {
         Specialty specialty = this.clinicService.findSpecialtyById(specialtyId);
         if (specialty is null)
@@ -391,7 +405,9 @@ class SpecialtyRestControllerV1 : SpecialtiesApi
 }
 
 /// `VetRestControllerV1`.
-@RestController @CrossOrigin(exposedHeaders : ["errors, content-type"]) @RequestMapping("api")
+@RestController
+@CrossOrigin(exposedHeaders : ["errors, content-type"])
+@RequestMapping("api")
 class VetRestControllerV1 : VetsApi
 {
     private ClinicService clinicService;
@@ -448,7 +464,8 @@ class VetRestControllerV1 : VetsApi
         return ResponseEntity.of(vetMapper.toVetDto(currentVet), HttpStatus.NO_CONTENT);
     }
 
-    @Transactional override ResponseEntity deleteVet(int vetId)
+    @Transactional
+    override ResponseEntity deleteVet(int vetId)
     {
         Vet vet = this.clinicService.findVetById(vetId);
         if (vet is null)
@@ -468,7 +485,9 @@ class VetRestControllerV1 : VetsApi
 }
 
 /// `UserRestControllerV1`.
-@RestController @CrossOrigin(exposedHeaders : ["errors, content-type"]) @RequestMapping("api")
+@RestController
+@CrossOrigin(exposedHeaders : ["errors, content-type"])
+@RequestMapping("api")
 class UserRestControllerV1 : UsersApi
 {
     private UserService userService;
@@ -490,11 +509,14 @@ class UserRestControllerV1 : UsersApi
 }
 
 /// `RootRestControllerV1`: the root redirects to the Swagger UI.
-@RestController @CrossOrigin(exposedHeaders : ["errors, content-type"]) @RequestMapping("/")
+@RestController
+@CrossOrigin(exposedHeaders : ["errors, content-type"])
+@RequestMapping("/")
 class RootRestControllerV1
 {
     /// `response.sendRedirect(servletContextPath + "/swagger-ui/index.html")`.
-    @RequestMapping(value : ["/"]) void redirectToSwagger(HttpServletRequest request, HttpServletResponse response)
+    @RequestMapping(value : ["/"])
+    void redirectToSwagger(HttpServletRequest request, HttpServletResponse response)
     {
         response.sendRedirect(request.getContextPath() ~ "/swagger-ui/index.html");
     }

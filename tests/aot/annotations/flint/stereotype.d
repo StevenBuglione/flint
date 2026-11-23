@@ -13,22 +13,28 @@ struct Component
 }
 
 /// `@Service`.
-@Component struct Service
+@Component
+struct Service
 {
     /// Bean name.
-    @AliasFor(annotation : ClassRef("flint.stereotype.Component")) string value;
+    @AliasFor(annotation : ClassRef("flint.stereotype.Component"))
+    string value;
 }
 
 /// `@Repository`.
-@Component struct Repository
+@Component
+struct Repository
 {
     /// Bean name.
-    @AliasFor(annotation : ClassRef("flint.stereotype.Component")) string value;
+    @AliasFor(annotation : ClassRef("flint.stereotype.Component"))
+    string value;
 }
 
 /// `@Controller`.
-@Component struct Controller
+@Component
+struct Controller
 {
     /// Bean name.
-    @AliasFor(annotation : ClassRef("flint.stereotype.Component")) string value;
+    @AliasFor(annotation : ClassRef("flint.stereotype.Component"))
+    string value;
 }

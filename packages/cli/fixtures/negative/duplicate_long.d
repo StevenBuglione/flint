@@ -7,8 +7,10 @@ import flint.cli : Command, parse, Option;
 @Command("duplicate-long", "Compile-time diagnostic fixture")
 private struct Duplicate
 {
-    @Option("first", 'a', "") int first;
-    @Option("first", 'b', "") int second;
+    @Option("first", 'a', "")
+    int first;
+    @Option("first", 'b', "")
+    int second;
 }
 
 /// Instantiate the invalid command and expose its field-local diagnostic.

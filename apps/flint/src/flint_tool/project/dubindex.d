@@ -59,7 +59,8 @@ private bool readIndex(string path, string display, ref DubEntry[] entries, ref 
     static struct Row
     {
         string name;
-        @JsonName("version") string version_;
+        @JsonName("version")
+        string version_;
         string repository;
         string commit;
         string tree_sha256;

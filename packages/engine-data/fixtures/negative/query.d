@@ -9,7 +9,8 @@ import flint.engine.data : Column, Id, Query, SqlRepository, Table;
 @Table("records")
 private struct Record
 {
-    @Id long id;
+    @Id
+    long id;
 }
 
 private struct Projection
@@ -38,8 +39,10 @@ else version (FlintDataDuplicateParameter)
     @Query("SELECT :key AS value")
     private struct Args
     {
-        @Column("key") long first;
-        @Column("key") bool duplicate;
+        @Column("key")
+        long first;
+        @Column("key")
+        bool duplicate;
     }
 }
 else version (FlintDataBoundMarker)

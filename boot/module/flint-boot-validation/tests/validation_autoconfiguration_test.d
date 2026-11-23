@@ -49,7 +49,8 @@ private final class RecordingCustomizer : ValidationConfigurationCustomizer
 
 private struct Address
 {
-    @NotBlank string city;
+    @NotBlank
+    string city;
 }
 
 @("defaultValidatorUsesTheContextDescriptors") unittest

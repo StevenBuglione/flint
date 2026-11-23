@@ -10,25 +10,30 @@ import todo.store : TodoList;
 struct Add
 {
     /// Overrides `default_priority`.
-    @Option("priority", 'p', "low, normal or high") string priority;
+    @Option("priority", 'p', "low, normal or high")
+    string priority;
     /// The words of the item.
-    @Arg(0, "Text of the item") string[] text;
+    @Arg(0, "Text of the item")
+    string[] text;
 }
 
 /// `todo list [--all] [--json]`.
 struct List
 {
     /// Include done items.
-    @Option("all", 'a', "Include done items") bool all;
+    @Option("all", 'a', "Include done items")
+    bool all;
     /// Print JSON.
-    @Option("json", '\0', "Print a JSON array") bool json;
+    @Option("json", '\0', "Print a JSON array")
+    bool json;
 }
 
 /// `todo done <id>` and `todo remove <id>`.
 struct Target
 {
     /// The item.
-    @Arg(0, "Item id") ulong[] id;
+    @Arg(0, "Item id")
+    ulong[] id;
 }
 
 /// The command line.
@@ -36,13 +41,17 @@ struct Target
 struct Options
 {
     /// Add an item.
-    @Subcommand("add", "Add an item") Add add;
+    @Subcommand("add", "Add an item")
+    Add add;
     /// List items.
-    @Subcommand("list", "List open items") List list;
+    @Subcommand("list", "List open items")
+    List list;
     /// Mark an item done.
-    @Subcommand("done", "Mark an item done") Target done;
+    @Subcommand("done", "Mark an item done")
+    Target done;
     /// Delete an item.
-    @Subcommand("remove", "Delete an item") Target remove;
+    @Subcommand("remove", "Delete an item")
+    Target remove;
 }
 
 /// Exit codes.

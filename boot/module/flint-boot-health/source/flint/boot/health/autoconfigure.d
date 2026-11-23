@@ -398,13 +398,13 @@ final class HealthWebEndpoint : ExposableWebEndpoint
 
 /// Auto-configuration of the health endpoint: the contributor registry over every `HealthContributor` bean, the
 /// groups, the endpoint, its web extension and its web exposure.
-@AutoConfiguration @EnableConfigurationProperties([ClassRef(typeNameOf!HealthEndpointProperties)])
+@AutoConfiguration
+@EnableConfigurationProperties([ClassRef(typeNameOf!HealthEndpointProperties)])
 final class HealthEndpointAutoConfiguration
 {
     /// The groups, with the probe groups unless `management.endpoint.health.probes.enabled` is false.
-    @Bean @ConditionalOnMissingBean([
-        ClassRef("flint.boot.health.actuate.endpoint.HealthEndpointGroups")
-    ])
+    @Bean
+    @ConditionalOnMissingBean([ClassRef("flint.boot.health.actuate.endpoint.HealthEndpointGroups")])
     AutoConfiguredHealthEndpointGroups healthEndpointGroups(HealthEndpointProperties properties, Environment env)
     {
         import std.uni : sicmp;
@@ -414,9 +414,8 @@ final class HealthEndpointAutoConfiguration
     }
 
     /// Every `HealthContributor` bean, named by its bean name without the standard suffix.
-    @Bean @ConditionalOnMissingBean([
-        ClassRef("flint.boot.health.registry.HealthContributorRegistry")
-    ])
+    @Bean
+    @ConditionalOnMissingBean([ClassRef("flint.boot.health.registry.HealthContributorRegistry")])
     DefaultHealthContributorRegistry healthContributorRegistry(ApplicationContext context)
     {
         auto registry = new DefaultHealthContributorRegistry;
@@ -435,21 +434,25 @@ final class HealthEndpointAutoConfiguration
     }
 
     /// The endpoint.
-    @Bean @ConditionalOnMissingBean HealthEndpoint healthEndpoint(HealthContributorRegistry registry,
-            HealthEndpointGroups groups)
+    @Bean
+    @ConditionalOnMissingBean
+    HealthEndpoint healthEndpoint(HealthContributorRegistry registry, HealthEndpointGroups groups)
     {
         return new HealthEndpoint(registry, groups);
     }
 
     /// The web extension.
-    @Bean @ConditionalOnMissingBean HealthEndpointWebExtension healthEndpointWebExtension(
-            HealthContributorRegistry registry, HealthEndpointGroups groups)
+    @Bean
+    @ConditionalOnMissingBean
+    HealthEndpointWebExtension healthEndpointWebExtension(HealthContributorRegistry registry,
+            HealthEndpointGroups groups)
     {
         return new HealthEndpointWebExtension(registry, groups);
     }
 
     /// The endpoint's web exposure; registers the descriptors Jackson writes the responses with.
-    @Bean HealthWebEndpoint healthWebEndpoint(HealthEndpointWebExtension extension, ApplicationContext context)
+    @Bean
+    HealthWebEndpoint healthWebEndpoint(HealthEndpointWebExtension extension, ApplicationContext context)
     {
         import flint.boot.health.actuate.endpoint : CompositeHealthDescriptor, HealthDescriptor,
             IndicatedHealthDescriptor, SystemHealthDescriptor;
@@ -474,28 +477,36 @@ final class HealthEndpointAutoConfiguration
 
 /// Auto-configuration of the availability probes: `livenessState` and `readinessState` indicators, unless
 /// `management.endpoint.health.probes.enabled` is false.
-@AutoConfiguration @probesEnabled final class AvailabilityProbesAutoConfiguration
+@AutoConfiguration
+@probesEnabled
+final class AvailabilityProbesAutoConfiguration
 {
     /// The liveness indicator.
-    @Bean @missingLiveness LivenessStateHealthIndicator livenessStateHealthIndicator(
-            ApplicationAvailability applicationAvailability)
+    @Bean
+    @missingLiveness
+    LivenessStateHealthIndicator livenessStateHealthIndicator(ApplicationAvailability applicationAvailability)
     {
         return new LivenessStateHealthIndicator(applicationAvailability);
     }
 
     /// The readiness indicator.
-    @Bean @missingReadiness ReadinessStateHealthIndicator readinessStateHealthIndicator(
-            ApplicationAvailability applicationAvailability)
+    @Bean
+    @missingReadiness
+    ReadinessStateHealthIndicator readinessStateHealthIndicator(ApplicationAvailability applicationAvailability)
     {
         return new ReadinessStateHealthIndicator(applicationAvailability);
     }
 }
 
 /// Auto-configuration of the `ping` indicator, unless `management.health.ping.enabled` is false.
-@AutoConfiguration @pingEnabled final class PingHealthContributorAutoConfiguration
+@AutoConfiguration
+@pingEnabled
+final class PingHealthContributorAutoConfiguration
 {
     /// Always `UP`.
-    @Bean @missingPing PingHealthIndicator pingHealthContributor()
+    @Bean
+    @missingPing
+    PingHealthIndicator pingHealthContributor()
     {
         return new PingHealthIndicator;
     }

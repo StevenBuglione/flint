@@ -11,9 +11,11 @@ import probe : benchmark, require, rows;
 @Table("probe_rows")
 private struct Record
 {
-    @Id long id;
+    @Id
+    long id;
     long payload;
-    @Version long revision;
+    @Version
+    long revision;
 }
 
 private ulong run(ref Pool pool, ref Context context)

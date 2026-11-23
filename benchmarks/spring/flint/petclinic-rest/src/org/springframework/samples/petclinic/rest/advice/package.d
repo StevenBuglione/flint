@@ -28,7 +28,8 @@ import org.springframework.samples.petclinic.rest.dto : ValidationMessageDto;
 
 /// Global Exception handler for REST controllers: returns the exceptions thrown by REST controllers to the client
 /// as problem details.
-@ControllerAdvice class ExceptionControllerAdvice
+@ControllerAdvice
+class ExceptionControllerAdvice
 {
     private enum ERROR_UNEXPECTED = "An unexpected error occurred while processing your request";
     private enum ERROR_DATA_INTEGRITY = "The requested resource could not be processed due to a data "
@@ -53,8 +54,9 @@ import org.springframework.samples.petclinic.rest.dto : ValidationMessageDto;
     }
 
     /// Handles all general exceptions by returning a 500 Internal Server Error status with error details.
-    @ExceptionHandler(classOf!Exception) @ResponseBody ResponseEntity handleGeneralException(Exception e,
-            HttpServletRequest request)
+    @ExceptionHandler(classOf!Exception)
+    @ResponseBody
+    ResponseEntity handleGeneralException(Exception e, HttpServletRequest request)
     {
         logger().error("Unexpected error at {} {}", request.getMethod(), request.getRequestURI(), e);
         HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;

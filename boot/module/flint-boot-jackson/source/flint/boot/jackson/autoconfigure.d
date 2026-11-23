@@ -324,14 +324,17 @@ interface JsonMapperBuilderCustomizer
 }
 
 /// Auto-configuration for Jackson: a prototype `JsonMapper.Builder` and the primary `JsonMapper`.
-@AutoConfiguration @ConditionalOnClass(null, ["flint.jackson.databind.JsonMapper"])
+@AutoConfiguration
+@ConditionalOnClass(null, ["flint.jackson.databind.JsonMapper"])
 @EnableConfigurationProperties([ClassRef(typeNameOf!JacksonProperties)])
 final class JacksonAutoConfiguration
 {
     /// A new builder for each injection point, over the context's Flint AOT descriptors (Jackson's reflection),
     /// customised in order by every `JsonMapperBuilderCustomizer`.
-    @Bean @Scope("prototype") @ConditionalOnMissingBean JsonMapper.Builder jsonMapperBuilder(
-            JsonMapperBuilderCustomizer[] customizers, ApplicationContext context = null)
+    @Bean
+    @Scope("prototype")
+    @ConditionalOnMissingBean
+    JsonMapper.Builder jsonMapperBuilder(JsonMapperBuilderCustomizer[] customizers, ApplicationContext context = null)
     {
         import flint.context.support : GenericApplicationContext;
 
@@ -344,13 +347,17 @@ final class JacksonAutoConfiguration
     }
 
     /// The application's `JsonMapper`.
-    @Bean @Primary @ConditionalOnMissingBean JsonMapper jacksonJsonMapper(JsonMapper.Builder builder)
+    @Bean
+    @Primary
+    @ConditionalOnMissingBean
+    JsonMapper jacksonJsonMapper(JsonMapper.Builder builder)
     {
         return builder.build();
     }
 
     /// The customizer that applies `flint.jackson.*`.
-    @Bean StandardJsonMapperBuilderCustomizer standardJsonMapperBuilderCustomizer(JacksonProperties jacksonProperties)
+    @Bean
+    StandardJsonMapperBuilderCustomizer standardJsonMapperBuilderCustomizer(JacksonProperties jacksonProperties)
     {
         return new StandardJsonMapperBuilderCustomizer(jacksonProperties);
     }

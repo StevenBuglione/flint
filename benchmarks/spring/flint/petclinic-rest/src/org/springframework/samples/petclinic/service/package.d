@@ -87,7 +87,8 @@ interface ClinicService
 
 /// Mostly used as a facade for all Petclinic controllers. Also a placeholder for `@Transactional` and `@Cacheable`
 /// annotations.
-@Service class ClinicServiceImpl : ClinicService
+@Service
+class ClinicServiceImpl : ClinicService
 {
     private PetRepository petRepository;
     private VetRepository vetRepository;
@@ -109,160 +110,191 @@ interface ClinicService
         this.petTypeRepository = petTypeRepository;
     }
 
-    @Transactional(readOnly : true) override Collection!Pet findAllPets()
+    @Transactional(readOnly : true)
+    override Collection!Pet findAllPets()
     {
         return petRepository.findAll();
     }
 
-    @Transactional(readOnly : true) override Page!Pet findPets(Pageable pageable)
+    @Transactional(readOnly : true)
+    override Page!Pet findPets(Pageable pageable)
     {
         return petRepository.findAll(pageable);
     }
 
-    @Transactional override void deletePet(Pet pet)
+    @Transactional
+    override void deletePet(Pet pet)
     {
         petRepository.delete_(pet);
     }
 
-    @Transactional(readOnly : true) override Visit findVisitById(int visitId)
+    @Transactional(readOnly : true)
+    override Visit findVisitById(int visitId)
     {
         return findEntityById(() => visitRepository.findById(visitId));
     }
 
-    @Transactional(readOnly : true) override Collection!Visit findAllVisits()
+    @Transactional(readOnly : true)
+    override Collection!Visit findAllVisits()
     {
         return visitRepository.findAll();
     }
 
-    @Transactional override void deleteVisit(Visit visit)
+    @Transactional
+    override void deleteVisit(Visit visit)
     {
         visitRepository.delete_(visit);
     }
 
-    @Transactional(readOnly : true) override Vet findVetById(int id)
+    @Transactional(readOnly : true)
+    override Vet findVetById(int id)
     {
         return findEntityById(() => vetRepository.findById(id));
     }
 
-    @Transactional(readOnly : true) override Collection!Vet findAllVets()
+    @Transactional(readOnly : true)
+    override Collection!Vet findAllVets()
     {
         return vetRepository.findAll();
     }
 
-    @Transactional override void saveVet(Vet vet)
+    @Transactional
+    override void saveVet(Vet vet)
     {
         vetRepository.save(vet);
     }
 
-    @Transactional override void deleteVet(Vet vet)
+    @Transactional
+    override void deleteVet(Vet vet)
     {
         vetRepository.delete_(vet);
     }
 
-    @Transactional(readOnly : true) override Collection!Owner findAllOwners()
+    @Transactional(readOnly : true)
+    override Collection!Owner findAllOwners()
     {
         return ownerRepository.findAll();
     }
 
-    @Transactional(readOnly : true) override Page!Owner findOwners(string lastName, Pageable pageable)
+    @Transactional(readOnly : true)
+    override Page!Owner findOwners(string lastName, Pageable pageable)
     {
         if (lastName !is null)
             return ownerRepository.findByLastName(lastName, pageable);
         return ownerRepository.findAll(pageable);
     }
 
-    @Transactional override void deleteOwner(Owner owner)
+    @Transactional
+    override void deleteOwner(Owner owner)
     {
         ownerRepository.delete_(owner);
     }
 
-    @Transactional(readOnly : true) override PetType findPetTypeById(int petTypeId)
+    @Transactional(readOnly : true)
+    override PetType findPetTypeById(int petTypeId)
     {
         return findEntityById(() => petTypeRepository.findById(petTypeId));
     }
 
-    @Transactional(readOnly : true) override Collection!PetType findAllPetTypes()
+    @Transactional(readOnly : true)
+    override Collection!PetType findAllPetTypes()
     {
         return petTypeRepository.findAll();
     }
 
-    @Transactional override void savePetType(PetType petType)
+    @Transactional
+    override void savePetType(PetType petType)
     {
         petTypeRepository.save(petType);
     }
 
-    @Transactional override void deletePetType(PetType petType)
+    @Transactional
+    override void deletePetType(PetType petType)
     {
         petTypeRepository.delete_(petType);
     }
 
-    @Transactional(readOnly : true) override Specialty findSpecialtyById(int specialtyId)
+    @Transactional(readOnly : true)
+    override Specialty findSpecialtyById(int specialtyId)
     {
         return findEntityById(() => specialtyRepository.findById(specialtyId));
     }
 
-    @Transactional(readOnly : true) override Collection!Specialty findAllSpecialties()
+    @Transactional(readOnly : true)
+    override Collection!Specialty findAllSpecialties()
     {
         return specialtyRepository.findAll();
     }
 
-    @Transactional override void saveSpecialty(Specialty specialty)
+    @Transactional
+    override void saveSpecialty(Specialty specialty)
     {
         specialtyRepository.save(specialty);
     }
 
-    @Transactional override void deleteSpecialty(Specialty specialty)
+    @Transactional
+    override void deleteSpecialty(Specialty specialty)
     {
         specialtyRepository.delete_(specialty);
     }
 
-    @Transactional(readOnly : true) override Collection!PetType findPetTypes()
+    @Transactional(readOnly : true)
+    override Collection!PetType findPetTypes()
     {
         return petRepository.findPetTypes();
     }
 
-    @Transactional(readOnly : true) override Owner findOwnerById(int id)
+    @Transactional(readOnly : true)
+    override Owner findOwnerById(int id)
     {
         return findEntityById(() => ownerRepository.findById(id));
     }
 
-    @Transactional(readOnly : true) override Pet findPetById(int id)
+    @Transactional(readOnly : true)
+    override Pet findPetById(int id)
     {
         return findEntityById(() => petRepository.findById(id));
     }
 
-    @Transactional override void savePet(Pet pet)
+    @Transactional
+    override void savePet(Pet pet)
     {
         pet.setType(findPetTypeById(pet.getType().getId()));
         petRepository.save(pet);
     }
 
-    @Transactional override void saveVisit(Visit visit)
+    @Transactional
+    override void saveVisit(Visit visit)
     {
         visitRepository.save(visit);
     }
 
-    @Transactional(readOnly : true) override Collection!Vet findVets()
+    @Transactional(readOnly : true)
+    override Collection!Vet findVets()
     {
         return vetRepository.findAll();
     }
 
-    @Transactional override void saveOwner(Owner owner)
+    @Transactional
+    override void saveOwner(Owner owner)
     {
         ownerRepository.save(owner);
     }
 
-    @Transactional(readOnly : true) override Collection!Owner findOwnerByLastName(string lastName)
+    @Transactional(readOnly : true)
+    override Collection!Owner findOwnerByLastName(string lastName)
     {
         return ownerRepository.findByLastName(lastName);
     }
 
-    @Transactional(readOnly : true) override Collection!Visit findVisitsByPetId(int petId)
+    @Transactional(readOnly : true)
+    override Collection!Visit findVisitsByPetId(int petId)
     {
         return visitRepository.findByPetId(petId);
     }
 
-    @Transactional(readOnly : true) override List!Specialty findSpecialtiesByNameIn(Set!string names)
+    @Transactional(readOnly : true)
+    override List!Specialty findSpecialtiesByNameIn(Set!string names)
     {
         return findEntityById(() => specialtyRepository.findSpecialtiesByNameIn(names));
     }
@@ -287,7 +319,8 @@ interface UserService
 }
 
 /// Saves users, prefixing their role names with `ROLE_`.
-@Service class UserServiceImpl : UserService
+@Service
+class UserServiceImpl : UserService
 {
     private UserRepository userRepository;
 
@@ -297,7 +330,8 @@ interface UserService
         this.userRepository = userRepository;
     }
 
-    @Transactional override void saveUser(User user)
+    @Transactional
+    override void saveUser(User user)
     {
         if (user.getRoles() is null || user.getRoles().isEmpty())
             throw new IllegalArgumentException("User must have at least a role set!");

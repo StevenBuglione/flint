@@ -20,7 +20,8 @@ public import flint.engine.data : Column, CrudRepository, Id, Nullable, ReadOnly
 @safe:
 
 /// The `[database]` section.
-@ConditionalOnConfig("database") @ConfigurationProperties("database")
+@ConditionalOnConfig("database")
+@ConfigurationProperties("database")
 struct DatabaseProperties
 {
     /// `sqlite` or `postgres`.
@@ -36,7 +37,9 @@ struct DatabaseProperties
 }
 
 /// The pool: opened and migrated at start-up, closed at shutdown. Registered only with a `[database]` section.
-@ConditionalOnConfig("database") @Service final class DataSource
+@ConditionalOnConfig("database")
+@Service
+final class DataSource
 {
     private DatabaseProperties properties;
     private Pool store;
@@ -49,7 +52,8 @@ struct DatabaseProperties
     }
 
     /// Open the pool and apply the migrations.
-    @PostConstruct Error open()
+    @PostConstruct
+    Error open()
     {
         import flint.engine.sql : Driver, PoolOptions;
 
@@ -85,7 +89,8 @@ struct DatabaseProperties
     }
 
     /// Close the pool.
-    @PreDestroy void close() nothrow
+    @PreDestroy
+    void close() nothrow
     {
         if (!opened)
             return;

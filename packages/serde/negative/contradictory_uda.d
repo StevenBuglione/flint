@@ -8,7 +8,9 @@ import flint.serde : JsonDefault, JsonRequired, decodeInto;
 
 private struct Invalid
 {
-    @JsonRequired @JsonDefault("42") int value;
+    @JsonRequired
+    @JsonDefault("42")
+    int value;
 }
 
 /// Instantiating the hot decoder must reject this DTO shape.

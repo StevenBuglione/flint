@@ -21,9 +21,11 @@ enum Propagation
 struct Transactional
 {
     /// Alias of `transactionManager`.
-    @AliasFor("transactionManager") string value;
+    @AliasFor("transactionManager")
+    string value;
     /// Transaction manager bean.
-    @AliasFor("value") string transactionManager;
+    @AliasFor("value")
+    string transactionManager;
     /// Propagation.
     Propagation propagation;
     /// Read-only hint.

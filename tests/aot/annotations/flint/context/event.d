@@ -9,9 +9,11 @@ import flint.core.annotation : AliasFor, ClassRef;
 struct EventListener
 {
     /// Alias for `classes`.
-    @AliasFor("classes") ClassRef[] value;
+    @AliasFor("classes")
+    ClassRef[] value;
     /// The event classes this listener handles; without them, the parameter's type.
-    @AliasFor("value") ClassRef[] classes;
+    @AliasFor("value")
+    ClassRef[] classes;
     /// SpEL condition.
     string condition;
 }

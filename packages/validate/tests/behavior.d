@@ -7,13 +7,16 @@ import flint.validate : Email, Max, Min, NotBlank, Pattern, Size, Valid, Violati
 
 private struct Caption
 {
-    @NotBlank string value;
+    @NotBlank
+    string value;
 }
 
 private struct Widths
 {
-    @Size(2, 2) string label;
-    @Size(2, 2) ubyte[] raw;
+    @Size(2, 2)
+    string label;
+    @Size(2, 2)
+    ubyte[] raw;
 }
 
 @("UTF-8 whitespace and scalar counts")
@@ -47,12 +50,20 @@ unittest
 
 private struct Numeric
 {
-    @Min(long.min) @Max(long.min) long signedMinimum;
-    @Min(-1) ulong unsignedValue;
-    @Max(long.max) ulong cappedUnsigned;
-    @Min(16_777_217) float roundedBound;
-    @Max(long.max) double upperFloat;
-    @Min(0) @Max(0) double fractional;
+    @Min(long.min)
+    @Max(long.min)
+    long signedMinimum;
+    @Min(-1)
+    ulong unsignedValue;
+    @Max(long.max)
+    ulong cappedUnsigned;
+    @Min(16_777_217)
+    float roundedBound;
+    @Max(long.max)
+    double upperFloat;
+    @Min(0)
+    @Max(0)
+    double fractional;
 }
 
 @("numeric comparisons avoid sign overflow and rounded long endpoints")
@@ -82,7 +93,8 @@ unittest
 
 private struct Mailbox
 {
-    @Email string address;
+    @Email
+    string address;
 }
 
 private string repeated(char byteValue, size_t count)
@@ -123,7 +135,8 @@ private bool matches(string expression)(string value) nothrow @nogc
 {
     static struct Sample
     {
-        @Pattern(expression) string subject;
+        @Pattern(expression)
+        string subject;
     }
 
     const dto = Sample(value);
@@ -167,13 +180,17 @@ unittest
 private struct Entry
 {
     @("unrelated") @NotBlank @Size(2, 3) string display;
-    @Min(1) int score;
+    @Min(1)
+    int score;
 }
 
 private struct Form
 {
-    @Size(3, 4) @Valid Entry[][] groups;
-    @Valid Entry single;
+    @Size(3, 4)
+    @Valid
+    Entry[][] groups;
+    @Valid
+    Entry single;
 }
 
 @("violations follow declaration order, annotation order, and nested indexes")
@@ -201,7 +218,8 @@ unittest
 
 private struct Bulk
 {
-    @Valid Caption[] entries;
+    @Valid
+    Caption[] entries;
 }
 
 @("the 4097 sentinel leaves output beyond the 4096th violation intact")
@@ -221,7 +239,10 @@ unittest
 
 private struct ArenaCaption
 {
-    @Size(2, 2) @NotBlank @Pattern("..") Text name;
+    @Size(2, 2)
+    @NotBlank
+    @Pattern("..")
+    Text name;
 }
 
 @("Text handles require the current owning arena and use the same UTF-8 rules")
@@ -248,42 +269,52 @@ private enum CanValidate(T) = __traits(compiles, () @safe nothrow @nogc { T dto;
 
 private struct BadBlank
 {
-    @NotBlank uint count;
+    @NotBlank
+    uint count;
 }
 
 private struct BadMin
 {
-    @Min(0) Caption label;
+    @Min(0)
+    Caption label;
 }
 
 private struct BadInterval
 {
-    @Min(9) @Max(5) int index;
+    @Min(9)
+    @Max(5)
+    int index;
 }
 
 private struct BadSize
 {
-    @Size(5, 10) @Size(1, 4) string label;
+    @Size(5, 10)
+    @Size(1, 4)
+    string label;
 }
 
 private struct BadBytes
 {
-    @Pattern("a") ubyte[] bytes;
+    @Pattern("a")
+    ubyte[] bytes;
 }
 
 private struct Recursive
 {
-    @Valid Recursive[] children;
+    @Valid
+    Recursive[] children;
 }
 
 private struct TooManyIndexes
 {
-    @Valid Caption[][][][][][][][][] content;
+    @Valid
+    Caption[][][][][][][][][] content;
 }
 
 private struct BadPattern(string expression)
 {
-    @Pattern(expression) string content;
+    @Pattern(expression)
+    string content;
 }
 
 static assert(CanValidate!ArenaCaption);
@@ -306,18 +337,21 @@ static assert(!CanValidate!(BadPattern!r"[z-a]"));
 
 private struct MissingMinimum
 {
-    @Min int count;
+    @Min
+    int count;
 }
 
 private struct NestedDepth(size_t depth)
 {
     static if (depth == 0)
     {
-        @NotBlank string label;
+        @NotBlank
+        string label;
     }
     else
     {
-        @Valid NestedDepth!(depth - 1) child;
+        @Valid
+        NestedDepth!(depth - 1) child;
     }
 }
 
@@ -327,9 +361,12 @@ static assert(!CanValidate!(NestedDepth!64));
 
 private struct WideWidths
 {
-    @Size(2, 2) wstring utf16;
-    @Size(2, 2) dstring utf32;
-    @Size(2, 2) const(wchar)[] mutable16;
+    @Size(2, 2)
+    wstring utf16;
+    @Size(2, 2)
+    dstring utf32;
+    @Size(2, 2)
+    const(wchar)[] mutable16;
 }
 
 @("Size counts scalars in UTF-16 and UTF-32 strings and rejects invalid code units")
@@ -359,12 +396,19 @@ unittest
 
 private struct NarrowNumeric
 {
-    @Min(int.min) @Max(int.min) int signedInt;
-    @Min(short.min) short signedShort;
-    @Max(ubyte.max) ubyte unsignedByte;
-    @Min(uint.max) uint unsignedInt;
-    @Max(0) float single;
-    @Min(0) real extended;
+    @Min(int.min)
+    @Max(int.min)
+    int signedInt;
+    @Min(short.min)
+    short signedShort;
+    @Max(ubyte.max)
+    ubyte unsignedByte;
+    @Min(uint.max)
+    uint unsignedInt;
+    @Max(0)
+    float single;
+    @Min(0)
+    real extended;
 }
 
 @("narrow signed minima, unsigned maxima and nonfinite float and real values")
@@ -510,9 +554,12 @@ unittest
 
 private struct Budgeted
 {
-    @Pattern(r"(a{15}){17}") string exact;
-    @Pattern(r"((a|b)+)*c") string nested;
-    @Pattern(r"(a*)*(a|aa)*b") string ambiguous;
+    @Pattern(r"(a{15}){17}")
+    string exact;
+    @Pattern(r"((a|b)+)*c")
+    string nested;
+    @Pattern(r"(a*)*(a|aa)*b")
+    string ambiguous;
 }
 
 @("nested quantifiers stay within the state budget and linear on adversarial input")
@@ -541,8 +588,10 @@ static assert(!CanValidate!(BadPattern!r"\k<name>"));
 
 private struct Pair
 {
-    @NotBlank string left;
-    @Min(1) int right;
+    @NotBlank
+    string left;
+    @Min(1)
+    int right;
 }
 
 @("one-slot and exactly-sized outputs report written and total separately")
@@ -551,7 +600,8 @@ unittest
     Pair[3] rows = [Pair("", 0), Pair("x", 1), Pair(" ", 1)];
     static struct Rows
     {
-        @Valid Pair[] rows;
+        @Valid
+        Pair[] rows;
     }
 
     const dto = Rows(rows[]);
@@ -575,12 +625,14 @@ unittest
 
 private struct ArenaRow
 {
-    @NotBlank Text label;
+    @NotBlank
+    Text label;
 }
 
 private struct ArenaTable
 {
-    @Valid ArenaRow[][] rows;
+    @Valid
+    ArenaRow[][] rows;
 }
 
 @("default, stale and foreign Text handles inside nested arrays fail without dereference")

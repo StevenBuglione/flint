@@ -105,8 +105,8 @@ struct ConditionalOnDefaultServletWebSecurity
 
 /// Auto-configuration of servlet web security: Boot's default `SecurityFilterChain` and `@EnableWebSecurity` when
 /// the application has not enabled it.
-@afterUserDetailsService @ConditionalOnClass(null,
-        ["flint.security.config.annotation.web.configuration.EnableWebSecurity"])
+@afterUserDetailsService
+@ConditionalOnClass(null, ["flint.security.config.annotation.web.configuration.EnableWebSecurity"])
 @ConditionalOnWebApplication(ConditionalOnWebApplication.Type.SERVLET)
 @Import([classOf!SecurityFilterChainConfiguration, classOf!EnableWebSecurityConfiguration])
 final class ServletWebSecurityAutoConfiguration
@@ -114,11 +114,14 @@ final class ServletWebSecurityAutoConfiguration
 }
 
 /// Boot's default `SecurityFilterChain`: every request authenticated, with HTTP Basic.
-@liteConfiguration @ConditionalOnDefaultServletWebSecurity final class SecurityFilterChainConfiguration
+@liteConfiguration
+@ConditionalOnDefaultServletWebSecurity
+final class SecurityFilterChainConfiguration
 {
     /// The default chain.
-    @Bean @Order(SecurityFilterProperties.BASIC_AUTH_ORDER) SecurityFilterChain defaultSecurityFilterChain(
-            HttpSecurity http)
+    @Bean
+    @Order(SecurityFilterProperties.BASIC_AUTH_ORDER)
+    SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http)
     {
         alias Registry = AuthorizeHttpRequestsConfigurer.AuthorizationManagerRequestMatcherRegistry;
         http.authorizeHttpRequests((Registry requests) { requests.anyRequest().authenticated(); });
@@ -128,13 +131,17 @@ final class ServletWebSecurityAutoConfiguration
 }
 
 /// `@EnableWebSecurity`, unless the application defines the `springSecurityFilterChain` bean.
-@liteConfiguration @missingSpringSecurityFilterChain @EnableWebSecurity final class EnableWebSecurityConfiguration
+@liteConfiguration
+@missingSpringSecurityFilterChain
+@EnableWebSecurity
+final class EnableWebSecurityConfiguration
 {
 }
 
 /// Auto-configuration of the `springSecurityFilterChain` filter's registration, at `flint.security.filter.order`
 /// and for `flint.security.filter.dispatcher-types`.
-@afterServletWebSecurity @ConditionalOnWebApplication(ConditionalOnWebApplication.Type.SERVLET)
+@afterServletWebSecurity
+@ConditionalOnWebApplication(ConditionalOnWebApplication.Type.SERVLET)
 @EnableConfigurationProperties([ClassRef(typeNameOf!SecurityFilterProperties)])
 @ConditionalOnClass(null, ["flint.security.web.SecurityFilterChain"])
 final class SecurityFilterAutoConfiguration
@@ -142,7 +149,9 @@ final class SecurityFilterAutoConfiguration
     private enum DEFAULT_FILTER_NAME = "springSecurityFilterChain";
 
     /// The registration of the filter chain proxy.
-    @Bean @onSpringSecurityFilterChain DelegatingFilterProxyRegistrationBean securityFilterChainRegistration(
+    @Bean
+    @onSpringSecurityFilterChain
+    DelegatingFilterProxyRegistrationBean securityFilterChainRegistration(
             SecurityFilterProperties securityFilterProperties)
     {
         auto registration = new DelegatingFilterProxyRegistrationBean(DEFAULT_FILTER_NAME);

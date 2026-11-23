@@ -667,7 +667,8 @@ private struct ExtractReport
     int exit_code;
     Diagnostic[] diagnostics;
     string project;
-    @JsonName("version") string version_;
+    @JsonName("version")
+    string version_;
     string output;
     size_t files;
     size_t types;
@@ -679,7 +680,8 @@ private struct ExtractReport
 private struct FetchRow
 {
     string project;
-    @JsonName("version") string version_;
+    @JsonName("version")
+    string version_;
     string directory;
     bool cached;
     string licence;
@@ -710,10 +712,12 @@ private struct CoverageManifest
 {
     string manifest;
     string project;
-    @JsonName("version") string version_;
+    @JsonName("version")
+    string version_;
     TallyRow summary;
     TallyRow[] modules;
-    @JsonIgnore string[] unclassified;
+    @JsonIgnore
+    string[] unclassified;
 }
 
 private struct CoverageReport
@@ -782,7 +786,8 @@ private struct DiffReport
     size_t added;
     size_t removed;
     size_t changed;
-    @JsonIgnore DiffRow[] differences;
+    @JsonIgnore
+    DiffRow[] differences;
 }
 
 /// `finish`, with one more member whose JSON is written directly: arrays that may exceed flint.serde's limit.

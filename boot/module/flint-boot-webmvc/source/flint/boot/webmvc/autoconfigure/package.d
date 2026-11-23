@@ -481,21 +481,24 @@ class DispatcherServletRegistrationBean : ServletRegistrationBean
 }
 
 /// Auto-configuration of the `DispatcherServlet` and its registration.
-@dispatcherServletAutoConfiguration @AutoConfigureOrder(int.min)
+@dispatcherServletAutoConfiguration
+@AutoConfigureOrder(int.min)
 @ConditionalOnWebApplication(ConditionalOnWebApplication.Type.SERVLET)
 @ConditionalOnClass(null, ["flint.web.servlet.DispatcherServlet"])
 @EnableConfigurationProperties([ClassRef(typeNameOf!WebMvcProperties)])
 final class DispatcherServletAutoConfiguration
 {
     /// The `DispatcherServlet`, over Spring MVC's strategies.
-    @Bean @ConditionalOnMissingBean([ClassRef("flint.web.servlet.DispatcherServlet")])
+    @Bean
+    @ConditionalOnMissingBean([ClassRef("flint.web.servlet.DispatcherServlet")])
     DispatcherServlet dispatcherServlet(WebMvcConfigurationSupport webMvcConfigurationSupport)
     {
         return new DispatcherServlet(webMvcConfigurationSupport.build());
     }
 
     /// The servlet's registration at `flint.mvc.servlet.path`.
-    @Bean @ConditionalOnMissingBean([ClassRef(typeNameOf!DispatcherServletRegistrationBean)])
+    @Bean
+    @ConditionalOnMissingBean([ClassRef(typeNameOf!DispatcherServletRegistrationBean)])
     DispatcherServletRegistrationBean dispatcherServletRegistration(DispatcherServlet dispatcherServlet,
             WebMvcProperties webMvcProperties)
     {
@@ -509,13 +512,15 @@ final class DispatcherServletAutoConfiguration
 /// Auto-configuration of Spring MVC (Boot's `WebMvcAutoConfiguration` with `EnableWebMvcConfiguration`): the
 /// strategies over Flint AOT's request mappings, the application's `WebMvcConfigurer`s, the exception and view
 /// resolver beans (Boot's `DefaultErrorAttributes` first), and JSON through the application's `JsonMapper`.
-@webMvcAutoConfiguration @ConditionalOnWebApplication(ConditionalOnWebApplication.Type.SERVLET)
+@webMvcAutoConfiguration
+@ConditionalOnWebApplication(ConditionalOnWebApplication.Type.SERVLET)
 @ConditionalOnClass(null, ["flint.jakarta.servlet.Servlet", "flint.web.servlet.DispatcherServlet"])
 @EnableConfigurationProperties([ClassRef(typeNameOf!WebMvcProperties)])
 final class WebMvcAutoConfiguration
 {
     /// Spring MVC's configuration, unless the application defines one.
-    @Bean @ConditionalOnMissingBean([
+    @Bean
+    @ConditionalOnMissingBean([
         ClassRef("flint.web.servlet.config.annotation.WebMvcConfigurationSupport")
     ])
     WebMvcConfigurationSupport webMvcConfigurationSupport(ApplicationContext context,

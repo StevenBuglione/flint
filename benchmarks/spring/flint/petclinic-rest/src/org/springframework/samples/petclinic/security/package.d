@@ -25,7 +25,8 @@ import flint.stereotype : Component;
 @safe:
 
 /// The role names `@PreAuthorize` expressions read as `@roles.OWNER_ADMIN` and so on.
-@Component class Roles
+@Component
+class Roles
 {
     immutable string OWNER_ADMIN = "ROLE_OWNER_ADMIN"; ///
     immutable string VET_ADMIN = "ROLE_VET_ADMIN"; ///
@@ -34,14 +35,17 @@ import flint.stereotype : Component;
 
 /// Security off (`petclinic.security.enable=false`, the default): every request is permitted, CSRF is off, and
 /// Spring Security's default headers are written, with `X-Frame-Options: SAMEORIGIN`.
-@Configuration @EnableWebSecurity @ConditionalOnProperty(name : ["petclinic.security.enable"], havingValue:
+@Configuration
+@EnableWebSecurity
+@ConditionalOnProperty(name : ["petclinic.security.enable"], havingValue:
         "false")
 class DisableSecurityConfig
 {
     private alias Registry = AuthorizeHttpRequestsConfigurer.AuthorizationManagerRequestMatcherRegistry;
 
     ///
-    @Bean SecurityFilterChain filterChain(HttpSecurity http)
+    @Bean
+    SecurityFilterChain filterChain(HttpSecurity http)
     {
         return http.csrf((CsrfConfigurer csrf) { csrf.disable(); }).authorizeHttpRequests((Registry authz) {
             authz.anyRequest().permitAll();
@@ -54,7 +58,8 @@ class DisableSecurityConfig
 
 /// Security on (`petclinic.security.enable=true`): HTTP Basic against the `users` and `roles` tables with BCrypt
 /// passwords, and `@PreAuthorize` method security.
-@Configuration @EnableMethodSecurity(prePostEnabled : true)  // Enable @PreAuthorize method-level security
+@Configuration
+@EnableMethodSecurity(prePostEnabled : true)  // Enable @PreAuthorize method-level security
 @ConditionalOnProperty(name : ["petclinic.security.enable"], havingValue:
         "true")
 class BasicAuthenticationConfig
@@ -71,13 +76,15 @@ class BasicAuthenticationConfig
     }
 
     ///
-    @Bean PasswordEncoder passwordEncoder()
+    @Bean
+    PasswordEncoder passwordEncoder()
     {
         return new BCryptPasswordEncoder();
     }
 
     ///
-    @Bean SecurityFilterChain filterChain(HttpSecurity http)
+    @Bean
+    SecurityFilterChain filterChain(HttpSecurity http)
     {
         http.csrf((CsrfConfigurer csrf) { csrf.disable(); }).authorizeHttpRequests((Registry authz) {
             authz.anyRequest().authenticated();

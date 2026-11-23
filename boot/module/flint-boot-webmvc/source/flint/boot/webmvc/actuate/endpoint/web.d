@@ -111,7 +111,9 @@ final class LinksHandler
     }
 
     /// The links.
-    @endpointMapping @ResponseBody Links links(HttpServletRequest request)
+    @endpointMapping
+    @ResponseBody
+    Links links(HttpServletRequest request)
     {
         auto body = new Links;
         body.put("_links", resolver.resolveLinks(request.getRequestURL()));
@@ -134,7 +136,8 @@ final class OperationHandler
     }
 
     /// Invoke the operation.
-    @endpointMapping ResponseEntity handle(HttpServletRequest request)
+    @endpointMapping
+    ResponseEntity handle(HttpServletRequest request)
     {
         auto response = operation.invoke(selectors(request));
         auto status = HttpStatusCode.valueOf(response.getStatus());

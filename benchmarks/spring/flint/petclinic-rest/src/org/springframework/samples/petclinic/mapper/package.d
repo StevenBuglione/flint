@@ -68,7 +68,8 @@ interface OwnerMapper
 }
 
 /// `OwnerMapperImpl`: the implementation MapStruct generates for `OwnerMapper`.
-@Component class OwnerMapperImpl : OwnerMapper
+@Component
+class OwnerMapperImpl : OwnerMapper
 {
     private PetMapper petMapper;
 
@@ -225,7 +226,8 @@ interface PetMapper
 }
 
 /// `PetMapperImpl`: the implementation MapStruct generates for `PetMapper`.
-@Component class PetMapperImpl : PetMapper
+@Component
+class PetMapperImpl : PetMapper
 {
     private VisitMapper visitMapper;
 
@@ -416,7 +418,8 @@ interface PetTypeMapper
 }
 
 /// `PetTypeMapperImpl`: the implementation MapStruct generates for `PetTypeMapper`.
-@Component class PetTypeMapperImpl : PetTypeMapper
+@Component
+class PetTypeMapperImpl : PetTypeMapper
 {
 
     override PetType toPetType(PetTypeDto petTypeDto)
@@ -497,7 +500,8 @@ interface SpecialtyMapper
 }
 
 /// `SpecialtyMapperImpl`: the implementation MapStruct generates for `SpecialtyMapper`.
-@Component class SpecialtyMapperImpl : SpecialtyMapper
+@Component
+class SpecialtyMapperImpl : SpecialtyMapper
 {
 
     override Specialty toSpecialty(SpecialtyDto specialtyDto)
@@ -576,7 +580,8 @@ interface UserMapper
 }
 
 /// `UserMapperImpl`: the implementation MapStruct generates for `UserMapper`.
-@Component class UserMapperImpl : UserMapper
+@Component
+class UserMapperImpl : UserMapper
 {
 
     override Role toRole(RoleDto roleDto)
@@ -703,7 +708,8 @@ interface VetMapper
 }
 
 /// `VetMapperImpl`: the implementation MapStruct generates for `VetMapper`.
-@Component class VetMapperImpl : VetMapper
+@Component
+class VetMapperImpl : VetMapper
 {
     private SpecialtyMapper specialtyMapper;
 
@@ -814,7 +820,8 @@ interface VisitMapper
 }
 
 /// `VisitMapperImpl`: the implementation MapStruct generates for `VisitMapper`.
-@Component class VisitMapperImpl : VisitMapper
+@Component
+class VisitMapperImpl : VisitMapper
 {
 
     override Visit toVisit(VisitDto visitDto)

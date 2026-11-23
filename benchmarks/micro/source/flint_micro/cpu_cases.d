@@ -22,8 +22,12 @@ private struct Decoded
 
 private struct Checked
 {
-    @NotBlank @Size(2, 4) string label;
-    @Min(1) @Max(9) int score;
+    @NotBlank
+    @Size(2, 4)
+    string label;
+    @Min(1)
+    @Max(9)
+    int score;
 }
 
 private struct ValidationCase

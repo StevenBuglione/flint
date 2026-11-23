@@ -13,7 +13,8 @@ import flint.engine.web : Get, PathVariable, RequestContext, Response, RestContr
 @safe:
 
 /// The `[spa]` section.
-@ConditionalOnConfig("spa") @ConfigurationProperties("spa")
+@ConditionalOnConfig("spa")
+@ConfigurationProperties("spa")
 struct SpaProperties
 {
     /// Directory of the built front end, relative to the working directory.
@@ -23,7 +24,8 @@ struct SpaProperties
 }
 
 /// Serves the front end. Registered only with a `[spa]` section.
-@ConditionalOnConfig("spa") @RestController("")
+@ConditionalOnConfig("spa")
+@RestController("")
 struct SpaController
 {
     private SpaProperties properties;

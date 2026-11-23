@@ -23,7 +23,8 @@ import org.springframework.samples.petclinic.rest.dto : OwnerFieldsDto, PetDto, 
 @safe:
 
 /// `OwnersApi`.
-@Validated interface OwnersApi
+@Validated
+interface OwnersApi
 {
     /// POST /owners: Adds a pet owner
     @RequestMapping(method : [RequestMethod.POST], value:
@@ -94,7 +95,8 @@ produces:
 }
 
 /// `OwnerV2Api`.
-@Validated interface OwnerV2Api
+@Validated
+interface OwnerV2Api
 {
     /// GET /v2/owners: Lists pet owners with pagination
     @RequestMapping(method : [RequestMethod.GET], value:
@@ -111,7 +113,8 @@ defaultValue:
 }
 
 /// `PetsApi`.
-@Validated interface PetsApi
+@Validated
+interface PetsApi
 {
     /// DELETE /pets/{petId}: Delete a pet by ID
     @RequestMapping(method : [RequestMethod.DELETE], value:
@@ -140,7 +143,8 @@ defaultValue:
 }
 
 /// `PetV2Api`.
-@Validated interface PetV2Api
+@Validated
+interface PetV2Api
 {
     /// GET /v2/pets: Lists pets with pagination.
     @RequestMapping(method : [RequestMethod.GET], value:
@@ -156,7 +160,8 @@ defaultValue:
 }
 
 /// `PettypesApi`.
-@Validated interface PettypesApi
+@Validated
+interface PettypesApi
 {
     /// POST /pettypes: Create a pet type
     @RequestMapping(method : [RequestMethod.POST], value:
@@ -193,7 +198,8 @@ defaultValue:
 }
 
 /// `SpecialtiesApi`.
-@Validated interface SpecialtiesApi
+@Validated
+interface SpecialtiesApi
 {
     /// POST /specialties: Create a specialty
     @RequestMapping(method : [RequestMethod.POST], value:
@@ -232,7 +238,8 @@ produces:
 }
 
 /// `UsersApi`.
-@Validated interface UsersApi
+@Validated
+interface UsersApi
 {
     /// POST /users: Create a user
     @RequestMapping(method : [RequestMethod.POST], value:
@@ -243,7 +250,8 @@ produces:
 }
 
 /// `VetsApi`.
-@Validated interface VetsApi
+@Validated
+interface VetsApi
 {
     /// POST /vets: Create a Vet
     @RequestMapping(method : [RequestMethod.POST], value:
@@ -280,7 +288,8 @@ consumes:
 }
 
 /// `VisitsApi`.
-@Validated interface VisitsApi
+@Validated
+interface VisitsApi
 {
     /// POST /visits: Create a visit
     @RequestMapping(method : [RequestMethod.POST], value:

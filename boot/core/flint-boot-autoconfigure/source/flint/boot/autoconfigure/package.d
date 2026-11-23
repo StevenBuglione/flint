@@ -51,7 +51,10 @@ struct AutoConfigurationPackage
 
 /// The application's main annotation: `@FlintBootConfiguration`, `@EnableAutoConfiguration` and component
 /// scanning of the annotated class's package. `@FlintApplication`, the ADR-029 name, is an alias.
-@FlintBootConfiguration @EnableAutoConfiguration @AutoConfigurationPackage struct FlintBootApplication
+@FlintBootConfiguration
+@EnableAutoConfiguration
+@AutoConfigurationPackage
+struct FlintBootApplication
 {
     /// Auto-configurations to leave out; an alias of `EnableAutoConfiguration.exclude`.
     ClassRef[] exclude;
@@ -97,7 +100,9 @@ struct AutoConfigureBefore
 
 /// Marks an auto-configuration class: a `@Configuration(proxyBeanMethods = false)` listed in a starter's
 /// `AutoConfiguration.imports`, ordered with `before` and `after`.
-@AutoConfigureBefore @AutoConfigureAfter struct AutoConfiguration
+@AutoConfigureBefore
+@AutoConfigureAfter
+struct AutoConfiguration
 {
     /// The bean name of the configuration; an alias of `Configuration.value`.
     string value;

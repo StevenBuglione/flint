@@ -14,7 +14,8 @@ private struct Invalid
     }
 
     Nested nested;
-    @JsonFlatten Nested flattened;
+    @JsonFlatten
+    Nested flattened;
     int name;
 }
 

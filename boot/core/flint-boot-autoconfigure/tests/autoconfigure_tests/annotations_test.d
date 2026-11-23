@@ -9,7 +9,8 @@ import flint.engine.aot.descriptor : descriptorOf;
 
 @safe:
 
-@FlintBootApplication private final class App
+@FlintBootApplication
+private final class App
 {
 }
 

@@ -63,15 +63,18 @@ private template withEnvironment(FlintBootTest.WebEnvironment environment)
     }();
 }
 
-@propertiesTest private final class PropertiesTest
+@propertiesTest
+private final class PropertiesTest
 {
 }
 
-@withEnvironment!(FlintBootTest.WebEnvironment.RANDOM_PORT) private final class RandomPortTest
+@withEnvironment!(FlintBootTest.WebEnvironment.RANDOM_PORT)
+private final class RandomPortTest
 {
 }
 
-@withEnvironment!(FlintBootTest.WebEnvironment.NONE) private final class NoWebTest
+@withEnvironment!(FlintBootTest.WebEnvironment.NONE)
+private final class NoWebTest
 {
 }
 

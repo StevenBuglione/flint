@@ -43,7 +43,8 @@ private enum RequestMapping incompatibleTypePath = RequestMapping(null, "", ["/i
             null, null, null, null, ["text/plain"]);
 
 /// `@ResponseStatus(value = HttpStatus.BAD_REQUEST, reason = "Expected!")`.
-@badRequestExpected class ExpectedException : RuntimeException
+@badRequestExpected
+class ExpectedException : RuntimeException
 {
     /// Without a message.
     this() pure nothrow
@@ -53,7 +54,8 @@ private enum RequestMapping incompatibleTypePath = RequestMapping(null, "", ["/i
 }
 
 /// `@ResponseStatus(HttpStatus.NOT_ACCEPTABLE)`.
-@notAcceptable class NoReasonExpectedException : RuntimeException
+@notAcceptable
+class NoReasonExpectedException : RuntimeException
 {
     /// With `message`.
     this(string message) pure nothrow
@@ -81,7 +83,8 @@ final class DummyBody
 }
 
 /// The test's controller.
-@RestController class ErrorsController
+@RestController
+class ErrorsController
 {
     /// `foo`.
     string getFoo()
@@ -90,37 +93,43 @@ final class DummyBody
     }
 
     /// Fails.
-    @RequestMapping("/") string home()
+    @RequestMapping("/")
+    string home()
     {
         throw new IllegalStateException("Expected!");
     }
 
     /// Fails without a message.
-    @RequestMapping("/noMessage") string noMessage()
+    @RequestMapping("/noMessage")
+    string noMessage()
     {
         throw new IllegalStateException();
     }
 
     /// Fails with `ExpectedException`.
-    @RequestMapping("/annotated") string annotated()
+    @RequestMapping("/annotated")
+    string annotated()
     {
         throw new ExpectedException();
     }
 
     /// Fails with a message and no reason.
-    @RequestMapping("/annotatedNoReason") string annotatedNoReason()
+    @RequestMapping("/annotatedNoReason")
+    string annotatedNoReason()
     {
         throw new NoReasonExpectedException("Expected message");
     }
 
     /// Fails with an empty message and no reason.
-    @RequestMapping("/annotatedNoMessage") string annotatedNoMessage()
+    @RequestMapping("/annotatedNoMessage")
+    string annotatedNoMessage()
     {
         throw new NoReasonExpectedException("");
     }
 
     /// Fails binding `foo`.
-    @RequestMapping("/bind") string bind()
+    @RequestMapping("/bind")
+    string bind()
     {
         Map!(string, Any) target = new HashMap!(string, Any);
         target.put("foo", Any.of("foo"));
@@ -130,14 +139,16 @@ final class DummyBody
     }
 
     /// Echoes a valid body.
-    @bodyValidationMapping string bodyValidation(@Valid @RequestBody DummyBody body)
+    @bodyValidationMapping
+    string bodyValidation(@Valid @RequestBody DummyBody body)
     {
         return
         body.content;
     }
 
     /// Fails for a `text/plain` handler.
-    @incompatibleTypePath string incompatibleType()
+    @incompatibleTypePath
+    string incompatibleType()
     {
         throw new ExpectedException();
     }

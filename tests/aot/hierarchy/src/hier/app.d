@@ -6,6 +6,7 @@ import flint.boot.autoconfigure : FlintBootApplication;
 @safe:
 
 /// The fixture application.
-@FlintBootApplication final class HierarchyApplication
+@FlintBootApplication
+final class HierarchyApplication
 {
 }

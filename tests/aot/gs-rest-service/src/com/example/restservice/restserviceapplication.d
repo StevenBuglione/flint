@@ -6,6 +6,7 @@ import flint.boot.autoconfigure : FlintBootApplication;
 @safe:
 
 /// `@SpringBootApplication public class RestServiceApplication`.
-@FlintBootApplication class RestServiceApplication
+@FlintBootApplication
+class RestServiceApplication
 {
 }
