@@ -78,6 +78,24 @@ import flint.java.util : Optional;
     assert(thrown);
 }
 
+@("the factory handles 200 requests at once by default; server.flint.max-handlers sets the limit") unittest
+{
+    auto properties = new ServerProperties;
+    auto factory = new FlintServletWebServerFactory;
+    assert(factory.getMaxHandlers() == 200);
+    new ServletWebServerFactoryCustomizer(properties).customize(factory);
+    assert(factory.getMaxHandlers() == 200);
+    properties.getFlint().setMaxHandlers(0);
+    new ServletWebServerFactoryCustomizer(properties).customize(factory);
+    assert(factory.getMaxHandlers() == 0);
+    bool thrown;
+    try
+        factory.setMaxHandlers(-1);
+    catch (IllegalArgumentException)
+        thrown = true;
+    assert(thrown && factory.getMaxHandlers() == 0);
+}
+
 @("server.servlet.context-path is cleaned as Boot cleans it: trimmed, without a trailing slash") unittest
 {
     auto servlet = new ServerProperties().getServlet();

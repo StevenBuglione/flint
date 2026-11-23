@@ -26,7 +26,7 @@ import textwrap
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 class F:
     def __init__(self, name, dtype, default, doc, ro=False, uda=None, setter=None, ctor=False, setter_body=None,
-                 schema=None):
+                 schema=None, throws=False):
         self.name, self.dtype, self.default, self.doc, self.ro, self.uda = name, dtype, default, doc, ro, uda
         # schema: the type the metadata and schema describe, when the D type is erased (Boot's
         # Map<SerializationFeature, Boolean> held as Map!(string, bool), so generated code shares one map type)
@@ -37,6 +37,8 @@ class F:
         self.ctor = ctor
         # setter_body: the setter's statements, when Boot's setter does more than store a value
         self.setter_body = setter_body
+        # throws: the setter rejects a value with an exception, which the binder reports as a BindException
+        self.throws = throws
 
 
 class Enum:
@@ -118,7 +120,7 @@ def render_class(c, indent=0, static=False):
                                f'{pad}        return {field(f.name)};', f'{pad}    }}']))
         if not f.ro:
             statements = f.setter_body or [f'this.{field(f.name)} = {f.setter or field(f.name)};']
-            body.append('\n'.join([f'{pad}    /// Set `{f.name}`.', f'{pad}    void set{cap(f.name)}({f.dtype} {field(f.name)}) pure nothrow @nogc',
+            body.append('\n'.join([f'{pad}    /// Set `{f.name}`.', f'{pad}    void set{cap(f.name)}({f.dtype} {field(f.name)})' + ('' if f.throws else ' pure nothrow @nogc'),
                                    f'{pad}    {{'] + [f'{pad}        {line}' if line else '' for line in statements] + [f'{pad}    }}']))
     for method in c.methods:
         body.append('\n'.join(f'{pad}    {line}' if line else '' for line in method))
@@ -297,6 +299,10 @@ server = Cls('ServerProperties', 'Settings of the embedded web server.', [
     F('flint', 'Flint', 'new Flint', "Flint servlet engine settings (`server.flint.*`), in place of Boot's `server.tomcat.*`.", ro=True),
 ], nested=[Cls('Flint', "Flint servlet engine settings (Flint addition, in place of Boot's `server.tomcat.*`).", [
     F('threads', 'int', '0', 'Number of reactor threads serving requests. 0 uses every CPU the process may run on, up to 16, as Tomcat\'s request thread pool spans the CPUs.'),
+    F('maxHandlers', 'int', '200', 'Maximum number of requests handled at once, across the reactor threads, as Tomcat\'s server.tomcat.threads.max. Requests past it wait on their connections. 0 runs one handler per connection slot.',
+      throws=True, setter_body=['if (maxHandlers < 0)', '{', '    import flint.java.lang : IllegalArgumentException;', '',
+                                '    throw new IllegalArgumentException("Max handlers must not be negative");', '}',
+                                'this.maxHandlers = maxHandlers;']),
 ]), Cls('Servlet', 'Servlet properties.', [
     F('contextParameters', 'Map!(string, string)', 'new LinkedHashMap!(string, string)', 'Servlet context init parameters.', ro=True),
     F('contextPath', 'string', None, 'Context path of the application.', setter='cleanContextPath(contextPath)'),

@@ -20,6 +20,7 @@ unittest
     assert(properties.getServlet().getApplicationDisplayName() == "application");
     assert(properties.getServlet().getContextPath() is null);
     assert(properties.getFlint().getThreads() == 0);
+    assert(properties.getFlint().getMaxHandlers() == 200);
 }
 
 unittest
@@ -43,4 +44,45 @@ unittest
     assert(properties.getServlet().getContextPath() == "/api");
     assert(properties.getPort().get() == 8081);
     assert(properties.getFlint().getThreads() == 3);
+}
+
+/// `server.*` bound from the one property `key=value`, then its `server.flint.*` group.
+private ServerProperties.Flint bindFlint(string key, string value)
+{
+    string[2][] entries = [[key, value]];
+    auto binder = new Binder([
+        cast(ConfigurationPropertySource) new MapConfigurationPropertySource("test", entries)
+    ]);
+    foreach (descriptor; [
+        descriptorOf!Shutdown(), descriptorOf!Compression(), descriptorOf!Http2(),
+        descriptorOf!(ServerProperties.Servlet)(), descriptorOf!(ServerProperties.Flint)(),
+        descriptorOf!(Optional!int)()
+    ])
+        binder.getDescriptors().add(descriptor);
+    return binder.bind!ServerProperties("server").get().getFlint();
+}
+
+@("server.flint.max-handlers binds Tomcat's threads.max; 0 keeps one handler per connection slot") unittest
+{
+    assert(bindFlint("server.flint.max-handlers", "64").getMaxHandlers() == 64);
+    assert(bindFlint("server.flint.max-handlers", "0").getMaxHandlers() == 0);
+}
+
+@("a negative server.flint.max-handlers fails at binding, naming the property") unittest
+{
+    import flint.boot.context.properties.bind : BindException;
+    import flint.java.lang : IllegalArgumentException;
+
+    try
+    {
+        bindFlint("server.flint.max-handlers", "-1");
+        assert(false, "a negative max-handlers bound");
+    }
+    catch (BindException failure)
+    {
+        auto property = failure.getProperty();
+        assert(property !is null && property.getName().toString() == "server.flint.max-handlers", failure.msg);
+        assert(cast(IllegalArgumentException) failure.getCause() !is null, failure.msg);
+        assert(failure.getCause().msg == "Max handlers must not be negative");
+    }
 }

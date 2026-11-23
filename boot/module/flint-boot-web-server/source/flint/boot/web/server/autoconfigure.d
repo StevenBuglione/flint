@@ -32,6 +32,7 @@ final class ServerProperties
     static final class Flint
     {
         private int threads = 0;
+        private int maxHandlers = 200;
 
         /// Number of reactor threads serving requests. 0 uses every CPU the process may run on, up to 16, as Tomcat's
         /// request thread pool spans the CPUs.
@@ -44,6 +45,26 @@ final class ServerProperties
         void setThreads(int threads) pure nothrow @nogc
         {
             this.threads = threads;
+        }
+
+        /// Maximum number of requests handled at once, across the reactor threads, as Tomcat's
+        /// server.tomcat.threads.max. Requests past it wait on their connections. 0 runs one handler per connection
+        /// slot.
+        int getMaxHandlers() const pure nothrow @nogc
+        {
+            return maxHandlers;
+        }
+
+        /// Set `maxHandlers`.
+        void setMaxHandlers(int maxHandlers)
+        {
+            if (maxHandlers < 0)
+            {
+                import flint.java.lang : IllegalArgumentException;
+
+                throw new IllegalArgumentException("Max handlers must not be negative");
+            }
+            this.maxHandlers = maxHandlers;
         }
     }
 
@@ -219,7 +240,7 @@ imported!"flint.engine.aot.descriptor".Descriptor[] flintAotDescriptors()
 // ---- end: generated region
 
 /// Applies `server.*` to the servlet web server factory: the port, the address, the context path and the shutdown (Boot's
-/// `ServletWebServerFactoryCustomizer`), and on Flint's factory `server.flint.threads`.
+/// `ServletWebServerFactoryCustomizer`), and on Flint's factory `server.flint.threads` and `server.flint.max-handlers`.
 class ServletWebServerFactoryCustomizer : WebServerFactoryCustomizer
 {
     private ServerProperties serverProperties;
@@ -240,9 +261,13 @@ class ServletWebServerFactoryCustomizer : WebServerFactoryCustomizer
         if (auto contextPath = serverProperties.getServlet().getContextPath())
             factory.setContextPath(contextPath);
         factory.setShutdown(serverProperties.getShutdown());
-        // Boot's TomcatWebServerFactoryCustomizer applies server.tomcat.threads.*; Flint's engine takes its threads here.
+        // Boot's TomcatWebServerFactoryCustomizer applies server.tomcat.threads.*; Flint's engine takes its threads and
+        // its handler limit (threads.max) here.
         if (auto flintFactory = cast(FlintServletWebServerFactory) factory)
+        {
             flintFactory.setThreads(serverProperties.getFlint().getThreads());
+            flintFactory.setMaxHandlers(serverProperties.getFlint().getMaxHandlers());
+        }
     }
 }
 

@@ -105,6 +105,7 @@ class FlintServletWebServerFactory : ConfigurableServletWebServerFactory
     private string errorPath = "/error";
     private Shutdown shutdown = Shutdown.GRACEFUL;
     private int threads;
+    private int maxHandlers = 200;
 
     /// The default factory.
     this() pure nothrow @nogc
@@ -131,6 +132,7 @@ class FlintServletWebServerFactory : ConfigurableServletWebServerFactory
         options.globalErrorPage = errorPath;
         options.shutdown = shutdown == Shutdown.GRACEFUL ? ShutdownMode.graceful : ShutdownMode.immediate;
         options.cores = threads;
+        options.maxHandlers = cast(uint) maxHandlers; // setMaxHandlers keeps it non-negative
         auto engine = new ServletEngine(options);
         foreach (initializer; initializers)
             initializer.onStartup(engine.getServletContext());
@@ -219,5 +221,22 @@ class FlintServletWebServerFactory : ConfigurableServletWebServerFactory
         if (threads < 0 || threads > 16)
             throw new IllegalArgumentException("Threads must be between 0 and 16");
         this.threads = threads;
+    }
+
+    /// The requests handled at once across the reactor threads; 200, the default, is Tomcat's `threads.max`.
+    int getMaxHandlers() const pure nothrow @nogc
+    {
+        return maxHandlers;
+    }
+
+    /// Set the requests handled at once across the reactor threads (`server.flint.max-handlers`), as Tomcat's
+    /// `setMaxThreads`; requests past it wait on their connections. 0 runs one handler per connection slot.
+    void setMaxHandlers(int maxHandlers)
+    {
+        import flint.java.lang : IllegalArgumentException;
+
+        if (maxHandlers < 0)
+            throw new IllegalArgumentException("Max handlers must not be negative");
+        this.maxHandlers = maxHandlers;
     }
 }

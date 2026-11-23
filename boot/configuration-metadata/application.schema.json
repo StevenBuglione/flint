@@ -1699,6 +1699,11 @@
               "type": "integer",
               "description": "Number of reactor threads serving requests. 0 uses every CPU the process may run on, up to 16, as Tomcat's request thread pool spans the CPUs.",
               "default": 0
+            },
+            "max-handlers": {
+              "type": "integer",
+              "description": "Maximum number of requests handled at once, across the reactor threads, as Tomcat's server.tomcat.threads.max. Requests past it wait on their connections. 0 runs one handler per connection slot.",
+              "default": 200
             }
           }
         }

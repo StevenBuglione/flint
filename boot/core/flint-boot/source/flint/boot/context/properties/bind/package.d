@@ -464,13 +464,13 @@ final class Binder
     /// Returns whether anything was bound; `instance` then holds the result. Throws `BindException`.
     bool bind(ConfigurationPropertyName name, const Descriptor type, ref Any instance)
     {
+        // Binder.handleBindError: any exception, a conversion failure or a setter rejecting its value, becomes a
+        // BindException naming the property being bound.
         try
             return bindValue(name, type, instance);
         catch (BindException failure)
             throw failure;
-        catch (ConversionFailedException failure)
-            throw new BindException(name, type.name, lastProperty, failure);
-        catch (IllegalStateException failure)
+        catch (Exception failure)
             throw new BindException(name, type.name, lastProperty, failure);
     }
 
