@@ -130,12 +130,16 @@ Each Spring-layer module of `policy/framework.json` now has two things:
 
 | Module | Linked bytes (larger of O3/Oz) | Budget | Template instances | Budget |
 | --- | ---: | ---: | ---: | ---: |
+| beans | 452,856 | 573,440 | 634 | 800 |
+| context | 766,936 | 966,656 | 890 | 1,150 |
 | core | 59,384 | 81,920 | 577 | 750 |
 | engine-aot | 61,744 | 81,920 | 308 | 400 |
+| hibernate-validator | 348,016 | 442,368 | 837 | 1,050 |
 | jackson-annotations | 0 | 4,096 | 273 | 350 |
 | jackson-core | 92,760 | 131,072 | 277 | 350 |
 | jackson-databind | 434,144 | 557,056 | 530 | 700 |
 | jakarta-annotation | 0 | 4,096 | 274 | 350 |
+| jakarta-validation | 63,336 | 81,920 | 275 | 350 |
 | java | 272,264 | 344,064 | 2,680 | 3,350 |
 | jdbc | 376,216 | 475,136 | 577 | 750 |
 | slf4j-api | 371,368 | 475,136 | 720 | 900 |
@@ -149,4 +153,4 @@ How the budgets were set:
 
 **What the template count covers.** The instrumented compiler traces each `-c` invocation, and DUB compiles a library dependency with `-lib`. The count therefore covers the probe's compile, including every instantiation of the module's templates that the probe uses, but not the module library's own compile. Packages have always been counted this way; whether to trace library compiles too is for the measurement owners.
 
-beans, context, hibernate-validator and jakarta-validation joined `policy/framework.json` while these probes were written and are next. Modules that join later (web, webmvc, jakarta-servlet, framework-test, aop) need a probe pair and a budget in the same commit. `framework_budgets.load` refuses a module without them, so the gate fails until they exist.
+beans, context, hibernate-validator and jakarta-validation joined `policy/framework.json` while the first ten probes were written; their rows come from a run at `821d702122`. Modules that join later (web, webmvc, jakarta-servlet, framework-test, aop) need a probe pair and a budget in the same commit. `framework_budgets.load` refuses a module without them, so the gate fails until they exist.

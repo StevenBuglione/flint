@@ -363,6 +363,27 @@
     "core",
     "engine-aot",
     "java"
+   ],
+   "bench": {
+    "fixture": "framework/beans/bench",
+    "baseline": "framework/beans/bench/baseline",
+    "edit_source": "framework/beans/source/flint/beans/factory/support.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 573440,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 800
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
    ]
   },
   "context": {
@@ -379,6 +400,27 @@
     "core",
     "engine-aot",
     "java"
+   ],
+   "bench": {
+    "fixture": "framework/context/bench",
+    "baseline": "framework/context/bench/baseline",
+    "edit_source": "framework/context/source/flint/context/support.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 966656,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 1150
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
    ]
   },
   "jakarta-validation": {
@@ -391,6 +433,27 @@
     "conc",
     "engine-aot",
     "java"
+   ],
+   "bench": {
+    "fixture": "framework/jakarta-validation/bench",
+    "baseline": "framework/jakarta-validation/bench/baseline",
+    "edit_source": "framework/jakarta-validation/source/flint/jakarta/validation/package.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 81920,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 350
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
    ]
   },
   "hibernate-validator": {
@@ -405,6 +468,27 @@
     "java",
     "serde",
     "validate"
+   ],
+   "bench": {
+    "fixture": "framework/hibernate-validator/bench",
+    "baseline": "framework/hibernate-validator/bench/baseline",
+    "edit_source": "framework/hibernate-validator/source/flint/hibernate/validator/package.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 442368,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 1050
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
    ]
   }
  }
