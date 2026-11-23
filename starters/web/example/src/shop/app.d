@@ -1,15 +1,26 @@
-/// shop: the application root.
+/// shop: the application root, as a Spring Boot application.
 module shop.app;
 
 import flint.arena : Result;
-import flint.boot : runApplication;
-import flint.boot_autoconfigure_web : WebServerAutoConfiguration;
+import flint.boot : FlintApplication, FlintMain;
 import flint.config : ConfigurationProperties, Required;
-import flint.di : Provided, Service;
+import flint.di : Service;
 import flint.web : Get, PathVariable, RestController;
 import shop.greeting : greet;
 
 @safe:
+
+/// The application: its package, src/shop/, is scanned for beans at compile time.
+@FlintApplication final class ShopApplication
+{
+    /// Start the application.
+    static int main(string[] args)
+    {
+        return FlintApplication.run!ShopApplication(args);
+    }
+}
+
+mixin FlintMain!ShopApplication;
 
 /// Typed configuration bound from config/application*.toml.
 @ConfigurationProperties("app")
@@ -62,9 +73,4 @@ struct GreetingController
     {
         return Result!Message(greeter.greeting(name));
     }
-}
-
-int main(string[] args)
-{
-    return runApplication!(WebServerAutoConfiguration, Provided!AppSettings, Greeter, GreetingController)(args);
 }

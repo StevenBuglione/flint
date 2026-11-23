@@ -3,7 +3,7 @@ module flint.boot_autoconfigure_data.autoconfigure_data_test;
 import flint.arena : RequestArena, Status;
 import flint.di : AppContext, ConfiguredSections;
 import flint.boot_autoconfigure_data : Context, DataSourceAutoConfiguration, DataSource, DatabaseProperties,
-    Id, Repository, Table, Text, migrationDescription, migrationVersion, toString, toText;
+    Id, JdbcRepository, Table, Text, migrationDescription, migrationVersion, toString, toText;
 
 @safe:
 
@@ -32,7 +32,7 @@ unittest
     const path = buildPath(tempDir(), "flint-starter-data-" ~ randomUUID().toString() ~ ".db");
     scope (exit)
         remove(path);
-    AppContext!(DataSourceAutoConfiguration, ConfiguredSections!("database"), Repository!(Note, ulong)) context;
+    AppContext!(DataSourceAutoConfiguration, ConfiguredSections!("database"), JdbcRepository!(Note, ulong)) context;
     DatabaseProperties properties;
     properties.url = "file:" ~ path;
     assert(context.provide(properties).code == Status.ok);
@@ -64,7 +64,7 @@ unittest
     ubyte[4096] storage;
     auto arena = RequestArena(storage[]);
     Context cancellation;
-    auto repository = context.get!(Repository!(Note, ulong))();
+    auto repository = context.get!(JdbcRepository!(Note, ulong))();
     Note note;
     note.title = toText(arena, "First").value;
     const saved = repository.save(note, arena, cancellation);

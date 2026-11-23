@@ -75,3 +75,35 @@ unittest
     write(buildPath("config", "application.toml"), "[greeting]\ntxet = \"Hi\"\n");
     assert(runApplication!(Defaults, Greeter)(["app"]) == 3);
 }
+
+@("scanning finds the annotated beans, runners run after start, and @Exclude turns off an auto-configuration")
+unittest
+{
+    import flint.boot : AutoConfigurationList, FlintApplication, ScannedBeans;
+    import flint.di : Provided;
+    static import scanned.app;
+    import scanned.app : JobProperties, Jobs, ScannedApplication, StartupReport, UnwantedAutoConfiguration;
+
+    import std.file : chdir, getcwd, mkdirRecurse, rmdirRecurse, tempDir;
+    import std.path : buildPath;
+    import std.uuid : randomUUID;
+
+    const directory = buildPath(tempDir(), "flint-boot-scan-" ~ randomUUID().toString());
+    mkdirRecurse(directory);
+    const previous = getcwd();
+    chdir(directory);
+    scope (exit)
+    {
+        chdir(previous);
+        rmdirRecurse(directory);
+    }
+    alias Beans = ScannedBeans!(scanned.app);
+    static assert(is(Beans[0] == Provided!JobProperties) && is(Beans[1] == Jobs) && is(Beans[2] == StartupReport));
+    static assert(Beans.length == 3);
+    assert(FlintApplication.run!ScannedApplication(["app"]) == 70); // not registered yet: build with flint
+    FlintApplication.register!(ScannedApplication, AutoConfigurationList!(UnwantedAutoConfiguration), scanned.app)();
+    StartupReport.seen = null;
+    assert(FlintApplication.run!ScannedApplication(["app", "--banner=off", "--set=jobs.batch=25"]) == 0);
+    assert(FlintApplication.run!ScannedApplication(["app", "--fail", "--banner=off"]) == 9);
+    assert(StartupReport.seen == ["batch 25", "batch 10"], StartupReport.seen[0]);
+}

@@ -46,7 +46,7 @@ struct WebServer
                 import flint.term : Stream, writeStream;
                 import flint.web : openApiDocument;
 
-                enum document = openApiDocument!(Controllers!(Context.Registered))("Flint application", "0.0.0");
+                enum document = openApiDocument!(ApiControllers!(Context.Registered))("Flint application", "0.0.0");
                 code = writeStream(Stream.output, document ~ "\n").code == Status.ok ? 0 : 1;
                 return true;
             }
@@ -114,6 +114,18 @@ template Customizers(Registered...)
     }
 
     alias Customizers = collect!0;
+}
+
+/// The application's own controllers, without the front end's `SpaController`, for the OpenAPI document.
+struct ApiControllers(Registered...)
+{
+    import std.meta : Filter;
+
+    private enum bool api(T) = !is(T == SpaController);
+    /// The controller types.
+    alias Types = Filter!(api, Controllers!Registered.Types);
+    /// The controllers.
+    Types items;
 }
 
 /// The application struct flint:web serves: one field per `@RestController` registration, in order.

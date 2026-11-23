@@ -18,9 +18,8 @@ flint add web
 
 ```d
 import flint.arena : Result;
-import flint.boot : runApplication;
-import flint.boot_autoconfigure_web : WebServerAutoConfiguration;
-import flint.di : Provided, Service;
+import flint.boot : FlintApplication, FlintMain;
+import flint.di : Service;
 import flint.web : Get, PathVariable, RestController;
 
 @Service final class Greeter { ... }
@@ -35,12 +34,19 @@ struct GreetingController
     Result!Message get(@PathVariable("name") string name) { ... }
 }
 
-int main(string[] args)
+@FlintApplication
+final class ShopApplication
 {
-    return runApplication!(WebServerAutoConfiguration, Provided!AppSettings, Greeter, GreetingController)(args);
+    static int main(string[] args)
+    {
+        return FlintApplication.run!ShopApplication(args);
+    }
 }
+
+mixin FlintMain!ShopApplication;
 ```
 
+- **The entry point:** it is Spring Boot's. `flint build` scans `src/<project>/` at compile time for `@Service`, `@Component`, `@Repository`, `@RestController` and `@ControllerAdvice` types and `@ConfigurationProperties` structs, and adds the auto-configuration of every declared starter. `@Exclude!(...)` on the application class turns one off.
 - **Imports:** the application imports the packages the starter brings directly, without declaring each one, as with a Spring Boot starter.
 - **Configuration:** every `Provided!T` whose `T` is a `@ConfigurationProperties` struct is bound from `config/`, from one snapshot that includes `--set key=value` and `--profile name`. A key that no type claims is an error naming the key.
 - **Controllers:** every `@RestController` among the beans is served.

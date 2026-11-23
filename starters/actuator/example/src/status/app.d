@@ -2,9 +2,8 @@
 module status.app;
 
 import flint.arena : Result;
-import flint.boot : runApplication;
-import flint.boot_actuator : ActuatorAutoConfiguration, Counter, Observability;
-import flint.boot_autoconfigure_web : WebServerAutoConfiguration;
+import flint.boot : FlintApplication, FlintMain;
+import flint.boot_actuator : Counter, Observability;
 import flint.web : Post, RestController;
 
 @safe:
@@ -40,7 +39,14 @@ struct JobController
     }
 }
 
-int main(string[] args)
+/// The application.
+@FlintApplication final class StatusApplication
 {
-    return runApplication!(WebServerAutoConfiguration, ActuatorAutoConfiguration, JobController)(args);
+    /// Start the application.
+    static int main(string[] args)
+    {
+        return FlintApplication.run!StatusApplication(args);
+    }
 }
+
+mixin FlintMain!StatusApplication;

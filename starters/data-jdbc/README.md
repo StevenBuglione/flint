@@ -14,10 +14,10 @@ flint generate migration create_notes
 
 ```d
 import flint.arena : Result, Text;
-import flint.boot : runApplication;
-import flint.boot_autoconfigure_data : DataSourceAutoConfiguration, Repository;
-import flint.boot_autoconfigure_web : WebServerAutoConfiguration;
+import flint.boot : FlintApplication, FlintMain;
+import flint.boot_autoconfigure_data : DataSource, JdbcRepository;
 import flint.data : Id, Table;
+import flint.di : Repository;
 import flint.validate : NotBlank, Valid;
 import flint.web : Post, RequestBody, RequestContext, RestController;
 
@@ -29,7 +29,10 @@ struct Note
     Text body;
 }
 
-alias Notes = Repository!(Note, ulong);
+@Repository final class Notes : JdbcRepository!(Note, ulong)
+{
+    this(DataSource source) { super(source); }
+}
 
 @RestController("/api/notes")
 struct NoteController
@@ -44,14 +47,20 @@ struct NoteController
     }
 }
 
-int main(string[] args)
+@FlintApplication
+final class NotesApplication
 {
-    return runApplication!(WebServerAutoConfiguration, DataSourceAutoConfiguration, Notes, NoteController)(args);
+    static int main(string[] args)
+    {
+        return FlintApplication.run!NotesApplication(args);
+    }
 }
+
+mixin FlintMain!NotesApplication;
 ```
 
 - **`DataSource`** opens the pool from `[database]` and applies every `resources/migrations/V<version>__<description>.sql` in version order. Like `config/`, the migrations are read at start-up, and `flint package` ships `resources/`. flint:migrate records their hashes, so an edited applied migration stops start-up. The pool closes at shutdown.
-- **`Repository!(E, ID)`** is a flint:data `CrudRepository` bean: `findById`, `save`, `deleteById` and `existsById`. `sql()` gives the underlying repository, for `queryOne` and projections. At construction it checks the table and columns against the migrated schema.
+- **`JdbcRepository!(E, ID)`** is the base of a scanned `@Repository` class, a flint:data `CrudRepository`: `findById`, `save`, `deleteById` and `existsById`. `sql()` gives the underlying repository, for `queryOne` and projections. At construction it checks the table and columns against the migrated schema.
 - **Text columns** are `Text` handles in the request arena. A repository call takes `context.arena`, and the handler returns the entity within the same request. Where business logic needs a `string`, use `toString(arena, text)` and `toText(arena, value)`.
 - **Without a `[database]` section** the starter registers nothing.
 

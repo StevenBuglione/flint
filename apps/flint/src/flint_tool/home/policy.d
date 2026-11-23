@@ -33,6 +33,8 @@ struct CorePackage
     string section;
     /// For a starter: what it wires.
     string summary;
+    /// For a starter: its auto-configuration lists, as `module:Symbol` (ADR-029 section 2).
+    string[] autoconfiguration;
 }
 
 /// The safety rules from policy/safety-policy.json.
@@ -365,6 +367,7 @@ private bool loadStarters(ref Home home, ref Report report)
             item.directory = decoded.value.directory;
             item.section = decoded.value.section;
             item.summary = decoded.value.summary;
+            item.autoconfiguration = decoded.value.autoconfiguration;
             item.starter = group == "starters";
             item.boot = !item.starter;
             item.tier = item.starter ? 6 : 5;
@@ -386,6 +389,7 @@ private struct BootRecordJson
     string[] dependencies;
     string section;
     string summary;
+    string[] autoconfiguration;
 }
 
 private struct PackageRecordJson

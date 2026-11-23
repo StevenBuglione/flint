@@ -72,7 +72,10 @@
         "boot-autoconfigure-web"
       ],
       "section": "server",
-      "summary": "REST controllers on a configuration-bound server, with SPA serving and OpenAPI"
+      "summary": "REST controllers on a configuration-bound server, with SPA serving and OpenAPI",
+      "autoconfiguration": [
+        "flint.boot_autoconfigure_web:WebServerAutoConfiguration"
+      ]
     },
     "starter-actuator": {
       "directory": "starters/actuator",
@@ -82,7 +85,10 @@
         "boot-actuator"
       ],
       "section": "management",
-      "summary": "Health, readiness and Prometheus metrics endpoints on the application's server, and OTLP export"
+      "summary": "Health, readiness and Prometheus metrics endpoints on the application's server, and OTLP export",
+      "autoconfiguration": [
+        "flint.boot_actuator:ActuatorAutoConfiguration"
+      ]
     },
     "starter-data-jdbc": {
       "directory": "starters/data-jdbc",
@@ -95,7 +101,10 @@
         "boot-autoconfigure-data"
       ],
       "section": "database",
-      "summary": "A configured SQL pool, migrations applied at start-up, and repositories as beans"
+      "summary": "A configured SQL pool, migrations applied at start-up, and repositories as beans",
+      "autoconfiguration": [
+        "flint.boot_autoconfigure_data:DataSourceAutoConfiguration"
+      ]
     }
   }
 }

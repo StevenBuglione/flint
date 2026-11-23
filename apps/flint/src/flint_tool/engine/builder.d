@@ -291,6 +291,27 @@ private bool prepareBuild(ref Session session, const ref Manifest manifest, cons
                     result.compiler), report);
 }
 
+/// Write or remove `.flint/generated/scan/flint_scan.d`; true when the project has an `@FlintApplication`.
+private bool writeScan(ref Session session, const ref Manifest manifest, const ref Resolution resolution)
+{
+    import std.file : exists, remove;
+    import std.path : buildPath;
+    import flint_tool.engine.scan : renderScan, scanDirectory, scanProject;
+    import flint_tool.support.files : writeIfChanged;
+
+    const path = buildPath(manifest.root, scanDirectory, "flint_scan.d");
+    const scan = scanProject(manifest);
+    const text = renderScan(session.home, resolution, scan);
+    if (text.length == 0)
+    {
+        if (exists(path))
+            remove(path);
+        return false;
+    }
+    writeIfChanged(path, text);
+    return true;
+}
+
 /// `-verror-hide` for the DMD fork (ADR-027 section 5): an error raised inside druntime, Phobos or a Flint package
 /// is reported at the user's line that caused it. Not with `--verbose`, LDC, or a fork that was not built from this
 /// checkout's patch, which would not know the switch.
@@ -516,6 +537,7 @@ private bool writeRecipes(ref Session session, const ref Manifest manifest, cons
     extras.objects = native.objects.dup;
     extras.nativeFlags = natives.linkFlags.dup;
     extras.diagnosticFlags = diagnosticFlags;
+    extras.scanned = writeScan(session, manifest, resolution);
     if (native.objects.length)
     {
         NativeCPolicy policy;

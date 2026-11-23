@@ -199,9 +199,31 @@ Status: proposed by the Milestone 10 implementation, for the project owner's rev
    - **Framework libraries:** they cannot import Boot, because their policy dependencies never name it (FLINT-E0507).
 
 6. **Still to come in this restructuring.**
-   - **The entry point:** `@FlintApplication` with compile-time scanning, `FlintApplication.run!App`, the banner and runners. It will take the auto-configuration lists from the declared starters, so applications no longer pass them.
+   - **The entry point:** done in section 9.
    - **The Spring names:** these replace the current ones, which stay as aliases.
    - **`application.yaml`.**
+
+### 9. The Spring Boot entry point (ADR-029 section 2)
+
+1. **The API, in `flint.boot`.**
+   - **`@FlintApplication`** marks the application class. `FlintApplication.run!App(args)` starts it, as `SpringApplication.run`.
+   - **`mixin FlintMain!App`** generates the free `main` that D requires, calling `App.main(args)`.
+   - **`CommandLineRunner`** beans run after the context starts and before the launcher. A nonzero result is the exit code.
+   - **`@Exclude!(SomeAutoConfiguration)`** on the application class turns an auto-configuration off. It is a separate UDA, because a D UDA struct cannot hold a type list.
+
+2. **Compile-time scanning without an import cycle.**
+   - **The scan module:** `flint build` writes `.flint/generated/scan/flint_scan.d` when a module under `src/` declares an `@FlintApplication` class. It imports every module under `src/<project>/` and the auto-configuration of every starter the project resolves (`autoconfiguration` in `policy/boot.json`).
+   - **Registration:** its module constructor calls `FlintApplication.register!(App, AutoConfigurationList!(...), modules...)`. `run!App` calls the registered runner, and fails with exit code 70 and a message when the application was not built with flint.
+   - **Why not import it:** no module imports the scan module. ADR-029's shape, where `run!App` imports the module list, would make the application module import a module that imports it back, which AGENTS.md rules out.
+   - **What it finds:** `ScannedBeans!(modules)` registers every class or struct annotated `@Component`, `@Service`, `@Repository`, `@RestController` or `@ControllerAdvice`, and every `@ConfigurationProperties` struct as `Provided!T`. The web stereotypes are matched by name, so flint:boot stays below flint:web.
+
+3. **The banner.** At start, the application prints `resources/banner.txt` or Flint's banner, then "Starting <App> using Flint" and the active profile, to standard error. Standard output stays the application's.
+   - **Turning it off:** `--banner=off` or `FLINT_MAIN_BANNER_MODE=off`.
+   - **When it is skipped:** `--openapi` prints none.
+
+4. **Repositories are scanned like Spring Data's.** An application declares `@Repository final class NoteRepository : JdbcRepository!(Note, ulong)`, with a constructor that takes the `DataSource`. `JdbcRepository` is named after Spring Data JDBC, since flint.di's `@Repository` is the stereotype.
+
+5. **The OpenAPI document leaves out the front end:** the SPA controller's routes are not part of the API.
 
 ## Consequences
 

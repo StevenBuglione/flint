@@ -24,6 +24,8 @@ struct RecipeExtras
     string[] nativeFlags;
     /// Compiler flags that only change how diagnostics read (`-verror-hide`, ADR-027 section 5).
     string[] diagnosticFlags;
+    /// `.flint/generated/scan/flint_scan.d` exists: the project has an `@FlintApplication` (ADR-029 section 2).
+    bool scanned;
 }
 
 /// Render the root recipe for a project.
@@ -38,6 +40,8 @@ string renderRecipe(const ref Home home, const ref Manifest manifest, const ref 
     // `@ConditionalOnConfig` reads config/application.toml as a string import (ADR-028 section 1).
     if (hasApplicationConfig(manifest.root))
         text ~= field("stringImportPaths", "../../../config");
+    if (extras.scanned)
+        text ~= field("sourceFiles", "../scan/flint_scan.d");
     if (extras.objects.length)
         text ~= fields("sourceFiles", extras.objects);
     if (extras.objects.length && manifest.type == "executable")

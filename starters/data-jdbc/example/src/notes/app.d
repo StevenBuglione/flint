@@ -2,9 +2,9 @@
 module notes.app;
 
 import flint.arena : Error, Result, Status, Text;
-import flint.boot : runApplication;
-import flint.boot_autoconfigure_data : DataSourceAutoConfiguration, Repository;
-import flint.boot_autoconfigure_web : WebServerAutoConfiguration;
+import flint.boot : FlintApplication, FlintMain;
+import flint.boot_autoconfigure_data : DataSource, JdbcRepository;
+import flint.di : Repository;
 import flint.data : Id, Table;
 import flint.validate : NotBlank, Valid;
 import flint.web : Delete, Get, PathVariable, Post, RequestBody, RequestContext, RestController;
@@ -24,7 +24,14 @@ struct Note
 }
 
 /// The notes repository.
-alias Notes = Repository!(Note, ulong);
+@Repository final class Notes : JdbcRepository!(Note, ulong)
+{
+    /// Check the table against the migrated schema.
+    this(DataSource source)
+    {
+        super(source);
+    }
+}
 
 /// `/api/notes`.
 @RestController("/api/notes")
@@ -63,7 +70,14 @@ struct NoteController
     }
 }
 
-int main(string[] args)
+/// The application.
+@FlintApplication final class NotesApplication
 {
-    return runApplication!(WebServerAutoConfiguration, DataSourceAutoConfiguration, Notes, NoteController)(args);
+    /// Start the application.
+    static int main(string[] args)
+    {
+        return FlintApplication.run!NotesApplication(args);
+    }
 }
+
+mixin FlintMain!NotesApplication;

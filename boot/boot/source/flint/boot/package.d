@@ -14,7 +14,10 @@ module flint.boot;
 
 import flint.arena : Error, Status;
 import flint.config : ConfigurationProperties;
-import flint.di : Provided;
+import flint.di : Bind, Provided;
+
+public import flint.boot.application : AutoConfigurationList, CommandLineRunner, Exclude,
+    FlintApplication, FlintMain, ScannedBeans;
 
 @safe:
 
@@ -53,6 +56,14 @@ int runApplication(Beans...)(string[] args)
         return report(StartupExit.context, "startup: " ~ started.message);
     scope (exit)
         context.shutdown();
+    static foreach (Runner; Runners!(Context.Registered))
+    {
+        {
+            const ran = context.get!Runner().run(args);
+            if (ran != 0)
+                return ran;
+        }
+    }
     static if (Context.Launchers.length)
         return Context.Launchers[0].launch(context, args);
     else
@@ -115,6 +126,87 @@ private enum bool configurationType(T) = () {
     }
     return false;
 }();
+
+/// The keys of the `CommandLineRunner` beans among the registrations, in order.
+template Runners(Registered...)
+{
+    import std.meta : AliasSeq;
+
+    template collect(size_t index)
+    {
+        static if (index == Registered.length)
+            alias collect = AliasSeq!();
+        else
+        {
+            static if (is(Registered[index] == Bind!(Contract, Implementation), Contract, Implementation))
+                alias Key = Contract;
+            else static if (is(Registered[index] == Provided!Value, Value))
+                alias Key = Value;
+            else
+                alias Key = Registered[index];
+            static if (is(Key == class) && is(Key : CommandLineRunner))
+                alias collect = AliasSeq!(Key, collect!(index + 1));
+            else
+                alias collect = collect!(index + 1);
+        }
+    }
+
+    alias Runners = collect!0;
+}
+
+/// Print the banner, `resources/banner.txt` or Flint's, the application and the active profile to standard error,
+/// as Spring Boot does at start. `--banner=off` or `FLINT_MAIN_BANNER_MODE=off` turns it off, and `--openapi`
+/// prints none.
+void printBanner(string application, scope const string[] args)
+{
+    import std.file : exists, readText;
+    import std.process : environment;
+    import flint.term : Stream, writeStream;
+
+    foreach (argument; args.length > 1 ? args[1 .. $] : null)
+    {
+        if (argument == "--banner=off" || argument == "--openapi")
+            return;
+    }
+    if (environment.get("FLINT_MAIN_BANNER_MODE", "console") == "off")
+        return;
+    string banner = defaultBanner;
+    try
+    {
+        if (exists("resources/banner.txt"))
+            banner = readText("resources/banner.txt");
+    }
+    catch (Exception)
+    {
+    }
+    writeStream(Stream.error, banner ~ (banner.length && banner[$ - 1] == '\n'
+            ? "" : "\n") ~ "Starting " ~ application
+            ~ " using Flint\nThe following profile is active: \"" ~ activeProfile(args) ~ "\"\n");
+}
+
+/// The configuration profile: `--profile name`, else `FLINT_PROFILE`, else `dev`.
+string activeProfile(scope const string[] args)
+{
+    import std.algorithm.searching : startsWith;
+    import std.process : environment;
+
+    foreach (index, argument; args)
+    {
+        if (argument.startsWith("--profile="))
+            return argument["--profile=".length .. $];
+        if (argument == "--profile" && index + 1 < args.length)
+            return args[index + 1];
+    }
+    return environment.get("FLINT_PROFILE", "dev");
+}
+
+private enum defaultBanner = `
+  _____ _ _       _
+ |  ___| (_)_ __ | |_
+ | |_  | | | '_ \| __|
+ |  _| | | | | | | |_
+ |_|   |_|_|_| |_|\__|
+`;
 
 /// Write a start-up failure to standard error and return `code`.
 int report(int code, string message)

@@ -13,12 +13,11 @@ flint add web actuator
 
 ## Use
 
-Pass `ActuatorAutoConfiguration` to `runApplication`, with the web server's:
+With `flint:starter-web` and this starter declared, `@FlintApplication` picks up `ActuatorAutoConfiguration`:
 
 ```d
-import flint.boot : runApplication;
-import flint.boot_actuator : ActuatorAutoConfiguration, Counter, Observability;
-import flint.boot_autoconfigure_web : WebServerAutoConfiguration;
+import flint.boot : FlintApplication, FlintMain;
+import flint.boot_actuator : Counter, Observability;
 import flint.web : Post, RestController;
 
 @RestController("/api/jobs")
@@ -37,10 +36,16 @@ struct JobController
     Result!Accepted accept() { observability.registry().add(accepted); ... }
 }
 
-int main(string[] args)
+@FlintApplication
+final class StatusApplication
 {
-    return runApplication!(WebServerAutoConfiguration, ActuatorAutoConfiguration, JobController)(args);
+    static int main(string[] args)
+    {
+        return FlintApplication.run!StatusApplication(args);
+    }
 }
+
+mixin FlintMain!StatusApplication;
 ```
 
 The endpoints are:

@@ -95,9 +95,16 @@ struct DatabaseProperties
     }
 }
 
-/// A repository bean for entity `E` keyed by `ID`, over the data source: register `Repository!(Note, ulong)`, or
-/// bind it to `CrudRepository!(Note, ulong)`.
-final class Repository(E, ID) : CrudRepository!(E, ID)
+/// A repository for entity `E` keyed by `ID`, over the data source. Declare the application's repository as a
+/// scanned bean, as with Spring Data:
+///
+/// ---
+/// @Repository final class NoteRepository : JdbcRepository!(Note, ulong)
+/// {
+///     this(DataSource source) { super(source); }
+/// }
+/// ---
+class JdbcRepository(E, ID) : CrudRepository!(E, ID)
 {
     import flint.data : SqlRepository;
 
