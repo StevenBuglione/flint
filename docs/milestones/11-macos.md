@@ -33,12 +33,15 @@ export PATH="$PWD/.tools/dub-1.43.0/bin:$PWD/.tools/ldc2-1.43.0-osx-arm64/bin:$P
 python3 tools/ci.py platform --target macos-arm64
 ```
 
-At `e8be84d` its receipt `artifacts/platforms/macos-arm64.json` records exit code 0 after 400 s. The artifact `macos-arm64.log` has sha256 `1aeacff30a3f6625fdf38dfc7b095d70d38b9fa15112b9cbc711abd42a614d36`. The run covered:
+At `10ae6c3` its receipt `artifacts/platforms/macos-arm64.json` records exit code 0 after 454 s. The artifact `macos-arm64.log` has sha256 `893cd05ff1fe5b1c3e9bd82938e2efbf25f7534f7aa32879260a0757fc226da3`. The DMD role was the forked DMD with its AArch64 code generator (ADR-025 section 3, stage 2), beside `ldc2`, and the DUB pipeline was on. The run covered:
 
-1. the native providers and wasmtime, built or verified from their receipts;
-2. 74 `dub test` runs, every package on `ldmd2` and on `ldc2`;
-3. 18 peered `flint test` runs, the nine peered packages on both compilers, against PostgreSQL 18.7, Valkey 9.1.2, MinIO and the Go protocol peers;
-4. the five compile-negative fixtures and the BetterC fixtures, on both compilers.
+1. the native providers, wasmtime and the WKWebView provider, built or verified from their receipts;
+2. every package's `dub test` on the forked DMD and on `ldc2`;
+3. the peered `flint test` runs on both compilers, against PostgreSQL 18.7, Valkey 9.1.2, MinIO and the Go protocol peers;
+4. the seven live `mq` scenarios: Kafka on the Temurin aarch64 macOS JRE, and NATS JetStream plain and with TLS;
+5. the five compile-negative fixtures and the five BetterC fixtures, on both compilers.
+
+pluto is shared with the Linux arm64 VM and the dmd-arm64 session. The run was taken in a quiet window agreed with both, because the lane's wall-clock bounds (child reaping, the reactor's offload heartbeat, HTTP exchange pacing) fail under that load.
 
 `tools/collect_evidence.py` verifies that receipt, so Gate 6's `macos-arm64` entry is true. Gate 6 as a whole still fails while Windows x86-64 has no receipt. As with the other platforms (ADR-017 decision 4), the receipt and its log are kept on the runner rather than committed. Re-run the lane after every rebase, because the receipt is bound to its commit.
 

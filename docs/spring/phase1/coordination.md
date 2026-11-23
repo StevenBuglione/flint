@@ -81,7 +81,7 @@ When your assigned work is done, don't stop.
 | 13 | Port the upstream JUnit tests for spring-web and spring-webmvc classes already ported | size-levers | |
 | 14 | Spring-style REST benchmark app (Flint) for `load_bench`'s Spring workload. Scope (proof-harness): the workload measures the side-by-side ports themselves, so this is the gs-rest-service and petclinic-rest Flint apps under `benchmarks/spring/flint/<app>/` with their `flint-spring.json` (build, cached, scratch, O3 and Oz commands), written against the framework as items 2, 3, 4 and 10 land; the framework and auto-configuration stay with their owners | proof-harness | |
 | 15 | Windows platform lane receipt (Gate 6) | Windows session | |
-| 16 | macOS platform lane receipt in a quiet window | macOS session | |
+| 16 | macOS platform lane receipt in a quiet window | macOS session | receipt at `10ae6c3` (exit 0, 454 s, forked DMD and LDC) |
 | 17 | linux-aarch64 platform lane receipt | linux-arm64-vm | |
 | 18 | DMD arm64 stage 2 (Flint on DMD arm64) | dmd-arm64 | |
 | 19 | `examples/framework/golden-wasm-app` compiles again: `flint_demo/sys/exports.d` assigns `CommandBuffer` and `SignalGraph`, whose `opAssign` engine-wasm-bridge and engine-ui-signals now `@disable` (found by m7-flint-cli; `build.py` itself is fixed) | third-party-apis | `ea21b76` (Oz and O3 link; Node smoke run of the four exports) |
