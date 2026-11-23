@@ -1,0 +1,32 @@
+[project]
+name = "petclinic-rest"
+version = "0.0.1"
+flint = "1.0"
+type = "executable"
+base-package = "org.springframework"
+description = "spring-petclinic/spring-petclinic-rest (jdbc profile, PostgreSQL), ported to Flint Boot"
+
+[build]
+executable = "petclinic-rest"
+
+[dependencies]
+"flint:boot-starter-web" = {}
+"flint:boot-starter-jdbc" = {}
+"flint:boot-starter-actuator" = {}
+"flint:boot-starter-validation" = {}
+"flint:boot-core" = {}
+"flint:boot-autoconfigure" = {}
+"flint:boot-validation" = {}
+"flint:core" = {}
+"flint:context" = {}
+"flint:data-commons" = {}
+"flint:engine-aot" = {}
+"flint:hibernate-validator" = {}
+"flint:jackson-annotations" = {}
+"flint:jakarta-servlet" = {}
+"flint:jakarta-validation" = {}
+"flint:java" = {}
+"flint:jdbc" = {}
+"flint:slf4j-api" = {}
+"flint:tx" = {}
+"flint:web" = {}
