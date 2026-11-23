@@ -9,6 +9,8 @@ TREES=('packages','apps','benchmarks','examples','starters')
 LEGACY=('boot/boot/','boot/autoconfigure-','boot/actuator/')
 COMPLEXITY='dscanner.metric.cyclomatic_complexity'
 ALLOWLIST=ROOT/'policy/complexity-allowlist.json'
+# Flint's patched dfmt (toolchain/dfmt-0.15.2-stack-udas.patch) stacks user-defined attributes as Java stacks annotations.
+DFMT_FLINT_SUFFIX='+flint.stack-udas'
 
 def legacy(p):
     try:rel=p.resolve().relative_to(ROOT).as_posix()
@@ -46,6 +48,9 @@ def main():
         if not path.is_dir():raise SystemExit('quality source tree missing: '+str(path))
     files=sorted({p for path in paths for p in path.rglob('*.d') if not any(part in ('.dub','.flint','build','artifacts') for part in p.relative_to(path).parts) and not legacy(p)})
     if not files:raise SystemExit('quality gate has no implementation sources')
+    version=subprocess.run([a.dfmt,'--version'],capture_output=True,text=True)
+    if DFMT_FLINT_SUFFIX not in version.stdout:
+        raise SystemExit(f'{a.dfmt} is not Flint\'s patched dfmt (its --version lacks {DFMT_FLINT_SUFFIX}); run python3 tools/install_quality_tools.py')
     failures=[]
     for p in files:
         source=p.read_bytes();r=subprocess.run([a.dfmt,'--config',str(ROOT),str(p)],capture_output=True,check=True)
@@ -74,5 +79,5 @@ def main():
     for key in sorted(set(allowed)-used):
         if key[0] in scanned:failures.append(f'{key[0]}: {key[1]} is in policy/complexity-allowlist.json but within the complexity limit; remove the entry')
     if failures:raise SystemExit('\n'.join(failures))
-    print(json.dumps({'files':len(files),'issues':0,'formatter':'dfmt0.15.2 stdout byte comparison'}))
+    print(json.dumps({'files':len(files),'issues':0,'formatter':'dfmt0.15.2+flint.stack-udas stdout byte comparison'}))
 if __name__=='__main__':main()

@@ -1,0 +1,266 @@
+diff --git a/src/dfmt/ast_info.d b/src/dfmt/ast_info.d
+index 34a8ede..52d2ee0 100644
+--- a/src/dfmt/ast_info.d
++++ b/src/dfmt/ast_info.d
+@@ -65,6 +65,7 @@ struct ASTInformation
+         ufcsHintLocations = ufcsHintLocations.uniq().array();
+         sort(ternaryColonLocations);
+         sort(namedArgumentColonLocations);
++        sort(udaLineBreakLocations);
+     }
+ 
+     /// Locations of end braces for struct bodies
+@@ -143,6 +144,10 @@ struct ASTInformation
+ 
+     /// Locations of named arguments of function call or struct constructor.
+     size_t[] namedArgumentColonLocations;
++
++    /// Flint (dfmt_stack_udas): locations of the tokens that follow a user-defined attribute of a declaration
++    /// outside any statement block; the formatter starts a new line there.
++    size_t[] udaLineBreakLocations;
+ }
+ 
+ /// Collects information from the AST that is useful for the formatter
+@@ -341,7 +346,25 @@ final class FormatVisitor : ASTVisitor
+     {
+         astInformation.aggregateBodyLocations ~= structBody.startLocation;
+         astInformation.doubleNewlineLocations ~= structBody.endLocation;
++        // Members of an aggregate declared inside a function body are declarations again, not statements.
++        immutable outerBlockDepth = blockDepth;
++        blockDepth = 0;
+         structBody.accept(this);
++        blockDepth = outerBlockDepth;
++    }
++
++    override void visit(const BlockStatement blockStatement)
++    {
++        ++blockDepth;
++        blockStatement.accept(this);
++        --blockDepth;
++    }
++
++    override void visit(const Declaration declaration)
++    {
++        if (blockDepth == 0 && stacksUdas(declaration))
++            markLeadingUdas(declaration);
++        declaration.accept(this);
+     }
+ 
+     override void visit(const TemplateDeclaration templateDeclaration)
+@@ -485,4 +508,90 @@ final class FormatVisitor : ASTVisitor
+ 
+ private:
+     ASTInformation* astInformation;
++
++    /// Flint: how many statement blocks enclose the visited node, reset inside aggregate bodies.
++    size_t blockDepth;
++
++    /// Flint: the declarations whose user-defined attributes go on lines of their own, as Java annotations do.
++    static bool stacksUdas(const Declaration d)
++    {
++        return d.classDeclaration !is null || d.structDeclaration !is null || d.unionDeclaration !is null
++            || d.interfaceDeclaration !is null || d.enumDeclaration !is null
++            || d.anonymousEnumDeclaration !is null || d.templateDeclaration !is null
++            || d.eponymousTemplateDeclaration !is null || d.mixinTemplateDeclaration !is null
++            || d.functionDeclaration !is null || d.constructor !is null || d.destructor !is null
++            || d.variableDeclaration !is null;
++    }
++
++    /// Flint: the line breaks after the declaration's leading run of user-defined attributes. The run stops at
++    /// the first other attribute or storage class, so `@Bean public Service service()` stacks `@Bean` while
++    /// `public @Bean Service service()` and `@safe @Foo void f()` keep their line.
++    void markLeadingUdas(const Declaration declaration)
++    {
++        import std.algorithm.sorting : sort;
++
++        static struct Prefix
++        {
++            size_t start;
++            size_t end;
++            bool uda;
++        }
++
++        Prefix[] prefixes;
++        void add(T)(const T[] items)
++        {
++            foreach (item; items)
++            {
++                if (item.atAttribute !is null)
++                    prefixes ~= Prefix(item.atAttribute.startLocation, item.atAttribute.endLocation,
++                            isUserDefined(item.atAttribute));
++                else
++                    prefixes ~= Prefix(firstLocation(item), 0, false);
++            }
++        }
++
++        add(declaration.attributes);
++        if (const f = declaration.functionDeclaration)
++        {
++            add(f.attributes);
++            add(f.storageClasses);
++        }
++        if (const v = declaration.variableDeclaration)
++        {
++            add(v.storageClasses);
++            if (v.autoDeclaration !is null)
++                add(v.autoDeclaration.storageClasses);
++        }
++        prefixes.sort!((a, b) => a.start < b.start);
++        foreach (prefix; prefixes)
++        {
++            if (!prefix.uda || prefix.end <= prefix.start)
++                break;
++            astInformation.udaLineBreakLocations ~= prefix.end;
++        }
++    }
++
++    /// Flint: where a non-`@` attribute or storage class starts, or 0 when libdparse records no token for it
++    /// (such an item sorts first and so ends the run of user-defined attributes, which is the safe side).
++    static size_t firstLocation(T)(const T item)
++    {
++        if (item.tokens.length > 0)
++            return item.tokens[0].index;
++        static if (is(T == Attribute))
++            return item.attribute.index;
++        else
++            return item.token.index;
++    }
++
++    /// Flint: `@Name`, `@Name(args)` and `@Name!T(args)`, but not the compiler's own `@safe`, `@nogc`, ...
++    /// nor `@(expression)` and `@"literal"`.
++    static bool isUserDefined(const AtAttribute a)
++    {
++        import std.algorithm.searching : canFind;
++
++        if (a.templateInstance !is null)
++            return true;
++        return a.identifier.type == tok!"identifier" && !["safe", "trusted", "system", "nogc", "property",
++            "live", "disable", "mustuse", "__future", "future"].canFind(a.identifier.text);
++    }
+ }
+diff --git a/src/dfmt/config.d b/src/dfmt/config.d
+index 6b41d4a..0241e3c 100644
+--- a/src/dfmt/config.d
++++ b/src/dfmt/config.d
+@@ -69,6 +69,9 @@ struct Config
+     OptionalBoolean dfmt_space_after_statement_keyword;
+     ///
+     OptionalBoolean dfmt_space_before_named_arg_colon;
++    /// Flint: put each user-defined attribute of a module- or aggregate-level class, struct, union, interface,
++    /// enum, template, function, constructor, destructor or variable on its own line above the declaration.
++    OptionalBoolean dfmt_stack_udas;
+ 
+     mixin StandardEditorConfigFields;
+ 
+@@ -101,6 +104,7 @@ struct Config
+         dfmt_single_indent = OptionalBoolean.f;
+         dfmt_reflow_property_chains = OptionalBoolean.t;
+         dfmt_space_before_named_arg_colon = OptionalBoolean.f;
++        dfmt_stack_udas = OptionalBoolean.f;
+     }
+ 
+     /**
+diff --git a/src/dfmt/formatter.d b/src/dfmt/formatter.d
+index 0f7e821..44001ec 100644
+--- a/src/dfmt/formatter.d
++++ b/src/dfmt/formatter.d
+@@ -152,6 +152,9 @@ private:
+     /// Output to write output to
+     OutputRange output;
+ 
++    /// Flint: nothing but indentation has been written since the last line break.
++    bool atLineStart = true;
++
+     /// Used for skipping parts of the file with `dfmt off` and `dfmt on` comments
+     const ubyte[] rawSource;
+ 
+@@ -222,6 +225,10 @@ private:
+         import std.range : assumeSorted;
+ 
+         assert(hasCurrent);
++        // Flint (dfmt_stack_udas): a declaration's user-defined attribute ends its line.
++        if (!atLineStart && !currentIs(tok!"comment") && index > 0 && !peekBackIs(tok!"comment")
++                && breaksAfterUda(current.index))
++            newline();
+         if (currentIs(tok!"comment"))
+         {
+             formatComment();
+@@ -1750,6 +1757,16 @@ private:
+         import dfmt.editorconfig : EOL;
+ 
+         output.put(eolString);
++        atLineStart = true;
++    }
++
++    /// Flint: whether a user-defined attribute ends right before the token at `location` (dfmt_stack_udas).
++    bool breaksAfterUda(size_t location)
++    {
++        import dfmt.editorconfig : OptionalBoolean;
++
++        return config.dfmt_stack_udas == OptionalBoolean.t
++            && astInformation.udaLineBreakLocations.canFindIndex(location);
+     }
+ 
+     void newline()
+@@ -1923,6 +1940,12 @@ private:
+ 
+     void write(string str)
+     {
++        // Flint: no space before, nor at the start of the line of, the token that a user-defined attribute's
++        // line break moves to the next line (formatStep breaks the line unless a comment precedes the token).
++        if (str == " " && hasCurrent && breaksAfterUda(current.index)
++                && (atLineStart || index == 0 || !peekBackIs(tok!"comment")))
++            return;
++        atLineStart = false;
+         currentLineLength += str.length;
+         output.put(str);
+     }
+@@ -1934,6 +1957,7 @@ private:
+         import std.algorithm.iteration:joiner;
+         import std.string:lineSplitter;
+ 
++        atLineStart = false;
+         if (current.text is null)
+         {
+             immutable s = str(current.type);
+diff --git a/src/dfmt/main.d b/src/dfmt/main.d
+index c5a5577..c095dbb 100644
+--- a/src/dfmt/main.d
++++ b/src/dfmt/main.d
+@@ -29,7 +29,7 @@ static immutable VERSION = () {
+         enum DFMT_VERSION = import("githash.txt").strip;
+     }
+ 
+-    return DFMT_VERSION ~ DEBUG_SUFFIX;
++    return DFMT_VERSION ~ "+flint.stack-udas" ~ DEBUG_SUFFIX;
+ } ();
+ 
+ 
+@@ -95,6 +95,9 @@ else
+             case "space_before_named_arg_colon":
+                 optConfig.dfmt_space_before_named_arg_colon = optVal;
+                 break;
++            case "stack_udas":
++                optConfig.dfmt_stack_udas = optVal;
++                break;
+             case "keep_line_breaks":
+                 optConfig.dfmt_keep_line_breaks = optVal;
+                 break;
+@@ -141,7 +144,8 @@ else
+                 "template_constraint_style", &optConfig.dfmt_template_constraint_style,
+                 "keep_line_breaks", &handleBooleans,
+                 "single_indent", &handleBooleans,
+-                "reflow_property_chains", &handleBooleans);
++                "reflow_property_chains", &handleBooleans,
++                "stack_udas", &handleBooleans);
+             // dfmt on
+         }
+         catch (GetOptException e)
+@@ -341,6 +345,7 @@ Formatting Options:
+     --indent_style, -t          `,
+             optionsToString!(typeof(Config.indent_style)), `
+     --keep_line_breaks
++    --stack_udas
+     --soft_max_line_length
+     --max_line_length
+     --outdent_attributes

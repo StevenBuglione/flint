@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Build the pinned dfmt and D-Scanner with DUB into .tools/bin, both on Flint's patched libdparse."""
+"""Build the pinned dfmt and D-Scanner with DUB into .tools/bin, both on Flint's patched libdparse; dfmt also carries
+Flint's stacked-UDA patch."""
 import argparse,ctypes,json,os,shutil,subprocess
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
@@ -45,6 +46,24 @@ def patched_libdparse(compiler):
     if 'namedArgumentList' not in (target/'src/dparse/ast.d').read_text():raise SystemExit('libdparse patch not applied')
     return target
 
+# dfmt 0.15.2 joins user-defined attributes onto their declaration's line; Flint lays them out as Java lays out
+# annotations, one per line above the declaration (toolchain/dfmt-0.15.2-stack-udas.patch, .editorconfig dfmt_stack_udas).
+DFMT='0.15.2'
+DFMT_PATCH='dfmt-'+DFMT+'-stack-udas.patch'
+# The patched dfmt's --version suffix; tools/quality.py refuses a dfmt without it.
+DFMT_FLINT_SUFFIX='+flint.stack-udas'
+
+def patched_dfmt(source):
+    """dfmt with Flint's patch, in .tools/src/dfmt-0.15.2/dfmt (rebuilt from the fetched source). dfmt's build names
+    its version after the parent directory (v0.15.2) when its directory's git repository has no tags."""
+    target=ROOT/'.tools/src'/('dfmt-'+DFMT)/'dfmt'
+    shutil.rmtree(target.parent,ignore_errors=True);target.parent.mkdir(parents=True,exist_ok=True)
+    shutil.copytree(source,target,ignore=shutil.ignore_patterns('.dub','bin'))
+    run(['git','init','-q'],cwd=target)
+    run(['git','apply','--whitespace=nowarn',str(ROOT/'toolchain'/DFMT_PATCH)],cwd=target)
+    if 'dfmt_stack_udas' not in (target/'src/dfmt/config.d').read_text():raise SystemExit('dfmt patch not applied')
+    return target
+
 def default_compiler():
     """dmd, except on arm64 hosts, where dmd is the AArch64 fork; it crashes building dcd:dsymbol with -O -release
     -inline (reported to dmd-arm64), and flint toolchain install already builds the quality tools with ldc2."""
@@ -61,6 +80,9 @@ def main():
         run(['dub','fetch',name,'--version='+version])
         x=run(['dub','describe',name+'@'+version,'--compiler='+a.compiler],capture_output=True,text=True)
         doc=json.loads(x.stdout);pkg=next(p for p in doc['packages'] if p['name']==name);path=Path(pkg['path'])
+        if name=='dfmt':
+            if version!=DFMT:raise SystemExit(f'toolchain/{DFMT_PATCH} applies to dfmt {DFMT}, not {version}')
+            path=patched_dfmt(path)
         selections=json.loads((ROOT/f'policy/tooling-locks/{name}.json').read_text())
         # Both tools parse with the patched libdparse, so Flint's named-argument UDAs parse (work-queue item 22).
         if selections['versions'].get('libdparse')==LIBDPARSE:selections['versions']['libdparse']={'path':str(parser)}

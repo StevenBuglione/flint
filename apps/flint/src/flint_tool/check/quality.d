@@ -15,7 +15,7 @@ struct QualitySummary
     /// D-Scanner warnings and errors.
     long issues;
     /// The formatter identity, as tools/quality.py reports it.
-    string formatter = "dfmt0.15.2 stdout byte comparison";
+    string formatter = "dfmt0.15.2+flint.stack-udas stdout byte comparison";
 }
 
 /// One D-Scanner issue.
@@ -85,7 +85,7 @@ QualitySummary checkQuality(scope const(string)[] files, string dfmt, string dsc
 
     QualitySummary summary;
     summary.files = cast(long) files.length;
-    if (!toolPresent(dfmt, "dfmt", report) | !toolPresent(dscanner, "dscanner", report))
+    if (!qualityToolsReady(dfmt, dscanner, report))
         return summary;
     foreach (file; files)
     {
@@ -149,6 +149,13 @@ QualitySummary checkQuality(scope const(string)[] files, string dfmt, string dsc
     return summary;
 }
 
+/// Both tools exist and dfmt is Flint's patched build; every missing piece is reported.
+private bool qualityToolsReady(string dfmt, string dscanner, ref Report report)
+{
+    const present = toolPresent(dfmt, "dfmt", report) & toolPresent(dscanner, "dscanner", report);
+    return present && dfmtPatched(dfmt, report);
+}
+
 private bool toolPresent(string path, string name, ref Report report)
 {
     import std.file : exists;
@@ -156,6 +163,23 @@ private bool toolPresent(string path, string name, ref Report report)
     if (path.length && exists(path))
         return true;
     report.error("FLINT-E0807", name ~ " is not installed at " ~ path, "python3 tools/install_quality_tools.py");
+    return false;
+}
+
+/// The `--version` suffix of Flint's patched dfmt (toolchain/dfmt-0.15.2-stack-udas.patch). An upstream dfmt
+/// joins stacked user-defined attributes back onto their declaration's line, so `flint fmt` refuses it.
+enum dfmtFlintSuffix = "+flint.stack-udas";
+
+private bool dfmtPatched(string dfmt, ref Report report)
+{
+    import std.algorithm.searching : canFind;
+    import flint_tool.support.process : capture;
+
+    const version_ = capture([dfmt, "--version"]);
+    if (version_.ok && version_.output.canFind(dfmtFlintSuffix))
+        return true;
+    report.error("FLINT-E0807", dfmt ~ " is not Flint's patched dfmt (its --version lacks " ~ dfmtFlintSuffix ~ ")",
+            "python3 tools/install_quality_tools.py");
     return false;
 }
 
@@ -179,7 +203,7 @@ string[] formatFiles(scope const(string)[] files, string dfmt, string configRoot
     import flint_tool.support.process : capture;
 
     string[] changed;
-    if (!toolPresent(dfmt, "dfmt", report))
+    if (!toolPresent(dfmt, "dfmt", report) || !dfmtPatched(dfmt, report))
         return null;
     foreach (file; files)
     {

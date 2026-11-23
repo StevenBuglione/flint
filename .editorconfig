@@ -14,6 +14,9 @@ dfmt_soft_max_line_length = 100
 max_line_length = 120
 dfmt_space_after_keywords = true
 dfmt_space_after_cast = true
+; Flint's dfmt patch (toolchain/dfmt-0.15.2-stack-udas.patch): user-defined attributes of declarations go on their
+; own lines above the declaration, as Java lays out annotations.
+dfmt_stack_udas = true
 
 [*.{yml,yaml,json}]
 indent_size = 2

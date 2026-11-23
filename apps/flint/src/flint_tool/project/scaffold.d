@@ -117,7 +117,8 @@ import std.stdio : write, writeln;
 struct Options
 {
     /// Who to greet.
-    @Option("name", 'n', "Name to greet") string name = "world";
+    @Option("name", 'n', "Name to greet")
+    string name = "world";
 }
 
 /// Typed configuration bound from config/application*.toml.
@@ -125,7 +126,8 @@ struct Options
 struct AppSettings
 {
     /// Greeting prefix.
-    @Required string greeting;
+    @Required
+    string greeting;
 }
 
 int main(string[] args)

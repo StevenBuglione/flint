@@ -398,8 +398,8 @@ immutable CodeInfo[] catalog = [
             ~ "and an entry that is registered or gone must be removed.",
             `"web": {"directory": "framework/web", "module": "flint.web", "repo": "framework", ...}`),
     CodeInfo("FLINT-E0601", ExitCode.user, "source is not formatted",
-            "One formatter: dfmt 0.15.2 with the repository's dfmt.ini. `flint check` compares its output byte for "
-            ~ "byte.", "flint fmt"),
+            "One formatter: dfmt 0.15.2 with Flint's stacked-UDA patch and the repository's .editorconfig. "
+            ~ "`flint check` compares its output byte for byte.", "flint fmt"),
     CodeInfo("FLINT-E0602", ExitCode.user, "D-Scanner finding",
             "D-Scanner 0.16.0-beta.5 with dscanner.ini reports a warning or error.",
             "fix the reported line; the message names the check"),

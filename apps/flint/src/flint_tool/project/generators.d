@@ -171,9 +171,13 @@ import flint.validate : NotBlank;
 struct {Name}
 {
     /// Database primary key.
-    @Id ulong id;
+    @Id
+    ulong id;
     /// Required name.
-    @Column("name") @JsonName("name") @NotBlank Text name;
+    @Column("name")
+    @JsonName("name")
+    @NotBlank
+    Text name;
 }
 `;
 
@@ -201,7 +205,8 @@ import flint.engine.di : Service;
 @safe:
 
 /// Constructor-injected application service.
-@Service final class {Name}Service
+@Service
+final class {Name}Service
 {
     /// Describe the service; replace with the feature's operations.
     string describe() const pure nothrow @nogc
@@ -223,7 +228,8 @@ import flint.engine.web : RequestContext;
 @safe:
 
 /// Constructor-injected application service.
-@Service final class {Name}Service
+@Service
+final class {Name}Service
 {
     private {Name}Repository repository;
 
@@ -300,9 +306,11 @@ import flint.config : ConfigurationProperties, Default, Required;
 struct {Name}Properties
 {
     /// Required endpoint.
-    @Required string endpoint;
+    @Required
+    string endpoint;
     /// Timeout in milliseconds.
-    @Default("5000") uint timeoutMillis;
+    @Default("5000")
+    uint timeoutMillis;
 }
 `;
 
