@@ -114,8 +114,10 @@ class StructuralParityTests(unittest.TestCase):
         cls.base.mkdir()
         for name in ('policy', 'packages', 'framework', 'tools', 'toolchain'):
             shutil.copytree(ROOT / name, cls.base / name, ignore=ignore, symlinks=True)
-        for name in ('dub.sdl', 'flint.toml', 'dscanner.ini', 'dfmt.ini', '.editorconfig'):
+        for name in ('dub.sdl', 'flint.toml', 'dscanner.ini', 'dfmt.ini', '.editorconfig', 'platform.lock'):
             shutil.copy2(ROOT / name, cls.base / name)
+        (cls.base / 'boot/dependencies').mkdir(parents=True)
+        shutil.copy2(ROOT / 'boot/dependencies/flint-dependencies.json', cls.base / 'boot/dependencies')
         (cls.base / '.tools').symlink_to((ROOT / '.tools').resolve())
 
     @classmethod
@@ -194,6 +196,9 @@ class StructuralParityTests(unittest.TestCase):
             ('arena', edit('policy/packages.json', '"repo": "flint",\n      "dependencies": [\n        "arena",\n'
                            '        "conc"', '"repo": "flint",\n      "dependencies": [\n        "arena",\n'
                            '        "engine-di",\n        "conc"'), 'FLINT-E0532'),
+            # A policy edit without regenerating the platform-module outputs (ADR-023 platform modules).
+            ('arena', edit('policy/peer-lock.json', '"consumers": ["engine-cache"]', '"consumers": ["arena"]'),
+             'FLINT-E0534'),
         ]
         for package, mutate, code in cases:
             with self.subTest(code=code):

@@ -15,6 +15,11 @@
     ["starters/starter", "starter/flint-boot-starter"],
     ["starters/", "starter/flint-boot-starter-"]
   ],
+  "lock_partitions_note": "Inputs of policy/lock-partitions.json besides the locks (tools/platform_modules.py, flint check structural): shim_providers are the native libraries a repo's own Flint C shim archive wraps, which it carries even where other repos' packages consume them too (flint_ffi_base wraps libyaml and utf8proc); tool_consumers map a lock consumer that is a package's build tool to that package.",
+  "lock_partitions": {
+    "shim_providers": {"flint": ["libyaml", "utf8proc"]},
+    "tool_consumers": {"rpc-codegen-build-tool": "engine-rpc"}
+  },
   "repos": {
     "flint": {
       "github": "flint-projects/flint",

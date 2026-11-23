@@ -176,6 +176,13 @@ def framework_layers():
             check_thread_locals(module,ts,where)
     return len(modules)
 
+def platform_outputs():
+    """The bill of materials and the lock partitions are current (ADR-023 platform modules): a policy edit
+    regenerates them in the same commit, and a rebase that touches policy regenerates them again."""
+    if not (ROOT/'platform.lock').is_file():return
+    import platform_modules
+    for problem in platform_modules.problems(ROOT):require(False,problem)
+
 WORKSPACE=Workspace()
 
 def structural(selected):
@@ -197,6 +204,7 @@ def structural(selected):
     root_sdl=(ROOT/'dub.sdl').read_text(encoding='utf-8')
     require(set(re.findall(r'subPackage\s+"packages/([\w-]+)"',root_sdl))==set(P),'root subpackage list differs')
     boot_layers()
+    platform_outputs()
     module_budgets.load(B,P,ROOT)
     framework=framework_layers()
     mixin_packages=set()

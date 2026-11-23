@@ -52,7 +52,7 @@ Flint is a port of the Spring ecosystem. Read `docs/adr/ADR-030-flint-is-a-sprin
 
 ## Dependency rules
 
-`policy/packages.json` is the exact allowlist, not a suggested graph. A direct import requires a direct DUB dependency even when another dependency already exposes it. Lower tiers cannot import higher tiers. CLI/TUI code cannot import web/data packages. Optional codecs, desktop backends and templates attach through application composition. Circular imports are rejected, including generated code. Generated source must be materialized and checked before compilation; mixins may not generate import declarations.
+`policy/packages.json` is the exact allowlist, not a suggested graph. A direct import requires a direct DUB dependency even when another dependency already exposes it. Lower tiers cannot import higher tiers. CLI/TUI code cannot import web/data packages. Optional codecs, desktop backends and templates attach through application composition. Circular imports are rejected, including generated code. Generated source must be materialized and checked before compilation; mixins may not generate import declarations. A policy edit (`policy/*.json`, `platform.lock`) regenerates the platform-module outputs in the same commit with `python3 tools/platform_modules.py --write`, and again after a rebase that touches policy; the structural gate fails while they are stale (FLINT-E0534).
 
 ## Daily task loop
 

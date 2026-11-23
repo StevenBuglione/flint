@@ -49,6 +49,8 @@ StructuralSummary structuralGate(const ref Home home, scope const(string)[] sele
     checkRootRecipe(home, report);
     checkBootLayers(home, report);
     summary.pending_repo_edges = checkRepoEdges(home, report);
+    if (!fast)
+        checkPlatformOutputs(home, report);
     string[] names;
     foreach (ref item; home.packages)
     {
@@ -161,6 +163,16 @@ private string[] checkRepoEdges(const ref Home home, ref Report report)
 
     sort(pending);
     return pending;
+}
+
+/// The bill of materials and the lock partitions are current (FLINT-E0534), as tools/gates.py platform_outputs.
+private void checkPlatformOutputs(const ref Home home, ref Report report)
+{
+    import flint_tool.check.platform : platformOutputProblems;
+
+    foreach (problem; platformOutputProblems(home))
+        report.add(at(diagnostic("FLINT-E0534", Severity.error, problem,
+                "python3 tools/platform_modules.py --write"), "platform.lock", 0));
 }
 
 /// An application's flint:* dependencies follow the same edges, from its repo in policy/apps.json.

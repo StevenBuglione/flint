@@ -95,8 +95,10 @@ class PlatformModuleTests(unittest.TestCase):
             stale = dict(bom, artifacts=dict(bom['artifacts']))
             del stale['artifacts']['flint:engine-web']
             (root / 'boot/dependencies/flint-dependencies.json').write_text(json.dumps(stale))
-            self.assertEqual(module.problems(root), ['boot/dependencies/flint-dependencies.json is stale: run '
-                                                     'python3 tools/platform_modules.py --write'])
+            self.assertEqual(module.problems(root), ['boot/dependencies/flint-dependencies.json is stale: '
+                                                     + module.REGENERATE])
+            self.assertIn('python3 tools/platform_modules.py --write', module.REGENERATE)
+            self.assertIn('rebase', module.REGENERATE)
 
     def test_a_project_outside_the_checkout_locks_each_package_at_its_platform_version(self):
         flint = ROOT / '.flint/bin/flint'

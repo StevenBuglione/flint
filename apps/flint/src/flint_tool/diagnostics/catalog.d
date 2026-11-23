@@ -385,6 +385,12 @@ immutable CodeInfo[] catalog = [
             ~ "checkout platform.lock pins, under `.flint/platform/<repo>-<commit>` in the Flint home (ADR-023, "
             ~ "platform modules). Fetch the pinned checkouts once per platform.lock change.",
             "python3 tools/platform_modules.py --fetch"),
+    CodeInfo("FLINT-E0534", ExitCode.user, "the platform-module outputs are stale",
+            "The bill of materials (boot/dependencies/flint-dependencies.json) and the lock partitions "
+            ~ "(policy/lock-partitions.json) are generated from policy and platform.lock. A policy edit "
+            ~ "regenerates them in the same commit; after a rebase that touches policy, regenerate them again. They "
+            ~ "are deterministic, so regenerating settles any conflict.",
+            "python3 tools/platform_modules.py --write"),
     CodeInfo("FLINT-E0601", ExitCode.user, "source is not formatted",
             "One formatter: dfmt 0.15.2 with the repository's dfmt.ini. `flint check` compares its output byte for "
             ~ "byte.", "flint fmt"),
