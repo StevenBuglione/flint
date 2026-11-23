@@ -282,6 +282,79 @@ void dubPhases(string output, long wall, ref imported!"flint_tool.engine.receipt
     phases.plan = wall - (phases.compile > 0 ? phases.compile : 0) - (phases.link > 0 ? phases.link : 0);
 }
 
+/// A project build's additions to its environment. Returns whether the user asked for DUB's trace.
+private bool projectEnvironment(const ref BuildRequest request, const ref ProfileSpec spec,
+        const ref BuildOutcome result, ref EnvVar[] environment)
+{
+    // The compile server preloads the platform modules for dev builds only (coordinator, 2026-11-23): a test build
+    // compiles with -unittest, which the prelude's switches would not match anyway.
+    if (result.platform.active && spec.compile_server && !request.test && request.profile == "dev")
+        environment ~= EnvVar("FLINT_DMD_SERVER_PRELUDE", result.platform.prelude);
+    // The Flint DUB reports its phases with FLINT_DUB_TRACE (toolchain/README.md); flint reads them for the
+    // receipt and keeps them out of what it shows.
+    const userTrace = traceRequested(environment);
+    if (!userTrace)
+        environment ~= EnvVar("FLINT_DUB_TRACE", "1");
+    return userTrace;
+}
+
+/// Build through DUB, reading its phases from the Flint DUB's trace.
+private bool buildWithDub(ref Session session, scope const(string)[] command, EnvVar[] environment,
+        string root, bool hideTrace, ref BuildOutcome result)
+{
+    import core.time : MonoTime;
+
+    const start = MonoTime.currTime;
+    const built = runDub(session, command, environment, root, result.output, hideTrace);
+    dubPhases(result.output, (MonoTime.currTime - start).total!"msecs", result.phases);
+    if (hideTrace)
+        result.output = withoutTrace(result.output);
+    return built;
+}
+
+/// Whether flint may build the project itself, without DUB (engine/direct.d): a DMD dev build that links the
+/// shared platform object, with no dependency DUB would build (only core packages, and the AOT library, if any,
+/// from the platform cache) and no embedded C. `FLINT_DIRECT_BUILD=0` builds through DUB.
+private bool directEligible(const ref BuildRequest request, const ref Resolution graph, const ref BuildOutcome result)
+{
+    import std.process : environment;
+
+    if (environment.get("FLINT_DIRECT_BUILD", "") == "0" || request.test || result.platformShared.length == 0)
+        return false;
+    if (result.aotLibrary.key.length && result.aotLibrary.archive.length == 0)
+        return false; // DUB builds the AOT library this time
+    if (result.native.objects.length)
+        return false;
+    foreach (ref item; graph.packages)
+    {
+        if (item.kind != "core")
+            return false;
+    }
+    return true;
+}
+
+private imported!"flint_tool.engine.direct".DirectResult buildDirectly(ref Session session, const ref Manifest manifest,
+        const ref Toolchain toolchain, string compiler, const ref BuildRequest request,
+        EnvVar[] environment, string dflags, ref BuildOutcome result)
+{
+    import std.path : buildPath;
+    import flint_tool.engine.direct : DirectBuild, DirectResult, directBuild;
+    import flint_tool.engine.recipe : recipeDirectory;
+
+    DirectBuild build;
+    build.compiler = toolchain.component(compiler).path;
+    build.compilerSha256 = toolchain.component(compiler).sha256;
+    build.dub = toolchain.dub.path;
+    build.dubSha256 = toolchain.dub.sha256;
+    build.root = manifest.root;
+    build.recipeDirectory = buildPath(manifest.root, recipeDirectory);
+    build.configuration = request.profile;
+    build.artifact = artifactPath(manifest, request);
+    build.environment = environment;
+    build.dflags = dflags;
+    return directBuild(session, build, result.output, result.phases);
+}
+
 /// Close the phases: the total since the session opened, and flint's own share of it.
 private void finishPhases(ref Session session, ref imported!"flint_tool.engine.receipt".PhasesRecord phases)
 {
@@ -568,26 +641,16 @@ bool buildProject(ref Session session, const ref Manifest manifest, const ref Re
     const command = projectCommand(toolchain, compiler, manifest.root, request);
     result.command = command.dup;
     auto environment = buildEnvironment(session, toolchain, spec, dubHome, settings.dflags);
-    // The compile server preloads the platform modules for dev builds only (coordinator, 2026-11-23): a test build
-    // compiles with -unittest, which the prelude's switches would not match anyway.
-    if (result.platform.active && spec.compile_server && !request.test && request.profile == "dev")
-        environment ~= EnvVar("FLINT_DMD_SERVER_PRELUDE", result.platform.prelude);
+    const userTrace = projectEnvironment(request, spec, result, environment);
     const label = request.test ? "test" : request.profile;
     session.progress(request.test ? "Compiling" : "Building",
             manifest.name ~ " " ~ manifest.version_ ~ " (" ~ label ~ ", " ~ compiler ~ ")");
-    // The Flint DUB reports its phases with FLINT_DUB_TRACE (toolchain/README.md); flint reads them for the
-    // receipt and keeps them out of what it shows.
-    const userTrace = traceRequested(environment);
-    if (!userTrace)
-        environment ~= EnvVar("FLINT_DUB_TRACE", "1");
-    import core.time : MonoTime;
+    import flint_tool.engine.direct : DirectResult;
 
-    const dubStart = MonoTime.currTime;
-    const built = runDub(session, command, environment, manifest.root, result.output, !userTrace);
-    const dubWall = (MonoTime.currTime - dubStart).total!"msecs";
-    dubPhases(result.output, dubWall, result.phases);
-    if (!userTrace)
-        result.output = withoutTrace(result.output);
+    const direct = directEligible(request, resolution, result) ? buildDirectly(session, manifest,
+            toolchain, compiler, request, environment, settings.dflags, result) : DirectResult.unavailable;
+    const built = direct == DirectResult.unavailable ? buildWithDub(session, command, environment,
+            manifest.root, !userTrace, result) : direct == DirectResult.built;
     if (!built)
     {
         report.error("FLINT-E0701", request.test ? "the test build failed" : "the build failed",

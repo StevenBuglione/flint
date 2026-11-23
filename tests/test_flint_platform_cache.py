@@ -126,6 +126,42 @@ class PlatformCacheTests(unittest.TestCase):
                              encoding='utf-8', timeout=60)
         self.assertEqual(ran.returncode, 0, ran.stdout + ran.stderr)
 
+    def test_a_dev_edit_builds_directly_without_dub(self):
+        direct = self.directory / 'direct'
+        shutil.copytree(self.project, direct, ignore=shutil.ignore_patterns('.flint'))
+        env = environment(FLINT_CACHE=str(self.cache))
+        first = flint('build', cwd=direct, env=env)
+        self.assertEqual(first.returncode, 0, first.stdout + first.stderr)
+        artifact = direct / '.flint/build/dev/demo'
+        built = artifact.stat().st_mtime_ns
+        again = flint('build', cwd=direct, env=env)
+        self.assertEqual(again.returncode, 0, again.stdout + again.stderr)
+        self.assertEqual(artifact.stat().st_mtime_ns, built, 'an up-to-date build relinks nothing')
+        source = next((direct / 'src').rglob('*.d'))
+        source.write_text(source.read_text(encoding='utf-8') + '\nprivate enum edited = 1;\n', encoding='utf-8',
+                          newline='\n')
+        edited = flint('build', cwd=direct, env=env)
+        self.assertEqual(edited.returncode, 0, edited.stdout + edited.stderr)
+        phases = self.receipt(direct)['phases_ms']
+        self.assertEqual(phases['plan'], 0, phases)
+        self.assertGreaterEqual(phases['compile'], 0, phases)
+        self.assertGreaterEqual(phases['link'], 0, phases)
+        ran = subprocess.run([str(artifact)], cwd=direct, capture_output=True, text=True, encoding='utf-8',
+                             timeout=60)
+        self.assertEqual(ran.returncode, 0, ran.stdout + ran.stderr)
+        config = direct / 'config/application.toml'
+        if config.is_file():
+            config.write_text(config.read_text(encoding='utf-8') + '\n', encoding='utf-8', newline='\n')
+            before = artifact.stat().st_mtime_ns
+            rebuilt = flint('build', cwd=direct, env=env)
+            self.assertEqual(rebuilt.returncode, 0, rebuilt.stdout + rebuilt.stderr)
+            self.assertNotEqual(artifact.stat().st_mtime_ns, before, 'a string import changed')
+        source.write_text(source.read_text(encoding='utf-8') + '\nprivate enum edited2 = 1;\n', encoding='utf-8',
+                          newline='\n')
+        dub = flint('build', cwd=direct, env=environment(FLINT_CACHE=str(self.cache), FLINT_DIRECT_BUILD='0'))
+        self.assertEqual(dub.returncode, 0, dub.stdout + dub.stderr)
+        self.assertGreater(self.receipt(direct)['phases_ms']['plan'], 0)
+
     def test_no_platform_cache_compiles_the_modules_from_source(self):
         plain = self.directory / 'plain'
         shutil.copytree(self.project, plain, ignore=shutil.ignore_patterns('.flint'))
