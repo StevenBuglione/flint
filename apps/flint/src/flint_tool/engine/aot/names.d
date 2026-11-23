@@ -7,6 +7,10 @@ module flint_tool.engine.aot.names;
 enum flintBootApplication = "flint.boot.autoconfigure.FlintBootApplication";
 /// ADR-029's `@FlintApplication`, Boot's class used as a bare UDA: an alias of `@FlintBootApplication`.
 enum flintApplication = "flint.boot.FlintApplication";
+/// `@EnableAutoConfiguration`.
+enum enableAutoConfiguration = "flint.boot.autoconfigure.EnableAutoConfiguration";
+/// Boot's `spring.boot.enableautoconfiguration`, under Flint's prefix.
+enum enableAutoConfigurationProperty = "flint.boot.enableautoconfiguration";
 /// `@AutoConfiguration`.
 enum autoConfiguration = "flint.boot.autoconfigure.AutoConfiguration";
 /// `@AutoConfigureOrder`.

@@ -1,0 +1,4 @@
+# Fixture auto-configurations for Flint AOT tests.
+flintsample.autoconfig.ExcludedAutoConfiguration
+
+flintsample.autoconfig.WidgetAutoConfiguration

@@ -473,6 +473,43 @@ unittest
     expect(outcome.application).toEqual("shop.app.ShopApplication");
 }
 
+@("auto-configurations: excluded at build time by excludeName, switched off at startup by the property")
+unittest
+{
+    import std.file : readText;
+    import std.path : buildPath;
+    import flint_tool.engine.aot.driver : AotRequest, runAot;
+
+    const project = copyFixture("sample");
+    scope (exit)
+        remove(project);
+    edit(buildPath(project, "src", "shop", "app.d"), "@FlintBootApplication final class",
+            `@FlintBootApplication(excludeName: ["flintsample.autoconfig.ExcludedAutoConfiguration"]) final class`);
+    const root = repositoryRoot();
+    AotRequest request;
+    request.root = project;
+    request.compiler = compiler();
+    request.importPaths = [
+        "-I" ~ buildPath(root, "tests", "aot", "annotations"),
+        "-I" ~ buildPath(root, "tests", "aot", "autoconfig", "source")
+    ];
+    request.flags = ["-preview=dip1000"];
+    request.packageDirectories = [buildPath(root, "tests", "aot", "autoconfig")];
+    request.environmentKey = "test";
+    auto outcome = runAot(request);
+    expect(outcome.extractionErrors).toEqual("");
+    expect(outcome.ok).toBeTrue();
+    expect(outcome.removed.canFind(
+            "flintsample.autoconfig.ExcludedAutoConfiguration: excluded by the application's "
+            ~ "exclude or excludeName")).toBeTrue();
+    const generated = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot",
+            "flintsample", "autoconfig.d"));
+    expect(generated.canFind(`"flintsample.autoconfig.WidgetAutoConfiguration"`)).toBeTrue();
+    expect(generated.canFind("ExcludedAutoConfiguration\";")).toBeFalse();
+    expect(generated.canFind(`c.property("flint.boot.enableautoconfiguration", "true", true) `
+            ~ `&& !c.hasBeanOfType("flintsample.autoconfig.Widget")`)).toBeTrue();
+}
+
 @("a project without @FlintBootApplication runs no extraction")
 unittest
 {

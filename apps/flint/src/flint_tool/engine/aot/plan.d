@@ -472,6 +472,8 @@ private final class Analysis
     uint rank;
     size_t[string] moduleIndex;
     BeanPlan[] allBeans;
+    /// Auto-configurations the application excludes at build time.
+    bool[string] excluded;
 
     this(const Model model, const ref AnalysisInput input)
     {
@@ -567,8 +569,25 @@ private final class Analysis
         const annotation = merged.get(flintBootApplication);
         if (annotation !is null)
             plan.scanPackages = annotation.get("scanBasePackages").strings;
+        exclusionsOf(merged);
         if (plan.scanPackages.length == 0)
             plan.scanPackages = [packageOf(decl.module_)];
+    }
+
+    /// `exclude` and `excludeName` of `@FlintBootApplication` and `@EnableAutoConfiguration` (merged, so declared
+    /// directly or as a meta-annotation).
+    void exclusionsOf(const ref MergedSet merged)
+    {
+        import flint_tool.engine.aot.names : enableAutoConfiguration, flintBootApplication;
+
+        foreach (type; [flintBootApplication, enableAutoConfiguration])
+        {
+            if (const annotation = merged.get(type))
+            {
+                foreach (name; annotation.get("exclude").strings ~ annotation.get("excludeName").strings)
+                    excluded[name] = true;
+            }
+        }
     }
 
     bool scanned(string moduleName)
@@ -633,6 +652,11 @@ private final class Analysis
             const decl = model.type(name);
             if (decl is null)
                 continue;
+            if (name in excluded)
+            {
+                plan.removed ~= name ~ ": excluded by the application's exclude or excludeName";
+                continue;
+            }
             result ~= Candidate(decl, mergedOf(*decl), true);
         }
         // Boot sorts alphabetically, then by @AutoConfigureOrder, then by @AutoConfigureAfter/Before.
@@ -716,6 +740,9 @@ private final class Analysis
         auto outcome = evaluate(candidate.merged, decl.fqn, model.present);
         if (!acceptOutcome(outcome, decl.name, decl.file, decl.line))
             return;
+        // Boot's spring.boot.enableautoconfiguration=false turns every auto-configuration off at startup.
+        if (candidate.autoConfiguration)
+            outcome.terms = autoConfigurationTerm() ~ outcome.terms;
         BeanPlan bean;
         bean.name = componentName(candidate);
         bean.type = decl.fqn;
@@ -752,6 +779,14 @@ private final class Analysis
             return false;
         }
         return true;
+    }
+
+    static string autoConfigurationTerm()
+    {
+        import flint_tool.engine.aot.conditions : literal;
+        import flint_tool.engine.aot.names : enableAutoConfigurationProperty;
+
+        return "c.property(" ~ literal(enableAutoConfigurationProperty) ~ ", \"true\", true)";
     }
 
     string componentName(ref Candidate candidate)

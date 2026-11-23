@@ -6,9 +6,22 @@ import flint.core.annotation : AliasFor, ClassRef;
 
 @safe:
 
-/// `@FlintBootApplication` (`@SpringBootApplication`).
-@Configuration struct FlintBootApplication
+/// `@EnableAutoConfiguration`.
+struct EnableAutoConfiguration
 {
+    /// Auto-configurations to leave out.
+    ClassRef[] exclude;
+    /// Auto-configuration class names to leave out.
+    string[] excludeName;
+}
+
+/// `@FlintBootApplication` (`@SpringBootApplication`).
+@Configuration @EnableAutoConfiguration struct FlintBootApplication
+{
+    /// Auto-configurations to leave out.
+    ClassRef[] exclude;
+    /// Auto-configuration class names to leave out.
+    string[] excludeName;
     /// Packages to scan; the application class's package when empty.
     string[] scanBasePackages;
     /// Whether `@Bean` methods are proxied.

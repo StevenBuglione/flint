@@ -427,7 +427,7 @@ RegistryPopulator installedRegistry() nothrow @nogc;              // null when t
 - A class with a merged `@Component` (so also `@Service`, `@Repository`, `@Controller`, `@RestController`, `@Configuration`, `@ControllerAdvice`) in a scanned module. The scanned modules are those under the `@FlintBootApplication` class's package, or under `scanBasePackages`, exactly as `@ComponentScan` would see them.
 - Each `@Bean` method of a `@Configuration` (or lite `@Component`) class, named after the method unless `@Bean(name)` says otherwise.
 - A `@ConfigurationProperties` class listed by `@EnableConfigurationProperties` or found by `@ConfigurationPropertiesScan`, named `<prefix>-<fully qualified name>` as Boot names it.
-- Each auto-configuration class of the closure, with its `@Bean` methods, after every user definition. A package lists its auto-configurations, one fully qualified class per line, in `META-INF/flint/flint.boot.autoconfigure.AutoConfiguration.imports` at its root, as Boot's `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports` does. Auto-configuration beans are named by their fully qualified class name, as in Boot.
+- Each auto-configuration class of the closure, with its `@Bean` methods, after every user definition. A package lists its auto-configurations, one fully qualified class per line, in `META-INF/flint/flint.boot.autoconfigure.AutoConfiguration.imports` at its root, as Boot's `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports` does. Auto-configuration beans are named by their fully qualified class name, as in Boot. The `exclude` and `excludeName` of `@FlintBootApplication` and `@EnableAutoConfiguration` (declared or merged) remove auto-configurations at build time. `flint.boot.enableautoconfiguration=false` (Boot's `spring.boot.enableautoconfiguration`) removes all of them at startup: every auto-configuration definition's condition starts with `c.property("flint.boot.enableautoconfiguration", "true", true)`. Boot's `spring.autoconfigure.exclude` list (`flint.autoconfigure.exclude`) needs a membership test that `ConditionContext` lacks and is proposed for contract 2.
 
 The default bean name is the class name with its first letter lowered, keeping Spring's rule that a name starting with two capitals stays as it is (`URLService`).
 
@@ -471,6 +471,8 @@ The generator also checks at build time that the constructor dependencies have n
 | `@ConditionalOnSingleCandidate` | startup | `c.hasSingleCandidate(type)` |
 | `@ConditionalOnWebApplication` | startup | `c.isWebApplication("SERVLET")` |
 | legacy `@ConditionalOnConfig("section")` | startup | `c.property("section", "", false)` over the section's presence |
+| `exclude`, `excludeName` | build time | the auto-configuration and its `@Bean` methods are left out |
+| `flint.boot.enableautoconfiguration` | startup | `c.property("flint.boot.enableautoconfiguration", "true", true)` on every auto-configuration definition |
 
 Every condition of a definition, including those inherited from its configuration class, is conjoined into one generated function:
 
