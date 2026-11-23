@@ -65,9 +65,10 @@ class ForkSourcesTests(unittest.TestCase):
     def test_arm64_overlay_and_runtime_patches(self):
         self.assertEqual(patched_files(TOOLCHAIN / 'dmd-2.114.0-flint-darwin.patch'),
                          ['dmd/flintlink.d', 'dmd/flintserver.d'])
-        # std.math.hardware's FPSR/FPCR access; the rest are test thresholds for a 64-bit real
+        # std.math.hardware's FPSR/FPCR access and std.conv's exact decimal parsing with a 64-bit real;
+        # the rest are test thresholds for a 64-bit real
         self.assertEqual(patched_files(TOOLCHAIN / 'phobos-2.114.0-flint.patch'),
-                         ['std/complex.d', 'std/internal/math/gammafunction.d', 'std/math/hardware.d'])
+                         ['std/complex.d', 'std/conv.d', 'std/internal/math/gammafunction.d', 'std/math/hardware.d'])
         druntime = patched_files(TOOLCHAIN / 'druntime-2.114.0-flint.patch')
         self.assertIn('src/core/internal/atomic_aarch64.c', druntime)
         for module in ('core/atomic.d', 'core/internal/atomic.d', 'core/math.d', 'core/thread/osthread.d',

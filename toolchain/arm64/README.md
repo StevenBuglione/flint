@@ -86,6 +86,7 @@ Object files and relocations:
 - Mach-O: relocations chosen from the instruction (BRANCH26, PAGE21/PAGEOFF12 with `ARM64_RELOC_ADDEND`, GOT_LOAD, TLVP_LOAD). Non-local symbols go through the GOT. Extern symbols forwarded to a public or local definition use its index. Thread-local template variables get weak TLV descriptors. (`tls_template`)
 - Mach-O `__eh_frame`: a `zPLR` CIE with an `ARM64_RELOC_POINTER_TO_GOT` personality. FDE addresses and the LSDA are `pcrel|sdata4` `SUBTRACTOR`/`UNSIGNED` pairs. (`exceptions`)
 - Mach-O: the TLV init-symbol name buffer freed the stack buffer for long names.
+- Mach-O AArch64: template instances (COMDAT definitions) are weak definitions that the linker may hide, so executables do not export them. With them exported, dyld coalesced each one against every loaded image at start-up: an empty D program retired 92 million instructions instead of 16 million, about 15 ms (`run.py` checks it).
 - Mach-O libraries (`dmd -lib`): the symbol table was padded to 4 bytes, so members' contents were 8-byte aligned or not depending on its size. The 64-bit Apple linker rejects misaligned members (`archive_members`).
 - Mach-O AArch64: a branch with no addend that was the last instruction of a section was cut off by the relocation writer. Interface thunks end an object's code, so ld64 found a relocation outside the section (`thunk_last_in_section`).
 - DWARF EH on ELF uses PC-relative personality, LSDA and TType encodings. Debug info uses ABS32/ABS64 relocations.
@@ -135,4 +136,5 @@ druntime and Phobos:
 - Atomics as naked D function templates in `core.internal.atomic` (load-acquire, store-release and exclusive loops; they were empty stubs), so `-betterC` programs link without druntime (`betterc_atomics`). `callWithStackShell` and `getStackTop` go through assembly helpers.
 - `core.math` bodies for the x87-only intrinsics; the `test_runner` floating point control register asm is skipped under DMD.
 - `std.math.hardware`: FPSR and FPCR access through C helpers under DMD AArch64.
+- `std.conv`'s floating point parse rounds at every step, so with a 64-bit `real` it was one ulp off for decimal input such as `"0.7"`. Input whose mantissa has at most 53 bits and whose power of ten is at most 22 now takes Clinger's exact path, as strtod does. Longer input, such as `"1e-300"`, can still be one ulp off; LDC's Phobos behaves the same way.
 - Tests whose thresholds assume an 80-bit `real` take LDC's thresholds for a 64-bit `real` (`std.complex`, `std.internal.math.gammafunction`). One `gammafunction` threshold also allows for glibc's `log1p`, which is 1 ulp from Apple's at that point.

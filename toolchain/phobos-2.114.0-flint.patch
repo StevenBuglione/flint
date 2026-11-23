@@ -20,6 +20,64 @@ index d7e8475..e500ab0 100644
  }
  
  @safe pure nothrow unittest
+diff --git a/std/conv.d b/std/conv.d
+index 62f631f..3aa4ec4 100644
+--- a/std/conv.d
++++ b/std/conv.d
+@@ -3439,10 +3439,31 @@ if (isFloatingPoint!Target && !is(Target == enum) &&
+         enforce(sawDigits, new ConvException("No digits seen."));
+     }
+ 
+-    ldval = msdec;
+-    if (msscale != 1)               /* if stuff was accumulated in lsdec */
++    /* Clinger's fast path: a mantissa of at most 2^53 and a power of ten of at most 22 are exact in a
++     * double, so one multiplication or division rounds correctly. With a 64-bit real (DMD and LDC on
++     * AArch64), the loop below rounds at every step and was one ulp off for "0.7" or "2.675".
++     */
++    bool exact = false;
++    static if (real.mant_dig == double.mant_dig && !is(Unqual!Target == float))
++    {
++        static immutable double[23] exactPow10 = [1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10,
++            1e11, 1e12, 1e13, 1e14, 1e15, 1e16, 1e17, 1e18, 1e19, 1e20, 1e21, 1e22];
++        if (!isHex && msscale == 1 && msdec <= (1UL << 53) && exp >= -22 && exp <= 22)
++        {
++            const double mantissa = msdec;
++            ldval = exp < 0 ? mantissa / exactPow10[-exp] : mantissa * exactPow10[exp];
++            exact = true;
++        }
++    }
++
++    if (!exact)
++        ldval = msdec;
++    if (!exact && msscale != 1)     /* if stuff was accumulated in lsdec */
+         ldval = ldval * msscale + lsdec;
+-    if (isHex)
++    if (exact)
++    {
++    }
++    else if (isHex)
+     {
+         import core.math : ldexp;
+ 
+@@ -3495,6 +3516,18 @@ if (isFloatingPoint!Target && !is(Target == enum) &&
+ }
+ 
+ 
++// Decimal input that the exact fast path covers is correctly rounded with a 64-bit real too
++// (as strtod rounds it); before, a 64-bit real gave one ulp too much for these.
++@safe unittest
++{
++    assert(to!double("0.7") is 0x1.6666666666666p-1);
++    assert(to!double("0.3") is 0x1.3333333333333p-2);
++    assert(to!double("2.675") is 0x1.5666666666666p+1);
++    assert(to!double("-12345.6789e-3") is -0x1.8b0fcd324d5a2p+3);
++    assert(to!double("1e22") is 0x1.0f0cf064dd592p+73);
++    assert(to!real("0.1") == to!double("0.1"));
++}
++
+ ///
+ @safe unittest
+ {
 diff --git a/std/internal/math/gammafunction.d b/std/internal/math/gammafunction.d
 index 1b05ebd..5e4a23d 100644
 --- a/std/internal/math/gammafunction.d

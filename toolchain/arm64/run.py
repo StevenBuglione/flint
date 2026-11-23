@@ -84,12 +84,24 @@ def main():
         r = subprocess.run(link, capture_output=True, text=True, timeout=120, env=env, cwd=tmp)
         if r.returncode == 0 and a.os == 'osx' and not list(cache.glob('flint-dmd/link-*.txt')):
             failed.append('dmd links with ' + wl + ' through cc, not directly with ld')
+        # On macOS, template instances are weak definitions the linker may hide: an executable that
+        # exports them makes dyld coalesce each against every loaded image at start-up (machobj)
+        if a.os == 'osx':
+            source = Path(tmp) / 'weak.d'
+            source.write_text('T twice(T)(T x) { return x * 2; }\nint main() { return twice(21) == 42 ? 0 : 1; }\n')
+            weak = Path(tmp) / 'weak'
+            link = [str(Path(dmd).resolve()), '-conf=', '-marm64', '-os=osx', '-I' + str(Path(a.druntime_import).resolve()),
+                    '-defaultlib=', str(source), str(Path(a.druntime).resolve()), '-of' + str(weak)]
+            r = subprocess.run(link, capture_output=True, text=True, timeout=120, cwd=tmp)
+            header = subprocess.run(['otool', '-hv', str(weak)], capture_output=True, text=True).stdout if r.returncode == 0 else ''
+            if r.returncode != 0 or 'WEAK_DEFINES' in header:
+                failed.append('an executable exports weak definitions:\n' + (r.stdout + r.stderr)[-1000:] + header)
         if r.returncode == 0:
             r = subprocess.run(shlex.split(a.run_prefix) + [str(Path(tmp) / 'wl')], capture_output=True, text=True,
                                timeout=60)
         if r.returncode != 0:
             failed.append('dmd links with ' + wl + ':\n' + (r.stdout + r.stderr)[-2000:])
-    total = len(tests) * len(FLAGS) + 2
+    total = len(tests) * len(FLAGS) + 2 + (a.os == 'osx')
     for f in failed:
         print('FAIL', f)
     print(f'{total - len(failed)}/{total} passed')

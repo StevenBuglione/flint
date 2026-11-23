@@ -412,8 +412,13 @@ def install_dmd_arm64(destination):
     for patch in dmd_patches():
         apply_patch(patch, stage / 'compiler' / 'src')
     env = dict(os.environ, PATH=str(ldc_bin) + os.pathsep + os.environ['PATH'])
+    # macOS: LTO gives about 10% fewer instructions per compile and a third of the start-up, and the executable
+    # exports only main: exported weak definitions make dyld coalesce each against every loaded image
+    # when the process starts, which cost more than `dmd --version` itself (ADR-025 section 3).
+    # Linux arm64 keeps a plain release build until LTO is verified there (LDC needs a linker plugin).
+    tuned = ['ENABLE_LTO=1', 'DFLAGS=-L-exported_symbol -L_main'] if osname == 'Darwin' else []
     subprocess.run([str(ldc_bin / 'ldmd2'), '-run', 'build.d', 'HOST_DMD=ldmd2', 'ENABLE_RELEASE=1',
-                    '-j' + str(min(os.cpu_count() or 2, 16)), 'dmd'], cwd=stage / 'compiler' / 'src', env=env,
+                    *tuned, '-j' + str(min(os.cpu_count() or 2, 16)), 'dmd'], cwd=stage / 'compiler' / 'src', env=env,
                    check=True, stdout=subprocess.DEVNULL)
     built = stage / 'generated' / osdir / 'release' / '64' / 'dmd'
     library, sources = build_arm64_runtime(built, dmd2 / 'src', work, osname)

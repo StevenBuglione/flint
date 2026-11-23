@@ -5182,7 +5182,7 @@ index 581128a..0a296b3 100644
          if (config.flags3 & CFG3pic &&
              tyfunc(s.ty()))
 diff --git a/dmd/backend/machobj.d b/dmd/backend/machobj.d
-index 522235d..df03a5d 100644
+index 522235d..c37fdf4 100644
 --- a/dmd/backend/machobj.d
 +++ b/dmd/backend/machobj.d
 @@ -555,10 +555,13 @@ int mach_numbersyms()
@@ -5349,15 +5349,15 @@ index 522235d..df03a5d 100644
 -                                    assert(0);
 +                                type = ARM64_RELOC_BRANCHY26;
 +                                pcrel = 1;
-                             }
--                            //dumpFixup(*s, rel.r_type);
--                            //assert(rel.r_address < section.size);
++                            }
 +                            else if ((ins & 0x9F00_0000) == 0x9000_0000)    // ADRP
 +                            {
 +                                type = isTLV ? ARM64_RELOC_TLVP_LOAD_PAGE21 :
 +                                       r.indirect ? ARM64_RELOC_GOT_LOAD_PAGE21 : ARM64_RELOC_PAGE21;
 +                                pcrel = 1;
-+                            }
+                             }
+-                            //dumpFixup(*s, rel.r_type);
+-                            //assert(rel.r_address < section.size);
 +                            else                                            // ADD, LDR, STR
 +                                type = isTLV ? ARM64_RELOC_TLVP_LOAD_PAGEOFF12 :
 +                                       r.indirect ? ARM64_RELOC_GOT_LOAD_PAGEOFF12 : ARM64_RELOC_PAGEOFF12;
@@ -5434,7 +5434,24 @@ index 522235d..df03a5d 100644
                                  machobj.fobjbuf.write(&rel, rel.sizeof);
                                  foffset += rel.sizeof;
                                  nreloc++;
-@@ -2429,15 +2363,15 @@ int MachObj_thread_vars(ref Symbol s, out targ_size_t offset, bool bss)
+@@ -1691,7 +1625,16 @@ assert(rel.r_symbolnum);
+             sym.n_type |= N_PEXT; // private extern
+         sym.n_desc = 0;
+         if (s.Sclass == SC.comdat)
++        {
+             sym.n_desc = N_WEAK_DEF;
++            /* AArch64: N_WEAK_DEF | N_WEAK_REF on a definition is "weak def can be hidden", so the
++             * linker coalesces template instances across objects and leaves them out of the exports.
++             * Exported weak definitions make dyld coalesce each one against every loaded image at
++             * start-up: 15 ms per process on pluto, the larger part of `dmd --version`.
++             */
++            if (machobj.AArch64)
++                sym.n_desc |= N_WEAK_REF;
++        }
+         sym.n_sect = remap(s.Sseg);
+         if (I64)
+         {
+@@ -2429,15 +2372,15 @@ int MachObj_thread_vars(ref Symbol s, out targ_size_t offset, bool bss)
          char[DEST_LEN] dest = void;
          size_t len = strlen(s.Sident.ptr);
          char* destr = dest.ptr;
@@ -5454,7 +5471,7 @@ index 522235d..df03a5d 100644
      }
  
      /* write _ident$tlv$init to __thread_bss / __thread_data section
-@@ -3002,6 +2936,8 @@ void MachObj_addrel(int seg, targ_size_t offset, Symbol* targsym,
+@@ -3002,6 +2945,8 @@ void MachObj_addrel(int seg, targ_size_t offset, Symbol* targsym,
      rel.subtractor = false;
      rel.funcsym = funcsym_p;
      rel.val = cast(short)val;
@@ -5463,7 +5480,7 @@ index 522235d..df03a5d 100644
  
      seg_data* pseg = SegData[seg];
      if (targsym && targsym.Sxtrnnum == 0)
-@@ -3286,6 +3222,13 @@ int MachObj_reftoidentAArch64(int seg, targ_size_t offset, Symbol* s, targ_size_
+@@ -3286,6 +3231,13 @@ int MachObj_reftoidentAArch64(int seg, targ_size_t offset, Symbol* s, targ_size_
          {
              MachObj_addrel(seg, offset, s, 0, REL.address, v);
          }
@@ -5477,7 +5494,7 @@ index 522235d..df03a5d 100644
      }
  
      OutBuffer* buf = SegData[seg].SDbuf;
-@@ -3309,7 +3252,9 @@ int MachObj_reftoidentAArch64(int seg, targ_size_t offset, Symbol* s, targ_size_
+@@ -3309,7 +3261,9 @@ int MachObj_reftoidentAArch64(int seg, targ_size_t offset, Symbol* s, targ_size_
      }
      else
          buf.write64(val);
@@ -5488,7 +5505,7 @@ index 522235d..df03a5d 100644
          buf.setsize(save);
  
      return retsize;
-@@ -3454,7 +3399,7 @@ int mach_dwarf_reftoident(int seg, targ_size_t offset, Symbol* s, targ_size_t va
+@@ -3454,7 +3408,7 @@ int mach_dwarf_reftoident(int seg, targ_size_t offset, Symbol* s, targ_size_t va
  {
      //printf("dwarf_reftoident(seg=%d offset=x%x s=%s val=x%x\n", seg, cast(int)offset, s.Sident.ptr, cast(int)val);
      if (machobj.AArch64)
@@ -5497,7 +5514,7 @@ index 522235d..df03a5d 100644
      else
          MachObj_reftoident(seg, offset, s, val + 4, I64 ? CF.off : CF.indirect);
      return 4;
-@@ -3496,24 +3441,24 @@ int dwarf_eh_frame_fixup(int dfseg, targ_size_t offset, Symbol* s, targ_size_t v
+@@ -3496,24 +3450,24 @@ int dwarf_eh_frame_fixup(int dfseg, targ_size_t offset, Symbol* s, targ_size_t v
      OutBuffer* buf = SegData[dfseg].SDbuf;
      assert(offset == buf.length());
      assert(fdesym.Sseg == dfseg);
