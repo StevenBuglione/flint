@@ -1,0 +1,8 @@
+Measuring gs-rest-service
+gs-rest-service: Go std-primed cold 0.153s, -a 3.175s, binary 6635680 bytes
+  primary: platform cache vs std-primed GOCACHE: 6.723 FAIL
+  secondary: from scratch vs go build -a: 1.297 FAIL
+  incremental: 3.988 FAIL
+  stricter: platform cache vs deps-primed GOCACHE: 6.963 FAIL
+  Oz binary size: 1.775 FAIL
+Wrote Spring build evidence /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/gs-builds/20261123T123014Z/builds.json (failed)

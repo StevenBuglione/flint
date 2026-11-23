@@ -2,7 +2,7 @@
   "schema": "flint.measure-queue/1",
   "id": "gs-builds",
   "created": "2026-11-23",
-  "status": "pending",
+  "status": "done",
   "requested_by": "m7-flint-cli (local_b3b0e1d4), after the platform cache (9655843b)",
   "summary": "gs-rest-service builds against both ADR-030 headlines: platform cache vs std-primed GOCACHE, and --no-platform-cache vs go build -a",
   "why": "The platform cache and --no-platform-cache exist now; this re-measures the gap the 09:00Z smoke showed (9.0 s cold vs Go 0.16 s). Measured in a worktree at 7ddf0354a057 with the release-built flint and DMD linking with mold (ADR-021); the cache is primed by one recorded, unscored build. About 20 minutes, so it fits a short window. Re-pinned for m7-flint-cli's 19390bd1 (Flint AOT's platform modules as a cached library) and cc2f98e2 (stat-keyed digests).",
@@ -40,5 +40,195 @@
     ]
   },
   "report_to": "m7-flint-cli; the coordinator; docs/milestones/13.md",
-  "estimate_minutes": 20
+  "estimate_minutes": 20,
+  "attempts": [
+    {
+      "time": "2026-11-23T12:32:52Z",
+      "outcome": "measured",
+      "evidence": true,
+      "host": "venus",
+      "builds": {
+        "tree": {
+          "commit": "7ddf0354a057ae5b0c90f396ee8ecd8dc218f15f",
+          "worktree": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/7ddf0354a057"
+        }
+      },
+      "window_before": {
+        "time": "2026-11-23T12:30:15Z",
+        "load_average": [
+          0.32275390625,
+          0.8779296875,
+          1.18310546875
+        ],
+        "busy_processes": [],
+        "idle_build_processes": 910,
+        "quiet": true,
+        "problems": []
+      },
+      "window_during": [
+        {
+          "time": "2026-11-23T12:30:27Z",
+          "load_average": [
+            5.62939453125,
+            2.0009765625,
+            1.54541015625
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-23T12:30:38Z",
+          "load_average": [
+            4.9169921875,
+            1.96728515625,
+            1.53955078125
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-23T12:30:49Z",
+          "load_average": [
+            5.2744140625,
+            2.20947265625,
+            1.62744140625
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-23T12:31:00Z",
+          "load_average": [
+            7.0478515625,
+            2.7080078125,
+            1.79736328125
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-23T12:31:11Z",
+          "load_average": [
+            6.19775390625,
+            2.66748046875,
+            1.79443359375
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-23T12:31:22Z",
+          "load_average": [
+            6.2666015625,
+            2.79541015625,
+            1.845703125
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-23T12:31:33Z",
+          "load_average": [
+            5.53662109375,
+            2.751953125,
+            1.841796875
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-23T12:31:44Z",
+          "load_average": [
+            4.9931640625,
+            2.7646484375,
+            1.86083984375
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-23T12:31:55Z",
+          "load_average": [
+            4.69970703125,
+            2.77294921875,
+            1.873046875
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-23T12:32:06Z",
+          "load_average": [
+            4.2841796875,
+            2.7470703125,
+            1.875
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-23T12:32:17Z",
+          "load_average": [
+            3.9326171875,
+            2.72216796875,
+            1.876953125
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-23T12:32:28Z",
+          "load_average": [
+            3.35595703125,
+            2.6533203125,
+            1.8681640625
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-23T12:32:39Z",
+          "load_average": [
+            2.9931640625,
+            2.59814453125,
+            1.8583984375
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-23T12:32:50Z",
+          "load_average": [
+            2.7666015625,
+            2.5615234375,
+            1.8544921875
+          ],
+          "busy_processes": []
+        }
+      ],
+      "foreign_activity_during": 0,
+      "window_after": {
+        "time": "2026-11-23T12:32:52Z",
+        "load_average": [
+          2.7666015625,
+          2.5615234375,
+          1.8544921875
+        ],
+        "busy_processes": [],
+        "idle_build_processes": 910,
+        "quiet": true,
+        "problems": []
+      },
+      "results_directory": ".flint/measure/results/gs-builds/20261123T123014Z",
+      "summary": {
+        "steps": [
+          {
+            "command": [
+              "/usr/bin/python3",
+              "tools/measure_builds.py",
+              "--spring",
+              "--spring-app",
+              "gs-rest-service",
+              "--no-context",
+              "--output",
+              "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/gs-builds/20261123T123014Z/builds.json"
+            ],
+            "cwd": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/7ddf0354a057",
+            "exit_code": 1,
+            "log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/gs-builds/20261123T123014Z/step-0.log"
+          }
+        ],
+        "outputs": {
+          "builds.json": "69b638f512f3051aa636727c7765115693b74fb0dafe76ad176bbec7ad416207"
+        }
+      }
+    }
+  ]
 }

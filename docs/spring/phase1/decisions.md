@@ -67,6 +67,17 @@
 
 ## Open for the owner
 
+- 2026-11-23, proof-harness: **ADR-030's Phase 1 stop rule is met on builds.** These are the first certified Flint-versus-Go numbers: gs-rest-service builds, queue entry `gs-builds` at 7ddf0354, 12:30–12:33Z. The window was quiet: load 0.32, and no foreign build process in any of 14 samples. Nine trials each, with the release-built flint, DMD linking with the pinned mold, the platform cache primed and the digest log cleared before every cold trial. Flint misses every gated build metric (Flint/Go median ratio, 99% interval; the target is at most 0.99):
+  - primary, the platform cache against a std-primed `GOCACHE`: 6.72 (6.34–6.87), 1.066 s against 0.159 s;
+  - secondary, `--no-platform-cache` against `go build -a`: 1.30 (1.29–1.32), 4.192 s against 3.232 s;
+  - incremental: 3.99 (3.84–4.17), 0.632 s against 0.158 s;
+  - Oz binary size: 1.775, 11,778,984 bytes against 6,635,680.
+
+  ADR-030 says to take the fallback or redesign before Phase 2. The agreed fallback (a D collector) addresses p99 and RSS, not builds or size, so for these metrics only a redesign or an amended target remains, and that decision is the owner's.
+  - **Work already in progress:** the compile server holding the platform modules (unassigned, with the fork owner); faster Flint AOT extraction, 0.58 s of the cold build (flint-aot); the binary size (size-levers).
+  - **Evidence:** `benchmarks/spring/evidence/gs-builds/20261123T123014Z/`.
+  - **Not yet certified:** the runtime metrics. A smoke run gave Flint about 0.26–0.4x Go's throughput. `phase1-guides` measures them in the next window.
+
 - 2026-11-23, coordinator: the edit-build floor. After m7-flint-cli's cut (`19390bd1`: 0.98 s → 0.69 s), gs-rest-service's edit build is link 0.2 s, compile 0.13 s and flint's own overhead about 0.3 s. Even with every planned lever (the compile-server prelude, flint overhead cuts), m7 estimates a floor near 0.35 s against Go's 0.154 s. Closing it likely needs dev builds that link the platform cache as shared objects, so an edit relinks only the app; release and size builds stay static. That changes what the edit-build gate compares (a dynamically linked dev binary against Go's static one), so it's the owner's call. m7 is prototyping and measuring it, plus split debug info (which needs no decision), and won't make shared-object dev builds the default without a yes.
 
 - 2026-11-23, proof-harness: with the corrected template count (own library plus probe, `d153fd1`), some of the 37 packages' `template_instances` budgets in `policy/packages.json` may now be exceeded. The old count left out each package's own library compile. Raising a budget is the owner's decision. Until then, any package over its budget fails the measured gate, and no cap has been changed.
