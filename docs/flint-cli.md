@@ -59,6 +59,7 @@ flint check
 | `flint api extract --source DIR --project P --version TAG [-o FILE] [--exclude PREFIX]...` | Write the API manifest of an upstream Java source tree: every public and protected type and member ([API manifests](#api-manifests)). |
 | `flint api coverage [--repo R] [--manifest FILE...] [--mapping FILE] [--show N]` | Classify every manifest element against the repo's mapping, print per-module percentages, and fail on unclassified elements. `--repo` takes every manifest `api/upstreams.json` assigns to the repo. |
 | `flint api diff <old> <new>` | List the API elements added, removed or changed between two manifests. |
+| `flint api checklist --slice FILE --output DIR` | Write one Markdown checklist per module of a porting slice, each element with the status the repo's mapping gives it, and an index `README.md`. |
 
 Every command accepts `--json` and `--help`. Commands acting on a project take `--project DIR` (or `-C DIR`). `flint` never prompts.
 
@@ -170,6 +171,7 @@ Command fields:
 | `flint.api-fetch/1` | `cache`, `fetched` (`project`, `version`, `directory`, `cached`, `licence`) |
 | `flint.api-extract/1` | `project`, `version`, `output`, `files`, `types`, `methods`, `excludes`, `modules` (`name`, `types`, `methods`, `constructors`, `fields`, `constants`, `attributes`, `components`) |
 | `flint.api-coverage/1` | `mapping`, `repo`, `rulebook`, `unclassified`, `manifests` (`manifest`, `project`, `version`, `summary`, `modules`; each tally has `name`, `total`, `ported`, `adapted`, `excluded`, `unclassified`, `classified_percent`), `unclassified_ids` (`project@version` → element ids) |
+| `flint.api-checklist/1` | `checklists` (`name`, `file`, `types`, `elements`, `open`) |
 | `flint.api-diff/1` | `older`, `newer`, `added`, `removed`, `changed`, `differences` (`change`, `kind`, `id`, `details`) |
 
 Usage errors that occur before a command runs use `flint.usage/1`. A field is added only with a new schema version.
@@ -229,6 +231,18 @@ The entries follow these rules:
 - **Upstreams.** Each manifest classified must be listed under `upstream`.
 
 `flint api coverage` prints, per module, the element count and how many are ported, adapted, excluded and unclassified, then the first `--show` unclassified ids (default 20). It exits non-zero (FLINT-E1002) while anything is unclassified. `--json` lists every unclassified id.
+
+**Checklists.** A slice file (`flint.api-slice/1`) names a porting slice's checklists. Each entry gives an upstream (`project@version`), a module, and optionally package patterns (the mapping's `*` and `**`):
+
+```json
+{"schema": "flint.api-slice/1", "title": "Phase 1",
+ "checklists": [
+   {"name": "spring-core", "upstream": "spring-framework@v7.1.0", "module": "spring-core",
+    "packages": ["org.springframework.core", "org.springframework.core.convert.**"]},
+   {"name": "spring-jdbc", "upstream": "spring-framework@v7.1.0", "module": "spring-jdbc"}]}
+```
+
+`flint api checklist --slice FILE --output DIR` writes `DIR/<name>.md` for each entry and an index, `DIR/README.md`, with per-checklist counts. A checklist has one table per type: the status, the element as Java declares it, and its id, which is the key a mapping entry uses. Statuses come from the upstream's repo mapping. A checklist is a view, so never edit it: classify in the mapping and regenerate. Phase 1's slice is [`docs/spring/phase1/slice.json`](spring/phase1/slice.json), and its checklists are in [`docs/spring/phase1/checklists/`](spring/phase1/checklists/README.md).
 
 **Follow upstream.** `flint api diff old.json new.json` lists added (`+`), removed (`-`) and changed (`~`) elements. For a changed element it names each property that differs, such as `type: int -> long` or `annotations: (none) -> @Deprecated(since = "7.0.5")`. Parameter names and member order are not API. From v7.0.0 to v7.1.0, Spring Framework added 687 elements, removed 151 and changed 257.
 

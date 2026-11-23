@@ -505,6 +505,18 @@ struct ApiDiffArgs
     @Option("json", 0, "Emit flint.api-diff/1 JSON on stdout") bool json;
 }
 
+/// `flint api checklist`.
+@Command("flint api checklist", "Write per-module checklists of a porting slice, with statuses from the mapping")
+struct ApiChecklistArgs
+{
+    /// Slice file.
+    @Option("slice", 0, "flint.api-slice/1 file naming the checklists") string slice;
+    /// Output directory.
+    @Option("output", 'o', "Directory for <name>.md and README.md") string output;
+    /// JSON output.
+    @Option("json", 0, "Emit flint.api-checklist/1 JSON on stdout") bool json;
+}
+
 /// `flint api`.
 @Command("flint api", "Extract, compare and classify the upstream Java APIs that Flint ports")
 struct ApiArgs
@@ -519,6 +531,8 @@ struct ApiArgs
     ApiCoverageArgs coverage;
     /// diff.
     @Subcommand("diff", "List API elements added, removed or changed between two manifests") ApiDiffArgs diff;
+    /// checklist.
+    @Subcommand("checklist", "Write per-module checklists of a porting slice") ApiChecklistArgs checklist;
 }
 
 /// The root command.

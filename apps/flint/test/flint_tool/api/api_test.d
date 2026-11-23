@@ -340,3 +340,71 @@ unittest
     expect(tagAlias(["build", "--version"])).toEqual(["build", "--version"]);
     expect(tagAlias(["api", "diff", "--version"])).toEqual(["api", "diff", "--version"]);
 }
+
+@("a slice selects a module's types by package pattern, and its checklist reads statuses from the mapping")
+unittest
+{
+    import std.algorithm.searching : canFind;
+    import flint_tool.api.checklist : ChecklistCounts, IndexRow, Slice, parseSlice, renderChecklist,
+        renderIndex, selected;
+
+    const root = fixtureTree("gradle");
+    scope (exit)
+        removeTree(root);
+    ExtractRequest request;
+    request.source = root;
+    request.project = "spring-x";
+    request.version_ = "v1.0.0";
+    request.excludes = ["buildSrc", "framework-docs"];
+    auto manifest = extract(request).manifest;
+    Slice slice;
+    string error;
+    expect(parseSlice(`{"schema":"flint.api-slice/1","title":"Phase 1","checklists":[
+        {"name":"spring-web","upstream":"spring-x@v1.0.0","module":"spring-web","packages":["org.x.*"]},
+        {"name":"spring-core","upstream":"spring-x@v1.0.0","module":"spring-core","packages":["org.y.**"]}]}`,
+            slice, error)).toEqual(true);
+    expect(error).toEqual("");
+    expect(selected(slice.checklists[0], manifest.types[1])).toEqual(true);
+    expect(selected(slice.checklists[0], manifest.types[0])).toEqual(false);
+    expect(selected(slice.checklists[1], manifest.types[0])).toEqual(false);
+
+    Mapping mapping;
+    parseMapping(`{"elements":{"org.x.web.HttpStatus":{"status":"ported","d":"flint.web.HttpStatus"},
+        "org.x.web.HttpStatus#value()":{"status":"adapted","rules":["R6"]},
+        "org.x.web.GetMapping#*":{"status":"excluded","category":"deferred","phase":"2"}}}`, mapping, error);
+    const classifier = Classifier(mapping);
+    ChecklistCounts counts;
+    const text = renderChecklist(slice.checklists[0], slice.title, manifest,
+            "api/upstream/spring-x-v1.0.0.json", classifier, "api/framework/mapping.json", counts);
+    expect(counts.types).toEqual(2);
+    expect(counts.elements).toEqual(6);
+    expect(counts.open).toEqual(3);
+    expect(text.canFind("# spring-web: Phase 1 checklist\n")).toEqual(true);
+    expect(text.canFind("2 types, 6 elements: 1 ported, 1 adapted, 1 excluded, 3 open.")).toEqual(true);
+    expect(text.canFind("| ported `flint.web.HttpStatus` | `public enum HttpStatus` | `org.x.web.HttpStatus` |"))
+        .toEqual(true);
+    expect(text.canFind("| adapted R6 | `public int value()` | `#value()` |")).toEqual(true);
+    expect(text.canFind("| excluded: deferred (phase 2) | `public String[] value() default {}` | `#value` |")).toEqual(
+            true);
+    expect(text.canFind("|  | `public OK` | `#OK` |")).toEqual(true);
+    const index = renderIndex("Phase 1", "slice.json", [
+        IndexRow("spring-web", "spring-x@v1.0.0", "spring-web", counts)
+    ]);
+    expect(index.canFind("| [spring-web](spring-web.md) | spring-x@v1.0.0 | `spring-web` | 2 | 6 | 1 | 1 | 1 | 3 |"))
+        .toEqual(true);
+    expect(parseSlice(
+            `{"schema":"flint.api-slice/1","checklists":[{"name":"Bad Name","upstream":"a@1","module":"m"}]}`,
+            slice, error)).toEqual(false);
+}
+
+@("checklist cells escape table pipes and backticks; constructors render with their type's name")
+unittest
+{
+    import flint_tool.api.checklist : cell, declaration;
+    import flint_tool.api.java : parseJava;
+
+    expect(cell("a | b `c`")).toEqual("a \\| b 'c'");
+    const unit = parseJava("package p;\npublic class Pool { protected Pool(int size) throws Exception { } }\n");
+    expect(declaration(unit.types[0].members[0], "Pool")).toEqual("protected Pool(int size) throws Exception");
+    expect(declaration(unit.types[0])).toEqual("public class Pool");
+}

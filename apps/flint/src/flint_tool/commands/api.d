@@ -4,6 +4,7 @@
 /// - `flint api extract` writes the manifest of an upstream Java source tree.
 /// - `flint api coverage` classifies manifest elements against `api/mapping.json` and fails on unclassified ones.
 /// - `flint api diff` lists the elements added, removed or changed between two manifests.
+/// - `flint api checklist` writes per-module checklists of a porting slice, with statuses from the mapping.
 module flint_tool.commands.api;
 
 import flint.serde : JsonIgnore, JsonName;
@@ -272,6 +273,133 @@ private void classifyManifests(ref Session session, ref Report report, ref Cover
     }
 }
 
+/// `flint api checklist --slice FILE --output DIR`.
+int commandApiChecklist(ref Session session, string slicePath, string outputDirectory)
+{
+    import std.file : exists, mkdirRecurse, readText;
+    import std.path : buildPath;
+    import flint_tool.api.checklist : IndexRow, Slice, parseSlice, renderIndex;
+    import flint_tool.commands.output : finish;
+    import flint_tool.support.files : writeIfChanged;
+
+    Report report;
+    ChecklistReport payload;
+    Slice slice;
+    string error;
+    if (slicePath.length == 0 || outputDirectory.length == 0)
+    {
+        report.error("FLINT-E0002", "flint api checklist needs --slice and --output",
+                "flint api checklist --slice docs/spring/phase1/slice.json --output docs/spring/phase1/checklists");
+        return finish(session, report, payload);
+    }
+    if (!exists(slicePath) || !parseSlice(readText(slicePath), slice, error))
+    {
+        report.error("FLINT-E1004", slicePath ~ ": " ~ (error.length ? error : "missing"),
+                "write a flint.api-slice/1 file; see docs/flint-cli.md");
+        return finish(session, report, payload);
+    }
+    ChecklistSources sources;
+    IndexRow[] rows;
+    foreach (ref entry; slice.checklists)
+    {
+        IndexRow row;
+        if (!renderOne(session, sources, slice, entry, outputDirectory, row, report))
+            continue;
+        rows ~= row;
+        payload.checklists ~= ChecklistRow(entry.name, buildPath(outputDirectory,
+                entry.name ~ ".md"), row.counts.types, row.counts.elements, row.counts.open);
+    }
+    if (report.ok)
+    {
+        mkdirRecurse(outputDirectory);
+        writeIfChanged(buildPath(outputDirectory, "README.md"), renderIndex(slice.title, slicePath, rows));
+        const index = buildPath(outputDirectory, "README.md");
+        session.progress("Wrote", index ~ " and " ~ count(rows.length) ~ " checklists");
+    }
+    return finish(session, report, payload);
+}
+
+/// Manifests and mappings loaded once for all the checklists of a slice.
+private struct ChecklistSources
+{
+    imported!"flint_tool.api.manifest".Manifest[string] manifests;
+    imported!"flint_tool.api.coverage".Mapping[string] mappings;
+    imported!"flint_tool.api.upstreams".Upstream[] upstreams;
+    bool loaded;
+}
+
+private bool renderOne(ref Session session, ref ChecklistSources sources,
+        const ref imported!"flint_tool.api.checklist".Slice slice,
+        const ref imported!"flint_tool.api.checklist".SliceEntry entry, string outputDirectory,
+        out imported!"flint_tool.api.checklist".IndexRow row, ref Report report)
+{
+    import std.file : exists, mkdirRecurse, readText;
+    import std.path : buildPath;
+    import flint_tool.api.checklist : renderChecklist;
+    import flint_tool.api.coverage : Classifier, Mapping, parseMapping;
+    import flint_tool.api.manifest : Manifest, loadManifest;
+    import flint_tool.api.upstreams : loadUpstreams;
+    import flint_tool.support.files : writeIfChanged;
+
+    string error;
+    if (!sources.loaded)
+    {
+        sources.upstreams = loadUpstreams(session.home.root, error);
+        sources.loaded = true;
+    }
+    const(imported!"flint_tool.api.upstreams".Upstream)* pin;
+    foreach (ref upstream; sources.upstreams)
+    {
+        if (upstream.project ~ "@" ~ upstream.version_ == entry.upstream)
+            pin = &upstream;
+    }
+    if (pin is null)
+    {
+        report.error("FLINT-E1004", entry.name ~ ": `" ~ entry.upstream ~ "` is not pinned in api/upstreams.json",
+                "name an upstream as project@version");
+        return false;
+    }
+    const manifestPath = buildPath("api", "upstream", pin.key ~ ".json");
+    if (entry.upstream !in sources.manifests)
+    {
+        Manifest manifest;
+        if (!loadManifest(buildPath(session.home.root, manifestPath), manifest, error))
+        {
+            report.error("FLINT-E1004", error, "flint api extract the upstream first");
+            return false;
+        }
+        sources.manifests[entry.upstream] = manifest;
+    }
+    const repoMapping = buildPath("api", pin.repo, "mapping.json");
+    const mappingPath = exists(repoMapping) ? repoMapping : buildPath("api", "mapping.json");
+    if (mappingPath !in sources.mappings)
+    {
+        Mapping mapping;
+        if (exists(mappingPath) && !parseMapping(readText(mappingPath), mapping, error))
+        {
+            report.error("FLINT-E1003", mappingPath ~ ": " ~ error, "fix the entry; see docs/spring/api-mapping.md");
+            return false;
+        }
+        sources.mappings[mappingPath] = mapping;
+    }
+    const classifier = Classifier(sources.mappings[mappingPath]);
+    row.name = entry.name;
+    row.upstream = entry.upstream;
+    row.module_ = entry.module_;
+    const text = renderChecklist(entry, slice.title, sources.manifests[entry.upstream],
+            manifestPath, classifier, mappingPath, row.counts);
+    if (row.counts.types == 0)
+    {
+        report.error("FLINT-E1004",
+                entry.name ~ ": no type of " ~ entry.upstream ~ " module `" ~ entry.module_ ~ "` matches the slice",
+                "check the module and package patterns");
+        return false;
+    }
+    mkdirRecurse(outputDirectory);
+    writeIfChanged(buildPath(outputDirectory, entry.name ~ ".md"), text);
+    return true;
+}
+
 /// `flint api diff OLD NEW`.
 int commandApiDiff(ref Session session, string older, string newer)
 {
@@ -423,6 +551,24 @@ private struct CoverageReport
     uint rulebook;
     size_t unclassified;
     CoverageManifest[] manifests;
+}
+
+private struct ChecklistRow
+{
+    string name;
+    string file;
+    size_t types;
+    size_t elements;
+    size_t open;
+}
+
+private struct ChecklistReport
+{
+    string schema = "flint.api-checklist/1";
+    bool ok;
+    int exit_code;
+    Diagnostic[] diagnostics;
+    ChecklistRow[] checklists;
 }
 
 private struct DiffRow
