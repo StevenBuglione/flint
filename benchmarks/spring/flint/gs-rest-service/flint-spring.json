@@ -1,12 +1,41 @@
 {
   "schema": "flint.spring-port/1",
-  "build": ["flint", "build", "--profile", "release"],
+  "build": [
+    "flint",
+    "build",
+    "--profile",
+    "release"
+  ],
   "binary": ".flint/build/release/gs-rest-service",
   "measure": {
-    "cached": ["flint", "build"],
-    "scratch": ["flint", "build", "--force"],
+    "cached": [
+      "flint",
+      "build"
+    ],
+    "scratch": [
+      "flint",
+      "build",
+      "--force",
+      "--no-platform-cache"
+    ],
     "edit_source": "src/com/example/restservice/package.d",
-    "O3": {"command": ["flint", "build", "--profile", "release"], "binary": ".flint/build/release/gs-rest-service"},
-    "Oz": {"command": ["flint", "build", "--profile", "size"], "binary": ".flint/build/size/gs-rest-service"}
+    "O3": {
+      "command": [
+        "flint",
+        "build",
+        "--profile",
+        "release"
+      ],
+      "binary": ".flint/build/release/gs-rest-service"
+    },
+    "Oz": {
+      "command": [
+        "flint",
+        "build",
+        "--profile",
+        "size"
+      ],
+      "binary": ".flint/build/size/gs-rest-service"
+    }
   }
 }
