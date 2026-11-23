@@ -94,6 +94,11 @@ immutable CodeInfo[] catalog = [
     CodeInfo("FLINT-E0008", ExitCode.usage, "the file to generate already exists",
             "`flint generate` never overwrites a file (except AGENTS.md, which it owns). The component already "
             ~ "exists, or another file has its path.", "flint generate entity OrderLine"),
+    CodeInfo("FLINT-E0009", ExitCode.usage, "not a starter",
+            "`flint add` wires starters: packages of auto-configuration over the core packages, listed in "
+            ~ "policy/starters.json. A starter is named by its domain, such as `web` or `data`, or in full, such as "
+            ~ "`starter-web`.",
+            "flint add web\nflint add data security"),
 
     // 01xx: the manifest.
     CodeInfo("FLINT-E0101", ExitCode.usage, "not inside a Flint project",

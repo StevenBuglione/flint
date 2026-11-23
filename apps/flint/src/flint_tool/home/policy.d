@@ -23,6 +23,14 @@ struct CorePackage
     string[] dependencies;
     /// Usable from BetterC.
     bool betterC;
+    /// Home-relative directory: `packages/<name>`, or `starters/<domain>` for a starter.
+    string directory;
+    /// A starter (policy/starters.json): a package of auto-configuration over the core packages (ADR-028).
+    bool starter;
+    /// For a starter: the configuration section it reads, and the one-line summary `flint add` shows.
+    string section;
+    /// For a starter: what it wires.
+    string summary;
 }
 
 /// The safety rules from policy/safety-policy.json.
@@ -105,6 +113,8 @@ struct Home
     string root;
     /// Core packages in policy order.
     CorePackage[] packages;
+    /// Starters from policy/starters.json, in policy order (ADR-028).
+    CorePackage[] starters;
     /// Safety rules.
     SafetyPolicy safety;
     /// Pinned tool versions by name.
@@ -127,12 +137,28 @@ struct Home
         return null;
     }
 
-    /// The package owning module `name`, or null.
+    /// The package or starter owning module `name`, or null.
     const(CorePackage)* owner(string moduleName) const
     {
         foreach (ref item; packages)
         {
             if (moduleName == item.module_ || startsWithModule(moduleName, item.module_))
+                return &item;
+        }
+        foreach (ref item; starters)
+        {
+            if (moduleName == item.module_ || startsWithModule(moduleName, item.module_))
+                return &item;
+        }
+        return null;
+    }
+
+    /// The starter named `name` (`starter-web`), or null.
+    const(CorePackage)* findStarter(string name) const
+    {
+        foreach (ref item; starters)
+        {
+            if (item.name == name)
                 return &item;
         }
         return null;
@@ -242,6 +268,7 @@ bool loadHome(string root, out Home home, ref Report report)
 {
     home.root = root;
     bool ok = loadPackages(home, report);
+    ok = loadStarters(home, report) && ok;
     ok = loadSafety(home, report) && ok;
     ok = loadVersions(home, report) && ok;
     ok = loadProfiles(home, report) && ok;
@@ -287,11 +314,54 @@ private bool loadPackages(ref Home home, ref Report report)
         if (!decoded.ok)
             return invalid(report, "policy/packages.json", entry.name ~ ": " ~ decoded.error.message);
         home.packages ~= CorePackage(entry.name, decoded.value.tier, decoded.value.module_,
-                decoded.value.dependencies, decoded.value.better_c);
+                decoded.value.dependencies, decoded.value.better_c, "packages/" ~ entry.name);
     }
     if (failure.length || home.packages.length == 0)
         return invalid(report, "policy/packages.json", failure.length ? failure : "lists no packages");
     return true;
+}
+
+// policy/starters.json: the starters, each a DUB subpackage under starters/ (ADR-028 section 2).
+private bool loadStarters(ref Home home, ref Report report)
+{
+    import std.file : exists;
+    import std.path : buildPath;
+
+    if (!exists(buildPath(home.root, "policy", "starters.json")))
+        return true;
+    const text = policyText(home, "policy/starters.json", report);
+    string failure;
+    const starters = member(objectMembers(text, failure), "starters");
+    if (failure.length || starters is null)
+        return invalid(report, "policy/starters.json", failure.length ? failure : "has no starters object");
+    foreach (entry; objectMembers(starters, failure))
+    {
+        auto decoded = deserialize!StarterRecordJson(entry.value, lenient());
+        if (!decoded.ok)
+            return invalid(report, "policy/starters.json", entry.name ~ ": " ~ decoded.error.message);
+        CorePackage starter;
+        starter.name = entry.name;
+        starter.module_ = decoded.value.module_;
+        starter.dependencies = decoded.value.dependencies;
+        starter.directory = decoded.value.directory;
+        starter.starter = true;
+        starter.section = decoded.value.section;
+        starter.summary = decoded.value.summary;
+        starter.tier = 5;
+        home.starters ~= starter;
+    }
+    return failure.length == 0 || invalid(report, "policy/starters.json", failure);
+}
+
+private struct StarterRecordJson
+{
+    import flint.serde : JsonName;
+
+    @JsonName("module") string module_;
+    string directory;
+    string[] dependencies;
+    string section;
+    string summary;
 }
 
 private struct PackageRecordJson

@@ -1,0 +1,4 @@
+# flint:starter-web (ADR-028). Every key is optional.
+[server]
+address = "127.0.0.1"
+port = 8080

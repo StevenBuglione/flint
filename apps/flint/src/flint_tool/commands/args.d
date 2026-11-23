@@ -339,6 +339,20 @@ struct GenerateArgs
     @Option("json", 0, "Emit flint.generate/1 JSON on stdout") bool json;
 }
 
+/// `flint add`.
+@Command("flint add", "Wire starters into the project: dependency, configuration section and lock")
+struct AddArgs
+{
+    /// Starters.
+    @Arg(0, "Starters, such as web or data") string[] starters;
+    /// Plan.
+    @Option("plan", 0, "Print the flint.toml and configuration changes without writing") bool plan;
+    /// Project directory.
+    @Option("project", 'C', "Add to this project directory") string project;
+    /// JSON output.
+    @Option("json", 0, "Emit flint.add/1 JSON on stdout") bool json;
+}
+
 /// `flint config`.
 @Command("flint config", "Print every resolved configuration key with its value and source")
 struct ConfigArgs
@@ -451,6 +465,8 @@ struct FlintArgs
     @Subcommand("docs", "Search the pinned Flint API") DocsArgs docs;
     /// generate.
     @Subcommand("generate", "Write the canonical shape of a component") GenerateArgs generate;
+    /// add.
+    @Subcommand("add", "Wire starters into the project") AddArgs add;
     /// config.
     @Subcommand("config", "Print the resolved configuration") ConfigArgs config;
     /// watch.

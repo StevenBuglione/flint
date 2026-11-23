@@ -276,6 +276,25 @@ private ResolvedPackage corePackage(const ref Home home, string name, bool works
     return item;
 }
 
+// A starter resolves like a core package: a DUB subpackage of the Flint home, under starters/.
+private ResolvedPackage starterPackage(const ref Home home,
+        const ref imported!"flint_tool.home.policy".CorePackage meta, bool workspace)
+{
+    import std.path : buildPath;
+
+    ResolvedPackage item;
+    item.name = "flint:" ~ meta.name;
+    item.kind = "core";
+    item.source = workspace ? "workspace" : "flint-home";
+    item.directory = buildPath(home.root, meta.directory);
+    item.moduleRoot = meta.module_;
+    foreach (dependency; meta.dependencies)
+        item.dependencies ~= "flint:" ~ dependency;
+    if (!workspace)
+        item.contentSha256 = contentHash(item.directory, ["dub.sdl", "source/**", "config.toml"]);
+    return item;
+}
+
 private string resolveOne(const ref Home home, const ref Manifest owner, const ref DependencySpec spec,
         ref ResolvedPackage[string] found, ref string[] active, ref Requirement[] remotes, ref Report report)
 {
@@ -393,6 +412,12 @@ private string resolveCore(const ref Home home, const ref Manifest owner, const 
     import flint_tool.project.manifest : closest;
 
     const coreName = spec.name[6 .. $];
+    if (const starter = home.findStarter(coreName))
+    {
+        if (spec.name !in found)
+            found[spec.name] = starterPackage(home, *starter, inside(owner.root, home.root));
+        return spec.name;
+    }
     if (home.find(coreName) is null)
     {
         string[] names;

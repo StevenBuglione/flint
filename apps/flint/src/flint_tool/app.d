@@ -194,6 +194,12 @@ private int knowledgeCommand(ref Session session, string name, ref FlintArgs opt
                 options.generate.project, options.generate.plan);
     case "flint config":
         return commandConfig(session, options.config.project, options.config.profile);
+    case "flint add":
+        {
+            import flint_tool.commands.add : commandAdd;
+
+            return commandAdd(session, options.add.starters, options.add.project, options.add.plan);
+        }
     case "flint mcp":
         return commandMcp(session, options.mcp.log);
     case "flint lsp":

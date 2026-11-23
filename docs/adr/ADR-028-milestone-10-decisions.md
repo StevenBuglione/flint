@@ -27,6 +27,51 @@ Status: proposed by the Milestone 10 implementation, for the project owner's rev
    - **A context without conditions:** it is flattened exactly as before, behind a single CTFE check that instantiates nothing per bean. The DI bench grows from 1,515 to 1,525 template instances, within its 2,000 budget.
    - **A conditional context:** it costs a few instances per entry.
 
+### 2. Starters: packages under `starters/`, and `flint add`
+
+1. **A separate tier.** Starters live in `starters/<domain>/` and are DUB subpackages of the Flint home, named `flint:starter-<domain>`. Their modules are `flint.starter_<domain>`, following the rule for hyphenated names. They are listed in `policy/starters.json`.
+   - **Why not in `policy/packages.json`:** the release gate and the build measurements are defined over exactly the 37 library packages. A starter adds no library surface, only wiring over that surface, so starters stay outside the 37.
+   - **Resolution:** a starter resolves like a core package, with its own content hash outside the workspace. Its dependencies are core packages, and its modules count for the import rules, so a direct import still needs a direct dependency.
+   - **Reflection:** a starter's own reflection, which selects configuration types and controllers from a resolved bean list, counts as framework internals, like the DI and web packages it composes.
+
+2. **What a starter ships.** Each starter provides:
+   - an `AutoConfiguration` list;
+   - its `@ConfigurationProperties` schema;
+   - `config.toml` (its documented section);
+   - `README.md` (its documentation);
+   - `example/`, a complete Flint project built in place, so its lock stays a workspace lock.
+
+   A starter re-exports what an application writes, so an application imports the starter alone.
+
+3. **`flint add <starter>...`.** Each name is a domain (`web`) or a full name (`starter-web`). For each starter, `flint add`:
+   - declares `"flint:starter-<domain>" = {}`;
+   - appends the starter's section from its `config.toml` to `config/application.toml` when the section is missing;
+   - relocks.
+
+   `--plan` prints the changes without writing them. An unknown name is FLINT-E0009, which lists the starters.
+
+4. **`flint:starter-web`.** `runApplication!(Beans...)(args)` does the whole start-up of a web application:
+   - it binds every `Provided!T` whose `T` is a `@ConfigurationProperties` struct, from one configuration snapshot with `--set` and `--profile`, so a key that no type claims is an error naming it;
+   - it starts the context of `WebAutoConfiguration` and the beans;
+   - it serves every `@RestController` bean on `[server]`;
+   - it shuts the context down when the server stops.
+
+   Exit codes: 3 when configuration does not bind, and 4 when start-up fails.
+
+### 3. Attribute inference: the framework chooses where a handler runs
+
+1. **Ordinary handlers need no `nothrow`, `@nogc` or `scope`.** A route handler is a plain method. flint:web reads its attributes at compile time, whether declared or inferred:
+   - **On the reactor:** a controller whose handlers are all `nothrow @nogc` runs there, as before.
+   - **On a worker thread:** any other controller is served through flint:web's existing worker (`@WorkerController`, which stays available for forcing it). It may allocate, throw (a 500) and call ordinary services.
+   - **The `scope` parameter:** a handler needs a `ref scope RequestContext` parameter only when it uses the request arena.
+   - **Why:** this follows ADR-021's goal that annotations are for performance work, not a price of entry.
+
+2. **`string` path and query arguments.** flint:web accepts `string` path and query arguments as well as `Text`. They are decoded like `Text` and copied to the GC heap, so only worker-thread handlers take them.
+
+3. **Cost.** The selection is one compile-time scan of each controller's routes. The web bench's template instances are unchanged at 261.
+
 ## Consequences
 
+- `flint add web` and twenty lines of application code give a configured REST service with DI, ordinary handlers and string path variables. `tests/test_flint_starters.py` covers `flint add` (dependency, section, lock, a repeated add and an unknown starter), and the example serving a request and refusing a misspelt key with exit code 3.
+- **Known limit:** SIGTERM stops a starter application without running `@PreDestroy` hooks, because flint:os dispatches only SIGINT. A worker-thread controller has one thread with 16 queued requests.
 - A starter can register its beans by default, an application can override any of them by registering the same key, and a starter's optional parts switch on with a configuration section. `packages/di/tests/context_behavior.d` covers auto-configured wiring, replacement by an explicit binding, `@ConditionalOnMissingBean`, the compile-time error for a disabled dependency, and the TOML section reader. The 17 negative fixtures are rejected as before.

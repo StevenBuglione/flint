@@ -16,6 +16,7 @@ __pycache__/
 .native-sanitized/
 .native-conan/
 /packages/*/flint-*-test-unittest
+/starters/*/flint-*-test-unittest
 *.pdb
 *.ilk
 *.exp

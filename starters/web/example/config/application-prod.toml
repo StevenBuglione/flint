@@ -1,0 +1,3 @@
+# Overrides for FLINT_PROFILE=prod.
+[app]
+greeting = "Good day"

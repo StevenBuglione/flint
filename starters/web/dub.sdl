@@ -1,0 +1,22 @@
+name "starter-web"
+description "Flint web starter: configuration-bound server, DI context and controllers in one call"
+license "Apache-2.0"
+targetType "library"
+sourcePaths "source"
+importPaths "source"
+dflags "-preview=dip1000"
+dependency "flint:arena" version="*"
+dependency "flint:di" version="*"
+dependency "flint:config" version="*"
+dependency "flint:web" version="*"
+dependency "flint:term" version="*"
+dependency "flint:validate" version="*"
+
+configuration "library" {
+    targetType "library"
+}
+configuration "unittest" {
+    targetType "library"
+    sourcePaths "source" "tests"
+    importPaths "source" "tests"
+}

@@ -1,0 +1,12 @@
+{
+  "schema": "flint.starters/1",
+  "starters": {
+    "starter-web": {
+      "directory": "starters/web",
+      "module": "flint.starter_web",
+      "dependencies": ["arena", "di", "config", "web", "term", "validate"],
+      "section": "server",
+      "summary": "REST controllers on a configuration-bound server, wired by runApplication"
+    }
+  }
+}

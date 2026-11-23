@@ -1,0 +1,11 @@
+[project]
+name = "shop"
+version = "0.1.0"
+flint = "1.0"
+type = "executable"
+
+[dependencies]
+"flint:starter-web" = {}
+
+[test-dependencies]
+"flint:test" = {}

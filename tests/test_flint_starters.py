@@ -1,11 +1,16 @@
 """Milestone 10 (ADR-028): compile-time conditional registration driven by config/application.toml, starters
 and `flint add`."""
+import json
+import signal
+import socket
 import subprocess
 import tempfile
+import time
 import unittest
+import urllib.request
 from pathlib import Path
 
-from test_flint_cli import FLINT, environment, flint_json, setUpModule  # noqa: F401
+from test_flint_cli import FLINT, ROOT, codes, environment, flint_json, setUpModule  # noqa: F401
 
 CONDITIONAL_APP = '''module shop.app;
 
@@ -60,6 +65,62 @@ class ConditionalConfigTests(unittest.TestCase):
             result = subprocess.run([str(FLINT), 'run'], cwd=project, capture_output=True, text=True,
                                     env=environment())
             self.assertIn('database false cache true', result.stdout, result.stderr)
+
+
+
+def free_port():
+    with socket.socket() as probe:
+        probe.bind(('127.0.0.1', 0))
+        return probe.getsockname()[1]
+
+
+class StarterWebTests(unittest.TestCase):
+    def test_flint_add_wires_the_dependency_the_configuration_and_the_lock(self):
+        with tempfile.TemporaryDirectory(prefix='flint-add-') as temporary:
+            self.assertEqual(flint_json('new', 'shop', cwd=temporary)[0], 0)
+            project = Path(temporary) / 'shop'
+            status, document = flint_json('add', 'web', cwd=project)
+            self.assertEqual(status, 0, document)
+            self.assertEqual(document['added'], ['flint:starter-web'])
+            self.assertEqual(document['sections'], ['server'])
+            self.assertIn('"flint:starter-web" = {}', (project / 'flint.toml').read_text())
+            self.assertIn('[server]\naddress = "127.0.0.1"', (project / 'config/application.toml').read_text())
+            self.assertIn('name = "flint:starter-web"', (project / 'flint.lock').read_text())
+            status, document = flint_json('add', 'starter-web', cwd=project)
+            self.assertEqual((status, document['added'], document['present']), (0, [], ['flint:starter-web']))
+            status, document = flint_json('add', 'webb', cwd=project)
+            self.assertEqual((status, codes(document)), (4, ['FLINT-E0009']))
+
+    def test_the_example_serves_an_ordinary_handler_with_configuration(self):
+        # Built in place: the example's lock is a workspace lock.
+        project = ROOT / 'starters/web/example'
+        built = subprocess.run([str(FLINT), 'build', '--json'], cwd=project, capture_output=True, text=True,
+                               env=environment())
+        self.assertEqual(built.returncode, 0, built.stdout[-3000:])
+        port = free_port()
+        process = subprocess.Popen([str(project / '.flint/build/dev/shop'), f'--set=server.port={port}'],
+                                   cwd=project, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        try:
+            body = None
+            for _ in range(100):
+                try:
+                    with urllib.request.urlopen(f'http://127.0.0.1:{port}/api/greetings/Ada', timeout=2) as r:
+                        body = json.loads(r.read())
+                        break
+                except OSError:
+                    time.sleep(0.05)
+            self.assertEqual(body, {'text': 'Hello, Ada!'})
+        finally:
+            process.send_signal(signal.SIGINT)
+            try:
+                process.wait(10)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait()
+        misspelt = subprocess.run([str(project / '.flint/build/dev/shop'), '--set=server.prot=1'], cwd=project,
+                                  capture_output=True, text=True, timeout=10)
+        self.assertEqual(misspelt.returncode, 3, misspelt.stderr)
+        self.assertIn('server.prot', misspelt.stderr)
 
 
 if __name__ == '__main__':
