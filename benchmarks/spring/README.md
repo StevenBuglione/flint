@@ -322,7 +322,7 @@ The window is sampled before the measurement, every 10 s during it, and after it
 - `adr031-startup` and `adr031-rest`: bench-rest before (`440d72d^`, which is `48b8f52`) and after ADR-031's TLS-only OpenSSL (`440d72d`). The first measures start-up, the second is a REST regression check.
   - Each side rebuilds its own native prefix. The build checks OpenSSL Configure's `%disabled` record in `configdata.pm`: after disables `legacy`, `des`, `rc4` and `tls1`, and before disables none of them. `no-legacy` emits no `OPENSSL_NO_LEGACY` macro, so `configuration.h` cannot show it.
   - Sizes: O3 5,904,384 to 5,005,088, and Oz 5,855,232 to 4,955,936. That is 899,296 bytes saved; the base on `main` is 80 bytes larger than the requester's.
-- `phase1-spring-apps`: the whole Phase 1 evidence run of the section above. It is blocked on the Flint ports.
+- `phase1-builds-<app>` and `phase1-http-<app>`: the Phase 1 evidence run of the section above, split per application into one window each. `spring_bench.py assemble` merges the parts. They are blocked on petclinic-rest's port and on a pin to one commit, and they claim windows only under the conditions in docs/spring/phase1/coordination.md, "Measurement".
 
 Every pending entry is built, and its smoke run passes. They wait for a quiet window.
 

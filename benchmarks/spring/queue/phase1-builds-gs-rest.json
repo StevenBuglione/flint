@@ -1,9 +1,17 @@
 {
   "schema": "flint.measure-queue/1",
+  "id": "phase1-builds-gs-rest",
   "created": "2026-11-23",
   "status": "blocked",
+  "window": "natural",
+  "priority": 4,
   "blocked_on": "petclinic-rest scoring 109/109 in proof-harness's independent run, then a pin to one commit where all three ports pass exactly",
-  "requested_by": "ADR-030 section 8, Phase 1 exit (coordinator's plan, 2026-11-23 15:20Z)",
+  "claim_when": "Claims a window only once the gs-builds certification (per-phase timings and the prelude) shows a primary build ratio under about 1.5; until then gs-builds is the signal, and this runs only on natural quiet (coordinator, 2026-11-23 16:45Z)",
+  "requested_by": "ADR-030 section 8, Phase 1 exit (coordinator's plan, 2026-11-23 15:20Z); split per application by the coordinator, 2026-11-23 16:45Z",
+  "report_to": "the coordinator; docs/milestones/13.md",
+  "estimate_minutes": 17,
+  "summary": "Phase 1: gs-rest-service's suites (Java, Go, Flint) and builds against Go (both headlines, edit builds, Oz stripped)",
+  "why": "One part of the Phase 1 builds evidence, split per application: the same trials and comparators as the whole run, scheduled separately. spring_bench.py assemble merges the parts, which must share one commit.",
   "builds": {
     "tree": {
       "app": "checkout",
@@ -12,11 +20,6 @@
       "linker": "mold"
     }
   },
-  "report_to": "the coordinator; docs/milestones/13.md",
-  "id": "phase1-builds",
-  "estimate_minutes": 50,
-  "summary": "Phase 1: the three apps' suites (Java, Go, Flint) and builds against Go (both headlines, edit builds, Oz stripped)",
-  "why": "One claimed window (~50 min) of the split Phase 1 run; spring_bench.py assemble gathers its outputs for the gate.",
   "measure": {
     "kind": "command",
     "ports": [],
@@ -26,6 +29,7 @@
           "{python}",
           "tools/spring_bench.py",
           "accept",
+          "gs-rest-service",
           "--impl",
           "java",
           "--json",
@@ -38,6 +42,7 @@
           "{python}",
           "tools/spring_bench.py",
           "accept",
+          "gs-rest-service",
           "--impl",
           "go",
           "--json",
@@ -50,6 +55,7 @@
           "{python}",
           "tools/spring_bench.py",
           "accept",
+          "gs-rest-service",
           "--impl",
           "flint",
           "--json",
@@ -62,6 +68,8 @@
           "{python}",
           "tools/measure_builds.py",
           "--spring",
+          "--spring-app",
+          "gs-rest-service",
           "--no-context",
           "--output",
           "{out}/builds.json"

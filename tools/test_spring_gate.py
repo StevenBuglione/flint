@@ -90,5 +90,26 @@ class SpringGate(unittest.TestCase):
         self.assertTrue(any('acceptance-flint.json: missing' in f for f in failures))
 
 
+class AssembleParts(unittest.TestCase):
+    def test_per_application_parts_merge_into_one_record(self):
+        def part(app, status='passed'):
+            return {'schema': 'flint.spring-builds/1', 'mode': 'production', 'status': status, 'commit': 'abc',
+                    'host': {}, 'trials_per_series': 9, 'comparators': {app: {}}, 'missing_flint': [],
+                    'apps': {app: {'go': {}, 'flint': {}}}, 'trials': [{'app': app}]}
+        with tempfile.TemporaryDirectory() as temporary:
+            paths = []
+            for app in ('gs-rest-service', 'petclinic-rest'):
+                path = Path(temporary) / f'{app}.json'
+                path.write_text(json.dumps(part(app)))
+                paths.append((path, part(app)))
+            merged = spring_bench.merge_builds(paths)
+            self.assertEqual(sorted(merged['apps']), ['gs-rest-service', 'petclinic-rest'])
+            self.assertEqual((merged['mode'], merged['status'], len(merged['trials'])), ('production', 'passed', 2))
+            paths[1] = (paths[1][0], dict(part('petclinic-rest', 'failed'), trials_per_series=1))
+            merged = spring_bench.merge_builds(paths)
+            self.assertEqual((merged['mode'], merged['status']), ('mixed', 'failed'))
+        self.assertEqual(len(spring_bench.merge_acceptance([(None, {'app': 'a'}), (None, [{'app': 'b'}, {'app': 'c'}])])), 3)
+
+
 if __name__ == '__main__':
     unittest.main()

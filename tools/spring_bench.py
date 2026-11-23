@@ -519,10 +519,14 @@ def check_registry(names=None):
 # Assembling the Phase 1 evidence from the queue's certified runs
 
 PHASE1_FILES = {
-    'phase1-builds': ['acceptance-java.json', 'acceptance-go.json', 'acceptance-flint.json', 'builds.json'],
-    'phase1-http': ['http.json'],
     'error-404-p99': ['http-error-404.json'],
     'error-validation-p99': ['http-error-validation.json'],
+}
+# Entries split per application, one claimed window each (coordination.md "Measurement"): every entry whose id has
+# the prefix is one part, and each file is merged across the parts.
+PHASE1_SPLIT = {
+    'phase1-builds-': ['acceptance-java.json', 'acceptance-go.json', 'acceptance-flint.json', 'builds.json'],
+    'phase1-http-': ['http.json'],
 }
 PHASE1_GC_PREFIX = 'phase1-gc-matrix-'  # parts of the GC matrix, one claimed window each
 
@@ -550,6 +554,39 @@ def merge_http(records):
             merged['mode'] = record['mode']
     merged['status'] = 'passed' if all(p['status'] == 'passed' for p in merged['parts']) else 'failed'
     return merged
+
+
+def merge_acceptance(records):
+    """One acceptance list from the parts' records (`accept --json` writes one record, or a list of several)."""
+    merged = []
+    for _, record in records:
+        merged += record if isinstance(record, list) else [record]
+    return merged
+
+
+def merge_builds(records):
+    """One measure_builds --spring record from parts that each measured some applications."""
+    merged = {'schema': 'flint.spring-builds/1', 'apps': {}, 'comparators': {}, 'missing_flint': [], 'trials': [],
+              'parts': []}
+    for path, record in records:
+        for key in ('commit', 'host', 'trials_per_series'):
+            merged.setdefault(key, record.get(key))
+        merged['apps'].update(record['apps'])
+        merged['comparators'].update(record.get('comparators', {}))
+        merged['missing_flint'] += record.get('missing_flint', [])
+        merged['trials'] += record.get('trials', [])
+        merged['parts'].append({'source': str(path), 'sha256': sha256(path), 'status': record['status'],
+                                'mode': record['mode'], 'commit': record.get('commit'),
+                                'trials_per_series': record.get('trials_per_series'), 'apps': sorted(record['apps'])})
+    parts = merged['parts']
+    merged['mode'] = 'production' if all(p['mode'] == 'production' for p in parts) else 'mixed'
+    if len({p['trials_per_series'] for p in parts}) > 1:
+        merged['mode'] = 'mixed'
+    merged['status'] = 'passed' if all(p['status'] == 'passed' for p in parts) else 'failed'
+    return merged
+
+
+PHASE1_MERGE = {'builds.json': merge_builds, 'http.json': merge_http}
 
 
 def merge_gc(records):
@@ -588,8 +625,30 @@ def assemble(output):
                     shutil.copy2(directory / name, output / name)
     if errors:
         (output / 'http-error-paths.json').write_text(json.dumps(merge_http(errors), indent=2) + '\n')
-    parts = []
     queue = ROOT / 'benchmarks' / 'spring' / 'queue'
+    commits = {}
+    for prefix, files in PHASE1_SPLIT.items():
+        found = {name: [] for name in files}
+        for entry in sorted(queue.glob(prefix + '*.json')):
+            directory = certified_results(entry.stem)
+            if directory is None:
+                manifest['missing'].append(entry.stem)
+                continue
+            manifest['sources'][entry.stem] = str(directory.relative_to(ROOT))
+            receipt = json.loads((directory / 'receipt.json').read_text())
+            commits[entry.stem] = sorted({row.get('commit') for row in receipt.get('builds', {}).values()})
+            for name in files:
+                if (directory / name).is_file():
+                    found[name].append((directory / name, json.loads((directory / name).read_text())))
+        for name, records in found.items():
+            if records:
+                merged = PHASE1_MERGE.get(name, merge_acceptance)(records)
+                (output / name).write_text(json.dumps(merged, indent=2) + '\n')
+    # The parts are pinned to one commit where every port passes exactly; parts measured elsewhere are flagged.
+    manifest['commits'] = commits
+    if len({tuple(c) for c in commits.values()}) > 1:
+        manifest['problems'] = [f'the per-application parts were measured at different commits: {commits}']
+    parts = []
     for entry in sorted(queue.glob(PHASE1_GC_PREFIX + '*.json')):
         directory = certified_results(entry.stem)
         if directory is None:

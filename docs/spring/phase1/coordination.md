@@ -79,9 +79,19 @@ The wrapper stops the command's whole process group (SIGSTOP) while the lock exi
 
 Queue policy (coordinator, 2026-11-23). A claimed window pauses everyone, so it is spent only on short entries that gate a decision:
 
-- **Claimed windows.** Only entries of about 30 minutes or less that gate a decision claim one. They are gs-builds (per-phase timings and the prelude), gs-rest-multicore-2, the error-path p99s once boot's Date-based error timestamp lands, and phase1-spring-apps in parts. Each entry file says `"window": "claim"` or `"natural"`; without one, an entry estimated at 30 minutes or less claims and anything longer is natural. An entry over 30 minutes claims only when the coordinator names it.
+- **Claimed windows.** Only entries of about 30 minutes or less that gate a decision claim one. They are gs-builds (per-phase timings and the prelude), gs-rest-multicore-2, the error-path p99s once boot's Date-based error timestamp lands, and the per-application Phase 1 parts under the conditions below. Each entry file says `"window": "claim"` or `"natural"`; without one, an entry estimated at 30 minutes or less claims and anything longer is natural. An entry over 30 minutes claims only when the coordinator names it.
 - **Natural quiet.** Long, low-priority entries run only after 5 minutes of natural quiet with no `hold`-wrapped work alive, and never take the lock: they are framework-timings, the GC matrix, java-context and phase1-guides. While one runs, `.flint/measure/MEASURING-NATURAL` exists. `hold` ignores it, so nobody pauses. The moment another session's build or `hold`-wrapped command appears, the run stops and records the attempt as interrupted, not evidence.
 - **Order.** Each entry's `priority` (lower first) comes before its estimate. gs-builds (1) runs first, then gs-rest-multicore-2 (2), then the error-path p99s (3), then the rest. Natural entries wait while any claimed entry is pending.
+- **Gap.** Consecutive claimed windows are at least 10 minutes apart (`watch --claim-gap-minutes 10`), so work held during one runs before the next pauses it.
+- **Phase 1 parts (coordinator, 16:45Z).** phase1-builds and phase1-http gate the Phase 1 exit, so they may claim windows as named exceptions. They are split per application, with the same trials, durations and comparators, only scheduled separately. Each part certifies on its own, and `spring_bench.py assemble` merges the parts and flags any that were measured at different commits:
+  - phase1-builds-gs-rest, phase1-builds-gs-relational and phase1-builds-petclinic, about 17 minutes each;
+  - phase1-http-gs-rest and phase1-http-petclinic, about 41 minutes each.
+
+  They claim only when the numbers can move the decision, and until then they run only on natural quiet (`"window": "natural"`, with the condition in `claim_when`):
+  - phase1-builds claims after the gs-builds certification (phases and prelude) shows a primary ratio under about 1.5;
+  - phase1-http claims after the io_uring steps and the RSS and GC fixes land, since a run that only confirms today's 0.75x throughput isn't worth pausing everyone.
+
+  All five also stay blocked until petclinic-rest scores 109/109 and the parts are pinned to one commit where every port passes exactly.
 
 ## Work queue
 

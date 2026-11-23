@@ -1,0 +1,47 @@
+{
+  "schema": "flint.measure-queue/1",
+  "id": "phase1-http-petclinic",
+  "created": "2026-11-23",
+  "status": "blocked",
+  "window": "natural",
+  "priority": 4,
+  "blocked_on": "petclinic-rest scoring 109/109 in proof-harness's independent run, then a pin to one commit where all three ports pass exactly",
+  "claim_when": "Claims a window only once the io_uring steps and the RSS and GC fixes land: a run that only confirms gs-rest-multicore's 0.75x throughput is not worth pausing everyone. Until then it runs only on natural quiet (coordinator, 2026-11-23 16:45Z)",
+  "requested_by": "ADR-030 section 8, Phase 1 exit (coordinator's plan, 2026-11-23 15:20Z); split per application by the coordinator, 2026-11-23 16:45Z",
+  "report_to": "the coordinator; docs/milestones/13.md",
+  "estimate_minutes": 41,
+  "summary": "Phase 1: the Spring-style REST workload for petclinic-rest, Flint vs Go",
+  "why": "One part of the Phase 1 REST evidence, split per application: the manifest's runs, durations and comparator unchanged, scheduled separately. spring_bench.py assemble merges the parts, which must share one commit.",
+  "builds": {
+    "tree": {
+      "app": "checkout",
+      "commit": "TBD",
+      "flint": true,
+      "linker": "mold"
+    }
+  },
+  "measure": {
+    "kind": "command",
+    "ports": [],
+    "steps": [
+      {
+        "argv": [
+          "{python}",
+          "tools/load_bench.py",
+          "--manifest",
+          "policy/spring-http-benchmark.json",
+          "--app",
+          "petclinic-rest",
+          "--no-context",
+          "--output",
+          "{out}/http.json"
+        ],
+        "may_fail": true,
+        "smoke_args": [
+          "--smoke"
+        ],
+        "in": "tree"
+      }
+    ]
+  }
+}
