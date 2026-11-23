@@ -9,7 +9,10 @@ import flint.engine.reactor.types : ConnectionId;
 @("cancellation before submit delivers once without entering the backend")
 unittest
 {
-    auto table = OperationTable(1);
+    OperationTable table;
+    assert(table.initialize(1) == Status.ok);
+    scope (exit)
+        table.release();
     auto connection = ConnectionId(1, 2, 3);
     auto operation = table.reserve(connection).value;
     assert(table.requestCancellation(operation, Status.cancelled) == Status.ok);
@@ -25,7 +28,10 @@ unittest
 @("cancelled in-flight read retains its slot until the final completion is delivered")
 unittest
 {
-    auto table = OperationTable(1);
+    OperationTable table;
+    assert(table.initialize(1) == Status.ok);
+    scope (exit)
+        table.release();
     auto connection = ConnectionId(0, 1, 2);
     auto operation = table.reserve(connection).value;
     assert(table.start(operation) == Status.ok);
@@ -53,7 +59,10 @@ unittest
 @("final completion wins over subsequent cancellation")
 unittest
 {
-    auto table = OperationTable(1);
+    OperationTable table;
+    assert(table.initialize(1) == Status.ok);
+    scope (exit)
+        table.release();
     auto operation = table.reserve(ConnectionId(0, 0, 1)).value;
     assert(table.finish(operation, Status.ok, 0).error.code == Status.conflict);
     assert(table.start(operation) == Status.ok);
@@ -67,7 +76,10 @@ unittest
 @("a read completed with data before cancellation took effect reports success; other outcomes stay cancelled")
 unittest
 {
-    auto table = OperationTable(1);
+    OperationTable table;
+    assert(table.initialize(1) == Status.ok);
+    scope (exit)
+        table.release();
     auto connection = ConnectionId(0, 0, 1);
 
     Status finalStatus(Status kernel, size_t bytes, bool read)

@@ -1,6 +1,7 @@
 module flint.engine.reactor.internal.operations;
 
 import flint.arena : Error, Result, Status;
+import flint.engine.reactor.sys.chunks : Chunked;
 import flint.engine.reactor.types : Completion, ConnectionId;
 
 @safe:
@@ -44,36 +45,55 @@ private struct Operation
     Status cancellation;
 }
 
-/// Owner-thread only. The OS token remains valid through callback delivery.
+/// Owner-thread only. The OS token remains valid through callback delivery. Slots are allocated in chunks as they
+/// are first used, outside the GC heap (an operation holds no references): returned slots are reused first, most
+/// recent first, so a worker's live operations stay in its lowest chunks.
 package(flint.engine.reactor) struct OperationTable
 {
-    private Operation[] slots;
+    private Chunked!Operation slots;
     private uint nextFree = uint.max;
+    /// Slots below this index were handed out at least once; the rest have never been used.
+    private uint used;
 
     @disable this(this);
 
-    this(uint capacity)
+    Status initialize(uint capacity) nothrow @nogc
     {
         assert(capacity <= 1U << operationSlotBits);
-        slots = new Operation[capacity];
-        if (capacity == 0)
-            return;
-        nextFree = 0;
-        foreach (index, ref slot; slots)
-            slot.next = cast(uint)(index + 1);
-        slots[$ - 1].next = uint.max;
+        return slots.reserve(capacity);
+    }
+
+    void release() nothrow @nogc
+    {
+        slots.release();
+        nextFree = uint.max;
+        used = 0;
+    }
+
+    /// The slot the next `reserve` hands out, or `uint.max` when the table is full.
+    uint nextSlot() const nothrow @nogc
+    {
+        if (nextFree != uint.max)
+            return nextFree;
+        return used < slots.length ? used : uint.max;
     }
 
     Result!OperationId reserve(ConnectionId connection) nothrow @nogc
     {
         if (connection.generation == 0)
             return Result!OperationId(OperationId.init, Error(Status.invalidArgument, "invalid connection"));
-        if (nextFree == uint.max)
+        const index = nextSlot;
+        if (index == uint.max)
             return Result!OperationId(OperationId.init, Error(Status.resourceExhausted, "operation table full"));
-
-        const index = nextFree;
+        if (index == used)
+        {
+            if (slots.ensure(index) != Status.ok)
+                return Result!OperationId(OperationId.init, Error(Status.outOfMemory, "operation table chunk"));
+            ++used;
+        }
+        else
+            nextFree = slots[index].next;
         auto slot = &slots[index];
-        nextFree = slot.next;
         ++slot.generation;
         // Public IoId tickets carry the low 32 bits, and a zero ticket generation means no operation.
         if (cast(uint) slot.generation == 0)
@@ -144,8 +164,7 @@ package(flint.engine.reactor) struct OperationTable
 
     private bool contains(OperationId id) const nothrow @nogc
     {
-        return id.slot < slots.length && slots[id.slot].phase != Phase.free && slots[id.slot].generation
-            == id.generation;
+        return id.slot < used && slots[id.slot].phase != Phase.free && slots[id.slot].generation == id.generation;
     }
 }
 
@@ -154,7 +173,11 @@ unittest
 {
     // A worker owns only maxPendingIoPerCore slots and its free list reuses the most recent slot first,
     // so one hot slot passes 2^32 reservations after hours of sustained traffic.
-    auto table = OperationTable(1);
+    OperationTable table;
+    assert(table.initialize(1) == Status.ok);
+    scope (exit)
+        table.release();
+    assert(table.slots.ensure(0) == Status.ok);
     table.slots[0].generation = uint.max - 2;
     const connection = ConnectionId(0, 0, 1);
     OperationId previous;
@@ -171,4 +194,27 @@ unittest
         assert(table.retire(id) == Status.ok);
         previous = id;
     }
+}
+
+@("operation slots are allocated a chunk at a time and returned slots are reused before new ones")
+unittest
+{
+    OperationTable table;
+    assert(table.initialize(1 << operationSlotBits) == Status.ok);
+    scope (exit)
+        table.release();
+    const connection = ConnectionId(0, 0, 1);
+    OperationId[70] ids;
+    foreach (ref id; ids)
+        id = table.reserve(connection).value;
+    assert(ids[0].slot == 0 && ids[69].slot == 69);
+    assert(table.slots.present(127) && !table.slots.present(128), "only the chunks in use are allocated");
+    foreach (id; ids[0 .. 3])
+    {
+        assert(table.start(id) == Status.ok && table.finish(id, Status.ok, 0).ok);
+        assert(table.retire(id) == Status.ok);
+    }
+    assert(table.nextSlot == 2, "the most recently returned slot is reused first");
+    assert(table.reserve(connection).value.slot == 2 && table.reserve(connection).value.slot == 1);
+    assert(table.reserve(connection).value.slot == 0 && table.reserve(connection).value.slot == 70);
 }

@@ -10,6 +10,7 @@ import flint.arena : Error, Result, Status;
 import flint.conc : Context, Deadline;
 import flint.conc.wait : replaceWaitHook;
 import flint.engine.reactor.internal.operations : OperationId, OperationTable;
+import flint.engine.reactor.sys.chunks : Chunked;
 import flint.engine.reactor.internal.queues : Mailbox, Message, Timers;
 import flint.engine.reactor.sys.fibers : createFiber, PoolFiber, releaseFiber, resetFiber, resumeFiber, yieldFiber;
 import flint.engine.reactor.sys.locals : cellStamp, loadCell, localStorable, localWords, storeCell;
@@ -176,7 +177,7 @@ struct FiberLocal(T) if (localStorable!T && localWords!T < maxFiberLocalWords)
             return;
         size_t stamp;
         auto cell = localCell(offset, localWords!T, stamp);
-        cell[] = null;
+        cell[] = null; // empty when the cell was never allocated
     }
 }
 
@@ -216,11 +217,16 @@ private void*[] localCell(uint offset, size_t words, out size_t stamp, bool writ
             if (end > stride)
                 return null;
             auto task = &worker.fibers[worker.activeFiber];
-            if (writing)
-                task.localsDirty = true;
-            stamp = cast(size_t) task.generation;
             const base = cast(size_t) worker.activeFiber * stride;
-            return worker.localWords[base + first .. base + end];
+            if (writing)
+            {
+                if (worker.localWords.ensure(base) != Status.ok)
+                    return null;
+                task.localsDirty = true;
+            }
+            stamp = cast(size_t) task.generation;
+            // Null before any fiber in this slot's chunk set a local: `get` then sees no value.
+            return worker.localWords.slice(base + first, base + end);
         }
     }
     stamp = threadStamp;
@@ -948,10 +954,14 @@ private struct Worker
         /// its completion rather than by a poll, independent of how fast the build is.
         shared ulong resumptions;
     }
-    Connection[] connections;
-    uint nextFree;
+    /// Connection slots, allocated a chunk at a time as admissions first reach them (sys/chunks.d), with the
+    /// slots below `connectionsUsed` handed out at least once and `nextFree` the list of returned ones.
+    Chunked!Connection connections;
+    uint connectionsUsed;
+    uint nextFree = noSlot;
     OperationTable operations;
-    IoWork[] workItems;
+    /// Per-operation state, indexed by operation slot and allocated with the operation table's chunks.
+    Chunked!IoWork workItems;
     ulong[] activeIo;
     version (linux)
         Scratch buffers;
@@ -976,8 +986,9 @@ private struct Worker
     long nextWake = long.max;
     /// Last task lifetime issued on this worker.
     ulong taskGeneration;
-    /// FiberLocal cells, `fiberLocalWords` per fiber slot. GC-scanned, so stored references stay alive.
-    void*[] localWords;
+    /// FiberLocal cells, `fiberLocalWords` per fiber slot, allocated for 64 fiber slots at a time when one of them
+    /// first sets a local. GC roots, so stored references stay alive.
+    Chunked!(void*) localWords;
     /// Whether this worker tried, and managed, to watch its offload signal.
     bool offloadWatchTried;
     bool offloadWatched;
@@ -1011,12 +1022,15 @@ private struct Worker
         this.cpu = cpu;
 
         const options = runtime.options;
-        connections = new Connection[options.maxConnectionsPerCore];
-        foreach (slot, ref connection; connections)
-            connection.next = cast(uint)(slot + 1);
-        connections[$ - 1].next = noSlot;
-        operations = OperationTable(options.maxPendingIoPerCore);
-        workItems = new IoWork[options.maxPendingIoPerCore];
+        // The tables are sized for the limits but allocated as slots are used: whole, they were most of a server's
+        // GC live set, which the heap's size follows (performance playbook R-20).
+        auto reserved = connections.reserve(options.maxConnectionsPerCore);
+        if (reserved == Status.ok)
+            reserved = operations.initialize(options.maxPendingIoPerCore);
+        if (reserved == Status.ok)
+            reserved = workItems.reserve(options.maxPendingIoPerCore);
+        if (reserved != Status.ok)
+            return reserved;
         activeIo = new ulong[(options.maxPendingIoPerCore + ioWordBits - 1) / ioWordBits];
         mailbox.initialize(options.mailboxCapacity);
         timers.initialize(options.maxTimersPerCore);
@@ -1046,7 +1060,14 @@ private struct Worker
         fibers[$ - 1].next = noSlot;
         freeFiber = 0;
         suspended = new uint[fibers.length];
-        localWords = new void*[fibers.length * runtime.options.fiberLocalWords];
+        const stride = runtime.options.fiberLocalWords;
+        localWords.release();
+        if (localWords.reserve(fibers.length * stride, 64 * (stride ? stride : 1)) != Status.ok)
+        {
+            import core.exception : onOutOfMemoryError;
+
+            onOutOfMemoryError();
+        }
     }
 
     void releaseFibers()
@@ -1054,6 +1075,7 @@ private struct Worker
         foreach (ref task; fibers)
             releaseFiber(task.fiber);
         fibers = null;
+        localWords.release();
     }
 
     Result!TaskContext activeTask() const nothrow @nogc
@@ -1217,7 +1239,7 @@ private struct Worker
             {
                 // The generation stamp already hides these cells; clearing them releases their references.
                 const stride = runtime.options.fiberLocalWords;
-                localWords[cast(size_t) slot * stride .. (cast(size_t) slot + 1) * stride] = null;
+                localWords.slice(cast(size_t) slot * stride, (cast(size_t) slot + 1) * stride)[] = null;
                 task.localsDirty = false;
             }
             task.task = null;
@@ -1378,6 +1400,11 @@ private struct Worker
             nativeWatches.release();
         version (linux)
             buffers.release();
+        connections.release();
+        connectionsUsed = 0;
+        nextFree = noSlot;
+        operations.release();
+        workItems.release();
     }
 
     version (ReactorNativeWatches)
@@ -1554,11 +1581,12 @@ private struct Worker
 
     private void admit(Socket incoming) nothrow @nogc
     {
-        if (nextFree == noSlot || atomicLoad(runtime.state) != State.running || atomicLoad(runtime.acceptStopping))
+        if (atomicLoad(runtime.state) != State.running || atomicLoad(runtime.acceptStopping) || slotsExhausted())
         {
             closeSocket(incoming);
             return;
         }
+        const slot = nextFree != noSlot ? nextFree : connectionsUsed;
 
         const generation = nextIdentity();
         if (generation == 0)
@@ -1569,9 +1597,11 @@ private struct Worker
         }
         // Best effort: a refused option changes latency only, never correctness.
         sendImmediately(incoming);
-        const slot = nextFree;
         auto connection = &connections[slot];
-        nextFree = connection.next;
+        if (slot == connectionsUsed)
+            ++connectionsUsed;
+        else
+            nextFree = connection.next;
         *connection = Connection(incoming, generation);
         const id = ConnectionId(index, slot, generation);
         if (runtime.accept !is null)
@@ -1582,8 +1612,17 @@ private struct Worker
 
     private bool validConnection(ConnectionId id) const nothrow @nogc
     {
-        return id.ownerCore == index && id.generation != 0 && id.slot < connections.length
+        return id.ownerCore == index && id.generation != 0 && connections.present(id.slot)
             && connections[id.slot].generation == id.generation;
+    }
+
+    /// Whether no connection slot can be handed out: none was returned and every slot is in use, or the chunk for
+    /// the next never-used slot could not be allocated. Otherwise that chunk exists afterwards, so `admit` succeeds.
+    private bool slotsExhausted() nothrow @nogc
+    {
+        if (nextFree != noSlot)
+            return false;
+        return connectionsUsed == connections.length || connections.ensure(connectionsUsed) != Status.ok;
     }
 
     Status closeConnection(ConnectionId id) nothrow @nogc
@@ -1624,6 +1663,9 @@ private struct Worker
         if ((callbacks.reading ? connection.read : connection.write).generation != 0)
             return Result!IoId(IoId.init, Error(Status.conflict, "operation in this direction already active"));
 
+        const next = operations.nextSlot;
+        if (next != uint.max && workItems.ensure(next) != Status.ok)
+            return Result!IoId(IoId.init, Error(Status.outOfMemory, "could not allocate I/O work slots"));
         const reserved = operations.reserve(id);
         if (!reserved.ok)
             return Result!IoId(IoId.init, reserved.error);
@@ -1649,7 +1691,7 @@ private struct Worker
 
     Status cancelIo(IoId operation) nothrow @nogc
     {
-        if (operation.generation == 0 || operation.slot >= workItems.length)
+        if (operation.generation == 0 || !workItems.present(operation.slot))
             return Status.notFound;
         auto work = &workItems[operation.slot];
         if (cast(uint) work.id.generation != operation.generation || work.connection != operation.connection)
@@ -2038,7 +2080,7 @@ private struct Worker
             }
 
             const id = OperationId.fromToken(event.token);
-            if (id.slot >= workItems.length)
+            if (!workItems.present(id.slot))
                 return;
             auto work = &workItems[id.slot];
             if (work.id != id || !work.pending)
@@ -2061,12 +2103,12 @@ private struct Worker
     private void drain() nothrow @nogc
     {
         timers.clear();
-        foreach (slot, ref connection; connections)
+        foreach (slot; 0 .. connectionsUsed)
         {
-            if (connection.generation != 0)
+            if (connections[slot].generation != 0)
             {
-                connection.draining = true;
-                closeIdle(cast(uint) slot);
+                connections[slot].draining = true;
+                closeIdle(slot);
             }
         }
 

@@ -157,6 +157,77 @@ unittest
     }
 }
 
+private enum rootedFibers = 200;
+
+private final class Rooted
+{
+    Principal[rootedFibers] handedOver;
+    shared uint stored;
+    shared bool collected;
+    uint survived;
+
+    this()
+    {
+        foreach (index; 0 .. rootedFibers)
+            handedOver[index] = new Principal(index);
+    }
+
+    void play() nothrow @nogc
+    {
+        auto owner = Reactor.current();
+        const self = owner.currentTask().value.requestId;
+        // After this the FiberLocal cell, in a chunk allocated by the first `set` of its 64 fiber slots, is the
+        // object's only reference.
+        assert(principal.set(handedOver[self]).code == Status.ok);
+        handedOver[self] = null;
+        atomicOp!"+="(stored, 1);
+        while (!atomicLoad(collected))
+            assert(owner.yieldUntil(Deadline.afterMillis(1)).code == Status.ok);
+        const seen = principal.get();
+        if (seen !is null && seen.id == self)
+            ++survived;
+        if (atomicOp!"+="(stored, 1) == 2 * rootedFibers)
+            owner.stop();
+    }
+}
+
+@("a GC object reachable only through a lazily allocated FiberLocal chunk survives forced collections")
+unittest
+{
+    import core.memory : GC;
+
+    foreach (backend; [Backend.automatic, readinessBackend])
+    {
+        ReactorOptions options;
+        options.backend = backend;
+        options.cores = 1;
+        options.fiberPoolSize = rootedFibers;
+        options.mailboxCapacity = rootedFibers;
+        auto owner = Reactor.create(options);
+        assert(owner.ok);
+        auto fixture = new Rooted;
+        foreach (index; 0 .. rootedFibers)
+            assert(owner.value.postStartup(0, &fixture.play, TaskContext(index)).code == Status.ok);
+        // Collect while every task waits, and churn the heap so a freed Principal would be reused with another id.
+        auto collector = new Thread(() @trusted {
+            while (atomicLoad(fixture.stored) < rootedFibers)
+                Thread.yield();
+            foreach (round; 0 .. 3)
+            {
+                GC.collect();
+                foreach (_; 0 .. 20_000)
+                    cast(void) new Principal(ulong.max);
+            }
+            GC.collect();
+            atomicStore(fixture.collected, true);
+        });
+        () @trusted { collector.start(); }();
+        assert(owner.value.run().code == Status.ok);
+        () @trusted { collector.join(); }();
+        assert(fixture.survived == rootedFibers, "a FiberLocal chunk was not a GC root");
+    }
+}
+
 private shared FiberLocal!ulong callbackLocal;
 private shared ulong callbackSeen = ulong.max;
 private shared ulong fiberSeenAfter = ulong.max;
