@@ -44,8 +44,6 @@ POSTGRES_URL=jdbc:postgresql://127.0.0.1:5432/petclinic POSTGRES_USER=petclinic 
 
 ## Status
 
-`spring_bench.py accept petclinic-rest`: 108 of 109 cases. Open pieces:
+`spring_bench.py accept petclinic-rest`: 109 of 109 cases on PostgreSQL, wire-exact. Not ported yet:
 
-- A `@Valid` violation on a list element (`roles[0].name`) reports a null rejected value, since `flint.validation`
-  does not read indexed property paths (1 case).
 - `BasicAuthenticationConfig` (`petclinic.security.enable=true`) is not ported.
