@@ -384,6 +384,17 @@ def peer_tests(runner):
     scenarios=sorted(tomllib.loads((ROOT/'policy/test-peers.toml').read_text()).get('scenarios',{}))
     runner.run([ROOT/'.flint/bin/flint','test',*scenarios,'--scenarios','--verify'])
 
+def request_allocation_tests(runner):
+    """The per-request allocation gate (owner decision 9a9aefa0): every Spring port policy/request-allocations.json
+    budgets runs its request-allocation test through flint test, on both compilers. Budgets are measured on Linux
+    x86-64 glibc, the lane that runs this."""
+    budgeted=json.loads((ROOT/'policy/request-allocations.json').read_text())['apps']
+    rows=json.loads((ROOT/'benchmarks/spring/apps.json').read_text())['apps']
+    runner.run([PYTHON,'tools/install_toolchains.py','--compiler','flint'])
+    for app in sorted(budgeted):
+        runner.run([ROOT/'.flint/bin/flint','test','-C',ROOT/rows[app]['flint']['directory'],'--compiler','both',
+                    '--verify'])
+
 def platform_run(runner,target):
     if not runner.plan:implementation_required()
     if target=='wasm32':
@@ -398,6 +409,7 @@ def platform_run(runner,target):
     try:
         native(runner,target)
         for compiler in compilers:run_tests(runner,compiler)
+        if target=='linux-x86_64-glibc':request_allocation_tests(runner)
         # The native arm64 lanes also run the peered packages through flint test (ADR-024, Milestone 11).
         if target in ('macos-arm64','linux-aarch64-glibc'):peer_tests(runner)
         for compiler in compilers:negative_tests(runner,compiler)
