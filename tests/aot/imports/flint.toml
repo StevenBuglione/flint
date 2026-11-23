@@ -1,0 +1,6 @@
+[project]
+name = "aot-imports"
+version = "0.1.0"
+flint = "1.0"
+type = "executable"
+description = "Flint AOT fixture: @Import order, conditions, scanned imports and @Import on an interface."

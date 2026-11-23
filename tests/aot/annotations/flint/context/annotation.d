@@ -6,11 +6,19 @@ import flint.stereotype : Component;
 
 @safe:
 
+/// `@Import`: the classes are configuration beans, registered after their importer's class and before its
+/// `@Bean` methods.
+struct Import
+{
+    /// The classes.
+    ClassRef[] value;
+}
+
 /// `@Configuration`.
 @Component struct Configuration
 {
     /// Bean name.
-    @AliasFor(annotation: ClassRef("flint.stereotype.Component")) string value;
+    @AliasFor(annotation : ClassRef("flint.stereotype.Component")) string value;
     /// Whether `@Bean` methods return the container's instances when called directly.
     bool proxyBeanMethods = true;
 }
@@ -39,7 +47,8 @@ struct Bean
     }
 
     /// The array form, and the named-attribute form.
-    static Bean opCall(string[] value = null, string[] name = null, string initMethod = null, string destroyMethod = "(inferred)")
+    static Bean opCall(string[] value = null, string[] name = null, string initMethod = null,
+            string destroyMethod = "(inferred)")
     {
         Bean result;
         result.value = value;

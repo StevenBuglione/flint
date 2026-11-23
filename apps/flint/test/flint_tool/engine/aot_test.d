@@ -627,8 +627,56 @@ unittest
     expect(generated.canFind(`"flintsample.autoconfig.WidgetAutoConfiguration"`)).toBeTrue();
     expect(generated.canFind("ExcludedAutoConfiguration\";")).toBeFalse();
     expect(generated.canFind(`c.property("flint.boot.enableautoconfiguration", "true", true) `
-            ~ `&& !c.isAutoConfigurationExcluded("flintsample.autoconfig.WidgetAutoConfiguration") `
-            ~ `&& !c.hasBeanOfType("flintsample.autoconfig.Widget")`)).toBeTrue();
+            ~ `&& !c.isAutoConfigurationExcluded("flintsample.autoconfig.WidgetAutoConfiguration");`)).toBeTrue();
+    // A @Bean method is conditional on its configuration having registered, not on a copy of its terms.
+    expect(generated.canFind(`c.hasBeanNamed("flintsample.autoconfig.WidgetAutoConfiguration") `
+            ~ `&& !c.hasBeanOfType("flintsample.autoconfig.Widget");`)).toBeTrue();
+}
+
+@("@Import: Spring's definition order, importer-registered conditions, scanned imports, interfaces")
+unittest
+{
+    import std.algorithm.searching : canFind, count;
+    import std.file : readText;
+    import std.path : buildPath;
+
+    const project = copyFixture("imports");
+    scope (exit)
+        remove(project);
+    auto outcome = generate(project);
+    expect(outcome.extractionErrors).toEqual("");
+    foreach (ref item; outcome.diagnostics)
+        expect(item.code ~ " " ~ item.message).toEqual("");
+    expect(outcome.ok).toBeTrue();
+    const aot = buildPath(project, ".flint", "generated", "aot", "flint_aot");
+    const configs = readText(buildPath(aot, "imp", "configs.d"));
+    const things = readText(buildPath(aot, "shared_", "things.d"));
+    // Ranks: every scanned class first; then each configuration's imports, placed at the first importer, before
+    // its own @Bean methods (gh-24643: the importer's `thing` overrides the imported one).
+    expect(rankOf(configs, "gammaConfig") < rankOf(things, "shared_.things.SharedConfig")).toBeTrue();
+    expect(rankOf(things, "thing") < rankOf(configs, "thing")).toBeTrue();
+    expect(rankOf(things, "shared_.things.SharedConfig") < rankOf(configs, "scannedThing")).toBeTrue();
+    // The shared configuration registers when either importer did.
+    expect(things.canFind(`return (c.hasBeanNamed("alphaConfig") || c.hasBeanNamed("betaConfig"));`)).toBeTrue();
+    expect(things.canFind(`return c.hasBeanNamed("shared_.things.SharedConfig");`)).toBeTrue();
+    // A scanned class that is also imported is defined once, as scanned.
+    expect(configs.count(`definition.name = "scannedConfig";`)).toEqual(1);
+    expect(things.canFind(`"imp.configs.ScannedConfig"`)).toBeFalse();
+    // @Import on an implemented interface.
+    expect(things.canFind(`definition.name = "shared_.things.MarkedConfig";`)).toBeTrue();
+    expect(things.canFind(`return (c.hasBeanNamed("gammaConfig"));`)).toBeTrue();
+}
+
+/// The rank of the definition named `name` in `text`.
+private int rankOf(string text, string name)
+{
+    import std.conv : to;
+    import std.string : indexOf;
+
+    const at = text.indexOf(`definition.name = "` ~ name ~ `";`);
+    assert(at >= 0, "no definition named " ~ name);
+    const rank = text.indexOf("definition.rank = ", at) + "definition.rank = ".length;
+    return text[rank .. rank + text[rank .. $].indexOf(';')].to!int;
 }
 
 /// Source directories of the DUB closure of `roots` (repository-relative package directories), following each
@@ -832,7 +880,9 @@ unittest
     expect(imported.canFind(`definition.name = "flint.security.config.annotation.method.configuration.`
             ~ `PrePostMethodSecurityConfiguration";`)).toBeTrue();
     expect(imported.canFind(`definition.name = "preAuthorizeAuthorizationMethodInterceptor";`)).toBeTrue();
-    expect(imported.canFind(`return c.property("petclinic.security.enable", "true", false);`)).toBeTrue();
+    expect(imported.canFind(`return (c.hasBeanNamed("basicAuthenticationConfig"));`)).toBeTrue();
+    expect(imported.canFind(`return c.hasBeanNamed("flint.security.config.annotation.method.configuration.`
+            ~ `PrePostMethodSecurityConfiguration")`)).toBeTrue();
     // A FactoryBean's object types come first, so getBean(Vets) finds the factory's object.
     const vets = readText(buildPath(generated, "model", "vets.d"));
     expect(vets.canFind(`definition.objectTypes = ["org.springframework.samples.petclinic.model.vets.Vets"];`))

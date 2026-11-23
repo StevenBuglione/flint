@@ -524,6 +524,12 @@ Plan analyze(const Model model, const ref AnalysisInput input)
     return analysis.plan;
 }
 
+private struct DefinedClass
+{
+    BeanPlan bean;
+    bool proxyConfiguration;
+}
+
 private struct Candidate
 {
     const(TypeDecl)* decl;
@@ -581,8 +587,14 @@ private final class Analysis
     BeanPlan[] allBeans;
     /// Auto-configurations the application excludes at build time.
     bool[string] excluded;
-    /// Classes already defined through `@Import`.
-    bool[string] importedOnce;
+    /// Defined classes (scanned, auto-configured or imported) by fully qualified name.
+    DefinedClass[string] definedClasses;
+    /// Classes whose configuration is processed (or left out).
+    bool[string] finished;
+    /// Classes whose class definition is decided (defined or left out).
+    bool[string] decided;
+    /// Importing classes of each imported class.
+    string[][string] importersOf;
     /// Modules whose types are described.
     bool[string] described;
     /// Types `describeProperties` has visited.
@@ -616,9 +628,24 @@ private final class Analysis
         }
         if (plan.application.length == 0)
             return;
-        Candidate[] candidates = userCandidates() ~ autoConfigurationCandidates();
-        foreach (ref candidate; candidates)
-            defineComponent(candidate);
+        // Spring's order (ConfigurationClassParser, then the deferred auto-configuration imports): every scanned
+        // component's class definition first; then each configuration's imports and @Bean methods in scan order;
+        // then each auto-configuration's class, imports and @Bean methods.
+        Candidate[] user = userCandidates();
+        Candidate[] autos = autoConfigurationCandidates();
+        collectImporters(user ~ autos);
+        foreach (ref candidate; user)
+            defineClass(candidate);
+        foreach (ref candidate; user)
+            processConfiguration(candidate);
+        foreach (ref candidate; autos)
+        {
+            if (candidate.decl.fqn in definedClasses || candidate.decl.fqn in finished)
+                continue;
+            defineClass(candidate);
+            processConfiguration(candidate);
+        }
+        placeRemainingImports();
         compileExpressions();
         checkInjection();
         checkCycles();
@@ -914,8 +941,11 @@ private final class Analysis
         return ordered;
     }
 
-    void defineComponent(ref Candidate candidate)
+    /// Define a candidate's class (and the class's proxy), without its @Bean methods or imports; false when it is
+    /// left out (not public, abstract, or removed by a build-time condition).
+    bool defineClass(ref Candidate candidate)
     {
+        decided[candidate.decl.fqn] = true;
         import flint_tool.engine.aot.conditions : evaluate;
         import flint_tool.engine.aot.names : beanName, component;
 
@@ -924,13 +954,13 @@ private final class Analysis
         {
             const message = "@Component class " ~ decl.name ~ " is " ~ decl.visibility;
             error("FLINT-E1108", message ~ "; generated code needs it public", decl.file, decl.line);
-            return;
+            return false;
         }
         if (decl.abstract_)
-            return;
+            return false;
         auto outcome = evaluate(candidate.merged, decl.fqn, model.present);
         if (!acceptOutcome(outcome, decl.name, decl.file, decl.line))
-            return;
+            return false;
         // Boot's spring.boot.enableautoconfiguration=false turns every auto-configuration off at startup.
         if (candidate.autoConfiguration)
             outcome.terms = autoConfigurationTerms(decl.fqn) ~ outcome.terms;
@@ -957,32 +987,139 @@ private final class Analysis
         bean.proxied = !proxyConfiguration && planProxy(*decl, inherited, bean);
         bean.rank = rank++;
         addBean(decl.module_, bean);
-        // Boot registers the enabled properties with the configuration class, before its @Bean methods: a
-        // configuration conditional on a missing bean must not see its own beans when the properties register.
-        enableConfigurationProperties(candidate, outcome.terms);
-        defineBeanMethods(candidate, bean, outcome.terms, proxyConfiguration);
+        definedClasses[decl.fqn] = DefinedClass(bean, proxyConfiguration);
         if (bean.proxied || candidate.merged.has(imported!"flint_tool.engine.aot.names".controller))
             moduleFor(decl.module_).consulted ~= decl.module_;
-        defineImports(*decl, outcome.terms);
+        return true;
     }
 
-    /// `@Import`: each imported class is a configuration bean, defined once, after its importer and under its
-    /// importer's conditions, with its own `@Bean` methods and imports.
-    void defineImports(const ref TypeDecl decl, string[] terms)
+    /// A configuration's imports, enabled properties and @Bean methods, all conditional on the configuration's
+    /// own definition having registered (Spring evaluates a configuration's conditions once).
+    void processConfiguration(ref Candidate candidate)
     {
-        foreach (name; importedClasses(decl.annotations, model.annotationTypes))
+        import flint_tool.engine.aot.conditions : literal;
+
+        const fqn = candidate.decl.fqn;
+        const defined = fqn in definedClasses;
+        if (defined is null || fqn in finished)
         {
-            if (name in importedOnce || definesClass(name))
-                continue;
-            importedOnce[name] = true;
-            const target = model.type(name);
-            if (target is null)
+            finished[fqn] = true;
+            return;
+        }
+        // Imported configurations register before the importer's own @Bean methods, which therefore override
+        // theirs (gh-24643).
+        foreach (name; importsOf(*candidate.decl))
+            placeImport(name);
+        const owner = defined.bean;
+        const ownerTerm = ["c.hasBeanNamed(" ~ literal(owner.name) ~ ")"];
+        enableConfigurationProperties(candidate, ownerTerm);
+        defineBeanMethods(candidate, owner, ownerTerm, defined.proxyConfiguration);
+        finished[fqn] = true;
+    }
+
+    /// The classes a type's `@Import`s name, its supertypes' included (gh-34820: `@Import` on an interface).
+    string[] importsOf(const ref TypeDecl decl)
+    {
+        Annotation[] declared;
+        foreach (ref annotation; decl.annotations)
+            declared ~= clone(annotation);
+        foreach (ref supertype; decl.supertypes)
+        {
+            if (const base = model.type(supertype.name))
             {
-                error("FLINT-E1106", "@Import names " ~ name ~ ", which is not in the closure", decl.file, decl.line);
-                continue;
+                foreach (ref annotation; base.annotations)
+                    declared ~= clone(annotation);
             }
-            auto candidate = Candidate(target, mergedOf(*target), false, true, terms.dup);
-            defineComponent(candidate);
+        }
+        return importedClasses(declared, model.annotationTypes);
+    }
+
+    /// Every class importing each imported class, over everything reachable from the candidates.
+    void collectImporters(Candidate[] candidates)
+    {
+        import std.algorithm.searching : canFind;
+
+        string[] pending;
+        foreach (ref candidate; candidates)
+            pending ~= candidate.decl.fqn;
+        bool[string] seen;
+        while (pending.length)
+        {
+            const name = pending[0];
+            pending = pending[1 .. $];
+            if (name in seen)
+                continue;
+            seen[name] = true;
+            const decl = model.type(name);
+            if (decl is null)
+                continue;
+            foreach (imported; importsOf(*decl))
+            {
+                if (!importersOf.get(imported, null).canFind(name))
+                    importersOf[imported] ~= name;
+                pending ~= imported;
+            }
+        }
+    }
+
+    /// Place an imported class at its first importer, as Spring does, once every importer's class definition is
+    /// decided, so its condition, "any importer registered", sees them all. Scanned importers are decided before
+    /// any import is placed. A class that is also scanned keeps its scanned definition.
+    void placeImport(string name)
+    {
+        if (name in definedClasses || name in finished)
+            return;
+        foreach (importer; importersOf.get(name, null))
+        {
+            if (importer !in decided)
+                return;
+        }
+        defineImported(name);
+    }
+
+    void defineImported(string name)
+    {
+        import std.array : join;
+        import flint_tool.engine.aot.conditions : literal;
+
+        string[] registered;
+        foreach (importer; importersOf.get(name, null))
+        {
+            if (auto defined = importer in definedClasses)
+                registered ~= "c.hasBeanNamed(" ~ literal(defined.bean.name) ~ ")";
+        }
+        const target = model.type(name);
+        if (target is null)
+        {
+            if (const importer = model.type(importersOf[name][0]))
+                error("FLINT-E1106", "@Import names " ~ name ~ ", which is not in the closure",
+                        importer.file, importer.line);
+            finished[name] = true;
+            return;
+        }
+        if (registered.length == 0)
+        {
+            finished[name] = true;
+            return;
+        }
+        auto candidate = Candidate(target, mergedOf(*target), false, true, [
+            "(" ~ registered.join(" || ") ~ ")"
+        ]);
+        if (!defineClass(candidate))
+        {
+            finished[name] = true;
+            return;
+        }
+        processConfiguration(candidate);
+    }
+
+    /// Imports whose importers were never all decided (an importer that is not a candidate).
+    void placeRemainingImports()
+    {
+        foreach (name, importers; importersOf)
+        {
+            if (name !in definedClasses && name !in finished)
+                defineImported(name);
         }
     }
 
@@ -999,7 +1136,7 @@ private final class Analysis
     /// Boot's `@EnableConfigurationProperties`: each listed `@ConfigurationProperties` class becomes a bean named
     /// `<prefix>-<fully qualified name>`, under the enabling configuration's conditions, bound at creation; its
     /// module's types are described for the binder. A class enabled twice is registered once.
-    void enableConfigurationProperties(ref Candidate candidate, string[] terms)
+    void enableConfigurationProperties(ref Candidate candidate, const string[] terms)
     {
         import flint_tool.engine.aot.names : configurationProperties,
             enableConfigurationProperties_ = enableConfigurationProperties;
@@ -1418,7 +1555,7 @@ private final class Analysis
         return names.length ? names[0] : method.name;
     }
 
-    void defineBeanMethods(ref Candidate candidate, ref BeanPlan owner, string[] classTerms, bool proxied)
+    void defineBeanMethods(ref Candidate candidate, const ref BeanPlan owner, const string[] classTerms, bool proxied)
     {
         import flint_tool.engine.aot.conditions : evaluate;
         import flint_tool.engine.aot.names : bean;
