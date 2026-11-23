@@ -453,6 +453,11 @@ Method-level SpEL compiled to D (section 9.1), in the new leaf module `flint.eng
 | `ExpressionSpec` | `annotation`, `attribute`, `source`, `evaluate` | one SpEL-valued attribute |
 | `MethodDescriptor` | `ExpressionSpec[] expressions`, `expression(annotation, attribute)` | the method's compiled expressions |
 | `EventListenerSpec` | `CompiledExpression conditionExpression` | a compiled `@EventListener(condition)` |
+| `MergedAnnotation` | `ubyte aggregateIndex` | 0 for the element, n for its nth supertype or overridden method (section 4.2) |
+| `ArgumentSpec` | `const(Descriptor) descriptor` | `descriptorOf!T` of the parameter type; null for scalars and `string` |
+| `HandlerMapping` | `const(Descriptor) returnDescriptor` | `descriptorOf!T` of the return type; null for scalars and `void` |
+
+The descriptor fields spare dispatch a by-name table lookup per request; a null one means "look up the name", so older generated code keeps working.
 
 Generated registries call `registry.begin(3, ...)`.
 
