@@ -266,6 +266,25 @@ def shared_tools():
     raise SystemExit('no checkout holds the pinned toolchain (tools/install_toolchains.py --compiler dmd)')
 
 
+def private_tools(tools, linker):
+    """A toolchain directory for one checkout: every entry of the shared one linked, except DMD, which is copied and
+    configured to link with `linker` (ADR-021: dev builds link with mold). The shared toolchain other sessions use is
+    never changed."""
+    shared = shared_tools()
+    tools.mkdir()
+    for entry in shared.iterdir():
+        if entry.name == 'dmd2':
+            shutil.copytree(entry, tools / 'dmd2', symlinks=True)
+        elif entry.name == 'flint-toolchain.json':
+            shutil.copy2(entry, tools / entry.name)
+        else:
+            (tools / entry.name).symlink_to(entry)
+    sys.path.insert(0, str(ROOT / 'tools'))
+    import install_toolchains
+    install_toolchains.configure_dmd_linker(tools / 'dmd2' / 'linux' / 'bin64',
+                                            install_toolchains.identify_elf_linker(linker))
+
+
 def toolchain_environment():
     """The pinned toolchain on PATH: the forked DMD, LDC and the tools bin directory of the main checkout (this
     checkout first, for worktrees that carry their own .tools)."""
@@ -382,7 +401,9 @@ def prepare_checkout(spec, logs):
         # The flint CLI at this commit, for steps that build Flint ports; the pinned compilers come from the main
         # checkout's toolchain directory, linked read-only.
         tools = directory / '.tools'
-        if not tools.exists():
+        if not tools.exists() and spec.get('linker'):
+            private_tools(tools, spec['linker'])
+        elif not tools.exists():
             tools.symlink_to(shared_tools())
         # The pinned peers (JDK, Maven, PostgreSQL) installed in this checkout, for spring_bench and load_bench there.
         peers = directory / '.flint' / 'peers'
@@ -539,7 +560,8 @@ def measure_command(entry, built, outdir, smoke):
         cwd, env = ROOT, toolchain_environment()
         if step.get('in'):
             cwd = worktree(built[step['in']]['commit'])[0]
-            env['PATH'] = str(cwd / '.flint' / 'bin') + os.pathsep + env['PATH']
+            private = [cwd / '.flint' / 'bin', cwd / '.tools' / 'dmd2' / 'linux' / 'bin64']
+            env['PATH'] = os.pathsep.join(str(p) for p in private if p.is_dir()) + os.pathsep + env['PATH']
         command = [part.replace('{out}', str(outdir)).replace('{python}', sys.executable) for part in step['argv']]
         if smoke and step.get('smoke_args'):
             command += step['smoke_args']

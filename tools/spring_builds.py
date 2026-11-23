@@ -135,6 +135,13 @@ def measure_flint(name, trials, timed, logs, temporary, result):
         shutil.rmtree(directory / '.flint', ignore_errors=True)
 
     try:
+        # The platform cache (ADR-030 section 5) lives outside the port, so clearing the port's .flint keeps it. One
+        # unscored build primes it, as measure_builds primes the DMD compile server, and its time is recorded.
+        clean()
+        log = logs / f'{name}-flint-prime.log'
+        observed = timed(spec['cached'], directory, env, log)
+        row['flint_first_build_seconds'] = observed['seconds']
+        row['dev_linker'] = dev_linker(env)
         for trial in range(trials):
             for flavour in ('cached', 'scratch'):
                 clean()
@@ -165,6 +172,20 @@ def measure_flint(name, trials, timed, logs, temporary, result):
     finally:
         edit.write_bytes(original)
     return row
+
+
+def dev_linker(env):
+    """The ELF linker the dev-profile DMD on PATH links with: the -fuse-ld its dmd.conf sets, else the system
+    default (ld.bfd)."""
+    dmd = shutil.which('dmd', path=env.get('PATH'))
+    if not dmd:
+        return None
+    config = Path(dmd).resolve().parent / 'dmd.conf'
+    text = config.read_text() if config.is_file() else ''
+    for linker in ('mold', 'lld'):
+        if f'-fuse-ld={linker}' in text:
+            return linker
+    return 'system default (ld.bfd)'
 
 
 def measure_java(name, trials, timed, logs, temporary, result, native=False):
