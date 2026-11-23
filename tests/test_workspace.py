@@ -111,3 +111,20 @@ class PlatformModuleTests(unittest.TestCase):
                           lock)
             self.assertIn('name = "flint:arena"\nkind = "core"\nsource = "flint-home"\nplatform = "flint@monorepo"',
                           lock)
+
+
+class LockPartitionTests(unittest.TestCase):
+    def test_each_repo_carries_its_slice_of_the_native_and_peer_locks(self):
+        import platform_modules
+
+        partitions = platform_modules.lock_partitions()
+        self.assertEqual(partitions, json.loads((ROOT / 'policy/lock-partitions.json').read_text()))
+        self.assertEqual(partitions['native']['flint'], ['libyaml', 'utf8proc'])
+        framework = set(partitions['native']['framework'])
+        self.assertTrue({'openssl', 'sqlite', 'llhttp', 'zlib', 'zstd'} <= framework)
+        self.assertNotIn('libyaml', framework)
+        self.assertEqual(partitions['peers']['framework'], ['jre', 'kafka', 'minio', 'nats', 'valkey'])
+        self.assertEqual(partitions['peers']['flint'], ['jdk', 'maven', 'spring-boot'])
+        native = json.loads((ROOT / 'policy/native-lock.json').read_text())['libraries']
+        covered = set().union(*map(set, partitions['native'].values()))
+        self.assertEqual(covered, {row['name'] for row in native})
