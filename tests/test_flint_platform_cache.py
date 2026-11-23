@@ -75,6 +75,9 @@ class PlatformCacheTests(unittest.TestCase):
         platform = (self.project / '.flint/generated/platform/dub.sdl').read_text()
         self.assertIn('targetType "sourceLibrary"', platform)
         self.assertNotIn('sourcePaths', platform)
+        prelude = (self.project / '.flint/generated/platform/dmd-server-prelude.txt').read_text().splitlines()
+        self.assertTrue(any(line.startswith('-I') for line in prelude), prelude)
+        self.assertIn('flint.arena', prelude)
 
     def test_another_project_links_the_same_archives_without_compiling_them(self):
         other = self.directory / 'other'

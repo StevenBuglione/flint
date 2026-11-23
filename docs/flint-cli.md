@@ -373,6 +373,7 @@ The pinned platform modules (the core packages, framework modules and Boot libra
 - **Linking.** `.flint/generated/platform/dub.sdl` lists each module as its import paths and settings, without sources. The project's recipe depends on it and links the archives as one group, so archive order does not matter.
 - **Reproducible.** The prime build runs from the Flint home, and every archive's member headers are normalized as `ar D` does (time, owner and group zero, mode 644). A rebuild of the same source with the same toolchain and flags then has the same bytes, in another project and another cache. `tests/test_flint_platform_cache.py` checks it.
 - **Interfaces.** Modules are imported from their pinned source. DMD 2.114's `-H` interface files drop the function bodies that compile-time evaluation needs, and its `-inline` full output loses the imports behind expanded UDA sequences, so `.di` files would not compile Flint's modules. Holding the modules' semantic analysis belongs to the compile server.
+- **Compile-server prelude.** `.flint/generated/platform/dmd-server-prelude.txt` lists, one per line, the import paths (`-I<dir>`), version identifiers and flags of the platform modules the project depends on, then their D module names. A project build passes it to DMD as `FLINT_DMD_SERVER_PRELUDE`, unless the profile turns the compile server off. The file depends only on the platform's source, settings and flags. The forked compile server is meant to preload those modules and key itself by the file's digest. Until the fork reads the variable, it has no effect.
 - **Off.** Use `--no-platform-cache` or `FLINT_PLATFORM_CACHE=0`. Sanitizer and cross-target builds always compile from source. On this first slice the cache is enabled on Linux hosts only, until the macOS and Windows archivers are checked.
 
 The receipt's `platform_archives` lists each linked module with its key and archive SHA-256; it is empty when the modules compiled from source.
@@ -397,4 +398,4 @@ Every artifact has `<artifact>.receipt.json` (`flint.receipt/1`) next to it. Wor
 | `FLINT_DUB_INDEX` | An additional DUB compatibility index, for private packages. |
 | `SOURCE_DATE_EPOCH` | Timestamps of `flint package` archives, images and SBOMs, for byte-reproducible packages. |
 
-`flint` removes `DFLAGS` from its builds. It records `FLINT_DMD_SERVER`, `FLINT_DUB_PIPELINE`, `FLINT_DMD_DIRECT_LINK`, `FLINT_LINK_THREADS`, `CC` and `LD` in receipts when they are set.
+`flint` removes `DFLAGS` and `FLINT_DMD_SERVER_PRELUDE` from its builds and sets the prelude itself. It records `FLINT_DMD_SERVER`, `FLINT_DUB_PIPELINE`, `FLINT_DMD_DIRECT_LINK`, `FLINT_LINK_THREADS`, `CC` and `LD` in receipts when they are set.

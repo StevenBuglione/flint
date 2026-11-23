@@ -33,6 +33,8 @@ enum cacheFormat = "flint.platform-cache/1";
 /// Archives kept per module. A source edit re-keys the module and every module that imports it, so the cache keeps
 /// the newest few and removes older ones after each priming build.
 enum keptPerModule = 4;
+/// The compile server's platform prelude, relative to the project root (`renderPrelude`).
+enum preludeFile = ".flint/generated/platform/dmd-server-prelude.txt";
 
 /// One platform module, as DUB describes it.
 struct PlatformModule
@@ -82,6 +84,8 @@ struct PlatformPlan
     string[] archives;
     /// Modules compiled into the cache by this build.
     size_t primed;
+    /// The compile server's prelude for the project's platform modules: FLINT_DMD_SERVER_PRELUDE.
+    string prelude;
 }
 
 /// What keys and builds the platform modules: the tools, flags and environment of the project's build.
@@ -171,6 +175,8 @@ bool planPlatform(ref Session session, string root, const ref Resolution resolut
             plan.archives ~= item.archive;
     }
     writeIfChanged(buildPath(root, platformDirectory, "dub.sdl"), renderPlatformRoot(plan.modules));
+    plan.prelude = buildPath(root, preludeFile);
+    writeIfChanged(plan.prelude, renderPrelude(plan.modules, resolution.direct, inputs.dflags));
     plan.active = true;
     return true;
 }
@@ -581,6 +587,92 @@ string[] linkGroup(scope const string[] archives)
         return archives.dup;
 }
 
+/// The compile server's platform prelude: what the DMD compile server preloads besides druntime and Phobos, so an
+/// app compile does not analyse the platform modules again. Lines are the import paths (`-I<dir>`), version
+/// identifiers (`-version=<id>`) and DFLAGS the modules compile with, then the names of the D modules of every
+/// platform package the project depends on, directly or not. The file is a pure function of the platform's source,
+/// settings and flags, so the server keys itself by its digest, and a request whose semantic switches differ from
+/// the prelude's compiles in-process.
+string renderPrelude(scope const PlatformModule[] modules, scope const string[] roots, string dflags)
+{
+    import std.algorithm.sorting : sort;
+    import std.array : split;
+
+    size_t[string] index;
+    foreach (position, ref item; modules)
+        index[item.name] = position;
+    bool[string] reached;
+    void visit(string name)
+    {
+        if (name in reached || name !in index)
+            return;
+        reached[name] = true;
+        foreach (dependency; modules[index[name]].dependencies)
+            visit(dependency);
+    }
+
+    foreach (root; roots)
+        visit(root);
+    string[] paths, versions, names;
+    bool[string] seen;
+    foreach (ref item; modules)
+    {
+        if (item.name !in reached)
+            continue;
+        foreach (path; item.importPaths)
+            if (unseen(seen, "-I" ~ path))
+                paths ~= "-I" ~ path;
+        foreach (identifier; item.versions)
+            if (unseen(seen, "-version=" ~ identifier))
+                versions ~= "-version=" ~ identifier;
+        foreach (file; item.files)
+        {
+            const name = moduleName(file, item.importPaths);
+            if (name.length && unseen(seen, name))
+                names ~= name;
+        }
+    }
+    sort(versions);
+    sort(names);
+    string text;
+    foreach (line; paths ~ versions ~ dflags.split ~ names)
+        text ~= line ~ "\n";
+    return text;
+}
+
+private bool unseen(ref bool[string] seen, string value)
+{
+    if (value in seen)
+        return false;
+    seen[value] = true;
+    return true;
+}
+
+/// The D module a source file declares by its path under the innermost import path, or null: `flint.web` for
+/// `<import>/flint/web/package.d`.
+private string moduleName(string file, scope const string[] importPaths)
+{
+    import std.array : replace;
+    import std.path : dirSeparator, extension, stripExtension;
+
+    if (file.extension != ".d")
+        return null;
+    string best;
+    foreach (path; importPaths)
+    {
+        const prefix = path ~ dirSeparator;
+        if (file.length > prefix.length && file[0 .. prefix.length] == prefix && path.length > best.length)
+            best = path;
+    }
+    if (best.length == 0)
+        return null;
+    string name = file[best.length + 1 .. $].stripExtension.replace(dirSeparator, ".");
+    enum suffix = ".package";
+    if (name.length > suffix.length && name[$ - suffix.length .. $] == suffix)
+        name = name[0 .. $ - suffix.length];
+    return name;
+}
+
 @safe unittest
 {
     ubyte[] archive = cast(ubyte[])("!<arch>\n" ~ "a.o/            1763888000  1000  1000  100664  3         `\n"
@@ -638,6 +730,30 @@ string[] linkGroup(scope const string[] archives)
         ~ "    targetType \"sourceLibrary\"\n    importPaths \"/h/framework/web/source\"\n    versions \"V\"\n"
         ~ "    dependency \"flint:core\" version=\"*\"\n}\n";
     assert(recipe[$ - expected.length .. $] == expected, recipe);
+}
+
+@safe unittest
+{
+    PlatformModule core, web, desktop;
+    core.name = "flint:core";
+    core.importPaths = ["/h/core/source"];
+    core.versions = ["Z", "A"];
+    core.files = [
+        "/h/core/source/flint/core/package.d", "/h/core/source/flint/core/views/page.d",
+        "/h/core/dub.sdl"
+    ];
+    web.name = "flint:web";
+    web.importPaths = ["/h/web/source", "/h/web/source/extra"];
+    web.versions = ["A"];
+    web.dependencies = ["flint:core", "vibe-d"];
+    web.files = ["/h/web/source/flint/web/http.d", "/h/web/source/extra/glue.d"];
+    desktop.name = "flint:desktop";
+    desktop.importPaths = ["/h/desktop/source"];
+    desktop.files = ["/h/desktop/source/flint/desktop.d"];
+    const prelude = renderPrelude([core, desktop, web], ["flint:web"], "-g -preview=dip1000");
+    assert(prelude == "-I/h/core/source\n-I/h/web/source\n-I/h/web/source/extra\n-version=A\n-version=Z\n-g\n"
+            ~ "-preview=dip1000\nflint.core\nflint.core.views.page\nflint.web.http\nglue\n", prelude);
+    assert(renderPrelude([core, desktop, web], null, "-g") == "-g\n");
 }
 
 @safe unittest

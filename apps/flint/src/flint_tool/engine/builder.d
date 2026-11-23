@@ -132,7 +132,8 @@ EnvVar[] buildEnvironment(ref Session session, const ref Toolchain toolchain, co
         }
         else
             const key = name;
-        if (key == "DFLAGS" || key == "DUB_HOME" || key == "PATH")
+        // flint sets the prelude itself, for the project builds that link the platform cache.
+        if (key == "DFLAGS" || key == "DUB_HOME" || key == "PATH" || key == "FLINT_DMD_SERVER_PRELUDE")
             continue;
         const disabledServer = name == "FLINT_DMD_SERVER" && !spec.compile_server;
         if (disabledServer || (name == "FLINT_DUB_PIPELINE" && !spec.dub_pipeline))
@@ -460,6 +461,8 @@ bool buildProject(ref Session session, const ref Manifest manifest, const ref Re
     const command = projectCommand(toolchain, compiler, manifest.root, request);
     result.command = command.dup;
     auto environment = buildEnvironment(session, toolchain, spec, dubHome, settings.dflags);
+    if (result.platform.active && spec.compile_server)
+        environment ~= EnvVar("FLINT_DMD_SERVER_PRELUDE", result.platform.prelude);
     const label = request.test ? "test" : request.profile;
     session.progress(request.test ? "Compiling" : "Building",
             manifest.name ~ " " ~ manifest.version_ ~ " (" ~ label ~ ", " ~ compiler ~ ")");
