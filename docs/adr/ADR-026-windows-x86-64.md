@@ -210,7 +210,7 @@ One change applies to every package: `Thread` is imported from `core.thread.osth
 
 Where Windows semantics differ, this is what Flint does:
 
-- **The reactor (`flint.reactor`).**
+- **The reactor (`flint.engine.reactor`).**
   - Windows has one backend, the I/O completion port (`Backend.iocp`). It runs through the same completion path as io_uring.
   - Accepts use `AcceptEx` on worker 0, and reads and writes use overlapped `WSARecv` and `WSASend` into the worker's stable slots.
   - Cancellation is `CancelIoEx`, and storage is released only when the original packet is dequeued.
@@ -221,11 +221,11 @@ Where Windows semantics differ, this is what Flint does:
   - Tests that asked for "the readiness backend" use IOCP on Windows. The cancellation race, the backpressured write drain, the foreign-worker close and the `TCP_NODELAY` check now run there, on DMD and LDC. Descriptor exhaustion has no Windows counterpart to `RLIMIT_NOFILE` and stays POSIX.
   - With a completion port, an OVERLAPPED's status is written only when its packet is dequeued. The low-level test of "a read completed before `CancelIoEx`" therefore waits for the loopback receive instead of observing it.
 
-- **Wake-ups (`flint.security`, `flint.cache`).**
+- **Wake-ups (`flint.engine.security`, `flint.engine.cache`).**
   - The JWKS worker and the cache monitor wait on an auto-reset event (`CreateEventW`, `SetEvent`, `WaitForSingleObject`) where Linux uses an eventfd and macOS a pipe.
   - Signals sent before a wait collapse into one wake-up, as an eventfd drain does.
 - **Secure random bytes (`flint.conc`).** `BCryptGenRandom` with the system-preferred generator, resolved from System32's `bcrypt.dll` at run time.
-- **IP literals (`flint.security`).** Winsock's `inet_pton`, which needs no `WSAStartup`. The packages that call Winsock declare `libs "ws2_32" platform="windows"`.
+- **IP literals (`flint.engine.security`).** Winsock's `inet_pton`, which needs no `WSAStartup`. The packages that call Winsock declare `libs "ws2_32" platform="windows"`.
 - **Backend selection in packages and tests.** Code that picked kqueue on macOS and epoll elsewhere picks IOCP on Windows.
 - **Child processes (`flint.os`).** The supervisor and output pump stay unchanged. They wait on small integer descriptors, which on Windows name slots in a static table: an overlapped named-pipe reader with its own buffer, a process handle, or a manual-reset event.
   - Output pipes are named pipes, because anonymous pipes cannot be waited on. Each reader keeps one overlapped read outstanding. A read is cancelled with `CancelIoEx`, and its final completion is observed before the buffer and `OVERLAPPED` are released.
@@ -284,7 +284,7 @@ Two details of the MSVC build of Flint's C shims (`native/ffi`):
 - MSVC's C mode has no `max_align_t`, so `flint_codec_core.c` declares one for MSVC from the most strictly aligned scalar types, and C11 atomics need `/experimental:c11atomics`;
 - the providers are static archives whose Windows headers declare DLL imports by default, so the shims compile with `UTF8PROC_STATIC`, `CURL_STATICLIB`, `NGHTTP2_STATICLIB`, `YAML_DECLARE_STATIC`, `LIBARCHIVE_STATIC` and `SODIUM_STATIC`.
 
-`flint.prompt`'s secret store is `native/secret.c` on Linux and macOS. Windows has no C step in the package build, so `flint.prompt.sys.secret` defines the same functions in D there, wiping with volatile stores.
+`flint.engine.prompt`'s secret store is `native/secret.c` on Linux and macOS. Windows has no C step in the package build, so `flint.engine.prompt.sys.secret` defines the same functions in D there, wiping with volatile stores.
 
 Next, in ADR-025's order:
 
@@ -295,7 +295,7 @@ Next, in ADR-025's order:
 
 ## Public API additions
 
-None. `flint.reactor.Backend.iocp` is already part of the frozen contract.
+None. `flint.engine.reactor.Backend.iocp` is already part of the frozen contract.
 
 ## Consequences for Linux and macOS
 

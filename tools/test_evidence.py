@@ -182,13 +182,13 @@ class SourceIdentityTests(unittest.TestCase):
         import native_build
         (self.root / '.gitignore').write_text('.native/\n')
         policy = self.root / 'policy'; policy.mkdir()
-        lock = {'libraries': [{'name': 'wasmtime', 'consumers': ['wasi'], 'dependencies': []}]}
+        lock = {'libraries': [{'name': 'wasmtime', 'consumers': ['engine-wasi'], 'dependencies': []}]}
         (policy / 'native-lock.json').write_text(json.dumps(lock))
-        (policy / 'packages.json').write_text(json.dumps({'packages': {'wasi': {}}}))
-        package = self.root / 'packages/wasi'; baseline = package / 'bench/baseline'
+        (policy / 'packages.json').write_text(json.dumps({'packages': {'engine-wasi': {}}}))
+        package = self.root / 'packages/engine-wasi'; baseline = package / 'bench/baseline'
         baseline.mkdir(parents=True)
         recipe = package / 'dub.sdl'; control = baseline / 'dub.sdl'
-        recipe.write_text('name "wasi"\n')
+        recipe.write_text('name "engine-wasi"\n')
         control_source = 'name "probe-wasi-baseline"\n'
         control.write_text(control_source)
         subprocess.run(['git', 'add', '.'], cwd=self.root, check=True)
@@ -237,13 +237,13 @@ class SourceIdentityTests(unittest.TestCase):
         (self.root / '.gitignore').write_text('.native/\n')
         policy = self.root / 'policy'; policy.mkdir()
         (policy / 'native-lock.json').write_text(json.dumps({'libraries': [
-            {'name': 'protobuf-c', 'consumers': ['rpc'], 'dependencies': []}
+            {'name': 'protobuf-c', 'consumers': ['engine-rpc'], 'dependencies': []}
         ]}))
-        (policy / 'packages.json').write_text(json.dumps({'packages': {'rpc': {}}}))
-        package = self.root / 'packages/rpc'
+        (policy / 'packages.json').write_text(json.dumps({'packages': {'engine-rpc': {}}}))
+        package = self.root / 'packages/engine-rpc'
         baseline = package / 'bench/baseline'; baseline.mkdir(parents=True)
         recipe = package / 'dub.sdl'
-        recipe.write_text('name "rpc"\nconfiguration "unittest" {\n    targetType "library"\n}\n')
+        recipe.write_text('name "engine-rpc"\nconfiguration "unittest" {\n    targetType "library"\n}\n')
         probes = {package / 'bench/dub.sdl': 'name "probe-rpc"\n',
                   baseline / 'dub.sdl': 'name "probe-rpc-baseline"\n'}
         for probe, text in probes.items():
@@ -318,11 +318,11 @@ class MeasurementDefinitionTests(unittest.TestCase):
                     builds.stripped_size(target, 'strip', 'readelf', root, log)
 
     def test_equivalent_native_profiles_ignore_install_prefix_only(self):
-        first = {'wasi': 'versions "FlintNativeWasmtime"\nlflags "/base/native/lib/libwasmtime.a"\n'}
-        second = {'wasi': 'versions "FlintNativeWasmtime"\nlflags "/candidate/native/lib/libwasmtime.a"\n'}
+        first = {'engine-wasi': 'versions "FlintNativeWasmtime"\nlflags "/base/native/lib/libwasmtime.a"\n'}
+        second = {'engine-wasi': 'versions "FlintNativeWasmtime"\nlflags "/candidate/native/lib/libwasmtime.a"\n'}
         self.assertEqual(builds.native_profile_hash(first, '/base/native'),
                          builds.native_profile_hash(second, '/candidate/native'))
-        second['wasi'] = second['wasi'].replace('Wasmtime', 'Wamr')
+        second['engine-wasi'] = second['engine-wasi'].replace('Wasmtime', 'Wamr')
         self.assertNotEqual(builds.native_profile_hash(first, '/base/native'),
                             builds.native_profile_hash(second, '/candidate/native'))
     def test_independent_estimator_is_ratio_of_group_medians(self):

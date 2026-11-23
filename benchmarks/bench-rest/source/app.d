@@ -1,6 +1,6 @@
 module app;
 
-import flint.web : runApplication;
+import flint.engine.web : runApplication;
 import flint_bench_rest.profile : Application, minimalRestOptions;
 import std.conv : to;
 import std.string : lastIndexOf;

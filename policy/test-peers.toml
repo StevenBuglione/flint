@@ -68,46 +68,46 @@ install = "python3 tools/native_build.py --profile ci --target {host} --phase bu
 
 [peer.ai]
 description = "loopback HTTP peer speaking the five AI dialects"
-command = ["python3", "packages/ai/tests/local_peer.py"]
+command = ["python3", "packages/engine-ai/tests/local_peer.py"]
 
 [peer.s3]
 description = "loopback S3 peer re-verifying every SigV4 signature"
-command = ["python3", "packages/storage/tests/local_peer.py"]
+command = ["python3", "packages/engine-storage/tests/local_peer.py"]
 
 [peer.minio]
 description = "real MinIO server"
-command = ["python3", "packages/storage/tests/minio_peer.py", "{bin:minio}"]
+command = ["python3", "packages/engine-storage/tests/minio_peer.py", "{bin:minio}"]
 
 [peer.http]
 description = "Go HTTP/1.1, HTTP/2 and TLS protocol peers"
-command = ["python3", "packages/http/tests/fixture/run.py", "--server", "{go-build:packages/http/tests/fixture}", "--"]
+command = ["python3", "packages/engine-http/tests/fixture/run.py", "--server", "{go-build:packages/engine-http/tests/fixture}", "--"]
 
 [peer.jwks]
 description = "Go HTTPS JWKS peer"
-command = ["python3", "packages/security/tests/security_fixture/run.py", "--server", "{go-build:packages/security/tests/security_fixture}", "--"]
+command = ["python3", "packages/engine-security/tests/security_fixture/run.py", "--server", "{go-build:packages/engine-security/tests/security_fixture}", "--"]
 
 [peer.smtp]
 description = "Go loopback SMTP and HTTPS provider peers"
-command = ["python3", "packages/mail/tests/fixture/run.py", "--server", "{go-build:packages/mail/tests/fixture}", "--"]
+command = ["python3", "packages/engine-mail/tests/fixture/run.py", "--server", "{go-build:packages/engine-mail/tests/fixture}", "--"]
 
 [peer.redis]
 description = "authenticated Valkey and the scripted Go RESP3 peer"
-command = ["python3", "packages/cache/tests/redis_fixture/run.py", "--server", "{go-build:packages/cache/tests/redis_fixture}", "--valkey", "{bin:valkey}", "--"]
+command = ["python3", "packages/engine-cache/tests/redis_fixture/run.py", "--server", "{go-build:packages/engine-cache/tests/redis_fixture}", "--valkey", "{bin:valkey}", "--"]
 
 [peer.postgres]
 description = "disposable PostgreSQL cluster"
 command = ["python3", "tools/pg_peer.py", "--bin", "{bin:postgres}", "--variable", "FLINT_SQL_PG_TEST_DSN", "--variable", "FLINT_DATA_PG_TEST_DSN", "--variable", "FLINT_MIGRATE_PG_TEST_DSN", "--"]
 
 [packages]
-ai = ["ai"]
-storage = ["s3", "minio"]
-http = ["http"]
-security = ["jwks"]
-mail = ["smtp"]
-cache = ["redis"]
-sql = ["postgres"]
-data = ["postgres"]
-migrate = ["postgres"]
+engine-ai = ["ai"]
+engine-storage = ["s3", "minio"]
+engine-http = ["http"]
+engine-security = ["jwks"]
+engine-mail = ["smtp"]
+engine-cache = ["redis"]
+engine-sql = ["postgres"]
+engine-data = ["postgres"]
+engine-migrate = ["postgres"]
 
 [scenarios]
-mq = ["python3", "tools/mq_live.py", "--kafka", "{bin:kafka}", "--java-home", "{bin:jre}", "--nats", "{bin:nats}", "--dub", "{bin:dub}", "--dmd", "{bin:dmd}", "--prefix", "{bin:native}"]
+engine-mq = ["python3", "tools/mq_live.py", "--kafka", "{bin:kafka}", "--java-home", "{bin:jre}", "--nats", "{bin:nats}", "--dub", "{bin:dub}", "--dmd", "{bin:dmd}", "--prefix", "{bin:native}"]

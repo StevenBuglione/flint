@@ -3,6 +3,7 @@
 The flint binary is bootstrapped by tools/install_toolchains.py --compiler flint when it is missing.
 """
 import json
+import re
 import os
 import shutil
 import subprocess
@@ -111,7 +112,7 @@ class StructuralParityTests(unittest.TestCase):
         cls.base = Path(cls.temporary.name) / 'base'
         ignore = shutil.ignore_patterns('.dub', 'build', '*.a', '*.o', 'flint-*-test-*', '__pycache__')
         cls.base.mkdir()
-        for name in ('policy', 'packages', 'tools', 'toolchain'):
+        for name in ('policy', 'packages', 'framework', 'tools', 'toolchain'):
             shutil.copytree(ROOT / name, cls.base / name, ignore=ignore, symlinks=True)
         for name in ('dub.sdl', 'flint.toml', 'dscanner.ini', 'dfmt.ini', '.editorconfig'):
             shutil.copy2(ROOT / name, cls.base / name)
@@ -136,8 +137,12 @@ class StructuralParityTests(unittest.TestCase):
             # The text output is byte-identical; the JSON schema always carries compiler_profiles.
             human = flint('check', '--gate', 'structural', '--package', package, cwd=work,
                           env=environment(FLINT_HOME=str(work)))
-            self.assertEqual(human.stdout, gate.stdout)
+            # flint check does not run gates.py's framework_layers yet (policy/framework.json, a77bb57), so the
+            # framework module count is gates.py's alone.
+            python_text = re.sub(r'\n  "framework_modules": \d+,', '', gate.stdout)
+            self.assertEqual(human.stdout, python_text)
             expected = json.loads(gate.stdout)
+            expected.pop('framework_modules', None)
             expected['generated_dependencies'].setdefault('compiler_profiles', 0)
             expected.setdefault('repo', '')
             expected.setdefault('pending_repo_edges', [])
@@ -188,7 +193,7 @@ class StructuralParityTests(unittest.TestCase):
             # The repo split (plan section 7): flint's log may not depend on the framework's di.
             ('arena', edit('policy/packages.json', '"repo": "flint",\n      "dependencies": [\n        "arena",\n'
                            '        "conc"', '"repo": "flint",\n      "dependencies": [\n        "arena",\n'
-                           '        "di",\n        "conc"'), 'FLINT-E0532'),
+                           '        "engine-di",\n        "conc"'), 'FLINT-E0532'),
         ]
         for package, mutate, code in cases:
             with self.subTest(code=code):
@@ -204,7 +209,7 @@ class FixturePeerTests(unittest.TestCase):
         cls.work = Path(cls.temporary.name) / 'work'
         ignore = shutil.ignore_patterns('.dub', 'build', '*.a', '*.o', 'flint-*-test-*', '__pycache__')
         cls.work.mkdir()
-        for name in ('policy', 'packages', 'tools', 'toolchain'):
+        for name in ('policy', 'packages', 'framework', 'tools', 'toolchain'):
             shutil.copytree(ROOT / name, cls.work / name, ignore=ignore, symlinks=True)
         for name in ('dub.sdl', 'flint.toml', 'dscanner.ini', 'dfmt.ini', '.editorconfig'):
             shutil.copy2(ROOT / name, cls.work / name)
@@ -323,11 +328,11 @@ class ProjectLifecycleTests(unittest.TestCase):
         self.assertEqual(status, 1)
         typo = next(item for item in document['diagnostics'] if item['code'] == 'FLINT-E0103')
         self.assertEqual((typo['fix'], typo['file'], typo['line']), ('did you mean `version`?', 'flint.toml', 3))
-        manifest.write_text(original.replace('"flint:log" = {}\n', '"flint:log" = {}\n"flint:di" = {}\n'))
+        manifest.write_text(original.replace('"flint:log" = {}\n', '"flint:log" = {}\n"flint:engine-di" = {}\n'))
         status, document = flint_json('build', cwd=work)
         self.assertEqual((status, codes(document)), (3, ['FLINT-E0202']))
         stale = next(item for item in document['diagnostics'] if item['code'] == 'FLINT-E0202')
-        self.assertIn('added flint:di', stale['message'])
+        self.assertIn('added flint:engine-di', stale['message'])
         status, document = flint_json('lock', cwd=work)
         self.assertEqual((status, document['state']), (0, 'written'))
         status, document = flint_json('lock', '--check', cwd=work)

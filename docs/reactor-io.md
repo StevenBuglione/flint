@@ -1,6 +1,6 @@
 # Reactor I/O and timer contract
 
-This extends the [reactor handoff contract](../handoff/contracts/source/flint/reactor.d) with the submission and cancellation operations required by the [reactor specification](../handoff/specs/tier-0/reactor.md). The existing signatures and backend enum values retain their meaning.
+This extends the [reactor handoff contract](../handoff/contracts/source/flint/engine/reactor.d) with the submission and cancellation operations required by the [reactor specification](../handoff/specs/tier-0/reactor.md). The existing signatures and backend enum values retain their meaning.
 
 ```d
 alias TaskFn = void function() @safe nothrow @nogc;

@@ -19,7 +19,7 @@
       "license_expression": "MIT",
       "license_selected": "MIT",
       "consumers": [
-        "codec"
+        "engine-codec"
       ],
       "dependencies": [],
       "header_strategy": "C ABI shim compiled against the pinned headers; narrow extern(C) D declarations; opaque native handles. ImportC only for the sanitized Flint shim header.",
@@ -55,8 +55,8 @@
       "license_expression": "curl",
       "license_selected": "curl",
       "consumers": [
-        "http",
-        "mail"
+        "engine-http",
+        "engine-mail"
       ],
       "dependencies": [
         "openssl",
@@ -97,7 +97,7 @@
       "license_expression": "BSD-3-Clause",
       "license_selected": "BSD-3-Clause",
       "consumers": [
-        "cache"
+        "engine-cache"
       ],
       "dependencies": [
         "openssl"
@@ -136,7 +136,7 @@
       "license_expression": "BSD-2-Clause AND BSD-3-Clause AND ISC AND MIT",
       "license_selected": "BSD-2-Clause AND BSD-3-Clause AND ISC AND MIT",
       "consumers": [
-        "codec"
+        "engine-codec"
       ],
       "dependencies": [
         "zlib",
@@ -175,7 +175,7 @@
       "license_expression": "PostgreSQL",
       "license_selected": "PostgreSQL",
       "consumers": [
-        "sql"
+        "engine-sql"
       ],
       "dependencies": [
         "openssl",
@@ -215,7 +215,7 @@
       "license_expression": "BSD-2-Clause AND MIT AND Apache-2.0",
       "license_selected": "BSD-2-Clause AND MIT AND Apache-2.0",
       "consumers": [
-        "mq"
+        "engine-mq"
       ],
       "dependencies": [
         "openssl",
@@ -255,7 +255,7 @@
       "license_expression": "ISC",
       "license_selected": "ISC",
       "consumers": [
-        "security"
+        "engine-security"
       ],
       "dependencies": [],
       "header_strategy": "C ABI shim compiled against the pinned headers; narrow extern(C) D declarations; opaque native handles. ImportC only for the sanitized Flint shim header.",
@@ -292,7 +292,7 @@
       "license_expression": "MIT",
       "license_selected": "MIT",
       "consumers": [
-        "reactor"
+        "engine-reactor"
       ],
       "dependencies": [],
       "header_strategy": "C ABI shim compiled against the pinned headers; narrow extern(C) D declarations; opaque native handles. ImportC only for the sanitized Flint shim header.",
@@ -366,7 +366,7 @@
       "license_expression": "MIT",
       "license_selected": "MIT",
       "consumers": [
-        "web"
+        "engine-web"
       ],
       "dependencies": [],
       "header_strategy": "C ABI shim compiled against the pinned headers; narrow extern(C) D declarations; opaque native handles. ImportC only for the sanitized Flint shim header.",
@@ -406,9 +406,9 @@
       "license_expression": "MIT",
       "license_selected": "MIT",
       "consumers": [
-        "web",
-        "http",
-        "rpc"
+        "engine-web",
+        "engine-http",
+        "engine-rpc"
       ],
       "dependencies": [],
       "header_strategy": "C ABI shim compiled against the pinned headers; narrow extern(C) D declarations; opaque native handles. ImportC only for the sanitized Flint shim header.",
@@ -444,14 +444,14 @@
       "license_expression": "Apache-2.0",
       "license_selected": "Apache-2.0",
       "consumers": [
-        "web",
-        "http",
-        "rpc",
-        "security",
-        "sql",
-        "mail",
-        "mq",
-        "storage"
+        "engine-web",
+        "engine-http",
+        "engine-rpc",
+        "engine-security",
+        "engine-sql",
+        "engine-mail",
+        "engine-mq",
+        "engine-storage"
       ],
       "dependencies": [],
       "header_strategy": "C ABI shim compiled against the pinned headers; narrow extern(C) D declarations; opaque native handles. ImportC only for the sanitized Flint shim header.",
@@ -488,7 +488,7 @@
       "license_expression": "BSD-2-Clause",
       "license_selected": "BSD-2-Clause",
       "consumers": [
-        "rpc"
+        "engine-rpc"
       ],
       "dependencies": [],
       "header_strategy": "C ABI shim compiled against the pinned headers; narrow extern(C) D declarations; opaque native handles. ImportC only for the sanitized Flint shim header.",
@@ -564,7 +564,7 @@
       "license_expression": "Zlib",
       "license_selected": "Zlib",
       "consumers": [
-        "desktop"
+        "engine-desktop"
       ],
       "dependencies": [],
       "header_strategy": "C ABI shim compiled against the pinned headers; narrow extern(C) D declarations; opaque native handles. ImportC only for the sanitized Flint shim header.",
@@ -599,7 +599,7 @@
       "license_expression": "blessing",
       "license_selected": "blessing",
       "consumers": [
-        "sql"
+        "engine-sql"
       ],
       "dependencies": [],
       "header_strategy": "C ABI shim compiled against the pinned headers; narrow extern(C) D declarations; opaque native handles. ImportC only for the sanitized Flint shim header.",
@@ -637,7 +637,7 @@
       "license_expression": "MIT",
       "license_selected": "MIT",
       "consumers": [
-        "codec"
+        "engine-codec"
       ],
       "dependencies": [],
       "header_strategy": "C ABI shim compiled against the pinned headers; narrow extern(C) D declarations; opaque native handles. ImportC only for the sanitized Flint shim header.",
@@ -673,8 +673,8 @@
       "license_expression": "MIT AND LicenseRef-Unicode-Data",
       "license_selected": "MIT AND LicenseRef-Unicode-Data",
       "consumers": [
-        "style",
-        "widgets"
+        "engine-style",
+        "engine-widgets"
       ],
       "dependencies": [],
       "header_strategy": "C ABI shim compiled against the pinned headers; narrow extern(C) D declarations; opaque native handles. ImportC only for the sanitized Flint shim header.",
@@ -711,7 +711,7 @@
       "license_expression": "Apache-2.0 WITH LLVM-exception",
       "license_selected": "Apache-2.0 WITH LLVM-exception",
       "consumers": [
-        "wasi"
+        "engine-wasi"
       ],
       "dependencies": [],
       "header_strategy": "C ABI shim compiled against the pinned headers; narrow extern(C) D declarations; opaque native handles. ImportC only for the sanitized Flint shim header.",
@@ -747,7 +747,7 @@
       "license_expression": "Apache-2.0 WITH LLVM-exception",
       "license_selected": "Apache-2.0 WITH LLVM-exception",
       "consumers": [
-        "wasi"
+        "engine-wasi"
       ],
       "dependencies": [],
       "header_strategy": "C ABI shim compiled against the pinned headers; narrow extern(C) D declarations; opaque native handles. ImportC only for the sanitized Flint shim header.",
@@ -780,7 +780,7 @@
       "license_expression": "LGPL-2.1-or-later AND BSD-2-Clause",
       "license_selected": "LGPL-2.1-or-later AND BSD-2-Clause (unmodified dynamic system libraries)",
       "consumers": [
-        "desktop"
+        "engine-desktop"
       ],
       "dependencies": [],
       "header_strategy": "Direct extern(C) D declarations of the GLib, GTK 3 and WebKitGTK 4.1 functions used; no Flint C shim and no ImportC.",
@@ -798,7 +798,7 @@
     },
     {
       "consumers": [
-        "desktop"
+        "engine-desktop"
       ],
       "default_enabled": false,
       "dependencies": [],
@@ -844,7 +844,7 @@
       "license_expression": "MIT",
       "license_selected": "MIT",
       "consumers": [
-        "desktop"
+        "engine-desktop"
       ],
       "dependencies": [],
       "header_strategy": "C ABI shim compiled against the pinned headers; narrow extern(C) D declarations; opaque native handles. ImportC only for the sanitized Flint shim header.",
@@ -885,7 +885,7 @@
       "license_expression": "MIT OR Apache-2.0",
       "license_selected": "MIT OR Apache-2.0",
       "consumers": [
-        "desktop"
+        "engine-desktop"
       ],
       "dependencies": [],
       "header_strategy": "C ABI shim compiled against the pinned headers; narrow extern(C) D declarations; opaque native handles. ImportC only for the sanitized Flint shim header.",
@@ -921,9 +921,9 @@
       "license_expression": "Zlib",
       "license_selected": "Zlib",
       "consumers": [
-        "codec",
-        "http",
-        "mq"
+        "engine-codec",
+        "engine-http",
+        "engine-mq"
       ],
       "dependencies": [],
       "header_strategy": "C ABI shim compiled against the pinned headers; narrow extern(C) D declarations; opaque native handles. ImportC only for the sanitized Flint shim header.",
@@ -963,8 +963,8 @@
       "license_expression": "BSD-3-Clause",
       "license_selected": "BSD-3-Clause",
       "consumers": [
-        "codec",
-        "mq"
+        "engine-codec",
+        "engine-mq"
       ],
       "dependencies": [],
       "header_strategy": "C ABI shim compiled against the pinned headers; narrow extern(C) D declarations; opaque native handles. ImportC only for the sanitized Flint shim header.",

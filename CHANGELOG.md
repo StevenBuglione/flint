@@ -11,20 +11,20 @@
   - The release and size profiles pass LDC's `-fno-moduleinfo-localclasses`, so `--gc-sections` drops unused classes: 2,000 classes with 50 used shrink from 2.46 MB to 0.49 MB. The DMD fork gains the same switch.
   - `policy/budgets.json` gives framework modules linked-bytes budgets, checked by the gates. `measure_builds.py --app-sizes` measures the apps' release sizes alone.
 - Milestone 10, in progress (ADR-028):
-  - flint:di gains compile-time conditional registration: `@ConditionalOnConfig`, `@ConditionalOnMissingBean` and `AutoConfiguration` lists, driven by `config/application.toml`.
+  - flint:engine-di gains compile-time conditional registration: `@ConditionalOnConfig`, `@ConditionalOnMissingBean` and `AutoConfiguration` lists, driven by `config/application.toml`.
   - Starters live under `starters/` and are added with `flint add`:
     - flint:starter-web runs a configured REST service in one call and serves a single-page front end.
     - flint:starter-observability serves health, readiness and Prometheus metrics.
-  - Ordinary handlers need no `nothrow`/`@nogc`/`scope`: flint:web runs them on a worker thread, with replies of any size.
+  - Ordinary handlers need no `nothrow`/`@nogc`/`scope`: flint:engine-web runs them on a worker thread, with replies of any size.
   - `flint openapi` writes the controllers' OpenAPI 3.1 document and a typed TypeScript client.
   - `flint check` flags nullable class fields (FLINT-E0530) and handler attributes the framework makes unneeded (FLINT-E0531), and reports attributes per handler.
   - The vibe-coding benchmark has Go and Spring Boot references for all four tasks, and each passes its acceptance test.
     - They build with the pinned Go 1.27.4, and with a Temurin JDK 21.0.13.1+2, Maven 3.9.16 and Spring Boot 4.2.0 newly pinned with checksums in `policy/peer-lock.json`.
-  - Graceful shutdown: flint:os dispatches SIGTERM as well as SIGINT, and flint:web drains on it. The listener closes, in-flight requests finish within a grace period, and the process exits 0, 124 when the grace period expires, or 130 after a second signal.
+  - Graceful shutdown: flint:os dispatches SIGTERM as well as SIGINT, and flint:engine-web drains on it. The listener closes, in-flight requests finish within a grace period, and the process exits 0, 124 when the grace period expires, or 130 after a second signal.
 - Milestone 9 (ADR-027) adds knowledge and tooling for people and agents:
   - `flint docs`, `flint examples` and `flint explain` answer from an offline index of the pinned API.
   - `flint generate` produces canonical components, and new projects get an `AGENTS.md`.
-  - `flint mcp` serves the API, the diagnostics catalogue and the build loop over `flint:mcp`, which gains blocking tools.
+  - `flint mcp` serves the API, the diagnostics catalogue and the build loop over `flint:engine-mcp`, which gains blocking tools.
   - `flint watch` rebuilds and restarts or retests on every change.
   - `flint run --debug` and the generated launch configurations come with gdb pretty-printers.
   - `flint lsp` gives editors diagnostics, hover, go-to-definition and completion.
@@ -47,7 +47,7 @@
   - floats are written as shortest round-trip;
   - responses carry a `Date` header and return 405 with `Allow`;
   - JetStream reconnects automatically.
-- Rebuild `flint:desktop` after Tauri v2's architecture in D over GTK and WebKitGTK (ADR-020).
+- Rebuild `flint:engine-desktop` after Tauri v2's architecture in D over GTK and WebKitGTK (ADR-020).
 - Keep heavy Phobos templates and archive cascades out of library compiles, so all 37 packages meet their compile-time, memory, template (ADR-019) and size caps.
 - Pass the strict sanitizer lane with full ASan and UBSan, using a sanitizer-aware D runtime.
 - Join background worker threads (cache, actuator, MCP, storage, security) on close and return from starting one only once it runs, so no worker overlaps runtime termination; this fixes an intermittent segfault at process exit.

@@ -42,7 +42,7 @@ unittest
     expect(scaffoldDependencies("executable", null)).toEqual(["arena", "cli", "config", "log"]);
     expect(scaffoldDependencies("library", null).length).toEqual(0);
     expect(scaffoldDependencies("executable", ["data"])).toEqual([
-        "arena", "cli", "config", "data", "log", "migrate", "sql"
+        "arena", "cli", "config", "engine-data", "engine-migrate", "engine-sql", "log"
     ]);
     const home = fixtureHome();
     expect(scaffold(home, "model", "library", null)[6].path).toEqual("src/model/package.d");

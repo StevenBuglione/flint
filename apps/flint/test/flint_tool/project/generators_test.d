@@ -27,7 +27,7 @@ unittest
     expect(entity.files[0].path).toEqual("src/shop/order_item/order_item.d");
     expect(entity.files[0].content.canFind("module shop.order_item.order_item;")).toEqual(true);
     expect(entity.files[0].content.canFind("@Table(\"order_items\")")).toEqual(true);
-    expect(entity.packages).toEqual(["arena", "data", "serde", "validate"]);
+    expect(entity.packages).toEqual(["arena", "engine-data", "serde", "validate"]);
     const migration = generate("migration", "OrderItem", "shop", 12, null);
     expect(migration.files[0].path).toEqual("resources/migrations/V000012__order_item.sql");
     const plain = generate("service", "Mailer", "shop", 1, null);
@@ -40,8 +40,8 @@ unittest
 @("dependencies are added to an existing or a new [dependencies] table")
 unittest
 {
-    expect(withDependencies("[project]\n[dependencies]\n\"flint:log\" = {}\n", ["flint:web"])).toEqual(
-            "[project]\n[dependencies]\n\"flint:web\" = {}\n\"flint:log\" = {}\n");
-    expect(withDependencies("[project]\nname = \"x\"\n", ["flint:web"])).toEqual(
-            "[project]\nname = \"x\"\n\n[dependencies]\n\"flint:web\" = {}\n");
+    expect(withDependencies("[project]\n[dependencies]\n\"flint:log\" = {}\n", ["flint:engine-web"])).toEqual(
+            "[project]\n[dependencies]\n\"flint:engine-web\" = {}\n\"flint:log\" = {}\n");
+    expect(withDependencies("[project]\nname = \"x\"\n", ["flint:engine-web"])).toEqual(
+            "[project]\nname = \"x\"\n\n[dependencies]\n\"flint:engine-web\" = {}\n");
 }

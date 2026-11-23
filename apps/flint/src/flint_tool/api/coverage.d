@@ -7,9 +7,9 @@
 /// {"rulebook": 1,
 ///  "upstream": ["spring-framework@v7.1.0", "spring-boot@v4.2.0"],
 ///  "elements": {
-///    "org.springframework.http.HttpStatus": {"status": "ported", "d": "flint.http.HttpStatus"},
+///    "org.springframework.http.HttpStatus": {"status": "ported", "d": "flint.engine.http.HttpStatus"},
 ///    "org.springframework.http.ResponseEntity": {"status": "adapted", "rules": ["R12", "R13"],
-///                                                "d": "flint.http.ResponseEntity"},
+///                                                "d": "flint.engine.http.ResponseEntity"},
 ///    "org.springframework.jmx.**": {"status": "excluded", "category": "jvm-platform"},
 ///    "org.springframework.beans.factory.xml.**": {"status": "excluded", "category": "deferred", "phase": "3"}}}
 /// ---

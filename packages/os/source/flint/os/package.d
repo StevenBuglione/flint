@@ -81,7 +81,7 @@ private Result!InterruptSubscription subscribe(void delegate(ShutdownSignal) @sa
 
 /// SIGTERM and SIGINT as cancellation, after Spring Boot's graceful shutdown: the first signal cancels `graceful`,
 /// which asks the application to drain, and a second signal cancels `forced`, which asks it to stop now.
-/// Pass both to `flint.web.serve`. Closing the watch restores the signals' previous dispositions.
+/// Pass both to `flint.engine.web.serve`. Closing the watch restores the signals' previous dispositions.
 struct ShutdownSignals
 {
     private SignalLatch* latch;

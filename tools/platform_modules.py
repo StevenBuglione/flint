@@ -31,7 +31,7 @@ PARTITIONS = ROOT / 'policy' / 'lock-partitions.json'
 # libyaml and utf8proc, so the flint repo carries them even where framework packages consume them too.
 SHIM_PROVIDERS = {'flint': ['libyaml', 'utf8proc']}
 # Lock consumers that are not packages: a build tool of a package, or a flint tool.
-TOOL_CONSUMERS = {'rpc-codegen-build-tool': 'rpc'}
+TOOL_CONSUMERS = {'rpc-codegen-build-tool': 'engine-rpc'}
 
 
 def consumer_repo(consumer, owners):

@@ -1,7 +1,7 @@
 module positive;
 import flint.arena;
 import flint.conc;
-import flint.di;
+import flint.engine.di;
 import flint.serde;
 import flint.serde.owned;
 import flint.validate;

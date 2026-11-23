@@ -15,7 +15,7 @@ from test_flint_cli import FLINT, ROOT, codes, environment, flint_json, setUpMod
 
 CONDITIONAL_APP = '''module shop.app;
 
-import flint.di : AppContext, AutoConfiguration, ConditionalOnConfig, Service;
+import flint.engine.di : AppContext, AutoConfiguration, ConditionalOnConfig, Service;
 import std.stdio : writeln;
 
 @safe:
@@ -50,7 +50,7 @@ class ConditionalConfigTests(unittest.TestCase):
             self.assertEqual(status, 0, document)
             project = Path(temporary) / 'shop'
             manifest = project / 'flint.toml'
-            manifest.write_text(manifest.read_text().replace('[dependencies]\n', '[dependencies]\n"flint:di" = {}\n'))
+            manifest.write_text(manifest.read_text().replace('[dependencies]\n', '[dependencies]\n"flint:engine-di" = {}\n'))
             for stale in (project / 'src' / 'shop').glob('*.d'):
                 stale.unlink()
             (project / 'src' / 'shop' / 'app.d').write_text(CONDITIONAL_APP)
@@ -249,8 +249,8 @@ class OpenApiTests(unittest.TestCase):
 UNNEEDED = '''module shop.orders;
 
 import flint.arena : Result;
-import flint.di : Service;
-import flint.web : Get, PathVariable, Post, RequestContext, RestController;
+import flint.engine.di : Service;
+import flint.engine.web : Get, PathVariable, Post, RequestContext, RestController;
 
 @safe:
 

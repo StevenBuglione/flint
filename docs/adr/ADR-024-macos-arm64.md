@@ -95,7 +95,7 @@ Tests that observed Linux-only state use Darwin equivalents with the same assert
 
 ### 3. The kqueue reactor backend
 
-`Backend.kqueue` is the readiness backend on macOS, and `automatic` selects it. It shares the owner loop, operation table, timers, mailboxes, fibers and cancellation of the epoll backend. Only the kernel interface in `flint.reactor.sys` differs.
+`Backend.kqueue` is the readiness backend on macOS, and `automatic` selects it. It shares the owner loop, operation table, timers, mailboxes, fibers and cancellation of the epoll backend. Only the kernel interface in `flint.engine.reactor.sys` differs.
 
 - **Readiness and EOF.** Filters are level-triggered, like epoll without `EPOLLET`. A read or write operation registers `EVFILT_READ` or `EVFILT_WRITE` while it is active, and the owner removes the filter when the direction goes idle. `EV_EOF` and `EV_ERROR` are reported as faults, as epoll's `HUP`, `RDHUP` and `ERR` are. EOF with data still delivers the data first, because the next `recv` returns it before 0.
 - **Listener.** Each owner registers the listener in its own kqueue. kqueue has no `EPOLLEXCLUSIVE`, so every owner may wake for one connection. The losers' `accept` returns `EAGAIN`, which is ignored.
@@ -135,9 +135,9 @@ Platform differences the shims absorb:
 - **libarchive pathnames.** libarchive converts UTF-8 header names to NFC on Linux and to NFD on Darwin (`archive_string.c`), and has no option to change that. The archive reader recomposes them to NFC with CoreFoundation's `CFStringNormalize`, which every macOS native package already links, so a reader sees the same bytes on both platforms.
 - **SQLite and WAL.** The local file systems allowed to use WAL are identified by `f_fstypename` (`apfs`, `hfs`, `tmpfs`) instead of Linux magic numbers.
 - **Redis.** The connection socket gets `SO_NOSIGPIPE`, because the thread's SIGPIPE mask cannot contain a process-wide signal.
-- **Desktop.** The SDL3 canvas backend builds on macOS, and `flint_desktop_main_thread` uses `pthread_main_np`. Its tests use SDL's dummy driver, because macOS has no EGL for the offscreen driver. The default system-webview backend is WKWebView, in `flint.desktop.ffi.wkwebview`, bound through the Objective-C runtime as ADR-020 planned (described there). On macOS the `desktop` native profile selects the `wkwebview` system provider in place of `webkitgtk`. `native_build.py` records the SDK path and the SHA256 of each framework's `.tbd` stub (WebKit, AppKit and Foundation), links them with `-lobjc`, and sets version `FlintNativeWkwebview`. The emitted DUB block re-checks those digests. The thread-local allowlist gains `flint.desktop.ffi.wkwebview.initialized`, the main-thread root matching the WebKitGTK module's entry. The platform lane builds the provider, and the desktop suite opens real AppKit windows in the GUI session the lane runs in.
+- **Desktop.** The SDL3 canvas backend builds on macOS, and `flint_desktop_main_thread` uses `pthread_main_np`. Its tests use SDL's dummy driver, because macOS has no EGL for the offscreen driver. The default system-webview backend is WKWebView, in `flint.engine.desktop.ffi.wkwebview`, bound through the Objective-C runtime as ADR-020 planned (described there). On macOS the `desktop` native profile selects the `wkwebview` system provider in place of `webkitgtk`. `native_build.py` records the SDK path and the SHA256 of each framework's `.tbd` stub (WebKit, AppKit and Foundation), links them with `-lobjc`, and sets version `FlintNativeWkwebview`. The emitted DUB block re-checks those digests. The thread-local allowlist gains `flint.engine.desktop.ffi.wkwebview.initialized`, the main-thread root matching the WebKitGTK module's entry. The platform lane builds the provider, and the desktop suite opens real AppKit windows in the GUI session the lane runs in.
 
-On the D side, each package's `ffi`/`sys` module enables its native path on macOS next to Linux. Pipe-based wake-ups replace `eventfd` in `flint.cache` and `flint.security`. `os_sync_wait_on_address` replaces the futex in `flint.sql`. `flint.mcp` starts children with `posix_spawn`. `flint.web` keeps its lazily zero-filled `mmap` connection slots, and `flint.conc` reads secure random bytes with `getentropy`, which previously returned `unsupported` on macOS.
+On the D side, each package's `ffi`/`sys` module enables its native path on macOS next to Linux. Pipe-based wake-ups replace `eventfd` in `flint.engine.cache` and `flint.engine.security`. `os_sync_wait_on_address` replaces the futex in `flint.engine.sql`. `flint.engine.mcp` starts children with `posix_spawn`. `flint.engine.web` keeps its lazily zero-filled `mmap` connection slots, and `flint.conc` reads secure random bytes with `getentropy`, which previously returned `unsupported` on macOS.
 
 Tests that selected `Backend.epoll` select `Backend.kqueue` on macOS. The `cache` package's remote store does the same in its source. That keeps the readiness backend under test on Linux unchanged.
 
@@ -199,7 +199,7 @@ This is the baseline the DMD arm64 work (ADR-025 section 3) has to beat. `ldmd2`
 
 ## Public API additions
 
-None so far. `flint.reactor.Backend.kqueue` is already part of the frozen contract.
+None so far. `flint.engine.reactor.Backend.kqueue` is already part of the frozen contract.
 
 ## Consequences for Linux
 

@@ -98,11 +98,11 @@ endif()
 
 # Test codecs and their benchmark control are separate from the production FFI archive.
 if(EXISTS "${CMAKE_INSTALL_PREFIX}/include/protobuf-c/protobuf-c.h")
-  set(FLINT_RPC_TEST_CODECS "${CMAKE_CURRENT_SOURCE_DIR}/../../packages/rpc/tests/generated")
+  set(FLINT_RPC_TEST_CODECS "${CMAKE_CURRENT_SOURCE_DIR}/../../packages/engine-rpc/tests/generated")
   add_library(flint_rpc_fixture STATIC
     "${FLINT_RPC_TEST_CODECS}/echo.pb-c.c"
     "${FLINT_RPC_TEST_CODECS}/echo_flint.c"
-    "../../packages/rpc/bench/baseline/source/probe.c")
+    "../../packages/engine-rpc/bench/baseline/source/probe.c")
   target_include_directories(flint_rpc_fixture PRIVATE
     "${FLINT_RPC_TEST_CODECS}" "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_INSTALL_PREFIX}/include")
   install(TARGETS flint_rpc_fixture ARCHIVE DESTINATION lib)
@@ -144,7 +144,7 @@ if((CMAKE_SYSTEM_NAME STREQUAL "Linux" OR APPLE) AND EXISTS "${CMAKE_INSTALL_PRE
   target_compile_definitions(flint_ffi_framework PRIVATE FLINT_HAS_WASMTIME=1)
   if(EXISTS "${CMAKE_INSTALL_PREFIX}/include/flint_wasmtime_extensions.h")
     target_compile_definitions(flint_ffi_framework PRIVATE FLINT_HAS_WASMTIME_EXTENSIONS=1)
-    add_library(flint_wasi_reference STATIC "../../packages/wasi/bench/baseline/native/direct.c")
+    add_library(flint_wasi_reference STATIC "../../packages/engine-wasi/bench/baseline/native/direct.c")
     target_include_directories(flint_wasi_reference PRIVATE "${CMAKE_INSTALL_PREFIX}/include")
     install(TARGETS flint_wasi_reference ARCHIVE DESTINATION lib)
   endif()
@@ -155,7 +155,7 @@ if((CMAKE_SYSTEM_NAME STREQUAL "Linux" OR APPLE) AND EXISTS "${CMAKE_CURRENT_SOU
     EXISTS "${CMAKE_INSTALL_PREFIX}/include/curl/curl.h")
   install(FILES flint_mail.h DESTINATION include)
   # Isolated pinned-ABI control. Static linking retains it only in the reference executable.
-  add_library(flint_mail_reference STATIC "../../packages/mail/bench/baseline/native/direct.c")
+  add_library(flint_mail_reference STATIC "../../packages/engine-mail/bench/baseline/native/direct.c")
   target_include_directories(flint_mail_reference PRIVATE "${CMAKE_INSTALL_PREFIX}/include")
   install(TARGETS flint_mail_reference ARCHIVE DESTINATION lib)
 endif()

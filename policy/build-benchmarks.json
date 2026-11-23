@@ -5,10 +5,10 @@
   "cold_definition": "fresh copied project source and DUB_HOME build cache; immutable verified native install archives shared; precompiled toolchain runtimes retained; OS page cache not dropped",
   "go_cache": "stdlib-only primed cache copied afresh per cold app trial",
   "packages": {
-    "reactor": {
-      "fixture": "packages/reactor/bench",
-      "baseline": "packages/reactor/bench/baseline",
-      "edit_source": "packages/reactor/source/flint/reactor.d",
+    "engine-reactor": {
+      "fixture": "packages/engine-reactor/bench",
+      "baseline": "packages/engine-reactor/bench/baseline",
+      "edit_source": "packages/engine-reactor/source/flint/engine/reactor.d",
       "size_basis": "framework_over_provider_equivalent_baseline"
     },
     "arena": {
@@ -23,10 +23,10 @@
       "edit_source": "packages/conc/source/flint/conc.d",
       "size_basis": "framework_over_provider_equivalent_baseline"
     },
-    "di": {
-      "fixture": "packages/di/bench",
-      "baseline": "packages/di/bench/baseline",
-      "edit_source": "packages/di/source/flint/di.d",
+    "engine-di": {
+      "fixture": "packages/engine-di/bench",
+      "baseline": "packages/engine-di/bench/baseline",
+      "edit_source": "packages/engine-di/source/flint/engine/di.d",
       "size_basis": "framework_over_provider_equivalent_baseline"
     },
     "config": {
@@ -59,64 +59,64 @@
       "edit_source": "packages/test/source/flint/test.d",
       "size_basis": "framework_over_provider_equivalent_baseline"
     },
-    "web": {
-      "fixture": "packages/web/bench",
-      "baseline": "packages/web/bench/baseline",
-      "edit_source": "packages/web/source/flint/web.d",
+    "engine-web": {
+      "fixture": "packages/engine-web/bench",
+      "baseline": "packages/engine-web/bench/baseline",
+      "edit_source": "packages/engine-web/source/flint/engine/web.d",
       "size_basis": "framework_over_provider_equivalent_baseline"
     },
-    "http": {
-      "fixture": "packages/http/bench",
-      "baseline": "packages/http/bench/baseline",
-      "edit_source": "packages/http/source/flint/http.d",
+    "engine-http": {
+      "fixture": "packages/engine-http/bench",
+      "baseline": "packages/engine-http/bench/baseline",
+      "edit_source": "packages/engine-http/source/flint/engine/http.d",
       "size_basis": "framework_over_provider_equivalent_baseline"
     },
-    "security": {
-      "fixture": "packages/security/bench",
-      "baseline": "packages/security/bench/baseline",
-      "edit_source": "packages/security/source/flint/security.d",
+    "engine-security": {
+      "fixture": "packages/engine-security/bench",
+      "baseline": "packages/engine-security/bench/baseline",
+      "edit_source": "packages/engine-security/source/flint/engine/security.d",
       "size_basis": "framework_over_provider_equivalent_baseline"
     },
-    "actuator": {
-      "fixture": "packages/actuator/bench",
-      "baseline": "packages/actuator/bench/baseline",
-      "edit_source": "packages/actuator/source/flint/actuator.d",
+    "engine-actuator": {
+      "fixture": "packages/engine-actuator/bench",
+      "baseline": "packages/engine-actuator/bench/baseline",
+      "edit_source": "packages/engine-actuator/source/flint/engine/actuator.d",
       "size_basis": "framework_over_provider_equivalent_baseline"
     },
-    "schedule": {
-      "fixture": "packages/schedule/bench",
-      "baseline": "packages/schedule/bench/baseline",
-      "edit_source": "packages/schedule/source/flint/schedule.d",
+    "engine-schedule": {
+      "fixture": "packages/engine-schedule/bench",
+      "baseline": "packages/engine-schedule/bench/baseline",
+      "edit_source": "packages/engine-schedule/source/flint/engine/schedule.d",
       "size_basis": "framework_over_provider_equivalent_baseline"
     },
-    "rpc": {
-      "fixture": "packages/rpc/bench",
-      "baseline": "packages/rpc/bench/baseline",
-      "edit_source": "packages/rpc/source/flint/rpc.d",
+    "engine-rpc": {
+      "fixture": "packages/engine-rpc/bench",
+      "baseline": "packages/engine-rpc/bench/baseline",
+      "edit_source": "packages/engine-rpc/source/flint/engine/rpc.d",
       "size_basis": "framework_over_provider_equivalent_baseline"
     },
-    "sql": {
-      "fixture": "packages/sql/bench",
-      "baseline": "packages/sql/bench/baseline",
-      "edit_source": "packages/sql/source/flint/sql.d",
+    "engine-sql": {
+      "fixture": "packages/engine-sql/bench",
+      "baseline": "packages/engine-sql/bench/baseline",
+      "edit_source": "packages/engine-sql/source/flint/engine/sql.d",
       "size_basis": "framework_over_provider_equivalent_baseline"
     },
-    "data": {
-      "fixture": "packages/data/bench",
-      "baseline": "packages/data/bench/baseline",
-      "edit_source": "packages/data/source/flint/data.d",
+    "engine-data": {
+      "fixture": "packages/engine-data/bench",
+      "baseline": "packages/engine-data/bench/baseline",
+      "edit_source": "packages/engine-data/source/flint/engine/data.d",
       "size_basis": "framework_over_provider_equivalent_baseline"
     },
-    "migrate": {
-      "fixture": "packages/migrate/bench",
-      "baseline": "packages/migrate/bench/baseline",
-      "edit_source": "packages/migrate/source/flint/migrate.d",
+    "engine-migrate": {
+      "fixture": "packages/engine-migrate/bench",
+      "baseline": "packages/engine-migrate/bench/baseline",
+      "edit_source": "packages/engine-migrate/source/flint/engine/migrate.d",
       "size_basis": "framework_over_provider_equivalent_baseline"
     },
-    "cache": {
-      "fixture": "packages/cache/bench",
-      "baseline": "packages/cache/bench/baseline",
-      "edit_source": "packages/cache/source/flint/cache.d",
+    "engine-cache": {
+      "fixture": "packages/engine-cache/bench",
+      "baseline": "packages/engine-cache/bench/baseline",
+      "edit_source": "packages/engine-cache/source/flint/engine/cache.d",
       "size_basis": "framework_over_provider_equivalent_baseline"
     },
     "cli": {
@@ -131,28 +131,28 @@
       "edit_source": "packages/term/source/flint/term.d",
       "size_basis": "framework_over_provider_equivalent_baseline"
     },
-    "tui": {
-      "fixture": "packages/tui/bench",
-      "baseline": "packages/tui/bench/baseline",
-      "edit_source": "packages/tui/source/flint/tui.d",
+    "engine-tui": {
+      "fixture": "packages/engine-tui/bench",
+      "baseline": "packages/engine-tui/bench/baseline",
+      "edit_source": "packages/engine-tui/source/flint/engine/tui.d",
       "size_basis": "framework_over_provider_equivalent_baseline"
     },
-    "style": {
-      "fixture": "packages/style/bench",
-      "baseline": "packages/style/bench/baseline",
-      "edit_source": "packages/style/source/flint/style.d",
+    "engine-style": {
+      "fixture": "packages/engine-style/bench",
+      "baseline": "packages/engine-style/bench/baseline",
+      "edit_source": "packages/engine-style/source/flint/engine/style.d",
       "size_basis": "framework_over_provider_equivalent_baseline"
     },
-    "widgets": {
-      "fixture": "packages/widgets/bench",
-      "baseline": "packages/widgets/bench/baseline",
-      "edit_source": "packages/widgets/source/flint/widgets.d",
+    "engine-widgets": {
+      "fixture": "packages/engine-widgets/bench",
+      "baseline": "packages/engine-widgets/bench/baseline",
+      "edit_source": "packages/engine-widgets/source/flint/engine/widgets.d",
       "size_basis": "framework_over_provider_equivalent_baseline"
     },
-    "prompt": {
-      "fixture": "packages/prompt/bench",
-      "baseline": "packages/prompt/bench/baseline",
-      "edit_source": "packages/prompt/source/flint/prompt.d",
+    "engine-prompt": {
+      "fixture": "packages/engine-prompt/bench",
+      "baseline": "packages/engine-prompt/bench/baseline",
+      "edit_source": "packages/engine-prompt/source/flint/engine/prompt.d",
       "size_basis": "framework_over_provider_equivalent_baseline"
     },
     "os": {
@@ -161,70 +161,70 @@
       "edit_source": "packages/os/source/flint/os.d",
       "size_basis": "framework_over_provider_equivalent_baseline"
     },
-    "wasm-bridge": {
-      "fixture": "packages/wasm-bridge/bench",
-      "baseline": "packages/wasm-bridge/bench/baseline",
-      "edit_source": "packages/wasm-bridge/source/flint/wasm_bridge.d",
+    "engine-wasm-bridge": {
+      "fixture": "packages/engine-wasm-bridge/bench",
+      "baseline": "packages/engine-wasm-bridge/bench/baseline",
+      "edit_source": "packages/engine-wasm-bridge/source/flint/engine/wasm_bridge.d",
       "size_basis": "framework_over_provider_equivalent_baseline"
     },
-    "ui-signals": {
-      "fixture": "packages/ui-signals/bench",
-      "baseline": "packages/ui-signals/bench/baseline",
-      "edit_source": "packages/ui-signals/source/flint/ui_signals.d",
+    "engine-ui-signals": {
+      "fixture": "packages/engine-ui-signals/bench",
+      "baseline": "packages/engine-ui-signals/bench/baseline",
+      "edit_source": "packages/engine-ui-signals/source/flint/engine/ui_signals.d",
       "size_basis": "framework_over_provider_equivalent_baseline"
     },
-    "wasi": {
-      "fixture": "packages/wasi/bench",
-      "baseline": "packages/wasi/bench/baseline",
-      "edit_source": "packages/wasi/source/flint/wasi.d",
+    "engine-wasi": {
+      "fixture": "packages/engine-wasi/bench",
+      "baseline": "packages/engine-wasi/bench/baseline",
+      "edit_source": "packages/engine-wasi/source/flint/engine/wasi.d",
       "size_basis": "framework_over_provider_equivalent_baseline"
     },
-    "mq": {
-      "fixture": "packages/mq/bench",
-      "baseline": "packages/mq/bench/baseline",
-      "edit_source": "packages/mq/source/flint/mq.d",
+    "engine-mq": {
+      "fixture": "packages/engine-mq/bench",
+      "baseline": "packages/engine-mq/bench/baseline",
+      "edit_source": "packages/engine-mq/source/flint/engine/mq.d",
       "size_basis": "framework_over_provider_equivalent_baseline"
     },
-    "storage": {
-      "fixture": "packages/storage/bench",
-      "baseline": "packages/storage/bench/baseline",
-      "edit_source": "packages/storage/source/flint/storage.d",
+    "engine-storage": {
+      "fixture": "packages/engine-storage/bench",
+      "baseline": "packages/engine-storage/bench/baseline",
+      "edit_source": "packages/engine-storage/source/flint/engine/storage.d",
       "size_basis": "framework_over_provider_equivalent_baseline"
     },
-    "mail": {
-      "fixture": "packages/mail/bench",
-      "baseline": "packages/mail/bench/baseline",
-      "edit_source": "packages/mail/source/flint/mail.d",
+    "engine-mail": {
+      "fixture": "packages/engine-mail/bench",
+      "baseline": "packages/engine-mail/bench/baseline",
+      "edit_source": "packages/engine-mail/source/flint/engine/mail.d",
       "size_basis": "framework_over_provider_equivalent_baseline"
     },
-    "ai": {
-      "fixture": "packages/ai/bench",
-      "baseline": "packages/ai/bench/baseline",
-      "edit_source": "packages/ai/source/flint/ai.d",
+    "engine-ai": {
+      "fixture": "packages/engine-ai/bench",
+      "baseline": "packages/engine-ai/bench/baseline",
+      "edit_source": "packages/engine-ai/source/flint/engine/ai.d",
       "size_basis": "framework_over_provider_equivalent_baseline"
     },
-    "mcp": {
-      "fixture": "packages/mcp/bench",
-      "baseline": "packages/mcp/bench/baseline",
-      "edit_source": "packages/mcp/source/flint/mcp.d",
+    "engine-mcp": {
+      "fixture": "packages/engine-mcp/bench",
+      "baseline": "packages/engine-mcp/bench/baseline",
+      "edit_source": "packages/engine-mcp/source/flint/engine/mcp.d",
       "size_basis": "framework_over_provider_equivalent_baseline"
     },
-    "template": {
-      "fixture": "packages/template/bench",
-      "baseline": "packages/template/bench/baseline",
-      "edit_source": "packages/template/source/flint/templates.d",
+    "engine-template": {
+      "fixture": "packages/engine-template/bench",
+      "baseline": "packages/engine-template/bench/baseline",
+      "edit_source": "packages/engine-template/source/flint/engine/templates.d",
       "size_basis": "framework_over_provider_equivalent_baseline"
     },
-    "codec": {
-      "fixture": "packages/codec/bench",
-      "baseline": "packages/codec/bench/baseline",
-      "edit_source": "packages/codec/source/flint/codec.d",
+    "engine-codec": {
+      "fixture": "packages/engine-codec/bench",
+      "baseline": "packages/engine-codec/bench/baseline",
+      "edit_source": "packages/engine-codec/source/flint/engine/codec.d",
       "size_basis": "framework_over_provider_equivalent_baseline"
     },
-    "desktop": {
-      "fixture": "packages/desktop/bench",
-      "baseline": "packages/desktop/bench/baseline",
-      "edit_source": "packages/desktop/source/flint/desktop.d",
+    "engine-desktop": {
+      "fixture": "packages/engine-desktop/bench",
+      "baseline": "packages/engine-desktop/bench/baseline",
+      "edit_source": "packages/engine-desktop/source/flint/engine/desktop.d",
       "size_basis": "framework_over_provider_equivalent_baseline"
     }
   },

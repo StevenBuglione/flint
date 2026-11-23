@@ -97,24 +97,24 @@ Generation generate(string kind, string name, string root, long nextMigration, s
     {
     case "entity":
         result.files = [GeneratedFile(base ~ feature ~ ".d", entity(name, module_, feature))];
-        result.packages = ["arena", "data", "serde", "validate"];
+        result.packages = ["arena", "engine-data", "serde", "validate"];
         result.next = "flint generate repository " ~ name;
         break;
     case "repository":
         result.files = [GeneratedFile(base ~ "repository.d", repository(name, module_, feature))];
-        result.packages = ["data", "di"];
+        result.packages = ["engine-data", "engine-di"];
         result.next = "flint generate service " ~ name;
         break;
     case "service":
         result.files = [
             GeneratedFile(base ~ "service.d", service(name, module_, existing.canFind(base ~ "repository.d")))
         ];
-        result.packages = ["arena", "di", "web"];
+        result.packages = ["arena", "engine-di", "engine-web"];
         result.next = "flint generate controller " ~ name;
         break;
     case "controller":
         result.files = [GeneratedFile(base ~ "controller.d", controller(name, module_, feature))];
-        result.packages = ["arena", "validate", "web"];
+        result.packages = ["arena", "validate", "engine-web"];
         result.next = "register " ~ name
             ~ "Controller in the AppContext and the Application struct of src/" ~ root ~ "/app.d";
         break;
@@ -129,8 +129,8 @@ Generation generate(string kind, string name, string root, long nextMigration, s
             GeneratedFile(format("resources/migrations/V%06d__%s.sql", nextMigration, feature),
                     migration(name, feature))
         ];
-        result.packages = ["migrate", "sql"];
-        result.next = "apply it with flint.migrate's migrate at startup; it runs once, in version order";
+        result.packages = ["engine-migrate", "engine-sql"];
+        result.next = "apply it with flint.engine.migrate's migrate at startup; it runs once, in version order";
         break;
     default:
         break;
@@ -160,7 +160,7 @@ private enum entityTemplate = `/// The {Name} entity: its table row and its JSON
 module {module}.{feature};
 
 import flint.arena : Text;
-import flint.data : Column, Id, Table;
+import flint.engine.data : Column, Id, Table;
 import flint.serde : JsonName;
 import flint.validate : NotBlank;
 
@@ -181,8 +181,8 @@ private enum repositoryTemplate = `/// Persistence of {Name} rows: the repositor
 module {module}.repository;
 
 import {module}.{feature} : {Name};
-import flint.data : CrudRepository, SqlRepository;
-import flint.di : BeanRegistrar, Bind;
+import flint.engine.data : CrudRepository, SqlRepository;
+import flint.engine.di : BeanRegistrar, Bind;
 
 @safe:
 
@@ -196,7 +196,7 @@ alias {Name}Bindings = BeanRegistrar!(Bind!({Name}Repository, SqlRepository!({Na
 private enum plainServiceTemplate = `/// {Name} business rules.
 module {module}.service;
 
-import flint.di : Service;
+import flint.engine.di : Service;
 
 @safe:
 
@@ -217,8 +217,8 @@ module {module}.service;
 import {module}.{feature} : {Name};
 import {module}.repository : {Name}Repository;
 import flint.arena : Result;
-import flint.di : Service;
-import flint.web : RequestContext;
+import flint.engine.di : Service;
+import flint.engine.web : RequestContext;
 
 @safe:
 
@@ -254,7 +254,7 @@ import {module}.{feature} : {Name};
 import {module}.service : {Name}Service;
 import flint.arena : Result;
 import flint.validate : Valid;
-import flint.web : Get, PathVariable, Post, RequestBody, RequestContext, RestController;
+import flint.engine.web : Get, PathVariable, Post, RequestBody, RequestContext, RestController;
 
 @safe:
 
@@ -306,7 +306,7 @@ struct {Name}Properties
 }
 `;
 
-private enum migrationTemplate = `-- {Name}: applied once, in version order, by flint.migrate.
+private enum migrationTemplate = `-- {Name}: applied once, in version order, by flint.engine.migrate.
 -- Never edit an applied migration; add a new one (a changed checksum stops startup).
 CREATE TABLE {features} (
     id INTEGER PRIMARY KEY,
@@ -458,7 +458,7 @@ Fix the first error first: each has a code, a location and a fix line.
 - Prefer structs; classes only for DI services (` ~ "`@Service final class`" ~ `). Inject through constructors.
 - Use explicit selective imports: ` ~ "`import flint.config : load;`" ~ `. Never ` ~ "`import std;`" ~ `.
 - Print errors with ` ~ "`flint.term.writeStream(Stream.error, text)`" ~ ` (` ~ "`std.stdio.stderr`" ~ ` is not @safe).
-- Dependencies go in ` ~ "`flint.toml`" ~ ` (` ~ "`\"flint:web\" = {}`" ~ `, a repository path with a version, or
+- Dependencies go in ` ~ "`flint.toml`" ~ ` (` ~ "`\"flint:engine-web\" = {}`" ~ `, a repository path with a version, or
   ` ~ "`\"dub:<name>\"`" ~ ` from the compatibility index), never a dub.sdl.
 
 ## Do not

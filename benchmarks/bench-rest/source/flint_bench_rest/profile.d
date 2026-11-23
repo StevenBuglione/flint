@@ -3,7 +3,7 @@ module flint_bench_rest.profile;
 
 import flint.arena : Error, Result;
 import flint.serde : encodeJson;
-import flint.web : Get, RequestContext, Response, RestController, ServerOptions;
+import flint.engine.web : Get, RequestContext, Response, RestController, ServerOptions;
 
 @safe:
 

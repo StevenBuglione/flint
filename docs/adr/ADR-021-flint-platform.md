@@ -215,7 +215,7 @@ Native dependencies are resolved by Flint's resolver, which uses **Conan 2 inter
 
 These features are first-class, not afterthoughts:
 
-- **`flint mcp`** is an MCP server built on `flint:mcp` itself. Its tools:
+- **`flint mcp`** is an MCP server built on `flint:engine-mcp` itself. Its tools:
   - `search_api`, `get_symbol` and `get_example`;
   - `explain_error`;
   - `describe_project`, `resolved_config` and `dependency_graph`;

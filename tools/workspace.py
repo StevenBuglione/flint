@@ -157,7 +157,7 @@ def packages_of(repo, root=ROOT):
 
 def dub_root(workspace, output, root=ROOT):
     """Write `output/dub.sdl`: one DUB package named `flint` whose subpackages are every package, Boot library
-    and starter at its repo's checkout, so `dub test flint:web --root=<output>` builds a repo's packages against
+    and starter at its repo's checkout, so `dub test flint:engine-web --root=<output>` builds a repo's packages against
     the other repos' checkouts. Every repo keeps the `flint:*` names; the workspace joins them."""
     import os
     output = Path(output).resolve()

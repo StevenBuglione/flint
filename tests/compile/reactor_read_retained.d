@@ -1,6 +1,6 @@
 module reactor_read_retained;
 
-import flint.reactor : Completion, ReadFn;
+import flint.engine.reactor : Completion, ReadFn;
 
 @safe:
 

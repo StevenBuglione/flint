@@ -158,7 +158,7 @@ immutable CodeInfo[] catalog = [
     // 03xx: dependencies.
     CodeInfo("FLINT-E0301", ExitCode.dependency, "unknown Flint core package",
             "Core packages are named `flint:<package>` after the 37 packages in policy/packages.json.",
-            "[dependencies]\n\"flint:web\" = {}"),
+            "[dependencies]\n\"flint:engine-web\" = {}"),
     CodeInfo("FLINT-E0302", ExitCode.dependency,
             "path dependency not found",
             "A `path` dependency must name a directory containing a flint.toml (a Flint project) or a dub.sdl or "
@@ -369,10 +369,11 @@ immutable CodeInfo[] catalog = [
             "@RestController(\"/api/orders\")\nstruct OrderController\n{\n    private OrderService orders;\n    "
             ~ "this(OrderService orders) { this.orders = orders; }\n}"),
     CodeInfo("FLINT-E0531", ExitCode.user, "an attribute the framework makes unneeded",
-            "In an application that uses a starter, flint:web picks where a controller runs from its handlers: on "
-            ~ "the reactor when every handler is nothrow @nogc, otherwise on a worker thread. `nothrow` or `@nogc` on "
-            ~ "some handlers of a worker-thread controller changes nothing, and `scope` on an argument the framework "
-            ~ "passes as an owned value is noise. `flint check` reports the attributes per handler.",
+            "In an application that uses a starter, flint:engine-web picks where a controller runs from its "
+            ~ "handlers: on the reactor when every handler is nothrow @nogc, otherwise on a worker thread. "
+            ~ "`nothrow` or `@nogc` on some handlers of a worker-thread controller changes nothing, and `scope` on "
+            ~ "an argument the framework passes as an owned value is noise. `flint check` reports the attributes "
+            ~ "per handler.",
             "@Get(\"/:id\")\nResult!Order get(@PathVariable(\"id\") ulong id)\n{\n    return orders.find(id);\n}"),
     CodeInfo("FLINT-E0532", ExitCode.user, "a dependency crosses repos the wrong way",
             "After the repo split each flint:* package lives in one repo (the `repo` field of policy/packages.json "
@@ -538,7 +539,7 @@ immutable CodeInfo[] catalog = [
             "Every type, method, constructor, field, enum constant, annotation attribute and record component of "
             ~ "an upstream manifest must be classified in api/mapping.json: ported (with its D symbol), adapted "
             ~ "(with the rulebook rules R1-R14 it follows) or excluded (with a rulebook category).",
-            `"org.springframework.http.HttpStatus": ` ~ `{"status": "ported", "d": "flint.http.HttpStatus"}`),
+            `"org.springframework.http.HttpStatus": ` ~ `{"status": "ported", "d": "flint.engine.http.HttpStatus"}`),
     CodeInfo("FLINT-E1003", ExitCode.user, "the API mapping is invalid",
             "api/mapping.json has the shape docs/spring/api-mapping.md describes. A ported element needs its D "
             ~ "symbol `d` under `flint.`, an adapted one its `rules` (R1 to R14), an excluded one a rulebook "

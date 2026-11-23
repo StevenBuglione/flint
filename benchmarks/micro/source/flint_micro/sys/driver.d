@@ -3,7 +3,7 @@ module flint_micro.sys.driver;
 
 import core.lifetime : move;
 import core.thread.osthread : Thread;
-import flint.reactor : Reactor;
+import flint.engine.reactor : Reactor;
 
 @safe:
 

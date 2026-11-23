@@ -25,12 +25,12 @@ class PackageTemplateCounts(unittest.TestCase):
             traces = Path(temporary)
             workspace = '/tmp/w/workspace'
             records = [
-                invocation(traces, 'a', workspace + '/packages/web/bench', ['../source/flint/web/router.d'], 300),
-                invocation(traces, 'b', workspace + '/packages/web/bench', ['source/app.d', 'harness/h.d'], 40),
-                invocation(traces, 'c', workspace + '/packages/web/bench', ['../../reactor/source/flint/reactor/package.d'], 900),
+                invocation(traces, 'a', workspace + '/packages/engine-web/bench', ['../source/flint/engine/web/router.d'], 300),
+                invocation(traces, 'b', workspace + '/packages/engine-web/bench', ['source/app.d', 'harness/h.d'], 40),
+                invocation(traces, 'c', workspace + '/packages/engine-web/bench', ['../../reactor/source/flint/engine/reactor/package.d'], 900),
                 invocation(traces, 'd', workspace + '/packages/webview/bench', ['source/app.d'], 7),
             ]
-            self.assertEqual(package_template_instances(records, 'web'), 340)
+            self.assertEqual(package_template_instances(records, 'engine-web'), 340)
             closure = ''.join((traces / (i + '.stderr.txt')).read_text() for i in 'abcd')
             self.assertEqual(template_instances(closure), 1247)
 

@@ -5,11 +5,11 @@ policy/framework.json (framework/<artifact>), and either kind may be listed in `
 can also carry its own budget for the bytes it adds to a linked executable:
 
     "module_linked_bytes": {
-      "required_packages": ["web"],
+      "required_packages": ["engine-web"],
       "modules": {
-        "flint.web.bind.annotation": {
-          "fixture": "packages/web/bench/modules/bind-annotation",
-          "baseline": "packages/web/bench/modules/baseline",
+        "flint.engine.web.router": {
+          "fixture": "packages/engine-web/bench/modules/router",
+          "baseline": "packages/engine-web/bench/modules/baseline",
           "linked_bytes": 4096
         }
       }

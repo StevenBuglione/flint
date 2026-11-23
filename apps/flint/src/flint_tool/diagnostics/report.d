@@ -248,7 +248,7 @@ enum Tone : ubyte
     success
 }
 
-/// SGR styling of `text` when color is enabled. flint does not link flint.style: its width tables need
+/// SGR styling of `text` when color is enabled. flint does not link flint.engine.style: its width tables need
 /// the utf8proc provider, and flint must bootstrap without native providers (ADR-022).
 string paint(string text, Palette palette, Tone tone)
 {

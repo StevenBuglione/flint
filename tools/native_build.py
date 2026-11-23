@@ -327,7 +327,7 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
             # The extension is portable Rust over the C API; macOS builds it too (ADR-024).
             flint_extensions=name=='wasmtime' and (self.a.target.startswith('linux') or self.a.target=='macos-arm64')
             if flint_extensions:
-                extension=package_path('wasi')/'native/install_extensions.py'
+                extension=package_path('engine-wasi')/'native/install_extensions.py'
                 self.command([sys.executable,extension,src],src)
                 args[-1]+=',flint-wasi-extensions'
             output=self.command(args+['--','--print','native-static-libs'],src)
@@ -566,7 +566,7 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
             direct=sorted(n for n in available if package in self.rows[n]['consumers'])
             if not direct:continue
             closure=dependency_order(direct,self.rows,False);flags=[]
-            if package == 'mail':
+            if package == 'engine-mail':
                 reference = self.receipt.get('mail_reference_archive')
                 if reference:
                     if digest(Path(reference['path'])) != reference['sha256']:
@@ -611,12 +611,12 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
         for package, block in self.dub_blocks().items():
             root = 'packages/' + package
             recipes[root + '/dub.sdl'] = block
-            if package == 'rpc':
+            if package == 'engine-rpc':
                 # Both executables call fixture symbols. Place the fixture before
                 # the provider archives for single-pass static linkers.
                 block = block.replace('\nlflags ', '\n' + self.rpc_fixture_flag() + 'lflags ', 1)
                 recipes[root + '/bench/dub.sdl'] = block
-            if package == 'wasi' and (self.a.target.startswith('linux') or self.a.target == 'macos-arm64') and 'wasmtime' in self.receipt['libraries']:
+            if package == 'engine-wasi' and (self.a.target.startswith('linux') or self.a.target == 'macos-arm64') and 'wasmtime' in self.receipt['libraries']:
                 reference = self.receipt.get('wasi_reference_archive')
                 if not reference or reference != self.wasi_reference_archive_receipt():
                     raise RuntimeError('Installed WASI reference archive changed; rebuild the native shims')
@@ -634,7 +634,7 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
             package = relative.split('/')[1]
             path = package_path(package) / '/'.join(relative.split('/')[2:])
             text = re.sub(r'\n// BEGIN FLINT NATIVE\n.*?// END FLINT NATIVE\n', '\n', path.read_text(), flags=re.S)
-            if relative == 'packages/rpc/dub.sdl':
+            if relative == 'packages/engine-rpc/dub.sdl':
                 text = self.emit_rpc_test_archive(text)
             path.write_text(text.rstrip() + '\n' + block)
 
@@ -697,7 +697,7 @@ def main():
         packages=json.loads((ROOT/'policy/packages.json').read_text())['packages']
         def needs_reactor(package, seen=None):
             seen=set() if seen is None else seen
-            if package=='reactor':return True
+            if package=='engine-reactor':return True
             if package in seen or package not in packages:return False
             seen.add(package)
             return any(needs_reactor(dep,seen) for dep in packages[package]['dependencies'])

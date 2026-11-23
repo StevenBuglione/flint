@@ -4,7 +4,7 @@ module flint_micro.echo;
 import core.time : dur;
 import flint.arena : Status;
 import flint.conc : Context, Deadline;
-import flint.reactor : Backend, Completion, ConnectionId, IoId, ListenOptions, Reactor, ReactorOptions;
+import flint.engine.reactor : Backend, Completion, ConnectionId, IoId, ListenOptions, Reactor, ReactorOptions;
 import flint_bench_gc.sys.loopback : receiveAll, sendAll;
 import flint_micro.sys.driver : joinDriver, startDriver, takeOwner;
 import flint_micro.timing : BatchResult, Trial, timeTrial;

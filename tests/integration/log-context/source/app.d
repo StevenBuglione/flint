@@ -6,7 +6,7 @@ import core.time : msecs;
 import flint.arena : Error, Status;
 import flint.conc : Context, Deadline, WorkerOptions, WorkerPool;
 import flint.log : Format, Level, LogContext, Logger, LogOptions;
-import flint.reactor : Backend, Reactor, ReactorOptions, TaskContext;
+import flint.engine.reactor : Backend, Reactor, ReactorOptions, TaskContext;
 import std.array : split;
 import std.file : mkdir, readText, rmdirRecurse, tempDir;
 import std.json : JSONValue, parseJSON;

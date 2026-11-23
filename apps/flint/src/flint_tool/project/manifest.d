@@ -180,19 +180,19 @@ immutable string[][string] starterPackages;
 shared static this()
 {
     starterPackages = [
-        "web": ["web", "http", "di", "config", "log", "serde", "validate"],
-        "data": ["data", "sql", "migrate", "config", "log"],
-        "security": ["security", "http", "config"],
-        "cache": ["cache", "config"],
-        "messaging": ["mq", "config", "log"],
-        "mail": ["mail", "config"],
-        "storage": ["storage", "config"],
-        "ai": ["ai", "config"],
-        "mcp": ["mcp", "config"],
+        "web": ["engine-web", "engine-http", "engine-di", "config", "log", "serde", "validate"],
+        "data": ["engine-data", "engine-sql", "engine-migrate", "config", "log"],
+        "security": ["engine-security", "engine-http", "config"],
+        "cache": ["engine-cache", "config"],
+        "messaging": ["engine-mq", "config", "log"],
+        "mail": ["engine-mail", "config"],
+        "storage": ["engine-storage", "config"],
+        "ai": ["engine-ai", "config"],
+        "mcp": ["engine-mcp", "config"],
         "cli": ["cli", "config", "log"],
-        "tui": ["tui", "widgets", "style", "term", "prompt"],
-        "desktop": ["desktop", "config"],
-        "observability": ["actuator", "log"],
+        "tui": ["engine-tui", "engine-widgets", "engine-style", "term", "engine-prompt"],
+        "desktop": ["engine-desktop", "config"],
+        "observability": ["engine-actuator", "log"],
     ];
 }
 

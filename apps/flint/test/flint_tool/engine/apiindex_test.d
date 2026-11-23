@@ -27,7 +27,7 @@ unittest
     expect(blocks[0].code[0 .. 9]).toEqual("@(\"runs\")");
     expect(("run" in blocks[0].identifiers) !is null).toEqual(true);
     expect(blocks[0].imports("flint.os")).toEqual(true);
-    expect(blocks[0].imports("flint.web")).toEqual(false);
+    expect(blocks[0].imports("flint.engine.web")).toEqual(false);
 }
 
 @("search ranks exact names, then prefixes, then documentation")

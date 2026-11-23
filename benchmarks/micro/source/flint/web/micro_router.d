@@ -1,11 +1,11 @@
 /// Frozen router-only requests using the same dispatch as the HTTP transport.
-module flint.web.micro_router;
+module flint.engine.web.micro_router;
 
 import flint.arena : Error, RequestArena, Result, Status;
-import flint.web : Method, Request, RequestContext, Response;
-import flint.web.dispatch : executeRoute;
-import flint.web.router : RouteTable;
-import flint.web.types : RequestMetadata;
+import flint.engine.web : Method, Request, RequestContext, Response;
+import flint.engine.web.dispatch : executeRoute;
+import flint.engine.web.router : RouteTable;
+import flint.engine.web.types : RequestMetadata;
 import flint_micro.timing : BatchResult;
 
 @safe:

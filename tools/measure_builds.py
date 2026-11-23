@@ -389,7 +389,7 @@ def source_identity(root):
         if NATIVE_BLOCK.findall(text) != [expected[relative]]:
             raise RuntimeError('native recipe block differs from verified installed dependency receipt: ' + relative)
         original = run_checked(['git', 'show', 'HEAD:' + prefix + relative], root).stdout
-        if relative == 'packages/rpc/dub.sdl':
+        if relative == 'packages/engine-rpc/dub.sdl':
             # The unittest-only generated codec is a separate receipt-bound
             # section and does not appear in the production linker block.
             original = builder.emit_rpc_test_archive(original)

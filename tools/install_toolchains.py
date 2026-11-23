@@ -141,7 +141,7 @@ PRELUDE = FORK_DIR / 'dmd-server-prelude.txt'
 # Builds that train the profile-guided DMD build; they exercise the same
 # compiler paths as ordinary development builds of this repository.
 PGO_APPS = ('benchmarks/bench-cli', 'benchmarks/bench-rest', 'examples/golden-cli', 'examples/golden-rest-service')
-PGO_TESTS = ('arena', 'conc', 'config', 'serde', 'validate', 'log', 'cli', 'web', 'http', 'reactor', 'di')
+PGO_TESTS = ('arena', 'conc', 'config', 'serde', 'validate', 'log', 'cli', 'engine-web', 'engine-http', 'engine-reactor', 'engine-di')
 
 
 def apply_patch(patch, directory):

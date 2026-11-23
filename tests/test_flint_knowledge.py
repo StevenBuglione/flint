@@ -7,7 +7,7 @@ from pathlib import Path
 from test_flint_cli import ROOT, codes, environment, flint, flint_json, setUpModule  # noqa: F401
 
 # Web and data applications link the native providers through the workspace recipes' generated blocks.
-NATIVE_LINKED = 'BEGIN FLINT NATIVE' in (ROOT / 'packages/web/dub.sdl').read_text()
+NATIVE_LINKED = 'BEGIN FLINT NATIVE' in (ROOT / 'packages/engine-web/dub.sdl').read_text()
 
 WIRING = '''module shop.order.wiring_test;
 
@@ -16,9 +16,9 @@ import shop.order.properties : OrderProperties;
 import shop.order.repository : OrderBindings;
 import shop.order.service : OrderService;
 import flint.config : ConfigOptions, load;
-import flint.di : AppContext, Provided;
-import flint.sql : Pool;
-import flint.web : ServerOptions, runApplication;
+import flint.engine.di : AppContext, Provided;
+import flint.engine.sql : Pool;
+import flint.engine.web : ServerOptions, runApplication;
 
 @safe:
 
@@ -58,7 +58,7 @@ class DocsTests(unittest.TestCase):
         packages = {p['name']: p for p in document['packages']}
         self.assertEqual(len(packages), 37)
         self.assertTrue(all(not p['problem'] for p in packages.values()), [p for p in packages.values() if p['problem']])
-        self.assertGreater(packages['di']['symbols'], 10)  # re-exported from internal modules
+        self.assertGreater(packages['engine-di']['symbols'], 10)  # re-exported from internal modules
         self.assertGreater(sum(p['symbols'] for p in packages.values()), 2000)
         self.assertGreater(sum(p['with_examples'] for p in packages.values()), 500)
 
@@ -89,7 +89,7 @@ class DocsTests(unittest.TestCase):
             self.assertEqual(status, 0, document['diagnostics'])
             summary = (Path(directory) / 'llms.txt').read_text()
             full = (Path(directory) / 'llms-full.txt').read_text()
-            self.assertIn('`flint.di`', summary)
+            self.assertIn('`flint.engine.di`', summary)
             self.assertIn('### flint.os.run', full)
 
     def test_examples_return_tested_code(self):
@@ -127,7 +127,7 @@ class GenerateTests(unittest.TestCase):
         self.assertEqual(status, 0, document['diagnostics'])
         self.assertTrue(document['plan'])
         self.assertEqual(document['files'][0]['path'], 'src/shop/order/order.d')
-        self.assertIn('flint:data', document['dependencies_added'])
+        self.assertIn('flint:engine-data', document['dependencies_added'])
         self.assertFalse((self.project / 'src/shop/order').exists())
 
     def test_3_every_generator_builds_wires_and_checks(self):
@@ -136,7 +136,7 @@ class GenerateTests(unittest.TestCase):
             self.assertEqual(status, 0, (kind, document['diagnostics']))
         self.assertTrue((self.project / 'resources/migrations/V000001__order.sql').is_file())
         manifest = (self.project / 'flint.toml').read_text()
-        for package in ('data', 'di', 'web', 'config', 'migrate', 'sql'):
+        for package in ('engine-data', 'engine-di', 'engine-web', 'config', 'engine-migrate', 'engine-sql'):
             self.assertIn('"flint:' + package + '"', manifest)
         status, document = self.run_flint('lock', '--check')
         self.assertEqual(status, 0, document['diagnostics'])

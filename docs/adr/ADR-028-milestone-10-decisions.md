@@ -4,9 +4,9 @@ Status: proposed by the Milestone 10 implementation, for the project owner's rev
 
 ## Decisions
 
-### 1. Conditional registration and auto-configuration in `flint:di`
+### 1. Conditional registration and auto-configuration in `flint:engine-di`
 
-1. **The API.** `flint.di` exports four additions.
+1. **The API.** `flint.engine.di` exports four additions.
    - **`@ConditionalOnConfig("section")`:** registers a bean only when the application's configuration has that section. A section is a table (`[database]`), a nested table (`[database.pool]`), an array of tables (`[[queues]]`), or a dotted or inline top-level key (`database.url = …`, `auth = { … }`).
    - **`@ConditionalOnMissingBean`:** registers a bean only when no other registration has the same key.
    - **`AutoConfiguration!(Entries...)`:** a starter's default registrations. Every entry yields to an explicit registration of the same key, as if it carried `@ConditionalOnMissingBean`, and honours its own `@ConditionalOnConfig`. Each starter exports one such list.
@@ -60,13 +60,13 @@ Status: proposed by the Milestone 10 implementation, for the project owner's rev
 
 ### 3. Attribute inference: the framework chooses where a handler runs
 
-1. **Ordinary handlers need no `nothrow`, `@nogc` or `scope`.** A route handler is a plain method. flint:web reads its attributes at compile time, whether declared or inferred:
+1. **Ordinary handlers need no `nothrow`, `@nogc` or `scope`.** A route handler is a plain method. flint:engine-web reads its attributes at compile time, whether declared or inferred:
    - **On the reactor:** a controller whose handlers are all `nothrow @nogc` runs there, as before.
-   - **On a worker thread:** any other controller is served through flint:web's existing worker (`@WorkerController`, which stays available for forcing it). It may allocate, throw (a 500) and call ordinary services.
+   - **On a worker thread:** any other controller is served through flint:engine-web's existing worker (`@WorkerController`, which stays available for forcing it). It may allocate, throw (a 500) and call ordinary services.
    - **The `scope` parameter:** a handler needs a `ref scope RequestContext` parameter only when it uses the request arena.
    - **Why:** this follows ADR-021's goal that annotations are for performance work, not a price of entry.
 
-2. **`string` path and query arguments.** flint:web accepts `string` path and query arguments as well as `Text`. They are decoded like `Text` and copied to the GC heap, so only worker-thread handlers take them.
+2. **`string` path and query arguments.** flint:engine-web accepts `string` path and query arguments as well as `Text`. They are decoded like `Text` and copied to the GC heap, so only worker-thread handlers take them.
 
 3. **Cost.** The selection is one compile-time scan of each controller's routes. The web bench's template instances are unchanged at 261.
 
@@ -93,7 +93,7 @@ Status: proposed by the Milestone 10 implementation, for the project owner's rev
 
 ### 5. The full-stack path: OpenAPI, TypeScript clients and SPA serving
 
-1. **OpenAPI from controllers, at compile time.** `flint.web.openApiDocument!App(title, version)` builds an OpenAPI 3.1 document from the same route table and argument plan that serve requests, so it cannot drift from the application. It documents:
+1. **OpenAPI from controllers, at compile time.** `flint.engine.web.openApiDocument!App(title, version)` builds an OpenAPI 3.1 document from the same route table and argument plan that serve requests, so it cannot drift from the application. It documents:
    - paths, with `:id` written as `{id}`;
    - methods, with `Controller.handler` as the operationId;
    - path and query parameters, and JSON request bodies;
@@ -124,12 +124,12 @@ Status: proposed by the Milestone 10 implementation, for the project owner's rev
 
 ### 6. `flint:starter-observability`, and `ServerCustomizer`
 
-1. **`ServerCustomizer` in flint:web.** `interface ServerCustomizer { Error customize(ref Server server); }` is an extension point. `runApplication` gains an optional `configure` delegate, which runs after the server starts and before it polls.
+1. **`ServerCustomizer` in flint:engine-web.** `interface ServerCustomizer { Error customize(ref Server server); }` is an extension point. `runApplication` gains an optional `configure` delegate, which runs after the server starts and before it polls.
    - **starter-web:** it collects every class registration that implements `ServerCustomizer` (keys of `Bind` and `Provided` included) and applies them in order.
    - **Failure:** a customizer's failure stops start-up.
 
 2. **What the starter provides.**
-   - **The bean:** `Observability` (`@Service`, `ServerCustomizer`) opens a `flint.actuator.Registry` from `[management]`: `path_prefix`, `service_name`, `otlp_endpoint` and `max_metric_series`.
+   - **The bean:** `Observability` (`@Service`, `ServerCustomizer`) opens a `flint.engine.actuator.Registry` from `[management]`: `path_prefix`, `service_name`, `otlp_endpoint` and `max_metric_series`.
    - **The endpoints:** it attaches `<prefix>/health/live`, `/health/ready` and `/metrics` (Prometheus text) to the application's server.
    - **Shutdown:** it closes at shutdown, which reports not-ready and finishes the export.
    - **The registry:** `registry()` hands it to the application for counters, histograms and health probes. The starter re-exports `Counter`, `Histogram`, `Health` and `HealthProbe`.
@@ -139,25 +139,25 @@ Status: proposed by the Milestone 10 implementation, for the project owner's rev
 
 1. **What it registers.** `DataAutoConfiguration` (now `DataSourceAutoConfiguration` in `flint:boot-autoconfigure-data`, section 8) registers two things, both conditional on `[database]`:
    - `DatabaseProperties`: `driver`, `url`, `max_connections`, `migrate` and `migrations`;
-   - `DataSource`: it opens the flint:sql pool in `@PostConstruct`, applies the migrations, and closes the pool in `@PreDestroy`.
+   - `DataSource`: it opens the flint:engine-sql pool in `@PostConstruct`, applies the migrations, and closes the pool in `@PreDestroy`.
 
 2. **Migrations are read at start-up, not compiled in.**
-   - **The files:** every `V<version>__<description>.sql` in `resources/migrations` (configurable), in version order, with SHA-256 for flint:migrate's history check. This mirrors how `config/` is read, and `flint package` ships `resources/`.
+   - **The files:** every `V<version>__<description>.sql` in `resources/migrations` (configurable), in version order, with SHA-256 for flint:engine-migrate's history check. This mirrors how `config/` is read, and `flint package` ships `resources/`.
    - **Why not a string import:** a starter's ordinary functions compile inside the starter package, without the application's string-import paths. A compile-time plan would need the application to instantiate it.
 
 3. **`Repository!(E, ID)`** is a `CrudRepository` bean over `SqlRepository`, constructed from the `DataSource`. It checks the table and columns at construction, after the migrations have run.
 
 4. **Text stays `Text`.**
-   - **Why:** flint:data is allocation-free from end to end; even its row callbacks are typed `nothrow @nogc`. `string` columns would mean redesigning that core, not wiring it.
+   - **Why:** flint:engine-data is allocation-free from end to end; even its row callbacks are typed `nothrow @nogc`. `string` columns would mean redesigning that core, not wiring it.
    - **How it reads:** entities therefore keep `Text` columns in the request arena, and a CRUD handler passes `context.arena` and returns the entity within the request.
    - **Conversion helpers:** `toString(arena, text)` and `toText(arena, value)` convert at the edges.
-   - **Revisit:** whether flint:data should gain GC-owned `string` columns is a question for the owner.
+   - **Revisit:** whether flint:engine-data should gain GC-owned `string` columns is a question for the owner.
    - **Decided (ADR-030 section 4):** entities use GC-owned `string` fields; the engine converts at the edges.
 
 5. **Restarts no longer fail on the port.**
    - **The fault:** an application killed and started again at once failed with "could not bind listener" in about 5 of 8 tries, even with `SO_REUSEADDR`. The reactor's io_uring keeps the old listener alive until the kernel finishes the ring's teardown, after the process is reaped.
-   - **The fix:** flint:reactor now retries a bind on `EADDRINUSE` for up to a second. Over the same scenario, 0 of 10 restarts failed.
-   - **Seeing the error:** flint:web gains `serve`, which returns why serving stopped, and `runApplication` keeps its exit codes on top of it. starter-web prints the error, such as "server: could not bind listener", where before it exited 1 without a word.
+   - **The fix:** flint:engine-reactor now retries a bind on `EADDRINUSE` for up to a second. Over the same scenario, 0 of 10 restarts failed.
+   - **Seeing the error:** flint:engine-web gains `serve`, which returns why serving stopped, and `runApplication` keeps its exit codes on top of it. starter-web prints the error, such as "server: could not bind listener", where before it exited 1 without a word.
 
 6. **DI start-up errors name the cause.** An exception from a bean's constructor or `@PostConstruct` now appears in the start-up error, for example "could not verify SQL repository schema for notes", where before it was only "raised an exception".
 
@@ -179,9 +179,9 @@ Status: proposed by the Milestone 10 implementation, for the project owner's rev
    - **The fix:** each starter depends on the auto-configuration for its library, which is `@ConditionalOnClass` resolved by the dependency graph.
 
 3. **Launchers.**
-   - **The type:** `flint.di.Launcher!T` is an auto-configuration entry that is not a bean. `AppContext.Launchers` lists the enabled ones.
+   - **The type:** `flint.engine.di.Launcher!T` is an auto-configuration entry that is not a bean. `AppContext.Launchers` lists the enabled ones.
    - **The protocol:** `flint:boot` defines it. A launcher may define `static bool command(Context)(args, out code)`, run before binding (the web server answers `--openapi` there), and `static int launch(Context)(ref context, args)`, run after the context starts.
-   - **Why:** this keeps `flint:boot` free of flint:web while the web server, which needs the application's controllers as compile-time types, still launches from the run loop.
+   - **Why:** this keeps `flint:boot` free of flint:engine-web while the web server, which needs the application's controllers as compile-time types, still launches from the run loop.
 
 4. **Starters hold no code.** A starter's `dub.sdl` is `targetType "none"` with its dependencies, beside its `config.toml` section, `README.md` and `example/`.
 
@@ -216,13 +216,13 @@ Status: proposed by the Milestone 10 implementation, for the project owner's rev
    - **The scan module:** `flint build` writes `.flint/generated/scan/flint_scan.d` when a module under `src/` declares an `@FlintApplication` class. It imports every module under `src/<project>/` and the auto-configuration of every starter the project resolves (`autoconfiguration` in `policy/boot.json`).
    - **Registration:** its module constructor calls `FlintApplication.register!(App, AutoConfigurationList!(...), modules...)`. `run!App` calls the registered runner, and fails with exit code 70 and a message when the application was not built with flint.
    - **Why not import it:** no module imports the scan module. ADR-029's shape, where `run!App` imports the module list, would make the application module import a module that imports it back, which AGENTS.md rules out.
-   - **What it finds:** `ScannedBeans!(modules)` registers every class or struct annotated `@Component`, `@Service`, `@Repository`, `@RestController` or `@ControllerAdvice`, and every `@ConfigurationProperties` struct as `Provided!T`. The web stereotypes are matched by name, so flint:boot stays below flint:web.
+   - **What it finds:** `ScannedBeans!(modules)` registers every class or struct annotated `@Component`, `@Service`, `@Repository`, `@RestController` or `@ControllerAdvice`, and every `@ConfigurationProperties` struct as `Provided!T`. The web stereotypes are matched by name, so flint:boot stays below flint:engine-web.
 
 3. **The banner.** At start, the application prints `resources/banner.txt` or Flint's banner, then "Starting <App> using Flint" and the active profile, to standard error. Standard output stays the application's.
    - **Turning it off:** `--banner=off` or `FLINT_MAIN_BANNER_MODE=off`.
    - **When it is skipped:** `--openapi` prints none.
 
-4. **Repositories are scanned like Spring Data's.** An application declares `@Repository final class NoteRepository : JdbcRepository!(Note, ulong)`, with a constructor that takes the `DataSource`. `JdbcRepository` is named after Spring Data JDBC, since flint.di's `@Repository` is the stereotype.
+4. **Repositories are scanned like Spring Data's.** An application declares `@Repository final class NoteRepository : JdbcRepository!(Note, ulong)`, with a constructor that takes the `DataSource`. `JdbcRepository` is named after Spring Data JDBC, since flint.engine.di's `@Repository` is the stereotype.
 
 5. **The OpenAPI document leaves out the front end:** the SPA controller's routes are not part of the API.
 
@@ -234,7 +234,7 @@ Spring Boot's `server.shutdown=graceful` and `spring.lifecycle.timeout-per-shutd
    - **The latch carries the signal:** the native action adds 1 for SIGINT and 1 << 32 for SIGTERM to the eventfd (or the Darwin pipe), so one read reports both counts. On Windows, Ctrl+C is SIGINT and Ctrl+Break is SIGTERM.
    - **Ownership is per signal:** each disposition is claimed while a subscription wants it and restored when the last one leaves. A custom handler on either signal keeps it, and the subscription fails with `conflict`.
    - **The API:** `onShutdownSignal(void delegate(ShutdownSignal))` runs once per signal received. Two signals that arrive together are two calls, so a second signal is never lost. `watchShutdownSignals()` turns them into two contexts: the first signal cancels `graceful` and a second one cancels `forced`. `onInterrupt` is unchanged.
-2. **flint:web drains.**
+2. **flint:engine-web drains.**
    - **`Server.drain(deadline, forced)`:** the drain stops admission and closes the listener, so new connections are refused. Each owner loop then closes its idle keep-alive connections. Admitted requests finish with `Connection: close`, and the server stops once none remain.
    - **When it gives up:** if the deadline passes, the drain cancels the remaining requests and returns `timedOut`. If `forced` is cancelled first, it does the same and returns `cancelled`.
    - **HTTP/2:** an HTTP/2 session gets REFUSED_STREAM for any new stream. The drain waits for admitted streams, not for idle sessions, which then receive GOAWAY at the stop.
@@ -245,11 +245,11 @@ Spring Boot's `server.shutdown=graceful` and `spring.lifecycle.timeout-per-shutd
    - **Why:** section 7.5 found that io_uring keeps a listener alive while an accept is pending on it.
    - **`Reactor.stopAccepting()`:** each owner retires its accept. A completion owner cancels its pending accept and waits for that completion, and a readiness owner drops its interest. The last owner then closes the socket. `acceptStopped()` reports when every owner has done this.
    - **Windows:** Windows retires the IOCP accept but keeps the socket until release, because closing it would also give up the process's Winsock reference.
-4. **The composition is the application's for now.** flint:web (tier 2) cannot import flint:os (tier 4). The two meet in the application: `runApplication(app, options, null, signals.graceful, signals.forced)`. Flint Boot will make that call, with the shutdown phase running `@PreDestroy`, once the owner resumes starter work.
+4. **The composition is the application's for now.** flint:engine-web (tier 2) cannot import flint:os (tier 4). The two meet in the application: `runApplication(app, options, null, signals.graceful, signals.forced)`. Flint Boot will make that call, with the shutdown phase running `@PreDestroy`, once the owner resumes starter work.
 5. **Tests.**
-   - **The reactor:** `packages/reactor/tests/stop_accepting.d` shows a refused connection after `stopAccepting` while an admitted one keeps serving, over epoll with two owners and over io_uring.
+   - **The reactor:** `packages/engine-reactor/tests/stop_accepting.d` shows a refused connection after `stopAccepting` while an admitted one keeps serving, over epoll with two owners and over io_uring.
    - **flint:os:** `packages/os/tests/interrupts.d` covers SIGTERM and SIGINT with their kinds, per-signal ownership and restoration, a coalesced second signal, and a custom SIGTERM handler.
-   - **flint:web:** `packages/web/tests/graceful_shutdown.d` covers an in-flight request finishing while new connections are refused and an idle keep-alive connection is closed. It also covers grace expiry, a forced drain, the three exit codes, and `ShutdownMode.immediate`.
+   - **flint:engine-web:** `packages/engine-web/tests/graceful_shutdown.d` covers an in-flight request finishing while new connections are refused and an idle keep-alive connection is closed. It also covers grace expiry, a forced drain, the three exit codes, and `ShutdownMode.immediate`.
    - **The whole process:** `tests/test_graceful_shutdown.py` sends real signals to `tests/integration/graceful-shutdown`. It covers SIGTERM and SIGINT exiting 0 after the in-flight request, exit 124 on expiry, exit 130 on a second signal, and a stuck worker handler that does not hold the process.
 
 ## Consequences
@@ -258,15 +258,15 @@ Spring Boot's `server.shutdown=graceful` and `spring.lifecycle.timeout-per-shutd
 - `flint add web observability` gives health, readiness and metrics endpoints with no wiring. The example counts accepted jobs from a worker-thread handler, and `tests/test_flint_starters.py` reads the count back from `/actuator/metrics`.
 - A starter application has a typed front-end contract: `flint openapi --typescript client.ts` turns its controllers into a document and a client, and a `[spa]` section serves the front end beside the API. `tests/test_flint_starters.py` checks the document, the client, the front-end routes and a 100 KB asset served by a worker-thread handler.
 - `flint add web` and twenty lines of application code give a configured REST service with DI, ordinary handlers and string path variables. `tests/test_flint_starters.py` covers `flint add` (dependency, section, lock, a repeated add and an unknown starter), and the example serving a request and refusing a misspelt key with exit code 3.
-- flint:web drains gracefully on SIGTERM and SIGINT when the application passes `watchShutdownSignals()`'s contexts to `runApplication` (section 10). **Known limit:** a starter application does not do this yet, so it still stops without running `@PreDestroy` hooks, until Flint Boot wires the signals in. A worker-thread controller has one thread with 16 queued requests.
-- A starter can register its beans by default, an application can override any of them by registering the same key, and a starter's optional parts switch on with a configuration section. `packages/di/tests/context_behavior.d` covers auto-configured wiring, replacement by an explicit binding, `@ConditionalOnMissingBean`, the compile-time error for a disabled dependency, and the TOML section reader. The 17 negative fixtures are rejected as before.
+- flint:engine-web drains gracefully on SIGTERM and SIGINT when the application passes `watchShutdownSignals()`'s contexts to `runApplication` (section 10). **Known limit:** a starter application does not do this yet, so it still stops without running `@PreDestroy` hooks, until Flint Boot wires the signals in. A worker-thread controller has one thread with 16 queued requests.
+- A starter can register its beans by default, an application can override any of them by registering the same key, and a starter's optional parts switch on with a configuration section. `packages/engine-di/tests/context_behavior.d` covers auto-configured wiring, replacement by an explicit binding, `@ConditionalOnMissingBean`, the compile-time error for a disabled dependency, and the TOML section reader. The 17 negative fixtures are rejected as before.
 
 ## Remaining for Milestone 10
 
-- **flint:data `string` columns:** an owner decision (section 7.4).
+- **flint:engine-data `string` columns:** an owner decision (section 7.4).
 - **The rest of ADR-029:** the entry point, the Spring names, `application.yaml`, and the Spring-shaped `flint new`, generators and examples (section 8.6).
 - **flint:starter-security and the auth starter:** sessions, OAuth login, password hashing and email verification.
 - **The second wave of starters:** cache, messaging, mail, storage, ai, mcp, cli, tui and desktop.
-- **Graceful SIGTERM and SIGINT in Flint Boot:** flint:os and flint:web are done (section 10). What remains is for `flint:boot` to pass the signal contexts to the web launcher and run `@PreDestroy` in the shutdown phase, once starter work resumes.
+- **Graceful SIGTERM and SIGINT in Flint Boot:** flint:os and flint:engine-web are done (section 10). What remains is for `flint:boot` to pass the signal contexts to the web launcher and run `@PreDestroy` in the shutdown phase, once starter work resumes.
 - **The benchmark's Flint references:** Flint references for `rest-notes`, `queue-worker` and `tui-dashboard`. They are on hold while the owner settles the application model. The Go and Spring Boot references are done: all eight pass their acceptance tests, built with the pinned Go 1.27.4, Temurin JDK 21.0.13.1+2, Maven 3.9.16 and Spring Boot 4.2.0.
 

@@ -6,7 +6,7 @@
       "module": "flint.boot",
       "dependencies": [
         "arena",
-        "di",
+        "engine-di",
         "config",
         "term"
       ],
@@ -17,9 +17,9 @@
       "module": "flint.boot_autoconfigure_web",
       "dependencies": [
         "arena",
-        "di",
+        "engine-di",
         "config",
-        "web",
+        "engine-web",
         "term",
         "boot"
       ],
@@ -31,11 +31,11 @@
       "dependencies": [
         "arena",
         "conc",
-        "di",
+        "engine-di",
         "config",
-        "data",
-        "sql",
-        "migrate"
+        "engine-data",
+        "engine-sql",
+        "engine-migrate"
       ],
       "repo": "boot"
     },
@@ -45,10 +45,10 @@
       "dependencies": [
         "arena",
         "conc",
-        "di",
+        "engine-di",
         "config",
-        "web",
-        "actuator"
+        "engine-web",
+        "engine-actuator"
       ],
       "repo": "boot"
     }
@@ -69,11 +69,11 @@
       "dependencies": [
         "starter",
         "arena",
-        "di",
+        "engine-di",
         "config",
         "serde",
         "validate",
-        "web",
+        "engine-web",
         "boot-autoconfigure-web"
       ],
       "section": "server",
@@ -87,7 +87,7 @@
       "directory": "starters/actuator",
       "dependencies": [
         "starter",
-        "actuator",
+        "engine-actuator",
         "boot-actuator"
       ],
       "section": "management",
@@ -102,9 +102,9 @@
       "dependencies": [
         "starter",
         "conc",
-        "data",
-        "sql",
-        "migrate",
+        "engine-data",
+        "engine-sql",
+        "engine-migrate",
         "boot-autoconfigure-data"
       ],
       "section": "database",

@@ -1,8 +1,8 @@
 module app;
 
 import core.time : MonoTime;
-import flint.reactor : Backend;
-import flint.web.micro_router : RouterCase, paths, routes;
+import flint.engine.reactor : Backend;
+import flint.engine.web.micro_router : RouterCase, paths, routes;
 import flint_bench_gc.sys.loopback : diagnostic;
 import flint_bench_rest.profile : jsonBody;
 import flint_micro.cpu_cases : CpuCases, arenaBytes;

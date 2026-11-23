@@ -128,7 +128,7 @@ class SourcePolicyTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'private boundary'):
             gates.structural(['conc'])
     def test_string_mixin_outside_generator_rejected(self):
-        self.source('arena', 'flint.arena', '@safe:\nmixin("im" ~ "port flint.web;");\n')
+        self.source('arena', 'flint.arena', '@safe:\nmixin("im" ~ "port flint.engine.web;");\n')
         with self.assertRaisesRegex(ValueError, 'outside approved generator'):
             gates.structural(['arena'])
     def test_module_thread_local_state_rejected(self):
@@ -154,27 +154,27 @@ class SourcePolicyTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'stale thread_local_allowlist'):
             gates.structural(['arena'])
     def test_comments_strings_and_nested_comments_do_not_invent_imports(self):
-        source = ('module example; /+ nested /+ import flint.web; +/ +/\n'
+        source = ('module example; /+ nested /+ import flint.engine.web; +/ +/\n'
                   'import a = flint.arena : Buffer;\n@safe:\n'
-                  'enum text = "import flint.web; @trusted:";\n')
+                  'enum text = "import flint.engine.web; @trusted:";\n')
         ts = list(tokens(source))
         self.assertEqual(imported_modules(ts), ['flint.arena'])
         self.assertEqual(module_default(ts), 'safe')
     @unittest.skipUnless(os.environ.get('DMD') or shutil.which('dmd'), 'DMD needed for real generated-code audit')
     def test_compiler_expansion_catches_split_import_string(self):
-        self.source('di', 'flint.di.internal.wiring', '@safe:\nmixin("im" ~ "port flint.web;");\n')
-        self.source('web', 'flint.web', '@safe:\n')
+        self.source('engine-di', 'flint.engine.di.internal.wiring', '@safe:\nmixin("im" ~ "port flint.engine.web;");\n')
+        self.source('engine-web', 'flint.engine.web', '@safe:\n')
         with self.assertRaisesRegex(ValueError, 'generated import'):
-            gates.structural(['di'])
+            gates.structural(['engine-di'])
     @unittest.skipUnless(os.environ.get('DMD') or shutil.which('dmd'), 'DMD needed for real generated-code audit')
     def test_compiler_expansion_catches_generated_trusted(self):
-        self.source('di', 'flint.di.internal.wiring', '@safe:\nmixin("@tru" ~ "sted void bad() {}");\n')
+        self.source('engine-di', 'flint.engine.di.internal.wiring', '@safe:\nmixin("@tru" ~ "sted void bad() {}");\n')
         with self.assertRaisesRegex(ValueError, 'generated unsafe'):
-            gates.structural(['di'])
+            gates.structural(['engine-di'])
     @unittest.skipUnless(os.environ.get('DMD') or shutil.which('dmd'), 'DMD needed for real generated-code audit')
     def test_compiler_expansion_accepts_safe_generated_code(self):
-        self.source('di', 'flint.di.internal.wiring', '@safe:\nmixin("int value() { return 1; }");\n')
-        result = gates.structural(['di'])
+        self.source('engine-di', 'flint.engine.di.internal.wiring', '@safe:\nmixin("int value() { return 1; }");\n')
+        result = gates.structural(['engine-di'])
         self.assertEqual(result['generated_dependencies']['compiler_profiles'], 2)
 
     def test_standard_library_expansions_leave_project_expansions_auditable(self):
@@ -183,10 +183,10 @@ class SourcePolicyTests(unittest.TestCase):
         library = installation / 'src/druntime/import/object.d'
         library.parent.mkdir(parents=True)
         library.touch()
-        source = self.source('di', 'flint.di.internal.wiring', '@safe:\n')
+        source = self.source('engine-di', 'flint.engine.di.internal.wiring', '@safe:\n')
         output = (f'// expansion at {library}(4990)\nimport imported = std.traits;\n\n'
-                  f'// expansion at {source}(3)\nimport flint.web;\n')
-        self.assertEqual(imported_modules(gates.project_mixin_tokens(output, compiler)), ['flint.web'])
+                  f'// expansion at {source}(3)\nimport flint.engine.web;\n')
+        self.assertEqual(imported_modules(gates.project_mixin_tokens(output, compiler)), ['flint.engine.web'])
 
 
 def synthetic_evidence(commit, scale=1.0):

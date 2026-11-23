@@ -1,9 +1,9 @@
 {
   "schema": 1,
   "packages": {
-    "reactor": {
+    "engine-reactor": {
       "tier": 0,
-      "module": "flint.reactor",
+      "module": "flint.engine.reactor",
       "repo": "framework",
       "dependencies": [
         "arena",
@@ -54,9 +54,9 @@
         "template_instances": 2000
       }
     },
-    "di": {
+    "engine-di": {
       "tier": 1,
-      "module": "flint.di",
+      "module": "flint.engine.di",
       "repo": "framework",
       "dependencies": [
         "arena"
@@ -163,15 +163,15 @@
         "template_instances": 2000
       }
     },
-    "web": {
+    "engine-web": {
       "tier": 2,
-      "module": "flint.web",
+      "module": "flint.engine.web",
       "repo": "framework",
       "dependencies": [
         "arena",
-        "reactor",
+        "engine-reactor",
         "conc",
-        "di",
+        "engine-di",
         "serde",
         "validate",
         "log"
@@ -187,13 +187,13 @@
         "template_instances": 2000
       }
     },
-    "http": {
+    "engine-http": {
       "tier": 2,
-      "module": "flint.http",
+      "module": "flint.engine.http",
       "repo": "framework",
       "dependencies": [
         "arena",
-        "reactor",
+        "engine-reactor",
         "conc",
         "serde"
       ],
@@ -208,13 +208,13 @@
         "template_instances": 2000
       }
     },
-    "security": {
+    "engine-security": {
       "tier": 2,
-      "module": "flint.security",
+      "module": "flint.engine.security",
       "repo": "framework",
       "dependencies": [
         "arena",
-        "http",
+        "engine-http",
         "serde",
         "conc"
       ],
@@ -229,15 +229,15 @@
         "template_instances": 2000
       }
     },
-    "actuator": {
+    "engine-actuator": {
       "tier": 2,
-      "module": "flint.actuator",
+      "module": "flint.engine.actuator",
       "repo": "framework",
       "dependencies": [
         "arena",
-        "reactor",
-        "web",
-        "http",
+        "engine-reactor",
+        "engine-web",
+        "engine-http",
         "log",
         "serde",
         "conc"
@@ -253,13 +253,13 @@
         "template_instances": 2000
       }
     },
-    "schedule": {
+    "engine-schedule": {
       "tier": 2,
-      "module": "flint.schedule",
+      "module": "flint.engine.schedule",
       "repo": "framework",
       "dependencies": [
         "arena",
-        "reactor",
+        "engine-reactor",
         "conc",
         "log"
       ],
@@ -274,16 +274,16 @@
         "template_instances": 2000
       }
     },
-    "rpc": {
+    "engine-rpc": {
       "tier": 2,
-      "module": "flint.rpc",
+      "module": "flint.engine.rpc",
       "repo": "framework",
       "dependencies": [
         "arena",
-        "reactor",
+        "engine-reactor",
         "conc",
-        "web",
-        "http",
+        "engine-web",
+        "engine-http",
         "serde"
       ],
       "better_c": false,
@@ -297,13 +297,13 @@
         "template_instances": 2000
       }
     },
-    "sql": {
+    "engine-sql": {
       "tier": 3,
-      "module": "flint.sql",
+      "module": "flint.engine.sql",
       "repo": "framework",
       "dependencies": [
         "arena",
-        "reactor",
+        "engine-reactor",
         "conc",
         "log"
       ],
@@ -318,16 +318,16 @@
         "template_instances": 2000
       }
     },
-    "data": {
+    "engine-data": {
       "tier": 3,
-      "module": "flint.data",
+      "module": "flint.engine.data",
       "repo": "data-jdbc",
       "dependencies": [
         "arena",
-        "sql",
+        "engine-sql",
         "serde",
         "validate",
-        "di",
+        "engine-di",
         "conc"
       ],
       "better_c": false,
@@ -341,13 +341,13 @@
         "template_instances": 2000
       }
     },
-    "migrate": {
+    "engine-migrate": {
       "tier": 3,
-      "module": "flint.migrate",
+      "module": "flint.engine.migrate",
       "repo": "framework",
       "dependencies": [
         "arena",
-        "sql",
+        "engine-sql",
         "log",
         "conc"
       ],
@@ -362,13 +362,13 @@
         "template_instances": 2000
       }
     },
-    "cache": {
+    "engine-cache": {
       "tier": 3,
-      "module": "flint.cache",
+      "module": "flint.engine.cache",
       "repo": "framework",
       "dependencies": [
         "arena",
-        "reactor",
+        "engine-reactor",
         "conc",
         "serde"
       ],
@@ -420,15 +420,15 @@
         "template_instances": 2000
       }
     },
-    "tui": {
+    "engine-tui": {
       "tier": 4,
-      "module": "flint.tui",
+      "module": "flint.engine.tui",
       "repo": "framework",
       "dependencies": [
         "arena",
         "conc",
         "term",
-        "style"
+        "engine-style"
       ],
       "better_c": false,
       "budget": {
@@ -441,9 +441,9 @@
         "template_instances": 2000
       }
     },
-    "style": {
+    "engine-style": {
       "tier": 4,
-      "module": "flint.style",
+      "module": "flint.engine.style",
       "repo": "framework",
       "dependencies": [],
       "better_c": false,
@@ -457,14 +457,14 @@
         "template_instances": 2000
       }
     },
-    "widgets": {
+    "engine-widgets": {
       "tier": 4,
-      "module": "flint.widgets",
+      "module": "flint.engine.widgets",
       "repo": "framework",
       "dependencies": [
         "arena",
-        "tui",
-        "style"
+        "engine-tui",
+        "engine-style"
       ],
       "better_c": false,
       "budget": {
@@ -477,15 +477,15 @@
         "template_instances": 2000
       }
     },
-    "prompt": {
+    "engine-prompt": {
       "tier": 4,
-      "module": "flint.prompt",
+      "module": "flint.engine.prompt",
       "repo": "framework",
       "dependencies": [
         "arena",
         "term",
-        "tui",
-        "widgets",
+        "engine-tui",
+        "engine-widgets",
         "validate"
       ],
       "better_c": false,
@@ -518,9 +518,9 @@
         "template_instances": 2000
       }
     },
-    "wasm-bridge": {
+    "engine-wasm-bridge": {
       "tier": 5,
-      "module": "flint.wasm_bridge",
+      "module": "flint.engine.wasm_bridge",
       "repo": "framework",
       "dependencies": [
         "arena"
@@ -536,13 +536,13 @@
         "template_instances": 2000
       }
     },
-    "ui-signals": {
+    "engine-ui-signals": {
       "tier": 5,
-      "module": "flint.ui_signals",
+      "module": "flint.engine.ui_signals",
       "repo": "framework",
       "dependencies": [
         "arena",
-        "wasm-bridge"
+        "engine-wasm-bridge"
       ],
       "better_c": true,
       "budget": {
@@ -555,9 +555,9 @@
         "template_instances": 2000
       }
     },
-    "wasi": {
+    "engine-wasi": {
       "tier": 5,
-      "module": "flint.wasi",
+      "module": "flint.engine.wasi",
       "repo": "framework",
       "dependencies": [
         "arena",
@@ -574,13 +574,13 @@
         "template_instances": 2000
       }
     },
-    "mq": {
+    "engine-mq": {
       "tier": 6,
-      "module": "flint.mq",
+      "module": "flint.engine.mq",
       "repo": "framework",
       "dependencies": [
         "arena",
-        "reactor",
+        "engine-reactor",
         "conc",
         "serde",
         "log"
@@ -596,14 +596,14 @@
         "template_instances": 2000
       }
     },
-    "storage": {
+    "engine-storage": {
       "tier": 6,
-      "module": "flint.storage",
+      "module": "flint.engine.storage",
       "repo": "framework",
       "dependencies": [
         "arena",
-        "http",
-        "security",
+        "engine-http",
+        "engine-security",
         "conc"
       ],
       "better_c": false,
@@ -617,14 +617,14 @@
         "template_instances": 2000
       }
     },
-    "mail": {
+    "engine-mail": {
       "tier": 6,
-      "module": "flint.mail",
+      "module": "flint.engine.mail",
       "repo": "framework",
       "dependencies": [
         "arena",
-        "http",
-        "reactor",
+        "engine-http",
+        "engine-reactor",
         "conc"
       ],
       "better_c": false,
@@ -638,13 +638,13 @@
         "template_instances": 2000
       }
     },
-    "ai": {
+    "engine-ai": {
       "tier": 7,
-      "module": "flint.ai",
+      "module": "flint.engine.ai",
       "repo": "ai",
       "dependencies": [
         "arena",
-        "http",
+        "engine-http",
         "serde",
         "conc",
         "validate"
@@ -660,14 +660,14 @@
         "template_instances": 2000
       }
     },
-    "mcp": {
+    "engine-mcp": {
       "tier": 7,
-      "module": "flint.mcp",
+      "module": "flint.engine.mcp",
       "repo": "ai",
       "dependencies": [
         "arena",
-        "http",
-        "web",
+        "engine-http",
+        "engine-web",
         "serde",
         "validate",
         "conc"
@@ -683,9 +683,9 @@
         "template_instances": 2000
       }
     },
-    "template": {
+    "engine-template": {
       "tier": 8,
-      "module": "flint.templates",
+      "module": "flint.engine.templates",
       "repo": "framework",
       "dependencies": [
         "arena",
@@ -702,9 +702,9 @@
         "template_instances": 2000
       }
     },
-    "codec": {
+    "engine-codec": {
       "tier": 8,
-      "module": "flint.codec",
+      "module": "flint.engine.codec",
       "repo": "framework",
       "dependencies": [
         "arena"
@@ -720,16 +720,16 @@
         "template_instances": 2000
       }
     },
-    "desktop": {
+    "engine-desktop": {
       "tier": 8,
-      "module": "flint.desktop",
+      "module": "flint.engine.desktop",
       "repo": "framework",
       "dependencies": [
         "arena",
         "conc",
         "os",
         "serde",
-        "wasm-bridge"
+        "engine-wasm-bridge"
       ],
       "better_c": false,
       "budget": {

@@ -18,9 +18,9 @@ class RepoPolicyTests(unittest.TestCase):
         owners = workspace.package_repos()
         self.assertEqual(set(workspace.packages_of('flint')),
                          {'arena', 'conc', 'validate', 'serde', 'config', 'log', 'cli', 'os', 'term', 'test'})
-        self.assertIn('security', workspace.packages_of('framework'))
-        self.assertEqual(workspace.packages_of('ai'), ['ai', 'mcp'])
-        self.assertEqual(workspace.packages_of('data-jdbc'), ['data'])
+        self.assertIn('engine-security', workspace.packages_of('framework'))
+        self.assertEqual(workspace.packages_of('ai'), ['engine-ai', 'engine-mcp'])
+        self.assertEqual(workspace.packages_of('data-jdbc'), ['engine-data'])
         self.assertIn('boot-autoconfigure-web', workspace.packages_of('boot'))
         self.assertIn('starter-web', workspace.packages_of('boot'))
         for name, (repo, _) in owners.items():
@@ -35,13 +35,13 @@ class RepoPolicyTests(unittest.TestCase):
             root = Path(temporary)
             (root / 'policy').mkdir()
             packages = json.loads((ROOT / 'policy/packages.json').read_text())
-            packages['packages']['log']['dependencies'].append('web')
+            packages['packages']['log']['dependencies'].append('engine-web')
             (root / 'policy/packages.json').write_text(json.dumps(packages))
             for name in ('boot.json', 'repos.json'):
                 (root / 'policy' / name).write_text((ROOT / 'policy' / name).read_text())
             violations, _ = workspace.edge_violations(root)
             self.assertEqual([message for _, _, message in violations],
-                             ['log (flint) -> web (framework): flint may not depend on framework'])
+                             ['log (flint) -> engine-web (framework): flint may not depend on framework'])
 
 
 class WorkspaceTests(unittest.TestCase):
@@ -56,7 +56,7 @@ class WorkspaceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             pinned = workspace.Workspace(self.write(temporary, head))
             self.assertEqual(pinned.verify(), [])
-            self.assertEqual(pinned.package_dir('web'), ROOT / 'packages/web')
+            self.assertEqual(pinned.package_dir('engine-web'), ROOT / 'packages/engine-web')
             self.assertEqual(pinned.package_dir('starter-web'), ROOT / 'starters/web')
             stale = workspace.Workspace(self.write(temporary, '0000000'))
             self.assertEqual(len(stale.verify()), len(workspace.repo_policy()['repos']))
@@ -64,7 +64,7 @@ class WorkspaceTests(unittest.TestCase):
     def test_the_gate_checks_one_repo_and_refuses_a_stale_workspace(self):
         with tempfile.TemporaryDirectory() as temporary:
             gate = subprocess.run([sys.executable, str(ROOT / 'tools/gates.py'), '--gate', 'structural',
-                                   '--repo', 'ai', '--package', 'ai'], cwd=ROOT, capture_output=True, text=True)
+                                   '--repo', 'ai', '--package', 'engine-ai'], cwd=ROOT, capture_output=True, text=True)
             self.assertEqual(gate.returncode, 0, gate.stderr)
             self.assertEqual(json.loads(gate.stdout)['repo'], 'ai')
             stale = subprocess.run([sys.executable, str(ROOT / 'tools/gates.py'), '--gate', 'structural',
@@ -93,7 +93,7 @@ class PlatformModuleTests(unittest.TestCase):
                 (root / 'policy' / name).write_text((ROOT / 'policy' / name).read_text())
             (root / 'platform.lock').write_text((ROOT / 'platform.lock').read_text())
             stale = dict(bom, artifacts=dict(bom['artifacts']))
-            del stale['artifacts']['flint:web']
+            del stale['artifacts']['flint:engine-web']
             (root / 'boot/dependencies/flint-dependencies.json').write_text(json.dumps(stale))
             self.assertEqual(module.problems(root), ['boot/dependencies/flint-dependencies.json is stale: run '
                                                      'python3 tools/platform_modules.py --write'])
@@ -146,7 +146,7 @@ class AppRepoTests(unittest.TestCase):
             (root / 'apps/flint-mcp/flint.toml').write_text((ROOT / 'apps/flint-mcp/flint.toml').read_text())
             violations, _ = workspace.edge_violations(root)
             self.assertEqual([message for _, _, message in violations],
-                             ['app flint-mcp (flint) -> mcp (ai): flint may not depend on ai'])
+                             ['app flint-mcp (flint) -> engine-mcp (ai): flint may not depend on ai'])
 
 
 class ExtractionTests(unittest.TestCase):
@@ -155,10 +155,10 @@ class ExtractionTests(unittest.TestCase):
 
         # A repo with an API mapping takes api/<repo>, which extraction renames to api/.
         self.assertEqual(extract_repo.moving_paths('boot'), ['api/boot', 'boot', 'starters'])
-        self.assertEqual(extract_repo.moving_paths('ai'), ['apps/flint-mcp', 'packages/ai', 'packages/mcp'])
-        self.assertEqual(extract_repo.moving_paths('data-jdbc'), ['packages/data'])
+        self.assertEqual(extract_repo.moving_paths('ai'), ['apps/flint-mcp', 'packages/engine-ai', 'packages/engine-mcp'])
+        self.assertEqual(extract_repo.moving_paths('data-jdbc'), ['packages/engine-data'])
         framework = extract_repo.moving_paths('framework')
-        self.assertIn('packages/security', framework)
+        self.assertIn('packages/engine-security', framework)
         self.assertIn('api/framework', framework)
         self.assertNotIn('packages/arena', framework)
         self.assertEqual(len(framework), len(workspace.packages_of('framework')) + 1)
@@ -171,5 +171,6 @@ class ExtractionTests(unittest.TestCase):
             lines = [line for line in recipe.splitlines() if line.startswith('subPackage ')]
             self.assertEqual(len(lines), len([n for n, (_, d) in workspace.package_repos().items()
                                               if (ROOT / d / 'dub.sdl').is_file()]))
-            self.assertTrue(any(line.endswith('packages/web"') for line in lines))
+            self.assertTrue(any(line.endswith('packages/engine-web"') for line in lines))
             self.assertTrue(any(line.endswith('starters/web"') for line in lines))
+

@@ -3,7 +3,7 @@
   "purpose": "Pinned fixture peers for workspace test suites and live scenarios (ADR-018, ADR-022). tools/install_peers.py verifies each archive before building or extracting it and writes a flint-peer.json receipt. Go is pinned in policy/toolchains.json and the PostgreSQL source in policy/native-lock.json.",
   "peers": {
     "valkey": {
-      "consumers": ["cache"],
+      "consumers": ["engine-cache"],
       "version": "9.1.2",
       "kind": "make",
       "url": "https://github.com/valkey-io/valkey/archive/refs/tags/9.1.2.tar.gz",
@@ -16,7 +16,7 @@
       "binaries": {"valkey-server": "src/valkey-server"}
     },
     "nats": {
-      "consumers": ["mq"],
+      "consumers": ["engine-mq"],
       "version": "2.15.3",
       "kind": "go",
       "url": "https://github.com/nats-io/nats-server/archive/refs/tags/v2.15.3.tar.gz",
@@ -27,7 +27,7 @@
       "binaries": {"nats-server": "nats-server"}
     },
     "minio": {
-      "consumers": ["storage"],
+      "consumers": ["engine-storage"],
       "version": "RELEASE.2025-10-15T17-29-55Z",
       "kind": "go",
       "url": "https://github.com/minio/minio/archive/refs/tags/RELEASE.2025-10-15T17-29-55Z.tar.gz",
@@ -38,7 +38,7 @@
       "binaries": {"minio": "minio"}
     },
     "kafka": {
-      "consumers": ["mq"],
+      "consumers": ["engine-mq"],
       "version": "4.1.2",
       "kind": "archive",
       "url": "https://downloads.apache.org/kafka/4.1.2/kafka_2.13-4.1.2.tgz",
@@ -50,7 +50,7 @@
       "binaries": {"kafka-server-start.sh": "bin/kafka-server-start.sh"}
     },
     "jre": {
-      "consumers": ["mq"],
+      "consumers": ["engine-mq"],
       "version": "21.0.13.1+2",
       "kind": "archive",
       "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.13.1%2B2/OpenJDK21U-jre_x64_linux_hotspot_21.0.13.1_2.tar.gz",

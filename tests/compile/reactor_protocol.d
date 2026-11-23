@@ -2,7 +2,7 @@ module reactor_protocol;
 
 import flint.arena : Status;
 import flint.conc : Context, Deadline;
-import flint.reactor : Completion, ConnectionId, Reactor, TaskContext;
+import flint.engine.reactor : Completion, ConnectionId, Reactor, TaskContext;
 
 @safe:
 

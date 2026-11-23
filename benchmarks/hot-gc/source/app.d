@@ -4,7 +4,7 @@ import core.lifetime : move;
 import core.memory : GC;
 import flint.arena : Status;
 import flint.conc : Context, Deadline;
-import flint.web : Method, Server, registerController;
+import flint.engine.web : Method, Server, registerController;
 import flint_bench_gc.barrier : Barrier, Counter, Stage, ownerCount;
 import flint_bench_gc.client : Client, choosePort;
 import flint_bench_rest.profile : Application, minimalRestOptions;

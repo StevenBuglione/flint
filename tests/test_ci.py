@@ -142,7 +142,7 @@ class CiBoundaryTests(unittest.TestCase):
         compiles=[command for command in calls if command[0]=='ldc2']
         self.assertEqual(len(compiles),5)
         paths=[next(x for x in command if x.endswith('/tests/betterc.d')) for command in compiles]
-        for package in ['arena','serde','validate','wasm-bridge','ui-signals']:
+        for package in ['arena','serde','validate','engine-wasm-bridge','engine-ui-signals']:
             self.assertTrue(any('/'+package+'/tests/betterc.d' in path for path in paths))
         for command in compiles:
             self.assertIn('-L--export=flint_test',command)

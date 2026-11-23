@@ -11,7 +11,7 @@ from conan.tools.files import download
 
 NAME = 'utf8proc'
 DEPENDENCIES = []
-BUILD_ENGINE_SHA256 = '245c0979505c6380660bf7e6dc17324ccdf3b4adcb0e196cc14a7bf13a436a62'
+BUILD_ENGINE_SHA256 = '18963edcf4b7e250ab32a95b58caed5e4d9f468701d382c37a27e826cd91432d'
 TARGETS = ['linux-aarch64-glibc', 'linux-aarch64-musl', 'linux-x86_64-glibc', 'linux-x86_64-musl', 'macos-arm64', 'windows-x86_64']
 
 

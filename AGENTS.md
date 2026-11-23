@@ -10,7 +10,7 @@ Read this file, the assigned milestone prompt, `docs/AGENT_D_DIALECT.md`, `docs/
 
 ## Source layout
 
-Each implementation lives under `packages/<dub-name>/source/flint/`. A module with children uses `flint/name/package.d`, never both `flint/name.d` and a child module hierarchy. D module names use underscores for hyphenated DUB names. `flint:template` uses `flint.templates`, because `template` is a keyword. Public import paths and UDAs must remain stable. `ffi/` and `sys/` are private low-level subdirectories; applications must not import them.
+Each implementation lives under `packages/<dub-name>/source/flint/`. A module with children uses `flint/name/package.d`, never both `flint/name.d` and a child module hierarchy. D module names use underscores for hyphenated DUB names. `flint:engine-template` uses `flint.engine.templates`, because `template` is a keyword. Public import paths and UDAs must remain stable. `ffi/` and `sys/` are private low-level subdirectories; applications must not import them.
 
 ## Mandatory language rules
 

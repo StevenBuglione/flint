@@ -39,7 +39,7 @@ The handoff archive under `handoff/` stays byte-identical to its `MANIFEST.sha25
 
   It reads the files, `.env`, environment and arguments once and binds every value from that one snapshot; types may share a prefix. With `rejectUnknownKeys`, a key is unknown only when no bound type's schema claims it, so a misspelt key inside a bound prefix is still rejected with the same diagnostic as `load!T`. On failure every value is reset to its initializer and the earliest diagnostic by key is returned. `load!T` keeps single-type semantics.
 
-- **Fiber wake-up.** Owner fibers waiting for stream or HTTP-client progress had no completion wake-up. They resumed on every loop pass for 200 µs and then polled every 1 ms, so a peer slower than 200 µs paid up to 1 ms per wait plus 200 µs of spinning. `flint.reactor` adds a targeted wake and a wait that also observes a caller's context:
+- **Fiber wake-up.** Owner fibers waiting for stream or HTTP-client progress had no completion wake-up. They resumed on every loop pass for 200 µs and then polled every 1 ms, so a peer slower than 200 µs paid up to 1 ms per wait plus 200 µs of spinning. `flint.engine.reactor` adds a targeted wake and a wait that also observes a caller's context:
 
   ```d
   struct TaskWaker { uint ownerCore = uint.max; uint slot; ulong generation; bool valid() const pure nothrow @nogc; }

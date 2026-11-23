@@ -1,7 +1,7 @@
 /// `flint openapi`: the OpenAPI document of a starter-web application, and a typed TypeScript client from it
 /// (ADR-028 section 5).
 ///
-/// flint builds the project, runs it with `--openapi` (flint:starter-web prints the document that flint:web
+/// flint builds the project, runs it with `--openapi` (flint:starter-web prints the document that flint:engine-web
 /// generated from the controllers at compile time), names the document after flint.toml, and writes it. With
 /// `--typescript`, it also writes a dependency-free client: one interface per object schema and one method per
 /// operation, over `fetch`.
@@ -90,7 +90,7 @@ private bool parse(string text, out JSONValue document)
     return document.type == JSONType.object && "paths" in document && "info" in document;
 }
 
-/// The TypeScript client for an OpenAPI document that flint:web generated.
+/// The TypeScript client for an OpenAPI document that flint:engine-web generated.
 string typescriptClient(const JSONValue document)
 {
     import std.algorithm.sorting : sort;
@@ -253,7 +253,7 @@ private string interfaceOf(string name, const JSONValue schema, ref string[strin
 {
     import std.algorithm.sorting : sort;
 
-    // Fields in declaration order: flint:web lists them in `required`; otherwise sorted.
+    // Fields in declaration order: flint:engine-web lists them in `required`; otherwise sorted.
     const properties = schema["properties"].objectNoRef;
     string[] order;
     if (const required = "required" in schema)

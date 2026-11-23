@@ -53,7 +53,7 @@ flint check
 | `flint examples <topic>` | Compiled, tested examples for a topic, and matching golden applications. |
 | `flint generate <entity\|repository\|service\|controller\|config\|migration\|agents\|debug> <Name> [--plan]` | Write the canonical shape of a component (package-by-feature), add the core packages it needs and relock. `agents` refreshes `AGENTS.md`, and `debug` writes VS Code launch and task configurations that load Flint's pretty-printers. Never overwrites a component. |
 | `flint add <starter>... [--plan]` | Wire starters (`web`, ...; listed in `policy/starters.json`): add `flint:starter-<name>` to `[dependencies]`, append its configuration section to `config/application.toml` when missing, and relock (ADR-028). |
-| `flint openapi [-o FILE] [--typescript FILE]` | Build a starter-web project, take the OpenAPI 3.1 document flint:web generated from its controllers (the app's `--openapi`), name it after `flint.toml`, and write it; `--typescript` also writes a typed `fetch` client (ADR-028). |
+| `flint openapi [-o FILE] [--typescript FILE]` | Build a starter-web project, take the OpenAPI 3.1 document flint:engine-web generated from its controllers (the app's `--openapi`), name it after `flint.toml`, and write it; `--typescript` also writes a typed `fetch` client (ADR-028). |
 | `flint receipt <artifact> [--canonical]` | Verify an artifact against its receipt and the current toolchain. |
 | `flint api fetch [projects...] [--cache DIR]` | Download the upstream source archives pinned in `api/upstreams.json` into the reference cache, verified by SHA-256 (ADR-030). Never compiles them. |
 | `flint api extract --source DIR --project P --version TAG [-o FILE] [--exclude PREFIX]...` | Write the API manifest of an upstream Java source tree: every public and protected type and member ([API manifests](#api-manifests)). |
@@ -219,8 +219,8 @@ The mapping has the shape the rulebook ([`docs/spring/api-mapping.md`](spring/ap
 {"rulebook": 2,
  "upstream": ["spring-framework@v7.1.0", "spring-boot@v4.2.0"],
  "elements": {
-   "org.springframework.http.HttpStatus": {"status": "ported", "d": "flint.http.HttpStatus"},
-   "org.springframework.http.ResponseEntity": {"status": "adapted", "rules": ["R12", "R13"], "d": "flint.http.ResponseEntity"},
+   "org.springframework.http.HttpStatus": {"status": "ported", "d": "flint.engine.http.HttpStatus"},
+   "org.springframework.http.ResponseEntity": {"status": "adapted", "rules": ["R12", "R13"], "d": "flint.engine.http.ResponseEntity"},
    "org.springframework.jmx.**": {"status": "excluded", "category": "jvm-platform"},
    "org.springframework.beans.factory.xml.**": {"status": "excluded", "category": "deferred", "phase": "3"}}}
 ```

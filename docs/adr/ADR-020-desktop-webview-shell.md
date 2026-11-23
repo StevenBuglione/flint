@@ -4,7 +4,7 @@ Status: accepted on 2026-11-21. It implements the project owner's direction to f
 
 ## Context
 
-`flint:desktop` shipped two backends. The default was a static SDL3 build limited to its X11, offscreen and dummy video drivers, drawing a Flint-specific binary draw list. The other was an opt-in WebKitGTK profile written as a separate C adapter with its own build script and DUB block. The webview profile had no typed host bridge: JavaScript sent raw byte arrays to a single `app.message` method.
+`flint:engine-desktop` shipped two backends. The default was a static SDL3 build limited to its X11, offscreen and dummy video drivers, drawing a Flint-specific binary draw list. The other was an opt-in WebKitGTK profile written as a separate C adapter with its own build script and DUB block. The webview profile had no typed host bridge: JavaScript sent raw byte arrays to a single `app.message` method.
 
 On the reference Linux desktop (NixOS, Hyprland on Wayland, NVIDIA) the SDL profile could not open a window. SDL `dlopen`s `libX11.so.6`, which NixOS does not put on a default library path. Xwayland also listened on a nonstandard socket, while a stale server held the abstract socket. The package tests passed only with `SDL_VIDEO_DRIVER=offscreen`, so the real platform path was never exercised. The draw list was also a renderer Flint had to own: text shaping, input methods, accessibility, high-DPI and every widget would have had to be written from scratch.
 
@@ -22,17 +22,17 @@ The obvious port is to wrap `tao` and `wry` in a Rust static library. The user r
 
 ## Decision
 
-Rebuild `flint:desktop` on the Tauri v2 architecture, implemented in D, binding the platform C libraries directly. There is no Rust, and no Flint C shim on the webview path.
+Rebuild `flint:engine-desktop` on the Tauri v2 architecture, implemented in D, binding the platform C libraries directly. There is no Rust, and no Flint C shim on the webview path.
 
 ### Platform layer
 
 | Platform | Windows and event loop | Webview | Binding |
 | --- | --- | --- | --- |
-| Linux (implemented) | GTK 3 (`libgtk-3`, GDK picks Wayland or X11) | WebKitGTK `webkit2gtk-4.1` | `extern(C)` declarations in `flint.desktop.ffi.webkit` |
+| Linux (implemented) | GTK 3 (`libgtk-3`, GDK picks Wayland or X11) | WebKitGTK `webkit2gtk-4.1` | `extern(C)` declarations in `flint.engine.desktop.ffi.webkit` |
 | Windows (later) | Win32 | WebView2 through its COM C ABI (`ICoreWebView2*` vtables) | `extern(Windows)` vtable structs in D |
-| macOS (implemented, ADR-024) | AppKit | WKWebView | Objective-C runtime C ABI (`objc_msgSend`, `sel_registerName`) from D, in `flint.desktop.ffi.wkwebview` |
+| macOS (implemented, ADR-024) | AppKit | WKWebView | Objective-C runtime C ABI (`objc_msgSend`, `sel_registerName`) from D, in `flint.engine.desktop.ffi.wkwebview` |
 
-These are the same libraries `tao` and `wry` use on each platform. Only GLib, GObject, GTK and WebKitGTK functions are declared, each with the exact C signature. Raw pointers and callbacks stay in `flint.desktop.ffi`, already an allowlisted low-level prefix. Every `@trusted` function carries its adjacent `// SAFETY:` note and stays under 60 lines. GTK signal callbacks are `extern(C) nothrow @nogc` D functions. They do not call application code: they copy the IPC message or window event into a window-owned ring, and the owner loop dispatches it after the GTK iteration returns. A D exception therefore cannot unwind through GTK.
+These are the same libraries `tao` and `wry` use on each platform. Only GLib, GObject, GTK and WebKitGTK functions are declared, each with the exact C signature. Raw pointers and callbacks stay in `flint.engine.desktop.ffi`, already an allowlisted low-level prefix. Every `@trusted` function carries its adjacent `// SAFETY:` note and stays under 60 lines. GTK signal callbacks are `extern(C) nothrow @nogc` D functions. They do not call application code: they copy the IPC message or window event into a window-owned ring, and the owner loop dispatches it after the GTK iteration returns. A D exception therefore cannot unwind through GTK.
 
 On macOS the same contract is implemented without Objective-C source. `objc_msgSend` is cast to each call's exact C prototype, as arm64 requires. One `NSObject` subclass, registered at run time with `objc_allocateClassPair`, is the script message handler, the `flint` URL scheme handler, and the navigation, UI and window delegate. Its methods are `extern(C) nothrow @nogc` D functions that only copy into the window-owned ring or record an event, as the GTK callbacks do. Decision handlers are Objective-C blocks; Flint calls each one exactly once through the block's `invoke` slot. Assets are served from `flint://localhost` with the same headers and content-security policy. Downloads, new windows and media-capture requests are refused. The owner loop drains queued AppKit events and one run-loop pass on every poll. The bridge script is unchanged, because WKWebView exposes the same `window.webkit.messageHandlers` interface as WebKitGTK. WKWebView has no setting that copies console output to stdout, so `FLINT_DESKTOP_CONSOLE` has no effect there. `FLINT_DESKTOP_DEVTOOLS=1` makes the view inspectable.
 
@@ -44,7 +44,7 @@ The webview backend opens on Wayland directly. Nothing is `dlopen`ed by soname: 
 
 ### Application model
 
-The developer ergonomics match `flint:web`: annotated structs, explicit composition, typed DTOs through `flint:serde`, and `@safe`/DIP1000 rules unchanged.
+The developer ergonomics match `flint:engine-web`: annotated structs, explicit composition, typed DTOs through `flint:serde`, and `@safe`/DIP1000 rules unchanged.
 
 ```d
 struct AddRequest { long a; long b; }
@@ -86,7 +86,7 @@ flint.listen("count", (payload) => render(payload));
 flint.emit("clicked", { count: 3 });
 ```
 
-- **Commands.** `@Command("name")` on a method of a `@DesktopCommands` struct. The method takes either `(ref scope InvokeContext)` or `(scope const ref Dto, ref scope InvokeContext)`. It returns `Result!T`, encoded with `flint:serde`, or `Error`, which resolves to `null`. The args object is decoded into `Dto` by `flint.serde.decodeInto` with unknown fields rejected, which plays the role of the `@RequestBody` binding in `flint:web`. A failed decode rejects the promise with `invalidArgument` before the method runs. Duplicate command names and unsupported signatures are compile errors. The binder is a compile-time walk of the explicit `Application` struct's fields, like `flint.web.internal.controllers`. It never scans modules or constructs from strings.
+- **Commands.** `@Command("name")` on a method of a `@DesktopCommands` struct. The method takes either `(ref scope InvokeContext)` or `(scope const ref Dto, ref scope InvokeContext)`. It returns `Result!T`, encoded with `flint:serde`, or `Error`, which resolves to `null`. The args object is decoded into `Dto` by `flint.serde.decodeInto` with unknown fields rejected, which plays the role of the `@RequestBody` binding in `flint:engine-web`. A failed decode rejects the promise with `invalidArgument` before the method runs. Duplicate command names and unsupported signatures are compile errors. The binder is a compile-time walk of the explicit `Application` struct's fields, like `flint.engine.web.internal.controllers`. It never scans modules or constructs from strings.
 - **Events.** D→JS: `Window.emit(name, value)` or `InvokeContext.emit`, owner thread only. JS→D: `flint.emit(name, payload)` reaches the `@Listen("name")` methods, typed the same way as commands.
 - **Capabilities.** `Capability { identifier, windows, commands, events, origins }` values are composed explicitly in D. They are matched on the window's `label` and the page's origin: the app origin, or exact HTTPS origins listed in `origins`. An invoke or emit is dispatched only when some capability for that window and origin lists the name. Otherwise it is rejected with `permissionDenied` before decoding, so unknown and forbidden commands look the same. With no capabilities, every invoke is denied.
 - **Asset protocol.** `Asset { path, content, mime }` values are served by D from the `flint://localhost/` scheme. Each response carries `Content-Security-Policy`, `X-Content-Type-Options: nosniff` and `Cache-Control: no-store`. The default CSP allows only same-origin scripts, styles, images and fonts, plus inline scripts and styles. Navigation is limited to the app origin and the window's exact `httpsOrigin`. New windows, downloads (unsupported MIME responses) and permission requests (camera, geolocation, notifications) are denied.
@@ -114,18 +114,18 @@ Bundling follows Tauri's targets: a later `flint desktop bundle` CLI writes `.de
 ## Consequences
 
 - Policy changes needing integration-owner review:
-  - `desktop` gains a direct `flint:serde` dependency (tier 1, so the graph stays acyclic) in `policy/packages.json` and `packages/desktop/dub.sdl`.
-  - `flint.desktop.internal` joins the approved reflection internals in `AGENTS.md`. The command-table walk is reflection; it uses no string mixins, so `policy/safety-policy.json` is unchanged.
+  - `desktop` gains a direct `flint:serde` dependency (tier 1, so the graph stays acyclic) in `policy/packages.json` and `packages/engine-desktop/dub.sdl`.
+  - `flint.engine.desktop.internal` joins the approved reflection internals in `AGENTS.md`. The command-table walk is reflection; it uses no string mixins, so `policy/safety-policy.json` is unchanged.
   - `policy/native-lock.json` gains a `webkitgtk` system-provider row: pkg-config modules, minimum versions and license.
   - The `desktop` profile in `tools/native_build.py` resolves that provider through pkg-config, records the resolved versions, the digests of the `.pc` files and the link flags in the install receipt, and emits the `FlintNativeWebkitgtk` DUB version.
   - SDL moves to a new `desktop-canvas` profile. The `ci` closure still builds it.
 - Public API additions: `WindowOptions.label`, `assets` and `capabilities`; `Asset`, `Capability`, `DesktopCommands`, `Command`, `Listen`, `InvokeContext`; `Window.serve` and `Window.emit`. Existing declarations keep their meaning. The raw `window.webkit.messageHandlers.flint.postMessage([...])` byte protocol of the old adapter is replaced by the `flint` bridge object.
-- `packages/desktop/native/webkitgtk.c`, `build_webkitgtk.py` and the fixtures that drove it are removed; D tests cover the same origin and navigation denials.
+- `packages/engine-desktop/native/webkitgtk.c`, `build_webkitgtk.py` and the fixtures that drove it are removed; D tests cover the same origin and navigation denials.
 - The desktop suite runs against the real display. With no display it fails, rather than skipping, as the old SDL suite did.
 
 ## Specification changes for review
 
-`handoff/` is the frozen, manifest-pinned bootstrap contract, so this branch leaves it untouched. The integration owner should apply these changes to `specs/tier-8/desktop.md` and `contracts/source/flint/desktop.d` and refresh `MANIFEST.sha256`:
+`handoff/` is the frozen, manifest-pinned bootstrap contract, so this branch leaves it untouched. The integration owner should apply these changes to `specs/tier-8/desktop.md` and `contracts/source/flint/engine/desktop.d` and refresh `MANIFEST.sha256`:
 
 - **§1 parity checklist.** "System WebView is the default frontend (GTK + WebKitGTK on Linux, WebView2, WKWebView). Typed commands, events both ways and capabilities are the host bridge. SDL3 is an optional canvas backend."
 - **§2 dependencies.** Add `flint:serde`.

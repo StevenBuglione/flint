@@ -55,7 +55,7 @@ ADR-018 and ADR-021 fix what `flint` does. Building it forced choices they leave
       - PostgreSQL 18.7 is built from the libpq source pinned in `policy/native-lock.json`, and Go comes from `policy/toolchains.json`.
     - **Go fixture servers** are built offline with the pinned Go.
     - **Missing peers.** A peer whose binary is missing is never taken from the system. The offline pass still runs, then FLINT-E0815 names the peer and fails the package.
-    - **Live scenarios.** `[scenarios]` declares commands that `flint test --scenarios` runs after the unit tests. `mq`'s, `tools/mq_live.py`, starts a single-node KRaft Kafka on the pinned JRE and JetStream, plain and with TLS from a throwaway CA. It builds the scenario programs in `packages/mq/fixtures` and runs all seven against them.
+    - **Live scenarios.** `[scenarios]` declares commands that `flint test --scenarios` runs after the unit tests. `mq`'s, `tools/mq_live.py`, starts a single-node KRaft Kafka on the pinned JRE and JetStream, plain and with TLS from a throwaway CA. It builds the scenario programs in `packages/engine-mq/fixtures` and runs all seven against them.
     - **`tools/ci.py`.** It never started peers; its `run_tests` lane is unchanged.
 
     `flint toolchain install` also stops the compile servers running the DMD it replaces, which otherwise make the installer's in-place extraction fail with "Text file busy". It writes the toolchain receipt as soon as DMD, DUB and LDC are installed, before the quality tools.

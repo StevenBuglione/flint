@@ -115,7 +115,7 @@ int commandMcp(ref Session session, string log)
     Target server;
     // flint-mcp belongs to the ai repo (policy/apps.json): it is found through that repo's platform module.
     if (!locate(session, session.home.appDirectory("flint-mcp"), server, report))
-        return finishBare(session, report, "flint.mcp/1");
+        return finishBare(session, report, "flint.engine.mcp/1");
     BuildRequest request;
     BuildOutcome outcome;
     // Standard output belongs to the protocol: the build reports on standard error only.
@@ -124,11 +124,11 @@ int commandMcp(ref Session session, string log)
     const built = buildProject(session, server.manifest, server.resolution, request, outcome, report);
     session.json = quiet;
     if (!built)
-        return finishBare(session, report, "flint.mcp/1");
+        return finishBare(session, report, "flint.engine.mcp/1");
     environment["FLINT_EXECUTABLE"] = session.executable;
     if (log.length)
         environment["FLINT_MCP_LOG"] = absolutePath(log);
     replaceProcess(outcome.artifact, [outcome.artifact], directory);
     report.error("FLINT-E0814", "could not start " ~ outcome.artifact, "flint build -C " ~ server.root);
-    return finishBare(session, report, "flint.mcp/1");
+    return finishBare(session, report, "flint.engine.mcp/1");
 }

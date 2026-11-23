@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Run flint:mq's live scenarios against real, pinned brokers (policy/peer-lock.json).
+"""Run flint:engine-mq's live scenarios against real, pinned brokers (policy/peer-lock.json).
 
 Starts a single-node KRaft Apache Kafka on the pinned JRE and NATS JetStream, plain and with TLS
-from a throwaway CA. Builds the scenario programs in packages/mq/fixtures, the D ones with DUB
-against flint:mq and the C ones against native/ffi/flint_mq.c and the pinned librdkafka. Then runs:
+from a throwaway CA. Builds the scenario programs in packages/engine-mq/fixtures, the D ones with DUB
+against flint:engine-mq and the C ones against native/ffi/flint_mq.c and the pinned librdkafka. Then runs:
 
   kafka          receipts, local redelivery with a fresh token, processing and confirmed drain
   kafka_state    a real rebalance revokes a held delivery; the stale acknowledgement is rejected
@@ -28,7 +28,7 @@ import uuid
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-FIXTURES = ROOT / 'packages' / 'mq' / 'fixtures'
+FIXTURES = ROOT / 'packages' / 'engine-mq' / 'fixtures'
 TOPICS = ('flint-live', 'flint-rebalance', 'flint-orders')
 # Darwin has no librt; its static OpenSSL needs the Security and CoreFoundation frameworks (ADR-024).
 SYSTEM_LIBRARIES = (('-lpthread', '-lm', '-framework', 'Security', '-framework', 'CoreFoundation')
@@ -69,7 +69,7 @@ def build_d(args, work, name, files, versions=(), lflags=()):
     project.mkdir()
     recipe = ['name "mq-' + name + '"', 'targetType "executable"', 'targetPath "."',
               'importPaths "' + str(FIXTURES) + '"', 'dflags "-preview=dip1000"',
-              'dependency "flint:mq" path="' + str(ROOT) + '"']
+              'dependency "flint:engine-mq" path="' + str(ROOT) + '"']
     recipe += ['sourceFiles "' + str(FIXTURES / file) + '"' for file in files]
     recipe += ['versions "' + version + '"' for version in versions]
     recipe += ['lflags "' + flag + '"' for flag in lflags]
@@ -229,7 +229,7 @@ def main():
         scenario(results, 'jetstream_tls', [sys.executable, FIXTURES / 'check_jetstream.py', binaries['jetstream'],
                                             secure_port, tls[0]], 120)
     passed = sum(1 for result in results if result['ok'])
-    print(json.dumps({'schema': 'flint.mq-live/1', 'passed': passed, 'failed': len(results) - passed,
+    print(json.dumps({'schema': 'flint.engine.mq-live/1', 'passed': passed, 'failed': len(results) - passed,
                       'outage_seconds': args.outage_seconds, 'scenarios': results}))
     return 0 if passed == len(results) else 1
 

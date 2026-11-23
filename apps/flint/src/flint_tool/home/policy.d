@@ -17,7 +17,7 @@ struct CorePackage
     string name;
     /// Architecture tier.
     long tier;
-    /// Root D module, such as "flint.wasm_bridge".
+    /// Root D module, such as "flint.engine.wasm_bridge".
     string module_;
     /// Direct dependencies by package name.
     string[] dependencies;

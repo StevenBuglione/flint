@@ -213,7 +213,7 @@ def run_tests(runner,compiler,*,sanitize=False):
     for name in PACKAGES:
         command=['dub','test',':'+name,'--compiler='+compiler,'--build='+build_type,'--force']
         package_env=env
-        if name=='desktop':
+        if name=='engine-desktop':
             # The ci closure builds the optional SDL canvas backend, whose pinned SDL has no Wayland
             # driver (ADR-020), so its suite runs on SDL's offscreen driver. The default WebKitGTK
             # backend is built by the desktop native profile and tested on a real display.

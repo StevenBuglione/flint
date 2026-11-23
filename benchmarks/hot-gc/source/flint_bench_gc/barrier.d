@@ -4,8 +4,8 @@ module flint_bench_gc.barrier;
 import core.atomic : atomicLoad, atomicStore;
 import core.memory : GC;
 import flint.arena : Error, Result, Status;
-import flint.reactor : Reactor;
-import flint.web : Request, RequestContext, Response;
+import flint.engine.reactor : Reactor;
+import flint.engine.web : Request, RequestContext, Response;
 import flint_bench_gc.sys.loopback : linuxThreadId;
 
 @safe:

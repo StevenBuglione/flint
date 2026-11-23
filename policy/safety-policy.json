@@ -1,9 +1,9 @@
 {
   "schema": 1,
   "unsafe_module_prefixes": {
-    "reactor": [
-      "flint.reactor.sys",
-      "flint.reactor.ffi"
+    "engine-reactor": [
+      "flint.engine.reactor.sys",
+      "flint.engine.reactor.ffi"
     ],
     "arena": [
       "flint.arena.sys",
@@ -13,7 +13,7 @@
       "flint.conc.sys",
       "flint.conc.ffi"
     ],
-    "di": [],
+    "engine-di": [],
     "engine-aot": ["flint.engine.aot.sys"],
     "config": ["flint.config.sys"],
     "serde": [
@@ -28,127 +28,127 @@
     "test": [
       "flint.test.sys"
     ],
-    "web": [
-      "flint.web.sys",
-      "flint.web.ffi"
+    "engine-web": [
+      "flint.engine.web.sys",
+      "flint.engine.web.ffi"
     ],
-    "http": [
-      "flint.http.sys",
-      "flint.http.ffi"
+    "engine-http": [
+      "flint.engine.http.sys",
+      "flint.engine.http.ffi"
     ],
-    "security": [
-      "flint.security.sys",
-      "flint.security.ffi"
+    "engine-security": [
+      "flint.engine.security.sys",
+      "flint.engine.security.ffi"
     ],
-    "actuator": [],
-    "schedule": [],
-    "rpc": [
-      "flint.rpc.sys",
-      "flint.rpc.ffi"
+    "engine-actuator": [],
+    "engine-schedule": [],
+    "engine-rpc": [
+      "flint.engine.rpc.sys",
+      "flint.engine.rpc.ffi"
     ],
-    "sql": [
-      "flint.sql.sys",
-      "flint.sql.ffi"
+    "engine-sql": [
+      "flint.engine.sql.sys",
+      "flint.engine.sql.ffi"
     ],
-    "data": [],
-    "migrate": [],
-    "cache": [
-      "flint.cache.sys",
-      "flint.cache.ffi"
+    "engine-data": [],
+    "engine-migrate": [],
+    "engine-cache": [
+      "flint.engine.cache.sys",
+      "flint.engine.cache.ffi"
     ],
     "cli": [],
     "term": [
       "flint.term.sys",
       "flint.term.ffi"
     ],
-    "tui": ["flint.tui.sys.worker"],
-    "style": [
-      "flint.style.ffi"
+    "engine-tui": ["flint.engine.tui.sys.worker"],
+    "engine-style": [
+      "flint.engine.style.ffi"
     ],
-    "widgets": [],
-    "prompt": ["flint.prompt.sys.secret"],
+    "engine-widgets": [],
+    "engine-prompt": ["flint.engine.prompt.sys.secret"],
     "os": [
       "flint.os.sys",
       "flint.os.ffi"
     ],
-    "wasm-bridge": [
-      "flint.wasm_bridge.sys",
-      "flint.wasm_bridge.ffi"
+    "engine-wasm-bridge": [
+      "flint.engine.wasm_bridge.sys",
+      "flint.engine.wasm_bridge.ffi"
     ],
-    "ui-signals": [],
-    "wasi": [
-      "flint.wasi.sys",
-      "flint.wasi.ffi"
+    "engine-ui-signals": [],
+    "engine-wasi": [
+      "flint.engine.wasi.sys",
+      "flint.engine.wasi.ffi"
     ],
-    "mq": [
-      "flint.mq.sys",
-      "flint.mq.ffi"
+    "engine-mq": [
+      "flint.engine.mq.sys",
+      "flint.engine.mq.ffi"
     ],
-    "storage": [],
-    "mail": ["flint.mail.ffi"],
-    "ai": [],
-    "mcp": ["flint.mcp.sys.storage", "flint.mcp.sys.stdio"],
-    "template": [],
-    "codec": [
-      "flint.codec.sys",
-      "flint.codec.ffi"
+    "engine-storage": [],
+    "engine-mail": ["flint.engine.mail.ffi"],
+    "engine-ai": [],
+    "engine-mcp": ["flint.engine.mcp.sys.storage", "flint.engine.mcp.sys.stdio"],
+    "engine-template": [],
+    "engine-codec": [
+      "flint.engine.codec.sys",
+      "flint.engine.codec.ffi"
     ],
-    "desktop": [
-      "flint.desktop.sys",
-      "flint.desktop.ffi"
+    "engine-desktop": [
+      "flint.engine.desktop.sys",
+      "flint.engine.desktop.ffi"
     ]
   },
   "generator_module_prefixes": [
-    "flint.di.internal",
+    "flint.engine.di.internal",
     "flint.serde.internal",
-    "flint.web.internal",
-    "flint.http.internal",
-    "flint.data.internal",
+    "flint.engine.web.internal",
+    "flint.engine.http.internal",
+    "flint.engine.data.internal",
     "flint.cli.internal",
     "flint.test.internal",
     "flint.validate.internal",
-    "flint.templates.internal",
-    "flint.ai.internal",
-    "flint.mcp.internal"
+    "flint.engine.templates.internal",
+    "flint.engine.ai.internal",
+    "flint.engine.mcp.internal"
   ],
   "module_default": "safe",
   "thread_local_allowlist_rationale": "Module-level mutable variables are thread-local in D. Framework state that must follow a task uses FiberLocal!T; these existing entries are thread roots (reactor and loop identity, per-thread caches, C callback trampolines active only during one call) reviewed under ADR-030. New entries need review.",
   "thread_local_allowlist": [
-    "flint.actuator.metrics.assignedCore",
-    "flint.actuator.checkingHealth",
-    "flint.ai.client.ownerGeneration",
+    "flint.engine.actuator.metrics.assignedCore",
+    "flint.engine.actuator.checkingHealth",
+    "flint.engine.ai.client.ownerGeneration",
     "flint.arena.sys.owner.ownerCounter",
-    "flint.codec.archives.archives",
-    "flint.codec.runtime.streams",
+    "flint.engine.codec.archives.archives",
+    "flint.engine.codec.runtime.streams",
     "flint.conc.wait.current",
-    "flint.desktop.ffi.webkit.initialized",
-    "flint.desktop.ffi.wkwebview.initialized",
-    "flint.desktop.runtime.windows",
-    "flint.desktop.runtime.generation",
-    "flint.desktop.runtime.workers",
-    "flint.desktop.runtime.workersReady",
-    "flint.http.client.threadGeneration",
+    "flint.engine.desktop.ffi.webkit.initialized",
+    "flint.engine.desktop.ffi.wkwebview.initialized",
+    "flint.engine.desktop.runtime.windows",
+    "flint.engine.desktop.runtime.generation",
+    "flint.engine.desktop.runtime.workers",
+    "flint.engine.desktop.runtime.workersReady",
+    "flint.engine.http.client.threadGeneration",
     "flint.log.internal.currentConsumer",
     "flint.log.sys.ring.threadProducer",
-    "flint.mq.threadIdentity",
+    "flint.engine.mq.threadIdentity",
     "flint.os.sys.interrupts.onCoordinator",
-    "flint.reactor.currentRuntime",
-    "flint.reactor.currentWorkerIndex",
-    "flint.reactor.threadLocalWords",
-    "flint.sql.activeFibers",
-    "flint.sql.activeThread",
-    "flint.sql.sys.wait.signals",
-    "flint.storage.multipart.threadGeneration",
-    "flint.wasm_bridge.sys.borrow.current",
-    "flint.web.ffi.http2.activeToken",
-    "flint.web.ffi.http2.activeEvents",
-    "flint.web.ffi.http2.activeBody",
-    "flint.web.ffi.shim.activeSink",
-    "flint.web.ffi.shim.activeToken",
-    "flint.web.ffi.shim.sinkStatus",
-    "flint.web.runtime.ownerSweep",
-    "flint.web.wire.cachedDate",
-    "flint.web.wire.cachedSecond"
+    "flint.engine.reactor.currentRuntime",
+    "flint.engine.reactor.currentWorkerIndex",
+    "flint.engine.reactor.threadLocalWords",
+    "flint.engine.sql.activeFibers",
+    "flint.engine.sql.activeThread",
+    "flint.engine.sql.sys.wait.signals",
+    "flint.engine.storage.multipart.threadGeneration",
+    "flint.engine.wasm_bridge.sys.borrow.current",
+    "flint.engine.web.ffi.http2.activeToken",
+    "flint.engine.web.ffi.http2.activeEvents",
+    "flint.engine.web.ffi.http2.activeBody",
+    "flint.engine.web.ffi.shim.activeSink",
+    "flint.engine.web.ffi.shim.activeToken",
+    "flint.engine.web.ffi.shim.sinkStatus",
+    "flint.engine.web.runtime.ownerSweep",
+    "flint.engine.web.wire.cachedDate",
+    "flint.engine.web.wire.cachedSecond"
   ],
   "max_trusted_lines": 60,
   "generated_dependency_check": "DMD -deps and -mixin with -unittest are mandatory for packages containing approved string mixins; CI repeats on every native platform and build profile"

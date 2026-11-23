@@ -969,7 +969,7 @@ string scenarioSummary(string output)
 /// driver; the WebKitGTK backend is tested on a real display by its own profile.
 EnvVar[] packageEnvironment(string name, bool test)
 {
-    if (test && name == "desktop")
+    if (test && name == "engine-desktop")
         return [EnvVar("SDL_VIDEODRIVER", "offscreen")];
     return null;
 }

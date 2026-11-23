@@ -146,10 +146,10 @@ unittest
     expect(matches("org.x.web.HttpStatus#*(*)", "org.x.web.HttpStatus#valueOf(int)")).toEqual(true);
     expect(matches("org.x.*.Resource", "org.x.core.Resource")).toEqual(true);
     expect(matches("org.x.*.Resource", "org.x.core.io.Resource")).toEqual(false);
-    expect(validSymbol("flint.http.HttpStatus")).toEqual(true);
+    expect(validSymbol("flint.engine.http.HttpStatus")).toEqual(true);
     expect(validSymbol("flint.")).toEqual(false);
     expect(validSymbol("org.springframework.X")).toEqual(false);
-    expect(validSymbol("flint.http..X")).toEqual(false);
+    expect(validSymbol("flint.engine.http..X")).toEqual(false);
     expect(validRule("R1")).toEqual(true);
     expect(validRule("R14")).toEqual(true);
     expect(validRule("R15")).toEqual(false);
@@ -168,7 +168,7 @@ unittest
         "org.x.**":{"status":"excluded","category":"jvm-platform"},
         "org.x.web.**":{"status":"adapted","rules":["R3","R13"]},
         "org.x.web.*":{"status":"excluded","category":"deferred","phase":"2"},
-        "org.x.web.HttpStatus":{"status":"ported","d":"flint.web.HttpStatus"}}}`, mapping, error);
+        "org.x.web.HttpStatus":{"status":"ported","d":"flint.engine.web.HttpStatus"}}}`, mapping, error);
     expect(error).toEqual("");
     expect(parsed).toEqual(true);
     expect(mapping.rulebook).toEqual(1);
@@ -369,7 +369,7 @@ unittest
     expect(selected(slice.checklists[1], manifest.types[0])).toEqual(false);
 
     Mapping mapping;
-    parseMapping(`{"elements":{"org.x.web.HttpStatus":{"status":"ported","d":"flint.web.HttpStatus"},
+    parseMapping(`{"elements":{"org.x.web.HttpStatus":{"status":"ported","d":"flint.engine.web.HttpStatus"},
         "org.x.web.HttpStatus#value()":{"status":"adapted","rules":["R6"]},
         "org.x.web.GetMapping#*":{"status":"excluded","category":"deferred","phase":"2"}}}`, mapping, error);
     const classifier = Classifier(mapping);
@@ -381,7 +381,7 @@ unittest
     expect(counts.open).toEqual(3);
     expect(text.canFind("# spring-web: Phase 1 checklist\n")).toEqual(true);
     expect(text.canFind("2 types, 6 elements: 1 ported, 1 adapted, 1 excluded, 3 open.")).toEqual(true);
-    expect(text.canFind("| ported `flint.web.HttpStatus` | `public enum HttpStatus` | `org.x.web.HttpStatus` |"))
+    expect(text.canFind("| ported `flint.engine.web.HttpStatus` | `public enum HttpStatus` | `org.x.web.HttpStatus` |"))
         .toEqual(true);
     expect(text.canFind("| adapted R6 | `public int value()` | `#value()` |")).toEqual(true);
     expect(text.canFind("| excluded: deferred (phase 2) | `public String[] value() default {}` | `#value` |")).toEqual(
