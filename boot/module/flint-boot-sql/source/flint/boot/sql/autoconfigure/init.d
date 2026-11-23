@@ -1,4 +1,5 @@
 // Ported from spring-boot v4.2.0: module/spring-boot-sql/src/main/java/org/springframework/boot/sql/autoconfigure/init/SqlInitializationProperties.java
+// with ApplicationScriptDatabaseInitializer.java and SettingsCreator.java from the same directory
 // Copyright 2012-present the original author or authors.
 // Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
 // Modified by the Flint authors: Java Beans getters and setters are kept (rulebook R6); `spring.*` keys
@@ -8,7 +9,7 @@
 module flint.boot.sql.autoconfigure.init;
 
 import flint.boot.context.properties : ConfigurationProperties;
-import flint.boot.sql.init : DatabaseInitializationMode;
+import flint.boot.sql.init : DatabaseInitializationMode, DatabaseInitializationSettings;
 
 @safe:
 
@@ -139,3 +140,41 @@ final class SqlInitializationProperties
 }
 
 // ---- end: generated region
+
+/// The application's script-based database initializer, configured from `flint.sql.init.*`.
+interface ApplicationScriptDatabaseInitializer
+{
+    /// The settings `properties` describe: the configured script locations, else `schema-<platform>.sql` and
+    /// `schema.sql` (likewise `data`), each optional.
+    static DatabaseInitializationSettings getSettings(SqlInitializationProperties properties)
+    {
+        return SettingsCreator.createFrom(properties);
+    }
+}
+
+// Boot's SettingsCreator.
+private struct SettingsCreator
+{
+    static DatabaseInitializationSettings createFrom(SqlInitializationProperties properties)
+    {
+        auto settings = new DatabaseInitializationSettings;
+        settings.setSchemaLocations(scriptLocations(properties.getSchemaLocations(), "schema",
+                properties.getPlatform()));
+        settings.setDataLocations(scriptLocations(properties.getDataLocations(), "data", properties.getPlatform()));
+        settings.setContinueOnError(properties.isContinueOnError());
+        settings.setSeparator(properties.getSeparator());
+        settings.setEncoding(properties.getEncoding());
+        settings.setMode(properties.getMode());
+        return settings;
+    }
+
+    private static string[] scriptLocations(string[] locations, string fallback, string platform) pure
+    {
+        if (locations !is null)
+            return locations;
+        return [
+            "optional:classpath*:" ~ fallback ~ "-" ~ platform ~ ".sql",
+            "optional:classpath*:" ~ fallback ~ ".sql"
+        ];
+    }
+}

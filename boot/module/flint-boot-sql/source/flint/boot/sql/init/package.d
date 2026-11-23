@@ -1,11 +1,18 @@
 // Ported from spring-boot v4.2.0: module/spring-boot-sql/src/main/java/org/springframework/boot/sql/init/DatabaseInitializationMode.java
+// with AbstractScriptDatabaseInitializer.java and DatabaseInitializationSettings.java from the same directory
 // Copyright 2012-present the original author or authors.
 // Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
 // Modified by the Flint authors: Java Beans getters and setters are kept (rulebook R6); `spring.*` keys
-// become `flint.*` with `spring.*` accepted as an alias (ADR-030).
+// become `flint.*` with `spring.*` accepted as an alias (ADR-030); a charset is its name; `classpath*:` is
+// `classpath:`, since Flint's class path is a fixed list of roots without wildcards in script locations, and the
+// scripts of one location are the one resource it names.
 
 /// `org.springframework.boot.sql.init`: SQL database initialization support.
 module flint.boot.sql.init;
+
+import flint.beans.factory : InitializingBean;
+import flint.context : ResourceLoaderAware;
+import flint.core.io : Resource, ResourceLoader;
 
 @safe:
 
@@ -23,3 +30,255 @@ enum DatabaseInitializationMode
 }
 
 // ---- end: generated region
+
+/// The settings of a script-based database initializer: script locations, error handling, separator, encoding and
+/// mode.
+class DatabaseInitializationSettings
+{
+    private string[] schemaLocations;
+    private string[] dataLocations;
+    private bool continueOnError;
+    private string separator = ";";
+    private string encoding;
+    private DatabaseInitializationMode mode = DatabaseInitializationMode.EMBEDDED;
+
+    /// The schema (DDL) script locations.
+    string[] getSchemaLocations() pure nothrow
+    {
+        return schemaLocations;
+    }
+
+    /// Set the schema script locations.
+    void setSchemaLocations(string[] schemaLocations) pure nothrow
+    {
+        this.schemaLocations = schemaLocations;
+    }
+
+    /// The data (DML) script locations.
+    string[] getDataLocations() pure nothrow
+    {
+        return dataLocations;
+    }
+
+    /// Set the data script locations.
+    void setDataLocations(string[] dataLocations) pure nothrow
+    {
+        this.dataLocations = dataLocations;
+    }
+
+    /// Whether initialization continues when a statement fails.
+    bool isContinueOnError() const pure nothrow @nogc
+    {
+        return continueOnError;
+    }
+
+    /// Set whether initialization continues when a statement fails.
+    void setContinueOnError(bool continueOnError) pure nothrow @nogc
+    {
+        this.continueOnError = continueOnError;
+    }
+
+    /// The statement separator.
+    string getSeparator() const pure nothrow @nogc
+    {
+        return separator;
+    }
+
+    /// Set the statement separator.
+    void setSeparator(string separator) pure nothrow @nogc
+    {
+        this.separator = separator;
+    }
+
+    /// The scripts' charset name, or `null` for the platform default.
+    string getEncoding() const pure nothrow @nogc
+    {
+        return encoding;
+    }
+
+    /// Set the scripts' charset name.
+    void setEncoding(string encoding) pure nothrow @nogc
+    {
+        this.encoding = encoding;
+    }
+
+    /// When initialization runs.
+    DatabaseInitializationMode getMode() const pure nothrow @nogc
+    {
+        return mode;
+    }
+
+    /// Set when initialization runs.
+    void setMode(DatabaseInitializationMode mode) pure nothrow @nogc
+    {
+        this.mode = mode;
+    }
+}
+
+/// Initializes a database from schema and data scripts when it is created, if the mode allows: `ALWAYS`, or
+/// `EMBEDDED` for an embedded database. Subclasses run the scripts against their kind of database.
+abstract class AbstractScriptDatabaseInitializer : ResourceLoaderAware, InitializingBean
+{
+    private enum string OPTIONAL_LOCATION_PREFIX = "optional:";
+
+    private DatabaseInitializationSettings settings;
+    private ResourceLoader resourceLoader;
+
+    /// Over `settings`.
+    protected this(DatabaseInitializationSettings settings)
+    {
+        this.settings = settings;
+    }
+
+    /// The settings.
+    DatabaseInitializationSettings getSettings() pure nothrow @nogc
+    {
+        return settings;
+    }
+
+    /// The loader that resolves script locations.
+    void setResourceLoader(ResourceLoader resourceLoader)
+    {
+        this.resourceLoader = resourceLoader;
+    }
+
+    /// Initialize the database.
+    void afterPropertiesSet()
+    {
+        initializeDatabase();
+    }
+
+    /// Apply the schema scripts, then the data scripts. Returns whether any ran.
+    bool initializeDatabase()
+    {
+        const initialized = applyScripts(settings.getSchemaLocations(), "schema");
+        return applyScripts(settings.getDataLocations(), "data") || initialized;
+    }
+
+    /// Whether the database is embedded; by default unknown, which `EMBEDDED` mode reports.
+    protected bool isEmbeddedDatabase()
+    {
+        import flint.java.lang : IllegalStateException;
+        import std.conv : to;
+
+        throw new IllegalStateException("Database initialization mode is '" ~ settings.getMode()
+                .to!string ~ "' and database type is unknown");
+    }
+
+    /// Run `scripts`.
+    protected abstract void runScripts(Scripts scripts);
+
+    private bool isEnabled()
+    {
+        if (settings.getMode() == DatabaseInitializationMode.NEVER)
+            return false;
+        return settings.getMode() == DatabaseInitializationMode.ALWAYS || isEmbeddedDatabase();
+    }
+
+    private bool applyScripts(string[] locations, string type)
+    {
+        auto scripts = getScripts(locations, type);
+        if (scripts.length == 0 || !isEnabled())
+            return false;
+        runScripts(new Scripts(scripts).continueOnError(settings.isContinueOnError())
+                .separator(settings.getSeparator()).encoding(settings.getEncoding()));
+        return true;
+    }
+
+    private Resource[] getScripts(string[] locations, string type)
+    {
+        import flint.java.lang : IllegalStateException;
+        import std.algorithm.searching : startsWith;
+
+        Resource[] resources;
+        foreach (location; locations)
+        {
+            const optional = location.startsWith(OPTIONAL_LOCATION_PREFIX);
+            if (optional)
+                location = location[OPTIONAL_LOCATION_PREFIX.length .. $];
+            auto resource = loader().getResource(classPathLocation(location));
+            if (resource.isReadable())
+                resources ~= resource;
+            else if (!optional)
+                throw new IllegalStateException("No " ~ type ~ " scripts found at location '" ~ location ~ "'");
+        }
+        return resources;
+    }
+
+    private ResourceLoader loader()
+    {
+        import flint.core.io : DefaultResourceLoader;
+
+        if (resourceLoader is null)
+            resourceLoader = new DefaultResourceLoader;
+        return resourceLoader;
+    }
+
+    // `classpath*:x` names `classpath:x` (see the module header).
+    private static string classPathLocation(string location) pure
+    {
+        import std.algorithm.searching : startsWith;
+
+        return location.startsWith("classpath*:") ? "classpath:" ~ location["classpath*:".length .. $] : location;
+    }
+
+    /// The scripts to run, with how to run them.
+    static class Scripts
+    {
+        private Resource[] resources;
+        private bool continueOnError_;
+        private string separator_ = ";";
+        private string encoding_;
+
+        /// Over `resources`.
+        this(Resource[] resources) pure nothrow
+        {
+            this.resources = resources;
+        }
+
+        /// The scripts, in order.
+        Resource[] getResources() pure nothrow @nogc
+        {
+            return resources;
+        }
+
+        /// Set whether to continue on error.
+        Scripts continueOnError(bool continueOnError) pure nothrow @nogc
+        {
+            continueOnError_ = continueOnError;
+            return this;
+        }
+
+        /// Whether to continue on error.
+        bool isContinueOnError() const pure nothrow @nogc
+        {
+            return continueOnError_;
+        }
+
+        /// Set the statement separator.
+        Scripts separator(string separator) pure nothrow @nogc
+        {
+            separator_ = separator;
+            return this;
+        }
+
+        /// The statement separator.
+        string getSeparator() const pure nothrow @nogc
+        {
+            return separator_;
+        }
+
+        /// Set the charset name.
+        Scripts encoding(string encoding) pure nothrow @nogc
+        {
+            encoding_ = encoding;
+            return this;
+        }
+
+        /// The charset name, or `null`.
+        string getEncoding() const pure nothrow @nogc
+        {
+            return encoding_;
+        }
+    }
+}

@@ -6,6 +6,9 @@ sourcePaths "source"
 importPaths "source"
 dflags "-preview=dip1000"
 dependency "flint:boot-core" version="*"
+dependency "flint:beans" version="*"
+dependency "flint:context" version="*"
+dependency "flint:core" version="*"
 dependency "flint:engine-aot" version="*"
 
 configuration "library" {

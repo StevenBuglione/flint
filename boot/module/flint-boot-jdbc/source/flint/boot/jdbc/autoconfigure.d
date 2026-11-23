@@ -1,7 +1,9 @@
 // Ported from spring-boot v4.2.0: module/spring-boot-jdbc/src/main/java/org/springframework/boot/jdbc/autoconfigure/DataSourceProperties.java
 // with JdbcProperties.java, DataSourceAutoConfiguration.java, DataSourceConfiguration.java,
 // DataSourceTransactionManagerAutoConfiguration.java, JdbcTemplateAutoConfiguration.java, JdbcTemplateConfiguration.java,
-// NamedParameterJdbcTemplateConfiguration.java and JdbcClientAutoConfiguration.java from the same directory, and
+// NamedParameterJdbcTemplateConfiguration.java, JdbcClientAutoConfiguration.java,
+// DataSourceInitializationAutoConfiguration.java and ApplicationDataSourceScriptDatabaseInitializer.java from the same
+// directory, and
 // ../EmbeddedDatabaseConnection.java
 // Copyright 2012-present the original author or authors.
 // Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
@@ -17,6 +19,10 @@ import flint.boot.autoconfigure : AutoConfiguration;
 import flint.boot.autoconfigure.condition : ConditionalOnClass, ConditionalOnMissingBean,
     ConditionalOnSingleCandidate;
 import flint.boot.context.properties : ClassRef, ConfigurationProperties, EnableConfigurationProperties;
+public import flint.boot.jdbc.init : isEmbeddedUrl;
+import flint.boot.jdbc.init : DataSourceScriptDatabaseInitializer;
+import flint.boot.sql.autoconfigure.init : ApplicationScriptDatabaseInitializer, SqlInitializationProperties;
+import flint.boot.sql.init : DatabaseInitializationSettings;
 import flint.context.annotation : Bean, Primary;
 import flint.engine.aot.name : typeNameOf;
 import flint.engine.jdbc : FlintDataSource;
@@ -341,14 +347,6 @@ string getUrl(EmbeddedDatabaseConnection connection, string databaseName) pure
     return "jdbc:sqlite:file:" ~ databaseName ~ "?mode=memory&cache=shared";
 }
 
-/// Whether `url` is the URL of an embedded, in-memory database (Boot's `EmbeddedDatabaseConnection.isEmbedded`).
-bool isEmbeddedUrl(string url) pure
-{
-    import std.algorithm.searching : canFind, startsWith;
-
-    return url.startsWith("jdbc:sqlite::memory:") || (url.startsWith("jdbc:sqlite:") && url.canFind("mode=memory"));
-}
-
 /// The database name: a unique one when `generate-unique-name` holds, else `name`, else `testdb` for an embedded
 /// database, else `null` (Boot's `DataSourceProperties.determineDatabaseName`).
 string determineDatabaseName(DataSourceProperties properties)
@@ -538,3 +536,40 @@ private enum AutoConfiguration afterJdbcTemplate = () {
     configuration.afterName = ["flint.boot.jdbc.autoconfigure.JdbcTemplateAutoConfiguration"];
     return configuration;
 }();
+
+/// The application's `DataSource` initializer, configured from `flint.sql.init.*`.
+class ApplicationDataSourceScriptDatabaseInitializer : DataSourceScriptDatabaseInitializer,
+    ApplicationScriptDatabaseInitializer
+{
+    /// Over `dataSource`, with the settings `properties` describe.
+    this(DataSource dataSource, SqlInitializationProperties properties)
+    {
+        this(dataSource, ApplicationScriptDatabaseInitializer.getSettings(properties));
+    }
+
+    /// Over `dataSource`, with `settings`.
+    this(DataSource dataSource, DatabaseInitializationSettings settings)
+    {
+        super(dataSource, settings);
+    }
+}
+
+/// Auto-configuration of SQL initialization: the `DataSource` is initialized from `flint.sql.init.*`'s schema and
+/// data scripts when the context creates the initializer, unless the application defines its own initializer.
+/// Boot's `DataSourceBuilder` for `flint.sql.init.username`/`password` joins with `DataSourceBuilder`; the scripts run
+/// on the application's data source until then.
+@AutoConfiguration @ConditionalOnSingleCandidate(ClassRef("flint.javax.sql.DataSource"))
+@ConditionalOnMissingBean([
+    ClassRef("flint.boot.sql.autoconfigure.init.ApplicationScriptDatabaseInitializer")
+])
+@ConditionalOnClass(null, ["flint.jdbc.datasource.init.DatabasePopulator"])
+@EnableConfigurationProperties([ClassRef(typeNameOf!SqlInitializationProperties)])
+final class DataSourceInitializationAutoConfiguration
+{
+    /// The initializer, which runs the scripts once its properties are set.
+    @Bean ApplicationDataSourceScriptDatabaseInitializer dataSourceScriptDatabaseInitializer(
+            DataSource dataSource, SqlInitializationProperties properties)
+    {
+        return new ApplicationDataSourceScriptDatabaseInitializer(dataSource, properties);
+    }
+}

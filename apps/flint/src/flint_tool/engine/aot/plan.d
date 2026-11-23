@@ -885,8 +885,10 @@ private final class Analysis
         bean.proxied = !proxyConfiguration && planProxy(*decl, candidate.merged, bean);
         bean.rank = rank++;
         addBean(decl.module_, bean);
-        defineBeanMethods(candidate, bean, outcome.terms, proxyConfiguration);
+        // Boot registers the enabled properties with the configuration class, before its @Bean methods: a
+        // configuration conditional on a missing bean must not see its own beans when the properties register.
         enableConfigurationProperties(candidate, outcome.terms);
+        defineBeanMethods(candidate, bean, outcome.terms, proxyConfiguration);
         if (bean.proxied || candidate.merged.has(imported!"flint_tool.engine.aot.names".controller))
             moduleFor(decl.module_).consulted ~= decl.module_;
     }
@@ -934,7 +936,9 @@ private final class Analysis
             lifecycleOf(*decl, bean);
             propertiesOf(merged, bean);
             bean.rank = rank++;
-            addBean(decl.module_, bean);
+            // In the enabling configuration's module, so it registers (and its conditions run) before the
+            // configuration's @Bean methods, wherever the properties class is declared.
+            addBean(candidate.decl.module_, bean);
             describeProperties(decl.fqn);
         }
     }
