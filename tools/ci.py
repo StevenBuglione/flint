@@ -100,31 +100,45 @@ def windows_environment():
             key,value=line.split('=',1);os.environ[key]=value
     require(shutil.which('cl') and shutil.which('msbuild'),'MSVC environment was not initialized')
 
-def windows_tools(runner):
-    require(sys.platform=='win32' or runner.plan,'Windows prerequisite installation is Windows-only')
-    runner.run([PYTHON,'-m','pip','install','meson==1.12.1'])
-    if runner.plan:return
-    lock=json.loads((ROOT/'policy/toolchains.json').read_text())
-    asset=lock['assets']['win_flex_bison-2.5.25.zip']
-    directory=ROOT/'.tools/winflexbison-2.5.25';directory.mkdir(parents=True,exist_ok=True)
+WINDOWS_CURL='curl-8.23.0_9-win64-mingw'
+
+def windows_curl_bin():
+    """The pinned curl for Windows: engine-web's HTTP/2 suite needs an independent nghttp2-based client, and the
+    curl.exe Windows ships has no HTTP/2 (ADR-026)."""
+    return ROOT/'.tools'/WINDOWS_CURL/WINDOWS_CURL/'bin'
+
+def fetch_zip(name,directory,label):
+    """Download a pinned asset into `directory`, verify it and extract it without path escapes or symlinks."""
+    asset=json.loads((ROOT/'policy/toolchains.json').read_text())['assets'][name]
+    directory.mkdir(parents=True,exist_ok=True)
     archive=directory/'upstream.zip'
     if not archive.is_file() or digest(archive)!=asset['sha256']:
         with urllib.request.urlopen(asset['url'],timeout=60) as source,archive.open('wb') as output:
             shutil.copyfileobj(source,output)
-    require(digest(archive)==asset['sha256'],'winflexbison archive checksum mismatch')
+    require(digest(archive)==asset['sha256'],label+' archive checksum mismatch')
     with zipfile.ZipFile(archive) as bundle:
         for member in bundle.infolist():
             destination=(directory/member.filename).resolve()
             require(destination.is_relative_to(directory.resolve()) and ':' not in member.filename,
-                    'unsafe winflexbison archive path')
-            require((member.external_attr>>16)&0o170000!=0o120000,'symlink in winflexbison archive')
+                    'unsafe '+label+' archive path')
+            require((member.external_attr>>16)&0o170000!=0o120000,'symlink in '+label+' archive')
         bundle.extractall(directory)
+    return asset['sha256']
+
+def windows_tools(runner):
+    require(sys.platform=='win32' or runner.plan,'Windows prerequisite installation is Windows-only')
+    runner.run([PYTHON,'-m','pip','install','meson==1.12.1'])
+    if runner.plan:return
+    directory=ROOT/'.tools/winflexbison-2.5.25'
+    sha=fetch_zip('win_flex_bison-2.5.25.zip',directory,'winflexbison')
     for original,alias in (('win_bison.exe','bison.exe'),('win_flex.exe','flex.exe')):
         require((directory/original).is_file(),'unexpected winflexbison archive layout')
         shutil.copy2(directory/original,directory/alias)
     if os.environ.get('GITHUB_PATH'):
         with open(os.environ['GITHUB_PATH'],'a') as output:output.write(str(directory)+'\n')
-    print(json.dumps({'winflexbison':str(directory),'sha256':asset['sha256']}))
+    curl_sha=fetch_zip(WINDOWS_CURL+'.zip',ROOT/'.tools'/WINDOWS_CURL,'curl')
+    require((windows_curl_bin()/'curl.exe').is_file(),'unexpected curl archive layout')
+    print(json.dumps({'winflexbison':str(directory),'sha256':sha,'curl':str(windows_curl_bin()),'curl_sha256':curl_sha}))
 
 def native(runner,target,sanitize=False):
     if not runner.plan:require(native_target()==target,'native test target differs from actual host: '+native_target())
@@ -204,6 +218,10 @@ def run_tests(runner,compiler,*,sanitize=False):
     env=os.environ.copy()
     env.pop('DFLAGS',None)
     env['DUB_HOME']=str(ROOT/'.ci-dub-home'/('sanitized' if sanitize else 'normal')/Path(compiler).name)
+    if sys.platform=='win32' and not runner.plan:
+        # engine-web's HTTP/2 suite runs the pinned curl (windows-tools), not the one Windows ships (ADR-026).
+        require((windows_curl_bin()/'curl.exe').is_file(),'run tools/ci.py windows-tools for the pinned curl')
+        env['PATH']=str(windows_curl_bin())+os.pathsep+env.get('PATH','')
     if sanitize:
         if not runner.plan:
             require(verified_sanitizer_runtime(sanitizer_runtime_dir()),'LDC sanitizer runtime missing or changed: '+str(sanitizer_runtime_dir()))
