@@ -628,12 +628,12 @@ unittest
 
 /// Source directories of the DUB closure of `roots` (repository-relative package directories), following each
 /// dub.sdl's `dependency` lines, so the list follows packages when they move. `flint:x` names resolve to
-/// packages/x or framework/x. framework/java comes first: while framework/p1-interim exists it shadows
+/// framework/x or packages/x, whichever has a dub.sdl. framework/java comes first: while framework/p1-interim exists it shadows
 /// flint.java.lang for packages that do not depend on it.
 private string[] closureImports(scope const string[] roots)
 {
     import std.algorithm.searching : canFind, startsWith;
-    import std.file : exists, isDir, readText;
+    import std.file : exists, readText;
     import std.path : buildNormalizedPath, buildPath;
     import std.regex : matchAll, regex;
 
@@ -653,10 +653,12 @@ private string[] closureImports(scope const string[] roots)
             const name = match[1];
             if (name.startsWith("flint:"))
             {
-                foreach (base; ["packages", "framework"])
+                // Only a directory with a recipe is a package: a checkout can keep a stale directory where a package
+                // used to live (packages/engine-aot before framework/engine-aot).
+                foreach (base; ["framework", "packages"])
                 {
                     const candidate = buildPath(root, base, name[6 .. $]);
-                    if (exists(candidate) && isDir(candidate))
+                    if (exists(buildPath(candidate, "dub.sdl")))
                     {
                         visit(candidate);
                         break;
