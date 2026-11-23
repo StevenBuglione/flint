@@ -1,0 +1,22 @@
+name "boot-jackson"
+description "Flint Boot Jackson (spring-boot v4.2.0 module/spring-boot-jackson): JacksonProperties, then JacksonAutoConfiguration"
+license "Apache-2.0"
+targetType "library"
+sourcePaths "source"
+importPaths "source"
+dflags "-preview=dip1000"
+dependency "boot" path="../../core/flint-boot"
+dependency "flint:java" path="../../.."
+dependency "flint:engine-aot" path="../../.."
+dependency "flint:jackson-annotations" path="../../.."
+dependency "flint:jackson-core" path="../../.."
+dependency "flint:jackson-databind" path="../../.."
+
+configuration "library" {
+    targetType "library"
+}
+configuration "unittest" {
+    targetType "library"
+    sourcePaths "source" "tests"
+    importPaths "source" "tests"
+}

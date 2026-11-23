@@ -1,0 +1,48 @@
+// Ported from spring-boot v4.2.0: module/spring-boot-transaction/src/main/java/org/springframework/boot/transaction/autoconfigure/TransactionProperties.java
+// Copyright 2012-present the original author or authors.
+// Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
+// Modified by the Flint authors: Java Beans getters and setters are kept (rulebook R6); `spring.*` keys
+// become `flint.*` with `spring.*` accepted as an alias (ADR-030).
+
+/// `org.springframework.boot.transaction.autoconfigure`: the transaction properties.
+module flint.boot.transaction.autoconfigure;
+
+import flint.boot.context.properties : ConfigurationProperties;
+import flint.boot.convert : ChronoUnit, DurationUnit;
+import core.time : Duration;
+import flint.java.util : Optional;
+
+@safe:
+
+/// Settings of the transaction managers. Bound under `flint.transaction` (Boot's `spring.transaction` is accepted as an
+/// alias).
+@ConfigurationProperties("flint.transaction")
+final class TransactionProperties
+{
+    @DurationUnit(ChronoUnit.SECONDS) private Optional!Duration defaultTimeout;
+    private Optional!bool rollbackOnCommitFailure;
+
+    /// Default transaction timeout. If a duration suffix is not specified, seconds will be used.
+    @DurationUnit(ChronoUnit.SECONDS) Optional!Duration getDefaultTimeout() const pure nothrow @nogc
+    {
+        return defaultTimeout;
+    }
+
+    /// Set `defaultTimeout`.
+    void setDefaultTimeout(Optional!Duration defaultTimeout) pure nothrow @nogc
+    {
+        this.defaultTimeout = defaultTimeout;
+    }
+
+    /// Whether to roll back on commit failures.
+    Optional!bool getRollbackOnCommitFailure() const pure nothrow @nogc
+    {
+        return rollbackOnCommitFailure;
+    }
+
+    /// Set `rollbackOnCommitFailure`.
+    void setRollbackOnCommitFailure(Optional!bool rollbackOnCommitFailure) pure nothrow @nogc
+    {
+        this.rollbackOnCommitFailure = rollbackOnCommitFailure;
+    }
+}

@@ -35,7 +35,8 @@ Run a package's tests with `dub test --root boot/core/flint-boot --compiler=dmd`
 | `@FlintBootTest`, `@TestConfiguration`, `FlintBootTestContext` | done over the context stand-in | 6 Flint tests modelled on Boot's `SpringBootTest*Tests` |
 | `@WebMvcTest`, `@AutoConfigureMockMvc` (module `flint-boot-webmvc-test`), `@DataJdbcTest` (module `flint-boot-data-jdbc-test`) | annotations done; the slices run when MockMvc and Data JDBC land | |
 | Starters: `flint-boot-starter`, `-web`, `-jdbc`, `-validation`, `-json`, `-test` | done as dependency lists over what exists (`boot/starter/README.md` lists what joins each) | |
-| Boot's error path: `ErrorAttributeOptions` (core) and `ErrorProperties` (`server.error.*`) | done; `ErrorAttributes`, `DefaultErrorAttributes`, `BasicErrorController` and the Whitelabel view follow in `module/flint-boot-webmvc` on web-mvc's servlet API (agreed with web-mvc) | 5 Flint tests |
+| Boot's error path: `ErrorAttributeOptions` (core) and `ErrorProperties` (`flint.web.error.*`; Boot 4 deprecated `server.error.*` at error level) | done; `ErrorAttributes`, `DefaultErrorAttributes`, `BasicErrorController` and the Whitelabel view follow in `module/flint-boot-webmvc` on web-mvc's servlet API (agreed with web-mvc) | 5 Flint tests |
+| Phase 1 properties classes with Boot's keys and defaults: `ServerProperties` (`server.*`), `WebProperties` (`flint.web.*`), `WebMvcProperties` (`flint.mvc.*`), `JacksonProperties` (`flint.jackson.*`, on flint.jackson's feature enums), `DataSourceProperties` (`flint.datasource.*`), `JdbcProperties` (`flint.jdbc.*`), `SqlInitializationProperties` (`flint.sql.init.*`), `TransactionProperties` (`flint.transaction.*`) | done in `boot/module/flint-boot-{web-server,webmvc,jackson,jdbc,sql,transaction}` and core autoconfigure; `@DurationUnit` honoured; nested read-only groups bind into their getter's object. Groups that need `DataSize`, `MediaType` or later modules are listed in each file's header. `flint.datasource.hikari.*` binds onto the pool the data-access module provides | 13 Flint tests |
 | Phase 1 auto-configurations (web/MVC, Jackson, `DataSource` with `hikari`, transactions, validation, SQL init) | waiting on the framework types they create | |
 | `@MockitoBean` | deferred: spring-test's `org.springframework.test` maps to `flint.test`, which the base test library already owns, and Mockito needs a mock engine (generated subclasses); raised with the coordinating session | |
 
@@ -43,13 +44,17 @@ Excluded upstream tests, each with its reason:
 - `ConfigurationPropertyNameTests.hashCodeIsStored` (`runtime-reflection`): reads a private field with `ReflectionTestUtils`.
 - `OriginTrackedPropertiesLoaderTests.compareToJavaProperties` (`jvm-platform`): compares against `java.util.Properties`.
 
-Total so far: **308 tests pass on DMD 2.114 and LDC 1.43** (299 in flint-boot, 3 in flint-boot-autoconfigure, 6 in flint-boot-test): 275 ported upstream tests and 33 Flint tests. The runner in `tests/boot_tests/support.d` runs each `unittest` on its own and prints the count.
+Total so far: **323 tests pass on DMD 2.114 and LDC 1.43** (300 in flint-boot, 6 in flint-boot-autoconfigure, 6 in flint-boot-test, 11 in the modules): 275 ported upstream tests and 48 Flint tests. The runner in `tests/boot_tests/support.d` runs each `unittest` on its own and prints the count.
 
 ## Design decisions
 
 ### Configuration values are text, typed by Flint AOT descriptors
 
 Spring keeps `Object` values in property sources and converts them while binding. In Flint, every property source holds strings, and so does YAML: the engine resolves scalars as SnakeYAML's YAML 1.1 resolver does (`True`, `yes` and `on` become `true`; `~` becomes empty; `0x1A` becomes `26`; `1_000` becomes `1000`) and returns the text. Typed values come from binding: the `Binder` converts text to the target property's type, using the target's Flint AOT `Descriptor` (`flint.engine.aot.descriptor`, contract §4.2). This matches what `Environment.getProperty(key)` returns in Boot, and Boot's string-to-type conversion rules decide the result.
+
+### Nullable properties
+
+Boot's `@Nullable Integer`, `Boolean` and `Duration` fields are `flint.java.util.Optional!T`; they bind once the descriptors' `unwrap`/`wrap` builders land (contract 2). `@Nullable String` fields are `string` with a `null` default. Lists are D arrays and maps are `flint.java.util.Map!(K, V)`.
 
 ### Binding on descriptors
 

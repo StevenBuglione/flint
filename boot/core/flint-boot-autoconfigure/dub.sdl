@@ -7,6 +7,7 @@ importPaths "source"
 dflags "-preview=dip1000"
 dependency "boot" path="../flint-boot"
 dependency "flint:engine-aot" path="../../.."
+dependency "flint:java" path="../../.."
 
 configuration "library" {
     targetType "library"

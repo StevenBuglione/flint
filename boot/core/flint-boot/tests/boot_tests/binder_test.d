@@ -573,6 +573,29 @@ private Binder recordBinder(MapConfigurationPropertySource s)
     assert(ds.maximumPoolSize == 10);
 }
 
+/// `DurationStyleTests`-style property with `@DurationUnit(ChronoUnit.SECONDS)`.
+struct TimeoutSettings
+{
+    import core.time : Duration;
+    import flint.boot.convert : ChronoUnit, DurationUnit;
+
+    /// Bare numbers are seconds.
+    @DurationUnit(ChronoUnit.SECONDS) Duration timeout;
+    /// Bare numbers are milliseconds.
+    Duration delay;
+}
+
+@("flint.durationUnitAppliesToBareNumbers") unittest
+{
+    import core.time : msecs, seconds;
+
+    const settings = binder(source([["t.timeout", "30"], ["t.delay", "30"]])).bind!TimeoutSettings("t").get();
+    assert(settings.timeout == seconds(30));
+    assert(settings.delay == msecs(30));
+    const explicit = binder(source([["t.timeout", "500ms"]])).bind!TimeoutSettings("t").get();
+    assert(explicit.timeout == msecs(500));
+}
+
 private auto descriptorOfValueBean()
 {
     import flint.engine.aot.descriptor : descriptorOf;

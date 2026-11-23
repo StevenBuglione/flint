@@ -1,4 +1,4 @@
-/// Flint tests: `server.error.*` defaults and binding with Boot's names.
+/// Flint tests: `flint.web.error.*` defaults and binding with Boot's names.
 module autoconfigure_tests.error_properties_test;
 
 import flint.boot.autoconfigure.web : ErrorProperties;
@@ -22,10 +22,10 @@ unittest
 unittest
 {
     auto source = new MapConfigurationPropertySource("test", [
-        ["server.error.path", "/oops"], ["server.error.include-exception", "true"]
+        ["flint.web.error.path", "/oops"], ["flint.web.error.include-exception", "true"]
     ]);
     auto properties = new Binder([cast(ConfigurationPropertySource) source]).bind!ErrorProperties(
-            "server.error").get();
+            "flint.web.error").get();
     assert(properties.getPath() == "/oops");
     assert(properties.isIncludeException());
 }

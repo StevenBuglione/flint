@@ -1,0 +1,19 @@
+name "boot-jdbc"
+description "Flint Boot JDBC (spring-boot v4.2.0 module/spring-boot-jdbc): the DataSource and JdbcTemplate properties, then their auto-configurations"
+license "Apache-2.0"
+targetType "library"
+sourcePaths "source"
+importPaths "source"
+dflags "-preview=dip1000"
+dependency "boot" path="../../core/flint-boot"
+dependency "flint:java" path="../../.."
+dependency "flint:engine-aot" path="../../.."
+
+configuration "library" {
+    targetType "library"
+}
+configuration "unittest" {
+    targetType "library"
+    sourcePaths "source" "tests"
+    importPaths "source" "tests"
+}

@@ -1,0 +1,137 @@
+// Ported from spring-boot v4.2.0: module/spring-boot-sql/src/main/java/org/springframework/boot/sql/autoconfigure/init/SqlInitializationProperties.java
+// Copyright 2012-present the original author or authors.
+// Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
+// Modified by the Flint authors: Java Beans getters and setters are kept (rulebook R6); `spring.*` keys
+// become `flint.*` with `spring.*` accepted as an alias (ADR-030); `Charset encoding` is a charset name.
+
+/// `org.springframework.boot.sql.autoconfigure.init`: the SQL initialization properties.
+module flint.boot.sql.autoconfigure.init;
+
+import flint.boot.context.properties : ConfigurationProperties;
+import flint.boot.sql.init : DatabaseInitializationMode;
+
+@safe:
+
+/// Settings of SQL database initialization. Bound under `flint.sql.init` (Boot's `spring.sql.init` is accepted as an
+/// alias).
+@ConfigurationProperties("flint.sql.init")
+final class SqlInitializationProperties
+{
+    private string[] schemaLocations;
+    private string[] dataLocations;
+    private string platform = "all";
+    private string username;
+    private string password;
+    private bool continueOnError = false;
+    private string separator = ";";
+    private string encoding;
+    private DatabaseInitializationMode mode = DatabaseInitializationMode.EMBEDDED;
+
+    /// Locations of the schema (DDL) scripts to apply to the database.
+    string[] getSchemaLocations() pure nothrow @nogc
+    {
+        return schemaLocations;
+    }
+
+    /// Set `schemaLocations`.
+    void setSchemaLocations(string[] schemaLocations) pure nothrow @nogc
+    {
+        this.schemaLocations = schemaLocations;
+    }
+
+    /// Locations of the data (DML) scripts to apply to the database.
+    string[] getDataLocations() pure nothrow @nogc
+    {
+        return dataLocations;
+    }
+
+    /// Set `dataLocations`.
+    void setDataLocations(string[] dataLocations) pure nothrow @nogc
+    {
+        this.dataLocations = dataLocations;
+    }
+
+    /// Platform to use in the default schema or data script locations, schema-${platform}.sql and data-${platform}.sql.
+    string getPlatform() const pure nothrow @nogc
+    {
+        return platform;
+    }
+
+    /// Set `platform`.
+    void setPlatform(string platform) pure nothrow @nogc
+    {
+        this.platform = platform;
+    }
+
+    /// Username of the database to use when applying initialization scripts (if different).
+    string getUsername() const pure nothrow @nogc
+    {
+        return username;
+    }
+
+    /// Set `username`.
+    void setUsername(string username) pure nothrow @nogc
+    {
+        this.username = username;
+    }
+
+    /// Password of the database to use when applying initialization scripts (if different).
+    string getPassword() const pure nothrow @nogc
+    {
+        return password;
+    }
+
+    /// Set `password`.
+    void setPassword(string password) pure nothrow @nogc
+    {
+        this.password = password;
+    }
+
+    /// Whether initialization should continue when an error occurs.
+    bool isContinueOnError() const pure nothrow @nogc
+    {
+        return continueOnError;
+    }
+
+    /// Set `continueOnError`.
+    void setContinueOnError(bool continueOnError) pure nothrow @nogc
+    {
+        this.continueOnError = continueOnError;
+    }
+
+    /// Statement separator in the schema and data scripts.
+    string getSeparator() const pure nothrow @nogc
+    {
+        return separator;
+    }
+
+    /// Set `separator`.
+    void setSeparator(string separator) pure nothrow @nogc
+    {
+        this.separator = separator;
+    }
+
+    /// Encoding of the schema and data scripts (a charset name).
+    string getEncoding() const pure nothrow @nogc
+    {
+        return encoding;
+    }
+
+    /// Set `encoding`.
+    void setEncoding(string encoding) pure nothrow @nogc
+    {
+        this.encoding = encoding;
+    }
+
+    /// Mode to apply when determining whether initialization should be performed.
+    DatabaseInitializationMode getMode() const pure nothrow @nogc
+    {
+        return mode;
+    }
+
+    /// Set `mode`.
+    void setMode(DatabaseInitializationMode mode) pure nothrow @nogc
+    {
+        this.mode = mode;
+    }
+}

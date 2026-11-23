@@ -1,0 +1,314 @@
+// Ported from spring-boot v4.2.0: module/spring-boot-jdbc/src/main/java/org/springframework/boot/jdbc/autoconfigure/DataSourceProperties.java
+// with JdbcProperties.java from the same directory and ../EmbeddedDatabaseConnection.java
+// Copyright 2012-present the original author or authors.
+// Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
+// Modified by the Flint authors: Java Beans getters and setters are kept (rulebook R6); `spring.*` keys
+// become `flint.*` with `spring.*` accepted as an alias (ADR-030); `type` is the class name; `jndiName` is excluded (jvm-platform); the `hikari` keys bind onto the pool data-access provides.
+
+/// `org.springframework.boot.jdbc.autoconfigure`: the JDBC configuration properties. `flint.datasource.hikari.*` (alias
+/// `pool`) binds onto the pool `DataSource` the data-access module provides, as Boot binds `spring.datasource.hikari.*`
+/// onto `HikariDataSource`.
+module flint.boot.jdbc.autoconfigure;
+
+import flint.boot.context.properties : ConfigurationProperties;
+import flint.boot.convert : ChronoUnit, DurationUnit;
+import core.time : Duration;
+import flint.java.util : Optional;
+import flint.java.util : LinkedHashMap, Map;
+
+@safe:
+
+/// Connection details for embedded databases. Flint adds `SQLITE`, the embedded engine Flint ships; Boot's JVM engines
+/// keep their names.
+enum EmbeddedDatabaseConnection
+{
+    /// No connection.
+    NONE,
+    /// H2 (JVM only; no Flint driver).
+    H2,
+    /// Derby (JVM only; no Flint driver).
+    DERBY,
+    /// HSQLDB (JVM only; no Flint driver).
+    HSQLDB,
+    /// SQLite in memory: Flint's embedded database (Flint addition).
+    SQLITE
+}
+
+/// Base settings of the auto-configured `DataSource`. Bound under `flint.datasource` (Boot's `spring.datasource` is
+/// accepted as an alias).
+@ConfigurationProperties("flint.datasource")
+final class DataSourceProperties
+{
+    /// XA-specific datasource settings.
+    static final class Xa
+    {
+        private string dataSourceClassName;
+        private Map!(string, string) properties;
+
+        /// Boot's defaults.
+        this() pure nothrow
+        {
+            properties = new LinkedHashMap!(string, string);
+        }
+
+        /// XA datasource fully qualified name.
+        string getDataSourceClassName() const pure nothrow @nogc
+        {
+            return dataSourceClassName;
+        }
+
+        /// Set `dataSourceClassName`.
+        void setDataSourceClassName(string dataSourceClassName) pure nothrow @nogc
+        {
+            this.dataSourceClassName = dataSourceClassName;
+        }
+
+        /// Properties to pass to the XA data source.
+        Map!(string, string) getProperties() pure nothrow @nogc
+        {
+            return properties;
+        }
+    }
+
+    private bool generateUniqueName = true;
+    private string name;
+    private string type;
+    private string driverClassName;
+    private string url;
+    private string username;
+    private string password;
+    private EmbeddedDatabaseConnection embeddedDatabaseConnection = EmbeddedDatabaseConnection.NONE;
+    private Xa xa;
+
+    /// Boot's defaults.
+    this() pure nothrow
+    {
+        xa = new Xa;
+    }
+
+    /// Whether to generate a random datasource name (`generate-unique-name`, default true).
+    bool isGenerateUniqueName() const pure nothrow @nogc
+    {
+        return generateUniqueName;
+    }
+
+    /// Set `generateUniqueName`.
+    void setGenerateUniqueName(bool generateUniqueName) pure nothrow @nogc
+    {
+        this.generateUniqueName = generateUniqueName;
+    }
+
+    /// Datasource name to use if "generate-unique-name" is false. Defaults to "testdb" when using an embedded database,
+    /// otherwise null.
+    string getName() const pure nothrow @nogc
+    {
+        return name;
+    }
+
+    /// Set `name`.
+    void setName(string name) pure nothrow @nogc
+    {
+        this.name = name;
+    }
+
+    /// Fully qualified name of the DataSource implementation to use. By default, a connection pool implementation is
+    /// auto-detected from the build.
+    string getType() const pure nothrow @nogc
+    {
+        return type;
+    }
+
+    /// Set `type`.
+    void setType(string type) pure nothrow @nogc
+    {
+        this.type = type;
+    }
+
+    /// Fully qualified name of the JDBC driver. Auto-detected based on the URL by default.
+    string getDriverClassName() const pure nothrow @nogc
+    {
+        return driverClassName;
+    }
+
+    /// Set `driverClassName`.
+    void setDriverClassName(string driverClassName) pure nothrow @nogc
+    {
+        this.driverClassName = driverClassName;
+    }
+
+    /// JDBC URL of the database.
+    string getUrl() const pure nothrow @nogc
+    {
+        return url;
+    }
+
+    /// Set `url`.
+    void setUrl(string url) pure nothrow @nogc
+    {
+        this.url = url;
+    }
+
+    /// Login username of the database.
+    string getUsername() const pure nothrow @nogc
+    {
+        return username;
+    }
+
+    /// Set `username`.
+    void setUsername(string username) pure nothrow @nogc
+    {
+        this.username = username;
+    }
+
+    /// Login password of the database.
+    string getPassword() const pure nothrow @nogc
+    {
+        return password;
+    }
+
+    /// Set `password`.
+    void setPassword(string password) pure nothrow @nogc
+    {
+        this.password = password;
+    }
+
+    /// Connection details for an embedded database. Defaults to the most suitable embedded database available in the
+    /// build.
+    EmbeddedDatabaseConnection getEmbeddedDatabaseConnection() const pure nothrow @nogc
+    {
+        return embeddedDatabaseConnection;
+    }
+
+    /// Set `embeddedDatabaseConnection`.
+    void setEmbeddedDatabaseConnection(EmbeddedDatabaseConnection embeddedDatabaseConnection) pure nothrow @nogc
+    {
+        this.embeddedDatabaseConnection = embeddedDatabaseConnection;
+    }
+
+    /// XA settings (`xa.*`).
+    Xa getXa() pure nothrow @nogc
+    {
+        return xa;
+    }
+}
+
+/// Settings of the auto-configured `JdbcTemplate`. Bound under `flint.jdbc` (Boot's `spring.jdbc` is accepted as an
+/// alias).
+@ConfigurationProperties("flint.jdbc")
+final class JdbcProperties
+{
+    /// `JdbcTemplate` settings.
+    static final class Template
+    {
+        private bool ignoreWarnings = true;
+        private int fetchSize = -1;
+        private int maxRows = -1;
+        @DurationUnit(ChronoUnit.SECONDS) private Optional!Duration queryTimeout;
+        private bool skipResultsProcessing = false;
+        private bool skipUndeclaredResults = false;
+        private bool resultsMapCaseInsensitive = false;
+
+        /// Whether to ignore JDBC statement warnings (SQLWarning). When set to false, throw an SQLWarningException
+        /// instead.
+        bool isIgnoreWarnings() const pure nothrow @nogc
+        {
+            return ignoreWarnings;
+        }
+
+        /// Set `ignoreWarnings`.
+        void setIgnoreWarnings(bool ignoreWarnings) pure nothrow @nogc
+        {
+            this.ignoreWarnings = ignoreWarnings;
+        }
+
+        /// Number of rows that should be fetched from the database when more rows are needed. Use -1 to use the JDBC
+        /// driver's default configuration.
+        int getFetchSize() const pure nothrow @nogc
+        {
+            return fetchSize;
+        }
+
+        /// Set `fetchSize`.
+        void setFetchSize(int fetchSize) pure nothrow @nogc
+        {
+            this.fetchSize = fetchSize;
+        }
+
+        /// Maximum number of rows. Use -1 to use the JDBC driver's default configuration.
+        int getMaxRows() const pure nothrow @nogc
+        {
+            return maxRows;
+        }
+
+        /// Set `maxRows`.
+        void setMaxRows(int maxRows) pure nothrow @nogc
+        {
+            this.maxRows = maxRows;
+        }
+
+        /// Query timeout. Default is to use the JDBC driver's default configuration. If a duration suffix is not
+        /// specified, seconds will be used.
+        @DurationUnit(ChronoUnit.SECONDS) Optional!Duration getQueryTimeout() const pure nothrow @nogc
+        {
+            return queryTimeout;
+        }
+
+        /// Set `queryTimeout`.
+        void setQueryTimeout(Optional!Duration queryTimeout) pure nothrow @nogc
+        {
+            this.queryTimeout = queryTimeout;
+        }
+
+        /// Whether results processing should be skipped. Can be used to optimize callable statement processing when we
+        /// know that no results are being passed back.
+        bool isSkipResultsProcessing() const pure nothrow @nogc
+        {
+            return skipResultsProcessing;
+        }
+
+        /// Set `skipResultsProcessing`.
+        void setSkipResultsProcessing(bool skipResultsProcessing) pure nothrow @nogc
+        {
+            this.skipResultsProcessing = skipResultsProcessing;
+        }
+
+        /// Whether undeclared results should be skipped.
+        bool isSkipUndeclaredResults() const pure nothrow @nogc
+        {
+            return skipUndeclaredResults;
+        }
+
+        /// Set `skipUndeclaredResults`.
+        void setSkipUndeclaredResults(bool skipUndeclaredResults) pure nothrow @nogc
+        {
+            this.skipUndeclaredResults = skipUndeclaredResults;
+        }
+
+        /// Whether execution of a CallableStatement will return the results in a Map that uses case-insensitive names
+        /// for the parameters.
+        bool isResultsMapCaseInsensitive() const pure nothrow @nogc
+        {
+            return resultsMapCaseInsensitive;
+        }
+
+        /// Set `resultsMapCaseInsensitive`.
+        void setResultsMapCaseInsensitive(bool resultsMapCaseInsensitive) pure nothrow @nogc
+        {
+            this.resultsMapCaseInsensitive = resultsMapCaseInsensitive;
+        }
+    }
+
+    private Template template_;
+
+    /// Boot's defaults.
+    this() pure nothrow
+    {
+        template_ = new Template;
+    }
+
+    /// `flint.jdbc.template.*`.
+    Template getTemplate() pure nothrow @nogc
+    {
+        return template_;
+    }
+}

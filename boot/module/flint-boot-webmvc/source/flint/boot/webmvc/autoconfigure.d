@@ -1,0 +1,417 @@
+// Ported from spring-boot v4.2.0: module/spring-boot-webmvc/src/main/java/org/springframework/boot/webmvc/autoconfigure/WebMvcProperties.java
+// Copyright 2012-present the original author or authors.
+// Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
+// Modified by the Flint authors: Java Beans getters and setters are kept (rulebook R6); `spring.*` keys
+// become `flint.*` with `spring.*` accepted as an alias (ADR-030); media types are text until `flint.http.MediaType` can be combined with `flint:java`; `apiversion.*` follows with API versioning.
+
+/// `org.springframework.boot.webmvc.autoconfigure`: the MVC properties. The auto-configurations
+/// (`WebMvcAutoConfiguration`, `DispatcherServletAutoConfiguration`) join this module on web-mvc's
+/// `WebMvcConfigurationSupport`.
+module flint.boot.webmvc.autoconfigure;
+
+import flint.boot.context.properties : ConfigurationProperties;
+import core.time : Duration;
+import flint.java.util : Optional;
+import flint.java.util : LinkedHashMap, Map;
+
+@safe:
+
+/// Spring MVC settings. Bound under `flint.mvc` (Boot's `spring.mvc` is accepted as an alias).
+@ConfigurationProperties("flint.mvc")
+final class WebMvcProperties
+{
+    /// Strategies for matching request paths against registered mappings.
+    enum MatchingStrategy
+    {
+        /// Use the `AntPathMatcher` implementation.
+        ANT_PATH_MATCHER,
+        /// Use the `PathPatternParser` implementation.
+        PATH_PATTERN_PARSER
+    }
+
+    /// Asynchronous request handling.
+    static final class Async
+    {
+        private Optional!Duration requestTimeout;
+
+        /// Amount of time before asynchronous request handling times out. If this value is not set, the default timeout
+        /// of the underlying implementation is used.
+        Optional!Duration getRequestTimeout() const pure nothrow @nogc
+        {
+            return requestTimeout;
+        }
+
+        /// Set `requestTimeout`.
+        void setRequestTimeout(Optional!Duration requestTimeout) pure nothrow @nogc
+        {
+            this.requestTimeout = requestTimeout;
+        }
+    }
+
+    /// Dispatcher servlet settings.
+    static final class Servlet
+    {
+        private string path = "/";
+        private int loadOnStartup = -1;
+
+        /// Path of the dispatcher servlet. Setting a custom value for this property is not compatible with the
+        /// PathPatternParser matching strategy.
+        string getPath() const pure nothrow @nogc
+        {
+            return path;
+        }
+
+        /// Set `path`.
+        void setPath(string path) pure nothrow @nogc
+        {
+            this.path = path;
+        }
+
+        /// Load on startup priority of the dispatcher servlet.
+        int getLoadOnStartup() const pure nothrow @nogc
+        {
+            return loadOnStartup;
+        }
+
+        /// Set `loadOnStartup`.
+        void setLoadOnStartup(int loadOnStartup) pure nothrow @nogc
+        {
+            this.loadOnStartup = loadOnStartup;
+        }
+    }
+
+    /// View resolution.
+    static final class View
+    {
+        private string prefix;
+        private string suffix;
+
+        /// MVC view prefix.
+        string getPrefix() const pure nothrow @nogc
+        {
+            return prefix;
+        }
+
+        /// Set `prefix`.
+        void setPrefix(string prefix) pure nothrow @nogc
+        {
+            this.prefix = prefix;
+        }
+
+        /// MVC view suffix.
+        string getSuffix() const pure nothrow @nogc
+        {
+            return suffix;
+        }
+
+        /// Set `suffix`.
+        void setSuffix(string suffix) pure nothrow @nogc
+        {
+            this.suffix = suffix;
+        }
+    }
+
+    /// Content negotiation.
+    static final class Contentnegotiation
+    {
+        private bool favorParameter = false;
+        private string parameterName;
+        private Map!(string, string) mediaTypes;
+        private string[] defaultContentTypes;
+
+        /// Boot's defaults.
+        this() pure nothrow
+        {
+            mediaTypes = new LinkedHashMap!(string, string);
+        }
+
+        /// Whether a request parameter ("format" by default) should be used to determine the requested media type.
+        bool isFavorParameter() const pure nothrow @nogc
+        {
+            return favorParameter;
+        }
+
+        /// Set `favorParameter`.
+        void setFavorParameter(bool favorParameter) pure nothrow @nogc
+        {
+            this.favorParameter = favorParameter;
+        }
+
+        /// Query parameter name to use when "favor-parameter" is enabled.
+        string getParameterName() const pure nothrow @nogc
+        {
+            return parameterName;
+        }
+
+        /// Set `parameterName`.
+        void setParameterName(string parameterName) pure nothrow @nogc
+        {
+            this.parameterName = parameterName;
+        }
+
+        /// Map file extensions to media types for content negotiation. For instance, yml to text/yaml.
+        Map!(string, string) getMediaTypes() pure nothrow @nogc
+        {
+            return mediaTypes;
+        }
+
+        /// List of default content types to be used when no specific content type is requested.
+        string[] getDefaultContentTypes() pure nothrow @nogc
+        {
+            return defaultContentTypes;
+        }
+
+        /// Set `defaultContentTypes`.
+        void setDefaultContentTypes(string[] defaultContentTypes) pure nothrow @nogc
+        {
+            this.defaultContentTypes = defaultContentTypes;
+        }
+    }
+
+    /// Path matching.
+    static final class Pathmatch
+    {
+        private MatchingStrategy matchingStrategy = MatchingStrategy.PATH_PATTERN_PARSER;
+
+        /// Choice of strategy for matching request paths against registered mappings.
+        MatchingStrategy getMatchingStrategy() const pure nothrow @nogc
+        {
+            return matchingStrategy;
+        }
+
+        /// Set `matchingStrategy`.
+        void setMatchingStrategy(MatchingStrategy matchingStrategy) pure nothrow @nogc
+        {
+            this.matchingStrategy = matchingStrategy;
+        }
+    }
+
+    /// Date and time formats.
+    static final class Format
+    {
+        private string date;
+        private string time;
+        private string dateTime;
+
+        /// Date format to use, for example 'dd/MM/yyyy'.
+        string getDate() const pure nothrow @nogc
+        {
+            return date;
+        }
+
+        /// Set `date`.
+        void setDate(string date) pure nothrow @nogc
+        {
+            this.date = date;
+        }
+
+        /// Time format to use, for example 'HH:mm:ss'.
+        string getTime() const pure nothrow @nogc
+        {
+            return time;
+        }
+
+        /// Set `time`.
+        void setTime(string time) pure nothrow @nogc
+        {
+            this.time = time;
+        }
+
+        /// Date-time format to use, for example 'yyyy-MM-dd HH:mm:ss'.
+        string getDateTime() const pure nothrow @nogc
+        {
+            return dateTime;
+        }
+
+        /// Set `dateTime`.
+        void setDateTime(string dateTime) pure nothrow @nogc
+        {
+            this.dateTime = dateTime;
+        }
+    }
+
+    /// RFC 9457 problem details.
+    static final class Problemdetails
+    {
+        private bool enabled = false;
+
+        /// Whether RFC 9457 Problem Details support should be enabled.
+        bool isEnabled() const pure nothrow @nogc
+        {
+            return enabled;
+        }
+
+        /// Set `enabled`.
+        void setEnabled(bool enabled) pure nothrow @nogc
+        {
+            this.enabled = enabled;
+        }
+    }
+
+    private string messageCodesResolverFormat;
+    private Format format;
+    private bool dispatchTraceRequest = false;
+    private bool dispatchOptionsRequest = true;
+    private bool publishRequestHandledEvents = true;
+    private bool logRequestDetails = false;
+    private bool logResolvedException = false;
+    private string staticPathPattern = "/**";
+    private string webjarsPathPattern = "/webjars/**";
+    private Async async;
+    private Servlet servlet;
+    private View view;
+    private Contentnegotiation contentnegotiation;
+    private Pathmatch pathmatch;
+    private Problemdetails problemdetails;
+
+    /// Boot's defaults.
+    this() pure nothrow
+    {
+        format = new Format;
+        async = new Async;
+        servlet = new Servlet;
+        view = new View;
+        contentnegotiation = new Contentnegotiation;
+        pathmatch = new Pathmatch;
+        problemdetails = new Problemdetails;
+    }
+
+    /// Formatting strategy for message codes. For instance, 'PREFIX_ERROR_CODE'.
+    string getMessageCodesResolverFormat() const pure nothrow @nogc
+    {
+        return messageCodesResolverFormat;
+    }
+
+    /// Set `messageCodesResolverFormat`.
+    void setMessageCodesResolverFormat(string messageCodesResolverFormat) pure nothrow @nogc
+    {
+        this.messageCodesResolverFormat = messageCodesResolverFormat;
+    }
+
+    /// Date and time formats (`flint.mvc.format.*`).
+    Format getFormat() pure nothrow @nogc
+    {
+        return format;
+    }
+
+    /// Whether to dispatch TRACE requests to the FrameworkServlet doService method.
+    bool isDispatchTraceRequest() const pure nothrow @nogc
+    {
+        return dispatchTraceRequest;
+    }
+
+    /// Set `dispatchTraceRequest`.
+    void setDispatchTraceRequest(bool dispatchTraceRequest) pure nothrow @nogc
+    {
+        this.dispatchTraceRequest = dispatchTraceRequest;
+    }
+
+    /// Whether to dispatch OPTIONS requests to the FrameworkServlet doService method.
+    bool isDispatchOptionsRequest() const pure nothrow @nogc
+    {
+        return dispatchOptionsRequest;
+    }
+
+    /// Set `dispatchOptionsRequest`.
+    void setDispatchOptionsRequest(bool dispatchOptionsRequest) pure nothrow @nogc
+    {
+        this.dispatchOptionsRequest = dispatchOptionsRequest;
+    }
+
+    /// Whether to publish a ServletRequestHandledEvent at the end of each request.
+    bool isPublishRequestHandledEvents() const pure nothrow @nogc
+    {
+        return publishRequestHandledEvents;
+    }
+
+    /// Set `publishRequestHandledEvents`.
+    void setPublishRequestHandledEvents(bool publishRequestHandledEvents) pure nothrow @nogc
+    {
+        this.publishRequestHandledEvents = publishRequestHandledEvents;
+    }
+
+    /// Whether logging of (potentially sensitive) request details at DEBUG and TRACE level is allowed.
+    bool isLogRequestDetails() const pure nothrow @nogc
+    {
+        return logRequestDetails;
+    }
+
+    /// Set `logRequestDetails`.
+    void setLogRequestDetails(bool logRequestDetails) pure nothrow @nogc
+    {
+        this.logRequestDetails = logRequestDetails;
+    }
+
+    /// Whether to enable warn logging of exceptions resolved by a "HandlerExceptionResolver", except for
+    /// "DefaultHandlerExceptionResolver".
+    bool isLogResolvedException() const pure nothrow @nogc
+    {
+        return logResolvedException;
+    }
+
+    /// Set `logResolvedException`.
+    void setLogResolvedException(bool logResolvedException) pure nothrow @nogc
+    {
+        this.logResolvedException = logResolvedException;
+    }
+
+    /// Path pattern used for static resources.
+    string getStaticPathPattern() const pure nothrow @nogc
+    {
+        return staticPathPattern;
+    }
+
+    /// Set `staticPathPattern`.
+    void setStaticPathPattern(string staticPathPattern) pure nothrow @nogc
+    {
+        this.staticPathPattern = staticPathPattern;
+    }
+
+    /// Path pattern used for WebJar assets.
+    string getWebjarsPathPattern() const pure nothrow @nogc
+    {
+        return webjarsPathPattern;
+    }
+
+    /// Set `webjarsPathPattern`.
+    void setWebjarsPathPattern(string webjarsPathPattern) pure nothrow @nogc
+    {
+        this.webjarsPathPattern = webjarsPathPattern;
+    }
+
+    /// Asynchronous request handling (`flint.mvc.async.*`).
+    Async getAsync() pure nothrow @nogc
+    {
+        return async;
+    }
+
+    /// The dispatcher servlet (`flint.mvc.servlet.*`).
+    Servlet getServlet() pure nothrow @nogc
+    {
+        return servlet;
+    }
+
+    /// View resolution (`flint.mvc.view.*`).
+    View getView() pure nothrow @nogc
+    {
+        return view;
+    }
+
+    /// Content negotiation (`flint.mvc.contentnegotiation.*`).
+    Contentnegotiation getContentnegotiation() pure nothrow @nogc
+    {
+        return contentnegotiation;
+    }
+
+    /// Path matching (`flint.mvc.pathmatch.*`); deprecated since 4.2.0.
+    Pathmatch getPathmatch() pure nothrow @nogc
+    {
+        return pathmatch;
+    }
+
+    /// RFC 9457 problem details (`flint.mvc.problemdetails.*`).
+    Problemdetails getProblemdetails() pure nothrow @nogc
+    {
+        return problemdetails;
+    }
+}

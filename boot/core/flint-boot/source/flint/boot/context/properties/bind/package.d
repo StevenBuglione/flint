@@ -26,7 +26,7 @@ import flint.boot.context.properties.source : ConfigurationProperty, Configurati
 import flint.java.lang : IllegalStateException, RuntimeException;
 import flint.java.util : NoSuchElementException;
 import flint.engine.aot.any : Any;
-import flint.engine.aot.descriptor : Descriptor, DescriptorTable, TypeKind, descriptorOf;
+import flint.engine.aot.descriptor : Descriptor, DescriptorTable, PropertyDescriptor, TypeKind, descriptorOf;
 import flint.engine.aot.name : typeNameOf;
 
 @safe:
@@ -442,16 +442,16 @@ private:
         return descriptor;
     }
 
-    bool bindValue(ConfigurationPropertyName name, const Descriptor type, ref Any instance)
+    bool bindValue(ConfigurationPropertyName name, const Descriptor type, ref Any instance, string durationUnit = null)
     {
         if (isValueType(type))
-            return bindScalar(name, type, instance);
+            return bindScalar(name, type, instance, durationUnit);
         final switch (type.kind)
         {
         case TypeKind.scalar:
         case TypeKind.string_:
         case TypeKind.enum_:
-            return bindScalar(name, type, instance);
+            return bindScalar(name, type, instance, null);
         case TypeKind.array:
             throw new IllegalStateException("Binding " ~ type.name
                     ~ " needs the descriptor's collection builders, which flint:engine-aot does not provide yet");
@@ -462,13 +462,13 @@ private:
         }
     }
 
-    bool bindScalar(ConfigurationPropertyName name, const Descriptor type, ref Any instance)
+    bool bindScalar(ConfigurationPropertyName name, const Descriptor type, ref Any instance, string durationUnit)
     {
         auto property = ConfigurationPropertySources.find(sources, name);
         if (property is null)
             return false;
         lastProperty = property;
-        auto converted = convert(placeholders.resolvePlaceholders(property.getValue()), type);
+        auto converted = convert(placeholders.resolvePlaceholders(property.getValue()), type, durationUnit);
         if (converted.isNull() && type.kind == TypeKind.enum_)
             return false;
         instance = converted;
@@ -485,26 +485,35 @@ private:
         bool bound;
         Any target = instance;
         foreach (ref property; type.properties)
-        {
-            if (property.set is null)
-                continue;
-            auto propertyType = lookup(property.type);
-            if (propertyType is null)
-                continue;
-            if (target.isNull())
-                target = create(name, type);
-            Any value = property.get is null ? Any.init : property.get(target);
-            if (isValueType(propertyType))
-                value = Any.init;
-            if (bindValue(name.append(toDashedForm(property.name)), propertyType, value))
-            {
-                property.set(target, value);
-                bound = true;
-            }
-        }
+            bound = bindProperty(name, type, property, target) || bound;
         if (bound)
             instance = target;
         return bound;
+    }
+
+    // One JavaBean property; creates the target on first use. A read-only property binds into the object its
+    // getter returns, as Boot's JavaBeanBinder does for final nested properties; a read-only value property cannot
+    // be bound.
+    bool bindProperty(ConfigurationPropertyName name, const Descriptor type,
+            ref const PropertyDescriptor property, ref Any target)
+    {
+        auto propertyType = lookup(property.type);
+        if (propertyType is null)
+            return false;
+        const intoExisting = property.set is null;
+        if (intoExisting && (property.get is null || propertyType.kind != TypeKind.class_))
+            return false;
+        if (target.isNull())
+            target = create(name, type);
+        Any value = property.get is null || isValueType(propertyType) ? Any.init : property.get(target);
+        if (intoExisting && value.isNull())
+            return false;
+        if (!bindValue(name.append(toDashedForm(property.name)), propertyType, value,
+                durationUnitOf(property.annotations)))
+            return false;
+        if (!intoExisting)
+            property.set(target, value);
+        return true;
     }
 
     bool bindValueObject(ConfigurationPropertyName name, const Descriptor type, ref Any instance)
@@ -547,6 +556,19 @@ private:
         return Any.init;
     }
 
+    // `@DurationUnit` on a property: the suffix its bare numbers take.
+    static string durationUnitOf(const(typeof(Descriptor.annotations)) annotations)
+    {
+        import flint.boot.convert : ChronoUnit, DurationUnit;
+        import flint.engine.aot.descriptor : findAnnotation;
+
+        auto annotation = findAnnotation(annotations, typeNameOf!DurationUnit);
+        if (annotation is null)
+            return null;
+        static immutable string[] suffixes = ["ns", "us", "ms", "s", "m", "h", "d"];
+        return suffixes[annotation.value.get!DurationUnit.value];
+    }
+
     // A descriptor by type name; the converter's own value types need none registered.
     const(Descriptor) lookup(string type)
     {
@@ -579,7 +601,7 @@ private:
 /// Convert configuration text to a value of the scalar, string or enum `type`, as Boot's `BindConverter` with
 /// `ApplicationConversionService` does: lenient booleans, numbers in decimal, hex (`0x`, `#`) and with a sign,
 /// `Duration` in the simple (`10s`, `500ms`) and ISO-8601 (`PT10S`) styles.
-Any convert(string text, const Descriptor type)
+Any convert(string text, const Descriptor type, string durationUnit = null)
 {
     import std.string : strip;
 
@@ -598,7 +620,7 @@ Any convert(string text, const Descriptor type)
     case "real":
         return Any.of(parseFloating(text.strip, type.name));
     case "core.time.Duration":
-        return Any.of(parseDuration(text.strip));
+        return Any.of(parseDuration(text.strip, durationUnit));
     default:
         if (type.kind == TypeKind.scalar)
             return integral(text.strip, type.name);
@@ -745,7 +767,7 @@ private long parseNumber(string text)
 }
 
 /// Boot's `DurationStyle.detectAndParse`: `10s`, `-5m`, `500` (milliseconds), or ISO-8601 `PT1H30M`.
-auto parseDuration(string text)
+auto parseDuration(string text, string defaultSuffix = null)
 {
     import std.conv : ConvException, to;
     import std.uni : toLower;
@@ -760,7 +782,8 @@ auto parseDuration(string text)
         amount = text[0 .. split].to!long;
     catch (ConvException)
         throw new ConversionFailedException(text, durationType, "'" ~ text ~ "' is not a valid duration");
-    return simpleDuration(amount, text[split .. $].toLower, text);
+    const suffix = text[split .. $].toLower;
+    return simpleDuration(amount, suffix.length || defaultSuffix is null ? suffix : defaultSuffix, text);
 }
 
 private enum durationType = "core.time.Duration";

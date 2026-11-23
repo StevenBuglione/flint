@@ -1,0 +1,98 @@
+// Ported from spring-boot v4.2.0: module/spring-boot-web-server/src/main/java/org/springframework/boot/web/server/Shutdown.java
+// with Compression.java and Http2.java from the same directory
+// Copyright 2012-present the original author or authors.
+// Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
+// Modified by the Flint authors: Java Beans getters and setters are kept (rulebook R6); `spring.*` keys
+// become `flint.*` with `spring.*` accepted as an alias (ADR-030); `DataSize minResponseSize` waits on spring-core's `DataSize`.
+
+/// `org.springframework.boot.web.server`: embedded web server support.
+module flint.boot.web.server;
+
+@safe:
+
+/// Types of server shutdown.
+enum Shutdown
+{
+    /// The server supports graceful shutdown: in-flight requests finish, new ones are refused.
+    GRACEFUL,
+    /// The server shuts down immediately.
+    IMMEDIATE
+}
+
+/// Response compression.
+final class Compression
+{
+    private bool enabled = false;
+    private string[] mimeTypes = [
+        "text/html", "text/xml", "text/plain", "text/css", "text/javascript",
+        "application/javascript", "application/json", "application/xml"
+    ];
+    private string[] additionalMimeTypes;
+    private string[] excludedUserAgents;
+
+    /// Whether response compression is enabled.
+    bool isEnabled() const pure nothrow @nogc
+    {
+        return enabled;
+    }
+
+    /// Set `enabled`.
+    void setEnabled(bool enabled) pure nothrow @nogc
+    {
+        this.enabled = enabled;
+    }
+
+    /// Comma-separated list of MIME types that should be compressed.
+    string[] getMimeTypes() pure nothrow @nogc
+    {
+        return mimeTypes;
+    }
+
+    /// Set `mimeTypes`.
+    void setMimeTypes(string[] mimeTypes) pure nothrow @nogc
+    {
+        this.mimeTypes = mimeTypes;
+    }
+
+    /// Comma-separated list of additional MIME types that should be compressed.
+    string[] getAdditionalMimeTypes() pure nothrow @nogc
+    {
+        return additionalMimeTypes;
+    }
+
+    /// Set `additionalMimeTypes`.
+    void setAdditionalMimeTypes(string[] additionalMimeTypes) pure nothrow @nogc
+    {
+        this.additionalMimeTypes = additionalMimeTypes;
+    }
+
+    /// Comma-separated list of user agents for which responses should not be compressed.
+    string[] getExcludedUserAgents() pure nothrow @nogc
+    {
+        return excludedUserAgents;
+    }
+
+    /// Set `excludedUserAgents`.
+    void setExcludedUserAgents(string[] excludedUserAgents) pure nothrow @nogc
+    {
+        this.excludedUserAgents = excludedUserAgents;
+    }
+}
+
+/// HTTP/2 settings.
+final class Http2
+{
+    private bool enabled = false;
+
+    /// Whether to enable HTTP/2 support, if the current environment supports it.
+    bool isEnabled() const pure nothrow @nogc
+    {
+        return enabled;
+    }
+
+    /// Set `enabled`.
+    void setEnabled(bool enabled) pure nothrow @nogc
+    {
+        this.enabled = enabled;
+    }
+}

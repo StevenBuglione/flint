@@ -1,0 +1,279 @@
+// Ported from spring-boot v4.2.0: module/spring-boot-jackson/src/main/java/org/springframework/boot/jackson/autoconfigure/JacksonProperties.java
+// Copyright 2012-present the original author or authors.
+// Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
+// Modified by the Flint authors: Java Beans getters and setters are kept (rulebook R6); `spring.*` keys
+// become `flint.*` with `spring.*` accepted as an alias (ADR-030); `TimeZone` and `Locale` are their text forms; `datatype.json-node` and `factory.constraints.*` follow with flint.jackson's `JsonNodeFeature` and `StreamReadConstraints`.
+
+/// `org.springframework.boot.jackson.autoconfigure`: the Jackson properties. `JacksonAutoConfiguration` joins this
+/// module on flint.jackson.databind's `JsonMapper.Builder`.
+module flint.boot.jackson.autoconfigure;
+
+import flint.boot.context.properties : ConfigurationProperties;
+import flint.java.util : Optional;
+import flint.java.util : LinkedHashMap, Map;
+import flint.jackson.annotation : JsonAutoDetect, JsonInclude, PropertyAccessor;
+import flint.jackson.core : StreamReadFeature, StreamWriteFeature;
+import flint.jackson.core.json : JsonReadFeature, JsonWriteFeature;
+import flint.jackson.databind.cfg : DateTimeFeature, DeserializationFeature, EnumFeature,
+    MapperFeature, SerializationFeature;
+
+@safe:
+
+/// Jackson settings. Bound under `flint.jackson` (Boot's `spring.jackson` is accepted as an alias).
+@ConfigurationProperties("flint.jackson")
+final class JacksonProperties
+{
+    /// Strategies to use to auto-detect constructors.
+    enum ConstructorDetectorStrategy
+    {
+        /// Use heuristics to see if "properties" mode is to be used.
+        DEFAULT,
+        /// Assume "properties" mode if not explicitly annotated otherwise.
+        USE_PROPERTIES_BASED,
+        /// Assume "delegating" mode if not explicitly annotated otherwise.
+        USE_DELEGATING,
+        /// Refuse to decide implicit mode and instead throw an InvalidDefinitionException for ambiguous cases.
+        EXPLICIT_ONLY
+    }
+
+    /// Datatype features.
+    static final class Datatype
+    {
+        private Map!(EnumFeature, bool) enumFeatures;
+        private Map!(DateTimeFeature, bool) datetime;
+
+        /// Boot's defaults.
+        this() pure nothrow
+        {
+            enumFeatures = new LinkedHashMap!(EnumFeature, bool);
+            datetime = new LinkedHashMap!(DateTimeFeature, bool);
+        }
+
+        /// Jackson on/off features for enums.
+        Map!(EnumFeature, bool) getEnumFeatures() pure nothrow @nogc
+        {
+            return enumFeatures;
+        }
+
+        /// Jackson on/off features for DateTimes.
+        Map!(DateTimeFeature, bool) getDatetime() pure nothrow @nogc
+        {
+            return datetime;
+        }
+    }
+
+    /// JSON-specific features.
+    static final class Json
+    {
+        private Map!(JsonReadFeature, bool) read;
+        private Map!(JsonWriteFeature, bool) write;
+
+        /// Boot's defaults.
+        this() pure nothrow
+        {
+            read = new LinkedHashMap!(JsonReadFeature, bool);
+            write = new LinkedHashMap!(JsonWriteFeature, bool);
+        }
+
+        /// Jackson on/off token reader features that are specific to JSON.
+        Map!(JsonReadFeature, bool) getRead() pure nothrow @nogc
+        {
+            return read;
+        }
+
+        /// Jackson on/off token writer features that are specific to JSON.
+        Map!(JsonWriteFeature, bool) getWrite() pure nothrow @nogc
+        {
+            return write;
+        }
+    }
+
+    private string dateFormat;
+    private string propertyNamingStrategy;
+    private Map!(PropertyAccessor, JsonAutoDetect.Visibility) visibility;
+    private Map!(SerializationFeature, bool) serialization;
+    private Map!(DeserializationFeature, bool) deserialization;
+    private Map!(MapperFeature, bool) mapper;
+    private Optional!(JsonInclude.Include) defaultPropertyInclusion;
+    private Optional!bool defaultLeniency;
+    private ConstructorDetectorStrategy constructorDetector = ConstructorDetectorStrategy.DEFAULT;
+    private string timeZone;
+    private string locale;
+    private bool useJackson2Defaults = false;
+    private bool findAndAddModules = true;
+    private Datatype datatype;
+    private Map!(StreamReadFeature, bool) read;
+    private Map!(StreamWriteFeature, bool) write;
+    private Json json;
+
+    /// Boot's defaults.
+    this() pure nothrow
+    {
+        visibility = new LinkedHashMap!(PropertyAccessor, JsonAutoDetect.Visibility);
+        serialization = new LinkedHashMap!(SerializationFeature, bool);
+        deserialization = new LinkedHashMap!(DeserializationFeature, bool);
+        mapper = new LinkedHashMap!(MapperFeature, bool);
+        datatype = new Datatype;
+        read = new LinkedHashMap!(StreamReadFeature, bool);
+        write = new LinkedHashMap!(StreamWriteFeature, bool);
+        json = new Json;
+    }
+
+    /// Date format string or a fully-qualified date format class name. For instance, 'yyyy-MM-dd HH:mm:ss'.
+    string getDateFormat() const pure nothrow @nogc
+    {
+        return dateFormat;
+    }
+
+    /// Set `dateFormat`.
+    void setDateFormat(string dateFormat) pure nothrow @nogc
+    {
+        this.dateFormat = dateFormat;
+    }
+
+    /// One of the constants on Jackson's PropertyNamingStrategies. Can also be a fully-qualified class name of a
+    /// PropertyNamingStrategy implementation.
+    string getPropertyNamingStrategy() const pure nothrow @nogc
+    {
+        return propertyNamingStrategy;
+    }
+
+    /// Set `propertyNamingStrategy`.
+    void setPropertyNamingStrategy(string propertyNamingStrategy) pure nothrow @nogc
+    {
+        this.propertyNamingStrategy = propertyNamingStrategy;
+    }
+
+    /// Jackson visibility thresholds that can be used to limit which methods (and fields) are auto-detected.
+    Map!(PropertyAccessor, JsonAutoDetect.Visibility) getVisibility() pure nothrow @nogc
+    {
+        return visibility;
+    }
+
+    /// Jackson on/off features that affect the way objects are serialized.
+    Map!(SerializationFeature, bool) getSerialization() pure nothrow @nogc
+    {
+        return serialization;
+    }
+
+    /// Jackson on/off features that affect the way objects are deserialized.
+    Map!(DeserializationFeature, bool) getDeserialization() pure nothrow @nogc
+    {
+        return deserialization;
+    }
+
+    /// Jackson general purpose on/off features.
+    Map!(MapperFeature, bool) getMapper() pure nothrow @nogc
+    {
+        return mapper;
+    }
+
+    /// Controls the inclusion of properties during serialization. Configured with one of the values in Jackson's
+    /// JsonInclude.Include enumeration.
+    Optional!(JsonInclude.Include) getDefaultPropertyInclusion() const pure nothrow @nogc
+    {
+        return defaultPropertyInclusion;
+    }
+
+    /// Set `defaultPropertyInclusion`.
+    void setDefaultPropertyInclusion(Optional!(JsonInclude.Include) defaultPropertyInclusion) pure nothrow @nogc
+    {
+        this.defaultPropertyInclusion = defaultPropertyInclusion;
+    }
+
+    /// Global default setting (if any) for leniency.
+    Optional!bool getDefaultLeniency() const pure nothrow @nogc
+    {
+        return defaultLeniency;
+    }
+
+    /// Set `defaultLeniency`.
+    void setDefaultLeniency(Optional!bool defaultLeniency) pure nothrow @nogc
+    {
+        this.defaultLeniency = defaultLeniency;
+    }
+
+    /// Strategy to use to auto-detect constructor, and in particular behavior with single-argument constructors.
+    ConstructorDetectorStrategy getConstructorDetector() const pure nothrow @nogc
+    {
+        return constructorDetector;
+    }
+
+    /// Set `constructorDetector`.
+    void setConstructorDetector(ConstructorDetectorStrategy constructorDetector) pure nothrow @nogc
+    {
+        this.constructorDetector = constructorDetector;
+    }
+
+    /// Time zone used when formatting dates. For instance, "America/Los_Angeles" or "GMT+10".
+    string getTimeZone() const pure nothrow @nogc
+    {
+        return timeZone;
+    }
+
+    /// Set `timeZone`.
+    void setTimeZone(string timeZone) pure nothrow @nogc
+    {
+        this.timeZone = timeZone;
+    }
+
+    /// Locale used for formatting.
+    string getLocale() const pure nothrow @nogc
+    {
+        return locale;
+    }
+
+    /// Set `locale`.
+    void setLocale(string locale) pure nothrow @nogc
+    {
+        this.locale = locale;
+    }
+
+    /// Whether to configure Jackson 3 with the same defaults as Boot previously used for Jackson 2.
+    bool isUseJackson2Defaults() const pure nothrow @nogc
+    {
+        return useJackson2Defaults;
+    }
+
+    /// Set `useJackson2Defaults`.
+    void setUseJackson2Defaults(bool useJackson2Defaults) pure nothrow @nogc
+    {
+        this.useJackson2Defaults = useJackson2Defaults;
+    }
+
+    /// Whether to find and add modules to the auto-configured JsonMapper.Builder.
+    bool isFindAndAddModules() const pure nothrow @nogc
+    {
+        return findAndAddModules;
+    }
+
+    /// Set `findAndAddModules`.
+    void setFindAndAddModules(bool findAndAddModules) pure nothrow @nogc
+    {
+        this.findAndAddModules = findAndAddModules;
+    }
+
+    /// Datatype features (`flint.jackson.datatype.*`).
+    Datatype getDatatype() pure nothrow @nogc
+    {
+        return datatype;
+    }
+
+    /// Jackson on/off token reader features common to multiple formats.
+    Map!(StreamReadFeature, bool) getRead() pure nothrow @nogc
+    {
+        return read;
+    }
+
+    /// Jackson on/off token writer features common to multiple formats.
+    Map!(StreamWriteFeature, bool) getWrite() pure nothrow @nogc
+    {
+        return write;
+    }
+
+    /// JSON-specific features (`flint.jackson.json.*`).
+    Json getJson() pure nothrow @nogc
+    {
+        return json;
+    }
+}

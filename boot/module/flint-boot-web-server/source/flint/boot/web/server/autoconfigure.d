@@ -1,0 +1,159 @@
+// Ported from spring-boot v4.2.0: module/spring-boot-web-server/src/main/java/org/springframework/boot/web/server/autoconfigure/ServerProperties.java
+// Copyright 2012-present the original author or authors.
+// Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
+// Modified by the Flint authors: Java Beans getters and setters are kept (rulebook R6); `spring.*` keys
+// become `flint.*` with `spring.*` accepted as an alias (ADR-030); `InetAddress address` is the address text; the deprecated `forward-headers-strategy`, `max-http-request-header-size` (`DataSize`), `ssl`, `mime-mappings`, `reactive.*`, `request.*` and the servlet `jsp`, `session` and `encoding` groups follow with their modules.
+
+/// `org.springframework.boot.web.server.autoconfigure`: the web server properties.
+module flint.boot.web.server.autoconfigure;
+
+import flint.boot.context.properties : ConfigurationProperties;
+import flint.boot.web.server : Compression, Http2, Shutdown;
+import flint.java.util : LinkedHashMap, Map;
+import flint.java.util : Optional;
+
+@safe:
+
+/// Settings of the embedded web server. Bound under `server`.
+@ConfigurationProperties("server")
+final class ServerProperties
+{
+    /// Servlet properties.
+    static final class Servlet
+    {
+        private Map!(string, string) contextParameters;
+        private string contextPath;
+        private string applicationDisplayName = "application";
+        private bool registerDefaultServlet = false;
+
+        /// Boot's defaults.
+        this() pure nothrow
+        {
+            contextParameters = new LinkedHashMap!(string, string);
+        }
+
+        /// Servlet context init parameters.
+        Map!(string, string) getContextParameters() pure nothrow @nogc
+        {
+            return contextParameters;
+        }
+
+        /// Context path of the application.
+        string getContextPath() const pure nothrow @nogc
+        {
+            return contextPath;
+        }
+
+        /// Set `contextPath`.
+        void setContextPath(string contextPath) pure nothrow @nogc
+        {
+            this.contextPath = contextPath;
+        }
+
+        /// Display name of the application.
+        string getApplicationDisplayName() const pure nothrow @nogc
+        {
+            return applicationDisplayName;
+        }
+
+        /// Set `applicationDisplayName`.
+        void setApplicationDisplayName(string applicationDisplayName) pure nothrow @nogc
+        {
+            this.applicationDisplayName = applicationDisplayName;
+        }
+
+        /// Whether to register the default Servlet with the container.
+        bool isRegisterDefaultServlet() const pure nothrow @nogc
+        {
+            return registerDefaultServlet;
+        }
+
+        /// Set `registerDefaultServlet`.
+        void setRegisterDefaultServlet(bool registerDefaultServlet) pure nothrow @nogc
+        {
+            this.registerDefaultServlet = registerDefaultServlet;
+        }
+    }
+
+    private Optional!int port;
+    private string address;
+    private string serverHeader;
+    private Shutdown shutdown = Shutdown.GRACEFUL;
+    private Compression compression;
+    private Http2 http2;
+    private Servlet servlet;
+
+    /// Boot's defaults.
+    this() pure nothrow
+    {
+        compression = new Compression;
+        http2 = new Http2;
+        servlet = new Servlet;
+    }
+
+    /// Server HTTP port. The server factory uses 8080 when unset; 0 picks a free port.
+    Optional!int getPort() const pure nothrow @nogc
+    {
+        return port;
+    }
+
+    /// Set `port`.
+    void setPort(Optional!int port) pure nothrow @nogc
+    {
+        this.port = port;
+    }
+
+    /// Network address to which the server should bind.
+    string getAddress() const pure nothrow @nogc
+    {
+        return address;
+    }
+
+    /// Set `address`.
+    void setAddress(string address) pure nothrow @nogc
+    {
+        this.address = address;
+    }
+
+    /// Value to use for the Server response header (if empty, no header is sent).
+    string getServerHeader() const pure nothrow @nogc
+    {
+        return serverHeader;
+    }
+
+    /// Set `serverHeader`.
+    void setServerHeader(string serverHeader) pure nothrow @nogc
+    {
+        this.serverHeader = serverHeader;
+    }
+
+    /// Type of shutdown that the server will support.
+    Shutdown getShutdown() const pure nothrow @nogc
+    {
+        return shutdown;
+    }
+
+    /// Set `shutdown`.
+    void setShutdown(Shutdown shutdown) pure nothrow @nogc
+    {
+        this.shutdown = shutdown;
+    }
+
+    /// Response compression (`server.compression.*`).
+    Compression getCompression() pure nothrow @nogc
+    {
+        return compression;
+    }
+
+    /// HTTP/2 (`server.http2.*`).
+    Http2 getHttp2() pure nothrow @nogc
+    {
+        return http2;
+    }
+
+    /// Servlet settings (`server.servlet.*`).
+    Servlet getServlet() pure nothrow @nogc
+    {
+        return servlet;
+    }
+}
