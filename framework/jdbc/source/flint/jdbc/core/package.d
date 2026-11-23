@@ -2310,25 +2310,27 @@ final class BeanPropertyRowMapping
     private const(Descriptor) descriptor;
     private bool checkFullyPopulated;
     private bool primitivesDefaultedForNullValue;
-    private const(PropertyDescriptor)*[string] mappedProperties;
-    private bool[string] mappedPropertyNames;
+    /// The descriptor's properties a constructor parameter maps instead (`useConstructor`), by index; null otherwise.
+    private bool[] suppressed;
+    /// The properties set from columns: those with a setter and not suppressed. Spring's `mappedProperties`.
+    private size_t mappedPropertyCount;
     private const(ConstructorDescriptor)* mappedConstructor;
     private size_t[string] underscoredParameterIndexes;
     private size_t[string] lowerCaseParameterIndexes;
 
-    /// Map rows to instances of the type `descriptor` describes.
+    /++
+    Map rows to instances of the type `descriptor` describes. A column maps to the property whose lower-case name or
+    underscored name (`first_name` for `firstName`) equals the column label without spaces, ignoring case: Spring's
+    `mappedProperties` keys. The match is made on the descriptor's names as each row is mapped, so building a
+    mapping, which callers do per query (`BeanPropertyRowMapper.newInstance`), allocates no names or maps.
+    +/
     this(const(Descriptor) descriptor, bool checkFullyPopulated)
     {
         this.descriptor = descriptor;
         this.checkFullyPopulated = checkFullyPopulated;
         foreach (ref property; descriptor.properties)
-        {
-            if (property.set is null)
-                continue;
-            mappedProperties[lowerCaseName(property.name)] = &property;
-            mappedProperties[JdbcUtils.convertPropertyNameToUnderscoreName(property.name)] = &property;
-            mappedPropertyNames[property.name] = true;
-        }
+            if (property.set !is null)
+                ++mappedPropertyCount;
     }
 
     /// Map through the preferred constructor too: `DataClassRowMapper`.
@@ -2349,11 +2351,27 @@ final class BeanPropertyRowMapping
         }
     }
 
+    /// Stop mapping the property `propertyName` (or whose underscored name is that of `propertyName`) from columns.
     private void suppressProperty(string propertyName)
     {
-        mappedProperties.remove(lowerCaseName(propertyName));
-        mappedProperties.remove(JdbcUtils.convertPropertyNameToUnderscoreName(propertyName));
-        mappedPropertyNames.remove(propertyName);
+        if (suppressed is null)
+            suppressed = new bool[descriptor.properties.length];
+        char[maxNameLength] buffer;
+        const length = underscoredName(propertyName, buffer);
+        foreach (i, ref property; descriptor.properties)
+        {
+            if (property.set is null || suppressed[i])
+                continue;
+            // Spring removes both of the parameter's keys; a property is gone when either of its keys was one.
+            const underscored = length <= maxNameLength ? buffer[0 .. length] : null;
+            if (sameIgnoringCase(property.name, propertyName) || hasUnderscoredName(propertyName,
+                    property.name) || (underscored !is null && (sameIgnoringCase(property.name,
+                    underscored) || hasUnderscoredName(underscored, property.name))))
+            {
+                suppressed[i] = true;
+                --mappedPropertyCount;
+            }
+        }
     }
 
     void setCheckFullyPopulated(bool checkFullyPopulated) ///
@@ -2380,7 +2398,7 @@ final class BeanPropertyRowMapping
 
     private bool hasMappedProperties()
     {
-        return mappedProperties.length > 0 || (checkFullyPopulated && mappedPropertyNames.length > 0);
+        return mappedPropertyCount > 0;
     }
 
     /// Map the current row to a new instance, held by the returned `Any`.
@@ -2391,13 +2409,17 @@ final class BeanPropertyRowMapping
             return mappedObject;
         auto rsmd = rs.getMetaData();
         const columnCount = rsmd.getColumnCount();
-        bool[string] populatedProperties;
+        // Which mapped properties a column populated, only when that is checked: one word, or one array past 64.
+        ulong populatedBits;
+        bool[] populatedMany = checkFullyPopulated && descriptor.properties.length > 64
+            ? new bool[descriptor.properties.length] : null;
+        size_t populated;
         foreach (index; 1 .. columnCount + 1)
         {
-            const column = JdbcUtils.lookupColumnName(rsmd, index);
-            auto property = mappedProperties.get(lowerCaseName(withoutSpaces(column)), null);
-            if (property is null)
+            const found = mappedPropertyIndex(JdbcUtils.lookupColumnName(rsmd, index));
+            if (found == size_t.max)
                 continue;
+            auto property = &descriptor.properties[found];
             auto value = columnValue(rs, index, property.type);
             if (value.isNull && isPrimitive(property.type))
             {
@@ -2407,12 +2429,100 @@ final class BeanPropertyRowMapping
             }
             else
                 property.set(mappedObject, value);
-            populatedProperties[property.name] = true;
+            if (!checkFullyPopulated)
+                continue;
+            if (populatedMany is null)
+            {
+                const bit = 1UL << found;
+                populated += (populatedBits & bit) == 0;
+                populatedBits |= bit;
+            }
+            else
+            {
+                populated += !populatedMany[found];
+                populatedMany[found] = true;
+            }
         }
-        if (checkFullyPopulated && populatedProperties.length != mappedPropertyNames.length)
+        if (checkFullyPopulated && populated != mappedPropertyCount)
             throw new InvalidDataAccessApiUsageException("Given ResultSet does not contain all properties "
                     ~ "necessary to populate object of class " ~ descriptor.name);
         return mappedObject;
+    }
+
+    /++
+    The index in the descriptor of the mapped property for `column`, or `size_t.max`. As Spring's map, whose later
+    entries replace earlier ones, the last property whose underscored or lower-case name matches wins.
+    +/
+    private size_t mappedPropertyIndex(scope const(char)[] column) const
+    {
+        foreach_reverse (i, ref property; descriptor.properties)
+        {
+            if (property.set is null || (suppressed !is null && suppressed[i]))
+                continue;
+            if (hasUnderscoredName(column, property.name) || sameIgnoringCase(column, property.name))
+                return i;
+        }
+        return size_t.max;
+    }
+
+    /// Longer names take the allocating path of `JdbcUtils.convertPropertyNameToUnderscoreName`.
+    private enum maxNameLength = 128;
+
+    /// `JdbcUtils.convertPropertyNameToUnderscoreName(name)` into `buffer`; the full length, which may exceed it.
+    private static size_t underscoredName(scope const(char)[] name, ref char[maxNameLength] buffer) pure nothrow @nogc
+    {
+        size_t length;
+        void put(char c)
+        {
+            if (length < maxNameLength)
+                buffer[length] = c;
+            ++length;
+        }
+
+        foreach (i, c; name)
+        {
+            if (i == 0)
+                put(lower(c));
+            else if (c >= 'A' && c <= 'Z')
+            {
+                put('_');
+                put(lower(c));
+            }
+            else
+                put(c);
+        }
+        return length;
+    }
+
+    /// Whether `column` without spaces equals `name`'s underscored form, ignoring case.
+    private static bool hasUnderscoredName(scope const(char)[] column, scope const(char)[] name)
+    {
+        char[maxNameLength] buffer;
+        const length = underscoredName(name, buffer);
+        if (length <= maxNameLength)
+            return sameIgnoringCase(column, buffer[0 .. length]);
+        return sameIgnoringCase(column, JdbcUtils.convertPropertyNameToUnderscoreName(name.idup));
+    }
+
+    /// Whether `column` without spaces equals `name`, ignoring ASCII case: `lowerCaseName(withoutSpaces(column))`
+    /// against `lowerCaseName(name)`.
+    private static bool sameIgnoringCase(scope const(char)[] column, scope const(char)[] name) pure nothrow @nogc
+    {
+        size_t j;
+        foreach (c; column)
+        {
+            if (c == ' ')
+                continue;
+            if (j == name.length || lower(c) != lower(name[j]))
+                return false;
+            ++j;
+        }
+        return j == name.length;
+    }
+
+    private static char lower(char c) pure nothrow @nogc
+    {
+        return c >= 'A' && c <= 'Z' ? cast(char)(c + 32) : c;
     }
 
     private Any constructMappedInstance(ResultSet rs)
@@ -2532,12 +2642,77 @@ final class BeanPropertyRowMapping
         return result.idup;
     }
 
-    private static string withoutSpaces(string name)
+}
+
+version (unittest) private class RowMappingBean
+{
+    private string firstName;
+    private long id;
+    private string city;
+
+    string getFirstName()
     {
-        string result;
-        foreach (c; name)
-            if (c != ' ')
-                result ~= c;
-        return result;
+        return firstName;
     }
+
+    void setFirstName(string firstName)
+    {
+        this.firstName = firstName;
+    }
+
+    long getId()
+    {
+        return id;
+    }
+
+    void setId(long id)
+    {
+        this.id = id;
+    }
+
+    string getCity()
+    {
+        return city;
+    }
+
+    void setCity(string city)
+    {
+        this.city = city;
+    }
+}
+
+@("BeanPropertyRowMapping: building one allocates only itself, and matching a column to a property allocates nothing")
+unittest
+{
+    import core.memory : GC;
+
+    auto descriptor = beanDescriptorOf!RowMappingBean();
+    size_t index(string name)
+    {
+        foreach (i, ref property; descriptor.properties)
+            if (property.name == name)
+                return i;
+        assert(false, name);
+    }
+
+    const before = GC.stats().allocatedInCurrentThread;
+    auto mapping = new BeanPropertyRowMapping(descriptor, false);
+    const built = GC.stats().allocatedInCurrentThread - before;
+    assert(built <= 2 * __traits(classInstanceSize, BeanPropertyRowMapping), "a mapping builds names or maps");
+    assert(mapping.mappedPropertyCount == 3);
+
+    const matching = GC.stats().allocatedInCurrentThread;
+    assert(mapping.mappedPropertyIndex("FIRST_NAME") == index("firstName"));
+    assert(mapping.mappedPropertyIndex("first name") == index("firstName"));
+    assert(mapping.mappedPropertyIndex("FirstName") == index("firstName"));
+    assert(mapping.mappedPropertyIndex("id") == index("id"));
+    assert(mapping.mappedPropertyIndex("CITY") == index("city"));
+    assert(mapping.mappedPropertyIndex("first_nam") == size_t.max);
+    assert(mapping.mappedPropertyIndex("firstname_") == size_t.max);
+    assert(mapping.mappedPropertyIndex("last_name") == size_t.max);
+    assert(GC.stats().allocatedInCurrentThread == matching, "matching a column allocated");
+
+    // DataClassRowMapper: a constructor parameter suppresses the property it maps, by either of its names.
+    mapping.suppressProperty("first_name");
+    assert(mapping.mappedPropertyIndex("first_name") == size_t.max && mapping.mappedPropertyCount == 2);
 }
