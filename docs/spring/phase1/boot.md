@@ -137,6 +137,60 @@ Boot's exceptions extend `flint.java.lang`'s `RuntimeException`, `IllegalArgumen
 | third-party-apis | `flint.slf4j` `Logger`/`LoggerFactory` and a binding point for Boot's console appender; `flint.jackson.databind.ObjectMapper` (`JsonMapper` in Jackson 3) for `JacksonAutoConfiguration`; `flint.jakarta.validation.Validator` | to coordinate |
 | data-access | `flint.jdbc.datasource` (`DataSource`), `JdbcTemplate`, `NamedParameterJdbcTemplate`, `JdbcClient`, `DataSourceTransactionManager` for the JDBC, transaction and SQL-init auto-configurations | to coordinate |
 
+## gs-rest-service: the target port
+
+The Flint port lands in `benchmarks/spring/flint/gs-rest-service/` (with its `flint-spring.json`) once web-mvc's dispatcher and server, framework-core's context and Flint AOT's generator can build it. It is the guide's `complete/` project, file for file, under rulebook R1 (one D module per Java package):
+
+```d
+// src/com/example/restservice.d
+module com.example.restservice;
+
+import flint.boot : FlintMain;
+import flint.boot.autoconfigure : FlintBootApplication;
+import flint.java.util.concurrent.atomic : AtomicLong;
+import flint.web.bind.annotation : GetMapping, RequestParam, RestController;
+import std.format : format;
+
+@FlintBootApplication
+class RestServiceApplication
+{
+}
+
+mixin FlintMain!RestServiceApplication; // deviation D-1
+
+/// `record Greeting(long id, String content)` (rulebook R11).
+struct Greeting
+{
+    long id;
+    string content;
+}
+
+@RestController
+class GreetingController
+{
+    private enum template_ = "Hello, %s!";
+    private AtomicLong counter = new AtomicLong();
+
+    @GetMapping("/greeting")
+    Greeting greeting(@RequestParam(defaultValue: "World") string name)
+    {
+        return Greeting(counter.incrementAndGet(), format(template_, name));
+    }
+}
+```
+
+`resources/application.yaml` is empty in the guide; the port keeps an empty file, so the config-data path runs. The test is the guide's `GreetingControllerTests` with `@FlintBootTest` and `@AutoConfigureRestTestClient` over MockMvc (`RestTestClient.bindTo(mockMvc)`). A MockMvc variant asserts `jsonPath("$.content").value("Hello, World!")` and `"Hello, Spring Community!"`.
+
+Still needed from the other sessions:
+- `flint.java.util.concurrent.atomic.AtomicLong` (framework-core);
+- `@RestController`, `@GetMapping`, `@RequestParam`, the dispatcher and the server (web-mvc);
+- the JSON converter (third-party-apis);
+- the generated registry (flint-aot).
+
+## Tooling gap: named arguments
+
+dfmt and dscanner 0.15.2, pinned in `policy/toolchains.json`, cannot parse D's named arguments (`@RequestParam(defaultValue: "World")`). dfmt rewrites them as `defaultValue : "World"` and reports a formatter difference, and dscanner reports a parse error. Rulebook R2 writes annotations with named arguments, so every Spring-style source under a root `tools/quality.py` lints (`packages`, `apps`, `benchmarks`, `examples`, `starters`) fails the quality gate. Boot's own sources avoid named arguments for now: its test annotations are CTFE constants. The gs-rest-service port cannot, so the pinned linters need a libdparse with named-argument support before Spring-style applications pass the gate.
+
 ## Budgets
 
 The package has no ADR-019 budget row yet. The size gate's linked-bytes budget for `flint:boot` is set when the package registers in `policy/framework.json`, with the first `measure_builds` run of gs-rest-service.
