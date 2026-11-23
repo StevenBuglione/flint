@@ -219,6 +219,7 @@ AotOutcome runAot(const ref AotRequest request)
     const providers = readServiceProviders(request.packageDirectories ~ request.root);
     const cache = buildPath(request.root, cacheDirectory);
     State state = loadState(cache, request.environmentKey);
+    const knownPlatform = loadPlatformInterfaces(request, state);
     // A fresh state (a new environment, or none) drops the annotation types too: the describer skips the ones
     // listed there, which must come from this environment.
     if (state.keys.length == 0)
@@ -239,6 +240,8 @@ AotOutcome runAot(const ref AotRequest request)
     if (stale.length && !extractImports(request, cache, sources, stale, keys, state, outcome))
         return finish(outcome, started);
     outcome.ok = produceOutput(request, sources, autoConfigurations, services, keys, stale.length > 0, state, outcome);
+    if (state.platform.length > knownPlatform)
+        storePlatformInterfaces(request, state);
     if (!outcome.ok)
         saveState(cache, state);
     return finish(outcome, started);
@@ -989,6 +992,69 @@ private void readPlatform(const ref imported!"std.json".JSONValue root, ref Stat
         state.platform[name] = SourceModule(name, item["path"].str,
                 item["package"].type == JSONType.true_, item["hash"].str, imports, false);
     }
+}
+
+/// Where the shared cache keeps the platform modules' locations and interfaces for one environment. The environment
+/// key covers every package's contents, so within it a platform module neither moves nor changes: a cold build
+/// (a fresh project state) takes them from here instead of searching the import paths and lexing every platform
+/// source (~8% of petclinic-rest's cold AOT step in-process).
+private string platformInterfacesPath(string sharedCache, string environment)
+{
+    import std.path : buildPath;
+    import flint_tool.support.files : sha256Hex;
+
+    return buildPath(sharedCache, "interfaces", sha256Hex(cast(const(ubyte)[]) environment) ~ ".json");
+}
+
+/// The platform modules a shared entry records for this environment, into `state`; nothing if it is missing,
+/// damaged or another environment's.
+private void readPlatformInterfaces(string path, string environment, ref State state)
+{
+    import std.file : exists, readText;
+    import std.json : JSONException, JSONType, parseJSON;
+
+    if (!exists(path))
+        return;
+    try
+    {
+        auto root = parseJSON(readText(path));
+        if (root.type == JSONType.object && "environment" in root.objectNoRef
+                && root["environment"].type == JSONType.string && root["environment"].str == environment)
+            readPlatform(root, state);
+    }
+    catch (JSONException)
+        state.platform = null;
+}
+
+/// Seed a fresh state's platform modules from the shared cache; returns how many the state then knows.
+private size_t loadPlatformInterfaces(const ref AotRequest request, ref State state)
+{
+    if (state.platform.length == 0 && request.sharedCache.length)
+        readPlatformInterfaces(platformInterfacesPath(request.sharedCache, request.environmentKey),
+                request.environmentKey, state);
+    return state.platform.length;
+}
+
+/// Record the platform modules this run found, with those the shared entry already holds.
+private void storePlatformInterfaces(const ref AotRequest request, ref State state)
+{
+    import std.file : mkdirRecurse;
+    import std.json : JSONValue;
+    import std.path : dirName;
+
+    if (request.sharedCache.length == 0)
+        return;
+    const path = platformInterfacesPath(request.sharedCache, request.environmentKey);
+    State merged;
+    readPlatformInterfaces(path, request.environmentKey, merged);
+    foreach (name, ref item; state.platform)
+        merged.platform[name] = item;
+    mkdirRecurse(dirName(path));
+    writeAtomically(path, JSONValue([
+        "schema": JSONValue("flint.aot.platform-interfaces/1"),
+        "environment": JSONValue(request.environmentKey),
+        "platform": platformJson(merged)
+    ]).toString);
 }
 
 private imported!"std.json".JSONValue platformJson(const ref State state)

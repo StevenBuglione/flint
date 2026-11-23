@@ -1197,6 +1197,61 @@ unittest
     expect(outputs[1]).toEqual(outputs[0]);
 }
 
+@("the shared cache keeps platform modules' interfaces per environment; a damaged entry is searched again")
+unittest
+{
+    import std.algorithm.searching : canFind;
+    import std.conv : to;
+    import std.file : SpanMode, dirEntries, exists, readText, rmdirRecurse, tempDir, write;
+    import std.path : buildPath;
+    import std.process : thisProcessID;
+    import flint_tool.engine.aot.driver : AotRequest, runAot;
+
+    const shared_ = buildPath(tempDir, "flint-aot-interfaces-" ~ thisProcessID.to!string);
+    if (exists(shared_))
+        rmdirRecurse(shared_);
+    scope (exit)
+        if (exists(shared_))
+            rmdirRecurse(shared_);
+    const root = repositoryRoot();
+    string generateCopy()
+    {
+        const project = copyFixture("sample");
+        scope (exit)
+            remove(project);
+        AotRequest request;
+        request.root = project;
+        request.compiler = compiler();
+        request.importPaths = [
+            "-I" ~ buildPath(root, "tests", "aot", "annotations"),
+            "-I" ~ buildPath(root, "tests", "aot", "autoconfig", "source")
+        ];
+        request.flags = ["-preview=dip1000"];
+        request.packageDirectories = [buildPath(root, "tests", "aot", "autoconfig")];
+        request.environmentKey = "test";
+        request.sharedCache = shared_;
+        auto outcome = runAot(request);
+        expect(outcome.extractionErrors).toEqual("");
+        expect(outcome.ok).toBeTrue();
+        return readText(buildPath(project, ".flint", "generated", "aot", "flint_aot", "flintsample", "autoconfig.d"));
+    }
+
+    const first = generateCopy();
+    string[] entries;
+    foreach (entry; dirEntries(buildPath(shared_, "interfaces"), "*.json", SpanMode.shallow))
+        entries ~= entry.name;
+    expect(entries.length).toEqual(1);
+    const recorded = readText(entries[0]);
+    expect(recorded.canFind(`"environment":"test"`)).toBeTrue();
+    expect(recorded.canFind(`"flintsample.autoconfig"`)).toBeTrue();
+    // A fresh copy reads the entry instead of searching and lexing the platform sources: the same output.
+    expect(generateCopy()).toEqual(first);
+    // A damaged entry is ignored and rewritten.
+    write(entries[0], "{\"environment\": ");
+    expect(generateCopy()).toEqual(first);
+    expect(readText(entries[0]).canFind(`"flintsample.autoconfig"`)).toBeTrue();
+}
+
 @("a cached cold build (a clean .flint, the shared cache kept) extracts nothing and restores the output")
 unittest
 {
