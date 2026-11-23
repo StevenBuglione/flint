@@ -17,6 +17,11 @@ if(NOT MSVC)
 else()
   # MSVC: C11 atomics are opt-in, and /Gy is its per-function sectioning.
   target_compile_options(${flint_ffi} PRIVATE /experimental:c11atomics /Gy)
+  # _NO_CRT_STDIO_INLINE: the UCRT headers otherwise define snprintf, vsnprintf and their helpers as external
+  # inline COMDATs in every shim that prints. druntime references snprintf too, and link.exe would then load
+  # whichever shim object it meets first, with that shim's provider, into a program that never calls it
+  # (engine-wasi pulled in libpq and SQLite). With it, those calls bind to legacy_stdio_definitions.lib (ADR-026).
+  target_compile_definitions(${flint_ffi} PRIVATE _NO_CRT_STDIO_INLINE)
 endif()
 # The providers are static archives. Their Windows headers declare DLL imports unless told otherwise.
 if(WIN32)
