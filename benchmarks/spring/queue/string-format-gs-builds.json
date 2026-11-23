@@ -1,0 +1,71 @@
+{
+  "schema": "flint.measure-queue/1",
+  "created": "2026-11-23",
+  "id": "string-format-gs-builds",
+  "status": "pending",
+  "window": "natural",
+  "priority": 3,
+  "requested_by": "framework-core, for the coordinator (priority 1: a non-templated String.format)",
+  "report_to": "framework-core; the coordinator; dmd-arm64",
+  "estimate_minutes": 40,
+  "summary": "gs-rest-service builds before and after String.format replaced std.format.format!(char, string)",
+  "why": "The coordinator measured 26 ms of the 57 ms gs-rest-service edit-build compile in std.format.format!(char,string), instantiated by the app's format(template_, name). ea038af1 switches the app to flint:java's String.format (a one-line Any[] facade over a non-template engine). base is its parent, 4a85b044. Compare the served edit-build compile and the cached cold build.",
+  "builds": {
+    "base": {
+      "app": "checkout",
+      "commit": "4a85b044",
+      "flint": true,
+      "linker": "mold"
+    },
+    "cand": {
+      "app": "checkout",
+      "commit": "ea038af1",
+      "flint": true,
+      "linker": "mold"
+    }
+  },
+  "measure": {
+    "kind": "command",
+    "ports": [],
+    "steps": [
+      {
+        "in": "base",
+        "argv": [
+          "{python}",
+          "tools/measure_builds.py",
+          "--spring",
+          "--spring-app",
+          "gs-rest-service",
+          "--no-context",
+          "--output",
+          "{out}/builds-base.json"
+        ],
+        "smoke_args": [
+          "--smoke",
+          "--trials",
+          "1"
+        ],
+        "may_fail": true
+      },
+      {
+        "in": "cand",
+        "argv": [
+          "{python}",
+          "tools/measure_builds.py",
+          "--spring",
+          "--spring-app",
+          "gs-rest-service",
+          "--no-context",
+          "--output",
+          "{out}/builds-cand.json"
+        ],
+        "smoke_args": [
+          "--smoke",
+          "--trials",
+          "1"
+        ],
+        "may_fail": true
+      }
+    ]
+  }
+}
