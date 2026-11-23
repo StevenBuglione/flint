@@ -347,6 +347,18 @@ immutable CodeInfo[] catalog = [
             "add a positive unittest that instantiates the generator"),
 
     // 06xx: formatting and lint.
+    CodeInfo("FLINT-E0530", ExitCode.user, "a class-typed field may be null",
+            "A field whose type is a class or interface the project declares is null until something assigns it. "
+            ~ "Every constructor of the aggregate must assign it, as constructor injection does; a value without "
+            ~ "identity belongs in a struct. A field with no constructor, or initialised to null, is flagged.",
+            "@RestController(\"/api/orders\")\nstruct OrderController\n{\n    private OrderService orders;\n    "
+            ~ "this(OrderService orders) { this.orders = orders; }\n}"),
+    CodeInfo("FLINT-E0531", ExitCode.user, "an attribute the framework makes unneeded",
+            "In an application that uses a starter, flint:web picks where a controller runs from its handlers: on "
+            ~ "the reactor when every handler is nothrow @nogc, otherwise on a worker thread. `nothrow` or `@nogc` on "
+            ~ "some handlers of a worker-thread controller changes nothing, and `scope` on an argument the framework "
+            ~ "passes as an owned value is noise. `flint check` reports the attributes per handler.",
+            "@Get(\"/:id\")\nResult!Order get(@PathVariable(\"id\") ulong id)\n{\n    return orders.find(id);\n}"),
     CodeInfo("FLINT-E0601", ExitCode.user, "source is not formatted",
             "One formatter: dfmt 0.15.2 with the repository's dfmt.ini. `flint check` compares its output byte for "
             ~ "byte.", "flint fmt"),

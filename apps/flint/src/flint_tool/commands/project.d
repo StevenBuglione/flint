@@ -701,6 +701,10 @@ struct CheckPayload
     string[] checks;
     /// Sources the layout and safety rules covered.
     long files;
+    /// REST handlers in src/.
+    long handlers;
+    /// `nothrow`, `@nogc`, `scope`, `pure`, `return` and `@trusted` on them (ADR-028 section 3).
+    long handler_attributes;
     /// Embedded C sources clang-tidy covered.
     long c_files;
     /// Diagnostics suppressed by waivers.
@@ -751,6 +755,8 @@ int commandCheck(ref Session session, CheckArgs args)
     checkLock(target.root, renderLock(session.home, target.manifest, target.resolution), true, report);
     const summary = checkProject(session.home, target.manifest, target.resolution, true, report);
     payload.files = summary.files;
+    payload.handlers = summary.handlers;
+    payload.handler_attributes = summary.handlerAttributes;
     payload.waived = summary.waived;
     payload.waivers = summary.waivers.dup;
     const files = qualityFiles([buildPath(target.root, "src"), buildPath(target.root, "test")]);

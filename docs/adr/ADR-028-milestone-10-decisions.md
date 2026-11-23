@@ -70,6 +70,27 @@ Status: proposed by the Milestone 10 implementation, for the project owner's rev
 
 3. **Cost.** The selection is one compile-time scan of each controller's routes. The web bench's template instances are unchanged at 261.
 
+4. **The attributes-per-handler metric.**
+   - **What it counts:** for each REST handler in `src/`, the `nothrow`, `@nogc`, `scope`, `pure`, `return` and `@trusted` attributes on it and its parameters. `flint check --json` reports `handlers` and `handler_attributes`.
+   - **The test:** `tests/test_flint_starters.py` asserts that the starter example has one handler and zero attributes.
+
+5. **FLINT-E0531: attributes the framework makes unneeded.** In an application that uses a starter, `flint check` and every build flag two cases:
+   - **`nothrow` or `@nogc` on a worker-thread controller:** these change nothing when another handler of the same controller is not both, because the controller runs on a worker thread anyway.
+   - **`scope` on an owned argument:** `scope` on a handler parameter other than `RequestContext`, `Request` or `RequestArena` changes nothing, because the framework passes that argument as an owned value.
+
+   A deliberately all-`nothrow @nogc` controller is not flagged, since those attributes put it on the reactor. The rule reads tokens, and the existing per-file waiver applies.
+
+### 4. Safety conventions: FLINT-E0530, nullable class fields
+
+1. **The rule.** A field whose type is a class or interface that the project declares is flagged in application code (`src/`), by `flint check` and every build, in two cases:
+   - **no constructor:** the field is null until something assigns it, so an aggregate with no constructor fails;
+   - **an unassigning constructor:** some constructor of the aggregate leaves it unassigned (an assignment is `name = …` or `this.name = …`).
+
+   A field initialised to `null` counts as unassigned.
+2. **Why.** Constructor injection, which the starters use, assigns these fields, so canonical starter code passes. A null class field is the one null a `@safe` Flint program can still dereference.
+3. **The limit.** The rule reads tokens, not types. It recognises classes the project declares, not class types from libraries. Starters prefer structs and `Result`, so an application rarely holds a library class.
+
+
 ## Consequences
 
 - `flint add web` and twenty lines of application code give a configured REST service with DI, ordinary handlers and string path variables. `tests/test_flint_starters.py` covers `flint add` (dependency, section, lock, a repeated add and an unknown starter), and the example serving a request and refusing a misspelt key with exit code 3.

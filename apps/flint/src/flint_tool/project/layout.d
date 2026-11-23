@@ -24,6 +24,10 @@ struct CheckSummary
     string[] waivers;
     /// DUB packages used under an `[unchecked]` waiver, as "name version: reason (N findings)".
     string[] unchecked;
+    /// REST handlers in src/ (the attributes-per-handler metric, ADR-028 section 3).
+    long handlers;
+    /// `nothrow`, `@nogc`, `scope`, `pure`, `return` and `@trusted` on those handlers.
+    long handlerAttributes;
 }
 
 /// Directories allowed at the top of a project.
@@ -56,6 +60,7 @@ CheckSummary checkProject(const ref Home home, const ref Manifest manifest, cons
         const text = readText(buildPath(manifest.root, relative));
         checkFile(home, manifest, resolution, relative, text, found);
     }
+    checkConventions(manifest, summary, found);
     checkPackageDirectories(manifest, found);
     checkImportC(manifest, found);
     checkConfiguration(manifest, found);
@@ -73,6 +78,63 @@ CheckSummary checkProject(const ref Home home, const ref Manifest manifest, cons
             report.add(item);
     }
     return summary;
+}
+
+/// FLINT-E0530 and FLINT-E0531 over src/, and the attributes-per-handler metric (ADR-028 sections 3 and 5). Class
+/// names come from every project source, so a field typed by a class declared in another module is recognised.
+private void checkConventions(const ref Manifest manifest, ref CheckSummary summary, ref Report report)
+{
+    import std.algorithm.searching : startsWith;
+    import std.file : readText;
+    import std.path : buildPath;
+    import flint_tool.check.conventions : HandlerMetric, checkHandlerAttributes, checkNullableFields, declaredClasses;
+    import flint_tool.check.lexer : LexFailure, Token, tokenize;
+    import flint_tool.support.files : dSources;
+
+    string[] files;
+    string[] texts;
+    Token[][] scanned;
+    bool[string] classes;
+    foreach (relative; dSources(manifest.root))
+    {
+        if (!relative.startsWith("src/"))
+            continue;
+        Token[] tokens;
+        LexFailure failure;
+        const text = readText(buildPath(manifest.root, relative));
+        if (!tokenize(text, tokens, failure))
+            continue;
+        foreach (name; declaredClasses(tokens))
+            classes[name] = true;
+        files ~= relative;
+        texts ~= text;
+        scanned ~= tokens;
+    }
+    const starters = usesStarter(manifest);
+    HandlerMetric metric;
+    foreach (index, file; files)
+    {
+        checkNullableFields(file, texts[index], scanned[index], classes, report);
+        Report attributes;
+        checkHandlerAttributes(file, texts[index], scanned[index], metric, attributes);
+        if (starters)
+            foreach (item; attributes.items)
+                report.add(item);
+    }
+    summary.handlers = metric.handlers;
+    summary.handlerAttributes = metric.attributes;
+}
+
+private bool usesStarter(const ref Manifest manifest)
+{
+    import std.algorithm.searching : startsWith;
+
+    foreach (ref dependency; manifest.dependencies)
+    {
+        if (dependency.name.startsWith("flint:starter-"))
+            return true;
+    }
+    return false;
 }
 
 /// A DUB package that fails Flint's safety rules builds only under an `[unchecked]` waiver naming it with a reason
