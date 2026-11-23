@@ -243,10 +243,18 @@ class ExtractionTests(unittest.TestCase):
             (checkout / 'packages/web/source/router.d').write_text('module flint.web.router;\n' * 20)
             subprocess.run([*git, 'add', '-A'], check=True)
             subprocess.run([*git, 'commit', '-qm', 'web'], check=True)
+            (checkout / 'examples/golden-tui').mkdir(parents=True)
+            (checkout / 'examples/golden-tui/dub.sdl').write_text('name "golden-tui"\n' * 20)
+            subprocess.run([*git, 'add', '-A'], check=True)
+            subprocess.run([*git, 'commit', '-qm', 'example'], check=True)
             subprocess.run([*git, 'mv', 'packages/web', 'packages/engine-web'], check=True)
+            (checkout / 'examples/framework').mkdir()
+            subprocess.run([*git, 'mv', 'examples/golden-tui', 'examples/framework/golden-tui'], check=True)
             subprocess.run([*git, 'commit', '-qm', 'rename'], check=True)
-            self.assertEqual(extract_repo.earlier_names(checkout, ['packages/engine-web']),
-                             {'packages/web': 'packages/engine-web'})
+            # A directory keeps its own name below the place it moved to.
+            self.assertEqual(extract_repo.earlier_names(checkout, ['packages/engine-web', 'examples/framework']),
+                             {'examples/golden-tui': 'examples/framework/golden-tui',
+                              'packages/web': 'packages/engine-web'})
             self.assertEqual(extract_repo.earlier_names(checkout, ['packages/engine-mq']), {})
 
     def test_the_refresh_needs_all_to_push_and_one_repo_otherwise(self):

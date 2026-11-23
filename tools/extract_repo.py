@@ -73,8 +73,10 @@ def renames(repo, checkout, paths, root=ROOT):
 
 
 def earlier_names(checkout, paths):
-    """{earlier directory: later directory} for every moving directory that git saw renamed within its top-level
-    tree (packages/web -> packages/engine-web), so filter-repo keeps the history from before the rename too."""
+    """{earlier directory: later directory} for every moving directory git saw renamed, so filter-repo keeps the
+    history from before the rename too. An earlier directory is the first two components of a renamed file's
+    old path (packages/web, examples/golden-tui). Its later directory is where the files below it went, keeping
+    their relative paths (examples/framework/golden-tui), else the first two components of the new path."""
     log = subprocess.run(['git', 'log', '--format=', '--name-status', '-M', '--diff-filter=R', 'HEAD'], cwd=checkout,
                          capture_output=True, text=True, check=True).stdout
     votes = {}
@@ -82,11 +84,16 @@ def earlier_names(checkout, paths):
         fields = line.split('\t')
         if len(fields) != 3:
             continue
-        old, new = fields[1].split('/'), fields[2].split('/')
-        if len(old) < 3 or len(new) < 3 or old[0] != new[0] or old[:2] == new[:2]:
+        old, new = fields[1], fields[2]
+        parts = old.split('/')
+        if len(parts) < 3:
             continue
-        counts = votes.setdefault('/'.join(old[:2]), {})
-        counts['/'.join(new[:2])] = counts.get('/'.join(new[:2]), 0) + 1
+        head, relative = '/'.join(parts[:2]), '/'.join(parts[2:])
+        later = new[:-len(relative) - 1] if new.endswith('/' + relative) else '/'.join(new.split('/')[:2])
+        if later == head:
+            continue
+        counts = votes.setdefault(head, {})
+        counts[later] = counts.get(later, 0) + 1
     found = {}
     for old, counts in votes.items():
         # Git pairs an occasional identical small file across directories; the directory's rename is the target
@@ -194,14 +201,15 @@ def extract(repo, source, commit, into, root=ROOT):
     source_commit = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=checkout, capture_output=True, text=True,
                                    check=True).stdout.strip()
     moves = renames(repo, checkout, paths, root)
-    # Earlier names come along with their history, renamed to where their later name goes.
-    earlier = [(old, dict(moves).get(new, new)) for old, new in earlier_names(checkout, paths).items()]
 
     def placed(path):
+        """Where a path below a moving directory lands in the extracted repo."""
         for old, new in moves:
-            if path.startswith(old + '/'):
+            if path == old or path.startswith(old + '/'):
                 return new + path[len(old):]
         return path
+    # Earlier names come along with their history, renamed to where their later name goes.
+    earlier = [(old, placed(new)) for old, new in earlier_names(checkout, paths).items()]
     files = [(old, placed(new)) for old, new in earlier_files(checkout, paths, dict(earlier))]
     run(['git', 'filter-repo', '--force', '--quiet', '--refs', 'main',
          *sum((['--path', p] for p in paths + [old for old, _ in earlier] + [old for old, _ in files]), []),
