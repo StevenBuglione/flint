@@ -304,7 +304,7 @@ class ConventionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix='flint-conventions-') as temporary:
             self.assertEqual(flint_json('new', 'shop', cwd=temporary)[0], 0)
             project = Path(temporary) / 'shop'
-            self.assertEqual(flint_json('add', 'web', cwd=project)[0], 0)
+            self.assertEqual(flint_json('add', 'flint:starter-web', cwd=project)[0], 0)
             (project / 'src/shop/orders.d').write_text(UNNEEDED)
             status, document = flint_json('check', cwd=project)
             self.assertEqual(status, 1)

@@ -227,12 +227,23 @@ private void checkImport(const ref Home home, const ref Manifest manifest, const
     const line = importLine(scan, imported);
     if (startsWithModule(imported, "flint"))
     {
-        const owner = home.owner(imported);
+        auto owner = home.owner(imported);
         if (owner is null)
         {
             report.add(at(diagnostic("FLINT-E0510", Severity.error, "unknown Flint module " ~ imported,
                     "import a module a core package owns"), scan.file, line, 0, scan.text));
             return;
+        }
+        // Until the pre-port Boot retires, flint.boot has two owners (boot-core and the legacy boot library, as
+        // tools/gates.py boot_owners): an import is declared through either.
+        foreach (ref library; home.bootLibraries)
+        {
+            if ((imported == library.module_ || startsWithModule(imported, library.module_))
+                    && declared(resolution, "flint:" ~ library.name, test))
+            {
+                owner = &library;
+                break;
+            }
         }
         const name = "flint:" ~ owner.name;
         if (!declared(resolution, name, test))
