@@ -17,6 +17,10 @@ struct Upstream
     string project;
     /// Tag or release.
     string version_;
+    /// The Flint repo whose mapping classifies it (policy/repos.json).
+    string repo;
+    /// Its entry in policy/upstream-licences.json.
+    string matrix;
     /// Download URL.
     string url;
     /// Lower-case hexadecimal SHA-256 of the archive.
@@ -53,6 +57,8 @@ bool parseUpstreams(string text, out Upstream[] upstreams, out string error)
             Upstream upstream;
             upstream.project = item["project"].str;
             upstream.version_ = item["version"].str;
+            upstream.repo = "repo" in item ? item["repo"].str : null;
+            upstream.matrix = "matrix" in item ? item["matrix"].str : upstream.project;
             upstream.url = item["url"].str;
             upstream.sha256 = item["sha256"].str;
             upstream.format = item["format"].str;
