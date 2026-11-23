@@ -120,6 +120,59 @@ def boot_layers():
                 dep=boot_owner(module)
                 require(dep is None or dep==name or dep in meta['dependencies'],str(f.relative_to(base.parent))+': undeclared Boot-layer import '+module)
 
+def framework_layers():
+    """ADR-030: Spring-layer modules (the Spring Framework API and the third-party APIs of rulebook R1) live under
+    framework/<artifact>, outside the 37 engine packages. Each is listed in policy/framework.json and keeps the
+    package rules: module paths, module-scope @safe:, declared imports only, no private engine imports, no
+    thread-local state and no unsafe annotations. EPL-2.0 sources live only in modules licensed EPL-2.0."""
+    path=ROOT/'policy/framework.json'
+    if not path.is_file():return 0
+    modules=json.loads(path.read_text(encoding='utf-8'))['modules']
+    root_sdl=(ROOT/'dub.sdl').read_text(encoding='utf-8')
+    def layer_owner(module):
+        for name,meta in modules.items():
+            if module==meta['module'] or module.startswith(meta['module']+'.'):return name
+        return None
+    for name,meta in modules.items():
+        base=ROOT/meta['directory']
+        require(meta['directory']=='framework/'+name,name+': a framework module lives in framework/'+name)
+        require(('subPackage "'+meta['directory']+'"') in root_sdl,name+': missing from the root subPackage list')
+        sdl=(base/'dub.sdl').read_text(encoding='utf-8')
+        require(re.search(r'^name "'+re.escape(name)+'"$',sdl,re.MULTILINE),name+': dub.sdl name differs')
+        require(re.search(r'^license "'+re.escape(meta['licence'])+'"$',sdl,re.MULTILINE),name+': dub.sdl license differs from policy')
+        actual=set(re.findall(r'dependency\s+"flint:([\w-]+)"\s+version="\*"',sdl))
+        require(actual==set(meta['dependencies']),name+': SDL dependencies differ from policy')
+        require(len(re.findall(r'\bdependency\b',sdl))==len(actual),name+': noncanonical dependency recipe')
+        for dep in meta['dependencies']:
+            require(dep in P or dep in modules,name+': unknown dependency '+dep)
+        epl=meta['licence']=='EPL-2.0'
+        require(epl==(base/'LICENSE').is_file(),name+': an EPL-2.0 module carries its own LICENSE, and only it')
+        for f in sorted((base/'source').rglob('*.d')):
+            text=f.read_text(encoding='utf-8');ts=list(tokens(text));where=str(f.relative_to(ROOT))
+            module=declared_module(ts)
+            parts=list(f.relative_to(base/'source').with_suffix('').parts)
+            if parts[-1]=='package':parts.pop()
+            require(module=='.'.join(parts),where+': module/path mismatch')
+            require(layer_owner(module)==name,where+': source belongs to another module')
+            require(module_default(ts)=='safe',where+': require module-scope @safe: before declarations')
+            require(not has_string_mixin(ts) or meta.get('generator',False),where+': string mixin outside an approved API-layer internal')
+            require(epl==('SPDX-License-Identifier: EPL-2.0' in text),where+': EPL-2.0 sources belong only to EPL-2.0 modules')
+            values=[t.value for t in ts]
+            require(not any(values[i]=='@' and values[i+1] in ['trusted','system'] for i in range(len(values)-1)),where+': the API layer stays @safe')
+            for imported in imported_modules(ts):
+                dep=layer_owner(imported)
+                if dep is not None:
+                    require(dep==name or dep in meta['dependencies'],where+': undeclared import '+imported)
+                    continue
+                dep=owner(imported)
+                require(not imported.startswith('flint.') or dep is not None,where+': unknown Flint module '+imported)
+                require(dep is None or dep in meta['dependencies'],where+': undeclared import '+imported)
+                if dep is not None:
+                    private=[P[dep]['module']+'.'+part for part in ['internal','sys','ffi']]
+                    require(not prefix_match(imported,private),where+': cross-package private boundary import '+imported)
+            check_thread_locals(module,ts,where)
+    return len(modules)
+
 WORKSPACE=Workspace()
 
 def structural(selected):
@@ -142,6 +195,7 @@ def structural(selected):
     require(set(re.findall(r'subPackage\s+"packages/([\w-]+)"',root_sdl))==set(P),'root subpackage list differs')
     boot_layers()
     module_budgets.load(B,P,ROOT)
+    framework=framework_layers()
     mixin_packages=set()
     for n in selected:
         meta=P[n];pkg=WORKSPACE.package_dir(n,ROOT) if WORKSPACE.file else ROOT/'packages'/n;sdl=(pkg/'dub.sdl').read_text(encoding='utf-8')
@@ -181,7 +235,7 @@ def structural(selected):
                             depth+=(ts[k].value=='{')-(ts[k].value=='}');k+=1
                         require(depth==0,str(f)+': unbalanced trusted body')
                         require(ts[k-1].line-ts[j].line<=S['max_trusted_lines'],str(f)+': trusted function exceeds 60 lines')
-    return {'packages':len(selected),'graph_nodes':len(P),'generated_dependencies':generated_dependencies(mixin_packages)}
+    return {'packages':len(selected),'graph_nodes':len(P),'framework_modules':framework,'generated_dependencies':generated_dependencies(mixin_packages)}
 
 def compare_series(new,old,ceiling,label,minimum=9):
     finite_samples(new,minimum);finite_samples(old,minimum)

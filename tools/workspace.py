@@ -1,6 +1,6 @@
 """Repos and workspaces for the Flint repo split (plan section 7; ADR-023, platform modules).
 
-Every flint:* package belongs to one repo (the `repo` field of policy/packages.json and policy/boot.json).
+Every flint:* package belongs to one repo (the `repo` field of policy/packages.json, policy/boot.json and policy/framework.json).
 policy/repos.json says which repos each repo may depend on, so dependencies point only from portfolio repos to
 boot, framework and flint, never back.
 
@@ -30,7 +30,7 @@ def repo_policy(root=ROOT):
 
 
 def package_repos(root=ROOT):
-    """Every package, Boot library and starter, by name: (repo, home-relative directory)."""
+    """Every package, Boot library, starter and framework module, by name: (repo, home-relative directory)."""
     root = Path(root)
     found = {}
     for name, meta in _load(root / 'policy' / 'packages.json')['packages'].items():
@@ -41,6 +41,10 @@ def package_repos(root=ROOT):
         for group in ('libraries', 'starters'):
             for name, meta in policy.get(group, {}).items():
                 found[name] = (meta.get('repo', 'boot'), meta['directory'])
+    framework = root / 'policy' / 'framework.json'
+    if framework.is_file():
+        for name, meta in _load(framework)['modules'].items():
+            found[name] = (meta.get('repo', 'framework'), meta['directory'])
     return found
 
 
@@ -54,6 +58,10 @@ def dependencies(root=ROOT):
         for group in ('libraries', 'starters'):
             for name, meta in policy.get(group, {}).items():
                 edges[name] = list(meta['dependencies'])
+    framework = root / 'policy' / 'framework.json'
+    if framework.is_file():
+        for name, meta in _load(framework)['modules'].items():
+            edges[name] = list(meta['dependencies'])
     return edges
 
 

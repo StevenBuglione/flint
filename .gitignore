@@ -19,6 +19,8 @@ __pycache__/
 /starters/*/flint-*-test-unittest
 /boot/*/flint-*-test-unittest
 /boot/*/libflint_*.a
+/framework/*/flint-*-test-unittest
+/framework/*/libflint_*.a
 *.pdb
 *.ilk
 *.exp

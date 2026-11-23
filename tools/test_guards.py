@@ -12,6 +12,67 @@ import module_budgets
 from d_source import tokens, imported_modules, module_default
 
 
+class FrameworkLayerTests(unittest.TestCase):
+    """ADR-030: Spring-layer modules under framework/ keep the package rules and the EPL-2.0 boundary."""
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.original = gates.ROOT
+        self.root = Path(self.temporary.name)
+        (self.root / 'policy').mkdir()
+        modules = {'api-a': {'directory': 'framework/api-a', 'module': 'flint.apia', 'repo': 'framework',
+                             'licence': 'Apache-2.0', 'dependencies': ['arena']},
+                   'api-e': {'directory': 'framework/api-e', 'module': 'flint.apie', 'repo': 'framework',
+                             'licence': 'EPL-2.0', 'dependencies': []}}
+        (self.root / 'policy' / 'framework.json').write_text(json.dumps({'modules': modules}), encoding='utf-8')
+        (self.root / 'dub.sdl').write_text('subPackage "framework/api-a"\nsubPackage "framework/api-e"\n', encoding='utf-8')
+        for name, meta in modules.items():
+            base = self.root / meta['directory']
+            (base / 'source').mkdir(parents=True)
+            deps = ''.join('dependency "flint:' + d + '" version="*"\n' for d in meta['dependencies'])
+            (base / 'dub.sdl').write_text('name "' + name + '"\nlicense "' + meta['licence'] + '"\n' + deps, encoding='utf-8')
+        (self.root / 'framework' / 'api-e' / 'LICENSE').write_text('EPL-2.0', encoding='utf-8')
+        gates.ROOT = self.root
+    def tearDown(self):
+        gates.ROOT = self.original
+        self.temporary.cleanup()
+    def source(self, name, module, body):
+        path = self.root / 'framework' / name / 'source' / (module.replace('.', '/') + '.d')
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text('module ' + module + ';\n' + body, encoding='utf-8')
+    def test_conforming_modules_pass(self):
+        self.source('api-a', 'flint.apia', 'import flint.arena : Buffer;\n@safe:\nstruct A {}\n')
+        self.source('api-e', 'flint.apie', '// SPDX-License-Identifier: EPL-2.0\n@safe:\nstruct E {}\n')
+        self.assertEqual(gates.framework_layers(), 2)
+    def test_epl_source_outside_epl_module_rejected(self):
+        self.source('api-a', 'flint.apia', '// SPDX-License-Identifier: EPL-2.0\n@safe:\n')
+        with self.assertRaisesRegex(ValueError, 'EPL-2.0 sources'):
+            gates.framework_layers()
+    def test_epl_module_without_licence_file_rejected(self):
+        (self.root / 'framework' / 'api-e' / 'LICENSE').unlink()
+        with self.assertRaisesRegex(ValueError, 'own LICENSE'):
+            gates.framework_layers()
+    def test_api_layer_stays_safe(self):
+        self.source('api-a', 'flint.apia', '@safe:\n// SAFETY: no\n@trusted void f() {}\n')
+        with self.assertRaisesRegex(ValueError, 'stays @safe'):
+            gates.framework_layers()
+    def test_undeclared_and_private_imports_rejected(self):
+        for body, message in [('import flint.apie;\n@safe:\n', 'undeclared import'),
+                              ('import flint.conc;\n@safe:\n', 'undeclared import'),
+                              ('import flint.arena.sys.memory;\n@safe:\n', 'private boundary')]:
+            with self.subTest(body=body):
+                self.source('api-a', 'flint.apia', body)
+                with self.assertRaisesRegex(ValueError, message):
+                    gates.framework_layers()
+    def test_thread_local_state_rejected(self):
+        self.source('api-a', 'flint.apia', '@safe:\nprivate string[string] mdc;\n')
+        with self.assertRaisesRegex(ValueError, 'thread-local mutable'):
+            gates.framework_layers()
+    def test_dependency_and_licence_must_match_policy(self):
+        (self.root / 'framework' / 'api-a' / 'dub.sdl').write_text('name "api-a"\nlicense "MIT"\ndependency "flint:arena" version="*"\n', encoding='utf-8')
+        with self.assertRaisesRegex(ValueError, 'license differs'):
+            gates.framework_layers()
+
+
 class SourcePolicyTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
