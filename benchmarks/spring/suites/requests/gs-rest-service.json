@@ -1,0 +1,295 @@
+{
+ "schema": "flint.spring-requests/1",
+ "app": "gs-rest-service",
+ "generated_by": "tools/spring_requests.py from benchmarks/spring/suites/gs_rest_service.py",
+ "requests": [
+  {
+   "name": "default name",
+   "method": "GET",
+   "path": "/greeting",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "name parameter",
+   "method": "GET",
+   "path": "/greeting?name=User",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "percent-encoded UTF-8 name",
+   "method": "GET",
+   "path": "/greeting?name=%C3%A9t%C3%A9",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "name with spaces and plus",
+   "method": "GET",
+   "path": "/greeting?name=Jane+Q%20Public",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "empty name takes the default",
+   "method": "GET",
+   "path": "/greeting?name=",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "repeated name parameter joins with a comma",
+   "method": "GET",
+   "path": "/greeting?name=a&name=b",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "JSON escaping",
+   "method": "GET",
+   "path": "/greeting?name=%22quoted%22%5Cslash%3C%3E",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "unknown parameter is ignored",
+   "method": "GET",
+   "path": "/greeting?other=1",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "Accept application/json",
+   "method": "GET",
+   "path": "/greeting",
+   "headers": [
+    [
+     "Accept",
+     "application/json"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "Accept application/xml is not acceptable",
+   "method": "GET",
+   "path": "/greeting",
+   "headers": [
+    [
+     "Accept",
+     "application/xml"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "HEAD reaches the handler",
+   "method": "HEAD",
+   "path": "/greeting",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "OPTIONS lists the allowed methods",
+   "method": "OPTIONS",
+   "path": "/greeting",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "POST is not allowed",
+   "method": "POST",
+   "path": "/greeting",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "DELETE is not allowed",
+   "method": "DELETE",
+   "path": "/greeting",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "unknown path is a JSON 404",
+   "method": "GET",
+   "path": "/nope",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "trailing slash does not match",
+   "method": "GET",
+   "path": "/greeting/",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "unknown path for a browser is the Whitelabel page",
+   "method": "GET",
+   "path": "/nope",
+   "headers": [
+    [
+     "Accept",
+     "text/html"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "counter after the errors",
+   "method": "GET",
+   "path": "/greeting?name=again",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  }
+ ]
+}

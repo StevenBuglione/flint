@@ -1,0 +1,1951 @@
+{
+ "schema": "flint.spring-requests/1",
+ "app": "petclinic-rest",
+ "generated_by": "tools/spring_requests.py from benchmarks/spring/suites/petclinic_rest.py",
+ "requests": [
+  {
+   "name": "root redirects to the Swagger UI",
+   "method": "GET",
+   "path": "/petclinic/",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "actuator links",
+   "method": "GET",
+   "path": "/petclinic/actuator",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "actuator health",
+   "method": "GET",
+   "path": "/petclinic/actuator/health",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "actuator liveness group",
+   "method": "GET",
+   "path": "/petclinic/actuator/health/liveness",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "actuator readiness group",
+   "method": "GET",
+   "path": "/petclinic/actuator/health/readiness",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "actuator endpoint that is not exposed",
+   "method": "GET",
+   "path": "/petclinic/actuator/info",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "actuator health with an explicit Accept",
+   "method": "GET",
+   "path": "/petclinic/actuator/health",
+   "headers": [
+    [
+     "Accept",
+     "application/json"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "list owners",
+   "method": "GET",
+   "path": "/petclinic/api/owners",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "owners by last name",
+   "method": "GET",
+   "path": "/petclinic/api/owners?lastName=Davis",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "owners by last name prefix",
+   "method": "GET",
+   "path": "/petclinic/api/owners?lastName=Da",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "owners by an unknown last name",
+   "method": "GET",
+   "path": "/petclinic/api/owners?lastName=Nobody",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "owner with pets and visits",
+   "method": "GET",
+   "path": "/petclinic/api/owners/6",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "unknown owner",
+   "method": "GET",
+   "path": "/petclinic/api/owners/999",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "owner id that is not a number",
+   "method": "GET",
+   "path": "/petclinic/api/owners/abc",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "owner pet",
+   "method": "GET",
+   "path": "/petclinic/api/owners/6/pets/7",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "pet of another owner",
+   "method": "GET",
+   "path": "/petclinic/api/owners/1/pets/7",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "list pets",
+   "method": "GET",
+   "path": "/petclinic/api/pets",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "pet",
+   "method": "GET",
+   "path": "/petclinic/api/pets/8",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "unknown pet",
+   "method": "GET",
+   "path": "/petclinic/api/pets/999",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "list visits",
+   "method": "GET",
+   "path": "/petclinic/api/visits",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "visit",
+   "method": "GET",
+   "path": "/petclinic/api/visits/2",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "unknown visit",
+   "method": "GET",
+   "path": "/petclinic/api/visits/999",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "list pet types",
+   "method": "GET",
+   "path": "/petclinic/api/pettypes",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "pet type",
+   "method": "GET",
+   "path": "/petclinic/api/pettypes/3",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "unknown pet type",
+   "method": "GET",
+   "path": "/petclinic/api/pettypes/999",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "list specialties",
+   "method": "GET",
+   "path": "/petclinic/api/specialties",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "specialty",
+   "method": "GET",
+   "path": "/petclinic/api/specialties/2",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "unknown specialty",
+   "method": "GET",
+   "path": "/petclinic/api/specialties/999",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "list vets",
+   "method": "GET",
+   "path": "/petclinic/api/vets",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "vet with specialties",
+   "method": "GET",
+   "path": "/petclinic/api/vets/3",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "unknown vet",
+   "method": "GET",
+   "path": "/petclinic/api/vets/999",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "v2 owners default page",
+   "method": "GET",
+   "path": "/petclinic/api/v2/owners",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "v2 owners page and size",
+   "method": "GET",
+   "path": "/petclinic/api/v2/owners?page=1&size=3",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "v2 owners past the end",
+   "method": "GET",
+   "path": "/petclinic/api/v2/owners?page=9&size=5",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "v2 owners by last name",
+   "method": "GET",
+   "path": "/petclinic/api/v2/owners?lastName=Davis&size=1",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "v2 pets page",
+   "method": "GET",
+   "path": "/petclinic/api/v2/pets?page=2&size=4",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "v2 size below the minimum",
+   "method": "GET",
+   "path": "/petclinic/api/v2/pets?size=0",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "create owner",
+   "method": "POST",
+   "path": "/petclinic/api/owners",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"0123456789\"}"
+  },
+  {
+   "name": "created owner reads back",
+   "method": "GET",
+   "path": "/petclinic/api/owners/11",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "create owner with UTF-8 names",
+   "method": "POST",
+   "path": "/petclinic/api/owners",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"firstName\":\"Zo\\u00eb\",\"lastName\":\"O'Brien-N\\u00fa\\u00f1ez\",\"address\":\"12 St James Sq.\",\"city\":\"S\\u00e3o Paulo\",\"telephone\":\"0123456789\"}"
+  },
+  {
+   "name": "create owner: telephone with letters",
+   "method": "POST",
+   "path": "/petclinic/api/owners",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}"
+  },
+  {
+   "name": "create owner: blank city",
+   "method": "POST",
+   "path": "/petclinic/api/owners",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"   \",\"telephone\":\"0123456789\"}"
+  },
+  {
+   "name": "create owner: missing first name",
+   "method": "POST",
+   "path": "/petclinic/api/owners",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"0123456789\"}"
+  },
+  {
+   "name": "create owner: first name with digits",
+   "method": "POST",
+   "path": "/petclinic/api/owners",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"firstName\":\"Ada2\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"0123456789\"}"
+  },
+  {
+   "name": "create owner: malformed JSON",
+   "method": "POST",
+   "path": "/petclinic/api/owners",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"firstName\": \"Ada\","
+  },
+  {
+   "name": "create owner: wrong content type",
+   "method": "POST",
+   "path": "/petclinic/api/owners",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/x-www-form-urlencoded"
+    ]
+   ],
+   "body": "firstName=Ada"
+  },
+  {
+   "name": "update owner",
+   "method": "PUT",
+   "path": "/petclinic/api/owners/11",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"Marylebone\",\"telephone\":\"0987654321\"}"
+  },
+  {
+   "name": "updated owner reads back",
+   "method": "GET",
+   "path": "/petclinic/api/owners/11",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "update unknown owner",
+   "method": "PUT",
+   "path": "/petclinic/api/owners/999",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"0123456789\"}"
+  },
+  {
+   "name": "update owner: last name with four parts",
+   "method": "PUT",
+   "path": "/petclinic/api/owners/11",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"firstName\":\"Ada\",\"lastName\":\"Van Der Berg Smith\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"0123456789\"}"
+  },
+  {
+   "name": "add pet to owner",
+   "method": "POST",
+   "path": "/petclinic/api/owners/11/pets",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"name\":\"Babbage\",\"birthDate\":\"2020-02-02\",\"type\":{\"id\":2,\"name\":\"dog\"}}"
+  },
+  {
+   "name": "added pet reads back through the owner",
+   "method": "GET",
+   "path": "/petclinic/api/owners/11/pets/14",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "add pet to unknown owner",
+   "method": "POST",
+   "path": "/petclinic/api/owners/999/pets",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"name\":\"Babbage\",\"birthDate\":\"2020-02-02\",\"type\":{\"id\":2,\"name\":\"dog\"}}"
+  },
+  {
+   "name": "add pet: birth date in the future",
+   "method": "POST",
+   "path": "/petclinic/api/owners/11/pets",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"name\":\"Babbage\",\"birthDate\":\"2999-01-01\",\"type\":{\"id\":2,\"name\":\"dog\"}}"
+  },
+  {
+   "name": "add pet: birth date older than 50 years",
+   "method": "POST",
+   "path": "/petclinic/api/owners/11/pets",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"name\":\"Babbage\",\"birthDate\":\"1900-01-01\",\"type\":{\"id\":2,\"name\":\"dog\"}}"
+  },
+  {
+   "name": "add pet: blank name",
+   "method": "POST",
+   "path": "/petclinic/api/owners/11/pets",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"name\":\" \",\"birthDate\":\"2020-02-02\",\"type\":{\"id\":2,\"name\":\"dog\"}}"
+  },
+  {
+   "name": "add pet: unknown pet type",
+   "method": "POST",
+   "path": "/petclinic/api/owners/11/pets",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"name\":\"Babbage\",\"birthDate\":\"2020-02-02\",\"type\":{\"id\":999,\"name\":\"dragon\"}}"
+  },
+  {
+   "name": "update owner pet",
+   "method": "PUT",
+   "path": "/petclinic/api/owners/11/pets/14",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"name\":\"Analytical\",\"birthDate\":\"2020-02-02\",\"type\":{\"id\":1,\"name\":\"cat\"}}"
+  },
+  {
+   "name": "update pet of unknown owner",
+   "method": "PUT",
+   "path": "/petclinic/api/owners/999/pets/14",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"name\":\"Babbage\",\"birthDate\":\"2020-02-02\",\"type\":{\"id\":2,\"name\":\"dog\"}}"
+  },
+  {
+   "name": "add visit through the owner",
+   "method": "POST",
+   "path": "/petclinic/api/owners/11/pets/14/visits",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"date\":\"2026-01-15\",\"description\":\"annual check-up\"}"
+  },
+  {
+   "name": "owner with the new pet and visit",
+   "method": "GET",
+   "path": "/petclinic/api/owners/11",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "update pet",
+   "method": "PUT",
+   "path": "/petclinic/api/pets/14",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"id\":14,\"name\":\"Engine\",\"birthDate\":\"2021-03-03\",\"type\":{\"id\":5,\"name\":\"bird\"},\"visits\":[]}"
+  },
+  {
+   "name": "updated pet reads back",
+   "method": "GET",
+   "path": "/petclinic/api/pets/14",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "update unknown pet",
+   "method": "PUT",
+   "path": "/petclinic/api/pets/999",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"id\":999,\"name\":\"Ghost\",\"birthDate\":\"2021-03-03\",\"type\":{\"id\":5,\"name\":\"bird\"},\"visits\":[]}"
+  },
+  {
+   "name": "create visit",
+   "method": "POST",
+   "path": "/petclinic/api/visits",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"date\":\"2026-01-15\",\"description\":\"first visit for Leo\",\"petId\":1}"
+  },
+  {
+   "name": "create visit: whitespace description",
+   "method": "POST",
+   "path": "/petclinic/api/visits",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"date\":\"2026-01-15\",\"description\":\" \",\"petId\":1}"
+  },
+  {
+   "name": "create visit for an unknown pet",
+   "method": "POST",
+   "path": "/petclinic/api/visits",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"date\":\"2026-01-15\",\"description\":\"annual check-up\",\"petId\":999}"
+  },
+  {
+   "name": "update visit",
+   "method": "PUT",
+   "path": "/petclinic/api/visits/6",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"date\":\"2026-02-01\",\"description\":\"follow-up\"}"
+  },
+  {
+   "name": "updated visit reads back",
+   "method": "GET",
+   "path": "/petclinic/api/visits/6",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "update unknown visit",
+   "method": "PUT",
+   "path": "/petclinic/api/visits/999",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"date\":\"2026-02-01\",\"description\":\"x\"}"
+  },
+  {
+   "name": "delete visit",
+   "method": "DELETE",
+   "path": "/petclinic/api/visits/6",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "delete unknown visit",
+   "method": "DELETE",
+   "path": "/petclinic/api/visits/6",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "create pet type",
+   "method": "POST",
+   "path": "/petclinic/api/pettypes",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"name\":\"ferret\"}"
+  },
+  {
+   "name": "create pet type: name starting with a digit",
+   "method": "POST",
+   "path": "/petclinic/api/pettypes",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"name\":\"9cats\"}"
+  },
+  {
+   "name": "update pet type without an id",
+   "method": "PUT",
+   "path": "/petclinic/api/pettypes/7",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"name\":\"weasel\"}"
+  },
+  {
+   "name": "update pet type",
+   "method": "PUT",
+   "path": "/petclinic/api/pettypes/7",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"id\":7,\"name\":\"weasel\"}"
+  },
+  {
+   "name": "updated pet type reads back",
+   "method": "GET",
+   "path": "/petclinic/api/pettypes/7",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "update unknown pet type",
+   "method": "PUT",
+   "path": "/petclinic/api/pettypes/999",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"id\":999,\"name\":\"weasel\"}"
+  },
+  {
+   "name": "delete pet type",
+   "method": "DELETE",
+   "path": "/petclinic/api/pettypes/7",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "delete pet type in use deletes its pets",
+   "method": "DELETE",
+   "path": "/petclinic/api/pettypes/6",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "delete unknown pet type",
+   "method": "DELETE",
+   "path": "/petclinic/api/pettypes/7",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "create specialty",
+   "method": "POST",
+   "path": "/petclinic/api/specialties",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"name\":\"oncology\"}"
+  },
+  {
+   "name": "create specialty: name with digits",
+   "method": "POST",
+   "path": "/petclinic/api/specialties",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"name\":\"9lives\"}"
+  },
+  {
+   "name": "update specialty",
+   "method": "PUT",
+   "path": "/petclinic/api/specialties/4",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"name\":\"cardiology\"}"
+  },
+  {
+   "name": "updated specialty reads back",
+   "method": "GET",
+   "path": "/petclinic/api/specialties/4",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "update unknown specialty",
+   "method": "PUT",
+   "path": "/petclinic/api/specialties/999",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"name\":\"cardiology\"}"
+  },
+  {
+   "name": "create vet with a specialty",
+   "method": "POST",
+   "path": "/petclinic/api/vets",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"firstName\":\"Grace\",\"lastName\":\"Hopper\",\"specialties\":[{\"id\":4,\"name\":\"cardiology\"}]}"
+  },
+  {
+   "name": "create vet: last name too long",
+   "method": "POST",
+   "path": "/petclinic/api/vets",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"firstName\":\"Grace\",\"lastName\":\"HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH\",\"specialties\":[]}"
+  },
+  {
+   "name": "update vet",
+   "method": "PUT",
+   "path": "/petclinic/api/vets/7",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"firstName\":\"Grace\",\"lastName\":\"Brewster\",\"specialties\":[{\"id\":1,\"name\":\"radiology\"}]}"
+  },
+  {
+   "name": "updated vet reads back",
+   "method": "GET",
+   "path": "/petclinic/api/vets/7",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "update unknown vet",
+   "method": "PUT",
+   "path": "/petclinic/api/vets/999",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"firstName\":\"A\",\"lastName\":\"B\",\"specialties\":[]}"
+  },
+  {
+   "name": "delete vet",
+   "method": "DELETE",
+   "path": "/petclinic/api/vets/7",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "delete unknown vet",
+   "method": "DELETE",
+   "path": "/petclinic/api/vets/7",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "delete specialty",
+   "method": "DELETE",
+   "path": "/petclinic/api/specialties/4",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "delete unknown specialty",
+   "method": "DELETE",
+   "path": "/petclinic/api/specialties/4",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "create user",
+   "method": "POST",
+   "path": "/petclinic/api/users",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"username\":\"clerk\",\"password\":\"secret\",\"enabled\":true,\"roles\":[{\"name\":\"ROLE_OWNER_ADMIN\"}]}"
+  },
+  {
+   "name": "create user: role without the ROLE_ prefix",
+   "method": "POST",
+   "path": "/petclinic/api/users",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"username\":\"clerk3\",\"password\":\"secret\",\"enabled\":true,\"roles\":[{\"name\":\"OWNER_ADMIN\"}]}"
+  },
+  {
+   "name": "create user: missing roles",
+   "method": "POST",
+   "path": "/petclinic/api/users",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{\"username\":\"clerk2\",\"password\":\"secret\",\"enabled\":true}"
+  },
+  {
+   "name": "delete pet",
+   "method": "DELETE",
+   "path": "/petclinic/api/pets/14",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "delete unknown pet",
+   "method": "DELETE",
+   "path": "/petclinic/api/pets/14",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "delete owner",
+   "method": "DELETE",
+   "path": "/petclinic/api/owners/12",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "delete unknown owner",
+   "method": "DELETE",
+   "path": "/petclinic/api/owners/12",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "owners after the changes",
+   "method": "GET",
+   "path": "/petclinic/api/owners",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "unknown API path",
+   "method": "GET",
+   "path": "/petclinic/api/nothing-here",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "wrong method",
+   "method": "PATCH",
+   "path": "/petclinic/api/owners/1",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Content-Type",
+     "application/json"
+    ]
+   ],
+   "body": "{}"
+  },
+  {
+   "name": "path outside the context path",
+   "method": "GET",
+   "path": "/api/owners",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "CORS simple request",
+   "method": "GET",
+   "path": "/petclinic/api/pettypes/2",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Origin",
+     "http://client.example"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "CORS preflight",
+   "method": "OPTIONS",
+   "path": "/petclinic/api/owners",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Origin",
+     "http://client.example"
+    ],
+    [
+     "Access-Control-Request-Method",
+     "POST"
+    ],
+    [
+     "Access-Control-Request-Headers",
+     "content-type"
+    ]
+   ],
+   "body": null
+  },
+  {
+   "name": "CORS preflight for a method that is not mapped",
+   "method": "OPTIONS",
+   "path": "/petclinic/api/owners",
+   "headers": [
+    [
+     "Accept",
+     "*/*"
+    ],
+    [
+     "User-Agent",
+     "flint-spring-suite/1"
+    ],
+    [
+     "Origin",
+     "http://client.example"
+    ],
+    [
+     "Access-Control-Request-Method",
+     "PATCH"
+    ]
+   ],
+   "body": null
+  }
+ ]
+}
