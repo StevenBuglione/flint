@@ -5,6 +5,7 @@ from pathlib import Path
 from d_source import tokens,imported_modules,declared_module,module_default,has_string_mixin,compiler_dependency_edges,module_thread_locals
 from perf_stats import finite_samples,median_ratio_interval
 from workspace import Workspace,edge_violations,package_repos
+import module_budgets
 ROOT=Path(__file__).resolve().parents[1]
 P=json.loads((ROOT/'policy/packages.json').read_text(encoding='utf-8'))['packages']
 B=json.loads((ROOT/'policy/budgets.json').read_text(encoding='utf-8'))
@@ -140,6 +141,7 @@ def structural(selected):
     root_sdl=(ROOT/'dub.sdl').read_text(encoding='utf-8')
     require(set(re.findall(r'subPackage\s+"packages/([\w-]+)"',root_sdl))==set(P),'root subpackage list differs')
     boot_layers()
+    module_budgets.load(B,P,ROOT)
     mixin_packages=set()
     for n in selected:
         meta=P[n];pkg=WORKSPACE.package_dir(n,ROOT) if WORKSPACE.file else ROOT/'packages'/n;sdl=(pkg/'dub.sdl').read_text(encoding='utf-8')
@@ -212,6 +214,7 @@ def measured(current,baseline=None):
             if y is not None:require(x[k]<=y[k]*ratio,name+': '+k+' regression')
         require(type(x['incremental_linked_bytes']) is int and 0<=x['incremental_linked_bytes']<=meta['budget']['incremental_linked_bytes'],name+': incremental size ceiling')
         if y is not None:require(x['incremental_linked_bytes']<=y['incremental_linked_bytes']*B['regression']['binary_ratio_max'],name+': incremental size regression')
+    module_budgets.check_measured(module_budgets.load(B,P,ROOT),current,baseline,B['regression']['binary_ratio_max'])
     for app,caps in B['benchmark_apps'].items():
         x=current['apps'][app];y=baseline['apps'][app] if baseline is not None else None
         for k,cap in caps.items():
@@ -267,7 +270,7 @@ def verify_evidence_artifacts(evidence,directory):
     def payload(name):return json.loads((directory/evidence['receipts'][name]['artifact']).read_text(encoding='utf-8'))
     builds=payload('compile')
     require(builds==payload('size'),'compile and size evidence came from different builds')
-    for key in ['packages','apps']:require(evidence[key]==builds[key],key+': summary differs from measured source artifact')
+    for key in ['packages','apps','modules']:require(evidence[key]==builds[key],key+': summary differs from measured source artifact')
     require(evidence['go']['apps']==builds['go']['apps'],'Go build summary differs from measured source artifact')
     runtime=payload('runtime')
     require(evidence['rest']==runtime['http']['rest'] and evidence['go']['rest']==runtime['http']['go']['rest'],

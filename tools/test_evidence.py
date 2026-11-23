@@ -122,13 +122,13 @@ class ArtifactTests(unittest.TestCase):
             evidence.validate_capture(capture, self.root, self.receipt['commit'], 'micro')
 
     def test_displayed_metrics_must_match_retained_payloads(self):
-        document = {'mode': 'production', 'commit': 'a' * 40, 'packages': {'fixture': 1},
+        document = {'mode': 'production', 'commit': 'a' * 40, 'packages': {'fixture': 1}, 'modules': {},
                     'apps': {}, 'go': {'apps': {}, 'rest': {'p99_ms': [2]}},
                     'rest': {'p99_ms': [1]}, 'micro': {'fixture': [3]}, 'gc': {'fixture': 0},
                     'platforms': {'fixture': True}, 'receipts': {}}
         payloads = {
-            'compile': {'packages': document['packages'], 'apps': {}, 'go': {'apps': {}}},
-            'size': {'packages': document['packages'], 'apps': {}, 'go': {'apps': {}}},
+            'compile': {'packages': document['packages'], 'modules': {}, 'apps': {}, 'go': {'apps': {}}},
+            'size': {'packages': document['packages'], 'modules': {}, 'apps': {}, 'go': {'apps': {}}},
             'runtime': {'http': {'rest': document['rest'], 'go': {'rest': document['go']['rest']}}, 'micro': document['micro']},
             'hot_gc': {'gc': document['gc']}, 'cross_platform': {'platforms': document['platforms']}}
         for name, payload in payloads.items():

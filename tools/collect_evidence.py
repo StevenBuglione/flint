@@ -324,16 +324,24 @@ def validate_builds(builds, directory, commit):
                 re.fullmatch(r'[0-9a-f]{64}', row['sha256']), 'invalid linked binary observation')
         sizes[identity] = row
         artifacts.append((artifact_file(directory, row['log'], row['log_sha256']), 'size-trial-' + str(index)))
-    expected_sizes = {(name, profile, variant) for name in packages for profile in ['O3', 'Oz'] for variant in ['fixture', 'baseline']}
+    from module_budgets import load as module_budgets
+    modules = module_budgets(read(ROOT / 'policy/budgets.json'), packages, ROOT)
+    require(set(builds.get('modules', {})) == set(modules), 'module size measurements differ from the module budgets')
+    for name, row in builds['modules'].items():
+        deltas = [row['size_detail'][profile]['fixture'] - row['size_detail'][profile]['baseline'] for profile in ['O3', 'Oz']]
+        require(row['incremental_linked_bytes'] == max(0, *deltas), 'module marginal size differs from observed binaries')
+    measured = {**packages, **modules}
+    expected_sizes = {(name, profile, variant) for name in measured for profile in ['O3', 'Oz'] for variant in ['fixture', 'baseline']}
     expected_sizes |= {(name, profile, 'app') for name in ['bench-cli', 'bench-rest'] for profile in ['O3', 'Oz']}
     require(set(sizes) == expected_sizes, 'all native feature/baseline and app size observations required')
     for name, profile, variant in expected_sizes:
-        expected = (builds['packages'][name]['size_detail'][profile][variant] if name in packages
+        group = 'packages' if name in packages else 'modules' if name in modules else None
+        expected = (builds[group][name]['size_detail'][profile][variant] if group
                     else builds['apps'][name][profile]['binary_bytes'])
         require(expected == sizes[(name, profile, variant)]['binary_bytes'], 'size aggregate differs from stripped binary observation')
-        if name in packages:
-            require(builds['packages'][name]['size_detail'][profile][variant + '_sha256'] == sizes[(name, profile, variant)]['sha256'],
-                    'package binary identity differs from stripped observation')
+        if group:
+            require(builds[group][name]['size_detail'][profile][variant + '_sha256'] == sizes[(name, profile, variant)]['sha256'],
+                    'package or module binary identity differs from stripped observation')
     native = builds.get('native_inputs')
     if native is not None:
         artifacts.append((artifact_file(ROOT, native['receipt'], native['sha256']), 'native-install'))
@@ -469,7 +477,7 @@ def collect(args):
                        'native_features': (builds.get('native_inputs') or {}).get('features', []),
                        'native_profile': (builds.get('native_inputs') or {}).get('profile_sha256')})}
     output = {'schema': 1, 'mode': 'production', 'commit': commit, 'environment': environment,
-              'packages': builds['packages'], 'apps': builds['apps'], 'rest': http['rest'],
+              'packages': builds['packages'], 'modules': builds['modules'], 'apps': builds['apps'], 'rest': http['rest'],
               'go': {'apps': builds['go']['apps'], 'rest': http['go']['rest']},
               'micro': micro, 'gc': gc, 'platforms': platforms, 'receipts': receipts,
               'provenance': {'hardware': hardware_info, 'toolchain': toolchain,

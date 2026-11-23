@@ -1,0 +1,98 @@
+"""Per-module linked-bytes budgets (policy/budgets.json "module_linked_bytes", Phase 0 binary-size levers).
+
+ADR-019 budgets each of the 37 packages. The Spring port adds framework modules by the thousand, so each module
+can also carry its own budget for the bytes it adds to a linked executable:
+
+    "module_linked_bytes": {
+      "required_packages": ["web"],
+      "modules": {
+        "flint.web.bind.annotation": {
+          "fixture": "packages/web/bench/modules/bind-annotation",
+          "baseline": "packages/web/bench/modules/baseline",
+          "linked_bytes": 4096
+        }
+      }
+    }
+
+The fixture is a minimal executable that uses the module and the baseline the same executable without it.
+tools/measure_builds.py builds both with the release (O3) and size (Oz) profiles and records the larger
+stripped-size difference as the module's `incremental_linked_bytes`, exactly as for packages. tools/gates.py
+fails a module above its budget or one that grew past the regression ratio against the base commit. Every
+module of a package in `required_packages` must have a budget, so a package opts in once and every module
+it adds later needs one.
+"""
+from __future__ import annotations
+
+from pathlib import Path
+import re
+
+KEY = 'module_linked_bytes'
+MODULE = re.compile(r'flint(\.[a-z_][a-z0-9_]*)+')
+
+
+def require(value, message):
+    if not value:
+        raise ValueError(message)
+
+
+def owner(module, packages):
+    matches = [n for n, m in packages.items() if module == m['module'] or module.startswith(m['module'] + '.')]
+    require(len(matches) <= 1, 'ambiguous module owner ' + module)
+    return matches[0] if matches else None
+
+
+def package_modules(root, package):
+    """The module names of a package's sources."""
+    base = Path(root) / 'packages' / package / 'source'
+    names = set()
+    for path in sorted(base.rglob('*.d')) if base.is_dir() else []:
+        parts = list(path.relative_to(base).with_suffix('').parts)
+        if parts[-1] == 'package':
+            parts.pop()
+        names.add('.'.join(parts))
+    return names
+
+
+def load(budgets, packages, root):
+    """The validated module budgets, {module: entry}; any malformed or missing budget fails."""
+    policy = budgets.get(KEY)
+    require(isinstance(policy, dict) and set(policy) == {'required_packages', 'modules'},
+            KEY + ' must hold exactly required_packages and modules')
+    required, modules = policy['required_packages'], policy['modules']
+    require(isinstance(required, list) and all(isinstance(n, str) for n in required) and len(set(required)) == len(required),
+            KEY + '.required_packages must be a list of distinct package names')
+    require(isinstance(modules, dict), KEY + '.modules must be an object')
+    for name in required:
+        require(name in packages, KEY + ': unknown required package ' + name)
+    for module, entry in modules.items():
+        where = KEY + '.' + module
+        require(MODULE.fullmatch(module) is not None, where + ': not a Flint module name')
+        require(owner(module, packages) is not None, where + ': no package owns this module')
+        require(isinstance(entry, dict) and set(entry) == {'fixture', 'baseline', 'linked_bytes'},
+                where + ': needs exactly fixture, baseline and linked_bytes')
+        require(type(entry['linked_bytes']) is int and entry['linked_bytes'] > 0, where + ': linked_bytes must be a positive integer')
+        require(entry['fixture'] != entry['baseline'], where + ': fixture and baseline must differ')
+        for key in ('fixture', 'baseline'):
+            directory = Path(root) / entry[key]
+            require(isinstance(entry[key], str) and not Path(entry[key]).is_absolute()
+                    and directory.resolve().is_relative_to(Path(root).resolve()), where + '.' + key + ': must stay inside the repository')
+            require((directory / 'dub.sdl').is_file() and (directory / 'source/app.d').is_file(),
+                    where + '.' + key + ': needs dub.sdl and source/app.d')
+    for name in required:
+        missing = sorted(package_modules(root, name) - set(modules))
+        require(not missing, KEY + ': package ' + name + ' requires a budget for every module; missing ' + ', '.join(missing))
+    return modules
+
+
+def check_measured(modules, current, baseline, ratio):
+    """Fail a measured module above its budget, or above `ratio` times its base-commit size."""
+    measured = current.get('modules')
+    require(isinstance(measured, dict) and set(measured) == set(modules), 'module size measurements differ from the module budgets')
+    for module, entry in modules.items():
+        size = measured[module]['incremental_linked_bytes']
+        require(type(size) is int and 0 <= size <= entry['linked_bytes'], module + ': linked-bytes budget exceeded')
+        # A module the base commit did not budget has nothing to regress against.
+        previous = (baseline or {}).get('modules', {}).get(module)
+        if previous is not None:
+            require(size <= previous['incremental_linked_bytes'] * ratio, module + ': linked-bytes regression')
+

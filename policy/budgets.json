@@ -31,6 +31,10 @@
       "gzip_bytes": 100000
     }
   },
+  "module_linked_bytes": {
+    "required_packages": [],
+    "modules": {}
+  },
   "go_relative": {
     "throughput_ratio_min": 1.01,
     "p99_ratio_max": 0.99,

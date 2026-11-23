@@ -25,6 +25,7 @@ import sys
 import tempfile
 import time
 
+import module_budgets
 import profiles
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -636,7 +637,7 @@ def main(argv=None):
               'producer': 'tools/measure_builds.py', 'command': [sys.executable] + sys.argv,
               'exit_code': 0, 'toolchains': tools, 'manifest_sha256': digest(args.manifest),
               'native_inputs': native_inputs, 'workspace': workspace_commits,
-              'packages': {}, 'apps': {}, 'go': {'apps': {}}, 'trials': [], 'size_trials': []}
+              'packages': {}, 'modules': {}, 'apps': {}, 'go': {'apps': {}}, 'trials': [], 'size_trials': []}
     base_env = os.environ.copy()
     base_env.pop('DFLAGS', None)
     if darwin:
@@ -650,6 +651,11 @@ def main(argv=None):
             for path in sorted((ROOT/fixture[variant]).rglob('*')):
                 if path.is_file() and (path.suffix in ('.d', '.c', '.h') or path.name=='dub.sdl') and '.dub' not in path.parts:
                     workload_files[str(path.relative_to(ROOT))]=workload_digest(ROOT, path, native_inputs)
+    for entry in module_budgets.load(json.loads((ROOT / 'policy/budgets.json').read_text()), packages, ROOT).values():
+        for variant in ['fixture', 'baseline']:
+            for path in sorted((ROOT / entry[variant]).rglob('*')):
+                if path.is_file() and (path.suffix in ('.d', '.c', '.h') or path.name == 'dub.sdl') and '.dub' not in path.parts:
+                    workload_files[str(path.relative_to(ROOT))] = workload_digest(ROOT, path, native_inputs)
     for name,fixture in manifest['apps'].items():
         for path in sorted((ROOT/fixture['fixture']).rglob('*')):
             if path.is_file() and (path.suffix=='.d' or path.name=='dub.sdl') and '.dub' not in path.parts:
@@ -784,10 +790,8 @@ def main(argv=None):
         for name, row in result['apps'].items():
             print(name, 'O3', row['O3']['binary_bytes'], 'Oz', row['Oz']['binary_bytes'])
         return 0
-    for name, fixture in manifest['packages'].items():
-        print('Measuring package', name, flush=True)
-        row = measured_native(name, fixture)
-        row['size_basis'] = fixture['size_basis']
+    def size_delta(name, fixture):
+        """The larger O3/Oz stripped-size difference of a fixture over its baseline, and the sizes."""
         differences = []; sizes = {}
         for profile in ['O3', 'Oz']:
             sizes[profile] = {}
@@ -807,9 +811,19 @@ def main(argv=None):
             difference = sizes[profile]['fixture'] - sizes[profile]['baseline']
             sizes[profile]['signed_delta_bytes'] = difference
             differences.append(difference)
-        row['incremental_linked_bytes'] = max(0, *differences)
-        row['size_detail'] = sizes
+        return max(0, *differences), sizes
+    for name, fixture in manifest['packages'].items():
+        print('Measuring package', name, flush=True)
+        row = measured_native(name, fixture)
+        row['size_basis'] = fixture['size_basis']
+        row['incremental_linked_bytes'], row['size_detail'] = size_delta(name, fixture)
         result['packages'][name] = row
+    # Per-module linked-bytes budgets (policy/budgets.json module_linked_bytes), measured as packages are.
+    for module, entry in module_budgets.load(json.loads((ROOT / 'policy/budgets.json').read_text()),
+                                             packages, ROOT).items():
+        print('Measuring module', module, flush=True)
+        incremental, sizes = size_delta(module, entry)
+        result['modules'][module] = {'incremental_linked_bytes': incremental, 'size_detail': sizes}
     for name in ['bench-cli', 'bench-rest']:
         print('Measuring app', name, flush=True)
         row = measured_native(name, manifest['apps'][name])

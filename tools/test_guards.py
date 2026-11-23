@@ -8,6 +8,7 @@ import shutil
 import tempfile
 import unittest
 import gates
+import module_budgets
 from d_source import tokens, imported_modules, module_default
 
 
@@ -133,7 +134,7 @@ def synthetic_evidence(commit, scale=1.0):
     doc = {'schema': 1, 'commit': commit,
            'environment': {k: 'fixture' for k in ['runner_fingerprint', 'toolchain_fingerprint',
                                                  'dependency_lock_sha256', 'workload_sha256']},
-           'packages': {}, 'apps': {}, 'receipts': {}, 'gc': {'worker_count': 2,
+           'packages': {}, 'modules': {}, 'apps': {}, 'receipts': {}, 'gc': {'worker_count': 2,
            'allocated_bytes_per_worker': [0, 0], 'collection_delta': 0}}
     doc['environment']['runner_label'] = gates.B['runner']
     for name in ['quality', 'safety', 'dag', 'betterc', 'sanitizers', 'cross_platform',
@@ -184,6 +185,62 @@ class EvidencePolicyTests(unittest.TestCase):
         del current['platforms']['linux-aarch64-musl']
         with self.assertRaisesRegex(ValueError, 'cross-platform'):
             gates.measured(current, baseline)
+
+
+class ModuleBudgetTests(unittest.TestCase):
+    """policy/budgets.json module_linked_bytes: per-module linked-bytes budgets."""
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.root = Path(self.temporary.name)
+        for name in ('fixture', 'baseline'):
+            (self.root / 'probe' / name / 'source').mkdir(parents=True)
+            (self.root / 'probe' / name / 'dub.sdl').write_text('name "probe"\n')
+            (self.root / 'probe' / name / 'source/app.d').write_text('void main() {}\n')
+        for module in ('flint.arena', 'flint.arena.pages'):
+            path = self.root / 'packages/arena/source' / (module.replace('.', '/') + '.d')
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text('module ' + module + ';\n')
+    def tearDown(self):
+        self.temporary.cleanup()
+    def policy(self, modules=None, required=()):
+        return {'module_linked_bytes': {'required_packages': list(required), 'modules': modules or {}}}
+    def entry(self, linked=4096):
+        return {'fixture': 'probe/fixture', 'baseline': 'probe/baseline', 'linked_bytes': linked}
+    def test_repository_policy_is_valid(self):
+        module_budgets.load(gates.B, gates.P, gates.ROOT)
+    def test_missing_section_fails(self):
+        with self.assertRaisesRegex(ValueError, 'module_linked_bytes'):
+            module_budgets.load({}, gates.P, self.root)
+    def test_unknown_required_package_fails(self):
+        with self.assertRaisesRegex(ValueError, 'unknown required package'):
+            module_budgets.load(self.policy(required=['nope']), gates.P, self.root)
+    def test_required_package_needs_every_module(self):
+        with self.assertRaisesRegex(ValueError, 'missing flint.arena.pages'):
+            module_budgets.load(self.policy({'flint.arena': self.entry()}, ['arena']), gates.P, self.root)
+        module_budgets.load(self.policy({'flint.arena': self.entry(), 'flint.arena.pages': self.entry()}, ['arena']),
+                            gates.P, self.root)
+    def test_unowned_module_fails(self):
+        with self.assertRaisesRegex(ValueError, 'no package owns'):
+            module_budgets.load(self.policy({'flint.nowhere': self.entry()}), gates.P, self.root)
+    def test_missing_fixture_fails(self):
+        entry = dict(self.entry(), fixture='probe/absent')
+        with self.assertRaisesRegex(ValueError, 'dub.sdl and source/app.d'):
+            module_budgets.load(self.policy({'flint.arena': entry}), gates.P, self.root)
+    def test_nonpositive_budget_fails(self):
+        with self.assertRaisesRegex(ValueError, 'positive integer'):
+            module_budgets.load(self.policy({'flint.arena': self.entry(0)}), gates.P, self.root)
+    def test_measured_budget_and_regression(self):
+        modules = module_budgets.load(self.policy({'flint.arena': self.entry(4096)}), gates.P, self.root)
+        row = lambda size: {'modules': {'flint.arena': {'incremental_linked_bytes': size}}}
+        module_budgets.check_measured(modules, row(4000), None, 1.05)
+        with self.assertRaisesRegex(ValueError, 'budget exceeded'):
+            module_budgets.check_measured(modules, row(5000), None, 1.05)
+        with self.assertRaisesRegex(ValueError, 'regression'):
+            module_budgets.check_measured(modules, row(3000), row(2000), 1.05)
+        # A module new in the candidate has no base measurement to regress against.
+        module_budgets.check_measured(modules, row(3000), {'modules': {}}, 1.05)
+        with self.assertRaisesRegex(ValueError, 'differ from the module budgets'):
+            module_budgets.check_measured(modules, {'modules': {}}, None, 1.05)
 
 
 if __name__ == '__main__':
