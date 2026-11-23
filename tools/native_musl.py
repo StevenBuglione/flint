@@ -56,7 +56,10 @@ def command(args):
         build += ['--library', library]
     root = shlex.quote(str(ROOT))
     script = (f'set -u; apk add --no-cache {PACKAGES} >/dev/null && git config --global --add safe.directory {root} '
-              f'&& {shlex.join(build)}; status=$?; chown -R {os.getuid()}:{os.getgid()} {root}/.native; exit $status')
+              f'&& {shlex.join(build)}; status=$?; '
+              # Everything the container created under the checkout goes back to the caller (.native, and anything
+              # else a tool wrote as root), so the checkout stays removable without root.
+              f'find {root} -xdev -user 0 -exec chown {os.getuid()}:{os.getgid()} {{}} +; exit $status')
     mounts = ['--mount', f'type=bind,source={ROOT},target={ROOT}']
     common = git_common_dir()
     if not common.is_relative_to(ROOT):
@@ -64,7 +67,7 @@ def command(args):
         mounts += ['--mount', f'type=bind,source={common},target={common},readonly']
     # Docker's default seccomp profile denies io_uring_setup, which liburing's tests use.
     return ['docker', 'run', '--rm', '--security-opt', 'seccomp=unconfined', *mounts, '--workdir', str(ROOT),
-            '--env', 'HOME=/tmp', image(), 'sh', '-c', script]
+            '--env', 'HOME=/tmp', '--env', 'PYTHONDONTWRITEBYTECODE=1', image(), 'sh', '-c', script]
 
 
 def main():
