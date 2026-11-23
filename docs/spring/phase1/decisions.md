@@ -83,6 +83,26 @@
     - any platform entry changed in place through a hard link.
 
     The receipt records each cold trial's AOT counts (`aot_extracted_and_shared_per_cold_trial`) and the pruned digest entries. Every gs-builds primary since `7907be4e` (including 2.52 at `2018e5e5`) is optimistic for this reason; the incremental, edit-build and size results are unaffected.
+  - **Update, 17:18–17:21Z (certified, `gs-builds` at `36c29248`, no foreign build in 12 samples).** This is the first fair cold result: platform-only cold trials (`bf57dc9f`), m7-flint-cli's cold-path steps (`804c2b6c`, `dc711c95`), ctime and inode in the digest stat key (`87c13a93`, condition 2) and nothing from FLINT_CACHE in the log (`36c29248`). It is still built with today's flags, with debug info (owner decision `4b27d207` comes with m7's next batch). Every cold trial extracted the project's own model (1) and took 22 platform models from the cache. Median ratios (99% interval):
+    - primary: 3.07 (2.76–3.36), 0.535 s against 0.174 s;
+    - context, primary with the digest log cleared: 3.62 (3.25–3.97);
+    - secondary: 1.10 (1.06–1.12), 3.734 s against 3.381 s;
+    - edit build, dev profile as built (shared objects): **0.447 (0.404–0.487), which passes**: 0.078 s against 0.175 s;
+    - edit build, fully static: 1.87 (1.78–2.04), 0.326 s;
+    - Oz: 0.615, which passes.
+
+    Per-phase medians in ms:
+
+    | Series | total | flint | aot | plan | compile | link |
+    | --- | --- | --- | --- | --- | --- | --- |
+    | edit, shared objects | 63 | 21 | 0 | 0 | 25 | 18 |
+    | edit, static | 312 | 92 | 0 | 22 | 20 | 177 |
+    | cached cold | 520 | 377 | 91 | 0 | 29 | 19 |
+    | cached cold, digest log cleared | 615 | 474 | 89 | 0 | 31 | 21 |
+    | static cold | 460 | 149 | 91 | 22 | 20 | 179 |
+    | scratch | 3,714 | 129 | 88 | 3,265 | – | 230 |
+
+    flint's own phase is 377 ms in the shared-object cold build against 149 ms in the static one, and the project's AOT extraction is about 90 ms. Evidence: `benchmarks/spring/evidence/gs-builds/20261123T171818Z/`.
 
 - 2026-11-23, data-access: `@EnableTransactionManagement` stays in `flint.transaction.annotation` (R1), but `ProxyTransactionManagementConfiguration`, `AbstractTransactionManagementConfiguration` and `TransactionManagementConfigurer` live in the child module `flint.transaction.annotation.configuration`. They build the `TransactionInterceptor`, which reads `@Transactional` from the annotation module, and one module would import itself (circular imports are rejected). The annotation imports the configuration by its qualified name. flint:tx now depends on flint:beans and flint:context, as spring-tx does on spring-context for these classes. Size: flint:tx goes from 5,983 to 6,360 templates and 584,240 to 584,528 bytes; it was already over its budget (2,350 templates, 229,376 bytes), so I raised nothing and reported it to size-levers.
 - 2026-11-23, third-party-apis (item 26's regex finding): Jakarta `@Pattern` needs `java.util.regex` semantics, and `flint.validate`'s automaton is not that engine: 256 NFA states (`[0-9]{1,160}` fails), ASCII literals, `\p{L}` only, no look-around, back-references, reluctant or possessive quantifiers, inline flags or `Pattern.Flag`s. Since `fbe899d5`, such a pattern fails loudly (HV000032, "Flint's run-time pattern engine does not support this java.util.regex pattern yet") instead of rejecting every value. The plan:

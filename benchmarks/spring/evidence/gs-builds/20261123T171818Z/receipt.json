@@ -1,0 +1,175 @@
+{
+  "time": "2026-11-23T17:20:56Z",
+  "outcome": "measured",
+  "evidence": true,
+  "host": "venus",
+  "builds": {
+    "tree": {
+      "commit": "36c2924886ae69297f7ef4039ebf1b08e5da2392",
+      "worktree": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/36c2924886ae"
+    }
+  },
+  "window_before": {
+    "time": "2026-11-23T17:18:31Z",
+    "load_average": [
+      3.52685546875,
+      4.39208984375,
+      3.8564453125
+    ],
+    "running_tasks": 1,
+    "instant": true,
+    "busy_processes": [],
+    "idle_build_processes": 2472,
+    "quiet": true,
+    "problems": []
+  },
+  "window_during": [
+    {
+      "time": "2026-11-23T17:18:42Z",
+      "load_average": [
+        3.27490234375,
+        4.291015625,
+        3.83154296875
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-23T17:18:54Z",
+      "load_average": [
+        4.033203125,
+        4.41455078125,
+        3.8759765625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-23T17:19:05Z",
+      "load_average": [
+        3.56640625,
+        4.30126953125,
+        3.8447265625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-23T17:19:16Z",
+      "load_average": [
+        4.6806640625,
+        4.50732421875,
+        3.916015625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-23T17:19:27Z",
+      "load_average": [
+        4.24658203125,
+        4.4169921875,
+        3.89599609375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-23T17:19:38Z",
+      "load_average": [
+        3.90087890625,
+        4.3369140625,
+        3.87548828125
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-23T17:19:49Z",
+      "load_average": [
+        3.68212890625,
+        4.27587890625,
+        3.8603515625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-23T17:20:00Z",
+      "load_average": [
+        3.42333984375,
+        4.2001953125,
+        3.83984375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-23T17:20:11Z",
+      "load_average": [
+        3.2041015625,
+        4.12744140625,
+        3.8193359375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-23T17:20:23Z",
+      "load_average": [
+        2.9306640625,
+        4.0224609375,
+        3.78955078125
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-23T17:20:34Z",
+      "load_average": [
+        2.861328125,
+        3.9716796875,
+        3.775390625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-23T17:20:45Z",
+      "load_average": [
+        2.80224609375,
+        3.92236328125,
+        3.76123046875
+      ],
+      "busy_processes": []
+    }
+  ],
+  "foreign_activity_during": 0,
+  "window_after": {
+    "time": "2026-11-23T17:20:56Z",
+    "load_average": [
+      2.75927734375,
+      3.875,
+      3.7470703125
+    ],
+    "running_tasks": 0,
+    "instant": false,
+    "busy_processes": [],
+    "idle_build_processes": 2147,
+    "quiet": true,
+    "problems": []
+  },
+  "results_directory": ".flint/measure/results/gs-builds/20261123T171818Z",
+  "summary": {
+    "steps": [
+      {
+        "command": [
+          "/usr/bin/python3",
+          "tools/measure_builds.py",
+          "--spring",
+          "--spring-app",
+          "gs-rest-service",
+          "--no-context",
+          "--output",
+          "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/gs-builds/20261123T171818Z/builds.json"
+        ],
+        "cwd": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/36c2924886ae",
+        "exit_code": 1,
+        "log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/gs-builds/20261123T171818Z/step-0.log",
+        "measured": true
+      }
+    ],
+    "outputs": {
+      "builds.json": "e7af5df49f7cfb0a0aa0768c5a6268c100004655f570d853b7678c9e11949ab9"
+    }
+  }
+}
