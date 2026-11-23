@@ -66,13 +66,17 @@ def setUpModule():
 class SharedPolicyTests(unittest.TestCase):
     def test_measurement_flags_unchanged_by_the_move_to_policy(self):
         import measure_builds
+        # Measurement links as flint builds: RELR packed relocations on a glibc host (ADR-030 section 5).
+        relr = ['-L-z', '-Lpack-relative-relocs'] if profiles.glibc_host() else []
         self.assertEqual(measure_builds.native_profiles(), {
-            'dmd': ['-preview=dip1000', '-debug', '-g', '-boundscheck=on'],
+            'dmd': ['-preview=dip1000', '-debug', '-g', '-boundscheck=on'] + relr,
             'O3': ['-preview=dip1000', '-release', '-boundscheck=safeonly', '-O3', '--flto=thin',
-                   '-link-defaultlib-shared=false'],
+                   '-link-defaultlib-shared=false', '-fno-moduleinfo-localclasses'] + relr,
             'Oz': ['-preview=dip1000', '-release', '-boundscheck=safeonly', '-Oz', '--flto=thin',
-                   '-link-defaultlib-shared=false']})
+                   '-link-defaultlib-shared=false', '-fno-moduleinfo-localclasses'] + relr})
         self.assertEqual(measure_builds.native_profiles('/x/ld.lld')['O3'][-1], '-linker=/x/ld.lld')
+        self.assertEqual(profiles.link_dflags('release', glibc=False), [])
+        self.assertEqual(profiles.link_dflags('sanitize', glibc=True), [])
 
     def test_sanitizer_flags_unchanged_by_the_move_to_policy(self):
         import ci
@@ -269,7 +273,8 @@ class ProjectLifecycleTests(unittest.TestCase):
         self.assertEqual(built['schema'], 'flint.build/1')
         receipt = json.loads((self.project / '.flint/build/dev/demo.receipt.json').read_text())
         self.assertEqual(receipt['schema'], 'flint.receipt/1')
-        self.assertEqual(receipt['profile']['effective_dflags'], profiles.dflags('dev'))
+        # Linker flags reach the compiler as -L flags: on a glibc host, the profile's RELR glibc_lflags.
+        self.assertEqual(receipt['profile']['effective_dflags'], profiles.dflags('dev') + profiles.link_dflags('dev'))
         self.assertEqual(receipt['outputs'][0]['sha256'], install_toolchains.sha256_file(self.project / '.flint/build/dev/demo'))
 
         status, ran = flint_json('run', '--', '--name', 'Ada', cwd=self.project)

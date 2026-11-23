@@ -25,7 +25,9 @@ AARCH64_FILES = {
 
 
 def patched_files(patch):
-    return sorted(re.findall(r'^\+\+\+ b/(\S+)', patch.read_text(), flags=re.M))
+    # A file may have two sections: dmd/glue/package.d has a Flint one (-fno-moduleinfo-localclasses) and an
+    # AArch64 one.
+    return sorted(set(re.findall(r'^\+\+\+ b/(\S+)', patch.read_text(), flags=re.M)))
 
 
 class ForkSourcesTests(unittest.TestCase):
@@ -46,6 +48,13 @@ class ForkSourcesTests(unittest.TestCase):
                          ['build.d', 'dmd/cond.d', 'dmd/errors.d', 'dmd/expressionsem.d', 'dmd/flintdiag.d',
                           'dmd/flintlink.d', 'dmd/flintserver.d', 'dmd/hdrgen.d', 'dmd/link.d', 'dmd/main.d',
                           'dmd/mars.d', 'dmd/timetrace.d'])
+
+    def test_dmd_patch_leaves_out_local_classes_on_request(self):
+        # ADR-030 section 5: -fno-moduleinfo-localclasses, named as LDC's, empties ModuleInfo.localClasses.
+        text = (TOOLCHAIN / 'dmd-2.114.0-flint.patch').read_text()
+        self.assertIn('+        else if (arg == "-fno-moduleinfo-localclasses")', text)
+        self.assertIn('+public __gshared bool flintNoLocalClasses;', text)
+        self.assertIn('+    if (!flintNoLocalClasses)\n+        getLocalClasses(m, aclasses);', text)
 
     def test_dmd_patch_aarch64_sections_stay_in_the_code_generator(self):
         # ADR-025 section 3: the AArch64 back end, its object file writers and the target's ABI; x86-64 output
