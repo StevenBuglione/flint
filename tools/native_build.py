@@ -362,8 +362,8 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
             self.env['CARGO_PROFILE_RELEASE_PANIC']='abort'
             args=['cargo','rustc','--lib','--crate-type','staticlib','--release','--locked','--jobs',str(self.a.jobs),'--target',triple]
             if name=='wasmtime':args+=['-p','wasmtime-c-api','--no-default-features','--features','cranelift,wasi,component-model,component-model-async']
-            # The extension is portable Rust over the C API; macOS builds it too (ADR-024).
-            flint_extensions=name=='wasmtime' and (self.a.target.startswith('linux') or self.a.target=='macos-arm64')
+            # The extension is portable Rust over the C API; macOS (ADR-024) and Windows (ADR-026) build it too.
+            flint_extensions=name=='wasmtime'
             if flint_extensions:
                 extension=package_path('engine-wasi')/'native/install_extensions.py'
                 self.command([sys.executable,extension,src],src)

@@ -11,7 +11,7 @@ from conan.tools.files import download
 
 NAME = 'sqlite'
 DEPENDENCIES = []
-BUILD_ENGINE_SHA256 = 'ea8bde5174ce098bf4fd464418eb489f5d9266bfefdf4b12f486882978064843'
+BUILD_ENGINE_SHA256 = '1a9742e78c9de329bb67af4113f1ad8618e6d08e5608a4515afcd0c97de4d0f3'
 TARGETS = ['linux-aarch64-glibc', 'linux-aarch64-musl', 'linux-x86_64-glibc', 'linux-x86_64-musl', 'macos-arm64', 'windows-x86_64']
 
 

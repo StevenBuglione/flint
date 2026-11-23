@@ -322,6 +322,19 @@ Other per-shim changes:
 - `engine-web`'s HTTP/2 test calls an independent `curl` client, but the `curl.exe` Windows ships has no HTTP/2.
 - `engine-wasi` needs wasmtime, which `ci.py`'s native step builds with the pinned Rust.
 
+Both now pass:
+
+- **curl.** `ci.py windows-tools` installs a pinned, sha256-checked curl 8.23.0 built with nghttp2 (`policy/toolchains.json`). The lane's test step points `FLINT_TEST_CURL` at it, because CreateProcess searches System32 before `PATH`.
+- **wasmtime.** On Windows, wasmtime builds with Flint's Rust extensions, as on Linux and macOS (`flint_wasmtime_extensions.rs`). `flint_wasi.c` compiles there over `flint_port.h`.
+  - **Preopens.** A preopen's host path is walked one directory at a time from its root, with `FILE_FLAG_OPEN_REPARSE_POINT`, and every component must be a plain directory, so a symbolic link or junction is refused. The walk's handles stay open without `FILE_SHARE_DELETE` while Wasmtime opens the path, so no component can be renamed or replaced in between.
+  - **Refused paths.** UNC and device paths, drive-relative paths, alternate data streams, and components that Win32 would rewrite (a trailing dot or space).
+  - **Bench reference.** The direct-provider reference archive stays Linux and macOS only, because no Windows bench lane uses it.
+- **The UCRT's inline stdio.** The UCRT headers define `snprintf` and its relatives as external inline COMDATs. druntime references `snprintf`, so link.exe loaded the first shim object that defined it, together with that shim's provider: `engine-wasi`'s test pulled in libpq and SQLite. Both shim projects now build with `_NO_CRT_STDIO_INLINE`, so their printf-family calls bind to `legacy_stdio_definitions.lib`.
+
+Still open:
+
+- **DMD.** It does not add `user32.lib` by default, as LDC does, and static libcrypto needs it (`MessageBoxW`, `GetProcessWindowStation`). Packages that link OpenSSL therefore link only with LDC, the Windows lane's compiler.
+
 ### 4. The flint CLI
 
 `flint_tool.sys.windows` is the Windows counterpart of `flint_tool.sys.posix`:
@@ -355,7 +368,6 @@ Two details of the MSVC build of Flint's C shims (`native/ffi`):
 Next, in ADR-025's order:
 
 - the remaining cold-build levers of ADR-025 section 4a, with a breakdown after each: the warm worker pool and its template-instance ownership, parallel jobs, DMD's CodeView emission, process creation and a cached link command;
-- wasmtime through the pinned Rust, and an HTTP/2-capable curl client for `engine-web`'s HTTP/2 test;
 - the `windows-x86_64` platform lane for Gate 6.
 
 ## Public API additions
