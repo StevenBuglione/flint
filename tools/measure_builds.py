@@ -552,15 +552,19 @@ def main(argv=None):
     parser.add_argument('--lld', default=None, help='Optional external LLD22; default uses system cc/ld with bundled LLVMgold plugin')
     parser.add_argument('--apps-only', action='store_true',
                         help='ADR-025 compile-speed gate on any tier-1 host: dev builds of the apps and Go, cold and incremental')
+    parser.add_argument('--app-sizes', action='store_true',
+                        help='only the stripped O3 and Oz sizes of bench-cli and bench-rest')
     parser.add_argument('--app', action='append', choices=['bench-cli', 'bench-rest'],
-                        help='with --apps-only, measure only this app (the gate needs both)')
+                        help='with --apps-only or --app-sizes, measure only this app (the gate needs both)')
     parser.add_argument('--workspace', type=Path,
                         help='flint.workspace/1 file pinning each repo\'s checkout (plan section 7); default: this '
                              'monorepo. Its commits are recorded in the evidence.')
     args = parser.parse_args(argv)
     workspace_commits = pinned_workspace(args.workspace)
-    if args.app and not args.apps_only:
-        raise RuntimeError('--app applies only to --apps-only')
+    if args.app and not (args.apps_only or args.app_sizes):
+        raise RuntimeError('--app applies only to --apps-only and --app-sizes')
+    if args.apps_only and args.app_sizes:
+        raise RuntimeError('--apps-only and --app-sizes are separate measurements')
     host = (sys.platform, os.uname().machine if hasattr(os, 'uname') else '')
     if not args.apps_only and host not in (('linux', 'x86_64'), ('darwin', 'arm64')):
         raise RuntimeError('measurement runners are Linux x86-64 and macOS arm64 (ADR-025); '
@@ -755,6 +759,31 @@ def main(argv=None):
     if args.apps_only:
         return measure_compile_gate(args, manifest, result, measured_native, go_sources, base_env, logs)
     published = ROOT / 'build'; published.mkdir(exist_ok=True)
+    def app_sizes(name, fixture, row):
+        for profile in ['O3', 'Oz']:
+            with tempfile.TemporaryDirectory(prefix='flint-app-size-') as temporary:
+                workspace = Path(temporary) / 'workspace'; copy_workspace(workspace)
+                cmd, cwd, env = dub_command(workspace, fixture['fixture'], args.ldc, profile)
+                build = run_checked(cmd, cwd, env)
+                logfile = logs / f'size-{name}-{profile}.log'
+                logfile.write_text(json.dumps({'command': cmd, 'dflags': env['DFLAGS']}) + '\n' + build.stdout + build.stderr)
+                target = binary(workspace, fixture['fixture'], args.ldc)
+                measured_size = stripped_size(target, args.strip, args.readelf, workspace, logfile)
+                row[profile] = {k: measured_size[k] for k in ['binary_bytes', 'sha256', 'dynamic_system_dependencies']}
+                result['size_trials'].append(dict(measured_size, fixture=name, profile=profile,
+                                                   variant='app', log=str(logfile.relative_to(args.output.parent))))
+                shutil.copy2(target, published / (name if profile == 'O3' else name + '-Oz'))
+        return row
+    if args.app_sizes:
+        # The release (O3) and size (Oz) profile sizes of the apps alone, for linker and toolchain levers.
+        result['mode'] = 'app-sizes'
+        for name in args.app or ['bench-cli', 'bench-rest']:
+            print('Measuring app size', name, flush=True)
+            result['apps'][name] = app_sizes(name, manifest['apps'][name], {})
+        args.output.write_text(json.dumps(result, indent=2) + '\n')
+        for name, row in result['apps'].items():
+            print(name, 'O3', row['O3']['binary_bytes'], 'Oz', row['Oz']['binary_bytes'])
+        return 0
     for name, fixture in manifest['packages'].items():
         print('Measuring package', name, flush=True)
         row = measured_native(name, fixture)
@@ -782,24 +811,10 @@ def main(argv=None):
         row['size_detail'] = sizes
         result['packages'][name] = row
     for name in ['bench-cli', 'bench-rest']:
-        fixture = manifest['apps'][name]
         print('Measuring app', name, flush=True)
-        row = measured_native(name, fixture)
+        row = measured_native(name, manifest['apps'][name])
         row.pop('compiler_peak_rss_bytes'); row.pop('template_instances'); row.pop('template_receipt')
-        for profile in ['O3', 'Oz']:
-            with tempfile.TemporaryDirectory(prefix='flint-app-size-') as temporary:
-                workspace = Path(temporary) / 'workspace'; copy_workspace(workspace)
-                cmd, cwd, env = dub_command(workspace, fixture['fixture'], args.ldc, profile)
-                build = run_checked(cmd, cwd, env)
-                logfile = logs / f'size-{name}-{profile}.log'
-                logfile.write_text(json.dumps({'command': cmd, 'dflags': env['DFLAGS']}) + '\n' + build.stdout + build.stderr)
-                target = binary(workspace, fixture['fixture'], args.ldc)
-                measured_size = stripped_size(target, args.strip, args.readelf, workspace, logfile)
-                row[profile] = {k: measured_size[k] for k in ['binary_bytes', 'sha256', 'dynamic_system_dependencies']}
-                result['size_trials'].append(dict(measured_size, fixture=name, profile=profile,
-                                                   variant='app', log=str(logfile.relative_to(args.output.parent))))
-                shutil.copy2(target, published / (name if profile == 'O3' else name + '-Oz'))
-        result['apps'][name] = row
+        result['apps'][name] = app_sizes(name, manifest['apps'][name], row)
     wasm = manifest['apps']['bench-wasm']
     wasm_row = {'ldc_cold_seconds': [], 'ldc_incremental_seconds': []}
     for profile in ['O3', 'Oz']:
