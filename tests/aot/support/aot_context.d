@@ -178,8 +178,8 @@ final class AotContext : AotRegistry, BeanFactory, ConditionContext
         string[] names;
         foreach (ref definition; active)
         {
-            if (definition.types.canFind(type) && (qualifier.length == 0 || definition.qualifiers.canFind(qualifier)
-                    || definition.name == qualifier))
+            if (definition.types.canFind(type) && (qualifier.length == 0
+                    || definition.qualifiers.canFind(qualifier) || definition.name == qualifier))
                 names ~= definition.name;
         }
         if (names.length > 1)
@@ -313,5 +313,10 @@ final class AotContext : AotRegistry, BeanFactory, ConditionContext
     bool isWebApplication(string type)
     {
         return true;
+    }
+
+    bool isAutoConfigurationExcluded(string type)
+    {
+        return false;
     }
 }

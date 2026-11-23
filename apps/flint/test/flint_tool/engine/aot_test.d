@@ -342,7 +342,7 @@ private imported!"flint_tool.engine.aot.driver".AotOutcome generate(string proje
     request.compiler = compiler();
     request.importPaths = [
         "-I" ~ buildPath(repositoryRoot(), "tests", "aot", "annotations"),
-        "-I" ~ buildPath(repositoryRoot(), "packages", "engine-aot", "source")
+        "-I" ~ buildPath(repositoryRoot(), "framework", "engine-aot", "source")
     ];
     request.flags = ["-preview=dip1000"];
     request.environmentKey = "test";
@@ -420,7 +420,7 @@ unittest
     launch.directory = project;
     const built = capture([
         compiler(), "-preview=dip1000", "-I" ~ buildPath(root, "tests", "aot", "annotations"),
-        "-I" ~ buildPath(root, "packages", "engine-aot", "source"),
+        "-I" ~ buildPath(root, "framework", "engine-aot", "source"),
         "-I" ~ buildPath(root, "tests", "aot", "support"), "-I" ~ buildPath(project, "src"),
         "-I" ~ buildPath(project, ".flint", "generated", "aot"), "-i", "-of=" ~ binary,
         buildPath(project, "main.d")
