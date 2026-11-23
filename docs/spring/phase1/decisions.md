@@ -88,6 +88,15 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
 
 ## Open for the owner
 
+- 2026-11-23, proof-harness: **The first certified Flint-versus-Go runtime numbers miss every metric.** Queue entry `gs-rest-multicore` (web-http's), 15:18–15:59Z, a claimed window with no foreign build in 218 samples. gs-rest-service at `c473ea7b6f93` (multi-core servlet default; the port passes 18/18 exact) against the registered Go comparator, on the Spring REST workload with 9 interleaved trials. Flint/Go median ratios with 99% intervals (targets: throughput at least 1.01, the others at most 0.99):
+  - throughput 0.746 (0.738–0.751): 187k against 251k req/s;
+  - p50 1.84 (1.76–1.88): 0.111 against 0.060 ms;
+  - p99 2.45 (2.17–2.63): 0.632 against 0.258 ms;
+  - peak RSS 1.82 (1.80–1.84): 25.1 against 13.8 MB;
+  - CPU per request 1.38 (1.34–1.40).
+
+  ADR-030's agreed fallback applies to p99 and RSS: a D collector with per-thread allocation caches. Throughput and CPU per request need the request-path work (third-party-apis is profiling it; web-http measured 76.1k instructions per request). The evidence is in `benchmarks/spring/evidence/gs-rest-multicore/`.
+
 - 2026-11-23, proof-harness: **The Phase 0 runtime levers regress bench-rest's peak RSS by 6.2%.** This is certified: queue entry `runtime-levers-rest`, 14:14–14:54Z, load 0.78 at the start, no foreign build in any of 220 samples. bench-rest at `e16668e` (base) against `966c4b7` (FiberLocal, 256 KiB guarded fiber stacks, the offload pool), both built with bench-rest's README release command, on the production REST workload with 9 interleaved trials. Median ratios with 99% intervals against `policy/budgets.json`'s regression ceilings:
   - peak RSS 1.062 (1.045–1.090; 13.66 MB against 12.87 MB): over the 1.05 ceiling;
   - p50 1.017 (0.989–1.037), CPU per request 1.006 (0.987–1.015), throughput 0.997: within;

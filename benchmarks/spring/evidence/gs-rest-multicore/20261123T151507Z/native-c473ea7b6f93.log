@@ -1,0 +1,67 @@
+native: perl /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/sources/openssl-45e844fa2a14/Configure linux-x86_64 no-shared
+native: make -j 8 build_libs
+native: make install_dev
+native: sh autogen.sh
+native: configure --disable-shared --enable-static --prefix=/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/install/linux-x86_64-glibc
+native: make -j 8
+native: make install
+native: cmake -S /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/sources/llhttp-816485216511 -B
+native: cmake --build /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/llhttp --config
+native: cmake --install /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/llhttp --config
+native: cmake -S /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/sources/nghttp2-80dcb8140af0 -B
+native: cmake --build /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/nghttp2 --config
+native: cmake --install /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/nghttp2 --config
+native: cmake -S /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/sources/zlib-99623ef70973 -B
+native: cmake --build /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/zlib --config
+native: cmake --install /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/zlib --config
+native: cmake -S /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/sources/curl-3163ec065643 -B
+native: cmake --build /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/curl --config
+native: cmake --install /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/curl --config
+native: curl-config --protocols
+native: cmake -S /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/sqlite/project -B
+native: cmake --build /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/sqlite/cmake --config
+native: cmake --install /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/sqlite/cmake --config
+native: meson setup /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/libpq /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/sources/libpq-f5c41f6681c9
+native: meson compile -C /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/libpq
+native: cmake -S /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/sources/zstd-f8745da6ff1a/build/cmake -B
+native: cmake --build /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/zstd --config
+native: cmake --install /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/zstd --config
+native: cmake -S /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/sources/librdkafka-c6c9973cf1b2 -B
+native: cmake --build /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/librdkafka --config
+native: cmake --install /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/librdkafka --config
+native: cmake -S /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/sources/brotli-db24a98aed38 -B
+native: cmake --build /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/brotli --config
+native: cmake --install /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/brotli --config
+native: cmake -S /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/sources/libarchive-03036ffa409a -B
+native: cmake --build /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/libarchive --config
+native: cmake --install /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/libarchive --config
+native: cmake -S /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/sources/utf8proc-79cdd5ab40c7 -B
+native: cmake --build /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/utf8proc --config
+native: cmake --install /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/utf8proc --config
+native: cmake -S /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/sources/libyaml-2c891fc7a770 -B
+native: cmake --build /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/libyaml --config
+native: cmake --install /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/libyaml --config
+native: cmake -S /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/sources/sdl3-f00dc919ca35 -B
+native: cmake --build /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/sdl3 --config
+native: cmake --install /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/sdl3 --config
+native: cmake -S /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/protobuf-c/runtime-project -B
+native: cmake --build /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/protobuf-c/runtime --config
+native: cmake --install /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/protobuf-c/runtime --config
+native: cmake -S /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/sources/hiredis-644e39907c77 -B
+native: cmake --build /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/hiredis --config
+native: cmake --install /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/hiredis --config
+native: cmake -S /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/crypt-blowfish/project -B
+native: cmake --build /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/crypt-blowfish/cmake --config
+native: cmake --install /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/crypt-blowfish/cmake --config
+native: sh configure --use-libc --prefix=/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/install/linux-x86_64-glibc
+native: make -C src -j
+native: make -C src install
+native: cmake -S /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/native/ffi -B
+native: cmake --build /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/flint-ffi --config
+native: cmake --install /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/flint-ffi --config
+native: ctest --test-dir /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/flint-ffi --output-on-failure
+native: cmake -S /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/native/framework -B
+native: cmake --build /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/flint-ffi-framework --config
+native: cmake --install /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/flint-ffi-framework --config
+native: ctest --test-dir /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/build/linux-x86_64-glibc/flint-ffi-framework --output-on-failure
+{"phase": "build", "target": "linux-x86_64-glibc", "prefix": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/install/linux-x86_64-glibc", "receipt": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/c473ea7b6f93/.native/install/linux-x86_64-glibc/flint-native-install.json"}

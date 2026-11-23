@@ -1,0 +1,11 @@
+{
+  "schema": "flint.measure-correction/1",
+  "date": "2026-11-23",
+  "by": "proof-harness",
+  "corrects": "http.json apps: the workload key",
+  "reason": "load_bench keyed the Spring workload's results by the last metric name ('requests_per_second') instead of the workload ('gs-rest-service'); fixed in the commit after this run. The measured series are correct and belong to gs-rest-service, the only workload of this run.",
+  "apps_key": {
+    "recorded": "requests_per_second",
+    "correct": "gs-rest-service"
+  }
+}
