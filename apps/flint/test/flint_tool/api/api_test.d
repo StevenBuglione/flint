@@ -303,7 +303,7 @@ unittest
     Upstream[] upstreams;
     string error;
     expect(parseUpstreams(`{"schema":"flint.api-upstreams/1","upstreams":[{"project":"lib","version":"1.0",
-        "url":"file://` ~ archive ~ `","sha256":"` ~ digest ~ `","format":"tar.gz","exclude":["docs"]}]}`,
+        "url":"` ~ fileUrl(archive) ~ `","sha256":"` ~ digest ~ `","format":"tar.gz","exclude":["docs"]}]}`,
             upstreams, error)).toEqual(true);
     expect(error).toEqual("");
     const pinned = findUpstream(upstreams, "lib", "1.0");
@@ -695,4 +695,17 @@ unittest
     expect(archives[0].tests).toEqual(true);
     expect(parseUpstreamTests(`{"archives":[{"project":"x","version":"1","url":"u","sha256":"short",
         "format":"tar.gz"}]}`, archives, error)).toEqual(false);
+}
+
+/// A file URL curl reads on every host: `file:///C:/a/b` on Windows, whose `\` would also be invalid in JSON.
+private string fileUrl(string path)
+{
+    version (Windows)
+    {
+        import std.array : replace;
+
+        return "file:///" ~ path.replace(`\`, "/");
+    }
+    else
+        return "file://" ~ path;
 }
