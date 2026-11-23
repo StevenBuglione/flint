@@ -111,7 +111,10 @@ class StructuralParityTests(unittest.TestCase):
         cls.base = Path(cls.temporary.name) / 'base'
         ignore = shutil.ignore_patterns('.dub', 'build', '*.a', '*.o', 'flint-*-test-*', '__pycache__')
         cls.base.mkdir()
-        for name in ('policy', 'packages', 'framework', 'boot', 'starters', 'tools', 'toolchain'):
+        # Integrated repos stage in a tree of their own name (security/), which the gates check too.
+        repos = json.loads((ROOT / 'policy/repos.json').read_text())['repos']
+        trees = ['policy', 'packages', 'framework', 'boot', 'starters', 'tools', 'toolchain']
+        for name in trees + [repo for repo in repos if repo not in trees]:
             if (ROOT / name).is_dir():  # framework/, boot/ and starters/ leave the flint repo at the cutover
                 shutil.copytree(ROOT / name, cls.base / name, ignore=ignore, symlinks=True)
         for name in ('dub.sdl', 'flint.toml', 'dscanner.ini', 'dfmt.ini', '.editorconfig', 'platform.lock'):
