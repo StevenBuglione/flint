@@ -162,6 +162,79 @@ class PlatformCacheTests(unittest.TestCase):
         self.assertEqual(dub.returncode, 0, dub.stdout + dub.stderr)
         self.assertGreater(self.receipt(direct)['phases_ms']['plan'], 0)
 
+    def test_a_dev_edit_recompiles_only_the_modules_it_can_affect(self):
+        """Per-module incremental compilation (owner priority 74a746d1): each root module has its own object; an edit
+        recompiles the changed module and its importers. A body edit counts for importers, since they can run it at
+        compile time; a string-import change recompiles everything."""
+        project = self.directory / 'incremental'
+        shutil.copytree(self.project, project, ignore=shutil.ignore_patterns('.flint'))
+        env = environment(FLINT_CACHE=str(self.cache))
+        objects = project / '.flint/build/dev-objects'
+        app, greeting = project / 'src/demo/app.d', project / 'src/demo/greeting.d'
+
+        def build(expect_ok=True):
+            built = flint('build', cwd=project, env=env)
+            self.assertEqual(built.returncode == 0, expect_ok, built.stdout + built.stderr)
+            return built
+
+        def times():
+            return {path.name: path.stat().st_mtime_ns for path in objects.glob('*.o')}
+
+        def output():
+            ran = subprocess.run([str(project / '.flint/build/dev/demo')], cwd=project, capture_output=True,
+                                 text=True, encoding='utf-8', timeout=60)
+            self.assertEqual(ran.returncode, 0, ran.stdout + ran.stderr)
+            return ran.stdout
+
+        def append(path, text):
+            path.write_text(path.read_text(encoding='utf-8') + text, encoding='utf-8', newline='\n')
+
+        build()
+        self.assertTrue({'demo.app.o', 'demo.greeting.o'} <= set(times()), times())
+        before = times()
+        append(app, '\nprivate enum appEdit = 1;\n')
+        build()
+        after = times()
+        self.assertNotEqual(after['demo.app.o'], before['demo.app.o'])
+        self.assertEqual(after['demo.greeting.o'], before['demo.greeting.o'], 'nothing imports demo.app')
+
+        # A body edit in an imported module recompiles its importer: here the importer runs the function at compile
+        # time, so a stale object would keep the old value and this build would wrongly succeed.
+        append(greeting, '\n/// Used at compile time by demo.app.\nint answer() pure { return 41; }\n')
+        append(app, '\nimport demo.greeting : answer;\nstatic assert(answer() == 41);\n')
+        build()
+        greeting.write_text(greeting.read_text(encoding='utf-8').replace('return 41;', 'return 42;'),
+                            encoding='utf-8', newline='\n')
+        build(expect_ok=False)
+        app.write_text(app.read_text(encoding='utf-8').replace('== 41', '== 42'), encoding='utf-8', newline='\n')
+        build()
+        before = times()
+        greeting.write_text(greeting.read_text(encoding='utf-8').replace('~ "!"', '~ "?"'), encoding='utf-8',
+                            newline='\n')
+        build()
+        after = times()
+        self.assertNotEqual(after['demo.greeting.o'], before['demo.greeting.o'])
+        self.assertNotEqual(after['demo.app.o'], before['demo.app.o'], 'demo.app imports demo.greeting')
+        self.assertIn('Hello, world?', output())
+
+        extra = project / 'src/demo/extra.d'
+        extra.write_text('module demo.extra;\n\n@safe:\n\n/// Added.\nstring mark() pure\n{\n    return "+";\n}\n',
+                         encoding='utf-8', newline='\n')
+        append(app, '\nimport demo.extra : mark;\nstatic assert(mark() == "+");\n')
+        build()
+        self.assertIn('demo.extra.o', times())
+        extra.unlink()
+        app.write_text(app.read_text(encoding='utf-8').replace('\nimport demo.extra : mark;\nstatic assert(mark() == "+");\n', ''),
+                       encoding='utf-8', newline='\n')
+        build()
+        self.assertNotIn('demo.extra.o', times(), "a removed module's object is not linked again")
+
+        before = times()
+        append(project / 'config/application.toml', '\n')
+        build()
+        after = times()
+        self.assertTrue(all(after[name] != before[name] for name in before), 'a string import recompiles everything')
+
     def test_no_debug_builds_carry_no_debug_information_or_symbol_table(self):
         """Owner decision 4b27d207: measured builds match Go's -ldflags=-s -w, platform archives included."""
         def sections(path):

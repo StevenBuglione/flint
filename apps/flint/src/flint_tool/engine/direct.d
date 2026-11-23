@@ -4,8 +4,9 @@
 ///
 /// The root package's settings (flags, versions, import paths, sources, linker files) come from
 /// `dub describe --data`, kept in `.flint/generated/dub/direct.txt` while its stamp holds: the recipes, the build
-/// flags, the tools and the modification time of every source directory. The compile and link commands are the
-/// ones DUB runs for the same recipe: one compile of every root source with `-oq`, then one link.
+/// flags, the tools and the modification time of every source directory. Each root module compiles in its own job
+/// with the flags DUB passes, and an edit recompiles only the modules it can affect (flint_tool.engine.incremental);
+/// then one link, as DUB runs it.
 module flint_tool.engine.direct;
 
 import flint.os : EnvVar;
@@ -113,12 +114,16 @@ DirectResult directBuild(ref Session session, const ref DirectBuild build, out s
     session.progress("Building", "directly, without DUB");
     const objects = buildPath(build.root, ".flint", "build", build.configuration ~ "-objects");
     const compileStart = MonoTime.currTime;
-    if (!compile(build, settings, objects, output))
+    string[] objectFiles;
+    if (!compile(build, settings, objects, objectFiles, output))
         return DirectResult.failed;
     phases.compile = (MonoTime.currTime - compileStart).total!"msecs";
     const linkStart = MonoTime.currTime;
-    if (!link(build, settings, objects, output))
+    if (!link(build, settings, objectFiles, output))
+    {
+        forgetModules(objects);
         return DirectResult.failed;
+    }
     phases.link = (MonoTime.currTime - linkStart).total!"msecs";
     return DirectResult.built;
 }
@@ -386,17 +391,15 @@ private EnvVar[] compilerEnvironment(const ref DirectBuild build)
     return environment;
 }
 
-/// One compile of every root source, as DUB runs it: the profile's flags, the recipe's, then versions, paths and
-/// `-c -od<objects> -oq`.
-private bool compile(const ref DirectBuild build, const ref RootSettings settings, string objects, ref string output)
+/// The root modules that changed and their importers, each in its own job with DUB's flags: the profile's, the
+/// recipe's, then versions, paths and `-c` (flint_tool.engine.incremental). `objectFiles` gets every object to
+/// link.
+private bool compile(const ref DirectBuild build, const ref RootSettings settings, string objects,
+        out string[] objectFiles, ref string output)
 {
-    import std.file : exists, mkdirRecurse, rmdirRecurse;
-    import flint_tool.support.process : Launch, capture;
+    import flint_tool.engine.incremental : ModuleCompile, ModuleOutcome, compileModules;
 
-    if (exists(objects))
-        rmdirRecurse(objects);
-    mkdirRecurse(objects);
-    string[] command = [build.compiler] ~ profileFlags(build.dflags) ~ settings.dflags.dup;
+    string[] command = profileFlags(build.dflags) ~ settings.dflags.dup;
     foreach (identifier; settings.versions)
         command ~= "-version=" ~ identifier;
     foreach (identifier; settings.debugVersions)
@@ -405,14 +408,27 @@ private bool compile(const ref DirectBuild build, const ref RootSettings setting
         command ~= "-I" ~ path;
     foreach (path; settings.stringImportPaths)
         command ~= "-J" ~ path;
-    command ~= ["-c", "-od" ~ objects, "-oq"] ~ settings.sources.dup;
-    Launch launch;
-    launch.directory = build.root;
-    launch.environment = compilerEnvironment(build);
-    launch.inherit = false;
-    const outcome = capture(command, launch);
-    output ~= outcome.combined;
-    return outcome.ok;
+    ModuleCompile request = {
+        compiler: build.compiler, compilerSha256: build.compilerSha256, flags: command ~ "-c", sources: settings
+            .sources.dup, stringImportPaths: settings.stringImportPaths.dup,
+        linkerFiles: settings.linkerFiles.dup, root: build.root, objects: objects, environment: compilerEnvironment(
+                build)
+    };
+    ModuleOutcome outcome;
+    const compiled = compileModules(request, outcome, output);
+    objectFiles = outcome.objects;
+    return compiled;
+}
+
+/// After a failed link, compile every module again next time.
+private void forgetModules(string objects)
+{
+    import std.file : exists, remove;
+    import std.path : buildPath;
+
+    const record = buildPath(objects, "modules.txt");
+    if (exists(record))
+        remove(record);
 }
 
 /// Flags DUB passes to the link: linker flags and the ones the compiler driver uses when it links.
@@ -427,20 +443,17 @@ private bool linkFlag(string flag)
 
 /// The link, as DUB runs it, into a temporary file renamed over the artifact, so a running program keeps its
 /// executable.
-private bool link(const ref DirectBuild build, const ref RootSettings settings, string objects, ref string output)
+private bool link(const ref DirectBuild build, const ref RootSettings settings,
+        scope const string[] objectFiles, ref string output)
 {
-    import std.algorithm.sorting : sort;
-    import std.file : SpanMode, dirEntries, exists, mkdirRecurse, remove, rename;
+    import std.file : exists, mkdirRecurse, remove, rename;
     import std.path : dirName;
     import flint_tool.support.process : Launch, capture;
 
-    string[] objectFiles;
-    foreach (entry; dirEntries(objects, "*.o", SpanMode.shallow))
-        objectFiles ~= entry.name;
-    sort(objectFiles);
     const partial = build.artifact ~ ".partial";
     mkdirRecurse(dirName(build.artifact));
-    string[] command = [build.compiler, "-of" ~ partial] ~ objectFiles ~ settings.linkerFiles.dup ~ "-L--no-as-needed";
+    string[] command = [build.compiler, "-of" ~ partial] ~ objectFiles.dup
+        ~ settings.linkerFiles.dup ~ "-L--no-as-needed";
     foreach (flag; settings.lflags)
         command ~= "-L" ~ flag;
     foreach (library; settings.libs)
