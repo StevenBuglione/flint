@@ -147,6 +147,33 @@ Peak RSS before and after the io_uring fix (section 3, item 1):
 
 Idle after startup, the server holds 14.2 MB, or 11.7 MB after the fix. The roughly 10 MB that load adds is almost all GC heap. The heap grows to absorb allocation between collections, and with a conservative, non-moving collector it does not shrink.
 
+### 1.4 Peak RSS at current main, and the levers (local diagnosis, not evidence)
+
+The certified gs-rest-multicore-4 run (`27e8d10b`) put Flint at 22 MB against Go's 13.8, ×1.62, flat while allocation cuts moved CPU and p99. This breakdown is gs-rest-service release at `438bebf6`, on 2 pinned CPUs with 64 connections and 15 s of load: peak 21.7 MB, idle 11.75 MB.
+
+| region | resident at peak | note |
+|---|---|---|
+| GC pools | ~11.6 MB | druntime reports 12 MB of pools (1 + 4 + 7 MB; the 7 MB pool is fully resident). Live data is small; the heap grows to absorb about 100 collections' worth of allocation per second (1,002 collections in 10 s, 0.54 s of total pause, 3 ms max). |
+| binary text and data | 4.3 MB | file-backed: 3.26 MB of `.text` touched, 1 MB of data and relocations |
+| libc, libm, ld.so, libgcc | 2.4 MB | file-backed; libc alone is 1.75 MB |
+| fiber stacks and guards | ~1.6 MB | 2 × 1,088 preallocated fibers, 2,208 small mappings |
+| glibc thread arenas | ~1.2 MB | the touched part of the per-connection request arenas (header, body capacity and write queue, malloc'd) |
+| io_uring rings | 0.55 MB | after `9aa14e28` |
+| TLS, thread stacks (36 threads, 31 of them GC mark threads) and the rest | ~0.3 MB | |
+
+Levers, each with a local before and after:
+
+| lever | peak RSS | cost | proposal |
+|---|---|---|---|
+| `rt_options` `incPoolSize:1` (default 3 MB) | 21.6–22.4 → 18.3–19.0 MB (−3 MB) | ~65% more collections (1,615–1,663 against 928–1,002) and ~50% more pause (0.9 s against 0.6 s) | Not yet: it trades p99 for RSS. Collections scale with allocations per request, so retry it when `/greeting` reaches the next trigger (~14). |
+| `heapSizeFactor:1.5`; `heapSizeLimit:8M`, `6M` or `4M` | no change | none | No. druntime treats `heapSizeLimit` as best effort, and pools still reach 10–12 MB. |
+| `parallel:1` (one mark thread rather than 31) | ~−0.3 MB | pause per collection within noise | Bake it in with any `rt_options` change: a 2-CPU server needs no 31 mark threads. |
+| fiber pool sized by `server.flint.max-handlers` (default unchanged) | −1.7 MB at 128 per worker (measured in §3, item 2) | more 503s under bursts at a low setting, so it's opt-in | Proposed to web-http and boot: a setting, today's default. |
+| releasing freed pages after a sweep (D1b) | none at steady load: every page is reused within a collection cycle | | Only in gc:flint; not a peak-RSS lever while the heap is fully cycled. |
+| static link (`flint build --static`, an existing profile) | libc's 1.75 MB of shared text becomes only the functions linked | a build-mode decision | For the owner and size-levers: it changes how the binary is built, not the workload. |
+
+So most of the gap is the GC heap: about 12 MB of pools against Go's whole 13.8 MB process. Smaller pools cost pauses at today's allocation rate. Fewer allocations per request reduce both together, so item 28's cuts lead. `incPoolSize:1` and `parallel:1` follow once `/greeting` is near 14.
+
 ## 2. Options
 
 ### A. Settings baked in through `rt_options` (cheap, partial)
