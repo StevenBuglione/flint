@@ -19,7 +19,7 @@ contract 1). Where it needs a rule the rulebook doesn't have yet, it proposes on
 `@PostConstruct` and `@PreDestroy` are `flint.jakarta.annotation` (third-party-apis, `framework/jakarta-annotation`).
 
 Dependency edges: `engine-aot` depends on nothing; `java` on `engine-aot` and `serde` (Java's `Double.toString`
-rendering); `core` on `java` and `engine-aot`; `beans` on `core`; `context` on `beans` and `jakarta-validation`. In `policy/framework.json`,
+rendering); `core` on `java` and `engine-aot`; `beans` on `core` and `jakarta-annotation` (`@Priority`); `context` on `beans`, `jakarta-validation` and `engine-reactor` (`FiberLocal`). In `policy/framework.json`,
 `also` lists the further package roots a module owns: spring-core holds `flint.core`, `flint.util` and `flint.lang`,
 spring-context `flint.context`, `flint.stereotype` and `flint.validation`. engine-aot's entry carries `unsafe`, the one audited `sys`
 directory of the Spring layer; `tools/gates.py` applies the package `@trusted` rules there and nowhere else.
@@ -206,22 +206,40 @@ same fields for generated descriptors.
 | validation.ValidatorTests | 2 | 1 | 1: `supports` of a subclass needs the class hierarchy |
 | validation.beanvalidation SpringValidatorAdapterTests, ValidatorFactoryTests | 25 | 0 | 25: need Hibernate Validator and a `MessageSource`; the adapter is tested against a stub provider |
 
-| beans.factory.DefaultListableBeanFactoryTests | 190 | 67 | 123: properties/XML readers, property values and conversion, constructor arguments and reflective `autowire`/`createBean`, parent definitions, `FactoryBean`, factory methods, `@Priority`, `ResolvableType`, inner beans, serialization |
+| beans.factory.DefaultListableBeanFactoryTests | 190 | 76 | 114: properties/XML readers, property values and conversion, constructor arguments and reflective `autowire`/`createBean`, parent definitions, `SmartFactoryBean` and factory-bean autowiring, factory methods, `ResolvableType`, inner beans, serialization |
 | beans.factory.support.DefaultSingletonBeanRegistryTests | 3 | 3 | |
 | context.support.GenericApplicationContextTests | 42 | 14 | 28: `refreshForAot` and RuntimeHints, Spring 7 `BeanRegistrar`, `ApplicationStartup`, `setResourceLoader` |
 | context.annotation.AnnotationConfigApplicationContextTests | 36 | 16 | 20: classpath scanning, `BeanNameGenerator`, reflective constructor arguments, `FactoryBean`, `refreshForAot` |
 | context.event.ApplicationContextEventTests | 37 | 15 | 22: wildcard generics, task executors, AOP proxies, listener beans looked up by name per event, threads |
 | context.event.PayloadApplicationEventTests | 14 | 12 | 2: `ResolvableType` introspection |
 | context.support.DefaultLifecycleProcessorTests | 24 | 20 | 4: `FactoryBean`, bootstrap executor, Spring 7 `restart`/`pause` |
-| context.event.AnnotationDrivenEventListenerTests | 35 | 14 | 21: `@EventListener` replies, AOP and scoped proxies, `@Async`, XML |
+| context.event.AnnotationDrivenEventListenerTests | 35 | 20 | 15: asynchronous replies, AOP and scoped proxies, `@Async`, XML |
+| context.support.StaticMessageSourceTests | 10 | 7 | 3: a StaticApplicationContext's bean counts, the MessageFormat cache |
+| context.support.ResourceBundleMessageSourceTests | 33 | 11 | 22: `ReloadableResourceBundleMessageSource`, XML bundles, `java.util.ResourceBundle` |
 
 Each test file lists its skipped Java tests and the reason.
 
-Known gaps the container ports surfaced: an `@EventListener` result is not published as a reply
-(`EventListenerSpec.invoke` returns void); listener beans are registered once their singleton exists, not looked up
+Known gaps the container ports surfaced: listener beans are registered once their singleton exists, not looked up
 by name per event; a failed generated injection is a `BeanCreationException`, not an `UnsatisfiedDependencyException`;
-the AOT bean record has no `autowireCandidate`; `@Priority`, `@Order` on listener classes, listener ids and
-`FactoryBean` are not implemented.
+the AOT bean record has no `autowireCandidate`; `@Order` on listener classes, listener ids, `SmartFactoryBean` and
+asynchronous listener replies are not implemented.
+
+`FactoryBean!T` (with `mixin FactoryBean!T.Defaults` for Java's defaults and the erased `FactoryBeanErased`) exposes
+its object under the bean name and itself under `&name`. A definition knows the object type from the
+`FactoryBean!T` entry among its types, as Flint AOT lists them, so type matching never creates a factory early.
+`@Priority` (Jakarta's) breaks ties after `@Primary` through the factory's dependency comparator, which
+`GenericApplicationContext` sets to an `AnnotationAwareOrderComparator` over its descriptors; `@Order`, then
+`@Priority`, also orders injected collections. `@EventListener` results are published as replies through
+`EventListenerSpec.invokeForResult` (contract 3): a non-null value, or each element of an array or `Collection`.
+
+`MessageSource` is Spring's: `AbstractMessageSource` (parent, common messages, `useCodeAsDefaultMessage`, resolvable
+arguments), `StaticMessageSource`, `DelegatingMessageSource` (the context's default without a `messageSource`
+bean), and `ResourceBundleMessageSource`, which reads `<basename>[_<locale>].properties` through the resource
+loader (`classpath:`, so `flint build`'s embedded resources) with `ResourceBundle`'s candidate and fallback order.
+`ReloadableResourceBundleMessageSource` is not ported (files are read once). Messages render with flint:java's
+`java.text.MessageFormat` subset (`{n}`, `{n,number}`, `{n,number,integer}`, Java quoting, the locale's grouping).
+`LocaleContextHolder` keeps the locale in a `FiberLocal` (flint:engine-reactor, as flint:tx does), so each request
+fiber has its own; without one it is `Locale.getDefault()`.
 
 ## Rulebook proposals
 

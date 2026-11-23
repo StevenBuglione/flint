@@ -14,6 +14,7 @@
    "upstream": "spring-framework@v7.1.0",
    "dependencies": [
     "engine-aot",
+    "jakarta-annotation",
     "java"
    ],
    "bench": {
@@ -384,6 +385,7 @@
    "dependencies": [
     "core",
     "engine-aot",
+    "jakarta-annotation",
     "java"
    ],
    "bench": {
@@ -422,6 +424,7 @@
     "beans",
     "core",
     "engine-aot",
+    "engine-reactor",
     "jakarta-validation",
     "java"
    ],
