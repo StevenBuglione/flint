@@ -49,6 +49,9 @@ class ParsedSql
     private int namedParameterCount;
     private int unnamedParameterCount;
     private int totalParameterCount;
+    /// The statement with every named parameter replaced by one `?`: what `substituteNamedParameters` returns when
+    /// no value is a list, made once when the statement is parsed rather than on every call.
+    private string singlePlaceholderSql;
 
     /// Create a new instance of the `ParsedSql` class.
     package(flint.jdbc) this(string originalSql)
@@ -148,6 +151,7 @@ abstract class NamedParameterUtils
         parsedSql.setNamedParameterCount(scanner.namedParameterCount);
         parsedSql.setUnnamedParameterCount(scanner.unnamedParameterCount);
         parsedSql.setTotalParameterCount(scanner.totalParameterCount);
+        parsedSql.singlePlaceholderSql = substitute(parsedSql, null);
         return parsedSql;
     }
 
@@ -319,6 +323,35 @@ abstract class NamedParameterUtils
     /// Parse the SQL statement and locate any placeholders or named parameters. Named parameters are substituted
     /// for a JDBC placeholder, and any select list is expanded to the required number of placeholders.
     static string substituteNamedParameters(ParsedSql parsedSql, SqlParameterSource paramSource)
+    {
+        if (parsedSql.getParameterNames().length == 0)
+            return parsedSql.getOriginalSql();
+        // Only a list value (an IN clause) changes the text, by expanding its placeholders; otherwise every call
+        // gives the statement parsed once with a `?` per parameter.
+        if (parsedSql.singlePlaceholderSql !is null && !hasListValue(parsedSql, paramSource))
+            return parsedSql.singlePlaceholderSql;
+        return substitute(parsedSql, paramSource);
+    }
+
+    /// Whether a value `paramSource` supplies for one of `parsedSql`'s parameters is a list.
+    private static bool hasListValue(ParsedSql parsedSql, SqlParameterSource paramSource)
+    {
+        if (paramSource is null)
+            return false;
+        foreach (paramName; parsedSql.getParameterNames())
+        {
+            if (!paramSource.hasValue(paramName))
+                continue;
+            auto value = paramSource.getValue(paramName);
+            if (auto parameterValue = parameterValueOf(value))
+                value = parameterValue.getValue();
+            if (!value.isNull && value.holds!(Any[]))
+                return true;
+        }
+        return false;
+    }
+
+    private static string substitute(ParsedSql parsedSql, SqlParameterSource paramSource)
     {
         const originalSql = parsedSql.getOriginalSql();
         auto paramNames = parsedSql.getParameterNames();

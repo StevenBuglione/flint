@@ -74,6 +74,22 @@ unittest
     assert(NamedParameterUtils.substituteNamedParameters("xxx :a :b :c xx :a :a", namedParams) == "xxx ? ? ? xx ? ?");
 }
 
+@("a parsed statement's single-placeholder text is reused when no value is a list, and lists still expand")
+unittest
+{
+    auto parsed = NamedParameterUtils.parseSqlStatement("select * from t where a = :a and b in (:ids)");
+    auto scalar = new MapSqlParameterSource;
+    scalar.addValue("a", 1).addValue("ids", 2);
+    const first = NamedParameterUtils.substituteNamedParameters(parsed, scalar);
+    assert(first == "select * from t where a = ? and b in (?)");
+    assert(NamedParameterUtils.substituteNamedParameters(parsed, scalar) is first, "the text was rebuilt per call");
+    auto list = new MapSqlParameterSource;
+    list.addValue("a", 1).addValue("ids", [Any.of(2), Any.of(3), Any.of(4)]);
+    assert(NamedParameterUtils.substituteNamedParameters(parsed,
+            list) == "select * from t where a = ? and b in (?, ?, ?)");
+    assert(NamedParameterUtils.substituteNamedParameters(parsed, null) is first);
+}
+
 @("a null named parameter is one placeholder, not an empty IN list")
 unittest
 {
