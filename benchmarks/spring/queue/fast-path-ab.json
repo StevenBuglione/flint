@@ -1,0 +1,49 @@
+{
+  "schema": "flint.measure-queue/1",
+  "id": "fast-path-ab",
+  "created": "2026-11-23",
+  "status": "blocked",
+  "blocked_on": "its smoke run at 139e4fc48a43 (proof-harness, now)",
+  "window": "claim",
+  "priority": 0,
+  "estimate_minutes": 30,
+  "requested_by": "fast-path-spike (owner priority decisions.md 74a746d1: the first measurement window once ready), 2026-11-23 22:09Z",
+  "report_to": "fast-path-spike; the coordinator",
+  "summary": "gs-rest-service per-endpoint AOT fast path: FLINT_AOT_FAST_PATH off against on (same tree 139e4fc4), Go interleaved, 4 trials",
+  "why": "Gates fast-path.md section 9: land the mechanism opt-in, then default on, if on beats off on throughput, CPU per request and p99 beyond the intervals, with no metric worse and 18/18 exact in both arms. Both arms come from branch spring/fast-path-proto at 139e4fc48a43 with the tree's own flint and the measured build command (flint build --profile release --no-debug); the on arm adds FLINT_AOT_FAST_PATH=1, which the AOT output key includes, and must contain fast_com_example_restservice_GreetingController_greeting in its generated module. Workload: policy/spring-http-benchmark.json unchanged, Go, off, on alternating (Go, off, on / on, off, Go), 4 trials per arm to fit a claimed window. Reported per arm: throughput, p50, p99, peak RSS, CPU per request; on/off and each/Go ratios of medians with bootstrap 99% intervals (wide at 4 trials). Local, indicative only: on/main throughput 1.39-1.47, CPU 0.73, capacity p99 0.54; /greeting allocations 16 to 1 per request.",
+  "builds": {
+    "tree": {
+      "app": "checkout",
+      "commit": "139e4fc48a43",
+      "flint": true,
+      "linker": "mold"
+    }
+  },
+  "measure": {
+    "kind": "command",
+    "ports": [],
+    "steps": [
+      {
+        "in": "tree",
+        "argv": [
+          "{python}",
+          "{harness}/tools/spring_binary_ab.py",
+          "--app",
+          "gs-rest-service",
+          "--runs",
+          "4",
+          "--go",
+          "--root",
+          ".",
+          "--variants",
+          "{\"off\": {\"build\": [\"flint\", \"build\", \"--profile\", \"release\", \"--no-debug\"], \"binary\": \".flint/build/release/gs-rest-service\"}, \"on\": {\"build\": [\"flint\", \"build\", \"--profile\", \"release\", \"--no-debug\"], \"env\": {\"FLINT_AOT_FAST_PATH\": \"1\"}, \"binary\": \".flint/build/release/gs-rest-service\", \"require_text\": {\"path\": \".flint/generated/aot/flint_aot/com/example/restservice/package.d\", \"text\": \"fast_com_example_restservice_GreetingController_greeting\"}}}",
+          "--output",
+          "{out}/fast-path-ab.json"
+        ],
+        "smoke_args": [
+          "--smoke"
+        ]
+      }
+    ]
+  }
+}
