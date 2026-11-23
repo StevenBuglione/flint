@@ -35,7 +35,7 @@ flint check
 | `flint watch [--test\|--build] [-- args]` | Rebuild and restart the executable (or retest a library) on every change to `src/`, `test/`, `config/`, `native/`, `resources/` or `flint.toml`. A failing cycle shows its diagnostics and waits. `--json` prints one `flint.watch/1` line per cycle. |
 | `flint test [packages...] [--compiler dmd\|ldc\|both] [--sanitize] [--scenarios] [--verify] [--locked] [--force]` | Build and run unittests: the project's `src/` and `test/`, or `dub test` for workspace packages. `--sanitize` builds a project's tests, embedded C and native packages with ASan and UBSan. |
 | `flint check [--gate structural] [--package P]...` | Every check CI runs: lock, layout, safety rules, configuration convention, dfmt, D-Scanner and clang-tidy over embedded C. In the workspace: `tools/gates.py`'s structural gate, then dfmt and D-Scanner. |
-| `flint fmt [--check]` | Format with the pinned dfmt and the repository's `.editorconfig`. |
+| `flint fmt [--check]` | Format with the pinned dfmt and the repository's `.editorconfig`. Sources are LF on every host: `--check` reports CRLF line endings, and `flint new` writes `.gitattributes` with `* text=auto eol=lf` so git's `autocrlf` keeps them LF on Windows. |
 | `flint lock [--check]` | Write `flint.lock`, or verify it. |
 | `flint deps tree\|why <package>\|update [packages...]\|vendor` | Print the graph, explain why a package is in it, raise repository-path requirements to their latest release, or copy repository modules and DUB packages into `vendor/` for offline builds. |
 | `flint deps audit [--target T]` | Verify the lock and every module, DUB and native hash; list each component's licence and the LGPL/AGPL obligations; show `[unchecked]` waivers. |

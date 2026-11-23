@@ -44,6 +44,9 @@ ScaffoldFile[] scaffold(const ref Home home, string name, string type, scope con
     ScaffoldFile[] files;
     files ~= ScaffoldFile("flint.toml", manifest(home, name, type, starters, dependencies));
     files ~= ScaffoldFile(".gitignore", ".flint/\n");
+    // Sources stay LF on every host, as dfmt writes them: git's autocrlf would otherwise check out CRLF on Windows,
+    // and `flint fmt --check` compares bytes.
+    files ~= ScaffoldFile(".gitattributes", "* text=auto eol=lf\n");
     {
         import flint_tool.project.generators : agentsGuide;
 

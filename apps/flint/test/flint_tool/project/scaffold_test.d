@@ -18,7 +18,7 @@ unittest
     foreach (ref file; files)
         paths ~= file.path;
     expect(paths).toEqual([
-        "flint.toml", ".gitignore", "AGENTS.md", "config/application.toml",
+        "flint.toml", ".gitignore", ".gitattributes", "AGENTS.md", "config/application.toml",
         "config/application-dev.toml", "config/application-prod.toml", "src/order_service/app.d",
         "src/order_service/greeting.d", "test/order_service/greeting_test.d"
     ]);
@@ -26,7 +26,7 @@ unittest
     Report report;
     expect(parseManifestText(files[0].content, home, manifest, report)).toEqual(true);
     expect(manifest.name).toEqual("order-service");
-    foreach (ref file; files[6 .. $])
+    foreach (ref file; files[7 .. $])
     {
         SourceScan scan;
         assert(scanSource(file.path, file.content, scan, report));
@@ -45,6 +45,6 @@ unittest
         "arena", "cli", "config", "engine-data", "engine-migrate", "engine-sql", "log"
     ]);
     const home = fixtureHome();
-    expect(scaffold(home, "model", "library", null)[6].path).toEqual("src/model/package.d");
+    expect(scaffold(home, "model", "library", null)[7].path).toEqual("src/model/package.d");
     expect(scaffold(home, "x", "executable", null) == scaffold(home, "x", "executable", null)).toEqual(true);
 }

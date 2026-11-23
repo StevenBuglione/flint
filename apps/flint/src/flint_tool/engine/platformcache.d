@@ -732,7 +732,7 @@ version (Posix) @safe unittest  // The cache is enabled on Linux only; the fixtu
     assert(recipe[$ - expected.length .. $] == expected, recipe);
 }
 
-@safe unittest
+version (Posix) @safe unittest  // The fixture spells POSIX paths.
 {
     PlatformModule core, web, desktop;
     core.name = "flint:core";

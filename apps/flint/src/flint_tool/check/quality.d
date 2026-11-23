@@ -60,6 +60,19 @@ string[] qualityFiles(scope const(string)[] trees, bool buildOutputs = false)
     return files.uniq.array;
 }
 
+/// FLINT-E0601 for a file dfmt would change. Flint sources are LF (.editorconfig, `flint new`'s .gitattributes), so
+/// a CRLF file is named as such rather than pointed at line 1.
+private auto formatterDifference(scope const(char)[] source)
+{
+    import std.algorithm.searching : canFind;
+
+    if (source.canFind("\r\n"))
+        return diagnostic("FLINT-E0601", Severity.error,
+                "formatter difference: CRLF line endings (Flint sources are LF)",
+                "flint fmt; add `* text=auto eol=lf` to .gitattributes");
+    return diagnostic("FLINT-E0601", Severity.error, "formatter difference", "flint fmt");
+}
+
 /// Compare every file with dfmt's output (configured by `configRoot`/.editorconfig), then run D-Scanner.
 /// `displayRoot` shortens paths in diagnostics.
 QualitySummary checkQuality(scope const(string)[] files, string dfmt, string dscanner,
@@ -90,9 +103,8 @@ QualitySummary checkQuality(scope const(string)[] files, string dfmt, string dsc
         if (formatted.output != source)
         {
             ++summary.unformatted;
-            const line = firstDifferentLine(source, formatted.output);
-            report.add(at(diagnostic("FLINT-E0601", Severity.error, "formatter difference",
-                    "flint fmt"), display, line, 0, cast(string) source.idup));
+            report.add(at(formatterDifference(source), display, firstDifferentLine(source,
+                    formatted.output), 0, cast(string) source.idup));
         }
     }
     const config = buildPath(configRoot, "dscanner.ini");
