@@ -375,9 +375,9 @@ def spring_quiet(smoke):
         require(load<1.0,f"the runner is busy (1-minute load {load:.2f}); measure when it is otherwise quiet")
     return load
 
-def spring_server(spring, app, target, port, database, workload, environment, smoke):
+def spring_server(spring, app, target, port, database, workload, environment, smoke, extra_args=(), binary=None):
     """argv, environment and identity of one implementation, pinned to the server CPUs."""
-    argv,env,cwd=spring.launch(app,"java" if target=="java-jvm" else target,port,database)
+    argv,env,cwd=spring.launch(app,"java" if target=="java-jvm" else target,port,database,extra_args,binary)
     env.update(environment.get(target,{}))
     executable=Path(argv[0])
     identity={"executable":str(executable),"sha256":file_hash(executable)}
@@ -389,10 +389,11 @@ def spring_server(spring, app, target, port, database, workload, environment, sm
     argv=["taskset","--cpu-list",",".join(map(str,workload["server_cpus"]))]+argv
     return argv,env,cwd,identity
 
-def spring_measure(spring, app, spec, target, workload, oha, trial, outdir, environment, database, smoke):
+def spring_measure(spring, app, spec, target, workload, oha, trial, outdir, environment, database, smoke,
+                   extra_args=(), binary=None, label=None):
     port=spring.free_port();url=f"http://127.0.0.1:{port}{spec['path']}"
-    argv,env,cwd,identity=spring_server(spring,app,target,port,database,workload,environment,smoke)
-    expected=spec["expected"];prefix=f"{trial:02d}-{app}-{target}"
+    argv,env,cwd,identity=spring_server(spring,app,target,port,database,workload,environment,smoke,extra_args,binary)
+    expected=spec["expected"];prefix=f"{trial:02d}-{app}-{label or target}"
     log_path=outdir/(prefix+"-server.log")
     with log_path.open("wb") as log:
         process=subprocess.Popen(argv,cwd=cwd,env=env,stdout=log,stderr=subprocess.STDOUT,start_new_session=True)

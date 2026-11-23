@@ -267,7 +267,7 @@ def pinned_environment():
     return env
 
 
-def launch(name, implementation, port, database=None, extra_args=()):
+def launch(name, implementation, port, database=None, extra_args=(), binary=None):
     """(argv, environment, cwd) for one implementation of one application, built beforehand."""
     row = app_row(name)
     env = pinned_environment()
@@ -286,7 +286,7 @@ def launch(name, implementation, port, database=None, extra_args=()):
         if not jar.is_file():
             raise SystemExit(f'{name}: build the Java reference first (spring_bench.py build {name} --impl java)')
         return [str(jdk / 'bin' / 'java'), '-jar', str(jar), *extra_args], env, jar.parent.parent
-    binary = go_binary(name) if implementation == 'go' else flint_binary(name)
+    binary = Path(binary) if binary else (go_binary(name) if implementation == 'go' else flint_binary(name))
     if not binary.is_file():
         raise SystemExit(f'{name}: build the {implementation} implementation first '
                          f'(spring_bench.py build {name} --impl {implementation})')
@@ -306,7 +306,7 @@ def maybe_postgres(name):
         yield None
 
 
-def observe(name, implementation=None, start=None, url=None, logs=None, mask=True):
+def observe(name, implementation=None, start=None, url=None, logs=None, mask=True, extra_args=(), binary=None):
     """Run the suite once and return (observations, seconds)."""
     row = app_row(name)
     module = load_suite(name)
@@ -324,7 +324,7 @@ def observe(name, implementation=None, start=None, url=None, logs=None, mask=Tru
             env.setdefault('SERVER_PORT', str(port))
         else:
             port = free_port()
-            command, env, cwd = launch(name, implementation, port, database)
+            command, env, cwd = launch(name, implementation, port, database, extra_args, binary)
         if row['kind'] == 'command':
             observed, seconds = springsuite.run_command(module.SUITE, command, env, cwd, log_path)
             return observed, seconds
@@ -363,9 +363,9 @@ def record(name):
     print(f'{name}: recorded {count} observations from the Java reference into {golden_path(name).relative_to(ROOT)}')
 
 
-def accept(name, implementation, wire, start=None, url=None):
+def accept(name, implementation, wire, start=None, url=None, extra_args=(), binary=None):
     golden = json.loads(golden_path(name).read_text())
-    observed, seconds = observe(name, implementation, start, url, mask=False)
+    observed, seconds = observe(name, implementation, start, url, mask=False, extra_args=extra_args, binary=binary)
     if golden['kind'] == 'command':
         problems = springsuite.compare_command(golden['observations'], observed)
         cases = [{'name': 'run to completion', 'problems': problems}]
@@ -377,7 +377,7 @@ def accept(name, implementation, wire, start=None, url=None):
                  for want, got in zip(expected, observed)]
     passed = sum(not case['problems'] for case in cases)
     return {'schema': 'flint.spring-acceptance/1', 'app': name, 'implementation': implementation or 'custom',
-            'start': start, 'wire': wire, 'golden_sha256': sha256(golden_path(name)), 'cases': cases,
+            'start': start, 'extra_args': list(extra_args), 'binary': str(binary) if binary else None, 'wire': wire, 'golden_sha256': sha256(golden_path(name)), 'cases': cases,
             'passed': passed, 'total': len(cases), 'success': passed == len(cases), 'seconds': seconds}
 
 
@@ -468,6 +468,7 @@ def main(argv=None):
     sub.add_parser('check-registry')
     p = sub.add_parser('gc-matrix'); p.add_argument('app'); p.add_argument('--output', type=Path, required=True)
     p.add_argument('--smoke', action='store_true'); p.add_argument('--setting', action='append')
+    p.add_argument('--binary', help='a stand-in executable for harness checks; never evidence')
     args = parser.parse_args(argv)
     names = getattr(args, 'apps', None) or list(registry()['apps'])
 

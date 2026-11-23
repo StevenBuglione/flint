@@ -1,0 +1,16 @@
+{
+  "schema": "flint.spring-gc-matrix/1",
+  "description": "The druntime GC settings Phase 1 measures on the Flint ports (ADR-030 section 4, 'GC'). Each setting is passed to the same binary as --DRT-gcopt, which druntime reads before main and removes from the arguments, so the code under test is identical across the matrix. profile:1 is added to every setting, so each run reports its collections and pause times at exit. The setting that wins is then baked into the port's binary through rt_options (extern(C) __gshared string[] rt_options = [\"gcopt=...\"]), which is how the shipped binary carries it. If p99 or RSS still loses to Go under every setting, the agreed fallback applies: a D collector with per-thread allocation caches, registered through druntime's GC interface.",
+  "profile": "profile:1",
+  "settings": {
+    "conservative": "gc:conservative",
+    "conservative-serial-mark": "gc:conservative parallel:0",
+    "precise": "gc:precise",
+    "precise-serial-mark": "gc:precise parallel:0",
+    "conservative-fork": "gc:conservative fork:1",
+    "precise-fork": "gc:precise fork:1",
+    "precise-large-pools": "gc:precise initReserve:64 minPoolSize:32 incPoolSize:16",
+    "precise-heap-factor-4": "gc:precise heapSizeFactor:4"
+  },
+  "apps": ["petclinic-rest", "gs-rest-service"]
+}
