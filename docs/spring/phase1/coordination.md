@@ -55,7 +55,7 @@ This file lets the Spring port sessions (ADR-030) keep moving when neither the o
 
 ## Measurement
 
-Timing evidence is taken only by the proof-harness watcher when venus has been quiet for 5 minutes (`tools/measure_queue.py`). Queue timing runs with proof-harness rather than measuring yourself. Byte sizes and template counts are deterministic and may be measured any time. On pluto, the macOS, linux-arm64-vm and dmd-arm64 sessions agree quiet windows among themselves.
+Timing evidence is taken only by the proof-harness watcher when venus has been quiet for 5 minutes (`tools/measure_queue.py`). While a timed run is in progress, `/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/MEASURING` exists. It holds the entry id, start time and pid. Hold compiles while it exists, and build freely when it doesn't: the watcher refuses to start a run while other sessions' builds use CPU. Queue timing runs with proof-harness rather than measuring yourself. Byte sizes and template counts are deterministic and may be measured any time. On pluto, the macOS, linux-arm64-vm and dmd-arm64 sessions agree quiet windows among themselves.
 
 ## Work queue
 

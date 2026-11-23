@@ -26,6 +26,9 @@ The window is checked before every measuring step and again after it, and both s
 the processes found, go into the receipt. A step that ends in a busy window is recorded as such and not reported
 as evidence. `--force-busy` measures anyway and marks the receipt `busy`, for harness checks only.
 
+While a measurement runs, .flint/measure/MEASURING holds its entry id, start time and pid; other sessions hold
+their compiles while it exists (docs/spring/phase1/coordination.md, "Measurement").
+
 Builds happen in detached worktrees under .flint/measure/worktrees/<commit> with their own native prefix; the
 shared .native is never written. Raw outputs and every attempt go to .flint/measure/results/<id>/ (attempts.jsonl); the entry file changes only
 when a run counts as evidence, which receives its receipt and status done.
@@ -47,6 +50,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 QUEUE = ROOT / 'benchmarks' / 'spring' / 'queue'
 WORK = ROOT / '.flint' / 'measure'
+LOCK = WORK / 'MEASURING'
 BUSY_COMMANDS = {'dmd', 'ldc2', 'ldmd2', 'cargo', 'cmake', 'rustc', 'cc1', 'cc1plus', 'native-image', 'ninja',
                  'dub', 'mvn', 'gradle'}
 LOAD_LIMIT = 1.5
@@ -526,6 +530,10 @@ def run(entry, force_busy=False, smoke=False):
         log_attempt(entry, {'time': before['time'], 'outcome': 'not run: busy', 'problems': before['problems']})
         raise SystemExit(f"{entry['id']}: venus is busy: " + '; '.join(before['problems']))
     print(f"{entry['id']}: measuring ({entry['measure']['kind']})", flush=True)
+    # The signal other sessions watch: while MEASURING exists, a timed run is in progress and compiles would void it.
+    LOCK.parent.mkdir(parents=True, exist_ok=True)
+    LOCK.write_text(json.dumps({'id': entry['id'], 'started': now(), 'pid': os.getpid(),
+                                'results': str(outdir)}) + '\n')
     pin = entry['measure']['kind'] == 'startup'  # load_bench and measure_builds pin their own processes
     if pin:
         os.sched_setaffinity(0, set(LOAD_CPUS))
@@ -533,6 +541,7 @@ def run(entry, force_busy=False, smoke=False):
         with WindowSampler() as sampler:
             summary = KINDS[entry['measure']['kind']](entry, built, outdir, smoke)
     finally:
+        LOCK.unlink(missing_ok=True)
         if pin:
             os.sched_setaffinity(0, set(range(os.cpu_count())))
     # The load average at the end includes the measurement itself (a start-up run launches hundreds of processes),
