@@ -3,7 +3,7 @@
 
 A platform module is one repo: a set of flint:* packages that share one tag and resolve by platform version, never
 by minimal version selection. `platform.lock` in the flint repo pins every Flint repo; the `flint-dependencies`
-bill of materials (boot/dependencies/flint-dependencies.json, as spring-boot-dependencies) pins the coordinated
+bill of materials (flint-dependencies.json beside platform.lock, as spring-boot-dependencies) pins the coordinated
 set of artifacts for applications.
 
 Each repo also takes its slice of the native and peer locks: `policy/lock-partitions.json` lists, per repo, the
@@ -33,7 +33,7 @@ sys.path.insert(0, str(ROOT / 'tools'))
 from workspace import package_repos, repo_policy  # noqa: E402
 
 LOCK = ROOT / 'platform.lock'
-BOM = ROOT / 'boot' / 'dependencies' / 'flint-dependencies.json'
+BOM = ROOT / 'flint-dependencies.json'
 PARTITIONS = ROOT / 'policy' / 'lock-partitions.json'
 
 REGENERATE = ('run python3 tools/platform_modules.py --write and commit the result with the policy edit; after a '
@@ -123,9 +123,9 @@ def problems(root=ROOT):
     for repo, entry in sorted(lock['repos'].items()):
         if entry.get('source') != 'monorepo' and not entry.get('commit'):
             found.append(f'platform.lock: {repo} needs a commit, or source "monorepo" before the split')
-    path = Path(root) / 'boot' / 'dependencies' / 'flint-dependencies.json'
+    path = Path(root) / 'flint-dependencies.json'
     if not found and (not path.is_file() or json.loads(path.read_text(encoding='utf-8')) != bill_of_materials(root)):
-        found.append('boot/dependencies/flint-dependencies.json is stale: ' + REGENERATE)
+        found.append('flint-dependencies.json is stale: ' + REGENERATE)
     partitions = Path(root) / 'policy' / 'lock-partitions.json'
     if (Path(root) / 'policy' / 'native-lock.json').is_file() and (
             not partitions.is_file() or json.loads(partitions.read_text(encoding='utf-8')) != lock_partitions(root)):

@@ -117,8 +117,7 @@ class StructuralParityTests(unittest.TestCase):
                 shutil.copytree(ROOT / name, cls.base / name, ignore=ignore, symlinks=True)
         for name in ('dub.sdl', 'flint.toml', 'dscanner.ini', 'dfmt.ini', '.editorconfig', 'platform.lock'):
             shutil.copy2(ROOT / name, cls.base / name)
-        (cls.base / 'boot/dependencies').mkdir(parents=True, exist_ok=True)
-        shutil.copy2(ROOT / 'boot/dependencies/flint-dependencies.json', cls.base / 'boot/dependencies')
+        shutil.copy2(ROOT / 'flint-dependencies.json', cls.base / 'flint-dependencies.json')
         (cls.base / '.tools').symlink_to((ROOT / '.tools').resolve())
 
     @classmethod

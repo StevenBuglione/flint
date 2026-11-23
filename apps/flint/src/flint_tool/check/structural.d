@@ -271,16 +271,37 @@ private void checkBootLayers(const ref Home home, ref Report report)
                 continue;
             foreach (imported; scan.imports)
             {
-                const dependency = home.owner(imported);
-                if (dependency is null || dependency.name == library.name || declaredIn(library, dependency.name))
+                const owners = bootOwners(home, imported);
+                bool declared = owners.length == 0;
+                foreach (owner; owners)
+                    declared = declared || owner == library.name || declaredIn(library, owner);
+                if (declared)
                     continue;
                 report.add(at(diagnostic("FLINT-E0529", Severity.error,
-                        library.name ~ ": undeclared Boot-layer import " ~ imported, "declare flint:" ~ dependency.name
+                        library.name ~ ": undeclared Boot-layer import " ~ imported, "declare flint:" ~ owners[0]
                         ~ " for it in policy/boot.json and its dub.sdl, keeping framework -> boot -> autoconfigure"),
                         scan.file, 0));
             }
         }
     }
+}
+
+/// The packages that own `module_`, as tools/gates.py boot_owners: every Boot library whose module root it is
+/// under (until the pre-ADR-030 library retires, flint.boot has two, boot and boot-core), else the core owner.
+private string[] bootOwners(const ref Home home, string module_)
+{
+    import std.algorithm.searching : startsWith;
+
+    string[] found;
+    foreach (ref library; home.bootLibraries)
+    {
+        if (module_ == library.module_ || module_.startsWith(library.module_ ~ "."))
+            found ~= library.name;
+    }
+    if (found.length == 0)
+        if (auto dependency = home.owner(module_))
+            found ~= dependency.name;
+    return found;
 }
 
 private bool declaredIn(const ref imported!"flint_tool.home.policy".CorePackage library, string name)

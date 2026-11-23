@@ -238,7 +238,7 @@ The repo split (ADR-030; the Spring-port plan, section 7) adds platform modules.
    - **`FLINT_WORKSPACE`:** this names a `flint.workspace/1` file of local checkouts, which overrides those checkouts for development.
    - **The project lock:** outside the workspace, a project's `flint.lock` records each Flint package's `platform = "<repo>@<version>"`.
 4. **`flint-dependencies`, the bill of materials, as `spring-boot-dependencies`.**
-   - **The file:** `boot/dependencies/flint-dependencies.json` pins the coordinated set of `flint:*` artifacts and their platform versions for applications.
+   - **The file:** `flint-dependencies.json`, next to `platform.lock` in the `flint` repo, pins the coordinated set of `flint:*` artifacts and their platform versions for applications.
    - **How it is kept current:** `tools/platform_modules.py --write` generates it from policy and `platform.lock`, and `--check` fails when it is stale or when `platform.lock` misses a repo. The structural gate (`tools/gates.py` and `flint check`) fails while it or `policy/lock-partitions.json` is stale (FLINT-E0534). Both outputs are deterministic, so a policy edit regenerates them in the same commit and a rebase settles a conflict by regenerating.
 5. **Workspaces.**
    - **The file:** a `flint.workspace/1` file pins each repo's checkout and commit.

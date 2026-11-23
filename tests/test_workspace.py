@@ -95,20 +95,20 @@ class PlatformModuleTests(unittest.TestCase):
     def test_platform_lock_covers_every_repo_and_the_bill_of_materials_is_current(self):
         import platform_modules as module
         self.assertEqual(module.problems(), [])
-        bom = json.loads((ROOT / 'boot/dependencies/flint-dependencies.json').read_text())
+        bom = json.loads((ROOT / 'flint-dependencies.json').read_text())
         self.assertEqual(bom['artifacts']['flint:starter-web'], {'repo': 'boot', 'version': pinned('boot')})
         self.assertEqual(bom['artifacts']['flint:arena'], {'repo': 'flint', 'version': pinned('flint')})
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            for name in ('policy', 'boot/dependencies'):
+            for name in ('policy',):
                 (root / name).mkdir(parents=True)
             for name in ('packages.json', 'boot.json', 'repos.json', 'platform.toml'):
                 (root / 'policy' / name).write_text((ROOT / 'policy' / name).read_text())
             (root / 'platform.lock').write_text((ROOT / 'platform.lock').read_text())
             stale = dict(bom, artifacts=dict(bom['artifacts']))
             del stale['artifacts']['flint:engine-web']
-            (root / 'boot/dependencies/flint-dependencies.json').write_text(json.dumps(stale))
-            self.assertEqual(module.problems(root), ['boot/dependencies/flint-dependencies.json is stale: '
+            (root / 'flint-dependencies.json').write_text(json.dumps(stale))
+            self.assertEqual(module.problems(root), ['flint-dependencies.json is stale: '
                                                      + module.REGENERATE])
             self.assertIn('python3 tools/platform_modules.py --write', module.REGENERATE)
             self.assertIn('rebase', module.REGENERATE)
@@ -201,7 +201,6 @@ class ExtractionTests(unittest.TestCase):
         self.assertEqual(layout('framework/jakarta-annotation', 'framework'), 'flint-jakarta-annotation')
         self.assertEqual(layout('boot/core/flint-boot', 'boot'), 'core/flint-boot')
         self.assertEqual(layout('boot/boot', 'boot'), 'legacy/flint-boot')
-        self.assertEqual(layout('boot/dependencies', 'boot'), 'platform/flint-boot-dependencies')
         self.assertEqual(layout('boot/actuator', 'boot'), 'module/flint-boot-actuator')
         self.assertEqual(layout('starters/starter', 'boot'), 'starter/flint-boot-starter')
         self.assertEqual(layout('starters/web', 'boot'), 'starter/flint-boot-starter-web')

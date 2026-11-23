@@ -24,7 +24,7 @@ string[] platformOutputProblems(const ref Home home)
     string[string] owners;
     if (!collectOwners(home.root, owners, problems))
         return problems;
-    const bom = buildPath("boot", "dependencies", "flint-dependencies.json");
+    const bom = "flint-dependencies.json";
     if (!bomCurrent(home, owners, bom))
         problems ~= bom ~ " is stale: " ~ regenerate;
     if (exists(buildPath(home.root, "policy", "native-lock.json")))

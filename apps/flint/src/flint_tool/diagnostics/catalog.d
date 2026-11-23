@@ -386,7 +386,7 @@ immutable CodeInfo[] catalog = [
             ~ "platform modules). Fetch the pinned checkouts once per platform.lock change.",
             "python3 tools/platform_modules.py --fetch"),
     CodeInfo("FLINT-E0534", ExitCode.user, "the platform-module outputs are stale",
-            "The bill of materials (boot/dependencies/flint-dependencies.json) and the lock partitions "
+            "The bill of materials (flint-dependencies.json) and the lock partitions "
             ~ "(policy/lock-partitions.json) are generated from policy and platform.lock. A policy edit "
             ~ "regenerates them in the same commit; after a rebase that touches policy, regenerate them again. They "
             ~ "are deterministic, so regenerating settles any conflict.",

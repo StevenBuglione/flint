@@ -10,7 +10,6 @@
     ["boot/module", "module"],
     ["boot/platform", "platform"],
     ["boot/starter", "starter"],
-    ["boot/dependencies", "platform/flint-boot-dependencies"],
     ["boot/boot", "legacy/flint-boot"],
     ["boot/", "module/flint-boot-"],
     ["starters/starter", "starter/flint-boot-starter"],
