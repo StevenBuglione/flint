@@ -152,6 +152,7 @@ Status: proposed by the Milestone 10 implementation, for the project owner's rev
    - **How it reads:** entities therefore keep `Text` columns in the request arena, and a CRUD handler passes `context.arena` and returns the entity within the request.
    - **Conversion helpers:** `toString(arena, text)` and `toText(arena, value)` convert at the edges.
    - **Revisit:** whether flint:data should gain GC-owned `string` columns is a question for the owner.
+   - **Decided (ADR-030 section 4):** entities use GC-owned `string` fields; the engine converts at the edges.
 
 5. **Restarts no longer fail on the port.**
    - **The fault:** an application killed and started again at once failed with "could not bind listener" in about 5 of 8 tries, even with `SO_REUSEADDR`. The reactor's io_uring keeps the old listener alive until the kernel finishes the ring's teardown, after the process is reaped.

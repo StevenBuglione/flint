@@ -2,6 +2,8 @@
 
 Status: accepted by the project owner on 2026-11-22.
 
+Partly superseded by [ADR-030](ADR-030-flint-is-a-spring-port.md) (2026-11-23): Spring's names now apply wherever this ADR chose different ones (the names here stay as aliases), proxies are generated subclasses with Spring's semantics, and user code never sees the request arena.
+
 ## Context
 
 The project owner's direction: a Java developer should open a Flint application and immediately feel that it is "just Spring Boot, in D". That covers the entry point (`@FlintApplication`, as `@SpringBootApplication`), the annotations, the conventions, the configuration keys and the test style.

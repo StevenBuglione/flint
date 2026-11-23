@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Flint becomes a port of Spring (ADR-030): Spring's public names with "Spring" replaced by "Flint", a repository family mirroring spring-projects, a Java → D API mapping rulebook (`docs/spring/api-mapping.md`) and an upstream licence matrix (`policy/upstream-licences.json`). The roadmap gains Milestones 13–15 for the port, and Milestone 10's remaining starter work is superseded.
 - Milestone 10, in progress (ADR-028):
   - flint:di gains compile-time conditional registration: `@ConditionalOnConfig`, `@ConditionalOnMissingBean` and `AutoConfiguration` lists, driven by `config/application.toml`.
   - Starters live under `starters/` and are added with `flint add`:
