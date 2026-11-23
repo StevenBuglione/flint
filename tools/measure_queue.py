@@ -401,7 +401,9 @@ def private_tools(tools, linker, fork=False, checkout=None, logs=None):
     toolchain other sessions use is never changed."""
     shared = shared_tools()
     tools.mkdir()
-    private = {'dmd2', 'flint-toolchain.json'} | ({'flint-fork-build'} if fork else set())
+    # The fork build extracts the pinned LDC into this directory again; a link to the shared extraction would point
+    # outside it, which tarfile's data filter refuses, so the archive is linked and the extraction stays private.
+    private = {'dmd2', 'flint-toolchain.json'} | ({'flint-fork-build', 'ldc2-1.43.0-linux-x86_64'} if fork else set())
     for entry in shared.iterdir():
         if entry.name in private:
             if not fork and entry.name == 'dmd2':
@@ -417,6 +419,8 @@ def private_tools(tools, linker, fork=False, checkout=None, logs=None):
                                         '--destination', str(tools)], cwd=checkout, env=toolchain_environment(),
                                        stdout=stream, stderr=subprocess.STDOUT)
         if completed.returncode:
+            # A half-made toolchain would be taken as ready by the next prepare (it checks only that .tools exists).
+            shutil.rmtree(tools)
             raise SystemExit(f'building the DMD fork for {checkout} failed; see {log}')
         return  # install_toolchains configures the pinned mold on Linux x86-64 itself (4112de26)
     sys.path.insert(0, str(ROOT / 'tools'))
