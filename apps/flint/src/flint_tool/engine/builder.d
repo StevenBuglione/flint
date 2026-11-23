@@ -152,10 +152,13 @@ EnvironmentRecord[] influentialEnvironment()
     import std.process : environment;
 
     EnvironmentRecord[] records;
-    foreach (name; [
+    string[] names = [
         "FLINT_DMD_SERVER", "FLINT_DUB_PIPELINE", "FLINT_DMD_DIRECT_LINK", "FLINT_LINK_THREADS", "CC",
         "LD"
-    ])
+    ];
+    version (Windows)
+        names ~= "LINKCMD64"; // Selects DMD's linker: the pinned lld-link instead of link.exe (ADR-026).
+    foreach (name; names)
     {
         const value = environment.get(name, null);
         if (value !is null)

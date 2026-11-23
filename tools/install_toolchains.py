@@ -571,8 +571,8 @@ LLVM_WINDOWS_ROOT = 'clang+llvm-22.1.8-x86_64-pc-windows-msvc'
 
 
 def install_lld_link(destination):
-    """Extract only lld-link.exe from the pinned LLVM Windows release: DMD links dev builds with it through
-    LINKCMD64, since a full link with a PDB takes LLD a third of link.exe's time (ADR-026)."""
+    """Extract only lld-link.exe from the pinned LLVM Windows release. LINKCMD64 makes DMD link with it: a cold link
+    with a PDB takes LLD a fifth of link.exe's time, though link.exe's incremental links are faster (ADR-026)."""
     binary = destination / LLVM_WINDOWS_ROOT / 'bin' / 'lld-link.exe'
     if not binary.is_file():
         install(LLVM_WINDOWS_ARCHIVE, destination, keep=lambda name: name == LLVM_WINDOWS_ROOT + '/bin/lld-link.exe')
@@ -585,21 +585,35 @@ def install_lld_link(destination):
             'sha256': LOCK['assets'][LLVM_WINDOWS_ARCHIVE]['sha256'], 'lld_link_sha256': sha256_file(binary)}
 
 
-def configure_dmd_lld_link(bin_dir, destination):
-    """Make the pinned lld-link DMD's 64-bit linker on Windows (ADR-025 section 4a, ADR-026).
+# DMD's development builds on Windows link the C runtime DLL (ADR-026). The static UCRT carries 33 MB of CodeView that
+# every /DEBUG link merges into the PDB; its import library carries none. ucrt.lib is named explicitly because lld-link
+# otherwise resolves __acrt_iob_func to druntime's /alternatename fallback before it loads the UCRT import library.
+WINDOWS_DMD_CRT_FLAGS = ('-mscrtlib=msvcrt', '-L/DEFAULTLIB:ucrt.lib')
 
-    Of the linkers that keep file-and-line stack traces, LLD writes the complete PDB fastest. sc.ini's LINKCMD64 takes
-    precedence over the environment, so flint, DUB and the measurement tools all link the same way. The path is
-    relative to %@P%, sc.ini's own directory. Idempotent."""
+
+def configure_dmd_windows(bin_dir, destination):
+    """Configure DMD's 64-bit builds on Windows through sc.ini (ADR-025 section 4a, ADR-026). Idempotent.
+
+    - The C runtime is the DLL (WINDOWS_DMD_CRT_FLAGS), added to the 64-bit DFLAGS.
+    - The linker stays MSVC link.exe, whose incremental links give the fastest edit loop. The pinned lld-link is
+      installed beside DMD for the faster cold link; LINKCMD64 in the environment selects it, and flint records
+      that variable in each build receipt. sc.ini sets no LINKCMD64, since an sc.ini value would override it."""
     linker = install_lld_link(destination)
     config = bin_dir / 'sc.ini'
-    lines = [line for line in config.read_text().split('\n') if not line.startswith('LINKCMD64=')]
+    lines = config.read_text().split('\n')
     if '[Environment64]' not in lines:
         raise ValueError('Missing [Environment64] in the pinned sc.ini')
-    relative = os.path.relpath(Path(linker['bin']) / 'lld-link.exe', bin_dir)
-    lines.insert(lines.index('[Environment64]') + 1, 'LINKCMD64=%@P%\\' + relative)
-    config.write_text('\n'.join(lines))
-    return {'driver': 'lld-link', 'version': linker['version'], 'sha256': linker['lld_link_sha256']}
+    common = next((line for line in lines if line.startswith('DFLAGS=')), None)
+    if common is None:
+        raise ValueError('Missing DFLAGS in the pinned sc.ini')
+    section = lines.index('[Environment64]')
+    following = next((i for i in range(section + 1, len(lines)) if lines[i].startswith('[')), len(lines))
+    body = [line for line in lines[section + 1:following] if not line.startswith(('LINKCMD64=', 'DFLAGS='))]
+    body.insert(0, ' '.join([common, *WINDOWS_DMD_CRT_FLAGS]))
+    config.write_text('\n'.join(lines[:section + 1] + body + lines[following:]))
+    return {'driver': 'link.exe', 'crt': 'msvcrt', 'dflags': list(WINDOWS_DMD_CRT_FLAGS),
+            'lld_link': {'version': linker['version'], 'sha256': linker['lld_link_sha256'],
+                         'path': str(Path(linker['bin']) / 'lld-link.exe')}}
 
 
 SANITIZER_RUNTIME = 'ldc-1.43.0-sanitizer-runtime'
@@ -729,7 +743,7 @@ def main():
         print(json.dumps(install_musl_sysroot(a.destination)))
         return
     if a.compiler=='lld':
-        if (osname,arch)!=('Windows','x86_64'):raise SystemExit('the pinned lld-link is the Windows dev linker (ADR-026)')
+        if (osname,arch)!=('Windows','x86_64'):raise SystemExit('the pinned lld-link is the opt-in Windows dev linker (ADR-026)')
         print(json.dumps(install_lld_link(a.destination)))
         return
     if a.compiler in ('clang','ldc-sanitizer-runtime'):
@@ -745,8 +759,8 @@ def main():
         return
     if a.compiler=='dmd':
         if (osname,arch)==('Windows','x86_64') and not a.musl:
-            # ADR-026: upstream DMD by default (--flint-fork adds the warm worker pool), linking with the pinned lld-link.
-            if a.dmd_linker:raise SystemExit('--dmd-linker selects an ELF linker; Windows DMD links with the pinned lld-link (ADR-026)')
+            # ADR-026: upstream DMD by default (--flint-fork adds the warm worker pool), with the DLL C runtime.
+            if a.dmd_linker:raise SystemExit('--dmd-linker selects an ELF linker; on Windows, LINKCMD64 selects the pinned lld-link (ADR-026)')
             name='dmd.2.114.0.windows.7z'
         elif (osname,arch)!=('Linux','x86_64') or a.musl:raise SystemExit('DMD development pin supports Linux x86_64 glibc and Windows x86_64; use LDC for this target')
         else:name='dmd.2.114.0.linux.tar.xz'
@@ -772,7 +786,7 @@ def main():
     if a.compiler=='dmd' and osname!='Windows':
         quote_dmd_conf(binary_path)  # The Windows release's sc.ini already quotes its %@P% paths.
     elif a.compiler=='dmd':
-        receipt['linker'] = configure_dmd_lld_link(binary_path, a.destination)
+        receipt['linker'] = configure_dmd_windows(binary_path, a.destination)
     if linker:
         configure_dmd_linker(binary_path, linker)
         receipt['linker'] = linker

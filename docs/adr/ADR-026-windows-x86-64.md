@@ -59,17 +59,17 @@ The DUB shared by `flint` and by `dub test` builds all 16 stage-2 packages on bo
 
 A traced cold pipeline build spends about 0.06 s planning, 0.31 s compiling 61 modules in 9 parallel jobs (0.97 s sequentially), 5 ms archiving, and about 0.75 s linking. The sequential build linked in a similar time, which the faster compile phase now exposes.
 
-#### Linking: the pinned `lld-link` (ADR-025 section 4a)
+#### Linking: the DLL C runtime and `link.exe` (ADR-025 section 4a)
 
-The cold link is slow because it is a full link with debug information. The dev profile's `-g` makes DMD pass `/DEBUG`, and Windows debug information means a PDB, whose type records the linker merges. With the previous `.ilk` and `.pdb` present, `link.exe` links incrementally in about 0.03 s; a cold build never has them.
+A cold link is slow because it is a full link with debug information. The dev profile's `-g` makes DMD pass `/DEBUG`, and on Windows debug information means a PDB, whose type records and symbols the linker merges. With the previous `.ilk` and `.pdb` present, `link.exe` links incrementally; a cold build never has them.
 
 `install_toolchains.py --compiler lld` installs the pinned `lld-link` 22.1.8 on Windows: it streams the official `clang+llvm-22.1.8-x86_64-pc-windows-msvc.tar.xz` (GitHub release digest), keeps only `bin/lld-link.exe` and checks its version. The `lld-link` in DMD's Windows release is LLVM 9, which cannot link against the current MSVC runtime (`__guard_eh_cont_table`).
 
-ADR-025 section 4a names two candidates besides today's full-PDB `link.exe`. Full links of the same `bench-cli` inputs into a new directory, median of five, each candidate replacing only the `/DEBUG` option of DMD's link command:
+**The candidates.** ADR-025 section 4a names two candidates besides the full-PDB `link.exe`. Full links of the same `bench-cli` inputs into a new directory, median of five, each replacing only the `/DEBUG` option of DMD's link command:
 
 | Linker | Link |
 | --- | ---: |
-| `link.exe /DEBUG` (full PDB, the previous default) | 0.686 s |
+| `link.exe /DEBUG` (full PDB) | 0.686 s |
 | `link.exe /DEBUG:FASTLINK` | 0.681 s |
 | `link.exe /DEBUG:FASTLINK /INCREMENTAL` | 0.683 s |
 | `lld-link /DEBUG` | 0.261 s |
@@ -78,54 +78,90 @@ ADR-025 section 4a names two candidates besides today's full-PDB `link.exe`. Ful
 | `lld-link /DEBUG:GHASH /threads:8` | 0.251 s |
 | `link.exe /DEBUG:NONE` (reference, no PDB) | 0.137 s |
 
-FASTLINK saves nothing here: `link.exe` still spends the time with a partial PDB. GHASH and the thread count are within noise. DMD writes no precomputed type hashes (`.debug$H`), so LLD computes them itself, and the VM has 4 vCPUs. LLD's `/time` puts 72 ms in reading inputs, mostly `phobos64.lib`, and 117 ms in writing the PDB.
+Every candidate qualifies: a project whose `main` and whose unittest throw an uncaught exception prints `app.d(7)` for the throw and the caller's line, in both `flint run` and `flint test`. For a while `lld-link` was the default, since it gives the fastest cold build. Its incremental build was worse, though (0.429 s against `link.exe`'s 0.237 s), because LLD always links in full.
 
-Every candidate qualifies. A project whose `main` and whose unittest throw an uncaught exception prints `app.d(7)` for the throw and the caller's line, in both `flint run` and `flint test`, with each linker. `lld-link` gives the fastest cold build, so DMD on Windows now links with it. `install_toolchains.py --compiler dmd` installs it beside DMD and writes `LINKCMD64=%@P%\..\..\..\clang+llvm-22.1.8-x86_64-pc-windows-msvc\bin\lld-link.exe` into DMD's `sc.ini`. An `sc.ini` value takes precedence over the environment, so flint, DUB and the measurement tools all link the same way. The installer's DMD receipt records the linker's version and hash. Its PDB is complete and self-contained, so `flint run --debug` needs no second link (decision 4). Release builds use LDC and are unchanged. `/DEBUG:GHASH` is not added, since it gains nothing measurable and would need a Windows-only flag in the shared profile.
+**What the PDB is made of.** LLD's `/summary` for that link:
+
+- inputs: 2,580 objects, 125 MB in all, read in 83 ms;
+- type records: 91,012, totalling 6.8 MB, merged into 17,536 TPI and 8,265 IPI records;
+- symbols: 110,777 module symbol records and 89,368 global symbol records;
+- PDB emission: 149 ms, of which 9 ms hashing types, 36 ms merging them, 47 ms merging symbols and 44 ms writing the file.
+
+A count of the COFF sections of every input shows where this comes from:
+
+- `phobos64.lib` (17,492 members) carries no CodeView at all;
+- Flint's libraries and `app.obj` carry 0.3 MB of `.debug$T`;
+- the static Microsoft C runtime that DMD links by default carries almost everything. `libucrt.lib` alone has 15.3 MB of `.debug$T` and 17.4 MB of `.debug$S`, and `libcmt.lib` has 2.8 MB of `.debug$S`, which refers to a type-server PDB.
+
+**The DLL C runtime.** DMD's `-mscrtlib=msvcrt` links the C runtime DLL instead, whose import libraries carry no CodeView. That link has:
+
+- 2,327 input objects, 53 MB in all;
+- 17,352 type records totalling 628 KB, all from D code;
+- 4,444 global symbol records;
+- 21 ms of PDB emission, within 71 ms of LLD time (0.097 s wall time).
+
+One fix is needed. `lld-link` resolves `__acrt_iob_func` to druntime's `/alternatename` fallback before it loads the UCRT import library, and the program then dies with an illegal instruction at start-up. `link.exe` searches every library first. Naming `ucrt.lib` on the command line fixes it.
+
+`install_toolchains.py --compiler dmd` therefore writes the 64-bit `DFLAGS` into DMD's `sc.ini`: the release's import paths, then `-mscrtlib=msvcrt -L/DEFAULTLIB:ucrt.lib`. An `sc.ini` value takes precedence over the environment, so flint, DUB and the measurement tools all build the same way. Executables built with DMD then need `vcruntime140.dll`, which the Visual Studio Build Tools install. Release builds use LDC and are unchanged. No Flint target builds a DLL with DMD; one would need `msvcrt.lib` named explicitly.
+
+**The rest of `link.exe`'s cold time** is not the PDB's content. With the DLL runtime, `/DEBUG`, `/DEBUG:FASTLINK` and `/INCREMENTAL:NO` all take 0.61 s, against 0.11 s for `/DEBUG:NONE`. `/time+` puts it all in pass 1, at 196 MB of private bytes. The cost grows with the number of object modules: a hello-world program (1,093 objects) pays 0.13 s for `/DEBUG`, `bench-cli` (2,327) pays 0.5 s. Nearly all of those objects are `phobos64.lib` members, one per function.
+
+**The default.** Until both builds beat Go, the default is the configuration with the best edit loop (the project owner's direction, relayed on 2026-11-22). That is `link.exe` with the DLL runtime: its incremental build beats Go. `sc.ini` sets no `LINKCMD64`. Setting `LINKCMD64` to the pinned `lld-link` in the environment selects the faster cold link, and flint records `LINKCMD64` among the influential variables of each build receipt. Both linkers write a complete, self-contained PDB, so `flint run --debug` needs no second link and no FASTLINK PDB is produced (decision 4).
+
+**What was ruled out:**
+
+- **Precomputed type hashes (`.debug$H`).** Hashing is 9 ms of LLD's 263 ms with the static runtime and 1 ms with the DLL runtime, so the DMD fork does not emit them.
+- **A type server, or less CodeView for template instances.** D code's 628 KB of type records merge in 1 ms, which leaves nothing to save.
+- **A druntime/Phobos DLL.** It carries no CodeView, but it would remove `link.exe`'s per-object cost for some 2,300 members. DMD ships no druntime or Phobos DLL for Windows, so that remains a lever for the cold build.
+- **Mixed linkers.** A cold build with `lld-link` and edits with `link.exe /INCREMENTAL` do not combine. `link.exe` patches only an `.ilk` it wrote itself, so the first edit would be a full `link.exe` link. Writing that `.ilk` in the background after a cold build would make the output depend on timing.
 
 `[profile.dev] debug = false` (decision 5) removes `-g`, `-gf`, `-gc`, `-gline-tables-only` and `-gdwarf=*` from the dev build. The build receipt lists it among the non-canonical reasons ("flint.toml turns off debug information (debug = false)"), and `flint run --debug` ignores it. `debug` is accepted only in `[profile.dev]`. On the VM it halves the trace project's executable (1.09 MB to 0.53 MB) and leaves no PDB, and an uncaught exception then shows only `app.d(7)` in its message.
 
-`bench-cli` on the VM, median of seven, with the Flint DUB pipeline and the upstream DMD:
-
-| Linker | Cold | Incremental | Go cold | Go incremental | Cold ratio | Incremental ratio |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| `link.exe`, full PDB (median of five) | 1.08 s | 0.237 s | 0.263 s | 0.271 s | 4.10 | 0.88 |
-| pinned `lld-link` (default) | 0.648 s | 0.429 s | 0.258 s | 0.239 s | 2.52 | 1.80 |
-
-The cold build loses 0.43 s, but the incremental build gains 0.19 s: LLD always does a full link, where `link.exe` would patch its `.ilk`. A traced build with `lld-link`:
-
-| Phase | Cold | Incremental |
-| --- | ---: | ---: |
-| DUB start-up and planning | 21 ms | 19 ms |
-| compiling (9 jobs on 4 vCPUs; the longest is `flint:config` at 322 ms) | 322 ms | 118 ms (`app.d`) |
-| archiving | 5 ms | 0 ms |
-| linking through DMD | 259 ms | 288 ms |
-| total | 0.64 s | 0.45 s |
-
 #### The compile-speed gate on Windows
 
-`tools/measure_builds.py --apps-only` measures ADR-025's gate on any tier-1 host, Windows included. It uses the full run's method: nine trials, a fresh workspace copy and an empty `DUB_HOME` per trial, the ADR-016 server priming before trial 0, and the first build without a server reported separately. For each app it times the dev build cold and after the canonical edit, and Go's build cold (a fresh clone of the standard-library-only primed cache) and after appending a declaration to `main.go`. It reports each ratio's median and bootstrap 99% upper bound (`tools/perf_stats.py`) against the 0.99 ceiling. On Windows a job object holding the build reports its peak committed memory, since there is no `/proc` to sample. Other changes:
+`tools/measure_builds.py --apps-only` measures ADR-025's gate on any tier-1 host, Windows included. It uses the full run's method:
+
+- nine trials;
+- a fresh workspace copy and an empty `DUB_HOME` per trial;
+- the ADR-016 server priming before trial 0;
+- the first build without a server, reported separately.
+
+For each app it times the dev build cold and after the canonical edit. For Go it times the build cold, from a fresh clone of the standard-library-only primed cache, and after appending a declaration to `main.go`. It reports each ratio's median and bootstrap 99% upper bound (`tools/perf_stats.py`) against the 0.99 ceiling. On Windows a job object holding the build reports its peak committed memory, since there is no `/proc` to sample. Other changes:
 
 - the native receipt is the host's (`windows-x86_64` here);
 - `--app` restricts the run to one app, and the gate then reports failing;
 - the full Linux run is unchanged.
 
-On the VM with the pinned `lld-link` (`bench-cli` only, since `bench-rest` needs the IOCP reactor):
+`bench-cli` on the VM, nine trials each. `bench-rest` needs the IOCP reactor.
 
-| `bench-cli` | Flint | Go | Median ratio | 99% upper bound |
-| --- | ---: | ---: | ---: | ---: |
-| cold | 0.656 s | 0.250 s | 2.62 | 2.79 |
-| incremental | 0.436 s | 0.244 s | 1.79 | 1.94 |
+| Configuration | First build | Cold | Incremental | Go cold | Go incremental | Cold ratio (99% upper) | Incremental ratio (99% upper) |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `lld-link`, static runtime | 0.678 s | 0.656 s | 0.436 s | 0.250 s | 0.244 s | 2.62 (2.79) | 1.79 (1.94) |
+| `lld-link`, DLL runtime (opt-in) | 0.506 s | 0.492 s | 0.258 s | 0.249 s | 0.247 s | 1.97 (2.08) | 1.05 (1.12) |
+| `link.exe`, DLL runtime (default) | 1.177 s | 1.014 s | 0.214 s | 0.257 s | 0.239 s | 3.95 (4.18) | **0.89 (0.95), passes** |
 
-The first build without a server took 0.678 s. The gate fails.
+The incremental build beats Go. The cold build does not, so the gate fails.
 
-Cold-build levers, each measured on its own with traced builds:
+Traced builds with the DLL runtime, where planning takes about 20 ms and archiving 5 ms:
+
+| | Compiling | Linking | Total |
+| --- | ---: | ---: | ---: |
+| `lld-link`, cold | 0.31–0.36 s (9 jobs; the longest is `flint:config`) | 0.11 s | 0.47–0.53 s |
+| `lld-link`, incremental | 0.11 s (`app.d`) | 0.11 s | 0.26–0.29 s |
+| `link.exe`, cold | 0.31–0.35 s | 0.65 s | 1.04 s |
+| `link.exe`, incremental | 0.11 s | 0.07 s | 0.218 s |
+
+Other levers, each measured on its own:
 
 | Lever | Effect |
 | --- | --- |
-| no debug information at all (not allowed; the bound of any CodeView work) | compile phase about 5% shorter (`app.d` 0.21 s to 0.19 s), link 0.27 s to 0.12 s; cold 0.69 s to 0.52 s, incremental 0.45 s to 0.26 s |
-| linking without the DMD driver (a cached `lld-link` command) | 0.299 s to 0.277 s per link |
+| no debug information at all, static runtime (not allowed; the bound of any CodeView work) | compile phase about 5% shorter, link 0.27 s to 0.12 s |
+| linking without the DMD driver (a cached link command) | about 22 ms per link (0.299 s to 0.277 s with `lld-link`) |
 
-Even without any debug information the cold build takes twice Go's time. The compile phase dominates: about 0.35 s for the 61 modules of seven Flint packages in 9 jobs on 4 vCPUs (0.97 s of work in sequence), where Go compiles only the app's own package against a primed standard library.
+The cold build's remaining cost has two parts:
+
+- **`link.exe`'s per-object PDB cost.** A druntime/Phobos DLL, or fewer and larger runtime objects, would cut it.
+- **The compile phase.** About 0.35 s, for the 61 modules of seven Flint packages in 9 jobs on 4 vCPUs (0.97 s of work in sequence). Go compiles only the app's own package against a primed standard library.
 
 #### The compile server: a warm worker pool (experimental, opt-in)
 
