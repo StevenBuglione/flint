@@ -681,7 +681,7 @@ private string[] closureImports(scope const string[] roots)
     return flags;
 }
 
-@("gs-rest-service against the real web annotations: the table is Spring's and the code compiles")
+@("gs-rest-service against the real web and Boot annotations: the table is Spring's and the code compiles")
 unittest
 {
     import std.algorithm.iteration : map;
@@ -694,11 +694,9 @@ unittest
     const project = copyFixture("gs-rest-service");
     scope (exit)
         remove(project);
-    // The real web stack. Boot comes from the fixture annotations until framework/web leaves p1-interim
-    // (coordination item 1): today Boot's flint:core and web's p1-interim both declare flint.core.annotation.
-    auto imports = closureImports(["framework/web", "framework/webmvc"]) ~ [
-        "-I" ~ buildPath(repositoryRoot(), "tests", "aot", "annotations")
-    ];
+    auto imports = closureImports([
+        "framework/web", "framework/webmvc", "boot/core/flint-boot-autoconfigure"
+    ]);
     AotRequest request;
     request.root = project;
     request.compiler = compiler();
