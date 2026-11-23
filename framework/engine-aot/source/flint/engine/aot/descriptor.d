@@ -1326,10 +1326,7 @@ private Any fieldGet(T, size_t i)(ref Any self) @safe
         return instance is null ? Any.init : Any.of(instance.tupleof[i]);
     }
     else
-    {
-        auto box = self.box!T;
-        return box is null ? Any.init : Any.of(box.value.tupleof[i]);
-    }
+        return self.holds!T && !self.isNull ? Any.of(self.get!T.tupleof[i]) : Any.init;
 }
 
 private void fieldSet(T, size_t i)(ref Any self, Any value) @safe
@@ -1345,9 +1342,8 @@ private void fieldSet(T, size_t i)(ref Any self, Any value) @safe
     }
     else
     {
-        auto box = self.box!T;
-        if (box !is null)
-            box.value.tupleof[i] = value.get!F;
+        if (self.holds!T && !self.isNull)
+            self.get!T.tupleof[i] = value.get!F; // by ref: into the box or the inline struct
     }
 }
 
@@ -1359,10 +1355,7 @@ private Any getterGet(T, string member)(ref Any self) @safe
         return instance is null ? Any.init : Any.of(__traits(getMember, instance, member)());
     }
     else
-    {
-        auto box = self.box!T;
-        return box is null ? Any.init : Any.of(__traits(getMember, box.value, member)());
-    }
+        return self.holds!T && !self.isNull ? Any.of(__traits(getMember, self.get!T, member)()) : Any.init;
 }
 
 private void setterSet(T, string member)(ref Any self, Any value) @safe
@@ -1374,7 +1367,7 @@ private void setterSet(T, string member)(ref Any self, Any value) @safe
     }
     else
     {
-        if (auto box = self.box!T)
-            __traits(getMember, box.value, member)(value.get!(SetterType!(T, member)));
+        if (self.holds!T && !self.isNull)
+            __traits(getMember, self.get!T, member)(value.get!(SetterType!(T, member)));
     }
 }

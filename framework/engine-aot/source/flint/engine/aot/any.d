@@ -3,16 +3,20 @@
 
 An `Any` holds a value and its type's canonical name (`flint.engine.aot.name`). Class and interface references
 are stored as references; booleans, integers, characters, integral enums and floating-point values inline in a
-64-bit slot; strings inline as a slice; anything else (structs, other enums, arrays, maps) in a GC `Box`. It never
-uses `std.variant`, and every access is `@safe`: the reference slots never overlap the bit slot.
+64-bit slot; strings inline as a slice; plain structs of at most 32 bytes (no postblit, copy constructor or
+destructor) inline in the same storage, viewed as four pointer-typed words the GC scans; anything else (larger or
+elaborate structs, other enums, arrays, maps) in a GC `Box`. It never uses `std.variant`; the raw view of an inline
+struct is `flint.engine.aot.sys.inline`'s.
 
-`get!T` returns by `ref` for boxed structs, so generated code and binders can update a boxed struct in place, and
+`get!T` returns by `ref` for structs, boxed or inline, so generated code and binders can update one in place, and
 by value for class, interface, scalar, string, array and map `T`, where a reference would alias a cast, reinterpret
-inline bits, or point at a null array that has no box.
+inline bits, or point at a null array that has no box. A copy of an `Any` holding an inline struct holds its own
+copy of the struct (a boxed one shares the box).
 +/
 module flint.engine.aot.any;
 
 import flint.engine.aot.name : typeNameOf;
+import flint.engine.aot.sys.inline : inlineValue, isInlineable, storeInline;
 
 @safe:
 
@@ -73,6 +77,7 @@ private enum Slot : ubyte
     character,
     text,
     enumeration,
+    inlined,
 }
 
 /// How `Any` stores and converts values of a type.
@@ -138,15 +143,20 @@ private template categoryOf(U)
 struct Any
 {
     private string typeName_;
+    // The value fields: 32 contiguous bytes, which also hold an inline struct (flint.engine.aot.sys.inline).
     private Object object_;
     private union
     {
         long long_;
         double double_;
+        private void* pointerWord_; // never read: makes the GC treat this word as a pointer for an inline struct
     }
 
     private string string_;
     private Slot slot_;
+
+    static assert(long_.offsetof == object_.offsetof + 8 && string_.offsetof == object_.offsetof + 16
+            && string_.offsetof + string.sizeof - object_.offsetof == 32, "Any's value fields must be contiguous");
 
     /// Wrap a copy of `value`, recording `T`'s canonical name.
     static Any of(T)(T value)
@@ -183,6 +193,12 @@ struct Any
                 if (value !is null)
                     result.object_ = new Box!U(value);
                 result.slot_ = Slot.box;
+            }
+            else static if (category == Category.boxed && isInlineable!U)
+            {
+                const U copy = value;
+                storeInline(result.object_, copy);
+                result.slot_ = Slot.inlined;
             }
             else static if (category == Category.boxed)
             {
@@ -246,8 +262,9 @@ struct Any
             return object_ is null;
         case Slot.text:
             return string_ is null;
-        case Slot.integral, Slot.unsigned, Slot.floating, Slot.boolean, Slot.character, Slot.enumeration:
-            return false;
+        case Slot.integral, Slot.unsigned, Slot.floating, Slot.boolean, Slot.character,
+                Slot.enumeration, Slot.inlined:
+                return false;
         }
     }
 
@@ -306,6 +323,11 @@ struct Any
     {
         if (categoryOf!U == Category.collection && slot_ == Slot.empty)
             return true;
+        static if (isInlineable!U)
+        {
+            if (slot_ == Slot.inlined)
+                return typeName_ == typeNameOf!U;
+        }
         if (slot_ != Slot.box || typeName_ != typeNameOf!U)
             return false;
         return (cast(const Box!U) object_) !is null || (categoryOf!U == Category.collection && object_ is null);
@@ -332,6 +354,11 @@ struct Any
 
     private ref inout(U) boxed(U)() inout return
     {
+        static if (isInlineable!U)
+        {
+            if (slot_ == Slot.inlined && typeName_ == typeNameOf!U)
+                return inlineValue!U(object_);
+        }
         auto box = slot_ == Slot.box && typeName_ == typeNameOf!U ? cast(inout(Box!U)) object_ : null;
         if (box is null)
             throw mismatch(typeNameOf!U);
@@ -377,7 +404,7 @@ struct Any
             return cast(U) long_;
     }
 
-    /// The box of a held value type, or null; used by descriptor accessors to write through.
+    /// The box of a held value type, or null (also for an inline struct: use `get!T`, which returns by `ref`).
     inout(Box!T) box(T)() inout pure nothrow @nogc
     {
         return slot_ == Slot.box ? cast(inout(Box!T)) object_ : null;
@@ -399,6 +426,9 @@ struct Any
             return string_ == other.string_;
         case Slot.reference, Slot.box:
             return object_ is other.object_;
+        case Slot.inlined:
+            // Word by word (unused bytes are zero): the same plain struct value.
+            return object_ is other.object_ && long_ == other.long_ && string_ is other.string_;
         case Slot.floating:
             return double_ == other.double_;
         case Slot.integral, Slot.unsigned, Slot.boolean, Slot.character, Slot.enumeration:
@@ -413,7 +443,7 @@ struct Any
             return hashOf(string_);
         if (slot_ == Slot.floating)
             return hashOf(double_);
-        if (slot_ == Slot.reference || slot_ == Slot.box)
+        if (slot_ == Slot.reference || slot_ == Slot.box || slot_ == Slot.inlined)
             return hashOf(typeName_);
         return hashOf(long_) ^ hashOf(typeName_);
     }
@@ -431,6 +461,8 @@ struct Any
             return string_;
         case Slot.reference, Slot.box:
             return object_ is null ? "null" : typeName_;
+        case Slot.inlined:
+            return typeName_;
         case Slot.enumeration:
             return typeName_ ~ "(" ~ decimal(long_) ~ ")";
         default:

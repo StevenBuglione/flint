@@ -684,3 +684,57 @@ unittest
     const ExceptionHandlerSpec spec;
     assert(spec.invokeArguments is null);
 }
+
+/// gs-rest-service's `Greeting`: a 24-byte record with a string, the shape of a typical handler result.
+private struct InlineGreeting
+{
+    long id;
+    string content;
+}
+
+/// Larger than `Any`'s 32 bytes of value storage: still boxed.
+private struct LargeRecord
+{
+    long[5] values;
+}
+
+unittest
+{
+    import flint.engine.aot.any : Any;
+
+    // An inline struct: no Box, the value and its type name round-trip, and get returns a reference into the Any.
+    static assert(Any.sizeof == 56, "Any keeps its size");
+    auto any = Any.of(InlineGreeting(1, "Hello, World!"));
+    assert(any.holds!InlineGreeting && !any.isNull && any.box!InlineGreeting is null);
+    assert(any.get!InlineGreeting == InlineGreeting(1, "Hello, World!"));
+    any.get!InlineGreeting.id = 2;
+    assert(any.get!InlineGreeting.id == 2);
+    // A copy holds its own value; equal values are equal Anys, with equal hashes.
+    auto copy = any;
+    copy.get!InlineGreeting.id = 3;
+    assert(any.get!InlineGreeting.id == 2 && copy.get!InlineGreeting.id == 3);
+    assert(Any.of(InlineGreeting(2, "Hello, World!")) == any && any != copy);
+    assert(Any.of(InlineGreeting(2, "Hello, World!")).toHash() == any.toHash());
+    // Negative: another type does not match; a large struct is boxed and shares its box between copies.
+    assert(!any.holds!LargeRecord && !Any.of(LargeRecord.init).holds!InlineGreeting);
+    auto large = Any.of(LargeRecord.init);
+    assert(large.box!LargeRecord !is null);
+    auto shared_ = large;
+    shared_.get!LargeRecord.values[0] = 9;
+    assert(large.get!LargeRecord.values[0] == 9);
+}
+
+unittest
+{
+    import flint.engine.aot.any : Any;
+
+    // Descriptor accessors read and write an inline struct in place.
+    auto descriptor = descriptorOf!InlineGreeting;
+    auto any = Any.of(InlineGreeting(1, "a"));
+    assert(descriptor.property("content").get(any).get!string == "a");
+    descriptor.property("id").set(any, Any.of(5L));
+    assert(any.get!InlineGreeting.id == 5);
+    auto created = descriptor.create();
+    descriptor.property("content").set(created, Any.of("made"));
+    assert(created.get!InlineGreeting.content == "made");
+}
