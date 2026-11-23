@@ -206,7 +206,22 @@ same fields for generated descriptors.
 | validation.ValidatorTests | 2 | 1 | 1: `supports` of a subclass needs the class hierarchy |
 | validation.beanvalidation SpringValidatorAdapterTests, ValidatorFactoryTests | 25 | 0 | 25: need Hibernate Validator and a `MessageSource`; the adapter is tested against a stub provider |
 
-Each test file lists its skipped Java tests and the reason. The beans and context test ports are in progress.
+| beans.factory.DefaultListableBeanFactoryTests | 190 | 67 | 123: properties/XML readers, property values and conversion, constructor arguments and reflective `autowire`/`createBean`, parent definitions, `FactoryBean`, factory methods, `@Priority`, `ResolvableType`, inner beans, serialization |
+| beans.factory.support.DefaultSingletonBeanRegistryTests | 3 | 3 | |
+| context.support.GenericApplicationContextTests | 42 | 14 | 28: `refreshForAot` and RuntimeHints, Spring 7 `BeanRegistrar`, `ApplicationStartup`, `setResourceLoader` |
+| context.annotation.AnnotationConfigApplicationContextTests | 36 | 16 | 20: classpath scanning, `BeanNameGenerator`, reflective constructor arguments, `FactoryBean`, `refreshForAot` |
+| context.event.ApplicationContextEventTests | 37 | 15 | 22: wildcard generics, task executors, AOP proxies, listener beans looked up by name per event, threads |
+| context.event.PayloadApplicationEventTests | 14 | 12 | 2: `ResolvableType` introspection |
+| context.support.DefaultLifecycleProcessorTests | 24 | 20 | 4: `FactoryBean`, bootstrap executor, Spring 7 `restart`/`pause` |
+| context.event.AnnotationDrivenEventListenerTests | 35 | 12 | 23: `@EventListener` replies, AOP and scoped proxies, `@Async`, SpEL conditions, XML |
+
+Each test file lists its skipped Java tests and the reason.
+
+Known gaps the container ports surfaced: an `@EventListener` result is not published as a reply
+(`EventListenerSpec.invoke` returns void); listener beans are registered once their singleton exists, not looked up
+by name per event; a failed generated injection is a `BeanCreationException`, not an `UnsatisfiedDependencyException`;
+the AOT bean record has no `autowireCandidate`; `@Priority`, `@Order` on listener classes, listener ids and
+`FactoryBean` are not implemented.
 
 ## Rulebook proposals
 
