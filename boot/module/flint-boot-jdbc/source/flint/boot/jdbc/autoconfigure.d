@@ -13,6 +13,10 @@
 // its driver when it is linked). Flint's pool finds its driver by URL rather than taking the class Boot determines, so
 // the data source checks at creation, as Hikari's setDriverClassName does, that the class is registered or that a
 // registered driver accepts the URL; the message names the package to add.
+// Flint links only the drivers an application declares (performance playbook S-1): `PostgresJdbcDriverAutoConfiguration`
+// and `SqliteJdbcDriverAutoConfiguration` (Flint additions) enable the engine driver when `flint:postgresql` or
+// `flint:sqlite-jdbc` is present, and the data source takes their `Driver` beans so that they exist before its check;
+// engine-jdbc's FlintDriver accepts only the URLs of enabled drivers.
 
 /// `org.springframework.boot.jdbc.autoconfigure`: the JDBC configuration properties. `flint.datasource.hikari.*` (alias
 /// `pool`) binds onto the pool `DataSource` the data-access module provides, as Boot binds `spring.datasource.hikari.*`
@@ -31,8 +35,10 @@ import flint.boot.sql.init : DatabaseInitializationSettings;
 import flint.boot.transaction.autoconfigure : TransactionManagerCustomizers;
 import flint.context.annotation : Bean, Primary;
 import flint.engine.aot.name : typeNameOf;
-import flint.engine.jdbc : FlintDataSource;
+import flint.engine.jdbc : enablePostgres, enableSqlite,
+    FlintDataSource, FlintDriver;
 import flint.beans.factory : BeanCreationException;
+import flint.java.sql : Driver;
 import flint.javax.sql : DataSource;
 import flint.jdbc.core : JdbcTemplate;
 import flint.jdbc.core.namedparam : NamedParameterJdbcTemplate;
@@ -535,6 +541,36 @@ private string uniqueName(DataSourceProperties properties)
     return properties.uniqueName;
 }
 
+/// Flint addition: enables the engine's PostgreSQL driver when the application declares `flint:postgresql` (PgJDBC's
+/// `org.postgresql.Driver`), the only way libpq and OpenSSL enter an application (performance playbook S-1).
+@AutoConfiguration
+@ConditionalOnClass(null, ["flint.postgresql.Driver"])
+final class PostgresJdbcDriverAutoConfiguration
+{
+    /// The engine driver for `jdbc:postgresql:` URLs, enabled.
+    @Bean
+    Driver flintPostgresJdbcDriver()
+    {
+        enablePostgres();
+        return new FlintDriver;
+    }
+}
+
+/// Flint addition: enables the engine's SQLite driver when the application declares `flint:sqlite-jdbc` (sqlite-jdbc's
+/// `org.sqlite.JDBC`), the only way SQLite enters an application (performance playbook S-1).
+@AutoConfiguration
+@ConditionalOnClass(null, ["flint.sqlite.JDBC"])
+final class SqliteJdbcDriverAutoConfiguration
+{
+    /// The engine driver for `jdbc:sqlite:` URLs, enabled.
+    @Bean
+    Driver flintSqliteJdbcDriver()
+    {
+        enableSqlite();
+        return new FlintDriver;
+    }
+}
+
 /// Auto-configuration of the `DataSource`: Flint's pooled `FlintDataSource` (Boot's `HikariDataSource`), configured
 /// from `flint.datasource.*` and bound with `flint.datasource.hikari.*` (Hikari's property names), unless the
 /// application defines a `DataSource`.
@@ -543,11 +579,12 @@ private string uniqueName(DataSourceProperties properties)
 @EnableConfigurationProperties([ClassRef(typeNameOf!DataSourceProperties)])
 final class DataSourceAutoConfiguration
 {
-    /// The pooled data source.
+    /// The pooled data source. `drivers` are the declared JDBC drivers' beans, which enable their engine drivers
+    /// before the URL's driver is checked.
     @Bean
     @ConditionalOnMissingBean([ClassRef("flint.javax.sql.DataSource")])
     @ConfigurationProperties("flint.datasource.hikari")
-    FlintDataSource dataSource(DataSourceProperties properties)
+    FlintDataSource dataSource(DataSourceProperties properties, Driver[] drivers = null)
     {
         const url = properties.determineUrl();
         requireDriver(properties, properties.determineDriverClassName(), url);

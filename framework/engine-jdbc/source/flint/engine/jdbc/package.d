@@ -2141,9 +2141,11 @@ final class FlintDriver : Driver_
         return connection;
     }
 
+    /// Whether `url` is a `jdbc:sqlite:` or `jdbc:postgresql:` URL whose engine driver is enabled: an application
+    /// that did not declare a driver has no driver for its URLs, as a Java application without the jar.
     override bool acceptsURL(string url)
     {
-        return startsWith(url, "jdbc:sqlite:") || startsWith(url, "jdbc:postgresql:");
+        return driverEnabled(url);
     }
 
     override int getMajorVersion()

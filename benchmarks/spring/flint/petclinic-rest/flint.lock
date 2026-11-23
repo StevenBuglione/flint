@@ -330,6 +330,13 @@ scope = "build"
 dependencies = ["flint:arena", "flint:conc"]
 
 [[package]]
+name = "flint:postgresql"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = ["flint:engine-jdbc", "flint:java"]
+
+[[package]]
 name = "flint:security-config"
 kind = "core"
 source = "workspace"

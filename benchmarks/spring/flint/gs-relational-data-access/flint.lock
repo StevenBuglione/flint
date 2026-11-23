@@ -183,6 +183,13 @@ scope = "build"
 dependencies = ["flint:arena", "flint:conc", "flint:engine-aot", "flint:engine-reactor", "flint:java", "flint:log", "flint:serde"]
 
 [[package]]
+name = "flint:sqlite-jdbc"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = ["flint:engine-jdbc", "flint:java"]
+
+[[package]]
 name = "flint:term"
 kind = "core"
 source = "workspace"
