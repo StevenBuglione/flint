@@ -65,6 +65,28 @@ On macOS arm64 and Linux arm64, the forked DMD now fills the DMD role of the dev
 
 On pluto, `flint test --compiler dmd` passes 37 of the workspace's 38 packages, peers included (S3, MinIO, PostgreSQL, Valkey and the Go peers). The run used the native providers that `tools/ci.py` builds (`--profile ci --library wasmtime --library wkwebview`) and Homebrew's `python3`. Apple's `/usr/bin/python3` 3.9 rejects the S3 fixture's empty query strings. The 38th package, `engine-desktop`, passes when its test binary runs with `SDL_VIDEODRIVER=dummy`, as the lane does: `flint test` does not pass that variable through. Its WKWebView tests need the logged-in GUI session. Linux arm64 needs real hardware.
 
+## Status (stages 3 to 5: speed on macOS arm64)
+
+- Mach-O archives have 8-byte aligned members, and Apple's ld links them without `-ld_classic`.
+- The Darwin direct link runs Apple's ld from the cached expansion of `cc -###`.
+- The compile server serves macOS. On pluto it compiles `flint:config` in 61 ms; without it, DMD takes 190 ms.
+- Process start: D executables no longer export template instances as weak definitions. DMD is built with LTO and exports only `main`, and so does the Flint DUB. `dmd --version` went from 15 to 5 ms, and `dub --version` from 30 to 5 ms.
+- The DUB pipeline writes Darwin archives (the macOS port's overlay).
+
+On 2026-11-23, `tools/measure_builds.py --apps-only` on pluto (9 trials, load average 5 to 7 from other work on 8 cores) measured the following medians:
+
+| | dev build cold | Go cold | dev build incremental | Go incremental |
+| --- | --- | --- | --- | --- |
+| bench-cli | 0.238 s | 0.169 s | 0.174 s | 0.163 s |
+| bench-rest | 0.297 s | 0.301 s | 0.241 s | 0.293 s |
+
+`bench-rest` is at or below Go; `bench-cli` is not yet.
+
+- A cold `bench-cli` build spends 12 ms in DUB, about 120 ms on its longest compile job (`flint:config`, 61 ms when the machine is quiet) and about 70 ms linking.
+- Of the link, 60 ms is the fixed cost of druntime, Phobos and the system libraries: an empty D program takes that long to link.
+- druntime does not support D shared libraries on macOS, which would remove that cost.
+- The gate needs a quiet measurement window. Pluto's background load moves Go's own times between 0.17 and 0.47 s.
+
 ## Decisions and known ABI gaps
 
 - **`real` is `double` on all AArch64 targets**, as it already was for macOS. The back end has no 128-bit floating point. On Linux, C's `long double` is 128-bit, so `extern(C)` functions that take or return `long double` are not compatible. druntime binds the C library's `long double` functions in `core.stdc.math`, and `strtold`, to their `double` versions there (`long_double_libm`). `printf("%Lf")` and other C code that passes `long double` still disagree.
