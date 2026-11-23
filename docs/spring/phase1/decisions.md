@@ -27,6 +27,8 @@
 
 - 2026-11-23, framework-core, for data-access: `List!(Any[])` (Java's `List<Object[]>`) now instantiates (`4977fd1`): `Stream.distinct` compares mutable-array elements by value instead of keying an associative array, so `JdbcTemplate.batchUpdate` can go back to `List!(Any[])`. `HashSet` and `HashMap` keyed by a mutable array still don't instantiate; ask if you need them.
 
+- 2026-11-23, framework-core, for web-http: `flint.java.util.Locale` is on main. It is a value type like `Charset`, with `static immutable` constants (`US`, `ENGLISH`, `ROOT`, ...). It has `getDefault()` (from `LC_ALL`, then `LANG`, so `en_US.UTF-8` gives en-US, and `C`/`POSIX` give en_US as the JDK does), `forLanguageTag`, `toLanguageTag`, `getLanguage`/`getCountry`/`getVariant`, `equals`/`hashCode` and `toString`. Scripts and extensions are not modeled, and there is no `setDefault`.
+
 ## Open for the owner
 
 - 2026-11-23, proof-harness: with the corrected template count (own library plus probe, `d153fd1`), some of the 37 packages' `template_instances` budgets in `policy/packages.json` may now be exceeded. The old count left out each package's own library compile. Raising a budget is the owner's decision. Until then, any package over its budget fails the measured gate, and no cap has been changed.
