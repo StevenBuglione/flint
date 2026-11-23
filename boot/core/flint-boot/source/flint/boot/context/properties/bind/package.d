@@ -167,10 +167,13 @@ class ConversionFailedException : RuntimeException
 {
     private string targetType;
     private string reason;
+    private string[] enumConstants;
 
-    /// `value` could not become a `type`, because of `reason` (may be `null`).
-    this(string value, string type, string reason = null) pure
+    /// `value` could not become a `type`, because of `reason` (may be `null`); `enumConstants` lists an enum
+    /// target's constants for the failure analysis.
+    this(string value, string type, string reason = null, string[] enumConstants = null) pure
     {
+        this.enumConstants = enumConstants;
         super("Failed to convert from type [java.lang.String] to type [" ~ type ~ "] for value [" ~ value ~ "]" ~ (
                 reason.length ? "; " ~ reason : ""));
         this.targetType = type;
@@ -193,6 +196,12 @@ class ConversionFailedException : RuntimeException
     string getReason() const pure nothrow @nogc
     {
         return reason;
+    }
+
+    /// The constants of an enum target; empty otherwise.
+    const(string)[] getEnumConstants() const pure nothrow @nogc
+    {
+        return enumConstants;
     }
 }
 
@@ -459,7 +468,10 @@ private:
         if (property is null)
             return false;
         lastProperty = property;
-        instance = convert(placeholders.resolvePlaceholders(property.getValue()), type);
+        auto converted = convert(placeholders.resolvePlaceholders(property.getValue()), type);
+        if (converted.isNull() && type.kind == TypeKind.enum_)
+            return false;
+        instance = converted;
         return true;
     }
 
@@ -590,9 +602,48 @@ Any convert(string text, const Descriptor type)
     default:
         if (type.kind == TypeKind.scalar)
             return integral(text.strip, type.name);
-        throw new ConversionFailedException(text, type.name, type.kind == TypeKind.enum_
-                ? "enum binding needs Any.ofEnum from flint:engine-aot" : "no converter for the type");
+        if (type.kind == TypeKind.enum_)
+            return lenientEnum(text.strip, type);
+        throw new ConversionFailedException(text, type.name, "no converter for the type");
     }
+}
+
+// Boot's LenientObjectToEnumConverterFactory: the exact constant, else the constant whose letters and digits match
+// ignoring case, with `true` also matching `ON` and `false` matching `OFF`. Empty text converts to nothing.
+private Any lenientEnum(string text, const Descriptor type)
+{
+    if (text.length == 0)
+        return Any.init;
+    if (type.enumValues.length != type.enumConstants.length)
+        throw new ConversionFailedException(text, type.name, "no enum values in the descriptor (a non-integral enum)");
+    foreach (index, constant; type.enumConstants)
+    {
+        if (constant == text)
+            return Any.ofEnum(type.name, type.enumValues[index]);
+    }
+    const name = canonicalEnumName(text);
+    const alias_ = name == "true" ? "on" : (name == "false" ? "off" : null);
+    foreach (index, constant; type.enumConstants)
+    {
+        const candidate = canonicalEnumName(constant);
+        if (candidate == name || (alias_ !is null && candidate == alias_))
+            return Any.ofEnum(type.name, type.enumValues[index]);
+    }
+    throw new ConversionFailedException(text, type.name, "No enum constant " ~ type.name ~ "." ~ text,
+            type.enumConstants.dup);
+}
+
+private string canonicalEnumName(string name) pure
+{
+    import std.ascii : isAlphaNum, toLower;
+
+    char[] result;
+    foreach (char ch; name)
+    {
+        if (isAlphaNum(ch))
+            result ~= toLower(ch);
+    }
+    return result.idup;
 }
 
 private bool parseBoolean(string text, string type)

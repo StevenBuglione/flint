@@ -28,7 +28,20 @@ final class BindFailureAnalyzer : AbstractFailureAnalyzer!BindException
             description ~= "\n    Origin: " ~ (property.getOrigin() is null ? "null" : property.getOrigin());
         }
         description ~= "\n    Reason: " ~ reason(cause);
-        return new FailureAnalysis(description, "Update your application's configuration", cause);
+        string action = "Update your application's configuration";
+        if (auto conversion = findCause!ConversionFailedException(cause))
+        {
+            import std.algorithm.sorting : sort;
+
+            auto valid = conversion.getEnumConstants().dup;
+            if (valid.length)
+            {
+                action ~= ". The following values are valid:\n";
+                foreach (value; valid.sort)
+                    action ~= "\n    " ~ value;
+            }
+        }
+        return new FailureAnalysis(description, action, cause);
     }
 
     private static string reason(BindException cause)
