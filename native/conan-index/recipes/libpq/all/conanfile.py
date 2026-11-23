@@ -11,7 +11,7 @@ from conan.tools.files import download
 
 NAME = 'libpq'
 DEPENDENCIES = ['openssl/3.5.9', 'zlib/1.4']
-BUILD_ENGINE_SHA256 = '9e127757ec867f98ed7d4ab9f6dd1df1eb853b2c54d4e0c94efc6a90de32dcb8'
+BUILD_ENGINE_SHA256 = 'ea8bde5174ce098bf4fd464418eb489f5d9266bfefdf4b12f486882978064843'
 TARGETS = ['linux-aarch64-glibc', 'linux-aarch64-musl', 'linux-x86_64-glibc', 'linux-x86_64-musl', 'macos-arm64', 'windows-x86_64']
 
 
