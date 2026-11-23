@@ -84,6 +84,18 @@ class QuietWindow(unittest.TestCase):
             self.assertGreater(time.monotonic() - started, 4.5)  # 3 s of work plus the ~2 s it was held
             self.assertEqual(len(out.read_text()), 30)
 
+    def test_a_claimed_window_needs_three_quiet_samples(self):
+        quiet = {'quiet': True, 'problems': []}
+        busy = {'quiet': False, 'problems': ['ldc2']}
+        samples = iter([busy, quiet, quiet, busy, quiet, quiet, quiet])
+        with mock.patch.object(measure_queue, 'quiet_snapshot', side_effect=lambda **_: next(samples)), \
+                mock.patch.object(measure_queue.time, 'sleep'):
+            self.assertTrue(measure_queue.claim_window(600)['quiet'])
+        with mock.patch.object(measure_queue, 'quiet_snapshot', return_value=busy), \
+                mock.patch.object(measure_queue.time, 'sleep'), \
+                mock.patch.object(measure_queue.time, 'monotonic', side_effect=[0, 0, 100]):
+            self.assertFalse(measure_queue.claim_window(90)['quiet'])
+
     def test_entries_are_well_formed(self):
         for entry in measure_queue.entries():
             self.assertIn(entry['status'], ('pending', 'blocked', 'done'))
