@@ -81,8 +81,10 @@ UNTOUCHED = ('docs/adr/', 'docs/spring/', 'handoff/', 'CHANGELOG.md')
 
 
 # Once the pre-port flint:boot is flint:legacy-boot, Spring Boot's core takes Spring's artifact name, spring-boot ->
-# flint:boot (boot's request; registered until then as flint:boot-core).
-SPRING = {'boot-core': 'boot'}
+# flint:boot (boot's request; registered until then as flint:boot-core). Likewise spring-boot-actuator ->
+# flint:boot-actuator once the pre-port actuator is flint:legacy-boot-actuator (registered until then as
+# flint:boot-actuate).
+SPRING = {'boot-core': 'boot', 'boot-actuate': 'boot-actuator'}
 
 
 def legacy_names(flint):
