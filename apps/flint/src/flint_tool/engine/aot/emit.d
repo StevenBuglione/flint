@@ -864,9 +864,9 @@ private struct Emitter
         {
             foreach (name; argument.modules)
                 imports[name] = true;
+            const required = argument.required ? "true" : "false";
             text ~= "            () { ArgumentSpec a; a.kind = ArgumentKind." ~ argument.kind ~ "; a.name = " ~ literal(
-                    argument.name) ~ "; a.type = " ~ typeNameText(argument.type) ~ "; a.required = " ~ (argument.required
-                    ? "true" : "false") ~ "; ";
+                    argument.name) ~ "; a.type = " ~ typeNameText(argument.type) ~ "; a.required = " ~ required ~ "; ";
             if (argument.hasDefault)
                 text ~= "a.defaultValue = " ~ literal(argument.defaultValue) ~ "; ";
             if (argument.elementType.length)
