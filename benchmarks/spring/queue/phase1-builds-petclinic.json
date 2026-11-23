@@ -4,7 +4,7 @@
   "created": "2026-11-23",
   "status": "pending",
   "window": "claim",
-  "priority": 5,
+  "priority": 3,
   "requested_by": "ADR-030 section 8, Phase 1 exit (coordinator's plan, 2026-11-23 15:20Z); split per application by the coordinator, 2026-11-23 16:45Z",
   "report_to": "the coordinator; docs/milestones/13.md",
   "estimate_minutes": 17,
