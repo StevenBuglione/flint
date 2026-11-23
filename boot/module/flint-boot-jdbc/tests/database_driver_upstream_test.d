@@ -12,7 +12,8 @@ import flint.boot.jdbc : DatabaseDriver;
 @("DatabaseDriverTests.classNameForKnownDatabase")
 unittest
 {
-    assert(DatabaseDriver.fromJdbcUrl("jdbc:postgresql://hostname/dbname").getDriverClassName() == "flint.postgresql.Driver");
+    assert(DatabaseDriver.fromJdbcUrl("jdbc:postgresql://hostname/dbname").getDriverClassName()
+            == "flint.postgresql.Driver");
 }
 
 @("DatabaseDriverTests.nullClassNameForUnknownDatabase")
@@ -91,7 +92,8 @@ unittest
     assert(DatabaseDriver.fromJdbcUrl("jdbc:mysql://localhost:3306/sample") == DatabaseDriver.MYSQL);
     assert(DatabaseDriver.fromJdbcUrl("jdbc:oracle:thin:@localhost:1521:orcl") == DatabaseDriver.ORACLE);
     assert(DatabaseDriver.fromJdbcUrl("jdbc:postgresql://127.0.0.1:5432/sample") == DatabaseDriver.POSTGRESQL);
-    assert(DatabaseDriver.fromJdbcUrl("jdbc:redshift://examplecluster.abc123xyz789.us-west-2.redshift.amazonaws.com:5439/sample") == DatabaseDriver.REDSHIFT);
+    assert(DatabaseDriver.fromJdbcUrl("jdbc:redshift://examplecluster.abc123xyz789.us-west-2.redshift.amazonaws.com"
+            ~ ":5439/sample") == DatabaseDriver.REDSHIFT);
     assert(DatabaseDriver.fromJdbcUrl("jdbc:jtds:sqlserver://127.0.0.1:1433/sample") == DatabaseDriver.JTDS);
     assert(DatabaseDriver.fromJdbcUrl("jdbc:sap:localhost") == DatabaseDriver.HANA);
     assert(DatabaseDriver.fromJdbcUrl("jdbc:sqlserver://127.0.0.1:1433") == DatabaseDriver.SQLSERVER);
@@ -106,7 +108,8 @@ unittest
     assert(DatabaseDriver.fromJdbcUrl("jdbc:tc:mysql://localhost:3306/sample") == DatabaseDriver.TESTCONTAINERS);
     assert(DatabaseDriver.fromJdbcUrl("jdbc:clickhouse://localhost:3306/sample") == DatabaseDriver.CLICKHOUSE);
     assert(DatabaseDriver.fromJdbcUrl("jdbc:ch://localhost:3306/sample") == DatabaseDriver.CLICKHOUSE);
-    assert(DatabaseDriver.fromJdbcUrl("jdbc:aws-wrapper:postgresql://127.0.0.1:5432/sample") == DatabaseDriver.AWS_WRAPPER);
+    assert(DatabaseDriver.fromJdbcUrl("jdbc:aws-wrapper:postgresql://127.0.0.1:5432/sample")
+            == DatabaseDriver.AWS_WRAPPER);
 }
 
 @("DatabaseDriverTests.deprecatedDatabaseJdbcUrlLookups")

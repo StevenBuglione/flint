@@ -17,13 +17,56 @@ import std.traits : getUDAs;
 shared static this()
 {
     import flint.engine.jdbc : enableSqlite;
+    import flint.java.sql : DriverManager;
 
     try
         enableSqlite();
     catch (SQLException ex)
     {
-        // A build without SQLite: the cases below that need it check driverEnabled first.
+        // A build without SQLite natives: the cases below that need it check driverEnabled first, and a stand-in
+        // driver accepts SQLite URLs so that the modules configuring (never opening) SQLite data sources pass the
+        // data source's driver check; the cases that open one are gated on FlintNativeSqlite.
+        DriverManager.registerDriver(&supplySqliteStandIn);
     }
+}
+
+/// Accepts `jdbc:sqlite:` URLs in a build without the SQLite natives; connects to nothing.
+private final class SqliteStandInDriver : Driver
+{
+    import flint.java.sql : Connection;
+    import flint.java.util : Properties;
+
+    override Connection connect(string url, Properties info)
+    {
+        return null;
+    }
+
+    override bool acceptsURL(string url)
+    {
+        import std.algorithm.searching : startsWith;
+
+        return url.startsWith("jdbc:sqlite:");
+    }
+
+    override int getMajorVersion()
+    {
+        return 0;
+    }
+
+    override int getMinorVersion()
+    {
+        return 0;
+    }
+
+    override bool jdbcCompliant()
+    {
+        return false;
+    }
+}
+
+private Driver supplySqliteStandIn()
+{
+    return new SqliteStandInDriver;
 }
 
 private string[] requiredClasses(T)()
