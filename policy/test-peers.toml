@@ -8,7 +8,8 @@
 # [scenarios] lists live scenarios that `flint test --scenarios` runs after a package's unit tests.
 # When a binary is unavailable, flint still runs the package's offline tests, names the
 # missing peer and fails the run: peer-dependent suites are never skipped silently.
-# Paths are relative to the Flint checkout; {toolchain} is the toolchain directory.
+# Paths are relative to the Flint checkout; {toolchain} is the toolchain directory, {dub} and {dmd} the pinned
+# DUB and the executable filling the DMD role on this host, and {host} the host's target (ADR-024).
 
 [binary.go]
 description = "Go 1.27.4 (policy/toolchains.json)"
@@ -53,17 +54,17 @@ install = "python3 tools/install_peers.py --peer jre"
 
 [binary.dub]
 description = "the pinned DUB"
-path = "{toolchain}/dmd2/linux/bin64/dub"
+path = "{dub}"
 
 [binary.dmd]
-description = "the pinned DMD"
-path = "{toolchain}/dmd2/linux/bin64/dmd"
+description = "the pinned DMD, or the executable that fills its role on this host"
+path = "{dmd}"
 
 [binary.native]
-description = "the native provider install for linux-x86_64-glibc"
-path = ".native/install/linux-x86_64-glibc"
-receipt = ".native/install/linux-x86_64-glibc/flint-native-install.json"
-install = "python3 tools/native_build.py --profile ci --target linux-x86_64-glibc --phase build --emit-dub --library wasmtime"
+description = "the native provider install for this host"
+path = ".native/install/{host}"
+receipt = ".native/install/{host}/flint-native-install.json"
+install = "python3 tools/native_build.py --profile ci --target {host} --phase build --emit-dub --library wasmtime"
 
 [peer.ai]
 description = "loopback HTTP peer speaking the five AI dialects"

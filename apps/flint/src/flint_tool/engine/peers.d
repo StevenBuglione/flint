@@ -19,7 +19,7 @@ struct PeerBinary
     string name;
     /// What it is.
     string description;
-    /// Path template ({toolchain} or relative to the checkout).
+    /// Path template: relative to the checkout, or with `{toolchain}`, `{dub}`, `{dmd}` or `{host}` (expandBinaryPath).
     string path;
     /// Receipt that must exist, when the binary is built by Flint.
     string receipt;
@@ -202,6 +202,19 @@ private string joinPath(scope const(string)[] path)
     return path.join(".");
 }
 
+/// Expand a binary path template: `{toolchain}` is the toolchain directory, `{dub}` and `{dmd}` the pinned DUB and
+/// the executable filling the DMD role on this host, and `{host}` the host's target name (ADR-024).
+string expandBinaryPath(const ref Home home, string toolchainDirectory, string path)
+{
+    import std.array : replace;
+    import flint_tool.engine.target : hostTarget;
+    import flint_tool.toolchain.toolchain : componentPath;
+
+    return path.replace("{dub}", componentPath(home, toolchainDirectory, "dub")).replace("{dmd}",
+            componentPath(home, toolchainDirectory, "dmd")).replace("{host}", hostTarget())
+        .replace("{toolchain}", toolchainDirectory);
+}
+
 /// Absolute path of a binary, or null with a MissingPeer reason when it is unavailable.
 string binaryPath(const ref Home home, string toolchainDirectory, const ref PeerBinary binary, out string why)
 {
@@ -214,13 +227,14 @@ string binaryPath(const ref Home home, string toolchainDirectory, const ref Peer
         why = binary.unpinned;
         return null;
     }
-    const path = buildNormalizedPath(absolutePath(binary.path.replace("{toolchain}", toolchainDirectory), home.root));
+    const path = buildNormalizedPath(absolutePath(expandBinaryPath(home, toolchainDirectory, binary.path), home.root));
     if (!exists(path))
     {
         why = binary.description ~ " is not installed at " ~ path;
         return null;
     }
-    if (binary.receipt.length && !exists(buildNormalizedPath(absolutePath(binary.receipt, home.root))))
+    if (binary.receipt.length && !exists(buildNormalizedPath(absolutePath(expandBinaryPath(home,
+            toolchainDirectory, binary.receipt), home.root))))
     {
         why = binary.description ~ " has no install receipt";
         return null;
@@ -290,7 +304,7 @@ private bool resolveArgument(const ref Home home, const ref PeerTable table, str
     {
         missing.binary = name;
         missing.detail = why;
-        missing.install = table.binaries[name].install;
+        missing.install = expandBinaryPath(home, toolchainDirectory, table.binaries[name].install);
         return false;
     }
     if (!goBuild)

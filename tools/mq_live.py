@@ -30,6 +30,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURES = ROOT / 'packages' / 'mq' / 'fixtures'
 TOPICS = ('flint-live', 'flint-rebalance', 'flint-orders')
+# Darwin has no librt; its static OpenSSL needs the Security and CoreFoundation frameworks (ADR-024).
+SYSTEM_LIBRARIES = (('-lpthread', '-lm', '-framework', 'Security', '-framework', 'CoreFoundation')
+                    if sys.platform == 'darwin' else ('-lpthread', '-ldl', '-lm', '-lrt'))
 
 
 def free_port():
@@ -73,6 +76,9 @@ def build_d(args, work, name, files, versions=(), lflags=()):
     (project / 'dub.sdl').write_text('\n'.join(recipe) + '\n')
     env = dict(os.environ, DUB_HOME=str(ROOT / '.flint' / 'dub' / 'dmd'))
     env.pop('DFLAGS', None)
+    if sys.platform == 'darwin':
+        # DUB treats ldmd2 as DMD; its pipeline's archives are ELF-style until the Darwin archiver lands (ADR-024).
+        env['FLINT_DUB_PIPELINE'] = '0'
     subprocess.run([args.dub, 'build', '--root=' + str(project), '--compiler=' + args.dmd, '--build=debug',
                     '--skip-registry=all'], env=env, check=True, stdout=subprocess.DEVNULL)
     return project / ('mq-' + name)
@@ -86,9 +92,10 @@ def build_c(args, work, name):
     shim = [] if '#include "flint_mq.c"' in source.read_text() else ['libflint_ffi.a']
     libraries = [str(prefix / 'lib' / library) for library in
                  (*shim, 'librdkafka.a', 'libzstd.a', 'libz.a', 'libssl.a', 'libcrypto.a')]
-    subprocess.run([args.cc, '-std=c11', '-g', '-O1', '-D_GNU_SOURCE', '-DFLINT_HAS_LIBRDKAFKA', '-I' + str(ROOT / 'native' / 'ffi'),
+    darwin = ['-D_DARWIN_C_SOURCE'] if sys.platform == 'darwin' else []  # as native/ffi/CMakeLists.txt
+    subprocess.run([args.cc, '-std=c11', '-g', '-O1', '-D_GNU_SOURCE', *darwin, '-DFLINT_HAS_LIBRDKAFKA', '-I' + str(ROOT / 'native' / 'ffi'),
                     '-I' + str(prefix / 'include'), str(source), '-o', str(output), *libraries,
-                    '-lpthread', '-ldl', '-lm', '-lrt'], check=True)
+                    *SYSTEM_LIBRARIES], check=True)
     return output
 
 
@@ -142,8 +149,12 @@ def certificates(work):
     extensions.write_text('subjectAltName=IP:127.0.0.1\nbasicConstraints=CA:FALSE\n'
                           'keyUsage=digitalSignature\nextendedKeyUsage=serverAuth\n')
     quiet = {'stdout': subprocess.DEVNULL, 'stderr': subprocess.DEVNULL, 'check': True}
+    # Explicit CA extensions: LibreSSL's openssl (macOS) adds none by default, and Python's strict X.509
+    # verification requires keyUsage on a CA (ADR-024). OpenSSL 3 already adds basicConstraints.
     subprocess.run(['openssl', 'req', '-x509', '-newkey', 'ec', '-pkeyopt', 'ec_paramgen_curve:P-256', '-nodes',
-                    '-keyout', str(ca_key), '-out', str(ca), '-days', '1', '-subj', '/CN=flint-mq-test-ca'], **quiet)
+                    '-keyout', str(ca_key), '-out', str(ca), '-days', '1', '-subj', '/CN=flint-mq-test-ca',
+                    '-addext', 'basicConstraints=critical,CA:TRUE', '-addext', 'keyUsage=critical,keyCertSign,cRLSign'],
+                   **quiet)
     subprocess.run(['openssl', 'req', '-newkey', 'ec', '-pkeyopt', 'ec_paramgen_curve:P-256', '-nodes',
                     '-keyout', str(key), '-out', str(request), '-subj', '/CN=127.0.0.1'], **quiet)
     subprocess.run(['openssl', 'x509', '-req', '-in', str(request), '-CA', str(ca), '-CAkey', str(ca_key),

@@ -53,7 +53,16 @@
       "checksum_url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.13.1%2B2/OpenJDK21U-jre_x64_linux_hotspot_21.0.13.1_2.tar.gz.sha256.txt",
       "verification": "The digest equals the Eclipse Temurin published .sha256.txt (observed 2026-11-22). Kafka 4.1 brokers require Java 17 or later.",
       "license": "GPL-2.0-with-classpath-exception",
-      "binaries": {"java": "bin/java"}
+      "binaries": {"java": "bin/java"},
+      "hosts": {
+        "macos-arm64": {
+          "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.13.1%2B2/OpenJDK21U-jre_aarch64_mac_hotspot_21.0.13.1_2.tar.gz",
+          "sha256": "848feb1906c7de79de4f8391636042193fbd46eff86e26299506c4656f62c260",
+          "checksum_url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.13.1%2B2/OpenJDK21U-jre_aarch64_mac_hotspot_21.0.13.1_2.tar.gz.sha256.txt",
+          "verification": "The digest equals the Eclipse Temurin published .sha256.txt and the GitHub release asset digest (observed 2026-11-22); the same release's x64 Linux digest equals the entry above.",
+          "home": "Contents/Home"
+        }
+      }
     },
     "jdk": {
       "version": "21.0.13.1+2",

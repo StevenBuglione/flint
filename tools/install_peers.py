@@ -101,6 +101,11 @@ def go_environment(toolchain):
 
 def install_locked(name, toolchain, jobs):
     row = json.loads(PEER_LOCK.read_text())['peers'][name]
+    # A peer published per platform names the other hosts' archives under `hosts` (ADR-024).
+    from native_build import host_target
+    override = row.get('hosts', {}).get(host_target())
+    if override:
+        row = {**row, **override}
     prefix = PEERS / (name + '-' + row['version'])
     receipt_path = prefix / 'flint-peer.json'
     if receipt_path.is_file() and json.loads(receipt_path.read_text()).get('archive_sha256') == row['sha256']:
@@ -113,6 +118,12 @@ def install_locked(name, toolchain, jobs):
     extra = {}
     if row['kind'] == 'archive':
         extract(archive, prefix)
+        if row.get('home'):
+            # A macOS bundle keeps the runtime under Contents/Home; install it at the prefix as on Linux.
+            bundle = prefix.with_name(prefix.name + '.bundle')
+            prefix.rename(bundle)
+            (bundle / row['home']).rename(prefix)
+            shutil.rmtree(bundle)
     else:
         source = extract(archive, PEERS / 'src' / (name + '-' + row['version']))
         if prefix.exists():

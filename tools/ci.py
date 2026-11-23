@@ -321,8 +321,12 @@ def peer_tests(runner):
     import tomllib
     peered=sorted(tomllib.loads((ROOT/'policy/test-peers.toml').read_text())['packages'])
     runner.run([PYTHON,'tools/install_toolchains.py','--compiler','flint'])
-    runner.run([PYTHON,'tools/install_peers.py','--peer','go','--peer','postgres','--peer','valkey','--peer','minio'])
+    runner.run([PYTHON,'tools/install_peers.py','--peer','go','--peer','postgres','--peer','valkey','--peer','minio',
+                '--peer','nats','--peer','kafka','--peer','jre'])
     runner.run([ROOT/'.flint/bin/flint','test',*peered,'--compiler','both','--verify'])
+    # The declared live scenarios: mq against a real Kafka on the pinned JRE and NATS JetStream, plain and TLS.
+    scenarios=sorted(tomllib.loads((ROOT/'policy/test-peers.toml').read_text()).get('scenarios',{}))
+    runner.run([ROOT/'.flint/bin/flint','test',*scenarios,'--scenarios','--verify'])
 
 def platform_run(runner,target):
     if not runner.plan:implementation_required()
