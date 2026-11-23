@@ -112,6 +112,69 @@ private struct State
     SourceModule[string] platform;
     /// Something worth saving was learnt this run although nothing was extracted (a platform module found).
     bool dirty;
+    /// This run's parsed models (by module, with the model's hash) and annotation types (with the file's hash):
+    /// the @Import search and generation read the same models. Never saved.
+    ParsedModel[string] parsed;
+    /// ditto
+    imported!"flint_tool.engine.aot.model".AnnotationType[string] parsedAnnotations;
+    /// ditto
+    string parsedAnnotationsHash;
+}
+
+private struct ParsedModel
+{
+    string hash;
+    imported!"flint_tool.engine.aot.model".ModuleModel model;
+}
+
+/// A cached model, parsed once per run while its hash is unchanged; false when it is missing or unreadable.
+private bool cachedModel(string cache, string name, ref State state,
+        out imported!"flint_tool.engine.aot.model".ModuleModel model)
+{
+    import std.file : exists, readText;
+    import flint_tool.engine.aot.model : parseModule;
+
+    const hash = state.models.get(name, null);
+    if (hash.length)
+    {
+        if (auto hit = name in state.parsed)
+        {
+            if (hit.hash == hash)
+            {
+                model = hit.model;
+                return true;
+            }
+        }
+    }
+    const path = modelPath(cache, name);
+    string error;
+    if (!exists(path) || !parseModule(readText(path), model, error))
+        return false;
+    if (hash.length)
+        state.parsed[name] = ParsedModel(hash, model);
+    return true;
+}
+
+/// The cached annotation types, parsed once per run while the file is unchanged.
+private alias AnnotationTypes = imported!"flint_tool.engine.aot.model".AnnotationType[string];
+
+private AnnotationTypes cachedAnnotationTypes(string cache, ref State state)
+{
+    import flint_tool.engine.aot.model : AnnotationType, parseAnnotationType;
+
+    if (state.annotations.length && state.parsedAnnotationsHash == state.annotations)
+        return state.parsedAnnotations;
+    AnnotationType[string] types;
+    foreach (name, document; loadAnnotations(cache))
+    {
+        AnnotationType type;
+        string error;
+        if (parseAnnotationType(document, type, error))
+            types[name] = type;
+    }
+    state.parsedAnnotations = types;
+    state.parsedAnnotationsHash = state.annotations;
+    return types;
 }
 
 /// Run Flint AOT for a project.
@@ -381,7 +444,7 @@ private bool extractImports(const ref AotRequest request, string cache, ref Sour
 {
     foreach (round; 0 .. 8)
     {
-        const added = addModules(importTargets(cache, sources), request.importPaths, sources, state);
+        const added = addModules(importTargets(cache, sources, state), request.importPaths, sources, state);
         if (added.length == 0)
             return true;
         state.importedModules ~= added;
@@ -393,29 +456,19 @@ private bool extractImports(const ref AotRequest request, string cache, ref Sour
 }
 
 /// Modules declaring the classes that the cached models' `@Import`s name.
-private string[] importTargets(string cache, scope const SourceModule[] sources)
+private string[] importTargets(string cache, scope const SourceModule[] sources, ref State state)
 {
     import std.algorithm.searching : canFind;
-    import std.file : exists, readText;
-    import flint_tool.engine.aot.model : AnnotationType, ModuleModel, parseAnnotationType, parseModule;
+    import flint_tool.engine.aot.model : ModuleModel;
     import flint_tool.engine.aot.names : packageOf;
     import flint_tool.engine.aot.plan : importedClasses;
 
-    AnnotationType[string] types;
-    foreach (name, document; loadAnnotations(cache))
-    {
-        AnnotationType type;
-        string error;
-        if (parseAnnotationType(document, type, error))
-            types[name] = type;
-    }
+    const types = cachedAnnotationTypes(cache, state);
     string[] modules;
     foreach (ref source; sources)
     {
-        const path = modelPath(cache, source.name);
         ModuleModel model;
-        string error;
-        if (!exists(path) || !parseModule(readText(path), model, error))
+        if (!cachedModel(cache, source.name, state, model))
             continue;
         foreach (ref decl; model.types)
         {
@@ -603,21 +656,15 @@ private bool generate(const ref AotRequest request, scope const SourceModule[] s
 
     const cache = buildPath(request.root, cacheDirectory);
     auto model = new Model;
-    foreach (name, document; loadAnnotations(cache))
-    {
-        AnnotationType type;
-        string error;
-        if (parseAnnotationType(document, type, error))
-            model.annotationTypes[name] = type;
-    }
+    foreach (name, type; cachedAnnotationTypes(cache, state))
+        model.annotationTypes[name] = type;
     AnalysisInput input;
     input.root = request.root;
     input.autoConfigurations = autoConfigurations.dup;
     foreach (ref source; sources)
     {
         ModuleModel item;
-        string error;
-        if (!parseModule(readText(modelPath(cache, source.name)), item, error))
+        if (!cachedModel(cache, source.name, state, item))
             continue;
         model.add(item);
         if (source.user)
@@ -943,7 +990,8 @@ private string sharedEntry(string sharedCache, string key)
 {
     import std.path : buildPath;
 
-    return buildPath(sharedCache, "models", key ~ ".json");
+    // The format is part of the name: an entry of another format is never read as this one.
+    return buildPath(sharedCache, "models", key ~ ".r2");
 }
 
 /// Take the requested modules' models from the shared cache (`keyed`: their shared-cache keys); the modules
@@ -986,14 +1034,9 @@ private bool reuseShared(string sharedCache, string name, string sharedKey, stri
         return false;
     string document;
     string set;
-    try
-    {
-        const root = parseJSON(readText(path));
-        document = root["model"].str;
-        set = root["annotationSet"].str;
-    }
-    catch (Exception)
-        return false; // unreadable, half-written or an older entry: extract instead
+    string hash;
+    if (!readSharedModel(path, document, set, hash))
+        return false; // unreadable, truncated or corrupt: extract instead
     if (sharedCache ~ set !in sets)
     {
         string[string] found;
@@ -1011,21 +1054,80 @@ private bool reuseShared(string sharedCache, string name, string sharedKey, stri
     mkdirRecurse(buildPath(cache, "models"));
     write(modelPath(cache, name), document);
     state.keys[name] = key;
-    state.models[name] = imported!"flint_tool.support.files".sha256Hex(cast(const(ubyte)[]) document);
+    state.models[name] = hash;
     return true;
+}
+
+/// The header line of a shared model entry (format 2: raw, not JSON).
+enum sharedModelFormat = "flint.aot.shared-model/2";
+
+/// A shared model entry: the format line, the annotation set's hash, the model's length and SHA-256, then the model
+/// document verbatim. Raw, so a reuse copies the document instead of decoding an escaped JSON string.
+string renderSharedModel(string document, string annotationSet)
+{
+    import std.conv : to;
+    import flint_tool.support.files : sha256Hex;
+
+    return sharedModelFormat ~ "\n" ~ annotationSet ~ "\n" ~ document.length.to!string ~ "\n" ~ sha256Hex(
+            cast(const(ubyte)[]) document) ~ "\n" ~ document;
+}
+
+/// Read a shared model entry; false unless every field is present and the document has its recorded length and
+/// SHA-256 (a truncated, corrupt or foreign file is a cache miss, never used). `hash` is the document's SHA-256.
+bool parseSharedModel(string text, out string document, out string set, out string hash)
+{
+    import std.conv : ConvException, to;
+    import std.string : indexOf;
+    import flint_tool.support.files : sha256Hex;
+
+    string[4] fields;
+    size_t at;
+    foreach (ref field; fields)
+    {
+        const end = text.indexOf('\n', at);
+        if (end < 0)
+            return false;
+        field = text[at .. end];
+        at = end + 1;
+    }
+    if (fields[0] != sharedModelFormat || fields[1].length == 0)
+        return false;
+    size_t length;
+    try
+        length = fields[2].to!size_t;
+    catch (ConvException)
+        return false;
+    if (text.length - at != length)
+        return false;
+    const body_ = text[at .. $];
+    const actual = sha256Hex(cast(const(ubyte)[]) body_);
+    if (actual != fields[3])
+        return false;
+    document = body_;
+    set = fields[1];
+    hash = actual;
+    return true;
+}
+
+private bool readSharedModel(string path, out string document, out string set, out string hash)
+{
+    import std.file : FileException, readText;
+    import std.utf : UTFException;
+
+    try
+        return parseSharedModel(readText(path), document, set, hash);
+    catch (FileException)
+        return false;
+    catch (UTFException)
+        return false;
 }
 
 /// Keep a model, with the annotation types of its extraction compile, in the shared cache.
 private void storeShared(string sharedCache, string key, string document, string annotationSet)
 {
-    import std.json : JSONValue;
-
     if (key.length == 0 || annotationSet.length == 0)
         return;
-    JSONValue[string] root;
-    root["model"] = JSONValue(document);
-    root["annotationSet"] = JSONValue(annotationSet);
-    writeAtomically(sharedEntry(sharedCache, key), JSONValue(root).toString);
+    writeAtomically(sharedEntry(sharedCache, key), renderSharedModel(document, annotationSet));
 }
 
 /// Keep the annotation types one extraction compile announced, once, by content: the models of that compile

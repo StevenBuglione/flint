@@ -1118,6 +1118,86 @@ unittest
     expect(readText(generated)).toEqual(texts[0]);
 }
 
+@("shared model entries are raw, versioned and checked: a truncated or corrupt one is never used")
+unittest
+{
+    import flint_tool.engine.aot.driver : parseSharedModel, renderSharedModel;
+
+    const document = `{"schema":"flint.aot.model/1","module":"m","types":[]}`;
+    const entry = renderSharedModel(document, "abc123");
+    string read, set, hash;
+    expect(parseSharedModel(entry, read, set, hash)).toBeTrue();
+    expect(read).toEqual(document);
+    expect(set).toEqual("abc123");
+    expect(hash.length).toEqual(64);
+    // Truncated, extended, a corrupted body, a foreign format line, or a JSON-era entry: each is a miss.
+    expect(parseSharedModel(entry[0 .. $ - 1], read, set, hash)).toBeFalse();
+    expect(parseSharedModel(entry ~ " ", read, set, hash)).toBeFalse();
+    expect(parseSharedModel(entry[0 .. $ - 2] ~ "]]", read, set, hash)).toBeFalse();
+    const foreign = "flint.aot.shared-model/1" ~ entry["flint.aot.shared-model/2".length .. $];
+    expect(parseSharedModel(foreign, read, set, hash)).toBeFalse();
+    expect(parseSharedModel(`{"model":"{}","annotationSet":"abc"}`, read, set, hash)).toBeFalse();
+    expect(parseSharedModel("", read, set, hash)).toBeFalse();
+}
+
+@("a corrupt shared model entry is extracted again, with the same output")
+unittest
+{
+    import std.conv : to;
+    import std.file : SpanMode, dirEntries, exists, readText, rmdirRecurse, tempDir, write;
+    import std.path : buildPath;
+    import std.process : thisProcessID;
+    import flint_tool.engine.aot.driver : AotOutcome, AotRequest, runAot;
+
+    const shared_ = buildPath(tempDir, "flint-aot-corrupt-" ~ thisProcessID.to!string);
+    if (exists(shared_))
+        rmdirRecurse(shared_);
+    scope (exit)
+        if (exists(shared_))
+            rmdirRecurse(shared_);
+    const project = copyFixture("sample");
+    scope (exit)
+        remove(project);
+    AotRequest request;
+    request.root = project;
+    request.compiler = compiler();
+    request.importPaths = [
+        "-I" ~ buildPath(repositoryRoot(), "tests", "aot", "annotations"), "-I" ~ runtimeSource()
+    ];
+    request.flags = ["-preview=dip1000"];
+    request.environmentKey = "test";
+    request.sharedCache = shared_;
+    auto first = runAot(request);
+    expect(first.ok).toBeTrue();
+    const expected = generatedFiles(project);
+    // Truncate one project model entry and drop the stored output: the next cold build must extract that module.
+    bool truncated;
+    foreach (entry; dirEntries(buildPath(shared_, "projects"), "*.r2", SpanMode.depth))
+    {
+        if (!truncated)
+        {
+            const text = readText(entry.name);
+            write(entry.name, text[0 .. $ / 2]);
+            truncated = true;
+        }
+    }
+    expect(truncated).toBeTrue();
+    foreach (entry; dirEntries(buildPath(shared_, "projects"), "*.json", SpanMode.depth))
+    {
+        if (imported!"std.algorithm.searching".canFind(entry.name, "outputs"))
+            imported!"std.file".remove(entry.name);
+    }
+    rmdirRecurse(buildPath(project, ".flint"));
+    auto second = runAot(request);
+    expect(second.ok).toBeTrue();
+    expect(second.extracted).toEqual(1);
+    expect(second.reused).toEqual(first.extracted - 1);
+    const actual = generatedFiles(project);
+    expect(actual.length).toEqual(expected.length);
+    foreach (path, text; expected)
+        expect(actual.get(path, null)).toEqual(text);
+}
+
 /// Every generated file of a project, by path relative to the generated directory.
 private string[string] generatedFiles(string project)
 {
