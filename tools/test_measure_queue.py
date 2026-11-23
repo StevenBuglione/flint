@@ -54,6 +54,21 @@ class QuietWindow(unittest.TestCase):
             sleeper.kill()
             sleeper.wait()
 
+    def test_processes_in_the_runs_own_checkout_are_not_foreign(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as own:
+            worker = subprocess.Popen(['sleep', '5'], cwd=own, start_new_session=True)
+            try:
+                with mock.patch.object(measure_queue, 'BUSY_COMMANDS', {'sleep'}), \
+                        mock.patch.object(measure_queue, 'own_tree', return_value=set()):
+                    self.assertIn(worker.pid, [row['pid'] for row in measure_queue.build_processes()])
+                    measure_queue.OWN_DIRECTORIES[:] = [own]
+                    self.assertNotIn(worker.pid, [row['pid'] for row in measure_queue.build_processes()])
+            finally:
+                measure_queue.OWN_DIRECTORIES[:] = []
+                worker.kill()
+                worker.wait()
+
     def test_entries_are_well_formed(self):
         for entry in measure_queue.entries():
             self.assertIn(entry['status'], ('pending', 'blocked', 'done'))

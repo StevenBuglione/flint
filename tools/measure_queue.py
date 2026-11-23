@@ -110,9 +110,15 @@ def cpu_ticks(pid):
     return int(fields[11]) + int(fields[12])
 
 
+OWN_DIRECTORIES = []  # set by run(): the run's checkouts and results; a process working there belongs to the run
+
+
 def build_processes():
-    """Compiler and build-system processes on the host outside this run's own tree, with where they run."""
+    """Compiler and build-system processes on the host outside this run's own tree, with where they run. A process
+    whose working directory is inside the run's own checkouts belongs to the run even when it is not a descendant:
+    the DMD compile server detaches from the build that starts it."""
     mine = own_tree()
+    own = [str(Path(d).resolve()) + os.sep for d in OWN_DIRECTORIES]
     found = []
     for name in os.listdir('/proc'):
         if not name.isdigit() or int(name) in mine:
@@ -121,8 +127,10 @@ def build_processes():
             command = Path(f'/proc/{name}/comm').read_text().strip()
             if command not in BUSY_COMMANDS:
                 continue
-            found.append({'pid': int(name), 'command': command, 'cwd': os.readlink(f'/proc/{name}/cwd'),
-                          'ticks': cpu_ticks(name)})
+            cwd = os.readlink(f'/proc/{name}/cwd')
+            if any((cwd.removesuffix(' (deleted)') + os.sep).startswith(prefix) for prefix in own):
+                continue
+            found.append({'pid': int(name), 'command': command, 'cwd': cwd, 'ticks': cpu_ticks(name)})
         except OSError:
             continue
     return found
@@ -592,6 +600,7 @@ def run(entry, force_busy=False, smoke=False):
     port_problems = check_ports(ports)
     if port_problems:
         raise SystemExit(f"{entry['id']}: " + '; '.join(port_problems))
+    OWN_DIRECTORIES[:] = [outdir] + [row['worktree'] for row in built.values() if row.get('worktree')]
     before = quiet_snapshot()
     if not before['quiet'] and not force_busy:
         log_attempt(entry, {'time': before['time'], 'outcome': 'not run: busy', 'problems': before['problems']})
