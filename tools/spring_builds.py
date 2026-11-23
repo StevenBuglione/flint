@@ -20,6 +20,9 @@ and process-tree peak RSS sampled every millisecond), nine trials of:
   - `flint_scratch_seconds`: the same build with every module compiled from source and no platform cache;
   - `flint_cached_cold_digests_cleared_seconds`: the cached cold build with flint's digest log cleared too, published
     as non-gating context beside the primary (coordinator, decisions.md 2026-11-23, condition 3);
+  - every measured command matches Go's -s -w (`flint build --no-debug`: no debug information, no symbol table;
+    owner decision 4b27d207); `flint_debug_*` repeats the cached, static and scratch series with debug information
+    (`measure.context_debug`, the commands without --no-debug), published as non-gating context;
   - `phase_medians_ms` per series: the median wall time of each build phase (total, flint, aot, plan, compile,
     link; -1 means absent) from flint's build receipt (phases_ms, d2a929cd), beside the coordinator's budget (`phase_budget_ms`);
   - `O3` and `Oz` binary sizes after GNU strip (flint's artifacts keep their symbol tables), as for Go.
@@ -197,14 +200,25 @@ def measure_flint(name, trials, timed, logs, temporary, result):
     2026-11-23). The edited source is restored after each trial."""
     directory = ROOT / spring_bench.app_row(name)['flint']['directory']
     spec = json.loads((directory / 'flint-spring.json').read_text())['measure']
-    row = {'flint_cached_cold_seconds': [], 'flint_cached_incremental_seconds': [], 'flint_scratch_seconds': []}
     # Owner decision 2 (decisions.md, 2026-11-23): edit builds report the dev profile as built (shared-object linking
     # of the platform cache) as the primary headline, and the same build linked fully static as the secondary. A
-    # port declares the static command as measure.cached_static.
-    flavours = ['cached', 'cached_cleared', 'scratch'] + (['cached_static'] if spec.get('cached_static') else [])
-    row['flint_cached_cold_digests_cleared_seconds'] = []
-    if 'cached_static' in flavours:
-        row.update(flint_static_cold_seconds=[], flint_static_incremental_seconds=[])
+    # port declares the static command as measure.cached_static. Owner decision 4b27d207: the measured commands match
+    # Go's -s -w (flint build --no-debug); the same builds with debug information (measure.context_debug) are
+    # published beside them as non-gating context.
+    debug = spec.get('context_debug', {})
+    # flavour: (command, states, digest log, series key with {state})
+    table = {
+        'cached': (spec['cached'], ('cold', 'incremental'), 'keep', 'flint_cached_{state}_seconds'),
+        'cached_cleared': (spec['cached'], ('cold',), 'clear', 'flint_cached_cold_digests_cleared_seconds'),
+        'scratch': (spec['scratch'], ('cold',), 'clear', 'flint_scratch_seconds'),
+        'cached_static': (spec.get('cached_static'), ('cold', 'incremental'), 'keep', 'flint_static_{state}_seconds'),
+        'debug_cached': (debug.get('cached'), ('cold', 'incremental'), 'keep', 'flint_debug_cached_{state}_seconds'),
+        'debug_static': (debug.get('cached_static'), ('cold', 'incremental'), 'keep',
+                         'flint_debug_static_{state}_seconds'),
+        'debug_scratch': (debug.get('scratch'), ('cold',), 'clear', 'flint_debug_scratch_seconds'),
+    }
+    flavours = [name for name, (command, *_rest) in table.items() if command]
+    row = {table[f][3].format(state=state): [] for f in flavours for state in table[f][1]}
     # A flint cache of this measurement's own, primed by the first build; the trials use clones of its platform part.
     cache = temporary / f'{name}-flint-cache'
     platform = temporary / f'{name}-flint-platform-cache'
@@ -227,13 +241,18 @@ def measure_flint(name, trials, timed, logs, temporary, result):
     phases = {}
     try:
         # The platform cache (ADR-030 section 5) lives outside the port, so clearing the port's .flint keeps it. One
-        # unscored build primes it, as measure_builds primes the DMD compile server, and its time is recorded.
-        clean()
-        log = logs / f'{name}-flint-prime.log'
-        observed = timed(spec['cached'], directory, env, log)
-        row['flint_first_build_seconds'] = observed['seconds']
+        # unscored build per cached command primes it (debug and no-debug archives have different keys, and a static
+        # build records its commands), as measure_builds primes the DMD compile server; the times are recorded.
+        primes = [f for f in ('cached', 'cached_static', 'debug_cached', 'debug_static') if f in flavours]
+        row['flint_prime_seconds'] = {}
+        for flavour in primes:
+            clean()
+            observed = timed(table[flavour][0], directory, env, logs / f'{name}-flint-prime-{flavour}.log')
+            row['flint_prime_seconds'][flavour] = observed['seconds']
+        row['flint_first_build_seconds'] = row['flint_prime_seconds']['cached']
         row['dev_linker'] = dev_linker(env)
-        has_aot = aot_counts(log) is not None  # a port without @FlintApplication has no AOT step to check
+        # A port without @FlintApplication has no AOT step to check.
+        has_aot = aot_counts(logs / f'{name}-flint-prime-cached.log') is not None
         pruned = platform_only_cache(cache, platform, directory)
         master = cache_snapshot(platform)
         env = dict(os.environ, FLINT_CACHE=str(trial_cache))
@@ -247,18 +266,16 @@ def measure_flint(name, trials, timed, logs, temporary, result):
                               'port_entries_pruned': pruned}
         for trial in range(trials):
             for flavour in flavours:
-                clean('clear' if flavour in ('scratch', 'cached_cleared') else 'keep')
-                states = ['cold'] if flavour in ('scratch', 'cached_cleared') else ['cold', 'incremental']
+                command, states, digests, series = table[flavour]
+                clean(digests)
                 for state in states:
                     if state == 'incremental':
                         with edit.open('a', encoding='utf-8') as output:
                             output.write(f'\nenum flintMeasureEdit{trial} = {trial};\n')
                     log = logs / f'{name}-flint-{flavour}-{state}-{trial}.log'
                     began = time.time() - 1
-                    observed = timed(spec['cached' if flavour == 'cached_cleared' else flavour], directory, env, log)
-                    key = {'scratch': 'flint_scratch_seconds', 'cached': f'flint_cached_{state}_seconds',
-                           'cached_cleared': 'flint_cached_cold_digests_cleared_seconds',
-                           'cached_static': f'flint_static_{state}_seconds'}[flavour]
+                    observed = timed(command, directory, env, log)
+                    key = series.format(state=state)
                     row[key].append(observed['seconds'])
                     phases.setdefault(key, []).append(build_phases(directory, began))
                     if state == 'cold' and has_aot:
@@ -402,12 +419,19 @@ def verdicts(name, flint, go, ceiling):
         'stricter: platform cache vs deps-primed GOCACHE': ('flint_cached_cold_seconds', 'go_deps_cold_seconds', False),
         'context: primary with the digest log cleared': ('flint_cached_cold_digests_cleared_seconds',
                                                          'go_std_cold_seconds', False),
+        'context: primary with debug information': ('flint_debug_cached_cold_seconds', 'go_std_cold_seconds', False),
+        'context: secondary with debug information': ('flint_debug_scratch_seconds', 'go_scratch_seconds', False),
+        'context: edit build, dev profile, with debug information': ('flint_debug_cached_incremental_seconds',
+                                                                     'go_std_incremental_seconds', False),
+        'context: edit build, fully static, with debug information': ('flint_debug_static_incremental_seconds',
+                                                                      'go_std_incremental_seconds', False),
     }
     out = {}
     for label, (mine, theirs, gating) in pairs.items():
         if mine not in flint:
-            out[label] = {'gating': gating, 'pass': False,
-                          'note': 'not measured: the port declares no measure.cached_static command'}
+            if gating:
+                out[label] = {'gating': gating, 'pass': False,
+                              'note': 'not measured: the port declares no measure.cached_static command'}
             continue
         median, lower, upper = median_ratio_interval(flint[mine], go[theirs])
         out[label] = {'median_ratio': median, 'lower_99': lower, 'upper_99': upper, 'gating': gating,

@@ -152,13 +152,21 @@ A port lives in `benchmarks/spring/flint/<app>/`, next to its `flint-spring.json
 **The fields:**
 - `build` produces the binary that the suites and `load_bench` run.
 - `measure.cached` is the development build with the platform cache, the first headline.
-- `measure.scratch` builds every module from source with no platform cache, the second headline.
+- `measure.cached_static` is the same build linked fully static, the secondary edit-build headline (owner decision 2).
+- `measure.scratch` builds every module from source with no platform cache (`--no-platform-cache`), the second headline.
+- Every measured command carries `--no-debug`, so it matches the Go comparator's `-ldflags=-s -w`: no debug information and no symbol table, in the project, the platform archives and the shared platform object (owner decision `4b27d207`).
+- `measure.context_debug` holds the same commands without `--no-debug`. Every run publishes them as non-gating context (`flint_debug_*` series).
 - `edit_source` is the file that the incremental build appends a declaration to.
 - `O3` and `Oz` give the size profiles.
 
 Without a `binary`, the harness reads the executable from `flint build --json` (`artifact.path`). A port's `flint.toml` keeps its upstream package as `base-package` (for example `com.example.restservice`) and declares Boot starters as dependencies (`"flint:boot-starter-web" = {}`).
 
-flint has no platform cache yet (ADR-030 section 5). `cached` therefore also compiles the platform modules from source, so until the cache lands the primary headline is measured conservatively. When it lands, `scratch` gains its `--no-platform-cache` switch.
+**Cold trials.** One unscored build per cached command primes a `FLINT_CACHE` of the run's own. The harness then makes a platform-only copy, without the project-keyed entries under `projects/` (the app's AOT models and generated output), with the digest log pruned of the port's entries. Every cold trial starts from an empty `.flint` and a fresh hard-link clone of that copy, as Go's cold trials start from a clone of a std-only `GOCACHE`. The run fails if:
+- a cold trial reuses project-keyed AOT state;
+- the platform copy names the port;
+- a build changes a platform entry in place.
+
+The same build with the digest log cleared is published as non-gating context (decisions.md, 2026-11-23).
 
 **A `flint-spring.json` with `"status": "skeleton"` counts as no port.** It holds sources that do not build yet. **Without a port, every claim about that application fails closed.** `accept --impl flint` exits non-zero. The measuring tools refuse to run unless `--allow-missing-flint` is given, which writes an `incomplete` record. The gate never accepts such a record.
 

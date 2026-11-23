@@ -10,13 +10,15 @@
   "measure": {
     "cached": [
       "flint",
-      "build"
+      "build",
+      "--no-debug"
     ],
     "scratch": [
       "flint",
       "build",
       "--force",
-      "--no-platform-cache"
+      "--no-platform-cache",
+      "--no-debug"
     ],
     "edit_source": "src/com/example/restservice/package.d",
     "O3": {
@@ -40,7 +42,25 @@
     "cached_static": [
       "flint",
       "build",
-      "--static"
-    ]
+      "--static",
+      "--no-debug"
+    ],
+    "context_debug": {
+      "cached": [
+        "flint",
+        "build"
+      ],
+      "cached_static": [
+        "flint",
+        "build",
+        "--static"
+      ],
+      "scratch": [
+        "flint",
+        "build",
+        "--force",
+        "--no-platform-cache"
+      ]
+    }
   }
 }

@@ -3,8 +3,9 @@
   "build": ["flint", "build", "--profile", "release"],
   "binary": ".flint/build/release/petclinic-rest",
   "measure": {
-    "cached": ["flint", "build"],
-    "scratch": ["flint", "build", "--force"],
+    "cached": ["flint", "build", "--no-debug"],
+    "scratch": ["flint", "build", "--force", "--no-debug"],
+    "context_debug": {"cached": ["flint", "build"], "scratch": ["flint", "build", "--force"]},
     "edit_source": "src/org/springframework/samples/petclinic/rest/controller/package.d",
     "O3": {"command": ["flint", "build", "--profile", "release"], "binary": ".flint/build/release/petclinic-rest"},
     "Oz": {"command": ["flint", "build", "--profile", "size"], "binary": ".flint/build/size/petclinic-rest"}
