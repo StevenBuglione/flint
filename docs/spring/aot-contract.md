@@ -462,6 +462,15 @@ The descriptor fields spare dispatch a by-name table lookup per request; a null 
 
 Generated registries call `registry.begin(3, ...)`.
 
+### 4.12 Contract 4 additions
+
+| Type | Member | Meaning |
+| --- | --- | --- |
+| `HandlerMapping` | `HandlerArrayInvoker invokeArguments` | `invoke` over the resolved `Any[]` arguments (each converted to its `ArgumentSpec.type`), so dispatch builds no `HandlerArguments` object and may pass stack storage |
+| `ExceptionHandlerSpec` | `ExceptionArrayInvoker invokeArguments` | the same for exception handlers |
+
+Both are null in older generated code; callers then use `invoke`.
+
 ## 5. Beans
 
 ### 5.1 What becomes a bean
