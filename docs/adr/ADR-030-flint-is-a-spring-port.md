@@ -55,7 +55,11 @@ Every public name is identical to Spring's, with one exception: where an identif
 
 Shell, Kafka, AMQP, Integration, Session and GraphQL follow in the same pattern.
 
-**The split happens in two steps.** It is first prepared inside this repository: policy gains a `repo` field, and gates and tools learn workspaces. History is then extracted with `git filter-repo`. Dependency edges may point only portfolio → boot → framework → flint.
+**The split happens in two steps.** It is first prepared inside this repository: policy gains a `repo` field, and gates and tools learn workspaces. History is then extracted with `git filter-repo`. Dependency edges follow Spring's own:
+
+- **Integrated repositories** (`flint-security`, the `flint-data-*` family, `flint-batch`) sit between boot and framework, because Spring Boot auto-configures them: boot → integrated → framework → flint. They depend on each other only where Spring does (data-jpa → data-commons).
+- **Boot-based repositories** (`flint-ai`, the `flint-cloud-*` family, later Shell) ship their own auto-configuration and depend on boot: boot-based → boot.
+- **Engines stay in `flint-framework`.** The existing `security` package (hashing, HMAC, secret erasure, the crypto wrappers) is one of them, so `storage` and other engines keep using it. `flint-security` ports the Spring Security API on top of it.
 
 **Versioning.** ADR-023 gains *platform modules*:
 - one repository holds many packages under one tag, resolved by platform version, never by MVS;
