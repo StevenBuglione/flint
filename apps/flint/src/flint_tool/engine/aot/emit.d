@@ -25,10 +25,12 @@ string generatedName(string moduleName)
 /// The generated module's path under `.flint/generated/aot/`, mirroring its source path.
 string generatedPath(string moduleName, bool packageModule)
 {
-    import std.array : replace;
+    import std.array : split;
+    import std.path : buildPath;
 
-    const base = "flint_aot/" ~ moduleName.replace(".", "/");
-    return packageModule ? base ~ "/package.d" : base ~ ".d";
+    // The platform's separators throughout: the driver compares these paths with directory listings (Windows).
+    const base = buildPath(["flint_aot"] ~ moduleName.split("."));
+    return packageModule ? buildPath(base, "package.d") : base ~ ".d";
 }
 
 /// Render one generated module.

@@ -581,7 +581,7 @@ private bool writeOutput(string root, const ref imported!"flint_tool.engine.aot.
     import std.algorithm.searching : canFind;
     import std.algorithm.sorting : sort;
     import std.file : SpanMode, dirEntries, exists, isFile, mkdirRecurse, remove;
-    import std.path : buildPath, dirName;
+    import std.path : buildNormalizedPath, buildPath, dirName;
     import flint_tool.engine.aot.emit : generatedPath, renderModule, renderRegistry;
     import flint_tool.support.files : writeIfChanged;
 
@@ -615,9 +615,13 @@ private bool writeOutput(string root, const ref imported!"flint_tool.engine.aot.
         ++outcome.written;
     written ~= registry;
     outcome.generated = modules.length;
+    string[] normalizedWritten;
+    foreach (path; written)
+        normalizedWritten ~= buildNormalizedPath(path);
     foreach (entry; dirEntries(directory, "*.d", SpanMode.depth))
     {
-        if (isFile(entry.name) && !written.canFind(entry.name))
+        // Normalized on both sides: on Windows a listing spells `\` where a joined path may keep `/`.
+        if (isFile(entry.name) && !normalizedWritten.canFind(buildNormalizedPath(entry.name)))
             remove(entry.name);
     }
     return true;
