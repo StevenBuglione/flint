@@ -802,6 +802,48 @@ private int rankOf(string text, string name)
     return text[rank .. rank + text[rank .. $].indexOf(';')].to!int;
 }
 
+@("a platform module's generated code may not import a project module (FLINT-E1116)")
+unittest
+{
+    import std.file : mkdirRecurse, write;
+    import std.path : buildPath, dirName;
+    import flint_tool.engine.aot.driver : AotRequest, runAot;
+
+    const project = copyFixture("sample");
+    scope (exit)
+        remove(project);
+    // An auto-configuration whose @Value names the sample's `pricing` bean: its factory would cast to
+    // shop.pricing.Pricing, a project class, so the AOT library could not be compiled apart from the project.
+    const package_ = buildPath(dirName(project), "leaky");
+    mkdirRecurse(buildPath(package_, "META-INF", "flint"));
+    mkdirRecurse(buildPath(package_, "source", "leaky"));
+    write(buildPath(package_, "META-INF", "flint",
+            "flint.boot.autoconfigure.AutoConfiguration.imports"), "leaky.config.LeakyAutoConfiguration\n");
+    write(buildPath(package_, "source", "leaky", "config.d"), "module leaky.config;\n"
+            ~ "import flint.beans.factory.annotation : Value;\nimport flint.boot.autoconfigure : AutoConfiguration;\n"
+            ~ "import flint.context.annotation : Bean;\n@safe:\nclass Limit { long value; this(long value) "
+            ~ "{ this.value = value; } }\n@AutoConfiguration class LeakyAutoConfiguration\n{\n"
+            ~ "    @Bean Limit limit(@Value(\"#{@pricing.doubled}\") long doubled)\n"
+            ~ "    {\n        return new Limit(doubled);\n    }\n}\n");
+    const root = repositoryRoot();
+    AotRequest request;
+    request.root = project;
+    request.compiler = compiler();
+    request.importPaths = [
+        "-I" ~ buildPath(root, "tests", "aot", "annotations"), "-I" ~ buildPath(package_, "source")
+    ];
+    request.flags = ["-preview=dip1000"];
+    request.packageDirectories = [package_];
+    request.environmentKey = "test";
+    auto outcome = runAot(request);
+    expect(outcome.extractionErrors).toEqual("");
+    expect(outcome.ok).toBeFalse();
+    string[] codes;
+    foreach (ref item; outcome.diagnostics)
+        codes ~= item.code;
+    expect(codes).toEqual(["FLINT-E1116"]);
+}
+
 @("The shared cache serves platform modules' models and presence answers to a cold build of another copy")
 unittest
 {

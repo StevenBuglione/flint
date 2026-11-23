@@ -673,4 +673,9 @@ immutable CodeInfo[] catalog = [
     CodeInfo("FLINT-E1115", ExitCode.user, "a bean is not a class or interface instance",
             "Beans are D objects. A @Bean method returning a struct, array or scalar has no object to register; "
             ~ "wrap the value in a class.", "@Bean OwnerSettings settings() { return new OwnerSettings(...); }"),
+    CodeInfo("FLINT-E1116", ExitCode.user, "a platform module's generated code would import a project module",
+            "flint build compiles the generated code of modules outside src/ as a library kept across edits, so it "
+            ~ "cannot refer to the project's types. Usually a SpEL @bean reference in an auto-configuration names a "
+            ~ "project bean; reference a platform type, or move the expression into the project.",
+            "@Value(\"#{@settings.limit}\") in a project @Configuration instead of an auto-configuration"),
 ];

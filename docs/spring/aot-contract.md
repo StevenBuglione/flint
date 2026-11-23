@@ -116,7 +116,7 @@ The legacy ADR-028 attribute `flint.di.internal.conditions.ConditionalOnConfig("
 ```
 
 - **One generated module per extracted module** that contributes anything; a module that contributes nothing gets no file. The path mirrors the source path under `flint_aot/`.
-- **Imports of a generated module:** the `flint.engine.aot.*` modules it uses, and, with `static import`, its own user module, the modules declaring the types it spells out (a constructor parameter's type, a proxied method's parameter types) and the annotation and enum modules of the merged values it builds. It never imports another generated module. Everything it spells is qualified, so nothing it imports can shadow a name. In tables, types are named by their fully qualified string.
+- **Imports of a generated module:** the `flint.engine.aot.*` modules it uses, and, with `static import`, its own user module, the modules declaring the types it spells out (a constructor parameter's type, a proxied method's parameter types) and the annotation and enum modules of the merged values it builds. It never imports another generated module. Everything it spells is qualified, so nothing it imports can shadow a name. In tables, types are named by their fully qualified string. A generated module for a module outside `src/` (an auto-configuration or another platform module) never imports a project module: `flint build` compiles those as a separate library, `.flint/generated/aot-library`, that DUB keeps across edits (19390bd1, `flint-cli.md` "The AOT library"). The generator checks this and reports FLINT-E1116 when, say, a compiled SpEL `@bean` reference in an auto-configuration would name a project bean's class.
 - **The registry** imports only `flint.engine.aot.registry`. It declares each generated module's entry point by its `extern(C)` name, calls them in definition order (section 5.4), and installs itself in its module constructor:
   ```d
   module flint_aot_registry;
@@ -641,6 +641,7 @@ SpEL is compiled to typed D at build time (`engine/aot/spel.d`); nothing interpr
 | FLINT-E1113 | an `@Async` method returns a value |
 | FLINT-E1114 | a derived query uses a nested property path |
 | FLINT-E1115 | a bean (a `@Bean` method's return type) is not a class or interface |
+| FLINT-E1116 | a generated module for a module outside `src/` would import a project module |
 
 Every diagnostic names the source file and line of the declaration that caused it.
 

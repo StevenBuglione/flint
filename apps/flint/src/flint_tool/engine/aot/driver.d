@@ -528,11 +528,10 @@ private bool generate(const ref AotRequest request, scope const SourceModule[] s
     outcome.removed = plan.removed;
     if (plan.failed)
         return false;
-    writeOutput(request.root, plan, sources, outcome);
-    return true;
+    return writeOutput(request.root, plan, sources, outcome);
 }
 
-private void writeOutput(string root, const ref imported!"flint_tool.engine.aot.plan".Plan plan,
+private bool writeOutput(string root, const ref imported!"flint_tool.engine.aot.plan".Plan plan,
         scope const SourceModule[] sources, ref AotOutcome outcome)
 {
     import std.algorithm.searching : canFind;
@@ -555,8 +554,11 @@ private void writeOutput(string root, const ref imported!"flint_tool.engine.aot.
         foreach (ref source; sources)
             packageModule = packageModule || (source.name == item.name && source.packageModule);
         const path = buildPath(directory, generatedPath(item.name, packageModule));
+        const text = renderModule(item);
+        if (!separable(item.name, item.source, text, sources, outcome))
+            return false;
         mkdirRecurse(dirName(path));
-        if (writeIfChanged(path, renderModule(item)))
+        if (writeIfChanged(path, text))
             ++outcome.written;
         written ~= path;
         modules ~= item.name;
@@ -574,6 +576,33 @@ private void writeOutput(string root, const ref imported!"flint_tool.engine.aot.
         if (isFile(entry.name) && !written.canFind(entry.name))
             remove(entry.name);
     }
+    return true;
+}
+
+/// `flint build` compiles the generated modules of modules outside `src/` as a separate library that DUB keeps
+/// across edits (aot-contract.md section 3), so such a module must not import a project module. A compiled SpEL
+/// `@bean` reference from a platform module to a project bean would; that is FLINT-E1116.
+private bool separable(string name, string source, string text, scope const SourceModule[] sources,
+        ref AotOutcome outcome)
+{
+    import std.algorithm.searching : canFind;
+    import flint_tool.engine.aot.plan : Diagnostic;
+
+    bool platform;
+    foreach (ref item; sources)
+        platform = platform || (item.name == name && !item.user);
+    if (!platform)
+        return true;
+    foreach (ref item; sources)
+    {
+        if (item.user && text.canFind("static import " ~ item.name ~ ";"))
+        {
+            outcome.diagnostics ~= Diagnostic("FLINT-E1116", "the generated code of " ~ name
+                    ~ ", which is outside src/, would import the project " ~ "module " ~ item.name, source, 1);
+            return false;
+        }
+    }
+    return true;
 }
 
 private State loadState(string cache, string environment)
