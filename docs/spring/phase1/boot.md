@@ -170,6 +170,9 @@ boot-security (`flint.boot.security`, spring-boot-security) and `flint-boot-star
 - `SecurityAutoConfiguration` binds `flint.security.*` (`SecurityProperties`: the default user, its generated password and roles).
 - `UserDetailsServiceAutoConfiguration` gives an `InMemoryUserDetailsManager` with that user. It applies unless the application defines an `AuthenticationManager`, `AuthenticationProvider` or `UserDetailsService`, and it logs a generated password as Boot does.
 - `ServletWebSecurityAutoConfiguration` imports Boot's default `SecurityFilterChain` (every request authenticated, HTTP Basic), unless the application defines a chain. It also imports `@EnableWebSecurity`, unless a `springSecurityFilterChain` bean exists. Boot's nested configurations are module-level classes that it `@Import`s, since Flint AOT reads top-level classes.
+  With flint-aot's import order (`f81d78c`), a trial app with no security configuration answers 401 anonymously,
+  200 with the logged password, and 401 with a wrong one. An app whose `@EnableWebSecurity` chain is conditional
+  gets its own chain when the condition holds and Boot's default otherwise.
 - `SecurityFilterAutoConfiguration` registers `springSecurityFilterChain` through `DelegatingFilterProxyRegistrationBean` (boot-web-server), at `flint.security.filter.order` (-100) and for every dispatcher type by default. The proxy looks the bean up on the first request. `ServletContextInitializerBeans` does not adapt the target bean a second time.
 
 Deviations:
