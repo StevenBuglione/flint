@@ -119,3 +119,34 @@ python3 tools/measure_class_gc.py --dmd .tools/dmd2/linux/bin64/dmd --ldc ldc2 -
 python3 tools/gates.py --gate structural
 flint toolchain verify
 ```
+
+## 4. Framework module budgets
+
+Each Spring-layer module of `policy/framework.json` now has two things:
+- **A probe pair**, `framework/<artifact>/bench` and `bench/baseline`, with its own `PROBE_CONTRACT.md`. The fixture runs a representative public operation of the module and prints one line that depends on its arguments. The baseline declares the module's direct dependencies, but not the module, and prints the same line computed without it.
+- **A budget** in `policy/framework.json`, with the seven package-budget keys (`tools/framework_budgets.py`).
+
+`tools/measure_builds.py --framework-sizes` measured the deterministic keys on venus at `26da3a7de0` (the tree pushed with them) with the verified private toolchain. An earlier run had core at 283 template instances; upstream then gave core `flint.util` and `flint.lang`, and it came back at 577, which is the drift this gate exists to catch.
+
+| Module | Linked bytes (larger of O3/Oz) | Budget | Template instances | Budget |
+| --- | ---: | ---: | ---: | ---: |
+| core | 59,384 | 81,920 | 577 | 750 |
+| engine-aot | 61,744 | 81,920 | 308 | 400 |
+| jackson-annotations | 0 | 4,096 | 273 | 350 |
+| jackson-core | 92,760 | 131,072 | 277 | 350 |
+| jackson-databind | 434,144 | 557,056 | 530 | 700 |
+| jakarta-annotation | 0 | 4,096 | 274 | 350 |
+| java | 272,264 | 344,064 | 2,680 | 3,350 |
+| jdbc | 376,216 | 475,136 | 577 | 750 |
+| slf4j-api | 371,368 | 475,136 | 720 | 900 |
+| tx | 176,408 | 229,376 | 1,874 | 2,350 |
+
+How the budgets were set:
+- **Linked bytes:** the measured value plus 25%, rounded up to 16 KiB. The annotation-only modules link nothing and get 4,096 bytes, so any runtime code they gain is caught.
+- **Template instances:** the measured count plus 25%, rounded up to 50.
+- **Compile times and compiler peak RSS:** the package defaults (0.9 / 0.6 / 5.4 / 2.7 s, 512 MiB), listed in each module's `"provisional"` until the proof-harness session's quiet-window timings replace them. The gate prints the modules that still carry provisional keys.
+- **Drift:** the regression ratios of `policy/budgets.json` apply against every base commit, so drift fails long before a ceiling does.
+
+**What the template count covers.** The instrumented compiler traces each `-c` invocation, and DUB compiles a library dependency with `-lib`. The count therefore covers the probe's compile, including every instantiation of the module's templates that the probe uses, but not the module library's own compile. Packages have always been counted this way; whether to trace library compiles too is for the measurement owners.
+
+beans, context, hibernate-validator and jakarta-validation joined `policy/framework.json` while these probes were written and are next. Modules that join later (web, webmvc, jakarta-servlet, framework-test, aop) need a probe pair and a budget in the same commit. `framework_budgets.load` refuses a module without them, so the gate fails until they exist.

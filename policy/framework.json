@@ -15,6 +15,27 @@
    "dependencies": [
     "engine-aot",
     "java"
+   ],
+   "bench": {
+    "fixture": "framework/core/bench",
+    "baseline": "framework/core/bench/baseline",
+    "edit_source": "framework/core/source/flint/core/package.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 81920,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 750
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
    ]
   },
   "engine-aot": {
@@ -26,6 +47,27 @@
    "dependencies": [],
    "unsafe": [
     "flint.engine.aot.sys"
+   ],
+   "bench": {
+    "fixture": "framework/engine-aot/bench",
+    "baseline": "framework/engine-aot/bench/baseline",
+    "edit_source": "framework/engine-aot/source/flint/engine/aot/name.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 81920,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 400
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
    ]
   },
   "jackson-annotations": {
@@ -34,7 +76,28 @@
    "repo": "framework",
    "licence": "Apache-2.0",
    "upstream": "jackson-annotations@2.21",
-   "dependencies": []
+   "dependencies": [],
+   "bench": {
+    "fixture": "framework/jackson-annotations/bench",
+    "baseline": "framework/jackson-annotations/bench/baseline",
+    "edit_source": "framework/jackson-annotations/source/flint/jackson/annotation/package.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 4096,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 350
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
   },
   "jackson-core": {
    "directory": "framework/jackson-core",
@@ -44,6 +107,27 @@
    "upstream": "jackson-core@3.1.8",
    "dependencies": [
     "serde"
+   ],
+   "bench": {
+    "fixture": "framework/jackson-core/bench",
+    "baseline": "framework/jackson-core/bench/baseline",
+    "edit_source": "framework/jackson-core/source/flint/jackson/core/package.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 131072,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 350
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
    ]
   },
   "jackson-databind": {
@@ -58,6 +142,27 @@
     "jackson-core",
     "java",
     "serde"
+   ],
+   "bench": {
+    "fixture": "framework/jackson-databind/bench",
+    "baseline": "framework/jackson-databind/bench/baseline",
+    "edit_source": "framework/jackson-databind/source/flint/jackson/databind/package.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 557056,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 700
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
    ]
   },
   "jakarta-annotation": {
@@ -66,7 +171,28 @@
    "repo": "framework",
    "licence": "EPL-2.0",
    "upstream": "jakarta-annotation@3.0.0",
-   "dependencies": []
+   "dependencies": [],
+   "bench": {
+    "fixture": "framework/jakarta-annotation/bench",
+    "baseline": "framework/jakarta-annotation/bench/baseline",
+    "edit_source": "framework/jakarta-annotation/source/flint/jakarta/annotation/package.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 4096,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 350
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
   },
   "java": {
    "directory": "framework/java",
@@ -80,6 +206,27 @@
    "dependencies": [
     "engine-aot",
     "serde"
+   ],
+   "bench": {
+    "fixture": "framework/java/bench",
+    "baseline": "framework/java/bench/baseline",
+    "edit_source": "framework/java/source/flint/java/util/package.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 344064,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 3350
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
    ]
   },
   "jdbc": {
@@ -94,6 +241,27 @@
     "java",
     "slf4j-api",
     "tx"
+   ],
+   "bench": {
+    "fixture": "framework/jdbc/bench",
+    "baseline": "framework/jdbc/bench/baseline",
+    "edit_source": "framework/jdbc/source/flint/jdbc/package.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 475136,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 750
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
    ]
   },
   "slf4j-api": {
@@ -110,6 +278,27 @@
     "java",
     "log",
     "serde"
+   ],
+   "bench": {
+    "fixture": "framework/slf4j-api/bench",
+    "baseline": "framework/slf4j-api/bench/baseline",
+    "edit_source": "framework/slf4j-api/source/flint/slf4j/package.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 475136,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 900
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
    ]
   },
   "tx": {
@@ -127,6 +316,27 @@
     "engine-reactor",
     "java",
     "slf4j-api"
+   ],
+   "bench": {
+    "fixture": "framework/tx/bench",
+    "baseline": "framework/tx/bench/baseline",
+    "edit_source": "framework/tx/source/flint/dao/package.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 229376,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 2350
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
    ]
   },
   "beans": {
