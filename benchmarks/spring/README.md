@@ -159,7 +159,7 @@ A port lives in `benchmarks/spring/flint/<app>/`, next to its `flint-spring.json
 
 The command names above are placeholders. The port's owner fills in whatever `flint build` offers once Flint AOT and the platform cache land.
 
-**Without a port, every claim about that application fails closed.** `accept --impl flint` exits non-zero. The measuring tools refuse to run unless `--allow-missing-flint` is given, which writes an `incomplete` record. The gate never accepts such a record.
+**A `flint-spring.json` with `"status": "skeleton"` counts as no port.** It holds sources that do not build yet. **Without a port, every claim about that application fails closed.** `accept --impl flint` exits non-zero. The measuring tools refuse to run unless `--allow-missing-flint` is given, which writes an `incomplete` record. The gate never accepts such a record.
 
 ## Measuring
 

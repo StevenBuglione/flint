@@ -490,7 +490,7 @@ def spring_main(a, raw, m):
     a.output.parent.mkdir(parents=True,exist_ok=True)
     outdir=a.output.parent/(a.output.stem+"-raw");outdir.mkdir(exist_ok=True)
     targets=list(m["targets"])
-    missing=[app for app in apps if not (ROOT/spring.app_row(app)["flint"]["directory"]/"flint-spring.json").is_file()]
+    missing=[app for app in apps if not spring.flint_port_ready(app)]
     if missing:
         require(a.allow_missing_flint,"the Flint port is missing for "+", ".join(missing)+
                 "; a missing port fails its claim (pass --allow-missing-flint to measure the rest as an incomplete record)")

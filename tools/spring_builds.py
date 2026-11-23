@@ -215,7 +215,7 @@ def measure(args, timed):
     problems = spring_bench.check_registry(names)
     if problems:
         raise SystemExit('Go comparators: ' + '; '.join(problems))
-    missing = [n for n in names if not (ROOT / spring_bench.app_row(n)['flint']['directory'] / 'flint-spring.json').is_file()]
+    missing = [n for n in names if not spring_bench.flint_port_ready(n)]
     if missing and not args.allow_missing_flint:
         raise SystemExit('the Flint port is missing for ' + ', '.join(missing) + '; a missing port fails its claim '
                          '(pass --allow-missing-flint to record the Go and Java sides as an incomplete record)')

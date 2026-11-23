@@ -202,6 +202,13 @@ def flint_binary(name):
     return BUILD / f"{name}-flint"
 
 
+def flint_port_ready(name):
+    """A Flint port the harness may build: its flint-spring.json exists and is not a skeleton (benchmarks/spring/
+    flint/<app>/README.md). A skeleton counts as missing, which every claim treats as a failure."""
+    manifest = ROOT / app_row(name)['flint']['directory'] / 'flint-spring.json'
+    return manifest.is_file() and json.loads(manifest.read_text()).get('status') != 'skeleton'
+
+
 def build_flint(name):
     """The Flint port, built with the command its directory declares in flint-spring.json. The ports are written by
     the Phase 1 framework and Boot sessions; until one lands, this fails closed."""
@@ -212,7 +219,13 @@ def build_flint(name):
         raise SystemExit(f'{name}: the Flint port is not there yet ({manifest} is missing). A missing port is a '
                          'failure of its claim, never a pass (AGENTS.md, "CI and evidence integrity").')
     spec = json.loads(manifest.read_text())
-    run(spec['build'], directory, dict(os.environ))
+    if spec.get('status') == 'skeleton':
+        raise SystemExit(f'{name}: the Flint port is a skeleton that does not build yet ({manifest}); a missing port '
+                         'is a failure of its claim, never a pass')
+    try:
+        run(spec['build'], directory, dict(os.environ))
+    except OSError as exc:
+        raise SystemExit(f'{name}: the Flint build command could not run: {exc}') from exc
     produced = directory / spec['binary']
     if not produced.is_file():
         raise SystemExit(f'{name}: the Flint build did not produce {produced}')
@@ -503,7 +516,8 @@ def main(argv=None):
     if args.command == 'list':
         for name, row in registry()['apps'].items():
             golden = 'recorded' if golden_path(name).is_file() else 'not recorded'
-            flint = 'present' if (ROOT / row['flint']['directory'] / 'flint-spring.json').is_file() else 'not yet'
+            manifest = ROOT / row['flint']['directory'] / 'flint-spring.json'
+            flint = 'ready' if flint_port_ready(name) else ('skeleton' if manifest.is_file() else 'not yet')
             print(f"{name:28} {row['kind']:8} upstream {row['upstream']['commit'][:12]}  golden {golden:13} flint {flint}")
         return 0
     if args.command == 'fetch':
