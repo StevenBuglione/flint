@@ -1,0 +1,139 @@
+{
+  "groups": [
+    {
+      "name": "flint.jackson",
+      "type": "flint.boot.jackson.autoconfigure.JacksonProperties",
+      "sourceType": "flint.boot.jackson.autoconfigure.JacksonProperties"
+    },
+    {
+      "name": "flint.jackson.datatype",
+      "type": "flint.boot.jackson.autoconfigure.JacksonProperties$Datatype",
+      "sourceType": "flint.boot.jackson.autoconfigure.JacksonProperties$Datatype"
+    },
+    {
+      "name": "flint.jackson.json",
+      "type": "flint.boot.jackson.autoconfigure.JacksonProperties$Json",
+      "sourceType": "flint.boot.jackson.autoconfigure.JacksonProperties$Json"
+    }
+  ],
+  "properties": [
+    {
+      "name": "flint.jackson.date-format",
+      "type": "java.lang.String",
+      "description": "Date format string or a fully-qualified date format class name. For instance, 'yyyy-MM-dd HH:mm:ss'.",
+      "sourceType": "flint.boot.jackson.autoconfigure.JacksonProperties"
+    },
+    {
+      "name": "flint.jackson.property-naming-strategy",
+      "type": "java.lang.String",
+      "description": "One of the constants on Jackson's PropertyNamingStrategies. Can also be a fully-qualified class name of a PropertyNamingStrategy implementation.",
+      "sourceType": "flint.boot.jackson.autoconfigure.JacksonProperties"
+    },
+    {
+      "name": "flint.jackson.visibility",
+      "type": "java.util.Map<PropertyAccessor,JsonAutoDetect.Visibility>",
+      "description": "Jackson visibility thresholds that can be used to limit which methods (and fields) are auto-detected.",
+      "sourceType": "flint.boot.jackson.autoconfigure.JacksonProperties"
+    },
+    {
+      "name": "flint.jackson.serialization",
+      "type": "java.util.Map<SerializationFeature,bool>",
+      "description": "Jackson on/off features that affect the way objects are serialized.",
+      "sourceType": "flint.boot.jackson.autoconfigure.JacksonProperties"
+    },
+    {
+      "name": "flint.jackson.deserialization",
+      "type": "java.util.Map<DeserializationFeature,bool>",
+      "description": "Jackson on/off features that affect the way objects are deserialized.",
+      "sourceType": "flint.boot.jackson.autoconfigure.JacksonProperties"
+    },
+    {
+      "name": "flint.jackson.mapper",
+      "type": "java.util.Map<MapperFeature,bool>",
+      "description": "Jackson general purpose on/off features.",
+      "sourceType": "flint.boot.jackson.autoconfigure.JacksonProperties"
+    },
+    {
+      "name": "flint.jackson.default-property-inclusion",
+      "type": "JsonInclude.Include",
+      "description": "Controls the inclusion of properties during serialization. Configured with one of the values in Jackson's JsonInclude.Include enumeration.",
+      "sourceType": "flint.boot.jackson.autoconfigure.JacksonProperties"
+    },
+    {
+      "name": "flint.jackson.default-leniency",
+      "type": "java.lang.Boolean",
+      "description": "Global default setting (if any) for leniency.",
+      "sourceType": "flint.boot.jackson.autoconfigure.JacksonProperties"
+    },
+    {
+      "name": "flint.jackson.constructor-detector",
+      "type": "ConstructorDetectorStrategy",
+      "description": "Strategy to use to auto-detect constructor, and in particular behavior with single-argument constructors.",
+      "sourceType": "flint.boot.jackson.autoconfigure.JacksonProperties",
+      "defaultValue": "default"
+    },
+    {
+      "name": "flint.jackson.time-zone",
+      "type": "java.lang.String",
+      "description": "Time zone used when formatting dates. For instance, \"America/Los_Angeles\" or \"GMT+10\".",
+      "sourceType": "flint.boot.jackson.autoconfigure.JacksonProperties"
+    },
+    {
+      "name": "flint.jackson.locale",
+      "type": "java.lang.String",
+      "description": "Locale used for formatting.",
+      "sourceType": "flint.boot.jackson.autoconfigure.JacksonProperties"
+    },
+    {
+      "name": "flint.jackson.use-jackson2-defaults",
+      "type": "java.lang.Boolean",
+      "description": "Whether to configure Jackson 3 with the same defaults as Boot previously used for Jackson 2.",
+      "sourceType": "flint.boot.jackson.autoconfigure.JacksonProperties",
+      "defaultValue": false
+    },
+    {
+      "name": "flint.jackson.find-and-add-modules",
+      "type": "java.lang.Boolean",
+      "description": "Whether to find and add modules to the auto-configured JsonMapper.Builder.",
+      "sourceType": "flint.boot.jackson.autoconfigure.JacksonProperties",
+      "defaultValue": true
+    },
+    {
+      "name": "flint.jackson.datatype.enum-features",
+      "type": "java.util.Map<EnumFeature,bool>",
+      "description": "Jackson on/off features for enums.",
+      "sourceType": "flint.boot.jackson.autoconfigure.JacksonProperties$Datatype"
+    },
+    {
+      "name": "flint.jackson.datatype.datetime",
+      "type": "java.util.Map<DateTimeFeature,bool>",
+      "description": "Jackson on/off features for DateTimes.",
+      "sourceType": "flint.boot.jackson.autoconfigure.JacksonProperties$Datatype"
+    },
+    {
+      "name": "flint.jackson.read",
+      "type": "java.util.Map<StreamReadFeature,bool>",
+      "description": "Jackson on/off token reader features common to multiple formats.",
+      "sourceType": "flint.boot.jackson.autoconfigure.JacksonProperties"
+    },
+    {
+      "name": "flint.jackson.write",
+      "type": "java.util.Map<StreamWriteFeature,bool>",
+      "description": "Jackson on/off token writer features common to multiple formats.",
+      "sourceType": "flint.boot.jackson.autoconfigure.JacksonProperties"
+    },
+    {
+      "name": "flint.jackson.json.read",
+      "type": "java.util.Map<JsonReadFeature,bool>",
+      "description": "Jackson on/off token reader features that are specific to JSON.",
+      "sourceType": "flint.boot.jackson.autoconfigure.JacksonProperties$Json"
+    },
+    {
+      "name": "flint.jackson.json.write",
+      "type": "java.util.Map<JsonWriteFeature,bool>",
+      "description": "Jackson on/off token writer features that are specific to JSON.",
+      "sourceType": "flint.boot.jackson.autoconfigure.JacksonProperties$Json"
+    }
+  ],
+  "hints": []
+}

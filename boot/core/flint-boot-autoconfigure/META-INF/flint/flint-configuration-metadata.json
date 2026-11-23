@@ -1,0 +1,108 @@
+{
+  "groups": [
+    {
+      "name": "flint.web",
+      "type": "flint.boot.autoconfigure.web.WebProperties",
+      "sourceType": "flint.boot.autoconfigure.web.WebProperties"
+    },
+    {
+      "name": "flint.web.resources",
+      "type": "flint.boot.autoconfigure.web.WebProperties$Resources",
+      "sourceType": "flint.boot.autoconfigure.web.WebProperties$Resources"
+    },
+    {
+      "name": "flint.web.error",
+      "type": "flint.boot.autoconfigure.web.WebProperties$ErrorProperties",
+      "sourceType": "flint.boot.autoconfigure.web.WebProperties$ErrorProperties"
+    },
+    {
+      "name": "flint.web.error.whitelabel",
+      "type": "flint.boot.autoconfigure.web.WebProperties$ErrorProperties$Whitelabel",
+      "sourceType": "flint.boot.autoconfigure.web.WebProperties$ErrorProperties$Whitelabel"
+    }
+  ],
+  "properties": [
+    {
+      "name": "flint.web.locale",
+      "type": "java.lang.String",
+      "description": "Locale to use (a language tag such as `en-US`). By default, this locale is overridden by the \"Accept-Language\" header.",
+      "sourceType": "flint.boot.autoconfigure.web.WebProperties"
+    },
+    {
+      "name": "flint.web.locale-resolver",
+      "type": "LocaleResolver",
+      "description": "Define how the locale should be resolved.",
+      "sourceType": "flint.boot.autoconfigure.web.WebProperties",
+      "defaultValue": "accept-header"
+    },
+    {
+      "name": "flint.web.resources.static-locations",
+      "type": "java.util.List<java.lang.String>",
+      "description": "Locations of static resources.",
+      "sourceType": "flint.boot.autoconfigure.web.WebProperties$Resources",
+      "defaultValue": [
+        "classpath:/META-INF/resources/",
+        "classpath:/resources/",
+        "classpath:/static/",
+        "classpath:/public/"
+      ]
+    },
+    {
+      "name": "flint.web.resources.add-mappings",
+      "type": "java.lang.Boolean",
+      "description": "Whether to enable default resource handling.",
+      "sourceType": "flint.boot.autoconfigure.web.WebProperties$Resources",
+      "defaultValue": true
+    },
+    {
+      "name": "flint.web.error.path",
+      "type": "java.lang.String",
+      "description": "Path of the error controller.",
+      "sourceType": "flint.boot.autoconfigure.web.WebProperties$ErrorProperties",
+      "defaultValue": "/error"
+    },
+    {
+      "name": "flint.web.error.include-exception",
+      "type": "java.lang.Boolean",
+      "description": "Include the \"exception\" attribute.",
+      "sourceType": "flint.boot.autoconfigure.web.WebProperties$ErrorProperties",
+      "defaultValue": false
+    },
+    {
+      "name": "flint.web.error.include-stacktrace",
+      "type": "IncludeAttribute",
+      "description": "When to include the \"trace\" attribute.",
+      "sourceType": "flint.boot.autoconfigure.web.WebProperties$ErrorProperties",
+      "defaultValue": "never"
+    },
+    {
+      "name": "flint.web.error.include-message",
+      "type": "IncludeAttribute",
+      "description": "When to include the \"message\" attribute.",
+      "sourceType": "flint.boot.autoconfigure.web.WebProperties$ErrorProperties",
+      "defaultValue": "never"
+    },
+    {
+      "name": "flint.web.error.include-binding-errors",
+      "type": "IncludeAttribute",
+      "description": "When to include the \"errors\" attribute.",
+      "sourceType": "flint.boot.autoconfigure.web.WebProperties$ErrorProperties",
+      "defaultValue": "never"
+    },
+    {
+      "name": "flint.web.error.include-path",
+      "type": "IncludeAttribute",
+      "description": "When to include the \"path\" attribute.",
+      "sourceType": "flint.boot.autoconfigure.web.WebProperties$ErrorProperties",
+      "defaultValue": "always"
+    },
+    {
+      "name": "flint.web.error.whitelabel.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Whether to enable the default error page displayed in browsers in case of a server error.",
+      "sourceType": "flint.boot.autoconfigure.web.WebProperties$ErrorProperties$Whitelabel",
+      "defaultValue": true
+    }
+  ],
+  "hints": []
+}

@@ -1,0 +1,108 @@
+{
+  "groups": [
+    {
+      "name": "server",
+      "type": "flint.boot.web.server.autoconfigure.ServerProperties",
+      "sourceType": "flint.boot.web.server.autoconfigure.ServerProperties"
+    },
+    {
+      "name": "server.compression",
+      "type": "flint.boot.web.server.autoconfigure.ServerProperties$Compression",
+      "sourceType": "flint.boot.web.server.autoconfigure.ServerProperties$Compression"
+    },
+    {
+      "name": "server.http2",
+      "type": "flint.boot.web.server.autoconfigure.ServerProperties$Http2",
+      "sourceType": "flint.boot.web.server.autoconfigure.ServerProperties$Http2"
+    },
+    {
+      "name": "server.servlet",
+      "type": "flint.boot.web.server.autoconfigure.ServerProperties$Servlet",
+      "sourceType": "flint.boot.web.server.autoconfigure.ServerProperties$Servlet"
+    }
+  ],
+  "properties": [
+    {
+      "name": "server.port",
+      "type": "java.lang.Integer",
+      "description": "Server HTTP port. The server factory uses 8080 when unset; 0 picks a free port.",
+      "sourceType": "flint.boot.web.server.autoconfigure.ServerProperties"
+    },
+    {
+      "name": "server.address",
+      "type": "java.lang.String",
+      "description": "Network address to which the server should bind.",
+      "sourceType": "flint.boot.web.server.autoconfigure.ServerProperties"
+    },
+    {
+      "name": "server.server-header",
+      "type": "java.lang.String",
+      "description": "Value to use for the Server response header (if empty, no header is sent).",
+      "sourceType": "flint.boot.web.server.autoconfigure.ServerProperties"
+    },
+    {
+      "name": "server.shutdown",
+      "type": "Shutdown",
+      "description": "Type of shutdown that the server will support.",
+      "sourceType": "flint.boot.web.server.autoconfigure.ServerProperties",
+      "defaultValue": "graceful"
+    },
+    {
+      "name": "server.compression.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Whether response compression is enabled.",
+      "sourceType": "flint.boot.web.server.autoconfigure.ServerProperties$Compression",
+      "defaultValue": false
+    },
+    {
+      "name": "server.compression.mime-types",
+      "type": "java.util.List<java.lang.String>",
+      "description": "Comma-separated list of MIME types that should be compressed.",
+      "sourceType": "flint.boot.web.server.autoconfigure.ServerProperties$Compression",
+      "defaultValue": [
+        "text/html",
+        "text/xml",
+        "text/plain",
+        "text/css",
+        "text/javascript",
+        "application/javascript",
+        "application/json",
+        "application/xml"
+      ]
+    },
+    {
+      "name": "server.compression.additional-mime-types",
+      "type": "java.util.List<java.lang.String>",
+      "description": "Comma-separated list of additional MIME types that should be compressed.",
+      "sourceType": "flint.boot.web.server.autoconfigure.ServerProperties$Compression"
+    },
+    {
+      "name": "server.compression.excluded-user-agents",
+      "type": "java.util.List<java.lang.String>",
+      "description": "Comma-separated list of user agents for which responses should not be compressed.",
+      "sourceType": "flint.boot.web.server.autoconfigure.ServerProperties$Compression"
+    },
+    {
+      "name": "server.http2.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Whether to enable HTTP/2 support, if the current environment supports it.",
+      "sourceType": "flint.boot.web.server.autoconfigure.ServerProperties$Http2",
+      "defaultValue": false
+    },
+    {
+      "name": "server.servlet.path",
+      "type": "java.lang.String",
+      "description": "Path of the dispatcher servlet. Setting a custom value for this property is not compatible with the PathPatternParser matching strategy.",
+      "sourceType": "flint.boot.web.server.autoconfigure.ServerProperties$Servlet",
+      "defaultValue": "/"
+    },
+    {
+      "name": "server.servlet.load-on-startup",
+      "type": "java.lang.Integer",
+      "description": "Load on startup priority of the dispatcher servlet.",
+      "sourceType": "flint.boot.web.server.autoconfigure.ServerProperties$Servlet",
+      "defaultValue": -1
+    }
+  ],
+  "hints": []
+}

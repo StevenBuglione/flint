@@ -1,0 +1,191 @@
+{
+  "groups": [
+    {
+      "name": "flint.mvc",
+      "type": "flint.boot.webmvc.autoconfigure.WebMvcProperties",
+      "sourceType": "flint.boot.webmvc.autoconfigure.WebMvcProperties"
+    },
+    {
+      "name": "flint.mvc.format",
+      "type": "flint.boot.webmvc.autoconfigure.WebMvcProperties$Format",
+      "sourceType": "flint.boot.webmvc.autoconfigure.WebMvcProperties$Format"
+    },
+    {
+      "name": "flint.mvc.async",
+      "type": "flint.boot.webmvc.autoconfigure.WebMvcProperties$Async",
+      "sourceType": "flint.boot.webmvc.autoconfigure.WebMvcProperties$Async"
+    },
+    {
+      "name": "flint.mvc.servlet",
+      "type": "flint.boot.webmvc.autoconfigure.WebMvcProperties$Servlet",
+      "sourceType": "flint.boot.webmvc.autoconfigure.WebMvcProperties$Servlet"
+    },
+    {
+      "name": "flint.mvc.view",
+      "type": "flint.boot.webmvc.autoconfigure.WebMvcProperties$View",
+      "sourceType": "flint.boot.webmvc.autoconfigure.WebMvcProperties$View"
+    },
+    {
+      "name": "flint.mvc.contentnegotiation",
+      "type": "flint.boot.webmvc.autoconfigure.WebMvcProperties$Contentnegotiation",
+      "sourceType": "flint.boot.webmvc.autoconfigure.WebMvcProperties$Contentnegotiation"
+    },
+    {
+      "name": "flint.mvc.pathmatch",
+      "type": "flint.boot.webmvc.autoconfigure.WebMvcProperties$Pathmatch",
+      "sourceType": "flint.boot.webmvc.autoconfigure.WebMvcProperties$Pathmatch"
+    },
+    {
+      "name": "flint.mvc.problemdetails",
+      "type": "flint.boot.webmvc.autoconfigure.WebMvcProperties$Problemdetails",
+      "sourceType": "flint.boot.webmvc.autoconfigure.WebMvcProperties$Problemdetails"
+    }
+  ],
+  "properties": [
+    {
+      "name": "flint.mvc.message-codes-resolver-format",
+      "type": "java.lang.String",
+      "description": "Formatting strategy for message codes. For instance, 'PREFIX_ERROR_CODE'.",
+      "sourceType": "flint.boot.webmvc.autoconfigure.WebMvcProperties"
+    },
+    {
+      "name": "flint.mvc.format.date",
+      "type": "java.lang.String",
+      "description": "Date format to use, for example 'dd/MM/yyyy'.",
+      "sourceType": "flint.boot.webmvc.autoconfigure.WebMvcProperties$Format"
+    },
+    {
+      "name": "flint.mvc.format.time",
+      "type": "java.lang.String",
+      "description": "Time format to use, for example 'HH:mm:ss'.",
+      "sourceType": "flint.boot.webmvc.autoconfigure.WebMvcProperties$Format"
+    },
+    {
+      "name": "flint.mvc.format.date-time",
+      "type": "java.lang.String",
+      "description": "Date-time format to use, for example 'yyyy-MM-dd HH:mm:ss'.",
+      "sourceType": "flint.boot.webmvc.autoconfigure.WebMvcProperties$Format"
+    },
+    {
+      "name": "flint.mvc.dispatch-trace-request",
+      "type": "java.lang.Boolean",
+      "description": "Whether to dispatch TRACE requests to the FrameworkServlet doService method.",
+      "sourceType": "flint.boot.webmvc.autoconfigure.WebMvcProperties",
+      "defaultValue": false
+    },
+    {
+      "name": "flint.mvc.dispatch-options-request",
+      "type": "java.lang.Boolean",
+      "description": "Whether to dispatch OPTIONS requests to the FrameworkServlet doService method.",
+      "sourceType": "flint.boot.webmvc.autoconfigure.WebMvcProperties",
+      "defaultValue": true
+    },
+    {
+      "name": "flint.mvc.publish-request-handled-events",
+      "type": "java.lang.Boolean",
+      "description": "Whether to publish a ServletRequestHandledEvent at the end of each request.",
+      "sourceType": "flint.boot.webmvc.autoconfigure.WebMvcProperties",
+      "defaultValue": true
+    },
+    {
+      "name": "flint.mvc.log-request-details",
+      "type": "java.lang.Boolean",
+      "description": "Whether logging of (potentially sensitive) request details at DEBUG and TRACE level is allowed.",
+      "sourceType": "flint.boot.webmvc.autoconfigure.WebMvcProperties",
+      "defaultValue": false
+    },
+    {
+      "name": "flint.mvc.log-resolved-exception",
+      "type": "java.lang.Boolean",
+      "description": "Whether to enable warn logging of exceptions resolved by a \"HandlerExceptionResolver\", except for \"DefaultHandlerExceptionResolver\".",
+      "sourceType": "flint.boot.webmvc.autoconfigure.WebMvcProperties",
+      "defaultValue": false
+    },
+    {
+      "name": "flint.mvc.static-path-pattern",
+      "type": "java.lang.String",
+      "description": "Path pattern used for static resources.",
+      "sourceType": "flint.boot.webmvc.autoconfigure.WebMvcProperties",
+      "defaultValue": "/**"
+    },
+    {
+      "name": "flint.mvc.webjars-path-pattern",
+      "type": "java.lang.String",
+      "description": "Path pattern used for WebJar assets.",
+      "sourceType": "flint.boot.webmvc.autoconfigure.WebMvcProperties",
+      "defaultValue": "/webjars/**"
+    },
+    {
+      "name": "flint.mvc.async.request-timeout",
+      "type": "java.time.Duration",
+      "description": "Amount of time before asynchronous request handling times out. If this value is not set, the default timeout of the underlying implementation is used.",
+      "sourceType": "flint.boot.webmvc.autoconfigure.WebMvcProperties$Async"
+    },
+    {
+      "name": "flint.mvc.servlet.path",
+      "type": "java.lang.String",
+      "description": "Path of the dispatcher servlet. Setting a custom value for this property is not compatible with the PathPatternParser matching strategy.",
+      "sourceType": "flint.boot.webmvc.autoconfigure.WebMvcProperties$Servlet",
+      "defaultValue": "/"
+    },
+    {
+      "name": "flint.mvc.servlet.load-on-startup",
+      "type": "java.lang.Integer",
+      "description": "Load on startup priority of the dispatcher servlet.",
+      "sourceType": "flint.boot.webmvc.autoconfigure.WebMvcProperties$Servlet",
+      "defaultValue": -1
+    },
+    {
+      "name": "flint.mvc.view.prefix",
+      "type": "java.lang.String",
+      "description": "MVC view prefix.",
+      "sourceType": "flint.boot.webmvc.autoconfigure.WebMvcProperties$View"
+    },
+    {
+      "name": "flint.mvc.view.suffix",
+      "type": "java.lang.String",
+      "description": "MVC view suffix.",
+      "sourceType": "flint.boot.webmvc.autoconfigure.WebMvcProperties$View"
+    },
+    {
+      "name": "flint.mvc.contentnegotiation.favor-parameter",
+      "type": "java.lang.Boolean",
+      "description": "Whether a request parameter (\"format\" by default) should be used to determine the requested media type.",
+      "sourceType": "flint.boot.webmvc.autoconfigure.WebMvcProperties$Contentnegotiation",
+      "defaultValue": false
+    },
+    {
+      "name": "flint.mvc.contentnegotiation.parameter-name",
+      "type": "java.lang.String",
+      "description": "Query parameter name to use when \"favor-parameter\" is enabled.",
+      "sourceType": "flint.boot.webmvc.autoconfigure.WebMvcProperties$Contentnegotiation"
+    },
+    {
+      "name": "flint.mvc.contentnegotiation.media-types",
+      "type": "java.util.Map<java.lang.String,java.lang.String>",
+      "description": "Map file extensions to media types for content negotiation. For instance, yml to text/yaml.",
+      "sourceType": "flint.boot.webmvc.autoconfigure.WebMvcProperties$Contentnegotiation"
+    },
+    {
+      "name": "flint.mvc.contentnegotiation.default-content-types",
+      "type": "java.util.List<java.lang.String>",
+      "description": "List of default content types to be used when no specific content type is requested.",
+      "sourceType": "flint.boot.webmvc.autoconfigure.WebMvcProperties$Contentnegotiation"
+    },
+    {
+      "name": "flint.mvc.pathmatch.matching-strategy",
+      "type": "MatchingStrategy",
+      "description": "Choice of strategy for matching request paths against registered mappings.",
+      "sourceType": "flint.boot.webmvc.autoconfigure.WebMvcProperties$Pathmatch",
+      "defaultValue": "path-pattern-parser"
+    },
+    {
+      "name": "flint.mvc.problemdetails.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Whether RFC 9457 Problem Details support should be enabled.",
+      "sourceType": "flint.boot.webmvc.autoconfigure.WebMvcProperties$Problemdetails",
+      "defaultValue": false
+    }
+  ],
+  "hints": []
+}

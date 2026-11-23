@@ -143,6 +143,20 @@ Boot's exceptions extend `flint.java.lang`'s `RuntimeException`, `IllegalArgumen
 | third-party-apis | `flint.slf4j` `Logger`/`LoggerFactory` and a binding point for Boot's console appender; `flint.jackson.databind.ObjectMapper` (`JsonMapper` in Jackson 3) for `JacksonAutoConfiguration`; `flint.jakarta.validation.Validator` | to coordinate |
 | data-access | `flint.jdbc.datasource` (`DataSource`), `JdbcTemplate`, `NamedParameterJdbcTemplate`, `JdbcClient`, `DataSourceTransactionManager` for the JDBC, transaction and SQL-init auto-configurations | to coordinate |
 
+## Configuration properties: one spec, three outputs
+
+`boot/tools/configuration_properties.py` holds the specification of every Phase 1 `@ConfigurationProperties` class: Boot's field names, types, defaults and Javadoc. It renders three things from it:
+- the D classes;
+- Boot's configuration metadata per module (`META-INF/flint/flint-configuration-metadata.json`, the format of Boot's `spring-configuration-metadata.json`);
+- `boot/configuration-metadata/application.schema.json`, a JSON Schema for `application.yaml`.
+
+```bash
+python3 boot/tools/configuration_properties.py --write   # regenerate
+python3 boot/tools/configuration_properties.py --check   # CI: fail when an output is stale
+```
+
+The schema covers the module properties and the keys Boot core reads, such as `flint.main.*`, `flint.profiles.*`, `flint.config.*` and `logging.level.*`. It accepts every `flint.*` key under `spring.*` too. Enum values are offered in kebab case and as constants, because Boot binds them leniently. Editors that use yaml-language-server pick it up from a first line of `# yaml-language-server: $schema=<path or URL>/application.schema.json`, or from a `yaml.schemas` setting that maps `application*.yaml` to it.
+
 ## gs-rest-service: the target port
 
 The Flint port lands in `benchmarks/spring/flint/gs-rest-service/` (with its `flint-spring.json`) once web-mvc's dispatcher and server, framework-core's context and Flint AOT's generator can build it. It is the guide's `complete/` project, file for file, under rulebook R1 (one D module per Java package):

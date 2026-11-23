@@ -1,0 +1,137 @@
+{
+  "groups": [
+    {
+      "name": "flint.datasource",
+      "type": "flint.boot.jdbc.autoconfigure.DataSourceProperties",
+      "sourceType": "flint.boot.jdbc.autoconfigure.DataSourceProperties"
+    },
+    {
+      "name": "flint.datasource.xa",
+      "type": "flint.boot.jdbc.autoconfigure.DataSourceProperties$Xa",
+      "sourceType": "flint.boot.jdbc.autoconfigure.DataSourceProperties$Xa"
+    },
+    {
+      "name": "flint.jdbc",
+      "type": "flint.boot.jdbc.autoconfigure.JdbcProperties",
+      "sourceType": "flint.boot.jdbc.autoconfigure.JdbcProperties"
+    },
+    {
+      "name": "flint.jdbc.template",
+      "type": "flint.boot.jdbc.autoconfigure.JdbcProperties$Template",
+      "sourceType": "flint.boot.jdbc.autoconfigure.JdbcProperties$Template"
+    }
+  ],
+  "properties": [
+    {
+      "name": "flint.datasource.generate-unique-name",
+      "type": "java.lang.Boolean",
+      "description": "Whether to generate a random datasource name (`generate-unique-name`, default true).",
+      "sourceType": "flint.boot.jdbc.autoconfigure.DataSourceProperties",
+      "defaultValue": true
+    },
+    {
+      "name": "flint.datasource.name",
+      "type": "java.lang.String",
+      "description": "Datasource name to use if \"generate-unique-name\" is false. Defaults to \"testdb\" when using an embedded database, otherwise null.",
+      "sourceType": "flint.boot.jdbc.autoconfigure.DataSourceProperties"
+    },
+    {
+      "name": "flint.datasource.type",
+      "type": "java.lang.String",
+      "description": "Fully qualified name of the DataSource implementation to use. By default, a connection pool implementation is auto-detected from the build.",
+      "sourceType": "flint.boot.jdbc.autoconfigure.DataSourceProperties"
+    },
+    {
+      "name": "flint.datasource.driver-class-name",
+      "type": "java.lang.String",
+      "description": "Fully qualified name of the JDBC driver. Auto-detected based on the URL by default.",
+      "sourceType": "flint.boot.jdbc.autoconfigure.DataSourceProperties"
+    },
+    {
+      "name": "flint.datasource.url",
+      "type": "java.lang.String",
+      "description": "JDBC URL of the database.",
+      "sourceType": "flint.boot.jdbc.autoconfigure.DataSourceProperties"
+    },
+    {
+      "name": "flint.datasource.username",
+      "type": "java.lang.String",
+      "description": "Login username of the database.",
+      "sourceType": "flint.boot.jdbc.autoconfigure.DataSourceProperties"
+    },
+    {
+      "name": "flint.datasource.password",
+      "type": "java.lang.String",
+      "description": "Login password of the database.",
+      "sourceType": "flint.boot.jdbc.autoconfigure.DataSourceProperties"
+    },
+    {
+      "name": "flint.datasource.embedded-database-connection",
+      "type": "EmbeddedDatabaseConnection",
+      "description": "Connection details for an embedded database. Defaults to the most suitable embedded database available in the build.",
+      "sourceType": "flint.boot.jdbc.autoconfigure.DataSourceProperties",
+      "defaultValue": "none"
+    },
+    {
+      "name": "flint.datasource.xa.data-source-class-name",
+      "type": "java.lang.String",
+      "description": "XA datasource fully qualified name.",
+      "sourceType": "flint.boot.jdbc.autoconfigure.DataSourceProperties$Xa"
+    },
+    {
+      "name": "flint.datasource.xa.properties",
+      "type": "java.util.Map<java.lang.String,java.lang.String>",
+      "description": "Properties to pass to the XA data source.",
+      "sourceType": "flint.boot.jdbc.autoconfigure.DataSourceProperties$Xa"
+    },
+    {
+      "name": "flint.jdbc.template.ignore-warnings",
+      "type": "java.lang.Boolean",
+      "description": "Whether to ignore JDBC statement warnings (SQLWarning). When set to false, throw an SQLWarningException instead.",
+      "sourceType": "flint.boot.jdbc.autoconfigure.JdbcProperties$Template",
+      "defaultValue": true
+    },
+    {
+      "name": "flint.jdbc.template.fetch-size",
+      "type": "java.lang.Integer",
+      "description": "Number of rows that should be fetched from the database when more rows are needed. Use -1 to use the JDBC driver's default configuration.",
+      "sourceType": "flint.boot.jdbc.autoconfigure.JdbcProperties$Template",
+      "defaultValue": -1
+    },
+    {
+      "name": "flint.jdbc.template.max-rows",
+      "type": "java.lang.Integer",
+      "description": "Maximum number of rows. Use -1 to use the JDBC driver's default configuration.",
+      "sourceType": "flint.boot.jdbc.autoconfigure.JdbcProperties$Template",
+      "defaultValue": -1
+    },
+    {
+      "name": "flint.jdbc.template.query-timeout",
+      "type": "java.time.Duration",
+      "description": "Query timeout. Default is to use the JDBC driver's default configuration. If a duration suffix is not specified, seconds will be used.",
+      "sourceType": "flint.boot.jdbc.autoconfigure.JdbcProperties$Template"
+    },
+    {
+      "name": "flint.jdbc.template.skip-results-processing",
+      "type": "java.lang.Boolean",
+      "description": "Whether results processing should be skipped. Can be used to optimize callable statement processing when we know that no results are being passed back.",
+      "sourceType": "flint.boot.jdbc.autoconfigure.JdbcProperties$Template",
+      "defaultValue": false
+    },
+    {
+      "name": "flint.jdbc.template.skip-undeclared-results",
+      "type": "java.lang.Boolean",
+      "description": "Whether undeclared results should be skipped.",
+      "sourceType": "flint.boot.jdbc.autoconfigure.JdbcProperties$Template",
+      "defaultValue": false
+    },
+    {
+      "name": "flint.jdbc.template.results-map-case-insensitive",
+      "type": "java.lang.Boolean",
+      "description": "Whether execution of a CallableStatement will return the results in a Map that uses case-insensitive names for the parameters.",
+      "sourceType": "flint.boot.jdbc.autoconfigure.JdbcProperties$Template",
+      "defaultValue": false
+    }
+  ],
+  "hints": []
+}

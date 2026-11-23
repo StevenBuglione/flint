@@ -1,0 +1,24 @@
+{
+  "groups": [
+    {
+      "name": "flint.transaction",
+      "type": "flint.boot.transaction.autoconfigure.TransactionProperties",
+      "sourceType": "flint.boot.transaction.autoconfigure.TransactionProperties"
+    }
+  ],
+  "properties": [
+    {
+      "name": "flint.transaction.default-timeout",
+      "type": "java.time.Duration",
+      "description": "Default transaction timeout. If a duration suffix is not specified, seconds will be used.",
+      "sourceType": "flint.boot.transaction.autoconfigure.TransactionProperties"
+    },
+    {
+      "name": "flint.transaction.rollback-on-commit-failure",
+      "type": "java.lang.Boolean",
+      "description": "Whether to roll back on commit failures.",
+      "sourceType": "flint.boot.transaction.autoconfigure.TransactionProperties"
+    }
+  ],
+  "hints": []
+}
