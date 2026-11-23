@@ -245,7 +245,7 @@ private string[] dubCommand(const ref PlatformInputs inputs, string verb, string
 }
 
 /// Part of the description record: a change to its layout invalidates every record.
-private enum describeFormat = "flint.platform-describe/3";
+private enum describeFormat = "flint.platform-describe/4";
 
 /// The platform modules as DUB describes them, from the project's description record while it is current. The
 /// record holds what `dub describe` said and what it depends on: the describe root, the tools, flags and
@@ -348,12 +348,43 @@ private string describeStamp(const ref PlatformInputs inputs, string describeRoo
     sort(environment);
     string text = describeFormat ~ "\n" ~ inputs.dub ~ "\n" ~ inputs.dubSha256 ~ "\n" ~ inputs.compiler
         ~ "\n" ~ inputs.compilerSha256 ~ "\n" ~ inputs.dflags ~ "\n" ~ inputs.target ~ "\n"
-        ~ inputs.workingDirectory ~ "\n" ~ listed("env", environment) ~ readIfPresent(buildPath(describeRoot,
-                "dub.sdl")) ~ "\n" ~ readIfPresent(buildPath(source, "dub.sdl"));
+        ~ inputs.workingDirectory ~ "\n" ~ listed("env",
+                environment) ~ readIfPresent(buildPath(describeRoot, "dub.sdl")) ~ "\n";
+    // The recipe that lists the platform packages: every root recipe file DUB would read there, present or not.
+    foreach (name; rootRecipeFiles)
+        text ~= fileLine(buildPath(source, name)) ~ "\n";
     return sha256Hex(cast(const(ubyte)[]) text);
 }
 
-/// What a description depends on besides its stamp: `f <dub.sdl> <sha256>` and `d <directory> <mtime>` lines.
+/// The files at a package's root that change what `dub describe` reports: the recipe names DUB looks for, in its
+/// order of precedence (a dub.json beside dub.sdl replaces it), and the selections file.
+private immutable string[] rootRecipeFiles = [
+    "dub.json", "dub.sdl", "package.json", "dub.selections.json"
+];
+
+/// `f <path> <sha256>` for a file, or `f <path> absent`: a file that appears later changes the line.
+private string fileLine(string path)
+{
+    import std.file : exists, isFile;
+    import flint_tool.support.files : cachedSha256File;
+
+    return "f " ~ path ~ " " ~ (exists(path) && isFile(path) ? cachedSha256File(path) : "absent");
+}
+
+/// Whether `file` is an object, archive or shared library: a linker input, not a source DUB discovers.
+private bool linkedBinary(string file) pure
+{
+    import std.algorithm.searching : canFind;
+    import std.path : extension;
+    import std.uni : toLower;
+
+    return [".o", ".obj", ".a", ".lib", ".so", ".dylib", ".dll", ".res"].canFind(extension(file).toLower);
+}
+
+/// What a description depends on besides its stamp: `f <file> <sha256|absent>` for each package's root recipe files,
+/// and `d <directory> <mtime>` for its source, import and string-import directories. The package root itself is
+/// not watched by time: DUB copies each built library into it (libflint_boot-core.a), so a build of another
+/// configuration would otherwise make the record stale (m7, 2026-11-23: every certified cold trial re-described).
 private string[] watched(scope const PlatformModule[] modules)
 {
     import std.algorithm.sorting : sort;
@@ -362,19 +393,23 @@ private string[] watched(scope const PlatformModule[] modules)
     import std.conv : to;
     import std.file : FileException, timeLastModified;
     import std.path : buildPath, dirName;
-    import flint_tool.support.files : cachedSha256File;
 
     string[] directories;
     string[] lines;
     foreach (ref item; modules)
     {
-        lines ~= "f " ~ buildPath(item.directory,
-                "dub.sdl") ~ " " ~ cachedSha256File(buildPath(item.directory, "dub.sdl"));
-        directories ~= item.directory;
+        foreach (name; rootRecipeFiles)
+            lines ~= fileLine(buildPath(item.directory, name));
         directories ~= item.importPaths;
         directories ~= item.stringImportPaths;
         foreach (file; item.files)
-            directories ~= dirName(file);
+        {
+            // A linked object or library is named by the recipe (flint:term's `sourceFiles "build/..."`), which
+            // is hashed; DUB never finds one by scanning, and a pre-build command rewrites its directory on every
+            // build of any configuration.
+            if (!linkedBinary(file))
+                directories ~= dirName(file);
+        }
     }
     sort(directories);
     foreach (directory; directories.uniq.array)
@@ -388,6 +423,53 @@ private string[] watched(scope const PlatformModule[] modules)
         lines ~= "d " ~ directory ~ " " ~ time.to!string;
     }
     return lines;
+}
+
+@("a description ignores a library DUB drops in a package root, and follows recipe files and modules")
+unittest
+{
+    import std.conv : to;
+    import std.file : mkdirRecurse, rmdirRecurse, tempDir, write;
+    import std.path : buildPath;
+    import std.process : thisProcessID;
+
+    const root = buildPath(tempDir, "flint-watched-" ~ thisProcessID.to!string);
+    mkdirRecurse(buildPath(root, "source", "demo"));
+    scope (exit)
+        rmdirRecurse(root);
+    write(buildPath(root, "dub.sdl"), "name \"demo\"\n");
+    write(buildPath(root, "source", "demo", "package.d"), "module demo;\n");
+    PlatformModule item;
+    item.directory = root;
+    item.importPaths = [buildPath(root, "source")];
+    item.files = [buildPath(root, "source", "demo", "package.d")];
+    const before = watched([item]);
+
+    write(buildPath(root, "libdemo.a"), "!<arch>\n");
+    assert(watched([item]) == before, "a library DUB copies into the package root");
+
+    // An object a pre-build command writes, named by the recipe: rewriting it changes only its directory.
+    mkdirRecurse(buildPath(root, "build"));
+    write(buildPath(root, "build", "shim.o"), "object");
+    PlatformModule withObject = item;
+    withObject.files ~= buildPath(root, "build", "shim.o");
+    const objectBefore = watched([withObject]);
+    write(buildPath(root, "build", "shim.o.partial"), "object");
+    assert(watched([withObject]) == objectBefore, "a rewritten pre-build object");
+
+    write(buildPath(root, "source", "demo", "extra.d"), "module demo.extra;\n");
+    const added = watched([item]);
+    assert(added != before, "an added module");
+
+    write(buildPath(root, "dub.json"), "{\"name\": \"demo\"}\n");
+    const json = watched([item]);
+    assert(json != added, "a dub.json beside dub.sdl, which DUB prefers");
+
+    write(buildPath(root, "dub.selections.json"), "{\"fileVersion\": 1}\n");
+    const selections = watched([item]);
+    assert(selections != json, "a new dub.selections.json");
+    write(buildPath(root, "dub.selections.json"), "{\"fileVersion\": 1, \"versions\": {}}\n");
+    assert(watched([item]) != selections, "a changed dub.selections.json");
 }
 
 private bool readDescription(string record, string stamp, out PlatformModule[] modules)

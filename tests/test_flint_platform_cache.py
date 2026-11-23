@@ -256,6 +256,36 @@ class PlatformCacheTests(unittest.TestCase):
                                                                   newline='\n')
         self.assertNotIn("DUB's recorded commands", build(), 'a new string-import file discards the record')
 
+    def test_a_build_of_another_configuration_keeps_the_platform_description(self):
+        """DUB copies each library it builds into its package's directory. A description recorded for one
+        configuration must survive another configuration's build: a cold build then reads the record and runs no
+        `dub describe` (every certified cold trial re-described before, m7 2026-11-23)."""
+        project = self.directory / 'describe'
+        cache = self.directory / 'cache-describe'
+        shutil.copytree(self.project, project, ignore=shutil.ignore_patterns('.flint'))
+        shutil.copytree(self.cache, cache)
+        # flint:term's pre-build command writes the C shim object its recipe links, so priming it rewrites a
+        # directory inside the package as well.
+        manifest = project / 'flint.toml'
+        manifest.write_text(manifest.read_text(encoding='utf-8').replace('[dependencies]\n',
+                                                                         '[dependencies]\n"flint:term" = {}\n'),
+                            encoding='utf-8', newline='\n')
+        env = environment(FLINT_CACHE=str(cache))
+        locked = flint('lock', cwd=project, env=env)
+        self.assertEqual(locked.returncode, 0, locked.stdout + locked.stderr)
+        recorded = flint('build', '--no-debug', cwd=project, env=env)
+        self.assertEqual(recorded.returncode, 0, recorded.stdout + recorded.stderr)
+        # The same order as a certified run's priming: another configuration compiles the platform modules again.
+        other = flint('build', cwd=project, env=env)
+        self.assertEqual(other.returncode, 0, other.stdout + other.stderr)
+        self.assertIn('Priming', other.stderr, 'the debug build compiles flint:term, which the class cache lacks')
+        shutil.rmtree(project / '.flint')
+        log = self.directory / 'describe.jsonl'
+        cold = flint('build', '--no-debug', cwd=project, env=environment(FLINT_CACHE=str(cache), FLINT_LOG=str(log)))
+        self.assertEqual(cold.returncode, 0, cold.stdout + cold.stderr)
+        commands = [json.loads(line).get('fields', {}).get('argv', '') for line in log.read_text().splitlines()]
+        self.assertFalse([c for c in commands if ' describe ' in c], 'the cold build re-described the platform')
+
     def test_no_platform_cache_compiles_the_modules_from_source(self):
         plain = self.directory / 'plain'
         shutil.copytree(self.project, plain, ignore=shutil.ignore_patterns('.flint'))
