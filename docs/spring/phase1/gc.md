@@ -100,6 +100,36 @@ web-http counts only `gc_malloc` calls (callgrind, LDC release build, one reacto
 
 web-http's next candidates are a shared read-only `*/*` list, an unboxed `PathContainer` attribute, and `HttpHeaders`' first-entry allocation.
 
+### 1.2b Per-site targets (the allocation gate, work-queue item 28)
+
+The target for every request is the same: only what user code can see is allocated on the GC heap. For gs-rest-service's `GET /greeting` that is the greeting's content string (the `Greeting` itself is a struct returned by value), so 1–2 allocations. Everything else moves to the request arena or to reused per-fiber or per-connection storage: the servlet adapter, dispatch, content negotiation, path matching and Jackson.
+
+The numbers come from `policy/request-allocations.json`'s test on druntime's collector, at `f11b7e01`. Per-site counts are from the gate's call-site recording over 30 identical requests: the first frame outside druntime and the counter.
+
+| `GET /greeting` site | per request | owner | target |
+|---|---|---|---|
+| `ServletEngine.serve` (filter chain, response) | 2 | web-http | 0 |
+| `ServletEngine.capture` (request head, request object) | 2 | web-http | 0 |
+| `ServletEngineResponse.getOutputStream`, `ServletEngineRequest.getHeaders` | 2 | web-http | 0 |
+| `RequestMappingHandlerAdapter.handle` (`ServletWebRequest`, `ModelAndViewContainer`, invocable method) | 3 | framework-core | 0 |
+| `MediaType.parseMediaTypes`, `determineCompatibleMediaTypes`, `createOutputMessage`, `HttpHeaders.create` | 4 | framework-core | 0 |
+| `parsedLookupPath`, `getHandlerExecutionChain` | 2 | framework-core | 0 |
+| `InvocableHandlerMethod.getMethodArgumentValues`, `doInvoke`, `RequestParamMethodArgumentResolver.resolveName` | 3 | flint-aot | 0 |
+| `Any.of!Greeting` (boxing the return value) | 1 | flint-aot | 0 |
+| Jackson (`createBufferedGenerator`, `writeStartObject`) | 0 (was 4) | third-party-apis | 0 |
+| `String.format` (the content string) | 1 | the application | 1 |
+| **total** | **20** (5,040 bytes) | | **1–2** |
+
+The error paths cost the most and are the furthest from their targets. A JSON 404 costs 77 allocations:
+- 14 `HashMap` and 3 `LinkedHashMap` allocations building Boot's error attributes;
+- a `ContentNegotiationManager` constructed 4 times per request;
+- `RequestMappingInfo.matchProduces` and `getAcceptedMediaTypes`, 4 each;
+- `lookupHandlerMethod`, 3.
+
+The 406, 405 and Whitelabel paths (90–119) look similar. Their target is the error body the client sees, the `ProblemDetail` or error map with its strings, at about 5–10 allocations. framework-core owns the negotiation and mapping sites, and boot the error attributes.
+
+petclinic-rest's targets follow once its gate measures it. By the same rule, `GET /owners/1` should allocate only the entities and DTOs it returns, which are user-visible: the owner, pets, types and visits, their lists, and their strings from the database rows.
+
 ### 1.3 Peak RSS, by mapping
 
 Peak RSS before and after the io_uring fix (section 3, item 1):
