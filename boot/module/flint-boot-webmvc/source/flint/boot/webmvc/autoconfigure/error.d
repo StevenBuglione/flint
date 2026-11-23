@@ -28,7 +28,6 @@ import flint.engine.aot.name : typeNameOf;
 import flint.http : HttpStatus, MediaType, ResponseEntity;
 import flint.jakarta.servlet : RequestDispatcher;
 import flint.jakarta.servlet.http : HttpServletRequest, HttpServletResponse;
-import flint.java.time : Instant;
 import flint.java.util : LinkedHashMap;
 import flint.stereotype : Controller;
 import flint.web : HttpMediaTypeNotAcceptableException;
@@ -263,7 +262,7 @@ final class WhitelabelErrorView : View
         response.getWriter().write(html ~ "</body></html>");
     }
 
-    // Java's `Object.toString()` of a model value: `Date` prints as `EEE MMM dd HH:mm:ss zzz yyyy`, in UTC here.
+    // Java's `String.valueOf` of a model value: a `Date` prints as `EEE MMM dd HH:mm:ss zzz yyyy` (in UTC here).
     private static string text(LinkedHashMap!(string, Any) model, string key)
     {
         import std.conv : to;
@@ -271,29 +270,18 @@ final class WhitelabelErrorView : View
         auto value = model.get(key);
         if (value.isNull())
             return "null";
-        if (value.holds!Instant)
-            return dateText(value.get!Instant);
         if (value.holds!int)
             return value.get!int
                 .to!string;
         if (value.holds!string)
             return value.get!string;
+        if (auto o = value.asObject())
+        {
+            import flint.engine.aot.objects : objectToString;
+
+            return objectToString(o);
+        }
         return value.toString();
-    }
-
-    private static string dateText(Instant instant)
-    {
-        import std.datetime.systime : SysTime, unixTimeToStdTime;
-        import std.datetime.timezone : UTC;
-        import std.format : format;
-
-        static immutable days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-        static immutable months = [
-            "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-        ];
-        const time = SysTime(unixTimeToStdTime(instant.getEpochSecond()), UTC());
-        return format("%s %s %02d %02d:%02d:%02d UTC %04d", days[time.dayOfWeek],
-                months[time.month - 1], time.day, time.hour, time.minute, time.second, time.year);
     }
 
     private static string htmlEscape(string input) pure

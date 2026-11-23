@@ -14,8 +14,7 @@ import flint.boot.webmvc.autoconfigure.error : BasicErrorController, WhitelabelE
 import flint.boot.webmvc.error : DefaultErrorAttributes;
 import flint.engine.aot.any : Any;
 import flint.jakarta.servlet : RequestDispatcher;
-import flint.java.time : Instant;
-import flint.java.util : LinkedHashMap;
+import flint.java.util : Date, LinkedHashMap;
 import flint.mock.web : MockHttpServletRequest, MockHttpServletResponse;
 import flint.web.context.request : ServletWebRequest;
 
@@ -35,7 +34,7 @@ private MockHttpServletRequest errorRequest(int status, string uri)
 {
     auto attributes = new DefaultErrorAttributes().getErrorAttributes(new ServletWebRequest(errorRequest(404,
             "/x")), ErrorAttributeOptions.defaults());
-    assert(attributes.get("timestamp").holds!Instant);
+    assert(attributes.get("timestamp").holds!Date);
 }
 
 @("specificStatusCode") unittest
@@ -107,7 +106,7 @@ private MockHttpServletRequest errorRequest(int status, string uri)
 @("the Whitelabel page is Boot's StaticView, with Java's Date text") unittest
 {
     auto model = new LinkedHashMap!(string, Any);
-    model.put("timestamp", Any.of(Instant.ofEpochSecond(1_795_417_635)));
+    model.put("timestamp", Any.of(new Date(1_795_417_635_000L)));
     model.put("status", Any.of(404));
     model.put("error", Any.of("Not Found"));
     auto response = new MockHttpServletResponse;

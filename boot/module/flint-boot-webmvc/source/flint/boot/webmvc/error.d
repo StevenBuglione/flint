@@ -3,8 +3,7 @@
 // Copyright 2012-present the original author or authors.
 // Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
 // Modified by the Flint authors: `Map<String, Object>` is `LinkedHashMap!(string, Any)`, the model type of
-// flint:webmvc (R12); the `timestamp` is a `flint.java.time.Instant` (Java's `Date`, which Jackson writes as the same
-// ISO-8601 UTC text); binding and method-validation results join with flint:validation's `BindingResult`.
+// flint:webmvc (R12); binding and method-validation results join with flint:validation's `BindingResult`.
 
 /// `org.springframework.boot.webmvc.error`: error handling for Spring MVC.
 module flint.boot.webmvc.error;
@@ -14,8 +13,7 @@ import flint.core : Ordered;
 import flint.engine.aot.any : Any;
 import flint.jakarta.servlet : RequestDispatcher, ServletException;
 import flint.jakarta.servlet.http : HttpServletRequest, HttpServletResponse;
-import flint.java.time : Instant;
-import flint.java.util : LinkedHashMap;
+import flint.java.util : Date, LinkedHashMap;
 import flint.web.context.request : RequestAttributes, WebRequest;
 import flint.web.servlet : HandlerExceptionResolver, ModelAndView;
 
@@ -60,7 +58,7 @@ class DefaultErrorAttributes : ErrorAttributes, HandlerExceptionResolver, Ordere
     LinkedHashMap!(string, Any) getErrorAttributes(WebRequest webRequest, ErrorAttributeOptions options)
     {
         auto errorAttributes = new LinkedHashMap!(string, Any);
-        errorAttributes.put("timestamp", Any.of(now()));
+        errorAttributes.put("timestamp", Any.of(new Date()));
         addStatus(errorAttributes, webRequest);
         addErrorDetails(errorAttributes, webRequest, options.isIncluded(ErrorAttributeOptions.Include.STACK_TRACE));
         addPath(errorAttributes, webRequest);
@@ -85,12 +83,6 @@ class DefaultErrorAttributes : ErrorAttributes, HandlerExceptionResolver, Ordere
         if (error !is null && error.msg.length)
             return error.msg.idup;
         return "No message available";
-    }
-
-    // Java's `new Date()`: the current time to the millisecond.
-    private static Instant now()
-    {
-        return Instant.ofEpochMilli(Instant.now().toEpochMilli());
     }
 
     private void addStatus(LinkedHashMap!(string, Any) errorAttributes, WebRequest webRequest)

@@ -149,3 +149,29 @@ private MvcFixture setup()
     assert(response.getStatus() >= 500 && response.getStatus() < 600);
     assert(response.getContentAsString().canFind("ERROR_BEAN"), response.getContentAsString());
 }
+
+// Flint: DefaultErrorAttributes' timestamp is a java.util.Date, as Boot's `new Date()`, which Jackson's StdDateFormat
+// writes as ISO-8601 UTC with three millisecond digits (`.000` keeps its zeros), the time of the request.
+@("FlintErrorTimestampIsJavaUtilDate") unittest
+{
+    import flint.engine.aot.clock : currentTimeMillis;
+    import std.ascii : isDigit;
+    import std.datetime.systime : SysTime;
+
+    auto fixture = setup();
+    const before = currentTimeMillis();
+    const body = fixture.perform("GET", "/bang").getContentAsString();
+    const after = currentTimeMillis();
+    enum key = `{"timestamp":"`;
+    assert(body.length > key.length + 24 && body[0 .. key.length] == key, body);
+    const stamp = body[key.length .. key.length + 24];
+    assert(body[key.length + 24] == '"', body);
+    foreach (i, c; stamp)
+    {
+        const expected = i == 4 || i == 7 ? '-' : i == 10 ? 'T' : i == 13 || i == 16 ? ':' : i == 19 ? '.'
+            : i == 23 ? 'Z' : '#';
+        assert(expected == '#' ? c.isDigit : c == expected, stamp);
+    }
+    const millis = (SysTime.fromISOExtString(stamp) - SysTime.fromUnixTime(0)).total!"msecs";
+    assert(before <= millis && millis <= after, stamp);
+}
