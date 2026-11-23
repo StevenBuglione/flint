@@ -94,9 +94,73 @@
     "dmd_incremental_seconds": 0.6,
     "ldc_cold_seconds": 5.4,
     "ldc_incremental_seconds": 2.7,
-    "incremental_linked_bytes": 7094272,
+    "incremental_linked_bytes": 872448,
     "compiler_peak_rss_bytes": 536870912,
     "template_instances": 2750
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
+  "postgresql": {
+   "directory": "framework/postgresql",
+   "module": "flint.postgresql",
+   "repo": "framework",
+   "licence": "Apache-2.0",
+   "upstream": "PgJDBC's org.postgresql.Driver as Flint's driver declaration (Flint's own, over flint.engine.jdbc)",
+   "dependencies": [
+   "engine-jdbc",
+   "java"
+  ],
+   "bench": {
+    "fixture": "framework/postgresql/bench",
+    "baseline": "framework/postgresql/bench/baseline",
+    "edit_source": "framework/postgresql/source/flint/postgresql/package.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 5832704,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 1400
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
+  "sqlite-jdbc": {
+   "directory": "framework/sqlite-jdbc",
+   "module": "flint.sqlite",
+   "repo": "framework",
+   "licence": "Apache-2.0",
+   "upstream": "sqlite-jdbc's org.sqlite.JDBC as Flint's driver declaration (Flint's own, over flint.engine.jdbc)",
+   "dependencies": [
+   "engine-jdbc",
+   "java"
+  ],
+   "bench": {
+    "fixture": "framework/sqlite-jdbc/bench",
+    "baseline": "framework/sqlite-jdbc/bench/baseline",
+    "edit_source": "framework/sqlite-jdbc/source/flint/sqlite/package.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 2613248,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 1400
    },
    "provisional": [
     "dmd_cold_seconds",

@@ -1,0 +1,8 @@
+name "probe-postgresql"
+targetType "executable"
+sourcePaths "source"
+importPaths "source"
+targetPath "build"
+targetName "probe-postgresql"
+dflags "-preview=dip1000"
+dependency "flint:postgresql" path="../../.."
