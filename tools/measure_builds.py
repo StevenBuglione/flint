@@ -557,10 +557,22 @@ def main(argv=None):
                         help='only the stripped O3 and Oz sizes of bench-cli and bench-rest')
     parser.add_argument('--app', action='append', choices=['bench-cli', 'bench-rest'],
                         help='with --apps-only or --app-sizes, measure only this app (the gate needs both)')
+    parser.add_argument('--spring', action='store_true',
+                        help='the Spring side-by-side apps (benchmarks/spring, ADR-030 section 8): the Flint ports '
+                             'against the registered Go comparators, both headlines, Java as context; see tools/spring_builds.py')
+    parser.add_argument('--spring-app', action='append', help='with --spring, measure only this application')
+    parser.add_argument('--trials', type=int, default=9, help='with --spring: trials per series (9 for evidence)')
+    parser.add_argument('--smoke', action='store_true', help='with --spring: a short harness check, never evidence')
+    parser.add_argument('--allow-missing-flint', action='store_true',
+                        help='with --spring: record the Go and Java sides when a Flint port is missing (incomplete)')
+    parser.add_argument('--no-context', action='store_true', help='with --spring: skip the Java context builds')
     parser.add_argument('--workspace', type=Path,
                         help='flint.workspace/1 file pinning each repo\'s checkout (plan section 7); default: this '
                              'monorepo. Its commits are recorded in the evidence.')
     args = parser.parse_args(argv)
+    if args.spring:
+        import spring_builds
+        return spring_builds.measure(args, timed_process)
     workspace_commits = pinned_workspace(args.workspace)
     if args.app and not (args.apps_only or args.app_sizes):
         raise RuntimeError('--app applies only to --apps-only and --app-sizes')
