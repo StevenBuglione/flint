@@ -44,14 +44,10 @@ POSTGRES_URL=jdbc:postgresql://127.0.0.1:5432/petclinic POSTGRES_USER=petclinic 
 
 ## Status
 
-`spring_bench.py accept petclinic-rest`: 70 of 109 cases, with `DisableSecurityConfig` writing Spring Security's
-headers. Open pieces:
+`spring_bench.py accept petclinic-rest`: 89 of 109 cases. Open pieces:
 
-- Error responses: an `@ExceptionHandler`'s `ProblemDetail` goes out as `application/json`, not
-  `application/problem+json`, and without Tomcat's `Connection: close` (16 cases fail on only these two).
 - Jackson builds a DTO through its required-arguments constructor, as Java's Jackson does not for these generated
   models, and fails when the `Nullable!int` id is absent: creating visits, specialties and vets, and updating pet
-  types, specialties and vets (about 18 cases, with the follow-up reads).
-- A `@Valid` violation on a list element (`roles[0].name`) reports a null rejected value.
-- `NoResourceFoundException` and paths outside the context path.
+  types, specialties and vets, with the follow-up reads and deletes (19 cases).
+- A `@Valid` violation on a list element (`roles[0].name`) reports a null rejected value (1 case).
 - `BasicAuthenticationConfig` (`petclinic.security.enable=true`) is not ported.
