@@ -1,0 +1,55 @@
+{
+  "schema": "flint.measure-queue/1",
+  "created": "2026-11-23",
+  "status": "pending",
+  "builds": {
+    "tree": {
+      "app": "checkout",
+      "commit": "996467729eae",
+      "flint": true,
+      "linker": "mold"
+    }
+  },
+  "requested_by": "web-http (local_16478490), for the coordinator: the multi-core servlet default",
+  "id": "gs-rest-multicore",
+  "summary": "gs-rest-service throughput with the servlet engine on every allowed CPU (55a5e264), Flint against the registered Go comparator",
+  "why": "55a5e264 made ServletEngineOptions.cores default to every CPU in the affinity mask (2 under the workload's server_cpus), where it was 1 reactor thread; third-party-apis' unofficial cores=2 run gave 113-144k against 69-75k req/s. 9fb8972c makes the shared handler caches safe on several reactors and 99646772 drops OpenSSL from plain-HTTP servers. This entry gives the official number and the CPU per request against Go's. Suite first, then the Spring REST workload for gs-rest-service only.",
+  "measure": {
+    "kind": "command",
+    "ports": [],
+    "steps": [
+      {
+        "argv": [
+          "{python}",
+          "tools/spring_bench.py",
+          "accept",
+          "gs-rest-service",
+          "--impl",
+          "flint",
+          "--json",
+          "{out}/acceptance-flint.json"
+        ],
+        "in": "tree"
+      },
+      {
+        "argv": [
+          "{python}",
+          "tools/load_bench.py",
+          "--manifest",
+          "policy/spring-http-benchmark.json",
+          "--app",
+          "gs-rest-service",
+          "--no-context",
+          "--output",
+          "{out}/http.json"
+        ],
+        "in": "tree",
+        "smoke_args": [
+          "--smoke"
+        ]
+      }
+    ]
+  },
+  "report_to": "web-http and the coordinator (coordination inboxes); decisions.md",
+  "estimate_minutes": 45
+}
