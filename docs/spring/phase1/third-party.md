@@ -88,6 +88,16 @@ Generic façades are one-liners over an erased engine (ADR-030 section 5): `read
 
 The streaming layer is `flint.jackson.core`'s `JsonGenerator` and `JsonParser`. The generator writes to a caller-supplied sink, so the web layer's message converter can write straight into its response buffer. The parser tokenizes with serde's scanner rules and keeps Jackson's token model (`JsonToken`, `currentName`, `getNumberType`).
 
+### Arrays, Optional, enums and records
+
+Values whose descriptors carry the erased thunks (contract 2) serialize and deserialize through them:
+
+- **Arrays and collections.** `length`/`element`/`fromElements` serve D arrays and element-built collections. `byte[]` and `ubyte[]` are Base64, as Jackson's `ByteArraySerializer` writes them, and also read from number arrays that wrap at 255.
+- **Maps.** `toKeys`/`toValues`/`fromEntries` serve associative arrays. Keys convert as Jackson's `StdKeyDeserializer` converts them.
+- **Optional.** `unwrap`/`wrap` serve `Optional!T` and `Nullable!T`. An empty optional writes `null`, and `null` reads back as empty.
+- **Enums.** Enums read by name, by index or by a quoted index, through `enumValue`. Enum bits map back to constants through `enumValues`. The unknown-value message lists the names in `CompactStringObjectMap` order, as Jackson's does.
+- **Records.** A constructor marked `canonical` is the record's creator unless another constructor carries `@JsonCreator`. A missing primitive creator argument fails under `FAIL_ON_NULL_FOR_PRIMITIVES`, which defaults to on in Jackson 3, with Jackson's message.
+
 ### java.time
 
 `flint.jackson.databind.ext.javatime` ports Jackson 3's built-in java.time support (`tools.jackson.databind.ext.javatime`) over `flint.java.time`:
@@ -137,6 +147,7 @@ The tests compare Flint's output with golden files that the real Jackson 3.1.8 w
 | D-JACKSON-3 | `JsonMapper.Builder.changeDefaultPropertyInclusion(valueInclusion, contentInclusion)` takes the two settings instead of an operator over `JsonInclude.Value` | `JsonInclude.Value` is not ported; Boot sets exactly these two |
 | D-JACKSON-4 | `JsonFormat.with` is `with_` | `with` is a D keyword |
 | D-JACKSON-5 | Generators write to an `OutputSink` delegate (or a `ByteArrayBuilder`) | Stands in for `java.io.OutputStream` (R9) |
+| D-JACKSON-6 | A null D array writes as `[]` (`""` for Base64 `byte[]`), not `null` | D's `[]` is null; an empty array and a null one can't be told apart |
 | D-SLF4J-1 | `LoggerFactory.installProvider` binds a provider; the default writes through `flint.log` | Closed world: no `ServiceLoader`; Java's default would be the NOP logger |
 | D-SLF4J-2 | `Logger.debug` is `debug_` | `debug` is a D keyword |
 | D-VALIDATION-1 | Hibernate Validator registers itself with `Validation` when linked in | Replaces `META-INF/services` discovery |
@@ -151,6 +162,7 @@ All commands run from the repository root with the toolchain on `PATH`.
 | Java number text | `java Gen` (JDK 21.0.13) then the D comparer, two seeds | 11,986,636 values, 0 mismatches |
 | Jackson streaming | `dub test :jackson-core --compiler=dmd` and `=ldc2` | 10 golden files byte-equal; 33 ported upstream cases |
 | Jackson databind | `dub test :jackson-databind --compiler=dmd` and `=ldc2` | 21 golden files byte-equal; TestNamingStrategyStd's tables |
+| Jackson shapes | same | `shapes.tsv`: arrays, `byte[]` (Base64), `Optional`, maps, enums (including Jackson's key order in the unknown-value message) and records, 6 writes and 18 reads identical |
 | Jackson java.time | same | `javatime.tsv`: 23 writes and 59 reads (values and messages) identical to Jackson 3.1.8 |
 | java.time | `dub test :java --compiler=dmd` and `=ldc2` | `time.tsv` and `time_format.tsv` identical to JDK 21; epoch days walked over 1600–2400 |
 | Jackson annotations | `dub test :jackson-annotations --compiler=dmd` and `=ldc2` | defaults and shorthand |
@@ -172,7 +184,7 @@ The classification is name-based: an element counts as ported when the Flint mod
   - `@safe` equality and hash on `Any`, so `flint.java.util` collections can hold it;
   - the time-zone database for region `ZoneId`s.
 
-  `flint.java.time` and `ClassRef` have landed. Next on the third-party side: D arrays, `Optional` and enum reading over the new descriptor thunks, then `@JsonNaming`. Validation still lacks groups and custom constraints.
+  `flint.java.time` and `ClassRef` have landed. Jackson now covers D arrays, associative arrays, `Optional`, enum reading and record canonical constructors through the descriptor thunks. `@JsonNaming` is next. Validation still lacks groups and custom constraints.
 - **flint-aot:**
   - a record's field-wise constructor as `constructors[0]` for structs;
   - descriptors for the concrete collection types of collection-typed properties.
