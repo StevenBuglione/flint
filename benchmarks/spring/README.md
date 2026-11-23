@@ -304,6 +304,8 @@ python3 tools/measure_queue.py next
 
 **Claimed windows.** `watch` takes the `MEASURING` lock before a run. Sessions behind `measure_queue.py hold` pause, and the run starts once the window settles: three quiet samples 5 s apart, with no build process using CPU and at most 2 runnable tasks. If it doesn't settle within 90 s, the lock is released and the watcher retries in 5 minutes. `--no-claim` waits for natural quiet instead.
 
+**Natural quiet.** Only an entry that gates a decision and takes about 30 minutes or less claims a window: `"window": "claim"`, or no `window` and an `estimate_minutes` of 30 or less. Longer entries are `natural`. They run only after `--quiet-minutes` of natural quiet with no `hold`-wrapped work alive, and they write `MEASURING-NATURAL` instead of the lock, so nobody pauses for them. As soon as another session's build or wrapped command appears, the run stops its measurement and logs an `interrupted` attempt, which is not evidence. `priority` (lower first, default 9) orders entries ahead of their estimate. Natural entries wait while any claimed entry is pending. The policy is in docs/spring/phase1/coordination.md, "Measurement".
+
 **The quiet window.** Every measuring step checks it:
 - the 1-minute load average is below 1.5;
 - no `dmd`, `ldc2`, `ldmd2`, `cargo`, `cmake`, `rustc`, `cc1`, `cc1plus`, `ninja`, `dub`, `mvn`, `gradle` or `native-image` uses CPU anywhere on the host, outside the run's own process tree. A process counts if it uses at least 2 CPU ticks in a 1 s sample. The DMD compile servers keep pre-forked workers asleep between builds, over 2,000 of them on venus, and those idle workers are counted in the receipt but do not block;

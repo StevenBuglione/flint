@@ -29,6 +29,16 @@ as evidence. `--force-busy` measures anyway and marks the receipt `busy`, for ha
 While a measurement runs, .flint/measure/MEASURING holds its entry id, start time and pid; other sessions hold
 their compiles while it exists (docs/spring/phase1/coordination.md, "Measurement").
 
+Two kinds of window (the coordinator's policy, coordination.md "Measurement"). An entry's `window` is `claim` or
+`natural`; without one, an entry of at most 30 estimated minutes claims and a longer one is natural.
+- `claim`: `watch` takes MEASURING first, sessions behind `hold` pause, and the run starts once the window settles.
+  Only for short entries that gate a decision.
+- `natural`: runs only after `--quiet-minutes` of natural quiet with no `hold`-wrapped work alive, and never takes
+  MEASURING (it writes .flint/measure/MEASURING-NATURAL, which `hold` ignores), so nobody pauses for it. The moment
+  another session's build or `hold`-wrapped command appears, it stops its measurement and records the attempt as
+  interrupted, not evidence.
+`priority` (lower first, default 9) orders the queue ahead of the estimate.
+
 Builds happen in detached worktrees under .flint/measure/worktrees/<commit> with their own native prefix; the
 shared .native is never written. Raw outputs and every attempt go to .flint/measure/results/<id>/ (attempts.jsonl); the entry file changes only
 when a run counts as evidence, which receives its receipt and status done.
@@ -36,6 +46,7 @@ when a run counts as evidence, which receives its receipt and status done.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import hashlib
 import json
 import os
@@ -51,6 +62,9 @@ ROOT = Path(__file__).resolve().parents[1]
 QUEUE = ROOT / 'benchmarks' / 'spring' / 'queue'
 WORK = ROOT / '.flint' / 'measure'
 LOCK = WORK / 'MEASURING'
+# A natural-quiet run's marker. `hold` does not honour it: nobody pauses for a long run, which stops instead.
+NATURAL = WORK / 'MEASURING-NATURAL'
+CLAIM_MAX_MINUTES = 30  # the longest entry that may claim a window (coordination.md "Measurement")
 BUSY_COMMANDS = {'dmd', 'ldc2', 'ldmd2', 'cargo', 'cmake', 'rustc', 'cc1', 'cc1plus', 'native-image', 'ninja',
                  'dub', 'mvn', 'gradle'}
 LOAD_LIMIT = 1.5
@@ -102,6 +116,49 @@ def own_tree():
     mine = set(chain(me))
     mine.update(pid for pid in table if me in chain(pid))
     return mine
+
+
+def descendants():
+    """This process's children, grandchildren and so on (servers in their own sessions included)."""
+    table, me = parents(), os.getpid()
+
+    def under(pid):
+        seen = set()
+        while pid > 1 and pid not in seen:
+            if pid == me:
+                return True
+            seen.add(pid)
+            pid = table.get(pid, 0)
+        return False
+    return [pid for pid in table if pid != me and under(pid)]
+
+
+def stop_descendants(grace=10):
+    """Stop the measurement this process is running: SIGTERM, then SIGKILL whatever is left after `grace` seconds."""
+    import signal
+    for sig in (signal.SIGTERM, signal.SIGKILL):
+        for pid in descendants():
+            with contextlib.suppress(OSError):
+                os.kill(pid, sig)
+        deadline = time.monotonic() + grace
+        while descendants() and time.monotonic() < deadline:
+            time.sleep(0.5)
+
+
+def held_work():
+    """Other sessions' commands behind `measure_queue.py hold`: work that would pause if a window were claimed."""
+    mine = own_tree()
+    found = []
+    for name in os.listdir('/proc'):
+        if not name.isdigit() or int(name) in mine:
+            continue
+        try:
+            argv = Path(f'/proc/{name}/cmdline').read_bytes().split(b'\0')
+        except OSError:
+            continue
+        if any(part.endswith(b'measure_queue.py') for part in argv) and b'hold' in argv:
+            found.append(int(name))
+    return found
 
 
 def cpu_ticks(pid):
@@ -156,16 +213,28 @@ def busy_processes(interval=1.0):
 class WindowSampler:
     """Snapshots of the window every 10 s while a measurement runs, so contention in the middle is seen too."""
 
-    def __init__(self):
+    INTERVAL = 10
+
+    def __init__(self, yield_to_others=False):
         import threading
         self.samples, self.stop = [], threading.Event()
+        self.yield_to_others, self.yielded = yield_to_others, None
         self.thread = threading.Thread(target=self.loop, daemon=True)
 
     def loop(self):
-        while not self.stop.wait(10):
+        while not self.stop.wait(self.INTERVAL):
             snapshot = quiet_snapshot(own_load_ok=True)
             self.samples.append({'time': snapshot['time'], 'load_average': snapshot['load_average'],
                                  'busy_processes': snapshot['busy_processes']})
+            # A natural-quiet run gives way: it stops its own measurement rather than slow another session's work.
+            held = held_work() if self.yield_to_others else []
+            if self.yield_to_others and (snapshot['busy_processes'] or held):
+                self.yielded = '; '.join(
+                    ([f"{len(snapshot['busy_processes'])} build process(es) using CPU: " + ', '.join(sorted(
+                        {row['command'] + ' in ' + row['cwd'] for row in snapshot['busy_processes']}))]
+                     if snapshot['busy_processes'] else []) + ([f'hold-wrapped work started: pids {held}'] if held else []))
+                stop_descendants()
+                return
 
     def __enter__(self):
         self.thread.start()
@@ -680,6 +749,18 @@ def claim_window(seconds):
         time.sleep(5)
 
 
+def window_mode(entry):
+    """`claim` or `natural`: an explicit `window`, else claim only for at most CLAIM_MAX_MINUTES estimated."""
+    mode = entry.get('window') or ('claim' if entry.get('estimate_minutes', 60) <= CLAIM_MAX_MINUTES else 'natural')
+    if mode not in ('claim', 'natural'):
+        raise SystemExit(f"{entry['id']}: window must be claim or natural, not {mode!r}")
+    return mode
+
+
+def queue_order(entry):
+    return (entry.get('priority', 9), entry.get('estimate_minutes', 60), entry['created'], entry['id'])
+
+
 def run(entry, force_busy=False, smoke=False, claim_seconds=0):
     outdir = WORK / 'results' / entry['id'] / time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())
     outdir.mkdir(parents=True, exist_ok=True)
@@ -692,16 +773,24 @@ def run(entry, force_busy=False, smoke=False, claim_seconds=0):
     # The signal other sessions watch: while MEASURING exists, a timed run is in progress and compiles would void it.
     # Smoke and forced runs are never evidence, so they do not ask anyone to hold builds.
     locking = not (smoke or force_busy)
+    # A natural entry never claims: it writes its own marker, which `hold` ignores, and gives way to other work.
+    natural = window_mode(entry) == 'natural'
+    marker = NATURAL if natural else LOCK
+    if natural:
+        claim_seconds = 0
     LOCK.parent.mkdir(parents=True, exist_ok=True)
     if locking:
-        LOCK.write_text(json.dumps({'id': entry['id'], 'started': now(), 'pid': os.getpid(),
-                                    'results': str(outdir)}) + '\n')
+        marker.write_text(json.dumps({'id': entry['id'], 'started': now(), 'pid': os.getpid(),
+                                      'results': str(outdir)}) + '\n')
     # A claimed window (watch --claim): the lock is taken first and sessions behind `hold` pause, then the window
     # must settle. Otherwise venus must already be quiet.
     before = claim_window(claim_seconds) if (locking and claim_seconds) else quiet_snapshot()
+    held = held_work() if natural else []
+    if held:
+        before = dict(before, quiet=False, problems=before['problems'] + [f'hold-wrapped work is alive: pids {held}'])
     if not before['quiet'] and not force_busy:
         if locking:
-            LOCK.unlink(missing_ok=True)
+            marker.unlink(missing_ok=True)
         log_attempt(entry, {'time': before['time'], 'outcome': 'not run: busy', 'problems': before['problems'],
                             'claimed': bool(claim_seconds)})
         raise SystemExit(f"{entry['id']}: venus is busy: " + '; '.join(before['problems']))
@@ -710,15 +799,23 @@ def run(entry, force_busy=False, smoke=False, claim_seconds=0):
     if pin:
         os.sched_setaffinity(0, set(LOAD_CPUS))
     try:
-        with WindowSampler() as sampler:
-            summary = KINDS[entry['measure']['kind']](entry, built, outdir, smoke)
+        with WindowSampler(yield_to_others=natural and locking) as sampler:
+            try:
+                summary = KINDS[entry['measure']['kind']](entry, built, outdir, smoke)
+            except (SystemExit, Exception):  # a stopped step fails in its own way: a missing output, an exit code
+                if not sampler.yielded:
+                    raise
+            if sampler.yielded:
+                log_attempt(entry, {'time': now(), 'outcome': 'interrupted: gave way to other work',
+                                    'evidence': False, 'problems': [sampler.yielded], 'window': 'natural'})
+                raise SystemExit(f"{entry['id']}: gave way to other work ({sampler.yielded}); not evidence")
         # The after-check runs while the lock is still held: sessions behind `hold` resume the moment it goes. The
         # load average at the end includes the measurement itself (a start-up run launches hundreds of processes),
         # so it judges foreign build processes only, like the samples during the run.
         after = quiet_snapshot(own_load_ok=True)
     finally:
         if locking:
-            LOCK.unlink(missing_ok=True)
+            marker.unlink(missing_ok=True)
         if pin:
             os.sched_setaffinity(0, set(range(os.cpu_count())))
     foreign = sampler.foreign_activity()
@@ -766,7 +863,8 @@ def main(argv=None):
             log = WORK / 'results' / entry['id'] / 'attempts.jsonl'
             lines = log.read_text().splitlines() if log.is_file() else []
             last = json.loads(lines[-1])['outcome'] if lines else '-'
-            print(f"{entry['id']:34} {entry['status']:8} {entry['measure']['kind']:10} last: {last:16} {entry['summary'][:70]}")
+            print(f"{entry['id']:34} {entry['status']:8} {window_mode(entry):8} {entry['measure']['kind']:10} "
+                  f"last: {last[:16]:16} {entry['summary'][:62]}")
         return 0
     if args.command == 'quiet':
         snapshot = quiet_snapshot()
@@ -793,49 +891,55 @@ def main(argv=None):
     if args.command == 'hold':
         return hold(args.argv[1:] if args.argv[:1] == ['--'] else args.argv)
     if args.command == 'watch':
-        # By default the watcher claims windows: it takes the lock, sessions behind `hold` pause, and the run starts
-        # once the window settles. With --no-claim it waits for --quiet-minutes of natural quiet. A run interrupted
-        # by other sessions is recorded as not evidence and stays pending.
+        # Claimed windows first (short entries that gate a decision): the lock is taken, sessions behind `hold`
+        # pause, and the run starts once the window settles. Natural entries (long, low priority) and, with
+        # --no-claim, every entry wait for --quiet-minutes of natural quiet with no hold-wrapped work alive.
+        # A run that is interrupted is recorded as not evidence and stays pending.
         deadline = time.monotonic() + args.hours * 3600
         streak = 0
-        while time.monotonic() < deadline:
-            # Shortest first: venus's quiet gaps are short, and a long run that loses its window should not keep
-            # the one-minute timings from ever running.
-            pending = sorted((e for e in entries() if e['status'] == 'pending'),
-                             key=lambda e: (e.get('estimate_minutes', 60), e['created'], e['id']))
-            if not pending:
-                print(now(), 'no pending entries; done', flush=True)
-                return 0
-            if not args.claim:
-                snapshot = quiet_snapshot()
-                streak = streak + 1 if snapshot['quiet'] else 0
-                if streak < args.quiet_minutes:
-                    time.sleep(59)
-                    continue
-            for entry in pending:
+
+        def run_round(round_entries, claim):
+            for entry in round_entries:
                 # The round's list may be stale: another session can block, re-pin or finish an entry meanwhile.
                 entry = load_entry(entry['id'])
                 if entry['status'] != 'pending':
                     continue
-                if not args.claim and not quiet_snapshot()['quiet']:
+                if not claim and not (quiet_snapshot()['quiet'] and not held_work()):
                     print(now(), 'window closed before', entry['id'], flush=True)
-                    break
-                print(now(), 'running', entry['id'], flush=True)
+                    return
+                print(now(), 'running', entry['id'], '(claimed window)' if claim else '(natural quiet)', flush=True)
                 try:
-                    receipt = run(entry, claim_seconds=args.claim_seconds if args.claim else 0)
+                    receipt = run(entry, claim_seconds=args.claim_seconds if claim else 0)
                     print(now(), entry['id'], receipt['outcome'], 'evidence' if receipt['evidence'] else 'not evidence',
                           flush=True)
                 except SystemExit as exc:
                     print(now(), entry['id'], 'stopped:', exc, flush=True)
-                    # Back off after any stopped run: a window that did not settle (someone is not behind `hold`), or
-                    # an entry that measured nothing. Retrying at once would keep pausing everyone else's work.
+                    # Back off after any stopped run: a window that did not settle (someone is not behind `hold`),
+                    # a natural run that gave way, or an entry that measured nothing. Retrying at once would keep
+                    # pausing or crowding everyone else's work.
                     time.sleep(args.retry_minutes * 60)
-                    break
+                    return
+
+        while time.monotonic() < deadline:
+            pending = sorted((e for e in entries() if e['status'] == 'pending'), key=queue_order)
+            if not pending:
+                print(now(), 'no pending entries; done', flush=True)
+                return 0
+            claimed = [e for e in pending if window_mode(e) == 'claim'] if args.claim else []
+            if claimed:
+                run_round(claimed, claim=True)
+                streak = 0
+                continue
+            streak = streak + 1 if (quiet_snapshot()['quiet'] and not held_work()) else 0
+            if streak < args.quiet_minutes:
+                time.sleep(59)
+                continue
+            run_round(pending, claim=False)
             streak = 0
         print(now(), 'gave up after', args.hours, 'hours', flush=True)
         return 1
     if args.command == 'next':
-        for entry in [e for e in entries() if e['status'] == 'pending']:
+        for entry in sorted((e for e in entries() if e['status'] == 'pending'), key=queue_order):
             snapshot = quiet_snapshot()
             if not snapshot['quiet']:
                 print('stopping: venus is busy: ' + '; '.join(snapshot['problems']))

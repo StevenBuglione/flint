@@ -3,6 +3,7 @@
   "id": "framework-timings",
   "created": "2026-11-23",
   "status": "pending",
+  "window": "natural",
   "requested_by": "Spring port P0: RELR and class-metadata size levers (local_8b7074aa), for the coordinator",
   "summary": "Timed builds of every policy/framework.json module (cold and edited DMD and LDC, compiler peak RSS, templates, linked bytes)",
   "why": "Each framework module's compile-time and compiler-RSS budgets are provisional placeholders until measured. After a run that counts as evidence, `python3 tools/framework_budgets.py apply <out>/framework-builds.json --receipt <receipt>` sets each provisional key to the measured value plus headroom (seconds x1.5 of the median, rounded up to 0.01 s; RSS x1.25, rounded up to a MiB) and drops it from 'provisional'; that policy change is committed and reviewed separately. Template instances use measure_builds' method own-library-and-probe/2, which also counts each module's own -lib compile. The measurement runs in a worktree at ec1cda8a7519 (all 15 modules' probes and budgets, the -lib template fix and --framework-builds) with its own native prefix. Re-pinned 2026-11-23 from d153fd1 to ec1cda8a7519: the first attempt would have timed the framework from before the template diet (owner decision 3 resets the budgets after it), so it was stopped.",

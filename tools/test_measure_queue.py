@@ -4,6 +4,7 @@ from pathlib import Path
 import socket
 import subprocess
 import sys
+import tempfile
 import time
 import unittest
 from unittest import mock
@@ -96,9 +97,57 @@ class QuietWindow(unittest.TestCase):
                 mock.patch.object(measure_queue.time, 'monotonic', side_effect=[0, 0, 100]):
             self.assertFalse(measure_queue.claim_window(90)['quiet'])
 
+    def test_only_short_entries_claim_by_default(self):
+        mode = measure_queue.window_mode
+        self.assertEqual(mode({'id': 'a', 'estimate_minutes': 30}), 'claim')
+        self.assertEqual(mode({'id': 'a', 'estimate_minutes': 31}), 'natural')
+        self.assertEqual(mode({'id': 'a'}), 'natural')
+        self.assertEqual(mode({'id': 'a', 'estimate_minutes': 45, 'window': 'claim'}), 'claim')
+        with self.assertRaises(SystemExit):
+            mode({'id': 'a', 'window': 'soon'})
+        rows = [{'id': 'long', 'created': '1', 'estimate_minutes': 1},
+                {'id': 'first', 'created': '2', 'estimate_minutes': 20, 'priority': 1}]
+        self.assertEqual([r['id'] for r in sorted(rows, key=measure_queue.queue_order)], ['first', 'long'])
+
+    def test_a_natural_run_gives_way_without_taking_the_lock(self):
+        seen = {}
+
+        def measure(entry, built, outdir, smoke):
+            seen['lock'], seen['natural'] = measure_queue.LOCK.exists(), measure_queue.NATURAL.exists()
+            started = time.monotonic()
+            completed = subprocess.run(['sleep', '30'])
+            seen['seconds'] = time.monotonic() - started
+            raise SystemExit(f'step 0 exited with {completed.returncode}')
+
+        def snapshot(own_load_ok=False, instant=False):
+            busy = [{'pid': 1, 'command': 'dmd', 'cwd': '/elsewhere'}] if own_load_ok else []
+            return {'time': 't', 'load_average': [0, 0, 0], 'busy_processes': busy, 'quiet': True, 'problems': []}
+
+        entry = {'id': 'long-one', 'estimate_minutes': 80, 'measure': {'kind': 'fake'}}
+        with tempfile.TemporaryDirectory() as temporary:
+            work = Path(temporary)
+            with mock.patch.object(measure_queue, 'WORK', work), \
+                    mock.patch.object(measure_queue, 'LOCK', work / 'MEASURING'), \
+                    mock.patch.object(measure_queue, 'NATURAL', work / 'MEASURING-NATURAL'), \
+                    mock.patch.object(measure_queue, 'ROOT', work), \
+                    mock.patch.object(measure_queue, 'prepare', return_value={}), \
+                    mock.patch.object(measure_queue, 'held_work', return_value=[]), \
+                    mock.patch.object(measure_queue, 'quiet_snapshot', side_effect=snapshot), \
+                    mock.patch.object(measure_queue.WindowSampler, 'INTERVAL', 0.2), \
+                    mock.patch.dict(measure_queue.KINDS, {'fake': measure}):
+                with self.assertRaisesRegex(SystemExit, 'gave way'):
+                    measure_queue.run(entry)
+                self.assertFalse((work / 'MEASURING-NATURAL').exists())
+                attempts = (work / 'results' / 'long-one' / 'attempts.jsonl').read_text().splitlines()
+        self.assertEqual(seen['lock'], False)
+        self.assertEqual(seen['natural'], True)
+        self.assertLess(seen['seconds'], 15)
+        self.assertIn('interrupted', json.loads(attempts[-1])['outcome'])
+
     def test_entries_are_well_formed(self):
         for entry in measure_queue.entries():
             self.assertIn(entry['status'], ('pending', 'blocked', 'done'))
+            self.assertIn(measure_queue.window_mode(entry), ('claim', 'natural'))
             self.assertIn(entry['measure']['kind'], measure_queue.KINDS)
             self.assertFalse(measure_queue.check_ports(p for p in entry['measure'].get('ports', [])
                                                        if p in measure_queue.RESERVED_PORTS))

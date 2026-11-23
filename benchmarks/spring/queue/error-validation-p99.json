@@ -2,6 +2,8 @@
   "schema": "flint.measure-queue/1",
   "created": "2026-11-23",
   "status": "blocked",
+  "priority": 3,
+  "window": "claim",
   "builds": {},
   "requested_by": "Spring port P1: real HTTP for webmvc (web-http, local_16478490)",
   "id": "error-validation-p99",

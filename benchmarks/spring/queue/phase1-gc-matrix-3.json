@@ -2,6 +2,7 @@
   "schema": "flint.measure-queue/1",
   "created": "2026-11-23",
   "status": "blocked",
+  "window": "natural",
   "blocked_on": "petclinic-rest scoring 109/109 in proof-harness's independent run, then a pin to one commit where all three ports pass exactly",
   "requested_by": "ADR-030 section 8, Phase 1 exit (coordinator's plan, 2026-11-23 15:20Z)",
   "builds": {

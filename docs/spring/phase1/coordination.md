@@ -77,6 +77,12 @@ python3 tools/measure_queue.py hold -- flint test --compiler both
 
 The wrapper stops the command's whole process group (SIGSTOP) while the lock exists and continues it afterwards, so a build that is already running pauses too. A paused build uses no CPU, so the queue ignores it. The watcher claims windows: it takes the lock, waits up to 90 s for wrapped work to pause (three quiet samples 5 s apart), and then measures. If the window does not settle, because some build is not behind `hold`, it releases the lock and tries again 5 minutes later. Queue timing runs with proof-harness rather than measuring yourself. Byte sizes and template counts are deterministic and may be measured any time. On pluto, the macOS, linux-arm64-vm and dmd-arm64 sessions agree quiet windows among themselves.
 
+Queue policy (coordinator, 2026-11-23). A claimed window pauses everyone, so it is spent only on short entries that gate a decision:
+
+- **Claimed windows.** Only entries of about 30 minutes or less that gate a decision claim one. They are gs-builds (per-phase timings and the prelude), gs-rest-multicore-2, the error-path p99s once boot's Date-based error timestamp lands, and phase1-spring-apps in parts. Each entry file says `"window": "claim"` or `"natural"`; without one, an entry estimated at 30 minutes or less claims and anything longer is natural. An entry over 30 minutes claims only when the coordinator names it.
+- **Natural quiet.** Long, low-priority entries run only after 5 minutes of natural quiet with no `hold`-wrapped work alive, and never take the lock: they are framework-timings, the GC matrix, java-context and phase1-guides. While one runs, `.flint/measure/MEASURING-NATURAL` exists. `hold` ignores it, so nobody pauses. The moment another session's build or `hold`-wrapped command appears, the run stops and records the attempt as interrupted, not evidence.
+- **Order.** Each entry's `priority` (lower first) comes before its estimate. gs-builds (1) runs first, then gs-rest-multicore-2 (2), then the error-path p99s (3), then the rest. Natural entries wait while any claimed entry is pending.
+
 ## Work queue
 
 When your assigned work is done, don't stop.
