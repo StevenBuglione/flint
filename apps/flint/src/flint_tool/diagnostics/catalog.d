@@ -321,6 +321,11 @@ immutable CodeInfo[] catalog = [
             "check the braces of the function the location points at"),
     CodeInfo("FLINT-E0513", ExitCode.user, "C reached outside an ffi module", ffiExplanation,
             ffiExample),
+    CodeInfo("FLINT-E0514", ExitCode.user, "module-level thread-local mutable variable",
+            "A module-level mutable variable is thread-local in D, so task fibers that interleave on one thread "
+            ~ "share it. Per-task state lives in FiberLocal!T; process state is shared or immutable. Reviewed "
+            ~ "thread roots are listed in policy/safety-policy.json (ADR-030).",
+            "private shared FiberLocal!SecurityContext context;"),
 
     // 052x: workspace structure (the structural gate).
     CodeInfo("FLINT-E0521", ExitCode.user, "dependency cycle in the package graph",

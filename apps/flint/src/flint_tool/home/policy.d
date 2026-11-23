@@ -82,6 +82,8 @@ struct SafetyPolicy
     string[] generatorPrefixes;
     /// Longest permitted @trusted body in lines.
     long maxTrustedLines = 60;
+    /// Module-level thread-local mutable variables reviewed as thread roots, as `module.name` (ADR-030).
+    string[] threadLocalAllowlist;
 }
 
 /// One canonical build profile from policy/profiles.toml.
@@ -616,6 +618,7 @@ private struct SafetyRecord
 {
     string[] generator_module_prefixes;
     long max_trusted_lines;
+    string[] thread_local_allowlist;
 }
 
 private bool loadSafety(ref Home home, ref Report report)
@@ -628,6 +631,7 @@ private bool loadSafety(ref Home home, ref Report report)
         return invalid(report, "policy/safety-policy.json", decoded.error.message);
     home.safety.generatorPrefixes = decoded.value.generator_module_prefixes;
     home.safety.maxTrustedLines = decoded.value.max_trusted_lines;
+    home.safety.threadLocalAllowlist = decoded.value.thread_local_allowlist;
     string failure;
     const prefixes = member(objectMembers(text, failure), "unsafe_module_prefixes");
     if (failure.length || prefixes is null)

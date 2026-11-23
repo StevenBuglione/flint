@@ -91,6 +91,37 @@ void checkMixin(const ref SourceScan scan, scope const(string)[] generatorPrefix
     }
 }
 
+/// No module-level thread-local mutable variable in a framework package outside the reviewed allowlist, and
+/// no allowlist entry for a variable the module no longer declares (FLINT-E0514, ADR-030).
+void checkThreadLocals(const ref SourceScan scan, scope const(string)[] allowlist, ref Report report)
+{
+    import flint_tool.check.threadlocals : moduleThreadLocals;
+
+    bool[string] found;
+    foreach (variable; moduleThreadLocals(scan.tokens))
+    {
+        const qualified = scan.moduleName ~ "." ~ variable.name;
+        found[qualified] = true;
+        bool allowed;
+        foreach (entry; allowlist)
+            allowed = allowed || entry == qualified;
+        if (!allowed)
+            report.add(at(diagnostic("FLINT-E0514", Severity.error,
+                    "module-level thread-local mutable variable " ~ variable.name,
+                    "use FiberLocal!T for per-task state or shared/immutable storage, or allowlist a runtime "
+                    ~ "root in policy/safety-policy.json"), scan.file, variable.line, 0, scan.text));
+    }
+    foreach (entry; allowlist)
+    {
+        import std.string : lastIndexOf;
+
+        const dot = entry.lastIndexOf('.');
+        if (dot > 0 && entry[0 .. dot] == scan.moduleName && (entry in found) is null)
+            report.add(at(diagnostic("FLINT-E0514", Severity.error, "stale thread_local_allowlist entry " ~ entry,
+                    "remove the entry from policy/safety-policy.json"), scan.file, 1, 0, scan.text));
+    }
+}
+
 /// @trusted and @system confinement, SAFETY rationale, no scopes or blocks, bounded length.
 void checkAnnotations(const ref SourceScan scan, bool lowLevel, long maxTrustedLines, ref Report report)
 {

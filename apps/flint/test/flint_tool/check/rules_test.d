@@ -1,6 +1,6 @@
 module flint_tool.check.rules_test;
 
-import flint_tool.check.rules : SourceScan, checkAnnotations, checkDefault, checkMixin,
+import flint_tool.check.rules : SourceScan, checkAnnotations, checkDefault, checkMixin, checkThreadLocals,
     checkWorkspaceImport, expectedModule, scanSource;
 import flint_tool.diagnostics.report : Report;
 import flint_tool.fixtures : codes, fixtureHome;
@@ -110,4 +110,45 @@ unittest
 {
     expect(expectedModule("shop/order/service.d")).toEqual("shop.order.service");
     expect(expectedModule("shop/order/package.d")).toEqual("shop.order");
+}
+
+private string[] threadLocalCodes(string body, scope const(string)[] allowlist = null)
+{
+    Report report;
+    SourceScan scan;
+    assert(scanSource("x.d", "module flint.arena;\n@safe:\n" ~ body, scan, report));
+    checkThreadLocals(scan, allowlist, report);
+    return codes(report);
+}
+
+@("module-level thread-local mutable variables are rejected as in tools/gates.py")
+unittest
+{
+    foreach (body; [
+        "private ulong requestId;\n", "const(char)[] name;\n", "version (linux) { int fd = -1; }\n",
+        "private { Object principal; }\n", "static if (true) { auto cache = [1]; }\n", "void* handle;\n",
+        "size_t f(int a = 1) { return a; }\nint[4] slots;\n"
+    ])
+        expect(threadLocalCodes(body)).toEqual(["FLINT-E0514"]);
+}
+
+@("shared, immutable, const, enum, local and member state is not module thread-local state")
+unittest
+{
+    const body = "private shared ulong counter;\n__gshared int legacy;\nimmutable string name = \"x\";\n"
+        ~ "const(size_t) none = size_t.max;\nenum limit = 4;\nshared { int a; }\n"
+        ~ "alias Fn = void function();\nextern (C) int puts(const(char)* text) nothrow;\n"
+        ~ "int value() { int local; static int calls; return local + calls; }\n"
+        ~ "struct S { int field; static int count; }\nimmutable made = () { int x; return x; }();\n";
+    expect(threadLocalCodes(body).length).toEqual(0);
+}
+
+@("the thread-local allowlist admits exact entries and rejects stale ones")
+unittest
+{
+    expect(threadLocalCodes("private uint ownerCounter;\n", ["flint.arena.ownerCounter"]).length).toEqual(0);
+    expect(threadLocalCodes("private shared uint ownerCounter;\n", ["flint.arena.ownerCounter"])).toEqual(
+            ["FLINT-E0514"]);
+    expect(threadLocalCodes("private uint other;\n", ["flint.arena.ownerCounter"])).toEqual(
+            ["FLINT-E0514", "FLINT-E0514"]);
 }

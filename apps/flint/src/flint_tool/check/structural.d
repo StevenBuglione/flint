@@ -6,7 +6,7 @@ module flint_tool.check.structural;
 
 import flint_tool.check.lexer : DependencyEdge, LexFailure, Token, compilerDependencyEdges, importedModules, tokenize;
 import flint_tool.check.rules : SourceScan, checkAnnotations, checkDefault, checkMixin,
-    checkWorkspaceImport, expectedModule, importLine, scanSource;
+    checkThreadLocals, checkWorkspaceImport, expectedModule, importLine, scanSource;
 import flint_tool.diagnostics.report : Report, Severity, at, diagnostic;
 import flint_tool.home.policy : Home, matchesAny;
 
@@ -356,6 +356,7 @@ private bool checkPackage(const ref Home home, string name, ref Report report)
             checkWorkspaceImport(home, name, imported, display, display, importLine(scan,
                     imported), scan.text, report);
         checkAnnotations(scan, low, home.safety.maxTrustedLines, report);
+        checkThreadLocals(scan, home.safety.threadLocalAllowlist, report);
     }
     return mixins;
 }
