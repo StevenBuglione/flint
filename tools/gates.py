@@ -379,10 +379,10 @@ def api_gate(repos,flint,release=False):
     return report,failures
 
 def main():
-    ap=argparse.ArgumentParser();ap.add_argument('--package',action='append',choices=sorted(P));ap.add_argument('--gate',choices=['structural','baseline','all','api'],required=True)
+    ap=argparse.ArgumentParser();ap.add_argument('--package',action='append',choices=sorted(P));ap.add_argument('--gate',choices=['structural','baseline','all','api','spring'],required=True)
     ap.add_argument('--flint',type=Path,default=ROOT/'.flint'/'bin'/'flint',help='api gate: the flint executable (default: .flint/bin/flint)')
     ap.add_argument('--release',action='store_true',help='api gate: require every element classified, not just the baseline ratchet')
-    ap.add_argument('--evidence',type=Path);ap.add_argument('--baseline',type=Path)
+    ap.add_argument('--evidence',type=Path,help='baseline/all: the evidence file; spring: the harness output directory');ap.add_argument('--baseline',type=Path)
     ap.add_argument('--repo',help='check only this repo\'s packages (policy/repos.json), as its own CI will after the split')
     ap.add_argument('--workspace',type=Path,help='flint.workspace/1 file: the checkouts of each repo at pinned commits; default: this monorepo')
     a=ap.parse_args()
@@ -392,6 +392,14 @@ def main():
     require(not problems,'workspace: '+'; '.join(problems))
     selected=a.package or [n for n in P if a.repo is None or package_repos(ROOT)[n][0]==a.repo]
     require(a.repo is None or a.repo in {r for r,_ in package_repos(ROOT).values()},'unknown repo '+str(a.repo))
+    if a.gate=='spring':
+        # ADR-030 section 8: the side-by-side suites, both build headlines, the Spring workload and the GC matrix.
+        require(a.evidence is not None,'spring gate: --evidence <directory> of the harness output is required')
+        from spring_gate import spring_gate
+        report,failures=spring_gate(a.evidence)
+        print(json.dumps({'spring':report,'failures':failures},indent=2))
+        require(not failures,'spring: '+' | '.join(failures))
+        return
     if a.gate=='api':
         repos=[a.repo] if a.repo else sorted({r for r,_ in package_repos(ROOT).values()}|{u['repo'] for u in json.loads((ROOT/'api'/'upstreams.json').read_text(encoding='utf-8'))['upstreams']})
         report,failures=api_gate(repos,a.flint.resolve(),a.release)
