@@ -36,6 +36,11 @@
         "size"
       ],
       "binary": ".flint/build/size/gs-rest-service"
-    }
+    },
+    "cached_static": [
+      "flint",
+      "build",
+      "--static"
+    ]
   }
 }
