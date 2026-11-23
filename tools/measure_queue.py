@@ -324,19 +324,32 @@ def shared_tools():
     raise SystemExit('no checkout holds the pinned toolchain (tools/install_toolchains.py --compiler dmd)')
 
 
-def private_tools(tools, linker):
+def private_tools(tools, linker, fork=False, checkout=None, logs=None):
     """A toolchain directory for one checkout: every entry of the shared one linked, except DMD, which is copied and
-    configured to link with `linker` (ADR-021: dev builds link with mold). The shared toolchain other sessions use is
-    never changed."""
+    configured to link with `linker` (ADR-021: dev builds link with mold). With `fork`, DMD is instead built from the
+    checkout's own fork patch (install_toolchains.py --compiler dmd --flint-fork), so a measurement sees a fork
+    change such as the compile server's platform prelude (42ebbef9) before the shared toolchain has it. The shared
+    toolchain other sessions use is never changed."""
     shared = shared_tools()
     tools.mkdir()
+    private = {'dmd2', 'flint-toolchain.json'} | ({'flint-fork-build'} if fork else set())
     for entry in shared.iterdir():
-        if entry.name == 'dmd2':
-            shutil.copytree(entry, tools / 'dmd2', symlinks=True)
-        elif entry.name == 'flint-toolchain.json':
-            shutil.copy2(entry, tools / entry.name)
+        if entry.name in private:
+            if not fork and entry.name == 'dmd2':
+                shutil.copytree(entry, tools / 'dmd2', symlinks=True)
+            elif not fork and entry.name == 'flint-toolchain.json':
+                shutil.copy2(entry, tools / entry.name)
         else:
             (tools / entry.name).symlink_to(entry)
+    if fork:
+        log = Path(logs) / 'fork.log'
+        with log.open('wb') as stream:
+            completed = subprocess.run([sys.executable, 'tools/install_toolchains.py', '--compiler', 'dmd', '--flint-fork',
+                                        '--destination', str(tools)], cwd=checkout, env=toolchain_environment(),
+                                       stdout=stream, stderr=subprocess.STDOUT)
+        if completed.returncode:
+            raise SystemExit(f'building the DMD fork for {checkout} failed; see {log}')
+        return  # install_toolchains configures the pinned mold on Linux x86-64 itself (4112de26)
     sys.path.insert(0, str(ROOT / 'tools'))
     import install_toolchains
     if linker == 'mold' and hasattr(install_toolchains, 'install_mold'):
@@ -462,8 +475,8 @@ def prepare_checkout(spec, logs):
         # The flint CLI at this commit, for steps that build Flint ports; the pinned compilers come from the main
         # checkout's toolchain directory, linked read-only.
         tools = directory / '.tools'
-        if not tools.exists() and spec.get('linker'):
-            private_tools(tools, spec['linker'])
+        if not tools.exists() and (spec.get('linker') or spec.get('fork')):
+            private_tools(tools, spec.get('linker', 'mold'), spec.get('fork', False), directory, logs)
         elif not tools.exists():
             tools.symlink_to(shared_tools())
         # The pinned peers (JDK, Maven, PostgreSQL) installed in this checkout, for spring_bench and load_bench there.
