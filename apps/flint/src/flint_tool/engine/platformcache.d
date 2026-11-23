@@ -686,7 +686,7 @@ private string moduleName(string file, scope const string[] importPaths)
     assert(cast(const(char)[]) other == "not an archive");
 }
 
-@safe unittest
+version (Posix) @safe unittest  // The cache is enabled on Linux only; the fixture spells POSIX paths.
 {
     const text = `{"targets": [{"rootPackage": "flint:web", "cacheArtifactPath": "/c/libflint_web.a"},
         {"rootPackage": "flint-platform", "cacheArtifactPath": "/c/"}],

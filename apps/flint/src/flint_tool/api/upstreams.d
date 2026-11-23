@@ -207,9 +207,9 @@ struct Fetched
 Fetched fetchUpstream(const ref Upstream upstream, string cache, bool offline)
 {
     import std.file : exists, mkdirRecurse, readText, remove, rename, rmdirRecurse, write;
-    import std.path : buildPath;
+    import std.path : baseName, buildPath, dirName;
     import flint_tool.support.files : sha256File;
-    import flint_tool.support.process : capture;
+    import flint_tool.support.process : Launch, capture;
 
     Fetched result = Fetched(upstream.project, upstream.version_, buildPath(cache, upstream.key));
     const stamp = buildPath(result.directory, ".flint-api-fetch");
@@ -248,9 +248,11 @@ Fetched fetchUpstream(const ref Upstream upstream, string cache, bool offline)
     if (exists(staging))
         rmdirRecurse(staging);
     mkdirRecurse(staging);
+    // tar runs beside the archive and names it relatively: GNU tar (Git for Windows) reads `C:` in an archive
+    // path as a remote host.
     const unpacked = upstream.format == "tar.gz" ? capture([
-        "tar", "-xzf", archive, "-C", staging, "--strip-components=1"
-    ]) : capture(["unzip", "-q", "-o", archive, "-d", staging]);
+        "tar", "-xzf", baseName(archive), "-C", staging, "--strip-components=1"
+    ], Launch(dirName(archive))) : capture(["unzip", "-q", "-o", archive, "-d", staging]);
     if (!unpacked.ok)
     {
         result.failure = "cannot unpack " ~ upstream.key ~ ": " ~ unpacked.failure ~ unpacked.errors;

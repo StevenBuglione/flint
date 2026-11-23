@@ -287,7 +287,7 @@ unittest
     import std.path : buildPath;
     import std.uuid : randomUUID;
     import flint_tool.support.files : sha256File;
-    import flint_tool.support.process : capture;
+    import flint_tool.support.process : Launch, capture;
 
     const work = buildPath(tempDir(), "flint-api-fetch-" ~ randomUUID().toString());
     scope (exit)
@@ -295,7 +295,7 @@ unittest
     mkdirRecurse(buildPath(work, "lib-1.0", "src", "main", "java", "p"));
     write(buildPath(work, "lib-1.0", "src", "main", "java", "p", "A.java"), "package p;\npublic class A { }\n");
     const archive = buildPath(work, "lib-1.0.tar.gz");
-    expect(capture(["tar", "-czf", archive, "-C", work, "lib-1.0"]).ok).toEqual(true);
+    expect(capture(["tar", "-czf", "lib-1.0.tar.gz", "lib-1.0"], Launch(work)).ok).toEqual(true);
     const digest = sha256File(archive);
 
     Upstream[] upstreams;

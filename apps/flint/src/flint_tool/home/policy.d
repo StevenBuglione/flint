@@ -202,7 +202,15 @@ struct Home
 
         const base = repoRoot(repo);
         const same = buildPath(base, directory);
-        return exists(same) ? same : buildPath(base, repoLayout(repo, directory));
+        const path = exists(same) ? same : buildPath(base, repoLayout(repo, directory));
+        version (Windows)
+        {
+            import std.path : buildNormalizedPath;
+
+            return buildNormalizedPath(path); // the layout rules write `/`
+        }
+        else
+            return path;
     }
 
     /// `directory` in the extracted `repo`'s layout: `engine/web`, `core/flint-boot`. Each rule rewrites the

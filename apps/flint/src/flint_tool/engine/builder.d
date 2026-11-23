@@ -969,6 +969,7 @@ private PackageRun runPackage(ref Session session, string name, string compiler,
     import std.file : exists;
     import std.path : buildPath;
     import flint_tool.support.files : findFiles;
+    import flint_tool.toolchain.host : executable;
 
     PackageRun run;
     run.name = name;
@@ -999,8 +1000,8 @@ private PackageRun runPackage(ref Session session, string name, string compiler,
                 ? "tests failed" : "failed to build") ~ " with " ~ compiler, "output:\n" ~ tail(output));
         return run;
     }
-    const artifact = test ? buildPath(session.home.root, "packages", name, "flint-" ~ name ~ "-test-unittest")
-        : libraryPath(session.home.root, name);
+    const artifact = test ? buildPath(session.home.root, "packages", name,
+            executable("flint-" ~ name ~ "-test-unittest")) : libraryPath(session.home.root, name);
     if (!exists(artifact))
         return run;
     if (test)
@@ -1118,7 +1119,11 @@ private string libraryPath(string root, string name)
     import std.array : replace;
     import std.path : buildPath;
 
-    return buildPath(root, "packages", name, "libflint_" ~ name.replace("-", "_") ~ ".a");
+    // DUB names a static library `lib<name>.a` on POSIX hosts and `<name>.lib` on Windows.
+    version (Windows)
+        return buildPath(root, "packages", name, "flint_" ~ name.replace("-", "_") ~ ".lib");
+    else
+        return buildPath(root, "packages", name, "libflint_" ~ name.replace("-", "_") ~ ".a");
 }
 
 /// The druntime unittest summary line, such as "6 modules passed unittests".
