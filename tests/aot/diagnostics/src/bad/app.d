@@ -8,6 +8,7 @@ import flint.context.annotation : Bean, Configuration, Profile;
 import flint.data.repository : CrudRepository;
 import flint.jakarta.annotation : PostConstruct;
 import flint.scheduling.annotation : Async;
+import flint.security.access.prepost : PreAuthorize;
 import flint.stereotype : Component, Service;
 
 @safe:
@@ -90,6 +91,11 @@ interface Missing
     @Async int later()
     {
         return 3;
+    }
+
+    /// FLINT-E1107: a security function that does not exist.
+    @PreAuthorize("frobnicate('x')") void guarded()
+    {
     }
 }
 

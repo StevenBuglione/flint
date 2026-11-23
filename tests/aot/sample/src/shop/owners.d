@@ -56,8 +56,8 @@ import flint.transaction.annotation : Transactional;
         store.events ~= "service stopped";
     }
 
-    /// Advised: read-only transaction and the "owners" cache.
-    @Transactional(readOnly: true) @Cacheable("owners") string findName(long id)
+    /// Advised: read-only transaction and the "owners" cache, keyed by a compiled SpEL expression.
+    @Transactional(readOnly: true) @Cacheable("owners", key: "#id * 2") string findName(long id)
     {
         calls++;
         return store.find(id);

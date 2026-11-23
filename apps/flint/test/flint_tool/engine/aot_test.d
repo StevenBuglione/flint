@@ -555,12 +555,15 @@ unittest
     auto outcome = generate(project);
     expect(outcome.ok).toBeFalse();
     string[] codes;
+    bool securityReported;
     foreach (ref item; outcome.diagnostics)
     {
+        securityReported = securityReported || item.message.canFind("unknown function `frobnicate()`");
         codes ~= item.code;
         expect(item.file).toEqual("src/bad/app.d");
         expect(item.line > 0).toBeTrue();
     }
+    expect(securityReported).toBeTrue();
     foreach (code; [
         "FLINT-E1101", "FLINT-E1102", "FLINT-E1105", "FLINT-E1106", "FLINT-E1107", "FLINT-E1108",
         "FLINT-E1109", "FLINT-E1110", "FLINT-E1111", "FLINT-E1112", "FLINT-E1113", "FLINT-E1114",
@@ -676,7 +679,7 @@ private string[] closureImports(scope const string[] roots)
     return flags;
 }
 
-@("gs-rest-service against the real framework and Boot annotations: the table is Spring's and the code compiles")
+@("gs-rest-service against the real web annotations: the table is Spring's and the code compiles")
 unittest
 {
     import std.algorithm.iteration : map;
@@ -689,9 +692,11 @@ unittest
     const project = copyFixture("gs-rest-service");
     scope (exit)
         remove(project);
-    auto imports = closureImports([
-        "framework/web", "framework/webmvc", "boot/core/flint-boot-autoconfigure"
-    ]);
+    // The real web stack. Boot comes from the fixture annotations until framework/web leaves p1-interim
+    // (coordination item 1): today Boot's flint:core and web's p1-interim both declare flint.core.annotation.
+    auto imports = closureImports(["framework/web", "framework/webmvc"]) ~ [
+        "-I" ~ buildPath(repositoryRoot(), "tests", "aot", "annotations")
+    ];
     AotRequest request;
     request.root = project;
     request.compiler = compiler();

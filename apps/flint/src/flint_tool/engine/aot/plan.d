@@ -206,7 +206,34 @@ struct MethodPlan
     MergedSet annotations;
     /// Each parameter's merged annotations.
     MergedSet[] parameters;
+    /// SpEL-valued attributes of its merged annotations, compiled (aot-contract.md section 9.1).
+    ExpressionPlan[] expressions;
 }
+
+/// One compiled method-level expression.
+struct ExpressionPlan
+{
+    /// Annotation and attribute that hold it.
+    string annotation;
+    /// ditto
+    string attribute;
+    /// SpEL source.
+    string source;
+    /// D expression over `EvaluationContext context`.
+    string code;
+}
+
+/// Annotation attributes that hold SpEL.
+immutable string[2][] spelAttributes = [
+    ["flint.cache.annotation.Cacheable", "key"], ["flint.cache.annotation.Cacheable", "condition"],
+    ["flint.cache.annotation.Cacheable", "unless"], ["flint.cache.annotation.CachePut", "key"],
+    ["flint.cache.annotation.CachePut", "condition"], ["flint.cache.annotation.CachePut",
+        "unless"], ["flint.cache.annotation.CacheEvict",
+        "key"], ["flint.cache.annotation.CacheEvict",
+        "condition"], ["flint.security.access.prepost.PreAuthorize", "value"],
+    ["flint.security.access.prepost.PostAuthorize", "value"],
+    ["flint.context.event.EventListener", "condition"]
+];
 
 /// A descriptor property.
 struct PropertyPlan
@@ -377,6 +404,8 @@ struct ListenerPlan
     string condition;
     /// `@Order`.
     long order = int.max;
+    /// The compiled condition, when there is one (aot-contract.md section 9.1).
+    string conditionCode;
 }
 
 /// A derived query.
@@ -1301,6 +1330,37 @@ private final class Analysis
         result.annotations = merged;
         foreach (ref parameter; method.parameters)
             result.parameters ~= mergedOf(parameter);
+        result.expressions = expressionsOf(method, merged);
+        return result;
+    }
+
+    /// Compile the SpEL-valued attributes of a method's merged annotations (aot-contract.md section 9.1).
+    ExpressionPlan[] expressionsOf(const ref Method method, const ref MergedSet merged)
+    {
+        import flint_tool.engine.aot.spel : Compiled, SpelError, compileSpel;
+
+        ExpressionPlan[] result;
+        foreach (entry; spelAttributes)
+        {
+            const annotation = merged.get(entry[0]);
+            if (annotation is null)
+                continue;
+            const source = annotation.text(entry[1]);
+            if (source.length == 0)
+                continue;
+            auto scope_ = new MethodScope(this, method);
+            Compiled compiled;
+            SpelError failure;
+            if (!compileSpel(source, scope_, compiled, failure))
+            {
+                error("FLINT-E1107", "@" ~ imported!"flint_tool.engine.aot.merge".shortName(
+                        entry[0]) ~ "(" ~ entry[1] ~ ") on " ~ method.name ~ ": " ~ failure.message,
+                        method.file, method.line);
+                continue;
+            }
+            result ~= ExpressionPlan(entry[0], entry[1], source, compiled.type == "Any"
+                    ? compiled.code : "Any.of(" ~ compiled.code ~ ")");
+        }
         return result;
     }
 
@@ -1917,6 +1977,8 @@ private final class Analysis
             listener.method = method.name;
             listener.eventType = method.parameters[0].type.name;
             listener.condition = annotation.text("condition");
+            foreach (ref expression; expressionsOf(method, methodMerged))
+                listener.conditionCode = expression.code;
             if (const ordered = methodMerged.get(order))
                 listener.order = ordered.get("value").integer;
             moduleFor(decl.module_).listeners ~= listener;
@@ -2088,6 +2150,115 @@ private bool methodOf(const ref TypeDecl decl, string name, imported!"flint_tool
         return true;
     }
     return false;
+}
+
+/// What method-level SpEL sees (aot-contract.md section 9.1): the arguments typed from the signature, the
+/// result, `#root.methodName`, beans, placeholders, and the security root's functions as runtime calls.
+private final class MethodScope : imported!"flint_tool.engine.aot.spel".SpelScope
+{
+    import flint_tool.engine.aot.spel : Compiled;
+
+    private Analysis analysis;
+    private const(Method) method;
+    string[] modules;
+
+    this(Analysis analysis, const ref Method method)
+    {
+        this.analysis = analysis;
+        this.method = method;
+    }
+
+    bool variable(string name, out Compiled result)
+    {
+        import std.conv : ConvException, to;
+
+        foreach (index, ref parameter; method.parameters)
+        {
+            const positional = "p" ~ index.to!string;
+            if (parameter.name == name || name == positional || name == "a" ~ index.to!string)
+            {
+                modules ~= parameter.type.modules;
+                result = Compiled("context.argument(" ~ index.to!string ~ ").get!(" ~ parameter.type.name ~ ")()",
+                        parameter.type.name);
+                return true;
+            }
+        }
+        if (name == "result" && method.returns.name != "void")
+        {
+            modules ~= method.returns.modules;
+            result = Compiled("context.result().get!(" ~ method.returns.name ~ ")()", method.returns.name);
+            return true;
+        }
+        if (name == "root")
+        {
+            result = Compiled("context", "flint.engine.aot.expression.EvaluationContext");
+            return true;
+        }
+        return false;
+    }
+
+    bool bean(string name, out Compiled result)
+    {
+        import flint_tool.engine.aot.conditions : literal;
+
+        foreach (ref item; analysis.allBeans)
+        {
+            if (item.name != name)
+                continue;
+            if (const decl = analysis.model.type(item.type))
+                modules ~= decl.module_;
+            result = Compiled("(cast(" ~ item.type ~ ") context.bean(" ~ literal(name) ~ "))", item.type);
+            return true;
+        }
+        return false;
+    }
+
+    Compiled placeholder(string expression)
+    {
+        import flint_tool.engine.aot.conditions : literal;
+
+        return Compiled("context.placeholder(" ~ literal(expression) ~ ")", "string");
+    }
+
+    bool root(string name, Compiled[] arguments, bool call, out Compiled result)
+    {
+        import std.algorithm.searching : canFind;
+        import std.array : join;
+        import flint_tool.engine.aot.conditions : literal;
+
+        static immutable string[] functions = [
+            "hasRole", "hasAnyRole", "hasAuthority", "hasAnyAuthority", "isAuthenticated",
+            "isAnonymous", "isRememberMe", "isFullyAuthenticated", "permitAll", "denyAll",
+            "hasPermission"
+        ];
+        static immutable string[] properties = ["principal", "authentication"];
+        if (call && functions.canFind(name))
+        {
+            string[] boxed;
+            foreach (ref argument; arguments)
+                boxed ~= argument.type == "Any" ? argument.code : "Any.of(" ~ argument.code ~ ")";
+            result = Compiled("context.rootFunction(" ~ literal(name) ~ ", [" ~ boxed.join(", ") ~ "])", "Any");
+            return true;
+        }
+        if (!call && properties.canFind(name))
+        {
+            result = Compiled("context.rootProperty(" ~ literal(name) ~ ")", "Any");
+            return true;
+        }
+        return false;
+    }
+
+    bool member(string type, string name, Compiled[] arguments, bool call, string target, out Compiled result)
+    {
+        if (type == "flint.engine.aot.expression.EvaluationContext")
+        {
+            if (name != "methodName" || call)
+                return false;
+            result = Compiled("context.methodName()", "string");
+            return true;
+        }
+        return memberOf(analysis.model, type, name, arguments, call, target, result, modules);
+    }
 }
 
 /// Parameter types of a method, comma-separated, for overload identity.
