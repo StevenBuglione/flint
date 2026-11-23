@@ -310,11 +310,32 @@ private string pathFix(string name)
     return "add `" ~ name ~ " = { path = \"...\" }` under [dependencies]";
 }
 
+/// Whether `name` is among the dependencies a direct starter brings, transitively through other starters: a
+/// starter is a dependency bundle, so its packages are the application's to import (ADR-029 section 8).
+private bool throughStarter(const ref Resolution resolution, string direct, string name)
+{
+    import std.algorithm.searching : startsWith;
+
+    if (!direct.startsWith("flint:starter"))
+        return false;
+    foreach (ref item; resolution.packages)
+    {
+        if (item.name != direct)
+            continue;
+        foreach (dependency; item.dependencies)
+        {
+            if (dependency == name || throughStarter(resolution, dependency, name))
+                return true;
+        }
+    }
+    return false;
+}
+
 private bool declared(const ref Resolution resolution, string name, bool test)
 {
     foreach (direct; resolution.direct)
     {
-        if (direct == name)
+        if (direct == name || throughStarter(resolution, direct, name))
             return true;
     }
     if (test)

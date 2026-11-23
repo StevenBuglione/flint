@@ -22,6 +22,20 @@ scope = "build"
 dependencies = []
 
 [[package]]
+name = "flint:boot"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = ["flint:arena", "flint:config", "flint:di", "flint:term"]
+
+[[package]]
+name = "flint:boot-autoconfigure-web"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = ["flint:arena", "flint:boot", "flint:config", "flint:di", "flint:term", "flint:web"]
+
+[[package]]
 name = "flint:conc"
 kind = "core"
 source = "workspace"
@@ -64,11 +78,18 @@ scope = "build"
 dependencies = ["flint:arena"]
 
 [[package]]
+name = "flint:starter"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = ["flint:boot", "flint:log"]
+
+[[package]]
 name = "flint:starter-web"
 kind = "core"
 source = "workspace"
 scope = "build"
-dependencies = ["flint:arena", "flint:config", "flint:di", "flint:term", "flint:validate", "flint:web"]
+dependencies = ["flint:arena", "flint:boot-autoconfigure-web", "flint:config", "flint:di", "flint:serde", "flint:starter", "flint:validate", "flint:web"]
 
 [[package]]
 name = "flint:term"

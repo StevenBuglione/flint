@@ -1,0 +1,12 @@
+[project]
+name = "notes"
+version = "0.1.0"
+flint = "1.0"
+type = "executable"
+
+[dependencies]
+"flint:starter-web" = {}
+"flint:starter-data-jdbc" = {}
+
+[test-dependencies]
+"flint:test" = {}

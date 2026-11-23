@@ -17,6 +17,8 @@ __pycache__/
 .native-conan/
 /packages/*/flint-*-test-unittest
 /starters/*/flint-*-test-unittest
+/boot/*/flint-*-test-unittest
+/boot/*/libflint_*.a
 *.pdb
 *.ilk
 *.exp

@@ -43,6 +43,7 @@ StructuralSummary structuralGate(const ref Home home, scope const(string)[] sele
     summary.graph_nodes = cast(long) home.packages.length;
     checkGraph(home, report);
     checkRootRecipe(home, report);
+    checkBootLayers(home, report);
     string[] names;
     foreach (ref item; home.packages)
     {
@@ -105,6 +106,61 @@ private void checkGraph(const ref Home home, ref Report report)
 
     foreach (ref item; home.packages)
         visit(item.name);
+}
+
+/// ADR-029 section 8: a starter holds no D source outside its example (FLINT-E0528), and a Flint Boot library
+/// imports only the packages and Boot libraries policy/boot.json declares for it (FLINT-E0529).
+private void checkBootLayers(const ref Home home, ref Report report)
+{
+    import std.algorithm.searching : startsWith;
+    import std.path : buildPath;
+    import flint_tool.check.rules : SourceScan, scanSource;
+    import flint_tool.support.files : findFiles, readIfPresent, relativeTo;
+
+    foreach (ref starter; home.starters)
+    {
+        const base = buildPath(home.root, starter.directory);
+        foreach (file; findFiles(base, "**/*.d"))
+        {
+            if (file.startsWith("example/"))
+                continue;
+            report.add(at(diagnostic("FLINT-E0528", Severity.error, starter.name ~ ": a starter has no D source",
+                    "move the code to a framework library or a Flint Boot library; a starter lists dependencies"),
+                    relativeTo(buildPath(base, file), home.root), 0));
+        }
+    }
+    foreach (ref library; home.bootLibraries)
+    {
+        const base = buildPath(home.root, library.directory, "source");
+        foreach (file; findFiles(base, "**/*.d"))
+        {
+            SourceScan scan;
+            Report ignored;
+            const path = buildPath(base, file);
+            if (!scanSource(relativeTo(path, home.root), readIfPresent(path), scan, ignored))
+                continue;
+            foreach (imported; scan.imports)
+            {
+                const dependency = home.owner(imported);
+                if (dependency is null || dependency.name == library.name || declaredIn(library, dependency.name))
+                    continue;
+                report.add(at(diagnostic("FLINT-E0529", Severity.error,
+                        library.name ~ ": undeclared Boot-layer import " ~ imported, "declare flint:" ~ dependency.name
+                        ~ " for it in policy/boot.json and its dub.sdl, keeping framework -> boot -> autoconfigure"),
+                        scan.file, 0));
+            }
+        }
+    }
+}
+
+private bool declaredIn(const ref imported!"flint_tool.home.policy".CorePackage library, string name)
+{
+    foreach (dependency; library.dependencies)
+    {
+        if (dependency == name)
+            return true;
+    }
+    return false;
 }
 
 private void checkRootRecipe(const ref Home home, ref Report report)

@@ -1,0 +1,7 @@
+name "starter"
+description "Flint's base starter: Flint Boot and logging"
+license "Apache-2.0"
+// A starter has no code (ADR-029 section 8): its dependencies and its configuration section.
+targetType "none"
+dependency "flint:boot" version="*"
+dependency "flint:log" version="*"

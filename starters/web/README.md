@@ -1,6 +1,9 @@
 # flint:starter-web
 
-This starter runs a REST application in one call. It binds configuration, starts the DI context, serves the controllers, and stops everything when the server stops (ADR-028 section 2).
+This starter is a dependency bundle and the `[server]` section. As in Spring Boot, it holds no code (ADR-029 section 8). It brings:
+- flint:web, flint:di, flint:config, flint:validate and flint:serde;
+- `flint:boot`, the application runner;
+- `flint:boot-autoconfigure-web`, whose `WebServerAutoConfiguration` binds `[server]`, serves the controllers and the front end, and answers `--openapi`.
 
 ```bash
 flint add web
@@ -14,8 +17,11 @@ flint add web
 ## Use
 
 ```d
-import flint.starter_web : ConfigurationProperties, Get, PathVariable, Provided, RestController, Result, Service,
-    runApplication;
+import flint.arena : Result;
+import flint.boot : runApplication;
+import flint.boot_autoconfigure_web : WebServerAutoConfiguration;
+import flint.di : Provided, Service;
+import flint.web : Get, PathVariable, RestController;
 
 @Service final class Greeter { ... }
 
@@ -31,13 +37,13 @@ struct GreetingController
 
 int main(string[] args)
 {
-    return runApplication!(Provided!AppSettings, Greeter, GreetingController)(args);
+    return runApplication!(WebServerAutoConfiguration, Provided!AppSettings, Greeter, GreetingController)(args);
 }
 ```
 
-- **One import.** `flint.starter_web` re-exports what a web application writes: the DI, web, configuration and validation attributes, and `Result`, `Error` and `Status`.
-- **Beans.** These are the application's services, repositories and controllers, together with other starters' auto-configuration lists. Every `Provided!T` whose `T` is a `@ConfigurationProperties` struct is bound from `config/`, from one snapshot that includes `--set key=value` and `--profile name` arguments. A key that no type claims is an error naming the key.
-- **Controllers.** Every `@RestController` among the beans is served.
+- **Imports:** the application imports the packages the starter brings directly, without declaring each one, as with a Spring Boot starter.
+- **Configuration:** every `Provided!T` whose `T` is a `@ConfigurationProperties` struct is bound from `config/`, from one snapshot that includes `--set key=value` and `--profile name`. A key that no type claims is an error naming the key.
+- **Controllers:** every `@RestController` among the beans is served.
 - **Handlers need no attributes.** A controller whose handlers are all `nothrow @nogc` runs on the reactor. Any other controller runs on a worker thread, so it may allocate, throw (an exception becomes a 500) and call ordinary services. Path and query arguments may be `string`.
 
 ## Configuration: `[server]`

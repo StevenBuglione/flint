@@ -1,0 +1,8 @@
+name "starter-actuator"
+description "Health, readiness and metrics endpoints with Flint Boot's actuator"
+license "Apache-2.0"
+// A starter has no code (ADR-029 section 8): its dependencies and its configuration section.
+targetType "none"
+dependency "flint:starter" version="*"
+dependency "flint:actuator" version="*"
+dependency "flint:boot-actuator" version="*"

@@ -137,7 +137,7 @@ Status: proposed by the Milestone 10 implementation, for the project owner's rev
 
 ### 7. `flint:starter-data`
 
-1. **What it registers.** `DataAutoConfiguration` registers two things, both conditional on `[database]`:
+1. **What it registers.** `DataAutoConfiguration` (now `DataSourceAutoConfiguration` in `flint:boot-autoconfigure-data`, section 8) registers two things, both conditional on `[database]`:
    - `DatabaseProperties`: `driver`, `url`, `max_connections`, `migrate` and `migrations`;
    - `DataSource`: it opens the flint:sql pool in `@PostConstruct`, applies the migrations, and closes the pool in `@PreDestroy`.
 
@@ -160,6 +160,49 @@ Status: proposed by the Milestone 10 implementation, for the project owner's rev
 
 6. **DI start-up errors name the cause.** An exception from a bean's constructor or `@PostConstruct` now appears in the start-up error, for example "could not verify SQL repository schema for notes", where before it was only "raised an exception".
 
+### 8. The Spring Boot layering, applied (ADR-029 section 8)
+
+1. **Libraries.** The Flint Boot libraries live in `boot/`. They are DUB subpackages listed in `policy/boot.json`, outside the 37 framework packages that the release gates measure.
+
+   | Library | Spring counterpart | Holds |
+   | --- | --- | --- |
+   | `flint:boot` (`flint.boot`) | `spring-boot` | `runApplication!(Beans...)`: launcher commands, configuration binding, the context, the launcher, shutdown; `StartupExit` and start-up reports |
+   | `flint:boot-autoconfigure-web` | `spring-boot-autoconfigure` (web) | `WebServerAutoConfiguration`: `ServerProperties`, `SpaProperties`/`SpaController`, the `WebServer` launcher, `--openapi`, `ServerCustomizer` beans |
+   | `flint:boot-autoconfigure-data` | `spring-boot-autoconfigure` (JDBC) | `DataSourceAutoConfiguration`: `DatabaseProperties`, `DataSource`, migrations, `Repository!(E, ID)` |
+   | `flint:boot-actuator` | `spring-boot-actuator` | `ActuatorAutoConfiguration`: `ManagementProperties`, `Observability` |
+
+2. **The required deviation: auto-configuration is one library per framework library.**
+   - **Why:** Spring's single autoconfigure jar works because Java loads an auto-configuration class only when its `@ConditionalOnClass` holds. D links every module it compiles.
+   - **Why not optional dependencies:** DUB's optional dependencies cannot stand in, because DUB always selects sibling subpackages. That was tested: `Have_<package>` is defined even when nothing else depends on it.
+   - **The cost of one library:** a single `flint:boot-autoconfigure` would therefore link SQLite, OpenSSL and every other native provider into every application.
+   - **The fix:** each starter depends on the auto-configuration for its library, which is `@ConditionalOnClass` resolved by the dependency graph.
+
+3. **Launchers.**
+   - **The type:** `flint.di.Launcher!T` is an auto-configuration entry that is not a bean. `AppContext.Launchers` lists the enabled ones.
+   - **The protocol:** `flint:boot` defines it. A launcher may define `static bool command(Context)(args, out code)`, run before binding (the web server answers `--openapi` there), and `static int launch(Context)(ref context, args)`, run after the context starts.
+   - **Why:** this keeps `flint:boot` free of flint:web while the web server, which needs the application's controllers as compile-time types, still launches from the run loop.
+
+4. **Starters hold no code.** A starter's `dub.sdl` is `targetType "none"` with its dependencies, beside its `config.toml` section, `README.md` and `example/`.
+
+   | Starter | Brings |
+   | --- | --- |
+   | `flint:starter` | the base: `boot`, `log` |
+   | `flint:starter-web` | web, di, config, serde, validate, `boot-autoconfigure-web` |
+   | `flint:starter-actuator` | actuator, `boot-actuator` |
+   | `flint:starter-data-jdbc` | data, sql, migrate, conc, `boot-autoconfigure-data` |
+
+   An application may import every package a direct starter brings, transitively through starters, without declaring it, as with a Spring Boot starter. Every other import still needs a direct dependency (FLINT-E0507).
+
+5. **Gates.** `flint check --gate structural` and `tools/gates.py` enforce the layering:
+   - **FLINT-E0528:** a starter with D source outside `example/` fails.
+   - **FLINT-E0529:** a Boot library importing anything `policy/boot.json` does not declare for it fails.
+   - **Framework libraries:** they cannot import Boot, because their policy dependencies never name it (FLINT-E0507).
+
+6. **Still to come in this restructuring.**
+   - **The entry point:** `@FlintApplication` with compile-time scanning, `FlintApplication.run!App`, the banner and runners. It will take the auto-configuration lists from the declared starters, so applications no longer pass them.
+   - **The Spring names:** these replace the current ones, which stay as aliases.
+   - **`application.yaml`.**
+
 ## Consequences
 
 - `flint add web data`, one migration and about forty lines give a validated CRUD API over SQLite. `tests/test_flint_starters.py` creates, validates, fetches, restarts against the same database and deletes.
@@ -172,6 +215,7 @@ Status: proposed by the Milestone 10 implementation, for the project owner's rev
 ## Remaining for Milestone 10
 
 - **flint:data `string` columns:** an owner decision (section 7.4).
+- **The rest of ADR-029:** the entry point, the Spring names, `application.yaml`, and the Spring-shaped `flint new`, generators and examples (section 8.6).
 - **flint:starter-security and the auth starter:** sessions, OAuth login, password hashing and email verification.
 - **The second wave of starters:** cache, messaging, mail, storage, ai, mcp, cli, tui and desktop.
 - **Graceful SIGTERM and SIGINT:** this needs flint:os to dispatch SIGTERM and flint:web's run loop to watch for it.

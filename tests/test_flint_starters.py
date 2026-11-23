@@ -136,7 +136,7 @@ class StarterWebTests(unittest.TestCase):
 
 class StarterObservabilityTests(unittest.TestCase):
     def test_health_readiness_and_an_application_counter_are_served(self):
-        project = ROOT / 'starters/observability/example'
+        project = ROOT / 'starters/actuator/example'
         built = subprocess.run([str(FLINT), 'build', '--json'], cwd=project, capture_output=True, text=True,
                                env=environment())
         self.assertEqual(built.returncode, 0, built.stdout[-3000:])
@@ -171,7 +171,7 @@ class StarterObservabilityTests(unittest.TestCase):
 
 class StarterDataTests(unittest.TestCase):
     def test_the_notes_example_migrates_validates_and_keeps_data_across_restarts(self):
-        project = ROOT / 'starters/data/example'
+        project = ROOT / 'starters/data-jdbc/example'
         built = subprocess.run([str(FLINT), 'build', '--json'], cwd=project, capture_output=True, text=True,
                                env=environment())
         self.assertEqual(built.returncode, 0, built.stdout[-3000:])
@@ -248,7 +248,9 @@ class OpenApiTests(unittest.TestCase):
 
 UNNEEDED = '''module shop.orders;
 
-import flint.starter_web : Get, PathVariable, Post, RequestContext, RestController, Result, Service;
+import flint.arena : Result;
+import flint.di : Service;
+import flint.web : Get, PathVariable, Post, RequestContext, RestController;
 
 @safe:
 

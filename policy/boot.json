@@ -1,0 +1,101 @@
+{
+  "schema": "flint.boot/1",
+  "libraries": {
+    "boot": {
+      "directory": "boot/boot",
+      "module": "flint.boot",
+      "dependencies": [
+        "arena",
+        "di",
+        "config",
+        "term"
+      ]
+    },
+    "boot-autoconfigure-web": {
+      "directory": "boot/autoconfigure-web",
+      "module": "flint.boot_autoconfigure_web",
+      "dependencies": [
+        "arena",
+        "di",
+        "config",
+        "web",
+        "term",
+        "boot"
+      ]
+    },
+    "boot-autoconfigure-data": {
+      "directory": "boot/autoconfigure-data",
+      "module": "flint.boot_autoconfigure_data",
+      "dependencies": [
+        "arena",
+        "conc",
+        "di",
+        "config",
+        "data",
+        "sql",
+        "migrate"
+      ]
+    },
+    "boot-actuator": {
+      "directory": "boot/actuator",
+      "module": "flint.boot_actuator",
+      "dependencies": [
+        "arena",
+        "conc",
+        "di",
+        "config",
+        "web",
+        "actuator"
+      ]
+    }
+  },
+  "starters": {
+    "starter": {
+      "directory": "starters/starter",
+      "dependencies": [
+        "boot",
+        "log"
+      ],
+      "section": "",
+      "summary": "Flint Boot and logging: the base every other starter builds on"
+    },
+    "starter-web": {
+      "directory": "starters/web",
+      "dependencies": [
+        "starter",
+        "arena",
+        "di",
+        "config",
+        "serde",
+        "validate",
+        "web",
+        "boot-autoconfigure-web"
+      ],
+      "section": "server",
+      "summary": "REST controllers on a configuration-bound server, with SPA serving and OpenAPI"
+    },
+    "starter-actuator": {
+      "directory": "starters/actuator",
+      "dependencies": [
+        "starter",
+        "actuator",
+        "boot-actuator"
+      ],
+      "section": "management",
+      "summary": "Health, readiness and Prometheus metrics endpoints on the application's server, and OTLP export"
+    },
+    "starter-data-jdbc": {
+      "directory": "starters/data-jdbc",
+      "dependencies": [
+        "starter",
+        "conc",
+        "data",
+        "sql",
+        "migrate",
+        "boot-autoconfigure-data"
+      ],
+      "section": "database",
+      "summary": "A configured SQL pool, migrations applied at start-up, and repositories as beans"
+    }
+  }
+}

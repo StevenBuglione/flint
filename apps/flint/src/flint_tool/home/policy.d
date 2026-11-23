@@ -25,8 +25,10 @@ struct CorePackage
     bool betterC;
     /// Home-relative directory: `packages/<name>`, or `starters/<domain>` for a starter.
     string directory;
-    /// A starter (policy/starters.json): a package of auto-configuration over the core packages (ADR-028).
+    /// A starter (policy/boot.json): a code-free dependency bundle and a configuration section (ADR-029).
     bool starter;
+    /// A Flint Boot library (policy/boot.json): the runner, an auto-configuration or the actuator (ADR-029).
+    bool boot;
     /// For a starter: the configuration section it reads, and the one-line summary `flint add` shows.
     string section;
     /// For a starter: what it wires.
@@ -113,7 +115,9 @@ struct Home
     string root;
     /// Core packages in policy order.
     CorePackage[] packages;
-    /// Starters from policy/starters.json, in policy order (ADR-028).
+    /// Flint Boot libraries from policy/boot.json, in policy order (ADR-029 section 8).
+    CorePackage[] bootLibraries;
+    /// Starters from policy/boot.json, in policy order (ADR-029 section 8).
     CorePackage[] starters;
     /// Safety rules.
     SafetyPolicy safety;
@@ -145,9 +149,20 @@ struct Home
             if (moduleName == item.module_ || startsWithModule(moduleName, item.module_))
                 return &item;
         }
-        foreach (ref item; starters)
+        foreach (ref item; bootLibraries)
         {
             if (moduleName == item.module_ || startsWithModule(moduleName, item.module_))
+                return &item;
+        }
+        return null;
+    }
+
+    /// The Flint Boot library named `name` (`boot-autoconfigure-web`), or null.
+    const(CorePackage)* findBoot(string name) const
+    {
+        foreach (ref item; bootLibraries)
+        {
+            if (item.name == name)
                 return &item;
         }
         return null;
@@ -321,39 +336,48 @@ private bool loadPackages(ref Home home, ref Report report)
     return true;
 }
 
-// policy/starters.json: the starters, each a DUB subpackage under starters/ (ADR-028 section 2).
+// policy/boot.json: the Flint Boot libraries under boot/ and the code-free starters under starters/, each a DUB
+// subpackage of the home (ADR-029 section 8).
 private bool loadStarters(ref Home home, ref Report report)
 {
     import std.file : exists;
     import std.path : buildPath;
 
-    if (!exists(buildPath(home.root, "policy", "starters.json")))
+    if (!exists(buildPath(home.root, "policy", "boot.json")))
         return true;
-    const text = policyText(home, "policy/starters.json", report);
+    const text = policyText(home, "policy/boot.json", report);
     string failure;
-    const starters = member(objectMembers(text, failure), "starters");
-    if (failure.length || starters is null)
-        return invalid(report, "policy/starters.json", failure.length ? failure : "has no starters object");
-    foreach (entry; objectMembers(starters, failure))
+    const top = objectMembers(text, failure);
+    foreach (group; ["libraries", "starters"])
     {
-        auto decoded = deserialize!StarterRecordJson(entry.value, lenient());
-        if (!decoded.ok)
-            return invalid(report, "policy/starters.json", entry.name ~ ": " ~ decoded.error.message);
-        CorePackage starter;
-        starter.name = entry.name;
-        starter.module_ = decoded.value.module_;
-        starter.dependencies = decoded.value.dependencies;
-        starter.directory = decoded.value.directory;
-        starter.starter = true;
-        starter.section = decoded.value.section;
-        starter.summary = decoded.value.summary;
-        starter.tier = 5;
-        home.starters ~= starter;
+        const members = member(top, group);
+        if (failure.length || members is null)
+            return invalid(report, "policy/boot.json", failure.length ? failure : "has no " ~ group ~ " object");
+        foreach (entry; objectMembers(members, failure))
+        {
+            auto decoded = deserialize!BootRecordJson(entry.value, lenient());
+            if (!decoded.ok)
+                return invalid(report, "policy/boot.json", entry.name ~ ": " ~ decoded.error.message);
+            CorePackage item;
+            item.name = entry.name;
+            item.module_ = decoded.value.module_;
+            item.dependencies = decoded.value.dependencies;
+            item.directory = decoded.value.directory;
+            item.section = decoded.value.section;
+            item.summary = decoded.value.summary;
+            item.starter = group == "starters";
+            item.boot = !item.starter;
+            item.tier = item.starter ? 6 : 5;
+            if (item.starter)
+                home.starters ~= item;
+            else
+                home.bootLibraries ~= item;
+        }
     }
-    return failure.length == 0 || invalid(report, "policy/starters.json", failure);
+    return failure.length == 0 || invalid(report, "policy/boot.json", failure);
 }
 
-private struct StarterRecordJson
+private struct BootRecordJson
 {
     import flint.serde : JsonName;
 

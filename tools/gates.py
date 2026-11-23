@@ -81,6 +81,28 @@ def generated_dependencies(packages):
                 count+=1
     return {'packages':len(packages),'compiler_profiles':count}
 
+def boot_layers():
+    """ADR-029 section 8: starters hold no D source; a Flint Boot library imports only the packages and Boot
+    libraries policy/boot.json declares for it."""
+    path=ROOT/'policy/boot.json'
+    if not path.is_file():return
+    policy=json.loads(path.read_text(encoding='utf-8'))
+    libraries=policy['libraries']
+    for name,meta in policy['starters'].items():
+        base=ROOT/meta['directory']
+        sources=sorted(str(f.relative_to(ROOT)) for f in base.rglob('*.d') if f.relative_to(base).parts[0]!='example') if base.is_dir() else []
+        require(not sources,name+': a starter has no D source: '+(sources[0] if sources else ''))
+    def boot_owner(module):
+        for name,meta in libraries.items():
+            if module==meta['module'] or module.startswith(meta['module']+'.'):return name
+        return owner(module)
+    for name,meta in libraries.items():
+        base=ROOT/meta['directory']/'source'
+        for f in sorted(base.rglob('*.d')) if base.is_dir() else []:
+            for module in imported_modules(tokens(f.read_text(encoding='utf-8'))):
+                dep=boot_owner(module)
+                require(dep is None or dep==name or dep in meta['dependencies'],str(f.relative_to(ROOT))+': undeclared Boot-layer import '+module)
+
 def structural(selected):
     visited=set();active=set()
     def visit(n):
@@ -96,6 +118,7 @@ def structural(selected):
     for n in P:visit(n)
     root_sdl=(ROOT/'dub.sdl').read_text(encoding='utf-8')
     require(set(re.findall(r'subPackage\s+"packages/([\w-]+)"',root_sdl))==set(P),'root subpackage list differs')
+    boot_layers()
     mixin_packages=set()
     for n in selected:
         meta=P[n];pkg=ROOT/'packages'/n;sdl=(pkg/'dub.sdl').read_text(encoding='utf-8')

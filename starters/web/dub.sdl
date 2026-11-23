@@ -1,22 +1,13 @@
 name "starter-web"
-description "Flint web starter: configuration-bound server, DI context and controllers in one call"
+description "Build REST applications with flint:web and Flint Boot"
 license "Apache-2.0"
-targetType "library"
-sourcePaths "source"
-importPaths "source"
-dflags "-preview=dip1000"
+// A starter has no code (ADR-029 section 8): its dependencies and its configuration section.
+targetType "none"
+dependency "flint:starter" version="*"
 dependency "flint:arena" version="*"
 dependency "flint:di" version="*"
 dependency "flint:config" version="*"
-dependency "flint:web" version="*"
-dependency "flint:term" version="*"
+dependency "flint:serde" version="*"
 dependency "flint:validate" version="*"
-
-configuration "library" {
-    targetType "library"
-}
-configuration "unittest" {
-    targetType "library"
-    sourcePaths "source" "tests"
-    importPaths "source" "tests"
-}
+dependency "flint:web" version="*"
+dependency "flint:boot-autoconfigure-web" version="*"

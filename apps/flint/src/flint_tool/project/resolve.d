@@ -217,6 +217,7 @@ private void resolveProjectNatives(const ref Home home, const ref Manifest manif
 /// Add every core package reachable from a direct, path or remote dependency.
 private void addCoreClosure(const ref Home home, ref ResolvedPackage[string] found, bool workspace)
 {
+    addExtensions(home, found, workspace);
     string[] coreRoots;
     foreach (name, ref item; found)
     {
@@ -233,6 +234,34 @@ private void addCoreClosure(const ref Home home, ref ResolvedPackage[string] fou
         const key = "flint:" ~ coreName;
         if (key !in found)
             found[key] = corePackage(home, coreName, workspace);
+    }
+}
+
+/// Add the starters and Flint Boot libraries that resolved packages depend on, transitively.
+private void addExtensions(const ref Home home, ref ResolvedPackage[string] found, bool workspace)
+{
+    for (bool added = true; added;)
+    {
+        added = false;
+        string[] wanted;
+        foreach (name, ref item; found)
+        {
+            foreach (dependency; item.dependencies)
+            {
+                if (dependency.length > 6 && dependency[0 .. 6] == "flint:" && dependency !in found)
+                    wanted ~= dependency;
+            }
+        }
+        foreach (dependency; wanted)
+        {
+            auto extension = home.findStarter(dependency[6 .. $]);
+            if (extension is null)
+                extension = home.findBoot(dependency[6 .. $]);
+            if (extension is null || dependency in found)
+                continue;
+            found[dependency] = starterPackage(home, *extension, workspace);
+            added = true;
+        }
     }
 }
 
@@ -276,7 +305,8 @@ private ResolvedPackage corePackage(const ref Home home, string name, bool works
     return item;
 }
 
-// A starter resolves like a core package: a DUB subpackage of the Flint home, under starters/.
+// A starter or a Flint Boot library resolves like a core package: a DUB subpackage of the Flint home, under
+// starters/ or boot/.
 private ResolvedPackage starterPackage(const ref Home home,
         const ref imported!"flint_tool.home.policy".CorePackage meta, bool workspace)
 {
@@ -412,10 +442,13 @@ private string resolveCore(const ref Home home, const ref Manifest owner, const 
     import flint_tool.project.manifest : closest;
 
     const coreName = spec.name[6 .. $];
-    if (const starter = home.findStarter(coreName))
+    auto extension = home.findStarter(coreName);
+    if (extension is null)
+        extension = home.findBoot(coreName);
+    if (extension !is null)
     {
         if (spec.name !in found)
-            found[spec.name] = starterPackage(home, *starter, inside(owner.root, home.root));
+            found[spec.name] = starterPackage(home, *extension, inside(owner.root, home.root));
         return spec.name;
     }
     if (home.find(coreName) is null)

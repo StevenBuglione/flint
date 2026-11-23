@@ -347,6 +347,17 @@ immutable CodeInfo[] catalog = [
             "add a positive unittest that instantiates the generator"),
 
     // 06xx: formatting and lint.
+    CodeInfo("FLINT-E0528", ExitCode.user, "a starter contains D source",
+            "A starter is a dependency bundle and a configuration section, as a Spring Boot starter is (ADR-029). "
+            ~ "Behaviour belongs in a framework library, the programming model, or in a Flint Boot library under "
+            ~ "boot/, the wiring and defaults. Only a starter's example/ project may hold D source.",
+            "starters/web/dub.sdl:\n  targetType \"none\"\n"
+            ~ "  dependency \"flint:boot-autoconfigure-web\" version=\"*\""),
+    CodeInfo("FLINT-E0529", ExitCode.user, "an undeclared Boot-layer import",
+            "A Flint Boot library may import only what policy/boot.json declares for it, which keeps the "
+            ~ "direction framework libraries -> flint:boot -> auto-configuration -> starters. Framework libraries "
+            ~ "never import Boot.",
+            "policy/boot.json:\n  \"boot-autoconfigure-web\": { \"dependencies\": " ~ "[\"web\", \"boot\"] }"),
     CodeInfo("FLINT-E0530", ExitCode.user, "a class-typed field may be null",
             "A field whose type is a class or interface the project declares is null until something assigns it. "
             ~ "Every constructor of the aggregate must assign it, as constructor injection does; a value without "

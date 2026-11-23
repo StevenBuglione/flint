@@ -46,7 +46,8 @@ int commandOpenApi(ref Session session, string project, string output, string ty
     JSONValue document;
     if (!printed.ok || !parse(printed.output, document))
     {
-        const hint = "serve the controllers with flint.starter_web.runApplication; it answers --openapi\n";
+        const hint = "serve the controllers with flint.boot.runApplication and WebServerAutoConfiguration; "
+            ~ "they answer --openapi\n";
         report.error("FLINT-E0704", "the application did not print an OpenAPI document", hint ~ printed.combined());
         return finishBare(session, report, "flint.openapi/1");
     }

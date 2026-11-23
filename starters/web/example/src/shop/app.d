@@ -1,8 +1,12 @@
 /// shop: the application root.
 module shop.app;
 
-import flint.starter_web : ConfigurationProperties, Get, PathVariable, Provided, Required,
-    RestController, Result, Service, runApplication;
+import flint.arena : Result;
+import flint.boot : runApplication;
+import flint.boot_autoconfigure_web : WebServerAutoConfiguration;
+import flint.config : ConfigurationProperties, Required;
+import flint.di : Provided, Service;
+import flint.web : Get, PathVariable, RestController;
 import shop.greeting : greet;
 
 @safe:
@@ -62,5 +66,5 @@ struct GreetingController
 
 int main(string[] args)
 {
-    return runApplication!(Provided!AppSettings, Greeter, GreetingController)(args);
+    return runApplication!(WebServerAutoConfiguration, Provided!AppSettings, Greeter, GreetingController)(args);
 }

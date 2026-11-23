@@ -169,9 +169,14 @@ private string readConfiguration(string root)
 
 private string starterList(ref Session session)
 {
+    import std.algorithm.searching : startsWith;
+
     string names;
     foreach (ref starter; session.home.starters)
-        names ~= (names.length ? "|" : "") ~ starter.name[8 .. $];
+    {
+        if (starter.name.startsWith("starter-"))
+            names ~= (names.length ? "|" : "") ~ starter.name["starter-".length .. $];
+    }
     return names.length ? names : "web";
 }
 
