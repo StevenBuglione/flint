@@ -806,6 +806,11 @@ unittest
     expect(controller.canFind(`ExpressionSpec("flint.security.access.prepost.PreAuthorize", "value", `
             ~ `"hasRole(@roles.OWNER_ADMIN)", &spel_OwnerRestController_`)).toBeTrue();
     expect(controller.canFind("final class OwnerRestController__FlintProxy")).toBeTrue();
+    // Container-typed arguments: spelled as engine-aot names them, with their descriptors registered.
+    expect(controller.canFind(`a.type = imported!"flint.engine.aot.name".typeNameOf!(flint.java.util.Optional!(`
+            ~ `string)); a.required = false;`)).toBeTrue();
+    expect(controller.canFind(`descriptorOf!(flint.java.util.Optional!(string))()`)).toBeTrue();
+    expect(controller.canFind(`descriptorOf!(flint.java.util.List!(int))()`)).toBeTrue();
     // A root property's member is a dotted root path the runtime resolves.
     expect(controller.canFind(`(context.rootProperty("authentication.name")).get!(string)() == "admin"`)).toBeTrue();
     // A FactoryBean's object types come first, so getBean(Vets) finds the factory's object.

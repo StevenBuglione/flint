@@ -323,6 +323,8 @@ struct ArgumentPlan
     bool exception;
     /// Contract 2: the element type of an array, or the first template argument (`HttpEntity!T`, `Optional!T`).
     string elementType;
+    /// Modules declaring the parameter's type, for spelling template instances with typeNameOf.
+    string[] modules;
     /// Merged parameter annotations.
     MergedSet annotations;
 }
@@ -2101,8 +2103,27 @@ private final class Analysis
             handler.reason = status.text("reason");
         }
         foreach (index, ref parameter; method.parameters)
+        {
             handler.arguments ~= argumentOf(parameter, hierarchyMerged(decl, method, index), false);
+            handler.arguments[$ - 1].modules = modulesOf(parameter.type);
+            containerArgument(decl, parameter.type);
+        }
         return handler;
+    }
+
+    /// A handler argument typed `Optional!T`, `List!T`, `Set!T` or an array is converted by the binder through
+    /// its descriptor (`wrap`, `fromElements`): register `descriptorOf` for it, as for bound properties.
+    void containerArgument(const ref TypeDecl decl, const ref TypeRef type)
+    {
+        import std.algorithm.searching : canFind, endsWith;
+
+        if (type.name == "string" || !(type.name.canFind("!(") || type.name.endsWith("[]")))
+            return;
+        auto target = &moduleFor(decl.module_);
+        if (target.containerDescriptors.canFind(type.name))
+            return;
+        target.containerDescriptors ~= type.name;
+        target.containerModules ~= modulesOf(type);
     }
 
     long statusCode(const ref imported!"flint_tool.engine.aot.model".Annotation status)

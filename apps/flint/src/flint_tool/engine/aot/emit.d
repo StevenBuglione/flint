@@ -862,13 +862,15 @@ private struct Emitter
         string text = "[\n";
         foreach (ref argument; arguments)
         {
+            foreach (name; argument.modules)
+                imports[name] = true;
             text ~= "            () { ArgumentSpec a; a.kind = ArgumentKind." ~ argument.kind ~ "; a.name = " ~ literal(
-                    argument.name) ~ "; a.type = " ~ literal(argument.type) ~ "; a.required = " ~ (argument.required
+                    argument.name) ~ "; a.type = " ~ typeNameText(argument.type) ~ "; a.required = " ~ (argument.required
                     ? "true" : "false") ~ "; ";
             if (argument.hasDefault)
                 text ~= "a.defaultValue = " ~ literal(argument.defaultValue) ~ "; ";
             if (argument.elementType.length)
-                text ~= "a.elementType = " ~ literal(argument.elementType) ~ "; ";
+                text ~= "a.elementType = " ~ typeNameText(argument.elementType) ~ "; ";
             if (argument.validate)
                 text ~= "a.validate = true; ";
             if (argument.annotations.items.length)
