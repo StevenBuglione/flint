@@ -130,8 +130,9 @@ def framework_layers():
     modules=json.loads(path.read_text(encoding='utf-8'))['modules']
     root_sdl=(ROOT/'dub.sdl').read_text(encoding='utf-8')
     def layer_owner(module):
+        # A module may own further package roots ("also"): spring-tx is both flint.dao and flint.transaction.
         for name,meta in modules.items():
-            if module==meta['module'] or module.startswith(meta['module']+'.'):return name
+            if any(module==root or module.startswith(root+'.') for root in [meta['module']]+meta.get('also',[])):return name
         return None
     for name,meta in modules.items():
         # With --workspace, a framework module is checked in its repo's checkout, in that repo's layout.

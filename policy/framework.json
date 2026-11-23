@@ -1,6 +1,6 @@
 {
  "schema": "flint.framework/1",
- "note": "ADR-030: Spring-layer DUB packages (the Spring Framework API and the third-party APIs of rulebook R1) live under framework/<artifact>, outside the 37 engine packages of policy/packages.json, and move to flint-framework at the repo split. tools/gates.py (framework_layers) checks each against this file. 'licence' is the module's own licence: EPL-2.0 modules hold ported EPL-2.0 sources and nothing else (ADR-030 section 7).",
+ "note": "ADR-030: Spring-layer DUB packages (the Spring Framework API and the third-party APIs of rulebook R1) live under framework/<artifact>, outside the 37 engine packages of policy/packages.json, and move to flint-framework at the repo split. tools/gates.py (framework_layers) checks each against this file. 'licence' is the module's own licence: EPL-2.0 modules hold ported EPL-2.0 sources and nothing else (ADR-030 section 7). 'also' lists further package roots a module owns beside 'module' (spring-tx is flint.dao and flint.transaction).",
  "modules": {
   "core": {
    "directory": "framework/core",

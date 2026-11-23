@@ -39,17 +39,19 @@ def require(value, message):
 
 def owners(packages, root):
     """{name: (module, directory)} of the 37 engine packages and the Spring-layer modules of policy/framework.json."""
-    result = {name: (meta['module'], 'packages/' + name) for name, meta in packages.items()}
+    result = {name: ((meta['module'],), 'packages/' + name) for name, meta in packages.items()}
     framework = Path(root) / 'policy/framework.json'
     if framework.is_file():
         for name, meta in json.loads(framework.read_text(encoding='utf-8'))['modules'].items():
             require(name not in result, 'framework module name collides with a package: ' + name)
-            result[name] = (meta['module'], meta['directory'])
+            # "also" lists further package roots of one module (spring-tx: flint.dao and flint.transaction).
+            result[name] = (tuple([meta['module']] + meta.get('also', [])), meta['directory'])
     return result
 
 
 def owner(module, units):
-    matches = [n for n, (m, _) in units.items() if module == m or module.startswith(m + '.')]
+    matches = [n for n, (roots, _) in units.items()
+               if any(module == m or module.startswith(m + '.') for m in roots)]
     require(len(matches) <= 1, 'ambiguous module owner ' + module)
     return matches[0] if matches else None
 

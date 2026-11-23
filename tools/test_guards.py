@@ -43,6 +43,18 @@ class FrameworkLayerTests(unittest.TestCase):
         self.source('api-a', 'flint.apia', 'import flint.arena : Buffer;\n@safe:\nstruct A {}\n')
         self.source('api-e', 'flint.apie', '// SPDX-License-Identifier: EPL-2.0\n@safe:\nstruct E {}\n')
         self.assertEqual(gates.framework_layers(), 2)
+    def test_extra_roots_belong_to_their_module(self):
+        policy = json.loads((self.root / 'policy' / 'framework.json').read_text(encoding='utf-8'))
+        policy['modules']['api-a']['also'] = ['flint.apiz']
+        (self.root / 'policy' / 'framework.json').write_text(json.dumps(policy), encoding='utf-8')
+        self.source('api-a', 'flint.apia', '@safe:\nstruct A {}\n')
+        self.source('api-a', 'flint.apiz.sub', 'import flint.apia : A;\n@safe:\nstruct Z {}\n')
+        self.source('api-e', 'flint.apie', '// SPDX-License-Identifier: EPL-2.0\n@safe:\nstruct E {}\n')
+        self.assertEqual(gates.framework_layers(), 2)
+        # A root of another module is still another module's source.
+        self.source('api-e', 'flint.apiz', '// SPDX-License-Identifier: EPL-2.0\n@safe:\n')
+        with self.assertRaisesRegex(ValueError, 'belongs to another module'):
+            gates.framework_layers()
     def test_epl_source_outside_epl_module_rejected(self):
         self.source('api-a', 'flint.apia', '// SPDX-License-Identifier: EPL-2.0\n@safe:\n')
         with self.assertRaisesRegex(ValueError, 'EPL-2.0 sources'):
