@@ -356,3 +356,9 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - The same series with debug information (today's dev default) is published in every run as non-gating context, as the cleared-digest-log series already is.
   - Developers' own `flint build` default is unchanged. The measured command selects the profile explicitly and says so in `flint-spring.json`'s `measure` block and in the benchmark description.
   - Measurements up to now carried debug information. They stay as recorded and are not rewritten.
+- 2026-11-23, owner (via the coordinator): **per-request allocations get a budget gate, like template budgets.** Ported Java idioms that allocate on every request are the main cause of the p99 and RSS gap. Examples are media types parsed per request, an attribute map per request, and path parsing (gc.md: about 40 allocations and 4.8 KB per /greeting). The HTTP engine itself already beats Go.
+  - **What is measured:** each Phase 1 app's endpoints (2xx, 404 and validation-error paths) are served through the real servlet path after warm-up. GC allocations and bytes are counted per request.
+  - **Budgets:** stored in `policy/request-allocations.json`. Each starts at the measured count ×1.25, rounded up, and only goes down; the structural gate refuses raises.
+  - **Failure output:** the gate names the top call sites.
+  - **Where it runs:** deterministic, in `dub test` and CI on DMD and LDC.
+  - **Owner:** data-access, with proof-harness for the app fixtures. Work-queue item 28 in coordination.md.
