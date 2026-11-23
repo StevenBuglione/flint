@@ -1,0 +1,44 @@
+{
+  "schema": "flint.measure-queue/1",
+  "created": "2026-11-23",
+  "builds": {
+    "tree": {
+      "app": "checkout",
+      "commit": "561f399b9f90",
+      "flint": true,
+      "linker": "mold"
+    }
+  },
+  "measure": {
+    "kind": "command",
+    "ports": [],
+    "steps": [
+      {
+        "in": "tree",
+        "argv": [
+          "{python}",
+          "tools/measure_builds.py",
+          "--spring",
+          "--spring-app",
+          "gs-rest-service",
+          "--no-context",
+          "--output",
+          "{out}/builds.json"
+        ],
+        "smoke_args": [
+          "--smoke",
+          "--trials",
+          "1"
+        ],
+        "may_fail": true
+      }
+    ]
+  },
+  "estimate_minutes": 20,
+  "id": "gs-builds-aot-2",
+  "status": "pending",
+  "requested_by": "flint-aot (Spring port P1: Flint AOT generator), for the coordinator: owner decision 2670d5be",
+  "summary": "gs-rest-service builds after the generated-code template diet (boot's exporters, literal type names)",
+  "why": "Follows gs-builds-aot (certified at ff31b6d2: cached cold 4.03x, incremental 2.93x, scratch 1.09x of Go). This commit adds boot's 03071dc5 (one map type for Jackson's feature maps) and 2f573cc7 (Boot properties modules export their descriptors, 5aafcf43's hook), and flint-aot's 972d8d32 (literal canonical type names instead of typeNameOf!(T)). Locally, gs-rest-service's generated code went from 2,697 to 1,133 lines and its generated jackson auto-configuration module from 0.45 s to 0.03 s; every generated module compiles in 0.05 s or less. This shrinks the cache prime and the scratch build; the cached cold build already skipped the AOT library (ff31b6d2).",
+  "report_to": "flint-aot; m7-flint-cli; boot; the coordinator"
+}
