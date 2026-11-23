@@ -1,0 +1,13 @@
+# Codex CLI profile for Flint's agents. Copy to ~/.codex/flint.config.toml and pass `--profile flint`
+# (agentctl.py launch <role> --harness codex --profile flint). It layers over ~/.codex/config.toml.
+# Keys: https://learn.chatgpt.com/docs/config-file/config-reference
+
+approval_policy = "never"          # agents run unattended; owner-only decisions are enforced by the protocol
+sandbox_mode = "workspace-write"
+
+[sandbox_workspace_write]
+network_access = true              # git push to flint-projects, toolchain and package downloads
+writable_roots = [
+  "/home/olfa/flint-work",         # every worktree, the coordination directory, .tools and .native
+  "/tmp",
+]

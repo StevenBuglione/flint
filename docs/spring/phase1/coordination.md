@@ -24,7 +24,7 @@ This file lets the Spring port sessions (ADR-030) keep moving when neither the o
 ## Rules for deciding without waiting
 
 1. **The documents decide first.** `AGENTS.md`, ADR-030, ADR-031, the rulebook, `aot-contract.md` and this file. If they answer the question, act on them.
-2. **The owner decides inside its area.** Ask the owner directly with `SendMessage`, not through the coordinator.
+2. **The owner decides inside its area.** Ask the owner directly with `python3 tools/agentctl.py send` (a Claude `SendMessage` may go alongside as a doorbell), not through the coordinator. Every role also writes its hand-off state with `agentctl handoff` at the end of every turn, so an agent in any harness can take the role over (`docs/agents/README.md`).
 3. **Never wait more than 30 minutes for a peer.** If the owner hasn't answered and you're blocked, take the smallest reversible step that unblocks you:
    - add new files in the owner's package rather than editing its existing ones;
    - keep the change in a commit of its own;
