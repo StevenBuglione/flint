@@ -856,6 +856,8 @@ def main(argv=None):
                    help='wait for natural quiet instead of taking the lock and letting sessions behind hold pause')
     p.add_argument('--claim-seconds', type=int, default=90)
     p.add_argument('--retry-minutes', type=int, default=5, help='after a claim that did not settle')
+    p.add_argument('--claim-gap-minutes', type=float, default=10,
+                   help='between the end of one claimed run and the next claim, so held work can run')
     p.add_argument('--hours', type=float, default=12, help='give up after this long')
     args = parser.parse_args(argv)
     if args.command == 'list':
@@ -897,9 +899,16 @@ def main(argv=None):
         # A run that is interrupted is recorded as not evidence and stays pending.
         deadline = time.monotonic() + args.hours * 3600
         streak = 0
+        last_claim = {'ended': None}
 
         def run_round(round_entries, claim):
             for entry in round_entries:
+                # Consecutive claims leave a gap, so work held during one window runs before the next pauses it.
+                if claim and last_claim['ended'] is not None:
+                    wait = last_claim['ended'] + args.claim_gap_minutes * 60 - time.monotonic()
+                    if wait > 0:
+                        print(now(), f'claim gap: next claim in {wait / 60:.1f} minutes', flush=True)
+                        time.sleep(wait)
                 # The round's list may be stale: another session can block, re-pin or finish an entry meanwhile.
                 entry = load_entry(entry['id'])
                 if entry['status'] != 'pending':
@@ -912,8 +921,12 @@ def main(argv=None):
                     receipt = run(entry, claim_seconds=args.claim_seconds if claim else 0)
                     print(now(), entry['id'], receipt['outcome'], 'evidence' if receipt['evidence'] else 'not evidence',
                           flush=True)
+                    if claim:
+                        last_claim['ended'] = time.monotonic()
                 except SystemExit as exc:
                     print(now(), entry['id'], 'stopped:', exc, flush=True)
+                    if claim:
+                        last_claim['ended'] = time.monotonic()
                     # Back off after any stopped run: a window that did not settle (someone is not behind `hold`),
                     # a natural run that gave way, or an entry that measured nothing. Retrying at once would keep
                     # pausing or crowding everyone else's work.
