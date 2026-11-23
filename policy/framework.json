@@ -739,7 +739,7 @@
    ]
   },
   "security-crypto": {
-   "directory": "framework/security-crypto",
+   "directory": "security/security-crypto",
    "module": "flint.security.crypto",
    "repo": "security",
    "licence": "Apache-2.0",
@@ -750,7 +750,7 @@
    ]
   },
   "security-core": {
-   "directory": "framework/security-core",
+   "directory": "security/security-core",
    "module": "flint.security.core",
    "also": [
     "flint.security.access",
@@ -773,7 +773,7 @@
    ]
   },
   "security-web": {
-   "directory": "framework/security-web",
+   "directory": "security/security-web",
    "module": "flint.security.web",
    "repo": "security",
    "licence": "Apache-2.0",
@@ -787,7 +787,7 @@
    "test_dependencies": ["framework-test"]
   },
   "security-config": {
-   "directory": "framework/security-config",
+   "directory": "security/security-config",
    "module": "flint.security.config",
    "repo": "security",
    "licence": "Apache-2.0",

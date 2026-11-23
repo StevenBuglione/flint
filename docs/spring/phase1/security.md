@@ -1,10 +1,8 @@
 # Spring Security subset for spring-petclinic-rest (work-queue item 24)
 
 framework-core ports the part of Spring Security 7.2.0 that spring-petclinic-rest uses, for the `flint-security` repo
-(an integrated repo: boot → security → framework). The modules are staged as `framework/security-*`, registered in
-`policy/framework.json` with `"repo": "security"`: the gate accepts framework.json modules only under `framework/`, and
-a top-level `security/` waits on registration support for integrated repos (m7-flint-cli). Moving them is a `git mv`
-and a policy edit.
+(an integrated repo: boot → security → framework), staged under `security/` with `"repo": "security"` in
+`policy/framework.json`; at extraction `security/<x>` becomes `flint-<x>` in flint-security.
 
 ## What petclinic-rest uses
 
@@ -47,7 +45,6 @@ and a policy edit.
 
 ## Open
 
-- A top-level `security/` for integrated repos: policy, gates and the repo layout (m7-flint-cli); then `git mv`.
 - Framework budgets and probes for the four modules (size-levers).
 - `@Import` through `@EnableWebSecurity`/`@EnableMethodSecurity` in the generator (flint-aot).
 - Boot: `SecurityAutoConfiguration`, `SecurityFilterAutoConfiguration` and `UserDetailsServiceAutoConfiguration`.
