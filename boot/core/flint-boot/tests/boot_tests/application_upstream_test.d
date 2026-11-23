@@ -487,27 +487,23 @@ version (FlintRunnerOrder)
     assert(run.output.count("Caused by: flint.java.lang.RuntimeException: ExpectedError") == 1, run.output);
 }
 
-version (FlintMainBeanFactoryDefaults)
+@("beanDefinitionOverridingIsDisabledByDefault") unittest
 {
-    // Gap: Boot's defaults, no bean definition overriding and no circular references, are not applied.
-    @("beanDefinitionOverridingIsDisabledByDefault") unittest
-    {
-        import flint.beans.factory.support : BeanDefinitionOverrideException;
+    import flint.beans.factory.support : BeanDefinitionOverrideException;
 
-        auto run = prepare();
-        registerSomeBeans(run);
-        assertThrows!BeanDefinitionOverrideException(() { run.start(); });
-    }
+    auto run = prepare();
+    registerSomeBeans(run);
+    assertThrows!BeanDefinitionOverrideException(() { run.start(); });
+}
 
-    @("circularReferencesAreDisabledByDefault") unittest
-    {
-        import flint.beans.factory.support : DefaultListableBeanFactory;
+@("circularReferencesAreDisabledByDefault") unittest
+{
+    import flint.beans.factory.support : DefaultListableBeanFactory;
 
-        auto run = prepare();
-        auto context = run.start("--flint.main.web-application-type=none");
-        // Boot fails on the producer and consumer configurations' cycle: the factory refuses circular references.
-        assert(!(cast(DefaultListableBeanFactory) context.getBeanFactory()).isAllowCircularReferences());
-    }
+    auto run = prepare();
+    auto context = run.start("--flint.main.web-application-type=none");
+    // Boot fails on the producer and consumer configurations' cycle: the factory refuses circular references.
+    assert(!(cast(DefaultListableBeanFactory) context.getBeanFactory()).isAllowCircularReferences());
 }
 
 @("beanDefinitionOverridingCanBeEnabled") unittest

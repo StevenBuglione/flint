@@ -544,6 +544,8 @@ class FlintApplication
     private bool bannerModeSet;
     private Banner banner;
     private bool logStartupInfo = true;
+    private bool allowBeanDefinitionOverriding;
+    private bool allowCircularReferences;
     private string[] additionalProfiles;
     private string[string] defaultProperties;
     private string[string] testProperties;
@@ -672,6 +674,20 @@ class FlintApplication
         this.logStartupInfo = logStartupInfo;
     }
 
+    /// Whether a bean definition may override one registered earlier under the same name; off by default, as in
+    /// Boot (`flint.main.allow-bean-definition-overriding`).
+    void setAllowBeanDefinitionOverriding(bool allowBeanDefinitionOverriding)
+    {
+        this.allowBeanDefinitionOverriding = allowBeanDefinitionOverriding;
+    }
+
+    /// Whether beans may refer to each other in a cycle; off by default, as in Boot
+    /// (`flint.main.allow-circular-references`).
+    void setAllowCircularReferences(bool allowCircularReferences)
+    {
+        this.allowCircularReferences = allowCircularReferences;
+    }
+
     /// Profiles active in addition to `flint.profiles.active`.
     void setAdditionalProfiles(string[] profiles...)
     {
@@ -773,6 +789,12 @@ private:
         const logInfo = environment.getProperty("flint.main.log-startup-info");
         if (logInfo !is null)
             logStartupInfo = logInfo.toUpper == "TRUE";
+        const overriding = environment.getProperty("flint.main.allow-bean-definition-overriding");
+        if (overriding !is null)
+            allowBeanDefinitionOverriding = overriding.toUpper == "TRUE";
+        const circular = environment.getProperty("flint.main.allow-circular-references");
+        if (circular !is null)
+            allowCircularReferences = circular.toUpper == "TRUE";
         if (!webApplicationTypeSet)
         {
             const type = environment.getProperty("flint.main.web-application-type");
@@ -896,10 +918,17 @@ private:
     void prepareContext(ConfigurableApplicationContext context, ApplicationEnvironment environment,
             DefaultApplicationArguments arguments, Banner printedBanner)
     {
+        import flint.beans.factory.support : DefaultListableBeanFactory;
         import flint.boot.context.properties.bind : EnvironmentConfigurationPropertiesBinder;
         import flint.context.support : GenericApplicationContext;
 
         context.setEnvironment(environment);
+        // Boot's defaults: no bean definition overriding and no circular references, unless flint.main.* allows them.
+        if (auto factory = cast(DefaultListableBeanFactory) context.getBeanFactory())
+        {
+            factory.setAllowBeanDefinitionOverriding(allowBeanDefinitionOverriding);
+            factory.setAllowCircularReferences(allowCircularReferences);
+        }
         auto binder = new EnvironmentConfigurationPropertiesBinder(environment.getConfigurationPropertySources());
         if (auto generic = cast(GenericApplicationContext) context)
         {
