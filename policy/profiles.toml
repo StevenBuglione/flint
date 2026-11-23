@@ -24,6 +24,11 @@
 #   dub_pipeline    allow the forked DUB's parallel build pipeline
 #   native_profile  tools/native_build.py provider profile the build links
 #   native_sanitize sanitizers the native providers are built with, if any
+#
+# -fno-moduleinfo-localclasses (LDC upstream; the Flint DMD fork has the same
+# switch) leaves ModuleInfo.localClasses empty, so --gc-sections drops every
+# class no code instantiates or names. Object.factory and TypeInfo_Class.find
+# then cannot find those classes; Flint never constructs from a string name.
 
 [profile.dev]
 description = "Development loop: forked DMD with the compile server and the parallel DUB pipeline."
@@ -56,7 +61,7 @@ description = "Release: LDC -O3 with ThinLTO and static default libraries."
 compiler = "ldc2"
 compilers = ["ldc2"]
 build_type = "plain"
-dflags = ["-preview=dip1000", "-release", "-boundscheck=safeonly", "-O3", "--flto=thin", "-link-defaultlib-shared=false"]
+dflags = ["-preview=dip1000", "-release", "-boundscheck=safeonly", "-O3", "--flto=thin", "-link-defaultlib-shared=false", "-fno-moduleinfo-localclasses"]
 lflags = []
 glibc_lflags = ["-z", "pack-relative-relocs"]
 compile_server = false
@@ -69,7 +74,7 @@ description = "Size: as release, optimised with -Oz."
 compiler = "ldc2"
 compilers = ["ldc2"]
 build_type = "plain"
-dflags = ["-preview=dip1000", "-release", "-boundscheck=safeonly", "-Oz", "--flto=thin", "-link-defaultlib-shared=false"]
+dflags = ["-preview=dip1000", "-release", "-boundscheck=safeonly", "-Oz", "--flto=thin", "-link-defaultlib-shared=false", "-fno-moduleinfo-localclasses"]
 lflags = []
 glibc_lflags = ["-z", "pack-relative-relocs"]
 compile_server = false
