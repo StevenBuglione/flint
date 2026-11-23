@@ -48,11 +48,22 @@ class Runner:
         print(json.dumps({'command':command,'cwd':str(cwd),'plan_only':self.plan}),flush=True)
         if not self.plan:subprocess.run(command,cwd=cwd,env=env,check=True)
 
+def package_source(name):
+    """A package's source directory: under packages/ here, or in its repo's checkout after the cutover (the
+    workspace FLINT_WORKSPACE names, else the fetched platform modules' .flint/platform/workspace.json)."""
+    local=ROOT/'packages'/name/'source'
+    if local.is_dir():return local
+    sys.path.insert(0,str(ROOT/'tools'))
+    import workspace
+    named=os.environ.get('FLINT_WORKSPACE') or ROOT/'.flint'/'platform'/'workspace.json'
+    if not Path(named).is_file():return local
+    return workspace.Workspace(named).package_dir(name,ROOT)/'source'
+
 def implementation_required():
     missing=[]
     for name,meta in PACKAGES.items():
         module=Path(*meta['module'].split('.'))
-        source=ROOT/'packages'/name/'source'
+        source=package_source(name)
         # A package whose root holds only leaf modules (flint:engine-aot, AOT contract section 4) has no package.d.
         if not (source/module.with_suffix('.d')).is_file() and not (source/module/'package.d').is_file() \
                 and not any((source/module).glob('*.d')):
@@ -60,7 +71,7 @@ def implementation_required():
     require(not missing,'implementation milestone incomplete; public source modules missing: '+', '.join(missing))
 
 def import_flags():
-    return ['-I'+str(ROOT/'packages'/name/'source') for name in PACKAGES]
+    return ['-I'+str(package_source(name)) for name in PACKAGES]
 
 def native_target():
     machine=platform.machine().lower()
@@ -256,7 +267,7 @@ def betterc(runner,compiler='ldc2'):
     if not runner.plan:directory.mkdir(parents=True,exist_ok=True)
     for name,meta in PACKAGES.items():
         if not meta['better_c']:continue
-        fixture=ROOT/'packages'/name/'tests/betterc.d'
+        fixture=package_source(name).parent/'tests/betterc.d'
         if not runner.plan:require(fixture.is_file(),'BetterC runtime fixture missing: '+name)
         executable=directory/(name+('.exe' if sys.platform=='win32' else ''))
         runner.run([compiler,'-betterC','-preview=dip1000','-i=flint',*import_flags(),fixture,'-of='+str(executable)])
@@ -267,7 +278,7 @@ def wasm_betterc(runner):
     if not runner.plan:directory.mkdir(parents=True,exist_ok=True)
     for name,meta in PACKAGES.items():
         if not meta['better_c']:continue
-        fixture=ROOT/'packages'/name/'tests/betterc.d'
+        fixture=package_source(name).parent/'tests/betterc.d'
         if not runner.plan:require(fixture.is_file(),'WASM BetterC fixture missing: '+name)
         output=directory/(name+'.wasm')
         runner.run(['ldc2','-betterC','-preview=dip1000','-mtriple=wasm32-unknown-unknown-wasm',

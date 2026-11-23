@@ -29,6 +29,8 @@ def hide_flags():
     """The flags flint adds for the fork (flint_tool.engine.builder.condensedDiagnostics)."""
     bin_dir = DMD.parent
     spellings = [ROOT / 'packages', Path(str(bin_dir) + '/../../src'), (bin_dir / '../../src').resolve()]
+    if (ROOT / '.flint' / 'platform').is_dir():  # after the cutover the engines are in the platform modules
+        spellings.append(ROOT / '.flint' / 'platform')
     return ['-verror-hide=' + str(path) + '/' for path in spellings]
 
 

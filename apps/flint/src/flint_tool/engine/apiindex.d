@@ -171,6 +171,15 @@ private string countText(size_t count)
     return count.to!string ~ " packages";
 }
 
+/// A core package's directory: in this home before the cutover, in its repo's platform module after it.
+private string packageRoot(const ref Home home, string name)
+{
+    import std.path : buildPath;
+
+    const meta = home.find(name);
+    return home.packagePath(meta is null ? "flint" : meta.repo, buildPath("packages", name));
+}
+
 /// Hash of every package's sources, tests and recipe: the index is current while it is unchanged.
 string sourcesDigest(const ref Home home)
 {
@@ -179,9 +188,9 @@ string sourcesDigest(const ref Home home)
     import flint_tool.support.files : sha256Hex;
 
     string records = home.platform.release ~ "\n";
+    const patterns = ["dub.sdl", "source/**", "tests/**"];
     foreach (ref item; home.packages)
-        records ~= item.name ~ " " ~ contentHash(buildPath(home.root, "packages", item.name),
-                ["dub.sdl", "source/**", "tests/**"]) ~ "\n";
+        records ~= item.name ~ " " ~ contentHash(packageRoot(home, item.name), patterns) ~ "\n";
     return sha256Hex(cast(const(ubyte)[]) records);
 }
 
@@ -240,7 +249,7 @@ private string packageDescription(const ref Home home, string name)
     foreach (candidate; [relative ~ "/package.d", relative ~ ".d"])
     {
         string summary;
-        foreach (line; readIfPresent(buildPath(home.root, "packages", name, "source", candidate)).lineSplitter)
+        foreach (line; readIfPresent(buildPath(packageRoot(home, name), "source", candidate)).lineSplitter)
         {
             const text = line.strip;
             if (!text.startsWith("///"))
@@ -250,7 +259,7 @@ private string packageDescription(const ref Home home, string name)
         if (summary.length)
             return summary;
     }
-    foreach (line; readIfPresent(buildPath(home.root, "packages", name, "dub.sdl")).lineSplitter)
+    foreach (line; readIfPresent(buildPath(packageRoot(home, name), "dub.sdl")).lineSplitter)
     {
         const text = line.strip;
         if (text.length > 13 && text[0 .. 12] == "description ")
@@ -291,7 +300,7 @@ private string describePackage(const ref Home home, string dmd, string name, str
     import flint_tool.support.files : findFiles, readIfPresent;
     import flint_tool.support.process : Launch, capture;
 
-    const source = buildPath(home.root, "packages", name, "source");
+    const source = buildPath(packageRoot(home, name), "source");
     // Every module is described: public modules often re-export internal declarations.
     string[] files;
     foreach (relative; findFiles(source, "**/*.d"))
@@ -305,8 +314,8 @@ private string describePackage(const ref Home home, string dmd, string name, str
     ];
     foreach (dependency; home.closure([name]))
         argv ~= [
-        "-I" ~ buildPath(home.root, "packages", dependency, "source"),
-        "-J" ~ buildPath(home.root, "packages", dependency, "source")
+        "-I" ~ buildPath(packageRoot(home, dependency), "source"),
+        "-J" ~ buildPath(packageRoot(home, dependency), "source")
     ];
     Launch launch;
     launch.directory = home.root;
@@ -500,7 +509,7 @@ private void attachExamples(const ref Home home, string package_, ref Symbol[] s
     import std.path : buildPath;
     import flint_tool.support.files : findFiles;
 
-    const tests = buildPath(home.root, "packages", package_, "tests");
+    const tests = buildPath(packageRoot(home, package_), "tests");
     Block[] blocks;
     foreach (relative; findFiles(tests, "**/*.d"))
         blocks ~= unittestBlocks(readText(buildPath(tests, relative)), "packages/" ~ package_ ~ "/tests/" ~ relative);

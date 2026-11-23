@@ -7,7 +7,8 @@ from pathlib import Path
 from test_flint_cli import ROOT, codes, environment, flint, flint_json, setUpModule  # noqa: F401
 
 # Web and data applications link the native providers through the workspace recipes' generated blocks.
-NATIVE_LINKED = 'BEGIN FLINT NATIVE' in (ROOT / 'packages/engine-web/dub.sdl').read_text()
+from flint_testing import package_dir  # noqa: E402
+NATIVE_LINKED = 'BEGIN FLINT NATIVE' in (package_dir('engine-web') / 'dub.sdl').read_text()
 
 WIRING = '''module shop.order.wiring_test;
 
