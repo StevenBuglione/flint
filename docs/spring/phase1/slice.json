@@ -29,5 +29,10 @@
 {"name":"jackson-core","upstream":"jackson-core@3.1.8","module":"jackson-core"},
 {"name":"jackson-databind","upstream":"jackson-databind@3.1.8","module":"jackson-databind"},
 {"name":"jackson-annotations","upstream":"jackson-annotations@2.21","module":"jackson-annotations"},
-{"name":"slf4j-api","upstream":"slf4j-api@2.0.20","module":"slf4j-api"}
+{"name":"slf4j-api","upstream":"slf4j-api@2.0.20","module":"slf4j-api"},
+{"name":"spring-security-core","upstream":"spring-security@7.2.0","module":"core"},
+{"name":"spring-security-web","upstream":"spring-security@7.2.0","module":"web"},
+{"name":"spring-security-config","upstream":"spring-security@7.2.0","module":"config"},
+{"name":"spring-security-crypto","upstream":"spring-security@7.2.0","module":"crypto"},
+{"name":"spring-data-commons-domain","upstream":"spring-data-commons@4.2.0","module":"spring-data-commons","packages":["org.springframework.data.domain"]}
 ]}
