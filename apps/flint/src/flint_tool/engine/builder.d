@@ -129,6 +129,36 @@ bool selectProfile(ref Session session, string name, out ProfileSpec spec, ref R
     return false;
 }
 
+/// mold threads for flint's builds when FLINT_LINK_THREADS is unset (link-threads-ab, certified at df11097e): 8,
+/// or the host's online CPUs when it has fewer.
+string linkThreads() nothrow
+{
+    import std.conv : to;
+
+    enum preferred = 8;
+    long online = preferred;
+    version (linux) // mold links only on Linux
+    {
+        import core.sys.posix.unistd : _SC_NPROCESSORS_ONLN, sysconf;
+
+        online = sysconf(_SC_NPROCESSORS_ONLN);
+    }
+    const threads = online >= 1 && online < preferred ? online : preferred;
+    try
+        return threads.to!string;
+    catch (Exception)
+        return "8";
+}
+
+@("linkThreads is 8, or fewer on a host with fewer CPUs")
+unittest
+{
+    import std.conv : to;
+
+    const threads = linkThreads().to!int;
+    assert(threads >= 1 && threads <= 8);
+}
+
 /// Environment for DUB: flint's own, without DFLAGS, with the pinned toolchain first on PATH.
 EnvVar[] buildEnvironment(ref Session session, const ref Toolchain toolchain, const ref ProfileSpec spec,
         string dubHome, string dflags)
@@ -165,6 +195,11 @@ EnvVar[] buildEnvironment(ref Session session, const ref Toolchain toolchain, co
             dirName(toolchain.dmd.path) ~ pathListSeparator ~ dirName(toolchain.ldc2.path)
             ~ pathListSeparator ~ inherited);
     variables ~= EnvVar("DUB_HOME", dubHome);
+    // mold's thread count for the forked DMD's direct link, whose own default is 4. Eight cut gs-rest-service's
+    // static edit link from 174 to 136 ms (link-threads-ab, df11097e: 99% interval of the difference -42 to
+    // -30 ms) and left shared builds unchanged. mold's output does not depend on it. A set value wins.
+    if (environment.get("FLINT_LINK_THREADS", null) is null)
+        variables ~= EnvVar("FLINT_LINK_THREADS", linkThreads());
     if (spec.native_sanitize.length)
         variables = sanitizerBuildEnvironment(session, variables);
     if (dflags.length)

@@ -412,4 +412,4 @@ Every artifact has `<artifact>.receipt.json` (`flint.receipt/1`) next to it. Wor
 | `FLINT_DUB_INDEX` | An additional DUB compatibility index, for private packages. |
 | `SOURCE_DATE_EPOCH` | Timestamps of `flint package` archives, images and SBOMs, for byte-reproducible packages. |
 
-`flint` removes `DFLAGS` and `FLINT_DMD_SERVER_PRELUDE` from its builds and sets the prelude itself. It records `FLINT_DMD_SERVER`, `FLINT_DUB_PIPELINE`, `FLINT_DMD_DIRECT_LINK`, `FLINT_LINK_THREADS`, `CC` and `LD` in receipts when they are set.
+`flint` removes `DFLAGS` and `FLINT_DMD_SERVER_PRELUDE` from its builds and sets the prelude itself. It records `FLINT_DMD_SERVER`, `FLINT_DUB_PIPELINE`, `FLINT_DMD_DIRECT_LINK`, `FLINT_LINK_THREADS`, `CC` and `LD` in receipts when they are set. When `FLINT_LINK_THREADS` is unset, flint's builds link with 8 mold threads, or the host's CPU count when it is lower, rather than the fork's default 4: on gs-rest-service's static edit build that cut the link from 174 to 136 ms, and shared builds were unchanged (link-threads-ab, certified at df11097e).
