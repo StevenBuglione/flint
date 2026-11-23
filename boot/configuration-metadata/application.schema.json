@@ -8,6 +8,70 @@
     "flint": {
       "type": "object",
       "properties": {
+        "messages": {
+          "type": "object",
+          "properties": {
+            "basename": {
+              "oneOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "List of basenames (essentially a fully-qualified classpath location), each following the ResourceBundle convention with relaxed support for slash based locations. If it does not contain a package qualifier (such as \"org.mypackage\"), it will be resolved from the classpath root.",
+              "default": [
+                "messages"
+              ]
+            },
+            "common-messages": {
+              "oneOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "List of locale-independent property file resources containing common messages."
+            },
+            "encoding": {
+              "type": "string",
+              "description": "Message bundles encoding (a charset name).",
+              "default": "UTF-8"
+            },
+            "cache-duration": {
+              "type": [
+                "string",
+                "integer"
+              ],
+              "pattern": "^([+-]?\\d+(ns|us|ms|s|m|h|d)?|[+-]?[pP].*)$",
+              "description": "Loaded resource bundle files cache duration. When not set, bundles are cached forever. If a duration suffix is not specified, seconds will be used."
+            },
+            "fallback-to-system-locale": {
+              "type": "boolean",
+              "description": "Whether to fall back to the system Locale if no files for a specific Locale have been found. If this is turned off, the only fallback will be the default file (e.g. \"messages.properties\" for basename \"messages\").",
+              "default": true
+            },
+            "always-use-message-format": {
+              "type": "boolean",
+              "description": "Whether to always apply the MessageFormat rules, parsing even messages without arguments.",
+              "default": false
+            },
+            "use-code-as-default-message": {
+              "type": "boolean",
+              "description": "Whether to use the message code as the default message instead of throwing a \"NoSuchMessageException\". Recommended during development only.",
+              "default": false
+            }
+          }
+        },
         "web": {
           "type": "object",
           "properties": {

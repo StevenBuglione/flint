@@ -1,7 +1,8 @@
 // Ported from spring-boot v4.2.0: module/spring-boot-jdbc/src/main/java/org/springframework/boot/jdbc/autoconfigure/DataSourceProperties.java
-// with JdbcProperties.java, DataSourceAutoConfiguration.java, DataSourceConfiguration.java and
-// DataSourceTransactionManagerAutoConfiguration.java, JdbcTemplateAutoConfiguration.java and
-// JdbcTemplateConfiguration.java from the same directory, and ../EmbeddedDatabaseConnection.java
+// with JdbcProperties.java, DataSourceAutoConfiguration.java, DataSourceConfiguration.java,
+// DataSourceTransactionManagerAutoConfiguration.java, JdbcTemplateAutoConfiguration.java, JdbcTemplateConfiguration.java,
+// NamedParameterJdbcTemplateConfiguration.java and JdbcClientAutoConfiguration.java from the same directory, and
+// ../EmbeddedDatabaseConnection.java
 // Copyright 2012-present the original author or authors.
 // Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
 // Modified by the Flint authors: Java Beans getters and setters are kept (rulebook R6); `spring.*` keys
@@ -22,6 +23,8 @@ import flint.engine.jdbc : FlintDataSource;
 import flint.beans.factory : BeanCreationException;
 import flint.javax.sql : DataSource;
 import flint.jdbc.core : JdbcTemplate;
+import flint.jdbc.core.namedparam : NamedParameterJdbcTemplate;
+import flint.jdbc.core.simple : JdbcClient;
 import flint.jdbc.support : JdbcTransactionManager, SQLExceptionTranslator;
 import flint.boot.convert : ChronoUnit, DurationUnit;
 import core.time : Duration;
@@ -477,8 +480,8 @@ private enum AutoConfiguration afterDataSource = () {
 }();
 
 /// Auto-configuration of a `JdbcTemplate` over the single `DataSource`, configured from `flint.jdbc.template.*`,
-/// unless the application defines `JdbcOperations`. Boot's `JdbcTemplateConfiguration` is folded in; its
-/// `NamedParameterJdbcTemplateConfiguration` joins when flint:jdbc provides `NamedParameterJdbcTemplate`.
+/// unless the application defines `JdbcOperations`, and of a `NamedParameterJdbcTemplate` over it. Boot's
+/// `JdbcTemplateConfiguration` and `NamedParameterJdbcTemplateConfiguration` are folded in.
 @afterDataSource @ConditionalOnClass(null, [
     "flint.javax.sql.DataSource", "flint.jdbc.core.JdbcTemplate"
 ])
@@ -505,4 +508,33 @@ final class JdbcTemplateAutoConfiguration
             jdbcTemplate.setExceptionTranslator(sqlExceptionTranslators[0]);
         return jdbcTemplate;
     }
+
+    /// The primary `NamedParameterJdbcTemplate` over the single `JdbcTemplate`, unless the application defines
+    /// `NamedParameterJdbcOperations`.
+    @Bean @Primary @ConditionalOnSingleCandidate(ClassRef("flint.jdbc.core.JdbcTemplate"))
+    @ConditionalOnMissingBean([ClassRef("flint.jdbc.core.namedparam.NamedParameterJdbcOperations")])
+    NamedParameterJdbcTemplate namedParameterJdbcTemplate(JdbcTemplate jdbcTemplate)
+    {
+        return new NamedParameterJdbcTemplate(jdbcTemplate);
+    }
 }
+
+/// Auto-configuration of a `JdbcClient` over the single `NamedParameterJdbcTemplate`, unless the application defines
+/// one.
+@afterJdbcTemplate @ConditionalOnSingleCandidate(ClassRef("flint.jdbc.core.namedparam.NamedParameterJdbcTemplate"))
+@ConditionalOnMissingBean([ClassRef("flint.jdbc.core.simple.JdbcClient")])
+final class JdbcClientAutoConfiguration
+{
+    /// The client.
+    @Bean JdbcClient jdbcClient(NamedParameterJdbcTemplate jdbcTemplate)
+    {
+        return JdbcClient.create(jdbcTemplate);
+    }
+}
+
+// `@AutoConfiguration(after = JdbcTemplateAutoConfiguration.class)`.
+private enum AutoConfiguration afterJdbcTemplate = () {
+    AutoConfiguration configuration;
+    configuration.afterName = ["flint.boot.jdbc.autoconfigure.JdbcTemplateAutoConfiguration"];
+    return configuration;
+}();

@@ -26,7 +26,7 @@ name = "flint:beans"
 kind = "core"
 source = "workspace"
 scope = "build"
-dependencies = ["flint:core", "flint:engine-aot", "flint:java"]
+dependencies = ["flint:core", "flint:engine-aot", "flint:jakarta-annotation", "flint:java"]
 
 [[package]]
 name = "flint:boot-autoconfigure"
@@ -89,14 +89,14 @@ name = "flint:context"
 kind = "core"
 source = "workspace"
 scope = "build"
-dependencies = ["flint:beans", "flint:core", "flint:engine-aot", "flint:jakarta-validation", "flint:java"]
+dependencies = ["flint:beans", "flint:core", "flint:engine-aot", "flint:engine-reactor", "flint:jakarta-validation", "flint:java"]
 
 [[package]]
 name = "flint:core"
 kind = "core"
 source = "workspace"
 scope = "build"
-dependencies = ["flint:engine-aot", "flint:java"]
+dependencies = ["flint:engine-aot", "flint:jakarta-annotation", "flint:java"]
 
 [[package]]
 name = "flint:engine-aot"

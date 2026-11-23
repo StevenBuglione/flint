@@ -454,7 +454,7 @@ struct ModulePlan
     QueryPlan[] queries;
     /// Other extracted modules whose models this one's output depends on.
     string[] consulted;
-    /// Container types (`Optional!T`, `Map!(K, V)`, `List!T`) of bound properties, described by engine-aot's
+    /// Container types (`Optional!T`, `Map!(K, V)`, `List!T`, arrays) of bound properties, described by engine-aot's
     /// `descriptorOf`, which fills their erased builders; with the modules their spelling needs.
     string[] containerDescriptors;
     /// ditto
@@ -953,7 +953,7 @@ private final class Analysis
     /// described by their arguments.
     void describeProperties(string type)
     {
-        import std.algorithm.searching : canFind;
+        import std.algorithm.searching : canFind, endsWith;
         import std.ascii : isAlphaNum;
 
         // The dotted names in the spelling: `flint.java.util.Optional!(core.time.Duration)` names both.
@@ -974,7 +974,8 @@ private final class Analysis
             addDescriptor(moduleFor(decl.module_), descriptor);
             foreach (ref property; descriptor.properties)
             {
-                if (property.type.canFind("!(") && !moduleFor(decl.module_).containerDescriptors.canFind(property.type))
+                const container = property.type.canFind("!(") || property.type.endsWith("[]");
+                if (container && !moduleFor(decl.module_).containerDescriptors.canFind(property.type))
                 {
                     moduleFor(decl.module_).containerDescriptors ~= property.type;
                     moduleFor(decl.module_).containerModules ~= property.modules;

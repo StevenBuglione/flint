@@ -2,9 +2,8 @@
 // Copyright 2012-present the original author or authors.
 // Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
 // Modified by the Flint authors: the auto-configuration's bean is called directly, as Flint AOT's generated
-// definitions call it, instead of through an ApplicationContextRunner; the bean-presence, multi-DataSource and
-// NamedParameterJdbcTemplate cases are not ported (conditions are evaluated by Flint AOT, and flint:jdbc has no
-// NamedParameterJdbcTemplate yet).
+// definitions call it, instead of through an ApplicationContextRunner; the bean-presence and multi-DataSource cases
+// are not ported (conditions are evaluated by Flint AOT). JdbcClientAutoConfigurationTests' creation case is here.
 module jdbc_template_autoconfiguration_test;
 
 import flint.boot.context.properties.bind : Binder;
@@ -82,4 +81,14 @@ private JdbcTemplate jdbcTemplate(string[2][] entries, SQLExceptionTranslator[] 
     auto translator2 = new SQLStateSQLExceptionTranslator;
     const translator = jdbcTemplate(null, [translator1, translator2]).getExceptionTranslator();
     assert(translator !is translator1 && translator !is translator2);
+}
+
+@("testNamedParameterJdbcTemplateExists: over the JdbcTemplate") unittest
+{
+    import flint.boot.jdbc.autoconfigure : JdbcClientAutoConfiguration;
+
+    auto template_ = jdbcTemplate(null);
+    auto named = new JdbcTemplateAutoConfiguration().namedParameterJdbcTemplate(template_);
+    assert(named.getJdbcOperations() is template_);
+    assert(new JdbcClientAutoConfiguration().jdbcClient(named) !is null);
 }

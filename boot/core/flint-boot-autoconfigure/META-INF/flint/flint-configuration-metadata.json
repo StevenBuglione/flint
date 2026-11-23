@@ -1,6 +1,11 @@
 {
   "groups": [
     {
+      "name": "flint.messages",
+      "type": "flint.boot.autoconfigure.context.MessageSourceProperties",
+      "sourceType": "flint.boot.autoconfigure.context.MessageSourceProperties"
+    },
+    {
       "name": "flint.web",
       "type": "flint.boot.autoconfigure.web.WebProperties",
       "sourceType": "flint.boot.autoconfigure.web.WebProperties"
@@ -22,6 +27,55 @@
     }
   ],
   "properties": [
+    {
+      "name": "flint.messages.basename",
+      "type": "java.util.List<java.lang.String>",
+      "description": "List of basenames (essentially a fully-qualified classpath location), each following the ResourceBundle convention with relaxed support for slash based locations. If it does not contain a package qualifier (such as \"org.mypackage\"), it will be resolved from the classpath root.",
+      "sourceType": "flint.boot.autoconfigure.context.MessageSourceProperties",
+      "defaultValue": [
+        "messages"
+      ]
+    },
+    {
+      "name": "flint.messages.common-messages",
+      "type": "java.util.List<java.lang.String>",
+      "description": "List of locale-independent property file resources containing common messages.",
+      "sourceType": "flint.boot.autoconfigure.context.MessageSourceProperties"
+    },
+    {
+      "name": "flint.messages.encoding",
+      "type": "java.lang.String",
+      "description": "Message bundles encoding (a charset name).",
+      "sourceType": "flint.boot.autoconfigure.context.MessageSourceProperties",
+      "defaultValue": "UTF-8"
+    },
+    {
+      "name": "flint.messages.cache-duration",
+      "type": "java.time.Duration",
+      "description": "Loaded resource bundle files cache duration. When not set, bundles are cached forever. If a duration suffix is not specified, seconds will be used.",
+      "sourceType": "flint.boot.autoconfigure.context.MessageSourceProperties"
+    },
+    {
+      "name": "flint.messages.fallback-to-system-locale",
+      "type": "java.lang.Boolean",
+      "description": "Whether to fall back to the system Locale if no files for a specific Locale have been found. If this is turned off, the only fallback will be the default file (e.g. \"messages.properties\" for basename \"messages\").",
+      "sourceType": "flint.boot.autoconfigure.context.MessageSourceProperties",
+      "defaultValue": true
+    },
+    {
+      "name": "flint.messages.always-use-message-format",
+      "type": "java.lang.Boolean",
+      "description": "Whether to always apply the MessageFormat rules, parsing even messages without arguments.",
+      "sourceType": "flint.boot.autoconfigure.context.MessageSourceProperties",
+      "defaultValue": false
+    },
+    {
+      "name": "flint.messages.use-code-as-default-message",
+      "type": "java.lang.Boolean",
+      "description": "Whether to use the message code as the default message instead of throwing a \"NoSuchMessageException\". Recommended during development only.",
+      "sourceType": "flint.boot.autoconfigure.context.MessageSourceProperties",
+      "defaultValue": false
+    },
     {
       "name": "flint.web.locale",
       "type": "java.lang.String",

@@ -72,11 +72,7 @@
       "directory": "boot/core/flint-boot-autoconfigure",
       "module": "flint.boot.autoconfigure",
       "layer": "core",
-      "dependencies": [
-        "boot-core",
-        "engine-aot",
-        "java"
-      ],
+      "dependencies": [],
       "repo": "boot"
     },
     "boot-test": {

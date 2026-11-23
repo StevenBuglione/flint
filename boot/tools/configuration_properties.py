@@ -348,6 +348,16 @@ END = '// ---- end: generated region'
 
 
 WEB_SERVER = 'boot/module/flint-boot-web-server'
+messages = Cls('MessageSourceProperties', 'Settings of the auto-configured `MessageSource`.', [
+    F('basename', 'string[]', '["messages"]', 'List of basenames (essentially a fully-qualified classpath location), each following the ResourceBundle convention with relaxed support for slash based locations. If it does not contain a package qualifier (such as "org.mypackage"), it will be resolved from the classpath root.'),
+    F('commonMessages', 'string[]', None, 'List of locale-independent property file resources containing common messages.'),
+    F('encoding', 'string', '"UTF-8"', 'Message bundles encoding (a charset name).'),
+    F('cacheDuration', 'Optional!Duration', None, 'Loaded resource bundle files cache duration. When not set, bundles are cached forever. If a duration suffix is not specified, seconds will be used.', uda='@DurationUnit(ChronoUnit.SECONDS)'),
+    F('fallbackToSystemLocale', 'bool', 'true', 'Whether to fall back to the system Locale if no files for a specific Locale have been found. If this is turned off, the only fallback will be the default file (e.g. "messages.properties" for basename "messages").'),
+    F('alwaysUseMessageFormat', 'bool', 'false', 'Whether to always apply the MessageFormat rules, parsing even messages without arguments.'),
+    F('useCodeAsDefaultMessage', 'bool', 'false', 'Whether to use the message code as the default message instead of throwing a "NoSuchMessageException". Recommended during development only.'),
+], prefix='flint.messages')
+
 UNITS = [
     Unit(f'{WEB_SERVER}/source/flint/boot/web/server/package.d',
          header('module/spring-boot-web-server/src/main/java/org/springframework/boot/web/server/Shutdown.java\n// with Compression.java and Http2.java from the same directory', '`DataSize minResponseSize` waits on spring-core\'s `DataSize`'),
@@ -357,6 +367,11 @@ UNITS = [
                 '`InetAddress address` is the address text; the deprecated `forward-headers-strategy`, `max-http-request-header-size` (`DataSize`), `ssl`, `mime-mappings`, `reactive.*`, `request.*` and the servlet `jsp`, `session` and `encoding` groups follow with their modules'),
          'flint.boot.web.server.autoconfigure', '`org.springframework.boot.web.server.autoconfigure`: the web server properties.',
          [CP, 'import flint.boot.web.server : Compression, Http2, Shutdown;', MAP, OPT], [server], WEB_SERVER),
+    Unit('boot/core/flint-boot-autoconfigure/source/flint/boot/autoconfigure/context.d',
+         header('core/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/context/MessageSourceProperties.java\n// with MessageSourceAutoConfiguration.java and ResourceBasedMessageSourceConfigurer.java from the same directory',
+                '`Charset encoding` is a charset name; `List<Resource> commonMessages` are resource locations'),
+         'flint.boot.autoconfigure.context', '`org.springframework.boot.autoconfigure.context`: the `MessageSource` properties and auto-configuration.',
+         [CP, DU, DUR, OPT], [messages], 'boot/core/flint-boot-autoconfigure'),
     Unit('boot/core/flint-boot-autoconfigure/source/flint/boot/autoconfigure/web.d',
          header('core/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/web/ErrorProperties.java\n// with WebProperties.java from the same directory', '`Locale locale` is a language tag'),
          'flint.boot.autoconfigure.web', '`org.springframework.boot.autoconfigure.web`: web properties shared by the server modules.',
