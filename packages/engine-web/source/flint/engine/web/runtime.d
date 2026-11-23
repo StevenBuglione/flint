@@ -73,6 +73,11 @@ private struct Connection
     bool readActive;
     bool writeActive;
     bool taskActive;
+    /// The request waits in its worker's handler queue (`HandlerQueue`) for a free handler.
+    bool handlerQueued;
+    /// Neighbours in that queue, as slot numbers on this connection's worker.
+    uint queuedPrevious = noQueued;
+    uint queuedNext = noQueued;
     bool closing;
     bool peerClosed;
     bool continuing;
@@ -103,8 +108,41 @@ private struct Connection
 
     void runHandler() nothrow @nogc
     {
+        // Read first: by the time dispatch returns, the connection may have been retired.
+        const core = id.ownerCore;
         owner.dispatch(id);
+        owner.handlerFinished(core);
     }
+}
+
+private enum uint noQueued = uint.max;
+
+/// Handler fibers per worker for `maxHandlers` across `cores` workers (`ServerOptions.maxHandlers`), never more
+/// than the worker's request slots; zero keeps one per slot up to 1,088.
+package(flint.engine.web) uint handlerFibers(uint maxHandlers, uint cores, uint requestSlots) pure nothrow @nogc
+{
+    const perSlot = requestSlots < 1_088 ? requestSlots : 1_088;
+    if (maxHandlers == 0 || cores == 0)
+        return perSlot;
+    const share = (maxHandlers + cores - 1) / cores;
+    return share < requestSlots ? share : requestSlots;
+}
+
+///
+@safe pure nothrow @nogc unittest
+{
+    assert(handlerFibers(0, 2, 4096) == 1_088 && handlerFibers(0, 2, 64) == 64);
+    assert(handlerFibers(200, 2, 4096) == 100 && handlerFibers(200, 3, 4096) == 67);
+    assert(handlerFibers(200, 16, 4096) == 13 && handlerFibers(1, 4, 4096) == 1);
+    assert(handlerFibers(200, 1, 64) == 64);
+}
+
+/// One worker's running handlers and the requests waiting for one, touched only on that worker's loop.
+private struct HandlerQueue
+{
+    uint active;
+    uint head = noQueued;
+    uint tail = noQueued;
 }
 
 // Test-visible counters (unittest and debug builds only; release builds carry none).
@@ -431,6 +469,9 @@ private final class RuntimeDriver() : StreamEndpoint, FiberEndpoint
     /// raises its entry; `release` reads them after every loop has stopped.
     private size_t[] rootedSlots;
     private WorkerLifecycle[] workers;
+    /// Per worker: the handler limit's bookkeeping (`ServerOptions.maxHandlers`).
+    private HandlerQueue[] handlerQueues;
+    private uint handlersPerCore;
     private CancelSource root;
     private Context serverContext;
     /// Child of the server root, cancelled when draining begins: admission and HTTP/2 streams observe it, while
@@ -472,7 +513,13 @@ private final class RuntimeDriver() : StreamEndpoint, FiberEndpoint
         options.ioBufferBytes = ioBytes;
         const requestSlots = allowsH2(limits) ? limits.maxConnectionsPerCore * limits.maxStreamsPerConnection
             : limits.maxConnectionsPerCore;
-        options.fiberPoolSize = requestSlots < 1_088 ? requestSlots : 1_088;
+        handlersPerCore = handlerFibers(limits.maxHandlers, limits.cores, requestSlots);
+        options.fiberPoolSize = handlersPerCore;
+        // Every running or starting HTTP/1 handler holds a mailbox entry until its fiber starts, so the mailbox
+        // keeps its usual room for other messages beside them.
+        const mailbox = handlersPerCore + 256;
+        options.mailboxCapacity = mailbox < ushort.max ? mailbox : ushort.max;
+        handlerQueues = new HandlerQueue[limits.cores];
         options.maxTimersPerCore = 64;
 
         auto created = Reactor.create(options);
@@ -893,15 +940,10 @@ private final class RuntimeDriver() : StreamEndpoint, FiberEndpoint
         }
         connection.request.requestId = identity;
         connection.phase = ConnectionPhase.handling;
-        const queued = Reactor.current().postWithCleanup(connection.id.ownerCore,
-                connection.handlerTask, TaskContext(identity, connection.request.cancellation));
-        if (queued.code != Status.ok)
+        if (!admitHandler(connection))
             reply(connection, failure(connection, 503), false, false);
         else
-        {
-            connection.taskActive = true;
             readMore(connection);
-        }
     }
 
     /// Solicit an expected request body. Reads resume after the interim response is accepted.
@@ -926,6 +968,75 @@ private final class RuntimeDriver() : StreamEndpoint, FiberEndpoint
                 selected = limits.maxStreamingRequestBytes;
         });
         return checked == Status.ok ? selected : limits.maxBodyBytes;
+    }
+
+    /// Start `connection`'s request on a handler fiber, or queue it while every handler of its worker is busy.
+    /// False when the reactor refused the task (it is stopping).
+    private bool admitHandler(Connection* connection) nothrow @nogc
+    {
+        auto queue = &handlerQueues[connection.id.ownerCore];
+        if (queue.active < handlersPerCore)
+            return startHandler(connection, queue);
+        const slotNumber = connection.id.slot;
+        connection.handlerQueued = true;
+        connection.queuedPrevious = queue.tail;
+        connection.queuedNext = noQueued;
+        if (queue.tail == noQueued)
+            queue.head = slotNumber;
+        else
+            queuedSlot(connection.id.ownerCore, queue.tail).queuedNext = slotNumber;
+        queue.tail = slotNumber;
+        return true;
+    }
+
+    private bool startHandler(Connection* connection, HandlerQueue* queue) nothrow @nogc
+    {
+        const queued = Reactor.current().postWithCleanup(connection.id.ownerCore, connection.handlerTask,
+                TaskContext(connection.request.requestId, connection.request.cancellation));
+        if (queued.code != Status.ok)
+            return false;
+        connection.taskActive = true;
+        ++queue.active;
+        return true;
+    }
+
+    /// A handler of worker `core` finished: start the requests waiting for one, in arrival order.
+    private void handlerFinished(uint core) nothrow @nogc
+    {
+        auto queue = &handlerQueues[core];
+        --queue.active;
+        while (queue.active < handlersPerCore && queue.head != noQueued)
+        {
+            auto next = queuedSlot(core, queue.head);
+            unqueue(next);
+            if (!startHandler(next, queue))
+                reply(next, failure(next, 503), false, false);
+        }
+    }
+
+    private Connection* queuedSlot(uint core, uint slotNumber) nothrow @nogc
+    {
+        return &connections[cast(size_t) core * limits.maxConnectionsPerCore + slotNumber];
+    }
+
+    /// Take `connection` out of its worker's handler queue.
+    private void unqueue(scope Connection* connection) scope nothrow @nogc
+    {
+        if (!connection.handlerQueued)
+            return;
+        const core = connection.id.ownerCore;
+        auto queue = &handlerQueues[core];
+        if (connection.queuedPrevious == noQueued)
+            queue.head = connection.queuedNext;
+        else
+            queuedSlot(core, connection.queuedPrevious).queuedNext = connection.queuedNext;
+        if (connection.queuedNext == noQueued)
+            queue.tail = connection.queuedPrevious;
+        else
+            queuedSlot(core, connection.queuedNext).queuedPrevious = connection.queuedPrevious;
+        connection.handlerQueued = false;
+        connection.queuedPrevious = noQueued;
+        connection.queuedNext = noQueued;
     }
 
     private void dispatch(ConnectionId id) nothrow @nogc
@@ -1630,6 +1741,7 @@ private final class RuntimeDriver() : StreamEndpoint, FiberEndpoint
 
     private void close(scope Connection* connection) scope nothrow @nogc
     {
+        unqueue(connection);
         wakeStream(connection.streamWaiter);
         if (!connection.closing)
         {
@@ -1646,6 +1758,7 @@ private final class RuntimeDriver() : StreamEndpoint, FiberEndpoint
 
     private void retire(scope Connection* connection) scope nothrow @nogc
     {
+        unqueue(connection);
         if (connection.phase != ConnectionPhase.free)
             atomicOp!"-="(openConnections, 1U);
         connection.cancellation.cancel();

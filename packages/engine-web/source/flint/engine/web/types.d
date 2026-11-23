@@ -119,6 +119,11 @@ struct ServerOptions
     uint maxConnectionsPerCore = 4096;
     /// Maximum admitted HTTP/2 streams per connection.
     uint maxStreamsPerConnection = 100;
+    /// HTTP/1 request handlers running at once across all workers, as Tomcat's `server.tomcat.threads.max`:
+    /// each worker runs up to `ceil(maxHandlers / cores)`, one fiber each. A request past the limit waits on its
+    /// connection, in arrival order, and starts when one of its worker's handlers finishes; it is not refused.
+    /// Zero gives each worker one fiber per connection slot, up to 1,088.
+    uint maxHandlers;
     /// Combined request line and field byte limit.
     size_t maxHeaderBytes = 16_384;
     /// Largest nonstreamed request body.

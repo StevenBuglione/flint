@@ -69,6 +69,11 @@ struct ServletEngineOptions
     size_t maxBodyBytes = 1_048_576;
     /// Connections each reactor thread holds.
     uint maxConnectionsPerCore = 4096;
+    /// `server.flint.max-handlers`: requests handled at once across the reactor threads, Tomcat's
+    /// `server.tomcat.threads.max` and its default of 200. A request past it waits on its connection, in arrival
+    /// order, until a handler finishes, as Tomcat's executor queues it. 0 gives each reactor thread one handler
+    /// per connection slot, up to 1,088 (the sizing before this setting).
+    uint maxHandlers = 200;
 }
 
 /// The reactor threads for `cores`: `cores` itself, or for 0 the CPUs this process may run on (on Linux, its
@@ -190,6 +195,7 @@ final class ServletEngine : RequestHost
         serverOptions.idleTimeoutNanos = options.keepAliveTimeoutNanos;
         serverOptions.maxBodyBytes = options.maxBodyBytes;
         serverOptions.maxConnectionsPerCore = options.maxConnectionsPerCore;
+        serverOptions.maxHandlers = options.maxHandlers;
         serverOptions.shutdown = options.shutdown;
         const opened = server.start(serverOptions);
         if (opened.code != Status.ok)
