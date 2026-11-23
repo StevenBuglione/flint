@@ -81,7 +81,7 @@ When your assigned work is done, don't stop.
 | 1 | Retire `framework/p1-interim`, register `framework/web`, `webmvc`, `jakarta-servlet`, `framework-test` | web-http | `404c77c` (p1-interim retired), registration in the commit that marks this |
 | 2 | `FiberRoute` in `engine-web`, the servlet adapter, and a start/stop/port API for Boot | web-http | |
 | 3 | Boot on `flint.context`; web-server auto-configuration on the servlet adapter; the gs-rest-service Flint port passing `spring_bench.py accept` | boot | |
-| 4 | `engine-jdbc`, `JdbcTemplate`/`JdbcClient`; the gs-relational-data-access Flint port passing its suite | data-access | |
+| 4 | `engine-jdbc`, `JdbcTemplate`/`JdbcClient`; the gs-relational-data-access Flint port passing its suite | data-access | `94f6762` (driver), `199f62a`, `85df9af` (JdbcTemplate), `8fd18b6` (JdbcClient); Boot app `47ec8e1` (boot) passes 1/1 |
 | 5 | Beans and context complete for Phase 1 (`@Configuration`/`@Bean`, `@Value`, profiles, events, lifecycle) with upstream tests ported | framework-core | `0ef8a7b`, `c12b3c3`, `4f280e5` (gaps listed in `framework-core.md`: listener replies, FactoryBean, `@Priority`) |
 | 6 | jackson-databind subset byte-equal with Jackson, SLF4J, Jakarta Validation with Hibernate Validator messages | third-party-apis | `01947a2` (java.time), `daa0b85`, `d13b99b` (arrays, Optional, enums, records, `@JsonNaming`), `51756be`, `6e870d2` (validation), `12277d6` (checklists complete); goldens and gaps in `third-party.md` |
 | 7 | AOT contract 2 emission; mapping and descriptor tables for the three Phase 1 apps | flint-aot | |
