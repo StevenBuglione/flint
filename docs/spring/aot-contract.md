@@ -474,7 +474,7 @@ Both are null in older generated code; callers then use `invoke`.
 
 Flint AOT emits both forms for every mapping and exception handler: `handle_<id>` and `handleArray_<id>` (`exception_<id>` and `exceptionArray_<id>`) share one call expression and differ only in reading argument `i` as `arguments[i]` instead of `arguments.get(i)`. The array form's parameter is `scope Any[] arguments` in an `@safe` module, so under `-preview=dip1000` a generated body cannot keep the slice; the CLI suite compiles the emitted signatures with a body that stores it and expects the compile to fail. The runtime still declares `aotContractVersion = 3`, so generated registries still call `registry.begin(3, ...)`; code that sets the fields needs flint:engine-aot from b181a524 on.
 
-### 4.13 The per-endpoint fast path (opt-in)
+### 4.13 The per-endpoint fast path (default on)
 
 Flint's per-endpoint fast path ([`phase1/fast-path.md`](phase1/fast-path.md)) adds one field and a leaf module, `flint.engine.aot.fast`. Nothing changes for generated code that doesn't use it.
 
@@ -486,7 +486,7 @@ Flint's per-endpoint fast path ([`phase1/fast-path.md`](phase1/fast-path.md)) ad
 | `FastExchange` | `method`, `path`, `acceptCount`, `accept`, `parameter`, `respond`, `materialize` | one request as the container holds it before any servlet object exists, borrowed for the call and passed `ref scope` |
 | `FastDispatch` | `hasFastPath()`, `dispatchFast(ref scope FastExchange)` | implemented by `DispatcherServlet`; returns a `FastOutcome` (`declined`, `written`, `materialized`) |
 
-**What Flint AOT emits.** Only when the build sets the option (`FLINT_AOT_FAST_PATH=1` for the prototype, `AotRequest.fastPath`, part of the output key), and only for a mapping that `fastShape` accepts (fast-path.md 3.1):
+**What Flint AOT emits.** Unless the build opts out (`FLINT_AOT_FAST_PATH=0`; `AotRequest.fastPath`, part of the output key), and only for a mapping that `fastShape` accepts (fast-path.md 3.1):
 - `fast_<id>`;
 - `mapping.fast = &fast_<id>;`;
 - once per application with at least one such mapping, two beans in the application's own generated module:

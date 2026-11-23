@@ -1,6 +1,6 @@
 # The per-endpoint fast path
 
-Owner: the fast-path spike (started by the coordinator, 2026-11-23). Status: **prototype** on branch `spring/fast-path-proto`, opt-in, for gs-rest-service's `/greeting`. Recommendation: go, staged (section 9). Read with ADR-030, `docs/spring/api-mapping.md`, `gc.md`, `coordination.md` and `performance-playbook.md` (rule R-13 is the reason for this note).
+Owner: the fast-path spike (started by the coordinator, 2026-11-23). Status: **Flint's default execution model** (owner decision `7206d97d`), with the generic Spring path as the fallback. Every build emits it for qualifying endpoints; `FLINT_AOT_FAST_PATH=0` opts out, for diagnosis. It was prototyped on gs-rest-service's `/greeting` and recommended go, staged (section 9). **Certified A/B (section 8.5): on ÷ off throughput 1.394, p99 0.507, CPU 0.659; on ÷ Go throughput 1.293, p99 0.729, CPU 0.843, p50 1.016, RSS 1.45.** Read with ADR-030, `docs/spring/api-mapping.md`, `gc.md`, `coordination.md` and `performance-playbook.md` (rule R-13 is the reason for this note).
 
 ## 1. The idea
 
@@ -18,7 +18,7 @@ Nothing public changes. The servlet and Spring objects are built only when somet
 | **Startup** | `FastPathTable.build` (`flint.web.servlet.mvc.method.fast`), called by `WebMvcConfigurationSupport.build` | The mapping proof against the configured strategies (section 3.2), and the content-negotiation table: for each `Accept` key, the `Content-Type` that generic negotiation selects, computed by the generic code itself. The table is fixed after startup. The container enables the offer only when no filter is mapped. |
 | **Run time** | The container (`flint.engine.servlet.fast`) and the table | Method and literal path match; the one `Accept` value looked up in the table; parameters decoded with the servlet request's own decoder into stack storage; the handler called; the value written by the converter's own `ObjectMapper` into a recycled buffer; one `FiberResponse.respond`. Anything unexpected declines before the handler runs (section 3.3). |
 
-**The opt-in.** The switch is a Flint AOT generation option: `FLINT_AOT_FAST_PATH=1` for the prototype (`AotRequest.fastPath`). The framework code is linked but inert when no mapping row carries a `fast` function, since a null `HandlerMapping.fast` means today's path. The container asks the servlet once, when it starts (`FastDispatch.hasFastPath`), and then never offers a request, so a build without the option pays nothing per request. This avoids a `-version` flag that would have to reach the cached platform archives. The option is part of the AOT output key, so a build with it never restores output generated without it. If the spike goes ahead, the switch becomes a `flint.toml` or profile setting owned by m7-flint-cli, and later the default.
+**The switch.** It is a Flint AOT generation option (`AotRequest.fastPath`). It is on by default since the owner's decision `7206d97d`, and `FLINT_AOT_FAST_PATH=0` opts out for diagnosis. During the prototype it was opt-in through `FLINT_AOT_FAST_PATH=1`. An application without a qualifying endpoint links none of it (pay-for-use, section 9 stage 1): the table and the container offer are reached only through two beans that Flint AOT generates for qualifying endpoints, and a null `HandlerMapping.fast` means today's path. The container asks the servlet once, when it starts (`FastDispatch.hasFastPath`). If there is no fast path it never offers a request, so such a build pays nothing per request. An AOT option avoids a `-version` flag that would have to reach the cached platform archives. The option is part of the AOT output key, so a build with it never restores output generated without it. The opt-out should become a `flint.toml` or profile setting, owned by m7-flint-cli, so that the receipt records it (flint-aot's note).
 
 ## 3. The fallback rule: when an endpoint, or a request, takes the generic path
 
@@ -211,17 +211,40 @@ The Go comparator measured only about 170–175k req/s here, against 247k in the
 
 **RSS does not move.** Idle, both builds hold 11.1–11.2 MB. Under load, both reach about 21.5 MB, although the fast path allocates 64 bytes per request. Peak RSS is therefore not per-request garbage. It is what the server and the collector reserve under load: GC pools, the 36 threads including druntime's mark threads, fiber stacks touched by 64 connections, and the connection slots. These are `gc.md` §1.3's items, and the fast path does not touch them.
 
-**Size, pay-for-use (playbook S-1, the coordinator's merge condition).** Stripped, at `eaa27d1d` with the two generated beans (section 9, stage 1):
+**Size, pay-for-use (playbook S-1, the coordinator's merge condition).** Stripped gs-rest-service, with the two generated beans (section 9, stage 1):
 
-| build | stripped bytes | against main |
-|---|---|---|
-| main | 4,746,624 | — |
-| off: no endpoint qualifies, or the option is not set | 4,739,176 | **−7,448** |
-| on: gs-rest-service's `/greeting` specialised | 4,769,288 | +22,664 |
+| build | at `eaa27d1d` | against main | at `e77bc654` (merged) | against main |
+|---|---|---|---|---|
+| main | 4,746,624 | — | 4,697,792 | — |
+| off: no qualifying endpoint, or opted out | 4,739,176 | −7,448 | 4,698,536 | **+744** |
+| on: gs-rest-service's `/greeting` specialised | 4,769,288 | +22,664 | 4,720,456 | +22,664 |
 
-With the option off nothing of the fast path is linked. The build is smaller than main because the media-type selection is now one shared function. With the option on, gs-rest-service carries the table, the offer and one `fast_<id>` (+0.48%). Setting the option on gs-relational-data-access or petclinic-rest, which have no qualifying endpoint, changes their generated output by 0 lines.
+- **On**, gs-rest-service carries the table, the offer and one `fast_<id>`: a constant +22,664 B (+0.48%).
+- **Off**, the table, `serveFast` and the binding code are not linked. What remains is about 1.1 KB of interface residue:
+  - the `FastDispatch` and `FastPathFactory` type info and their dynamic-cast helpers;
+  - `DispatcherServlet`'s interface table;
+  - the fast module's `ModuleInfo`.
+
+  Against main's inlining that nets **+744 B on the merged base**. On the earlier base the same residue was hidden by a 7 KB shrink elsewhere. Removing the residue too would mean moving both casts behind the generated beans.
+- **Apps without a qualifying endpoint.** Setting the option on gs-relational-data-access or petclinic-rest changes their generated output by 0 lines.
 
 Earlier, before pay-for-use, stripped at `c0aafbbf`: main 4,746,584 B; off 4,764,576 B (+17,992 B, +0.38%, the always-linked table and hook); on 4,760,480 B; Go's comparator 6,634,456 B. At `eaa27d1d`: main 4,750,720 B; off 4,768,712 B (+17,992 B); on 4,764,616 B.
+
+### 8.5 Certified A/B (proof-harness, `fast-path-ab`)
+
+proof-harness measured gs-rest-service at `139e4fc4`, in a claimed window with no foreign build in 144 samples (`benchmarks/spring/evidence/fast-path-ab/`, decisions.md `6b7125e2`):
+- workload: `policy/spring-http-benchmark.json`, 4 trials per arm;
+- arms: off and `FLINT_AOT_FAST_PATH=1`, with Go interleaved;
+- both arms 18/18 exact, and the on arm checked for its generated `fast_` function.
+
+| ratio of medians (99% interval) | throughput | p99 | p50 | CPU per request | peak RSS |
+|---|---|---|---|---|---|
+| on ÷ off | **1.394** (1.379–1.401) | **0.507** (0.366–0.672) | 0.639 | **0.659** (0.603–0.868) | 0.999 (0.986–1.014) |
+| on ÷ Go | **1.293** (1.285–1.299) | **0.729** (0.548–0.934) | 1.016 | **0.843** (0.783–1.061) | 1.450 |
+
+Medians: on 319k req/s and p99 0.198 ms; off 229k and 0.390 ms; Go 247k and 0.272 ms.
+
+**With the fast path, gs-rest-service beats Go on throughput, p99 and CPU per request, and p50 is at parity.** The local projection (section 8.4) was right on throughput, CPU and p50. p99 came out better than projected. **RSS still misses** (1.45× Go), as section 8.4 predicted, and needs gc.md §1.3's work. The commits after `139e4fc4` change startup proof and linkage, not the per-request path: pay-for-use, the return-value-handler check, the null-value branch, and the started-transport guard.
 
 ## 9. Recommendation
 
@@ -246,8 +269,8 @@ Earlier, before pay-for-use, stripped at `c0aafbbf`: main 4,746,584 B; off 4,764
    - **`flintAotFastPathConfigurer`**, a `FastPathConfigurer`: a `WebMvcConfigurer` that implements a small `FastPathFactory` interface in `flint.web.servlet`. `WebMvcConfigurationSupport.build` asks any configurer that implements it for the table. Nothing else references `FastPathTable`.
    - **`flintAotFastPathOffer`**, a `WebServerFactoryCustomizer`. It hands `FlintServletWebServerFactory` the address of `flint.engine.servlet.fast.serveFast` (a new `setFastOffer`, which reaches `ServletEngineOptions`). `ServletEngine.serve` calls the offer through that pointer only when it is set, so nothing else references `serveFast`.
    Without the beans, `--gc-sections` drops both, and the only residue is the null check and the `FastDispatch` interface on `DispatcherServlet`, which the size table must show. Owners: boot (the factory setter), flint-aot (the planner's two beans, probed like the date customizer), web-http (the hooks).
-2. **Certify.** Add a proof-harness queue entry: gs-rest-multicore with the option on, against the option off, at the same commit (priority 1, claimed). This is the go/no-go evidence; everything above is local.
-3. **Default on,** after the certified run beats the base on throughput, CPU and p99 without losing 18/18, and once the black-box suites run in CI with the option on and off.
+2. **Certify.** Done: `fast-path-ab` (section 8.5) meets the decision rule. on beats off on throughput, CPU and p99 beyond the intervals, with no metric worse and 18/18 in both arms.
+3. **Default on.** Done: the owner decided it on the certified result (`7206d97d`). `FLINT_AOT_FAST_PATH=0` opts out.
 4. **Grow the shapes, one at a time, each with black-box cases and gate entries.** In order:
    - `@PathVariable` of `int`, `long` and `string` (the pattern matched by the generic `PathPattern` at startup into a literal prefix plus one segment);
    - `ResponseEntity` (status and headers written by the generic `HttpEntityMethodProcessor` rules);
