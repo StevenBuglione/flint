@@ -21,6 +21,7 @@ What is scored, per run:
 Agent runs cost model usage, so `run` only starts when asked; `accept` and `reference` cost nothing.
 """
 import argparse
+import hashlib
 import importlib.util
 import json
 import os
@@ -40,7 +41,75 @@ TASKS = BENCH / 'tasks'
 LANGUAGES = ('flint', 'go', 'spring')
 EXECUTABLES = {'rest-notes': 'notes', 'cli-todo': 'todo', 'queue-worker': 'worker', 'tui-dashboard': 'dash'}
 FLINT = ROOT / '.flint' / 'bin' / 'flint'
-GO = ROOT / '.tools' / 'go' / 'bin' / 'go'
+
+
+def checkouts():
+    """This checkout, then the main checkout when this is a git worktree: where .tools and .flint/peers live."""
+    roots = [ROOT]
+    try:
+        common = subprocess.run(['git', 'rev-parse', '--path-format=absolute', '--git-common-dir'], cwd=ROOT,
+                                capture_output=True, text=True, timeout=10).stdout.strip()
+    except OSError:
+        common = ''
+    if common and Path(common).name == '.git' and Path(common).parent != ROOT:
+        roots.append(Path(common).parent)
+    return roots
+
+
+def pinned_go():
+    """The Go pinned in policy/toolchains.json (tools/install_toolchains.py --compiler go)."""
+    version = json.loads((ROOT / 'policy' / 'toolchains.json').read_text())['versions']['go']
+    candidates = [root / '.tools' / 'go' / 'bin' / 'go' for root in checkouts()] + [shutil.which('go')]
+    for candidate in filter(None, candidates):
+        if Path(candidate).is_file():
+            reported = subprocess.run([str(candidate), 'version'], capture_output=True, text=True).stdout
+            if f'go{version} ' in reported:
+                return str(candidate)
+    raise SystemExit(f'Go {version} is missing; install it with python3 tools/install_peers.py --peer go')
+
+
+def pinned_peer(name):
+    """A peer from policy/peer-lock.json installed by tools/install_peers.py, verified by its receipt."""
+    row = json.loads((ROOT / 'policy' / 'peer-lock.json').read_text())['peers'][name]
+    for root in checkouts():
+        prefix = root / '.flint' / 'peers' / f"{name}-{row['version']}"
+        receipt = prefix / 'flint-peer.json'
+        if receipt.is_file() and json.loads(receipt.read_text()).get('archive_sha256') == row['sha256']:
+            return prefix
+    raise SystemExit(f'{name} {row["version"]} is missing; install it with python3 tools/install_peers.py --peer {name}')
+
+
+def go_environment():
+    """Builds use the pinned Go only and verify modules against go.sum and the checksum database."""
+    env = dict(os.environ, GOTOOLCHAIN='local', GOFLAGS='-mod=readonly')
+    for name in ('GONOSUMDB', 'GONOSUMCHECK', 'GOSUMDB', 'GOINSECURE', 'GOPRIVATE', 'GONOPROXY'):
+        env.pop(name, None)
+    return env
+
+
+def java_environment():
+    """The pinned Temurin JDK and Maven (policy/peer-lock.json), and the Maven repository they resolve into."""
+    jdk = pinned_peer('jdk')
+    env = dict(os.environ, JAVA_HOME=str(jdk))
+    env['PATH'] = str(jdk / 'bin') + os.pathsep + env.get('PATH', '')
+    return jdk, pinned_peer('maven') / 'bin' / 'mvn', env
+
+
+def check_spring_boot(directory, repository):
+    """A reference builds on the pinned Spring Boot: its parent pom and BOM match policy/peer-lock.json."""
+    row = json.loads((ROOT / 'policy' / 'peer-lock.json').read_text())['peers']['spring-boot']
+    pom = (Path(directory) / 'pom.xml').read_text()
+    parent = re.search(r'<parent>.*?<artifactId>spring-boot-starter-parent</artifactId>\s*<version>([^<]+)</version>',
+                       pom, re.S)
+    if not parent or parent.group(1) != row['version']:
+        return f"pom.xml must use spring-boot-starter-parent {row['version']} (policy/peer-lock.json)"
+    base = Path(repository) / 'org' / 'springframework' / 'boot'
+    for artifact, key in (('spring-boot-starter-parent', 'sha256'), ('spring-boot-dependencies', 'bom_sha256')):
+        path = base / artifact / row['version'] / f"{artifact}-{row['version']}.pom"
+        if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != row[key]:
+            return f'{path} does not match its digest in policy/peer-lock.json'
+    return ''
+
 
 PREAMBLE = {
     'flint': """You are building this program in D with Flint, in the current directory, which is a fresh
@@ -96,15 +165,19 @@ def prepare(task, language, directory):
         if result.returncode:
             raise SystemExit(result.stdout + result.stderr)
     elif language == 'go':
-        result = run_quiet([str(GO), 'mod', 'init', 'example.com/' + name], directory)
+        result = run_quiet([pinned_go(), 'mod', 'init', 'example.com/' + name], directory, go_environment())
         if result.returncode:
             raise SystemExit(result.stdout + result.stderr)
     (directory / 'PROMPT.md').write_text(prompt(task, language))
     return directory
 
 
-def build(task, language, directory):
-    """Build the solution; returns (Program or None, log)."""
+def build(task, language, directory, reference=False):
+    """Build the solution; returns (Program or None, log).
+
+    Go builds use the pinned Go. Spring Boot builds use the pinned JDK, and the project's Maven wrapper if it has
+    one, else the pinned Maven with --strict-checksums; a reference must also build on the pinned Spring Boot.
+    """
     from vibelib import Program
     directory = Path(directory).resolve()
     if language == 'flint':
@@ -122,21 +195,28 @@ def build(task, language, directory):
         return Program([str(path)]), ''
     if language == 'go':
         output = directory / '.vibe' / EXECUTABLES[task]
-        result = run_quiet([str(GO), 'build', '-o', str(output), '.'], directory)
+        result = run_quiet([pinned_go(), 'build', '-o', str(output), '.'], directory, go_environment())
         return (Program([str(output)]) if result.returncode == 0 else None), result.stdout + result.stderr
+    jdk, maven, env = java_environment()
     wrapper = directory / 'mvnw'
-    result = run_quiet([str(wrapper) if wrapper.exists() else 'mvn', '-q', '-DskipTests', 'package'], directory)
+    repository = ROOT / '.flint' / 'peers' / 'm2'
+    command = ([str(wrapper)] if wrapper.exists() else [str(maven), '--strict-checksums']) + [
+        '-B', '-q', '-Dmaven.repo.local=' + str(repository), '-DskipTests', 'package']
+    result = run_quiet(command, directory, env)
     jars = [p for p in (directory / 'target').glob('*.jar') if not p.name.endswith('-plain.jar')]
     if result.returncode or len(jars) != 1:
         return None, result.stdout + result.stderr
-    return Program(['java', '-jar', str(jars[0])]), ''
+    problem = check_spring_boot(directory, repository) if reference else ''
+    if problem:
+        return None, problem
+    return Program([str(jdk / 'bin' / 'java'), '-jar', str(jars[0])]), ''
 
 
-def accept(task, language, directory):
+def accept(task, language, directory, reference=False):
     """Build and run the acceptance test; returns a result dictionary."""
     sys.path.insert(0, str(BENCH))
     started = time.monotonic()
-    program, log = build(task, language, directory)
+    program, log = build(task, language, directory, reference)
     built = time.monotonic()
     if program is None:
         return {'task': task, 'language': language, 'built': False, 'build_log': log[-4000:], 'checks': [],
@@ -187,11 +267,19 @@ SHELL_LOOP = re.compile(r' (go (build|test|run|vet)|mvn\S* .*(package|test|verif
                         r'flint (build|test|run|check)|dub (build|test|run)|dmd |ldc2 )')
 
 
+def optional(locate):
+    """A pinned tool's path, or None when it is not installed."""
+    try:
+        return locate()
+    except SystemExit:
+        return None
+
+
 def shims(directory, log):
     """Logging wrappers for the build tools an agent can call through a shell."""
     bin_dir = Path(directory) / 'shims'
     bin_dir.mkdir()
-    tools = (('go', str(GO)), ('mvn', shutil.which('mvn')), ('gradle', shutil.which('gradle')),
+    tools = (('go', optional(pinned_go)), ('mvn', shutil.which('mvn')), ('gradle', shutil.which('gradle')),
              ('flint', str(FLINT) if FLINT.is_file() else None), ('dub', shutil.which('dub')),
              ('dmd', shutil.which('dmd')), ('ldc2', shutil.which('ldc2')))
     for name, real in tools:
@@ -386,7 +474,7 @@ def main():
                 print(f'{task} ({arguments.language}): no reference solution')
                 failed += 1
                 continue
-            record = accept(task, arguments.language, directory)
+            record = accept(task, arguments.language, directory, reference=True)
             record['review'] = review_size(arguments.language, directory)
             print_result(record)
             print(f"  review size: {record['review']}")
