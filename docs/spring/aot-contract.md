@@ -81,7 +81,8 @@ The generator composes annotations exactly as Spring's `MergedAnnotations` with 
 - class-level advice annotations apply to every public method that declares none of its own;
 - a method's annotations are searched through its type hierarchy, as Spring's `TYPE_HIERARCHY` strategy does, for request mappings and advice; so are a class's for advice and Spring MVC's class-level `@Controller`, `@RequestMapping`, `@ResponseBody`, `@CrossOrigin` and `@ControllerAdvice`. The aggregates are the element, then its interfaces, then its superclasses (for a method, the methods it overrides there). Each is merged on its own and the first aggregate with a match wins, nearest within it, as Spring's `MergedAnnotationFinder` does: a subclass's meta-annotated `@Transactional` beats its superclass's direct one. Handler methods inherited from a base class are handlers. Its own come first, then those of the interface and superclass methods it implements or overrides (same name and parameter types, in model types). A handler's parameter annotations (`@PathVariable`, `@RequestBody`, `@Valid`) are found the same way, as Spring MVC's `HandlerMethodParameter` finds them on an implemented interface, such as petclinic-rest's openapi-generated `OwnersApi`;
 - aliases inside nested annotation values are resolved, as Spring synthesizes nested annotations;
-- not yet: `@Inherited` (INHERITED_ANNOTATIONS) for stereotypes and conditions, and descriptor tables carrying the supertypes' annotations with `aggregateIndex` (agreed with framework-core, emitted once the runtime field lands).
+- type descriptors carry each supertype's annotations as a further aggregate (`aggregateIndex`, section 4.11);
+- not yet: `@Inherited` (INHERITED_ANNOTATIONS) for stereotypes and conditions, a documented deviation in the runtime too.
 
 Generated code receives the merged result as a value of the annotation type, built field by field so that no constructor or `opCall` is involved, and boxed in `Any`: `Any.of(() { Transactional a; a.readOnly = true; return a; }())`.
 
@@ -457,7 +458,7 @@ Method-level SpEL compiled to D (section 9.1), in the new leaf module `flint.eng
 | `ArgumentSpec` | `Descriptor descriptor` | `descriptorOf!T` of the parameter type; null for scalars and `string` |
 | `HandlerMapping` | `Descriptor returnDescriptor` | `descriptorOf!T` of the return type; null for scalars and `void` |
 
-The descriptor fields spare dispatch a by-name table lookup per request; a null one means "look up the name", so older generated code keeps working.
+The descriptor fields spare dispatch a by-name table lookup per request; a null one means "look up the name", so older generated code keeps working. The generator sets them for request bodies and response bodies whose types the generated tables register, so they are the same instances a lookup would find. It fills a type descriptor's `annotations` with the type's own merge as aggregate 0, then each interface's and each superclass's, in TYPE_HIERARCHY order, as `descriptorOf!T` does. Method and parameter tables keep the merge of section 2.1 through overridden methods as aggregate 0, which webmvc's lookups read.
 
 Generated registries call `registry.begin(3, ...)`.
 

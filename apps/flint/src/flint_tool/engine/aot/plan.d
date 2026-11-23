@@ -277,6 +277,9 @@ struct DescriptorPlan
     string[] supertypes;
     /// Merged type annotations.
     MergedSet annotations;
+    /// Contract 3: each supertype's merged annotations, in TYPE_HIERARCHY aggregate order (interfaces, then
+    /// superclasses); aggregate n + 1 in the table.
+    MergedSet[] inherited;
     /// Properties.
     PropertyPlan[] properties;
     /// "init" for `T.init`, "new" for `new T()`, empty when none.
@@ -1902,6 +1905,8 @@ private final class Analysis
         result.simple = decl.name;
         result.kind = decl.kind ~ "_";
         result.annotations = cloneMerged(merged);
+        foreach (base; aggregateOrder(decl))
+            result.inherited ~= mergedOf(*base);
         foreach (ref supertype; decl.supertypes)
             result.supertypes ~= supertype.name;
         result.constants = decl.constants.dup;

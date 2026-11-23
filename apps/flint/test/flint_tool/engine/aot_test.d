@@ -911,10 +911,18 @@ unittest
     const web = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot", "hier", "web.d"));
     expect(web.canFind(`mapping.paths = ["/api/ping"];`)).toBeTrue();
     expect(web.canFind(`mapping.paths = ["/api/version"];`)).toBeTrue();
+    // Contract 3: the controller's descriptor carries PingApi's @RequestMapping as aggregate 1.
+    expect(web.canFind(`MergedAnnotation("flint.web.bind.annotation.RequestMapping", Any.of(`)).toBeTrue();
+    expect(web.canFind(`), 0, 1),`)).toBeTrue();
     // The first aggregate with a match wins: ReportService's meta-annotated @Transactional, not BaseService's.
     const service = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot", "hier", "service.d"));
     expect(service.canFind(`a.value = "readOnlyManager";`)).toBeTrue();
-    expect(service.canFind(`"baseManager"`)).toBeFalse();
+    // BaseService's own @Transactional is only in the descriptor's table, as aggregate 1.
+    foreach (line; imported!"std.string".splitLines(service))
+    {
+        if (line.canFind(`"baseManager"`))
+            expect(line.canFind("), 0, 1),")).toBeTrue();
+    }
 }
 
 @("a platform module's generated code may not import a project module (FLINT-E1116)")

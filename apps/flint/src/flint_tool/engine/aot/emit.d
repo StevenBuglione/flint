@@ -242,19 +242,39 @@ private struct Emitter
         return text ~ "return a; }()";
     }
 
-    string mergedArray(const ref MergedSet merged, string indent)
+    /// A merged annotation table: `merged` as aggregate 0, then each of `inherited` (contract 3, `aggregateIndex`).
+    string mergedArray(const ref MergedSet merged, string indent, const MergedSet[] inherited = null)
     {
         import std.conv : to;
         import flint_tool.engine.aot.conditions : literal;
 
-        if (merged.items.length == 0)
+        string text = "[\n";
+        bool any;
+        foreach (aggregate; 0 .. inherited.length + 1)
+        {
+            const items = aggregate == 0 ? merged.items : inherited[aggregate - 1].items;
+            foreach (ref item; items)
+            {
+                any = true;
+                const index = aggregate == 0 ? "" : ", " ~ aggregate.to!string;
+                text ~= indent ~ "    MergedAnnotation(" ~ literal(item.annotation.type) ~ ", Any.of(" ~ annotationLiteral(
+                        item.annotation) ~ "), " ~ item.distance.to!string ~ index ~ "),\n";
+            }
+        }
+        if (!any)
             return "null";
         used["merged"] = true;
-        string text = "[\n";
-        foreach (ref item; merged.items)
-            text ~= indent ~ "    MergedAnnotation(" ~ literal(item.annotation.type) ~ ", Any.of(" ~ annotationLiteral(
-                    item.annotation) ~ "), " ~ item.distance.to!string ~ "),\n";
         return text ~ indent ~ "]";
+    }
+
+    static bool hasInherited(const ref DescriptorPlan descriptor)
+    {
+        foreach (ref item; descriptor.inherited)
+        {
+            if (item.items.length)
+                return true;
+        }
+        return false;
     }
 
     // ---- beans ----
@@ -630,8 +650,9 @@ private struct Emitter
                 descriptor.type) ~ ", TypeKind." ~ descriptor.kind ~ ");\n";
         if (descriptor.supertypes.length)
             text ~= "    descriptor.supertypes = " ~ stringArray(descriptor.supertypes) ~ ";\n";
-        if (descriptor.annotations.items.length)
-            text ~= "    descriptor.annotations = " ~ mergedArray(descriptor.annotations, "    ") ~ ";\n";
+        if (descriptor.annotations.items.length || hasInherited(descriptor))
+            text ~= "    descriptor.annotations = " ~ mergedArray(descriptor.annotations, "    ",
+                    descriptor.inherited) ~ ";\n";
         if (descriptor.properties.length)
         {
             text ~= "    descriptor.properties = [\n";
