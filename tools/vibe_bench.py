@@ -207,7 +207,7 @@ def iterations(language, mcp_log, shim_log):
     return {'builds': len(loops), 'failed': None}
 
 
-def agent_command(agent, language, directory, prompt_file, model, mcp_log, template):
+def agent_command(agent, language, directory, prompt_file, model, mcp_log, template, effort=None):
     """The agent's command line. Flint runs get only the flint MCP server and file tools; the others get a shell."""
     text = Path(prompt_file).read_text()
     if agent == 'claude':
@@ -224,9 +224,15 @@ def agent_command(agent, language, directory, prompt_file, model, mcp_log, templ
             command += ['--allowedTools', 'Bash,Read,Write,Edit,Glob,Grep']
         return command
     if agent == 'codex':
-        command = ['codex', 'exec', '--full-auto', '--skip-git-repo-check']
+        # Codex CLI 0.171 removed --full-auto. The workspace-write sandbox with automatic approval
+        # review is its replacement. The user's own config.toml is ignored and the session is not
+        # persisted, so every run uses only the pinned model and effort below.
+        command = ['codex', 'exec', '--sandbox', 'workspace-write', '--approve-for-me',
+                   '--skip-git-repo-check', '--ephemeral', '--ignore-user-config']
         if model:
             command += ['--model', model]
+        if effort:
+            command += ['-c', 'model_reasoning_effort=' + json.dumps(effort)]
         if language == 'flint':
             command += ['-c', 'mcp_servers.flint.command=' + json.dumps(str(FLINT)),
                         '-c', 'mcp_servers.flint.args=' + json.dumps(['mcp', '--log', str(mcp_log)])]
@@ -237,7 +243,7 @@ def agent_command(agent, language, directory, prompt_file, model, mcp_log, templ
                                        mcp_log=shlex.quote(str(mcp_log)), flint=shlex.quote(str(FLINT))))
 
 
-def run(task, language, agent, runs, model, out, template, timeout):
+def run(task, language, agent, runs, model, out, template, timeout, effort=None):
     out = Path(out)
     out.mkdir(parents=True, exist_ok=True)
     records = []
@@ -248,7 +254,7 @@ def run(task, language, agent, runs, model, out, template, timeout):
         shim_log = scratch / 'shims.log'
         env = {k: v for k, v in os.environ.items() if not k.startswith('FLINT_')}
         env['PATH'] = str(shims(scratch, shim_log)) + os.pathsep + env.get('PATH', '')
-        command = agent_command(agent, language, directory, directory / 'PROMPT.md', model, mcp_log, template)
+        command = agent_command(agent, language, directory, directory / 'PROMPT.md', model, mcp_log, template, effort)
         started = time.monotonic()
         try:
             finished = subprocess.run(command, cwd=directory, env=env, capture_output=True, text=True, timeout=timeout)
@@ -259,7 +265,7 @@ def run(task, language, agent, runs, model, out, template, timeout):
         wall = time.monotonic() - started
         (scratch / 'transcript.txt').write_text(transcript)
         record = accept(task, language, directory)
-        record.update({'run': index + 1, 'agent': agent, 'model': model, 'agent_exit': exit_code,
+        record.update({'run': index + 1, 'agent': agent, 'model': model, 'effort': effort, 'agent_exit': exit_code,
                        'wall_seconds': round(wall, 1), 'iterations': iterations(language, mcp_log, shim_log),
                        'review': review_size(language, directory), 'workspace': str(scratch)})
         records.append(record)
@@ -325,6 +331,7 @@ def main():
     sub.add_argument('--agent-command', help='for --agent command: a template with {prompt}, {dir}, {mcp_log}, {flint}')
     sub.add_argument('--runs', type=int, default=1)
     sub.add_argument('--model')
+    sub.add_argument('--effort', help='reasoning effort pinned for the agent (Codex: model_reasoning_effort)')
     sub.add_argument('--timeout', type=int, default=3600)
     sub.add_argument('--out', default=str(BENCH / 'results'))
     sub = commands.add_parser('report')
@@ -375,7 +382,7 @@ def main():
         return 1 if failed else 0
     elif arguments.command == 'run':
         records = run(arguments.task, arguments.language, arguments.agent, arguments.runs, arguments.model,
-                      arguments.out, arguments.agent_command, arguments.timeout)
+                      arguments.out, arguments.agent_command, arguments.timeout, arguments.effort)
         print(summary(records))
     elif arguments.command == 'report':
         records = []
