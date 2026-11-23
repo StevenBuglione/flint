@@ -166,6 +166,34 @@ Error Server.routeFiber(FiberRoute(handler));   // at most one; serves every req
 - **Response.** `FiberResponse.respond(status, fields, body, chunked)` writes a whole response, head and body in one write when they fit. `begin(status, fields, contentLength)`, `send` and `finish` stream it, where `unknownLength` means chunked on HTTP/1.1 and close-delimited on HTTP/1.0. The engine owns `Content-Length`, `Transfer-Encoding`, `Connection` and `Keep-Alive`, and writes them as Tomcat's `Http11Processor.prepareResponse` does: status line without a reason phrase, application fields in order, the framing field, `Date` unless given, then `Connection: close` or, only when the request named keep-alive, `Keep-Alive: timeout=<idle seconds>` and `Connection: keep-alive`. 204 and 304 have no framing field, 205 has `Content-Length: 0`, and HEAD keeps its framing fields without body bytes. A body shorter than its `Content-Length` closes the connection.
 - **Connections.** After a finished response the connection serves the next request, pipelined or not. Fiber routes are HTTP/1.1 only for now: HTTP/2 answers 404 for a target only a fiber route serves.
 
+### The servlet engine (flint.engine.servlet)
+
+`framework/engine-servlet` is Flint's servlet container, the part embedded Tomcat plays under Spring Boot. It is Flint's own engine, not a Spring type, so it lives under `flint.engine.*`. It depends on `flint:jakarta-servlet` and the engines, never on Boot.
+
+```d
+auto engine = new ServletEngine(ServletEngineOptions(port: 8080));  // address, contextPath, errorPages, globalErrorPage "/error", shutdown, cores
+engine.addServlet("dispatcherServlet", dispatcherServlet);           // mapped at "/"
+engine.addFilter("characterEncodingFilter", filter);                 // REQUEST dispatches, in order
+engine.start();                // init servlets and filters, bind, admit; throws ServletEngineException (port in use)
+engine.getPort();              // the bound port; -1 before start
+engine.shutDownGracefully(30.seconds); // true = idle (GracefulShutdownResult.IDLE)
+engine.stop();
+```
+
+Boot's web server support owns `WebServer` and `ServletWebServerFactory` and wraps this API, as spring-boot-tomcat wraps Tomcat (proposed to the boot session).
+
+**What it reproduces from Tomcat 11 under Spring Boot 4.2.0:**
+- **Request.** Copied out of the arena in two allocations before any servlet code runs. Parameters come from the query string (UTF-8, `+` as a space, repeated values kept in order) and from a form body. The servlet at `/` has the whole path as its servlet path and no path info. Server name and port come from `Host`.
+- **Response.** An 8 KiB buffer. A response never committed goes out whole with `Content-Length`, so an empty one sends `Content-Length: 0`. `flushBuffer`, or a full buffer, commits with chunked framing unless the application set a length. `setContentType` moves a `charset` parameter to the encoding and writes it back as `;charset=X`. `setHeader` keeps the first field's position. Fields go out in insertion order, then `Content-Type` and `Content-Language`.
+- **Errors.** `sendError` keeps the fields set before it, clears the body and suspends output. From the application's side the response then reports itself committed, as `ResponseFacade` does. When the servlet returns, one forward goes to the status's error page or the global page, with `DispatcherType.ERROR` and the `jakarta.servlet.error.*` attributes (`status_code`, `message`, `request_uri`, `query_string`, `method`, `servlet_name`). An uncaught exception becomes a 500 forwarded with `exception` and `exception_type`, after a `ServletException` is unwrapped to its root cause.
+
+**Not yet covered:**
+- the peer address (`getRemoteAddr`);
+- sessions;
+- async;
+- Tomcat's HTML error report when no error page is configured (the engine sends the status with an empty body);
+- HTTP/2.
+
 ## Proof
 
 - **Upstream tests.** Each ported class ports its JUnit tests (`HttpStatusTests`, `HttpHeadersTests`, `MediaTypeTests`, `ResponseEntityTests`, `ProblemDetailTests`, `UriComponentsBuilderTests`, `RequestMappingHandlerMappingTests`, `RequestResponseBodyMethodProcessorTests`, `ExceptionHandlerExceptionResolverTests`, `DefaultHandlerExceptionResolverTests`, `ResponseEntityExceptionHandlerTests`, MockMvc's own tests). Counts of ported, passing and excluded tests, with reasons, are kept in "Upstream test counts" below.
@@ -213,6 +241,7 @@ Flint's own tests cover the R15/D-15 adaptations, the exceptions' messages and b
 | `flint.web.util` | `UriComponentsBuilder`, `UriComponents`, `UriUtils` (R14: UTF-8 bytes, identical encoded output) |
 | CORS | `flint.web.cors` (`CorsConfiguration`, `DefaultCorsProcessor`, `UrlBasedCorsConfigurationSource`), `@CrossOrigin` class and method combination, `CorsRegistry`, preflight handling; petclinic's three CORS goldens reproduce through MockMvc |
 | `FiberRoute` | in `packages/engine-web` (`flint.engine.web.fiber`): full-D handlers on the request fiber, Tomcat framing, keep-alive; 3 socket tests and 3 unit tests on DMD and LDC |
-| Next | the servlet engine over `FiberRoute` (`framework/engine-servlet`), `ResponseEntityExceptionHandler`, `@RequestBody` with Jackson reading |
+| Servlet engine | `framework/engine-servlet` (`flint.engine.servlet`): `ServletEngine` with Tomcat's framing, field order, error-page forward and exception handling; 7 socket tests on DMD and LDC. Unregistered, like `jakarta-servlet`, until the web stack leaves `p1-interim` |
+| Next | gs-rest-service over real HTTP through `DispatcherServlet`, Boot's error controller (boot session), `ResponseEntityExceptionHandler`, `@RequestBody` with Jackson reading |
 
 The packages are not yet in `policy/framework.json` or the root `dub.sdl`: their DUB names (`web`, `webmvc`) and module roots (`flint.web`, `flint.http`) are held by the engines until the rename, and `framework_layers` gives each module one root while spring-web needs two (`flint.http`, `flint.web`). Until then they build with path dependencies and `dub test` from each package directory.
