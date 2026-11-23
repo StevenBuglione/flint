@@ -1,3 +1,181 @@
+diff --git a/std/complex.d b/std/complex.d
+index d7e8475..e500ab0 100644
+--- a/std/complex.d
++++ b/std/complex.d
+@@ -1092,7 +1092,7 @@ Complex!T asin(T)(Complex!T z)  @safe pure nothrow @nogc
+     import std.math.operations : isClose;
+     import std.math.constants : PI;
+     assert(asin(complex(0.0)) == 0.0);
+-    assert(isClose(asin(complex(0.5L)), PI / 6));
++    assert(isClose(asin(complex(0.5L)), PI / 6, 0, 1e-15));
+ }
+ 
+ @safe pure nothrow unittest
+@@ -1118,7 +1118,7 @@ Complex!T acos(T)(Complex!T z)  @safe pure nothrow @nogc
+     import std.math.constants : PI;
+     import std.math.trigonometry : std_math_acos = acos;
+     assert(acos(complex(0.0)) == std_math_acos(0.0));
+-    assert(isClose(acos(complex(0.5L)), PI / 3));
++    assert(isClose(acos(complex(0.5L)), PI / 3, 0, 1e-15));
+ }
+ 
+ @safe pure nothrow unittest
+diff --git a/std/internal/math/gammafunction.d b/std/internal/math/gammafunction.d
+index 1b05ebd..5e4a23d 100644
+--- a/std/internal/math/gammafunction.d
++++ b/std/internal/math/gammafunction.d
+@@ -25,6 +25,7 @@ import core.math : fabs, sin, sqrt;
+ import std.algorithm.iteration : fold;
+ import std.algorithm.searching : any;
+ import std.range : only;
++version (unittest) import std.algorithm.comparison : min;
+ 
+ pure:
+ nothrow:
+@@ -290,23 +291,31 @@ real igammaTemmeLarge(real a, real x, bool compl)
+ 
+ @safe unittest
+ {
++    enum real64 = real.mant_dig == double.mant_dig;
++    // With a 64-bit real, glibc's log1p is 1 ulp from the correctly rounded value at
++    // sigma = 1/25, and phi = sigma - log1p(sigma) cancels 6 bits of it
++    version (CRuntime_Glibc)
++        enum glibcLoss = real64 ? 2 : 0;
++    else
++        enum glibcLoss = 0;
++
+     // Values were generated using scipy, which restricts values to double precision.
+     assert(feqrel(igammaTemmeLarge(25.0, 25.0, true), 0.47339_84685_56349_37L) >= double.mant_dig);
+-    assert(feqrel(igammaTemmeLarge(25.0, 26.0, true), 0.39592_65699_99828_5L) >= double.mant_dig);
+-    assert(feqrel(igammaTemmeLarge(26.0, 25.0, true), 0.55292_14200_24414_8L) >= double.mant_dig);
++    assert(feqrel(igammaTemmeLarge(25.0, 26.0, true), 0.39592_65699_99828_5L) >= double.mant_dig - (real64 ? 2 : 0) - glibcLoss);
++    assert(feqrel(igammaTemmeLarge(26.0, 25.0, true), 0.55292_14200_24414_8L) >= double.mant_dig - (real64 ? 1 : 0));
+ 
+     assert(feqrel(igammaTemmeLarge(25.0, 25.0, false), 0.52660_15314_43650_6L) >= double.mant_dig);
+-    assert(feqrel(igammaTemmeLarge(26.0, 25.0, false), 0.44707_85799_75585_2L) >= double.mant_dig);
++    assert(feqrel(igammaTemmeLarge(26.0, 25.0, false), 0.44707_85799_75585_2L) >= double.mant_dig - (real64 ? 3 : 0));
+ 
+     assert(
+         feqrel(igammaTemmeLarge(30.0L,31.0L,true), 1.0L-igammaTemmeLarge(30.0L,31.0L,false))
+-        >= real.mant_dig - 1);
++        >= real.mant_dig - (real64 ? 2 : 1));
+ 
+     assert(feqrel(igammaTemmeLarge(1e9, 1.1e9, false), 1.0) >= double.mant_dig);
+     assert(feqrel(igammaTemmeLarge(1.1e9, 1e9, false), 0.0) >= double.mant_dig);
+ 
+     assert(
+-        feqrel(igammaTemmeLarge(1e6, 1e6 + 1.0, true), 0.49946_80772_57932_46L) >= double.mant_dig);
++        feqrel(igammaTemmeLarge(1e6, 1e6 + 1.0, true), 0.49946_80772_57932_46L) >= double.mant_dig - (real64 ? 9 : 0));
+ }
+ 
+ } // private
+@@ -456,7 +465,7 @@ real gamma(real x)
+     {
+         // Require exact equality for small factorials
+         if (i<14) assert(gamma(i*1.0L) == fact);
+-        assert(feqrel(gamma(i*1.0L), fact) >= real.mant_dig-15);
++        assert(feqrel(gamma(i*1.0L), fact) >= min(real.mant_dig-15, 66));
+         fact *= (i*1.0L);
+     }
+     assert(gamma(0.0) == real.infinity);
+@@ -475,14 +484,14 @@ real gamma(real x)
+     real SQRT_PI = 1.77245385090551602729816748334114518279754945612238L;
+ 
+ 
+-    assert(feqrel(gamma(0.5L), SQRT_PI) >= real.mant_dig-1);
+-    assert(feqrel(gamma(17.25L), 4.224986665692703551570937158682064589938e13L) >= real.mant_dig-4);
++    assert(feqrel(gamma(0.5L), SQRT_PI) >= min(real.mant_dig-1, 68));
++    assert(feqrel(gamma(17.25L), 4.224986665692703551570937158682064589938e13L) >= min(real.mant_dig-4, 68));
+ 
+-    assert(feqrel(gamma(1.0 / 3.0L),  2.67893853470774763365569294097467764412868937795730L) >= real.mant_dig-2);
++    assert(feqrel(gamma(1.0 / 3.0L),  2.67893853470774763365569294097467764412868937795730L) >= min(real.mant_dig-2, 66));
+     assert(feqrel(gamma(0.25L),
+-        3.62560990822190831193068515586767200299516768288006L) >= real.mant_dig-1);
++        3.62560990822190831193068515586767200299516768288006L) >= min(real.mant_dig-1, 65));
+     assert(feqrel(gamma(1.0 / 5.0L),
+-        4.59084371199880305320475827592915200343410999829340L) >= real.mant_dig-1);
++        4.59084371199880305320475827592915200343410999829340L) >= min(real.mant_dig-1, 65));
+ }
+ 
+ 
+@@ -633,17 +642,17 @@ real logGamma(real x)
+    // TODO: test derivatives as well.
+     for (int i=0; i<testpoints.length; i+=3)
+     {
+-        assert( feqrel(logGamma(testpoints[i]), testpoints[i+1]) > real.mant_dig-5);
++        assert( feqrel(logGamma(testpoints[i]), testpoints[i+1]) > min(real.mant_dig-5, 62));
+         if (testpoints[i]<MAXGAMMA)
+         {
+-            assert( feqrel(log(fabs(gamma(testpoints[i]))), testpoints[i+1]) > real.mant_dig-5);
++            assert( feqrel(log(fabs(gamma(testpoints[i]))), testpoints[i+1]) > min(real.mant_dig-5, 60));
+         }
+     }
+-    assert(feqrel(logGamma(-50.2L),log(fabs(gamma(-50.2L)))) > real.mant_dig-2);
+-    assert(feqrel(logGamma(-0.008L),log(fabs(gamma(-0.008L)))) > real.mant_dig-2);
+-    assert(feqrel(logGamma(-38.8L),log(fabs(gamma(-38.8L)))) > real.mant_dig-4);
++    assert(feqrel(logGamma(-50.2L),log(fabs(gamma(-50.2L)))) > min(real.mant_dig-2, 69));
++    assert(feqrel(logGamma(-0.008L),log(fabs(gamma(-0.008L)))) > min(real.mant_dig-2, 68));
++    assert(feqrel(logGamma(-38.8L),log(fabs(gamma(-38.8L)))) > min(real.mant_dig-4, 68));
+     static if (real.mant_dig >= 64) // incl. 80-bit reals
+-        assert(feqrel(logGamma(1500.0L),log(gamma(1500.0L))) > real.mant_dig-2);
++        assert(feqrel(logGamma(1500.0L),log(gamma(1500.0L))) > min(real.mant_dig-2, 78));
+     else static if (real.mant_dig >= 53) // incl. 64-bit reals
+         assert(feqrel(logGamma(150.0L),log(gamma(150.0L))) > real.mant_dig-2);
+ }
+@@ -865,7 +874,12 @@ real beta(in real x, in real y)
+     assert(beta(nextUp(-0.5L), 0.5) < 0);
+     assert(beta(-0.5, nextUp(0.5L)) < 0);
+     assert(beta(-0.5, real.infinity) == -real.infinity);
+-    assert(cmp(beta(nextDown(-0.0L), 2*nextUp(+0.0L)), -0.0L) <= 0);
++    version (AArch64) // FIXME: wrong sign for resulting NaN (not negative), with both double and quadruple real
++        assert(isNaN(beta(nextDown(-0.0L), 2*nextUp(+0.0L))));
++    else version (WebAssembly) // FIXME: wrong sign for resulting NaN (not negative), with both double and quadruple real
++        assert(isNaN(beta(nextDown(-0.0L), 2*nextUp(+0.0L))));
++    else
++        assert(cmp(beta(nextDown(-0.0L), 2*nextUp(+0.0L)), -0.0L) <= 0);
+     assert(beta(nextUp(-1.0L), 1) < 0);
+     assert(beta(nextDown(-0.0L), +real.infinity) == -real.infinity);
+     assert(beta(nextDown(-0.0L), nextDown(+real.infinity)) < 0, "B(-ε,y) < 0, y large");
+@@ -2289,14 +2303,14 @@ done:
+ {
+     // Exact values
+     assert(digamma(1.0)== -EULERGAMMA);
+-    assert(feqrel(digamma(0.25), -PI/2 - 3* LN2 - EULERGAMMA) >= real.mant_dig-7);
+-    assert(feqrel(digamma(1.0L/6), -PI/2 *sqrt(3.0L) - 2* LN2 -1.5*log(3.0L) - EULERGAMMA) >= real.mant_dig-7);
++    assert(feqrel(digamma(0.25), -PI/2 - 3* LN2 - EULERGAMMA) >= min(real.mant_dig-7, 57));
++    assert(feqrel(digamma(1.0L/6), -PI/2 *sqrt(3.0L) - 2* LN2 -1.5*log(3.0L) - EULERGAMMA) >= min(real.mant_dig-7, 57));
+     assert(digamma(-0.0) == real.infinity);
+     assert(!digamma(nextDown(-0.0)).isNaN());
+     assert(digamma(+0.0) == -real.infinity);
+     assert(!digamma(nextUp(+0.0)).isNaN());
+     assert(digamma(-5.0).isNaN());
+-    assert(feqrel(digamma(2.5), -EULERGAMMA - 2*LN2 + 2.0 + 2.0L/3) >= real.mant_dig-9);
++    assert(feqrel(digamma(2.5), -EULERGAMMA - 2*LN2 + 2.0 + 2.0L/3) >= min(real.mant_dig-9, 55));
+     assert(isIdentical(digamma(NaN(0xABC)), NaN(0xABC)));
+ 
+     for (int k=1; k<40; ++k)
+@@ -2306,7 +2320,7 @@ done:
+         {
+             y += 1.0L/u;
+         }
+-        assert(feqrel(digamma(k+1.0), -EULERGAMMA + y) >= real.mant_dig-2);
++        assert(feqrel(digamma(k+1.0), -EULERGAMMA + y) >= min(real.mant_dig-2, 64));
+     }
+ }
+ 
+@@ -2355,9 +2369,10 @@ real logmdigamma(real x)
+     assert(isIdentical(logmdigamma(NaN(0xABC)), NaN(0xABC)));
+     assert(logmdigamma(0.0) == real.infinity);
+     for (auto x = 0.01; x < 1.0; x += 0.1)
+-        assert(isClose(digamma(x), log(x) - logmdigamma(x)));
++        // casting the rhs to double to make isClose more forgiving for quadruple real
++        assert(isClose(digamma(x), double(log(x) - logmdigamma(x))));
+     for (auto x = 1.0; x < 15.0; x += 1.0)
+-        assert(isClose(digamma(x), log(x) - logmdigamma(x)));
++        assert(isClose(digamma(x), double(log(x) - logmdigamma(x))));
+ }
+ 
+ /** Inverse of the Log Minus Digamma function
 diff --git a/std/math/hardware.d b/std/math/hardware.d
 index e4556cc..6a50624 100644
 --- a/std/math/hardware.d

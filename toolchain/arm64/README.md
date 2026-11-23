@@ -11,7 +11,7 @@
 | `../druntime-2.114.0-flint.patch` | `dmd2/src/druntime` (sources and `import/`) | arm64 runtime builds |
 | `../phobos-2.114.0-flint.patch` | `dmd2/src/phobos` | arm64 runtime builds |
 
-The AArch64 changes leave x86-64 code generation unchanged. On 2026-11-23, `bench-cli` and `bench-rest` were built in debug and release mode with the fork with and without them, installed at the same path. Of 5,700 objects, archive members and executables, the debug builds were byte-identical. In the release builds, one object of `flint:log` (`package_e2_260.o`) differed, along with the `bench-cli` executable that contains it. That object also differs between two runs of the same compiler: a 64-bit immediate carries uninitialised upper bytes. This is an existing nondeterminism and is not caused by these changes.
+The AArch64 changes leave x86-64 code generation unchanged. On 2026-11-23 (again after the last change listed below), `bench-cli` and `bench-rest` were built in debug and release mode with the fork with and without them, installed at the same path. Of 5,700 objects, archive members and executables, the debug builds were byte-identical. In the release builds, one object of `flint:log` (`package_e2_260.o`) differed, along with the `bench-cli` executable that contains it. That object also differs between two runs of the same compiler: a 64-bit immediate carries uninitialised upper bytes. This is an existing nondeterminism and is not caused by these changes.
 
 ## Install
 
@@ -48,14 +48,20 @@ python3 toolchain/arm64/run.py --dmd <fork dmd> --druntime-import <druntime/impo
 
 | | druntime unittests | Phobos unittests | regression tests |
 | --- | --- | --- | --- |
-| Linux AArch64 (QEMU user mode) | 567/567 modules | 151/176 modules | 75/75 |
-| macOS arm64 (pluto, native) | 566/567 modules | 161/176 modules | 75/75 |
+| Linux AArch64 (QEMU user mode) | 567/567 modules | 173/176 modules | 99/99 |
+| macOS arm64 (pluto, native) | 567/567 modules | 176/176 modules | 99/99 |
 
-The remaining Phobos failures are code generator defects that are still being fixed. Stage 1 is complete only when both libraries pass on both platforms. The macOS druntime failure is `core.thread.osthread`, which stops with a trap.
+Both libraries pass natively on macOS arm64. The three Linux failures come from the QEMU cross sysroot, not the code generator:
+
+- `std.stdio` opens a file in mode `ccs=UTF-16LE`, and the sysroot has no gconv modules;
+- `std.net.curl` finds no arm64 libcurl, and QEMU's `accept` fails;
+- `std.socket` stops in glibc's `fd_set` bounds check under QEMU.
+
+They are to be confirmed on real Linux AArch64 hardware, along with stage 2.
 
 ## Decisions and known ABI gaps
 
-- **`real` is `double` on all AArch64 targets**, as it already was for macOS. The back end has no 128-bit floating point. On Linux, C's `long double` is 128-bit, so `extern(C)` functions that take or return `long double` are not compatible.
+- **`real` is `double` on all AArch64 targets**, as it already was for macOS. The back end has no 128-bit floating point. On Linux, C's `long double` is 128-bit, so `extern(C)` functions that take or return `long double` are not compatible. druntime binds the C library's `long double` functions in `core.stdc.math`, and `strtold`, to their `double` versions there (`long_double_libm`). `printf("%Lf")` and other C code that passes `long double` still disagree.
 - **Homogeneous floating point aggregates of 3 or 4 elements** are passed and returned by the general aggregate rules: in general registers, or in memory above 16 bytes. AAPCS64 uses SIMD registers for them. Calls between D functions agree. C functions that take or return such a struct do not, and neither does `va_arg` of one through a C `va_list`. HFAs of 1 or 2 elements follow AAPCS64.
 - On macOS, stack arguments follow Apple's rules:
   - scalars are packed at their natural alignment;
@@ -97,6 +103,12 @@ Code generation:
 - `++`/`--` of a register variable left its tracked constant valid (`postinc_register_constant`).
 - `lazy` parameters were treated as passed by reference when their expression's type is larger than 16 bytes (`lazy_large_result`).
 - `assert(encodeNImmrImms(...))` computed the encoding inside the assert, so release builds of DMD emitted `AND #1` for `AND #0xFF`.
+- A struct passed in memory (one with a destructor or postblit, or a static array of such structs) was never copied to the outgoing argument area. The code took every `OPstrpar` for a zero-sized struct (`struct_param_memory`).
+- Narrow integers reinterpreted between signed and unsigned were not extended to the new type: call results, parameters in their registers and register variables. AAPCS64 also leaves the upper bits of a narrow result unspecified. `REV16` swapped the upper halfword too (`narrow_paint`).
+- Nested functions addressed their parent's stack parameters 16 bytes too high. The x86 frame bias (saved RBP and return address) was added to parameter offsets (`nested_stack_param`).
+- The binary search of a `switch` (with `-O` and 4 or more cases) compared a case value that does not fit an immediate the wrong way round (`switch_binary_search`).
+- String literals with the same bytes but different character sizes shared a symbol: `""w` and `""d` got the 1-byte terminator of `""`. The same pooling is in the x86 back end (`string_literal_sizes`).
+- The prolog's CFI took effect at 1 and 4 bytes into the function instead of after `STP` and `MOV x29,sp`. The CIE's code alignment factor is 1 (`prolog_cfi`).
 - Smaller items:
   - x86 helper misdispatch (`getlvalue`), `getregs` given a register number instead of a mask;
   - the x86 scheduler and NOP running on AArch64;
@@ -109,3 +121,4 @@ druntime and Phobos:
 - Atomics through `core/internal/atomic_aarch64.c` (they were empty stubs); `callWithStackShell` and `getStackTop` through assembly helpers.
 - `core.math` bodies for the x87-only intrinsics; the `test_runner` floating point control register asm is skipped under DMD.
 - `std.math.hardware`: FPSR and FPCR access through C helpers under DMD AArch64.
+- Tests whose thresholds assume an 80-bit `real` take LDC's thresholds for a 64-bit `real` (`std.complex`, `std.internal.math.gammafunction`). One `gammafunction` threshold also allows for glibc's `log1p`, which is 1 ulp from Apple's at that point.

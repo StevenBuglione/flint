@@ -302,6 +302,250 @@ index 941b5de..317ad93 100644
  
  unittest
  {
+diff --git a/import/core/stdc/config.d b/import/core/stdc/config.d
+index 59ad5e7..7bd4600 100644
+--- a/import/core/stdc/config.d
++++ b/import/core/stdc/config.d
+@@ -665,3 +665,25 @@ version (PPC64)
+     enum PPCUseIEEE128 = real.mant_dig == 113;
+ else
+     enum PPCUseIEEE128 = false;
++
++/* DMD's AArch64 back end implements `real` as `double`, but `long double` is
++ * 128-bit in the Linux AArch64 C ABI. The C library's `long double` functions
++ * are then bound to their `double` counterparts.
++ */
++version (AArch64)
++{
++    version (linux)
++        package(core) enum realIsNarrowerThanCLongDouble = real.mant_dig == 53;
++    else
++        package(core) enum realIsNarrowerThanCLongDouble = false;
++}
++else
++    package(core) enum realIsNarrowerThanCLongDouble = false;
++
++package(core) template longDoubleMangle(string name, string doubleName)
++{
++    static if (realIsNarrowerThanCLongDouble)
++        enum longDoubleMangle = doubleName;
++    else
++        enum longDoubleMangle = name;
++}
+diff --git a/import/core/stdc/math.d b/import/core/stdc/math.d
+index f3f95b1..b999792 100644
+--- a/import/core/stdc/math.d
++++ b/import/core/stdc/math.d
+@@ -4880,61 +4880,61 @@ else
+     else
+     {
+         ///
+-        real    acosl(real x);
++        pragma(mangle, longDoubleMangle!("acosl", "acos")) real    acosl(real x);
+         ///
+-        real    asinl(real x);
++        pragma(mangle, longDoubleMangle!("asinl", "asin")) real    asinl(real x);
+         ///
+-        pure real    atanl(real x);
++        pragma(mangle, longDoubleMangle!("atanl", "atan")) pure real    atanl(real x);
+         ///
+-        real    atan2l(real y, real x);
++        pragma(mangle, longDoubleMangle!("atan2l", "atan2")) real    atan2l(real y, real x);
+         ///
+-        pure real    cosl(real x);
++        pragma(mangle, longDoubleMangle!("cosl", "cos")) pure real    cosl(real x);
+         ///
+-        pure real    sinl(real x);
++        pragma(mangle, longDoubleMangle!("sinl", "sin")) pure real    sinl(real x);
+         ///
+-        pure real    tanl(real x);
++        pragma(mangle, longDoubleMangle!("tanl", "tan")) pure real    tanl(real x);
+         ///
+-        real    acoshl(real x);
++        pragma(mangle, longDoubleMangle!("acoshl", "acosh")) real    acoshl(real x);
+         ///
+-        pure real    asinhl(real x);
++        pragma(mangle, longDoubleMangle!("asinhl", "asinh")) pure real    asinhl(real x);
+         ///
+-        real    atanhl(real x);
++        pragma(mangle, longDoubleMangle!("atanhl", "atanh")) real    atanhl(real x);
+         ///
+-        real    coshl(real x);
++        pragma(mangle, longDoubleMangle!("coshl", "cosh")) real    coshl(real x);
+         ///
+-        real    sinhl(real x);
++        pragma(mangle, longDoubleMangle!("sinhl", "sinh")) real    sinhl(real x);
+         ///
+-        pure real    tanhl(real x);
++        pragma(mangle, longDoubleMangle!("tanhl", "tanh")) pure real    tanhl(real x);
+         ///
+-        real    expl(real x);
++        pragma(mangle, longDoubleMangle!("expl", "exp")) real    expl(real x);
+         ///
+-        real    exp2l(real x);
++        pragma(mangle, longDoubleMangle!("exp2l", "exp2")) real    exp2l(real x);
+         ///
+-        real    expm1l(real x);
++        pragma(mangle, longDoubleMangle!("expm1l", "expm1")) real    expm1l(real x);
+         ///
+-        pure real    frexpl(real value, int* exp);
++        pragma(mangle, longDoubleMangle!("frexpl", "frexp")) pure real    frexpl(real value, int* exp);
+         ///
+-        int     ilogbl(real x);
++        pragma(mangle, longDoubleMangle!("ilogbl", "ilogb")) int     ilogbl(real x);
+         ///
+-        real    ldexpl(real x, int exp);
++        pragma(mangle, longDoubleMangle!("ldexpl", "ldexp")) real    ldexpl(real x, int exp);
+         ///
+-        real    logl(real x);
++        pragma(mangle, longDoubleMangle!("logl", "log")) real    logl(real x);
+         ///
+-        real    log10l(real x);
++        pragma(mangle, longDoubleMangle!("log10l", "log10")) real    log10l(real x);
+         ///
+-        real    log1pl(real x);
++        pragma(mangle, longDoubleMangle!("log1pl", "log1p")) real    log1pl(real x);
+         ///
+-        real    log2l(real x);
++        pragma(mangle, longDoubleMangle!("log2l", "log2")) real    log2l(real x);
+         ///
+-        real    logbl(real x);
++        pragma(mangle, longDoubleMangle!("logbl", "logb")) real    logbl(real x);
+         ///
+-        pure real    modfl(real value, real *iptr);
++        pragma(mangle, longDoubleMangle!("modfl", "modf")) pure real    modfl(real value, real *iptr);
+         ///
+-        real    scalbnl(real x, int n);
++        pragma(mangle, longDoubleMangle!("scalbnl", "scalbn")) real    scalbnl(real x, int n);
+         ///
+-        real    scalblnl(real x, c_long n);
++        pragma(mangle, longDoubleMangle!("scalblnl", "scalbln")) real    scalblnl(real x, c_long n);
+         ///
+-        pure real    cbrtl(real x);
++        pragma(mangle, longDoubleMangle!("cbrtl", "cbrt")) pure real    cbrtl(real x);
+         version (CRuntime_Microsoft)
+         {
+         }
+@@ -4943,67 +4943,75 @@ else
+             ///
+             pure float   fabsf(float x);
+             ///
+-            pure real    fabsl(real x);
++            pragma(mangle, longDoubleMangle!("fabsl", "fabs")) pure real    fabsl(real x);
+         }
+         ///
+-        real    hypotl(real x, real y);
++        pragma(mangle, longDoubleMangle!("hypotl", "hypot")) real    hypotl(real x, real y);
+         ///
+-        real    powl(real x, real y);
++        pragma(mangle, longDoubleMangle!("powl", "pow")) real    powl(real x, real y);
+         ///
+-        real    sqrtl(real x);
++        pragma(mangle, longDoubleMangle!("sqrtl", "sqrt")) real    sqrtl(real x);
+         ///
+-        pure real    erfl(real x);
++        pragma(mangle, longDoubleMangle!("erfl", "erf")) pure real    erfl(real x);
+         ///
+-        real    erfcl(real x);
++        pragma(mangle, longDoubleMangle!("erfcl", "erfc")) real    erfcl(real x);
+         ///
+-        real    lgammal(real x);
++        pragma(mangle, longDoubleMangle!("lgammal", "lgamma")) real    lgammal(real x);
+         ///
+-        real    tgammal(real x);
++        pragma(mangle, longDoubleMangle!("tgammal", "tgamma")) real    tgammal(real x);
+         ///
+-        pure real    ceill(real x);
++        pragma(mangle, longDoubleMangle!("ceill", "ceil")) pure real    ceill(real x);
+         ///
+-        pure real    floorl(real x);
++        pragma(mangle, longDoubleMangle!("floorl", "floor")) pure real    floorl(real x);
+         ///
+-        pure real    nearbyintl(real x);
++        pragma(mangle, longDoubleMangle!("nearbyintl", "nearbyint")) pure real    nearbyintl(real x);
+         ///
+-        pure real    rintl(real x);
++        pragma(mangle, longDoubleMangle!("rintl", "rint")) pure real    rintl(real x);
+         ///
+-        c_long  lrintl(real x);
++        pragma(mangle, longDoubleMangle!("lrintl", "lrint")) c_long  lrintl(real x);
+         ///
+-        long    llrintl(real x);
++        pragma(mangle, longDoubleMangle!("llrintl", "llrint")) long    llrintl(real x);
+         ///
+-        pure real    roundl(real x);
++        pragma(mangle, longDoubleMangle!("roundl", "round")) pure real    roundl(real x);
+         ///
+-        c_long  lroundl(real x);
++        pragma(mangle, longDoubleMangle!("lroundl", "lround")) c_long  lroundl(real x);
+         ///
+-        long    llroundl(real x);
++        pragma(mangle, longDoubleMangle!("llroundl", "llround")) long    llroundl(real x);
+         ///
+-        pure real    truncl(real x);
++        pragma(mangle, longDoubleMangle!("truncl", "trunc")) pure real    truncl(real x);
+         ///
+-        real    fmodl(real x, real y);
++        pragma(mangle, longDoubleMangle!("fmodl", "fmod")) real    fmodl(real x, real y);
+         ///
+-        real    remainderl(real x, real y);
++        pragma(mangle, longDoubleMangle!("remainderl", "remainder")) real    remainderl(real x, real y);
+         ///
+-        real    remquol(real x, real y, int* quo);
++        pragma(mangle, longDoubleMangle!("remquol", "remquo")) real    remquol(real x, real y, int* quo);
+         ///
+-        pure real    copysignl(real x, real y);
++        pragma(mangle, longDoubleMangle!("copysignl", "copysign")) pure real    copysignl(real x, real y);
+         ///
+-        pure real    nanl(char* tagp);
++        pragma(mangle, longDoubleMangle!("nanl", "nan")) pure real    nanl(char* tagp);
+         ///
+-        real    nextafterl(real x, real y);
++        pragma(mangle, longDoubleMangle!("nextafterl", "nextafter")) real    nextafterl(real x, real y);
+         ///
+-        double  nexttoward(double x, real y);
++        pragma(mangle, longDoubleMangle!("nexttoward", "nextafter")) double  nexttoward(double x, real y);
+         ///
+-        float   nexttowardf(float x, real y);
++        static if (realIsNarrowerThanCLongDouble)
++            extern(D) float nexttowardf()(float x, real y)
++            {
++                if (x != x || y != y) return x + y;
++                if (x == y) return cast(float) y;
++                return nextafterf(x, y > x ? float.infinity : -float.infinity);
++            }
++        else
++            float   nexttowardf(float x, real y);
+         ///
+-        real    nexttowardl(real x, real y);
++        pragma(mangle, longDoubleMangle!("nexttowardl", "nexttoward")) real    nexttowardl(real x, real y);
+         ///
+-        real    fdiml(real x, real y);
++        pragma(mangle, longDoubleMangle!("fdiml", "fdim")) real    fdiml(real x, real y);
+         ///
+-        pure real    fmaxl(real x, real y);
++        pragma(mangle, longDoubleMangle!("fmaxl", "fmax")) pure real    fmaxl(real x, real y);
+         ///
+-        pure real    fminl(real x, real y);
++        pragma(mangle, longDoubleMangle!("fminl", "fmin")) pure real    fminl(real x, real y);
+         ///
+-        pure real    fmal(real x, real y, real z);
++        pragma(mangle, longDoubleMangle!("fmal", "fma")) pure real    fmal(real x, real y, real z);
+     }
+ }
+diff --git a/import/core/stdc/stdlib.d b/import/core/stdc/stdlib.d
+index d4195b9..8efe4d6 100644
+--- a/import/core/stdc/stdlib.d
++++ b/import/core/stdc/stdlib.d
+@@ -155,7 +155,7 @@ else
+     else
+     {
+         /// Added to Bionic since Lollipop.
+-        real strtold(scope inout(char)* nptr, scope inout(char)** endptr);
++        pragma(mangle, longDoubleMangle!("strtold", "strtod")) real strtold(scope inout(char)* nptr, scope inout(char)** endptr);
+     }
+ }
+ 
 diff --git a/import/core/thread/osthread.d b/import/core/thread/osthread.d
 index 3c7c03e..4a20969 100644
 --- a/import/core/thread/osthread.d
@@ -802,6 +1046,250 @@ index 941b5de..317ad93 100644
  
  unittest
  {
+diff --git a/src/core/stdc/config.d b/src/core/stdc/config.d
+index 59ad5e7..7bd4600 100644
+--- a/src/core/stdc/config.d
++++ b/src/core/stdc/config.d
+@@ -665,3 +665,25 @@ version (PPC64)
+     enum PPCUseIEEE128 = real.mant_dig == 113;
+ else
+     enum PPCUseIEEE128 = false;
++
++/* DMD's AArch64 back end implements `real` as `double`, but `long double` is
++ * 128-bit in the Linux AArch64 C ABI. The C library's `long double` functions
++ * are then bound to their `double` counterparts.
++ */
++version (AArch64)
++{
++    version (linux)
++        package(core) enum realIsNarrowerThanCLongDouble = real.mant_dig == 53;
++    else
++        package(core) enum realIsNarrowerThanCLongDouble = false;
++}
++else
++    package(core) enum realIsNarrowerThanCLongDouble = false;
++
++package(core) template longDoubleMangle(string name, string doubleName)
++{
++    static if (realIsNarrowerThanCLongDouble)
++        enum longDoubleMangle = doubleName;
++    else
++        enum longDoubleMangle = name;
++}
+diff --git a/src/core/stdc/math.d b/src/core/stdc/math.d
+index f3f95b1..b999792 100644
+--- a/src/core/stdc/math.d
++++ b/src/core/stdc/math.d
+@@ -4880,61 +4880,61 @@ else
+     else
+     {
+         ///
+-        real    acosl(real x);
++        pragma(mangle, longDoubleMangle!("acosl", "acos")) real    acosl(real x);
+         ///
+-        real    asinl(real x);
++        pragma(mangle, longDoubleMangle!("asinl", "asin")) real    asinl(real x);
+         ///
+-        pure real    atanl(real x);
++        pragma(mangle, longDoubleMangle!("atanl", "atan")) pure real    atanl(real x);
+         ///
+-        real    atan2l(real y, real x);
++        pragma(mangle, longDoubleMangle!("atan2l", "atan2")) real    atan2l(real y, real x);
+         ///
+-        pure real    cosl(real x);
++        pragma(mangle, longDoubleMangle!("cosl", "cos")) pure real    cosl(real x);
+         ///
+-        pure real    sinl(real x);
++        pragma(mangle, longDoubleMangle!("sinl", "sin")) pure real    sinl(real x);
+         ///
+-        pure real    tanl(real x);
++        pragma(mangle, longDoubleMangle!("tanl", "tan")) pure real    tanl(real x);
+         ///
+-        real    acoshl(real x);
++        pragma(mangle, longDoubleMangle!("acoshl", "acosh")) real    acoshl(real x);
+         ///
+-        pure real    asinhl(real x);
++        pragma(mangle, longDoubleMangle!("asinhl", "asinh")) pure real    asinhl(real x);
+         ///
+-        real    atanhl(real x);
++        pragma(mangle, longDoubleMangle!("atanhl", "atanh")) real    atanhl(real x);
+         ///
+-        real    coshl(real x);
++        pragma(mangle, longDoubleMangle!("coshl", "cosh")) real    coshl(real x);
+         ///
+-        real    sinhl(real x);
++        pragma(mangle, longDoubleMangle!("sinhl", "sinh")) real    sinhl(real x);
+         ///
+-        pure real    tanhl(real x);
++        pragma(mangle, longDoubleMangle!("tanhl", "tanh")) pure real    tanhl(real x);
+         ///
+-        real    expl(real x);
++        pragma(mangle, longDoubleMangle!("expl", "exp")) real    expl(real x);
+         ///
+-        real    exp2l(real x);
++        pragma(mangle, longDoubleMangle!("exp2l", "exp2")) real    exp2l(real x);
+         ///
+-        real    expm1l(real x);
++        pragma(mangle, longDoubleMangle!("expm1l", "expm1")) real    expm1l(real x);
+         ///
+-        pure real    frexpl(real value, int* exp);
++        pragma(mangle, longDoubleMangle!("frexpl", "frexp")) pure real    frexpl(real value, int* exp);
+         ///
+-        int     ilogbl(real x);
++        pragma(mangle, longDoubleMangle!("ilogbl", "ilogb")) int     ilogbl(real x);
+         ///
+-        real    ldexpl(real x, int exp);
++        pragma(mangle, longDoubleMangle!("ldexpl", "ldexp")) real    ldexpl(real x, int exp);
+         ///
+-        real    logl(real x);
++        pragma(mangle, longDoubleMangle!("logl", "log")) real    logl(real x);
+         ///
+-        real    log10l(real x);
++        pragma(mangle, longDoubleMangle!("log10l", "log10")) real    log10l(real x);
+         ///
+-        real    log1pl(real x);
++        pragma(mangle, longDoubleMangle!("log1pl", "log1p")) real    log1pl(real x);
+         ///
+-        real    log2l(real x);
++        pragma(mangle, longDoubleMangle!("log2l", "log2")) real    log2l(real x);
+         ///
+-        real    logbl(real x);
++        pragma(mangle, longDoubleMangle!("logbl", "logb")) real    logbl(real x);
+         ///
+-        pure real    modfl(real value, real *iptr);
++        pragma(mangle, longDoubleMangle!("modfl", "modf")) pure real    modfl(real value, real *iptr);
+         ///
+-        real    scalbnl(real x, int n);
++        pragma(mangle, longDoubleMangle!("scalbnl", "scalbn")) real    scalbnl(real x, int n);
+         ///
+-        real    scalblnl(real x, c_long n);
++        pragma(mangle, longDoubleMangle!("scalblnl", "scalbln")) real    scalblnl(real x, c_long n);
+         ///
+-        pure real    cbrtl(real x);
++        pragma(mangle, longDoubleMangle!("cbrtl", "cbrt")) pure real    cbrtl(real x);
+         version (CRuntime_Microsoft)
+         {
+         }
+@@ -4943,67 +4943,75 @@ else
+             ///
+             pure float   fabsf(float x);
+             ///
+-            pure real    fabsl(real x);
++            pragma(mangle, longDoubleMangle!("fabsl", "fabs")) pure real    fabsl(real x);
+         }
+         ///
+-        real    hypotl(real x, real y);
++        pragma(mangle, longDoubleMangle!("hypotl", "hypot")) real    hypotl(real x, real y);
+         ///
+-        real    powl(real x, real y);
++        pragma(mangle, longDoubleMangle!("powl", "pow")) real    powl(real x, real y);
+         ///
+-        real    sqrtl(real x);
++        pragma(mangle, longDoubleMangle!("sqrtl", "sqrt")) real    sqrtl(real x);
+         ///
+-        pure real    erfl(real x);
++        pragma(mangle, longDoubleMangle!("erfl", "erf")) pure real    erfl(real x);
+         ///
+-        real    erfcl(real x);
++        pragma(mangle, longDoubleMangle!("erfcl", "erfc")) real    erfcl(real x);
+         ///
+-        real    lgammal(real x);
++        pragma(mangle, longDoubleMangle!("lgammal", "lgamma")) real    lgammal(real x);
+         ///
+-        real    tgammal(real x);
++        pragma(mangle, longDoubleMangle!("tgammal", "tgamma")) real    tgammal(real x);
+         ///
+-        pure real    ceill(real x);
++        pragma(mangle, longDoubleMangle!("ceill", "ceil")) pure real    ceill(real x);
+         ///
+-        pure real    floorl(real x);
++        pragma(mangle, longDoubleMangle!("floorl", "floor")) pure real    floorl(real x);
+         ///
+-        pure real    nearbyintl(real x);
++        pragma(mangle, longDoubleMangle!("nearbyintl", "nearbyint")) pure real    nearbyintl(real x);
+         ///
+-        pure real    rintl(real x);
++        pragma(mangle, longDoubleMangle!("rintl", "rint")) pure real    rintl(real x);
+         ///
+-        c_long  lrintl(real x);
++        pragma(mangle, longDoubleMangle!("lrintl", "lrint")) c_long  lrintl(real x);
+         ///
+-        long    llrintl(real x);
++        pragma(mangle, longDoubleMangle!("llrintl", "llrint")) long    llrintl(real x);
+         ///
+-        pure real    roundl(real x);
++        pragma(mangle, longDoubleMangle!("roundl", "round")) pure real    roundl(real x);
+         ///
+-        c_long  lroundl(real x);
++        pragma(mangle, longDoubleMangle!("lroundl", "lround")) c_long  lroundl(real x);
+         ///
+-        long    llroundl(real x);
++        pragma(mangle, longDoubleMangle!("llroundl", "llround")) long    llroundl(real x);
+         ///
+-        pure real    truncl(real x);
++        pragma(mangle, longDoubleMangle!("truncl", "trunc")) pure real    truncl(real x);
+         ///
+-        real    fmodl(real x, real y);
++        pragma(mangle, longDoubleMangle!("fmodl", "fmod")) real    fmodl(real x, real y);
+         ///
+-        real    remainderl(real x, real y);
++        pragma(mangle, longDoubleMangle!("remainderl", "remainder")) real    remainderl(real x, real y);
+         ///
+-        real    remquol(real x, real y, int* quo);
++        pragma(mangle, longDoubleMangle!("remquol", "remquo")) real    remquol(real x, real y, int* quo);
+         ///
+-        pure real    copysignl(real x, real y);
++        pragma(mangle, longDoubleMangle!("copysignl", "copysign")) pure real    copysignl(real x, real y);
+         ///
+-        pure real    nanl(char* tagp);
++        pragma(mangle, longDoubleMangle!("nanl", "nan")) pure real    nanl(char* tagp);
+         ///
+-        real    nextafterl(real x, real y);
++        pragma(mangle, longDoubleMangle!("nextafterl", "nextafter")) real    nextafterl(real x, real y);
+         ///
+-        double  nexttoward(double x, real y);
++        pragma(mangle, longDoubleMangle!("nexttoward", "nextafter")) double  nexttoward(double x, real y);
+         ///
+-        float   nexttowardf(float x, real y);
++        static if (realIsNarrowerThanCLongDouble)
++            extern(D) float nexttowardf()(float x, real y)
++            {
++                if (x != x || y != y) return x + y;
++                if (x == y) return cast(float) y;
++                return nextafterf(x, y > x ? float.infinity : -float.infinity);
++            }
++        else
++            float   nexttowardf(float x, real y);
+         ///
+-        real    nexttowardl(real x, real y);
++        pragma(mangle, longDoubleMangle!("nexttowardl", "nexttoward")) real    nexttowardl(real x, real y);
+         ///
+-        real    fdiml(real x, real y);
++        pragma(mangle, longDoubleMangle!("fdiml", "fdim")) real    fdiml(real x, real y);
+         ///
+-        pure real    fmaxl(real x, real y);
++        pragma(mangle, longDoubleMangle!("fmaxl", "fmax")) pure real    fmaxl(real x, real y);
+         ///
+-        pure real    fminl(real x, real y);
++        pragma(mangle, longDoubleMangle!("fminl", "fmin")) pure real    fminl(real x, real y);
+         ///
+-        pure real    fmal(real x, real y, real z);
++        pragma(mangle, longDoubleMangle!("fmal", "fma")) pure real    fmal(real x, real y, real z);
+     }
+ }
+diff --git a/src/core/stdc/stdlib.d b/src/core/stdc/stdlib.d
+index d4195b9..8efe4d6 100644
+--- a/src/core/stdc/stdlib.d
++++ b/src/core/stdc/stdlib.d
+@@ -155,7 +155,7 @@ else
+     else
+     {
+         /// Added to Bionic since Lollipop.
+-        real strtold(scope inout(char)* nptr, scope inout(char)** endptr);
++        pragma(mangle, longDoubleMangle!("strtold", "strtod")) real strtold(scope inout(char)* nptr, scope inout(char)** endptr);
+     }
+ }
+ 
 diff --git a/src/core/thread/fiber/switch_context_asm.S b/src/core/thread/fiber/switch_context_asm.S
 index ca44874..96d0702 100644
 --- a/src/core/thread/fiber/switch_context_asm.S
