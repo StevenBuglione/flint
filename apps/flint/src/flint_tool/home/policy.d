@@ -166,6 +166,8 @@ struct Home
     CorePackage[] bootLibraries;
     /// The Spring-layer modules of policy/framework.json, which resolve like Boot libraries (ADR-030).
     CorePackage[] frameworkModules;
+    /// Old name -> new name of the packages the repo split renamed (policy/renamed-packages.json).
+    string[string] renamed;
     /// Starters from policy/boot.json, in policy order (ADR-029 section 8).
     CorePackage[] starters;
     /// The repos of the split (policy/repos.json), and the edges pending a decision.
@@ -449,6 +451,7 @@ bool loadHome(string root, out Home home, ref Report report)
     bool ok = loadPackages(home, report);
     ok = loadStarters(home, report) && ok;
     ok = loadFramework(home, report) && ok;
+    ok = loadRenamed(home, report) && ok;
     ok = loadRepos(home, report) && ok;
     ok = loadPlatformModules(home, report) && ok;
     ok = loadApps(home, report) && ok;
@@ -579,6 +582,29 @@ private bool loadFramework(ref Home home, ref Report report)
         home.frameworkModules ~= item;
     }
     return failure.length == 0 || invalid(report, "policy/framework.json", failure);
+}
+
+// policy/renamed-packages.json, written by tools/cutover.py: {"renamed": {"boot": "legacy-boot", ...}}.
+private bool loadRenamed(ref Home home, ref Report report)
+{
+    import std.file : exists;
+    import std.path : buildPath;
+
+    if (!exists(buildPath(home.root, "policy", "renamed-packages.json")))
+        return true;
+    const text = policyText(home, "policy/renamed-packages.json", report);
+    string failure;
+    const members = member(objectMembers(text, failure), "renamed");
+    if (failure.length || members is null)
+        return invalid(report, "policy/renamed-packages.json", failure.length ? failure : "has no renamed object");
+    foreach (entry; objectMembers(members, failure))
+    {
+        auto decoded = deserialize!string(entry.value, lenient());
+        if (!decoded.ok)
+            return invalid(report, "policy/renamed-packages.json", entry.name ~ ": " ~ decoded.error.message);
+        home.renamed[entry.name] = decoded.value;
+    }
+    return failure.length == 0 || invalid(report, "policy/renamed-packages.json", failure);
 }
 
 private struct FrameworkRecordJson

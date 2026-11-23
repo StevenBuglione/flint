@@ -490,6 +490,14 @@ private string resolveCore(const ref Home home, const ref Manifest owner, const 
         foreach (ref item; home.packages)
             names ~= "flint:" ~ item.name;
         const suggestion = closest(spec.name, names);
+        // A package the repo split renamed (policy/renamed-packages.json): name its new name.
+        if (auto renamed = coreName in home.renamed)
+        {
+            report.add(at(diagnostic("FLINT-E0301", Severity.error,
+                    "`" ~ spec.name ~ "` was renamed to `flint:" ~ *renamed ~ "`",
+                    "depend on `flint:" ~ *renamed ~ "` instead"), displayManifest(owner), spec.line, 0, owner.text));
+            return null;
+        }
         report.add(at(diagnostic("FLINT-E0301", Severity.error, "`" ~ spec.name ~ "` is not a Flint core package",
                 suggestion.length
                 ? "did you mean `" ~ suggestion ~ "`?" : "core packages are listed in policy/packages.json"),

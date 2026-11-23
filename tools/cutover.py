@@ -8,12 +8,14 @@ Both run the same steps:
 
 1. **Extract.** It clones flint at `--commit` (default: origin/main of `--source`) and extracts every repo that has
    paths (tools/extract_repo.py refresh), gated through a workspace of the fresh checkouts.
-2. **Cut.** On a `cutover` branch of that flint clone it removes every path that moved, keeps only the remaining
-   subpackages in the root dub.sdl, and pins each extracted repo in platform.lock at its extracted commit, as
-   "source": "github". Then it commits.
+2. **Cut.** The pre-port Boot libraries and starters take legacy names (flint:legacy-boot, ...,
+   flint:legacy-starter-web), in the extracted flint-boot (one commit) and in the flint clone, which records them
+   in policy/renamed-packages.json so flint names the new name where an old one is used. On a `cutover` branch of
+   that flint clone it removes every path that moved, keeps only the remaining subpackages in the root dub.sdl,
+   and pins each extracted repo in platform.lock at its extracted commit, as "source": "github". Then it commits.
 3. **Fetch.** As a Flint home it installs its flint CLI and fetches the pinned repos with their native DUB blocks
-   (tools/platform_modules.py --fetch). A rehearsal fetches them from the local extracted checkouts; the real
-   cutover fetches them from GitHub after pushing.
+   (tools/platform_modules.py --fetch), from the local extracted checkouts: the real cutover pushes exactly those
+   commits, and only after every check passes.
 4. **Check.** It checks that everything still in flint builds against the fetched repos:
    - the structural gate (gates.py and flint check) through the fetched workspace;
    - every flint package's unittests;
@@ -26,10 +28,10 @@ It is reversible:
   else wrote;
 - the cut is one commit on the `cutover` branch of a scratch clone, so nothing touches flint main.
 
-With `--push` it first refuses unless the preconditions hold: policy/unregistered-packages.json is empty and
-framework/p1-interim is gone. A rehearsal reports them in report.json instead. It then force-pushes the extracted
-repos, fetches them from GitHub and checks. It leaves the `cutover` commit for the coordinator to push to flint
-main, or to throw away.
+With `--push` it refuses unless the preconditions hold (policy/unregistered-packages.json is empty and
+framework/p1-interim is gone; a rehearsal reports them in report.json instead) and unless every check passes; then
+it force-pushes the extracted repos. It leaves the `cutover` commit for the coordinator to push to flint main, or
+to throw away.
 """
 import argparse
 import json
@@ -67,6 +69,79 @@ def preconditions(flint):
     return problems
 
 
+# Coordinator's decision 5: the pre-port Boot libraries and starters take legacy names at the cutover, so Spring
+# Boot's flint:boot and its starters' names are free. flint names the new name where an old one is used
+# (policy/renamed-packages.json, FLINT-E0301).
+LEGACY = {'boot': 'legacy-boot', 'boot-autoconfigure-web': 'legacy-boot-autoconfigure-web',
+          'boot-autoconfigure-data': 'legacy-boot-autoconfigure-data', 'boot-actuator': 'legacy-boot-actuator',
+          'starter': 'legacy-starter', 'starter-web': 'legacy-starter-web',
+          'starter-actuator': 'legacy-starter-actuator', 'starter-data-jdbc': 'legacy-starter-data-jdbc'}
+LEGACY_DIRECTORIES = ('boot/boot', 'boot/autoconfigure-', 'boot/actuator', 'starters/')
+UNTOUCHED = ('docs/adr/', 'docs/spring/', 'handoff/', 'CHANGELOG.md')
+
+
+def legacy_names(flint):
+    """LEGACY, for the packages policy/boot.json still has in their pre-port directories."""
+    policy = json.loads((flint / 'policy' / 'boot.json').read_text())
+    found = {}
+    for group in ('libraries', 'starters'):
+        for name, meta in policy.get(group, {}).items():
+            if name in LEGACY and meta['directory'].startswith(LEGACY_DIRECTORIES):
+                found[name] = LEGACY[name]
+    return found
+
+
+def rename_references(checkout, names):
+    """flint:<old> -> flint:<new> in every tracked text file but the historical records; returns the files."""
+    pattern = re.compile(r'(?<![\w-])flint:(' + '|'.join(sorted(map(re.escape, names), key=len, reverse=True))
+                         + r')(?![\w-])')
+    changed = []
+    for name in run(['git', 'ls-files'], checkout, check=False).stdout.split():
+        path = checkout / name
+        if name.startswith(UNTOUCHED) or path.is_symlink() or not path.is_file():
+            continue
+        try:
+            text = path.read_text()
+        except UnicodeDecodeError:
+            continue
+        new = pattern.sub(lambda match: 'flint:' + names[match[1]], text)
+        if new != text:
+            path.write_text(new)
+            changed.append(name)
+    return changed
+
+
+def rename_recipes(checkout, flint, names):
+    """`name "<old>"` -> `name "<new>"` in each renamed package's dub.sdl in the extracted boot checkout."""
+    from workspace import repo_layout
+    policy = json.loads((flint / 'policy' / 'boot.json').read_text())
+    for group in ('libraries', 'starters'):
+        for name, meta in policy.get(group, {}).items():
+            if name in names:
+                recipe = checkout / repo_layout(meta['directory'], 'boot', flint) / 'dub.sdl'
+                text = recipe.read_text()
+                recipe.write_text(re.sub(r'^name "' + re.escape(name) + r'"$', f'name "{names[name]}"', text,
+                                         count=1, flags=re.M))
+
+
+def rename_boot_policy(flint, names):
+    path = flint / 'policy' / 'boot.json'
+    policy = json.loads(path.read_text())
+    for group in ('libraries', 'starters'):
+        renamed = {}
+        for name, meta in policy.get(group, {}).items():
+            for key in ('dependencies', 'autoconfiguration'):
+                if isinstance(meta.get(key), list):
+                    meta[key] = [names.get(item, item) for item in meta[key]]
+            renamed[names.get(name, name)] = meta
+        policy[group] = renamed
+    path.write_text(json.dumps(policy, indent=2) + '\n')
+    (flint / 'policy' / 'renamed-packages.json').write_text(json.dumps(
+        {'schema': 'flint.renamed/1', 'note': 'Packages the repo split renamed (ADR-030 cutover); flint names the new '
+         'name where an old one is used (FLINT-E0301). Written by tools/cutover.py.', 'renamed': names},
+        indent=2) + '\n')
+
+
 def push_mirrors(summary, remote, policy):
     for repo in summary['repos']:
         checkout = Path(summary['workspace']).parent / f'flint-{repo}'
@@ -86,6 +161,10 @@ def cut(flint, extracted, github):
     recipe.write_text('\n'.join(line for line in recipe.read_text().splitlines()
                                 if not line.startswith('subPackage ')
                                 or (flint / re.search(r'"(.*)"', line)[1]).is_dir()) + '\n')
+    names = legacy_names(flint)
+    if names:
+        rename_boot_policy(flint, names)
+        rename_references(flint, names)
     lock_path = flint / 'platform.lock'
     lock = json.loads(lock_path.read_text())
     for repo, commit in extracted.items():
@@ -161,11 +240,19 @@ def main():
     extracted = summary['repos']
     source_flint = into / 'extract' / 'flint'
     blocked = preconditions(source_flint)
-    if arguments.push:
-        if blocked:
-            raise SystemExit('refusing the cutover: ' + '; '.join(blocked))
-        push_mirrors(summary, arguments.remote, repo_policy(source_flint)['repos'])
-        summary['pushed'] = sorted(extracted)
+    if arguments.push and blocked:
+        raise SystemExit('refusing the cutover: ' + '; '.join(blocked))
+    names = legacy_names(source_flint)
+    boot = into / 'extract' / 'flint-boot'
+    if names and boot.is_dir():
+        rename_recipes(boot, source_flint, names)
+        rename_references(boot, names)
+        run(['git', 'add', '-A'], boot)
+        run(['git', '-c', 'user.name=flint cutover', '-c', 'user.email=cutover@flint.invalid', 'commit', '--quiet',
+             '-m', 'Cutover: the pre-port Boot libraries and starters take legacy names (ADR-030)\n\n'
+             + ', '.join(f'flint:{old} -> flint:{new}' for old, new in sorted(names.items()))
+             + '. Spring Boot takes flint:boot and the starters\' names.'], boot)
+        extracted['boot'] = run(['git', 'rev-parse', 'HEAD'], boot, check=False).stdout.strip()
     flint = into / 'flint'
     run(['git', 'clone', '--quiet', '--no-local', str(source_flint), str(flint)])
     run(['git', 'checkout', '--quiet', '--detach', summary['source_commit']], flint)
@@ -176,11 +263,17 @@ def main():
     shutil.copytree(ROOT / '.native' / 'install' / arguments.target, flint / '.native' / 'install' / arguments.target,
                     symlinks=True)
     run([PYTHON, 'tools/install_toolchains.py', '--compiler', 'flint'], flint)
-    url = arguments.remote if arguments.push else str(into / 'extract') + '/flint-{repo}'
+    # Always fetch the local extracted commits; the real cutover pushes exactly those, and only after every check.
+    url = str(into / 'extract') + '/flint-{repo}'
     run([PYTHON, 'tools/platform_modules.py', '--fetch', '--native', arguments.target, '--url', url], flint)
     results = [] if arguments.skip_checks else checks(flint, arguments.target)
+    if arguments.push:
+        if arguments.skip_checks or not all(result['ok'] for result in results):
+            raise SystemExit('refusing to push the mirrors: the checks did not all pass (see the results above)')
+        push_mirrors(summary, arguments.remote, repo_policy(source_flint)['repos'])
+        summary['pushed'] = sorted(extracted)
     report = {'source_commit': summary['source_commit'], 'extracted': extracted, 'pushed': summary['pushed'],
-              'preconditions': blocked,
+              'preconditions': blocked, 'renamed': names,
               'cutover_commit': run(['git', 'rev-parse', 'HEAD'], flint, check=False).stdout.strip(),
               'removed': removed, 'passed': sum(r['ok'] for r in results),
               'failed': [r['check'] for r in results if not r['ok']], 'results': results}
