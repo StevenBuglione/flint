@@ -328,6 +328,9 @@ def check(runner,gate):
             runner.run([PYTHON,'-m','unittest','discover','-s',suites,'-p','test_*.py'],
                        env=dict(os.environ,FLINT_ROOT=str(ROOT)))
         runner.run([PYTHON,'tools/test_guards.py'])
+        # Every committed project's flint.lock matches its resolved graph (apps, examples, Spring ports).
+        runner.run([PYTHON,'tools/install_toolchains.py','--compiler','flint'])
+        runner.run([PYTHON,'tools/check_locks.py'])
     elif gate=='dag':runner.run([PYTHON,'tools/gates.py','--gate','structural'])
     elif gate=='api':
         # ADR-030 section 8: ported-file headers always pass, and API coverage only ratchets up.

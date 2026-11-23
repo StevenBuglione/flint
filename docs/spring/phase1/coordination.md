@@ -59,7 +59,8 @@ A session should end its turn only when every queue item it could take is claime
 - **Before every push:**
   1. rebase onto `flint-projects/flint` main;
   2. run the package's tests on DMD and LDC;
-  3. run `python3 tools/gates.py --gate structural` and `python3 tools/quality.py`.
+  3. run `python3 tools/gates.py --gate structural` and `python3 tools/quality.py`;
+  4. after changing a package's dependencies, run `python3 tools/check_locks.py` and relock what it names (`flint lock -C <project>`) in the same commit.
 - **Policy edits** regenerate the platform outputs in the same commit (`python3 tools/platform_modules.py --write`, FLINT-E0534).
 - **New packages** under `framework/` or `boot/` are registered in `policy/framework.json` or `policy/boot.json` in the commit that adds them (FLINT-E0535). When registering an allowlisted package, delete its line from `policy/unregistered-packages.json` in the same commit.
 - **Push each verified step.** Never force-push. Never push to the mirror repos (`flint-framework`, `flint-boot`, `flint-ai`, `flint-data-jdbc`); m7-flint-cli refreshes them with `tools/extract_repo.py --all --push`.
