@@ -760,7 +760,9 @@ unittest
     expect(data.canFind("descriptor.enumValue = &enum_OwnerStatus;")).toBeTrue();
     const ran = capture([binary], launch);
     expect(ran.ok).toBeTrue();
-    expect(ran.output).toEqual(readText(buildPath(root, "tests", "aot", "sample", "expected.txt")));
+    // Windows' text-mode stdout ends lines with CRLF; expected.txt uses LF.
+    expect(imported!"std.array".replace(ran.output, "\r\n", "\n")).toEqual(readText(buildPath(root,
+            "tests", "aot", "sample", "expected.txt")));
 }
 
 @("every generator diagnostic names its declaration")
