@@ -139,6 +139,10 @@ AotOutcome runAot(const ref AotRequest request)
     const autoConfigurations = readAutoConfigurations(request.packageDirectories);
     const cache = buildPath(request.root, cacheDirectory);
     State state = loadState(cache, request.environmentKey);
+    // A fresh state (a new environment, or none) drops the annotation types too: the describer skips the ones
+    // listed there, which must come from this environment.
+    if (state.keys.length == 0)
+        resetAnnotations(cache);
     sources ~= autoConfigurationModules(autoConfigurations, request.importPaths, state);
     outcome.modules = sources.length;
     addModules(state.importedModules, request.importPaths, sources, state);
@@ -548,6 +552,8 @@ private bool extractInto(const ref AotRequest request, scope const SourceModule[
     ];
     extraction.modules = modules.dup;
     extraction.classes = classes.dup;
+    auto known = knownAnnotations(cache, sources);
+    extraction.knownAnnotations = known.keys;
     extraction.directory = buildPath(request.root, extractDirectory);
     extraction.workingDirectory = request.root;
     auto result = extract(extraction);
@@ -569,7 +575,7 @@ private bool extractInto(const ref AotRequest request, scope const SourceModule[
         {
             const root = roots[model.name];
             if (root !in annotationSets)
-                annotationSets[root] = storeAnnotationSet(root, result);
+                annotationSets[root] = storeAnnotationSet(root, result, known);
             storeShared(root, *sharedKey, result.documents[index], annotationSets[root]);
         }
     }
@@ -1025,13 +1031,17 @@ private void storeShared(string sharedCache, string key, string document, string
 /// Keep the annotation types one extraction compile announced, once, by content: the models of that compile
 /// refer to the set by its hash, so a cold build parses each set once. Returns the hash.
 private string storeAnnotationSet(string sharedCache,
-        const ref imported!"flint_tool.engine.aot.extract".ExtractionResult result)
+        const ref imported!"flint_tool.engine.aot.extract".ExtractionResult result, const string[string] known)
 {
     import std.file : exists;
     import std.json : JSONValue;
     import flint_tool.support.files : sha256Hex;
 
+    // The types the describer skipped belong to the set too, so a project reusing these models from the shared
+    // cache gets every annotation type they reference.
     JSONValue[string] annotations;
+    foreach (name, document; known)
+        annotations[name] = JSONValue(document);
     foreach (index, ref type; result.annotationTypes)
         annotations[type.name] = JSONValue(result.annotationDocuments[index]);
     const text = JSONValue(annotations).toString;
@@ -1114,6 +1124,44 @@ private void writeAtomically(string path, string text)
     const temporary = path ~ "." ~ thisProcessID.to!string ~ ".tmp";
     write(temporary, text);
     rename(temporary, path);
+}
+
+/// The annotation types the describer need not describe again: those the project's cache holds, except the ones
+/// declared in the project's own modules, which an edit may change. By name, with their documents.
+private string[string] knownAnnotations(string cache, scope const SourceModule[] sources)
+{
+    import flint_tool.engine.aot.model : AnnotationType, parseAnnotationType;
+
+    bool[string] userModules;
+    foreach (ref source; sources)
+    {
+        if (source.user)
+            userModules[source.name] = true;
+    }
+    string[string] known;
+    foreach (name, document; loadAnnotations(cache))
+    {
+        AnnotationType type;
+        string error;
+        if (!parseAnnotationType(document, type, error))
+            continue;
+        bool user;
+        foreach (module_; type.modules)
+            user = user || (module_ in userModules) !is null;
+        if (!user)
+            known[name] = document;
+    }
+    return known;
+}
+
+private void resetAnnotations(string cache)
+{
+    import std.file : exists, remove;
+    import std.path : buildPath;
+
+    const path = buildPath(cache, "annotations.json");
+    if (exists(path))
+        remove(path);
 }
 
 /// Annotation types by name, as their JSON documents.

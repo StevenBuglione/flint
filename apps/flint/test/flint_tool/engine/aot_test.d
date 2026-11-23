@@ -1118,6 +1118,104 @@ unittest
     expect(readText(generated)).toEqual(texts[0]);
 }
 
+/// Every generated file of a project, by path relative to the generated directory.
+private string[string] generatedFiles(string project)
+{
+    import std.file : SpanMode, dirEntries, isFile, readText;
+    import std.path : buildPath, relativePath;
+
+    const directory = buildPath(project, ".flint", "generated", "aot");
+    string[string] files;
+    foreach (entry; dirEntries(directory, "*.d", SpanMode.depth))
+    {
+        if (isFile(entry.name))
+            files[relativePath(entry.name, directory)] = readText(entry.name);
+    }
+    return files;
+}
+
+@("a fresh platform-only cache: the project's extraction skips the cached platform annotation types, same output")
+unittest
+{
+    import std.conv : to;
+    import std.file : exists, rmdirRecurse, tempDir;
+    import std.path : buildPath;
+    import std.process : thisProcessID;
+    import flint_tool.engine.aot.driver : AotRequest, runAot;
+
+    const shared_ = buildPath(tempDir, "flint-aot-known-" ~ thisProcessID.to!string);
+    if (exists(shared_))
+        rmdirRecurse(shared_);
+    scope (exit)
+        if (exists(shared_))
+            rmdirRecurse(shared_);
+    const root = repositoryRoot();
+    AotRequest request;
+    request.compiler = compiler();
+    request.importPaths = [
+        "-I" ~ buildPath(root, "tests", "aot", "annotations"),
+        "-I" ~ buildPath(root, "tests", "aot", "autoconfig", "source"), "-I" ~ runtimeSource()
+    ];
+    request.flags = ["-preview=dip1000"];
+    request.packageDirectories = [buildPath(root, "tests", "aot", "autoconfig")];
+    request.environmentKey = "test";
+    request.sharedCache = shared_;
+    string[string][2] outputs;
+    foreach (run; 0 .. 2)
+    {
+        const project = copyFixture("sample");
+        scope (exit)
+            remove(project);
+        // The second project starts from the platform part only, as the cold build benchmark does: the platform
+        // model and its annotation types are reused, the project's modules are extracted with those types known.
+        if (run == 1)
+            rmdirRecurse(buildPath(shared_, "projects"));
+        request.root = project;
+        auto outcome = runAot(request);
+        expect(outcome.extractionErrors).toEqual("");
+        expect(outcome.ok).toBeTrue();
+        if (run == 1)
+        {
+            expect(outcome.reused > 0).toBeTrue();
+            expect(outcome.extracted > 0).toBeTrue();
+        }
+        outputs[run] = generatedFiles(project);
+    }
+    expect(outputs[1].length).toEqual(outputs[0].length);
+    foreach (path, text; outputs[0])
+        expect(outputs[1].get(path, null)).toEqual(text);
+}
+
+@("an incremental extraction with known annotation types matches a full one; project annotation types are redescribed")
+unittest
+{
+    import std.path : buildPath;
+
+    const incremental = copyFixture("hierarchy");
+    scope (exit)
+        remove(incremental);
+    expect(generate(incremental).ok).toBeTrue();
+    // An interface edit re-extracts one module with the cached annotation types known; then an edit to the
+    // project's own composed annotation must be described again, not taken from the cache.
+    edit(buildPath(incremental, "src", "hier", "web.d"), `@GetMapping("/ping")`, `@GetMapping("/pong")`);
+    expect(generate(incremental).ok).toBeTrue();
+    edit(buildPath(incremental, "src", "hier", "service.d"), `"readOnlyManager"`, `"reportManager"`);
+    expect(generate(incremental).ok).toBeTrue();
+    const full = copyFixture("hierarchy");
+    scope (exit)
+        remove(full);
+    edit(buildPath(full, "src", "hier", "web.d"), `@GetMapping("/ping")`, `@GetMapping("/pong")`);
+    edit(buildPath(full, "src", "hier", "service.d"), `"readOnlyManager"`, `"reportManager"`);
+    expect(generate(full).ok).toBeTrue();
+    const expected = generatedFiles(full);
+    const actual = generatedFiles(incremental);
+    expect(actual.length).toEqual(expected.length);
+    foreach (path, text; expected)
+        expect(actual.get(path, null)).toEqual(text);
+    expect(imported!"std.algorithm.searching".canFind(actual[buildPath("flint_aot", "hier",
+            "service.d")], `"reportManager"`)).toBeTrue();
+}
+
 /// Source directories of the DUB closure of `roots` (repository-relative package directories), following each
 /// dub.sdl's `dependency` lines, so the list follows packages when they move. `flint:x` names resolve to
 /// framework/x or packages/x, whichever has a dub.sdl. framework/java comes first: while framework/p1-interim exists it shadows
