@@ -209,8 +209,9 @@ class CompileServerPreludeTests(unittest.TestCase):
         (self.temp / 'app.d').write_text(self.APP, encoding='utf-8')
         self.prelude = self.temp / 'prelude.txt'
         self.write_prelude()
-        self.runtime = self.temp / 'run'
-        self.runtime.mkdir()
+        # The server's socket lives here: keep its path within macOS's 104-byte sun_path ($TMPDIR is long there).
+        self.runtime = Path(tempfile.mkdtemp(prefix='fp-', dir='/tmp'))
+        self.addCleanup(shutil.rmtree, self.runtime, True)
         self.trace = self.temp / 'trace.txt'
         self.env = dict(os.environ, XDG_RUNTIME_DIR=str(self.runtime), FLINT_DMD_SERVER_IDLE='60',
                         FLINT_DMD_SERVER_PRELUDE=str(self.prelude), FLINT_DMD_SERVER_TRACE=str(self.trace))
@@ -222,12 +223,14 @@ class CompileServerPreludeTests(unittest.TestCase):
                                 encoding='utf-8')
 
     def stop_servers(self):
-        for proc in Path('/proc').glob('[0-9]*'):
-            try:
-                if str(self.runtime).encode() in (proc / 'cmdline').read_bytes():
-                    os.kill(int(proc.name), 9)
-            except (OSError, ValueError):
-                pass
+        listing = subprocess.run(['ps', '-axo', 'pid=,command='], capture_output=True, text=True).stdout
+        for line in listing.splitlines():
+            pid, _, command = line.strip().partition(' ')
+            if str(self.runtime) in command and pid.isdigit():
+                try:
+                    os.kill(int(pid), 9)
+                except OSError:
+                    pass
 
     def sockets(self):
         return sorted((self.runtime / 'flint-dmd').glob('*.sock'))
