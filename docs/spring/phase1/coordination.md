@@ -87,7 +87,7 @@ When your assigned work is done, don't stop.
 | 7 | AOT contract 2 emission; mapping and descriptor tables for the three Phase 1 apps | flint-aot | |
 | 8 | Framework module budgets and probes for every `framework.json` module | size-levers | `01d5802`..`2e021fd` (timings provisional until proof-harness's quiet-window run) |
 | 9 | Cutover decisions 1–7 in `tools/cutover.py` and the CLI | m7-flint-cli | `ce402cc`..`f228c76`. Linux and macOS rehearsals pass, except the known items 19 (golden-wasm-app) and 14 (gs-rest-service, in progress); the Windows report is pending |
-| 10 | spring-petclinic-rest (JDBC) Flint port passing its suite | | |
+| 10 | spring-petclinic-rest (JDBC) Flint port passing its suite | data-access (`local_958a603d`) | |
 | 11 | Classification sweeps: lower the coverage baselines by classifying excluded and adapted elements in the Phase 1 checklists, with the module owners' agreement | api-coverage (`local_7afcbe30`) | |
 | 12 | SpEL subset compiled to D for `@Value("#{…}")`, `@Cacheable(key=…)` and `@PreAuthorize` | flint-aot | |
 | 13 | Port the upstream JUnit tests for spring-web and spring-webmvc classes already ported | macOS session (from size-levers) | |
