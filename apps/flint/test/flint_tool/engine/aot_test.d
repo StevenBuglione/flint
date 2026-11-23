@@ -1434,6 +1434,68 @@ unittest
     expect(checked.ok).toBeTrue();
 }
 
+@("a described java.util.Date registers Jackson's JavaUtilDateModule through a generated builder customizer")
+unittest
+{
+    import std.file : dirEntries, readText, SpanMode;
+    import std.path : buildPath;
+    import flint_tool.engine.aot.driver : AotRequest, runAot;
+    import flint_tool.support.process : Launch, capture;
+
+    const project = copyFixture("date");
+    scope (exit)
+        remove(project);
+    auto imports = closureImports([
+        "framework/web", "framework/webmvc", "boot/core/flint-boot-autoconfigure",
+        "boot/module/flint-boot-jackson"
+    ]);
+    AotRequest request;
+    request.root = project;
+    request.compiler = compiler();
+    request.importPaths = imports;
+    request.flags = ["-preview=dip1000"];
+    request.environmentKey = "test";
+    auto outcome = runAot(request);
+    expect(outcome.extractionErrors).toEqual("");
+    foreach (ref item; outcome.diagnostics)
+        expect(item.code ~ " " ~ item.message).toEqual("");
+    expect(outcome.ok).toBeTrue();
+    // In the application's own generated module, not the platform's (whose generated code stays project-free).
+    const application = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot",
+            "com", "example", "dated", "application.d"));
+    expect(application.canFind(`definition.name = "flintAotJavaUtilDateModuleCustomizer";`)).toBeTrue();
+    expect(application.canFind(`definition.types = ["flint.boot.jackson.autoconfigure.JsonMapperBuilderCustomizer"];`))
+        .toBeTrue();
+    const added = "builder.addModule(new flint.jackson.databind.module_.JavaUtilDateModule());";
+    expect(application.canFind(added)).toBeTrue();
+    string[] sources;
+    foreach (directory; ["src", ".flint/generated/aot"])
+        foreach (entry; dirEntries(buildPath(project, directory), "*.d", SpanMode.depth))
+            sources ~= entry.name;
+    Launch launch;
+    launch.directory = project;
+    const checked = capture([
+        compiler(), "-o-", "-preview=dip1000", "-I" ~ buildPath(project, "src"),
+        "-I" ~ buildPath(project, ".flint", "generated", "aot")
+    ] ~ imports ~ sources, launch);
+    expect(checked.combined()).toEqual("");
+    expect(checked.ok).toBeTrue();
+}
+
+@("no java.util.Date described: no customizer")
+unittest
+{
+    import std.file : readText;
+    import std.path : buildPath;
+
+    const project = copyFixture("sample");
+    scope (exit)
+        remove(project);
+    expect(generate(project).ok).toBeTrue();
+    const app = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot", "shop", "app.d"));
+    expect(app.canFind("flintAotJavaUtilDateModuleCustomizer")).toBeFalse();
+}
+
 @("petclinic-rest's shapes: interface mappings, @PreAuthorize SpEL, inherited properties, real annotations")
 unittest
 {

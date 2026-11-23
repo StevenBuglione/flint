@@ -1,0 +1,6 @@
+[project]
+name = "aot-date"
+version = "0.1.0"
+flint = "1.0"
+type = "executable"
+description = "Flint AOT fixture: a DTO holding a java.util.Date, read and written through the erased descriptor path."

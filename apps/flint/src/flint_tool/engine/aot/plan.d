@@ -82,12 +82,18 @@ enum FactoryKind
     /// An instance `@Bean` method on the configuration bean.
     method,
     /// A static `@Bean` method.
-    staticMethod
+    staticMethod,
+    /// A D expression the generator writes itself (`BeanPlan.expression`), for beans it contributes.
+    expression
 }
 
 /// One bean definition.
 struct BeanPlan
 {
+    /// For `FactoryKind.expression`: the expression creating the bean, and the modules it names.
+    string expression;
+    /// ditto
+    string[] expressionModules;
     /// Bean name.
     string name;
     /// Declared type.
@@ -745,6 +751,93 @@ private final class Analysis
         compileMethodExpressions();
         markDescribed();
         planContainers();
+        planDateModule();
+    }
+
+    /// The canonical names of Jackson's java.util.Date module and of Boot's builder customizer.
+    enum dateModule = "flint.jackson.databind.module_.JavaUtilDateModule";
+    /// ditto
+    enum dateCustomizer = "flint.boot.jackson.autoconfigure.JsonMapperBuilderCustomizer";
+
+    /// Reading a java.util.Date through the erased descriptor path needs Jackson's JavaUtilDateModule (pay for use,
+    /// third-party-apis' 3f74f7ef). When a described type spells flint.java.util.date.Date at any depth, the
+    /// application's own generated module contributes a JsonMapperBuilderCustomizer bean that adds it: Boot's
+    /// JacksonAutoConfiguration applies every customizer, and the platform's generated code stays project-free.
+    void planDateModule()
+    {
+        import flint_tool.engine.aot.names : packageOf;
+
+        if (plan.application.length == 0 || !describesDate())
+            return;
+        // Both classes must be in the closure; unknown ones are asked together (the driver probes once).
+        bool unknown;
+        foreach (name; [dateModule, dateCustomizer])
+        {
+            if (name !in model.present)
+            {
+                plan.unknownClasses ~= name;
+                unknown = true;
+            }
+            else if (!model.present[name])
+                return;
+        }
+        if (unknown)
+            return;
+        const application = model.type(plan.application);
+        const target = application is null ? packageOf(plan.application) : application.module_;
+        BeanPlan bean;
+        bean.name = "flintAotJavaUtilDateModuleCustomizer";
+        bean.type = dateCustomizer;
+        bean.types = [dateCustomizer];
+        bean.className = dateCustomizer;
+        bean.factory = FactoryKind.expression;
+        enum builder = "flint.jackson.databind.JsonMapper.Builder";
+        bean.expression = "new class " ~ dateCustomizer ~ " {\n        void customize(" ~ builder
+            ~ " builder) @safe\n        {\n            builder.addModule(new " ~ dateModule ~ "());\n        }\n    }";
+        bean.expressionModules = [
+            "flint.boot.jackson.autoconfigure", "flint.jackson.databind",
+            "flint.jackson.databind.module_"
+        ];
+        bean.source = "Flint AOT: an application type holds a java.util.Date";
+        bean.rank = rank++;
+        addBean(target, bean);
+    }
+
+    /// Whether a type the generated tables describe holds flint.java.util.date.Date, at any depth.
+    bool describesDate() const
+    {
+        import std.algorithm.searching : canFind;
+
+        enum date = "flint.java.util.date.Date";
+        foreach (ref item; plan.modules)
+        {
+            foreach (type; item.containerDescriptors)
+            {
+                if (type.canFind(date))
+                    return true;
+            }
+            foreach (ref descriptor; item.descriptors)
+            {
+                if (descriptor.type == date)
+                    return true;
+                foreach (ref property; descriptor.properties)
+                {
+                    if (property.type.canFind(date))
+                        return true;
+                }
+            }
+            foreach (ref handler; item.handlers)
+            {
+                if (handler.method.returns.name.canFind(date))
+                    return true;
+                foreach (ref argument; handler.arguments)
+                {
+                    if (argument.type.canFind(date) || argument.elementType.canFind(date))
+                        return true;
+                }
+            }
+        }
+        return false;
     }
 
     /// Which registered container types the erased builders describe (`ContainerPlan`).

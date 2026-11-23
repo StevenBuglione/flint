@@ -386,6 +386,10 @@ private struct Emitter
                     bean.arguments.length ? ", " ~ arguments(bean.arguments) : "") ~ ")";
         case FactoryKind.staticMethod:
             return "cast(Object) " ~ bean.className ~ "." ~ bean.method ~ "(" ~ arguments(bean.arguments) ~ ")";
+        case FactoryKind.expression:
+            foreach (name; bean.expressionModules)
+                imports[name] = true;
+            return bean.expression;
         case FactoryKind.method:
             const owner = bean.configProxied
                 ? shortName(bean.className) ~ "__FlintConfiguration" : bean.className;
