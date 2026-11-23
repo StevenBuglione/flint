@@ -9,6 +9,7 @@ dependency "flint:boot-core" version="*"
 dependency "flint:boot-autoconfigure" version="*"
 dependency "flint:beans" version="*"
 dependency "flint:context" version="*"
+dependency "flint:core" version="*"
 dependency "flint:engine-servlet" version="*"
 dependency "flint:jakarta-servlet" version="*"
 dependency "flint:java" version="*"
@@ -21,4 +22,5 @@ configuration "unittest" {
     targetType "library"
     sourcePaths "source" "tests"
     importPaths "source" "tests"
+    dependency "flint:web" version="*"
 }

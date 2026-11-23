@@ -95,6 +95,50 @@ import flint.java.util : Optional;
             ~ "application to listen on another port.");
 }
 
+private final class NamedFilter : imported!"flint.web.filter".OncePerRequestFilter, imported!"flint.core".Ordered
+{
+    private int order;
+
+    this(int order)
+    {
+        this.order = order;
+    }
+
+    protected override void doFilterInternal(imported!"flint.jakarta.servlet.http".HttpServletRequest request,
+            imported!"flint.jakarta.servlet.http".HttpServletResponse response,
+            imported!"flint.jakarta.servlet".FilterChain chain)
+    {
+        chain.doFilter(request, response);
+    }
+
+    int getOrder()
+    {
+        return order;
+    }
+}
+
+@("ServletContextInitializerBeans: Filter beans are adapted under their names, in order, unless registered") unittest
+{
+    import flint.boot.web.server.servlet : AbstractFilterRegistrationBean, FilterRegistrationBean;
+    import flint.boot.web.server.servlet.context : ServletContextInitializerBeans;
+    import flint.jakarta.servlet : DispatcherType;
+
+    auto context = new ServletWebServerApplicationContext;
+    auto registered = new NamedFilter(0);
+    context.getBeanFactory().registerSingleton("second", new NamedFilter(2));
+    context.getBeanFactory().registerSingleton("first", new NamedFilter(1));
+    context.getBeanFactory().registerSingleton("registered", registered);
+    auto registration = new FilterRegistrationBean(registered);
+    registration.setName("explicit");
+    registration.setOrder(-5);
+    context.getBeanFactory().registerSingleton("registration", registration);
+    string[] names;
+    foreach (initializer; new ServletContextInitializerBeans(context).get())
+        names ~= (cast(AbstractFilterRegistrationBean) initializer).getFilterName();
+    assert(names == ["explicit", "first", "second"], imported!"std.conv".to!string(names));
+    assert(registration.getDispatcherTypes() == [DispatcherType.REQUEST]);
+}
+
 version (FlintNativeLlhttp)
 {
     import flint.jakarta.servlet.http : HttpServlet;
@@ -201,5 +245,33 @@ version (FlintNativeLlhttp)
         catch (PortInUseException e)
             thrown = e.getPort() == first.getPort();
         assert(thrown);
+    }
+
+    // Adds `X-Filtered: yes` before the chain.
+    private final class HeaderFilter : imported!"flint.web.filter".OncePerRequestFilter
+    {
+        protected override void doFilterInternal(imported!"flint.jakarta.servlet.http".HttpServletRequest request,
+                imported!"flint.jakarta.servlet.http".HttpServletResponse response,
+                imported!"flint.jakarta.servlet".FilterChain chain)
+        {
+            response.setHeader("X-Filtered", "yes");
+            chain.doFilter(request, response);
+        }
+    }
+
+    @("a FilterRegistrationBean's filter runs before the servlet, at its URL pattern") unittest
+    {
+        import flint.boot.web.server.servlet : FilterRegistrationBean, ServletRegistrationBean;
+        import std.algorithm.searching : canFind;
+
+        auto filter = new FilterRegistrationBean(new HeaderFilter);
+        filter.setUrlPatterns("/filtered/*");
+        auto server = new FlintServletWebServerFactory(0).getWebServer(new ServletRegistrationBean(new OkServlet,
+                "/"), filter);
+        server.start();
+        scope (exit)
+            server.destroy();
+        assert(get(server.getPort(), "/filtered/x").canFind("X-Filtered: yes"));
+        assert(!get(server.getPort(), "/other").canFind("X-Filtered"));
     }
 }

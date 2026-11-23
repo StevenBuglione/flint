@@ -1,5 +1,6 @@
 // Ported from spring-boot v4.2.0: module/spring-boot-web-server/src/main/java/org/springframework/boot/web/server/servlet/context/ServletWebServerApplicationContext.java
-// with ServletWebServerApplicationContextFactory.java from the same directory.
+// with ServletWebServerApplicationContextFactory.java from the same directory, and
+// core/spring-boot/src/main/java/org/springframework/boot/web/servlet/ServletContextInitializerBeans.java.
 // Copyright 2012-present the original author or authors.
 // Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
 // Modified by the Flint authors: the context extends GenericApplicationContext (Flint has no
@@ -125,10 +126,7 @@ class ServletWebServerApplicationContext : GenericApplicationContext, KeepAliveA
         if (webServer !is null)
             return;
         auto factory = getWebServerFactory();
-        ServletContextInitializer[] initializers;
-        foreach (name; getBeanFactory().getBeanNamesForTypeErased(typeNameOf!ServletContextInitializer))
-            initializers ~= cast(ServletContextInitializer) getBeanFactory().getBean(name);
-        webServer = factory.getWebServer(initializers);
+        webServer = factory.getWebServer(new ServletContextInitializerBeans(this).get());
     }
 
     private void markTerminated() nothrow @nogc
@@ -136,6 +134,87 @@ class ServletWebServerApplicationContext : GenericApplicationContext, KeepAliveA
         import core.atomic : atomicStore;
 
         atomicStore(terminated, true);
+    }
+}
+
+/// The context's `ServletContextInitializer` beans, with its plain `Servlet` and `Filter` beans adapted to
+/// registrations under their bean names (unless a registration bean already covers them), sorted by order.
+final class ServletContextInitializerBeans
+{
+    private ServletContextInitializer[] initializers;
+
+    /// The initializers of `context`.
+    this(ServletWebServerApplicationContext context)
+    {
+        import flint.boot.web.server.servlet : AbstractFilterRegistrationBean,
+            FilterRegistrationBean, ServletRegistrationBean;
+        import flint.engine.aot.name : typeNameOf;
+        import flint.jakarta.servlet : Filter, Servlet;
+        import std.algorithm.searching : canFind;
+
+        auto factory = context.getBeanFactory();
+        Object[] seen;
+        foreach (name; factory.getBeanNamesForTypeErased(typeNameOf!ServletContextInitializer))
+        {
+            auto initializer = cast(ServletContextInitializer) factory.getBean(name);
+            initializers ~= initializer;
+            if (auto servlet = cast(ServletRegistrationBean) initializer)
+                seen ~= cast(Object) servlet.getServlet();
+            else if (auto filter = cast(AbstractFilterRegistrationBean) initializer)
+                seen ~= cast(Object) filter.getFilter();
+        }
+        string[] servletNames;
+        foreach (name; factory.getBeanNamesForTypeErased(typeNameOf!Servlet))
+        {
+            if (!seen.canFind!((a, b) => a is b)(factory.getBean(name)))
+                servletNames ~= name;
+        }
+        foreach (name; servletNames)
+        {
+            // Boot's ServletRegistrationBeanAdapter: a single servlet (or the dispatcher) maps at "/".
+            const url = servletNames.length == 1
+                || name == ServletWebServerApplicationContext.DISPATCHER_SERVLET_NAME ? "/" : "/" ~ name ~ "/";
+            auto bean = factory.getBean(name);
+            auto registration = new ServletRegistrationBean(cast(Servlet) bean, url);
+            registration.setName(name);
+            registration.setOrder(orderOf(bean));
+            initializers ~= registration;
+        }
+        foreach (name; factory.getBeanNamesForTypeErased(typeNameOf!Filter))
+        {
+            auto bean = factory.getBean(name);
+            if (seen.canFind!((a, b) => a is b)(bean))
+                continue;
+            auto registration = new FilterRegistrationBean(cast(Filter) bean);
+            registration.setName(name);
+            registration.setOrder(orderOf(bean));
+            initializers ~= registration;
+        }
+        initializers = sortedByOrder(initializers);
+    }
+
+    /// The initializers, in order.
+    ServletContextInitializer[] get() pure nothrow
+    {
+        return initializers.dup;
+    }
+
+    private static int orderOf(Object bean)
+    {
+        import flint.core : Ordered;
+
+        if (auto ordered = cast(Ordered) bean)
+            return ordered.getOrder();
+        return Ordered.LOWEST_PRECEDENCE;
+    }
+
+    private static ServletContextInitializer[] sortedByOrder(ServletContextInitializer[] items)
+    {
+        import std.algorithm.mutation : SwapStrategy;
+        import std.algorithm.sorting : sort;
+
+        sort!((a, b) => orderOf(cast(Object) a) < orderOf(cast(Object) b), SwapStrategy.stable)(items);
+        return items;
     }
 }
 

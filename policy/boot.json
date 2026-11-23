@@ -101,6 +101,7 @@
         "boot-autoconfigure",
         "beans",
         "context",
+        "core",
         "engine-servlet",
         "jakarta-servlet",
         "java",
