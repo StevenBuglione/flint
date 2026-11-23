@@ -1,0 +1,44 @@
+{
+  "schema": "flint.measure-queue/1",
+  "id": "gs-builds-aot",
+  "created": "2026-11-23",
+  "status": "pending",
+  "requested_by": "flint-aot (Spring port P1: Flint AOT generator), for the coordinator: owner decision 2670d5be",
+  "summary": "gs-rest-service builds (cached cold, incremental, scratch) after the AOT step and AOT library changes",
+  "why": "Re-times gs-builds for the generated-code fixes. In this commit: 1397cf87 (the incremental edit, an appended enum, skips the AOT extraction: 81 ms -> 3 ms locally), a9def752 (platform models from the shared cache on cold builds), 6eb4dc4a (generated text without checkout paths) and m7-flint-cli's ff31b6d2 (the AOT library cached like a platform archive, so the 0.45 s generated jackson auto-configuration module is not compiled on a cached cold build). Same command as gs-builds. Boot's descriptor exporters (5aafcf43's hook) and the erased container builders are not in yet; a later entry measures them.",
+  "builds": {
+    "tree": {
+      "app": "checkout",
+      "commit": "ff31b6d26fb3",
+      "flint": true,
+      "linker": "mold"
+    }
+  },
+  "measure": {
+    "kind": "command",
+    "ports": [],
+    "steps": [
+      {
+        "in": "tree",
+        "argv": [
+          "{python}",
+          "tools/measure_builds.py",
+          "--spring",
+          "--spring-app",
+          "gs-rest-service",
+          "--no-context",
+          "--output",
+          "{out}/builds.json"
+        ],
+        "smoke_args": [
+          "--smoke",
+          "--trials",
+          "1"
+        ],
+        "may_fail": true
+      }
+    ]
+  },
+  "report_to": "flint-aot; m7-flint-cli; the coordinator",
+  "estimate_minutes": 20
+}
