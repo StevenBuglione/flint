@@ -5,11 +5,11 @@
   "status": "pending",
   "requested_by": "m7-flint-cli (local_b3b0e1d4), after the platform cache (9655843b)",
   "summary": "gs-rest-service builds against both ADR-030 headlines: platform cache vs std-primed GOCACHE, and --no-platform-cache vs go build -a",
-  "why": "The platform cache and --no-platform-cache exist now; this re-measures the gap the 09:00Z smoke showed (9.0 s cold vs Go 0.16 s). Measured in a worktree at 674ee6d7d429 with the release-built flint and DMD linking with mold (ADR-021); the cache is primed by one recorded, unscored build. About 20 minutes, so it fits a short window.",
+  "why": "The platform cache and --no-platform-cache exist now; this re-measures the gap the 09:00Z smoke showed (9.0 s cold vs Go 0.16 s). Measured in a worktree at 33fb1b82dd81 with the release-built flint and DMD linking with mold (ADR-021); the cache is primed by one recorded, unscored build. About 20 minutes, so it fits a short window.",
   "builds": {
     "tree": {
       "app": "checkout",
-      "commit": "674ee6d7d429",
+      "commit": "33fb1b82dd81",
       "flint": true,
       "linker": "mold"
     }
