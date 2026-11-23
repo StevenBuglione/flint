@@ -449,6 +449,7 @@ class FlintApplication
     private bool logStartupInfo = true;
     private string[] additionalProfiles;
     private string[string] defaultProperties;
+    private string[string] testProperties;
     private WebApplicationType webApplicationType = WebApplicationType.NONE;
     private bool webApplicationTypeSet;
     private ApplicationContextFactory applicationContextFactory;
@@ -617,6 +618,13 @@ class FlintApplication
         this.failureAnalyzers ~= analyzers;
     }
 
+    /// Flint test support: properties with the highest precedence, as `@FlintBootTest(properties: ...)` inlines
+    /// them (Boot's "Inlined Test Properties" source).
+    void setTestProperties(string[string] properties)
+    {
+        this.testProperties = properties.dup;
+    }
+
     /// Flint: read config files through `reader` (tests use an in-memory one).
     void setResourceReader(ConfigDataResourceReader reader)
     {
@@ -647,6 +655,7 @@ private:
         options.environment = environmentVariablesSet ? environmentVariables : environment.toAA();
         options.additionalProfiles = additionalProfiles;
         options.defaultProperties = defaultProperties;
+        options.inlinedProperties = testProperties;
         options.reader = resourceReader;
         auto result = new ApplicationEnvironment(new ConfigDataEnvironment(options).processAndApply());
         bindMainProperties(result);

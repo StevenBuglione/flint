@@ -1,0 +1,5 @@
+name "boot-starter-validation"
+description "Jakarta Validation with Hibernate Validator's behaviour (spring-boot-starter-validation)"
+license "Apache-2.0"
+targetType "none"
+dependency "boot-starter" path="../flint-boot-starter"

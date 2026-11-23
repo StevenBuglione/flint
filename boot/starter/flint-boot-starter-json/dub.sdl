@@ -1,0 +1,5 @@
+name "boot-starter-json"
+description "JSON with Jackson (spring-boot-starter-json)"
+license "Apache-2.0"
+targetType "none"
+dependency "boot-starter" path="../flint-boot-starter"

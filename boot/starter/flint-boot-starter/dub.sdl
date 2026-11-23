@@ -1,0 +1,7 @@
+name "boot-starter"
+description "Core starter: auto-configuration support, logging and YAML (spring-boot-starter)"
+license "Apache-2.0"
+targetType "none"
+dependency "boot" path="../../core/flint-boot"
+dependency "boot-autoconfigure" path="../../core/flint-boot-autoconfigure"
+dependency "flint:jakarta-annotation" path="../../.."

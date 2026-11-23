@@ -1,0 +1,6 @@
+name "boot-starter-web"
+description "Web applications with Flint MVC on Flint's embedded server (spring-boot-starter-web)"
+license "Apache-2.0"
+targetType "none"
+dependency "boot-starter" path="../flint-boot-starter"
+dependency "boot-starter-json" path="../flint-boot-starter-json"

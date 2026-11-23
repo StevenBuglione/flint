@@ -1,0 +1,8 @@
+name "boot-starter-test"
+description "Testing Flint Boot applications (spring-boot-starter-test)"
+license "Apache-2.0"
+targetType "none"
+dependency "boot-starter" path="../flint-boot-starter"
+dependency "boot-test" path="../../core/flint-boot-test"
+dependency "boot-webmvc-test" path="../../module/flint-boot-webmvc-test"
+dependency "boot-data-jdbc-test" path="../../module/flint-boot-data-jdbc-test"

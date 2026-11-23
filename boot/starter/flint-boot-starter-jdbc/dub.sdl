@@ -1,0 +1,5 @@
+name "boot-starter-jdbc"
+description "JDBC with a pooled DataSource (spring-boot-starter-jdbc)"
+license "Apache-2.0"
+targetType "none"
+dependency "boot-starter" path="../flint-boot-starter"

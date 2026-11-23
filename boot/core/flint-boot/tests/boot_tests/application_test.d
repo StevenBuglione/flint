@@ -12,6 +12,7 @@ import flint.boot : ApplicationArguments, ApplicationContextFactory, Application
     ApplicationRunner, Banner, ClassRef, CommandLineRunner,
     DefaultApplicationArguments,
     ExitCodeGenerator, FlintApplication, FlintBootBanner, ResourceBanner, WebApplicationType;
+import flint.boot.builder : FlintApplicationBuilder;
 import flint.boot.context.config : ConfigDataResourceReader, ConfigDataResult, Profiles;
 import flint.boot.context.properties.source : ConfigurationPropertySource, MapConfigurationPropertySource;
 import flint.boot.internal.context : ConfigurableApplicationContext;
@@ -474,6 +475,70 @@ private final class FixedExitCode : ExitCodeGenerator
     application.setEnvironmentVariables(null);
     application.setOutput((string) {});
     assertThrows!IllegalStateException(() { application.run(null); }, "No ApplicationContextFactory");
+}
+
+// ---- SpringApplicationBuilderTests ----------------------------------------------------------------------------
+
+private ApplicationEnvironment runBuilder(string[string] files,
+        scope void delegate(FlintApplicationBuilder) @safe configure)
+{
+    auto context = new StubContext;
+    auto builder = new FlintApplicationBuilder(ClassRef("boot_tests.application_test.ExampleConfig"));
+    builder.contextFactory(new StubFactory(context)).bannerMode(Banner.Mode.OFF);
+    builder.getApplication().setResourceReader(new MemoryReader(files));
+    builder.getApplication().setEnvironmentVariables(null);
+    builder.getApplication().setOutput((string) {});
+    configure(builder);
+    builder.run();
+    return cast(ApplicationEnvironment) context.environment;
+}
+
+@("profileAndProperties") unittest
+{
+    auto environment = runBuilder([
+        "resources/application.properties": "b=file\nc=file\n",
+        "resources/application-foo.properties": "b=profile-specific-file\n"
+    ], (b) { b.profiles("foo").properties("a=default"); });
+    assert(environment.getProperty("a") == "default");
+    assert(environment.getProperty("b") == "profile-specific-file");
+    assert(environment.getProperty("c") == "file");
+    assert(environment.acceptsProfiles("foo"));
+}
+
+@("propertiesAsMap") unittest
+{
+    auto environment = runBuilder(null, (b) { b.properties(["bar": "foo"]); });
+    assert(environment.getProperty("bar") == "foo");
+}
+
+@("propertiesWithRepeatSeparator") unittest
+{
+    auto environment = runBuilder(null, (b) {
+        b.properties("one=c:\\logging.file.name", "two=a:b", "three:c:\\logging.file.name", "four:a:b");
+    });
+    assert(environment.getProperty("one") == "c:\\logging.file.name");
+    assert(environment.getProperty("two") == "a:b");
+    assert(environment.getProperty("three") == "c:\\logging.file.name");
+    assert(environment.getProperty("four") == "a:b");
+}
+
+@("specificApplicationContextFactory") unittest
+{
+    auto context = new StubContext;
+    auto builder = new FlintApplicationBuilder(ClassRef("x.ExampleConfig"));
+    builder.contextFactory(new StubFactory(context)).bannerMode(Banner.Mode.OFF);
+    builder.getApplication().setResourceReader(new MemoryReader(null));
+    builder.getApplication().setEnvironmentVariables(null);
+    builder.getApplication().setOutput((string) {});
+    assert(builder.run() is context);
+}
+
+@("flint.testPropertiesWinOverEverything") unittest
+{
+    auto environment = runBuilder(["resources/application.properties": "a=file\n"], (b) {
+        b.getApplication().setTestProperties(["a": "inlined"]);
+    });
+    assert(environment.getProperty("a") == "inlined");
 }
 
 // ---- DefaultApplicationArgumentsTests -----------------------------------------------------------------------

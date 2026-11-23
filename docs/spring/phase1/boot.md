@@ -30,13 +30,19 @@ Run a package's tests with `dub test --root boot/core/flint-boot --compiler=dmd`
 | Config data: `application.{properties,yaml}`, location groups, profile files, `---` with `flint.config.activate.on-profile`, profile groups and includes, `FLINT_PROFILES_ACTIVE`, `spring.*` aliases | done | 23 of 87 `ConfigDataEnvironmentPostProcessorIntegrationTests` (in-memory resources), plus 8 Flint tests |
 | `FlintApplication` (run, exit, `flint.main.*`), runners, `ApplicationArguments`, banner (`FlintBootBanner`, `ResourceBanner`, ANSI), startup info, `mixin FlintMain` | done over a context stand-in until `flint.context` lands; `FlintApplicationBuilder` next | 22 `SpringApplicationTests` (stub context), 6 of 7 `DefaultApplicationArgumentsTests`, 14 of 15 `ResourceBannerTests`, plus 1 Flint test |
 | `FailureAnalyzer`, `FailureAnalysis`, `LoggingFailureAnalysisReporter`, Bind / InvalidConfigurationPropertyName / ConfigDataNotFound analyzers; Boot's console log format | done; the format plugs into `flint.slf4j` as its provider when that lands | covered by the `SpringApplicationTests` failure tests; 4 Flint console-format tests |
-| autoconfigure, boot-test, starters | after flint-context and webmvc land | |
+| `@FlintBootApplication`, `@EnableAutoConfiguration`, `@AutoConfiguration` and ordering, the `@ConditionalOn*` family | done (annotation leaves at AOT contract 1's names) | 1 Flint test (meta-annotations merge through `descriptorOf`) |
+| `FlintApplicationBuilder` | done (context hierarchies deferred) | 4 of 23 `SpringApplicationBuilderTests` (the rest exercise parent/child contexts, class loaders and initializers) plus 1 Flint test |
+| `@FlintBootTest`, `@TestConfiguration`, `FlintBootTestContext` | done over the context stand-in | 6 Flint tests modelled on Boot's `SpringBootTest*Tests` |
+| `@WebMvcTest`, `@AutoConfigureMockMvc` (module `flint-boot-webmvc-test`), `@DataJdbcTest` (module `flint-boot-data-jdbc-test`) | annotations done; the slices run when MockMvc and Data JDBC land | |
+| Starters: `flint-boot-starter`, `-web`, `-jdbc`, `-validation`, `-json`, `-test` | done as dependency lists over what exists (`boot/starter/README.md` lists what joins each) | |
+| Phase 1 auto-configurations (web/MVC, Jackson, `DataSource` with `hikari`, transactions, validation, SQL init) | waiting on the framework types they create | |
+| `@MockitoBean` | deferred: spring-test's `org.springframework.test` maps to `flint.test`, which the base test library already owns, and Mockito needs a mock engine (generated subclasses); raised with the coordinating session | |
 
 Excluded upstream tests, each with its reason:
 - `ConfigurationPropertyNameTests.hashCodeIsStored` (`runtime-reflection`): reads a private field with `ReflectionTestUtils`.
 - `OriginTrackedPropertiesLoaderTests.compareToJavaProperties` (`jvm-platform`): compares against `java.util.Properties`.
 
-Total so far: **285 tests pass on DMD 2.114 and LDC 1.43**: 267 ported upstream tests and 18 Flint tests. The runner in `tests/boot_tests/support.d` runs each `unittest` on its own and prints the count.
+Total so far: **297 tests pass on DMD 2.114 and LDC 1.43** (290 in flint-boot, 1 in flint-boot-autoconfigure, 6 in flint-boot-test): 271 ported upstream tests and 26 Flint tests. The runner in `tests/boot_tests/support.d` runs each `unittest` on its own and prints the count.
 
 ## Design decisions
 

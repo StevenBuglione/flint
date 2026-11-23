@@ -238,6 +238,8 @@ struct ConfigDataEnvironmentOptions
     string[] additionalProfiles;
     /// `FlintApplication.setDefaultProperties`, lowest precedence.
     string[string] defaultProperties;
+    /// Inlined test properties (`@FlintBootTest(properties: ...)`), highest precedence.
+    string[string] inlinedProperties;
     /// Where files are read from; the file system when `null`.
     ConfigDataResourceReader reader;
 }
@@ -306,6 +308,12 @@ final class ConfigDataEnvironment
         import flint.boot.internal.core_env : parseCommandLine;
 
         ConfigurationPropertySource[] bootstrap;
+        if (options.inlinedProperties.length)
+        {
+            auto inlined = new MapConfigurationPropertySource("Inlined Test Properties");
+            inlined.putAll(options.inlinedProperties);
+            bootstrap ~= inlined;
+        }
         bootstrap ~= commandLineSource(parseCommandLine(options.args));
         bootstrap ~= new SystemEnvironmentPropertySource(options.environment);
         auto defaults = new MapConfigurationPropertySource("defaultProperties");
