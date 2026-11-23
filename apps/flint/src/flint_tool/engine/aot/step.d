@@ -45,6 +45,13 @@ AotStep runAotStep(ref Session session, const ref Manifest manifest, const ref R
     foreach (ref item; resolution.packages)
         request.packageDirectories ~= item.directory;
     request.environmentKey = environmentKey(session, toolchain, request.compiler, resolution);
+    // The per-endpoint fast path is Flint's default execution model (owner decision 7206d97d,
+    // docs/spring/phase1/fast-path.md); FLINT_AOT_FAST_PATH=0 opts out, for diagnosis.
+    {
+        import std.process : environment;
+
+        request.fastPath = environment.get("FLINT_AOT_FAST_PATH", "1") != "0";
+    }
     request.sharedCache = buildPath(cacheRoot(session), "aot");
     // Project-keyed entries apart from the platform's, so a platform-only copy of the cache is <cache> without
     // projects/ (the cold build benchmark starts from one).
