@@ -1,3 +1,5 @@
+import json
+import os
 import re
 import shutil
 import subprocess
@@ -135,6 +137,31 @@ class ForkSourcesTests(unittest.TestCase):
                 checked += 1
         if not checked:
             self.skipTest('pinned DMD/DUB sources are not installed')
+
+
+class FlintDubTests(unittest.TestCase):
+    def test_compiler_family_comes_from_the_binary_name(self):
+        # DUB matched "dmd" anywhere in the compiler path, so LDC under a directory such as dmd-tools/ (or a
+        # checkout in ~/work/dmd-arm64/) was driven with DMD's switches and failed its platform probe.
+        dubs = [ROOT / '.tools' / directory / 'dub' for directory in ('dub-1.43.0/bin', 'dmd2/linux/bin64')]
+        dub = next((d for d in dubs if d.is_file()), None)
+        ldc = next(iter(sorted((ROOT / '.tools').glob('ldc2-1.43.0-*/bin/ldc2'))), None)
+        if dub is None or ldc is None or sys.platform == 'win32':
+            self.skipTest('the Flint DUB and the pinned LDC are not installed')
+        with tempfile.TemporaryDirectory(prefix='flint dub ') as temp:
+            temp = Path(temp)
+            (temp / 'dmd-tools').mkdir()
+            (temp / 'dmd-tools' / 'ldc2').symlink_to(ldc)
+            package = temp / 'probe'
+            (package / 'source').mkdir(parents=True)
+            (package / 'dub.sdl').write_text('name "probe"\n')
+            (package / 'source' / 'app.d').write_text('void main() {}\n')
+            env = dict(os.environ, DUB_HOME=str(temp / 'dub-home'), HOME=str(temp))
+            result = subprocess.run([str(dub), 'describe', '--root', str(package), '--skip-registry=all',
+                                     '--compiler=' + str(temp / 'dmd-tools' / 'ldc2')],
+                                    capture_output=True, text=True, env=env, timeout=300)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertEqual(json.loads(result.stdout)['compiler'], 'ldc')
 
 
 class InstallerArgumentTests(unittest.TestCase):

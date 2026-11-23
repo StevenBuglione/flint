@@ -83,10 +83,27 @@ index 7d05493..d6562af 100644
  		return 0;
  	}
 diff --git a/source/dub/compilers/compiler.d b/source/dub/compilers/compiler.d
-index ce97d38..737d806 100644
+index ce97d38..bbc080d 100644
 --- a/source/dub/compilers/compiler.d
 +++ b/source/dub/compilers/compiler.d
-@@ -186,9 +186,46 @@ interface Compiler {
+@@ -64,9 +64,13 @@ Compiler getCompiler(string name)
+ 			return c;
+ 
+ 	// try to match names like gdmd or gdc-2.61
+-	if (name.canFind("dmd")) return getCompiler("dmd");
+-	if (name.canFind("gdc")) return getCompiler("gdc");
+-	if (name.canFind("ldc")) return getCompiler("ldc");
++	// Flint fork: by the binary's name only, so a directory such as
++	// /opt/dmd-tools/bin/ldc2 does not make LDC look like DMD.
++	import std.path : baseName;
++	const binary = name.baseName;
++	if (binary.canFind("dmd")) return getCompiler("dmd");
++	if (binary.canFind("gdc")) return getCompiler("gdc");
++	if (binary.canFind("ldc")) return getCompiler("ldc");
+ 
+ 	throw new UnknownCompilerException(name);
+ }
+@@ -186,9 +190,46 @@ interface Compiler {
  		import dub.compilers.utils : generatePlatformProbeFile, readPlatformSDLProbe;
  		import std.string : format, strip;
  
