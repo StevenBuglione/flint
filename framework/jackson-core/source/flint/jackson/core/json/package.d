@@ -264,7 +264,29 @@ final class JsonFactory
         }
     }
 
-    private InternedName[1024] _names;
+    // The table is allocated on the first read, not with the factory: a mapper that only writes keeps a factory of a
+    // few hundred bytes rather than one large block of pointers for every collection to scan (playbook R-20).
+    // A struct, not an array, so the table is exactly two pages with no array header.
+    private static struct NameTable
+    {
+        InternedName[1024] slots;
+    }
+
+    private NameTable* _names;
+
+    // The name table, allocated by whichever reader needs it first.
+    private NameTable* names() nothrow
+    {
+        import core.atomic : atomicLoad, cas;
+
+        auto table = atomicLoad(_names);
+        if (table !is null)
+            return table;
+        auto created = new NameTable;
+        if (cas(&_names, cast(NameTable*) null, created))
+            return created;
+        return atomicLoad(_names);
+    }
 
     package(flint.jackson) string internName(scope const(char)[] text)
     {
@@ -273,9 +295,10 @@ final class JsonFactory
         uint hash = 2_166_136_261;
         foreach (c; text)
             hash = (hash ^ c) * 16_777_619;
+        auto table = names();
         foreach (probe; 0 .. 8)
         {
-            auto slot = &_names[(hash + probe) % _names.length];
+            auto slot = &table.slots[(hash + probe) % table.slots.length];
             auto known = atomicLoad(*slot);
             if (known is null)
             {
@@ -368,6 +391,31 @@ final class JsonFactory
     {
         return createParser(ObjectReadContext.empty(), content);
     }
+}
+
+// A factory that only writes never allocates its name table; the first read does, and names are interned through it.
+unittest
+{
+    static assert(__traits(classInstanceSize, JsonFactory) < 1024);
+    auto factory = new JsonFactory();
+    auto g = factory.createGenerator(null, (scope const(ubyte)[] bytes) {});
+    g.writeStartObject();
+    g.writeEndObject();
+    g.close();
+    assert(factory._names is null);
+
+    string first;
+    foreach (round; 0 .. 2)
+    {
+        auto p = factory.createParser(`{"name":1}`);
+        p.nextToken();
+        p.nextToken();
+        if (round == 0)
+            first = p.currentName();
+        else
+            assert(p.currentName() is first);
+    }
+    assert(factory._names !is null);
 }
 
 /// `TSFBuilder` implementation for constructing vanilla `JsonFactory` instances for reading/writing JSON encoded content.
