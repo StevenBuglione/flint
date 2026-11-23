@@ -87,6 +87,13 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
 
 ## Open for the owner
 
+- 2026-11-23, proof-harness: **The Phase 0 runtime levers regress bench-rest's peak RSS by 6.2%.** This is certified: queue entry `runtime-levers-rest`, 14:14–14:54Z, load 0.78 at the start, no foreign build in any of 220 samples. bench-rest at `e16668e` (base) against `966c4b7` (FiberLocal, 256 KiB guarded fiber stacks, the offload pool), both built with bench-rest's README release command, on the production REST workload with 9 interleaved trials. Median ratios with 99% intervals against `policy/budgets.json`'s regression ceilings:
+  - peak RSS 1.062 (1.045–1.090; 13.66 MB against 12.87 MB): over the 1.05 ceiling;
+  - p50 1.017 (0.989–1.037), CPU per request 1.006 (0.987–1.015), throughput 0.997: within;
+  - p99 0.993 (0.856–1.345): too wide to call.
+
+  ADR-030 section 4 expected only touched pages to count, so that larger stacks would be RSS-neutral (`packages/reactor/tests/fiber_stack.d` measures idle fibers). Under load the regression ratio is exceeded. Either the levers change, or the owner accepts the cost. The evidence is in `benchmarks/spring/evidence/runtime-levers-rest/20261123T141406Z/`.
+
 - 2026-11-23, proof-harness: **ADR-030's Phase 1 stop rule is met on builds.** These are the first certified Flint-versus-Go numbers: gs-rest-service builds, queue entry `gs-builds` at 7ddf0354, 12:30–12:33Z. The window was quiet: load 0.32, and no foreign build process in any of 14 samples. Nine trials each, with the release-built flint, DMD linking with the pinned mold, the platform cache primed and the digest log cleared before every cold trial. Flint misses every gated build metric (Flint/Go median ratio, 99% interval; the target is at most 0.99):
   - primary, the platform cache against a std-primed `GOCACHE`: 6.72 (6.34–6.87), 1.066 s against 0.159 s;
   - secondary, `--no-platform-cache` against `go build -a`: 1.30 (1.29–1.32), 4.192 s against 3.232 s;
