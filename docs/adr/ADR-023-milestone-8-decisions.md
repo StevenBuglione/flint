@@ -245,3 +245,8 @@ The repo split (ADR-030; the Spring-port plan, section 7) adds platform modules.
    - **The tools:** `tools/gates.py`, `tools/measure_builds.py` and `tools/native_build.py` take `--workspace`. They verify the pinned commits and find each package in its repo's checkout. `measure_builds` records the commits in its evidence.
    - **The current limit:** `measure_builds` builds only a single-checkout workspace until the split rewrites the probes' recipes.
    - **Without the flag:** the monorepo is the workspace, and every gate behaves as before.
+6. **Applications belong to repos too.**
+   - **The policy:** `policy/apps.json` records each app's repo. `apps/flint` is in `flint`, and `apps/flint-mcp` is in `ai`, beside the `mcp` package it serves.
+   - **Locating an app:** an app keeps its directory inside its repo. `flint mcp` locates flint-mcp through the ai repo's platform module.
+   - **Its dependencies:** an app's `flint:*` dependencies follow the same edges (FLINT-E0532).
+
