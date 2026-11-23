@@ -342,7 +342,8 @@
    "directory": "framework/tx",
    "module": "flint.dao",
    "also": [
-    "flint.transaction"
+    "flint.transaction",
+    "flint.orm"
    ],
    "repo": "framework",
    "licence": "Apache-2.0",
