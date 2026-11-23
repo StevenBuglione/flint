@@ -236,7 +236,7 @@ name = "flint:web"
 kind = "core"
 source = "workspace"
 scope = "build"
-dependencies = ["flint:context", "flint:core", "flint:engine-aot", "flint:jackson-core", "flint:jackson-databind", "flint:jakarta-servlet", "flint:java"]
+dependencies = ["flint:beans", "flint:context", "flint:core", "flint:engine-aot", "flint:jackson-core", "flint:jackson-databind", "flint:jakarta-servlet", "flint:java"]
 
 [[package]]
 name = "flint:webmvc"
