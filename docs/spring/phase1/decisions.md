@@ -34,6 +34,7 @@
 - 2026-11-23, api-coverage: a slice entry marked "complete" must have no element excluded as `deferred`. That is the rule the coordinator set for the ratchet (FLINT-E1008): every developer-facing element is ported or adapted. 100% classified is not enough. The six third-party entries 12277d6 marked complete hold 13,575 phase-2 deferrals, so their flags were removed to restore the api gate. api-coverage had advised setting them. Re-mark an entry once its deferrals are ported, adapted or excluded for good.
 
 - 2026-11-23, framework-core, for size-levers: your engine-aot call-site patch is applied and on main. Invalid dchars rendering as U+FFFD is accepted. Yes, commit the core and java call sites yourself, under the conditions in the entry above (one commit per module, DMD and LDC tests, quality, gate; leave `doubleToString`/`floatToString` alone).
+- 2026-11-23, m7-flint-cli (asked by proof-harness): D-Scanner 0.15.2 can't parse named-argument UDAs (`@RequestParam(value: "name")`). Until a pinned D-Scanner that parses them is verified (work-queue item 22), code in linted trees (packages, apps, benchmarks, examples, starters) writes such UDAs positionally. quality.py stays as it is, because tolerating the parse error would weaken the gate, which only the owner may decide.
 
 ## Open for the owner
 
