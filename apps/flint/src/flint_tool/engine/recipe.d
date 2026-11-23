@@ -141,19 +141,36 @@ bool hasApplicationConfig(string root)
 }
 
 /// Render the recipe of a path dependency that is a Flint project, with absolute source paths. `platform`: the core
-/// packages come from the platform cache's recipe.
+/// packages come from the platform cache's recipe. `directory`, where the recipe is written, makes the source paths
+/// relative on Windows (`dependencySourcePath`).
 string renderDependencyRecipe(const ref Home home, const ref ResolvedPackage item,
-        const ref Resolution resolution, bool platform = false)
+        const ref Resolution resolution, bool platform = false, string directory = null)
 {
     import std.path : buildPath;
 
+    const source = dependencySourcePath(buildPath(item.directory, "src"), directory);
     string text = header() ~ field("name", dubName(item.name)) ~ field("targetType",
-            "library") ~ field("sourcePaths", recipePath(buildPath(item.directory,
-            "src"))) ~ field("importPaths", recipePath(buildPath(item.directory,
-            "src"))) ~ field("dflags", "-preview=dip1000");
+            "library") ~ field("sourcePaths", source) ~ field("importPaths",
+            source) ~ field("dflags", "-preview=dip1000");
     foreach (name; item.dependencies)
         text ~= dependencyLine(home, resolution, name, "", "../", platform);
     return text;
+}
+
+/// A dependency's source directory as its recipe names it. DUB 1.43 on Windows asserts ("Cannot append absolute
+/// path") on an absolute `sourcePaths` entry, so there the path is relative to the recipe when both are on one
+/// drive. Elsewhere it stays absolute.
+private string dependencySourcePath(string path, string directory)
+{
+    version (Windows)
+    {
+        import std.path : absolutePath, driveName, relativePath;
+        import std.uni : sicmp;
+
+        if (directory.length && sicmp(driveName(absolutePath(path)), driveName(absolutePath(directory))) == 0)
+            return recipePath(relativePath(absolutePath(path), absolutePath(directory)));
+    }
+    return recipePath(path);
 }
 
 /// Where the joined `flint` recipe is written, relative to the project root (see renderJoinedRoot).

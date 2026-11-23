@@ -662,8 +662,9 @@ private bool writeRecipes(ref Session session, const ref Manifest manifest, cons
                     "depend on library projects; set type = \"library\" in its flint.toml");
             return false;
         }
-        writeIfChanged(buildPath(manifest.root, dependencyRecipeDirectory(item.name), "dub.sdl"),
-                renderDependencyRecipe(session.home, item, resolution, result.platform.active));
+        const directory = buildPath(manifest.root, dependencyRecipeDirectory(item.name));
+        writeIfChanged(buildPath(directory, "dub.sdl"), renderDependencyRecipe(session.home, item,
+                resolution, result.platform.active, directory));
     }
     return true;
 }
