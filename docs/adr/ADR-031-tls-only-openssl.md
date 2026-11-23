@@ -105,7 +105,22 @@ python3 tools/tls_profile_matrix.py --reference <full-install> --openssl full=<f
 python3 tools/measure_builds.py --app-sizes --app bench-rest --output sizes.json
 ```
 
-Start-up and throughput timings are queued with the proof-harness session's quiet-window measurement queue. venus was too busy for timing evidence.
+**REST regression check.** This was measured in a quiet window on venus by the proof-harness queue (`adr031-rest`, 2026-11-23 10:54–11:35Z):
+- **Conditions:** the 1-minute load was 0.06 at the start, and no foreign build process appeared in any of the 220 samples taken before, during and after the run.
+- **Workload:** the existing production REST workload (`policy/http-benchmark.json`): 9 interleaved trials, a 10 s warmup, 60 s at 20,000 req/s and 60 s of capacity. Server on CPUs 2–3, oha on 4–7.
+- **Builds:** bench-rest at `440d72d^` (`48b8f52`, 5,904,384 bytes) and at `440d72d` (5,005,088 bytes), each with its own native prefix. The receipt records each build's OpenSSL `%disabled` check.
+
+| TLS-only / before | Median ratio | 99% interval | Ceiling | Verdict |
+| --- | ---: | --- | ---: | --- |
+| p50 | 0.998 | 0.977–1.019 | 1.05 | within |
+| p99 | 1.035 | 0.734–1.157 | 1.05 | not shown within: the upper bound exceeds the ceiling |
+| Peak RSS | 0.980 | 0.967–0.987 | 1.05 | within |
+| CPU per request | 0.997 | 0.986–1.008 | 1.05 | within |
+| Throughput | 1.004 | — | ≥ 0.95 | within |
+
+The medians are 0.050 ms p50 on both sides, p99 0.119 ms against 0.114 ms, 431k against 430k req/s, and 12.7 MB against 12.9 MB peak RSS. bench-rest serves plain HTTP, so OpenSSL is linked but not exercised, and the result is neutral on every metric whose interval is resolved. The p99 difference is 5 µs, within a 99% interval too wide to call either way. The receipt, samples and raw oha outputs are in `benchmarks/spring/evidence/adr031-rest/20261123T105441Z/`.
+
+The start-up timing (`adr031-startup`) is still queued.
 
 ## Consequences
 
