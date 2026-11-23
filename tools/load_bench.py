@@ -544,8 +544,8 @@ def spring_main(a, raw, m):
                             if target not in context:raise
                             result["context_errors"].append(f"{app} [{target}] trial {trial}: {exc}");continue
                         result["trials"].append(row)
-                        for key in FIELDS:
-                            series[target][key].append(row["capacity" if key=="requests_per_second" else "latency"][key])
+                        for field in FIELDS:
+                            series[target][field].append(row["capacity" if field=="requests_per_second" else "latency"][field])
                         print(json.dumps({"workload":key,"trial":trial,"target":target,"status":"measured"}),flush=True)
             result["apps"][key]={"app":app,"measured":{t:series[t] for t in measured},"context":{t:series[t] for t in available}}
         result["status"]="incomplete" if missing else "passed"
