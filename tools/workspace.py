@@ -18,6 +18,8 @@ import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+# The trees a repo keeps of its own in the monorepo as <tree>/<repo>, moved to <tree>/ by the extraction.
+REPO_TREES = ('api', 'native', 'examples', 'tests')
 
 
 def _load(path):
@@ -36,6 +38,10 @@ def repo_layout(directory, repo, root=ROOT):
     if repo == 'flint':
         return directory
     parts = directory.split('/')
+    # A repo's own tree in the monorepo (api/<repo>, native/<repo>, examples/<repo>, tests/<repo>) is that tree's
+    # top in the extracted repo.
+    if len(parts) >= 2 and parts[0] in REPO_TREES and parts[1] == repo:
+        return '/'.join([parts[0], *parts[2:]])
     head, rest = '/'.join(parts[:2]), parts[2:]
     for source, target in repo_policy(root).get('layout', []):
         if head == source or (source.endswith(('/', '-')) and head.startswith(source)):
@@ -193,10 +199,33 @@ def dub_root(workspace, output, root=ROOT):
     return output / 'dub.sdl'
 
 
+def build_example(example, workspace, output, compiler='dmd', root=ROOT):
+    """Build a DUB example of another repo's checkout against the workspace: its `flint:*` path dependencies point
+    at the monorepo root, which an extracted repo does not have, so a copy of the example builds with them pointing
+    at the workspace's joined `flint` recipe (dub_root). Returns dub's exit status."""
+    import os
+    import re
+    import shutil
+    output = Path(output).resolve()
+    joined = dub_root(workspace, output / 'root', root).parent
+    copy = output / 'example'
+    shutil.rmtree(copy, ignore_errors=True)
+    shutil.copytree(example, copy, ignore=shutil.ignore_patterns('.dub', 'build', '*.o', '*.a'))
+    recipe = copy / 'dub.sdl'
+    text = recipe.read_text(encoding='utf-8')
+    target = os.path.relpath(joined, copy)
+    recipe.write_text(re.sub(r'(dependency "flint:[\w-]+") path="[^"]*"', lambda m: f'{m[1]} path={json.dumps(target)}',
+                             text), encoding='utf-8')
+    return subprocess.run(['dub', 'build', '--root', str(copy), '--compiler=' + compiler, '--skip-registry=all'],
+                          check=False).returncode
+
+
 def main():
     import argparse
     parser = argparse.ArgumentParser(description='Repo split workspaces (plan section 7).')
-    parser.add_argument('command', choices=['verify', 'dub-root', 'edges'])
+    parser.add_argument('command', choices=['verify', 'dub-root', 'edges', 'build-example'])
+    parser.add_argument('example', nargs='?', type=Path, help='build-example: the DUB example directory')
+    parser.add_argument('--compiler', default='dmd')
     parser.add_argument('--workspace', type=Path, help='flint.workspace/1 file; default: this monorepo')
     parser.add_argument('--output', type=Path, help='dub-root: directory for the generated dub.sdl')
     arguments = parser.parse_args()
@@ -211,6 +240,10 @@ def main():
             parser.error('dub-root needs --output')
         print(dub_root(workspace, arguments.output))
         return 0
+    if arguments.command == 'build-example':
+        if not arguments.example or not arguments.output:
+            parser.error('build-example needs the example directory and --output')
+        return build_example(arguments.example, workspace, arguments.output, arguments.compiler)
     violations, deferred = edge_violations()
     for _, _, message in violations + deferred:
         print(message)

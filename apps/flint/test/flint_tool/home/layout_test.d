@@ -26,6 +26,9 @@ unittest
     expect(home.repoLayout("boot", "starters/web")).toEqual("starter/flint-boot-starter-web");
     expect(home.repoLayout("ai", "apps/flint-mcp")).toEqual("apps/flint-mcp");
     expect(home.repoLayout("flint", "packages/arena")).toEqual("packages/arena");
+    expect(home.repoLayout("framework", "examples/framework/golden-tui")).toEqual("examples/golden-tui");
+    expect(home.repoLayout("framework", "native/framework")).toEqual("native");
+    expect(home.repoLayout("boot", "examples/framework/golden-tui")).toEqual("examples/framework/golden-tui");
 }
 
 @("a package resolves to the monorepo path when the checkout has it, else to its extracted place")

@@ -4,7 +4,7 @@
     python3 tools/cutover.py --into /tmp/cutover            # rehearse: nothing leaves this machine
     python3 tools/cutover.py --into /tmp/cutover --push     # the real cutover, on the coordinator's call
 
-Both run the same steps:
+It needs `git filter-repo` on PATH. Both run the same steps:
 
 1. **Extract.** It clones flint at `--commit` (default: origin/main of `--source`) and extracts every repo that has
    paths (tools/extract_repo.py refresh), gated through a workspace of the fresh checkouts.
@@ -193,8 +193,10 @@ def check(name, command, cwd, env, results, timeout=3600):
 def checks(flint, target):
     env = dict(os.environ)
     tools = (flint / '.tools').resolve()
-    env['PATH'] = os.pathsep.join([str(tools / 'dmd2' / 'linux' / 'bin64'), str(tools / 'bin'), env['PATH']])
-    env.setdefault('SDL_VIDEODRIVER', 'offscreen')
+    host = {'darwin': 'osx', 'win32': 'windows'}.get(sys.platform, 'linux')
+    env['PATH'] = os.pathsep.join([str(tools / 'dmd2' / host / 'bin64'), str(tools / 'bin'), env['PATH']])
+    # SDL's offscreen driver needs EGL, which macOS lacks; its headless driver there is dummy (ADR-024).
+    env.setdefault('SDL_VIDEODRIVER', 'dummy' if sys.platform == 'darwin' else 'offscreen')
     # platform.lock alone resolves the fetched repos; FLINT_WORKSPACE would also redirect the suites' own homes.
     workspace = flint / '.flint' / 'platform' / 'workspace.json'
     flint_bin = str(flint / '.flint' / 'bin' / 'flint')
@@ -220,6 +222,23 @@ def checks(flint, target):
         check(f'dub build {recipe.parent.relative_to(flint)}', ['dub', 'build', '--root', str(recipe.parent),
                                                                 '--compiler=dmd', '--skip-registry=all'],
               flint, env, results)
+    # The extracted repos' examples build against the fetched workspace: DUB examples through workspace.py
+    # build-example, a browser example through its own build.py against FLINT_ROOT.
+    checkouts = json.loads(workspace.read_text())['checkouts']
+    for repo, entry in sorted(checkouts.items()):
+        if repo == 'flint':
+            continue
+        for recipe in sorted((workspace.parent / entry['path']).glob('examples/*/dub.sdl')):
+            example = recipe.parent
+            name = f'{repo} example {example.name}'
+            if (example / 'build.py').is_file():
+                check(name, [PYTHON, str(example / 'build.py'), '--ldc', 'ldc2', '--output',
+                             str(flint / '.flint' / 'cutover' / example.name / 'app.wasm')], flint,
+                      dict(env, FLINT_ROOT=str(flint)), results)
+            else:
+                check(name, [PYTHON, 'tools/workspace.py', 'build-example', str(example), '--workspace',
+                             str(workspace), '--output', str(flint / '.flint' / 'cutover' / example.name)],
+                      flint, env, results)
     check('python suite', [PYTHON, '-m', 'unittest', 'discover', '-s', 'tests', '-p', 'test_*.py'], flint, env, results)
     return results
 
@@ -235,6 +254,9 @@ def main():
     parser.add_argument('--skip-checks', action='store_true', help='stop after the fetch')
     arguments = parser.parse_args()
     into = arguments.into.resolve()
+    if run(['git', 'filter-repo', '--version'], check=False).returncode != 0:
+        raise SystemExit('tools/cutover.py needs git filter-repo on PATH (pip install git-filter-repo, or brew install '
+                         'git-filter-repo)')
     # Extract and gate without pushing; the mirrors are pushed only once the preconditions hold.
     summary = refresh(arguments.source, arguments.commit or 'origin/main', into / 'extract', False, arguments.remote)
     extracted = summary['repos']

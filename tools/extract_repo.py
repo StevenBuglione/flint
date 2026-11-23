@@ -42,9 +42,11 @@ def moving_paths(repo, root=ROOT):
     if (root / 'api' / repo / 'mapping.json').is_file():
         # The repo's API mapping (flint api coverage); renamed to api/mapping.json on extraction.
         paths.append(api_mapping_dir(repo))
-    if repo != 'flint' and (root / 'native' / repo).is_dir():
-        # The repo's native project, as native/framework builds flint_ffi_framework; native/ once extracted.
-        paths.append('native/' + repo)
+    for tree in ('native', 'examples', 'tests'):
+        if repo != 'flint' and (root / tree / repo).is_dir():
+            # The repo's own tree (workspace.REPO_TREES): native/framework builds flint_ffi_framework, and
+            # examples/<repo> and tests/<repo> hold its applications and suites; <tree>/ once extracted.
+            paths.append(f'{tree}/{repo}')
     return sorted(set(paths))
 
 

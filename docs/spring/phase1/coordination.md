@@ -84,3 +84,5 @@ When your assigned work is done, don't stop.
 | 16 | macOS platform lane receipt in a quiet window | macOS session | |
 | 17 | linux-aarch64 platform lane receipt | linux-arm64-vm | |
 | 18 | DMD arm64 stage 2 (Flint on DMD arm64) | dmd-arm64 | |
+| 19 | `examples/framework/golden-wasm-app` compiles again: `flint_demo/sys/exports.d` assigns `CommandBuffer` and `SignalGraph`, whose `opAssign` engine-wasm-bridge and engine-ui-signals now `@disable` (found by m7-flint-cli; `build.py` itself is fixed) | | |
+| 20 | Toolchain PGO training after the cutover: `install_toolchains.py` `PGO_APPS` trains on `examples/framework/golden-rest-service` and `benchmarks/bench-rest`, which are engine applications that leave the flint repo. Train through the fetched framework platform module, or choose flint-repo apps (found by m7-flint-cli) | | |

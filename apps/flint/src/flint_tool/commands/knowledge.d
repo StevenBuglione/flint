@@ -204,7 +204,7 @@ int commandExamples(ref Session session, string topic, size_t limit)
                 payload.examples ~= ExampleHit(symbol.qualified, symbol.signature, example);
         }
     }
-    payload.applications = applications(session.home.root, topic);
+    payload.applications = applications(session.home, topic);
     foreach (ref hit; payload.examples)
     {
         session.say("// " ~ hit.symbol ~ ": " ~ hit.signature ~ "\n// " ~ hit.example.file ~ ":"
@@ -220,29 +220,40 @@ int commandExamples(ref Session session, string topic, size_t limit)
     return finish(session, report, payload);
 }
 
-/// Golden applications whose name or README mentions every word of the topic.
-private string[] applications(string root, string topic)
+/// Golden applications whose name or README mentions every word of the topic: in examples/ and examples/<repo>/
+/// of this home, and in examples/ of each repo that resolves from its platform module after the cutover.
+private string[] applications(const ref imported!"flint_tool.home.policy".Home home, string topic)
 {
     import std.algorithm.searching : all, canFind;
     import std.array : split;
-    import std.file : dirEntries, exists, SpanMode;
-    import std.path : baseName, buildPath;
+    import std.file : dirEntries, exists, isDir, SpanMode;
+    import std.path : baseName, buildPath, relativePath;
     import std.uni : toLower;
     import flint_tool.support.files : readIfPresent;
 
     const words = topic.toLower.split;
+    string[] roots = [buildPath(home.root, "examples")];
+    if (exists(roots[0]))
+        foreach (entry; dirEntries(roots[0], SpanMode.shallow))
+            if (entry.isDir && !baseName(entry.name).canFind("golden"))
+                roots ~= entry.name;
+    foreach (ref repo; home.repos)
+        if (!home.inHome(repo.name))
+            roots ~= buildPath(home.repoRoot(repo.name), "examples");
     string[] found;
-    const directory = buildPath(root, "examples");
-    if (!exists(directory))
-        return null;
-    foreach (entry; dirEntries(directory, SpanMode.shallow))
+    foreach (directory; roots)
     {
-        const name = baseName(entry.name);
-        if (!name.canFind("golden"))
+        if (!exists(directory))
             continue;
-        const text = (name ~ " " ~ readIfPresent(buildPath(entry.name, "README.md"))).toLower;
-        if (words.all!(word => text.canFind(word)))
-            found ~= "examples/" ~ name;
+        foreach (entry; dirEntries(directory, SpanMode.shallow))
+        {
+            const name = baseName(entry.name);
+            if (!name.canFind("golden"))
+                continue;
+            const text = (name ~ " " ~ readIfPresent(buildPath(entry.name, "README.md"))).toLower;
+            if (words.all!(word => text.canFind(word)))
+                found ~= relativePath(entry.name, home.root);
+        }
     }
     import std.algorithm.sorting : sort;
 

@@ -98,7 +98,7 @@ class DocsTests(unittest.TestCase):
         self.assertTrue(document['examples'])
         self.assertIn('unittest', document['examples'][0]['example']['code'])
         status, document = flint_json('examples', 'rest', 'service')
-        self.assertIn('examples/golden-rest-service', document['applications'])
+        self.assertIn('examples/framework/golden-rest-service', document['applications'])
 
 
 class GenerateTests(unittest.TestCase):

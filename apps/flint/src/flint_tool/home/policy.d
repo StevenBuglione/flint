@@ -217,6 +217,13 @@ struct Home
         const second = first < 0 ? -1 : directory[first + 1 .. $].countUntil('/');
         const end = second < 0 ? directory.length : first + 1 + second;
         const head = directory[0 .. end];
+        // A repo's own tree in the monorepo (api/<repo>, native/<repo>, examples/<repo>, tests/<repo>) is that
+        // tree's top in the extracted repo, as tools/workspace.py REPO_TREES.
+        foreach (tree; ["api", "native", "examples", "tests"])
+        {
+            if (head == tree ~ "/" ~ repo)
+                return tree ~ directory[end .. $];
+        }
         foreach (ref rule; layout)
         {
             if (head == rule[0] || ((rule[0].endsWith("/") || rule[0].endsWith("-")) && head.startsWith(rule[0])))

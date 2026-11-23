@@ -140,7 +140,7 @@ DUB_PATCH = FORK_DIR / 'dub-1.43.0-flint.patch'
 PRELUDE = FORK_DIR / 'dmd-server-prelude.txt'
 # Builds that train the profile-guided DMD build; they exercise the same
 # compiler paths as ordinary development builds of this repository.
-PGO_APPS = ('benchmarks/bench-cli', 'benchmarks/bench-rest', 'examples/golden-cli', 'examples/golden-rest-service')
+PGO_APPS = ('benchmarks/bench-cli', 'benchmarks/bench-rest', 'examples/golden-cli', 'examples/framework/golden-rest-service')
 PGO_TESTS = ('arena', 'conc', 'config', 'serde', 'validate', 'log', 'cli', 'engine-web', 'engine-http', 'engine-reactor', 'engine-di')
 
 

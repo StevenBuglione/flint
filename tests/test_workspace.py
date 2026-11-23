@@ -181,7 +181,8 @@ class ExtractionTests(unittest.TestCase):
         self.assertIn('api/framework', framework)
         self.assertNotIn('packages/arena', framework)
         self.assertIn('native/framework', framework)  # flint_ffi_framework's project, native/ once extracted
-        self.assertEqual(len(framework), len(workspace.packages_of('framework')) + 2)
+        self.assertIn('examples/framework', framework)  # the engines' golden applications, examples/ once extracted
+        self.assertEqual(len(framework), len(workspace.packages_of('framework')) + 3)
         self.assertEqual(extract_repo.moving_paths('batch'), [])
 
     @monorepo_only
@@ -207,6 +208,9 @@ class ExtractionTests(unittest.TestCase):
         self.assertEqual(layout('starters/starter', 'boot'), 'starter/flint-boot-starter')
         self.assertEqual(layout('starters/web', 'boot'), 'starter/flint-boot-starter-web')
         self.assertEqual(layout('apps/flint-mcp', 'ai'), 'apps/flint-mcp')
+        self.assertEqual(layout('examples/framework/golden-tui', 'framework'), 'examples/golden-tui')
+        self.assertEqual(layout('tests/boot/test_flint_starters.py', 'boot'), 'tests/test_flint_starters.py')
+        self.assertEqual(layout('native/framework', 'framework'), 'native')
         self.assertEqual(layout('packages/arena', 'flint'), 'packages/arena')
         with tempfile.TemporaryDirectory() as temporary:
             checkout = Path(temporary) / 'flint-framework'
