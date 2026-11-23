@@ -335,11 +335,13 @@ NativeRecord nativeIdentity(string home)
     import flint_tool.support.files : sha256File;
 
     NativeRecord record;
-    // Linux glibc and musl hosts both build the glibc provider install; macOS builds its own.
+    // Linux glibc and musl hosts both build the glibc provider install of their architecture; macOS builds its own.
     version (OSX)
         record.target = hostTarget();
     else version (Windows)
         record.target = hostTarget();
+    else version (AArch64)
+        record.target = "linux-aarch64-glibc";
     else
         record.target = glibcTarget;
     const receipt = buildPath(home, ".native", "install", record.target, "flint-native-install.json");

@@ -18,8 +18,11 @@ import install_toolchains  # noqa: E402
 import profiles  # noqa: E402
 
 FLINT = ROOT / '.flint' / 'bin' / 'flint'
-# The executable that fills the DMD role: the forked DMD, or LDC's ldmd2 on macOS (ADR-024).
+# The executable that fills the DMD role: the forked DMD, or LDC's ldmd2 on macOS (ADR-024) and on Linux arm64
+# until the DMD fork's AArch64 code generator lands there (ADR-025 section 3).
+LDMD_HOST = sys.platform == 'darwin' or install_toolchains.linux_arm64_glibc()
 DMD_BIN = (ROOT / '.tools' / install_toolchains.LDC_DARWIN / 'bin' if sys.platform == 'darwin'
+           else ROOT / '.tools' / install_toolchains.LDC_LINUX_AARCH64 / 'bin' if LDMD_HOST
            else ROOT / '.tools' / 'dmd2' / 'linux' / 'bin64')
 
 
@@ -376,8 +379,8 @@ class KnowledgeTests(unittest.TestCase):
         status, doctor = flint_json('doctor')
         self.assertIn(status, (0, 2))
         self.assertTrue({'installation', 'dmd', 'fork', 'compile server'} <= {c['name'] for c in doctor['checks']})
-        if sys.platform == 'darwin':
-            # The compile server belongs to the Linux DMD fork (ADR-024).
+        if LDMD_HOST:
+            # The compile server belongs to the Linux x86-64 DMD fork (ADR-024).
             status, refused = flint_json('daemon', 'start')
             self.assertEqual((status, codes(refused)), (2, ['FLINT-E0810']))
             return

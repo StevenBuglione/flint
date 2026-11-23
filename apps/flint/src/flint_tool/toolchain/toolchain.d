@@ -471,8 +471,8 @@ string[][] installCommands(const ref Home home, string directory, bool pgo, stri
     }
     else static if (!dmdForkHost)
     {
-        // ADR-024: LDC, then the Flint-patched DUB built with it. The receipt follows the second.
-        // Embedded C uses the host's Apple clang; sanitizer and musl lanes are Linux-only.
+        // ADR-024: LDC, then the Flint-patched DUB built with it. The receipt follows the second. Embedded C
+        // uses the host's C compiler; the sanitizer and musl lanes are Linux x86-64 only.
         string[][] hostCommands = [
             ["python3", installer, "--compiler", "ldc", "--destination", directory],
             ["python3", installer, "--compiler", "dub", "--destination", directory]

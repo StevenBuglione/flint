@@ -8,6 +8,9 @@
 ///
 /// Windows x86-64 runs the upstream DMD of the pinned Windows release and the Flint DUB, built from source with
 /// LDC and the Windows overlay patch, whose pipeline spawns with CreateProcess and writes COFF archives (ADR-026).
+///
+/// Linux arm64 uses the macOS arrangement, ldmd2 and the Flint DUB built with LDC, until the forked DMD's
+/// AArch64 code generator lands there (ADR-025 section 3).
 module flint_tool.toolchain.host;
 
 @safe:
@@ -41,6 +44,21 @@ else version (Windows)
     enum string executableSuffix = ".exe";
     /// The separator between PATH entries.
     enum string pathListSeparator = ";";
+}
+else version (AArch64)
+{
+    /// The forked DMD and its compile server are installed on this host.
+    enum bool dmdForkHost = false;
+    /// The upstream DMD fills its own role on this host.
+    enum bool upstreamDmdHost = false;
+    /// The Flint DUB's parallel pipeline builds on this host.
+    enum bool dubPipelineHost = false;
+    /// The pinned LDC release directory name.
+    enum string ldcPlatform = "linux-aarch64";
+    /// The suffix of an executable file name.
+    enum string executableSuffix = "";
+    /// The separator between PATH entries.
+    enum string pathListSeparator = ":";
 }
 else
 {

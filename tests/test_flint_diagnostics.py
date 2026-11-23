@@ -16,11 +16,14 @@ import ci  # noqa: E402
 
 MISUSE = ROOT / 'tests' / 'compile' / 'misuse'
 TOOLS = Path(os.environ.get('FLINT_TOOLCHAIN_DIR') or ROOT / '.tools')
-if sys.platform == 'darwin':
-    import install_toolchains  # noqa: E402
+import install_toolchains  # noqa: E402
 
+if sys.platform == 'darwin':
     # LDC's ldmd2 fills the DMD role on macOS (ADR-024).
     DMD = TOOLS / install_toolchains.LDC_DARWIN / 'bin' / 'ldmd2'
+elif install_toolchains.linux_arm64_glibc():
+    # And on Linux arm64 until the DMD fork's AArch64 code generator lands there (ADR-025 section 3).
+    DMD = TOOLS / install_toolchains.LDC_LINUX_AARCH64 / 'bin' / 'ldmd2'
 else:
     DMD = TOOLS / 'dmd2' / 'linux' / 'bin64' / 'dmd'
 # The DMD fork exists on Linux x86-64 only (ADR-024, ADR-026); elsewhere `dmd` is LDC's ldmd2 or upstream DMD.

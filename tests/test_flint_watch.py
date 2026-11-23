@@ -8,7 +8,7 @@ import time
 import unittest
 from pathlib import Path
 
-from test_flint_cli import FLINT, ROOT, codes, environment, flint_json, setUpModule  # noqa: F401
+from test_flint_cli import DMD_BIN, FLINT, ROOT, codes, environment, flint_json, setUpModule  # noqa: F401
 
 
 def wait_for(predicate, timeout=60):
@@ -105,7 +105,7 @@ class DebugTests(unittest.TestCase):
 
 void inspect(ref Result!int good, ref Result!int bad, ref Error error, ref RequestArena arena, ref Text text)
 {
-    asm { nop; }
+    pragma(inline, false);
 }
 
 void main()
@@ -119,7 +119,7 @@ void main()
     inspect(good, bad, error, arena, text);
 }
 ''')
-            dmd = ROOT / '.tools/dmd2/linux/bin64/dmd'
+            dmd = DMD_BIN / 'dmd' if (DMD_BIN / 'dmd').is_file() else DMD_BIN / 'ldmd2'
             subprocess.run([str(dmd), '-g', '-i', '-preview=dip1000', '-I' + str(ROOT / 'packages/arena/source'),
                             str(source), '-of=' + str(Path(directory) / 'probe')], check=True, cwd=directory)
             result = subprocess.run(['gdb', '-q', '-batch', '-ex', 'set debuginfod enabled off', '-x',

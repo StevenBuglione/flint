@@ -483,6 +483,12 @@ def dub_patch_digest():
     return digest.hexdigest()
 
 
+def linux_arm64_glibc():
+    """True on a Linux arm64 glibc host, which uses LDC's ldmd2 and the Flint DUB until the DMD fork lands there."""
+    return (platform.system() == 'Linux' and platform.machine().lower() in ('aarch64', 'arm64')
+            and not list(Path('/lib').glob('ld-musl-*.so.1')))
+
+
 def install_flint_dub(destination):
     """Build the Flint-patched DUB 1.43.0 from its pinned source with the pinned LDC (ADR-024).
 
@@ -494,8 +500,12 @@ def install_flint_dub(destination):
     elif platform.system() == 'Windows':
         # ADR-026: the Flint DUB with the parallel pipeline, beside the upstream DMD.
         ldc_bin = install(LDC_WINDOWS + '.7z', destination) / LDC_WINDOWS / 'bin'
+    elif linux_arm64_glibc():
+        # Milestone 11: Linux arm64 has no DMD fork yet (ADR-025 section 3), so it takes the macOS arrangement.
+        ldc_bin = install(LDC_LINUX_AARCH64 + '.tar.xz', destination) / LDC_LINUX_AARCH64 / 'bin'
     else:
-        raise SystemExit('--compiler dub is the macOS and Windows DUB; Linux installs DUB with --compiler dmd --flint-fork')
+        raise SystemExit('--compiler dub is the macOS, Windows and Linux arm64 DUB; Linux x86-64 installs DUB with '
+                         '--compiler dmd --flint-fork')
     output = destination / FLINT_DUB / 'bin' / exe('dub')
     receipt = {'compiler': 'dub', 'version': LOCK['versions']['dub'], 'bin': str(output.parent),
                'sha256': LOCK['assets']['dub-1.43.0.tar.gz']['sha256'], 'dub_patch_sha256': dub_patch_digest()}
@@ -537,6 +547,11 @@ def bootstrap_flint(toolchain):
         bin_dir = toolchain / LDC_DARWIN / 'bin'
         dmd, dub = bin_dir / 'ldmd2', toolchain / FLINT_DUB / 'bin' / 'dub'
         hint = '--compiler ldc and --compiler dub'
+    elif linux_arm64_glibc():
+        # Milestone 11: the macOS arrangement until the DMD fork's AArch64 code generator lands on Linux.
+        bin_dir = toolchain / LDC_LINUX_AARCH64 / 'bin'
+        dmd, dub = bin_dir / 'ldmd2', toolchain / FLINT_DUB / 'bin' / 'dub'
+        hint = '--compiler ldc and --compiler dub'
     elif platform.system() == 'Windows':
         # ADR-026: the upstream DMD and DUB of the pinned Windows release.
         bin_dir = toolchain / dmd_bin_relative()
@@ -558,8 +573,9 @@ def bootstrap_flint(toolchain):
     env = {k: v for k, v in os.environ.items() if k not in ('DFLAGS', 'DUB_HOME')}
     env.update(PATH=str(bin_dir) + os.pathsep + env.get('PATH', ''), DUB_HOME=str(FLINT_APP / '.flint' / 'dub'),
                DFLAGS=' '.join(profiles.dflags('dev')))
-    if platform.system() == 'Darwin':
-        env['FLINT_DUB_PIPELINE'] = '0'  # The pipeline's in-process archives are ELF-only (ADR-024).
+    if platform.system() == 'Darwin' or linux_arm64_glibc():
+        # The pipeline's in-process archives are ELF-only (ADR-024); it is untried with ldmd2 on Linux arm64.
+        env['FLINT_DUB_PIPELINE'] = '0'
     subprocess.run([str(dub), 'build', '--root=' + str(recipe_dir), '--config=dev', '--compiler=' + str(dmd),
                     '--build=plain', '--skip-registry=all'], cwd=FLINT_APP, env=env, check=True)
     artifact = exe(manifest.get('build', {}).get('executable', manifest['project']['name']))
@@ -893,7 +909,8 @@ def main():
     elif a.compiler=='go':
         if (osname,arch)==('Windows','x86_64'):name='go1.27.4.windows-amd64.zip'  # Diagnostic comparisons (ADR-025).
         elif (osname,arch)==('Darwin','aarch64'):name='go1.27.4.darwin-arm64.tar.gz'  # The macOS gate's comparator (ADR-025).
-        elif (osname,arch)!=('Linux','x86_64'):raise SystemExit('Go reference benchmark pin is Linux x86_64, macOS arm64 and Windows x86_64')
+        elif (osname,arch)==('Linux','aarch64'):name='go1.27.4.linux-arm64.tar.gz'  # Linux arm64 peers and comparisons.
+        elif (osname,arch)!=('Linux','x86_64'):raise SystemExit('Go reference benchmark pin is Linux x86_64 and arm64, macOS arm64 and Windows x86_64')
         else:name='go1.27.4.linux-amd64.tar.gz'
         relative='go/bin'
     else:
