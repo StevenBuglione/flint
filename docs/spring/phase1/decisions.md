@@ -388,3 +388,13 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
 - 2026-11-23, owner (via the coordinator): **Phase 2 waits for the Phase 1 exit.** The plan's stop rule stands. No Phase 2 module starts, not even ones off the request path, until Phase 1's runtime metrics beat Go or the agreed fallback is in place.
   - The runtime fix (allocation cuts, the allocation gate, the collector) is foundational, and every module that serves requests would inherit it.
   - Coordinator assignment, same day: framework-core takes the media-type and path parsing in the web and webmvc packages, formerly web-mvc's area; web-mvc is stopped (out of context). web-http keeps the servlet adapter.
+- 2026-11-23, coordinator: **runtime first.** The runtime metrics are the only thing between Phase 1 and its exit (gs-rest-multicore-3: throughput 0.801, p50 1.83, p99 2.27, RSS 1.66, CPU per request 1.46 against Go).
+  - **Target:** on gs-rest-service's /greeting, only user code allocates on the GC heap (the Greeting and its string). Engine and framework memory goes to the request arena or reused buffers (ADR-030 §4). Flint's own HTTP engine already beats Go (1.68× throughput); the gap is the Spring layer's allocations and the GC pauses they cause.
+  - **Owners:**
+    - data-access leads, with the allocation gate (item 28) and per-site targets in gc.md;
+    - web-http: servlet adapter;
+    - framework-core: media types and path parsing;
+    - flint-aot: generated dispatch and argument resolution;
+    - third-party-apis: Jackson reads and writes.
+  - **Collector:** D3 (mostly-concurrent marking) is prototyped now, in parallel, because p99 is the metric least likely to fall to allocation cuts alone.
+  - **Measurement:** runtime runs claim windows ahead of build-time runs once the current gs-builds finishes. A gs-rest-multicore re-measure follows each roughly 25% drop in allocations per request.
