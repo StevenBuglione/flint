@@ -65,8 +65,8 @@ struct AotRequest
     /// generated output, kept apart from the platform entries so the platform part can be copied alone (the cold
     /// build benchmark starts from a platform-only cache). Empty: `<sharedCache>/projects/<root hash>`.
     string projectCache;
-    /// Emit the per-endpoint fast path (docs/spring/phase1/fast-path.md). Part of the output key, so a build with
-    /// it never restores one generated without it.
+    /// Emit the per-endpoint fast path (docs/spring/phase1/fast-path.md): on unless the build opts out. Part of
+    /// the output key, so a build with it never restores one generated without it.
     bool fastPath;
 }
 
