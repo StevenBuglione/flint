@@ -438,7 +438,31 @@ def verdicts(name, flint, go, ceiling):
                       'pass': median <= ceiling and upper <= ceiling}
     size = flint['Oz']['binary_bytes'] / go['binary_bytes']
     out['Oz binary size'] = {'ratio': size, 'gating': True, 'pass': size <= ceiling}
+    third_party_context(out, go)
     return out
+
+
+def third_party_context(out, go):
+    """For a comparator with third-party packages, the deps-primed ratio stands beside the primary (coordinator,
+    2026-11-23): Go's std-primed cold build compiles them from source while Flint links its native libraries and
+    platform archives prebuilt, so the primary alone overstates Flint's lead. The gating definitions are unchanged."""
+    packages = go.get('third_party_packages') or []
+    primary = out.get('primary: platform cache vs std-primed GOCACHE')
+    stricter = out.get('stricter: platform cache vs deps-primed GOCACHE')
+    if not packages or not primary or not stricter:
+        return
+    primary['third_party_context'] = {
+        'deps_primed_ratio': stricter['median_ratio'], 'deps_primed_lower_99': stricter['lower_99'],
+        'deps_primed_upper_99': stricter['upper_99'], 'packages': len(packages),
+        'note': f"Go's std-primed cold build compiles its {len(packages)} third-party package(s) from source, while "
+                "Flint links its native libraries and platform archives prebuilt; the deps-primed ratio is the "
+                "like-for-like comparison."}
+    secondary = out.get('secondary: from scratch vs go build -a')
+    if secondary:
+        secondary['third_party_context'] = {
+            'note': "No deps-primed equivalent exists: go build -a recompiles every package, the third-party ones "
+                    "included, while Flint's --no-platform-cache rebuilds the D modules but links the native C "
+                    "libraries prebuilt."}
 
 
 def measure(args, timed):
@@ -501,5 +525,11 @@ def measure(args, timed):
               f"binary {go['binary_bytes']} bytes")
         for label, verdict in row.get('verdicts', {}).items():
             print(f"  {label}: {verdict.get('median_ratio', verdict.get('ratio')):.3f}", 'pass' if verdict['pass'] else 'FAIL')
+            context = verdict.get('third_party_context')
+            if context and 'deps_primed_ratio' in context:
+                print(f"    deps-primed: {context['deps_primed_ratio']:.3f} ({context['deps_primed_lower_99']:.3f}-"
+                      f"{context['deps_primed_upper_99']:.3f}); {context['note']}")
+            elif context:
+                print(f"    {context['note']}")
     print('Wrote Spring build evidence', args.output, f"({result['status']})")
     return 0 if result['status'] == 'passed' or (result['status'] == 'incomplete' and args.allow_missing_flint) else 1

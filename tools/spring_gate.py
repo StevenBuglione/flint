@@ -106,6 +106,17 @@ def spring_gate(directory):
                                    f'build {app} secondary (scratch vs go build -a)', failures),
                 'incremental': ratio(flint['flint_cached_incremental_seconds'], go['go_std_incremental_seconds'], ceiling,
                                      f'build {app} incremental (dev profile as built)', failures)}
+            # Beside the primary, with equal prominence, for a comparator with third-party packages (coordinator,
+            # 2026-11-23): Go's std-primed cold build compiles them from source while Flint links prebuilt libraries.
+            # Context only; the gating definitions are the owner's.
+            if go.get('third_party_packages') and 'go_deps_cold_seconds' in go:
+                report[f'build {app}']['primary, deps-primed GOCACHE (context)'] = ratio(
+                    flint['flint_cached_cold_seconds'], go['go_deps_cold_seconds'], ceiling,
+                    f'build {app} primary against a deps-primed GOCACHE (context)', [])
+                report[f'build {app}']['third-party note'] = (
+                    f"Go's std-primed cold build compiles {len(go['third_party_packages'])} third-party package(s) from "
+                    "source while Flint links its native libraries prebuilt; the deps-primed ratio is the like-for-like "
+                    "comparison. The secondary has no deps-primed equivalent (go build -a recompiles everything).")
             # Owner decision 2: edit builds also report the fully static build, as the secondary headline.
             if 'flint_static_incremental_seconds' in flint:
                 report[f'build {app}']['incremental static'] = ratio(
