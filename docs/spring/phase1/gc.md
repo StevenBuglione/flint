@@ -130,6 +130,31 @@ The 406, 405 and Whitelabel paths (90–119) look similar. Their target is the e
 
 petclinic-rest's targets follow once its gate measures it. By the same rule, `GET /owners/1` should allocate only the entities and DTOs it returns, which are user-visible: the owner, pets, types and visits, their lists, and their strings from the database rows.
 
+**petclinic-rest by area** (the gate's call-site counter, each request recorded alone after a warm-up on fresh data, one 404 fence subtracted; local, LDC). `GET /owners/6` cost 1,520 allocations:
+
+| area | allocations | owner |
+|---|---|---|
+| transaction manager looked up by type on every `@Transactional` call (`getBeanOfType`, through `canonicalTypeName` per bean) | 983 (65%) | data-access (cache), framework-core (by-type lookups) |
+| `BeanPropertyRowMapper` built per query; column names lower-cased per row | 143 | data-access |
+| engine-jdbc: text copied twice per cell, a cell array per row, metadata per call | 138 | data-access |
+| engine-aot descriptors per request (`beanName`, `digits`, `descriptorOf`) | 90 | framework-core |
+| media-type matching, `HashMap`, NamedParameter SQL parse, `java.time` text, validation paths, tx synchronizations, Jackson | about 150 | web-http, framework-core, data-access, third-party-apis |
+| the entities and DTOs it returns | 16 | the application |
+
+Writes do the transaction-manager lookup twice. Validation compiles and matches its regex with fresh objects (200–373 per write; third-party-apis).
+
+After `7ca27b3b` (Spring's `transactionManagerCache`), `78445f8a` (row mapping without names or maps) and `7404e44b` (engine-jdbc cells), `policy/request-allocations.json` was re-measured at `2637c108`:
+
+| request | before | after |
+|---|---|---|
+| owner with pets and visits | 1,655 | 446 |
+| unknown pet | 1,152 | 163 |
+| list owners | 4,401 | 2,920 |
+| update owner | 2,973 | 794 |
+| add pet to owner | 3,351 | 1,087 |
+
+Next come the plan of attack's 2B data-path items: the parsed-SQL cache, `MapSqlParameterSource` copies, rows in the pooled arena, and `SimpleJdbcInsert` compiled once.
+
 ### 1.3 Peak RSS, by mapping
 
 Peak RSS before and after the io_uring fix (section 3, item 1):
