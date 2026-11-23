@@ -10,6 +10,13 @@
   - flint:engine-web gains fiber routes (`FiberRoute`): a full-D handler, which may use the GC and throw, runs on the request's reactor fiber and serves every request no other route serves, as a servlet container's `/` mapping does. Its `FiberResponse` frames output as embedded Tomcat does: no reason phrase, `Content-Length` or chunked chosen by the caller, `Date` and the connection fields after the application's, `Keep-Alive: timeout=N` only when asked for. The connection is kept alive and pipelines. `Request` gains field enumeration, the raw query and the protocol version.
   - A fiber route's response survives the client half-closing its side of the connection, as in Tomcat: the running response and the requests already pipelined behind it complete. A seeded framing fuzz (`packages/engine-web/tests/fiber_fuzz.d`) runs in every engine-web test run. The `FiberRoute` boundary passes ASan, UBSan and LeakSanitizer against instrumented natives.
   - `flint.engine.servlet` (`framework/engine-servlet`), Flint's servlet container over fiber routes, which plays embedded Tomcat's part for Spring Web MVC. It reproduces Tomcat's framing, field order, error-page forward with the `jakarta.servlet.error.*` attributes, and handling of uncaught exceptions. It offers the start, stop, port and graceful-shutdown API that Boot's web server support drives.
+  - Spring Web MVC request binding follows Spring 7:
+    - `@Valid @RequestBody` runs the configured validator (`WebMvcConfigurationSupport.setValidator`) and throws `MethodArgumentNotValidException` with its `BindingResult`.
+    - A blank request value converts to null for non-string parameters, and the default value then applies.
+    - `Optional!T` parameters wrap through their AOT descriptors.
+    - `java.time` parameters parse in their ISO forms.
+    - An unsupported parameter throws `IllegalArgumentException`.
+  - Servlet filters for Spring Security: Jakarta's request and response wrappers, and `GenericFilterBean` and `OncePerRequestFilter` in `flint.web.filter`. The servlet engine keeps a wrapped request's path-mapped filters and forwards it.
 - Phase 0 binary-size levers (ADR-030 section 5, `docs/milestones/13-binary-size.md`):
   - Linux glibc PIE outputs link with RELR packed relocations. This takes 765,880 bytes off bench-rest and 147,384 off bench-cli, with PIE, relro and now kept.
   - The release and size profiles pass LDC's `-fno-moduleinfo-localclasses`, so `--gc-sections` drops unused classes: 2,000 classes with 50 used shrink from 2.46 MB to 0.49 MB. The DMD fork gains the same switch.
