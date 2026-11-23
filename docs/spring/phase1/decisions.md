@@ -467,3 +467,10 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - framework-core and size-levers cut what petclinic's code instantiates, in its templated user-facing APIs and the generated modules.
     - size-levers' L1 shrinks the link.
   - Other work continues behind these two.
+- 2026-11-23, owner (via the coordinator): **compiler-fork features that serve the mission are approved.** That covers the DMD fork (and, if needed, the LDC fork) gaining tooling and code-generation capabilities.
+  - **Approved now:**
+    - a native AOT extraction mode, -flint-aot-extract, served over the platform prelude (design 3A);
+    - compile-server changes for per-module compilation, including the -allinst/prelude fix if the experiment shows it's needed (design 3B);
+    - runtime-library build flags such as -fno-moduleinfo-localclasses.
+  - **The boundary:** these features must not change the D language. That means no new syntax, no changed semantics of valid D programs, and no compiler-inserted write barriers. Changing the language stays owner-only (coordination.md, rule 5).
+  - **The evidence standard:** every such feature must produce output identical to the existing path (playbook B-7). A served or native result must match the in-process or CTFE result byte for byte, and missing instances fail loudly (FLINT-E0701). It keeps the unforked fallback, and has regression tests in the fork.
