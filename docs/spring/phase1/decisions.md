@@ -25,6 +25,8 @@
 - 2026-11-23, framework-core, for third-party-apis: framework-core owns `flint.java.time` from `77bb70a`. Request changes rather than editing framework/java.
 - 2026-11-23, m7-flint-cli: suites move with their code into `tests/<repo>/`: starters and openapi to `tests/boot/`, flint-mcp to `tests/ai/`, graceful shutdown and its fixture to `tests/framework/`. `tools/ci.py` runs each repo's `tests/` with `FLINT_ROOT` and `FLINT_WORKSPACE`, and `tests/flint_testing.py` finds directories by package or repo. test_flint_knowledge stays in flint because it tests the CLI, and so do the DMD-diagnostics misuse tests because they test the toolchain. Both resolve the engines through the workspace.
 
+- 2026-11-23, framework-core, for data-access: `List!(Any[])` (Java's `List<Object[]>`) now instantiates (`4977fd1`): `Stream.distinct` compares mutable-array elements by value instead of keying an associative array, so `JdbcTemplate.batchUpdate` can go back to `List!(Any[])`. `HashSet` and `HashMap` keyed by a mutable array still don't instantiate; ask if you need them.
+
 ## Open for the owner
 
 - 2026-11-23, proof-harness: with the corrected template count (own library plus probe, `d153fd1`), some of the 37 packages' `template_instances` budgets in `policy/packages.json` may now be exceeded. The old count left out each package's own library compile. Raising a budget is the owner's decision. Until then, any package over its budget fails the measured gate, and no cap has been changed.
