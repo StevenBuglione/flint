@@ -241,5 +241,5 @@ Status: proposed by the Milestone 10 implementation, for the project owner's rev
 - **flint:starter-security and the auth starter:** sessions, OAuth login, password hashing and email verification.
 - **The second wave of starters:** cache, messaging, mail, storage, ai, mcp, cli, tui and desktop.
 - **Graceful SIGTERM and SIGINT:** this needs flint:os to dispatch SIGTERM and flint:web's run loop to watch for it.
-- **The benchmark's references:** Flint references for `rest-notes`, `queue-worker` and `tui-dashboard`, and the Go and Spring Boot references.
+- **The benchmark's Flint references:** Flint references for `rest-notes`, `queue-worker` and `tui-dashboard`. They are on hold while the owner settles the application model. The Go and Spring Boot references are done: all eight pass their acceptance tests, built with the pinned Go 1.27.4, Temurin JDK 21.0.13.1+2, Maven 3.9.16 and Spring Boot 4.2.0.
 
