@@ -2,18 +2,18 @@
   "schema": "flint.measure-queue/1",
   "id": "gc-pools-ab",
   "created": "2026-11-23",
-  "status": "blocked",
+  "status": "pending",
   "window": "claim",
   "priority": 2,
   "requested_by": "the coordinator (2026-11-23), after the reactor table chunking (2b2c76bf) took gs-rest-service's GC live set from 2,320 to 440 KB",
   "report_to": "data-access and the coordinator (coordination inboxes); docs/spring/phase1/gc.md",
   "estimate_minutes": 30,
   "summary": "gs-rest-service: druntime's default GC pools against minPoolSize:1 incPoolSize:0 parallel:1, same binary, Go interleaved, 4 trials",
-  "why": "Decision-gating A/B (coordinator, 2026-11-23); run after gs-rest-multicore-5. The same Flint binary at b481428a005a runs under --DRT-gcopt='gc:conservative profile:1' (druntime's default) and --DRT-gcopt='gc:conservative minPoolSize:1 incPoolSize:0 parallel:1 profile:1', with the registered Go comparator, interleaved in every trial (Go, A, B, then B, A, Go), on the workload of policy/spring-http-benchmark.json with 4 trials instead of 9 so it fits a claimed window. Reports peak RSS, throughput, p50, p99, CPU per request and druntime's collections and pauses per arm. Decision: if small-pools lowers peak RSS and costs no other metric beyond its interval, Boot bakes it into rt_options with a playbook entry; if it costs p99 or throughput, minPoolSize:2 and 4 are next. The record is mode \"ab\" and never counts as the Phase 1 GC matrix. Agreed with proof-harness (2026-11-23 21:15Z): priority 2, so it runs right after gs-rest-multicore-5 (priority 1) and ahead of build runs; proof-harness adds small-pools/default ratios of medians with bootstrap 99% intervals from the raw series, wide at 4 trials per arm, so 'no metric worse beyond its interval' is a lenient test and the result says so.",
+  "why": "Decision-gating A/B (coordinator, 2026-11-23); run after gs-rest-multicore-5. The same Flint binary at b481428a005a runs under --DRT-gcopt='gc:conservative profile:1' (druntime's default) and --DRT-gcopt='gc:conservative minPoolSize:1 incPoolSize:0 parallel:1 profile:1', with the registered Go comparator, interleaved in every trial (Go, A, B, then B, A, Go), on the workload of policy/spring-http-benchmark.json with 4 trials instead of 9 so it fits a claimed window. Reports peak RSS, throughput, p50, p99, CPU per request and druntime's collections and pauses per arm. Decision: if small-pools lowers peak RSS and costs no other metric beyond its interval, Boot bakes it into rt_options with a playbook entry; if it costs p99 or throughput, minPoolSize:2 and 4 are next. The record is mode \"ab\" and never counts as the Phase 1 GC matrix. Agreed with proof-harness (2026-11-23 21:15Z): priority 2, so it runs right after gs-rest-multicore-5 (priority 1) and ahead of build runs; proof-harness adds small-pools/default ratios of medians with bootstrap 99% intervals from the raw series, wide at 4 trials per arm, so 'no metric worse beyond its interval' is a lenient test and the result says so. Pinned at 259a864d05ea with gs-rest-multicore-5 (toolchain DMD 0aae4c32…).",
   "builds": {
     "tree": {
       "app": "checkout",
-      "commit": "TBD",
+      "commit": "259a864d05ea",
       "flint": true,
       "linker": "mold"
     }
@@ -43,6 +43,5 @@
         ]
       }
     ]
-  },
-  "blocked_on": "the same pin as gs-rest-multicore-5: the latest main after m7-flint-cli's shared-toolchain switch (at or after b481428a), so the default arm and multicore-5 share one binary and toolchain"
+  }
 }
