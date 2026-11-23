@@ -1690,6 +1690,17 @@
               "default": -1
             }
           }
+        },
+        "flint": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "threads": {
+              "type": "integer",
+              "description": "Number of reactor threads serving requests. 0 uses every CPU the process may run on, up to 16, as Tomcat's request thread pool spans the CPUs.",
+              "default": 0
+            }
+          }
         }
       }
     },

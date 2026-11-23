@@ -19,6 +19,11 @@
       "name": "server.servlet",
       "type": "flint.boot.web.server.autoconfigure.ServerProperties$Servlet",
       "sourceType": "flint.boot.web.server.autoconfigure.ServerProperties$Servlet"
+    },
+    {
+      "name": "server.flint",
+      "type": "flint.boot.web.server.autoconfigure.ServerProperties$Flint",
+      "sourceType": "flint.boot.web.server.autoconfigure.ServerProperties$Flint"
     }
   ],
   "properties": [
@@ -102,6 +107,13 @@
       "description": "Load on startup priority of the dispatcher servlet.",
       "sourceType": "flint.boot.web.server.autoconfigure.ServerProperties$Servlet",
       "defaultValue": -1
+    },
+    {
+      "name": "server.flint.threads",
+      "type": "java.lang.Integer",
+      "description": "Number of reactor threads serving requests. 0 uses every CPU the process may run on, up to 16, as Tomcat's request thread pool spans the CPUs.",
+      "sourceType": "flint.boot.web.server.autoconfigure.ServerProperties$Flint",
+      "defaultValue": 0
     }
   ],
   "hints": []

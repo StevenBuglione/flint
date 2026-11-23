@@ -28,6 +28,25 @@ import flint.java.util : Optional;
 @ConfigurationProperties("server")
 final class ServerProperties
 {
+    /// Flint servlet engine settings (Flint addition, in place of Boot's `server.tomcat.*`).
+    static final class Flint
+    {
+        private int threads = 0;
+
+        /// Number of reactor threads serving requests. 0 uses every CPU the process may run on, up to 16, as Tomcat's
+        /// request thread pool spans the CPUs.
+        int getThreads() const pure nothrow @nogc
+        {
+            return threads;
+        }
+
+        /// Set `threads`.
+        void setThreads(int threads) pure nothrow @nogc
+        {
+            this.threads = threads;
+        }
+    }
+
     /// Servlet properties.
     static final class Servlet
     {
@@ -100,6 +119,7 @@ final class ServerProperties
     private Compression compression;
     private Http2 http2;
     private Servlet servlet;
+    private Flint flint;
 
     /// Boot's defaults.
     this() pure nothrow
@@ -107,6 +127,7 @@ final class ServerProperties
         compression = new Compression;
         http2 = new Http2;
         servlet = new Servlet;
+        flint = new Flint;
     }
 
     /// Server HTTP port. The server factory uses 8080 when unset; 0 picks a free port.
@@ -174,12 +195,18 @@ final class ServerProperties
     {
         return servlet;
     }
+
+    /// Flint servlet engine settings (`server.flint.*`), in place of Boot's `server.tomcat.*`.
+    Flint getFlint() pure nothrow @nogc
+    {
+        return flint;
+    }
 }
 
 // ---- end: generated region
 
 /// Applies `server.*` to the servlet web server factory: the port, the address, the context path and the shutdown (Boot's
-/// `ServletWebServerFactoryCustomizer`).
+/// `ServletWebServerFactoryCustomizer`), and on Flint's factory `server.flint.threads`.
 class ServletWebServerFactoryCustomizer : WebServerFactoryCustomizer
 {
     private ServerProperties serverProperties;
@@ -200,6 +227,9 @@ class ServletWebServerFactoryCustomizer : WebServerFactoryCustomizer
         if (auto contextPath = serverProperties.getServlet().getContextPath())
             factory.setContextPath(contextPath);
         factory.setShutdown(serverProperties.getShutdown());
+        // Boot's TomcatWebServerFactoryCustomizer applies server.tomcat.threads.*; Flint's engine takes its threads here.
+        if (auto flintFactory = cast(FlintServletWebServerFactory) factory)
+            flintFactory.setThreads(serverProperties.getFlint().getThreads());
     }
 }
 

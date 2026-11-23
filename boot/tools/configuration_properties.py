@@ -209,7 +209,10 @@ server = Cls('ServerProperties', 'Settings of the embedded web server.', [
     F('compression', 'Compression', 'new Compression', 'Response compression (`server.compression.*`).', ro=True),
     F('http2', 'Http2', 'new Http2', 'HTTP/2 (`server.http2.*`).', ro=True),
     F('servlet', 'Servlet', 'new Servlet', 'Servlet settings (`server.servlet.*`).', ro=True),
-], nested=[Cls('Servlet', 'Servlet properties.', [
+    F('flint', 'Flint', 'new Flint', "Flint servlet engine settings (`server.flint.*`), in place of Boot's `server.tomcat.*`.", ro=True),
+], nested=[Cls('Flint', "Flint servlet engine settings (Flint addition, in place of Boot's `server.tomcat.*`).", [
+    F('threads', 'int', '0', 'Number of reactor threads serving requests. 0 uses every CPU the process may run on, up to 16, as Tomcat\'s request thread pool spans the CPUs.'),
+]), Cls('Servlet', 'Servlet properties.', [
     F('contextParameters', 'Map!(string, string)', 'new LinkedHashMap!(string, string)', 'Servlet context init parameters.', ro=True),
     F('contextPath', 'string', None, 'Context path of the application.', setter='cleanContextPath(contextPath)'),
     F('applicationDisplayName', 'string', '"application"', 'Display name of the application.'),

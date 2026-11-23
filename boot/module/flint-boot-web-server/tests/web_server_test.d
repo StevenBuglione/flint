@@ -62,6 +62,22 @@ import flint.java.util : Optional;
     assert(factory.getContextPath() == "/app");
 }
 
+@("the factory serves on every CPU by default; server.flint.threads sets the reactor threads") unittest
+{
+    auto properties = new ServerProperties;
+    auto factory = new FlintServletWebServerFactory;
+    assert(factory.getThreads() == 0);
+    properties.getFlint().setThreads(2);
+    new ServletWebServerFactoryCustomizer(properties).customize(factory);
+    assert(factory.getThreads() == 2);
+    bool thrown;
+    try
+        factory.setThreads(17);
+    catch (IllegalArgumentException)
+        thrown = true;
+    assert(thrown);
+}
+
 @("server.servlet.context-path is cleaned as Boot cleans it: trimmed, without a trailing slash") unittest
 {
     auto servlet = new ServerProperties().getServlet();

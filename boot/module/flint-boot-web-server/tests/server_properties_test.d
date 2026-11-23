@@ -19,6 +19,7 @@ unittest
     assert(properties.getCompression().getMimeTypes().length == 8);
     assert(properties.getServlet().getApplicationDisplayName() == "application");
     assert(properties.getServlet().getContextPath() is null);
+    assert(properties.getFlint().getThreads() == 0);
 }
 
 unittest
@@ -26,12 +27,13 @@ unittest
     auto source = new MapConfigurationPropertySource("test", [
         ["server.address", "127.0.0.1"], ["server.shutdown", "immediate"],
         ["server.compression.enabled", "true"], ["server.servlet.context-path", "/api"],
-        ["SERVER_HTTP2_ENABLED", "true"], ["server.port", "8081"]
+        ["SERVER_HTTP2_ENABLED", "true"], ["server.port", "8081"], ["server.flint.threads", "3"]
     ]);
     auto binder = new Binder([cast(ConfigurationPropertySource) source]);
     foreach (descriptor; [
         descriptorOf!Shutdown(), descriptorOf!Compression(), descriptorOf!Http2(),
-        descriptorOf!(ServerProperties.Servlet)(), descriptorOf!(Optional!int)()
+        descriptorOf!(ServerProperties.Servlet)(), descriptorOf!(ServerProperties.Flint)(),
+        descriptorOf!(Optional!int)()
     ])
         binder.getDescriptors().add(descriptor);
     auto properties = binder.bind!ServerProperties("server").get();
@@ -40,4 +42,5 @@ unittest
     assert(properties.getCompression().isEnabled());
     assert(properties.getServlet().getContextPath() == "/api");
     assert(properties.getPort().get() == 8081);
+    assert(properties.getFlint().getThreads() == 3);
 }

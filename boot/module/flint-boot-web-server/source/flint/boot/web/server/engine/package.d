@@ -104,6 +104,7 @@ class FlintServletWebServerFactory : ConfigurableServletWebServerFactory
     private string contextPath = "";
     private string errorPath = "/error";
     private Shutdown shutdown = Shutdown.GRACEFUL;
+    private int threads;
 
     /// The default factory.
     this() pure nothrow @nogc
@@ -129,6 +130,7 @@ class FlintServletWebServerFactory : ConfigurableServletWebServerFactory
         options.contextPath = contextPath;
         options.globalErrorPage = errorPath;
         options.shutdown = shutdown == Shutdown.GRACEFUL ? ShutdownMode.graceful : ShutdownMode.immediate;
+        options.cores = threads;
         auto engine = new ServletEngine(options);
         foreach (initializer; initializers)
             initializer.onStartup(engine.getServletContext());
@@ -201,5 +203,21 @@ class FlintServletWebServerFactory : ConfigurableServletWebServerFactory
     void setShutdown(Shutdown shutdown)
     {
         this.shutdown = shutdown;
+    }
+
+    /// The reactor threads serving requests; 0, the default, is every CPU the process may run on, up to 16.
+    int getThreads() const pure nothrow @nogc
+    {
+        return threads;
+    }
+
+    /// Set the reactor threads serving requests (`server.flint.threads`); 0 is every CPU, up to 16.
+    void setThreads(int threads)
+    {
+        import flint.java.lang : IllegalArgumentException;
+
+        if (threads < 0 || threads > 16)
+            throw new IllegalArgumentException("Threads must be between 0 and 16");
+        this.threads = threads;
     }
 }
