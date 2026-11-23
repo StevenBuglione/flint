@@ -773,6 +773,28 @@ int commandCheck(ref Session session, CheckArgs args)
     return finish(session, report, payload);
 }
 
+/// The packages of one repo of the split, for `flint check --gate structural --repo <name>`.
+private string[] repoPackages(ref Session session, string repo, ref Report report)
+{
+    string[] names;
+    bool known;
+    foreach (ref policy; session.home.repos)
+        known = known || policy.name == repo;
+    if (!known)
+    {
+        report.error("FLINT-E0001", "`" ~ repo ~ "` is not a repo in policy/repos.json",
+                "flint check --gate " ~ "structural --repo flint");
+        return null;
+    }
+    foreach (ref item; session.home.packages)
+    {
+        if (item.repo == repo)
+            names ~= item.name;
+    }
+    // A repo with no framework packages (boot) still runs the graph, repo-edge and Boot-layer checks.
+    return names.length ? names : ["\0none"];
+}
+
 /// The workspace part of `flint check`: the structural gate and, unless restricted, dfmt and D-Scanner.
 private void checkWorkspace(ref Session session, const ref CheckArgs args, string dfmt, string dscanner,
         ref CheckPayload payload, ref Report report)
@@ -782,13 +804,14 @@ private void checkWorkspace(ref Session session, const ref CheckArgs args, strin
     import flint_tool.check.structural : structuralGate;
     import flint_tool.toolchain.toolchain : componentPath, toolchainDirectory;
 
-    if (args.gate.length == 0 && args.packages.length)
+    if (args.gate.length == 0 && (args.packages.length || args.repo.length))
     {
         report.error("FLINT-E0004", "--package restricts the structural gate",
                 "flint check --gate structural --package cli");
         return;
     }
-    const selected = args.packages.length ? selectedPackages(session, args.packages, report) : null;
+    const selected = args.packages.length ? selectedPackages(session, args.packages,
+            report) : args.repo.length ? repoPackages(session, args.repo, report) : null;
     if (!report.ok)
         return;
     payload.checks ~= "structural";
@@ -796,6 +819,7 @@ private void checkWorkspace(ref Session session, const ref CheckArgs args, strin
             : session.home.packages.length, "package") ~ ")");
     const dmd = componentPath(session.home, toolchainDirectory(session.home), "dmd");
     payload.structural = structuralGate(session.home, selected, dmd, report);
+    payload.structural.repo = args.repo;
     if (args.gate.length == 0)
     {
         payload.checks ~= "quality";
@@ -817,11 +841,21 @@ string gateJson(const ref StructuralSummary summary)
 {
     import std.conv : to;
 
+    string tail;
+    if (summary.repo.length)
+        tail ~= ",\n  \"repo\": \"" ~ summary.repo ~ "\"";
+    if (summary.pending_repo_edges.length)
+    {
+        tail ~= ",\n  \"pending_repo_edges\": [";
+        foreach (index, edge; summary.pending_repo_edges)
+            tail ~= (index ? "," : "") ~ "\n    \"" ~ edge ~ "\"";
+        tail ~= "\n  ]";
+    }
     return "{\n  \"packages\": " ~ summary.packages.to!string ~ ",\n  \"graph_nodes\": " ~ summary
         .graph_nodes.to!string ~ ",\n  \"generated_dependencies\": {\n    \"packages\": "
         ~ summary.generated_dependencies.packages.to!string ~ (summary.generated_dependencies.packages
-                ? ",\n    \"compiler_profiles\": " ~ summary.generated_dependencies.compiler_profiles.to!string
-                : "") ~ "\n  }\n}";
+                ? ",\n    \"compiler_profiles\": " ~ summary.generated_dependencies.compiler_profiles.to!string : "")
+        ~ "\n  }" ~ tail ~ "\n}";
 }
 
 // ---------------------------------------------------------------- fmt

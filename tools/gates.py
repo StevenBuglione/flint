@@ -4,6 +4,7 @@ import argparse,json,re,statistics,subprocess,sys,os,shutil,tempfile,hashlib
 from pathlib import Path
 from d_source import tokens,imported_modules,declared_module,module_default,has_string_mixin,compiler_dependency_edges
 from perf_stats import finite_samples,median_ratio_interval
+from workspace import Workspace,edge_violations,package_repos
 ROOT=Path(__file__).resolve().parents[1]
 P=json.loads((ROOT/'policy/packages.json').read_text(encoding='utf-8'))['packages']
 B=json.loads((ROOT/'policy/budgets.json').read_text(encoding='utf-8'))
@@ -103,6 +104,8 @@ def boot_layers():
                 dep=boot_owner(module)
                 require(dep is None or dep==name or dep in meta['dependencies'],str(f.relative_to(ROOT))+': undeclared Boot-layer import '+module)
 
+WORKSPACE=Workspace()
+
 def structural(selected):
     visited=set();active=set()
     def visit(n):
@@ -116,12 +119,14 @@ def structural(selected):
             visit(d)
         active.remove(n);visited.add(n)
     for n in P:visit(n)
+    violations,_=edge_violations(ROOT)
+    require(not violations,'repo edge: '+(violations[0][2] if violations else ''))
     root_sdl=(ROOT/'dub.sdl').read_text(encoding='utf-8')
     require(set(re.findall(r'subPackage\s+"packages/([\w-]+)"',root_sdl))==set(P),'root subpackage list differs')
     boot_layers()
     mixin_packages=set()
     for n in selected:
-        meta=P[n];pkg=ROOT/'packages'/n;sdl=(pkg/'dub.sdl').read_text(encoding='utf-8')
+        meta=P[n];pkg=WORKSPACE.package_dir(n);sdl=(pkg/'dub.sdl').read_text(encoding='utf-8')
         actual=set(re.findall(r'dependency\s+"flint:([\w-]+)"\s+version="\*"',sdl))
         require(actual==set(meta['dependencies']),n+': SDL dependencies differ from policy')
         require(len(re.findall(r'\bdependency\b',sdl))==len(actual),n+': noncanonical dependency recipe')
@@ -256,8 +261,20 @@ def verify_evidence_artifacts(evidence,directory):
 
 def main():
     ap=argparse.ArgumentParser();ap.add_argument('--package',action='append',choices=sorted(P));ap.add_argument('--gate',choices=['structural','baseline','all'],required=True)
-    ap.add_argument('--evidence',type=Path);ap.add_argument('--baseline',type=Path);a=ap.parse_args()
-    result=structural(a.package or P)
+    ap.add_argument('--evidence',type=Path);ap.add_argument('--baseline',type=Path)
+    ap.add_argument('--repo',help='check only this repo\'s packages (policy/repos.json), as its own CI will after the split')
+    ap.add_argument('--workspace',type=Path,help='flint.workspace/1 file: the checkouts of each repo at pinned commits; default: this monorepo')
+    a=ap.parse_args()
+    global WORKSPACE
+    WORKSPACE=Workspace(a.workspace)
+    problems=WORKSPACE.verify()
+    require(not problems,'workspace: '+'; '.join(problems))
+    selected=a.package or [n for n in P if a.repo is None or package_repos(ROOT)[n][0]==a.repo]
+    require(a.repo is None or a.repo in {r for r,_ in package_repos(ROOT).values()},'unknown repo '+str(a.repo))
+    result=structural(selected)
+    if a.repo:result['repo']=a.repo
+    _,deferred=edge_violations(ROOT)
+    if deferred:result['pending_repo_edges']=sorted(message for _,_,message in deferred)
     if a.gate in ['baseline','all']:
         require(a.evidence is not None,'measured evidence is required; missing evidence never passes')
         require(a.gate!='all' or a.baseline is not None,'regression gates require measured base evidence')

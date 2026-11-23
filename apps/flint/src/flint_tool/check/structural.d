@@ -21,6 +21,10 @@ struct StructuralSummary
     long graph_nodes;
     /// The compiler dependency audit.
     GeneratedSummary generated_dependencies;
+    /// The repo the gate was restricted to, or empty (plan section 7).
+    string repo;
+    /// Cross-repo dependencies pending a decision in policy/repos.json.
+    string[] pending_repo_edges;
 }
 
 /// Compiler dependency audit counts.
@@ -44,6 +48,7 @@ StructuralSummary structuralGate(const ref Home home, scope const(string)[] sele
     checkGraph(home, report);
     checkRootRecipe(home, report);
     checkBootLayers(home, report);
+    summary.pending_repo_edges = checkRepoEdges(home, report);
     string[] names;
     foreach (ref item; home.packages)
     {
@@ -106,6 +111,85 @@ private void checkGraph(const ref Home home, ref Report report)
 
     foreach (ref item; home.packages)
         visit(item.name);
+}
+
+/// Plan section 7: a package depends only on its own repo and the repos policy/repos.json allows it
+/// (FLINT-E0532). Returns the pending edges, which the policy lists with a reason and which do not fail.
+private string[] checkRepoEdges(const ref Home home, ref Report report)
+{
+    if (home.repos.length == 0)
+        return null;
+    string[] pending;
+    void check(const ref imported!"flint_tool.home.policy".CorePackage item)
+    {
+        const source = repoOf(home, item.repo);
+        if (source is null)
+        {
+            report.add(at(diagnostic("FLINT-E0532", Severity.error,
+                    item.name ~ ": repo `" ~ item.repo ~ "` is not in policy/repos.json",
+                    "add the repo, or move the package to a listed one"), "policy/repos.json", 0));
+            return;
+        }
+        foreach (name; item.dependencies)
+        {
+            auto target = home.find(name);
+            if (target is null)
+                target = home.findBoot(name);
+            if (target is null)
+                target = home.findStarter(name);
+            if (target is null || target.repo == item.repo || allowed(*source, target.repo))
+                continue;
+            const message = item.name ~ " (" ~ item.repo ~ ") -> " ~ name ~ " (" ~ target.repo ~ "): "
+                ~ item.repo ~ " may not depend on " ~ target.repo;
+            if (isPending(home, item.name, name))
+                pending ~= message;
+            else
+                report.add(at(diagnostic("FLINT-E0532", Severity.error, message,
+                        "dependencies point portfolio -> boot -> framework -> flint; move the code down"),
+                        "policy/repos.json", 0));
+        }
+    }
+
+    foreach (ref item; home.packages)
+        check(item);
+    foreach (ref item; home.bootLibraries)
+        check(item);
+    foreach (ref item; home.starters)
+        check(item);
+    import std.algorithm.sorting : sort;
+
+    sort(pending);
+    return pending;
+}
+
+private const(imported!"flint_tool.home.policy".RepoPolicy)* repoOf(const ref Home home, string name)
+{
+    foreach (ref repo; home.repos)
+    {
+        if (repo.name == name)
+            return &repo;
+    }
+    return null;
+}
+
+private bool allowed(const ref imported!"flint_tool.home.policy".RepoPolicy source, string target)
+{
+    foreach (name; source.mayDependOn)
+    {
+        if (name == target)
+            return true;
+    }
+    return false;
+}
+
+private bool isPending(const ref Home home, string from, string to)
+{
+    foreach (ref edge; home.pendingEdges)
+    {
+        if (edge.from == from && edge.to == to)
+            return true;
+    }
+    return false;
 }
 
 /// ADR-029 section 8: a starter holds no D source outside its example (FLINT-E0528), and a Flint Boot library

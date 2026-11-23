@@ -370,6 +370,11 @@ immutable CodeInfo[] catalog = [
             ~ "some handlers of a worker-thread controller changes nothing, and `scope` on an argument the framework "
             ~ "passes as an owned value is noise. `flint check` reports the attributes per handler.",
             "@Get(\"/:id\")\nResult!Order get(@PathVariable(\"id\") ulong id)\n{\n    return orders.find(id);\n}"),
+    CodeInfo("FLINT-E0532", ExitCode.user, "a dependency crosses repos the wrong way",
+            "After the repo split each flint:* package lives in one repo (the `repo` field of policy/packages.json "
+            ~ "and policy/boot.json). Dependencies point only from portfolio repos to boot, framework and flint, as "
+            ~ "policy/repos.json lists; an edge the coordinator is still deciding is listed under pending_edges.",
+            "policy/repos.json:\n  \"framework\": { \"may_depend_on\": [\"flint\"] }"),
     CodeInfo("FLINT-E0601", ExitCode.user, "source is not formatted",
             "One formatter: dfmt 0.15.2 with the repository's dfmt.ini. `flint check` compares its output byte for "
             ~ "byte.", "flint fmt"),

@@ -132,6 +132,8 @@ class StructuralParityTests(unittest.TestCase):
             self.assertEqual(human.stdout, gate.stdout)
             expected = json.loads(gate.stdout)
             expected['generated_dependencies'].setdefault('compiler_profiles', 0)
+            expected.setdefault('repo', '')
+            expected.setdefault('pending_repo_edges', [])
             self.assertEqual(expected, document['structural'])
         return gate.returncode == 0, status == 0, gate.stderr, codes(document)
 
@@ -176,6 +178,10 @@ class StructuralParityTests(unittest.TestCase):
              'FLINT-E0504'),
             ('cli', edit('packages/cli/dub.sdl', 'dependency "flint:validate" version="*"', ''), 'FLINT-E0525'),
             ('cli', edit('dub.sdl', 'subPackage "packages/cli"\n', ''), 'FLINT-E0524'),
+            # The repo split (plan section 7): flint's log may not depend on the framework's di.
+            ('arena', edit('policy/packages.json', '"repo": "flint",\n      "dependencies": [\n        "arena",\n'
+                           '        "conc"', '"repo": "flint",\n      "dependencies": [\n        "arena",\n'
+                           '        "di",\n        "conc"'), 'FLINT-E0532'),
         ]
         for package, mutate, code in cases:
             with self.subTest(code=code):

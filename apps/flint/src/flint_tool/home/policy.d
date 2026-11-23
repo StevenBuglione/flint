@@ -35,6 +35,29 @@ struct CorePackage
     string summary;
     /// For a starter: its auto-configuration lists, as `module:Symbol` (ADR-029 section 2).
     string[] autoconfiguration;
+    /// The repo the package belongs to after the split (policy/repos.json, plan section 7): flint, framework, boot,
+    /// or a portfolio repo.
+    string repo;
+}
+
+/// A repo of the split and the repos it may depend on (policy/repos.json).
+struct RepoPolicy
+{
+    /// Short name: flint, framework, boot, security, ...
+    string name;
+    /// Repos this repo's packages may depend on, besides its own.
+    string[] mayDependOn;
+}
+
+/// A dependency that crosses repos the wrong way while the coordinator decides it.
+struct PendingEdge
+{
+    /// The depending package.
+    string from;
+    /// The dependency.
+    string to;
+    /// Why it is pending.
+    string reason;
 }
 
 /// The safety rules from policy/safety-policy.json.
@@ -121,6 +144,10 @@ struct Home
     CorePackage[] bootLibraries;
     /// Starters from policy/boot.json, in policy order (ADR-029 section 8).
     CorePackage[] starters;
+    /// The repos of the split (policy/repos.json), and the edges pending a decision.
+    RepoPolicy[] repos;
+    /// ditto
+    PendingEdge[] pendingEdges;
     /// Safety rules.
     SafetyPolicy safety;
     /// Pinned tool versions by name.
@@ -286,6 +313,7 @@ bool loadHome(string root, out Home home, ref Report report)
     home.root = root;
     bool ok = loadPackages(home, report);
     ok = loadStarters(home, report) && ok;
+    ok = loadRepos(home, report) && ok;
     ok = loadSafety(home, report) && ok;
     ok = loadVersions(home, report) && ok;
     ok = loadProfiles(home, report) && ok;
@@ -332,6 +360,7 @@ private bool loadPackages(ref Home home, ref Report report)
             return invalid(report, "policy/packages.json", entry.name ~ ": " ~ decoded.error.message);
         home.packages ~= CorePackage(entry.name, decoded.value.tier, decoded.value.module_,
                 decoded.value.dependencies, decoded.value.better_c, "packages/" ~ entry.name);
+        home.packages[$ - 1].repo = decoded.value.repo.length ? decoded.value.repo : "flint";
     }
     if (failure.length || home.packages.length == 0)
         return invalid(report, "policy/packages.json", failure.length ? failure : "lists no packages");
@@ -368,6 +397,7 @@ private bool loadStarters(ref Home home, ref Report report)
             item.section = decoded.value.section;
             item.summary = decoded.value.summary;
             item.autoconfiguration = decoded.value.autoconfiguration;
+            item.repo = decoded.value.repo.length ? decoded.value.repo : "boot";
             item.starter = group == "starters";
             item.boot = !item.starter;
             item.tier = item.starter ? 6 : 5;
@@ -390,6 +420,49 @@ private struct BootRecordJson
     string section;
     string summary;
     string[] autoconfiguration;
+    string repo;
+}
+
+private struct RepoRecordJson
+{
+    string[] may_depend_on;
+}
+
+private struct PendingEdgeJson
+{
+    string from;
+    string to;
+    string reason;
+}
+
+// policy/repos.json: the repos of the split and which may depend on which (plan section 7).
+private bool loadRepos(ref Home home, ref Report report)
+{
+    import std.file : exists;
+    import std.path : buildPath;
+
+    if (!exists(buildPath(home.root, "policy", "repos.json")))
+        return true;
+    const text = policyText(home, "policy/repos.json", report);
+    string failure;
+    const top = objectMembers(text, failure);
+    foreach (entry; objectMembers(member(top, "repos"), failure))
+    {
+        auto decoded = deserialize!RepoRecordJson(entry.value, lenient());
+        if (!decoded.ok)
+            return invalid(report, "policy/repos.json", entry.name ~ ": " ~ decoded.error.message);
+        home.repos ~= RepoPolicy(entry.name, decoded.value.may_depend_on);
+    }
+    const pending = member(top, "pending_edges");
+    if (pending !is null)
+    {
+        auto decoded = deserialize!(PendingEdgeJson[])(pending, lenient());
+        if (!decoded.ok)
+            return invalid(report, "policy/repos.json", "pending_edges: " ~ decoded.error.message);
+        foreach (ref edge; decoded.value)
+            home.pendingEdges ~= PendingEdge(edge.from, edge.to, edge.reason);
+    }
+    return failure.length == 0 || invalid(report, "policy/repos.json", failure);
 }
 
 private struct PackageRecordJson
@@ -400,6 +473,7 @@ private struct PackageRecordJson
     @JsonName("module") string module_;
     string[] dependencies;
     bool better_c;
+    string repo;
 }
 
 private struct SafetyRecord

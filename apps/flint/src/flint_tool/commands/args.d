@@ -121,6 +121,8 @@ struct CheckArgs
     @Option("gate", 'g', "Run only this gate: structural (the workspace's tools/gates.py gate)") string gate;
     /// Workspace packages for the structural gate.
     @Option("package", 0, "Restrict the structural gate to this workspace package (repeatable)") string[] packages;
+    /// One repo of the split.
+    @Option("repo", 0, "Restrict the structural gate to one repo's packages (policy/repos.json)") string repo;
     /// Project directory.
     @Option("project", 'C', "Run in this project or workspace directory") string project;
     /// Show more detail.
