@@ -155,6 +155,129 @@ unittest
     expect(defaulted.get("m.Config").flag("proxyBeanMethods", false)).toBeTrue();
 }
 
+// Fixture annotation types in the model's JSON, for the alias cases of Spring's MergedAnnotationsTests.
+
+/// An attribute: its name, D type, default (JSON) and, optionally, `@AliasFor(annotation, attribute)`.
+private string attribute(string name, string type, string default_, string target = null,
+        string aliased = null, bool alias_ = false)
+{
+    const annotations = alias_ || target.length || aliased.length
+        ? `[{"type":"flint.core.annotation.AliasFor",` ~ `"modules":[],"values":{"attribute":` ~ (aliased.length
+                ? `"` ~ aliased ~ `"` : "null")
+        ~ `,"annotation":{"type":"flint.core.annotation.ClassRef","modules":[],"values":{"name":` ~ (
+                target.length ? `"` ~ target ~ `"` : "null") ~ `}},"value":null}}]` : "[]";
+    return `{"name":"` ~ name ~ `","type":{"name":"` ~ type ~ `","modules":[]},"default":` ~ default_
+        ~ `,"annotations":` ~ annotations ~ `}`;
+}
+
+/// An annotation type with its meta-annotation declarations (JSON) and attributes.
+private string annotationType(string name, string meta, string[] attributes...)
+{
+    import std.array : join;
+
+    return `{"name":"` ~ name ~ `","modules":["m"],"meta":` ~ meta ~ `,"fields":[` ~ attributes.join(",") ~ `]}`;
+}
+
+/// A use of `type` with `values` (JSON object members).
+private string use(string type, string values = "")
+{
+    return `{"type":"` ~ type ~ `","modules":["m"],"values":{` ~ values ~ `}}`;
+}
+
+private imported!"flint_tool.engine.aot.merge".MergedSet mergedWith(string types, string annotations)
+{
+    import flint_tool.engine.aot.merge : merge;
+    import flint_tool.engine.aot.model : AnnotationType, ModuleModel, parseModule;
+
+    ModuleModel model;
+    string error;
+    const document = `{"schema":"flint.aot.model/1","module":"m","types":[{"name":"T","fqn":"m.T","kind":"class",`
+        ~ `"annotations":` ~ annotations ~ `}],"annotationTypes":[` ~ types ~ `]}`;
+    assert(parseModule(document, model, error), error);
+    AnnotationType[string] index;
+    foreach (ref type; model.annotationTypes)
+        index[type.name] = type;
+    return merge(model.types[0].annotations, index);
+}
+
+/// `@Meta(foo, bar)`, the root of the alias cases.
+private enum metaType = annotationType("m.Meta", "[]", attribute("foo", "string", `""`),
+            attribute("bar", "string", `""`), attribute("packages", "string[]", "[]"));
+
+@("an explicit alias maps its attribute's default too (FlintAliasForMetaDefaultOverride)")
+unittest
+{
+    const only = annotationType("m.OnlyValue", `[` ~ use("m.Meta", `"foo":"declared"`) ~ `]`,
+            attribute("value", "string", `"fromValue"`, "m.Meta", "foo"));
+    const merged = mergedWith(metaType ~ "," ~ only, `[` ~ use("m.OnlyValue", `"value":"fromValue"`) ~ `]`);
+    expect(merged.conflicts).toEqual(cast(string[]) null);
+    expect(merged.get("m.Meta").text("foo")).toEqual("fromValue");
+}
+
+@("an alias may target a meta-meta-annotation, and the nearest declaration wins")
+unittest
+{
+    const middle = annotationType("m.Middle", `[` ~ use("m.Meta", `"bar":"middle"`) ~ `]`,
+            attribute("bar", "string", `""`, "m.Meta", "bar"));
+    const top = annotationType("m.Top", `[` ~ use("m.Middle") ~ `]`, attribute("foo", "string", `""`,
+            "m.Meta", "foo"), attribute("bar", "string", `""`, "m.Meta", "bar"));
+    const merged = mergedWith(metaType ~ "," ~ middle ~ "," ~ top, `[` ~ use("m.Top",
+            `"foo":"top","bar":"topBar"`) ~ `]`);
+    expect(merged.conflicts).toEqual(cast(string[]) null);
+    expect(merged.get("m.Meta").text("foo")).toEqual("top");
+    expect(merged.get("m.Meta").text("bar")).toEqual("topBar");
+    expect(merged.items[2].distance).toEqual(2);
+}
+
+@("a single value aliasing an array attribute becomes a one-element array")
+unittest
+{
+    const scan = annotationType("m.Scan", `[` ~ use("m.Meta") ~ `]`, attribute("pkg", "string", `""`,
+            "m.Meta", "packages"));
+    const merged = mergedWith(metaType ~ "," ~ scan, `[` ~ use("m.Scan", `"pkg":"com.example"`) ~ `]`);
+    expect(merged.conflicts).toEqual(cast(string[]) null);
+    expect(merged.get("m.Meta").get("packages").strings).toEqual(["com.example"]);
+}
+
+@("implicit aliases mirror each other and conflict when they differ")
+unittest
+{
+    const implicit = annotationType("m.Implicit", `[` ~ use("m.Meta") ~ `]`, attribute("xml",
+            "string", `""`, "m.Meta", "foo"), attribute("groovy", "string", `""`, "m.Meta", "foo"));
+    const merged = mergedWith(metaType ~ "," ~ implicit, `[` ~ use("m.Implicit", `"groovy":"g.groovy"`) ~ `]`);
+    expect(merged.conflicts).toEqual(cast(string[]) null);
+    expect(merged.get("m.Implicit").text("xml")).toEqual("g.groovy");
+    expect(merged.get("m.Meta").text("foo")).toEqual("g.groovy");
+    const conflicting = mergedWith(metaType ~ "," ~ implicit, `[` ~ use("m.Implicit", `"xml":"a","groovy":"b"`) ~ `]`);
+    expect(conflicting.conflicts.length > 0).toBeTrue();
+}
+
+@("misconfigured @AliasFor declarations are reported, as Spring throws AnnotationConfigurationException")
+unittest
+{
+    import std.algorithm.searching : canFind;
+
+    const oneSided = annotationType("m.OneSided", "[]", attribute("value", "string", `""`, null,
+            "path"), attribute("path", "string", `""`));
+    const defaults = annotationType("m.Defaults", "[]", attribute("value", "string", `"a"`, null,
+            "path"), attribute("path", "string", `"b"`, null, "value"));
+    const notMeta = annotationType("m.NotMeta", "[]", attribute("foo", "string", `""`, "m.Meta", "foo"));
+    const typed = annotationType("m.Typed", `[` ~ use("m.Meta") ~ `]`, attribute("foo", "long", "0", "m.Meta", "foo"));
+    const all = metaType ~ "," ~ oneSided ~ "," ~ defaults ~ "," ~ notMeta ~ "," ~ typed;
+    const expected = [
+        "m.OneSided": "must be declared as an @AliasFor", "m.Defaults": "must have the same default",
+        "m.NotMeta": "which is not a meta-annotation", "m.Typed": "does not match"
+    ];
+    foreach (type, message; expected)
+    {
+        const merged = mergedWith(all, `[` ~ use(type) ~ `]`);
+        bool found;
+        foreach (conflict; merged.conflicts)
+            found = found || conflict.canFind(message);
+        expect(found).toBeTrue();
+    }
+}
+
 // ---- conditions ----
 
 @("profile expressions compile to D")

@@ -73,13 +73,14 @@ Rulebook R2 makes every Java annotation a UDA struct with the same name and attr
 The generator composes annotations exactly as Spring's `MergedAnnotations` with the `INHERITED_ANNOTATIONS` search strategy does at runtime:
 
 - an annotation is *present* on an element when it is declared there or is a meta-annotation (at any depth) of one declared there;
-- a meta-annotation's attributes take the values the declaring annotation gives through explicit `@AliasFor(annotation: ...)` and through implicit aliases (two attributes that alias the same meta-attribute alias each other);
-- a convention-free alias that keeps its default does not override;
-- the nearest declaration wins; for equal distance, the first declared wins;
-- the same alias pair given two different non-default values is an error (FLINT-E1103), as Spring's `AnnotationConfigurationException` is;
+- a meta-annotation's attributes take the values the annotations below it give through explicit `@AliasFor(annotation: ...)`, at any depth (an alias may target a meta-meta-annotation). The nearest declaring annotation wins, even when its attribute holds its default, as Spring maps the attribute through the alias either way;
+- implicit aliases (attributes aliasing the same meta-attribute) mirror each other, on the composed annotation too, and a set one wins over one at its default. So does the set member of a mirror pair in the meta-annotation: GetMapping's `value` and `path` both alias RequestMapping's mirrored `value` and `path`;
+- a single value aliasing an array attribute becomes a one-element array (`string pkg` aliasing `string[] basePackages`);
+- the nearest declaration of a type wins; for equal distance, the first declared wins;
+- the same alias pair given two different non-default values is an error (FLINT-E1103), as Spring's `AnnotationConfigurationException` is. So are misconfigured declarations: an intra-annotation alias not declared on both attributes, or one with different types or defaults; an explicit alias whose target is not a meta-annotation of the declaring annotation, or whose type is neither the target's type nor its element type;
 - class-level advice annotations apply to every public method that declares none of its own;
 - a method's annotations are searched through its type hierarchy, as Spring's `TYPE_HIERARCHY` strategy does, for request mappings and advice. Its own come first, then those of the interface and superclass methods it implements or overrides (same name and parameter types, in model types). A handler's parameter annotations (`@PathVariable`, `@RequestBody`, `@Valid`) are found the same way, as Spring MVC's `HandlerMethodParameter` finds them on an implemented interface, such as petclinic-rest's openapi-generated `OwnersApi`;
-- not yet: class-level annotations inherited from superclasses through `@Inherited`.
+- not yet: class-level annotations inherited from superclasses through `@Inherited`, and aliases inside nested annotation values.
 
 Generated code receives the merged result as a value of the annotation type, built field by field so that no constructor or `opCall` is involved, and boxed in `Any`: `Any.of(() { Transactional a; a.readOnly = true; return a; }())`.
 
