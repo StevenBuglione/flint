@@ -134,6 +134,7 @@ Creating the GitHub repositories is an outward step and waits for the owner's go
   - **Reproducible.** Archives are built by `flint` from pinned source, and their hashes must equal a local rebuild.
   - **Cache key.** Compiler, flags, platform version and target.
   - **MVS modules.** Third-party modules resolved by MVS always compile from source.
+  - **Implemented (archives, 2026-11-23).** `flint build` keeps each module's archive in `<cache>/platform/<key>/` and links it; [flint-cli.md](../flint-cli.md#the-platform-cache) has the key and the layout. Rebuilt archives are byte-identical once their `ar` member headers are normalized. No `.di` files ship: DMD 2.114's `-H` output drops the bodies compile-time evaluation needs, and its `-inline` full output loses the imports behind expanded UDA sequences. Modules are imported from their pinned source, and their semantic analysis is left to the compile server.
   - **Two published headlines:**
     - the platform cache against Go with a standard-library-primed `GOCACHE`;
     - everything from scratch against `go build -a` with an empty cache.

@@ -93,7 +93,8 @@ class SharedPolicyTests(unittest.TestCase):
                 profiles.load(path)
 
     def test_bootstrap_recipe_equals_the_recipe_flint_generates(self):
-        flint('build', '--project', str(ROOT / 'apps/flint'))
+        # The bootstrap compiles the platform modules from source, as --no-platform-cache does (ADR-030 section 5).
+        flint('build', '--no-platform-cache', '--project', str(ROOT / 'apps/flint'))
         generated = ROOT / 'apps/flint/.flint/generated/dub/dub.sdl'
         manifest = tomllib.loads((ROOT / 'apps/flint/flint.toml').read_text())
         # A verified DMD fork adds `-verror-hide`, which only changes how diagnostics read (ADR-027 section 5).

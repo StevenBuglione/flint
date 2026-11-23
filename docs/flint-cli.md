@@ -30,7 +30,7 @@ flint check
 | Command | What it does |
 | --- | --- |
 | `flint new <name> [--starter a,b] [--type executable\|library] [--path DIR] [--plan]` | Create a project in the canonical layout, with `flint.lock`. Never overwrites. `--plan` prints the files instead. |
-| `flint build [packages...] [--profile P] [--compiler C] [--dflags F]... [--lflags F]... [--verify] [--locked] [--force] [-- flags]` | Build the project, or workspace packages, with a canonical profile. Writes a receipt next to the artifact. |
+| `flint build [packages...] [--profile P] [--compiler C] [--dflags F]... [--lflags F]... [--verify] [--locked] [--force] [--no-platform-cache] [-- flags]` | Build the project, or workspace packages, with a canonical profile. Links the platform modules from the platform cache unless `--no-platform-cache` is given. Writes a receipt next to the artifact. |
 | `flint run [--profile P] [--dflags F]... [--debug] [--verify] [--locked] [-- args]` | Build if needed, then run with the project root as working directory. `--debug` starts gdb (or lldb) with Flint's pretty-printers. |
 | `flint watch [--test\|--build] [-- args]` | Rebuild and restart the executable (or retest a library) on every change to `src/`, `test/`, `config/`, `native/`, `resources/` or `flint.toml`. A failing cycle shows its diagnostics and waits. `--json` prints one `flint.watch/1` line per cycle. |
 | `flint test [packages...] [--compiler dmd\|ldc\|both] [--sanitize] [--scenarios] [--verify] [--locked] [--force]` | Build and run unittests: the project's `src/` and `test/`, or `dub test` for workspace packages. `--sanitize` builds a project's tests, embedded C and native packages with ASan and UBSan. |
@@ -364,6 +364,19 @@ defines = ["SHOP_FAST=1"]
 | `size` | LDC | as release, with `-Oz` |
 | `sanitize` | LDC | ASan and UBSan on the sanitizer-aware runtime |
 
+### The platform cache
+
+The pinned platform modules (the core packages, framework modules and Boot libraries a project resolves) play the role of Go's standard library (ADR-030 section 5). `flint build` compiles each one once per compiler, flags, platform version and target, keeps the archive in `<cache>/platform/<key>/`, and links it into every project that needs it. Third-party modules (path, repository and DUB dependencies) always compile from source.
+
+- **Key.** A module's key hashes the compiler's and DUB's executables, the platform release, the profile's flags, the target, the module's DUB settings, the content of every file DUB lists for it, and its dependencies' keys. Editing a module re-keys it and everything that imports it, because their inlined functions and template instances may change.
+- **Priming.** On a miss, `flint build` reports `Priming N platform module(s)`, builds them with one DUB run from a synthetic root (`.flint/generated/platform-describe`), and stores each archive under a temporary name before renaming it. It keeps the four newest archives of each module.
+- **Linking.** `.flint/generated/platform/dub.sdl` lists each module as its import paths and settings, without sources. The project's recipe depends on it and links the archives as one group, so archive order does not matter.
+- **Reproducible.** The prime build runs from the Flint home, and every archive's member headers are normalized as `ar D` does (time, owner and group zero, mode 644). A rebuild of the same source with the same toolchain and flags then has the same bytes, in another project and another cache. `tests/test_flint_platform_cache.py` checks it.
+- **Interfaces.** Modules are imported from their pinned source. DMD 2.114's `-H` interface files drop the function bodies that compile-time evaluation needs, and its `-inline` full output loses the imports behind expanded UDA sequences, so `.di` files would not compile Flint's modules. Holding the modules' semantic analysis belongs to the compile server.
+- **Off.** Use `--no-platform-cache` or `FLINT_PLATFORM_CACHE=0`. Sanitizer and cross-target builds always compile from source. On this first slice the cache is enabled on Linux hosts only, until the macOS and Windows archivers are checked.
+
+The receipt's `platform_archives` lists each linked module with its key and archive SHA-256; it is empty when the modules compiled from source.
+
 ### Receipts
 
 Every artifact has `<artifact>.receipt.json` (`flint.receipt/1`) next to it. Workspace package artifacts have theirs in `.flint/receipts/`. A receipt records the identities behind the artifact: tool, project, manifest and lock hashes, source commit and dirtiness, toolchain components and hashes, native install receipt, profile, flags actually passed, additions, waivers, command, influential environment and output hashes. An artifact is **canonical** when no flags were added, the compiler belongs to the profile, and the toolchain verifies against its receipt. `flint receipt --canonical` and measurement refuse anything else.
@@ -378,7 +391,8 @@ Every artifact has `<artifact>.receipt.json` (`flint.receipt/1`) next to it. Wor
 | `FLINT_LOG` | Append a JSON line per child process `flint` runs (argv, directory, status, duration). |
 | `FLINT_PROFILE` | Read by applications: selects `config/application-<profile>.toml`. |
 | `FLINT_PROXY` | Fetch repository-path modules and DUB packages from `<proxy>/<path>` instead of `https://<path>`; `off` never fetches. |
-| `FLINT_CACHE` | The module cache, instead of `<installation>/.flint/cache`. |
+| `FLINT_CACHE` | The module and platform cache, instead of `<installation>/.flint/cache`. |
+| `FLINT_PLATFORM_CACHE` | `0`: compile the platform modules from source, as `--no-platform-cache` does. |
 | `FLINT_OFFLINE` | `1`: never touch the network; use the cache or `vendor/`. |
 | `FLINT_DUB_INDEX` | An additional DUB compatibility index, for private packages. |
 | `SOURCE_DATE_EPOCH` | Timestamps of `flint package` archives, images and SBOMs, for byte-reproducible packages. |

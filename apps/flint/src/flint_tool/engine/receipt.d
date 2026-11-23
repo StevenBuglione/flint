@@ -168,6 +168,17 @@ struct NativePackageRecord
     string binary_sha256;
 }
 
+/// One platform module linked from the platform cache (ADR-030 section 5).
+struct PlatformArchiveRecord
+{
+    /// DUB name, such as flint:web.
+    string name;
+    /// Cache key: toolchain, flags, target, settings, sources and dependencies' keys.
+    string key;
+    /// SHA-256 of the archive.
+    string sha256;
+}
+
 /// A complete build receipt.
 struct Receipt
 {
@@ -211,6 +222,8 @@ struct Receipt
     bool portable = true;
     /// Why it does not.
     string[] non_portable_reasons;
+    /// Platform modules linked from the platform cache; empty when they were compiled from source.
+    PlatformArchiveRecord[] platform_archives;
 }
 
 /// Receipt path for an artifact.

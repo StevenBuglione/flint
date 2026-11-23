@@ -28,6 +28,10 @@ struct RecipeExtras
     bool scanned;
     /// `.flint/generated/aot` holds Flint AOT's modules: the project has a `@FlintBootApplication` (ADR-030).
     bool aot;
+    /// The core packages come from `.flint/generated/platform`, the platform cache's recipe (ADR-030 section 5).
+    bool platform;
+    /// The linker flags that link the platform cache's archives.
+    string[] platformLflags;
 }
 
 /// Render the root recipe for a project.
@@ -54,8 +58,10 @@ string renderRecipe(const ref Home home, const ref Manifest manifest, const ref 
         text ~= fields("lflags", dubEscaped(extras.nativeFlags));
     if (extras.diagnosticFlags.length)
         text ~= fields("dflags", dubEscaped(extras.diagnosticFlags));
+    if (extras.platformLflags.length)
+        text ~= fields("lflags", dubEscaped(extras.platformLflags));
     foreach (name; resolution.direct)
-        text ~= dependencyLine(home, resolution, name, "");
+        text ~= dependencyLine(home, resolution, name, "", "../deps/", extras.platform);
     foreach (profile; profileNames)
     {
         if (profile == "test")
@@ -71,7 +77,7 @@ string renderRecipe(const ref Home home, const ref Manifest manifest, const ref 
     if (extras.objects.length && manifest.type == "library")
         text ~= fields("lflags", extras.linkHardening, "    ");
     foreach (name; resolution.directTest)
-        text ~= dependencyLine(home, resolution, name, "    ");
+        text ~= dependencyLine(home, resolution, name, "    ", "../deps/", extras.platform);
     return text ~ "}\n";
 }
 
@@ -84,8 +90,10 @@ bool hasApplicationConfig(string root)
     return root.length && exists(buildPath(root, "config", "application.toml"));
 }
 
-/// Render the recipe of a path dependency that is a Flint project, with absolute source paths.
-string renderDependencyRecipe(const ref Home home, const ref ResolvedPackage item, const ref Resolution resolution)
+/// Render the recipe of a path dependency that is a Flint project, with absolute source paths. `platform`: the core
+/// packages come from the platform cache's recipe.
+string renderDependencyRecipe(const ref Home home, const ref ResolvedPackage item,
+        const ref Resolution resolution, bool platform = false)
 {
     import std.path : buildPath;
 
@@ -94,7 +102,7 @@ string renderDependencyRecipe(const ref Home home, const ref ResolvedPackage ite
             "src"))) ~ field("importPaths", recipePath(buildPath(item.directory,
             "src"))) ~ field("dflags", "-preview=dip1000");
     foreach (name; item.dependencies)
-        text ~= dependencyLine(home, resolution, name, "", "../");
+        text ~= dependencyLine(home, resolution, name, "", "../", platform);
     return text;
 }
 
@@ -146,8 +154,8 @@ string dubName(string name)
 }
 
 /// `dub.selections.json` for the generated root recipe: every DUB package pinned to its checked-out directory,
-/// so DUB packages that depend on each other resolve to the compatibility index's versions. Null when there are
-/// none.
+/// so DUB packages that depend on each other resolve to the compatibility index's versions. A project without DUB
+/// packages gets an empty selection: DUB counts a missing file as a change and rebuilds the project every time.
 string renderSelections(string root, const ref Resolution resolution)
 {
     import std.path : buildPath;
@@ -161,7 +169,7 @@ string renderSelections(string root, const ref Resolution resolution)
         const directory = recipePath(buildPath(root, dubPackagesDirectory, workingName(item)));
         versions ~= (versions.length ? ",\n" : "") ~ "\t\t" ~ quoted(name) ~ ": {\"path\": " ~ quoted(directory) ~ "}";
     }
-    return versions.length ? "{\n\t\"fileVersion\": 1,\n\t\"versions\": {\n" ~ versions ~ "\n\t}\n}\n" : null;
+    return "{\n\t\"fileVersion\": 1,\n\t\"versions\": {" ~ (versions.length ? "\n" ~ versions ~ "\n\t" : "") ~ "}\n}\n";
 }
 
 /// Where DUB packages are built, relative to the project root. DUB writes build outputs into a package's own
@@ -200,9 +208,10 @@ private string header()
 }
 
 /// A dependency line. `siblings` leads from the recipe's directory to the generated dependency recipes:
-/// "../deps/" from .flint/generated/dub, "../" from .flint/generated/deps/<name>.
+/// "../deps/" from .flint/generated/dub, "../" from .flint/generated/deps/<name>. `platform`: a core package comes
+/// from the platform cache's recipe, `.flint/generated/platform`.
 private string dependencyLine(const ref Home home, const ref Resolution resolution, string name,
-        string indent, string siblings = "../deps/")
+        string indent, string siblings = "../deps/", bool platform = false)
 {
     import std.path : buildPath;
 
@@ -210,7 +219,9 @@ private string dependencyLine(const ref Home home, const ref Resolution resoluti
     if (item is null)
         return null;
     string path;
-    if (item.kind == "core" && joinsRepos(home, resolution))
+    if (item.kind == "core" && platform)
+        path = siblings ~ "../platform";
+    else if (item.kind == "core" && joinsRepos(home, resolution))
         path = siblings ~ "../flint";
     else if (item.kind == "core")
         path = recipePath(item.repoRoot.length ? item.repoRoot : home.root);

@@ -445,6 +445,11 @@ immutable CodeInfo[] catalog = [
             ~ "target is shared, and musl targets are fully static. The executable needs another shared library "
             ~ "or a loader.",
             "[native]\nzlib = { version = \"1.3.1\", linkage = \"bundled\" }   # ships lib/ with an rpath"),
+    CodeInfo("FLINT-E0712", ExitCode.user, "the platform cache could not be prepared",
+            "`flint build` links the pinned platform modules from archives it compiles once per compiler, flags, "
+            ~ "platform version and target (ADR-030 section 5). DUB could not describe or build them, or an "
+            ~ "archive could not be stored in the cache (FLINT_CACHE, else <home>/.flint/cache).",
+            "flint build --no-platform-cache --verbose"),
 
     // 08xx: toolchain and environment.
     CodeInfo("FLINT-E0801", ExitCode.environment, "Flint installation not found",

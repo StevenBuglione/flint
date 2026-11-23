@@ -43,6 +43,9 @@ struct BuildArgs
     @Option("locked", 0, "Fail when flint.lock is missing instead of writing it") bool locked;
     /// Rebuild everything.
     @Option("force", 'f', "Rebuild even when up to date") bool force;
+    /// Compile the platform modules from source.
+    @Option("no-platform-cache", 0, "Compile the platform modules from source instead of linking cached archives")
+    bool noPlatformCache;
     /// Project directory.
     @Option("project", 'C', "Run in this project or workspace directory") string project;
     /// Stream tool output.

@@ -46,6 +46,9 @@ struct BuildRequest
     bool sanitize;
     /// Built for `flint run --debug`, which always keeps debug information (ADR-025 section 4a).
     bool debugger;
+    /// Link the pinned platform modules from the platform cache (ADR-030 section 5); `--no-platform-cache` turns
+    /// it off and compiles them from source.
+    bool platformCache = true;
 }
 
 /// One finished build.
@@ -73,6 +76,19 @@ struct BuildOutcome
     CBuild native;
     /// Native packages linked into the artifact.
     imported!"flint_tool.project.native".NativeResolution natives;
+    /// The platform cache's archives the artifact links.
+    imported!"flint_tool.engine.platformcache".PlatformPlan platform;
+}
+
+/// The profile, flags and DUB home a project build uses, settled before it prepares anything.
+private struct BuildSettings
+{
+    /// The selected profile.
+    ProfileSpec spec;
+    /// The flags passed as DFLAGS.
+    string dflags;
+    /// DUB's home for this build.
+    string dubHome;
 }
 
 /// The project's root directory relative to the current directory, for display.
@@ -269,7 +285,8 @@ bool sanitizerToolchain(ref Session session, ref Report report)
 
 /// Everything before DUB runs: lock, toolchain, fast checks, embedded C and the generated recipes.
 private bool prepareBuild(ref Session session, const ref Manifest manifest, const ref Resolution resolution,
-        const ref BuildRequest request, out Toolchain toolchain, ref BuildOutcome result, ref Report report)
+        const ref BuildRequest request, const ref BuildSettings settings, out Toolchain toolchain,
+        ref BuildOutcome result, ref Report report)
 {
     import flint_tool.engine.aot.step : runAotStep;
 
@@ -292,8 +309,45 @@ private bool prepareBuild(ref Session session, const ref Manifest manifest, cons
     const aot = runAotStep(session, manifest, resolution, toolchain, result.compiler, report);
     if (!aot.ok)
         return false;
-    return writeRecipes(session, manifest, resolution, result.native, result.natives,
-            condensedDiagnostics(session, toolchain, result.compiler), aot.active, report);
+    if (!preparePlatform(session, manifest, resolution, request, settings, toolchain, result, report))
+        return false;
+    return writeRecipes(session, manifest, resolution, result, condensedDiagnostics(session,
+            toolchain, result.compiler), aot.active, report);
+}
+
+/// Link the platform modules from the platform cache when the build allows it (engine/platformcache.d).
+private bool preparePlatform(ref Session session, const ref Manifest manifest, const ref Resolution resolution,
+        const ref BuildRequest request, const ref BuildSettings settings, const ref Toolchain toolchain,
+        ref BuildOutcome result, ref Report report)
+{
+    import flint_tool.engine.platformcache : PlatformInputs, planPlatform, platformCacheAllowed;
+    import flint_tool.engine.target : hostTarget;
+
+    if (!platformCacheAllowed(request.platformCache, request.sanitize, request.target))
+        return true;
+    PlatformInputs inputs;
+    inputs.dub = toolchain.dub.path;
+    inputs.compiler = toolchain.component(result.compiler).path;
+    inputs.compilerSha256 = toolchain.component(result.compiler).sha256;
+    inputs.dubSha256 = toolchain.dub.sha256;
+    inputs.release = session.home.platform.release;
+    inputs.dflags = settings.dflags;
+    inputs.target = hostTarget();
+    inputs.environment = buildEnvironment(session, toolchain, settings.spec, settings.dubHome, settings.dflags);
+    inputs.cache = platformCacheRoot(session);
+    inputs.workingDirectory = session.home.root;
+    return planPlatform(session, manifest.root, resolution, inputs, result.platform, report);
+}
+
+/// The cache directory: FLINT_CACHE, else `<home>/.flint/cache` (as project/remote.d's Fetcher).
+private string platformCacheRoot(ref Session session)
+{
+    import std.path : absolutePath, buildNormalizedPath, buildPath;
+    import std.process : environment;
+
+    const relocated = environment.get("FLINT_CACHE", "");
+    return relocated.length
+        ? buildNormalizedPath(absolutePath(relocated)) : buildPath(session.home.root, ".flint", "cache");
 }
 
 /// Write or remove `.flint/generated/scan/flint_scan.d`; true when the project has an `@FlintApplication`.
@@ -396,15 +450,16 @@ bool buildProject(ref Session session, const ref Manifest manifest, const ref Re
         return false;
     const compiler = request.compiler.length ? request.compiler : spec.compiler;
     result.compiler = compiler;
+    const flags = composeFlags(spec, manifest.overrideFor(request.profile), request);
+    const dubHome = buildPath(manifest.root, ".flint", request.target.length ? "dub-" ~ request.target : "dub");
+    const settings = BuildSettings(spec, flags.dflags.join(" "), dubHome);
     Toolchain toolchain;
-    if (!prepareBuild(session, manifest, resolution, request, toolchain, result, report))
+    if (!prepareBuild(session, manifest, resolution, request, settings, toolchain, result, report))
         return false;
 
-    const flags = composeFlags(spec, manifest.overrideFor(request.profile), request);
     const command = projectCommand(toolchain, compiler, manifest.root, request);
     result.command = command.dup;
-    const dubHome = buildPath(manifest.root, ".flint", request.target.length ? "dub-" ~ request.target : "dub");
-    auto environment = buildEnvironment(session, toolchain, spec, dubHome, flags.dflags.join(" "));
+    auto environment = buildEnvironment(session, toolchain, spec, dubHome, settings.dflags);
     const label = request.test ? "test" : request.profile;
     session.progress(request.test ? "Compiling" : "Building",
             manifest.name ~ " " ~ manifest.version_ ~ " (" ~ label ~ ", " ~ compiler ~ ")");
@@ -534,22 +589,24 @@ private bool prepareLock(ref Session session, const ref Manifest manifest, const
 }
 
 private bool writeRecipes(ref Session session, const ref Manifest manifest, const ref Resolution resolution,
-        const ref CBuild native, const ref imported!"flint_tool.project.native".NativeResolution natives,
-        string[] diagnosticFlags, bool aot, ref Report report)
+        const ref BuildOutcome result, string[] diagnosticFlags, bool aot, ref Report report)
 {
     import std.path : buildPath;
     import flint_tool.engine.cbuild : NativeCPolicy, loadNativeCPolicy;
+    import flint_tool.engine.platformcache : linkGroup;
     import flint_tool.engine.recipe : RecipeExtras, dependencyRecipeDirectory, recipeDirectory,
         renderDependencyRecipe, renderRecipe;
     import flint_tool.support.files : writeIfChanged;
 
     RecipeExtras extras;
-    extras.objects = native.objects.dup;
-    extras.nativeFlags = natives.linkFlags.dup;
+    extras.objects = result.native.objects.dup;
+    extras.nativeFlags = result.natives.linkFlags.dup;
     extras.diagnosticFlags = diagnosticFlags;
     extras.scanned = writeScan(session, manifest, resolution);
     extras.aot = aot;
-    if (native.objects.length)
+    extras.platform = result.platform.active;
+    extras.platformLflags = linkGroup(result.platform.archives);
+    if (result.native.objects.length)
     {
         NativeCPolicy policy;
         string digest;
@@ -567,16 +624,12 @@ private bool writeRecipes(ref Session session, const ref Manifest manifest, cons
                     renderJoinedRoot(resolution, buildPath(manifest.root, joinedRootDirectory)));
     }
     {
-        import std.file : exists, remove;
         import flint_tool.engine.recipe : renderSelections;
 
+        // Written even when empty: without the file, DUB rebuilds and relinks the project on every build.
         syncDubPackages(manifest.root, resolution);
-        const selections = renderSelections(manifest.root, resolution);
-        const path = buildPath(manifest.root, recipeDirectory, "dub.selections.json");
-        if (selections.length)
-            writeIfChanged(path, selections);
-        else if (exists(path))
-            remove(path);
+        writeIfChanged(buildPath(manifest.root, recipeDirectory, "dub.selections.json"),
+                renderSelections(manifest.root, resolution));
     }
     foreach (ref item; resolution.packages)
     {
@@ -591,7 +644,7 @@ private bool writeRecipes(ref Session session, const ref Manifest manifest, cons
             return false;
         }
         writeIfChanged(buildPath(manifest.root, dependencyRecipeDirectory(item.name), "dub.sdl"),
-                renderDependencyRecipe(session.home, item, resolution));
+                renderDependencyRecipe(session.home, item, resolution, result.platform.active));
     }
     return true;
 }
@@ -701,6 +754,13 @@ private Receipt projectReceipt(ref Session session, const ref Manifest manifest,
     foreach (ref package_; result.natives.packages)
         receipt.native_packages ~= NativePackageRecord(package_.name, package_.version_, package_.linkage,
                 package_.recipeRevision, package_.packageId, package_.sourceSha256, package_.binarySha256);
+    foreach (ref item; result.platform.modules)
+    {
+        import flint_tool.engine.receipt : PlatformArchiveRecord;
+
+        if (item.archive.length)
+            receipt.platform_archives ~= PlatformArchiveRecord(item.name, item.key, item.archiveSha256);
+    }
     receipt.portable = result.natives.nonPortable.length == 0;
     receipt.non_portable_reasons = result.natives.nonPortable.dup;
     string[] reasons;
