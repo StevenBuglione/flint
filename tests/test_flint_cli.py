@@ -95,7 +95,7 @@ class SharedPolicyTests(unittest.TestCase):
     def test_policy_schema_is_closed(self):
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / 'profiles.toml'
-            path.write_text((ROOT / 'policy/profiles.toml').read_text(encoding='utf-8') + '\n[profile.extra]\ncompiler = "dmd"\n', encoding='utf-8')
+            path.write_text((ROOT / 'policy/profiles.toml').read_text(encoding='utf-8') + '\n[profile.extra]\ncompiler = "dmd"\n', encoding='utf-8', newline='\n')
             with self.assertRaises(ValueError):
                 profiles.load(path)
 
@@ -177,19 +177,19 @@ class StructuralParityTests(unittest.TestCase):
                 path = work / relative
                 text = path.read_text(encoding='utf-8')
                 self.assertIn(old, text)
-                path.write_text(text.replace(old, new, 1), encoding='utf-8')
+                path.write_text(text.replace(old, new, 1), encoding='utf-8', newline='\n')
             return apply
 
         def append(relative, text):
             def apply(work):
                 path = work / relative
-                path.write_text(path.read_text(encoding='utf-8') + text, encoding='utf-8')
+                path.write_text(path.read_text(encoding='utf-8') + text, encoding='utf-8', newline='\n')
             return apply
 
         def unregistered(relative):
             def apply(work):
                 (work / relative).mkdir(parents=True)
-                (work / relative / 'dub.sdl').write_text('name "unregistered"\n', encoding='utf-8')
+                (work / relative / 'dub.sdl').write_text('name "unregistered"\n', encoding='utf-8', newline='\n')
             return apply
 
         cli = 'packages/cli/source/flint/cli/types.d'
@@ -250,12 +250,12 @@ class FixturePeerTests(unittest.TestCase):
 
     def run_arena(self, peers, packages):
         policy = self.original.replace('[packages]\n', peers + '[packages]\narena = ' + packages + '\n')
-        self.policy.write_text(policy, encoding='utf-8')
+        self.policy.write_text(policy, encoding='utf-8', newline='\n')
         return flint_json('test', 'arena', cwd=self.work, env=environment(FLINT_HOME=str(self.work)))
 
     def test_declared_peers_wrap_the_test_binary_outermost_first(self):
         log = Path(self.temporary.name) / 'peer-order'
-        log.write_text('', encoding='utf-8')
+        log.write_text('', encoding='utf-8', newline='\n')
         # Each probe appends its name, exports a variable and runs the rest of the command line.
         script = ('import os, subprocess, sys; open(sys.argv[1], "a").write(sys.argv[2] + "\\n"); '
                   'sys.exit(subprocess.call(sys.argv[3:], env=dict(os.environ, FLINT_PROBE=sys.argv[2])))')
@@ -351,12 +351,12 @@ class ProjectLifecycleTests(unittest.TestCase):
         shutil.copytree(self.project, work, ignore=shutil.ignore_patterns('.flint'))
         manifest = work / 'flint.toml'
         original = manifest.read_text(encoding='utf-8')
-        manifest.write_text(original.replace('version = "0.1.0"', 'verison = "0.1.0"'), encoding='utf-8')
+        manifest.write_text(original.replace('version = "0.1.0"', 'verison = "0.1.0"'), encoding='utf-8', newline='\n')
         status, document = flint_json('build', cwd=work)
         self.assertEqual(status, 1)
         typo = next(item for item in document['diagnostics'] if item['code'] == 'FLINT-E0103')
         self.assertEqual((typo['fix'], typo['file'], typo['line']), ('did you mean `version`?', 'flint.toml', 3))
-        manifest.write_text(original.replace('"flint:log" = {}\n', '"flint:log" = {}\n"flint:engine-di" = {}\n'), encoding='utf-8')
+        manifest.write_text(original.replace('"flint:log" = {}\n', '"flint:log" = {}\n"flint:engine-di" = {}\n'), encoding='utf-8', newline='\n')
         status, document = flint_json('build', cwd=work)
         self.assertEqual((status, codes(document)), (3, ['FLINT-E0202']))
         stale = next(item for item in document['diagnostics'] if item['code'] == 'FLINT-E0202')
@@ -372,9 +372,9 @@ class ProjectLifecycleTests(unittest.TestCase):
             shutil.rmtree(work)
         shutil.copytree(self.project, work, ignore=shutil.ignore_patterns('.flint'))
         source = work / 'src/demo/greeting.d'
-        source.write_text(source.read_text(encoding='utf-8').replace('@safe:', '') + '\nvoid poke() @trusted nothrow {}\n', encoding='utf-8')
-        (work / 'src/demo/stray.d').write_text('module demo.elsewhere;\n@safe:\n', encoding='utf-8')
-        (work / 'config/application.yaml').write_text('app:\n  greeting: no\n', encoding='utf-8')
+        source.write_text(source.read_text(encoding='utf-8').replace('@safe:', '') + '\nvoid poke() @trusted nothrow {}\n', encoding='utf-8', newline='\n')
+        (work / 'src/demo/stray.d').write_text('module demo.elsewhere;\n@safe:\n', encoding='utf-8', newline='\n')
+        (work / 'config/application.yaml').write_text('app:\n  greeting: no\n', encoding='utf-8', newline='\n')
         status, document = flint_json('check', cwd=work)
         self.assertEqual(status, 1)
         self.assertTrue({'FLINT-E0501', 'FLINT-E0502', 'FLINT-E0401', 'FLINT-E0407'} <= set(codes(document)),
@@ -383,7 +383,7 @@ class ProjectLifecycleTests(unittest.TestCase):
         self.assertEqual((located['file'], located['line']), ('src/demo/stray.d', 1))
         manifest = work / 'flint.toml'
         manifest.write_text(manifest.read_text(encoding='utf-8') + '\n[[waivers]]\nrule = "FLINT-E0401"\nfile = "src/demo/stray.d"\n'
-                            'reason = "fixture"\n', encoding='utf-8')
+                            'reason = "fixture"\n', encoding='utf-8', newline='\n')
         status, document = flint_json('check', cwd=work)
         self.assertNotIn('FLINT-E0401', codes(document))
         self.assertEqual(document['waived'], 1)

@@ -53,15 +53,15 @@ class WatchTests(unittest.TestCase):
             self.assertTrue(wait_for(next_event))
             self.assertEqual((events[0]['cycle'], events[0]['action'], events[0]['ok']), (1, 'build', True))
             self.assertTrue(events[0]['restarted'])
-            greeting.write_text(original.replace('"world"', '"planet"'), encoding='utf-8')
+            greeting.write_text(original.replace('"world"', '"planet"'), encoding='utf-8', newline='\n')
             self.assertTrue(wait_for(next_event))
             self.assertEqual(events[1]['changed'], ['src/w/greeting.d'])
             self.assertTrue(events[1]['ok'])
-            greeting.write_text(original + '\nint broken(\n', encoding='utf-8')
+            greeting.write_text(original + '\nint broken(\n', encoding='utf-8', newline='\n')
             self.assertTrue(wait_for(next_event))
             self.assertFalse(events[2]['ok'])
             self.assertFalse(events[2]['restarted'])
-            greeting.write_text(original, encoding='utf-8')
+            greeting.write_text(original, encoding='utf-8', newline='\n')
             self.assertTrue(wait_for(next_event))
             self.assertTrue(events[3]['ok'])
         finally:
@@ -69,7 +69,7 @@ class WatchTests(unittest.TestCase):
             self.assertEqual(process.wait(timeout=30), 0)
             process.stdout.close()
             process.stderr.close()
-            greeting.write_text(original, encoding='utf-8')
+            greeting.write_text(original, encoding='utf-8', newline='\n')
         self.assertEqual([e['cycle'] for e in events], [1, 2, 3, 4])
 
     def test_libraries_are_retested(self):
@@ -122,7 +122,7 @@ void main()
     auto text = Text(arena.copyIn(cast(const(ubyte)[]) "hello").value);
     inspect(good, bad, error, arena, text);
 }
-''', encoding='utf-8')
+''', encoding='utf-8', newline='\n')
             dmd = DMD_BIN / 'dmd' if (DMD_BIN / 'dmd').is_file() else DMD_BIN / 'ldmd2'
             subprocess.run([str(dmd), '-g', '-i', '-preview=dip1000', '-I' + str(ROOT / 'packages/arena/source'),
                             str(source), '-of=' + str(Path(directory) / 'probe')], check=True, cwd=directory)

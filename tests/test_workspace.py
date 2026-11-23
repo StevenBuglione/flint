@@ -47,9 +47,9 @@ class RepoPolicyTests(unittest.TestCase):
             (root / 'policy').mkdir()
             packages = json.loads((ROOT / 'policy/packages.json').read_text(encoding='utf-8'))
             packages['packages']['log']['dependencies'].append('engine-web')
-            (root / 'policy/packages.json').write_text(json.dumps(packages), encoding='utf-8')
+            (root / 'policy/packages.json').write_text(json.dumps(packages), encoding='utf-8', newline='\n')
             for name in ('boot.json', 'repos.json'):
-                (root / 'policy' / name).write_text((ROOT / 'policy' / name).read_text(encoding='utf-8'), encoding='utf-8')
+                (root / 'policy' / name).write_text((ROOT / 'policy' / name).read_text(encoding='utf-8'), encoding='utf-8', newline='\n')
             violations, _ = workspace.edge_violations(root)
             self.assertEqual([message for _, _, message in violations],
                              ['log (flint) -> engine-web (framework): flint may not depend on framework'])
@@ -59,7 +59,7 @@ class WorkspaceTests(unittest.TestCase):
     def write(self, directory, commit):
         path = Path(directory) / 'workspace.json'
         checkouts = {repo: {'path': str(ROOT), 'commit': commit} for repo in workspace.repo_policy()['repos']}
-        path.write_text(json.dumps({'schema': 'flint.workspace/1', 'checkouts': checkouts}), encoding='utf-8')
+        path.write_text(json.dumps({'schema': 'flint.workspace/1', 'checkouts': checkouts}), encoding='utf-8', newline='\n')
         return path
 
     @monorepo_only
@@ -103,11 +103,11 @@ class PlatformModuleTests(unittest.TestCase):
             for name in ('policy',):
                 (root / name).mkdir(parents=True)
             for name in ('packages.json', 'boot.json', 'repos.json', 'platform.toml'):
-                (root / 'policy' / name).write_text((ROOT / 'policy' / name).read_text(encoding='utf-8'), encoding='utf-8')
-            (root / 'platform.lock').write_text((ROOT / 'platform.lock').read_text(encoding='utf-8'), encoding='utf-8')
+                (root / 'policy' / name).write_text((ROOT / 'policy' / name).read_text(encoding='utf-8'), encoding='utf-8', newline='\n')
+            (root / 'platform.lock').write_text((ROOT / 'platform.lock').read_text(encoding='utf-8'), encoding='utf-8', newline='\n')
             stale = dict(bom, artifacts=dict(bom['artifacts']))
             del stale['artifacts']['flint:engine-web']
-            (root / 'flint-dependencies.json').write_text(json.dumps(stale), encoding='utf-8')
+            (root / 'flint-dependencies.json').write_text(json.dumps(stale), encoding='utf-8', newline='\n')
             self.assertEqual(module.problems(root), ['flint-dependencies.json is stale: '
                                                      + module.REGENERATE])
             self.assertIn('python3 tools/platform_modules.py --write', module.REGENERATE)
@@ -158,11 +158,11 @@ class AppRepoTests(unittest.TestCase):
             root = Path(temporary)
             (root / 'policy').mkdir()
             for name in ('packages.json', 'boot.json', 'repos.json'):
-                (root / 'policy' / name).write_text((ROOT / 'policy' / name).read_text(encoding='utf-8'), encoding='utf-8')
+                (root / 'policy' / name).write_text((ROOT / 'policy' / name).read_text(encoding='utf-8'), encoding='utf-8', newline='\n')
             moved = dict(apps, **{'flint-mcp': {'directory': 'apps/flint-mcp', 'repo': 'flint'}})
-            (root / 'policy/apps.json').write_text(json.dumps({'schema': 'flint.apps/1', 'apps': moved}), encoding='utf-8')
+            (root / 'policy/apps.json').write_text(json.dumps({'schema': 'flint.apps/1', 'apps': moved}), encoding='utf-8', newline='\n')
             (root / 'apps/flint-mcp').mkdir(parents=True)
-            (root / 'apps/flint-mcp/flint.toml').write_text((ROOT / 'apps/flint-mcp/flint.toml').read_text(encoding='utf-8'), encoding='utf-8')
+            (root / 'apps/flint-mcp/flint.toml').write_text((ROOT / 'apps/flint-mcp/flint.toml').read_text(encoding='utf-8'), encoding='utf-8', newline='\n')
             violations, _ = workspace.edge_violations(root)
             self.assertEqual([message for _, _, message in violations],
                              ['app flint-mcp (flint) -> engine-mcp (ai): flint may not depend on ai'])
@@ -220,14 +220,14 @@ class ExtractionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             checkout = Path(temporary).resolve() / 'flint-framework'  # macOS: /var -> /private/var
             (checkout / 'engine/web').mkdir(parents=True)
-            (checkout / 'engine/web/dub.sdl').write_text('name "engine-web"\n', encoding='utf-8')
+            (checkout / 'engine/web/dub.sdl').write_text('name "engine-web"\n', encoding='utf-8', newline='\n')
             (checkout / 'engine/web/README.md').write_text('See packages/engine-web/source and '
-                                                           'packages/engine-webx.\n', encoding='utf-8')
+                                                           'packages/engine-webx.\n', encoding='utf-8', newline='\n')
             subprocess.run(['git', 'init', '-q', str(checkout)], check=True)
             subprocess.run(['git', '-C', str(checkout), 'add', '-A'], check=True)
             file = Path(temporary) / 'workspace.json'
             file.write_text(json.dumps({'schema': 'flint.workspace/1',
-                                        'checkouts': {'framework': {'path': 'flint-framework'}}}), encoding='utf-8')
+                                        'checkouts': {'framework': {'path': 'flint-framework'}}}), encoding='utf-8', newline='\n')
             self.assertEqual(workspace.Workspace(file).package_dir('engine-web'), checkout / 'engine/web')
             pairs = [('packages/engine-web', 'engine/web')]
             self.assertEqual(extract_repo.rewrite_references(checkout, pairs), ['engine/web/README.md'])
@@ -242,11 +242,11 @@ class ExtractionTests(unittest.TestCase):
             git = ['git', '-C', str(checkout), '-c', 'user.name=t', '-c', 'user.email=t@t']
             subprocess.run(['git', 'init', '-q', str(checkout)], check=True)
             (checkout / 'packages/web/source').mkdir(parents=True)
-            (checkout / 'packages/web/source/router.d').write_text('module flint.web.router;\n' * 20, encoding='utf-8')
+            (checkout / 'packages/web/source/router.d').write_text('module flint.web.router;\n' * 20, encoding='utf-8', newline='\n')
             subprocess.run([*git, 'add', '-A'], check=True)
             subprocess.run([*git, 'commit', '-qm', 'web'], check=True)
             (checkout / 'examples/golden-tui').mkdir(parents=True)
-            (checkout / 'examples/golden-tui/dub.sdl').write_text('name "golden-tui"\n' * 20, encoding='utf-8')
+            (checkout / 'examples/golden-tui/dub.sdl').write_text('name "golden-tui"\n' * 20, encoding='utf-8', newline='\n')
             subprocess.run([*git, 'add', '-A'], check=True)
             subprocess.run([*git, 'commit', '-qm', 'example'], check=True)
             subprocess.run([*git, 'mv', 'packages/web', 'packages/engine-web'], check=True)
@@ -279,24 +279,24 @@ class PlatformFetchTests(unittest.TestCase):
             git = ['git', '-C', str(upstream), '-c', 'user.name=t', '-c', 'user.email=t@t']
             subprocess.run(['git', 'init', '-q', str(upstream)], check=True)
             (upstream / 'engine/web').mkdir(parents=True)
-            (upstream / 'engine/web/dub.sdl').write_text('name "engine-web"\n', encoding='utf-8')
+            (upstream / 'engine/web/dub.sdl').write_text('name "engine-web"\n', encoding='utf-8', newline='\n')
             subprocess.run([*git, 'add', '-A'], check=True)
             subprocess.run([*git, 'commit', '-qm', 'one'], check=True)
             commit = subprocess.run([*git, 'rev-parse', 'HEAD'], capture_output=True, text=True, encoding='utf-8').stdout.strip()
-            (upstream / 'later').write_text('after the pin\n', encoding='utf-8')
+            (upstream / 'later').write_text('after the pin\n', encoding='utf-8', newline='\n')
             subprocess.run([*git, 'add', '-A'], check=True)
             subprocess.run([*git, 'commit', '-qm', 'two'], check=True)
             home = temporary / 'home'
             (home / 'policy').mkdir(parents=True)
             for name in ('packages.json', 'boot.json', 'framework.json', 'repos.json', 'apps.json'):
                 if (ROOT / 'policy' / name).is_file():
-                    (home / 'policy' / name).write_text((ROOT / 'policy' / name).read_text(encoding='utf-8'), encoding='utf-8')
+                    (home / 'policy' / name).write_text((ROOT / 'policy' / name).read_text(encoding='utf-8'), encoding='utf-8', newline='\n')
             lock = json.loads((ROOT / 'platform.lock').read_text(encoding='utf-8'))
             for repo, entry in lock['repos'].items():  # only framework is fetched here
                 lock['repos'][repo] = {'github': entry['github'], 'source': 'monorepo'}
             lock['repos']['framework'] = {'github': 'flint-projects/flint-framework', 'source': 'github',
                                           'commit': commit}
-            (home / 'platform.lock').write_text(json.dumps(lock), encoding='utf-8')
+            (home / 'platform.lock').write_text(json.dumps(lock), encoding='utf-8', newline='\n')
             fetched = platform_modules.fetch(home, url=str(temporary) + '/flint-{repo}')
             checkout = home / '.flint/platform' / f'framework-{commit}'
             self.assertEqual(fetched, {'framework': str(checkout)})

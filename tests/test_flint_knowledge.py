@@ -149,7 +149,7 @@ class GenerateTests(unittest.TestCase):
         self.assertEqual((status, codes(document)), (4, ['FLINT-E0008']))
         if NATIVE_LINKED:
             (self.project / 'test/shop/order').mkdir(parents=True, exist_ok=True)
-            (self.project / 'test/shop/order/wiring_test.d').write_text(WIRING, encoding='utf-8')
+            (self.project / 'test/shop/order/wiring_test.d').write_text(WIRING, encoding='utf-8', newline='\n')
             status, document = self.run_flint('test')
             self.assertEqual(status, 0, document['diagnostics'])
 
@@ -160,7 +160,7 @@ class GenerateTests(unittest.TestCase):
         self.assertEqual((status, codes(document)), (4, ['FLINT-E0003']))
 
     def test_5_generate_agents_refreshes_agents_md(self):
-        (self.project / 'AGENTS.md').write_text('stale\n', encoding='utf-8')
+        (self.project / 'AGENTS.md').write_text('stale\n', encoding='utf-8', newline='\n')
         status, document = self.run_flint('generate', 'agents')
         self.assertEqual(status, 0, document['diagnostics'])
         self.assertIn('Flint way', (self.project / 'AGENTS.md').read_text(encoding='utf-8'))

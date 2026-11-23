@@ -49,19 +49,19 @@ class MilestoneEightTests(unittest.TestCase):
         manifest = cls.project / 'flint.toml'
         manifest.write_text(manifest.read_text(encoding='utf-8').replace('version = "0.1.0"\n', 'version = "0.1.0"\nlicense = "MIT"\n')
                             .replace('[dependencies]\n', '[dependencies]\n"example.test/acme/checksum" = "1.0.0"\n')
-                            + '\n[native]\nzlib = "1.4"\n', encoding='utf-8')
+                            + '\n[native]\nzlib = "1.4"\n', encoding='utf-8', newline='\n')
         (cls.project / 'native').mkdir()
-        (cls.project / 'native' / 'crc.c').write_text(CRC_C, encoding='utf-8')
-        (cls.project / 'native' / 'crc.h').write_text(CRC_H, encoding='utf-8')
+        (cls.project / 'native' / 'crc.c').write_text(CRC_C, encoding='utf-8', newline='\n')
+        (cls.project / 'native' / 'crc.h').write_text(CRC_H, encoding='utf-8', newline='\n')
         (cls.project / 'src' / 'done' / 'ffi').mkdir()
-        (cls.project / 'src' / 'done' / 'ffi' / 'crc.d').write_text(FFI.replace('module demo.ffi.crc', 'module done.ffi.crc'), encoding='utf-8')
-        (cls.project / 'test' / 'done' / 'app_test.d').write_text(APP_TEST.replace('{version}', LOCK['zlib']['version']), encoding='utf-8')
+        (cls.project / 'src' / 'done' / 'ffi' / 'crc.d').write_text(FFI.replace('module demo.ffi.crc', 'module done.ffi.crc'), encoding='utf-8', newline='\n')
+        (cls.project / 'test' / 'done' / 'app_test.d').write_text(APP_TEST.replace('{version}', LOCK['zlib']['version']), encoding='utf-8', newline='\n')
         app = cls.project / 'src' / 'done' / 'app.d'
         app.write_text(app.read_text(encoding='utf-8').replace('import done.greeting : greet;\n',
                                                'import checksum : hex;\nimport done.ffi.crc : crc32;\nimport done.greeting : greet;\n')
                        .replace('    writeln(greet(settings.value.greeting, parsed.options.name));\n',
                                 '    writeln(greet(settings.value.greeting, parsed.options.name), " crc32=",\n'
-                                '            hex(crc32(cast(const(ubyte)[]) "123456789")));\n'), encoding='utf-8')
+                                '            hex(crc32(cast(const(ubyte)[]) "123456789")));\n'), encoding='utf-8', newline='\n')
 
     @classmethod
     def tearDownClass(cls):

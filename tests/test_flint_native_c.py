@@ -137,11 +137,11 @@ class EmbeddedCTests(unittest.TestCase):
         assert status == 0, document
         cls.project = base / 'demo'
         (cls.project / 'native').mkdir()
-        (cls.project / 'native' / 'crc.c').write_text(CRC, encoding='utf-8')
-        (cls.project / 'native' / 'crc.h').write_text(HEADER, encoding='utf-8')
+        (cls.project / 'native' / 'crc.c').write_text(CRC, encoding='utf-8', newline='\n')
+        (cls.project / 'native' / 'crc.h').write_text(HEADER, encoding='utf-8', newline='\n')
         (cls.project / 'src' / 'demo' / 'ffi').mkdir()
-        (cls.project / 'src' / 'demo' / 'ffi' / 'crc.d').write_text(FFI, encoding='utf-8')
-        (cls.project / 'test' / 'demo' / 'crc_test.d').write_text(TEST, encoding='utf-8')
+        (cls.project / 'src' / 'demo' / 'ffi' / 'crc.d').write_text(FFI, encoding='utf-8', newline='\n')
+        (cls.project / 'test' / 'demo' / 'crc_test.d').write_text(TEST, encoding='utf-8', newline='\n')
 
     @classmethod
     def tearDownClass(cls):
@@ -189,14 +189,14 @@ class EmbeddedCTests(unittest.TestCase):
         self.assertEqual(self.run_flint('build')[0], 0)
         self.assertEqual(sorted(p.name for p in cache.glob('*.o')), before)
         header = self.project / 'native' / 'crc.h'
-        header.write_text(HEADER.replace('#endif', 'int demo_version(void);\n#endif'), encoding='utf-8')
+        header.write_text(HEADER.replace('#endif', 'int demo_version(void);\n#endif'), encoding='utf-8', newline='\n')
         try:
             self.assertEqual(self.run_flint('build')[0], 0)
             # A header change that alters the preprocessed unit gives a new key; a cached object is never
             # reused for a different translation unit.
             self.assertEqual(len(list(cache.glob('*.o'))), len(before) + 1)
         finally:
-            header.write_text(HEADER, encoding='utf-8')
+            header.write_text(HEADER, encoding='utf-8', newline='\n')
 
     def test_3_tests_run_on_both_compilers(self):
         for compiler in ('dmd', 'ldc'):
@@ -207,14 +207,14 @@ class EmbeddedCTests(unittest.TestCase):
     def test_4_warnings_are_errors(self):
         source = self.project / 'native' / 'crc.c'
         source.write_text(CRC + '\nint demo_unused(int value);\nint demo_unused(int value)\n{\n    int x;\n'
-                          '    return value;\n}\n', encoding='utf-8')
+                          '    return value;\n}\n', encoding='utf-8', newline='\n')
         try:
             status, document = self.run_flint('build')
             self.assertEqual(status, 1)
             self.assertEqual(codes(document), ['FLINT-E0708'])
             self.assertIn('-Wunused-variable', error(document, 'FLINT-E0708')['fix'])
         finally:
-            source.write_text(CRC, encoding='utf-8')
+            source.write_text(CRC, encoding='utf-8', newline='\n')
 
     def test_5_check_runs_the_fixed_clang_tidy_profile(self):
         status, document = self.run_flint('check')
@@ -223,7 +223,7 @@ class EmbeddedCTests(unittest.TestCase):
         self.assertEqual(document['c_files'], 1)
         source = self.project / 'native' / 'crc.c'
         source.write_text('#include <string.h>\n' + CRC + '\nvoid demo_copy(char *to, const char *from);\n'
-                          'void demo_copy(char *to, const char *from)\n{\n    strcpy(to, from);\n}\n', encoding='utf-8')
+                          'void demo_copy(char *to, const char *from)\n{\n    strcpy(to, from);\n}\n', encoding='utf-8', newline='\n')
         try:
             status, document = self.run_flint('check')
             self.assertEqual(status, 1)
@@ -232,14 +232,14 @@ class EmbeddedCTests(unittest.TestCase):
             self.assertEqual(tidy[0]['file'], 'native/crc.c')
             self.assertIn('strcpy', tidy[0]['message'])
         finally:
-            source.write_text(CRC, encoding='utf-8')
+            source.write_text(CRC, encoding='utf-8', newline='\n')
 
     def test_6_c_is_reached_only_through_ffi_modules(self):
         rogue = self.project / 'src' / 'demo' / 'rogue.d'
         rogue.write_text('/// Rogue.\nmodule demo.rogue;\n\n@safe:\n\nextern (C) int puts(scope const(char)* text) '
-                         '@system nothrow @nogc;\n', encoding='utf-8')
+                         '@system nothrow @nogc;\n', encoding='utf-8', newline='\n')
         imported = self.project / 'src' / 'demo' / 'direct.c'
-        imported.write_text('int demo_direct(void);\nint demo_direct(void) { return 1; }\n', encoding='utf-8')
+        imported.write_text('int demo_direct(void);\nint demo_direct(void) { return 1; }\n', encoding='utf-8', newline='\n')
         try:
             status, document = self.run_flint('build')
             self.assertEqual(status, 1)
@@ -256,7 +256,7 @@ class EmbeddedCTests(unittest.TestCase):
         self.assertEqual(status, 0, document['diagnostics'])
         self.assertEqual(document['runs'][0]['compiler'], 'ldc2')
         overflow = self.project / 'test' / 'demo' / 'overflow_test.d'
-        overflow.write_text(OVERFLOW_TEST, encoding='utf-8')
+        overflow.write_text(OVERFLOW_TEST, encoding='utf-8', newline='\n')
         try:
             status, document = self.run_flint('test', '--sanitize')
             self.assertEqual(status, 1)
@@ -268,7 +268,7 @@ class EmbeddedCTests(unittest.TestCase):
         finally:
             overflow.unlink()
         signed = self.project / 'test' / 'demo' / 'signed_test.d'
-        signed.write_text(SIGNED_OVERFLOW_TEST, encoding='utf-8')
+        signed.write_text(SIGNED_OVERFLOW_TEST, encoding='utf-8', newline='\n')
         try:
             status, document = self.run_flint('test', '--sanitize')
             self.assertEqual(status, 1)

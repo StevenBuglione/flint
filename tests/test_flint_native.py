@@ -85,18 +85,18 @@ class NativePackageTests(unittest.TestCase):
         cls.manifest = cls.project / 'flint.toml'
         cls.original = cls.manifest.read_text(encoding='utf-8')
         (cls.project / 'native').mkdir()
-        (cls.project / 'native' / 'crc.c').write_text(CRC_C, encoding='utf-8')
-        (cls.project / 'native' / 'crc.h').write_text(CRC_H, encoding='utf-8')
+        (cls.project / 'native' / 'crc.c').write_text(CRC_C, encoding='utf-8', newline='\n')
+        (cls.project / 'native' / 'crc.h').write_text(CRC_H, encoding='utf-8', newline='\n')
         (cls.project / 'src' / 'demo' / 'ffi').mkdir()
-        (cls.project / 'src' / 'demo' / 'ffi' / 'crc.d').write_text(FFI, encoding='utf-8')
-        (cls.project / 'test' / 'demo' / 'crc_test.d').write_text(TEST.replace('{version}', LOCK['zlib']['version']), encoding='utf-8')
+        (cls.project / 'src' / 'demo' / 'ffi' / 'crc.d').write_text(FFI, encoding='utf-8', newline='\n')
+        (cls.project / 'test' / 'demo' / 'crc_test.d').write_text(TEST.replace('{version}', LOCK['zlib']['version']), encoding='utf-8', newline='\n')
 
     @classmethod
     def tearDownClass(cls):
         cls.temporary.cleanup()
 
     def use(self, native):
-        self.manifest.write_text(self.original + '\n[native]\n' + native, encoding='utf-8')
+        self.manifest.write_text(self.original + '\n[native]\n' + native, encoding='utf-8', newline='\n')
         (self.project / 'flint.lock').unlink(missing_ok=True)
 
     def run_flint(self, *arguments):
@@ -131,9 +131,9 @@ class NativePackageTests(unittest.TestCase):
         library = self.base / 'zipper'
         if not library.exists():
             flint_json('new', 'zipper', '--type', 'library', cwd=self.base, env=self.env)
-            (library / 'flint.toml').write_text((library / 'flint.toml').read_text(encoding='utf-8') + '\n[native]\nzlib = "1.3.1"\n', encoding='utf-8')
+            (library / 'flint.toml').write_text((library / 'flint.toml').read_text(encoding='utf-8') + '\n[native]\nzlib = "1.3.1"\n', encoding='utf-8', newline='\n')
         self.manifest.write_text(self.original.replace('[dependencies]\n', '[dependencies]\nzipper = { path = "../zipper" }\n')
-                                 + '\n[native]\nzlib = "1.4"\n', encoding='utf-8')
+                                 + '\n[native]\nzlib = "1.4"\n', encoding='utf-8', newline='\n')
         status, document = self.run_flint('lock')
         self.assertEqual((status, codes(document)), (3, ['FLINT-E0320']))
         message = document['diagnostics'][0]['message']
@@ -145,7 +145,7 @@ class NativePackageTests(unittest.TestCase):
         self.assertEqual(self.run_flint('lock')[0], 0)
         lock = (self.project / 'flint.lock').read_text(encoding='utf-8')
         tampered = lock.replace('binary_sha256 = "', 'binary_sha256 = "0', 1)
-        (self.project / 'flint.lock').write_text(tampered, encoding='utf-8')
+        (self.project / 'flint.lock').write_text(tampered, encoding='utf-8', newline='\n')
         status, document = self.run_flint('build', '--locked')
         self.assertEqual((status, codes(document)), (3, ['FLINT-E0202']))
         self.assertIn('changed native zlib', document['diagnostics'][0]['message'])

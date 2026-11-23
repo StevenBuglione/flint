@@ -23,7 +23,7 @@ native_build=load('native_build')
 class CiBoundaryTests(unittest.TestCase):
     def event(self,kind,payload,**environment):
         with tempfile.TemporaryDirectory() as temporary:
-            path=Path(temporary)/'event.json';path.write_text(json.dumps(payload), encoding='utf-8')
+            path=Path(temporary)/'event.json';path.write_text(json.dumps(payload), encoding='utf-8', newline='\n')
             env={'GITHUB_EVENT_PATH':str(path),'GITHUB_EVENT_NAME':kind,**environment}
             with patch.dict(os.environ,env,clear=True),contextlib.redirect_stdout(io.StringIO()) as output:
                 ci.refs(None)
@@ -190,7 +190,7 @@ class CiBoundaryTests(unittest.TestCase):
                 ('.native-sanitized/logs/'+target+'/shims.log','instrumented output'),
                 ('.native-sanitized/install/'+target+'/flint-native-install.json','{}'),
                 ('.tools/rust/flint-rust-install.json','{"rust_version":"1.97.0"}')]:
-                path=root/relative;path.parent.mkdir(parents=True,exist_ok=True);path.write_text(content, encoding='utf-8')
+                path=root/relative;path.parent.mkdir(parents=True,exist_ok=True);path.write_text(content, encoding='utf-8', newline='\n')
             ci.preserve_native(target,sanitize=True)
             output=root/'artifacts/native-sanitizers'
             self.assertEqual((output/'engine-logs/wasmtime.log').read_text(encoding='utf-8'),'engine output')

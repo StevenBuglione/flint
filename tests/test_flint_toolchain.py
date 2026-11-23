@@ -154,8 +154,8 @@ class FlintDubTests(unittest.TestCase):
             (temp / 'dmd-tools' / 'ldc2').symlink_to(ldc)
             package = temp / 'probe'
             (package / 'source').mkdir(parents=True)
-            (package / 'dub.sdl').write_text('name "probe"\n', encoding='utf-8')
-            (package / 'source' / 'app.d').write_text('void main() {}\n', encoding='utf-8')
+            (package / 'dub.sdl').write_text('name "probe"\n', encoding='utf-8', newline='\n')
+            (package / 'source' / 'app.d').write_text('void main() {}\n', encoding='utf-8', newline='\n')
             env = dict(os.environ, DUB_HOME=str(temp / 'dub-home'), HOME=str(temp))
             result = subprocess.run([str(dub), 'describe', '--root', str(package), '--skip-registry=all',
                                      '--compiler=' + str(temp / 'dmd-tools' / 'ldc2')],

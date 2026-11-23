@@ -41,17 +41,17 @@ class PackageTests(unittest.TestCase):
         manifest = cls.project / 'flint.toml'
         # flint:os brings ImportC C of its own, which the musl cross build must preprocess against the sysroot.
         manifest.write_text(manifest.read_text(encoding='utf-8').replace('version = "0.1.0"\n', 'version = "0.1.0"\nlicense = "MIT"\n')
-                            .replace('"flint:log" = {}\n', '"flint:log" = {}\n"flint:os" = {}\n'), encoding='utf-8')
+                            .replace('"flint:log" = {}\n', '"flint:log" = {}\n"flint:os" = {}\n'), encoding='utf-8', newline='\n')
         (cls.project / 'native').mkdir()
-        (cls.project / 'native' / 'crc.c').write_text(CRC, encoding='utf-8')
-        (cls.project / 'native' / 'crc.h').write_text(HEADER, encoding='utf-8')
+        (cls.project / 'native' / 'crc.c').write_text(CRC, encoding='utf-8', newline='\n')
+        (cls.project / 'native' / 'crc.h').write_text(HEADER, encoding='utf-8', newline='\n')
         (cls.project / 'src' / 'demo' / 'ffi').mkdir()
-        (cls.project / 'src' / 'demo' / 'ffi' / 'crc.d').write_text(FFI, encoding='utf-8')
+        (cls.project / 'src' / 'demo' / 'ffi' / 'crc.d').write_text(FFI, encoding='utf-8', newline='\n')
         app = cls.project / 'src' / 'demo' / 'app.d'
         app.write_text(app.read_text(encoding='utf-8').replace(
             'import demo.greeting : greet;\n', 'import demo.ffi.crc : crc32;\nimport demo.greeting : greet;\n').replace(
             '    writeln(greet(settings.value.greeting, parsed.options.name));\n',
-            '    writeln(greet(settings.value.greeting, parsed.options.name), " crc=", crc32(cast(const(ubyte)[]) "123456789"));\n'), encoding='utf-8')
+            '    writeln(greet(settings.value.greeting, parsed.options.name), " crc=", crc32(cast(const(ubyte)[]) "123456789"));\n'), encoding='utf-8', newline='\n')
         status, document = flint_json('lock', cwd=cls.project, env=cls.env)
         assert status == 0, document
         cls.packages = cls.project / '.flint' / 'package'

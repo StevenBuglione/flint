@@ -107,7 +107,7 @@ class MisuseTests(unittest.TestCase):
     def probe_hide_support(self):
         with tempfile.TemporaryDirectory(prefix='flint-diagnostics-') as temporary:
             empty = Path(temporary) / 'empty.d'
-            empty.write_text('module empty;\n', encoding='utf-8')
+            empty.write_text('module empty;\n', encoding='utf-8', newline='\n')
             result = subprocess.run([str(DMD), '-c', '-o-', '-verror-hide=/nonexistent/', str(empty)],
                                     capture_output=True, text=True, encoding='utf-8')
             return result.returncode, result.stdout + result.stderr

@@ -51,7 +51,7 @@ class StaticElfAuditTests(unittest.TestCase):
     def test_actual_dynamic_executable_is_rejected(self):
         with tempfile.TemporaryDirectory() as temporary:
             source=Path(temporary)/'dynamic.c';binary=Path(temporary)/'dynamic'
-            source.write_text('#include <stdio.h>\nint main(void) { return puts("dynamic probe") < 0; }\n', encoding='utf-8')
+            source.write_text('#include <stdio.h>\nint main(void) { return puts("dynamic probe") < 0; }\n', encoding='utf-8', newline='\n')
             subprocess.run(['cc',str(source),'-Wl,-Bdynamic','-o',str(binary)],check=True,capture_output=True)
             data=binary.read_bytes();machine=struct.unpack_from('<H',data,18)[0]
             with self.assertRaisesRegex(ValueError,'PT_INTERP|DT_NEEDED'):

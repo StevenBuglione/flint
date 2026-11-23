@@ -75,10 +75,10 @@ class ShellLoopCountingTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as temporary:
             log = Path(temporary) / 'shims.log'
-            log.write_text('1 flint test exit=1\n2 dmd -c a.d exit=0\n3 flint test exit=0\n4 dub build exit=0\n', encoding='utf-8')
+            log.write_text('1 flint test exit=1\n2 dmd -c a.d exit=0\n3 flint test exit=0\n4 dub build exit=0\n', encoding='utf-8', newline='\n')
             self.assertEqual(vibe_bench.shell_loops(log), (3, 1))
             counts = vibe_bench.iterations('flint', Path(temporary) / 'absent.jsonl', log)
             self.assertEqual((counts['builds'], counts['failed'], counts['shell_builds'], counts['mcp_builds']),
                              (3, 1, 3, 0))
-            log.write_text('1 go build ./... exit=2\n2 go test ./... exit=0\n', encoding='utf-8')
+            log.write_text('1 go build ./... exit=2\n2 go test ./... exit=0\n', encoding='utf-8', newline='\n')
             self.assertEqual(vibe_bench.iterations('go', Path(temporary) / 'absent.jsonl', log)['failed'], 1)
