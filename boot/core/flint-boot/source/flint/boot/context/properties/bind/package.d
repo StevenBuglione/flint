@@ -174,11 +174,34 @@ class BindException : RuntimeException
 /// Thrown by the converter when text is not a valid value of the target type.
 class ConversionFailedException : RuntimeException
 {
-    /// `value` could not become a `type`.
+    private string targetType;
+    private string reason;
+
+    /// `value` could not become a `type`, because of `reason` (may be `null`).
     this(string value, string type, string reason = null) pure
     {
         super("Failed to convert from type [java.lang.String] to type [" ~ type ~ "] for value [" ~ value ~ "]" ~ (
                 reason.length ? "; " ~ reason : ""));
+        this.targetType = type;
+        this.reason = reason;
+    }
+
+    /// The source type, as Spring names it.
+    string getSourceType() const pure nothrow @nogc
+    {
+        return "java.lang.String";
+    }
+
+    /// The target type's fully qualified name.
+    string getTargetType() const pure nothrow @nogc
+    {
+        return targetType;
+    }
+
+    /// Why the conversion failed, or `null`.
+    string getReason() const pure nothrow @nogc
+    {
+        return reason;
     }
 }
 

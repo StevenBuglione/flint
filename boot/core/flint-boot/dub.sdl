@@ -6,6 +6,7 @@ sourcePaths "source"
 importPaths "source"
 dflags "-preview=dip1000"
 dependency "flint:engine-aot" path="../../.."
+dependency "flint:term" path="../../.."
 
 configuration "library" {
     targetType "library"

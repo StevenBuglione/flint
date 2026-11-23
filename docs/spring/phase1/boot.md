@@ -28,15 +28,15 @@ Run a package's tests with `dub test --root boot/core/flint-boot --compiler=dmd`
 | YAML loader (`OriginTrackedYamlLoader`, `YamlPropertySourceLoader`) on Flint's D YAML engine | done | 13 / 13 `OriginTrackedYamlLoaderTests`, 5 / 5 `YamlPropertySourceLoaderTests`, plus 3 Flint YAML tests |
 | `Binder`, `Bindable`, `BindResult`, `@DefaultValue`, `@ConfigurationProperties`, placeholders, `BindConverter` (booleans, numbers, `Duration`) | done for scalars, strings, JavaBeans and value objects; enums, arrays and maps wait on `flint:engine-aot` builders (requested) | 13 `BinderTests`, 13 `JavaBeanBinderTests`, 3 `ValueObjectBinderTests`, 12 `BindResultTests`, 3 `PropertySourcesPlaceholdersResolverTests`, 2 `DataObjectPropertyNameTests`, 3 `DurationStyleTests`; plus 3 Flint tests |
 | Config data: `application.{properties,yaml}`, location groups, profile files, `---` with `flint.config.activate.on-profile`, profile groups and includes, `FLINT_PROFILES_ACTIVE`, `spring.*` aliases | done | 23 of 87 `ConfigDataEnvironmentPostProcessorIntegrationTests` (in-memory resources), plus 8 Flint tests |
-| `FlintApplication`, `FlintApplicationBuilder`, runners, `ApplicationArguments`, banner, `mixin FlintMain` | after the binder | |
-| `FailureAnalyzer`, Boot's console log format through `flint.slf4j` | after the binder | |
+| `FlintApplication` (run, exit, `flint.main.*`), runners, `ApplicationArguments`, banner (`FlintBootBanner`, `ResourceBanner`, ANSI), startup info, `mixin FlintMain` | done over a context stand-in until `flint.context` lands; `FlintApplicationBuilder` next | 22 `SpringApplicationTests` (stub context), 6 of 7 `DefaultApplicationArgumentsTests`, 14 of 15 `ResourceBannerTests`, plus 1 Flint test |
+| `FailureAnalyzer`, `FailureAnalysis`, `LoggingFailureAnalysisReporter`, Bind / InvalidConfigurationPropertyName / ConfigDataNotFound analyzers; Boot's console log format | done; the format plugs into `flint.slf4j` as its provider when that lands | covered by the `SpringApplicationTests` failure tests; 4 Flint console-format tests |
 | autoconfigure, boot-test, starters | after flint-context and webmvc land | |
 
 Excluded upstream tests, each with its reason:
 - `ConfigurationPropertyNameTests.hashCodeIsStored` (`runtime-reflection`): reads a private field with `ReflectionTestUtils`.
 - `OriginTrackedPropertiesLoaderTests.compareToJavaProperties` (`jvm-platform`): compares against `java.util.Properties`.
 
-Total so far: **239 tests pass on DMD 2.114 and LDC 1.43**: 225 ported upstream tests and 14 Flint tests. The runner in `tests/boot_tests/support.d` runs each `unittest` on its own and prints the count.
+Total so far: **285 tests pass on DMD 2.114 and LDC 1.43**: 267 ported upstream tests and 18 Flint tests. The runner in `tests/boot_tests/support.d` runs each `unittest` on its own and prints the count.
 
 ## Design decisions
 
@@ -79,6 +79,29 @@ Unknown tags are rejected, as Boot's restricted constructor rejects them. The en
 `flint.boot.context.config.ConfigDataEnvironment` follows Boot's `processAndApply`: the initial contributors (command line, environment, default properties), the plain documents of every location group, the profiles (additional, then included, then `flint.profiles.active`, expanded through groups), and then the profile files and `on-profile` documents. Boot's contributor tree is flattened into one ordered list per location group, giving the documented order. A group's plain files sit below its profile files, a later location and a later profile win, and a later group wins over an earlier one. `flint.config.import`, `on-cloud-platform` detection, `random.*` and config trees are deferred to Phase 2; a document with `on-cloud-platform` stays inactive. JVM system properties have no native counterpart, so Boot's system-property tests use command-line arguments.
 
 The `spring.*` alias is resolved in one place, `ConfigurationPropertySources.find`. A `flint.*` name is also looked up as `spring.*` in each source, and the `flint` spelling wins inside one source. `FLINT_PROFILES_ACTIVE` and `SPRING_PROFILES_ACTIVE` both work, through the environment mapper.
+
+### FlintApplication
+
+`FlintApplication.run` follows `SpringApplication.run`:
+- the arguments;
+- the environment (config data, then `flint.main.*` bound onto the application);
+- logging (application name and group, `logging.level.*`, ANSI);
+- the banner;
+- "Starting …" and the profile line;
+- context creation through `ApplicationContextFactory`;
+- the `flintApplicationArguments` and `flintBootBanner` singletons;
+- refresh;
+- "Started … in … seconds (process running for …)";
+- the runners.
+
+A failure is explained by the failure analyzers and logged as "APPLICATION FAILED TO START". Otherwise it is logged as "Application run failed". Either way the context is closed and the exception rethrown.
+
+Deviations:
+- `mixin FlintMain!App` (D-1) generates `main`, which runs the application and then waits on `awaitTermination()`. Java's non-daemon server threads keep a JVM alive after `main` returns, and a D `main` has to wait explicitly.
+- "Starting X using Flint 0.7.0 with PID …" replaces "using Java 21".
+- The context is a stand-in interface (`flint.boot.internal.context`) under Spring's method names until framework-core's `flint.context.ConfigurableApplicationContext` exists. `ApplicationEnvironment` likewise stands in for `StandardEnvironment`.
+- Failure analyzers are listed explicitly: Boot core's own, plus `addFailureAnalyzers` from modules. Flint's closed world has no `spring.factories` scan.
+- `@FlintApplication` (the ADR-029 alias of `@FlintBootApplication`) is the class `flint.boot.FlintApplication` used as a bare UDA. Flint AOT reads that type UDA as `@FlintBootApplication`.
 
 ### Origins
 

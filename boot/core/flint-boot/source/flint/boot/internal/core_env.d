@@ -48,8 +48,9 @@ final class CommandLineArgs
     /// The values of `name`: empty for `--name` alone, `null` when it was not given.
     const(string)[] getOptionValues(string name) const pure nothrow
     {
+        static immutable string[1] none;
         if (auto values = name in options)
-            return *values is null ? [] : *values;
+            return *values is null ? none[0 .. 0] : *values;
         return null;
     }
 
