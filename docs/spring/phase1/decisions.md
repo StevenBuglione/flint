@@ -385,3 +385,6 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - shared-object edit build, link: 16 → 14 ms, −2 ms (−4 to +3), and total 60 → 60 ms, 0 (−4 to +3); neither excludes zero.
 
   By m7's rule (change the default only if the interval excludes zero), 8 qualifies for static dev links. The shared-object dev build is indifferent. Evidence: `benchmarks/spring/evidence/link-threads-ab/`.
+- 2026-11-23, owner (via the coordinator): **Phase 2 waits for the Phase 1 exit.** The plan's stop rule stands. No Phase 2 module starts, not even ones off the request path, until Phase 1's runtime metrics beat Go or the agreed fallback is in place.
+  - The runtime fix (allocation cuts, the allocation gate, the collector) is foundational, and every module that serves requests would inherit it.
+  - Coordinator assignment, same day: framework-core takes the media-type and path parsing in the web and webmvc packages, formerly web-mvc's area; web-mvc is stopped (out of context). web-http keeps the servlet adapter.
