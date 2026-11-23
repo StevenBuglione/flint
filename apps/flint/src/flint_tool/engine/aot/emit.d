@@ -679,7 +679,7 @@ private struct Emitter
             foreach (index, ref method; descriptor.methods)
                 text ~= "        MethodDescriptor(" ~ literal(method.method.name) ~ ", " ~ literal(
                         method.method.returns.name) ~ ", " ~ parameterDescriptors(method) ~ ", " ~ mergedArray(
-                        method.annotations, "        ") ~ ", " ~ index.to!string ~ "),\n";
+                        method.annotations, "        ", method.inherited) ~ ", " ~ index.to!string ~ "),\n";
             text ~= "    ];\n";
             text ~= expressionTables(descriptor, id);
         }
@@ -755,7 +755,8 @@ private struct Emitter
         string text = "[";
         foreach (index, ref parameter; method.method.parameters)
             text ~= (index ? ", " : "") ~ "ParameterDescriptor(" ~ literal(parameter.name) ~ ", " ~ literal(
-                    parameter.type.name) ~ ", " ~ mergedArray(method.parameters[index], "        ") ~ ")";
+                    parameter.type.name) ~ ", " ~ mergedArray(method.parameters[index], "        ",
+                    index < method.parameterInherited.length ? method.parameterInherited[index] : null) ~ ")";
         return text ~ "]";
     }
 

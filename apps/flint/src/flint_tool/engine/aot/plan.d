@@ -204,10 +204,16 @@ struct MethodPlan
 {
     /// The method.
     Method method;
-    /// Its merged annotations, with class-level advice.
+    /// Its own merged annotations (aggregate 0).
     MergedSet annotations;
-    /// Each parameter's merged annotations.
+    /// Contract 3: the overridden methods' merged annotations (aggregates 1..n, in TYPE_HIERARCHY order), then the
+    /// declaring class's advice annotations as the last aggregate, so a first match in table order is Spring's
+    /// lookup order (the method's hierarchy, then the class).
+    MergedSet[] inherited;
+    /// Each parameter's own merged annotations (aggregate 0).
     MergedSet[] parameters;
+    /// Each parameter's annotations on the overridden methods (aggregates 1..n).
+    MergedSet[][] parameterInherited;
     /// SpEL-valued attributes of its merged annotations, compiled (aot-contract.md section 9.1).
     ExpressionPlan[] expressions;
 }
@@ -1750,11 +1756,8 @@ private final class Analysis
         if (advised)
         {
             item.index = descriptor.methods.length;
-            auto advisedMethod = methodPlan(method, merged, classMerged);
-            // Constraint annotations on an implemented interface's parameters validate like the method's own.
-            foreach (index; 0 .. method.parameters.length)
-                advisedMethod.parameters[index] = hierarchyMerged(decl, method, index);
-            descriptor.methods ~= advisedMethod;
+            // Constraint annotations on an implemented interface's parameters are in the parameters' aggregates.
+            descriptor.methods ~= methodPlan(decl, method, merged, classMerged);
         }
         proxy.methods ~= item;
     }
@@ -1804,24 +1807,42 @@ private final class Analysis
         return true;
     }
 
-    MethodPlan methodPlan(const ref Method method, MergedSet merged, const MergedSet classMerged)
+    /// A method's descriptor entry: its own annotations, the overridden methods' and the class's advice as further
+    /// aggregates, each parameter's likewise; `merged` (the TYPE_HIERARCHY view) feeds the compiled expressions.
+    MethodPlan methodPlan(const ref TypeDecl decl, const ref Method method, MergedSet merged,
+            const MergedSet classMerged)
     {
-        import flint_tool.engine.aot.merge : Merged;
+        import std.algorithm.searching : canFind;
+        import flint_tool.engine.aot.merge : Merged, merge;
         import flint_tool.engine.aot.names : adviceAnnotations;
 
         MethodPlan result;
         result.method = clone(method);
-        // Class-level advice applies to every method that does not declare its own.
+        const overriddenMethods = overridden(decl, method);
+        result.annotations = merge(method.annotations, model.annotationTypes);
+        foreach (base; overriddenMethods)
+            result.inherited ~= merge(base.annotations, model.annotationTypes);
+        // Class-level advice applies to every method that does not declare its own: the last aggregate.
+        MergedSet advice;
         foreach (ref item; classMerged.items)
         {
-            import std.algorithm.searching : canFind;
-
-            if (adviceAnnotations.canFind(item.type) && !merged.has(item.type))
-                merged.items ~= Merged(clone(item.annotation), item.distance);
+            if (adviceAnnotations.canFind(item.type))
+            {
+                advice.items ~= Merged(clone(item.annotation), item.distance);
+                if (!merged.has(item.type))
+                    merged.items ~= Merged(clone(item.annotation), item.distance);
+            }
         }
-        result.annotations = merged;
-        foreach (ref parameter; method.parameters)
+        if (advice.items.length)
+            result.inherited ~= advice;
+        foreach (index, ref parameter; method.parameters)
+        {
             result.parameters ~= mergedOf(parameter);
+            MergedSet[] aggregates;
+            foreach (base; overriddenMethods)
+                aggregates ~= merge(base.parameters[index].annotations, model.annotationTypes);
+            result.parameterInherited ~= aggregates;
+        }
         result.expressions = expressionsOf(method, merged);
         return result;
     }
@@ -2325,9 +2346,7 @@ private final class Analysis
                 auto handler = handlerOf(decl, bean, method, methodMerged, hierarchy);
                 handler.index = methodIndex(*descriptor, method);
                 if (handler.index == descriptor.methods.length)
-                    descriptor.methods ~= methodPlan(method, methodMerged, MergedSet.init);
-                foreach (index; 0 .. method.parameters.length)
-                    descriptor.methods[handler.index].parameters[index] = hierarchyMerged(decl, method, index);
+                    descriptor.methods ~= methodPlan(decl, method, methodMerged, MergedSet.init);
                 target.handlers ~= handler;
             }
             else if (methodMerged.has(exceptionHandler))

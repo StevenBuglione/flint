@@ -1205,6 +1205,13 @@ unittest
     expect(controller.canFind(`ParameterDescriptor("size", "int", [`)).toBeTrue();
     expect(controller.canFind(`MergedAnnotation("flint.jakarta.validation.constraints.Min", Any.of(() { `
             ~ `flint.jakarta.validation.constraints.Min a;`)).toBeTrue();
+    // Contract 3: in the parameter's table, @Min comes from the implemented OwnersApi method, aggregate 1 (the
+    // handler's ArgumentSpec keeps the merged view).
+    bool aggregated;
+    foreach (line; imported!"std.string".splitLines(controller))
+        aggregated = aggregated || (line.canFind(`MergedAnnotation("flint.jakarta.validation.constraints.Min"`)
+                && line.canFind("), 0, 1)"));
+    expect(aggregated).toBeTrue();
     // Container-typed arguments: spelled as engine-aot names them, with their descriptors registered.
     expect(controller.canFind(`a.type = imported!"flint.engine.aot.name".typeNameOf!(flint.java.util.Optional!(`
             ~ `string)); a.required = false;`)).toBeTrue();
