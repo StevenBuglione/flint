@@ -24,7 +24,7 @@ PYTHON=sys.executable
 PACKAGES=json.loads((ROOT/'policy/packages.json').read_text())['packages']
 PLATFORMS=('linux-x86_64-glibc','linux-aarch64-glibc','linux-x86_64-musl',
            'linux-aarch64-musl','macos-arm64','windows-x86_64','wasm32')
-STATIC=('quality','dag','safety','betterc')
+STATIC=('quality','dag','api','safety','betterc')
 # Sanitizer lane only: druntime/Phobos built with fake-stack GC scanning
 # (tools/install_toolchains.py --compiler ldc-sanitizer-runtime). Normal lanes
 # keep the shipped LDC runtime.
@@ -283,6 +283,10 @@ def check(runner,gate):
         runner.run([PYTHON,'-m','unittest','discover','-s','tests','-p','test_*.py'])
         runner.run([PYTHON,'tools/test_guards.py'])
     elif gate=='dag':runner.run([PYTHON,'tools/gates.py','--gate','structural'])
+    elif gate=='api':
+        # ADR-030 section 8: ported-file headers always pass, and API coverage only ratchets up.
+        runner.run([PYTHON,'tools/install_toolchains.py','--compiler','flint'])
+        runner.run([PYTHON,'tools/gates.py','--gate','api'])
     elif gate=='safety':
         runner.run([PYTHON,'tools/gates.py','--gate','structural'])
         negative_tests(runner,'dmd');negative_tests(runner,'ldc2')
@@ -309,7 +313,7 @@ def receipt(runner,name,command,*,platform_name=None):
     runner.run([*argv,'--',*command])
 
 def static(runner):
-    for gate in ('quality','dag'):
+    for gate in ('quality','dag','api'):
         receipt(runner,gate,[PYTHON,'tools/ci.py','check','--gate',gate])
     try:
         native(runner,'linux-x86_64-glibc')
