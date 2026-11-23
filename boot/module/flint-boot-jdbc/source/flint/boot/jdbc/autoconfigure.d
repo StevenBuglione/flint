@@ -16,7 +16,10 @@
 // Flint links only the drivers an application declares (performance playbook S-1): `PostgresJdbcDriverAutoConfiguration`
 // and `SqliteJdbcDriverAutoConfiguration` (Flint additions) enable the engine driver when `flint:postgresql` or
 // `flint:sqlite-jdbc` is present, and the data source takes their `Driver` beans so that they exist before its check;
-// engine-jdbc's FlintDriver accepts only the URLs of enabled drivers.
+// engine-jdbc's FlintDriver accepts only the URLs of enabled drivers. Deviation (rulebook D-JDBC-1, temporary):
+// Spring has no driver auto-configurations and its dataSource takes no Driver[]. Known gap: a plain flint:jdbc or
+// DriverManager application without Boot gets no driver unless it calls enablePostgres()/enableSqlite() itself; Flint
+// AOT linking META-INF/services providers would retire both auto-configurations and close it.
 
 /// `org.springframework.boot.jdbc.autoconfigure`: the JDBC configuration properties. `flint.datasource.hikari.*` (alias
 /// `pool`) binds onto the pool `DataSource` the data-access module provides, as Boot binds `spring.datasource.hikari.*`
@@ -35,8 +38,7 @@ import flint.boot.sql.init : DatabaseInitializationSettings;
 import flint.boot.transaction.autoconfigure : TransactionManagerCustomizers;
 import flint.context.annotation : Bean, Primary;
 import flint.engine.aot.name : typeNameOf;
-import flint.engine.jdbc : enablePostgres, enableSqlite,
-    FlintDataSource, FlintDriver;
+import flint.engine.jdbc : enablePostgres, enableSqlite, FlintDataSource, FlintDriver;
 import flint.beans.factory : BeanCreationException;
 import flint.java.sql : Driver;
 import flint.javax.sql : DataSource;
@@ -541,6 +543,7 @@ private string uniqueName(DataSourceProperties properties)
     return properties.uniqueName;
 }
 
+/// Temporary (rulebook D-JDBC-1): removed when Flint AOT links `META-INF/services` providers.
 /// Flint addition: enables the engine's PostgreSQL driver when the application declares `flint:postgresql` (PgJDBC's
 /// `org.postgresql.Driver`), the only way libpq and OpenSSL enter an application (performance playbook S-1).
 @AutoConfiguration
@@ -556,6 +559,7 @@ final class PostgresJdbcDriverAutoConfiguration
     }
 }
 
+/// Temporary (rulebook D-JDBC-1): removed when Flint AOT links `META-INF/services` providers.
 /// Flint addition: enables the engine's SQLite driver when the application declares `flint:sqlite-jdbc` (sqlite-jdbc's
 /// `org.sqlite.JDBC`), the only way SQLite enters an application (performance playbook S-1).
 @AutoConfiguration

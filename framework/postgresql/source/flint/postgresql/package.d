@@ -9,7 +9,7 @@ An application without this dependency links none of the driver's native code (l
 module flint.postgresql;
 
 import flint.engine.jdbc : FlintDriver, enablePostgres;
-import flint.java.sql : Connection, Driver_ = Driver;
+import flint.java.sql : Connection, Driver_ = Driver, DriverManager;
 import flint.java.util : Properties;
 
 @safe:
@@ -55,4 +55,16 @@ final class Driver : Driver_
     {
         return false;
     }
+}
+
+private Driver_ supply()
+{
+    return new Driver;
+}
+
+/// Registers the driver with the `DriverManager`, as the driver jar's `META-INF/services/java.sql.Driver` does; the
+/// first lookup constructs it, which enables the engine driver.
+shared static this()
+{
+    DriverManager.registerDriver(&supply);
 }

@@ -10,7 +10,7 @@ without this dependency links none of the driver's native code (SQLite).
 module flint.sqlite;
 
 import flint.engine.jdbc : FlintDriver, enableSqlite;
-import flint.java.sql : Connection, Driver_ = Driver;
+import flint.java.sql : Connection, Driver_ = Driver, DriverManager;
 import flint.java.util : Properties;
 
 @safe:
@@ -56,4 +56,16 @@ final class JDBC : Driver_
     {
         return false;
     }
+}
+
+private Driver_ supply()
+{
+    return new JDBC;
+}
+
+/// Registers the driver with the `DriverManager`, as the driver jar's `META-INF/services/java.sql.Driver` does; the
+/// first lookup constructs it, which enables the engine driver.
+shared static this()
+{
+    DriverManager.registerDriver(&supply);
 }

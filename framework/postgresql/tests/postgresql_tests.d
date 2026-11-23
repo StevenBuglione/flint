@@ -1,7 +1,7 @@
 module postgresql_tests;
 
 import flint.engine.jdbc : driverEnabled;
-import flint.java.sql : SQLException;
+import flint.java.sql : DriverManager, SQLException;
 import flint.postgresql : Driver;
 
 @safe:
@@ -38,4 +38,15 @@ unittest
         assert(!created.jdbcCompliant());
         assert(created.getMajorVersion() >= 1);
     }
+}
+
+@("the module registers its driver with the DriverManager under its class name")
+unittest
+{
+    if (driver() is null)
+        return;
+    bool found;
+    foreach (registered; DriverManager.getDrivers())
+        found |= typeid(cast(Object) registered).name == "flint.postgresql.Driver";
+    assert(found);
 }
