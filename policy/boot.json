@@ -51,6 +51,128 @@
         "engine-actuator"
       ],
       "repo": "boot"
+    },
+    "boot-core": {
+      "directory": "boot/core/flint-boot",
+      "module": "flint.boot",
+      "layer": "core",
+      "dependencies": [
+        "engine-aot",
+        "term",
+        "java",
+        "slf4j-api"
+      ],
+      "repo": "boot"
+    },
+    "boot-autoconfigure": {
+      "directory": "boot/core/flint-boot-autoconfigure",
+      "module": "flint.boot.autoconfigure",
+      "layer": "core",
+      "dependencies": [
+        "boot-core",
+        "engine-aot",
+        "java"
+      ],
+      "repo": "boot"
+    },
+    "boot-test": {
+      "directory": "boot/core/flint-boot-test",
+      "module": "flint.boot.test",
+      "layer": "core",
+      "dependencies": [
+        "boot-core",
+        "boot-autoconfigure",
+        "engine-aot"
+      ],
+      "repo": "boot"
+    },
+    "boot-web-server": {
+      "directory": "boot/module/flint-boot-web-server",
+      "module": "flint.boot.web.server",
+      "layer": "module",
+      "dependencies": [
+        "boot-core",
+        "java",
+        "engine-aot"
+      ],
+      "repo": "boot"
+    },
+    "boot-webmvc": {
+      "directory": "boot/module/flint-boot-webmvc",
+      "module": "flint.boot.webmvc",
+      "layer": "module",
+      "dependencies": [
+        "boot-core",
+        "java",
+        "engine-aot"
+      ],
+      "repo": "boot"
+    },
+    "boot-jackson": {
+      "directory": "boot/module/flint-boot-jackson",
+      "module": "flint.boot.jackson",
+      "layer": "module",
+      "dependencies": [
+        "boot-core",
+        "java",
+        "engine-aot",
+        "jackson-annotations",
+        "jackson-core",
+        "jackson-databind"
+      ],
+      "repo": "boot"
+    },
+    "boot-jdbc": {
+      "directory": "boot/module/flint-boot-jdbc",
+      "module": "flint.boot.jdbc",
+      "layer": "module",
+      "dependencies": [
+        "boot-core",
+        "java",
+        "engine-aot"
+      ],
+      "repo": "boot"
+    },
+    "boot-sql": {
+      "directory": "boot/module/flint-boot-sql",
+      "module": "flint.boot.sql",
+      "layer": "module",
+      "dependencies": [
+        "boot-core",
+        "engine-aot"
+      ],
+      "repo": "boot"
+    },
+    "boot-transaction": {
+      "directory": "boot/module/flint-boot-transaction",
+      "module": "flint.boot.transaction",
+      "layer": "module",
+      "dependencies": [
+        "boot-core",
+        "java",
+        "engine-aot"
+      ],
+      "repo": "boot"
+    },
+    "boot-webmvc-test": {
+      "directory": "boot/module/flint-boot-webmvc-test",
+      "module": "flint.boot.webmvc.test",
+      "layer": "module",
+      "dependencies": [
+        "boot-autoconfigure",
+        "boot-core"
+      ],
+      "repo": "boot"
+    },
+    "boot-data-jdbc-test": {
+      "directory": "boot/module/flint-boot-data-jdbc-test",
+      "module": "flint.boot.data.jdbc.test",
+      "layer": "module",
+      "dependencies": [
+        "boot-autoconfigure",
+        "boot-core"
+      ],
+      "repo": "boot"
     }
   },
   "starters": {
@@ -112,6 +234,78 @@
       "autoconfiguration": [
         "flint.boot_autoconfigure_data:DataSourceAutoConfiguration"
       ],
+      "repo": "boot"
+    },
+    "boot-starter": {
+      "directory": "boot/starter/flint-boot-starter",
+      "layer": "starter",
+      "dependencies": [
+        "boot-core",
+        "boot-autoconfigure",
+        "jakarta-annotation"
+      ],
+      "section": "",
+      "summary": "Flint Boot core: FlintApplication, configuration data, auto-configuration support and Boot console logging (spring-boot-starter)",
+      "repo": "boot"
+    },
+    "boot-starter-json": {
+      "directory": "boot/starter/flint-boot-starter-json",
+      "layer": "starter",
+      "dependencies": [
+        "boot-starter",
+        "boot-jackson"
+      ],
+      "section": "json",
+      "summary": "JSON with Jackson (spring-boot-starter-json)",
+      "repo": "boot"
+    },
+    "boot-starter-web": {
+      "directory": "boot/starter/flint-boot-starter-web",
+      "layer": "starter",
+      "dependencies": [
+        "boot-starter",
+        "boot-starter-json",
+        "boot-webmvc",
+        "boot-web-server"
+      ],
+      "section": "web",
+      "summary": "Web applications with Flint MVC on Flint's embedded server (spring-boot-starter-web)",
+      "repo": "boot"
+    },
+    "boot-starter-jdbc": {
+      "directory": "boot/starter/flint-boot-starter-jdbc",
+      "layer": "starter",
+      "dependencies": [
+        "boot-starter",
+        "boot-jdbc",
+        "boot-sql",
+        "boot-transaction"
+      ],
+      "section": "datasource",
+      "summary": "JDBC with a pooled DataSource, SQL initialization and transactions (spring-boot-starter-jdbc)",
+      "repo": "boot"
+    },
+    "boot-starter-validation": {
+      "directory": "boot/starter/flint-boot-starter-validation",
+      "layer": "starter",
+      "dependencies": [
+        "boot-starter"
+      ],
+      "section": "validation",
+      "summary": "Jakarta Validation with Hibernate Validator's behaviour (spring-boot-starter-validation)",
+      "repo": "boot"
+    },
+    "boot-starter-test": {
+      "directory": "boot/starter/flint-boot-starter-test",
+      "layer": "starter",
+      "dependencies": [
+        "boot-starter",
+        "boot-test",
+        "boot-webmvc-test",
+        "boot-data-jdbc-test"
+      ],
+      "section": "test",
+      "summary": "Testing Flint Boot applications (spring-boot-starter-test)",
       "repo": "boot"
     }
   }

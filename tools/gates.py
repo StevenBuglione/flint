@@ -114,16 +114,17 @@ def boot_layers():
         base=home(meta)
         sources=sorted(str(f.relative_to(base)) for f in base.rglob('*.d') if f.relative_to(base).parts[0]!='example') if base.is_dir() else []
         require(not sources,name+': a starter has no D source: '+(meta['directory']+'/'+sources[0] if sources else ''))
-    def boot_owner(module):
-        for name,meta in libraries.items():
-            if module==meta['module'] or module.startswith(meta['module']+'.'):return name
-        return owner(module)
+    def boot_owners(module):
+        # Until the pre-ADR-030 library retires, flint.boot has two registered owners (boot and boot-core); an
+        # import is declared when any of its owners is.
+        found=[name for name,meta in libraries.items() if module==meta['module'] or module.startswith(meta['module']+'.')]
+        return found or [owner(module)]
     for name,meta in libraries.items():
         base=home(meta)/'source'
         for f in sorted(base.rglob('*.d')) if base.is_dir() else []:
             for module in imported_modules(tokens(f.read_text(encoding='utf-8'))):
-                dep=boot_owner(module)
-                require(dep is None or dep==name or dep in meta['dependencies'],str(f.relative_to(base.parent))+': undeclared Boot-layer import '+module)
+                deps=boot_owners(module)
+                require(None in deps or name in deps or any(dep in meta['dependencies'] for dep in deps),str(f.relative_to(base.parent))+': undeclared Boot-layer import '+module)
 
 def check_trusted_functions(ts,lines,where):
     """@system only on bodiless prototypes; no @trusted scopes or blocks; an adjacent SAFETY rationale and a bounded

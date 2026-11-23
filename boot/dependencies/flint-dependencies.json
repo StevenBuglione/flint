@@ -19,11 +19,79 @@
       "repo": "boot",
       "version": "monorepo"
     },
+    "flint:boot-autoconfigure": {
+      "repo": "boot",
+      "version": "monorepo"
+    },
     "flint:boot-autoconfigure-data": {
       "repo": "boot",
       "version": "monorepo"
     },
     "flint:boot-autoconfigure-web": {
+      "repo": "boot",
+      "version": "monorepo"
+    },
+    "flint:boot-core": {
+      "repo": "boot",
+      "version": "monorepo"
+    },
+    "flint:boot-data-jdbc-test": {
+      "repo": "boot",
+      "version": "monorepo"
+    },
+    "flint:boot-jackson": {
+      "repo": "boot",
+      "version": "monorepo"
+    },
+    "flint:boot-jdbc": {
+      "repo": "boot",
+      "version": "monorepo"
+    },
+    "flint:boot-sql": {
+      "repo": "boot",
+      "version": "monorepo"
+    },
+    "flint:boot-starter": {
+      "repo": "boot",
+      "version": "monorepo"
+    },
+    "flint:boot-starter-jdbc": {
+      "repo": "boot",
+      "version": "monorepo"
+    },
+    "flint:boot-starter-json": {
+      "repo": "boot",
+      "version": "monorepo"
+    },
+    "flint:boot-starter-test": {
+      "repo": "boot",
+      "version": "monorepo"
+    },
+    "flint:boot-starter-validation": {
+      "repo": "boot",
+      "version": "monorepo"
+    },
+    "flint:boot-starter-web": {
+      "repo": "boot",
+      "version": "monorepo"
+    },
+    "flint:boot-test": {
+      "repo": "boot",
+      "version": "monorepo"
+    },
+    "flint:boot-transaction": {
+      "repo": "boot",
+      "version": "monorepo"
+    },
+    "flint:boot-web-server": {
+      "repo": "boot",
+      "version": "monorepo"
+    },
+    "flint:boot-webmvc": {
+      "repo": "boot",
+      "version": "monorepo"
+    },
+    "flint:boot-webmvc-test": {
       "repo": "boot",
       "version": "monorepo"
     },

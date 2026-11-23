@@ -14,7 +14,7 @@ The layout follows spring-boot's own. Until cutover, the code lives under `boot/
 | `module/spring-boot-webmvc`, `-jdbc`, `-jackson`, `-validation`, `-sql`, `-transaction` | `boot/module/flint-boot-*` | `flint:boot-webmvc`, … | `flint.boot.webmvc.autoconfigure`, `flint.boot.jdbc.autoconfigure`, … |
 | `starter/spring-boot-starter*` | `boot/starter/flint-boot-starter*` | `flint:boot-starter`, `flint:boot-starter-web`, … | none: dependency lists only |
 
-Until cutover, the new packages have their own `dub.sdl` and are not registered in the root `dub.sdl`. The pre-ADR-030 `boot/boot` package still owns the DUB name `flint:boot`, and two packages cannot share it. Step 5, after cutover, moves `boot/boot`, `boot/autoconfigure-*` and `starters/*` into this layout and retires the old names.
+Every package is registered in `policy/boot.json` with its layer (`core`, `module` or `starter`), dependencies and `"repo": "boot"`. Each also has its own `dub.sdl`, with path dependencies. The pre-ADR-030 `boot/boot` package still owns the DUB name `boot` and the module `flint.boot`, so the new core is the DUB package `boot-core` until m7-flint-cli's scripted cutover renames the legacy package to `flint:legacy-boot`, when it becomes `flint:boot`. Until then `flint.boot.*` has two registered owners. The structural gate accepts a Boot-layer import when any of its owners is declared. Step 5 then retires `boot/boot`, `boot/autoconfigure-*` and `starters/*`, once the new core covers the applications that use them.
 
 Run a package's tests with `dub test --root boot/core/flint-boot --compiler=dmd` (and `--compiler=ldc2`).
 
