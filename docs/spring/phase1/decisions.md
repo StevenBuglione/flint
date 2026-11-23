@@ -454,3 +454,14 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **Background:** the Go comparator is a fully static binary (CGO off). Flint's release apps link libc and other libraries dynamically, and their shared text is about 1.75 MB of resident memory.
   - **The comparison run:** proof-harness runs a non-gating, side-by-side comparison of gs-rest-service's release build, static against dynamic. It measures peak RSS, throughput, p99 and CPU per request in one claimed window, plus stripped O3 and Oz sizes against Go.
   - **The decision rule:** switch the measured release profile to static only if the Oz size still passes against Go and no runtime metric gets worse beyond its interval. Size and runtime then use the same static release build, and the dynamic series stays published as context, as with `--no-debug` (`4b27d207`). Earlier results stay as recorded.
+- 2026-11-23, owner (via the coordinator): **the two top priorities are the per-endpoint fast-path spike and petclinic-rest's cold build.**
+  - Together they decide most of the mission risk.
+    - The fast path is the main lever for gs-rest-service's throughput, CPU, p99 and RSS against Go.
+    - petclinic's cold build is the largest build gap: 4.18× Go with Go's dependencies primed (e96671ce); AOT 760 ms plus compile 454 ms, 77% of it petclinic's own code.
+  - **Fast path.** fast-path-spike reaches a go/no-go quickly. Owners whose files it touches review within 30 minutes: flint-aot, web-http, third-party-apis, framework-core. proof-harness gives its A/B the first measurement window once it's ready. On go, extend it to petclinic-rest's endpoints.
+  - **petclinic cold build.**
+    - flint-aot lands the describer memoization first.
+    - m7-flint-cli puts petclinic's cold compile and edit build ahead of the musl work: per-module compile, parallel jobs, serving the project's dependencies from the prelude.
+    - framework-core and size-levers cut what petclinic's code instantiates, in its templated user-facing APIs and the generated modules.
+    - size-levers' L1 shrinks the link.
+  - Other work continues behind these two.
