@@ -1,0 +1,46 @@
+{
+  "schema": 2,
+  "description": "Spring-style REST workload (ADR-030 section 8), next to the 26-byte JSON workload of policy/http-benchmark.json, which it leaves unchanged. Each side-by-side application of benchmarks/spring/apps.json is served by the Flint port and the registered Go comparator, and by the Java reference on the JVM as context only. Every implementation must pass its black-box suite before it is loaded, and each response is checked during load. Same phases, trial count and statistics as the existing workload; petclinic-rest reads one owner with its pets, types and visits from PostgreSQL on every request. The fixed rates are initial values to be confirmed by the first baseline on the designated runner, before any Flint measurement; after that a change needs its own ADR and remeasurement of both sides (AGENTS.md).",
+  "workload": {
+    "runs": 9,
+    "duration_seconds": 60,
+    "capacity_seconds": 60,
+    "warmup_seconds": 10,
+    "connections": 64,
+    "request_timeout_seconds": 5,
+    "server_cpus": [2, 3],
+    "load_cpus": [4, 5, 6, 7],
+    "database_cpus": [8, 9]
+  },
+  "apps": {
+    "gs-rest-service": {
+      "path": "/greeting?name=Flint",
+      "fixed_rate_qps": 20000,
+      "expected": {
+        "status": 200,
+        "content_type": "application/json",
+        "body_regex": "\\{\"id\":[1-9][0-9]*,\"content\":\"Hello, Flint!\"\\}\\n?",
+        "min_body_bytes": 34,
+        "max_body_bytes": 48
+      }
+    },
+    "petclinic-rest": {
+      "path": "/petclinic/api/owners/1",
+      "fixed_rate_qps": 5000,
+      "expected": {
+        "status": 200,
+        "content_type": "application/json",
+        "body_regex": "\\{\"firstName\":\"George\",\"lastName\":\"Franklin\",\"address\":\"110 W\\. Liberty St\\.\",\"city\":\"Madison\",\"telephone\":\"6085551023\",\"pets\":\\[\\{\"name\":\"Leo\",\"birthDate\":\"2000-09-07\",\"type\":\\{\"name\":\"cat\",\"id\":1\\},\"id\":1,\"visits\":\\[\\],\"ownerId\":1\\}\\],\"id\":1\\}\\n?",
+        "min_body_bytes": 227,
+        "max_body_bytes": 228
+      }
+    }
+  },
+  "targets": ["flint", "go"],
+  "context": ["java-jvm"],
+  "environment": {
+    "flint": {"FLINT_CORES": "2"},
+    "go": {"GOMAXPROCS": "2"},
+    "java-jvm": {"JAVA_TOOL_OPTIONS": "-XX:ActiveProcessorCount=2"}
+  }
+}
