@@ -2,7 +2,7 @@
   "schema": "flint.measure-queue/1",
   "id": "phase1-builds-gs-relational",
   "created": "2026-11-23",
-  "status": "blocked",
+  "status": "pending",
   "window": "claim",
   "priority": 5,
   "requested_by": "ADR-030 section 8, Phase 1 exit (coordinator's plan, 2026-11-23 15:20Z); split per application by the coordinator, 2026-11-23 16:45Z",
@@ -82,6 +82,5 @@
         "in": "tree"
       }
     ]
-  },
-  "blocked_on": "phase1-builds-petclinic's smoke run at 6ab588f8340c; then all three pending"
+  }
 }
