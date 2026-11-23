@@ -133,8 +133,11 @@ void readOutput(string output, ref ExtractionResult result)
     string[] modules;
     string[][string] types;
     bool[string] announced;
-    foreach (line; output.splitter('\n'))
+    foreach (raw; output.splitter('\n'))
     {
+        // Windows compilers end lines with CRLF; a module name keeping the CR is an invalid file name there, and
+        // a presence answer "true\r" would read as false.
+        const line = raw.length && raw[$ - 1] == '\r' ? raw[0 .. $ - 1] : raw;
         if (line.startsWith(modulePrefix))
         {
             const name = line[modulePrefix.length .. $];

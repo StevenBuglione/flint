@@ -67,6 +67,21 @@ unittest
     expect(found.imports).toEqual(["c.d", "g", "i.j", "k"]);
 }
 
+@("the describer's output reads the same with CRLF line ends (Windows)")
+unittest
+{
+    import flint_tool.engine.aot.extract : ExtractionResult, readOutput;
+
+    ExtractionResult result;
+    readOutput("FLINT-AOT-MODULE shop.app\r\nFLINT-AOT-PRESENT flint.x.Y true\r\n"
+            ~ "FLINT-AOT-PRESENT flint.x.Z false\r\n", result);
+    expect(result.errors).toEqual("");
+    expect(result.models.length).toEqual(1);
+    expect(result.models[0].name).toEqual("shop.app");
+    expect(result.present["flint.x.Y"]).toBeTrue();
+    expect(result.present["flint.x.Z"]).toBeFalse();
+}
+
 // ---- merged annotations ----
 
 private enum annotationTypes = `[
