@@ -687,20 +687,22 @@ private:
     void configureLogging(ApplicationEnvironment environment)
     {
         import flint.boot.context.properties.source : ConfigurationPropertyName;
+        import flint.boot.logging.slf4j : Slf4jLoggingSystem;
         import std.uni : toUpper;
 
         logSettings.format.applicationName = environment.getProperty("flint.application.name", "");
         logSettings.format.applicationGroup = environment.getProperty("flint.application.group", "");
         logSettings.format.ansi = ansiEnabled(environment);
+        auto system = new Slf4jLoggingSystem(logSettings.format, logSettings.sink);
+        system.initialize();
         auto prefix = ConfigurationPropertyName.of("logging.level");
         foreach (name; ConfigurationPropertySources.names(environment.getPropertySources()))
         {
             if (!prefix.isAncestorOf(name))
                 continue;
-            const logger = name.subName(2).toString();
             const level = environment.getProperty(name.toString());
             if (level !is null)
-                logSettings.levels[logger] = parseEnum!LogLevel(level.toUpper, name.toString());
+                system.setLogLevel(name.subName(2).toString(), parseEnum!LogLevel(level.toUpper, name.toString()));
         }
     }
 

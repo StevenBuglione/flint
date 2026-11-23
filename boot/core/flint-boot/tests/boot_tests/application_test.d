@@ -477,6 +477,28 @@ private final class FixedExitCode : ExitCodeGenerator
     assertThrows!IllegalStateException(() { application.run(null); }, "No ApplicationContextFactory");
 }
 
+@("flint.applicationLoggersPrintBootsConsoleFormat") unittest
+{
+    import flint.slf4j : LoggerFactory;
+    import std.algorithm.searching : canFind;
+
+    auto run = prepare(
+            [
+        "resources/application.properties": "flint.application.name=demo\nlogging.level.com.example.quiet=warn\n"
+    ]);
+    string output;
+    run.application.setOutput((string text) { output ~= text; });
+    run.application.run(null);
+    LoggerFactory.getLogger("com.example.restservice.GreetingController").info("Hello, {}!", "Flint");
+    LoggerFactory.getLogger("com.example.quiet.Noisy").info("hidden");
+    LoggerFactory.getLogger("com.example.quiet.Noisy").warn("shown");
+    assert(output.canFind(" INFO "), output);
+    assert(output.canFind(" --- [demo] ["), output);
+    assert(output.canFind("c.e.restservice.GreetingController       : Hello, Flint!\n"), output);
+    assert(!output.canFind("hidden"), output);
+    assert(output.canFind(" WARN ") && output.canFind(": shown\n"), output);
+}
+
 // ---- SpringApplicationBuilderTests ----------------------------------------------------------------------------
 
 private ApplicationEnvironment runBuilder(string[string] files,

@@ -1,117 +1,87 @@
-/// Boot's own logger until `flint.slf4j` lands: Commons Logging's `Log` shape (which Boot's classes use through
-/// spring-jcl), writing Boot's console format to standard output.
-///
-/// Once third-party-apis publishes `flint.slf4j`, Boot installs its console format as the SLF4J provider
-/// (`LoggerFactory.installProvider`) and this module forwards to it.
+/// Boot's own logger: Commons Logging's `Log` shape (which Boot's classes use through spring-jcl), forwarding to
+/// `flint.slf4j`, whose output Boot's logging system formats.
 module flint.boot.internal.log;
 
-import flint.boot.logging : ConsoleLogFormat, LogEvent, LogLevel;
+import flint.boot.logging : ConsoleLogFormat;
+import flint.slf4j : Logger, LoggerFactory;
 
 @safe:
 
 /// Where formatted lines go; tests capture them.
 alias LogSink = void delegate(string line) @safe;
 
-/// The process-wide console settings, set once by `FlintApplication` before it logs.
+/// The console settings `FlintApplication` applies through Boot's logging system.
 final class LogSettings
 {
     /// The console format.
     ConsoleLogFormat format;
-    /// The threshold: events below it are dropped.
-    LogLevel threshold = LogLevel.INFO;
-    /// Per-logger thresholds (`logging.level.<name>`), longest prefix wins.
-    LogLevel[string] levels;
     /// The sink; standard output when `null`.
     LogSink sink;
-
-    /// Whether `logger` logs at `level`.
-    bool enabled(string logger, LogLevel level) const pure
-    {
-        import std.algorithm.searching : startsWith;
-
-        size_t best;
-        LogLevel effective = threshold;
-        foreach (name, configured; levels)
-        {
-            const matches = name == "root" || logger == name || logger.startsWith(name ~ ".");
-            const length = name == "root" ? 0 : name.length;
-            if (matches && length >= best)
-            {
-                best = length;
-                effective = configured;
-            }
-        }
-        return level >= effective && effective != LogLevel.OFF;
-    }
 }
 
-/// A named logger.
+/// A named logger: Commons Logging's `Log` shape over `flint.slf4j`, so Boot's own lines go through the same
+/// provider, levels and format as the application's.
 final class Log
 {
     private string name;
-    private LogSettings settings;
 
-    /// The logger `name` writing with `settings`.
-    this(string name, LogSettings settings) pure nothrow @nogc
+    /// The logger `name`; the settings are applied by the logging system, not per logger.
+    this(string name, LogSettings settings = null) pure nothrow @nogc
     {
         this.name = name;
-        this.settings = settings;
+    }
+
+    private Logger logger()
+    {
+        return LoggerFactory.getLogger(name);
     }
 
     /// Whether debug output is on.
-    bool isDebugEnabled() const
+    bool isDebugEnabled()
     {
-        return settings.enabled(name, LogLevel.DEBUG);
+        return logger().isDebugEnabled();
     }
 
     /// Whether info output is on.
-    bool isInfoEnabled() const
+    bool isInfoEnabled()
     {
-        return settings.enabled(name, LogLevel.INFO);
+        return logger().isInfoEnabled();
     }
 
     /// Log at DEBUG.
     void debug_(string message, Throwable failure = null)
     {
-        write(LogLevel.DEBUG, message, failure);
+        if (failure is null)
+            logger().debug_(message);
+        else
+            logger().debug_(message, failure);
     }
 
     /// Log at INFO.
     void info(string message, Throwable failure = null)
     {
-        write(LogLevel.INFO, message, failure);
+        if (failure is null)
+            logger().info(message);
+        else
+            logger().info(message, failure);
     }
 
     /// Log at WARN.
     void warn(string message, Throwable failure = null)
     {
-        write(LogLevel.WARN, message, failure);
+        if (failure is null)
+            logger().warn(message);
+        else
+            logger().warn(message, failure);
     }
 
     /// Log at ERROR.
     void error(string message, Throwable failure = null)
     {
-        write(LogLevel.ERROR, message, failure);
-    }
-
-    private void write(LogLevel level, string message, Throwable failure)
-    {
-        if (!settings.enabled(name, level))
-            return;
-        LogEvent event;
-        event.timestampMillis = nowMillis();
-        event.utcOffsetMinutes = localOffsetMinutes();
-        event.level = level;
-        event.pid = processId();
-        event.logger = name;
-        event.message = message;
-        if (failure !is null)
-            event.throwable = render(failure);
-        const line = settings.format.format(event);
-        if (settings.sink !is null)
-            settings.sink(line);
+        if (failure is null)
+            logger().error(message);
         else
-            writeOut(line);
+            logger().error(message, failure);
     }
 }
 
@@ -158,11 +128,4 @@ long processId()
     import std.process : thisProcessID;
 
     return thisProcessID;
-}
-
-private void writeOut(string line)
-{
-    import flint.term : Stream, writeStream;
-
-    cast(void) writeStream(Stream.output, line);
 }

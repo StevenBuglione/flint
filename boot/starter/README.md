@@ -4,7 +4,7 @@ A starter has no D source: it is a DUB package with `targetType "none"` whose de
 
 | Starter | Upstream dependencies | In Flint now | Joins when it lands |
 | --- | --- | --- | --- |
-| `flint-boot-starter` | starter-logging, autoconfigure, jakarta.annotation-api, snakeyaml | `boot`, `boot-autoconfigure`, `flint:jakarta-annotation` (YAML is built into `boot`) | `flint-boot-starter-logging` (the `flint.slf4j` provider with Boot's console format) |
+| `flint-boot-starter` | starter-logging, autoconfigure, jakarta.annotation-api, snakeyaml | `boot`, `boot-autoconfigure`, `flint:jakarta-annotation` (YAML and the `flint.slf4j` logging system are built into `boot`) | `flint-boot-starter-logging` as its own starter, when an alternative logging system exists to exclude it for |
 | `flint-boot-starter-json` | starter, module jackson | `boot-starter`, `boot-jackson` (properties so far) | `JacksonAutoConfiguration` in `boot-jackson` |
 | `flint-boot-starter-web` | starter-jackson, starter-tomcat, http-converter, webmvc | `boot-starter`, `boot-starter-json`, `boot-webmvc`, `boot-web-server` (properties so far) | the MVC and server auto-configurations, `flint-boot-http-converter`, and the flint:webmvc and server packages (Flint's embedded server takes Tomcat's place) |
 | `flint-boot-starter-jdbc` | starter, module jdbc, HikariCP | `boot-starter`, `boot-jdbc`, `boot-sql`, `boot-transaction` (properties so far) | `DataSourceAutoConfiguration` over Flint's pool (bound with `flint.datasource.hikari.*`), `JdbcTemplateAutoConfiguration`, the transaction and SQL-init auto-configurations |
