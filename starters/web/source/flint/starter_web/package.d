@@ -20,6 +20,7 @@ public import flint.config : ConfigurationProperties, Default, Env, Required, Se
 public import flint.di : AutoConfiguration, Bind, Component, ConditionalOnConfig,
     ConditionalOnMissingBean, Inject, Named, PostConstruct, PreDestroy, Provided, Repository, Service;
 public import flint.validate : Email, Max, Min, NotBlank, Pattern, Size, Valid;
+public import flint.starter_web.spa : SpaController, SpaProperties;
 public import flint.web : ControllerAdvice, Delete, Get, PathVariable, Post, Put, QueryParam,
     Request, RequestBody, RequestContext, Response, RestController;
 
@@ -39,8 +40,9 @@ struct ServerProperties
     size_t maxBodyBytes = 1_048_576;
 }
 
-/// The starter's registrations: the server settings, bound from configuration by `runApplication`.
-alias WebAutoConfiguration = AutoConfiguration!(Provided!ServerProperties);
+/// The starter's registrations: the server settings, bound from configuration by `runApplication`, and the
+/// single-page application front end when `[spa]` is configured.
+alias WebAutoConfiguration = AutoConfiguration!(Provided!ServerProperties, Provided!SpaProperties, SpaController);
 
 /// Exit codes of `runApplication` before the server runs.
 enum StartupExit : int
@@ -51,8 +53,8 @@ enum StartupExit : int
     context = 4
 }
 
-/// Run a web application: bind configuration from `config/` (with `--set key=value` and `--profile name`
-/// arguments), start the DI context of `WebAutoConfiguration` and `Beans`, serve every `@RestController` bean, and
+/// Run a web application: with `--openapi`, print the controllers' OpenAPI document and exit. Otherwise bind
+/// configuration from `config/` (with `--set key=value` and `--profile name` arguments), start the DI context of `WebAutoConfiguration` and `Beans`, serve every `@RestController` bean, and
 /// shut the context down after the server stops. Beans are starters' auto-configuration lists and the
 /// application's own services, repositories and controllers.
 int runApplication(Beans...)(string[] args)
@@ -63,6 +65,19 @@ int runApplication(Beans...)(string[] args)
 
     AppContext!(WebAutoConfiguration, Beans) context;
     alias Registered = typeof(context).Registered;
+    alias Served = Controllers!Registered;
+    // `--openapi` prints the OpenAPI document of the controllers and exits; `flint openapi` calls it.
+    foreach (argument; args.length > 1 ? args[1 .. $] : null)
+    {
+        if (argument == "--openapi")
+        {
+            import flint.term : Stream, writeStream;
+            import flint.web : openApiDocument;
+
+            enum document = openApiDocument!Served("Flint application", "0.0.0");
+            return writeStream(Stream.output, document ~ "\n").code == Status.ok ? 0 : 1;
+        }
+    }
     const configured = bindConfiguration(context, args.length > 1 ? args[1 .. $] : null);
     if (configured.code != Status.ok)
         return report(StartupExit.configuration, "configuration: " ~ configured.message);
@@ -72,7 +87,6 @@ int runApplication(Beans...)(string[] args)
     scope (exit)
         context.shutdown();
 
-    alias Served = Controllers!Registered;
     Served application;
     static foreach (index, Controller; Served.Types)
         application.items[index] = context.get!Controller();

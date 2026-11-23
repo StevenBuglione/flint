@@ -53,6 +53,7 @@ flint check
 | `flint examples <topic>` | Compiled, tested examples for a topic, and matching golden applications. |
 | `flint generate <entity\|repository\|service\|controller\|config\|migration\|agents\|debug> <Name> [--plan]` | Write the canonical shape of a component (package-by-feature), add the core packages it needs and relock. `agents` refreshes `AGENTS.md`, and `debug` writes VS Code launch and task configurations that load Flint's pretty-printers. Never overwrites a component. |
 | `flint add <starter>... [--plan]` | Wire starters (`web`, ...; listed in `policy/starters.json`): add `flint:starter-<name>` to `[dependencies]`, append its configuration section to `config/application.toml` when missing, and relock (ADR-028). |
+| `flint openapi [-o FILE] [--typescript FILE]` | Build a starter-web project, take the OpenAPI 3.1 document flint:web generated from its controllers (the app's `--openapi`), name it after `flint.toml`, and write it; `--typescript` also writes a typed `fetch` client (ADR-028). |
 | `flint receipt <artifact> [--canonical]` | Verify an artifact against its receipt and the current toolchain. |
 
 Every command accepts `--json` and `--help`. Commands acting on a project take `--project DIR` (or `-C DIR`). `flint` never prompts.

@@ -353,6 +353,21 @@ struct AddArgs
     @Option("json", 0, "Emit flint.add/1 JSON on stdout") bool json;
 }
 
+/// `flint openapi`.
+@Command("flint openapi",
+        "Print the OpenAPI document of a starter-web application, or write it and a TypeScript client")
+struct OpenApiArgs
+{
+    /// Output file.
+    @Option("output", 'o', "Write the document to this file instead of standard output") string output;
+    /// TypeScript client.
+    @Option("typescript", 0, "Also write a typed TypeScript client to this file") string typescript;
+    /// Project directory.
+    @Option("project", 'C', "Document this project directory") string project;
+    /// JSON output.
+    @Option("json", 0, "Emit flint.openapi/1 JSON on stdout") bool json;
+}
+
 /// `flint config`.
 @Command("flint config", "Print every resolved configuration key with its value and source")
 struct ConfigArgs
@@ -467,6 +482,8 @@ struct FlintArgs
     @Subcommand("generate", "Write the canonical shape of a component") GenerateArgs generate;
     /// add.
     @Subcommand("add", "Wire starters into the project") AddArgs add;
+    /// openapi.
+    @Subcommand("openapi", "OpenAPI document and TypeScript client from the controllers") OpenApiArgs openapi;
     /// config.
     @Subcommand("config", "Print the resolved configuration") ConfigArgs config;
     /// watch.

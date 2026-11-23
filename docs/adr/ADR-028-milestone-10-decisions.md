@@ -91,8 +91,40 @@ Status: proposed by the Milestone 10 implementation, for the project owner's rev
 3. **The limit.** The rule reads tokens, not types. It recognises classes the project declares, not class types from libraries. Starters prefer structs and `Result`, so an application rarely holds a library class.
 
 
+### 5. The full-stack path: OpenAPI, TypeScript clients and SPA serving
+
+1. **OpenAPI from controllers, at compile time.** `flint.web.openApiDocument!App(title, version)` builds an OpenAPI 3.1 document from the same route table and argument plan that serve requests, so it cannot drift from the application. It documents:
+   - paths, with `:id` written as `{id}`;
+   - methods, with `Controller.handler` as the operationId;
+   - path and query parameters, and JSON request bodies;
+   - success responses: 200, 201 for a POST that returns an entity, and 204 for `void`;
+   - a default error schema.
+
+   Schemas follow flint:serde: `@JsonName` renames a field, `@JsonIgnore` drops it, enums are string unions, and arrays and nested structs are inline objects whose `title` is the D type name.
+
+2. **`--openapi` and `flint openapi`.**
+   - **`--openapi`:** a starter-web application started with `--openapi` prints the document and exits.
+   - **`flint openapi [-o FILE] [--typescript FILE]`:** builds the project, captures that document, and names it after `flint.toml`'s name and version.
+   - **The TypeScript client:** `--typescript` also writes a dependency-free client: one interface per titled schema (fields in declaration order) and one typed method per operation over `fetch`, such as `noteGet(id: number): Promise<Note>`. A non-2xx response throws `ApiError` with the status and the server's message.
+   - **Verified:** the example's client type-checks with `tsc --strict` (TypeScript 5.6.3).
+
+3. **SPA serving.** With a `[spa]` section (`directory`, `index`), flint:starter-web registers `SpaController`, which serves the built front end:
+   - **files:** a file by its path, with its media type;
+   - **client-side routes:** `index` for any other GET;
+   - **the API:** 404 for unmatched paths under `/api/`, so the controllers keep the API;
+   - **containment:** `..` and `.` never leave the directory.
+
+   Both beans are `@ConditionalOnConfig("spa")`, so an application without a front end has neither.
+
+4. **Worker-thread replies of any size and media type.** Before this, a worker-thread handler's response was limited to 4,096 bytes and seven media types, and it ran in a 12 KB arena. Section 3 makes ordinary handlers run on the worker, so these limits would have broken ordinary applications. Now:
+   - **The arena:** each worker owns a reusable 8 MiB request arena.
+   - **Larger bodies:** a body larger than the packet is copied to the GC heap by the worker thread. The reactor copies it into the request arena and drops it.
+   - **Any media type:** an unlisted media type travels as its string.
+   - **Unchanged:** the reactor-inline path does not change.
+
 ## Consequences
 
+- A starter application has a typed front-end contract: `flint openapi --typescript client.ts` turns its controllers into a document and a client, and a `[spa]` section serves the front end beside the API. `tests/test_flint_starters.py` checks the document, the client, the front-end routes and a 100 KB asset served by a worker-thread handler.
 - `flint add web` and twenty lines of application code give a configured REST service with DI, ordinary handlers and string path variables. `tests/test_flint_starters.py` covers `flint add` (dependency, section, lock, a repeated add and an unknown starter), and the example serving a request and refusing a misspelt key with exit code 3.
 - **Known limit:** SIGTERM stops a starter application without running `@PreDestroy` hooks, because flint:os dispatches only SIGINT. A worker-thread controller has one thread with 16 queued requests.
 - A starter can register its beans by default, an application can override any of them by registering the same key, and a starter's optional parts switch on with a configuration section. `packages/di/tests/context_behavior.d` covers auto-configured wiring, replacement by an explicit binding, `@ConditionalOnMissingBean`, the compile-time error for a disabled dependency, and the TOML section reader. The 17 negative fixtures are rejected as before.

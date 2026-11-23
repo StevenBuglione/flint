@@ -49,6 +49,27 @@ int main(string[] args)
 | `cores` | `1` | HTTP reactor workers |
 | `maxBodyBytes` (or `max_body_bytes`) | `1048576` | Largest request body |
 
+## Front end: `[spa]`
+
+```toml
+[spa]
+directory = "resources/static"   # the built front end
+index = "index.html"             # served for client-side routes
+```
+
+- **Files:** each file is served by its path.
+- **Client-side routes:** every other GET gets the index page.
+- **The API:** paths under `/api/` that no controller matches stay 404.
+
+## OpenAPI and a TypeScript client
+
+```bash
+flint openapi -o openapi.json --typescript web/src/api.ts
+```
+
+- **The document:** the application answers `--openapi` with the OpenAPI 3.1 document that flint:web generates from its controllers at compile time.
+- **The client:** `flint openapi` names the document after `flint.toml`, and writes a typed `fetch` client with one method per operation.
+
 ## Exit codes
 
 - 3: configuration did not bind. The message names the key.
@@ -68,4 +89,4 @@ curl localhost:8080/api/greetings/Ada
 ## Known limits
 
 - **Stopping:** SIGTERM stops the process without running `@PreDestroy` hooks, because `flint:os` dispatches only SIGINT today. SIGINT and the server's own shutdown do run them.
-- **Worker threads:** each worker-thread controller has one thread with 16 queued requests.
+- **Worker threads:** each worker-thread controller has one thread, with 16 queued requests and an 8 MiB request arena.

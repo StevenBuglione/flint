@@ -7,3 +7,7 @@ greeting = "Hello"
 [server]
 address = "127.0.0.1"
 port = 8080
+
+# Serve the front end in resources/static, with index.html for client-side routes.
+[spa]
+directory = "resources/static"

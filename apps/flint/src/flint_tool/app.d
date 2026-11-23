@@ -194,6 +194,13 @@ private int knowledgeCommand(ref Session session, string name, ref FlintArgs opt
                 options.generate.project, options.generate.plan);
     case "flint config":
         return commandConfig(session, options.config.project, options.config.profile);
+    case "flint openapi":
+        {
+            import flint_tool.commands.openapi : commandOpenApi;
+
+            return commandOpenApi(session, options.openapi.project, options.openapi.output,
+                    options.openapi.typescript);
+        }
     case "flint add":
         {
             import flint_tool.commands.add : commandAdd;

@@ -7,6 +7,7 @@ import subprocess
 import tempfile
 import time
 import unittest
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -110,6 +111,16 @@ class StarterWebTests(unittest.TestCase):
                 except OSError:
                     time.sleep(0.05)
             self.assertEqual(body, {'text': 'Hello, Ada!'})
+            # The front end: files, client-side routes, and /api/ left to the controllers.
+            for path, status, media in [('/', 200, 'text/html'), ('/app.js', 200, 'text/javascript'),
+                                        ('/orders/42', 200, 'text/html'), ('/api/nothing', 404, 'application/json')]:
+                try:
+                    with urllib.request.urlopen(f'http://127.0.0.1:{port}{path}', timeout=5) as r:
+                        got = (r.status, r.headers.get('Content-Type', ''))
+                except urllib.error.HTTPError as error:
+                    got = (error.code, error.headers.get('Content-Type', ''))
+                self.assertEqual(got[0], status, path)
+                self.assertTrue(got[1].startswith(media), (path, got))
         finally:
             process.send_signal(signal.SIGINT)
             try:
@@ -121,6 +132,29 @@ class StarterWebTests(unittest.TestCase):
                                   capture_output=True, text=True, timeout=10)
         self.assertEqual(misspelt.returncode, 3, misspelt.stderr)
         self.assertIn('server.prot', misspelt.stderr)
+
+
+class OpenApiTests(unittest.TestCase):
+    def test_flint_openapi_documents_the_controllers_and_writes_a_typescript_client(self):
+        with tempfile.TemporaryDirectory(prefix='flint-openapi-') as temporary:
+            document_path = Path(temporary) / 'openapi.json'
+            client_path = Path(temporary) / 'client.ts'
+            result = subprocess.run([str(FLINT), 'openapi', '-C', str(ROOT / 'starters/web/example'), '-o',
+                                     str(document_path), '--typescript', str(client_path)], capture_output=True,
+                                    text=True, env=environment())
+            self.assertEqual(result.returncode, 0, result.stderr[-3000:])
+            document = json.loads(document_path.read_text())
+            self.assertEqual(document['info'], {'title': 'shop', 'version': '0.1.0'})
+            get = document['paths']['/api/greetings/{name}']['get']
+            self.assertEqual(get['operationId'], 'GreetingController.get')
+            self.assertEqual(get['parameters'][0]['in'], 'path')
+            schema = get['responses']['200']['content']['application/json']['schema']
+            self.assertEqual((schema['title'], schema['properties']['text']['type']), ('Message', 'string'))
+            client = client_path.read_text()
+            self.assertIn('export interface Message {\n  text: string;\n}', client)
+            self.assertIn('greetingGet(name: string): Promise<Message>', client)
+            refused = flint_json('openapi', cwd=ROOT / 'benchmarks/vibe/reference/flint/cli-todo')
+            self.assertEqual(codes(refused[1]), ['FLINT-E0004'])
 
 
 UNNEEDED = '''module shop.orders;
