@@ -20,7 +20,7 @@ AARCH64_FILES = {
     'dmd/backend/backconfig.d', 'dmd/backend/cgelem.d', 'dmd/backend/cgen.d', 'dmd/backend/cgsched.d',
     'dmd/backend/code.d', 'dmd/backend/codebuilder.d', 'dmd/backend/dout.d', 'dmd/backend/dwarfdbginf.d',
     'dmd/backend/dwarfeh.d', 'dmd/backend/el.d', 'dmd/backend/elfobj.d', 'dmd/backend/elpicpie.d',
-    'dmd/backend/machobj.d',
+    'dmd/backend/machobj.d', 'dmd/lib/mach.d',
 }
 
 

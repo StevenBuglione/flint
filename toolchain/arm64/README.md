@@ -32,7 +32,7 @@ The compiler is installed in `.tools/dmd2/osx/bin64` on macOS and in `.tools/dmd
 
 ## Regression tests
 
-Every code generator defect fixed in the fork has a test here. Each test is a self-checking D program that exits 0, and some have a C companion. `run.py` compiles each test three ways (no flags, `-O`, `-O -release -inline`), links it against druntime for the target, and runs it.
+Every code generator defect fixed in the fork has a test here. Each test is a self-checking D program that exits 0, and some have a C companion. `run.py` compiles each test three ways (no flags, `-O`, `-O -release -inline`), links it against druntime for the target, and runs it. A test `name.d` with a directory `name/` also links a library that `dmd -lib` builds from that directory.
 
 ```bash
 # natively on an arm64 host, with the installed toolchain
@@ -48,8 +48,8 @@ python3 toolchain/arm64/run.py --dmd <fork dmd> --druntime-import <druntime/impo
 
 | | druntime unittests | Phobos unittests | regression tests |
 | --- | --- | --- | --- |
-| Linux AArch64 (QEMU user mode) | 567/567 modules | 173/176 modules | 99/99 |
-| macOS arm64 (pluto, native) | 567/567 modules | 176/176 modules | 99/99 |
+| Linux AArch64 (QEMU user mode) | 567/567 modules | 173/176 modules | 106/106 |
+| macOS arm64 (pluto, native) | 567/567 modules | 176/176 modules | 106/106 |
 
 Both libraries pass natively on macOS arm64. The three Linux failures come from the QEMU cross sysroot, not the code generator:
 
@@ -79,6 +79,8 @@ Object files and relocations:
 - Mach-O: relocations chosen from the instruction (BRANCH26, PAGE21/PAGEOFF12 with `ARM64_RELOC_ADDEND`, GOT_LOAD, TLVP_LOAD). Non-local symbols go through the GOT. Extern symbols forwarded to a public or local definition use its index. Thread-local template variables get weak TLV descriptors. (`tls_template`)
 - Mach-O `__eh_frame`: a `zPLR` CIE with an `ARM64_RELOC_POINTER_TO_GOT` personality. FDE addresses and the LSDA are `pcrel|sdata4` `SUBTRACTOR`/`UNSIGNED` pairs. (`exceptions`)
 - Mach-O: the TLV init-symbol name buffer freed the stack buffer for long names.
+- Mach-O libraries (`dmd -lib`): the symbol table was padded to 4 bytes, so members' contents were 8-byte aligned or not depending on its size. The 64-bit Apple linker rejects misaligned members (`archive_members`).
+- Mach-O AArch64: a branch with no addend that was the last instruction of a section was cut off by the relocation writer. Interface thunks end an object's code, so ld64 found a relocation outside the section (`thunk_last_in_section`).
 - DWARF EH on ELF uses PC-relative personality, LSDA and TType encodings. Debug info uses ABS32/ABS64 relocations.
 
 Code generation:
@@ -109,6 +111,7 @@ Code generation:
 - The binary search of a `switch` (with `-O` and 4 or more cases) compared a case value that does not fit an immediate the wrong way round (`switch_binary_search`).
 - String literals with the same bytes but different character sizes shared a symbol: `""w` and `""d` got the 1-byte terminator of `""`. The same pooling is in the x86 back end (`string_literal_sizes`).
 - The prolog's CFI took effect at 1 and 4 bytes into the function instead of after `STP` and `MOV x29,sp`. The CIE's code alignment factor is 1 (`prolog_cfi`).
+- The driver: `-marm64` in `dmd.conf`'s DFLAGS made `dmd --version` report a change of architecture (`run.py` checks it).
 - Smaller items:
   - x86 helper misdispatch (`getlvalue`), `getregs` given a register number instead of a mask;
   - the x86 scheduler and NOP running on AArch64;

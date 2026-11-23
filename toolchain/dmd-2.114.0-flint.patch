@@ -4986,7 +4986,7 @@ index 581128a..0a296b3 100644
          if (config.flags3 & CFG3pic &&
              tyfunc(s.ty()))
 diff --git a/dmd/backend/machobj.d b/dmd/backend/machobj.d
-index 522235d..ef45ae8 100644
+index 522235d..df03a5d 100644
 --- a/dmd/backend/machobj.d
 +++ b/dmd/backend/machobj.d
 @@ -555,10 +555,13 @@ int mach_numbersyms()
@@ -5281,7 +5281,18 @@ index 522235d..ef45ae8 100644
      }
  
      OutBuffer* buf = SegData[seg].SDbuf;
-@@ -3454,7 +3397,7 @@ int mach_dwarf_reftoident(int seg, targ_size_t offset, Symbol* s, targ_size_t va
+@@ -3309,7 +3252,9 @@ int MachObj_reftoidentAArch64(int seg, targ_size_t offset, Symbol* s, targ_size_
+     }
+     else
+         buf.write64(val);
+-    if (save > offset + retsize)
++    // position() truncated the buffer, and a branch with no addend writes nothing back:
++    // restore the length, even when the instruction is the last in the section
++    if (buf.length() < save)
+         buf.setsize(save);
+ 
+     return retsize;
+@@ -3454,7 +3399,7 @@ int mach_dwarf_reftoident(int seg, targ_size_t offset, Symbol* s, targ_size_t va
  {
      //printf("dwarf_reftoident(seg=%d offset=x%x s=%s val=x%x\n", seg, cast(int)offset, s.Sident.ptr, cast(int)val);
      if (machobj.AArch64)
@@ -5290,7 +5301,7 @@ index 522235d..ef45ae8 100644
      else
          MachObj_reftoident(seg, offset, s, val + 4, I64 ? CF.off : CF.indirect);
      return 4;
-@@ -3496,24 +3439,24 @@ int dwarf_eh_frame_fixup(int dfseg, targ_size_t offset, Symbol* s, targ_size_t v
+@@ -3496,24 +3441,24 @@ int dwarf_eh_frame_fixup(int dfseg, targ_size_t offset, Symbol* s, targ_size_t v
      OutBuffer* buf = SegData[dfseg].SDbuf;
      assert(offset == buf.length());
      assert(fdesym.Sseg == dfseg);
@@ -5737,7 +5748,7 @@ index ca39388..78611a9 100644
              break;
          case Tcomplex64:
 diff --git a/dmd/glue/package.d b/dmd/glue/package.d
-index e252457..e293907 100644
+index e11dc02..41ffdc9 100644
 --- a/dmd/glue/package.d
 +++ b/dmd/glue/package.d
 @@ -244,7 +244,7 @@ Symbol* getBzeroSymbol()
@@ -5807,6 +5818,50 @@ index 3f23e39..7bfbc4a 100644
      {
          printf("InlineAsmAArch64Statement.semantic()\n");
          for (auto token = s.tokens; token; token = token.next)
+diff --git a/dmd/lib/mach.d b/dmd/lib/mach.d
+index 5552182..59a1555 100644
+--- a/dmd/lib/mach.d
++++ b/dmd/lib/mach.d
+@@ -359,9 +359,10 @@ private:
+             MachObjSymbol* os = objsymbols[i];
+             moffset += 8 + os.name.length + 1;
+         }
+-        moffset = (moffset + 3) & ~3;
+-        //if (moffset & 4)
+-        //    moffset += 4;
++        /* Pad the symbol table to 8 bytes: each member's header and name take a multiple of 8
++         * bytes, so its contents are then 8 byte aligned, as the 64-bit linker requires.
++         */
++        moffset = (moffset + 7) & ~7;
+         uint hoffset = moffset;
+         static if (LOG)
+         {
+@@ -439,10 +440,8 @@ private:
+             libbuf.writestring(os.name);
+             libbuf.writeByte(0);
+         }
+-        while (libbuf.length & 3)
++        while (libbuf.length & 7)
+             libbuf.writeByte(0);
+-        //if (libbuf.length & 4)
+-        //    libbuf.write(pad[0 .. 4]);
+         static if (LOG)
+         {
+             printf("\tlibbuf.moffset = x%x\n", libbuf.length);
+diff --git a/dmd/main.d b/dmd/main.d
+index aad33ac..48d9be7 100644
+--- a/dmd/main.d
++++ b/dmd/main.d
+@@ -1174,7 +1174,8 @@ bool parseCommandlineAndConfig(const(char)[][] argv, out Param params, ref Strin
+     if (char* p = getenv("DDOCFILE"))
+         global.params.ddoc.files.shift(p);
+ 
+-    if (target.isX86_64 != isX86_64 && !target.isAArch64)
++    // -marm64 in DFLAGS selects AArch64, which `dmd --version` returns before applying
++    if (target.isX86_64 != isX86_64 && !target.isAArch64 && arch != "arm64")
+         eSink.error(Loc.initial, "the architecture must not be changed in the %s section of %.*s",
+               envsection.ptr, cast(int)global.inifilename.length, global.inifilename.ptr);
+ 
 diff --git a/dmd/target.d b/dmd/target.d
 index e697db0..3fcd9a8 100644
 --- a/dmd/target.d
