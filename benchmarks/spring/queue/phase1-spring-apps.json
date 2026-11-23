@@ -1,0 +1,101 @@
+{
+  "schema": "flint.measure-queue/1",
+  "id": "phase1-spring-apps",
+  "created": "2026-11-23",
+  "status": "blocked",
+  "blocked_on": "the Flint ports of benchmarks/spring/apps.json (benchmarks/spring/flint/<app>/flint-spring.json)",
+  "requested_by": "ADR-030 section 8, Phase 1 exit",
+  "summary": "Phase 1 side-by-side evidence: suites, both build headlines, the Spring REST workload, the GC matrix, then the spring gate",
+  "why": "benchmarks/spring/README.md, 'Measuring'. Change status to pending when every port has landed.",
+  "builds": {},
+  "measure": {
+    "kind": "command",
+    "steps": [
+      {
+        "argv": [
+          "{python}",
+          "tools/spring_bench.py",
+          "accept",
+          "--impl",
+          "java",
+          "--json",
+          "{out}/acceptance-java.json"
+        ]
+      },
+      {
+        "argv": [
+          "{python}",
+          "tools/spring_bench.py",
+          "accept",
+          "--impl",
+          "go",
+          "--json",
+          "{out}/acceptance-go.json"
+        ]
+      },
+      {
+        "argv": [
+          "{python}",
+          "tools/spring_bench.py",
+          "accept",
+          "--impl",
+          "flint",
+          "--json",
+          "{out}/acceptance-flint.json"
+        ]
+      },
+      {
+        "argv": [
+          "{python}",
+          "tools/measure_builds.py",
+          "--spring",
+          "--native-context",
+          "--output",
+          "{out}/builds.json"
+        ]
+      },
+      {
+        "argv": [
+          "{python}",
+          "tools/load_bench.py",
+          "--manifest",
+          "policy/spring-http-benchmark.json",
+          "--output",
+          "{out}/http.json"
+        ]
+      },
+      {
+        "argv": [
+          "{python}",
+          "tools/spring_bench.py",
+          "gc-matrix",
+          "petclinic-rest",
+          "--output",
+          "{out}/gc-matrix-petclinic-rest.json"
+        ]
+      },
+      {
+        "argv": [
+          "{python}",
+          "tools/spring_bench.py",
+          "gc-matrix",
+          "gs-rest-service",
+          "--output",
+          "{out}/gc-matrix-gs-rest-service.json"
+        ]
+      },
+      {
+        "argv": [
+          "{python}",
+          "tools/gates.py",
+          "--gate",
+          "spring",
+          "--evidence",
+          "{out}"
+        ]
+      }
+    ],
+    "ports": []
+  },
+  "report_to": "docs/milestones/13.md"
+}

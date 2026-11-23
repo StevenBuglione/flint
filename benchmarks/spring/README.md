@@ -245,6 +245,48 @@ The gs-rest-service image builds in 53 s on venus, is 67 MB, and passes 18/18. g
 
 spring-petclinic-rest's image builds, but exits at start-up with `NoClassDefFoundError: Could not initialize class org.slf4j.MarkerFactory`. Its log4j-to-SLF4J bridge fails to initialise in the image. Fixing that would need upstream edits beyond the parent version. The harness therefore records it as a context error, and petclinic-rest's context is the JVM only.
 
+## The measurement queue
+
+Several sessions build on venus at once, so no timing taken at a random moment is evidence. Pending performance runs therefore wait in a queue, and run only in a quiet window. `tools/measure_queue.py` runs the queue; see its docstring.
+
+```bash
+python3 tools/measure_queue.py list
+python3 tools/measure_queue.py quiet
+python3 tools/measure_queue.py prepare <id>
+python3 tools/measure_queue.py run <id>
+python3 tools/measure_queue.py next
+```
+
+- **`quiet`** says whether a run may start now.
+- **`prepare`** builds what an entry measures. It may run at any time, because nothing is timed.
+- **`run`** checks the window, measures and writes the receipt.
+- **`next`** runs every pending entry while the window stays quiet.
+
+**Entries.** Each entry is one file, `benchmarks/spring/queue/<id>.json`, so sessions add entries without editing each other's.
+- **Builds.** `builds` names what to build: an app at a commit, built in a detached worktree under `.flint/measure/worktrees/` with that worktree's own native prefix. The shared `.native` is never written.
+- **Measurement.** `measure.kind` is one of:
+  - `startup`: exec to the first correct response, interleaved;
+  - `rest-pair`: `load_bench`'s schema-1 REST workload, with the base build in one slot and the candidate in the other. `load_bench` interleaves them trial by trial, then the regression ratios of `policy/budgets.json` are computed;
+  - `command`: steps run in this checkout or in a build's worktree.
+- **Status.** `pending` runs with `next`; `blocked` waits on `blocked_on`; `done` has a receipt that counts as evidence.
+
+**The quiet window.** Every measuring step checks it:
+- the 1-minute load average is below 1.5;
+- no `dmd`, `ldc2`, `ldmd2`, `cargo`, `cmake`, `rustc`, `cc1`, `cc1plus`, `ninja`, `dub`, `mvn`, `gradle` or `native-image` runs anywhere on the host, outside the run's own process tree;
+- every port is outside 8080–8099, and free. Entries use 18080 and up, and `rest-pair` writes a manifest copy with its ports;
+- servers are pinned with `taskset`, and load generators to their CPU sets, as the evidence rules require. The `startup` client runs on CPUs 4–7 and the server on 2–3. `load_bench` and `measure_builds` pin their own processes.
+
+The window is sampled before the measurement, every 10 s during it, and after it. All the samples go into the receipt: load averages, plus each build process with its working directory. A receipt counts as evidence only if every sample was quiet. `--force-busy` and `--smoke` produce receipts that never count, for harness checks only. Receipts and raw outputs stay in `.flint/measure/results/<id>/`; a run that counts appends its receipt to the entry file.
+
+**Queued now:**
+- `runtime-levers-rest`: bench-rest at `e16668e` against `966c4b7`, a REST no-regression check of FiberLocal, the 256 KiB guarded stacks and the offload pool. Both commits predate `--app-sizes`, so both are built with bench-rest's README command.
+- `relr-startup`: bench-rest at `13d5d62` against `3eef2dc`, built with `measure_builds --app-sizes`. The result goes into `docs/milestones/13-binary-size.md`.
+  - The queue's builds reproduce that document's sizes exactly: 6,670,024 and 5,904,144 bytes at O3.
+  - Their sha256 values differ from the requester's, and from build to build when the environment differs. The bytes are deterministic, but the binaries are not bit-identical.
+- `phase1-spring-apps`: the whole Phase 1 evidence run of the section above. It is blocked on the Flint ports.
+
+Both pending entries are built, and their smoke runs pass. They wait for a quiet window.
+
 ## Status
 
 **In place:**

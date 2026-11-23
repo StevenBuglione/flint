@@ -1,0 +1,36 @@
+{
+  "schema": "flint.measure-queue/1",
+  "id": "runtime-levers-rest",
+  "created": "2026-11-23",
+  "status": "pending",
+  "requested_by": "Event-driven fiber wake for streams and HTTP client (local_4058edb3)",
+  "summary": "REST no-regression check of the Phase 0 runtime levers (FiberLocal, 256 KiB guarded stacks, offload): bench-rest at e16668e vs 966c4b7",
+  "why": "f3aed26 raised fiber stacks from 64 KiB to 256 KiB with guard pages and added FiberLocal and the offload pool; ADR-030 section 4 claims RSS only counts touched pages. The first attempt failed on a port clash at 8081 and on a busy runner.",
+  "builds": {
+    "base": {
+      "app": "bench-rest",
+      "commit": "e16668e",
+      "method": "dub-release"
+    },
+    "candidate": {
+      "app": "bench-rest",
+      "commit": "966c4b7",
+      "method": "dub-release"
+    }
+  },
+  "measure": {
+    "kind": "rest-pair",
+    "manifest": "policy/http-benchmark.json",
+    "base": "base",
+    "candidate": "candidate",
+    "ports": [
+      18080,
+      18081
+    ],
+    "environment": {
+      "FLINT_CORES": "2"
+    },
+    "note": "Both commits predate measure_builds --app-sizes, so both are built with bench-rest's README command (dub build --build=release); base and candidate share the method."
+  },
+  "report_to": "the requester; docs/milestones/13.md when it exists"
+}
