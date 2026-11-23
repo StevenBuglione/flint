@@ -191,6 +191,10 @@
       "repo": "framework",
       "version": "monorepo"
     },
+    "flint:engine-servlet": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:engine-sql": {
       "repo": "framework",
       "version": "monorepo"
@@ -231,6 +235,10 @@
       "repo": "framework",
       "version": "monorepo"
     },
+    "flint:framework-test": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:hibernate-validator": {
       "repo": "framework",
       "version": "monorepo"
@@ -248,6 +256,10 @@
       "version": "monorepo"
     },
     "flint:jakarta-annotation": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
+    "flint:jakarta-servlet": {
       "repo": "framework",
       "version": "monorepo"
     },
@@ -309,6 +321,14 @@
     },
     "flint:validate": {
       "repo": "flint",
+      "version": "monorepo"
+    },
+    "flint:web": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
+    "flint:webmvc": {
+      "repo": "framework",
       "version": "monorepo"
     }
   }

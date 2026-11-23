@@ -514,6 +514,191 @@
     "ldc_incremental_seconds",
     "compiler_peak_rss_bytes"
    ]
+  },
+  "jakarta-servlet": {
+   "directory": "framework/jakarta-servlet",
+   "module": "flint.jakarta.servlet",
+   "repo": "framework",
+   "licence": "EPL-2.0",
+   "upstream": "jakarta-servlet@6.1.0",
+   "dependencies": [
+    "engine-aot",
+    "java"
+   ],
+   "bench": {
+    "fixture": "framework/jakarta-servlet/bench",
+    "baseline": "framework/jakarta-servlet/bench/baseline",
+    "edit_source": "framework/jakarta-servlet/source/flint/jakarta/servlet/http.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 98304,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 2150
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
+  "webmvc": {
+   "directory": "framework/webmvc",
+   "module": "flint.web.servlet",
+   "repo": "framework",
+   "licence": "Apache-2.0",
+   "upstream": "spring-framework@v7.1.0",
+   "dependencies": [
+    "context",
+    "core",
+    "engine-aot",
+    "jakarta-servlet",
+    "java",
+    "web"
+   ],
+   "bench": {
+    "fixture": "framework/webmvc/bench",
+    "baseline": "framework/webmvc/bench/baseline",
+    "edit_source": "framework/webmvc/source/flint/web/servlet/package.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 1359872,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 4100
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
+  "web": {
+   "directory": "framework/web",
+   "module": "flint.web",
+   "also": [
+    "flint.http"
+   ],
+   "repo": "framework",
+   "licence": "Apache-2.0",
+   "upstream": "spring-framework@v7.1.0",
+   "dependencies": [
+    "context",
+    "core",
+    "engine-aot",
+    "jackson-databind",
+    "jakarta-servlet",
+    "java"
+   ],
+   "bench": {
+    "fixture": "framework/web/bench",
+    "baseline": "framework/web/bench/baseline",
+    "edit_source": "framework/web/source/flint/http/package.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 126976,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 15650
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
+  "framework-test": {
+   "directory": "framework/framework-test",
+   "module": "flint.test.web",
+   "also": [
+    "flint.test.util",
+    "flint.mock"
+   ],
+   "repo": "framework",
+   "licence": "Apache-2.0",
+   "upstream": "spring-framework@v7.1.0",
+   "dependencies": [
+    "context",
+    "core",
+    "engine-aot",
+    "jackson-databind",
+    "jakarta-servlet",
+    "java",
+    "web",
+    "webmvc"
+   ],
+   "bench": {
+    "fixture": "framework/framework-test/bench",
+    "baseline": "framework/framework-test/bench/baseline",
+    "edit_source": "framework/framework-test/source/flint/test/web/servlet/package.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 1552384,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 7800
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
+  "engine-servlet": {
+   "directory": "framework/engine-servlet",
+   "module": "flint.engine.servlet",
+   "repo": "framework",
+   "licence": "Apache-2.0",
+   "upstream": "Flint servlet container over flint:engine-web (docs/spring/phase1/web-mvc.md, Real HTTP serving)",
+   "dependencies": [
+    "arena",
+    "conc",
+    "engine-aot",
+    "engine-web",
+    "jakarta-servlet",
+    "java"
+   ],
+   "bench": {
+    "fixture": "framework/engine-servlet/bench",
+    "baseline": "framework/engine-servlet/bench/baseline",
+    "edit_source": "framework/engine-servlet/source/flint/engine/servlet/package.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 282624,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 2000
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
   }
  }
 }

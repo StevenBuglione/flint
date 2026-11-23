@@ -66,7 +66,7 @@ When your assigned work is done, don't stop.
 
 | # | Item | Claimed by | Done |
 | --- | --- | --- | --- |
-| 1 | Retire `framework/p1-interim`, register `framework/web`, `webmvc`, `jakarta-servlet`, `framework-test` | web-http | |
+| 1 | Retire `framework/p1-interim`, register `framework/web`, `webmvc`, `jakarta-servlet`, `framework-test` | web-http | `404c77c` (p1-interim retired), registration in the commit that marks this |
 | 2 | `FiberRoute` in `engine-web`, the servlet adapter, and a start/stop/port API for Boot | web-http | |
 | 3 | Boot on `flint.context`; web-server auto-configuration on the servlet adapter; the gs-rest-service Flint port passing `spring_bench.py accept` | boot | |
 | 4 | `engine-jdbc`, `JdbcTemplate`/`JdbcClient`; the gs-relational-data-access Flint port passing its suite | data-access | |
