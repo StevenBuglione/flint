@@ -747,6 +747,27 @@
    "dependencies": [
     "conc",
     "java"
+   ],
+   "bench": {
+    "fixture": "security/security-crypto/bench",
+    "baseline": "security/security-crypto/bench/baseline",
+    "edit_source": "security/security-crypto/source/flint/security/crypto/password.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 622592,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 1200
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
    ]
   },
   "security-core": {
@@ -770,6 +791,27 @@
     "java",
     "jdbc",
     "security-crypto"
+   ],
+   "bench": {
+    "fixture": "security/security-core/bench",
+    "baseline": "security/security-core/bench/baseline",
+    "edit_source": "security/security-core/source/flint/security/core/package.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 704512,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 2600
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
    ]
   },
   "security-web": {
@@ -784,7 +826,28 @@
     "java",
     "security-core"
    ],
-   "test_dependencies": ["framework-test"]
+   "test_dependencies": ["framework-test"],
+   "bench": {
+    "fixture": "security/security-web/bench",
+    "baseline": "security/security-web/bench/baseline",
+    "edit_source": "security/security-web/source/flint/security/web/package.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 770048,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 1800
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
   },
   "security-config": {
    "directory": "security/security-config",
@@ -803,7 +866,28 @@
     "security-crypto",
     "security-web"
    ],
-   "test_dependencies": ["framework-test"]
+   "test_dependencies": ["framework-test"],
+   "bench": {
+    "fixture": "security/security-config/bench",
+    "baseline": "security/security-config/bench/baseline",
+    "edit_source": "security/security-config/source/flint/security/config/package.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 1425408,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 3300
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
   }
  }
 }

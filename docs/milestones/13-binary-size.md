@@ -145,6 +145,10 @@ Each Spring-layer module of `policy/framework.json` now has two things:
 | jdbc | 376,216 | 475,136 | 577 | 750 |
 | slf4j-api | 371,368 | 475,136 | 720 | 900 |
 | tx | 176,408 | 229,376 | 1,874 | 2,350 |
+| security-config | 1,139,736 | 1,425,408 | 2,633 | 3,300 |
+| security-core | 556,136 | 704,512 | 2,069 | 2,600 |
+| security-crypto | 495,280 | 622,592 | 959 | 1,200 |
+| security-web | 606,912 | 770,048 | 1,402 | 1,800 |
 
 **engine-jdbc** is measured at `3b88673842`. Its 5.7 MB is mostly `flint:engine-sql` and its native providers: SQLite, libpq and OpenSSL. Registering `FlintDriver` with `DriverManager` reaches both engine drivers, so an application that links the JDBC driver links both databases, whichever URL it uses. Making registration pay only for the driver a URL selects is a design question for the module's owner, and the budget will move with it.
 
@@ -156,4 +160,4 @@ How the budgets were set:
 
 **What the template count covers.** The instrumented compiler traces each `-c` invocation, and DUB compiles a library dependency with `-lib`. The count therefore covers the probe's compile, including every instantiation of the module's templates that the probe uses, but not the module library's own compile. Packages have always been counted this way; whether to trace library compiles too is for the measurement owners.
 
-beans, context, hibernate-validator and jakarta-validation joined `policy/framework.json` while the first ten probes were written; their rows come from a run at `821d702122`. Modules that join later (web, webmvc, jakarta-servlet, framework-test, aop) need a probe pair and a budget in the same commit. `framework_budgets.load` refuses a module without them, so the gate fails until they exist.
+beans, context, hibernate-validator and jakarta-validation joined `policy/framework.json` while the first ten probes were written; their rows come from a run at `821d702122`. The four Spring Security modules (`security/security-*`, repo `security`) joined at `da3da940`; their rows come from a run at `0e1acaac` and count templates as own-library-and-probe/2, the module's own `-lib` compile included, unlike the older rows above. As for the other modules, the linked bytes include what each module pulls in from its dependencies: the baselines print a constant and link none of their code. Modules that join later (web, webmvc, jakarta-servlet, framework-test, aop) need a probe pair and a budget in the same commit. `framework_budgets.load` refuses a module without them, so the gate fails until they exist.
