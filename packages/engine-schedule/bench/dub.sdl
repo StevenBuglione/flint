@@ -1,0 +1,8 @@
+name "probe-schedule"
+targetType "executable"
+sourcePaths "source" "harness"
+importPaths "source" "harness"
+targetPath "build"
+targetName "probe-schedule"
+dflags "-preview=dip1000"
+dependency "flint:engine-schedule" path="../../.."

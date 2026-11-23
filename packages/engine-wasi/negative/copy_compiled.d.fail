@@ -1,0 +1,10 @@
+module copy_compiled;
+
+import flint.engine.wasi : CompiledPlugin;
+
+@safe:
+
+void duplicate(ref CompiledPlugin source)
+{
+    CompiledPlugin destination = source;
+}
