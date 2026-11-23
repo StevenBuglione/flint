@@ -82,7 +82,7 @@ name = "flint:boot-web-server"
 kind = "core"
 source = "workspace"
 scope = "build"
-dependencies = ["flint:beans", "flint:boot-autoconfigure", "flint:boot-core", "flint:context", "flint:engine-aot", "flint:engine-servlet", "flint:jakarta-servlet", "flint:java"]
+dependencies = ["flint:beans", "flint:boot-autoconfigure", "flint:boot-core", "flint:context", "flint:core", "flint:engine-aot", "flint:engine-servlet", "flint:jakarta-servlet", "flint:java"]
 
 [[package]]
 name = "flint:boot-webmvc"

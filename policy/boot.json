@@ -152,6 +152,7 @@
         "boot-autoconfigure",
         "boot-actuate",
         "context",
+        "core",
         "jackson-annotations",
         "java",
         "engine-aot"
@@ -215,6 +216,7 @@
         "beans",
         "context",
         "core",
+        "java",
         "engine-aot"
       ],
       "repo": "boot"
