@@ -5,6 +5,7 @@
   "layout": [
     ["packages/engine-", "engine/"],
     ["framework/", "flint-"],
+    ["security/", "flint-"],
     ["boot/core", "core"],
     ["boot/module", "module"],
     ["boot/platform", "platform"],

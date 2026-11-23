@@ -783,7 +783,8 @@
     "jakarta-servlet",
     "java",
     "security-core"
-   ]
+   ],
+   "test_dependencies": ["framework-test"]
   },
   "security-config": {
    "directory": "framework/security-config",
@@ -801,7 +802,8 @@
     "security-core",
     "security-crypto",
     "security-web"
-   ]
+   ],
+   "test_dependencies": ["framework-test"]
   }
  }
 }

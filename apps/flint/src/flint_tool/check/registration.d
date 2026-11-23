@@ -42,7 +42,7 @@ RegistrationProblem[] registrationProblems(string root, scope const string[] top
     string[] found;
     foreach (top; tops)
     {
-        const policyFile = top == "framework" ? "policy/framework.json" : "policy/boot.json";
+        const policyFile = top == "boot" ? "policy/boot.json" : "policy/framework.json";
         foreach (path; packageDirectories(root, top))
         {
             found ~= path;
@@ -186,8 +186,16 @@ void checkRegistration(const ref imported!"flint_tool.home.policy".Home home,
     import std.path : buildPath;
     import flint_tool.diagnostics.report : Severity, at, diagnostic;
 
+    // framework/ and boot/, and each other repo's tree staged here under its own name (security/), as gates.py
+    // registration_trees.
+    string[] trees = ["framework", "boot"];
+    foreach (ref repo; home.repos)
+    {
+        if (repo.name != "flint" && repo.name != "framework" && repo.name != "boot")
+            trees ~= repo.name;
+    }
     string[] tops;
-    foreach (top; ["framework", "boot"])
+    foreach (top; trees)
     {
         const tree = buildPath(home.root, top);
         if (home.inHome(top) && exists(tree) && isDir(tree))

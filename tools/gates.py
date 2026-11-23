@@ -170,15 +170,23 @@ def framework_layers():
         if not WORKSPACE.file and not in_home(meta.get('repo','framework')):continue
         # With --workspace, a framework module is checked in its repo's checkout, in that repo's layout.
         base=WORKSPACE.locate(meta.get('repo','framework'),meta['directory']) if WORKSPACE.file else ROOT/meta['directory']
-        require(meta['directory']=='framework/'+name,name+': a framework module lives in framework/'+name)
+        # framework/<artifact>; an integrated repo's module may also live in its repo's own tree, security/<artifact>
+        # (ADR-030 section 2), which is where new ones go.
+        trees={'framework',meta.get('repo','framework')}
+        require(meta['directory'] in {tree+'/'+name for tree in trees},
+                name+': a module lives in '+' or '.join(sorted(tree+'/'+name for tree in trees)))
         require(not in_home(meta.get('repo','framework')) or ('subPackage "'+meta['directory']+'"') in root_sdl,name+': missing from the root subPackage list')
         sdl=(base/'dub.sdl').read_text(encoding='utf-8')
         require(re.search(r'^name "'+re.escape(name)+'"$',sdl,re.MULTILINE),name+': dub.sdl name differs')
         require(re.search(r'^license "'+re.escape(meta['licence'])+'"$',sdl,re.MULTILINE),name+': dub.sdl license differs from policy')
-        actual=set(re.findall(r'dependency\s+"flint:([\w-]+)"\s+version="\*"',sdl))
+        # Build dependencies at the top of the recipe; test_dependencies (framework-test) in its unittest configuration.
+        unittest_block=re.search(r'^configuration "unittest" \{(.*?)^\}',sdl,re.MULTILINE|re.DOTALL)
+        testing=set(re.findall(r'dependency\s+"flint:([\w-]+)"\s+version="\*"',unittest_block.group(1))) if unittest_block else set()
+        actual=set(re.findall(r'dependency\s+"flint:([\w-]+)"\s+version="\*"',sdl))-testing
         require(actual==set(meta['dependencies']),name+': SDL dependencies differ from policy')
-        require(len(re.findall(r'\bdependency\b',sdl))==len(actual),name+': noncanonical dependency recipe')
-        for dep in meta['dependencies']:
+        require(testing==set(meta.get('test_dependencies',[])),name+': SDL unittest dependencies differ from policy test_dependencies')
+        require(len(re.findall(r'\bdependency\b',sdl))==len(actual)+len(testing),name+': noncanonical dependency recipe')
+        for dep in meta['dependencies']+meta.get('test_dependencies',[]):
             require(dep in P or dep in modules,name+': unknown dependency '+dep)
         epl=meta['licence']=='EPL-2.0'
         require(epl==(base/'LICENSE').is_file(),name+': an EPL-2.0 module carries its own LICENSE, and only it')
@@ -230,6 +238,14 @@ WORKSPACE=Workspace()
 
 REGISTRATION_FROZEN='2026-11-23'
 
+def registration_trees():
+    """The top-level trees whose DUB packages must be registered: framework/ and boot/, and the tree of each other
+    repo staged here under its own name (security/, ADR-030 section 2), whose modules policy/framework.json lists."""
+    trees=[('framework','policy/framework.json'),('boot','policy/boot.json')]
+    repos=json.loads((ROOT/'policy/repos.json').read_text(encoding='utf-8'))['repos'] if (ROOT/'policy/repos.json').is_file() else {}
+    trees+=[(repo,'policy/framework.json') for repo in sorted(repos) if repo not in ('flint','framework','boot') and (ROOT/repo).is_dir()]
+    return trees
+
 def layer_registration():
     """FLINT-E0535: every DUB package under framework/ and boot/ is listed in policy/framework.json or policy/boot.json,
     so the gates check it and tools/extract_repo.py moves it. policy/unregistered-packages.json lists the packages
@@ -242,7 +258,7 @@ def layer_registration():
             policy=json.loads((ROOT/file).read_text(encoding='utf-8'))
             registered|={meta['directory'] for group in groups for meta in policy.get(group,{}).values()}
     found=[];tops=[]
-    for top,policy_file in (('framework','policy/framework.json'),('boot','policy/boot.json')):
+    for top,policy_file in registration_trees():
         # Only this checkout's own trees: after the split framework/ and boot/ live in their repos, which their own
         # CI checks; a workspace run over extracted checkouts scans nothing here.
         if not in_home(top) or not (ROOT/top).is_dir():continue

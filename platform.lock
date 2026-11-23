@@ -16,8 +16,7 @@
     },
     "security": {
       "github": "flint-projects/flint-security",
-      "source": "github",
-      "commit": "21d3bc4450c306d87d799df40198639b845d700e"
+      "source": "monorepo"
     },
     "data-jdbc": {
       "github": "flint-projects/flint-data-jdbc",
