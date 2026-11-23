@@ -191,6 +191,14 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - CPU per request 1.46 (1.33–1.58) [1.52]: 12.0 against 8.2 µs.
 
     Throughput rose about 5% and p99 fell. RSS and CPU per request are within noise of multicore-2. Every metric still misses. Evidence: `benchmarks/spring/evidence/gs-rest-multicore-3/`.
+  - **Update, 19:44–20:24Z (certified, `gs-rest-multicore-4` at `27e8d10b`).** This is the allocation-cut run, at 19 per request: web-http's `27e8d10b` takes /greeting from 31 to 19 GC allocations, and the build also has `6a48c768` (lookup path) and `852b8a8e` (Jackson writes). The collector is druntime's default with no gcopt, on the same workload as multicore-3. A claimed window with no foreign build in 217 samples, and the port passes 18/18 exact. Flint/Go median ratios (99% interval), with multicore-3's in brackets:
+    - throughput **0.885 (0.877–0.892)** [0.801]: 218k against 247k req/s;
+    - p50 **1.48 (1.44–1.52)** [1.83]: 0.090 against 0.061 ms;
+    - p99 **1.93 (1.82–2.05)** [2.27]: 0.522 against 0.271 ms;
+    - peak RSS 1.62 (1.60–1.64) [1.66]: 22.2 against 13.8 MB;
+    - CPU per request **1.17 (1.14–1.19)** [1.46]: 9.7 against 8.3 µs.
+
+    Cutting allocations by 39% moved throughput, latency and CPU by 10–20% each, while RSS is flat. Every metric still misses. Evidence: `benchmarks/spring/evidence/gs-rest-multicore-4/`.
 
 - 2026-11-23, proof-harness: **The Phase 0 runtime levers regress bench-rest's peak RSS by 6.2%.** This is certified: queue entry `runtime-levers-rest`, 14:14–14:54Z, load 0.78 at the start, no foreign build in any of 220 samples. bench-rest at `e16668e` (base) against `966c4b7` (FiberLocal, 256 KiB guarded fiber stacks, the offload pool), both built with bench-rest's README release command, on the production REST workload with 9 interleaved trials. Median ratios with 99% intervals against `policy/budgets.json`'s regression ceilings:
   - peak RSS 1.062 (1.045–1.090; 13.66 MB against 12.87 MB): over the 1.05 ceiling;

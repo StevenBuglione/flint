@@ -1,0 +1,31 @@
+     Warning 
+     Warning ## Warning for package flint-tool, configuration unittest ##
+     Warning 
+     Warning The following compiler flags have been specified in the package description
+     Warning file. They are handled by DUB and direct use in packages is discouraged.
+     Warning Alternatively, you can set the DFLAGS environment variable to pass custom flags
+     Warning to the compiler, or use one of the suggestions below:
+     Warning 
+     Warning debugInfo: Call DUB with --build=debug
+     Warning unittests: Call DUB with --build=unittest
+     Warning 
+    Starting Performing "plain" build using /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/27e8d10b469d/.tools/dmd2/linux/bin64/dmd for x86_64.
+    Building flint:arena ~master: building configuration [library]
+    Building flint:validate ~master: building configuration [library]
+    Building flint:cli ~master: building configuration [library]
+    Building flint:conc ~master: building configuration [library]
+    Building flint:serde ~master: building configuration [library]
+    Building flint:config ~master: building configuration [library]
+    Building flint:log ~master: building configuration [library]
+    Building flint:os ~master: building configuration [library]
+    Building flint:term ~master: building configuration [library]
+   Pre-build Running commands
+    Building flint-tool ~master: building configuration [dev]
+     Linking flint
+     Priming 10 platform module(s) into the cache
+    Building flint-tool 0.7.0 (release, ldc2)
+    Finished apps/flint/.flint/build/release/flint (non-canonical: the toolchain is not verified against its receipt)
+warning[FLINT-E0805] toolchain fork patches changed
+  cause: the installed fork was built from different patches than toolchain/ holds
+  fix: flint toolchain install
+{"compiler": "flint", "version": "0.7.0", "bin": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/27e8d10b469d/.flint/bin", "sha256": "278bb41a0c82fb8a4ad30a0ec3dba21a54900144edbe748640a28d2ef33d898c", "receipt": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/27e8d10b469d/.flint/bin/flint.receipt.json"}
