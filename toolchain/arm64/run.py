@@ -11,11 +11,57 @@ test links with. A test `betterc_*.d` is compiled with -betterC and linked witho
     python3 toolchain/arm64/run.py --dmd DMD --druntime-import DIR --druntime LIB
         [--os linux|osx] [--cc CC] [--run-prefix "qemu-aarch64 -L /usr/aarch64-linux-gnu"]
 """
-import argparse, os, shlex, shutil, subprocess, sys, tempfile
+import argparse, os, shlex, shutil, struct, subprocess, sys, tempfile
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 FLAGS = [[], ['-O'], ['-O', '-release', '-inline']]
+
+def archive_members(path):
+    """The members of a BSD ar archive (as libtool and dmd -lib write it): (name, bytes)."""
+    d = Path(path).read_bytes()
+    assert d[:8] == b'!<arch>\n'
+    off = 8
+    while off + 60 <= len(d):
+        name, size = d[off:off + 16].rstrip(), int(d[off + 48:off + 58])
+        data = d[off + 60:off + 60 + size]
+        if name.startswith(b'#1/'):     # the name follows the header
+            n = int(name[3:])
+            name, data = data[:n].rstrip(b'\0'), data[n:]
+        yield name.decode(), data
+        off += 60 + size + (size & 1)
+
+def bad_fde_addresses(obj):
+    """FDEs in a Mach-O object's __eh_frame whose PC Begin is not relative to its own address.
+
+    A 4 byte pc-relative field is a SUBTRACTOR/UNSIGNED pair: target - subtrahend + the field,
+    where the subtrahend is the local symbol at the start of the FDE, so the field must hold
+    subtrahend - address (ld64.lld checks this; with another value the FDE covers other code).
+    """
+    if obj[:4] != b'\xcf\xfa\xed\xfe':
+        return []
+    ncmds = struct.unpack_from('<I', obj, 16)[0]
+    off, sections, symtab = 32, [], None
+    for _ in range(ncmds):
+        cmd, size = struct.unpack_from('<II', obj, off)
+        if cmd == 0x19:                 # LC_SEGMENT_64
+            for i in range(struct.unpack_from('<I', obj, off + 64)[0]):
+                h = off + 72 + 80 * i
+                sections.append((obj[h:h + 16].rstrip(b'\0'), *struct.unpack_from('<QQIIIII', obj, h + 32)))
+        elif cmd == 0x2:                # LC_SYMTAB
+            symtab = struct.unpack_from('<IIII', obj, off + 8)
+        off += size
+    bad = []
+    for name, addr, _, fileoff, _, reloff, nreloc, _ in sections:
+        if name != b'__eh_frame':
+            continue
+        for i in range(nreloc):
+            address, info = struct.unpack_from('<iI', obj, reloff + 8 * i)
+            if info >> 28 == 1 and info >> 27 & 1:     # ARM64_RELOC_SUBTRACTOR, extern
+                value = struct.unpack_from('<Q', obj, symtab[0] + 16 * (info & 0xFFFFFF) + 8)[0]
+                if struct.unpack_from('<i', obj, fileoff + address)[0] != value - (addr + address):
+                    bad.append(address)
+    return bad
 
 def main():
     ap = argparse.ArgumentParser()
@@ -96,12 +142,18 @@ def main():
             header = subprocess.run(['otool', '-hv', str(weak)], capture_output=True, text=True).stdout if r.returncode == 0 else ''
             if r.returncode != 0 or 'WEAK_DEFINES' in header:
                 failed.append('an executable exports weak definitions:\n' + (r.stdout + r.stderr)[-1000:] + header)
+            # The druntime the tests link with: every FDE's PC Begin is relative to the FDE (machobj
+            # patched the field through a pointer into the object buffer the relocations then grew)
+            bad = [f'{member} at ' + ', '.join(map(hex, offsets[:3]))
+                   for member, data in archive_members(a.druntime) if (offsets := bad_fde_addresses(data))]
+            if bad:
+                failed.append('__eh_frame PC Begin not relative to the FDE in ' + '; '.join(bad[:5]))
         if r.returncode == 0:
             r = subprocess.run(shlex.split(a.run_prefix) + [str(Path(tmp) / 'wl')], capture_output=True, text=True,
                                timeout=60)
         if r.returncode != 0:
             failed.append('dmd links with ' + wl + ':\n' + (r.stdout + r.stderr)[-2000:])
-    total = len(tests) * len(FLAGS) + 2 + (a.os == 'osx')
+    total = len(tests) * len(FLAGS) + 2 + 2 * (a.os == 'osx')
     for f in failed:
         print('FAIL', f)
     print(f'{total - len(failed)}/{total} passed')

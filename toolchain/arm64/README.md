@@ -111,6 +111,7 @@ Object files and relocations:
 - Mach-O AArch64: template instances (COMDAT definitions) are weak definitions that the linker may hide, so executables do not export them. With them exported, dyld coalesced each one against every loaded image at start-up: an empty D program retired 92 million instructions instead of 16 million, about 15 ms (`run.py` checks it).
 - Mach-O libraries (`dmd -lib`): the symbol table was padded to 4 bytes, so members' contents were 8-byte aligned or not depending on its size. The 64-bit Apple linker rejects misaligned members (`archive_members`).
 - Mach-O AArch64: a branch with no addend that was the last instruction of a section was cut off by the relocation writer. Interface thunks end an object's code, so ld64 found a relocation outside the section (`thunk_last_in_section`).
+- Mach-O AArch64: the relocation writer patched an `__eh_frame` PC-relative field through a pointer into the object buffer, then wrote the field's relocations to the same buffer. When that grew the buffer, the patch went to freed memory and the FDE kept its unpatched value, so it covered the wrong addresses. Apple's ld accepted it; `ld64.lld` rejects it ("invalid FDE relocation"). druntime had 13 such FDEs (`run.py` checks every FDE in the druntime it links with).
 - DWARF EH on ELF uses PC-relative personality, LSDA and TType encodings. Debug info uses ABS32/ABS64 relocations.
 
 Code generation:
@@ -140,6 +141,7 @@ Code generation:
 - Nested functions addressed their parent's stack parameters 16 bytes too high. The x86 frame bias (saved RBP and return address) was added to parameter offsets (`nested_stack_param`).
 - The binary search of a `switch` (with `-O` and 4 or more cases) compared a case value that does not fit an immediate the wrong way round (`switch_binary_search`).
 - String literals with the same bytes but different character sizes shared a symbol: `""w` and `""d` got the 1-byte terminator of `""`. The same pooling is in the x86 back end (`string_literal_sizes`).
+- `-inline` can make a slice common subexpression that is reloaded only to set the flags (`s is null || s.length == 0`). The flags bit is one of the odd (MSW) register bits, so it was taken as the register for the high half, and register allocation failed with an assert (SIGTRAP in a release DMD; dcd's dsymbol hit it) (`cse_pair_flags`).
 - The prolog's CFI took effect at 1 and 4 bytes into the function instead of after `STP` and `MOV x29,sp`. The CIE's code alignment factor is 1 (`prolog_cfi`).
 - The driver: `-marm64` in `dmd.conf`'s DFLAGS made `dmd --version` report a change of architecture (`run.py` checks it).
 - A result returned in memory had its address passed as a hidden first argument in x0, so C functions returning a struct over 16 bytes got their first argument in its place (`c_struct_return`).

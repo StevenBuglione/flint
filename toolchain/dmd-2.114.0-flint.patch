@@ -5182,7 +5182,7 @@ index 581128a..0a296b3 100644
          if (config.flags3 & CFG3pic &&
              tyfunc(s.ty()))
 diff --git a/dmd/backend/machobj.d b/dmd/backend/machobj.d
-index 522235d..c37fdf4 100644
+index 522235d..f63284f 100644
 --- a/dmd/backend/machobj.d
 +++ b/dmd/backend/machobj.d
 @@ -555,10 +555,13 @@ int mach_numbersyms()
@@ -5199,7 +5199,7 @@ index 522235d..c37fdf4 100644
              machobj.externSymbols.remove(i);    // remove s
              //printf("extern %p %s forwarded to %p %s\n", s, s.Sident.ptr, sfwd, sfwd.Sident.ptr);
              continue;
-@@ -963,154 +966,82 @@ void MachObj_term(const(char)[] objfilename)
+@@ -963,154 +966,84 @@ void MachObj_term(const(char)[] objfilename)
                          }
                          if (r.subtractor)  // emit SUBTRACTOR/UNSIGNED pair
                          {
@@ -5215,6 +5215,10 @@ index 522235d..c37fdf4 100644
 +                             * s - fdesym + value, where fdesym is the local symbol at the
 +                             * start of the FDE, so value = fdesym - pc.
 +                             */
++                            // Patch before writing the relocations: they go to fobjbuf too,
++                            // which may move as it grows and leave pvalue dangling
++                            *pvalue += cast(int)(r.funcsym.Soffset - r.offset);
++
                              rel.r_type = ARM64_RELOC_SUBTRACTOR;
                              rel.r_address = cast(int)r.offset;
                              rel.r_pcrel = 0;
@@ -5245,10 +5249,9 @@ index 522235d..c37fdf4 100644
                              machobj.fobjbuf.write(&rel, rel.sizeof);
                              foffset += rel.sizeof;
                              ++nreloc;
- 
+-
 -                            // patch with fdesym.Soffset - offset
 -                            *pvalue += r.funcsym.Soffset - r.offset;
-+                            *pvalue += cast(int)(r.funcsym.Soffset - r.offset);
                              continue;
                          }
                          else if (pseg.isCode())
@@ -5410,7 +5413,7 @@ index 522235d..c37fdf4 100644
                              continue;
                          }
                          else
-@@ -1140,18 +1071,21 @@ static if (0)
+@@ -1140,18 +1073,21 @@ static if (0)
                                  rel.r_address = cast(int)r.offset;
                                  rel.r_symbolnum = s.Sxtrnnum;
                                  assert(s.Sxtrnnum < nsyms);
@@ -5434,7 +5437,7 @@ index 522235d..c37fdf4 100644
                                  machobj.fobjbuf.write(&rel, rel.sizeof);
                                  foffset += rel.sizeof;
                                  nreloc++;
-@@ -1691,7 +1625,16 @@ assert(rel.r_symbolnum);
+@@ -1691,7 +1627,16 @@ assert(rel.r_symbolnum);
              sym.n_type |= N_PEXT; // private extern
          sym.n_desc = 0;
          if (s.Sclass == SC.comdat)
@@ -5451,7 +5454,7 @@ index 522235d..c37fdf4 100644
          sym.n_sect = remap(s.Sseg);
          if (I64)
          {
-@@ -2429,15 +2372,15 @@ int MachObj_thread_vars(ref Symbol s, out targ_size_t offset, bool bss)
+@@ -2429,15 +2374,15 @@ int MachObj_thread_vars(ref Symbol s, out targ_size_t offset, bool bss)
          char[DEST_LEN] dest = void;
          size_t len = strlen(s.Sident.ptr);
          char* destr = dest.ptr;
@@ -5471,7 +5474,7 @@ index 522235d..c37fdf4 100644
      }
  
      /* write _ident$tlv$init to __thread_bss / __thread_data section
-@@ -3002,6 +2945,8 @@ void MachObj_addrel(int seg, targ_size_t offset, Symbol* targsym,
+@@ -3002,6 +2947,8 @@ void MachObj_addrel(int seg, targ_size_t offset, Symbol* targsym,
      rel.subtractor = false;
      rel.funcsym = funcsym_p;
      rel.val = cast(short)val;
@@ -5480,7 +5483,7 @@ index 522235d..c37fdf4 100644
  
      seg_data* pseg = SegData[seg];
      if (targsym && targsym.Sxtrnnum == 0)
-@@ -3286,6 +3231,13 @@ int MachObj_reftoidentAArch64(int seg, targ_size_t offset, Symbol* s, targ_size_
+@@ -3286,6 +3233,13 @@ int MachObj_reftoidentAArch64(int seg, targ_size_t offset, Symbol* s, targ_size_
          {
              MachObj_addrel(seg, offset, s, 0, REL.address, v);
          }
@@ -5494,7 +5497,7 @@ index 522235d..c37fdf4 100644
      }
  
      OutBuffer* buf = SegData[seg].SDbuf;
-@@ -3309,7 +3261,9 @@ int MachObj_reftoidentAArch64(int seg, targ_size_t offset, Symbol* s, targ_size_
+@@ -3309,7 +3263,9 @@ int MachObj_reftoidentAArch64(int seg, targ_size_t offset, Symbol* s, targ_size_
      }
      else
          buf.write64(val);
@@ -5505,7 +5508,7 @@ index 522235d..c37fdf4 100644
          buf.setsize(save);
  
      return retsize;
-@@ -3454,7 +3408,7 @@ int mach_dwarf_reftoident(int seg, targ_size_t offset, Symbol* s, targ_size_t va
+@@ -3454,7 +3410,7 @@ int mach_dwarf_reftoident(int seg, targ_size_t offset, Symbol* s, targ_size_t va
  {
      //printf("dwarf_reftoident(seg=%d offset=x%x s=%s val=x%x\n", seg, cast(int)offset, s.Sident.ptr, cast(int)val);
      if (machobj.AArch64)
@@ -5514,7 +5517,7 @@ index 522235d..c37fdf4 100644
      else
          MachObj_reftoident(seg, offset, s, val + 4, I64 ? CF.off : CF.indirect);
      return 4;
-@@ -3496,24 +3450,24 @@ int dwarf_eh_frame_fixup(int dfseg, targ_size_t offset, Symbol* s, targ_size_t v
+@@ -3496,24 +3452,24 @@ int dwarf_eh_frame_fixup(int dfseg, targ_size_t offset, Symbol* s, targ_size_t v
      OutBuffer* buf = SegData[dfseg].SDbuf;
      assert(offset == buf.length());
      assert(fdesym.Sseg == dfseg);
@@ -5544,7 +5547,7 @@ index 522235d..c37fdf4 100644
  
  
 diff --git a/dmd/backend/x86/cgcod.d b/dmd/backend/x86/cgcod.d
-index e9088e7..7f06517 100644
+index e9088e7..5277e67 100644
 --- a/dmd/backend/x86/cgcod.d
 +++ b/dmd/backend/x86/cgcod.d
 @@ -1252,12 +1252,21 @@ void stackoffsets(ref CGstate cg, ref symtab_t symtab, bool estimate)
@@ -5590,7 +5593,39 @@ index e9088e7..7f06517 100644
  /*********************************
   * Allocate some registers.
   * Input:
-@@ -2855,7 +2877,8 @@ void codelem(ref CGstate cg, ref CodeBuilder cdb,elem* e,ref regm_t pretregs,uin
+@@ -2448,11 +2470,13 @@ private void comsub(ref CodeBuilder cdb,elem* e, ref regm_t pretregs)
+         regm_t xMSW = mMSW;
+         regm_t xLSW = mLSW | mBP;
+         regm_t xALLREGS = ALLREGS;
++        regm_t pairregs = pretregs;     // registers the pair may be loaded into
+         if (AArch64)
+         {
+             xMSW = INSTR.MSW;
+             xLSW = INSTR.LSW;
+             xALLREGS = INSTR.ALLREGS | INSTR.FLOATREGS;
++            pairregs &= xALLREGS;       // mPSW is an odd bit, as an MSW register would be
+         }
+ 
+         reg_t msreg,lsreg;
+@@ -2473,7 +2497,7 @@ private void comsub(ref CodeBuilder cdb,elem* e, ref regm_t pretregs)
+         }
+ 
+         /* Look for right vals in any regs      */
+-        regm_t regm = pretregs & xMSW;
++        regm_t regm = pairregs & xMSW;
+         if (emask & regm)
+             msreg = findreg(emask & regm);
+         else if (emask & xMSW)
+@@ -2486,7 +2510,7 @@ private void comsub(ref CodeBuilder cdb,elem* e, ref regm_t pretregs)
+             loadcse(cdb,e,msreg,xMSW);
+         }
+ 
+-        regm = pretregs & xLSW;
++        regm = pairregs & xLSW;
+         if (emask & regm)
+             lsreg = findreg(emask & regm);
+         else if (emask & xLSW)
+@@ -2855,7 +2879,8 @@ void codelem(ref CGstate cg, ref CodeBuilder cdb,elem* e,ref regm_t pretregs,uin
                  {
                      if ((pretregs & (cg.allregs | INSTR.FLOATREGS)) == 0)
                      {
@@ -5600,7 +5635,7 @@ index e9088e7..7f06517 100644
                      }
                  }
                  else if ((pretregs & (mSTACK | mES | ALLREGS | mBP | XMMREGS)) == 0)
-@@ -3003,7 +3026,8 @@ void scodelem(ref CGstate cg, ref CodeBuilder cdb, elem* e,ref regm_t pretregs,r
+@@ -3003,7 +3028,8 @@ void scodelem(ref CGstate cg, ref CodeBuilder cdb, elem* e,ref regm_t pretregs,r
  
          if (isregvar(e, regm, reg) &&           // if e is a register variable
              (regm & pretregs) == regm &&        // in one of the right regs
