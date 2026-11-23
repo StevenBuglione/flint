@@ -236,7 +236,7 @@ private void checkBootLayers(const ref Home home, ref Report report)
 
     foreach (ref starter; home.starters)
     {
-        const base = buildPath(home.repoRoot(starter.repo), starter.directory);
+        const base = home.packagePath(starter.repo, starter.directory);
         foreach (file; findFiles(base, "**/*.d"))
         {
             if (file.startsWith("example/"))
@@ -248,7 +248,7 @@ private void checkBootLayers(const ref Home home, ref Report report)
     }
     foreach (ref library; home.bootLibraries)
     {
-        const base = buildPath(home.repoRoot(library.repo), library.directory, "source");
+        const base = buildPath(home.packagePath(library.repo, library.directory), "source");
         foreach (file; findFiles(base, "**/*.d"))
         {
             SourceScan scan;

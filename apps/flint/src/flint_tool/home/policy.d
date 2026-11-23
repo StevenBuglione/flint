@@ -166,6 +166,8 @@ struct Home
     RepoPolicy[] repos;
     /// ditto
     PendingEdge[] pendingEdges;
+    /// Where a monorepo directory sits in an extracted repo (policy/repos.json `layout`): [from, to] rules.
+    string[2][] layout;
     /// Every repo's platform version (platform.lock).
     PlatformRepo[] platformRepos;
     /// Checkouts by repo from `FLINT_WORKSPACE` (a flint.workspace/1 file), overriding platform.lock.
@@ -179,8 +181,40 @@ struct Home
         import std.path : buildPath;
 
         if (auto app = name in apps)
-            return buildPath(repoRoot((*app)[0]), (*app)[1]);
+            return packagePath((*app)[0], (*app)[1]);
         return buildPath(root, "apps", name);
+    }
+
+    /// The monorepo directory `directory` (`packages/engine-web`, `boot/boot`) in `repo`'s checkout: the same
+    /// path when the checkout has it (this monorepo), else its place in the extracted repo's layout.
+    string packagePath(string repo, string directory) const
+    {
+        import std.file : exists;
+        import std.path : buildPath;
+
+        const base = repoRoot(repo);
+        const same = buildPath(base, directory);
+        return exists(same) ? same : buildPath(base, repoLayout(repo, directory));
+    }
+
+    /// `directory` in the extracted `repo`'s layout: `engine/web`, `core/flint-boot`. Each rule rewrites the
+    /// first two path components; one ending in `/` or `-` is a prefix, any other must match whole.
+    string repoLayout(string repo, string directory) const
+    {
+        import std.algorithm.searching : countUntil, endsWith, startsWith;
+
+        if (repo == "flint")
+            return directory;
+        const first = directory.countUntil('/');
+        const second = first < 0 ? -1 : directory[first + 1 .. $].countUntil('/');
+        const end = second < 0 ? directory.length : first + 1 + second;
+        const head = directory[0 .. end];
+        foreach (ref rule; layout)
+        {
+            if (head == rule[0] || ((rule[0].endsWith("/") || rule[0].endsWith("-")) && head.startsWith(rule[0])))
+                return rule[1] ~ head[rule[0].length .. $] ~ directory[end .. $];
+        }
+        return directory;
     }
 
     /// The checkout that holds `repo`'s packages: this home before the split (or with no platform.lock), the
@@ -569,6 +603,11 @@ private struct RepoRecordJson
     string[] may_depend_on;
 }
 
+private struct RepoLayoutJson
+{
+    string[][] layout;
+}
+
 private struct PendingEdgeJson
 {
     string from;
@@ -593,6 +632,15 @@ private bool loadRepos(ref Home home, ref Report report)
         if (!decoded.ok)
             return invalid(report, "policy/repos.json", entry.name ~ ": " ~ decoded.error.message);
         home.repos ~= RepoPolicy(entry.name, decoded.value.may_depend_on);
+    }
+    auto layout = deserialize!RepoLayoutJson(text, lenient());
+    if (!layout.ok)
+        return invalid(report, "policy/repos.json", "layout: " ~ layout.error.message);
+    foreach (rule; layout.value.layout)
+    {
+        if (rule.length != 2)
+            return invalid(report, "policy/repos.json", "layout: each rule is [from, to]");
+        home.layout ~= [rule[0], rule[1]];
     }
     const pending = member(top, "pending_edges");
     if (pending !is null)

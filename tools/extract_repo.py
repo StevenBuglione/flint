@@ -17,7 +17,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'tools'))
-from workspace import package_repos, repo_policy  # noqa: E402
+import re  # noqa: E402
+from workspace import package_repos, repo_layout, repo_policy  # noqa: E402
 
 
 def moving_paths(repo, root=ROOT):
@@ -40,6 +41,65 @@ def api_mapping_dir(repo):
     return 'api/' + repo
 
 
+def renames(repo, checkout, paths, root=ROOT):
+    """(monorepo path, path in the extracted repo) for every moving directory whose place changes. boot/ and
+    starters/ move child by child (core/, module/, platform/ and starter/)."""
+    pairs = []
+    for path in paths:
+        if path == api_mapping_dir(repo):
+            pairs.append((path, 'api'))
+            continue
+        children = sorted(p.name for p in (checkout / path).iterdir() if p.is_dir()) if path in ('boot', 'starters') \
+            else None
+        for directory in ([f'{path}/{c}' for c in children] if children is not None else [path]):
+            target = repo_layout(directory, repo, root)
+            if target != directory:
+                pairs.append((directory, target))
+    return pairs
+
+
+def earlier_names(checkout, paths):
+    """{earlier directory: later directory} for every moving directory that git saw renamed within its top-level
+    tree (packages/web -> packages/engine-web), so filter-repo keeps the history from before the rename too."""
+    log = subprocess.run(['git', 'log', '--format=', '--name-status', '-M', '--diff-filter=R', 'HEAD'], cwd=checkout,
+                         capture_output=True, text=True, check=True).stdout
+    found = {}
+    for line in log.splitlines():
+        fields = line.split('\t')
+        if len(fields) != 3:
+            continue
+        old, new = fields[1].split('/'), fields[2].split('/')
+        if len(old) < 3 or len(new) < 3 or old[0] != new[0] or old[:2] == new[:2]:
+            continue
+        if any(fields[2].startswith(path + '/') for path in paths):
+            found.setdefault('/'.join(old[:2]), '/'.join(new[:2]))
+    return dict(sorted(found.items()))
+
+
+def rewrite_references(checkout, pairs):
+    """Point the extracted tree's own references (recipes, scripts, docs) at the new places; returns the files
+    changed."""
+    patterns = [(re.compile(r'(?<![\w.-])' + re.escape(old) + r'(?![\w-])'), new) for old, new in pairs]
+    changed = []
+    tracked = subprocess.run(['git', 'ls-files', '-z'], cwd=checkout, capture_output=True, text=True,
+                             check=True).stdout.split('\0')
+    for name in filter(None, tracked):
+        path = checkout / name
+        if path.is_symlink() or not path.is_file():
+            continue
+        try:
+            text = path.read_text(encoding='utf-8')
+        except UnicodeDecodeError:
+            continue
+        new = text
+        for pattern, replacement in patterns:
+            new = pattern.sub(replacement, new)
+        if new != text:
+            path.write_text(new, encoding='utf-8')
+            changed.append(name)
+    return changed
+
+
 def run(command, cwd=None):
     subprocess.run(command, cwd=cwd, check=True)
 
@@ -48,6 +108,7 @@ def root_files(repo, checkout, root=ROOT):
     meta = repo_policy(root)['repos'][repo]
     subpackages = []
     for name, (owner, directory) in sorted(package_repos(root).items()):
+        directory = repo_layout(directory, repo, root)
         if owner == repo and (checkout / directory / 'dub.sdl').is_file():
             subpackages.append('subPackage ' + json.dumps(directory))
     (checkout / 'dub.sdl').write_text('\n'.join([
@@ -89,15 +150,21 @@ def main():
     run(['git', 'checkout', '--quiet', '-B', 'main', arguments.commit], checkout)
     source_commit = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=checkout, capture_output=True, text=True,
                                    check=True).stdout.strip()
-    renames = ['--path-rename', api_mapping_dir(arguments.repo) + '/:api/'] if api_mapping_dir(arguments.repo) in paths else []
-    run(['git', 'filter-repo', '--force', '--refs', 'main', *sum((['--path', p] for p in paths), []), *renames], checkout)
+    moves = renames(arguments.repo, checkout, paths)
+    # Earlier names come along with their history, renamed to where their later name goes.
+    earlier = [(old, dict(moves).get(new, new)) for old, new in earlier_names(checkout, paths).items()]
+    run(['git', 'filter-repo', '--force', '--refs', 'main',
+         *sum((['--path', p] for p in paths + [old for old, _ in earlier]), []),
+         *sum((['--path-rename', f'{old}/:{new}/'] for old, new in moves + earlier), [])], checkout)
+    rewritten = rewrite_references(checkout, moves)
     root_files(arguments.repo, checkout)
     run(['git', 'add', '-A'], checkout)
     run(['git', 'commit', '--quiet', '-m', f'Extract the {arguments.repo} repo from flint-projects/flint at '
-         f'{source_commit[:12]}\n\nKept with history: {", ".join(paths)}. Root files: dub.sdl (the flint '
-         f'namespace\'s subpackages of this repo), LICENSE, NOTICE, README.md and .gitignore.'], checkout)
+         f'{source_commit[:12]}\n\nKept with history: {", ".join(paths)}, in the layout of policy/repos.json '
+         f'({len(moves)} directories moved, {len(rewritten)} files\' references updated). Root files: dub.sdl '
+         f'(the flint namespace\'s subpackages of this repo), LICENSE, NOTICE, README.md and .gitignore.'], checkout)
     print(json.dumps({'repo': arguments.repo, 'checkout': str(checkout), 'source_commit': source_commit,
-                      'paths': paths}))
+                      'paths': paths, 'moves': dict(moves), 'earlier': dict(earlier), 'rewritten': rewritten}))
     return 0
 
 

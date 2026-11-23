@@ -103,10 +103,10 @@ def boot_layers():
     policy=json.loads(path.read_text(encoding='utf-8'))
     libraries=policy['libraries']
     def home(meta):
-        # With --workspace, a Boot library or starter is checked in its repo's checkout.
-        return WORKSPACE.checkout(meta.get('repo','boot')) if WORKSPACE.file else ROOT
+        # With --workspace, a Boot library or starter is checked in its repo's checkout, in that repo's layout.
+        return WORKSPACE.locate(meta.get('repo','boot'),meta['directory']) if WORKSPACE.file else ROOT/meta['directory']
     for name,meta in policy['starters'].items():
-        base=home(meta)/meta['directory']
+        base=home(meta)
         sources=sorted(str(f.relative_to(base)) for f in base.rglob('*.d') if f.relative_to(base).parts[0]!='example') if base.is_dir() else []
         require(not sources,name+': a starter has no D source: '+(meta['directory']+'/'+sources[0] if sources else ''))
     def boot_owner(module):
@@ -114,7 +114,7 @@ def boot_layers():
             if module==meta['module'] or module.startswith(meta['module']+'.'):return name
         return owner(module)
     for name,meta in libraries.items():
-        base=home(meta)/meta['directory']/'source'
+        base=home(meta)/'source'
         for f in sorted(base.rglob('*.d')) if base.is_dir() else []:
             for module in imported_modules(tokens(f.read_text(encoding='utf-8'))):
                 dep=boot_owner(module)
@@ -134,7 +134,8 @@ def framework_layers():
             if module==meta['module'] or module.startswith(meta['module']+'.'):return name
         return None
     for name,meta in modules.items():
-        base=ROOT/meta['directory']
+        # With --workspace, a framework module is checked in its repo's checkout, in that repo's layout.
+        base=WORKSPACE.locate(meta.get('repo','framework'),meta['directory']) if WORKSPACE.file else ROOT/meta['directory']
         require(meta['directory']=='framework/'+name,name+': a framework module lives in framework/'+name)
         require(('subPackage "'+meta['directory']+'"') in root_sdl,name+': missing from the root subPackage list')
         sdl=(base/'dub.sdl').read_text(encoding='utf-8')

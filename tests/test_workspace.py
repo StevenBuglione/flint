@@ -174,3 +174,50 @@ class ExtractionTests(unittest.TestCase):
             self.assertTrue(any(line.endswith('packages/engine-web"') for line in lines))
             self.assertTrue(any(line.endswith('starters/web"') for line in lines))
 
+    def test_an_extracted_repo_mirrors_springs_layout_and_its_checkout_is_found_there(self):
+        import extract_repo
+
+        layout = workspace.repo_layout
+        self.assertEqual(layout('packages/engine-web', 'framework'), 'engine/web')
+        self.assertEqual(layout('framework/jakarta-annotation', 'framework'), 'flint-jakarta-annotation')
+        self.assertEqual(layout('boot/core/flint-boot', 'boot'), 'core/flint-boot')
+        self.assertEqual(layout('boot/boot', 'boot'), 'legacy/flint-boot')
+        self.assertEqual(layout('boot/dependencies', 'boot'), 'platform/flint-boot-dependencies')
+        self.assertEqual(layout('boot/actuator', 'boot'), 'module/flint-boot-actuator')
+        self.assertEqual(layout('starters/starter', 'boot'), 'starter/flint-boot-starter')
+        self.assertEqual(layout('starters/web', 'boot'), 'starter/flint-boot-starter-web')
+        self.assertEqual(layout('apps/flint-mcp', 'ai'), 'apps/flint-mcp')
+        self.assertEqual(layout('packages/arena', 'flint'), 'packages/arena')
+        with tempfile.TemporaryDirectory() as temporary:
+            checkout = Path(temporary) / 'flint-framework'
+            (checkout / 'engine/web').mkdir(parents=True)
+            (checkout / 'engine/web/dub.sdl').write_text('name "engine-web"\n')
+            (checkout / 'engine/web/README.md').write_text('See packages/engine-web/source and '
+                                                           'packages/engine-webx.\n')
+            subprocess.run(['git', 'init', '-q', str(checkout)], check=True)
+            subprocess.run(['git', '-C', str(checkout), 'add', '-A'], check=True)
+            file = Path(temporary) / 'workspace.json'
+            file.write_text(json.dumps({'schema': 'flint.workspace/1',
+                                        'checkouts': {'framework': {'path': 'flint-framework'}}}))
+            self.assertEqual(workspace.Workspace(file).package_dir('engine-web'), checkout / 'engine/web')
+            pairs = [('packages/engine-web', 'engine/web')]
+            self.assertEqual(extract_repo.rewrite_references(checkout, pairs), ['engine/web/README.md'])
+            self.assertEqual((checkout / 'engine/web/README.md').read_text(),
+                             'See engine/web/source and packages/engine-webx.\n')
+
+    def test_extraction_keeps_the_history_of_a_directorys_earlier_name(self):
+        import extract_repo
+
+        with tempfile.TemporaryDirectory() as temporary:
+            checkout = Path(temporary)
+            git = ['git', '-C', str(checkout), '-c', 'user.name=t', '-c', 'user.email=t@t']
+            subprocess.run(['git', 'init', '-q', str(checkout)], check=True)
+            (checkout / 'packages/web/source').mkdir(parents=True)
+            (checkout / 'packages/web/source/router.d').write_text('module flint.web.router;\n' * 20)
+            subprocess.run([*git, 'add', '-A'], check=True)
+            subprocess.run([*git, 'commit', '-qm', 'web'], check=True)
+            subprocess.run([*git, 'mv', 'packages/web', 'packages/engine-web'], check=True)
+            subprocess.run([*git, 'commit', '-qm', 'rename'], check=True)
+            self.assertEqual(extract_repo.earlier_names(checkout, ['packages/engine-web']),
+                             {'packages/web': 'packages/engine-web'})
+            self.assertEqual(extract_repo.earlier_names(checkout, ['packages/engine-mq']), {})

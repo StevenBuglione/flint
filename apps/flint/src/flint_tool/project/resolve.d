@@ -303,7 +303,7 @@ private ResolvedPackage corePackage(const ref Home home, string name, bool works
     item.source = workspace ? "workspace" : "flint-home";
     item.repoRoot = home.repoRoot(meta.repo);
     item.platform = home.platformVersion(meta.repo);
-    item.directory = buildPath(item.repoRoot, "packages", name);
+    item.directory = home.packagePath(meta.repo, buildPath("packages", name));
     item.moduleRoot = meta.module_;
     foreach (dependency; meta.dependencies)
         item.dependencies ~= "flint:" ~ dependency;
@@ -326,7 +326,7 @@ private ResolvedPackage starterPackage(const ref Home home,
     // Boot libraries and starters resolve from the boot platform module, never by version selection.
     item.repoRoot = home.repoRoot(meta.repo);
     item.platform = home.platformVersion(meta.repo);
-    item.directory = buildPath(item.repoRoot, meta.directory);
+    item.directory = home.packagePath(meta.repo, meta.directory);
     item.moduleRoot = meta.module_;
     foreach (dependency; meta.dependencies)
         item.dependencies ~= "flint:" ~ dependency;

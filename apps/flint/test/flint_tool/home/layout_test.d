@@ -1,0 +1,51 @@
+module flint_tool.home.layout_test;
+
+import flint_tool.fixtures : fixtureHome;
+import flint.test : expect;
+
+@safe:
+
+private enum string[2][] rules = [
+    ["packages/engine-", "engine/"], ["framework/", "flint-"], ["boot/core", "core"],
+    ["boot/boot", "legacy/flint-boot"], ["boot/", "module/flint-boot-"],
+    ["starters/starter", "starter/flint-boot-starter"], ["starters/", "starter/flint-boot-starter-"]
+];
+
+@("an extracted repo places engines under engine/, modules as flint-<module> and Boot in spring-boot's layout")
+unittest
+{
+    auto home = fixtureHome();
+    home.layout = rules.dup;
+    expect(home.repoLayout("framework", "packages/engine-web")).toEqual("engine/web");
+    expect(home.repoLayout("framework", "packages/engine-web/source")).toEqual("engine/web/source");
+    expect(home.repoLayout("framework", "framework/core")).toEqual("flint-core");
+    expect(home.repoLayout("boot", "boot/core/flint-boot")).toEqual("core/flint-boot");
+    expect(home.repoLayout("boot", "boot/boot")).toEqual("legacy/flint-boot");
+    expect(home.repoLayout("boot", "boot/autoconfigure-web")).toEqual("module/flint-boot-autoconfigure-web");
+    expect(home.repoLayout("boot", "starters/starter")).toEqual("starter/flint-boot-starter");
+    expect(home.repoLayout("boot", "starters/web")).toEqual("starter/flint-boot-starter-web");
+    expect(home.repoLayout("ai", "apps/flint-mcp")).toEqual("apps/flint-mcp");
+    expect(home.repoLayout("flint", "packages/arena")).toEqual("packages/arena");
+}
+
+@("a package resolves to the monorepo path when the checkout has it, else to its extracted place")
+unittest
+{
+    import std.file : mkdirRecurse, rmdirRecurse, tempDir;
+    import std.path : buildPath;
+    import std.process : thisProcessID;
+    import std.conv : to;
+
+    const root = buildPath(tempDir, "flint-layout-" ~ thisProcessID.to!string);
+    scope (exit)
+        rmdirRecurse(root);
+    auto home = fixtureHome();
+    home.layout = rules.dup;
+    home.workspaceCheckouts["framework"] = buildPath(root, "framework");
+    home.workspaceCheckouts["boot"] = buildPath(root, "boot");
+    mkdirRecurse(buildPath(root, "framework", "engine", "web"));
+    mkdirRecurse(buildPath(root, "boot", "boot", "boot"));
+    expect(home.packagePath("boot", "boot/actuator")).toEqual(buildPath(root, "boot", "module", "flint-boot-actuator"));
+    expect(home.packagePath("framework", "packages/engine-web")).toEqual(buildPath(root, "framework", "engine", "web"));
+    expect(home.packagePath("boot", "boot/boot")).toEqual(buildPath(root, "boot", "boot", "boot"));
+}
