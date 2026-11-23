@@ -152,14 +152,14 @@
    }
   },
   "petclinic-rest": {
-   "measured_at": "data-access 2B step 1 (tx synchronizations, numbered SQL cache, single-placeholder text) on 7bdfa237",
+   "measured_at": "data-access beanDescriptorOf memo on 0017b3f3",
    "requests": {
     "root redirects to the Swagger UI": {
      "allocations": 30,
      "bytes": 6420,
      "measured": {
       "allocations": 24,
-      "bytes": 5168
+      "bytes": 5136
      }
     },
     "actuator links": {
@@ -188,18 +188,18 @@
     },
     "actuator readiness group": {
      "allocations": 112,
-     "bytes": 16580,
+     "bytes": 16560,
      "measured": {
       "allocations": 89,
-      "bytes": 13280
+      "bytes": 13248
      }
     },
     "actuator endpoint that is not exposed": {
      "allocations": 218,
-     "bytes": 25560,
+     "bytes": 25540,
      "measured": {
       "allocations": 174,
-      "bytes": 20464
+      "bytes": 20432
      }
     },
     "actuator health with an explicit Accept": {
@@ -211,51 +211,51 @@
      }
     },
     "list owners": {
-     "allocations": 2259,
-     "bytes": 227020,
+     "allocations": 1930,
+     "bytes": 187060,
      "measured": {
-      "allocations": 1807,
-      "bytes": 181616
+      "allocations": 1544,
+      "bytes": 149648
      }
     },
     "owners by last name": {
-     "allocations": 575,
-     "bytes": 52380,
+     "allocations": 467,
+     "bytes": 40300,
      "measured": {
-      "allocations": 460,
-      "bytes": 41904
+      "allocations": 373,
+      "bytes": 32240
      }
     },
     "owners by last name prefix": {
-     "allocations": 553,
-     "bytes": 50960,
+     "allocations": 444,
+     "bytes": 38840,
      "measured": {
-      "allocations": 442,
-      "bytes": 40768
+      "allocations": 355,
+      "bytes": 31072
      }
     },
     "owners by an unknown last name": {
-     "allocations": 189,
-     "bytes": 20240,
+     "allocations": 135,
+     "bytes": 15080,
      "measured": {
-      "allocations": 151,
-      "bytes": 16192
+      "allocations": 108,
+      "bytes": 12064
      }
     },
     "owner with pets and visits": {
-     "allocations": 532,
-     "bytes": 51040,
+     "allocations": 450,
+     "bytes": 42440,
      "measured": {
-      "allocations": 425,
-      "bytes": 40832
+      "allocations": 360,
+      "bytes": 33952
      }
     },
     "unknown owner": {
-     "allocations": 239,
-     "bytes": 27900,
+     "allocations": 185,
+     "bytes": 22740,
      "measured": {
-      "allocations": 191,
-      "bytes": 22320
+      "allocations": 148,
+      "bytes": 18192
      }
     },
     "owner id that is not a number": {
@@ -267,35 +267,35 @@
      }
     },
     "owner pet": {
-     "allocations": 469,
-     "bytes": 46660,
+     "allocations": 388,
+     "bytes": 38020,
      "measured": {
-      "allocations": 375,
-      "bytes": 37328
+      "allocations": 310,
+      "bytes": 30416
      }
     },
     "pet of another owner": {
-     "allocations": 400,
-     "bytes": 41800,
+     "allocations": 319,
+     "bytes": 33200,
      "measured": {
-      "allocations": 320,
-      "bytes": 33440
+      "allocations": 255,
+      "bytes": 26560
      }
     },
     "list pets": {
-     "allocations": 675,
-     "bytes": 71100,
+     "allocations": 594,
+     "bytes": 62500,
      "measured": {
-      "allocations": 540,
-      "bytes": 56880
+      "allocations": 475,
+      "bytes": 50000
      }
     },
     "pet": {
-     "allocations": 527,
-     "bytes": 50220,
+     "allocations": 445,
+     "bytes": 41620,
      "measured": {
-      "allocations": 421,
-      "bytes": 40176
+      "allocations": 356,
+      "bytes": 33296
      }
     },
     "unknown pet": {
@@ -307,19 +307,19 @@
      }
     },
     "list visits": {
-     "allocations": 1213,
-     "bytes": 105220,
+     "allocations": 888,
+     "bytes": 70660,
      "measured": {
-      "allocations": 970,
-      "bytes": 84176
+      "allocations": 710,
+      "bytes": 56528
      }
     },
     "visit": {
-     "allocations": 465,
-     "bytes": 44980,
+     "allocations": 384,
+     "bytes": 36340,
      "measured": {
-      "allocations": 372,
-      "bytes": 35984
+      "allocations": 307,
+      "bytes": 29072
      }
     },
     "unknown visit": {
@@ -331,115 +331,115 @@
      }
     },
     "list pet types": {
-     "allocations": 183,
-     "bytes": 20760,
+     "allocations": 155,
+     "bytes": 17240,
      "measured": {
-      "allocations": 146,
-      "bytes": 16608
+      "allocations": 124,
+      "bytes": 13792
      }
     },
     "pet type": {
-     "allocations": 229,
-     "bytes": 26880,
+     "allocations": 202,
+     "bytes": 23440,
      "measured": {
-      "allocations": 183,
-      "bytes": 21504
+      "allocations": 161,
+      "bytes": 18752
      }
     },
     "unknown pet type": {
-     "allocations": 212,
-     "bytes": 26200,
+     "allocations": 184,
+     "bytes": 22720,
      "measured": {
-      "allocations": 169,
-      "bytes": 20960
+      "allocations": 147,
+      "bytes": 18176
      }
     },
     "list specialties": {
-     "allocations": 198,
-     "bytes": 21740,
+     "allocations": 170,
+     "bytes": 18260,
      "measured": {
-      "allocations": 158,
-      "bytes": 17392
+      "allocations": 136,
+      "bytes": 14608
      }
     },
     "specialty": {
-     "allocations": 238,
-     "bytes": 27160,
+     "allocations": 210,
+     "bytes": 23640,
      "measured": {
-      "allocations": 190,
-      "bytes": 21728
+      "allocations": 168,
+      "bytes": 18912
      }
     },
     "unknown specialty": {
-     "allocations": 212,
-     "bytes": 26200,
+     "allocations": 184,
+     "bytes": 22720,
      "measured": {
-      "allocations": 169,
-      "bytes": 20960
+      "allocations": 147,
+      "bytes": 18176
      }
     },
     "list vets": {
-     "allocations": 482,
-     "bytes": 45100,
+     "allocations": 414,
+     "bytes": 37940,
      "measured": {
-      "allocations": 385,
-      "bytes": 36080
+      "allocations": 331,
+      "bytes": 30352
      }
     },
     "vet with specialties": {
-     "allocations": 393,
-     "bytes": 39120,
+     "allocations": 325,
+     "bytes": 31960,
      "measured": {
-      "allocations": 314,
-      "bytes": 31296
+      "allocations": 260,
+      "bytes": 25568
      }
     },
     "unknown vet": {
-     "allocations": 224,
-     "bytes": 26380,
+     "allocations": 184,
+     "bytes": 22700,
      "measured": {
-      "allocations": 179,
-      "bytes": 21104
+      "allocations": 147,
+      "bytes": 18160
      }
     },
     "v2 owners default page": {
-     "allocations": 2222,
-     "bytes": 209360,
+     "allocations": 1893,
+     "bytes": 169360,
      "measured": {
-      "allocations": 1777,
-      "bytes": 167488
+      "allocations": 1514,
+      "bytes": 135488
      }
     },
     "v2 owners page and size": {
-     "allocations": 894,
-     "bytes": 83460,
+     "allocations": 758,
+     "bytes": 67860,
      "measured": {
-      "allocations": 715,
-      "bytes": 66768
+      "allocations": 606,
+      "bytes": 54288
      }
     },
     "v2 owners past the end": {
-     "allocations": 272,
-     "bytes": 25520,
+     "allocations": 218,
+     "bytes": 20360,
      "measured": {
-      "allocations": 217,
-      "bytes": 20416
+      "allocations": 174,
+      "bytes": 16288
      }
     },
     "v2 owners by last name": {
-     "allocations": 540,
-     "bytes": 46940,
+     "allocations": 459,
+     "bytes": 38300,
      "measured": {
-      "allocations": 432,
-      "bytes": 37552
+      "allocations": 367,
+      "bytes": 30640
      }
     },
     "v2 pets page": {
-     "allocations": 652,
-     "bytes": 63460,
+     "allocations": 570,
+     "bytes": 54820,
      "measured": {
-      "allocations": 521,
-      "bytes": 50768
+      "allocations": 456,
+      "bytes": 43856
      }
     },
     "v2 size below the minimum": {
@@ -451,35 +451,35 @@
      }
     },
     "create owner": {
-     "allocations": 1245,
-     "bytes": 121380,
+     "allocations": 1192,
+     "bytes": 117780,
      "measured": {
-      "allocations": 996,
-      "bytes": 98320
+      "allocations": 953,
+      "bytes": 94224
      }
     },
     "created owner reads back": {
-     "allocations": 372,
-     "bytes": 39120,
+     "allocations": 290,
+     "bytes": 30480,
      "measured": {
-      "allocations": 297,
-      "bytes": 31296
+      "allocations": 232,
+      "bytes": 24384
      }
     },
     "create owner with UTF-8 names": {
-     "allocations": 704,
-     "bytes": 65180,
+     "allocations": 650,
+     "bytes": 60020,
      "measured": {
-      "allocations": 563,
-      "bytes": 52144
+      "allocations": 520,
+      "bytes": 48016
      }
     },
     "create owner: telephone with letters": {
      "allocations": 567,
-     "bytes": 53980,
+     "bytes": 53940,
      "measured": {
       "allocations": 453,
-      "bytes": 43184
+      "bytes": 43152
      }
     },
     "create owner: blank city": {
@@ -487,7 +487,7 @@
      "bytes": 49800,
      "measured": {
       "allocations": 424,
-      "bytes": 39840
+      "bytes": 39872
      }
     },
     "create owner: missing first name": {
@@ -503,7 +503,7 @@
      "bytes": 52120,
      "measured": {
       "allocations": 432,
-      "bytes": 41728
+      "bytes": 41696
      }
     },
     "create owner: malformed JSON": {
@@ -511,7 +511,7 @@
      "bytes": 25460,
      "measured": {
       "allocations": 191,
-      "bytes": 20368
+      "bytes": 20400
      }
     },
     "create owner: wrong content type": {
@@ -523,59 +523,59 @@
      }
     },
     "update owner": {
-     "allocations": 945,
-     "bytes": 87540,
+     "allocations": 810,
+     "bytes": 73740,
      "measured": {
-      "allocations": 756,
-      "bytes": 70032
+      "allocations": 648,
+      "bytes": 58992
      }
     },
     "updated owner reads back": {
-     "allocations": 372,
-     "bytes": 39120,
+     "allocations": 290,
+     "bytes": 30440,
      "measured": {
-      "allocations": 297,
-      "bytes": 31296
+      "allocations": 232,
+      "bytes": 24352
      }
     },
     "update unknown owner": {
-     "allocations": 635,
-     "bytes": 58640,
+     "allocations": 582,
+     "bytes": 53520,
      "measured": {
-      "allocations": 508,
-      "bytes": 46912
+      "allocations": 465,
+      "bytes": 42816
      }
     },
     "update owner: last name with four parts": {
      "allocations": 584,
-     "bytes": 61740,
+     "bytes": 61700,
      "measured": {
       "allocations": 467,
-      "bytes": 49392
+      "bytes": 49360
      }
     },
     "add pet to owner": {
-     "allocations": 1269,
-     "bytes": 115240,
+     "allocations": 1160,
+     "bytes": 103120,
      "measured": {
-      "allocations": 1015,
-      "bytes": 92192
+      "allocations": 928,
+      "bytes": 82496
      }
     },
     "added pet reads back through the owner": {
-     "allocations": 418,
-     "bytes": 42520,
+     "allocations": 337,
+     "bytes": 33880,
      "measured": {
-      "allocations": 334,
-      "bytes": 34016
+      "allocations": 269,
+      "bytes": 27104
      }
     },
     "add pet to unknown owner": {
-     "allocations": 505,
-     "bytes": 43240,
+     "allocations": 452,
+     "bytes": 38120,
      "measured": {
-      "allocations": 404,
-      "bytes": 34592
+      "allocations": 361,
+      "bytes": 30496
      }
     },
     "add pet: birth date in the future": {
@@ -591,7 +591,7 @@
      "bytes": 48100,
      "measured": {
       "allocations": 380,
-      "bytes": 38480
+      "bytes": 38512
      }
     },
     "add pet: blank name": {
@@ -599,31 +599,31 @@
      "bytes": 46220,
      "measured": {
       "allocations": 404,
-      "bytes": 36976
+      "bytes": 37008
      }
     },
     "add pet: unknown pet type": {
-     "allocations": 904,
-     "bytes": 77020,
+     "allocations": 795,
+     "bytes": 64940,
      "measured": {
-      "allocations": 723,
-      "bytes": 61616
+      "allocations": 636,
+      "bytes": 51952
      }
     },
     "update owner pet": {
-     "allocations": 1193,
-     "bytes": 102220,
+     "allocations": 1003,
+     "bytes": 81460,
      "measured": {
-      "allocations": 954,
-      "bytes": 81776
+      "allocations": 802,
+      "bytes": 65168
      }
     },
     "update pet of unknown owner": {
-     "allocations": 522,
-     "bytes": 43880,
+     "allocations": 468,
+     "bytes": 38720,
      "measured": {
-      "allocations": 417,
-      "bytes": 35104
+      "allocations": 374,
+      "bytes": 30976
      }
     },
     "add visit through the owner": {
@@ -631,31 +631,31 @@
      "bytes": 70600,
      "measured": {
       "allocations": 585,
-      "bytes": 56480
+      "bytes": 56512
      }
     },
     "owner with the new pet and visit": {
-     "allocations": 435,
-     "bytes": 42860,
+     "allocations": 354,
+     "bytes": 34220,
      "measured": {
-      "allocations": 348,
-      "bytes": 34288
+      "allocations": 283,
+      "bytes": 27376
      }
     },
     "update pet": {
-     "allocations": 929,
-     "bytes": 75200,
+     "allocations": 820,
+     "bytes": 63080,
      "measured": {
-      "allocations": 743,
-      "bytes": 60160
+      "allocations": 656,
+      "bytes": 50464
      }
     },
     "updated pet reads back": {
-     "allocations": 472,
-     "bytes": 45460,
+     "allocations": 390,
+     "bytes": 36820,
      "measured": {
-      "allocations": 377,
-      "bytes": 36368
+      "allocations": 312,
+      "bytes": 29456
      }
     },
     "update unknown pet": {
@@ -663,7 +663,7 @@
      "bytes": 38320,
      "measured": {
       "allocations": 390,
-      "bytes": 30656
+      "bytes": 30688
      }
     },
     "create visit": {
@@ -691,19 +691,19 @@
      }
     },
     "update visit": {
-     "allocations": 682,
-     "bytes": 61560,
+     "allocations": 600,
+     "bytes": 52920,
      "measured": {
-      "allocations": 545,
-      "bytes": 49248
+      "allocations": 480,
+      "bytes": 42336
      }
     },
     "updated visit reads back": {
-     "allocations": 443,
-     "bytes": 43500,
+     "allocations": 362,
+     "bytes": 34860,
      "measured": {
-      "allocations": 354,
-      "bytes": 34800
+      "allocations": 289,
+      "bytes": 27888
      }
     },
     "update unknown visit": {
@@ -715,11 +715,11 @@
      }
     },
     "delete visit": {
-     "allocations": 484,
-     "bytes": 45320,
+     "allocations": 403,
+     "bytes": 36680,
      "measured": {
-      "allocations": 387,
-      "bytes": 36256
+      "allocations": 322,
+      "bytes": 29344
      }
     },
     "delete unknown visit": {
@@ -727,15 +727,15 @@
      "bytes": 19480,
      "measured": {
       "allocations": 139,
-      "bytes": 15584
+      "bytes": 15600
      }
     },
     "create pet type": {
-     "allocations": 562,
-     "bytes": 48320,
+     "allocations": 534,
+     "bytes": 44840,
      "measured": {
-      "allocations": 449,
-      "bytes": 38656
+      "allocations": 427,
+      "bytes": 35872
      }
     },
     "create pet type: name starting with a digit": {
@@ -751,63 +751,63 @@
      "bytes": 41620,
      "measured": {
       "allocations": 337,
-      "bytes": 33312
+      "bytes": 33344
      }
     },
     "update pet type": {
-     "allocations": 442,
-     "bytes": 40380,
+     "allocations": 387,
+     "bytes": 33420,
      "measured": {
-      "allocations": 353,
-      "bytes": 32304
+      "allocations": 309,
+      "bytes": 26736
      }
     },
     "updated pet type reads back": {
-     "allocations": 217,
-     "bytes": 26020,
+     "allocations": 189,
+     "bytes": 22540,
      "measured": {
-      "allocations": 173,
-      "bytes": 20816
+      "allocations": 151,
+      "bytes": 18032
      }
     },
     "update unknown pet type": {
-     "allocations": 338,
-     "bytes": 32000,
+     "allocations": 310,
+     "bytes": 28520,
      "measured": {
-      "allocations": 270,
-      "bytes": 25600
+      "allocations": 248,
+      "bytes": 22816
      }
     },
     "delete pet type": {
-     "allocations": 368,
+     "allocations": 293,
      "bytes": 35340,
      "measured": {
-      "allocations": 294,
-      "bytes": 39872
+      "allocations": 234,
+      "bytes": 34048
      }
     },
     "delete pet type in use deletes its pets": {
-     "allocations": 480,
-     "bytes": 44060,
+     "allocations": 373,
+     "bytes": 34040,
      "measured": {
-      "allocations": 384,
-      "bytes": 35248
+      "allocations": 298,
+      "bytes": 27232
      }
     },
     "delete unknown pet type": {
-     "allocations": 203,
-     "bytes": 23100,
+     "allocations": 175,
+     "bytes": 19580,
      "measured": {
-      "allocations": 162,
-      "bytes": 18480
+      "allocations": 140,
+      "bytes": 15664
      }
     },
     "create specialty": {
-     "allocations": 592,
-     "bytes": 60420,
+     "allocations": 564,
+     "bytes": 56940,
      "measured": {
-      "allocations": 473,
-      "bytes": 48336
+      "allocations": 451,
+      "bytes": 45552
      }
     },
     "create specialty: name with digits": {
@@ -815,39 +815,39 @@
      "bytes": 38860,
      "measured": {
       "allocations": 332,
-      "bytes": 31168
+      "bytes": 31136
      }
     },
     "update specialty": {
-     "allocations": 444,
-     "bytes": 41260,
+     "allocations": 389,
+     "bytes": 34300,
      "measured": {
-      "allocations": 355,
-      "bytes": 33008
+      "allocations": 311,
+      "bytes": 27440
      }
     },
     "updated specialty reads back": {
-     "allocations": 217,
-     "bytes": 26020,
+     "allocations": 189,
+     "bytes": 22540,
      "measured": {
-      "allocations": 173,
-      "bytes": 20816
+      "allocations": 151,
+      "bytes": 18032
      }
     },
     "update unknown specialty": {
-     "allocations": 340,
-     "bytes": 32860,
+     "allocations": 313,
+     "bytes": 29380,
      "measured": {
-      "allocations": 272,
-      "bytes": 26288
+      "allocations": 250,
+      "bytes": 23504
      }
     },
     "create vet with a specialty": {
-     "allocations": 1128,
-     "bytes": 83160,
+     "allocations": 1060,
+     "bytes": 76000,
      "measured": {
-      "allocations": 902,
-      "bytes": 66528
+      "allocations": 848,
+      "bytes": 60800
      }
     },
     "create vet: last name too long": {
@@ -859,67 +859,67 @@
      }
     },
     "update vet": {
-     "allocations": 1039,
-     "bytes": 85760,
+     "allocations": 904,
+     "bytes": 71440,
      "measured": {
-      "allocations": 831,
-      "bytes": 68608
+      "allocations": 723,
+      "bytes": 57152
      }
     },
     "updated vet reads back": {
-     "allocations": 357,
-     "bytes": 37500,
+     "allocations": 289,
+     "bytes": 30340,
      "measured": {
-      "allocations": 285,
-      "bytes": 30000
+      "allocations": 231,
+      "bytes": 24272
      }
     },
     "update unknown vet": {
-     "allocations": 437,
-     "bytes": 35940,
+     "allocations": 397,
+     "bytes": 32260,
      "measured": {
-      "allocations": 349,
-      "bytes": 28752
+      "allocations": 317,
+      "bytes": 25808
      }
     },
     "delete vet": {
-     "allocations": 418,
-     "bytes": 40640,
+     "allocations": 350,
+     "bytes": 33480,
      "measured": {
-      "allocations": 334,
-      "bytes": 32512
+      "allocations": 280,
+      "bytes": 26784
      }
     },
     "delete unknown vet": {
-     "allocations": 215,
-     "bytes": 23300,
+     "allocations": 175,
+     "bytes": 19620,
      "measured": {
-      "allocations": 172,
-      "bytes": 18640
+      "allocations": 140,
+      "bytes": 15696
      }
     },
     "delete specialty": {
-     "allocations": 312,
-     "bytes": 30040,
+     "allocations": 284,
+     "bytes": 26560,
      "measured": {
-      "allocations": 249,
-      "bytes": 24032
+      "allocations": 227,
+      "bytes": 21248
      }
     },
     "delete unknown specialty": {
-     "allocations": 203,
-     "bytes": 23140,
+     "allocations": 175,
+     "bytes": 19660,
      "measured": {
-      "allocations": 162,
-      "bytes": 18512
+      "allocations": 140,
+      "bytes": 15728
      }
     },
     "create user": {
-     "allocations": 1013,
-     "bytes": 88160,
+     "allocations": 963,
+     "bytes": 84560,
      "measured": {
-      "allocations": 810,
-      "bytes": 70528
+      "allocations": 770,
+      "bytes": 67648
      }
     },
     "create user: role without the ROLE_ prefix": {
@@ -927,7 +927,7 @@
      "bytes": 45700,
      "measured": {
       "allocations": 404,
-      "bytes": 36560
+      "bytes": 36592
      }
     },
     "create user: missing roles": {
@@ -939,43 +939,43 @@
      }
     },
     "delete pet": {
-     "allocations": 539,
-     "bytes": 49340,
+     "allocations": 458,
+     "bytes": 40700,
      "measured": {
-      "allocations": 431,
-      "bytes": 39472
+      "allocations": 366,
+      "bytes": 32560
      }
     },
     "delete unknown pet": {
      "allocations": 167,
-     "bytes": 18900,
+     "bytes": 18860,
      "measured": {
       "allocations": 133,
-      "bytes": 15120
+      "bytes": 15088
      }
     },
     "delete owner": {
-     "allocations": 420,
-     "bytes": 40280,
+     "allocations": 339,
+     "bytes": 31640,
      "measured": {
-      "allocations": 336,
-      "bytes": 32224
+      "allocations": 271,
+      "bytes": 25312
      }
     },
     "delete unknown owner": {
-     "allocations": 229,
-     "bytes": 24780,
+     "allocations": 175,
+     "bytes": 19620,
      "measured": {
-      "allocations": 183,
-      "bytes": 19824
+      "allocations": 140,
+      "bytes": 15696
      }
     },
     "owners after the changes": {
-     "allocations": 2087,
-     "bytes": 200600,
+     "allocations": 1730,
+     "bytes": 157160,
      "measured": {
-      "allocations": 1669,
-      "bytes": 160480
+      "allocations": 1384,
+      "bytes": 125728
      }
     },
     "unknown API path": {
@@ -983,7 +983,7 @@
      "bytes": 25600,
      "measured": {
       "allocations": 174,
-      "bytes": 20512
+      "bytes": 20480
      }
     },
     "wrong method": {
@@ -999,15 +999,15 @@
      "bytes": 5840,
      "measured": {
       "allocations": 12,
-      "bytes": 4720
+      "bytes": 4688
      }
     },
     "CORS simple request": {
-     "allocations": 239,
-     "bytes": 28180,
+     "allocations": 212,
+     "bytes": 24740,
      "measured": {
-      "allocations": 191,
-      "bytes": 22544
+      "allocations": 169,
+      "bytes": 19792
      }
     },
     "CORS preflight": {
