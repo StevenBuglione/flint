@@ -230,8 +230,8 @@ private Shadow[] work(size_t owner)
     return ring;
 }
 
-@("Flint collector stress: threads, thread caches, finalizers and large blocks under collections; shadow check")
-unittest
+/// The stress run: worker threads under collections from the main thread, then the shadow check after they exit.
+private void stress(void delegate() alongside = null)
 {
     Shadow[][threads] kept;
     Thread[threads] workers;
@@ -251,6 +251,8 @@ unittest
     }
     foreach (worker; workers)
         worker.join();
+    if (alongside !is null)
+        alongside();
     assert(!atomicLoad(failed), failure);
 
     // The workers exited with objects in their caches; their retained objects must survive more collections.
@@ -271,4 +273,80 @@ unittest
         }
     assert(atomicLoad(verified) > threads * rounds * ringSize / 2);
     assert(GC.profileStats().numCollections > 10);
+}
+
+@("Flint collector stress: threads, thread caches, finalizers and large blocks under collections; shadow check")
+unittest
+{
+    stress();
+}
+
+private enum moved = 4_096;
+
+/// Objects held only in two heap arrays, moved from one to the other without allocating while collections run.
+private final class Mover
+{
+    Node[] left, right;
+    shared bool stop;
+    size_t passes;
+
+    this()
+    {
+        left = new Node[moved];
+        right = new Node[moved];
+        foreach (i, ref slot; left)
+        {
+            slot = new Node;
+            slot.stamp = stampOf(99, i);
+            writePattern(slot.body[], slot.stamp);
+        }
+    }
+
+    /// A marker that scanned `right` before an object moved there, and `left` after it left, has not seen it: only
+    /// the rescan of the written page keeps it.
+    void run()
+    {
+        while (!atomicLoad(stop))
+        {
+            foreach (i; 0 .. moved)
+            {
+                right[i] = left[i];
+                left[i] = null;
+            }
+            foreach (i; 0 .. moved)
+            {
+                left[i] = right[i];
+                right[i] = null;
+            }
+            ++passes;
+        }
+    }
+
+    void check()
+    {
+        foreach (i; 0 .. moved)
+        {
+            auto node = left[i] is null ? right[i] : left[i];
+            if (node is null || node.stamp != stampOf(99, i) || !patternHolds(node.body[], node.stamp))
+                fail("an object moved between heap arrays while marking ran was freed");
+        }
+    }
+}
+
+@("D3 concurrent marking: the stress run and objects moved between heap arrays during marking survive")
+unittest
+{
+    import flint.arena.gc : concurrentCollections, setConcurrentMarking;
+
+    if (!setConcurrentMarking(true))
+        return; // no soft-dirty tracking here: collections stop the world, which the test above covers
+    scope (exit)
+        cast(void) setConcurrentMarking(false);
+    const before = concurrentCollections();
+    auto mover = new Mover;
+    auto thread = new Thread(&mover.run);
+    thread.start();
+    stress(() { atomicStore(mover.stop, true); thread.join(); mover.check(); });
+    assert(concurrentCollections() - before > 10, "collections did not mark concurrently");
+    assert(mover.passes > 0);
 }

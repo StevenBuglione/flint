@@ -23,6 +23,32 @@ static import flint.arena.sys.gc.counting;
 /// The name to select with `--DRT-gcopt=gc:<name>` or `rt_options`.
 enum collectorName = "flint";
 
+/// The name of the Flint collector with mostly-concurrent marking (D3, docs/spring/phase1/gc.md section 3a).
+enum concurrentCollectorName = "flint-concurrent";
+
+/++
+Switch the running Flint collector's mostly-concurrent marking on or off (D3, docs/spring/phase1/gc.md section 3a):
+a collection marks from the static data and the registered roots and ranges while the program's threads keep
+running, and stops them only for their stacks and the pages they wrote meanwhile. False when the Flint collector is
+not running or the platform tracks no written pages (Linux only); collections then stop the world throughout.
++/
+bool setConcurrentMarking(bool on) nothrow
+{
+    version (FlintCollector)
+        return flint.arena.sys.gc.collector.setConcurrentMarking(on);
+    else
+        return false;
+}
+
+/// Collections the Flint collector began marking with the program running (`setConcurrentMarking`); zero otherwise.
+size_t concurrentCollections() nothrow @nogc
+{
+    version (FlintCollector)
+        return flint.arena.sys.gc.collector.concurrentCollections();
+    else
+        return 0;
+}
+
 /// GC allocations and their total bytes.
 struct Allocations
 {

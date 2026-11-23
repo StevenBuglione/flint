@@ -13,6 +13,8 @@
  * - the module name, and the pool table imported from its Flint copy;
  * - the collector registers as "flint" (select it with `--DRT-gcopt=gc:flint` or `rt_options`), and the
  *   "conservative" and "precise" registrations stay druntime's own;
+ * - D3, mostly-concurrent marking (docs/spring/phase1/gc.md, section 3a): registered as "flint-concurrent" too, or
+ *   switched with `setConcurrentMarking`; Linux only;
  * - aligned blocks (`BlkAttr.ALIGNMENT_*`, druntime 2.114) are used where the linked druntime has them, so the
  *   same source builds with LDC 1.43's druntime, whose block-metadata helpers predate them; LDC's
  *   AddressSanitizer exemptions on the two stack-scanning functions come from LDC v1.43.0's copy.
@@ -64,6 +66,7 @@ import core.gc.gcinterface;
 import core.internal.container.treap;
 import core.internal.spinlock;
 import flint.arena.sys.gc.pooltable; // Flint: the ported pool table
+version (linux) import flint.arena.sys.gc.softdirty : SoftDirty, softDirtyBatch; // Flint: D3
 import core.internal.gc.blkcache;
 
 import cstdlib = core.stdc.stdlib;
@@ -92,6 +95,8 @@ __gshared Duration markTime;
 __gshared Duration sweepTime;
 __gshared Duration pauseTime;
 __gshared Duration maxPauseTime;
+__gshared Duration concurrentMarkTime; // Flint: D3, marking while the program runs
+__gshared size_t numConcurrentCollections; // Flint: D3
 __gshared Duration maxCollectionTime;
 __gshared size_t numCollections;
 __gshared size_t maxPoolMemory;
@@ -255,6 +260,47 @@ private pragma(crt_constructor) void flintCollectorCtor()
     import core.gc.registry : registerGCFactory;
 
     registerGCFactory("flint", &initialize);
+    registerGCFactory("flint-concurrent", &initializeConcurrent); // Flint: D3
+}
+
+/// Flint: D3. Collections whose marking began with the program running.
+// SAFETY: Reads one word the collector writes under its lock; a stale count is harmless.
+@trusted size_t concurrentCollections() nothrow @nogc
+{
+    return numConcurrentCollections;
+}
+
+// Flint: D3. The Flint collector with mostly-concurrent marking where the kernel tracks written pages.
+private GC initializeConcurrent()
+{
+    auto gc = initialize();
+    cast(void) setConcurrentMarking(true);
+    return gc;
+}
+
+/++
+Flint: D3. Switch mostly-concurrent marking on or off for the running Flint collector (docs/spring/phase1/gc.md,
+section 3a). A collection then marks from the static data and the registered roots and ranges while the program's
+threads keep running and allocating from their caches, and stops them only to scan their stacks and registers, the
+roots and ranges again, and every marked object on a page written meanwhile. False when the Flint collector is not
+running, or the kernel tracks no written pages (not Linux, or no /proc); collections then stop the world throughout.
++/
+// SAFETY: Takes the GC lock, then reads and writes only the running collector's own flag and /proc descriptors.
+@trusted bool setConcurrentMarking(bool on) nothrow
+{
+    version (linux)
+    {
+        ConservativeGC.gcLock.lock();
+        scope (exit)
+            ConservativeGC.gcLock.unlock();
+        auto gcx = Gcx.instance;
+        if (gcx is null || ConservativeGC.isPrecise || (on && !gcx.softDirty.open()))
+            return false;
+        gcx.concurrentMark = on;
+        return true;
+    }
+    else
+        return false;
 }
 
 private GC initialize()
@@ -1956,9 +2002,15 @@ struct Gcx
     SmallObjectPool*[Bins.B_NUMSMALL] recoverPool;
     version (Posix) __gshared Gcx* instance;
 
+    // Flint: D3, mostly-concurrent marking (setConcurrentMarking).
+    bool concurrentMark;
+    version (linux) SoftDirty softDirty;
+
     void initialize()
     {
         (cast(byte*)&this)[0 .. Gcx.sizeof] = 0;
+        version (linux)
+            softDirty = SoftDirty.init; // Flint: D3; closed descriptors are -1, not 0
         leakDetector.initialize(&this);
         roots.initialize(0x243F6A8885A308D3UL);
         ranges.initialize(0x13198A2E03707344UL);
@@ -1995,12 +2047,15 @@ struct Gcx
             printf("\tNumber of collections:  %llu\n", cast(ulong) numCollections);
             printf("\tTotal GC prep time:  %lld milliseconds\n", prepTime.total!("msecs"));
             printf("\tTotal mark time:  %lld milliseconds\n", markTime.total!("msecs"));
+            if (concurrentMarkTime > Duration.zero) // Flint: D3
+                printf("\tConcurrent mark time:  %lld milliseconds\n", concurrentMarkTime.total!("msecs"));
             printf("\tTotal sweep time:  %lld milliseconds\n", sweepTime.total!("msecs"));
             long maxPause = maxPauseTime.total!("msecs");
             printf("\tMax Pause Time:  %lld milliseconds\n", maxPause);
             long gcTime = (sweepTime + markTime + prepTime).total!("msecs");
             printf("\tGrand total GC time:  %lld milliseconds\n", gcTime);
-            long pauseTime = (markTime + prepTime).total!("msecs");
+            // Flint: D3. Marking while the program ran is not a pause.
+            long pauseTime = (markTime + prepTime - concurrentMarkTime).total!("msecs");
 
             char[30] apitxt = void;
             apitxt[0] = 0;
@@ -2037,6 +2092,8 @@ struct Gcx
 
         version (Posix)
             instance = null;
+        version (linux)
+            softDirty.close(); // Flint: D3
         version (COLLECT_PARALLEL)
             stopScanThreads();
 
@@ -3114,6 +3171,95 @@ struct Gcx
         }
     }
 
+    /++
+    Flint: D3. When concurrent marking is on, prepare the mark bits, clear the pages' soft-dirty bits and mark from the
+    roots and ranges with the program running; false, having done nothing, when it is off or the kernel refused.
+    Called with the GC lock, and the roots and ranges locks, held: the program's threads allocate only from their
+    caches meanwhile, which changes no collector state, so the pools, free lists and attribute bits stay as prepared.
+    Mark bits and stacks are the collector's own. A word the program writes while it is read is either seen by
+    this pass or lies on a soft-dirty page, which `markAfterConcurrent` rescans. On return the pause starts: `begin`
+    is reset so the collection's pause counts only the stopped part.
+    +/
+    bool markConcurrently(ref MonoTime begin, ref MonoTime start) nothrow
+    {
+        version (linux)
+        {
+            if (!concurrentMark || ConservativeGC.isPrecise)
+                return false;
+            prepare();
+            if (!softDirty.clear())
+                return false;
+            auto stop = currTime;
+            prepTime += stop - start;
+            start = stop;
+            foreach (root; roots)
+                markConservative!false(cast(void*)&root.proot, cast(void*)(&root.proot + 1));
+            foreach (range; ranges)
+                markConservative!false(range.pbot, range.ptop);
+            stop = currTime;
+            concurrentMarkTime += stop - start;
+            markTime += stop - start;
+            ++numConcurrentCollections;
+            begin = start = stop;
+            thread_suspendAll();
+            return true;
+        }
+        else
+            return false;
+    }
+
+    /++
+    Flint: D3. With the world stopped after `markConcurrently`: rescan every marked object on a pool page the program
+    wrote since its soft-dirty bits were cleared, then the thread stacks, registers and TLS (the thread caches among
+    them) and the roots and ranges again, each marking to closure. A pointer stored while marking ran lies in one
+    of those, so every reachable object ends marked; an object only freshly referenced from the stacks is marked
+    here. Roots and ranges are scanned whole: they lie outside the pools, so their writes are not tracked here.
+    +/
+    void markAfterConcurrent() nothrow
+    {
+        version (linux)
+        {
+            bool[softDirtyBatch] dirty = void;
+            foreach (Pool* pool; this.pooltable[])
+            {
+                for (size_t first = 0; first < pool.npages; first += softDirtyBatch)
+                {
+                    const count = pool.npages - first < softDirtyBatch ? pool.npages - first : softDirtyBatch;
+                    if (!softDirty.read(pool.baseAddr + first * PAGESIZE, dirty[0 .. count]))
+                        dirty[0 .. count] = true; // unknown: rescan as written
+                    foreach (i; 0 .. count)
+                        if (dirty[i])
+                            rescanPage(pool, first + i);
+                }
+            }
+            markAll!(markConservative!false)();
+        }
+    }
+
+    /// Flint: D3. Mark from every marked, scannable object on page `pn` of `pool`, or from its part of a large one.
+    private void rescanPage(Pool* pool, size_t pn) nothrow
+    {
+        const bin = cast(Bins) pool.pagetable[pn];
+        auto page = pool.baseAddr + pn * PAGESIZE;
+        if (bin < Bins.B_PAGE)
+        {
+            const size = binsize[bin];
+            const end = (PAGESIZE / size) * size;
+            for (size_t offset = 0; offset < end; offset += size)
+            {
+                const biti = (pn * PAGESIZE + offset) >> pool.shiftBy;
+                if (pool.mark.test(biti) && !pool.freebits.test(biti) && !pool.noscan.test(biti))
+                    markConservative!false(page + offset, page + offset + size);
+            }
+        }
+        else if (bin == Bins.B_PAGE || bin == Bins.B_PAGEPLUS)
+        {
+            const start = bin == Bins.B_PAGE ? pn : pn - pool.bPageOffsets[pn];
+            if (pool.mark.test(start) && !pool.noscan.test(start))
+                markConservative!false(page, page + PAGESIZE);
+        }
+    }
+
     // collection step 3: finalize unreferenced objects, recover full pages with no live objects
     size_t sweep() nothrow
     {
@@ -3555,6 +3701,7 @@ struct Gcx
 
         MonoTime start, stop, begin;
         begin = start = currTime;
+        const collectionBegin = begin; // Flint: D3 moves `begin` to the start of the pause
 
         debug (COLLECT_PRINTF)
             printf("Gcx.fullcollect()\n");
@@ -3616,15 +3763,24 @@ struct Gcx
                 rangesLock.unlock();
                 rootsLock.unlock();
             }
-            thread_suspendAll();
+            // Flint: D3. Mark from the static data, roots and ranges while the program runs, then stop it for the rest.
+            const concurrent = !doFork && !isFinal && markConcurrently(begin, start);
+            if (!concurrent)
+            {
+                thread_suspendAll();
 
-            prepare();
+                prepare();
 
-            stop = currTime;
-            prepTime += (stop - start);
-            start = stop;
+                stop = currTime;
+                prepTime += (stop - start);
+                start = stop;
+            }
 
-            if (doFork && !isFinal && !block) // don't start a new fork during termination
+            if (concurrent)
+            {
+                markAfterConcurrent();
+            }
+            else if (doFork && !isFinal && !block) // don't start a new fork during termination
             {
                 version (COLLECT_FORK)
                 {
@@ -3707,7 +3863,7 @@ struct Gcx
         stop = currTime;
         sweepTime += (stop - start);
 
-        Duration collectionTime = stop - begin;
+        Duration collectionTime = stop - collectionBegin;
         if (collectionTime > maxCollectionTime)
             maxCollectionTime = collectionTime;
 
@@ -3811,6 +3967,14 @@ struct Gcx
             {
                 thread_cancelRestore(fork_cancel_state);
                 ConservativeGC.gcLock.unlock();
+
+                // Flint: D3. The inherited /proc/self descriptors name the parent; the child opens its own.
+                version (linux)
+                {
+                    Gcx.instance.softDirty.close();
+                    if (Gcx.instance.concurrentMark && !Gcx.instance.softDirty.open())
+                        Gcx.instance.concurrentMark = false;
+                }
 
                 // make sure the threads and event handles are reinitialized in a fork
                 version (COLLECT_PARALLEL)
