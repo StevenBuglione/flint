@@ -1,0 +1,6 @@
+    Building gs-relational-data-access 0.0.1 (dev, dmd)
+    Building directly, without DUB
+    Finished .flint/build/dev/gs-relational-data-access (non-canonical: --no-debug builds without debug information or a symbol table; the toolchain is not verified against its receipt)
+warning[FLINT-E0804] toolchain receipt missing
+  cause: no toolchain receipt at /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6ab588f8340c/.tools/flint-toolchain.json, so the installed fork cannot be traced to toolchain/*.patch
+  fix: flint toolchain install

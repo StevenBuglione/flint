@@ -1,0 +1,20 @@
+{
+  "schema": "flint.spring-acceptance/1",
+  "app": "gs-relational-data-access",
+  "implementation": "go",
+  "start": null,
+  "extra_args": [],
+  "binary": null,
+  "wire": "semantic",
+  "golden_sha256": "0878a6cdd0a0172312c9a3e00746ddf147d93c71e455c1bc7b66af5dc29d6be2",
+  "cases": [
+    {
+      "name": "run to completion",
+      "problems": []
+    }
+  ],
+  "passed": 1,
+  "total": 1,
+  "success": true,
+  "seconds": 0.0037139272317290306
+}
