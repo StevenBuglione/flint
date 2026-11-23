@@ -243,7 +243,7 @@ name = "flint:jackson-core"
 kind = "core"
 source = "workspace"
 scope = "build"
-dependencies = ["flint:serde"]
+dependencies = ["flint:engine-aot", "flint:serde"]
 
 [[package]]
 name = "flint:jackson-databind"
