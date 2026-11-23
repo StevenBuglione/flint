@@ -577,7 +577,16 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
         fixture = self.receipt.get('rpc_test_archive')
         if not fixture or fixture != self.rpc_test_archive_receipt():
             raise RuntimeError('Installed RPC test fixture archive changed')
-        return 'lflags ' + json.dumps(fixture['path']) + ' platform=' + json.dumps(self.dub_platform()) + '\n'
+        return self.link_line(fixture['path'])
+
+    def link_line(self, item):
+        """One DUB link input. On Windows an archive is `libs`: DUB concatenates the lflags of every path through a
+        dependency graph and keeps the repeats, which outgrew link.exe's 128 KiB response-file line (LNK1170) for an
+        application with dozens of packages. DUB keeps `libs` unique (ADR-026)."""
+        platform = ' platform=' + json.dumps(self.dub_platform()) + '\n'
+        if self.a.target.startswith('windows') and item.lower().endswith('.lib'):
+            return 'libs ' + json.dumps(item[:-len('.lib')]) + platform
+        return 'lflags ' + json.dumps(item) + platform
 
     def emit_rpc_test_archive(self, text):
         begin = '    // BEGIN FLINT RPC TEST NATIVE\n'
@@ -644,7 +653,7 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
                 if 'webview' in closure:flags+=['-Wl,-framework,WebKit','-lc++','-lobjc']
             # SDL double-quoted string escapes are JSON-compatible for these paths.
             versions=['FlintNative'+''.join(part[:1].upper()+part[1:] for part in n.split('-')) for n in sorted(direct)]
-            block='\n// BEGIN FLINT NATIVE\n'+'\n'.join('versions '+json.dumps(v)+' platform='+json.dumps(tag) for v in versions)+'\n'+'\n'.join('lflags '+json.dumps(x)+' platform='+json.dumps(tag) for x in flags)+'\n// END FLINT NATIVE\n'
+            block='\n// BEGIN FLINT NATIVE\n'+'\n'.join('versions '+json.dumps(v)+' platform='+json.dumps(tag) for v in versions)+'\n'+'\n'.join(self.link_line(x).rstrip('\n') for x in flags)+'\n// END FLINT NATIVE\n'
             blocks[package]=block
         return blocks
 
@@ -657,14 +666,13 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
             if package == 'engine-rpc':
                 # Both executables call fixture symbols. Place the fixture before
                 # the provider archives for single-pass static linkers.
-                block = block.replace('\nlflags ', '\n' + self.rpc_fixture_flag() + 'lflags ', 1)
+                block = before_first_link_line(block, self.rpc_fixture_flag())
                 recipes[root + '/bench/dub.sdl'] = block
             if package == 'engine-wasi' and (self.a.target.startswith('linux') or self.a.target == 'macos-arm64') and 'wasmtime' in self.receipt['libraries']:
                 reference = self.receipt.get('wasi_reference_archive')
                 if not reference or reference != self.wasi_reference_archive_receipt():
                     raise RuntimeError('Installed WASI reference archive changed; rebuild the native shims')
-                flag = 'lflags ' + json.dumps(reference['path']) + ' platform=' + json.dumps(self.dub_platform()) + '\n'
-                block = block.replace('\nlflags ', '\n' + flag + 'lflags ', 1)
+                block = before_first_link_line(block, self.link_line(reference['path']))
             recipes[root + '/bench/baseline/dub.sdl'] = block
         return recipes
 
@@ -680,6 +688,11 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
             if relative == 'packages/engine-rpc/dub.sdl':
                 text = self.emit_rpc_test_archive(text)
             path.write_text(text.rstrip() + '\n' + block)
+
+def before_first_link_line(block, line):
+    """`line` inserted before the block's first link input, where a single-pass static linker needs it."""
+    found = re.search(r'\n(?:lflags|libs) ', block)
+    return block if found is None else block[:found.start() + 1] + line + block[found.start() + 1:]
 
 def version_key(text):
     return tuple(int(part) for part in re.findall(r'[0-9]+',text)[:4])

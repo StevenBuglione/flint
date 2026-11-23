@@ -330,6 +330,10 @@ Both now pass:
   - **Refused paths.** UNC and device paths, drive-relative paths, alternate data streams, and components that Win32 would rewrite (a trailing dot or space).
   - **Bench reference.** The direct-provider reference archive stays Linux and macOS only, because no Windows bench lane uses it.
 - **The UCRT's inline stdio.** The UCRT headers define `snprintf` and its relatives as external inline COMDATs. druntime references `snprintf`, so link.exe loaded the first shim object that defined it, together with that shim's provider: `engine-wasi`'s test pulled in libpq and SQLite. Both shim projects now build with `_NO_CRT_STDIO_INLINE`, so their printf-family calls bind to `legacy_stdio_definitions.lib`.
+- **Link inputs as `libs`.** On Windows, `--emit-dub` writes each archive and system library as `libs "<path without .lib>"`, not `lflags`.
+  - DUB concatenates the `lflags` of every path through a dependency graph and keeps the repeats. gs-relational-data-access, with about 30 packages, passed link.exe 7,705 library arguments, a 187 KB response-file line, and link.exe stops at 128 KiB (LNK1170).
+  - DUB keeps `libs` unique: 43 arguments, 5.6 KB.
+  - Linux and macOS keep `lflags`, whose order a single-pass static linker needs.
 - **DMD and OpenSSL.** Static libcrypto calls `MessageBoxW` and `GetProcessWindowStation`. LDC links `user32.lib` by default and DMD does not, so the DUB blocks that `--emit-dub` writes for Windows now name `user32.lib` with the other system libraries. Packages that link OpenSSL then link with both compilers, which the cutover's `flint build` (DMD) needs.
 
 ### 4. The flint CLI

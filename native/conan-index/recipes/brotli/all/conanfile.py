@@ -11,7 +11,7 @@ from conan.tools.files import download
 
 NAME = 'brotli'
 DEPENDENCIES = []
-BUILD_ENGINE_SHA256 = '5ca461624d827863a091fa5e7caa6b3638255cedca0c1ec3bb7c6a02cd5314ca'
+BUILD_ENGINE_SHA256 = 'e63ee77bb9a6b22837b0dc637f6b1bb70ebd93bf1945ed2f69f36f94b0677b3c'
 TARGETS = ['linux-aarch64-glibc', 'linux-aarch64-musl', 'linux-x86_64-glibc', 'linux-x86_64-musl', 'macos-arm64', 'windows-x86_64']
 
 
