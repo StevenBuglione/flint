@@ -167,7 +167,13 @@ string statIdentity(string path)
 private long changeTimeOf(ref imported!"std.file".DirEntry entry)
 {
     version (linux)
-        return cast(long) entry.statBuf.st_ctim.tv_sec * 1_000_000_000 + entry.statBuf.st_ctim.tv_nsec;
+    {
+        // druntime declares st_ctim on x86-64, but st_ctime and st_ctimensec on AArch64 (same glibc layout)
+        static if (__traits(hasMember, typeof(entry.statBuf), "st_ctim"))
+            return cast(long) entry.statBuf.st_ctim.tv_sec * 1_000_000_000 + entry.statBuf.st_ctim.tv_nsec;
+        else
+            return cast(long) entry.statBuf.st_ctime * 1_000_000_000 + entry.statBuf.st_ctimensec;
+    }
     else version (OSX)
         return cast(long) entry.statBuf.st_ctimespec.tv_sec * 1_000_000_000 + entry.statBuf.st_ctimespec.tv_nsec;
     else version (Posix)
