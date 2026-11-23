@@ -54,6 +54,38 @@
       "verification": "The digest equals the Eclipse Temurin published .sha256.txt (observed 2026-11-22). Kafka 4.1 brokers require Java 17 or later.",
       "license": "GPL-2.0-with-classpath-exception",
       "binaries": {"java": "bin/java"}
+    },
+    "jdk": {
+      "version": "21.0.13.1+2",
+      "kind": "archive",
+      "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.13.1%2B2/OpenJDK21U-jdk_x64_linux_hotspot_21.0.13.1_2.tar.gz",
+      "sha256": "bb8a93f9ae6e7a693b2b721e85dbeff26ae1a77447985a8d7afcdd9c7cf6222e",
+      "checksum_url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.13.1%2B2/OpenJDK21U-jdk_x64_linux_hotspot_21.0.13.1_2.tar.gz.sha256.txt",
+      "verification": "The digest equals the Eclipse Temurin published .sha256.txt (observed 2026-11-23). The same Temurin 21 build as the jre peer, with javac, for the vibe benchmark's Spring Boot references (ADR-021 section 11).",
+      "license": "GPL-2.0-with-classpath-exception",
+      "binaries": {"java": "bin/java", "javac": "bin/javac"}
+    },
+    "maven": {
+      "version": "3.9.16",
+      "kind": "archive",
+      "url": "https://archive.apache.org/dist/maven/maven-3/3.9.16/binaries/apache-maven-3.9.16-bin.tar.gz",
+      "sha256": "80ffca22aed9e8b9713a232f3394fd81d7f20322df75efdb2b047dbd3e3a23bb",
+      "sha512": "831a8591fe20c8243b1dbe7d71e3244f31d1665b0804b2e825e38cbbe5ce0cafb8338851f90780735568773e0a6cd07bbec107cda0b896b008b861075358b6f6",
+      "checksum_url": "https://downloads.apache.org/maven/maven-3/3.9.16/binaries/apache-maven-3.9.16-bin.tar.gz.sha512",
+      "verification": "The SHA-512 equals the Apache-published apache-maven-3.9.16-bin.tar.gz.sha512 (observed 2026-11-23); the SHA-256 is of the same verified bytes. The vibe benchmark builds Spring Boot references with it and --strict-checksums, so every Maven Central artifact is verified against its published checksum.",
+      "license": "Apache-2.0",
+      "binaries": {"mvn": "bin/mvn"}
+    },
+    "spring-boot": {
+      "version": "4.2.0",
+      "kind": "maven",
+      "url": "https://repo.maven.apache.org/maven2/org/springframework/boot/spring-boot-starter-parent/4.2.0/spring-boot-starter-parent-4.2.0.pom",
+      "sha256": "91049b50425c15577a8dd240fbc83f268b0f4156386c3d79ef99c672b298234b",
+      "sha1": "f8dd1e40513441f3924ca8668fc4e3a1f42ae4d2",
+      "bom_url": "https://repo.maven.apache.org/maven2/org/springframework/boot/spring-boot-dependencies/4.2.0/spring-boot-dependencies-4.2.0.pom",
+      "bom_sha256": "804e5814943891a723f74537ac9b5d5ce710ccce7a76dc643b231a1e4c62fd91",
+      "verification": "The parent's SHA-1 equals Maven Central's published .sha1 (observed 2026-11-23; released 2026-11-19, the current GA). Spring Boot is consumed as the parent of each reference's pom.xml, not installed; tools/vibe_bench.py checks the resolved parent and BOM against these digests and builds with --strict-checksums.",
+      "license": "Apache-2.0"
     }
   }
 }

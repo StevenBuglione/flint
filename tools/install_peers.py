@@ -3,9 +3,10 @@
 
   go        Go from policy/toolchains.json, into the toolchain directory (tools/install_toolchains.py).
   postgres  A PostgreSQL server built from the source pinned for libpq in policy/native-lock.json.
-  valkey, nats, minio, kafka, jre
+  valkey, nats, minio, kafka, jre, jdk, maven
             The pins in policy/peer-lock.json: Valkey built with make, nats-server and MinIO built from
-            their tagged sources with the pinned Go, and the Kafka and Temurin JRE release archives.
+            their tagged sources with the pinned Go, and the Kafka, Temurin JRE and JDK, and Maven release
+            archives. The JDK and Maven build the vibe benchmark's Spring Boot references.
 
 Every archive is verified against its pinned digest before use. Each peer lands in
 .flint/peers/<name>-<version>/ with a flint-peer.json receipt; nothing is taken from the system.
@@ -178,15 +179,15 @@ def install_postgres(jobs):
 def main():
     cli = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     cli.add_argument('--peer', action='append', required=True,
-                     choices=['go', 'postgres', 'valkey', 'nats', 'minio', 'kafka', 'jre', 'all'])
+                     choices=['go', 'postgres', 'valkey', 'nats', 'minio', 'kafka', 'jre', 'jdk', 'maven', 'all'])
     cli.add_argument('--destination', type=Path, default=ROOT / '.tools', help='toolchain directory for go')
     cli.add_argument('--jobs', type=int, default=min(os.cpu_count() or 2, 16))
     args = cli.parse_args()
     receipts = []
-    order = ['go', 'postgres', 'valkey', 'nats', 'minio', 'kafka', 'jre']
+    order = ['go', 'postgres', 'valkey', 'nats', 'minio', 'kafka', 'jre', 'jdk', 'maven']
     selected = order if 'all' in args.peer else [peer for peer in order if peer in args.peer]
     for peer in selected:
-        if peer in ('valkey', 'nats', 'minio', 'kafka', 'jre'):
+        if peer in ('valkey', 'nats', 'minio', 'kafka', 'jre', 'jdk', 'maven'):
             receipts.append(install_locked(peer, args.destination.resolve(), args.jobs))
         elif peer == 'go':
             subprocess.run([sys.executable, str(ROOT / 'tools/install_toolchains.py'), '--compiler', 'go',
