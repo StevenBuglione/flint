@@ -83,6 +83,23 @@ A `GET /greeting?name=Flint` at `08b19d2f` allocates **4,816 GC bytes in 40 allo
 
 Each change records its allocations and bytes per request here, with the same two probes.
 
+| change | `gc_malloc` per request | instructions per request | reported by |
+|---|---|---|---|
+| `a5b05c89` (with `8815f2d2`) | 37.0 | 86.1k | web-http |
+| `bc808cca`: servlet response body, fields and request head buffered in engine storage; webmvc resolver composite and `getMatchingCondition` copy removed | 31.0 | 83.7k | web-http |
+
+web-http counts only `gc_malloc` calls (callgrind, LDC release build, one reactor). The 40 above also counts array appends, which do not always allocate. The remaining 31 calls by owner:
+- Jackson: 4.
+- `RequestMappingHandlerAdapter.handle`: 3, which Spring also allocates.
+- The servlet engine: 5.
+- Spring-side headers, response and handler chain: 5.
+- Per-request argument arrays: 2.
+- A boxed `PathContainer`: 1.
+- Path parsing and content negotiation: 3.
+- The generated glue and the app's `Greeting`: 2.
+
+web-http's next candidates are a shared read-only `*/*` list, an unboxed `PathContainer` attribute, and `HttpHeaders`' first-entry allocation.
+
 ### 1.3 Peak RSS, by mapping
 
 Peak RSS before and after the io_uring fix (section 3, item 1):
@@ -145,9 +162,21 @@ druntime selects a collector by name: `registerGCFactory("flint", ...)` from a `
 2. **Root ranges (C).** Done in `8815f2d2`, agreed with web-http: the HTTP/1 connection slots become GC roots in chunks of 64, 128, 256 … per worker as the reactor first uses them. The reactor hands out the lowest free slot, so a server at 64 connections registers one chunk. Locally the pause per collection fell from 0.96 to 0.64–0.79 ms, with peak RSS unchanged.
    - The rest of the 128-connection gain comes from preallocation sized by the connection limit. The fiber pool is 1,088 fibers per worker: fiber objects, stacks, task and fiber-local arrays. Capping it at 128 per worker saved 1.7 MB of RSS and about 0.1 ms per collection. A fixed cap changes overload behaviour, though: more requests get 503 instead of waiting, as they would in Tomcat's backlog. web-http would accept a `server.flint.max-handlers` setting that keeps today's default, or real backpressure.
    - The reactor's `IoWork` table (120 B × 4,160 per worker) is also scanned on every collection.
-3. **GC profile in the harness.** Boot apps have no SIGTERM or SIGINT handler. They die from the default action (exit 143 or 130), so neither graceful shutdown nor druntime's exit report runs, and `spring_gc_matrix.py` would record no collections or pauses. This is filed with boot, and proof-harness is told to hold the `phase1-gc-matrix-*` entries until it lands. Then queue the matrix for gs-rest-service and petclinic-rest.
+3. **GC profile in the harness.** Done: boot's `a5b05c89` adds graceful SIGTERM/SIGINT, so Boot apps exit 0 and print druntime's `profile:1` report. proof-harness released the matrix (`7d18cc86`): `phase1-gc-matrix-1/2/3` for petclinic-rest and `phase1-gc-matrix-gs-rest-1/2/3` for gs-rest-service, at `08b19d2f`, on natural quiet.
 4. **Allocation table (B).** Started in section 1.2a: 4,816 bytes and 40 allocations per `/greeting` request at `08b19d2f`. web-http is cutting the servlet adapter, third-party-apis the Jackson copy, and framework-core the MIME-type parsing.
-5. **Collector prototype (D).** Start with D1 (per-thread caches) plus page release, measured against druntime's collector on the same binary through `rt_options`. Then D3 if the pause still loses. Each step goes through proof-harness's queue before any claim.
+5. **The Flint collector (D).** Approved by the owner (`b515505b`): it lives in `flint.arena.sys.gc` and ports druntime (BSL-1.0) and bdwgc's soft-dirty tracking (Boehm-GC). Both upstreams are in `policy/upstream-licences.json` and NOTICE (`0ae1fabf`).
+   - **Step 0, `9bfdd441`.** druntime v2.114.0's conservative collector, ported unchanged and registered as `flint`. `flint.arena.gc` links it, and boot's `c88cf777` links it into every Boot app. `--DRT-gcopt=gc:flint` or `rt_options` selects it; druntime's collector stays the default. arena's test program runs on it, including druntime's own collector unittests.
+   - **Step D1a, `c341740f`: per-thread allocation caches.**
+     - Small allocations with no attributes, `NO_SCAN`, `APPENDABLE` or both come from a thread-local cache, refilled under the lock with up to 2 KiB of objects of one bin and class at a time.
+     - Cached objects are already allocated, and the TLS slots reference them. Every collection scans TLS, so nothing is flushed, a thread stopped mid-pop is safe, and an exiting thread's cache becomes garbage.
+     - The fast path writes no shared state.
+     - Finalized, aligned and `NO_INTERIOR` objects, the precise collector and `fork:1` keep the locked path.
+     - Evidence of correctness:
+       - `tests/gc_stress.d`: four threads and 576,000 stamped allocations under repeated collections. A shadow ring and chains of nodes reachable only through it are re-verified every round, and address uniqueness is checked across threads. An injected double-allocation bug crashes it.
+       - The `ci.py` sanitize profile: ASan, UBSan and LSan.
+       - A ThreadSanitizer lane does not exist yet.
+   - **Next, D1b: page release.** Return free pages with `madvise(MADV_DONTNEED)` after a sweep, with hysteresis so that pages reused at once are not released.
+   - **Gating.** gc:flint and gc:conservative run on the same binary through proof-harness's queue. D3 (mostly-concurrent marking with soft-dirty tracking) follows only if the pause still loses.
 
 ## 4. How p99 and RSS are measured
 
