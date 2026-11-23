@@ -1017,6 +1017,11 @@ unittest
     const web = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot", "hier", "web.d"));
     expect(web.canFind(`mapping.paths = ["/api/ping"];`)).toBeTrue();
     expect(web.canFind(`mapping.paths = ["/api/version"];`)).toBeTrue();
+    // RequestMappingInfo.combine: the class's methods, params and headers join the method's, each once.
+    expect(web.canFind(`mapping.paths = ["/v2/status"];`)).toBeTrue();
+    expect(web.canFind(`mapping.methods = ["GET", "HEAD"];`)).toBeTrue();
+    expect(web.canFind(`mapping.params = ["version=2", "full"];`)).toBeTrue();
+    expect(web.canFind(`mapping.headers = ["X-Api=1"];`)).toBeTrue();
     // Contract 3: the controller's descriptor carries PingApi's @RequestMapping as aggregate 1.
     expect(web.canFind(`MergedAnnotation("flint.web.bind.annotation.RequestMapping", Any.of(`)).toBeTrue();
     expect(web.canFind(`), 0, 1),`)).toBeTrue();
