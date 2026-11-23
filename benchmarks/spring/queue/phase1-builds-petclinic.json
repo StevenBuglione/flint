@@ -13,7 +13,7 @@
   "builds": {
     "tree": {
       "app": "checkout",
-      "commit": "6ab588f8340c",
+      "commit": "259a864d05ea",
       "flint": true,
       "linker": "mold",
       "fork": true
@@ -452,5 +452,5 @@
       }
     }
   ],
-  "blocked_on": "runtime first (coordinator, 21:25Z): a re-run after gs-rest-multicore-5 and gc-pools-ab, pinned at a commit with petclinic-rest's corrected measure block (scratch with --no-platform-cache, cached_static added), at the same toolchain as those runs"
+  "blocked_on": "its smoke run at 259a864d (the corrected measure block); then pending at priority 5, after gs-rest-multicore-5 and gc-pools-ab"
 }
