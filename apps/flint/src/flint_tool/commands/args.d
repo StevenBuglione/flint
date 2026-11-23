@@ -487,6 +487,19 @@ struct ApiCoverageArgs
     @Option("mapping", 0, "The mapping (default: api/<repo>/mapping.json, else api/mapping.json)") string mapping;
     /// Repo.
     @Option("repo", 0, "Classify every manifest api/upstreams.json assigns to this repo") string repo;
+    /// Release mode.
+    @Option("release", 0, "Require every element classified, whatever the baseline says (the release gate)")
+    bool release;
+    /// Lower the baseline.
+    @Option("update-baseline", 0, "Lower coverage-baseline.json to the current counts; refuses to raise any")
+    bool updateBaseline;
+    /// Baseline path.
+    @Option("baseline", 0, "The ratchet's baseline (default: coverage-baseline.json beside the mapping)")
+    string baseline;
+    /// Slice files.
+    @Option("slice", 0,
+            "Slice whose complete checklists must be complete (repeatable; default: docs/spring/*/slice.json)")
+    string[] slices;
     /// How many unclassified ids to print.
     @Option("show", 0, "Unclassified element ids to print per manifest (default: 20)") uint show = 20;
     /// JSON output.

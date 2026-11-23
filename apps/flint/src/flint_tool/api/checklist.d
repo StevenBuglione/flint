@@ -36,6 +36,8 @@ struct SliceEntry
     string module_;
     /// Package patterns; empty means the whole module.
     string[] packages;
+    /// Marked complete: every element classified, and none deferred.
+    bool complete;
 }
 
 /// A slice.
@@ -91,6 +93,7 @@ bool parseSlice(string text, out Slice slice, out string error)
             if ("packages" in item)
                 foreach (ref value; item["packages"].arrayNoRef)
                     entry.packages ~= value.str;
+            entry.complete = "complete" in item && item["complete"].boolean;
             if (!validName(entry.name))
             {
                 error = "checklist name `" ~ entry.name ~ "` must be lower-case letters, digits and hyphens";
@@ -134,6 +137,34 @@ bool selected(const ref SliceEntry entry, const ref ApiType type)
             return true;
     }
     return false;
+}
+
+/// The elements that keep a checklist marked complete from being complete: unclassified ones, and ones excluded as
+/// `deferred` (a developer-facing element postponed, not ported or adapted).
+string[] unfinished(const ref SliceEntry entry, const ref Manifest manifest, const ref Classifier classifier)
+{
+    import flint_tool.api.coverage : Status;
+    import flint_tool.api.manifest : memberId;
+
+    string[] found;
+    void check(string id)
+    {
+        const classified = classifier.classify(id);
+        if (classified is null)
+            found ~= id ~ " (unclassified)";
+        else if (classified.status == Status.excluded && classified.category == "deferred")
+            found ~= id ~ " (deferred to phase " ~ classified.phase ~ ")";
+    }
+
+    foreach (ref type; manifest.types)
+    {
+        if (!selected(entry, type))
+            continue;
+        check(type.decl.id);
+        foreach (ref member; type.decl.members)
+            check(memberId(type.decl, member));
+    }
+    return found;
 }
 
 /// Render one checklist; `counts` receives its totals.

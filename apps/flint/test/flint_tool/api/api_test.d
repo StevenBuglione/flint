@@ -478,4 +478,112 @@ unittest
     expect(check("// Ported from spring-framework: no version\n")).toEqual(
             ["the marker must read `Ported from <project> <version>: <upstream path>`"]);
     expect(sdlLicence("name \"x\"\nlicense \"EPL-2.0\"\n")).toEqual("EPL-2.0");
+    // An SPDX line naming the licence the port is made under stands for the licence sentence, and the upstream
+    // paths may continue on the lines after the marker.
+    enum spdx = "/*\n * Ported from jakarta-servlet 6.1.0: https://github.com/jakartaee/servlet, tag 6.1.0,\n"
+        ~ " *   api/src/main/java/jakarta/servlet/{Filter,Servlet}.java\n * Copyright (c) 1997 Oracle\n"
+        ~ " * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0\n"
+        ~ " * Modified by the Flint authors.\n */\n";
+    expect(check(spdx, "EPL-2.0")).toEqual(cast(string[]) null);
+    expect(check("// Ported from spring-framework v7.1.0:\n//   a/B.java\n"
+            ~ "// Copyright 2002-present the original author or authors.\n// SPDX-License-Identifier: MIT\n"
+            ~ "// Modified by the Flint authors.\n")).toEqual(
+            [
+        "the header lacks the licence line (Licensed under the Apache License, Version 2.0, or an "
+        ~ "SPDX-License-Identifier naming Apache-2.0)"
+    ]);
+}
+
+@("the coverage baseline ratchets: counts may fall, never rise, and a lowered baseline keeps unmeasured upstreams")
+unittest
+{
+    import flint_tool.api.baseline : Baseline, BaselineUpstream, compare, lowered, parseBaseline, renderBaseline;
+
+    Baseline baselineOf(string key, size_t[string] modules)
+    {
+        Baseline baseline;
+        baseline.upstreams = [BaselineUpstream(key, modules)];
+        return baseline;
+    }
+
+    auto recorded = baselineOf("spring-framework@v7.1.0", [
+        "spring-core": 10,
+        "spring-jdbc": 5,
+        "spring-tx": 0
+    ]);
+    recorded.upstreams ~= BaselineUpstream("slf4j-api@2.0.20", ["slf4j-api": 7]);
+    const text = renderBaseline(recorded);
+    Baseline reread;
+    string error;
+    expect(parseBaseline(text, reread, error)).toEqual(true);
+    expect(renderBaseline(reread)).toEqual(text);
+    expect(reread.total).toEqual(22);
+
+    const better = baselineOf("spring-framework@v7.1.0", [
+        "spring-core": 4,
+        "spring-jdbc": 5,
+        "spring-tx": 0
+    ]);
+    const ratchet = compare(reread, better);
+    expect(ratchet.regressions.length).toEqual(0);
+    expect(ratchet.improvements).toEqual(
+            ["spring-framework@v7.1.0 spring-core: 4 unclassified, below the baseline's 10"]);
+    string[] raised;
+    const next = lowered(reread, better, raised);
+    expect(raised.length).toEqual(0);
+    expect(next.total).toEqual(16);
+    expect(next.find("slf4j-api@2.0.20").modules["slf4j-api"]).toEqual(7);
+
+    const worse = baselineOf("spring-framework@v7.1.0", [
+        "spring-core": 4,
+        "spring-jdbc": 6,
+        "spring-tx": 0,
+        "spring-new": 3
+    ]);
+    expect(compare(next, worse).regressions).toEqual(
+            [
+        "spring-framework@v7.1.0 spring-jdbc: 6 unclassified, above the baseline's 5",
+        "spring-framework@v7.1.0 spring-new: 3 unclassified, and the module is not in the baseline"
+    ]);
+    lowered(next, worse, raised);
+    expect(raised.length).toEqual(2);
+
+    // A manifest the baseline has never recorded fails the ratchet, and --update-baseline records it.
+    const fresh = baselineOf("jackson-core@3.1.8", ["jackson-core": 30]);
+    expect(compare(next, fresh).regressions).toEqual(
+            ["jackson-core@3.1.8 is not in the baseline; record it with --update-baseline"]);
+    const added = lowered(next, fresh, raised);
+    expect(raised.length).toEqual(0);
+    expect(added.total).toEqual(46);
+}
+
+@("a checklist marked complete is unfinished while an element is unclassified or deferred")
+unittest
+{
+    import flint_tool.api.checklist : Slice, parseSlice, unfinished;
+
+    const root = fixtureTree("gradle");
+    scope (exit)
+        removeTree(root);
+    ExtractRequest request;
+    request.source = root;
+    request.project = "spring-x";
+    request.version_ = "v1.0.0";
+    request.excludes = ["buildSrc", "framework-docs"];
+    auto manifest = extract(request).manifest;
+    Slice slice;
+    string error;
+    parseSlice(`{"schema":"flint.api-slice/1","checklists":[
+        {"name":"spring-core","upstream":"spring-x@v1.0.0","module":"spring-core","complete":true}]}`, slice, error);
+    expect(slice.checklists[0].complete).toEqual(true);
+    Mapping mapping;
+    parseMapping(`{"elements":{"org.x.core.Resource":{"status":"ported","d":"flint.core.Resource"},
+        "org.x.core.Resource#exists()":{"status":"excluded","category":"deferred","phase":"2"},
+        "org.x.core.Resource#getFilename()":{"status":"excluded","category":"jvm-platform"}}}`, mapping, error);
+    const partial = Classifier(mapping);
+    expect(unfinished(slice.checklists[0], manifest, partial)).toEqual(
+            ["org.x.core.Resource#exists() (deferred to phase 2)"]);
+    parseMapping(`{"elements":{"org.x.core.**":{"status":"adapted","rules":["R6"]}}}`, mapping, error);
+    const done = Classifier(mapping);
+    expect(unfinished(slice.checklists[0], manifest, done).length).toEqual(0);
 }

@@ -15,8 +15,8 @@
 /// - The pin's licence entry (`matrix`) must allow porting (`port-source`, `port-source-bsd-option` or
 ///   `epl-module`), at the same tag.
 /// - The header must carry the entry's copyright line, or a `Copyright` line when the entry names none.
-/// - It must carry the licence line for the licence and use: Apache License 2.0, MIT, the BSD 3-Clause option, or
-///   the Eclipse Public License 2.0.
+/// - It must carry the licence line for the licence and use (Apache License 2.0, MIT, the BSD 3-Clause option, or
+///   the Eclipse Public License 2.0), or an `SPDX-License-Identifier:` line naming that licence.
 /// - It must say "Modified by the Flint authors", as Apache-2.0 §4(b) requires.
 /// - An `epl-module` port must live in a package whose `dub.sdl` declares `license "EPL-2.0"`.
 module flint_tool.api.headers;
@@ -201,8 +201,9 @@ private string[] contentProblems(string header, const ref LicenceEntry entry, st
     const copyright = entry.header.length ? entry.header : "Copyright";
     if (header.indexOf(copyright) < 0)
         problems ~= "the header lacks the upstream copyright line" ~ (entry.header.length ? ": " ~ entry.header : "");
-    if (header.indexOf(line) < 0)
-        problems ~= "the header lacks the licence line: " ~ line;
+    if (header.indexOf(line) < 0 && !spdxNames(header, spdxOf(entry)))
+        problems ~= "the header lacks the licence line (" ~ line
+            ~ ", or an SPDX-License-Identifier naming " ~ spdxOf(entry) ~ ")";
     if (header.indexOf(modifiedNotice) < 0)
         problems ~= "the header lacks \"" ~ modifiedNotice ~ "\" (Apache-2.0 §4(b))";
     if (entry.use == "epl-module" && packageLicence != "EPL-2.0")
@@ -211,12 +212,58 @@ private string[] contentProblems(string header, const ref LicenceEntry entry, st
     return problems;
 }
 
+/// The SPDX identifier of the licence a port is made under: the BSD or EPL option of a dual licence.
+string spdxOf(const ref LicenceEntry entry)
+{
+    if (entry.use == "port-source-bsd-option")
+        return "BSD-3-Clause";
+    if (entry.use == "epl-module")
+        return "EPL-2.0";
+    return entry.licence;
+}
+
+/// Whether an `SPDX-License-Identifier:` line of the header names `licence`.
+bool spdxNames(string header, string licence)
+{
+    import std.string : indexOf, lineSplitter;
+
+    enum tag = "SPDX-License-Identifier:";
+    foreach (line; header.lineSplitter)
+    {
+        const at = line.indexOf(tag);
+        if (at < 0)
+            continue;
+        foreach (word; splitWords(line[at + tag.length .. $]))
+        {
+            if (word == licence)
+                return true;
+        }
+    }
+    return false;
+}
+
+private string[] splitWords(string text)
+{
+    string[] words;
+    size_t start;
+    foreach (index, c; text)
+    {
+        if (c == ' ' || c == '(' || c == ')' || c == '\t')
+        {
+            if (index > start)
+                words ~= text[start .. index];
+            start = index + 1;
+        }
+    }
+    if (text.length > start)
+        words ~= text[start .. $];
+    return words;
+}
+
 /// Parse `Ported from <project> <version>: <path>` out of a header.
 bool parseMarker(string header, out string project, out string version_, out string path)
 {
-    import std.string : indexOf, strip;
-
-    import std.string : lineSplitter, stripLeft;
+    import std.string : indexOf, lineSplitter, strip, stripLeft;
 
     string rest;
     foreach (line; header.lineSplitter)
@@ -229,14 +276,15 @@ bool parseMarker(string header, out string project, out string version_, out str
     }
     if (rest.length == 0)
         return false;
+    // `<project> <version>:`, then the upstream path, on this line or the lines that follow.
     const space = rest.indexOf(' ');
-    const colon = rest.indexOf(": ");
+    const colon = rest.indexOf(':');
     if (space <= 0 || colon <= space + 1)
         return false;
     project = rest[0 .. space];
     version_ = rest[space + 1 .. colon];
-    path = rest[colon + 2 .. $].strip;
-    return path.length != 0 && version_.indexOf(' ') < 0;
+    path = rest[colon + 1 .. $].strip;
+    return version_.indexOf(' ') < 0;
 }
 
 /// The `license` of the nearest `dub.sdl` above `file`, up to `root`.

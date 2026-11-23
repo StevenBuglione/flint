@@ -307,7 +307,8 @@ private int apiCommand(ref Session session, string name, ref ApiArgs args)
         return commandApiExtract(session, command);
     case "flint api coverage":
         const coverage = CoverageCommand(args.coverage.manifests, args.coverage.mapping,
-                args.coverage.repo, args.coverage.show);
+                args.coverage.repo, args.coverage.show, args.coverage.release,
+                args.coverage.updateBaseline, args.coverage.baseline, args.coverage.slices);
         return commandApiCoverage(session, coverage);
     case "flint api diff":
         return commandApiDiff(session, args.diff.older, args.diff.newer);

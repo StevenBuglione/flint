@@ -57,7 +57,7 @@ flint check
 | `flint receipt <artifact> [--canonical]` | Verify an artifact against its receipt and the current toolchain. |
 | `flint api fetch [projects...] [--cache DIR]` | Download the upstream source archives pinned in `api/upstreams.json` into the reference cache, verified by SHA-256 (ADR-030). Never compiles them. |
 | `flint api extract --source DIR --project P --version TAG [-o FILE] [--exclude PREFIX]...` | Write the API manifest of an upstream Java source tree: every public and protected type and member ([API manifests](#api-manifests)). |
-| `flint api coverage [--repo R] [--manifest FILE...] [--mapping FILE] [--show N]` | Classify every manifest element against the repo's mapping, print per-module percentages, and fail on unclassified elements. `--repo` takes every manifest `api/upstreams.json` assigns to the repo. |
+| `flint api coverage [--repo R] [--manifest FILE...] [--mapping FILE] [--show N] [--release] [--update-baseline]` | Classify every manifest element against the repo's mapping and print per-module percentages. With a `coverage-baseline.json` it fails only when a module's unclassified count rises or a checklist marked complete is not. `--release`, or no baseline, fails on any unclassified element. `--update-baseline` lowers the baseline. `--repo` takes every manifest `api/upstreams.json` assigns to the repo. |
 | `flint api diff <old> <new>` | List the API elements added, removed or changed between two manifests. |
 | `flint api headers [paths...]` | Check that every D file ported from an upstream carries ADR-030's header, for an upstream the licence matrix lets Flint port at that tag. |
 | `flint api checklist --slice FILE --output DIR` | Write one Markdown checklist per module of a porting slice, each element with the status the repo's mapping gives it, and an index `README.md`. |
@@ -171,7 +171,7 @@ Command fields:
 | `flint.receipt/1` | `artifact`, `receipt`, `canonical`, `non_canonical_reasons`, `profile`, `commit` |
 | `flint.api-fetch/1` | `cache`, `fetched` (`project`, `version`, `directory`, `cached`, `licence`) |
 | `flint.api-extract/1` | `project`, `version`, `output`, `files`, `types`, `methods`, `excludes`, `modules` (`name`, `types`, `methods`, `constructors`, `fields`, `constants`, `attributes`, `components`) |
-| `flint.api-coverage/1` | `mapping`, `repo`, `rulebook`, `unclassified`, `manifests` (`manifest`, `project`, `version`, `summary`, `modules`; each tally has `name`, `total`, `ported`, `adapted`, `excluded`, `unclassified`, `classified_percent`), `unclassified_ids` (`project@version` → element ids) |
+| `flint.api-coverage/1` | `mapping`, `repo`, `mode` (`ratchet`, `release`, `update-baseline`), `baseline`, `rulebook`, `unclassified`, `regressions`, `improvements`, `complete`, `manifests` (`manifest`, `project`, `version`, `summary`, `modules`; each tally has `name`, `total`, `ported`, `adapted`, `excluded`, `unclassified`, `classified_percent`), `unclassified_ids` (`project@version` → element ids) |
 | `flint.api-headers/1` | `files`, `ported`, `problems` |
 | `flint.api-checklist/1` | `checklists` (`name`, `file`, `types`, `elements`, `open`) |
 | `flint.api-diff/1` | `older`, `newer`, `added`, `removed`, `changed`, `differences` (`change`, `kind`, `id`, `details`) |
@@ -232,7 +232,12 @@ The entries follow these rules:
 - **Rulebook version.** `rulebook` must equal the version in the rulebook.
 - **Upstreams.** Each manifest classified must be listed under `upstream`.
 
-`flint api coverage` prints, per module, the element count and how many are ported, adapted, excluded and unclassified, then the first `--show` unclassified ids (default 20). It exits non-zero (FLINT-E1002) while anything is unclassified. `--json` lists every unclassified id.
+`flint api coverage` prints, per module, the element count and how many are ported, adapted, excluded and unclassified, then the first `--show` unclassified ids (default 20). `--json` lists every unclassified id. How it judges the counts depends on the mode:
+- **Ratchet** (the default when `coverage-baseline.json` sits beside the mapping). The baseline records every module's unclassified count. A count above it, or a manifest it has not recorded, fails with FLINT-E1007. A count below it is reported, so you can lower the baseline: `flint api coverage --repo framework --update-baseline` rewrites it and refuses to raise any number.
+- **Complete checklists.** In every mode, a checklist that `docs/spring/*/slice.json` (or `--slice`) marks `"complete": true` must have every element classified and none excluded as `deferred`, or the run fails with FLINT-E1008. Developer-facing elements must be ported or adapted, not postponed.
+- **Release** (`--release`, or no baseline). Any unclassified element fails with FLINT-E1002. This is what the release requires (ADR-030 section 8).
+
+Run `flint api coverage --repo framework` or `--repo boot` before each push, and lower the baseline in the same commit as the classifications that earn it.
 
 **Checklists.** A slice file (`flint.api-slice/1`) names a porting slice's checklists. Each entry gives an upstream (`project@version`), a module, and optionally package patterns (the mapping's `*` and `**`):
 
@@ -263,11 +268,11 @@ The entries follow these rules:
 - "Modified by the Flint authors" is missing;
 - an `epl-module` upstream is ported into a package whose `dub.sdl` does not declare `license "EPL-2.0"`.
 
-**Gate.** `python3 tools/gates.py --gate api [--repo R] [--workspace W] [--flint PATH]` runs both proofs for each repo, at the repo's checkout in the workspace:
+**Gate.** `python3 tools/gates.py --gate api [--repo R] [--workspace W] [--flint PATH] [--release]` runs both proofs for each repo, at the repo's checkout in the workspace. `tools/ci.py` runs it on every change, in ratchet mode:
 - `flint api headers` over the repo's packages;
 - `flint api coverage` of its mapping over every manifest `api/upstreams.json` assigns to it, with the manifests and pins read from the `flint` checkout.
 
-It fails on any header problem, invalid mapping or unclassified element. Until the port classifies every element, it reports the open counts and fails, as a release blocker should.
+It fails on any header problem, invalid mapping, coverage regression or unfinished complete checklist. With `--release` it also fails on any unclassified element, as the release requires.
 
 **Follow upstream.** `flint api diff old.json new.json` lists added (`+`), removed (`-`) and changed (`~`) elements. For a changed element it names each property that differs, such as `type: int -> long` or `annotations: (none) -> @Deprecated(since = "7.0.5")`. Parameter names and member order are not API. From v7.0.0 to v7.1.0, Spring Framework added 687 elements, removed 151 and changed 257.
 

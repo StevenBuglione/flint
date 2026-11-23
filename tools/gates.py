@@ -344,10 +344,12 @@ def run_flint_json(flint,arguments,home):
     try:return json.loads(out.stdout)
     except ValueError:raise ValueError('flint '+' '.join(arguments[:2])+' printed no JSON: '+(out.stderr or out.stdout)[-400:])
 
-def api_gate(repos,flint):
+def api_gate(repos,flint,release=False):
     """ADR-030 section 8: per repo, `flint api headers` over its packages (every ported file carries the section 7
     header for an upstream the licence matrix lets Flint port) and `flint api coverage` of its mapping over every
-    manifest api/upstreams.json assigns to it. Any header problem, invalid mapping or unclassified element fails."""
+    manifest api/upstreams.json assigns to it. Coverage is a ratchet: no module's unclassified count may rise above
+    the repo's coverage-baseline.json, and a checklist its slice marks complete must be complete. With `release`,
+    every element must be classified, as the release requires."""
     require(flint.is_file(),f'flint api gate: {flint} is missing; bootstrap it with python3 tools/install_toolchains.py --compiler flint')
     home=WORKSPACE.checkout('flint')
     pins=json.loads((home/'api'/'upstreams.json').read_text(encoding='utf-8'))['upstreams']
@@ -366,8 +368,12 @@ def api_gate(repos,flint):
             mapping=api_mapping(checkout,repo)
             if not mapping.is_file():failures.append(f'{repo}: owns upstream manifests but has no {mapping.relative_to(checkout)}')
             else:
-                coverage=run_flint_json(flint,['api','coverage','--repo',repo,'--mapping',str(mapping),'--show','0'],home)
+                slices=sum((['--slice',str(s)] for s in sorted((checkout/'docs'/'spring').glob('*/slice.json'))),[])
+                coverage=run_flint_json(flint,['api','coverage','--repo',repo,'--mapping',str(mapping),'--show','0',*slices,
+                                               *(['--release'] if release else [])],home)
                 entry['coverage']={m['project']+'@'+m['version']:{k:m['summary'][k] for k in ('total','ported','adapted','excluded','unclassified')} for m in coverage.get('manifests',[])}
+                entry['mode']=coverage.get('mode')
+                if coverage.get('improvements'):entry['lower_the_baseline']=coverage['improvements']
                 if not coverage.get('ok'):failures.append(f'{repo}: '+'; '.join(d['message'] for d in coverage.get('diagnostics',[]) if d['severity']=='error'))
         report[repo]=entry
     return report,failures
@@ -375,6 +381,7 @@ def api_gate(repos,flint):
 def main():
     ap=argparse.ArgumentParser();ap.add_argument('--package',action='append',choices=sorted(P));ap.add_argument('--gate',choices=['structural','baseline','all','api'],required=True)
     ap.add_argument('--flint',type=Path,default=ROOT/'.flint'/'bin'/'flint',help='api gate: the flint executable (default: .flint/bin/flint)')
+    ap.add_argument('--release',action='store_true',help='api gate: require every element classified, not just the baseline ratchet')
     ap.add_argument('--evidence',type=Path);ap.add_argument('--baseline',type=Path)
     ap.add_argument('--repo',help='check only this repo\'s packages (policy/repos.json), as its own CI will after the split')
     ap.add_argument('--workspace',type=Path,help='flint.workspace/1 file: the checkouts of each repo at pinned commits; default: this monorepo')
@@ -387,7 +394,7 @@ def main():
     require(a.repo is None or a.repo in {r for r,_ in package_repos(ROOT).values()},'unknown repo '+str(a.repo))
     if a.gate=='api':
         repos=[a.repo] if a.repo else sorted({r for r,_ in package_repos(ROOT).values()}|{u['repo'] for u in json.loads((ROOT/'api'/'upstreams.json').read_text(encoding='utf-8'))['upstreams']})
-        report,failures=api_gate(repos,a.flint.resolve())
+        report,failures=api_gate(repos,a.flint.resolve(),a.release)
         print(json.dumps({'api':report,'failures':failures},indent=2))
         require(not failures,'api: '+' | '.join(failures))
         return

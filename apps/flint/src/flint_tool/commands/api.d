@@ -147,6 +147,14 @@ struct CoverageCommand
     string repo;
     /// Unclassified ids to print per manifest.
     size_t shown;
+    /// Require every element classified, ignoring the baseline.
+    bool release;
+    /// Lower the baseline to the current counts.
+    bool updateBaseline;
+    /// Baseline path; default `coverage-baseline.json` beside the mapping.
+    string baseline;
+    /// Slice files whose `complete` checklists must be complete; default `docs/spring/*/slice.json`.
+    const(string)[] slices;
 }
 
 /// The manifests and mapping to classify: as named, or the repo's (api/upstreams.json `repo`).
@@ -189,7 +197,7 @@ int commandApiCoverage(ref Session session, const ref CoverageCommand command)
     import std.conv : to;
     import std.file : exists, readText;
     import std.path : buildPath;
-    import flint_tool.api.coverage : Mapping, parseMapping, rulebookVersion;
+    import flint_tool.api.coverage : Classifier, Mapping, parseMapping, rulebookVersion;
     import flint_tool.commands.output : finish;
     import flint_tool.support.files : readIfPresent;
 
@@ -224,10 +232,11 @@ int commandApiCoverage(ref Session session, const ref CoverageCommand command)
     }
     payload.mapping = mappingPath;
     payload.rulebook = mapping.rulebook;
-    classifyManifests(session, report, payload, mapping, manifests, shown);
-    if (payload.unclassified)
-        report.error("FLINT-E1002", to!string(payload.unclassified) ~ " API elements are unclassified",
-                "classify each as ported, adapted or excluded in " ~ mappingPath);
+    const classifier = Classifier(mapping);
+    Classified classified;
+    classifyManifests(session, report, payload, mapping, classifier, manifests, shown, classified);
+    applyBaseline(session, report, payload, command, mappingPath, classified);
+    checkComplete(session, report, payload, command.slices, classified, classifier);
     // Unclassified ids can number tens of thousands, past flint.serde's array limit: they are written directly.
     string ids = "{";
     foreach (index, ref row; payload.manifests)
@@ -235,13 +244,21 @@ int commandApiCoverage(ref Session session, const ref CoverageCommand command)
     return finishWith(session, report, payload, "unclassified_ids", ids ~ "}");
 }
 
-private void classifyManifests(ref Session session, ref Report report, ref CoverageReport payload,
-        const ref imported!"flint_tool.api.coverage".Mapping mapping, const(string)[] manifests, size_t shown)
+/// The manifests a coverage run classified, and their results.
+private struct Classified
 {
-    import flint_tool.api.coverage : Classifier, coverage;
+    imported!"flint_tool.api.manifest".Manifest[] manifests;
+    imported!"flint_tool.api.coverage".ManifestCoverage[] results;
+}
+
+private void classifyManifests(ref Session session, ref Report report, ref CoverageReport payload,
+        const ref imported!"flint_tool.api.coverage".Mapping mapping,
+        const ref imported!"flint_tool.api.coverage".Classifier classifier,
+        const(string)[] manifests, size_t shown, ref Classified classified)
+{
+    import flint_tool.api.coverage : coverage;
     import flint_tool.api.manifest : Manifest, loadManifest;
 
-    const classifier = Classifier(mapping);
     foreach (path; manifests)
     {
         Manifest manifest;
@@ -269,8 +286,106 @@ private void classifyManifests(ref Session session, ref Report report, ref Cover
         row.unclassified = result.unclassified;
         payload.unclassified += result.unclassified.length;
         payload.manifests ~= row;
+        classified.manifests ~= manifest;
+        classified.results ~= result;
         if (!session.json)
             session.say(coverageTable(row, shown));
+    }
+}
+
+/// The ratchet: with a baseline, fail on any module whose unclassified count rose; `--update-baseline` lowers it;
+/// `--release`, or no baseline, requires every element classified.
+private void applyBaseline(ref Session session, ref Report report, ref CoverageReport payload,
+        const ref CoverageCommand command, string mappingPath, const ref Classified classified)
+{
+    import std.conv : to;
+    import std.file : exists, readText;
+    import std.path : buildPath, dirName;
+    import flint_tool.api.baseline : Baseline, baselineOf, compare, lowered, parseBaseline, renderBaseline;
+    import flint_tool.support.files : writeIfChanged;
+
+    const path = command.baseline.length ? command.baseline : buildPath(dirName(mappingPath), "coverage-baseline.json");
+    const strict = command.release || (!exists(path) && !command.updateBaseline);
+    payload.mode = command.updateBaseline ? "update-baseline" : strict ? "release" : "ratchet";
+    if (strict)
+    {
+        if (payload.unclassified)
+            report.error("FLINT-E1002", to!string(payload.unclassified) ~ " API elements are unclassified",
+                    "classify each as ported, adapted or excluded in " ~ mappingPath);
+        return;
+    }
+    payload.baseline = path;
+    Baseline recorded;
+    string error;
+    if (exists(path) && !parseBaseline(readText(path), recorded, error))
+    {
+        report.error("FLINT-E1004", path ~ ": " ~ error, "restore it from git");
+        return;
+    }
+    const current = baselineOf(classified.results);
+    if (command.updateBaseline)
+    {
+        string[] raised;
+        const next = lowered(recorded, current, raised);
+        foreach (message; raised)
+            report.error("FLINT-E1007", message, "the baseline only goes down: classify the elements instead");
+        const verb = exists(path) ? "Lowered" : "Recorded";
+        if (raised.length == 0 && writeIfChanged(path, renderBaseline(next)))
+            session.progress(verb, path ~ " at " ~ to!string(next.total) ~ " unclassified");
+        return;
+    }
+    const ratchet = compare(recorded, current);
+    payload.regressions = ratchet.regressions.dup;
+    payload.improvements = ratchet.improvements.dup;
+    foreach (message; ratchet.regressions)
+        report.error("FLINT-E1007", message, "classify the new elements in " ~ mappingPath);
+    if (ratchet.improvements.length)
+    {
+        const improved = to!string(ratchet.improvements.length);
+        session.progress("Improved", improved ~ " modules; lower the baseline with --update-baseline");
+    }
+}
+
+/// Every checklist a slice marks `complete` must have every element classified and none deferred.
+private void checkComplete(ref Session session, ref Report report, ref CoverageReport payload,
+        const(string)[] slicePaths, const ref Classified classified,
+        const ref imported!"flint_tool.api.coverage".Classifier classifier)
+{
+    import std.conv : to;
+    import std.file : exists, readText;
+    import std.path : buildPath;
+    import flint_tool.api.checklist : Slice, parseSlice, unfinished;
+    import flint_tool.support.files : findFiles;
+
+    string[] paths = slicePaths.dup;
+    if (paths.length == 0)
+        foreach (relative; findFiles(buildPath("docs", "spring"), "*/slice.json"))
+            paths ~= buildPath("docs", "spring", relative);
+    foreach (path; paths)
+    {
+        Slice slice;
+        string error;
+        if (!exists(path) || !parseSlice(readText(path), slice, error))
+        {
+            report.error("FLINT-E1004", path ~ ": " ~ (error.length ? error : "missing"), "fix the slice file");
+            continue;
+        }
+        foreach (ref entry; slice.checklists)
+        {
+            if (!entry.complete)
+                continue;
+            foreach (ref manifest; classified.manifests)
+            {
+                if (manifest.project ~ "@" ~ manifest.version_ != entry.upstream)
+                    continue;
+                payload.complete ~= entry.name;
+                const open = unfinished(entry, manifest, classifier);
+                if (open.length)
+                    report.error("FLINT-E1008", entry.name ~ " is marked complete in " ~ path ~ ", but " ~ to!string(
+                            open.length) ~ " elements are not ported, adapted or excluded for good, "
+                            ~ "first " ~ open[0], "finish them, or remove \"complete\" from the slice");
+            }
+        }
     }
 }
 
@@ -608,8 +723,13 @@ private struct CoverageReport
     Diagnostic[] diagnostics;
     string mapping;
     string repo;
+    string mode;
+    string baseline;
     uint rulebook;
     size_t unclassified;
+    string[] regressions;
+    string[] improvements;
+    string[] complete;
     CoverageManifest[] manifests;
 }
 

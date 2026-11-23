@@ -563,4 +563,15 @@ immutable CodeInfo[] catalog = [
             "// Ported from spring-framework v7.1.0: spring-core/src/main/java/org/springframework/util/Assert.java\n"
             ~ "// Copyright 2002-present the original author or authors.\n"
             ~ "// Licensed under the Apache License, Version 2.0.\n// Modified by the Flint authors."),
+    CodeInfo("FLINT-E1007", ExitCode.user, "API coverage fell below its baseline",
+            "A repo's coverage-baseline.json, beside its mapping, records how many elements of each module are "
+            ~ "still unclassified. The count may only go down: a module above its baseline, or a manifest the "
+            ~ "baseline has not recorded, fails, and --update-baseline refuses to raise a number.",
+            "flint api coverage --repo framework\nflint api coverage --repo framework --update-baseline"),
+    CodeInfo("FLINT-E1008", ExitCode.user, "a module marked complete is not",
+            "A checklist marked \"complete\": true in a slice file must have every element classified, with "
+            ~ "every developer-facing element ported or adapted: an unclassified element, or one excluded as "
+            ~ "deferred, keeps it from being complete.",
+            `{"name": "spring-jdbc", "upstream": "spring-framework@v7.1.0", "module": "spring-jdbc", `
+            ~ `"complete": true}`),
 ];
