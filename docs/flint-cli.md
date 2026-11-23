@@ -55,6 +55,10 @@ flint check
 | `flint add <starter>... [--plan]` | Wire starters (`web`, ...; listed in `policy/starters.json`): add `flint:starter-<name>` to `[dependencies]`, append its configuration section to `config/application.toml` when missing, and relock (ADR-028). |
 | `flint openapi [-o FILE] [--typescript FILE]` | Build a starter-web project, take the OpenAPI 3.1 document flint:web generated from its controllers (the app's `--openapi`), name it after `flint.toml`, and write it; `--typescript` also writes a typed `fetch` client (ADR-028). |
 | `flint receipt <artifact> [--canonical]` | Verify an artifact against its receipt and the current toolchain. |
+| `flint api fetch [projects...] [--cache DIR]` | Download the upstream source archives pinned in `api/upstreams.json` into the reference cache, verified by SHA-256 (ADR-030). Never compiles them. |
+| `flint api extract --source DIR --project P --version TAG [-o FILE] [--exclude PREFIX]...` | Write the API manifest of an upstream Java source tree: every public and protected type and member ([API manifests](#api-manifests)). |
+| `flint api coverage --manifest FILE... [--mapping FILE] [--show N]` | Classify every manifest element against `api/mapping.json`, print per-module percentages, and fail on unclassified elements. |
+| `flint api diff <old> <new>` | List the API elements added, removed or changed between two manifests. |
 
 Every command accepts `--json` and `--help`. Commands acting on a project take `--project DIR` (or `-C DIR`). `flint` never prompts.
 
@@ -115,6 +119,7 @@ error[FLINT-E0401] module name does not match its file path
 | E07xx | Build, test and run |
 | E08xx | Toolchain and environment |
 | E09xx | Receipts |
+| E10xx | API manifests (`flint api`) |
 
 ### Compiler errors from library code
 
@@ -162,8 +167,71 @@ Command fields:
 | `flint.config/1` | `project`, `profile`, `files`, `keys` (`key`, `value`, `source`) |
 | `flint.generate/1` | `project`, `kind`, `name`, `files` (`path`, `content`), `dependencies_added`, `next`, `plan` |
 | `flint.receipt/1` | `artifact`, `receipt`, `canonical`, `non_canonical_reasons`, `profile`, `commit` |
+| `flint.api-fetch/1` | `cache`, `fetched` (`project`, `version`, `directory`, `cached`, `licence`) |
+| `flint.api-extract/1` | `project`, `version`, `output`, `files`, `types`, `methods`, `excludes`, `modules` (`name`, `types`, `methods`, `constructors`, `fields`, `constants`, `attributes`, `components`) |
+| `flint.api-coverage/1` | `mapping`, `rulebook`, `unclassified`, `manifests` (`manifest`, `project`, `version`, `summary`, `modules`; each tally has `name`, `total`, `ported`, `adapted`, `excluded`, `unclassified`, `classified_percent`), `unclassified_ids` (`project@version` → element ids) |
+| `flint.api-diff/1` | `older`, `newer`, `added`, `removed`, `changed`, `differences` (`change`, `kind`, `id`, `details`) |
 
 Usage errors that occur before a command runs use `flint.usage/1`. A field is added only with a new schema version.
+
+## API manifests
+
+ADR-030 makes Flint a port of Spring. The `flint api` commands prove the port is complete, element by element, against the pinned upstream sources.
+
+**Fetch.** `api/upstreams.json` in the Flint home pins each upstream archive by URL and SHA-256:
+- the Spring projects as GitHub tag archives: Framework v7.1.0, Boot v4.2.0, and the portfolio tags Boot v4.2.0 manages (Security 7.2.0, Data Commons, Relational and JPA 4.2.0, Batch v6.1.0), plus Spring AI v2.1.0;
+- third-party APIs as Maven `-sources.jar`s, at the versions Boot v4.2.0 manages: Jakarta Validation 3.1.1, Persistence 3.2.0 and Servlet 6.1.0, Jackson databind 3.1.8, SLF4J 2.0.20 and Micrometer core 1.18.0.
+
+`flint api fetch` unpacks them into `<flint home>/.flint/cache/api/<project>-<version>/` (`FLINT_CACHE` relocates the cache, `--cache` overrides it). A digest mismatch is an error, and nothing in the cache is ever compiled. `FLINT_OFFLINE=1` uses the cache only.
+
+**Extract.** `flint api extract` reads declarations with a Java parser written in D. It skips method bodies and initializers by balanced brackets, after a lexer that understands comments, strings, characters and text blocks. Its output is the manifest, `api/upstream/<project>-<version>.json` by default (`flint.api-manifest/1`). That manifest lists:
+- every public and protected type, top-level and nested: its kind (`class`, `interface`, `enum`, `record`, `annotation`), modifiers, annotations, type parameters and supertypes;
+- each visible member: methods, constructors (including a class's implicit default constructor and a record's canonical one), fields, enum constants, annotation attributes with their defaults, and record components, with their signatures and annotations.
+
+Interface members count as public, and the members of a type that is not visible are not listed. Which files count:
+- In a Gradle or Maven tree, only `<module>/src/main/java`, where no other `src` directory lies above it. That leaves out `src/test`, `src/testFixtures`, `src/jmh` and build plugins' sample projects. The module is the directory above `src`.
+- A flat `-sources.jar` is one module named after the project.
+- Packages named `internal` are always left out, as are `package-info.java` and `module-info.java`.
+- Each pin's `exclude` prefixes are left out (`buildSrc`, `framework-docs`, Boot's smoke and integration tests), plus any `--exclude`.
+
+Kotlin and Groovy sources are not read.
+
+Every element has an id, which the mapping and diffs key on:
+- a type's id is its canonical Java name, such as `org.springframework.http.HttpStatus.Series`;
+- a member's id is the type id, `#` and its signature: `query(String,RowMapper)`, `<init>(DataSource)`, or a field, constant, attribute or component name.
+
+Signatures erase annotations and type arguments, as Java's overload identity does. The manifest holds one type per line, so it diffs line by line.
+
+`--version` is accepted for `--tag`, since `flint.cli` reserves `--version` for itself.
+
+**Classify.** `api/mapping.json` has the shape the rulebook ([`docs/spring/api-mapping.md`](spring/api-mapping.md)) describes:
+
+```json
+{"rulebook": 1,
+ "upstream": ["spring-framework@v7.1.0", "spring-boot@v4.2.0"],
+ "elements": {
+   "org.springframework.http.HttpStatus": {"status": "ported", "d": "flint.http.HttpStatus"},
+   "org.springframework.http.ResponseEntity": {"status": "adapted", "rules": ["R12", "R13"], "d": "flint.http.ResponseEntity"},
+   "org.springframework.jmx.**": {"status": "excluded", "category": "jvm-platform"},
+   "org.springframework.beans.factory.xml.**": {"status": "excluded", "category": "deferred", "phase": "3"}}}
+```
+
+The entries follow these rules:
+- **Keys.** A key is an element id or a pattern: `*` matches within one name (no `.`, `#`, `(`, `)` or `,`), and `**` matches anything.
+- **Precedence.** An exact id wins. Among patterns, the longest literal text before the first wildcard wins, then fewer `**`, then the longer pattern.
+- **Status.** `ported` needs a D symbol `d` under `flint.`. `adapted` needs one or more of the rules R1–R14. `excluded` needs one of the rulebook's categories, and `deferred` must also name its `phase`.
+- **Rulebook version.** `rulebook` must equal the version in the rulebook.
+- **Upstreams.** Each manifest classified must be listed under `upstream`.
+
+`flint api coverage` prints, per module, the element count and how many are ported, adapted, excluded and unclassified, then the first `--show` unclassified ids (default 20). It exits non-zero (FLINT-E1002) while anything is unclassified. `--json` lists every unclassified id.
+
+**Follow upstream.** `flint api diff old.json new.json` lists added (`+`), removed (`-`) and changed (`~`) elements. For a changed element it names each property that differs, such as `type: int -> long` or `annotations: (none) -> @Deprecated(since = "7.0.5")`. Parameter names and member order are not API. From v7.0.0 to v7.1.0, Spring Framework added 687 elements, removed 151 and changed 257.
+
+```bash
+flint api fetch spring-framework spring-boot
+flint api extract --source .flint/cache/api/spring-framework-v7.1.0 --project spring-framework --version v7.1.0
+flint api coverage --manifest api/upstream/spring-framework-v7.1.0.json --manifest api/upstream/spring-boot-v4.2.0.json
+```
 
 ## The project
 
