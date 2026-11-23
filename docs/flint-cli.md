@@ -378,6 +378,10 @@ The pinned platform modules (the core packages, framework modules and Boot libra
 
 The receipt's `platform_archives` lists each linked module with its key and archive SHA-256; it is empty when the modules compiled from source.
 
+### The AOT library
+
+A Boot application's Flint AOT modules (docs/spring/aot-contract.md) build in two parts. The project compiles the registry and the modules generated for its own `src/` modules. The modules generated for the platform and for dependencies, such as Boot's auto-configuration, are in `.flint/generated/aot-library`. They import no project module and change only with the platform or the closure, so they build as a library that DUB keeps across edits. Without the split, a one-line edit to gs-rest-service recompiled all eleven generated modules, and its edit build took 0.98 s. With the split it recompiles three and takes 0.69 s. `flint_aot_library.d`, compiled with the project, imports each library module. When DMD archives the library with `-lib`, each function becomes its own archive member, so a module's `ModuleInfo` reaches the link only through an import. The `ModuleInfo` in turn brings the static constructors of the platform modules the module imports.
+
 ### Receipts
 
 Every artifact has `<artifact>.receipt.json` (`flint.receipt/1`) next to it. Workspace package artifacts have theirs in `.flint/receipts/`. A receipt records the identities behind the artifact: tool, project, manifest and lock hashes, source commit and dirtiness, toolchain components and hashes, native install receipt, profile, flags actually passed, additions, waivers, command, influential environment and output hashes. An artifact is **canonical** when no flags were added, the compiler belongs to the profile, and the toolchain verifies against its receipt. `flint receipt --canonical` and measurement refuse anything else.

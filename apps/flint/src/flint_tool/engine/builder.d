@@ -607,6 +607,22 @@ private bool writeRecipes(ref Session session, const ref Manifest manifest, cons
     extras.diagnosticFlags = diagnosticFlags;
     extras.scanned = writeScan(session, manifest, resolution);
     extras.aot = aot;
+    if (aot)
+    {
+        import flint_tool.engine.recipe : aotLibraryDirectory, renderAotLibraryLink, renderAotLibraryRecipe;
+
+        string[] library, modules;
+        splitAotModules(manifest.root, extras.aotOwn, library, modules);
+        if (library.length)
+        {
+            writeIfChanged(buildPath(manifest.root, aotLibraryDirectory, "dub.sdl"),
+                    renderAotLibraryRecipe(session.home, resolution, library, diagnosticFlags, result.platform.active));
+            writeIfChanged(buildPath(manifest.root, aotLibraryDirectory, "flint_aot_library.d"),
+                    renderAotLibraryLink(modules));
+        }
+        else
+            extras.aotOwn = null;
+    }
     extras.platform = result.platform.active;
     extras.platformLflags = linkGroup(result.platform.archives);
     if (result.native.objects.length)
@@ -650,6 +666,53 @@ private bool writeRecipes(ref Session session, const ref Manifest manifest, cons
                 renderDependencyRecipe(session.home, item, resolution, result.platform.active));
     }
     return true;
+}
+
+/// Split Flint AOT's modules, relative to the root recipe: `own` are the registry and the modules generated for the
+/// project's source (`flint_aot/<module path>` where `src/<module path>` exists), which an edit may change;
+/// `library` are the rest, generated for platform and dependency modules, which build as the AOT library, and
+/// `modules` their module names.
+private void splitAotModules(string root, out string[] own, out string[] library, out string[] modules)
+{
+    import std.algorithm.sorting : sort;
+    import std.array : replace;
+    import std.file : SpanMode, dirEntries, exists;
+    import std.path : buildPath, dirSeparator, extension, relativePath;
+    import flint_tool.engine.aot.driver : aotDirectory;
+
+    const generated = buildPath(root, aotDirectory);
+    const prefix = "flint_aot" ~ dirSeparator;
+    foreach (entry; dirEntries(generated, SpanMode.depth))
+    {
+        if (!entry.isFile || entry.name.extension != ".d")
+            continue;
+        const relative = relativePath(entry.name, generated);
+        const generatedForSource = relative.length > prefix.length && relative[0 .. prefix.length] == prefix;
+        const recipeRelative = "../aot/" ~ relative.replace(dirSeparator, "/");
+        if (generatedForSource && !exists(buildPath(root, "src", relative[prefix.length .. $])))
+        {
+            library ~= recipeRelative;
+            modules ~= moduleOfPath(relative);
+        }
+        else
+            own ~= recipeRelative;
+    }
+    sort(own);
+    sort(library);
+    sort(modules);
+}
+
+/// `flint_aot.flint.web` for `flint_aot/flint/web/package.d`.
+private string moduleOfPath(string relative)
+{
+    import std.array : replace;
+    import std.path : dirSeparator, stripExtension;
+
+    string name = relative.stripExtension.replace(dirSeparator, ".");
+    enum suffix = ".package";
+    if (name.length > suffix.length && name[$ - suffix.length .. $] == suffix)
+        name = name[0 .. $ - suffix.length];
+    return name;
 }
 
 /// Refresh the working copy of each DUB package from its verified source when the source's hash changed.
