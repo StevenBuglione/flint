@@ -480,9 +480,13 @@ With `proxyBeanMethods` true (the default), the generator emits `<Name>__FlintCo
 
 ### 5.4 Definition order and conditions
 
-`dependsOn` names only `@DependsOn` values and, for a `@Bean` method, its configuration bean. A `@Bean` method's condition includes its class's, so its configuration bean exists whenever it does, and the runtime treats a missing name as an error, as Spring does for `@DependsOn`. Startup per bean: `create`, the `Aware` callbacks, `BeanPostProcessor.before`, `initialize(target)`, `BeanPostProcessor.after`, then `proxy(target)`.
+`dependsOn` names only `@DependsOn` values and, for a `@Bean` method, its configuration bean. A `@Bean` method's condition starts with `c.hasBeanNamed(<its configuration bean>)`, so its configuration bean exists whenever it does, and the runtime treats a missing name as an error, as Spring does for `@DependsOn`. Startup per bean: `create`, the `Aware` callbacks, `BeanPostProcessor.before`, `initialize(target)`, `BeanPostProcessor.after`, then `proxy(target)`.
 
-The registry adds definitions in Spring's order: user components by module name and then source order, then the `@Bean` methods of each configuration class after the class itself, then auto-configurations sorted by `@AutoConfigureOrder`, `@AutoConfigureAfter` and `@AutoConfigureBefore`, then their `@Bean` methods. Registration order is that order: the registry calls the generated modules in the order of their first definition, and each module registers its definitions in order. Since contract 2, every definition also carries `rank` (its position plus one), so the runtime can sort across modules.
+The registry adds definitions in Spring's order (`ConfigurationClassParser`, then the deferred auto-configuration imports):
+
+1. every scanned component's class definition, by module name and then source order;
+2. for each scanned configuration in that order: the classes it `@Import`s, then its `@EnableConfigurationProperties` types, then its `@Bean` methods. Imported configurations therefore register before the importer's `@Bean` methods, which override theirs (gh-24643). An imported class is placed at its first importer, once every importer's class definition is decided. It is defined once, as scanned when it is also scanned. Its condition is `(c.hasBeanNamed(<importer>) || ...) && <its own terms>` over the importers that are defined. `@Import` on an implemented interface or a superclass counts (gh-34820);
+3. the auto-configurations, sorted by `@AutoConfigureOrder`, `@AutoConfigureAfter` and `@AutoConfigureBefore`, each as its class definition, its imports and then its `@Bean` methods. Registration order is that order: the registry calls the generated modules in the order of their first definition, and each module registers its definitions in order. Since contract 2, every definition also carries `rank` (its position plus one), so the runtime can sort across modules.
 
 The runtime walks that order once, at startup, before creating anything:
 
@@ -527,7 +531,7 @@ private bool condition_dataSource(ConditionContext c) @safe
       result = Any.of((cast(shop.web.OwnerController) bean).findOwner(a.get(0).get!long));
   }
   ```
-- **Exception handlers** and **event listeners** get the same treatment, in `ExceptionHandlerSpec` and `EventListenerSpec` tables.
+- **Exception handlers** and **event listeners** get the same treatment, in `ExceptionHandlerSpec` and `EventListenerSpec` tables. A listener's event types are `@EventListener(classes)` (or `value`), else its single parameter's type, as in Spring's `resolveDeclaredEventTypes`; one `EventListenerSpec` is registered per type. A method with declared classes may take no parameter (it is called without the event) or one parameter that each class extends.
 - **Descriptors** serve message conversion (Jackson), validation (the constraint annotations are in `PropertyDescriptor.annotations`, with `@Constraint` composition already merged) and `@ConfigurationProperties` binding. The runtime never asks the type system anything the descriptor does not hold.
 
 ## 7. AOP proxies

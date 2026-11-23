@@ -3,11 +3,45 @@ module shop.pricing;
 
 import flint.beans.factory.annotation : Value;
 import flint.context.event : EventListener;
+import flint.core.annotation : ClassRef;
 import flint.stereotype : Component;
 
 @safe:
 
 /// Values computed from beans, placeholders and literals.
+/// Price events.
+abstract class PriceEvent
+{
+    /// What happened.
+    string label;
+
+    /// An event labelled `label`.
+    this(string label)
+    {
+        this.label = label;
+    }
+}
+
+/// A price went up.
+final class PriceRaised : PriceEvent
+{
+    /// ditto
+    this(string label)
+    {
+        super(label);
+    }
+}
+
+/// A price went down.
+final class PriceCut : PriceEvent
+{
+    /// ditto
+    this(string label)
+    {
+        super(label);
+    }
+}
+
 @Component class Pricing
 {
     /// `@clock.now()` is 42 in the sample.
@@ -31,6 +65,22 @@ import flint.stereotype : Component;
     @EventListener string onGreeting(string text)
     {
         return "re: " ~ text;
+    }
+
+    /// Price events seen by the listeners below.
+    string[] priceEvents;
+
+    /// `@EventListener(classes)` without a parameter: one listener per class (Spring's `@EventListener(X.class)`).
+    @EventListener(classes: [ClassRef("shop.pricing.PriceRaised"), ClassRef("shop.pricing.PriceCut")])
+    void onPriceEvent()
+    {
+        priceEvents ~= "any";
+    }
+
+    /// `@EventListener(classes)` with a parameter of their base type.
+    @EventListener(classes: [ClassRef("shop.pricing.PriceCut")]) void onPriceCut(PriceEvent event)
+    {
+        priceEvents ~= "cut " ~ event.label;
     }
 
     /// Large numbers only: the condition compiles to `context.argument(0).get!(long)() > 10L`.

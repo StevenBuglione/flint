@@ -19,6 +19,7 @@ descriptor: 2 properties, content = set through the descriptor
 creator: 1 constructor(s), parameters id, content -> 7 built by the canonical constructor
 enum: 2 constants, ordinal 1 = archived, ordinal 9 null = true
 spel: doubled=85 label="Shop FLINT is open" premium=true
+listeners: shop.pricing.PriceRaised, shop.pricing.PriceCut, shop.pricing.PriceCut; called: any, cut 10%
 shutdown: service stopped, store destroyed
 == prod profile
 application: shop.app.ShopApplication
@@ -41,4 +42,5 @@ descriptor: 2 properties, content = set through the descriptor
 creator: 1 constructor(s), parameters id, content -> 7 built by the canonical constructor
 enum: 2 constants, ordinal 1 = archived, ordinal 9 null = true
 spel: doubled=85 label="Shop FLINT is open" premium=true
+listeners: shop.pricing.PriceRaised, shop.pricing.PriceCut, shop.pricing.PriceCut; called: any, cut 10%
 shutdown: service stopped, store destroyed

@@ -404,10 +404,12 @@ struct ListenerPlan
     string bean;
     /// ditto
     string className;
-    /// Listener method and event type.
+    /// Listener method.
     string method;
-    /// ditto
-    string eventType;
+    /// The event types: `@EventListener(classes)`, else the parameter's type. One spec is registered per type.
+    string[] eventTypes;
+    /// The parameter's type; empty for a method without a parameter.
+    string parameterType;
     /// SpEL condition.
     string condition;
     /// `@Order`.
@@ -2518,17 +2520,24 @@ private final class Analysis
             const annotation = methodMerged.get(eventListener);
             if (annotation is null)
                 continue;
-            if (method.parameters.length != 1 || method.visibility != "public")
+            // Spring's resolveDeclaredEventTypes: the declared classes, else the single parameter's type.
+            auto classes = annotation.get("classes").strings;
+            if (classes.length == 0)
+                classes = annotation.get("value").strings;
+            const parameters = method.parameters.length;
+            if (method.visibility != "public" || parameters > 1 || (parameters == 0 && classes.length == 0))
             {
-                error("FLINT-E1108", "@EventListener method " ~ decl.name ~ "." ~ method.name
-                        ~ " must be public and " ~ "take the event as its only parameter", method.file, method.line);
+                error("FLINT-E1108", "@EventListener method " ~ decl.name ~ "." ~ method.name ~ " must be public "
+                        ~ "and take at most one parameter, the event, or name its event classes",
+                        method.file, method.line);
                 continue;
             }
             ListenerPlan listener;
             listener.bean = bean;
             listener.className = decl.fqn;
             listener.method = method.name;
-            listener.eventType = method.parameters[0].type.name;
+            listener.parameterType = parameters ? method.parameters[0].type.name : null;
+            listener.eventTypes = classes.length ? classes.dup : [listener.parameterType];
             listener.returnType = method.returns.name;
             listener.condition = annotation.text("condition");
             if (listener.condition.length)

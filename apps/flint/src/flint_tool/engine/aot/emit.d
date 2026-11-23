@@ -794,8 +794,8 @@ private struct Emitter
     string listenerInvoker(const ref ListenerPlan listener)
     {
         const id = sanitize(listener.className) ~ "_" ~ sanitize(listener.method);
-        const call = "(cast(" ~ listener.className ~ ") bean)." ~ listener.method ~ "(event.get!("
-            ~ listener.eventType ~ ")())";
+        const argument = listener.parameterType.length ? "event.get!(" ~ listener.parameterType ~ ")()" : "";
+        const call = "(cast(" ~ listener.className ~ ") bean)." ~ listener.method ~ "(" ~ argument ~ ")";
         // A non-void listener's result is published as replies (contract 3, invokeForResult).
         string text = listener.returnType == "void"
             ? "private void listen_" ~ id ~ "(Object bean, ref Any event)\n{\n    " ~ call ~ ";\n}\n\n"
@@ -955,12 +955,15 @@ private struct Emitter
         const order = listener.order == int.max ? "int.max" : listener.order.to!string;
         const condition = listener.conditionCode.length
             ? "        listener.conditionExpression = &condition_" ~ id ~ ";\n" : "";
-        return "    {\n        EventListenerSpec listener;\n        listener.bean = " ~ literal(
-                listener.bean) ~ ";\n        listener.eventType = " ~ literal(
-                listener.eventType) ~ ";\n        listener.condition = " ~ literal(
-                listener.condition) ~ ";\n        listener.order = " ~ order ~ ";\n        listener." ~ (
-                listener.returnType == "void" ? "invoke" : "invokeForResult") ~ " = &listen_"
-            ~ id ~ ";\n" ~ condition ~ "        registry.listener(listener);\n    }\n";
+        string text;
+        foreach (eventType; listener.eventTypes)
+            text ~= "    {\n        EventListenerSpec listener;\n        listener.bean = " ~ literal(
+                    listener.bean) ~ ";\n        listener.eventType = " ~ literal(
+                    eventType) ~ ";\n        listener.condition = " ~ literal(
+                    listener.condition) ~ ";\n        listener.order = " ~ order ~ ";\n        listener." ~ (
+                    listener.returnType == "void" ? "invoke" : "invokeForResult") ~ " = &listen_"
+                ~ id ~ ";\n" ~ condition ~ "        registry.listener(listener);\n    }\n";
+        return text;
     }
 
     string queryRegistration(const ref QueryPlan query)
