@@ -165,7 +165,7 @@ Status: proposed by the Milestone 9 implementation, for the project owner's revi
 
 ## Consequences
 
-- The vibe-coding benchmark can run: four tasks with black-box acceptance tests, a harness for Claude Code, Codex or any agent command, and a Flint reference for `cli-todo` that passes all 29 checks. Agent runs wait for a budget and a pinned model.
+- The vibe-coding benchmark can run: four tasks with black-box acceptance tests, a harness for Claude Code, Codex or any agent command, and a Flint reference for `cli-todo` that passes all 29 checks. The owner's canonical agent is `--agent codex --model gpt-6.2-sol --effort high` (Codex CLI 0.171.0).
 - A framework misuse reads as one error at the line that caused it, naming the field, handler or service. `tests/test_flint_diagnostics.py` compiles the misuse corpus with and without the fork's condensing and checks that condensing changes no object byte.
 - Editors get Flint-aware diagnostics as they type, and API hover, definition and completion, from `flint lsp`. `tests/test_flint_lsp.py` drives it as an LSP client: diagnostics following unsaved edits (a compiler error, then a policy error, then clean), and hover, definition and completion against the pinned API.
 - Edit, save, see: `flint watch` rebuilds and restarts, or retests, in one incremental cycle per change, and `flint run --debug` and the generated launch configurations show Flint values readably. `tests/test_flint_watch.py` covers the watch cycles, recovery from a broken edit, the library mode, the launch configurations, the gdb printers and `flint run --debug` under gdb.

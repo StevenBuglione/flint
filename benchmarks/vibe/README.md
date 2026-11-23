@@ -22,7 +22,7 @@ python3 tools/vibe_bench.py list
 python3 tools/vibe_bench.py reference cli-todo
 python3 tools/vibe_bench.py prepare cli-todo --language flint --dir /tmp/todo
 python3 tools/vibe_bench.py accept cli-todo --language flint --dir /tmp/todo
-python3 tools/vibe_bench.py run cli-todo --language flint --agent claude --runs 3
+python3 tools/vibe_bench.py run cli-todo --language flint --agent codex --model gpt-6.2-sol --effort high --runs 3
 python3 tools/vibe_bench.py report benchmarks/vibe/results/*.json
 ```
 
