@@ -1,6 +1,7 @@
 // Ported from spring-boot v4.2.0: module/spring-boot-jdbc/src/main/java/org/springframework/boot/jdbc/autoconfigure/DataSourceProperties.java
 // with JdbcProperties.java, DataSourceAutoConfiguration.java, DataSourceConfiguration.java and
-// DataSourceTransactionManagerAutoConfiguration.java from the same directory, and ../EmbeddedDatabaseConnection.java
+// DataSourceTransactionManagerAutoConfiguration.java, JdbcTemplateAutoConfiguration.java and
+// JdbcTemplateConfiguration.java from the same directory, and ../EmbeddedDatabaseConnection.java
 // Copyright 2012-present the original author or authors.
 // Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
 // Modified by the Flint authors: Java Beans getters and setters are kept (rulebook R6); `spring.*` keys
@@ -15,12 +16,13 @@ import flint.boot.autoconfigure : AutoConfiguration;
 import flint.boot.autoconfigure.condition : ConditionalOnClass, ConditionalOnMissingBean,
     ConditionalOnSingleCandidate;
 import flint.boot.context.properties : ClassRef, ConfigurationProperties, EnableConfigurationProperties;
-import flint.context.annotation : Bean;
+import flint.context.annotation : Bean, Primary;
 import flint.engine.aot.name : typeNameOf;
 import flint.engine.jdbc : FlintDataSource;
 import flint.beans.factory : BeanCreationException;
 import flint.javax.sql : DataSource;
-import flint.jdbc.support : JdbcTransactionManager;
+import flint.jdbc.core : JdbcTemplate;
+import flint.jdbc.support : JdbcTransactionManager, SQLExceptionTranslator;
 import flint.boot.convert : ChronoUnit, DurationUnit;
 import core.time : Duration;
 import flint.java.util : Optional;
@@ -452,7 +454,7 @@ final class DataSourceAutoConfiguration
 
 /// Auto-configuration of a `JdbcTransactionManager` for the single `DataSource`, unless the application defines a
 /// `TransactionManager`.
-@AutoConfiguration @ConditionalOnClass(null, [
+@afterDataSource @ConditionalOnClass(null, [
     "flint.jdbc.support.JdbcTransactionManager", "flint.transaction.TransactionManager"
 ])
 final class DataSourceTransactionManagerAutoConfiguration
@@ -463,5 +465,44 @@ final class DataSourceTransactionManagerAutoConfiguration
     JdbcTransactionManager transactionManager(DataSource dataSource)
     {
         return new JdbcTransactionManager(dataSource);
+    }
+}
+
+// `@AutoConfiguration(after = DataSourceAutoConfiguration.class)`, as a constant (dfmt 0.15 cannot parse named UDA
+// arguments).
+private enum AutoConfiguration afterDataSource = () {
+    AutoConfiguration configuration;
+    configuration.afterName = ["flint.boot.jdbc.autoconfigure.DataSourceAutoConfiguration"];
+    return configuration;
+}();
+
+/// Auto-configuration of a `JdbcTemplate` over the single `DataSource`, configured from `flint.jdbc.template.*`,
+/// unless the application defines `JdbcOperations`. Boot's `JdbcTemplateConfiguration` is folded in; its
+/// `NamedParameterJdbcTemplateConfiguration` joins when flint:jdbc provides `NamedParameterJdbcTemplate`.
+@afterDataSource @ConditionalOnClass(null, [
+    "flint.javax.sql.DataSource", "flint.jdbc.core.JdbcTemplate"
+])
+@ConditionalOnSingleCandidate(ClassRef("flint.javax.sql.DataSource"))
+@EnableConfigurationProperties([ClassRef(typeNameOf!JdbcProperties)])
+final class JdbcTemplateAutoConfiguration
+{
+    /// The primary `JdbcTemplate`. A single `SQLExceptionTranslator` bean replaces the default translator.
+    @Bean @Primary @ConditionalOnMissingBean([ClassRef("flint.jdbc.core.JdbcOperations")])
+    JdbcTemplate jdbcTemplate(DataSource dataSource, JdbcProperties properties,
+            SQLExceptionTranslator[] sqlExceptionTranslators)
+    {
+        auto jdbcTemplate = new JdbcTemplate(dataSource);
+        auto template_ = properties.getTemplate();
+        jdbcTemplate.setIgnoreWarnings(template_.isIgnoreWarnings());
+        jdbcTemplate.setFetchSize(template_.getFetchSize());
+        jdbcTemplate.setMaxRows(template_.getMaxRows());
+        if (template_.getQueryTimeout().isPresent())
+            jdbcTemplate.setQueryTimeout(cast(int) template_.getQueryTimeout().get().total!"seconds");
+        jdbcTemplate.setSkipResultsProcessing(template_.isSkipResultsProcessing());
+        jdbcTemplate.setSkipUndeclaredResults(template_.isSkipUndeclaredResults());
+        jdbcTemplate.setResultsMapCaseInsensitive(template_.isResultsMapCaseInsensitive());
+        if (sqlExceptionTranslators.length == 1)
+            jdbcTemplate.setExceptionTranslator(sqlExceptionTranslators[0]);
+        return jdbcTemplate;
     }
 }
