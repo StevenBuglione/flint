@@ -49,6 +49,9 @@ struct BuildRequest
     /// Link the pinned platform modules from the platform cache (ADR-030 section 5); `--no-platform-cache` turns
     /// it off and compiles them from source.
     bool platformCache = true;
+    /// Link the platform modules statically into a dev build (`--static`). Without it a dev build links them as one
+    /// shared object, so an edit relinks only the project (owner decision 2, 2026-11-23).
+    bool staticLink;
 }
 
 /// One finished build.
@@ -81,6 +84,8 @@ struct BuildOutcome
     /// The AOT library as a platform-cache entry: linked from the cache when `archive` is set, else stored there
     /// after the build compiled it (engine/platformcache.d `aotLibraryModule`).
     imported!"flint_tool.engine.platformcache".PlatformModule aotLibrary;
+    /// The shared platform object a dev build links (`linkShared`), or empty when it links archives.
+    string platformShared;
 }
 
 /// The profile, flags and DUB home a project build uses, settled before it prepares anything.
@@ -340,6 +345,9 @@ private bool preparePlatform(ref Session session, const ref Manifest manifest, c
     inputs.environment = buildEnvironment(session, toolchain, settings.spec, settings.dubHome, settings.dflags);
     inputs.cache = platformCacheRoot(session);
     inputs.workingDirectory = session.home.root;
+    // Owner decision 2 (2026-11-23): a DMD dev build links the platform as one shared object; --static, tests,
+    // release and size builds link its archives.
+    inputs.sharedLink = request.profile == "dev" && !request.test && !request.staticLink && result.compiler == "dmd";
     return planPlatform(session, manifest.root, resolution, inputs, result.platform, report);
 }
 
@@ -654,6 +662,8 @@ private bool writeRecipes(ref Session session, const ref Manifest manifest, cons
     extras.platform = result.platform.active;
     extras.platformLflags = linkGroup(extras.aotArchive.length
             ? result.platform.archives ~ extras.aotArchive : result.platform.archives);
+    if (result.platform.active && result.platform.inputs.sharedLink && !linkShared(result, extras, report))
+        return false;
     if (result.native.objects.length)
     {
         NativeCPolicy policy;
@@ -695,6 +705,39 @@ private bool writeRecipes(ref Session session, const ref Manifest manifest, cons
         writeIfChanged(buildPath(directory, "dub.sdl"), renderDependencyRecipe(session.home, item,
                 resolution, result.platform.active, directory));
     }
+    return true;
+}
+
+/// Link the platform as one shared object and point the project's link at it (owner decision 2): the native
+/// libraries move into the shared object, and the project links druntime and Phobos as a shared library too, so
+/// every D module shares one runtime.
+private bool linkShared(ref BuildOutcome result,
+        ref imported!"flint_tool.engine.recipe".RecipeExtras extras, ref Report report)
+{
+    import std.path : dirName;
+    import flint_tool.engine.platformcache : linkSharedPlatform, phobosDirectory, platformNativeFlags;
+
+    string[] extraArchives, extraKeys;
+    if (extras.aotArchive.length)
+    {
+        extraArchives ~= extras.aotArchive;
+        extraKeys ~= result.aotLibrary.key;
+    }
+    const native = platformNativeFlags(result.platform.modules) ~ result.natives.linkFlags;
+    string failure;
+    if (!linkSharedPlatform(result.platform, extraArchives, extraKeys, native, result.platformShared, failure))
+    {
+        report.error("FLINT-E0712",
+                "the platform cache could not be prepared: the shared platform object failed " ~ "to link",
+                "flint build --static links the archives instead; the linker said:\n" ~ tail(failure));
+        return false;
+    }
+    extras.platformLflags = [
+        result.platformShared, "-rpath=" ~ dirName(result.platformShared),
+        "-rpath=" ~ phobosDirectory(result.platform.inputs.compiler)
+    ];
+    extras.platformDflags = ["-defaultlib=libphobos2.so"];
+    extras.nativeFlags = null;
     return true;
 }
 
@@ -896,6 +939,17 @@ private Receipt projectReceipt(ref Session session, const ref Manifest manifest,
 
         receipt.platform_archives ~= PlatformArchiveRecord(result.aotLibrary.name,
                 result.aotLibrary.key, result.aotLibrary.archiveSha256);
+    }
+    if (result.platformShared.length)
+    {
+        import std.path : baseName, dirName;
+        import flint_tool.engine.receipt : PlatformArchiveRecord;
+        import flint_tool.support.files : cachedSha256File;
+
+        // The shared object a dev build loads at run time: its directory is `shared-<key>`.
+        receipt.platform_archives ~= PlatformArchiveRecord("flint-platform-shared",
+                baseName(dirName(result.platformShared))["shared-".length .. $],
+                cachedSha256File(result.platformShared));
     }
     receipt.portable = result.natives.nonPortable.length == 0;
     receipt.non_portable_reasons = result.natives.nonPortable.dup;

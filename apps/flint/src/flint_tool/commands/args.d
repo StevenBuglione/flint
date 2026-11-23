@@ -46,6 +46,9 @@ struct BuildArgs
     /// Compile the platform modules from source.
     @Option("no-platform-cache", 0, "Compile the platform modules from source instead of linking cached archives")
     bool noPlatformCache;
+    /// Link the platform's archives into a dev build instead of the shared platform object.
+    @Option("static", 0, "Link the platform modules statically into a dev build, as release and size builds do")
+    bool staticLink;
     /// Project directory.
     @Option("project", 'C', "Run in this project or workspace directory") string project;
     /// Stream tool output.

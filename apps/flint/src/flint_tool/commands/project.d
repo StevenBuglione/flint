@@ -302,6 +302,7 @@ int commandBuild(ref Session session, BuildArgs args, string[] passthrough)
     auto request = requestOf(args.profile, args.compiler, args.dflags ~ passthrough, args.lflags,
             args.verify, args.locked, args.force);
     request.platformCache = !args.noPlatformCache;
+    request.staticLink = args.staticLink;
     if (target.kind == TargetKind.workspace)
     {
         import flint_tool.home.policy : ProfileSpec;

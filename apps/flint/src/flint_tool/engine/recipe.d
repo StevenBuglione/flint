@@ -38,6 +38,8 @@ struct RecipeExtras
     bool platform;
     /// The linker flags that link the platform cache's archives.
     string[] platformLflags;
+    /// Compiler flags of a shared-object dev link: druntime and Phobos as a shared library.
+    string[] platformDflags;
 }
 
 /// Render the root recipe for a project.
@@ -65,6 +67,8 @@ string renderRecipe(const ref Home home, const ref Manifest manifest, const ref 
         text ~= fields("dflags", dubEscaped(extras.diagnosticFlags));
     if (extras.platformLflags.length)
         text ~= fields("lflags", dubEscaped(extras.platformLflags));
+    if (extras.platformDflags.length)
+        text ~= fields("dflags", extras.platformDflags);
     foreach (name; resolution.direct)
         text ~= dependencyLine(home, resolution, name, "", "../deps/", extras.platform);
     foreach (profile; profileNames)

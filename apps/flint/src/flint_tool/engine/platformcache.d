@@ -91,6 +91,8 @@ struct PlatformPlan
     /// Hash of the tools, flags, target and every platform module's key: what an archive compiled against the
     /// platform depends on besides its own sources (`aotLibraryModule`).
     string platformKey;
+    /// The inputs the plan was made with.
+    PlatformInputs inputs;
 }
 
 /// What keys and builds the platform modules: the tools, flags and environment of the project's build.
@@ -117,6 +119,21 @@ struct PlatformInputs
     /// Where DUB runs the compiler: the home. Debug information records the compiler's working directory, so a
     /// per-project directory would make every project's archives differ.
     string workingDirectory;
+    /// The build links the platform as one shared object (`linkSharedPlatform`): the platform recipe then leaves
+    /// the native libraries to that object.
+    bool sharedLink;
+
+    /// A copy that owns its environment.
+    PlatformInputs copy() const
+    {
+        PlatformInputs result = {
+            dub: dub, compiler: compiler, compilerSha256: compilerSha256, dubSha256: dubSha256, release: release,
+            dflags: dflags, target: target, cache: cache, workingDirectory: workingDirectory, sharedLink: sharedLink
+        };
+        foreach (ref variable; environment)
+            result.environment ~= EnvVar(variable.name, variable.value);
+        return result;
+    }
 }
 
 /// Whether a build may link the platform cache. `FLINT_PLATFORM_CACHE=0` turns it off. Sanitizer and cross builds
@@ -179,9 +196,10 @@ bool planPlatform(ref Session session, string root, const ref Resolution resolut
         if (item.archive.length)
             plan.archives ~= item.archive;
     }
-    writeIfChanged(buildPath(root, platformDirectory, "dub.sdl"), renderPlatformRoot(plan.modules));
+    writeIfChanged(buildPath(root, platformDirectory, "dub.sdl"), renderPlatformRoot(plan.modules, inputs.sharedLink));
     plan.prelude = buildPath(root, preludeFile);
     plan.cache = inputs.cache;
+    plan.inputs = inputs.copy();
     plan.platformKey = platformKeyOf(plan.modules, inputs);
     writeIfChanged(plan.prelude, renderPrelude(plan.modules, resolution.direct, inputs.dflags));
     plan.active = true;
@@ -543,7 +561,7 @@ private void setField(ubyte[] field, string value)
 /// The `flint` recipe the project links: an archive-backed module is its import paths and settings without
 /// sources, and a module without a target only gathers its dependencies. The archives themselves are linked by
 /// the project's recipe, as one group (linkGroup).
-string renderPlatformRoot(scope const PlatformModule[] modules)
+string renderPlatformRoot(scope const PlatformModule[] modules, bool sharedLink = false)
 {
     import flint_tool.engine.recipe : quoted;
 
@@ -553,9 +571,10 @@ string renderPlatformRoot(scope const PlatformModule[] modules)
     {
         text ~= "subPackage {\n    name " ~ quoted(item.name[6 .. $]) ~ "\n    targetType " ~ quoted(
                 item.archive.length ? "sourceLibrary" : "none") ~ "\n";
-        text ~= values("importPaths", item.importPaths, true) ~ values("stringImportPaths", item.stringImportPaths,
-                true) ~ values("versions", item.versions) ~ values("dflags",
-                item.dflags) ~ values("lflags", item.lflags) ~ values("libs", item.libs);
+        text ~= values("importPaths", item.importPaths, true) ~ values("stringImportPaths",
+                item.stringImportPaths, true) ~ values("versions", item.versions) ~ values("dflags", item.dflags);
+        if (!sharedLink) // the shared object carries the native libraries
+            text ~= values("lflags", item.lflags) ~ values("libs", item.libs);
         foreach (dependency; item.dependencies)
             text ~= "    dependency " ~ quoted(dependency) ~ " version=\"*\"\n";
         text ~= "}\n";
@@ -618,6 +637,105 @@ PlatformModule aotLibraryModule(const ref PlatformPlan plan, string aotDirectory
     item.files = files.dup;
     item.key = sha256Hex(cast(const(ubyte)[]) text);
     return item;
+}
+
+/// Shared-object dev linking (owner decision 2, 2026-11-23). The platform's archives, and the cached AOT library,
+/// are linked once into `<cache>/platform/shared-<key>/libflint-platform.so` with the native libraries they use,
+/// against druntime and Phobos as a shared library. A dev build then links only the project's objects against it,
+/// so an edit relinks the project and not the platform. The key covers the platform key (tools, flags, target and
+/// every module's key), the extra archives' keys and the native linker flags. Linux only, as the cache is.
+bool linkSharedPlatform(const ref PlatformPlan plan, scope const string[] extraArchives,
+        scope const string[] extraKeys, scope const string[] nativeFlags, out string sharedObject, out string failure)
+{
+    import std.conv : to;
+    import std.file : exists, mkdirRecurse, rename, rmdirRecurse, write;
+    import std.path : buildPath;
+    import std.process : thisProcessID;
+    import flint_tool.support.files : sha256Hex;
+    import std.array : join;
+    import flint_tool.support.process : Launch, capture;
+
+    string text = "flint.platform-shared/2\nplatform " ~ plan.platformKey ~ "\n" ~ listed("extra",
+            extraKeys) ~ listed("native", nativeFlags);
+    const key = sha256Hex(cast(const(ubyte)[]) text);
+    const directory = buildPath(plan.cache, "platform", "shared-" ~ key);
+    sharedObject = buildPath(directory, "libflint-platform.so");
+    if (exists(sharedObject))
+        return true;
+    const partial = directory ~ "." ~ thisProcessID.to!string ~ ".partial";
+    if (exists(partial))
+        rmdirRecurse(partial);
+    mkdirRecurse(partial);
+    const stub = buildPath(partial, "flint_platform_shared.d");
+    write(stub, "module flint_platform_shared;\n");
+    // DMD moves a `-L` argument that names a file after its switches, outside --whole-archive, so each region
+    // reaches the linker as one `-Wl` argument through the C compiler driver, in order.
+    string[] command = [
+        plan.inputs.compiler, "-shared", "-defaultlib=libphobos2.so",
+        "-of=" ~ buildPath(partial, "libflint-platform.so"), "-od=" ~ partial, stub,
+        "-L-rpath=" ~ phobosDirectory(plan.inputs.compiler),
+        "-Xcc=-Wl,--whole-archive," ~ join(plan.archives ~ extraArchives, ",") ~ ",--no-whole-archive"
+    ];
+    if (nativeFlags.length)
+        command ~= "-Xcc=-Wl,--start-group," ~ join(nativeFlags, ",") ~ ",--end-group";
+    Launch launch;
+    launch.directory = plan.inputs.workingDirectory;
+    launch.environment = plan.inputs.environment.dup;
+    launch.inherit = false;
+    const linked = capture(command, launch);
+    if (!linked.ok)
+    {
+        failure = linked.started ? linked.combined : linked.failure;
+        rmdirRecurse(partial);
+        return false;
+    }
+    import std.file : remove;
+    import flint_tool.support.files : sha256File;
+
+    remove(stub);
+    if (exists(buildPath(partial, "flint_platform_shared.o")))
+        remove(buildPath(partial, "flint_platform_shared.o"));
+    // A record like an archive's, so `prune` keeps the newest shared objects and removes older ones.
+    write(buildPath(partial, "module.json"),
+            "{\"format\": \"" ~ cacheFormat ~ "\", \"module\": \"flint-platform-shared\", \"key\": \""
+            ~ key ~ "\", \"sha256\": \"" ~ sha256File(buildPath(partial, "libflint-platform.so")) ~ "\"}\n");
+    if (exists(directory))
+        rmdirRecurse(partial); // another build stored it first
+    else
+        rename(partial, directory);
+    prune(plan.cache, keptPerModule);
+    return true;
+}
+
+/// The directory of the compiler's druntime and Phobos libraries (`dmd2/linux/lib64` beside `bin64`).
+string phobosDirectory(string compiler)
+{
+    import std.path : buildNormalizedPath, dirName;
+
+    return buildNormalizedPath(dirName(compiler), "..", "lib64");
+}
+
+/// The native linker inputs of the platform modules: the object files they list as sources (flint:term's C shim,
+/// which DUB hands to the final link rather than to the archive), their linker flags and their libraries.
+string[] platformNativeFlags(scope const PlatformModule[] modules)
+{
+    import std.path : extension;
+
+    string[] flags;
+    foreach (ref item; modules)
+    {
+        if (item.archive.length == 0)
+            continue;
+        foreach (file; item.files)
+        {
+            if (file.extension == ".o")
+                flags ~= file;
+        }
+        flags ~= item.lflags;
+        foreach (library; item.libs)
+            flags ~= "-l" ~ library;
+    }
+    return flags;
 }
 
 /// The linker flags that link the cached archives: one group on ELF linkers, which resolve archives in one pass,

@@ -34,6 +34,8 @@ def entries(cache):
     found = {}
     for record in sorted((Path(cache) / 'platform').glob('*/module.json')):
         data = json.loads(record.read_text(encoding='utf-8'))
+        if data['module'] == 'flint-platform-shared':
+            continue  # a dev build's shared object: linked from the archives, not claimed byte-reproducible
         archives = [p for p in record.parent.iterdir() if p.name != 'module.json']
         found[record.parent.name] = (data['module'], data['sha256'], sha256(archives[0]))
     return found
@@ -65,13 +67,16 @@ class PlatformCacheTests(unittest.TestCase):
         self.assertTrue(stored, 'no archive was stored')
         for key, (module, recorded, actual) in stored.items():
             self.assertEqual(recorded, actual, module)
-        linked = self.receipt(self.project)['platform_archives']
+        linked = [item for item in self.receipt(self.project)['platform_archives']
+                  if item['name'] != 'flint-platform-shared']
         self.assertTrue(linked)
         self.assertEqual({(item['key'], item['sha256']) for item in linked},
                          {(key, recorded) for key, (_, recorded, _) in stored.items()})
         recipe = (self.project / '.flint/generated/dub/dub.sdl').read_text(encoding='utf-8')
         self.assertIn('dependency "flint:arena" path="../deps/../platform"', recipe)
-        self.assertIn('"--start-group"', recipe)
+        # A dev build links the platform as one shared object (owner decision 2, 2026-11-23).
+        self.assertIn('libflint-platform.so"', recipe)
+        self.assertIn('"-defaultlib=libphobos2.so"', recipe)
         platform = (self.project / '.flint/generated/platform/dub.sdl').read_text(encoding='utf-8')
         self.assertIn('targetType "sourceLibrary"', platform)
         self.assertNotIn('sourcePaths', platform)
@@ -98,6 +103,28 @@ class PlatformCacheTests(unittest.TestCase):
         self.assertEqual(built.returncode, 0, built.stdout + built.stderr)
         self.assertIn('Priming', built.stderr)
         self.assertEqual(entries(cache), entries(self.cache))
+
+    def test_a_dev_build_runs_against_the_shared_platform_object(self):
+        names = [item['name'] for item in self.receipt(self.project)['platform_archives']]
+        self.assertIn('flint-platform-shared', names)
+        shared = list((self.cache / 'platform').glob('shared-*/libflint-platform.so'))
+        self.assertEqual(len(shared), 1, shared)
+        ran = subprocess.run([str(self.project / '.flint/build/dev/demo')], cwd=self.project, capture_output=True,
+                             text=True, encoding='utf-8', timeout=60)
+        self.assertEqual(ran.returncode, 0, ran.stdout + ran.stderr)
+
+    def test_static_links_the_archives_into_a_dev_build(self):
+        static = self.directory / 'static'
+        shutil.copytree(self.project, static, ignore=shutil.ignore_patterns('.flint'))
+        built = flint('build', '--static', cwd=static, env=environment(FLINT_CACHE=str(self.cache)))
+        self.assertEqual(built.returncode, 0, built.stdout + built.stderr)
+        recipe = (static / '.flint/generated/dub/dub.sdl').read_text(encoding='utf-8')
+        self.assertIn('"--start-group"', recipe)
+        self.assertNotIn('libflint-platform.so', recipe)
+        self.assertNotIn('flint-platform-shared', [item['name'] for item in self.receipt(static)['platform_archives']])
+        ran = subprocess.run([str(static / '.flint/build/dev/demo')], cwd=static, capture_output=True, text=True,
+                             encoding='utf-8', timeout=60)
+        self.assertEqual(ran.returncode, 0, ran.stdout + ran.stderr)
 
     def test_no_platform_cache_compiles_the_modules_from_source(self):
         plain = self.directory / 'plain'

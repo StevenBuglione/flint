@@ -139,7 +139,7 @@ Creating the GitHub repositories is an outward step and waits for the owner's go
   - **Two published headlines:**
     - the platform cache against Go with a standard-library-primed `GOCACHE`;
     - everything from scratch against `go build -a` with an empty cache.
-- **Dev-profile linking (owner, 2026-11-23).** The dev profile links the platform cache as shared objects, so an edit relinks only the app; release and size profiles stay static. Edit-build evidence reports the dev profile as built as the primary number and fully static as the secondary.
+- **Dev-profile linking (owner, 2026-11-23).** The dev profile links the platform cache as shared objects, so an edit relinks only the app; release and size profiles stay static. Edit-build evidence reports the dev profile as built as the primary number and fully static as the secondary. Implemented (m7-flint-cli): a DMD dev build links `<cache>/platform/shared-<key>/libflint-platform.so` and shared druntime and Phobos. `flint build --static` is the fully static dev build that the secondary number measures (flint-cli.md, "The platform cache").
 - **Budgets.** Every framework module carries budgets for added compile time, linked bytes, template instances and generated lines per bean or handler, on top of ADR-019's per-package budgets. Budgets are set from the corrected count (own library plus probe) times 1.25, rounded up to 50, and after that may only go down (owner, 2026-11-23). Linked bytes are gated first: `policy/budgets.json` `module_linked_bytes` gives a module its fixture, baseline and budget. A package listed in `required_packages` must budget every module it has.
 
 ### 6. The API mapping rulebook
