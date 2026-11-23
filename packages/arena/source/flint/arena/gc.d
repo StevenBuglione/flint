@@ -18,3 +18,22 @@ static import flint.arena.sys.gc.collector;
 
 /// The name to select with `--DRT-gcopt=gc:<name>` or `rt_options`.
 enum collectorName = "flint";
+
+/// GC allocations and their total bytes.
+struct Allocations
+{
+    /// Allocations made.
+    ulong count;
+    /// Bytes they took, rounded up to the collector's block sizes.
+    ulong bytes;
+}
+
+/++
+The allocations every thread but the caller has made so far, as the Flint collector counts them; false when another
+collector runs. The per-request allocation gate (policy/request-allocations.json) reads it before and after a test
+client's requests, which a server answers on its own threads. A thread counts an allocation before returning it.
++/
+bool otherThreadsAllocations(out Allocations totals) nothrow @nogc
+{
+    return flint.arena.sys.gc.collector.otherThreadsAllocations(totals.count, totals.bytes);
+}

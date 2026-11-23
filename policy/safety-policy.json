@@ -133,6 +133,7 @@
     "flint.os.sys.interrupts.onCoordinator",
     "flint.arena.sys.gc.collector.bytesAllocated",
     "flint.arena.sys.gc.collector.threadCache",
+    "flint.arena.sys.gc.collector.threadAllocations",
     "flint.engine.reactor.currentRuntime",
     "flint.engine.reactor.currentWorkerIndex",
     "flint.engine.reactor.threadLocalWords",
