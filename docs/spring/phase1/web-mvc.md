@@ -18,10 +18,10 @@ The engine rename (`flint.web` → `flint.engine.web`, DUB `flint:web` → `flin
 
 | Spring artifact | Final DUB name | Interim DUB name and directory | D modules |
 | --- | --- | --- | --- |
-| spring-web | `flint:web` | `flint:framework-web`, `packages/framework-web` | `flint.http`, `flint.http.converter`, `flint.http.converter.json`, `flint.http.server`, `flint.web`, `flint.web.bind`, `flint.web.bind.annotation`, `flint.web.server`, `flint.web.util`, `flint.web.cors`, `flint.web.method`, `flint.web.method.annotation`, `flint.web.context.request` |
-| spring-webmvc | `flint:webmvc` | `flint:framework-webmvc`, `packages/framework-webmvc` | `flint.web.servlet`, `flint.web.servlet.config.annotation`, `flint.web.servlet.handler`, `flint.web.servlet.mvc.method`, `flint.web.servlet.mvc.method.annotation`, `flint.web.servlet.mvc.support` |
-| jakarta.servlet-api 6.1 (EPL-2.0 module) | `flint:jakarta-servlet` | same, `packages/jakarta-servlet` | `flint.jakarta.servlet`, `flint.jakarta.servlet.http` |
-| spring-test (MockMvc part) | see open question 1 | `flint:framework-test`, `packages/framework-test` | `flint.test.web.servlet`, `flint.test.web.servlet.request`, `flint.test.web.servlet.result`, `flint.mock.web` |
+| spring-web | `flint:web` | `flint:framework-web`, `framework/web` | `flint.http`, `flint.http.converter`, `flint.http.converter.json`, `flint.http.server`, `flint.web`, `flint.web.bind`, `flint.web.bind.annotation`, `flint.web.server`, `flint.web.util`, `flint.web.cors`, `flint.web.method`, `flint.web.method.annotation`, `flint.web.context.request` |
+| spring-webmvc | `flint:webmvc` | `flint:framework-webmvc`, `framework/webmvc` | `flint.web.servlet`, `flint.web.servlet.config.annotation`, `flint.web.servlet.handler`, `flint.web.servlet.mvc.method`, `flint.web.servlet.mvc.method.annotation`, `flint.web.servlet.mvc.support` |
+| jakarta.servlet-api 6.1 (EPL-2.0 module) | `flint:jakarta-servlet` | same, `framework/jakarta-servlet` | `flint.jakarta.servlet`, `flint.jakarta.servlet.http` |
+| spring-test (MockMvc part) | see open question 1 | `flint:framework-test`, `framework/framework-test` | `flint.test.web.servlet`, `flint.test.web.servlet.request`, `flint.test.web.servlet.result`, `flint.mock.web` |
 | spring-boot-webmvc (error handling) | `flint:boot-webmvc` | handed to the boot session | `flint.boot.webmvc.autoconfigure.error` |
 
 Dependency edges:
@@ -189,10 +189,10 @@ Flint's own tests cover the R15/D-15 adaptations, the exceptions' messages and b
 
 | Piece | State |
 | --- | --- |
-| `flint.http`, `flint.web`, `flint.web.bind(.annotation)`, `flint.web.server`, `flint.web.util.pattern`, converters, `flint.web.method.*`, `flint.web.accept` | in `packages/framework-web` |
-| `flint.jakarta.servlet(.http)` | in `packages/jakarta-servlet` (EPL-2.0) |
-| `DispatcherServlet`, `RequestMappingHandlerMapping`/`Adapter`, processors, exception resolvers, `WebMvcConfigurer`, `WebMvcConfigurationSupport` | in `packages/framework-webmvc` |
-| MockMvc (`flint.test.web.servlet.*`, `flint.mock.web`) | in `packages/framework-test` |
+| `flint.http`, `flint.web`, `flint.web.bind(.annotation)`, `flint.web.server`, `flint.web.util.pattern`, converters, `flint.web.method.*`, `flint.web.accept` | in `framework/web` |
+| `flint.jakarta.servlet(.http)` | in `framework/jakarta-servlet` (EPL-2.0) |
+| `DispatcherServlet`, `RequestMappingHandlerMapping`/`Adapter`, processors, exception resolvers, `WebMvcConfigurer`, `WebMvcConfigurationSupport` | in `framework/webmvc` |
+| MockMvc (`flint.test.web.servlet.*`, `flint.mock.web`) | in `framework/framework-test` |
 | `api/framework/mapping.json` | 1,391 elements classified for the ported types: spring-web 14.1%, spring-webmvc 22.7%, jakarta-servlet 33.5%; a member is classified only when the D type declares it |
 | `flint.web.util` | `UriComponentsBuilder`, `UriComponents`, `UriUtils` (R14: UTF-8 bytes, identical encoded output) |
 | CORS | `flint.web.cors` (`CorsConfiguration`, `DefaultCorsProcessor`, `UrlBasedCorsConfigurationSource`), `@CrossOrigin` class and method combination, `CorsRegistry`, preflight handling; petclinic's three CORS goldens reproduce through MockMvc |

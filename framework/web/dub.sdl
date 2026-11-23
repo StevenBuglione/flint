@@ -1,11 +1,13 @@
-name "jakarta-servlet"
-description "flint.jakarta.servlet: a minimal port of the Jakarta Servlet 6.1 API, with no servlet container (EPL-2.0 module, ADR-030 section 7)"
-license "EPL-2.0"
+name "web"
+description "Flint Web: the port of spring-web (DUB flint:web)"
+license "Apache-2.0"
 targetType "library"
 sourcePaths "source"
 importPaths "source"
 dflags "-preview=dip1000"
-dependency "framework-interim" path="../framework-interim"
+dependency "p1-interim" path="../p1-interim"
+dependency "jakarta-servlet" path="../jakarta-servlet"
+dependency "engine-aot" path="../../packages/engine-aot"
 
 configuration "library" {
     targetType "library"
