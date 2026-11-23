@@ -99,7 +99,7 @@
       "defaultValue": true
     },
     {
-      "name": "flint.jackson.datatype.enum-features",
+      "name": "flint.jackson.datatype.enum",
       "type": "java.util.Map<EnumFeature,bool>",
       "description": "Jackson on/off features for enums.",
       "sourceType": "flint.boot.jackson.autoconfigure.JacksonProperties$Datatype"

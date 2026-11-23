@@ -25,8 +25,12 @@ import textwrap
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 class F:
-    def __init__(self, name, dtype, default, doc, ro=False, uda=None, setter=None, ctor=False, setter_body=None):
+    def __init__(self, name, dtype, default, doc, ro=False, uda=None, setter=None, ctor=False, setter_body=None,
+                 schema=None):
         self.name, self.dtype, self.default, self.doc, self.ro, self.uda = name, dtype, default, doc, ro, uda
+        # schema: the type the metadata and schema describe, when the D type is erased (Boot's
+        # Map<SerializationFeature, Boolean> held as Map!(string, bool), so generated code shares one map type)
+        self.schema = schema
         # setter: the D expression the setter stores, when Boot's setter does more than assign (cleanContextPath)
         self.setter = setter
         # ctor: the default is a run-time value (Boot's UUID password), assigned in the constructor
@@ -50,7 +54,7 @@ class Cls:
         self.base, self.methods = base, [list(m) for m in methods]
 
 
-KEYWORDS = {'template', 'version', 'function', 'delegate', 'out', 'ref', 'in', 'body', 'module', 'scope', 'alias'}
+KEYWORDS = {'template', 'version', 'function', 'delegate', 'out', 'ref', 'in', 'body', 'module', 'scope', 'alias', 'enum'}
 
 
 def field(name):
@@ -307,11 +311,14 @@ ctor_detector = Enum('ConstructorDetectorStrategy', 'Strategies to use to auto-d
     ('USE_DELEGATING', 'Assume "delegating" mode if not explicitly annotated otherwise.'),
     ('EXPLICIT_ONLY', 'Refuse to decide implicit mode and instead throw an InvalidDefinitionException for ambiguous cases.')])
 def fm(name, key, doc):
-    return F(name, f'Map!({key}, bool)', f'new LinkedHashMap!({key}, bool)', doc, ro=True)
+    # Boot's Map<Feature, Boolean>, keyed by the feature's name as bound (`indent-output` or `INDENT_OUTPUT`): one map
+    # type for every feature enum, so Flint AOT's generated module instantiates one map, not one per enum (owner's
+    # template diet, 2670d5be). StandardJsonMapperBuilderCustomizer converts the names as Boot's binder does.
+    return F(name, 'Map!(string, bool)', 'new LinkedHashMap!(string, bool)', doc, ro=True, schema=f'Map!({key}, bool)')
 jackson = Cls('JacksonProperties', 'Jackson settings.', [
     F('dateFormat', 'string', None, "Date format string or a fully-qualified date format class name. For instance, 'yyyy-MM-dd HH:mm:ss'."),
     F('propertyNamingStrategy', 'string', None, "One of the constants on Jackson's PropertyNamingStrategies. Can also be a fully-qualified class name of a PropertyNamingStrategy implementation."),
-    F('visibility', 'Map!(PropertyAccessor, JsonAutoDetect.Visibility)', 'new LinkedHashMap!(PropertyAccessor, JsonAutoDetect.Visibility)', 'Jackson visibility thresholds that can be used to limit which methods (and fields) are auto-detected.', ro=True),
+    F('visibility', 'Map!(string, string)', 'new LinkedHashMap!(string, string)', 'Jackson visibility thresholds that can be used to limit which methods (and fields) are auto-detected.', ro=True, schema='Map!(PropertyAccessor, JsonAutoDetect.Visibility)'),
     fm('serialization', 'SerializationFeature', 'Jackson on/off features that affect the way objects are serialized.'),
     fm('deserialization', 'DeserializationFeature', 'Jackson on/off features that affect the way objects are deserialized.'),
     fm('mapper', 'MapperFeature', 'Jackson general purpose on/off features.'),
@@ -328,7 +335,7 @@ jackson = Cls('JacksonProperties', 'Jackson settings.', [
     F('json', 'Json', 'new Json', 'JSON-specific features (`flint.jackson.json.*`).', ro=True),
 ], enums=[ctor_detector], nested=[
     Cls('Datatype', 'Datatype features.', [
-        fm('enumFeatures', 'EnumFeature', 'Jackson on/off features for enums.'),
+        fm('enum', 'EnumFeature', 'Jackson on/off features for enums.'),
         fm('datetime', 'DateTimeFeature', 'Jackson on/off features for DateTimes.')]),
     Cls('Json', 'JSON-specific features.', [
         fm('read', 'JsonReadFeature', 'Jackson on/off token reader features that are specific to JSON.'),
@@ -640,7 +647,7 @@ def walk(cls, prefix, local, classes, metadata, schema, source_type):
             sub = schema.setdefault('properties', {}).setdefault(kebab(f.name), {'type': 'object', 'additionalProperties': False})
             walk(nested, key, local, classes, metadata, sub, f'{source_type}${nested.name}')
             continue
-        value, java_type = value_schema(f.dtype, local, classes)
+        value, java_type = value_schema(f.schema or f.dtype, local, classes)
         entry = {'name': key, 'type': java_type, 'description': f.doc, 'sourceType': source_type}
         default = default_value(f)
         if default is not None:

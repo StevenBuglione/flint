@@ -4,6 +4,10 @@
 // Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
 // Modified by the Flint authors: Java Beans getters and setters are kept (rulebook R6); `spring.*` keys
 // become `flint.*` with `spring.*` accepted as an alias (ADR-030); `TimeZone` and `Locale` are their text forms; `datatype.json-node` and `factory.constraints.*` follow with flint.jackson's `JsonNodeFeature` and `StreamReadConstraints`.
+// The feature maps (`Map<SerializationFeature, Boolean>` and the rest) and `visibility` are keyed by the name as bound
+// (`Map!(string, bool)`, `Map!(string, string)`): one map type for every enum keeps Flint AOT's generated module from
+// instantiating a map per feature enum (owner's template diet, 2670d5be). The standard customizer converts the names
+// as Boot's binder does; the metadata keeps the enum keys.
 
 /// `org.springframework.boot.jackson.autoconfigure`: Jackson's auto-configuration and properties.
 ///
@@ -52,24 +56,24 @@ final class JacksonProperties
     /// Datatype features.
     static final class Datatype
     {
-        private Map!(EnumFeature, bool) enumFeatures;
-        private Map!(DateTimeFeature, bool) datetime;
+        private Map!(string, bool) enum_;
+        private Map!(string, bool) datetime;
 
         /// Boot's defaults.
         this() pure nothrow
         {
-            enumFeatures = new LinkedHashMap!(EnumFeature, bool);
-            datetime = new LinkedHashMap!(DateTimeFeature, bool);
+            enum_ = new LinkedHashMap!(string, bool);
+            datetime = new LinkedHashMap!(string, bool);
         }
 
         /// Jackson on/off features for enums.
-        Map!(EnumFeature, bool) getEnumFeatures() pure nothrow @nogc
+        Map!(string, bool) getEnum() pure nothrow @nogc
         {
-            return enumFeatures;
+            return enum_;
         }
 
         /// Jackson on/off features for DateTimes.
-        Map!(DateTimeFeature, bool) getDatetime() pure nothrow @nogc
+        Map!(string, bool) getDatetime() pure nothrow @nogc
         {
             return datetime;
         }
@@ -78,24 +82,24 @@ final class JacksonProperties
     /// JSON-specific features.
     static final class Json
     {
-        private Map!(JsonReadFeature, bool) read;
-        private Map!(JsonWriteFeature, bool) write;
+        private Map!(string, bool) read;
+        private Map!(string, bool) write;
 
         /// Boot's defaults.
         this() pure nothrow
         {
-            read = new LinkedHashMap!(JsonReadFeature, bool);
-            write = new LinkedHashMap!(JsonWriteFeature, bool);
+            read = new LinkedHashMap!(string, bool);
+            write = new LinkedHashMap!(string, bool);
         }
 
         /// Jackson on/off token reader features that are specific to JSON.
-        Map!(JsonReadFeature, bool) getRead() pure nothrow @nogc
+        Map!(string, bool) getRead() pure nothrow @nogc
         {
             return read;
         }
 
         /// Jackson on/off token writer features that are specific to JSON.
-        Map!(JsonWriteFeature, bool) getWrite() pure nothrow @nogc
+        Map!(string, bool) getWrite() pure nothrow @nogc
         {
             return write;
         }
@@ -103,10 +107,10 @@ final class JacksonProperties
 
     private string dateFormat;
     private string propertyNamingStrategy;
-    private Map!(PropertyAccessor, JsonAutoDetect.Visibility) visibility;
-    private Map!(SerializationFeature, bool) serialization;
-    private Map!(DeserializationFeature, bool) deserialization;
-    private Map!(MapperFeature, bool) mapper;
+    private Map!(string, string) visibility;
+    private Map!(string, bool) serialization;
+    private Map!(string, bool) deserialization;
+    private Map!(string, bool) mapper;
     private Optional!(JsonInclude.Include) defaultPropertyInclusion;
     private Optional!bool defaultLeniency;
     private ConstructorDetectorStrategy constructorDetector = ConstructorDetectorStrategy.DEFAULT;
@@ -115,20 +119,20 @@ final class JacksonProperties
     private bool useJackson2Defaults = false;
     private bool findAndAddModules = true;
     private Datatype datatype;
-    private Map!(StreamReadFeature, bool) read;
-    private Map!(StreamWriteFeature, bool) write;
+    private Map!(string, bool) read;
+    private Map!(string, bool) write;
     private Json json;
 
     /// Boot's defaults.
     this() pure nothrow
     {
-        visibility = new LinkedHashMap!(PropertyAccessor, JsonAutoDetect.Visibility);
-        serialization = new LinkedHashMap!(SerializationFeature, bool);
-        deserialization = new LinkedHashMap!(DeserializationFeature, bool);
-        mapper = new LinkedHashMap!(MapperFeature, bool);
+        visibility = new LinkedHashMap!(string, string);
+        serialization = new LinkedHashMap!(string, bool);
+        deserialization = new LinkedHashMap!(string, bool);
+        mapper = new LinkedHashMap!(string, bool);
         datatype = new Datatype;
-        read = new LinkedHashMap!(StreamReadFeature, bool);
-        write = new LinkedHashMap!(StreamWriteFeature, bool);
+        read = new LinkedHashMap!(string, bool);
+        write = new LinkedHashMap!(string, bool);
         json = new Json;
     }
 
@@ -158,25 +162,25 @@ final class JacksonProperties
     }
 
     /// Jackson visibility thresholds that can be used to limit which methods (and fields) are auto-detected.
-    Map!(PropertyAccessor, JsonAutoDetect.Visibility) getVisibility() pure nothrow @nogc
+    Map!(string, string) getVisibility() pure nothrow @nogc
     {
         return visibility;
     }
 
     /// Jackson on/off features that affect the way objects are serialized.
-    Map!(SerializationFeature, bool) getSerialization() pure nothrow @nogc
+    Map!(string, bool) getSerialization() pure nothrow @nogc
     {
         return serialization;
     }
 
     /// Jackson on/off features that affect the way objects are deserialized.
-    Map!(DeserializationFeature, bool) getDeserialization() pure nothrow @nogc
+    Map!(string, bool) getDeserialization() pure nothrow @nogc
     {
         return deserialization;
     }
 
     /// Jackson general purpose on/off features.
-    Map!(MapperFeature, bool) getMapper() pure nothrow @nogc
+    Map!(string, bool) getMapper() pure nothrow @nogc
     {
         return mapper;
     }
@@ -273,13 +277,13 @@ final class JacksonProperties
     }
 
     /// Jackson on/off token reader features common to multiple formats.
-    Map!(StreamReadFeature, bool) getRead() pure nothrow @nogc
+    Map!(string, bool) getRead() pure nothrow @nogc
     {
         return read;
     }
 
     /// Jackson on/off token writer features common to multiple formats.
-    Map!(StreamWriteFeature, bool) getWrite() pure nothrow @nogc
+    Map!(string, bool) getWrite() pure nothrow @nogc
     {
         return write;
     }
@@ -372,23 +376,26 @@ final class StandardJsonMapperBuilderCustomizer : JsonMapperBuilderCustomizer
             const inclusion = properties.getDefaultPropertyInclusion().get();
             builder.changeDefaultPropertyInclusion(inclusion, inclusion);
         }
-        configureFeatures(builder, properties.getDeserialization());
-        configureFeatures(builder, properties.getSerialization());
-        configureFeatures(builder, properties.getMapper());
-        configureFeatures(builder, properties.getDatatype().getDatetime());
-        configureFeatures(builder, properties.getDatatype().getEnumFeatures());
-        configureFeatures(builder, properties.getRead());
-        configureFeatures(builder, properties.getWrite());
-        configureFeatures(builder, properties.getJson().getRead());
-        configureFeatures(builder, properties.getJson().getWrite());
+        configureFeatures!DeserializationFeature(builder, properties.getDeserialization());
+        configureFeatures!SerializationFeature(builder, properties.getSerialization());
+        configureFeatures!MapperFeature(builder, properties.getMapper());
+        configureFeatures!DateTimeFeature(builder, properties.getDatatype().getDatetime());
+        configureFeatures!EnumFeature(builder, properties.getDatatype().getEnum());
+        configureFeatures!StreamReadFeature(builder, properties.getRead());
+        configureFeatures!StreamWriteFeature(builder, properties.getWrite());
+        configureFeatures!JsonReadFeature(builder, properties.getJson().getRead());
+        configureFeatures!JsonWriteFeature(builder, properties.getJson().getWrite());
         if (properties.getPropertyNamingStrategy() !is null)
             builder.propertyNamingStrategy(namingStrategy(properties.getPropertyNamingStrategy()));
         configureConstructorDetector(builder);
     }
 
-    private static void configureFeatures(F)(JsonMapper.Builder builder, Map!(F, bool) features)
+    // The feature maps are keyed by the name as bound; Boot's binder would have converted it to the enum.
+    private static void configureFeatures(F)(JsonMapper.Builder builder, Map!(string, bool) features)
     {
-        features.forEach((F feature, bool state) { builder.configure(feature, state); });
+        features.forEach((string name, bool state) {
+            builder.configure(featureNamed!F(name), state);
+        });
     }
 
     private void configureConstructorDetector(JsonMapper.Builder builder)
@@ -431,4 +438,31 @@ final class StandardJsonMapperBuilderCustomizer : JsonMapperBuilderCustomizer
             throw new IllegalStateException("Constant named '" ~ name ~ "' not found");
         }
     }
+}
+
+/// The constant of the feature enum `F` that `name` names, as Boot's lenient enum conversion matches it: letters and
+/// digits only, ignoring case (`indent-output` and `INDENT_OUTPUT` are `INDENT_OUTPUT`).
+F featureNamed(F)(string name) if (is(F == enum))
+{
+    import flint.java.lang : IllegalArgumentException;
+    import std.ascii : isAlphaNum, toLower;
+
+    static string canonical(string text) pure nothrow
+    {
+        string result;
+        foreach (char ch; text)
+        {
+            if (ch.isAlphaNum)
+                result ~= ch.toLower;
+        }
+        return result;
+    }
+
+    const wanted = canonical(name);
+    static foreach (member; __traits(allMembers, F))
+    {
+        if (canonical(member) == wanted)
+            return __traits(getMember, F, member);
+    }
+    throw new IllegalArgumentException("No enum constant " ~ F.stringof ~ "." ~ name);
 }

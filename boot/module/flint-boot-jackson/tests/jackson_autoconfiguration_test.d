@@ -48,7 +48,7 @@ private JsonMapper mapper(string[2][] entries)
     import flint.java.util : Map;
     import flint.jackson.databind.cfg : SerializationFeature;
 
-    binder.getDescriptors().add(descriptorOf!(Map!(SerializationFeature, bool))());
+    binder.getDescriptors().add(descriptorOf!(Map!(string, bool))());
     binder.getDescriptors().add(descriptorOf!SerializationFeature());
     auto properties = binder.bindOrCreate!JacksonProperties("flint.jackson");
 

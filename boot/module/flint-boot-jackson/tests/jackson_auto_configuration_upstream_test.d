@@ -42,29 +42,17 @@ else
 
 private JacksonProperties properties(string[2][] entries)
 {
-    import flint.jackson.annotation : JsonAutoDetect, PropertyAccessor;
     import flint.java.util : Map, Optional;
 
     auto binder = new Binder([
         cast(ConfigurationPropertySource) new MapConfigurationPropertySource("test", entries)
     ]);
     foreach (descriptor; [
-        descriptorOf!(Map!(SerializationFeature, bool))(), descriptorOf!SerializationFeature(),
-        descriptorOf!(Map!(DeserializationFeature, bool))(),
-        descriptorOf!DeserializationFeature(), descriptorOf!(Map!(MapperFeature, bool))(),
-        descriptorOf!MapperFeature(), descriptorOf!(Map!(DateTimeFeature, bool))(),
-        descriptorOf!DateTimeFeature(), descriptorOf!(Map!(EnumFeature, bool))(),
-        descriptorOf!EnumFeature(), descriptorOf!(Map!(StreamReadFeature, bool))(),
-        descriptorOf!StreamReadFeature(), descriptorOf!(Map!(StreamWriteFeature, bool))(),
-        descriptorOf!StreamWriteFeature(), descriptorOf!(Map!(JsonReadFeature, bool))(),
-        descriptorOf!JsonReadFeature(), descriptorOf!(Map!(JsonWriteFeature, bool))(),
-        descriptorOf!JsonWriteFeature(), descriptorOf!(JacksonProperties.Datatype)(),
-        descriptorOf!(JacksonProperties.Json)(),
+        descriptorOf!(Map!(string, bool))(), descriptorOf!(Map!(string, string))(),
+        descriptorOf!(JacksonProperties.Datatype)(), descriptorOf!(JacksonProperties.Json)(),
         descriptorOf!(JacksonProperties.ConstructorDetectorStrategy)(),
         descriptorOf!(Optional!(JsonInclude.Include))(), descriptorOf!(JsonInclude.Include)(),
-        descriptorOf!(Optional!bool)(),
-        descriptorOf!(Map!(PropertyAccessor, JsonAutoDetect.Visibility))(),
-        descriptorOf!PropertyAccessor(), descriptorOf!(JsonAutoDetect.Visibility)()
+        descriptorOf!(Optional!bool)()
     ])
         binder.getDescriptors().add(descriptor);
     return binder.bindOrCreate!JacksonProperties("flint.jackson");
@@ -493,6 +481,19 @@ version (FlintJacksonNamingStrategyClass)
     }
 }
 
+// Flint test: the feature maps are keyed by the name as bound, so the constant's own spelling converts too, as Boot's
+// lenient enum conversion does.
+@("disableDeserializationFeatureByConstantName") unittest
+{
+    foreach (mapperType; [EnumMembers!MapperType])
+    {
+        auto mapper = getMapper(mapperType, [
+            ["flint.jackson.deserialization.FAIL_ON_NULL_FOR_PRIMITIVES", "false"]
+        ]);
+        assert(!mapper.isEnabled(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES));
+    }
+}
+
 @("JacksonAutoConfigurationTests.enableMapperFeature") unittest
 {
     foreach (mapperType; [EnumMembers!MapperType])
@@ -569,20 +570,16 @@ version (FlintJacksonNamingStrategyClass)
     }
 }
 
-// LIKELY BUG: Boot binds the enum features from `datatype.enum.*` (`Datatype.getEnum()`); Flint's getter is
-// `getEnumFeatures()`, so it binds `datatype.enum-features.*` and `flint.jackson.datatype.enum.*` is ignored.
-version (FlintJacksonDatatypeEnumBinding)
+// Boot binds the enum features from `datatype.enum.*` (`Datatype.getEnum()`).
+@("JacksonAutoConfigurationTests.enableEnumFeature") unittest
 {
-    @("JacksonAutoConfigurationTests.enableEnumFeature") unittest
+    foreach (mapperType; [EnumMembers!MapperType])
     {
-        foreach (mapperType; [EnumMembers!MapperType])
-        {
-            auto mapper = getMapper(mapperType, [
-                ["spring.jackson.datatype.enum.write-enums-to-lowercase", "true"]
-            ]);
-            assert(!enabledByDefault(EnumFeature.WRITE_ENUMS_TO_LOWERCASE));
-            assert(mapper.serializationConfig().isEnabled(EnumFeature.WRITE_ENUMS_TO_LOWERCASE));
-        }
+        auto mapper = getMapper(mapperType, [
+            ["spring.jackson.datatype.enum.write-enums-to-lowercase", "true"]
+        ]);
+        assert(!enabledByDefault(EnumFeature.WRITE_ENUMS_TO_LOWERCASE));
+        assert(mapper.serializationConfig().isEnabled(EnumFeature.WRITE_ENUMS_TO_LOWERCASE));
     }
 }
 

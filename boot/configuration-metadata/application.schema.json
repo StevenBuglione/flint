@@ -670,7 +670,7 @@
               "type": "object",
               "additionalProperties": false,
               "properties": {
-                "enum-features": {
+                "enum": {
                   "type": "object",
                   "propertyNames": {
                     "enum": [
