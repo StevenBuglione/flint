@@ -198,7 +198,7 @@ package(flint.validate) immutable uint[2][] letterRanges = [
 ];
 
 /// Whether `cp` is a Unicode letter (`\p{L}`).
-package(flint.validate) bool isUnicodeLetter(uint cp) pure nothrow @nogc
+package(flint) bool isUnicodeLetter(uint cp) pure nothrow @nogc
 {
     if (cp < 0x80)
         return (cp | 0x20) >= 'a' && (cp | 0x20) <= 'z';

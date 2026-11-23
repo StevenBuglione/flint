@@ -6,6 +6,9 @@ module flint.validate.patterns;
 
 package(flint) import flint.validate.internal.pattern : RuntimePattern, compileRuntimePattern;
 
+/// Whether `cp` is a letter (`Character.isLetter` on JDK 21), for engines that implement `\p{L}` themselves.
+package(flint) import flint.validate.internal.letters : isUnicodeLetter;
+
 @("a run-time pattern matches as the compile-time one does")
 unittest
 {
