@@ -9,11 +9,11 @@
   "report_to": "the coordinator; docs/milestones/13.md",
   "estimate_minutes": 17,
   "summary": "Phase 1: gs-rest-service's suites (Java, Go, Flint) and builds against Go (both headlines, edit builds, Oz stripped)",
-  "why": "One part of the Phase 1 builds evidence, split per application: the same trials and comparators as the whole run, scheduled separately. spring_bench.py assemble merges the parts, which must share one commit. Pinned with its two sibling parts at befd9649b1e9 (coordinator, 2026-11-23 19:40Z): gs-builds at aa17876b showed a primary of 1.255, under the 1.5 threshold, so the parts claim windows at priority 5, behind any ready runtime run. Built with the DMD fork (compile-server prelude), as gs-builds is. The accept steps are the independent check that every port passes exactly (petclinic-rest 109/109).",
+  "why": "One part of the Phase 1 builds evidence, split per application: the same trials and comparators as the whole run, scheduled separately. spring_bench.py assemble merges the parts, which must share one commit. Pinned with its two sibling parts at befd9649b1e9 (coordinator, 2026-11-23 19:40Z): gs-builds at aa17876b showed a primary of 1.255, under the 1.5 threshold, so the parts claim windows at priority 5, behind any ready runtime run. Built with the DMD fork (compile-server prelude), as gs-builds is. The accept steps are the independent check that every port passes exactly (petclinic-rest 109/109). Re-pinned with its siblings at bae71bd6a19b: petclinic-rest's edit_source fixed (controller/v1); at befd9649 the smoke runs gave Java, Go and Flint 18/18, 1/1 and 109/109.",
   "builds": {
     "tree": {
       "app": "checkout",
-      "commit": "befd9649b1e9",
+      "commit": "bae71bd6a19b",
       "flint": true,
       "linker": "mold",
       "fork": true
@@ -83,5 +83,5 @@
       }
     ]
   },
-  "blocked_on": "re-pin of all three parts to one commit with petclinic-rest's edit_source fixed"
+  "blocked_on": "phase1-builds-petclinic's smoke run at bae71bd6a19b; then all three pending"
 }
