@@ -191,19 +191,65 @@ bool joinsRepos(const ref Home home, const ref Resolution resolution)
 
 /// The joined `flint` recipe: one subpackage per resolved core package, at its directory in its repo's checkout,
 /// so `flint:engine-web` from flint-framework and `flint:arena` from this home resolve as one namespace.
-/// `directory` is where the recipe is written; DUB takes subpackage paths relative to it.
-string renderJoinedRoot(const ref Resolution resolution, string directory)
+/// `directory` is where the recipe is written; DUB takes subpackage paths relative to it. DUB also needs every
+/// `flint:` package a listed recipe names in any configuration, such as `flint:framework-test` in a unittest
+/// configuration that the build never selects, so those are added from their recipes too.
+string renderJoinedRoot(const ref Home home, const ref Resolution resolution, string directory)
 {
+    import std.algorithm.sorting : sort;
     import std.path : absolutePath, relativePath;
 
-    string text = header() ~ field("name", "flint") ~ field("targetType", "none");
+    string[] directories;
+    bool[string] listed;
     foreach (ref item; resolution.packages)
     {
-        if (item.kind == "core")
-            text ~= field("subPackage", recipePath(relativePath(absolutePath(item.directory),
-                    absolutePath(directory))));
+        if (item.kind != "core")
+            continue;
+        listed[item.name] = true;
+        directories ~= item.directory;
     }
+    string[] extra;
+    for (size_t next = 0; next < directories.length; ++next)
+    {
+        foreach (name; recipeFlintDependencies(directories[next]))
+        {
+            if ("flint:" ~ name in listed)
+                continue;
+            listed["flint:" ~ name] = true;
+            const meta = home.find(name);
+            if (meta is null)
+                continue;
+            const located = home.packagePath(meta.repo, meta.directory.length ? meta.directory : "packages/" ~ name);
+            directories ~= located;
+            extra ~= located;
+        }
+    }
+    string text = header() ~ field("name", "flint") ~ field("targetType", "none");
+    const resolved = directories[0 .. directories.length - extra.length];
+    sort(extra);
+    foreach (path; resolved ~ extra)
+        text ~= field("subPackage", recipePath(relativePath(absolutePath(path), absolutePath(directory))));
     return text;
+}
+
+/// The `flint:` packages a package's dub.sdl names, in any configuration.
+private string[] recipeFlintDependencies(string packageDirectory)
+{
+    import std.algorithm.searching : findSplitAfter, findSplitBefore;
+    import std.path : buildPath;
+    import std.string : lineSplitter, strip;
+    import flint_tool.support.files : readIfPresent;
+
+    string[] names;
+    foreach (line; readIfPresent(buildPath(packageDirectory, "dub.sdl")).lineSplitter)
+    {
+        if (auto after = line.strip.findSplitAfter("dependency \"flint:"))
+        {
+            if (auto name = after[1].findSplitBefore("\""))
+                names ~= name[0].idup;
+        }
+    }
+    return names;
 }
 
 /// Directory of a path or remote dependency's generated recipe, relative to the project root.

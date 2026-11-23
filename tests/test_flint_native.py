@@ -165,8 +165,9 @@ class NativePackageTests(unittest.TestCase):
             ran = subprocess.run([str(top / 'bin' / 'demo'), '--name', 'bundled'], cwd=top, capture_output=True, text=True, encoding='utf-8')
             self.assertEqual(ran.returncode, 0, ran.stderr)
 
-    @unittest.skipUnless(shutil.which('pkg-config') and subprocess.run(['pkg-config', '--exists', 'zlib']).returncode == 0,
-                         'host has no zlib.pc')
+    # The resolved path: on Windows pkg-config may be a .bat (Strawberry Perl), which CreateProcess cannot start by name.
+    @unittest.skipUnless((pkg_config := shutil.which('pkg-config'))
+                         and subprocess.run([pkg_config, '--exists', 'zlib']).returncode == 0, 'host has no zlib.pc')
     def test_6_system_true_uses_the_host_library_and_is_not_portable(self):
         self.use('zlib = { version = "1.2", system = true }\n')
         result = flint('build', cwd=self.project, env=self.env)

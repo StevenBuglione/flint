@@ -384,9 +384,14 @@ Known gaps: these tests are skipped on Windows, each with its reason.
 | --- | --- |
 | `test_flint_watch.WatchTests` (2 tests) | `flint watch` stops on Ctrl+C. A test cannot send Ctrl+C to a child without sharing its console, and Ctrl+Break is SIGTERM, which `flint watch` leaves to the default handler. |
 | `test_install_quality_tools`: the two libcurl tests | `install_quality_tools.py` checks for libcurl only off Windows, where DUB loads it at run time. |
+| `framework/test_graceful_shutdown.GracefulShutdownTests` | `os.kill` on Windows is `TerminateProcess`, so the application exits at once instead of draining. A graceful stop needs `CTRL_BREAK_EVENT` to a child started with `CREATE_NEW_PROCESS_GROUP`, which flint.os maps to SIGTERM. Porting the test to that is open. |
 | `test_vibe_bench`: the queue-worker and tui-dashboard oracles | Their acceptance tests send SIGTERM and drive a pty. On Windows the test runs only the rest-notes oracle. |
 
 `tools/load_bench.py` imports on Windows, so its parsers stay testable, but a load run stops with a plain error there: it uses `getrusage` and process groups.
+
+### Path length
+
+Windows paths stop at MAX_PATH (260 characters) unless a machine enables long paths. DUB's build cache nests the package, configuration and build-settings hash under `DUB_HOME`. A project inside a platform checkout, such as a Boot starter's example under `.flint/platform/boot-<commit>/legacy/...`, went past the limit with the project-local `.flint/dub`. On Windows, `flint build` therefore puts a project's DUB home at `<cache>/dub/<12 hex of the project path>` (FLINT_CACHE, else `<home>/.flint/cache`). Other hosts keep `<project>/.flint/dub`.
 
 ## Public API additions
 

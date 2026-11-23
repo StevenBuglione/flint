@@ -340,6 +340,26 @@ private bool preparePlatform(ref Session session, const ref Manifest manifest, c
     return planPlatform(session, manifest.root, resolution, inputs, result.platform, report);
 }
 
+/// DUB's home for a project build: `<project>/.flint/dub` (`dub-<target>` for a cross target). On Windows it is
+/// `<cache>/dub/<12 hex of the project path>` instead. DUB's build cache nests the package and configuration under
+/// it, and a project inside a platform checkout (`.flint/platform/<repo>-<commit>/...`) went past MAX_PATH there.
+private string projectDubHome(ref Session session, string root, string target)
+{
+    import std.path : buildPath;
+
+    const name = target.length ? "dub-" ~ target : "dub";
+    version (Windows)
+    {
+        import std.path : absolutePath, buildNormalizedPath;
+        import flint_tool.support.files : sha256Hex;
+
+        const project = buildNormalizedPath(absolutePath(root));
+        return buildPath(platformCacheRoot(session), name, sha256Hex(cast(const(ubyte)[]) project)[0 .. 12]);
+    }
+    else
+        return buildPath(root, ".flint", name);
+}
+
 /// The cache directory: FLINT_CACHE, else `<home>/.flint/cache` (as project/remote.d's Fetcher).
 private string platformCacheRoot(ref Session session)
 {
@@ -452,7 +472,7 @@ bool buildProject(ref Session session, const ref Manifest manifest, const ref Re
     const compiler = request.compiler.length ? request.compiler : spec.compiler;
     result.compiler = compiler;
     const flags = composeFlags(spec, manifest.overrideFor(request.profile), request);
-    const dubHome = buildPath(manifest.root, ".flint", request.target.length ? "dub-" ~ request.target : "dub");
+    const dubHome = projectDubHome(session, manifest.root, request.target);
     const settings = BuildSettings(spec, flags.dflags.join(" "), dubHome);
     Toolchain toolchain;
     if (!prepareBuild(session, manifest, resolution, request, settings, toolchain, result, report))
@@ -640,7 +660,7 @@ private bool writeRecipes(ref Session session, const ref Manifest manifest, cons
 
         if (joinsRepos(session.home, resolution))
             writeIfChanged(buildPath(manifest.root, joinedRootDirectory, "dub.sdl"),
-                    renderJoinedRoot(resolution, buildPath(manifest.root, joinedRootDirectory)));
+                    renderJoinedRoot(session.home, resolution, buildPath(manifest.root, joinedRootDirectory)));
     }
     {
         import flint_tool.engine.recipe : renderSelections;

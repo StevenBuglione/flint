@@ -140,8 +140,8 @@ bool planPlatform(ref Session session, string root, const ref Resolution resolut
     const describeRoot = buildPath(root, describeDirectory);
     const joined = joinsRepos(session.home, resolution);
     if (joined)
-        writeIfChanged(buildPath(root, sourceDirectory, "dub.sdl"), renderJoinedRoot(resolution,
-                buildPath(root, sourceDirectory)));
+        writeIfChanged(buildPath(root, sourceDirectory, "dub.sdl"), renderJoinedRoot(session.home,
+                resolution, buildPath(root, sourceDirectory)));
     writeIfChanged(buildPath(describeRoot, "dub.sdl"), renderDescribeRoot(resolution, joined
             ? "../platform-source" : session.home.root));
     string failure;
