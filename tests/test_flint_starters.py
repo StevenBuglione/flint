@@ -134,6 +134,41 @@ class StarterWebTests(unittest.TestCase):
         self.assertIn('server.prot', misspelt.stderr)
 
 
+class StarterObservabilityTests(unittest.TestCase):
+    def test_health_readiness_and_an_application_counter_are_served(self):
+        project = ROOT / 'starters/observability/example'
+        built = subprocess.run([str(FLINT), 'build', '--json'], cwd=project, capture_output=True, text=True,
+                               env=environment())
+        self.assertEqual(built.returncode, 0, built.stdout[-3000:])
+        port = free_port()
+        process = subprocess.Popen([str(project / '.flint/build/dev/status'), f'--set=server.port={port}'],
+                                   cwd=project, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+        def call(path, method='GET'):
+            request = urllib.request.Request(f'http://127.0.0.1:{port}{path}', method=method,
+                                             data=b'' if method == 'POST' else None)
+            with urllib.request.urlopen(request, timeout=5) as response:
+                return response.status, response.read().decode()
+
+        try:
+            for _ in range(100):
+                try:
+                    call('/actuator/health/live')
+                    break
+                except OSError:
+                    time.sleep(0.05)
+            self.assertEqual(call('/actuator/health/live'), (200, '{"status":"UP"}'))
+            self.assertEqual(call('/actuator/health/ready'), (200, '{"status":"UP"}'))
+            self.assertEqual(call('/api/jobs', 'POST'), (201, '{"total":1}'))
+            self.assertEqual(call('/api/jobs', 'POST'), (201, '{"total":2}'))
+            status, metrics = call('/actuator/metrics')
+            self.assertEqual(status, 200)
+            self.assertIn('# TYPE jobs_accepted_total counter\njobs_accepted_total 2\n', metrics)
+        finally:
+            process.kill()
+            process.wait()
+
+
 class OpenApiTests(unittest.TestCase):
     def test_flint_openapi_documents_the_controllers_and_writes_a_typescript_client(self):
         with tempfile.TemporaryDirectory(prefix='flint-openapi-') as temporary:

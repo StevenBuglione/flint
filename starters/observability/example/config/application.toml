@@ -1,0 +1,12 @@
+# The example has no settings of its own.
+
+# flint:starter-web (ADR-028). Every key is optional.
+[server]
+address = "127.0.0.1"
+port = 8080
+
+# flint:starter-observability (ADR-028). Every key is optional.
+[management]
+path_prefix = "/actuator"
+service_name = "flint"
+# otlp_endpoint = "http://127.0.0.1:4318"

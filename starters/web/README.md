@@ -88,5 +88,5 @@ curl localhost:8080/api/greetings/Ada
 
 ## Known limits
 
-- **Stopping:** SIGTERM stops the process without running `@PreDestroy` hooks, because `flint:os` dispatches only SIGINT today. SIGINT and the server's own shutdown do run them.
+- **Stopping:** SIGTERM and SIGINT stop the process without running `@PreDestroy` hooks, because flint:web's run loop does not yet watch for signals. Only the server's own shutdown runs them.
 - **Worker threads:** each worker-thread controller has one thread, with 16 queued requests and an 8 MiB request arena.

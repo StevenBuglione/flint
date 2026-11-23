@@ -122,9 +122,23 @@ Status: proposed by the Milestone 10 implementation, for the project owner's rev
    - **Any media type:** an unlisted media type travels as its string.
    - **Unchanged:** the reactor-inline path does not change.
 
+### 6. `flint:starter-observability`, and `ServerCustomizer`
+
+1. **`ServerCustomizer` in flint:web.** `interface ServerCustomizer { Error customize(ref Server server); }` is an extension point. `runApplication` gains an optional `configure` delegate, which runs after the server starts and before it polls.
+   - **starter-web:** it collects every class registration that implements `ServerCustomizer` (keys of `Bind` and `Provided` included) and applies them in order.
+   - **Failure:** a customizer's failure stops start-up.
+
+2. **What the starter provides.**
+   - **The bean:** `Observability` (`@Service`, `ServerCustomizer`) opens a `flint.actuator.Registry` from `[management]`: `path_prefix`, `service_name`, `otlp_endpoint` and `max_metric_series`.
+   - **The endpoints:** it attaches `<prefix>/health/live`, `/health/ready` and `/metrics` (Prometheus text) to the application's server.
+   - **Shutdown:** it closes at shutdown, which reports not-ready and finishes the export.
+   - **The registry:** `registry()` hands it to the application for counters, histograms and health probes. The starter re-exports `Counter`, `Histogram`, `Health` and `HealthProbe`.
+   - **Loopback only:** the actuator refuses a non-loopback listener without a `ManagementPolicy`. That policy stays the actuator's.
+
 ## Consequences
 
+- `flint add web observability` gives health, readiness and metrics endpoints with no wiring. The example counts accepted jobs from a worker-thread handler, and `tests/test_flint_starters.py` reads the count back from `/actuator/metrics`.
 - A starter application has a typed front-end contract: `flint openapi --typescript client.ts` turns its controllers into a document and a client, and a `[spa]` section serves the front end beside the API. `tests/test_flint_starters.py` checks the document, the client, the front-end routes and a 100 KB asset served by a worker-thread handler.
 - `flint add web` and twenty lines of application code give a configured REST service with DI, ordinary handlers and string path variables. `tests/test_flint_starters.py` covers `flint add` (dependency, section, lock, a repeated add and an unknown starter), and the example serving a request and refusing a misspelt key with exit code 3.
-- **Known limit:** SIGTERM stops a starter application without running `@PreDestroy` hooks, because flint:os dispatches only SIGINT. A worker-thread controller has one thread with 16 queued requests.
+- **Known limit:** SIGTERM and SIGINT stop a starter application without running `@PreDestroy` hooks, because flint:web's run loop does not yet watch for signals (flint:os dispatches only SIGINT, to callbacks). A worker-thread controller has one thread with 16 queued requests.
 - A starter can register its beans by default, an application can override any of them by registering the same key, and a starter's optional parts switch on with a configuration section. `packages/di/tests/context_behavior.d` covers auto-configured wiring, replacement by an explicit binding, `@ConditionalOnMissingBean`, the compile-time error for a disabled dependency, and the TOML section reader. The 17 negative fixtures are rejected as before.

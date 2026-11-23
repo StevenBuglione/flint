@@ -4,9 +4,30 @@
     "starter-web": {
       "directory": "starters/web",
       "module": "flint.starter_web",
-      "dependencies": ["arena", "di", "config", "web", "term", "validate"],
+      "dependencies": [
+        "arena",
+        "di",
+        "config",
+        "web",
+        "term",
+        "validate"
+      ],
       "section": "server",
       "summary": "REST controllers on a configuration-bound server, wired by runApplication"
+    },
+    "starter-observability": {
+      "directory": "starters/observability",
+      "module": "flint.starter_observability",
+      "dependencies": [
+        "arena",
+        "conc",
+        "di",
+        "config",
+        "web",
+        "actuator"
+      ],
+      "section": "management",
+      "summary": "Health, readiness and Prometheus metrics endpoints on the application's server, and OTLP export"
     }
   }
 }

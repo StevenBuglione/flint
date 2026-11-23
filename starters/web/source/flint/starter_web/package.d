@@ -61,7 +61,7 @@ int runApplication(Beans...)(string[] args)
 {
     import flint.arena : Status;
     import flint.di : AppContext;
-    import flint.web : ServerOptions, run = runApplication;
+    import flint.web : Server, ServerOptions, run = runApplication;
 
     AppContext!(WebAutoConfiguration, Beans) context;
     alias Registered = typeof(context).Registered;
@@ -96,7 +96,19 @@ int runApplication(Beans...)(string[] args)
     server.port = settings.port;
     server.cores = settings.cores;
     server.maxBodyBytes = settings.maxBodyBytes;
-    return run(application, server);
+    // Every ServerCustomizer bean (flint:starter-observability's actuator, for one) registers on the server.
+    scope imported!"flint.arena".Error delegate(ref Server) @safe customize = (ref Server started) @safe {
+        static foreach (Customizer; Customizers!Registered)
+        {
+            {
+                imported!"flint.arena".Error customized = context.get!Customizer().customize(started);
+                if (customized.code != Status.ok)
+                    return customized;
+            }
+        }
+        return imported!"flint.arena".Error.init;
+    };
+    return run(application, server, customize);
 }
 
 /// Bind every `Provided!T` registration whose `T` is a `@ConfigurationProperties` struct, from one snapshot of the
@@ -156,6 +168,34 @@ private enum bool configurationType(T) = () {
     }
     return false;
 }();
+
+/// The keys among the registrations that are `ServerCustomizer`s, in order.
+template Customizers(Registered...)
+{
+    import std.meta : AliasSeq;
+    import flint.web : ServerCustomizer;
+
+    template collect(size_t index)
+    {
+        static if (index == Registered.length)
+            alias collect = AliasSeq!();
+        else
+        {
+            static if (is(Registered[index] == Bind!(Contract, Implementation), Contract, Implementation))
+                alias Key = Contract;
+            else static if (is(Registered[index] == Provided!Value, Value))
+                alias Key = Value;
+            else
+                alias Key = Registered[index];
+            static if (is(Key == class) && is(Key : ServerCustomizer))
+                alias collect = AliasSeq!(Key, collect!(index + 1));
+            else
+                alias collect = collect!(index + 1);
+        }
+    }
+
+    alias Customizers = collect!0;
+}
 
 /// The application struct flint:web serves: one field per `@RestController` registration, in order.
 struct Controllers(Registered...)
