@@ -598,7 +598,7 @@ private bool writeOutput(string root, const ref imported!"flint_tool.engine.aot.
         foreach (ref source; sources)
             packageModule = packageModule || (source.name == item.name && source.packageModule);
         const path = buildPath(directory, generatedPath(item.name, packageModule));
-        const text = renderModule(item);
+        const text = renderModule(item, plan.canonicalNames);
         if (!separable(item.name, item.source, text, sources, outcome))
             return false;
         mkdirRecurse(dirName(path));

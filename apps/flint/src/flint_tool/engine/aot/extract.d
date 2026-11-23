@@ -455,6 +455,15 @@ private string typeRef(T)()
                 r ~= "{\"name\":" ~ quote(A.stringof) ~ ",\"modules\":[]}";
         }
         r ~= "]";
+        // The runtime's spelling of the instance (typeNameOf), so generated code can name it with a literal
+        // instead of instantiating the type: only when the closure has the runtime.
+        static if (__traits(compiles, { import flint.engine.aot.name : canonicalTypeName; })
+                && __traits(compiles, __traits(fullyQualifiedName, T)))
+        {
+            import flint.engine.aot.name : canonicalTypeName;
+
+            r ~= ",\"canonical\":" ~ quote(canonicalTypeName(__traits(fullyQualifiedName, T)));
+        }
     }
     static if (is(T == class))
         r ~= ",\"kind\":\"class\"";

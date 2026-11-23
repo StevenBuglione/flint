@@ -507,6 +507,9 @@ struct Plan
     string[] unknownClasses;
     /// Definitions removed at build time, as "name: reason".
     string[] removed;
+    /// The runtime's canonical name (`typeNameOf`) of each template instance the model spells, by its spelling:
+    /// generated code names those with a literal instead of instantiating them.
+    string[string] canonicalNames;
 
     /// Whether any diagnostic is an error.
     bool failed() const
@@ -622,6 +625,36 @@ private final class Analysis
     {
         this.model = model;
         this.input = AnalysisInput(input.userModules.dup, input.autoConfigurations.dup, input.root);
+        collectCanonicalNames();
+    }
+
+    /// Every template instance's canonical name, from the extraction (`TypeRef.canonical`).
+    void collectCanonicalNames()
+    {
+        void visit(const ref TypeRef type)
+        {
+            if (type.canonical.length)
+                plan.canonicalNames[type.name] = type.canonical;
+            foreach (ref item; type.element)
+                visit(item);
+            foreach (ref item; type.arguments)
+                visit(item);
+        }
+
+        foreach (ref item; model.modules)
+        {
+            foreach (ref decl; item.types)
+            {
+                foreach (ref field; decl.fields)
+                    visit(field.type);
+                foreach (ref method; decl.methods)
+                {
+                    visit(method.returns);
+                    foreach (ref parameter; method.parameters)
+                        visit(parameter.type);
+                }
+            }
+        }
     }
 
     void run()

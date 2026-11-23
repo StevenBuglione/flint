@@ -221,6 +221,8 @@ struct TypeRef
     /// For a method's return type: the fully qualified names of its base classes and interfaces, so a bean whose
     /// type is declared in a module the extraction did not describe still has its supertypes.
     string[] supertypes;
+    /// For a template instance: the runtime's canonical name (`typeNameOf`), when the extraction had the runtime.
+    string canonical;
 }
 
 /// A function parameter.
@@ -567,6 +569,7 @@ private TypeRef readTypeRef(const JSONValue value)
     result.modules = strings(value, "modules");
     result.kind = str(value, "kind");
     result.template_ = str(value, "template");
+    result.canonical = str(value, "canonical");
     const element = member(value, "element");
     if (str(element, "name").length)
         result.element = [readTypeRef(element)];
@@ -766,6 +769,7 @@ TypeRef clone(const ref TypeRef type)
     result.modules = type.modules.dup;
     result.kind = type.kind;
     result.template_ = type.template_;
+    result.canonical = type.canonical;
     result.supertypes = type.supertypes.dup;
     foreach (ref item; type.element)
         result.element ~= clone(item);

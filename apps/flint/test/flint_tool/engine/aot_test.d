@@ -1252,9 +1252,10 @@ unittest
         aggregated = aggregated || (line.canFind(`MergedAnnotation("flint.jakarta.validation.constraints.Min"`)
                 && line.canFind("), 0, 1)"));
     expect(aggregated).toBeTrue();
-    // Container-typed arguments: spelled as engine-aot names them, with their descriptors registered.
-    expect(controller.canFind(`a.type = imported!"flint.engine.aot.name".typeNameOf!(flint.java.util.Optional!(`
-            ~ `string)); a.required = false;`)).toBeTrue();
+    // Container-typed arguments: named by the runtime's canonical spelling as a literal (no typeNameOf!(T) instance
+    // in the generated module), with their descriptors registered.
+    expect(controller.canFind(`a.type = "flint.java.util.Optional!string"; a.required = false;`)).toBeTrue();
+    expect(controller.canFind(`typeNameOf!(`)).toBeFalse();
     expect(controller.canFind(`descriptorOf!(flint.java.util.Optional!(string))()`)).toBeTrue();
     expect(controller.canFind(`descriptorOf!(flint.java.util.List!(int))()`)).toBeTrue();
     // A root property's member is a dotted root path the runtime resolves.

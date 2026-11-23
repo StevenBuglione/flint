@@ -34,9 +34,9 @@ string generatedPath(string moduleName, bool packageModule)
 }
 
 /// Render one generated module.
-string renderModule(const ref ModulePlan plan)
+string renderModule(const ref ModulePlan plan, const string[string] canonicalNames = null)
 {
-    auto emitter = Emitter(plan);
+    auto emitter = Emitter(plan, canonicalNames);
     return emitter.render();
 }
 
@@ -88,6 +88,8 @@ string sanitize(string text)
 private struct Emitter
 {
     const ModulePlan plan;
+    /// Canonical names of template instances (Plan.canonicalNames).
+    const(string[string]) canonicalNames;
     bool[string] imports;
     bool[string] used;
     string[string] descriptorLocal;
@@ -163,7 +165,12 @@ private struct Emitter
         import std.algorithm.searching : canFind;
         import flint_tool.engine.aot.conditions : literal;
 
-        return type.canFind("!(") ? "imported!\"flint.engine.aot.name\".typeNameOf!(" ~ type ~ ")" : literal(type);
+        if (!type.canFind("!("))
+            return literal(type);
+        // A literal when the extraction gave the runtime's spelling: typeNameOf!(T) would instantiate T here.
+        if (const canonical = type in canonicalNames)
+            return literal(*canonical);
+        return "imported!\"flint.engine.aot.name\".typeNameOf!(" ~ type ~ ")";
     }
 
     /// Note the modules a type needs.
