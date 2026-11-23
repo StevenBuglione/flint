@@ -696,6 +696,26 @@ private final class Analysis
         return result;
     }
 
+    /// A class's merged annotations with those of its model supertypes after its own, as an inherited pointcut sees
+    /// them: `@Validated` on petclinic-rest's generated `OwnersApi` advises the implementing controller.
+    MergedSet typeHierarchyMerged(const ref TypeDecl decl)
+    {
+        import flint_tool.engine.aot.merge : merge;
+
+        Annotation[] declared;
+        foreach (ref annotation; decl.annotations)
+            declared ~= clone(annotation);
+        foreach (ref supertype; decl.supertypes)
+        {
+            if (const base = model.type(supertype.name))
+            {
+                foreach (ref annotation; base.annotations)
+                    declared ~= clone(annotation);
+            }
+        }
+        return merge(declared, model.annotationTypes);
+    }
+
     /// A parameter's merged annotations with those of the same parameter in overridden methods, as Spring MVC's
     /// HandlerMethodParameter finds `@PathVariable` and `@RequestBody` on an implemented interface.
     MergedSet hierarchyMerged(const ref TypeDecl decl, const ref Method method, size_t index)
@@ -933,7 +953,8 @@ private final class Analysis
         lifecycleOf(*decl, bean);
         propertiesOf(candidate.merged, bean);
         const proxyConfiguration = configurationProxy(candidate, bean);
-        bean.proxied = !proxyConfiguration && planProxy(*decl, candidate.merged, bean);
+        const inherited = typeHierarchyMerged(*decl);
+        bean.proxied = !proxyConfiguration && planProxy(*decl, inherited, bean);
         bean.rank = rank++;
         addBean(decl.module_, bean);
         // Boot registers the enabled properties with the configuration class, before its @Bean methods: a
@@ -1535,7 +1556,11 @@ private final class Analysis
         if (advised)
         {
             item.index = descriptor.methods.length;
-            descriptor.methods ~= methodPlan(method, merged, classMerged);
+            auto advisedMethod = methodPlan(method, merged, classMerged);
+            // Constraint annotations on an implemented interface's parameters validate like the method's own.
+            foreach (index; 0 .. method.parameters.length)
+                advisedMethod.parameters[index] = hierarchyMerged(decl, method, index);
+            descriptor.methods ~= advisedMethod;
         }
         proxy.methods ~= item;
     }

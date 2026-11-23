@@ -30,7 +30,8 @@ class OwnerRestController : OwnersApi
     }
 
     /// GET /api/owners.
-    @PreAuthorize("hasRole(@roles.OWNER_ADMIN)") ResponseEntity listOwners(Optional!string lastName, List!int ids)
+    @PreAuthorize("hasRole(@roles.OWNER_ADMIN)") ResponseEntity listOwners(Optional!string lastName, List!int ids,
+            int size)
     {
         return ResponseEntity.ok().build();
     }

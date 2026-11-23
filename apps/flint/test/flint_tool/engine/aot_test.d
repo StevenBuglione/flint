@@ -704,8 +704,15 @@ private string[] closureImports(scope const string[] roots)
         }
     }
 
+    // A root is a directory, or a root sub-package's name, so packages that move (security/ left framework/)
+    // need no change here.
     foreach (item; roots)
-        visit(buildPath(root, item));
+    {
+        if (auto directory = item in subPackageDirectories(root))
+            visit(*directory);
+        else
+            visit(buildPath(root, item));
+    }
     string[] flags = ["-I" ~ buildPath(root, "framework", "java", "source")];
     foreach (directory; seen)
     {
@@ -775,7 +782,7 @@ unittest
         remove(project);
     auto imports = closureImports([
         "framework/web", "framework/webmvc", "framework/tx", "framework/jakarta-validation",
-        "framework/security-config", "boot/core/flint-boot-autoconfigure"
+        "security-config", "boot/core/flint-boot-autoconfigure"
     ]);
     AotRequest request;
     request.root = project;
@@ -805,6 +812,12 @@ unittest
     expect(controller.canFind(`ExpressionSpec("flint.security.access.prepost.PreAuthorize", "value", `
             ~ `"hasRole(@roles.OWNER_ADMIN)", &spel_OwnerRestController_`)).toBeTrue();
     expect(controller.canFind("final class OwnerRestController__FlintProxy")).toBeTrue();
+    // Method validation: @Validated on OwnersApi advises the controller, and @Min on the interface's parameter is in
+    // the advised method's parameter descriptor.
+    expect(controller.canFind(`MergedAnnotation("flint.validation.annotation.Validated"`)).toBeTrue();
+    expect(controller.canFind(`ParameterDescriptor("size", "int", [`)).toBeTrue();
+    expect(controller.canFind(`MergedAnnotation("flint.jakarta.validation.constraints.Min", Any.of(() { `
+            ~ `flint.jakarta.validation.constraints.Min a;`)).toBeTrue();
     // Container-typed arguments: spelled as engine-aot names them, with their descriptors registered.
     expect(controller.canFind(`a.type = imported!"flint.engine.aot.name".typeNameOf!(flint.java.util.Optional!(`
             ~ `string)); a.required = false;`)).toBeTrue();

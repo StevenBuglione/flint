@@ -4,13 +4,15 @@ module org.springframework.samples.petclinic.rest.api.ownersapi;
 import flint.http : ResponseEntity;
 import flint.java.util : List, Optional;
 import flint.jakarta.validation : Valid;
+import flint.jakarta.validation.constraints : Min;
+import flint.validation.annotation : Validated;
 import flint.web.bind.annotation : GetMapping, PathVariable, PostMapping, RequestBody, RequestParam;
 import org.springframework.samples.petclinic.rest.dto.ownerdto : OwnerFieldsDto;
 
 @safe:
 
-/// The owners resource.
-interface OwnersApi
+/// The owners resource; `@Validated` here advises the implementing controller (method validation).
+@Validated interface OwnersApi
 {
     /// GET /owners/{ownerId}.
     @GetMapping(path: ["/owners/{ownerId}"], produces: ["application/json"])
@@ -19,7 +21,8 @@ interface OwnersApi
     /// GET /owners?lastName=...&ids=...: optional and multi-valued request parameters.
     @GetMapping(path: ["/owners"], produces: ["application/json"])
     ResponseEntity listOwners(@RequestParam(value: "lastName", required: false) Optional!string lastName,
-            @RequestParam(value: "ids", required: false) List!int ids);
+            @RequestParam(value: "ids", required: false) List!int ids,
+            @Min(1) @RequestParam(value: "size", required: false, defaultValue: "10") int size);
 
     /// POST /owners.
     @PostMapping(path: ["/owners"], produces: ["application/json"])
