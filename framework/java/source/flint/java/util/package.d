@@ -253,8 +253,9 @@ struct Optional(T)
         return present_ ? this : supplier();
     }
 
-    /// A stream of the value, or an empty stream.
-    Stream!T stream()
+    /// A stream of the value, or an empty stream. A template, so `Optional!T` instantiates `Stream!T` only where
+    /// it is called.
+    Stream!T stream()()
     {
         return present_ ? Stream!T.of(value_) : Stream!T.empty();
     }
@@ -540,8 +541,14 @@ interface Collection(T) : Iterable!T, RawCollection
     bool removeIf(bool delegate(T) @safe filter);
     /// The elements, in iteration order, as a new D array.
     T[] toArray();
-    /// A sequential stream of the elements.
-    Stream!T stream();
+
+    /// A sequential stream of the elements. A template (non-virtual, instantiated only where it is called), so a
+    /// `Collection!T` does not instantiate `Stream!T` and its operations for every element type (playbook B-1).
+    Stream!T stream()()
+    {
+        return Stream!T.ofArray(toArray());
+    }
+
     /// Java's `equals` (declared so it can be called through the interface).
     bool equals(Object o);
     /// Java's `hashCode`.
@@ -752,12 +759,6 @@ abstract class AbstractCollection(T) : Collection!T
         for (auto it = iterator(); it.hasNext();)
             result ~= it.next();
         return result;
-    }
-
-    /// Java's `stream`.
-    Stream!T stream()
-    {
-        return Stream!T.ofArray(toArray());
     }
 
     /// Java's `forEach`.
@@ -1579,11 +1580,6 @@ private mixin template ErasedListMethods(T, bool mutable)
         return 0;
     }
 
-    Stream!T stream()
-    {
-        return Stream!T.ofArray(toArray());
-    }
-
     Any[] toAnyArray()
     {
         return objectsToAny(typeNameOf!T);
@@ -2182,11 +2178,6 @@ class HashSet(T) if (isErasedElement!T) : ErasedHashSet, Set!T
     T[] toArray()
     {
         return assumeClasses!T(items).dup;
-    }
-
-    Stream!T stream()
-    {
-        return Stream!T.ofArray(toArray());
     }
 
     Iterator!T iterator()
