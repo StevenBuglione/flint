@@ -1,12 +1,29 @@
 module flint.os.sys.interrupts;
 
-import core.atomic : atomicStore, cas;
+import core.atomic : atomicExchange, atomicLoad, atomicOp, atomicStore, cas;
 import core.thread.osthread : Thread;
 import flint.arena : Error, Result, Status;
 import flint.os.sys.process : nativeStatus, waitForOutput;
 import flint.os.sys.threads : joinThread;
+import flint.os.types : ShutdownSignal;
 
 @safe:
+
+// The latch carries one counter per signal: SIGINT adds 1 and SIGTERM adds 1 << 32, so one eventfd read
+// (or one drain of the Darwin pipe) reports both counts. interrupt_latch.c writes the same encoding.
+private enum ulong interruptUnit = 1;
+private enum ulong terminateUnit = 1UL << 32;
+private enum uint signalKinds = 2;
+
+private uint maskOf(ShutdownSignal signal) pure nothrow @nogc
+{
+    return 1U << signal;
+}
+
+private ulong countOf(ulong counts, ShutdownSignal signal) pure nothrow @nogc
+{
+    return signal == ShutdownSignal.interrupt ? counts & uint.max : counts >> 32;
+}
 
 version (Windows)
 {
@@ -16,18 +33,27 @@ version (Windows)
     private alias ControlHandler = extern (Windows) BOOL function(DWORD) nothrow @nogc @system;
     private extern (Windows) BOOL SetConsoleCtrlHandler(ControlHandler handler, BOOL add) nothrow @nogc @system;
 
-    // The console runs control handlers on a thread of its own; this one only sets the latch event, which
-    // lives for the process once created, exactly like the POSIX notifier descriptor.
+    // The console runs control handlers on a thread of its own; this one only counts the event and sets the
+    // latch event, which lives for the process once created, exactly like the POSIX notifier descriptor.
     private __gshared void* interruptEvent;
+    // The latch encoding of the events not yet taken, and which kinds a subscription currently claims.
+    private shared ulong pendingEvents;
+    private shared uint claimedKinds;
 
     private extern (Windows) BOOL onConsoleControl(DWORD kind) nothrow @nogc @system
     {
         import core.sys.windows.winbase : SetEvent;
 
+        // Ctrl+C is SIGINT and Ctrl+Break is SIGTERM. Close, logoff and shutdown keep their default
+        // handling: Windows ends the process as soon as a handler for them returns.
         enum DWORD ctrlCEvent = 0;
+        enum DWORD ctrlBreakEvent = 1;
         auto event = interruptEvent;
-        if (kind != ctrlCEvent || event is null)
-            return 0; // Every other event keeps its default handling.
+        const signal = kind == ctrlCEvent ? ShutdownSignal.interrupt : ShutdownSignal.terminate;
+        if ((kind != ctrlCEvent && kind != ctrlBreakEvent) || event is null
+                || (atomicLoad(claimedKinds) & maskOf(signal)) == 0)
+            return 0;
+        atomicOp!"+="(pendingEvents, signal == ShutdownSignal.interrupt ? interruptUnit : terminateUnit);
         SetEvent(event);
         return 1;
     }
@@ -35,7 +61,7 @@ version (Windows)
 else
 {
     import core.stdc.errno : errno;
-    import core.sys.posix.signal : SA_RESTART, SIGINT, SIG_DFL, SIG_IGN, sigaction, sigaction_t, sigemptyset;
+    import core.sys.posix.signal : SA_RESTART, SIGINT, SIGTERM, SIG_DFL, SIG_IGN, sigaction, sigaction_t, sigemptyset;
     import core.sys.posix.unistd : read;
 
     version (OSX)
@@ -51,16 +77,25 @@ else
     }
 }
 
-private alias Callback = void delegate() @safe;
+private alias Callback = void delegate(ShutdownSignal) @safe;
 private enum capacity = 32;
 
 private struct Subscription
 {
     ulong id;
     Callback callback;
+    uint signals;
     bool callbackFailed;
     bool inFlight;
     bool closing;
+}
+
+/// The process disposition of one signal: claimed while any subscription wants that signal.
+private struct Disposition
+{
+    uint users;
+    version (Posix) sigaction_t previous;
+    bool owned;
 }
 
 private struct Coordinator
@@ -70,9 +105,9 @@ private struct Coordinator
     ulong lastId;
     ulong epoch;
     Thread worker;
-    version (Posix) sigaction_t previous;
+    Disposition[signalKinds] actions;
     int descriptor = -1;
-    bool ownsAction;
+    version (Windows) bool ownsHandler;
 }
 
 private __gshared Coordinator coordinator;
@@ -170,109 +205,175 @@ version (Windows)
     // Windows cannot list other control handlers, so one an application registers later runs first and may claim
     // the event; Flint's handler then never sees it.
     // SAFETY: Registers the handler above, which only signals the process-lifetime latch event.
-    private Error install(ref Coordinator state) @trusted nothrow @nogc
+    private Error install(ref Coordinator state, ShutdownSignal signal) @trusted nothrow @nogc
     {
         import core.sys.windows.winbase : GetLastError;
 
-        if (state.ownsAction)
+        if (state.actions[signal].owned)
             return Error.init;
-        cast(void) takeSignal(state.descriptor);
-        if (!SetConsoleCtrlHandler(&onConsoleControl, 1))
-            return Error(nativeStatus(GetLastError()), "could not install the Ctrl+C notifier");
-        state.ownsAction = true;
+        if (!state.ownsHandler)
+        {
+            cast(void) takeSignal(state.descriptor);
+            if (!SetConsoleCtrlHandler(&onConsoleControl, 1))
+                return Error(nativeStatus(GetLastError()), "could not install the Ctrl+C notifier");
+            state.ownsHandler = true;
+        }
+        state.actions[signal].owned = true;
+        atomicOp!"|="(claimedKinds, maskOf(signal));
         return Error.init;
     }
 
-    // SAFETY: Removes only Flint's own handler.
-    private Error restore(ref Coordinator state) @trusted nothrow @nogc
+    // SAFETY: Removes only Flint's own handler, once neither kind is claimed.
+    private Error restore(ref Coordinator state, ShutdownSignal signal) @trusted nothrow @nogc
     {
         import core.sys.windows.winbase : GetLastError;
 
-        if (!state.ownsAction)
+        if (!state.actions[signal].owned)
             return Error.init;
-        state.ownsAction = false;
+        state.actions[signal].owned = false;
+        atomicOp!"&="(claimedKinds, ~maskOf(signal));
+        if (!state.ownsHandler || atomicLoad(claimedKinds) != 0)
+            return Error.init;
+        state.ownsHandler = false;
         if (!SetConsoleCtrlHandler(&onConsoleControl, 0))
             return Error(nativeStatus(GetLastError()), "could not remove the Ctrl+C notifier");
         return Error.init;
     }
 
-    private bool takeSignal(int fd) nothrow @nogc
+    private ulong takeSignal(int fd) nothrow @nogc
     {
-        return takeWake(fd);
+        if (!takeWake(fd))
+            return 0;
+        return atomicExchange(&pendingEvents, 0UL);
     }
 }
 else
 {
-    // SAFETY: The raw C action runs only the event notifier. The application callback stays in the D registry.
-    // This action only claims SIGINT when no independent custom handler currently owns it.
-    private Error install(ref Coordinator state) @trusted nothrow @nogc
+    private int numberOf(ShutdownSignal signal) pure nothrow @nogc
     {
-        if (state.ownsAction)
+        return signal == ShutdownSignal.interrupt ? SIGINT : SIGTERM;
+    }
+
+    // SAFETY: The raw C action runs only the event notifier. The application callback stays in the D registry.
+    // This action only claims the signal when no independent custom handler currently owns it.
+    private Error install(ref Coordinator state, ShutdownSignal signal) @trusted nothrow @nogc
+    {
+        auto disposition = &state.actions[signal];
+        if (disposition.owned)
             return Error.init;
 
+        const number = numberOf(signal);
         sigaction_t previous;
-        if (sigaction(SIGINT, null, &previous) != 0)
-            return Error(nativeStatus(errno), "could not inspect SIGINT disposition");
+        if (sigaction(number, null, &previous) != 0)
+            return Error(nativeStatus(errno), "could not inspect the signal disposition");
         if (previous.sa_handler != SIG_DFL && previous.sa_handler != SIG_IGN)
-            return Error(Status.conflict, "SIGINT already has an application handler");
+            return Error(Status.conflict, signal == ShutdownSignal.interrupt
+                    ? "SIGINT already has an application handler" : "SIGTERM already has an application handler");
 
-        cast(void) takeSignal(state.descriptor);
+        if (state.actions[0].users + state.actions[1].users == 0)
+            cast(void) takeSignal(state.descriptor);
         sigaction_t action;
         if (sigemptyset(&action.sa_mask) != 0)
-            return Error(nativeStatus(errno), "could not prepare SIGINT disposition");
+            return Error(nativeStatus(errno), "could not prepare the signal disposition");
         action.sa_handler = &flint_os_notify_interrupt;
         action.sa_flags = SA_RESTART;
 
-        if (sigaction(SIGINT, &action, &state.previous) != 0)
-            return Error(nativeStatus(errno), "could not install SIGINT notifier");
-        state.ownsAction = true;
+        if (sigaction(number, &action, &disposition.previous) != 0)
+            return Error(nativeStatus(errno), "could not install the signal notifier");
+        disposition.owned = true;
         return Error.init;
     }
 
     // SAFETY: Only the previously saved action is restored, and only while the current action is ours.
-    private Error restore(ref Coordinator state) @trusted nothrow @nogc
+    private Error restore(ref Coordinator state, ShutdownSignal signal) @trusted nothrow @nogc
     {
-        if (!state.ownsAction)
+        auto disposition = &state.actions[signal];
+        if (!disposition.owned)
             return Error.init;
 
+        const number = numberOf(signal);
         sigaction_t current;
-        if (sigaction(SIGINT, null, &current) != 0)
-            return Error(nativeStatus(errno), "could not inspect active SIGINT notifier");
+        if (sigaction(number, null, &current) != 0)
+            return Error(nativeStatus(errno), "could not inspect the active signal notifier");
+        disposition.owned = false;
         if (current.sa_handler != &flint_os_notify_interrupt)
-        {
-            state.ownsAction = false;
-            return Error(Status.conflict, "SIGINT action changed while subscribed");
-        }
-        if (sigaction(SIGINT, &state.previous, null) != 0)
-            return Error(nativeStatus(errno), "could not restore previous SIGINT action");
-        state.ownsAction = false;
+            return Error(Status.conflict, "a signal action changed while subscribed");
+        if (sigaction(number, &disposition.previous, null) != 0)
+            return Error(nativeStatus(errno), "could not restore the previous signal action");
         return Error.init;
     }
 
+    // Darwin's pipe carries whole eight-byte records that sum to what one eventfd read returns.
     // SAFETY: eventfd writes at most eight bytes to the local counter and borrows no storage.
     // On Darwin each read fills at most the local buffer from the nonblocking pipe.
-    private bool takeSignal(int fd) @trusted nothrow @nogc
+    private ulong takeSignal(int fd) @trusted nothrow @nogc
     {
         version (OSX)
         {
-            ulong[8] counts;
-            bool any;
-            while (read(fd, counts.ptr, counts.sizeof) > 0)
-                any = true;
-            return any;
+            ulong[8] records;
+            ulong total;
+            for (;;)
+            {
+                const count = read(fd, records.ptr, records.sizeof);
+                if (count <= 0)
+                    return total;
+                foreach (record; records[0 .. cast(size_t) count / ulong.sizeof])
+                    total += record;
+            }
         }
         else
         {
             ulong count;
-            return read(fd, &count, count.sizeof) == count.sizeof;
+            return read(fd, &count, count.sizeof) == count.sizeof ? count : 0;
         }
     }
 }
 
-package(flint.os) Result!ulong registerInterrupt(Callback callback)
+/// Claim each signal in `signals` for one more subscription, rolling back on failure.
+private Error claim(ref Coordinator state, uint signals) nothrow @nogc
 {
-    if (callback is null)
-        return Result!ulong(0, Error(Status.invalidArgument, "interrupt callback required"));
+    foreach (kind; 0 .. signalKinds)
+    {
+        const signal = cast(ShutdownSignal) kind;
+        if ((signals & maskOf(signal)) == 0)
+            continue;
+        if (state.actions[kind].users == 0)
+        {
+            const installed = install(state, signal);
+            if (installed.code != Status.ok)
+            {
+                release(state, signals & (maskOf(signal) - 1));
+                return installed;
+            }
+        }
+        ++state.actions[kind].users;
+    }
+    return Error.init;
+}
+
+/// Give back each signal in `signals`, restoring a disposition its last user held.
+private Error release(ref Coordinator state, uint signals) nothrow @nogc
+{
+    Error result;
+    foreach (kind; 0 .. signalKinds)
+    {
+        const signal = cast(ShutdownSignal) kind;
+        if ((signals & maskOf(signal)) == 0 || state.actions[kind].users == 0)
+            continue;
+        if (--state.actions[kind].users != 0)
+            continue;
+        const restored = restore(state, signal);
+        if (restored.code != Status.ok && result.code == Status.ok)
+            result = restored;
+    }
+    return result;
+}
+
+/// Subscribe `callback` to the signals in `signals`, a mask of `1 << ShutdownSignal`.
+package(flint.os) Result!ulong registerInterrupt(Callback callback, uint signals)
+{
+    if (callback is null || signals == 0 || signals >= 1U << signalKinds)
+        return Result!ulong(0, Error(Status.invalidArgument, "interrupt callback and signals required"));
     auto state = lock();
     scope (exit)
         unlock();
@@ -282,28 +383,28 @@ package(flint.os) Result!ulong registerInterrupt(Callback callback)
     const started = initializeLatch(*state);
     if (started.code != Status.ok)
         return Result!ulong(0, started);
-    const installed = install(*state);
-    if (installed.code != Status.ok)
-        return Result!ulong(0, installed);
+    size_t free = capacity;
+    foreach (slot, ref entry; state.subscriptions)
+    {
+        if (entry.id == 0)
+        {
+            free = slot;
+            break;
+        }
+    }
+    if (free == capacity)
+        return Result!ulong(0, Error(Status.resourceExhausted, "interrupt callbacks still retiring"));
+    const claimed = claim(*state, signals);
+    if (claimed.code != Status.ok)
+        return Result!ulong(0, claimed);
 
     scope (failure)
-    {
-        if (state.count == 0)
-            restore(*state);
-    }
-    foreach (ref entry; state.subscriptions)
-    {
-        if (entry.id != 0)
-            continue;
-        startCoordinator(*state);
-        const id = ++state.lastId;
-        entry = Subscription(id, callback);
-        ++state.count;
-        return Result!ulong(id);
-    }
-    if (state.count == 0)
-        restore(*state);
-    return Result!ulong(0, Error(Status.resourceExhausted, "interrupt callbacks still retiring"));
+        release(*state, signals);
+    startCoordinator(*state);
+    const id = ++state.lastId;
+    state.subscriptions[free] = Subscription(id, callback, signals);
+    ++state.count;
+    return Result!ulong(id);
 }
 
 package(flint.os) Error unregisterInterrupt(ulong id) nothrow
@@ -320,6 +421,9 @@ package(flint.os) Error unregisterInterrupt(ulong id) nothrow
         if (entry.callbackFailed)
             result = Error(Status.ioError, "interrupt callback failed");
 
+        const restored = release(*state, entry.signals);
+        if (restored.code != Status.ok)
+            result = restored;
         entry.callback = null;
         entry.closing = true;
         removedSlot = slot;
@@ -327,10 +431,6 @@ package(flint.os) Error unregisterInterrupt(ulong id) nothrow
             entry = Subscription.init;
         if (--state.count == 0)
         {
-            const restored = restore(*state);
-            if (restored.code != Status.ok)
-                result = restored;
-
             retiredWorker = state.worker;
             state.worker = null;
         }
@@ -368,6 +468,7 @@ private struct Notification
 {
     bool terminating;
     ulong through;
+    ulong counts;
 }
 
 private Notification notifications(int fd, ulong epoch) nothrow @nogc
@@ -377,9 +478,10 @@ private Notification notifications(int fd, ulong epoch) nothrow @nogc
         unlock();
     if (state.worker is null || state.epoch != epoch)
         return Notification(true);
-    if (!takeSignal(fd))
+    const counts = takeSignal(fd);
+    if (counts == 0)
         return Notification.init;
-    return Notification(false, state.lastId);
+    return Notification(false, state.lastId, counts);
 }
 
 private Subscription beginCallback(size_t slot, ulong through, ulong epoch) nothrow @nogc
@@ -391,7 +493,7 @@ private Subscription beginCallback(size_t slot, ulong through, ulong epoch) noth
     if (state.epoch != epoch || entry.id > through || entry.callback is null)
         return Subscription.init;
     entry.inFlight = true;
-    return Subscription(entry.id, entry.callback);
+    return Subscription(entry.id, entry.callback, entry.signals);
 }
 
 private void finishCallback(size_t slot, ulong id, bool failed) nothrow @nogc
@@ -411,6 +513,27 @@ private void finishCallback(size_t slot, ulong id, bool failed) nothrow @nogc
     }
 }
 
+/// Run one subscription's callback once per signal it wants: two signals of one kind that arrived together
+/// are two calls, so a second signal is never lost, and any beyond the second are coalesced.
+private bool deliver(ref Subscription active, ulong counts) nothrow
+{
+    foreach (kind; 0 .. signalKinds)
+    {
+        const signal = cast(ShutdownSignal) kind;
+        if ((active.signals & maskOf(signal)) == 0)
+            continue;
+        const count = countOf(counts, signal);
+        foreach (_; 0 .. count < 2 ? count : 2)
+        {
+            try
+                active.callback(signal);
+            catch (Exception)
+                return false;
+        }
+    }
+    return true;
+}
+
 private void dispatchLoop(int fd, ulong epoch) nothrow
 {
     onCoordinator = true;
@@ -427,12 +550,7 @@ private void dispatchLoop(int fd, ulong epoch) nothrow
             auto active = beginCallback(slot, notification.through, epoch);
             if (active.callback is null)
                 continue;
-            bool failed;
-            try
-                active.callback();
-            catch (Exception)
-                failed = true;
-            finishCallback(slot, active.id, failed);
+            finishCallback(slot, active.id, !deliver(active, notification.counts));
         }
     }
 }

@@ -26,4 +26,4 @@ LCG seed 8573; every other case uses fixed inputs, so no other seed is needed.
 The suite also covers behaviour from Sections 3 and 4 that Section 6 does not list: capture-limit
 overflow (`tests/process.d:capture overflow terminates the command without growing the retained output`),
 prompt reaping (`tests/process.d:a quickly exiting child is reaped as soon as its pipes close rather than on the next supervisor poll`),
-and SIGINT subscriptions (`tests/interrupts.d`).
+and SIGINT and SIGTERM subscriptions with graceful and forced shutdown contexts (`tests/interrupts.d`, ADR-028 section 10).

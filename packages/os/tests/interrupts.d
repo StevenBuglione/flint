@@ -3,20 +3,53 @@ module flint.os.interrupt_test;
 version (Posix)
 {
     import core.atomic : atomicLoad, atomicOp;
-    import core.sys.posix.signal : SIGINT, SIG_IGN, kill, sigaction, sigaction_t, sigemptyset;
+    import core.sys.posix.signal : SIGINT, SIGTERM, SIG_IGN, kill, sigaction, sigaction_t, sigemptyset;
     import core.sys.posix.unistd : getpid;
     import core.thread.osthread : Thread;
     import core.time : msecs;
     import flint.arena : Status;
-    import flint.os : onInterrupt;
+    import flint.os : ShutdownSignal, onInterrupt, onShutdownSignal, watchShutdownSignals;
 
     private shared uint first;
     private shared uint second;
+
+    private shared uint terminations;
+    private shared uint interruptions;
 
     private extern (C) void foreignAction(int number) nothrow @nogc
     {
         if (number == SIGINT)
             atomicOp!"+="(first, 100U);
+    }
+
+    /// Ignore both signals for the test's duration, so the restored disposition cannot end the runner.
+    private struct Ignored
+    {
+        sigaction_t interrupt, terminate;
+
+        static Ignored install() @trusted
+        {
+            Ignored saved;
+            sigaction_t ignored;
+            sigemptyset(&ignored.sa_mask);
+            ignored.sa_handler = SIG_IGN;
+            assert(sigaction(SIGINT, &ignored, &saved.interrupt) == 0);
+            assert(sigaction(SIGTERM, &ignored, &saved.terminate) == 0);
+            return saved;
+        }
+
+        void restore() @trusted
+        {
+            sigaction(SIGINT, &interrupt, null);
+            sigaction(SIGTERM, &terminate, null);
+        }
+    }
+
+    private bool ignoring(int number) @trusted
+    {
+        sigaction_t active;
+        assert(sigaction(number, null, &active) == 0);
+        return active.sa_handler == SIG_IGN;
     }
 
     private void waitUntil(ref shared uint counter, uint value)
@@ -79,5 +112,97 @@ version (Posix)
         sigaction_t active;
         assert(sigaction(SIGINT, null, &active) == 0);
         assert(active.sa_handler == &foreignAction);
+    }
+
+    @("SIGTERM and SIGINT reach a shutdown subscription with their kind, and SIGTERM skips an interrupt subscription")
+    unittest
+    {
+        auto saved = Ignored.install();
+        scope (exit)
+            saved.restore();
+
+        auto shutdown = onShutdownSignal((ShutdownSignal signal) @safe {
+            atomicOp!"+="(signal == ShutdownSignal.terminate ? terminations : interruptions, 1U);
+        });
+        assert(shutdown.ok, shutdown.error.message);
+        auto interruptOnly = onInterrupt(() @safe { atomicOp!"+="(second, 1000U); });
+        assert(interruptOnly.ok, interruptOnly.error.message);
+        const before = atomicLoad(second);
+
+        assert(kill(getpid(), SIGTERM) == 0);
+        waitUntil(terminations, 1);
+        assert(atomicLoad(interruptions) == 0 && atomicLoad(second) == before);
+        assert(kill(getpid(), SIGINT) == 0);
+        waitUntil(interruptions, 1);
+        waitUntil(second, before + 1000);
+        assert(atomicLoad(terminations) == 1);
+
+        // The interrupt subscription leaves, so SIGINT stays claimed and SIGTERM keeps its single owner.
+        assert(interruptOnly.value.close().code == Status.ok);
+        assert(!ignoring(SIGINT) && !ignoring(SIGTERM));
+        assert(shutdown.value.close().code == Status.ok);
+        assert(ignoring(SIGINT) && ignoring(SIGTERM));
+    }
+
+    @("the first shutdown signal cancels the graceful context and a second one, even coalesced, the forced context")
+    unittest
+    {
+        auto saved = Ignored.install();
+        scope (exit)
+            saved.restore();
+
+        foreach (signal; [SIGTERM, SIGINT])
+        {
+            auto watched = watchShutdownSignals();
+            assert(watched.ok, watched.error.message);
+            auto signals = &watched.value;
+            auto graceful = signals.graceful();
+            auto forced = signals.forced();
+            assert(!graceful.cancelled() && !forced.cancelled() && signals.received() == 0);
+
+            assert(kill(getpid(), signal) == 0);
+            foreach (_; 0 .. 1000)
+            {
+                if (graceful.cancelled())
+                    break;
+                Thread.sleep(1.msecs);
+            }
+            assert(graceful.cancelled() && !forced.cancelled());
+            assert(signals.first() == (signal == SIGTERM ? ShutdownSignal.terminate : ShutdownSignal.interrupt));
+
+            // Two signals before the coordinator wakes still count as two.
+            assert(kill(getpid(), signal) == 0);
+            assert(kill(getpid(), signal) == 0);
+            foreach (_; 0 .. 1000)
+            {
+                if (forced.cancelled())
+                    break;
+                Thread.sleep(1.msecs);
+            }
+            assert(forced.cancelled() && signals.received() >= 2);
+            assert(signals.close().code == Status.ok);
+            assert(ignoring(SIGINT) && ignoring(SIGTERM));
+        }
+    }
+
+    @("a custom SIGTERM handler keeps ownership and the shutdown subscription gives SIGINT back")
+    unittest
+    {
+        auto saved = Ignored.install();
+        scope (exit)
+            saved.restore();
+        sigaction_t foreign;
+        sigemptyset(&foreign.sa_mask);
+        foreign.sa_handler = &foreignAction;
+        assert(sigaction(SIGTERM, &foreign, null) == 0);
+
+        const subscription = onShutdownSignal((ShutdownSignal) @safe {});
+        assert(subscription.error.code == Status.conflict);
+        const watched = watchShutdownSignals();
+        assert(watched.error.code == Status.conflict);
+        sigaction_t active;
+        assert(sigaction(SIGTERM, null, &active) == 0);
+        assert(active.sa_handler == &foreignAction);
+        assert(ignoring(SIGINT));
     }
 }

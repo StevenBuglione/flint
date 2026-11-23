@@ -56,3 +56,12 @@ struct GlobOptions
     /// Maximum number of results, up to 100,000.
     uint maxResults = 100_000;
 }
+
+/// A process signal that asks the application to stop.
+enum ShutdownSignal : ubyte
+{
+    /// SIGINT, or Ctrl+C in a Windows console.
+    interrupt,
+    /// SIGTERM, or Ctrl+Break in a Windows console.
+    terminate
+}
