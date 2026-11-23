@@ -3,21 +3,21 @@
   "id": "phase1-builds-gs-rest",
   "created": "2026-11-23",
   "status": "blocked",
-  "window": "natural",
+  "window": "claim",
   "priority": 5,
-  "blocked_on": "petclinic-rest scoring 109/109 in proof-harness's independent run, then a pin to one commit where all three ports pass exactly",
-  "claim_when": "Claims a window only once the gs-builds certification (per-phase timings and the prelude) shows a primary build ratio under about 1.5; until then gs-builds is the signal, and this runs only on natural quiet (coordinator, 2026-11-23 16:45Z)",
+  "blocked_on": "its smoke run at befd9649b1e9, under hold; then pending and claimed",
   "requested_by": "ADR-030 section 8, Phase 1 exit (coordinator's plan, 2026-11-23 15:20Z); split per application by the coordinator, 2026-11-23 16:45Z",
   "report_to": "the coordinator; docs/milestones/13.md",
   "estimate_minutes": 17,
   "summary": "Phase 1: gs-rest-service's suites (Java, Go, Flint) and builds against Go (both headlines, edit builds, Oz stripped)",
-  "why": "One part of the Phase 1 builds evidence, split per application: the same trials and comparators as the whole run, scheduled separately. spring_bench.py assemble merges the parts, which must share one commit.",
+  "why": "One part of the Phase 1 builds evidence, split per application: the same trials and comparators as the whole run, scheduled separately. spring_bench.py assemble merges the parts, which must share one commit. Pinned with its two sibling parts at befd9649b1e9 (coordinator, 2026-11-23 19:40Z): gs-builds at aa17876b showed a primary of 1.255, under the 1.5 threshold, so the parts claim windows at priority 5, behind any ready runtime run. Built with the DMD fork (compile-server prelude), as gs-builds is. The accept steps are the independent check that every port passes exactly (petclinic-rest 109/109).",
   "builds": {
     "tree": {
       "app": "checkout",
-      "commit": "TBD",
+      "commit": "befd9649b1e9",
       "flint": true,
-      "linker": "mold"
+      "linker": "mold",
+      "fork": true
     }
   },
   "measure": {
