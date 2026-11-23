@@ -92,7 +92,7 @@ When your assigned work is done, don't stop.
 | 12 | SpEL subset compiled to D for `@Value("#{…}")`, `@Cacheable(key=…)` and `@PreAuthorize` | flint-aot | |
 | 13 | Port the upstream JUnit tests for spring-web and spring-webmvc classes already ported | macOS session (from size-levers) | |
 | 14 | Spring-style REST benchmark app (Flint) for `load_bench`'s Spring workload. Scope (proof-harness): the workload measures the side-by-side ports themselves, so this is the gs-rest-service and petclinic-rest Flint apps under `benchmarks/spring/flint/<app>/` with their `flint-spring.json` (build, cached, scratch, O3 and Oz commands), written against the framework as items 2, 3, 4 and 10 land; the framework and auto-configuration stay with their owners | proof-harness | |
-| 15 | Windows platform lane receipt (Gate 6) | Windows session | |
+| 15 | Windows platform lane receipt (Gate 6) | Windows session | receipt at `3988927` (exit 0, 455 s, LDC; 37 of 37 packages, the negative fixtures and the betterC runs; `verified_receipt` passes against that commit) |
 | 16 | macOS platform lane receipt in a quiet window | macOS session | receipt at `10ae6c3` (exit 0, 454 s, forked DMD and LDC) |
 | 17 | linux-aarch64 platform lane receipt | linux-arm64-vm | |
 | 18 | DMD arm64 stage 2 (Flint on DMD arm64) | dmd-arm64 | |
