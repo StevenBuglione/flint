@@ -109,7 +109,7 @@ class FilterChainProxy : Filter
     void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
     {
         auto httpRequest = cast(HttpServletRequest) request;
-        auto filters = httpRequest is null ? null : getFilters(httpRequest);
+        auto filters = httpRequest is null ? null : filtersFor(this, httpRequest);
         scope (exit)
             SecurityContextHolder.clearContext();
         if (filters.length == 0)
@@ -119,6 +119,20 @@ class FilterChainProxy : Filter
         }
         new VirtualFilterChain(chain, filters).doFilter(request, response);
     }
+}
+
+/// The filters of the first chain matching `request`, without `getFilters`' copy for Flint's own chain (read-only;
+/// once per request).
+private Filter[] filtersFor(FilterChainProxy proxy, HttpServletRequest request)
+{
+    foreach (chain; proxy.filterChains)
+        if (chain.matches(request))
+        {
+            if (auto own = cast(DefaultSecurityFilterChain) chain)
+                return own.filters;
+            return chain.getFilters();
+        }
+    return null;
 }
 
 /// Runs the security filters, then the original chain.

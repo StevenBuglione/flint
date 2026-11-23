@@ -483,6 +483,7 @@
    "licence": "Apache-2.0",
    "upstream": "spring-framework@v7.1.0",
    "dependencies": [
+    "conc",
     "core",
     "engine-aot",
     "jakarta-annotation",

@@ -20,6 +20,75 @@ template typeNameOf(T)
 /// `a.M!(string, a.O!(int))`.
 string canonicalTypeName(string name) pure nothrow
 {
+    // Most names name no template instance: nothing to remove, and nothing to allocate.
+    if (!namesInstance(name))
+        return name;
+    Rebuilt rebuilt;
+    string[32] owners; // the identifier owning each open '!(' (empty for a plain parenthesis)
+    size_t depth;
+    size_t i;
+    while (i < name.length)
+    {
+        const c = name[i];
+        if (c == '(')
+        {
+            if (depth == owners.length)
+                return canonicalTypeNameSlow(name); // nested deeper than any real type name
+            owners[depth++] = i > 0 && name[i - 1] == '!' ? identifierBefore(name, i - 1) : null;
+            i++;
+        }
+        else if (c == ')' && depth)
+            i = rebuilt.skip(name, i + 1, skipRepeated(name, i + 1, owners[--depth]));
+        else if (c == '!' && i + 1 < name.length && isIdentifierChar(name[i + 1]))
+        {
+            const owner = identifierBefore(name, i);
+            size_t end = i + 1;
+            while (end < name.length && isIdentifierChar(name[end]))
+                end++;
+            i = rebuilt.skip(name, end, skipRepeated(name, end, owner));
+        }
+        else
+            i++;
+    }
+    return rebuilt.finish(name);
+}
+
+private bool namesInstance(string name) pure nothrow @nogc
+{
+    foreach (c; name)
+        if (c == '!')
+            return true;
+    return false;
+}
+
+/// A copy of a name that is made only once something is removed: `name[copied .. i]` is still owed to `result`.
+private struct Rebuilt
+{
+    string result;
+    size_t copied;
+    bool changed;
+
+    /// Keep `name[copied .. keepEnd]` and drop `name[keepEnd .. after]`; returns `after`.
+    size_t skip(string name, size_t keepEnd, size_t after) pure nothrow
+    {
+        if (after != keepEnd)
+        {
+            result ~= name[copied .. keepEnd];
+            copied = after;
+            changed = true;
+        }
+        return after;
+    }
+
+    string finish(string name) pure nothrow
+    {
+        return changed ? result ~ name[copied .. $] : name;
+    }
+}
+
+/// `canonicalTypeName` for a name nested more than 32 parentheses deep (one character at a time).
+private string canonicalTypeNameSlow(string name) pure nothrow
+{
     string result;
     string[] templates; // the identifier owning each open '!(' (empty for a plain parenthesis)
     size_t i;
@@ -113,6 +182,19 @@ unittest
     assert(canonicalTypeName("a.Map!(string, a.List!int.List).Map") == "a.Map!(string, a.List!int)");
     assert(canonicalTypeName("app.t.Opt!(Owner).Inner") == "app.t.Opt!(Owner).Inner");
     assert(canonicalTypeName("int") == "int" && canonicalTypeName("app.Owner[]") == "app.Owner[]");
+    // Nothing to remove: the same slice back, with no allocation (by-type bean lookups ask for every bean).
+    const plain = "app.petclinic.model.Owner";
+    assert(canonicalTypeName(plain) is plain);
+    const instance = "flint.java.util.List!(app.Owner)";
+    assert(canonicalTypeName(instance) is instance);
+    // Deeper than the fixed owner stack: the one-character-at-a-time path, with the same result.
+    string deep = "x";
+    foreach (_; 0 .. 40)
+        deep = "a.L!(" ~ deep ~ ").L";
+    string expected = "x";
+    foreach (_; 0 .. 40)
+        expected = "a.L!(" ~ expected ~ ")";
+    assert(canonicalTypeName(deep) == expected);
     assert(simpleTypeName("app.t.Owner") == "Owner" && simpleTypeName("app.t.Opt!(a.B)") == "Opt");
     assert(typeNameOf!int == "int" && typeNameOf!string == "string");
 }
