@@ -79,7 +79,7 @@ When your assigned work is done, don't stop.
 | 11 | Classification sweeps: lower the coverage baselines by classifying excluded and adapted elements in the Phase 1 checklists, with the module owners' agreement | api-coverage (`local_7afcbe30`) | |
 | 12 | SpEL subset compiled to D for `@Value("#{…}")`, `@Cacheable(key=…)` and `@PreAuthorize` | | |
 | 13 | Port the upstream JUnit tests for spring-web and spring-webmvc classes already ported | size-levers | |
-| 14 | Spring-style REST benchmark app (Flint) for `load_bench`'s Spring workload | | |
+| 14 | Spring-style REST benchmark app (Flint) for `load_bench`'s Spring workload. Scope (proof-harness): the workload measures the side-by-side ports themselves, so this is the gs-rest-service and petclinic-rest Flint apps under `benchmarks/spring/flint/<app>/` with their `flint-spring.json` (build, cached, scratch, O3 and Oz commands), written against the framework as items 2, 3, 4 and 10 land; the framework and auto-configuration stay with their owners | proof-harness | |
 | 15 | Windows platform lane receipt (Gate 6) | Windows session | |
 | 16 | macOS platform lane receipt in a quiet window | macOS session | |
 | 17 | linux-aarch64 platform lane receipt | linux-arm64-vm | |
