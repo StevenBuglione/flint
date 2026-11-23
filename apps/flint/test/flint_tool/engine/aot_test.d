@@ -427,6 +427,14 @@ unittest
     ] ~ sources, launch);
     expect(built.combined()).toEqual("");
     expect(built.ok).toBeTrue();
+    // Contract 2 fields.
+    const web = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot", "shop", "web.d"));
+    expect(web.canFind(`mapping.beanType = "shop.web.OwnerController";`)).toBeTrue();
+    expect(web.canFind("mapping.typeAnnotations = [")).toBeTrue();
+    expect(web.canFind("definition.rank = ")).toBeTrue();
+    const data = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot", "shop", "data.d"));
+    expect(data.canFind("&construct_Owner_0, true)")).toBeTrue();
+    expect(data.canFind("descriptor.enumValue = &enum_OwnerStatus;")).toBeTrue();
     const ran = capture([binary], launch);
     expect(ran.ok).toBeTrue();
     expect(ran.output).toEqual(readText(buildPath(root, "tests", "aot", "sample", "expected.txt")));
@@ -507,6 +515,7 @@ unittest
     expect(generated.canFind(`"flintsample.autoconfig.WidgetAutoConfiguration"`)).toBeTrue();
     expect(generated.canFind("ExcludedAutoConfiguration\";")).toBeFalse();
     expect(generated.canFind(`c.property("flint.boot.enableautoconfiguration", "true", true) `
+            ~ `&& !c.isAutoConfigurationExcluded("flintsample.autoconfig.WidgetAutoConfiguration") `
             ~ `&& !c.hasBeanOfType("flintsample.autoconfig.Widget")`)).toBeTrue();
 }
 

@@ -9,6 +9,7 @@ import flint.engine.aot.mapping : HandlerArguments;
 import flint.engine.aot.proxy : Advisor, DetachedExecutor, Invocation, Proceed;
 import flint.engine.aot.registry : installedRegistry;
 import shop.config : AuditLog, ClockReport, Greeter;
+import shop.data : OwnerStatus;
 import shop.owners : OwnerService, OwnerStore;
 import shop.web : Greeting;
 import std.stdio : writeln;
@@ -146,6 +147,12 @@ void scenario(string label, string[] profiles, string[string] properties)
                     descriptor.constructors[0].parameters[0].name, ", ", descriptor.constructors[0].parameters[1].name,
                     " -> ", made.get!Greeting.id, " ", made.get!Greeting.content);
         }
+    }
+    foreach (descriptor; context.descriptors)
+    {
+        if (descriptor.name == "shop.data.OwnerStatus")
+            writeln("enum: ", descriptor.enumConstants.length, " constants, ordinal 1 = ",
+                    descriptor.enumValue(1).get!OwnerStatus, ", ordinal 9 null = ", descriptor.enumValue(9).isNull);
     }
     auto store = cast(OwnerStore) context.getBean("ownerStore");
     context.close();

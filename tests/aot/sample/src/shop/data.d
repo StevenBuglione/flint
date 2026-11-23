@@ -8,6 +8,13 @@ import flint.jakarta.validation.constraints : NotBlank, Size;
 
 @safe:
 
+/// An owner's standing.
+enum OwnerStatus
+{
+    active,
+    archived
+}
+
 /// An owner row.
 @Table("owners") struct Owner
 {

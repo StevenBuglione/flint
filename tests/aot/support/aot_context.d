@@ -61,8 +61,9 @@ final class AotContext : AotRegistry, BeanFactory, ConditionContext
 
     void begin(uint contractVersion, size_t modules) scope
     {
-        if (contractVersion != 1)
-            throw new Exception("contract version mismatch");
+        import flint.engine.aot.registry : checkContractVersion;
+
+        checkContractVersion(contractVersion);
     }
 
     void bean(BeanDefinition definition) scope

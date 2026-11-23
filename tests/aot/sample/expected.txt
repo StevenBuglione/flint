@@ -17,6 +17,7 @@ query: findFirst2ByCityAndFirstNameStartingWith: SELECT id, first_name, surname,
 query: existsByCity: SELECT 1 FROM owners WHERE city = ? LIMIT 1
 descriptor: 2 properties, content = set through the descriptor
 creator: 1 constructor(s), parameters id, content -> 7 built by the canonical constructor
+enum: 2 constants, ordinal 1 = archived, ordinal 9 null = true
 shutdown: service stopped, store destroyed
 == prod profile
 application: shop.app.ShopApplication
@@ -37,4 +38,5 @@ query: findFirst2ByCityAndFirstNameStartingWith: SELECT id, first_name, surname,
 query: existsByCity: SELECT 1 FROM owners WHERE city = ? LIMIT 1
 descriptor: 2 properties, content = set through the descriptor
 creator: 1 constructor(s), parameters id, content -> 7 built by the canonical constructor
+enum: 2 constants, ordinal 1 = archived, ordinal 9 null = true
 shutdown: service stopped, store destroyed

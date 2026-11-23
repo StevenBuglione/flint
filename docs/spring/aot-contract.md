@@ -6,7 +6,7 @@ Flint AOT is the build step that replaces Spring's runtime reflection (ADR-030 s
 - **the runtime** (`flint.engine.aot.*`, DUB `flint:engine-aot`) lives in `flint-framework` and is implemented by the framework-core session;
 - **the annotations** the generator recognizes are owned by the framework, Boot and portfolio packages that declare them.
 
-Contract version: **1**. A change to anything below bumps the version, and the generator writes the version into every generated module, so a mismatched runtime fails to compile instead of misbehaving.
+Contract version: **2**, additive over 1 (section 4.10); the runtime accepts both. A change to anything below bumps the version, and the generator writes the version into every generated module, so a mismatched runtime fails to compile instead of misbehaving.
 
 ## 1. What runs when
 
@@ -419,6 +419,22 @@ void installRegistry(RegistryPopulator populate) nothrow @nogc;   // called once
 RegistryPopulator installedRegistry() nothrow @nogc;              // null when the program has no registry
 ```
 
+### 4.10 Contract 2 additions
+
+All are fields with defaults, so contract-1 code still compiles. The generator emits:
+
+| Type | Field | Value |
+| --- | --- | --- |
+| `BeanDefinition` | `uint rank` | definition order plus one; 0 means unranked |
+| `HandlerMapping` | `string beanType`, `MergedAnnotation[] typeAnnotations` | the controller's type and its merged class-level annotations (class plus method `@CrossOrigin` combine) |
+| `ExceptionHandlerSpec` | `string beanType`, `string[] adviceAssignableTypes`, `string[] adviceAnnotations`, `string[] produces` | `@ControllerAdvice` selectors and `@ExceptionHandler(produces)` |
+| `ArgumentSpec` | `string elementType` | an array's element type, or the first template argument (`HttpEntity!T`, `Optional!T`) |
+| `ConstructorDescriptor` | `bool canonical` | true for a record's field-wise constructor |
+| `Descriptor` | `Any function(long ordinal) enumValue` | a user enum's constant by declaration index, `Any.init` out of range |
+| `ConditionContext` | `bool isAutoConfigurationExcluded(string type)` | called on every auto-configuration definition |
+
+Generated registries call `registry.begin(2, ...)`. The runtime's other builders (`length`, `element`, `fromElements`, `toKeys`, `toValues`, `fromEntries`, `wrap`, `unwrap`) cover built-in collection types; user descriptors leave them null.
+
 ## 5. Beans
 
 ### 5.1 What becomes a bean
@@ -427,7 +443,7 @@ RegistryPopulator installedRegistry() nothrow @nogc;              // null when t
 - A class with a merged `@Component` (so also `@Service`, `@Repository`, `@Controller`, `@RestController`, `@Configuration`, `@ControllerAdvice`) in a scanned module. The scanned modules are those under the `@FlintBootApplication` class's package, or under `scanBasePackages`, exactly as `@ComponentScan` would see them.
 - Each `@Bean` method of a `@Configuration` (or lite `@Component`) class, named after the method unless `@Bean(name)` says otherwise.
 - A `@ConfigurationProperties` class listed by `@EnableConfigurationProperties` or found by `@ConfigurationPropertiesScan`, named `<prefix>-<fully qualified name>` as Boot names it.
-- Each auto-configuration class of the closure, with its `@Bean` methods, after every user definition. A package lists its auto-configurations, one fully qualified class per line, in `META-INF/flint/flint.boot.autoconfigure.AutoConfiguration.imports` at its root, as Boot's `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports` does. Auto-configuration beans are named by their fully qualified class name, as in Boot. The `exclude` and `excludeName` of `@FlintBootApplication` and `@EnableAutoConfiguration` (declared or merged) remove auto-configurations at build time. `flint.boot.enableautoconfiguration=false` (Boot's `spring.boot.enableautoconfiguration`) removes all of them at startup: every auto-configuration definition's condition starts with `c.property("flint.boot.enableautoconfiguration", "true", true)`. Boot's `spring.autoconfigure.exclude` list (`flint.autoconfigure.exclude`) needs a membership test that `ConditionContext` lacks and is proposed for contract 2.
+- Each auto-configuration class of the closure, with its `@Bean` methods, after every user definition. A package lists its auto-configurations, one fully qualified class per line, in `META-INF/flint/flint.boot.autoconfigure.AutoConfiguration.imports` at its root, as Boot's `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports` does. Auto-configuration beans are named by their fully qualified class name, as in Boot. The `exclude` and `excludeName` of `@FlintBootApplication` and `@EnableAutoConfiguration` (declared or merged) remove auto-configurations at build time. `flint.boot.enableautoconfiguration=false` (Boot's `spring.boot.enableautoconfiguration`) removes all of them at startup: every auto-configuration definition's condition starts with `c.property("flint.boot.enableautoconfiguration", "true", true)`. Boot's `spring.autoconfigure.exclude` list (`flint.autoconfigure.exclude`) removes single auto-configurations at startup through `!c.isAutoConfigurationExcluded("<fqn>")` (contract 2), which Boot's binder answers with relaxed binding.
 
 The default bean name is the class name with its first letter lowered, keeping Spring's rule that a name starting with two capitals stays as it is (`URLService`).
 
@@ -451,7 +467,7 @@ With `proxyBeanMethods` true (the default), the generator emits `<Name>__FlintCo
 
 `dependsOn` names only `@DependsOn` values and, for a `@Bean` method, its configuration bean. A `@Bean` method's condition includes its class's, so its configuration bean exists whenever it does, and the runtime treats a missing name as an error, as Spring does for `@DependsOn`. Startup per bean: `create`, the `Aware` callbacks, `BeanPostProcessor.before`, `initialize(target)`, `BeanPostProcessor.after`, then `proxy(target)`.
 
-The registry adds definitions in Spring's order: user components by module name and then source order, then the `@Bean` methods of each configuration class after the class itself, then auto-configurations sorted by `@AutoConfigureOrder`, `@AutoConfigureAfter` and `@AutoConfigureBefore`, then their `@Bean` methods. Registration order is that order: the registry calls the generated modules in the order of their first definition, and each module registers its definitions in order. (Two auto-configuration modules whose classes interleave in that order would register out of order; a `rank` field in a later contract version would remove the limit.)
+The registry adds definitions in Spring's order: user components by module name and then source order, then the `@Bean` methods of each configuration class after the class itself, then auto-configurations sorted by `@AutoConfigureOrder`, `@AutoConfigureAfter` and `@AutoConfigureBefore`, then their `@Bean` methods. Registration order is that order: the registry calls the generated modules in the order of their first definition, and each module registers its definitions in order. Since contract 2, every definition also carries `rank` (its position plus one), so the runtime can sort across modules.
 
 The runtime walks that order once, at startup, before creating anything:
 

@@ -279,6 +279,8 @@ struct ArgumentPlan
     bool validate;
     /// The exception parameter of an exception handler.
     bool exception;
+    /// Contract 2: the element type of an array, or the first template argument (`HttpEntity!T`, `Optional!T`).
+    string elementType;
     /// Merged parameter annotations.
     MergedSet annotations;
 }
@@ -316,6 +318,8 @@ struct HandlerPlan
     size_t index;
     /// Source location.
     string source;
+    /// Contract 2: the controller's merged class-level annotations.
+    MergedSet typeAnnotations;
 }
 
 /// An exception handler.
@@ -333,6 +337,12 @@ struct ExceptionPlan
     bool advice;
     /// `@ControllerAdvice(basePackages)`.
     string[] basePackages;
+    /// Contract 2: `@ControllerAdvice(assignableTypes)` and `@ControllerAdvice(annotations)`.
+    string[] assignableTypes;
+    /// ditto
+    string[] adviceAnnotations;
+    /// Contract 2: `@ExceptionHandler(produces)`.
+    string[] produces;
     /// Arguments.
     ArgumentPlan[] arguments;
     /// Whether the response is the body.
@@ -742,7 +752,7 @@ private final class Analysis
             return;
         // Boot's spring.boot.enableautoconfiguration=false turns every auto-configuration off at startup.
         if (candidate.autoConfiguration)
-            outcome.terms = autoConfigurationTerm() ~ outcome.terms;
+            outcome.terms = autoConfigurationTerms(decl.fqn) ~ outcome.terms;
         BeanPlan bean;
         bean.name = componentName(candidate);
         bean.type = decl.fqn;
@@ -781,12 +791,17 @@ private final class Analysis
         return true;
     }
 
-    static string autoConfigurationTerm()
+    /// Boot's startup switches for an auto-configuration: spring.boot.enableautoconfiguration and the
+    /// spring.autoconfigure.exclude list (contract 2), under Flint's prefixes.
+    static string[] autoConfigurationTerms(string type)
     {
         import flint_tool.engine.aot.conditions : literal;
         import flint_tool.engine.aot.names : enableAutoConfigurationProperty;
 
-        return "c.property(" ~ literal(enableAutoConfigurationProperty) ~ ", \"true\", true)";
+        return [
+            "c.property(" ~ literal(enableAutoConfigurationProperty) ~ ", \"true\", true)",
+            "!c.isAutoConfigurationExcluded(" ~ literal(type) ~ ")"
+        ];
     }
 
     string componentName(ref Candidate candidate)
@@ -1621,8 +1636,11 @@ private final class Analysis
     {
         import flint_tool.engine.aot.names : requestMapping, responseBody, responseStatus;
 
+        import flint_tool.engine.aot.merge : cloneMerged = clone;
+
         const classMapping = classMerged.get(requestMapping);
         HandlerPlan handler;
+        handler.typeAnnotations = cloneMerged(classMerged);
         handler.bean = bean;
         handler.className = decl.fqn;
         handler.method = clone(method);
@@ -1689,8 +1707,14 @@ private final class Analysis
         handler.advice = advice;
         handler.source = location(method.file, method.line);
         handler.exceptionTypes = merged.get(exceptionHandler).get("value").strings;
+        handler.produces = merged.get(exceptionHandler).get("produces").strings;
         if (advice)
-            handler.basePackages = classMerged.get(controllerAdvice).get("basePackages").strings;
+        {
+            const selectors = classMerged.get(controllerAdvice);
+            handler.basePackages = selectors.get("basePackages").strings ~ selectors.get("value").strings;
+            handler.assignableTypes = selectors.get("assignableTypes").strings;
+            handler.adviceAnnotations = selectors.get("annotations").strings;
+        }
         handler.responseBody = merged.has(responseBody) || classMerged.has(responseBody);
         if (const status = merged.get(responseStatus))
             handler.status = statusCode(*status);
@@ -1725,6 +1749,10 @@ private final class Analysis
         argument.validate = merged.hasAny([valid, validated]);
         argument.exception = exception;
         argument.required = true;
+        if (parameter.type.element.length)
+            argument.elementType = parameter.type.element[0].name;
+        else if (parameter.type.arguments.length)
+            argument.elementType = parameter.type.arguments[0].name;
         static immutable string[2][] bindings = [
             [pathVariable, "pathVariable"], [requestParam, "requestParam"],
             [requestHeader, "requestHeader"], [cookieValue, "cookieValue"],

@@ -14,7 +14,7 @@ import flint_tool.engine.aot.plan : ArgumentPlan, BeanPlan, ConfigPlan, Descript
 @safe:
 
 /// The contract version generated code targets.
-enum contractVersion = 1;
+enum contractVersion = 2;
 
 /// The generated module's name for an extracted module.
 string generatedName(string moduleName)
@@ -404,6 +404,7 @@ private struct Emitter
         string text = "    {\n        BeanDefinition definition;\n        definition.name = " ~ literal(
                 bean.name) ~ ";\n        definition.type = " ~ literal(
                 bean.type) ~ ";\n        definition.types = " ~ stringArray(bean.types) ~ ";\n";
+        text ~= "        definition.rank = " ~ (bean.rank + 1).to!string ~ ";\n";
         if (bean.dependsOn.length)
             text ~= "        definition.dependsOn = " ~ stringArray(bean.dependsOn) ~ ";\n";
         if (bean.qualifiers.length)
@@ -600,6 +601,8 @@ private struct Emitter
                     ? descriptor.type ~ ".init" : "new " ~ descriptor.type ~ "()") ~ ");\n}\n\n";
         foreach (index, ref constructor; descriptor.constructors)
             text ~= constructorFunction(descriptor, constructor, id, index);
+        if (descriptor.constants.length)
+            text ~= enumFunction(descriptor, id);
         text ~= "private Descriptor describe_" ~ id ~ "()\n{\n    auto descriptor = new Descriptor(" ~ literal(
                 descriptor.type) ~ ", TypeKind." ~ descriptor.kind ~ ");\n";
         if (descriptor.supertypes.length)
@@ -631,14 +634,28 @@ private struct Emitter
             foreach (index, ref constructor; descriptor.constructors)
                 text ~= "        ConstructorDescriptor(" ~ constructorParameters(
                         constructor) ~ ", " ~ mergedArray(constructor.annotations,
-                        "        ") ~ ", &construct_" ~ id ~ "_" ~ index.to!string ~ "),\n";
+                        "        ") ~ ", &construct_" ~ id ~ "_" ~ index.to!string ~ (constructor.kind == "literal"
+                        ? ", true" : "") ~ "),\n";
             text ~= "    ];\n";
         }
         if (descriptor.create.length)
             text ~= "    descriptor.create = &new_" ~ id ~ ";\n";
         if (descriptor.constants.length)
-            text ~= "    descriptor.enumConstants = " ~ stringArray(descriptor.constants) ~ ";\n";
+            text ~= "    descriptor.enumConstants = " ~ stringArray(
+                    descriptor.constants) ~ ";\n" ~ "    descriptor.enumValue = &enum_" ~ id ~ ";\n";
         return text ~ "    return descriptor;\n}\n\n";
+    }
+
+    /// Contract 2: an enum constant by its declaration index (Java's ordinal), or `Any.init`.
+    string enumFunction(const ref DescriptorPlan descriptor, string id)
+    {
+        import std.conv : to;
+
+        string text = "private Any enum_" ~ id ~ "(long ordinal)\n{\n    switch (ordinal)\n    {\n";
+        foreach (index, constant; descriptor.constants)
+            text ~= "    case " ~ index.to!string ~ ":\n        return Any.of(" ~ descriptor.type
+                ~ "." ~ constant ~ ");\n";
+        return text ~ "    default:\n        return Any.init;\n    }\n}\n\n";
     }
 
     string constructorParameters(const ref imported!"flint_tool.engine.aot.plan".ConstructorPlan constructor)
@@ -771,6 +788,8 @@ private struct Emitter
                     ? "true" : "false") ~ "; ";
             if (argument.hasDefault)
                 text ~= "a.defaultValue = " ~ literal(argument.defaultValue) ~ "; ";
+            if (argument.elementType.length)
+                text ~= "a.elementType = " ~ literal(argument.elementType) ~ "; ";
             if (argument.validate)
                 text ~= "a.validate = true; ";
             if (argument.annotations.items.length)
@@ -799,6 +818,9 @@ private struct Emitter
             if (items.length)
                 text ~= "        mapping." ~ field ~ " = " ~ stringArray(items) ~ ";\n";
         }
+        text ~= "        mapping.beanType = " ~ literal(handler.className) ~ ";\n";
+        if (handler.typeAnnotations.items.length)
+            text ~= "        mapping.typeAnnotations = " ~ mergedArray(handler.typeAnnotations, "        ") ~ ";\n";
         text ~= "        mapping.arguments = " ~ argumentSpecs(
                 handler.arguments) ~ ";\n        mapping.returnType = " ~ literal(
                 handler.method.returns.name) ~ ";\n        mapping.responseBody = " ~ (handler.responseBody
@@ -822,8 +844,17 @@ private struct Emitter
         string text = "    {\n        ExceptionHandlerSpec handler;\n        handler.bean = " ~ literal(
                 handler.bean) ~ ";\n        handler.exceptionTypes = " ~ stringArray(
                 handler.exceptionTypes) ~ ";\n        handler.advice = " ~ (handler.advice ? "true" : "false") ~ ";\n";
-        if (handler.basePackages.length)
-            text ~= "        handler.adviceBasePackages = " ~ stringArray(handler.basePackages) ~ ";\n";
+        text ~= "        handler.beanType = " ~ literal(handler.className) ~ ";\n";
+        foreach (field, items; [
+            "adviceBasePackages": handler.basePackages,
+            "adviceAssignableTypes": handler.assignableTypes,
+            "adviceAnnotations": handler.adviceAnnotations,
+            "produces": handler.produces
+        ])
+        {
+            if (items.length)
+                text ~= "        handler." ~ field ~ " = " ~ stringArray(items) ~ ";\n";
+        }
         text ~= "        handler.arguments = " ~ argumentSpecs(
                 handler.arguments) ~ ";\n        handler.returnType = " ~ literal(
                 handler.method.returns.name) ~ ";\n        handler.responseBody = " ~ (handler.responseBody
