@@ -1,9 +1,11 @@
 /**
- * Ported from druntime v2.114.0 (https://github.com/dlang/dmd, tag v2.114.0):
+ * Port of druntime v2.114.0 (https://github.com/dlang/dmd, tag v2.114.0), the D runtime, not a ported API
+ * (api/upstreams.json pins API sources only):
  * druntime/src/core/internal/gc/impl/conservative/gc.d
  *
  * Copyright: D Language Foundation 2001 - 2021.
  * License:   $(HTTP www.boost.org/LICENSE_1_0.txt, Boost License 1.0).
+ * SPDX-License-Identifier: BSL-1.0
  * Authors:   Walter Bright, David Friedman, Sean Kelly
  *
  * Modified by the Flint authors.
