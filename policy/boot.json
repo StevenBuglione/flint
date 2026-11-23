@@ -223,6 +223,7 @@
         "jdbc",
         "engine-jdbc",
         "tx",
+        "boot-transaction",
         "java",
         "engine-aot"
       ],
@@ -248,6 +249,10 @@
       "layer": "module",
       "dependencies": [
         "boot-core",
+        "boot-autoconfigure",
+        "context",
+        "core",
+        "tx",
         "java",
         "engine-aot"
       ],

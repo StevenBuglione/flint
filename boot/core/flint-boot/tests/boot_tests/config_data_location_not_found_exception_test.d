@@ -41,14 +41,10 @@ version (FlintConfigDataLocationApi)
     }
 }
 
-version (FlintConfigDataNotFoundMessage)
+@("getMessageReturnsMessage") unittest
 {
-    // Gap: the message reads "... does not exist" instead of Boot's "... cannot be found".
-    @("getMessageReturnsMessage") unittest
-    {
-        auto exception = new ConfigDataLocationNotFoundException(location());
-        assert(exception.msg == "Config data location 'optional:test' cannot be found");
-    }
+    auto exception = new ConfigDataLocationNotFoundException(location());
+    assert(exception.msg == "Config data location 'optional:test' cannot be found");
 }
 
 import boot_tests.support : RegisterTests;

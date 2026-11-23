@@ -1,0 +1,2 @@
+flint.boot.transaction.autoconfigure.TransactionAutoConfiguration
+flint.boot.transaction.autoconfigure.TransactionManagerCustomizationAutoConfiguration

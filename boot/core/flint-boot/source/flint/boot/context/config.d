@@ -28,6 +28,7 @@
 /// Every key may use the `spring.*` spelling instead of `flint.*`.
 module flint.boot.context.config;
 
+import flint.boot.context.properties.bind : PlaceholdersResolver, PropertySourcesPlaceholdersResolver;
 import flint.boot.context.properties.source : ConfigurationPropertyName, ConfigurationPropertySource,
     ConfigurationPropertySources, MapConfigurationPropertySource, SystemEnvironmentPropertySource;
 import flint.boot.env : OriginTrackedMapPropertySource, PropertiesPropertySourceLoader,
@@ -150,7 +151,7 @@ struct ConfigDataLocation
     }
 }
 
-/// Thrown when a required config data location does not exist.
+/// Thrown when a required config data location cannot be found.
 class ConfigDataLocationNotFoundException : RuntimeException
 {
     private ConfigDataLocation location;
@@ -158,7 +159,7 @@ class ConfigDataLocationNotFoundException : RuntimeException
     /// The missing `location`.
     this(ConfigDataLocation location) pure
     {
-        super("Config data location '" ~ location.toString() ~ "' does not exist");
+        super("Config data location '" ~ location.toString() ~ "' cannot be found");
         this.location = location;
     }
 
@@ -331,7 +332,7 @@ final class ConfigDataEnvironment
 
         // Phase 2: profiles, from the bootstrap sources and the documents active without profiles.
         auto withoutProfiles = activeSources(bootstrap, plain, defaults);
-        auto profiles = deduceProfiles(withoutProfiles, collectIncludes(plain));
+        auto profiles = deduceProfiles(withoutProfiles, collectIncludes(plain, withoutProfiles));
 
         // Phase 3: profile files and on-profile documents, later groups first.
         auto configData = orderGroups(groups, plain, profiles, names);
@@ -590,8 +591,11 @@ private:
         return bootstrap ~ configData ~ defaults;
     }
 
-    static string[] collectIncludes(Document[][] plain)
+    // Boot binds each document's `include` with placeholders resolved against every active contributor
+    // (ConfigDataEnvironmentContributorPlaceholdersResolver).
+    static string[] collectIncludes(Document[][] plain, ConfigurationPropertySource[] active)
     {
+        auto resolver = new PropertySourcesPlaceholdersResolver(active);
         string[] result;
         foreach (group; plain)
         {
@@ -600,7 +604,7 @@ private:
                 if (document.onProfile.length || document.cloudPlatformOnly)
                     continue;
                 ConfigurationPropertySource[] own = [document.source];
-                foreach (profile; listValue(own, includeProperty, null))
+                foreach (profile; listValue(own, includeProperty, null, resolver))
                     result = appendUnique(result, profile);
             }
         }
@@ -609,18 +613,19 @@ private:
 
     Profiles deduceProfiles(ConfigurationPropertySource[] sources, string[] included)
     {
-        auto groups = profileGroups(sources);
+        auto resolver = new PropertySourcesPlaceholdersResolver(sources);
+        auto groups = profileGroups(sources, resolver);
         string[] additional;
         foreach (profile; options.additionalProfiles ~ included)
             additional = appendUnique(additional, profile);
         string[] active = additional;
-        foreach (profile; listValue(sources, activeProperty, null))
+        foreach (profile; listValue(sources, activeProperty, null, resolver))
             active = appendUnique(active, profile);
-        auto defaults = listValue(sources, defaultProperty, ["default"]);
+        auto defaults = listValue(sources, defaultProperty, ["default"], resolver);
         return new Profiles(expand(active, groups), expand(defaults, groups));
     }
 
-    static string[][string] profileGroups(ConfigurationPropertySource[] sources)
+    static string[][string] profileGroups(ConfigurationPropertySource[] sources, PlaceholdersResolver resolver)
     {
         auto prefix = ConfigurationPropertyName.of(groupProperty);
         string[][string] groups;
@@ -631,7 +636,7 @@ private:
             const group = name.getElement(prefix.getNumberOfElements(), ConfigurationPropertyName.Form.ORIGINAL);
             if ((group in groups) !is null)
                 continue;
-            groups[group] = listValue(sources, groupProperty ~ "." ~ group, null);
+            groups[group] = listValue(sources, groupProperty ~ "." ~ group, null, resolver);
         }
         return groups;
     }
@@ -677,20 +682,27 @@ private:
 }
 
 /// A list property as Boot binds `Set<String>`: a comma-separated value, or indexed items `name[0]`, `name[1]`,
-/// from the highest-precedence source that has either; `fallback` when none does.
-string[] listValue(ConfigurationPropertySource[] sources, string name, string[] fallback)
+/// from the highest-precedence source that has either; `fallback` when none does. With a `resolver`, each value's
+/// `${...}` placeholders are resolved before it is split, as Boot's binder does.
+string[] listValue(ConfigurationPropertySource[] sources, string name, string[] fallback,
+        PlaceholdersResolver resolver = null)
 {
     import std.algorithm.iteration : filter, map, splitter;
     import std.array : array;
     import std.conv : to;
     import std.string : strip;
 
+    string resolved(string value)
+    {
+        return resolver is null ? value : resolver.resolvePlaceholders(value);
+    }
+
     auto canonical = ConfigurationPropertyName.of(name);
     foreach (source; sources)
     {
         ConfigurationPropertySource[] one = [source];
         if (auto property = ConfigurationPropertySources.find(one, canonical))
-            return property.getValue().splitter(',').map!(s => s.strip)
+            return resolved(property.getValue()).splitter(',').map!(s => s.strip)
                 .filter!(s => s.length > 0)
                 .array;
         string[] items;
@@ -699,7 +711,7 @@ string[] listValue(ConfigurationPropertySource[] sources, string name, string[] 
             auto item = ConfigurationPropertySources.find(one, canonical.append("[" ~ index.to!string ~ "]"));
             if (item is null)
                 break;
-            items ~= item.getValue().strip;
+            items ~= resolved(item.getValue()).strip;
         }
         if (items.length)
             return items;

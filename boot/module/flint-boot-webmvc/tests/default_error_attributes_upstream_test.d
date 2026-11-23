@@ -144,63 +144,71 @@ private final class TestOutOfMemoryError : Error
 
 // Boot's DefaultErrorAttributes reads a BindingResult (or a MethodValidationResult) from the error: its errors as
 // `errors` and "Validation failed for object='...'. Error count: n" as `message`.
-version (FlintErrorAttributesBindingErrors)
+import flint.context : MessageSourceResolvable;
+import flint.java.util : HashMap, List;
+import flint.validation : BindException, BindingResult, MapBindingResult, ObjectError;
+
+private void testErrors(Fixture f, List!ObjectError errors, string expectedMessage, Exception ex,
+        ErrorAttributeOptions options)
 {
-    import flint.java.util : Collections, List;
-    import flint.validation : BindException, BindingResult, MapBindingResult, ObjectError;
+    import flint.boot.web.error : Error_;
 
-    private void testErrors(Fixture f, List!ObjectError errors, string expectedMessage, Exception ex,
-            ErrorAttributeOptions options)
+    setException(f.request, ex);
+    auto attributes = f.errorAttributes.getErrorAttributes(f.webRequest, options);
+    if (options.isIncluded(Include.MESSAGE))
+        assert(attributes.get("message").get!string == expectedMessage);
+    else
+        assert(!attributes.containsKey("message"));
+    if (options.isIncluded(Include.BINDING_ERRORS))
     {
-        import flint.boot.web.error : Error_ = Error;
-
-        setException(f.request, ex);
-        auto attributes = f.errorAttributes.getErrorAttributes(f.webRequest, options);
-        if (options.isIncluded(Include.MESSAGE))
-            assert(attributes.get("message").get!string == expectedMessage);
-        else
-            assert(!attributes.containsKey("message"));
-        if (options.isIncluded(Include.BINDING_ERRORS))
-            assert(attributes.get("errors") == Any.of(Error_.wrapIfNecessary(errors)));
-        else
-            assert(!attributes.containsKey("errors"));
+        // Boot's isEqualTo: the lists' elements, not the boxes' identity.
+        auto actual = cast(List!MessageSourceResolvable) attributes.get("errors").get!Object;
+        assert(actual !is null && actual.equals(cast(Object) Error_.wrapIfNecessary(errors)));
     }
+    else
+        assert(!attributes.containsKey("errors"));
+}
 
-    private void testBindingResult(Fixture f, BindingResult bindingResult, Exception ex, ErrorAttributeOptions options)
-    {
-        testErrors(f, bindingResult.getAllErrors(),
-                "Validation failed for object='objectName'. Error count: 1", ex, options);
-    }
+private void testBindingResult(Fixture f, BindingResult bindingResult, Exception ex, ErrorAttributeOptions options)
+{
+    testErrors(f, bindingResult.getAllErrors(),
+            "Validation failed for object='objectName'. Error count: 1", ex, options);
+}
 
-    private BindingResult bindingResult()
-    {
-        auto result = new MapBindingResult(Collections.singletonMap("a", Any.of("b")), "objectName");
-        result.addError(new ObjectError("c", "d"));
-        return result;
-    }
+private BindingResult bindingResult()
+{
+    auto target = new HashMap!(string, Any);
+    target.put("a", Any.of("b"));
+    auto result = new MapBindingResult(target, "objectName");
+    result.addError(new ObjectError("c", "d"));
+    return result;
+}
 
-    @("DefaultErrorAttributesTests.withBindingErrors") unittest
-    {
-        auto result = bindingResult();
-        testBindingResult(fixture(), result, new BindException(result),
-                ErrorAttributeOptions.of(Include.MESSAGE, Include.BINDING_ERRORS));
-    }
+@("DefaultErrorAttributesTests.withBindingErrors") unittest
+{
+    auto result = bindingResult();
+    testBindingResult(fixture(), result, new BindException(result),
+            ErrorAttributeOptions.of(Include.MESSAGE, Include.BINDING_ERRORS));
+}
 
-    @("DefaultErrorAttributesTests.withoutBindingErrors") unittest
-    {
-        auto result = bindingResult();
-        testBindingResult(fixture(), result, new BindException(result), ErrorAttributeOptions.defaults());
-    }
+@("DefaultErrorAttributesTests.withoutBindingErrors") unittest
+{
+    auto result = bindingResult();
+    testBindingResult(fixture(), result, new BindException(result), ErrorAttributeOptions.defaults());
+}
 
-    @("DefaultErrorAttributesTests.withMethodArgumentNotValidExceptionBindingErrors") unittest
-    {
-        import flint.web.bind : MethodArgumentNotValidException;
+@("DefaultErrorAttributesTests.withMethodArgumentNotValidExceptionBindingErrors") unittest
+{
+    import flint.web.bind : MethodArgumentNotValidException;
 
-        auto result = bindingResult();
-        testBindingResult(fixture(), result, new MethodArgumentNotValidException(null, result),
-                ErrorAttributeOptions.of(Include.MESSAGE, Include.BINDING_ERRORS));
-    }
+    auto result = bindingResult();
+    testBindingResult(fixture(), result, new MethodArgumentNotValidException(null, result),
+            ErrorAttributeOptions.of(Include.MESSAGE, Include.BINDING_ERRORS));
+}
 
+// Gap: Flint has no MethodValidationResult or HandlerMethodValidationException yet (flint:context, flint:web).
+version (FlintMethodValidationResult)
+{
     @("DefaultErrorAttributesTests.withHandlerMethodValidationExceptionBindingErrors") unittest
     {
         import flint.validation.method : MethodValidationResult, ParameterValidationResult;

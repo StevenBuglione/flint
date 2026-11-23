@@ -953,7 +953,7 @@ private:
     {
         import flint.engine.aot.name : typeNameOf;
 
-        foreach (bean; beansOfType(context, typeNameOf!Runner))
+        foreach (bean; orderedBeansOfType(context, typeNameOf!Runner))
         {
             if (auto applicationRunner = cast(ApplicationRunner) bean)
                 applicationRunner.run(arguments);
@@ -1012,6 +1012,17 @@ Object[] beansOfType(ConfigurableApplicationContext context, string type)
     return beans;
 }
 
+/// The beans of `context` injectable as `type`, sorted as Boot's `callRunners` sorts them: `PriorityOrdered`, then
+/// `Ordered` and `@Order` (on the bean or its definition), then registration order.
+Object[] orderedBeansOfType(ConfigurableApplicationContext context, string type)
+{
+    import flint.beans.factory.support : DefaultListableBeanFactory;
+
+    if (auto factory = cast(DefaultListableBeanFactory) context.getBeanFactory())
+        return factory.resolveAllByType(type);
+    return beansOfType(context, type);
+}
+
 /// Generates the process entry point beside the application class (deviation D-1): `main` runs `App`, waits for
 /// its context to close, and returns the exit code. When `App` declares its own `static int main(string[])` (to
 /// customise `FlintApplication` as a Java `main` would), that is called instead.
@@ -1028,15 +1039,30 @@ mixin template FlintMain(App)
 
 private:
 
+// Boot binds these through LenientObjectToEnumConverterFactory: the constant whose letters and digits match ignoring
+// case, with `true` also matching `ON` and `false` matching `OFF` (YAML's `off` is the boolean false).
 E parseEnum(E)(string text, string property)
 {
-    import std.array : replace;
+    import std.ascii : isAlphaNum;
     import std.uni : toUpper;
 
-    const normalized = text.toUpper.replace("-", "_");
+    static string canonical(string value)
+    {
+        string result;
+        foreach (char ch; value.toUpper)
+        {
+            if (ch.isAlphaNum)
+                result ~= ch;
+        }
+        return result;
+    }
+
+    const normalized = canonical(text);
+    const alias_ = normalized == "TRUE" ? "ON" : (normalized == "FALSE" ? "OFF" : null);
     foreach (index, name; enumNames!E)
     {
-        if (normalized == name)
+        const candidate = canonical(name);
+        if (normalized == candidate || (alias_ !is null && alias_ == candidate))
             return cast(E) index;
     }
     throw new IllegalArgumentException("Invalid value '" ~ text ~ "' for " ~ property);

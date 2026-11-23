@@ -23,6 +23,7 @@ public import flint.boot.jdbc.init : isEmbeddedUrl;
 import flint.boot.jdbc.init : DataSourceScriptDatabaseInitializer;
 import flint.boot.sql.autoconfigure.init : ApplicationScriptDatabaseInitializer, SqlInitializationProperties;
 import flint.boot.sql.init : DatabaseInitializationSettings;
+import flint.boot.transaction.autoconfigure : TransactionManagerCustomizers;
 import flint.context.annotation : Bean, Primary;
 import flint.engine.aot.name : typeNameOf;
 import flint.engine.jdbc : FlintDataSource;
@@ -454,8 +455,8 @@ final class DataSourceAutoConfiguration
 }
 
 /// Auto-configuration of a `JdbcTransactionManager` for the single `DataSource`, unless the application defines a
-/// `TransactionManager`.
-@afterDataSource @ConditionalOnClass(null, [
+/// `TransactionManager`; the `TransactionManagerCustomizers` (`flint.transaction.*`, execution listeners) apply to it.
+@transactionManagerOrder @ConditionalOnClass(null, [
     "flint.jdbc.support.JdbcTransactionManager", "flint.transaction.TransactionManager"
 ])
 final class DataSourceTransactionManagerAutoConfiguration
@@ -463,14 +464,30 @@ final class DataSourceTransactionManagerAutoConfiguration
     /// The transaction manager.
     @Bean @ConditionalOnMissingBean([ClassRef("flint.transaction.TransactionManager")])
     @ConditionalOnSingleCandidate(ClassRef("flint.javax.sql.DataSource"))
-    JdbcTransactionManager transactionManager(DataSource dataSource)
+    JdbcTransactionManager transactionManager(DataSource dataSource,
+            TransactionManagerCustomizers[] transactionManagerCustomizers = null)
     {
-        return new JdbcTransactionManager(dataSource);
+        auto transactionManager = new JdbcTransactionManager(dataSource);
+        foreach (customizers; transactionManagerCustomizers)
+            customizers.customize(transactionManager);
+        return transactionManager;
     }
 }
 
 // `@AutoConfiguration(after = DataSourceAutoConfiguration.class)`, as a constant (dfmt 0.15 cannot parse named UDA
 // arguments).
+// `@AutoConfiguration(before = TransactionAutoConfiguration.class, after = { DataSourceAutoConfiguration.class,
+// TransactionManagerCustomizationAutoConfiguration.class })`.
+private enum AutoConfiguration transactionManagerOrder = () {
+    AutoConfiguration configuration;
+    configuration.beforeName = ["flint.boot.transaction.autoconfigure.TransactionAutoConfiguration"];
+    configuration.afterName = [
+        "flint.boot.jdbc.autoconfigure.DataSourceAutoConfiguration",
+        "flint.boot.transaction.autoconfigure.TransactionManagerCustomizationAutoConfiguration"
+    ];
+    return configuration;
+}();
+
 private enum AutoConfiguration afterDataSource = () {
     AutoConfiguration configuration;
     configuration.afterName = ["flint.boot.jdbc.autoconfigure.DataSourceAutoConfiguration"];

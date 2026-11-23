@@ -68,7 +68,7 @@ name = "flint:boot-jdbc"
 kind = "core"
 source = "workspace"
 scope = "build"
-dependencies = ["flint:beans", "flint:boot-autoconfigure", "flint:boot-core", "flint:boot-sql", "flint:context", "flint:engine-aot", "flint:engine-jdbc", "flint:java", "flint:jdbc", "flint:tx"]
+dependencies = ["flint:beans", "flint:boot-autoconfigure", "flint:boot-core", "flint:boot-sql", "flint:boot-transaction", "flint:context", "flint:engine-aot", "flint:engine-jdbc", "flint:java", "flint:jdbc", "flint:tx"]
 
 [[package]]
 name = "flint:boot-security"
@@ -138,7 +138,7 @@ name = "flint:boot-transaction"
 kind = "core"
 source = "workspace"
 scope = "build"
-dependencies = ["flint:boot-core", "flint:engine-aot", "flint:java"]
+dependencies = ["flint:boot-autoconfigure", "flint:boot-core", "flint:context", "flint:core", "flint:engine-aot", "flint:java", "flint:tx"]
 
 [[package]]
 name = "flint:boot-validation"

@@ -524,10 +524,23 @@ final class WebMvcAutoConfiguration
             support.addFirstExceptionResolvers(exceptionResolvers);
         if (viewResolvers.length)
             support.addViewResolvers(viewResolvers);
-        // Boot's mvcValidator: the application's Validator (the auto-configured LocalValidatorFactoryBean).
+        // Boot's mvcValidator (ValidatorAdapter.get): the context's Bean Validation validator (the auto-configured
+        // LocalValidatorFactoryBean), not another Spring Validator the application declares.
         if (validators.length)
-            support.setValidator(validators[0]);
+            support.setValidator(mvcValidator(validators));
         return support;
+    }
+
+    private static Validator mvcValidator(Validator[] validators)
+    {
+        import flint.validation.beanvalidation : SpringValidatorAdapter;
+
+        foreach (validator; validators)
+        {
+            if (cast(SpringValidatorAdapter) validator)
+                return validator;
+        }
+        return validators[0];
     }
 
     // The error controller is an auto-configured bean, outside the application's scanned packages, so its mapping
@@ -559,6 +572,28 @@ final class WebMvcAutoConfiguration
         foreach (descriptor; handlerDescriptorsOf!BasicErrorController())
             descriptors.add(descriptor);
         descriptors.add(descriptorOf!(LinkedHashMap!(string, Any))());
+        addBindingErrorDescriptors(descriptors);
+    }
+
+    // The `errors` attribute (DefaultErrorAttributes) holds a BindingResult's errors, which Jackson writes as Java's
+    // getters: codes, arguments, defaultMessage, objectName, field, rejectedValue, bindingFailure and code. Flint's
+    // Jackson serializes a list element by its declared type, MessageSourceResolvable, until it looks up the runtime
+    // class as Java's Jackson does.
+    private static void addBindingErrorDescriptors(imported!"flint.engine.aot.descriptor".DescriptorTable descriptors)
+    {
+        import flint.boot.web.error : Error_;
+        import flint.context : MessageSourceResolvable;
+        import flint.context.support : DefaultMessageSourceResolvable;
+        import flint.engine.aot.descriptor : descriptorOf;
+        import flint.java.util : ArrayList;
+        import flint.validation : FieldError, ObjectError;
+
+        descriptors.add(descriptorOf!(ArrayList!MessageSourceResolvable)());
+        descriptors.add(descriptorOf!MessageSourceResolvable());
+        descriptors.add(descriptorOf!DefaultMessageSourceResolvable());
+        descriptors.add(descriptorOf!ObjectError());
+        descriptors.add(descriptorOf!FieldError());
+        descriptors.add(descriptorOf!Error_());
     }
 
     // The actuator's endpoint handlers are singletons the rows name, with the descriptors their bodies need.

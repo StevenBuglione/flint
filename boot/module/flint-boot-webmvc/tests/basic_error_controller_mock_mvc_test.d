@@ -129,14 +129,11 @@ private MvcFixture setup()
 
 // Boot's DefaultErrorAttributes takes the message of a BindingResult error ("Validation failed for object=...");
 // Flint's keeps the forwarded "Invalid request content.".
-version (FlintErrorAttributesBindingErrors)
+@("BasicErrorControllerMockMvcTests.testBindingExceptionForMachineClient") unittest
 {
-    @("BasicErrorControllerMockMvcTests.testBindingExceptionForMachineClient") unittest
-    {
-        auto response = setup().perform("GET", "/bind");
-        assert(response.getStatus() >= 400 && response.getStatus() < 500);
-        assert(response.getContentAsString().canFind("Validation failed"), response.getContentAsString());
-    }
+    auto response = setup().perform("GET", "/bind");
+    assert(response.getStatus() >= 400 && response.getStatus() < 500);
+    assert(response.getContentAsString().canFind("Validation failed"), response.getContentAsString());
 }
 
 @("BasicErrorControllerMockMvcTests.testDirectAccessForBrowserClient") unittest

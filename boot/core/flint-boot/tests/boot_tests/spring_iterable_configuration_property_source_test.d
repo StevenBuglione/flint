@@ -157,38 +157,34 @@ version (FlintPropertySourceOriginText)
     assert(adapter.containsDescendantOf(name("fof")) == ConfigurationPropertyState.ABSENT);
 }
 
-version (FlintLegacySystemEnvironmentNames)
+@("containsDescendantOfWhenSystemEnvironmentPropertySourceShouldSupportLegacyProperty") unittest
 {
-    // Gap: Boot's legacy environment form (`FOO_BAR_BAZ` for `foo.bar-baz`) is not matched.
-    @("containsDescendantOfWhenSystemEnvironmentPropertySourceShouldSupportLegacyProperty") unittest
-    {
-        auto adapter = new SystemEnvironmentPropertySource([
-            "FOO_BAR_BAZ_BONG": "bing",
-            "FOO_ALPHABRAVO_GAMMA": "delta",
-            "loo_bar_baz_bong": "bing",
-            "loo_alphabravo_gamma": "delta"
-        ]);
-        assert(adapter.containsDescendantOf(name("foo.bar-baz")) == ConfigurationPropertyState.PRESENT);
-        assert(adapter.containsDescendantOf(name("foo.alpha-bravo")) == ConfigurationPropertyState.PRESENT);
-        assert(adapter.containsDescendantOf(name("foo.blah")) == ConfigurationPropertyState.ABSENT);
-        assert(adapter.containsDescendantOf(name("loo.bar-baz")) == ConfigurationPropertyState.PRESENT);
-        assert(adapter.containsDescendantOf(name("loo.alpha-bravo")) == ConfigurationPropertyState.PRESENT);
-        assert(adapter.containsDescendantOf(name("loo.blah")) == ConfigurationPropertyState.ABSENT);
-    }
+    auto adapter = new SystemEnvironmentPropertySource([
+        "FOO_BAR_BAZ_BONG": "bing",
+        "FOO_ALPHABRAVO_GAMMA": "delta",
+        "loo_bar_baz_bong": "bing",
+        "loo_alphabravo_gamma": "delta"
+    ]);
+    assert(adapter.containsDescendantOf(name("foo.bar-baz")) == ConfigurationPropertyState.PRESENT);
+    assert(adapter.containsDescendantOf(name("foo.alpha-bravo")) == ConfigurationPropertyState.PRESENT);
+    assert(adapter.containsDescendantOf(name("foo.blah")) == ConfigurationPropertyState.ABSENT);
+    assert(adapter.containsDescendantOf(name("loo.bar-baz")) == ConfigurationPropertyState.PRESENT);
+    assert(adapter.containsDescendantOf(name("loo.alpha-bravo")) == ConfigurationPropertyState.PRESENT);
+    assert(adapter.containsDescendantOf(name("loo.blah")) == ConfigurationPropertyState.ABSENT);
+}
 
-    @("getConfigurationPropertyWhenSystemEnvironmentPropertySourceShouldSupportLegacyProperty") unittest
-    {
-        auto adapter = new SystemEnvironmentPropertySource([
-            "TEST_VALUE_UPPER": "upper",
-            "test_value_lower": "lower"
-        ]);
-        auto valueUpper = adapter.getConfigurationProperty(name("test.value-upper"));
-        assert(valueUpper !is null);
-        assert(valueUpper.getValue() == "upper");
-        auto valueLower = adapter.getConfigurationProperty(name("test.value-lower"));
-        assert(valueLower !is null);
-        assert(valueLower.getValue() == "lower");
-    }
+@("getConfigurationPropertyWhenSystemEnvironmentPropertySourceShouldSupportLegacyProperty") unittest
+{
+    auto adapter = new SystemEnvironmentPropertySource([
+        "TEST_VALUE_UPPER": "upper",
+        "test_value_lower": "lower"
+    ]);
+    auto valueUpper = adapter.getConfigurationProperty(name("test.value-upper"));
+    assert(valueUpper !is null);
+    assert(valueUpper.getValue() == "upper");
+    auto valueLower = adapter.getConfigurationProperty(name("test.value-lower"));
+    assert(valueLower !is null);
+    assert(valueLower.getValue() == "lower");
 }
 
 @("simpleMapPropertySourceKeyDataChangeInvalidatesCache") unittest

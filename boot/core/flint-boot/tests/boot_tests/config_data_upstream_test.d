@@ -442,34 +442,28 @@ private enum profileExpressions = "---\nmy:\n  property: fromyamlfile\n---\n"
     assert(result.getProfiles().isAccepted("customdefault"));
 }
 
-version (FlintProfilePlaceholders)
+@("runWhenActiveProfilesCanBeConfiguredUsingPlaceholdersResolvedAgainstTheEnvironmentLoadsExpectedProperties")
+unittest
 {
-    // Gap: `${...}` placeholders in spring.profiles.active/include are not resolved, so the literal text becomes a
-    // profile name.
-    @("runWhenActiveProfilesCanBeConfiguredUsingPlaceholdersResolvedAgainstTheEnvironmentLoadsExpectedProperties")
-    unittest
-    {
-        auto result = run(
-                [
-            "resources/application.properties": "spring.profiles.active=${activeProfile:propertiesfile}"
-        ], ["--activeProfile=testPropertySource"]);
-        assert(result.getProfiles().getActive() == ["testPropertySource"]);
-    }
+    auto result = run([
+        "resources/application.properties": "spring.profiles.active=${activeProfile:propertiesfile}"
+    ], ["--activeProfile=testPropertySource"]);
+    assert(result.getProfiles().getActive() == ["testPropertySource"]);
+}
 
-    @("runWhenHasIncludedProfilesWithPlaceholderActivatesProfiles") unittest
-    {
-        import std.algorithm.sorting : sort;
+@("runWhenHasIncludedProfilesWithPlaceholderActivatesProfiles") unittest
+{
+    import std.algorithm.sorting : sort;
 
-        auto result = run(
-                [
-            "resources/application.properties": "spring.profiles.active=p1\nspring.profiles.include=p2\n#---\n"
-            ~ "myprofile=p4\nspring.profiles.include=p3,${myprofile}\n#---\nmyotherprofile=p5\n"
-            ~ "spring.profiles.include=${myotherprofile}\n"
-        ]);
-        auto active = result.getProfiles().getActive().dup;
-        active.sort();
-        assert(active == ["p1", "p2", "p3", "p4", "p5"]);
-    }
+    auto result = run(
+            [
+        "resources/application.properties": "spring.profiles.active=p1\nspring.profiles.include=p2\n#---\n"
+        ~ "myprofile=p4\nspring.profiles.include=p3,${myprofile}\n#---\nmyotherprofile=p5\n"
+        ~ "spring.profiles.include=${myotherprofile}\n"
+    ]);
+    auto active = result.getProfiles().getActive().dup;
+    active.sort();
+    assert(active == ["p1", "p2", "p3", "p4", "p5"]);
 }
 
 @("runWhenHasAdditionalLocationLoadsWithAdditionalTakingPrecedenceOverDefaultLocation") unittest

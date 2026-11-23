@@ -894,6 +894,31 @@ struct SystemEnvironmentPropertyMapper
         return ConfigurationPropertyName.adapt(canonical is null ? "" : canonical, '.');
     }
 
+    /// Boot's `asSystemEnvironmentLegacyName`: `name` with each dash as an element separator (`foo.the-bar` →
+    /// `foo.the.bar`), or `null` when `name` has no dashed element or the result is not a valid name.
+    static ConfigurationPropertyName legacyName(ConfigurationPropertyName name) pure
+    {
+        import std.array : replace;
+        import std.string : indexOf;
+
+        if (name is null)
+            return null;
+        bool dashed;
+        string text;
+        foreach (i; 0 .. name.getNumberOfElements())
+        {
+            const element = name.getElement(i, ConfigurationPropertyName.Form.DASHED);
+            if (name.isIndexed(i))
+            {
+                text ~= "[" ~ element ~ "]";
+                continue;
+            }
+            dashed = dashed || element.indexOf('-') >= 0;
+            text ~= (text.length ? "." : "") ~ element.replace("-", ".");
+        }
+        return dashed ? ConfigurationPropertyName.ofIfValid(text) : null;
+    }
+
     private static string[] splitUnderscores(string key) pure
     {
         import std.array : split;
@@ -910,6 +935,25 @@ final class SystemEnvironmentPropertySource : MapConfigurationPropertySource
     {
         super(sourceName, &SystemEnvironmentPropertyMapper.map);
         putAll(environment);
+    }
+
+    // Boot's SystemEnvironmentPropertyMapper also maps a name to its legacy variable, dashes as underscores
+    // (`foo.the-bar` → `FOO_THE_BAR`), and its ancestor check accepts that form.
+    override ConfigurationProperty getConfigurationProperty(ConfigurationPropertyName name)
+    {
+        if (auto property = super.getConfigurationProperty(name))
+            return property;
+        auto legacy = SystemEnvironmentPropertyMapper.legacyName(name);
+        return legacy is null ? null : super.getConfigurationProperty(legacy);
+    }
+
+    override ConfigurationPropertyState containsDescendantOf(ConfigurationPropertyName name)
+    {
+        const state = super.containsDescendantOf(name);
+        if (state == ConfigurationPropertyState.PRESENT)
+            return state;
+        auto legacy = SystemEnvironmentPropertyMapper.legacyName(name);
+        return legacy is null ? state : super.containsDescendantOf(legacy);
     }
 }
 

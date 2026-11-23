@@ -246,23 +246,19 @@ version (FlintApplicationSourcesCheck)
     assert(!run.bannerPrinted(), run.output);
 }
 
-version (FlintBannerModeBoolean)
+@("bindsYamlStyleBannerModeToSpringApplication") unittest
 {
-    // Gap: `flint.main.banner-mode=false` (YAML's `off`, a boolean) fails instead of meaning OFF.
-    @("bindsYamlStyleBannerModeToSpringApplication") unittest
-    {
-        auto run = prepare();
-        run.application.setDefaultProperties(["flint.main.banner-mode": "false"]);
-        run.start();
-        assert(!run.bannerPrinted(), run.output);
-    }
+    auto run = prepare();
+    run.application.setDefaultProperties(["flint.main.banner-mode": "false"]);
+    run.start();
+    assert(!run.bannerPrinted(), run.output);
+}
 
-    @("bindsBooleanAsStringBannerModeToSpringApplication") unittest
-    {
-        auto run = prepare();
-        run.start("--flint.main.banner-mode=false");
-        assert(!run.bannerPrinted(), run.output);
-    }
+@("bindsBooleanAsStringBannerModeToSpringApplication") unittest
+{
+    auto run = prepare();
+    run.start("--flint.main.banner-mode=false");
+    assert(!run.bannerPrinted(), run.output);
 }
 
 version (FlintContextId)
@@ -365,64 +361,60 @@ version (FlintApplicationConversionService)
     }
 }
 
-version (FlintRunnerOrder)
+import flint.beans.factory.support : RootBeanDefinition;
+import flint.engine.aot.bean : AotBeanDefinition = BeanDefinition, AotBeanFactory = BeanFactory;
+import flint.engine.aot.name : typeNameOf;
+
+private string[] ranRunners;
+
+/// A runner of `BeanDefinitionOrderRunnerConfig` that records its name.
+final class NamedRunner : CommandLineRunner
 {
-    // Gap: runners run in registration order; Boot sorts them by Ordered and @Order.
-    import flint.beans.factory.support : RootBeanDefinition;
-    import flint.engine.aot.bean : AotBeanDefinition = BeanDefinition, AotBeanFactory = BeanFactory;
-    import flint.engine.aot.name : typeNameOf;
+    private string name;
 
-    private string[] ranRunners;
-
-    /// A runner of `BeanDefinitionOrderRunnerConfig` that records its name.
-    final class NamedRunner : CommandLineRunner
+    /// The runner `name`.
+    this(string name)
     {
-        private string name;
-
-        /// The runner `name`.
-        this(string name)
-        {
-            this.name = name;
-        }
-
-        /// Part of the upstream test fixture.
-        void run(string[])
-        {
-            ranRunners ~= name;
-        }
+        this.name = name;
     }
 
-    /// The `@Bean @Order(order)` definition of a `NamedRunner`, as Flint AOT generates it.
-    private RootBeanDefinition orderedRunner(string name, int order, Object function(AotBeanFactory) @safe create)
+    /// Part of the upstream test fixture.
+    void run(string[])
     {
-        import flint.boot : Runner;
-
-        AotBeanDefinition record;
-        record.name = name;
-        record.type = typeNameOf!NamedRunner;
-        record.types = [typeNameOf!NamedRunner, typeNameOf!CommandLineRunner, typeNameOf!Runner];
-        record.order = order;
-        record.create = create;
-        return new RootBeanDefinition(record);
+        ranRunners ~= name;
     }
+}
 
-    @("runCommandLineRunnersAndApplicationRunnersUsingOrderOnBeanDefinitions") unittest
-    {
-        import flint.core : Ordered;
+/// The `@Bean @Order(order)` definition of a `NamedRunner`, as Flint AOT generates it.
+private RootBeanDefinition orderedRunner(string name, int order, Object function(AotBeanFactory) @safe create)
+{
+    import flint.boot : Runner;
 
-        ranRunners = null;
-        auto run = prepare();
-        run.context.registrations ~= (TestContext context) {
-            context.registerBeanDefinition("runnerC", orderedRunner("runnerC",
-                    Ordered.LOWEST_PRECEDENCE, function Object(AotBeanFactory) => new NamedRunner("runnerC")));
-            context.registerBeanDefinition("runnerB", orderedRunner("runnerB",
-                    Ordered.LOWEST_PRECEDENCE - 1, function Object(AotBeanFactory) => new NamedRunner("runnerB")));
-            context.registerBeanDefinition("runnerA", orderedRunner("runnerA",
-                    Ordered.HIGHEST_PRECEDENCE, function Object(AotBeanFactory) => new NamedRunner("runnerA")));
-        };
-        run.start("arg");
-        assert(ranRunners == ["runnerA", "runnerB", "runnerC"], ranRunners[0]);
-    }
+    AotBeanDefinition record;
+    record.name = name;
+    record.type = typeNameOf!NamedRunner;
+    record.types = [typeNameOf!NamedRunner, typeNameOf!CommandLineRunner, typeNameOf!Runner];
+    record.order = order;
+    record.create = create;
+    return new RootBeanDefinition(record);
+}
+
+@("runCommandLineRunnersAndApplicationRunnersUsingOrderOnBeanDefinitions") unittest
+{
+    import flint.core : Ordered;
+
+    ranRunners = null;
+    auto run = prepare();
+    run.context.registrations ~= (TestContext context) {
+        context.registerBeanDefinition("runnerC", orderedRunner("runnerC",
+                Ordered.LOWEST_PRECEDENCE, function Object(AotBeanFactory) => new NamedRunner("runnerC")));
+        context.registerBeanDefinition("runnerB", orderedRunner("runnerB",
+                Ordered.LOWEST_PRECEDENCE - 1, function Object(AotBeanFactory) => new NamedRunner("runnerB")));
+        context.registerBeanDefinition("runnerA", orderedRunner("runnerA",
+                Ordered.HIGHEST_PRECEDENCE, function Object(AotBeanFactory) => new NamedRunner("runnerA")));
+    };
+    run.start("arg");
+    assert(ranRunners == ["runnerA", "runnerB", "runnerC"], ranRunners[0]);
 }
 
 @("runnersAreCalledOnceWhenContextIsRefreshed") unittest

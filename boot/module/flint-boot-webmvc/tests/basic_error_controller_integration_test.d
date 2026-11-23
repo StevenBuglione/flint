@@ -339,43 +339,39 @@ private void bindingExceptionWithoutMessage(MvcFixture fixture, string param)
 }
 
 // Boot's DefaultErrorAttributes adds a BindingResult's errors and its "Validation failed for object=..." message.
-version (FlintErrorAttributesBindingErrors)
+private void bindingExceptionWithErrors(MvcFixture fixture, string param)
 {
-    private void bindingExceptionWithErrors(MvcFixture fixture, string param)
-    {
-        auto response = getResponseMap(fixture, "/bind" ~ param);
-        assertErrorAttributes(response, "400", "Bad Request",
-                typeid(MethodArgumentNotValidException).name, null, "/bind");
-        assert(response.has("errors"));
-    }
+    auto response = getResponseMap(fixture, "/bind" ~ param);
+    assertErrorAttributes(response, "400", "Bad Request", typeid(MethodArgumentNotValidException).name, null, "/bind");
+    assert(response.has("errors"));
+}
 
-    private void bindingExceptionWithMessage(MvcFixture fixture, string param)
-    {
-        auto response = getResponseMap(fixture, "/bind" ~ param);
-        assertErrorAttributes(response, "400", "Bad Request", typeid(MethodArgumentNotValidException)
-                .name, "Validation failed for object='test'. Error count: 1", "/bind");
-        assert(!response.has("errors"));
-    }
+private void bindingExceptionWithMessage(MvcFixture fixture, string param)
+{
+    auto response = getResponseMap(fixture, "/bind" ~ param);
+    assertErrorAttributes(response, "400", "Bad Request", typeid(MethodArgumentNotValidException)
+            .name, "Validation failed for object='test'. Error count: 1", "/bind");
+    assert(!response.has("errors"));
+}
 
-    @("BasicErrorControllerIntegrationTests.testBindingExceptionForMachineClientWithErrorsParamTrue") unittest
-    {
-        bindingExceptionWithErrors(load(withBindingErrors("on-param")), "?errors=true");
-    }
+@("BasicErrorControllerIntegrationTests.testBindingExceptionForMachineClientWithErrorsParamTrue") unittest
+{
+    bindingExceptionWithErrors(load(withBindingErrors("on-param")), "?errors=true");
+}
 
-    @("BasicErrorControllerIntegrationTests.testBindingExceptionForMachineClientAlwaysErrors") unittest
-    {
-        bindingExceptionWithErrors(load(withBindingErrors("always")), "?errors=false");
-    }
+@("BasicErrorControllerIntegrationTests.testBindingExceptionForMachineClientAlwaysErrors") unittest
+{
+    bindingExceptionWithErrors(load(withBindingErrors("always")), "?errors=false");
+}
 
-    @("BasicErrorControllerIntegrationTests.testBindingExceptionForMachineClientWithMessageParamTrue") unittest
-    {
-        bindingExceptionWithMessage(load(withMessage("on-param")), "?message=true");
-    }
+@("BasicErrorControllerIntegrationTests.testBindingExceptionForMachineClientWithMessageParamTrue") unittest
+{
+    bindingExceptionWithMessage(load(withMessage("on-param")), "?message=true");
+}
 
-    @("BasicErrorControllerIntegrationTests.testBindingExceptionForMachineClientAlwaysMessage") unittest
-    {
-        bindingExceptionWithMessage(load(withMessage("always")), "?message=false");
-    }
+@("BasicErrorControllerIntegrationTests.testBindingExceptionForMachineClientAlwaysMessage") unittest
+{
+    bindingExceptionWithMessage(load(withMessage("always")), "?message=false");
 }
 
 @("BasicErrorControllerIntegrationTests.testBindingExceptionForMachineClientWithErrorsParamFalse") unittest

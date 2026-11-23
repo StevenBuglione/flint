@@ -13,6 +13,7 @@ dependency "flint:context" version="*"
 dependency "flint:jdbc" version="*"
 dependency "flint:engine-jdbc" version="*"
 dependency "flint:tx" version="*"
+dependency "flint:boot-transaction" version="*"
 dependency "flint:java" version="*"
 dependency "flint:engine-aot" version="*"
 

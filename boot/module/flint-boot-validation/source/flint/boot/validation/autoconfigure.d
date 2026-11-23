@@ -42,7 +42,7 @@ interface ValidationConfigurationCustomizer
 final class ValidationAutoConfiguration
 {
     /// The default validator.
-    @Bean @ConditionalOnMissingBean([ClassRef("flint.validation.Validator")])
+    @Bean @ConditionalOnMissingBean([ClassRef("flint.jakarta.validation.Validator")])
     LocalValidatorFactoryBean defaultValidator(ValidationConfigurationCustomizer[] customizers,
             ApplicationContext context = null)
     {

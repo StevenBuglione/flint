@@ -125,6 +125,24 @@ class DefaultErrorAttributes : ErrorAttributes, HandlerExceptionResolver, Ordere
             if (includeStackTrace)
                 errorAttributes.put("trace", Any.of(stackTraceOf(error)));
         }
+        addErrorMessage(errorAttributes, webRequest, error);
+    }
+
+    // A BindingResult error gives its own message and errors; Flint has no MethodValidationResult yet.
+    private void addErrorMessage(LinkedHashMap!(string, Any) errorAttributes, WebRequest webRequest, Throwable error)
+    {
+        import flint.boot.web.error : Error_;
+        import flint.validation : BindingResult;
+        import std.conv : to;
+
+        if (auto result = cast(BindingResult) error)
+        {
+            auto errors = result.getAllErrors();
+            errorAttributes.put("message", Any.of("Validation failed for object='" ~ result.getObjectName()
+                    ~ "'. Error count: " ~ errors.size().to!string));
+            errorAttributes.put("errors", Any.of(Error_.wrapIfNecessary(errors)));
+            return;
+        }
         errorAttributes.put("message", Any.of(getMessage(webRequest, error)));
     }
 

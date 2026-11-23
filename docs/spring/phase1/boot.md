@@ -92,6 +92,10 @@ Unknown tags are rejected, as Boot's restricted constructor rejects them. The en
 
 The `spring.*` alias is resolved in one place, `ConfigurationPropertySources.find`. A `flint.*` name is also looked up as `spring.*` in each source, and the `flint` spelling wins inside one source. `FLINT_PROFILES_ACTIVE` and `SPRING_PROFILES_ACTIVE` both work, through the environment mapper.
 
+`${...}` placeholders in `flint.profiles.active`, `include`, `default` and `group.*` resolve against the sources active before profiles (the bootstrap sources and the plain documents), as Boot's `ConfigDataEnvironmentContributorPlaceholdersResolver` does. So `flint.profiles.active=${activeProfile:dev}` and `include=${myprofile}` name the resolved profiles.
+
+The environment source also answers Boot's legacy variable form, dashes as underscores. `FOO_THE_BAR` matches `foo.the-bar`, and `MY_SPRING_BOOT_PROPERTY` is a descendant of `my.spring-boot`. A name with a dashed element is also looked up as its legacy name (`foo.the.bar`), as `SystemEnvironmentPropertyMapper` maps a name to both variables.
+
 ### FlintApplication
 
 `FlintApplication.run` follows `SpringApplication.run`:
@@ -135,6 +139,8 @@ Boot's exceptions extend `flint.java.lang`'s `RuntimeException`, `IllegalArgumen
 - `.properties` files decode as ISO-8859-1 unless the caller passes `"UTF-8"`, as in Boot. Columns count code points, not UTF-16 units (D-14).
 - `ConfigurationPropertyName.EMPTY` is `immutable`. A method that returns "the empty name" returns an equal, mutable empty name, so upstream's `isSameAs(EMPTY)` checks become `equals(EMPTY)`.
 - XML properties files (`PropertiesPropertySourceLoader`'s `.xml`) are excluded as `jvm-platform`.
+- Boot's `org.springframework.boot.web.error.Error` is `flint.boot.web.error.Error_`, because object.d reserves the name `Error`.
+- `TransactionManagerCustomizer<T>` is an abstract class template over `AnyTransactionManagerCustomizer`, Boot's `TransactionManagerCustomizer<?>`. Its final `customizeIfApplicable` does LambdaSafe's generic check with a cast that a D interface cannot hold, so `TransactionManagerCustomizers` applies a customizer only to the manager types it accepts.
 
 ## Contracts needed from the other Phase 1 sessions
 
@@ -213,6 +219,8 @@ spring-petclinic-rest (item 10, data-access) needs, from Boot, beyond what gs-re
 | Bean Validation of request bodies | `ValidationAutoConfiguration` (boot-validation) | `defaultValidator` done, over the context's Flint AOT descriptors (Hibernate Validator's reflection); `methodValidationPostProcessor` registered over web-http's `MethodValidationPostProcessor` (`9b80a9e`) |
 | `extends SpringBootServletInitializer` | WAR deployment | not ported (no servlet container deployment in Flint); the port drops the superclass, a noted deviation |
 | The actuator's links, health and health groups | boot-actuate (spring-boot-actuator and its auto-configuration), boot-health (spring-boot-health), boot-webmvc's endpoint mapping, `flint-boot-starter-actuator` | done: `/actuator` links, `/actuator/health` with the `liveness` and `readiness` probe groups, Boot's media types, framing and default exposure (health); see "The actuator" below |
+| `flint.transaction.*`, `@Transactional` services | boot-transaction: `TransactionManagerCustomizationAutoConfiguration` (TransactionProperties and the execution listeners customise the `JdbcTransactionManager`) and `TransactionAutoConfiguration` (`TransactionTemplate`) | customizers and template done; Boot's `EnableTransactionManagementConfiguration` waits for flint:tx's `@EnableTransactionManagement` (data-access), until when no `TransactionInterceptor` is registered and `@Transactional` methods auto-commit per statement |
+| Validation errors in error responses | `DefaultErrorAttributes` reads a `BindingResult` error: "Validation failed for object='…'. Error count: n" and `errors` | done; `MethodValidationResult` waits for `flint.validation.method` in flint:context |
 | Spring Security headers, `@PreAuthorize` | boot-security over framework-core's Spring Security (`da3da94`) and Flint AOT's `@Import` (`15a340b`) | done; see "Security" below |
 
 ## Budgets

@@ -1,12 +1,18 @@
 // Ported from spring-boot v4.2.0: core/spring-boot/src/main/java/org/springframework/boot/web/error/ErrorAttributeOptions.java
+// and Error.java from the same directory.
 // Copyright 2012-present the original author or authors.
 // Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
 // Modified by the Flint authors: the `EnumSet` is a bit set; `Map<String, Object>` is `flint.java.util.Map!(string, V)` with `V` `Object` or `Any`.
+// `Error` is `Error_`, because object.d reserves the name; `wrapIfNecessary` is a template over the element type
+// (D's lists are not covariant).
 
 /// `org.springframework.boot.web.error`: which attributes an error response includes.
 module flint.boot.web.error;
 
-import flint.java.util : Map;
+import flint.context : MessageSourceResolvable;
+import flint.engine.aot.any : Any;
+import flint.engine.aot.objects : objectEquals, objectToHash, objectToString;
+import flint.java.util : ArrayList, List, Map;
 
 @safe:
 
@@ -106,5 +112,81 @@ final class ErrorAttributeOptions
     static ErrorAttributeOptions of(Include[] included...) pure nothrow
     {
         return new ErrorAttributeOptions(0).including(included);
+    }
+}
+
+/// Boot's `Error` (object.d reserves the name): a `MessageSourceResolvable` error wrapped so that it is safe to serialize as JSON: its codes, arguments and
+/// default message, without the cause's other properties.
+final class Error_ : MessageSourceResolvable
+{
+    private MessageSourceResolvable cause;
+
+    private this(MessageSourceResolvable cause) pure nothrow @nogc
+    {
+        this.cause = cause;
+    }
+
+    /// The cause's codes.
+    string[] getCodes()
+    {
+        return cause.getCodes();
+    }
+
+    /// The cause's arguments.
+    Any[] getArguments()
+    {
+        return cause.getArguments();
+    }
+
+    /// The cause's default message.
+    string getDefaultMessage()
+    {
+        return cause.getDefaultMessage();
+    }
+
+    /// The wrapped error (`@JsonIgnore` in Boot).
+    MessageSourceResolvable getCause() pure nothrow @nogc
+    {
+        return cause;
+    }
+
+    override bool opEquals(Object other)
+    {
+        if (other is this)
+            return true;
+        auto that = cast(Error_) other;
+        return that !is null && objectEquals(cast(Object) that.cause, cast(Object) cause);
+    }
+
+    override size_t toHash() @safe nothrow
+    {
+        return objectToHash(cast(Object) cause);
+    }
+
+    override string toString()
+    {
+        return objectToString(cast(Object) cause);
+    }
+
+    /// `errors` with each error that is not of a safe type (`DefaultMessageSourceResolvable`, `ObjectError` or
+    /// `FieldError` exactly) wrapped in an `Error_`.
+    static List!MessageSourceResolvable wrapIfNecessary(E : MessageSourceResolvable)(List!E errors)
+    {
+        auto result = new ArrayList!MessageSourceResolvable;
+        if (errors is null)
+            return result;
+        foreach (error; errors.toArray())
+            result.add(isSafeType(error) ? cast(MessageSourceResolvable) error : new Error_(error));
+        return result;
+    }
+
+    private static bool isSafeType(MessageSourceResolvable error)
+    {
+        import flint.context.support : DefaultMessageSourceResolvable;
+        import flint.validation : FieldError, ObjectError;
+
+        auto type = typeid(cast(Object) error);
+        return type is typeid(DefaultMessageSourceResolvable) || type is typeid(ObjectError) || type is typeid(
+                FieldError);
     }
 }

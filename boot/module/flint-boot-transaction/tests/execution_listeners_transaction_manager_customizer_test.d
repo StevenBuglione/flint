@@ -7,50 +7,47 @@ module execution_listeners_transaction_manager_customizer_test;
 @safe:
 
 // Flint has no ExecutionListenersTransactionManagerCustomizer (nor TransactionManagerCustomizers).
-version (FlintTransactionManagerCustomizers)
+import flint.boot.transaction.autoconfigure : ExecutionListenersTransactionManagerCustomizer;
+import flint.java.util : ArrayList, Collection;
+import flint.transaction : ConfigurableTransactionManager, TransactionExecutionListener;
+
+private final class RecordingTransactionManager : ConfigurableTransactionManager
 {
-    import flint.boot.transaction.autoconfigure : ExecutionListenersTransactionManagerCustomizer;
-    import flint.java.util : ArrayList, Collection;
-    import flint.transaction : ConfigurableTransactionManager, TransactionExecutionListener;
+    TransactionExecutionListener[] added;
+    private Collection!TransactionExecutionListener listeners;
 
-    private final class RecordingTransactionManager : ConfigurableTransactionManager
+    this()
     {
-        TransactionExecutionListener[] added;
-        private Collection!TransactionExecutionListener listeners;
-
-        this()
-        {
-            listeners = new ArrayList!TransactionExecutionListener;
-        }
-
-        void setTransactionExecutionListeners(Collection!TransactionExecutionListener listeners)
-        {
-            this.listeners = listeners;
-        }
-
-        Collection!TransactionExecutionListener getTransactionExecutionListeners()
-        {
-            return listeners;
-        }
-
-        void addListener(TransactionExecutionListener listener)
-        {
-            added ~= listener;
-        }
+        listeners = new ArrayList!TransactionExecutionListener;
     }
 
-    private final class StubListener : TransactionExecutionListener
+    void setTransactionExecutionListeners(Collection!TransactionExecutionListener listeners)
     {
+        this.listeners = listeners;
     }
 
-    @("ExecutionListenersTransactionManagerCustomizerTests."
-            ~ "whenTransactionManagerIsCustomizedThenExecutionListenersAreAddedToIt")
-    unittest
+    Collection!TransactionExecutionListener getTransactionExecutionListeners()
     {
-        TransactionExecutionListener listener1 = new StubListener;
-        TransactionExecutionListener listener2 = new StubListener;
-        auto transactionManager = new RecordingTransactionManager;
-        new ExecutionListenersTransactionManagerCustomizer([listener1, listener2]).customize(transactionManager);
-        assert(transactionManager.added == [listener1, listener2]);
+        return listeners;
     }
+
+    void addListener(TransactionExecutionListener listener)
+    {
+        added ~= listener;
+    }
+}
+
+private final class StubListener : TransactionExecutionListener
+{
+}
+
+@("ExecutionListenersTransactionManagerCustomizerTests."
+        ~ "whenTransactionManagerIsCustomizedThenExecutionListenersAreAddedToIt")
+unittest
+{
+    TransactionExecutionListener listener1 = new StubListener;
+    TransactionExecutionListener listener2 = new StubListener;
+    auto transactionManager = new RecordingTransactionManager;
+    new ExecutionListenersTransactionManagerCustomizer([listener1, listener2]).customize(transactionManager);
+    assert(transactionManager.added == [listener1, listener2]);
 }

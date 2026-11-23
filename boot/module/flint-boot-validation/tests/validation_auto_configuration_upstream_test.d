@@ -43,26 +43,23 @@ private string[] missingBeanTypes(alias method)()
 // Spring `flint.validation.Validator`, so a user's Jakarta validator does not replace it, and a user's Spring
 // Validator (a custom form or DTO validator) removes the auto-configured LocalValidatorFactoryBean, leaving
 // `@Valid` arguments and method validation without Bean Validation.
-version (FlintValidatorBackOffType)
+@("ValidationAutoConfigurationTests.validationAutoConfigurationWhenUserProvidesJsrValidatorShouldBackOff")
+unittest
 {
-    @("ValidationAutoConfigurationTests.validationAutoConfigurationWhenUserProvidesJsrValidatorShouldBackOff")
-    unittest
-    {
-        assert(missingBeanTypes!(ValidationAutoConfiguration.defaultValidator)() == [
-            "flint.jakarta.validation.Validator"
-        ]);
-    }
+    assert(missingBeanTypes!(ValidationAutoConfiguration.defaultValidator)() == [
+        "flint.jakarta.validation.Validator"
+    ]);
+}
 
-    @("ValidationAutoConfigurationTests."
-            ~ "validationAutoConfigurationWhenUserProvidesSpringValidatorShouldCreateJsrValidator")
-    unittest
-    {
-        assert(missingBeanTypes!(ValidationAutoConfiguration.defaultValidator)() == [
-            "flint.jakarta.validation.Validator"
-        ]);
-        version (FlintPrimaryDefaultValidator)
-            assert(isPrimaryBean!(ValidationAutoConfiguration.defaultValidator));
-    }
+@("ValidationAutoConfigurationTests."
+        ~ "validationAutoConfigurationWhenUserProvidesSpringValidatorShouldCreateJsrValidator")
+unittest
+{
+    assert(missingBeanTypes!(ValidationAutoConfiguration.defaultValidator)() == [
+        "flint.jakarta.validation.Validator"
+    ]);
+    version (FlintPrimaryDefaultValidator)
+        assert(isPrimaryBean!(ValidationAutoConfiguration.defaultValidator));
 }
 
 // Boot's PrimaryDefaultValidatorPostProcessor makes `defaultValidator` primary unless another Spring Validator is.

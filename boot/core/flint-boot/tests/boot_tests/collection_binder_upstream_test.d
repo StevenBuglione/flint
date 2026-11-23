@@ -471,21 +471,17 @@ private void assertNames(BeanWithCamelCaseNameList result)
             valueObject!BeanWithCamelCaseNameList()).bind!BeanWithCamelCaseNameList("foo").get());
 }
 
-version (FlintLegacySystemEnvironmentNames)
+@("bindToLegacySystemEnvironmentVariableProperty") unittest
 {
-    // Gap: `FOO_THE_NAMES_0_FIRST` (Boot's legacy form) does not bind `foo.the-names[0].first`.
-    @("bindToLegacySystemEnvironmentVariableProperty") unittest
-    {
-        // gh-46184
-        auto environment = new SystemEnvironmentPropertySource([
-            "FOO_THE_NAMES_0_FIRST": "spring",
-            "FOO_THE_NAMES_0_LAST": "boot",
-            "FOO_THE_NAMES_1_FIRST": "binding",
-            "FOO_THE_NAMES_1_LAST": "test"
-        ]);
-        assertNames(binderOf!(List!Name)([environment], valueObject!Name(),
-                valueObject!BeanWithCamelCaseNameList()).bind!BeanWithCamelCaseNameList("foo").get());
-    }
+    // gh-46184
+    auto environment = new SystemEnvironmentPropertySource([
+        "FOO_THE_NAMES_0_FIRST": "spring",
+        "FOO_THE_NAMES_0_LAST": "boot",
+        "FOO_THE_NAMES_1_FIRST": "binding",
+        "FOO_THE_NAMES_1_LAST": "test"
+    ]);
+    assertNames(binderOf!(List!Name)([environment], valueObject!Name(),
+            valueObject!BeanWithCamelCaseNameList()).bind!BeanWithCamelCaseNameList("foo").get());
 }
 
 import boot_tests.support : RegisterTests;

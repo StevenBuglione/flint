@@ -49,19 +49,15 @@ private bool ancestorOf(ConfigurationPropertyName name, string variable)
     assert(mapPropertySourceName("S-ERVER") == "s-erver");
 }
 
-version (FlintLegacySystemEnvironmentNames)
+@("mapFromConfigurationShouldReturnBestGuess") unittest
 {
-    // Gap: `FOO_THE_BAR` (dashes as underscores, Boot's legacy form) does not match `foo.the-bar`.
-    @("mapFromConfigurationShouldReturnBestGuess") unittest
-    {
-        assert(mapsTo("server", "SERVER", "server"));
-        assert(mapsTo("server.port", "SERVER_PORT", "server_port"));
-        assert(mapsTo("host[0]", "HOST_0", "host_0"));
-        assert(mapsTo("host[0][1]", "HOST_0_1", "host_0_1"));
-        assert(mapsTo("host[0].name", "HOST_0_NAME", "host_0_name"));
-        assert(mapsTo("host.f00.name", "HOST_F00_NAME", "host_f00_name"));
-        assert(mapsTo("foo.the-bar", "FOO_THEBAR", "FOO_THE_BAR", "foo_thebar", "foo_the_bar"));
-    }
+    assert(mapsTo("server", "SERVER", "server"));
+    assert(mapsTo("server.port", "SERVER_PORT", "server_port"));
+    assert(mapsTo("host[0]", "HOST_0", "host_0"));
+    assert(mapsTo("host[0][1]", "HOST_0_1", "host_0_1"));
+    assert(mapsTo("host[0].name", "HOST_0_NAME", "host_0_name"));
+    assert(mapsTo("host.f00.name", "HOST_F00_NAME", "host_f00_name"));
+    assert(mapsTo("foo.the-bar", "FOO_THEBAR", "FOO_THE_BAR", "foo_thebar", "foo_the_bar"));
 }
 
 @("underscoreShouldMapToEmptyString") unittest
@@ -76,16 +72,12 @@ version (FlintLegacySystemEnvironmentNames)
     assert(mapped.isEmpty());
 }
 
-version (FlintLegacySystemEnvironmentNames)
+@("isAncestorOfConsidersLegacyNames") unittest
 {
-    // Gap: `MY_SPRING_BOOT_PROPERTY` is not a descendant of `my.spring-boot`.
-    @("isAncestorOfConsidersLegacyNames") unittest
-    {
-        auto name = ConfigurationPropertyName.of("my.spring-boot");
-        assert(ancestorOf(name, "MY_SPRING_BOOT_PROPERTY"));
-        assert(ancestorOf(name, "MY_SPRINGBOOT_PROPERTY"));
-        assert(!ancestorOf(name, "MY_BOOT_PROPERTY"));
-    }
+    auto name = ConfigurationPropertyName.of("my.spring-boot");
+    assert(ancestorOf(name, "MY_SPRING_BOOT_PROPERTY"));
+    assert(ancestorOf(name, "MY_SPRINGBOOT_PROPERTY"));
+    assert(!ancestorOf(name, "MY_BOOT_PROPERTY"));
 }
 
 @("isAncestorOfWhenNonCanonicalSource") unittest

@@ -106,37 +106,34 @@ unittest
 
 // LIKELY BUG: flint.transaction.* is bound (TransactionProperties) but never applied to the transaction manager:
 // Flint has no TransactionManagerCustomizers, and TransactionProperties is not a TransactionManagerCustomizer.
-version (FlintTransactionManagerCustomizers)
+@("DataSourceTransactionManagerAutoConfigurationTests.transactionManagerWithCustomizationIsConfigured")
+unittest
 {
-    @("DataSourceTransactionManagerAutoConfigurationTests.transactionManagerWithCustomizationIsConfigured")
-    unittest
-    {
-        import core.time : Duration;
-        import flint.boot.context.properties.bind : Binder;
-        import flint.boot.context.properties.source : ConfigurationPropertySource, MapConfigurationPropertySource;
-        import flint.boot.transaction.autoconfigure : TransactionManagerCustomizer,
-            TransactionManagerCustomizers, TransactionProperties;
-        import flint.engine.aot.descriptor : descriptorOf;
-        import flint.java.util : Optional;
+    import core.time : Duration;
+    import flint.boot.context.properties.bind : Binder;
+    import flint.boot.context.properties.source : ConfigurationPropertySource, MapConfigurationPropertySource;
+    import flint.boot.transaction.autoconfigure : AnyTransactionManagerCustomizer,
+        TransactionManagerCustomizers, TransactionProperties;
+    import flint.engine.aot.descriptor : descriptorOf;
+    import flint.java.util : Optional;
 
-        auto binder = new Binder([
-            cast(ConfigurationPropertySource) new MapConfigurationPropertySource("test",
-                    [
-                        ["spring.transaction.default-timeout", "1m"],
-                        ["spring.transaction.rollback-on-commit-failure", "true"]
-            ])
-        ]);
-        binder.getDescriptors().add(descriptorOf!(Optional!Duration)());
-        binder.getDescriptors().add(descriptorOf!(Optional!bool)());
-        auto transactionProperties = binder.bindOrCreate!TransactionProperties("flint.transaction");
-        auto customizers = TransactionManagerCustomizers.of([
-            cast(TransactionManagerCustomizer) transactionProperties
-        ]);
-        auto transactionManager = new DataSourceTransactionManagerAutoConfiguration().transactionManager(embedded(),
-                customizers);
-        assert(transactionManager.getDefaultTimeout() == 60);
-        assert(transactionManager.isRollbackOnCommitFailure());
-    }
+    auto binder = new Binder([
+        cast(ConfigurationPropertySource) new MapConfigurationPropertySource("test",
+                [
+                    ["spring.transaction.default-timeout", "1m"],
+                    ["spring.transaction.rollback-on-commit-failure", "true"]
+        ])
+    ]);
+    binder.getDescriptors().add(descriptorOf!(Optional!Duration)());
+    binder.getDescriptors().add(descriptorOf!(Optional!bool)());
+    auto transactionProperties = binder.bindOrCreate!TransactionProperties("flint.transaction");
+    auto customizers = TransactionManagerCustomizers.of([
+        cast(AnyTransactionManagerCustomizer) transactionProperties
+    ]);
+    auto transactionManager = new DataSourceTransactionManagerAutoConfiguration().transactionManager(
+            embedded(), [customizers]);
+    assert(transactionManager.getDefaultTimeout() == 60);
+    assert(transactionManager.isRollbackOnCommitFailure());
 }
 
 // Flint always creates a JdbcTransactionManager: spring.persistence.exceptiontranslation.enabled is not read.

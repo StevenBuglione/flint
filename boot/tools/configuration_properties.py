@@ -41,10 +41,13 @@ class Enum:
 
 
 class Cls:
-    def __init__(self, name, doc, fields, nested=(), enums=(), prefix=None, state=()):
+    def __init__(self, name, doc, fields, nested=(), enums=(), prefix=None, state=(), base=None, methods=()):
         self.name, self.doc, self.fields, self.nested, self.enums, self.prefix = name, doc, fields, list(nested), list(enums), prefix
         # state: private declarations that are not properties (no getter, setter or metadata), such as Boot's uniqueName
         self.state = list(state)
+        # base: the class's base type (Boot's `implements`); methods: hand-written members appended after the
+        # accessors, each a list of lines at the class body's indent
+        self.base, self.methods = base, [list(m) for m in methods]
 
 
 KEYWORDS = {'template', 'version', 'function', 'delegate', 'out', 'ref', 'in', 'body', 'module', 'scope', 'alias'}
@@ -81,7 +84,7 @@ def render_class(c, indent=0, static=False):
         out.append(f'{pad}@ConfigurationProperties("{c.prefix}")')
     else:
         out.append(doc_lines(c.doc, indent))
-    out.append(f'{pad}{"static " if static else ""}final class {c.name}')
+    out.append(f'{pad}{"static " if static else ""}final class {c.name}' + (f' : {c.base}' if c.base else ''))
     out.append(f'{pad}{{')
     body = []
     for e in c.enums:
@@ -113,6 +116,8 @@ def render_class(c, indent=0, static=False):
             statements = f.setter_body or [f'this.{field(f.name)} = {f.setter or field(f.name)};']
             body.append('\n'.join([f'{pad}    /// Set `{f.name}`.', f'{pad}    void set{cap(f.name)}({f.dtype} {field(f.name)}) pure nothrow @nogc',
                                    f'{pad}    {{'] + [f'{pad}        {line}' if line else '' for line in statements] + [f'{pad}    }}']))
+    for method in c.methods:
+        body.append('\n'.join(f'{pad}    {line}' if line else '' for line in method))
     out.append('\n\n'.join(body))
     out.append(f'{pad}}}')
     return '\n'.join(out)
@@ -198,7 +203,15 @@ sqlinit = Cls('SqlInitializationProperties', 'Settings of SQL database initializ
 tx = Cls('TransactionProperties', 'Settings of the transaction managers.', [
     F('defaultTimeout', 'Optional!Duration', None, 'Default transaction timeout. If a duration suffix is not specified, seconds will be used.', uda='@DurationUnit(ChronoUnit.SECONDS)'),
     F('rollbackOnCommitFailure', 'Optional!bool', None, 'Whether to roll back on commit failures.'),
-], prefix='flint.transaction')
+], prefix='flint.transaction', base='TransactionManagerCustomizer!AbstractPlatformTransactionManager', methods=[[
+    '/// Apply the default timeout (in whole seconds) and rollback-on-commit-failure that are set.',
+    'override void customize(AbstractPlatformTransactionManager transactionManager)',
+    '{',
+    '    if (defaultTimeout.isPresent())',
+    '        transactionManager.setDefaultTimeout(cast(int) defaultTimeout.get().total!"seconds");',
+    '    if (rollbackOnCommitFailure.isPresent())',
+    '        transactionManager.setRollbackOnCommitFailure(rollbackOnCommitFailure.get());',
+    '}']])
 
 # ---- web server -----------------------------------------------------------------------------------------------
 server = Cls('ServerProperties', 'Settings of the embedded web server.', [

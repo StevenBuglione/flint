@@ -262,7 +262,7 @@ private ConfigDataResult run(string[string] files, string[] args = null,
 {
     assertThrows!ConfigDataLocationNotFoundException(() {
         run(null, ["--flint.config.location=file:missing/"]);
-    }, "does not exist");
+    }, "cannot be found");
 }
 
 @("runWhenUsingInvalidPropertyThrowsException") unittest
