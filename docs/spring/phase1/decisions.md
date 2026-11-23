@@ -87,6 +87,15 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
 - 2026-11-23, m7-flint-cli (owner decision 4): `policy/complexity-allowlist.json` lists the ported functions that may exceed D-Scanner's cyclomatic complexity limit. tools/quality.py drops a complexity finding only when the function it points at is listed, and only if the entry names an upstream project of policy/upstream-licences.json plus the upstream file and method. An entry whose function falls back within the limit is reported as stale. The first 9 entries are ports their module documentation names: HttpHeaders, UriComponentsBuilder, HierarchicalUriComponents, PathPattern, InternalPathPatternParser, AbstractMessageConverterMethodProcessor, ControllerAdviceBean, RequestMappingInfoHandlerMapping and jackson-core's NumberInput. quality.py skips the pre-port Boot directories, which retire at the cutover. framework/, boot/ and security/ join its default trees once their remaining findings are fixed: 8 functions over the limit that are not ports (helpers and test tables), 6 dfmt differences and a few lint findings, sent to their owners.
 
 - 2026-11-23, coordinator: **ADR-030 section 4's agreed GC fallback is triggered.** The certified gs-rest-multicore run (gs-rest-service, Spring workload, 9 trials, 15:59Z) loses to Go on every runtime metric: capacity 187k vs 251k req/s (0.75), CPU per request 11.4 vs 8.3 µs (1.38), p50 at 20k req/s 0.111 vs 0.060 ms (1.84), p99 0.632 vs 0.258 ms (2.45), peak RSS 25.1 vs 13.8 MB (1.82). ADR-030 pre-agreed that if p99 or RSS loses, Flint builds a D collector with per-thread allocation caches, registered through druntime's GC interface. data-access owns it, together with the RSS investigation (per-reactor preallocation, fiber stacks, GC reserve). web-http owns request-path CPU and latency, and third-party-apis JSON cost. Phase 2 stays paused until certified runtime beats Go.
+- 2026-11-23, m7-flint-cli: the Windows cutover rehearsal passes, so the coordinator's precondition of a Windows rehearsal report is met. It ran at source `dee89bda` (cutover commit 2303324e) on the Windows 11 VM, with `--check-timeout 14400`, and passed 27 of 27 in 9.3 min. The report is in the Windows session's shared notes (cutover-windows-dee89bd-green). The fixes that got it there:
+  - Windows path separators in repoLayout, packagePath, diagnostics and the AOT generator;
+  - CRLF in locks, sources and test output;
+  - a project-local DUB home past MAX_PATH;
+  - the joined recipe's test-only flint packages;
+  - DUB's absolute-sourcePaths assert;
+  - user32 for OpenSSL;
+  - `core.thread.osthread` imports;
+  - a Python suite ported to Windows, with its skips listed in ADR-026.
 
 ## Open for the owner
 
