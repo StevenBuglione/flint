@@ -315,6 +315,15 @@ def static(runner):
     finally:
         if not runner.plan:preserve_native('linux-x86_64-glibc')
 
+def peer_tests(runner):
+    """Run the packages policy/test-peers.toml gives fixture peers through flint test, which wraps each
+    package's unittests in its pinned peers on both compilers and fails when a peer is missing (ADR-024)."""
+    import tomllib
+    peered=sorted(tomllib.loads((ROOT/'policy/test-peers.toml').read_text())['packages'])
+    runner.run([PYTHON,'tools/install_toolchains.py','--compiler','flint'])
+    runner.run([PYTHON,'tools/install_peers.py','--peer','go','--peer','postgres','--peer','valkey','--peer','minio'])
+    runner.run([ROOT/'.flint/bin/flint','test',*peered,'--compiler','both','--verify'])
+
 def platform_run(runner,target):
     if not runner.plan:implementation_required()
     if target=='wasm32':
@@ -327,6 +336,7 @@ def platform_run(runner,target):
     try:
         native(runner,target)
         for compiler in compilers:run_tests(runner,compiler)
+        if target=='macos-arm64':peer_tests(runner)
         for compiler in compilers:negative_tests(runner,compiler)
         for compiler in compilers:betterc(runner,compiler)
         if target.endswith('-musl'):
