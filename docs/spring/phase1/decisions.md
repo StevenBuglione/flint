@@ -74,7 +74,7 @@
   - Oz binary size: 1.775, 11,778,984 bytes against 6,635,680.
 
   ADR-030 says to take the fallback or redesign before Phase 2. The agreed fallback (a D collector) addresses p99 and RSS, not builds or size, so for these metrics only a redesign or an amended target remains, and that decision is the owner's.
-  - **Work already in progress:** the compile server holding the platform modules (unassigned, with the fork owner); faster Flint AOT extraction, 0.58 s of the cold build (flint-aot); the binary size (size-levers).
+  - **Levers that remain** (m7-flint-cli, 2026-11-23): flint-aot's template diet for the generated Jackson auto-configuration module, the 448 ms critical-path compile; splitting that module across compile jobs; and the dev link, through shared-object dev builds, which is the owner's call. The binary size is with size-levers. The compile-server preload of the platform modules is ruled out: dmd-arm64's prototype gained 13 ms once correct (9f1a1d8b).
   - **Evidence:** `benchmarks/spring/evidence/gs-builds/20261123T123014Z/`.
   - **Not yet certified:** the runtime metrics. A smoke run gave Flint about 0.26–0.4x Go's throughput. `phase1-guides` measures them in the next window.
 
