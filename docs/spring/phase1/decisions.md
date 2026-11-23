@@ -313,3 +313,14 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     1. Every project-keyed entry is pruned or excluded for each cold trial, not only the log's port entries: AOT models and generated output (kept by project root since `7907be4e`), objects, and anything else the port owns. The harness fails a cold trial that gets a project-keyed hit. The `2018e5e5` primary (2.52) reused the port's AOT output ("23 from the shared cache, 0 extracted") and is optimistic. Its incremental and edit series are unaffected.
     2. m7-flint-cli adds a test: an edited platform or toolchain file is re-hashed despite an unchanged size and a restored mtime (ctime and inode in the stat key).
     3. Every run keeps publishing the non-gating "primary with the digest log cleared".
+- 2026-11-23, owner (via the coordinator; answers gc.md option D's two owner questions): **the Flint collector is approved as proposed.** data-access builds it now, in parallel with the allocation cuts. It does not wait for them.
+  - **Home:** `flint.arena.sys.gc`, an allowlisted low-level `sys/` directory of the existing `flint:arena` package. No new package; the 37-package surface is unchanged.
+    - The collector's `@system` code stays inside that directory.
+    - Any `@trusted` entry point follows AGENTS.md: an adjacent `// SAFETY:` comment, at most 60 lines, and positive, negative and sanitizer or fuzz coverage.
+  - **Sources:** druntime's collector, under Boost-1.0, and bdwgc's soft-dirty tracking (`SOFT_VDB`), under its MIT-style licence.
+    - Both get entries in `policy/upstream-licences.json` before any ported code lands.
+    - Ported files carry the upstream path, tag and copyright, with "Modified by the Flint authors".
+    - NOTICE gains both attributions.
+  - **Gating:** each step (D1 per-thread caches with page release, then D3 if the pause still loses) is measured through proof-harness's queue against druntime's collector on the same binary, before any claim.
+    - Correctness evidence: druntime's GC tests, a stress fuzzer with a shadow reachability check, ASan and TSan.
+    - It is switchable back to the conservative collector through `rt_options`.
