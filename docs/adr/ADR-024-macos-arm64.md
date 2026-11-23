@@ -172,7 +172,7 @@ python3 tools/ci.py platform --target macos-arm64
 ADR-025 names pluto (`flint-perf-macos-arm64-v1`) as the macOS measurement runner, so the measurement tools run there.
 
 - **Go.** `install_toolchains.py --compiler go` installs the pinned Go 1.27.4 darwin-arm64 archive. Its digest comes from go.dev's listing, whose linux-amd64 digest equals the existing lock entry.
-- **`tools/compare_go_builds.py`.** It uses `ldmd2` on macOS and turns the DUB pipeline off.
+- **`tools/compare_go_builds.py`.** It uses `ldmd2` on macOS, with the DUB pipeline (section 1).
 - **`tools/measure_builds.py`.** It accepts the macOS runner and changes these pieces:
   - process-tree RSS comes from libproc's task info, which is what psutil reports as RSS on macOS;
   - the size audit uses Apple `strip` and `otool -L`, and only `/usr/lib` and system frameworks may stay dynamic;
@@ -187,6 +187,17 @@ Baseline on pluto, 9 paired trials, medians. Flint is the `ldmd2` dev profile; G
 | `bench-rest` | 2067 ms | 431 ms | 4.79 | 460 ms | 296 ms | 1.56 |
 
 This is the baseline the DMD arm64 work (ADR-025 section 3) has to beat. `ldmd2` misses the compile-speed gate by a wide margin, which is why ADR-025 keeps it as an interim setting only.
+
+**The linker (ADR-025 section 3, stage 4).** macOS links with Apple's linker (ld-prime, Xcode's `ld-1267`), not `ld64.lld`. For `bench-rest`'s final link on pluto, with the same objects and archives and the median of 9 runs:
+
+| Invocation | Time |
+| --- | ---: |
+| Apple `ld`, run directly with the arguments `cc -###` expands to | 53 ms |
+| pinned `ld64.lld` 22.1.8, run directly | 60 ms |
+| `/usr/bin/cc`, which runs Apple `ld` | 75 ms |
+| `ldmd2` → `ldc2` → `cc` → `ld`, as DUB links today | about 165 ms |
+
+`ld64.lld` is slower here and its output only about 1% smaller, so it is not adopted. It stays installed with the pinned LLVM for embedded C. The saving is in skipping the driver chain, which is what the fork's direct linking does: it caches the `cc -###` expansion and runs the linker directly. On macOS that is Apple's `ld`. Direct linking and the compile server are DMD features and arrive with DMD arm64 (the fork's `dmd-2.114.0-flint-darwin.patch`).
 
 ### 7. The flint CLI
 
