@@ -26,7 +26,7 @@ Run a package's tests with `dub test --root boot/core/flint-boot --compiler=dmd`
 | `MapConfigurationPropertySource`, `SystemEnvironmentPropertyMapper` | first cut | Flint tests only so far |
 | `.properties` loader (`OriginTrackedPropertiesLoader`, `PropertiesPropertySourceLoader`) | done | 45 of 46 `OriginTrackedPropertiesLoaderTests` (1 excluded) |
 | YAML loader (`OriginTrackedYamlLoader`, `YamlPropertySourceLoader`) on Flint's D YAML engine | done | 13 / 13 `OriginTrackedYamlLoaderTests`, 5 / 5 `YamlPropertySourceLoaderTests`, plus 3 Flint YAML tests |
-| `Binder`, `Bindable`, `BindResult`, `@DefaultValue`, `@ConfigurationProperties`, placeholders, `BindConverter` (booleans, numbers, `Duration`) | done for scalars, strings, enums (Boot's lenient matching), JavaBeans and value objects; arrays, lists and maps wait on the `flint:engine-aot` collection builders (contract 2, in progress) | 13 `BinderTests`, 13 `JavaBeanBinderTests`, 3 `ValueObjectBinderTests`, 12 `BindResultTests`, 3 `PropertySourcesPlaceholdersResolverTests`, 2 `DataObjectPropertyNameTests`, 3 `DurationStyleTests`; plus 3 Flint tests |
+| `Binder`, `Bindable`, `BindResult`, `@DefaultValue`, `@ConfigurationProperties`, placeholders, `BindConverter` (booleans, numbers, `Duration`) | done for scalars, strings, enums (Boot's lenient matching), JavaBeans, value objects, arrays, `List`/`Set`, maps (D associative arrays and `Map`) and `Optional`, on contract 2's descriptor builders | 13 `BinderTests`, 13 `JavaBeanBinderTests`, 3 `ValueObjectBinderTests`, 12 `BindResultTests`, 3 `PropertySourcesPlaceholdersResolverTests`, 2 `DataObjectPropertyNameTests`, 3 `DurationStyleTests`; plus 3 Flint tests |
 | Config data: `application.{properties,yaml}`, location groups, profile files, `---` with `flint.config.activate.on-profile`, profile groups and includes, `FLINT_PROFILES_ACTIVE`, `spring.*` aliases | done | 23 of 87 `ConfigDataEnvironmentPostProcessorIntegrationTests` (in-memory resources), plus 8 Flint tests |
 | `FlintApplication` (run, exit, `flint.main.*`), runners, `ApplicationArguments`, banner (`FlintBootBanner`, `ResourceBanner`, ANSI), startup info, `mixin FlintMain` | done over a context stand-in until `flint.context` lands; `FlintApplicationBuilder` next | 22 `SpringApplicationTests` (stub context), 6 of 7 `DefaultApplicationArgumentsTests`, 14 of 15 `ResourceBannerTests`, plus 1 Flint test |
 | `FailureAnalyzer`, `FailureAnalysis`, `LoggingFailureAnalysisReporter`, Bind / InvalidConfigurationPropertyName / ConfigDataNotFound analyzers; Boot's console log format | done end to end: `flint.boot.logging.slf4j.Slf4jLoggingSystem` installs Boot's format as `flint.slf4j`'s appender and applies `logging.level.*`; Boot's own lines go through SLF4J too | covered by the `SpringApplicationTests` failure tests; 5 Flint console-format and logging tests |
@@ -44,7 +44,7 @@ Excluded upstream tests, each with its reason:
 - `ConfigurationPropertyNameTests.hashCodeIsStored` (`runtime-reflection`): reads a private field with `ReflectionTestUtils`.
 - `OriginTrackedPropertiesLoaderTests.compareToJavaProperties` (`jvm-platform`): compares against `java.util.Properties`.
 
-Total so far: **324 tests pass on DMD 2.114 and LDC 1.43** (301 in flint-boot, 6 in flint-boot-autoconfigure, 6 in flint-boot-test, 11 in the modules): 275 ported upstream tests and 49 Flint tests. The runner in `tests/boot_tests/support.d` runs each `unittest` on its own and prints the count.
+Total so far: **353 tests pass on DMD 2.114 and LDC 1.43** (328 in flint-boot, 6 in flint-boot-autoconfigure, 6 in flint-boot-test, 13 in the modules): 301 ported upstream tests and 52 Flint tests. The runner in `tests/boot_tests/support.d` runs each `unittest` on its own and prints the count.
 
 ## Design decisions
 
@@ -54,7 +54,7 @@ Spring keeps `Object` values in property sources and converts them while binding
 
 ### Nullable properties
 
-Boot's `@Nullable Integer`, `Boolean` and `Duration` fields are `flint.java.util.Optional!T`; they bind once the descriptors' `unwrap`/`wrap` builders land (contract 2). `@Nullable String` fields are `string` with a `null` default. Lists are D arrays and maps are `flint.java.util.Map!(K, V)`.
+Boot's `@Nullable Integer`, `Boolean` and `Duration` fields are `flint.java.util.Optional!T`, bound through the descriptors' `unwrap`/`wrap` builders (contract 2). `@Nullable String` fields are `string` with a `null` default. Lists are D arrays and maps are `flint.java.util.Map!(K, V)`.
 
 ### Binding on descriptors
 

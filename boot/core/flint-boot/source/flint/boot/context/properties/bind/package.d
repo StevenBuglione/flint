@@ -446,6 +446,12 @@ private:
     {
         if (isValueType(type))
             return bindScalar(name, type, instance, durationUnit);
+        if (type.unwrap !is null && type.wrap !is null)
+            return bindOptional(name, type, instance, durationUnit);
+        if (type.fromEntries !is null)
+            return bindMap(name, type, instance);
+        if (type.fromElements !is null)
+            return bindCollection(name, type, instance, durationUnit);
         final switch (type.kind)
         {
         case TypeKind.scalar:
@@ -453,8 +459,7 @@ private:
         case TypeKind.enum_:
             return bindScalar(name, type, instance, null);
         case TypeKind.array:
-            throw new IllegalStateException("Binding " ~ type.name
-                    ~ " needs the descriptor's collection builders, which flint:engine-aot does not provide yet");
+            throw new IllegalStateException("Binding " ~ type.name ~ " needs the descriptor's collection builders");
         case TypeKind.struct_:
         case TypeKind.class_:
         case TypeKind.interface_:
@@ -489,6 +494,160 @@ private:
         if (bound)
             instance = target;
         return bound;
+    }
+
+    // `Optional!T`: the element bound under the same name, wrapped.
+    bool bindOptional(ConfigurationPropertyName name, const Descriptor type, ref Any instance, string durationUnit)
+    {
+        auto elementType = elementDescriptor(type);
+        Any value;
+        if (!bindValue(name, elementType, value, durationUnit))
+            return false;
+        instance = type.wrap(value);
+        return true;
+    }
+
+    // Boot's IndexedElementsBinder: from the highest-precedence source that has `name` or a descendant of it, a
+    // comma-separated value under `name`, or `name[0]`, `name[1]`, ... The bound list replaces any existing one.
+    bool bindCollection(ConfigurationPropertyName name, const Descriptor type, ref Any instance, string durationUnit)
+    {
+        import std.conv : to;
+
+        auto elementType = elementDescriptor(type);
+        foreach (source; sources)
+        {
+            ConfigurationPropertySource[] one = [source];
+            if (auto direct = ConfigurationPropertySources.find(one, name))
+            {
+                if (!isValueType(elementType))
+                    continue;
+                lastProperty = direct;
+                instance = type.fromElements(splitElements(direct.getValue(), elementType, durationUnit));
+                return true;
+            }
+            if (!ConfigurationPropertySources.containsDescendantOf(one, name))
+                continue;
+            auto single = new Binder(one, placeholders, descriptors);
+            Any[] elements;
+            for (size_t index;; index++)
+            {
+                Any element;
+                if (!single.bindValue(name.append("[" ~ index.to!string ~ "]"), elementType, element, durationUnit))
+                    break;
+                elements ~= element;
+            }
+            if (elements.length == 0)
+                continue;
+            instance = type.fromElements(elements);
+            return true;
+        }
+        return false;
+    }
+
+    Any[] splitElements(string value, const Descriptor elementType, string durationUnit)
+    {
+        import std.algorithm.iteration : splitter;
+        import std.string : strip;
+
+        const text = placeholders.resolvePlaceholders(value);
+        Any[] elements;
+        if (text.strip.length == 0)
+            return elements;
+        foreach (part; text.splitter(','))
+            elements ~= convert(part.strip, elementType, durationUnit);
+        return elements;
+    }
+
+    // Boot's MapBinder: every descendant of `name` is an entry. For scalar values the key is the rest of the name
+    // (`map.a.b=x` has the key `a.b`); for bean values it is the next element. Entries merge into an existing map.
+    bool bindMap(ConfigurationPropertyName name, const Descriptor type, ref Any instance)
+    {
+        auto keyType = lookup(type.keyType);
+        auto valueType = elementDescriptor(type);
+        if (keyType is null)
+            throw new IllegalStateException("No descriptor for map key type " ~ type.keyType ~ " of " ~ type.name);
+        Any[] keys = instance.isNull() ? null : type.toKeys(instance);
+        Any[] values = instance.isNull() ? null : type.toValues(instance);
+        if (hasEmptyValue(name))
+        {
+            // `map=` (an empty value) binds an empty map, as in Boot.
+            instance = type.fromEntries(keys, values);
+            return true;
+        }
+        string[] keyTexts;
+        bool bound;
+        foreach (candidate; ConfigurationPropertySources.names(sources))
+        {
+            if (!name.isAncestorOf(candidate))
+                continue;
+            const depth = isValueType(valueType) ? candidate.getNumberOfElements() : name.getNumberOfElements() + 1;
+            auto entryName = candidate.chop(depth);
+            const keyText = mapKey(entryName.subName(name.getNumberOfElements()));
+            if (!addKey(keyTexts, keyText))
+                continue;
+            Any value;
+            if (!bindValue(entryName, valueType, value))
+                continue;
+            putEntry(keys, values, convert(keyText, keyType), value);
+            bound = true;
+        }
+        if (!bound)
+            return false;
+        instance = type.fromEntries(keys, values);
+        return true;
+    }
+
+    bool hasEmptyValue(ConfigurationPropertyName name)
+    {
+        import std.string : strip;
+
+        auto direct = ConfigurationPropertySources.find(sources, name);
+        return direct !is null && placeholders.resolvePlaceholders(direct.getValue()).strip.length == 0;
+    }
+
+    // Record `key`; false when it was seen already.
+    static bool addKey(ref string[] seen, string key)
+    {
+        foreach (existing; seen)
+        {
+            if (existing == key)
+                return false;
+        }
+        seen ~= key;
+        return true;
+    }
+
+    // Replace the value of `key`, or add the entry.
+    static void putEntry(ref Any[] keys, ref Any[] values, Any key, Any value)
+    {
+        foreach (index, ref existing; keys)
+        {
+            if (existing.toString() == key.toString())
+            {
+                values[index] = value;
+                return;
+            }
+        }
+        keys ~= key;
+        values ~= value;
+    }
+
+    static string mapKey(ConfigurationPropertyName rest)
+    {
+        if (rest.getNumberOfElements() == 1)
+            return rest.getElement(0, ConfigurationPropertyName.Form.ORIGINAL);
+        string key;
+        foreach (index; 0 .. rest.getNumberOfElements())
+            key ~= (index ? "." : "") ~ rest.getElement(index, ConfigurationPropertyName.Form.ORIGINAL);
+        return key;
+    }
+
+    const(Descriptor) elementDescriptor(const Descriptor type)
+    {
+        auto elementType = lookup(type.elementType);
+        if (elementType is null)
+            throw new IllegalStateException("No descriptor for element type " ~ type.elementType ~ " of " ~ type.name);
+        return elementType;
     }
 
     // One JavaBean property; creates the target on first use. A read-only property binds into the object its
@@ -636,12 +795,10 @@ private Any lenientEnum(string text, const Descriptor type)
 {
     if (text.length == 0)
         return Any.init;
-    if (type.enumValues.length != type.enumConstants.length)
-        throw new ConversionFailedException(text, type.name, "no enum values in the descriptor (a non-integral enum)");
     foreach (index, constant; type.enumConstants)
     {
         if (constant == text)
-            return Any.ofEnum(type.name, type.enumValues[index]);
+            return enumAt(type, index, text);
     }
     const name = canonicalEnumName(text);
     const alias_ = name == "true" ? "on" : (name == "false" ? "off" : null);
@@ -649,10 +806,20 @@ private Any lenientEnum(string text, const Descriptor type)
     {
         const candidate = canonicalEnumName(constant);
         if (candidate == name || (alias_ !is null && candidate == alias_))
-            return Any.ofEnum(type.name, type.enumValues[index]);
+            return enumAt(type, index, text);
     }
     throw new ConversionFailedException(text, type.name, "No enum constant " ~ type.name ~ "." ~ text,
             type.enumConstants.dup);
+}
+
+// The constant at `index`: the descriptor's `enumValue` thunk (contract 2), else `enumValues` with `Any.ofEnum`.
+private Any enumAt(const Descriptor type, size_t index, string text)
+{
+    if (type.enumValue !is null)
+        return type.enumValue(cast(long) index);
+    if (index < type.enumValues.length)
+        return Any.ofEnum(type.name, type.enumValues[index]);
+    throw new ConversionFailedException(text, type.name, "the descriptor has no enum values");
 }
 
 private string canonicalEnumName(string name) pure

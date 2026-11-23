@@ -6,6 +6,7 @@ import flint.boot.context.properties.source : ConfigurationPropertySource, MapCo
 import flint.boot.web.server : Compression, Http2, Shutdown;
 import flint.boot.web.server.autoconfigure : ServerProperties;
 import flint.engine.aot.descriptor : descriptorOf;
+import flint.java.util : Optional;
 
 @safe:
 
@@ -25,12 +26,12 @@ unittest
     auto source = new MapConfigurationPropertySource("test", [
         ["server.address", "127.0.0.1"], ["server.shutdown", "immediate"],
         ["server.compression.enabled", "true"], ["server.servlet.context-path", "/api"],
-        ["SERVER_HTTP2_ENABLED", "true"]
+        ["SERVER_HTTP2_ENABLED", "true"], ["server.port", "8081"]
     ]);
     auto binder = new Binder([cast(ConfigurationPropertySource) source]);
     foreach (descriptor; [
         descriptorOf!Shutdown(), descriptorOf!Compression(), descriptorOf!Http2(),
-        descriptorOf!(ServerProperties.Servlet)()
+        descriptorOf!(ServerProperties.Servlet)(), descriptorOf!(Optional!int)()
     ])
         binder.getDescriptors().add(descriptor);
     auto properties = binder.bind!ServerProperties("server").get();
@@ -38,4 +39,5 @@ unittest
     assert(properties.getShutdown() == Shutdown.IMMEDIATE);
     assert(properties.getCompression().isEnabled());
     assert(properties.getServlet().getContextPath() == "/api");
+    assert(properties.getPort().get() == 8081);
 }
