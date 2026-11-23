@@ -158,6 +158,8 @@ Each D namespace has one owner, so a Spring package never collides with Flint's 
 
 The framework-side engines that today use `flint.<name>` (`flint.web`, `flint.http`, `flint.reactor`, `flint.data`, `flint.security`, `flint.cache`, `flint.mail`, `flint.ai`, …) move to `flint.engine.<name>`, and their DUB names to `flint:engine-<name>`. This is a mechanical rename, done once, before the split. Base libraries that Spring has no package for keep their names.
 
+**`flint.test` is shared, split by subpackage.** The base library (`flint:test`, in the CLI's closure) owns `flint.test` itself (`package.d`), `flint.test.internal` and `flint.test.sys`. spring-test (`flint:framework-test`) owns its own subpackages under the same root: `flint.test.annotation`, `.context`, `.http`, `.jdbc`, `.json`, `.util`, `.validation` and `.web`, so `MockMvc`, `@MockitoBean` and `RestTestClient` keep Spring's package paths. spring-test has no types in its root package, so the two never collide. The base library must not add a module under any of spring-test's subpackage names, and spring-test must not use `internal` or `sys`.
+
 ## Erased types used by the rules
 
 | Type | Purpose |
