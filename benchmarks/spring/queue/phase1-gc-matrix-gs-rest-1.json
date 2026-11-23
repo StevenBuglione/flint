@@ -1,0 +1,47 @@
+{
+  "schema": "flint.measure-queue/1",
+  "created": "2026-11-23",
+  "status": "pending",
+  "window": "natural",
+  "requested_by": "the coordinator, via data-access (2026-11-23 17:07Z): the same three setting groups as petclinic-rest's",
+  "builds": {
+    "tree": {
+      "app": "checkout",
+      "commit": "08b19d2f3a78",
+      "flint": true,
+      "linker": "mold"
+    }
+  },
+  "report_to": "the coordinator; docs/milestones/13.md",
+  "id": "phase1-gc-matrix-gs-rest-1",
+  "estimate_minutes": 61,
+  "summary": "Phase 1 GC matrix, part 1: gs-rest-service under conservative, conservative-serial-mark, precise, Go interleaved",
+  "why": "Part of the GC matrix (ADR-030 section 4) split into claimed windows of about an hour; assemble merges the parts. Released at 08b19d2f3a78 (data-access for the coordinator, 2026-11-23 17:07Z): boot's a5b05c89 lands graceful SIGTERM/SIGINT, so the ports exit 0 with druntime's profile:1 report. Natural quiet only, never a claimed window.",
+  "measure": {
+    "kind": "command",
+    "ports": [],
+    "steps": [
+      {
+        "argv": [
+          "{python}",
+          "tools/spring_bench.py",
+          "gc-matrix",
+          "gs-rest-service",
+          "--output",
+          "{out}/gc-matrix-gs-rest-service.json",
+          "--setting",
+          "conservative",
+          "--setting",
+          "conservative-serial-mark",
+          "--setting",
+          "precise"
+        ],
+        "may_fail": true,
+        "smoke_args": [
+          "--smoke"
+        ],
+        "in": "tree"
+      }
+    ]
+  }
+}

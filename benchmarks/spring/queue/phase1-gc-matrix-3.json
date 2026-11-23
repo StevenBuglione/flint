@@ -1,14 +1,13 @@
 {
   "schema": "flint.measure-queue/1",
   "created": "2026-11-23",
-  "status": "blocked",
+  "status": "pending",
   "window": "natural",
-  "blocked_on": "petclinic-rest scoring 109/109 in proof-harness's independent run, then a pin to one commit where all three ports pass exactly",
   "requested_by": "ADR-030 section 8, Phase 1 exit (coordinator's plan, 2026-11-23 15:20Z)",
   "builds": {
     "tree": {
       "app": "checkout",
-      "commit": "TBD",
+      "commit": "08b19d2f3a78",
       "flint": true,
       "linker": "mold"
     }
@@ -17,7 +16,7 @@
   "id": "phase1-gc-matrix-3",
   "estimate_minutes": 41,
   "summary": "Phase 1 GC matrix, part 3: petclinic-rest under precise-large-pools, precise-heap-factor-4, Go interleaved",
-  "why": "Part of the GC matrix (ADR-030 section 4) split into claimed windows of about an hour; assemble merges the parts.",
+  "why": "Part of the GC matrix (ADR-030 section 4) split into claimed windows of about an hour; assemble merges the parts. Released at 08b19d2f3a78 (data-access for the coordinator, 2026-11-23 17:07Z): boot's a5b05c89 lands graceful SIGTERM/SIGINT, so the ports exit 0 with druntime's profile:1 report. Natural quiet only, never a claimed window.",
   "measure": {
     "kind": "command",
     "ports": [],

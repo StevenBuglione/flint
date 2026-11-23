@@ -257,7 +257,7 @@ Both bodies verify against the Go comparators and the Java references: 88 bytes 
 - larger pools;
 - a heap-size factor.
 
-The gate's matrix is petclinic-rest's, because ADR-030 section 4 asks for idiomatic PetClinic code. Other applications can be run by hand. For each setting, the suite must still pass. The Spring workload then measures latency, RSS, CPU and capacity, with the Go comparator interleaved in every trial. druntime's exit profile gives the collections and the maximum pause.
+The gate's matrix covers petclinic-rest, because ADR-030 section 4 asks for idiomatic PetClinic code, and gs-rest-service, which the coordinator added. The queue measures each in three parts (`phase1-gc-matrix-<n>` and `phase1-gc-matrix-gs-rest-<n>`), on natural quiet only, and `assemble` merges each application's parts. For each setting, the suite must still pass. The Spring workload then measures latency, RSS, CPU and capacity, with the Go comparator interleaved in every trial. druntime's exit profile gives the collections and the maximum pause.
 
 **What happens with the result:**
 - The winning setting is baked into the port through `rt_options`.

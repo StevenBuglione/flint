@@ -1,6 +1,6 @@
 {
   "schema": "flint.spring-gc-matrix/1",
-  "description": "The druntime GC settings Phase 1 measures on the Flint ports (ADR-030 section 4, 'GC'). Each setting is passed to the same binary as --DRT-gcopt, which druntime reads before main and removes from the arguments, so the code under test is identical across the matrix. profile:1 is added to every setting, so each run reports its collections and pause times at exit. The setting that wins is then baked into the port's binary through rt_options (extern(C) __gshared string[] rt_options = [\"gcopt=...\"]), which is how the shipped binary carries it. If p99 or RSS still loses to Go under every setting, the agreed fallback applies: a D collector with per-thread allocation caches, registered through druntime's GC interface. ADR-030 section 4 asks for the matrix on idiomatic PetClinic code, so petclinic-rest is the measured application; gs-rest-service can be run by hand with spring_bench.py gc-matrix, outside the gate.",
+  "description": "The druntime GC settings Phase 1 measures on the Flint ports (ADR-030 section 4, 'GC'). Each setting is passed to the same binary as --DRT-gcopt, which druntime reads before main and removes from the arguments, so the code under test is identical across the matrix. profile:1 is added to every setting, so each run reports its collections and pause times at exit. The setting that wins is then baked into the port's binary through rt_options (extern(C) __gshared string[] rt_options = [\"gcopt=...\"]), which is how the shipped binary carries it. If p99 or RSS still loses to Go under every setting, the agreed fallback applies: a D collector with per-thread allocation caches, registered through druntime's GC interface. ADR-030 section 4 asks for the matrix on idiomatic PetClinic code, so petclinic-rest is measured; the coordinator added gs-rest-service (2026-11-23), so both are in the gate.",
   "profile": "profile:1",
   "settings": {
     "conservative": "gc:conservative",
@@ -13,6 +13,7 @@
     "precise-heap-factor-4": "gc:precise heapSizeFactor:4"
   },
   "apps": [
-    "petclinic-rest"
+    "petclinic-rest",
+    "gs-rest-service"
   ]
 }

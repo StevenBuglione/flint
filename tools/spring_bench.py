@@ -528,7 +528,7 @@ PHASE1_SPLIT = {
     'phase1-builds-': ['acceptance-java.json', 'acceptance-go.json', 'acceptance-flint.json', 'builds.json'],
     'phase1-http-': ['http.json'],
 }
-PHASE1_GC_PREFIX = 'phase1-gc-matrix-'  # parts of the GC matrix, one claimed window each
+PHASE1_GC_PREFIX = 'phase1-gc-matrix-'  # parts of the GC matrix per application, each run on natural quiet
 
 
 def certified_results(entry_id):
@@ -657,9 +657,9 @@ def assemble(output):
         manifest['sources'][entry.stem] = str(directory.relative_to(ROOT))
         for path in directory.glob('gc-matrix-*.json'):
             parts.append((path, json.loads(path.read_text())))
-    if parts:
-        merged = merge_gc(parts)
-        (output / f"gc-matrix-{merged['app']}.json").write_text(json.dumps(merged, indent=2) + '\n')
+    for app in sorted({record['app'] for _, record in parts}):
+        merged = merge_gc([(path, record) for path, record in parts if record['app'] == app])
+        (output / f'gc-matrix-{app}.json').write_text(json.dumps(merged, indent=2) + '\n')
     (output / 'assembled.json').write_text(json.dumps(manifest, indent=2) + '\n')
     return manifest
 
