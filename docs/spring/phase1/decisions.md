@@ -103,6 +103,25 @@
     | scratch | 3,714 | 129 | 88 | 3,265 | – | 230 |
 
     flint's own phase is 377 ms in the shared-object cold build against 149 ms in the static one, and the project's AOT extraction is about 90 ms. A FLINT_LOG diagnosis (17:25Z, under hold, not evidence) found why: the priming build links the shared platform object before the AOT library exists, so every later build keys it differently (`--whole-archive` gains `libflint-aot-library.a`). Each fresh cold clone therefore relinks it (`dmd -shared`, about 160 ms) and still runs the platform `dub describe` (about 50 ms). That is flint's behaviour as built, so the result stands; m7-flint-cli has the log. Evidence: `benchmarks/spring/evidence/gs-builds/20261123T171818Z/`.
+  - **Update, 19:28–19:31Z (certified, `gs-builds` at `aa17876b`, no foreign build in 15 samples).** This is the first run under owner decision `4b27d207`: the gating commands carry `--no-debug`, matching Go's `-s -w`, and the with-debug series is non-gating context. It also has m7-flint-cli's `2d8a16dc`: no shared-object relink and no platform describe per cold trial, and static builds replay DUB's commands. Every cold trial extracted the project's model (1) and took 22 platform models from the cache. Median ratios (99% interval):
+    - **primary: 1.255 (1.17–1.28)**, 0.198 s against 0.158 s (3.07 at `36c29248`);
+    - **secondary: 0.985 (0.953–1.009)**, 3.251 s against 3.302 s. The median is under 1, but the upper bound misses the 0.99 ceiling;
+    - **edit build, dev profile (shared objects): 0.398 (0.386–0.415), which passes**: 65 ms against 162 ms;
+    - edit build, fully static: 1.27 (1.24–1.33), 0.206 s;
+    - Oz: 0.617, which passes.
+    - Context, not gating: primary with the digest log cleared 1.86; with debug information, primary 1.27, secondary 1.10, shared edit 0.407 and static edit 1.49.
+
+    Per-phase medians in ms (no-debug):
+
+    | Series | total | flint | aot | plan | compile | link |
+    | --- | --- | --- | --- | --- | --- | --- |
+    | cached cold | 195 | 78 | 74 | 0 | 24 | 19 |
+    | edit, shared | 60 | 20 | 0 | 0 | 23 | 17 |
+    | static cold | 356 | 82 | 74 | 23 | 20 | 158 |
+    | edit, static | 200 | 22 | 0 | 0 | 24 | 155 |
+    | scratch | 3,247 | 61 | 73 | 2,909 | – | 203 |
+
+    The cold gap to Go (about 40 ms) is mostly the project's AOT extraction (74 ms) and flint's own 78 ms. The primary is now under the coordinator's 1.5 threshold for the Phase 1 builds parts. Evidence: `benchmarks/spring/evidence/gs-builds/20261123T192758Z/`.
 
 - 2026-11-23, data-access: `@EnableTransactionManagement` stays in `flint.transaction.annotation` (R1), but `ProxyTransactionManagementConfiguration`, `AbstractTransactionManagementConfiguration` and `TransactionManagementConfigurer` live in the child module `flint.transaction.annotation.configuration`. They build the `TransactionInterceptor`, which reads `@Transactional` from the annotation module, and one module would import itself (circular imports are rejected). The annotation imports the configuration by its qualified name. flint:tx now depends on flint:beans and flint:context, as spring-tx does on spring-context for these classes. Size: flint:tx goes from 5,983 to 6,360 templates and 584,240 to 584,528 bytes; it was already over its budget (2,350 templates, 229,376 bytes), so I raised nothing and reported it to size-levers.
 - 2026-11-23, third-party-apis (item 26's regex finding): Jakarta `@Pattern` needs `java.util.regex` semantics, and `flint.validate`'s automaton is not that engine: 256 NFA states (`[0-9]{1,160}` fails), ASCII literals, `\p{L}` only, no look-around, back-references, reluctant or possessive quantifiers, inline flags or `Pattern.Flag`s. Since `fbe899d5`, such a pattern fails loudly (HV000032, "Flint's run-time pattern engine does not support this java.util.regex pattern yet") instead of rejecting every value. The plan:
