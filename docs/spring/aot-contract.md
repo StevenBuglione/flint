@@ -35,7 +35,7 @@ A module's interface text is its token stream with every function body removed, 
 - bodies of functions whose name appears anywhere else in the interface text (in an attribute argument, an enum or static initializer, a template constraint or a mixin), repeated until no new name appears, because CTFE may run them;
 - function literals inside initializers, which are kept with their initializer.
 
-`unittest` blocks are removed. A module's **extraction key** hashes its interface text, the interface texts of the project modules it imports (transitively), the generator version, the contract version, the compiler identity and the platform version. A module's **generation key** adds the models of the other modules its generated code consulted (an entity for a repository, a bean's dependencies, a field type for a descriptor). Both keys live in `.flint/cache/aot/state.json`.
+`unittest` blocks are removed, and string literals keep their full text. A module's **extraction key** hashes its interface text, the interface texts of the project modules it imports (transitively), the generator version, the compiler identity, the platform version and the closure's package hashes. The **output key** hashes every extraction key and the class-presence answers: while it is unchanged, nothing is analysed or written. When it changes, every generated module is re-rendered, but a file is rewritten only when its text changed, so DUB recompiles only those. The keys and the cached models live in `.flint/cache/aot/state.json`.
 
 ## 2. Annotation conventions the generator relies on
 
@@ -53,6 +53,17 @@ Rulebook R2 makes every Java annotation a UDA struct with the same name and attr
   enum ClassRef classOf(T) = ClassRef(__traits(fullyQualifiedName, T));
   ```
   `@ConditionalOnMissingBean(classOf!DataSource)` reads like Java's `DataSource.class`. Where Java offers a `String` alternative so that the class need not be present (`@ConditionalOnClass(name = ...)`), the D attribute is the same string. This extends R4 to annotation attributes and is proposed to the rulebook as R4.1.
+- **Single values for array attributes (proposed R2.1).** Java accepts `@GetMapping("/x")` for a `String[]` attribute, and D's struct literal does not: a `string` does not convert to `string[]`, and D has no implicit construction. An annotation whose array attribute Java lets take one value gets two `static opCall` overloads, one taking the element and one the array (defaulted to `null`), each with every attribute as a named parameter with Java's default:
+  ```d
+  struct GetMapping
+  {
+      string[] value; string[] path; string[] produces;
+      static GetMapping opCall(string value, string[] path = null, string[] produces = null);
+      static GetMapping opCall(string[] value = null, string[] path = null, string[] produces = null);
+  }
+  ```
+  `@GetMapping("/x")`, `@GetMapping(["/x", "/y"])`, `@GetMapping(produces: ["application/json"])`, `@GetMapping("/x", produces: [...])` and a bare `@GetMapping` all work on DMD and LDC, and the struct's fields stay what the generator reads. `tests/aot/annotations/` shows the pattern.
+- **Tooling gap.** dfmt 0.15.2 and D-Scanner do not parse named arguments (`@AliasFor(annotation: ...)`, `@Transactional(readOnly: true)`), which every Spring-shaped module needs; the pinned tools need an update before such modules can pass `tools/quality.py`.
 - **A bare type UDA** (`@RestController` without parentheses) means the attribute with its defaults.
 - **Enum-valued attributes** keep Java's enum names (`RequestMethod.GET`).
 - **Annotation modules are leaves** (rulebook R2), so generated code may import them.
@@ -66,9 +77,10 @@ The generator composes annotations exactly as Spring's `MergedAnnotations` with 
 - a convention-free alias that keeps its default does not override;
 - the nearest declaration wins; for equal distance, the first declared wins;
 - the same alias pair given two different non-default values is an error (FLINT-E1103), as Spring's `AnnotationConfigurationException` is;
-- class-level annotations of a class's superclasses and implemented interfaces are inherited where the annotation itself is `@Inherited`, and `@Transactional`-style advice annotations on interface methods apply to the implementing methods, as in Spring 6+.
+- class-level advice annotations apply to every public method that declares none of its own;
+- not yet: class-level annotations inherited from superclasses through `@Inherited`, and advice annotations declared on interface methods (Spring 6+ applies them to the implementing methods).
 
-Generated code receives the merged result as a struct literal of the annotation type, for example `Transactional(readOnly: true, propagation: Propagation.REQUIRED)`, boxed in `Any`.
+Generated code receives the merged result as a value of the annotation type, built field by field so that no constructor or `opCall` is involved, and boxed in `Any`: `Any.of(() { Transactional a; a.readOnly = true; return a; }())`.
 
 ### 2.2 Recognized annotations
 
@@ -89,7 +101,7 @@ The generator acts on these merged annotations by fully qualified D name. Every 
 | Data | `flint.data.annotation.Id`, `Transient`; `flint.data.relational.core.mapping.Table`, `Column`; repository interfaces deriving from `flint.data.repository.Repository` |
 | Advice | `flint.transaction.annotation.Transactional`, `flint.cache.annotation.Cacheable`, `CachePut`, `CacheEvict`, `Caching`, `flint.scheduling.annotation.Async`, `flint.validation.annotation.Validated`, `flint.security.access.prepost.PreAuthorize`, `PostAuthorize`, `flint.resilience.annotation.Retryable`, `ConcurrencyLimit` |
 
-The legacy ADR-028 attribute `flint.di.ConditionalOnConfig("section")` is read as `@ConditionalOnProperty(prefix: "section", name: ...)`-style presence and is decided at startup like any other property condition, so `config/application.toml` is no longer a string import for AOT applications.
+The legacy ADR-028 attribute `flint.di.internal.conditions.ConditionalOnConfig("section")` is read as `@ConditionalOnProperty(prefix: "section", name: ...)`-style presence and is decided at startup like any other property condition, so `config/application.toml` is no longer a string import for AOT applications.
 
 ## 3. Generated layout
 
@@ -102,7 +114,7 @@ The legacy ADR-028 attribute `flint.di.ConditionalOnConfig("section")` is read a
 ```
 
 - **One generated module per extracted module** that contributes anything; a module that contributes nothing gets no file. The path mirrors the source path under `flint_aot/`.
-- **Imports of a generated module:** its own user module, the `flint.engine.aot.*` modules, and the annotation modules whose merged values it spells out. It never imports another generated module, and never a user module other than its own. Types from other modules reach generated code only through expressions of its own module's declarations, and are named in tables by their fully qualified string.
+- **Imports of a generated module:** the `flint.engine.aot.*` modules it uses, and, with `static import`, its own user module, the modules declaring the types it spells out (a constructor parameter's type, a proxied method's parameter types) and the annotation and enum modules of the merged values it builds. It never imports another generated module. Everything it spells is qualified, so nothing it imports can shadow a name. In tables, types are named by their fully qualified string.
 - **The registry** imports only `flint.engine.aot.registry`. It declares each generated module's entry point by its `extern(C)` name, calls them in definition order (section 5.4), and installs itself in its module constructor:
   ```d
   module flint_aot_registry;
@@ -119,7 +131,7 @@ The legacy ADR-028 attribute `flint.di.ConditionalOnConfig("section")` is read a
   }
   shared static this() { installRegistry(&populate); }
   ```
-  The `extern(C)` name is `flint_aot_register_` followed by each module-name segment prefixed with its length, so it is unique and needs no import.
+  The `extern(C)` name is `flint_aot_register_` followed by each module-name segment prefixed with its length, so it is unique and needs no import. The prototypes are D functions with C linkage, defined by the generated modules as `@safe` functions, not foreign code.
 - **Generated code is plain D:** `@safe:`, no template declarations, no string mixins, no `__traits`. The only templates it instantiates are `Any.of!T` and `Any.get!T`, and the annotation struct literals it constructs are not templates.
 - **Symbols** in a generated module are `private` except the proxy and configuration subclasses (section 7), whose names end in `__FlintProxy` and `__FlintConfiguration`, and the `extern(C)` entry point. Generated names never start with a user's identifier followed by `__Flint` by accident: the generator rejects user identifiers containing `__Flint` (FLINT-E1104).
 - Every generated module starts with `// Generated by Flint AOT (contract 1) from <source path>. Do not edit.`
@@ -135,14 +147,14 @@ Each module below is a leaf of `flint:engine-aot` with no `package.d`. Signature
 struct Any
 {
     static Any of(T)(T value);                 // copies value; inline when it fits in 2 words, else GC
-    ref inout(T) get(T)() inout return;        // throws ClassCastException-like AnyTypeException on mismatch
+    auto ref T get(T)();                       // by ref for boxed structs, by value otherwise; throws on mismatch
     bool isNull() const nothrow @nogc;         // Any.init, or a null class/array
     string typeName() const nothrow @nogc;     // fully qualified D name of the boxed type
     Object asObject();                         // class references only, else null
 }
 ```
 
-`T` covers class and interface references, structs, enums, arrays and the built-in scalars. `get!T` succeeds for the exact type, for a base class or interface of a boxed class, and for `const` views.
+`T` covers class and interface references, structs, enums, arrays and the built-in scalars. `get!T` succeeds for the exact type, for a base class or interface of a boxed class, and for `const` views. Generated code mutates a boxed struct through `self.get!(T)().field = value`, so `get` returns boxed structs by reference.
 
 ### 4.2 `flint.engine.aot.descriptor`
 
@@ -190,6 +202,7 @@ struct MethodDescriptor
 
 final class Descriptor
 {
+    this(string name, TypeKind kind);           // generated code calls exactly this constructor
     string name;                               // fully qualified D name
     TypeKind kind;
     string[] supertypes;                       // classes and interfaces, nearest first
@@ -411,7 +424,7 @@ RegistryPopulator installedRegistry() nothrow @nogc;              // null when t
 - A class with a merged `@Component` (so also `@Service`, `@Repository`, `@Controller`, `@RestController`, `@Configuration`, `@ControllerAdvice`) in a scanned module. The scanned modules are those under the `@FlintBootApplication` class's package, or under `scanBasePackages`, exactly as `@ComponentScan` would see them.
 - Each `@Bean` method of a `@Configuration` (or lite `@Component`) class, named after the method unless `@Bean(name)` says otherwise.
 - A `@ConfigurationProperties` class listed by `@EnableConfigurationProperties` or found by `@ConfigurationPropertiesScan`, named `<prefix>-<fully qualified name>` as Boot names it.
-- Each class listed by a resolved starter's auto-configuration, with its `@Bean` methods, after every user definition.
+- Each auto-configuration class of the closure, with its `@Bean` methods, after every user definition. A package lists its auto-configurations, one fully qualified class per line, in `META-INF/flint/flint.boot.autoconfigure.AutoConfiguration.imports` at its root, as Boot's `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports` does. Auto-configuration beans are named by their fully qualified class name, as in Boot.
 
 The default bean name is the class name with its first letter lowered, keeping Spring's rule that a name starting with two capitals stays as it is (`URLService`).
 
@@ -433,7 +446,7 @@ With `proxyBeanMethods` true (the default), the generator emits `<Name>__FlintCo
 
 ### 5.4 Definition order and conditions
 
-The registry adds definitions in Spring's order: user components by module name and then source order, then the `@Bean` methods of each configuration class after the class itself, then auto-configurations sorted by `@AutoConfigureOrder`, `@AutoConfigureAfter` and `@AutoConfigureBefore`, then their `@Bean` methods.
+The registry adds definitions in Spring's order: user components by module name and then source order, then the `@Bean` methods of each configuration class after the class itself, then auto-configurations sorted by `@AutoConfigureOrder`, `@AutoConfigureAfter` and `@AutoConfigureBefore`, then their `@Bean` methods. Registration order is that order: the registry calls the generated modules in the order of their first definition, and each module registers its definitions in order. (Two auto-configuration modules whose classes interleave in that order would register out of order; a `rank` field in a later contract version would remove the limit.)
 
 The runtime walks that order once, at startup, before creating anything:
 
@@ -488,38 +501,45 @@ final class OwnerService__FlintProxy : shop.owners.OwnerService
 {
     private shop.owners.OwnerService __flintTarget;
     private AdviceChain __flintChain;
+    private Descriptor __flintDescriptor;
 
-    void __flintBind(shop.owners.OwnerService target, AdviceChain chain) @safe
+    private this()                                   // never called; D needs it when the base has no default
+    {
+        super((shop.owners.OwnerStore).init);
+    }
+
+    void __flintBind(shop.owners.OwnerService target, AdviceChain chain, Descriptor descriptor)
     {
         __flintTarget = target;
         __flintChain = chain;
+        __flintDescriptor = descriptor;
     }
 
-    override string findName(long id) @safe          // advised
+    override string findName(long id)                // advised
     {
-        Invocation invocation = Invocation(&ownerServiceDescriptor.methods[0], __flintTarget, [Any.of(id)]);
-        __flintChain.invoke(invocation, (ref Invocation i) @safe {
-            i.result = Any.of(__flintTarget.findName(id));
-        });
-        return invocation.result.get!string;
+        auto invocation = Invocation(&__flintDescriptor.methods[0], __flintTarget, [Any.of(id)]);
+        __flintChain.invoke(invocation, (ref Invocation call) { call.result = Any.of(__flintTarget.findName(id)); });
+        return invocation.result.get!(string)();
     }
 
-    override void rename(long id, string name) @safe  // not advised: forwards
+    override string describe(long id)                // not advised: forwards
     {
-        __flintTarget.rename(id, name);
+        return __flintTarget.describe(id);
     }
 }
 
-private Object proxy_ownerService(Object target, BeanFactory factory) @safe
+private Object proxy_ownerService(Object target, BeanFactory factory)
 {
+    auto descriptor = describe_OwnerService();       // the same builder the registration uses
     auto proxy = cast(OwnerService__FlintProxy) allocateProxy(typeid(OwnerService__FlintProxy));
-    proxy.__flintBind(cast(shop.owners.OwnerService) target, adviceChain(factory, ownerServiceDescriptor));
+    proxy.__flintBind(cast(shop.owners.OwnerService) target, adviceChain(factory, descriptor), descriptor);
     return proxy;
 }
 ```
 
 - **Spring's self-invocation semantics.** The target is an ordinary instance constructed by the bean's factory. The proxy forwards every overridable public method to it, so a call from inside the target (`this.findName(...)` from `rename`) reaches the target directly and runs no advice, as with Spring's JDK and CGLIB proxies. Callers that received the bean from the container hold the proxy.
-- **What can be advised:** public, non-final, non-static methods. A `final` method on a proxied class runs on the proxy instance with initial field values, as with CGLIB; the generator warns about each one (FLINT-W1111). A protected or private advised method is FLINT-E1112: D does not let the proxy call another instance's protected method.
+- **What can be advised:** public, non-final, non-static, `@safe` methods that are not `nothrow`, `@nogc` or `pure`. A `final` method on a proxied class runs on the proxy instance with initial field values, as with CGLIB; the generator warns about each one (FLINT-E1111, a warning). A protected or private advised method is FLINT-E1112: D does not let the proxy call another instance's protected method. `@system` methods inherited from `Object` (`toString`) are left to the base class.
+- **Order at startup:** the runtime calls `create`, then `initialize` on the target, then `proxy` on the target, and exposes the proxy; `destroy` receives the target. Fields read directly on the proxy are never initialized, as with CGLIB.
 - **`@Async`** methods return `void` and call `invokeDetached`, whose `proceed` closure owns copies of the arguments; a non-`void` `@Async` method is FLINT-E1113 until `flint.java.util.concurrent` lands.
 - **Ordering, propagation, rollback rules, cache resolution, retry and security expressions** are the runtime's: the generated code only provides the merged annotations on the `MethodDescriptor` and the boxed arguments and result.
 - **Interfaces.** When the bean is injected by an interface it implements, the same subclass serves, so Flint never needs a second, JDK-style proxy.
@@ -554,10 +574,11 @@ Expressions in `#{...}` (`@Value`), `@Cacheable(key, condition, unless)`, `@Even
 | FLINT-E1108 | a lifecycle or injected method is not public |
 | FLINT-E1109 | a `@Bean` method of a proxied configuration is final or not public |
 | FLINT-E1110 | unconditional beans form a constructor-injection cycle |
-| FLINT-W1111 | a final public method of a proxied class will not be advised |
+| FLINT-E1111 | a final public method of a proxied class will not be advised (a warning) |
 | FLINT-E1112 | an advised method is protected or private |
 | FLINT-E1113 | an `@Async` method returns a value |
 | FLINT-E1114 | a derived query uses a nested property path |
+| FLINT-E1115 | a bean (a `@Bean` method's return type) is not a class or interface |
 
 Every diagnostic names the source file and line of the declaration that caused it.
 
@@ -566,4 +587,28 @@ Every diagnostic names the source file and line of the declaration that caused i
 - The generator, the extractor and this document belong to the flint-aot session in `flint`. Runtime signatures in section 4 change only by a contract version bump agreed with framework-core.
 - The runtime owns everything behind the signatures: storage, ordering of advisors, conversion, binding and dispatch.
 - An annotation's owner may add attributes freely; renaming or removing one that section 2.2 lists needs a contract change.
-- Until `flint-framework` publishes `flint:engine-aot`, the generator's tests compile and run their sample against a minimal conformance runtime kept in `apps/flint/test/fixtures/aot/runtime/`. It implements section 4 only as far as the tests need and is not a product.
+- The generator's tests (`apps/flint/test/flint_tool/engine/aot_test.d`) generate the sample in `tests/aot/sample`, compile it with `packages/engine-aot` and a minimal test container (`tests/aot/support/aot_context.d`), run it, and compare its output with `tests/aot/sample/expected.txt`. The annotation modules in `tests/aot/annotations` are fixtures with Spring's names, not the framework's.
+
+## 12. Status
+
+Implemented and tested on DMD and LDC: extraction (section 1.1), interface keys and the cache (1.2), merging with meta-annotations and `@AliasFor` (2.1, except the "not yet" items), bean definitions with constructor, field and `@Value` injection, lifecycle, `@Configuration` subclasses, definition order and every condition of section 5.5, proxies (section 7), request-mapping, exception-handler and event-listener tables, descriptors with fields, `tupleof` access and Java Beans accessors, derived queries (section 8), the SpEL diagnostic (section 9) and every diagnostic of section 10. `flint build` runs the step when a module mentions `FlintBootApplication`.
+
+The legacy `flint:engine-di` container keeps its compile-time `import("application.toml")` for ADR-028 applications. Flint AOT applications do not use it: their `@ConditionalOnConfig` and `@ConditionalOnProperty` are startup conditions (section 5.5). Removing the legacy path waits for the ADR-028 golden applications to move to `@FlintBootApplication`.
+
+Not yet: `@ConfigurationProperties` constructor binding (JavaBean binding is generated), constructor descriptors, `@Retryable`'s and `@Cacheable`'s SpEL, `@Inherited` and interface-method annotations (section 2.1), and repository implementation classes (Phase 2, with `flint-data-jdbc`).
+
+## 13. Measured cost in the edit loop
+
+Measured on 2026-11-23 on a 32-thread AMD Ryzen AI MAX+ 395 workstation (Linux x86-64, the forked DMD 2.114.0) under a load average of about 9 from other sessions. This is an ordinary workstation, not the designated runner. Each cell is the median of nine runs (five for cold runs) of the generator step exactly as `flint build` runs it (`runAot`, non-optimized build of the tool), timed from process start to exit. The edits alternate between two texts, so every run sees a real change.
+
+| App | Cold: all modules extracted | No change | Method-body edit | Interface edit (one route's path) |
+| --- | --- | --- | --- | --- |
+| `tests/aot/sample` (5 modules) | 78.7 ms | 2.1 ms | 2.0 ms, nothing extracted or written | 36.9 ms: 1 module extracted (28 ms compile), 1 file written |
+| synthetic, 21 modules, each importing the previous | 131.9 ms | 3.2 ms | 3.3 ms | 146.6 ms: the edited module and its 19 transitive importers extracted |
+| synthetic, 101 modules, the same chain | 532.9 ms | 20.4 ms | 20.5 ms | 530.7 ms: 100 modules extracted (439 ms compile) |
+
+A regenerated module compiles in about 10 ms (`dmd -c`, checked profile), in parallel with the rest of the build.
+
+**Against Go.** The recorded Linux edit builds are 97.1 ms for Flint's REST application and 194.2 ms for Go's (`docs/milestones/06-linux-compile-fork.md`), leaving 97 ms of headroom. On an application of Phase 1's size, a body edit adds 2 ms and an interface edit adds about 37 ms plus one 10 ms parallel compile, so the edit loop stays below Go's. An interface edit to a module that many others import (transitively) re-extracts all of them, at about 4.4 ms each, because a module's evaluated attributes and supertypes can depend on declarations several imports away. Before Phase 1 measures PetClinic's edit loop on the runner, the extraction should gain early cutoff: compare each re-extracted model with the cached one and stop at importers whose inputs did not change.
+
+How the cost came down while building it: the first describer built each module's model as one CTFE string and deduplicated annotation types with a linear scan, taking 0.84 s and 680 MB for 100 modules; printing one line per type, announcing each annotation type once per compile from a template instance, and skipping `Object`'s methods brought that to 0.42 s and 375 MB. Splitting the cache into keys and per-module model files took the no-change path for 101 modules from 71 ms to 18 ms. The compile server neither helps nor hurts extraction: its preloaded Phobos is irrelevant to a compile that imports none, and the describer's CTFE dominates.

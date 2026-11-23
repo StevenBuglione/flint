@@ -1,0 +1,1836 @@
+/// Flint AOT's analysis: from the extracted model to a generation plan (docs/spring/aot-contract.md sections 5-8).
+///
+/// The plan holds everything the emitter prints, already decided: bean definitions in definition order with their
+/// injection points and lifecycle, startup conditions compiled to D, proxy and configuration subclasses,
+/// request-mapping tables, descriptors and derived queries, plus the diagnostics.
+module flint_tool.engine.aot.plan;
+
+import flint_tool.engine.aot.merge : MergedSet;
+import flint_tool.engine.aot.model : Method, Model, Parameter, TypeDecl, TypeRef, clone;
+import flint_tool.engine.aot.query : DerivedQuery;
+
+@safe:
+
+/// A generator diagnostic.
+struct Diagnostic
+{
+    /// `FLINT-E11nn`.
+    string code;
+    /// Message.
+    string message;
+    /// Source file and line of the declaration.
+    string file;
+    /// ditto
+    long line;
+    /// Reported as a warning: the build continues.
+    bool warning;
+}
+
+/// How an injection point is satisfied at startup.
+enum PointKind
+{
+    bean,
+    beans,
+    optional,
+    value
+}
+
+/// One constructor, bean-method or field injection point.
+struct Point
+{
+    /// How it resolves.
+    PointKind kind;
+    /// The parameter's or field's type, as D source.
+    string type;
+    /// For `beans` and `optional`: the bean type looked up.
+    string lookup;
+    /// `@Qualifier`.
+    string qualifier;
+    /// `@Value` expression.
+    string expression;
+    /// Modules declaring the types it names.
+    string[] modules;
+}
+
+/// A field set during `initialize`.
+struct FieldPoint
+{
+    /// The class declaring the field.
+    string owner;
+    /// Its index in that class's `tupleof`.
+    long index;
+    /// What to inject.
+    Point point;
+}
+
+/// How a bean is created.
+enum FactoryKind
+{
+    /// `new Class(arguments)`.
+    constructor,
+    /// `new Class__FlintConfiguration(factory, arguments)`: a proxied configuration class.
+    configuration,
+    /// An instance `@Bean` method on the configuration bean.
+    method,
+    /// A static `@Bean` method.
+    staticMethod
+}
+
+/// One bean definition.
+struct BeanPlan
+{
+    /// Bean name.
+    string name;
+    /// Declared type.
+    string type;
+    /// Every type it can be injected as.
+    string[] types;
+    /// Position in definition order.
+    uint rank;
+    /// How it is created.
+    FactoryKind factory;
+    /// The class constructed, or the configuration class declaring the bean method.
+    string className;
+    /// For bean methods: the configuration bean and the method.
+    string configBean;
+    /// ditto
+    string method;
+    /// For bean methods: whether the configuration class is proxied.
+    bool configProxied;
+    /// Constructor or bean-method arguments.
+    Point[] arguments;
+    /// Fields injected during `initialize`.
+    FieldPoint[] fields;
+    /// Lifecycle.
+    string[] postConstruct;
+    /// ditto
+    bool initializingBean;
+    /// ditto
+    string initMethod;
+    /// ditto
+    string[] preDestroy;
+    /// ditto
+    bool disposableBean;
+    /// ditto
+    string destroyMethod;
+    /// `@ConfigurationProperties` prefix bound during `initialize`, or empty.
+    string propertiesPrefix;
+    /// Startup condition as a D expression over `c`, or empty.
+    string condition;
+    /// Definition attributes.
+    string[] dependsOn;
+    /// ditto
+    string[] qualifiers;
+    /// ditto
+    string scope_ = "singleton";
+    /// ditto
+    bool primary;
+    /// ditto
+    bool fallback;
+    /// ditto
+    bool lazyInit;
+    /// ditto
+    long order = int.max;
+    /// ditto
+    bool autoConfiguration;
+    /// "src/shop/owners.d:12".
+    string source;
+    /// The same location, split, for diagnostics.
+    string file;
+    /// ditto
+    long line;
+    /// Whether a proxy subclass wraps it.
+    bool proxied;
+    /// Whether the generated module defines a descriptor for its class.
+    bool described;
+    /// Types it requires through constructor arguments (for the build-time cycle check).
+    string[] requires;
+}
+
+/// A proxied `@Configuration` class.
+struct ConfigPlan
+{
+    /// The configuration class.
+    string className;
+    /// Its simple name.
+    string simple;
+    /// The constructor's parameters, forwarded to `super`.
+    Parameter[] parameters;
+    /// The instance `@Bean` methods.
+    Method[] methods;
+    /// Their bean names, parallel to `methods`.
+    string[] beans;
+}
+
+/// One method of a proxy subclass.
+struct ProxyMethod
+{
+    /// The method.
+    Method method;
+    /// Whether it goes through the advice chain.
+    bool advised;
+    /// Whether it is `@Async`.
+    bool async_;
+    /// Its index in the bean class's descriptor methods.
+    size_t index;
+}
+
+/// A proxy subclass.
+struct ProxyPlan
+{
+    /// The proxied class.
+    string className;
+    /// Its simple name.
+    string simple;
+    /// Every overridable public method.
+    ProxyMethod[] methods;
+    /// The class's constructors, for the never-called constructor D requires.
+    Method[] constructors;
+}
+
+/// A method in a descriptor.
+struct MethodPlan
+{
+    /// The method.
+    Method method;
+    /// Its merged annotations, with class-level advice.
+    MergedSet annotations;
+    /// Each parameter's merged annotations.
+    MergedSet[] parameters;
+}
+
+/// A descriptor property.
+struct PropertyPlan
+{
+    /// Java Beans name.
+    string name;
+    /// Type, as D source.
+    string type;
+    /// Merged annotations of the field, getter and setter.
+    MergedSet annotations;
+    /// "field" (public), "tuple" (private, by `tupleof`) or "accessor" (getter and setter).
+    string access;
+    /// For "field" and "tuple": the field name and index.
+    string field;
+    /// ditto
+    long index;
+    /// For "accessor".
+    string getter;
+    /// ditto
+    string setter;
+    /// Whether the property can be written.
+    bool writable;
+}
+
+/// A descriptor.
+struct DescriptorPlan
+{
+    /// Fully qualified type.
+    string type;
+    /// Simple name.
+    string simple;
+    /// "struct_", "class_", "interface_" or "enum_".
+    string kind;
+    /// Supertypes, nearest first.
+    string[] supertypes;
+    /// Merged type annotations.
+    MergedSet annotations;
+    /// Properties.
+    PropertyPlan[] properties;
+    /// "init" for `T.init`, "new" for `new T()`, empty when none.
+    string create;
+    /// Enum constants.
+    string[] constants;
+    /// Advised, mapped and listener methods.
+    MethodPlan[] methods;
+}
+
+/// A handler argument.
+struct ArgumentPlan
+{
+    /// `ArgumentKind` member name.
+    string kind;
+    /// Binding name.
+    string name;
+    /// Parameter type.
+    string type;
+    /// Whether it is required.
+    bool required;
+    /// Default value, when the binding annotation gives one.
+    string defaultValue;
+    /// Whether a default value was given.
+    bool hasDefault;
+    /// `@Valid` or `@Validated`.
+    bool validate;
+    /// The exception parameter of an exception handler.
+    bool exception;
+    /// Merged parameter annotations.
+    MergedSet annotations;
+}
+
+/// A request mapping.
+struct HandlerPlan
+{
+    /// Controller bean and class.
+    string bean;
+    /// ditto
+    string className;
+    /// Handler method.
+    Method method;
+    /// Combined paths.
+    string[] paths;
+    /// Conditions.
+    string[] methods;
+    /// ditto
+    string[] params;
+    /// ditto
+    string[] headers;
+    /// ditto
+    string[] consumes;
+    /// ditto
+    string[] produces;
+    /// Arguments.
+    ArgumentPlan[] arguments;
+    /// Whether the response is the body.
+    bool responseBody;
+    /// `@ResponseStatus`.
+    long status;
+    /// ditto
+    string reason;
+    /// Index in the controller's descriptor methods.
+    size_t index;
+    /// Source location.
+    string source;
+}
+
+/// An exception handler.
+struct ExceptionPlan
+{
+    /// Declaring bean and class.
+    string bean;
+    /// ditto
+    string className;
+    /// Handler method.
+    Method method;
+    /// Handled exception types.
+    string[] exceptionTypes;
+    /// Declared in a `@ControllerAdvice`.
+    bool advice;
+    /// `@ControllerAdvice(basePackages)`.
+    string[] basePackages;
+    /// Arguments.
+    ArgumentPlan[] arguments;
+    /// Whether the response is the body.
+    bool responseBody;
+    /// `@ResponseStatus`.
+    long status;
+    /// Source location.
+    string source;
+}
+
+/// An event listener.
+struct ListenerPlan
+{
+    /// Declaring bean and class.
+    string bean;
+    /// ditto
+    string className;
+    /// Listener method and event type.
+    string method;
+    /// ditto
+    string eventType;
+    /// SpEL condition.
+    string condition;
+    /// `@Order`.
+    long order = int.max;
+}
+
+/// A derived query.
+struct QueryPlan
+{
+    /// Repository interface and domain type.
+    string repository;
+    /// ditto
+    string domainType;
+    /// The translated query.
+    DerivedQuery query;
+    /// Source location.
+    string source;
+}
+
+/// Everything one generated module holds.
+struct ModulePlan
+{
+    /// The extracted module.
+    string name;
+    /// Its source file.
+    string source;
+    /// Contents.
+    BeanPlan[] beans;
+    /// ditto
+    ConfigPlan[] configurations;
+    /// ditto
+    ProxyPlan[] proxies;
+    /// ditto
+    DescriptorPlan[] descriptors;
+    /// ditto
+    HandlerPlan[] handlers;
+    /// ditto
+    ExceptionPlan[] exceptionHandlers;
+    /// ditto
+    ListenerPlan[] listeners;
+    /// ditto
+    QueryPlan[] queries;
+    /// Other extracted modules whose models this one's output depends on.
+    string[] consulted;
+
+    /// Whether the module contributes anything.
+    bool empty() const
+    {
+        return beans.length == 0 && descriptors.length == 0 && handlers.length == 0
+            && exceptionHandlers.length == 0 && listeners.length == 0 && queries.length == 0;
+    }
+}
+
+/// The whole generation plan.
+struct Plan
+{
+    /// The `@FlintBootApplication` class, or empty when the project has none.
+    string application;
+    /// Scanned packages.
+    string[] scanPackages;
+    /// Generated modules, by module name.
+    ModulePlan[] modules;
+    /// Diagnostics.
+    Diagnostic[] diagnostics;
+    /// Class names whose presence must be asked before the plan is final.
+    string[] unknownClasses;
+    /// Definitions removed at build time, as "name: reason".
+    string[] removed;
+
+    /// Whether any diagnostic is an error.
+    bool failed() const
+    {
+        foreach (ref item; diagnostics)
+        {
+            if (!item.warning)
+                return true;
+        }
+        return false;
+    }
+}
+
+/// What the analysis is given besides the model.
+struct AnalysisInput
+{
+    /// Modules under `src/`.
+    string[] userModules;
+    /// Auto-configuration classes of the closure, in the imports files' order.
+    string[] autoConfigurations;
+    /// Project root, to shorten source paths.
+    string root;
+}
+
+/// Analyse the model.
+Plan analyze(const Model model, const ref AnalysisInput input)
+{
+    import std.algorithm.sorting : sort;
+
+    auto analysis = new Analysis(model, input);
+    analysis.run();
+    sort!((a, b) => a.name < b.name)(analysis.plan.modules);
+    return analysis.plan;
+}
+
+private struct Candidate
+{
+    const(TypeDecl)* decl;
+    MergedSet merged;
+    bool autoConfiguration;
+}
+
+private final class Analysis
+{
+    const Model model;
+    AnalysisInput input;
+    Plan plan;
+    uint rank;
+    size_t[string] moduleIndex;
+    BeanPlan[] allBeans;
+
+    this(const Model model, const ref AnalysisInput input)
+    {
+        this.model = model;
+        this.input = AnalysisInput(input.userModules.dup, input.autoConfigurations.dup, input.root);
+    }
+
+    void run()
+    {
+        import flint_tool.engine.aot.names : flintBootApplication;
+
+        foreach (name; input.userModules)
+        {
+            const item = model.module_(name);
+            if (item is null)
+                continue;
+            foreach (ref decl; item.types)
+            {
+                if (decl.kind == "class" && mergedOf(decl).has(flintBootApplication) && plan.application.length == 0)
+                {
+                    plan.application = decl.fqn;
+                    scanPackagesOf(decl);
+                }
+            }
+        }
+        if (plan.application.length == 0)
+            return;
+        Candidate[] candidates = userCandidates() ~ autoConfigurationCandidates();
+        foreach (ref candidate; candidates)
+            defineComponent(candidate);
+        checkInjection();
+        checkCycles();
+        foreach (name; input.userModules)
+        {
+            if (scanned(name))
+                describeModule(name);
+        }
+    }
+
+    MergedSet mergedOf(const ref TypeDecl decl)
+    {
+        import flint_tool.engine.aot.merge : merge;
+
+        auto result = merge(decl.annotations, model.annotationTypes);
+        foreach (conflict; result.conflicts)
+            error("FLINT-E1103", conflict, decl.file, decl.line);
+        return result;
+    }
+
+    MergedSet mergedOf(const ref Method method)
+    {
+        import flint_tool.engine.aot.merge : merge;
+
+        auto result = merge(method.annotations, model.annotationTypes);
+        foreach (conflict; result.conflicts)
+            error("FLINT-E1103", conflict, method.file, method.line);
+        return result;
+    }
+
+    MergedSet mergedOf(const ref Parameter parameter)
+    {
+        import flint_tool.engine.aot.merge : merge;
+
+        return merge(parameter.annotations, model.annotationTypes);
+    }
+
+    void error(string code, string message, string file, long line)
+    {
+        plan.diagnostics ~= Diagnostic(code, message, relative(file), line);
+    }
+
+    string relative(string file)
+    {
+        if (input.root.length && file.length > input.root.length && file[0 .. input.root.length] == input.root)
+            return file[input.root.length + 1 .. $];
+        return file;
+    }
+
+    string location(string file, long line)
+    {
+        import std.conv : to;
+
+        return relative(file) ~ ":" ~ line.to!string;
+    }
+
+    void scanPackagesOf(const ref TypeDecl decl)
+    {
+        import flint_tool.engine.aot.names : flintBootApplication, packageOf;
+
+        const merged = mergedOf(decl);
+        const annotation = merged.get(flintBootApplication);
+        plan.scanPackages = annotation.get("scanBasePackages").strings;
+        if (plan.scanPackages.length == 0)
+            plan.scanPackages = [packageOf(decl.module_)];
+    }
+
+    bool scanned(string moduleName)
+    {
+        import flint_tool.engine.aot.names : inPackage;
+
+        foreach (name; plan.scanPackages)
+        {
+            if (inPackage(moduleName, name))
+                return true;
+        }
+        return false;
+    }
+
+    ref ModulePlan moduleFor(string name)
+    {
+        if (auto index = name in moduleIndex)
+            return plan.modules[*index];
+        ModulePlan item;
+        item.name = name;
+        if (const extracted = model.module_(name))
+        {
+            if (extracted.types.length)
+                item.source = relative(extracted.types[0].file);
+        }
+        moduleIndex[name] = plan.modules.length;
+        plan.modules ~= item;
+        return plan.modules[$ - 1];
+    }
+
+    Candidate[] userCandidates()
+    {
+        import std.algorithm.sorting : sort;
+        import flint_tool.engine.aot.names : component;
+
+        Candidate[] result;
+        string[] modules = input.userModules.dup;
+        sort(modules);
+        foreach (name; modules)
+        {
+            const item = model.module_(name);
+            if (item is null || !scanned(name))
+                continue;
+            foreach (ref decl; item.types)
+            {
+                auto merged = mergedOf(decl);
+                if (decl.kind == "class" && merged.has(component))
+                    result ~= Candidate(&decl, merged, false);
+            }
+        }
+        return result;
+    }
+
+    Candidate[] autoConfigurationCandidates()
+    {
+        import std.algorithm.mutation : SwapStrategy;
+        import std.algorithm.sorting : sort;
+
+        Candidate[] result;
+        foreach (name; input.autoConfigurations)
+        {
+            const decl = model.type(name);
+            if (decl is null)
+                continue;
+            result ~= Candidate(decl, mergedOf(*decl), true);
+        }
+        // Boot sorts alphabetically, then by @AutoConfigureOrder, then by @AutoConfigureAfter/Before.
+        sort!((a, b) => a.decl.fqn < b.decl.fqn)(result);
+        sort!((a, b) => autoConfigurationOrder(a) < autoConfigurationOrder(b), SwapStrategy.stable)(result);
+        return afterBefore(result);
+    }
+
+    static long autoConfigurationOrder(ref const Candidate candidate)
+    {
+        import flint_tool.engine.aot.names : autoConfigureOrder;
+
+        const annotation = candidate.merged.get(autoConfigureOrder);
+        return annotation is null ? 0 : annotation.get("value").integer;
+    }
+
+    /// Order auto-configurations by `@AutoConfiguration(after, before)` and `@AutoConfigureAfter/Before`, keeping
+    /// the incoming order where unconstrained.
+    Candidate[] afterBefore(Candidate[] items)
+    {
+        import flint_tool.engine.aot.names : autoConfiguration, autoConfigureAfter, autoConfigureBefore;
+
+        bool[string][string] after;
+        foreach (ref item; items)
+        {
+            string[] afters;
+            string[] befores;
+            if (const annotation = item.merged.get(autoConfiguration))
+            {
+                afters ~= annotation.get("after").strings;
+                befores ~= annotation.get("before").strings;
+            }
+            if (const annotation = item.merged.get(autoConfigureAfter))
+                afters ~= annotation.get("value").strings ~ annotation.get("name").strings;
+            if (const annotation = item.merged.get(autoConfigureBefore))
+                befores ~= annotation.get("value").strings ~ annotation.get("name").strings;
+            foreach (name; afters)
+                after[item.decl.fqn][name] = true;
+            foreach (name; befores)
+                after[name][item.decl.fqn] = true;
+        }
+        Candidate[] ordered;
+        bool[string] placed;
+        bool[string] visiting;
+        void visit(ref Candidate item)
+        {
+            if (item.decl.fqn in placed || item.decl.fqn in visiting)
+                return;
+            visiting[item.decl.fqn] = true;
+            if (auto needs = item.decl.fqn in after)
+            {
+                foreach (ref other; items)
+                {
+                    if (other.decl.fqn in *needs)
+                        visit(other);
+                }
+            }
+            placed[item.decl.fqn] = true;
+            ordered ~= item;
+        }
+
+        foreach (ref item; items)
+            visit(item);
+        return ordered;
+    }
+
+    void defineComponent(ref Candidate candidate)
+    {
+        import flint_tool.engine.aot.conditions : evaluate;
+        import flint_tool.engine.aot.names : beanName, component;
+
+        const decl = candidate.decl;
+        if (decl.visibility != "public" && decl.visibility != "export")
+        {
+            const message = "@Component class " ~ decl.name ~ " is " ~ decl.visibility;
+            error("FLINT-E1108", message ~ "; generated code needs it public", decl.file, decl.line);
+            return;
+        }
+        if (decl.abstract_)
+            return;
+        auto outcome = evaluate(candidate.merged, decl.fqn, model.present);
+        if (!acceptOutcome(outcome, decl.name, decl.file, decl.line))
+            return;
+        BeanPlan bean;
+        bean.name = componentName(candidate);
+        bean.type = decl.fqn;
+        bean.types = typesOf(*decl);
+        bean.autoConfiguration = candidate.autoConfiguration;
+        bean.className = decl.fqn;
+        bean.source = location(decl.file, decl.line);
+        bean.file = relative(decl.file);
+        bean.line = decl.line;
+        bean.condition = joinTerms(outcome.terms);
+        definitionAttributes(candidate.merged, bean);
+        constructorOf(*decl, bean);
+        fieldsOf(*decl, bean);
+        lifecycleOf(*decl, bean);
+        propertiesOf(candidate.merged, bean);
+        const proxyConfiguration = configurationProxy(candidate, bean);
+        bean.proxied = !proxyConfiguration && planProxy(*decl, candidate.merged, bean);
+        bean.rank = rank++;
+        addBean(decl.module_, bean);
+        defineBeanMethods(candidate, bean, outcome.terms, proxyConfiguration);
+        if (bean.proxied || candidate.merged.has(imported!"flint_tool.engine.aot.names".controller))
+            moduleFor(decl.module_).consulted ~= decl.module_;
+    }
+
+    bool acceptOutcome(ref imported!"flint_tool.engine.aot.conditions".ConditionOutcome outcome,
+            string name, string file, long line)
+    {
+        foreach (index, message; outcome.errors)
+            error(outcome.codes[index], message, file, line);
+        plan.unknownClasses ~= outcome.unknownClasses;
+        if (!outcome.included)
+        {
+            plan.removed ~= name ~ ": " ~ outcome.reason;
+            return false;
+        }
+        return true;
+    }
+
+    string componentName(ref Candidate candidate)
+    {
+        import flint_tool.engine.aot.names : beanName, component;
+
+        const annotation = candidate.merged.get(component);
+        const explicit = annotation is null ? null : annotation.text("value");
+        if (explicit.length)
+            return explicit;
+        // Auto-configurations are named by their fully qualified class name, as Boot names them.
+        return candidate.autoConfiguration ? candidate.decl.fqn : beanName(candidate.decl.name);
+    }
+
+    string[] typesOf(const ref TypeDecl decl)
+    {
+        string[] types = [decl.fqn];
+        foreach (ref supertype; decl.supertypes)
+        {
+            if (supertype.name != "object.Object")
+                types ~= supertype.name;
+        }
+        return types;
+    }
+
+    string[] typesOf(const ref TypeRef type)
+    {
+        string[] types = [type.name];
+        if (const decl = model.type(type.name))
+            types = typesOf(*decl);
+        return types;
+    }
+
+    void addBean(string moduleName, BeanPlan bean)
+    {
+        allBeans ~= bean;
+        moduleFor(moduleName).beans ~= bean;
+    }
+
+    void definitionAttributes(const ref MergedSet merged, ref BeanPlan bean)
+    {
+        import flint_tool.engine.aot.names : dependsOn, fallback, lazy_, order, primary, qualifier, scope_;
+
+        bean.primary = merged.has(primary);
+        bean.fallback = merged.has(fallback);
+        if (const annotation = merged.get(lazy_))
+            bean.lazyInit = annotation.flag("value", true);
+        if (const annotation = merged.get(dependsOn))
+            bean.dependsOn ~= annotation.get("value").strings;
+        if (const annotation = merged.get(scope_))
+        {
+            const value = annotation.text("value").length ? annotation.text("value") : annotation.text("scopeName");
+            if (value.length)
+                bean.scope_ = value;
+        }
+        if (const annotation = merged.get(order))
+            bean.order = annotation.get("value").integer;
+        if (const annotation = merged.get(qualifier))
+            bean.qualifiers ~= annotation.text("value");
+    }
+
+    Point pointOf(const ref Parameter parameter, const MergedSet merged, string file, long line)
+    {
+        return pointFor(parameter.type, merged, file, line, parameter.name);
+    }
+
+    Point pointFor(const ref TypeRef type, const MergedSet merged, string file, long line, string name)
+    {
+        import std.algorithm.searching : startsWith;
+        import flint_tool.engine.aot.names : autowired, qualifier, value;
+
+        Point point;
+        point.type = type.name;
+        point.lookup = type.name;
+        point.modules = modulesOf(type);
+        if (const annotation = merged.get(qualifier))
+            point.qualifier = annotation.text("value");
+        if (const annotation = merged.get(value))
+        {
+            point.kind = PointKind.value;
+            point.expression = annotation.text("value");
+            if (point.expression.startsWith("#{"))
+                error("FLINT-E1107", "@Value(\"" ~ point.expression ~ "\") on `" ~ name
+                        ~ "` is SpEL, which Flint AOT " ~ "does not compile yet; use a ${...} placeholder", file, line);
+            return point;
+        }
+        const required = merged.get(autowired) is null || merged.get(autowired).flag("required", true);
+        if (type.element.length && type.name != "string")
+        {
+            point.kind = PointKind.beans;
+            point.lookup = type.element[0].name;
+        }
+        else if (type.template_.length && (type.template_.startsWith("flint.java.util.Optional")
+                || type.template_.startsWith("std.typecons.Nullable")) && type.arguments.length)
+        {
+            point.kind = PointKind.optional;
+            point.lookup = type.arguments[0].name;
+        }
+        else if (type.template_ == "flint.java.util.List" && type.arguments.length)
+        {
+            point.kind = PointKind.beans;
+            point.lookup = type.arguments[0].name;
+        }
+        else if (!required)
+            point.kind = PointKind.optional;
+        return point;
+    }
+
+    static string[] modulesOf(const ref TypeRef type)
+    {
+        string[] result = type.modules.dup;
+        foreach (ref item; type.element)
+            result ~= modulesOf(item);
+        foreach (ref item; type.arguments)
+            result ~= modulesOf(item);
+        return result;
+    }
+
+    void constructorOf(const ref TypeDecl decl, ref BeanPlan bean)
+    {
+        import flint_tool.engine.aot.names : autowired;
+
+        const constructors = decl.constructors;
+        const(Method)* chosen;
+        size_t autowiredCount;
+        foreach (ref constructor; constructors)
+        {
+            if (mergedOf(constructor).has(autowired))
+            {
+                chosen = &constructor;
+                ++autowiredCount;
+            }
+        }
+        if (chosen is null && constructors.length == 1)
+            chosen = &constructors[0];
+        if (chosen is null && constructors.length > 1)
+        {
+            foreach (ref constructor; constructors)
+            {
+                if (constructor.parameters.length == 0)
+                    chosen = &constructor;
+            }
+            if (chosen is null)
+            {
+                error("FLINT-E1105", "bean class " ~ decl.name ~ " has several constructors and none is @Autowired",
+                        decl.file, decl.line);
+                return;
+            }
+        }
+        if (autowiredCount > 1)
+            error("FLINT-E1105", "bean class " ~ decl.name ~ " has several @Autowired constructors",
+                    decl.file, decl.line);
+        if (chosen is null)
+            return;
+        foreach (ref parameter; chosen.parameters)
+        {
+            auto point = pointOf(parameter, mergedOf(parameter), chosen.file, chosen.line);
+            bean.arguments ~= point;
+            if (point.kind == PointKind.bean)
+                bean.requires ~= point.lookup;
+        }
+    }
+
+    void fieldsOf(const ref TypeDecl decl, ref BeanPlan bean)
+    {
+        import flint_tool.engine.aot.merge : merge;
+        import flint_tool.engine.aot.names : autowired, inject, value;
+
+        const(TypeDecl)*[] chain = [model.type(decl.fqn)];
+        foreach (ref supertype; decl.supertypes)
+        {
+            if (const base = model.type(supertype.name))
+            {
+                if (base.kind == "class")
+                    chain = base ~ chain;
+            }
+        }
+        foreach (owner; chain)
+        {
+            foreach (ref field; owner.fields)
+            {
+                auto merged = merge(field.annotations, model.annotationTypes);
+                if (!merged.hasAny([autowired, inject, value]))
+                    continue;
+                bean.fields ~= FieldPoint(owner.fqn, field.index, pointFor(field.type, merged,
+                        owner.file, owner.line, field.name));
+            }
+        }
+    }
+
+    void lifecycleOf(const ref TypeDecl decl, ref BeanPlan bean)
+    {
+        import flint_tool.engine.aot.names : disposableBean, initializingBean, postConstruct, preDestroy;
+
+        bean.initializingBean = decl.isA(initializingBean);
+        bean.disposableBean = decl.isA(disposableBean);
+        foreach (ref method; decl.methods)
+        {
+            if (method.name == "__ctor")
+                continue;
+            const merged = mergedOf(method);
+            foreach (type; [postConstruct, preDestroy])
+            {
+                if (!merged.has(type))
+                    continue;
+                if (method.visibility != "public" || method.parameters.length)
+                {
+                    const message = "lifecycle method " ~ decl.name ~ "." ~ method.name;
+                    error("FLINT-E1108", message ~ " must be public and take no parameters", method.file, method.line);
+                    continue;
+                }
+                if (type == postConstruct)
+                    bean.postConstruct ~= method.name;
+                else
+                    bean.preDestroy ~= method.name;
+            }
+        }
+    }
+
+    void propertiesOf(const ref MergedSet merged, ref BeanPlan bean)
+    {
+        import flint_tool.engine.aot.names : configurationProperties;
+
+        if (const annotation = merged.get(configurationProperties))
+        {
+            bean.propertiesPrefix = annotation.text("prefix");
+            if (bean.propertiesPrefix.length == 0)
+                bean.propertiesPrefix = annotation.text("value");
+        }
+    }
+
+    /// Whether the candidate is a configuration class whose bean methods need the configuration subclass.
+    bool configurationProxy(ref Candidate candidate, ref BeanPlan bean)
+    {
+        import flint_tool.engine.aot.names : bean_ = bean, configuration;
+
+        const annotation = candidate.merged.get(configuration);
+        if (annotation is null || !annotation.flag("proxyBeanMethods", true))
+            return false;
+        ConfigPlan config;
+        config.className = candidate.decl.fqn;
+        config.simple = candidate.decl.name;
+        foreach (ref constructor; candidate.decl.constructors)
+        {
+            if (constructor.parameters.length == bean.arguments.length)
+                config.parameters = clone(constructor.parameters);
+        }
+        foreach (ref method; candidate.decl.methods)
+        {
+            if (method.static_ || method.inherited || !mergedOf(method).has(bean_))
+                continue;
+            if (method.final_ || method.visibility != "public")
+            {
+                error("FLINT-E1109", "@Bean method " ~ candidate.decl.name ~ "." ~ method.name ~ " must not be "
+                        ~ "private or final; change the method's modifiers to continue", method.file, method.line);
+                continue;
+            }
+            config.methods ~= clone(method);
+            config.beans ~= beanMethodName(method, mergedOf(method));
+        }
+        if (config.methods.length == 0)
+            return false;
+        bean.factory = FactoryKind.configuration;
+        moduleFor(candidate.decl.module_).configurations ~= config;
+        return true;
+    }
+
+    string beanMethodName(const ref Method method, const MergedSet merged)
+    {
+        import flint_tool.engine.aot.names : bean;
+
+        const annotation = merged.get(bean);
+        auto names = annotation.get("name").strings;
+        if (names.length == 0)
+            names = annotation.get("value").strings;
+        return names.length ? names[0] : method.name;
+    }
+
+    void defineBeanMethods(ref Candidate candidate, ref BeanPlan owner, string[] classTerms, bool proxied)
+    {
+        import flint_tool.engine.aot.conditions : evaluate;
+        import flint_tool.engine.aot.names : bean;
+
+        foreach (ref method; candidate.decl.methods)
+        {
+            if (method.inherited)
+                continue;
+            auto merged = mergedOf(method);
+            if (!merged.has(bean))
+                continue;
+            if (method.returns.kind != "class" && method.returns.kind != "interface")
+            {
+                error("FLINT-E1115", "@Bean method " ~ candidate.decl.name ~ "." ~ method.name ~ " returns "
+                        ~ method.returns.name ~ "; a bean is a class or interface instance", method.file, method.line);
+                continue;
+            }
+            auto outcome = evaluate(merged, method.returns.name, model.present);
+            if (!acceptOutcome(outcome, method.name, method.file, method.line))
+                continue;
+            BeanPlan definition;
+            definition.name = beanMethodName(method, merged);
+            definition.type = method.returns.name;
+            definition.types = typesOf(method.returns);
+            definition.autoConfiguration = candidate.autoConfiguration;
+            definition.className = candidate.decl.fqn;
+            definition.configBean = owner.name;
+            definition.method = method.name;
+            definition.factory = method.static_ ? FactoryKind.staticMethod : FactoryKind.method;
+            definition.configProxied = proxied && !method.static_;
+            definition.source = location(method.file, method.line);
+            definition.file = relative(method.file);
+            definition.line = method.line;
+            definition.condition = joinTerms(classTerms ~ outcome.terms);
+            definitionAttributes(merged, definition);
+            beanMethodLifecycle(merged, method, definition);
+            if (!method.static_)
+            {
+                definition.requires ~= candidate.decl.fqn;
+                definition.dependsOn ~= owner.name;
+            }
+            foreach (ref parameter; method.parameters)
+            {
+                auto point = pointOf(parameter, mergedOf(parameter), method.file, method.line);
+                definition.arguments ~= point;
+                if (point.kind == PointKind.bean)
+                    definition.requires ~= point.lookup;
+            }
+            definition.rank = rank++;
+            addBean(candidate.decl.module_, definition);
+        }
+    }
+
+    void beanMethodLifecycle(const ref MergedSet merged, const ref Method method, ref BeanPlan plan)
+    {
+        import flint_tool.engine.aot.names : bean, disposableBean, initializingBean;
+
+        const annotation = merged.get(bean);
+        plan.initMethod = annotation.text("initMethod");
+        const destroy = annotation.get("destroyMethod");
+        plan.destroyMethod = destroy.kind == imported!"flint_tool.engine.aot.model".Value.Kind.text
+            ? destroy.text : "(inferred)";
+        if (const returned = model.type(method.returns.name))
+        {
+            plan.initializingBean = returned.isA(initializingBean);
+            plan.disposableBean = returned.isA(disposableBean);
+            if (plan.destroyMethod == "(inferred)")
+                plan.destroyMethod = inferredDestroy(*returned);
+        }
+        else if (plan.destroyMethod == "(inferred)")
+            plan.destroyMethod = null;
+    }
+
+    string inferredDestroy(const ref TypeDecl decl)
+    {
+        foreach (name; ["close", "shutdown"])
+        {
+            foreach (ref method; decl.methods)
+            {
+                if (method.name == name && method.parameters.length == 0 && method.visibility == "public")
+                    return name;
+            }
+        }
+        return null;
+    }
+
+    bool planProxy(const ref TypeDecl decl, const ref MergedSet classMerged, ref BeanPlan bean)
+    {
+        ProxyPlan proxy;
+        proxy.className = decl.fqn;
+        proxy.simple = decl.name;
+        proxy.constructors = clone(decl.constructors);
+        DescriptorPlan descriptor = descriptorShell(decl, classMerged);
+        bool[string] seen;
+        foreach (ref method; decl.methods)
+        {
+            if (!overridable(method))
+                continue;
+            const signature = method.name ~ "(" ~ parameterTypes(method) ~ ")";
+            if (signature in seen)
+                continue;
+            seen[signature] = true;
+            proxyMethod(decl, method, classMerged, proxy, descriptor);
+        }
+        if (descriptor.methods.length == 0)
+            return false;
+        auto target = &moduleFor(decl.module_);
+        target.proxies ~= proxy;
+        addDescriptor(*target, descriptor);
+        bean.described = true;
+        return true;
+    }
+
+    /// Methods a proxy subclass may override, before visibility and attribute checks.
+    static bool overridable(const ref Method method)
+    {
+        return method.name != "__ctor" && !method.static_ && method.name != "toHash"
+            && method.name != "opCmp" && method.name != "opEquals";
+    }
+
+    /// Add one method to a proxy: advised through the chain, or forwarded.
+    void proxyMethod(const ref TypeDecl decl, const ref Method method, const ref MergedSet classMerged,
+            ref ProxyPlan proxy, ref DescriptorPlan descriptor)
+    {
+        import flint_tool.engine.aot.names : adviceAnnotations, async_;
+
+        auto merged = mergedOf(method);
+        const advised = classMerged.hasAny(adviceAnnotations) || merged.hasAny(adviceAnnotations);
+        if (!checkAdvisable(decl, method, advised))
+            return;
+        // Generated code is @safe: a @system method (Object.toString) is left to the base class.
+        if (method.visibility != "public" || method.final_ || (!method.has("@safe") && !method.has("@trusted")))
+            return;
+        ProxyMethod item = ProxyMethod(clone(method), advised, merged.has(async_) || classMerged.has(async_));
+        if (advised)
+        {
+            item.index = descriptor.methods.length;
+            descriptor.methods ~= methodPlan(method, merged, classMerged);
+        }
+        proxy.methods ~= item;
+    }
+
+    bool checkAdvisable(const ref TypeDecl decl, const ref Method method, bool advised)
+    {
+        import flint_tool.engine.aot.names : async_;
+
+        if (!advised)
+            return true;
+        if (method.visibility != "public")
+        {
+            error("FLINT-E1112", "advised method " ~ decl.name ~ "." ~ method.name ~ " is " ~ method.visibility
+                    ~ "; the proxy can only call public methods of its target", method.file, method.line);
+            return false;
+        }
+        if (method.final_)
+        {
+            plan.diagnostics ~= Diagnostic("FLINT-E1111",
+                    "final method " ~ decl.name ~ "." ~ method.name ~ " of a proxied class is not advised",
+                    relative(method.file), method.line, true);
+            return false;
+        }
+        if (!method.has("@safe") && !method.has("@trusted"))
+        {
+            error("FLINT-E1112",
+                    "advised method " ~ decl.name ~ "." ~ method.name ~ " is @system; generated proxies " ~ "are @safe",
+                    method.file, method.line);
+            return false;
+        }
+        foreach (attribute; ["nothrow", "@nogc", "pure"])
+        {
+            if (method.has(attribute))
+            {
+                error("FLINT-E1112", "advised method " ~ decl.name ~ "." ~ method.name ~ " is "
+                        ~ attribute ~ ", which the advice chain cannot honour", method.file, method.line);
+                return false;
+            }
+        }
+        if (mergedOf(method).has(async_) && method.returns.name != "void")
+        {
+            error("FLINT-E1113", "@Async method " ~ decl.name ~ "." ~ method.name ~ " returns " ~ method.returns.name
+                    ~ "; only void @Async methods are supported until flint.java.util.concurrent lands",
+                    method.file, method.line);
+            return false;
+        }
+        return true;
+    }
+
+    MethodPlan methodPlan(const ref Method method, MergedSet merged, const MergedSet classMerged)
+    {
+        import flint_tool.engine.aot.merge : Merged;
+        import flint_tool.engine.aot.names : adviceAnnotations;
+
+        MethodPlan result;
+        result.method = clone(method);
+        // Class-level advice applies to every method that does not declare its own.
+        foreach (ref item; classMerged.items)
+        {
+            import std.algorithm.searching : canFind;
+
+            if (adviceAnnotations.canFind(item.type) && !merged.has(item.type))
+                merged.items ~= Merged(clone(item.annotation), item.distance);
+        }
+        result.annotations = merged;
+        foreach (ref parameter; method.parameters)
+            result.parameters ~= mergedOf(parameter);
+        return result;
+    }
+
+    DescriptorPlan descriptorShell(const ref TypeDecl decl, const MergedSet merged)
+    {
+        import flint_tool.engine.aot.merge : cloneMerged = clone;
+
+        DescriptorPlan result;
+        result.type = decl.fqn;
+        result.simple = decl.name;
+        result.kind = decl.kind ~ "_";
+        result.annotations = cloneMerged(merged);
+        foreach (ref supertype; decl.supertypes)
+            result.supertypes ~= supertype.name;
+        result.constants = decl.constants.dup;
+        return result;
+    }
+
+    void addDescriptor(ref ModulePlan target, DescriptorPlan descriptor)
+    {
+        foreach (ref existing; target.descriptors)
+        {
+            if (existing.type == descriptor.type)
+            {
+                existing.methods ~= descriptor.methods;
+                return;
+            }
+        }
+        target.descriptors ~= descriptor;
+    }
+
+    string joinTerms(const string[] terms)
+    {
+        import std.array : join;
+
+        return terms.join(" && ");
+    }
+
+    void checkInjection()
+    {
+        import std.algorithm.searching : canFind;
+        import flint_tool.engine.aot.names : infrastructureTypes;
+
+        foreach (ref bean; allBeans)
+        {
+            foreach (ref point; bean.arguments)
+            {
+                if (point.kind != PointKind.bean)
+                    continue;
+                if (infrastructureTypes.canFind(point.lookup) || hasCandidate(point.lookup))
+                    continue;
+                const message = "bean `" ~ bean.name ~ "` needs a " ~ point.lookup;
+                plan.diagnostics ~= Diagnostic("FLINT-E1106",
+                        message ~ ", and no definition in the closure provides one", bean.file, bean.line);
+            }
+        }
+    }
+
+    bool hasCandidate(string type)
+    {
+        import std.algorithm.searching : canFind;
+
+        foreach (ref bean; allBeans)
+        {
+            if (bean.types.canFind(type))
+                return true;
+        }
+        return false;
+    }
+
+    /// A constructor-injection cycle among unconditional definitions is FLINT-E1110.
+    void checkCycles()
+    {
+        import std.algorithm.searching : canFind;
+        import std.array : join;
+
+        size_t[][] edges = new size_t[][allBeans.length];
+        foreach (index, ref bean; allBeans)
+        {
+            if (bean.condition.length)
+                continue;
+            foreach (type; bean.requires)
+            {
+                foreach (other, ref provider; allBeans)
+                {
+                    if (other != index && provider.condition.length == 0 && provider.types.canFind(type))
+                        edges[index] ~= other;
+                }
+            }
+        }
+        ubyte[] state = new ubyte[allBeans.length];
+        size_t[] stack;
+        bool visit(size_t node)
+        {
+            state[node] = 1;
+            stack ~= node;
+            foreach (next; edges[node])
+            {
+                if (state[next] == 1)
+                {
+                    string[] names;
+                    bool on;
+                    foreach (item; stack)
+                    {
+                        on = on || item == next;
+                        if (on)
+                            names ~= allBeans[item].name;
+                    }
+                    plan.diagnostics ~= Diagnostic("FLINT-E1110",
+                            "beans form a constructor-injection cycle: " ~ (names ~ allBeans[next].name)
+                                .join(" -> "), allBeans[next].file, allBeans[next].line);
+                    return true;
+                }
+                if (state[next] == 0 && visit(next))
+                    return true;
+            }
+            state[node] = 2;
+            stack = stack[0 .. $ - 1];
+            return false;
+        }
+
+        foreach (node; 0 .. allBeans.length)
+        {
+            if (state[node] == 0 && visit(node))
+                break;
+        }
+    }
+
+    void describeModule(string name)
+    {
+        import flint_tool.engine.aot.names : component, configurationProperties, repository;
+
+        const item = model.module_(name);
+        if (item is null)
+            return;
+        foreach (ref decl; item.types)
+        {
+            auto merged = mergedOf(decl);
+            if (merged.has(component))
+            {
+                webOf(decl, merged);
+                listenersOf(decl, merged);
+                if (merged.has(configurationProperties))
+                    addDescriptor(moduleFor(name), dataDescriptor(decl, merged));
+                continue;
+            }
+            if (decl.kind == "interface" && decl.isA(repository))
+            {
+                queriesOf(decl);
+                continue;
+            }
+            if (decl.kind == "struct" || decl.kind == "enum" || (decl.kind == "class" && !decl.abstract_))
+            {
+                if (decl.visibility == "public" || decl.visibility == "export")
+                    addDescriptor(moduleFor(name), dataDescriptor(decl, merged));
+            }
+        }
+    }
+
+    DescriptorPlan dataDescriptor(const ref TypeDecl decl, MergedSet merged)
+    {
+        import flint_tool.engine.aot.merge : merge;
+        import flint_tool.engine.aot.names : jsonProperty;
+
+        auto result = descriptorShell(decl, merged);
+        if (decl.kind == "enum")
+            return result;
+        result.create = decl.kind == "struct" ? "init" : defaultConstructible(decl) ? "new" : null;
+        foreach (ref field; decl.fields)
+        {
+            auto fieldMerged = merge(field.annotations, model.annotationTypes);
+            const isPublic = field.visibility == "public" || field.visibility == "export";
+            if (!isPublic && !fieldMerged.has(jsonProperty))
+                continue;
+            PropertyPlan property;
+            property.name = field.name;
+            property.type = field.type.name;
+            property.annotations = fieldMerged;
+            property.access = isPublic ? "field" : "tuple";
+            property.field = field.name;
+            property.index = field.index;
+            property.writable = !mutabilityQualified(field.type.name);
+            result.properties ~= property;
+        }
+        accessorProperties(decl, result);
+        return result;
+    }
+
+    bool defaultConstructible(const ref TypeDecl decl)
+    {
+        const constructors = decl.constructors;
+        if (constructors.length == 0)
+            return true;
+        foreach (ref constructor; constructors)
+        {
+            if (constructor.parameters.length == 0 && constructor.visibility == "public")
+                return true;
+        }
+        return false;
+    }
+
+    bool mutabilityQualified(string type)
+    {
+        import std.algorithm.searching : startsWith;
+
+        return type.startsWith("const(") || type.startsWith("immutable(");
+    }
+
+    /// Java Beans properties from `getX()`/`isX()` and `setX(v)` pairs.
+    void accessorProperties(const ref TypeDecl decl, ref DescriptorPlan result)
+    {
+        foreach (ref method; decl.methods)
+        {
+            const property = propertyOfGetter(method);
+            if (property.length == 0)
+                continue;
+            bool known;
+            foreach (ref existing; result.properties)
+                known = known || existing.name == property;
+            if (known)
+                continue;
+            PropertyPlan item;
+            item.name = property;
+            item.type = method.returns.name;
+            item.annotations = mergedOf(method);
+            item.access = "accessor";
+            item.getter = method.name;
+            const setter = "set" ~ method.name[method.name[0 .. 2] == "is" ? 2 : 3 .. $];
+            foreach (ref candidate; decl.methods)
+            {
+                if (candidate.name == setter && candidate.parameters.length == 1 && candidate.visibility == "public")
+                {
+                    item.setter = setter;
+                    item.writable = true;
+                }
+            }
+            result.properties ~= item;
+        }
+    }
+
+    /// The property a public, declared, no-argument `getX()` or `isX()` reads, or empty.
+    static string propertyOfGetter(const ref Method method)
+    {
+        import std.ascii : isUpper, toLower;
+
+        if (method.static_ || method.visibility != "public" || method.parameters.length != 0
+                || method.returns.name == "void" || method.inherited)
+            return null;
+        foreach (prefix; ["get", "is"])
+        {
+            if (method.name.length > prefix.length && method.name[0 .. prefix.length] == prefix
+                    && isUpper(method.name[prefix.length]))
+            {
+                const property = toLower(method.name[prefix.length]) ~ method.name[prefix.length + 1 .. $];
+                return property == "class" ? null : property;
+            }
+        }
+        return null;
+    }
+
+    string beanNameOf(const ref TypeDecl decl)
+    {
+        foreach (ref bean; allBeans)
+        {
+            if (bean.className == decl.fqn && bean.method.length == 0)
+                return bean.name;
+        }
+        return null;
+    }
+
+    void webOf(const ref TypeDecl decl, MergedSet merged)
+    {
+        import flint_tool.engine.aot.names : controller, controllerAdvice, exceptionHandler, requestMapping;
+
+        const bean = beanNameOf(decl);
+        if (bean.length == 0)
+            return;
+        const isController = merged.has(controller);
+        const isAdvice = merged.has(controllerAdvice);
+        if (!isController && !isAdvice)
+            return;
+        auto descriptor = descriptorShell(decl, merged);
+        auto target = &moduleFor(decl.module_);
+        foreach (ref method; decl.methods)
+        {
+            if (method.inherited || method.name == "__ctor" || method.static_)
+                continue;
+            auto methodMerged = mergedOf(method);
+            if (isController && methodMerged.has(requestMapping))
+            {
+                auto handler = handlerOf(decl, bean, method, methodMerged, merged);
+                handler.index = descriptor.methods.length;
+                descriptor.methods ~= methodPlan(method, methodMerged, MergedSet.init);
+                target.handlers ~= handler;
+            }
+            else if (methodMerged.has(exceptionHandler))
+                target.exceptionHandlers ~= exceptionHandlerOf(decl, bean, method, methodMerged, merged, isAdvice);
+        }
+        if (descriptor.methods.length)
+        {
+            addDescriptor(*target, descriptor);
+            foreach (ref item; target.beans)
+            {
+                if (item.name == bean)
+                    item.described = true;
+            }
+        }
+    }
+
+    HandlerPlan handlerOf(const ref TypeDecl decl, string bean, const ref Method method,
+            const ref MergedSet merged, const ref MergedSet classMerged)
+    {
+        import flint_tool.engine.aot.names : requestMapping, responseBody, responseStatus;
+
+        const classMapping = classMerged.get(requestMapping);
+        HandlerPlan handler;
+        handler.bean = bean;
+        handler.className = decl.fqn;
+        handler.method = clone(method);
+        handler.source = location(method.file, method.line);
+        const mapping = merged.get(requestMapping);
+        handler.paths = combinePaths(classMapping is null ? null : pathsOf(*classMapping), pathsOf(*mapping));
+        foreach (ref item; mapping.get("method").items)
+            handler.methods ~= item.text;
+        if (handler.methods.length == 0 && classMapping !is null)
+        {
+            foreach (ref item; classMapping.get("method").items)
+                handler.methods ~= item.text;
+        }
+        handler.params = mapping.get("params").strings;
+        handler.headers = mapping.get("headers").strings;
+        handler.consumes = mapping.get("consumes").strings;
+        handler.produces = mapping.get("produces").strings;
+        if (classMapping !is null)
+        {
+            if (handler.consumes.length == 0)
+                handler.consumes = classMapping.get("consumes").strings;
+            if (handler.produces.length == 0)
+                handler.produces = classMapping.get("produces").strings;
+        }
+        handler.responseBody = merged.has(responseBody) || classMerged.has(responseBody);
+        if (const status = merged.get(responseStatus))
+        {
+            handler.status = statusCode(*status);
+            handler.reason = status.text("reason");
+        }
+        foreach (ref parameter; method.parameters)
+            handler.arguments ~= argumentOf(parameter, mergedOf(parameter), false);
+        return handler;
+    }
+
+    long statusCode(const ref imported!"flint_tool.engine.aot.model".Annotation status)
+    {
+        import flint_tool.engine.aot.model : Value;
+
+        foreach (name; ["value", "code"])
+        {
+            const value = status.get(name);
+            if (value.kind == Value.Kind.integer && value.integer)
+                return value.integer;
+        }
+        return 0;
+    }
+
+    string[] pathsOf(const ref imported!"flint_tool.engine.aot.model".Annotation mapping)
+    {
+        auto paths = mapping.get("path").strings;
+        return paths.length ? paths : mapping.get("value").strings;
+    }
+
+    ExceptionPlan exceptionHandlerOf(const ref TypeDecl decl, string bean, const ref Method method,
+            const ref MergedSet merged, const ref MergedSet classMerged, bool advice)
+    {
+        import flint_tool.engine.aot.names : controllerAdvice, exceptionHandler, responseBody, responseStatus;
+
+        ExceptionPlan handler;
+        handler.bean = bean;
+        handler.className = decl.fqn;
+        handler.method = clone(method);
+        handler.advice = advice;
+        handler.source = location(method.file, method.line);
+        handler.exceptionTypes = merged.get(exceptionHandler).get("value").strings;
+        if (advice)
+            handler.basePackages = classMerged.get(controllerAdvice).get("basePackages").strings;
+        handler.responseBody = merged.has(responseBody) || classMerged.has(responseBody);
+        if (const status = merged.get(responseStatus))
+            handler.status = statusCode(*status);
+        foreach (ref parameter; method.parameters)
+        {
+            const isException = isExceptionType(parameter.type.name);
+            handler.arguments ~= argumentOf(parameter, mergedOf(parameter), isException);
+            if (isException && handler.exceptionTypes.length == 0)
+                handler.exceptionTypes ~= parameter.type.name;
+        }
+        return handler;
+    }
+
+    bool isExceptionType(string type)
+    {
+        if (type == "object.Exception" || type == "object.Throwable")
+            return true;
+        if (const decl = model.type(type))
+            return decl.isA("object.Exception");
+        return type.length > 9 && type[$ - 9 .. $] == "Exception";
+    }
+
+    ArgumentPlan argumentOf(const ref Parameter parameter, MergedSet merged, bool exception)
+    {
+        import flint_tool.engine.aot.names : cookieValue, modelAttribute, pathVariable, requestBody,
+            requestHeader, requestParam, valid, validated;
+
+        ArgumentPlan argument;
+        argument.name = parameter.name;
+        argument.type = parameter.type.name;
+        argument.annotations = merged;
+        argument.validate = merged.hasAny([valid, validated]);
+        argument.exception = exception;
+        argument.required = true;
+        static immutable string[2][] bindings = [
+            [pathVariable, "pathVariable"], [requestParam, "requestParam"],
+            [requestHeader, "requestHeader"], [cookieValue, "cookieValue"],
+            [requestBody, "requestBody"], [modelAttribute, "modelAttribute"]
+        ];
+        foreach (binding; bindings)
+        {
+            const annotation = merged.get(binding[0]);
+            if (annotation is null)
+                continue;
+            argument.kind = binding[1];
+            const named = annotation.text("name").length ? annotation.text("name") : annotation.text("value");
+            if (named.length && binding[1] != "requestBody")
+                argument.name = named;
+            argument.required = annotation.flag("required", true);
+            const defaultValue = annotation.get("defaultValue");
+            if (defaultValue.kind == imported!"flint_tool.engine.aot.model".Value.Kind.text
+                    && defaultValue.text != "\n\t\t\n\t\t\n\n\t\t\t\t\n")
+            {
+                argument.defaultValue = defaultValue.text;
+                argument.hasDefault = true;
+                argument.required = false;
+            }
+            return argument;
+        }
+        if (exception || resolvedByTypeName(parameter.type.name))
+            argument.kind = "byType";
+        else if (simpleType(parameter.type))
+        {
+            argument.kind = "requestParam";
+            argument.required = false;
+        }
+        else
+            argument.kind = "modelAttribute";
+        return argument;
+    }
+
+    bool resolvedByTypeName(string type)
+    {
+        import flint_tool.engine.aot.merge : shortName;
+        import flint_tool.engine.aot.names : resolvedByType;
+        import std.algorithm.searching : canFind;
+
+        return resolvedByType.canFind(shortName(type));
+    }
+
+    bool simpleType(const ref TypeRef type)
+    {
+        import std.algorithm.searching : canFind;
+
+        if (type.kind == "enum")
+            return true;
+        if (type.element.length)
+            return simpleType(type.element[0]);
+        return [
+            "bool", "byte", "ubyte", "short", "ushort", "int", "uint", "long", "ulong", "float",
+            "double", "char", "string"
+        ].canFind(type.name);
+    }
+
+    void listenersOf(const ref TypeDecl decl, const ref MergedSet merged)
+    {
+        import flint_tool.engine.aot.names : eventListener, order;
+
+        const bean = beanNameOf(decl);
+        if (bean.length == 0)
+            return;
+        foreach (ref method; decl.methods)
+        {
+            if (method.inherited)
+                continue;
+            const methodMerged = mergedOf(method);
+            const annotation = methodMerged.get(eventListener);
+            if (annotation is null)
+                continue;
+            if (method.parameters.length != 1 || method.visibility != "public")
+            {
+                error("FLINT-E1108", "@EventListener method " ~ decl.name ~ "." ~ method.name
+                        ~ " must be public and " ~ "take the event as its only parameter", method.file, method.line);
+                continue;
+            }
+            ListenerPlan listener;
+            listener.bean = bean;
+            listener.className = decl.fqn;
+            listener.method = method.name;
+            listener.eventType = method.parameters[0].type.name;
+            listener.condition = annotation.text("condition");
+            if (const ordered = methodMerged.get(order))
+                listener.order = ordered.get("value").integer;
+            moduleFor(decl.module_).listeners ~= listener;
+        }
+    }
+
+    void queriesOf(const ref TypeDecl decl)
+    {
+        import flint_tool.engine.aot.names : query, repository;
+        import flint_tool.engine.aot.query : deriveQuery, QueryError;
+
+        const(TypeRef)* base;
+        foreach (ref supertype; decl.supertypes)
+        {
+            if (supertype.template_.length && supertype.arguments.length == 2 && base is null)
+                base = &supertype;
+        }
+        if (base is null)
+            return;
+        const domainDecl = model.type(base.arguments[0].name);
+        if (domainDecl is null)
+            return;
+        auto domain = domainOf(*domainDecl);
+        auto target = &moduleFor(decl.module_);
+        target.consulted ~= domainDecl.module_;
+        foreach (ref method; decl.methods)
+        {
+            if (method.inherited || mergedOf(method).has(query))
+                continue;
+            string[] parameters;
+            foreach (ref parameter; method.parameters)
+                parameters ~= parameter.name;
+            imported!"flint_tool.engine.aot.query".DerivedQuery derived;
+            QueryError failure;
+            if (!deriveQuery(method.name, method.returns.name, parameters, domain, derived, failure))
+            {
+                error(failure.code, failure.message, method.file, method.line);
+                continue;
+            }
+            target.queries ~= QueryPlan(decl.fqn, domainDecl.fqn, derived, location(method.file, method.line));
+        }
+    }
+
+    imported!"flint_tool.engine.aot.query".Domain domainOf(const ref TypeDecl decl)
+    {
+        import flint_tool.engine.aot.merge : merge;
+        import flint_tool.engine.aot.names : column, table, transient;
+        import flint_tool.engine.aot.query : Column, Domain, snakeCase;
+
+        Domain domain;
+        domain.type = decl.fqn;
+        domain.name = decl.name;
+        const typeMerged = mergedOf(decl);
+        const tableName = typeMerged.get(table);
+        domain.table = tableName !is null && tableName.text("value").length
+            ? tableName.text("value") : snakeCase(decl.name);
+        foreach (ref field; decl.fields)
+        {
+            auto merged = merge(field.annotations, model.annotationTypes);
+            if (merged.has(transient))
+                continue;
+            const named = merged.get(column);
+            const columnName = named !is null && named.text("value").length ? named.text(
+                    "value") : snakeCase(field.name);
+            domain.columns ~= Column(field.name, columnName, field.type.kind == "struct" || field.type.kind == "class");
+        }
+        return domain;
+    }
+}
+
+/// Parameter types of a method, comma-separated, for overload identity.
+string parameterTypes(const ref Method method)
+{
+    import std.array : join;
+
+    string[] types;
+    foreach (ref parameter; method.parameters)
+        types ~= parameter.type.name;
+    return types.join(",");
+}
+
+/// Combine class-level and method-level paths with Spring's `PathPattern` rules.
+string[] combinePaths(const string[] classPaths, const string[] methodPaths)
+{
+    if (classPaths.length == 0)
+        return methodPaths.length ? methodPaths.dup : [""];
+    if (methodPaths.length == 0)
+        return classPaths.dup;
+    string[] result;
+    foreach (left; classPaths)
+    {
+        foreach (right; methodPaths)
+            result ~= combine(left, right);
+    }
+    return result;
+}
+
+private string combine(string left, string right)
+{
+    if (left.length == 0)
+        return right;
+    if (right.length == 0)
+        return left;
+    const leftSlash = left[$ - 1] == '/';
+    const rightSlash = right[0] == '/';
+    if (leftSlash && rightSlash)
+        return left ~ right[1 .. $];
+    if (!leftSlash && !rightSlash)
+        return left ~ "/" ~ right;
+    return left ~ right;
+}

@@ -271,6 +271,8 @@ bool sanitizerToolchain(ref Session session, ref Report report)
 private bool prepareBuild(ref Session session, const ref Manifest manifest, const ref Resolution resolution,
         const ref BuildRequest request, out Toolchain toolchain, ref BuildOutcome result, ref Report report)
 {
+    import flint_tool.engine.aot.step : runAotStep;
+
     if (!prepareLock(session, manifest, resolution, request.locked, report))
         return false;
     if (!usableToolchain(session, result.compiler, request.verify, toolchain, report))
@@ -285,10 +287,13 @@ private bool prepareBuild(ref Session session, const ref Manifest manifest, cons
     string[] cflags = request.targetCflags.dup;
     foreach (directory; result.natives.includeDirs)
         cflags ~= "-I" ~ directory;
-    return compileNativeC(session, manifest, request.sanitize, cflags, result.native, report)
-        && writeRecipes(session, manifest,
-                resolution, result.native, result.natives, condensedDiagnostics(session, toolchain,
-                    result.compiler), report);
+    if (!compileNativeC(session, manifest, request.sanitize, cflags, result.native, report))
+        return false;
+    const aot = runAotStep(session, manifest, resolution, toolchain, result.compiler, report);
+    if (!aot.ok)
+        return false;
+    return writeRecipes(session, manifest, resolution, result.native, result.natives,
+            condensedDiagnostics(session, toolchain, result.compiler), aot.active, report);
 }
 
 /// Write or remove `.flint/generated/scan/flint_scan.d`; true when the project has an `@FlintApplication`.
@@ -530,7 +535,7 @@ private bool prepareLock(ref Session session, const ref Manifest manifest, const
 
 private bool writeRecipes(ref Session session, const ref Manifest manifest, const ref Resolution resolution,
         const ref CBuild native, const ref imported!"flint_tool.project.native".NativeResolution natives,
-        string[] diagnosticFlags, ref Report report)
+        string[] diagnosticFlags, bool aot, ref Report report)
 {
     import std.path : buildPath;
     import flint_tool.engine.cbuild : NativeCPolicy, loadNativeCPolicy;
@@ -543,6 +548,7 @@ private bool writeRecipes(ref Session session, const ref Manifest manifest, cons
     extras.nativeFlags = natives.linkFlags.dup;
     extras.diagnosticFlags = diagnosticFlags;
     extras.scanned = writeScan(session, manifest, resolution);
+    extras.aot = aot;
     if (native.objects.length)
     {
         NativeCPolicy policy;

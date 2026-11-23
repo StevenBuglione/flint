@@ -1,0 +1,38 @@
+== default profile, audit on
+application: shop.app.ShopApplication
+beans: shopApplication greetingConfig friendlyGreeter auditLog clock clockReport ownerStore ownerService ownerController
+greeter: Hello, Ada!
+audit: true
+clock: singleton
+proxy: flint_aot.shop.owners.OwnerService__FlintProxy ready=true (proxy field ready=false)
+findName: Ada calls=1
+findName again: Ada calls=1 (cache hit)
+describe: owner Ada calls=2 (self-invocation skips the cache)
+async queued: 1 calls=2
+async drained: calls=102
+advice: findName: flint.transaction.annotation.Transactional flint.cache.annotation.Cacheable | findName: flint.transaction.annotation.Transactional flint.cache.annotation.Cacheable | notifyOwner: flint.scheduling.annotation.Async
+mapping: GET /owners/{id} -> 2 Hello, Grace (2 arguments, Hello)
+query: findByLastNameIgnoreCaseOrderByFirstNameAsc: SELECT id, first_name, surname, city FROM owners WHERE UPPER(surname) = UPPER(?) ORDER BY first_name ASC
+query: findFirst2ByCityAndFirstNameStartingWith: SELECT id, first_name, surname, city FROM owners WHERE city = ? AND first_name LIKE ? LIMIT 2
+query: existsByCity: SELECT 1 FROM owners WHERE city = ? LIMIT 1
+descriptor: 2 properties, content = set through the descriptor
+shutdown: service stopped, store destroyed
+== prod profile
+application: shop.app.ShopApplication
+beans: shopApplication greetingConfig formalGreeter clock clockReport ownerStore ownerService ownerController
+greeter: Good day, Ada.
+audit: false
+clock: singleton
+proxy: flint_aot.shop.owners.OwnerService__FlintProxy ready=true (proxy field ready=false)
+findName: Ada calls=1
+findName again: Ada calls=1 (cache hit)
+describe: owner Ada calls=2 (self-invocation skips the cache)
+async queued: 1 calls=2
+async drained: calls=102
+advice: findName: flint.transaction.annotation.Transactional flint.cache.annotation.Cacheable | findName: flint.transaction.annotation.Transactional flint.cache.annotation.Cacheable | notifyOwner: flint.scheduling.annotation.Async
+mapping: GET /owners/{id} -> 2 Hello, Grace (2 arguments, Hello)
+query: findByLastNameIgnoreCaseOrderByFirstNameAsc: SELECT id, first_name, surname, city FROM owners WHERE UPPER(surname) = UPPER(?) ORDER BY first_name ASC
+query: findFirst2ByCityAndFirstNameStartingWith: SELECT id, first_name, surname, city FROM owners WHERE city = ? AND first_name LIKE ? LIMIT 2
+query: existsByCity: SELECT 1 FROM owners WHERE city = ? LIMIT 1
+descriptor: 2 properties, content = set through the descriptor
+shutdown: service stopped, store destroyed

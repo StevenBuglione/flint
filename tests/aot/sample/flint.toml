@@ -1,0 +1,6 @@
+[project]
+name = "aot-sample"
+version = "0.1.0"
+flint = "1.0"
+type = "executable"
+description = "Flint AOT fixture: beans, conditions, a configuration class, a proxy, a controller and a repository."

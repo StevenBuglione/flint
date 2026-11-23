@@ -26,6 +26,8 @@ struct RecipeExtras
     string[] diagnosticFlags;
     /// `.flint/generated/scan/flint_scan.d` exists: the project has an `@FlintApplication` (ADR-029 section 2).
     bool scanned;
+    /// `.flint/generated/aot` holds Flint AOT's modules: the project has a `@FlintBootApplication` (ADR-030).
+    bool aot;
 }
 
 /// Render the root recipe for a project.
@@ -42,6 +44,8 @@ string renderRecipe(const ref Home home, const ref Manifest manifest, const ref 
         text ~= field("stringImportPaths", "../../../config");
     if (extras.scanned)
         text ~= field("sourceFiles", "../scan/flint_scan.d");
+    if (extras.aot)
+        text ~= field("sourcePaths", "../aot") ~ field("importPaths", "../aot");
     if (extras.objects.length)
         text ~= fields("sourceFiles", extras.objects);
     if (extras.objects.length && manifest.type == "executable")
