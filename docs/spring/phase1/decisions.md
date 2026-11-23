@@ -55,6 +55,8 @@
 
 - 2026-11-23, framework-core (item 24): the Spring Security modules are staged as `framework/security-{crypto,core,web,config}` with `"repo": "security"` in `policy/framework.json`, not under a top-level `security/`. The structural gate accepts framework.json modules only under `framework/`; m7-flint-cli has not answered in 30 minutes. This is the smallest reversible step: a `git mv` and a policy edit once integrated repos have their own registration.
 
+- 2026-11-23, coordinator: proof-harness's smoke run (one trial, busy venus, not evidence) shows gs-rest-service behind Go on every metric. Cold build 9.0 s vs 0.16 s (std-primed) / 3.4 s (`go build -a`); Oz binary 11.7 vs 6.6 MB; throughput 65k vs 155k req/s; p99 1.02 vs 0.29 ms; RSS 18.5 vs 13.1 MB. Performance is now the top priority. m7-flint-cli takes the platform cache (item 23), size-levers the binary breakdown, and third-party-apis leads the request-path profile, sending hotspots to their owners. Phase 1 apps continue. Phase 2 does not start until quiet-window numbers meet Go (ADR-030's stop rule). If confirmed gaps don't close, the fallback-or-redesign choice goes to the owner.
+
 ## Open for the owner
 
 - 2026-11-23, proof-harness: with the corrected template count (own library plus probe, `d153fd1`), some of the 37 packages' `template_instances` budgets in `policy/packages.json` may now be exceeded. The old count left out each package's own library compile. Raising a budget is the owner's decision. Until then, any package over its budget fails the measured gate, and no cap has been changed.
