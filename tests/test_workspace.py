@@ -32,7 +32,8 @@ class RepoPolicyTests(unittest.TestCase):
         self.assertIn('engine-security', workspace.packages_of('framework'))
         self.assertEqual(workspace.packages_of('ai'), ['engine-ai', 'engine-mcp'])
         self.assertEqual(workspace.packages_of('data-jdbc'), ['engine-data'])
-        self.assertIn('boot-core', workspace.packages_of('boot'))
+        # The cutover renames boot-core to boot (tools/cutover.py SPRING); either side of it is valid here.
+        self.assertTrue({'boot-core', 'boot'} & set(workspace.packages_of('boot')), workspace.packages_of('boot'))
         self.assertIn('boot-starter-web', workspace.packages_of('boot'))
         for name, (repo, _) in owners.items():
             self.assertIn(repo, repos, name)

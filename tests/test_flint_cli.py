@@ -198,8 +198,10 @@ class StructuralParityTests(unittest.TestCase):
             *([('cli', unregistered('framework/unregistered'), 'FLINT-E0535')] if (ROOT / 'framework').is_dir() else []),
             *([('cli', unregistered('boot/module/flint-boot-unregistered'), 'FLINT-E0535')]
               if (ROOT / 'boot').is_dir() else []),
-            # An integrated repo staged under its own name (security/, ADR-030 section 2) registers its packages too.
-            ('cli', unregistered('security/security-unregistered'), 'FLINT-E0535'),
+            # An integrated repo staged under its own name (security/, ADR-030 section 2) registers its packages too,
+            # while it is in this checkout (until the cutover extracts it).
+            *([('cli', unregistered('security/security-unregistered'), 'FLINT-E0535')]
+              if (ROOT / 'security').is_dir() else []),
             ('cli', edit(cli, '@safe:', ''), 'FLINT-E0501'),
             ('cli', edit(cli, 'module flint.cli.types;', 'module flint.cli.kinds;'), 'FLINT-E0401'),
             ('cli', edit(cli, 'import flint.arena : Error;', 'import flint.arena : Error;\nimport flint.log : Logger;'),

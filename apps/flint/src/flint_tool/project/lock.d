@@ -121,7 +121,8 @@ LockState checkLock(string root, string expected, bool missingIsError, ref Repor
     import std.path : buildPath;
     import flint_tool.support.files : readIfPresent;
 
-    const actual = readIfPresent(buildPath(root, lockName));
+    // A Windows checkout with git's autocrlf has CRLF line endings; the lock's content is the same.
+    const actual = lfOnly(readIfPresent(buildPath(root, lockName)));
     if (actual is null)
     {
         if (missingIsError)
@@ -135,6 +136,13 @@ LockState checkLock(string root, string expected, bool missingIsError, ref Repor
             "review the change, then run `flint lock` to accept it"), lockName,
             firstDifference(actual, expected), 0, actual));
     return LockState.stale;
+}
+
+private string lfOnly(string text)
+{
+    import std.array : replace;
+
+    return text is null ? null : text.replace("\r\n", "\n");
 }
 
 /// Write flint.lock; returns true when its content changed.

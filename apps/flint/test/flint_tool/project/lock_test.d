@@ -73,5 +73,9 @@ unittest
     expect(checkLock(directory, "x = 2\n", true, again) == LockState.stale).toEqual(true);
     expect(codes(again)).toEqual(["FLINT-E0202"]);
     expect(again.items[0].line).toEqual(1);
+    write(buildPath(directory, "flint.lock"), "x = 1\r\ny = 2\r\n");
+    Report crlf;
+    expect(checkLock(directory, "x = 1\ny = 2\n", true, crlf) == LockState.current).toEqual(true);
+    expect(crlf.items.length).toEqual(0);
     expect(quoted("a\"b\\c")).toEqual("\"a\\\"b\\\\c\"");
 }
