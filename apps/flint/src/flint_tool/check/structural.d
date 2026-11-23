@@ -48,7 +48,7 @@ StructuralSummary structuralGate(const ref Home home, scope const(string)[] sele
     checkGraph(home, report);
     checkRootRecipe(home, report);
     checkBootLayers(home, report);
-    imported!"flint_tool.check.registration".checkRegistration(home.root, report);
+    imported!"flint_tool.check.registration".checkRegistration(home, report);
     summary.pending_repo_edges = checkRepoEdges(home, report);
     if (!fast)
         checkPlatformOutputs(home, report);

@@ -112,12 +112,11 @@ class StructuralParityTests(unittest.TestCase):
         cls.base = Path(cls.temporary.name) / 'base'
         ignore = shutil.ignore_patterns('.dub', 'build', '*.a', '*.o', 'flint-*-test-*', '__pycache__')
         cls.base.mkdir()
-        for name in ('policy', 'packages', 'framework', 'tools', 'toolchain'):
+        # framework/ and boot/ whole: the registration check (FLINT-E0535) scans both against the policies.
+        for name in ('policy', 'packages', 'framework', 'boot', 'tools', 'toolchain'):
             shutil.copytree(ROOT / name, cls.base / name, ignore=ignore, symlinks=True)
         for name in ('dub.sdl', 'flint.toml', 'dscanner.ini', 'dfmt.ini', '.editorconfig', 'platform.lock'):
             shutil.copy2(ROOT / name, cls.base / name)
-        (cls.base / 'boot/dependencies').mkdir(parents=True)
-        shutil.copy2(ROOT / 'boot/dependencies/flint-dependencies.json', cls.base / 'boot/dependencies')
         (cls.base / '.tools').symlink_to((ROOT / '.tools').resolve())
 
     @classmethod
@@ -177,8 +176,16 @@ class StructuralParityTests(unittest.TestCase):
                 path.write_text(path.read_text() + text)
             return apply
 
+        def unregistered(relative):
+            def apply(work):
+                (work / relative).mkdir(parents=True)
+                (work / relative / 'dub.sdl').write_text('name "unregistered"\n')
+            return apply
+
         cli = 'packages/cli/source/flint/cli/types.d'
         cases = [
+            ('cli', unregistered('framework/unregistered'), 'FLINT-E0535'),
+            ('cli', unregistered('boot/module/flint-boot-unregistered'), 'FLINT-E0535'),
             ('cli', edit(cli, '@safe:', ''), 'FLINT-E0501'),
             ('cli', edit(cli, 'module flint.cli.types;', 'module flint.cli.kinds;'), 'FLINT-E0401'),
             ('cli', edit(cli, 'import flint.arena : Error;', 'import flint.arena : Error;\nimport flint.log : Logger;'),

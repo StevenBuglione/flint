@@ -61,4 +61,11 @@ unittest
         "boot/later: policy/unregistered-packages.json only shrinks -> register the package in its policy instead",
         "framework/core is registered now -> remove it from policy/unregistered-packages.json"
     ]);
+    // After the split boot/ lives in its own repo: its packages and allowlist entries are not this checkout's.
+    expect(messages(registrationProblems(root, ["framework"]))).toEqual(
+            [
+        "framework/new is a DUB package that no policy lists -> add it to policy/framework.json",
+        "framework/core is registered now -> remove it from policy/unregistered-packages.json"
+    ]);
+    expect(registrationProblems(root, null).length).toEqual(0);
 }

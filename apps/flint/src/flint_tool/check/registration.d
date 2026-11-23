@@ -23,8 +23,11 @@ struct RegistrationProblem
     string fix;
 }
 
-/// The registration problems of the tree at `root`.
-RegistrationProblem[] registrationProblems(string root)
+/// The registration problems of the tree at `root`, for the top-level trees `tops` (`framework`, `boot`) whose repos
+/// live in this checkout.
+RegistrationProblem[] registrationProblems(string root, scope const string[] tops = [
+    "framework", "boot"
+])
 {
     import std.path : buildPath;
     import flint_tool.support.files : readIfPresent;
@@ -37,7 +40,7 @@ RegistrationProblem[] registrationProblems(string root)
     const allowed = allowlist(readIfPresent(buildPath(root, "policy", "unregistered-packages.json")));
     RegistrationProblem[] problems;
     string[] found;
-    foreach (top; ["framework", "boot"])
+    foreach (top; tops)
     {
         const policyFile = top == "framework" ? "policy/framework.json" : "policy/boot.json";
         foreach (path; packageDirectories(root, top))
@@ -51,6 +54,8 @@ RegistrationProblem[] registrationProblems(string root)
     foreach (path; sortedKeys(allowed))
     {
         enum allowlistFile = "policy/unregistered-packages.json";
+        if (!contains(tops, topOf(path)))
+            continue;
         if (allowed[path] > registrationFrozen)
             problems ~= RegistrationProblem(path, path ~ ": " ~ allowlistFile ~ " only shrinks",
                     "register the package in its policy instead");
@@ -141,6 +146,16 @@ string[string] allowlist(string text)
     return paths;
 }
 
+private string topOf(string path)
+{
+    foreach (index, c; path)
+    {
+        if (c == '/')
+            return path[0 .. index];
+    }
+    return path;
+}
+
 private bool contains(scope const string[] values, string value)
 {
     foreach (item; values)
@@ -162,11 +177,22 @@ private string[] sortedKeys(const string[string] table)
     return keys;
 }
 
-/// Report every registration problem as FLINT-E0535, located at the package directory.
-void checkRegistration(string root, ref imported!"flint_tool.diagnostics.report".Report report)
+/// Report every registration problem as FLINT-E0535, located at the package directory. Only this checkout's own
+/// trees are scanned: a repo whose packages live elsewhere after the split (platform.lock) is skipped.
+void checkRegistration(const ref imported!"flint_tool.home.policy".Home home,
+        ref imported!"flint_tool.diagnostics.report".Report report)
 {
+    import std.file : exists, isDir;
+    import std.path : buildPath;
     import flint_tool.diagnostics.report : Severity, at, diagnostic;
 
-    foreach (ref problem; registrationProblems(root))
+    string[] tops;
+    foreach (top; ["framework", "boot"])
+    {
+        const tree = buildPath(home.root, top);
+        if (home.inHome(top) && exists(tree) && isDir(tree))
+            tops ~= top;
+    }
+    foreach (ref problem; registrationProblems(home.root, tops))
         report.add(at(diagnostic("FLINT-E0535", Severity.error, problem.message, problem.fix), problem.path, 0));
 }

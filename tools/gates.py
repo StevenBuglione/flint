@@ -235,9 +235,12 @@ def layer_registration():
         if (ROOT/file).is_file():
             policy=json.loads((ROOT/file).read_text(encoding='utf-8'))
             registered|={meta['directory'] for group in groups for meta in policy.get(group,{}).values()}
-    found=[]
+    found=[];tops=[]
     for top,policy_file in (('framework','policy/framework.json'),('boot','policy/boot.json')):
-        base=(WORKSPACE.checkout(top) if WORKSPACE.file else ROOT)
+        # Only this checkout's own trees: after the split framework/ and boot/ live in their repos, which their own
+        # CI checks; a workspace run over extracted checkouts scans nothing here.
+        if not in_home(top) or not (ROOT/top).is_dir():continue
+        tops.append(top);base=ROOT
         for directory,subdirs,files in os.walk(base/top):
             subdirs[:]=sorted(s for s in subdirs if not s.startswith('.'))
             if 'dub.sdl' in files or 'dub.json' in files:
@@ -247,6 +250,7 @@ def layer_registration():
     for path,policy_file in found:
         require(path in registered or path in allowed,f'FLINT-E0535: {path} is a DUB package that no policy lists; add it to {policy_file}')
     for path,meta in sorted(allowed.items()):
+        if path.split('/')[0] not in tops:continue
         require(meta.get('since','')<=REGISTRATION_FROZEN,f'FLINT-E0535: {path}: policy/unregistered-packages.json only shrinks; register the package in its policy instead')
         require(path in paths,f'FLINT-E0535: {path} is no longer a package; remove it from policy/unregistered-packages.json')
         require(path not in registered,f'FLINT-E0535: {path} is registered now; remove it from policy/unregistered-packages.json')
