@@ -524,13 +524,16 @@ private void auditExpansion(scope const Token[] expanded, string where, ref Repo
 /// Tokens of a -mixin dump, skipping expansions located in the bundled compiler's druntime and Phobos sources.
 bool projectMixinTokens(string text, string compiler, string root, out Token[] tokens, out LexFailure failure)
 {
+    import std.algorithm.searching : any;
     import std.file : exists, isFile;
     import std.path : absolutePath, buildNormalizedPath, buildPath, dirName;
     import std.regex : matchAll, regex;
 
     const installation = dirName(dirName(dirName(realPath(compiler))));
+    // DMD keeps druntime and Phobos under src/; LDC, whose ldmd2 fills the DMD role on arm64 (ADR-024), under import/.
     const standard = [
-        buildPath(installation, "src", "phobos"), buildPath(installation, "src", "druntime", "import")
+        buildPath(installation, "src", "phobos"), buildPath(installation, "src", "druntime",
+                "import"), buildPath(dirName(dirName(realPath(compiler))), "import")
     ];
     size_t[] starts;
     size_t[] ends;
@@ -554,7 +557,7 @@ bool projectMixinTokens(string text, string compiler, string root, out Token[] t
         if (location.length)
         {
             const source = realPath(buildPath(root, location));
-            if (exists(source) && isFile(source) && (within(source, standard[0]) || within(source, standard[1])))
+            if (exists(source) && isFile(source) && standard.any!(directory => within(source, directory)))
                 continue;
         }
         if (!tokenize(text[ends[index] .. finish], part, failure))
