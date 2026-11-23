@@ -111,6 +111,14 @@ reflects. Other mixed packages (`flint.context.annotation`, `flint.context.event
 annotation's module, as in Java, because applications import those types (`AnnotationConfigApplicationContext`,
 `ContextRefreshedEvent`) from there; their annotation structs import only other annotation modules.
 
+`descriptorOf!T` merges as the generator does (AOT contract section 2.1, `merge.d`): breadth first so the nearest
+declaration wins, explicit `@AliasFor` applied even at its default and to meta-meta-annotations, single values
+wrapped for array attributes, implicit aliases mirrored along alias chains, and Spring's `AnnotationTypeMapping`
+checks reported through `MergedAnnotation.error` (validated in attribute-name order, as `AttributeMethods` sorts).
+It also appends each supertype's annotations as aggregates 1..n (contract 3). Deviations: `@Inherited` is not
+modelled, so `INHERITED_ANNOTATIONS` reads aggregate 0 only (gate `FlintInheritedAnnotations`), and `SUPERCLASS`
+reads interfaces too; aliases inside nested annotation values are not resolved (`FlintAliasForNestedAnnotations`).
+
 ### The container
 
 - **Definitions** are `RootBeanDefinition`s over the generated `flint.engine.aot.bean.BeanDefinition` records.

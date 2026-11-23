@@ -168,6 +168,8 @@ struct MergedAnnotation
     string type;                               // fully qualified annotation name
     Any value;                                 // the merged struct literal
     ubyte distance;                            // 0 = declared, 1+ = meta-annotation depth
+    ubyte aggregateIndex;                      // contract 3: 0 = the element, n = its nth supertype or overridden method
+    string error;                              // runtime merger only: AnnotationConfigurationException message
 }
 
 struct ParameterDescriptor
@@ -218,6 +220,8 @@ final class Descriptor
     const(MergedAnnotation)* annotation(string type) const nothrow @nogc;   // hot
 }
 ```
+
+**Aggregates (contract 3).** `annotations` lists the element's own merged entries (aggregate 0) first, then those of each supertype, one entry per (type, aggregate), in Spring's `TYPE_HIERARCHY` order: the class, its interfaces (recursively), then the superclass and its interfaces; for a method, the methods it overrides or implements. `Descriptor.annotation(type)` reads aggregate 0 only (Spring's `INHERITED_ANNOTATIONS`, without `@Inherited`): stereotypes, `@Lazy`, `@Primary`, `@Scope` and conditions. The free `findAnnotation(annotations, type)`, `AnnotationUtils.findAnnotation`, `OrderUtils` and `MergedAnnotations.from(..., SUPERCLASS | TYPE_HIERARCHY)` read every aggregate and take the first aggregate holding the type, then the lowest distance, as Spring's `MergedAnnotationFinder` does. The generator never sets `error`; `descriptorOf!T`'s merger sets it on every entry of an element whose `@AliasFor` declarations are misconfigured (where the generator reports FLINT-E1103), and `MergedAnnotations.get` throws `AnnotationConfigurationException` with it.
 
 `constructors` lists every public constructor of a struct or class, with parameter names and merged annotations. For a struct without a constructor (a Java record, rule R11) whose fields are all public, `constructors[0]` is its field-wise canonical constructor, with parameters named after the fields in declaration order. That is how message conversion and row mapping find a record's creator; contract 2 may add an explicit flag.
 
