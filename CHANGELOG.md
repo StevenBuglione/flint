@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Milestone 10, in progress (ADR-028):
+  - flint:di gains compile-time conditional registration: `@ConditionalOnConfig`, `@ConditionalOnMissingBean` and `AutoConfiguration` lists, driven by `config/application.toml`.
+  - Starters live under `starters/` and are added with `flint add`:
+    - flint:starter-web runs a configured REST service in one call and serves a single-page front end.
+    - flint:starter-observability serves health, readiness and Prometheus metrics.
+  - Ordinary handlers need no `nothrow`/`@nogc`/`scope`: flint:web runs them on a worker thread, with replies of any size.
+  - `flint openapi` writes the controllers' OpenAPI 3.1 document and a typed TypeScript client.
+  - `flint check` flags nullable class fields (FLINT-E0530) and handler attributes the framework makes unneeded (FLINT-E0531), and reports attributes per handler.
 - Milestone 9 (ADR-027) adds knowledge and tooling for people and agents:
   - `flint docs`, `flint examples` and `flint explain` answer from an offline index of the pinned API.
   - `flint generate` produces canonical components, and new projects get an `AGENTS.md`.

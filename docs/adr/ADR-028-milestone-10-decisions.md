@@ -142,3 +142,14 @@ Status: proposed by the Milestone 10 implementation, for the project owner's rev
 - `flint add web` and twenty lines of application code give a configured REST service with DI, ordinary handlers and string path variables. `tests/test_flint_starters.py` covers `flint add` (dependency, section, lock, a repeated add and an unknown starter), and the example serving a request and refusing a misspelt key with exit code 3.
 - **Known limit:** SIGTERM and SIGINT stop a starter application without running `@PreDestroy` hooks, because flint:web's run loop does not yet watch for signals (flint:os dispatches only SIGINT, to callbacks). A worker-thread controller has one thread with 16 queued requests.
 - A starter can register its beans by default, an application can override any of them by registering the same key, and a starter's optional parts switch on with a configuration section. `packages/di/tests/context_behavior.d` covers auto-configured wiring, replacement by an explicit binding, `@ConditionalOnMissingBean`, the compile-time error for a disabled dependency, and the TOML section reader. The 17 negative fixtures are rejected as before.
+
+## Remaining for Milestone 10
+
+- **flint:starter-data.**
+  - **What it adds:** a pool from `[database]`, migrations discovered from `resources/migrations` at build time, and repository registration.
+  - **Its design point:** flint:data is allocation-free from end to end, with `Text` fields in the request arena, so the starter needs `Text`/`string` helpers rather than `string` columns.
+- **flint:starter-security and the auth starter:** sessions, OAuth login, password hashing and email verification.
+- **The second wave of starters:** cache, messaging, mail, storage, ai, mcp, cli, tui and desktop.
+- **Graceful SIGTERM and SIGINT:** this needs flint:os to dispatch SIGTERM and flint:web's run loop to watch for it.
+- **The benchmark's references:** Flint references for `rest-notes`, `queue-worker` and `tui-dashboard`, and the Go and Spring Boot references.
+
