@@ -202,6 +202,18 @@ Toolchain inspect(const ref Home home, scope const(string)[] names, bool hash, s
         }
         assign(toolchain, component);
     }
+    forkIdentity(home, toolchain);
+    verifyReceipt(toolchain);
+    return toolchain;
+}
+
+/// Whether the fork is installed and the digests of the patches it should be built from (ADR-024, ADR-025,
+/// ADR-026).
+private void forkIdentity(const ref Home home, ref Toolchain toolchain)
+{
+    import std.file : exists;
+    import std.path : buildPath;
+    import flint_tool.support.files : sha256File;
     import flint_tool.toolchain.host : dmdArm64Host, dmdForkHost, upstreamDmdHost;
 
     const bin = buildPath(toolchain.directory, "dmd2", "linux", "bin64");
@@ -224,6 +236,13 @@ Toolchain inspect(const ref Home home, scope const(string)[] names, bool hash, s
         toolchain.fork.dubPatch = upstreamDmdHost ? dubPatchDigest(home,
                 "dub-1.43.0-flint-windows.patch") : sha256File(buildPath(home.root, "toolchain",
                 "dub-1.43.0-flint.patch"));
+}
+
+/// Compare the installed fork with its receipt: patches and, where hashed, binaries.
+private void verifyReceipt(ref Toolchain toolchain)
+{
+    import std.path : buildPath;
+
     toolchain.fork.receiptPath = buildPath(toolchain.directory, receiptName);
     ToolchainReceipt receipt;
     if (readReceipt(toolchain.fork.receiptPath, receipt))
@@ -242,7 +261,6 @@ Toolchain inspect(const ref Home home, scope const(string)[] names, bool hash, s
             && receipt.dmd.dmd_patch_sha256 == toolchain.fork.dmdPatch
             && receipt.dmd.dub_patch_sha256 == toolchain.fork.dubPatch;
     }
-    return toolchain;
 }
 
 private void assign(ref Toolchain toolchain, Component component)
