@@ -17,8 +17,10 @@ It is the macOS track of [ADR-021](../adr/ADR-021-flint-platform.md) section 9, 
   - `flint toolchain install|verify`, `doctor`, `build`, `test` and `check` all work, and `flint` bootstraps itself.
 - **All 37 packages** pass `dub test` on `ldmd2` and `ldc2`.
 - **The packages that declare fixture peers** in `policy/test-peers.toml` also pass with those peers through `flint test --compiler both`: `ai`, `cache`, `data`, `http`, `mail`, `migrate`, `security`, `sql` and `storage`.
+- **The live `mq` scenarios** (`flint test mq --scenarios`) pass all seven on macOS: Kafka receipts, rebalance, rejection, drain and outage on a real KRaft broker under the Temurin aarch64 macOS JRE, and NATS JetStream over loopback and verified TLS. `policy/peer-lock.json` names that JRE as a `macos-arm64` host override, and the scenario binaries in `policy/test-peers.toml` name `{dub}`, `{dmd}` and `{host}` instead of Linux paths. The platform lane runs them.
 - **The reactor** has a kqueue backend with the epoll backend's semantics, including native descriptor watches.
 - **Native providers.** `tools/native_build.py` builds all 17 C providers of the `ci` closure and wasmtime with Apple clang. Flint's C shims build on Darwin; ADR-024 section 4 lists the differences they absorb.
+- **Embedded C in projects** builds with the pinned LLVM 22.1.8 for macOS arm64 under the Darwin rules in `policy/native-c.toml` (ADR-024 section 4).
 - **Build measurement.** `tools/measure_builds.py` and `tools/compare_go_builds.py` run on pluto against the pinned Go 1.27.4 darwin-arm64.
 
 ## Evidence
@@ -78,15 +80,6 @@ Findings for ADR-025:
 
 ## Not done
 
-- **Live `mq` scenarios** (`flint test --scenarios`) are not part of the macOS lane:
-  - the JRE in `policy/peer-lock.json` is the Linux x64 build;
-  - the scenario's `[binary.dub]`, `[binary.dmd]` and `[binary.native]` entries name Linux paths.
-
-  The `mq` unit and loopback JetStream tests do run on macOS.
-- **Embedded C in projects** (`policy/native-c.toml`) needs Darwin rules:
-  - the pinned compiler is the Linux LLVM release;
-  - Apple clang rejects `-fstack-clash-protection` on arm64;
-  - `-z relro -z now` are ELF-only.
 - **The desktop WebView backend** is GTK and WebKitGTK only. macOS runs the SDL canvas backend, and a WKWebView backend is future work.
 - **WASI preopens** keep a narrow rename race on macOS until the Wasmtime C API can take a directory descriptor (ADR-024 section 4).
 - **DMD arm64** is the dmd-arm64 session's work. These packages will be run on it as soon as druntime and Phobos land for macOS.

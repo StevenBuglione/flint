@@ -2,13 +2,14 @@
 import json
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 
 from test_flint_cli import ROOT, codes, environment, error, flint_json, setUpModule  # noqa: F401
 
-CLANG = ROOT / '.tools' / 'LLVM-22.1.8-Linux-X64' / 'bin' / 'clang'
+CLANG = ROOT / '.tools' / ('LLVM-22.1.8-macOS-ARM64' if sys.platform == 'darwin' else 'LLVM-22.1.8-Linux-X64') / 'bin' / 'clang'
 SANITIZER_RUNTIME = ROOT / '.tools' / 'ldc-1.43.0-sanitizer-runtime' / 'flint-sanitizer-runtime.json'
 
 CRC = '''#include "crc.h"
@@ -156,17 +157,29 @@ class EmbeddedCTests(unittest.TestCase):
         status, document = self.run_flint('build')
         self.assertEqual(status, 0, document['diagnostics'])
         binary = self.project / '.flint/build/dev/demo'
-        headers = subprocess.run(['readelf', '-lW', str(binary)], capture_output=True, text=True).stdout
-        dynamic = subprocess.run(['readelf', '-dW', str(binary)], capture_output=True, text=True).stdout
-        self.assertIn('GNU_RELRO', headers)
-        self.assertIn('Position-Independent Executable', headers)
-        self.assertIn('BIND_NOW', dynamic)
-        symbols = subprocess.run(['nm', str(binary)], capture_output=True, text=True).stdout
+        if sys.platform == 'darwin':
+            # Mach-O (ADR-024): a PIE executable whose fixups ld64 resolves at load (chained fixups).
+            header = subprocess.run(['otool', '-hv', str(binary)], capture_output=True, text=True).stdout
+            commands = subprocess.run(['otool', '-l', str(binary)], capture_output=True, text=True).stdout
+            self.assertIn('PIE', header)
+            self.assertIn('LC_DYLD_CHAINED_FIXUPS', commands)
+        else:
+            headers = subprocess.run(['readelf', '-lW', str(binary)], capture_output=True, text=True).stdout
+            dynamic = subprocess.run(['readelf', '-dW', str(binary)], capture_output=True, text=True).stdout
+            self.assertIn('GNU_RELRO', headers)
+            self.assertIn('Position-Independent Executable', headers)
+            self.assertIn('BIND_NOW', dynamic)
+        # ld64 dead-strips functions the executable never calls, as main here never calls the C (ADR-024).
+        built = [str(binary)] if sys.platform != 'darwin' else [str(p) for p in (self.project / '.flint/cache/c').glob('*.o')]
+        symbols = subprocess.run(['nm', *built], capture_output=True, text=True).stdout
         self.assertIn('demo_crc32', symbols)
         embedded = self.receipt(document)['embedded_c']
         self.assertEqual([s['path'] for s in embedded['sources']], ['native/crc.c'])
-        for flag in ('-std=c17', '-Wall', '-Wextra', '-Werror', '-D_FORTIFY_SOURCE=3', '-fstack-protector-strong',
-                     '-fstack-clash-protection', '-ftrivial-auto-var-init=zero'):
+        expected = ['-std=c17', '-Wall', '-Wextra', '-Werror', '-D_FORTIFY_SOURCE=3', '-fstack-protector-strong',
+                    '-ftrivial-auto-var-init=zero']
+        # Darwin arm64 has no stack-clash probing to switch on; it compiles against the SDK instead (ADR-024).
+        expected += ['-isysroot'] if sys.platform == 'darwin' else ['-fstack-clash-protection']
+        for flag in expected:
             self.assertIn(flag, embedded['flags'])
         self.assertEqual(len(embedded['compiler_sha256']), 64)
 

@@ -141,13 +141,14 @@ On the D side, each package's `ffi`/`sys` module enables its native path on macO
 
 Tests that selected `Backend.epoll` select `Backend.kqueue` on macOS. The `cache` package's remote store does the same in its source. That keeps the readiness backend under test on Linux unchanged.
 
-Providers keep the flags `native_build.py` gives them on Linux. The embedded-C rules in `policy/native-c.toml`, which govern C inside a Flint project, need a Darwin variant before `flint build` compiles such C on macOS:
+Providers keep the flags `native_build.py` gives them on Linux. C inside a Flint project follows `policy/native-c.toml`, whose `[macos]` table replaces the Linux fields on macOS:
 
-- the pinned compiler is the Linux LLVM release;
-- Apple clang rejects `-fstack-clash-protection` on arm64;
-- `-z relro -z now` are ELF-only.
+- **Compiler.** The pinned LLVM 22.1.8 release for macOS arm64 (`LLVM-22.1.8-macOS-ARM64.tar.xz`, sha256 in `policy/toolchains.json`, checked against the release's `.jsonl` attestation). `tools/install_toolchains.py --compiler clang` installs it to `.tools/LLVM-22.1.8-macOS-ARM64`, with `clang`, `clang-tidy`, `lld` and `ld64.lld`. `flint build` passes `-isysroot` with the SDK that `xcrun --show-sdk-path` names, and reports `FLINT-E0816` when no SDK is installed.
+- **Hardening.** The Linux set without `-fstack-clash-protection`, which LLVM rejects for Darwin arm64. `_FORTIFY_SOURCE=3`, `-fstack-protector-strong`, `-fPIE` and `-ftrivial-auto-var-init=zero` are kept.
+- **Link hardening.** None is passed. `-z relro -z now` are ELF-only. Apple's linker already writes position-independent executables whose imports bind through chained fixups (`LC_DYLD_CHAINED_FIXUPS`), and dyld maps those pages read-only after binding, which is what full RELRO gives on Linux. `tests/test_flint_native_c.py` checks for the `PIE` flag and the chained-fixups load command on macOS, where it checks `BIND_NOW` and `GNU_RELRO` on Linux.
+- **clang-tidy.** On macOS, `flint check` runs it with `-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0`. The Darwin SDK's fortify macros turn `strcpy` into `__builtin___strcpy_chk`, which hides the call from the `insecureAPI` checks the policy enables.
 
-That variant is follow-up work, coordinated with Milestone 8.
+ld64 drops C functions that the executable never calls. The native-C test therefore looks for the fixture's symbol in the cached object on macOS, not in the dev binary.
 
 ### 5. The platform lane
 
@@ -155,6 +156,8 @@ That variant is follow-up work, coordinated with Milestone 8.
 
 - `ldmd2`, which fills the dev and test profiles' DMD role;
 - `ldc2`.
+
+On macOS it then runs `flint test` for the packages with fixture peers and `flint test mq --scenarios`, after installing those peers, NATS, Kafka and the Temurin aarch64 macOS JRE. The JRE is a `macos-arm64` host override in `policy/peer-lock.json`, and `policy/test-peers.toml` names scenario binaries through the `{dub}`, `{dmd}` and `{host}` placeholders that `flint` expands.
 
 Linux lanes keep running `ldc2` only. On macOS the lane sets `FLINT_DUB_PIPELINE=0`. Its receipt, `artifacts/platforms/macos-arm64.json`, is what Gate 6's `macos-arm64` entry reads. The lane expects `ldc2`, `ldmd2` and the Flint DUB first on `PATH`:
 
@@ -209,4 +212,5 @@ The Linux behaviour of every changed module is unchanged by construction. The Li
 - the platform and sanitizer lanes of `tools/ci.py` (its macOS-only branches do not run on Linux);
 - `flint test --project apps/flint`, and `python3 -m unittest discover -s tests -p 'test_*.py'`;
 - `python3 tools/gates.py --gate structural`, since `tools/gates.py` changed;
-- `flint toolchain install --plan`, `flint toolchain verify` and `tools/install_toolchains.py --compiler flint`, since `tools/install_toolchains.py` and the toolchain modules changed.
+- `flint toolchain install --plan`, `flint toolchain verify` and `tools/install_toolchains.py --compiler flint`, since `tools/install_toolchains.py` and the toolchain modules changed;
+- `python3 -m unittest tests.test_flint_native_c` and `flint check` on a project with embedded C, since `cbuild.d` reads the new `[macos]` table (ignored on Linux) and `tools/install_toolchains.py --compiler clang` gained the Darwin download.

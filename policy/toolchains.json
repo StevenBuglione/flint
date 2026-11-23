@@ -97,6 +97,12 @@
       "checksum_url": "https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.8/clang+llvm-22.1.8-x86_64-pc-windows-msvc.tar.xz.jsonl",
       "verification": "The digest is the GitHub release asset digest, read on 2026-11-22. Only bin/lld-link.exe is extracted: the Windows dev link (ADR-026). The attestation signature was not verified with sigstore tooling."
     },
+    "LLVM-22.1.8-macOS-ARM64.tar.xz": {
+      "url": "https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.8/LLVM-22.1.8-macOS-ARM64.tar.xz",
+      "sha256": "f260f4f7c0d430828a81ae8a3826a1d63fc0963ec2459489308cc23b1f7eab4f",
+      "checksum_url": "https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.8/LLVM-22.1.8-macOS-ARM64.tar.xz.jsonl",
+      "verification": "The digest matches the subject of the release SLSA provenance attestation (.jsonl) and the GitHub release asset digest. The attestation signature was not verified with sigstore tooling."
+    },
     "LLVM-22.1.8-Linux-X64.tar.xz": {
       "url": "https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.8/LLVM-22.1.8-Linux-X64.tar.xz",
       "sha256": "df0e1ecf16caf3489a272a5eea4eec9b0d82878f6477fa309504f918a0006384",

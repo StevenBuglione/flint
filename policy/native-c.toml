@@ -14,3 +14,15 @@ hardening = ["-O2", "-D_FORTIFY_SOURCE=3", "-fstack-protector-strong", "-fstack-
 link_hardening = ["-z", "relro", "-z", "now"]
 sanitize = ["-O1", "-g", "-fsanitize=address,undefined", "-fno-sanitize-recover=all", "-fno-omit-frame-pointer", "-fstack-protector-strong", "-ftrivial-auto-var-init=zero", "-fPIE"]
 clang_tidy_checks = "-*,bugprone-*,cert-*,clang-analyzer-*,performance-*,portability-*,-bugprone-easily-swappable-parameters,-cert-err33-c,-clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling"
+
+# macOS arm64 (ADR-024) replaces the tool paths and flag sets above as a whole: the pinned LLVM release for
+# macOS compiles against the Xcode SDK, which flint passes with -isysroot. Darwin arm64 has no stack-clash
+# probing to switch on (clang rejects -fstack-clash-protection there), and Mach-O has no RELRO flags: ld64
+# resolves every fixup at load time (chained fixups) and maps __DATA_CONST read-only afterwards, and every
+# executable is PIE.
+[macos]
+compiler = "{toolchain}/LLVM-22.1.8-macOS-ARM64/bin/clang"
+clang_tidy = "{toolchain}/LLVM-22.1.8-macOS-ARM64/bin/clang-tidy"
+hardening = ["-O2", "-D_FORTIFY_SOURCE=3", "-fstack-protector-strong", "-ftrivial-auto-var-init=zero", "-fPIE"]
+link_hardening = []
+sanitize = ["-O1", "-g", "-fsanitize=address,undefined", "-fno-sanitize-recover=all", "-fno-omit-frame-pointer", "-fstack-protector-strong", "-ftrivial-auto-var-init=zero", "-fPIE"]

@@ -612,8 +612,36 @@ def keep_llvm_member(name):
     return any(relative == item or (item.endswith('/') and relative.startswith(item)) for item in LLVM_MEMBERS)
 
 
+LLVM_DARWIN_ARCHIVE = 'LLVM-22.1.8-macOS-ARM64.tar.xz'
+LLVM_DARWIN_ROOT = 'LLVM-22.1.8-macOS-ARM64'
+# On macOS the embedded-C compiler and clang-tidy (ADR-024), plus ld64.lld for the speed features (ADR-025).
+LLVM_DARWIN_MEMBERS = LLVM_MEMBERS + ('bin/lld', 'bin/ld64.lld')
+
+
+def install_clang_darwin(destination):
+    """Install the pinned LLVM release subset on macOS arm64; the 1.5 GB archive is not kept."""
+    bin_dir = destination / LLVM_DARWIN_ROOT / 'bin'
+    clang = bin_dir / 'clang'
+    if not clang.is_file() or 'clang version ' + LOCK['versions']['clang'] + ' ' not in subprocess.check_output(
+            [str(clang), '--version'], text=True):
+        prefix = LLVM_DARWIN_ROOT + '/'
+
+        def keep(name):
+            relative = name[len(prefix):] if name.startswith(prefix) else None
+            return relative is not None and any(relative == item or (item.endswith('/') and relative.startswith(item))
+                                                for item in LLVM_DARWIN_MEMBERS)
+        install(LLVM_DARWIN_ARCHIVE, destination, keep=keep)
+        (destination / LLVM_DARWIN_ARCHIVE).unlink(missing_ok=True)
+    version = subprocess.check_output([str(clang), '--version'], text=True)
+    if 'clang version ' + LOCK['versions']['clang'] + ' ' not in version:
+        raise SystemExit('pinned LLVM archive did not provide clang ' + LOCK['versions']['clang'])
+    return bin_dir
+
+
 def install_clang(destination):
     """Install the subset of the pinned official LLVM release the sanitizer lane uses."""
+    if platform.system() == 'Darwin':
+        return install_clang_darwin(destination)
     install(LLVM_ARCHIVE, destination, keep=keep_llvm_member)
     bin_dir = destination / LLVM_ROOT / 'bin'
     version = subprocess.check_output([str(bin_dir / 'clang'), '--version'], text=True)
@@ -878,10 +906,13 @@ def main():
         print(json.dumps(install_lld_link(a.destination)))
         return
     if a.compiler in ('clang','ldc-sanitizer-runtime'):
-        if (osname,arch)!=('Linux','x86_64') or a.musl:raise SystemExit('the sanitizer lane toolchain pin is Linux x86_64 glibc')
+        darwin_clang=a.compiler=='clang' and (osname,arch)==('Darwin','aarch64')
+        if not darwin_clang and ((osname,arch)!=('Linux','x86_64') or a.musl):
+            raise SystemExit('the sanitizer lane toolchain pin is Linux x86_64 glibc; clang is also pinned for macOS arm64')
         if a.compiler=='clang':
             bin_dir=install_clang(a.destination)
-            receipt={'compiler':'clang','version':LOCK['versions']['clang'],'bin':str(bin_dir),'sha256':LOCK['assets'][LLVM_ARCHIVE]['sha256']}
+            asset=LLVM_DARWIN_ARCHIVE if darwin_clang else LLVM_ARCHIVE
+            receipt={'compiler':'clang','version':LOCK['versions']['clang'],'bin':str(bin_dir),'sha256':LOCK['assets'][asset]['sha256']}
         else:
             runtime=build_sanitizer_runtime(a.destination,a.build_dir.resolve() if a.build_dir else None)
             receipt={'compiler':'ldc-sanitizer-runtime','version':LOCK['versions']['ldc'],

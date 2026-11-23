@@ -35,6 +35,21 @@ struct NativeCPolicy
     string clang_tidy_checks;
 }
 
+/// policy/native-c.toml `[macos]`: the tool paths and flag sets macOS uses in place of `[c]`'s (ADR-024).
+struct NativeCHost
+{
+    /// Compiler path template.
+    string compiler;
+    /// clang-tidy path template.
+    string clang_tidy;
+    /// Code-generation hardening.
+    string[] hardening;
+    /// Linker hardening, as linker arguments.
+    string[] link_hardening;
+    /// Flags of `flint test --sanitize` builds.
+    string[] sanitize;
+}
+
 /// The compiled C of one build.
 struct CBuild
 {
@@ -100,6 +115,7 @@ bool loadNativeCPolicy(const ref Home home, out NativeCPolicy policy, out string
     static struct File
     {
         NativeCPolicy c;
+        NativeCHost macos;
     }
 
     auto loaded = load!File(options);
@@ -110,6 +126,15 @@ bool loadNativeCPolicy(const ref Home home, out NativeCPolicy policy, out string
         return false;
     }
     policy = loaded.value.c;
+    version (OSX)
+    {
+        const host = loaded.value.macos;
+        policy.compiler = host.compiler;
+        policy.clang_tidy = host.clang_tidy;
+        policy.hardening = host.hardening.dup;
+        policy.link_hardening = host.link_hardening.dup;
+        policy.sanitize = host.sanitize.dup;
+    }
     const directory = toolchainDirectory(home);
     policy.compiler = policy.compiler.replace("{toolchain}", directory);
     policy.clang_tidy = policy.clang_tidy.replace("{toolchain}", directory);
@@ -142,11 +167,41 @@ string[] compileFlags(const ref NativeCPolicy policy, const ref Manifest manifes
         return null;
     }
     string[] flags = ["-std=" ~ standard] ~ policy.warnings.dup ~ (sanitize ? policy.sanitize : policy.hardening).dup;
+    version (OSX)
+    {
+        // The pinned LLVM release has no SDK of its own; compile against Xcode's (ADR-024).
+        const sdk = sdkPath();
+        if (sdk.length == 0)
+        {
+            report.error("FLINT-E0816", "the macOS SDK is not installed", "xcode-select --install");
+            return null;
+        }
+        flags ~= ["-isysroot", sdk];
+    }
     foreach (directory; manifest.nativeC.includeDirs)
         flags ~= "-I" ~ buildPath(manifest.root, directory);
     foreach (definition; manifest.nativeC.defines)
         flags ~= "-D" ~ definition;
     return flags;
+}
+
+version (OSX)
+{
+    /// The active Xcode or Command Line Tools SDK, or null when none is installed.
+    private string sdkPath()
+    {
+        import std.string : strip;
+        import flint_tool.support.process : capture;
+
+        static string cached;
+        if (cached.length == 0)
+        {
+            const result = capture(["xcrun", "--show-sdk-path"]);
+            if (result.ok)
+                cached = result.output.strip.idup;
+        }
+        return cached;
+    }
 }
 
 /// Compile every embedded C source of a project, reusing cached objects. True when nothing failed.
@@ -289,9 +344,15 @@ long tidyNativeC(const ref Home home, const ref Manifest manifest, ref Report re
     string digest;
     if (!loadNativeCPolicy(home, policy, digest, report) || !cToolPresent(policy.clang_tidy, "clang-tidy", report))
         return 0;
-    const flags = compileFlags(policy, manifest, false, report);
+    auto flags = compileFlags(policy, manifest, false, report);
     if (!report.ok)
         return 0;
+    version (OSX)
+    {
+        // Darwin's <string.h> rewrites fortified calls such as strcpy into __builtin___strcpy_chk, which hides
+        // them from the analyzer; analyse the plain API, as glibc's headers leave it (ADR-024).
+        flags ~= ["-U_FORTIFY_SOURCE", "-D_FORTIFY_SOURCE=0"];
+    }
     long findings;
     foreach (relative; sources)
     {
