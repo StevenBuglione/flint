@@ -19,7 +19,7 @@ and process-tree peak RSS sampled every millisecond), nine trials of:
     (`measure.cached_static`), the secondary edit-build headline;
   - `flint_scratch_seconds`: the same build with every module compiled from source and no platform cache;
   - `flint_cached_cold_digests_cleared_seconds`: the cached cold build with flint's digest log cleared too, published
-    as context beside the primary (decisions.md, 2026-11-23 17:00Z);
+    as non-gating context beside the primary (coordinator, decisions.md 2026-11-23, condition 3);
   - `phase_medians_ms` per series: the median wall time of each build phase (total, flint, aot, plan, compile,
     link; -1 means absent) from flint's build receipt (phases_ms, d2a929cd), beside the coordinator's budget (`phase_budget_ms`);
   - `O3` and `Oz` binary sizes after GNU strip (flint's artifacts keep their symbol tables), as for Go.
@@ -36,8 +36,9 @@ Go and Java sides with status "incomplete"; such a record never passes a gate.
 from __future__ import annotations
 
 import json
-import statistics
 import os
+import re
+import statistics
 import shutil
 import subprocess
 import sys
@@ -127,11 +128,73 @@ def measure_go(name, trials, timed, logs, temporary, result):
     return row
 
 
+# Project-keyed entries of a flint cache (flint-aot's 64b85d08: the project's AOT models, their annotation sets and
+# generated output under projects/<root hash>/aot). The rest is platform and toolchain state, including the digest
+# log, whose entries under the port are pruned (coordinator, decisions.md 2026-11-23, confirming 1235dc4b).
+PROJECT_CACHE_ENTRIES = ('projects',)
+DIGEST_LOG = 'digests.log'
+AOT_SUMMARY = re.compile(r'Generated \d+ Flint AOT modules for \S+ \((\d+) extracted in \d+ ms, (\d+) from the shared cache')
+
+
+def platform_only_cache(cache, platform, port):
+    """`platform`: a hard-link copy of the primed `cache` without its project-keyed entries, the analogue of Go's
+    std-only GOCACHE. Refuses a cache in which the port's path still appears outside them (a project-keyed entry in
+    an unexpected place): every text file is searched, archives and objects excepted."""
+    shutil.copytree(cache, platform, copy_function=os.link, symlinks=True)
+    for name in PROJECT_CACHE_ENTRIES:
+        path = platform / name
+        if path.is_dir():
+            shutil.rmtree(path)
+        else:
+            path.unlink(missing_ok=True)
+    pruned = 0
+    log = platform / DIGEST_LOG
+    if log.is_file():
+        # A copy of its own, without the port's entries: an in-place port keeps its files' stat data between
+        # trials, which Go's fresh source copies do not.
+        prefixes = tuple({str(port) + os.sep, str(Path(port).resolve()) + os.sep})
+        lines = log.read_text().splitlines(keepends=True)
+        kept = [line for line in lines if not line.startswith(prefixes)]
+        pruned = len(lines) - len(kept)
+        log.unlink()
+        log.write_text(''.join(kept))
+    needles = {str(port).encode(), str(Path(port).resolve()).encode()}
+    found = []
+    for path in platform.rglob('*'):
+        if not path.is_file() or path.is_symlink() or path.suffix in ('.a', '.o', '.so', '.lib', '.obj'):
+            continue
+        if path.stat().st_size > 16 << 20:
+            continue
+        data = path.read_bytes()
+        if b'\0' in data[:4096]:
+            continue
+        if any(needle in data for needle in needles):
+            found.append(str(path.relative_to(platform)))
+    if found:
+        raise RuntimeError(f'the platform-only flint cache still names the port ({port}) in: {", ".join(found[:8])}; '
+                           'a project-keyed entry is outside projects/')
+    return pruned
+
+
+def cache_snapshot(directory):
+    """Path, size, mtime and inode of every file: a hard-link clone shares inodes, so a build that wrote a platform
+    entry in place would change the master the next trial is cloned from."""
+    return {str(p.relative_to(directory)): (st.st_size, st.st_mtime_ns, st.st_ino)
+            for p in directory.rglob('*') if p.is_file() and not p.is_symlink() for st in [p.stat()]}
+
+
+def aot_counts(log):
+    """(extracted, from the shared cache) of the AOT step in a build log, or None when it reported nothing."""
+    match = AOT_SUMMARY.search(Path(log).read_text(errors='replace'))
+    return (int(match.group(1)), int(match.group(2))) if match else None
+
+
 def measure_flint(name, trials, timed, logs, temporary, result):
     """The Flint port, built in place. flint.lock records where the platform packages are, so a copy of the checkout
     at another path resolves a different graph (FLINT-E0202); instead every cold trial starts from a project with no
-    .flint state (no objects, no generated AOT code, no build cache), and the edited source is restored after each
-    trial."""
+    .flint state (no objects, no generated AOT code, no build cache) and a fresh hard-link clone of the platform-only
+    cache, deleted after the trial, as Go's cold trials start from a clone of a std-only GOCACHE (coordinator,
+    2026-11-23). The edited source is restored after each trial."""
     directory = ROOT / spring_bench.app_row(name)['flint']['directory']
     spec = json.loads((directory / 'flint-spring.json').read_text())['measure']
     row = {'flint_cached_cold_seconds': [], 'flint_cached_incremental_seconds': [], 'flint_scratch_seconds': []}
@@ -142,48 +205,49 @@ def measure_flint(name, trials, timed, logs, temporary, result):
     row['flint_cached_cold_digests_cleared_seconds'] = []
     if 'cached_static' in flavours:
         row.update(flint_static_cold_seconds=[], flint_static_incremental_seconds=[])
-    # A flint cache of this measurement's own (the platform archives and the digest log), primed by the first build.
+    # A flint cache of this measurement's own, primed by the first build; the trials use clones of its platform part.
     cache = temporary / f'{name}-flint-cache'
+    platform = temporary / f'{name}-flint-platform-cache'
+    trial_cache = temporary / f'{name}-flint-trial-cache'
     env = dict(os.environ, FLINT_CACHE=str(cache))
     edit = directory / spec['edit_source']
     original = edit.read_bytes()
 
-    pruned = [0]
-    port_prefixes = tuple({str(directory) + os.sep, str(directory.resolve()) + os.sep})
-
-    def clean(digests='project'):
-        """A cold project: no .flint. flint's digest log (stat-keyed sha256 of the toolchain executables, flint and
-        the platform sources) lives in the cache and is platform and toolchain state, like Go's std-primed GOCACHE,
-        so cached cold trials keep it; any entry under the port is pruned, because an in-place port keeps its files'
-        stat data between trials, which Go's fresh source copies do not. Scratch trials and the context series clear
-        it (decisions.md, 2026-11-23 17:00Z)."""
+    def clean(digests='keep'):
+        """A cold project (no .flint) and a fresh clone of the platform-only cache. Its digest log is a real copy, as
+        flint appends to it; scratch trials and the context series start without one."""
         shutil.rmtree(directory / '.flint', ignore_errors=True)
-        digest_log = cache / 'digests.log'
-        if digests == 'all':
-            digest_log.unlink(missing_ok=True)
-        elif digest_log.is_file():
-            lines = digest_log.read_text().splitlines(keepends=True)
-            kept = [line for line in lines if not line.startswith(port_prefixes)]
-            if len(kept) != len(lines):
-                pruned[0] += len(lines) - len(kept)
-                digest_log.write_text(''.join(kept))
+        shutil.rmtree(trial_cache, ignore_errors=True)
+        if platform.is_dir():
+            shutil.copytree(platform, trial_cache, copy_function=os.link, symlinks=True,
+                            ignore=lambda path, names: [DIGEST_LOG] if Path(path) == platform else [])
+            if digests == 'keep' and (platform / DIGEST_LOG).is_file():
+                shutil.copyfile(platform / DIGEST_LOG, trial_cache / DIGEST_LOG)
 
     phases = {}
     try:
         # The platform cache (ADR-030 section 5) lives outside the port, so clearing the port's .flint keeps it. One
         # unscored build primes it, as measure_builds primes the DMD compile server, and its time is recorded.
-        clean('all')
+        clean()
         log = logs / f'{name}-flint-prime.log'
         observed = timed(spec['cached'], directory, env, log)
         row['flint_first_build_seconds'] = observed['seconds']
         row['dev_linker'] = dev_linker(env)
+        has_aot = aot_counts(log) is not None  # a port without @FlintApplication has no AOT step to check
+        pruned = platform_only_cache(cache, platform, directory)
+        master = cache_snapshot(platform)
+        env = dict(os.environ, FLINT_CACHE=str(trial_cache))
+        aot = {}
         row['flint_cache'] = {'platform_cache_primed': True,
-                              'digest_log': 'kept across cached cold trials (platform and toolchain state), entries '
-                                            'under the port pruned before every trial; cleared before scratch trials '
-                                            'and the digests-cleared context series'}
+                              'cold_trials': 'a fresh hard-link clone of the primed cache without '
+                                             + ' and '.join(PROJECT_CACHE_ENTRIES) + ', deleted after the trial',
+                              'platform_cache_files': len(master),
+                              'digest_log': 'kept (a copy per trial), its entries under the port pruned; absent in '
+                                            'scratch trials and the digests-cleared context series',
+                              'port_entries_pruned': pruned}
         for trial in range(trials):
             for flavour in flavours:
-                clean('all' if flavour in ('scratch', 'cached_cleared') else 'project')
+                clean('clear' if flavour in ('scratch', 'cached_cleared') else 'keep')
                 states = ['cold'] if flavour in ('scratch', 'cached_cleared') else ['cold', 'incremental']
                 for state in states:
                     if state == 'incremental':
@@ -197,6 +261,13 @@ def measure_flint(name, trials, timed, logs, temporary, result):
                            'cached_static': f'flint_static_{state}_seconds'}[flavour]
                     row[key].append(observed['seconds'])
                     phases.setdefault(key, []).append(build_phases(directory, began))
+                    if state == 'cold' and has_aot:
+                        counts = aot_counts(log)
+                        aot.setdefault(key, []).append(counts)
+                        # A cold trial extracts the project's own models: none of them may come from a cache.
+                        if counts is None or counts[0] == 0:
+                            raise RuntimeError(f'{name}: cold trial {trial} ({flavour}) reused project-keyed AOT '
+                                               f'state (AOT step {counts}); see {log}')
                     result['trials'].append(dict(observed, app=name, implementation='flint', flavour=flavour,
                                                  state=state, trial=trial, log=str(log.relative_to(logs.parent))))
                 edit.write_bytes(original)
@@ -212,9 +283,12 @@ def measure_flint(name, trials, timed, logs, temporary, result):
                                           text=True)
                 binary = spring_bench.flint_artifact(reported.stdout, directory)
             row[profile] = dict(stripped(binary, temporary), sha256=spring_bench.sha256(binary))
+        if cache_snapshot(platform) != master:
+            raise RuntimeError(f'{name}: a build changed the platform-only cache in place through a hard link')
+        row['flint_cache']['aot_extracted_and_shared_per_cold_trial'] = aot
     finally:
         edit.write_bytes(original)
-    row['flint_cache']['port_entries_pruned'] = pruned[0]
+        shutil.rmtree(trial_cache, ignore_errors=True)
     # Per-phase medians (flint, AOT, plan, compile, link) per series, beside the build-time budget.
     row['phase_medians_ms'] = {key: phase_medians(trials) for key, trials in phases.items() if any(trials)}
     row['phase_budget_ms'] = PHASE_BUDGET_MS

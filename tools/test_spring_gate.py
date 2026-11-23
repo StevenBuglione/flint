@@ -111,5 +111,38 @@ class AssembleParts(unittest.TestCase):
         self.assertEqual(len(spring_bench.merge_acceptance([(None, {'app': 'a'}), (None, [{'app': 'b'}, {'app': 'c'}])])), 3)
 
 
+class PlatformOnlyCache(unittest.TestCase):
+    def test_project_entries_are_stripped_and_stray_ones_refused(self):
+        import spring_builds
+        with tempfile.TemporaryDirectory() as temporary:
+            root, port = Path(temporary), Path(temporary) / 'port'
+            cache = root / 'cache'
+            (cache / 'projects' / 'abc' / 'aot' / 'models').mkdir(parents=True)
+            (cache / 'projects' / 'abc' / 'aot' / 'models' / 'm.json').write_text(f'{{"file": "{port}/src/app.d"}}')
+            (cache / 'aot' / 'models').mkdir(parents=True)
+            (cache / 'aot' / 'models' / 'p.json').write_text('{"file": "/platform/source/flint/x.d"}')
+            (cache / 'digests.log').write_text(f'/platform/x.d\t1 2 3 abc\n{port}/src/app.d\t1 2 3 def\n')
+            self.assertEqual(spring_builds.platform_only_cache(cache, root / 'platform', port), 1)
+            self.assertEqual(sorted(p.name for p in (root / 'platform').rglob('*') if p.is_file()),
+                             ['digests.log', 'p.json'])
+            # The pruned log is a copy of its own: flint appends to it, and the primed cache must not change.
+            self.assertEqual((root / 'platform' / 'digests.log').read_text(), '/platform/x.d\t1 2 3 abc\n')
+            self.assertEqual((cache / 'digests.log').stat().st_nlink, 1)
+            (cache / 'aot' / 'outputs').mkdir()
+            (cache / 'aot' / 'outputs' / 'o.json').write_text(f'{{"root": "{port}"}}')
+            with self.assertRaisesRegex(RuntimeError, 'outputs/o.json'):
+                spring_builds.platform_only_cache(cache, root / 'platform-2', port)
+
+    def test_aot_counts(self):
+        import spring_builds
+        with tempfile.TemporaryDirectory() as temporary:
+            log = Path(temporary) / 'build.log'
+            log.write_text('    Generated 11 Flint AOT modules for a.B (2 extracted in 9 ms, 21 from the shared cache, '
+                           '12 written, 30 ms)\n')
+            self.assertEqual(spring_builds.aot_counts(log), (2, 21))
+            log.write_text('Built\n')
+            self.assertIsNone(spring_builds.aot_counts(log))
+
+
 if __name__ == '__main__':
     unittest.main()
