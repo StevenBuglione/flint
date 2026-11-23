@@ -820,14 +820,19 @@ private final class Analysis
         plan.diagnostics ~= Diagnostic(code, message, relative(file), line);
     }
 
-    /// A file relative to the project root, with '/' on every host, as Report shows diagnostics' files.
+    /// A file relative to the project root, with '/' on every host, as Report shows diagnostics' files. A file
+    /// outside the project (a platform module) is named from its package's `source/` directory, so the generated
+    /// text does not depend on where the platform is checked out: flint build caches the AOT library by that text.
     string relative(string file)
     {
+        import std.string : lastIndexOf;
         import flint_tool.diagnostics.report : portablePath;
 
         if (input.root.length && file.length > input.root.length && file[0 .. input.root.length] == input.root)
             return portablePath(file[input.root.length + 1 .. $]);
-        return portablePath(file);
+        const path = portablePath(file);
+        const source = path.lastIndexOf("/source/");
+        return source < 0 ? path : path[source + "/source/".length .. $];
     }
 
     string location(string file, long line)

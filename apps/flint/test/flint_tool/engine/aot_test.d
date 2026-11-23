@@ -957,6 +957,10 @@ unittest
     expect(generated.canFind("foreach (descriptor; flintexporter.config.flintAotDescriptors())")).toBeTrue();
     expect(generated.canFind("describe_ExporterProperties")).toBeFalse();
     expect(generated.canFind("descriptorOf!(string[])")).toBeFalse();
+    // A platform module's generated text names its sources from their source/ root, not the checkout, so flint
+    // build can cache the AOT library across projects and checkouts.
+    expect(generated.canFind(root)).toBeFalse();
+    expect(generated.canFind(`"flintexporter/config.d:`)).toBeTrue();
     // The properties bean is still generated: beans and conditions stay with the application.
     expect(generated.canFind(`"exporter-flintexporter.config.ExporterProperties"`)).toBeTrue();
 }
