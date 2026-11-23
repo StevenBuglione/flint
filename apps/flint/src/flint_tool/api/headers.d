@@ -261,7 +261,8 @@ string[] markerWords(string marker)
     size_t start;
     foreach (index, c; marker)
     {
-        const separator = c == ' ' || c == ',' || c == '(' || c == ')' || c == ':' || c == ';' || c == '\t';
+        // `/` splits URLs and owner/repo, so `https://github.com/hibernate/hibernate-validator` names its project.
+        const separator = c == ' ' || c == ',' || c == '(' || c == ')' || c == ':' || c == ';' || c == '\t' || c == '/';
         if (!separator)
             continue;
         if (index > start)
@@ -323,6 +324,10 @@ bool statesLicence(string header, const ref LicenceEntry entry)
     string[] evidence = [licenceLine(entry)];
     switch (spdxOf(entry))
     {
+    case "Apache-2.0":
+        // The standard sentence and upstream forms such as "License: Apache License, Version 2.0".
+        evidence ~= "Apache License, Version 2.0";
+        break;
     case "MIT":
         evidence ~= "Permission is hereby granted, free of charge";
         break;

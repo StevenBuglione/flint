@@ -648,3 +648,31 @@ unittest
     const apache = LicenceEntry("spring-framework", "Apache-2.0", "port-source", "v7.1.0");
     expect(statesLicence("Licensed under the Apache License, Version 2.0 (the \"License\")\n", apache)).toEqual(true);
 }
+
+@("upstream header forms: a project named in a URL, the Apache licence by name, an upstream's own header line")
+unittest
+{
+    import std.array : replicate;
+    import flint_tool.api.headers : LicenceEntry, checkHeader, markerText, pinOf, statesLicence;
+
+    Upstream[] upstreams;
+    string error;
+    parseUpstreams(`{"schema":"flint.api-upstreams/1","upstreams":[{"project":"hibernate-validator",
+        "version":"9.1.6.Final","format":"jar","sha256":"` ~ "a".replicate(64) ~ `","url":
+        "https://repo1.maven.org/maven2/org/hibernate/validator/hibernate-validator/9.1.6.Final/`
+            ~ `hibernate-validator-9.1.6.Final-sources.jar"},
+        {"project":"jakarta-validation","version":"3.1.1","format":"jar","sha256":"` ~ "b".replicate(
+                64) ~ `","url":"u"}]}`, upstreams, error);
+    string failure;
+    const pin = pinOf(markerText(
+            " * Ported from Hibernate Validator 9.1.6.Final, https://github.com/hibernate/hibernate-validator,\n"),
+            upstreams, failure);
+    expect(failure).toEqual("");
+    expect(pin.project).toEqual("hibernate-validator");
+    const apache = LicenceEntry("jakarta-validation", "Apache-2.0", "port-source", "3.1.1", "Jakarta Validation API");
+    expect(statesLicence(" * License: Apache License, Version 2.0\n", apache)).toEqual(true);
+    enum header = "/*\n * Ported from Jakarta Validation API 3.1.1 (jakarta-validation), https://x, tag 3.1.1:\n"
+        ~ " *\n * Jakarta Validation API\n * License: Apache License, Version 2.0\n *\n"
+        ~ " * Modified by the Flint authors.\n */\nmodule flint.jakarta.validation;\n";
+    expect(checkHeader("f.d", header, upstreams, [apache], "Apache-2.0").length).toEqual(0);
+}
