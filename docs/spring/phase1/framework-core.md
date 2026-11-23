@@ -74,6 +74,27 @@ should use the same pattern wherever an interface has `Class`-typed overloads.
   `TraceInfo`, so druntime captures no trace: framework control-flow exceptions use it (ADR-030 section 4).
 - `java.util.function` is `flint.java.util.function_`.
 
+### Dates, calendars and date formats
+
+`java.util.Date`, `Calendar`, `GregorianCalendar`, `TimeZone` and `SimpleTimeZone`, and `java.text`'s `DateFormat`,
+`SimpleDateFormat`, `ParsePosition` and `ParseException`, are clean room from the Java SE specification.
+- **Why they exist.** Jackson's `StdDateFormat` delegates to them as upstream does to the JDK's.
+- **Proof.** `framework/java/tests/golden/dates.tsv` holds the pattern cases of Jackson 3.1.8 and JDK 21 that
+  `SimpleDateFormat` must reproduce.
+- **Calendar.** It is Java's default `GregorianCalendar`, Julian before 1582-10-15. Fields resolve as Java does, and
+  a strict calendar re-checks every set field after computing.
+- **Weeks.** They follow the `en_US` rules: a week starts on Sunday, and week 1 holds January 1.
+- **Default zone.** UTC, as `ZoneId.systemDefault()` is and `Date.toString` prints.
+
+Deviations:
+- **Region zones.** Only UTC, GMT, `Etc/UTC`, `Etc/GMT` and Java's custom `GMT±h[h][[:]mm]` IDs resolve, because the
+  time-zone database is not ported. `TimeZone.getTimeZone` throws `IllegalArgumentException` for any other ID,
+  where Java silently returns GMT, and zones have no daylight saving time.
+- **English only.** Month, day, era, AM/PM and zone names are English. `new SimpleDateFormat(pattern, locale)`
+  throws for a non-English locale when the pattern uses names.
+- **`format`.** `DateFormat.format` returns a string. The `StringBuffer`/`FieldPosition` overload, `Calendar.roll`
+  and `getActualMaximum` are not provided.
+
 ### `@safe` and Java's `Object`
 
 druntime's `Object.opEquals`, `toHash` and `toString` have no attributes, so they cannot be called through an
