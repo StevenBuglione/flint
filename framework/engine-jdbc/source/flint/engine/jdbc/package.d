@@ -1276,7 +1276,11 @@ final class FlintResultSet : ResultSet
 {
     private FlintPreparedStatement statement;
     private string[] labels;
-    private Cell[][] rows;
+    /// Every row's cells, row after row: one block that grows, not one per row.
+    private Cell[] cells;
+    private size_t rowCount_;
+    /// `getMetaData`'s object, made once: a row mapper asks for it on every row.
+    private FlintResultSetMetaData metaData;
     private size_t position;
     private bool closed_;
     private bool lastWasNull;
@@ -1300,7 +1304,6 @@ final class FlintResultSet : ResultSet
                 labels[column] = readText(arena, label.value);
             }
         }
-        auto cells = new Cell[count];
         foreach (column; 0 .. count)
         {
             auto value = row.value(column, arena);
@@ -1311,21 +1314,24 @@ final class FlintResultSet : ResultSet
                 cell.text = readText(arena, value.value.bytes);
             else if (cell.kind == ValueKind.bytes)
                 cell.bytes = readBytes(arena, value.value.bytes);
-            cells[column] = cell;
+            cells ~= cell;
         }
-        rows ~= cells;
+        ++rowCount_;
     }
 
     private void limit(int maxRows)
     {
-        if (rows.length > maxRows)
-            rows = rows[0 .. maxRows];
+        if (rowCount_ > maxRows)
+        {
+            rowCount_ = maxRows;
+            cells = cells[0 .. rowCount_ * labels.length];
+        }
     }
 
     /// The number of rows.
     size_t rowCount() const pure nothrow @nogc
     {
-        return rows.length;
+        return rowCount_;
     }
 
     private void checkOpen()
@@ -1337,11 +1343,11 @@ final class FlintResultSet : ResultSet
     private Cell cell(int columnIndex)
     {
         checkOpen();
-        if (position == 0 || position > rows.length)
+        if (position == 0 || position > rowCount_)
             throw new SQLException("No current row: call next() first", "24000");
         if (columnIndex < 1 || columnIndex > labels.length)
             throw new SQLException("Column index out of range: " ~ decimal(columnIndex), "07009");
-        auto found = rows[position - 1][columnIndex - 1];
+        auto found = cells[(position - 1) * labels.length + columnIndex - 1];
         lastWasNull = found.kind == ValueKind.null_;
         return found;
     }
@@ -1349,9 +1355,9 @@ final class FlintResultSet : ResultSet
     override bool next()
     {
         checkOpen();
-        if (position <= rows.length)
+        if (position <= rowCount_)
             ++position;
-        return position <= rows.length;
+        return position <= rowCount_;
     }
 
     override void close()
@@ -1554,13 +1560,15 @@ final class FlintResultSet : ResultSet
     override ResultSetMetaData getMetaData()
     {
         checkOpen();
-        return new FlintResultSetMetaData(this);
+        if (metaData is null)
+            metaData = new FlintResultSetMetaData(this);
+        return metaData;
     }
 
     override int getRow()
     {
         checkOpen();
-        return position > rows.length ? 0 : cast(int) position;
+        return position > rowCount_ ? 0 : cast(int) position;
     }
 
     override bool isClosed()
@@ -1609,9 +1617,9 @@ final class FlintResultSet : ResultSet
     /// The JDBC type of a column, from its first non-null value; `Types.NULL` when every value is null.
     private int columnType(int column)
     {
-        foreach (row; rows)
+        foreach (row; 0 .. rowCount_)
         {
-            final switch (row[column - 1].kind)
+            final switch (cells[row * labels.length + column - 1].kind)
             {
             case ValueKind.null_:
                 continue;
@@ -2525,9 +2533,18 @@ private ubyte[] readBytes(ref RequestArena arena, Buffer buffer)
     return result;
 }
 
+/// A text value, copied once: through a stack buffer when it is short, the common case.
 private string readText(ref RequestArena arena, Buffer buffer)
 {
-    return (cast(const(char)[]) readBytes(arena, buffer)).idup;
+    char[256] small = void;
+    char[] target = buffer.length <= small.length ? small[0 .. buffer.length] : new char[buffer.length];
+    // The visitor is @nogc: it fills the buffer chosen beforehand.
+    const status = arena.read(buffer, (scope const(ubyte)[] bytes) @safe nothrow @nogc {
+        target[0 .. bytes.length] = cast(const(char)[]) bytes;
+    });
+    if (status != Status.ok)
+        throw new SQLException("Could not read a value from the statement buffer", "HY000");
+    return target.idup;
 }
 
 private string decimal(long value) pure nothrow
