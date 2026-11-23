@@ -70,6 +70,20 @@
     "compiler_peak_rss_bytes"
    ]
   },
+  "engine-jdbc": {
+   "directory": "framework/engine-jdbc",
+   "module": "flint.engine.jdbc",
+   "repo": "framework",
+   "licence": "Apache-2.0",
+   "upstream": "Flint's own JDBC driver over flint.engine.sql (docs/spring/phase1/data-access.md)",
+   "dependencies": [
+    "arena",
+    "conc",
+    "engine-aot",
+    "engine-sql",
+    "java"
+   ]
+  },
   "jackson-annotations": {
    "directory": "framework/jackson-annotations",
    "module": "flint.jackson.annotation",

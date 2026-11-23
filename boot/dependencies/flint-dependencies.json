@@ -83,6 +83,10 @@
       "repo": "framework",
       "version": "monorepo"
     },
+    "flint:engine-jdbc": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:engine-mail": {
       "repo": "framework",
       "version": "monorepo"

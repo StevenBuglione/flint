@@ -38,13 +38,15 @@ Upstream size: spring-jdbc has 231 public types in about 39,000 lines and 882 te
 application        JdbcTemplate, JdbcClient, @Transactional
 flint:jdbc, :tx    Spring's code, ported: templates, translators, transaction managers
 flint:java         flint.java.sql / flint.javax.sql interfaces (JDBC 4.3 subset)
-flint:engine-sql   the Flint JDBC driver: java.sql interfaces over Pool, Connection and Row
-                   the SQL engine: nothrow @nogc, arena-backed, libpq and SQLite shims
+flint:engine-jdbc  the Flint JDBC driver: java.sql interfaces over Pool, Connection and Row
+flint:engine-sql   the SQL engine: nothrow @nogc, arena-backed, libpq and SQLite shims
 ```
 
 Spring's JDBC code is written against the JDBC interfaces. Porting those interfaces as `flint.java.sql`, and putting a Flint JDBC driver beneath them, keeps `JdbcTemplate`, the translators and `DataSourceTransactionManager` close to line-for-line ports. It also lets the upstream tests' Mockito mocks of `Connection`, `PreparedStatement` and `ResultSet` become hand-written fakes of the same interfaces.
 
-The driver lives in the engine (`flint.engine.sql.jdbc`), because it is not Spring code. It accepts `jdbc:postgresql://…` and `jdbc:sqlite:…` URLs, so `flint.datasource.url` reads as it does in Boot.
+The driver is not Spring code, so it is an engine module: `framework/engine-jdbc` (DUB `flint:engine-jdbc`, module `flint.engine.jdbc`), depending on `flint:java` and `flint:engine-sql`. It sits beside the framework modules rather than in `packages/`, which keeps the 37-package surface. It accepts `jdbc:postgresql://…` and `jdbc:sqlite:…` URLs, so `flint.datasource.url` reads as it does in Boot. `FlintDriver` registers with `DriverManager` when the module loads. `FlintDataSource` is the pooled `DataSource`, with HikariCP's property names.
+
+The engine's `Connection.query` takes a `nothrow @nogc` row consumer. The driver copies rows into GC memory, and framework modules may not use `@trusted`, so the engine also offers `Connection.queryRows`. It is the same template instantiated with a consumer that may allocate (`RowCopier`). The `@nogc` path is unchanged.
 
 ### The user boundary
 
