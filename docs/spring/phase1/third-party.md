@@ -120,6 +120,27 @@ Values whose descriptors carry the erased thunks (contract 2) serialize and dese
 
 `flint.java.time` itself (framework-core owns it) is clean-room from the Java SE 21 specification. Its proof is `framework/java/tests/golden/time_format.tsv`: 542 format, parse and error results from JDK 21.
 
+### java.util.Date
+
+`flint.jackson.databind.stddateformat` ports Jackson's `java.util.Date` support (`JavaUtilDateSerializer`, `JavaUtilDateDeserializer`, `StdDateFormat`, and the Date map keys) over framework-core's `flint.java.util.Date`, `Calendar` and `TimeZone` and `flint.java.text.SimpleDateFormat`. Boot's error body carries its `timestamp` as a `Date`, so this is what the error path writes.
+
+- **Writing.** By default a date is StdDateFormat's ISO-8601 text in UTC with exactly three fraction digits: `"2026-11-19T15:01:50.000Z"`. Years past 9999 get a `+`, and years before the Common Era are written as ISO years (`+0000` is 1 BC). `WRITE_DATES_AS_TIMESTAMPS` writes epoch milliseconds, and map keys follow `WRITE_DATE_KEYS_AS_TIMESTAMPS`.
+- **`@JsonFormat`.** `shape` NUMBER writes milliseconds. A `pattern` formats with `SimpleDateFormat` in the annotation's `timezone`, or UTC, and so do `shape` STRING, `timezone` and `locale` without a pattern, with StdDateFormat. When reading, a pattern or time zone parses with that format, `lenient = FALSE` makes the calendar strict, and failures name the expected format as Jackson does.
+- **Reading.** Reading accepts what StdDateFormat accepts:
+  - ISO-8601 with or without seconds, fraction (up to nine digits) and offset;
+  - plain dates;
+  - extended years such as `+20100-01-01T00:00:00Z`;
+  - RFC 1123 (`Sat, 17 Jan 2009 06:13:58 GMT`);
+  - stringified timestamps.
+
+  Fields out of range carry over like a lenient `GregorianCalendar` (`2010-13-45` is 2011-02-14). Integer tokens are milliseconds. `""`, blank strings and `"null"` read as null, and arrays follow `UNWRAP_SINGLE_VALUE_ARRAYS` and `ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT`. Errors carry Jackson's messages.
+- **Calendar.** As upstream delegates to the JDK, `StdDateFormat` works through flint:java's `GregorianCalendar`, `TimeZone` and `SimpleDateFormat`. They are clean room from the Java SE specification and owned by framework-core (see framework-core.md). The calendar is Gregorian from 1582-10-15 and Julian before, as Java's is, so `-62135596800000` writes `0001-01-03`. Weeks follow the `en_US` rules, and two-digit years are read into the 80 years before and the 20 years after now.
+- **Zones and locales.** Only UTC, GMT and fixed `GMT±hh:mm` zones resolve, and names are English (D-JACKSON-9).
+- **Pay for use.** Plain writes are built in: ISO-8601 text, timestamps and map keys, with no calendar object, so a web app writing Boot's error timestamp links only those. Reading a `Date` and `@JsonFormat` pattern and time-zone writes live in `JavaUtilDateModule` (`flint.jackson.databind.module_`).
+  - **Who registers it.** Flint AOT emits a `JsonMapperBuilderCustomizer` that adds it whenever the application's described types hold a `Date`, and the templated `ObjectMapper` methods (`readValue!T`, `convertValue!T`, `writeValueAsString!T`, ...) register it when `T` holds one.
+  - **The exception.** Only a mapper built by hand over hand-added descriptors and used through the erased methods can lack it, and that throws `InvalidDefinitionException` naming `addModule(new JavaUtilDateModule())` (D-JACKSON-10).
+  - **The Module API.** Jackson 3's `JacksonModule`, `JacksonModule.SetupContext`, `SimpleModule`, `JsonMapper.Builder.addModule`/`addModules` and `ObjectMapper.registeredModules` are ported for this.
+
 ### Byte-equality proof
 
 The tests compare Flint's output with golden files that the real Jackson 3.1.8 wrote. `framework/jackson-databind/tests/golden/` holds the Java generator, run on OpenJDK 21 with the jars Boot 4.2.0 resolves, next to the JSON it produced. A test fails on any byte difference. The generator source is committed so anyone can regenerate the files.
@@ -158,6 +179,8 @@ The tests compare Flint's output with golden files that the real Jackson 3.1.8 w
 | D-JACKSON-7 | `@JsonNaming` binds only `PropertyNamingStrategies`' standard strategies | No construction from a class name (closed world); a custom strategy needs an explicit binding API first |
 | D-JACKSON-6 | A null D array writes as `[]` (`""` for Base64 `byte[]`), not `null` | D's `[]` is null; an empty array and a null one can't be told apart |
 | D-JACKSON-8 | `StreamWriteConstraints.overrideDefaultStreamWriteConstraints` is not ported, and `Builder.maxNestingDepth(-1)` throws `Exception`, not `IllegalArgumentException` | Framework packages keep no mutable module-level state; jackson-core does not depend on `flint.java` |
+| D-JACKSON-9 | A `java.util.Date` `@JsonFormat` `timezone` must be UTC, GMT or a fixed `GMT±hh:mm` offset; any other ID throws `InvalidDefinitionException` instead of falling back to GMT as `TimeZone.getTimeZone` does. Dates format and parse with English names, and a pattern with names in a non-English `locale` throws | Region zones need the time-zone database, which Flint has not ported; refusing is safer than writing a wrong offset. Non-English names would need locale data |
+| D-JACKSON-10 | `java.util.Date` reading and `@JsonFormat` pattern and time-zone writes are in `JavaUtilDateModule`, which Flint AOT's generated customizer and the templated `ObjectMapper` methods register; a hand-built mapper used through the erased methods without it throws `InvalidDefinitionException`. `JacksonModule.version()` is not ported, `getRegistrationId` returns a string, and `SimpleModule`'s serializer and deserializer registries are not ported yet. When `readerFor` or `TypeReference` are ported, they must register the module the same way the templated methods do, with tests (full entry in api-mapping.md) | Jackson builds Date support into every mapper; in Flint that would link about 70 KB of calendar and parsing into every web app, which only writes Dates. Spring code reaches Jackson through the templated methods or Boot's mapper, both of which register it |
 | D-SLF4J-1 | `LoggerFactory.installProvider` binds a provider; the default writes through `flint.log` | Closed world: no `ServiceLoader`; Java's default would be the NOP logger |
 | D-SLF4J-2 | `Logger.debug` is `debug_` | `debug` is a D keyword |
 | D-VALIDATION-1 | Hibernate Validator registers itself with `Validation` when linked in | Replaces `META-INF/services` discovery |
@@ -176,6 +199,7 @@ All commands run from the repository root with the toolchain on `PATH`.
 | Jackson shapes | same | `shapes.tsv`: arrays, `byte[]` (Base64), `Optional`, maps, enums (including Jackson's key order in the unknown-value message), records and `@JsonNaming`, 9 writes and 20 reads identical |
 | petclinic-rest DTOs | same | `petclinic.tsv`: 14 response bodies recorded from the real spring-petclinic-rest (Boot 4.2.0) read into D twins of its openapi-generator DTOs and write back byte for byte, plus a `ValidationMessageDto` with its `@JsonAnyGetter` map |
 | Jackson java.time | same | `javatime.tsv`: 23 writes and 59 reads (values and messages) identical to Jackson 3.1.8 |
+| Jackson java.util.Date | same | `dates.tsv`: 1,172 cases, all identical to Jackson 3.1.8 except one it refuses (D-JACKSON-9). They cover writes across the Julian/Gregorian cutover, BCE and five-digit years; 80 `SimpleDateFormat` patterns; ISO-8601, RFC 1123 and timestamp reads, with error messages; strict and lenient calendars; and map keys |
 | java.time | `dub test :java --compiler=dmd` and `=ldc2` | `time.tsv` and `time_format.tsv` identical to JDK 21; epoch days walked over 1600–2400 |
 | Jackson annotations | `dub test :jackson-annotations --compiler=dmd` and `=ldc2` | defaults and shorthand |
 | SLF4J | `dub test :slf4j-api --compiler=dmd` and `=ldc2` | MessageFormatterTest, BasicMarkerTest, MDCAdapterTestBase ported; logger behaviour |
