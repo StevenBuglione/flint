@@ -55,11 +55,18 @@ private Exchange exchangeOf(JSONValue request)
     return Exchange(request["name"].str, text ~ "\r\n" ~ body, method == "HEAD");
 }
 
-/// A keep-alive client that reads each response to its end.
+/// A keep-alive client that reads each response to its end, and reconnects after a `Connection: close` response.
 private struct Client
 {
     Socket socket;
+    ushort port;
     char[] pending;
+
+    this(ushort port)
+    {
+        this.port = port;
+        socket = new TcpSocket(new InternetAddress("127.0.0.1", port));
+    }
 
     void exchange(ref const Exchange request)
     {
@@ -95,6 +102,12 @@ private struct Client
                 fill(request.name);
         const consumed = chunked ? end + 4 + pending[end + 4 .. $].indexOf("0\r\n\r\n") + 5 : end + 4 + length;
         pending = pending[consumed .. $].dup;
+        if (head.indexOf("\r\nconnection: close") >= 0)
+        {
+            socket.close();
+            socket = new TcpSocket(new InternetAddress("127.0.0.1", port));
+            pending = null;
+        }
     }
 
     private void fill(string name)
@@ -158,7 +171,7 @@ unittest
     scope (exit)
         context.close();
     const port = cast(ushort) context.getWebServer().getPort();
-    auto client = Client(new TcpSocket(new InternetAddress("127.0.0.1", port)));
+    auto client = Client(port);
     scope (exit)
         client.socket.close();
 

@@ -34,3 +34,7 @@ executable = "petclinic-rest"
 "flint:slf4j-api" = {}
 "flint:tx" = {}
 "flint:web" = {}
+
+[test-dependencies]
+"flint:arena" = {}
+"flint:boot-web-server" = {}

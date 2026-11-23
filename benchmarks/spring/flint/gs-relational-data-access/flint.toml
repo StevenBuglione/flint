@@ -16,3 +16,6 @@ executable = "gs-relational-data-access"
 "flint:java" = {}
 "flint:jdbc" = {}
 "flint:slf4j-api" = {}
+
+[test-dependencies]
+"flint:arena" = {}
