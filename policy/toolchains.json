@@ -74,6 +74,11 @@
       "url": "https://go.dev/dl/go1.27.4.linux-amd64.tar.gz",
       "sha256": "7226736c2339719cda28fbf3a54d71aa63bcefe376e98cef00034268dab24840"
     },
+    "mold-2.40.4-aarch64-linux.tar.gz": {
+      "url": "https://github.com/rui314/mold/releases/download/v2.40.4/mold-2.40.4-aarch64-linux.tar.gz",
+      "sha256": "c799b9ccae8728793da2186718fbe53b76400a9da396184fac0c64aa3298ec37",
+      "verification": "Downloaded on 2026-11-23 from two networks (venus and the arm64 VM on pluto) with the same digest; the same release's x86_64 download still matches the existing lock entry."
+    },
     "mold-2.40.4-x86_64-linux.tar.gz": {
       "url": "https://github.com/rui314/mold/releases/download/v2.40.4/mold-2.40.4-x86_64-linux.tar.gz",
       "sha256": "4c999e19ffa31afa5aa429c679b665d5e2ca5a6b6832ad4b79668e8dcf3d8ec1"

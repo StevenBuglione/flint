@@ -32,6 +32,28 @@ class ProjectLinkerTests(unittest.TestCase):
                                             '-Xcc=-B' + str(bin_dir) + '/flint-linker/', '-Xcc=-fuse-ld=' + driver])
                     self.assertTrue((bin_dir / 'flint-linker' / ('ld.' + driver)).samefile(linker))
 
+    def test_aarch64_fork_configuration_takes_the_linker(self):
+        # The AArch64 fork writes one [Environment] section (install_flint_fork); the linker is configured after it.
+        with tempfile.TemporaryDirectory(prefix='flint tools ') as temp:
+            bin_dir = Path(temp)
+            linker = bin_dir / 'mold'
+            linker.touch()
+            (bin_dir / 'dmd.conf').write_text('[Environment]\nDFLAGS="-I%@P%/../../src/phobos" -marm64 -fPIC\n',
+                                              encoding='utf-8', newline='\n')
+            configure_dmd_linker(bin_dir, {'driver': 'mold', 'path': linker})
+            self.assertEqual((bin_dir / 'dmd.conf').read_text(encoding='utf-8'),
+                             '[Environment]\nDFLAGS="-I%@P%/../../src/phobos" -marm64 -fPIC '
+                             '"-Xcc=-B%@P%/flint-linker/" -Xcc=-fuse-ld=mold\n')
+
+    def test_mold_is_pinned_for_each_linux_architecture(self):
+        # Linux AArch64 DMD links with mold too: the system BFD ld took 0.35-1.3 s for bench-cli in the arm64 VM.
+        for machine, name in (('x86_64', 'mold-2.40.4-x86_64-linux'), ('aarch64', 'mold-2.40.4-aarch64-linux'),
+                              ('arm64', 'mold-2.40.4-aarch64-linux')):
+            self.assertEqual(install_toolchains.mold_name(machine), name)
+            asset = install_toolchains.LOCK['assets'][name + '.tar.gz']
+            self.assertEqual(asset['url'], 'https://github.com/rui314/mold/releases/download/v2.40.4/' + name + '.tar.gz')
+            self.assertRegex(asset['sha256'], r'^[0-9a-f]{64}$')
+
     def test_unrecognized_linker_is_rejected(self):
         with self.assertRaisesRegex(ValueError, 'Expected ld.lld or mold'):
             identify_elf_linker(sys.executable)

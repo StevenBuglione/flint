@@ -91,11 +91,18 @@ def identify_elf_linker(executable):
             'sha256': hashlib.sha256(linker.read_bytes()).hexdigest()}
 
 
-MOLD = 'mold-2.40.4-x86_64-linux'
+def mold_name(machine=None):
+    """The pinned mold release for a Linux host: x86-64 or AArch64."""
+    machine = (machine or platform.machine()).lower()
+    return 'mold-2.40.4-' + ('aarch64' if machine in ('arm64', 'aarch64') else 'x86_64') + '-linux'
+
+
+MOLD = mold_name()
 
 
 def install_mold(destination):
-    """The pinned mold, the Linux x86-64 development linker (ADR-021; ADR-016's measured builds linked with it)."""
+    """The pinned mold, the Linux development linker (ADR-021; ADR-016's measured builds linked with it). On Linux
+    AArch64 the system's BFD ld took 0.35-1.3 s for bench-cli's dev link in the arm64 VM, against about 0.2 s."""
     install(MOLD + '.tar.gz', destination)
     linker = destination / MOLD / 'bin' / 'mold'
     if not linker.is_file():
@@ -124,7 +131,10 @@ def quote_dmd_conf(bin_dir):
 def configure_dmd_linker(bin_dir, linker):
     config = bin_dir / 'dmd.conf'
     original = config.read_text()
+    # The release's dmd.conf has a 64-bit section; the AArch64 fork's has one [Environment] (it targets one model).
     before, marker, after = original.partition('[Environment64]\nDFLAGS=')
+    if not marker:
+        before, marker, after = original.partition('[Environment]\nDFLAGS=')
     if not marker:
         raise ValueError('Missing 64-bit DFLAGS in the pinned dmd.conf')
     driver_dir = bin_dir / 'flint-linker'
@@ -944,7 +954,7 @@ def build_sanitizer_runtime(destination, build_root=None, jobs=None):
 def main():
     ap=argparse.ArgumentParser();ap.add_argument('--compiler',choices=['dmd','ldc','dub','go','oha','clang','lld','ldc-sanitizer-runtime','musl-sysroot','conan','mold','flint'],required=True);ap.add_argument('--musl',action='store_true');ap.add_argument('--destination',type=Path,default=ROOT/'.tools')
     ap.add_argument('--dmd-linker', metavar='LINKER',
-                    help='ld.lld or mold for 64-bit DMD links; Linux x86-64 defaults to the pinned mold, and '
+                    help='ld.lld or mold for 64-bit DMD links; Linux x86-64 and AArch64 default to the pinned mold, and '
                          '"system" keeps the C compiler\'s default linker')
     ap.add_argument('--flint-fork', action='store_true',
                     help='Build the Flint DMD/DUB fork (resident toolchain compile server, parallel DUB pipeline, direct linking)')
@@ -955,10 +965,11 @@ def main():
     if a.flint_fork and a.compiler != 'dmd':
         ap.error('--flint-fork applies only to --compiler dmd')
     linker = None
-    linux_x86_64 = platform.system() == 'Linux' and platform.machine().lower() in ('amd64', 'x86_64') and not a.musl
-    if a.compiler == 'dmd' and linux_x86_64 and a.dmd_linker is None:
-        # Fast by default (ADR-025): Linux x86-64 DMD links with the pinned mold. `--dmd-linker system` keeps the C
-        # compiler's default linker.
+    linux_mold = (platform.system() == 'Linux' and platform.machine().lower() in ('amd64', 'x86_64', 'arm64', 'aarch64')
+                  and not a.musl)
+    if a.compiler == 'dmd' and linux_mold and a.dmd_linker is None:
+        # Fast by default (ADR-025): Linux DMD links with the pinned mold, on x86-64 and AArch64. `--dmd-linker system`
+        # keeps the C compiler's default linker.
         a.dmd_linker = str(install_mold(a.destination.resolve()))
     if a.dmd_linker == 'system':
         a.dmd_linker = None
@@ -982,7 +993,7 @@ def main():
         return
     osname=platform.system();arch=platform.machine().lower();arch='aarch64' if arch in ['arm64','aarch64'] else 'x86_64' if arch in ['amd64','x86_64'] else arch
     if a.compiler == 'mold':
-        if (osname,arch)!=('Linux','x86_64'):raise SystemExit('the mold pin is for Linux x86_64 hosts')
+        if osname!='Linux' or arch not in ('x86_64','aarch64'):raise SystemExit('the mold pin is for Linux x86_64 and aarch64 hosts')
         linker=install_mold(a.destination)
         print(json.dumps({'compiler':'mold','version':LOCK['versions']['mold'],'bin':str(linker.parent),
                           'sha256':LOCK['assets'][MOLD+'.tar.gz']['sha256']}))
@@ -1053,13 +1064,14 @@ def main():
         receipt['linker'] = configure_dmd_windows(binary_path, a.destination)
     if a.compiler=='ldc' and osname=='Windows' and not a.musl:
         receipt['windows'] = configure_ldc_windows(binary_path)
-    if linker:
-        configure_dmd_linker(binary_path, linker)
-        receipt['linker'] = linker
     if a.flint_fork and osname=='Windows':
         receipt['flint_fork'] = install_flint_fork_windows(binary_path, a.destination)
     elif a.flint_fork:
         receipt['flint_fork'] = install_flint_fork(binary_path, a.destination, not a.no_pgo)
+    if linker:
+        # After the fork, whose AArch64 build writes its own dmd.conf
+        configure_dmd_linker(binary_path, linker)
+        receipt['linker'] = linker
     if os.environ.get('GITHUB_PATH'):
         with open(os.environ['GITHUB_PATH'],'a') as f:f.write(str(binary_path)+'\n')
     print(json.dumps(receipt))
