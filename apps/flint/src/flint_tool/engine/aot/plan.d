@@ -1769,8 +1769,11 @@ private final class Analysis
                 argument.name = named;
             argument.required = annotation.flag("required", true);
             const defaultValue = annotation.get("defaultValue");
-            if (defaultValue.kind == imported!"flint_tool.engine.aot.model".Value.Kind.text
-                    && defaultValue.text != "\n\t\t\n\t\t\n\n\t\t\t\t\n")
+            // ValueConstants.DEFAULT_NONE is whatever the annotation declares as the attribute's default.
+            const type = binding[0] in model.annotationTypes;
+            const declared = type is null ? null : type.field("defaultValue");
+            const unset = declared is null || defaultValue.same(declared.default_);
+            if (defaultValue.kind == imported!"flint_tool.engine.aot.model".Value.Kind.text && !unset)
             {
                 argument.defaultValue = defaultValue.text;
                 argument.hasDefault = true;

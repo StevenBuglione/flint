@@ -494,11 +494,18 @@ private string value(T)(T v)
         }
         return r ~ "]";
     }
+    else static if (is(T == struct) && isEnumLike!T)
+        return "{\"enum\":" ~ quote(typeName!T) ~ ",\"modules\":[" ~ typeModules!T ~ "],\"name\":"
+            ~ quote(v.name()) ~ "}";
     else static if (is(T == struct))
         return annotationValue(v);
     else
         return "null";
 }
+
+/// A Java enum with methods, ported as a struct with static constants (proposed R15): named by name().
+private enum bool isEnumLike(T) = __traits(compiles, { string n = T.init.name(); int o = T.init.ordinal(); })
+    && __traits(compiles, __traits(getMember, T, T.init.name()));
 
 private string annotationValue(T)(T v)
 {

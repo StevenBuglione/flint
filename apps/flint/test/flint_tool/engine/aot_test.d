@@ -529,6 +529,106 @@ unittest
             ~ `&& !c.hasBeanOfType("flintsample.autoconfig.Widget")`)).toBeTrue();
 }
 
+/// Source directories of the DUB closure of `roots` (repository-relative package directories), following each
+/// dub.sdl's `dependency` lines, so the list follows packages when they move. `flint:x` names resolve to
+/// packages/x or framework/x. framework/java comes first: while framework/p1-interim exists it shadows
+/// flint.java.lang for packages that do not depend on it.
+private string[] closureImports(scope const string[] roots)
+{
+    import std.algorithm.searching : canFind, startsWith;
+    import std.file : exists, isDir, readText;
+    import std.path : buildNormalizedPath, buildPath;
+    import std.regex : matchAll, regex;
+
+    const root = repositoryRoot();
+    string[] seen;
+    void visit(string directory)
+    {
+        directory = buildNormalizedPath(directory);
+        if (seen.canFind(directory))
+            return;
+        seen ~= directory;
+        const recipe = buildPath(directory, "dub.sdl");
+        if (!exists(recipe))
+            return;
+        foreach (match; matchAll(readText(recipe), regex(`(?m)^\s*dependency\s+"([^"]+)"(?:\s+path="([^"]+)")?`)))
+        {
+            const name = match[1];
+            if (name.startsWith("flint:"))
+            {
+                foreach (base; ["packages", "framework"])
+                {
+                    const candidate = buildPath(root, base, name[6 .. $]);
+                    if (exists(candidate) && isDir(candidate))
+                    {
+                        visit(candidate);
+                        break;
+                    }
+                }
+            }
+            else if (match[2].length)
+                visit(buildPath(directory, match[2]));
+        }
+    }
+
+    foreach (item; roots)
+        visit(buildPath(root, item));
+    string[] flags = ["-I" ~ buildPath(root, "framework", "java", "source")];
+    foreach (directory; seen)
+    {
+        if (exists(buildPath(directory, "source")))
+            flags ~= "-I" ~ buildPath(directory, "source");
+    }
+    return flags;
+}
+
+@("gs-rest-service against the real framework and Boot annotations: the table is Spring's and the code compiles")
+unittest
+{
+    import std.algorithm.iteration : map;
+    import std.array : array;
+    import std.file : dirEntries, readText, SpanMode;
+    import std.path : buildPath;
+    import flint_tool.engine.aot.driver : AotRequest, runAot;
+    import flint_tool.support.process : Launch, capture;
+
+    const project = copyFixture("gs-rest-service");
+    scope (exit)
+        remove(project);
+    auto imports = closureImports([
+        "framework/web", "framework/webmvc", "boot/core/flint-boot-autoconfigure"
+    ]);
+    AotRequest request;
+    request.root = project;
+    request.compiler = compiler();
+    request.importPaths = imports;
+    request.flags = ["-preview=dip1000"];
+    request.environmentKey = "test";
+    auto outcome = runAot(request);
+    expect(outcome.extractionErrors).toEqual("");
+    expect(outcome.ok).toBeTrue();
+    expect(outcome.application).toEqual("com.example.restservice.restserviceapplication.RestServiceApplication");
+    const controller = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot",
+            "com", "example", "restservice", "greetingcontroller.d"));
+    expect(controller.canFind(`mapping.paths = ["/greeting"];`)).toBeTrue();
+    expect(controller.canFind(`mapping.methods = ["GET"];`)).toBeTrue();
+    expect(controller.canFind(`a.kind = ArgumentKind.requestParam; a.name = "name"; a.type = "string"; `
+            ~ `a.required = false; a.defaultValue = "World";`)).toBeTrue();
+    expect(controller.canFind("mapping.responseBody = true;")).toBeTrue();
+    string[] sources;
+    foreach (directory; ["src", ".flint/generated/aot"])
+        foreach (entry; dirEntries(buildPath(project, directory), "*.d", SpanMode.depth))
+            sources ~= entry.name;
+    Launch launch;
+    launch.directory = project;
+    const checked = capture([
+        compiler(), "-o-", "-preview=dip1000", "-I" ~ buildPath(project, "src"),
+        "-I" ~ buildPath(project, ".flint", "generated", "aot")
+    ] ~ imports ~ sources, launch);
+    expect(checked.combined()).toEqual("");
+    expect(checked.ok).toBeTrue();
+}
+
 @("a project without @FlintBootApplication runs no extraction")
 unittest
 {
