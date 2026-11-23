@@ -5,7 +5,7 @@
   "status": "blocked",
   "window": "claim",
   "priority": 5,
-  "blocked_on": "its smoke run at befd9649b1e9, under hold; then pending and claimed",
+  "blocked_on": "re-pin of all three parts to one commit with petclinic-rest's edit_source fixed",
   "requested_by": "ADR-030 section 8, Phase 1 exit (coordinator's plan, 2026-11-23 15:20Z); split per application by the coordinator, 2026-11-23 16:45Z",
   "report_to": "the coordinator; docs/milestones/13.md",
   "estimate_minutes": 17,
