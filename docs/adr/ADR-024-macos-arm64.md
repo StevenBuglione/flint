@@ -155,12 +155,12 @@ ld64 drops C functions that the executable never calls. The native-C test theref
 
 `python3 tools/ci.py platform --target macos-arm64` builds the providers and wasmtime with the pinned Rust. It then runs every package's `dub test`, the compile-negative fixtures and the BetterC fixtures. Each runs on both compilers available on macOS:
 
-- `ldmd2`, which fills the dev and test profiles' DMD role;
+- the forked DMD with its AArch64 code generator, `.tools/dmd2/osx/bin64/dmd`, in the dev and test profiles' DMD role since ADR-025 section 3, stage 2 passed on macOS (it was `ldmd2` before);
 - `ldc2`.
 
 On macOS it then runs `flint test` for the packages with fixture peers and `flint test mq --scenarios`, after installing those peers, NATS, Kafka and the Temurin aarch64 macOS JRE. The JRE is a `macos-arm64` host override in `policy/peer-lock.json`, and `policy/test-peers.toml` names scenario binaries through the `{dub}`, `{dmd}` and `{host}` placeholders that `flint` expands.
 
-Linux lanes keep running `ldc2` only. On macOS the `ldmd2` runs use the DUB pipeline. Its receipt, `artifacts/platforms/macos-arm64.json`, is what Gate 6's `macos-arm64` entry reads. The lane expects `ldc2`, `ldmd2` and the Flint DUB first on `PATH`:
+Linux lanes keep running `ldc2` only. On macOS the DMD-role runs use the DUB pipeline. Its receipt, `artifacts/platforms/macos-arm64.json`, is what Gate 6's `macos-arm64` entry reads. The lane expects `ldc2`, `ldmd2` and the Flint DUB first on `PATH`:
 
 ```bash
 export PATH="$PWD/.tools/dub-1.43.0/bin:$PWD/.tools/ldc2-1.43.0-osx-arm64/bin:$PWD/.tools/bin:$PATH"

@@ -369,8 +369,8 @@ def platform_run(runner,target):
         runner.run([PYTHON,'benchmarks/bench-wasm/build.py','--ldc','ldc2','--profile','Oz','--output','build/bench-wasm.wasm'])
         runner.run(['node','tests/wasm/run.mjs','build/bench-wasm.wasm'])
         return
-    # macOS has no DMD code generator; LDC's ldmd2 fills the DMD role of the dev and test profiles (ADR-024).
-    compilers=('ldmd2','ldc2') if target=='macos-arm64' else ('ldc2',)
+    # macOS runs the forked DMD's AArch64 code generator in the DMD role (ADR-025 section 3, stage 2), and LDC.
+    compilers=(str(ROOT/'.tools/dmd2/osx/bin64/dmd'),'ldc2') if target=='macos-arm64' else ('ldc2',)
     try:
         native(runner,target)
         for compiler in compilers:run_tests(runner,compiler)
