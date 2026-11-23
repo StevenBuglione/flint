@@ -46,9 +46,10 @@ CheckSummary checkProject(const ref Home home, const ref Manifest manifest, cons
     Report found;
     CheckSummary summary;
     const root = manifest.moduleRoot();
-    if (!exists(buildPath(manifest.root, "src", root)) || !isDir(buildPath(manifest.root, "src", root)))
-        found.add(at(diagnostic("FLINT-E0404", Severity.error, "src/" ~ root ~ "/ does not exist",
-                "create src/" ~ root ~ "/app.d with `module " ~ root ~ ".app;`"), "src/" ~ root, 0));
+    const directory = manifest.rootDirectory();
+    if (!exists(buildPath(manifest.root, "src", directory)) || !isDir(buildPath(manifest.root, "src", directory)))
+        found.add(at(diagnostic("FLINT-E0404", Severity.error, "src/" ~ directory ~ "/ does not exist",
+                "create src/" ~ directory ~ "/app.d with `module " ~ root ~ ".app;`"), "src/" ~ directory, 0));
     foreach (relative; dSources(manifest.root))
     {
         import std.algorithm.searching : startsWith;
@@ -191,12 +192,13 @@ private void checkFile(const ref Home home, const ref Manifest manifest, const r
     import std.algorithm.searching : startsWith;
 
     const root = manifest.moduleRoot();
+    const directory = manifest.rootDirectory();
     const inSource = relative.startsWith("src/");
     const inTest = relative.startsWith("test/");
     if (!inSource && !inTest)
     {
         report.add(at(diagnostic("FLINT-E0404", Severity.error, relative ~ " is outside src/ and test/",
-                "move it below src/" ~ root ~ "/ or test/" ~ root ~ "/"), relative, 0));
+                "move it below src/" ~ directory ~ "/ or test/" ~ directory ~ "/"), relative, 0));
         return;
     }
     SourceScan scan;
@@ -205,9 +207,9 @@ private void checkFile(const ref Home home, const ref Manifest manifest, const r
     const below = relative[(inSource ? "src/" : "test/").length .. $];
     const expected = expectedModule(below);
     if (!startsWithModule(expected, root))
-        report.add(at(diagnostic("FLINT-E0403", Severity.error,
-                relative ~ " is outside " ~ (inSource ? "src/" : "test/") ~ root ~ "/",
-                "move it below " ~ (inSource ? "src/" : "test/") ~ root ~ "/"), relative, 1, 0, text));
+        report.add(at(diagnostic("FLINT-E0403", Severity.error, relative ~ " is outside " ~ (inSource
+                ? "src/" : "test/") ~ directory ~ "/", "move it below " ~ (inSource ? "src/" : "test/") ~ directory
+                ~ "/"), relative, 1, 0, text));
     else if (scan.moduleName != expected)
         report.add(at(diagnostic("FLINT-E0401", Severity.error,
                 "declares `module " ~ scan.moduleName ~ ";` but its path names `" ~ expected ~ "`",
@@ -433,7 +435,9 @@ private void checkGenerated(const ref Manifest manifest, ref Report report)
     import std.file : exists, isDir;
     import std.path : buildPath;
 
-    foreach (candidate; ["generated", "src/generated", "src/" ~ manifest.moduleRoot() ~ "/generated"])
+    foreach (candidate; [
+        "generated", "src/generated", "src/" ~ manifest.rootDirectory() ~ "/generated"
+    ])
     {
         const path = buildPath(manifest.root, candidate);
         if (exists(path) && isDir(path))

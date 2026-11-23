@@ -41,6 +41,7 @@ Every public name is identical to Spring's, with one exception: where an identif
   - `@FlintTest` stays as an alias of `@FlintBootTest`;
   - `flint.data.*` stays as an alias of `flint.jpa.*`;
   - `pool` stays as an alias of `hikari`.
+- **Applications keep Spring's package structure.** `flint.toml`'s `[project] base-package` (the package `@FlintBootApplication` sits in, which Spring scans from) is the module root. Sources live at `src/<base/package/path>/`, and the module-path rule holds relative to it. Without a base package the module root stays `src/<project>/` (ADR-021). The other layout and safety rules are unchanged.
 
 ### 2. The repository family mirrors spring-projects
 

@@ -201,3 +201,26 @@ unittest
     expect(codes(parse(header ~ "[dependencies]\n\"dub:dyaml\" = { path = \"../x\" }\n", manifest))).toEqual(
             ["FLINT-E0105"]);
 }
+
+@("a base package moves the module root to Spring's package, below src/ as a path")
+unittest
+{
+    Manifest manifest;
+    const report = parse(header ~ "base-package = \"com.example.restservice\"\n", manifest);
+    expect(report.ok).toEqual(true);
+    expect(manifest.moduleRoot()).toEqual("com.example.restservice");
+    expect(manifest.rootDirectory()).toEqual("com/example/restservice");
+    Manifest plain;
+    expect(parse(header, plain).ok).toEqual(true);
+    expect(plain.moduleRoot()).toEqual("shop");
+    expect(plain.rootDirectory()).toEqual("shop");
+    foreach (bad; [
+        "Com.example", "com..example", "flint.shop", "com.example.class", ".com", "com-example"
+    ])
+    {
+        Manifest rejected;
+        expect(codes(parse(header ~ "base-package = \"" ~ bad ~ "\"\n", rejected))).toEqual([
+            "FLINT-E0106"
+        ]);
+    }
+}

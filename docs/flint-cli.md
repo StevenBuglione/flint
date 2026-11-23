@@ -301,6 +301,7 @@ shop/
 ```toml
 [project]
 name = "shop"              # lower-case letters, digits, hyphens; module root "shop"
+base-package = "com.example.shop"  # optional: Spring's package; module root and src/com/example/shop/
 version = "0.1.0"          # semantic version
 flint = "1.0"              # platform version: toolchain, core packages and rules
 type = "executable"        # or "library"

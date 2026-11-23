@@ -142,10 +142,21 @@ struct Manifest
     /// Native package dependencies.
     NativeDependency[] natives;
 
-    /// D module root: the name with hyphens replaced by underscores.
+    /// `[project] base-package`: the package Spring would scan from (`com.example.restservice`), when set.
+    string basePackage;
+
+    /// D module root: the base package when set, else the name with hyphens replaced by underscores.
     string moduleRoot() const
     {
-        return moduleRootOf(name);
+        return basePackage.length ? basePackage : moduleRootOf(name);
+    }
+
+    /// The module root's directory below src/ and test/: `com/example/restservice` for a base package.
+    string rootDirectory() const
+    {
+        import std.array : replace;
+
+        return moduleRoot().replace(".", "/");
     }
 
     /// File name of the built executable or library stem.
@@ -219,7 +230,7 @@ private immutable string[] sections = [
 ];
 
 private immutable string[] projectKeys = [
-    "name", "version", "flint", "type", "description", "license"
+    "name", "version", "base-package", "flint", "type", "description", "license"
 ];
 
 /// Find the nearest directory at or above `start` holding flint.toml, or null.
@@ -581,6 +592,14 @@ private struct Reader
         case "license":
             manifest.license = value;
             return;
+        case "base-package":
+            // Spring keeps its package structure (ADR-030): sources live at src/<base/package/path>/.
+            if (!validBasePackage(value))
+                return fail("FLINT-E0106", entry.offset, "`" ~ value ~ "` is not a valid base package",
+                        "lower-case identifiers joined by dots, none of them reserved: "
+                        ~ "base-package = \"com.example.shop\"");
+            manifest.basePackage = value;
+            return;
         default:
             manifest.description = value;
         }
@@ -812,6 +831,29 @@ bool validName(scope const(char)[] name)
             return false;
         if (ch == '-' && i && name[i - 1] == '-')
             return false;
+    }
+    return true;
+}
+
+/// A base package: dotted lower-case D identifiers, none reserved (`flint`, keywords), at least one.
+bool validBasePackage(scope const(char)[] value)
+{
+    import std.ascii : isDigit, isLower;
+
+    size_t start;
+    foreach (i; 0 .. value.length + 1)
+    {
+        if (i < value.length && value[i] != '.')
+            continue;
+        const part = value[start .. i];
+        if (part.length == 0 || !(isLower(part[0]) || part[0] == '_') || reservedRoot(part))
+            return false;
+        foreach (c; part)
+        {
+            if (!(isLower(c) || isDigit(c) || c == '_'))
+                return false;
+        }
+        start = i + 1;
     }
     return true;
 }
