@@ -561,7 +561,9 @@ def prepare_checkout(spec, logs):
         tools = directory / '.tools'
         if not tools.exists() and (spec.get('linker') or spec.get('fork')):
             private_tools(tools, spec.get('linker', 'mold'), spec.get('fork', False), directory, logs)
-        elif tools.is_dir() and not tools.is_symlink() and (tools / 'flint-fork-build').exists() != bool(spec.get('fork')):
+        elif tools.is_dir() and not tools.is_symlink() and (
+                ((tools / 'flint-fork-build').is_dir() and not (tools / 'flint-fork-build').is_symlink())
+                != bool(spec.get('fork'))):
             # Worktrees are keyed by commit: an entry wanting the other toolchain flavour must not reuse this one.
             raise SystemExit(f"{full[:12]}: its worktree's toolchain is {'' if spec.get('fork') else 'not '}"
                              "missing the fork build this entry needs; pin it at another commit")
