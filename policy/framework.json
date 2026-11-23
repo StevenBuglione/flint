@@ -29,7 +29,7 @@
     "ldc_incremental_seconds": 2.7,
     "incremental_linked_bytes": 81920,
     "compiler_peak_rss_bytes": 536870912,
-    "template_instances": 750
+    "template_instances": 8550
    },
    "provisional": [
     "dmd_cold_seconds",
@@ -61,7 +61,7 @@
     "ldc_incremental_seconds": 2.7,
     "incremental_linked_bytes": 81920,
     "compiler_peak_rss_bytes": 536870912,
-    "template_instances": 400
+    "template_instances": 1100
    },
    "provisional": [
     "dmd_cold_seconds",
@@ -96,7 +96,7 @@
     "ldc_incremental_seconds": 2.7,
     "incremental_linked_bytes": 7094272,
     "compiler_peak_rss_bytes": 536870912,
-    "template_instances": 500
+    "template_instances": 2750
    },
    "provisional": [
     "dmd_cold_seconds",
@@ -157,7 +157,7 @@
     "ldc_incremental_seconds": 2.7,
     "incremental_linked_bytes": 131072,
     "compiler_peak_rss_bytes": 536870912,
-    "template_instances": 350
+    "template_instances": 600
    },
    "provisional": [
     "dmd_cold_seconds",
@@ -192,7 +192,7 @@
     "ldc_incremental_seconds": 2.7,
     "incremental_linked_bytes": 557056,
     "compiler_peak_rss_bytes": 536870912,
-    "template_instances": 700
+    "template_instances": 4850
    },
    "provisional": [
     "dmd_cold_seconds",
@@ -256,7 +256,7 @@
     "ldc_incremental_seconds": 2.7,
     "incremental_linked_bytes": 344064,
     "compiler_peak_rss_bytes": 536870912,
-    "template_instances": 3350
+    "template_instances": 7350
    },
    "provisional": [
     "dmd_cold_seconds",
@@ -292,7 +292,7 @@
     "ldc_incremental_seconds": 2.7,
     "incremental_linked_bytes": 475136,
     "compiler_peak_rss_bytes": 536870912,
-    "template_instances": 750
+    "template_instances": 11150
    },
    "provisional": [
     "dmd_cold_seconds",
@@ -329,7 +329,7 @@
     "ldc_incremental_seconds": 2.7,
     "incremental_linked_bytes": 475136,
     "compiler_peak_rss_bytes": 536870912,
-    "template_instances": 900
+    "template_instances": 5050
    },
    "provisional": [
     "dmd_cold_seconds",
@@ -370,7 +370,7 @@
     "ldc_incremental_seconds": 2.7,
     "incremental_linked_bytes": 229376,
     "compiler_peak_rss_bytes": 536870912,
-    "template_instances": 2350
+    "template_instances": 8150
    },
    "provisional": [
     "dmd_cold_seconds",
@@ -402,7 +402,7 @@
     "ldc_incremental_seconds": 2.7,
     "incremental_linked_bytes": 745472,
     "compiler_peak_rss_bytes": 536870912,
-    "template_instances": 5750
+    "template_instances": 5700
    },
    "provisional": [
     "dmd_cold_seconds",
@@ -436,7 +436,7 @@
     "ldc_incremental_seconds": 2.7,
     "incremental_linked_bytes": 573440,
     "compiler_peak_rss_bytes": 536870912,
-    "template_instances": 800
+    "template_instances": 3000
    },
    "provisional": [
     "dmd_cold_seconds",
@@ -476,7 +476,7 @@
     "ldc_incremental_seconds": 2.7,
     "incremental_linked_bytes": 966656,
     "compiler_peak_rss_bytes": 536870912,
-    "template_instances": 1150
+    "template_instances": 9350
    },
    "provisional": [
     "dmd_cold_seconds",
@@ -509,7 +509,7 @@
     "ldc_incremental_seconds": 2.7,
     "incremental_linked_bytes": 81920,
     "compiler_peak_rss_bytes": 536870912,
-    "template_instances": 350
+    "template_instances": 1400
    },
    "provisional": [
     "dmd_cold_seconds",
@@ -544,7 +544,7 @@
     "ldc_incremental_seconds": 2.7,
     "incremental_linked_bytes": 442368,
     "compiler_peak_rss_bytes": 536870912,
-    "template_instances": 1050
+    "template_instances": 5300
    },
    "provisional": [
     "dmd_cold_seconds",
@@ -576,7 +576,7 @@
     "ldc_incremental_seconds": 2.7,
     "incremental_linked_bytes": 98304,
     "compiler_peak_rss_bytes": 536870912,
-    "template_instances": 2150
+    "template_instances": 2800
    },
    "provisional": [
     "dmd_cold_seconds",
@@ -617,7 +617,7 @@
     "ldc_incremental_seconds": 2.7,
     "incremental_linked_bytes": 126976,
     "compiler_peak_rss_bytes": 536870912,
-    "template_instances": 15650
+    "template_instances": 16700
    },
    "provisional": [
     "dmd_cold_seconds",
@@ -653,7 +653,7 @@
     "ldc_incremental_seconds": 2.7,
     "incremental_linked_bytes": 1359872,
     "compiler_peak_rss_bytes": 536870912,
-    "template_instances": 4100
+    "template_instances": 6300
    },
    "provisional": [
     "dmd_cold_seconds",
@@ -695,7 +695,7 @@
     "ldc_incremental_seconds": 2.7,
     "incremental_linked_bytes": 1552384,
     "compiler_peak_rss_bytes": 536870912,
-    "template_instances": 7800
+    "template_instances": 12450
    },
    "provisional": [
     "dmd_cold_seconds",
@@ -731,7 +731,7 @@
     "ldc_incremental_seconds": 2.7,
     "incremental_linked_bytes": 282624,
     "compiler_peak_rss_bytes": 536870912,
-    "template_instances": 2000
+    "template_instances": 3150
    },
    "provisional": [
     "dmd_cold_seconds",
@@ -764,7 +764,7 @@
     "ldc_incremental_seconds": 2.7,
     "incremental_linked_bytes": 622592,
     "compiler_peak_rss_bytes": 536870912,
-    "template_instances": 1200
+    "template_instances": 1500
    },
    "provisional": [
     "dmd_cold_seconds",
@@ -808,7 +808,7 @@
     "ldc_incremental_seconds": 2.7,
     "incremental_linked_bytes": 704512,
     "compiler_peak_rss_bytes": 536870912,
-    "template_instances": 2600
+    "template_instances": 2850
    },
    "provisional": [
     "dmd_cold_seconds",
@@ -843,7 +843,7 @@
     "ldc_incremental_seconds": 2.7,
     "incremental_linked_bytes": 770048,
     "compiler_peak_rss_bytes": 536870912,
-    "template_instances": 1800
+    "template_instances": 2000
    },
    "provisional": [
     "dmd_cold_seconds",
@@ -883,7 +883,7 @@
     "ldc_incremental_seconds": 2.7,
     "incremental_linked_bytes": 1425408,
     "compiler_peak_rss_bytes": 536870912,
-    "template_instances": 3300
+    "template_instances": 3550
    },
    "provisional": [
     "dmd_cold_seconds",

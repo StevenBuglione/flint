@@ -17,7 +17,7 @@
         "ldc_incremental_seconds": 2.7,
         "incremental_linked_bytes": 262144,
         "compiler_peak_rss_bytes": 536870912,
-        "template_instances": 2000
+        "template_instances": 1900
       }
     },
     "arena": {
@@ -33,7 +33,7 @@
         "ldc_incremental_seconds": 1.05,
         "incremental_linked_bytes": 262144,
         "compiler_peak_rss_bytes": 536870912,
-        "template_instances": 2000
+        "template_instances": 700
       }
     },
     "conc": {
@@ -51,7 +51,7 @@
         "ldc_incremental_seconds": 2.7,
         "incremental_linked_bytes": 262144,
         "compiler_peak_rss_bytes": 536870912,
-        "template_instances": 2000
+        "template_instances": 1500
       }
     },
     "engine-di": {
@@ -69,7 +69,7 @@
         "ldc_incremental_seconds": 2.4,
         "incremental_linked_bytes": 262144,
         "compiler_peak_rss_bytes": 536870912,
-        "template_instances": 2000
+        "template_instances": 2250
       }
     },
     "config": {
@@ -89,7 +89,7 @@
         "ldc_incremental_seconds": 2.4,
         "incremental_linked_bytes": 262144,
         "compiler_peak_rss_bytes": 536870912,
-        "template_instances": 2000
+        "template_instances": 2100
       }
     },
     "serde": {
@@ -107,7 +107,7 @@
         "ldc_incremental_seconds": 2.4,
         "incremental_linked_bytes": 262144,
         "compiler_peak_rss_bytes": 536870912,
-        "template_instances": 2000
+        "template_instances": 1950
       }
     },
     "validate": {
@@ -125,7 +125,7 @@
         "ldc_incremental_seconds": 1.05,
         "incremental_linked_bytes": 262144,
         "compiler_peak_rss_bytes": 536870912,
-        "template_instances": 2000
+        "template_instances": 1350
       }
     },
     "log": {
@@ -144,7 +144,7 @@
         "ldc_incremental_seconds": 2.4,
         "incremental_linked_bytes": 262144,
         "compiler_peak_rss_bytes": 536870912,
-        "template_instances": 2000
+        "template_instances": 1100
       }
     },
     "test": {
@@ -160,7 +160,7 @@
         "ldc_incremental_seconds": 2.4,
         "incremental_linked_bytes": 262144,
         "compiler_peak_rss_bytes": 536870912,
-        "template_instances": 2000
+        "template_instances": 1700
       }
     },
     "engine-web": {
@@ -184,7 +184,7 @@
         "ldc_incremental_seconds": 5.4,
         "incremental_linked_bytes": 1048576,
         "compiler_peak_rss_bytes": 536870912,
-        "template_instances": 2000
+        "template_instances": 1700
       }
     },
     "engine-http": {
@@ -205,7 +205,7 @@
         "ldc_incremental_seconds": 5.4,
         "incremental_linked_bytes": 1048576,
         "compiler_peak_rss_bytes": 536870912,
-        "template_instances": 2000
+        "template_instances": 950
       }
     },
     "engine-security": {
@@ -226,7 +226,7 @@
         "ldc_incremental_seconds": 5.4,
         "incremental_linked_bytes": 1048576,
         "compiler_peak_rss_bytes": 536870912,
-        "template_instances": 2000
+        "template_instances": 950
       }
     },
     "engine-actuator": {
@@ -250,7 +250,7 @@
         "ldc_incremental_seconds": 5.4,
         "incremental_linked_bytes": 1048576,
         "compiler_peak_rss_bytes": 536870912,
-        "template_instances": 2000
+        "template_instances": 2450
       }
     },
     "engine-schedule": {
@@ -271,7 +271,7 @@
         "ldc_incremental_seconds": 5.4,
         "incremental_linked_bytes": 1048576,
         "compiler_peak_rss_bytes": 536870912,
-        "template_instances": 2000
+        "template_instances": 800
       }
     },
     "engine-rpc": {
@@ -294,7 +294,7 @@
         "ldc_incremental_seconds": 5.4,
         "incremental_linked_bytes": 1048576,
         "compiler_peak_rss_bytes": 536870912,
-        "template_instances": 2000
+        "template_instances": 1000
       }
     },
     "engine-sql": {
@@ -315,7 +315,7 @@
         "ldc_incremental_seconds": 4.2,
         "incremental_linked_bytes": 786432,
         "compiler_peak_rss_bytes": 536870912,
-        "template_instances": 2000
+        "template_instances": 600
       }
     },
     "engine-data": {
@@ -338,7 +338,7 @@
         "ldc_incremental_seconds": 4.2,
         "incremental_linked_bytes": 786432,
         "compiler_peak_rss_bytes": 536870912,
-        "template_instances": 2000
+        "template_instances": 950
       }
     },
     "engine-migrate": {
@@ -359,7 +359,7 @@
         "ldc_incremental_seconds": 4.2,
         "incremental_linked_bytes": 786432,
         "compiler_peak_rss_bytes": 536870912,
-        "template_instances": 2000
+        "template_instances": 1400
       }
     },
     "engine-cache": {
@@ -380,7 +380,7 @@
         "ldc_incremental_seconds": 4.2,
         "incremental_linked_bytes": 786432,
         "compiler_peak_rss_bytes": 536870912,
-        "template_instances": 2000
+        "template_instances": 1200
       }
     },
     "cli": {
@@ -399,7 +399,7 @@
         "ldc_incremental_seconds": 2.7,
         "incremental_linked_bytes": 262144,
         "compiler_peak_rss_bytes": 536870912,
-        "template_instances": 2000
+        "template_instances": 1650
       }
     },
     "term": {
@@ -417,7 +417,7 @@
         "ldc_incremental_seconds": 2.7,
         "incremental_linked_bytes": 262144,
         "compiler_peak_rss_bytes": 536870912,
-        "template_instances": 2000
+        "template_instances": 400
       }
     },
     "engine-tui": {
@@ -438,7 +438,7 @@
         "ldc_incremental_seconds": 2.7,
         "incremental_linked_bytes": 262144,
         "compiler_peak_rss_bytes": 536870912,
-        "template_instances": 2000
+        "template_instances": 700
       }
     },
     "engine-style": {
@@ -454,7 +454,7 @@
         "ldc_incremental_seconds": 1.05,
         "incremental_linked_bytes": 262144,
         "compiler_peak_rss_bytes": 536870912,
-        "template_instances": 2000
+        "template_instances": 400
       }
     },
     "engine-widgets": {
@@ -474,7 +474,7 @@
         "ldc_incremental_seconds": 2.7,
         "incremental_linked_bytes": 262144,
         "compiler_peak_rss_bytes": 536870912,
-        "template_instances": 2000
+        "template_instances": 550
       }
     },
     "engine-prompt": {
@@ -515,7 +515,7 @@
         "ldc_incremental_seconds": 2.7,
         "incremental_linked_bytes": 262144,
         "compiler_peak_rss_bytes": 536870912,
-        "template_instances": 2000
+        "template_instances": 2350
       }
     },
     "engine-wasm-bridge": {
@@ -533,7 +533,7 @@
         "ldc_incremental_seconds": 2.4,
         "incremental_linked_bytes": 49152,
         "compiler_peak_rss_bytes": 536870912,
-        "template_instances": 2000
+        "template_instances": 200
       }
     },
     "engine-ui-signals": {
@@ -552,7 +552,7 @@
         "ldc_incremental_seconds": 2.4,
         "incremental_linked_bytes": 49152,
         "compiler_peak_rss_bytes": 536870912,
-        "template_instances": 2000
+        "template_instances": 300
       }
     },
     "engine-wasi": {
@@ -571,7 +571,7 @@
         "ldc_incremental_seconds": 2.4,
         "incremental_linked_bytes": 49152,
         "compiler_peak_rss_bytes": 536870912,
-        "template_instances": 2000
+        "template_instances": 550
       }
     },
     "engine-mq": {
@@ -593,7 +593,7 @@
         "ldc_incremental_seconds": 4.5,
         "incremental_linked_bytes": 1048576,
         "compiler_peak_rss_bytes": 536870912,
-        "template_instances": 2000
+        "template_instances": 850
       }
     },
     "engine-storage": {
@@ -614,7 +614,7 @@
         "ldc_incremental_seconds": 4.5,
         "incremental_linked_bytes": 1048576,
         "compiler_peak_rss_bytes": 536870912,
-        "template_instances": 2000
+        "template_instances": 1950
       }
     },
     "engine-mail": {
@@ -635,7 +635,7 @@
         "ldc_incremental_seconds": 4.5,
         "incremental_linked_bytes": 1048576,
         "compiler_peak_rss_bytes": 536870912,
-        "template_instances": 2000
+        "template_instances": 1000
       }
     },
     "engine-ai": {
@@ -657,7 +657,7 @@
         "ldc_incremental_seconds": 4.2,
         "incremental_linked_bytes": 524288,
         "compiler_peak_rss_bytes": 536870912,
-        "template_instances": 2000
+        "template_instances": 1500
       }
     },
     "engine-mcp": {
@@ -680,7 +680,7 @@
         "ldc_incremental_seconds": 4.2,
         "incremental_linked_bytes": 524288,
         "compiler_peak_rss_bytes": 536870912,
-        "template_instances": 2000
+        "template_instances": 1750
       }
     },
     "engine-template": {
@@ -699,7 +699,7 @@
         "ldc_incremental_seconds": 4.5,
         "incremental_linked_bytes": 1048576,
         "compiler_peak_rss_bytes": 536870912,
-        "template_instances": 2000
+        "template_instances": 1400
       }
     },
     "engine-codec": {
@@ -717,7 +717,7 @@
         "ldc_incremental_seconds": 4.5,
         "incremental_linked_bytes": 1048576,
         "compiler_peak_rss_bytes": 536870912,
-        "template_instances": 2000
+        "template_instances": 350
       }
     },
     "engine-desktop": {
@@ -739,7 +739,7 @@
         "ldc_incremental_seconds": 4.5,
         "incremental_linked_bytes": 1048576,
         "compiler_peak_rss_bytes": 536870912,
-        "template_instances": 2000
+        "template_instances": 500
       }
     }
   }

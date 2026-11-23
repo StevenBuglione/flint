@@ -1,5 +1,9 @@
 {
   "schema": 1,
+  "template_budget_ratchet": {
+    "after": "e00b7bd0d888058739983e20c2d9a076177be7e3",
+    "decision": "Owner decision 3 (docs/spring/phase1/decisions.md, 2026-11-23): template budgets were reset to the corrected count (own library plus probe) times 1.25, rounded up to 50, in the commit after this one, and may only go down from then on (tools/template_budget_ratchet.py)."
+  },
   "regression": {
     "compile_ratio_max": 1.1,
     "binary_ratio_max": 1.05,
