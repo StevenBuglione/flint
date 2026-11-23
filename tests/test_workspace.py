@@ -124,7 +124,7 @@ class LockPartitionTests(unittest.TestCase):
         self.assertTrue({'openssl', 'sqlite', 'llhttp', 'zlib', 'zstd'} <= framework)
         self.assertNotIn('libyaml', framework)
         self.assertEqual(partitions['peers']['framework'], ['jre', 'kafka', 'minio', 'nats', 'valkey'])
-        self.assertEqual(partitions['peers']['flint'], ['jdk', 'maven', 'spring-boot'])
+        self.assertEqual(partitions['peers']['flint'], ['graalvm', 'jdk', 'maven', 'spring-boot'])
         native = json.loads((ROOT / 'policy/native-lock.json').read_text())['libraries']
         covered = set().union(*map(set, partitions['native'].values()))
         self.assertEqual(covered, {row['name'] for row in native})
