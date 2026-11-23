@@ -1,0 +1,20 @@
+{"schema":"flint.unregistered-packages/1",
+"note":"DUB packages under framework/ and boot/ that policy/framework.json or policy/boot.json did not list on 2026-11-23, when the registration check (FLINT-E0535, tools/gates.py layer_registration) landed. The list only shrinks: an entry that is registered or gone fails until it is removed, and no entry may be dated after 2026-11-23. Register each package, then delete its line.",
+"paths":{
+"boot/core/flint-boot":{"since":"2026-11-23","owner":"Boot"},
+"boot/core/flint-boot-autoconfigure":{"since":"2026-11-23","owner":"Boot"},
+"boot/core/flint-boot-test":{"since":"2026-11-23","owner":"Boot"},
+"boot/module/flint-boot-data-jdbc-test":{"since":"2026-11-23","owner":"Boot"},
+"boot/module/flint-boot-webmvc-test":{"since":"2026-11-23","owner":"Boot"},
+"boot/starter/flint-boot-starter":{"since":"2026-11-23","owner":"Boot"},
+"boot/starter/flint-boot-starter-jdbc":{"since":"2026-11-23","owner":"Boot"},
+"boot/starter/flint-boot-starter-json":{"since":"2026-11-23","owner":"Boot"},
+"boot/starter/flint-boot-starter-test":{"since":"2026-11-23","owner":"Boot"},
+"boot/starter/flint-boot-starter-validation":{"since":"2026-11-23","owner":"Boot"},
+"boot/starter/flint-boot-starter-web":{"since":"2026-11-23","owner":"Boot"},
+"framework/framework-test":{"since":"2026-11-23","owner":"web-http"},
+"framework/jakarta-servlet":{"since":"2026-11-23","owner":"web-http"},
+"framework/p1-interim":{"since":"2026-11-23","owner":"framework-core (Phase 1 interim)"},
+"framework/web":{"since":"2026-11-23","owner":"web-http"},
+"framework/webmvc":{"since":"2026-11-23","owner":"web-http"}
+}}

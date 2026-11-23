@@ -391,6 +391,12 @@ immutable CodeInfo[] catalog = [
             ~ "regenerates them in the same commit; after a rebase that touches policy, regenerate them again. They "
             ~ "are deterministic, so regenerating settles any conflict.",
             "python3 tools/platform_modules.py --write"),
+    CodeInfo("FLINT-E0535", ExitCode.user, "a DUB package is not registered",
+            "Every DUB package under framework/ and boot/ (a directory with a dub.sdl or dub.json) is listed in "
+            ~ "policy/framework.json or policy/boot.json, so the gates check it and the repo split moves it. "
+            ~ "policy/unregistered-packages.json lists the packages unregistered on 2026-11-23; it only shrinks, "
+            ~ "and an entry that is registered or gone must be removed.",
+            `"web": {"directory": "framework/web", "module": "flint.web", "repo": "framework", ...}`),
     CodeInfo("FLINT-E0601", ExitCode.user, "source is not formatted",
             "One formatter: dfmt 0.15.2 with the repository's dfmt.ini. `flint check` compares its output byte for "
             ~ "byte.", "flint fmt"),

@@ -218,6 +218,36 @@ def platform_outputs():
 
 WORKSPACE=Workspace()
 
+REGISTRATION_FROZEN='2026-11-23'
+
+def layer_registration():
+    """FLINT-E0535: every DUB package under framework/ and boot/ is listed in policy/framework.json or policy/boot.json,
+    so the gates check it and tools/extract_repo.py moves it. policy/unregistered-packages.json lists the packages
+    that were unregistered when this check landed (2026-11-23); that list only shrinks."""
+    allow_path=ROOT/'policy/unregistered-packages.json'
+    allowed=json.loads(allow_path.read_text(encoding='utf-8'))['paths'] if allow_path.is_file() else {}
+    registered=set()
+    for name,file,groups in (('framework','policy/framework.json',('modules',)),('boot','policy/boot.json',('libraries','starters'))):
+        if (ROOT/file).is_file():
+            policy=json.loads((ROOT/file).read_text(encoding='utf-8'))
+            registered|={meta['directory'] for group in groups for meta in policy.get(group,{}).values()}
+    found=[]
+    for top,policy_file in (('framework','policy/framework.json'),('boot','policy/boot.json')):
+        base=(WORKSPACE.checkout(top) if WORKSPACE.file else ROOT)
+        for directory,subdirs,files in os.walk(base/top):
+            subdirs[:]=sorted(s for s in subdirs if not s.startswith('.'))
+            if 'dub.sdl' in files or 'dub.json' in files:
+                subdirs[:]=[]  # a recipe nested inside a package (a fixture) belongs to that package
+                found.append((Path(directory).relative_to(base).as_posix(),policy_file))
+    paths={p for p,_ in found}
+    for path,policy_file in found:
+        require(path in registered or path in allowed,f'FLINT-E0535: {path} is a DUB package that no policy lists; add it to {policy_file}')
+    for path,meta in sorted(allowed.items()):
+        require(meta.get('since','')<=REGISTRATION_FROZEN,f'FLINT-E0535: {path}: policy/unregistered-packages.json only shrinks; register the package in its policy instead')
+        require(path in paths,f'FLINT-E0535: {path} is no longer a package; remove it from policy/unregistered-packages.json')
+        require(path not in registered,f'FLINT-E0535: {path} is registered now; remove it from policy/unregistered-packages.json')
+    return {'packages':len(found),'unregistered_allowed':len(allowed)}
+
 def structural(selected):
     visited=set();active=set()
     def visit(n):
@@ -241,6 +271,7 @@ def structural(selected):
     platform_outputs()
     module_budgets.load(B,P,ROOT)
     framework=framework_layers()
+    layer_registration()
     mixin_packages=set()
     for n in selected:
         meta=P[n];pkg=WORKSPACE.package_dir(n,ROOT) if WORKSPACE.file else ROOT/'packages'/n;sdl=(pkg/'dub.sdl').read_text(encoding='utf-8')
