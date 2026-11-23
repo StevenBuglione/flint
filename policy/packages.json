@@ -211,7 +211,7 @@
     "security": {
       "tier": 2,
       "module": "flint.security",
-      "repo": "security",
+      "repo": "framework",
       "dependencies": [
         "arena",
         "http",
