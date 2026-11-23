@@ -68,9 +68,9 @@
     {
       "name": "flint.datasource.embedded-database-connection",
       "type": "EmbeddedDatabaseConnection",
-      "description": "Connection details for an embedded database. Defaults to the most suitable embedded database available in the build.",
+      "description": "Connection details for an embedded database. Defaults to the most suitable embedded database available in the build: SQLite, which Flint's JDBC driver always provides.",
       "sourceType": "flint.boot.jdbc.autoconfigure.DataSourceProperties",
-      "defaultValue": "none"
+      "defaultValue": "sqlite"
     },
     {
       "name": "flint.datasource.xa.data-source-class-name",

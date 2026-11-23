@@ -1,0 +1,2 @@
+flint.boot.jdbc.autoconfigure.DataSourceAutoConfiguration
+flint.boot.jdbc.autoconfigure.DataSourceTransactionManagerAutoConfiguration

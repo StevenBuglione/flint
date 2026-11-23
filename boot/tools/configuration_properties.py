@@ -35,8 +35,10 @@ class Enum:
 
 
 class Cls:
-    def __init__(self, name, doc, fields, nested=(), enums=(), prefix=None):
+    def __init__(self, name, doc, fields, nested=(), enums=(), prefix=None, state=()):
         self.name, self.doc, self.fields, self.nested, self.enums, self.prefix = name, doc, fields, list(nested), list(enums), prefix
+        # state: private declarations that are not properties (no getter, setter or metadata), such as Boot's uniqueName
+        self.state = list(state)
 
 
 KEYWORDS = {'template', 'version', 'function', 'delegate', 'out', 'ref', 'in', 'body', 'module', 'scope', 'alias'}
@@ -84,6 +86,7 @@ def render_class(c, indent=0, static=False):
     for f in c.fields:
         init = '' if f.default is None or f.ro else f' = {f.default}'
         fields.append(f'{pad}    {f.uda + " " if f.uda else ""}private {f.dtype} {field(f.name)}{init};')
+    fields += [f'{pad}    {decl}' for decl in c.state]
     if fields:
         body.append('\n'.join(fields))
     ros = [f for f in c.fields if f.ro]
@@ -136,12 +139,12 @@ datasource = Cls('DataSourceProperties', 'Base settings of the auto-configured `
     F('url', 'string', None, 'JDBC URL of the database.'),
     F('username', 'string', None, 'Login username of the database.'),
     F('password', 'string', None, 'Login password of the database.'),
-    F('embeddedDatabaseConnection', 'EmbeddedDatabaseConnection', 'EmbeddedDatabaseConnection.NONE', 'Connection details for an embedded database. Defaults to the most suitable embedded database available in the build.'),
+    F('embeddedDatabaseConnection', 'EmbeddedDatabaseConnection', 'EmbeddedDatabaseConnection.SQLITE', 'Connection details for an embedded database. Defaults to the most suitable embedded database available in the build: SQLite, which Flint\'s JDBC driver always provides.'),
     F('xa', 'Xa', 'new Xa', 'XA settings (`xa.*`).', ro=True),
 ], nested=[Cls('Xa', 'XA-specific datasource settings.', [
     F('dataSourceClassName', 'string', None, 'XA datasource fully qualified name.'),
     F('properties', 'Map!(string, string)', 'new LinkedHashMap!(string, string)', 'Properties to pass to the XA data source.', ro=True),
-])], prefix='flint.datasource')
+])], prefix='flint.datasource', state=['private string uniqueName; // generated once, by determineDatabaseName'])
 
 jdbc = Cls('JdbcProperties', 'Settings of the auto-configured `JdbcTemplate`.', [
     F('template', 'Template', 'new Template', '`flint.jdbc.template.*`.', ro=True),
@@ -363,7 +366,7 @@ UNITS = [
           'import flint.jackson.databind.cfg : DateTimeFeature, DeserializationFeature, EnumFeature, MapperFeature, SerializationFeature;'],
          [jackson], 'boot/module/flint-boot-jackson'),
     Unit('boot/module/flint-boot-jdbc/source/flint/boot/jdbc/autoconfigure.d',
-         header('module/spring-boot-jdbc/src/main/java/org/springframework/boot/jdbc/autoconfigure/DataSourceProperties.java\n// with JdbcProperties.java from the same directory and ../EmbeddedDatabaseConnection.java',
+         header('module/spring-boot-jdbc/src/main/java/org/springframework/boot/jdbc/autoconfigure/DataSourceProperties.java\n// with JdbcProperties.java, DataSourceAutoConfiguration.java, DataSourceConfiguration.java and\n// DataSourceTransactionManagerAutoConfiguration.java from the same directory, and ../EmbeddedDatabaseConnection.java',
                 '`type` is the class name; `jndiName` is excluded (jvm-platform); the `hikari` keys bind onto the pool data-access provides'),
          'flint.boot.jdbc.autoconfigure',
          '`org.springframework.boot.jdbc.autoconfigure`: the JDBC configuration properties. `flint.datasource.hikari.*` (alias `pool`) binds onto the pool `DataSource` the data-access module provides, as Boot binds `spring.datasource.hikari.*` onto `HikariDataSource`.',

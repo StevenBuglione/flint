@@ -1,5 +1,6 @@
 // Ported from spring-boot v4.2.0: module/spring-boot-jdbc/src/main/java/org/springframework/boot/jdbc/autoconfigure/DataSourceProperties.java
-// with JdbcProperties.java from the same directory and ../EmbeddedDatabaseConnection.java
+// with JdbcProperties.java, DataSourceAutoConfiguration.java, DataSourceConfiguration.java and
+// DataSourceTransactionManagerAutoConfiguration.java from the same directory, and ../EmbeddedDatabaseConnection.java
 // Copyright 2012-present the original author or authors.
 // Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
 // Modified by the Flint authors: Java Beans getters and setters are kept (rulebook R6); `spring.*` keys
@@ -10,7 +11,16 @@
 /// onto `HikariDataSource`.
 module flint.boot.jdbc.autoconfigure;
 
-import flint.boot.context.properties : ConfigurationProperties;
+import flint.boot.autoconfigure : AutoConfiguration;
+import flint.boot.autoconfigure.condition : ConditionalOnClass, ConditionalOnMissingBean,
+    ConditionalOnSingleCandidate;
+import flint.boot.context.properties : ClassRef, ConfigurationProperties, EnableConfigurationProperties;
+import flint.context.annotation : Bean;
+import flint.engine.aot.name : typeNameOf;
+import flint.engine.jdbc : FlintDataSource;
+import flint.beans.factory : BeanCreationException;
+import flint.javax.sql : DataSource;
+import flint.jdbc.support : JdbcTransactionManager;
 import flint.boot.convert : ChronoUnit, DurationUnit;
 import core.time : Duration;
 import flint.java.util : Optional;
@@ -79,8 +89,9 @@ final class DataSourceProperties
     private string url;
     private string username;
     private string password;
-    private EmbeddedDatabaseConnection embeddedDatabaseConnection = EmbeddedDatabaseConnection.NONE;
+    private EmbeddedDatabaseConnection embeddedDatabaseConnection = EmbeddedDatabaseConnection.SQLITE;
     private Xa xa;
+    private string uniqueName; // generated once, by determineDatabaseName
 
     /// Boot's defaults.
     this() pure nothrow
@@ -175,7 +186,7 @@ final class DataSourceProperties
     }
 
     /// Connection details for an embedded database. Defaults to the most suitable embedded database available in the
-    /// build.
+    /// build: SQLite, which Flint's JDBC driver always provides.
     EmbeddedDatabaseConnection getEmbeddedDatabaseConnection() const pure nothrow @nogc
     {
         return embeddedDatabaseConnection;
@@ -316,3 +327,141 @@ final class JdbcProperties
 }
 
 // ---- end: generated region
+
+/// The JDBC URL of an embedded database named `databaseName`, or `null` for `NONE` and the JVM-only engines.
+string getUrl(EmbeddedDatabaseConnection connection, string databaseName) pure
+{
+    if (connection != EmbeddedDatabaseConnection.SQLITE || databaseName is null)
+        return null;
+    return "jdbc:sqlite:file:" ~ databaseName ~ "?mode=memory&cache=shared";
+}
+
+/// Whether `url` is the URL of an embedded, in-memory database (Boot's `EmbeddedDatabaseConnection.isEmbedded`).
+bool isEmbeddedUrl(string url) pure
+{
+    import std.algorithm.searching : canFind, startsWith;
+
+    return url.startsWith("jdbc:sqlite::memory:") || (url.startsWith("jdbc:sqlite:") && url.canFind("mode=memory"));
+}
+
+/// The database name: a unique one when `generate-unique-name` holds, else `name`, else `testdb` for an embedded
+/// database, else `null` (Boot's `DataSourceProperties.determineDatabaseName`).
+string determineDatabaseName(DataSourceProperties properties)
+{
+    if (properties.isGenerateUniqueName())
+        return uniqueName(properties);
+    if (properties.getName().length)
+        return properties.getName();
+    if (properties.getEmbeddedDatabaseConnection() != EmbeddedDatabaseConnection.NONE)
+        return "testdb";
+    return null;
+}
+
+/// The JDBC URL: `url`, else the embedded database's (Boot's `DataSourceProperties.determineUrl`). Throws
+/// `DataSourceBeanCreationException` when neither is available.
+string determineUrl(DataSourceProperties properties)
+{
+    if (properties.getUrl().length)
+        return properties.getUrl();
+    const url = properties.getEmbeddedDatabaseConnection().getUrl(determineDatabaseName(properties));
+    if (url.length == 0)
+        throw new DataSourceBeanCreationException("Failed to determine suitable jdbc url",
+                properties, properties.getEmbeddedDatabaseConnection());
+    return url;
+}
+
+/// Thrown when the `DataSource` cannot be configured from `flint.datasource.*` (Boot's
+/// `DataSourceProperties.DataSourceBeanCreationException`).
+final class DataSourceBeanCreationException : BeanCreationException
+{
+    private DataSourceProperties properties;
+    private EmbeddedDatabaseConnection connection;
+
+    /// `message`, about `properties` and the embedded `connection` they name.
+    this(string message, DataSourceProperties properties, EmbeddedDatabaseConnection connection)
+    {
+        super(message);
+        this.properties = properties;
+        this.connection = connection;
+    }
+
+    /// The properties that failed.
+    DataSourceProperties getProperties() pure nothrow @nogc
+    {
+        return properties;
+    }
+
+    /// The embedded connection they name.
+    EmbeddedDatabaseConnection getConnection() const pure nothrow @nogc
+    {
+        return connection;
+    }
+}
+
+/// The login username: `username`, else `sa` for an embedded database (Boot's `determineUsername`).
+string determineUsername(DataSourceProperties properties)
+{
+    if (properties.getUsername().length)
+        return properties.getUsername();
+    return isEmbeddedUrl(determineUrl(properties)) ? "sa" : null;
+}
+
+/// The login password: `password`, else empty for an embedded database (Boot's `determinePassword`).
+string determinePassword(DataSourceProperties properties)
+{
+    if (properties.getPassword().length)
+        return properties.getPassword();
+    return isEmbeddedUrl(determineUrl(properties)) ? "" : null;
+}
+
+// Boot's uniqueName: one random name per DataSourceProperties instance.
+private string uniqueName(DataSourceProperties properties)
+{
+    import std.uuid : randomUUID;
+
+    if (properties.uniqueName is null)
+        properties.uniqueName = randomUUID().toString();
+    return properties.uniqueName;
+}
+
+/// Auto-configuration of the `DataSource`: Flint's pooled `FlintDataSource` (Boot's `HikariDataSource`), configured
+/// from `flint.datasource.*` and bound with `flint.datasource.hikari.*` (Hikari's property names), unless the
+/// application defines a `DataSource`.
+@AutoConfiguration @ConditionalOnClass(null, [
+    "flint.javax.sql.DataSource", "flint.engine.jdbc.FlintDataSource"
+])
+@EnableConfigurationProperties([ClassRef(typeNameOf!DataSourceProperties)])
+final class DataSourceAutoConfiguration
+{
+    /// The pooled data source.
+    @Bean @ConditionalOnMissingBean([ClassRef("flint.javax.sql.DataSource")])
+    @ConfigurationProperties("flint.datasource.hikari")
+    FlintDataSource dataSource(DataSourceProperties properties)
+    {
+        auto dataSource = new FlintDataSource();
+        dataSource.setJdbcUrl(properties.determineUrl());
+        if (auto username = properties.determineUsername())
+            dataSource.setUsername(username);
+        if (auto password = properties.determinePassword())
+            dataSource.setPassword(password);
+        if (properties.getName().length)
+            dataSource.setPoolName(properties.getName());
+        return dataSource;
+    }
+}
+
+/// Auto-configuration of a `JdbcTransactionManager` for the single `DataSource`, unless the application defines a
+/// `TransactionManager`.
+@AutoConfiguration @ConditionalOnClass(null, [
+    "flint.jdbc.support.JdbcTransactionManager", "flint.transaction.TransactionManager"
+])
+final class DataSourceTransactionManagerAutoConfiguration
+{
+    /// The transaction manager.
+    @Bean @ConditionalOnMissingBean([ClassRef("flint.transaction.TransactionManager")])
+    @ConditionalOnSingleCandidate(ClassRef("flint.javax.sql.DataSource"))
+    JdbcTransactionManager transactionManager(DataSource dataSource)
+    {
+        return new JdbcTransactionManager(dataSource);
+    }
+}

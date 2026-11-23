@@ -13,7 +13,7 @@ unittest
     auto properties = new DataSourceProperties;
     assert(properties.isGenerateUniqueName());
     assert(properties.getUrl() is null && properties.getName() is null);
-    assert(properties.getEmbeddedDatabaseConnection() == EmbeddedDatabaseConnection.NONE);
+    assert(properties.getEmbeddedDatabaseConnection() == EmbeddedDatabaseConnection.SQLITE);
     auto template_ = new JdbcProperties().getTemplate();
     assert(template_.isIgnoreWarnings() && template_.getFetchSize() == -1 && template_.getMaxRows() == -1);
     assert(template_.getQueryTimeout().isEmpty());

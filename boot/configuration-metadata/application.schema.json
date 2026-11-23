@@ -844,8 +844,8 @@
                 "HSQLDB",
                 "SQLITE"
               ],
-              "description": "Connection details for an embedded database. Defaults to the most suitable embedded database available in the build.",
-              "default": "none"
+              "description": "Connection details for an embedded database. Defaults to the most suitable embedded database available in the build: SQLite, which Flint's JDBC driver always provides.",
+              "default": "sqlite"
             },
             "xa": {
               "type": "object",

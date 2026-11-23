@@ -135,6 +135,12 @@
       "layer": "module",
       "dependencies": [
         "boot-core",
+        "boot-autoconfigure",
+        "beans",
+        "context",
+        "jdbc",
+        "engine-jdbc",
+        "tx",
         "java",
         "engine-aot"
       ],
