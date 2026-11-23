@@ -1132,6 +1132,7 @@ final class EnvironmentConfigurationPropertiesBinder : ConfigurationPropertiesBi
 {
     private ConfigurationPropertySource[] sources;
     private DescriptorTable descriptors;
+    private imported!"flint.validation".Validator[]delegate() @safe validatorLookup;
 
     /// A binder over `sources`, highest precedence first.
     this(ConfigurationPropertySource[] sources)
@@ -1145,6 +1146,13 @@ final class EnvironmentConfigurationPropertiesBinder : ConfigurationPropertiesBi
         this.descriptors = descriptors;
     }
 
+    /// Where the validators of `@Validated` beans come from (Boot's `getValidators`: the
+    /// `configurationPropertiesValidator` bean and the JSR-303 validator); asked only when a `@Validated` bean binds.
+    void setValidatorLookup(imported!"flint.validation".Validator[]delegate() @safe validatorLookup) pure nothrow @nogc
+    {
+        this.validatorLookup = validatorLookup;
+    }
+
     /// Bind the properties under `prefix` onto `target`, which `type` describes.
     void bind(string prefix, ref Any target, const Descriptor type)
     {
@@ -1152,7 +1160,49 @@ final class EnvironmentConfigurationPropertiesBinder : ConfigurationPropertiesBi
             throw new IllegalStateException(
                     "No descriptor for the @ConfigurationProperties bean " ~ target.typeName
                     ~ " bound under '" ~ prefix ~ "'");
-        binder().bind(ConfigurationPropertyName.of(prefix), type, target);
+        auto name = ConfigurationPropertyName.of(prefix);
+        binder().bind(name, type, target);
+        if (type.annotation("flint.validation.annotation.Validated") !is null)
+            validate(name, target, type);
+    }
+
+    // Boot's ValidationBindHandler.onFinish for the bound root: every validator that supports the type, then the
+    // target itself when it is a Validator; any error fails the binding with a BindValidationException.
+    private void validate(ConfigurationPropertyName name, ref Any target, const Descriptor type)
+    {
+        import flint.boot.context.properties.bind.validation : BindValidationException, ValidationErrors;
+        import flint.validation : BeanPropertyBindingResult, ObjectError, Validator;
+
+        Validator[] validators = validatorLookup is null ? null : validatorLookup();
+        if (!target.isNull() && target.holds!Object)
+        {
+            if (auto self = cast(Validator) target.get!Object)
+                validators ~= self;
+        }
+        auto errors = new BeanPropertyBindingResult(target, name.toString(), descriptors);
+        foreach (validator; validators)
+        {
+            if (validator.supports(type.name))
+                validator.validate(target, errors);
+        }
+        if (!errors.hasErrors())
+            return;
+        ObjectError[] all = errors.getAllErrors().toArray();
+        auto validationErrors = new ValidationErrors(name, boundProperties(name), all);
+        throw new BindException(name, type.name, null, new BindValidationException(validationErrors));
+    }
+
+    private ConfigurationProperty[] boundProperties(ConfigurationPropertyName name)
+    {
+        ConfigurationProperty[] result;
+        foreach (candidate; ConfigurationPropertySources.names(sources))
+        {
+            if (!name.isAncestorOf(candidate))
+                continue;
+            if (auto property = ConfigurationPropertySources.find(sources, candidate))
+                result ~= property;
+        }
+        return result;
     }
 
     /// A new value of `type` built from the properties under `prefix` (constructor binding).

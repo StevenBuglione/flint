@@ -105,3 +105,74 @@ private struct Address
     auto configuration = new ValidationAutoConfiguration();
     assertThrown!UnsupportedOperationException(configuration.methodValidationPostProcessor(context));
 }
+
+/// A `@Validated` `@ConfigurationProperties` type with a Bean Validation constraint (Boot's
+/// ConfigurationPropertiesTests' `ValidatedJsr303Properties`).
+@(imported!"flint.validation.annotation".Validated) final class ValidatedJsr303Properties
+{
+    @(imported!"flint.jakarta.validation.constraints".Min(5)) private int value;
+
+    /// The value.
+    int getValue() const
+    {
+        return value;
+    }
+
+    /// Set the value.
+    void setValue(int value)
+    {
+        this.value = value;
+    }
+}
+
+// Flint test (ConfigurationPropertiesTests.loadWhenHasJsr303ConstraintsShouldFail and
+// loadWhenHasJsr303ConstraintsAndValidValuesShouldSucceed): a @Validated properties bean is validated with the
+// context's Bean Validation validator, which FlintApplication's lookup finds, and an invalid value fails the binding.
+@("validatedConfigurationPropertiesUseTheContextBeanValidationValidator") unittest
+{
+    import flint.boot : configurationPropertiesValidators;
+    import flint.boot.context.properties.bind : BindException, EnvironmentConfigurationPropertiesBinder;
+    import flint.boot.context.properties.bind.validation : BindValidationException;
+    import flint.boot.context.properties.source : ConfigurationPropertySource, MapConfigurationPropertySource;
+    import flint.context.support : GenericApplicationContext;
+    import flint.engine.aot.any : Any;
+    import flint.engine.aot.descriptor : descriptorOf;
+
+    auto context = new GenericApplicationContext;
+    context.getDescriptorTable().add(descriptorOf!ValidatedJsr303Properties());
+    auto validator = new ValidationAutoConfiguration().defaultValidator(null, context);
+    validator.afterPropertiesSet();
+    scope (exit)
+        validator.destroy();
+    context.getBeanFactory().registerSingleton("defaultValidator", validator);
+    context.refresh();
+    scope (exit)
+        context.close();
+    assert(configurationPropertiesValidators(context).length == 1);
+
+    bool bind(string value)
+    {
+        auto binder = new EnvironmentConfigurationPropertiesBinder(
+                [
+            cast(ConfigurationPropertySource) new MapConfigurationPropertySource("test", [
+                ["test.value", value]
+            ])
+        ]);
+        binder.setDescriptors(context.getDescriptorTable());
+        binder.setValidatorLookup(() => configurationPropertiesValidators(context));
+        auto target = Any.of(new ValidatedJsr303Properties);
+        try
+            binder.bind("test", target, descriptorOf!ValidatedJsr303Properties());
+        catch (BindException failure)
+        {
+            auto validation = cast(BindValidationException) failure.getCause();
+            assert(validation !is null, failure.msg);
+            assert(validation.getValidationErrors().getAllErrors().length == 1, validation.msg);
+            return false;
+        }
+        return true;
+    }
+
+    assert(!bind("1"));
+    assert(bind("5"));
+}

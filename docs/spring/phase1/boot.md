@@ -63,6 +63,13 @@ Boot's `@Nullable Integer`, `Boolean` and `Duration` fields are `flint.java.util
 - JavaBeans get each settable property bound under its dashed name (`maxPoolSize` binds `max-pool-size` and every relaxed spelling);
 - value objects, whose preferred constructor takes parameters, are built through that constructor, with `@DefaultValue` for absent parameters.
 
+A `@Validated` `@ConfigurationProperties` bean is validated once it is bound, as Boot's `ValidationBindHandler` does for the root. The validators are those of Boot's `ConfigurationPropertiesBinder`:
+- the `configurationPropertiesValidator` bean;
+- a Bean Validation validator;
+- the bean itself, when it is a `Validator`.
+
+Boot builds its own `ConfigurationPropertiesJsr303Validator`; Flint uses the context's (boot-validation's `defaultValidator`), which carries the Flint AOT descriptors that Hibernate Validator needs. A failure is a `BindException` caused by `BindValidationException`, which `BindValidationFailureAnalyzer` explains: each error's property, value, origin and reason. The general `BindHandler` callbacks (`onStart`, `onSuccess`, `onCreate`) and the nested-property validation of `ValidationBindHandler` are not ported yet (`FlintBindHandler`).
+
 `bind!T`, `bindOrCreate!T` and `Bindable!T` are one-line façades that look up or build `T`'s descriptor. Nested types are found in the binder's `DescriptorTable`, which the AOT registry fills.
 
 Erased construction of enums, arrays and maps needs builders that `Descriptor` does not have yet. Boot asked framework-core and flint-aot for `Any.ofEnum`, `fromElements`/`toElements` and `fromEntries`/`toEntries`. Until they land, binding those types reports an `IllegalStateException` that names the gap.

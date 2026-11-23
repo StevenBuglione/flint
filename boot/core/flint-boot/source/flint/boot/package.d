@@ -930,6 +930,7 @@ private:
             factory.setAllowCircularReferences(allowCircularReferences);
         }
         auto binder = new EnvironmentConfigurationPropertiesBinder(environment.getConfigurationPropertySources());
+        binder.setValidatorLookup(() => configurationPropertiesValidators(context));
         if (auto generic = cast(GenericApplicationContext) context)
         {
             static immutable string[] types = ["NONE", "SERVLET", "REACTIVE"];
@@ -1010,6 +1011,37 @@ Object[] beansOfType(ConfigurableApplicationContext context, string type)
     foreach (name; factory.getBeanNamesForTypeErased(type))
         beans ~= factory.getBean(name);
     return beans;
+}
+
+/// Boot's `ConfigurationPropertiesBinder.getValidators`: the `configurationPropertiesValidator` bean, then a JSR-303
+/// validator. Boot builds its own `ConfigurationPropertiesJsr303Validator` when Bean Validation is present; Flint uses
+/// the context's Bean Validation validator (boot-validation's `defaultValidator`), which carries the Flint AOT
+/// descriptors that Hibernate Validator needs.
+imported!"flint.validation".Validator[] configurationPropertiesValidators(ConfigurableApplicationContext context)
+{
+    import flint.engine.aot.name : typeNameOf;
+    import flint.validation : Validator;
+    import flint.validation.beanvalidation : SpringValidatorAdapter;
+
+    enum validatorBeanName = "configurationPropertiesValidator";
+    Validator[] result;
+    auto factory = context.getBeanFactory();
+    if (factory.containsBean(validatorBeanName))
+    {
+        if (auto validator = cast(Validator) factory.getBean(validatorBeanName))
+            result ~= validator;
+    }
+    foreach (name; factory.getBeanNamesForTypeErased(typeNameOf!Validator))
+    {
+        if (name == validatorBeanName)
+            continue;
+        if (auto validator = cast(SpringValidatorAdapter) factory.getBean(name))
+        {
+            result ~= validator;
+            break;
+        }
+    }
+    return result;
 }
 
 /// The beans of `context` injectable as `type`, sorted as Boot's `callRunners` sorts them: `PriorityOrdered`, then

@@ -120,36 +120,7 @@ version (FlintUnboundIndexedElements)
     }
 }
 
-version (FlintBindValidation)
-{
-    // Gap: `@Validated` configuration properties are not validated (no ValidationBindHandler), so the binding
-    // succeeds instead of failing with a BindValidationException the analyzer leaves alone.
-    @("analysisForValidationExceptionIsNull") unittest
-    {
-        import flint.validation.annotation : Validated;
-        import flint.jakarta.validation.constraints : Min;
-
-        @Validated static final class FieldValidationFailureProperties
-        {
-            @Min(5, "at least five") private int value;
-
-            int getValue() const
-            {
-                return value;
-            }
-
-            void setValue(int value)
-            {
-                this.value = value;
-            }
-        }
-
-        const analysis = performAnalysis!FieldValidationFailureProperties("test.foo", [
-            "test.foo.value", "1"
-        ]);
-        assert(analysis is null);
-    }
-}
+// analysisForValidationExceptionIsNull is in bind_validation_failure_analyzer_test.d, beside the validation setup.
 
 version (FlintPropertySourceOriginText)
 {

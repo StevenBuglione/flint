@@ -1,5 +1,5 @@
 // Ported from spring-boot v4.2.0: core/spring-boot/src/main/java/org/springframework/boot/diagnostics/analyzer/BindFailureAnalyzer.java
-// with InvalidConfigurationPropertyNameFailureAnalyzer.java from the same directory, and
+// with InvalidConfigurationPropertyNameFailureAnalyzer.java and BindValidationFailureAnalyzer.java from the same directory, and
 // core/spring-boot/src/main/java/org/springframework/boot/context/config/ConfigDataNotFoundFailureAnalyzer.java.
 // Copyright 2012-present the original author or authors.
 // Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
@@ -20,6 +20,11 @@ final class BindFailureAnalyzer : AbstractFailureAnalyzer!BindException
 {
     protected override FailureAnalysis analyze(Throwable rootFailure, BindException cause)
     {
+        import flint.boot.context.properties.bind.validation : BindValidationException;
+
+        // BindValidationFailureAnalyzer explains validation failures.
+        if (cast(BindValidationException) causeOf(cause))
+            return null;
         string description = cause.getMessage() ~ ":\n";
         if (auto property = cause.getProperty())
         {
@@ -53,6 +58,55 @@ final class BindFailureAnalyzer : AbstractFailureAnalyzer!BindException
         if (root !is null && root.msg.length)
             return typeAndMessage(root);
         return typeAndMessage(cause);
+    }
+}
+
+/// Explains a `BindException` caused by a failed validation: each error's property, value and origin, and its
+/// message.
+final class BindValidationFailureAnalyzer : FailureAnalyzer
+{
+    /// The analysis of the first `BindValidationException` in `failure`'s causes, or `null`.
+    FailureAnalysis analyze(Throwable failure)
+    {
+        import flint.boot.context.properties.bind.validation : BindValidationException;
+        import flint.validation : FieldError;
+
+        auto validation = findCause!BindValidationException(failure);
+        if (validation is null)
+            return null;
+        auto bind = findCause!BindException(failure);
+        auto errors = validation.getValidationErrors();
+        string description = "Binding to target " ~ (bind is null ? errors.getName()
+                .toString() : bind.getTarget()) ~ " failed:\n";
+        foreach (error; errors.getAllErrors())
+        {
+            if (auto fieldError = cast(FieldError) error)
+            {
+                description ~= "\n    Property: " ~ fieldError.getObjectName() ~ "." ~ fieldError.getField();
+                description ~= "\n    Value: \"" ~ rejectedText(fieldError) ~ "\"";
+                if (auto property = errors.propertyOf(fieldError))
+                {
+                    if (property.getOrigin() !is null)
+                        description ~= "\n    Origin: " ~ property.getOrigin();
+                }
+            }
+            description ~= "\n    Reason: " ~ error.getDefaultMessage() ~ "\n";
+        }
+        return new FailureAnalysis(description, "Update your application's configuration", validation);
+    }
+
+    private static string rejectedText(imported!"flint.validation".FieldError error)
+    {
+        import flint.engine.aot.objects : objectToString;
+
+        auto value = error.getRejectedValue();
+        if (value.isNull())
+            return "null";
+        if (value.holds!string)
+            return value.get!string;
+        if (value.holds!Object)
+            return objectToString(value.get!Object);
+        return value.toString();
     }
 }
 
@@ -94,7 +148,8 @@ FailureAnalyzer[] bootFailureAnalyzers()
 {
     return [
         cast(FailureAnalyzer) new InvalidConfigurationPropertyNameFailureAnalyzer,
-        new BindFailureAnalyzer, new ConfigDataNotFoundFailureAnalyzer
+        new BindFailureAnalyzer, new BindValidationFailureAnalyzer,
+        new ConfigDataNotFoundFailureAnalyzer
     ];
 }
 
