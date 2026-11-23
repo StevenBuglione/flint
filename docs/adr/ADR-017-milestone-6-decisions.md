@@ -50,6 +50,14 @@ The handoff archive under `handoff/` stays byte-identical to its `MANIFEST.sha25
 
   `wake` is callable only on the owner loop. It marks a suspended fiber due, so the loop's next `resumeReadyTasks` pass resumes it before blocking. Waking a running or already due fiber does nothing, so waiters re-check their condition before yielding. Each task start gives its fiber slot a new generation, and a handle that outlives its task is rejected with `notFound`. The `yieldUntil` overload also ends the yield when the owner loop sees `watched` cancelled or expired, on the same per-pass check it already applies to the task's own context, so a wait on a handler-created context needs no polling. HTTP/1 read and write completions and close wake a streaming handler. HTTP/2 stream events, output drained by the provider and connection abort wake a stream's handler. The HTTP client keeps a list of waiting fibers per owner and wakes them on native readiness, on a libcurl timer fired by any fiber, and when a fiber's own call moves libcurl's timer ahead of another waiter's wake. Each waiter also sleeps no later than libcurl's next timer, read through the new internal C export `flint_http_timer`. The spin windows are gone. A 1 s fallback deadline remains only as a safety net against a missed wake (see `streamFallbackNanos` and the client's `fallbackMillis`). It never fires on a correct path. At one resumption per second, ten thousand idle stream waiters cost about 10,000 resumptions per second in total.
 
+- **Run-time exchange base URL.** `flint.engine.http` adds one overload beside `bindHttpClient!Client(ref HttpClient)`:
+
+  ```d
+  Result!Client bindHttpClient(Client)(ref HttpClient transport, string baseUrl);
+  ```
+
+  It binds the same adapter to `baseUrl` in place of the interface's `HttpExchange` base, as a client's base URL does in Spring. The base follows the annotation's rules, checked at run time instead of compile time: HTTP or HTTPS, a host, an optional path, and no query, fragment, user information or template braces. Trailing slashes are trimmed. Anything else returns `invalidArgument` and no adapter. The interface still needs exactly one `HttpExchange` annotation. The adapter now holds its base as a field instead of a template parameter, so each interface instantiates one adapter whichever base it uses. The HTTP suite's exchange peer listens on an ephemeral port and the test binds to it through this overload. It previously used the fixed port 127.0.0.1:43719, which collided when two checkouts ran the suite on one machine.
+
 ## Measurement method changes
 
 The first two changes were made before any baseline was recorded, and the milestone report shows counts under the old and new method. The next two were made after official performance runs at `96e475e` and `5f96e22`, whose results the report keeps. The last came from the AArch64 replay at `00ea4fc`.
