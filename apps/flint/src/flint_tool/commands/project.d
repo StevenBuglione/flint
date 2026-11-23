@@ -440,6 +440,7 @@ int commandRun(ref Session session, RunArgs args, string[] passthrough)
     }
     BuildOutcome outcome;
     auto request = requestOf(args.profile, null, args.dflags, null, args.verify, args.locked, false);
+    request.debugger = args.debug_;
     if (!buildProject(session, target.manifest, target.resolution, request, outcome, report))
         return finish(session, report, payload);
     payload.artifact = ArtifactInfo(display(outcome.artifact), display(outcome.receipt),

@@ -127,6 +127,23 @@ unittest
         .toEqual(["FLINT-E0109"]);
 }
 
+@("[profile.dev] debug = false opts out of debug information, and only there")
+unittest
+{
+    Manifest manifest;
+    expect(parse(header ~ "[profile.dev]\ndebug = false\n", manifest).items.length).toEqual(0);
+    expect(manifest.overrideFor("dev").noDebug).toEqual(true);
+    expect(manifest.overrideFor("test").noDebug).toEqual(false);
+    expect(parse(header ~ "[profile.dev]\ndebug = true\n", manifest).items.length).toEqual(0);
+    expect(manifest.overrideFor("dev").noDebug).toEqual(false);
+    expect(codes(parse(header ~ "[profile.release]\ndebug = false\n", manifest))).toEqual([
+        "FLINT-E0105"
+    ]);
+    expect(codes(parse(header ~ "[profile.dev]\ndebug = \"no\"\n", manifest))).toEqual([
+        "FLINT-E0105"
+    ]);
+}
+
 @("names, roots and versions")
 unittest
 {

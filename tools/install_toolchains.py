@@ -585,6 +585,23 @@ def install_lld_link(destination):
             'sha256': LOCK['assets'][LLVM_WINDOWS_ARCHIVE]['sha256'], 'lld_link_sha256': sha256_file(binary)}
 
 
+def configure_dmd_lld_link(bin_dir, destination):
+    """Make the pinned lld-link DMD's 64-bit linker on Windows (ADR-025 section 4a, ADR-026).
+
+    Of the linkers that keep file-and-line stack traces, LLD writes the complete PDB fastest. sc.ini's LINKCMD64 takes
+    precedence over the environment, so flint, DUB and the measurement tools all link the same way. The path is
+    relative to %@P%, sc.ini's own directory. Idempotent."""
+    linker = install_lld_link(destination)
+    config = bin_dir / 'sc.ini'
+    lines = [line for line in config.read_text().split('\n') if not line.startswith('LINKCMD64=')]
+    if '[Environment64]' not in lines:
+        raise ValueError('Missing [Environment64] in the pinned sc.ini')
+    relative = os.path.relpath(Path(linker['bin']) / 'lld-link.exe', bin_dir)
+    lines.insert(lines.index('[Environment64]') + 1, 'LINKCMD64=%@P%\\' + relative)
+    config.write_text('\n'.join(lines))
+    return {'driver': 'lld-link', 'version': linker['version'], 'sha256': linker['lld_link_sha256']}
+
+
 SANITIZER_RUNTIME = 'ldc-1.43.0-sanitizer-runtime'
 SANITIZER_RUNTIME_RECEIPT = 'flint-sanitizer-runtime.json'
 # Upstream runtime CMake options. RT_SUPPORT_SANITIZERS adds -d-version=SupportSanitizers:
@@ -728,8 +745,8 @@ def main():
         return
     if a.compiler=='dmd':
         if (osname,arch)==('Windows','x86_64') and not a.musl:
-            # ADR-026: the compile server and the parallel DUB pipeline are POSIX-only; Windows uses upstream DMD and DUB.
-            if a.dmd_linker:raise SystemExit('--dmd-linker selects an ELF linker; Windows links with link.exe (ADR-026)')
+            # ADR-026: upstream DMD by default (--flint-fork adds the warm worker pool), linking with the pinned lld-link.
+            if a.dmd_linker:raise SystemExit('--dmd-linker selects an ELF linker; Windows DMD links with the pinned lld-link (ADR-026)')
             name='dmd.2.114.0.windows.7z'
         elif (osname,arch)!=('Linux','x86_64') or a.musl:raise SystemExit('DMD development pin supports Linux x86_64 glibc and Windows x86_64; use LDC for this target')
         else:name='dmd.2.114.0.linux.tar.xz'
@@ -754,6 +771,8 @@ def main():
     receipt = {'compiler':a.compiler,'version':LOCK['versions'][a.compiler],'bin':str(binary_path),'sha256':LOCK['assets'][name]['sha256']}
     if a.compiler=='dmd' and osname!='Windows':
         quote_dmd_conf(binary_path)  # The Windows release's sc.ini already quotes its %@P% paths.
+    elif a.compiler=='dmd':
+        receipt['linker'] = configure_dmd_lld_link(binary_path, a.destination)
     if linker:
         configure_dmd_linker(binary_path, linker)
         receipt['linker'] = linker

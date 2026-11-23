@@ -44,6 +44,8 @@ struct BuildRequest
     /// Instrument with ASan and UBSan (`flint test --sanitize`): the sanitize profile, with embedded C
     /// compiled with the policy's sanitizer flags.
     bool sanitize;
+    /// Built for `flint run --debug`, which always keeps debug information (ADR-025 section 4a).
+    bool debugger;
 }
 
 /// One finished build.
@@ -431,6 +433,8 @@ struct Flags
     string[] manifestDflags;
     /// Additions from flint.toml.
     string[] manifestLflags;
+    /// `[profile.dev] debug = false` removed the debug information flags.
+    bool noDebug;
 }
 
 private Flags composeFlags(const ref ProfileSpec spec, ProfileOverride additions, const ref BuildRequest request)
@@ -454,12 +458,30 @@ private Flags composeFlags(const ref ProfileSpec spec, ProfileOverride additions
         flags.dflags = kept;
     }
     flags.dflags ~= request.targetDflags ~ additions.dflags ~ request.dflags;
+    flags.noDebug = additions.noDebug && !request.debugger;
+    if (flags.noDebug)
+        flags.dflags = withoutDebugInformation(flags.dflags);
     flags.lflags = spec.lflags.dup ~ additions.lflags ~ request.lflags;
     foreach (flag; flags.lflags)
         flags.dflags ~= "-L" ~ flag;
     flags.manifestDflags = additions.dflags;
     flags.manifestLflags = additions.lflags;
     return flags;
+}
+
+/// `flags` without the compiler flags that emit debug information (`[profile.dev] debug = false`).
+string[] withoutDebugInformation(scope const(string)[] flags)
+{
+    import std.algorithm.searching : canFind, startsWith;
+
+    static immutable debugFlags = ["-g", "-gf", "-gc", "-gline-tables-only"];
+    string[] kept;
+    foreach (flag; flags)
+    {
+        if (!debugFlags.canFind(flag) && !flag.startsWith("-gdwarf"))
+            kept ~= flag;
+    }
+    return kept;
 }
 
 private bool prepareLock(ref Session session, const ref Manifest manifest, const ref Resolution resolution,
@@ -641,6 +663,8 @@ private Receipt projectReceipt(ref Session session, const ref Manifest manifest,
     string[] reasons;
     if (flags.manifestDflags.length || flags.manifestLflags.length)
         reasons ~= "flint.toml adds flags to the " ~ request.profile ~ " profile";
+    if (flags.noDebug)
+        reasons ~= "flint.toml turns off debug information (debug = false)";
     reasons ~= commonReasons(spec, request, result.compiler, receipt.toolchain.verified);
     receipt.canonical = reasons.length == 0;
     receipt.non_canonical_reasons = reasons;

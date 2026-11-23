@@ -204,6 +204,9 @@ model = { path = "../model" }          # a Flint library project or a local DUB 
 [profile.release]          # additions on top of a canonical profile; marks builds non-canonical
 dflags = ["-mcpu=native"]
 
+[profile.dev]
+debug = false              # opt out of debug information (never the default; `flint run --debug` keeps it)
+
 [targets]
 default = ["linux-x86_64-glibc"]
 

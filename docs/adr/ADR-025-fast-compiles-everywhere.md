@@ -98,7 +98,7 @@ The decision:
    - `link.exe /DEBUG:FASTLINK /INCREMENTAL`: a partial PDB that references the objects' CodeView instead of merging it, read by dbghelp;
    - `lld-link /DEBUG:GHASH` with parallel threads.
 
-   A candidate qualifies only if an uncaught exception in `flint run` and in `flint test` prints file and line. Among qualifying candidates, the fastest cold build wins, and a tie goes to `link.exe`, whose incremental links give the fastest edit loop. Today's default, a full PDB with `link.exe`, stays until the measurement is done.
+   A candidate qualifies only if an uncaught exception in `flint run` and in `flint test` prints file and line. Among qualifying candidates, the fastest cold build wins, and a tie goes to `link.exe`, whose incremental links give the fastest edit loop. Today's default, a full PDB with `link.exe`, stays until the measurement is done. Measured on 2026-11-22 ([ADR-026](ADR-026-windows-x86-64.md)): every candidate qualifies, FASTLINK saves nothing, and `lld-link` links in 0.25 s against 0.68 s, so it is the default.
 3. **Remaining cold-build time is removed by speed work, not by dropping debug information:**
    - the compile server's warm worker pool (section 4);
    - parallel compile jobs;

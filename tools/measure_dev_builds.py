@@ -62,9 +62,9 @@ def append_go(path, iteration):
         output.write('\nconst flintMeasureEdit' + str(iteration) + ' = ' + str(iteration) + '\n')
 
 
-def flint_trials(app, trials, dub, dmd, extra_env):
+def flint_trials(app, trials, dub, dmd, extra_env, extra_dflags=()):
     fixture = POLICY['apps'][app]
-    flags = profiles.dflags('dev')
+    flags = profiles.dflags('dev') + list(extra_dflags)
     cold, incremental = [], []
     for iteration in range(trials):
         with tempfile.TemporaryDirectory(prefix='flint-dev-') as temporary:
@@ -116,13 +116,15 @@ def main():
     parser.add_argument('--no-go', action='store_true')
     parser.add_argument('--env', action='append', default=[], metavar='NAME=VALUE',
                         help='environment for the Flint builds, such as FLINT_DUB_PIPELINE=0')
+    parser.add_argument('--dflag', action='append', default=[], metavar='FLAG',
+                        help='a compiler flag appended to the dev profile, such as -L/DEBUG:FASTLINK')
     parser.add_argument('--label', default='', help='a name for this toolchain configuration')
     args = parser.parse_args()
     extra = dict(item.split('=', 1) for item in args.env)
     report = {'diagnostic': True, 'host': platform.platform(), 'cpus': os.cpu_count(), 'label': args.label,
-              'trials': args.trials, 'environment': extra, 'apps': {}}
+              'trials': args.trials, 'environment': extra, 'dflags': args.dflag, 'apps': {}}
     for app in args.app or ['bench-cli']:
-        cold, incremental = flint_trials(app, args.trials, args.dub, args.dmd, extra)
+        cold, incremental = flint_trials(app, args.trials, args.dub, args.dmd, extra, args.dflag)
         row = {'flint_cold': summary(cold), 'flint_incremental': summary(incremental)}
         if not args.no_go:
             go_cold, go_incremental = go_trials(app, args.trials, args.go)

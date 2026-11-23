@@ -48,6 +48,8 @@ struct ProfileOverride
     string[] dflags;
     /// Added linker flags.
     string[] lflags;
+    /// `debug = false` in [profile.dev]: build without debug information (ADR-025 section 4a). Never the default.
+    bool noDebug;
 }
 
 /// A waiver of one rule for one file.
@@ -158,7 +160,7 @@ struct Manifest
         foreach (ref item; overrides)
         {
             if (item.name == profile)
-                return ProfileOverride(item.name, item.dflags.dup, item.lflags.dup);
+                return ProfileOverride(item.name, item.dflags.dup, item.lflags.dup, item.noDebug);
         }
         return ProfileOverride(profile);
     }
@@ -692,23 +694,42 @@ private struct Reader
             return fail("FLINT-E0108", entry.offset, "unknown profile `" ~ name ~ "`", suggestion.length
                     ? "did you mean `" ~ suggestion ~ "`?" : "profiles: " ~ joined(profileNames));
         }
+        if (entry.path[2] == "debug")
+            return debugSetting(entry, manifest, name);
         if (entry.path[2] != "dflags" && entry.path[2] != "lflags")
-            return unknown(entry, entry.path[2], ["dflags", "lflags"], "[profile." ~ name ~ "]");
+            return unknown(entry, entry.path[2], ["dflags", "lflags", "debug"], "[profile." ~ name ~ "]");
         string[] values;
         if (!strings(entry, values))
             return;
-        size_t index = manifest.overrides.length;
-        foreach (i, ref existing; manifest.overrides)
-        {
-            if (existing.name == name)
-                index = i;
-        }
-        if (index == manifest.overrides.length)
-            manifest.overrides ~= ProfileOverride(name);
+        const index = overrideIndex(manifest, name);
         if (entry.path[2] == "dflags")
             manifest.overrides[index].dflags = values;
         else
             manifest.overrides[index].lflags = values;
+    }
+
+    /// `[profile.dev] debug = false` opts out of debug information (ADR-025 section 4a).
+    void debugSetting(ref const TomlEntry entry, ref Manifest manifest, string name)
+    {
+        enum example = "[profile.dev]\ndebug = false";
+        if (name != "dev")
+            return fail("FLINT-E0105", entry.offset, "`debug` applies to [profile.dev]", example);
+        if (entry.json != "true" && entry.json != "false")
+            return fail("FLINT-E0105", entry.offset, "`debug` is true or false", example);
+        manifest.overrides[overrideIndex(manifest, name)].noDebug = entry.json == "false";
+    }
+
+    /// The index of `name`'s additions, appended when new.
+    size_t overrideIndex(ref Manifest manifest, string name)
+    {
+        foreach (i, ref existing; manifest.overrides)
+        {
+            if (existing.name == name)
+                return i;
+        }
+        const index = manifest.overrides.length;
+        manifest.overrides ~= ProfileOverride(name);
+        return index;
     }
 
     void waivers(ref const TomlEntry entry, ref Manifest manifest)
