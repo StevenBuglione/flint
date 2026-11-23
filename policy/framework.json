@@ -156,6 +156,32 @@
     "engine-aot",
     "java"
    ]
+  },
+  "jakarta-validation": {
+   "directory": "framework/jakarta-validation",
+   "module": "flint.jakarta.validation",
+   "repo": "framework",
+   "licence": "Apache-2.0",
+   "upstream": "jakarta-validation@3.1.1",
+   "dependencies": [
+    "conc",
+    "engine-aot",
+    "java"
+   ]
+  },
+  "hibernate-validator": {
+   "directory": "framework/hibernate-validator",
+   "module": "flint.hibernate.validator",
+   "repo": "framework",
+   "licence": "Apache-2.0",
+   "upstream": "hibernate-validator@9.1.6.Final",
+   "dependencies": [
+    "engine-aot",
+    "jakarta-validation",
+    "java",
+    "serde",
+    "validate"
+   ]
   }
  }
 }

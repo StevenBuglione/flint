@@ -159,6 +159,10 @@
       "repo": "framework",
       "version": "monorepo"
     },
+    "flint:hibernate-validator": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:jackson-annotations": {
       "repo": "framework",
       "version": "monorepo"
@@ -172,6 +176,10 @@
       "version": "monorepo"
     },
     "flint:jakarta-annotation": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
+    "flint:jakarta-validation": {
       "repo": "framework",
       "version": "monorepo"
     },
