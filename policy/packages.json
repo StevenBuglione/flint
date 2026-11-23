@@ -4,6 +4,7 @@
     "reactor": {
       "tier": 0,
       "module": "flint.reactor",
+      "repo": "framework",
       "dependencies": [
         "arena",
         "conc"
@@ -22,6 +23,7 @@
     "arena": {
       "tier": 0,
       "module": "flint.arena",
+      "repo": "flint",
       "dependencies": [],
       "better_c": true,
       "budget": {
@@ -37,6 +39,7 @@
     "conc": {
       "tier": 0,
       "module": "flint.conc",
+      "repo": "flint",
       "dependencies": [
         "arena"
       ],
@@ -54,6 +57,7 @@
     "di": {
       "tier": 1,
       "module": "flint.di",
+      "repo": "framework",
       "dependencies": [
         "arena"
       ],
@@ -71,6 +75,7 @@
     "config": {
       "tier": 1,
       "module": "flint.config",
+      "repo": "flint",
       "dependencies": [
         "arena",
         "serde",
@@ -90,6 +95,7 @@
     "serde": {
       "tier": 1,
       "module": "flint.serde",
+      "repo": "flint",
       "dependencies": [
         "arena"
       ],
@@ -107,6 +113,7 @@
     "validate": {
       "tier": 1,
       "module": "flint.validate",
+      "repo": "flint",
       "dependencies": [
         "arena"
       ],
@@ -124,6 +131,7 @@
     "log": {
       "tier": 1,
       "module": "flint.log",
+      "repo": "flint",
       "dependencies": [
         "arena",
         "conc"
@@ -142,6 +150,7 @@
     "test": {
       "tier": 1,
       "module": "flint.test",
+      "repo": "flint",
       "dependencies": [],
       "better_c": false,
       "budget": {
@@ -157,6 +166,7 @@
     "web": {
       "tier": 2,
       "module": "flint.web",
+      "repo": "framework",
       "dependencies": [
         "arena",
         "reactor",
@@ -180,6 +190,7 @@
     "http": {
       "tier": 2,
       "module": "flint.http",
+      "repo": "framework",
       "dependencies": [
         "arena",
         "reactor",
@@ -200,6 +211,7 @@
     "security": {
       "tier": 2,
       "module": "flint.security",
+      "repo": "security",
       "dependencies": [
         "arena",
         "http",
@@ -220,6 +232,7 @@
     "actuator": {
       "tier": 2,
       "module": "flint.actuator",
+      "repo": "framework",
       "dependencies": [
         "arena",
         "reactor",
@@ -243,6 +256,7 @@
     "schedule": {
       "tier": 2,
       "module": "flint.schedule",
+      "repo": "framework",
       "dependencies": [
         "arena",
         "reactor",
@@ -263,6 +277,7 @@
     "rpc": {
       "tier": 2,
       "module": "flint.rpc",
+      "repo": "framework",
       "dependencies": [
         "arena",
         "reactor",
@@ -285,6 +300,7 @@
     "sql": {
       "tier": 3,
       "module": "flint.sql",
+      "repo": "framework",
       "dependencies": [
         "arena",
         "reactor",
@@ -305,6 +321,7 @@
     "data": {
       "tier": 3,
       "module": "flint.data",
+      "repo": "data-jdbc",
       "dependencies": [
         "arena",
         "sql",
@@ -327,6 +344,7 @@
     "migrate": {
       "tier": 3,
       "module": "flint.migrate",
+      "repo": "framework",
       "dependencies": [
         "arena",
         "sql",
@@ -347,6 +365,7 @@
     "cache": {
       "tier": 3,
       "module": "flint.cache",
+      "repo": "framework",
       "dependencies": [
         "arena",
         "reactor",
@@ -367,6 +386,7 @@
     "cli": {
       "tier": 4,
       "module": "flint.cli",
+      "repo": "flint",
       "dependencies": [
         "arena",
         "validate"
@@ -385,6 +405,7 @@
     "term": {
       "tier": 4,
       "module": "flint.term",
+      "repo": "flint",
       "dependencies": [
         "arena"
       ],
@@ -402,6 +423,7 @@
     "tui": {
       "tier": 4,
       "module": "flint.tui",
+      "repo": "framework",
       "dependencies": [
         "arena",
         "conc",
@@ -422,6 +444,7 @@
     "style": {
       "tier": 4,
       "module": "flint.style",
+      "repo": "framework",
       "dependencies": [],
       "better_c": false,
       "budget": {
@@ -437,6 +460,7 @@
     "widgets": {
       "tier": 4,
       "module": "flint.widgets",
+      "repo": "framework",
       "dependencies": [
         "arena",
         "tui",
@@ -456,6 +480,7 @@
     "prompt": {
       "tier": 4,
       "module": "flint.prompt",
+      "repo": "framework",
       "dependencies": [
         "arena",
         "term",
@@ -477,6 +502,7 @@
     "os": {
       "tier": 4,
       "module": "flint.os",
+      "repo": "flint",
       "dependencies": [
         "arena",
         "conc"
@@ -495,6 +521,7 @@
     "wasm-bridge": {
       "tier": 5,
       "module": "flint.wasm_bridge",
+      "repo": "framework",
       "dependencies": [
         "arena"
       ],
@@ -512,6 +539,7 @@
     "ui-signals": {
       "tier": 5,
       "module": "flint.ui_signals",
+      "repo": "framework",
       "dependencies": [
         "arena",
         "wasm-bridge"
@@ -530,6 +558,7 @@
     "wasi": {
       "tier": 5,
       "module": "flint.wasi",
+      "repo": "framework",
       "dependencies": [
         "arena",
         "conc"
@@ -548,6 +577,7 @@
     "mq": {
       "tier": 6,
       "module": "flint.mq",
+      "repo": "framework",
       "dependencies": [
         "arena",
         "reactor",
@@ -569,6 +599,7 @@
     "storage": {
       "tier": 6,
       "module": "flint.storage",
+      "repo": "framework",
       "dependencies": [
         "arena",
         "http",
@@ -589,6 +620,7 @@
     "mail": {
       "tier": 6,
       "module": "flint.mail",
+      "repo": "framework",
       "dependencies": [
         "arena",
         "http",
@@ -609,6 +641,7 @@
     "ai": {
       "tier": 7,
       "module": "flint.ai",
+      "repo": "ai",
       "dependencies": [
         "arena",
         "http",
@@ -630,6 +663,7 @@
     "mcp": {
       "tier": 7,
       "module": "flint.mcp",
+      "repo": "ai",
       "dependencies": [
         "arena",
         "http",
@@ -652,6 +686,7 @@
     "template": {
       "tier": 8,
       "module": "flint.templates",
+      "repo": "framework",
       "dependencies": [
         "arena",
         "serde"
@@ -670,6 +705,7 @@
     "codec": {
       "tier": 8,
       "module": "flint.codec",
+      "repo": "framework",
       "dependencies": [
         "arena"
       ],
@@ -687,6 +723,7 @@
     "desktop": {
       "tier": 8,
       "module": "flint.desktop",
+      "repo": "framework",
       "dependencies": [
         "arena",
         "conc",

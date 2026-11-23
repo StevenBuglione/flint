@@ -1,0 +1,64 @@
+{
+  "schema": "flint.repos/1",
+  "note": "Phase 0 of the repo split (plan section 7, ADR-023 platform modules): every flint:* package belongs to one repo; a package may depend only on its own repo and the repos its repo lists.",
+  "repos": {
+    "flint": {
+      "github": "flint",
+      "may_depend_on": []
+    },
+    "framework": {
+      "github": "flint-framework",
+      "may_depend_on": [
+        "flint"
+      ]
+    },
+    "boot": {
+      "github": "flint-boot",
+      "may_depend_on": [
+        "framework",
+        "flint"
+      ]
+    },
+    "security": {
+      "github": "flint-security",
+      "may_depend_on": [
+        "boot",
+        "framework",
+        "flint"
+      ]
+    },
+    "data-jdbc": {
+      "github": "flint-data-jdbc",
+      "may_depend_on": [
+        "boot",
+        "framework",
+        "flint"
+      ]
+    },
+    "ai": {
+      "github": "flint-ai",
+      "may_depend_on": [
+        "boot",
+        "framework",
+        "flint"
+      ]
+    }
+  },
+  "pending_edges": [
+    {
+      "from": "storage",
+      "to": "security",
+      "reason": "S3 SigV4 uses flint.security hashing; the coordinator decides whether the hashing moves down or security stays a framework engine"
+    },
+    {
+      "from": "boot-autoconfigure-data",
+      "to": "data",
+      "reason": "Spring Boot depends on Spring Data for auto-configuration; the coordinator decides whether boot may depend on data-jdbc"
+    },
+    {
+      "from": "starter-data-jdbc",
+      "to": "data",
+      "reason": "the same decision as boot-autoconfigure-data: Spring Boot's data starters depend on Spring Data"
+    }
+  ]
+}

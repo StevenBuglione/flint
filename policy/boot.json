@@ -9,7 +9,8 @@
         "di",
         "config",
         "term"
-      ]
+      ],
+      "repo": "boot"
     },
     "boot-autoconfigure-web": {
       "directory": "boot/autoconfigure-web",
@@ -21,7 +22,8 @@
         "web",
         "term",
         "boot"
-      ]
+      ],
+      "repo": "boot"
     },
     "boot-autoconfigure-data": {
       "directory": "boot/autoconfigure-data",
@@ -34,7 +36,8 @@
         "data",
         "sql",
         "migrate"
-      ]
+      ],
+      "repo": "boot"
     },
     "boot-actuator": {
       "directory": "boot/actuator",
@@ -46,7 +49,8 @@
         "config",
         "web",
         "actuator"
-      ]
+      ],
+      "repo": "boot"
     }
   },
   "starters": {
@@ -57,7 +61,8 @@
         "log"
       ],
       "section": "",
-      "summary": "Flint Boot and logging: the base every other starter builds on"
+      "summary": "Flint Boot and logging: the base every other starter builds on",
+      "repo": "boot"
     },
     "starter-web": {
       "directory": "starters/web",
@@ -75,7 +80,8 @@
       "summary": "REST controllers on a configuration-bound server, with SPA serving and OpenAPI",
       "autoconfiguration": [
         "flint.boot_autoconfigure_web:WebServerAutoConfiguration"
-      ]
+      ],
+      "repo": "boot"
     },
     "starter-actuator": {
       "directory": "starters/actuator",
@@ -88,7 +94,8 @@
       "summary": "Health, readiness and Prometheus metrics endpoints on the application's server, and OTLP export",
       "autoconfiguration": [
         "flint.boot_actuator:ActuatorAutoConfiguration"
-      ]
+      ],
+      "repo": "boot"
     },
     "starter-data-jdbc": {
       "directory": "starters/data-jdbc",
@@ -104,7 +111,8 @@
       "summary": "A configured SQL pool, migrations applied at start-up, and repositories as beans",
       "autoconfiguration": [
         "flint.boot_autoconfigure_data:DataSourceAutoConfiguration"
-      ]
+      ],
+      "repo": "boot"
     }
   }
 }
