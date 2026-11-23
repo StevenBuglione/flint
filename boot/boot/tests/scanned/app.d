@@ -2,7 +2,7 @@ module scanned.app;
 
 import flint.boot : CommandLineRunner, Exclude, FlintApplication;
 import flint.config : ConfigurationProperties;
-import flint.di : AutoConfiguration, Service;
+import flint.engine.di : AutoConfiguration, Service;
 
 @safe:
 

@@ -7,10 +7,10 @@ importPaths "source"
 dflags "-preview=dip1000"
 dependency "flint:arena" version="*"
 dependency "flint:conc" version="*"
-dependency "flint:di" version="*"
+dependency "flint:engine-di" version="*"
 dependency "flint:config" version="*"
-dependency "flint:web" version="*"
-dependency "flint:actuator" version="*"
+dependency "flint:engine-web" version="*"
+dependency "flint:engine-actuator" version="*"
 
 configuration "library" {
     targetType "library"

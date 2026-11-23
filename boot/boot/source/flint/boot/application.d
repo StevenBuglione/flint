@@ -129,10 +129,10 @@ private template beansOf(alias Module)
 private template beanEntry(T)
 {
     import flint.config : ConfigurationProperties;
-    import flint.di : Component, Provided, Repository, Service;
+    import flint.engine.di : Component, Provided, Repository, Service;
     import std.meta : AliasSeq;
 
-    // flint:boot sits below flint:web, so the web stereotypes are matched by name.
+    // flint:boot sits below flint:engine-web, so the web stereotypes are matched by name.
     enum kind = () {
         int found;
         static foreach (attribute; __traits(getAttributes, T))

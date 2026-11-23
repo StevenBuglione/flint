@@ -4,10 +4,10 @@ module notes.app;
 import flint.arena : Error, Result, Status, Text;
 import flint.boot : FlintApplication, FlintMain;
 import flint.boot_autoconfigure_data : DataSource, JdbcRepository;
-import flint.di : Repository;
-import flint.data : Id, Table;
+import flint.engine.di : Repository;
+import flint.engine.data : Id, Table;
 import flint.validate : NotBlank, Valid;
-import flint.web : Delete, Get, PathVariable, Post, RequestBody, RequestContext, RestController;
+import flint.engine.web : Delete, Get, PathVariable, Post, RequestBody, RequestContext, RestController;
 
 @safe:
 

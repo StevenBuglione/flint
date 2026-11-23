@@ -4,8 +4,8 @@ module shop.app;
 import flint.arena : Result;
 import flint.boot : FlintApplication, FlintMain;
 import flint.config : ConfigurationProperties, Required;
-import flint.di : Service;
-import flint.web : Get, PathVariable, RestController;
+import flint.engine.di : Service;
+import flint.engine.web : Get, PathVariable, RestController;
 import shop.greeting : greet;
 
 @safe:

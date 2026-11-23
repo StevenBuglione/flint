@@ -1,7 +1,7 @@
 module flint.boot_autoconfigure_data.autoconfigure_data_test;
 
 import flint.arena : RequestArena, Status;
-import flint.di : AppContext, ConfiguredSections;
+import flint.engine.di : AppContext, ConfiguredSections;
 import flint.boot_autoconfigure_data : Context, DataSourceAutoConfiguration, DataSource, DatabaseProperties,
     Id, JdbcRepository, Table, Text, migrationDescription, migrationVersion, toString, toText;
 
@@ -38,9 +38,9 @@ unittest
     assert(context.provide(properties).code == Status.ok);
     // The repository checks its table at construction, so the schema exists before the context starts.
     {
-        import flint.sql : Driver, Pool, PoolOptions;
+        import flint.engine.sql : Driver, Pool, PoolOptions;
 
-        import flint.migrate : Migration, MigrationOptions, migrate;
+        import flint.engine.migrate : Migration, MigrationOptions, migrate;
         import std.digest.sha : sha256Of;
 
         Pool setup;

@@ -2,7 +2,7 @@ module flint.boot.boot_test;
 
 import flint.arena : Status;
 import flint.config : ConfigurationProperties;
-import flint.di : AppContext, AutoConfiguration, Launcher, Provided, Service;
+import flint.engine.di : AppContext, AutoConfiguration, Launcher, Provided, Service;
 import flint.boot : ConfigurationTypes, bindConfiguration, runApplication;
 
 @safe:
@@ -80,7 +80,7 @@ unittest
 unittest
 {
     import flint.boot : AutoConfigurationList, FlintApplication, ScannedBeans;
-    import flint.di : Provided;
+    import flint.engine.di : Provided;
     static import scanned.app;
     import scanned.app : JobProperties, Jobs, ScannedApplication, StartupReport, UnwantedAutoConfiguration;
 

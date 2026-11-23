@@ -1,4 +1,4 @@
-/// flint:boot-autoconfigure-web: Flint Boot's auto-configuration for flint:web (ADR-029 section 8, ADR-028
+/// flint:boot-autoconfigure-web: Flint Boot's auto-configuration for flint:engine-web (ADR-029 section 8, ADR-028
 /// section 8).
 ///
 /// `WebServerAutoConfiguration` binds `[server]`, registers the single-page front end when `[spa]` is configured,
@@ -9,7 +9,7 @@ module flint.boot_autoconfigure_web;
 
 import flint.arena : Error, Status;
 import flint.config : ConfigurationProperties;
-import flint.di : AutoConfiguration, Bind, Launcher, Provided;
+import flint.engine.di : AutoConfiguration, Bind, Launcher, Provided;
 
 public import flint.boot_autoconfigure_web.spa : SpaController, SpaProperties;
 
@@ -44,7 +44,7 @@ struct WebServer
             if (argument == "--openapi")
             {
                 import flint.term : Stream, writeStream;
-                import flint.web : openApiDocument;
+                import flint.engine.web : openApiDocument;
 
                 enum document = openApiDocument!(ApiControllers!(Context.Registered))("Flint application", "0.0.0");
                 code = writeStream(Stream.output, document ~ "\n").code == Status.ok ? 0 : 1;
@@ -58,7 +58,7 @@ struct WebServer
     static int launch(Context)(ref Context context, string[] args)
     {
         import flint.boot : report;
-        import flint.web : Server, ServerOptions, serve;
+        import flint.engine.web : Server, ServerOptions, serve;
 
         alias Registered = Context.Registered;
         Controllers!Registered application;
@@ -92,7 +92,7 @@ struct WebServer
 template Customizers(Registered...)
 {
     import std.meta : AliasSeq;
-    import flint.web : ServerCustomizer;
+    import flint.engine.web : ServerCustomizer;
 
     template collect(size_t index)
     {
@@ -128,7 +128,7 @@ struct ApiControllers(Registered...)
     Types items;
 }
 
-/// The application struct flint:web serves: one field per `@RestController` registration, in order.
+/// The application struct flint:engine-web serves: one field per `@RestController` registration, in order.
 struct Controllers(Registered...)
 {
     import std.meta : AliasSeq;
@@ -150,7 +150,7 @@ struct Controllers(Registered...)
 }
 
 private enum bool controller(T) = () {
-    import flint.web : RestController;
+    import flint.engine.web : RestController;
 
     static if (is(T == struct) || is(T == class))
     {

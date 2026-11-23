@@ -1,6 +1,6 @@
 # flint:starter-data-jdbc
 
-This starter is a dependency bundle and the `[database]` section, and holds no code (ADR-029 section 8). It brings flint:data, flint:sql, flint:migrate and `flint:boot-autoconfigure-data`, whose `DataSourceAutoConfiguration` does three things:
+This starter is a dependency bundle and the `[database]` section, and holds no code (ADR-029 section 8). It brings flint:engine-data, flint:engine-sql, flint:engine-migrate and `flint:boot-autoconfigure-data`, whose `DataSourceAutoConfiguration` does three things:
 - opens a SQL pool from `[database]`;
 - applies the project's migrations at start-up;
 - makes repositories beans.
@@ -16,10 +16,10 @@ flint generate migration create_notes
 import flint.arena : Result, Text;
 import flint.boot : FlintApplication, FlintMain;
 import flint.boot_autoconfigure_data : DataSource, JdbcRepository;
-import flint.data : Id, Table;
-import flint.di : Repository;
+import flint.engine.data : Id, Table;
+import flint.engine.di : Repository;
 import flint.validate : NotBlank, Valid;
-import flint.web : Post, RequestBody, RequestContext, RestController;
+import flint.engine.web : Post, RequestBody, RequestContext, RestController;
 
 @Table("notes")
 struct Note
@@ -59,8 +59,8 @@ final class NotesApplication
 mixin FlintMain!NotesApplication;
 ```
 
-- **`DataSource`** opens the pool from `[database]` and applies every `resources/migrations/V<version>__<description>.sql` in version order. Like `config/`, the migrations are read at start-up, and `flint package` ships `resources/`. flint:migrate records their hashes, so an edited applied migration stops start-up. The pool closes at shutdown.
-- **`JdbcRepository!(E, ID)`** is the base of a scanned `@Repository` class, a flint:data `CrudRepository`: `findById`, `save`, `deleteById` and `existsById`. `sql()` gives the underlying repository, for `queryOne` and projections. At construction it checks the table and columns against the migrated schema.
+- **`DataSource`** opens the pool from `[database]` and applies every `resources/migrations/V<version>__<description>.sql` in version order. Like `config/`, the migrations are read at start-up, and `flint package` ships `resources/`. flint:engine-migrate records their hashes, so an edited applied migration stops start-up. The pool closes at shutdown.
+- **`JdbcRepository!(E, ID)`** is the base of a scanned `@Repository` class, a flint:engine-data `CrudRepository`: `findById`, `save`, `deleteById` and `existsById`. `sql()` gives the underlying repository, for `queryOne` and projections. At construction it checks the table and columns against the migrated schema.
 - **Text columns** are `Text` handles in the request arena. A repository call takes `context.arena`, and the handler returns the entity within the same request. Where business logic needs a `string`, use `toString(arena, text)` and `toText(arena, value)`.
 - **Without a `[database]` section** the starter registers nothing.
 

@@ -4,7 +4,7 @@ module status.app;
 import flint.arena : Result;
 import flint.boot : FlintApplication, FlintMain;
 import flint.boot_actuator : Counter, Observability;
-import flint.web : Post, RestController;
+import flint.engine.web : Post, RestController;
 
 @safe:
 

@@ -15,13 +15,6 @@ dub = "1.43.0"
 pinned_by = "workspace commit"
 
 [[package]]
-name = "flint:actuator"
-kind = "core"
-source = "workspace"
-scope = "build"
-dependencies = ["flint:arena", "flint:conc", "flint:http", "flint:log", "flint:reactor", "flint:serde", "flint:web"]
-
-[[package]]
 name = "flint:arena"
 kind = "core"
 source = "workspace"
@@ -33,21 +26,21 @@ name = "flint:boot"
 kind = "core"
 source = "workspace"
 scope = "build"
-dependencies = ["flint:arena", "flint:config", "flint:di", "flint:term"]
+dependencies = ["flint:arena", "flint:config", "flint:engine-di", "flint:term"]
 
 [[package]]
 name = "flint:boot-actuator"
 kind = "core"
 source = "workspace"
 scope = "build"
-dependencies = ["flint:actuator", "flint:arena", "flint:conc", "flint:config", "flint:di", "flint:web"]
+dependencies = ["flint:arena", "flint:conc", "flint:config", "flint:engine-actuator", "flint:engine-di", "flint:engine-web"]
 
 [[package]]
 name = "flint:boot-autoconfigure-web"
 kind = "core"
 source = "workspace"
 scope = "build"
-dependencies = ["flint:arena", "flint:boot", "flint:config", "flint:di", "flint:term", "flint:web"]
+dependencies = ["flint:arena", "flint:boot", "flint:config", "flint:engine-di", "flint:engine-web", "flint:term"]
 
 [[package]]
 name = "flint:conc"
@@ -64,28 +57,42 @@ scope = "build"
 dependencies = ["flint:arena", "flint:serde", "flint:validate"]
 
 [[package]]
-name = "flint:di"
+name = "flint:engine-actuator"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = ["flint:arena", "flint:conc", "flint:engine-http", "flint:engine-reactor", "flint:engine-web", "flint:log", "flint:serde"]
+
+[[package]]
+name = "flint:engine-di"
 kind = "core"
 source = "workspace"
 scope = "build"
 dependencies = ["flint:arena"]
 
 [[package]]
-name = "flint:http"
+name = "flint:engine-http"
 kind = "core"
 source = "workspace"
 scope = "build"
-dependencies = ["flint:arena", "flint:conc", "flint:reactor", "flint:serde"]
+dependencies = ["flint:arena", "flint:conc", "flint:engine-reactor", "flint:serde"]
 
 [[package]]
-name = "flint:log"
+name = "flint:engine-reactor"
 kind = "core"
 source = "workspace"
 scope = "build"
 dependencies = ["flint:arena", "flint:conc"]
 
 [[package]]
-name = "flint:reactor"
+name = "flint:engine-web"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = ["flint:arena", "flint:conc", "flint:engine-di", "flint:engine-reactor", "flint:log", "flint:serde", "flint:validate"]
+
+[[package]]
+name = "flint:log"
 kind = "core"
 source = "workspace"
 scope = "build"
@@ -110,14 +117,14 @@ name = "flint:starter-actuator"
 kind = "core"
 source = "workspace"
 scope = "build"
-dependencies = ["flint:actuator", "flint:boot-actuator", "flint:starter"]
+dependencies = ["flint:boot-actuator", "flint:engine-actuator", "flint:starter"]
 
 [[package]]
 name = "flint:starter-web"
 kind = "core"
 source = "workspace"
 scope = "build"
-dependencies = ["flint:arena", "flint:boot-autoconfigure-web", "flint:config", "flint:di", "flint:serde", "flint:starter", "flint:validate", "flint:web"]
+dependencies = ["flint:arena", "flint:boot-autoconfigure-web", "flint:config", "flint:engine-di", "flint:engine-web", "flint:serde", "flint:starter", "flint:validate"]
 
 [[package]]
 name = "flint:term"
@@ -139,10 +146,3 @@ kind = "core"
 source = "workspace"
 scope = "build"
 dependencies = ["flint:arena"]
-
-[[package]]
-name = "flint:web"
-kind = "core"
-source = "workspace"
-scope = "build"
-dependencies = ["flint:arena", "flint:conc", "flint:di", "flint:log", "flint:reactor", "flint:serde", "flint:validate"]

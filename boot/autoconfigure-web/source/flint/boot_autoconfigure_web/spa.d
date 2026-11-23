@@ -7,8 +7,8 @@ module flint.boot_autoconfigure_web.spa;
 
 import flint.arena : Result, Status;
 import flint.config : ConfigurationProperties;
-import flint.di : ConditionalOnConfig;
-import flint.web : Get, PathVariable, RequestContext, Response, RestController;
+import flint.engine.di : ConditionalOnConfig;
+import flint.engine.web : Get, PathVariable, RequestContext, Response, RestController;
 
 @safe:
 

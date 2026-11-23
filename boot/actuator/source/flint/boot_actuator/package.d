@@ -6,13 +6,13 @@
 /// counters, histograms and health probes.
 module flint.boot_actuator;
 
-import flint.actuator : Registry;
+import flint.engine.actuator : Registry;
 import flint.arena : Error, Status;
 import flint.config : ConfigurationProperties;
-import flint.di : AutoConfiguration, PostConstruct, PreDestroy, Provided, Service;
-import flint.web : Server, ServerCustomizer;
+import flint.engine.di : AutoConfiguration, PostConstruct, PreDestroy, Provided, Service;
+import flint.engine.web : Server, ServerCustomizer;
 
-public import flint.actuator : Counter, Health, HealthProbe, HealthStatus, Histogram;
+public import flint.engine.actuator : Counter, Health, HealthProbe, HealthStatus, Histogram;
 
 @safe:
 
@@ -45,7 +45,7 @@ struct ManagementProperties
     /// Open the registry, and the OTLP exporter when an endpoint is configured.
     @PostConstruct Error open()
     {
-        import flint.actuator : ActuatorOptions;
+        import flint.engine.actuator : ActuatorOptions;
 
         ActuatorOptions options;
         options.pathPrefix = properties.pathPrefix;

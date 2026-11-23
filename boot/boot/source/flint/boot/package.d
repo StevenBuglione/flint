@@ -14,7 +14,7 @@ module flint.boot;
 
 import flint.arena : Error, Status;
 import flint.config : ConfigurationProperties;
-import flint.di : Bind, Provided;
+import flint.engine.di : Bind, Provided;
 
 public import flint.boot.application : AutoConfigurationList, CommandLineRunner, Exclude,
     FlintApplication, FlintMain, ScannedBeans;
@@ -33,7 +33,7 @@ enum StartupExit : int
 /// Run the application of `Beans`: auto-configuration lists and the application's own beans.
 int runApplication(Beans...)(string[] args)
 {
-    import flint.di : AppContext;
+    import flint.engine.di : AppContext;
 
     AppContext!Beans context;
     alias Context = typeof(context);

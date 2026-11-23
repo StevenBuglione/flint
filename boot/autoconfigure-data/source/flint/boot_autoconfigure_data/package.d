@@ -1,21 +1,21 @@
-/// flint:boot-autoconfigure-data: Flint Boot's auto-configuration for flint:data (ADR-029 section 8, ADR-028
+/// flint:boot-autoconfigure-data: Flint Boot's auto-configuration for flint:engine-data (ADR-029 section 8, ADR-028
 /// sections 7 and 8): a SQL pool from `[database]`, the project's migrations (resources/migrations) applied at
 /// start-up, and repositories as beans.
 ///
-/// Entities are flint:data structs. Text columns are `Text` handles in the request arena, so a repository call
+/// Entities are flint:engine-data structs. Text columns are `Text` handles in the request arena, so a repository call
 /// takes `context.arena` and the handler returns the entity in the same request; `toString` and `toText` convert
 /// at the edges where business logic needs a `string`.
 module flint.boot_autoconfigure_data;
 
 import flint.arena : Error, Result, Status;
 import flint.config : ConfigurationProperties;
-import flint.di : AutoConfiguration, ConditionalOnConfig, PostConstruct, PreDestroy, Provided, Service;
-import flint.migrate : Migration;
-import flint.sql : Pool;
+import flint.engine.di : AutoConfiguration, ConditionalOnConfig, PostConstruct, PreDestroy, Provided, Service;
+import flint.engine.migrate : Migration;
+import flint.engine.sql : Pool;
 
 public import flint.arena : RequestArena, Text;
 public import flint.conc : Context;
-public import flint.data : Column, CrudRepository, Id, Nullable, ReadOnly, Table, Version;
+public import flint.engine.data : Column, CrudRepository, Id, Nullable, ReadOnly, Table, Version;
 
 @safe:
 
@@ -51,7 +51,7 @@ struct DatabaseProperties
     /// Open the pool and apply the migrations.
     @PostConstruct Error open()
     {
-        import flint.sql : Driver, PoolOptions;
+        import flint.engine.sql : Driver, PoolOptions;
 
         PoolOptions options;
         if (properties.driver == "sqlite")
@@ -69,7 +69,7 @@ struct DatabaseProperties
 
     private Error applyMigrations()
     {
-        import flint.migrate : MigrationOptions, migrate;
+        import flint.engine.migrate : MigrationOptions, migrate;
 
         auto plan = loadMigrations(properties.migrations);
         if (!plan.ok || plan.value.length == 0)
@@ -106,7 +106,7 @@ struct DatabaseProperties
 /// ---
 class JdbcRepository(E, ID) : CrudRepository!(E, ID)
 {
-    import flint.data : SqlRepository;
+    import flint.engine.data : SqlRepository;
 
     private SqlRepository!(E, ID) inner;
 
@@ -140,7 +140,7 @@ class JdbcRepository(E, ID) : CrudRepository!(E, ID)
         return inner.existsById(id, context);
     }
 
-    /// The underlying flint:data repository, for `queryOne` and projections.
+    /// The underlying flint:engine-data repository, for `queryOne` and projections.
     SqlRepository!(E, ID) sql()
     {
         return inner;

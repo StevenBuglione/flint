@@ -2,9 +2,9 @@ module flint.boot_autoconfigure_web.autoconfigure_web_test;
 
 import flint.boot : ConfigurationTypes, bindConfiguration;
 import flint.config : ConfigurationProperties;
-import flint.di : AppContext, Provided, Service;
+import flint.engine.di : AppContext, Provided, Service;
 import flint.boot_autoconfigure_web : Controllers, ServerProperties, WebServer, WebServerAutoConfiguration;
-import flint.web : Get, RestController;
+import flint.engine.web : Get, RestController;
 import flint.arena : Result;
 
 @safe:

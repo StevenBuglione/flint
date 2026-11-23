@@ -1,7 +1,7 @@
 module flint.boot_actuator.boot_actuator_test;
 
 import flint.arena : Status;
-import flint.di : AppContext;
+import flint.engine.di : AppContext;
 import flint.boot_actuator : ActuatorAutoConfiguration, ManagementProperties, Observability;
 
 @safe:

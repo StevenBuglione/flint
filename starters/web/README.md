@@ -1,7 +1,7 @@
 # flint:starter-web
 
 This starter is a dependency bundle and the `[server]` section. As in Spring Boot, it holds no code (ADR-029 section 8). It brings:
-- flint:web, flint:di, flint:config, flint:validate and flint:serde;
+- flint:engine-web, flint:engine-di, flint:config, flint:validate and flint:serde;
 - `flint:boot`, the application runner;
 - `flint:boot-autoconfigure-web`, whose `WebServerAutoConfiguration` binds `[server]`, serves the controllers and the front end, and answers `--openapi`.
 
@@ -19,8 +19,8 @@ flint add web
 ```d
 import flint.arena : Result;
 import flint.boot : FlintApplication, FlintMain;
-import flint.di : Service;
-import flint.web : Get, PathVariable, RestController;
+import flint.engine.di : Service;
+import flint.engine.web : Get, PathVariable, RestController;
 
 @Service final class Greeter { ... }
 
@@ -79,7 +79,7 @@ index = "index.html"             # served for client-side routes
 flint openapi -o openapi.json --typescript web/src/api.ts
 ```
 
-- **The document:** the application answers `--openapi` with the OpenAPI 3.1 document that flint:web generates from its controllers at compile time.
+- **The document:** the application answers `--openapi` with the OpenAPI 3.1 document that flint:engine-web generates from its controllers at compile time.
 - **The client:** `flint openapi` names the document after `flint.toml`, and writes a typed `fetch` client with one method per operation.
 
 ## Exit codes
@@ -100,5 +100,5 @@ curl localhost:8080/api/greetings/Ada
 
 ## Known limits
 
-- **Stopping:** SIGTERM and SIGINT stop the process without running `@PreDestroy` hooks, because flint:web's run loop does not yet watch for signals. Only the server's own shutdown runs them.
+- **Stopping:** SIGTERM and SIGINT stop the process without running `@PreDestroy` hooks, because flint:engine-web's run loop does not yet watch for signals. Only the server's own shutdown runs them.
 - **Worker threads:** each worker-thread controller has one thread, with 16 queued requests and an 8 MiB request arena.

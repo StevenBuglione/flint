@@ -1,6 +1,6 @@
 # flint:starter-actuator
 
-This starter is a dependency bundle and the `[management]` section, and holds no code (ADR-029 section 8). It brings flint:actuator and `flint:boot-actuator`. Its `ActuatorAutoConfiguration` serves health, readiness and Prometheus metrics on the application's own server, and exports to OTLP when configured.
+This starter is a dependency bundle and the `[management]` section, and holds no code (ADR-029 section 8). It brings flint:engine-actuator and `flint:boot-actuator`. Its `ActuatorAutoConfiguration` serves health, readiness and Prometheus metrics on the application's own server, and exports to OTLP when configured.
 
 ```bash
 flint add web actuator
@@ -18,7 +18,7 @@ With `flint:starter-web` and this starter declared, `@FlintApplication` picks up
 ```d
 import flint.boot : FlintApplication, FlintMain;
 import flint.boot_actuator : Counter, Observability;
-import flint.web : Post, RestController;
+import flint.engine.web : Post, RestController;
 
 @RestController("/api/jobs")
 struct JobController
