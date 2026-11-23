@@ -54,25 +54,30 @@
 ## Open for the owner
 
 - 2026-11-23, proof-harness: with the corrected template count (own library plus probe, `d153fd1`), some of the 37 packages' `template_instances` budgets in `policy/packages.json` may now be exceeded. The old count left out each package's own library compile. Raising a budget is the owner's decision. Until then, any package over its budget fails the measured gate, and no cap has been changed.
-- 2026-11-23, size-levers: the framework modules' `template_instances` budgets in `policy/framework.json` were set from the old count, which left out each module's own `-lib` compile. Recounted with `own-library-and-probe/2` (`measure_builds --framework-sizes` at `bf5f5a64ed`), 13 of 15 exceed them. Proposed for the modules over budget: the recount times 1.25, rounded up to 50, the rule the first budgets used. `policy/framework.json` is unchanged until the owner decides, so the measured gate shows the overages. One decision can cover these and the 37 packages' template budgets parked above.
+- 2026-11-23, size-levers: the framework modules' `template_instances` budgets in `policy/framework.json` were set from the old count, which left out each module's own `-lib` compile. Recounted with `own-library-and-probe/2` (`measure_builds --framework-sizes`), most exceed them. The "Now" column is after the template diet so far (item 21) and is still falling; "Proposed" is the current count times 1.25, rounded up to 50, for modules over budget only. `policy/framework.json` is unchanged until the owner decides, so the measured gate shows the overages. One decision can cover these and the 37 packages' template budgets parked above.
 
-  | Module | Budget | Recount | Proposed |
-  | --- | ---: | ---: | ---: |
-  | beans | 800 | 2,272 | 2,850 |
-  | context | 1,150 | 2,808 | 3,550 |
-  | core | 750 | 12,564 | 15,750 |
-  | engine-aot | 400 | 5,748 | 7,200 |
-  | engine-jdbc | 500 | 6,660 | 8,350 |
-  | hibernate-validator | 1,050 | 10,189 | 12,750 |
-  | jackson-annotations | 350 | 329 | unchanged |
-  | jackson-core | 350 | 5,600 | 7,000 |
-  | jackson-databind | 700 | 4,598 | 5,750 |
-  | jakarta-annotation | 350 | 293 | unchanged |
-  | jakarta-validation | 350 | 547 | 700 |
-  | java | 3,350 | 7,465 | 9,350 |
-  | jdbc | 750 | 2,210 | 2,800 |
-  | slf4j-api | 900 | 5,097 | 6,400 |
-  | tx | 2,350 | 6,942 | 8,700 |
+  | Module | Budget | At `bf5f5a6` | Now (`f51a733`) | Proposed |
+  | --- | ---: | ---: | ---: | ---: |
+  | beans | 800 | 2,272 | 2,269 | 2,850 |
+  | context | 1,150 | 2,808 | 7,840 | 9,800 |
+  | core | 750 | 12,564 | 12,365 | 15,500 |
+  | engine-aot | 400 | 5,748 | 677 | 850 |
+  | engine-jdbc | 500 | 6,660 | 1,742 | 2,200 |
+  | engine-servlet | 2,000 | – | 2,001 | 2,550 |
+  | framework-test | 7,800 | – | 6,858 | unchanged |
+  | hibernate-validator | 1,050 | 10,189 | 3,340 | 4,200 |
+  | jackson-annotations | 350 | 329 | 85 | unchanged |
+  | jackson-core | 350 | 5,600 | 1,224 | 1,550 |
+  | jackson-databind | 700 | 4,598 | 5,411 | 6,800 |
+  | jakarta-annotation | 350 | 293 | 49 | unchanged |
+  | jakarta-servlet | 2,150 | – | 2,028 | unchanged |
+  | jakarta-validation | 350 | 547 | 320 | unchanged |
+  | java | 3,350 | 7,465 | 7,720 | 9,650 |
+  | jdbc | 750 | 2,210 | 7,756 | 9,700 |
+  | slf4j-api | 900 | 5,097 | 4,873 | 6,100 |
+  | tx | 2,350 | 6,942 | 6,155 | 7,700 |
+  | web | 15,650 | – | 12,896 | unchanged |
+  | webmvc | 4,100 | – | 4,447 | 5,600 |
 - 2026-11-23, size-levers: template diet progress (coordination item 21). These counts are of each module's own library compile (`dmd -vtemplates` over its sources); the own-library-and-probe/2 recount for the table above follows when venus is out of the quiet window.
   - The probes print without Phobos (`a67dfeb`): about 290 fewer instances per module, the probe compile being part of each count.
   - `flint.engine.aot.text` (`492964e`, `e3d38a8`): non-template, pure number and character text with the same results as `std.conv`. One `to!string(double)` costs about 4,900 instances, `to!string(dchar)` about 4,500, `to!double` 1,328 and `to!long` 1,114.
@@ -80,7 +85,30 @@
   - jackson-core: 5,317 → 1,185 (`ad07ae0`).
   - hibernate-validator: 9,724 → 2,587 (`9912d12`); one `to!string` of an enum had instantiated most of `std.format`.
   - Next: jackson-databind (`std.uni` case mapping), slf4j-api, tx and context (`std.datetime.Clock`), engine-jdbc and java (`to!double`/`to!long`), core (`std.process`, `std.utf`, `std.string`).
-- 2026-11-23, size-levers: `tx` now links 231,800 bytes, over its 229,376 budget. It linked 176,408 when the budget was set on 2026-11-23 (`00b2749`), and data-access has added code since. This is drift caught by the gate, not a measurement change. data-access is told; raising the budget or trimming the module is for the owner and data-access.
+- 2026-11-23, size-levers: linked-bytes budgets were set with probes that printed through `writeln` in both the fixture and the baseline. The Phobos `std.format` code that `writeln` links was then part of the baseline, and the size delta hid the Phobos code each module pulls in itself. With the probes printing through C (`a67dfeb`, `55f6747`), the delta shows it, and most modules now exceed their budgets without any code growth (`f51a733`). Raising them is the owner's decision. The template diet lowers them as it removes Phobos: engine-aot fell from 61,744 to 12,720 bytes once `std.conv` was gone. The earlier tx entry is answered: measured with today's tools, tx at `00b2749` already linked 231,720 bytes, so its overage came from the tooling, not from tx code.
+
+  | Module | Budget | Linked now | Over |
+  | --- | ---: | ---: | --- |
+  | beans | 573,440 | 888,448 | yes |
+  | context | 966,656 | 1,343,608 | yes |
+  | core | 81,920 | 526,496 | yes |
+  | engine-aot | 81,920 | 12,720 |  |
+  | engine-jdbc | 7,094,272 | 6,022,928 |  |
+  | engine-servlet | 282,624 | 603,816 | yes |
+  | framework-test | 1,552,384 | 1,731,784 | yes |
+  | hibernate-validator | 442,368 | 714,160 | yes |
+  | jackson-annotations | 4,096 | 0 |  |
+  | jackson-core | 131,072 | 510,384 | yes |
+  | jackson-databind | 557,056 | 947,144 | yes |
+  | jakarta-annotation | 4,096 | 0 |  |
+  | jakarta-servlet | 98,304 | 493,816 | yes |
+  | jakarta-validation | 81,920 | 477,160 | yes |
+  | java | 344,064 | 624,648 | yes |
+  | jdbc | 475,136 | 819,992 | yes |
+  | slf4j-api | 475,136 | 744,232 | yes |
+  | tx | 229,376 | 637,376 | yes |
+  | web | 126,976 | 565,088 | yes |
+  | webmvc | 1,359,872 | 1,560,240 | yes |
 - 2026-11-23, framework-core: context's template count grew with org.springframework.validation (`832723b`), from 2,808 to 6,155 instances (own-library-and-probe/2, stock DMD 2.114). That is past `template_ratio_max` 1.1 against the base, and past size-levers' proposed 3,550. The growth is mostly druntime hooks (`new`, `~`) that scale with code size, plus `List!ObjectError` and `List!FieldError`, which the Spring API requires. I already removed about 4,400 instances by avoiding std.format in `valueOf` and std.algorithm. Linked bytes are 775,168 (+1.1%), within budget. A new context budget is the owner's decision; nothing was raised.
 - 2026-11-23, m7-flint-cli (asked by web-http; item 22): before quality.py lints framework/ and boot/, ported Spring functions exceed D-Scanner's cyclomatic complexity limit of 20 (12 in web-http's packages, 21 to 48: UriComponentsBuilder, PathPatternParser, MimeTypeUtils, RequestMappingInfo matching, request-value conversion, the JsonPath helper). They keep upstream's structure, so later diffs against Spring stay readable. Exempting them raises a cap, which is the owner's call. Options: (a) exempt the Spring API layer from cyclomatic_complexity in dscanner.ini, on port fidelity (ADR-030 section 7); (b) a per-function allowlist with the upstream source of each function; (c) split them, a slower job that drifts from upstream. Until it is decided, framework/ and boot/ stay out of quality.py's lint trees, and nothing changes for the trees it lints.
 - 2026-11-23, framework-core (item 24): petclinic-rest's secured mode verifies BCrypt hashes (`$2a$10$` in data.sql, `BCryptPasswordEncoder`). AGENTS.md forbids a new cryptographic implementation, and engine-security wraps only Argon2id, so this needs a pinned native provider. Candidates: Openwall's crypt_blowfish (public domain; used by PHP and libxcrypt), or libxcrypt (LGPL-2.1). Choosing and pinning it is the owner's call (with m7-flint-cli for platform.lock). Until then, `BCryptPasswordEncoder.matches` reports unsupported and the secured-mode tests use a `{noop}` encoder.
