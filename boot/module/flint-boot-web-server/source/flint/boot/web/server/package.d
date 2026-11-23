@@ -1,5 +1,6 @@
 // Ported from spring-boot v4.2.0: module/spring-boot-web-server/src/main/java/org/springframework/boot/web/server/Shutdown.java
-// with Compression.java, Http2.java, WebServer.java, WebServerException.java, PortInUseException.java and
+// with Compression.java, Http2.java, WebServer.java, GracefulShutdownCallback.java, GracefulShutdownResult.java,
+// WebServerException.java, PortInUseException.java and
 // PortInUseFailureAnalyzer.java from the same directory, and WebServerFactoryCustomizer.java from ./servlet's parent
 // Copyright 2012-present the original author or authors.
 // Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
@@ -116,6 +117,28 @@ interface WebServer
     int getPort();
     /// Release the server's resources; by default, `stop`.
     void destroy();
+
+    /// Stop accepting requests and let active ones finish, then report to `callback`. A server that does not
+    /// shut down gracefully reports `IMMEDIATE` at once.
+    void shutDownGracefully(GracefulShutdownCallback callback);
+}
+
+/// The result of a graceful shutdown.
+enum GracefulShutdownResult
+{
+    /// Requests were still active when the grace period ended.
+    REQUESTS_ACTIVE,
+    /// The server was idle: no requests were active.
+    IDLE,
+    /// The server shut down at once, without a grace period.
+    IMMEDIATE
+}
+
+/// Told when a graceful shutdown completes.
+interface GracefulShutdownCallback
+{
+    /// The shutdown completed with `result`.
+    void shutdownComplete(GracefulShutdownResult result);
 }
 
 /// Customises the servlet web server factory before the server is created (Boot's

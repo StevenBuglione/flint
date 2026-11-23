@@ -8,8 +8,9 @@
 /// Flint's embedded servlet web server: `FlintWebServer` and `FlintServletWebServerFactory`.
 module flint.boot.web.server.engine;
 
-import flint.boot.web.server : PortInUseException, WebServer, WebServerException;
-import flint.boot.web.server.servlet : ConfigurableServletWebServerFactory, ServletRegistrationBean;
+import flint.boot.web.server : GracefulShutdownCallback, GracefulShutdownResult, PortInUseException,
+    Shutdown, WebServer, WebServerException;
+import flint.boot.web.server.servlet : ConfigurableServletWebServerFactory, ServletContextInitializer;
 import flint.engine.servlet : ServletEngine, ServletEngineException, ServletEngineOptions;
 
 @safe:
@@ -17,15 +18,20 @@ import flint.engine.servlet : ServletEngine, ServletEngineException, ServletEngi
 /// A `WebServer` over a `ServletEngine`.
 final class FlintWebServer : WebServer
 {
+    // Boot's spring.lifecycle.timeout-per-shutdown-phase default.
+    private enum long gracePeriodNanos = 30_000_000_000L;
+
     private ServletEngine engine;
     private int configuredPort;
+    private Shutdown shutdown;
     private bool started;
 
-    /// Over `engine`, configured with `configuredPort`.
-    this(ServletEngine engine, int configuredPort) pure nothrow @nogc
+    /// Over `engine`, configured with `configuredPort` and `shutdown`.
+    this(ServletEngine engine, int configuredPort, Shutdown shutdown = Shutdown.GRACEFUL) pure nothrow @nogc
     {
         this.engine = engine;
         this.configuredPort = configuredPort;
+        this.shutdown = shutdown;
     }
 
     /// Bind the port and start serving. Throws `PortInUseException` when the port is taken.
@@ -40,7 +46,7 @@ final class FlintWebServer : WebServer
             import std.algorithm.searching : canFind;
 
             if (failure.msg.canFind("already in use"))
-                throw new PortInUseException(configuredPort, failure);
+                throw new PortInUseException(failure.port, failure);
             throw new WebServerException("Unable to start embedded Flint server", failure);
         }
         started = true;
@@ -67,6 +73,21 @@ final class FlintWebServer : WebServer
         stop();
     }
 
+    /// Close the listener, let active requests finish within the grace period, then stop; `IMMEDIATE` when the
+    /// server is configured to stop at once. The engine drains on the calling thread, where Tomcat's
+    /// `GracefulShutdown` uses its own; the context waits for the result either way.
+    void shutDownGracefully(GracefulShutdownCallback callback)
+    {
+        if (shutdown == Shutdown.IMMEDIATE || !started)
+        {
+            callback.shutdownComplete(GracefulShutdownResult.IMMEDIATE);
+            return;
+        }
+        started = false;
+        const idle = engine.shutDownGracefully(gracePeriodNanos);
+        callback.shutdownComplete(idle ? GracefulShutdownResult.IDLE : GracefulShutdownResult.REQUESTS_ACTIVE);
+    }
+
     /// The engine.
     ServletEngine getEngine() pure nothrow @nogc
     {
@@ -82,6 +103,7 @@ class FlintServletWebServerFactory : ConfigurableServletWebServerFactory
     private string address;
     private string contextPath = "";
     private string errorPath = "/error";
+    private Shutdown shutdown = Shutdown.GRACEFUL;
 
     /// The default factory.
     this() pure nothrow @nogc
@@ -94,23 +116,23 @@ class FlintServletWebServerFactory : ConfigurableServletWebServerFactory
         this.port = port;
     }
 
-    /// A server for `registrations`, configured but not started.
-    FlintWebServer getWebServer(ServletRegistrationBean[] registrations...)
+    /// A server whose `ServletContext` each of `initializers` configures, not yet started.
+    FlintWebServer getWebServer(ServletContextInitializer[] initializers...)
     {
+        // The engine's shutdown mode, named through its options (flint:engine-web is the engine's dependency).
+        alias ShutdownMode = typeof(ServletEngineOptions.init.shutdown);
+
         ServletEngineOptions options;
         options.port = cast(ushort) port;
         if (address.length)
             options.address = address;
         options.contextPath = contextPath;
         options.globalErrorPage = errorPath;
+        options.shutdown = shutdown == Shutdown.GRACEFUL ? ShutdownMode.graceful : ShutdownMode.immediate;
         auto engine = new ServletEngine(options);
-        foreach (registration; registrations)
-        {
-            auto mappings = registration.getUrlMappings();
-            engine.addServlet(registration.getServletName(), registration.getServlet(),
-                    mappings.length ? mappings : ["/"]);
-        }
-        return new FlintWebServer(engine, port);
+        foreach (initializer; initializers)
+            initializer.onStartup(engine.getServletContext());
+        return new FlintWebServer(engine, port, shutdown);
     }
 
     /// The port.
@@ -167,5 +189,17 @@ class FlintServletWebServerFactory : ConfigurableServletWebServerFactory
     void setErrorPath(string errorPath)
     {
         this.errorPath = errorPath;
+    }
+
+    /// How the server shuts down.
+    Shutdown getShutdown() const pure nothrow @nogc
+    {
+        return shutdown;
+    }
+
+    /// Set how the server shuts down: `GRACEFUL` (Boot's default) or `IMMEDIATE`.
+    void setShutdown(Shutdown shutdown)
+    {
+        this.shutdown = shutdown;
     }
 }

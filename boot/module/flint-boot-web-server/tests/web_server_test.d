@@ -4,7 +4,7 @@
 module web_server_test;
 
 import flint.boot : DefaultApplicationContextFactory, WebApplicationType;
-import flint.boot.web.server : PortInUseException, PortInUseFailureAnalyzer;
+import flint.boot.web.server : PortInUseException, PortInUseFailureAnalyzer, Shutdown;
 import flint.boot.web.server.autoconfigure : ServerProperties, ServletWebServerFactoryCustomizer;
 import flint.boot.web.server.engine : FlintServletWebServerFactory;
 import flint.boot.web.server.servlet.context : ServletWebServerApplicationContext;
@@ -53,7 +53,10 @@ import flint.java.util : Optional;
     properties.setPort(Optional!int.of(9090));
     properties.setAddress("127.0.0.1");
     properties.getServlet().setContextPath("/app");
+    properties.setShutdown(Shutdown.IMMEDIATE);
+    assert(factory.getShutdown() == Shutdown.GRACEFUL);
     new ServletWebServerFactoryCustomizer(properties).customize(factory);
+    assert(factory.getShutdown() == Shutdown.IMMEDIATE);
     assert(factory.getPort() == 9090);
     assert(factory.getAddress() == "127.0.0.1");
     assert(factory.getContextPath() == "/app");
@@ -85,6 +88,86 @@ version (FlintNativeLlhttp)
 
     private final class EmptyServlet : HttpServlet
     {
+    }
+
+    // Answers GET with "ok".
+    private final class OkServlet : HttpServlet
+    {
+        protected override void doGet(imported!"flint.jakarta.servlet.http".HttpServletRequest,
+                imported!"flint.jakarta.servlet.http".HttpServletResponse response)
+        {
+            response.setContentType("text/plain");
+            response.getWriter().write("ok");
+        }
+    }
+
+    private string get(int port, string path) @trusted
+    {
+        // SAFETY: test-only; std.socket's blocking calls on a local socket that lives for this call.
+        import std.socket : InternetAddress, TcpSocket;
+        import std.conv : to;
+
+        auto socket = new TcpSocket(new InternetAddress("127.0.0.1", cast(ushort) port));
+        scope (exit)
+            socket.close();
+        socket.send("GET " ~ path ~ " HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n");
+        char[] response;
+        char[4096] buffer;
+        for (;;)
+        {
+            const received = socket.receive(buffer[]);
+            if (received <= 0)
+                break;
+            response ~= buffer[0 .. received];
+        }
+        return response.idup;
+    }
+
+    private final class Recorder : imported!"flint.boot.web.server".GracefulShutdownCallback
+    {
+        imported!"flint.boot.web.server".GracefulShutdownResult result;
+        bool called;
+
+        void shutdownComplete(imported!"flint.boot.web.server".GracefulShutdownResult result)
+        {
+            this.result = result;
+            called = true;
+        }
+    }
+
+    @("a ServletRegistrationBean registers through the ServletContext; an idle server shuts down IDLE") unittest
+    {
+        import flint.boot.web.server : GracefulShutdownResult;
+        import flint.boot.web.server.servlet : ServletRegistrationBean;
+        import std.algorithm.searching : canFind, endsWith;
+
+        auto registration = new ServletRegistrationBean(new OkServlet, "/");
+        registration.setName("ok");
+        auto server = new FlintServletWebServerFactory(0).getWebServer(registration);
+        server.start();
+        scope (exit)
+            server.destroy();
+        const response = get(server.getPort(), "/anything");
+        assert(response.canFind("200") && response.endsWith("ok"), response);
+        auto recorder = new Recorder;
+        server.shutDownGracefully(recorder);
+        assert(recorder.called && recorder.result == GracefulShutdownResult.IDLE);
+    }
+
+    @("an IMMEDIATE server reports IMMEDIATE") unittest
+    {
+        import flint.boot.web.server : GracefulShutdownResult;
+        import flint.boot.web.server.servlet : ServletRegistrationBean;
+
+        auto factory = new FlintServletWebServerFactory(0);
+        factory.setShutdown(Shutdown.IMMEDIATE);
+        auto server = factory.getWebServer(new ServletRegistrationBean(new EmptyServlet, "/"));
+        server.start();
+        scope (exit)
+            server.destroy();
+        auto recorder = new Recorder;
+        server.shutDownGracefully(recorder);
+        assert(recorder.result == GracefulShutdownResult.IMMEDIATE);
     }
 
     @("a second server on a taken port fails with PortInUseException") unittest

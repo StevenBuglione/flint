@@ -170,7 +170,7 @@ final class ServerProperties
 
 // ---- end: generated region
 
-/// Applies `server.*` to the servlet web server factory: the port, the address and the context path (Boot's
+/// Applies `server.*` to the servlet web server factory: the port, the address, the context path and the shutdown (Boot's
 /// `ServletWebServerFactoryCustomizer`).
 class ServletWebServerFactoryCustomizer : WebServerFactoryCustomizer
 {
@@ -191,6 +191,7 @@ class ServletWebServerFactoryCustomizer : WebServerFactoryCustomizer
             factory.setAddress(serverProperties.getAddress());
         if (auto contextPath = serverProperties.getServlet().getContextPath())
             factory.setContextPath(contextPath);
+        factory.setShutdown(serverProperties.getShutdown());
     }
 }
 

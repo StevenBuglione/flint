@@ -1,32 +1,54 @@
 // Ported from spring-boot v4.2.0: module/spring-boot-web-server/src/main/java/org/springframework/boot/web/server/servlet/ServletWebServerFactory.java
-// with core/spring-boot/src/main/java/org/springframework/boot/web/servlet/ServletRegistrationBean.java
+// with ConfigurableServletWebServerFactory.java from the same directory, and
+// core/spring-boot/src/main/java/org/springframework/boot/web/servlet/ServletContextInitializer.java and
+// ServletRegistrationBean.java
 // Copyright 2012-present the original author or authors.
 // Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
-// Modified by the Flint authors: Flint's servlet engine registers servlets itself, not through
-// `ServletContext.addServlet`, so `getWebServer` takes the `ServletRegistrationBean`s rather than
-// `ServletContextInitializer`s, and `ServletRegistrationBean` lives here rather than in core (Boot core keeps no
-// servlet types in Flint).
+// Modified by the Flint authors: `ServletContextInitializer` and `ServletRegistrationBean` live here rather than in
+// core, which keeps no servlet types in Flint; `ServletRegistrationBean` folds in its
+// `DynamicRegistrationBean`/`RegistrationBean` bases; the configurable factory has the settings Flint's engine
+// supports.
 
 /// `org.springframework.boot.web.server.servlet`: servlet web server support.
 module flint.boot.web.server.servlet;
 
-import flint.boot.web.server : WebServer;
-import flint.jakarta.servlet : Servlet;
+import flint.boot.web.server : Shutdown, WebServer;
+import flint.jakarta.servlet : Servlet, ServletContext;
 
 @safe:
 
-/// A servlet the embedded web server registers at startup, with its name and URL mappings.
-class ServletRegistrationBean
+/// Configures a `ServletContext` when the embedded web server starts: registers servlets and filters.
+interface ServletContextInitializer
 {
+    /// Configure `servletContext`.
+    void onStartup(ServletContext servletContext);
+}
+
+/// Registers a servlet with the `ServletContext` under its name and URL mappings (`/*` when none are given).
+class ServletRegistrationBean : ServletContextInitializer
+{
+    private static immutable string[] DEFAULT_MAPPINGS = ["/*"];
+
     private Servlet servlet;
     private string servletName;
     private string[] urlMappings;
+    private int loadOnStartup = -1;
 
-    /// `servlet` under `urlMappings` (all URLs when empty).
+    /// `servlet` under `urlMappings`.
     this(Servlet servlet, string[] urlMappings...)
     {
         this.servlet = servlet;
         this.urlMappings = urlMappings.dup;
+    }
+
+    /// Register the servlet; a servlet already registered under the name is left alone, as Boot does.
+    void onStartup(ServletContext servletContext)
+    {
+        auto registration = servletContext.addServlet(getServletName(), servlet);
+        if (registration is null)
+            return;
+        registration.addMapping(urlMappings.length ? urlMappings : DEFAULT_MAPPINGS.dup);
+        registration.setLoadOnStartup(loadOnStartup);
     }
 
     /// The servlet.
@@ -65,13 +87,25 @@ class ServletRegistrationBean
     {
         this.urlMappings = urlMappings.dup;
     }
+
+    /// The `loadOnStartup` priority; -1 loads on first request.
+    int getLoadOnStartup() const pure nothrow @nogc
+    {
+        return loadOnStartup;
+    }
+
+    /// Set the `loadOnStartup` priority.
+    void setLoadOnStartup(int loadOnStartup) pure nothrow @nogc
+    {
+        this.loadOnStartup = loadOnStartup;
+    }
 }
 
 /// Creates the embedded servlet web server.
 interface ServletWebServerFactory
 {
-    /// A new, not yet started, `WebServer` that serves `registrations`.
-    WebServer getWebServer(ServletRegistrationBean[] registrations...);
+    /// A new, not yet started, `WebServer`, whose `ServletContext` each of `initializers` configures.
+    WebServer getWebServer(ServletContextInitializer[] initializers...);
 }
 
 /// A `ServletWebServerFactory` whose listener and context settings can be changed (Boot's
@@ -86,4 +120,6 @@ interface ConfigurableServletWebServerFactory : ServletWebServerFactory
     void setContextPath(string contextPath);
     /// Set the path that errors are forwarded to.
     void setErrorPath(string errorPath);
+    /// Set how the server shuts down.
+    void setShutdown(Shutdown shutdown);
 }

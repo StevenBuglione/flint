@@ -13,15 +13,16 @@ module flint.boot.web.server.servlet.context;
 
 import flint.boot : ApplicationContextFactory, DefaultApplicationContextFactory,
     KeepAliveApplicationContext, WebApplicationType;
-import flint.boot.web.server : WebServer;
-import flint.boot.web.server.servlet : ServletRegistrationBean, ServletWebServerFactory;
+import flint.boot.web.server : GracefulShutdownCallback, GracefulShutdownResult, WebServer;
+import flint.boot.web.server.servlet : ServletContextInitializer, ServletWebServerFactory;
 import flint.context : ApplicationContextException, ConfigurableApplicationContext;
 import flint.context.support : GenericApplicationContext;
 
 @safe:
 
 /// An application context that creates, starts and stops an embedded servlet web server: the single
-/// `ServletWebServerFactory` bean serves every `ServletRegistrationBean` bean.
+/// `ServletWebServerFactory` bean builds it, and every `ServletContextInitializer` bean (a `ServletRegistrationBean`,
+/// for instance) configures its `ServletContext`.
 class ServletWebServerApplicationContext : GenericApplicationContext, KeepAliveApplicationContext
 {
     /// The name of the `DispatcherServlet` bean and registration.
@@ -71,8 +72,12 @@ class ServletWebServerApplicationContext : GenericApplicationContext, KeepAliveA
         webServer.start();
     }
 
+    // Boot's WebServerGracefulShutdownLifecycle drains the server before the beans are destroyed, then
+    // WebServerStartStopLifecycle stops it.
     protected override void doClose()
     {
+        if (webServer !is null)
+            webServer.shutDownGracefully(new IgnoreResult);
         super.doClose();
         if (webServer !is null)
             webServer.destroy();
@@ -120,10 +125,10 @@ class ServletWebServerApplicationContext : GenericApplicationContext, KeepAliveA
         if (webServer !is null)
             return;
         auto factory = getWebServerFactory();
-        ServletRegistrationBean[] registrations;
-        foreach (name; getBeanFactory().getBeanNamesForTypeErased(typeNameOf!ServletRegistrationBean))
-            registrations ~= cast(ServletRegistrationBean) getBeanFactory().getBean(name);
-        webServer = factory.getWebServer(registrations);
+        ServletContextInitializer[] initializers;
+        foreach (name; getBeanFactory().getBeanNamesForTypeErased(typeNameOf!ServletContextInitializer))
+            initializers ~= cast(ServletContextInitializer) getBeanFactory().getBean(name);
+        webServer = factory.getWebServer(initializers);
     }
 
     private void markTerminated() nothrow @nogc
@@ -131,6 +136,14 @@ class ServletWebServerApplicationContext : GenericApplicationContext, KeepAliveA
         import core.atomic : atomicStore;
 
         atomicStore(terminated, true);
+    }
+}
+
+// The context only waits for the drain; Boot logs the result, which Flint's servers report through their own logs.
+private final class IgnoreResult : GracefulShutdownCallback
+{
+    void shutdownComplete(GracefulShutdownResult)
+    {
     }
 }
 

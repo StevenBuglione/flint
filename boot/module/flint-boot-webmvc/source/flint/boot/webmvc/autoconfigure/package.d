@@ -479,7 +479,10 @@ final class DispatcherServletAutoConfiguration
     DispatcherServletRegistrationBean dispatcherServletRegistration(DispatcherServlet dispatcherServlet,
             WebMvcProperties webMvcProperties)
     {
-        return new DispatcherServletRegistrationBean(dispatcherServlet, webMvcProperties.getServlet().getPath());
+        auto registration = new DispatcherServletRegistrationBean(dispatcherServlet,
+                webMvcProperties.getServlet().getPath());
+        registration.setLoadOnStartup(webMvcProperties.getServlet().getLoadOnStartup());
+        return registration;
     }
 }
 
