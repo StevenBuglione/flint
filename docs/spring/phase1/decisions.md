@@ -454,3 +454,10 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **Background:** the Go comparator is a fully static binary (CGO off). Flint's release apps link libc and other libraries dynamically, and their shared text is about 1.75 MB of resident memory.
   - **The comparison run:** proof-harness runs a non-gating, side-by-side comparison of gs-rest-service's release build, static against dynamic. It measures peak RSS, throughput, p99 and CPU per request in one claimed window, plus stripped O3 and Oz sizes against Go.
   - **The decision rule:** switch the measured release profile to static only if the Oz size still passes against Go and no runtime metric gets worse beyond its interval. Size and runtime then use the same static release build, and the dynamic series stays published as context, as with `--no-debug` (`4b27d207`). Earlier results stay as recorded.
+- 2026-11-23, fast-path spike (coordinator's task): **a per-endpoint, build-time-specialised request path is prototyped and recommended, staged** (`docs/spring/phase1/fast-path.md`, branch `spring/fast-path-proto`, not on main).
+  - **How it works.** Flint AOT emits `fast_<id>` for simple mappings behind the prototype switch `FLINT_AOT_FAST_PATH=1`, which is part of the AOT output key. `FastPathTable` proves each route against the configured strategies at startup. The servlet container offers requests before it builds servlet objects.
+  - **Allocations.** gs-rest-service `/greeting` drops from 16 to 1 GC allocation per request at `eaa27d1d`: the user's `String.format` result only. 18/18 exact with the fast path on and off.
+  - **CPU.** 71.1k → 43.2k instructions per request.
+  - **Local load.** Throughput about 1.4× and CPU per request about 0.73× against main, with RSS unchanged.
+  - **Next.** Land opt-in once its owners agree, then a certified on-against-off run (proposed queue entry), then default on.
+  - **petclinic-rest.** Estimated +2–5% capacity at most. Its request costs 1,655 allocations, mostly in the data path.
