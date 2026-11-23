@@ -210,6 +210,14 @@ def check(name, command, cwd, env, results, timeout=None):
     return ok
 
 
+def skeleton(project):
+    spec = project / 'flint-spring.json'
+    try:
+        return spec.is_file() and json.loads(spec.read_text()).get('status') == 'skeleton'
+    except ValueError:
+        return False
+
+
 def checks(flint, target):
     env = dict(os.environ)
     tools = (flint / '.tools').resolve()
@@ -234,8 +242,9 @@ def checks(flint, target):
     projects = run(['git', 'ls-files', '*flint.toml'], flint, check=False).stdout.split()
     for manifest in sorted(projects):
         project = (flint / manifest).parent
-        # tests/ holds fixtures the suites compile themselves (tests/aot/*), not buildable applications.
-        if project == flint or manifest.startswith('tests/'):
+        # tests/ holds fixtures the suites compile themselves (tests/aot/*), not buildable applications; a Spring
+        # side-by-side port whose flint-spring.json says "skeleton" is not written yet (proof-harness).
+        if project == flint or manifest.startswith('tests/') or skeleton(project):
             continue
         check(f'flint build {project.relative_to(flint)}', [flint_bin, 'build'], project, env, results)
     for recipe in sorted(flint.glob('examples/*/dub.sdl')):
