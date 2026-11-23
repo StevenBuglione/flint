@@ -4,14 +4,15 @@ spring-guides/gs-rest-service `complete/` (commit e15fec6, the reference pinned 
 Copyright the original author or authors. Licensed under the Apache License, Version 2.0.
 Modified by the Flint authors: Java → D syntax only (one module per Java package, R1; record → struct, R11;
 annotations, R2; `main` through `mixin FlintMain`, D-1), and one annotation written as a constant for the linters.
+`String.format` is flint:java's, over Java's `Formatter` syntax.
 +/
 module com.example.restservice;
 
 import flint.boot : FlintMain;
 import flint.boot.autoconfigure : FlintBootApplication;
+import flint.java.lang : String;
 import flint.java.util.concurrent.atomic : AtomicLong;
 import flint.web.bind.annotation : GetMapping, RequestParam, RestController;
-import std.format : format;
 
 @safe:
 
@@ -46,6 +47,6 @@ struct Greeting
     @GetMapping("/greeting") Greeting greeting(@RequestParam(value : "name", defaultValue:
             "World") string name)
     {
-        return Greeting(counter.incrementAndGet(), format(template_, name));
+        return Greeting(counter.incrementAndGet(), String.format(template_, name));
     }
 }
