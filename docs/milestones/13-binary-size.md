@@ -32,7 +32,16 @@ Measured at `42f86d6` (before), `fa7437d` (RELR) and `cd9caff` (no localClasses)
 
 **Start-up and the REST suite.**
 - **REST suite.** `tools/load_bench.py --smoke` passed against the final bench-rest (RELR plus no localClasses) and the Go reference, with every response checked before load. It is a harness check, not performance evidence.
-- **Start-up time is queued, not measured.** About ten sessions were building on venus, so timings taken then are not evidence. The proof-harness session's measurement queue runs it in a quiet window: wall time from exec to the first correct `GET /json`, for bench-rest at 13d5d62 against 3eef2dc, interleaved.
+- **Start-up time.** It was measured in a quiet window by the proof-harness queue (`relr-startup`, 2026-11-23 11:44Z, load 0.39 at the start, quiet after).
+  - **Method:** wall time from exec to the first correct `GET /json`. 200 interleaved runs per build, with the server pinned to CPUs 2–3 (`FLINT_CORES=2`).
+  - **Builds:** bench-rest from `measure_builds --app-sizes` at `13d5d62` (6,670,024 bytes) and at `3eef2dc` (5,904,144 bytes).
+
+  | Build | Median | p10 | p90 |
+  | --- | ---: | ---: | ---: |
+  | Before RELR | 8.278 ms | 7.928 ms | 33.208 ms |
+  | With RELR | 8.465 ms | 7.974 ms | 33.066 ms |
+
+  The median ratio is 1.023, with a 99% interval of 0.990–1.048. RELR is therefore neutral to about 2% slower at start-up, despite the loader processing 4 relative relocations instead of 32,282. Process start and server initialisation dominate. The receipt and samples are in `benchmarks/spring/evidence/relr-startup/`.
 - **Relocations.** With RELR, the dynamic loader processes 4 relative relocations instead of 32,282 (`LD_DEBUG=statistics`). An unquiet 10-run check gave a median of 9.15 ms before and 9.14 ms with RELR.
 - **DMD dev builds.** A canonical `flint build --verify` of flint itself, on the verified toolchain configured with `--dmd-linker mold`, links through the fork's direct mold link with RELR, `BIND_NOW` and `GNU_RELRO`.
 

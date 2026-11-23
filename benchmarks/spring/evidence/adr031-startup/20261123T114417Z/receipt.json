@@ -1,0 +1,75 @@
+{
+  "time": "2026-11-23T11:44:25Z",
+  "outcome": "measured",
+  "evidence": true,
+  "host": "venus",
+  "builds": {
+    "before": {
+      "commit": "48b8f52aa716093b2524fa1b2db7ee5f5a413f1c",
+      "method": "app-sizes",
+      "binary": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/bin/bench-rest-48b8f52aa716-app-sizes",
+      "sha256": "12af1733de9fc8fed9bdf87a71f1300a7b04bd55c045c3b5dd27fe3d8a4b9539",
+      "bytes": 5904384,
+      "reused": true
+    },
+    "tls-only": {
+      "commit": "440d72d172ec94ebfbf6f9e3aedb5248829b7e17",
+      "method": "app-sizes",
+      "binary": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/bin/bench-rest-440d72d172ec-app-sizes",
+      "sha256": "38941022becc649df2970901226251edcc6ffe8b13f1c9f9434762c42f480e36",
+      "bytes": 5005088,
+      "reused": true
+    }
+  },
+  "window_before": {
+    "time": "2026-11-23T11:44:18Z",
+    "load_average": [
+      0.16259765625,
+      0.72265625,
+      1.48046875
+    ],
+    "busy_processes": [],
+    "idle_build_processes": 390,
+    "quiet": true,
+    "problems": []
+  },
+  "window_during": [],
+  "foreign_activity_during": 0,
+  "window_after": {
+    "time": "2026-11-23T11:44:25Z",
+    "load_average": [
+      0.39013671875,
+      0.7607421875,
+      1.48876953125
+    ],
+    "busy_processes": [],
+    "idle_build_processes": 390,
+    "quiet": true,
+    "problems": []
+  },
+  "results_directory": ".flint/measure/results/adr031-startup/20261123T114417Z",
+  "summary": {
+    "before": {
+      "median_ms": 8.595261,
+      "p10_ms": 8.12061,
+      "p90_ms": 33.362845,
+      "runs": 200,
+      "commit": "48b8f52aa716093b2524fa1b2db7ee5f5a413f1c",
+      "sha256": "12af1733de9fc8fed9bdf87a71f1300a7b04bd55c045c3b5dd27fe3d8a4b9539"
+    },
+    "tls-only": {
+      "median_ms": 8.486285500000001,
+      "p10_ms": 8.022394,
+      "p90_ms": 33.323466,
+      "runs": 200,
+      "commit": "440d72d172ec94ebfbf6f9e3aedb5248829b7e17",
+      "sha256": "38941022becc649df2970901226251edcc6ffe8b13f1c9f9434762c42f480e36"
+    },
+    "ratio": {
+      "of": "tls-only/before",
+      "median": 0.9873214437583687,
+      "lower_99": 0.9525620478915925,
+      "upper_99": 1.0207313783579264
+    }
+  }
+}

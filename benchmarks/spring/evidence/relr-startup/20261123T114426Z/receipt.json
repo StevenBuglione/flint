@@ -1,0 +1,76 @@
+{
+  "time": "2026-11-23T11:44:34Z",
+  "outcome": "measured",
+  "evidence": true,
+  "host": "venus",
+  "builds": {
+    "before": {
+      "commit": "13d5d62b0f54ee1da535d0e8b805fd3c1f1f6d1e",
+      "method": "app-sizes",
+      "binary": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/bin/bench-rest-13d5d62b0f54-app-sizes",
+      "sha256": "2235b45da4f6e49381ffd9777bad15d1ef56ee5dc0841cf5a8df135f9840f838",
+      "bytes": 6670024,
+      "reused": true,
+      "note": "sha256 2235b45da4 differs from the requester's 685cb92597 (expected when the base differs)"
+    },
+    "relr": {
+      "commit": "3eef2dc403097d94072e58114560bf8cdd9dc4b7",
+      "method": "app-sizes",
+      "binary": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/bin/bench-rest-3eef2dc40309-app-sizes",
+      "sha256": "291ff1bf9dcfd123b15fb1be879f6599321cacfd62e06647f80ccf466a0a7b49",
+      "bytes": 5904144,
+      "reused": true
+    }
+  },
+  "window_before": {
+    "time": "2026-11-23T11:44:27Z",
+    "load_average": [
+      0.39013671875,
+      0.7607421875,
+      1.48876953125
+    ],
+    "busy_processes": [],
+    "idle_build_processes": 390,
+    "quiet": true,
+    "problems": []
+  },
+  "window_during": [],
+  "foreign_activity_during": 0,
+  "window_after": {
+    "time": "2026-11-23T11:44:34Z",
+    "load_average": [
+      0.484375,
+      0.76904296875,
+      1.48291015625
+    ],
+    "busy_processes": [],
+    "idle_build_processes": 390,
+    "quiet": true,
+    "problems": []
+  },
+  "results_directory": ".flint/measure/results/relr-startup/20261123T114426Z",
+  "summary": {
+    "before": {
+      "median_ms": 8.278034,
+      "p10_ms": 7.927777,
+      "p90_ms": 33.208,
+      "runs": 200,
+      "commit": "13d5d62b0f54ee1da535d0e8b805fd3c1f1f6d1e",
+      "sha256": "2235b45da4f6e49381ffd9777bad15d1ef56ee5dc0841cf5a8df135f9840f838"
+    },
+    "relr": {
+      "median_ms": 8.464641499999999,
+      "p10_ms": 7.974065,
+      "p90_ms": 33.066147,
+      "runs": 200,
+      "commit": "3eef2dc403097d94072e58114560bf8cdd9dc4b7",
+      "sha256": "291ff1bf9dcfd123b15fb1be879f6599321cacfd62e06647f80ccf466a0a7b49"
+    },
+    "ratio": {
+      "of": "relr/before",
+      "median": 1.0225424901613112,
+      "lower_99": 0.9899776004485792,
+      "upper_99": 1.0483461976629695
+    }
+  }
+}

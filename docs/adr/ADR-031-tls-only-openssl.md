@@ -120,7 +120,12 @@ python3 tools/measure_builds.py --app-sizes --app bench-rest --output sizes.json
 
 The medians are 0.050 ms p50 on both sides, p99 0.119 ms against 0.114 ms, 431k against 430k req/s, and 12.7 MB against 12.9 MB peak RSS. bench-rest serves plain HTTP, so OpenSSL is linked but not exercised, and the result is neutral on every metric whose interval is resolved. The p99 difference is 5 µs, within a 99% interval too wide to call either way. The receipt, samples and raw oha outputs are in `benchmarks/spring/evidence/adr031-rest/20261123T105441Z/`.
 
-The start-up timing (`adr031-startup`) is still queued.
+**Start-up.** It was measured in a quiet window (`adr031-startup`, 2026-11-23 11:44Z, load 0.16 at the start, quiet after). The run lasted 8 s, so the quiet checks before and after bracket it.
+- **Method:** wall time from exec to the first correct `GET /json`, with 200 interleaved runs per build and the server pinned to CPUs 2–3.
+- **Medians:** 8.595 ms before and 8.486 ms TLS-only (p10 8.121 / 8.022 ms, p90 33.36 / 33.32 ms).
+- **Ratio:** 0.987, with a 99% interval of 0.953–1.021. TLS-only OpenSSL is neutral to slightly faster at start-up.
+
+The receipt and samples are in `benchmarks/spring/evidence/adr031-startup/`.
 
 ## Consequences
 
