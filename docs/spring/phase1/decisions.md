@@ -57,5 +57,12 @@
   | jdbc | 750 | 2,210 | 2,800 |
   | slf4j-api | 900 | 5,097 | 6,400 |
   | tx | 2,350 | 6,942 | 8,700 |
+- 2026-11-23, size-levers: template diet progress (coordination item 21). These counts are of each module's own library compile (`dmd -vtemplates` over its sources); the own-library-and-probe/2 recount for the table above follows when venus is out of the quiet window.
+  - The probes print without Phobos (`a67dfeb`): about 290 fewer instances per module, the probe compile being part of each count.
+  - `flint.engine.aot.text` (`492964e`, `e3d38a8`): non-template, pure number and character text with the same results as `std.conv`. One `to!string(double)` costs about 4,900 instances, `to!string(dchar)` about 4,500, `to!double` 1,328 and `to!long` 1,114.
+  - engine-aot: 5,464 → 591 (`f4e67e7`, by framework-core).
+  - jackson-core: 5,317 → 1,185 (`ad07ae0`).
+  - hibernate-validator: 9,724 → 2,587 (`9912d12`); one `to!string` of an enum had instantiated most of `std.format`.
+  - Next: jackson-databind (`std.uni` case mapping), slf4j-api, tx and context (`std.datetime.Clock`), engine-jdbc and java (`to!double`/`to!long`), core (`std.process`, `std.utf`, `std.string`).
 - 2026-11-23, size-levers: `tx` now links 231,800 bytes, over its 229,376 budget. It linked 176,408 when the budget was set on 2026-11-23 (`00b2749`), and data-access has added code since. This is drift caught by the gate, not a measurement change. data-access is told; raising the budget or trimming the module is for the owner and data-access.
 - 2026-11-23, framework-core: context's template count grew with org.springframework.validation (`832723b`), from 2,808 to 6,155 instances (own-library-and-probe/2, stock DMD 2.114). That is past `template_ratio_max` 1.1 against the base, and past size-levers' proposed 3,550. The growth is mostly druntime hooks (`new`, `~`) that scale with code size, plus `List!ObjectError` and `List!FieldError`, which the Spring API requires. I already removed about 4,400 instances by avoiding std.format in `valueOf` and std.algorithm. Linked bytes are 775,168 (+1.1%), within budget. A new context budget is the owner's decision; nothing was raised.
