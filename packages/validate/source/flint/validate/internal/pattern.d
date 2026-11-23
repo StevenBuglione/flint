@@ -476,6 +476,54 @@ private template PatternCode(string expression)
     static immutable instructions = compiled.states[0 .. compiled.count];
 }
 
+/// A pattern compiled at run time, for expressions that arrive as data (Flint AOT descriptors of
+/// Jakarta `@Pattern`). Same syntax, limits and automaton as the compile-time patterns.
+package(flint) struct RuntimePattern
+{
+    private Instruction[] code;
+    private ushort entry;
+    /// The compile error, or null when the pattern compiled.
+    string error;
+
+    /// Whether `bytes` matches the whole pattern; false when it did not compile.
+    bool matches(scope const(ubyte)[] bytes) const pure nothrow @nogc
+    {
+        return error is null && match(code, entry, bytes);
+    }
+}
+
+/// Compile `expression` at run time. The parser's term buffer is sized for the 4,096-byte limit and lives on
+/// the GC heap, so callers compile each expression once and keep the result.
+package(flint) RuntimePattern compileRuntimePattern(string expression)
+{
+    RuntimePattern result;
+    if (expression.length > 4_096)
+    {
+        result.error = "pattern exceeds 4096 source bytes";
+        return result;
+    }
+    auto parser = new RegexParser!(2 * 4_096 + 1);
+    parser.expression = expression;
+    parser.add(Term(Op.empty));
+    immutable syntax = parser.parse();
+    if (parser.error !is null || parser.offset != expression.length)
+    {
+        result.error = parser.error is null ? "unmatched pattern group delimiter" : parser.error;
+        return result;
+    }
+    auto program = new Program!();
+    program.append(Instruction(Op.accept));
+    program.entry = program.lower(parser.terms[0 .. parser.termCount], syntax, 0);
+    if (program.error !is null)
+    {
+        result.error = program.error;
+        return result;
+    }
+    result.code = program.states[0 .. program.count].dup;
+    result.entry = program.entry;
+    return result;
+}
+
 package(flint.validate) enum patternError(string expression) = PatternCode!expression.compiled.error;
 
 package(flint.validate) bool matchPattern(string expression)(scope const(ubyte)[] bytes) pure nothrow @nogc
