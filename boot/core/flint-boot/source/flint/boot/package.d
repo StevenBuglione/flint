@@ -33,7 +33,11 @@ import flint.boot.context.properties.source : ConfigurationPropertyName,
     ConfigurationPropertySource, ConfigurationPropertySources, MapConfigurationPropertySource;
 import flint.boot.diagnostics : FailureAnalysisReporter, FailureAnalyzer, FailureAnalyzers,
     LoggingFailureAnalysisReporter;
-import flint.boot.internal.context : ConfigurableApplicationContext;
+import flint.conc.slot : ProcessSlot;
+import flint.context : ConfigurableApplicationContext;
+import flint.core.convert : TypeDescriptor;
+import flint.core.env : EnumerablePropertySource, MutablePropertySources, StandardEnvironment;
+import flint.engine.aot.any : Any;
 import flint.boot.internal.core_env : CommandLineArgs, parseCommandLine;
 import flint.java.lang : IllegalArgumentException, IllegalStateException;
 import flint.boot.internal.log : Log, LogSettings;
@@ -159,79 +163,106 @@ struct FlintBootConfiguration
     bool proxyBeanMethods = true;
 }
 
-/// The environment Boot prepares: property sources in precedence order, and the profiles.
+/// The environment Boot prepares: spring-core's `StandardEnvironment` over Boot's config data.
 ///
-/// It stands in for spring-core's `StandardEnvironment` (Boot's `ApplicationEnvironment` extends it) until
-/// `flint.core.env` lands, and keeps its method names.
-final class ApplicationEnvironment
+/// The property sources are those config data produced (command line, environment, profile files, `application.*`,
+/// default properties), in precedence order. Boot's relaxed lookup answers `getProperty`, including the `spring.*`
+/// alias of `flint.*` keys, as Boot's `ConfigurationPropertySourcesPropertyResolver` does. The profiles are the ones
+/// config data decided. Boot's own code reads the same sources through `getConfigurationPropertySources`.
+final class ApplicationEnvironment : StandardEnvironment
 {
-    private ConfigDataResult data;
+    private ConfigurationPropertySource[] bootSources;
 
     /// The environment of loaded config data.
-    this(ConfigDataResult data) pure nothrow @nogc
+    this(ConfigDataResult data)
     {
-        this.data = data;
+        super();
+        bootSources = data.getSources();
+        foreach (source; bootSources)
+            getPropertySources().addLast(new ConfigurationPropertySourcePropertySource(source));
+        setActiveProfiles(data.getProfiles().getActive().dup);
+        setDefaultProfiles(data.getProfiles().getDefault().dup);
     }
 
-    /// The value of `key`, with placeholders resolved, or `null`.
-    string getProperty(string key)
+    /// Boot adds config data instead of the system sources `StandardEnvironment` would add.
+    protected override void customizePropertySources(MutablePropertySources)
+    {
+    }
+
+    /// The value of `key` with Boot's relaxed names and placeholders, converted to `targetType`.
+    override Any getPropertyErased(string key, const TypeDescriptor targetType)
+    {
+        const text = relaxed(key);
+        if (text is null)
+            return Any.init;
+        const asString = TypeDescriptor.valueOf!string;
+        if (targetType is null || targetType.getName() == asString.getName())
+            return Any.of(text);
+        return getConversionService().convert(Any.of(text), asString, targetType);
+    }
+
+    /// Whether `key` has a value, by Boot's relaxed names.
+    override bool containsProperty(string key)
+    {
+        return relaxed(key) !is null;
+    }
+
+    /// `text` with `${...}` placeholders resolved against the config data, leniently.
+    override string resolvePlaceholders(string text)
     {
         import flint.boot.context.properties.bind : PropertySourcesPlaceholdersResolver;
 
-        if (!ConfigurationPropertyName.isValid(key))
+        return new PropertySourcesPlaceholdersResolver(bootSources).resolvePlaceholders(text);
+    }
+
+    /// The configuration property sources, highest precedence first (Boot's `ConfigurationPropertySources.get`).
+    ConfigurationPropertySource[] getConfigurationPropertySources() pure nothrow @nogc
+    {
+        return bootSources;
+    }
+
+    private string relaxed(string key)
+    {
+        import flint.boot.context.properties.bind : PropertySourcesPlaceholdersResolver;
+
+        auto name = ConfigurationPropertyName.isValid(key)
+            ? ConfigurationPropertyName.of(key) : ConfigurationPropertyName.adapt(key, '.');
+        if (name.isEmpty())
             return null;
-        auto property = ConfigurationPropertySources.find(data.getSources(), ConfigurationPropertyName.of(key));
+        auto property = ConfigurationPropertySources.find(bootSources, name);
         if (property is null)
             return null;
-        return new PropertySourcesPlaceholdersResolver(data.getSources()).resolvePlaceholders(property.getValue());
+        return new PropertySourcesPlaceholdersResolver(bootSources).resolvePlaceholders(property.getValue());
+    }
+}
+
+/// A Boot configuration property source as a spring-core property source, under its own raw keys.
+final class ConfigurationPropertySourcePropertySource : EnumerablePropertySource
+{
+    private ConfigurationPropertySource configuration;
+
+    /// The spring-core view of `configuration`.
+    this(ConfigurationPropertySource configuration)
+    {
+        super(configuration.getUnderlyingSourceName(), cast(Object) configuration);
+        this.configuration = configuration;
     }
 
-    /// The value of `key`, or `defaultValue`.
-    string getProperty(string key, string defaultValue)
+    override Any getProperty(string name)
     {
-        auto value = getProperty(key);
-        return value is null ? defaultValue : value;
+        if (auto map = cast(MapConfigurationPropertySource) configuration)
+        {
+            const value = map.getProperty(name);
+            return value is null ? Any.init : Any.of(value);
+        }
+        return Any.init;
     }
 
-    /// Whether `key` has a value.
-    bool containsProperty(string key)
+    override string[] getPropertyNames()
     {
-        return getProperty(key) !is null;
-    }
-
-    /// `text` with `${...}` placeholders resolved.
-    string resolvePlaceholders(string text)
-    {
-        import flint.boot.context.properties.bind : PropertySourcesPlaceholdersResolver;
-
-        return new PropertySourcesPlaceholdersResolver(data.getSources()).resolvePlaceholders(text);
-    }
-
-    /// The active profiles.
-    const(string)[] getActiveProfiles()
-    {
-        return data.getProfiles().getActive();
-    }
-
-    /// The default profiles.
-    const(string)[] getDefaultProfiles()
-    {
-        return data.getProfiles().getDefault();
-    }
-
-    /// Whether any of the profile expressions matches the accepted profiles.
-    bool acceptsProfiles(string[] profiles...)
-    {
-        import flint.boot.internal.core_env : matchesProfiles;
-
-        auto accepted = data.getProfiles();
-        return matchesProfiles(profiles, (string p) => accepted.isAccepted(p));
-    }
-
-    /// The property sources, highest precedence first, as Boot's `ConfigurationPropertySources.get` returns them.
-    ConfigurationPropertySource[] getPropertySources() pure nothrow @nogc
-    {
-        return data.getSources();
+        if (auto map = cast(MapConfigurationPropertySource) configuration)
+            return map.getPropertyNames().dup;
+        return null;
     }
 }
 
@@ -312,7 +343,7 @@ class ResourceBanner : Banner
         import flint.boot.context.properties.bind : PropertySourcesPlaceholdersResolver;
 
         const ansi = ansiEnabled(environment);
-        auto first = environment.getPropertySources() ~ [
+        auto first = environment.getConfigurationPropertySources() ~ [
             cast(ConfigurationPropertySource) titleSource(sourceClass, null),
             new AnsiPropertySource(ansi), versionSource(environment, null)
         ];
@@ -438,6 +469,53 @@ interface ApplicationContextFactory
     ConfigurableApplicationContext create(WebApplicationType webApplicationType);
 }
 
+/// Boot's default factory: a `GenericApplicationContext` loading Flint AOT's generated registry for `NONE`, and
+/// the factory a web module registered with `registerWebFactory` for `SERVLET` and `REACTIVE` (Boot finds them in
+/// `spring.factories`; Flint's closed world registers them from the web server module).
+final class DefaultApplicationContextFactory : ApplicationContextFactory
+{
+    private static shared ProcessSlot!ApplicationContextFactory servlet;
+    private static shared ProcessSlot!ApplicationContextFactory reactive;
+
+    /// Register the factory of `type` contexts; the first registration wins.
+    static void registerWebFactory(WebApplicationType type, ApplicationContextFactory factory)
+    {
+        if (type == WebApplicationType.SERVLET)
+            servlet.setIfAbsent(factory);
+        else if (type == WebApplicationType.REACTIVE)
+            reactive.setIfAbsent(factory);
+    }
+
+    /// A context for `webApplicationType`.
+    ConfigurableApplicationContext create(WebApplicationType webApplicationType)
+    {
+        import flint.context.support : GenericApplicationContext;
+
+        final switch (webApplicationType)
+        {
+        case WebApplicationType.NONE:
+            return new GenericApplicationContext;
+        case WebApplicationType.SERVLET:
+            if (auto factory = servlet.get())
+                return factory.create(webApplicationType);
+            throw new IllegalStateException("No servlet web server context: add flint:boot-web-server "
+                    ~ "(flint-boot-starter-web) or set flint.main.web-application-type=none");
+        case WebApplicationType.REACTIVE:
+            if (auto factory = reactive.get())
+                return factory.create(webApplicationType);
+            throw new IllegalStateException("No reactive web server context in the build");
+        }
+    }
+}
+
+/// A context that keeps the process alive, as Java's non-daemon server threads do: `mixin FlintMain` waits on it
+/// after `run` returns (deviation D-1). The servlet web server application context implements it.
+interface KeepAliveApplicationContext
+{
+    /// Block until the context is closed by a shutdown signal.
+    void awaitTermination();
+}
+
 /// Bootstraps and runs a Flint application.
 class FlintApplication
 {
@@ -492,10 +570,7 @@ class FlintApplication
             if (logStartupInfo)
                 logStarting(environment);
             context = createApplicationContext();
-            context.setEnvironment(environment);
-            context.registerSingleton("flintApplicationArguments", cast(Object) applicationArguments);
-            if (printedBanner !is null)
-                context.registerSingleton("flintBootBanner", cast(Object) printedBanner);
+            prepareContext(context, environment, applicationArguments, printedBanner);
             context.refresh();
             if (logStartupInfo)
                 logStarted(startNanos);
@@ -515,8 +590,8 @@ class FlintApplication
     {
         try
         {
-            auto context = run!App(args.length ? args[1 .. $] : null);
-            context.awaitTermination();
+            if (auto keepAlive = cast(KeepAliveApplicationContext) run!App(args.length ? args[1 .. $] : null))
+                keepAlive.awaitTermination();
             return 0;
         }
         catch (Exception)
@@ -540,7 +615,7 @@ class FlintApplication
             consider(generator.getExitCode());
         if (context !is null && context.isActive())
         {
-            foreach (bean; context.getBeanFactory().getBeansOfType(typeNameOf!ExitCodeGenerator))
+            foreach (bean; beansOfType(context, typeNameOf!ExitCodeGenerator))
             {
                 if (auto generator = cast(ExitCodeGenerator) bean)
                     consider(generator.getExitCode());
@@ -696,7 +771,7 @@ private:
         auto system = new Slf4jLoggingSystem(logSettings.format, logSettings.sink);
         system.initialize();
         auto prefix = ConfigurationPropertyName.of("logging.level");
-        foreach (name; ConfigurationPropertySources.names(environment.getPropertySources()))
+        foreach (name; ConfigurationPropertySources.names(environment.getConfigurationPropertySources()))
         {
             if (!prefix.isAncestorOf(name))
                 continue;
@@ -788,17 +863,46 @@ private:
 
     ConfigurableApplicationContext createApplicationContext()
     {
-        if (applicationContextFactory is null)
-            throw new IllegalStateException("No ApplicationContextFactory: add a context module (flint:context, or "
-                    ~ "flint:boot-starter-web for a servlet context) to the application");
-        return applicationContextFactory.create(webApplicationType);
+        auto factory = applicationContextFactory is null ? new DefaultApplicationContextFactory
+            : applicationContextFactory;
+        return factory.create(webApplicationType);
+    }
+
+    // SpringApplication.prepareContext: the environment, the web application type, Boot's singletons
+    // (`flintApplicationArguments`, `flintBootBanner` and the `@ConfigurationProperties` binder), and Flint AOT's
+    // generated registry, loaded during refresh so its startup conditions see them.
+    void prepareContext(ConfigurableApplicationContext context, ApplicationEnvironment environment,
+            DefaultApplicationArguments arguments, Banner printedBanner)
+    {
+        import flint.boot.context.properties.bind : EnvironmentConfigurationPropertiesBinder;
+        import flint.context.support : GenericApplicationContext;
+
+        context.setEnvironment(environment);
+        auto binder = new EnvironmentConfigurationPropertiesBinder(environment.getConfigurationPropertySources());
+        if (auto generic = cast(GenericApplicationContext) context)
+        {
+            static immutable string[] types = ["NONE", "SERVLET", "REACTIVE"];
+            generic.setWebApplicationType(types[webApplicationType]);
+            binder.setDescriptors(generic.getDescriptorTable());
+            generic.registerBean!DefaultApplicationArguments("flintApplicationArguments", () => arguments);
+            generic.registerBean!EnvironmentConfigurationPropertiesBinder("flintConfigurationPropertiesBinder",
+                    () => binder);
+            if (printedBanner !is null)
+                generic.getBeanFactory().registerSingleton("flintBootBanner", cast(Object) printedBanner);
+            generic.deferAotRegistry();
+            return;
+        }
+        context.getBeanFactory().registerSingleton("flintApplicationArguments", cast(Object) arguments);
+        context.getBeanFactory().registerSingleton("flintConfigurationPropertiesBinder", cast(Object) binder);
+        if (printedBanner !is null)
+            context.getBeanFactory().registerSingleton("flintBootBanner", cast(Object) printedBanner);
     }
 
     void callRunners(ConfigurableApplicationContext context, DefaultApplicationArguments arguments)
     {
         import flint.engine.aot.name : typeNameOf;
 
-        foreach (bean; context.getBeanFactory().getBeansOfType(typeNameOf!Runner))
+        foreach (bean; beansOfType(context, typeNameOf!Runner))
         {
             if (auto applicationRunner = cast(ApplicationRunner) bean)
                 applicationRunner.run(arguments);
@@ -845,6 +949,16 @@ private:
         else
             cast(void) writeStream(Stream.output, text);
     }
+}
+
+/// The beans of `context` injectable as `type`, in registration order.
+Object[] beansOfType(ConfigurableApplicationContext context, string type)
+{
+    auto factory = context.getBeanFactory();
+    Object[] beans;
+    foreach (name; factory.getBeanNamesForTypeErased(type))
+        beans ~= factory.getBean(name);
+    return beans;
 }
 
 /// Generates the process entry point beside the application class (deviation D-1): `main` runs `App`, waits for

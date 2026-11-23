@@ -5,100 +5,21 @@ module boot_test_tests.flint_boot_test_test;
 
 import flint.boot : ApplicationContextFactory, ApplicationEnvironment, ClassRef, FlintApplication, WebApplicationType;
 import flint.boot.context.config : ConfigDataResourceReader;
-import flint.boot.internal.context : ConfigurableApplicationContext;
+import flint.context : ConfigurableApplicationContext;
+import flint.context.support : GenericApplicationContext;
 import flint.boot.test.context : FlintBootTest, FlintBootTestContext;
-import flint.engine.aot.any : Any;
-import flint.engine.aot.bean : BeanFactory;
 
 @safe:
 
-private final class NoBeans : BeanFactory
-{
-    Object getBean(string)
-    {
-        return null;
-    }
-
-    Object getBeanOfType(string, string = null)
-    {
-        return null;
-    }
-
-    Object findBeanOfType(string, string = null)
-    {
-        return null;
-    }
-
-    Object[] getBeansOfType(string)
-    {
-        return null;
-    }
-
-    Any resolveValue(string, string)
-    {
-        return Any.init;
-    }
-
-    void bind(string, Any)
-    {
-    }
-
-    Any bindConstructor(string, string)
-    {
-        return Any.init;
-    }
-}
-
-private final class Context : ConfigurableApplicationContext
-{
-    Object environment;
-
-    string getId()
-    {
-        return "test";
-    }
-
-    void setEnvironment(Object environment)
-    {
-        this.environment = environment;
-    }
-
-    void registerSingleton(string, Object)
-    {
-    }
-
-    void refresh()
-    {
-    }
-
-    BeanFactory getBeanFactory()
-    {
-        return new NoBeans;
-    }
-
-    bool isActive()
-    {
-        return true;
-    }
-
-    void close()
-    {
-    }
-
-    void awaitTermination()
-    {
-    }
-}
-
 private final class Factory : ApplicationContextFactory
 {
-    Context context;
+    GenericApplicationContext context;
     WebApplicationType type;
 
     ConfigurableApplicationContext create(WebApplicationType webApplicationType)
     {
         type = webApplicationType;
-        context = new Context;
+        context = new GenericApplicationContext;
         return context;
     }
 }
@@ -161,7 +82,7 @@ private ApplicationEnvironment start(Test)(Factory factory)
         application.setEnvironmentVariables(null);
         application.setOutput((string) {});
     });
-    return cast(ApplicationEnvironment)(cast(Context) context).environment;
+    return cast(ApplicationEnvironment) context.getEnvironment();
 }
 
 unittest

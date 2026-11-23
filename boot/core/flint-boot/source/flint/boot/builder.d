@@ -12,7 +12,7 @@
 module flint.boot.builder;
 
 import flint.boot : ApplicationContextFactory, Banner, ClassRef, FlintApplication, WebApplicationType;
-import flint.boot.internal.context : ConfigurableApplicationContext;
+import flint.context : ConfigurableApplicationContext;
 
 @safe:
 

@@ -25,7 +25,7 @@
 module flint.boot.test.context;
 
 import flint.boot : ApplicationContextFactory, ClassRef, FlintApplication, WebApplicationType;
-import flint.boot.internal.context : ConfigurableApplicationContext;
+import flint.context : ConfigurableApplicationContext;
 
 @safe:
 

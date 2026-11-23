@@ -25,6 +25,7 @@ import flint.boot.context.properties.source : ConfigurationProperty, Configurati
     ConfigurationPropertySource, ConfigurationPropertySources;
 import flint.java.lang : IllegalStateException, RuntimeException;
 import flint.java.util : NoSuchElementException;
+import flint.beans.factory.config : ConfigurationPropertiesBinder;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : Descriptor, DescriptorTable, PropertyDescriptor, TypeKind, descriptorOf;
 import flint.engine.aot.name : typeNameOf;
@@ -1047,4 +1048,58 @@ private auto isoComponent(string number, char unit, bool time)
     if (unit == 'M' && time)
         return minutes(number.to!long);
     throw new ConvException("misplaced unit");
+}
+
+/// Boot's `ConfigurationPropertiesBinder`: binds `@ConfigurationProperties` beans for the context, with a `Binder`
+/// over the environment's configuration property sources and the context's Flint AOT descriptors. `FlintApplication`
+/// registers it before refresh; the bean factory calls it from each generated `@ConfigurationProperties` bean.
+final class EnvironmentConfigurationPropertiesBinder : ConfigurationPropertiesBinder
+{
+    private ConfigurationPropertySource[] sources;
+    private DescriptorTable descriptors;
+
+    /// A binder over `sources`, highest precedence first.
+    this(ConfigurationPropertySource[] sources)
+    {
+        this.sources = sources;
+    }
+
+    /// Use the context's descriptor table for nested types.
+    void setDescriptors(DescriptorTable descriptors) pure nothrow @nogc
+    {
+        this.descriptors = descriptors;
+    }
+
+    /// Bind the properties under `prefix` onto `target`, which `type` describes.
+    void bind(string prefix, ref Any target, const Descriptor type)
+    {
+        if (type is null)
+            throw new IllegalStateException(
+                    "No descriptor for the @ConfigurationProperties bean " ~ target.typeName
+                    ~ " bound under '" ~ prefix ~ "'");
+        binder().bind(ConfigurationPropertyName.of(prefix), type, target);
+    }
+
+    /// A new value of `type` built from the properties under `prefix` (constructor binding).
+    Any bindConstructor(string prefix, const Descriptor type)
+    {
+        Any instance;
+        if (type is null)
+            throw new IllegalStateException("No descriptor for a constructor-bound @ConfigurationProperties type");
+        auto b = binder();
+        if (!b.bind(ConfigurationPropertyName.of(prefix), type, instance) && type.create !is null)
+            instance = type.create();
+        return instance;
+    }
+
+    /// The list under `name`, as Boot binds `String[]` (`flint.autoconfigure.exclude`).
+    string[] bindList(string name)
+    {
+        return binder().bind!(string[])(name).orElse(null);
+    }
+
+    private Binder binder()
+    {
+        return new Binder(sources, null, descriptors);
+    }
 }

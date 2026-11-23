@@ -8,6 +8,7 @@ dflags "-preview=dip1000"
 dependency "boot-core" path="../flint-boot"
 dependency "boot-autoconfigure" path="../flint-boot-autoconfigure"
 dependency "flint:engine-aot" path="../../.."
+dependency "flint:context" path="../../.."
 
 configuration "library" {
     targetType "library"

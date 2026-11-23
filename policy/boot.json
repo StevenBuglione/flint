@@ -60,7 +60,11 @@
         "engine-aot",
         "term",
         "java",
-        "slf4j-api"
+        "slf4j-api",
+        "core",
+        "beans",
+        "context",
+        "conc"
       ],
       "repo": "boot"
     },
@@ -82,7 +86,8 @@
       "dependencies": [
         "boot-core",
         "boot-autoconfigure",
-        "engine-aot"
+        "engine-aot",
+        "context"
       ],
       "repo": "boot"
     },

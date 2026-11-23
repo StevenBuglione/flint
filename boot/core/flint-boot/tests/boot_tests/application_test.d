@@ -15,117 +15,60 @@ import flint.boot : ApplicationArguments, ApplicationContextFactory, Application
 import flint.boot.builder : FlintApplicationBuilder;
 import flint.boot.context.config : ConfigDataResourceReader, ConfigDataResult, Profiles;
 import flint.boot.context.properties.source : ConfigurationPropertySource, MapConfigurationPropertySource;
-import flint.boot.internal.context : ConfigurableApplicationContext;
-import flint.engine.aot.any : Any;
-import flint.engine.aot.bean : BeanFactory;
+import flint.context : ConfigurableApplicationContext;
+import flint.context.support : GenericApplicationContext;
 
 @safe:
 
 // ---- a stub context -----------------------------------------------------------------------------------------
 
-private final class StubBeanFactory : BeanFactory
+/// A real `GenericApplicationContext` that records refresh and close, can fail its refresh, and registers test beans
+/// as Flint AOT's generated definitions would.
+private final class StubContext : GenericApplicationContext
 {
+    string[] events;
+    Exception refreshFailure;
     Object[] beans;
 
-    Object getBean(string)
-    {
-        return null;
-    }
-
-    Object getBeanOfType(string, string = null)
-    {
-        return null;
-    }
-
-    Object findBeanOfType(string, string = null)
-    {
-        return null;
-    }
-
-    Object[] getBeansOfType(string type)
-    {
-        import flint.boot : Runner;
-
-        Object[] result;
-        foreach (bean; beans)
-        {
-            if ((type == "flint.boot.Runner" && cast(Runner) bean !is null)
-                    || (type == "flint.boot.ExitCodeGenerator" && cast(ExitCodeGenerator) bean !is null))
-                result ~= bean;
-        }
-        return result;
-    }
-
-    Any resolveValue(string, string)
-    {
-        return Any.init;
-    }
-
-    void bind(string, Any)
-    {
-    }
-
-    Any bindConstructor(string, string)
-    {
-        return Any.init;
-    }
-}
-
-private final class StubContext : ConfigurableApplicationContext
-{
-    StubBeanFactory factory;
-    string[] events;
-    Object environment;
-    Object[string] singletons;
-    bool active;
-    Exception refreshFailure;
-
-    this()
-    {
-        factory = new StubBeanFactory;
-    }
-
-    string getId()
-    {
-        return "application";
-    }
-
-    void setEnvironment(Object environment)
-    {
-        this.environment = environment;
-    }
-
-    void registerSingleton(string name, Object singleton)
-    {
-        singletons[name] = singleton;
-    }
-
-    void refresh()
+    override void refresh()
     {
         events ~= "refresh";
         if (refreshFailure !is null)
             throw refreshFailure;
-        active = true;
+        foreach (index, bean; beans)
+            register(index, bean);
+        super.refresh();
     }
 
-    BeanFactory getBeanFactory()
-    {
-        return factory;
-    }
-
-    bool isActive()
-    {
-        return active;
-    }
-
-    void close()
+    override void close()
     {
         events ~= "close";
-        active = false;
+        super.close();
     }
 
-    void awaitTermination()
+    private void register(size_t index, Object bean)
     {
+        import std.conv : to;
+
+        const name = "testBean" ~ index.to!string;
+        if (auto runner = cast(TestCommandLineRunner) bean)
+            registerBean!TestCommandLineRunner(name, () => runner);
+        else if (auto runner = cast(TestApplicationRunner) bean)
+            registerBean!TestApplicationRunner(name, () => runner);
+        else if (auto runner = cast(FailingRunner) bean)
+            registerBean!FailingRunner(name, () => runner);
+        else if (auto generator = cast(FixedExitCode) bean)
+            registerBean!FixedExitCode(name, () => generator);
+    }
+
+    ApplicationEnvironment environment()
+    {
+        return cast(ApplicationEnvironment) getEnvironment();
+    }
+
+    Object singleton(string name)
+    {
+        return getBeanFactory().getBean(name);
     }
 }
 
@@ -308,7 +251,7 @@ private string capture(ref Run run, string[] args = null)
 {
     auto run = prepare();
     capture(run, ["--foo=bar"]);
-    auto environment = cast(ApplicationEnvironment) run.context.environment;
+    auto environment = run.context.environment();
     assert(environment.getProperty("foo") == "bar");
 }
 
@@ -317,7 +260,7 @@ private string capture(ref Run run, string[] args = null)
     auto run = prepare();
     run.application.setDefaultProperties(["baz": "", "bar": "foo"]);
     capture(run, ["--bar=spam", "bucket"]);
-    auto environment = cast(ApplicationEnvironment) run.context.environment;
+    auto environment = run.context.environment();
     assert(environment.getProperty("bar") == "spam");
     assert(environment.getProperty("baz") == "");
 }
@@ -326,9 +269,9 @@ private string capture(ref Run run, string[] args = null)
 {
     auto run = prepare();
     capture(run, ["--debug", "spring"]);
-    auto arguments = cast(ApplicationArguments) run.context.singletons["flintApplicationArguments"];
+    auto arguments = cast(ApplicationArguments) run.context.singleton("flintApplicationArguments");
     assert(arguments.getNonOptionArgs() == ["spring"]);
-    assert(cast(Banner) run.context.singletons["flintBootBanner"]!is null);
+    assert(cast(Banner) run.context.singleton("flintBootBanner") !is null);
 }
 
 private final class OrderRecorder
@@ -376,7 +319,7 @@ private final class TestApplicationRunner : ApplicationRunner
     auto recorder = new OrderRecorder;
     auto commandLine = new TestCommandLineRunner(recorder);
     auto application = new TestApplicationRunner(recorder);
-    run.context.factory.beans = [commandLine, application];
+    run.context.beans = [commandLine, application];
     capture(run, ["--debug", "arg"]);
     assert(recorder.calls == ["command", "application"]);
     assert(commandLine.seen == ["--debug", "arg"]);
@@ -396,7 +339,7 @@ private final class FailingRunner : CommandLineRunner
     import std.algorithm.searching : canFind;
 
     auto run = prepare();
-    run.context.factory.beans = [new FailingRunner];
+    run.context.beans = [new FailingRunner];
     string output;
     run.application.setOutput((string text) { output ~= text; });
     assertThrows!Exception(() { run.application.run(null); }, "runner failed");
@@ -461,12 +404,12 @@ private final class FixedExitCode : ExitCodeGenerator
 @("exitWithExplicitCodeFromBean") unittest
 {
     auto run = prepare();
-    run.context.factory.beans = [new FixedExitCode(2)];
+    run.context.beans = [new FixedExitCode(2)];
     capture(run);
     assert(FlintApplication.exit(run.context) == 2);
 }
 
-@("noApplicationContextFactoryFails") unittest
+@("flint.defaultApplicationContextFactory") unittest
 {
     import flint.java.lang : IllegalStateException;
 
@@ -474,7 +417,12 @@ private final class FixedExitCode : ExitCodeGenerator
     application.setResourceReader(new MemoryReader(null));
     application.setEnvironmentVariables(null);
     application.setOutput((string) {});
-    assertThrows!IllegalStateException(() { application.run(null); }, "No ApplicationContextFactory");
+    auto context = application.run(null);
+    assert(cast(GenericApplicationContext) context !is null && context.isActive());
+    context.close();
+    // A servlet application needs the web server module's factory.
+    application.setWebApplicationType(WebApplicationType.SERVLET);
+    assertThrows!IllegalStateException(() { application.run(null); }, "No servlet web server context");
 }
 
 @("flint.applicationLoggersPrintBootsConsoleFormat") unittest
@@ -499,6 +447,90 @@ private final class FixedExitCode : ExitCodeGenerator
     assert(output.canFind(" WARN ") && output.canFind(": shown\n"), output);
 }
 
+/// A `@ConfigurationProperties` bean, as an application declares one.
+final class GreetingProperties
+{
+    private string prefix = "Hello";
+    private int repeat = 1;
+
+    /// The greeting prefix.
+    string getPrefix() const
+    {
+        return prefix;
+    }
+
+    /// Set the prefix.
+    void setPrefix(string prefix)
+    {
+        this.prefix = prefix;
+    }
+
+    /// How often to greet.
+    int getRepeat() const
+    {
+        return repeat;
+    }
+
+    /// Set the repeat count.
+    void setRepeat(int repeat)
+    {
+        this.repeat = repeat;
+    }
+}
+
+/// A context with the definition Flint AOT generates for `@ConfigurationProperties("greeting") GreetingProperties`:
+/// create the bean, then `factory.bind(prefix, bean)`, which reaches Boot's binder.
+private final class PropertiesContext : GenericApplicationContext
+{
+    override void refresh()
+    {
+        import flint.engine.aot.any : Any;
+        import flint.engine.aot.bean : AotBeanDefinition = BeanDefinition, AotBeanFactory = BeanFactory;
+        import flint.engine.aot.descriptor : descriptorOf;
+        import flint.engine.aot.name : typeNameOf;
+
+        getDescriptorTable().add(descriptorOf!GreetingProperties());
+        AotBeanDefinition record;
+        record.name = "greeting-" ~ typeNameOf!GreetingProperties;
+        record.type = typeNameOf!GreetingProperties;
+        record.types = [typeNameOf!GreetingProperties];
+        record.create = (AotBeanFactory factory) => cast(Object) new GreetingProperties;
+        record.initialize = (Object bean, AotBeanFactory factory) {
+            factory.bind("greeting", Any.ofObject(bean, typeNameOf!GreetingProperties));
+        };
+        getDefaultListableBeanFactory().registerAotDefinition(record);
+        super.refresh();
+    }
+}
+
+private final class PropertiesFactory : ApplicationContextFactory
+{
+    ConfigurableApplicationContext create(WebApplicationType)
+    {
+        return new PropertiesContext;
+    }
+}
+
+@("flint.configurationPropertiesBindThroughTheContext") unittest
+{
+    import flint.engine.aot.name : typeNameOf;
+
+    auto application = new FlintApplication(ClassRef("x.App"));
+    application.setApplicationContextFactory(new PropertiesFactory);
+    application.setResourceReader(new MemoryReader([
+        "resources/application.yaml": "greeting:\n  prefix: Hi\n"
+    ]));
+    application.setEnvironmentVariables(["GREETING_REPEAT": "3"]);
+    application.setOutput((string) {});
+    auto context = application.run(null);
+    scope (exit)
+        context.close();
+    auto properties = cast(GreetingProperties) context.getBeanFactory()
+        .getBean("greeting-" ~ typeNameOf!GreetingProperties);
+    assert(properties.getPrefix() == "Hi");
+    assert(properties.getRepeat() == 3);
+}
+
 // ---- SpringApplicationBuilderTests ----------------------------------------------------------------------------
 
 private ApplicationEnvironment runBuilder(string[string] files,
@@ -512,7 +544,7 @@ private ApplicationEnvironment runBuilder(string[string] files,
     builder.getApplication().setOutput((string) {});
     configure(builder);
     builder.run();
-    return cast(ApplicationEnvironment) context.environment;
+    return context.environment();
 }
 
 @("profileAndProperties") unittest
