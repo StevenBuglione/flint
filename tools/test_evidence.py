@@ -204,7 +204,9 @@ class SourceIdentityTests(unittest.TestCase):
 
         metadata = installed('native-static-link.json', b'{"flags": []}'); metadata['flags'] = []
         receipt = prefix / 'flint-native-install.json'
-        state = {'target': 'linux-x86_64-glibc', 'ffi_archive': installed('libflint_ffi.a'),
+        state = {'target': 'linux-x86_64-glibc',
+                 'ffi_archives': {'base': installed('libflint_ffi_base.a'),
+                                  'framework': installed('libflint_ffi_framework.a')},
                  'wasi_reference_archive': installed('libflint_wasi_reference.a'),
                  'libraries': {'wasmtime': {'archives': [installed('libwasmtime.a')],
                                             'system_link_metadata': metadata}}}
@@ -258,7 +260,7 @@ class SourceIdentityTests(unittest.TestCase):
         receipt = prefix / 'flint-native-install.json'
         receipt.write_text(json.dumps({
             'target': 'linux-x86_64-glibc',
-            'ffi_archive': archive('libflint_ffi.a'),
+            'ffi_archives': {'base': archive('libflint_ffi_base.a'), 'framework': archive('libflint_ffi_framework.a')},
             'rpc_test_archive': archive('libflint_rpc_fixture.a'),
             'libraries': {'protobuf-c': {'archives': [archive('libprotobuf-c.a')]}}
         }))

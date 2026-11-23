@@ -17,6 +17,16 @@ from workspace import Workspace  # noqa: E402
 # The checkouts of each repo (plan section 7): the monorepo unless --workspace names a flint.workspace/1 file.
 WORKSPACE = Workspace()
 
+# The Flint C shims split by repo (plan section 7), as native/ffi/CMakeLists.txt builds them: the flint repo's
+# closure links only flint_ffi_base; framework and portfolio packages link flint_ffi_framework first, then base.
+BASE_SHIMS = ('flint_abi_probe.c', 'flint_utf8proc.c', 'flint_yaml.c')
+FFI_ARCHIVES = {'base': ('libflint_ffi_base.a', 'flint_ffi_base.lib'),
+                'framework': ('libflint_ffi_framework.a', 'flint_ffi_framework.lib')}
+
+def ffi_archives_for(repo):
+    """The shim archives a package of `repo` links, in link order."""
+    return ['base'] if repo == 'flint' else ['framework', 'base']
+
 def package_path(package):
     """A package's directory: in its repo's checkout with --workspace, else under ROOT."""
     return WORKSPACE.package_dir(package, ROOT) if WORKSPACE.file else ROOT/'packages'/package
@@ -466,9 +476,12 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
             if self.a.sanitize:self.receipt['vendor_ubsan_exclusions']={k:list(v) for k,v in VENDOR_UBSAN_EXCLUSIONS.items() if k in self.receipt['libraries']}
             else:self.receipt.pop('vendor_ubsan_exclusions',None)
             self.receipt['sanitizer_environment']={k:self.env[k] for k in ('ASAN_OPTIONS','UBSAN_OPTIONS','LSAN_OPTIONS') if k in self.env}
-            paths=[p for p in self.prefix.rglob('*') if p.name in ('libflint_ffi.a','flint_ffi.lib')]
-            if len(paths)!=1:raise RuntimeError('Expected exactly one Flint FFI archive')
-            self.receipt['ffi_archive']={'path':str(paths[0]),'sha256':digest(paths[0])}
+            self.receipt.pop('ffi_archive',None)
+            self.receipt['ffi_archives']={}
+            for part,names in FFI_ARCHIVES.items():
+                paths=[p for p in self.prefix.rglob('*') if p.name in names]
+                if len(paths)!=1:raise RuntimeError('Expected exactly one Flint FFI archive '+names[0])
+                self.receipt['ffi_archives'][part]={'path':str(paths[0]),'sha256':digest(paths[0])}
             if 'protobuf-c' in self.receipt['libraries']:
                 self.receipt['rpc_test_archive'] = self.rpc_test_archive_receipt()
             if (self.a.target.startswith('linux') or self.a.target == 'macos-arm64') and 'wasmtime' in self.receipt['libraries']:
@@ -536,9 +549,10 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
                     if digest(Path(reference['path'])) != reference['sha256']:
                         raise RuntimeError('Installed mail reference archive changed')
                     flags.append(reference['path'])
-            ffi=self.receipt['ffi_archive']
-            if digest(Path(ffi['path']))!=ffi['sha256']:raise RuntimeError('Installed Flint FFI archive changed')
-            flags.append(ffi['path'])
+            for part in ffi_archives_for(packages[package].get('repo','flint')):
+                ffi=self.receipt['ffi_archives'][part]
+                if digest(Path(ffi['path']))!=ffi['sha256']:raise RuntimeError('Installed Flint FFI archive changed: '+ffi['path'])
+                flags.append(ffi['path'])
             for name in reversed(closure):
                 for item in self.receipt['libraries'][name]['archives']:
                     if digest(Path(item['path']))!=item['sha256']:raise RuntimeError('Installed archive changed: '+item['path'])

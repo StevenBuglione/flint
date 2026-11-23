@@ -2,30 +2,38 @@ cmake_minimum_required(VERSION 3.20)
 project(flint_ffi C)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
-file(GLOB FLINT_SHIMS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/flint_*.c")
-add_library(flint_ffi STATIC ${FLINT_SHIMS})
-target_include_directories(flint_ffi PRIVATE "${CMAKE_INSTALL_PREFIX}/include")
+# One archive per repo of the split (plan section 7): flint_ffi_base holds the shims of the flint repo's closure
+# (libyaml, utf8proc and the ABI probe); flint_ffi_framework holds the engines'. tools/native_build.py records both,
+# and FLINT_FFI_BASE_SHIMS must match its BASE_SHIMS.
+set(FLINT_FFI_BASE_SHIMS flint_abi_probe.c flint_utf8proc.c flint_yaml.c)
+file(GLOB FLINT_SHIMS CONFIGURE_DEPENDS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/flint_*.c")
+set(FLINT_FFI_FRAMEWORK_SHIMS ${FLINT_SHIMS})
+list(REMOVE_ITEM FLINT_FFI_FRAMEWORK_SHIMS ${FLINT_FFI_BASE_SHIMS})
+add_library(flint_ffi_base STATIC ${FLINT_FFI_BASE_SHIMS})
+add_library(flint_ffi_framework STATIC ${FLINT_FFI_FRAMEWORK_SHIMS})
+foreach(flint_ffi IN ITEMS flint_ffi_base flint_ffi_framework)
+target_include_directories(${flint_ffi} PRIVATE "${CMAKE_INSTALL_PREFIX}/include")
 # One section per function and object, so a linked program keeps only the shim entry points it reaches
 # (and the providers behind them) rather than every function that shares a translation unit with one.
 if(NOT MSVC)
-  target_compile_options(flint_ffi PRIVATE -ffunction-sections -fdata-sections)
+  target_compile_options(${flint_ffi} PRIVATE -ffunction-sections -fdata-sections)
 else()
   # MSVC: C11 atomics are opt-in, and /Gy is its per-function sectioning.
-  target_compile_options(flint_ffi PRIVATE /experimental:c11atomics /Gy)
+  target_compile_options(${flint_ffi} PRIVATE /experimental:c11atomics /Gy)
 endif()
 # The providers are static archives. Their Windows headers declare DLL imports unless told otherwise.
 if(WIN32)
-  target_compile_definitions(flint_ffi PRIVATE UTF8PROC_STATIC CURL_STATICLIB NGHTTP2_STATICLIB YAML_DECLARE_STATIC
+  target_compile_definitions(${flint_ffi} PRIVATE UTF8PROC_STATIC CURL_STATICLIB NGHTTP2_STATICLIB YAML_DECLARE_STATIC
     LIBARCHIVE_STATIC SODIUM_STATIC)
 endif()
 # The shims request POSIX.1-2008, which hides Darwin's own declarations (SO_NOSIGPIPE, F_SETNOSIGPIPE,
 # statfs's f_fstypename). Darwin keeps them visible alongside the POSIX set (ADR-024).
 if(APPLE)
-  target_compile_definitions(flint_ffi PRIVATE _DARWIN_C_SOURCE)
+  target_compile_definitions(${flint_ffi} PRIVATE _DARWIN_C_SOURCE)
 endif()
 # Wasmtime is a static archive in this profile; Windows headers must not emit DLL imports.
 if(WIN32 AND EXISTS "${CMAKE_INSTALL_PREFIX}/include/wasmtime.h")
-  target_compile_definitions(flint_ffi PRIVATE WASM_API_EXTERN= WASI_API_EXTERN=)
+  target_compile_definitions(${flint_ffi} PRIVATE WASM_API_EXTERN= WASI_API_EXTERN=)
 endif()
 foreach(PAIR IN ITEMS "llhttp.h|LLHTTP" "nghttp2/nghttp2.h|NGHTTP2" "curl/curl.h|CURL" "openssl/ssl.h|OPENSSL"
     "sqlite3.h|SQLITE" "libpq-fe.h|LIBPQ" "hiredis/hiredis_ssl.h|HIREDIS" "sodium.h|LIBSODIUM"
@@ -35,19 +43,20 @@ foreach(PAIR IN ITEMS "llhttp.h|LLHTTP" "nghttp2/nghttp2.h|NGHTTP2" "curl/curl.h
   list(GET FIELDS 0 HEADER)
   list(GET FIELDS 1 SYMBOL)
   if(EXISTS "${CMAKE_INSTALL_PREFIX}/include/${HEADER}")
-    target_compile_definitions(flint_ffi PRIVATE "FLINT_HAS_${SYMBOL}=1")
+    target_compile_definitions(${flint_ffi} PRIVATE "FLINT_HAS_${SYMBOL}=1")
   endif()
+endforeach()
 endforeach()
 if((CMAKE_SYSTEM_NAME STREQUAL "Linux" OR APPLE) AND EXISTS "${CMAKE_INSTALL_PREFIX}/include/SDL3/SDL.h"
     AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/flint_desktop.h")
-  target_compile_definitions(flint_ffi PRIVATE FLINT_HAS_SDL3=1)
+  target_compile_definitions(flint_ffi_framework PRIVATE FLINT_HAS_SDL3=1)
   install(FILES flint_desktop.h DESTINATION include)
 endif()
 add_executable(flint_abi_test probe_main.c)
-target_link_libraries(flint_abi_test PRIVATE flint_ffi)
+target_link_libraries(flint_abi_test PRIVATE flint_ffi_framework flint_ffi_base)
 enable_testing()
 add_test(NAME flint_abi_test COMMAND flint_abi_test)
-install(TARGETS flint_ffi ARCHIVE DESTINATION lib)
+install(TARGETS flint_ffi_base flint_ffi_framework ARCHIVE DESTINATION lib)
 install(FILES flint_abi_probe.h DESTINATION include)
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/flint_codec.h" AND
     (EXISTS "${CMAKE_INSTALL_PREFIX}/include/zlib.h" OR EXISTS "${CMAKE_INSTALL_PREFIX}/include/zstd.h" OR
@@ -100,11 +109,11 @@ if(EXISTS "${CMAKE_INSTALL_PREFIX}/include/protobuf-c/protobuf-c.h")
 endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND EXISTS "${CMAKE_INSTALL_PREFIX}/include/liburing.h")
-  target_compile_definitions(flint_ffi PRIVATE FLINT_HAS_LIBURING=1)
+  target_compile_definitions(flint_ffi_framework PRIVATE FLINT_HAS_LIBURING=1)
   install(FILES flint_reactor_uring.h DESTINATION include)
   find_library(FLINT_URING NAMES liburing.a PATHS "${CMAKE_INSTALL_PREFIX}/lib" NO_DEFAULT_PATH REQUIRED)
   add_executable(flint_reactor_uring_test reactor_uring_test.c)
-  target_link_libraries(flint_reactor_uring_test PRIVATE flint_ffi "${FLINT_URING}")
+  target_link_libraries(flint_reactor_uring_test PRIVATE flint_ffi_framework flint_ffi_base "${FLINT_URING}")
   add_test(NAME flint_reactor_uring_test COMMAND flint_reactor_uring_test)
   set_tests_properties(flint_reactor_uring_test PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 10)
   add_test(NAME flint_reactor_uring_denied COMMAND flint_reactor_uring_test --deny-setup)
@@ -117,7 +126,7 @@ if(EXISTS "${CMAKE_INSTALL_PREFIX}/include/llhttp.h" AND EXISTS "${CMAKE_INSTALL
   add_executable(flint_native_library_test native_library_test.c)
   target_compile_definitions(flint_native_library_test PRIVATE FLINT_SMOKE_MAIN=1)
   target_include_directories(flint_native_library_test PRIVATE "${CMAKE_INSTALL_PREFIX}/include")
-  target_link_libraries(flint_native_library_test PRIVATE flint_ffi "${FLINT_LLHTTP}" "${FLINT_ZLIB}")
+  target_link_libraries(flint_native_library_test PRIVATE flint_ffi_framework flint_ffi_base "${FLINT_LLHTTP}" "${FLINT_ZLIB}")
   add_test(NAME flint_native_library_test COMMAND flint_native_library_test)
 endif()
 
@@ -132,9 +141,9 @@ endif()
 
 if((CMAKE_SYSTEM_NAME STREQUAL "Linux" OR APPLE) AND EXISTS "${CMAKE_INSTALL_PREFIX}/include/wasmtime.h" AND
     EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/flint_wasi.h")
-  target_compile_definitions(flint_ffi PRIVATE FLINT_HAS_WASMTIME=1)
+  target_compile_definitions(flint_ffi_framework PRIVATE FLINT_HAS_WASMTIME=1)
   if(EXISTS "${CMAKE_INSTALL_PREFIX}/include/flint_wasmtime_extensions.h")
-    target_compile_definitions(flint_ffi PRIVATE FLINT_HAS_WASMTIME_EXTENSIONS=1)
+    target_compile_definitions(flint_ffi_framework PRIVATE FLINT_HAS_WASMTIME_EXTENSIONS=1)
     add_library(flint_wasi_reference STATIC "../../packages/wasi/bench/baseline/native/direct.c")
     target_include_directories(flint_wasi_reference PRIVATE "${CMAKE_INSTALL_PREFIX}/include")
     install(TARGETS flint_wasi_reference ARCHIVE DESTINATION lib)

@@ -89,7 +89,7 @@ def build_c(args, work, name):
     output = work / ('mq-' + name)
     source = FIXTURES / (name + '.c')
     # Scenarios that include flint_mq.c compile the shim themselves; the others link the installed one.
-    shim = [] if '#include "flint_mq.c"' in source.read_text() else ['libflint_ffi.a']
+    shim = [] if '#include "flint_mq.c"' in source.read_text() else ['libflint_ffi_framework.a', 'libflint_ffi_base.a']
     libraries = [str(prefix / 'lib' / library) for library in
                  (*shim, 'librdkafka.a', 'libzstd.a', 'libz.a', 'libssl.a', 'libcrypto.a')]
     darwin = ['-D_DARWIN_C_SOURCE'] if sys.platform == 'darwin' else []  # as native/ffi/CMakeLists.txt
