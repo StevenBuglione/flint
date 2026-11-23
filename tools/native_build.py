@@ -56,6 +56,17 @@ PROFILES = {
 #  - protobuf-c 1.5.2: protobuf_c_message_init calls each message's generated
 #    foo__init(Foo *) through ProtobufCMessageInit, void (*)(ProtobufCMessage *).
 VENDOR_UBSAN_EXCLUSIONS = {'openssl': ('function',), 'protobuf-c': ('function',)}
+# ADR-031: OpenSSL is built for TLS 1.2 and 1.3 only. Every switch removes an algorithm, protocol or
+# subsystem that neither Flint's TLS profile (native/ffi/flint_web_tls.c and the clients' OpenSSL defaults)
+# nor a consumer (curl, libpq, librdkafka, the Flint shims) uses. tools/tls_profile_matrix.py shows that
+# every handshake negotiates the same version, cipher, group and signature as the full build. dh, ecx
+# (X25519 and X448 together), ML-KEM and ML-DSA stay, because the profile negotiates or advertises them.
+OPENSSL_TLS_ONLY = ['no-legacy', 'no-des', 'no-rc2', 'no-rc4', 'no-bf', 'no-cast', 'no-idea', 'no-seed',
+                    'no-camellia', 'no-aria', 'no-sm2', 'no-sm3', 'no-sm4', 'no-whirlpool', 'no-mdc2', 'no-rmd160',
+                    'no-md4', 'no-gost', 'no-srp', 'no-psk', 'no-ssl3', 'no-tls1', 'no-tls1_1', 'no-dtls',
+                    'no-sctp', 'no-srtp', 'no-nextprotoneg', 'no-ec2m', 'no-dsa', 'no-cms', 'no-ts', 'no-cmp',
+                    'no-ct', 'no-engine', 'no-dynamic-engine', 'no-quic', 'no-comp', 'no-argon2', 'no-scrypt',
+                    'no-siv', 'no-ocb', 'no-siphash', 'no-slh-dsa', 'no-ssl-trace']
 CMAKE = {
  'llhttp': ('.', ['LLHTTP_BUILD_SHARED_LIBS=OFF','LLHTTP_BUILD_STATIC_LIBS=ON']),
  'nghttp2': ('.', ['ENABLE_LIB_ONLY=ON','BUILD_STATIC_LIBS=ON','BUILD_SHARED_LIBS=OFF','BUILD_TESTING=OFF']),
@@ -261,7 +272,7 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
             relative,options=CMAKE[name];self.cmake(name,src,build,relative,options)
         elif name=='openssl':
             target={'linux-x86_64-glibc':'linux-x86_64','linux-x86_64-musl':'linux-x86_64','linux-aarch64-glibc':'linux-aarch64','linux-aarch64-musl':'linux-aarch64','macos-arm64':'darwin64-arm64-cc','windows-x86_64':'VC-WIN64A'}[self.a.target]
-            configure = ['perl', src/'Configure', target, 'no-shared', 'no-module', 'no-tests',
+            configure = ['perl', src/'Configure', target, 'no-shared', 'no-module', 'no-tests', *OPENSSL_TLS_ONLY,
                          '--prefix=' + str(self.prefix), '--libdir=lib']
             if self.a.target == 'linux-x86_64-glibc' and not self.a.sanitize:
                 configure.append('CFLAGS=' + self.env['CFLAGS'] + ' -Os -ffunction-sections -fdata-sections')
@@ -473,6 +484,7 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
         row=self.rows[name];paths=self.archive_paths(name)
         self.receipt['libraries'][name]={'source_sha256':row['archive_sha256'],'revision':row.get('commit',row.get('source_id')),'license':row['license_selected'],'requested_sanitizers':self.a.sanitize,'archives':[{'path':str(p),'sha256':digest(p)} for p in paths]}
         if self.sanitizer_exclusions(name):self.receipt['libraries'][name]['sanitizer_exclusions']=list(self.sanitizer_exclusions(name))
+        if name=='openssl':self.receipt['libraries'][name]['configure_disabled']=list(OPENSSL_TLS_ONLY)
         if name=='sdl3':self.link_metadata[name]=self.sdl_link_metadata()
         if name == 'curl' and (self.a.target.startswith('linux') or self.a.target == 'macos-arm64'):
             config = self.prefix / 'bin/curl-config'
