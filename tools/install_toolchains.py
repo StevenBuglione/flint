@@ -152,9 +152,20 @@ def apply_patch(patch, directory):
     subprocess.run([tool, '-p1', '--forward', '--quiet', '-d', str(directory), '-i', str(patch)], check=True)
 
 
+def remove_tree(path):
+    """rmtree that also removes read-only files and directories, such as a Go module cache."""
+    def writable(function, name, _error):
+        os.chmod(name, 0o700 if os.path.isdir(name) else 0o600)
+        parent = os.path.dirname(name)
+        os.chmod(parent, 0o700)
+        function(name)
+    shutil.rmtree(path, onexc=writable)
+
+
 def copy_sources(destination):
+    # .flint holds generated output and fixture peers (a read-only Go module cache among them): training needs none.
     excluded = {'.git', '.dub', '.dub-home', '.ci-dub-home', '.tools', '.native', '.native-sanitized',
-                '__pycache__', 'artifacts', 'build'}
+                '__pycache__', 'artifacts', 'build', '.flint'}
     shutil.copytree(ROOT, destination, ignore=lambda d, names: [n for n in names if n in excluded])
 
 
@@ -192,7 +203,7 @@ def train_profile(bin_dir, instrumented, work, profiles):
     (train_bin / 'dmd').chmod(0o755)
     source = work / 'train-src'
     if source.exists():
-        shutil.rmtree(source)
+        remove_tree(source)
     copy_sources(source)
     env = dict(os.environ, PATH=str(train_bin) + os.pathsep + os.environ['PATH'], DUB_HOME=str(source / '.dub-home'),
                DFLAGS='-preview=dip1000 -debug -g -boundscheck=on', FLINT_DMD_SERVER='0', FLINT_DMD_DIRECT_LINK='0',
