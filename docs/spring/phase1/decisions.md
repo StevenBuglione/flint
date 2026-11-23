@@ -73,6 +73,16 @@
   - **Landed** as `flint.hibernate.validator.internal.regex` (until framework-core says where `flint.java.util.regex` goes): the first group below, with JDK 21 parity on 367 recorded cases.
   - **Order.** First Hibernate's needs: the syntax subset with groups, classes (with intersection), quantifiers (greedy, reluctant, possessive, counted), anchors and `\b`, look-around, back-references, `\Q...\E`, inline flags and `Pattern.Flag`'s `CASE_INSENSITIVE`, `MULTILINE`, `DOTALL`, `UNIX_LINES` and `COMMENTS`. Then the Unicode general categories, generated from JDK 21's `Character.getType` as `letters.d` is. `UNICODE_CASE`, `CANON_EQ`, `\X` and Unicode scripts and blocks come last.
 
+## Owner decisions, 2026-11-23
+
+Decided by the project owner on 2026-11-23, answering the items parked below. The parked entries stay for their evidence.
+
+1. **Build stop rule.** Phase 1 continues. The cause is known: the generated code instantiates heavy templates; one generated Jackson auto-configuration module compiles to a 17 MB object. The fix is to make generated code non-templated, as ADR-030 section 3 already requires, route it through the erased core, and split the largest generated modules across compile jobs. Phase 2 stays paused until certified build numbers beat Go.
+2. **Shared-object dev linking: yes.** The dev profile links the platform cache as shared objects, so an edit relinks only the app. Release and size profiles stay static. Edit-build evidence reports two numbers, as cold builds do (ADR-030 section 5): the dev profile as built (shared objects) as the primary headline, and fully static as the secondary.
+3. **Template budgets.** Each framework and package budget resets from the corrected count (own library plus probe) after the template diet, times 1.25, rounded up to 50, the rule the first budgets used. From then on budgets may only go down. The gate refuses a raise. This corrects a measurement, not a cap.
+4. **Complexity limit.** Ported Spring functions that exceed D-Scanner's cyclomatic complexity limit are exempt only by name, through a per-function allowlist in which every entry cites its upstream source file and method. New Flint code stays under the limit, and framework/ and boot/ join quality.py's lint trees.
+5. **BCrypt.** Pin Openwall's crypt_blowfish (public domain) as a native provider for `BCryptPasswordEncoder`, with its licence-matrix entry. No new cryptographic code is written.
+
 ## Open for the owner
 
 - 2026-11-23, proof-harness: **ADR-030's Phase 1 stop rule is met on builds.** These are the first certified Flint-versus-Go numbers: gs-rest-service builds, queue entry `gs-builds` at 7ddf0354, 12:30–12:33Z. The window was quiet: load 0.32, and no foreign build process in any of 14 samples. Nine trials each, with the release-built flint, DMD linking with the pinned mold, the platform cache primed and the digest log cleared before every cold trial. Flint misses every gated build metric (Flint/Go median ratio, 99% interval; the target is at most 0.99):
