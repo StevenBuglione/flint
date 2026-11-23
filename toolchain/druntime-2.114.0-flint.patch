@@ -25,52 +25,157 @@ index 778cf99..460076e 100644
  {
      import gcc.config;
 diff --git a/import/core/internal/atomic.d b/import/core/internal/atomic.d
-index 9a819a2..6331c8e 100644
+index 9a819a2..621c2b9 100644
 --- a/import/core/internal/atomic.d
 +++ b/import/core/internal/atomic.d
-@@ -15,41 +15,111 @@ import core.atomic : has128BitCAS, MemoryOrder;
+@@ -15,41 +15,213 @@ import core.atomic : has128BitCAS, MemoryOrder;
  version (DigitalMars)
  version (AArch64)
  {
 -    /* These functions are all stubbed out. They await someone who knows what
 -       they are doing with AArch64 atomics.
 -       TODO AArch64
-+    /* DMD has no AArch64 atomic intrinsics, so these call the lock free
-+     * implementations in core/internal/atomic_aarch64.c. MemoryOrder uses the
-+     * C11 numbering, so the order is passed through unchanged.
++    /* DMD has no AArch64 atomic intrinsics. These naked function templates hold the lock free
++     * sequences (load-acquire/store-release exclusives), so they are instantiated in the module
++     * that uses them and need no runtime library: -betterC programs link without druntime.
++     * Every order is at least as strong as requested. D linkage passes the rightmost parameter in
++     * x0, so the pointer comes last: p in x0, the value or `expected` in x1, `desired` in x2.
       */
-+    private extern (C) pure nothrow @nogc @trusted
++    private
 +    {
-+        ubyte  _d_atomic_load_1(const(void)* p, int order);
-+        ushort _d_atomic_load_2(const(void)* p, int order);
-+        uint   _d_atomic_load_4(const(void)* p, int order);
-+        ulong  _d_atomic_load_8(const(void)* p, int order);
-+        void   _d_atomic_load_16(const(void)* p, void* result, int order);
++        template RawN(size_t N)
++        {
++            static if (N == 1)      alias RawN = ubyte;
++            else static if (N == 2) alias RawN = ushort;
++            else static if (N == 4) alias RawN = uint;
++            else                    alias RawN = ulong;
++        }
++        // the size field (bits 31:30) of a load/store exclusive or acquire/release
++        enum uint sz(size_t N) = (N == 1 ? 0 : N == 2 ? 1 : N == 4 ? 2 : 3) << 30;
++        enum uint x64(size_t N) = N == 8 ? 0x8000_0000 : 0;  // the sf bit of ADD/CMP
 +
-+        void _d_atomic_store_1(void* p, ubyte v, int order);
-+        void _d_atomic_store_2(void* p, ushort v, int order);
-+        void _d_atomic_store_4(void* p, uint v, int order);
-+        void _d_atomic_store_8(void* p, ulong v, int order);
-+        void _d_atomic_store_16(void* p, const(void)* v, int order);
++        RawN!N aLoad(size_t N)(const(void)* p) pure nothrow @nogc @trusted
++        {
++            enum uint ldar = 0x08dffc00 | sz!N;                 // LDAR{B,H} w0/x0,[x0]
++            asm pure nothrow @nogc @trusted { naked; op ldar; op 0xd65f03c0; }
++        }
 +
-+        ubyte  _d_atomic_fetch_add_1(void* p, ubyte v, int order);
-+        ushort _d_atomic_fetch_add_2(void* p, ushort v, int order);
-+        uint   _d_atomic_fetch_add_4(void* p, uint v, int order);
-+        ulong  _d_atomic_fetch_add_8(void* p, ulong v, int order);
++        void aStore(size_t N)(RawN!N v, void* p) pure nothrow @nogc @trusted
++        {
++            enum uint stlr = 0x089ffc01 | sz!N;                 // STLR{B,H} w1/x1,[x0]
++            asm pure nothrow @nogc @trusted { naked; op stlr; op 0xd65f03c0; }
++        }
 +
-+        ubyte  _d_atomic_exchange_1(void* p, ubyte v, int order);
-+        ushort _d_atomic_exchange_2(void* p, ushort v, int order);
-+        uint   _d_atomic_exchange_4(void* p, uint v, int order);
-+        ulong  _d_atomic_exchange_8(void* p, ulong v, int order);
++        RawN!N aFetchAdd(size_t N)(RawN!N v, void* p) pure nothrow @nogc @trusted
++        {
++            enum uint ldaxr = 0x085ffc02 | sz!N;                // L: LDAXR w2,[x0]
++            enum uint add = 0x0b010043 | x64!N;                 //    ADD w3,w2,w1
++            enum uint stlxr = 0x0804fc03 | sz!N;                //    STLXR w4,w3,[x0]
++            asm pure nothrow @nogc @trusted
++            {
++                naked;
++                op ldaxr; op add; op stlxr;
++                op 0x35ffffa4;                                  //    CBNZ w4,L
++                op 0xaa0203e0;                                  //    MOV x0,x2
++                op 0xd65f03c0;                                  //    RET
++            }
++        }
 +
-+        bool _d_atomic_cas_1(void* p, void* expected, ubyte desired, int succ, int fail);
-+        bool _d_atomic_cas_2(void* p, void* expected, ushort desired, int succ, int fail);
-+        bool _d_atomic_cas_4(void* p, void* expected, uint desired, int succ, int fail);
-+        bool _d_atomic_cas_8(void* p, void* expected, ulong desired, int succ, int fail);
-+        bool _d_atomic_cas_16(void* p, void* expected, const(void)* desired, int succ, int fail);
++        RawN!N aExchange(size_t N)(RawN!N v, void* p) pure nothrow @nogc @trusted
++        {
++            enum uint ldaxr = 0x085ffc02 | sz!N;                // L: LDAXR w2,[x0]
++            enum uint stlxr = 0x0804fc01 | sz!N;                //    STLXR w4,w1,[x0]
++            asm pure nothrow @nogc @trusted
++            {
++                naked;
++                op ldaxr; op stlxr;
++                op 0x35ffffc4;                                  //    CBNZ w4,L
++                op 0xaa0203e0;                                  //    MOV x0,x2
++                op 0xd65f03c0;                                  //    RET
++            }
++        }
 +
-+        void _d_atomic_fence(int order);
-+        void _d_atomic_pause();
++        bool aCas(size_t N)(RawN!N desired, void* expected, void* p) pure nothrow @nogc @trusted
++        {
++            enum uint ldr = 0x39400025 | sz!N;                  //    LDR{B,H} w5,[x1]
++            enum uint ldaxr = 0x085ffc06 | sz!N;                // L: LDAXR w6,[x0]
++            enum uint cmp = 0x6b0500df | x64!N;                 //    CMP w6,w5
++            enum uint stlxr = 0x0807fc02 | sz!N;                //    STLXR w7,w2,[x0]
++            enum uint str = 0x39000026 | sz!N;                  // F: STR{B,H} w6,[x1]
++            asm pure nothrow @nogc @trusted
++            {
++                naked;
++                op ldr; op ldaxr; op cmp;
++                op 0x540000a1;                                  //    B.NE F
++                op stlxr;
++                op 0x35ffff87;                                  //    CBNZ w7,L
++                op 0x52800020;                                  //    MOV w0,#1
++                op 0xd65f03c0;                                  //    RET
++                op str;
++                op 0xd5033f5f;                                  //    CLREX
++                op 0x52800000;                                  //    MOV w0,#0
++                op 0xd65f03c0;                                  //    RET
++            }
++        }
++
++        void aLoad16()(void* result, const(void)* p) pure nothrow @nogc @trusted
++        {
++            asm pure nothrow @nogc @trusted
++            {
++                naked;
++                op 0xc87f8c02;                                  // L: LDAXP x2,x3,[x0]
++                op 0xc8248c02;                                  //    STLXP w4,x2,x3,[x0]
++                op 0x35ffffc4;                                  //    CBNZ w4,L
++                op 0xa9000c22;                                  //    STP x2,x3,[x1]
++                op 0xd65f03c0;                                  //    RET
++            }
++        }
++
++        void aStore16()(const(void)* v, void* p) pure nothrow @nogc @trusted
++        {
++            asm pure nothrow @nogc @trusted
++            {
++                naked;
++                op 0xa9400c22;                                  //    LDP x2,x3,[x1]
++                op 0xc87f9404;                                  // L: LDAXP x4,x5,[x0]
++                op 0xc8268c02;                                  //    STLXP w6,x2,x3,[x0]
++                op 0x35ffffc6;                                  //    CBNZ w6,L
++                op 0xd65f03c0;                                  //    RET
++            }
++        }
++
++        bool aCas16()(const(void)* desired, void* expected, void* p) pure nothrow @nogc @trusted
++        {
++            asm pure nothrow @nogc @trusted
++            {
++                naked;
++                op 0xa9401825;                                  //    LDP x5,x6,[x1]
++                op 0xa9402849;                                  //    LDP x9,x10,[x2]
++                op 0xc87fa007;                                  // L: LDAXP x7,x8,[x0]
++                op 0xeb0500ff;                                  //    CMP x7,x5
++                op 0xfa460100;                                  //    CCMP x8,x6,#0,EQ
++                op 0x540000a1;                                  //    B.NE F
++                op 0xc82ba809;                                  //    STLXP w11,x9,x10,[x0]
++                op 0x35ffff6b;                                  //    CBNZ w11,L
++                op 0x52800020;                                  //    MOV w0,#1
++                op 0xd65f03c0;                                  //    RET
++                op 0xc82ba007;                                  // F: STLXP w11,x7,x8,[x0] (a consistent snapshot)
++                op 0x35fffeeb;                                  //    CBNZ w11,L
++                op 0xa9002027;                                  //    STP x7,x8,[x1]
++                op 0x52800000;                                  //    MOV w0,#0
++                op 0xd65f03c0;                                  //    RET
++            }
++        }
++
++        void aFence()() pure nothrow @nogc @trusted
++        {
++            asm pure nothrow @nogc @trusted { naked; op 0xd5033bbf; op 0xd65f03c0; }   // DMB ISH; RET
++        }
++
++        void aPause()() pure nothrow @nogc @trusted
++        {
++            asm pure nothrow @nogc @trusted { naked; op 0xd503203f; op 0xd65f03c0; }   // YIELD; RET
++        }
 +    }
 +
 +    // The unsigned integer type with the size of T, for 1, 2, 4 and 8 byte T
@@ -83,9 +188,6 @@ index 9a819a2..6331c8e 100644
 +        else static assert(0, "no atomic operations for " ~ T.stringof);
 +    }
 +
-+    private enum sizeSuffix(T) = T.sizeof == 1 ? "1" : T.sizeof == 2 ? "2" : T.sizeof == 4 ? "4" :
-+                                 T.sizeof == 8 ? "8" : "16";
-+
      enum IsAtomicLockFree(T) = T.sizeof <= size_t.sizeof * 2;
  
      inout(T) atomicLoad(MemoryOrder order = MemoryOrder.seq, T)(inout(T)* src) pure nothrow @nogc @trusted
@@ -95,12 +197,12 @@ index 9a819a2..6331c8e 100644
 +        static if (T.sizeof == 16)
 +        {
 +            T result = void;
-+            _d_atomic_load_16(cast(const(void)*) src, cast(void*) &result, order);
++            aLoad16(cast(void*) &result, cast(const(void)*) src);
 +            return *cast(inout(T)*) &result;
 +        }
 +        else
 +        {
-+            RawOf!T raw = mixin("_d_atomic_load_" ~ sizeSuffix!T)(cast(const(void)*) src, order);
++            RawOf!T raw = aLoad!(T.sizeof)(cast(const(void)*) src);
 +            return *cast(inout(T)*) &raw;
 +        }
      }
@@ -110,16 +212,16 @@ index 9a819a2..6331c8e 100644
      {
 -        *dest = value;
 +        static if (T.sizeof == 16)
-+            _d_atomic_store_16(cast(void*) dest, cast(const(void)*) &value, order);
++            aStore16(cast(const(void)*) &value, cast(void*) dest);
 +        else
-+            mixin("_d_atomic_store_" ~ sizeSuffix!T)(cast(void*) dest, *cast(RawOf!T*) &value, order);
++            aStore!(T.sizeof)(*cast(RawOf!T*) &value, cast(void*) dest);
      }
  
      T atomicFetchAdd(MemoryOrder order = MemoryOrder.seq, bool result = true, T)(T* dest, T value) pure nothrow @nogc @trusted
          if (is(T : ulong))
      {
 -	    return *dest + value;
-+        RawOf!T raw = mixin("_d_atomic_fetch_add_" ~ sizeSuffix!T)(cast(void*) dest, cast(RawOf!T) value, order);
++        RawOf!T raw = aFetchAdd!(T.sizeof)(cast(RawOf!T) value, cast(void*) dest);
 +        return cast(T) raw;
      }
  
@@ -144,13 +246,13 @@ index 9a819a2..6331c8e 100644
 +        }
 +        else
 +        {
-+            RawOf!T raw = mixin("_d_atomic_exchange_" ~ sizeSuffix!T)(cast(void*) dest, *cast(RawOf!T*) &value, order);
++            RawOf!T raw = aExchange!(T.sizeof)(*cast(RawOf!T*) &value, cast(void*) dest);
 +            return *cast(T*) &raw;
 +        }
      }
  
      alias atomicCompareExchangeWeak = atomicCompareExchangeStrong;
-@@ -57,13 +127,11 @@ version (AArch64)
+@@ -57,13 +229,10 @@ version (AArch64)
      bool atomicCompareExchangeStrong(MemoryOrder succ = MemoryOrder.seq, MemoryOrder fail = MemoryOrder.seq, T)(T* dest, T* compare, T value) pure nothrow @nogc @trusted
          if (CanCAS!T)
      {
@@ -162,14 +264,13 @@ index 9a819a2..6331c8e 100644
 -        *dest = value;
 -        return true;
 +        static if (T.sizeof == 16)
-+            return _d_atomic_cas_16(cast(void*) dest, cast(void*) compare, cast(const(void)*) &value, succ, fail);
++            return aCas16(cast(const(void)*) &value, cast(void*) compare, cast(void*) dest);
 +        else
-+            return mixin("_d_atomic_cas_" ~ sizeSuffix!T)(cast(void*) dest, cast(void*) compare,
-+                                                          *cast(RawOf!T*) &value, succ, fail);
++            return aCas!(T.sizeof)(*cast(RawOf!T*) &value, cast(void*) compare, cast(void*) dest);
      }
  
      alias atomicCompareExchangeWeakNoResult = atomicCompareExchangeStrongNoResult;
-@@ -71,14 +139,13 @@ version (AArch64)
+@@ -71,14 +240,13 @@ version (AArch64)
      bool atomicCompareExchangeStrongNoResult(MemoryOrder succ = MemoryOrder.seq, MemoryOrder fail = MemoryOrder.seq, T)(T* dest, const T compare, T value) pure nothrow @nogc @trusted
          if (CanCAS!T)
      {
@@ -183,15 +284,15 @@ index 9a819a2..6331c8e 100644
  
      void atomicFence(MemoryOrder order = MemoryOrder.seq)() pure nothrow @nogc @trusted
      {
-+        _d_atomic_fence(order);
++        aFence();
      }
  
      void atomicSignalFence(MemoryOrder order = MemoryOrder.seq)() pure nothrow @nogc @trusted
-@@ -88,6 +155,7 @@ version (AArch64)
+@@ -88,6 +256,7 @@ version (AArch64)
  
      void pause() pure nothrow @nogc @trusted
      {
-+        _d_atomic_pause();
++        aPause();
      }
  }
  else // X86 and X86_64
@@ -629,52 +730,157 @@ index 778cf99..460076e 100644
  {
      import gcc.config;
 diff --git a/src/core/internal/atomic.d b/src/core/internal/atomic.d
-index 9a819a2..6331c8e 100644
+index 9a819a2..621c2b9 100644
 --- a/src/core/internal/atomic.d
 +++ b/src/core/internal/atomic.d
-@@ -15,41 +15,111 @@ import core.atomic : has128BitCAS, MemoryOrder;
+@@ -15,41 +15,213 @@ import core.atomic : has128BitCAS, MemoryOrder;
  version (DigitalMars)
  version (AArch64)
  {
 -    /* These functions are all stubbed out. They await someone who knows what
 -       they are doing with AArch64 atomics.
 -       TODO AArch64
-+    /* DMD has no AArch64 atomic intrinsics, so these call the lock free
-+     * implementations in core/internal/atomic_aarch64.c. MemoryOrder uses the
-+     * C11 numbering, so the order is passed through unchanged.
++    /* DMD has no AArch64 atomic intrinsics. These naked function templates hold the lock free
++     * sequences (load-acquire/store-release exclusives), so they are instantiated in the module
++     * that uses them and need no runtime library: -betterC programs link without druntime.
++     * Every order is at least as strong as requested. D linkage passes the rightmost parameter in
++     * x0, so the pointer comes last: p in x0, the value or `expected` in x1, `desired` in x2.
       */
-+    private extern (C) pure nothrow @nogc @trusted
++    private
 +    {
-+        ubyte  _d_atomic_load_1(const(void)* p, int order);
-+        ushort _d_atomic_load_2(const(void)* p, int order);
-+        uint   _d_atomic_load_4(const(void)* p, int order);
-+        ulong  _d_atomic_load_8(const(void)* p, int order);
-+        void   _d_atomic_load_16(const(void)* p, void* result, int order);
++        template RawN(size_t N)
++        {
++            static if (N == 1)      alias RawN = ubyte;
++            else static if (N == 2) alias RawN = ushort;
++            else static if (N == 4) alias RawN = uint;
++            else                    alias RawN = ulong;
++        }
++        // the size field (bits 31:30) of a load/store exclusive or acquire/release
++        enum uint sz(size_t N) = (N == 1 ? 0 : N == 2 ? 1 : N == 4 ? 2 : 3) << 30;
++        enum uint x64(size_t N) = N == 8 ? 0x8000_0000 : 0;  // the sf bit of ADD/CMP
 +
-+        void _d_atomic_store_1(void* p, ubyte v, int order);
-+        void _d_atomic_store_2(void* p, ushort v, int order);
-+        void _d_atomic_store_4(void* p, uint v, int order);
-+        void _d_atomic_store_8(void* p, ulong v, int order);
-+        void _d_atomic_store_16(void* p, const(void)* v, int order);
++        RawN!N aLoad(size_t N)(const(void)* p) pure nothrow @nogc @trusted
++        {
++            enum uint ldar = 0x08dffc00 | sz!N;                 // LDAR{B,H} w0/x0,[x0]
++            asm pure nothrow @nogc @trusted { naked; op ldar; op 0xd65f03c0; }
++        }
 +
-+        ubyte  _d_atomic_fetch_add_1(void* p, ubyte v, int order);
-+        ushort _d_atomic_fetch_add_2(void* p, ushort v, int order);
-+        uint   _d_atomic_fetch_add_4(void* p, uint v, int order);
-+        ulong  _d_atomic_fetch_add_8(void* p, ulong v, int order);
++        void aStore(size_t N)(RawN!N v, void* p) pure nothrow @nogc @trusted
++        {
++            enum uint stlr = 0x089ffc01 | sz!N;                 // STLR{B,H} w1/x1,[x0]
++            asm pure nothrow @nogc @trusted { naked; op stlr; op 0xd65f03c0; }
++        }
 +
-+        ubyte  _d_atomic_exchange_1(void* p, ubyte v, int order);
-+        ushort _d_atomic_exchange_2(void* p, ushort v, int order);
-+        uint   _d_atomic_exchange_4(void* p, uint v, int order);
-+        ulong  _d_atomic_exchange_8(void* p, ulong v, int order);
++        RawN!N aFetchAdd(size_t N)(RawN!N v, void* p) pure nothrow @nogc @trusted
++        {
++            enum uint ldaxr = 0x085ffc02 | sz!N;                // L: LDAXR w2,[x0]
++            enum uint add = 0x0b010043 | x64!N;                 //    ADD w3,w2,w1
++            enum uint stlxr = 0x0804fc03 | sz!N;                //    STLXR w4,w3,[x0]
++            asm pure nothrow @nogc @trusted
++            {
++                naked;
++                op ldaxr; op add; op stlxr;
++                op 0x35ffffa4;                                  //    CBNZ w4,L
++                op 0xaa0203e0;                                  //    MOV x0,x2
++                op 0xd65f03c0;                                  //    RET
++            }
++        }
 +
-+        bool _d_atomic_cas_1(void* p, void* expected, ubyte desired, int succ, int fail);
-+        bool _d_atomic_cas_2(void* p, void* expected, ushort desired, int succ, int fail);
-+        bool _d_atomic_cas_4(void* p, void* expected, uint desired, int succ, int fail);
-+        bool _d_atomic_cas_8(void* p, void* expected, ulong desired, int succ, int fail);
-+        bool _d_atomic_cas_16(void* p, void* expected, const(void)* desired, int succ, int fail);
++        RawN!N aExchange(size_t N)(RawN!N v, void* p) pure nothrow @nogc @trusted
++        {
++            enum uint ldaxr = 0x085ffc02 | sz!N;                // L: LDAXR w2,[x0]
++            enum uint stlxr = 0x0804fc01 | sz!N;                //    STLXR w4,w1,[x0]
++            asm pure nothrow @nogc @trusted
++            {
++                naked;
++                op ldaxr; op stlxr;
++                op 0x35ffffc4;                                  //    CBNZ w4,L
++                op 0xaa0203e0;                                  //    MOV x0,x2
++                op 0xd65f03c0;                                  //    RET
++            }
++        }
 +
-+        void _d_atomic_fence(int order);
-+        void _d_atomic_pause();
++        bool aCas(size_t N)(RawN!N desired, void* expected, void* p) pure nothrow @nogc @trusted
++        {
++            enum uint ldr = 0x39400025 | sz!N;                  //    LDR{B,H} w5,[x1]
++            enum uint ldaxr = 0x085ffc06 | sz!N;                // L: LDAXR w6,[x0]
++            enum uint cmp = 0x6b0500df | x64!N;                 //    CMP w6,w5
++            enum uint stlxr = 0x0807fc02 | sz!N;                //    STLXR w7,w2,[x0]
++            enum uint str = 0x39000026 | sz!N;                  // F: STR{B,H} w6,[x1]
++            asm pure nothrow @nogc @trusted
++            {
++                naked;
++                op ldr; op ldaxr; op cmp;
++                op 0x540000a1;                                  //    B.NE F
++                op stlxr;
++                op 0x35ffff87;                                  //    CBNZ w7,L
++                op 0x52800020;                                  //    MOV w0,#1
++                op 0xd65f03c0;                                  //    RET
++                op str;
++                op 0xd5033f5f;                                  //    CLREX
++                op 0x52800000;                                  //    MOV w0,#0
++                op 0xd65f03c0;                                  //    RET
++            }
++        }
++
++        void aLoad16()(void* result, const(void)* p) pure nothrow @nogc @trusted
++        {
++            asm pure nothrow @nogc @trusted
++            {
++                naked;
++                op 0xc87f8c02;                                  // L: LDAXP x2,x3,[x0]
++                op 0xc8248c02;                                  //    STLXP w4,x2,x3,[x0]
++                op 0x35ffffc4;                                  //    CBNZ w4,L
++                op 0xa9000c22;                                  //    STP x2,x3,[x1]
++                op 0xd65f03c0;                                  //    RET
++            }
++        }
++
++        void aStore16()(const(void)* v, void* p) pure nothrow @nogc @trusted
++        {
++            asm pure nothrow @nogc @trusted
++            {
++                naked;
++                op 0xa9400c22;                                  //    LDP x2,x3,[x1]
++                op 0xc87f9404;                                  // L: LDAXP x4,x5,[x0]
++                op 0xc8268c02;                                  //    STLXP w6,x2,x3,[x0]
++                op 0x35ffffc6;                                  //    CBNZ w6,L
++                op 0xd65f03c0;                                  //    RET
++            }
++        }
++
++        bool aCas16()(const(void)* desired, void* expected, void* p) pure nothrow @nogc @trusted
++        {
++            asm pure nothrow @nogc @trusted
++            {
++                naked;
++                op 0xa9401825;                                  //    LDP x5,x6,[x1]
++                op 0xa9402849;                                  //    LDP x9,x10,[x2]
++                op 0xc87fa007;                                  // L: LDAXP x7,x8,[x0]
++                op 0xeb0500ff;                                  //    CMP x7,x5
++                op 0xfa460100;                                  //    CCMP x8,x6,#0,EQ
++                op 0x540000a1;                                  //    B.NE F
++                op 0xc82ba809;                                  //    STLXP w11,x9,x10,[x0]
++                op 0x35ffff6b;                                  //    CBNZ w11,L
++                op 0x52800020;                                  //    MOV w0,#1
++                op 0xd65f03c0;                                  //    RET
++                op 0xc82ba007;                                  // F: STLXP w11,x7,x8,[x0] (a consistent snapshot)
++                op 0x35fffeeb;                                  //    CBNZ w11,L
++                op 0xa9002027;                                  //    STP x7,x8,[x1]
++                op 0x52800000;                                  //    MOV w0,#0
++                op 0xd65f03c0;                                  //    RET
++            }
++        }
++
++        void aFence()() pure nothrow @nogc @trusted
++        {
++            asm pure nothrow @nogc @trusted { naked; op 0xd5033bbf; op 0xd65f03c0; }   // DMB ISH; RET
++        }
++
++        void aPause()() pure nothrow @nogc @trusted
++        {
++            asm pure nothrow @nogc @trusted { naked; op 0xd503203f; op 0xd65f03c0; }   // YIELD; RET
++        }
 +    }
 +
 +    // The unsigned integer type with the size of T, for 1, 2, 4 and 8 byte T
@@ -687,9 +893,6 @@ index 9a819a2..6331c8e 100644
 +        else static assert(0, "no atomic operations for " ~ T.stringof);
 +    }
 +
-+    private enum sizeSuffix(T) = T.sizeof == 1 ? "1" : T.sizeof == 2 ? "2" : T.sizeof == 4 ? "4" :
-+                                 T.sizeof == 8 ? "8" : "16";
-+
      enum IsAtomicLockFree(T) = T.sizeof <= size_t.sizeof * 2;
  
      inout(T) atomicLoad(MemoryOrder order = MemoryOrder.seq, T)(inout(T)* src) pure nothrow @nogc @trusted
@@ -699,12 +902,12 @@ index 9a819a2..6331c8e 100644
 +        static if (T.sizeof == 16)
 +        {
 +            T result = void;
-+            _d_atomic_load_16(cast(const(void)*) src, cast(void*) &result, order);
++            aLoad16(cast(void*) &result, cast(const(void)*) src);
 +            return *cast(inout(T)*) &result;
 +        }
 +        else
 +        {
-+            RawOf!T raw = mixin("_d_atomic_load_" ~ sizeSuffix!T)(cast(const(void)*) src, order);
++            RawOf!T raw = aLoad!(T.sizeof)(cast(const(void)*) src);
 +            return *cast(inout(T)*) &raw;
 +        }
      }
@@ -714,16 +917,16 @@ index 9a819a2..6331c8e 100644
      {
 -        *dest = value;
 +        static if (T.sizeof == 16)
-+            _d_atomic_store_16(cast(void*) dest, cast(const(void)*) &value, order);
++            aStore16(cast(const(void)*) &value, cast(void*) dest);
 +        else
-+            mixin("_d_atomic_store_" ~ sizeSuffix!T)(cast(void*) dest, *cast(RawOf!T*) &value, order);
++            aStore!(T.sizeof)(*cast(RawOf!T*) &value, cast(void*) dest);
      }
  
      T atomicFetchAdd(MemoryOrder order = MemoryOrder.seq, bool result = true, T)(T* dest, T value) pure nothrow @nogc @trusted
          if (is(T : ulong))
      {
 -	    return *dest + value;
-+        RawOf!T raw = mixin("_d_atomic_fetch_add_" ~ sizeSuffix!T)(cast(void*) dest, cast(RawOf!T) value, order);
++        RawOf!T raw = aFetchAdd!(T.sizeof)(cast(RawOf!T) value, cast(void*) dest);
 +        return cast(T) raw;
      }
  
@@ -748,13 +951,13 @@ index 9a819a2..6331c8e 100644
 +        }
 +        else
 +        {
-+            RawOf!T raw = mixin("_d_atomic_exchange_" ~ sizeSuffix!T)(cast(void*) dest, *cast(RawOf!T*) &value, order);
++            RawOf!T raw = aExchange!(T.sizeof)(*cast(RawOf!T*) &value, cast(void*) dest);
 +            return *cast(T*) &raw;
 +        }
      }
  
      alias atomicCompareExchangeWeak = atomicCompareExchangeStrong;
-@@ -57,13 +127,11 @@ version (AArch64)
+@@ -57,13 +229,10 @@ version (AArch64)
      bool atomicCompareExchangeStrong(MemoryOrder succ = MemoryOrder.seq, MemoryOrder fail = MemoryOrder.seq, T)(T* dest, T* compare, T value) pure nothrow @nogc @trusted
          if (CanCAS!T)
      {
@@ -766,14 +969,13 @@ index 9a819a2..6331c8e 100644
 -        *dest = value;
 -        return true;
 +        static if (T.sizeof == 16)
-+            return _d_atomic_cas_16(cast(void*) dest, cast(void*) compare, cast(const(void)*) &value, succ, fail);
++            return aCas16(cast(const(void)*) &value, cast(void*) compare, cast(void*) dest);
 +        else
-+            return mixin("_d_atomic_cas_" ~ sizeSuffix!T)(cast(void*) dest, cast(void*) compare,
-+                                                          *cast(RawOf!T*) &value, succ, fail);
++            return aCas!(T.sizeof)(*cast(RawOf!T*) &value, cast(void*) compare, cast(void*) dest);
      }
  
      alias atomicCompareExchangeWeakNoResult = atomicCompareExchangeStrongNoResult;
-@@ -71,14 +139,13 @@ version (AArch64)
+@@ -71,14 +240,13 @@ version (AArch64)
      bool atomicCompareExchangeStrongNoResult(MemoryOrder succ = MemoryOrder.seq, MemoryOrder fail = MemoryOrder.seq, T)(T* dest, const T compare, T value) pure nothrow @nogc @trusted
          if (CanCAS!T)
      {
@@ -787,130 +989,34 @@ index 9a819a2..6331c8e 100644
  
      void atomicFence(MemoryOrder order = MemoryOrder.seq)() pure nothrow @nogc @trusted
      {
-+        _d_atomic_fence(order);
++        aFence();
      }
  
      void atomicSignalFence(MemoryOrder order = MemoryOrder.seq)() pure nothrow @nogc @trusted
-@@ -88,6 +155,7 @@ version (AArch64)
+@@ -88,6 +256,7 @@ version (AArch64)
  
      void pause() pure nothrow @nogc @trusted
      {
-+        _d_atomic_pause();
++        aPause();
      }
  }
  else // X86 and X86_64
 diff --git a/src/core/internal/atomic_aarch64.c b/src/core/internal/atomic_aarch64.c
 new file mode 100644
-index 0000000..0f472ea
+index 0000000..5f74b16
 --- /dev/null
 +++ b/src/core/internal/atomic_aarch64.c
-@@ -0,0 +1,134 @@
+@@ -0,0 +1,38 @@
 +/**
-+ * Atomic operations for DMD's AArch64 code generator, which has no atomic
-+ * intrinsics and no AArch64 inline assembler. core.internal.atomic calls these.
-+ *
-+ * The memory order argument uses the C11 numbering, which core.atomic.MemoryOrder
-+ * shares (raw = relaxed = 0, acq = 2, rel = 3, acq_rel = 4, seq = 5). A
-+ * non-constant order is treated as sequentially consistent by the compiler,
-+ * which is always correct.
++ * Floating point status (FPSR) and control (FPCR) register access for DMD's AArch64
++ * code generator, for std.math.hardware. (core.internal.atomic's atomics are naked D
++ * templates, so -betterC programs need no runtime library for them.)
 + *
 + * Copyright: The D Language Foundation and the Flint authors.
 + * License:   $(LINK2 http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0)
 + */
 +#if defined(__aarch64__) || defined(__arm64__)
 +#include <stdint.h>
-+#include <stdbool.h>
-+
-+#define DEFINE(N, T)                                                                 \
-+    T _d_atomic_load_##N(const volatile T *p, int order)                             \
-+    { (void)order; return __atomic_load_n(p, __ATOMIC_SEQ_CST); }                    \
-+    void _d_atomic_store_##N(volatile T *p, T v, int order)                          \
-+    { (void)order; __atomic_store_n(p, v, __ATOMIC_SEQ_CST); }                       \
-+    T _d_atomic_fetch_add_##N(volatile T *p, T v, int order)                         \
-+    { (void)order; return __atomic_fetch_add(p, v, __ATOMIC_SEQ_CST); }              \
-+    T _d_atomic_exchange_##N(volatile T *p, T v, int order)                          \
-+    { (void)order; return __atomic_exchange_n(p, v, __ATOMIC_SEQ_CST); }             \
-+    bool _d_atomic_cas_##N(volatile T *p, T *expected, T desired, int succ, int fail) \
-+    {                                                                                \
-+        (void)succ; (void)fail;                                                      \
-+        return __atomic_compare_exchange_n(p, expected, desired, false,              \
-+                                           __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);      \
-+    }
-+
-+DEFINE(1, uint8_t)
-+DEFINE(2, uint16_t)
-+DEFINE(4, uint32_t)
-+DEFINE(8, uint64_t)
-+
-+/* 16 byte compare-and-swap with an exclusive pair loop, which every ARMv8 core
-+ * supports and which the C compilers would otherwise route to libatomic.
-+ */
-+typedef unsigned __int128 u128;
-+
-+static bool cas16(volatile u128 *p, uint64_t *expected, uint64_t dlo, uint64_t dhi)
-+{
-+    uint64_t olo, ohi;
-+    uint32_t failed;
-+    __asm__ __volatile__(
-+        "1: ldaxp   %0, %1, [%3]\n"
-+        "   cmp     %0, %4\n"
-+        "   ccmp    %1, %5, #0, eq\n"
-+        "   b.ne    2f\n"
-+        "   stlxp   %w2, %6, %7, [%3]\n"
-+        "   cbnz    %w2, 1b\n"
-+        "   b       3f\n"
-+        "2: stlxp   %w2, %0, %1, [%3]\n"     /* store back what was read, so the read is atomic */
-+        "   cbnz    %w2, 1b\n"
-+        "   mov     %w2, #1\n"
-+        "3:\n"
-+        : "=&r"(olo), "=&r"(ohi), "=&r"(failed)
-+        : "r"(p), "r"(expected[0]), "r"(expected[1]), "r"(dlo), "r"(dhi)
-+        : "cc", "memory");
-+    if (failed)
-+    {
-+        expected[0] = olo;
-+        expected[1] = ohi;
-+        return false;
-+    }
-+    return true;
-+}
-+
-+bool _d_atomic_cas_16(volatile u128 *p, u128 *expected, const u128 *desired, int succ, int fail)
-+{
-+    (void)succ; (void)fail;
-+    const uint64_t *d = (const uint64_t *)desired;
-+    return cas16(p, (uint64_t *)expected, d[0], d[1]);
-+}
-+
-+void _d_atomic_load_16(volatile u128 *p, u128 *result, int order)
-+{
-+    (void)order;
-+    uint64_t e[2] = {0, 0};
-+    cas16(p, e, 0, 0);          /* fails and loads the value, or stores the 0 that is there */
-+    ((uint64_t *)result)[0] = e[0];
-+    ((uint64_t *)result)[1] = e[1];
-+}
-+
-+void _d_atomic_store_16(volatile u128 *p, const u128 *value, int order)
-+{
-+    (void)order;
-+    const uint64_t *v = (const uint64_t *)value;
-+    uint64_t e[2] = {0, 0};
-+    while (!cas16(p, e, v[0], v[1]))
-+    {
-+    }
-+}
-+
-+void _d_atomic_fence(int order)
-+{
-+    (void)order;
-+    __atomic_thread_fence(__ATOMIC_SEQ_CST);
-+}
-+
-+void _d_atomic_pause(void)
-+{
-+    __asm__ __volatile__("yield");
-+}
 +
 +/* Floating point status (FPSR) and control (FPCR) registers, for
 + * std.math.hardware under DMD.

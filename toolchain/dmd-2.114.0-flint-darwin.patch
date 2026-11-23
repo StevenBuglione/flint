@@ -1,8 +1,20 @@
 diff --git a/dmd/flintlink.d b/dmd/flintlink.d
-index f4e30b1..7fcf3a4 100644
+index f4e30b1..86f40db 100644
 --- a/dmd/flintlink.d
 +++ b/dmd/flintlink.d
-@@ -321,6 +321,23 @@ bool directLinkCommand(ref Strings argv, ref Array!bool ccSwitchFlags, ref Strin
+@@ -316,11 +316,35 @@ bool directLinkCommand(ref Strings argv, ref Array!bool ccSwitchFlags, ref Strin
+         }
+         if (eq(a, "-g") || eq(a, "-m64"))
+             continue;
++        if (eq(a, "-arch") && i + 1 < argv.length)
++        {
++            // Apple's driver selects the architecture; the expansion below must see it
++            ccSwitches.push(a);
++            ccSwitches.push(argv[++i]);
++            continue;
++        }
+         if (eq(a, "-Xlinker") && i + 1 < argv.length)
+         {
              inputs.push(argv[++i]);
              continue;
          }
@@ -26,7 +38,7 @@ index f4e30b1..7fcf3a4 100644
          if (startsWith(a, "-L"))
          {
              lpaths.push(a);
-@@ -373,7 +390,7 @@ bool directLinkCommand(ref Strings argv, ref Array!bool ccSwitchFlags, ref Strin
+@@ -373,7 +397,7 @@ bool directLinkCommand(ref Strings argv, ref Array!bool ccSwitchFlags, ref Strin
          return false;
      {
          char[64] m;
@@ -35,7 +47,7 @@ index f4e30b1..7fcf3a4 100644
          h = fnv(h, m.ptr);
      }
      foreach (s; ccSwitches)
-@@ -402,9 +419,9 @@ bool directLinkCommand(ref Strings argv, ref Array!bool ccSwitchFlags, ref Strin
+@@ -402,9 +426,9 @@ bool directLinkCommand(ref Strings argv, ref Array!bool ccSwitchFlags, ref Strin
          if (auto slash = strrchr(parent.ptr, '/'))
          {
              *slash = 0;

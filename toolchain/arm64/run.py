@@ -6,7 +6,7 @@ Each test is a self-checking D program that exits 0 on success. It is compiled w
 for the target, and run natively on arm64 or under QEMU user mode elsewhere. A test
 `name.d` may have a C companion `name.c`, and a directory `name/` of D modules (and C
 files, which DMD compiles as ImportC) that `dmd -lib` builds into a static library the
-test links with.
+test links with. A test `betterc_*.d` is compiled with -betterC and linked without druntime.
 
     python3 toolchain/arm64/run.py --dmd DMD --druntime-import DIR --druntime LIB
         [--os linux|osx] [--cc CC] [--run-prefix "qemu-aarch64 -L /usr/aarch64-linux-gnu"]
@@ -48,10 +48,11 @@ def main():
                     lib = Path(tmp) / (name + '.a')
                     steps.append(common + ['-lib', *map(str, modules), '-of' + str(lib)])
                     library = [str(lib)]
-                steps.append(common + ['-I' + str(HERE), '-c', str(t), '-of' + str(obj)])
+                betterc = t.name.startswith('betterc_')
+                steps.append(common + ['-I' + str(HERE), *(['-betterC'] if betterc else []), '-c', str(t), '-of' + str(obj)])
                 cfile = t.with_suffix('.c')
                 steps.append(shlex.split(a.cc) + [str(obj)] + ([str(cfile)] if cfile.exists() else [])
-                             + library + [a.druntime] + libs + ['-o', str(exe)])
+                             + library + ([] if betterc else [a.druntime]) + libs + ['-o', str(exe)])
                 steps.append(shlex.split(a.run_prefix) + [str(exe)])
                 for step in steps:
                     # DMD preprocesses ImportC files and links with $CC

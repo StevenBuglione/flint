@@ -6373,7 +6373,7 @@ index 0ba8725..4b9b39e 100644
      }
      return op;
 diff --git a/dmd/iasm/dmdaarch64.d b/dmd/iasm/dmdaarch64.d
-index 3f23e39..7bfbc4a 100644
+index 3f23e39..fcd27c2 100644
 --- a/dmd/iasm/dmdaarch64.d
 +++ b/dmd/iasm/dmdaarch64.d
 @@ -63,7 +63,7 @@ import dmd.backend.iasm;
@@ -6385,6 +6385,28 @@ index 3f23e39..7bfbc4a 100644
      {
          printf("InlineAsmAArch64Statement.semantic()\n");
          for (auto token = s.tokens; token; token = token.next)
+@@ -77,7 +77,20 @@ public Statement inlineAsmAArch64Semantic(InlineAsmStatement s, Scope* sc)
+ 
+     /* Set list of tokens that will be the input to the parser, and starting line number to use.
+      */
+-    p.setTokenList(s.tokens, s.loc.linnum);
++    /* The parser takes the tokens over and consumes them, but the copies of a template's
++     * statement share them: parse a copy, so every instance has them.
++     */
++    Token* tokens = null;
++    Token** tail = &tokens;
++    for (Token* t = s.tokens; t; t = t.next)
++    {
++        auto c = new Token();
++        *c = *t;
++        c.next = null;
++        *tail = c;
++        tail = &c.next;
++    }
++    p.setTokenList(tokens, s.loc.linnum);
+ 
+     int errors;
+     static if (1)
 diff --git a/dmd/lib/mach.d b/dmd/lib/mach.d
 index 5552182..59a1555 100644
 --- a/dmd/lib/mach.d

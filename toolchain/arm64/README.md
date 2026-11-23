@@ -121,6 +121,7 @@ Code generation:
 - The driver: `-marm64` in `dmd.conf`'s DFLAGS made `dmd --version` report a change of architecture (`run.py` checks it).
 - A result returned in memory had its address passed as a hidden first argument in x0, so C functions returning a struct over 16 bytes got their first argument in its place (`c_struct_return`).
 - HFAs of 3 or 4 elements in C calls (`hfa_c_abi`, see above).
+- The AArch64 inline assembler took over a template's `asm` tokens, so a second instance of a function template with an `asm` statement failed to parse (`betterc_atomics`).
 - The driver: `-L-Wl,...` (how native packages name Apple frameworks) went to the linker behind `-Xlinker`; it now goes to `cc`, and the direct link splits it. Linux AArch64 links got Apple's `-arch arm64`, and its ImportC preprocessing `-m64`, which GCC for AArch64 rejects (`run.py` checks the first two, `importc_preprocess` the last).
 - Smaller items:
   - x86 helper misdispatch (`getlvalue`), `getregs` given a register number instead of a mask;
@@ -131,7 +132,7 @@ Code generation:
 
 druntime and Phobos:
 
-- Atomics through `core/internal/atomic_aarch64.c` (they were empty stubs); `callWithStackShell` and `getStackTop` through assembly helpers.
+- Atomics as naked D function templates in `core.internal.atomic` (load-acquire, store-release and exclusive loops; they were empty stubs), so `-betterC` programs link without druntime (`betterc_atomics`). `callWithStackShell` and `getStackTop` go through assembly helpers.
 - `core.math` bodies for the x87-only intrinsics; the `test_runner` floating point control register asm is skipped under DMD.
 - `std.math.hardware`: FPSR and FPCR access through C helpers under DMD AArch64.
 - Tests whose thresholds assume an 80-bit `real` take LDC's thresholds for a 64-bit `real` (`std.complex`, `std.internal.math.gammafunction`). One `gammafunction` threshold also allows for glibc's `log1p`, which is 1 ulp from Apple's at that point.
