@@ -224,11 +224,12 @@ def agent_command(agent, language, directory, prompt_file, model, mcp_log, templ
             command += ['--allowedTools', 'Bash,Read,Write,Edit,Glob,Grep']
         return command
     if agent == 'codex':
-        # Codex CLI 0.171 removed --full-auto. The workspace-write sandbox with automatic approval
-        # review is its replacement. The user's own config.toml is ignored and the session is not
-        # persisted, so every run uses only the pinned model and effort below.
-        command = ['codex', 'exec', '--sandbox', 'workspace-write', '--approve-for-me',
-                   '--skip-git-repo-check', '--ephemeral', '--ignore-user-config']
+        # Codex CLI 0.171 removed --full-auto. Its replacement, --approve-for-me, implies the
+        # workspace-write sandbox and cannot be combined with --sandbox. The user's own config.toml
+        # is ignored and the session is not persisted, so every run uses only the pinned model and
+        # effort below.
+        command = ['codex', 'exec', '--approve-for-me', '--skip-git-repo-check', '--ephemeral',
+                   '--ignore-user-config']
         if model:
             command += ['--model', model]
         if effort:
