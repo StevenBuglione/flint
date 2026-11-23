@@ -104,6 +104,13 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   ADR-030 says to take the fallback or redesign before Phase 2. The agreed fallback (a D collector) addresses p99 and RSS, not builds or size, so for these metrics only a redesign or an amended target remains, and that decision is the owner's.
   - **Levers that remain** (m7-flint-cli, 2026-11-23): flint-aot's template diet for the generated Jackson auto-configuration module, the 448 ms critical-path compile; splitting that module across compile jobs; and the dev link, through shared-object dev builds, which is the owner's call. The binary size is with size-levers. The compile-server preload of the platform modules is ruled out: dmd-arm64's prototype gained 13 ms once correct (9f1a1d8b).
   - **Evidence:** `benchmarks/spring/evidence/gs-builds/20261123T123014Z/`.
+  - **Update, 15:06–15:09Z (certified, `gs-builds` at `6a7baf8f`, no foreign build in 12 samples):** after the template diet, the cached AOT library (ff31b6d2) and size-levers' work, the median ratios (99% interval) are:
+    - primary: 4.01 (3.84–4.11), 0.628 s against 0.157 s;
+    - secondary: 1.09 (1.07–1.11), 3.588 s against 3.291 s;
+    - incremental, dev profile as built: 2.89 (2.82–3.01);
+    - Oz size: **0.594, which passes**, 3,943,248 bytes against 6,634,456, both stripped.
+
+    The fully static incremental build waits for `flint build --static` (owner decision 2). Evidence: `benchmarks/spring/evidence/gs-builds/20261123T150624Z/`.
   - **Not yet certified:** the runtime metrics. A smoke run gave Flint about 0.26–0.4x Go's throughput. `phase1-guides` measures them in the next window.
 
 - 2026-11-23, coordinator: the edit-build floor. After m7-flint-cli's cut (`19390bd1`: 0.98 s → 0.69 s), gs-rest-service's edit build is link 0.2 s, compile 0.13 s and flint's own overhead about 0.3 s. Even with every planned lever (the compile-server prelude, flint overhead cuts), m7 estimates a floor near 0.35 s against Go's 0.154 s. Closing it likely needs dev builds that link the platform cache as shared objects, so an edit relinks only the app; release and size builds stay static. That changes what the edit-build gate compares (a dynamically linked dev binary against Go's static one), so it's the owner's call. m7 is prototyping and measuring it, plus split debug info (which needs no decision), and won't make shared-object dev builds the default without a yes.

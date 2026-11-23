@@ -1,0 +1,1485 @@
+{
+  "schema": "flint.spring-builds/1",
+  "mode": "production",
+  "status": "failed",
+  "commit": "6a7baf8f4e3e3d2236f043c4a5bb80340060434c",
+  "host": {
+    "platform": "linux",
+    "cpus": 32,
+    "load_average_at_start": 4.0341796875
+  },
+  "trials_per_series": 9,
+  "comparators": {
+    "gs-rest-service": {
+      "directory": "benchmarks/spring/go/gs-rest-service",
+      "commit": "f88554cfc7049d059e942130f77616b0d8eac4ed",
+      "sha256": "d33e8488448a0a4692e048d57b22ec362426e9f3d5ff723fcce64e3cf06be73b",
+      "go": "1.27.4",
+      "wire": "semantic",
+      "registered": "2026-11-23",
+      "measured": false
+    }
+  },
+  "missing_flint": [],
+  "apps": {
+    "gs-rest-service": {
+      "go": {
+        "go_std_cold_seconds": [
+          0.162925861,
+          0.155996683,
+          0.152721571,
+          0.171585909,
+          0.155174584,
+          0.156663125,
+          0.161732726,
+          0.157460653,
+          0.155464092
+        ],
+        "go_std_incremental_seconds": [
+          0.153875886,
+          0.157048901,
+          0.159581361,
+          0.159888949,
+          0.163312405,
+          0.159743644,
+          0.168039699,
+          0.157384766,
+          0.156385656
+        ],
+        "go_deps_cold_seconds": [
+          0.155101458,
+          0.151770418,
+          0.154555669,
+          0.165911362,
+          0.157496353,
+          0.154619425,
+          0.158169116,
+          0.155246481,
+          0.154825497
+        ],
+        "go_scratch_seconds": [
+          3.27659982,
+          3.411987887,
+          3.29138242,
+          3.2932399,
+          3.30666592,
+          3.276845048,
+          3.335591105,
+          3.275542509,
+          3.266684523
+        ],
+        "third_party_packages": [],
+        "binary_bytes": 6634456
+      },
+      "flint": {
+        "flint_cached_cold_seconds": [
+          0.675766387,
+          0.627723784,
+          0.632437368,
+          0.630947166,
+          0.62039515,
+          0.625867842,
+          0.627590705,
+          0.620783082,
+          0.638516363
+        ],
+        "flint_cached_incremental_seconds": [
+          0.461462838,
+          0.458682996,
+          0.474793873,
+          0.47053184,
+          0.472003561,
+          0.457893095,
+          0.460939254,
+          0.465647559,
+          0.46001114
+        ],
+        "flint_scratch_seconds": [
+          3.588281905,
+          3.602401963,
+          3.590497476,
+          3.539193337,
+          3.548193428,
+          3.527076512,
+          3.55244068,
+          3.627644809,
+          3.769497908
+        ],
+        "flint_first_build_seconds": 6.265860385,
+        "dev_linker": "mold",
+        "flint_cache": {
+          "platform_cache_primed": true,
+          "digest_log_cleared_before_cold_trials": true
+        },
+        "O3": {
+          "binary_bytes": 4610688,
+          "unstripped_bytes": 6640648,
+          "strip": "GNU strip (GNU Binutils for Ubuntu) 2.42",
+          "sha256": "e0103f8059b2e14e402a08f62f9b44c5df7a4b3e526983ef6469dc122f0ea83c"
+        },
+        "Oz": {
+          "binary_bytes": 3943248,
+          "unstripped_bytes": 6278408,
+          "strip": "GNU strip (GNU Binutils for Ubuntu) 2.42",
+          "sha256": "6dc12ad9f575b2558e5f69db29655fc8186c12416abb05c09eb179a315645e05"
+        }
+      },
+      "verdicts": {
+        "primary: platform cache vs std-primed GOCACHE": {
+          "median_ratio": 4.00683813756428,
+          "lower_99": 3.8414272489252026,
+          "upper_99": 4.10716297754468,
+          "gating": true,
+          "pass": false
+        },
+        "secondary: from scratch vs go build -a": {
+          "median_ratio": 1.0902051014175376,
+          "lower_99": 1.0650108386111674,
+          "upper_99": 1.1071369737791172,
+          "gating": true,
+          "pass": false
+        },
+        "incremental: dev profile as built": {
+          "median_ratio": 2.891708875700089,
+          "lower_99": 2.822438711866377,
+          "upper_99": 3.0054559948814927,
+          "gating": true,
+          "pass": false
+        },
+        "incremental: fully static": {
+          "gating": true,
+          "pass": false,
+          "note": "not measured: the port declares no measure.cached_static command"
+        },
+        "stricter: platform cache vs deps-primed GOCACHE": {
+          "median_ratio": 4.047181709923062,
+          "lower_99": 3.941571154984141,
+          "upper_99": 4.129599906350706,
+          "gating": false,
+          "pass": false
+        },
+        "Oz binary size": {
+          "ratio": 0.5943589044828996,
+          "gating": true,
+          "pass": true
+        }
+      }
+    }
+  },
+  "trials": [
+    {
+      "seconds": 0.162925861,
+      "peak_rss_bytes": 158502912,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6a7baf8f4e3e/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-ah7cnsfb/gs-rest-service-go-std-0/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "go",
+      "flavour": "std",
+      "state": "cold",
+      "trial": 0,
+      "log": "builds-logs/gs-rest-service-go-std-cold-0.log"
+    },
+    {
+      "seconds": 0.153875886,
+      "peak_rss_bytes": 157405184,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6a7baf8f4e3e/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-ah7cnsfb/gs-rest-service-go-std-0/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "go",
+      "flavour": "std",
+      "state": "incremental",
+      "trial": 0,
+      "log": "builds-logs/gs-rest-service-go-std-incremental-0.log"
+    },
+    {
+      "seconds": 0.155101458,
+      "peak_rss_bytes": 161525760,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6a7baf8f4e3e/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-ah7cnsfb/gs-rest-service-go-deps-0/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "go",
+      "flavour": "deps",
+      "state": "cold",
+      "trial": 0,
+      "log": "builds-logs/gs-rest-service-go-deps-cold-0.log"
+    },
+    {
+      "seconds": 3.27659982,
+      "peak_rss_bytes": 464633856,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6a7baf8f4e3e/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-ah7cnsfb/gs-rest-service-go-scratch-0/comparator",
+        "-a",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "go",
+      "flavour": "scratch",
+      "state": "cold",
+      "trial": 0,
+      "log": "builds-logs/gs-rest-service-go-scratch-cold-0.log"
+    },
+    {
+      "seconds": 0.155996683,
+      "peak_rss_bytes": 156049408,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6a7baf8f4e3e/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-ah7cnsfb/gs-rest-service-go-std-1/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "go",
+      "flavour": "std",
+      "state": "cold",
+      "trial": 1,
+      "log": "builds-logs/gs-rest-service-go-std-cold-1.log"
+    },
+    {
+      "seconds": 0.157048901,
+      "peak_rss_bytes": 159989760,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6a7baf8f4e3e/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-ah7cnsfb/gs-rest-service-go-std-1/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "go",
+      "flavour": "std",
+      "state": "incremental",
+      "trial": 1,
+      "log": "builds-logs/gs-rest-service-go-std-incremental-1.log"
+    },
+    {
+      "seconds": 0.151770418,
+      "peak_rss_bytes": 158957568,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6a7baf8f4e3e/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-ah7cnsfb/gs-rest-service-go-deps-1/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "go",
+      "flavour": "deps",
+      "state": "cold",
+      "trial": 1,
+      "log": "builds-logs/gs-rest-service-go-deps-cold-1.log"
+    },
+    {
+      "seconds": 3.411987887,
+      "peak_rss_bytes": 471805952,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6a7baf8f4e3e/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-ah7cnsfb/gs-rest-service-go-scratch-1/comparator",
+        "-a",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "go",
+      "flavour": "scratch",
+      "state": "cold",
+      "trial": 1,
+      "log": "builds-logs/gs-rest-service-go-scratch-cold-1.log"
+    },
+    {
+      "seconds": 0.152721571,
+      "peak_rss_bytes": 160071680,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6a7baf8f4e3e/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-ah7cnsfb/gs-rest-service-go-std-2/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "go",
+      "flavour": "std",
+      "state": "cold",
+      "trial": 2,
+      "log": "builds-logs/gs-rest-service-go-std-cold-2.log"
+    },
+    {
+      "seconds": 0.159581361,
+      "peak_rss_bytes": 157470720,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6a7baf8f4e3e/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-ah7cnsfb/gs-rest-service-go-std-2/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "go",
+      "flavour": "std",
+      "state": "incremental",
+      "trial": 2,
+      "log": "builds-logs/gs-rest-service-go-std-incremental-2.log"
+    },
+    {
+      "seconds": 0.154555669,
+      "peak_rss_bytes": 155127808,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6a7baf8f4e3e/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-ah7cnsfb/gs-rest-service-go-deps-2/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "go",
+      "flavour": "deps",
+      "state": "cold",
+      "trial": 2,
+      "log": "builds-logs/gs-rest-service-go-deps-cold-2.log"
+    },
+    {
+      "seconds": 3.29138242,
+      "peak_rss_bytes": 487161856,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6a7baf8f4e3e/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-ah7cnsfb/gs-rest-service-go-scratch-2/comparator",
+        "-a",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "go",
+      "flavour": "scratch",
+      "state": "cold",
+      "trial": 2,
+      "log": "builds-logs/gs-rest-service-go-scratch-cold-2.log"
+    },
+    {
+      "seconds": 0.171585909,
+      "peak_rss_bytes": 155832320,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6a7baf8f4e3e/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-ah7cnsfb/gs-rest-service-go-std-3/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "go",
+      "flavour": "std",
+      "state": "cold",
+      "trial": 3,
+      "log": "builds-logs/gs-rest-service-go-std-cold-3.log"
+    },
+    {
+      "seconds": 0.159888949,
+      "peak_rss_bytes": 159731712,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6a7baf8f4e3e/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-ah7cnsfb/gs-rest-service-go-std-3/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "go",
+      "flavour": "std",
+      "state": "incremental",
+      "trial": 3,
+      "log": "builds-logs/gs-rest-service-go-std-incremental-3.log"
+    },
+    {
+      "seconds": 0.165911362,
+      "peak_rss_bytes": 163819520,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6a7baf8f4e3e/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-ah7cnsfb/gs-rest-service-go-deps-3/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "go",
+      "flavour": "deps",
+      "state": "cold",
+      "trial": 3,
+      "log": "builds-logs/gs-rest-service-go-deps-cold-3.log"
+    },
+    {
+      "seconds": 3.2932399,
+      "peak_rss_bytes": 491249664,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6a7baf8f4e3e/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-ah7cnsfb/gs-rest-service-go-scratch-3/comparator",
+        "-a",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "go",
+      "flavour": "scratch",
+      "state": "cold",
+      "trial": 3,
+      "log": "builds-logs/gs-rest-service-go-scratch-cold-3.log"
+    },
+    {
+      "seconds": 0.155174584,
+      "peak_rss_bytes": 157040640,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6a7baf8f4e3e/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-ah7cnsfb/gs-rest-service-go-std-4/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "go",
+      "flavour": "std",
+      "state": "cold",
+      "trial": 4,
+      "log": "builds-logs/gs-rest-service-go-std-cold-4.log"
+    },
+    {
+      "seconds": 0.163312405,
+      "peak_rss_bytes": 159424512,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6a7baf8f4e3e/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-ah7cnsfb/gs-rest-service-go-std-4/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "go",
+      "flavour": "std",
+      "state": "incremental",
+      "trial": 4,
+      "log": "builds-logs/gs-rest-service-go-std-incremental-4.log"
+    },
+    {
+      "seconds": 0.157496353,
+      "peak_rss_bytes": 159371264,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6a7baf8f4e3e/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-ah7cnsfb/gs-rest-service-go-deps-4/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "go",
+      "flavour": "deps",
+      "state": "cold",
+      "trial": 4,
+      "log": "builds-logs/gs-rest-service-go-deps-cold-4.log"
+    },
+    {
+      "seconds": 3.30666592,
+      "peak_rss_bytes": 498851840,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6a7baf8f4e3e/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-ah7cnsfb/gs-rest-service-go-scratch-4/comparator",
+        "-a",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "go",
+      "flavour": "scratch",
+      "state": "cold",
+      "trial": 4,
+      "log": "builds-logs/gs-rest-service-go-scratch-cold-4.log"
+    },
+    {
+      "seconds": 0.156663125,
+      "peak_rss_bytes": 159023104,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6a7baf8f4e3e/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-ah7cnsfb/gs-rest-service-go-std-5/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "go",
+      "flavour": "std",
+      "state": "cold",
+      "trial": 5,
+      "log": "builds-logs/gs-rest-service-go-std-cold-5.log"
+    },
+    {
+      "seconds": 0.159743644,
+      "peak_rss_bytes": 163598336,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6a7baf8f4e3e/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-ah7cnsfb/gs-rest-service-go-std-5/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "go",
+      "flavour": "std",
+      "state": "incremental",
+      "trial": 5,
+      "log": "builds-logs/gs-rest-service-go-std-incremental-5.log"
+    },
+    {
+      "seconds": 0.154619425,
+      "peak_rss_bytes": 165478400,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6a7baf8f4e3e/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-ah7cnsfb/gs-rest-service-go-deps-5/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "go",
+      "flavour": "deps",
+      "state": "cold",
+      "trial": 5,
+      "log": "builds-logs/gs-rest-service-go-deps-cold-5.log"
+    },
+    {
+      "seconds": 3.276845048,
+      "peak_rss_bytes": 506163200,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6a7baf8f4e3e/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-ah7cnsfb/gs-rest-service-go-scratch-5/comparator",
+        "-a",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "go",
+      "flavour": "scratch",
+      "state": "cold",
+      "trial": 5,
+      "log": "builds-logs/gs-rest-service-go-scratch-cold-5.log"
+    },
+    {
+      "seconds": 0.161732726,
+      "peak_rss_bytes": 162856960,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6a7baf8f4e3e/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-ah7cnsfb/gs-rest-service-go-std-6/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "go",
+      "flavour": "std",
+      "state": "cold",
+      "trial": 6,
+      "log": "builds-logs/gs-rest-service-go-std-cold-6.log"
+    },
+    {
+      "seconds": 0.168039699,
+      "peak_rss_bytes": 152375296,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6a7baf8f4e3e/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-ah7cnsfb/gs-rest-service-go-std-6/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "go",
+      "flavour": "std",
+      "state": "incremental",
+      "trial": 6,
+      "log": "builds-logs/gs-rest-service-go-std-incremental-6.log"
+    },
+    {
+      "seconds": 0.158169116,
+      "peak_rss_bytes": 158015488,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6a7baf8f4e3e/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-ah7cnsfb/gs-rest-service-go-deps-6/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "go",
+      "flavour": "deps",
+      "state": "cold",
+      "trial": 6,
+      "log": "builds-logs/gs-rest-service-go-deps-cold-6.log"
+    },
+    {
+      "seconds": 3.335591105,
+      "peak_rss_bytes": 506847232,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6a7baf8f4e3e/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-ah7cnsfb/gs-rest-service-go-scratch-6/comparator",
+        "-a",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "go",
+      "flavour": "scratch",
+      "state": "cold",
+      "trial": 6,
+      "log": "builds-logs/gs-rest-service-go-scratch-cold-6.log"
+    },
+    {
+      "seconds": 0.157460653,
+      "peak_rss_bytes": 156942336,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6a7baf8f4e3e/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-ah7cnsfb/gs-rest-service-go-std-7/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "go",
+      "flavour": "std",
+      "state": "cold",
+      "trial": 7,
+      "log": "builds-logs/gs-rest-service-go-std-cold-7.log"
+    },
+    {
+      "seconds": 0.157384766,
+      "peak_rss_bytes": 157683712,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6a7baf8f4e3e/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-ah7cnsfb/gs-rest-service-go-std-7/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "go",
+      "flavour": "std",
+      "state": "incremental",
+      "trial": 7,
+      "log": "builds-logs/gs-rest-service-go-std-incremental-7.log"
+    },
+    {
+      "seconds": 0.155246481,
+      "peak_rss_bytes": 159764480,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6a7baf8f4e3e/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-ah7cnsfb/gs-rest-service-go-deps-7/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "go",
+      "flavour": "deps",
+      "state": "cold",
+      "trial": 7,
+      "log": "builds-logs/gs-rest-service-go-deps-cold-7.log"
+    },
+    {
+      "seconds": 3.275542509,
+      "peak_rss_bytes": 482525184,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6a7baf8f4e3e/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-ah7cnsfb/gs-rest-service-go-scratch-7/comparator",
+        "-a",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "go",
+      "flavour": "scratch",
+      "state": "cold",
+      "trial": 7,
+      "log": "builds-logs/gs-rest-service-go-scratch-cold-7.log"
+    },
+    {
+      "seconds": 0.155464092,
+      "peak_rss_bytes": 163102720,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6a7baf8f4e3e/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-ah7cnsfb/gs-rest-service-go-std-8/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "go",
+      "flavour": "std",
+      "state": "cold",
+      "trial": 8,
+      "log": "builds-logs/gs-rest-service-go-std-cold-8.log"
+    },
+    {
+      "seconds": 0.156385656,
+      "peak_rss_bytes": 155910144,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6a7baf8f4e3e/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-ah7cnsfb/gs-rest-service-go-std-8/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "go",
+      "flavour": "std",
+      "state": "incremental",
+      "trial": 8,
+      "log": "builds-logs/gs-rest-service-go-std-incremental-8.log"
+    },
+    {
+      "seconds": 0.154825497,
+      "peak_rss_bytes": 160899072,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6a7baf8f4e3e/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-ah7cnsfb/gs-rest-service-go-deps-8/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "go",
+      "flavour": "deps",
+      "state": "cold",
+      "trial": 8,
+      "log": "builds-logs/gs-rest-service-go-deps-cold-8.log"
+    },
+    {
+      "seconds": 3.266684523,
+      "peak_rss_bytes": 446341120,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6a7baf8f4e3e/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-ah7cnsfb/gs-rest-service-go-scratch-8/comparator",
+        "-a",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "go",
+      "flavour": "scratch",
+      "state": "cold",
+      "trial": 8,
+      "log": "builds-logs/gs-rest-service-go-scratch-cold-8.log"
+    },
+    {
+      "seconds": 0.675766387,
+      "peak_rss_bytes": 829030400,
+      "command": [
+        "flint",
+        "build"
+      ],
+      "exit_code": 0,
+      "log_sha256": "57bd09e41fe3e21a2987c0cb58335f9670dc691cc960b5932e37816d91509503",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "flint",
+      "flavour": "cached",
+      "state": "cold",
+      "trial": 0,
+      "log": "builds-logs/gs-rest-service-flint-cached-cold-0.log"
+    },
+    {
+      "seconds": 0.461462838,
+      "peak_rss_bytes": 819900416,
+      "command": [
+        "flint",
+        "build"
+      ],
+      "exit_code": 0,
+      "log_sha256": "0fce062616e92a99cb04ca4f314c18fcced7c8da48d0d09632494611f21ff78b",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "flint",
+      "flavour": "cached",
+      "state": "incremental",
+      "trial": 0,
+      "log": "builds-logs/gs-rest-service-flint-cached-incremental-0.log"
+    },
+    {
+      "seconds": 3.588281905,
+      "peak_rss_bytes": 981606400,
+      "command": [
+        "flint",
+        "build",
+        "--force",
+        "--no-platform-cache"
+      ],
+      "exit_code": 0,
+      "log_sha256": "7093ef868941d5eb09c5392ee74e95e56aa41627302fa820398a253083fe6292",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "flint",
+      "flavour": "scratch",
+      "state": "cold",
+      "trial": 0,
+      "log": "builds-logs/gs-rest-service-flint-scratch-cold-0.log"
+    },
+    {
+      "seconds": 0.627723784,
+      "peak_rss_bytes": 829870080,
+      "command": [
+        "flint",
+        "build"
+      ],
+      "exit_code": 0,
+      "log_sha256": "501075abf97d20950858dc7f9036c15f6562642ed00ecd8a7727508df32f9a4d",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "flint",
+      "flavour": "cached",
+      "state": "cold",
+      "trial": 1,
+      "log": "builds-logs/gs-rest-service-flint-cached-cold-1.log"
+    },
+    {
+      "seconds": 0.458682996,
+      "peak_rss_bytes": 815595520,
+      "command": [
+        "flint",
+        "build"
+      ],
+      "exit_code": 0,
+      "log_sha256": "0fce062616e92a99cb04ca4f314c18fcced7c8da48d0d09632494611f21ff78b",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "flint",
+      "flavour": "cached",
+      "state": "incremental",
+      "trial": 1,
+      "log": "builds-logs/gs-rest-service-flint-cached-incremental-1.log"
+    },
+    {
+      "seconds": 3.602401963,
+      "peak_rss_bytes": 978014208,
+      "command": [
+        "flint",
+        "build",
+        "--force",
+        "--no-platform-cache"
+      ],
+      "exit_code": 0,
+      "log_sha256": "57bd09e41fe3e21a2987c0cb58335f9670dc691cc960b5932e37816d91509503",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "flint",
+      "flavour": "scratch",
+      "state": "cold",
+      "trial": 1,
+      "log": "builds-logs/gs-rest-service-flint-scratch-cold-1.log"
+    },
+    {
+      "seconds": 0.632437368,
+      "peak_rss_bytes": 832393216,
+      "command": [
+        "flint",
+        "build"
+      ],
+      "exit_code": 0,
+      "log_sha256": "571d57fcc89b200266f5b356caa259868a7044146cc9ad92b8300d3d77e70948",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "flint",
+      "flavour": "cached",
+      "state": "cold",
+      "trial": 2,
+      "log": "builds-logs/gs-rest-service-flint-cached-cold-2.log"
+    },
+    {
+      "seconds": 0.474793873,
+      "peak_rss_bytes": 816852992,
+      "command": [
+        "flint",
+        "build"
+      ],
+      "exit_code": 0,
+      "log_sha256": "0fce062616e92a99cb04ca4f314c18fcced7c8da48d0d09632494611f21ff78b",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "flint",
+      "flavour": "cached",
+      "state": "incremental",
+      "trial": 2,
+      "log": "builds-logs/gs-rest-service-flint-cached-incremental-2.log"
+    },
+    {
+      "seconds": 3.590497476,
+      "peak_rss_bytes": 982265856,
+      "command": [
+        "flint",
+        "build",
+        "--force",
+        "--no-platform-cache"
+      ],
+      "exit_code": 0,
+      "log_sha256": "501075abf97d20950858dc7f9036c15f6562642ed00ecd8a7727508df32f9a4d",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "flint",
+      "flavour": "scratch",
+      "state": "cold",
+      "trial": 2,
+      "log": "builds-logs/gs-rest-service-flint-scratch-cold-2.log"
+    },
+    {
+      "seconds": 0.630947166,
+      "peak_rss_bytes": 831864832,
+      "command": [
+        "flint",
+        "build"
+      ],
+      "exit_code": 0,
+      "log_sha256": "b376e5801f29fdfc027a14746e961fa481bd590831c8ac1a192bbadc06cc4075",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "flint",
+      "flavour": "cached",
+      "state": "cold",
+      "trial": 3,
+      "log": "builds-logs/gs-rest-service-flint-cached-cold-3.log"
+    },
+    {
+      "seconds": 0.47053184,
+      "peak_rss_bytes": 819781632,
+      "command": [
+        "flint",
+        "build"
+      ],
+      "exit_code": 0,
+      "log_sha256": "0fce062616e92a99cb04ca4f314c18fcced7c8da48d0d09632494611f21ff78b",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "flint",
+      "flavour": "cached",
+      "state": "incremental",
+      "trial": 3,
+      "log": "builds-logs/gs-rest-service-flint-cached-incremental-3.log"
+    },
+    {
+      "seconds": 3.539193337,
+      "peak_rss_bytes": 977506304,
+      "command": [
+        "flint",
+        "build",
+        "--force",
+        "--no-platform-cache"
+      ],
+      "exit_code": 0,
+      "log_sha256": "a7624717b264ffee6e7edc0903a86f7b9cc0ae9de7cfa947b7d5601be3a68d8b",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "flint",
+      "flavour": "scratch",
+      "state": "cold",
+      "trial": 3,
+      "log": "builds-logs/gs-rest-service-flint-scratch-cold-3.log"
+    },
+    {
+      "seconds": 0.62039515,
+      "peak_rss_bytes": 829861888,
+      "command": [
+        "flint",
+        "build"
+      ],
+      "exit_code": 0,
+      "log_sha256": "bdbe727d09e842eb424f6d3867268ffa8c6b11916d476a03cd50fc83d2bacd59",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "flint",
+      "flavour": "cached",
+      "state": "cold",
+      "trial": 4,
+      "log": "builds-logs/gs-rest-service-flint-cached-cold-4.log"
+    },
+    {
+      "seconds": 0.472003561,
+      "peak_rss_bytes": 815378432,
+      "command": [
+        "flint",
+        "build"
+      ],
+      "exit_code": 0,
+      "log_sha256": "0fce062616e92a99cb04ca4f314c18fcced7c8da48d0d09632494611f21ff78b",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "flint",
+      "flavour": "cached",
+      "state": "incremental",
+      "trial": 4,
+      "log": "builds-logs/gs-rest-service-flint-cached-incremental-4.log"
+    },
+    {
+      "seconds": 3.548193428,
+      "peak_rss_bytes": 979091456,
+      "command": [
+        "flint",
+        "build",
+        "--force",
+        "--no-platform-cache"
+      ],
+      "exit_code": 0,
+      "log_sha256": "d232e4dfa6128e3f79dd20ae0ad13b149079155333969efd4962e7f524757fce",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "flint",
+      "flavour": "scratch",
+      "state": "cold",
+      "trial": 4,
+      "log": "builds-logs/gs-rest-service-flint-scratch-cold-4.log"
+    },
+    {
+      "seconds": 0.625867842,
+      "peak_rss_bytes": 834236416,
+      "command": [
+        "flint",
+        "build"
+      ],
+      "exit_code": 0,
+      "log_sha256": "a7624717b264ffee6e7edc0903a86f7b9cc0ae9de7cfa947b7d5601be3a68d8b",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "flint",
+      "flavour": "cached",
+      "state": "cold",
+      "trial": 5,
+      "log": "builds-logs/gs-rest-service-flint-cached-cold-5.log"
+    },
+    {
+      "seconds": 0.457893095,
+      "peak_rss_bytes": 811012096,
+      "command": [
+        "flint",
+        "build"
+      ],
+      "exit_code": 0,
+      "log_sha256": "0fce062616e92a99cb04ca4f314c18fcced7c8da48d0d09632494611f21ff78b",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "flint",
+      "flavour": "cached",
+      "state": "incremental",
+      "trial": 5,
+      "log": "builds-logs/gs-rest-service-flint-cached-incremental-5.log"
+    },
+    {
+      "seconds": 3.527076512,
+      "peak_rss_bytes": 981086208,
+      "command": [
+        "flint",
+        "build",
+        "--force",
+        "--no-platform-cache"
+      ],
+      "exit_code": 0,
+      "log_sha256": "ae4b0ad92e1febc553722be949261f75ac1468f257290c320b46f3e83532eb4b",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "flint",
+      "flavour": "scratch",
+      "state": "cold",
+      "trial": 5,
+      "log": "builds-logs/gs-rest-service-flint-scratch-cold-5.log"
+    },
+    {
+      "seconds": 0.627590705,
+      "peak_rss_bytes": 832409600,
+      "command": [
+        "flint",
+        "build"
+      ],
+      "exit_code": 0,
+      "log_sha256": "5cbb81ea04cbe34f0d7fad6ef3f9210d6c7fd0e31182c1d5d1c7d7a75fb79ac7",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "flint",
+      "flavour": "cached",
+      "state": "cold",
+      "trial": 6,
+      "log": "builds-logs/gs-rest-service-flint-cached-cold-6.log"
+    },
+    {
+      "seconds": 0.460939254,
+      "peak_rss_bytes": 816439296,
+      "command": [
+        "flint",
+        "build"
+      ],
+      "exit_code": 0,
+      "log_sha256": "0fce062616e92a99cb04ca4f314c18fcced7c8da48d0d09632494611f21ff78b",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "flint",
+      "flavour": "cached",
+      "state": "incremental",
+      "trial": 6,
+      "log": "builds-logs/gs-rest-service-flint-cached-incremental-6.log"
+    },
+    {
+      "seconds": 3.55244068,
+      "peak_rss_bytes": 977223680,
+      "command": [
+        "flint",
+        "build",
+        "--force",
+        "--no-platform-cache"
+      ],
+      "exit_code": 0,
+      "log_sha256": "7a6de3eea233844a38d95fc6fabbc01de5abba794591dd7558cf589ebcb1ca4d",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "flint",
+      "flavour": "scratch",
+      "state": "cold",
+      "trial": 6,
+      "log": "builds-logs/gs-rest-service-flint-scratch-cold-6.log"
+    },
+    {
+      "seconds": 0.620783082,
+      "peak_rss_bytes": 828887040,
+      "command": [
+        "flint",
+        "build"
+      ],
+      "exit_code": 0,
+      "log_sha256": "bdbe727d09e842eb424f6d3867268ffa8c6b11916d476a03cd50fc83d2bacd59",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "flint",
+      "flavour": "cached",
+      "state": "cold",
+      "trial": 7,
+      "log": "builds-logs/gs-rest-service-flint-cached-cold-7.log"
+    },
+    {
+      "seconds": 0.465647559,
+      "peak_rss_bytes": 813977600,
+      "command": [
+        "flint",
+        "build"
+      ],
+      "exit_code": 0,
+      "log_sha256": "0fce062616e92a99cb04ca4f314c18fcced7c8da48d0d09632494611f21ff78b",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "flint",
+      "flavour": "cached",
+      "state": "incremental",
+      "trial": 7,
+      "log": "builds-logs/gs-rest-service-flint-cached-incremental-7.log"
+    },
+    {
+      "seconds": 3.627644809,
+      "peak_rss_bytes": 983625728,
+      "command": [
+        "flint",
+        "build",
+        "--force",
+        "--no-platform-cache"
+      ],
+      "exit_code": 0,
+      "log_sha256": "eb4f54da40e05f5d816e4ee3b5e1ad4d09fc381230a9af7841d03ba7de239932",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "flint",
+      "flavour": "scratch",
+      "state": "cold",
+      "trial": 7,
+      "log": "builds-logs/gs-rest-service-flint-scratch-cold-7.log"
+    },
+    {
+      "seconds": 0.638516363,
+      "peak_rss_bytes": 834289664,
+      "command": [
+        "flint",
+        "build"
+      ],
+      "exit_code": 0,
+      "log_sha256": "a7624717b264ffee6e7edc0903a86f7b9cc0ae9de7cfa947b7d5601be3a68d8b",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "flint",
+      "flavour": "cached",
+      "state": "cold",
+      "trial": 8,
+      "log": "builds-logs/gs-rest-service-flint-cached-cold-8.log"
+    },
+    {
+      "seconds": 0.46001114,
+      "peak_rss_bytes": 820092928,
+      "command": [
+        "flint",
+        "build"
+      ],
+      "exit_code": 0,
+      "log_sha256": "0fce062616e92a99cb04ca4f314c18fcced7c8da48d0d09632494611f21ff78b",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "flint",
+      "flavour": "cached",
+      "state": "incremental",
+      "trial": 8,
+      "log": "builds-logs/gs-rest-service-flint-cached-incremental-8.log"
+    },
+    {
+      "seconds": 3.769497908,
+      "peak_rss_bytes": 981590016,
+      "command": [
+        "flint",
+        "build",
+        "--force",
+        "--no-platform-cache"
+      ],
+      "exit_code": 0,
+      "log_sha256": "57bd09e41fe3e21a2987c0cb58335f9670dc691cc960b5932e37816d91509503",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "gs-rest-service",
+      "implementation": "flint",
+      "flavour": "scratch",
+      "state": "cold",
+      "trial": 8,
+      "log": "builds-logs/gs-rest-service-flint-scratch-cold-8.log"
+    }
+  ]
+}
