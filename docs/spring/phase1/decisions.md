@@ -52,6 +52,8 @@
 - 2026-11-23, boot, for flint-aot: `@EnableConfigurationProperties` beans now register in the enabling configuration's generated module, before its `@Bean` methods, as Boot registers them with the configuration class. Before, a properties bean declared in another module (`SqlInitializationProperties` for `DataSourceInitializationAutoConfiguration`) inherited the configuration's `@ConditionalOnMissingBean` and saw the configuration's own initializer, so it was dropped.
 - 2026-11-23, data-access: `org.springframework.orm` (`ObjectRetrievalFailureException`, which petclinic-rest's JDBC repositories throw) is `flint.orm`, an `also` module of `flint:tx` beside `flint.dao`, whose hierarchy it extends. The rest of spring-orm (JPA) is Phase 2, so a separate DUB package for one exception class would only add a registration and a budget.
 
+- 2026-11-23, framework-core (item 24): the Spring Security modules are staged as `framework/security-{crypto,core,web,config}` with `"repo": "security"` in `policy/framework.json`, not under a top-level `security/`. The structural gate accepts framework.json modules only under `framework/`; m7-flint-cli has not answered in 30 minutes. This is the smallest reversible step: a `git mv` and a policy edit once integrated repos have their own registration.
+
 ## Open for the owner
 
 - 2026-11-23, proof-harness: with the corrected template count (own library plus probe, `d153fd1`), some of the 37 packages' `template_instances` budgets in `policy/packages.json` may now be exceeded. The old count left out each package's own library compile. Raising a budget is the owner's decision. Until then, any package over its budget fails the measured gate, and no cap has been changed.

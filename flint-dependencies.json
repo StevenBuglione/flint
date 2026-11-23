@@ -299,6 +299,22 @@
       "repo": "flint",
       "version": "monorepo"
     },
+    "flint:security-config": {
+      "repo": "security",
+      "version": "21d3bc4450c306d87d799df40198639b845d700e"
+    },
+    "flint:security-core": {
+      "repo": "security",
+      "version": "21d3bc4450c306d87d799df40198639b845d700e"
+    },
+    "flint:security-crypto": {
+      "repo": "security",
+      "version": "21d3bc4450c306d87d799df40198639b845d700e"
+    },
+    "flint:security-web": {
+      "repo": "security",
+      "version": "21d3bc4450c306d87d799df40198639b845d700e"
+    },
     "flint:serde": {
       "repo": "flint",
       "version": "monorepo"

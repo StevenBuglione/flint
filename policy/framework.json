@@ -705,6 +705,71 @@
     "ldc_incremental_seconds",
     "compiler_peak_rss_bytes"
    ]
+  },
+  "security-crypto": {
+   "directory": "framework/security-crypto",
+   "module": "flint.security.crypto",
+   "repo": "security",
+   "licence": "Apache-2.0",
+   "upstream": "spring-security@7.2.0",
+   "dependencies": [
+    "conc",
+    "java"
+   ]
+  },
+  "security-core": {
+   "directory": "framework/security-core",
+   "module": "flint.security.core",
+   "also": [
+    "flint.security.access",
+    "flint.security.authentication",
+    "flint.security.authorization",
+    "flint.security.provisioning"
+   ],
+   "repo": "security",
+   "licence": "Apache-2.0",
+   "upstream": "spring-security@7.2.0",
+   "dependencies": [
+    "beans",
+    "context",
+    "core",
+    "engine-aot",
+    "engine-reactor",
+    "java",
+    "jdbc",
+    "security-crypto"
+   ]
+  },
+  "security-web": {
+   "directory": "framework/security-web",
+   "module": "flint.security.web",
+   "repo": "security",
+   "licence": "Apache-2.0",
+   "upstream": "spring-security@7.2.0",
+   "dependencies": [
+    "engine-aot",
+    "jakarta-servlet",
+    "java",
+    "security-core"
+   ]
+  },
+  "security-config": {
+   "directory": "framework/security-config",
+   "module": "flint.security.config",
+   "repo": "security",
+   "licence": "Apache-2.0",
+   "upstream": "spring-security@7.2.0",
+   "dependencies": [
+    "beans",
+    "context",
+    "core",
+    "engine-aot",
+    "jakarta-servlet",
+    "java",
+    "security-core",
+    "security-crypto",
+    "security-web"
+   ]
   }
  }
 }
