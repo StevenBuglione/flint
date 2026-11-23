@@ -23,6 +23,9 @@
   "java": {
    "directory": "framework/java",
    "module": "flint.java",
+   "also": [
+    "flint.javax"
+   ],
    "repo": "framework",
    "licence": "Apache-2.0",
    "upstream": "openjdk-api (clean-room from the Java SE specification)",
