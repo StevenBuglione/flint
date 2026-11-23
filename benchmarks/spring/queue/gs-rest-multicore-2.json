@@ -7,7 +7,7 @@
   "builds": {
     "tree": {
       "app": "checkout",
-      "commit": "693f7165cd11",
+      "commit": "1af77aed3267",
       "flint": true,
       "linker": "mold"
     }
@@ -15,7 +15,7 @@
   "requested_by": "web-http (local_16478490), for the coordinator: the multi-core servlet default",
   "id": "gs-rest-multicore-2",
   "summary": "gs-rest-service throughput re-measured after gs-rest-multicore (c473ea7b): Flint against the registered Go comparator",
-  "why": "Re-measure requested by the coordinator after the certified gs-rest-multicore (c473ea7b6f93: 0.746 throughput, 1.38 CPU/request, p50 1.84). Since then: 51314f2b (servlet path 77.1k to 76.1k callgrind instructions per request), 98e97ba4 (no nghttp2 in plain-HTTP servers), 1ec23a0d (binder) and 693f7165 (readiness backends write at once; the certified Linux build runs on io_uring, so expect little change from it here). gs-rest-service 18/18 exact.",
+  "why": "Re-measure requested by the coordinator after the certified gs-rest-multicore (c473ea7b6f93: 0.746 throughput, 1.38 CPU/request, p50 1.84). Since then: 51314f2b (servlet path 77.1k to 76.1k callgrind instructions per request), 98e97ba4 (no nghttp2 in plain-HTTP servers), 1ec23a0d (binder) and 693f7165 (readiness backends write at once; the certified Linux build runs on io_uring, so expect little change from it here). gs-rest-service 18/18 exact. Re-pinned to 1af77aed3267 before it ran, with the coordinator's agreement, so one window covers io_uring steps 1 and 2: d40a17e0 (submit and wait in one io_uring_enter) and 1af77aed (COOP_TASKRUN | TASKRUN_FLAG), plus 8815f2d2 (data-access: chunked GC roots for connection slots).",
   "measure": {
     "kind": "command",
     "ports": [],
