@@ -873,6 +873,9 @@ private struct Emitter
                 text ~= "a.elementType = " ~ typeNameText(argument.elementType) ~ "; ";
             if (argument.validate)
                 text ~= "a.validate = true; ";
+            if (argument.described)
+                text ~= "a.descriptor = imported!\"flint.engine.aot.descriptor\".descriptorOf!("
+                    ~ argument.type ~ ")(); ";
             if (argument.annotations.items.length)
                 text ~= "a.annotations = " ~ mergedArray(argument.annotations, "            ") ~ "; ";
             text ~= "return a; }(),\n";
@@ -906,6 +909,12 @@ private struct Emitter
                 handler.arguments) ~ ";\n        mapping.returnType = " ~ literal(
                 handler.method.returns.name) ~ ";\n        mapping.responseBody = " ~ (handler.responseBody
                 ? "true" : "false") ~ ";\n";
+        if (handler.returnDescribed)
+        {
+            need(handler.method.returns);
+            text ~= "        mapping.returnDescriptor = imported!\"flint.engine.aot.descriptor\".descriptorOf!("
+                ~ handler.method.returns.name ~ ")();\n";
+        }
         if (handler.status)
             text ~= "        mapping.responseStatus = " ~ handler.status.to!string ~ ";\n";
         if (handler.reason.length)

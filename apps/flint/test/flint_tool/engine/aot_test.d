@@ -635,6 +635,13 @@ unittest
         "missing: @ConditionalOnClass: flint.does.not.Exist is not in the closure"
     ]);
 
+    // Contract 3: the described response body's descriptor is in the mapping.
+    const web = imported!"std.file".readText(buildPath(project, ".flint", "generated", "aot",
+            "flint_aot", "shop", "web.d"));
+    const expected = `mapping.returnDescriptor = imported!"flint.engine.aot.descriptor".descriptorOf!(shop.web.`
+        ~ `Greeting)();`;
+    expect(imported!"std.algorithm.searching".canFind(web, expected)).toBeTrue();
+
     auto unchanged = generate(project);
     expect(unchanged.extracted).toEqual(0);
     expect(unchanged.written).toEqual(0);
@@ -1174,6 +1181,10 @@ unittest
             ~ `a.type = "org.springframework.samples.petclinic.rest.dto.ownerdto.OwnerFieldsDto"; a.required = true; `
             ~ `a.validate = true;`)).toBeTrue();
     expect(controller.canFind(`MergedAnnotation("flint.web.bind.annotation.CrossOrigin"`)).toBeTrue();
+    // Contract 3: the request body's spec carries its descriptor, so dispatch skips the lookup by name.
+    expect(controller.canFind(
+            `a.descriptor = imported!"flint.engine.aot.descriptor".descriptorOf!(org.springframework.`
+            ~ `samples.petclinic.rest.dto.ownerdto.OwnerFieldsDto)();`)).toBeTrue();
     // @PreAuthorize("hasRole(@roles.OWNER_ADMIN)") is compiled: a bean's field passed to a root function.
     expect(controller.canFind(`return context.rootFunction("hasRole", [Any.of(((cast(org.springframework.samples.`
             ~ `petclinic.security.roles.Roles) context.bean("roles"))).OWNER_ADMIN)]);`)).toBeTrue();

@@ -327,6 +327,8 @@ struct ArgumentPlan
     string[] modules;
     /// Merged parameter annotations.
     MergedSet annotations;
+    /// Contract 3: a request body whose type the generated tables describe, so its spec carries the descriptor.
+    bool described;
 }
 
 /// A request mapping.
@@ -354,6 +356,8 @@ struct HandlerPlan
     ArgumentPlan[] arguments;
     /// Whether the response is the body.
     bool responseBody;
+    /// Contract 3: the return type is described in the generated tables, so the mapping carries its descriptor.
+    bool returnDescribed;
     /// `@ResponseStatus`.
     long status;
     /// ditto
@@ -657,6 +661,31 @@ private final class Analysis
                 describeOnce(name);
         }
         compileMethodExpressions();
+        markDescribed();
+    }
+
+    /// Contract 3: request bodies and response bodies whose types the generated tables register get their
+    /// descriptor in the spec (ArgumentSpec.descriptor, HandlerMapping.returnDescriptor), so dispatch skips the
+    /// lookup by name. Other types keep a null descriptor, which means "look the name up", as before.
+    void markDescribed()
+    {
+        bool[string] registered;
+        foreach (ref item; plan.modules)
+        {
+            foreach (ref descriptor; item.descriptors)
+                registered[descriptor.type] = true;
+            foreach (type; item.containerDescriptors)
+                registered[type] = true;
+        }
+        foreach (ref item; plan.modules)
+        {
+            foreach (ref handler; item.handlers)
+            {
+                foreach (ref argument; handler.arguments)
+                    argument.described = argument.kind == "requestBody" && (argument.type in registered) !is null;
+                handler.returnDescribed = handler.responseBody && (handler.method.returns.name in registered) !is null;
+            }
+        }
     }
 
     MergedSet mergedOf(const ref TypeDecl decl)
