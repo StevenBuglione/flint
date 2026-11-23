@@ -231,6 +231,42 @@ def save_entry(entry):
     entry_path(entry['id']).write_text(json.dumps(entry, indent=2, ensure_ascii=False) + '\n')
 
 
+def lock_paths():
+    """Every MEASURING lock to honour: this checkout's, and FLINT_MEASURE_LOCK's (the queue's lock as seen from
+    another checkout; docs/spring/phase1/coordination.md names its path)."""
+    paths = [LOCK]
+    if os.environ.get('FLINT_MEASURE_LOCK'):
+        paths.append(Path(os.environ['FLINT_MEASURE_LOCK']))
+    return paths
+
+
+def hold(argv):
+    """Run `argv` in its own process group, stopped (SIGSTOP) while a MEASURING lock exists and continued after,
+    so a build that is already running pauses too. A paused build uses no CPU, so the quiet window ignores it."""
+    import signal
+    if not argv:
+        raise SystemExit('usage: measure_queue.py hold -- <command> [args...]')
+    process = subprocess.Popen(argv, start_new_session=True)
+    paused = False
+    try:
+        while process.poll() is None:
+            locked = any(path.exists() for path in lock_paths())
+            if locked and not paused:
+                os.killpg(process.pid, signal.SIGSTOP)
+                paused = True
+                print(f'{now()} hold: paused while a timed run is in progress', file=sys.stderr, flush=True)
+            elif paused and not locked:
+                os.killpg(process.pid, signal.SIGCONT)
+                paused = False
+                print(f'{now()} hold: continued', file=sys.stderr, flush=True)
+            time.sleep(1)
+    except KeyboardInterrupt:
+        os.killpg(process.pid, signal.SIGCONT)
+        os.killpg(process.pid, signal.SIGINT)
+        process.wait()
+    return process.returncode
+
+
 def log_attempt(entry, row):
     """Every attempt, refused or measured, in .flint/measure/results/<id>/attempts.jsonl."""
     directory = WORK / 'results' / entry['id']
@@ -657,6 +693,8 @@ def main(argv=None):
     p.add_argument('--force-busy', action='store_true', help='measure in a busy window; the receipt is never evidence')
     p.add_argument('--smoke', action='store_true', help='a short harness check; never evidence')
     sub.add_parser('next')
+    p = sub.add_parser('hold', help='run a command, pausing it while a timed run holds the MEASURING lock')
+    p.add_argument('argv', nargs=argparse.REMAINDER)
     p = sub.add_parser('watch', help='wait for quiet, run the pending entries, repeat until none is pending')
     p.add_argument('--quiet-minutes', type=int, default=5)
     p.add_argument('--hours', type=float, default=12, help='give up after this long')
@@ -690,6 +728,8 @@ def main(argv=None):
             receipt = run(load_entry(name), args.force_busy, args.smoke)
             print(json.dumps({'id': name, 'outcome': receipt['outcome'], 'summary': receipt['summary']}, indent=2))
         return 0
+    if args.command == 'hold':
+        return hold(args.argv[1:] if args.argv[:1] == ['--'] else args.argv)
     if args.command == 'watch':
         # Natural quiet (the fiber-wake session's procedure): run when venus has been quiet for --quiet-minutes in a
         # row; a run interrupted by other sessions is recorded as not evidence and stays pending for the next window.

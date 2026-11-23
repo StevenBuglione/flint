@@ -1,5 +1,6 @@
 """Unit tests of the measurement queue's quiet-window rules: `python3 tools/test_measure_queue.py`."""
 import json
+from pathlib import Path
 import socket
 import subprocess
 import sys
@@ -68,6 +69,20 @@ class QuietWindow(unittest.TestCase):
                 measure_queue.OWN_DIRECTORIES[:] = []
                 worker.kill()
                 worker.wait()
+
+    def test_hold_pauses_while_the_lock_exists(self):
+        import tempfile, threading
+        with tempfile.TemporaryDirectory() as directory:
+            lock, out = Path(directory) / 'MEASURING', Path(directory) / 'ticks'
+            lock.write_text('{}')
+            script = f'import time\nfor i in range(30):\n    open({str(out)!r}, "a").write("x")\n    time.sleep(0.1)\n'
+            threading.Timer(2.5, lock.unlink).start()
+            with mock.patch.object(measure_queue, 'LOCK', lock):
+                started = time.monotonic()
+                code = measure_queue.hold([sys.executable, '-c', script])
+            self.assertEqual(code, 0)
+            self.assertGreater(time.monotonic() - started, 4.5)  # 3 s of work plus the ~2 s it was held
+            self.assertEqual(len(out.read_text()), 30)
 
     def test_entries_are_well_formed(self):
         for entry in measure_queue.entries():
