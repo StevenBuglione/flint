@@ -332,7 +332,23 @@ def build_bench_rest(spec, logs):
     return receipt
 
 
-RECIPES = {'bench-rest': build_bench_rest}
+def prepare_checkout(spec, logs):
+    """A detached worktree at the commit with its own native prefix, for `command` steps that run measure_builds
+    there (`in`). The native build runs once; later runs reuse the prefix."""
+    directory, full = worktree(spec['commit'])
+    marker = directory / '.native' / 'install' / 'linux-x86_64-glibc'
+    if not marker.is_dir():
+        log = logs / f'native-{full[:12]}.log'
+        with log.open('wb') as stream:
+            completed = subprocess.run([sys.executable, 'tools/native_build.py', '--profile', 'ci', '--target',
+                                        'linux-x86_64-glibc', '--phase', 'build', '--emit-dub'], cwd=directory,
+                                       env=toolchain_environment(), stdout=stream, stderr=subprocess.STDOUT)
+        if completed.returncode:
+            raise SystemExit(f'the native build at {full[:12]} failed; see {log}')
+    return {'commit': full, 'worktree': str(directory)}
+
+
+RECIPES = {'bench-rest': build_bench_rest, 'checkout': prepare_checkout}
 
 
 def prepare(entry, logs):

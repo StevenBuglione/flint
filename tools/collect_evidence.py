@@ -477,7 +477,7 @@ def collect(args):
                        'native_features': (builds.get('native_inputs') or {}).get('features', []),
                        'native_profile': (builds.get('native_inputs') or {}).get('profile_sha256')})}
     output = {'schema': 1, 'mode': 'production', 'commit': commit, 'environment': environment,
-              'packages': builds['packages'], 'modules': builds['modules'], 'framework': builds.get('framework', {}), 'apps': builds['apps'], 'rest': http['rest'],
+              'packages': builds['packages'], 'modules': builds['modules'], 'framework': builds.get('framework', {}), 'template_count_method': builds.get('template_count_method'), 'apps': builds['apps'], 'rest': http['rest'],
               'go': {'apps': builds['go']['apps'], 'rest': http['go']['rest']},
               'micro': micro, 'gc': gc, 'platforms': platforms, 'receipts': receipts,
               'provenance': {'hardware': hardware_info, 'toolchain': toolchain,

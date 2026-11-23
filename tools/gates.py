@@ -333,6 +333,8 @@ def compare_series(new,old,ceiling,label,minimum=9):
 def measured(current,baseline=None):
     require(current['schema']==1 and (baseline is None or baseline['schema']==1),'evidence schema must equal 1')
     if baseline is not None:
+        # Template counts of different methods are not comparable (measure_builds.TEMPLATE_COUNT_METHOD).
+        require(current.get('template_count_method')==baseline.get('template_count_method'),'template_count_method differs; measure the base again with the same tool')
         for key in ['runner_fingerprint','toolchain_fingerprint','dependency_lock_sha256','workload_sha256']:
             require(current['environment'][key]==baseline['environment'][key],key+' differs; comparisons invalid')
     require(current['environment']['runner_label']==B['runner'],'wrong performance runner')

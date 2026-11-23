@@ -152,3 +152,57 @@ def provisional_report(root=None):
     """{module: [provisional keys]} for the gate output, so placeholders stay visible until replaced."""
     listed = modules(root or Path(__file__).resolve().parents[1])
     return {name: sorted(provisional(name, meta)) for name, meta in sorted(listed.items()) if provisional(name, meta)}
+
+
+HEADROOM = {'seconds': 1.5, 'rss': 1.25}
+
+
+def apply(root, result, headroom_seconds=HEADROOM['seconds'], headroom_rss=HEADROOM['rss'], receipt=None):
+    """Replace each module's provisional timed budgets with measured values plus headroom, from a production
+    `measure_builds.py --framework-builds` result; returns {module: {key: (old, new)}}. Only provisional keys
+    change: a budget that was already measured is never raised by this step (AGENTS.md: no raising caps)."""
+    require(result.get('mode') == 'framework-builds', 'apply takes a measure_builds --framework-builds result')
+    path = Path(root) / 'policy' / 'framework.json'
+    document = json.loads(path.read_text(encoding='utf-8'))
+    changes = {}
+    for name, row in result['framework'].items():
+        meta = document['modules'].get(name)
+        require(meta is not None, f'{name}: measured but not listed in policy/framework.json')
+        keys = [key for key in meta.get('provisional', []) if key in SECONDS or key == 'compiler_peak_rss_bytes']
+        for key in keys:
+            if key in SECONDS:
+                samples = row[key]
+                require(len(samples) >= 9, f'{name}: {key} needs 9 samples')
+                value = math.ceil(statistics.median(samples) * headroom_seconds * 100) / 100
+            else:
+                mib = 1 << 20
+                value = math.ceil(row[key] * headroom_rss / mib) * mib
+            changes.setdefault(name, {})[key] = (meta['budget'][key], value)
+            meta['budget'][key] = value
+        remaining = [key for key in meta.get('provisional', []) if key not in keys]
+        if remaining:
+            meta['provisional'] = remaining
+        else:
+            meta.pop('provisional', None)
+        if keys:
+            meta['budget_source'] = {'measured': receipt or 'measure_builds --framework-builds',
+                                     'headroom': {'seconds': headroom_seconds, 'compiler_peak_rss_bytes': headroom_rss}}
+    path.write_text(json.dumps(document, indent=1, ensure_ascii=False) + '\n', encoding='utf-8')
+    return changes
+
+
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser(description='framework.json budgets: apply measured timings to provisional keys')
+    sub = parser.add_subparsers(dest='command', required=True)
+    p = sub.add_parser('apply')
+    p.add_argument('result', type=Path, help='a production measure_builds --framework-builds result')
+    p.add_argument('--receipt', help='the measurement queue receipt this result came from')
+    p.add_argument('--headroom-seconds', type=float, default=HEADROOM['seconds'])
+    p.add_argument('--headroom-rss', type=float, default=HEADROOM['rss'])
+    args = parser.parse_args()
+    measured = json.loads(args.result.read_text())
+    for module, keys in apply(Path(__file__).resolve().parents[1], measured, args.headroom_seconds, args.headroom_rss,
+                              args.receipt).items():
+        for key, (old, new) in keys.items():
+            print(f'{module}: {key} {old} -> {new}')

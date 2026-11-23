@@ -86,5 +86,31 @@ class FrameworkBudgets(unittest.TestCase):
             self.assertEqual(framework_budgets.provisional_report('.'), {})
 
 
+class ApplyMeasured(unittest.TestCase):
+    def test_only_provisional_keys_take_measured_values(self):
+        import json, tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / 'policy').mkdir()
+            meta = dict(LISTED['core'], budget=dict(BUDGET),
+                        provisional=['dmd_cold_seconds', 'ldc_cold_seconds', 'compiler_peak_rss_bytes'])
+            (root / 'policy' / 'framework.json').write_text(json.dumps({'schema': 'flint.framework/1',
+                                                                         'modules': {'core': meta}}, indent=1) + '\n')
+            result = {'mode': 'framework-builds', 'framework': {'core': row()}}
+            changes = framework_budgets.apply(root, result, receipt='queue receipt')
+            written = json.loads((root / 'policy' / 'framework.json').read_text())['modules']['core']
+        self.assertEqual(set(changes['core']), {'dmd_cold_seconds', 'ldc_cold_seconds', 'compiler_peak_rss_bytes'})
+        self.assertEqual(written['budget']['dmd_cold_seconds'], 0.76)  # median 0.502 x 1.5, rounded up to 0.01
+        self.assertEqual(written['budget']['compiler_peak_rss_bytes'], 597 << 20)  # 5e8 x 1.25, up to a MiB
+        self.assertEqual(written['budget']['dmd_incremental_seconds'], BUDGET['dmd_incremental_seconds'])
+        self.assertNotIn('provisional', written)
+        self.assertEqual(written['budget_source']['measured'], 'queue receipt')
+
+    def test_apply_refuses_other_results(self):
+        with self.assertRaises(ValueError):
+            framework_budgets.apply('.', {'mode': 'framework-sizes', 'framework': {}})
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -20,6 +20,7 @@ from pathlib import Path
 import re
 import shlex
 import shutil
+import statistics
 import subprocess
 import sys
 import tempfile
@@ -29,6 +30,9 @@ import module_budgets
 import profiles
 
 ROOT = Path(__file__).resolve().parents[1]
+# How template instances are counted: version 2 traces the package's own `-lib` compile as well as `-c` compiles
+# (ADR-019: "own library and probe"). Counts of different versions are not comparable; gates.py refuses to.
+TEMPLATE_COUNT_METHOD = 'own-library-and-probe/2'
 NATIVE_BLOCK = re.compile(r'\n// BEGIN FLINT NATIVE\n.*?// END FLINT NATIVE\n', re.S)
 
 
@@ -305,7 +309,9 @@ def expand(values, depth=0):
             result.append(value)
     return result
 expanded = expand(args)
-if '-c' not in expanded or any('dub_platform_probe_' in value for value in expanded):
+# DUB compiles a library target in one `-lib` invocation (compile and archive, no `-c`); ADR-019 counts the
+# package's own library as well as its probe, so both kinds are traced.
+if not ('-c' in expanded or '-lib' in expanded) or any('dub_platform_probe_' in value for value in expanded):
     os.execv(compiler, [compiler] + args)
 identity = uuid.uuid4().hex
 trace = traces / (identity + '.trace.json')
@@ -558,7 +564,11 @@ def main(argv=None):
                         help='only the stripped O3 and Oz sizes of bench-cli and bench-rest')
     parser.add_argument('--framework-sizes', action='store_true',
                         help='only the linked bytes and template instances of the policy/framework.json modules')
-    parser.add_argument('--framework', action='append', help='with --framework-sizes, measure only this module')
+    parser.add_argument('--framework-builds', action='store_true',
+                        help='only the policy/framework.json modules, measured in full as packages are: nine cold and '
+                             'edited DMD and LDC builds, compiler peak RSS, template instances and linked bytes')
+    parser.add_argument('--framework', action='append',
+                        help='with --framework-sizes or --framework-builds, measure only this module')
     parser.add_argument('--app', action='append', choices=['bench-cli', 'bench-rest'],
                         help='with --apps-only or --app-sizes, measure only this app (the gate needs both)')
     parser.add_argument('--spring', action='store_true',
@@ -582,10 +592,10 @@ def main(argv=None):
     workspace_commits = pinned_workspace(args.workspace)
     if args.app and not (args.apps_only or args.app_sizes):
         raise RuntimeError('--app applies only to --apps-only and --app-sizes')
-    if sum((args.apps_only, args.app_sizes, args.framework_sizes)) > 1:
-        raise RuntimeError('--apps-only, --app-sizes and --framework-sizes are separate measurements')
-    if args.framework and not args.framework_sizes:
-        raise RuntimeError('--framework applies only to --framework-sizes')
+    if sum((args.apps_only, args.app_sizes, args.framework_sizes, args.framework_builds)) > 1:
+        raise RuntimeError('--apps-only, --app-sizes, --framework-sizes and --framework-builds are separate measurements')
+    if args.framework and not (args.framework_sizes or args.framework_builds):
+        raise RuntimeError('--framework applies only to --framework-sizes and --framework-builds')
     host = (sys.platform, os.uname().machine if hasattr(os, 'uname') else '')
     if not args.apps_only and host not in (('linux', 'x86_64'), ('darwin', 'arm64')):
         raise RuntimeError('measurement runners are Linux x86-64 and macOS arm64 (ADR-025); '
@@ -593,7 +603,7 @@ def main(argv=None):
     manifest = json.loads(args.manifest.read_text())
     packages = json.loads((ROOT / 'policy/packages.json').read_text())['packages']
     # --app-sizes builds only the apps, so it does not need every package's probes.
-    if manifest['schema'] != 1 or (set(manifest['packages']) != set(packages) and not (args.app_sizes or args.framework_sizes)):
+    if manifest['schema'] != 1 or (set(manifest['packages']) != set(packages) and not (args.app_sizes or args.framework_sizes or args.framework_builds)):
         raise RuntimeError('build manifest must specify every package of policy/packages.json')
     if manifest['samples'] != 9:
         raise RuntimeError('production build evidence requires exactly 9 samples')
@@ -616,7 +626,7 @@ def main(argv=None):
     try:
         framework_fixtures = ({} if args.apps_only or args.app_sizes else
                               framework_budgets.load(ROOT, require_budget=not args.framework_sizes))
-        if args.framework_sizes and args.framework:
+        if (args.framework_sizes or args.framework_builds) and args.framework:
             unknown = sorted(set(args.framework) - set(framework_fixtures))
             if unknown:
                 raise RuntimeError('--framework names modules without a probe: ' + ', '.join(unknown))
@@ -677,7 +687,7 @@ def main(argv=None):
     args.output.parent.mkdir(parents=True, exist_ok=True)
     logs = args.output.parent / 'build-logs'
     logs.mkdir(exist_ok=True)
-    result = {'schema': 1, 'mode': 'production', 'commit': commit,
+    result = {'schema': 1, 'mode': 'production', 'commit': commit, 'template_count_method': TEMPLATE_COUNT_METHOD,
               'producer': 'tools/measure_builds.py', 'command': [sys.executable] + sys.argv,
               'exit_code': 0, 'toolchains': tools, 'manifest_sha256': digest(args.manifest),
               'native_inputs': native_inputs, 'workspace': workspace_commits,
@@ -861,6 +871,22 @@ def main(argv=None):
             sizes[profile]['signed_delta_bytes'] = difference
             differences.append(difference)
         return max(0, *differences), sizes
+    if args.framework_builds:
+        # The timed budget inputs of each framework module as well: what replaces the provisional compile-time and
+        # compiler-RSS placeholders of policy/framework.json (framework_budgets.py apply).
+        result['mode'] = 'framework-builds'
+        for name, fixture in framework_fixtures.items():
+            print('Measuring framework module', name, flush=True)
+            row = measured_native(name, fixture)
+            row['size_basis'] = fixture['size_basis']
+            row['incremental_linked_bytes'], row['size_detail'] = size_delta(name, fixture)
+            result['framework'][name] = row
+        args.output.write_text(json.dumps(result, indent=2) + '\n')
+        for name, row in result['framework'].items():
+            print(name, 'dmd cold', round(statistics.median(row['dmd_cold_seconds']), 3), 'ldc cold',
+                  round(statistics.median(row['ldc_cold_seconds']), 3), 'rss', row['compiler_peak_rss_bytes'],
+                  'templates', row['template_instances'], 'linked', row['incremental_linked_bytes'])
+        return 0
     if args.framework_sizes:
         # The deterministic budget inputs of each framework module: linked bytes and template instances.
         result['mode'] = 'framework-sizes'

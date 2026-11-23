@@ -395,6 +395,30 @@ class MeasurementDefinitionTests(unittest.TestCase):
                 gates.measured(document)
 
 
+class TemplateCountMethodTests(unittest.TestCase):
+    """The instrumented compiler traces the package's own `-lib` compile as well as `-c` compiles (ADR-019)."""
+    def run_wrapper(self, arguments):
+        with tempfile.TemporaryDirectory() as temporary:
+            temporary = Path(temporary)
+            fake = temporary / 'fake-dmd'
+            fake.write_text('#!/bin/sh\necho "vtemplate: 7 (3 distinct) instantiation(s) of template x"\n')
+            fake.chmod(0o755)
+            wrapper = builds.instrumented_compiler(temporary, fake, temporary / 'traces')
+            subprocess.run([str(wrapper), *arguments], check=True, capture_output=True)
+            return len(list((temporary / 'traces').glob('*.invocation.json')))
+
+    def test_library_and_object_compiles_are_traced(self):
+        self.assertEqual(self.run_wrapper(['-lib', '-oflibx.a', 'packages/x/source/x.d']), 1)
+        self.assertEqual(self.run_wrapper(['-c', 'packages/x/source/x.d']), 1)
+        self.assertEqual(self.run_wrapper(['-ofapp', 'app.o']), 0)
+
+    def test_methods_must_match_for_regression(self):
+        base, current = synthetic_evidence('a' * 40, .8), synthetic_evidence('b' * 40, .8)
+        base['template_count_method'] = 'own-library-and-probe/2'
+        with self.assertRaisesRegex(ValueError, 'template_count_method differs'):
+            gates.measured(current, base)
+
+
 class PublishedBinaryTests(unittest.TestCase):
     """Synthetic byte files test integrity only; none is a framework executable."""
     def setUp(self):
