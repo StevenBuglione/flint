@@ -195,7 +195,11 @@ def cut(flint, extracted, github):
     return removed
 
 
-def check(name, command, cwd, env, results, timeout=3600):
+CHECK_TIMEOUT = 3600
+
+
+def check(name, command, cwd, env, results, timeout=None):
+    timeout = timeout or CHECK_TIMEOUT
     try:
         done = subprocess.run(command, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout)
         ok, tail = done.returncode == 0, (done.stdout + done.stderr)[-3000:]
@@ -274,7 +278,11 @@ def main():
     parser.add_argument('--remote', default='git@github.com:{github}.git')
     parser.add_argument('--target', default='linux-x86_64-glibc', help='native target of this checkout\'s install')
     parser.add_argument('--skip-checks', action='store_true', help='stop after the fetch')
+    parser.add_argument('--check-timeout', type=int, default=3600,
+                        help='seconds each check may take (the Python suite needs more on a small Windows VM)')
     arguments = parser.parse_args()
+    global CHECK_TIMEOUT
+    CHECK_TIMEOUT = arguments.check_timeout
     into = arguments.into.resolve()
     if run(['git', 'filter-repo', '--version'], check=False).returncode != 0:
         raise SystemExit('tools/cutover.py needs git filter-repo on PATH (pip install git-filter-repo, or brew install '
