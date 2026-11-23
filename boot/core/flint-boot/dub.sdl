@@ -1,0 +1,16 @@
+name "boot"
+description "Flint Boot core (spring-boot v4.2.0 core/spring-boot): FlintApplication, configuration data and binding, the banner, failure analysis and console logging"
+license "Apache-2.0"
+targetType "library"
+sourcePaths "source"
+importPaths "source"
+dflags "-preview=dip1000"
+
+configuration "library" {
+    targetType "library"
+}
+configuration "unittest" {
+    targetType "library"
+    sourcePaths "source" "tests"
+    importPaths "source" "tests"
+}
