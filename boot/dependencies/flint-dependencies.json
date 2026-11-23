@@ -43,6 +43,10 @@
       "repo": "ai",
       "version": "monorepo"
     },
+    "flint:engine-aot": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:engine-cache": {
       "repo": "framework",
       "version": "monorepo"
@@ -144,6 +148,10 @@
       "version": "monorepo"
     },
     "flint:jakarta-annotation": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
+    "flint:java": {
       "repo": "framework",
       "version": "monorepo"
     },

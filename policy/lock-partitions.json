@@ -36,6 +36,7 @@
   },
   "peers": {
     "flint": [
+      "graalvm",
       "jdk",
       "maven",
       "spring-boot"
