@@ -1,0 +1,33 @@
+diff --git a/src/dparse/ast.d b/src/dparse/ast.d
+index ebc24d3..c58f007 100644
+--- a/src/dparse/ast.d
++++ b/src/dparse/ast.d
+@@ -1019,9 +1019,11 @@ final class AtAttribute : BaseNode
+ {
+     override void accept(ASTVisitor visitor) const
+     {
+-        mixin (visitIfNotNull!(templateInstance, argumentList, templateSingleArgument));
++        mixin (visitIfNotNull!(templateInstance, argumentList, namedArgumentList, templateSingleArgument));
+     }
+ 
++    /// Set instead of $(LREF argumentList) for `@identifier(name: value, ...)` (named arguments).
++    NamedArgumentList namedArgumentList;
+     /// Set for all of `@identifier(argumentList)`,
+     /// `@templateInstance!T(argumentList)` and `@(argumentListInParens)`.
+     ArgumentList argumentList;
+diff --git a/src/dparse/parser.d b/src/dparse/parser.d
+index d2ba1c4..6c244da 100644
+--- a/src/dparse/parser.d
++++ b/src/dparse/parser.d
+@@ -1254,7 +1254,10 @@ class Parser
+             {
+                 advance(); // (
+                 node.useParen = true;
+-                if (!currentIs(tok!")"))
++                // A UDA constructed with named arguments, `@Attr(name: value)` (DIP1030, D 2.108).
++                if (currentIs(tok!"identifier") && peekIs(tok!":"))
++                    mixin(parseNodeQ!(`node.namedArgumentList`, `NamedArgumentList`));
++                else if (!currentIs(tok!")"))
+                     mixin(parseNodeQ!(`node.argumentList`, `ArgumentList`));
+                 mixin(tokenCheck!")");
+             }
