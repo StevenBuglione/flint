@@ -3,7 +3,8 @@ Flint's garbage collector (ADR-030 section 4, owner decision b515505b).
 
 When flint:arena is compiled with `-version=FlintCollector`, importing this module links the collector into the
 program, registered with druntime under the name `flint`; without that version (the default until the collector is
-measured to beat druntime's, gc.md) the program carries no second collector, and the functions below report it.
+measured to beat druntime's, gc.md) the program carries no second collector. The allocation counter below
+works over whichever collector runs, druntime's by default.
 druntime still starts its own collector unless the program selects this one, either at run time with
 `--DRT-gcopt=gc:flint` or in the binary with `extern (C) __gshared string[] rt_options = ["gcopt=gc:flint"];`.
 Selecting `gc:conservative` switches back.
@@ -17,6 +18,7 @@ module flint.arena.gc;
 @safe:
 
 static import flint.arena.sys.gc.collector;
+static import flint.arena.sys.gc.counting;
 
 /// The name to select with `--DRT-gcopt=gc:<name>` or `rt_options`.
 enum collectorName = "flint";
@@ -26,19 +28,55 @@ struct Allocations
 {
     /// Allocations made.
     ulong count;
-    /// Bytes they took, rounded up to the collector's block sizes.
+    /// Bytes the collector counted for them (`GC.stats().allocatedInCurrentThread`), block sizes included.
     ulong bytes;
 }
 
 /++
-The allocations every thread but the caller has made so far, as the Flint collector counts them; false when another
-collector runs. The per-request allocation gate (policy/request-allocations.json) reads it before and after a test
-client's requests, which a server answers on its own threads. A thread counts an allocation before returning it.
+Put a counting proxy in front of the running collector (druntime's own in shipped programs), for the per-request
+allocation gate (policy/request-allocations.json). Every call is forwarded unchanged; each thread counts its
+allocations, and the bytes the collector itself counts for them. Call it before starting the threads to count.
+False when it is installed already.
 +/
+bool installAllocationCounter() nothrow
+{
+    return flint.arena.sys.gc.counting.install();
+}
+
+/// Remove the counting proxy.
+void uninstallAllocationCounter() nothrow
+{
+    flint.arena.sys.gc.counting.uninstall();
+}
+
+/// The allocations every thread but the caller has made since it first allocated under the counting proxy; false
+/// when the proxy is not installed. A thread counts an allocation before returning it.
 bool otherThreadsAllocations(out Allocations totals) nothrow @nogc
 {
-    version (FlintCollector)
-        return flint.arena.sys.gc.collector.otherThreadsAllocations(totals.count, totals.bytes);
-    else
+    if (!flint.arena.sys.gc.counting.isInstalled())
         return false;
+    flint.arena.sys.gc.counting.otherThreads(totals.count, totals.bytes);
+    return true;
+}
+
+/// The calling thread's allocations under the counting proxy; false when it is not installed.
+bool thisThreadAllocations(out Allocations totals) nothrow @nogc
+{
+    if (!flint.arena.sys.gc.counting.isInstalled())
+        return false;
+    flint.arena.sys.gc.counting.thisThread(totals.count, totals.bytes);
+    return true;
+}
+
+/// Record the call site of every counted allocation (Linux), clearing earlier records; or stop recording.
+void recordAllocationSites(bool on) nothrow @nogc
+{
+    flint.arena.sys.gc.counting.recordCallSites(on);
+}
+
+/// The `limit` functions that made the most recorded allocations on other threads, as "count  function" lines.
+/// Stop recording first.
+string[] topAllocationSites(size_t limit)
+{
+    return flint.arena.sys.gc.counting.topSites(limit);
 }

@@ -221,89 +221,6 @@ private struct ThreadCache
 
 private ThreadCache threadCache; // Flint: thread-local by design (policy/safety-policy.json)
 
-/* ===================== Flint: allocation totals per thread (policy/request-allocations.json) ===================== */
-
-/++
-One thread's GC allocations and their bytes. The owner adds with relaxed atomic stores (plain moves on x86), so
-other threads can read the totals with atomic loads; the registry links the records of threads that allocated, under
-the GC lock.
-+/
-private struct ThreadAllocations
-{
-    shared ulong count;
-    shared ulong bytes;
-    ThreadAllocations* next;
-    ThreadBase owner;
-    bool registered;
-}
-
-private ThreadAllocations threadAllocations; // Flint: thread-local by design (policy/safety-policy.json)
-private __gshared ThreadAllocations* allocationThreads; // under the GC lock
-private __gshared bool flintSelected; // the Flint collector is the one druntime runs
-
-/// Add one allocation of `bytes` to this thread's totals.
-private void countAllocation(size_t bytes) nothrow @nogc
-{
-    import core.atomic : MemoryOrder, atomicLoad, atomicStore;
-
-    atomicStore!(MemoryOrder.raw)(threadAllocations.count, atomicLoad!(MemoryOrder.raw)(threadAllocations.count) + 1);
-    atomicStore!(MemoryOrder.raw)(threadAllocations.bytes,
-            atomicLoad!(MemoryOrder.raw)(threadAllocations.bytes) + bytes);
-}
-
-/// Link this thread's totals into the registry, once; the caller holds the GC lock.
-private void registerAllocations() nothrow @nogc
-{
-    if (threadAllocations.registered)
-        return;
-    threadAllocations.owner = ThreadBase.getThis();
-    threadAllocations.next = allocationThreads;
-    allocationThreads = &threadAllocations;
-    threadAllocations.registered = true;
-}
-
-/// Unlink the totals `owner` registered; the caller holds the GC lock.
-private void unregisterAllocations(ThreadBase owner) nothrow @nogc
-{
-    for (auto link = &allocationThreads; *link !is null; link = &(*link).next)
-    {
-        if ((*link).owner is owner)
-        {
-            auto record = *link;
-            *link = record.next;
-            record.registered = false;
-            record.next = null;
-            return;
-        }
-    }
-}
-
-/++
-The GC allocations and bytes of every thread except the caller, since each first allocated, when the Flint
-collector is the one running; false otherwise. A thread counts an allocation before returning it, so the totals
-include every allocation a thread completed before the caller observed its effect.
-+/
-// SAFETY: Takes the GC lock, so no record is linked or unlinked meanwhile, and reads each registered record's shared
-// counters with atomic loads; a record's TLS lives until its thread's cleanupThread unlinks it under the same lock.
-@trusted bool otherThreadsAllocations(out ulong count, out ulong bytes) nothrow @nogc
-{
-    import core.atomic : MemoryOrder, atomicLoad;
-
-    if (!flintSelected)
-        return false;
-    ConservativeGC.lockNR();
-    scope (exit)
-        ConservativeGC.gcLock.unlock();
-    for (auto record = allocationThreads; record !is null; record = record.next)
-    {
-        if (record is &threadAllocations)
-            continue;
-        count += atomicLoad!(MemoryOrder.raw)(record.count);
-        bytes += atomicLoad!(MemoryOrder.raw)(record.bytes);
-    }
-    return true;
-}
-
 private
 {
     extern (C)
@@ -401,7 +318,6 @@ class ConservativeGC : GC
         // Flint: the precise collector records a pointer bitmap and a forked collection marks new objects, both
         // under the lock at each allocation, so only the conservative, non-forking collector uses thread caches.
         threadCaches = !isPrecise && !config.fork;
-        flintSelected = true;
     }
 
     /// Flint: whether allocations go through the per-thread caches.
@@ -755,7 +671,6 @@ class ConservativeGC : GC
                     threadCache.slots[bin][cls][n] = null;
                     alloc_size = binsize[bin];
                     bytesAllocated += alloc_size;
-                    countAllocation(alloc_size);
                     return p;
                 }
             }
@@ -777,7 +692,6 @@ class ConservativeGC : GC
             threadCache.slots[bin][cls][n++] = p;
         }
         threadCache.count[bin][cls] = cast(ubyte) n;
-        registerAllocations();
         return n;
     }
 
@@ -803,8 +717,6 @@ class ConservativeGC : GC
         }
         gcx.leakDetector.log_malloc(p, size);
         bytesAllocated += alloc_size;
-        registerAllocations(); // Flint: under the lock
-        countAllocation(alloc_size);
 
         debug (PRINTF)
             printf("  => p = %p\n", p);
@@ -1901,11 +1813,6 @@ class ConservativeGC : GC
     {
         cleanupBlkCache(t.tlsGCData);
         t.tlsGCData = null;
-        // Flint: forget the thread's allocation totals before its TLS goes away.
-        lockNR();
-        scope (exit)
-            gcLock.unlock();
-        unregisterAllocations(t);
     }
 }
 
