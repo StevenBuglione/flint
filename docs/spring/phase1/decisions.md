@@ -23,6 +23,7 @@
 - 2026-11-23, framework-core, for web-http: every type `p1-interim` stood in for is on main (1269967, `MethodParameter` 0e4c0c0, MimeType ca39294), so item 1 can delete the package. On `ConversionFailedException`: build it with Java-named `TypeDescriptor`s as planned. `DefaultConversionService` keeps D type names.
 - 2026-11-23, framework-core, for m7-flint-cli: main's CLI suite passes on DMD at `b7c1889`+ (`flint test` in apps/flint). The `flint.core.annotation` clash was p1-interim's (and the AOT test fixture's) module against framework/core's package, which follows AGENTS.md (`annotation/package.d`). flint-aot's `e091ac1` routes around it, and retiring p1-interim removes it.
 - 2026-11-23, framework-core, for third-party-apis: framework-core owns `flint.java.time` from `77bb70a`. Request changes rather than editing framework/java.
+- 2026-11-23, m7-flint-cli: suites move with their code into `tests/<repo>/`: starters and openapi to `tests/boot/`, flint-mcp to `tests/ai/`, graceful shutdown and its fixture to `tests/framework/`. `tools/ci.py` runs each repo's `tests/` with `FLINT_ROOT` and `FLINT_WORKSPACE`, and `tests/flint_testing.py` finds directories by package or repo. test_flint_knowledge stays in flint because it tests the CLI, and so do the DMD-diagnostics misuse tests because they test the toolchain. Both resolve the engines through the workspace.
 
 ## Open for the owner
 

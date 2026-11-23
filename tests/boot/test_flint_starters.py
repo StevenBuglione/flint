@@ -11,6 +11,10 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+import os
+import sys
+sys.path.insert(0, str(Path(os.environ.get('FLINT_ROOT') or Path(__file__).resolve().parents[2]) / 'tests'))
+from flint_testing import FLINT_ROOT, package_dir, repo_dir  # noqa: E402,F401
 from test_flint_cli import FLINT, ROOT, codes, environment, flint_json, setUpModule  # noqa: F401
 
 CONDITIONAL_APP = '''module shop.app;
@@ -94,7 +98,7 @@ class StarterWebTests(unittest.TestCase):
 
     def test_the_example_serves_an_ordinary_handler_with_configuration(self):
         # Built in place: the example's lock is a workspace lock.
-        project = ROOT / 'starters/web/example'
+        project = package_dir('starter-web') / 'example'
         built = subprocess.run([str(FLINT), 'build', '--json'], cwd=project, capture_output=True, text=True,
                                env=environment())
         self.assertEqual(built.returncode, 0, built.stdout[-3000:])
@@ -136,7 +140,7 @@ class StarterWebTests(unittest.TestCase):
 
 class StarterObservabilityTests(unittest.TestCase):
     def test_health_readiness_and_an_application_counter_are_served(self):
-        project = ROOT / 'starters/actuator/example'
+        project = package_dir('starter-actuator') / 'example'
         built = subprocess.run([str(FLINT), 'build', '--json'], cwd=project, capture_output=True, text=True,
                                env=environment())
         self.assertEqual(built.returncode, 0, built.stdout[-3000:])
@@ -171,7 +175,7 @@ class StarterObservabilityTests(unittest.TestCase):
 
 class StarterDataTests(unittest.TestCase):
     def test_the_notes_example_migrates_validates_and_keeps_data_across_restarts(self):
-        project = ROOT / 'starters/data-jdbc/example'
+        project = package_dir('starter-data-jdbc') / 'example'
         built = subprocess.run([str(FLINT), 'build', '--json'], cwd=project, capture_output=True, text=True,
                                env=environment())
         self.assertEqual(built.returncode, 0, built.stdout[-3000:])
@@ -228,7 +232,7 @@ class OpenApiTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix='flint-openapi-') as temporary:
             document_path = Path(temporary) / 'openapi.json'
             client_path = Path(temporary) / 'client.ts'
-            result = subprocess.run([str(FLINT), 'openapi', '-C', str(ROOT / 'starters/web/example'), '-o',
+            result = subprocess.run([str(FLINT), 'openapi', '-C', str(package_dir('starter-web') / 'example'), '-o',
                                      str(document_path), '--typescript', str(client_path)], capture_output=True,
                                     text=True, env=environment())
             self.assertEqual(result.returncode, 0, result.stderr[-3000:])
@@ -242,7 +246,7 @@ class OpenApiTests(unittest.TestCase):
             client = client_path.read_text()
             self.assertIn('export interface Message {\n  text: string;\n}', client)
             self.assertIn('greetingGet(name: string): Promise<Message>', client)
-            refused = flint_json('openapi', cwd=ROOT / 'benchmarks/vibe/reference/flint/cli-todo')
+            refused = flint_json('openapi', cwd=FLINT_ROOT / 'benchmarks/vibe/reference/flint/cli-todo')
             self.assertEqual(codes(refused[1]), ['FLINT-E0004'])
 
 
@@ -290,7 +294,7 @@ struct OrderController
 
 class ConventionTests(unittest.TestCase):
     def test_the_starter_example_has_no_handler_attributes(self):
-        status, document = flint_json('check', cwd=ROOT / 'starters/web/example')
+        status, document = flint_json('check', cwd=package_dir('starter-web') / 'example')
         self.assertEqual(status, 0, document)
         self.assertEqual((document['handlers'], document['handler_attributes']), (1, 0))
 

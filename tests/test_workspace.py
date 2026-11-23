@@ -116,6 +116,7 @@ class PlatformModuleTests(unittest.TestCase):
     def test_a_project_outside_the_checkout_locks_each_package_at_its_platform_version(self):
         flint = ROOT / '.flint/bin/flint'
         with tempfile.TemporaryDirectory(prefix='flint-platform-') as temporary:
+            temporary = str(Path(temporary).resolve())  # macOS: /var is a symlink to /private/var
             created = subprocess.run([str(flint), 'new', 'shop'], cwd=temporary, capture_output=True, text=True)
             self.assertEqual(created.returncode, 0, created.stderr)
             project = Path(temporary) / 'shop'
@@ -173,8 +174,9 @@ class ExtractionTests(unittest.TestCase):
         import extract_repo
 
         # A repo with an API mapping takes api/<repo>, which extraction renames to api/.
-        self.assertEqual(extract_repo.moving_paths('boot'), ['api/boot', 'boot', 'starters'])
-        self.assertEqual(extract_repo.moving_paths('ai'), ['apps/flint-mcp', 'packages/engine-ai', 'packages/engine-mcp'])
+        self.assertEqual(extract_repo.moving_paths('boot'), ['api/boot', 'boot', 'starters', 'tests/boot'])
+        self.assertEqual(extract_repo.moving_paths('ai'), ['apps/flint-mcp', 'packages/engine-ai', 'packages/engine-mcp',
+                                                         'tests/ai'])
         self.assertEqual(extract_repo.moving_paths('data-jdbc'), ['packages/engine-data'])
         framework = extract_repo.moving_paths('framework')
         self.assertIn('packages/engine-security', framework)
@@ -182,7 +184,8 @@ class ExtractionTests(unittest.TestCase):
         self.assertNotIn('packages/arena', framework)
         self.assertIn('native/framework', framework)  # flint_ffi_framework's project, native/ once extracted
         self.assertIn('examples/framework', framework)  # the engines' golden applications, examples/ once extracted
-        self.assertEqual(len(framework), len(workspace.packages_of('framework')) + 3)
+        self.assertIn('tests/framework', framework)  # its suites, tests/ once extracted
+        self.assertEqual(len(framework), len(workspace.packages_of('framework')) + 4)
         self.assertEqual(extract_repo.moving_paths('batch'), [])
 
     @monorepo_only

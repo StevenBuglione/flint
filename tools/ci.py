@@ -276,11 +276,27 @@ def wasm_betterc(runner):
                     *import_flags(),fixture,'-of='+str(output)])
         runner.run(['node','tests/wasm/betterc.mjs',output])
 
+def repo_suites():
+    """Every repo's own suites, which the flint repo's tooling runs (coordinator's decision 3): tests/<repo>/ in
+    the monorepo, or each checkout's tests/ of the workspace FLINT_WORKSPACE names."""
+    sys.path.insert(0,str(ROOT/'tools'))
+    import workspace
+    named=os.environ.get('FLINT_WORKSPACE')
+    if named:
+        pinned=workspace.Workspace(named)
+        return [(repo,path/'tests') for repo,(path,_) in sorted(pinned.checkouts.items())
+                if repo!='flint' and (path/'tests').is_dir()]
+    repos=workspace.repo_policy(ROOT)['repos']
+    return [(repo,ROOT/'tests'/repo) for repo in sorted(repos) if repo!='flint' and (ROOT/'tests'/repo).is_dir()]
+
 def check(runner,gate):
     if not runner.plan:implementation_required()
     if gate=='quality':
         runner.run([PYTHON,'tools/quality.py'])
         runner.run([PYTHON,'-m','unittest','discover','-s','tests','-p','test_*.py'])
+        for _,suites in repo_suites():
+            runner.run([PYTHON,'-m','unittest','discover','-s',suites,'-p','test_*.py'],
+                       env=dict(os.environ,FLINT_ROOT=str(ROOT)))
         runner.run([PYTHON,'tools/test_guards.py'])
     elif gate=='dag':runner.run([PYTHON,'tools/gates.py','--gate','structural'])
     elif gate=='api':
