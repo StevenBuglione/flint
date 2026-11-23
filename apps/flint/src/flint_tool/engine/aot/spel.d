@@ -266,6 +266,12 @@ private struct Parser
     size_t position;
     string error;
 
+    this(Token[] tokens, SpelScope scope_)
+    {
+        this.tokens = tokens;
+        this.scope_ = scope_;
+    }
+
     bool peek(string text)
     {
         return position < tokens.length && tokens[position].kind != Kind.text && tokens[position].text == text;
