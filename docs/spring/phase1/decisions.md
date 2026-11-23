@@ -19,3 +19,23 @@
 ## Open for the owner
 
 - 2026-11-23, proof-harness: with the corrected template count (own library plus probe, `d153fd1`), some of the 37 packages' `template_instances` budgets in `policy/packages.json` may now be exceeded. The old count left out each package's own library compile. Raising a budget is the owner's decision. Until then, any package over its budget fails the measured gate, and no cap has been changed.
+- 2026-11-23, size-levers: the framework modules' `template_instances` budgets in `policy/framework.json` were set from the old count, which left out each module's own `-lib` compile. Recounted with `own-library-and-probe/2` (`measure_builds --framework-sizes` at `bf5f5a64ed`), 13 of 15 exceed them. Proposed for the modules over budget: the recount times 1.25, rounded up to 50, the rule the first budgets used. `policy/framework.json` is unchanged until the owner decides, so the measured gate shows the overages. One decision can cover these and the 37 packages' template budgets parked above.
+
+  | Module | Budget | Recount | Proposed |
+  | --- | ---: | ---: | ---: |
+  | beans | 800 | 2,272 | 2,850 |
+  | context | 1,150 | 2,808 | 3,550 |
+  | core | 750 | 12,564 | 15,750 |
+  | engine-aot | 400 | 5,748 | 7,200 |
+  | engine-jdbc | 500 | 6,660 | 8,350 |
+  | hibernate-validator | 1,050 | 10,189 | 12,750 |
+  | jackson-annotations | 350 | 329 | unchanged |
+  | jackson-core | 350 | 5,600 | 7,000 |
+  | jackson-databind | 700 | 4,598 | 5,750 |
+  | jakarta-annotation | 350 | 293 | unchanged |
+  | jakarta-validation | 350 | 547 | 700 |
+  | java | 3,350 | 7,465 | 9,350 |
+  | jdbc | 750 | 2,210 | 2,800 |
+  | slf4j-api | 900 | 5,097 | 6,400 |
+  | tx | 2,350 | 6,942 | 8,700 |
+- 2026-11-23, size-levers: `tx` now links 231,800 bytes, over its 229,376 budget. It linked 176,408 when the budget was set on 2026-11-23 (`00b2749`), and data-access has added code since. This is drift caught by the gate, not a measurement change. data-access is told; raising the budget or trimming the module is for the owner and data-access.
