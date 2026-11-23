@@ -35,7 +35,8 @@ python3 tools/vibe_bench.py report benchmarks/vibe/results/*.json
   It also writes `PROMPT.md`: a language preamble followed by `TASK.md`.
 - `accept` builds a workspace and runs the acceptance test. With `--json` it saves the record.
 - `run` prepares a workspace, runs the agent, then scores the workspace.
-  - **Flint runs:** the agent gets only the `flint` MCP server (`flint mcp --log`) and file tools, with no shell.
+  - **Flint runs:** with Claude Code, the agent gets only the `flint` MCP server (`flint mcp --log`) and file tools, with no shell. Codex can't withhold its shell, so Codex runs have the shell in every language. Logging shims count the `flint`, `dub`, `dmd` and `ldc2` builds started through it, as they do for `go` and `mvn`. Records report `mcp_builds` and `shell_builds` separately, and failures for both.
+  - **The owner's canonical agent:** `--agent codex --model gpt-6.2-sol --effort high` (Codex CLI 0.171.0).
   - **Go and Spring Boot runs:** the agent gets a shell and its usual tools.
   - **`--agent`:** `claude` (Claude Code), `codex` (Codex CLI), or `command` with `--agent-command '<template using {prompt} {dir} {mcp_log} {flint}>'`.
 

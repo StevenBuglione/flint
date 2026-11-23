@@ -174,16 +174,27 @@ def review_size(language, directory):
 
 
 SHIM = """#!/bin/sh
-printf '%s\\n' "$(date +%s%N) $(basename "$0") $*" >> {log}
-exec {real} "$@"
+started=$(date +%s%N)
+{real} "$@"
+status=$?
+printf '%s\\n' "$started $(basename "$0") $* exit=$status" >> {log}
+exit $status
 """
+
+# Build and test commands an agent can start through a shell. Codex has no way to withhold its
+# shell, so Flint runs count these as well as the flint MCP server's build/test/check calls.
+SHELL_LOOP = re.compile(r' (go (build|test|run|vet)|mvn\S* .*(package|test|verify|compile)|gradle .*(build|test|bootJar)|'
+                        r'flint (build|test|run|check)|dub (build|test|run)|dmd |ldc2 )')
 
 
 def shims(directory, log):
-    """Logging wrappers for the build tools the Go and Spring Boot agents call."""
+    """Logging wrappers for the build tools an agent can call through a shell."""
     bin_dir = Path(directory) / 'shims'
     bin_dir.mkdir()
-    for name, real in (('go', str(GO)), ('mvn', shutil.which('mvn')), ('gradle', shutil.which('gradle'))):
+    tools = (('go', str(GO)), ('mvn', shutil.which('mvn')), ('gradle', shutil.which('gradle')),
+             ('flint', str(FLINT) if FLINT.is_file() else None), ('dub', shutil.which('dub')),
+             ('dmd', shutil.which('dmd')), ('ldc2', shutil.which('ldc2')))
+    for name, real in tools:
         if real:
             path = bin_dir / name
             path.write_text(SHIM.format(log=shlex.quote(str(log)), real=shlex.quote(real)))
@@ -191,24 +202,40 @@ def shims(directory, log):
     return bin_dir
 
 
+def shell_loops(shim_log):
+    """Build and test commands started through the shell, as (count, failed)."""
+    lines = shim_log.read_text().splitlines() if shim_log.is_file() else []
+    # A flint or dub command spawns dmd/ldc2 itself; count only the outermost tool of each command.
+    outer = [line for line in lines if SHELL_LOOP.search(line)]
+    nested = {'dmd', 'ldc2'}
+    if any(f' {name} ' in line for line in outer for name in ('flint', 'dub', 'go', 'mvn', 'gradle')):
+        outer = [line for line in outer if line.split(' ', 2)[1] not in nested]
+    failed = sum(not line.endswith(' exit=0') for line in outer)
+    return len(outer), failed
+
+
 def iterations(language, mcp_log, shim_log):
-    """Builds and test runs the agent started, and how many failed (failures are known for MCP calls only)."""
+    """Builds and test runs the agent started, through the flint MCP server or a shell, and how many failed."""
+    shell, shell_failed = shell_loops(shim_log)
     if language == 'flint':
         calls = []
         if mcp_log.is_file():
             calls = [json.loads(line) for line in mcp_log.read_text().splitlines() if line.strip()]
         loops = [c for c in calls if c.get('tool') in ('build', 'test', 'check')]
-        return {'builds': len(loops), 'failed': sum(c.get('exit_code', 0) != 0 for c in loops),
+        mcp_failed = sum(c.get('exit_code', 0) != 0 for c in loops)
+        return {'builds': len(loops) + shell, 'failed': mcp_failed + shell_failed,
+                'mcp_builds': len(loops), 'shell_builds': shell,
                 'knowledge_calls': sum(c.get('tool') in ('search_api', 'get_symbol', 'get_example', 'explain_error')
                                        for c in calls)}
-    lines = shim_log.read_text().splitlines() if shim_log.is_file() else []
-    loops = [line for line in lines if re.search(r' (go (build|test|run|vet)|mvn\S* .*(package|test|verify|compile)|'
-                                                r'gradle .*(build|test|bootJar))', line)]
-    return {'builds': len(loops), 'failed': None}
+    return {'builds': shell, 'failed': shell_failed, 'shell_builds': shell}
 
 
 def agent_command(agent, language, directory, prompt_file, model, mcp_log, template, effort=None):
-    """The agent's command line. Flint runs get only the flint MCP server and file tools; the others get a shell."""
+    """The agent's command line.
+
+    Claude Code's Flint runs get only the flint MCP server and file tools. Codex cannot withhold its
+    shell, so its runs have a shell in every language; shell builds are counted through the shims.
+    """
     text = Path(prompt_file).read_text()
     if agent == 'claude':
         command = ['claude', '-p', text, '--output-format', 'json', '--permission-mode', 'acceptEdits']
