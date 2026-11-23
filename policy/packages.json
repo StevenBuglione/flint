@@ -741,22 +741,6 @@
         "compiler_peak_rss_bytes": 536870912,
         "template_instances": 2000
       }
-    },
-    "engine-aot": {
-      "tier": 0,
-      "module": "flint.engine.aot",
-      "repo": "framework",
-      "dependencies": [],
-      "better_c": false,
-      "budget": {
-        "dmd_cold_seconds": 0.8,
-        "dmd_incremental_seconds": 0.6,
-        "ldc_cold_seconds": 4.8,
-        "ldc_incremental_seconds": 2.4,
-        "incremental_linked_bytes": 262144,
-        "compiler_peak_rss_bytes": 536870912,
-        "template_instances": 2000
-      }
     }
   }
 }

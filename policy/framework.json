@@ -97,6 +97,17 @@
     "java",
     "serde"
    ]
+  },
+  "engine-aot": {
+   "directory": "framework/engine-aot",
+   "module": "flint.engine.aot",
+   "repo": "framework",
+   "licence": "Apache-2.0",
+   "upstream": "Flint AOT contract (docs/spring/aot-contract.md)",
+   "dependencies": [],
+   "unsafe": [
+    "flint.engine.aot.sys"
+   ]
   }
  }
 }

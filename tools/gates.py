@@ -121,6 +121,28 @@ def boot_layers():
                 dep=boot_owner(module)
                 require(dep is None or dep==name or dep in meta['dependencies'],str(f.relative_to(base.parent))+': undeclared Boot-layer import '+module)
 
+def check_trusted_functions(ts,lines,where):
+    """@system only on bodiless prototypes; no @trusted scopes or blocks; an adjacent SAFETY rationale and a bounded
+    body per @trusted function."""
+    for i,t in enumerate(ts[:-1]):
+        if t.value!='@' or ts[i+1].value not in ['trusted','system']:continue
+        if ts[i+1].value=='system':
+            # Only a bodiless foreign prototype (the druntime allocator) may be @system.
+            j=i+2
+            while j<len(ts) and ts[j].value not in ['{',';',':']:j+=1
+            require(j<len(ts) and ts[j].value==';',where+': @system is allowed only on a bodiless extern prototype')
+            continue
+        require(i+2>=len(ts) or ts[i+2].value not in [':','{'],where+': no @trusted scopes/blocks')
+        require('// SAFETY:' in '\n'.join(lines[max(0,t.line-3):t.line]),where+': @trusted missing adjacent SAFETY rationale')
+        j=i+2
+        while j<len(ts) and ts[j].value not in ['{',';']:j+=1
+        if j<len(ts) and ts[j].value=='{':
+            depth=1;k=j+1
+            while k<len(ts) and depth:
+                depth+=(ts[k].value=='{')-(ts[k].value=='}');k+=1
+            require(depth==0,where+': unbalanced trusted body')
+            require(ts[k-1].line-ts[j].line<=S['max_trusted_lines'],where+': trusted function exceeds 60 lines')
+
 def framework_layers():
     """ADR-030: Spring-layer modules (the Spring Framework API and the third-party APIs of rulebook R1) live under
     framework/<artifact>, outside the 37 engine packages. Each is listed in policy/framework.json and keeps the
@@ -161,7 +183,12 @@ def framework_layers():
             require(not has_string_mixin(ts) or meta.get('generator',False),where+': string mixin outside an approved API-layer internal')
             require(epl==('SPDX-License-Identifier: EPL-2.0' in text),where+': EPL-2.0 sources belong only to EPL-2.0 modules')
             values=[t.value for t in ts]
-            require(not any(values[i]=='@' and values[i+1] in ['trusted','system'] for i in range(len(values)-1)),where+': the API layer stays @safe')
+            if prefix_match(module,meta.get('unsafe',[])):
+                # An AOT-runtime module's audited sys directory (framework.json "unsafe") keeps the package rules for
+                # @trusted: one function at a time, an adjacent SAFETY rationale, at most max_trusted_lines lines.
+                check_trusted_functions(ts,text.splitlines(),where)
+            else:
+                require(not any(values[i]=='@' and values[i+1] in ['trusted','system'] for i in range(len(values)-1)),where+': the API layer stays @safe')
             for imported in imported_modules(ts):
                 dep=layer_owner(imported)
                 if dep is not None:

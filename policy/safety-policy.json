@@ -14,7 +14,6 @@
       "flint.conc.ffi"
     ],
     "engine-di": [],
-    "engine-aot": ["flint.engine.aot.sys"],
     "config": ["flint.config.sys"],
     "serde": [
       "flint.serde.sys",
