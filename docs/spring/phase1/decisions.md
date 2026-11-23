@@ -425,3 +425,7 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - third-party-apis: Jackson reads and writes.
   - **Collector:** D3 (mostly-concurrent marking) is prototyped now, in parallel, because p99 is the metric least likely to fall to allocation cuts alone.
   - **Measurement:** runtime runs claim windows ahead of build-time runs once the current gs-builds finishes. A gs-rest-multicore re-measure follows each roughly 25% drop in allocations per request.
+- 2026-11-23, owner (via the coordinator; data-access's RSS breakdown, gc.md §1.4): **measure a static release build before deciding how the measured apps link.**
+  - **Background:** the Go comparator is a fully static binary (CGO off). Flint's release apps link libc and other libraries dynamically, and their shared text is about 1.75 MB of resident memory.
+  - **The comparison run:** proof-harness runs a non-gating, side-by-side comparison of gs-rest-service's release build, static against dynamic. It measures peak RSS, throughput, p99 and CPU per request in one claimed window, plus stripped O3 and Oz sizes against Go.
+  - **The decision rule:** switch the measured release profile to static only if the Oz size still passes against Go and no runtime metric gets worse beyond its interval. Size and runtime then use the same static release build, and the dynamic series stays published as context, as with `--no-debug` (`4b27d207`). Earlier results stay as recorded.
