@@ -392,8 +392,17 @@ def request_allocation_tests(runner):
     rows=json.loads((ROOT/'benchmarks/spring/apps.json').read_text())['apps']
     runner.run([PYTHON,'tools/install_toolchains.py','--compiler','flint'])
     for app in sorted(budgeted):
-        runner.run([ROOT/'.flint/bin/flint','test','-C',ROOT/rows[app]['flint']['directory'],'--compiler','both',
-                    '--verify'])
+        command=[ROOT/'.flint/bin/flint','test','-C',ROOT/rows[app]['flint']['directory'],'--compiler','both',
+                 '--verify']
+        if rows[app].get('database')!='postgres' or runner.plan:
+            runner.run(command)
+            continue
+        # The suite's database, as for the side-by-side suite: a disposable cluster of the pinned PostgreSQL peer.
+        runner.run([PYTHON,'tools/install_peers.py','--peer','postgres'])
+        sys.path.insert(0,str(ROOT/'tools'))
+        import spring_bench
+        with spring_bench.postgres_cluster() as database:
+            runner.run(command,env=dict(os.environ,**database()))
 
 def platform_run(runner,target):
     if not runner.plan:implementation_required()
