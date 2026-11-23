@@ -5,11 +5,11 @@
   "status": "pending",
   "requested_by": "proof-harness, for the coordinator's window: the Phase 1 evidence that does not wait for petclinic-rest",
   "summary": "gs-rest-service and gs-relational-data-access: both build headlines against Go, and the Spring REST workload for gs-rest-service (Flint vs Go)",
-  "why": "Both Guides' Flint ports pass their suites in exact mode at main (18/18, 1/1). Measuring them now gives early evidence for ADR-030 section 8's two build headlines and the REST workload; phase1-spring-apps repeats everything with petclinic-rest for the gate. Measured in a worktree at e171856e4a12 (both Guides' ports pass there) with its own native prefix and flint.",
+  "why": "Both Guides' Flint ports pass their suites in exact mode at main (18/18, 1/1). Measuring them now gives early evidence for ADR-030 section 8's two build headlines and the REST workload; phase1-spring-apps repeats everything with petclinic-rest for the gate. Measured in a worktree at a7756ac6f3de (both Guides' ports pass there) with its own native prefix and flint.",
   "builds": {
     "tree": {
       "app": "checkout",
-      "commit": "e171856e4a12",
+      "commit": "a7756ac6f3de",
       "flint": true
     }
   },
