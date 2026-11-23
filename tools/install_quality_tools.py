@@ -48,6 +48,8 @@ def patched_libdparse(compiler):
 
 # dfmt 0.15.2 joins user-defined attributes onto their declaration's line; Flint lays them out as Java lays out
 # annotations, one per line above the declaration (toolchain/dfmt-0.15.2-stack-udas.patch, .editorconfig dfmt_stack_udas).
+# The same patch formats named UDA arguments as named call arguments (`@Transactional(readOnly: true)`) and keeps the
+# space after a parameter list that holds a parenthesised UDA (`f(@PathVariable("id") long id) nothrow`).
 DFMT='0.15.2'
 DFMT_PATCH='dfmt-'+DFMT+'-stack-udas.patch'
 # The patched dfmt's --version suffix; tools/quality.py refuses a dfmt without it.

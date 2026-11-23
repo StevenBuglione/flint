@@ -17,6 +17,11 @@ module stack_udas;
     @Bean public Service bean() { return service; }
     @Transactional @safe void save() { }
     @Foo!int @Bar!(int, "x")("y") int templated;
+    @Transactional(readOnly: true) void readOnly() { }
+    @ConditionalOnProperty(name: ["flint.datasource.url", "flint.datasource.driver-class-name"], havingValue: "true") void conditional() { }
+    Greeting nogc(@PathVariable("id") long id)nothrow @nogc { return Greeting.init; }
+    Greeting constant(@PathVariable("id") long id) const { return Greeting.init; }
+    Greeting named(@RequestParam(value : "name", defaultValue : "World") string name) { return Greeting.init; }
 
     // Built-in attributes stay inline.
     @safe void safe() { }

@@ -1,5 +1,5 @@
 diff --git a/src/dfmt/ast_info.d b/src/dfmt/ast_info.d
-index 34a8ede..52d2ee0 100644
+index 34a8ede..8501c92 100644
 --- a/src/dfmt/ast_info.d
 +++ b/src/dfmt/ast_info.d
 @@ -65,6 +65,7 @@ struct ASTInformation
@@ -47,11 +47,50 @@ index 34a8ede..52d2ee0 100644
      }
  
      override void visit(const TemplateDeclaration templateDeclaration)
-@@ -485,4 +508,90 @@ final class FormatVisitor : ASTVisitor
+@@ -461,7 +484,35 @@ final class FormatVisitor : ASTVisitor
+             return;
+         }
  
- private:
-     ASTInformation* astInformation;
+-        foreach (item; functionCall.arguments.namedArgumentList.items)
++        recordNamedArgumentColons(functionCall.arguments.namedArgumentList);
++        functionCall.accept(this);
++    }
 +
++    /// Flint: `@Attr(name: value)` (libdparse's AtAttribute.namedArgumentList, Flint's libdparse patch) lays out
++    /// its colons as a call's named arguments do.
++    override void visit(const AtAttribute atAttribute)
++    {
++        if (atAttribute.namedArgumentList !is null)
++            recordNamedArgumentColons(atAttribute.namedArgumentList);
++        atAttribute.accept(this);
++    }
++
++    /// Flint: libdparse's Parameter.accept skips the parameter's attributes, so `f(@RequestParam(required: false)
++    /// string p)` records its named-argument colons here.
++    override void visit(const Parameter parameter)
++    {
++        foreach (attribute; parameter.parameterAttributes)
++            if (attribute.atAttribute !is null && attribute.atAttribute.namedArgumentList !is null)
++                recordNamedArgumentColons(attribute.atAttribute.namedArgumentList);
++        parameter.accept(this);
++    }
++
++private:
++    ASTInformation* astInformation;
++
++    void recordNamedArgumentColons(const NamedArgumentList namedArgumentList)
++    {
++        foreach (item; namedArgumentList.items)
+         {
+             // Do nothing if not a named argument.
+             if (item.name == tok!"")
+@@ -479,10 +530,91 @@ final class FormatVisitor : ASTVisitor
+                 }
+             }
+         }
++    }
+ 
+-        functionCall.accept(this);
 +    /// Flint: how many statement blocks enclose the visited node, reset inside aggregate bodies.
 +    size_t blockDepth;
 +
@@ -64,8 +103,10 @@ index 34a8ede..52d2ee0 100644
 +            || d.eponymousTemplateDeclaration !is null || d.mixinTemplateDeclaration !is null
 +            || d.functionDeclaration !is null || d.constructor !is null || d.destructor !is null
 +            || d.variableDeclaration !is null;
-+    }
-+
+     }
+ 
+-private:
+-    ASTInformation* astInformation;
 +    /// Flint: the line breaks after the declaration's leading run of user-defined attributes. The run stops at
 +    /// the first other attribute or storage class, so `@Bean public Service service()` stacks `@Bean` while
 +    /// `public @Bean Service service()` and `@safe @Foo void f()` keep their line.
@@ -161,7 +202,7 @@ index 6b41d4a..0241e3c 100644
  
      /**
 diff --git a/src/dfmt/formatter.d b/src/dfmt/formatter.d
-index 0f7e821..44001ec 100644
+index 0f7e821..48c4e25 100644
 --- a/src/dfmt/formatter.d
 +++ b/src/dfmt/formatter.d
 @@ -152,6 +152,9 @@ private:
@@ -185,7 +226,19 @@ index 0f7e821..44001ec 100644
          if (currentIs(tok!"comment"))
          {
              formatComment();
-@@ -1750,6 +1757,16 @@ private:
+@@ -810,7 +817,11 @@ private:
+             writeToken();
+         if (currentIs(tok!"("))
+         {
++            // Flint: the attribute's arguments leave the enclosing parentheses' spacing as it was, so
++            // `f(@A("x") int x) nothrow` keeps the space after its parameter list.
++            immutable bool outerSpaceAfterParens = spaceAfterParens;
+             writeParens(false);
++            spaceAfterParens = outerSpaceAfterParens;
+             if (tokens[index].type == tok!"{")
+                 return;
+ 
+@@ -1750,6 +1761,16 @@ private:
          import dfmt.editorconfig : EOL;
  
          output.put(eolString);
@@ -202,7 +255,7 @@ index 0f7e821..44001ec 100644
      }
  
      void newline()
-@@ -1923,6 +1940,12 @@ private:
+@@ -1923,6 +1944,12 @@ private:
  
      void write(string str)
      {
@@ -215,7 +268,7 @@ index 0f7e821..44001ec 100644
          currentLineLength += str.length;
          output.put(str);
      }
-@@ -1934,6 +1957,7 @@ private:
+@@ -1934,6 +1961,7 @@ private:
          import std.algorithm.iteration:joiner;
          import std.string:lineSplitter;
  

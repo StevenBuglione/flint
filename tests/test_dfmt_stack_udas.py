@@ -1,7 +1,8 @@
 """Flint's patched dfmt stacks user-defined attributes above declarations, as Java lays out annotations.
 
 toolchain/dfmt-0.15.2-stack-udas.patch adds dfmt_stack_udas, which .editorconfig turns on; tools/quality.py,
-`flint check` and `flint fmt` all run that one dfmt with that one configuration."""
+`flint check` and `flint fmt` all run that one dfmt with that one configuration. The same patch fixes two upstream
+layouts around UDAs: named UDA arguments and the space after a parameter list holding a parenthesised UDA."""
 import os
 import shutil
 import subprocess
@@ -54,6 +55,26 @@ class StackedUdaTests(unittest.TestCase):
     def test_parameter_attributes_stay_inline(self):
         source = 'void get(@PathVariable("id") long id, @RequestParam string name)\n{\n}\n'
         self.assertEqual(self.format(source), source)
+
+    def test_named_attribute_arguments_format_as_named_call_arguments(self):
+        # Flint's libdparse patch parses `@Attr(name: value)`; upstream dfmt formatted its colons as `name : value`
+        # (an unknown colon) and broke the line after a later one (as after a label).
+        source = ('@Transactional(readOnly: true)\nvoid find()\n{\n}\n\n'
+                  '@ConditionalOnProperty(name: ["flint.datasource.url", "flint.datasource.driver"], havingValue: 2)\n'
+                  'void bean()\n{\n}\n')
+        self.assertEqual(self.format(source), source)
+        self.assertEqual(self.format(source.replace(': ', ' : ')), source)
+        # Parameter attributes too, which libdparse's Parameter.accept does not visit.
+        parameter = 'void get(@RequestParam(value: "name", required: false) string name)\n{\n}\n'
+        self.assertEqual(self.format(parameter.replace(': ', ' : ')), parameter)
+        self.assertEqual(self.format('void f()\n{\n    call(x: 1, y: [2]);\n}\n'),
+                         'void f()\n{\n    call(x: 1, y: [2]);\n}\n')
+
+    def test_a_parameter_attribute_keeps_the_space_before_function_attributes(self):
+        for trailing in ('nothrow @nogc', 'const', '@safe', 'scope return'):
+            source = f'Item get(@PathVariable("id") long id) {trailing}\n{{\n    return Item.init;\n}}\n'
+            self.assertEqual(self.format(source), source)
+            self.assertEqual(self.format(source.replace(') ' + trailing, ')' + trailing)), source)
 
 
 if __name__ == '__main__':
