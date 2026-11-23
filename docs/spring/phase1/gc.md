@@ -53,6 +53,36 @@ The connection slots dominate. The benchmark holds 64 connections, but the GC re
 
 The slot range is about 60% of every pause and about 3 MB of peak RSS. There are more collections with 128 slots only because the server serves more requests in the same 10 s. The fix keeps the 4,096-connection capacity: register only the chunks of slots a worker has used, in doubling chunks, each with its own base address (section 3, item 2).
 
+### 1.2a What one request allocates
+
+A `GET /greeting?name=Flint` at `08b19d2f` allocates **4,816 GC bytes in 40 allocations**. This is local diagnosis, not evidence: gs-rest-service release, one reactor thread, keep-alive, measured after 2,000 warm-up requests.
+
+- The bytes come from druntime's per-thread counter (`bytesAllocated`), read on every thread before and after 5,000 requests, with the server running under gdb.
+- The calls come from callgrind over the same 5,000 requests: every call into an allocation entry point (`gc_malloc`, `_d_allocclass`, `_d_newarray*`, `_d_arrayappend*`, `_d_arraysetlength*`), by caller.
+- At the certified 187k requests per second that is about 900 MB/s of garbage. That allocation rate drives the ~90 collections per second.
+
+| owner | call site | allocations per request |
+|---|---|---|
+| engine-servlet (web-http) | `capture` (request copy: 3 arrays, 1 object) | 4 |
+| | `serve` | 2 |
+| | `ServletEngineResponse.getOutputStream`, `write` | 2 |
+| | request `fields`, `getParameterValues` | 2 |
+| | `Attribute[]` and `Parameter[]` growth (`_d_arraysetlengthT`) | 2 |
+| webmvc and web | `DispatcherServlet.handle` | 3 |
+| | `getHandlerExecutionChain` and `HandlerExecutionChain(Object, HandlerInterceptor[])` | 2 |
+| | `HandlerMethod(HandlerMethod)` (invocable copy) | 1 |
+| | mapping: `getMatchingCondition`, `PathContainer.of`, `parsePath`, `PathMatchInfo` | 4 |
+| | content negotiation: `resolveMediaTypes`, `determineCompatibleMediaTypes`, `new MediaType`, `setContentType` | 4 |
+| | `getMethodArgumentValues`, `doInvoke`, `handleReturnValue` | 3 |
+| | `HttpHeaders.put`, `HttpHeaders` entry `dup` | 2 |
+| | `create()` | 1 |
+| Jackson (third-party-apis) | `createBufferedGenerator` (2 objects, 1 array), `writeStartObject` | 4 |
+| application and its AOT handler | `String.format` (`formatJava`: 3 string appends) | 3 |
+| | `new Greeting` | 1 |
+| **total** | | **40** |
+
+Each change records its allocations and bytes per request here, with the same two probes.
+
 ### 1.3 Peak RSS, by mapping
 
 Peak RSS before and after the io_uring fix (section 3, item 1):
@@ -116,7 +146,7 @@ druntime selects a collector by name: `registerGCFactory("flint", ...)` from a `
    - The rest of the 128-connection gain comes from preallocation sized by the connection limit. The fiber pool is 1,088 fibers per worker: fiber objects, stacks, task and fiber-local arrays. Capping it at 128 per worker saved 1.7 MB of RSS and about 0.1 ms per collection. A fixed cap changes overload behaviour, though: more requests get 503 instead of waiting, as they would in Tomcat's backlog. web-http would accept a `server.flint.max-handlers` setting that keeps today's default, or real backpressure.
    - The reactor's `IoWork` table (120 B × 4,160 per worker) is also scanned on every collection.
 3. **GC profile in the harness.** Boot apps have no SIGTERM or SIGINT handler. They die from the default action (exit 143 or 130), so neither graceful shutdown nor druntime's exit report runs, and `spring_gc_matrix.py` would record no collections or pauses. This is filed with boot, and proof-harness is told to hold the `phase1-gc-matrix-*` entries until it lands. Then queue the matrix for gs-rest-service and petclinic-rest.
-4. **Allocation table (B).** Record bytes and allocations per request per call site, as framework-core and web-http report them.
+4. **Allocation table (B).** Started in section 1.2a: 4,816 bytes and 40 allocations per `/greeting` request at `08b19d2f`. web-http is cutting the servlet adapter, third-party-apis the Jackson copy, and framework-core the MIME-type parsing.
 5. **Collector prototype (D).** Start with D1 (per-thread caches) plus page release, measured against druntime's collector on the same binary through `rt_options`. Then D3 if the pause still loses. Each step goes through proof-harness's queue before any claim.
 
 ## 4. How p99 and RSS are measured
