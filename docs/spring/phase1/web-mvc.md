@@ -166,6 +166,32 @@ Error Server.routeFiber(FiberRoute(handler));   // at most one; serves every req
 - **Response.** `FiberResponse.respond(status, fields, body, chunked)` writes a whole response, head and body in one write when they fit. `begin(status, fields, contentLength)`, `send` and `finish` stream it, where `unknownLength` means chunked on HTTP/1.1 and close-delimited on HTTP/1.0. The engine owns `Content-Length`, `Transfer-Encoding`, `Connection` and `Keep-Alive`, and writes them as Tomcat's `Http11Processor.prepareResponse` does: status line without a reason phrase, application fields in order, the framing field, `Date` unless given, then `Connection: close` or, only when the request named keep-alive, `Keep-Alive: timeout=<idle seconds>` and `Connection: keep-alive`. 204 and 304 have no framing field, 205 has `Content-Length: 0`, and HEAD keeps its framing fields without body bytes. A body shorter than its `Content-Length` closes the connection.
 - **Connections.** After a finished response the connection serves the next request, pipelined or not. Fiber routes are HTTP/1.1 only for now: HTTP/2 answers 404 for a target only a fiber route serves.
 
+### Sanitizer and fuzz evidence for the `FiberRoute` boundary
+
+`flint.engine.web.sys.fiber.invokeFiber` is the boundary's one `@trusted` function. AGENTS.md asks for positive, negative and sanitizer/fuzz coverage:
+- **Positive:** `tests/fiber_behavior.d`, `tests/fiber_fuzz.d`, and `GC.collect()` inside a running handler.
+- **Negative:** a handler that throws before responding (500, then close), and a body short of its `Content-Length` (close).
+- **Fuzz:** `tests/fiber_fuzz.d` is seeded and deterministic, and runs in every `dub test :engine-web`. Each case sends 1–5 pipelined requests on one connection, split into random fragments:
+  - all seven methods, targets with percent escapes and queries, and random fields;
+  - bodies framed by `Content-Length` or chunked, with random chunk sizes and leading zeros;
+  - `HEAD`, `Connection: close`/`keep-alive`, and replies with `Content-Length` or chunked output;
+  - one case in four ends in a malformed request: a bad field line, a bare LF, a NUL, an invalid chunk size, duplicate or conflicting lengths, a bad version, a missing `Host`, an unknown method, a head over 16 KiB, or a truncated body. The client then half-closes.
+
+  Every valid response must carry the right status, framing and echo (method, target, body length and FNV-1a). Every malformed request must end in a 4xx/5xx or a close, and a clean request must succeed afterwards. `FLINT_FUZZ_SEED` and `FLINT_FUZZ_CASES` widen the run.
+- **What it found:** a client that half-closed after its requests lost the running fiber response and the pipelined requests behind it. Now, as in Tomcat, EOF ends only the request side (`halfClosed` in `runtime.d`), and the regression test is in `tests/fiber_behavior.d`.
+
+Recorded on venus, 2026-11-23, Linux x86-64 glibc:
+
+| Command | Exit |
+| --- | --- |
+| `dub test :engine-web --compiler=dmd` and `--compiler=ldc2` (fuzz with the default seed, 120 cases) | 0, 0 (12/12 modules) |
+| `FLINT_FUZZ_SEED=1..5 FLINT_FUZZ_CASES=600 ./packages/engine-web/flint-engine-web-test-unittest` (LDC, 3,000 cases) | 0 each |
+| `python3 tools/native_build.py --profile rest --target linux-x86_64-glibc --phase build --sanitize address,undefined --cc clang --cxx clang++ --work-dir .native-sanitized --prefix .native-sanitized/install/linux-x86_64-glibc` (Clang 22.1.8 from `.tools/LLVM-22.1.8-Linux-X64`) | 0 |
+| `dub test :engine-web --compiler=ldc2 --build=plain --force` and `:engine-servlet`, under `tools/ci.py run_tests`' sanitizer environment (`DFLAGS` from `policy/profiles.toml` `[sanitize]`, the LDC sanitizer runtime on `LIBRARY_PATH`, `ASAN_OPTIONS=detect_leaks=1:abort_on_error=1:detect_stack_use_after_return=1`, `UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1`), linked against the instrumented llhttp, nghttp2, OpenSSL and `libflint_ffi_framework.a` | 0, 0 (19/19 modules each; no ASan, UBSan or LSan report) |
+| the sanitized binary with `FLINT_FUZZ_SEED=11..13 FLINT_FUZZ_CASES=500` | 0 each |
+
+The full `tools/ci.py` sanitizer gate (every package, every native provider) is still the CI lane's job. The run above covers the two packages behind this boundary.
+
 ### The servlet engine (flint.engine.servlet)
 
 `framework/engine-servlet` is Flint's servlet container, the part embedded Tomcat plays under Spring Boot. It is Flint's own engine, not a Spring type, so it lives under `flint.engine.*`. It depends on `flint:jakarta-servlet` and the engines, never on Boot.
