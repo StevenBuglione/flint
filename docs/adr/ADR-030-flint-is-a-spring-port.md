@@ -167,6 +167,7 @@ Creating the GitHub repositories is an outward step and waits for the owner's go
   - `flint api extract` turns each pinned upstream source tree into a manifest of every public and protected element.
   - `api/mapping.json` classifies each element as ported, adapted (with a rule ID) or excluded (with a reason).
   - `flint api coverage` fails on any unclassified element.
+  - **CI ratchets; the release requires 100%.** On every change, CI requires two things. Every ported file carries the section 7 header (`flint api headers`). And coverage must not regress: each repo commits `coverage-baseline.json` beside its mapping, with the unclassified count of every module. A count that rises fails, and so does a checklist its slice marks `complete` with any element unclassified or deferred. `flint api coverage --update-baseline` lowers the baseline and refuses to raise any number. CI stays green while progress is permanent and regressions show. The release gate (`--release`, `tools/gates.py --gate api --release`) still requires the repo 100% classified.
   - `flint api diff` schedules the work of following a new upstream release.
   - **The parser is a small Java declaration parser written in D** (`apps/flint/src/flint_tool/api/java.d`), not tree-sitter-java:
     - **Closure.** The `flint` closure stays free of native code. It bootstraps from DUB with only the core D packages, and tree-sitter would make it the first CLI dependency to need a native recipe.
