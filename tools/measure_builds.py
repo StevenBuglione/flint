@@ -212,14 +212,14 @@ def template_instances(text):
     return sum(counts)
 
 
-def package_template_instances(records, name):
+def package_template_instances(records, name, directory=None):
     """Instantiations in the compiler invocations that compile this package's own modules or probe.
 
     Dependency libraries are compiled in separate invocations and counted under their own packages;
     counting them here again would charge every dependent for the same druntime instantiations (ADR-019).
     `records` are the instrumented wrapper's invocation receipts; their streams sit beside them.
     """
-    marker = os.sep + 'packages' + os.sep + name + os.sep
+    marker = os.sep + os.path.normpath(directory or ('packages/' + name)) + os.sep
     total = 0
     for record in sorted(records):
         invocation = json.loads(record.read_text())
@@ -605,6 +605,23 @@ def main(argv=None):
             edit_source_path(ROOT, fixture['edit_source'])
         except RuntimeError:
             missing.append('edit source ' + fixture['edit_source'])
+    # ADR-030 section 5: the Spring-layer modules of policy/framework.json, each with its own budget and probe.
+    import framework_budgets
+    try:
+        framework_fixtures = {} if args.apps_only or args.app_sizes else framework_budgets.load(ROOT)
+    except ValueError as exc:
+        missing.append(str(exc)); framework_fixtures = {}
+    for name, fixture in framework_fixtures.items():
+        if not list((ROOT / fixture['directory'] / 'source').rglob('*.d')):
+            missing.append('runtime implementation ' + fixture['directory'])
+        for key in ['fixture', 'baseline']:
+            directory = ROOT / fixture[key]
+            if not (directory / 'dub.sdl').is_file() or not (directory / 'source/app.d').is_file():
+                missing.append(key + ' probe ' + str(directory.relative_to(ROOT)))
+        try:
+            edit_source_path(ROOT, fixture['edit_source'])
+        except RuntimeError:
+            missing.append('edit source ' + fixture['edit_source'])
     for name, fixture in manifest['apps'].items():
         if not (ROOT / fixture['source']).is_file():
             missing.append('app source ' + fixture['source'])
@@ -663,6 +680,11 @@ def main(argv=None):
             for path in sorted((ROOT/fixture[variant]).rglob('*')):
                 if path.is_file() and (path.suffix in ('.d', '.c', '.h') or path.name=='dub.sdl') and '.dub' not in path.parts:
                     workload_files[str(path.relative_to(ROOT))]=workload_digest(ROOT, path, native_inputs)
+    for fixture in framework_fixtures.values():
+        for variant in ['fixture', 'baseline']:
+            for path in sorted((ROOT / fixture[variant]).rglob('*')):
+                if path.is_file() and (path.suffix in ('.d', '.c', '.h') or path.name == 'dub.sdl') and '.dub' not in path.parts:
+                    workload_files[str(path.relative_to(ROOT))] = workload_digest(ROOT, path, native_inputs)
     for entry in module_budgets.load(json.loads((ROOT / 'policy/budgets.json').read_text()), packages, ROOT).values():
         for variant in ['fixture', 'baseline']:
             for path in sorted((ROOT / entry[variant]).rglob('*')):
@@ -761,7 +783,8 @@ def main(argv=None):
             log.write_text(''.join(path.read_text(errors='replace') for path in streams))
             # ADR-019: the budget counts the package's own library and probe compiles; the whole build
             # closure, dependencies included, stays recorded for visibility.
-            row['template_instances'] = package_template_instances(traces.glob('*.invocation.json'), name)
+            row['template_instances'] = package_template_instances(traces.glob('*.invocation.json'), name,
+                                                                   fixture.get('directory'))
             row['template_instances_closure'] = template_instances(log.read_text(errors='replace'))
             row['template_receipt'] = {'command': observation['command'], 'log_sha256': digest(log),
                                        'log': str(log.relative_to(args.output.parent)),
@@ -830,6 +853,13 @@ def main(argv=None):
         row['size_basis'] = fixture['size_basis']
         row['incremental_linked_bytes'], row['size_detail'] = size_delta(name, fixture)
         result['packages'][name] = row
+    result['framework'] = {}
+    for name, fixture in framework_fixtures.items():
+        print('Measuring framework module', name, flush=True)
+        row = measured_native(name, fixture)
+        row['size_basis'] = fixture['size_basis']
+        row['incremental_linked_bytes'], row['size_detail'] = size_delta(name, fixture)
+        result['framework'][name] = row
     # Per-module linked-bytes budgets (policy/budgets.json module_linked_bytes), measured as packages are.
     for module, entry in module_budgets.load(json.loads((ROOT / 'policy/budgets.json').read_text()),
                                              packages, ROOT).items():
