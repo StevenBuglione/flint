@@ -419,6 +419,31 @@ bool dmdConfSplits(string dmd)
     return false;
 }
 
+/// The ELF linker the DMD configuration next to `dmd` selects with `-fuse-ld=` (`mold`, `lld`), or null when it
+/// leaves the choice to the C compiler, whose default is usually ld.bfd.
+string dmdLinker(string dmd)
+{
+    import std.algorithm.searching : startsWith;
+    import std.array : split;
+    import std.path : buildPath, dirName;
+    import std.string : lineSplitter;
+    import flint_tool.support.files : readIfPresent;
+
+    enum option = "-Xcc=-fuse-ld=";
+    string linker;
+    foreach (line; readIfPresent(buildPath(dirName(dmd), "dmd.conf")).lineSplitter)
+    {
+        if (!line.startsWith("DFLAGS="))
+            continue;
+        foreach (token; line["DFLAGS=".length .. $].split)
+        {
+            if (token.startsWith(option))
+                linker = token[option.length .. $].idup;
+        }
+    }
+    return linker;
+}
+
 version (Windows)
 {
     /// The libraries Phobos' std.net.curl tries, at run time, when DUB downloads from code.dlang.org.

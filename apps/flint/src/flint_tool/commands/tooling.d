@@ -344,6 +344,25 @@ private struct Doctor
     DoctorPayload payload;
     Report report;
 
+    /// Linux x86-64 development builds link with the pinned mold (ADR-021); without it, the C compiler's default
+    /// linker (usually ld.bfd) takes seconds per link.
+    void linker(const ref Component dmd)
+    {
+        import flint_tool.toolchain.toolchain : dmdLinker;
+
+        version (linux)
+            version (X86_64)
+                if (dmd.present)
+                {
+                    const selected = dmdLinker(dmd.path);
+                    if (selected.length)
+                        return add("linker", "ok", selected ~ " (dmd.conf)");
+                    add("linker", "warning", "DMD links with the C compiler's default linker, usually ld.bfd");
+                    report.add(diagnostic("FLINT-E0823", Severity.warning,
+                            "DMD links with the C compiler's default linker", "flint toolchain install"));
+                }
+    }
+
     void add(string name, string status, string detail)
     {
         payload.checks ~= DoctorCheck(name, status, detail);
@@ -379,6 +398,7 @@ private struct Doctor
                 item.severity = "warning";
             report.add(item);
         }
+        linker(found.dmd);
         foreach (name; ["dmd", "dub", "ldc2"])
         {
             const onPath = which(name);

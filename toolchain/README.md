@@ -15,11 +15,11 @@ The D language and the build commands developers run do not change. The compiler
 On Linux x86-64 glibc, from the checkout root:
 
 ```bash
-python3 tools/install_toolchains.py --compiler dmd --dmd-linker mold --flint-fork
+python3 tools/install_toolchains.py --compiler dmd --flint-fork
 export PATH="$PWD/.tools/dmd2/linux/bin64:$PATH"
 ```
 
-The installer extracts the checksum-locked DMD, LDC and DUB sources, applies the patches, builds DMD with LTO and profile-guided optimisation trained on this repository's applications, builds DUB with LDC, and installs both over the pinned executables. The upstream executables remain beside them as `dmd.upstream` and `dub.upstream`. `--no-pgo` skips the profile training, which takes about three minutes. `--dmd-linker` is optional; the direct-link path uses whichever linker the DMD configuration selects.
+The installer extracts the checksum-locked DMD, LDC and DUB sources, applies the patches, builds DMD with LTO and profile-guided optimisation trained on this repository's applications, builds DUB with LDC, and installs both over the pinned executables. The upstream executables remain beside them as `dmd.upstream` and `dub.upstream`. `--no-pgo` skips the profile training, which takes about three minutes. On Linux x86-64 the installer also installs the pinned mold (`policy/toolchains.json`, `--compiler mold`) and configures DMD to link with it, as the Milestone 6 measurements did. `--dmd-linker <ld.lld or mold>` selects another installed linker, and `--dmd-linker system` keeps the C compiler's default (usually ld.bfd, several times slower). `flint doctor` warns with FLINT-E0823 when DMD links with the default.
 
 ## What the DMD fork changes
 

@@ -11,7 +11,8 @@
     "rust": "1.97.0",
     "rustup": "1.29.3",
     "clang": "22.1.8",
-    "conan": "2.34.0"
+    "conan": "2.34.0",
+    "mold": "2.40.4"
   },
   "assets": {
     "ldc2-1.43.0-addon-wasi.tar.xz": {
@@ -72,6 +73,10 @@
     "go1.27.4.linux-amd64.tar.gz": {
       "url": "https://go.dev/dl/go1.27.4.linux-amd64.tar.gz",
       "sha256": "7226736c2339719cda28fbf3a54d71aa63bcefe376e98cef00034268dab24840"
+    },
+    "mold-2.40.4-x86_64-linux.tar.gz": {
+      "url": "https://github.com/rui314/mold/releases/download/v2.40.4/mold-2.40.4-x86_64-linux.tar.gz",
+      "sha256": "4c999e19ffa31afa5aa429c679b665d5e2ca5a6b6832ad4b79668e8dcf3d8ec1"
     },
     "oha-linux-amd64": {
       "url": "https://github.com/hatoo/oha/releases/download/v1.16.0/oha-linux-amd64",

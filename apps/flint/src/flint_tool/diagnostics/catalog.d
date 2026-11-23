@@ -534,6 +534,12 @@ immutable CodeInfo[] catalog = [
             "`flint run --debug` starts gdb, or lldb when gdb is missing, with Flint's pretty-printers "
             ~ "(tools/debug/flint_gdb.py, flint_lldb.py). Neither debugger is on PATH.",
             "sudo apt-get install gdb      # or: xcode-select --install for lldb"),
+    CodeInfo("FLINT-E0823", ExitCode.environment, "DMD links with the default linker",
+            "Linux x86-64 development builds link with the pinned mold (ADR-021): a framework application's link takes "
+            ~ "about 0.3 s with it and 2 s with ld.bfd, the C compiler's usual default. The installed dmd.conf "
+            ~ "selects no linker. `flint toolchain install` configures the pinned mold; "
+            ~ "`tools/install_toolchains.py --compiler dmd --dmd-linker system` keeps the default on purpose.",
+            "flint toolchain install"),
     // 09xx: receipts.
     CodeInfo("FLINT-E0901", ExitCode.environment, "receipt missing",
             "Every artifact flint builds has a JSON receipt next to it (<artifact>.receipt.json).",

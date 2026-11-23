@@ -91,6 +91,18 @@ def identify_elf_linker(executable):
             'sha256': hashlib.sha256(linker.read_bytes()).hexdigest()}
 
 
+MOLD = 'mold-2.40.4-x86_64-linux'
+
+
+def install_mold(destination):
+    """The pinned mold, the Linux x86-64 development linker (ADR-021; ADR-016's measured builds linked with it)."""
+    install(MOLD + '.tar.gz', destination)
+    linker = destination / MOLD / 'bin' / 'mold'
+    if not linker.is_file():
+        raise SystemExit('archive layout did not contain ' + str(linker))
+    return linker
+
+
 def quote_dmd_conf(bin_dir):
     """Quote every DFLAGS argument that contains %@P%.
 
@@ -930,8 +942,10 @@ def build_sanitizer_runtime(destination, build_root=None, jobs=None):
 
 
 def main():
-    ap=argparse.ArgumentParser();ap.add_argument('--compiler',choices=['dmd','ldc','dub','go','oha','clang','lld','ldc-sanitizer-runtime','musl-sysroot','conan','flint'],required=True);ap.add_argument('--musl',action='store_true');ap.add_argument('--destination',type=Path,default=ROOT/'.tools')
-    ap.add_argument('--dmd-linker', metavar='LINKER', help='Use installed ld.lld or mold for project-local 64-bit DMD links')
+    ap=argparse.ArgumentParser();ap.add_argument('--compiler',choices=['dmd','ldc','dub','go','oha','clang','lld','ldc-sanitizer-runtime','musl-sysroot','conan','mold','flint'],required=True);ap.add_argument('--musl',action='store_true');ap.add_argument('--destination',type=Path,default=ROOT/'.tools')
+    ap.add_argument('--dmd-linker', metavar='LINKER',
+                    help='ld.lld or mold for 64-bit DMD links; Linux x86-64 defaults to the pinned mold, and '
+                         '"system" keeps the C compiler\'s default linker')
     ap.add_argument('--flint-fork', action='store_true',
                     help='Build the Flint DMD/DUB fork (resident toolchain compile server, parallel DUB pipeline, direct linking)')
     ap.add_argument('--no-pgo', action='store_true', help='With --flint-fork, skip profile-guided optimization of DMD')
@@ -941,6 +955,13 @@ def main():
     if a.flint_fork and a.compiler != 'dmd':
         ap.error('--flint-fork applies only to --compiler dmd')
     linker = None
+    linux_x86_64 = platform.system() == 'Linux' and platform.machine().lower() in ('amd64', 'x86_64') and not a.musl
+    if a.compiler == 'dmd' and linux_x86_64 and a.dmd_linker is None:
+        # Fast by default (ADR-025): Linux x86-64 DMD links with the pinned mold. `--dmd-linker system` keeps the C
+        # compiler's default linker.
+        a.dmd_linker = str(install_mold(a.destination.resolve()))
+    if a.dmd_linker == 'system':
+        a.dmd_linker = None
     if a.dmd_linker:
         if a.compiler != 'dmd':
             ap.error('--dmd-linker applies only to --compiler dmd')
@@ -960,6 +981,12 @@ def main():
         print(json.dumps(bootstrap_flint(a.destination)))
         return
     osname=platform.system();arch=platform.machine().lower();arch='aarch64' if arch in ['arm64','aarch64'] else 'x86_64' if arch in ['amd64','x86_64'] else arch
+    if a.compiler == 'mold':
+        if (osname,arch)!=('Linux','x86_64'):raise SystemExit('the mold pin is for Linux x86_64 hosts')
+        linker=install_mold(a.destination)
+        print(json.dumps({'compiler':'mold','version':LOCK['versions']['mold'],'bin':str(linker.parent),
+                          'sha256':LOCK['assets'][MOLD+'.tar.gz']['sha256']}))
+        return
     if a.compiler == 'conan':
         if (osname,arch)!=('Linux','x86_64'):raise SystemExit('the Conan pin is for Linux x86_64 hosts')
         print(json.dumps(install_conan(a.destination)))
