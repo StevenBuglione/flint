@@ -45,8 +45,14 @@ def patched_libdparse(compiler):
     if 'namedArgumentList' not in (target/'src/dparse/ast.d').read_text():raise SystemExit('libdparse patch not applied')
     return target
 
+def default_compiler():
+    """dmd, except on arm64 hosts, where dmd is the AArch64 fork; it crashes building dcd:dsymbol with -O -release
+    -inline (reported to dmd-arm64), and flint toolchain install already builds the quality tools with ldc2."""
+    import platform
+    return 'ldc2' if platform.machine().lower() in ('arm64','aarch64') else 'dmd'
+
 def main():
-    ap=argparse.ArgumentParser();ap.add_argument('--compiler',default='dmd');a=ap.parse_args();out=ROOT/'.tools/bin';out.mkdir(parents=True,exist_ok=True)
+    ap=argparse.ArgumentParser();ap.add_argument('--compiler',default=default_compiler());a=ap.parse_args();out=ROOT/'.tools/bin';out.mkdir(parents=True,exist_ok=True)
     if os.name!='nt' and loadable_curl() is None:raise SystemExit('dub cannot download the quality tools: '+CURL_FIX)
     versions=json.loads((ROOT/'policy/toolchains.json').read_text())
     pins={name:versions['versions'][name] for name in ('dfmt','dscanner')}
