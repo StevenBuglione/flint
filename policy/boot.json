@@ -119,6 +119,8 @@
       "layer": "module",
       "dependencies": [
         "boot-core",
+        "boot-autoconfigure",
+        "context",
         "java",
         "engine-aot",
         "jackson-annotations",

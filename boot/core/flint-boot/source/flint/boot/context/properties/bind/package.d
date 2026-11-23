@@ -658,11 +658,11 @@ private:
             ref const PropertyDescriptor property, ref Any target)
     {
         auto propertyType = lookup(property.type);
-        if (propertyType is null)
+        if (propertyType is null || !bindable(property, propertyType))
             return false;
         const intoExisting = property.set is null;
-        if (intoExisting && (property.get is null || propertyType.kind != TypeKind.class_))
-            return false;
+        if (intoExisting && propertyType.fromEntries !is null)
+            return bindIntoExistingMap(name.append(toDashedForm(property.name)), propertyType, property, target, type);
         if (target.isNull())
             target = create(name, type);
         Any value = property.get is null || isValueType(propertyType) ? Any.init : property.get(target);
@@ -673,6 +673,37 @@ private:
             return false;
         if (!intoExisting)
             property.set(target, value);
+        return true;
+    }
+
+    // Whether the binder can bind `property`: it has a setter, or a getter returning a map or a nested object.
+    static bool bindable(ref const PropertyDescriptor property, const Descriptor propertyType) pure nothrow @nogc
+    {
+        if (property.set !is null)
+            return true;
+        return property.get !is null && (propertyType.fromEntries !is null || propertyType.kind == TypeKind.class_);
+    }
+
+    // A read-only map property (Boot's `final Map` fields): bind the entries, then put them into the map the getter
+    // returns, as Boot's MapBinder merges into an existing map.
+    bool bindIntoExistingMap(ConfigurationPropertyName name, const Descriptor mapType,
+            ref const PropertyDescriptor property, ref Any target, const Descriptor ownerType)
+    {
+        import flint.java.util : RawMap;
+
+        if (target.isNull())
+            target = create(name.getParent(), ownerType);
+        auto existing = property.get(target);
+        auto map = cast(RawMap) existing.asObject();
+        if (map is null)
+            return false;
+        Any entries;
+        if (!bindMap(name, mapType, entries))
+            return false;
+        auto keys = mapType.toKeys(entries);
+        auto values = mapType.toValues(entries);
+        foreach (index, key; keys)
+            map.putAny(key, values[index]);
         return true;
     }
 
