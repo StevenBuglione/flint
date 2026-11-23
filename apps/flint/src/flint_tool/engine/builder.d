@@ -53,6 +53,10 @@ struct BuildRequest
     /// Link the platform modules statically into a dev build (`--static`). Without it a dev build links them as one
     /// shared object, so an edit relinks only the project (owner decision 2, 2026-11-23).
     bool staticLink;
+    /// `--no-debug`: no debug information anywhere (the project, the platform archives, the shared object) and no
+    /// symbol table in the link, as the Go comparator's `-ldflags=-s -w` (owner decision 4b27d207). The flags are
+    /// part of every platform cache key, so debug and no-debug archives never mix.
+    bool noDebug;
 }
 
 /// One finished build.
@@ -851,13 +855,15 @@ private Flags composeFlags(const ref ProfileSpec spec, ProfileOverride additions
         flags.dflags = kept;
     }
     flags.dflags ~= request.targetDflags ~ additions.dflags ~ request.dflags;
-    flags.noDebug = additions.noDebug && !request.debugger;
+    flags.noDebug = (additions.noDebug || request.noDebug) && !request.debugger;
     if (flags.noDebug)
         flags.dflags = withoutDebugInformation(flags.dflags);
     flags.lflags = spec.lflags.dup;
     if (linksGlibcPie(request.target))
         flags.lflags ~= spec.glibc_lflags;
     flags.lflags ~= additions.lflags ~ request.lflags;
+    if (request.noDebug && !request.debugger)
+        flags.lflags ~= "-s"; // no symbol table either, as Go's -s
     foreach (flag; flags.lflags)
         flags.dflags ~= "-L" ~ flag;
     flags.manifestDflags = additions.dflags;
@@ -1239,7 +1245,8 @@ private Receipt projectReceipt(ref Session session, const ref Manifest manifest,
     if (flags.manifestDflags.length || flags.manifestLflags.length)
         reasons ~= "flint.toml adds flags to the " ~ request.profile ~ " profile";
     if (flags.noDebug)
-        reasons ~= "flint.toml turns off debug information (debug = false)";
+        reasons ~= request.noDebug ? "--no-debug builds without debug information or a symbol table"
+            : "flint.toml turns off debug information (debug = false)";
     reasons ~= commonReasons(spec, request, result.compiler, receipt.toolchain.verified);
     receipt.canonical = reasons.length == 0;
     receipt.non_canonical_reasons = reasons;

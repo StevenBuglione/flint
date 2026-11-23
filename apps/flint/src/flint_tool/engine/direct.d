@@ -513,7 +513,7 @@ struct Replay
 }
 
 /// Part of the replay record: a change to its layout invalidates every record.
-private enum replayFormat = "flint.direct-replay/1";
+private enum replayFormat = "flint.direct-replay/2";
 
 /// The compile and link commands in DUB's `-v` output: `[cwd=<directory>] <compiler> <arguments>` lines. False
 /// when there is not exactly one link, or an argument could hold a space (the pipeline does not quote them).
@@ -577,7 +577,7 @@ void recordReplay(const ref DirectBuild build, string dubOutput)
     if (!parseReplay(dubOutput, build.compiler, replay))
         return;
     string text = replayFormat ~ "\n" ~ settingsStamp(build) ~ "\n";
-    foreach (line; watched(replaySources(replay)))
+    foreach (line; replayWatched(build, replay))
         text ~= line ~ "\n";
     text ~= "directory\t" ~ replay.directory ~ "\ntarget\t" ~ replay.target ~ "\nlink\t"
         ~ replay.link.join("\x1f") ~ "\n";
@@ -612,7 +612,7 @@ private bool readReplay(const ref DirectBuild build, string record, out Replay r
         if (!replayField(replay, parts[0], parts[2]))
             return false;
     }
-    return replay.compiles.length && replay.link.length && watched(replaySources(replay)) == expected;
+    return replay.compiles.length && replay.link.length && replayWatched(build, replay) == expected;
 }
 
 private bool replayField(ref Replay replay, string name, string value)
@@ -636,6 +636,49 @@ private bool replayField(ref Replay replay, string name, string value)
     default:
         return false;
     }
+}
+
+/// What a replay record depends on besides its stamp: every directory under the project's source trees (src/,
+/// the generated AOT trees, config/, and every import or string import path of the recorded compiles that lies
+/// in the project) and the recorded sources' directories, with their modification times. Adding,
+/// removing or renaming a source anywhere in those trees, even in a new subdirectory, changes a parent
+/// directory's time and discards the record, so DUB runs (and is recorded) again.
+private string[] replayWatched(const ref DirectBuild build, const ref Replay replay)
+{
+    import std.file : SpanMode, dirEntries, exists, isDir;
+    import std.path : buildPath;
+
+    import std.path : absolutePath, buildNormalizedPath;
+
+    // The recipe's import and string import paths inside the project, as the recorded compiles name them (the
+    // generated recipe's source path is also an import path), and the trees flint generates or reads.
+    string[] trees = ["src", ".flint/generated/aot", ".flint/generated/aot-library", "config"];
+    const root = buildNormalizedPath(absolutePath(build.root));
+    foreach (command; replay.compiles)
+    {
+        foreach (argument; command)
+        {
+            if (argument.length <= 2 || (argument[0 .. 2] != "-I" && argument[0 .. 2] != "-J"))
+                continue;
+            const directory = buildNormalizedPath(absolutePath(argument[2 .. $], replay.directory));
+            if (directory.length > root.length && directory[0 .. root.length + 1] == root ~ "/")
+                trees ~= directory;
+        }
+    }
+    string[] sources = replaySources(replay);
+    foreach (tree; trees)
+    {
+        const top = buildPath(build.root, tree); // an absolute tree stays itself
+        if (!exists(top) || !isDir(top))
+            continue;
+        sources ~= buildPath(top, ".");
+        foreach (entry; dirEntries(top, SpanMode.depth))
+        {
+            if (entry.isDir)
+                sources ~= buildPath(entry.name, ".");
+        }
+    }
+    return watched(sources); // `watched` takes each path's directory: "<dir>/." names the directory itself
 }
 
 /// The D sources the recorded compiles name, as absolute paths.

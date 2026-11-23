@@ -162,6 +162,100 @@ class PlatformCacheTests(unittest.TestCase):
         self.assertEqual(dub.returncode, 0, dub.stdout + dub.stderr)
         self.assertGreater(self.receipt(direct)['phases_ms']['plan'], 0)
 
+    def test_no_debug_builds_carry_no_debug_information_or_symbol_table(self):
+        """Owner decision 4b27d207: measured builds match Go's -ldflags=-s -w, platform archives included."""
+        def sections(path):
+            listed = subprocess.run(['readelf', '-SW', str(path)], capture_output=True, text=True, encoding='utf-8')
+            self.assertEqual(listed.returncode, 0, listed.stderr)
+            return {line.split(']', 1)[1].split()[0] for line in listed.stdout.splitlines() if '] .' in line}
+
+        debug_keys = {item['key'] for item in self.receipt(self.project)['platform_archives']}
+        nodebug_cache = self.directory / 'cache-nodebug'  # the class's cache keeps only the first build's entries
+        shutil.copytree(self.cache, nodebug_cache)
+        for mode in ([], ['--static']):
+            copy = self.directory / ('nodebug' + ''.join(mode))
+            shutil.copytree(self.project, copy, ignore=shutil.ignore_patterns('.flint'))
+            built = flint('build', '--no-debug', *mode, cwd=copy, env=environment(FLINT_CACHE=str(nodebug_cache)))
+            self.assertEqual(built.returncode, 0, built.stdout + built.stderr)
+            binary = copy / '.flint/build/dev/demo'
+            names = sections(binary)
+            self.assertFalse([name for name in names if name.startswith('.debug')], (mode, names))
+            self.assertNotIn('.symtab', names, mode)
+            linked = self.receipt(copy)['platform_archives']
+            self.assertTrue(linked)
+            self.assertFalse(debug_keys & {item['key'] for item in linked},
+                             'a no-debug build never reuses an archive or shared object built with debug information')
+            for item in linked:
+                if item['name'] == 'flint-platform-shared':
+                    shared = next((nodebug_cache / 'platform').glob('shared-' + item['key'] + '/libflint-platform.so'))
+                    self.assertFalse([n for n in sections(shared) if n.startswith('.debug')])
+                    self.assertNotIn('.symtab', sections(shared))
+            ran = subprocess.run([str(binary)], cwd=copy, capture_output=True, text=True, encoding='utf-8', timeout=60)
+            self.assertEqual(ran.returncode, 0, ran.stdout + ran.stderr)
+
+    def test_a_static_replay_follows_added_and_removed_modules(self):
+        """A static dev build replays DUB's recorded commands; a new or removed module, even in a new directory, must
+        discard the record, and a replay must give DUB's binary byte for byte."""
+        project = self.directory / 'replay'
+        shutil.copytree(self.project, project, ignore=shutil.ignore_patterns('.flint'))
+        env = environment(FLINT_CACHE=str(self.cache))
+        binary = project / '.flint/build/dev/demo'
+        greeting = project / 'src/demo/greeting.d'
+        original = greeting.read_text(encoding='utf-8')
+
+        def build(*extra, environment_=env):
+            built = flint('build', '--static', *extra, cwd=project, env=environment_)
+            self.assertEqual(built.returncode, 0, built.stdout + built.stderr)
+            return built.stderr
+
+        def output():
+            ran = subprocess.run([str(binary)], cwd=project, capture_output=True, text=True, encoding='utf-8',
+                                 timeout=60)
+            self.assertEqual(ran.returncode, 0, ran.stdout + ran.stderr)
+            return ran.stdout
+
+        def edit(text):
+            greeting.write_text(text, encoding='utf-8', newline='\n')
+
+        build()  # through DUB, recorded
+        edit(original + '\n// edited\n')
+        self.assertIn("DUB's recorded commands", build())
+        self.assertIn('Hello, world!', output())
+
+        extras = project / 'src/demo/extras'
+        extras.mkdir()
+        (extras / 'punctuation.d').write_text('module demo.extras.punctuation;\n\n@safe:\n\n/// More emphasis.\n'
+                                              'string mark() pure\n{\n    return "?!";\n}\n', encoding='utf-8',
+                                              newline='\n')
+        edit(original.replace('module demo.greeting;', 'module demo.greeting;\n\nimport demo.extras.punctuation : mark;')
+             .replace('"world") ~ "!";', '"world") ~ "!" ~ mark();'))
+        self.assertNotIn("DUB's recorded commands", build(), 'a module in a new directory discards the record')
+        self.assertIn('Hello, world!?!', output())
+
+        edit(greeting.read_text(encoding='utf-8') + '\n// again\n')
+        self.assertIn("DUB's recorded commands", build())
+        replayed = binary.read_bytes()
+        build('--force', environment_=environment(FLINT_CACHE=str(self.cache), FLINT_DIRECT_BUILD='0'))
+        self.assertEqual(replayed, binary.read_bytes(), "a replay links DUB's binary byte for byte")
+
+        shutil.rmtree(extras)
+        edit(original)
+        self.assertNotIn("DUB's recorded commands", build(), 'a removed module discards the record')
+        self.assertIn('Hello, world!', output())
+        self.assertNotIn('?!', output())
+
+        # A string-imported file (config/ is the recipe's string import path): an edit re-runs the recorded
+        # compile, which reads the new content; a new file discards the record.
+        config = project / 'config/application.toml'
+        build()
+        before = binary.stat().st_mtime_ns
+        config.write_text(config.read_text(encoding='utf-8') + '\n', encoding='utf-8', newline='\n')
+        self.assertIn("DUB's recorded commands", build())
+        self.assertNotEqual(binary.stat().st_mtime_ns, before, 'an edited string import rebuilds')
+        (project / 'config/application-staging.toml').write_text('[app]\ngreeting = "Hi"\n', encoding='utf-8',
+                                                                  newline='\n')
+        self.assertNotIn("DUB's recorded commands", build(), 'a new string-import file discards the record')
+
     def test_no_platform_cache_compiles_the_modules_from_source(self):
         plain = self.directory / 'plain'
         shutil.copytree(self.project, plain, ignore=shutil.ignore_patterns('.flint'))

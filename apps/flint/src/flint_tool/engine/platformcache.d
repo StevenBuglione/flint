@@ -938,7 +938,8 @@ bool linkSharedPlatform(const ref PlatformPlan plan, scope const string[] extraA
     import std.path : buildPath;
     import std.process : thisProcessID;
     import flint_tool.support.files : sha256Hex;
-    import std.array : join;
+    import std.algorithm.searching : canFind;
+    import std.array : join, split;
     import flint_tool.support.process : Launch, capture;
 
     import std.file : isFile;
@@ -974,14 +975,21 @@ bool linkSharedPlatform(const ref PlatformPlan plan, scope const string[] extraA
     ];
     if (nativeFlags.length)
         command ~= "-Xcc=-Wl,--start-group," ~ join(nativeFlags, ",") ~ ",--end-group";
+    // A build without a symbol table (`flint build --no-debug`) strips the shared object too; the flag is in
+    // the platform key through the build's flags.
+    if (canFind(plan.inputs.dflags.split, "-L-s"))
+        command ~= "-L-s";
     Launch launch;
     launch.directory = plan.inputs.workingDirectory;
     launch.environment = plan.inputs.environment.dup;
     launch.inherit = false;
     const linked = capture(command, launch);
-    if (!linked.ok)
+    // The compiler's success is not enough: a compile server's client has reported success for a link that wrote
+    // nothing, and a record without its object would make every later build fail to link.
+    if (!linked.ok || !exists(buildPath(partial, "libflint-platform.so")))
     {
-        failure = linked.started ? linked.combined : linked.failure;
+        failure = !linked.started ? linked.failure : linked.ok
+            ? "the compiler reported success but wrote no shared object\n" ~ linked.combined : linked.combined;
         rmdirRecurse(partial);
         return false;
     }

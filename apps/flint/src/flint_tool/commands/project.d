@@ -303,6 +303,7 @@ int commandBuild(ref Session session, BuildArgs args, string[] passthrough)
             args.verify, args.locked, args.force);
     request.platformCache = !args.noPlatformCache;
     request.staticLink = args.staticLink;
+    request.noDebug = args.noDebug;
     if (target.kind == TargetKind.workspace)
     {
         import flint_tool.home.policy : ProfileSpec;

@@ -311,7 +311,9 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
                 self.copy(src/'src/libsodium/include/sodium',self.prefix/'include/sodium')
             else:
                 self.command(['sh','autogen.sh'],src)
-                self.command([src/'configure','--disable-shared','--enable-static','--prefix='+str(self.prefix)],build)
+                # --disable-pie: libsodium's configure appends -fPIE after CFLAGS' -fPIC, and -fPIE objects cannot go into the
+                # shared platform object of a dev build (`flint build`).
+                self.command([src/'configure','--disable-shared','--enable-static','--disable-pie','--prefix='+str(self.prefix)],build)
                 self.command(['make','-j',str(self.a.jobs)],build);self.command(['make','install'],build)
         elif name=='liburing':
             if self.a.phase=='build':self.prefix.mkdir(parents=True,exist_ok=True)

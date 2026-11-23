@@ -60,6 +60,9 @@ struct BuildArgs
     /// Compile the platform modules from source.
     @Option("no-platform-cache", 0, "Compile the platform modules from source instead of linking cached archives")
     bool noPlatformCache;
+    /// Build without debug information and link without a symbol table, as the Go comparator's `-s -w`.
+    @Option("no-debug", 0, "Build without debug information and link without a symbol table (the measured builds)")
+    bool noDebug;
     /// Link the platform's archives into a dev build instead of the shared platform object.
     @Option("static", 0, "Link the platform modules statically into a dev build, as release and size builds do")
     bool staticLink;
