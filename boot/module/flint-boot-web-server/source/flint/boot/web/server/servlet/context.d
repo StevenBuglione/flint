@@ -95,7 +95,7 @@ class ServletWebServerApplicationContext : GenericApplicationContext, KeepAliveA
     void awaitTermination()
     {
         import core.atomic : atomicLoad;
-        import core.thread : Thread;
+        import core.thread.osthread : Thread;
         import core.time : msecs;
 
         while (!atomicLoad(terminated))
