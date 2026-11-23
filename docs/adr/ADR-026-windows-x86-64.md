@@ -221,6 +221,12 @@ Where Windows semantics differ, this is what Flint does:
   - Tests that asked for "the readiness backend" use IOCP on Windows. The cancellation race, the backpressured write drain, the foreign-worker close and the `TCP_NODELAY` check now run there, on DMD and LDC. Descriptor exhaustion has no Windows counterpart to `RLIMIT_NOFILE` and stays POSIX.
   - With a completion port, an OVERLAPPED's status is written only when its packet is dequeued. The low-level test of "a read completed before `CancelIoEx`" therefore waits for the loopback receive instead of observing it.
 
+- **Wake-ups (`flint.security`, `flint.cache`).**
+  - The JWKS worker and the cache monitor wait on an auto-reset event (`CreateEventW`, `SetEvent`, `WaitForSingleObject`) where Linux uses an eventfd and macOS a pipe.
+  - Signals sent before a wait collapse into one wake-up, as an eventfd drain does.
+- **Secure random bytes (`flint.conc`).** `BCryptGenRandom` with the system-preferred generator, resolved from System32's `bcrypt.dll` at run time.
+- **IP literals (`flint.security`).** Winsock's `inet_pton`, which needs no `WSAStartup`. The packages that call Winsock declare `libs "ws2_32" platform="windows"`.
+- **Backend selection in packages and tests.** Code that picked kqueue on macOS and epoll elsewhere picks IOCP on Windows.
 - **Child processes (`flint.os`).** The supervisor and output pump stay unchanged. They wait on small integer descriptors, which on Windows name slots in a static table: an overlapped named-pipe reader with its own buffer, a process handle, or a manual-reset event.
   - Output pipes are named pipes, because anonymous pipes cannot be waited on. Each reader keeps one overlapped read outstanding. A read is cancelled with `CancelIoEx`, and its final completion is observed before the buffer and `OVERLAPPED` are released.
   - A child starts suspended with `CreateProcessW`, joins its own job object, the counterpart of the owned process group, and then resumes. The job kills every member when its last handle closes, and lets a deliberate daemon started with `CREATE_BREAKAWAY_FROM_JOB` leave, as `setsid` leaves a group.
