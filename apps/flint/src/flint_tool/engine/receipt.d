@@ -179,6 +179,25 @@ struct PlatformArchiveRecord
     string sha256;
 }
 
+/// Where a build's wall time went, in milliseconds (ADR-030 section 5's build budget). `compile` is the critical
+/// path of the parallel compile jobs, not their sum. `compile` and `link` are -1 when DUB did not report them, and
+/// `plan` then holds the whole DUB process. `flint` is what is left: flint's own work.
+struct PhasesRecord
+{
+    /// From flint's session start to the receipt.
+    long total;
+    /// flint's own work: total minus the other phases.
+    long flint;
+    /// The Flint AOT step.
+    long aot;
+    /// The DUB process apart from compile and link: start, recipe load, plan, archiving, exit.
+    long plan;
+    /// From the first compile job's start to the last one's end.
+    long compile = -1;
+    /// The final link.
+    long link = -1;
+}
+
 /// A complete build receipt.
 struct Receipt
 {
@@ -224,6 +243,8 @@ struct Receipt
     string[] non_portable_reasons;
     /// Platform modules linked from the platform cache; empty when they were compiled from source.
     PlatformArchiveRecord[] platform_archives;
+    /// Where the build's time went.
+    PhasesRecord phases_ms;
 }
 
 /// Receipt path for an artifact.

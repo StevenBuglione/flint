@@ -385,7 +385,14 @@ A Boot application's Flint AOT modules (docs/spring/aot-contract.md) build in tw
 
 ### Receipts
 
-Every artifact has `<artifact>.receipt.json` (`flint.receipt/1`) next to it. Workspace package artifacts have theirs in `.flint/receipts/`. A receipt records the identities behind the artifact: tool, project, manifest and lock hashes, source commit and dirtiness, toolchain components and hashes, native install receipt, profile, flags actually passed, additions, waivers, command, influential environment and output hashes. An artifact is **canonical** when no flags were added, the compiler belongs to the profile, and the toolchain verifies against its receipt. `flint receipt --canonical` and measurement refuse anything else.
+Every artifact has `<artifact>.receipt.json` (`flint.receipt/1`) next to it. Workspace package artifacts have theirs in `.flint/receipts/`. A receipt records the identities behind the artifact: tool, project, manifest and lock hashes, source commit and dirtiness, toolchain components and hashes, native install receipt, profile, flags actually passed, additions, waivers, command, influential environment and output hashes. `phases_ms` says where the build's wall time went, in integer milliseconds:
+- `total`: from flint's session start to the receipt;
+- `aot`: the Flint AOT step;
+- `plan`: the DUB process apart from compile and link;
+- `compile`: the critical path of the parallel compile jobs, not their sum;
+- `link`: the final link;
+- `flint`: what is left, flint's own work.
+`compile` and `link` come from the Flint DUB's trace. They are -1 when it reported neither, and `plan` then holds the whole DUB process. Proof-harness reads them for the build budget. An artifact is **canonical** when no flags were added, the compiler belongs to the profile, and the toolchain verifies against its receipt. `flint receipt --canonical` and measurement refuse anything else.
 
 ## Environment
 

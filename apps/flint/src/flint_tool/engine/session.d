@@ -13,6 +13,8 @@ struct Session
     Home home;
     /// Whether the home loaded.
     bool homeLoaded;
+    /// When the session opened, near the process start: build receipts measure their phases from it.
+    imported!"core.time".MonoTime started;
     /// Emit JSON on stdout instead of human text.
     bool json;
     /// Stream tool output and show more detail.
@@ -67,7 +69,10 @@ Session openSession(bool json, bool verbose, ref Report report)
     import std.process : environment;
     import flint_tool.home.policy : findHome, loadHome;
 
+    import core.time : MonoTime;
+
     Session session;
+    session.started = MonoTime.currTime;
     session.json = json;
     session.verbose = verbose;
     session.executable = thisExePath();

@@ -86,6 +86,8 @@ struct BuildOutcome
     imported!"flint_tool.engine.platformcache".PlatformModule aotLibrary;
     /// The shared platform object a dev build links (`linkShared`), or empty when it links archives.
     string platformShared;
+    /// Where the build's time went (receipt `phases_ms`).
+    imported!"flint_tool.engine.receipt".PhasesRecord phases;
 }
 
 /// The profile, flags and DUB home a project build uses, settled before it prepares anything.
@@ -194,7 +196,8 @@ EnvironmentRecord[] influentialEnvironment()
 }
 
 /// Run DUB, streaming its output when verbose and capturing it otherwise.
-bool runDub(ref Session session, scope const(string)[] argv, EnvVar[] env, string cwd, out string output)
+bool runDub(ref Session session, scope const(string)[] argv, EnvVar[] env, string cwd, out string output,
+        bool hideTrace = false)
 {
     import flint_tool.support.process : Launch, streamed;
     import flint_tool.sys.posix : writeError;
@@ -212,12 +215,81 @@ bool runDub(ref Session session, scope const(string)[] argv, EnvVar[] env, strin
     }, (scope const(char)[] text) @safe {
         collected ~= text;
         if (stream)
-            writeError(text);
+            writeError(hideTrace ? withoutTrace(text.idup) : text);
     });
     output = collected;
     if (!outcome.started)
         output = outcome.failure;
     return outcome.ok;
+}
+
+private bool traceRequested(scope const EnvVar[] environment)
+{
+    foreach (ref variable; environment)
+    {
+        if (variable.name == "FLINT_DUB_TRACE")
+            return true;
+    }
+    return false;
+}
+
+/// `text` without the Flint DUB's `[flint-dub ...]` trace lines.
+string withoutTrace(string text)
+{
+    import std.algorithm.searching : startsWith;
+    import std.string : lineSplitter, KeepTerminator;
+
+    string kept;
+    foreach (line; text.lineSplitter!(KeepTerminator.yes))
+    {
+        if (!line.startsWith("[flint-dub "))
+            kept ~= line;
+    }
+    return kept;
+}
+
+/// The DUB process's phases from its trace: compile from "pipeline N compile jobs" (or "pipeline planned") to
+/// "pipeline compiled", link from "link begin" to "link end", and the rest of `wall` as plan.
+void dubPhases(string output, long wall, ref imported!"flint_tool.engine.receipt".PhasesRecord phases)
+{
+    import std.algorithm.searching : canFind, findSplit, startsWith;
+    import std.conv : ConvException, to;
+    import std.string : lineSplitter, strip;
+
+    double compileStart = -1, compileEnd = -1, linkStart = -1, linkEnd = -1;
+    foreach (line; output.lineSplitter)
+    {
+        if (!line.startsWith("[flint-dub "))
+            continue;
+        auto parts = line["[flint-dub ".length .. $].findSplit("ms]");
+        double at;
+        try
+            at = parts[0].strip.to!double;
+        catch (ConvException)
+            continue;
+        const event = parts[2].strip;
+        if (event == "pipeline planned" || (event.startsWith("pipeline ") && event.canFind(" compile jobs")))
+            compileStart = at;
+        else if (event == "pipeline compiled")
+            compileEnd = at;
+        else if (event == "link begin")
+            linkStart = at;
+        else if (event == "link end")
+            linkEnd = at;
+    }
+    phases.compile = compileStart >= 0 && compileEnd >= compileStart ? cast(long)(compileEnd - compileStart) : -1;
+    phases.link = linkStart >= 0 && linkEnd >= linkStart ? cast(long)(linkEnd - linkStart) : -1;
+    phases.plan = wall - (phases.compile > 0 ? phases.compile : 0) - (phases.link > 0 ? phases.link : 0);
+}
+
+/// Close the phases: the total since the session opened, and flint's own share of it.
+private void finishPhases(ref Session session, ref imported!"flint_tool.engine.receipt".PhasesRecord phases)
+{
+    import core.time : MonoTime;
+
+    phases.total = (MonoTime.currTime - session.started).total!"msecs";
+    phases.flint = phases.total - phases.aot - phases.plan - (phases.compile > 0 ? phases.compile
+            : 0) - (phases.link > 0 ? phases.link : 0);
 }
 
 /// The tail of tool output worth showing in a diagnostic.
@@ -315,7 +387,11 @@ private bool prepareBuild(ref Session session, const ref Manifest manifest, cons
         cflags ~= "-I" ~ directory;
     if (!compileNativeC(session, manifest, request.sanitize, cflags, result.native, report))
         return false;
+    import core.time : MonoTime;
+
+    const aotStart = MonoTime.currTime;
     const aot = runAotStep(session, manifest, resolution, toolchain, result.compiler, report);
+    result.phases.aot = (MonoTime.currTime - aotStart).total!"msecs";
     if (!aot.ok)
         return false;
     if (!preparePlatform(session, manifest, resolution, request, settings, toolchain, result, report))
@@ -499,7 +575,20 @@ bool buildProject(ref Session session, const ref Manifest manifest, const ref Re
     const label = request.test ? "test" : request.profile;
     session.progress(request.test ? "Compiling" : "Building",
             manifest.name ~ " " ~ manifest.version_ ~ " (" ~ label ~ ", " ~ compiler ~ ")");
-    if (!runDub(session, command, environment, manifest.root, result.output))
+    // The Flint DUB reports its phases with FLINT_DUB_TRACE (toolchain/README.md); flint reads them for the
+    // receipt and keeps them out of what it shows.
+    const userTrace = traceRequested(environment);
+    if (!userTrace)
+        environment ~= EnvVar("FLINT_DUB_TRACE", "1");
+    import core.time : MonoTime;
+
+    const dubStart = MonoTime.currTime;
+    const built = runDub(session, command, environment, manifest.root, result.output, !userTrace);
+    const dubWall = (MonoTime.currTime - dubStart).total!"msecs";
+    dubPhases(result.output, dubWall, result.phases);
+    if (!userTrace)
+        result.output = withoutTrace(result.output);
+    if (!built)
     {
         report.error("FLINT-E0701", request.test ? "the test build failed" : "the build failed",
                 "the compiler output follows:\n" ~ tail(result.output));
@@ -510,6 +599,8 @@ bool buildProject(ref Session session, const ref Manifest manifest, const ref Re
         return false;
     storeAotArchive(session, result);
     auto receipt = projectReceipt(session, manifest, toolchain, request, flags, result);
+    finishPhases(session, result.phases); // after the receipt's hashing, which is flint's work too
+    receipt.phases_ms = result.phases;
     result.receipt = receiptPath(result.artifact);
     writeReceipt(result.receipt, receipt);
     result.canonical = receipt.canonical;
