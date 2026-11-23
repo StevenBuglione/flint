@@ -19,6 +19,16 @@
    "dependencies": [
     "engine-aot"
    ]
+  },
+  "jackson-core": {
+   "directory": "framework/jackson-core",
+   "module": "flint.jackson.core",
+   "repo": "framework",
+   "licence": "Apache-2.0",
+   "upstream": "jackson-core@3.1.8",
+   "dependencies": [
+    "serde"
+   ]
   }
  }
 }
