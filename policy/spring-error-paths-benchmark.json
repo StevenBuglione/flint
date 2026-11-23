@@ -1,0 +1,109 @@
+{
+  "schema": 2,
+  "description": "The error-path p99 workloads ADR-030 section 4 requires next to the Spring-style REST workload: the 404 path (Boot's BasicErrorController JSON after the servlet error forward) and the validation-error path (Bean Validation through petclinic-rest's ProblemDetail advice). It is a separate manifest, so policy/spring-http-benchmark.json and its workload digest stay as they are. Same phases, CPU sets, statistics and rules as that workload: every implementation passes its black-box suite before load, and each response is checked during load, with the body compared as JSON without key order (the Go comparators are scored in semantic wire mode). The validation request fails one constraint and writes nothing, so it can repeat. The fixed rates are initial values to be confirmed by the first baseline on the designated runner, before any Flint measurement; after that a change needs its own ADR and remeasurement of both sides (AGENTS.md).",
+  "workload": {
+    "runs": 9,
+    "duration_seconds": 60,
+    "capacity_seconds": 60,
+    "warmup_seconds": 10,
+    "connections": 64,
+    "request_timeout_seconds": 5,
+    "server_cpus": [
+      2,
+      3
+    ],
+    "load_cpus": [
+      4,
+      5,
+      6,
+      7
+    ],
+    "database_cpus": [
+      8,
+      9
+    ]
+  },
+  "apps": {
+    "gs-rest-service:not-found": {
+      "app": "gs-rest-service",
+      "path": "/nope",
+      "fixed_rate_qps": 10000,
+      "expected": {
+        "status": 404,
+        "content_type": "application/json",
+        "request": {
+          "method": "GET",
+          "headers": {
+            "Accept": "*/*"
+          }
+        },
+        "body_json": {
+          "timestamp": {
+            "$regex": "\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(\\.\\d{1,9})?Z"
+          },
+          "status": 404,
+          "error": "Not Found",
+          "path": "/nope"
+        },
+        "min_body_bytes": 88,
+        "max_body_bytes": 89
+      }
+    },
+    "petclinic-rest:validation-error": {
+      "app": "petclinic-rest",
+      "path": "/petclinic/api/owners",
+      "fixed_rate_qps": 5000,
+      "expected": {
+        "status": 400,
+        "content_type": "application/problem+json",
+        "request": {
+          "method": "POST",
+          "headers": {
+            "Content-Type": "application/json",
+            "Accept": "*/*"
+          },
+          "body": "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}"
+        },
+        "body_json": {
+          "detail": "The request contains invalid or missing parameters",
+          "status": 400,
+          "title": "MethodArgumentNotValidException",
+          "type": {
+            "$regex": "http://127\\.0\\.0\\.1:\\d+/petclinic/api/owners"
+          },
+          "timestamp": {
+            "$regex": "\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(\\.\\d{1,9})?Z"
+          },
+          "schemaValidationErrors": [
+            {
+              "message": "Field 'telephone' must match \"^[0-9]{10}$\" (rejected value: 01234abcde)",
+              "field": "telephone",
+              "defaultMessage": "must match \"^[0-9]{10}$\"",
+              "rejectedValue": "01234abcde"
+            }
+          ]
+        },
+        "min_body_bytes": 414,
+        "max_body_bytes": 430
+      }
+    }
+  },
+  "targets": [
+    "flint",
+    "go"
+  ],
+  "context": [
+    "java-jvm"
+  ],
+  "environment": {
+    "flint": {
+      "FLINT_CORES": "2"
+    },
+    "go": {
+      "GOMAXPROCS": "2"
+    },
+    "java-jvm": {
+      "JAVA_TOOL_OPTIONS": "-XX:ActiveProcessorCount=2"
+    }
+  }
+}

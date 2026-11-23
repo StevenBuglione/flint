@@ -1,0 +1,30 @@
+{
+  "schema": "flint.measure-queue/1",
+  "created": "2026-11-23",
+  "status": "blocked",
+  "builds": {},
+  "requested_by": "Spring port P1: real HTTP for webmvc (web-http, local_16478490)",
+  "id": "error-validation-p99",
+  "blocked_on": "the petclinic-rest Flint port (item 10) passing its suite",
+  "summary": "p99 of the validation-error path: petclinic-rest POST /petclinic/api/owners failing one constraint, Flint against Go (ADR-030 section 4)",
+  "why": "ADR-030 section 4: the validation path gets its own p99 test. Workload: policy/spring-error-paths-benchmark.json 'petclinic-rest:validation-error' (a 400 ProblemDetail from the application's advice; nothing is written, so the request repeats). Change status to pending when the Flint port passes all 109 petclinic-rest cases.",
+  "measure": {
+    "kind": "command",
+    "ports": [],
+    "steps": [
+      {
+        "argv": [
+          "{python}",
+          "tools/load_bench.py",
+          "--manifest",
+          "policy/spring-error-paths-benchmark.json",
+          "--app",
+          "petclinic-rest:validation-error",
+          "--output",
+          "{out}/http-error-validation.json"
+        ]
+      }
+    ]
+  },
+  "report_to": "the requester; docs/milestones/13.md"
+}

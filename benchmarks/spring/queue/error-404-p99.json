@@ -1,0 +1,30 @@
+{
+  "schema": "flint.measure-queue/1",
+  "created": "2026-11-23",
+  "status": "blocked",
+  "builds": {},
+  "requested_by": "Spring port P1: real HTTP for webmvc (web-http, local_16478490)",
+  "id": "error-404-p99",
+  "blocked_on": "Boot's BasicErrorController serving /error for the gs-rest-service Flint port (item 3); benchmarks/spring/flint/gs-rest-service with its flint-spring.json (item 14)",
+  "summary": "p99 of the 404 path: gs-rest-service GET /nope, Flint against the registered Go comparator (ADR-030 section 4)",
+  "why": "ADR-030 section 4: the 404 path gets its own p99 test. Workload: policy/spring-error-paths-benchmark.json 'gs-rest-service:not-found'. Change status to pending when the Flint port passes all 18 gs-rest-service cases.",
+  "measure": {
+    "kind": "command",
+    "ports": [],
+    "steps": [
+      {
+        "argv": [
+          "{python}",
+          "tools/load_bench.py",
+          "--manifest",
+          "policy/spring-error-paths-benchmark.json",
+          "--app",
+          "gs-rest-service:not-found",
+          "--output",
+          "{out}/http-error-404.json"
+        ]
+      }
+    ]
+  },
+  "report_to": "the requester; docs/milestones/13.md"
+}

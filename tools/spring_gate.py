@@ -12,6 +12,8 @@ itself is trusted where it can be recomputed:
 - `http.json`: `load_bench.py --manifest policy/spring-http-benchmark.json`, production; p99, peak RSS and CPU per
   request at most 0.99 of Go's and throughput at least 1.01 times Go's, each a median ratio whose bootstrap 99%
   upper bound must also hold;
+- `http-error-paths.json`: `load_bench.py --manifest policy/spring-error-paths-benchmark.json`, production; the
+  404 and validation-error paths' p99 at most 0.99 of Go's (ADR-030 section 4);
 - `gc-matrix-<app>.json`: `spring_bench.py gc-matrix`, production, every setting of benchmarks/spring/gc-matrix.json
   measured with its suite passing, for each application the matrix lists.
 
@@ -131,6 +133,22 @@ def spring_gate(directory):
             report[f'http {app}']['throughput'] = ratio(
                 [1 / x for x in flint['requests_per_second']], [1 / x for x in go['requests_per_second']],
                 1 / budgets['throughput_ratio_min'], f'http {app} throughput', failures)
+
+    # ADR-030 section 4: the 404 and validation-error paths get their own p99 tests.
+    errors = load(directory, 'http-error-paths.json', failures)
+    if errors is not None:
+        if errors.get('schema') != 2 or errors.get('mode') != 'production' or errors.get('status') != 'passed':
+            failures.append(f"http-error-paths.json: schema {errors.get('schema')}, mode {errors.get('mode')}, "
+                            f"status {errors.get('status')}; the production error-path workload is required")
+        check_comparators(errors, 'http-error-paths.json', registered, failures)
+        listed = json.loads((ROOT / 'policy' / 'spring-error-paths-benchmark.json').read_text())['apps']
+        for key in listed:
+            measured = errors.get('apps', {}).get(key, {}).get('measured', {})
+            if 'flint' not in measured or 'go' not in measured:
+                failures.append(f'http-error-paths.json: {key} lacks Flint or Go series')
+                continue
+            report[f'http {key}'] = {'p99_ms': ratio(measured['flint']['p99_ms'], measured['go']['p99_ms'],
+                                                     budgets['p99_ratio_max'], f'http {key} p99_ms', failures)}
 
     matrix = json.loads((ROOT / 'benchmarks' / 'spring' / 'gc-matrix.json').read_text())
     for app in matrix['apps']:

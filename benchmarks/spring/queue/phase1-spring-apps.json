@@ -67,6 +67,16 @@
       {
         "argv": [
           "{python}",
+          "tools/load_bench.py",
+          "--manifest",
+          "policy/spring-error-paths-benchmark.json",
+          "--output",
+          "{out}/http-error-paths.json"
+        ]
+      },
+      {
+        "argv": [
+          "{python}",
           "tools/spring_bench.py",
           "gc-matrix",
           "petclinic-rest",

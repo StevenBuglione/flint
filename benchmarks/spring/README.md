@@ -216,6 +216,19 @@ The incremental build and the Oz size are verdicts too.
 
 **The fixed rates** are 20,000 and 5,000 requests per second. They are initial values, to be confirmed by the first baseline on the designated runner before any Flint measurement. After that, changing them needs an ADR.
 
+### Error paths
+
+ADR-030 section 4 gives the 404 and validation-error paths their own p99 tests. `policy/spring-error-paths-benchmark.json` is a separate manifest, so the Spring-style workload's digest stays unchanged:
+- `GET /nope` on gs-rest-service, answered by Boot's JSON 404;
+- `POST /petclinic/api/owners` with one invalid field, answered by the application's 400 `ProblemDetail`. Nothing is written, so the request repeats.
+
+`load_bench` runs it like the main workload, with three additions:
+- an entry names its application (`app`);
+- entries carry the request method, headers and body;
+- responses are checked as JSON without key order (`body_json`, with `$regex` for the timestamp and the request URL).
+
+Both bodies verify against the Go comparators and the Java references: 88 bytes (89 from Go) and 426 bytes. The gate requires each path's p99 to be at most 0.99 of Go's (`http-error-paths.json`). The queue entries `error-404-p99` and `error-validation-p99` wait on the Boot error controller and the petclinic-rest port.
+
 ### The GC matrix
 
 `spring_bench.py gc-matrix <app>` runs the same Flint binary under each setting of [`gc-matrix.json`](gc-matrix.json), passed as `--DRT-gcopt=<setting> profile:1`. The settings are:

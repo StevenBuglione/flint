@@ -38,6 +38,10 @@ class SpringGate(unittest.TestCase):
         (directory / 'http.json').write_text(json.dumps({
             'schema': 2, 'mode': mode, 'status': 'passed', 'comparators': registered, 'acceptance': [],
             'apps': {'gs-rest-service': {'measured': {'flint': flint_http, 'go': go_http}}}}))
+        (directory / 'http-error-paths.json').write_text(json.dumps({
+            'schema': 2, 'mode': mode, 'status': 'passed', 'comparators': registered,
+            'apps': {key: {'measured': {'flint': flint_http, 'go': go_http}} for key in
+                     json.loads((spring_bench.ROOT / 'policy' / 'spring-error-paths-benchmark.json').read_text())['apps']}}))
         (directory / 'gc-matrix-gs-rest-service.json').write_text(json.dumps({
             'mode': mode, 'status': 'passed', 'settings': {'precise': {'suite': {'passed': 18, 'total': 18}}}}))
         if drop:
@@ -75,7 +79,7 @@ class SpringGate(unittest.TestCase):
     def test_slower_flint_fails_every_comparison(self):
         _, failures = self.gate(flint_factor=1.0)
         joined = ' | '.join(failures)
-        for label in ('primary', 'secondary', 'incremental', 'p99_ms', 'peak_rss_bytes', 'throughput'):
+        for label in ('primary', 'secondary', 'incremental', 'p99_ms', 'peak_rss_bytes', 'throughput', 'not-found'):
             self.assertIn(label, joined)
 
     def test_smoke_and_missing_evidence_fail(self):

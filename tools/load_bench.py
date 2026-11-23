@@ -198,12 +198,17 @@ class Monitor:
         return {"cpu_nanoseconds":cpu_ns,"peak_rss_bytes":max(self.peak,final["peak_rss_bytes"]),
                 "correctness_probes":self.probes,"rss_samples":self.samples}
 
-def run_oha(oha,url,workload,duration,rate,raw_path,process,expected,verifier=None,parse=None,require_sustained=True):
+def run_oha(oha,url,workload,duration,rate,raw_path,process,expected,verifier=None,parse=None,require_sustained=True,request=None):
     command=["taskset","--cpu-list",",".join(map(str,workload["load_cpus"])),str(oha),
              "--no-tui","--output-format","json","--http-version","1.1",
              "--worker-threads",str(len(workload["load_cpus"])),"-c",str(workload["connections"]),
              "-z",f"{duration}s","-w","-t",f"{workload['request_timeout_seconds']}s"]
     if rate is not None:command += ["-q",str(rate),"--latency-correction"]
+    if request:
+        # Schema-2 error-path workloads: the method, headers and body of the request under load.
+        command += ["-m",request.get("method","GET")]
+        for name,value in request.get("headers",{}).items():command += ["-H",f"{name}: {value}"]
+        if request.get("body") is not None:command += ["-d",request["body"]]
     command += [url]
     stderr_path=raw_path.with_suffix(".stderr.txt")
     monitor=Monitor(process,url,expected,verifier);monitor.start()
@@ -313,15 +318,35 @@ def spring_verifier(url, expected):
     try:
         path=target.path or "/"
         if target.query:path+="?"+target.query
-        conn.request("GET",path,headers={"Connection":"close","Accept":"application/json"})
+        request=expected.get("request",{})
+        headers={"Connection":"close","Accept":"application/json",**request.get("headers",{})}
+        body=request.get("body")
+        conn.request(request.get("method","GET"),path,body=body.encode() if body is not None else None,headers=headers)
         response=conn.getresponse()
         body=response.read(expected["max_body_bytes"]+1)
         require(response.status==expected["status"],"response status differs from workload")
         actual_type=(response.getheader("Content-Type") or "").split(";",1)[0].strip()
         require(actual_type==expected["content_type"],"response Content-Type differs")
-        require(_re.fullmatch(expected["body_regex"],body.decode("utf-8","replace")),"response body differs from the workload")
+        text=body.decode("utf-8","replace")
+        if "body_json" in expected:
+            try:value=json.loads(text)
+            except ValueError:raise ValueError("response body is not JSON")
+            require(json_matches(expected["body_json"],value),"response body differs from the workload")
+        else:
+            require(_re.fullmatch(expected["body_regex"],text),"response body differs from the workload")
     finally:
         conn.close()
+
+def json_matches(pattern, value):
+    """Order-free JSON comparison; {"$regex": r} matches a string by regular expression. Error bodies carry a
+    timestamp and the request URL, and a comparator may order keys differently (semantic wire mode)."""
+    if isinstance(pattern,dict) and set(pattern)=={"$regex"}:
+        return isinstance(value,str) and _re.fullmatch(pattern["$regex"],value) is not None
+    if isinstance(pattern,dict):
+        return isinstance(value,dict) and set(pattern)==set(value) and all(json_matches(pattern[k],value[k]) for k in pattern)
+    if isinstance(pattern,list):
+        return isinstance(value,list) and len(pattern)==len(value) and all(json_matches(a,b) for a,b in zip(pattern,value))
+    return type(pattern) is type(value) and pattern==value
 
 def parse_spring_oha(payload, expected):
     """parse_oha's checks, with a body-size range instead of one size: gs-rest-service's id grows a digit at a time."""
@@ -364,7 +389,9 @@ def validate_spring_manifest(m, smoke):
     for name,app in m["apps"].items():
         positive_number(app["fixed_rate_qps"],name+" fixed_rate_qps")
         e=app["expected"]
-        require(e["status"]==200 and e["content_type"]=="application/json" and e["body_regex"],name+": JSON 200 workload required")
+        require(isinstance(e["status"],int) and 200<=e["status"]<600,name+": HTTP status")
+        require(e["content_type"] in ("application/json","application/problem+json"),name+": JSON response required")
+        require(bool(e.get("body_regex"))!=("body_json" in e),name+": exactly one of body_regex and body_json")
         require(0<e["min_body_bytes"]<=e["max_body_bytes"],name+": body-size range")
     return w
 
@@ -419,7 +446,8 @@ def spring_measure(spring, app, spec, target, workload, oha, trial, outdir, envi
                 # Context targets are reported, never compared: a JVM that cannot hold the fixed rate is recorded
                 # as unsustained rather than dropped.
                 phases[phase]=run_oha(oha,url,workload,seconds,rate,outdir/f"{prefix}-{phase}.json",process,expected,
-                                      spring_verifier,parse_spring_oha,require_sustained=not target.startswith("java-"))
+                                      spring_verifier,parse_spring_oha,require_sustained=not target.startswith("java-"),
+                                      request=expected.get("request"))
                 spring_verifier(url,expected)
             if not smoke:
                 require(phases["latency"]["load_cpu_fraction"]<.85 and phases["capacity"]["load_cpu_fraction"]<.85,
@@ -433,8 +461,12 @@ def spring_main(a, raw, m):
     sys.path.insert(0,str(ROOT/"tools"))
     import spring_bench as spring
     workload=validate_spring_manifest(m,a.smoke).copy()
-    apps=a.app or list(m["apps"])
-    require(set(apps)<=set(m["apps"]),"unknown application")
+    keys=a.app or list(m["apps"])
+    require(set(keys)<=set(m["apps"]),"unknown application")
+    # A workload entry measures the application its "app" names (default: its key), so one application can carry
+    # several workloads, such as its 404 and validation-error paths (policy/spring-error-paths-benchmark.json).
+    app_of={key:m["apps"][key].get("app",key) for key in keys}
+    apps=sorted(set(app_of.values()))
     if a.smoke:
         workload.update(runs=1,duration_seconds=2,capacity_seconds=2,warmup_seconds=1,connections=min(workload["connections"],8))
     load=spring_quiet(a.smoke)
@@ -458,8 +490,8 @@ def spring_main(a, raw, m):
             "comparators":json.loads(spring.REGISTRY.read_text())["comparators"],"apps":{},"trials":[],"acceptance":[],
             "missing_flint":missing,"context_errors":[]}
     try:
-        for app in apps:
-            spec=m["apps"][app]
+        for key in keys:
+            spec=m["apps"][key];app=app_of[key]
             measured=[t for t in targets if not (t=="flint" and app in missing)]
             builds={"go":spring.build_go,"flint":spring.build_flint,"java-jvm":spring.build_java,
                     "java-native":spring.build_java_native}
@@ -497,8 +529,8 @@ def spring_main(a, raw, m):
                         result["trials"].append(row)
                         for key in FIELDS:
                             series[target][key].append(row["capacity" if key=="requests_per_second" else "latency"][key])
-                        print(json.dumps({"app":app,"trial":trial,"target":target,"status":"measured"}),flush=True)
-            result["apps"][app]={"measured":{t:series[t] for t in measured},"context":{t:series[t] for t in available}}
+                        print(json.dumps({"workload":key,"trial":trial,"target":target,"status":"measured"}),flush=True)
+            result["apps"][key]={"app":app,"measured":{t:series[t] for t in measured},"context":{t:series[t] for t in available}}
         result["status"]="incomplete" if missing else "passed"
         a.output.write_text(json.dumps(result,indent=2)+"\n")
         return 0
