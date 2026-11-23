@@ -346,6 +346,11 @@ abstract class TransactionSynchronizationManager
         auto current = state(false);
         if (current is null || !current.synchronizationActive)
             throw new IllegalStateException("Transaction synchronization is not active");
+        // Spring's shortcuts: no sorted copy for none or one, which is every transaction that registers nothing.
+        if (current.synchronizations.length == 0)
+            return Collections.emptyList!TransactionSynchronization();
+        if (current.synchronizations.length == 1)
+            return Collections.singletonList!TransactionSynchronization(current.synchronizations[0]);
         auto sorted = new ArrayList!TransactionSynchronization;
         foreach (synchronization; sortedByOrder(current.synchronizations))
             sorted.add(synchronization);
