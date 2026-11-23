@@ -134,8 +134,44 @@ The canonical examples, starter examples, `flint new`, `flint generate` and `AGE
 
 `docs/spring-boot-to-flint.md` maps every Spring concept a Java developer uses to its Flint equivalent, side by side.
 
+### 8. Library architecture: Spring Framework, Spring Boot, starters
+
+Decided by the project owner on 2026-11-22: Flint's libraries are layered exactly as Spring's are. Each layer has one job, and code lives in only one layer.
+
+| Spring | Flint | What lives there |
+| --- | --- | --- |
+| Spring Framework (`spring-core`, `spring-beans`, `spring-context`, `spring-web`, `spring-jdbc`, `spring-data-*`, `spring-security`, ...) | **The Flint framework libraries**: the 37 packages (`flint:arena` … `flint:web`, `flint:data`, `flint:security`, ...) | Programming models, annotations and programmatic APIs. Each library works on its own, with explicit construction. It knows nothing of Boot, reads no `application.*` file and carries no global defaults. |
+| `spring-boot` | **`flint:boot`** | `@FlintApplication`, `FlintApplication.run`, `FlintMain`, compile-time component scanning, the banner, runners, profiles, binding `application.*` to `@ConfigurationProperties`, the application lifecycle, and failure analysis: start-up errors explained with the key, bean or type that caused them. |
+| `spring-boot-autoconfigure` | **`flint:boot-autoconfigure`** | One `@AutoConfiguration` per framework library: `WebServerAutoConfiguration`, `DataSourceAutoConfiguration`, `SecurityAutoConfiguration`, `CacheAutoConfiguration` and so on. Each is guarded by `@ConditionalOnClass` (the library is linked, decided at compile time), `@ConditionalOnProperty` and `@ConditionalOnMissingBean`, and owns its properties types (`ServerProperties`, `DataSourceProperties`, ...). **Every default lives here and nowhere else.** |
+| `spring-boot-actuator`, `spring-boot-actuator-autoconfigure` | **`flint:boot-actuator`** (on `flint:actuator`) | Health, info, metrics and Prometheus endpoints, with Spring's paths and JSON. |
+| `spring-boot-test`, `spring-boot-test-autoconfigure` | **`flint:boot-test`** (on `flint:test`) | `@FlintTest`, `@WebTest`, `@DataTest`, `MockMvc` and `@MockBean`. |
+| `spring-boot-starter-*` | **`flint:starter-*`** | **No code.** A starter is a dependency bundle plus the configuration section that `flint add` writes. `flint:starter` (the base, like `spring-boot-starter`) is `boot` + `boot-autoconfigure` + `log`. Every other starter depends on it. |
+
+Rules:
+
+- **A starter contains no D source.** `flint check` fails one that does. Behaviour belongs in a framework library (the programming model) or in `flint:boot-autoconfigure` (wiring and defaults).
+- **Starters are named after the Spring Boot starter for the same domain, where one exists:**
+  - `starter-web`, `starter-validation` and `starter-json`;
+  - `starter-data-jdbc` (Flint's repositories over SQL);
+  - `starter-security` and `starter-oauth2-client`;
+  - `starter-actuator` (not "observability"), `starter-cache`, `starter-mail`, `starter-test`;
+  - `starter-kafka` for the Kafka and JetStream clients.
+
+  Flint-only domains keep descriptive names: `starter-mcp`, `starter-ai`, `starter-cli`, `starter-tui`, `starter-desktop` and `starter-wasm`.
+- **Framework libraries never import `flint:boot` or `flint:boot-autoconfigure`.** The dependency direction is framework → boot → autoconfigure → starters, and the structural gate checks it as it checks the existing tiers.
+- **Auto-configuration is overridable in Spring's ways:**
+  - a user's own bean of the same type wins (`@ConditionalOnMissingBean`);
+  - properties tune the defaults;
+  - `@FlintApplication(exclude: [DataSourceAutoConfiguration])` turns one off.
+- **`flint:starter-web` and `flint:starter-observability` move to this shape now:**
+  - `runApplication` and the run loop go to `flint:boot`;
+  - the server, SPA and static-resource wiring and `ServerProperties` go to `flint:boot-autoconfigure`;
+  - the actuator wiring goes to `flint:boot-actuator`;
+  - the starters keep only their dependency lists and configuration sections, and `starter-observability` is renamed `starter-actuator`.
+
 ## Consequences
 
+- **New libraries:** `flint:boot`, `flint:boot-autoconfigure`, `flint:boot-actuator` and `flint:boot-test` join the release surface as Boot's layer, separate from the 37 framework libraries. Starters become code-free.
 - **Public API additions:** `flint.boot` (`FlintApplication`, `FlintMain`, the runners and the banner), the mapping annotations, `ResponseEntity`, `@Value`, `@Profile`, the `@Configuration`/`@Bean` style, derived queries and the test slices. They are recorded in the Milestone 10 decisions ADR (ADR-028) as they land.
 - **Names:** the old names keep working, and `flint check` steers code to the Spring names.
 - **Scale:** this widens Milestone 10, and the vibe-coding benchmark waits for it, since agents and Java developers should meet the Spring shape first.
