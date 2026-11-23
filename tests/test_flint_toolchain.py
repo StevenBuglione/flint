@@ -79,6 +79,15 @@ class ForkSourcesTests(unittest.TestCase):
         self.assertTrue((TOOLCHAIN / 'arm64' / 'run.py').is_file())
         self.assertGreaterEqual(len(list((TOOLCHAIN / 'arm64').glob('*.d'))), 19)
 
+    def test_fork_reads_stat_mtime_on_every_host(self):
+        # LDC's druntime for Linux AArch64 has st_mtime and st_mtimensec, not st_mtim: the fork reads st_mtim only
+        # where stat_t has it, or Flint cannot bootstrap there.
+        for patch in ('dmd-2.114.0-flint.patch', 'dmd-2.114.0-flint-darwin.patch'):
+            added = [line[1:] for line in (TOOLCHAIN / patch).read_text().splitlines() if line.startswith('+')]
+            for i, line in enumerate(added):
+                if re.search(r'\.st_mtim\b', line):
+                    self.assertIn('__traits(hasMember, stat_t, "st_mtim")', added[i - 1], f'{patch}: {line.strip()}')
+
     def test_dmd_patches_per_host(self):
         from unittest import mock
         for system, overlay in (('Linux', []), ('Windows', [install_toolchains.DMD_WINDOWS_PATCH]),

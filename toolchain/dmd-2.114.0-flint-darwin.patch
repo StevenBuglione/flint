@@ -1,5 +1,5 @@
 diff --git a/dmd/flintlink.d b/dmd/flintlink.d
-index f4e30b1..d4a71f7 100644
+index ae18049..d1d04fa 100644
 --- a/dmd/flintlink.d
 +++ b/dmd/flintlink.d
 @@ -36,7 +36,16 @@ nothrow:
@@ -87,8 +87,8 @@ index f4e30b1..d4a71f7 100644
          return false;
      {
          char[64] m;
--        snprintf(m.ptr, m.length, "%lld.%lld.%lld", cast(long) st.st_mtim.tv_sec, cast(long) st.st_ino, cast(long) st.st_size);
-+        snprintf(m.ptr, m.length, "%lld.%lld.%lld", cast(long) (){ version (OSX) return st.st_mtimespec.tv_sec; else return st.st_mtim.tv_sec; }(), cast(long) st.st_ino, cast(long) st.st_size);
+-        snprintf(m.ptr, m.length, "%lld.%lld.%lld", cast(long) st.st_mtime, cast(long) st.st_ino, cast(long) st.st_size);
++        snprintf(m.ptr, m.length, "%lld.%lld.%lld", cast(long) (){ version (OSX) return st.st_mtimespec.tv_sec; else return st.st_mtime; }(), cast(long) st.st_ino, cast(long) st.st_size);
          h = fnv(h, m.ptr);
      }
      foreach (s; ccSwitches)
@@ -105,18 +105,10 @@ index f4e30b1..d4a71f7 100644
      char[4200] cache;
      snprintf(cache.ptr, cache.length, "%s/link-%016llx.txt", dir.ptr, h);
 diff --git a/dmd/flintserver.d b/dmd/flintserver.d
-index d7b6893..614daf6 100644
+index d374bfc..9e718da 100644
 --- a/dmd/flintserver.d
 +++ b/dmd/flintserver.d
-@@ -38,6 +38,7 @@ import core.sys.posix.sys.stat;
- import core.sys.posix.sys.un;
- import core.sys.posix.sys.wait;
- import core.sys.posix.unistd;
-+version (OSX) import core.sys.posix.time : timespec;
- import core.stdc.stdlib : atexit;
- 
- import dmd.arraytypes : Modules, Strings;
-@@ -74,11 +75,43 @@ extern (C) private
+@@ -75,11 +75,43 @@ extern (C) private
  {
      int flock(int fd, int operation);
      long syscall(long number, ...);
@@ -161,7 +153,7 @@ index d7b6893..614daf6 100644
  private enum LOCK_EX = 2, LOCK_NB = 4;
  private enum SYS_pidfd_open = 434;
  private enum uint magic = 0x464C4E54; // "FLNT"
-@@ -144,11 +177,30 @@ private bool fileExists(const(char)* path)
+@@ -145,18 +177,30 @@ private bool fileExists(const(char)* path)
  private const(char)* selfExe()
  {
      __gshared char[4096] buf;
@@ -185,19 +177,22 @@ index d7b6893..614daf6 100644
 +        buf[n] = 0;
 +        return buf.ptr;
 +    }
-+}
-+
-+/// The modification time field of `stat_t`, whose name differs on Darwin.
-+private ref auto mtimeOf(ref stat_t st)
-+{
-+    version (OSX)
-+        return st.st_mtimespec;
-+    else
-+        return st.st_mtim;
  }
  
- private const(char)* socketDirectory()
-@@ -159,7 +211,7 @@ private const(char)* socketDirectory()
+-/// The modification time of `stat_t`. Some druntimes (LDC's for Linux AArch64) split it into
+-/// `st_mtime` and `st_mtimensec` instead of `st_mtim`.
++/// The modification time of `stat_t`. Darwin names it `st_mtimespec`; on Linux some druntimes
++/// (LDC's for AArch64) split it into `st_mtime` and `st_mtimensec` instead of `st_mtim`.
+ private timespec mtimeOf(ref const stat_t st)
+ {
+-    static if (__traits(hasMember, stat_t, "st_mtim"))
++    version (OSX)
++        return st.st_mtimespec;
++    else static if (__traits(hasMember, stat_t, "st_mtim"))
+         return st.st_mtim;
+     else
+     {
+@@ -175,7 +219,7 @@ private const(char)* socketDirectory()
          snprintf(dir.ptr, dir.length, "%s/flint-dmd", runtime);
      else
          snprintf(dir.ptr, dir.length, "/tmp/flint-dmd-%u", cast(uint) getuid());
@@ -206,22 +201,7 @@ index d7b6893..614daf6 100644
      return dir.ptr;
  }
  private enum octal700 = 448;
-@@ -246,12 +298,12 @@ bool tryCompileServer(const(char)[][] dargs, out int status)
-     ulong h = 0xcbf29ce484222325UL;
-     h = fnv(h, exe, strlen(exe));
-     h = fnv(h, &est.st_ino, est.st_ino.sizeof);
--    h = fnv(h, &est.st_mtim, est.st_mtim.sizeof);
-+    h = fnv(h, &mtimeOf(est), mtimeOf(est).sizeof);
-     h = fnv(h, &est.st_size, est.st_size.sizeof);
-     if (haveConf)
-     {
-         h = fnv(h, &cst.st_ino, cst.st_ino.sizeof);
--        h = fnv(h, &cst.st_mtim, cst.st_mtim.sizeof);
-+        h = fnv(h, &mtimeOf(cst), mtimeOf(cst).sizeof);
-         h = fnv(h, &cst.st_size, cst.st_size.sizeof);
-     }
-     Strings keyArgs;
-@@ -399,7 +451,10 @@ private __gshared int traceFd = -2;
+@@ -417,7 +461,10 @@ private __gshared int traceFd = -2;
  /// Append a timestamped event for this worker when FLINT_DMD_SERVER_TRACE names a file.
  private void traceMark(const(char)* what)
  {

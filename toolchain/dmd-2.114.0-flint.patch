@@ -675,7 +675,7 @@ diff -ruN a/dmd/flintlink.d b/dmd/flintlink.d
 +        return false;
 +    {
 +        char[64] m;
-+        snprintf(m.ptr, m.length, "%lld.%lld.%lld", cast(long) st.st_mtim.tv_sec, cast(long) st.st_ino, cast(long) st.st_size);
++        snprintf(m.ptr, m.length, "%lld.%lld.%lld", cast(long) st.st_mtime, cast(long) st.st_ino, cast(long) st.st_size);
 +        h = fnv(h, m.ptr);
 +    }
 +    foreach (s; ccSwitches)
@@ -748,7 +748,7 @@ diff -ruN a/dmd/flintlink.d b/dmd/flintlink.d
 diff -ruN a/dmd/flintserver.d b/dmd/flintserver.d
 --- a/dmd/flintserver.d	1969-12-31 19:00:00.000000000 -0500
 +++ b/dmd/flintserver.d	2026-11-21 17:52:11.090753585 -0500
-@@ -0,0 +1,672 @@
+@@ -0,0 +1,690 @@
 +/**
 + * Resident toolchain compile server ("zygote") for the DMD driver.
 + *
@@ -789,6 +789,7 @@ diff -ruN a/dmd/flintserver.d b/dmd/flintserver.d
 +import core.sys.posix.sys.un;
 +import core.sys.posix.sys.wait;
 +import core.sys.posix.unistd;
++import core.sys.posix.time : timespec;
 +import core.stdc.stdlib : atexit;
 +
 +import dmd.arraytypes : Modules, Strings;
@@ -902,6 +903,21 @@ diff -ruN a/dmd/flintserver.d b/dmd/flintserver.d
 +    return buf.ptr;
 +}
 +
++/// The modification time of `stat_t`. Some druntimes (LDC's for Linux AArch64) split it into
++/// `st_mtime` and `st_mtimensec` instead of `st_mtim`.
++private timespec mtimeOf(ref const stat_t st)
++{
++    static if (__traits(hasMember, stat_t, "st_mtim"))
++        return st.st_mtim;
++    else
++    {
++        timespec t;
++        t.tv_sec = st.st_mtime;
++        t.tv_nsec = st.st_mtimensec;
++        return t;
++    }
++}
++
 +private const(char)* socketDirectory()
 +{
 +    __gshared char[1024] dir;
@@ -997,12 +1013,14 @@ diff -ruN a/dmd/flintserver.d b/dmd/flintserver.d
 +    ulong h = 0xcbf29ce484222325UL;
 +    h = fnv(h, exe, strlen(exe));
 +    h = fnv(h, &est.st_ino, est.st_ino.sizeof);
-+    h = fnv(h, &est.st_mtim, est.st_mtim.sizeof);
++    const emtime = mtimeOf(est);
++    h = fnv(h, &emtime, emtime.sizeof);
 +    h = fnv(h, &est.st_size, est.st_size.sizeof);
 +    if (haveConf)
 +    {
 +        h = fnv(h, &cst.st_ino, cst.st_ino.sizeof);
-+        h = fnv(h, &cst.st_mtim, cst.st_mtim.sizeof);
++        const cmtime = mtimeOf(cst);
++        h = fnv(h, &cmtime, cmtime.sizeof);
 +        h = fnv(h, &cst.st_size, cst.st_size.sizeof);
 +    }
 +    Strings keyArgs;
