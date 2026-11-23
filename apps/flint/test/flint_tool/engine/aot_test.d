@@ -1062,7 +1062,7 @@ unittest
     import std.file : exists, readText, rmdirRecurse, tempDir;
     import std.path : buildPath;
     import std.process : thisProcessID;
-    import flint_tool.engine.aot.driver : AotOutcome, AotRequest, runAot;
+    import flint_tool.engine.aot.driver : AotOutcome, AotRequest, projectCacheName, runAot;
 
     const shared_ = buildPath(tempDir, "flint-aot-cold-" ~ thisProcessID.to!string);
     if (exists(shared_))
@@ -1105,6 +1105,17 @@ unittest
     expect(outcomes[1].removed).toEqual(outcomes[0].removed);
     expect(texts[1]).toEqual(texts[0]);
     expect(exists(buildPath(project, ".flint", "generated", "aot", "flint_aot_registry.d"))).toBeTrue();
+    // Project-keyed entries live under projects/<root hash>/, apart from the platform's: without them (a
+    // platform-only copy of the cache, as the cold build benchmark starts from) the project is extracted again.
+    const projectPart = buildPath(shared_, "projects", projectCacheName(project));
+    expect(exists(buildPath(projectPart, "models"))).toBeTrue();
+    expect(exists(buildPath(projectPart, "outputs"))).toBeTrue();
+    rmdirRecurse(buildPath(shared_, "projects"));
+    rmdirRecurse(buildPath(project, ".flint"));
+    auto platformOnly = runAot(request);
+    expect(platformOnly.ok).toBeTrue();
+    expect(platformOnly.extracted).toEqual(outcomes[0].extracted);
+    expect(readText(generated)).toEqual(texts[0]);
 }
 
 /// Source directories of the DUB closure of `roots` (repository-relative package directories), following each

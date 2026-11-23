@@ -45,6 +45,10 @@ struct AotRequest
     /// auto-configurations, imported configurations) and class-presence answers are kept there by extraction key,
     /// so a cold build of any project with the same closure reuses them.
     string sharedCache;
+    /// This project's own part of the shared cache (`<FLINT_CACHE>/projects/<root hash>/aot`): its models and its
+    /// generated output, kept apart from the platform entries so the platform part can be copied alone (the cold
+    /// build benchmark starts from a platform-only cache). Empty: `<sharedCache>/projects/<root hash>`.
+    string projectCache;
 }
 
 /// What it did.
@@ -521,18 +525,19 @@ private bool extractInto(const ref AotRequest request, scope const SourceModule[
     import flint_tool.support.files : sha256Hex;
 
     const cache = buildPath(request.root, cacheDirectory);
-    // Shared-cache keys: a platform module's extraction key; a project module's with the project root too, since
-    // its model records absolute source paths. A cached cold build (a clean .flint) then extracts nothing.
+    // Shared-cache keys and directories: a platform module's in the platform part, a project module's in the
+    // project's part (its model records absolute source paths). A cached cold build then extracts nothing.
     string[string] shareable;
+    string[string] roots;
     foreach (ref source; sources)
     {
         if (request.sharedCache.length && source.name in keys)
         {
-            const key = keys[source.name];
-            shareable[source.name] = source.user ? sharedProjectKey(key, request.root) : key;
+            shareable[source.name] = keys[source.name];
+            roots[source.name] = source.user ? projectCacheOf(request) : request.sharedCache;
         }
     }
-    string[] modules = reuseShared(request.sharedCache, requested, shareable, keys, cache, state, outcome);
+    string[] modules = reuseShared(roots, requested, shareable, keys, cache, state, outcome);
     string[] classes = request.sharedCache.length ? sharedPresence(request, probes, state) : probes.dup;
     if (modules.length == 0 && classes.length == 0)
         return true;
@@ -554,7 +559,7 @@ private bool extractInto(const ref AotRequest request, scope const SourceModule[
         return false;
     }
     mkdirRecurse(buildPath(cache, "models"));
-    string annotationSet;
+    string[string] annotationSets; // by shared-cache directory
     foreach (index, ref model; result.models)
     {
         write(modelPath(cache, model.name), result.documents[index]);
@@ -562,9 +567,10 @@ private bool extractInto(const ref AotRequest request, scope const SourceModule[
         state.keys[model.name] = keys.get(model.name, null);
         if (const sharedKey = model.name in shareable)
         {
-            if (annotationSet.length == 0)
-                annotationSet = storeAnnotationSet(request.sharedCache, result);
-            storeShared(request.sharedCache, *sharedKey, result.documents[index], annotationSet);
+            const root = roots[model.name];
+            if (root !in annotationSets)
+                annotationSets[root] = storeAnnotationSet(root, result);
+            storeShared(root, *sharedKey, result.documents[index], annotationSets[root]);
         }
     }
     if (request.sharedCache.length && result.present.length)
@@ -813,12 +819,21 @@ private imported!"std.json".JSONValue platformJson(const ref State state)
     return JSONValue(modules);
 }
 
-/// The shared-cache key of a project module's model: its extraction key and the project root.
-private string sharedProjectKey(string key, string root)
+/// The project's part of the shared cache (AotRequest.projectCache).
+private string projectCacheOf(const ref AotRequest request)
+{
+    import std.path : buildPath;
+
+    return request.projectCache.length ? request.projectCache : buildPath(request.sharedCache,
+            "projects", projectCacheName(request.root));
+}
+
+/// The name of a project's part of the shared cache: the first 16 hex digits of the SHA-256 of its root.
+string projectCacheName(string root)
 {
     import flint_tool.support.files : sha256Hex;
 
-    return sha256Hex(cast(const(ubyte)[])(key ~ "\n" ~ root));
+    return sha256Hex(cast(const(ubyte)[]) root)[0 .. 16];
 }
 
 /// The shared cache's entry for the generated output of `outputKey` in this project.
@@ -826,7 +841,7 @@ private string outputEntry(const ref AotRequest request, string outputKey)
 {
     import std.path : buildPath;
 
-    return buildPath(request.sharedCache, "outputs", sharedProjectKey(outputKey, request.root) ~ ".json");
+    return buildPath(projectCacheOf(request), "outputs", outputKey ~ ".json");
 }
 
 /// Keep the generated files, and what the step reports about them, for a later cold build of this project.
@@ -927,7 +942,7 @@ private string sharedEntry(string sharedCache, string key)
 
 /// Take the requested modules' models from the shared cache (`keyed`: their shared-cache keys); the modules
 /// left to extract.
-private string[] reuseShared(string sharedCache, scope const string[] requested,
+private string[] reuseShared(const string[string] roots, scope const string[] requested,
         const string[string] keyed, const string[string] keys, string cache, ref State state, ref AotOutcome outcome)
 {
     string[] modules;
@@ -936,7 +951,7 @@ private string[] reuseShared(string sharedCache, scope const string[] requested,
     foreach (name; requested)
     {
         const sharedKey = name in keyed;
-        if (sharedKey is null || !reuseShared(sharedCache, name, *sharedKey, keys.get(name, null),
+        if (sharedKey is null || !reuseShared(roots[name], name, *sharedKey, keys.get(name, null),
                 cache, state, reusedAnnotations, sets))
             modules ~= name;
         else
@@ -973,7 +988,7 @@ private bool reuseShared(string sharedCache, string name, string sharedKey, stri
     }
     catch (Exception)
         return false; // unreadable, half-written or an older entry: extract instead
-    if (set !in sets)
+    if (sharedCache ~ set !in sets)
     {
         string[string] found;
         try
@@ -985,7 +1000,7 @@ private bool reuseShared(string sharedCache, string name, string sharedKey, stri
             return false;
         foreach (type, value; found)
             annotations[type] = value;
-        sets[set] = true;
+        sets[sharedCache ~ set] = true;
     }
     mkdirRecurse(buildPath(cache, "models"));
     write(modelPath(cache, name), document);

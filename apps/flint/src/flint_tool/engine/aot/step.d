@@ -24,7 +24,8 @@ AotStep runAotStep(ref Session session, const ref Manifest manifest, const ref R
         const ref Toolchain toolchain, string compiler, ref Report report)
 {
     import std.conv : to;
-    import flint_tool.engine.aot.driver : AotOutcome, AotRequest, runAot;
+    import std.path : buildPath;
+    import flint_tool.engine.aot.driver : AotOutcome, AotRequest, projectCacheName, runAot;
 
     // Only applications whose closure has the AOT runtime are AOT applications; ADR-029 applications that use the
     // legacy @FlintApplication keep the scan module.
@@ -44,7 +45,10 @@ AotStep runAotStep(ref Session session, const ref Manifest manifest, const ref R
     foreach (ref item; resolution.packages)
         request.packageDirectories ~= item.directory;
     request.environmentKey = environmentKey(session, toolchain, request.compiler, resolution);
-    request.sharedCache = sharedCache(session);
+    request.sharedCache = buildPath(cacheRoot(session), "aot");
+    // Project-keyed entries apart from the platform's, so a platform-only copy of the cache is <cache> without
+    // projects/ (the cold build benchmark starts from one).
+    request.projectCache = buildPath(cacheRoot(session), "projects", projectCacheName(manifest.root), "aot");
     auto outcome = runAot(request);
     if (!outcome.active)
         return AotStep(true, false);
@@ -99,17 +103,17 @@ string[] importPaths(const ref Resolution resolution)
 }
 
 /// Everything that invalidates every cached model: the compiler, the platform and the closure.
-/// `<cache>/aot`, beside the platform cache (FLINT_CACHE, else `<home>/.flint/cache`, as engine/builder.d's
-/// platformCacheRoot): platform modules' models and class-presence answers, shared by every project.
-private string sharedCache(ref Session session)
+/// The cache directory (FLINT_CACHE, else `<home>/.flint/cache`, as engine/builder.d's platformCacheRoot). Flint
+/// AOT keeps platform modules' models and class-presence answers in `<cache>/aot`, shared by every project, and a
+/// project's own models and generated output in `<cache>/projects/<root hash>/aot`.
+private string cacheRoot(ref Session session)
 {
     import std.path : absolutePath, buildNormalizedPath, buildPath;
     import std.process : environment;
 
     const relocated = environment.get("FLINT_CACHE", "");
-    const root = relocated.length
+    return relocated.length
         ? buildNormalizedPath(absolutePath(relocated)) : buildPath(session.home.root, ".flint", "cache");
-    return buildPath(root, "aot");
 }
 
 private string environmentKey(ref Session session, const ref Toolchain toolchain, string compiler,
