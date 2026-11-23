@@ -18,6 +18,8 @@ and process-tree peak RSS sampled every millisecond), nine trials of:
   - `flint_static_cold_seconds` and `flint_static_incremental_seconds`: the same build linked fully static
     (`measure.cached_static`), the secondary edit-build headline;
   - `flint_scratch_seconds`: the same build with every module compiled from source and no platform cache;
+  - `phase_medians_ms` per series: the median wall time of each build phase (total, flint, aot, plan, compile,
+    link) from flint's build receipt (phases_ms), beside the coordinator's budget (`phase_budget_ms`);
   - `O3` and `Oz` binary sizes after GNU strip (flint's artifacts keep their symbol tables), as for Go.
 - **Java, context only**: `mvn -o package` cold (no target/) and after a one-line edit, and the jar size; with
   --native-context, one Spring Boot native-image build with the pinned GraalVM, for its time and executable size.
@@ -32,6 +34,7 @@ Go and Java sides with status "incomplete"; such a record never passes a gate.
 from __future__ import annotations
 
 import json
+import statistics
 import os
 import shutil
 import subprocess
@@ -148,6 +151,7 @@ def measure_flint(name, trials, timed, logs, temporary, result):
         # files' stat data between trials, which Go's fresh source copies do not (decisions.md, 2026-11-23).
         (cache / 'digests.log').unlink(missing_ok=True)
 
+    phases = {}
     try:
         # The platform cache (ADR-030 section 5) lives outside the port, so clearing the port's .flint keeps it. One
         # unscored build primes it, as measure_builds primes the DMD compile server, and its time is recorded.
@@ -166,10 +170,12 @@ def measure_flint(name, trials, timed, logs, temporary, result):
                         with edit.open('a', encoding='utf-8') as output:
                             output.write(f'\nenum flintMeasureEdit{trial} = {trial};\n')
                     log = logs / f'{name}-flint-{flavour}-{state}-{trial}.log'
+                    began = time.time() - 1
                     observed = timed(spec[flavour], directory, env, log)
                     key = {'scratch': 'flint_scratch_seconds', 'cached': f'flint_cached_{state}_seconds',
                            'cached_static': f'flint_static_{state}_seconds'}[flavour]
                     row[key].append(observed['seconds'])
+                    phases.setdefault(key, []).append(build_phases(directory, began))
                     result['trials'].append(dict(observed, app=name, implementation='flint', flavour=flavour,
                                                  state=state, trial=trial, log=str(log.relative_to(logs.parent))))
                 edit.write_bytes(original)
@@ -187,7 +193,38 @@ def measure_flint(name, trials, timed, logs, temporary, result):
             row[profile] = dict(stripped(binary, temporary), sha256=spring_bench.sha256(binary))
     finally:
         edit.write_bytes(original)
+    # Per-phase medians (flint, AOT, plan, compile, link) per series, beside the build-time budget.
+    row['phase_medians_ms'] = {key: phase_medians(trials) for key, trials in phases.items() if any(trials)}
+    row['phase_budget_ms'] = PHASE_BUDGET_MS
+    row['phase_trials_ms'] = phases
     return row
+
+
+PHASES = ('total', 'flint', 'aot', 'plan', 'compile', 'link')
+# The coordinator's build-time budget for gs-rest-service (2026-11-23), reported beside the phase medians, not gated.
+PHASE_BUDGET_MS = {'total': 100, 'flint': 20, 'compile': 60, 'link': 20}
+
+
+def build_phases(directory, since):
+    """The phases_ms of the flint build receipt written during this trial (m7-flint-cli's receipt spec:
+    <port>/.flint/build/<profile>/<executable>.receipt.json, integer wall-time milliseconds; compile and link are
+    absent when DUB does not report them). None when no receipt from this trial carries phases_ms."""
+    receipts = [path for path in Path(directory).glob('.flint/build/*/*.receipt.json') if path.stat().st_mtime >= since]
+    for path in sorted(receipts, key=lambda p: p.stat().st_mtime, reverse=True):
+        phases = json.loads(path.read_text()).get('phases_ms')
+        if isinstance(phases, dict):
+            return {key: value for key, value in phases.items() if key in PHASES and isinstance(value, int)}
+    return None
+
+
+def phase_medians(trials):
+    """Median milliseconds per phase over the trials that reported it."""
+    out = {}
+    for phase in PHASES:
+        values = [trial[phase] for trial in trials if trial and phase in trial]
+        if values:
+            out[phase] = statistics.median(values)
+    return out
 
 
 def stripped(binary, temporary):
@@ -330,6 +367,11 @@ def measure(args, timed):
         raise
     args.output.write_text(json.dumps(result, indent=2) + '\n')
     for name, row in result['apps'].items():
+        for series, medians in row.get('flint', {}).get('phase_medians_ms', {}).items():
+            print(f'{name} {series} phase medians (ms):',
+                  ', '.join(f'{phase} {medians[phase]:g}' + (f' (budget {PHASE_BUDGET_MS[phase]})'
+                                                                if phase in PHASE_BUDGET_MS else '')
+                            for phase in PHASES if phase in medians))
         go = row['go']
         print(f"{name}: Go std-primed cold {min(go['go_std_cold_seconds']):.3f}s, -a {min(go['go_scratch_seconds']):.3f}s, "
               f"binary {go['binary_bytes']} bytes")
