@@ -153,8 +153,9 @@ class ServletRegistrationBean : RegistrationBean
     }
 }
 
-/// Registers a filter: its URL patterns or servlet names (`/*` when neither is given), dispatcher types (`REQUEST`
-/// by default) and whether it matches after the filters declared in the deployment.
+/// Registers a filter: its URL patterns or servlet names (`/*` when neither is given), dispatcher types (by default
+/// every type for a `OncePerRequestFilter` and `REQUEST` for any other filter) and whether it matches after the
+/// filters declared in the deployment.
 abstract class AbstractFilterRegistrationBean : RegistrationBean
 {
     private static immutable string[] DEFAULT_URL_MAPPINGS = ["/*"];
@@ -213,16 +214,34 @@ abstract class AbstractFilterRegistrationBean : RegistrationBean
         return servletNames.dup;
     }
 
-    /// Set the dispatcher types; `REQUEST` when none are set.
+    /// Set the dispatcher types; when none are set, `getDispatcherTypes` decides from the filter.
     void setDispatcherTypes(DispatcherType[] dispatcherTypes...) pure nothrow
     {
         this.dispatcherTypes = dispatcherTypes.dup;
     }
 
-    /// The dispatcher types.
-    DispatcherType[] getDispatcherTypes() pure nothrow
+    /// The dispatcher types: those set, else Boot's `determineDispatcherTypes`: every type for a
+    /// `OncePerRequestFilter`, which guards against running twice itself (and by default skips error dispatches),
+    /// and `REQUEST` for any other filter.
+    DispatcherType[] getDispatcherTypes()
     {
-        return dispatcherTypes.length ? dispatcherTypes.dup : [DispatcherType.REQUEST];
+        import std.traits : EnumMembers;
+
+        if (dispatcherTypes.length)
+            return dispatcherTypes.dup;
+        if (isOncePerRequestFilter(cast(Object) getFilter()))
+            return [EnumMembers!DispatcherType].dup;
+        return [DispatcherType.REQUEST];
+    }
+
+    // Boot's ClassUtils.isPresent and instanceof check, by class name: flint:web's OncePerRequestFilter is optional
+    // here, as spring-web is for spring-boot-web-server.
+    private static bool isOncePerRequestFilter(Object filter) nothrow
+    {
+        for (auto type = filter is null ? null : typeid(filter); type !is null; type = type.base)
+            if (type.name == "flint.web.filter.OncePerRequestFilter")
+                return true;
+        return false;
     }
 
     /// Set whether the filter matches after those declared in the deployment.

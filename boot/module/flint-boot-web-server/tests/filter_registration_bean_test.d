@@ -102,14 +102,11 @@ version (FlintRegistrationNullChecks)
     assert(servletContext.filters[0].filter is oncePerRequestFilter);
     version (FlintRegistrationAsyncSupported)
         assert(servletContext.filters[0].asyncSupported == [true]);
-    version (FlintOncePerRequestFilterDispatcherTypes)
-    {
-        import std.traits : EnumMembers;
+    import std.traits : EnumMembers;
 
-        assert(servletContext.filters[0].urlPatternMappings[0].dispatcherTypes == [
-            EnumMembers!DispatcherType
-        ]);
-    }
+    assert(servletContext.filters[0].urlPatternMappings[0].dispatcherTypes == [
+        EnumMembers!DispatcherType
+    ]);
     assert(!servletContext.filters[0].urlPatternMappings[0].matchAfter);
     assert(servletContext.filters[0].urlPatternMappings[0].values == ["/*"]);
 }

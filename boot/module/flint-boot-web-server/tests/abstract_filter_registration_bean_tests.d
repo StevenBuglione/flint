@@ -178,26 +178,21 @@ mixin template AbstractFilterRegistrationBeanTests(string prefix)
         assert(simpleFilter.getDispatcherTypes() == [DispatcherType.REQUEST]);
     }
 
-    // LIKELY BUG: Boot registers a OncePerRequestFilter for every dispatcher type (it guards re-entry itself), so it
-    // also runs on ERROR, FORWARD and ASYNC dispatches; Flint registers it for REQUEST only, so such filters (Spring
-    // Security's chain, CORS) do not see the error dispatch to /error.
-    version (FlintOncePerRequestFilterDispatcherTypes)
+    // Boot registers a OncePerRequestFilter for every dispatcher type: it guards re-entry itself.
+    @(prefix ~ ".shouldDetermineDispatcherTypesForOncePerRequestFilters") unittest
     {
-        @(prefix ~ ".shouldDetermineDispatcherTypesForOncePerRequestFilters") unittest
-        {
-            import std.algorithm.sorting : sort;
-            import std.traits : EnumMembers;
+        import std.algorithm.sorting : sort;
+        import std.traits : EnumMembers;
 
-            auto simpleFilter = new class AbstractFilterRegistrationBean
+        auto simpleFilter = new class AbstractFilterRegistrationBean
+        {
+            override imported!"flint.jakarta.servlet".Filter getFilter()
             {
-                override imported!"flint.jakarta.servlet".Filter getFilter()
-                {
-                    return new SimpleOncePerRequestFilter;
-                }
-            };
-            auto types = simpleFilter.getDispatcherTypes();
-            assert(types.sort().release == [EnumMembers!DispatcherType].sort().release);
-        }
+                return new SimpleOncePerRequestFilter;
+            }
+        };
+        auto types = simpleFilter.getDispatcherTypes();
+        assert(types.sort().release == [EnumMembers!DispatcherType].sort().release);
     }
 
     @(prefix ~ ".shouldDetermineDispatcherTypesForSetDispatcherTypes") unittest

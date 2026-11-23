@@ -152,7 +152,8 @@ private final class NamedFilter : imported!"flint.web.filter".OncePerRequestFilt
     foreach (initializer; new ServletContextInitializerBeans(context).get())
         names ~= (cast(AbstractFilterRegistrationBean) initializer).getFilterName();
     assert(names == ["explicit", "first", "second"], imported!"std.conv".to!string(names));
-    assert(registration.getDispatcherTypes() == [DispatcherType.REQUEST]);
+    // A OncePerRequestFilter is registered for every dispatcher type, as Boot's determineDispatcherTypes does.
+    assert(registration.getDispatcherTypes() == [imported!"std.traits".EnumMembers!DispatcherType]);
 }
 
 // Counts the requests it filters.
