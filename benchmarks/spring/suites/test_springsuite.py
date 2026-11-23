@@ -55,6 +55,16 @@ class Comparison(unittest.TestCase):
         self.assertTrue(compare(golden, response(404, '', [('Content-Type', 'text/html')], b'by <i>dusk</i>', case),
                                 'exact'))
 
+    def test_boot_error_timestamps_keep_three_digits(self):
+        case = Case('error', 'GET', '/nope', volatile={'timestamp': 'instant-millis'})
+        body = lambda stamp: json.dumps({'timestamp': stamp, 'status': 404}).encode()
+        golden = response(404, '', [('Content-Type', 'application/json')], body('2026-11-23T04:21:32.396Z'), case, True)
+        for stamp, ok in (('2026-11-23T15:01:50.000Z', True), ('2026-11-23T15:01:50Z', False),
+                          ('2026-11-23T15:01:50.39Z', False)):
+            problems = compare(golden, response(404, '', [('Content-Type', 'application/json')], body(stamp), case),
+                               'semantic')
+            self.assertEqual(problems == [], ok, stamp)
+
     def test_log_events(self):
         text = ('2026-11-23T04:21:58.353Z  INFO 17 --- [           main] c.e.r.App    : Creating tables\n'
                 '2026-11-23T04:21:58.350Z  INFO 17 --- [           main] c.e.r.App    : Started App in 0.4 seconds\n'

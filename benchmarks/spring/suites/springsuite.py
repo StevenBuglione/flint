@@ -46,7 +46,11 @@ from urllib.parse import urlsplit
 
 FRAMING = ('content-length', 'transfer-encoding', 'connection', 'keep-alive')
 MATCHERS = {
+    # java.time.Instant as Jackson writes it: the fraction trimmed to 0, 3, 6 or 9 digits (ProblemDetail properties).
     'instant': re.compile(r'^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d{1,9})?Z$'),
+    # java.util.Date as Jackson's StdDateFormat writes it (Boot's error attributes): always three millisecond digits,
+    # so `.000` and `.390` keep their zeros.
+    'instant-millis': re.compile(r'^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$'),
 }
 JSON_TYPE = re.compile(r'^application/([a-z0-9.+-]*\+)?json$')
 

@@ -344,7 +344,7 @@
     "compact": true,
     "json": {
      "timestamp": {
-      "$match": "instant"
+      "$match": "instant-millis"
      },
      "status": 405,
      "error": "Method Not Allowed",
@@ -378,7 +378,7 @@
     "compact": true,
     "json": {
      "timestamp": {
-      "$match": "instant"
+      "$match": "instant-millis"
      },
      "status": 405,
      "error": "Method Not Allowed",
@@ -408,7 +408,7 @@
     "compact": true,
     "json": {
      "timestamp": {
-      "$match": "instant"
+      "$match": "instant-millis"
      },
      "status": 404,
      "error": "Not Found",
@@ -438,7 +438,7 @@
     "compact": true,
     "json": {
      "timestamp": {
-      "$match": "instant"
+      "$match": "instant-millis"
      },
      "status": 404,
      "error": "Not Found",

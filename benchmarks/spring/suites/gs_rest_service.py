@@ -5,7 +5,8 @@ reaches the handler (HEAD included) increments it, and requests that fail before
 """
 from springsuite import Case
 
-INSTANT = {'timestamp': 'instant'}
+# Boot's error attributes carry a java.util.Date: always three millisecond digits ('instant-millis').
+INSTANT = {'timestamp': 'instant-millis'}
 WHITELABEL = [(r"<div id='created'>[^<]*</div>", "<div id='created'>*</div>")]
 
 CASES = [
