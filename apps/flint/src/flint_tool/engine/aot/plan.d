@@ -6,7 +6,7 @@
 module flint_tool.engine.aot.plan;
 
 import flint_tool.engine.aot.merge : MergedSet;
-import flint_tool.engine.aot.model : Method, Model, Parameter, TypeDecl, TypeRef, clone;
+import flint_tool.engine.aot.model : Annotation, Method, Model, Parameter, TypeDecl, TypeRef, clone;
 import flint_tool.engine.aot.query : DerivedQuery;
 import std.algorithm.searching : canFind;
 
@@ -219,8 +219,10 @@ struct ExpressionPlan
     string attribute;
     /// SpEL source.
     string source;
-    /// D expression over `EvaluationContext context`.
+    /// D expression over `EvaluationContext context`, of type `Any`.
     string code;
+    /// Modules declaring the types the code spells.
+    string[] modules;
 }
 
 /// Annotation attributes that hold SpEL.
@@ -408,6 +410,10 @@ struct ListenerPlan
     long order = int.max;
     /// The compiled condition, when there is one (aot-contract.md section 9.1).
     string conditionCode;
+    /// ditto
+    string[] conditionModules;
+    /// The listener method, for compiling its condition: zero or one entry.
+    Method[] conditionMethod;
 }
 
 /// A derived query.
@@ -573,6 +579,7 @@ private final class Analysis
             if (scanned(name))
                 describeOnce(name);
         }
+        compileMethodExpressions();
     }
 
     MergedSet mergedOf(const ref TypeDecl decl)
@@ -600,6 +607,62 @@ private final class Analysis
         import flint_tool.engine.aot.merge : merge;
 
         return merge(parameter.annotations, model.annotationTypes);
+    }
+
+    /// The methods a class method overrides or implements in its model supertypes: same name and parameter types.
+    const(Method)*[] overridden(const ref TypeDecl decl, const ref Method method)
+    {
+        const(Method)*[] result;
+        const signature = parameterTypes(method);
+        foreach (ref supertype; decl.supertypes)
+        {
+            const base = model.type(supertype.name);
+            if (base is null)
+                continue;
+            foreach (ref candidate; base.methods)
+            {
+                if (candidate.name == method.name && !candidate.inherited && parameterTypes(candidate) == signature)
+                    result ~= &candidate;
+            }
+        }
+        return result;
+    }
+
+    /// A method's merged annotations searched through its type hierarchy, as Spring's TYPE_HIERARCHY strategy
+    /// does: its own first, then those of the interface and superclass methods it implements or overrides.
+    MergedSet hierarchyMerged(const ref TypeDecl decl, const ref Method method)
+    {
+        import flint_tool.engine.aot.merge : merge;
+
+        Annotation[] declared;
+        foreach (ref annotation; method.annotations)
+            declared ~= clone(annotation);
+        foreach (base; overridden(decl, method))
+        {
+            foreach (ref annotation; base.annotations)
+                declared ~= clone(annotation);
+        }
+        auto result = merge(declared, model.annotationTypes);
+        foreach (conflict; result.conflicts)
+            error("FLINT-E1103", conflict, method.file, method.line);
+        return result;
+    }
+
+    /// A parameter's merged annotations with those of the same parameter in overridden methods, as Spring MVC's
+    /// HandlerMethodParameter finds `@PathVariable` and `@RequestBody` on an implemented interface.
+    MergedSet hierarchyMerged(const ref TypeDecl decl, const ref Method method, size_t index)
+    {
+        import flint_tool.engine.aot.merge : merge;
+
+        Annotation[] declared;
+        foreach (ref annotation; method.parameters[index].annotations)
+            declared ~= clone(annotation);
+        foreach (base; overridden(decl, method))
+        {
+            foreach (ref annotation; base.parameters[index].annotations)
+                declared ~= clone(annotation);
+        }
+        return merge(declared, model.annotationTypes);
     }
 
     void error(string code, string message, string file, long line)
@@ -1363,7 +1426,7 @@ private final class Analysis
     {
         import flint_tool.engine.aot.names : adviceAnnotations, async_;
 
-        auto merged = mergedOf(method);
+        auto merged = hierarchyMerged(decl, method);
         const advised = classMerged.hasAny(adviceAnnotations) || merged.hasAny(adviceAnnotations);
         if (!checkAdvisable(decl, method, advised))
             return;
@@ -1447,10 +1510,10 @@ private final class Analysis
     }
 
     /// Compile the SpEL-valued attributes of a method's merged annotations (aot-contract.md section 9.1).
+    /// The SpEL-valued attributes of a method's merged annotations, recorded for compileMethodExpressions: every
+    /// bean must be defined first, since expressions name beans (`@roles.OWNER_ADMIN`).
     ExpressionPlan[] expressionsOf(const ref Method method, const ref MergedSet merged)
     {
-        import flint_tool.engine.aot.spel : Compiled, SpelError, compileSpel;
-
         ExpressionPlan[] result;
         foreach (entry; spelAttributes)
         {
@@ -1458,22 +1521,62 @@ private final class Analysis
             if (annotation is null)
                 continue;
             const source = annotation.text(entry[1]);
-            if (source.length == 0)
-                continue;
-            auto scope_ = new MethodScope(this, method);
-            Compiled compiled;
-            SpelError failure;
-            if (!compileSpel(source, scope_, compiled, failure))
-            {
-                error("FLINT-E1107", "@" ~ imported!"flint_tool.engine.aot.merge".shortName(
-                        entry[0]) ~ "(" ~ entry[1] ~ ") on " ~ method.name ~ ": " ~ failure.message,
-                        method.file, method.line);
-                continue;
-            }
-            result ~= ExpressionPlan(entry[0], entry[1], source, compiled.type == "Any"
-                    ? compiled.code : "Any.of(" ~ compiled.code ~ ")");
+            if (source.length)
+                result ~= ExpressionPlan(entry[0], entry[1], source);
         }
         return result;
+    }
+
+    /// Compile one method-level expression (aot-contract.md section 9.1); false after reporting FLINT-E1107.
+    bool compileExpression(const ref Method method, ref ExpressionPlan expression)
+    {
+        import flint_tool.engine.aot.spel : Compiled, SpelError, compileSpel;
+
+        auto scope_ = new MethodScope(this, method);
+        Compiled compiled;
+        SpelError failure;
+        if (!compileSpel(expression.source, scope_, compiled, failure))
+        {
+            const where = imported!"flint_tool.engine.aot.merge".shortName(
+                    expression.annotation) ~ "(" ~ expression.attribute ~ ") on " ~ method.name;
+            error("FLINT-E1107", "@" ~ where ~ ": " ~ failure.message, method.file, method.line);
+            return false;
+        }
+        expression.code = compiled.type == "Any" ? compiled.code : "Any.of(" ~ compiled.code ~ ")";
+        expression.modules = scope_.modules;
+        return true;
+    }
+
+    /// Compile every recorded method-level expression, once all beans are defined.
+    void compileMethodExpressions()
+    {
+        foreach (ref item; plan.modules)
+        {
+            foreach (ref descriptor; item.descriptors)
+            {
+                foreach (ref method; descriptor.methods)
+                {
+                    ExpressionPlan[] compiled;
+                    foreach (ref expression; method.expressions)
+                    {
+                        if (compileExpression(method.method, expression))
+                            compiled ~= expression;
+                    }
+                    method.expressions = compiled;
+                }
+            }
+            foreach (ref listener; item.listeners)
+            {
+                if (listener.condition.length == 0 || listener.conditionMethod.length == 0)
+                    continue;
+                auto expression = ExpressionPlan("flint.context.event.EventListener", "condition", listener.condition);
+                if (compileExpression(listener.conditionMethod[0], expression))
+                {
+                    listener.conditionCode = expression.code;
+                    listener.conditionModules = expression.modules;
+                }
+            }
+        }
     }
 
     DescriptorPlan descriptorShell(const ref TypeDecl decl, const MergedSet merged)
@@ -1717,9 +1820,43 @@ private final class Analysis
             property.writable = !mutabilityQualified(field.type.name);
             result.properties ~= property;
         }
+        inheritedFields(decl, result);
         accessorProperties(decl, result);
         constructorsOf(decl, result);
         return result;
+    }
+
+    /// Public fields of the model base classes (`Owner : Person : BaseEntity`), as Jackson and
+    /// BeanPropertyRowMapper see them; nearest class first.
+    void inheritedFields(const ref TypeDecl decl, ref DescriptorPlan result)
+    {
+        import flint_tool.engine.aot.merge : merge;
+
+        foreach (ref supertype; decl.supertypes)
+        {
+            const base = model.type(supertype.name);
+            if (base is null || base.kind != "class")
+                continue;
+            foreach (ref field; base.fields)
+            {
+                if (field.visibility != "public" && field.visibility != "export")
+                    continue;
+                bool known;
+                foreach (ref existing; result.properties)
+                    known = known || existing.name == field.name;
+                if (known)
+                    continue;
+                PropertyPlan property;
+                property.name = field.name;
+                property.type = field.type.name;
+                property.modules = field.type.modules.dup;
+                property.annotations = merge(field.annotations, model.annotationTypes);
+                property.access = "field";
+                property.field = field.name;
+                property.writable = !mutabilityQualified(field.type.name);
+                result.properties ~= property;
+            }
+        }
     }
 
     /// Creators for message conversion and row mapping: every public constructor, and for a struct without one
@@ -1816,7 +1953,7 @@ private final class Analysis
         import std.ascii : isUpper, toLower;
 
         if (method.static_ || method.visibility != "public" || method.parameters.length != 0
-                || method.returns.name == "void" || method.inherited)
+                || method.returns.name == "void")
             return null;
         foreach (prefix; ["get", "is"])
         {
@@ -1851,32 +1988,55 @@ private final class Analysis
         const isAdvice = merged.has(controllerAdvice);
         if (!isController && !isAdvice)
             return;
-        auto descriptor = descriptorShell(decl, merged);
         auto target = &moduleFor(decl.module_);
+        // The class's descriptor may already exist: a proxied controller's advised methods are in it.
+        addDescriptor(*target, descriptorShell(decl, merged));
+        auto descriptor = descriptorIn(*target, decl.fqn);
         foreach (ref method; decl.methods)
         {
             if (method.inherited || method.name == "__ctor" || method.static_)
                 continue;
-            auto methodMerged = mergedOf(method);
+            auto methodMerged = hierarchyMerged(decl, method);
             if (isController && methodMerged.has(requestMapping))
             {
                 auto handler = handlerOf(decl, bean, method, methodMerged, merged);
-                handler.index = descriptor.methods.length;
-                descriptor.methods ~= methodPlan(method, methodMerged, MergedSet.init);
+                handler.index = methodIndex(*descriptor, method);
+                if (handler.index == descriptor.methods.length)
+                    descriptor.methods ~= methodPlan(method, methodMerged, MergedSet.init);
+                foreach (index; 0 .. method.parameters.length)
+                    descriptor.methods[handler.index].parameters[index] = hierarchyMerged(decl, method, index);
                 target.handlers ~= handler;
             }
             else if (methodMerged.has(exceptionHandler))
                 target.exceptionHandlers ~= exceptionHandlerOf(decl, bean, method, methodMerged, merged, isAdvice);
         }
-        if (descriptor.methods.length)
+        foreach (ref item; target.beans)
         {
-            addDescriptor(*target, descriptor);
-            foreach (ref item; target.beans)
-            {
-                if (item.name == bean)
-                    item.described = true;
-            }
+            if (item.name == bean && descriptor.methods.length)
+                item.described = true;
         }
+    }
+
+    /// The module's descriptor of `type`.
+    static DescriptorPlan* descriptorIn(ref ModulePlan target, string type)
+    {
+        foreach (ref existing; target.descriptors)
+        {
+            if (existing.type == type)
+                return &existing;
+        }
+        assert(false, "descriptor added just before");
+    }
+
+    /// The position of `method` in the descriptor's methods, or the length when absent.
+    static size_t methodIndex(const ref DescriptorPlan descriptor, const ref Method method)
+    {
+        foreach (index, ref existing; descriptor.methods)
+        {
+            if (existing.method.name == method.name && parameterTypes(existing.method) == parameterTypes(method))
+                return index;
+        }
+        return descriptor.methods.length;
     }
 
     HandlerPlan handlerOf(const ref TypeDecl decl, string bean, const ref Method method,
@@ -1919,8 +2079,8 @@ private final class Analysis
             handler.status = statusCode(*status);
             handler.reason = status.text("reason");
         }
-        foreach (ref parameter; method.parameters)
-            handler.arguments ~= argumentOf(parameter, mergedOf(parameter), false);
+        foreach (index, ref parameter; method.parameters)
+            handler.arguments ~= argumentOf(parameter, hierarchyMerged(decl, method, index), false);
         return handler;
     }
 
@@ -2091,8 +2251,8 @@ private final class Analysis
             listener.method = method.name;
             listener.eventType = method.parameters[0].type.name;
             listener.condition = annotation.text("condition");
-            foreach (ref expression; expressionsOf(method, methodMerged))
-                listener.conditionCode = expression.code;
+            if (listener.condition.length)
+                listener.conditionMethod = [clone(method)];
             if (const ordered = methodMerged.get(order))
                 listener.order = ordered.get("value").integer;
             moduleFor(decl.module_).listeners ~= listener;

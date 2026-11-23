@@ -14,7 +14,7 @@ import flint_tool.engine.aot.plan : ArgumentPlan, BeanPlan, ConfigPlan, Descript
 @safe:
 
 /// The contract version generated code targets.
-enum contractVersion = 2;
+enum contractVersion = 3;
 
 /// The generated module's name for an extracted module.
 string generatedName(string moduleName)
@@ -142,6 +142,8 @@ private struct Emitter
             text ~= "import flint.engine.aot.descriptor : MergedAnnotation;\n";
         if (plan.listeners.length)
             text ~= "import flint.engine.aot.event : EventListenerSpec;\n";
+        if ("expression" in used)
+            text ~= "import flint.engine.aot.expression : EvaluationContext, ExpressionSpec;\n";
         if (plan.handlers.length || plan.exceptionHandlers.length)
             text ~= "import flint.engine.aot.mapping : ArgumentKind, ArgumentSpec, ExceptionHandlerSpec, "
                 ~ "HandlerArguments, HandlerMapping;\n";
@@ -619,6 +621,7 @@ private struct Emitter
                     ? descriptor.type ~ ".init" : "new " ~ descriptor.type ~ "()") ~ ");\n}\n\n";
         foreach (index, ref constructor; descriptor.constructors)
             text ~= constructorFunction(descriptor, constructor, id, index);
+        text ~= expressionFunctions(descriptor, id);
         if (descriptor.constants.length)
             text ~= enumFunction(descriptor, id);
         text ~= "private Descriptor describe_" ~ id ~ "()\n{\n    auto descriptor = new Descriptor(" ~ literal(
@@ -645,6 +648,7 @@ private struct Emitter
                         method.method.returns.name) ~ ", " ~ parameterDescriptors(method) ~ ", " ~ mergedArray(
                         method.annotations, "        ") ~ ", " ~ index.to!string ~ "),\n";
             text ~= "    ];\n";
+            text ~= expressionTables(descriptor, id);
         }
         if (descriptor.constructors.length)
         {
@@ -788,8 +792,59 @@ private struct Emitter
     string listenerInvoker(const ref ListenerPlan listener)
     {
         const id = sanitize(listener.className) ~ "_" ~ sanitize(listener.method);
-        return "private void listen_" ~ id ~ "(Object bean, ref Any event)\n{\n    (cast(" ~ listener.className
-            ~ ") bean)." ~ listener.method ~ "(event.get!(" ~ listener.eventType ~ ")());\n}\n\n";
+        string text = "private void listen_" ~ id ~ "(Object bean, ref Any event)\n{\n    (cast("
+            ~ listener.className ~ ") bean)." ~ listener.method ~ "(event.get!(" ~ listener.eventType ~ ")());\n}\n\n";
+        if (listener.conditionCode.length)
+        {
+            used["expression"] = true;
+            foreach (name; listener.conditionModules)
+                imports[name] = true;
+            text ~= "private Any condition_" ~ id ~ "(EvaluationContext context)\n{\n    return "
+                ~ listener.conditionCode ~ ";\n}\n\n";
+        }
+        return text;
+    }
+
+    /// Contract 3: one function per compiled method-level expression (aot-contract.md section 9.1).
+    string expressionFunctions(const ref DescriptorPlan descriptor, string id)
+    {
+        import std.conv : to;
+
+        string text;
+        foreach (index, ref method; descriptor.methods)
+        {
+            foreach (position, ref expression; method.expressions)
+            {
+                used["expression"] = true;
+                foreach (name; expression.modules)
+                    imports[name] = true;
+                text ~= "private Any spel_" ~ id ~ "_" ~ index.to!string ~ "_" ~ position.to!string
+                    ~ "(EvaluationContext context)\n{\n    return " ~ expression.code ~ ";\n}\n\n";
+            }
+        }
+        return text;
+    }
+
+    /// Contract 3: each method's `expressions` table.
+    string expressionTables(const ref DescriptorPlan descriptor, string id)
+    {
+        import std.conv : to;
+        import flint_tool.engine.aot.conditions : literal;
+
+        string text;
+        foreach (index, ref method; descriptor.methods)
+        {
+            if (method.expressions.length == 0)
+                continue;
+            text ~= "    descriptor.methods[" ~ index.to!string ~ "].expressions = [\n";
+            foreach (position, ref expression; method.expressions)
+                text ~= "        ExpressionSpec(" ~ literal(expression.annotation) ~ ", " ~ literal(
+                        expression.attribute) ~ ", " ~ literal(
+                        expression.source) ~ ", &spel_" ~ id ~ "_" ~ index.to!string ~ "_" ~ position.to!string
+                    ~ "),\n";
+            text ~= "    ];\n";
+        }
+        return text;
     }
 
     string argumentSpecs(const ArgumentPlan[] arguments)
@@ -889,12 +944,14 @@ private struct Emitter
         import flint_tool.engine.aot.conditions : literal;
 
         const id = sanitize(listener.className) ~ "_" ~ sanitize(listener.method);
+        const order = listener.order == int.max ? "int.max" : listener.order.to!string;
+        const condition = listener.conditionCode.length
+            ? "        listener.conditionExpression = &condition_" ~ id ~ ";\n" : "";
         return "    {\n        EventListenerSpec listener;\n        listener.bean = " ~ literal(
                 listener.bean) ~ ";\n        listener.eventType = " ~ literal(
                 listener.eventType) ~ ";\n        listener.condition = " ~ literal(
-                listener.condition) ~ ";\n        listener.order = " ~ (listener.order == int.max
-                ? "int.max" : listener.order.to!string) ~ ";\n        listener.invoke = &listen_"
-            ~ id ~ ";\n        registry.listener(listener);\n    }\n";
+                listener.condition) ~ ";\n        listener.order = " ~ order ~ ";\n        listener.invoke = &listen_"
+            ~ id ~ ";\n" ~ condition ~ "        registry.listener(listener);\n    }\n";
     }
 
     string queryRegistration(const ref QueryPlan query)

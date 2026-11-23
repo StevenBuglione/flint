@@ -2,6 +2,7 @@
 module shop.pricing;
 
 import flint.beans.factory.annotation : Value;
+import flint.context.event : EventListener;
 import flint.stereotype : Component;
 
 @safe:
@@ -24,5 +25,11 @@ import flint.stereotype : Component;
         this.doubled = doubled;
         this.label = label;
         this.premium = premium;
+    }
+
+    /// Large numbers only: the condition compiles to `context.argument(0).get!(long)() > 10L`.
+    @EventListener(condition: "#event > 10") void onNumber(long event)
+    {
+        doubled = event;
     }
 }

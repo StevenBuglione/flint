@@ -11,7 +11,9 @@ import flint_tool.engine.aot.plan : Diagnostic;
 @safe:
 
 /// Bumped whenever the generator's output for an unchanged model may change.
-enum generatorVersion = "1";
+/// It also carries the tool's build time: DUB recompiles flint_tool as a whole, so every rebuilt generator
+/// re-extracts and regenerates once, and an edited generator never leaves stale output behind.
+enum generatorVersion = "1 " ~ __TIMESTAMP__;
 
 /// Where generated modules go, relative to the project root.
 enum aotDirectory = ".flint/generated/aot";

@@ -5,6 +5,7 @@ module sample_main;
 import aot_context : AotContext;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : Descriptor, MethodDescriptor;
+import flint.engine.aot.expression : EvaluationContext;
 import flint.engine.aot.mapping : HandlerArguments;
 import flint.engine.aot.proxy : Advisor, DetachedExecutor, Invocation, Proceed;
 import flint.engine.aot.registry : installedRegistry;
@@ -17,7 +18,54 @@ import std.stdio : writeln;
 
 @safe:
 
-/// Logs every advised call and serves `@Cacheable` methods from a map.
+/// The evaluation context over one invocation (contract 3), as a cache advisor builds it.
+final class InvocationContext : EvaluationContext
+{
+    private Invocation* invocation;
+
+    this(ref Invocation invocation) @trusted
+    {
+        // Test support only: the context lives no longer than the advisor's call.
+        this.invocation = &invocation;
+    }
+
+    Any argument(size_t index)
+    {
+        return invocation.arguments[index];
+    }
+
+    Any result()
+    {
+        return invocation.result;
+    }
+
+    string methodName()
+    {
+        return invocation.method.name;
+    }
+
+    Any rootFunction(string name, scope Any[] arguments)
+    {
+        return Any.init;
+    }
+
+    Any rootProperty(string name)
+    {
+        return Any.init;
+    }
+
+    Object bean(string name)
+    {
+        return null;
+    }
+
+    string placeholder(string text)
+    {
+        return text;
+    }
+}
+
+/// Logs every advised call and serves `@Cacheable` methods from a map, keyed by the compiled key expression.
 final class Recorder : Advisor
 {
     string[] log;
@@ -48,7 +96,10 @@ final class Recorder : Advisor
         log ~= invocation.method.name ~ ":" ~ names;
         if (!cacheable)
             return next(invocation);
-        const key = invocation.method.name ~ invocation.arguments[0].get!long.to!string;
+        const expression = invocation.method.expression("flint.cache.annotation.Cacheable", "key");
+        const key = invocation.method.name ~ "#" ~ expression.evaluate(new InvocationContext(invocation))
+            .get!long.to!string;
+        log ~= "key " ~ expression.source ~ " = " ~ key;
         if (auto hit = key in cache)
         {
             invocation.result = *hit;

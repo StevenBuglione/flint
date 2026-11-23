@@ -536,6 +536,9 @@ unittest
     expect(web.canFind(`mapping.beanType = "shop.web.OwnerController";`)).toBeTrue();
     expect(web.canFind("mapping.typeAnnotations = [")).toBeTrue();
     expect(web.canFind("definition.rank = ")).toBeTrue();
+    const pricing = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot", "shop", "pricing.d"));
+    expect(pricing.canFind("return Any.of((context.argument(0).get!(long)() > 10L));")).toBeTrue();
+    expect(pricing.canFind("listener.conditionExpression = &condition_shop_pricing_Pricing_onNumber;")).toBeTrue();
     const data = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot", "shop", "data.d"));
     expect(data.canFind("&construct_Owner_0, true)")).toBeTrue();
     expect(data.canFind("descriptor.enumValue = &enum_OwnerStatus;")).toBeTrue();
@@ -743,6 +746,68 @@ unittest
     expect(controller.canFind(`a.kind = ArgumentKind.requestParam; a.name = "name"; a.type = "string"; `
             ~ `a.required = false; a.defaultValue = "World";`)).toBeTrue();
     expect(controller.canFind("mapping.responseBody = true;")).toBeTrue();
+    string[] sources;
+    foreach (directory; ["src", ".flint/generated/aot"])
+        foreach (entry; dirEntries(buildPath(project, directory), "*.d", SpanMode.depth))
+            sources ~= entry.name;
+    Launch launch;
+    launch.directory = project;
+    const checked = capture([
+        compiler(), "-o-", "-preview=dip1000", "-I" ~ buildPath(project, "src"),
+        "-I" ~ buildPath(project, ".flint", "generated", "aot")
+    ] ~ imports ~ sources, launch);
+    expect(checked.combined()).toEqual("");
+    expect(checked.ok).toBeTrue();
+}
+
+@("petclinic-rest's shapes: interface mappings, @PreAuthorize SpEL, inherited properties, real annotations")
+unittest
+{
+    import std.file : dirEntries, readText, SpanMode;
+    import std.path : buildPath;
+    import flint_tool.engine.aot.driver : AotRequest, runAot;
+    import flint_tool.support.process : Launch, capture;
+
+    const project = copyFixture("petclinic-rest");
+    scope (exit)
+        remove(project);
+    // flint-security does not exist yet: @PreAuthorize comes from tests/aot/security.
+    auto imports = closureImports([
+        "framework/web", "framework/webmvc", "framework/tx", "framework/jakarta-validation",
+        "boot/core/flint-boot-autoconfigure"
+    ]) ~ ["-I" ~ buildPath(repositoryRoot(), "tests", "aot", "security")];
+    AotRequest request;
+    request.root = project;
+    request.compiler = compiler();
+    request.importPaths = imports;
+    request.flags = ["-preview=dip1000"];
+    request.environmentKey = "test";
+    auto outcome = runAot(request);
+    expect(outcome.extractionErrors).toEqual("");
+    foreach (ref item; outcome.diagnostics)
+        expect(item.code ~ " " ~ item.message).toEqual("");
+    expect(outcome.ok).toBeTrue();
+    const generated = buildPath(project, ".flint", "generated", "aot", "flint_aot", "org",
+            "springframework", "samples", "petclinic");
+    const controller = readText(buildPath(generated, "rest", "controller", "ownerrestcontroller.d"));
+    // The mapping is found on the implemented OwnersApi method, combined with the class's /api.
+    expect(controller.canFind(`mapping.paths = ["/api/owners/{ownerId}"];`)).toBeTrue();
+    expect(controller.canFind(`mapping.produces = ["application/json"];`)).toBeTrue();
+    expect(controller.canFind(`a.kind = ArgumentKind.pathVariable; a.name = "ownerId"; a.type = "int";`)).toBeTrue();
+    expect(controller.canFind(`a.kind = ArgumentKind.requestBody; a.name = "ownerFieldsDto"; `
+            ~ `a.type = "org.springframework.samples.petclinic.rest.dto.ownerdto.OwnerFieldsDto"; a.required = true; `
+            ~ `a.validate = true;`)).toBeTrue();
+    expect(controller.canFind(`MergedAnnotation("flint.web.bind.annotation.CrossOrigin"`)).toBeTrue();
+    // @PreAuthorize("hasRole(@roles.OWNER_ADMIN)") is compiled: a bean's field passed to a root function.
+    expect(controller.canFind(`return context.rootFunction("hasRole", [Any.of(((cast(org.springframework.samples.`
+            ~ `petclinic.security.roles.Roles) context.bean("roles"))).OWNER_ADMIN)]);`)).toBeTrue();
+    expect(controller.canFind(`ExpressionSpec("flint.security.access.prepost.PreAuthorize", "value", `
+            ~ `"hasRole(@roles.OWNER_ADMIN)", &spel_OwnerRestController_`)).toBeTrue();
+    expect(controller.canFind("final class OwnerRestController__FlintProxy")).toBeTrue();
+    // Properties inherited through getters: Owner : Person : BaseEntity.
+    const model = readText(buildPath(generated, "model", "baseentity.d"));
+    foreach (property; [`"telephone"`, `"firstName"`, `"id"`])
+        expect(model.canFind(`PropertyDescriptor(` ~ property)).toBeTrue();
     string[] sources;
     foreach (directory; ["src", ".flint/generated/aot"])
         foreach (entry; dirEntries(buildPath(project, directory), "*.d", SpanMode.depth))

@@ -10,7 +10,7 @@ findName again: Ada calls=1 (cache hit)
 describe: owner Ada calls=2 (self-invocation skips the cache)
 async queued: 1 calls=2
 async drained: calls=102
-advice: findName: flint.transaction.annotation.Transactional flint.cache.annotation.Cacheable | findName: flint.transaction.annotation.Transactional flint.cache.annotation.Cacheable | notifyOwner: flint.scheduling.annotation.Async
+advice: findName: flint.transaction.annotation.Transactional flint.cache.annotation.Cacheable | key #id * 2 = findName#2 | findName: flint.transaction.annotation.Transactional flint.cache.annotation.Cacheable | key #id * 2 = findName#2 | notifyOwner: flint.scheduling.annotation.Async
 mapping: GET /owners/{id} -> 2 Hello, Grace (2 arguments, Hello)
 query: findByLastNameIgnoreCaseOrderByFirstNameAsc: SELECT id, first_name, surname, city FROM owners WHERE UPPER(surname) = UPPER(?) ORDER BY first_name ASC
 query: findFirst2ByCityAndFirstNameStartingWith: SELECT id, first_name, surname, city FROM owners WHERE city = ? AND first_name LIKE ? LIMIT 2
@@ -32,7 +32,7 @@ findName again: Ada calls=1 (cache hit)
 describe: owner Ada calls=2 (self-invocation skips the cache)
 async queued: 1 calls=2
 async drained: calls=102
-advice: findName: flint.transaction.annotation.Transactional flint.cache.annotation.Cacheable | findName: flint.transaction.annotation.Transactional flint.cache.annotation.Cacheable | notifyOwner: flint.scheduling.annotation.Async
+advice: findName: flint.transaction.annotation.Transactional flint.cache.annotation.Cacheable | key #id * 2 = findName#2 | findName: flint.transaction.annotation.Transactional flint.cache.annotation.Cacheable | key #id * 2 = findName#2 | notifyOwner: flint.scheduling.annotation.Async
 mapping: GET /owners/{id} -> 2 Hello, Grace (2 arguments, Hello)
 query: findByLastNameIgnoreCaseOrderByFirstNameAsc: SELECT id, first_name, surname, city FROM owners WHERE UPPER(surname) = UPPER(?) ORDER BY first_name ASC
 query: findFirst2ByCityAndFirstNameStartingWith: SELECT id, first_name, surname, city FROM owners WHERE city = ? AND first_name LIKE ? LIMIT 2

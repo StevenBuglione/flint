@@ -6,7 +6,7 @@ Flint AOT is the build step that replaces Spring's runtime reflection (ADR-030 s
 - **the runtime** (`flint.engine.aot.*`, DUB `flint:engine-aot`) lives in `flint-framework` and is implemented by the framework-core session;
 - **the annotations** the generator recognizes are owned by the framework, Boot and portfolio packages that declare them.
 
-Contract version: **2**, additive over 1 (section 4.10); the runtime accepts both. A change to anything below bumps the version, and the generator writes the version into every generated module, so a mismatched runtime fails to compile instead of misbehaving.
+Contract version: **3**, additive over 1 and 2 (sections 4.10 and 4.11); the runtime accepts all three. A change to anything below bumps the version, and the generator writes the version into every generated module, so a mismatched runtime fails to compile instead of misbehaving.
 
 ## 1. What runs when
 
@@ -78,7 +78,8 @@ The generator composes annotations exactly as Spring's `MergedAnnotations` with 
 - the nearest declaration wins; for equal distance, the first declared wins;
 - the same alias pair given two different non-default values is an error (FLINT-E1103), as Spring's `AnnotationConfigurationException` is;
 - class-level advice annotations apply to every public method that declares none of its own;
-- not yet: class-level annotations inherited from superclasses through `@Inherited`, and advice annotations declared on interface methods (Spring 6+ applies them to the implementing methods).
+- a method's annotations are searched through its type hierarchy, as Spring's `TYPE_HIERARCHY` strategy does, for request mappings and advice. Its own come first, then those of the interface and superclass methods it implements or overrides (same name and parameter types, in model types). A handler's parameter annotations (`@PathVariable`, `@RequestBody`, `@Valid`) are found the same way, as Spring MVC's `HandlerMethodParameter` finds them on an implemented interface, such as petclinic-rest's openapi-generated `OwnersApi`;
+- not yet: class-level annotations inherited from superclasses through `@Inherited`.
 
 Generated code receives the merged result as a value of the annotation type, built field by field so that no constructor or `opCall` is involved, and boxed in `Any`: `Any.of(() { Transactional a; a.readOnly = true; return a; }())`.
 
@@ -435,6 +436,20 @@ All are fields with defaults, so contract-1 code still compiles. The generator e
 
 Generated registries call `registry.begin(2, ...)`. The runtime's other builders (`length`, `element`, `fromElements`, `toKeys`, `toValues`, `fromEntries`, `wrap`, `unwrap`) cover built-in collection types; user descriptors leave them null.
 
+### 4.11 Contract 3 additions
+
+Method-level SpEL compiled to D (section 9.1), in the new leaf module `flint.engine.aot.expression`:
+
+| Type | Member | Meaning |
+| --- | --- | --- |
+| `EvaluationContext` | `argument(i)`, `result()`, `methodName()`, `rootFunction(name, args)`, `rootProperty(name)`, `bean(name)`, `placeholder(text)` | what a compiled expression reads |
+| `CompiledExpression` | `Any function(EvaluationContext) @safe` | one compiled expression |
+| `ExpressionSpec` | `annotation`, `attribute`, `source`, `evaluate` | one SpEL-valued attribute |
+| `MethodDescriptor` | `ExpressionSpec[] expressions`, `expression(annotation, attribute)` | the method's compiled expressions |
+| `EventListenerSpec` | `CompiledExpression conditionExpression` | a compiled `@EventListener(condition)` |
+
+Generated registries call `registry.begin(3, ...)`.
+
 ## 5. Beans
 
 ### 5.1 What becomes a bean
@@ -599,7 +614,7 @@ SpEL is compiled to typed D at build time (`engine/aot/spel.d`); nothing interpr
 
 ### 9.1 Method-level expressions
 
-`@Cacheable(key, condition, unless)`, `@CacheEvict`, `@CachePut`, `@PreAuthorize`, `@PostAuthorize` and `@EventListener(condition)` use the same compiler. There `#name`, `#p0` and `#a0` are the method's arguments (typed from its signature), `#result` is its result, `#root.methodName` and `#root.args` are available, and the security root's functions (`hasRole`, `hasAnyRole`, `hasAuthority`, `isAuthenticated`, `principal`, `authentication`) are runtime calls whose results are converted where used. Emitting them needs an evaluation context and a per-method expression table in the runtime, proposed as contract 3. Until it lands, those attributes stay as strings in the merged annotations, and the runtime rejects them as framework-core's context does today.
+`@Cacheable(key, condition, unless)`, `@CacheEvict`, `@CachePut`, `@PreAuthorize`, `@PostAuthorize` and `@EventListener(condition)` use the same compiler. There `#name`, `#p0` and `#a0` are the method's arguments (typed from its signature), `#result` is its result, `#root.methodName` and `#root.args` are available, and the security root's functions (`hasRole`, `hasAnyRole`, `hasAuthority`, `isAuthenticated`, `principal`, `authentication`) are runtime calls whose results are converted where used. Each compiles to a function `Any spel_<type>_<method>_<n>(EvaluationContext context)`, listed in the method descriptor's `expressions` (contract 3), or set as `EventListenerSpec.conditionExpression`. petclinic-rest's `@PreAuthorize("hasRole(@roles.OWNER_ADMIN)")` becomes `context.rootFunction("hasRole", [Any.of((cast(Roles) context.bean("roles")).OWNER_ADMIN)])`.
 
 ## 10. Diagnostics
 
@@ -633,11 +648,11 @@ Every diagnostic names the source file and line of the declaration that caused i
 
 ## 12. Status
 
-Implemented and tested on DMD and LDC: extraction (section 1.1), interface keys and the cache (1.2), merging with meta-annotations and `@AliasFor` (2.1, except the "not yet" items), bean definitions with constructor, field and `@Value` injection, lifecycle, `@Configuration` subclasses, definition order and every condition of section 5.5, proxies (section 7), request-mapping, exception-handler and event-listener tables, descriptors with fields, `tupleof` access and Java Beans accessors, derived queries (section 8), the SpEL diagnostic (section 9) and every diagnostic of section 10. `flint build` runs the step when a module mentions `FlintBootApplication`.
+Implemented and tested on DMD and LDC: extraction (section 1.1), interface keys and the cache (1.2), merging with meta-annotations and `@AliasFor` (2.1, except the "not yet" items), bean definitions with constructor, field and `@Value` injection, lifecycle, `@Configuration` subclasses, definition order and every condition of section 5.5, proxies (section 7), request-mapping, exception-handler and event-listener tables, descriptors with fields, `tupleof` access and Java Beans accessors (inherited ones included), creators and enum values, derived queries (section 8), SpEL compiled to D for `@Value` and method-level annotations (section 9), and every diagnostic of section 10. The gs-rest-service and petclinic-rest shapes generate and type-check against the real framework, Boot and validation annotations. `flint build` runs the step when a module mentions `FlintBootApplication`.
 
 The legacy `flint:engine-di` container keeps its compile-time `import("application.toml")` for ADR-028 applications. Flint AOT applications do not use it: their `@ConditionalOnConfig` and `@ConditionalOnProperty` are startup conditions (section 5.5). Removing the legacy path waits for the ADR-028 golden applications to move to `@FlintBootApplication`.
 
-Not yet: `@ConfigurationProperties` constructor binding (JavaBean binding is generated), method-level SpEL (section 9.1, contract 3), `@Inherited` and interface-method annotations (section 2.1), and repository implementation classes (Phase 2, with `flint-data-jdbc`).
+Not yet: `@ConfigurationProperties` constructor binding (JavaBean binding is generated), `@Inherited` and interface-method annotations (section 2.1), and repository implementation classes (Phase 2, with `flint-data-jdbc`).
 
 ## 13. Measured cost in the edit loop
 
