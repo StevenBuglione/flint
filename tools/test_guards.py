@@ -280,6 +280,18 @@ class ModuleBudgetTests(unittest.TestCase):
             module_budgets.load(self.policy({'flint.arena': self.entry()}, ['arena']), gates.P, self.root)
         module_budgets.load(self.policy({'flint.arena': self.entry(), 'flint.arena.pages': self.entry()}, ['arena']),
                             gates.P, self.root)
+    def test_framework_modules_take_budgets(self):
+        # Spring-layer modules of policy/framework.json (framework/<artifact>) carry budgets as packages do.
+        (self.root / 'policy').mkdir()
+        (self.root / 'policy/framework.json').write_text(json.dumps({'schema': 'flint.framework/1', 'modules': {
+            'spring-web': {'directory': 'framework/spring-web', 'module': 'flint.web_api', 'repo': 'framework',
+                           'licence': 'Apache-2.0', 'upstream': 'spring-framework@7.1.0', 'dependencies': []}}}))
+        path = self.root / 'framework/spring-web/source/flint/web_api/bind.d'
+        path.parent.mkdir(parents=True)
+        path.write_text('module flint.web_api.bind;\n')
+        with self.assertRaisesRegex(ValueError, 'missing flint.web_api.bind'):
+            module_budgets.load(self.policy({}, ['spring-web']), gates.P, self.root)
+        module_budgets.load(self.policy({'flint.web_api.bind': self.entry()}, ['spring-web']), gates.P, self.root)
     def test_unowned_module_fails(self):
         with self.assertRaisesRegex(ValueError, 'no package owns'):
             module_budgets.load(self.policy({'flint.nowhere': self.entry()}), gates.P, self.root)

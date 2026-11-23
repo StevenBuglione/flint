@@ -1,6 +1,7 @@
 """Per-module linked-bytes budgets (policy/budgets.json "module_linked_bytes", Phase 0 binary-size levers).
 
-ADR-019 budgets each of the 37 packages. The Spring port adds framework modules by the thousand, so each module
+ADR-019 budgets each of the 37 packages. A module belongs to one of them or to a Spring-layer module of
+policy/framework.json (framework/<artifact>), and either kind may be listed in `required_packages`. The Spring port adds framework modules by the thousand, so each module
 can also carry its own budget for the bytes it adds to a linked executable:
 
     "module_linked_bytes": {
@@ -23,6 +24,7 @@ it adds later needs one.
 """
 from __future__ import annotations
 
+import json
 from pathlib import Path
 import re
 
@@ -35,15 +37,26 @@ def require(value, message):
         raise ValueError(message)
 
 
-def owner(module, packages):
-    matches = [n for n, m in packages.items() if module == m['module'] or module.startswith(m['module'] + '.')]
+def owners(packages, root):
+    """{name: (module, directory)} of the 37 engine packages and the Spring-layer modules of policy/framework.json."""
+    result = {name: (meta['module'], 'packages/' + name) for name, meta in packages.items()}
+    framework = Path(root) / 'policy/framework.json'
+    if framework.is_file():
+        for name, meta in json.loads(framework.read_text(encoding='utf-8'))['modules'].items():
+            require(name not in result, 'framework module name collides with a package: ' + name)
+            result[name] = (meta['module'], meta['directory'])
+    return result
+
+
+def owner(module, units):
+    matches = [n for n, (m, _) in units.items() if module == m or module.startswith(m + '.')]
     require(len(matches) <= 1, 'ambiguous module owner ' + module)
     return matches[0] if matches else None
 
 
-def package_modules(root, package):
+def package_modules(root, directory):
     """The module names of a package's sources."""
-    base = Path(root) / 'packages' / package / 'source'
+    base = Path(root) / directory / 'source'
     names = set()
     for path in sorted(base.rglob('*.d')) if base.is_dir() else []:
         parts = list(path.relative_to(base).with_suffix('').parts)
@@ -62,12 +75,13 @@ def load(budgets, packages, root):
     require(isinstance(required, list) and all(isinstance(n, str) for n in required) and len(set(required)) == len(required),
             KEY + '.required_packages must be a list of distinct package names')
     require(isinstance(modules, dict), KEY + '.modules must be an object')
+    units = owners(packages, root)
     for name in required:
-        require(name in packages, KEY + ': unknown required package ' + name)
+        require(name in units, KEY + ': unknown required package ' + name)
     for module, entry in modules.items():
         where = KEY + '.' + module
         require(MODULE.fullmatch(module) is not None, where + ': not a Flint module name')
-        require(owner(module, packages) is not None, where + ': no package owns this module')
+        require(owner(module, units) is not None, where + ': no package owns this module')
         require(isinstance(entry, dict) and set(entry) == {'fixture', 'baseline', 'linked_bytes'},
                 where + ': needs exactly fixture, baseline and linked_bytes')
         require(type(entry['linked_bytes']) is int and entry['linked_bytes'] > 0, where + ': linked_bytes must be a positive integer')
@@ -79,7 +93,7 @@ def load(budgets, packages, root):
             require((directory / 'dub.sdl').is_file() and (directory / 'source/app.d').is_file(),
                     where + '.' + key + ': needs dub.sdl and source/app.d')
     for name in required:
-        missing = sorted(package_modules(root, name) - set(modules))
+        missing = sorted(package_modules(root, units[name][1]) - set(modules))
         require(not missing, KEY + ': package ' + name + ' requires a budget for every module; missing ' + ', '.join(missing))
     return modules
 

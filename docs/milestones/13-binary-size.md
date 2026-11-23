@@ -85,7 +85,7 @@ Today's apps barely move. Flint's engines are struct-based, and the prebuilt dru
 
 `policy/budgets.json` gains `module_linked_bytes`, validated by `tools/module_budgets.py`:
 - `modules` maps a Flint module to a fixture, a baseline and a `linked_bytes` budget.
-- `required_packages` lists packages whose every module must have a budget.
+- `required_packages` lists packages whose every module must have a budget: any of the 37 engine packages, or a Spring-layer module of `policy/framework.json` (`framework/<artifact>`).
 
 The pieces that use it:
 - `tools/gates.py --gate structural` validates the policy.
