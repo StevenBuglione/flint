@@ -242,7 +242,7 @@ private string[] dubCommand(const ref PlatformInputs inputs, string verb, string
 }
 
 /// Part of the description record: a change to its layout invalidates every record.
-private enum describeFormat = "flint.platform-describe/1";
+private enum describeFormat = "flint.platform-describe/2";
 
 /// The platform modules as DUB describes them, from the project's description record while it is current. The
 /// record holds what `dub describe` said and what it depends on: the describe root, the tools, flags and
@@ -270,9 +270,17 @@ private string describeStamp(const ref PlatformInputs inputs, string describeRoo
     import std.path : buildPath;
     import flint_tool.support.files : readIfPresent, sha256Hex;
 
+    import std.algorithm.searching : startsWith;
+
+    // What `dub describe` reads: its own variables, DFLAGS, the compiler variables and PATH. The rest of the
+    // environment (PWD, TERM, ...) changes between shells and would only miss the record.
     string[] environment;
     foreach (ref variable; inputs.environment)
-        environment ~= variable.name ~ "=" ~ variable.value;
+    {
+        if (variable.name.startsWith("DUB") || variable.name == "DFLAGS" || variable.name == "DC"
+                || variable.name == "PATH")
+            environment ~= variable.name ~ "=" ~ variable.value;
+    }
     sort(environment);
     string text = describeFormat ~ "\n" ~ inputs.dub ~ "\n" ~ inputs.dubSha256 ~ "\n" ~ inputs.compiler
         ~ "\n" ~ inputs.compilerSha256 ~ "\n" ~ inputs.dflags ~ "\n" ~ inputs.target ~ "\n"

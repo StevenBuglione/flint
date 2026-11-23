@@ -213,7 +213,7 @@ private void forkIdentity(const ref Home home, ref Toolchain toolchain)
 {
     import std.file : exists;
     import std.path : buildPath;
-    import flint_tool.support.files : sha256File;
+    import flint_tool.support.files : cachedSha256File;
     import flint_tool.toolchain.host : dmdArm64Host, dmdForkHost, upstreamDmdHost;
 
     const bin = buildPath(toolchain.directory, "dmd2", "linux", "bin64");
@@ -229,13 +229,13 @@ private void forkIdentity(const ref Home home, ref Toolchain toolchain)
     static if (dmdArm64Host)
         toolchain.fork.dmdPatch = arm64DmdPatchDigest(home);
     else
-        toolchain.fork.dmdPatch = dmdForkHost ? sha256File(dmdPatch) : "";
+        toolchain.fork.dmdPatch = dmdForkHost ? cachedSha256File(dmdPatch) : "";
     version (OSX)
         toolchain.fork.dubPatch = dubPatchDigest(home, "dub-1.43.0-flint-darwin.patch");
     else
         toolchain.fork.dubPatch = upstreamDmdHost ? dubPatchDigest(home,
-                "dub-1.43.0-flint-windows.patch") : sha256File(buildPath(home.root, "toolchain",
-                "dub-1.43.0-flint.patch"));
+                "dub-1.43.0-flint-windows.patch") : cachedSha256File(buildPath(home.root,
+                "toolchain", "dub-1.43.0-flint.patch"));
 }
 
 /// Compare the installed fork with its receipt: patches and, where hashed, binaries.
