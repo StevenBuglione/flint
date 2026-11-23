@@ -202,19 +202,22 @@ Toolchain inspect(const ref Home home, scope const(string)[] names, bool hash, s
         }
         assign(toolchain, component);
     }
-    import flint_tool.toolchain.host : dmdForkHost, upstreamDmdHost;
+    import flint_tool.toolchain.host : dmdArm64Host, dmdForkHost, upstreamDmdHost;
 
     const bin = buildPath(toolchain.directory, "dmd2", "linux", "bin64");
     // Without the DMD fork (ADR-024) the Flint-patched DUB is the whole fork. With the upstream DMD and DUB
     // (ADR-026) there is no fork: the receipt then only ties the installed binaries to the pinned archives.
     // On Windows the fork is the Flint DUB with its Windows overlay, beside the upstream DMD (ADR-026).
-    static if (upstreamDmdHost)
+    static if (upstreamDmdHost || dmdArm64Host)
         toolchain.fork.installed = toolchain.dmd.present && toolchain.dub.present;
     else
         toolchain.fork.installed = dmdForkHost ? exists(buildPath(bin, "dmd.upstream"))
             && exists(buildPath(bin, "dub.upstream")) : toolchain.dub.present;
     const dmdPatch = buildPath(home.root, "toolchain", "dmd-2.114.0-flint.patch");
-    toolchain.fork.dmdPatch = dmdForkHost ? sha256File(dmdPatch) : "";
+    static if (dmdArm64Host)
+        toolchain.fork.dmdPatch = arm64DmdPatchDigest(home);
+    else
+        toolchain.fork.dmdPatch = dmdForkHost ? sha256File(dmdPatch) : "";
     version (OSX)
         toolchain.fork.dubPatch = dubPatchDigest(home, "dub-1.43.0-flint-darwin.patch");
     else
@@ -455,7 +458,7 @@ string[][] installCommands(const ref Home home, string directory, bool pgo, stri
 {
     import std.path : buildPath;
 
-    import flint_tool.toolchain.host : dmdForkHost, upstreamDmdHost;
+    import flint_tool.toolchain.host : dmdArm64Host, dmdForkHost, upstreamDmdHost;
 
     const installer = buildPath(home.root, "tools", "install_toolchains.py");
     static if (upstreamDmdHost)
@@ -481,6 +484,10 @@ string[][] installCommands(const ref Home home, string directory, bool pgo, stri
             ["python3", installer, "--compiler", "ldc", "--destination", directory],
             ["python3", installer, "--compiler", "dub", "--destination", directory]
         ];
+        // ADR-025 section 3: arm64 hosts first build the forked DMD with its AArch64 code generator, so the
+        // receipt follows the third command there.
+        static if (dmdArm64Host)
+            hostCommands = [["python3", installer, "--compiler", "dmd", "--destination", directory]] ~ hostCommands;
         if (directory == buildPath(home.root, ".tools"))
         {
             const quality = buildPath(home.root, "tools", "install_quality_tools.py");
@@ -572,12 +579,14 @@ bool composeReceipt(const ref Home home, string directory, string dmdOutput, str
     import std.path : buildPath;
     import flint_tool.support.files : sha256File;
 
-    import flint_tool.toolchain.host : dmdForkHost, upstreamDmdHost;
+    import flint_tool.toolchain.host : dmdArm64Host, dmdForkHost, upstreamDmdHost;
 
     DecodeOptions lenient;
     lenient.unknownFields = UnknownFields.ignore;
     static if (upstreamDmdHost)
         return composeUpstreamReceipt(home, directory, dmdOutput, ldcOutput, dubOutput, receipt, report);
+    else static if (dmdArm64Host)
+        return composeArm64Receipt(home, directory, dmdOutput, ldcOutput, dubOutput, receipt, report);
     else static if (!dmdForkHost)
         return composeHostReceipt(home, directory, dmdOutput, ldcOutput, receipt, report);
     auto dmd = deserialize!InstallerDmd(lastJsonLine(dmdOutput), lenient);
@@ -662,6 +671,60 @@ private bool composeUpstreamReceipt(const ref Home home, string directory, strin
     receipt.ldc = ReceiptTool(home.versions["ldc"], ldc.value.sha256, sha256File(componentPath(home,
             directory, "ldc2")));
     return true;
+}
+
+/// The receipt on an arm64 host (ADR-025 section 3), from the DMD, LDC and DUB installer outputs: the forked DMD
+/// built from the pinned release's sources with its patches, and the Flint DUB.
+private bool composeArm64Receipt(const ref Home home, string directory, string dmdOutput,
+        string ldcOutput, string dubOutput, out ToolchainReceipt receipt, ref Report report)
+{
+    import flint.serde : DecodeOptions, UnknownFields;
+    import flint.serde.owned : deserialize;
+    import std.path : buildPath;
+    import flint_tool.support.files : sha256File;
+
+    DecodeOptions lenient;
+    lenient.unknownFields = UnknownFields.ignore;
+    auto dmd = deserialize!InstallerDmd(lastJsonLine(dmdOutput), lenient);
+    auto ldc = deserialize!InstallerTool(lastJsonLine(ldcOutput), lenient);
+    auto dub = deserialize!InstallerDub(lastJsonLine(dubOutput), lenient);
+    if (!dmd.ok || !ldc.ok || !dub.ok || dmd.value.flint_fork.dmd_patch_sha256.length == 0
+            || dub.value.dub_patch_sha256.length == 0)
+    {
+        report.error("FLINT-E0814", "the installer did not print its receipt", "flint toolchain install --plan");
+        return false;
+    }
+    receipt.installer_sha256 = sha256File(buildPath(home.root, "tools", "install_toolchains.py"));
+    receipt.dmd = ReceiptDmd(home.versions["dmd"], dmd.value.sha256, dmd.value.flint_fork.dmd_sha256,
+            dub.value.dub_sha256, dmd.value.flint_fork.dmd_patch_sha256, dub.value.dub_patch_sha256,
+            dmd.value.flint_fork.prelude_sha256, false);
+    receipt.ldc = ReceiptTool(home.versions["ldc"], ldc.value.sha256, sha256File(componentPath(home,
+            directory, "ldc2")));
+    return true;
+}
+
+/// SHA-256 of the DMD patches an arm64 host applies, concatenated in order, as install_toolchains.py computes it:
+/// the shared patch, then on macOS the Darwin overlay.
+string arm64DmdPatchDigest(const ref Home home)
+{
+    import std.digest.sha : SHA256, toHexString;
+    import std.file : exists, read;
+    import std.path : buildPath;
+    import std.string : toLower;
+
+    version (OSX)
+        immutable names = ["dmd-2.114.0-flint.patch", "dmd-2.114.0-flint-darwin.patch"];
+    else
+        immutable names = ["dmd-2.114.0-flint.patch"];
+    SHA256 digest;
+    foreach (name; names)
+    {
+        const path = buildPath(home.root, "toolchain", name);
+        if (!exists(path))
+            return null;
+        digest.put(cast(const(ubyte)[]) read(path));
+    }
+    return toHexString(digest.finish()).toLower.idup;
 }
 
 /// SHA-256 of the shared DUB patch and a host's overlay (Windows, macOS) concatenated in order, as

@@ -147,10 +147,10 @@ int commandToolchainInstall(ref Session session, ToolchainInstallArgs args)
             return finish(session, report, payload);
         outputs ~= output;
         // The receipt covers DMD, DUB and LDC; write it as soon as they are installed. On Windows the Flint DUB is
-        // the third command (ADR-026).
-        import flint_tool.toolchain.host : upstreamDmdHost;
+        // the third command (ADR-026); on arm64 hosts the forked DMD comes first (ADR-025 section 3).
+        import flint_tool.toolchain.host : dmdArm64Host, upstreamDmdHost;
 
-        if (index == (upstreamDmdHost ? 2 : 1) && !writeToolchainReceipt(session, directory, outputs, report))
+        if (index == (upstreamDmdHost || dmdArm64Host ? 2 : 1) && !writeToolchainReceipt(session, directory, outputs, report))
             return finish(session, report, payload);
     }
     const toolchain = inspect(session.home, null, true, directory);
@@ -594,8 +594,8 @@ int commandDaemon(ref Session session, string action, string profile)
                 report.error("FLINT-E0810", "the compile server belongs to the Linux DMD fork; Windows builds with "
                         ~ "the upstream DMD, which has none yet (ADR-025, ADR-026)", "build without flint daemon");
             else
-                report.error("FLINT-E0810", "the compile server belongs to the Linux DMD fork; this host fills the "
-                        ~ "DMD role with LDC's ldmd2, which has none (ADR-024)", "build without flint daemon");
+                report.error("FLINT-E0810", "the compile server belongs to the Linux x86-64 DMD fork; it is not "
+                        ~ "enabled on arm64 hosts yet (ADR-025 section 3)", "build without flint daemon");
             break;
         }
         const toolchain = inspect(session.home, ["dmd"], false);

@@ -395,6 +395,9 @@ def install_dmd_arm64(destination):
     own binaries are x86-64 Linux and are replaced or unused.
     """
     osname = platform.system()
+    # A previous install replaced the release's druntime and Phobos with patched copies: extract them afresh
+    for name in ('druntime', 'phobos'):
+        shutil.rmtree(destination / 'dmd2' / 'src' / name, ignore_errors=True)
     dmd2 = install('dmd.2.114.0.linux.tar.xz', destination) / 'dmd2'
     ldc_name = LDC_DARWIN if osname == 'Darwin' else LDC_LINUX_AARCH64
     ldc_bin = install(ldc_name + '.tar.xz', destination) / ldc_name / 'bin'
@@ -498,7 +501,7 @@ def dub_patch_digest():
 
 
 def linux_arm64_glibc():
-    """True on a Linux arm64 glibc host, which uses LDC's ldmd2 and the Flint DUB until the DMD fork lands there."""
+    """True on a Linux arm64 glibc host, which runs the DMD fork built from source and the Flint DUB built with LDC."""
     return (platform.system() == 'Linux' and platform.machine().lower() in ('aarch64', 'arm64')
             and not list(Path('/lib').glob('ld-musl-*.so.1')))
 
@@ -516,7 +519,7 @@ def install_flint_dub(destination):
         # ADR-026: the Flint DUB with the parallel pipeline, beside the upstream DMD.
         ldc_bin = install(LDC_WINDOWS + '.7z', destination) / LDC_WINDOWS / 'bin'
     elif linux_arm64_glibc():
-        # Milestone 11: Linux arm64 has no DMD fork yet (ADR-025 section 3), so it takes the macOS arrangement.
+        # Linux arm64 takes the macOS arrangement: the Flint DUB built with LDC beside the DMD fork.
         ldc_bin = install(LDC_LINUX_AARCH64 + '.tar.xz', destination) / LDC_LINUX_AARCH64 / 'bin'
     else:
         raise SystemExit('--compiler dub is the macOS, Windows and Linux arm64 DUB; Linux x86-64 installs DUB with '
@@ -557,16 +560,12 @@ def bootstrap_flint(toolchain):
     import tomllib
     import profiles
     manifest = tomllib.loads((FLINT_APP / 'flint.toml').read_text())
-    if platform.system() == 'Darwin':
-        # ADR-024: LDC's ldmd2 fills the DMD role with the same flags; DUB is the Flint DUB built with LDC.
-        bin_dir = toolchain / LDC_DARWIN / 'bin'
-        dmd, dub = bin_dir / 'ldmd2', toolchain / FLINT_DUB / 'bin' / 'dub'
-        hint = '--compiler ldc and --compiler dub'
-    elif linux_arm64_glibc():
-        # Milestone 11: the macOS arrangement until the DMD fork's AArch64 code generator lands on Linux.
-        bin_dir = toolchain / LDC_LINUX_AARCH64 / 'bin'
-        dmd, dub = bin_dir / 'ldmd2', toolchain / FLINT_DUB / 'bin' / 'dub'
-        hint = '--compiler ldc and --compiler dub'
+    if platform.system() == 'Darwin' or linux_arm64_glibc():
+        # ADR-025 section 3: the forked DMD with its AArch64 code generator fills the DMD role; DUB is the Flint
+        # DUB built with LDC (ADR-024).
+        bin_dir = toolchain / 'dmd2' / ('osx' if platform.system() == 'Darwin' else 'linux') / 'bin64'
+        dmd, dub = bin_dir / 'dmd', toolchain / FLINT_DUB / 'bin' / 'dub'
+        hint = '--compiler dmd and --compiler dub'
     elif platform.system() == 'Windows':
         # ADR-026: the upstream DMD and DUB of the pinned Windows release.
         bin_dir = toolchain / dmd_bin_relative()
