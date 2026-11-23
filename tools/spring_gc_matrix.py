@@ -1,10 +1,12 @@
 """The GC matrix: a Flint port under each druntime GC setting of benchmarks/spring/gc-matrix.json (ADR-030 section 4).
 
     spring_bench.py gc-matrix <app> --output <file> [--setting <name>]... [--smoke] [--binary <stand-in>]
-    spring_bench.py gc-matrix <app> --output <file> --setting conservative --gcopt <name>=<options> --runs <n>
+    spring_bench.py gc-matrix <app> --output <file> --setting conservative --gcopt <name>=<options> --runs <n> [--no-go]
 
-`--gcopt` adds an arm that is not in the matrix, and `--runs` overrides the manifest's trial count; either makes
-the record an `ab` record (a decision-gating A/B), which spring_gate never counts as the Phase 1 matrix.
+`--gcopt` adds an arm that is not in the matrix, `--runs` overrides the manifest's trial count, and `--no-go` leaves
+out the Go comparator (an A/B between Flint configurations; certified Flint/Go ratios come from the multicore
+entries). Any of them makes the record an `ab` record (a decision-gating A/B), which spring_gate never counts as the
+Phase 1 matrix. Every arm's record holds its medians; `against_go` only when Go ran.
 
 For each setting the same Flint binary runs with `--DRT-gcopt=<setting> profile:1`:
 1. the black-box suite must still pass (a GC setting may not change behaviour);
@@ -53,7 +55,7 @@ def summary(values):
     return {'median': statistics.median(values), 'min': min(values), 'max': max(values)} if values else None
 
 
-def arms(matrix_settings, chosen, gcopts, runs):
+def arms(matrix_settings, chosen, gcopts, runs, no_go=False):
     """The settings to measure in order, every setting's gcopt options, and whether the record is an `ab` record."""
     options = dict(matrix_settings)
     extra = {}
@@ -69,7 +71,7 @@ def arms(matrix_settings, chosen, gcopts, runs):
     if unknown:
         raise SystemExit('unknown GC settings: ' + ', '.join(sorted(unknown)))
     options.update(extra)
-    return settings, options, bool(extra) or runs is not None
+    return settings, options, bool(extra) or runs is not None or no_go
 
 
 def main(args):
@@ -80,7 +82,8 @@ def main(args):
     app = args.app
     if app not in manifest['apps']:
         raise SystemExit(f'{app} has no Spring workload in {manifest_path.relative_to(ROOT)}')
-    settings, options, ab = arms(matrix['settings'], args.setting, args.gcopt, args.runs)
+    with_go = not getattr(args, 'no_go', False)
+    settings, options, ab = arms(matrix['settings'], args.setting, args.gcopt, args.runs, not with_go)
     workload = load_bench.validate_spring_manifest(manifest, args.smoke).copy()
     if args.runs is not None:
         workload['runs'] = args.runs
@@ -91,13 +94,14 @@ def main(args):
     oha = Path(os.environ.get('OHA') or ROOT / '.tools' / 'oha-1.16.0' / 'oha')
     if not oha.is_file() or load_bench.file_hash(oha) != load_bench.OHA_SHA256:
         raise SystemExit('the pinned oha is missing; tools/install_toolchains.py --compiler oha (or set OHA)')
-    problems = spring_bench.check_registry([app])
+    problems = spring_bench.check_registry([app]) if with_go else []
     if problems:
         raise SystemExit('Go comparator: ' + '; '.join(problems))
     stand_in = Path(args.binary).resolve() if args.binary else None
     if stand_in is None:
         spring_bench.build_flint(app)
-    spring_bench.build_go(app)
+    if with_go:
+        spring_bench.build_go(app)
     spec = manifest['apps'][app]
     environment = manifest.get('environment', {})
     args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -121,12 +125,14 @@ def main(args):
             result['settings'][name] = {'gcopt': options[name], 'suite': {
                 'passed': record['passed'], 'total': record['total']}, 'series': {k: [] for k in load_bench.FIELDS},
                 'gc_profiles': []}
-        result['go'] = {'series': {k: [] for k in load_bench.FIELDS}}
+        if with_go:
+            result['go'] = {'series': {k: [] for k in load_bench.FIELDS}}
+        comparator = ['go'] if with_go else []
         database_context = (spring_bench.postgres_cluster(workload['database_cpus'])
                             if spring_bench.app_row(app).get('database') == 'postgres' else load_bench.contextlib.nullcontext())
         with database_context as database:
             for trial in range(workload['runs']):
-                order = ['go'] + settings if trial % 2 == 0 else list(reversed(settings)) + ['go']
+                order = comparator + settings if trial % 2 == 0 else list(reversed(settings)) + comparator
                 for name in order:
                     if name == 'go':
                         row = load_bench.spring_measure(spring_bench, app, spec, 'go', workload, oha, trial, outdir,
@@ -145,10 +151,12 @@ def main(args):
                     for key in load_bench.FIELDS:
                         target['series'][key].append(row['capacity' if key == 'requests_per_second' else 'latency'][key])
                     print(json.dumps({'app': app, 'trial': trial, 'setting': name, 'status': 'measured'}), flush=True)
-        go = {key: statistics.median(values) for key, values in result['go']['series'].items()}
+        go = {key: statistics.median(values) for key, values in result['go']['series'].items()} if with_go else None
         for name, row in result['settings'].items():
             medians = {key: statistics.median(values) for key, values in row['series'].items()}
-            row['against_go'] = {key: medians[key] / go[key] for key in medians}
+            row['medians'] = medians
+            if go:
+                row['against_go'] = {key: medians[key] / go[key] for key in medians}
             pauses = [p['max_pause_ms'] for p in row['gc_profiles'] if p and 'max_pause_ms' in p]
             row['max_pause_ms'] = summary(pauses)
             if len(pauses) != len(row['gc_profiles']):
@@ -161,9 +169,11 @@ def main(args):
         args.output.write_text(json.dumps(result, indent=2) + '\n')
         raise
     args.output.write_text(json.dumps(result, indent=2) + '\n')
-    print(f"{'setting':28} {'p99/Go':>8} {'RSS/Go':>8} {'CPU/Go':>8} {'rps/Go':>8} {'max pause ms':>13}")
+    against = 'Go' if with_go else settings[0]
+    print(f"against {against}: {'setting':28} {'p99':>8} {'RSS':>8} {'CPU':>8} {'rps':>8} {'max pause ms':>13}")
+    base = None if with_go else result['settings'][settings[0]]['medians']
     for name, row in result['settings'].items():
-        ratio = row['against_go']
+        ratio = row['against_go'] if with_go else {key: row['medians'][key] / base[key] for key in base}
         pause = row['max_pause_ms']['median'] if row['max_pause_ms'] else '-'
         print(f"{name:28} {ratio['p99_ms']:8.3f} {ratio['peak_rss_bytes']:8.3f} {ratio['cpu_ns_per_request']:8.3f} "
               f"{ratio['requests_per_second']:8.3f} {pause:>13}")

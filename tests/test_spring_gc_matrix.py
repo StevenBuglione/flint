@@ -22,6 +22,7 @@ class GcMatrixArms(unittest.TestCase):
         self.assertTrue(ab)
         self.assertEqual(spring_gc_matrix.arms(MATRIX, None, ['a=minPoolSize:1'], None)[0], ['a'])
         self.assertTrue(spring_gc_matrix.arms(MATRIX, ['precise'], None, 3)[2])
+        self.assertTrue(spring_gc_matrix.arms(MATRIX, ['precise'], None, None, True)[2], '--no-go is an ab record')
 
     def test_an_arm_must_be_new_and_named(self):
         for gcopts, runs, message in ((['conservative=gc:precise'], None, '--gcopt needs a new'),
