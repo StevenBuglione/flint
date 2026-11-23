@@ -85,7 +85,7 @@ On 2026-11-23, `tools/measure_builds.py --apps-only` on pluto (9 trials, load av
 
 `bench-rest` is at or below Go; `bench-cli` is not yet.
 
-Again at 05:50 on 2026-11-24 (fork at 556fbc08), with the other Flint sessions on pluto stopped but load average 7.7 to 8.5 from Linguum's two `serve-sim` processes and two macOS services:
+Again at 05:50 EST on 2026-11-23 (fork at 556fbc08), with the other Flint sessions on pluto stopped but load average 7.7 to 8.5 from Linguum's two `serve-sim` processes and two macOS services:
 
 | | dev build cold | Go cold | dev build incremental | Go incremental |
 | --- | --- | --- | --- | --- |
