@@ -127,12 +127,17 @@ def measure_flint(name, trials, timed, logs, temporary, result):
     directory = ROOT / spring_bench.app_row(name)['flint']['directory']
     spec = json.loads((directory / 'flint-spring.json').read_text())['measure']
     row = {'flint_cached_cold_seconds': [], 'flint_cached_incremental_seconds': [], 'flint_scratch_seconds': []}
-    env = dict(os.environ)
+    # A flint cache of this measurement's own (the platform archives and the digest log), primed by the first build.
+    cache = temporary / f'{name}-flint-cache'
+    env = dict(os.environ, FLINT_CACHE=str(cache))
     edit = directory / spec['edit_source']
     original = edit.read_bytes()
 
     def clean():
         shutil.rmtree(directory / '.flint', ignore_errors=True)
+        # Cold means a cold digest log too: its entries are keyed by stat data, and an in-place port keeps its
+        # files' stat data between trials, which Go's fresh source copies do not (decisions.md, 2026-11-23).
+        (cache / 'digests.log').unlink(missing_ok=True)
 
     try:
         # The platform cache (ADR-030 section 5) lives outside the port, so clearing the port's .flint keeps it. One
@@ -142,6 +147,7 @@ def measure_flint(name, trials, timed, logs, temporary, result):
         observed = timed(spec['cached'], directory, env, log)
         row['flint_first_build_seconds'] = observed['seconds']
         row['dev_linker'] = dev_linker(env)
+        row['flint_cache'] = {'platform_cache_primed': True, 'digest_log_cleared_before_cold_trials': True}
         for trial in range(trials):
             for flavour in ('cached', 'scratch'):
                 clean()
