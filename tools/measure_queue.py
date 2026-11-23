@@ -349,8 +349,9 @@ def prepare_checkout(spec, logs):
     """A detached worktree at the commit with its own native prefix, for `command` steps that run measure_builds
     there (`in`). The native build runs once; later runs reuse the prefix."""
     directory, full = worktree(spec['commit'])
-    marker = directory / '.native' / 'install' / 'linux-x86_64-glibc'
-    if not marker.is_dir():
+    # Written only after the native build succeeds: the install directory and its receipt exist half-way through.
+    marker = directory / '.native' / 'flint-measure-prepared'
+    if not marker.is_file():
         log = logs / f'native-{full[:12]}.log'
         with log.open('wb') as stream:
             completed = subprocess.run([sys.executable, 'tools/native_build.py', '--profile', 'ci', '--target',
@@ -358,6 +359,7 @@ def prepare_checkout(spec, logs):
                                        env=toolchain_environment(), stdout=stream, stderr=subprocess.STDOUT)
         if completed.returncode:
             raise SystemExit(f'the native build at {full[:12]} failed; see {log}')
+        marker.write_text(now() + '\n')
     return {'commit': full, 'worktree': str(directory)}
 
 
