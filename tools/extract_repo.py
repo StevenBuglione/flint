@@ -29,7 +29,15 @@ def moving_paths(repo, root=ROOT):
     if repo == 'boot':
         # boot/ and starters/ move whole: the bill of materials and anything else under them.
         paths = ['boot', 'starters']
+    if (root / 'api' / repo / 'mapping.json').is_file():
+        # The repo's API mapping (flint api coverage); renamed to api/mapping.json on extraction.
+        paths.append(api_mapping_dir(repo))
     return sorted(set(paths))
+
+
+def api_mapping_dir(repo):
+    """The monorepo directory of a repo's API mapping; an extracted repo keeps it as api/."""
+    return 'api/' + repo
 
 
 def run(command, cwd=None):
@@ -81,7 +89,8 @@ def main():
     run(['git', 'checkout', '--quiet', '-B', 'main', arguments.commit], checkout)
     source_commit = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=checkout, capture_output=True, text=True,
                                    check=True).stdout.strip()
-    run(['git', 'filter-repo', '--force', '--refs', 'main', *sum((['--path', p] for p in paths), [])], checkout)
+    renames = ['--path-rename', api_mapping_dir(arguments.repo) + '/:api/'] if api_mapping_dir(arguments.repo) in paths else []
+    run(['git', 'filter-repo', '--force', '--refs', 'main', *sum((['--path', p] for p in paths), []), *renames], checkout)
     root_files(arguments.repo, checkout)
     run(['git', 'add', '-A'], checkout)
     run(['git', 'commit', '--quiet', '-m', f'Extract the {arguments.repo} repo from flint-projects/flint at '

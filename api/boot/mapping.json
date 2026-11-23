@@ -1,0 +1,11 @@
+{"rulebook":2,
+"upstream":["spring-boot@v4.2.0"],
+"elements":{
+"org.springframework.boot.actuate.autoconfigure.endpoint.jmx.**":{"status":"excluded","category":"jvm-platform"},
+"org.springframework.boot.actuate.endpoint.jmx.**":{"status":"excluded","category":"jvm-platform"},
+"org.springframework.boot.autoconfigure.jmx.**":{"status":"excluded","category":"jvm-platform"},
+"org.springframework.boot.devtools.restart.**":{"status":"excluded","category":"devtools"},
+"org.springframework.boot.groovy.**":{"status":"excluded","category":"jvm-language"},
+"org.springframework.boot.loader.**":{"status":"excluded","category":"packaging"},
+"org.springframework.boot.micrometer.metrics.autoconfigure.export.jmx.**":{"status":"excluded","category":"jvm-platform"}
+}}

@@ -153,13 +153,15 @@ class ExtractionTests(unittest.TestCase):
     def test_each_repo_takes_its_packages_boot_and_starters_and_its_apps(self):
         import extract_repo
 
-        self.assertEqual(extract_repo.moving_paths('boot'), ['boot', 'starters'])
+        # A repo with an API mapping takes api/<repo>, which extraction renames to api/.
+        self.assertEqual(extract_repo.moving_paths('boot'), ['api/boot', 'boot', 'starters'])
         self.assertEqual(extract_repo.moving_paths('ai'), ['apps/flint-mcp', 'packages/ai', 'packages/mcp'])
         self.assertEqual(extract_repo.moving_paths('data-jdbc'), ['packages/data'])
         framework = extract_repo.moving_paths('framework')
         self.assertIn('packages/security', framework)
+        self.assertIn('api/framework', framework)
         self.assertNotIn('packages/arena', framework)
-        self.assertEqual(len(framework), len(workspace.packages_of('framework')))
+        self.assertEqual(len(framework), len(workspace.packages_of('framework')) + 1)
         self.assertEqual(extract_repo.moving_paths('batch'), [])
 
     def test_the_workspace_root_recipe_joins_every_checkout_under_the_flint_name(self):

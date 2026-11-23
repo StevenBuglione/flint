@@ -57,7 +57,7 @@ flint check
 | `flint receipt <artifact> [--canonical]` | Verify an artifact against its receipt and the current toolchain. |
 | `flint api fetch [projects...] [--cache DIR]` | Download the upstream source archives pinned in `api/upstreams.json` into the reference cache, verified by SHA-256 (ADR-030). Never compiles them. |
 | `flint api extract --source DIR --project P --version TAG [-o FILE] [--exclude PREFIX]...` | Write the API manifest of an upstream Java source tree: every public and protected type and member ([API manifests](#api-manifests)). |
-| `flint api coverage --manifest FILE... [--mapping FILE] [--show N]` | Classify every manifest element against `api/mapping.json`, print per-module percentages, and fail on unclassified elements. |
+| `flint api coverage [--repo R] [--manifest FILE...] [--mapping FILE] [--show N]` | Classify every manifest element against the repo's mapping, print per-module percentages, and fail on unclassified elements. `--repo` takes every manifest `api/upstreams.json` assigns to the repo. |
 | `flint api diff <old> <new>` | List the API elements added, removed or changed between two manifests. |
 
 Every command accepts `--json` and `--help`. Commands acting on a project take `--project DIR` (or `-C DIR`). `flint` never prompts.
@@ -169,7 +169,7 @@ Command fields:
 | `flint.receipt/1` | `artifact`, `receipt`, `canonical`, `non_canonical_reasons`, `profile`, `commit` |
 | `flint.api-fetch/1` | `cache`, `fetched` (`project`, `version`, `directory`, `cached`, `licence`) |
 | `flint.api-extract/1` | `project`, `version`, `output`, `files`, `types`, `methods`, `excludes`, `modules` (`name`, `types`, `methods`, `constructors`, `fields`, `constants`, `attributes`, `components`) |
-| `flint.api-coverage/1` | `mapping`, `rulebook`, `unclassified`, `manifests` (`manifest`, `project`, `version`, `summary`, `modules`; each tally has `name`, `total`, `ported`, `adapted`, `excluded`, `unclassified`, `classified_percent`), `unclassified_ids` (`project@version` → element ids) |
+| `flint.api-coverage/1` | `mapping`, `repo`, `rulebook`, `unclassified`, `manifests` (`manifest`, `project`, `version`, `summary`, `modules`; each tally has `name`, `total`, `ported`, `adapted`, `excluded`, `unclassified`, `classified_percent`), `unclassified_ids` (`project@version` → element ids) |
 | `flint.api-diff/1` | `older`, `newer`, `added`, `removed`, `changed`, `differences` (`change`, `kind`, `id`, `details`) |
 
 Usage errors that occur before a command runs use `flint.usage/1`. A field is added only with a new schema version.
@@ -204,10 +204,15 @@ Signatures erase annotations and type arguments, as Java's overload identity doe
 
 `--version` is accepted for `--tag`, since `flint.cli` reserves `--version` for itself.
 
-**Classify.** `api/mapping.json` has the shape the rulebook ([`docs/spring/api-mapping.md`](spring/api-mapping.md)) describes:
+**Classify.** Each repo's mapping classifies the upstreams `api/upstreams.json` assigns to it (`repo`):
+- **Location.** In this monorepo the mapping is `api/<repo>/mapping.json`: `api/framework/mapping.json` covers Spring Framework and the third-party APIs, and `api/boot/mapping.json` covers Spring Boot. `tools/extract_repo.py` moves it to `api/mapping.json` in the extracted repo.
+- **Manifests stay in `flint`.** The manifests and pins remain here under `api/`, with the tooling.
+- **Running it.** `flint api coverage --repo framework` takes that mapping and every extracted manifest of the repo.
+
+The mapping has the shape the rulebook ([`docs/spring/api-mapping.md`](spring/api-mapping.md)) describes:
 
 ```json
-{"rulebook": 1,
+{"rulebook": 2,
  "upstream": ["spring-framework@v7.1.0", "spring-boot@v4.2.0"],
  "elements": {
    "org.springframework.http.HttpStatus": {"status": "ported", "d": "flint.http.HttpStatus"},
@@ -230,7 +235,8 @@ The entries follow these rules:
 ```bash
 flint api fetch spring-framework spring-boot
 flint api extract --source .flint/cache/api/spring-framework-v7.1.0 --project spring-framework --version v7.1.0
-flint api coverage --manifest api/upstream/spring-framework-v7.1.0.json --manifest api/upstream/spring-boot-v4.2.0.json
+flint api coverage --repo framework
+flint api coverage --repo boot
 ```
 
 ## The project

@@ -134,8 +134,55 @@ int commandApiFetch(ref Session session, const(string)[] projects, string cacheO
     return finish(session, report, payload);
 }
 
-/// `flint api coverage --manifest FILE... [--mapping FILE]`.
-int commandApiCoverage(ref Session session, const(string)[] manifests, string mappingPath, size_t shown)
+/// What `flint api coverage` was asked.
+struct CoverageCommand
+{
+    /// Manifests named on the command line.
+    const(string)[] manifests;
+    /// Mapping named on the command line.
+    string mapping;
+    /// Repo whose manifests and mapping to use.
+    string repo;
+    /// Unclassified ids to print per manifest.
+    size_t shown;
+}
+
+/// The manifests and mapping to classify: as named, or the repo's (api/upstreams.json `repo`).
+bool coverageInputs(ref Session session, const ref CoverageCommand command, ref Report report,
+        out string[] manifests, out string mappingPath)
+{
+    import std.file : exists;
+    import std.path : buildPath;
+    import flint_tool.api.upstreams : loadUpstreams;
+
+    manifests = command.manifests.dup;
+    mappingPath = command.mapping;
+    const repoMapping = buildPath("api", command.repo, "mapping.json");
+    if (mappingPath.length == 0)
+        mappingPath = command.repo.length && exists(repoMapping) ? repoMapping : buildPath("api", "mapping.json");
+    if (manifests.length == 0 && command.repo.length)
+    {
+        string error;
+        foreach (ref upstream; loadUpstreams(session.home.root, error))
+        {
+            const path = buildPath(session.home.root, "api", "upstream", upstream.key ~ ".json");
+            if (upstream.repo == command.repo && exists(path))
+                manifests ~= path;
+        }
+        if (manifests.length == 0)
+            report.error("FLINT-E1004",
+                    "api/upstreams.json assigns no extracted manifest to the `" ~ command.repo ~ "` repo",
+                    "flint api fetch, then flint api extract, for the repo's upstreams");
+        return manifests.length != 0;
+    }
+    if (manifests.length == 0)
+        report.error("FLINT-E0002", "flint api coverage needs --repo or at least one --manifest",
+                "flint api coverage --repo framework");
+    return manifests.length != 0;
+}
+
+/// `flint api coverage [--repo R] [--manifest FILE...] [--mapping FILE]`.
+int commandApiCoverage(ref Session session, const ref CoverageCommand command)
 {
     import std.conv : to;
     import std.file : exists, readText;
@@ -146,12 +193,12 @@ int commandApiCoverage(ref Session session, const(string)[] manifests, string ma
 
     Report report;
     CoverageReport payload;
-    if (manifests.length == 0)
-    {
-        report.error("FLINT-E0002", "flint api coverage needs at least one --manifest",
-                "flint api coverage --manifest api/upstream/spring-framework-v7.1.0.json");
+    string[] manifests;
+    string mappingPath;
+    if (!coverageInputs(session, command, report, manifests, mappingPath))
         return finish(session, report, payload);
-    }
+    const shown = command.shown;
+    payload.repo = command.repo;
     Mapping mapping;
     string error;
     if (!exists(mappingPath))
@@ -372,6 +419,7 @@ private struct CoverageReport
     int exit_code;
     Diagnostic[] diagnostics;
     string mapping;
+    string repo;
     uint rulebook;
     size_t unclassified;
     CoverageManifest[] manifests;

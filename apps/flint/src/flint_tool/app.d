@@ -294,8 +294,8 @@ private int depsCommand(ref Session session, string name, ref FlintArgs options)
 /// Run a `flint api` command; -1 when `name` is not one.
 private int apiCommand(ref Session session, string name, ref ApiArgs args)
 {
-    import flint_tool.commands.api : ExtractCommand, commandApiCoverage, commandApiDiff,
-        commandApiExtract, commandApiFetch;
+    import flint_tool.commands.api : CoverageCommand, ExtractCommand, commandApiCoverage,
+        commandApiDiff, commandApiExtract, commandApiFetch;
 
     switch (name)
     {
@@ -306,7 +306,9 @@ private int apiCommand(ref Session session, string name, ref ApiArgs args)
                 args.extract.output, args.extract.excludes);
         return commandApiExtract(session, command);
     case "flint api coverage":
-        return commandApiCoverage(session, args.coverage.manifests, args.coverage.mapping, args.coverage.show);
+        const coverage = CoverageCommand(args.coverage.manifests, args.coverage.mapping,
+                args.coverage.repo, args.coverage.show);
+        return commandApiCoverage(session, coverage);
     case "flint api diff":
         return commandApiDiff(session, args.diff.older, args.diff.newer);
     default:

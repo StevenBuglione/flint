@@ -484,7 +484,9 @@ struct ApiCoverageArgs
     /// Manifests.
     @Option("manifest", 'm', "Upstream manifest to classify (repeatable)") string[] manifests;
     /// Mapping.
-    @Option("mapping", 0, "The repo's mapping (default: api/mapping.json)") string mapping = "api/mapping.json";
+    @Option("mapping", 0, "The mapping (default: api/<repo>/mapping.json, else api/mapping.json)") string mapping;
+    /// Repo.
+    @Option("repo", 0, "Classify every manifest api/upstreams.json assigns to this repo") string repo;
     /// How many unclassified ids to print.
     @Option("show", 0, "Unclassified element ids to print per manifest (default: 20)") uint show = 20;
     /// JSON output.
