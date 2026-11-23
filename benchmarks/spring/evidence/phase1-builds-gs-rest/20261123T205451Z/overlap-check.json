@@ -1,0 +1,15 @@
+{
+  "schema": "flint.measure-note/1",
+  "time": "2026-11-23T21:05Z",
+  "reported_by": "size-levers via the coordinator: one cc compile of sqlite3.c overlapped about the first 14 s of this claimed window (from 20:54:51), before their guard saw the lock",
+  "timeline": {
+    "lock_taken_claim_started": "2026-11-23T20:54:51Z",
+    "foreign_compile_ended_about": "2026-11-23T20:55:05Z",
+    "claim_settled_three_quiet_samples_5s_apart_ending": "2026-11-23T20:55:17Z (window_before: quiet, 0 runnable tasks, no build process using CPU)",
+    "acceptance_steps_untimed": "2026-11-23T20:55:17Z to 20:55:26Z",
+    "measure_builds_started": "2026-11-23T20:55:26Z (step-2.log)",
+    "first_timed_trial_finished": "2026-11-23T20:55:30Z (gs-rest-service-go-std-cold-0.log)",
+    "samples_during_measurement": "16, from 20:55:28Z to 20:58:15Z, none with a foreign build process"
+  },
+  "verdict": "The overlap fell inside the claim's settle period, before any timed trial; no scored trial overlapped. The certified result stands."
+}

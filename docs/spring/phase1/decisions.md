@@ -130,7 +130,7 @@
     - **Oz: 0.619, which passes**.
     - Context, not gating: digest log cleared 1.53; with debug information, primary 0.908, secondary 1.11 and static edit 1.22.
 
-    Phases of the cached cold build: total 141 ms, flint 21, aot 74, compile 26 and link 21. The project's AOT extraction is now the largest part. Evidence: `benchmarks/spring/evidence/phase1-builds-gs-rest/`.
+    Phases of the cached cold build: total 141 ms, flint 21, aot 74, compile 26 and link 21. The project's AOT extraction is now the largest part. Evidence: `benchmarks/spring/evidence/phase1-builds-gs-rest/`. size-levers reported a foreign `cc` compile in the first ~14 s of the claimed window. It ended before the claim settled at 20:55:17Z, the first timed trial began after 20:55:26Z, and all 16 samples during the measurement were clean, so no scored trial overlapped (`overlap-check.json` beside the evidence).
   - **gs-relational-data-access, same commit (certified, `phase1-builds-gs-relational`, 20:40–20:45Z).** Java, Go and Flint pass 1/1. Median ratios (99% interval):
     - **primary 0.037 (0.036–0.039); against a deps-primed GOCACHE, 1.295 (1.222–1.378).** Go's std-primed cold build compiles its 12 third-party packages (the pure-Go `modernc.org/sqlite` and its libc) from source, about 5.3 s, while Flint links its native SQLite and platform archives prebuilt. The deps-primed ratio is therefore the like-for-like comparison, and on it Flint is 30% slower;
     - **secondary 0.361 (0.360–0.364).** No deps-primed equivalent exists: `go build -a` recompiles every package, the driver included, while Flint's `--no-platform-cache` rebuilds the D modules but links the native C libraries prebuilt;
