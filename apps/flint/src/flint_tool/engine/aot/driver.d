@@ -25,6 +25,22 @@ enum cacheDirectory = ".flint/cache/aot";
 /// Where a package lists its auto-configuration classes, one per line, as Boot's
 /// `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports` does.
 enum autoConfigurationImports = "META-INF/flint/flint.boot.autoconfigure.AutoConfiguration.imports";
+/// Where a package lists the providers of a service, as `java.util.ServiceLoader` reads them: one file per service
+/// interface, named after its fully qualified name, with one provider class per line and `#` comments.
+enum serviceDirectory = "META-INF/services";
+
+/// One provider line of a `META-INF/services` file.
+struct ServiceProvider
+{
+    /// The service interface: the file's name.
+    string service;
+    /// The provider's fully qualified class name.
+    string provider;
+    /// The listing file and line, for diagnostics.
+    string file;
+    /// ditto
+    long line;
+}
 
 /// One Flint AOT run.
 struct AotRequest
@@ -200,6 +216,7 @@ AotOutcome runAot(const ref AotRequest request)
     }
     outcome.active = true;
     const autoConfigurations = readAutoConfigurations(request.packageDirectories);
+    const providers = readServiceProviders(request.packageDirectories ~ request.root);
     const cache = buildPath(request.root, cacheDirectory);
     State state = loadState(cache, request.environmentKey);
     // A fresh state (a new environment, or none) drops the annotation types too: the describer skips the ones
@@ -207,6 +224,12 @@ AotOutcome runAot(const ref AotRequest request)
     if (state.keys.length == 0)
         resetAnnotations(cache);
     sources ~= autoConfigurationModules(autoConfigurations, request.importPaths, state);
+    string[] services;
+    if (!serviceModules(providers, sources, request.importPaths, state, services, outcome))
+    {
+        saveState(cache, state);
+        return finish(outcome, started);
+    }
     outcome.modules = sources.length;
     addModules(state.importedModules, request.importPaths, sources, state);
     auto keys = extractionKeys(sources, request.environmentKey);
@@ -215,7 +238,7 @@ AotOutcome runAot(const ref AotRequest request)
         return finish(outcome, started);
     if (stale.length && !extractImports(request, cache, sources, keys, state, outcome))
         return finish(outcome, started);
-    outcome.ok = produceOutput(request, sources, autoConfigurations, keys, stale.length > 0, state, outcome);
+    outcome.ok = produceOutput(request, sources, autoConfigurations, services, keys, stale.length > 0, state, outcome);
     if (!outcome.ok)
         saveState(cache, state);
     return finish(outcome, started);
@@ -224,14 +247,14 @@ AotOutcome runAot(const ref AotRequest request)
 /// The generated output for the current models: kept when its key is unchanged, restored from the shared cache
 /// on a cached cold build, else generated (and stored there). False when generation failed.
 private bool produceOutput(const ref AotRequest request, scope const SourceModule[] sources,
-        scope const string[] autoConfigurations, const string[string] keys, bool extracted,
-        ref State state, ref AotOutcome outcome)
+        scope const string[] autoConfigurations, scope const string[] services,
+        const string[string] keys, bool extracted, ref State state, ref AotOutcome outcome)
 {
     import std.file : exists;
     import std.path : buildPath;
 
     const cache = buildPath(request.root, cacheDirectory);
-    const outputKey = outputKeyOf(sources, state, request.environmentKey, autoConfigurations);
+    const outputKey = outputKeyOf(sources, state, request.environmentKey, autoConfigurations, services);
     if (state.outputKey == outputKey && exists(buildPath(request.root, aotDirectory, "flint_aot_registry.d")))
     {
         // Nothing to regenerate, also when the re-extracted models came out the same.
@@ -246,12 +269,12 @@ private bool produceOutput(const ref AotRequest request, scope const SourceModul
         saveState(cache, state);
         return true;
     }
-    if (!generate(request, sources, autoConfigurations, keys, state, outcome))
+    if (!generate(request, sources, autoConfigurations, services, keys, state, outcome))
         return false;
     if (request.sharedCache.length)
         storeOutput(request, outputKey, outcome);
     // Generation may have answered presence probes, which the key covers.
-    state.outputKey = outputKeyOf(sources, state, request.environmentKey, autoConfigurations);
+    state.outputKey = outputKeyOf(sources, state, request.environmentKey, autoConfigurations, services);
     saveState(cache, state);
     return true;
 }
@@ -338,6 +361,77 @@ string[] readAutoConfigurations(scope const string[] directories)
         }
     }
     return result;
+}
+
+/// Every provider the `META-INF/services` files of `directories` list, in directory order, then by service name,
+/// then in file order.
+ServiceProvider[] readServiceProviders(scope const string[] directories)
+{
+    import std.algorithm.iteration : splitter;
+    import std.algorithm.sorting : sort;
+    import std.file : SpanMode, dirEntries, exists, isDir, isFile, readText;
+    import std.path : baseName, buildPath;
+    import std.string : indexOf, strip;
+
+    ServiceProvider[] result;
+    foreach (directory; directories)
+    {
+        const listing = buildPath(directory, serviceDirectory);
+        if (!exists(listing) || !isDir(listing))
+            continue;
+        string[] files;
+        foreach (entry; dirEntries(listing, SpanMode.shallow))
+            if (isFile(entry.name))
+                files ~= entry.name;
+        sort(files);
+        foreach (file; files)
+        {
+            long number;
+            foreach (line; readText(file).splitter('\n'))
+            {
+                ++number;
+                const comment = line.indexOf('#');
+                const name = (comment < 0 ? line : line[0 .. comment]).strip;
+                if (name.length)
+                    result ~= ServiceProvider(baseName(file), name, file, number);
+            }
+        }
+    }
+    return result;
+}
+
+/// The modules declaring the listed providers, without duplicates, in listing order: the registry imports them,
+/// so a static link keeps each provider's module, its ModuleInfo and its constructors. A provider whose module the
+/// closure lacks is FLINT-E1117.
+private bool serviceModules(scope const ServiceProvider[] providers, scope const SourceModule[] sources,
+        scope const string[] importPaths, ref State state, out string[] modules, ref AotOutcome outcome)
+{
+    import std.algorithm.searching : canFind;
+    import flint_tool.diagnostics.report : portablePath;
+    import flint_tool.engine.aot.names : packageOf;
+    import flint_tool.engine.aot.plan : Diagnostic;
+
+    bool ok = true;
+    foreach (ref item; providers)
+    {
+        const moduleName = packageOf(item.provider);
+        if (modules.canFind(moduleName))
+            continue;
+        bool known;
+        foreach (ref source; sources)
+            known = known || source.name == moduleName;
+        SourceModule found;
+        if (moduleName.length && (known || findModule(moduleName, importPaths, state, found)))
+        {
+            modules ~= moduleName;
+            continue;
+        }
+        outcome.diagnostics ~= Diagnostic("FLINT-E1117",
+                "the " ~ item.service ~ " provider " ~ item.provider ~ " is in no module of the build closure" ~ (
+                    moduleName.length ? " (no module " ~ moduleName ~ ")" : ""), portablePath(item.file), item.line);
+        ok = false;
+    }
+    return ok;
 }
 
 private SourceModule[] autoConfigurationModules(scope const string[] classes,
@@ -545,7 +639,7 @@ private string[] staleModules(scope const SourceModule[] sources, const string[s
 
 /// A key over every module's extraction key: the generated output can only change when this does.
 private string outputKeyOf(scope const SourceModule[] sources, ref State state, string environment,
-        scope const string[] autoConfigurations)
+        scope const string[] autoConfigurations, scope const string[] services)
 {
     import std.algorithm.sorting : sort;
     import std.array : join;
@@ -569,6 +663,9 @@ private string outputKeyOf(scope const SourceModule[] sources, ref State state, 
             ",");
     foreach (part; parts)
         text ~= "\n" ~ part;
+    // Absent from the text when no package lists a provider, so such projects keep their keys.
+    if (services.length)
+        text ~= "\nservices " ~ services.join(",");
     return sha256Hex(cast(const(ubyte)[]) text);
 }
 
@@ -647,7 +744,8 @@ private bool extractInto(const ref AotRequest request, scope const SourceModule[
 }
 
 private bool generate(const ref AotRequest request, scope const SourceModule[] sources,
-        scope const string[] autoConfigurations, const string[string] keys, ref State state, ref AotOutcome outcome)
+        scope const string[] autoConfigurations, scope const string[] services,
+        const string[string] keys, ref State state, ref AotOutcome outcome)
 {
     import std.file : readText;
     import std.path : buildPath;
@@ -684,6 +782,7 @@ private bool generate(const ref AotRequest request, scope const SourceModule[] s
     outcome.removed = plan.removed;
     if (plan.failed)
         return false;
+    plan.serviceModules = services.dup;
     return writeOutput(request.root, plan, sources, outcome);
 }
 

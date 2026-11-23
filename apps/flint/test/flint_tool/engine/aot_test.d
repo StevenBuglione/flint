@@ -812,6 +812,63 @@ unittest
     expect(stores.combined().find("scope variable `arguments` to global variable `kept`").length > 0).toBeTrue();
 }
 
+@("META-INF/services providers: the registry imports each listed provider's module once, as ServiceLoader finds them")
+unittest
+{
+    import std.algorithm.searching : canFind, countUntil;
+    import std.file : mkdirRecurse, readText, write;
+    import std.path : buildPath;
+    import flint_tool.engine.aot.driver : AotRequest, runAot;
+
+    const project = copyFixture("sample");
+    scope (exit)
+        remove(project);
+    // A package of the closure lists a provider found on the import paths; the project lists one of its own
+    // modules, again under a second service, with comments and blank lines.
+    const package_ = buildPath(project, "..", "driver-package");
+    mkdirRecurse(buildPath(package_, "META-INF", "services"));
+    write(buildPath(package_, "META-INF", "services", "flint.java.sql.Driver"),
+            "# The engine driver.\nflint.web.bind.annotation.RestController\n");
+    mkdirRecurse(buildPath(project, "META-INF", "services"));
+    write(buildPath(project, "META-INF", "services", "shop.Codec"),
+            "shop.data.Owner # the project's own\n\n# a comment line\nshop.data.OwnerStatus\n");
+    write(buildPath(project, "META-INF", "services", "shop.Format"), "shop.data.Owner\n");
+    AotRequest request;
+    request.root = project;
+    request.compiler = compiler();
+    request.importPaths = [
+        "-I" ~ buildPath(repositoryRoot(), "tests", "aot", "annotations"), "-I" ~ runtimeSource()
+    ];
+    request.flags = ["-preview=dip1000"];
+    request.environmentKey = "test";
+    request.packageDirectories = [package_];
+    auto outcome = runAot(request);
+    expect(outcome.ok).toBeTrue();
+    const registry = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot_registry.d"));
+    const platform = registry.countUntil("static import flint.web.bind.annotation;\n");
+    const own = registry.countUntil("static import shop.data;\n");
+    expect(platform >= 0 && own > platform).toBeTrue();
+    expect(countOccurrences(registry, "static import shop.data;")).toEqual(1);
+
+    // A provider whose module is nowhere in the closure: FLINT-E1117 at the listing's line.
+    write(buildPath(project, "META-INF", "services", "shop.Format"), "# first\nshop.missing.Formatter\n");
+    auto failed = runAot(request);
+    expect(failed.ok).toBeFalse();
+    expect(failed.diagnostics.length).toEqual(1);
+    expect(failed.diagnostics[0].code).toEqual("FLINT-E1117");
+    expect(failed.diagnostics[0].line).toEqual(2);
+    expect(failed.diagnostics[0].message.canFind("shop.missing.Formatter")).toBeTrue();
+    expect(failed.diagnostics[0].file.canFind("shop.Format")).toBeTrue();
+}
+
+/// How often `needle` occurs in `text`.
+private size_t countOccurrences(string text, string needle)
+{
+    import std.algorithm.searching : count;
+
+    return text.count(needle);
+}
+
 @("every generator diagnostic names its declaration")
 unittest
 {

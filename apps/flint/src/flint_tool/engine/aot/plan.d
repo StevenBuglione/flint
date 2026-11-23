@@ -532,6 +532,8 @@ struct Plan
     string[] unknownClasses;
     /// Definitions removed at build time, as "name: reason".
     string[] removed;
+    /// Modules declaring `META-INF/services` providers: the registry imports them (set by the driver).
+    string[] serviceModules;
     /// The runtime's canonical name (`typeNameOf`) of each template instance the model spells, by its spelling:
     /// generated code names those with a literal instead of instantiating them.
     string[string] canonicalNames;

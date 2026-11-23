@@ -321,6 +321,8 @@ private template isLocalType(alias M, string member, string moduleName = null)
         enum isLocalType = false;
 }
 
+private enum string quoted(string s) = quote(s);
+
 private string quote(string s)
 {
     enum hex = "0123456789abcdef";
@@ -478,11 +480,15 @@ private string joinModules(string a, string b)
     return a ~ "," ~ b;
 }
 
+/// Memoized pieces: each is a template keyed by every input its function reads (the type, the attribute tuple,
+/// the string), so the compiler evaluates it once per compile however many members repeat it.
+private enum string typeRefOf(T) = typeRef!T();
+
 private string typeRef(T)()
 {
     string r = "{\"name\":" ~ quote(typeName!T) ~ ",\"modules\":[" ~ typeModules!T ~ "]";
     static if (is(T == E[], E) && !is(T : const(char)[]))
-        r ~= ",\"element\":" ~ typeRef!E();
+        r ~= ",\"element\":" ~ typeRefOf!E;
     static if (is(T == X!Args, alias X, Args...))
     {
         r ~= ",\"template\":" ~ quote(templateName(__traits(fullyQualifiedName, X))) ~ ",\"arguments\":[";
@@ -491,7 +497,7 @@ private string typeRef(T)()
             static if (i)
                 r ~= ",";
             static if (is(A))
-                r ~= typeRef!A();
+                r ~= typeRefOf!A;
             else
                 r ~= "{\"name\":" ~ quote(A.stringof) ~ ",\"modules\":[]}";
         }
@@ -520,7 +526,7 @@ private string typeRef(T)()
 private string location(alias S)()
 {
     enum where = __traits(getLocation, S);
-    return ",\"file\":" ~ quote(where[0]) ~ ",\"line\":" ~ number(where[1]);
+    return ",\"file\":" ~ quoted!(where[0]) ~ ",\"line\":" ~ number(where[1]);
 }
 
 private string value(T)(T v)
@@ -586,6 +592,8 @@ private string annotationValue(T)(T v)
     return r ~ "}}";
 }
 
+private enum string attributesOf(attrs...) = attributes!attrs();
+
 private string attributes(attrs...)()
 {
     string r = "[";
@@ -608,36 +616,36 @@ private string attributes(attrs...)()
 private string describeAnnotationType(T)()
 {
     string r = "{\"name\":" ~ quote(typeName!T) ~ ",\"modules\":[" ~ typeModules!T ~ "],\"meta\":"
-        ~ attributes!(__traits(getAttributes, T))() ~ ",\"fields\":[";
+        ~ attributesOf!(__traits(getAttributes, T)) ~ ",\"fields\":[";
     static foreach (i, field; T.tupleof)
     {
         static if (i)
             r ~= ",";
-        r ~= "{\"name\":" ~ quote(__traits(identifier, T.tupleof[i])) ~ ",\"type\":" ~ typeRef!(typeof(field))()
+        r ~= "{\"name\":" ~ quote(__traits(identifier, T.tupleof[i])) ~ ",\"type\":" ~ typeRefOf!(typeof(field))
             ~ ",\"default\":" ~ value(T.init.tupleof[i]) ~ ",\"annotations\":"
-            ~ attributes!(__traits(getAttributes, T.tupleof[i]))() ~ "}";
+            ~ attributesOf!(__traits(getAttributes, T.tupleof[i])) ~ "}";
     }
     return r ~ "]}";
 }
 
-private string function_(T, string name, size_t index)()
+private string function_(T, string name, size_t index, bool inherited)()
 {
     alias F = __traits(getOverloads, T, name)[index];
     enum where = __traits(getLocation, F);
-    string r = "{\"name\":" ~ quote(name) ~ ",\"file\":" ~ quote(where[0]) ~ ",\"line\":" ~ number(where[1])
+    string r = "{\"name\":" ~ quote(name) ~ ",\"file\":" ~ quoted!(where[0]) ~ ",\"line\":" ~ number(where[1])
         ~ ",\"visibility\":" ~ quote(__traits(getVisibility, F))
         ~ ",\"static\":" ~ (__traits(isStaticFunction, F) ? "true" : "false")
         ~ ",\"final\":" ~ (__traits(isFinalFunction, F) ? "true" : "false")
         ~ ",\"abstract\":" ~ (__traits(isAbstractFunction, F) ? "true" : "false")
         ~ ",\"override\":" ~ (__traits(isOverrideFunction, F) ? "true" : "false")
-        ~ ",\"annotations\":" ~ attributes!(__traits(getAttributes, F))();
+        ~ ",\"annotations\":" ~ attributesOf!(__traits(getAttributes, F));
     static if (is(typeof(F) R == return))
     {
-        r ~= ",\"returns\":" ~ typeRef!R();
+        r ~= ",\"returns\":" ~ typeRefOf!R;
         static if (is(R == class) || is(R == interface))
-            r ~= ",\"returnSupertypes\":[" ~ supertypeNames!R() ~ "]";
+            r ~= ",\"returnSupertypes\":[" ~ supertypeNamesOf!R ~ "]";
     }
-    r ~= ",\"attributes\":" ~ words!(__traits(getFunctionAttributes, F))();
+    r ~= ",\"attributes\":" ~ wordsOf!(__traits(getFunctionAttributes, F));
     r ~= ",\"parameters\":[";
     static if (is(typeof(F) P == __parameters))
     {
@@ -650,13 +658,15 @@ private string function_(T, string name, size_t index)()
                 r ~= "{\"name\":" ~ quote(__traits(identifier, P[i .. i + 1]));
             else
                 r ~= "{\"name\":" ~ quote("_param_" ~ number(i));
-            r ~= ",\"type\":" ~ typeRef!(P[i])()
-                ~ ",\"storage\":" ~ words!(__traits(getParameterStorageClasses, F, i))() ~ ",\"annotations\":"
-                ~ attributes!(__traits(getAttributes, P[i .. i + 1]))() ~ "}";
+            r ~= ",\"type\":" ~ typeRefOf!(P[i])
+                ~ ",\"storage\":" ~ wordsOf!(__traits(getParameterStorageClasses, F, i)) ~ ",\"annotations\":"
+                ~ attributesOf!(__traits(getAttributes, P[i .. i + 1])) ~ "}";
         }
     }
-    return r ~ "]}";
+    return r ~ "],\"inherited\":" ~ (inherited ? "true" : "false") ~ "}";
 }
+
+private enum string wordsOf(names...) = words!names();
 
 private string words(names...)()
 {
@@ -670,6 +680,8 @@ private string words(names...)()
     return r ~ "]";
 }
 
+private enum string supertypeNamesOf(T) = supertypeNames!T();
+
 private string supertypeNames(T)()
 {
     string r;
@@ -680,13 +692,15 @@ private string supertypeNames(T)()
             static if (!is(B == Object))
             {
                 r ~= (r.length ? "," : "") ~ quote(typeName!B);
-                static if (supertypeNames!B().length)
-                    r ~= "," ~ supertypeNames!B();
+                static if (supertypeNamesOf!B.length)
+                    r ~= "," ~ supertypeNamesOf!B;
             }
         }
     }
     return r;
 }
+
+private enum string supertypesOf(T) = supertypes!T();
 
 private string supertypes(T)()
 {
@@ -697,9 +711,9 @@ private string supertypes(T)()
         {
             static if (i)
                 r ~= ",";
-            r ~= typeRef!B();
-            static if (supertypes!B().length)
-                r ~= "," ~ supertypes!B();
+            r ~= typeRefOf!B;
+            static if (supertypesOf!B.length)
+                r ~= "," ~ supertypesOf!B;
         }
     }
     return r;
@@ -707,17 +721,17 @@ private string supertypes(T)()
 
 private template isDerived(T, string member)
 {
-    enum isDerived = derivedHas!(member, __traits(derivedMembers, T));
+    enum isDerived = declares!T(member);
 }
 
-private template derivedHas(string member, names...)
+/// Whether T itself declares member: one unrolled comparison per member, not a recursive template, which made
+/// O(members^2) instances per type.
+private bool declares(T)(string member)
 {
-    static if (names.length == 0)
-        enum derivedHas = false;
-    else static if (names[0] == member)
-        enum derivedHas = true;
-    else
-        enum derivedHas = derivedHas!(member, names[1 .. $]);
+    static foreach (name; __traits(derivedMembers, T))
+        if (name == member)
+            return true;
+    return false;
 }
 
 private string describeType(T)()
@@ -733,12 +747,12 @@ private string describeType(T)()
         enum kind = "struct";
     r ~= "{\"name\":" ~ quote(__traits(identifier, T)) ~ ",\"fqn\":" ~ quote(typeName!T) ~ ",\"kind\":\"" ~ kind
         ~ "\"" ~ location!T() ~ ",\"visibility\":" ~ quote(__traits(getVisibility, T)) ~ ",\"annotations\":"
-        ~ attributes!(__traits(getAttributes, T))();
+        ~ attributesOf!(__traits(getAttributes, T));
     static if (is(T == class))
         r ~= ",\"abstract\":" ~ (__traits(isAbstractClass, T) ? "true" : "false") ~ ",\"final\":"
             ~ (__traits(isFinalClass, T) ? "true" : "false");
     static if (is(T == class) || is(T == interface))
-        r ~= ",\"supertypes\":[" ~ supertypes!T() ~ "]";
+        r ~= ",\"supertypes\":[" ~ supertypesOf!T ~ "]";
     static if (is(T == enum))
     {
         r ~= ",\"constants\":[";
@@ -758,9 +772,9 @@ private string describeType(T)()
             static if (i)
                 r ~= ",";
             r ~= "{\"name\":" ~ quote(__traits(identifier, T.tupleof[i])) ~ ",\"index\":" ~ number(i)
-                ~ ",\"type\":" ~ typeRef!(typeof(field))() ~ ",\"visibility\":"
+                ~ ",\"type\":" ~ typeRefOf!(typeof(field)) ~ ",\"visibility\":"
                 ~ quote(__traits(getVisibility, T.tupleof[i])) ~ ",\"annotations\":"
-                ~ attributes!(__traits(getAttributes, T.tupleof[i]))() ~ "}";
+                ~ attributesOf!(__traits(getAttributes, T.tupleof[i])) ~ "}";
         }
         r ~= "],\"methods\":[";
         bool firstMethod = true;
@@ -783,8 +797,7 @@ private string describeType(T)()
                         if (!firstMethod)
                             r ~= ",";
                         firstMethod = false;
-                        r ~= function_!(T, member, index)();
-                        r = r[0 .. $ - 1] ~ ",\"inherited\":" ~ (isDerived!(T, member) ? "false" : "true") ~ "}";
+                        r ~= function_!(T, member, index, !isDerived!(T, member))();
                     }
                 }
             }

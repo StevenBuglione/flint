@@ -683,4 +683,9 @@ immutable CodeInfo[] catalog = [
             ~ "cannot refer to the project's types. Usually a SpEL @bean reference in an auto-configuration names a "
             ~ "project bean; reference a platform type, or move the expression into the project.",
             "@Value(\"#{@settings.limit}\") in a project @Configuration instead of an auto-configuration"),
+    CodeInfo("FLINT-E1117", ExitCode.user, "a META-INF/services provider is outside the build closure",
+            "Flint AOT imports the module of every class a package lists in META-INF/services/<interface>, as "
+            ~ "java.util.ServiceLoader would load it, so a static link keeps the provider. The listed class's "
+            ~ "module must be in a package of the closure: fix the listing, or add the package to flint.toml.",
+            "META-INF/services/flint.java.sql.Driver listing flint.postgresql.Driver with flint:postgresql declared"),
 ];
