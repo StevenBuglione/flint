@@ -3,5 +3,3 @@ flint.boot.jdbc.autoconfigure.DataSourceTransactionManagerAutoConfiguration
 flint.boot.jdbc.autoconfigure.JdbcTemplateAutoConfiguration
 flint.boot.jdbc.autoconfigure.JdbcClientAutoConfiguration
 flint.boot.jdbc.autoconfigure.DataSourceInitializationAutoConfiguration
-flint.boot.jdbc.autoconfigure.PostgresJdbcDriverAutoConfiguration
-flint.boot.jdbc.autoconfigure.SqliteJdbcDriverAutoConfiguration
