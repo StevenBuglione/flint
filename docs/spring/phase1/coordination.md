@@ -76,7 +76,7 @@ When your assigned work is done, don't stop.
 | 8 | Framework module budgets and probes for every `framework.json` module | size-levers | `01d5802`..`2e021fd` (timings provisional until proof-harness's quiet-window run) |
 | 9 | Cutover decisions 1–7 in `tools/cutover.py` and the CLI | m7-flint-cli | |
 | 10 | spring-petclinic-rest (JDBC) Flint port passing its suite | | |
-| 11 | Classification sweeps: lower the coverage baselines by classifying excluded and adapted elements in the Phase 1 checklists, with the module owners' agreement | api-coverage | |
+| 11 | Classification sweeps: lower the coverage baselines by classifying excluded and adapted elements in the Phase 1 checklists, with the module owners' agreement | api-coverage (`local_7afcbe30`) | |
 | 12 | SpEL subset compiled to D for `@Value("#{…}")`, `@Cacheable(key=…)` and `@PreAuthorize` | | |
 | 13 | Port the upstream JUnit tests for spring-web and spring-webmvc classes already ported | size-levers | |
 | 14 | Spring-style REST benchmark app (Flint) for `load_bench`'s Spring workload | | |
