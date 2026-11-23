@@ -281,3 +281,9 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - `needsCodegen` ignores instantiations by preloaded modules the request does not import.
     - The regression test for the second rule links a served object on its own. Without the rule, that link fails with `undefined symbol: …twice!int`.
   - **Not covered yet:** Windows' worker pool does not read the prelude. macOS builds it (type-checked), but it has not been measured on pluto. Packages DUB splits into chunks compile with `-allinst`, so a large project package gains nothing until `-allinst` is supported.
+- 2026-11-23, coordinator (build benchmark, cold trials): cold trials keep wiping all of `.flint`, including `digests.log`. What a trial wipes is part of the workload, which only the owner can change. Platform and toolchain state moves into `FLINT_CACHE` instead, which cold trials already keep, as Go keeps a primed `GOCACHE`:
+  - Entries in `FLINT_CACHE` are content-addressed and are trusted by name, not re-hashed. A missing or altered entry is a miss or a loud failure, never used.
+  - Toolchain and `flint` binaries are keyed by the toolchain receipt's digest plus each file's stat identity (device, inode, size, mtime and ctime).
+  - Project files are always hashed on a cold build.
+  - The build benchmark's description records this.
+  - Context: gs-builds at `2018e5e5` (`65d17a19`) has the shared-object edit build at 0.758 of Go, primary 2.52 and secondary 1.06. m7-flint-cli's cold-path steps, all approved: the platform description in `FLINT_CACHE`, then no app-side `dub describe`; `bf7b7b97` already took the edit build's plan step to 0. flint-aot is asked to serve the app's AOT extraction from the platform prelude (about 65 ms on cold builds).
