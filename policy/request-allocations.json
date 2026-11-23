@@ -1,0 +1,155 @@
+{
+ "schema": "flint.request-allocations/1",
+ "description": "Per-request GC allocation budgets of the Phase 1 apps (owner decision 9a9aefa0, work-queue item 28). Each app's test (benchmarks/spring/flint/<app>/test/.../request_allocations_test.d) serves every request of its side-by-side suite (benchmarks/spring/suites/requests/<app>.json) on the real servlet path, on druntime's own collector behind flint.arena's allocation counter, and fails when a request's server-side allocations or bytes exceed its budget, naming the top allocating functions. A budget starts at the measured cost x1.25, rounded up, and only goes down: the structural gate refuses a raise (tools/request_allocation_ratchet.py). 'measured' is the cost recorded with the budget (FLINT_REQUEST_ALLOCATIONS=record prints current costs); lower both as cuts land. Counts are deterministic and equal on DMD and LDC.",
+ "apps": {
+  "gs-rest-service": {
+   "measured_at": "00074486",
+   "requests": {
+    "default name": {
+     "allocations": 32,
+     "bytes": 5080,
+     "measured": {
+      "allocations": 25,
+      "bytes": 4064
+     }
+    },
+    "name parameter": {
+     "allocations": 33,
+     "bytes": 5780,
+     "measured": {
+      "allocations": 26,
+      "bytes": 4624
+     }
+    },
+    "percent-encoded UTF-8 name": {
+     "allocations": 35,
+     "bytes": 5820,
+     "measured": {
+      "allocations": 28,
+      "bytes": 4656
+     }
+    },
+    "name with spaces and plus": {
+     "allocations": 37,
+     "bytes": 5880,
+     "measured": {
+      "allocations": 29,
+      "bytes": 4704
+     }
+    },
+    "empty name takes the default": {
+     "allocations": 33,
+     "bytes": 5780,
+     "measured": {
+      "allocations": 26,
+      "bytes": 4624
+     }
+    },
+    "repeated name parameter joins with a comma": {
+     "allocations": 39,
+     "bytes": 5960,
+     "measured": {
+      "allocations": 31,
+      "bytes": 4768
+     }
+    },
+    "JSON escaping": {
+     "allocations": 37,
+     "bytes": 5940,
+     "measured": {
+      "allocations": 29,
+      "bytes": 4752
+     }
+    },
+    "unknown parameter is ignored": {
+     "allocations": 33,
+     "bytes": 5760,
+     "measured": {
+      "allocations": 26,
+      "bytes": 4608
+     }
+    },
+    "Accept application/json": {
+     "allocations": 32,
+     "bytes": 5120,
+     "measured": {
+      "allocations": 25,
+      "bytes": 4096
+     }
+    },
+    "Accept application/xml is not acceptable": {
+     "allocations": 149,
+     "bytes": 16760,
+     "measured": {
+      "allocations": 119,
+      "bytes": 13408
+     }
+    },
+    "HEAD reaches the handler": {
+     "allocations": 34,
+     "bytes": 5280,
+     "measured": {
+      "allocations": 27,
+      "bytes": 4224
+     }
+    },
+    "OPTIONS lists the allowed methods": {
+     "allocations": 57,
+     "bytes": 7480,
+     "measured": {
+      "allocations": 45,
+      "bytes": 5984
+     }
+    },
+    "POST is not allowed": {
+     "allocations": 113,
+     "bytes": 13680,
+     "measured": {
+      "allocations": 90,
+      "bytes": 10944
+     }
+    },
+    "DELETE is not allowed": {
+     "allocations": 113,
+     "bytes": 13700,
+     "measured": {
+      "allocations": 90,
+      "bytes": 10960
+     }
+    },
+    "unknown path is a JSON 404": {
+     "allocations": 103,
+     "bytes": 13220,
+     "measured": {
+      "allocations": 82,
+      "bytes": 10576
+     }
+    },
+    "trailing slash does not match": {
+     "allocations": 103,
+     "bytes": 13240,
+     "measured": {
+      "allocations": 82,
+      "bytes": 10592
+     }
+    },
+    "unknown path for a browser is the Whitelabel page": {
+     "allocations": 144,
+     "bytes": 14860,
+     "measured": {
+      "allocations": 115,
+      "bytes": 11888
+     }
+    },
+    "counter after the errors": {
+     "allocations": 33,
+     "bytes": 5780,
+     "measured": {
+      "allocations": 26,
+      "bytes": 4624
+     }
+    }
+   }
+  }
+ }
+}

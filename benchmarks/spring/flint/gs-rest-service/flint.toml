@@ -15,3 +15,7 @@ executable = "gs-rest-service"
 "flint:boot-autoconfigure" = {}
 "flint:java" = {}
 "flint:web" = {}
+
+[test-dependencies]
+"flint:arena" = {}
+"flint:boot-web-server" = {}
