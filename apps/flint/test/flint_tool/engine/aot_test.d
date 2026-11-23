@@ -817,6 +817,26 @@ private int rankOf(string text, string name)
     return text[rank .. rank + text[rank .. $].indexOf(';')].to!int;
 }
 
+@("class-level mappings come from interfaces and handler methods from base classes (TYPE_HIERARCHY)")
+unittest
+{
+    import std.algorithm.searching : canFind;
+    import std.file : readText;
+    import std.path : buildPath;
+
+    const project = copyFixture("hierarchy");
+    scope (exit)
+        remove(project);
+    auto outcome = generate(project);
+    expect(outcome.extractionErrors).toEqual("");
+    foreach (ref item; outcome.diagnostics)
+        expect(item.code ~ " " ~ item.message).toEqual("");
+    expect(outcome.ok).toBeTrue();
+    const web = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot", "hier", "web.d"));
+    expect(web.canFind(`mapping.paths = ["/api/ping"];`)).toBeTrue();
+    expect(web.canFind(`mapping.paths = ["/api/version"];`)).toBeTrue();
+}
+
 @("a platform module's generated code may not import a project module (FLINT-E1116)")
 unittest
 {

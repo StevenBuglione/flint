@@ -734,10 +734,15 @@ private final class Analysis
         Annotation[] declared;
         foreach (ref annotation; decl.annotations)
             declared ~= clone(annotation);
-        foreach (ref supertype; decl.supertypes)
+        // Spring's aggregate order: the class, its interfaces, then its superclasses (at equal distance the
+        // earlier one wins).
+        foreach (interfaces; [true, false])
         {
-            if (const base = model.type(supertype.name))
+            foreach (ref supertype; decl.supertypes)
             {
+                const base = model.type(supertype.name);
+                if (base is null || (base.kind == "interface") != interfaces)
+                    continue;
                 foreach (ref annotation; base.annotations)
                     declared ~= clone(annotation);
             }
@@ -2246,22 +2251,26 @@ private final class Analysis
         const bean = beanNameOf(decl);
         if (bean.length == 0)
             return;
-        const isController = merged.has(controller);
-        const isAdvice = merged.has(controllerAdvice);
+        // Spring MVC finds the class-level @Controller, @RequestMapping, @ResponseBody, @CrossOrigin and
+        // @ControllerAdvice through the type hierarchy (AnnotatedElementUtils, TYPE_HIERARCHY).
+        const hierarchy = typeHierarchyMerged(decl);
+        const isController = hierarchy.has(controller);
+        const isAdvice = hierarchy.has(controllerAdvice);
         if (!isController && !isAdvice)
             return;
         auto target = &moduleFor(decl.module_);
         // The class's descriptor may already exist: a proxied controller's advised methods are in it.
         addDescriptor(*target, descriptorShell(decl, merged));
         auto descriptor = descriptorIn(*target, decl.fqn);
+        // Handler methods include those inherited from a base class, as MethodIntrospector finds them.
         foreach (ref method; decl.methods)
         {
-            if (method.inherited || method.name == "__ctor" || method.static_)
+            if (method.name == "__ctor" || method.static_ || (method.inherited && method.abstract_))
                 continue;
             auto methodMerged = hierarchyMerged(decl, method);
             if (isController && methodMerged.has(requestMapping))
             {
-                auto handler = handlerOf(decl, bean, method, methodMerged, merged);
+                auto handler = handlerOf(decl, bean, method, methodMerged, hierarchy);
                 handler.index = methodIndex(*descriptor, method);
                 if (handler.index == descriptor.methods.length)
                     descriptor.methods ~= methodPlan(method, methodMerged, MergedSet.init);
@@ -2270,7 +2279,7 @@ private final class Analysis
                 target.handlers ~= handler;
             }
             else if (methodMerged.has(exceptionHandler))
-                target.exceptionHandlers ~= exceptionHandlerOf(decl, bean, method, methodMerged, merged, isAdvice);
+                target.exceptionHandlers ~= exceptionHandlerOf(decl, bean, method, methodMerged, hierarchy, isAdvice);
         }
         foreach (ref item; target.beans)
         {
