@@ -398,7 +398,12 @@ def api_gate(repos,flint,release=False):
     report,failures={},[]
     for repo in repos:
         checkout=WORKSPACE.checkout(repo)
-        dirs=[str(WORKSPACE.package_dir(n)) for n in sorted(package_repos(ROOT)) if package_repos(ROOT)[n][0]==repo and WORKSPACE.package_dir(n).is_dir()]
+        dirs=[WORKSPACE.package_dir(n) for n in sorted(package_repos(ROOT)) if package_repos(ROOT)[n][0]==repo and WORKSPACE.package_dir(n).is_dir()]
+        # The repo's own top-level tree (framework/, boot/) holds packages policy may not list yet; check them too.
+        tree=checkout/repo
+        if tree.is_dir() and repo!='flint':
+            dirs=[tree]+[d for d in dirs if tree not in d.resolve().parents and d.resolve()!=tree.resolve()]
+        dirs=[str(d) for d in dirs]
         entry={}
         if dirs:
             headers=run_flint_json(flint,['api','headers',*dirs],home)
