@@ -234,17 +234,7 @@ private void checkImport(const ref Home home, const ref Manifest manifest, const
                     "import a module a core package owns"), scan.file, line, 0, scan.text));
             return;
         }
-        // Until the pre-port Boot retires, flint.boot has two owners (boot-core and the legacy boot library, as
-        // tools/gates.py boot_owners): an import is declared through either.
-        foreach (ref library; home.bootLibraries)
-        {
-            if ((imported == library.module_ || startsWithModule(imported, library.module_))
-                    && declared(resolution, "flint:" ~ library.name, test))
-            {
-                owner = &library;
-                break;
-            }
-        }
+        owner = declaredBootOwner(home, resolution, imported, test, owner);
         const name = "flint:" ~ owner.name;
         if (!declared(resolution, name, test))
             report.add(at(diagnostic("FLINT-E0507", Severity.error,
@@ -343,6 +333,21 @@ private bool throughStarter(const ref Resolution resolution, string direct, stri
         }
     }
     return false;
+}
+
+/// Until the pre-port Boot retires, flint.boot has two owners (boot-core and the legacy boot library, as
+/// tools/gates.py boot_owners): an import is declared through either. Returns the declared one, else `owner`.
+private const(imported!"flint_tool.home.policy".CorePackage)* declaredBootOwner(const ref Home home,
+        const ref Resolution resolution, string imported, bool test,
+        const(imported!"flint_tool.home.policy".CorePackage)* owner)
+{
+    foreach (ref library; home.bootLibraries)
+    {
+        if ((imported == library.module_ || startsWithModule(imported, library.module_))
+                && declared(resolution, "flint:" ~ library.name, test))
+            return &library;
+    }
+    return owner;
 }
 
 private bool declared(const ref Resolution resolution, string name, bool test)
