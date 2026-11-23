@@ -2,7 +2,7 @@
   "schema": "flint.measure-queue/1",
   "id": "gs-builds",
   "created": "2026-11-23",
-  "status": "pending",
+  "status": "done",
   "requested_by": "m7-flint-cli (local_b3b0e1d4), after the platform cache (9655843b)",
   "summary": "gs-rest-service builds against both ADR-030 headlines: platform cache vs std-primed GOCACHE, and --no-platform-cache vs go build -a",
   "why": "The platform cache and --no-platform-cache exist now; this re-measures the gap the 09:00Z smoke showed (9.0 s cold vs Go 0.16 s). Measured in a worktree at dee89bda819f with the release-built flint and DMD linking with mold (ADR-021); the cache is primed by one recorded, unscored build. About 20 minutes, so it fits a short window. Re-pinned for m7-flint-cli's 19390bd1 (Flint AOT's platform modules as a cached library) and cc2f98e2 (stat-keyed digests). Re-pinned for m7-flint-cli's ff31b6d2: the generated AOT library (Boot's auto-configuration modules, including the 0.45 s Jackson module) is cached in the platform cache and linked on a cached cold build; the receipt lists it as flint-aot-library. The certified 12:30Z run stays in 'attempts'. Re-pinned for 592d4b37: the dev build links the platform cache as a shared object (primary edit-build headline) and --static gives the fully static secondary (owner decision 2).",
@@ -402,6 +402,181 @@
         ],
         "outputs": {
           "builds.json": "b8fe69e150547628657d31c584a9896f20650a9094a9172dc578af91c4edd721"
+        }
+      }
+    },
+    {
+      "time": "2026-11-23T16:12:01Z",
+      "outcome": "measured",
+      "evidence": true,
+      "host": "venus",
+      "builds": {
+        "tree": {
+          "commit": "dee89bda819f6ad8629a882ed2418a1765a14cdb",
+          "worktree": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/dee89bda819f"
+        }
+      },
+      "window_before": {
+        "time": "2026-11-23T16:09:41Z",
+        "load_average": [
+          6.037109375,
+          4.87109375,
+          3.53759765625
+        ],
+        "running_tasks": 0,
+        "instant": true,
+        "busy_processes": [],
+        "idle_build_processes": 1368,
+        "quiet": true,
+        "problems": []
+      },
+      "window_during": [
+        {
+          "time": "2026-11-23T16:09:52Z",
+          "load_average": [
+            5.576171875,
+            4.8095703125,
+            3.5322265625
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-23T16:10:03Z",
+          "load_average": [
+            6.22119140625,
+            4.9658203125,
+            3.5966796875
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-23T16:10:14Z",
+          "load_average": [
+            7.5546875,
+            5.30908203125,
+            3.7236328125
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-23T16:10:25Z",
+          "load_average": [
+            7.21630859375,
+            5.314453125,
+            3.74267578125
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-23T16:10:37Z",
+          "load_average": [
+            6.146484375,
+            5.16845703125,
+            3.71923828125
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-23T16:10:48Z",
+          "load_average": [
+            5.5146484375,
+            5.06396484375,
+            3.70068359375
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-23T16:10:59Z",
+          "load_average": [
+            4.9736328125,
+            4.96240234375,
+            3.68212890625
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-23T16:11:10Z",
+          "load_average": [
+            4.51611328125,
+            4.8642578125,
+            3.66357421875
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-23T16:11:21Z",
+          "load_average": [
+            3.8779296875,
+            4.70654296875,
+            3.63037109375
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-23T16:11:32Z",
+          "load_average": [
+            3.66259765625,
+            4.6328125,
+            3.6181640625
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-23T16:11:43Z",
+          "load_average": [
+            3.32666015625,
+            4.52880859375,
+            3.59521484375
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-23T16:11:54Z",
+          "load_average": [
+            3.19580078125,
+            4.46142578125,
+            3.5830078125
+          ],
+          "busy_processes": []
+        }
+      ],
+      "foreign_activity_during": 0,
+      "window_after": {
+        "time": "2026-11-23T16:12:01Z",
+        "load_average": [
+          3.0048828125,
+          4.3798828125,
+          3.5654296875
+        ],
+        "running_tasks": 0,
+        "instant": false,
+        "busy_processes": [],
+        "idle_build_processes": 1368,
+        "quiet": true,
+        "problems": []
+      },
+      "results_directory": ".flint/measure/results/gs-builds/20261123T160701Z",
+      "summary": {
+        "steps": [
+          {
+            "command": [
+              "/usr/bin/python3",
+              "tools/measure_builds.py",
+              "--spring",
+              "--spring-app",
+              "gs-rest-service",
+              "--no-context",
+              "--output",
+              "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/gs-builds/20261123T160701Z/builds.json"
+            ],
+            "cwd": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/dee89bda819f",
+            "exit_code": 1,
+            "log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/gs-builds/20261123T160701Z/step-0.log",
+            "measured": true
+          }
+        ],
+        "outputs": {
+          "builds.json": "0ef9e9f01ab8dc34aee6b2e22b91c118484399167418d85b8a338b87bebe7013"
         }
       }
     }

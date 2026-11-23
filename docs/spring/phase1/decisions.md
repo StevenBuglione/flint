@@ -122,6 +122,14 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - Oz size: **0.594, which passes**, 3,943,248 bytes against 6,634,456, both stripped.
 
     The fully static incremental build waits for `flint build --static` (owner decision 2). Evidence: `benchmarks/spring/evidence/gs-builds/20261123T150624Z/`.
+  - **Update, 16:07–16:12Z (certified, `gs-builds` at `dee89bda`, no foreign build in 12 samples):** this run has shared-object dev linking (592d4b37) and the static secondary. Median ratios (99% interval):
+    - primary: 3.46 (3.40–3.57), 0.547 s against 0.158 s;
+    - secondary: 1.11 (1.10–1.12);
+    - edit build, dev profile as built (shared objects): 1.53 (1.46–1.60), 0.240 s against 0.158 s;
+    - edit build, fully static: 2.97 (2.86–3.04), 0.468 s;
+    - Oz: 0.609, which passes.
+
+    Evidence: `benchmarks/spring/evidence/gs-builds/20261123T160701Z/`.
   - **Not yet certified:** the runtime metrics. A smoke run gave Flint about 0.26–0.4x Go's throughput. `phase1-guides` measures them in the next window.
 
 - 2026-11-23, coordinator: the edit-build floor. After m7-flint-cli's cut (`19390bd1`: 0.98 s → 0.69 s), gs-rest-service's edit build is link 0.2 s, compile 0.13 s and flint's own overhead about 0.3 s. Even with every planned lever (the compile-server prelude, flint overhead cuts), m7 estimates a floor near 0.35 s against Go's 0.154 s. Closing it likely needs dev builds that link the platform cache as shared objects, so an edit relinks only the app; release and size builds stay static. That changes what the edit-build gate compares (a dynamically linked dev binary against Go's static one), so it's the owner's call. m7 is prototyping and measuring it, plus split debug info (which needs no decision), and won't make shared-object dev builds the default without a yes.
