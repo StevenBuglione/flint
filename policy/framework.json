@@ -377,6 +377,38 @@
     "compiler_peak_rss_bytes"
    ]
   },
+  "data-commons": {
+   "directory": "framework/data-commons",
+   "module": "flint.data.domain",
+   "repo": "data-commons",
+   "licence": "Apache-2.0",
+   "upstream": "spring-data-commons@4.2.0",
+   "dependencies": [
+    "engine-aot",
+    "java"
+   ],
+   "bench": {
+    "fixture": "framework/data-commons/bench",
+    "baseline": "framework/data-commons/bench/baseline",
+    "edit_source": "framework/data-commons/source/flint/data/domain/package.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 745472,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 5750
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
   "beans": {
    "directory": "framework/beans",
    "module": "flint.beans",

@@ -131,6 +131,10 @@
       "repo": "framework",
       "version": "monorepo"
     },
+    "flint:data-commons": {
+      "repo": "data-commons",
+      "version": "monorepo"
+    },
     "flint:engine-actuator": {
       "repo": "framework",
       "version": "monorepo"

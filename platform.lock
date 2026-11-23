@@ -12,8 +12,7 @@
     },
     "data-commons": {
       "github": "flint-projects/flint-data-commons",
-      "source": "github",
-      "commit": "dd0cecaebd252502ba97504fbafa3f48b608c943"
+      "source": "monorepo"
     },
     "security": {
       "github": "flint-projects/flint-security",
