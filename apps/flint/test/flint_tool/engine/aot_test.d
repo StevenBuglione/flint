@@ -293,6 +293,18 @@ private string repositoryRoot()
     assert(false, "tests/aot/sample not found above the working directory");
 }
 
+/// The source directory of flint:engine-aot, from policy/framework.json, so the test follows the package when it
+/// moves (the repo split).
+private string runtimeSource()
+{
+    import std.file : readText;
+    import std.json : parseJSON;
+    import std.path : buildPath;
+
+    const policy = parseJSON(readText(buildPath(repositoryRoot(), "policy", "framework.json")));
+    return buildPath(repositoryRoot(), policy["modules"]["engine-aot"]["directory"].str, "source");
+}
+
 /// The DMD that runs the extraction compile: FLINT_AOT_TEST_DMD, else `dmd` on PATH. Never skipped.
 private string compiler()
 {
@@ -341,8 +353,7 @@ private imported!"flint_tool.engine.aot.driver".AotOutcome generate(string proje
     request.root = project;
     request.compiler = compiler();
     request.importPaths = [
-        "-I" ~ buildPath(repositoryRoot(), "tests", "aot", "annotations"),
-        "-I" ~ buildPath(repositoryRoot(), "framework", "engine-aot", "source")
+        "-I" ~ buildPath(repositoryRoot(), "tests", "aot", "annotations"), "-I" ~ runtimeSource()
     ];
     request.flags = ["-preview=dip1000"];
     request.environmentKey = "test";
@@ -420,10 +431,9 @@ unittest
     launch.directory = project;
     const built = capture([
         compiler(), "-preview=dip1000", "-I" ~ buildPath(root, "tests", "aot", "annotations"),
-        "-I" ~ buildPath(root, "framework", "engine-aot", "source"),
-        "-I" ~ buildPath(root, "tests", "aot", "support"), "-I" ~ buildPath(project, "src"),
-        "-I" ~ buildPath(project, ".flint", "generated", "aot"), "-i", "-of=" ~ binary,
-        buildPath(project, "main.d")
+        "-I" ~ runtimeSource(), "-I" ~ buildPath(root, "tests", "aot", "support"),
+        "-I" ~ buildPath(project, "src"), "-I" ~ buildPath(project, ".flint", "generated", "aot"),
+        "-i", "-of=" ~ binary, buildPath(project, "main.d")
     ] ~ sources, launch);
     expect(built.combined()).toEqual("");
     expect(built.ok).toBeTrue();
