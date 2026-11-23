@@ -83,7 +83,7 @@
       "flint.engine.mq.sys",
       "flint.engine.mq.ffi"
     ],
-    "engine-storage": [],
+    "engine-storage": ["flint.engine.storage.sys"],
     "engine-mail": ["flint.engine.mail.ffi"],
     "engine-ai": [],
     "engine-mcp": ["flint.engine.mcp.sys.storage", "flint.engine.mcp.sys.stdio"],

@@ -790,6 +790,23 @@ def configure_dmd_windows(bin_dir, destination):
                          'path': str(Path(linker['bin']) / 'lld-link.exe')}}
 
 
+LDC_WINDOWS_CONFIG = """"default":
+{
+    switches ~= [
+        "-mscrtlib=msvcrt",
+    ];
+};
+"""
+
+
+def configure_ldc_windows(bin_dir):
+    """LDC links the C runtime DLL on Windows, as DMD does and as the native providers are built (/MD, ADR-026).
+    LDC 1.43 reads etc/ldc2.conf as a directory of fragments; Flint adds its own. Idempotent."""
+    fragment = bin_dir.parent / 'etc' / 'ldc2.conf' / '60-flint-windows.conf'
+    fragment.write_text(LDC_WINDOWS_CONFIG)
+    return {'crt': 'msvcrt', 'config': str(fragment), 'sha256': hashlib.sha256(LDC_WINDOWS_CONFIG.encode()).hexdigest()}
+
+
 SANITIZER_RUNTIME = 'ldc-1.43.0-sanitizer-runtime'
 SANITIZER_RUNTIME_RECEIPT = 'flint-sanitizer-runtime.json'
 # Upstream runtime CMake options. RT_SUPPORT_SANITIZERS adds -d-version=SupportSanitizers:
@@ -972,6 +989,8 @@ def main():
         quote_dmd_conf(binary_path)  # The Windows release's sc.ini already quotes its %@P% paths.
     elif a.compiler=='dmd':
         receipt['linker'] = configure_dmd_windows(binary_path, a.destination)
+    if a.compiler=='ldc' and osname=='Windows' and not a.musl:
+        receipt['windows'] = configure_ldc_windows(binary_path)
     if linker:
         configure_dmd_linker(binary_path, linker)
         receipt['linker'] = linker

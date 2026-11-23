@@ -93,7 +93,7 @@ CMAKE = {
 ALIASES = {
  'openssl': [('ssl','libssl'),('crypto','libcrypto')], 'libsodium':[('sodium','libsodium')],
  'llhttp':[('llhttp','llhttp_static')], 'nghttp2':[('nghttp2','nghttp2_static')], 'curl':[('curl','libcurl','libcurl_a')],
- 'librdkafka':[('rdkafka','rdkafka_static')], 'zstd':[('zstd','zstd_static')], 'zlib':[('z','zlibstatic','zlib')],
+ 'librdkafka':[('rdkafka','rdkafka_static')], 'zstd':[('zstd','zstd_static')], 'zlib':[('z','zlibstatic','zlib','zs')],
  'brotli':[('brotlienc','brotlienc-static'),('brotlidec','brotlidec-static'),('brotlicommon','brotlicommon-static')],
  'hiredis':[('hiredis_ssl','hiredis_ssl_static'),('hiredis','hiredis_static')], 'liburing':[('uring-ffi',),('uring',)],
  'utf8proc':[('utf8proc','utf8proc_static')], 'libyaml':[('yaml','yaml_static')], 'protobuf-c':[('protobuf-c',)],
@@ -127,7 +127,17 @@ class Builder:
         self.env['PKG_CONFIG_PATH']=os.pathsep.join(str(self.prefix/x) for x in ['lib/pkgconfig','lib64/pkgconfig','share/pkgconfig'])
         self.env['PKG_CONFIG_LIBDIR']=self.env['PKG_CONFIG_PATH']
         self.env['PATH']=str(self.prefix/'bin')+os.pathsep+self.env.get('PATH','')
-        self.env['CFLAGS']=self.env.get('CFLAGS','')+(' /MD' if args.target.startswith('windows') else ' -O2 -fPIC')
+        # MSVC hardening for every provider (ADR-026): Control Flow Guard metadata, buffer security checks and the SDL
+        # checks. /O2 is explicit because OpenSSL's Configure replaces its default flags with CFLAGS from the environment.
+        # /sdl also turns some vendor warnings into errors. In third-party code these stay off: C4703 (a possibly
+        # uninitialized pointer, a false positive in libpq's fe-connect.c), C4996 (CRT and Winsock functions Microsoft
+        # deprecates in favour of its _s variants, used by librdkafka) and C4700 (an uninitialized local: librdkafka's
+        # rd_kafka_cgrp_rejoin passes its va_list to the KIP-848 consumer path before va_start, a real upstream bug on a
+        # path Flint never takes, since it keeps the default classic group protocol) and C4146 (unary minus on an
+        # unsigned value: protobuf-c's zigzag encoding, well defined in C). Flint's own C keeps every error.
+        windows_flags=' /MD /O2 /guard:cf /GS /sdl /wd4703 /wd4996 /wd4700 /wd4146'
+        self.env['CFLAGS']=self.env.get('CFLAGS','')+(windows_flags if args.target.startswith('windows') else ' -O2 -fPIC')
+        if args.target.startswith('windows'):self.env['CXXFLAGS']=self.env.get('CXXFLAGS','')+windows_flags
         self.env['CPPFLAGS']=self.env.get('CPPFLAGS','')+(' /I' if args.target.startswith('windows') else ' -I')+str(self.prefix/'include')
         self.env['LDFLAGS']=self.env.get('LDFLAGS','')+(' /LIBPATH:' if args.target.startswith('windows') else ' -L')+str(self.prefix/'lib')
         if args.cc: self.env['CC']=args.cc
@@ -196,14 +206,17 @@ class Builder:
 
     def cmake(self,name,src,build,relative,options,install=True,target=None):
         options=list(options)
-        # macOS gets the Linux protocol set (ADR-024); its curl also needs SystemConfiguration (dub_blocks).
-        if name == 'curl' and (self.a.target.startswith('linux') or self.a.target == 'macos-arm64'):
+        # macOS (ADR-024) and Windows (ADR-026) get the Linux protocol set; macOS's curl also needs SystemConfiguration
+        # (dub_blocks).
+        if name == 'curl' and (self.a.target.startswith('linux') or self.a.target in ('macos-arm64', 'windows-x86_64')):
             options.remove('HTTP_ONLY=ON')  # The pinned CMake removed this option.
             smtp = self.a.profile in ('mail', 'ci', 'all')
             options += ['CURL_DISABLE_SMTP=' + ('OFF' if smtp else 'ON'), 'CURL_USE_LIBSSH=OFF']
             disabled = ('DICT', 'FILE', 'FTP', 'GOPHER', 'IMAP', 'LDAP', 'LDAPS', 'MQTT',
                         'POP3', 'RTSP', 'TELNET', 'TFTP', 'IPFS')
             options += ['CURL_DISABLE_' + protocol + '=ON' for protocol in disabled]
+            # Windows builds LDAP through wldap32 unless told otherwise; the closure speaks HTTP and SMTP only.
+            if self.a.target.startswith('windows'): options += ['USE_WIN32_LDAP=OFF']
         if name=='protobuf-c': options += ['BUILD_PROTOC='+('ON' if self.a.with_codegen else 'OFF')]
         if name=='sdl3' and self.a.target.startswith('linux'): options += ['SDL_WAYLAND=OFF','SDL_X11=ON','SDL_X11_SHARED=ON','SDL_DEPS_SHARED=ON','SDL_KMSDRM=OFF','SDL_ALSA=OFF','SDL_PULSEAUDIO=OFF','SDL_PIPEWIRE=OFF','SDL_JACK=OFF','SDL_SNDIO=OFF','SDL_RPI=OFF','SDL_ROCKCHIP=OFF']
         argv=['cmake','-S',src/relative,'-B',build,'-G','Ninja','-DCMAKE_BUILD_TYPE=Release',
@@ -211,6 +224,10 @@ class Builder:
               '-DCMAKE_POSITION_INDEPENDENT_CODE=ON','-DCMAKE_FIND_USE_PACKAGE_REGISTRY=OFF',
               '-DOPENSSL_ROOT_DIR='+str(self.prefix),'-DOPENSSL_USE_STATIC_LIBS=TRUE']
         if self.a.target.startswith('windows'): argv += ['-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL']
+        if self.a.target.startswith('windows') and name != 'zlib':
+            # zlib's MSVC build installs libzs.lib, a name CMake's FindZLIB does not search (ADR-026).
+            zlib=[p for p in (self.prefix/'lib').glob('*.lib') if p.stem in ('libzs','zs','zlibstatic','zlib')]
+            if zlib: argv += ['-DZLIB_LIBRARY='+sorted(zlib)[0].as_posix(),'-DZLIB_INCLUDE_DIR='+(self.prefix/'include').as_posix()]
         if self.a.target=='macos-arm64': argv += ['-DCMAKE_OSX_ARCHITECTURES=arm64','-DCMAKE_OSX_DEPLOYMENT_TARGET=13.0']
         if self.a.cc: argv += ['-DCMAKE_C_COMPILER='+self.a.cc]
         if self.a.cxx: argv += ['-DCMAKE_CXX_COMPILER='+self.a.cxx]
@@ -319,7 +336,11 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
             reconfigure=['--reconfigure'] if (build/'meson-private/coredata.dat').is_file() and self.a.phase=='build' else []
             include_flag=('/I' if self.a.target.startswith('windows') else '-I')+str(self.prefix/'include')
             frontend_flags=shlex.split(self.env.get('CFLAGS',''))+shlex.split(os.environ.get('CPPFLAGS',''))+[include_flag]
-            self.command(['meson','setup',*reconfigure,build,src,'--prefix='+str(self.prefix),'--buildtype=release','-Dssl=openssl','-Dzlib=enabled','-Dc_args='+repr(frontend_flags),*['-D'+x+'=disabled' for x in options]],ROOT)
+            # Static libcrypto on Windows needs Winsock and the Crypto API in every link, Meson's checks included.
+            # libpq itself links no zlib (the server tools do); Windows has no pkg-config for Meson to find it with.
+            zlib_feature='disabled' if self.a.target.startswith('windows') else 'enabled'
+            link_args=['-Dc_link_args='+repr(['ws2_32.lib','crypt32.lib','advapi32.lib','user32.lib'])] if self.a.target.startswith('windows') else []
+            self.command(['meson','setup',*reconfigure,build,src,'--prefix='+str(self.prefix),'--buildtype=release','-Dssl=openssl','-Dzlib='+zlib_feature,'-Dc_args='+repr(frontend_flags),*link_args,*['-D'+x+'=disabled' for x in options]],ROOT)
             # PostgreSQL's libpq Makefile links these static support variants for the public encoding ABI.
             client_targets=('libpq','libpgcommon_shlib','libpgport_shlib')
             self.command(['meson','compile','-C',build,'-j',str(self.a.jobs),*[target+':static_library' for target in client_targets]],ROOT)
@@ -614,7 +635,8 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
                 # DUB passes lflags to the linker. -pthread is a compiler-driver option.
                 flags=['-lpthread' if flag=='-pthread' else flag for flag in flags]
                 flags+=['-lpthread','-ldl','-lm']
-            elif self.a.target.startswith('windows'):flags+=['ws2_32.lib','advapi32.lib','crypt32.lib','bcrypt.lib','userenv.lib','ntdll.lib','shell32.lib','ole32.lib']
+            # secur32: libpq's SSPI; xmllite: libarchive's XAR writer; iphlpapi: curl's interface lookups (ADR-026).
+            elif self.a.target.startswith('windows'):flags+=['ws2_32.lib','advapi32.lib','crypt32.lib','bcrypt.lib','userenv.lib','ntdll.lib','shell32.lib','ole32.lib','secur32.lib','xmllite.lib','iphlpapi.lib']
             else:
                 flags+=['-Wl,-framework,Security','-Wl,-framework,CoreFoundation']
                 if 'curl' in closure:flags+=['-Wl,-framework,SystemConfiguration']  # proxy settings (curl macos.c)

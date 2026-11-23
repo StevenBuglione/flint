@@ -256,6 +256,72 @@ Tests that observed POSIX-only state have Windows suites with the same assertion
 | `kill(getpid(), SIGINT)` | a child that detaches, allocates its own console and raises `CTRL_C_EVENT` there, so no other process sees it |
 | symbolic links | directory junctions, which need no privilege |
 
+### 3a. Native providers and Flint's C under MSVC
+
+`tools/native_build.py --profile ci --target windows-x86_64` builds all 17 providers of the `ci` closure with MSVC 14.44 and the Windows 11 SDK, against the C runtime DLL (`/MD`).
+
+**Build tools.** Linux and macOS use the host's build tools; nothing pins them. On the VM:
+
+| Tool | Version | Source |
+| --- | --- | --- |
+| Strawberry Perl, for OpenSSL's Configure | 5.42.3.1 portable | GitHub release asset; its published digest `6a081a81…10690` matched |
+| NASM | 3.02 | nasm.us; no checksum is published, and the zip's SHA-256 is `161d0bfa…aee7` |
+| Meson, for libpq | 1.12.1 | PyPI, as `ci.py windows-tools` installs it |
+| winflexbison | 2.5.25 | the pinned asset `ci.py windows-tools` installs |
+
+Only `perl\bin` from Strawberry Perl is put on the path, because its bundled MinGW toolchain would confuse CMake.
+
+**Hardening.** Every provider builds with `/guard:cf /GS /sdl` and `/O2`. `/O2` is explicit because OpenSSL's Configure replaces its defaults with `CFLAGS` from the environment. `/sdl` turns some warnings into errors, and four stay warnings in third-party code:
+
+- **C4703**, a possibly uninitialized pointer: a false positive in libpq's `fe-connect.c`.
+- **C4996**, CRT and Winsock functions Microsoft deprecates in favour of its `_s` variants: used throughout librdkafka.
+- **C4700**, an uninitialized local. This one is a real upstream bug: librdkafka's `rd_kafka_cgrp_rejoin` passes its `va_list` to the KIP-848 consumer path before `va_start`. Flint never takes that path, because it keeps the default classic group protocol. It should be reported upstream.
+- **C4146**, unary minus on an unsigned value: protobuf-c's zigzag encoding, which is well defined.
+
+**Flint's own C.** The shims, `flint_ffi_base` in `native/ffi` and `flint_ffi_framework` from the engines' `native/ffi`, build with `/W4 /WX /guard:cf /GS /sdl`. They keep every `/sdl` error. The only exception is C4200, which flags standard C99 flexible array members. Both ctest suites pass.
+
+**Provider recipe fixes for Windows:**
+
+- zlib installs `libzs.lib`, a name CMake's FindZLIB does not search. Dependents get `ZLIB_LIBRARY` explicitly, with forward slashes: a backslash path broke curl's generated CMake package.
+- curl gets the Linux protocol set (HTTP and SMTP only), so it no longer builds LDAP through wldap32.
+- libpq's Meson checks link static libcrypto with `ws2_32`, `crypt32`, `advapi32` and `user32`. libpq's zlib feature is off on Windows: the client library links no zlib, and Windows has no pkg-config for Meson.
+- The emitted link set adds `secur32` (libpq's SSPI), `xmllite` (libarchive's XAR writer) and `iphlpapi` (curl).
+
+**The C runtime.** Every Windows build uses the C runtime DLL, matching the `/MD` providers:
+
+- DMD gets `-mscrtlib=msvcrt -L/DEFAULTLIB:ucrt.lib` from `sc.ini`;
+- LDC gets `-mscrtlib=msvcrt` from a Flint fragment, `etc/ldc2.conf/60-flint-windows.conf`, which `install_toolchains.py --compiler ldc` writes. LDC 1.43 reads `ldc2.conf` as a directory of fragments.
+
+Programs therefore need `vcruntime140.dll`, which the Visual Studio Build Tools install.
+
+**The shims on Windows.** Thirteen shims were Linux and macOS only. They now build on Windows over `native/framework/include/flint_port.h`, a header of Flint's own that maps the POSIX subset they use onto Win32:
+
+- pthread `once`, mutexes (SRWLOCK), condition variables with a clock-aware timed wait, and threads (`_beginthreadex`);
+- `clock_gettime`, whose `CLOCK_MONOTONIC` reads `QueryPerformanceCounter` as D's MonoTime does;
+- `nanosleep`, `sysconf(_SC_NPROCESSORS_ONLN)`, `poll` as `WSAPoll`, and the `strcasecmp`, `strdup` and `access` names.
+
+Other per-shim changes:
+
+- The eventfd wake-ups (`flint_wake.h`) are a connected, nonblocking loopback TCP pair, whose read end the reactor watches.
+- The NATS socket uses Winsock: FIONBIO, `WSAGetLastError` and `closesocket`.
+- SQLite's local-file-system check accepts a fixed or RAM disk formatted NTFS or ReFS.
+- libarchive reads and writes header names as UTF-8 (`hdrcharset=UTF-8`), which POSIX gets from its private `C.UTF-8` locale.
+- The desktop queue finds the process's first thread from a thread snapshot (Windows names no main thread).
+- `hiredis` keeps no SIGPIPE mask, because Winsock raises none.
+
+**Native watches.** The reactor's native descriptor watches now exist on Windows, for sockets. The owner polls the watched sockets with `WSAPoll` on every loop pass, and caps its completion-port wait at 1 ms while any is watched. `flint.engine.sql` and `flint.engine.cache` need them for libpq's and hiredis's sockets and for their wake-ups.
+
+**Other D changes:**
+
+- `flint.engine.sql`'s lock parking uses `WaitOnAddress`, resolved from KernelBase at run time.
+- `flint.engine.storage` reads the wall clock with `GetSystemTimePreciseAsFileTime` in a new allowlisted `flint.engine.storage.sys.clock`, because `std.datetime`'s Windows clock is neither `nothrow` nor `@nogc`.
+- Every D binding that enabled a provider on Linux and macOS (`FlintCurlOnLinux` and the like) enables it on Windows too.
+
+**Results.** On the VM with LDC and the providers linked, 35 of the 37 packages pass `dub test`. The other two:
+
+- `engine-web`'s HTTP/2 test calls an independent `curl` client, but the `curl.exe` Windows ships has no HTTP/2.
+- `engine-wasi` needs wasmtime, which `ci.py`'s native step builds with the pinned Rust.
+
 ### 4. The flint CLI
 
 `flint_tool.sys.windows` is the Windows counterpart of `flint_tool.sys.posix`:
@@ -289,8 +355,7 @@ Two details of the MSVC build of Flint's C shims (`native/ffi`):
 Next, in ADR-025's order:
 
 - the remaining cold-build levers of ADR-025 section 4a, with a breakdown after each: the warm worker pool and its template-instance ownership, parallel jobs, DMD's CodeView emission, process creation and a cached link command;
-- the packages above the reactor (the IOCP backend is done);
-- the remaining native providers under MSVC hardening (`/guard:cf`, `/GS`, `/sdl`, and `/W4 /WX` for Flint's own C);
+- wasmtime through the pinned Rust, and an HTTP/2-capable curl client for `engine-web`'s HTTP/2 test;
 - the `windows-x86_64` platform lane for Gate 6.
 
 ## Public API additions
