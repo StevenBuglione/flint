@@ -373,6 +373,12 @@ private struct Server
         imports ~= importPaths();
         imports ~= "-I" ~ buildPath(root, "src");
         imports ~= "-I" ~ buildPath(root, "test");
+        {
+            import flint_tool.engine.recipe : hasApplicationConfig;
+
+            if (hasApplicationConfig(root))
+                imports ~= "-J" ~ buildPath(root, "config");
+        }
         Launch launch;
         launch.directory = root;
         const dmd = compiler();

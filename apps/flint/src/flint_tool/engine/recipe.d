@@ -35,6 +35,9 @@ string renderRecipe(const ref Home home, const ref Manifest manifest, const ref 
         text ~= field("description", manifest.description);
     text ~= field("targetName", manifest.artifactName()) ~ field("targetType", manifest.type) ~ field("sourcePaths",
             "../../../src") ~ field("importPaths", "../../../src") ~ field("dflags", "-preview=dip1000");
+    // `@ConditionalOnConfig` reads config/application.toml as a string import (ADR-028 section 1).
+    if (hasApplicationConfig(manifest.root))
+        text ~= field("stringImportPaths", "../../../config");
     if (extras.objects.length)
         text ~= fields("sourceFiles", extras.objects);
     if (extras.objects.length && manifest.type == "executable")
@@ -62,6 +65,15 @@ string renderRecipe(const ref Home home, const ref Manifest manifest, const ref 
     foreach (name; resolution.directTest)
         text ~= dependencyLine(home, resolution, name, "    ");
     return text ~ "}\n";
+}
+
+/// Whether a project has config/application.toml, which DI's compile-time conditions read.
+bool hasApplicationConfig(string root)
+{
+    import std.file : exists;
+    import std.path : buildPath;
+
+    return root.length && exists(buildPath(root, "config", "application.toml"));
 }
 
 /// Render the recipe of a path dependency that is a Flint project, with absolute source paths.
