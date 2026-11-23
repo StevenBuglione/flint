@@ -2,16 +2,17 @@
   "schema": "flint.measure-queue/1",
   "id": "gs-builds",
   "created": "2026-11-23",
-  "status": "done",
+  "status": "pending",
   "requested_by": "m7-flint-cli (local_b3b0e1d4), after the platform cache (9655843b)",
   "summary": "gs-rest-service builds against both ADR-030 headlines: platform cache vs std-primed GOCACHE, and --no-platform-cache vs go build -a",
-  "why": "The platform cache and --no-platform-cache exist now; this re-measures the gap the 09:00Z smoke showed (9.0 s cold vs Go 0.16 s). Measured in a worktree at dee89bda819f with the release-built flint and DMD linking with mold (ADR-021); the cache is primed by one recorded, unscored build. About 20 minutes, so it fits a short window. Re-pinned for m7-flint-cli's 19390bd1 (Flint AOT's platform modules as a cached library) and cc2f98e2 (stat-keyed digests). Re-pinned for m7-flint-cli's ff31b6d2: the generated AOT library (Boot's auto-configuration modules, including the 0.45 s Jackson module) is cached in the platform cache and linked on a cached cold build; the receipt lists it as flint-aot-library. The certified 12:30Z run stays in 'attempts'. Re-pinned for 592d4b37: the dev build links the platform cache as a shared object (primary edit-build headline) and --static gives the fully static secondary (owner decision 2).",
+  "why": "The platform cache and --no-platform-cache exist now; this re-measures the gap the 09:00Z smoke showed (9.0 s cold vs Go 0.16 s). Measured in a worktree at ad7cc1ba64d3 with the release-built flint and DMD linking with mold (ADR-021); the cache is primed by one recorded, unscored build. About 20 minutes, so it fits a short window. Re-pinned for m7-flint-cli's 19390bd1 (Flint AOT's platform modules as a cached library) and cc2f98e2 (stat-keyed digests). Re-pinned for m7-flint-cli's ff31b6d2: the generated AOT library (Boot's auto-configuration modules, including the 0.45 s Jackson module) is cached in the platform cache and linked on a cached cold build; the receipt lists it as flint-aot-library. The certified 12:30Z run stays in 'attempts'. Re-pinned for 592d4b37: the dev build links the platform cache as a shared object (primary edit-build headline) and --static gives the fully static secondary (owner decision 2). Re-pinned for dmd-arm64's compile-server platform prelude (42ebbef9, 0d0d3afd): the checkout builds its own DMD fork from its patch ('fork').",
   "builds": {
     "tree": {
       "app": "checkout",
-      "commit": "dee89bda819f",
+      "commit": "ad7cc1ba64d3",
       "flint": true,
-      "linker": "mold"
+      "linker": "mold",
+      "fork": true
     }
   },
   "measure": {
