@@ -1,0 +1,367 @@
+{
+  "time": "2026-11-23T21:13:55Z",
+  "outcome": "measured",
+  "evidence": true,
+  "host": "venus",
+  "builds": {
+    "tree": {
+      "commit": "6ab588f8340cc1d93249208b0ba124b32aa23a59",
+      "worktree": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6ab588f8340c"
+    }
+  },
+  "window_before": {
+    "time": "2026-11-23T21:08:39Z",
+    "load_average": [
+      5.3037109375,
+      7.490234375,
+      6.873046875
+    ],
+    "running_tasks": 0,
+    "instant": true,
+    "busy_processes": [],
+    "idle_build_processes": 1828,
+    "quiet": true,
+    "problems": []
+  },
+  "window_during": [
+    {
+      "time": "2026-11-23T21:08:51Z",
+      "load_average": [
+        5.30517578125,
+        7.42333984375,
+        6.8583984375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-23T21:09:02Z",
+      "load_average": [
+        4.7900390625,
+        7.244140625,
+        6.8056640625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-23T21:09:13Z",
+      "load_average": [
+        4.20703125,
+        7.0380859375,
+        6.7431640625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-23T21:09:24Z",
+      "load_average": [
+        4.02783203125,
+        6.90478515625,
+        6.70263671875
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-23T21:09:35Z",
+      "load_average": [
+        6.0712890625,
+        7.21875,
+        6.80859375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-23T21:09:46Z",
+      "load_average": [
+        5.36474609375,
+        7.02978515625,
+        6.75146484375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-23T21:09:57Z",
+      "load_average": [
+        8.1142578125,
+        7.58349609375,
+        6.935546875
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-23T21:10:09Z",
+      "load_average": [
+        10.20458984375,
+        8.0302734375,
+        7.08642578125
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-23T21:10:20Z",
+      "load_average": [
+        11.65185546875,
+        8.4140625,
+        7.22509765625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-23T21:10:31Z",
+      "load_average": [
+        10.31494140625,
+        8.23486328125,
+        7.17919921875
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-23T21:10:42Z",
+      "load_average": [
+        9.35009765625,
+        8.09521484375,
+        7.14501953125
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-23T21:10:53Z",
+      "load_average": [
+        8.3603515625,
+        7.92626953125,
+        7.10009765625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-23T21:11:04Z",
+      "load_average": [
+        7.3818359375,
+        7.73046875,
+        7.044921875
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-23T21:11:15Z",
+      "load_average": [
+        6.40380859375,
+        7.49755859375,
+        6.97900390625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-23T21:11:27Z",
+      "load_average": [
+        5.572265625,
+        7.283203125,
+        6.91455078125
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-23T21:11:38Z",
+      "load_average": [
+        4.869140625,
+        7.07568359375,
+        6.8505859375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-23T21:11:49Z",
+      "load_average": [
+        4.5078125,
+        6.9248046875,
+        6.80322265625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-23T21:12:00Z",
+      "load_average": [
+        3.8779296875,
+        6.66650390625,
+        6.72021484375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-23T21:12:11Z",
+      "load_average": [
+        3.73681640625,
+        6.544921875,
+        6.68017578125
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-23T21:12:22Z",
+      "load_average": [
+        3.54296875,
+        6.4111328125,
+        6.634765625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-23T21:12:33Z",
+      "load_average": [
+        3.30517578125,
+        6.265625,
+        6.5849609375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-23T21:12:44Z",
+      "load_average": [
+        3.15673828125,
+        6.087890625,
+        6.52099609375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-23T21:12:56Z",
+      "load_average": [
+        3.0654296875,
+        5.9697265625,
+        6.4775390625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-23T21:13:07Z",
+      "load_average": [
+        3.05517578125,
+        5.87158203125,
+        6.439453125
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-23T21:13:18Z",
+      "load_average": [
+        2.8994140625,
+        5.744140625,
+        6.3916015625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-23T21:13:29Z",
+      "load_average": [
+        2.8349609375,
+        5.63671875,
+        6.34912109375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-23T21:13:40Z",
+      "load_average": [
+        3.1123046875,
+        5.55712890625,
+        6.31103515625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-23T21:13:51Z",
+      "load_average": [
+        2.94091796875,
+        5.43994140625,
+        6.26416015625
+      ],
+      "busy_processes": []
+    }
+  ],
+  "foreign_activity_during": 0,
+  "window_after": {
+    "time": "2026-11-23T21:13:55Z",
+    "load_average": [
+      2.94580078125,
+      5.3994140625,
+      6.24658203125
+    ],
+    "running_tasks": 0,
+    "instant": false,
+    "busy_processes": [],
+    "idle_build_processes": 1829,
+    "quiet": true,
+    "problems": []
+  },
+  "results_directory": ".flint/measure/results/phase1-builds-petclinic/20261123T210820Z",
+  "summary": {
+    "steps": [
+      {
+        "command": [
+          "/usr/bin/python3",
+          "tools/spring_bench.py",
+          "accept",
+          "petclinic-rest",
+          "--impl",
+          "java",
+          "--json",
+          "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-builds-petclinic/20261123T210820Z/acceptance-java.json"
+        ],
+        "cwd": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6ab588f8340c",
+        "exit_code": 0,
+        "log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-builds-petclinic/20261123T210820Z/step-0.log"
+      },
+      {
+        "command": [
+          "/usr/bin/python3",
+          "tools/spring_bench.py",
+          "accept",
+          "petclinic-rest",
+          "--impl",
+          "go",
+          "--json",
+          "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-builds-petclinic/20261123T210820Z/acceptance-go.json"
+        ],
+        "cwd": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6ab588f8340c",
+        "exit_code": 0,
+        "log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-builds-petclinic/20261123T210820Z/step-1.log"
+      },
+      {
+        "command": [
+          "/usr/bin/python3",
+          "tools/spring_bench.py",
+          "accept",
+          "petclinic-rest",
+          "--impl",
+          "flint",
+          "--json",
+          "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-builds-petclinic/20261123T210820Z/acceptance-flint.json"
+        ],
+        "cwd": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6ab588f8340c",
+        "exit_code": 0,
+        "log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-builds-petclinic/20261123T210820Z/step-2.log"
+      },
+      {
+        "command": [
+          "/usr/bin/python3",
+          "tools/measure_builds.py",
+          "--spring",
+          "--spring-app",
+          "petclinic-rest",
+          "--no-context",
+          "--output",
+          "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-builds-petclinic/20261123T210820Z/builds.json"
+        ],
+        "cwd": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6ab588f8340c",
+        "exit_code": 1,
+        "log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-builds-petclinic/20261123T210820Z/step-3.log",
+        "measured": true
+      }
+    ],
+    "outputs": {
+      "acceptance-flint.json": "9d208749e6c01627c534275f0b94f53127f34d5e4096caef3534817b4b47b244",
+      "acceptance-go.json": "15f279e3aca35c25331afa58c1dbae8ad34055d1e7d32335707fd17be3590a1a",
+      "acceptance-java.json": "6d915251163fb67c63daa53a25dc65c064c16113a6eb427be731c4fd9b471360",
+      "builds.json": "879a0af07d941a234c828544cacf28728fa4dd3d64ac55a4a0ea6f37ca830895"
+    }
+  }
+}

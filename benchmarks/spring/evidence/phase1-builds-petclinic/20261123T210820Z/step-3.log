@@ -1,0 +1,23 @@
+Measuring petclinic-rest
+petclinic-rest flint_cached_cold_seconds phase medians (ms): total 1277 (budget 100), flint 33 (budget 20), aot 760, plan 0, compile 454 (budget 60), link 32 (budget 20)
+petclinic-rest flint_cached_incremental_seconds phase medians (ms): total 639 (budget 100), flint 32 (budget 20), aot 120, plan 0, compile 454 (budget 60), link 29 (budget 20)
+petclinic-rest flint_cached_cold_digests_cleared_seconds phase medians (ms): total 1394 (budget 100), flint 141 (budget 20), aot 754, plan 0, compile 457 (budget 60), link 34 (budget 20)
+petclinic-rest flint_scratch_seconds phase medians (ms): total 1390 (budget 100), flint 141 (budget 20), aot 758, plan 0, compile 459 (budget 60), link 33 (budget 20)
+petclinic-rest flint_debug_cached_cold_seconds phase medians (ms): total 1314 (budget 100), flint 33 (budget 20), aot 746, plan 0, compile 494 (budget 60), link 35 (budget 20)
+petclinic-rest flint_debug_cached_incremental_seconds phase medians (ms): total 687 (budget 100), flint 32 (budget 20), aot 121, plan 0, compile 496 (budget 60), link 36 (budget 20)
+petclinic-rest flint_debug_scratch_seconds phase medians (ms): total 1421 (budget 100), flint 141 (budget 20), aot 754, plan 0, compile 493 (budget 60), link 34 (budget 20)
+petclinic-rest: Go std-primed cold 1.938s, -a 4.107s, binary 11380728 bytes
+  primary: platform cache vs std-primed GOCACHE: 0.620 pass
+  secondary: from scratch vs go build -a: 0.334 pass
+  incremental: dev profile as built: 2.084 FAIL
+Traceback (most recent call last):
+  File "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6ab588f8340c/tools/measure_builds.py", line 1012, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6ab588f8340c/tools/measure_builds.py", line 595, in main
+    return spring_builds.measure(args, timed_process)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/6ab588f8340c/tools/spring_builds.py", line 503, in measure
+    print(f"  {label}: {verdict.get('median_ratio', verdict.get('ratio')):.3f}", 'pass' if verdict['pass'] else 'FAIL')
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: unsupported format string passed to NoneType.__format__
