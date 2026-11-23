@@ -150,6 +150,22 @@ The proof-harness suites (`benchmarks/spring/suites`) compare status, every head
 
 Tomcat's error-page forward (`StandardHostValve`) is reproduced by the servlet bridge: `sendError` records the status and message, and when the handler returns the bridge dispatches once to the error controller with the `jakarta.servlet.error.*` request attributes set, as Tomcat does. The error controller itself (`BasicErrorController`, `DefaultErrorAttributes`, the Whitelabel view) is spring-boot-webmvc, owned by the boot session.
 
+## Real HTTP serving
+
+### `FiberRoute` (flint.engine.web)
+
+A fiber route is the engine's third route kind, beside owner-loop handlers and stream routes:
+
+```d
+alias FiberHandler = void delegate(ref scope Request, ref scope RequestContext, scope FiberResponse) @safe;
+Error Server.routeFiber(FiberRoute(handler));   // at most one; serves every request no other route serves
+```
+
+- **Execution.** The handler runs on the request's reactor task fiber, a druntime `Fiber` whose stack the GC scans, so it may allocate, throw and suspend through `TaskWaker`. The engine's own code stays `nothrow @nogc`; a single `@trusted` boundary (`flint.engine.web.sys.fiber`) calls the handler. An escaping `Exception` gives 500 when nothing has been sent and otherwise closes the connection. `Error` is not caught.
+- **Request.** `Request.fieldCount`/`visitField` enumerate the fields (lowercase names, arrival order), `query()` gives the raw query and `protocolMinor()` the HTTP/1 version. Every view is arena memory valid for the visit only; the servlet bridge copies it into GC memory before user code sees it.
+- **Response.** `FiberResponse.respond(status, fields, body, chunked)` writes a whole response, head and body in one write when they fit. `begin(status, fields, contentLength)`, `send` and `finish` stream it, where `unknownLength` means chunked on HTTP/1.1 and close-delimited on HTTP/1.0. The engine owns `Content-Length`, `Transfer-Encoding`, `Connection` and `Keep-Alive`, and writes them as Tomcat's `Http11Processor.prepareResponse` does: status line without a reason phrase, application fields in order, the framing field, `Date` unless given, then `Connection: close` or, only when the request named keep-alive, `Keep-Alive: timeout=<idle seconds>` and `Connection: keep-alive`. 204 and 304 have no framing field, 205 has `Content-Length: 0`, and HEAD keeps its framing fields without body bytes. A body shorter than its `Content-Length` closes the connection.
+- **Connections.** After a finished response the connection serves the next request, pipelined or not. Fiber routes are HTTP/1.1 only for now: HTTP/2 answers 404 for a target only a fiber route serves.
+
 ## Proof
 
 - **Upstream tests.** Each ported class ports its JUnit tests (`HttpStatusTests`, `HttpHeadersTests`, `MediaTypeTests`, `ResponseEntityTests`, `ProblemDetailTests`, `UriComponentsBuilderTests`, `RequestMappingHandlerMappingTests`, `RequestResponseBodyMethodProcessorTests`, `ExceptionHandlerExceptionResolverTests`, `DefaultHandlerExceptionResolverTests`, `ResponseEntityExceptionHandlerTests`, MockMvc's own tests). Counts of ported, passing and excluded tests, with reasons, are kept in "Upstream test counts" below.
@@ -167,7 +183,7 @@ Tomcat's error-page forward (`StandardHostValve`) is reproduced by the servlet b
 
 1. **spring-test's DUB name.** Spring's artifact name gives `flint:test`, which is the base library's name, and `org.springframework.test` → `flint.test` shares a namespace with the base library `flint.test`. The modules don't collide (`flint.test.web.servlet` is new), but the DUB name does. Proposal: `flint:framework-test`.
 2. **JsonPath.** MockMvc's `jsonPath(...)` needs the Jayway JsonPath engine (Apache-2.0). Coordinated with the third-party-apis session: who ports it, and over which JSON tree.
-3. **Engine route kind.** The fiber route kind that may allocate and throw (above), coordinated with the owner of `flint.engine.web`.
+3. **Engine route kind.** Settled: `FiberRoute` in `flint.engine.web.fiber`, approved by the engine owner (m7-flint-cli). See "Real HTTP serving" below.
 
 ## Upstream test counts
 
@@ -196,6 +212,7 @@ Flint's own tests cover the R15/D-15 adaptations, the exceptions' messages and b
 | `api/framework/mapping.json` | 1,391 elements classified for the ported types: spring-web 14.1%, spring-webmvc 22.7%, jakarta-servlet 33.5%; a member is classified only when the D type declares it |
 | `flint.web.util` | `UriComponentsBuilder`, `UriComponents`, `UriUtils` (R14: UTF-8 bytes, identical encoded output) |
 | CORS | `flint.web.cors` (`CorsConfiguration`, `DefaultCorsProcessor`, `UrlBasedCorsConfigurationSource`), `@CrossOrigin` class and method combination, `CorsRegistry`, preflight handling; petclinic's three CORS goldens reproduce through MockMvc |
-| Next | the servlet bridge over `flint.engine.web` (after the rename), `ResponseEntityExceptionHandler`, `@RequestBody` with Jackson reading |
+| `FiberRoute` | in `packages/engine-web` (`flint.engine.web.fiber`): full-D handlers on the request fiber, Tomcat framing, keep-alive; 3 socket tests and 3 unit tests on DMD and LDC |
+| Next | the servlet engine over `FiberRoute` (`framework/engine-servlet`), `ResponseEntityExceptionHandler`, `@RequestBody` with Jackson reading |
 
 The packages are not yet in `policy/framework.json` or the root `dub.sdl`: their DUB names (`web`, `webmvc`) and module roots (`flint.web`, `flint.http`) are held by the engines until the rename, and `framework_layers` gives each module one root while spring-web needs two (`flint.http`, `flint.web`). Until then they build with path dependencies and `dub test` from each package directory.
