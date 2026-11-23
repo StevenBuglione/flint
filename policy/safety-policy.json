@@ -131,6 +131,7 @@
     "flint.log.sys.ring.threadProducer",
     "flint.engine.mq.threadIdentity",
     "flint.os.sys.interrupts.onCoordinator",
+    "flint.arena.sys.gc.collector.bytesAllocated",
     "flint.engine.reactor.currentRuntime",
     "flint.engine.reactor.currentWorkerIndex",
     "flint.engine.reactor.threadLocalWords",

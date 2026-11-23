@@ -91,6 +91,60 @@
     "file": "spring-webmvc/src/main/java/org/springframework/web/servlet/mvc/method/RequestMappingInfoHandlerMapping.java",
     "method": "handleNoMatch"
    }
+  },
+  {
+   "file": "packages/arena/source/flint/arena/sys/gc/collector.d",
+   "function": "reallocNoSync",
+   "upstream": {
+    "project": "druntime",
+    "file": "druntime/src/core/internal/gc/impl/conservative/gc.d",
+    "method": "ConservativeGC.reallocNoSync"
+   }
+  },
+  {
+   "file": "packages/arena/source/flint/arena/sys/gc/collector.d",
+   "function": "smallAlloc",
+   "upstream": {
+    "project": "druntime",
+    "file": "druntime/src/core/internal/gc/impl/conservative/gc.d",
+    "method": "Gcx.smallAlloc"
+   }
+  },
+  {
+   "file": "packages/arena/source/flint/arena/sys/gc/collector.d",
+   "function": "mark",
+   "upstream": {
+    "project": "druntime",
+    "file": "druntime/src/core/internal/gc/impl/conservative/gc.d",
+    "method": "Gcx.mark"
+   }
+  },
+  {
+   "file": "packages/arena/source/flint/arena/sys/gc/collector.d",
+   "function": "sweep",
+   "upstream": {
+    "project": "druntime",
+    "file": "druntime/src/core/internal/gc/impl/conservative/gc.d",
+    "method": "Gcx.sweep"
+   }
+  },
+  {
+   "file": "packages/arena/source/flint/arena/sys/gc/collector.d",
+   "function": "fullcollect",
+   "upstream": {
+    "project": "druntime",
+    "file": "druntime/src/core/internal/gc/impl/conservative/gc.d",
+    "method": "Gcx.fullcollect"
+   }
+  },
+  {
+   "file": "packages/arena/source/flint/arena/sys/gc/collector.d",
+   "function": "allocPages",
+   "upstream": {
+    "project": "druntime",
+    "file": "druntime/src/core/internal/gc/impl/conservative/gc.d",
+    "method": "LargeObjectPool.allocPages"
+   }
   }
  ]
 }
