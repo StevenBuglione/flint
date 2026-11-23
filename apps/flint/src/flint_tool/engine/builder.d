@@ -481,7 +481,9 @@ bool buildProject(ref Session session, const ref Manifest manifest, const ref Re
     const command = projectCommand(toolchain, compiler, manifest.root, request);
     result.command = command.dup;
     auto environment = buildEnvironment(session, toolchain, spec, dubHome, settings.dflags);
-    if (result.platform.active && spec.compile_server)
+    // The compile server preloads the platform modules for dev builds only (coordinator, 2026-11-23): a test build
+    // compiles with -unittest, which the prelude's switches would not match anyway.
+    if (result.platform.active && spec.compile_server && !request.test && request.profile == "dev")
         environment ~= EnvVar("FLINT_DMD_SERVER_PRELUDE", result.platform.prelude);
     const label = request.test ? "test" : request.profile;
     session.progress(request.test ? "Compiling" : "Building",

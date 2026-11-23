@@ -1,7 +1,7 @@
 module app;
 
 import core.lifetime : move;
-import core.thread : Thread;
+import core.thread.osthread : Thread;
 import core.time : msecs;
 import flint.arena : Error, Status;
 import flint.conc : Context, Deadline, WorkerOptions, WorkerPool;
