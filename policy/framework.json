@@ -12,6 +12,25 @@
     "java"
    ]
   },
+  "engine-aot": {
+   "directory": "framework/engine-aot",
+   "module": "flint.engine.aot",
+   "repo": "framework",
+   "licence": "Apache-2.0",
+   "upstream": "Flint AOT contract (docs/spring/aot-contract.md)",
+   "dependencies": [],
+   "unsafe": [
+    "flint.engine.aot.sys"
+   ]
+  },
+  "jackson-annotations": {
+   "directory": "framework/jackson-annotations",
+   "module": "flint.jackson.annotation",
+   "repo": "framework",
+   "licence": "Apache-2.0",
+   "upstream": "jackson-annotations@2.21",
+   "dependencies": []
+  },
   "jackson-core": {
    "directory": "framework/jackson-core",
    "module": "flint.jackson.core",
@@ -19,6 +38,20 @@
    "licence": "Apache-2.0",
    "upstream": "jackson-core@3.1.8",
    "dependencies": [
+    "serde"
+   ]
+  },
+  "jackson-databind": {
+   "directory": "framework/jackson-databind",
+   "module": "flint.jackson.databind",
+   "repo": "framework",
+   "licence": "Apache-2.0",
+   "upstream": "jackson-databind@3.1.8",
+   "dependencies": [
+    "engine-aot",
+    "jackson-annotations",
+    "jackson-core",
+    "java",
     "serde"
    ]
   },
@@ -43,21 +76,18 @@
     "engine-aot"
    ]
   },
-  "tx": {
-   "directory": "framework/tx",
-   "module": "flint.dao",
-   "also": [
-    "flint.transaction"
-   ],
+  "jdbc": {
+   "directory": "framework/jdbc",
+   "module": "flint.jdbc",
    "repo": "framework",
    "licence": "Apache-2.0",
    "upstream": "spring-framework@v7.1.0",
    "dependencies": [
     "core",
     "engine-aot",
-    "engine-reactor",
     "java",
-    "slf4j-api"
+    "slf4j-api",
+    "tx"
    ]
   },
   "slf4j-api": {
@@ -76,37 +106,21 @@
     "serde"
    ]
   },
-  "jackson-annotations": {
-   "directory": "framework/jackson-annotations",
-   "module": "flint.jackson.annotation",
+  "tx": {
+   "directory": "framework/tx",
+   "module": "flint.dao",
+   "also": [
+    "flint.transaction"
+   ],
    "repo": "framework",
    "licence": "Apache-2.0",
-   "upstream": "jackson-annotations@2.21",
-   "dependencies": []
-  },
-  "jackson-databind": {
-   "directory": "framework/jackson-databind",
-   "module": "flint.jackson.databind",
-   "repo": "framework",
-   "licence": "Apache-2.0",
-   "upstream": "jackson-databind@3.1.8",
+   "upstream": "spring-framework@v7.1.0",
    "dependencies": [
+    "core",
     "engine-aot",
-    "jackson-annotations",
-    "jackson-core",
+    "engine-reactor",
     "java",
-    "serde"
-   ]
-  },
-  "engine-aot": {
-   "directory": "framework/engine-aot",
-   "module": "flint.engine.aot",
-   "repo": "framework",
-   "licence": "Apache-2.0",
-   "upstream": "Flint AOT contract (docs/spring/aot-contract.md)",
-   "dependencies": [],
-   "unsafe": [
-    "flint.engine.aot.sys"
+    "slf4j-api"
    ]
   }
  }
