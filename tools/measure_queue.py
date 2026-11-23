@@ -281,6 +281,9 @@ def private_tools(tools, linker):
             (tools / entry.name).symlink_to(entry)
     sys.path.insert(0, str(ROOT / 'tools'))
     import install_toolchains
+    if linker == 'mold' and hasattr(install_toolchains, 'install_mold'):
+        # The pinned mold (policy/toolchains.json, checksum-verified), installed into this private directory.
+        linker = str(install_toolchains.install_mold(tools))
     install_toolchains.configure_dmd_linker(tools / 'dmd2' / 'linux' / 'bin64',
                                             install_toolchains.identify_elf_linker(linker))
 
