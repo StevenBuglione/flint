@@ -115,11 +115,13 @@ Creating the GitHub repositories is an outward step and waits for the owner's go
 ### 5. Size and compile time
 
 - **Classes.**
-  - The DMD fork gains an opt-in switch that leaves out `ModuleInfo.localClasses`, so unused classes become garbage for `--gc-sections`. Construction from string names is already banned.
-  - LDC is unmodified today. Whether it needs the same patch is an open decision, settled with measurements.
+  - Every module's `ModuleInfo.localClasses` keeps all its classes linked. `-fno-moduleinfo-localclasses` leaves the list empty, so `--gc-sections` drops every class nothing uses. Construction from string names is already banned.
+  - **LDC needs no patch.** LDC 1.43 already has the switch, and the release and size profiles pass it. On a generated program of 2,000 classes with 50 used, it cuts the stripped executable from 2,463,152 to 486,016 bytes at O3 and at Oz.
+  - **The DMD fork has the same switch** (`toolchain/dmd-2.114.0-flint.patch`), opt-in. DMD gains only when it also links with `--gc-sections` and without the `--export-dynamic` of its `dmd.conf`: then the same program shrinks from 2,065,296 to 407,664 bytes. The dev profile keeps DMD's link as it is, because druntime's backtraces name functions through the dynamic symbol table.
+  - Measurements: `docs/milestones/13-binary-size.md`.
   - Value types (`HttpHeaders`, `MediaType`, `HttpStatus`, `ResponseEntity`) are structs. Classes are used only where Spring users subclass or implement, and are `final` by default.
 - **Linking.**
-  - Linux glibc outputs link with packed relative relocations (`-z pack-relative-relocs`).
+  - Linux glibc outputs link with packed relative relocations (`-z pack-relative-relocs`), through each profile's `glibc_lflags`. PIE, relro and now are unchanged. This takes 765,880 bytes off bench-rest at O3 and at Oz.
   - A TLS-only OpenSSL build, keeping the benchmark's TLS profile, needs its own ADR.
 - **Imports.**
   - Framework modules have no `package.d` aggregators.
@@ -134,7 +136,7 @@ Creating the GitHub repositories is an outward step and waits for the owner's go
   - **Two published headlines:**
     - the platform cache against Go with a standard-library-primed `GOCACHE`;
     - everything from scratch against `go build -a` with an empty cache.
-- **Budgets.** Every framework module carries budgets for added compile time, linked bytes, template instances and generated lines per bean or handler, on top of ADR-019's per-package budgets.
+- **Budgets.** Every framework module carries budgets for added compile time, linked bytes, template instances and generated lines per bean or handler, on top of ADR-019's per-package budgets. Linked bytes are gated first: `policy/budgets.json` `module_linked_bytes` gives a module its fixture, baseline and budget. A package listed in `required_packages` must budget every module it has.
 
 ### 6. The API mapping rulebook
 
@@ -209,7 +211,9 @@ Sources are fetched by checksum into a reference cache and never compiled.
 
 ## Open decisions
 
-- Whether to patch LDC to leave out `localClasses`, settled with measurements.
+- ~~Whether to patch LDC to leave out `localClasses`.~~ Settled: no patch, since LDC's own `-fno-moduleinfo-localclasses` does it (section 5).
+- Whether to build the shipped druntime and Phobos with `-fno-moduleinfo-localclasses` too. The prebuilt runtime libraries keep their own class lists, so linked runtime classes stay alive. LDC's `ldc-build-runtime` can rebuild them without a fork, as the sanitizer lane already does.
+- Whether musl static-PIE outputs also take `-z pack-relative-relocs`. The pinned Alpine 3.22 musl (1.2.5) relocates RELR, and it saves 143,288 to 147,384 bytes on bench-cli and bench-rest built without native providers. Today only glibc outputs use it.
 - The JPA engine: persistence context, dirty checking, lazy loading, JPQL compiled at build time, Criteria. It is ported from Hibernate ORM (Apache-2.0 since March 2025) and gets its own ADR.
 - The TLS-only OpenSSL build, which gets its own ADR.
 - The ADR-023 amendment for platform modules, written with the split's preparation.
