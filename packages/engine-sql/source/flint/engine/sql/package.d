@@ -6,13 +6,13 @@ import flint.arena : Buffer, Error, RequestArena, Result, Status;
 import flint.conc : CancelSource, Context, Deadline;
 import flint.engine.sql.ffi.shim : Cell, Failure, Identity, Interest, Operation, Progress,
     acquirePool, claimTransaction, closePool, copyCell, dirtyLease, driverEnabled,
-    enablePostgresDriver, enableSqliteDriver,
-    endTransaction, inspectCell,
-    leaseFailure, nameCell, openPool, releasePool, retireLease, rowColumns, withdrawPool;
+    enablePostgresDriver, enableSqliteDriver, endTransaction,
+    inspectCell, leaseFailure, nameCell, openPool, releasePool, retireLease, rowColumns, setRetiredHook, withdrawPool;
 import flint.engine.sql.sys.diagnostics : decideDiagnostics, diagnosticNow, noteAcquire, noteQueue,
     noteRelease, noteRow, noteStatement, reportDiagnostics;
-import flint.engine.sql.sys.wait : admit, admitStartup, joinLeaseQueue, leaseChanged, leaseMark,
-    leaseWaiterCount, leaveLeaseQueue, pause, pauseForLease, waitFor;
+import flint.engine.sql.sys.wait : admit, admitStartup, armLeaseWait, forgetLeaseWaiter, joinLeaseQueue,
+    leaseChanged, leaseMark, leaseWaiterCount, leaveLeaseQueue, pause, pauseForLease,
+    prepareLeaseWaiters, retiredHook, waitFor;
 
 @safe:
 
@@ -427,10 +427,13 @@ private struct LeaseWait
 
     Status attempt(out Identity lease) nothrow @nogc
     {
-        const queued = ticket != 0;
+        const held = ticket;
         const status = acquirePool(pool, ticket, lease);
         if (status != Status.ok)
             return status;
+        // Forget this waiter's handle before announcing, so the announcement signals the next head.
+        forgetLeaseWaiter(pool.slot, held);
+        const queued = held != 0;
         unregister();
         // The next queued waiter is now the head and may find another idle lease.
         if (queued)
@@ -454,6 +457,7 @@ private struct LeaseWait
         if (ticket == 0)
             return;
         // A departing waiter may have been the queue head.
+        forgetLeaseWaiter(pool.slot, ticket);
         withdrawPool(pool, ticket);
         ticket = 0;
         leaseChanged(pool.slot);
@@ -506,6 +510,8 @@ struct Pool
         if (status != Status.ok)
             return Error(status, "could not open SQL pool");
         decideDiagnostics();
+        prepareLeaseWaiters(created.slot, options.maxWaiters);
+        setRetiredHook(retiredHook());
         enum maxAcquireNanos = 5_000_000_000L;
         this = Pool(created, options.driver, options.acquireTimeoutNanos < maxAcquireNanos
                 ? options.acquireTimeoutNanos : maxAcquireNanos);
@@ -539,6 +545,8 @@ struct Pool
             if (wait.ticket != 0 && Deadline.afterMillis(0).monotonicNanoseconds >= local)
                 return Result!Connection(Connection.init, Error(Status.timedOut, "SQL lease wait expired"));
             const mark = leaseMark(slot);
+            // Armed before the attempt, so a release right after it still ends the sleep below.
+            auto armed = armLeaseWait();
             Identity lease;
             const status = wait.attempt(lease);
             if (status == Status.ok)
@@ -555,7 +563,7 @@ struct Pool
                 continue;
             queued = true;
             noteQueue(leaseWaiterCount(slot));
-            const paused = pauseForLease(slot, mark);
+            const paused = pauseForLease(slot, mark, wait.ticket, armed, local, context);
             if (paused.code != Status.ok)
                 return Result!Connection(Connection.init, paused);
         }

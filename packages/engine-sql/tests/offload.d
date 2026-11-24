@@ -395,3 +395,284 @@ version (FlintNativeLibpq)
         assert(next.value.execute("SELECT 17", [], arena, context).ok());
     }
 }
+
+version (FlintNativeLibpq)
+{
+    private void runFibers(uint cores, uint fibers, scope void function() @safe nothrow @nogc[] starts)
+    {
+        ReactorOptions options;
+        options.cores = cores;
+        options.fiberPoolSize = fibers;
+        auto owner = Reactor.create(options);
+        assert(owner.ok(), owner.error.message);
+        foreach (index, start; starts)
+            assert(owner.value.post(cast(uint)(index % cores), start).code == Status.ok);
+        const ran = owner.value.run();
+        assert(ran.code == Status.ok, ran.message);
+    }
+
+    private long nowNanos() nothrow @nogc
+    {
+        return Deadline.afterMillis(0).monotonicNanoseconds;
+    }
+
+    // ---- Ten leases, 256 fibers on two workers: each release hands its lease to the FIFO head at once.
+
+    private enum stressClients = 256;
+    private enum stressRounds = 20;
+
+    private __gshared Pool stressPool;
+    private shared uint stressDone;
+    private shared uint stressFailures;
+    private shared long stressStart;
+    private shared long stressElapsed;
+
+    // SAFETY: The harness publishes the scalar pool handle before the reactor starts; fibers only copy it.
+    private Pool sharedStressPool() @trusted nothrow @nogc
+    {
+        return stressPool;
+    }
+
+    // SAFETY: Written once by the harness before the reactor starts.
+    private void publishStressPool(Pool pool) @trusted nothrow @nogc
+    {
+        stressPool = pool;
+    }
+
+    private void leaseClient() nothrow @nogc
+    {
+        auto pool = sharedStressPool();
+        Context context;
+        foreach (_; 0 .. stressRounds)
+        {
+            auto lease = pool.acquire(context);
+            if (!lease.ok())
+            {
+                atomicOp!"+="(stressFailures, 1u);
+                break;
+            }
+            scope RequestArena arena;
+            if (!lease.value.execute("SELECT 1", [], arena, context).ok())
+                atomicOp!"+="(stressFailures, 1u);
+            if (pool.release(lease.value).code != Status.ok)
+                atomicOp!"+="(stressFailures, 1u);
+        }
+        if (atomicOp!"+="(stressDone, 1u) == stressClients)
+        {
+            atomicStore(stressElapsed, nowNanos() - atomicLoad(stressStart));
+            Reactor.current().stop();
+        }
+    }
+
+    @("ten leases serve 256 fibers on two workers, each release handing its lease to the queue head at once")
+    unittest
+    {
+        import std.process : environment;
+        import flint.engine.sql.diagnostics : enableSqlDiagnostics, resetSqlDiagnostics, sqlDiagnostics;
+
+        const address = environment.get("FLINT_SQL_PG_TEST_DSN");
+        if (address.length == 0)
+            return;
+        auto config = libpqPool(address);
+        config.maxConnections = 10;
+        config.maxWaiters = stressClients;
+        Pool pool;
+        assert(pool.open(config).code == Status.ok);
+        Context context;
+        scope (exit)
+            assert(pool.close(context).code == Status.ok);
+        publishStressPool(pool);
+        enableSqlDiagnostics(true);
+        scope (exit)
+            enableSqlDiagnostics(false);
+        resetSqlDiagnostics();
+        atomicStore(stressDone, 0u);
+        atomicStore(stressFailures, 0u);
+        void function() @safe nothrow @nogc[stressClients] starts = &leaseClient;
+        atomicStore(stressStart, nowNanos());
+        runFibers(2, stressClients / 2 + 8, starts[]);
+        assert(atomicLoad(stressDone) == stressClients);
+        assert(atomicLoad(stressFailures) == 0);
+        const counters = sqlDiagnostics();
+        assert(counters.queuedAcquires > 0, "the test must queue waiters behind ten leases");
+        // 5,120 acquisitions, most of them queued: with the head woken only by its 1 ms poll the handoffs
+        // took several seconds.
+        assert(atomicLoad(stressElapsed) < 1_500_000_000L, "lease handoffs waited for the head's poll");
+        // Every lease came back: the full pool is acquirable again.
+        auto again = pool.acquire(context);
+        assert(again.ok());
+        assert(pool.release(again.value).code == Status.ok);
+    }
+
+    // ---- A queued head whose deadline expires withdraws, and the next waiter still gets the lease at once.
+
+    private final class Withdrawal
+    {
+        Pool pool;
+        long releasedAt;
+        long acquiredAt;
+        Status expired = Status.ok;
+        bool holderReady;
+        bool headQueued;
+    }
+
+    private __gshared Withdrawal withdrawal;
+
+    // SAFETY: The harness publishes before starting the reactor and clears after all workers join; one worker runs
+    // every fiber, so the fields are never shared across threads.
+    private Withdrawal sharedWithdrawal() @trusted nothrow @nogc
+    {
+        return withdrawal;
+    }
+
+    private void holder() nothrow @nogc
+    {
+        auto state = sharedWithdrawal();
+        auto owner = Reactor.current();
+        Context context;
+        auto lease = state.pool.acquire(context);
+        assert(lease.ok());
+        state.holderReady = true;
+        assert(owner.yieldUntil(Deadline.afterMillis(200)).code == Status.ok);
+        state.releasedAt = nowNanos();
+        assert(state.pool.release(lease.value).code == Status.ok);
+    }
+
+    private void expiringHead() nothrow @nogc
+    {
+        auto state = sharedWithdrawal();
+        auto owner = Reactor.current();
+        while (!state.holderReady)
+            assert(owner.yieldUntil(Deadline.afterMillis(1)).code == Status.ok);
+        auto source = CancelSource.create(Context.init, Deadline.afterMillis(50));
+        assert(source.ok());
+        auto limited = source.value.context();
+        state.headQueued = true;
+        state.expired = state.pool.acquire(limited).error.code;
+    }
+
+    private void patientWaiter() nothrow @nogc
+    {
+        auto state = sharedWithdrawal();
+        auto owner = Reactor.current();
+        scope (exit)
+            owner.stop();
+        while (!state.headQueued)
+            assert(owner.yieldUntil(Deadline.afterMillis(1)).code == Status.ok);
+        Context context;
+        auto lease = state.pool.acquire(context);
+        assert(lease.ok());
+        state.acquiredAt = nowNanos();
+        assert(state.pool.release(lease.value).code == Status.ok);
+    }
+
+    // SAFETY: Written by the harness before the reactor starts and after all workers join.
+    private void publishWithdrawal(Withdrawal state) @trusted nothrow @nogc
+    {
+        withdrawal = state;
+    }
+
+    @("a queued head that times out withdraws, and the waiter behind it gets the next release at once")
+    unittest
+    {
+        import std.process : environment;
+
+        const address = environment.get("FLINT_SQL_PG_TEST_DSN");
+        if (address.length == 0)
+            return;
+        auto state = new Withdrawal;
+        assert(state.pool.open(libpqPool(address)).code == Status.ok);
+        Context context;
+        scope (exit)
+            assert(state.pool.close(context).code == Status.ok);
+        publishWithdrawal(state);
+        scope (exit)
+            publishWithdrawal(null);
+        runFibers(1, 8, [&holder, &expiringHead, &patientWaiter]);
+        assert(state.expired == Status.timedOut, "the head's own deadline ends its wait");
+        assert(state.acquiredAt >= state.releasedAt);
+        // The release signals the new head; without it the waiter would sleep to its 100 ms fallback.
+        assert(state.acquiredAt - state.releasedAt < 30_000_000L, "the waiter behind a withdrawn head waited");
+    }
+
+    // ---- A connection that dies mid-lease retires; its slot goes to the waiting fiber when retirement finishes.
+
+    private final class Retirement
+    {
+        Pool pool;
+        long releasedAt;
+        long acquiredAt;
+        bool holderReady;
+        bool served;
+    }
+
+    private __gshared Retirement retirement;
+
+    // SAFETY: The harness publishes before starting the reactor and clears after all workers join; one worker runs
+    // every fiber.
+    private Retirement sharedRetirement() @trusted nothrow @nogc
+    {
+        return retirement;
+    }
+
+    // SAFETY: Written by the harness before the reactor starts and after all workers join.
+    private void publishRetirement(Retirement state) @trusted nothrow @nogc
+    {
+        retirement = state;
+    }
+
+    private void dyingHolder() nothrow @nogc
+    {
+        auto state = sharedRetirement();
+        auto owner = Reactor.current();
+        Context context;
+        auto lease = state.pool.acquire(context);
+        assert(lease.ok());
+        state.holderReady = true;
+        assert(owner.yieldUntil(Deadline.afterMillis(30)).code == Status.ok);
+        scope RequestArena arena;
+        // The server ends this session: the statement fails and the lease retires its connection.
+        assert(!lease.value.execute("SELECT pg_terminate_backend(pg_backend_pid())", [], arena, context).ok());
+        state.releasedAt = nowNanos();
+        cast(void) state.pool.release(lease.value);
+    }
+
+    private void retirementWaiter() nothrow @nogc
+    {
+        auto state = sharedRetirement();
+        auto owner = Reactor.current();
+        scope (exit)
+            owner.stop();
+        while (!state.holderReady)
+            assert(owner.yieldUntil(Deadline.afterMillis(1)).code == Status.ok);
+        Context context;
+        auto lease = state.pool.acquire(context);
+        assert(lease.ok(), lease.error.message);
+        state.acquiredAt = nowNanos();
+        scope RequestArena arena;
+        state.served = lease.value.execute("SELECT 1", [], arena, context).ok();
+        assert(state.pool.release(lease.value).code == Status.ok);
+    }
+
+    @("a connection that dies mid-lease retires, and its slot goes to the waiting fiber once retirement finishes")
+    unittest
+    {
+        import std.process : environment;
+
+        const address = environment.get("FLINT_SQL_PG_TEST_DSN");
+        if (address.length == 0)
+            return;
+        auto state = new Retirement;
+        assert(state.pool.open(libpqPool(address)).code == Status.ok);
+        Context context;
+        scope (exit)
+            assert(state.pool.close(context).code == Status.ok);
+        publishRetirement(state);
+        scope (exit)
+            publishRetirement(null);
+        runFibers(1, 8, [&dyingHolder, &retirementWaiter]);
+        assert(state.served, "the waiter's statement runs on a fresh connection");
+        assert(state.acquiredAt >= state.releasedAt);
+        assert(state.acquiredAt - state.releasedAt < 50_000_000L, "the freed slot waited for the fallback");
+    }
+}

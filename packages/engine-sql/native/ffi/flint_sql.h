@@ -67,6 +67,8 @@ int flint_sql_pool_open(int driver, const char *address, size_t length, unsigned
 int flint_sql_pool_acquire(uint64_t slot, uint64_t identity, uint64_t *ticket,
                            uint64_t *lease_slot, uint64_t *lease_identity);
 void flint_sql_pool_withdraw(uint64_t slot, uint64_t identity, uint64_t ticket);
+/* Called, outside the pool lock, with a pool slot whenever a retired connection there finishes closing. */
+void flint_sql_set_retired_hook(void (*hook)(uint64_t pool_slot));
 int flint_sql_pool_close(uint64_t slot, uint64_t identity);
 int flint_sql_pool_release(uint64_t slot, uint64_t identity,
                            uint64_t lease_slot, uint64_t lease_identity);

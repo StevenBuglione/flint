@@ -203,6 +203,16 @@ void flint_sql_pool_withdraw(uint64_t slot, uint64_t identity, uint64_t ticket)
     pthread_mutex_unlock(&gate);
 }
 
+/* Told when a retired connection's slot becomes free, so a queued waiter can take it (set under `gate`). */
+static void (*retired_hook)(uint64_t pool_slot);
+
+void flint_sql_set_retired_hook(void (*hook)(uint64_t pool_slot))
+{
+    pthread_mutex_lock(&gate);
+    retired_hook = hook;
+    pthread_mutex_unlock(&gate);
+}
+
 void flint_sql_retired(flint_sql_retirement receipt)
 {
     if (!receipt.slot)
@@ -210,9 +220,14 @@ void flint_sql_retired(flint_sql_retirement receipt)
     pthread_mutex_lock(&gate);
     pool_slot *owner = NULL;
     connection_slot *connection = connection_at(receipt.slot, &owner);
-    if (connection && owner->identity == receipt.pool_identity)
+    void (*hook)(uint64_t) = NULL;
+    if (connection && owner->identity == receipt.pool_identity) {
         connection->retiring = 0;
+        hook = retired_hook;
+    }
     pthread_mutex_unlock(&gate);
+    if (hook)
+        hook((receipt.slot - 1) / MAX_CONNECTIONS + 1);
 }
 
 static void close_native(int driver, void *native, flint_sql_retirement receipt)

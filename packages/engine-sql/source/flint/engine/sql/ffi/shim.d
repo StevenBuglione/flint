@@ -81,6 +81,7 @@ version (FlintSqlNative)
         private int flint_sql_pool_open(int, const(char)*, size_t, uint, uint, uint, ulong*, ulong*);
         private int flint_sql_pool_acquire(ulong, ulong, ulong*, ulong*, ulong*);
         private void flint_sql_pool_withdraw(ulong, ulong, ulong);
+        private void flint_sql_set_retired_hook(RetiredHook);
         private int flint_sql_pool_close(ulong, ulong);
         private int flint_sql_pool_release(ulong, ulong, ulong, ulong);
         private void flint_sql_pool_retire(ulong, ulong);
@@ -162,6 +163,16 @@ package(flint.engine.sql) void withdrawPool(Identity handle, ulong ticket) @trus
 {
     version (FlintSqlNative)
         flint_sql_pool_withdraw(handle.slot, handle.generation, ticket);
+}
+
+/// What the C core calls, with a pool slot, when a retired connection there finishes closing.
+package(flint.engine.sql) alias RetiredHook = extern (C) void function(ulong pool) nothrow @nogc;
+
+// SAFETY: The hook is a static extern(C) function that lives for the program; the core calls it outside its lock.
+package(flint.engine.sql) void setRetiredHook(RetiredHook hook) @trusted nothrow @nogc
+{
+    version (FlintSqlNative)
+        flint_sql_set_retired_hook(hook);
 }
 
 // SAFETY: Closing a generation removes only idle native owners. Outstanding leases prevent reclamation.
