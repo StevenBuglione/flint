@@ -176,8 +176,8 @@ class FlintDubTests(unittest.TestCase):
 
 def fork_dmd():
     """The installed DMD fork when it serves a platform prelude (FLINT_DMD_SERVER_PRELUDE), else None."""
-    for host in ('linux', 'osx'):
-        dmd = ROOT / '.tools' / 'dmd2' / host / 'bin64' / 'dmd'
+    for host, exe in (('linux', 'dmd'), ('osx', 'dmd'), ('windows', 'dmd.exe')):
+        dmd = ROOT / '.tools' / 'dmd2' / host / 'bin64' / exe
         if dmd.is_file() and b'FLINT_DMD_SERVER_PRELUDE' in dmd.read_bytes():
             return dmd
     return None
@@ -333,8 +333,8 @@ class CompileServerPreludeTests(unittest.TestCase):
 
 def aot_extract_dmd():
     """The installed DMD fork when it has native Flint AOT extraction (-flint-aot-extract=), else None."""
-    for host in ('linux', 'osx'):
-        dmd = ROOT / '.tools' / 'dmd2' / host / 'bin64' / 'dmd'
+    for host, exe in (('linux', 'dmd'), ('osx', 'dmd'), ('windows', 'dmd.exe')):
+        dmd = ROOT / '.tools' / 'dmd2' / host / 'bin64' / exe
         if dmd.is_file() and b'flint-aot-extract=' in dmd.read_bytes():
             return dmd
     return None
@@ -460,8 +460,8 @@ struct Plain { int x; void touch() {} }
 
 def server_dmd():
     """The installed DMD fork when it has the compile server, else None."""
-    for host in ('linux', 'osx'):
-        dmd = ROOT / '.tools' / 'dmd2' / host / 'bin64' / 'dmd'
+    for host, exe in (('linux', 'dmd'), ('osx', 'dmd'), ('windows', 'dmd.exe')):
+        dmd = ROOT / '.tools' / 'dmd2' / host / 'bin64' / exe
         if dmd.is_file() and b'-fork-server=' in dmd.read_bytes():
             return dmd
     return None
