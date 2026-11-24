@@ -352,6 +352,16 @@ class CompileServerPreludeTests(unittest.TestCase):
         # The server's own backend_init must not leave its switches in the backend configuration a request sees.
         self.assert_served_object_is_the_in_process_object('-O', '-g', '-release')
 
+    def test_a_compiler_invoked_through_a_symlinked_toolchain_is_served(self):
+        # The shared .tools is a symlink to the installed version (.tools -> .tools-v4). The server is started from
+        # the resolved executable, so it once found dmd.conf, and the druntime and Phobos import paths, through the
+        # real directory while the request named them through the symlink: every request was refused.
+        toolchain = self.dmd.resolve().parents[3]           # .../dmd2/linux/bin64/dmd -> the directory holding dmd2
+        link = self.runtime / 'tools'
+        link.symlink_to(toolchain, target_is_directory=True)
+        self.dmd = link / self.dmd.resolve().relative_to(toolchain)
+        self.assert_served_object_is_the_in_process_object()
+
     def test_a_request_without_the_platform_paths_or_versions_compiles_in_process(self):
         # A relative spelling of the platform path is the same path (DUB passes them relative to the package).
         result, verdict = self.served('-Ilib', '-version=PlatformOn', '-c', 'app.d')

@@ -1889,7 +1889,7 @@ diff -ruN a/dmd/link.d b/dmd/link.d
          foreach (i; 0 .. argv.length)
          {
 diff --git a/dmd/main.d b/dmd/main.d
-index 2d7f373..048bb39 100644
+index 2d7f373..46d19ae 100644
 --- a/dmd/main.d
 +++ b/dmd/main.d
 @@ -73,6 +73,8 @@ import dmd.target;
@@ -1901,7 +1901,7 @@ index 2d7f373..048bb39 100644
  
  /**
   * DMD's entry point, C main.
-@@ -148,9 +150,82 @@ extern (C) int _Dmain(const(char)[][] dargs)
+@@ -148,9 +150,116 @@ extern (C) int _Dmain(const(char)[][] dargs)
              fputs(buf.peekChars(), stderr);
          }
  
@@ -1919,6 +1919,40 @@ index 2d7f373..048bb39 100644
 +            }
 +            else
 +                kept ~= a;
++        }
++        version (Posix)
++        {
++            import core.stdc.stdlib : getenv;
++            import core.sys.posix.stdlib : setenv;
++            import core.sys.posix.unistd : getcwd;
++            // The server is started as /proc/self/exe, a resolved path, but it must find dmd.conf where the client
++            // did: through a symlinked toolchain directory, %@P% and with it the druntime and Phobos import paths
++            // would be spelled differently, the request's would not be the server's, and every request would be
++            // refused. The client passes its own invocation (absolute, symlinks kept); the server reads it as its
++            // argv[0].
++            if (serverSocketPath)
++            {
++                if (auto invoked = getenv("FLINT_DMD_SERVER_ARGV0"))
++                    if (*invoked && kept.length)
++                        kept[0] = invoked[0 .. strlen(invoked)];
++            }
++            else if (dargs.length && dargs[0].length && dargs[0][0] != '/' && memchr(dargs[0].ptr, '/', dargs[0].length))
++            {
++                char[4096] cwd;
++                if (getcwd(cwd.ptr, cwd.length))
++                {
++                    char[8192] absolute;
++                    snprintf(absolute.ptr, absolute.length, "%s/%.*s", cwd.ptr, cast(int) dargs[0].length, dargs[0].ptr);
++                    setenv("FLINT_DMD_SERVER_ARGV0", absolute.ptr, 1);
++                }
++            }
++            else if (dargs.length && dargs[0].length)
++            {
++                auto copy = cast(char*) malloc(dargs[0].length + 1);
++                memcpy(copy, dargs[0].ptr, dargs[0].length);
++                copy[dargs[0].length] = 0;
++                setenv("FLINT_DMD_SERVER_ARGV0", copy, 1);
++            }
 +        }
 +        if (serverSocketPath)
 +            dargs = kept;
@@ -1984,7 +2018,7 @@ index 2d7f373..048bb39 100644
  /************************************************************************************/
  
  private:
-@@ -176,7 +251,8 @@ private int tryMain(const(char)[][] argv, out Param params)
+@@ -176,7 +285,8 @@ private int tryMain(const(char)[][] argv, out Param params)
  
      Strings files;
      Strings libmodules;
@@ -1994,7 +2028,7 @@ index 2d7f373..048bb39 100644
  
      ErrorSink eSink = global.errorSink;
  
-@@ -187,11 +263,26 @@ private int tryMain(const(char)[][] argv, out Param params)
+@@ -187,11 +297,26 @@ private int tryMain(const(char)[][] argv, out Param params)
          global.plugErrorSinks();
      }
  
@@ -2022,7 +2056,7 @@ index 2d7f373..048bb39 100644
      if (global.params.v.messageStyle == MessageStyle.sarif)
      {
          // Hand off the settings the CLI wrote into the original sink so the
-@@ -376,7 +467,7 @@ private int tryMain(const(char)[][] argv, out Param params)
+@@ -376,7 +501,7 @@ private int tryMain(const(char)[][] argv, out Param params)
      {
          fatal();
      }
@@ -2031,7 +2065,7 @@ index 2d7f373..048bb39 100644
      {
          if (params.jsonFieldFlags)
          {
-@@ -395,13 +486,16 @@ private int tryMain(const(char)[][] argv, out Param params)
+@@ -395,13 +520,16 @@ private int tryMain(const(char)[][] argv, out Param params)
      setDefaultLibraries(target, driverParams.defaultlibname, driverParams.debuglibname);
  
      // Initialization
@@ -2055,7 +2089,7 @@ index 2d7f373..048bb39 100644
  
      reconcileLinkRunLib(params, files.length, target.obj_ext, eSink);
      version(CRuntime_Microsoft)
-@@ -410,10 +504,13 @@ private int tryMain(const(char)[][] argv, out Param params)
+@@ -410,10 +538,13 @@ private int tryMain(const(char)[][] argv, out Param params)
          initFPU();
      }
      import dmd.root.ctfloat : CTFloat;
@@ -2072,7 +2106,7 @@ index 2d7f373..048bb39 100644
  
      if (params.v.verbose)
      {
-@@ -465,8 +562,33 @@ private int tryMain(const(char)[][] argv, out Param params)
+@@ -465,8 +596,33 @@ private int tryMain(const(char)[][] argv, out Param params)
          atexit(&flushMixins); // see comment for flushMixins
      }
      scope(exit) flushMixins();
@@ -2106,7 +2140,7 @@ index 2d7f373..048bb39 100644
  
      if (params.timeTrace)
      {
-@@ -474,6 +596,15 @@ private int tryMain(const(char)[][] argv, out Param params)
+@@ -474,6 +630,15 @@ private int tryMain(const(char)[][] argv, out Param params)
          initializeTimeTrace(params.timeTraceGranularityUs, toCString(argv[0]).ptr);
      }
  
@@ -2122,7 +2156,7 @@ index 2d7f373..048bb39 100644
      // Create Modules
      Modules modules;
      if (createModules(files, libmodules, params, target, eSink, modules))
-@@ -580,6 +711,17 @@ private int tryMain(const(char)[][] argv, out Param params)
+@@ -580,6 +745,17 @@ private int tryMain(const(char)[][] argv, out Param params)
      }
      }
  
@@ -2140,7 +2174,7 @@ index 2d7f373..048bb39 100644
      if (anydocfiles && modules.length && (driverParams.oneobj || params.objname))
      {
          eSink.error(Loc.initial, "conflicting Ddoc and obj generation options");
-@@ -663,6 +805,13 @@ private int tryMain(const(char)[][] argv, out Param params)
+@@ -663,6 +839,13 @@ private int tryMain(const(char)[][] argv, out Param params)
      if (global.errors)
          removeHdrFilesAndFail(params.dihdr.doOutput, modules);
  
@@ -2154,7 +2188,7 @@ index 2d7f373..048bb39 100644
      // Do pass 3 semantic analysis
      foreach (m; modules)
      {
-@@ -802,6 +951,10 @@ private int tryMain(const(char)[][] argv, out Param params)
+@@ -802,6 +985,10 @@ private int tryMain(const(char)[][] argv, out Param params)
              params.objfiles.push(mainModule.objfile.toChars());
      }
  
@@ -2165,7 +2199,7 @@ index 2d7f373..048bb39 100644
      {
          ObjcGlue_initialize();
          timeTraceBeginEvent(TimeTraceEventType.codegenGlobal);
-@@ -911,6 +1064,63 @@ private int tryMain(const(char)[][] argv, out Param params)
+@@ -911,6 +1098,63 @@ private int tryMain(const(char)[][] argv, out Param params)
      return status;
  }
  
@@ -2229,7 +2263,7 @@ index 2d7f373..048bb39 100644
  /**
   * Parses the command line arguments and configuration files
   *
-@@ -1020,7 +1230,8 @@ bool parseCommandlineAndConfig(const(char)[][] argv, out Param params, ref Strin
+@@ -1020,7 +1264,8 @@ bool parseCommandlineAndConfig(const(char)[][] argv, out Param params, ref Strin
      if (char* p = getenv("DDOCFILE"))
          global.params.ddoc.files.shift(p);
  
