@@ -1,0 +1,3 @@
+   Generated 11 Flint AOT modules for com.example.restservice.RestServiceApplication (23 extracted in 147 ms, 0 from the shared cache, 12 written, 170 ms, native extractor)
+    Building gs-rest-service 0.0.1 (dev, dmd)
+    Finished .flint/build/dev/gs-rest-service (non-canonical: --no-debug builds without debug information or a symbol table)

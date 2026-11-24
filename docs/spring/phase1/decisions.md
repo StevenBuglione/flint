@@ -681,3 +681,11 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - Oz 0.669.
 
     Evidence: `benchmarks/spring/evidence/phase1-builds-gs-relational/20261124T105854Z/`.
+- 2026-11-24, proof-harness: **phase1-builds-gs-rest certified at B2** (`0f01d6edd0a4`, 11:13–11:15Z, no foreign activity). Java, Go and Flint pass 18/18, and so do the served dev and static binaries. Compile server: 1,031 compiled, 44 refused (one per scored cold build). Median ratios (99% interval), 9 trials:
+    - **primary 1.083 (1.055–1.154), which fails**: 165 against 152 ms; phases flint 23, **AOT 101**, compile 20, link 18 ms (1.063 at B): the AOT step remains the build bottleneck for gs-rest (flint-aot);
+    - **secondary 0.289 (0.283–0.298)**, strict scratch (925 against 3,200 ms; 0.985 at B);
+    - edit, dev profile: 0.399;
+    - **edit, fully static: 0.660 (0.615–0.691)**: 104 ms, link 56 (1.093 at B);
+    - Oz 0.628.
+
+    Evidence: `benchmarks/spring/evidence/phase1-builds-gs-rest/20261124T111251Z/`.

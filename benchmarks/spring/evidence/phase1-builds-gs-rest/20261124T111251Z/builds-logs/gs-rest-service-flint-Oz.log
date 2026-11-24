@@ -1,0 +1,4 @@
+     Priming 31 platform module(s) into the cache
+   Generated 11 Flint AOT modules for com.example.restservice.RestServiceApplication (23 extracted in 154 ms, 0 from the shared cache, 12 written, 180 ms, native extractor)
+    Building gs-rest-service 0.0.1 (size, ldc2)
+    Finished .flint/build/size/gs-rest-service (canonical)
