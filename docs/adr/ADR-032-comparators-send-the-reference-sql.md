@@ -1,0 +1,36 @@
+# ADR-032: The comparators send the Spring reference's SQL
+
+Status: **proposed** on 2026-11-24 by proof-harness, for the owner. It carries out owner decision 355068f5 (decisions.md): every comparator must send the Spring reference's SQL per request, or the benchmark is invalid. AGENTS.md requires a comparator change to have its own ADR and a remeasurement of both sides; this is that ADR. The comparator is not edited until it is accepted.
+
+## Context
+
+[ADR-029](ADR-029-spring-boot-is-the-reference.md) makes the Java Spring Boot application the reference, and the Go comparators are the bar Flint must beat ([ADR-030](ADR-030-flint-is-a-spring-port.md) section 8). A comparator that does less database work per request than the reference wins by doing less, not by being faster, and makes Flint's verdicts on the database apps meaningless.
+
+The census measured what each implementation sends. `tools/spring_sql_census.py` runs the black-box suite once per implementation against a PostgreSQL cluster that logs every statement (`log_min_duration_statement=0`: parse, bind and execute separately; connections; the backend and a millisecond timestamp on each line) and assigns each statement to the request it falls in. Evidence: `benchmarks/spring/evidence/sql-census/petclinic-rest-20261124T0437Z/` (`table.md`, `census.json`, the three server logs), at B (`ca5fbd4a46ed`), all 109 cases of petclinic-rest.
+
+| | Java (reference) | Flint | Go comparator |
+|---|---|---|---|
+| Benchmark request, GET /petclinic/api/owners/{id} | `BEGIN READ ONLY`, 3 SELECTs, `COMMIT`; 0 parses once warm | the same 3 SELECTs in `BEGIN ISOLATION LEVEL READ COMMITTED READ ONLY` … `COMMIT`; 2 unnamed parses (BEGIN, COMMIT) | the 3 SELECTs, no transaction |
+| Cases whose data statements or transaction commands differ from Java's | – | 2 of 109 (actuator health only) | 66 of 109 |
+| PostgreSQL CPU per owner request, 8 connections, no logging | – | 58.6 µs | 21.4 µs |
+
+Go's divergences:
+1. **No read-only transaction around reads (54 cases).** spring-petclinic-rest's `ClinicServiceImpl` is `@Transactional(readOnly = true)` for its finders, so the reference brackets each read in `BEGIN READ ONLY` … `COMMIT`. The Go comparator (`benchmarks/spring/go/petclinic-rest`, for example `getOwner` → `findOwner`) runs the SELECTs in autocommit.
+2. **One transaction where the reference uses two (6 cases).** For example, adding a pet: the reference first loads the owner in a read-only transaction, then inserts in a write transaction; Go loads outside any transaction and opens one for the write.
+3. **No first-insert metadata lookups (8 cases).** Spring's `SimpleJdbcInsert` reads the table's column metadata (two catalog queries) when it first inserts into a table. They occur once per table, on its first insert, in Java and in Flint alike; they are not part of a steady-state request.
+4. **Actuator health.** The reference's pool validates with two empty queries, Flint sends none and Go sends `-- ping`. No benchmark workload touches it.
+
+## Decision
+
+1. **The rule.** For every endpoint a registered workload or the black-box suite exercises, each comparator sends, per request, the reference's data statements in the reference's order and inside the reference's transaction boundaries (`BEGIN`, `BEGIN READ ONLY`, `COMMIT`, `ROLLBACK`). How a driver carries them (named or unnamed statements, when it prepares, pipelining) is the ecosystem's standard driver behaviour and is not matched: pgjdbc's server-side preparation and pgx's statement cache both stay as they are.
+2. **The Go change, and only it.** The Go comparator gains the reference's transactions: a read-only transaction around each finder the reference marks `readOnly`, and the reference's split into a read-only and a write transaction for the six writes. Nothing else changes, and nothing goes beyond Java: no caching, batching or query rewriting that the reference does not do.
+3. **First-use statements.** The metadata lookups in divergence 3 run on the first insert per table only. Proposed: they are outside the rule, because no steady-state request sends them and the benchmark's warm-up runs before any measurement. **Owner to confirm**; if the owner wants them matched, the Go comparator issues the same two catalog queries on its first insert per table.
+4. **Enforcement.** `spring_bench.py register` records a census for each database app beside the comparator's digest, and `check-registry` fails when the comparator's digest has changed since its census, or when the census shows a per-request divergence in data statements or transaction commands from Java outside the exemptions listed here (actuator health; first-use metadata, if section 3 stands).
+5. **Remeasurement of both sides.** After the change the comparator is registered again (a new digest), and every certified or pending part that loads or builds petclinic-rest is measured again at one commit: phase1-builds-petclinic, phase1-http-petclinic, error-validation-p99 and the petclinic GC-matrix parts. Earlier petclinic numbers against the old comparator are kept as history and never assembled with the new ones (assembly already fails on mixed commits).
+6. **Flint's own divergences** are not comparator matters and go to data-access: the per-transaction re-parse of `BEGIN` and `COMMIT` (236 parses across the suite against the reference's 129), the explicit isolation clause, `RETURNING "id"` on inserts, and the missing pool validation in actuator health.
+
+## Consequences
+
+- The Go comparator does about two more round trips per owner request (BEGIN and COMMIT), so Go's petclinic throughput and PostgreSQL CPU change; the throughput plan's targets are recomputed from the remeasured comparator.
+- gs-relational-data-access uses embedded engines (H2 for Java, SQLite for Go and Flint), which a PostgreSQL log cannot see. Its census needs engine-level statement tracing and follows separately; until it is done, this ADR's rule is verified for petclinic-rest only.
+- The census tool becomes part of the registration evidence and reruns whenever a comparator or the reference changes.
