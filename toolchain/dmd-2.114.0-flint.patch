@@ -2225,18 +2225,18 @@ diff -ruN a/dmd/timetrace.d b/dmd/timetrace.d
                  event.name = eventPrefixes[eventType] ~ name();
              else if (!event.name)
 diff --git a/build.d b/build.d
-index 7b08cb3..f8abb1b 100755
+index 7b08cb3..807a093 100755
 --- a/build.d
 +++ b/build.d
-@@ -1386,7 +1386,7 @@ auto sourceFiles()
-             glue/s2ir.d glue/tocsym.d glue/toctype.d glue/tocvdebug.d glue/todt.d glue/toir.d glue/toobj.d
-         "),
-         driver: fileArray(env["D"], "dinifile.d dmdparams.d lib/package.d lib/elf.d lib/mach.d lib/mscoff.d
--            link.d mars.d main.d flintserver.d flintlink.d sarif.d lib/scanelf.d lib/scanmach.d lib/scanmscoff.d timetrace.d vsoptions.d
-+            link.d mars.d main.d flintserver.d flintlink.d flintaot.d sarif.d lib/scanelf.d lib/scanmach.d lib/scanmscoff.d timetrace.d vsoptions.d
-         "),
-         frontend: fileArray(env["D"], "
-             access.d aggregate.d aliasthis.d argtypes_x86.d argtypes_sysv_x64.d argtypes_aarch64.d arrayop.d
+@@ -1400,7 +1400,7 @@ auto sourceFiles()
+             parse.d pragmasem.d printast.d rootobject.d safe.d
+             semantic2.d semantic3.d sideeffect.d statement.d
+             statementsem.d staticassert.d staticcond.d stmtstate.d target.d targetcompiler.d templatesem.d templateparamsem.d traits.d
+-            typesem.d typinf.d utils.d
++            typesem.d typinf.d utils.d flintaot.d
+             iasm/package.d iasm/gcc.d
+             mangle/package.d mangle/basic.d mangle/cpp.d mangle/cppwin.d
+             visitor/package.d visitor/foreachvar.d visitor/parsetime.d visitor/permissive.d visitor/postorder.d visitor/statement_rewrite_walker.d
 diff --git a/dmd/argtypes_aarch64.d b/dmd/argtypes_aarch64.d
 index 7c01e17..d040f8c 100644
 --- a/dmd/argtypes_aarch64.d
@@ -8167,22 +8167,22 @@ index b0c2fd7..22961b9 100644
                envsection.ptr, cast(int)global.inifilename.length, global.inifilename.ptr);
  
 diff --git a/dmd/mars.d b/dmd/mars.d
-index 5fbbc3d..7ae3ea6 100644
+index 5fbbc3d..9750a43 100644
 --- a/dmd/mars.d
 +++ b/dmd/mars.d
-@@ -1107,6 +1107,12 @@ bool parseCommandLine(const ref Strings arguments, const size_t argc, out Param
-             import dmd.glue : flintNoLocalClasses;
-             flintNoLocalClasses = true;
-         }
+@@ -951,6 +951,12 @@ bool parseCommandLine(const ref Strings arguments, const size_t argc, out Param
+             driverParams.map = true;
+         else if (arg == "-multiobj")
+             params.multiobj = true;
 +        else if (startsWith(p + 1, "flint-aot-extract="))
 +        {
 +            // Flint: describe modules for Flint AOT natively (dmd.flintaot).
 +            import dmd.flintaot : flintAotRequest;
 +            flintAotRequest = p + "-flint-aot-extract=".length;
 +        }
-         else if (startsWith(p + 1, "verror-hide="))
+         else if (startsWith(p + 1, "mixin="))
          {
-             // Flint: condense errors raised inside this directory (dmd.flintdiag).
+             auto tmp = p + 6 + 1;
 diff --git a/dmd/target.d b/dmd/target.d
 index e697db0..79a62cc 100644
 --- a/dmd/target.d

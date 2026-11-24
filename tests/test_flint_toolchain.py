@@ -335,7 +335,7 @@ def aot_extract_dmd():
     """The installed DMD fork when it has native Flint AOT extraction (-flint-aot-extract=), else None."""
     for host, exe in (('linux', 'dmd'), ('osx', 'dmd'), ('windows', 'dmd.exe')):
         dmd = ROOT / '.tools' / 'dmd2' / host / 'bin64' / exe
-        if dmd.is_file() and b'flint-aot-extract=' in dmd.read_bytes():
+        if dmd.is_file() and b'cannot read the Flint AOT request' in dmd.read_bytes():
             return dmd
     return None
 
