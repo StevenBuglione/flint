@@ -1,0 +1,4 @@
+     Priming 51 platform module(s) into the cache
+   Generated 34 Flint AOT modules for org.springframework.samples.petclinic.PetClinicApplication (59 extracted in 310 ms, 0 from the shared cache, 35 written, 404 ms, native extractor)
+    Building petclinic-rest 0.0.1 (size, ldc2)
+    Finished .flint/build/size/petclinic-rest (canonical)
