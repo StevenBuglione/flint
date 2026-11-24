@@ -437,7 +437,9 @@ def spring_server(spring, app, target, port, database, workload, environment, sm
     return argv,env,cwd,identity
 
 def spring_measure(spring, app, spec, target, workload, oha, trial, outdir, environment, database, smoke,
-                   extra_args=(), binary=None, label=None):
+                   extra_args=(), binary=None, label=None, observer=None):
+    """One trial of one target. `observer(event, pid)`, when given, is called at readiness, after each phase, and
+    every 15 s during the fixed-rate phase (a diagnostic hook: tools/smaps_census.py); its results go into the row."""
     port=spring.free_port();url=f"http://127.0.0.1:{port}{spec['path']}"
     argv,env,cwd,identity=spring_server(spring,app,target,port,database,workload,environment,smoke,extra_args,binary)
     expected=spec["expected"];prefix=f"{trial:02d}-{app}-{label or target}"
@@ -456,21 +458,38 @@ def spring_measure(spring, app, spec, target, workload, oha, trial, outdir, envi
             if target!="java-jvm":
                 require(file_hash(Path(f"/proc/{process.pid}/exe"))==identity["sha256"],"running process differs from the measured executable")
             check_no_children(process.pid)
+            observations=[]
+            def observe(event):
+                if observer:observations.append({"event":event,"at":time.monotonic(),"data":observer(event,process.pid)})
+            observe("ready")
             phases={}
             for phase,seconds,rate in (("warmup",workload["warmup_seconds"],spec["fixed_rate_qps"]),
                                        ("latency",workload["duration_seconds"],spec["fixed_rate_qps"]),
                                        ("capacity",workload["capacity_seconds"],None)):
                 # Context targets are reported, never compared: a JVM that cannot hold the fixed rate is recorded
                 # as unsustained rather than dropped.
-                phases[phase]=run_oha(oha,url,workload,seconds,rate,outdir/f"{prefix}-{phase}.json",process,expected,
-                                      spring_verifier,parse_spring_oha,require_sustained=not target.startswith("java-"),
-                                      request=expected.get("request"))
+                sampler=None
+                if observer and phase=="latency":
+                    import threading
+                    stop=threading.Event()
+                    def sample(stop=stop,began=time.monotonic()):
+                        while not stop.wait(15):observe(f"latency+{round(time.monotonic()-began)}s")
+                    sampler=threading.Thread(target=sample,daemon=True);sampler.start()
+                try:
+                    phases[phase]=run_oha(oha,url,workload,seconds,rate,outdir/f"{prefix}-{phase}.json",process,expected,
+                                          spring_verifier,parse_spring_oha,require_sustained=not target.startswith("java-"),
+                                          request=expected.get("request"))
+                finally:
+                    if sampler:stop.set();sampler.join()
+                observe("after-"+phase)
                 spring_verifier(url,expected)
             if not smoke:
                 require(phases["latency"]["load_cpu_fraction"]<.85 and phases["capacity"]["load_cpu_fraction"]<.85,
                         "load generator used >=85% of its CPUs; comparison may be client-limited")
-            return {"app":app,"target":target,"trial":trial,"server_command":argv,"server_pid":process.pid,
-                    "identity":identity,"server_log":str(log_path),**phases}
+            row={"app":app,"target":target,"trial":trial,"server_command":argv,"server_pid":process.pid,
+                 "identity":identity,"server_log":str(log_path),**phases}
+            if observer:row["observations"]=observations
+            return row
         finally:
             terminate(process)
 

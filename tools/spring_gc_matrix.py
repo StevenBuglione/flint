@@ -98,6 +98,12 @@ def main(args):
     if problems:
         raise SystemExit('Go comparator: ' + '; '.join(problems))
     stand_in = Path(args.binary).resolve() if args.binary else None
+    # --smaps (Astra's RSS review): a census of each server's mappings at readiness, after each phase and every 15 s
+    # of the fixed-rate phase, for Flint and Go. Live bytes after a collection are not visible from outside.
+    observer = None
+    if getattr(args, 'smaps', False):
+        import smaps_census
+        observer = lambda event, pid: smaps_census.snapshot(pid)
     if stand_in is None:
         spring_bench.build_flint(app)
     if with_go:
@@ -136,14 +142,18 @@ def main(args):
                 for name in order:
                     if name == 'go':
                         row = load_bench.spring_measure(spring_bench, app, spec, 'go', workload, oha, trial, outdir,
-                                                        environment, database, args.smoke)
+                                                        environment, database, args.smoke, observer=observer)
                         target = result['go']
                     else:
                         row = load_bench.spring_measure(spring_bench, app, spec, 'flint', workload, oha, trial, outdir,
                                                         environment, database, args.smoke, extra_args=gcopt(name),
-                                                        binary=stand_in, label='flint-' + name)
+                                                        binary=stand_in, label='flint-' + name, observer=observer)
                         target = result['settings'][name]
                         profile = gc_profile(row['server_log'])
+                        if profile and 'collections' in profile:
+                            # The process ran the three phases plus readiness; collections per second of load.
+                            loaded = workload['warmup_seconds'] + workload['duration_seconds'] + workload['capacity_seconds']
+                            profile['collections_per_load_second'] = profile['collections'] / loaded
                         target['gc_profiles'].append(profile)
                         row['gc_profile'] = profile
                     row['setting'] = name

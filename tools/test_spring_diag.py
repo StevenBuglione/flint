@@ -62,6 +62,22 @@ class Perf(unittest.TestCase):
             self.assertIsNone(spring_diag.perf_start(os.getpid(), 1))
 
 
+class Smaps(unittest.TestCase):
+    def test_pools_bucket_by_size(self):
+        import smaps_census
+        text = '\n'.join([
+            '7f0000000000-7f0000100000 rw-p 00000000 00:00 0 ', 'Rss:                1024 kB', 'Anonymous:          1024 kB',
+            '7f0000100000-7f0000500000 rw-p 00000000 00:00 0 ', 'Rss:                3000 kB', 'Anonymous:          3000 kB',
+            '7f0000500000-7f0000900000 rw-p 00000000 00:00 0 ', 'Rss:                 100 kB', 'Anonymous:           100 kB',
+            '55d000000000-55d000021000 rw-p 00000000 00:00 0                          [heap]', 'Rss:                 132 kB',
+            '7f1000000000-7f1000200000 r-xp 00000000 08:01 42                         /usr/lib/libc.so.6', 'Rss:                 900 kB'])
+        out = smaps_census.summarize(smaps_census.parse(text))
+        self.assertEqual(out['totals_kb']['Rss'], 1024 + 3000 + 100 + 132 + 900)
+        self.assertEqual(out['anon_by_size_kb']['4096'], {'mappings': 2, 'Rss': 3100, 'Anonymous': 3100})
+        self.assertEqual(out['anon_by_size_kb']['1024']['Rss'], 1024)
+        self.assertEqual(list(out['largest_kb'])[0], '[anon]')
+
+
 class Cpu(unittest.TestCase):
     def test_thread_and_process_cpu(self):
         threads = spring_diag.thread_cpu(os.getpid())
