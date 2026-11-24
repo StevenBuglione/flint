@@ -21,7 +21,8 @@ struct AotStep
 
 /// Run Flint AOT before the recipe is written.
 AotStep runAotStep(ref Session session, const ref Manifest manifest, const ref Resolution resolution,
-        const ref Toolchain toolchain, string compiler, ref Report report, string prelude = null)
+        const ref Toolchain toolchain, string compiler, ref Report report, string prelude = null,
+        scope const string[] versions = null)
 {
     import std.conv : to;
     import std.path : buildPath;
@@ -41,10 +42,13 @@ AotStep runAotStep(ref Session session, const ref Manifest manifest, const ref R
     const dmd = toolchain.component("dmd");
     request.compiler = dmd.present ? dmd.path : toolchain.component(compiler).path;
     request.importPaths = importPaths(resolution);
-    request.flags = ["-preview=dip1000"];
+    // The platform modules' version identifiers, as the project compile gets them: the extraction sees the
+    // declarations the build compiles, and the compile server, whose prelude defines them, serves it (a request
+    // without them is refused and compiles in-process, about 80 ms instead of 7 on gs-rest-service).
+    request.flags = ["-preview=dip1000"] ~ versions;
     foreach (ref item; resolution.packages)
         request.packageDirectories ~= item.directory;
-    request.environmentKey = environmentKey(session, toolchain, request.compiler, resolution);
+    request.environmentKey = environmentKey(session, toolchain, request.compiler, resolution, versions);
     // The per-endpoint fast path is Flint's default execution model (owner decision 7206d97d,
     // docs/spring/phase1/fast-path.md); FLINT_AOT_FAST_PATH=0 opts out, for diagnosis.
     {
@@ -126,12 +130,29 @@ private string cacheRoot(ref Session session)
 }
 
 private string environmentKey(ref Session session, const ref Toolchain toolchain, string compiler,
-        const ref Resolution resolution)
+        const ref Resolution resolution, scope const string[] versions)
 {
     import flint_tool.support.files : sha256Hex;
 
     string text = compiler ~ "\n" ~ toolchain.component("dmd").reported ~ "\n" ~ session.home.platform.release;
     foreach (ref item; resolution.packages)
         text ~= "\n" ~ item.name ~ "@" ~ item.contentSha256 ~ item.commit;
+    // Absent from the text without versions, so such builds keep their keys.
+    foreach (flag; versions)
+        text ~= "\n" ~ flag;
     return sha256Hex(cast(const(ubyte)[]) text);
+}
+
+/// The `-version=` lines of a compile-server prelude (engine/platformcache.d's renderPrelude), in its order: the
+/// platform modules' version identifiers, which every project compile of the build carries.
+string[] preludeVersions(string prelude) pure
+{
+    import std.algorithm.searching : startsWith;
+    import std.string : lineSplitter;
+
+    string[] versions;
+    foreach (line; prelude.lineSplitter)
+        if (line.startsWith("-version="))
+            versions ~= line;
+    return versions;
 }

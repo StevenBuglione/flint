@@ -401,6 +401,18 @@ private string serverPrelude(const ref BuildRequest request, const ref ProfileSp
     return null;
 }
 
+/// The platform modules' `-version=` flags when the build links the platform, as its prelude lists them; the AOT
+/// step's extraction compile passes them whether or not the compile server serves it.
+private string[] platformVersions(const ref BuildOutcome result)
+{
+    import std.file : exists, readText;
+    import flint_tool.engine.aot.step : preludeVersions;
+
+    if (!result.platform.active || !result.platform.prelude.length || !exists(result.platform.prelude))
+        return null;
+    return preludeVersions(readText(result.platform.prelude));
+}
+
 /// A project build's additions to its environment. Returns whether the user asked for DUB's trace.
 private bool projectEnvironment(const ref BuildRequest request, const ref ProfileSpec spec,
         const ref BuildOutcome result, ref EnvVar[] environment)
@@ -711,7 +723,7 @@ private bool prepareBuild(ref Session session, const ref Manifest manifest, cons
         return false;
     const aotStart = MonoTime.currTime;
     const aot = runAotStep(session, manifest, resolution, toolchain, result.compiler, report,
-            serverPrelude(request, settings.spec, result));
+            serverPrelude(request, settings.spec, result), platformVersions(result));
     result.phases.aot = (MonoTime.currTime - aotStart).total!"msecs";
     if (!aot.ok)
         return false;

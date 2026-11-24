@@ -921,6 +921,20 @@ unittest
             "module shop.web\nmodule shop.data\nknown flint.stereotype.Service\n");
 }
 
+@("the extraction compile takes the version lines of the compile server's prelude, in order")
+unittest
+{
+    import flint_tool.engine.aot.step : preludeVersions;
+
+    const prelude = "-I/p/web/source\n-version=FlintNativeLlhttp\n-version=FlintNativeOpenssl\n-preview=dip1000\n"
+        ~ "-debug\nflint.web\nflint.web.version_\n";
+    expect(preludeVersions(prelude)).toEqual([
+        "-version=FlintNativeLlhttp", "-version=FlintNativeOpenssl"
+    ]);
+    expect(preludeVersions("-I/p/source\n-preview=dip1000\nflint.web\n").length).toEqual(0);
+    expect(preludeVersions("").length).toEqual(0);
+}
+
 @("only a compiler without -flint-aot-extract falls back to the describer; the fork's own errors are reported")
 unittest
 {
