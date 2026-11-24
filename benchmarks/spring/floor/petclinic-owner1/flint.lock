@@ -22,11 +22,95 @@ scope = "build"
 dependencies = []
 
 [[package]]
+name = "flint:beans"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = ["flint:conc", "flint:core", "flint:engine-aot", "flint:jakarta-annotation", "flint:java"]
+
+[[package]]
+name = "flint:boot-autoconfigure"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = ["flint:boot-core", "flint:context", "flint:engine-aot", "flint:java"]
+
+[[package]]
+name = "flint:boot-core"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = ["flint:arena", "flint:beans", "flint:conc", "flint:context", "flint:core", "flint:engine-aot", "flint:java", "flint:os", "flint:slf4j-api", "flint:term"]
+
+[[package]]
+name = "flint:boot-jackson"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = ["flint:boot-autoconfigure", "flint:boot-core", "flint:context", "flint:engine-aot", "flint:jackson-annotations", "flint:jackson-core", "flint:jackson-databind", "flint:java"]
+
+[[package]]
+name = "flint:boot-starter"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = ["flint:boot-autoconfigure", "flint:boot-core", "flint:jakarta-annotation"]
+
+[[package]]
+name = "flint:boot-starter-json"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = ["flint:boot-jackson", "flint:boot-starter"]
+
+[[package]]
+name = "flint:boot-starter-validation"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = ["flint:boot-starter", "flint:boot-validation", "flint:hibernate-validator"]
+
+[[package]]
+name = "flint:boot-validation"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = ["flint:boot-autoconfigure", "flint:boot-core", "flint:context", "flint:engine-aot", "flint:hibernate-validator", "flint:jakarta-validation", "flint:java"]
+
+[[package]]
 name = "flint:conc"
 kind = "core"
 source = "workspace"
 scope = "build"
 dependencies = ["flint:arena"]
+
+[[package]]
+name = "flint:context"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = ["flint:beans", "flint:core", "flint:engine-aot", "flint:engine-reactor", "flint:jakarta-validation", "flint:java"]
+
+[[package]]
+name = "flint:core"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = ["flint:engine-aot", "flint:jakarta-annotation", "flint:java"]
+
+[[package]]
+name = "flint:data-commons"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = ["flint:engine-aot", "flint:java"]
+
+[[package]]
+name = "flint:engine-aot"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = []
 
 [[package]]
 name = "flint:engine-di"
@@ -57,6 +141,55 @@ scope = "build"
 dependencies = ["flint:arena", "flint:conc", "flint:engine-di", "flint:engine-reactor", "flint:log", "flint:serde", "flint:validate"]
 
 [[package]]
+name = "flint:hibernate-validator"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = ["flint:engine-aot", "flint:jakarta-validation", "flint:java", "flint:serde", "flint:validate"]
+
+[[package]]
+name = "flint:jackson-annotations"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = []
+
+[[package]]
+name = "flint:jackson-core"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = ["flint:engine-aot", "flint:serde"]
+
+[[package]]
+name = "flint:jackson-databind"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = ["flint:engine-aot", "flint:jackson-annotations", "flint:jackson-core", "flint:java", "flint:serde"]
+
+[[package]]
+name = "flint:jakarta-annotation"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = []
+
+[[package]]
+name = "flint:jakarta-validation"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = ["flint:conc", "flint:engine-aot", "flint:java"]
+
+[[package]]
+name = "flint:java"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = ["flint:engine-aot", "flint:serde"]
+
+[[package]]
 name = "flint:log"
 kind = "core"
 source = "workspace"
@@ -72,6 +205,20 @@ dependencies = ["flint:arena", "flint:conc"]
 
 [[package]]
 name = "flint:serde"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = ["flint:arena"]
+
+[[package]]
+name = "flint:slf4j-api"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = ["flint:arena", "flint:conc", "flint:engine-aot", "flint:engine-reactor", "flint:java", "flint:log", "flint:serde"]
+
+[[package]]
+name = "flint:term"
 kind = "core"
 source = "workspace"
 scope = "build"

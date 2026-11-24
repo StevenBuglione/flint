@@ -3,12 +3,27 @@ name = "floor"
 version = "0.0.1"
 flint = "1.0"
 type = "executable"
+base-package = "org.springframework"
 description = "Floor reference for petclinic-rest GET /owners/{id}: diagnostic only, never evidence (docs/spring/phase1/petclinic-cpu-astra.md)"
 
 [build]
 executable = "petclinic-floor"
 
 [dependencies]
+"flint:boot-core" = {}
+"flint:boot-autoconfigure" = {}
+"flint:boot-starter-json" = {}
+"flint:boot-starter-validation" = {}
+"flint:boot-validation" = {}
+"flint:context" = {}
+"flint:core" = {}
+"flint:data-commons" = {}
+"flint:engine-aot" = {}
+"flint:hibernate-validator" = {}
+"flint:jackson-annotations" = {}
+"flint:jackson-databind" = {}
+"flint:jakarta-validation" = {}
+"flint:java" = {}
 "flint:arena" = {}
 "flint:conc" = {}
 "flint:engine-reactor" = {}

@@ -8,15 +8,28 @@ SELECTs, COMMIT), and the response bytes petclinic sends: status line, header fi
 and JSON with its field order, sorting and Jackson's escaping. Rows are written straight into the response; nothing
 models Owner, Pet or PetType.
 
+Arm "mapped" (FLOOR_ARM=mapped): the same handler, with petclinic-rest's object work restored after the same
+statements: its Owner, Pet, PetType and Visit entities built from the rows, the OwnerDto of its OwnerMapperImpl
+(constructed with its PetMapperImpl and VisitMapperImpl, as Boot wires them), and the JsonMapper Boot's Jackson
+auto-configuration builds over the Flint AOT descriptors of petclinic's DTOs. The Boot context starts only for this
+arm; it has no web server, servlet, MVC or security of its own. The model and mapper packages are petclinic-rest's
+own files, linked; the DTO and validation packages are copies, because Flint AOT describes only a project's own
+files and follows no links.
+
 Environment: SERVER_PORT, POSTGRES_URL (jdbc:postgresql://host:port/database), POSTGRES_USER, POSTGRES_PASS, and
 FLOOR_SQL_DIR (petclinic's db/postgres scripts, run at startup as petclinic's flint.sql.init.mode=always does).
 SIGTERM stops it.
 +/
-module floor.app;
+module org.springframework.floor.app;
 
 import flint.arena : Buffer, Error, RequestArena, Status;
+import flint.boot : FlintApplication;
 import flint.conc : Context, Deadline;
 import flint.engine.sql : Connection, Driver, Pool, PoolOptions, Row, SqlValue, ValueKind, enablePostgres;
+import flint.jackson.databind : JsonMapper;
+import flint.java.time : LocalDate;
+import org.springframework.samples.petclinic.mapper : OwnerMapper, OwnerMapperImpl, PetMapperImpl, VisitMapperImpl;
+import org.springframework.samples.petclinic.model : Owner, Pet, PetType, Visit;
 import flint.engine.web : FiberResponse, FiberRoute, Method, Request, RequestContext, Server,
     ServerOptions, StreamField, unknownLength;
 
@@ -89,7 +102,7 @@ private enum maxPets = 64;
 private enum maxVisits = 256;
 private enum maxTypes = 64;
 
-private struct Visit
+private struct VisitRow
 {
     long id;
     long petId;
@@ -97,7 +110,7 @@ private struct Visit
     Text description;
 }
 
-private struct Pet
+private struct PetRow
 {
     long id;
     long typeId;
@@ -108,7 +121,7 @@ private struct Pet
     size_t visitCount;
 }
 
-private struct PetType
+private struct TypeRow
 {
     long id;
     Text name;
@@ -127,11 +140,11 @@ private struct OwnerRows
     bool found;
     long id;
     Text[5] text; // first name, last name, address, city, telephone
-    Pet[maxPets] pets;
+    PetRow[maxPets] pets;
     size_t petCount;
-    Visit[maxVisits] visits;
+    VisitRow[maxVisits] visits;
     size_t visitCount;
-    PetType[maxTypes] types;
+    TypeRow[maxTypes] types;
     size_t typeCount;
     bool tooMany;
 }
@@ -347,6 +360,9 @@ private void writeOwner(ref OwnerRows rows, ref const Scratch scratch, ref Body 
 private final class Floor
 {
     Pool pool;
+    /// Arm "mapped": petclinic-rest's DTO mapper and Boot's JsonMapper; null for arm "minimal".
+    OwnerMapper ownerMapper;
+    JsonMapper jsonMapper;
 
     void serve(ref scope Request request, ref scope RequestContext context, FiberResponse response) @safe
     {
@@ -369,6 +385,22 @@ private final class Floor
             respond(response, context, 404, null);
             return;
         }
+        if (jsonMapper !is null)
+        {
+            ubyte[] json;
+            try
+                json = jsonMapper.writeValueAsBytes(ownerMapper.toOwnerDto(entities(rows, scratch)));
+            catch (Exception failure)
+            {
+                import std.stdio : writeln;
+
+                writeln("floor: mapped arm failed: ", failure.msg);
+                respond(response, context, 500, null);
+                return;
+            }
+            respond(response, context, 200, cast(const(char)[]) json);
+            return;
+        }
         Body output;
         writeOwner(rows, scratch, output);
         if (output.overflowed)
@@ -377,6 +409,51 @@ private final class Floor
             return;
         }
         respond(response, context, 200, output.storage[0 .. output.used]);
+    }
+
+    /// The owner and its pets, types and visits as petclinic-rest's entities, as its repository builds them.
+    private static Owner entities(ref OwnerRows rows, ref const Scratch scratch)
+    {
+        string str(Text text)
+        {
+            return text.isNull ? null : scratch[text].idup;
+        }
+
+        auto owner = new Owner;
+        owner.setId(cast(int) rows.id);
+        owner.setFirstName(str(rows.text[0]));
+        owner.setLastName(str(rows.text[1]));
+        owner.setAddress(str(rows.text[2]));
+        owner.setCity(str(rows.text[3]));
+        owner.setTelephone(str(rows.text[4]));
+        PetType[] types;
+        foreach (ref row; rows.types[0 .. rows.typeCount])
+        {
+            auto type = new PetType;
+            type.setId(cast(int) row.id);
+            type.setName(str(row.name));
+            types ~= type;
+        }
+        foreach (ref row; rows.pets[0 .. rows.petCount])
+        {
+            auto pet = new Pet;
+            pet.setId(cast(int) row.id);
+            pet.setName(str(row.name));
+            pet.setBirthDate(LocalDate.parse(scratch[row.birthDate]));
+            foreach (type; types)
+                if (type.getId() == row.typeId)
+                    pet.setType(type);
+            foreach (ref visitRow; rows.visits[row.firstVisit .. row.firstVisit + row.visitCount])
+            {
+                auto visit = new Visit;
+                visit.setId(cast(int) visitRow.id);
+                visit.setDate(LocalDate.parse(scratch[visitRow.date]));
+                visit.setDescription(str(visitRow.description));
+                pet.addVisit(visit);
+            }
+            owner.addPet(pet);
+        }
+        return owner;
     }
 
     /// The owner id in the request's path, or -1.
@@ -464,7 +541,7 @@ private final class Floor
             rows.tooMany = true;
             return;
         }
-        rows.pets[rows.petCount++] = Pet(petId, integer(row, 3, arena), integer(row, 4, arena),
+        rows.pets[rows.petCount++] = PetRow(petId, integer(row, 3, arena), integer(row, 4, arena),
                 text(row, 1, arena, scratch), text(row, 2, arena, scratch), rows.visitCount, 0);
     }
 
@@ -476,7 +553,7 @@ private final class Floor
             rows.tooMany = true;
             return;
         }
-        Visit visit;
+        VisitRow visit;
         visit.id = visitId;
         visit.date = text(row, 6, arena, scratch);
         visit.description = text(row, 7, arena, scratch);
@@ -494,7 +571,7 @@ private final class Floor
                 rows.tooMany = true;
                 return Error.init;
             }
-            rows.types[rows.typeCount++] = PetType(integer(row, 0, arena), text(row, 1, arena, scratch));
+            rows.types[rows.typeCount++] = TypeRow(integer(row, 0, arena), text(row, 1, arena, scratch));
             return Error.init;
         });
     }
@@ -626,7 +703,9 @@ private void startServer(ref Server server, Floor floor)
         throw new Exception("could not route: " ~ routed.message);
 }
 
-int main()
+/// Run the arm `FLOOR_ARM` selects ("minimal" by default, or "mapped"); `App` is the Boot application of arm
+/// "mapped".
+int runFloor(App)(string[] args)
 {
     import core.atomic : atomicLoad, atomicStore;
     import core.thread.osthread : Thread;
@@ -643,6 +722,16 @@ int main()
     Server server;
     try
     {
+        import std.process : environment;
+
+        if (environment.get("FLOOR_ARM", "minimal") == "mapped")
+        {
+            // Boot's JsonMapper, over the Flint AOT descriptors of the DTOs this project compiles, and petclinic-rest's
+            // mappers as Boot wires them (this project links their sources, which Flint AOT does not scan).
+            auto context = FlintApplication.run!App(args);
+            floor.jsonMapper = context.getBean!JsonMapper();
+            floor.ownerMapper = new OwnerMapperImpl(new PetMapperImpl(new VisitMapperImpl));
+        }
         floor.pool = openPool();
         initializeDatabase(floor.pool);
         startServer(server, floor);
