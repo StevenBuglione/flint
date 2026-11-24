@@ -665,3 +665,11 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
 
   B's results stay as history. The exit claim still needs its one interleaved confirmation run (c25ae2b3).
 - 2026-11-24, proof-harness: **Go baseline of petclinic-rest captured** (c015f307; claimed window 09:20–10:02Z, harness `57d49362`, the ADR-032 comparator `c2791378`, census 0/109): 109/109, then nine production trials of the HTTP workload and nine of the validation-error path, calibration and probe. Medians: owner 1 at 20,990 req/s, p50 235 µs, p99 556 µs, RSS 26.5 MB, CPU 63.0 µs per request (before ADR-032 Go served about 28,300 req/s without the reference's transactions); validation path 157,220 req/s, p99 118 µs. Calibration coefficient of variation 0.3–0.7% (p99 5.7%). Record: `benchmarks/spring/baselines/go/petclinic-rest/20261124T092019Z/`. Known gap in both records' fingerprints: the PostgreSQL peer is recorded as null (it is pinned by libpq's version in native-lock.json, not peer-lock.json); it is left as is through B2, so B2's runs and assembly stay consistent, and fixed with the next re-capture.
+- 2026-11-24, proof-harness: **phase1-builds-petclinic certified at B2** (`0f01d6edd0a4`, claimed window 10:44–10:49Z, no foreign activity; a private copy of shared v4.1, mold, strict scratch, served compiles reported). Java, Go and Flint pass 109/109, and so do the served dev and static binaries built in the tree afterwards (exact mode). Compile server: 2,335 requests compiled, 44 refused, one in each of the 44 scored cold builds (named in the receipt; B2's toolchain predates 4ac873d8). Median ratios (99% interval), 9 trials. **Every gated build metric passes:**
+    - primary 0.257 (0.253–0.279): 519 against 2,018 ms; deps-primed context 1.66;
+    - **secondary 0.457 (0.442–0.479)**, strict scratch from an empty cache (owner c25ae2b3): 1,829 against 4,003 ms, against 1.417 at B (m7's parallel DUB pipeline and per-module archives);
+    - edit, dev profile: 0.602 (194 against 322 ms);
+    - **edit, fully static: 0.785 (0.759–0.822)**: 253 ms, link 81 ms, against 2.53 at B (the per-module archive layout, c17ea1ba);
+    - Oz 0.949 (10,874,920 against 11,462,648 bytes).
+
+    Evidence: `benchmarks/spring/evidence/phase1-builds-petclinic/20261124T104354Z/`.
