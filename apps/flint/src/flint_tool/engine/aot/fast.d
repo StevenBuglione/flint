@@ -1,11 +1,10 @@
 /++
-Flint AOT's per-endpoint fast path (docs/spring/phase1/fast-path.md): for a request mapping of a provably simple
-shape, a `fast_<id>` function that binds the handler's arguments straight from the borrowed exchange and calls the
-handler, with no `HandlerArguments`, `Any[]` or resolver in between.
-
-Emitted only when the build asks for it (`AotRequest.fastPath`); a mapping of any other shape gets nothing, not a
-diagnostic, and keeps the generic path. The runtime (`flint.web.servlet.mvc.method.fast`) proves the rest at startup
-against the configured strategies.
+Flint AOT's per-endpoint fast path (docs/spring/phase1/fast-path.md). The fast path is table-driven: the runtime
+(`flint.web.servlet.mvc.method.fast`) binds a qualifying mapping's arguments from its `ArgumentSpec`s into stack
+storage and calls the mapping's existing array invoker (contract 4), so no endpoint gets generated code of its own
+(playbook B-3; the coordinator's size rule for petclinic-rest). What Flint AOT adds is the two pay-for-use beans,
+when the build asks for the fast path (`AotRequest.fastPath`) and at least one mapping has a shape the runtime can
+prove; the runtime proves each mapping at startup against the configured strategies.
 +/
 module flint_tool.engine.aot.fast;
 
@@ -82,27 +81,6 @@ private bool requestParamsOnly(const ref HandlerPlan handler) pure nothrow
     return true;
 }
 
-/// The `fast_<id>` function for `handler`, which `fastShape` accepted.
-string fastHandler(const ref HandlerPlan handler, string id)
-{
-    import std.conv : to;
-    import flint_tool.engine.aot.conditions : literal;
-
-    string text = "private bool fast_" ~ id ~ "(Object bean, ref scope FastArguments arguments, ref Any result)\n{\n";
-    string call;
-    foreach (index, ref argument; handler.arguments)
-    {
-        const name = "a" ~ index.to!string;
-        text ~= "    string " ~ name ~ ";\n    if (!arguments.requestParamString(" ~ literal(
-                argument.name) ~ ", " ~ (argument.hasDefault
-                ? literal(argument.defaultValue) : "null") ~ ", " ~ (argument.required
-                ? "true" : "false") ~ ", " ~ name ~ "))\n        return false;\n";
-        call ~= (index ? ", " : "") ~ name;
-    }
-    return text ~ "    result = Any.of((cast(" ~ handler.className ~ ") bean)." ~ handler.method.name
-        ~ "(" ~ call ~ "));\n    return true;\n}\n\n";
-}
-
 /// The classes the fast path's beans need, probed for presence like the date customizer's.
 immutable string[] fastPathClasses = [
     "flint.web.servlet.mvc.method.fast.FastPathConfigurer",
@@ -157,7 +135,7 @@ BeanPlan[] fastPathBeans()
     return [table, offer];
 }
 
-@("fastShape accepts gs-rest-service's greeting and refuses every other shape; fastHandler binds by literal")
+@("fastShape accepts gs-rest-service's greeting and refuses every other shape")
 unittest
 {
     import flint_tool.engine.aot.plan : ArgumentPlan;
@@ -178,11 +156,6 @@ unittest
     name.defaultValue = "World";
     greeting.arguments = [name];
     assert(fastShape(greeting));
-    const text = fastHandler(greeting, "id");
-    assert(text == "private bool fast_id(Object bean, ref scope FastArguments arguments, ref Any result)\n{\n"
-            ~ "    string a0;\n    if (!arguments.requestParamString(\"name\", \"World\", false, a0))\n"
-            ~ "        return false;\n    result = Any.of((cast(com.example.restservice.GreetingController) bean)"
-            ~ ".greeting(a0));\n    return true;\n}\n\n", text);
 
     void refuses(void delegate(ref HandlerPlan) @safe change)
     {

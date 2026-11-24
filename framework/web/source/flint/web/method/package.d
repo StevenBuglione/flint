@@ -140,6 +140,13 @@ class HandlerMethod
         return fastInvoker;
     }
 
+    /// Flint: contract 4's invoker over the argument array, by which the fast path (fast-path.md) recognises the
+    /// mapping row it proved; `null` in older generated code and for exception handlers.
+    package(flint) HandlerArrayInvoker getArrayInvoker() pure nothrow @nogc
+    {
+        return handlerArrayInvoker;
+    }
+
     /// The method parameters.
     MethodParameter[] getMethodParameters() pure nothrow @nogc
     {

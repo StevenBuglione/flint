@@ -852,11 +852,11 @@ private bool generate(const ref AotRequest request, scope const SourceModule[] s
     if (plan.failed)
         return false;
     plan.serviceModules = services.dup;
-    return writeOutput(request.root, plan, sources, outcome, request.fastPath);
+    return writeOutput(request.root, plan, sources, outcome);
 }
 
 private bool writeOutput(string root, const ref imported!"flint_tool.engine.aot.plan".Plan plan,
-        scope const SourceModule[] sources, ref AotOutcome outcome, bool fastPath = false)
+        scope const SourceModule[] sources, ref AotOutcome outcome)
 {
     import std.algorithm.searching : canFind;
     import std.algorithm.sorting : sort;
@@ -878,7 +878,7 @@ private bool writeOutput(string root, const ref imported!"flint_tool.engine.aot.
         foreach (ref source; sources)
             packageModule = packageModule || (source.name == item.name && source.packageModule);
         const path = buildPath(directory, generatedPath(item.name, packageModule));
-        const text = renderModule(item, plan.canonicalNames, fastPath);
+        const text = renderModule(item, plan.canonicalNames);
         if (!separable(item.name, item.source, text, sources, outcome))
             return false;
         mkdirRecurse(dirName(path));

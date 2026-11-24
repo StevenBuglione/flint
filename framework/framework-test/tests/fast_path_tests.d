@@ -7,13 +7,13 @@ module fast_path_tests;
 
 import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : DescriptorTable;
-import flint.engine.aot.fast : FastArguments, FastExchange, FastOutcome, FastValueVisitor;
+import flint.engine.aot.fast : FastExchange, FastOutcome, FastValueVisitor;
 import flint.engine.aot.mapping : AotHandlerMapping = HandlerMapping;
 import flint.http : HttpStatus, ResponseEntity;
 import flint.http.converter.json : JacksonJsonHttpMessageConverter;
 import flint.jakarta.servlet.http : HttpServletRequest, HttpServletResponse;
 import flint.test.web.servlet.setup : StaticBeanFactory;
-import flint.web.bind.annotation : CrossOrigin, GetMapping, RequestParam, RestController;
+import flint.web.bind.annotation : CrossOrigin, DeleteMapping, GetMapping, PathVariable, RequestParam, RestController;
 import flint.web.servlet : DispatcherServlet, HandlerInterceptor;
 import flint.web.servlet.config.annotation : InterceptorRegistry, WebMvcConfigurationSupport, WebMvcConfigurer;
 import flint.web.servlet.mvc.method.aot : handlerDescriptorsOf, requestMappingsOf;
@@ -78,44 +78,71 @@ class NullController
     }
 }
 
-// What Flint AOT emits for these handlers (apps/flint/src/flint_tool/engine/aot/fast.d).
-private bool fastHello(Object bean, ref scope FastArguments arguments, ref Any result)
+/// S1: path variables of each bound type, beside a DELETE on the same pattern and a non-numeric literal.
+@RestController
+class OwnerController
 {
-    string a0;
-    if (!arguments.requestParamString("name", "World", false, a0))
-        return false;
-    result = Any.of((cast(HelloController) bean).hello(a0));
-    return true;
+    long calls; ///
+
+    @GetMapping(value: ["/owners/{ownerId}"], produces: ["application/json"])
+     ///
+    Hello owner(@PathVariable("ownerId") int ownerId)
+    {
+        ++calls;
+        return Hello(ownerId, "owner");
+    }
+
+    @GetMapping("/owners/{ownerId}/pets/{petId}")
+     ///
+    Hello pet(@PathVariable("ownerId") long ownerId, @PathVariable("petId") string petId)
+    {
+        ++calls;
+        return Hello(ownerId, petId);
+    }
+
+    @DeleteMapping("/owners/{ownerId}")
+     ///
+    Hello remove(@PathVariable("ownerId") int ownerId)
+    {
+        return Hello(ownerId, "deleted");
+    }
+
+    // Overlaps /owners/{ownerId} only for a value that is not a canonical number.
+    @GetMapping("/owners/find")
+     ///
+    Hello find()
+    {
+        return Hello(0, "find");
+    }
 }
 
-private bool fastCors(Object bean, ref scope FastArguments arguments, ref Any result)
+/// S1: a template that a literal GET mapping overlaps for one canonical id.
+@RestController
+class ShadowController
 {
-    string a0;
-    if (!arguments.requestParamString("name", "World", false, a0))
-        return false;
-    result = Any.of((cast(CorsController) bean).cors(a0));
-    return true;
-}
+    @GetMapping("/items/{id}")
+     ///
+    Hello item(@PathVariable("id") int id)
+    {
+        return Hello(id, "item");
+    }
 
-private bool fastEntity(Object bean, ref scope FastArguments arguments, ref Any result)
-{
-    result = Any.of((cast(EntityController) bean).entity());
-    return true;
-}
-
-private bool fastNothing(Object bean, ref scope FastArguments arguments, ref Any result)
-{
-    result = Any.of((cast(NullController) bean).nothing());
-    return true;
+    // A literal that a canonical id also matches: the template route may not claim /items/7.
+    @GetMapping("/items/7")
+     ///
+    Hello seven()
+    {
+        return Hello(7, "seven");
+    }
 }
 
 private final class CountingInterceptor : HandlerInterceptor
 {
 }
 
-/// A dispatcher over `controller`'s rows, the fast invoker set on every row when `fast` is given, with the
-/// configurer Flint AOT generates for a qualifying endpoint unless `generated` is false.
-private DispatcherServlet dispatcher(C)(C controller, string beanName, typeof(&fastHello) fast,
+/// A dispatcher over `controller`'s rows, which keep their array invokers (contract 4) unless `arrayInvokers` is
+/// false, with the configurer Flint AOT generates for a qualifying endpoint unless `generated` is false.
+private DispatcherServlet dispatcher(C)(C controller, string beanName, bool arrayInvokers = true,
         WebMvcConfigurer[] configurers = null, bool generated = true)
 {
     if (generated)
@@ -123,8 +150,9 @@ private DispatcherServlet dispatcher(C)(C controller, string beanName, typeof(&f
     auto beans = new StaticBeanFactory;
     beans.addBean(beanName, controller);
     auto rows = requestMappingsOf!C(beanName);
-    foreach (ref row; rows)
-        row.fast = fast;
+    if (!arrayInvokers)
+        foreach (ref row; rows)
+            row.invokeArguments = null;
     auto table = DescriptorTable.withBuiltins();
     auto descriptors = handlerDescriptorsOf!C();
     foreach (descriptor; descriptors)
@@ -149,8 +177,7 @@ private struct Offer
 }
 
 /// Offers a request as the container does: `query` undecoded pairs (the container's decoding is engine-servlet's).
-private Offer offer(DispatcherServlet servlet, string method, string path, string query = null,
-        string[] accept = null)
+private Offer offer(DispatcherServlet servlet, string method, string path, string query = null, string[] accept = null)
 {
     Offer result;
     bool parameter(scope const(char)[] name, scope FastValueVisitor visit)
@@ -202,7 +229,7 @@ private Offer offer(DispatcherServlet servlet, string method, string path, strin
 unittest
 {
     auto controller = new HelloController;
-    auto servlet = dispatcher(controller, "helloController", &fastHello);
+    auto servlet = dispatcher(controller, "helloController");
     auto plain = offer(servlet, "GET", "/hello");
     assert(plain.outcome == FastOutcome.written);
     assert(plain.status == 200 && plain.contentType == "application/json");
@@ -227,8 +254,8 @@ unittest
     const half = "y".replicate(512);
     assert(offer(servlet, "GET", "/hello", "name=" ~ half ~ "&name=" ~ half).outcome == FastOutcome.declined);
     const fits = "z".replicate(511);
-    assert(offer(servlet, "GET", "/hello", "name=" ~ fits ~ "&name=" ~ fits ~ "z").content
-            == `{"id":10,"text":"Hello, ` ~ fits ~ "," ~ fits ~ `z!"}`);
+    assert(offer(servlet, "GET", "/hello", "name=" ~ fits ~ "&name=" ~ fits ~ "z")
+            .content == `{"id":10,"text":"Hello, ` ~ fits ~ "," ~ fits ~ `z!"}`);
     assert(controller.calls == 10);
 }
 
@@ -236,7 +263,7 @@ unittest
 unittest
 {
     auto controller = new HelloController;
-    auto servlet = dispatcher(controller, "helloController", &fastHello);
+    auto servlet = dispatcher(controller, "helloController");
     assert(offer(servlet, "POST", "/hello").outcome == FastOutcome.declined);
     assert(offer(servlet, "OPTIONS", "/hello").outcome == FastOutcome.declined);
     assert(offer(servlet, "GET", "/hello/").outcome == FastOutcome.declined);
@@ -249,12 +276,11 @@ unittest
     assert(controller.calls == 0, "a declined request must not have run the handler");
 }
 
-@("fast path: no table without a generated invoker, with an interceptor, or for a @CrossOrigin handler")
+@("fast path: no table without the rows' array invokers, with an interceptor, or for a @CrossOrigin handler")
 unittest
 {
     auto controller = new HelloController;
-    assert(offer(dispatcher(controller, "helloController", null), "GET", "/hello").outcome
-            == FastOutcome.declined);
+    assert(offer(dispatcher(controller, "helloController", false), "GET", "/hello").outcome == FastOutcome.declined);
     auto interceptors = cast(WebMvcConfigurer) new class WebMvcConfigurer
     {
         override void addInterceptors(InterceptorRegistry registry)
@@ -262,25 +288,24 @@ unittest
             registry.addInterceptor(new CountingInterceptor);
         }
     };
-    assert(offer(dispatcher(controller, "helloController", &fastHello, [interceptors]), "GET", "/hello").outcome
-            == FastOutcome.declined);
-    assert(offer(dispatcher(new CorsController, "corsController", &fastCors), "GET", "/cors").outcome
-            == FastOutcome.declined);
+    assert(offer(dispatcher(controller, "helloController", true, [interceptors]), "GET", "/hello")
+            .outcome == FastOutcome.declined);
+    assert(offer(dispatcher(new CorsController, "corsController"), "GET", "/cors").outcome == FastOutcome.declined);
     assert(controller.calls == 0);
 }
 
 @("fast path: a ResponseEntity return is HttpEntityMethodProcessor's, so the proof leaves the row out")
 unittest
 {
-    assert(offer(dispatcher(new EntityController, "entityController", &fastEntity), "GET", "/entity").outcome
-            == FastOutcome.declined);
+    assert(offer(dispatcher(new EntityController, "entityController"), "GET", "/entity").outcome == FastOutcome
+            .declined);
 }
 
 @("fast path: a null @ResponseBody value is a 200 without Content-Type or body, as writeWithMessageConverters")
 unittest
 {
     auto controller = new NullController;
-    auto answer = offer(dispatcher(controller, "nullController", &fastNothing), "GET", "/nothing");
+    auto answer = offer(dispatcher(controller, "nullController"), "GET", "/nothing");
     assert(answer.outcome == FastOutcome.written && answer.status == 200);
     assert(answer.contentType is null && answer.content.length == 0);
     assert(controller.calls == 1);
@@ -290,7 +315,43 @@ unittest
 unittest
 {
     auto controller = new HelloController;
-    assert(offer(dispatcher(controller, "helloController", &fastHello, null, false), "GET", "/hello").outcome
-            == FastOutcome.declined);
+    assert(offer(dispatcher(controller, "helloController", true, null, false), "GET", "/hello")
+            .outcome == FastOutcome.declined);
     assert(controller.calls == 0);
+}
+
+@("fast path S1: a @PathVariable int, long or string binds from the template; other values decline")
+unittest
+{
+    auto controller = new OwnerController;
+    auto servlet = dispatcher(controller, "ownerController");
+    const one = offer(servlet, "GET", "/owners/1", null, ["*/*"]);
+    assert(one.outcome == FastOutcome.written && one.status == 200 && one.contentType == "application/json");
+    assert(one.content == `{"id":1,"text":"owner"}`, one.content);
+    assert(offer(servlet, "GET", "/owners/0").content == `{"id":0,"text":"owner"}`);
+    assert(offer(servlet, "GET", "/owners/999999999").content == `{"id":999999999,"text":"owner"}`);
+    assert(offer(servlet, "GET", "/owners/12/pets/max").content == `{"id":12,"text":"max"}`);
+    assert(controller.calls == 4);
+    // Everything the fast path does not bind exactly goes generic, before the handler runs.
+    foreach (path; [
+        "/owners/abc", "/owners/-1", "/owners/007", "/owners/+5", "/owners/0x1A",
+        "/owners/1234567890", "/owners/", "/owners//",
+        "/owners/1/", "/owners/1/pets/a%20b", "/owners/1/pets/a;v=1", "/owners/1/pets/", "/owners",
+        "/owners/1/x"
+    ])
+        assert(offer(servlet, "GET", path).outcome == FastOutcome.declined, path);
+    assert(offer(servlet, "DELETE", "/owners/1").outcome == FastOutcome.declined);
+    assert(controller.calls == 4);
+    // The literal /owners/find is not a canonical number, so it does not overlap the numeric template; it is
+    // a route of its own.
+    assert(offer(servlet, "GET", "/owners/find").content == `{"id":0,"text":"find"}`);
+}
+
+@("fast path S1: a template that another GET mapping could also match gets no route")
+unittest
+{
+    auto servlet = dispatcher(new ShadowController, "shadowController");
+    assert(offer(servlet, "GET", "/items/3").outcome == FastOutcome.declined);
+    // The literal route itself is still proved.
+    assert(offer(servlet, "GET", "/items/7").content == `{"id":7,"text":"seven"}`);
 }

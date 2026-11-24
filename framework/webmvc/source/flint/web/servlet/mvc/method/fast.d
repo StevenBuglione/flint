@@ -2,32 +2,35 @@
 Flint's per-endpoint fast path for `@RequestMapping` handlers (docs/spring/phase1/fast-path.md).
 
 `FastPathTable.build` runs once, when `WebMvcConfigurationSupport` builds the dispatcher strategies. For every
-mapping row that carries a Flint AOT `FastInvoker`, it proves against the strategies themselves that the generic
+mapping row with Flint AOT's array invoker (contract 4), it proves against the strategies themselves that the generic
 dispatch of a `GET` or `HEAD` to that row's literal path would choose the same handler, bind the same arguments
 and write the same response. A row that fails any condition is left out, and its requests keep the generic path.
 
-A served request then costs what the handler costs: the exchange is borrowed from the container, the arguments are
-bound straight from the query, content negotiation is a lookup in a table filled at startup by the generic code
+The fast path is table-driven (playbook B-3): it binds each argument from the row's `ArgumentSpec` into stack
+storage and calls the row's existing array invoker, so no endpoint carries generated code of its own. A served
+request then costs what the handler costs: the exchange is borrowed from the container, the arguments are bound
+straight from the query, content negotiation is a lookup in a table filled at startup by the generic code
 itself (`selectMediaType`), and the body is written by the converter's own `ObjectMapper` into a recycled buffer.
 Only what user code sees is GC memory: the bound strings and whatever the handler allocates (ADR-030 section 4).
 +/
 module flint.web.servlet.mvc.method.fast;
 
 import flint.engine.aot.any : Any;
-import flint.engine.aot.fast : FastArguments, FastExchange, FastInvoker, FastOutcome;
-import flint.engine.aot.mapping : AotHandlerMapping = HandlerMapping;
+import flint.engine.aot.fast : FastExchange, FastOutcome;
+import flint.engine.aot.mapping : AotHandlerMapping = HandlerMapping, ArgumentKind, ArgumentSpec;
 import flint.http : MediaType;
 import flint.http.converter : HttpMessageConverter, HttpMessageNotWritableException;
 import flint.http.converter.json : JacksonJsonHttpMessageConverter;
 import flint.jakarta.servlet.http : HttpServletRequest, HttpServletResponse;
 import flint.util : MimeTypeUtils;
 import flint.web.method : HandlerMethod;
+import flint.web.bind.annotation : ValueConstants;
 import flint.web.method.annotation : RequestParamMethodArgumentResolver;
 import flint.web.servlet : DispatcherStrategies, DispatcherServlet, FastPath, FastPathFactory;
 import flint.web.servlet.config.annotation : WebMvcConfigurer;
 import flint.web.servlet.mvc.method : RequestMappingInfo, RequestMappingInfoHandlerMapping;
-import flint.web.servlet.mvc.method.annotation : AbstractMessageConverterMethodProcessor,
-    HttpEntityMethodProcessor, HttpHeadersReturnValueHandler, RequestMappingHandlerAdapter;
+import flint.web.servlet.mvc.method.annotation : AbstractMessageConverterMethodProcessor, HttpEntityMethodProcessor,
+    HttpHeadersReturnValueHandler, PathVariableMethodArgumentResolver, RequestMappingHandlerAdapter;
 
 @safe:
 
@@ -74,21 +77,29 @@ final class FastPathTable : FastPath
     mappings change nothing per request: no interceptors, no CORS configuration source, no custom argument
     resolvers or return value handlers, and the header-only content negotiation manager.
     +/
-    static FastPathTable build(const(AotHandlerMapping)[] rows, RequestMappingInfoHandlerMapping mappings,
-            RequestMappingHandlerAdapter adapter, bool plain)
+    static FastPathTable build(const(AotHandlerMapping)[] rows,
+            RequestMappingInfoHandlerMapping mappings, RequestMappingHandlerAdapter adapter, bool plain)
     {
         if (!plain)
             return null;
-        Route[] routes;
+        // Literal routes first: lookupHandlerMethod prefers a direct path match to any pattern, and a template
+        // route proves only that no other GET mapping overlaps the values it binds.
+        Route[] literal, templates;
         foreach (ref row; rows)
         {
-            if (row.fast is null)
+            if (row.invokeArguments is null)
                 continue;
             Route route;
             if (prove(row, mappings, adapter, route))
-                routes ~= route;
+            {
+                if (route.segments.length == 0)
+                    literal ~= route;
+                else
+                    templates ~= route;
+            }
         }
-        return routes.length != 0 ? new FastPathTable(routes) : null;
+        auto proved = literal ~ templates;
+        return proved.length != 0 ? new FastPathTable(proved) : null;
     }
 
     FastOutcome dispatch(DispatcherServlet servlet, ref scope FastExchange exchange)
@@ -96,43 +107,32 @@ final class FastPathTable : FastPath
         if (exchange.method != "GET" && exchange.method != "HEAD")
             return FastOutcome.declined;
         foreach (ref route; routes)
-            if (exchange.path == route.path)
-                return serve(route, servlet, exchange);
+        {
+            Span[maxArguments] values;
+            if (route.segments.length == 0 ? exchange.path == route.path : matchTemplate(exchange.path,
+                    route.segments, values))
+                return serve(route, servlet, exchange, values);
+        }
         return FastOutcome.declined;
     }
 
-    private FastOutcome serve(ref Route route, DispatcherServlet servlet, ref scope FastExchange exchange)
+    private FastOutcome serve(ref Route route, DispatcherServlet servlet,
+            ref scope FastExchange exchange, ref const Span[maxArguments] values)
     {
         size_t key;
-        if (exchange.acceptCount > 1)
+        if (!acceptKey(exchange, key))
             return FastOutcome.declined;
-        if (exchange.acceptCount == 1)
-        {
-            key = acceptKeys.length;
-            foreach (index, candidate; acceptKeys[1 .. $])
-                if (exchange.accept == candidate)
-                    key = index + 1;
-            if (key == acceptKeys.length)
-                return FastOutcome.declined;
-        }
         const entry = route.accept[key];
         if (entry.contentType is null)
             return FastOutcome.declined; // 406 or a type the table does not write: the generic path answers
 
-        bool requestParamString(string name, string defaultValue, bool required, out string value)
-        {
-            return bindString(exchange, name, defaultValue, required, value);
-        }
-
-        // `scope`, so the delegate borrows this frame instead of a GC closure.
-        scope FastArguments arguments;
-        arguments.requestParamString = &requestParamString;
+        // Every argument is bound before the handler runs, so a declined request has run nothing.
+        Any[maxArguments] arguments;
+        if (!bindArguments(route, exchange, values, arguments))
+            return FastOutcome.declined;
         Any result;
         try
-        {
-            if (!route.invoke(route.bean, arguments, result))
-                return FastOutcome.declined;
-        }
+            result = route.handler.invokeArguments(arguments[0 .. route.arguments.length], null);
         catch (Exception ex)
             return complete(servlet, exchange, route, ex, null, null);
 
@@ -153,8 +153,8 @@ final class FastPathTable : FastPath
             // first, as the generic path's response would hold it.
             import flint.java.io : IOException;
 
-            Exception ex = cast(IOException) e !is null ? e
-                : new HttpMessageNotWritableException("Could not write JSON: " ~ e.msg, e);
+            Exception ex = cast(IOException) e !is null ? e : new HttpMessageNotWritableException(
+                    "Could not write JSON: " ~ e.msg, e);
             return complete(servlet, exchange, route, ex, entry.contentType, buffer.data);
         }
         exchange.respond(200, entry.contentType, buffer.data);
@@ -179,13 +179,123 @@ final class FastPathTable : FastPath
     }
 }
 
-/// One proved endpoint.
+/// The `acceptKeys` slot of the request's one `Accept` field (slot 0 without one); `false` for several fields or a
+/// value outside the keys.
+private bool acceptKey(ref scope FastExchange exchange, out size_t key)
+{
+    if (exchange.acceptCount > 1)
+        return false;
+    if (exchange.acceptCount == 0)
+        return true;
+    foreach (index, candidate; acceptKeys[1 .. $])
+        if (exchange.accept == candidate)
+        {
+            key = index + 1;
+            return true;
+        }
+    return false;
+}
+
+/++
+Each argument as its resolver binds it: a `@RequestParam string` by `bindString`, a path variable from the matched
+template's `values` by `bindPathVariable`. `false`, before anything ran, when one of them declines.
++/
+private bool bindArguments(ref const Route route, ref scope FastExchange exchange,
+        ref const Span[maxArguments] values, ref Any[maxArguments] arguments)
+{
+    foreach (index, ref spec; route.arguments)
+    {
+        if (spec.kind == ArgumentKind.pathVariable)
+        {
+            const span = values[route.variableOf[index]];
+            if (!bindPathVariable(exchange.path[span.start .. span.end], spec.type, arguments[index]))
+                return false;
+            continue;
+        }
+        string value;
+        const defaultValue = spec.defaultValue == ValueConstants.DEFAULT_NONE ? null : spec.defaultValue;
+        if (!bindString(exchange, spec.name, defaultValue, spec.required, value))
+            return false;
+        arguments[index] = Any.of(value);
+    }
+    return true;
+}
+
+/++
+A path variable as `PathVariableMethodArgumentResolver` and the conversion service bind it, for the values the fast
+path can bind exactly; every other value declines, and the generic path converts it (or answers the mismatch). An
+`int` or `long` takes canonical decimal digits only: no sign, no leading zero, no hexadecimal form, and few enough
+digits that the value fits. A `string` takes a segment without `%` (the generic path decodes it) or `;` (matrix
+variables, which the generic path strips); it is copied to the GC heap, as it reaches user code.
++/
+private bool bindPathVariable(scope const(char)[] text, string type, out Any value)
+{
+    switch (type)
+    {
+    case "int":
+        long number;
+        if (!canonicalDigits(text, 9, number))
+            return false;
+        value = Any.of(cast(int) number);
+        return true;
+    case "long":
+        long number;
+        if (!canonicalDigits(text, 18, number))
+            return false;
+        value = Any.of(number);
+        return true;
+    case "string":
+        foreach (c; text)
+            if (c == '%' || c == ';')
+                return false;
+        value = Any.of(text.idup);
+        return true;
+    default:
+        return false;
+    }
+}
+
+/// `text` as a decimal number of at most `maxDigits` digits, without a sign or a leading zero.
+private bool canonicalDigits(scope const(char)[] text, size_t maxDigits, out long number) pure nothrow @nogc
+{
+    if (text.length == 0 || text.length > maxDigits || (text.length > 1 && text[0] == '0'))
+        return false;
+    foreach (c; text)
+    {
+        if (c < '0' || c > '9')
+            return false;
+        number = number * 10 + (c - '0');
+    }
+    return true;
+}
+
+/// The most arguments a fast route binds, on the stack; a handler with more stays generic.
+private enum size_t maxArguments = 8;
+
+/// Where a template variable's text lies in the request path.
+private struct Span
+{
+    size_t start, end;
+}
+
+/// One segment of a route template: a literal, or the index of a `{name}` variable.
+private struct Segment
+{
+    string literal;
+    ptrdiff_t variable = -1;
+}
+
+/// One proved endpoint: the row's path, as a template when it has variables, its argument specs, and the handler
+/// that invokes it.
 private struct Route
 {
     string path;
+    /// Empty for a literal path, which is compared whole.
+    Segment[] segments;
     HandlerMethod handler;
-    Object bean;
-    FastInvoker invoke;
+    const(ArgumentSpec)[] arguments;
+    /// Per argument: the template variable a path variable binds.
+    size_t[maxArguments] variableOf;
     JacksonJsonHttpMessageConverter jackson;
     /// Per `acceptKeys` slot: the `Content-Type` the generic path writes, or `null` where it does not write one.
     AcceptEntry[acceptKeys.length] accept;
@@ -197,24 +307,116 @@ private struct AcceptEntry
 }
 
 /++
-The mapping proof (fast-path.md): the row is a literal `GET` path without other conditions, `@ResponseBody`,
-without `@ResponseStatus`; the generic lookup finds exactly this handler by that path; every parameter goes to the
-`@RequestParam` resolver as a `string`; and each `Accept` slot selects a parameterless media type that the Jackson
-converter writes. A slot that the generic path answers some other way (406, another converter, a charset) is left
-empty, so those requests take the generic path.
+`path` as a template the fast path matches byte for byte: literal segments without pattern syntax, escapes or matrix
+parameters, and whole-segment `{name}` variables without a regular expression. `segments` stays empty for a path
+without variables. `false` for anything else, which the generic `PathPattern` keeps.
++/
+private bool parseTemplate(string path, out Segment[] segments, out string[] variables)
+{
+    if (path.length == 0 || path[0] != '/')
+        return false;
+    Segment[] parsed;
+    size_t start = 1;
+    while (start <= path.length)
+    {
+        size_t end = start;
+        while (end < path.length && path[end] != '/')
+            ++end;
+        Segment segment;
+        if (!parseSegment(path[start .. end], segment, variables))
+            return false;
+        parsed ~= segment;
+        start = end + 1;
+    }
+    if (variables.length != 0)
+        segments = parsed;
+    return true;
+}
+
+// One template segment: `{name}` (a word name) becomes the next variable, anything else must be a plain literal.
+private bool parseSegment(string text, ref Segment segment, ref string[] variables)
+{
+    if (text.length > 2 && text[0] == '{' && text[$ - 1] == '}')
+    {
+        foreach (c; text[1 .. $ - 1])
+            if (!(c == '_' || (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')))
+                return false;
+        segment.variable = variables.length;
+        variables ~= text[1 .. $ - 1];
+        return true;
+    }
+    foreach (c; text)
+        if (c == '{' || c == '}' || c == '*' || c == '?' || c == '%' || c == ';' || c == '\\')
+            return false;
+    segment.literal = text;
+    return true;
+}
+
+/// Whether `path` matches the template, every variable a non-empty segment; where each variable's text lies goes
+/// to `values`.
+private bool matchTemplate(scope const(char)[] path, const(Segment)[] segments, ref Span[maxArguments] values)
+{
+    if (path.length == 0 || path[0] != '/')
+        return false;
+    size_t start = 1;
+    foreach (index, ref segment; segments)
+    {
+        size_t end = start;
+        while (end < path.length && path[end] != '/')
+            ++end;
+        const last = index + 1 == segments.length;
+        if (last ? end != path.length : end >= path.length)
+            return false;
+        const text = path[start .. end];
+        if (segment.variable < 0 ? text != segment.literal : text.length == 0)
+            return false;
+        if (segment.variable >= 0)
+            values[segment.variable] = Span(start, end);
+        start = end + 1;
+    }
+    return true;
+}
+
+/++
+The mapping proof (fast-path.md): the row is a `GET` of one literal or template path without other conditions
+(`produces` only as exactly `application/json`), `@ResponseBody`, without `@ResponseStatus` or `@CrossOrigin`; the
+generic lookup finds exactly this handler for every path the route accepts; every parameter goes to the
+`@RequestParam` resolver as a `string` or to the `@PathVariable` resolver as an `int`, `long` or `string`; and each
+`Accept` slot selects a parameterless media type that the Jackson converter writes. A slot that the generic path
+answers some other way (406, another converter, a charset) is left empty, so those requests take the generic path.
 +/
 private bool prove(ref const AotHandlerMapping row, RequestMappingInfoHandlerMapping mappings,
         RequestMappingHandlerAdapter adapter, out Route route)
 {
+    if (!simpleRow(row))
+        return false;
+    route.path = row.paths[0];
+    string[] variables;
+    if (!parseTemplate(route.path, route.segments, variables))
+        return false;
+    route.handler = variables.length == 0 ? directHandler(route.path, mappings) : patternHandler(row,
+            route.segments, mappings);
+    auto handler = route.handler;
+    if (handler is null || handler.getArrayInvoker() !is row.invokeArguments
+            || !handler.invokesArguments() || row.arguments.length > maxArguments
+            || handler.getResponseStatus() != 0 || handler.getResponseStatusReason() !is null
+            || handler.isVoid() || handler.getBean() is null)
+        return false;
+    if (!plainValue(row, handler, adapter) || !boundArguments(row, handler, adapter, variables, route))
+        return false;
+    route.arguments = row.arguments;
+    return acceptTable(row, adapter, route);
+}
+
+// One GET path, no params, headers or consumes, produces at most application/json, @ResponseBody without a status,
+// and no @CrossOrigin on the class or the method (CORS processing adds Vary fields).
+private bool simpleRow(ref const AotHandlerMapping row)
+{
     if (row.paths.length != 1 || row.methods != ["GET"] || row.params.length || row.headers.length
-            || row.consumes.length || row.produces.length || !row.responseBody || row.responseStatus != 0)
+            || row.consumes.length || !row.responseBody || row.responseStatus != 0)
         return false;
-    const path = row.paths[0];
-    if (path.length == 0 || path[0] != '/')
+    if (row.produces.length != 0 && row.produces != ["application/json"])
         return false;
-    foreach (c; path)
-        if (c == '{' || c == '}' || c == '*' || c == '?' || c == '%' || c == ';' || c == '\\')
-            return false;
     foreach (ref annotation; row.typeAnnotations)
         if (annotation.type == "flint.web.bind.annotation.CrossOrigin")
             return false;
@@ -222,37 +424,206 @@ private bool prove(ref const AotHandlerMapping row, RequestMappingInfoHandlerMap
         foreach (ref annotation; row.method.annotations)
             if (annotation.type == "flint.web.bind.annotation.CrossOrigin")
                 return false;
+    return true;
+}
 
+// The one registration lookupHandlerMethod finds by the plain path, before it scans any pattern; null otherwise.
+private HandlerMethod directHandler(string path, RequestMappingInfoHandlerMapping mappings)
+{
     size_t found;
     HandlerMethod handler;
     mappings.visitDirectPath(path, (RequestMappingInfo info, HandlerMethod candidate) {
         ++found;
         handler = candidate;
     });
-    if (found != 1 || handler.getFastInvoker() !is row.fast || handler.getResponseStatus() != 0
-            || handler.getResponseStatusReason() !is null || handler.isVoid())
-        return false;
-    // invokeAndHandle sends ResponseEntity, HttpEntity and HttpHeaders returns to their own handlers before
-    // @ResponseBody, and those take status and headers from the value; ProblemDetail takes its own status and
-    // application/problem+json. Only a plain @ResponseBody value is the fast path's (web-http's review).
+    return found == 1 ? handler : null;
+}
+
+/++
+The registration of `row`'s template, when no other registration that a `GET` or `HEAD` can reach could match a path
+the route accepts: then lookupHandlerMethod's scan finds this one alone for every such path. null otherwise.
++/
+private HandlerMethod patternHandler(ref const AotHandlerMapping row, const(Segment)[] segments,
+        RequestMappingInfoHandlerMapping mappings)
+{
+    auto infos = mappings.getHandlerMethods();
+    auto handlers = mappings.mappedHandlerMethods();
+    if (infos.length != handlers.length)
+        return null;
+    size_t found;
+    HandlerMethod handler;
+    foreach (index, info; infos)
+        foreach (pattern; info.getPatterns())
+            if (pattern.getPatternString() == row.paths[0] && handlers[index].getArrayInvoker() is row.invokeArguments)
+            {
+                ++found;
+                handler = handlers[index];
+            }
+    if (found != 1)
+        return null;
+    const numeric = numericVariables(row, segments);
+    foreach (index, info; infos)
+    {
+        if (handlers[index] is handler || !reachedByGet(info))
+            continue;
+        foreach (pattern; info.getPatterns())
+            if (mayOverlap(segments, numeric, pattern.getPatternString()))
+                return null;
+    }
+    return handler;
+}
+
+// Whether `info`'s method condition admits GET or HEAD (none admits every method).
+private bool reachedByGet(RequestMappingInfo info)
+{
+    auto methods = info.getMethods();
+    if (methods.length == 0)
+        return true;
+    foreach (method; methods)
+        if (method.name() == "GET" || method.name() == "HEAD")
+            return true;
+    return false;
+}
+
+// Per template variable: whether the route only accepts canonical digits there (it binds an int or a long).
+private bool[] numericVariables(ref const AotHandlerMapping row, const(Segment)[] segments)
+{
+    size_t count;
+    foreach (ref segment; segments)
+        if (segment.variable >= 0)
+            ++count;
+    auto numeric = new bool[count];
+    foreach (ref spec; row.arguments)
+    {
+        if (spec.kind != ArgumentKind.pathVariable || (spec.type != "int" && spec.type != "long"))
+            continue;
+        foreach (ref segment; segments)
+            if (segment.variable >= 0 && templateText(row.paths[0], segment.variable) == "{" ~ spec.name ~ "}")
+                numeric[segment.variable] = true;
+    }
+    return numeric;
+}
+
+// The text of the `variable`-th `{name}` segment of `path`.
+private string templateText(string path, ptrdiff_t variable)
+{
+    ptrdiff_t seen = -1;
+    size_t start = 1;
+    while (start <= path.length)
+    {
+        size_t end = start;
+        while (end < path.length && path[end] != '/')
+            ++end;
+        const text = path[start .. end];
+        if (text.length > 2 && text[0] == '{' && ++seen == variable)
+            return text;
+        start = end + 1;
+    }
+    return null;
+}
+
+/++
+Whether a path the template accepts could also match `pattern`: segment by segment, a pattern segment with syntax
+(a variable, `*` or `?`) can match anything, and a literal segment matches only itself, or a template variable
+that accepts it (a numeric variable accepts canonical digits only). `**` and `{*name}` can match any number of
+segments, so they always may overlap.
++/
+private bool mayOverlap(const(Segment)[] segments, const(bool)[] numeric, string pattern)
+{
+    if (pattern.length == 0 || pattern[0] != '/')
+        return true;
+    size_t start = 1, index;
+    while (start <= pattern.length)
+    {
+        size_t end = start;
+        while (end < pattern.length && pattern[end] != '/')
+            ++end;
+        const text = pattern[start .. end];
+        if (text == "**" || (text.length > 1 && text[0] == '{' && text[1] == '*'))
+            return true;
+        if (index >= segments.length)
+            return false;
+        bool syntax;
+        foreach (c; text)
+            syntax = syntax || c == '{' || c == '*' || c == '?';
+        const segment = segments[index];
+        if (!syntax)
+        {
+            long ignored;
+            if (segment.variable < 0 ? text != segment.literal : numeric[segment.variable]
+                    && !canonicalDigits(text, 18, ignored))
+                return false;
+        }
+        ++index;
+        start = end + 1;
+    }
+    return index == segments.length;
+}
+
+// invokeAndHandle sends ResponseEntity, HttpEntity and HttpHeaders returns to their own handlers before
+// @ResponseBody, and those take status and headers from the value; ProblemDetail takes its own status and
+// application/problem+json. Only a plain @ResponseBody value is the fast path's (web-http's review).
+private bool plainValue(ref const AotHandlerMapping row, HandlerMethod handler, RequestMappingHandlerAdapter adapter)
+{
     auto returnType = handler.getReturnType();
     foreach (returnHandler; adapter.getReturnValueHandlers().getHandlers())
         if (returnHandler.supportsReturnType(returnType) && (cast(HttpEntityMethodProcessor) returnHandler
                 || cast(HttpHeadersReturnValueHandler) returnHandler))
             return false;
-    if (!plainBody(row))
+    return plainBody(row);
+}
+
+/++
+Every parameter goes to the resolver the fast path binds as: `RequestParamMethodArgumentResolver` for a
+`@RequestParam string`, `PathVariableMethodArgumentResolver` for a `@PathVariable` `int`, `long` or `string` named by
+a template variable (the resolver composite's own lookup, as the generic path asks it).
++/
+private bool boundArguments(ref const AotHandlerMapping row, HandlerMethod handler,
+        RequestMappingHandlerAdapter adapter, const(string)[] variables, ref Route route)
+{
+    auto parameters = handler.getMethodParameters();
+    if (parameters.length != row.arguments.length)
         return false;
-    foreach (parameter; handler.getMethodParameters())
+    foreach (index, parameter; parameters)
     {
         auto resolver = adapter.getArgumentResolvers().getArgumentResolver(parameter);
-        if (resolver is null || typeid(cast(Object) resolver) !is typeid(RequestParamMethodArgumentResolver)
-                || parameter.getParameterType() != "string")
+        if (resolver is null)
+            return false;
+        const spec = row.arguments[index];
+        const type = parameter.getParameterType();
+        if (typeid(cast(Object) resolver) is typeid(RequestParamMethodArgumentResolver))
+        {
+            if (spec.kind != ArgumentKind.requestParam || type != "string")
+                return false;
+            continue;
+        }
+        if (typeid(cast(Object) resolver) !is typeid(PathVariableMethodArgumentResolver)
+                || spec.kind != ArgumentKind.pathVariable || (type != "int" && type != "long" && type != "string"))
+            return false;
+        bool named;
+        foreach (variable, name; variables)
+            if (name == spec.name)
+            {
+                route.variableOf[index] = variable;
+                named = true;
+            }
+        if (!named)
             return false;
     }
+    return true;
+}
 
+/++
+For each `Accept` key, the generic negotiation's answer: `HeaderContentNegotiationStrategy`'s parse and sort, then
+`selectMediaType` over the producible types (the `produces` condition's, as `handleMatch` sets them, else the
+converters'). Only a parameterless concrete type that `JacksonJsonHttpMessageConverter` writes gets an entry.
++/
+private bool acceptTable(ref const AotHandlerMapping row, RequestMappingHandlerAdapter adapter, ref Route route)
+{
     const valueType = row.returnType;
     auto converters = adapter.getMessageConverters();
-    auto producible = AbstractMessageConverterMethodProcessor.producibleTypes(converters, valueType);
+    auto producible = row.produces.length != 0 ? MediaType.parseMediaTypes(
+            ["application/json"]) : AbstractMessageConverterMethodProcessor.producibleTypes(converters, valueType);
     if (producible.length == 0)
         return false;
     JacksonJsonHttpMessageConverter jackson;
@@ -273,8 +644,8 @@ private bool prove(ref const AotHandlerMapping row, RequestMappingInfoHandlerMap
                 acceptable = [MediaType.ALL];
         }
         MediaType selected;
-        if (AbstractMessageConverterMethodProcessor.selectMediaType(acceptable, producible, valueType, selected)
-                != AbstractMessageConverterMethodProcessor.Selection.selected)
+        if (AbstractMessageConverterMethodProcessor.selectMediaType(acceptable, producible,
+                valueType, selected) != AbstractMessageConverterMethodProcessor.Selection.selected)
             continue;
         selected = selected.removeQualityValue();
         // AbstractHttpMessageConverter.addDefaultHeaders keeps a concrete type other than octet-stream as it is.
@@ -299,14 +670,8 @@ private bool prove(ref const AotHandlerMapping row, RequestMappingInfoHandlerMap
         jackson = cast(JacksonJsonHttpMessageConverter) writer;
         route.accept[slot] = AcceptEntry(header);
     }
-    if (jackson is null)
-        return false;
-    route.path = path;
-    route.handler = handler;
-    route.bean = handler.getBean();
-    route.invoke = row.fast;
     route.jackson = jackson;
-    return route.bean !is null;
+    return jackson !is null;
 }
 
 /// Whether the declared return type is a plain value: not `Object`, `Any` or `ProblemDetail` (or a subtype).
@@ -329,8 +694,8 @@ single value, and the conversion service joins several values with `,`. The quer
 a stack buffer; the value is copied to the GC heap in one allocation, because it reaches user code; a default is
 the generated literal itself. A joined value past the buffer declines to the generic path.
 +/
-private bool bindString(ref scope FastExchange exchange, string name, string defaultValue, bool required,
-        out string value)
+private bool bindString(ref scope FastExchange exchange, string name, string defaultValue,
+        bool required, out string value)
 {
     char[1024] stack = void;
     size_t count, at;
