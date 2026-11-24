@@ -602,32 +602,43 @@ class DispatcherServlet : HttpServlet, FastDispatch
     }
 
     /++
-    Flint: the rest of `doDispatch` for a fast-path request whose handler ran and threw `ex`, on the materialized
-    request and response. The handler mappings run again first, so the request carries the attributes the generic
-    lookup sets (the fast path's mapping proof makes them choose `handler`); then `processDispatchResult` resolves
-    the exception as `doDispatch` does. The fast path only serves handlers without interceptors.
+    Flint: `doDispatch` up to the handler for a fast-path request whose handler already ran, on the materialized
+    request and response, before anything else is written to them. The handler mappings run again, so the request
+    carries the attributes the generic lookup sets (the fast path's mapping proof makes them choose `handler`), and
+    the chain's interceptors run `preHandle`: the fast path only serves handlers without registered interceptors, so
+    that is at most the CORS interceptor, whose `Vary` fields the generic response carries too.
     +/
-    package(flint.web) final void completeFastDispatch(HttpServletRequest request, HttpServletResponse response,
-            Object handler, Exception ex)
+    package(flint.web) final HandlerExecutionChain prepareFastCompletion(HttpServletRequest request,
+            HttpServletResponse response, Object handler)
     {
         auto mappedHandler = getHandler(request);
         if (mappedHandler is null || mappedHandler.getHandler() !is handler)
             throw new IllegalStateException("fast path: the handler mappings no longer choose the specialised handler");
+        if (!mappedHandler.applyPreHandle(request, response))
+            throw new IllegalStateException("fast path: an interceptor stopped a request the proof admitted");
+        return mappedHandler;
+    }
+
+    /++
+    Flint: the rest of `doDispatch` for a fast-path request whose handler ran and threw `ex`, after
+    `prepareFastCompletion`: `processDispatchResult` resolves the exception as `doDispatch` does.
+    +/
+    package(flint.web) final void completeFastDispatch(HttpServletRequest request, HttpServletResponse response,
+            HandlerExecutionChain mappedHandler, Exception ex)
+    {
         processDispatchResult(request, response, mappedHandler, null, ex);
     }
 
     /++
     Flint: the rest of `doDispatch` for a fast-path request whose handler ran and returned a value the fast path does
     not write itself (a `ResponseEntity` with headers, say), on the materialized request and response. The handler
-    mappings run again, as for `completeFastDispatch`; `handleReturn` then runs the generic return value handling
+    mappings and interceptors ran in `prepareFastCompletion`; `handleReturn` then runs the generic return value handling
     that `invokeAndHandle` would have run, and `processDispatchResult` finishes with whatever it threw.
     +/
     package(flint.web) final void completeFastReturn(HttpServletRequest request, HttpServletResponse response,
-            Object handler, scope void delegate(HttpServletRequest, HttpServletResponse) @safe handleReturn)
+            HandlerExecutionChain mappedHandler,
+            scope void delegate(HttpServletRequest, HttpServletResponse) @safe handleReturn)
     {
-        auto mappedHandler = getHandler(request);
-        if (mappedHandler is null || mappedHandler.getHandler() !is handler)
-            throw new IllegalStateException("fast path: the handler mappings no longer choose the specialised handler");
         Exception dispatchException;
         try
             handleReturn(request, response);

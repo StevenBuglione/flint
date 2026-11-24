@@ -85,6 +85,8 @@ FastOutcome serveFast(ServletEngine engine, FastDispatch dispatch, ref scope Req
     exchange.acceptCount = request.firstHeader("accept", acceptField);
     if (exchange.acceptCount != 0)
         exchange.accept = take(acceptField);
+    Buffer originField;
+    exchange.originCount = request.firstHeader("origin", originField);
     if (!fits)
         return FastOutcome.declined;
     const contextPath = engine.contextPathOf();

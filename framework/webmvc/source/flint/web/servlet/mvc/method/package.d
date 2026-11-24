@@ -623,6 +623,14 @@ abstract class RequestMappingInfoHandlerMapping : AbstractHandlerMapping
             corsLookup[handlerMethod] = corsConfig;
     }
 
+    /// Flint's fast path: the CORS configuration registered for `handlerMethod` (its `@CrossOrigin`), or null.
+    package(flint) CorsConfiguration registeredCorsConfiguration(HandlerMethod handlerMethod)
+    {
+        if (auto found = handlerMethod in corsLookup)
+            return *found;
+        return null;
+    }
+
     protected override bool hasCorsConfigurationSource(Object handler)
     {
         if (super.hasCorsConfigurationSource(handler))

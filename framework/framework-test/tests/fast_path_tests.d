@@ -208,7 +208,7 @@ private struct Offer
 
 /// Offers a request as the container does: `query` undecoded pairs (the container's decoding is engine-servlet's).
 private Offer offer(DispatcherServlet servlet, string method, string path, string query = null,
-        string[] accept = null, bool materializes = false)
+        string[] accept = null, bool materializes = false, size_t origins = 0)
 {
     Offer result;
     bool parameter(scope const(char)[] name, scope FastValueVisitor visit)
@@ -263,6 +263,7 @@ private Offer offer(DispatcherServlet servlet, string method, string path, strin
     exchange.method = method;
     exchange.path = path;
     exchange.acceptCount = accept.length;
+    exchange.originCount = origins;
     if (accept.length)
         exchange.accept = accept[0];
     exchange.parameter = &parameter;
@@ -338,7 +339,7 @@ unittest
     };
     assert(offer(dispatcher(controller, "helloController", true, [interceptors]), "GET", "/hello")
             .outcome == FastOutcome.declined);
-    assert(offer(dispatcher(new CorsController, "corsController"), "GET", "/cors").outcome == FastOutcome.declined);
+    // A @CrossOrigin handler is S3's: see the CORS case below.
     assert(controller.calls == 0);
 }
 
@@ -430,4 +431,24 @@ unittest
     // A mapping without produces keeps the generic path (the producible type would depend on the body).
     assert(offer(dispatcher(new EntityController, "entityController"), "GET", "/entity").outcome == FastOutcome
             .declined);
+}
+
+@("fast path S3: a @CrossOrigin handler writes DefaultCorsProcessor's Vary fields first; an Origin goes generic")
+unittest
+{
+    auto servlet = dispatcher(new CorsController, "corsController");
+    const plain = offer(servlet, "GET", "/cors", "name=Ann");
+    assert(plain.outcome == FastOutcome.written && plain.status == 200 && !plain.chunked);
+    assert(plain.fields == [
+        ["Vary", "Origin"], ["Vary", "Access-Control-Request-Method"],
+        ["Vary", "Access-Control-Request-Headers"], ["Content-Type", "application/json"]
+    ], plain.fields[0][0]);
+    assert(plain.content == `{"id":1,"text":"Ann"}`, plain.content);
+    // Any Origin field (a CORS request, or a same-origin one) is DefaultCorsProcessor's to answer.
+    assert(offer(servlet, "GET", "/cors", null, null, false, 1).outcome == FastOutcome.declined);
+    // A handler without @CrossOrigin writes no Vary, Origin or not.
+    const hello = offer(dispatcher(new HelloController, "helloController"), "GET", "/hello", null, null, false, 1);
+    assert(hello.outcome == FastOutcome.written && hello.fields == [
+        ["Content-Type", "application/json"]
+    ]);
 }

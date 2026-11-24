@@ -18,12 +18,13 @@ module flint.web.servlet.mvc.method.fast;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.fast : FastExchange, FastField, FastOutcome;
 import flint.engine.aot.mapping : AotHandlerMapping = HandlerMapping, ArgumentKind, ArgumentSpec;
-import flint.http : MediaType, ResponseEntity;
+import flint.http : HttpHeaders, MediaType, ResponseEntity;
 import flint.http.converter : HttpMessageConverter, HttpMessageNotWritableException;
 import flint.http.converter.json : JacksonJsonHttpMessageConverter;
 import flint.jakarta.servlet.http : HttpServletRequest, HttpServletResponse;
 import flint.util : MimeTypeUtils;
 import flint.web.context.request : ServletWebRequest;
+import flint.web.cors : DefaultCorsProcessor;
 import flint.web.method : HandlerMethod;
 import flint.web.method.support : ModelAndViewContainer;
 import flint.web.bind.annotation : ValueConstants;
@@ -124,6 +125,9 @@ final class FastPathTable : FastPath
         size_t key;
         if (!acceptKey(exchange, key))
             return FastOutcome.declined;
+        // S3: a request with an Origin field may be a CORS request; DefaultCorsProcessor answers it generically.
+        if (route.vary.length != 0 && exchange.originCount != 0)
+            return FastOutcome.declined;
         const entry = route.accept[key];
         if (entry.contentType is null)
             return FastOutcome.declined; // 406 or a type the table does not write: the generic path answers
@@ -141,9 +145,10 @@ final class FastPathTable : FastPath
             return serveEntity(route, servlet, exchange, result, entry);
 
         // writeWithMessageConverters writes no body and no Content-Type for a null value: a 200 with Content-Length 0.
+        FastField[maxFields] storage;
         if (result.isNull())
         {
-            exchange.respond(200, null, null);
+            exchange.respondFields(200, responseFields(route, null, storage), null, false);
             return FastOutcome.written;
         }
         auto buffer = pool.acquire();
@@ -161,7 +166,7 @@ final class FastPathTable : FastPath
                     "Could not write JSON: " ~ e.msg, e);
             return complete(servlet, exchange, route, ex, 0, entry.contentType, buffer.data);
         }
-        exchange.respond(200, entry.contentType, buffer.data);
+        exchange.respondFields(200, responseFields(route, entry.contentType, storage), buffer.data, false);
         return FastOutcome.written;
     }
 
@@ -183,9 +188,10 @@ final class FastPathTable : FastPath
         if (status == 0 || !entity.getHeaders().isEmpty() || (!content.isNull()
                 && !jacksonWrites(route, content.typeName(), entry)))
             return completeReturn(servlet, exchange, route, result);
+        FastField[maxFields] storage;
         if (content.isNull())
         {
-            exchange.respondFields(status, null, null, false);
+            exchange.respondFields(status, responseFields(route, null, storage), null, false);
             return FastOutcome.written;
         }
         auto buffer = pool.acquire();
@@ -201,8 +207,7 @@ final class FastPathTable : FastPath
                     "Could not write JSON: " ~ e.msg, e);
             return complete(servlet, exchange, route, ex, status, entry.contentType, buffer.data);
         }
-        FastField[1] fields = [FastField("Content-Type", entry.contentType)];
-        exchange.respondFields(status, fields[], buffer.data, true);
+        exchange.respondFields(status, responseFields(route, entry.contentType, storage), buffer.data, true);
         return FastOutcome.written;
     }
 
@@ -212,10 +217,13 @@ final class FastPathTable : FastPath
     {
         Object request, response;
         exchange.materialize(request, response);
+        auto servletRequest = cast(HttpServletRequest) request;
+        auto servletResponse = cast(HttpServletResponse) response;
+        auto chain = servlet.prepareFastCompletion(servletRequest, servletResponse, route.handler);
         auto processor = route.entityProcessor;
         auto returnType = route.handler.getReturnType();
-        servlet.completeFastReturn(cast(HttpServletRequest) request, cast(HttpServletResponse) response,
-                route.handler, (HttpServletRequest servletRequest, HttpServletResponse servletResponse) {
+        servlet.completeFastReturn(servletRequest, servletResponse, chain,
+                (HttpServletRequest servletRequest, HttpServletResponse servletResponse) {
             processor.handleReturnValue(result, returnType, new ModelAndViewContainer,
                 new ServletWebRequest(servletRequest, servletResponse));
         });
@@ -230,6 +238,8 @@ final class FastPathTable : FastPath
         exchange.materialize(request, response);
         auto servletRequest = cast(HttpServletRequest) request;
         auto servletResponse = cast(HttpServletResponse) response;
+        // The interceptors' preHandle (CORS's Vary) comes before anything the handler's return wrote.
+        auto chain = servlet.prepareFastCompletion(servletRequest, servletResponse, route.handler);
         // HttpEntityMethodProcessor sets the entity's status before it writes.
         if (status != 0)
             servletResponse.setStatus(status);
@@ -238,7 +248,7 @@ final class FastPathTable : FastPath
             servletResponse.setContentType(contentType);
             servletResponse.getOutputStream().write(partial);
         }
-        servlet.completeFastDispatch(servletRequest, servletResponse, route.handler, ex);
+        servlet.completeFastDispatch(servletRequest, servletResponse, chain, ex);
         return FastOutcome.materialized;
     }
 }
@@ -336,6 +346,21 @@ private bool canonicalDigits(scope const(char)[] text, size_t maxDigits, out lon
 /// The most arguments a fast route binds, on the stack; a handler with more stays generic.
 private enum size_t maxArguments = 8;
 
+/// The most fields a fast response writes: the `Vary` fields and `Content-Type`.
+private enum size_t maxFields = 4;
+
+/// The route's `Vary` fields, then `Content-Type` when given, as the generic response holds them, on `storage`.
+private const(FastField)[] responseFields(ref const Route route, string contentType,
+        return ref FastField[maxFields] storage)
+{
+    size_t count;
+    foreach (ref field; route.vary)
+        storage[count++] = field;
+    if (contentType !is null)
+        storage[count++] = FastField("Content-Type", contentType);
+    return storage[0 .. count];
+}
+
 /// Where a template variable's text lies in the request path.
 private struct Span
 {
@@ -361,6 +386,8 @@ private struct Route
     /// Per argument: the template variable a path variable binds.
     size_t[maxArguments] variableOf;
     JacksonJsonHttpMessageConverter jackson;
+    /// S3: `DefaultCorsProcessor`'s `Vary` fields for a handler with a CORS configuration, else empty.
+    FastField[] vary;
     /// S2: the adapter's `HttpEntityMethodProcessor` for a `ResponseEntity` return, else null.
     HttpEntityMethodProcessor entityProcessor;
     /// The adapter's converters, in order: for an entity's body the writer is chosen per request.
@@ -483,28 +510,50 @@ private bool prove(ref const AotHandlerMapping row, RequestMappingInfoHandlerMap
             || handler.getResponseStatus() != 0 || handler.getResponseStatusReason() !is null
             || handler.isVoid() || handler.getBean() is null)
         return false;
-    if (!returnHandling(row, handler, adapter, route) || !boundArguments(row, handler, adapter, variables, route))
+    if (!returnHandling(row, handler, adapter, route) || !boundArguments(row, handler, adapter,
+            variables, route) || !corsFields(handler, mappings, route))
         return false;
     route.arguments = row.arguments;
     return acceptTable(row, adapter, route);
 }
 
-// One GET path, no params, headers or consumes, produces at most application/json, @ResponseBody without a status,
-// and no @CrossOrigin on the class or the method (CORS processing adds Vary fields).
+// One GET path, no params, headers or consumes, produces at most application/json, @ResponseBody without a status.
+// A @CrossOrigin handler's CORS processing is proved by corsFields (S3).
 private bool simpleRow(ref const AotHandlerMapping row)
 {
     if (row.paths.length != 1 || row.methods != ["GET"] || row.params.length || row.headers.length
             || row.consumes.length || !row.responseBody || row.responseStatus != 0)
         return false;
-    if (row.produces.length != 0 && row.produces != ["application/json"])
+    return row.produces.length == 0 || row.produces == ["application/json"];
+}
+
+/++
+S3: what CORS processing does to a request without an `Origin` field. Without a global configuration source (the
+table needs none) and without a configuration of its own, nothing. With one (its `@CrossOrigin`), `getHandler` adds
+the CORS interceptor, whose processor must be exactly `DefaultCorsProcessor` (the default when none is set) and
+whose configuration must validate (`validateAllowCredentials`, which `getHandler` runs per request): its `preHandle`
+then adds the three `Vary` fields and lets the request through, as it is not a CORS request.
++/
+private bool corsFields(HandlerMethod handler, RequestMappingInfoHandlerMapping mappings, ref Route route)
+{
+    if (mappings.hasGlobalCorsConfiguration())
         return false;
-    foreach (ref annotation; row.typeAnnotations)
-        if (annotation.type == "flint.web.bind.annotation.CrossOrigin")
-            return false;
-    if (row.method !is null)
-        foreach (ref annotation; row.method.annotations)
-            if (annotation.type == "flint.web.bind.annotation.CrossOrigin")
-                return false;
+    auto config = mappings.registeredCorsConfiguration(handler);
+    if (config is null)
+        return true;
+    auto processor = mappings.getCorsProcessor();
+    if (processor !is null && typeid(cast(Object) processor) !is typeid(DefaultCorsProcessor))
+        return false;
+    try
+        config.validateAllowCredentials();
+    catch (Exception)
+        return false;
+    // DefaultCorsProcessor.processRequest's fields, by the same constants, in its order.
+    route.vary = [
+        FastField(HttpHeaders.VARY, HttpHeaders.ORIGIN),
+        FastField(HttpHeaders.VARY, HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD),
+        FastField(HttpHeaders.VARY, HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS),
+    ];
     return true;
 }
 

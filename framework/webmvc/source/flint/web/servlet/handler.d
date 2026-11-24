@@ -165,6 +165,18 @@ abstract class AbstractHandlerMapping : HandlerMapping
         corsProcessor = processor;
     }
 
+    /// The configured CORS processor; `null` when none was set, which means a `DefaultCorsProcessor`.
+    CorsProcessor getCorsProcessor() pure nothrow @nogc
+    {
+        return corsProcessor;
+    }
+
+    /// Flint's fast path: whether a global CORS configuration source is set, which applies to every request.
+    package(flint) bool hasGlobalCorsConfiguration() const pure nothrow @nogc
+    {
+        return corsConfigurationSource !is null;
+    }
+
     HandlerExecutionChain getHandler(HttpServletRequest request)
     {
         Object handler = getHandlerInternal(request);
