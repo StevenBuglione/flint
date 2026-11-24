@@ -113,6 +113,43 @@ version (FlintNativeSqlite)
         assert(connection.getMetaData().getDatabaseProductName() == "SQLite");
     }
 
+    @("a data source reuses a statement's column labels, and a row's text values share one string")
+    @system unittest
+    {
+        auto source = new FlintDataSource("jdbc:sqlite:file:flint-jdbc-labels?mode=memory&cache=shared");
+        scope (exit)
+            source.close();
+        auto connection = source.getConnection();
+        scope (exit)
+            connection.close();
+        auto statement = connection.createStatement();
+        statement.execute("CREATE TABLE people (first TEXT, empty TEXT, missing TEXT, long TEXT)");
+        import std.array : replicate;
+
+        const long_ = "x".replicate(2000);
+        statement.execute("INSERT INTO people VALUES ('Ada', '', NULL, '" ~ long_ ~ "')");
+        statement.execute("INSERT INTO people VALUES ('George', 'Boole', NULL, 'y')");
+        enum query = "SELECT first, empty, missing, long FROM people ORDER BY first";
+
+        auto rows = statement.executeQuery(query);
+        const label = rows.getMetaData().getColumnLabel(1);
+        assert(rows.next());
+        assert(rows.getString(1) == "Ada" && rows.getString(2) == "" && rows.getString(4) == long_);
+        assert(rows.getString(3) is null && rows.wasNull());
+        assert(rows.next());
+        // Both short values of the row are slices of one string.
+        const first = rows.getString(1), second = rows.getString(2);
+        assert(first == "George" && second == "Boole" && first.ptr + first.length == second.ptr);
+        assert(rows.getString(4) == "y");
+
+        auto again = connection.createStatement().executeQuery(query);
+        assert(again.getMetaData().getColumnLabel(1) is label, "the second execution built its labels again");
+        assert(again.getMetaData().getColumnLabel(4) == "long");
+        // A different statement gets its own labels.
+        auto other = connection.createStatement().executeQuery("SELECT first AS given FROM people");
+        assert(other.getMetaData().getColumnLabel(1) == "given");
+    }
+
     @("FlintDataSource connections reuse one statement buffer instead of allocating 1 MiB each")
     unittest
     {

@@ -824,6 +824,7 @@ final class FlintPreparedStatement : PreparedStatement
             return null;
         }
         auto rows = new FlintResultSet(this);
+        rows.sqlText = text;
         string failure;
         auto status = lease.queryRows(native, params, arena, context, (ref Row row) @safe nothrow{
             try
@@ -1303,6 +1304,8 @@ private int clampInt(long value) pure nothrow @nogc
 final class FlintResultSet : ResultSet
 {
     private FlintPreparedStatement statement;
+    /// The statement text that produced these rows: the key of the data source's column-label cache.
+    private string sqlText;
     private string[] labels;
     /// Every row's cells, row after row: one block that grows, not one per row.
     private Cell[] cells;
@@ -1322,16 +1325,14 @@ final class FlintResultSet : ResultSet
     {
         const count = row.columns;
         if (labels is null && count)
-        {
-            labels = new string[count];
-            foreach (column; 0 .. count)
-            {
-                auto label = row.name(column, arena);
-                if (!label.ok)
-                    throw new SQLException("Column label unavailable", "HY000");
-                labels[column] = readText(arena, label.value);
-            }
-        }
+            labels = columnLabels(row, arena, count);
+        // A row's text values are copied out as one string and sliced: one allocation per row, not per value.
+        char[1024] rowText = void;
+        size_t textUsed;
+        bool textFits = true;
+        // The text cells waiting for the row's string, by column; columns past 64 take their own string.
+        ulong pending;
+        const first = cells.length;
         foreach (column; 0 .. count)
         {
             auto value = row.value(column, arena);
@@ -1339,12 +1340,84 @@ final class FlintResultSet : ResultSet
                 throw new SQLException("Column value unavailable: " ~ value.error.message, "HY000");
             auto cell = Cell(value.value.kind, value.value.integer, value.value.floating);
             if (cell.kind == ValueKind.text)
-                cell.text = readText(arena, value.value.bytes);
+            {
+                const length = value.value.bytes.length;
+                if (textFits && column < 64 && textUsed + length <= rowText.length)
+                {
+                    pending |= 1UL << column;
+                    readInto(arena, value.value.bytes, rowText[textUsed .. textUsed + length]);
+                    // Until the row's string exists, `integer` holds the value's offset in it.
+                    cell.integer = cast(long) textUsed;
+                    cell.floating = length;
+                    textUsed += length;
+                }
+                else
+                {
+                    textFits = false;
+                    cell.text = readText(arena, value.value.bytes);
+                }
+            }
             else if (cell.kind == ValueKind.bytes)
                 cell.bytes = readBytes(arena, value.value.bytes);
             cells ~= cell;
         }
+        if (pending == 0)
+        {
+            ++rowCount_;
+            return;
+        }
+        const shared_ = rowText[0 .. textUsed].idup;
+        foreach (column, ref cell; cells[first .. $])
+        {
+            if (column >= 64 || (pending & (1UL << column)) == 0)
+                continue;
+            const offset = cast(size_t) cell.integer;
+            cell.text = shared_[offset .. offset + cast(size_t) cell.floating];
+            cell.integer = 0;
+            cell.floating = 0;
+        }
         ++rowCount_;
+    }
+
+    /// The column labels of `row`: the data source's cached labels for this statement when the server reports the same
+    /// ones, compared without allocating; otherwise new strings, which the cache then keeps.
+    private string[] columnLabels(ref Row row, ref RequestArena arena, uint count)
+    {
+        auto source = statement.connection.source;
+        if (source !is null)
+        {
+            auto cached = source.cachedLabels(sqlText);
+            if (cached.length == count && sameLabels(row, arena, cached))
+                return cached;
+        }
+        auto fresh = new string[count];
+        foreach (column; 0 .. count)
+        {
+            auto label = row.name(column, arena);
+            if (!label.ok)
+                throw new SQLException("Column label unavailable", "HY000");
+            fresh[column] = readText(arena, label.value);
+        }
+        if (source !is null)
+            source.cacheLabels(sqlText, fresh);
+        return fresh;
+    }
+
+    private static bool sameLabels(ref Row row, ref RequestArena arena, string[] expected)
+    {
+        foreach (index, name; expected)
+        {
+            auto label = row.name(cast(uint) index, arena);
+            if (!label.ok || label.value.length != name.length)
+                return false;
+            bool same;
+            const status = arena.read(label.value, (scope const(ubyte)[] bytes) @safe nothrow @nogc {
+                same = cast(const(char)[]) bytes == name;
+            });
+            if (status != Status.ok || !same)
+                return false;
+        }
+        return true;
     }
 
     private void limit(int maxRows)
@@ -2236,6 +2309,7 @@ final class FlintDataSource : DataSource
     private ubyte[][] scratchBuffers;
     /// `numberedSql`'s cache: each statement's text with numbered placeholders. Guarded by this object's monitor.
     private string[string] numberedStatements;
+    private string[][string] statementLabels;
     private size_t freeScratch;
 
     /// Create an unconfigured data source.
@@ -2451,6 +2525,28 @@ final class FlintDataSource : DataSource
         return numbered;
     }
 
+    /// The column labels a statement's rows last carried, or null; the result set checks them against the server's.
+    package(flint.engine) string[] cachedLabels(string sql)
+    {
+        synchronized (this)
+        {
+            if (auto found = sql in statementLabels)
+                return *found;
+        }
+        return null;
+    }
+
+    /// Keep `labels` for `sql`'s later executions. Up to 256 statements are kept, as numbered SQL is.
+    package(flint.engine) void cacheLabels(string sql, string[] labels)
+    {
+        synchronized (this)
+        {
+            if (statementLabels.length >= 256)
+                statementLabels = null;
+            statementLabels[sql] = labels;
+        }
+    }
+
     /// A statement buffer a closed connection gave back, or null.
     package(flint.engine) ubyte[] takeScratch()
     {
@@ -2611,6 +2707,16 @@ private ubyte[] readBytes(ref RequestArena arena, Buffer buffer)
 }
 
 /// A text value, copied once: through a stack buffer when it is short, the common case.
+/// Copy `buffer`'s bytes into `target`, which has exactly their length.
+private void readInto(ref RequestArena arena, Buffer buffer, scope char[] target)
+{
+    const status = arena.read(buffer, (scope const(ubyte)[] bytes) @safe nothrow @nogc {
+        target[0 .. bytes.length] = cast(const(char)[]) bytes;
+    });
+    if (status != Status.ok)
+        throw new SQLException("Could not read a value from the statement buffer", "HY000");
+}
+
 private string readText(ref RequestArena arena, Buffer buffer)
 {
     char[256] small = void;
