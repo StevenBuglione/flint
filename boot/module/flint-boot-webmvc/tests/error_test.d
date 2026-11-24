@@ -14,6 +14,7 @@ import flint.boot.webmvc.autoconfigure.error : BasicErrorController, WhitelabelE
 import flint.boot.webmvc.error : DefaultErrorAttributes;
 import flint.engine.aot.any : Any;
 import flint.jakarta.servlet : RequestDispatcher;
+import flint.java.lang : RuntimeException;
 import flint.java.util : Date, LinkedHashMap;
 import flint.mock.web : MockHttpServletRequest, MockHttpServletResponse;
 import flint.web.context.request : ServletWebRequest;
@@ -81,6 +82,46 @@ private MockHttpServletRequest errorRequest(int status, string uri)
             ErrorAttributeOptions.of(Include.EXCEPTION, Include.MESSAGE));
     assert(attributes.get("exception").get!string == "object.Exception");
     assert(attributes.get("message").get!string == "Test");
+}
+
+/// A Flint exception whose message is built on demand: `msg` stays null and only `getMessage` has the text.
+private final class MessageOnDemandException : RuntimeException
+{
+    this() pure nothrow
+    {
+        super();
+    }
+
+    override string getMessage() const pure nothrow @nogc
+    {
+        return "built on demand";
+    }
+}
+
+@("FlintErrorMessageThroughGetMessage: message and trace read getMessage(), as Java does, not the D msg") unittest
+{
+    auto errorAttributes = new DefaultErrorAttributes;
+    auto request = errorRequest(500, "/x");
+    auto exception = new MessageOnDemandException;
+    assert(exception.msg is null);
+    assert(errorAttributes.resolveException(request, new MockHttpServletResponse, null, exception) is null);
+    auto attributes = errorAttributes.getErrorAttributes(new ServletWebRequest(request),
+            ErrorAttributeOptions.of(Include.MESSAGE, Include.STACK_TRACE));
+    assert(attributes.get("message").get!string == "built on demand");
+    import std.algorithm.searching : startsWith;
+
+    const trace = attributes.get("trace").get!string;
+    assert(trace.startsWith("error_test.MessageOnDemandException: built on demand\n\tat "), trace);
+}
+
+@("FlintErrorMessageEmpty: an empty getMessage() is no message") unittest
+{
+    auto errorAttributes = new DefaultErrorAttributes;
+    auto request = errorRequest(500, "/x");
+    errorAttributes.resolveException(request, new MockHttpServletResponse, null, new RuntimeException(""));
+    auto attributes = errorAttributes.getErrorAttributes(new ServletWebRequest(request),
+            ErrorAttributeOptions.of(Include.MESSAGE));
+    assert(attributes.get("message").get!string == "No message available");
 }
 
 @("BasicErrorController.error: the attributes as the body, with the error's status") unittest

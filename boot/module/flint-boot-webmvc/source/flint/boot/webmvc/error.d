@@ -3,7 +3,8 @@
 // Copyright 2012-present the original author or authors.
 // Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
 // Modified by the Flint authors: `Map<String, Object>` is `LinkedHashMap!(string, Any)`, the model type of
-// flint:webmvc (R12); binding and method-validation results join with flint:validation's `BindingResult`.
+// flint:webmvc (R12); binding and method-validation results join with flint:validation's `BindingResult`. The
+// error's message is read through `getMessage()`, as Java reads it, where the throwable is a Flint exception.
 
 /// `org.springframework.boot.webmvc.error`: error handling for Spring MVC.
 module flint.boot.webmvc.error;
@@ -80,8 +81,9 @@ class DefaultErrorAttributes : ErrorAttributes, HandlerExceptionResolver, Ordere
         const message = webRequest.getAttribute(RequestDispatcher.ERROR_MESSAGE, RequestAttributes.SCOPE_REQUEST);
         if (!message.isNull() && message.holds!string && message.get!string.length)
             return message.get!string;
-        if (error !is null && error.msg.length)
-            return error.msg.idup;
+        const errorMessage = error is null ? null : messageOf(error);
+        if (errorMessage.length)
+            return errorMessage.idup;
         return "No message available";
     }
 
@@ -155,7 +157,20 @@ class DefaultErrorAttributes : ErrorAttributes, HandlerExceptionResolver, Ordere
 
     private static string stackTraceOf(Throwable error)
     {
-        return typeid(error).name ~ ": " ~ error.msg.idup ~ "\n\tat " ~ error.file ~ ":" ~ lineOf(error);
+        return typeid(error).name ~ ": " ~ messageOf(error).idup ~ "\n\tat " ~ error.file ~ ":" ~ lineOf(error);
+    }
+
+    // Java's `Throwable.getMessage()`: a Flint exception's `getMessage`, which a subclass may build on demand, and
+    // druntime's message for any other D throwable.
+    private static const(char)[] messageOf(Throwable error)
+    {
+        import flint.java.lang : AssertionError, RuntimeException;
+
+        if (auto runtime = cast(RuntimeException) error)
+            return runtime.getMessage();
+        if (auto assertion = cast(AssertionError) error)
+            return assertion.getMessage();
+        return error.message();
     }
 
     private static string lineOf(Throwable error)
