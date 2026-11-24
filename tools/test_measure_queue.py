@@ -309,6 +309,51 @@ class StrayProcesses(unittest.TestCase):
                 child.wait()
 
 
+class Freezing(unittest.TestCase):
+    def test_strays_freeze_and_continue_and_recover(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            exe = Path(temporary) / 'scratchpad' / 'stray'
+            exe.parent.mkdir()
+            import shutil as _shutil
+            _shutil.copy('/bin/sleep', exe)
+            child = subprocess.Popen([str(exe), '60'], start_new_session=True, stdin=subprocess.DEVNULL)
+            try:
+                time.sleep(0.2)
+                state = lambda: Path(f'/proc/{child.pid}/stat').read_text().rsplit(')', 1)[1].split()[0]
+                frozen_file = Path(temporary) / 'FROZEN'
+                real_kind = measure_queue.stray_kind
+                # Only the test's own child may be frozen: other sessions' real strays must never be touched by a test.
+                only_child = lambda pid, command: real_kind(pid, command) if int(pid) == child.pid else None
+                with mock.patch.object(measure_queue, 'FROZEN', frozen_file), \
+                        mock.patch.object(measure_queue, 'stray_kind', side_effect=only_child), \
+                        mock.patch.object(measure_queue, 'own_tree', return_value=set()):
+                    freezer = measure_queue.Freezer()
+                    freezer.sweep()
+                    self.assertIn(child.pid, [row['pid'] for row in freezer.frozen])
+                    time.sleep(0.1)
+                    self.assertEqual(state(), 'T')
+                    self.assertTrue(frozen_file.is_file())
+                    freezer.thaw()
+                    time.sleep(0.1)
+                    self.assertEqual(state(), 'S')
+                    self.assertFalse(frozen_file.is_file())
+                    # A crash leaves FROZEN behind: the next watcher start continues the process.
+                    freezer = measure_queue.Freezer()
+                    freezer.sweep()
+                    self.assertEqual(measure_queue.recover_frozen(), [child.pid])
+                    time.sleep(0.1)
+                    self.assertEqual(state(), 'S')
+            finally:
+                child.kill()
+                child.wait()
+
+    def test_terminal_processes_are_never_frozen(self):
+        freezer = measure_queue.Freezer()
+        for row in freezer.candidates():
+            fields = Path(f"/proc/{row['pid']}/stat").read_text().rsplit(')', 1)[1].split()
+            self.assertEqual(int(fields[4]), 0)
+
+
 class DriftFallback(unittest.TestCase):
     def test_a_drifted_flint_only_step_switches_to_interleaved(self):
         with tempfile.TemporaryDirectory() as temporary:

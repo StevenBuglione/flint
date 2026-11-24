@@ -52,6 +52,7 @@ import json
 import os
 import re
 import shutil
+import signal
 import socket
 import statistics
 import subprocess
@@ -243,19 +244,114 @@ def busy_processes(interval=1.0):
     return busy
 
 
+FROZEN = WORK / 'FROZEN'
+
+
+def start_time(pid):
+    """A process's start time in clock ticks since boot (/proc/<pid>/stat field 22): with the pid, its identity."""
+    return int(Path(f'/proc/{pid}/stat').read_text().rsplit(')', 1)[1].split()[19])
+
+
+class Freezer:
+    """Strays frozen for a claimed window (coordinator, 2026-11-24 15:30Z: three windows were lost to other sessions'
+    daemons that escaped `hold`). At the claim and at every sample, each process the stray rule names (a tracer, a
+    valgrind tool, a session server, a scratchpad PostgreSQL) gets SIGSTOP, at any CPU use. Never frozen: this run's
+    own processes, compilers and the shared compile servers (the stray rule does not name them), another user's
+    processes, and any process with a controlling terminal (a person's interactive program). Every frozen process is
+    recorded in the receipt and in FROZEN, and gets SIGCONT when the window ends, on every path; a watcher that
+    starts after a crash continues whatever FROZEN still names (recover_frozen)."""
+
+    def __init__(self):
+        self.frozen = []
+
+    def candidates(self):
+        table, ancestors, pid = parents(), set(), os.getpid()
+        while pid > 1 and pid not in ancestors:  # this process and its ancestors (parents() maps pid -> parent)
+            ancestors.add(pid)
+            pid = table.get(pid, 0)
+        mine = own_tree() | ancestors
+        own = [str(Path(d).resolve()) + os.sep for d in OWN_DIRECTORIES]
+        frozen = {row['pid'] for row in self.frozen}
+        for name in os.listdir('/proc'):
+            if not name.isdigit() or int(name) in mine or int(name) in frozen:
+                continue
+            try:
+                info = Path(f'/proc/{name}')
+                if info.stat().st_uid != os.getuid():
+                    continue
+                fields = (info / 'stat').read_text().rsplit(')', 1)[1].split()
+                if int(fields[4]) != 0:  # tty_nr: a controlling terminal
+                    continue
+                command = (info / 'comm').read_text().strip()
+                kind = stray_kind(name, command)
+                if kind is None:
+                    continue
+                cwd = os.readlink(info / 'cwd')
+                if any((cwd.removesuffix(' (deleted)') + os.sep).startswith(prefix) for prefix in own):
+                    continue
+                yield {'pid': int(name), 'start': start_time(name), 'command': command, 'kind': kind, 'cwd': cwd}
+            except (OSError, ValueError, IndexError):
+                continue
+
+    def sweep(self):
+        for row in list(self.candidates()):
+            try:
+                os.kill(row['pid'], signal.SIGSTOP)
+            except OSError:
+                continue
+            self.frozen.append(dict(row, frozen_at=now()))
+            print(now(), f"froze {row['command']} pid {row['pid']} ({row['kind']}, {row['cwd']})", flush=True)
+        if self.frozen:
+            FROZEN.write_text(json.dumps(self.frozen, indent=2) + '\n')
+
+    def thaw(self):
+        for row in self.frozen:
+            resume(row)
+        FROZEN.unlink(missing_ok=True)
+
+
+def resume(row):
+    """SIGCONT a frozen process, if it is still the same process (pid and start time)."""
+    try:
+        if start_time(row['pid']) == row['start']:
+            os.kill(row['pid'], signal.SIGCONT)
+            return True
+    except (OSError, ValueError, IndexError):
+        pass
+    return False
+
+
+def recover_frozen():
+    """At watcher start: continue every process a crashed run left frozen."""
+    if not FROZEN.is_file():
+        return []
+    try:
+        rows = json.loads(FROZEN.read_text())
+    except ValueError:
+        rows = []
+    resumed = [row['pid'] for row in rows if resume(row)]
+    FROZEN.unlink(missing_ok=True)
+    if rows:
+        print(now(), f'continued {len(resumed)} of {len(rows)} processes a previous run left frozen', flush=True)
+    return resumed
+
+
 class WindowSampler:
     """Snapshots of the window every 10 s while a measurement runs, so contention in the middle is seen too."""
 
     INTERVAL = 10
 
-    def __init__(self, yield_to_others=False):
+    def __init__(self, yield_to_others=False, freezer=None):
         import threading
+        self.freezer = freezer
         self.samples, self.stop = [], threading.Event()
         self.yield_to_others, self.yielded = yield_to_others, None
         self.thread = threading.Thread(target=self.loop, daemon=True)
 
     def loop(self):
         while not self.stop.wait(self.INTERVAL):
+            if self.freezer:
+                self.freezer.sweep()  # a stray that appeared since the last sample
             snapshot = quiet_snapshot(own_load_ok=True)
             self.samples.append({'time': snapshot['time'], 'load_average': snapshot['load_average'],
                                  'busy_processes': snapshot['busy_processes']})
@@ -1159,9 +1255,22 @@ def run(entry, force_busy=False, smoke=False, claim_seconds=0):
     if natural:
         claim_seconds = 0
     LOCK.parent.mkdir(parents=True, exist_ok=True)
+    freezer = Freezer() if (locking and not natural) else None
     if locking:
         marker.write_text(json.dumps({'id': entry['id'], 'started': now(), 'pid': os.getpid(),
                                       'results': str(outdir)}) + '\n')
+    try:
+        return _run_window(entry, outdir, built, smoke, force_busy, claim_seconds, locking, natural, marker, freezer)
+    finally:
+        if freezer:
+            freezer.thaw()
+        if locking:
+            marker.unlink(missing_ok=True)
+
+
+def _run_window(entry, outdir, built, smoke, force_busy, claim_seconds, locking, natural, marker, freezer):
+    if freezer:
+        freezer.sweep()
     # A claimed window (watch --claim): the lock is taken first and sessions behind `hold` pause, then the window
     # must settle. Otherwise venus must already be quiet.
     before = claim_window(claim_seconds) if (locking and claim_seconds) else quiet_snapshot()
@@ -1179,7 +1288,7 @@ def run(entry, force_busy=False, smoke=False, claim_seconds=0):
     if pin:
         os.sched_setaffinity(0, set(LOAD_CPUS))
     try:
-        with WindowSampler(yield_to_others=natural and locking) as sampler:
+        with WindowSampler(yield_to_others=natural and locking, freezer=freezer) as sampler:
             try:
                 summary = KINDS[entry['measure']['kind']](entry, built, outdir, smoke)
             except (SystemExit, Exception):  # a stopped step fails in its own way: a missing output, an exit code
@@ -1194,6 +1303,8 @@ def run(entry, force_busy=False, smoke=False, claim_seconds=0):
         # so it judges foreign build processes only, like the samples during the run.
         after = quiet_snapshot(own_load_ok=True)
     finally:
+        if freezer:
+            freezer.thaw()
         if locking:
             marker.unlink(missing_ok=True)
         if pin:
@@ -1203,7 +1314,8 @@ def run(entry, force_busy=False, smoke=False, claim_seconds=0):
     receipt = {'time': now(), 'outcome': 'measured' if evidence else ('smoke' if smoke else 'busy'),
                'evidence': evidence, 'host': os.uname().nodename, 'builds': built,
                'shared_toolchain': shared_toolchain_receipt(), 'window_before': before,
-               'window_during': sampler.samples, 'foreign_activity_during': len(foreign), 'window_after': after, 'results_directory': str(outdir.relative_to(ROOT)), 'summary': summary}
+               'window_during': sampler.samples, 'foreign_activity_during': len(foreign), 'window_after': after,
+               'frozen': freezer.frozen if freezer else [], 'results_directory': str(outdir.relative_to(ROOT)), 'summary': summary}
     (outdir / 'receipt.json').write_text(json.dumps(receipt, indent=2) + '\n')
     log_attempt(entry, {'time': receipt['time'], 'outcome': receipt['outcome'], 'evidence': evidence,
                         'receipt': str((outdir / 'receipt.json').relative_to(ROOT))})
@@ -1334,6 +1446,7 @@ def main(argv=None):
                     return
 
         idle_reported = [False]
+        recover_frozen()  # continue whatever a crashed run left frozen
         while time.monotonic() < deadline:
             # not_before (UTC, ISO 8601): an entry that must wait, such as a calibration session spread across the day.
             pending = sorted((e for e in entries() if e['status'] == 'pending' and e.get('not_before', '') <= now()),
