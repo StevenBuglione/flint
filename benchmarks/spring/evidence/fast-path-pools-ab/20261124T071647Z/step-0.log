@@ -1,0 +1,17 @@
+{"app": "gs-rest-service", "trial": 0, "setting": "go", "status": "measured"}
+{"app": "gs-rest-service", "trial": 0, "setting": "p1", "status": "measured"}
+{"app": "gs-rest-service", "trial": 0, "setting": "p1-pools4", "status": "measured"}
+{"app": "gs-rest-service", "trial": 0, "setting": "p1-pools1", "status": "measured"}
+{"app": "gs-rest-service", "trial": 1, "setting": "p1-pools1", "status": "measured"}
+{"app": "gs-rest-service", "trial": 1, "setting": "p1-pools4", "status": "measured"}
+{"app": "gs-rest-service", "trial": 1, "setting": "p1", "status": "measured"}
+{"app": "gs-rest-service", "trial": 1, "setting": "go", "status": "measured"}
+{"app": "gs-rest-service", "trial": 2, "setting": "go", "status": "measured"}
+{"app": "gs-rest-service", "trial": 2, "setting": "p1", "status": "measured"}
+{"app": "gs-rest-service", "trial": 2, "setting": "p1-pools4", "status": "measured"}
+{"app": "gs-rest-service", "trial": 2, "setting": "p1-pools1", "status": "measured"}
+against Go: setting                           p99      RSS      CPU      rps  max pause ms
+p1                              0.917    1.417    1.029    1.319             0
+p1-pools4                       0.813    1.110    0.949    1.318             0
+p1-pools1                       0.846    0.939    1.021    1.300             1
+Wrote the GC matrix /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/fast-path-pools-ab/20261124T071647Z/fast-path-pools-ab.json (passed)

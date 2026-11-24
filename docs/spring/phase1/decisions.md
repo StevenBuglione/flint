@@ -634,3 +634,12 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - stripped size: O3 5,407,920 against 4,745,176 bytes, Oz 4,904,368 against 4,147,432 (Oz 0.739 of Go's 6,634,456, a pass, but larger than the dynamic Oz).
 
     **Verdict under 6ecd8933: the measured release profile stays dynamic glibc.** The rule switches only if no runtime metric gets worse beyond its interval, and throughput and p50 do (musl's mallocng and libc replace glibc's, as playbook M-5 recorded). The 8% RSS saving is real; it goes to the RSS work as a lead, not a profile switch. Evidence: `benchmarks/spring/evidence/release-static-ab/20261124T063926Z/`.
+- 2026-11-24, proof-harness: **fast-path-pools-ab certified** (main `5d7890bd`, claimed window 07:23–07:50Z, 3 interleaved runs, Go interleaved, `gc-matrix --smaps`; diagnostic A/B, owner decision 2 and Astra's RSS review 41053ce3). gs-rest-service on the default fast path, all arms 18/18. Against Go, median (99% interval):
+
+    | arm | peak RSS | throughput | p99 | p50 | CPU/request | collections/s | max pause |
+    |---|---|---|---|---|---|---|---|
+    | `parallel:1` | 1.417 (1.398–1.458) | 1.319 | 0.917 | 1.294 | 1.029 | 8.4 | 0 ms |
+    | `+ minPoolSize:4 incPoolSize:0` | 1.110 (1.083–1.131) | 1.318 | 0.813 | 1.127 | 0.949 | 17 | 0 ms |
+    | `+ minPoolSize:1 incPoolSize:0` | **0.939 (0.929–0.961)** | 1.300 | 0.846 | 1.248 | 1.021 | 38 | 1–3 ms |
+
+    **What grows (smaps census):** with the default pools, one new anonymous mapping of 7 MiB (druntime's grown second GC pool) appears during the fixed-rate phase and becomes fully resident: total RSS goes 11.3 MB after warm-up → 19.3 MB by 30 s and stays there. Fixed 4 MiB pools fill during warm-up and never grow; fixed 1 MiB pools stay at 12.6–12.9 MB (Go: 13.0 MB, flat). The rest is steady on both sides: about 198 mappings of 256 KiB (about 1.2 MB resident, fiber stacks) and 4.1 MB of Flint binary text against Go's 5.8 MB. So the RSS gap is the collector's pool growth policy, not live data: 1 MiB fixed pools meet the 13.0 MB budget for 1.4% throughput (1.319 → 1.300 of Go), 4.5 times the collections and pauses up to 3 ms. Evidence: `benchmarks/spring/evidence/fast-path-pools-ab/20261124T071647Z/`.
