@@ -2,7 +2,7 @@
   "schema": "flint.measure-queue/1",
   "id": "phase1-http-gs-rest",
   "created": "2026-11-23",
-  "status": "blocked",
+  "status": "pending",
   "window": "claim",
   "priority": 5,
   "claim_when": "B3 order 5 (coordinator 19:04Z)",
@@ -3315,6 +3315,5 @@
         }
       }
     }
-  ],
-  "blocked_on": "the B3 builds smoke (client-served check live), then unblocked"
+  ]
 }

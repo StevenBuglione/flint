@@ -2,7 +2,7 @@
   "schema": "flint.measure-queue/1",
   "id": "phase1-builds-gs-rest",
   "created": "2026-11-23",
-  "status": "blocked",
+  "status": "pending",
   "window": "claim",
   "priority": 1,
   "requested_by": "ADR-030 section 8, Phase 1 exit (coordinator's plan, 2026-11-23 15:20Z); split per application by the coordinator, 2026-11-23 16:45Z",
@@ -3061,6 +3061,5 @@
   ],
   "claim_when": "B3 order 1 (coordinator 19:04Z)",
   "tree_note": "B3: one private tree with a copy of shared v4.2 (4ac873d8: every compile client-served or client-local), mold, strict served compiles (0 client-local except c-source and forced), strict scratch; runtime parts interleaved with Go (the Go records' fingerprints predate the database protocol, so B3's tools refuse them as stale)",
-  "pinned": "B3, d6d15b0073dda669dacf790dea443f033f4dbb55 (coordinator 19:04Z, decisions.md 1927861e)",
-  "blocked_on": "the B3 builds smoke (client-served check live), then unblocked"
+  "pinned": "B3, d6d15b0073dda669dacf790dea443f033f4dbb55 (coordinator 19:04Z, decisions.md 1927861e)"
 }

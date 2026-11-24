@@ -1,7 +1,7 @@
 {
   "schema": "flint.measure-queue/1",
   "created": "2026-11-23",
-  "status": "blocked",
+  "status": "pending",
   "priority": 7,
   "window": "claim",
   "builds": {
@@ -5161,6 +5161,5 @@
         }
       }
     }
-  ],
-  "blocked_on": "the B3 builds smoke (client-served check live), then unblocked"
+  ]
 }
