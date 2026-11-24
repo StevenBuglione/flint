@@ -721,3 +721,8 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - p50 6.93, throughput 0.377 (93,000 against 247,000 req/s), CPU per request 3.85 (35.2 against 9.1 µs), RSS 1.02; p99.9 6.84, reported.
 
     Evidence: `benchmarks/spring/evidence/error-404-p99/20261124T151028Z/`.
+- 2026-11-24, proof-harness: **error-validation-p99 certified at B2** (`0f01d6edd0a4`, 16:00–16:40Z, interleaved with Go, no foreign activity; the first window that froze a stray instead of losing to it: a gs-rest server from worktree elastic-lamport, frozen at the claim and continued at the end, recorded in the receipt). petclinic POST /owners failing one constraint, Flint / Go, median (99% interval):
+    - **p99 3.995 (3.632–4.254), which fails** (491 against 123 µs), against 6.07 at B;
+    - p50 4.01, throughput 0.188 (29,570 against 157,700 req/s), CPU per request 3.81 (60.8 against 16.0 µs; 106 µs at B), RSS 0.764; p99.9 2.53, reported.
+
+    Evidence: `benchmarks/spring/evidence/error-validation-p99/20261124T160020Z/`.
