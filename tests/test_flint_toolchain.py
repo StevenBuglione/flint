@@ -396,7 +396,7 @@ struct Plain { int x; void touch() {} }
 
     def setUp(self):
         self.dmd = aot_extract_dmd()
-        if self.dmd is None or sys.platform == 'win32':
+        if self.dmd is None:
             self.skipTest('the installed DMD fork has no native Flint AOT extraction')
         self.work = Path(tempfile.mkdtemp(prefix='flint-aot-extract-'))
         self.addCleanup(shutil.rmtree, self.work, ignore_errors=True)
