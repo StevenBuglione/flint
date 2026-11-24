@@ -2,7 +2,7 @@
   "schema": "flint.measure-queue/1",
   "id": "db-state-check-petclinic",
   "created": "2026-11-24",
-  "status": "pending",
+  "status": "done",
   "window": "claim",
   "priority": 6.2,
   "estimate_minutes": 7,
@@ -34,5 +34,216 @@
         ]
       }
     ]
-  }
+  },
+  "attempts": [
+    {
+      "time": "2026-11-24T11:59:41Z",
+      "outcome": "measured",
+      "evidence": true,
+      "host": "venus",
+      "builds": {},
+      "shared_toolchain": {
+        "path": "/home/olfa/flint-work/flint/.tools",
+        "resolved": "/home/olfa/flint-work/flint/.tools-v4.1",
+        "dmd_sha256": "e7757432c68a04f1bf8f3bf401368ebddb623283ca9a9358419838b36d8c304e"
+      },
+      "window_before": {
+        "time": "2026-11-24T11:57:07Z",
+        "load_average": [
+          0.97998046875,
+          1.85302734375,
+          1.84716796875
+        ],
+        "running_tasks": 0,
+        "instant": true,
+        "busy_processes": [],
+        "idle_build_processes": 402,
+        "quiet": true,
+        "problems": []
+      },
+      "window_during": [
+        {
+          "time": "2026-11-24T11:57:18Z",
+          "load_average": [
+            0.8291015625,
+            1.79150390625,
+            1.82666015625
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T11:57:29Z",
+          "load_average": [
+            0.94189453125,
+            1.78271484375,
+            1.8232421875
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T11:57:40Z",
+          "load_average": [
+            2.04541015625,
+            1.97607421875,
+            1.88525390625
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T11:57:51Z",
+          "load_average": [
+            2.41357421875,
+            2.05908203125,
+            1.9140625
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T11:58:02Z",
+          "load_average": [
+            2.58447265625,
+            2.10693359375,
+            1.93115234375
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T11:58:13Z",
+          "load_average": [
+            2.333984375,
+            2.06982421875,
+            1.9208984375
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T11:58:24Z",
+          "load_average": [
+            3.16357421875,
+            2.25,
+            1.98095703125
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T11:58:35Z",
+          "load_average": [
+            2.54248046875,
+            2.15576171875,
+            1.9541015625
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T11:58:46Z",
+          "load_average": [
+            2.68701171875,
+            2.2001953125,
+            1.97119140625
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T11:58:57Z",
+          "load_average": [
+            2.2734375,
+            2.12744140625,
+            1.94970703125
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T11:59:08Z",
+          "load_average": [
+            1.923828125,
+            2.056640625,
+            1.92822265625
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T11:59:19Z",
+          "load_average": [
+            2.169921875,
+            2.10498046875,
+            1.9453125
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T11:59:30Z",
+          "load_average": [
+            1.6884765625,
+            2.0009765625,
+            1.9130859375
+          ],
+          "busy_processes": []
+        }
+      ],
+      "foreign_activity_during": 0,
+      "window_after": {
+        "time": "2026-11-24T11:59:41Z",
+        "load_average": [
+          1.970703125,
+          2.05078125,
+          1.93017578125
+        ],
+        "running_tasks": 1,
+        "instant": false,
+        "busy_processes": [],
+        "idle_build_processes": 402,
+        "quiet": true,
+        "problems": []
+      },
+      "results_directory": ".flint/measure/results/db-state-check-petclinic/20261124T115642Z",
+      "summary": {
+        "steps": [
+          {
+            "command": [
+              "/usr/bin/python3",
+              "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/45f8b1273f05/tools/spring_baseline.py",
+              "db-state-check",
+              "--app",
+              "petclinic-rest",
+              "--record",
+              "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/benchmarks/spring/baselines/go/petclinic-rest/20261124T092019Z",
+              "--pairs",
+              "3",
+              "--output",
+              "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/db-state-check-petclinic/20261124T115642Z/db-state"
+            ],
+            "cwd": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/45f8b1273f05",
+            "exit_code": 0,
+            "log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/db-state-check-petclinic/20261124T115642Z/step-0.log",
+            "harness_commit": "45f8b1273f0522bfa6dd3af1ea6ee059cedd6a56",
+            "harness_toolchain": {
+              "tools_directory": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools",
+              "fork_build": false,
+              "dmd": null,
+              "ldc2": null,
+              "flint": null,
+              "dmd_native_aot_extractor": null,
+              "mold": []
+            },
+            "artifacts": {},
+            "measured_binaries": [],
+            "aot_summaries": {
+              "count": 0,
+              "distinct": [],
+              "extractors": []
+            },
+            "gc_options": {
+              "argv": []
+            },
+            "dmd_server": {
+              "compiled": 0,
+              "refused": 0,
+              "stopped_before": []
+            }
+          }
+        ],
+        "outputs": {}
+      }
+    }
+  ]
 }
