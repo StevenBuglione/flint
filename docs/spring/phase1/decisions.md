@@ -698,3 +698,11 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - p99.9 1.131, reported.
 
     Evidence: `benchmarks/spring/evidence/phase1-http-gs-rest/20261124T112529Z/`.
+- 2026-11-24, proof-harness: **phase1-http-petclinic certified at B2** (`0f01d6edd0a4`, 13:00–13:40Z, no foreign activity), interleaved with Go trial by trial (the coordinator's fallback while the guard's bands are set from cross-session calibrations; a first interleaved attempt at 12:10Z was voided by one tick of an idle scratchpad PostgreSQL, the stray check's threshold since fixed). The first certified petclinic runtime result; the 5,000 req/s warm-up held in every trial. Flint / Go, median (99% interval), 9 trials:
+    - throughput **0.933 (0.922–0.952), which fails** (18,710 against 20,060 req/s; at B Flint held about 1,600);
+    - p50 **2.008, which fails** (0.480 against 0.239 ms); p99 **1.858, which fails** (1.09 against 0.587 ms);
+    - **peak RSS 0.818 (0.809–0.835), which passes** (21.5 against 26.3 MB);
+    - CPU per request **1.578, which fails** (99.9 against 63.3 µs);
+    - p99.9 2.71, reported.
+
+    The remaining gap is CPU per request: the next runtime candidate for data-access (the per-row locks, bind arrays and monitors of the throughput plan) and the S1–S4 fast-path shapes. Evidence: `benchmarks/spring/evidence/phase1-http-petclinic/20261124T125955Z/`.

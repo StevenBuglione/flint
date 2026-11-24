@@ -1,0 +1,18 @@
+
+  _____ _ _       _
+ |  ___| (_)_ __ | |_
+ | |_  | | | '_ \| __|
+ |  _| | | | | | | |_
+ |_|   |_|_|_| |_|\__|
+
+ :: Flint Boot ::                 (v0.7.0)
+
+2026-11-24T13:24:28.909Z  INFO 2598444 --- [           main] o.s.s.petclinic.PetClinicApplication     : Starting PetClinicApplication using Flint 0.7.0 with PID 2598444 (/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/0f01d6edd0a4/build/spring/petclinic-rest-flint started by olfa in /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/0f01d6edd0a4/benchmarks/spring/flint/petclinic-rest)
+2026-11-24T13:24:28.910Z  INFO 2598444 --- [           main] o.s.s.petclinic.PetClinicApplication     : The following 2 profiles are active: "postgres", "jdbc"
+2026-11-24T13:24:28.929Z  WARN 2598444 --- [           main] .s.a.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: 3cf2dbdf-abec-486f-b4ae-5129ed7f75bd
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2026-11-24T13:24:28.931Z  INFO 2598444 --- [           main] o.s.s.petclinic.PetClinicApplication     : Started PetClinicApplication in 0.022 seconds (process running for 0.02)
