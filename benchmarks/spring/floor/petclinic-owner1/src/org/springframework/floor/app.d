@@ -521,10 +521,9 @@ private final class Floor
         auto lease = acquired.value;
         scope (exit)
             cast(void) pool.release(lease);
-        // The request's own region, as the servlet path's statements use theirs.
-        auto began = lease.execute("BEGIN READ ONLY", [], arena, context);
-        if (!began.ok())
-            return began.error;
+        // The request's own region, as the servlet path's statements use theirs. BEGIN goes with the first
+        // SELECT, as engine-jdbc sends it (Connection.sendBefore, one round trip).
+        lease.sendBefore("BEGIN READ ONLY");
         const SqlValue[1] key = [SqlValue(ValueKind.int64, id)];
         auto status = loadOwner(lease, key[], arena, context, scratch, rows);
         if (status.code == Status.ok && rows.found)
