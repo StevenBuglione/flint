@@ -716,3 +716,8 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     5. Re-profile before spending on maps, Jackson or transaction glue.
   - **Not budgeted:** a 30–40 µs win from a JDBC executor alone. An arena entity graph copied at the boundary is rejected (two representations, lifetime hazards).
 - 2026-11-24, owner: **fixed 1 MiB GC pools confirmed as Boot's default** (owner: "1 MiB pools"). The provisional decision 236459b6, implemented in 0f01d6ed, is now final. A per-app arm for petclinic (2 or 4 MiB through `--DRT-gcopt`) stays an experiment in the petclinic CPU plan. Changing the default for any app comes back to the owner with its measurements.
+- 2026-11-24, proof-harness: **error-404-p99 certified at B2** (`0f01d6edd0a4`, 15:10–15:50Z, interleaved with Go, no foreign activity). Two earlier attempts measured nothing: at 13:50Z the drift guard (Go p99 outside the capture's band) switched the entry to interleaved, and at 14:20Z data-access's valgrind server, outside its held group, voided the window. framework-core's idle scratchpad PostgreSQL (15:09–15:29Z) overlapped this window but never used 2 ticks in a sampling second, so under the stray rule it does not count. gs-rest GET /nope, Flint / Go, median (99% interval):
+    - **p99 6.04 (5.32–6.80), which fails** (681 against 113 µs); unchanged from B (5.74);
+    - p50 6.93, throughput 0.377 (93,000 against 247,000 req/s), CPU per request 3.85 (35.2 against 9.1 µs), RSS 1.02; p99.9 6.84, reported.
+
+    Evidence: `benchmarks/spring/evidence/error-404-p99/20261124T151028Z/`.
