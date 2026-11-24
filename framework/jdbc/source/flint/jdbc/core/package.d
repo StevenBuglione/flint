@@ -2334,11 +2334,16 @@ matched with one binary search instead of converting every property's name. Buil
 +/
 final class BeanColumnIndex
 {
+    import flint.conc.slot : ProcessSlot;
     import flint.engine.aot.descriptor : Descriptor;
 
     private string[] keys;
     /// Per key, the properties it names, the last first: as in Spring's map, later properties replace earlier ones.
     private size_t[][] candidates;
+    /// The column plans worked out for this type so far, one per distinct list of column labels: a mapper is made per
+    /// query (`BeanPropertyRowMapper.newInstance`), and its query sends the same labels every time. Published once
+    /// each and only read afterwards; a type queried with more label lists than slots plans the rest per result set.
+    private shared ProcessSlot!ColumnPlan[4] plans;
 
     /// Index the settable properties of `descriptor`.
     this(const(Descriptor) descriptor)
@@ -2443,6 +2448,34 @@ final class BeanColumnIndex
         return size_t.max;
     }
 
+    /++
+    Each of `labels`' columns' mapped property (`find`, with nothing suppressed), or `size_t.max`: a published plan
+    whose labels equal `labels`, else one worked out now and published while a slot is free. The labels are the
+    plan's validation: a plan is used only for the column labels it was made from.
+    +/
+    const(size_t)[] planFor(scope const(string)[] labels)
+    {
+        foreach (ref slot; plans)
+        {
+            auto plan = slot.get();
+            if (plan is null)
+                break;
+            if (plan.matches(labels))
+                return plan.properties;
+        }
+        auto properties = new size_t[labels.length];
+        foreach (i, label; labels)
+            properties[i] = find(label, null);
+        auto built = new ColumnPlan(labels.dup, properties);
+        foreach (ref slot; plans)
+        {
+            auto held = slot.setIfAbsent(built);
+            if (held is built || held.matches(labels))
+                return held.properties;
+        }
+        return properties;
+    }
+
     private static string lowerName(string name) pure nothrow
     {
         char[] lowered = name.dup;
@@ -2450,6 +2483,31 @@ final class BeanColumnIndex
             if (c >= 'A' && c <= 'Z')
                 c = cast(char)(c + ('a' - 'A'));
         return lowered.idup;
+    }
+}
+
+/// A type's mapped property for each column of one list of column labels (`BeanColumnIndex.planFor`). Not changed
+/// after construction.
+private final class ColumnPlan
+{
+    private const(string)[] labels;
+    private const(size_t)[] properties;
+
+    this(const(string)[] labels, const(size_t)[] properties) pure nothrow
+    {
+        this.labels = labels;
+        this.properties = properties;
+    }
+
+    /// Whether `columns` are this plan's labels, in order.
+    bool matches(scope const(string)[] columns) const pure nothrow @nogc
+    {
+        if (columns.length != labels.length)
+            return false;
+        foreach (i, label; labels)
+            if (!(label.ptr is columns[i].ptr && label.length == columns[i].length) && label != columns[i])
+                return false;
+        return true;
     }
 }
 
@@ -2468,16 +2526,16 @@ final class BeanPropertyRowMapping
     private const(ConstructorDescriptor)* mappedConstructor;
     private size_t[string] underscoredParameterIndexes;
     private size_t[string] lowerCaseParameterIndexes;
-    /// The result set whose columns `columnProperties` maps, and for each of its `plannedColumns` columns the mapped
+    /// The result set whose columns `plannedProperties` maps, and for each of its columns the mapped
     /// property's index (`size_t.max` for none): worked out on its first row, reused for the rest. Holding the result
     /// set keeps its identity from being reused by another.
     private ResultSet plannedResult;
+    private const(size_t)[] plannedProperties;
     private size_t[] columnProperties;
-    private size_t plannedColumns;
     /// Room for the plan of a result with up to 16 columns, so a mapping made per query allocates none.
     private size_t[16] inlinePlan;
     /// The descriptor's names, sorted for lookup, when the mapping was built for a type (`beanColumnIndexOf`).
-    private const(BeanColumnIndex) columns;
+    private BeanColumnIndex columns;
 
     /++
     Map rows to instances of the type `descriptor` describes. A column maps to the property whose lower-case name or
@@ -2485,7 +2543,7 @@ final class BeanPropertyRowMapping
     `mappedProperties` keys. The match is made on the descriptor's names as each row is mapped, so building a
     mapping, which callers do per query (`BeanPropertyRowMapper.newInstance`), allocates no names or maps.
     +/
-    this(const(Descriptor) descriptor, bool checkFullyPopulated, const(BeanColumnIndex) columns = null)
+    this(const(Descriptor) descriptor, bool checkFullyPopulated, BeanColumnIndex columns = null)
     {
         this.descriptor = descriptor;
         this.checkFullyPopulated = checkFullyPopulated;
@@ -2610,24 +2668,35 @@ final class BeanPropertyRowMapping
         return mappedObject;
     }
 
-    /// Each column's mapped property index in `rs`, matched by name once per result set rather than on every row.
+    /// Each column's mapped property index in `rs`, matched by name once per result set rather than on every row, and
+    /// for a type's index (`beanColumnIndexOf`) once per list of column labels (`BeanColumnIndex.planFor`).
     private const(size_t)[] columnPlan(ResultSet rs)
     {
         if (rs is plannedResult)
-            return columnProperties[0 .. plannedColumns];
+            return plannedProperties;
         auto rsmd = rs.getMetaData();
         const columnCount = rsmd.getColumnCount();
-        if (columnProperties.length < columnCount)
-            columnProperties = columnCount <= inlinePlan.length ? inlinePlan[] : new size_t[columnCount];
-        foreach (index; 1 .. columnCount + 1)
+        if (columns !is null && suppressed is null && columnCount <= inlinePlan.length)
         {
-            const label = JdbcUtils.lookupColumnName(rsmd, index);
-            columnProperties[index - 1] = columns !is null ? columns.find(label,
-                    suppressed) : mappedPropertyIndex(label);
+            string[inlinePlan.length] labels;
+            foreach (index; 1 .. columnCount + 1)
+                labels[index - 1] = JdbcUtils.lookupColumnName(rsmd, index);
+            plannedProperties = columns.planFor(labels[0 .. columnCount]);
+        }
+        else
+        {
+            if (columnProperties.length < columnCount)
+                columnProperties = columnCount <= inlinePlan.length ? inlinePlan[] : new size_t[columnCount];
+            foreach (index; 1 .. columnCount + 1)
+            {
+                const label = JdbcUtils.lookupColumnName(rsmd, index);
+                columnProperties[index - 1] = columns !is null ? columns.find(label,
+                        suppressed) : mappedPropertyIndex(label);
+            }
+            plannedProperties = columnProperties[0 .. columnCount];
         }
         plannedResult = rs;
-        plannedColumns = columnCount;
-        return columnProperties[0 .. columnCount];
+        return plannedProperties;
     }
 
     /++
@@ -2912,4 +2981,34 @@ unittest
     assert(mapping.mappedPropertyIndex("first_name") == size_t.max && mapping.mappedPropertyCount == 2);
     assert(columns.find("first_name", mapping.suppressed) == size_t.max, "the index ignored a suppressed property");
     assert(columns.find("city", mapping.suppressed) == index("city"));
+}
+
+@("BeanColumnIndex.planFor: one plan per list of column labels, reused without allocating, validated by the labels")
+unittest
+{
+    import core.memory : GC;
+
+    auto descriptor = beanDescriptorOf!RowMappingBean();
+    auto columns = new BeanColumnIndex(descriptor);
+    const first = columns.planFor(["id", "FIRST_NAME", "unknown"]);
+    assert(first == [columns.find("id", null), columns.find("first_name", null), size_t.max]);
+
+    // The same labels, as new strings: the published plan, without allocating.
+    string[3] again = ["id".idup, "FIRST_NAME".idup, "unknown".idup];
+    const reusing = GC.stats().allocatedInCurrentThread;
+    assert(columns.planFor(again[]) is first, "the same labels made a new plan");
+    assert(GC.stats().allocatedInCurrentThread == reusing, "reusing a plan allocated");
+
+    // Other labels, other order or another count: their own plans, never the first one's.
+    assert(columns.planFor(["FIRST_NAME", "id", "unknown"]) == [
+        columns.find("first_name", null), columns.find("id", null), size_t.max
+    ]);
+    assert(columns.planFor(["id", "FIRST_NAME"]) == first[0 .. 2]);
+    assert(columns.planFor(["city"]) == [columns.find("city", null)]);
+
+    // Past the slots, a list is planned on each call, and still correctly.
+    const unpublished = columns.planFor(["CITY", "id"]);
+    assert(unpublished == [columns.find("city", null), columns.find("id", null)]);
+    assert(columns.planFor(["CITY", "id"]) !is unpublished && columns.planFor(["CITY", "id"]) == unpublished);
+    assert(columns.planFor(["id", "FIRST_NAME", "unknown"]) is first);
 }
