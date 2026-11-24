@@ -785,7 +785,11 @@ class DispatcherServlet : HttpServlet, FastDispatch
 private const(char)[] messageOf(Throwable error)
 {
     import flint.java.lang : AssertionError, RuntimeException;
+    import flint.validation : BindException;
 
+    // A BindException (MethodArgumentNotValidException among them) builds its message in getMessage.
+    if (auto binding = cast(BindException) error)
+        return binding.getMessage();
     if (auto runtime = cast(RuntimeException) error)
         return runtime.getMessage();
     if (auto assertion = cast(AssertionError) error)

@@ -381,6 +381,9 @@ class MethodArgumentNotValidException : BindException, ErrorResponse
 
     private MethodParameter parameter;
     private ProblemDetail body;
+    /// The message, built by the first `getMessage()` (Spring builds it on demand: a handler that answers with
+    /// the binding result never pays for the text).
+    private string message_;
 
     /// For the invalid argument `parameter` and the errors in `bindingResult`.
     this(MethodParameter parameter, BindingResult bindingResult)
@@ -388,8 +391,15 @@ class MethodArgumentNotValidException : BindException, ErrorResponse
         super(bindingResult);
         this.parameter = parameter;
         body = ProblemDetail.forStatusAndDetail(getStatusCode(), "Invalid request content.");
-        msg = validationMessage();
         skipBacktrace(this);
+    }
+
+    /// `Validation failed for argument [i] in m with n errors: [error] ...`, built on first use.
+    override string getMessage()
+    {
+        if (message_ is null)
+            message_ = validationMessage();
+        return message_;
     }
 
     HttpStatusCode getStatusCode()

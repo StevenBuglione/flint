@@ -30,7 +30,7 @@ unittest
     auto arguments = ex.getDetailMessageArguments();
     assert(arguments.length == 2 && arguments[0].get!string == "");
     assert(arguments[1].get!string == "telephone: numeric value out of bounds (<10 digits>.<0 digits> expected)");
-    assert(ex.msg.length > 20 && ex.msg[0 .. 20] == "Validation failed : ", ex.msg);
+    assert(ex.getMessage().length > 20 && ex.getMessage()[0 .. 20] == "Validation failed : ", ex.getMessage());
 
     result.addError(new ObjectError("owner", "owner is inconsistent"));
     result.addError(new FieldError("owner", "city", "must not be blank"));
@@ -42,5 +42,5 @@ unittest
             ~ "and city: must not be blank");
     // Without a parameter Spring's message has two spaces before " with".
     enum prefix = "Validation failed  with 3 errors: [Field error in object 'owner' on field 'telephone'";
-    assert(ex.msg[0 .. prefix.length] == prefix, ex.msg);
+    assert(ex.getMessage()[0 .. prefix.length] == prefix, ex.getMessage());
 }

@@ -444,3 +444,24 @@ unittest
         assert(viaSource.get(name) == viaApi.get(name), name);
     assert(viaSource.get("Accept") == ["application/json", "text/plain"]);
 }
+
+@("Flint: MethodArgumentNotValidException builds its message on the first getMessage, the text Spring gives")
+unittest
+{
+    import flint.validation : BeanPropertyBindingResult;
+
+    auto errors = new BeanPropertyBindingResult(Any.of(new TestBean()), "testBean");
+    import std.algorithm.searching : startsWith;
+
+    errors.rejectValue("name", "invalid");
+    errors.rejectValue("name", "tooLong");
+    auto ex = new MethodArgumentNotValidException(handleParameter(), errors);
+    // Nothing is formatted at construction: a handler that answers with the binding result never pays for it.
+    assert(ex.msg is null);
+    const message = ex.getMessage();
+    assert(message.startsWith("Validation failed for argument [0] in DefaultHandlerExceptionResolverTests.handle"
+            ~ " with 2 errors: [Field error in object 'testBean' on field 'name'"), message);
+    // Built once, then the same string.
+    assert(ex.getMessage() is message);
+    assert(ex.toString() == typeid(ex).name ~ ": " ~ message);
+}
