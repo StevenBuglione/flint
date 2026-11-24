@@ -13,7 +13,7 @@
   "builds": {
     "tree": {
       "app": "checkout",
-      "commit": "TBD",
+      "commit": "ca5fbd4a46ed",
       "flint": true,
       "linker": "mold",
       "fork": true
@@ -49,7 +49,8 @@
       }
     ]
   },
-  "blocked_on": "freeze B (resume plan section 1): the coordinator gives B's full SHA, then every baseline entry is pinned to it; and only if RSS still decides after phase1-http-gs-rest (owner decision 2, resume plan section 5)",
+  "blocked_on": "only if RSS still decides after phase1-http-gs-rest (owner decision 2, resume plan section 5)",
   "tree_note": "Resume plan 1.5: every baseline part builds in the same private tree at B (flint, mold, the fork build), so all parts measure one toolchain.",
-  "claim_when": "Section 2 order 9 of the owner-approved resume plan: a claimed window at B, only if RSS still decides"
+  "claim_when": "Section 2 order 9 of the owner-approved resume plan: a claimed window at B, only if RSS still decides",
+  "pinned": "B, ca5fbd4a46edd8e558d5876830197f23b5db5295 (coordinator, 2026-11-24 02:06Z)"
 }

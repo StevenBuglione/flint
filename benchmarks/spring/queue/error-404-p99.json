@@ -1,13 +1,13 @@
 {
   "schema": "flint.measure-queue/1",
   "created": "2026-11-23",
-  "status": "blocked",
+  "status": "pending",
   "priority": 4,
   "window": "claim",
   "builds": {
     "tree": {
       "app": "checkout",
-      "commit": "TBD",
+      "commit": "ca5fbd4a46ed",
       "flint": true,
       "linker": "mold",
       "fork": true
@@ -42,7 +42,7 @@
   },
   "report_to": "the requester; docs/milestones/13.md",
   "estimate_minutes": 45,
-  "blocked_on": "freeze B (resume plan section 1): the coordinator gives B's full SHA, then every baseline entry is pinned to it",
   "claim_when": "Section 2 of the owner-approved resume plan (b349fb0a), order 4: a claimed window at B, the plan naming every baseline entry (the 41- and 45-minute HTTP and error parts included)",
-  "tree_note": "Resume plan 1.5: every baseline part builds in the same private tree at B (flint, mold, the fork build), so all parts measure one toolchain."
+  "tree_note": "Resume plan 1.5: every baseline part builds in the same private tree at B (flint, mold, the fork build), so all parts measure one toolchain.",
+  "pinned": "B, ca5fbd4a46edd8e558d5876830197f23b5db5295 (coordinator, 2026-11-24 02:06Z)"
 }

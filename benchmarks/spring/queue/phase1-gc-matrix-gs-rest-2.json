@@ -1,13 +1,13 @@
 {
   "schema": "flint.measure-queue/1",
   "created": "2026-11-23",
-  "status": "blocked",
+  "status": "pending",
   "window": "natural",
   "requested_by": "the coordinator, via data-access (2026-11-23 17:07Z): the same three setting groups as petclinic-rest's",
   "builds": {
     "tree": {
       "app": "checkout",
-      "commit": "TBD",
+      "commit": "ca5fbd4a46ed",
       "flint": true,
       "linker": "mold",
       "fork": true
@@ -45,6 +45,6 @@
       }
     ]
   },
-  "blocked_on": "freeze B (resume plan section 1): the coordinator gives B's full SHA, then every baseline entry is pinned to it",
-  "tree_note": "Resume plan 1.5: every baseline part builds in the same private tree at B (flint, mold, the fork build), so all parts measure one toolchain."
+  "tree_note": "Resume plan 1.5: every baseline part builds in the same private tree at B (flint, mold, the fork build), so all parts measure one toolchain.",
+  "pinned": "B, ca5fbd4a46edd8e558d5876830197f23b5db5295 (coordinator, 2026-11-24 02:06Z)"
 }

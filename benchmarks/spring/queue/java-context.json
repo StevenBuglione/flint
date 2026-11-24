@@ -2,16 +2,15 @@
   "schema": "flint.measure-queue/1",
   "id": "java-context",
   "created": "2026-11-23",
-  "status": "blocked",
+  "status": "pending",
   "window": "natural",
-  "blocked_on": "freeze B (resume plan section 1): the coordinator gives B's full SHA, then every baseline entry is pinned to it",
   "requested_by": "ADR-030 section 8 (context only)",
   "summary": "Java Spring Boot on the JVM and as native images, the Spring workload and the error paths, as context next to the Phase 1 evidence",
   "why": "Context is reported, never compared or gated (benchmarks/spring/README.md). It doubles the HTTP runs, so it runs in its own window, under the same quiet rules, rather than inside the coordinator's paused window.",
   "builds": {
     "tree": {
       "app": "checkout",
-      "commit": "TBD",
+      "commit": "ca5fbd4a46ed",
       "flint": true,
       "linker": "mold",
       "fork": true
@@ -51,5 +50,6 @@
   },
   "report_to": "docs/milestones/13.md, beside the Phase 1 evidence",
   "estimate_minutes": 165,
-  "tree_note": "Resume plan 1.5: every baseline part builds in the same private tree at B (flint, mold, the fork build), so all parts measure one toolchain."
+  "tree_note": "Resume plan 1.5: every baseline part builds in the same private tree at B (flint, mold, the fork build), so all parts measure one toolchain.",
+  "pinned": "B, ca5fbd4a46edd8e558d5876830197f23b5db5295 (coordinator, 2026-11-24 02:06Z)"
 }

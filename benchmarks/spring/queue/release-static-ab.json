@@ -6,7 +6,7 @@
   "window": "claim",
   "priority": 8,
   "estimate_minutes": 30,
-  "blocked_on": "freeze B (resume plan section 1): the coordinator gives B's full SHA, then every baseline entry is pinned to it",
+  "blocked_on": "the musl preparation at B (native_musl.py, musl_smoke.py), done with the watcher stopped",
   "requested_by": "the owner (decisions.md 6ecd8933: measure a static release build before deciding how the measured apps link), scoped by the coordinator 2026-11-23 20:55Z (option 1: musl static)",
   "report_to": "the coordinator",
   "summary": "gs-rest-service release: dynamic glibc (as built now) against fully static musl (flint package), runtime on the Spring workload and stripped O3/Oz against Go; non-gating",
@@ -14,7 +14,7 @@
   "builds": {
     "tree": {
       "app": "checkout",
-      "commit": "TBD",
+      "commit": "ca5fbd4a46ed",
       "flint": true,
       "linker": "mold",
       "fork": true
@@ -47,5 +47,6 @@
     ]
   },
   "claim_when": "Section 2 of the owner-approved resume plan (b349fb0a), order 8: a claimed window at B, the plan naming every baseline entry (the 41- and 45-minute HTTP and error parts included)",
-  "tree_note": "Resume plan 1.5: every baseline part builds in the same private tree at B (flint, mold, the fork build), so all parts measure one toolchain."
+  "tree_note": "Resume plan 1.5: every baseline part builds in the same private tree at B (flint, mold, the fork build), so all parts measure one toolchain.",
+  "pinned": "B, ca5fbd4a46edd8e558d5876830197f23b5db5295 (coordinator, 2026-11-24 02:06Z)"
 }
