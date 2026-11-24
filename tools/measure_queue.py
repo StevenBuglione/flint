@@ -913,9 +913,15 @@ def step_provenance(command, cwd, env, log, outdir, started):
                 measured |= measured_binaries(json.loads(path.read_text()))
             except ValueError:
                 pass
-    lines = AOT_LINE.findall(Path(log).read_text(errors='replace')) if Path(log).is_file() else []
+    # The step's own log, and the logs a tool wrote under the results directory meanwhile (measure_builds keeps each
+    # build's output in builds-logs/), are where flint build's AOT summary lines land.
+    logs = [Path(log)] + [path for path in outdir.rglob('*.log') if path != Path(log) and path.stat().st_mtime >= started
+                          and not path.name.startswith('step-')]
+    lines = [line for path in logs if path.is_file() for line in AOT_LINE.findall(path.read_text(errors='replace'))]
     return {'artifacts': built_artifacts(cwd, started), 'measured_binaries': sorted(measured),
-            'aot_summaries': {'count': len(lines), 'distinct': sorted(set(re.sub(r'\d+ ms', 'N ms', l) for l in lines))},
+            'aot_summaries': {'count': len(lines), 'distinct': sorted(set(re.sub(r'\d+ ms', 'N ms', l) for l in lines)),
+                              'extractors': sorted({l.rsplit(', ', 1)[1].rstrip(')') for l in lines
+                                                    if l.endswith(('extractor)', 'describer)'))})},
             'gc_options': gc}
 
 
