@@ -12,7 +12,7 @@ import flint.engine.sql.sys.diagnostics : decideDiagnostics, diagnosticNow, note
     noteRelease, noteRow, noteStatement, reportDiagnostics;
 import flint.engine.sql.sys.wait : admit, admitStartup, armLeaseWait, forgetLeaseWaiter, joinLeaseQueue,
     leaseChanged, leaseMark, leaseWaiterCount, leaveLeaseQueue, pause, pauseForLease,
-    prepareLeaseWaiters, retiredHook, waitFor;
+    prepareLeaseWaiters, releaseWatches, retiredHook, waitFor;
 
 @safe:
 
@@ -411,7 +411,7 @@ private Execution drain(Consumer)(ref scope Operation work, ulong slot, ref Cont
             work.nextRow();
             break;
         case Progress.wait:
-            const paused = waitFor(interest, context, cleanup);
+            const paused = waitFor(interest, slot, context, cleanup);
             if (paused.code != Status.ok || Deadline.afterMillis(0).monotonicNanoseconds >= cleanup
                     .monotonicNanoseconds)
             {
@@ -587,6 +587,8 @@ struct Pool
             if (cleanup.code != Status.ok)
                 retireLease(handle);
         }
+        // Before the core may close a retired connection's descriptor.
+        releaseWatches(handle.slot);
         const status = releasePool(identity(), handle);
         if (status != Status.ok)
             return Error(status, "SQL lease could not be released");

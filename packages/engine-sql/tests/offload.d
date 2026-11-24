@@ -676,3 +676,100 @@ version (FlintNativeLibpq)
         assert(state.acquiredAt - state.releasedAt < 50_000_000L, "the freed slot waited for the fallback");
     }
 }
+
+version (FlintNativeLibpq)
+{
+    // ---- A leased connection keeps its watch between statements; readiness nobody waits for must not spin.
+
+    private final class StrayReadiness
+    {
+        Pool pool;
+        long idleCpuNanos = -1;
+        bool listened, notified, servedAfter;
+    }
+
+    private __gshared StrayReadiness strayState;
+
+    // SAFETY: The harness publishes before starting the reactor and clears after all workers join; one worker runs
+    // every fiber.
+    private StrayReadiness sharedStray() @trusted nothrow @nogc
+    {
+        return strayState;
+    }
+
+    // SAFETY: Written by the harness before the reactor starts and after all workers join.
+    private void publishStray(StrayReadiness state) @trusted nothrow @nogc
+    {
+        strayState = state;
+    }
+
+    // SAFETY: clock_gettime writes one timespec into the local it is given.
+    private long threadCpuNanos() @trusted nothrow @nogc
+    {
+        import core.sys.posix.time : CLOCK_THREAD_CPUTIME_ID, clock_gettime, timespec;
+
+        timespec now;
+        clock_gettime(CLOCK_THREAD_CPUTIME_ID, &now);
+        return now.tv_sec * 1_000_000_000L + now.tv_nsec;
+    }
+
+    private void listener() nothrow @nogc
+    {
+        auto state = sharedStray();
+        auto owner = Reactor.current();
+        scope (exit)
+            owner.stop();
+        Context context;
+        auto lease = state.pool.acquire(context);
+        assert(lease.ok());
+        scope RequestArena arena;
+        state.listened = lease.value.execute("LISTEN flint_stray", [], arena, context).ok();
+        while (!state.notified)
+            assert(owner.yieldUntil(Deadline.afterMillis(1)).code == Status.ok);
+        // The notification makes this lease's socket readable while no statement waits on it.
+        const before = threadCpuNanos();
+        assert(owner.yieldUntil(Deadline.afterMillis(100)).code == Status.ok);
+        state.idleCpuNanos = threadCpuNanos() - before;
+        state.servedAfter = lease.value.execute("SELECT 1", [], arena, context).ok();
+        assert(state.pool.release(lease.value).code == Status.ok);
+    }
+
+    private void notifier() nothrow @nogc
+    {
+        auto state = sharedStray();
+        auto owner = Reactor.current();
+        while (!state.listened)
+            assert(owner.yieldUntil(Deadline.afterMillis(1)).code == Status.ok);
+        Context context;
+        auto lease = state.pool.acquire(context);
+        assert(lease.ok());
+        scope RequestArena arena;
+        assert(lease.value.execute("NOTIFY flint_stray", [], arena, context).ok());
+        assert(state.pool.release(lease.value).code == Status.ok);
+        state.notified = true;
+    }
+
+    @("readiness on a leased connection between statements drops its watch instead of spinning the loop")
+    unittest
+    {
+        import std.process : environment;
+
+        const address = environment.get("FLINT_SQL_PG_TEST_DSN");
+        if (address.length == 0)
+            return;
+        auto state = new StrayReadiness;
+        auto config = libpqPool(address);
+        config.maxConnections = 2;
+        assert(state.pool.open(config).code == Status.ok);
+        Context context;
+        scope (exit)
+            assert(state.pool.close(context).code == Status.ok);
+        publishStray(state);
+        scope (exit)
+            publishStray(null);
+        runFibers(1, 8, [&listener, &notifier]);
+        assert(state.listened && state.notified && state.servedAfter);
+        // A loop reporting the readable socket on every pass would burn the whole 100 ms.
+        assert(state.idleCpuNanos >= 0 && state.idleCpuNanos < 20_000_000L, "the idle worker spun on stray readiness");
+    }
+}

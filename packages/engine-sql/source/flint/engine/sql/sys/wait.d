@@ -11,16 +11,32 @@ import flint.engine.sql.sys.diagnostics : diagnosticNow, noteSocketWait;
 
 @safe:
 
+/// A leased connection's descriptor watch on this worker. It stays registered across the statements of a lease,
+/// saving a watch and an unwatch (two system calls) per wait, and is dropped when the lease is released.
 private struct Signal
 {
     int descriptor = -1;
+    /// The lease whose connection owns the descriptor.
+    ulong lease;
+    /// The interest the watch is registered with; zero before it is registered.
+    uint events;
+    /// A fiber waits on the descriptor now.
+    bool waiting;
     bool ready;
     TaskWaker waker;
 
-    void receive(int fd, NativeInterest events) nothrow @nogc
+    void receive(int fd, NativeInterest seen) nothrow @nogc
     {
-        if (descriptor != fd || events == NativeInterest.none)
+        if (descriptor != fd || seen == NativeInterest.none)
             return;
+        if (!waiting)
+        {
+            // Readiness between statements (a server notice): nobody reads it yet, and the level-triggered watch
+            // would report it on every pass, so drop the watch; the next wait registers it again.
+            cast(void) Reactor.current().unwatchNative(fd);
+            this = Signal.init;
+            return;
+        }
         ready = true;
         // The watch is level-triggered: until the waiting fiber reads, every loop pass reports the descriptor
         // again, so resume it on the next pass rather than at its fallback deadline.
@@ -34,16 +50,43 @@ private enum fallbackMillis = 1_000;
 
 private Signal[256] signals;
 
-private size_t reserveSignal(int fd, TaskWaker waker) nothrow @nogc
+/// The entry for `fd` held by `lease` on this worker, a new one, or `size_t.max` when the table is full. An entry
+/// for the same descriptor under another lease is stale (its connection closed elsewhere) and is replaced.
+private size_t signalFor(int fd, ulong lease) nothrow @nogc
 {
+    size_t free = size_t.max;
     foreach (index, ref signal; signals)
     {
-        if (signal.descriptor != -1)
-            continue;
-        signal = Signal(fd, false, waker);
-        return index;
+        if (signal.descriptor == fd)
+        {
+            if (signal.lease == lease)
+                return index;
+            cast(void) Reactor.current().unwatchNative(fd);
+            signal = Signal(fd, lease);
+            return index;
+        }
+        if (signal.descriptor == -1 && free == size_t.max)
+            free = index;
     }
-    return size_t.max;
+    if (free != size_t.max)
+        signals[free] = Signal(fd, lease);
+    return free;
+}
+
+/// Drop the descriptor watches `lease` holds on this worker, before its connection may close.
+package(flint.engine.sql) void releaseWatches(ulong lease) nothrow @nogc
+{
+    auto owner = Reactor.current();
+    if (owner.currentCore() == uint.max)
+        return;
+    foreach (ref signal; signals)
+    {
+        if (signal.descriptor == -1 || signal.lease != lease)
+            continue;
+        if (signal.events != 0)
+            cast(void) owner.unwatchNative(signal.descriptor);
+        signal = Signal.init;
+    }
 }
 
 package(flint.engine.sql) Error admit() nothrow @nogc
@@ -280,36 +323,51 @@ private bool continueWaiting(ref const Context context, Deadline cleanup) nothro
     return Deadline.afterMillis(0).monotonicNanoseconds < cleanup.monotonicNanoseconds;
 }
 
-package(flint.engine.sql) Error waitFor(Interest interest, ref const Context context, Deadline cleanup) nothrow @nogc
+package(flint.engine.sql) Error waitFor(Interest want, ulong lease, ref const Context ctx, Deadline end) nothrow @nogc
 {
     auto owner = Reactor.current();
     if (owner.currentCore() == uint.max)
-        return Error(waitOffReactor(interest, 2));
-    if (interest.fd < 0)
+        return Error(waitOffReactor(want, 2));
+    if (want.fd < 0)
         return owner.yieldUntil(Deadline.afterMillis(1));
 
     const waker = owner.currentWaker();
     if (!waker.ok())
         return waker.error;
-    const index = reserveSignal(interest.fd, waker.value);
+    const index = signalFor(want.fd, lease);
     if (index == size_t.max)
         return owner.yieldUntil(Deadline.afterMillis(1));
-    scope (exit)
+    const watched = watchFor(owner, index, want);
+    if (watched.code != Status.ok)
+    {
         signals[index] = Signal.init;
-
-    const ready = &signals[index].receive;
-    const status = owner.watchNative(interest.fd, cast(NativeInterest) interest.events, ready);
-    // Without native watches (Windows, ADR-026) the fiber re-checks every millisecond, as when they are exhausted.
-    if (status.code == Status.resourceExhausted || status.code == Status.unsupported)
-        return owner.yieldUntil(Deadline.afterMillis(1));
-    if (status.code != Status.ok)
-        return status;
+        // Without native watches (Windows, ADR-026) the fiber re-checks every millisecond, as when they are exhausted.
+        if (watched.code == Status.resourceExhausted || watched.code == Status.unsupported)
+            return owner.yieldUntil(Deadline.afterMillis(1));
+        return watched;
+    }
+    signals[index].waker = waker.value;
+    signals[index].ready = false;
+    signals[index].waiting = true;
     scope (exit)
-        owner.unwatchNative(interest.fd);
+        if (signals[index].descriptor == want.fd)
+            signals[index].waiting = false;
     const started = diagnosticNow();
     scope (exit)
         noteSocketWait(started);
-    return awaitSignal(owner, index, context, cleanup);
+    return awaitSignal(owner, index, ctx, end);
+}
+
+/// Register the watch of the entry at `index` for `interest`, unless it already is.
+private Error watchFor(ref Reactor owner, size_t index, Interest interest) nothrow @nogc
+{
+    if (signals[index].events == interest.events)
+        return Error.init;
+    const ready = &signals[index].receive;
+    const status = owner.watchNative(interest.fd, cast(NativeInterest) interest.events, ready);
+    if (status.code == Status.ok)
+        signals[index].events = interest.events;
+    return status;
 }
 
 /// Sleep until the signal at `index` is ready, the caller's context ends or cleanup expires.
