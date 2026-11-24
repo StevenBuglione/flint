@@ -48,14 +48,34 @@ private struct Signal
 /// resumes it first; this only bounds a missed one.
 private enum fallbackMillis = 1_000;
 
-private Signal[256] signals;
+/// This worker's descriptor watches, in use below `used`: a worker holds a few leases at a time, so scans stop
+/// after a few entries rather than walking the whole table on every wait and release.
+private struct Signals
+{
+    Signal[256] entries;
+    size_t used;
+
+    ref Signal opIndex(size_t index) return nothrow @nogc
+    {
+        return entries[index];
+    }
+
+    /// Lower `used` past the free entries at its top.
+    void trim() nothrow @nogc
+    {
+        while (used != 0 && entries[used - 1].descriptor == -1)
+            --used;
+    }
+}
+
+private Signals signals;
 
 /// The entry for `fd` held by `lease` on this worker, a new one, or `size_t.max` when the table is full. An entry
 /// for the same descriptor under another lease is stale (its connection closed elsewhere) and is replaced.
 private size_t signalFor(int fd, ulong lease) nothrow @nogc
 {
     size_t free = size_t.max;
-    foreach (index, ref signal; signals)
+    foreach (index, ref signal; signals.entries[0 .. signals.used])
     {
         if (signal.descriptor == fd)
         {
@@ -68,8 +88,13 @@ private size_t signalFor(int fd, ulong lease) nothrow @nogc
         if (signal.descriptor == -1 && free == size_t.max)
             free = index;
     }
-    if (free != size_t.max)
-        signals[free] = Signal(fd, lease);
+    if (free == size_t.max)
+    {
+        if (signals.used == signals.entries.length)
+            return size_t.max;
+        free = signals.used++;
+    }
+    signals[free] = Signal(fd, lease);
     return free;
 }
 
@@ -79,7 +104,7 @@ package(flint.engine.sql) void releaseWatches(ulong lease) nothrow @nogc
     auto owner = Reactor.current();
     if (owner.currentCore() == uint.max)
         return;
-    foreach (ref signal; signals)
+    foreach (ref signal; signals.entries[0 .. signals.used])
     {
         if (signal.descriptor == -1 || signal.lease != lease)
             continue;
@@ -87,6 +112,7 @@ package(flint.engine.sql) void releaseWatches(ulong lease) nothrow @nogc
             cast(void) owner.unwatchNative(signal.descriptor);
         signal = Signal.init;
     }
+    signals.trim();
 }
 
 package(flint.engine.sql) Error admit() nothrow @nogc
@@ -109,28 +135,39 @@ package(flint.engine.sql) Error admitStartup() nothrow @nogc
 private shared uint[64] leaseEpochs;
 private shared uint[64] leaseSleepers;
 
+/// The per-pool tables' index for pool slot `pool`. The core numbers pool slots 1 to 64 (MAX_POOLS in
+/// flint_sql_core.c), so each pool has a table of its own.
+private size_t slotIndex(ulong pool) pure nothrow @nogc
+{
+    assert(pool >= 1 && pool <= 64, "SQL pool slot outside the core's 64");
+    return cast(size_t)(pool - 1);
+}
+// Off-reactor threads parked on a pool's epoch futex: a release wakes the futex only when one is, sparing the
+// system call on a server whose waiters are all reactor fibers (web-http's review of 57d49362).
+private shared uint[64] leaseParked;
+
 /// Register a waiter before the acquisition attempt whose failure it may sleep on.
 package(flint.engine.sql) void joinLeaseQueue(ulong pool) nothrow @nogc
 {
-    atomicOp!"+="(leaseSleepers[pool % leaseSleepers.length], 1U);
+    atomicOp!"+="(leaseSleepers[slotIndex(pool)], 1U);
 }
 
 /// Remove a waiter registered by joinLeaseQueue.
 package(flint.engine.sql) void leaveLeaseQueue(ulong pool) nothrow @nogc
 {
-    atomicOp!"-="(leaseSleepers[pool % leaseSleepers.length], 1U);
+    atomicOp!"-="(leaseSleepers[slotIndex(pool)], 1U);
 }
 
 /// Waiters registered on the pool, for diagnostics.
 package(flint.engine.sql) uint leaseWaiterCount(ulong pool) nothrow @nogc
 {
-    return atomicLoad(leaseSleepers[pool % leaseSleepers.length]);
+    return atomicLoad(leaseSleepers[slotIndex(pool)]);
 }
 
 /// Observe the pool's lease generation before an acquisition attempt.
 package(flint.engine.sql) uint leaseMark(ulong pool) nothrow @nogc
 {
-    return atomicLoad(leaseEpochs[pool % leaseEpochs.length]);
+    return atomicLoad(leaseEpochs[slotIndex(pool)]);
 }
 
 /// Announce a returned lease or a changed queue head to registered waiters. A waiter registers
@@ -139,11 +176,14 @@ package(flint.engine.sql) uint leaseMark(ulong pool) nothrow @nogc
 /// signalled through the handle it armed before its attempt.
 package(flint.engine.sql) void leaseChanged(ulong pool) nothrow @nogc
 {
-    const index = pool % leaseEpochs.length;
+    const index = slotIndex(pool);
     if (atomicLoad(leaseSleepers[index]) == 0)
         return;
     atomicOp!"+="(leaseEpochs[index], 1U);
-    wakeAll(leaseEpochs[index]);
+    // A thread counts itself parked before it compares the epoch, so one that saw zero here parks after this bump
+    // and the futex returns at once.
+    if (atomicLoad(leaseParked[index]) != 0)
+        wakeAll(leaseEpochs[index]);
     auto head = leaseHead(pool);
     if (head.valid)
         cast(void) head.signal();
@@ -181,7 +221,10 @@ package(flint.engine.sql) Error pauseForLease(ulong pool, uint mark, ulong ticke
     auto owner = Reactor.current();
     if (owner.currentCore() == uint.max)
     {
-        park(leaseEpochs[pool % leaseEpochs.length], mark, 2_000_000);
+        const index = slotIndex(pool);
+        atomicOp!"+="(leaseParked[index], 1U);
+        park(leaseEpochs[index], mark, 2_000_000);
+        atomicOp!"-="(leaseParked[index], 1U);
         return Error.init;
     }
     if (ticket == 0 || !armed.valid || !rememberLeaseWaiter(pool, ticket, armed))
@@ -220,7 +263,7 @@ private __gshared LeaseWaiters[64] leaseWaiters;
 // SAFETY: A slot's table is replaced only here, while its pool is opening and has no waiters.
 package(flint.engine.sql) @trusted void prepareLeaseWaiters(ulong pool, uint capacity)
 {
-    auto table = &leaseWaiters[pool % leaseWaiters.length];
+    auto table = &leaseWaiters[slotIndex(pool)];
     if (table.entries.length < capacity)
         table.entries = new LeaseWaiter[capacity];
     else
@@ -231,9 +274,17 @@ package(flint.engine.sql) @trusted void prepareLeaseWaiters(ulong pool, uint cap
 // SAFETY: The spin lock serializes every access to the slot's table, which only prepareLeaseWaiters resizes.
 private @trusted LeaseWaiters* lockWaiters(ulong pool) nothrow @nogc
 {
-    auto table = &leaseWaiters[pool % leaseWaiters.length];
-    while (!cas(&table.locked, false, true))
+    import core.atomic : pause;
+    import core.thread.osthread : Thread;
+
+    auto table = &leaseWaiters[slotIndex(pool)];
+    // The holder may be preempted (a reactor worker, or the libpq closer thread in the retirement hook): back off,
+    // and give up the CPU after a short spin rather than burning a whole time slice.
+    for (uint spins; !cas(&table.locked, false, true); ++spins)
     {
+        pause();
+        if (spins >= 64)
+            Thread.yield();
     }
     return table;
 }
