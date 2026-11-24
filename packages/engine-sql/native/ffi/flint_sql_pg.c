@@ -477,7 +477,7 @@ static int prepared_plain(const flint_pg_connection *connection, const char *tex
 static int send_pipelined(flint_pg_connection *connection, flint_sql_operation *operation)
 {
     const int preamble = prepared_plain(connection, operation->preamble);
-    if (preamble < 0)
+    if (preamble < 0 || !operation->text[0])
         return -1;
     const int cache = cache_index(connection, operation);
     if (cache >= 0) {
@@ -519,6 +519,14 @@ static int start_query(flint_pg_connection *connection, flint_sql_operation *ope
         operation->preamble = NULL;
         operation->parameter_count = 0;
         operation->preamble_state = PREAMBLE_ALONE;
+    }
+    /* pgjdbc sends an empty statement (its isValid) as a simple-protocol query; so does Flint, for the same
+       messages on the wire and the same line in the server's log. */
+    if (!operation->text[0] && !operation->parameter_count) {
+        if (!PQsendQuery(connection->database, ""))
+            return FLINT_SQL_IO;
+        operation->phase = PG_QUERY;
+        return FLINT_SQL_OK;
     }
     operation->cache = cache_index(connection, operation);
     if (operation->cache < 0)

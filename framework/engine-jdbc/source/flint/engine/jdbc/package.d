@@ -870,7 +870,7 @@ final class FlintPreparedStatement : PreparedStatement
         }
         if (connection.driver == Driver.postgres)
         {
-            auto returning = text ~ " RETURNING " ~ (keyColumns.length ? joinIdentifiers(keyColumns) : "*");
+            auto returning = returningSql(text, keyColumns);
             generatedKeys = execute(returning, values, true);
             updateCount = generatedKeys.rowCount;
             return updateCount;
@@ -1286,7 +1286,44 @@ private bool producesRows(string sql)
     foreach (keyword; ["SELECT", "WITH", "VALUES", "SHOW", "EXPLAIN", "PRAGMA", "TABLE"])
         if (rest.length >= keyword.length && equalsIgnoreCase(rest[0 .. keyword.length], keyword))
             return true;
-    return indexOfText(upper(sql), " RETURNING ") >= 0;
+    return hasReturning(sql);
+}
+
+/// `sql` asking for its generated keys, as pgjdbc writes it: a new line, then RETURNING and the key columns
+/// quoted, or `*` when none are named.
+private string returningSql(string sql, string[] keyColumns)
+{
+    return sql ~ "\nRETURNING " ~ (keyColumns.length ? joinIdentifiers(keyColumns) : "*");
+}
+
+/// Whether `sql` has a RETURNING clause: the word after any white space, followed by white space.
+private bool hasReturning(string sql)
+{
+    static bool space(char c) pure nothrow @nogc
+    {
+        return c == ' ' || c == '\n' || c == '\t' || c == '\r';
+    }
+
+    enum word = "RETURNING";
+    foreach (i; 1 .. (sql.length > word.length ? sql.length - word.length + 1 : 1))
+        if (space(sql[i - 1]) && equalsIgnoreCase(sql[i .. i + word.length], word)
+                && (i + word.length == sql.length || space(sql[i + word.length])))
+            return true;
+    return false;
+}
+
+@("generated keys are asked for as pgjdbc asks: a new line, RETURNING and the quoted key columns")
+unittest
+{
+    assert(returningSql("INSERT INTO owners (name) VALUES($1)",
+            ["id"]) == "INSERT INTO owners (name) VALUES($1)\nRETURNING \"id\"");
+    assert(returningSql("INSERT INTO t VALUES($1)", []) == "INSERT INTO t VALUES($1)\nRETURNING *");
+    assert(hasReturning("INSERT INTO t VALUES($1)\nRETURNING \"id\""));
+    assert(hasReturning("insert into t values (1) returning id"));
+    assert(hasReturning("INSERT INTO t VALUES (1)\tRETURNING\n*"));
+    assert(!hasReturning("SELECT returning_count FROM t"));
+    assert(!hasReturning("RETURNING"));
+    assert(hasReturning("DELETE FROM t RETURNING"));
 }
 
 private string joinIdentifiers(string[] names)
