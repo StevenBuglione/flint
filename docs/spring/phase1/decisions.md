@@ -645,3 +645,22 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     **What grows (smaps census):** with the default pools, one new anonymous mapping of 7 MiB (druntime's grown second GC pool) appears during the fixed-rate phase and becomes fully resident: total RSS goes 11.3 MB after warm-up → 19.3 MB by 30 s and stays there. Fixed 4 MiB pools fill during warm-up and never grow; fixed 1 MiB pools stay at 12.6–12.9 MB (Go: 13.0 MB, flat). The rest is steady on both sides: about 198 mappings of 256 KiB (about 1.2 MB resident, fiber stacks) and 4.1 MB of Flint binary text against Go's 5.8 MB. So the RSS gap is the collector's pool growth policy, not live data: 1 MiB fixed pools meet the 13.0 MB budget for 1.4% throughput (1.319 → 1.300 of Go), 4.5 times the collections and pauses up to 3 ms. Evidence: `benchmarks/spring/evidence/fast-path-pools-ab/20261124T071647Z/`.
 - 2026-11-24, coordinator, **provisional pending the owner** (asked at about 2:55 AM EST, no answer yet; reversible): **Boot's default GC setting becomes fixed 1 MiB pools** for B2, as recommended. fast-path-pools-ab (8c7d2302) showed the RSS gap is druntime growing a 7 MiB pool during the fixed-rate phase. Fixed 1 MiB pools gave RSS 0.939 of Go (12.6–12.9 MB, inside the 13.0 MB budget), throughput 1.300, p99 0.846, CPU 1.021, 38 collections per second and a 1–3 ms maximum pause. That run predates the RELRO root trim (33969576) and the pools[] move (f4808d67), which cut each collection's root scan by 43% and then 25%. B2 shows whether CPU per request also passes. If B2's CPU fails, the next arm is 2 MiB. The owner can override at any time; it's one rt_options line.
 - 2026-11-24, proof-harness: **Go baseline of gs-rest-service captured** (owner decision c015f307; claimed window 08:27–09:10Z, harness `57d49362`, the registered comparator `d33e8488`): 18/18, then nine production trials of the HTTP workload and nine of the 404 path, five calibration trials and the nine-sample probe. Medians: HTTP 250,710 req/s, p50 61 µs, p99 261 µs, RSS 13.9 MB, CPU 8,208 ns per request (B's interleaved Go: 249,500 req/s, p99 260 µs); 404 path 245,310 req/s, p99 114 µs. Calibration bands are tight (coefficient of variation 0.4–0.9%). Record: `benchmarks/spring/baselines/go/gs-rest-service/20261124T082805Z/`; Flint-only runs (`--baseline`) measure against it while its fingerprint holds.
+- 2026-11-24, coordinator: **B2 = `0f01d6edd0a416a709e828cd7a7e94d7c531c563`**, the second same-commit baseline. It contains:
+  - the engine-sql wait fix and the FIFO lease handoff on RemoteWaker (57d49362);
+  - the RELRO root trim and the pools[] move;
+  - the census SQL fixes and health validation;
+  - the fast-path binding;
+  - the 404 and validation-error work (third-party-apis, web-http, framework-core, boot);
+  - m7's static link dedup, per-module static replay and the DUB parallel pipeline on shared toolchain v4.1 (DMD e7757432);
+  - the provisional fixed 1 MiB GC pools (0f01d6ed);
+  - ADR-032's corrected Go comparator.
+
+  The batch runs under c015f307 (Go baselines captured once, Flint-only parts against them). Builds use strict scratch and served compiles, with 0 refused asserted. Priority order:
+  1. the Go baseline capture for petclinic-rest;
+  2. phase1-http-petclinic, its first measurement;
+  3. phase1-builds for all three apps;
+  4. phase1-http-gs-rest;
+  5. error-404-p99 and error-validation-p99 (Go baselines for the error paths captured as needed);
+  6. the GC-matrix parts on natural quiet.
+
+  B's results stay as history. The exit claim still needs its one interleaved confirmation run (c25ae2b3).
