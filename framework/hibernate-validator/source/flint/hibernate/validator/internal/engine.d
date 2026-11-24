@@ -20,7 +20,7 @@ module flint.hibernate.validator.internal.engine;
 
 import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : Descriptor, DescriptorTable, MergedAnnotation,
-    MethodDescriptor, PropertyDescriptor, TypeKind;
+    MethodDescriptor, ParameterDescriptor, PropertyDescriptor, TypeKind;
 import flint.engine.aot.name : typeNameOf;
 import flint.hibernate.validator.internal.constraintvalidators : BuiltinConstraint, PatternCache,
     PreparedCheck, attributeText, isBuiltin, isValid, javaConstraintName, javaTypeName, prepare, read;
@@ -392,9 +392,10 @@ final class ValidatorFactoryImpl : ValidatorFactory
     private CustomValidator[][string] custom;
     // Copy-on-write, as the pattern cache: a published table is never changed, so lookups take no lock.
     private BeanMetaData[const(Descriptor)] beanMetaData;
-    // Prepared constraints of a parameter's, a return value's or a property's annotations, keyed by the address of
-    // the descriptor's annotation array and checked against the array itself.
-    private PreparedAnnotations[size_t] preparedAnnotations;
+    // Prepared constraints of executables' parameters and return values and of properties validated alone, keyed by
+    // what names the element (ElementKey), in slots claimed with compare-and-swap: lookups take no lock and an insert
+    // copies nothing. Allocated on first use.
+    private PreparedSlots* preparedSlots;
 
     ///
     this(DescriptorTable descriptors, MessageInterpolator interpolator)
@@ -412,7 +413,7 @@ final class ValidatorFactoryImpl : ValidatorFactory
         {
             // Metadata prepared before this binding classified the annotation without it.
             beanMetaData = null;
-            preparedAnnotations = null;
+            preparedSlots = null;
         }
     }
 
@@ -441,30 +442,60 @@ final class ValidatorFactoryImpl : ValidatorFactory
         return created;
     }
 
-    // The constraints of `annotations`, a descriptor's array (an executable's parameter, its return value, or a
-    // property validated alone), prepared on first use as a bean's are. Descriptors live as long as the factory, so
-    // an array's address names it; the stored array confirms the match.
-    private MetaConstraint[] preparedFor(const(MergedAnnotation)[] annotations)
+    // The constraints of the element `key` names, whose annotations are `annotations`, prepared on first use as a
+    // bean's are. An element's annotations are fixed by its declaration, so its name finds them even when the caller's
+    // descriptor (and so the array) is rebuilt per call; an address would not. When every probed slot is taken by
+    // other elements, the constraints are prepared for this call alone.
+    private MetaConstraint[] preparedFor(const(MergedAnnotation)[] annotations, ref const ElementKey key)
     {
+        import core.atomic : atomicLoad, cas;
+
         if (annotations.length == 0)
             return null;
-        const key = cast(size_t)&annotations[0];
-        auto published = preparedAnnotations;
-        if (auto found = key in published)
-            if (found.source is annotations)
-                return found.constraints;
-        auto constraints = prepareAll(annotations);
-        synchronized (this)
+        auto slots = preparedSlotTable();
+        const hash = key.hash();
+        foreach (probe; 0 .. preparedProbes)
         {
-            if (preparedAnnotations.length < preparedLimit)
+            auto slot = &slots.entries[(hash + probe) % slots.entries.length];
+            auto known = atomicLoad(*slot);
+            if (known is null)
             {
-                auto grown = preparedAnnotations.dup;
-                grown[key] = PreparedAnnotations(annotations, constraints);
-                imported!"core.atomic".atomicFence(); // the entry and the table are complete before publication
-                preparedAnnotations = grown;
+                auto entry = new PreparedEntry(key, prepareAll(annotations));
+                if (cas(slot, cast(PreparedEntry) null, entry))
+                    return entry.constraints;
+                known = atomicLoad(*slot);
             }
+            if (known.key.matches(key))
+                return known.constraints;
         }
-        return constraints;
+        return prepareAll(annotations);
+    }
+
+    // How many elements have prepared constraints (for tests).
+    package(flint.hibernate.validator) size_t preparedElements()
+    {
+        import core.atomic : atomicLoad;
+
+        auto table = atomicLoad(preparedSlots);
+        size_t count;
+        if (table !is null)
+            foreach (ref entry; table.entries)
+                count += atomicLoad(entry) !is null;
+        return count;
+    }
+
+    // The slot table, allocated by whichever validation needs it first.
+    private PreparedSlots* preparedSlotTable()
+    {
+        import core.atomic : atomicLoad, cas;
+
+        auto table = atomicLoad(preparedSlots);
+        if (table !is null)
+            return table;
+        auto created = new PreparedSlots;
+        if (cas(&preparedSlots, cast(PreparedSlots*) null, created))
+            return created;
+        return atomicLoad(preparedSlots);
     }
 
     // Each annotation as a constraint to check: built-ins read, compiled and validated once.
@@ -589,7 +620,8 @@ final class ValidatorImpl : Validator, ExecutableValidator
             auto value = parameterValues[i];
             // The path is built only for a violation or a cascade, as for bean properties.
             auto at = LazyPath.ofExecutable(method.name, parameter.name);
-            run.check(object, value, factory.preparedFor(parameter.annotations), at);
+            const key = ElementKey(object.typeName(), method.name, method.parameters, cast(int) i);
+            run.check(object, value, factory.preparedFor(parameter.annotations, key), at);
             if (findAnnotation(parameter.annotations, typeNameOf!Valid) && !value.isNull())
                 run.cascade(value, at.get(), parameter.type);
         }
@@ -605,7 +637,8 @@ final class ValidatorImpl : Validator, ExecutableValidator
             throw new IllegalArgument("HV000116: The method to be validated must not be null.");
         auto run = Run(factory, object, object.typeName());
         auto at = LazyPath.ofExecutable(method.name, null, true);
-        run.check(object, returnValue, factory.preparedFor(method.annotations), at);
+        const key = ElementKey(object.typeName(), method.name, method.parameters, ElementKey.returnValue);
+        run.check(object, returnValue, factory.preparedFor(method.annotations, key), at);
         if (findAnnotation(method.annotations, typeNameOf!Valid) && !returnValue.isNull())
             run.cascade(returnValue, at.get(), method.returnType);
         return run.violations;
@@ -624,16 +657,67 @@ private struct MetaConstraint
     const(MergedAnnotation)[] annotation; // the user-defined annotation, alone
 }
 
-// An annotation array and its prepared constraints.
-private struct PreparedAnnotations
+// What names an executable's parameter or return value: the bean type, the method, its parameter types (which tell
+// overloads apart) and the slot.
+private struct ElementKey
 {
-    const(MergedAnnotation)[] source;
-    MetaConstraint[] constraints;
+    enum returnValue = -1;
+
+    string owner;
+    string method;
+    const(ParameterDescriptor)[] parameters;
+    int slot;
+
+    size_t hash() const pure nothrow @nogc
+    {
+        size_t h = 2_166_136_261;
+        void mix(scope const(char)[] text)
+        {
+            foreach (c; text)
+                h = (h ^ c) * 16_777_619;
+            h = (h ^ 0xFF) * 16_777_619;
+        }
+
+        mix(owner);
+        mix(method);
+        foreach (ref p; parameters)
+            mix(p.type);
+        return h ^ cast(size_t)(slot + 1);
+    }
+
+    // The same element: equal names, slot and parameter types (the arrays themselves may be distinct copies).
+    bool matches(ref const ElementKey other) const pure nothrow @nogc
+    {
+        if (slot != other.slot || owner != other.owner || method != other.method
+                || parameters.length != other.parameters.length)
+            return false;
+        foreach (i, ref p; parameters)
+            if (p.type != other.parameters[i].type)
+                return false;
+        return true;
+    }
 }
 
-// At most this many annotation arrays are kept prepared: an application's executables are few, and past the limit
-// a call prepares its constraints itself.
-private enum preparedLimit = 4096;
+// One prepared element. Immutable once published.
+private final class PreparedEntry
+{
+    ElementKey key;
+    MetaConstraint[] constraints;
+
+    this(ref const ElementKey key, MetaConstraint[] constraints) pure nothrow
+    {
+        this.key = key;
+        this.constraints = constraints;
+    }
+}
+
+// The prepared elements: an application's validated executables are few; past the probes, a call prepares alone.
+private struct PreparedSlots
+{
+    PreparedEntry[1024] entries;
+}
+
+private enum preparedProbes = 8;
 
 // A bean type's properties with their prepared constraints (Hibernate's BeanMetaData).
 private final class BeanMetaData
@@ -833,7 +917,7 @@ private struct Run
     void checkConstraints(Any leaf, ref Any value, const(MergedAnnotation)[] annotations, PathImpl at)
     {
         auto path = LazyPath(at);
-        check(leaf, value, factory.preparedFor(annotations), path);
+        check(leaf, value, factory.prepareAll(annotations), path);
     }
 
     void check(Any leaf, ref Any value, scope MetaConstraint[] constraints, ref LazyPath at)
@@ -917,4 +1001,63 @@ private bool findAnnotation(scope const(MergedAnnotation)[] annotations, string 
         if (a.type == type)
             return true;
     return false;
+}
+
+// A proxy's descriptor may be rebuilt for every call (new arrays, the same method): the prepared constraints are found
+// by the element's name, so repeated calls add no entries and allocate the same each time; an overload with other
+// parameter types is its own entry with its own constraints.
+unittest
+{
+    import core.memory : GC;
+    import flint.engine.aot.descriptor : ParameterDescriptor;
+    import flint.hibernate.validator.messageinterpolation : ResourceBundleMessageInterpolator;
+    import flint.jakarta.validation.constraints : Min;
+
+    static final class Target
+    {
+    }
+
+    auto factory = new ValidatorFactoryImpl(DescriptorTable.withBuiltins(), new ResourceBundleMessageInterpolator());
+    auto validator = cast(ValidatorImpl) factory.getValidator();
+    auto target = Any.of(new Target());
+    MethodDescriptor rebuilt(string parameterType, long minimum)
+    {
+        MethodDescriptor method;
+        method.name = "page";
+        method.returnType = "void";
+        method.parameters = [
+            ParameterDescriptor("number", parameterType, [
+                MergedAnnotation(typeNameOf!Min, Any.of(Min(minimum)), 0)
+            ])
+        ];
+        return method;
+    }
+
+    void call(string parameterType, long minimum, long argument, size_t violations)
+    {
+        auto method = rebuilt(parameterType, minimum);
+        auto value = parameterType == "int" ? Any.of(cast(int) argument) : Any.of(argument);
+        assert(validator.validateParameters(target, &method, [value]).length == violations);
+        assert(validator.validateReturnValue(target, &method, Any.init).length == 0);
+    }
+
+    foreach (round; 0 .. 20)
+        call("int", 0, 3, 0);
+    assert(factory.preparedElements() == 1);
+    size_t perCall(int calls)
+    {
+        const before = GC.stats().allocatedInCurrentThread;
+        foreach (round; 0 .. calls)
+            call("int", 0, 3, 0);
+        return cast(size_t)(GC.stats().allocatedInCurrentThread - before) / calls;
+    }
+
+    const early = perCall(10);
+    foreach (round; 0 .. 200)
+        call("int", 0, 3, 0);
+    assert(perCall(10) == early && factory.preparedElements() == 1);
+    // The overload page(long) with @Min(5): its own element, its own constraint.
+    call("long", 5, 3, 1);
+    call("int", 0, 3, 0);
+    assert(factory.preparedElements() == 2);
 }

@@ -135,14 +135,16 @@ unittest
     assert(thrown);
 }
 
-@("each parameter's constraints are prepared once and stay its own")
+@("each method's parameter constraints are prepared once and stay its own, from rebuilt descriptors too")
 unittest
 {
+    // An element's annotations are fixed by its declaration: two methods differ by name here, and every call builds
+    // its descriptor anew, as a proxy may.
     auto validator = executableValidator();
     foreach (minimum; [0, 5, 0, 5])
     {
         MethodDescriptor method;
-        method.name = "page";
+        method.name = minimum == 0 ? "page" : "pageFrom";
         method.returnType = "void";
         method.parameters = [ParameterDescriptor("number", "int", [annotation(Min(minimum))])];
         foreach (round; 0 .. 2)
@@ -150,7 +152,7 @@ unittest
             auto violations = validator.validateParameters(controller(), &method, [Any.of(3)]);
             assert(violations.length == (minimum > 3 ? 1 : 0));
             if (violations.length)
-                assert(violations[0].getPropertyPath().toString() == "page.number");
+                assert(violations[0].getPropertyPath().toString() == "pageFrom.number");
         }
     }
 }
