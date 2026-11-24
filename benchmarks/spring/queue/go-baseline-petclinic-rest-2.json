@@ -4,7 +4,7 @@
   "builds": {},
   "id": "go-baseline-petclinic-rest-2",
   "created": "2026-11-24",
-  "status": "pending",
+  "status": "blocked",
   "priority": 8.1,
   "estimate_minutes": 45,
   "requested_by": "owner decision 118b4482 (ADR-033): re-capture the affected Go baselines after the comparator change; the coordinator, 21:37Z",
@@ -35,5 +35,6 @@
         ]
       }
     ]
-  }
+  },
+  "blocked_by": "the coordinator, 21:50Z: hold until the owner decides whether HTTP parity extends to petclinic's owner GET and every gated path (the comparator would change again; capturing twice costs about 2 hours)"
 }
