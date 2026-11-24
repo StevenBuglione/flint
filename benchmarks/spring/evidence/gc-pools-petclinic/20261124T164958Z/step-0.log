@@ -1,0 +1,14 @@
+{"app": "petclinic-rest", "trial": 0, "setting": "pools1", "status": "measured"}
+{"app": "petclinic-rest", "trial": 0, "setting": "pools2", "status": "measured"}
+{"app": "petclinic-rest", "trial": 0, "setting": "pools4", "status": "measured"}
+{"app": "petclinic-rest", "trial": 1, "setting": "pools4", "status": "measured"}
+{"app": "petclinic-rest", "trial": 1, "setting": "pools2", "status": "measured"}
+{"app": "petclinic-rest", "trial": 1, "setting": "pools1", "status": "measured"}
+{"app": "petclinic-rest", "trial": 2, "setting": "pools1", "status": "measured"}
+{"app": "petclinic-rest", "trial": 2, "setting": "pools2", "status": "measured"}
+{"app": "petclinic-rest", "trial": 2, "setting": "pools4", "status": "measured"}
+against pools1: setting                           p99      RSS      CPU      rps  max pause ms
+pools1                          1.000    1.000    1.000    1.000             2
+pools2                          1.073    1.062    1.000    0.978             4
+pools4                          1.032    1.162    1.001    1.037             4
+Wrote the GC matrix /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/gc-pools-petclinic/20261124T164958Z/gc-pools-petclinic.json (passed)

@@ -1,0 +1,1274 @@
+{
+  "time": "2026-11-24T17:13:41Z",
+  "outcome": "measured",
+  "evidence": true,
+  "host": "venus",
+  "builds": {
+    "tree": {
+      "commit": "f4e81ead05aa939de1657d81c7d346ab7b0b7401",
+      "worktree": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/f4e81ead05aa",
+      "fork": false,
+      "linker": "mold",
+      "toolchain": {
+        "tools_directory": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/f4e81ead05aa/.tools",
+        "fork_build": false,
+        "dmd": {
+          "path": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/f4e81ead05aa/.tools/dmd2/linux/bin64/dmd",
+          "sha256": "663977a9340a84167083b5f03a2b9518783358b94c795b8813ce872891d0f213",
+          "version": "DMD64 D Compiler v2.114.0"
+        },
+        "ldc2": {
+          "path": "/home/olfa/flint-work/flint/.tools-v4.2/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+          "sha256": "06e4bb5bb6abe26a0201e6b112beb19810a13947c7389ebb41493c45bafe9604",
+          "version": "LDC - the LLVM D compiler (1.43.0):"
+        },
+        "flint": {
+          "path": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/f4e81ead05aa/.flint/bin/flint",
+          "sha256": "a784f208bd83d0534de0f1892cca45249161276b680dd9bca527a3bd18678519",
+          "version": "flint 0.7.0 (platform 1.0)"
+        },
+        "dmd_native_aot_extractor": true,
+        "dmd_conf": {
+          "sha256": "aa63c9885b1e23c026add6dbf8474cd13597a7a94c0307b3ec99f7a1dcdea4f3",
+          "linker_switches": [
+            "-Xcc=-fuse-ld=mold"
+          ]
+        },
+        "mold": [
+          {
+            "path": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/f4e81ead05aa/.tools/mold-2.40.4-x86_64-linux/bin/mold",
+            "sha256": "23bf6ca9d9fb342a774ebdd7885e0aa1941bdc25dea0fba2483303ecd89af886",
+            "version": "mold 2.40.4 (083901f42dea2491be8bc7cf6e3b1e2b9a3c850d; compatible with GNU ld)"
+          }
+        ]
+      }
+    }
+  },
+  "shared_toolchain": {
+    "path": "/home/olfa/flint-work/flint/.tools",
+    "resolved": "/home/olfa/flint-work/flint/.tools-v4.2",
+    "dmd_sha256": "663977a9340a84167083b5f03a2b9518783358b94c795b8813ce872891d0f213"
+  },
+  "window_before": {
+    "time": "2026-11-24T16:52:51Z",
+    "load_average": [
+      3.125,
+      2.60205078125,
+      2.33349609375
+    ],
+    "running_tasks": 1,
+    "instant": true,
+    "busy_processes": [],
+    "idle_build_processes": 3012,
+    "quiet": true,
+    "problems": []
+  },
+  "window_during": [
+    {
+      "time": "2026-11-24T16:53:02Z",
+      "load_average": [
+        2.95166015625,
+        2.58154296875,
+        2.32958984375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T16:53:13Z",
+      "load_average": [
+        2.724609375,
+        2.54541015625,
+        2.3203125
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T16:53:25Z",
+      "load_average": [
+        2.41552734375,
+        2.4853515625,
+        2.3037109375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T16:53:36Z",
+      "load_average": [
+        2.27734375,
+        2.45263671875,
+        2.29443359375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T16:53:47Z",
+      "load_average": [
+        2.08056640625,
+        2.404296875,
+        2.27978515625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T16:53:59Z",
+      "load_average": [
+        1.92138671875,
+        2.3515625,
+        2.26416015625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T16:54:10Z",
+      "load_average": [
+        1.62548828125,
+        2.27392578125,
+        2.23974609375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T16:54:21Z",
+      "load_average": [
+        1.5966796875,
+        2.248046875,
+        2.23193359375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T16:54:33Z",
+      "load_average": [
+        1.572265625,
+        2.22314453125,
+        2.22412109375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T16:54:44Z",
+      "load_average": [
+        1.60546875,
+        2.1962890625,
+        2.21484375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T16:54:55Z",
+      "load_average": [
+        1.51171875,
+        2.15673828125,
+        2.201171875
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T16:55:06Z",
+      "load_average": [
+        1.67333984375,
+        2.16845703125,
+        2.2041015625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T16:55:18Z",
+      "load_average": [
+        1.576171875,
+        2.1298828125,
+        2.1904296875
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T16:55:29Z",
+      "load_average": [
+        1.80615234375,
+        2.1552734375,
+        2.197265625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T16:55:40Z",
+      "load_average": [
+        2.056640625,
+        2.19921875,
+        2.2109375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T16:55:52Z",
+      "load_average": [
+        2.3623046875,
+        2.25927734375,
+        2.23046875
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T16:56:03Z",
+      "load_average": [
+        2.68798828125,
+        2.33349609375,
+        2.25537109375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T16:56:14Z",
+      "load_average": [
+        2.763671875,
+        2.3662109375,
+        2.26806640625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T16:56:26Z",
+      "load_average": [
+        2.33837890625,
+        2.28759765625,
+        2.24365234375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T16:56:37Z",
+      "load_average": [
+        2.05224609375,
+        2.22802734375,
+        2.224609375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T16:56:48Z",
+      "load_average": [
+        1.81005859375,
+        2.17041015625,
+        2.20556640625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T16:57:00Z",
+      "load_average": [
+        1.47607421875,
+        2.07958984375,
+        2.17431640625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T16:57:11Z",
+      "load_average": [
+        1.56298828125,
+        2.0771484375,
+        2.1728515625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T16:57:22Z",
+      "load_average": [
+        1.62353515625,
+        2.07421875,
+        2.17138671875
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T16:57:34Z",
+      "load_average": [
+        1.71923828125,
+        2.0712890625,
+        2.1689453125
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T16:57:45Z",
+      "load_average": [
+        1.92333984375,
+        2.10205078125,
+        2.17822265625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T16:57:56Z",
+      "load_average": [
+        2.2431640625,
+        2.1650390625,
+        2.1982421875
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T16:58:08Z",
+      "load_average": [
+        2.4404296875,
+        2.20947265625,
+        2.21240234375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T16:58:19Z",
+      "load_average": [
+        3.02685546875,
+        2.34716796875,
+        2.2578125
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T16:58:30Z",
+      "load_average": [
+        3.1025390625,
+        2.3857421875,
+        2.27197265625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T16:58:41Z",
+      "load_average": [
+        2.77880859375,
+        2.33935546875,
+        2.25830078125
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T16:58:53Z",
+      "load_average": [
+        2.51123046875,
+        2.294921875,
+        2.24462890625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T16:59:04Z",
+      "load_average": [
+        2.18212890625,
+        2.23095703125,
+        2.22412109375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T16:59:15Z",
+      "load_average": [
+        1.92626953125,
+        2.173828125,
+        2.205078125
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T16:59:27Z",
+      "load_average": [
+        1.77783203125,
+        2.134765625,
+        2.19140625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T16:59:38Z",
+      "load_average": [
+        1.50390625,
+        2.06396484375,
+        2.16748046875
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T16:59:49Z",
+      "load_average": [
+        1.841796875,
+        2.10986328125,
+        2.181640625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:00:01Z",
+      "load_average": [
+        2.10009765625,
+        2.15625,
+        2.1962890625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:00:12Z",
+      "load_average": [
+        2.38623046875,
+        2.21728515625,
+        2.2158203125
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:00:23Z",
+      "load_average": [
+        2.400390625,
+        2.2265625,
+        2.21875
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:00:35Z",
+      "load_average": [
+        2.83544921875,
+        2.3310546875,
+        2.25341796875
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:00:46Z",
+      "load_average": [
+        2.6396484375,
+        2.30419921875,
+        2.24560546875
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:00:57Z",
+      "load_average": [
+        2.3134765625,
+        2.244140625,
+        2.2265625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:01:08Z",
+      "load_average": [
+        2.11083984375,
+        2.20263671875,
+        2.212890625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:01:20Z",
+      "load_average": [
+        1.86376953125,
+        2.14306640625,
+        2.1923828125
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:01:31Z",
+      "load_average": [
+        1.8720703125,
+        2.13818359375,
+        2.18994140625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:01:42Z",
+      "load_average": [
+        1.66357421875,
+        2.083984375,
+        2.17138671875
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:01:54Z",
+      "load_average": [
+        1.984375,
+        2.13037109375,
+        2.185546875
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:02:05Z",
+      "load_average": [
+        2.21484375,
+        2.17578125,
+        2.19970703125
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:02:16Z",
+      "load_average": [
+        2.416015625,
+        2.22021484375,
+        2.2138671875
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:02:28Z",
+      "load_average": [
+        2.3515625,
+        2.21240234375,
+        2.2109375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:02:39Z",
+      "load_average": [
+        2.7041015625,
+        2.29931640625,
+        2.23974609375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:02:50Z",
+      "load_average": [
+        2.75,
+        2.32275390625,
+        2.24853515625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:03:02Z",
+      "load_average": [
+        2.55419921875,
+        2.29541015625,
+        2.240234375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:03:13Z",
+      "load_average": [
+        2.53662109375,
+        2.30126953125,
+        2.2431640625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:03:24Z",
+      "load_average": [
+        2.26318359375,
+        2.25244140625,
+        2.22802734375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:03:35Z",
+      "load_average": [
+        2.068359375,
+        2.2109375,
+        2.21435546875
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:03:47Z",
+      "load_average": [
+        1.97119140625,
+        2.18701171875,
+        2.20654296875
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:03:58Z",
+      "load_average": [
+        1.66748046875,
+        2.1142578125,
+        2.18212890625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:04:09Z",
+      "load_average": [
+        2.123046875,
+        2.19189453125,
+        2.2060546875
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:04:21Z",
+      "load_average": [
+        2.41845703125,
+        2.25244140625,
+        2.2255859375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:04:32Z",
+      "load_average": [
+        2.662109375,
+        2.310546875,
+        2.2451171875
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:04:43Z",
+      "load_average": [
+        2.720703125,
+        2.33349609375,
+        2.25341796875
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:04:55Z",
+      "load_average": [
+        3.47900390625,
+        2.51513671875,
+        2.314453125
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:05:06Z",
+      "load_average": [
+        2.94384765625,
+        2.431640625,
+        2.2890625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:05:17Z",
+      "load_average": [
+        2.87890625,
+        2.43408203125,
+        2.291015625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:05:29Z",
+      "load_average": [
+        2.6630859375,
+        2.40283203125,
+        2.28173828125
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:05:40Z",
+      "load_average": [
+        2.42333984375,
+        2.36572265625,
+        2.27099609375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:05:51Z",
+      "load_average": [
+        2.27783203125,
+        2.33642578125,
+        2.2626953125
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:06:02Z",
+      "load_average": [
+        2.0009765625,
+        2.275390625,
+        2.24365234375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:06:14Z",
+      "load_average": [
+        2.1669921875,
+        2.29541015625,
+        2.2509765625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:06:25Z",
+      "load_average": [
+        2.29541015625,
+        2.31884765625,
+        2.259765625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:06:36Z",
+      "load_average": [
+        2.650390625,
+        2.3916015625,
+        2.2841796875
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:06:48Z",
+      "load_average": [
+        2.8583984375,
+        2.44482421875,
+        2.302734375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:06:59Z",
+      "load_average": [
+        2.90283203125,
+        2.47265625,
+        2.31396484375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:07:10Z",
+      "load_average": [
+        2.8310546875,
+        2.47314453125,
+        2.31591796875
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:07:22Z",
+      "load_average": [
+        2.39501953125,
+        2.39111328125,
+        2.29052734375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:07:33Z",
+      "load_average": [
+        2.25390625,
+        2.36083984375,
+        2.28125
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:07:44Z",
+      "load_average": [
+        1.82177734375,
+        2.26025390625,
+        2.2490234375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:07:56Z",
+      "load_average": [
+        1.7021484375,
+        2.21875,
+        2.2353515625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:08:07Z",
+      "load_average": [
+        1.43994140625,
+        2.14501953125,
+        2.2109375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:08:18Z",
+      "load_average": [
+        1.37841796875,
+        2.107421875,
+        2.197265625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:08:29Z",
+      "load_average": [
+        1.5283203125,
+        2.1025390625,
+        2.193359375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:08:41Z",
+      "load_average": [
+        1.97607421875,
+        2.181640625,
+        2.21826171875
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:08:52Z",
+      "load_average": [
+        2.6015625,
+        2.30810546875,
+        2.25927734375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:09:03Z",
+      "load_average": [
+        2.96435546875,
+        2.39697265625,
+        2.2890625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:09:15Z",
+      "load_average": [
+        3.03369140625,
+        2.44287109375,
+        2.3056640625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:09:26Z",
+      "load_average": [
+        2.78759765625,
+        2.4111328125,
+        2.296875
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:09:37Z",
+      "load_average": [
+        2.7529296875,
+        2.41455078125,
+        2.298828125
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:09:49Z",
+      "load_average": [
+        2.3291015625,
+        2.33447265625,
+        2.2734375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:10:00Z",
+      "load_average": [
+        1.9541015625,
+        2.251953125,
+        2.2470703125
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:10:11Z",
+      "load_average": [
+        1.6533203125,
+        2.17724609375,
+        2.22265625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:10:23Z",
+      "load_average": [
+        1.55908203125,
+        2.13818359375,
+        2.208984375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:10:34Z",
+      "load_average": [
+        1.66943359375,
+        2.1318359375,
+        2.205078125
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:10:45Z",
+      "load_average": [
+        1.720703125,
+        2.126953125,
+        2.2021484375
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:10:56Z",
+      "load_average": [
+        1.84423828125,
+        2.13916015625,
+        2.205078125
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:11:08Z",
+      "load_average": [
+        2.25634765625,
+        2.2177734375,
+        2.22998046875
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:11:19Z",
+      "load_average": [
+        2.56298828125,
+        2.2890625,
+        2.25390625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:11:30Z",
+      "load_average": [
+        2.63671875,
+        2.31298828125,
+        2.26220703125
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:11:42Z",
+      "load_average": [
+        2.67333984375,
+        2.3349609375,
+        2.27001953125
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:11:53Z",
+      "load_average": [
+        2.341796875,
+        2.27392578125,
+        2.2509765625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:12:04Z",
+      "load_average": [
+        1.97021484375,
+        2.1943359375,
+        2.22509765625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:12:15Z",
+      "load_average": [
+        1.90087890625,
+        2.17138671875,
+        2.216796875
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:12:27Z",
+      "load_average": [
+        1.68212890625,
+        2.11572265625,
+        2.19775390625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:12:38Z",
+      "load_average": [
+        1.65087890625,
+        2.09521484375,
+        2.189453125
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:12:49Z",
+      "load_average": [
+        1.814453125,
+        2.107421875,
+        2.19140625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:13:00Z",
+      "load_average": [
+        1.9970703125,
+        2.13720703125,
+        2.2001953125
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:13:11Z",
+      "load_average": [
+        2.45947265625,
+        2.23193359375,
+        2.23046875
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:13:22Z",
+      "load_average": [
+        2.62890625,
+        2.2744140625,
+        2.244140625
+      ],
+      "busy_processes": []
+    },
+    {
+      "time": "2026-11-24T17:13:33Z",
+      "load_average": [
+        2.9072265625,
+        2.34765625,
+        2.26904296875
+      ],
+      "busy_processes": []
+    }
+  ],
+  "foreign_activity_during": 0,
+  "window_after": {
+    "time": "2026-11-24T17:13:41Z",
+    "load_average": [
+      2.84130859375,
+      2.3525390625,
+      2.271484375
+    ],
+    "running_tasks": 0,
+    "instant": false,
+    "busy_processes": [],
+    "idle_build_processes": 1060,
+    "quiet": true,
+    "problems": []
+  },
+  "frozen": [],
+  "results_directory": ".flint/measure/results/gc-pools-petclinic/20261124T164958Z",
+  "summary": {
+    "steps": [
+      {
+        "command": [
+          "/usr/bin/python3",
+          "tools/spring_bench.py",
+          "gc-matrix",
+          "petclinic-rest",
+          "--output",
+          "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/gc-pools-petclinic/20261124T164958Z/gc-pools-petclinic.json",
+          "--gcopt",
+          "pools1=minPoolSize:1 incPoolSize:0",
+          "--gcopt",
+          "pools2=minPoolSize:2 incPoolSize:0",
+          "--gcopt",
+          "pools4=minPoolSize:4 incPoolSize:0",
+          "--runs",
+          "3",
+          "--no-go",
+          "--smaps"
+        ],
+        "cwd": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/f4e81ead05aa",
+        "exit_code": 0,
+        "log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/gc-pools-petclinic/20261124T164958Z/step-0.log",
+        "harness_commit": null,
+        "artifacts": {
+          "benchmarks/spring/flint/petclinic-rest/.flint/build/release/petclinic-rest": {
+            "sha256": "71e0d8a2950316e07d7dfe2720a8f99ad277f3f7338373b3e9b0ca16ecc3bf66",
+            "bytes": 16728608,
+            "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=209a84f024bec0da50e53022cf75f706b7155432, for GNU/Linux 3.2.0, not stripped",
+            "comment": [
+              "GCC: (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+              "Ubuntu clang version 22.1.8 (++20260613092327+e80beda6e255-1~exp1~20260613092437.81)",
+              "ldc version 1.43.0"
+            ],
+            "embedded_gcopt": [
+              "gcopt=minPoolSize:1 incPoolSize:0",
+              "gcopt=parallel:"
+            ],
+            "profile": "release"
+          }
+        },
+        "measured_binaries": [
+          "71e0d8a2950316e07d7dfe2720a8f99ad277f3f7338373b3e9b0ca16ecc3bf66"
+        ],
+        "aot_summaries": {
+          "count": 0,
+          "distinct": [],
+          "extractors": []
+        },
+        "gc_options": {
+          "argv": [
+            "pools1=minPoolSize:1 incPoolSize:0",
+            "pools2=minPoolSize:2 incPoolSize:0",
+            "pools4=minPoolSize:4 incPoolSize:0"
+          ]
+        },
+        "dmd_server": {
+          "compiled": 3,
+          "refused": 0,
+          "stopped_before": [
+            3130667,
+            3130733,
+            3130777,
+            3130778,
+            3130779,
+            3130780,
+            3130781,
+            3130782,
+            3130783,
+            3130784,
+            3130785,
+            3130786,
+            3130787,
+            3130788,
+            3130789,
+            3130790,
+            3130791,
+            3130792,
+            3130793,
+            3130794,
+            3130795,
+            3130796,
+            3130797,
+            3130798,
+            3130799,
+            3130800,
+            3130801,
+            3130802,
+            3130803,
+            3130804,
+            3130805,
+            3130806,
+            3130807,
+            3130808,
+            3130809,
+            3130810,
+            3130811,
+            3130812,
+            3130813,
+            3130814,
+            3130815,
+            3130816,
+            3130817,
+            3130818,
+            3130819,
+            3130820,
+            3130821,
+            3130822,
+            3130823,
+            3130824,
+            3130825,
+            3130826,
+            3130827,
+            3130828,
+            3130829,
+            3130830,
+            3130831,
+            3130832,
+            3130833,
+            3130834,
+            3130835,
+            3130836,
+            3130837,
+            3130838,
+            3130839,
+            3130840,
+            3130841,
+            3130842,
+            3130843,
+            3130844,
+            3130845,
+            3130846,
+            3130847,
+            3130848,
+            3130849,
+            3130850,
+            3130851,
+            3130852,
+            3130853,
+            3130854,
+            3130855,
+            3130856,
+            3130857,
+            3130858,
+            3130859,
+            3130860,
+            3130861,
+            3130862,
+            3130863,
+            3130864,
+            3130865,
+            3130866,
+            3130867,
+            3130868,
+            3130869,
+            3130870,
+            3130871,
+            3130872,
+            3130873,
+            3130874,
+            3130875,
+            3130876,
+            3130877,
+            3130878,
+            3130879,
+            3130880,
+            3130881,
+            3130882,
+            3130883,
+            3130884,
+            3130885,
+            3130886,
+            3130887,
+            3130888,
+            3130889,
+            3130890,
+            3130891,
+            3130892,
+            3130893,
+            3130894,
+            3130895,
+            3130896,
+            3130897,
+            3130898,
+            3130899,
+            3130900,
+            3130901,
+            3130902,
+            3130903,
+            3130904
+          ]
+        }
+      }
+    ],
+    "outputs": {
+      "gc-pools-petclinic.json": "4c350fed3f072027ef990b46ac45361c626039df4fd31c882b8cdfbf4d56f8de"
+    }
+  }
+}

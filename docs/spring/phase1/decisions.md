@@ -726,3 +726,12 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - p50 4.01, throughput 0.188 (29,570 against 157,700 req/s), CPU per request 3.81 (60.8 against 16.0 µs; 106 µs at B), RSS 0.764; p99.9 2.53, reported.
 
     Evidence: `benchmarks/spring/evidence/error-validation-p99/20261124T160020Z/`.
+- 2026-11-24, proof-harness: **gc-pools-petclinic** (diagnostic A/B, the petclinic CPU plan 3df9a1c5; main `f4e81ead`, 16:50–17:14Z, 3 interleaved runs, no Go, smaps census, nothing frozen). petclinic-rest with fixed collector pools; each arm overrides only `minPoolSize` and `incPoolSize`, so the mark threads keep Boot's affinity default. All arms 109/109. Medians:
+
+    | pools | throughput | p99 | peak RSS | CPU/request | collections / 1,000 requests | mark time | max pause |
+    |---|---|---|---|---|---|---|---|
+    | 1 MiB (the default) | 18,926 req/s | 1.134 ms | 21.6 MB | 100.1 µs | 4.9 | 2.6 s | 2 ms |
+    | 2 MiB | 0.978× | 1.073× | 1.062× | 1.000× | 4.7 | 2.9 s | 4 ms |
+    | 4 MiB | **1.037×** | 1.032× | 1.162× (25.1 MB) | 1.001× | 3.3 | 2.1 s | 4 ms |
+
+    CPU per request does not move, so the collector is not petclinic's CPU gap. 4 MiB pools buy 3.7% throughput through a third fewer collections, for 3.5 MB of RSS that still stays under Go's 26.3-26.5 MB (about 0.95x). The smaps census shows the heap filling in warm-up and flat through the fixed-rate phase for every arm. Whether a per-app setting is worth it is boot's and data-access's call; gs-rest stays at 1 MiB. Allocations per request come from data-access's request-allocation gate (pool size does not change them). Evidence: `benchmarks/spring/evidence/gc-pools-petclinic/20261124T164958Z/`.
