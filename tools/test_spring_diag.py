@@ -1,7 +1,6 @@
 """Unit tests of the owner-1 diagnostic's measurement helpers: `python3 tools/test_spring_diag.py`."""
 import json
 import os
-import signal
 import subprocess
 import sys
 import tempfile
@@ -14,40 +13,53 @@ import spring_diag
 
 
 class Counters(unittest.TestCase):
-    def test_deltas_of_cumulative_counters(self):
-        before = {'timers': {'sql.lease_wait': {'count': 10, 'sum_ns': 1000, 'max_ns': 300}},
-                  'workers': {'0': {'requests': 5}, '1': {'requests': 7}}}
-        after = {'timers': {'sql.lease_wait': {'count': 30, 'sum_ns': 5000, 'max_ns': 900},
-                            'sql.map': {'count': 4, 'sum_ns': 400, 'max_ns': 150}},
-                 'gauges': {'sql.max_queue_depth': 9}, 'workers': {'0': {'requests': 25}, '1': {'requests': 7}}}
-        delta = spring_diag.counter_delta(before, after)
-        self.assertEqual(delta['timers']['sql.lease_wait'], {'count': 20, 'sum_ns': 4000, 'mean_ns': 200.0,
-                                                             'max_ns_since_start': 900})
-        self.assertEqual(delta['timers']['sql.map']['mean_ns'], 100.0)
-        self.assertEqual(delta['workers'], {'0': 20, '1': 0})
-        self.assertEqual(delta['gauges'], {'sql.max_queue_depth': 9})
-        self.assertIsNone(spring_diag.counter_delta(None, after))
-
-    def test_snapshot_waits_for_the_rewritten_file(self):
+    def test_counters_written_at_exit(self):
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / 'counters.json'
-            # A stand-in server: rewrites the file (temp + rename) on SIGUSR2.
-            script = ('import json, os, signal, sys, time\n'
-                      'p = sys.argv[1]; n = [0]\n'
-                      'def dump(*_):\n'
-                      '    n[0] += 1; open(p + ".tmp", "w").write(json.dumps({"timers": {"x": {"count": n[0], "sum_ns": 1}}}))\n'
-                      '    os.rename(p + ".tmp", p)\n'
-                      'signal.signal(signal.SIGUSR2, dump)\n'
-                      'print("ready", flush=True)\n'
-                      'while True: time.sleep(0.01)\n')
-            server = subprocess.Popen([sys.executable, '-c', script, str(path)], stdout=subprocess.PIPE, text=True)
-            try:
-                server.stdout.readline()
-                self.assertEqual(spring_diag.snapshot_counters(server.pid, path)['timers']['x']['count'], 1)
-                self.assertEqual(spring_diag.snapshot_counters(server.pid, path)['timers']['x']['count'], 2)
-            finally:
-                server.kill()
-                server.wait()
+            self.assertIsNone(spring_diag.read_counters(path))
+            path.write_text(json.dumps({'schema': 'flint.diag-counters/1',
+                                        'timers': {'sql.lease_wait': {'count': 4, 'sum_ns': 400, 'max_ns': 300},
+                                                   'sql.handoff': {'count': 0, 'sum_ns': 0, 'max_ns': 0}},
+                                        'gauges': {'sql.max_queue_depth': 9}}))
+            row = spring_diag.read_counters(path)
+            self.assertEqual(row['timers']['sql.lease_wait']['mean_ns'], 100.0)
+            self.assertIsNone(row['timers']['sql.handoff']['mean_ns'])
+            self.assertEqual(row['gauges'], {'sql.max_queue_depth': 9})
+
+
+class Census(unittest.TestCase):
+    def test_statement_log_counts(self):
+        log = '\n'.join([
+            '2026-11-24 03:40:00.001 UTC [11] db=petclinic1 LOG:  connection authorized: user=petclinic database=petclinic1',
+            '2026-11-24 03:40:00.002 UTC [11] db=petclinic1 LOG:  duration: 0.030 ms  parse <unnamed>: BEGIN READ ONLY',
+            '2026-11-24 03:40:00.003 UTC [11] db=petclinic1 LOG:  duration: 0.010 ms  bind <unnamed>: BEGIN READ ONLY',
+            '2026-11-24 03:40:00.004 UTC [11] db=petclinic1 LOG:  duration: 0.010 ms  execute <unnamed>: BEGIN READ ONLY',
+            '2026-11-24 03:40:00.005 UTC [11] db=petclinic1 LOG:  duration: 0.050 ms  parse S_1: SELECT * FROM owners WHERE id = $1',
+            '2026-11-24 03:40:00.006 UTC [11] db=petclinic1 LOG:  duration: 0.020 ms  execute S_1: SELECT * FROM owners WHERE id = $1',
+            '2026-11-24 03:40:00.007 UTC [11] db=petclinic1 LOG:  duration: 0.020 ms  statement: COMMIT',
+            '2026-11-24 03:40:00.008 UTC [12] db=petclinic2 LOG:  duration: 0.020 ms  statement: SELECT 1',
+            '\tcontinuation of a multi-line statement'])
+        counts, kinds, texts = spring_diag.parse_census(log, 'petclinic1')
+        self.assertEqual(counts, {'parse': 2, 'parse_unnamed': 1, 'bind': 1, 'execute': 2, 'simple': 1, 'connections': 1})
+        self.assertEqual(kinds, {'begin': 1, 'select': 1, 'commit': 1})
+        self.assertEqual(texts['SELECT * FROM owners WHERE id = $1'], 1)
+
+
+class Perf(unittest.TestCase):
+    def test_counts_and_refusals(self):
+        class Fake:
+            def communicate(self, timeout=None):
+                return '', ('2000000,,instructions:u,100,100.00,,\n1000000,,cycles:u,100,100.00,,\n'
+                            '<not supported>,,instructions:k,0,100.00,,\n<not counted>,,cycles:k,0,0.00,,\n'
+                            '500,,context-switches,100,100.00,,\n')
+        out = spring_diag.perf_finish(Fake(), 1000)
+        self.assertEqual(out['per_request'], {'instructions:u': 2000.0, 'cycles:u': 1000.0, 'context-switches': 0.5})
+        self.assertEqual(out['unavailable'], ['instructions:k', 'cycles:k'])
+        self.assertFalse(spring_diag.perf_finish(None, 1000)['available'])
+
+    def test_refused_above_level_two(self):
+        with mock.patch.object(spring_diag, 'perf_level', return_value=4):
+            self.assertIsNone(spring_diag.perf_start(os.getpid(), 1))
 
 
 class Cpu(unittest.TestCase):

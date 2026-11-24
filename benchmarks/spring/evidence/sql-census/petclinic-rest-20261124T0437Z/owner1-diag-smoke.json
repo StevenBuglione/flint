@@ -1,0 +1,357 @@
+{
+  "schema": "flint.spring-diag/1",
+  "evidence": false,
+  "app": "petclinic-rest",
+  "path": "/petclinic/api/owners/1",
+  "ladder": [
+    1,
+    8
+  ],
+  "seconds": 1,
+  "warmup_seconds": 1,
+  "workload_cpus": {
+    "server_cpus": [
+      2,
+      3
+    ],
+    "load_cpus": [
+      4,
+      5,
+      6,
+      7
+    ],
+    "database_cpus": [
+      8,
+      9
+    ]
+  },
+  "binaries": {
+    "flint": {
+      "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/ca5fbd4a46ed/build/spring/petclinic-rest-flint",
+      "sha256": "e3c290b14e291b6fe45c781117705e04c91279cb50d7a405cb1c86f08ae12495",
+      "env": {}
+    },
+    "go": {
+      "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/build/spring/petclinic-rest-go",
+      "sha256": "a74243f9ffb0b70f36b2084ed900dbea7dee8be2a7a71323accf1d32a038a8e2",
+      "env": {}
+    }
+  },
+  "steps": {
+    "flint": [
+      {
+        "connections": 1,
+        "seconds": 1,
+        "requests": 191,
+        "statuses": {
+          "200": 191
+        },
+        "unexpected_statuses": 0,
+        "requests_per_second": 191.7420063369235,
+        "latency_ms": {
+          "mean": 5.213480895287959,
+          "p50": 5.209105,
+          "p99": 5.803491,
+          "p999": 5.878858
+        },
+        "server_cpu_seconds": 0.92,
+        "server_cpu_us_per_request": 4816.753926701571,
+        "server_cpu_per_thread": {
+          "petclinic-rest-[1075926]": 0.91,
+          "petclinic-rest-[1075925]": 0.01
+        },
+        "perf": {
+          "available": true,
+          "perf_event_paranoid": 2,
+          "per_request": {
+            "instructions:u": 31620351.089005236,
+            "cycles:u": 11889994.031413613
+          },
+          "unavailable": [
+            "instructions:k",
+            "cycles:k"
+          ]
+        },
+        "postgres_cpu_seconds": 0.06,
+        "postgres_cpu_us_per_request": 314.13612565445027,
+        "counters": null
+      },
+      {
+        "connections": 8,
+        "seconds": 1,
+        "requests": 1536,
+        "statuses": {
+          "200": 1536
+        },
+        "unexpected_statuses": 0,
+        "requests_per_second": 1542.191529054964,
+        "latency_ms": {
+          "mean": 5.1936191315104105,
+          "p50": 5.178596,
+          "p99": 5.741744,
+          "p999": 5.787972
+        },
+        "server_cpu_seconds": 2.01,
+        "server_cpu_us_per_request": 1308.5937499999998,
+        "server_cpu_per_thread": {
+          "petclinic-rest-[1076045]": 1.0,
+          "petclinic-rest-[1076046]": 1.0,
+          "petclinic-rest-[1076039]": 0.01
+        },
+        "perf": {
+          "available": true,
+          "perf_event_paranoid": 2,
+          "per_request": {
+            "instructions:u": 9107591.626302084,
+            "cycles:u": 3253325.0149739585
+          },
+          "unavailable": [
+            "instructions:k",
+            "cycles:k"
+          ]
+        },
+        "postgres_cpu_seconds": 0.09,
+        "postgres_cpu_us_per_request": 58.59375,
+        "counters": null
+      }
+    ],
+    "go": [
+      {
+        "connections": 1,
+        "seconds": 1,
+        "requests": 10632,
+        "statuses": {
+          "200": 10632
+        },
+        "unexpected_statuses": 0,
+        "requests_per_second": 10619.768448178751,
+        "latency_ms": {
+          "mean": 0.09363336747554578,
+          "p50": 0.09124700000000001,
+          "p99": 0.12253599999999999,
+          "p999": 0.349876
+        },
+        "server_cpu_seconds": 0.73,
+        "server_cpu_us_per_request": 68.66064710308503,
+        "server_cpu_per_thread": {
+          "petclinic-rest-[1077143]": 0.24,
+          "petclinic-rest-[1077140]": 0.23,
+          "petclinic-rest-[1077164]": 0.22,
+          "petclinic-rest-[1077139]": 0.04
+        },
+        "perf": {
+          "available": true,
+          "perf_event_paranoid": 2,
+          "per_request": {
+            "instructions:u": 206338.008841234,
+            "cycles:u": 118951.17908201655
+          },
+          "unavailable": [
+            "instructions:k",
+            "cycles:k"
+          ]
+        },
+        "postgres_cpu_seconds": 0.0,
+        "postgres_cpu_us_per_request": 0.0,
+        "counters": null
+      },
+      {
+        "connections": 8,
+        "seconds": 1,
+        "requests": 24729,
+        "statuses": {
+          "200": 24729
+        },
+        "unexpected_statuses": 0,
+        "requests_per_second": 24725.17696432955,
+        "latency_ms": {
+          "mean": 0.32273342710986913,
+          "p50": 0.22934100000000002,
+          "p99": 3.30168,
+          "p999": 4.397977
+        },
+        "server_cpu_seconds": 1.13,
+        "server_cpu_us_per_request": 45.69533745804521,
+        "server_cpu_per_thread": {
+          "petclinic-rest-[1077228]": 0.35,
+          "petclinic-rest-[1077226]": 0.32,
+          "petclinic-rest-[1077272]": 0.32,
+          "petclinic-rest-[1077230]": 0.14
+        },
+        "perf": {
+          "available": true,
+          "perf_event_paranoid": 2,
+          "per_request": {
+            "instructions:u": 212134.34340248292,
+            "cycles:u": 102049.70346556674
+          },
+          "unavailable": [
+            "instructions:k",
+            "cycles:k"
+          ]
+        },
+        "postgres_cpu_seconds": 0.53,
+        "postgres_cpu_us_per_request": 21.43232641837519,
+        "counters": null
+      }
+    ]
+  },
+  "census": {
+    "flint": {
+      "requests": 200,
+      "connections": 8,
+      "per_request": {
+        "parse": 2.0,
+        "parse_unnamed": 2.0,
+        "bind": 5.0,
+        "execute": 5.0,
+        "simple": 0.02,
+        "connections": 0.005,
+        "statements_begin": 1.0,
+        "statements_commit": 1.0,
+        "statements_other": 0.015,
+        "statements_select": 3.005,
+        "transactions_committed (pg_stat_database)": 1.06,
+        "rows_returned (pg_stat_database)": 12.835,
+        "rows_fetched (pg_stat_database)": 8.82,
+        "sessions_opened (pg_stat_database)": 0.015,
+        "backend_cpu_us_with_logging": 100.0
+      },
+      "totals": {
+        "log": {
+          "parse": 400,
+          "parse_unnamed": 400,
+          "bind": 1000,
+          "execute": 1000,
+          "simple": 4,
+          "connections": 1
+        },
+        "kinds": {
+          "begin": 200,
+          "select": 601,
+          "commit": 200,
+          "other": 3
+        },
+        "pg_stat_database": {
+          "xact_commit": 212,
+          "xact_rollback": 0,
+          "tup_returned": 2567,
+          "tup_fetched": 1764,
+          "sessions": 3
+        }
+      },
+      "top_statements": [
+        [
+          "BEGIN ISOLATION LEVEL READ COMMITTED READ ONLY",
+          200
+        ],
+        [
+          "SELECT id, first_name, last_name, address, city, telephone FROM owners WHERE id= $1",
+          200
+        ],
+        [
+          "SELECT pets.id as pets_id, name, birth_date, type_id, owner_id, visits.id as visit_id, visit_date, description, visits.pet_id as visits_pet_id FROM pets LEFT OU",
+          200
+        ],
+        [
+          "SELECT id, name FROM types ORDER BY name",
+          200
+        ],
+        [
+          "COMMIT",
+          200
+        ],
+        [
+          "ALTER SYSTEM RESET log_min_duration_statement",
+          1
+        ],
+        [
+          "ALTER SYSTEM RESET log_connections",
+          1
+        ],
+        [
+          "ALTER SYSTEM RESET log_line_prefix",
+          1
+        ],
+        [
+          "SELECT pg_reload_conf()",
+          1
+        ]
+      ]
+    },
+    "go": {
+      "requests": 200,
+      "connections": 8,
+      "per_request": {
+        "parse": 0.03,
+        "parse_unnamed": 0.0,
+        "bind": 3.0,
+        "execute": 3.0,
+        "simple": 0.06,
+        "connections": 0.015,
+        "statements_other": 0.055,
+        "statements_select": 3.005,
+        "transactions_committed (pg_stat_database)": 3.15,
+        "rows_returned (pg_stat_database)": 21.87,
+        "rows_fetched (pg_stat_database)": 13.005,
+        "sessions_opened (pg_stat_database)": 0.025,
+        "backend_cpu_us_with_logging": 149.99999999999991
+      },
+      "totals": {
+        "log": {
+          "parse": 6,
+          "parse_unnamed": 0,
+          "bind": 600,
+          "execute": 600,
+          "simple": 12,
+          "connections": 3
+        },
+        "kinds": {
+          "other": 11,
+          "select": 601
+        },
+        "pg_stat_database": {
+          "xact_commit": 630,
+          "xact_rollback": 0,
+          "tup_returned": 4374,
+          "tup_fetched": 2601,
+          "sessions": 5
+        }
+      },
+      "top_statements": [
+        [
+          "SELECT id, first_name, last_name, address, city, telephone FROM owners WHERE id= $1",
+          200
+        ],
+        [
+          "SELECT pets.id as pets_id, name, birth_date, type_id, owner_id, visits.id as visit_id, visit_date, description, visits.pet_id as visits_pet_id FROM pets LEFT OU",
+          200
+        ],
+        [
+          "SELECT id, name FROM types ORDER BY name",
+          200
+        ],
+        [
+          "-- ping",
+          8
+        ],
+        [
+          "ALTER SYSTEM RESET log_min_duration_statement",
+          1
+        ],
+        [
+          "ALTER SYSTEM RESET log_connections",
+          1
+        ],
+        [
+          "ALTER SYSTEM RESET log_line_prefix",
+          1
+        ],
+        [
+          "SELECT pg_reload_conf()",
+          1
+        ]
+      ]
+    }
+  }
+}

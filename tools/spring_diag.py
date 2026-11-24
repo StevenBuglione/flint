@@ -9,14 +9,19 @@ that separates lease wait, lease hold, SQL drive, row mapping, dispatch and resp
 per-worker traffic and PostgreSQL CPU. data-access defines the server's counters; this tool drives the load and
 measures everything it can from outside:
 
-- one server per implementation, on the manifest's server CPUs, against a disposable PostgreSQL cluster on the
+- one server process per ladder step (a fresh database each), on the manifest's server CPUs, against a disposable PostgreSQL cluster on the
   database CPUs (the benchmark's own launch path, spring_bench.launch through load_bench.spring_server);
 - per ladder step: a warm-up, then `oha -z <seconds> -c <connections>` unthrottled on the load CPUs (capacity at
   that concurrency) against the manifest's path (petclinic: GET /petclinic/api/owners/1, owner 1);
 - per step: requests per second, latency mean/p50/p99/p99.9, the server's CPU per request and per thread
   (/proc/<pid>/task/*/stat), PostgreSQL's CPU per request (the cluster's postmaster and its backends), and for a
-  Flint server started with --counters, the deltas of its counters (FLINT_DIAG_COUNTERS=<file>; the server rewrites
-  the file on SIGUSR2; schema flint.diag-counters/1, defined with data-access).
+  Flint server started with --counters, its counters (FLINT_DIAG_COUNTERS=<file>, written at exit; schema
+  flint.diag-counters/1, defined by data-access), which cover that step's warm-up and measurement;
+- with kernel.perf_event_paranoid at 2 or lower, `perf stat` on the server during each measured phase: instructions
+  and cycles per request in user space (and in the kernel at 1 or lower), and context switches;
+- after the ladder, a database census per implementation: a counted burst with statement logging on, giving parses
+  (named and unnamed), binds, executions, simple statements, transactions, statement kinds, rows and connections
+  opened per successful request, and the most frequent statements.
 
 It refuses to run while a timed measurement holds the queue's lock, unless the queue itself runs it
 (FLINT_MEASURE_WINDOW_CERTIFIED) or --force is given: diagnostic load would void someone's window.
@@ -26,7 +31,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import signal
+import re
 import socket
 import subprocess
 import sys
@@ -85,34 +90,16 @@ def postgres_pids(port):
     return postmasters | {pid for pid, (ppid, _) in processes.items() if ppid in postmasters}
 
 
-def snapshot_counters(pid, path, timeout=5.0):
-    """Ask the server to rewrite its counters file (SIGUSR2) and read it once it changes."""
-    before = path.stat().st_mtime_ns if path.is_file() else 0
-    os.kill(pid, signal.SIGUSR2)
-    deadline = time.monotonic() + timeout
-    while time.monotonic() < deadline:
-        if path.is_file() and path.stat().st_mtime_ns != before:
-            try:
-                return json.loads(path.read_text())
-            except ValueError:
-                pass  # being replaced; the server renames atomically, so retry
-        time.sleep(0.02)
-    return None
-
-
-def counter_delta(before, after):
-    """Per-step deltas of cumulative counters: timers as count, mean and the step's share; gauges as read after."""
-    if not before or not after:
+def read_counters(path):
+    """The counters the server wrote at exit (data-access's contract: FLINT_DIAG_COUNTERS=<file>, replaced atomically
+    at exit and whenever a pool closes; schema flint.diag-counters/1). Cumulative over the process: one server runs
+    per ladder step, so they cover that step's warm-up and measurement."""
+    if not path or not path.is_file():
         return None
-    timers = {}
-    for name, row in after.get('timers', {}).items():
-        old = before.get('timers', {}).get(name, {'count': 0, 'sum_ns': 0})
-        count, total = row['count'] - old['count'], row['sum_ns'] - old['sum_ns']
-        timers[name] = {'count': count, 'sum_ns': total, 'mean_ns': total / count if count else None,
-                        'max_ns_since_start': row.get('max_ns')}
-    workers = {wid: row.get('requests', 0) - before.get('workers', {}).get(wid, {}).get('requests', 0)
-               for wid, row in after.get('workers', {}).items()}
-    return {'timers': timers, 'gauges': after.get('gauges', {}), 'workers': workers}
+    data = json.loads(path.read_text())
+    timers = {name: dict(row, mean_ns=row['sum_ns'] / row['count'] if row.get('count') else None)
+              for name, row in data.get('timers', {}).items()}
+    return {'schema': data.get('schema'), 'timers': timers, 'gauges': data.get('gauges', {})}
 
 
 def wait_ready(port, process, seconds=60):
@@ -143,14 +130,52 @@ def oha_run(oha, url, connections, seconds, cpus, request):
     return json.loads(completed.stdout)
 
 
-def step(process, pgport, oha, url, connections, seconds, warmup, workload, request, counters):
+PARANOID = Path('/proc/sys/kernel/perf_event_paranoid')
+PERF_EVENTS = ('instructions:u', 'cycles:u', 'instructions:k', 'cycles:k', 'context-switches')
+
+
+def perf_level():
+    """kernel.perf_event_paranoid: at 2 a user may count its processes in user space only, at 1 or lower in the
+    kernel too; above 2 not at all (venus defaults to 4; the owner lowers it to 2 for diagnostics, until reboot)."""
+    try:
+        return int(PARANOID.read_text())
+    except (OSError, ValueError):
+        return None
+
+
+def perf_start(pid, seconds):
+    """`perf stat` on the server for the measured phase, or None when the kernel refuses it."""
+    level = perf_level()
+    if level is None or level > 2:
+        return None
+    argv = ['perf', 'stat', '-x', ',', '-e', ','.join(PERF_EVENTS), '-p', str(pid), '--', 'sleep', str(seconds)]
+    return subprocess.Popen(argv, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
+
+
+def perf_finish(perf, requests):
+    """Counts per successful request; an event the kernel refused is reported as unavailable."""
+    if perf is None:
+        return {'available': False, 'perf_event_paranoid': perf_level()}
+    _, err = perf.communicate(timeout=60)
+    out = {'available': True, 'perf_event_paranoid': perf_level(), 'per_request': {}, 'unavailable': []}
+    for line in err.splitlines():
+        fields = line.split(',')
+        if len(fields) < 3 or fields[2] not in PERF_EVENTS:
+            continue
+        if fields[0].startswith('<'):
+            out['unavailable'].append(fields[2])
+        elif requests:
+            out['per_request'][fields[2]] = float(fields[0]) / requests
+    return out
+
+
+def step(process, pgport, oha, url, connections, seconds, warmup, workload, request):
     oha_run(oha, url, connections, warmup, workload['load_cpus'], request)
     threads0, pg0 = thread_cpu(process.pid), {p: process_cpu(p) for p in postgres_pids(pgport)} if pgport else {}
-    counters0 = snapshot_counters(process.pid, counters) if counters else None
+    perf = perf_start(process.pid, seconds)
     raw = oha_run(oha, url, connections, seconds, workload['load_cpus'], request)
     threads1 = thread_cpu(process.pid)
     pg1 = {p: process_cpu(p) for p in postgres_pids(pgport)} if pgport else {}
-    counters1 = snapshot_counters(process.pid, counters) if counters else None
     summary, percentiles = raw['summary'], raw.get('latencyPercentiles', {})
     statuses = raw.get('statusCodeDistribution', {})
     requests = sum(statuses.values())
@@ -158,6 +183,7 @@ def step(process, pgport, oha, url, connections, seconds, warmup, workload, requ
     server_cpu = sum(per_thread.values())
     pg_cpu = sum(cpu - pg0.get(pid, 0.0) for pid, cpu in pg1.items())
     expected = str(request.get('status', 200))
+    counted = perf_finish(perf, statuses.get(expected, 0))
     return {'connections': connections, 'seconds': seconds, 'requests': requests, 'statuses': statuses,
             'unexpected_statuses': requests - statuses.get(expected, 0),
             'requests_per_second': summary['requestsPerSec'],
@@ -166,8 +192,115 @@ def step(process, pgport, oha, url, connections, seconds, warmup, workload, requ
                               if percentiles.get(q) is not None}},
             'server_cpu_seconds': server_cpu, 'server_cpu_us_per_request': server_cpu / requests * 1e6 if requests else None,
             'server_cpu_per_thread': {k: round(v, 3) for k, v in sorted(per_thread.items(), key=lambda kv: -kv[1]) if v > 0},
-            'postgres_cpu_seconds': pg_cpu, 'postgres_cpu_us_per_request': pg_cpu / requests * 1e6 if requests and pgport else None,
-            'counters': counter_delta(counters0, counters1)}
+            'perf': counted,
+            'postgres_cpu_seconds': pg_cpu, 'postgres_cpu_us_per_request': pg_cpu / requests * 1e6 if requests and pgport else None}
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# The database census (coordinator 03:37Z, Astra concurrency review): statements, prepares against executions,
+# transactions, rows and connections per successful request, for each implementation, from the server's statement
+# log. The pinned PostgreSQL has no pg_stat_statements, so the census turns on log_min_duration_statement=0 (the
+# extended protocol logs parse, bind and execute separately) for a counted burst after the ladder; logging costs the
+# backends CPU, so the ladder's CPU figures, taken without it, stay the clean ones.
+
+CENSUS_SETTINGS = (('log_min_duration_statement', '0'), ('log_connections', 'on'),
+                   ('log_line_prefix', "'%m [%p] db=%d '"))
+DURATION = re.compile(r'LOG:  duration: [\d.]+ ms  (?:(parse|bind|execute) (.+?)|statement): (.*)$')
+STAT_COLUMNS = ('xact_commit', 'xact_rollback', 'tup_returned', 'tup_fetched', 'sessions')
+
+
+def psql(pgport, database, *commands):
+    argv = [str(spring_bench.postgres_bin() / 'psql'), '-X', '-At', '-h', '127.0.0.1', '-p', str(pgport), '-U',
+            'petclinic', '-d', database]
+    for command in commands:
+        argv += ['-c', command]  # one -c each: ALTER SYSTEM cannot run inside the implicit transaction of a list
+    completed = subprocess.run(argv, capture_output=True, text=True)
+    if completed.returncode:
+        raise SystemExit(f'psql failed: {completed.stderr[-400:]}')
+    return completed.stdout
+
+
+def database_stats(pgport, database):
+    row = psql(pgport, database, f"SELECT {', '.join(STAT_COLUMNS)} FROM pg_stat_database WHERE datname = '{database}'")
+    return dict(zip(STAT_COLUMNS, map(int, row.strip().split('|'))))
+
+
+def statement_kind(sql):
+    head = sql.lstrip().split(None, 1)[0].upper() if sql.strip() else ''
+    return {'BEGIN': 'begin', 'START': 'begin', 'COMMIT': 'commit', 'END': 'commit', 'ROLLBACK': 'rollback',
+            'SET': 'set', 'SHOW': 'show', 'SELECT': 'select', 'INSERT': 'insert', 'UPDATE': 'update',
+            'DELETE': 'delete'}.get(head, 'other')
+
+
+def parse_census(text, database):
+    """Counts from the statement log lines of one database."""
+    counts = {'parse': 0, 'parse_unnamed': 0, 'bind': 0, 'execute': 0, 'simple': 0, 'connections': 0}
+    kinds, texts = {}, {}
+    tag = f' db={database} '
+    for line in text.splitlines():
+        if tag not in line:
+            continue
+        if 'connection authorized' in line:
+            counts['connections'] += 1
+            continue
+        match = DURATION.search(line)
+        if not match:
+            continue
+        phase, name, sql = match.groups()
+        if phase == 'parse':
+            counts['parse'] += 1
+            counts['parse_unnamed'] += name == '<unnamed>'
+            continue
+        if phase == 'bind':
+            counts['bind'] += 1
+            continue
+        counts['execute' if phase == 'execute' else 'simple'] += 1
+        kind = statement_kind(sql)
+        kinds[kind] = kinds.get(kind, 0) + 1
+        key = ' '.join(sql.split())[:160]
+        texts[key] = texts.get(key, 0) + 1
+    return counts, kinds, texts
+
+
+def census(pgport, database, process, oha, url, requests, connections, cpus, request):
+    data_directory = psql(pgport, database, 'SHOW data_directory').strip()
+    log = Path(data_directory).parent / 'server.log'  # spring_bench.postgres_cluster's layout
+    time.sleep(11)  # idle backends flush their statistics within 10 s
+    stats0, offset = database_stats(pgport, database), log.stat().st_size
+    psql(pgport, database, *[f'ALTER SYSTEM SET {key} = {value}' for key, value in CENSUS_SETTINGS],
+         'SELECT pg_reload_conf()')
+    pg_pids = postgres_pids(pgport)
+    pg0 = {pid: process_cpu(pid) for pid in pg_pids}
+    try:
+        time.sleep(0.5)
+        argv = ['taskset', '--cpu-list', ','.join(map(str, cpus)), str(oha), '-n', str(requests), '-c', str(connections),
+                '--no-tui', '--output-format', 'json']
+        if request.get('method', 'GET') != 'GET':
+            argv += ['-m', request['method']]
+        raw = json.loads(subprocess.run(argv + [url], capture_output=True, text=True, check=True).stdout)
+        time.sleep(0.5)
+    finally:
+        psql(pgport, database, *[f'ALTER SYSTEM RESET {key}' for key, _ in CENSUS_SETTINGS], 'SELECT pg_reload_conf()')
+    pg_cpu = sum(process_cpu(pid) - pg0.get(pid, 0.0) for pid in postgres_pids(pgport))
+    time.sleep(11)
+    stats1 = database_stats(pgport, database)
+    with log.open('rb') as stream:
+        stream.seek(offset)
+        text = stream.read().decode(errors='replace')
+    counts, kinds, texts = parse_census(text, database)
+    ok = raw.get('statusCodeDistribution', {}).get(str(request.get('status', 200)), 0)
+    per = (lambda value: value / ok if ok else None)
+    stats = {key: stats1[key] - stats0[key] for key in STAT_COLUMNS}
+    return {'requests': ok, 'connections': connections,
+            'per_request': {**{key: per(value) for key, value in counts.items()},
+                            **{f'statements_{kind}': per(value) for kind, value in sorted(kinds.items())},
+                            'transactions_committed (pg_stat_database)': per(stats['xact_commit']),
+                            'rows_returned (pg_stat_database)': per(stats['tup_returned']),
+                            'rows_fetched (pg_stat_database)': per(stats['tup_fetched']),
+                            'sessions_opened (pg_stat_database)': per(stats['sessions']),
+                            'backend_cpu_us_with_logging': per(pg_cpu * 1e6)},
+            'totals': {'log': counts, 'kinds': kinds, 'pg_stat_database': stats},
+            'top_statements': sorted(texts.items(), key=lambda kv: -kv[1])[:15]}
 
 
 def main(argv=None):
@@ -183,6 +316,8 @@ def main(argv=None):
     parser.add_argument('--oha', type=Path, default=Path(os.environ.get('OHA', ROOT / '.tools' / 'oha-1.16.0' / 'oha')))
     parser.add_argument('--force', action='store_true', help='run although a timed measurement holds the lock')
     parser.add_argument('--smoke', action='store_true', help='ladder 1,8 for 1 s each')
+    parser.add_argument('--census-requests', type=int, default=2000, help='requests in the statement-log census')
+    parser.add_argument('--no-census', action='store_true')
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args(argv)
     if LOCK.exists() and not os.environ.get('FLINT_MEASURE_WINDOW_CERTIFIED') and not args.force:
@@ -206,45 +341,67 @@ def main(argv=None):
             (spring_bench.postgres_cluster(workload['database_cpus']) if database_kind == 'postgres'
              else _no_database()) as database:
         for impl in impls:
-            created = []
-
-            def tracked():
-                env = database()
-                created.append(env)
-                return env
-            port = spring_bench.free_port()
             extra_env = dict(item.split('=', 1) for item in args.env) if impl == 'flint' else {}
-            counters = Path(temporary) / f'{impl}-counters.json' if (impl == 'flint' and args.counters) else None
-            if counters:
-                extra_env['FLINT_DIAG_COUNTERS'] = str(counters)
-            argv_, env, cwd, identity = load_bench.spring_server(
-                spring_bench, args.app, impl, port, tracked if database else None, workload,
-                manifest.get('environment', {}), False, binary=binaries[impl])
-            env.update(extra_env)
-            pgport = int(created[0]['POSTGRES_URL'].rsplit(':', 1)[1].split('/')[0]) if created else None
-            result['binaries'][impl] = dict(identity, env=extra_env)
-            log = args.output.with_suffix(f'.{impl}-server.log')
-            with log.open('wb') as stream:
-                process = subprocess.Popen(argv_, env=env, cwd=cwd, stdout=stream, stderr=subprocess.STDOUT)
-            try:
-                wait_ready(port, process)
+            result['steps'][impl] = []
+
+            def serve(label, counters=None):
+                """One server process (a fresh database each launch), for one ladder step or the census."""
+                created = []
+
+                def tracked():
+                    env = database()
+                    created.append(env)
+                    return env
+                port = spring_bench.free_port()
+                launch_env = dict(extra_env, **({'FLINT_DIAG_COUNTERS': str(counters)} if counters else {}))
+                argv_, env, cwd, identity = load_bench.spring_server(
+                    spring_bench, args.app, impl, port, tracked if database else None, workload,
+                    manifest.get('environment', {}), False, binary=binaries[impl])
+                env.update(launch_env)
+                result['binaries'][impl] = dict(identity, env=extra_env)
+                log = args.output.with_suffix(f'.{impl}-{label}-server.log')
+                with log.open('wb') as stream:
+                    process = subprocess.Popen(argv_, env=env, cwd=cwd, stdout=stream, stderr=subprocess.STDOUT)
                 url = f'http://127.0.0.1:{port}{spec["path"]}'
-                result['steps'][impl] = []
-                for connections in ladder:
-                    row = step(process, pgport, args.oha, url, connections, seconds, warmup, workload, request, counters)
-                    result['steps'][impl].append(row)
-                    print(json.dumps({'impl': impl, 'connections': connections,
-                                      'rps': round(row['requests_per_second']),
-                                      'server_cpu_us': row['server_cpu_us_per_request'] and round(row['server_cpu_us_per_request'], 1),
-                                      'postgres_cpu_us': row['postgres_cpu_us_per_request'] and round(row['postgres_cpu_us_per_request'], 1),
-                                      'p50_ms': round(row['latency_ms'].get('p50', 0), 3)}), flush=True)
-            finally:
-                process.terminate()
+                url_db = created[0]['POSTGRES_URL'] if created else None
+                pgport = int(url_db.rsplit(':', 1)[1].split('/')[0]) if url_db else None
+                return process, url, pgport, url_db.rsplit('/', 1)[1] if url_db else None
+
+            def stop(process):
+                process.terminate()  # SIGTERM: Boot exits cleanly and the counters file is written
                 try:
-                    process.wait(timeout=10)
+                    process.wait(timeout=15)
                 except subprocess.TimeoutExpired:
                     process.kill()
                     process.wait()
+
+            for connections in ladder:
+                counters = Path(temporary) / f'{impl}-c{connections}-counters.json' if (impl == 'flint' and args.counters) else None
+                process, url, pgport, _ = serve(f'c{connections}', counters)
+                try:
+                    wait_ready(int(url.split(':')[2].split('/')[0]), process)
+                    row = step(process, pgport, args.oha, url, connections, seconds, warmup, workload, request)
+                finally:
+                    stop(process)
+                row['counters'] = read_counters(counters)
+                result['steps'][impl].append(row)
+                print(json.dumps({'impl': impl, 'connections': connections,
+                                  'rps': round(row['requests_per_second']),
+                                  'server_cpu_us': row['server_cpu_us_per_request'] and round(row['server_cpu_us_per_request'], 1),
+                                  'postgres_cpu_us': row['postgres_cpu_us_per_request'] and round(row['postgres_cpu_us_per_request'], 1),
+                                  'p50_ms': round(row['latency_ms'].get('p50', 0), 3)}), flush=True)
+            if database and not args.no_census:
+                process, url, pgport, name = serve('census')
+                try:
+                    wait_ready(int(url.split(':')[2].split('/')[0]), process)
+                    oha_run(args.oha, url, 8, warmup, workload['load_cpus'], request)
+                    result.setdefault('census', {})[impl] = census(
+                        pgport, name, process, args.oha, url, 200 if args.smoke else args.census_requests, 8,
+                        workload['load_cpus'], request)
+                finally:
+                    stop(process)
+                print(json.dumps({'impl': impl, 'census': {k: v and round(v, 3) for k, v in
+                                                           result['census'][impl]['per_request'].items()}}), flush=True)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, indent=2) + '\n')
     return 0
