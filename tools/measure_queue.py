@@ -1079,6 +1079,7 @@ def main(argv=None):
                    help='wait for natural quiet instead of taking the lock and letting sessions behind hold pause')
     p.add_argument('--claim-seconds', type=int, default=90)
     p.add_argument('--retry-minutes', type=int, default=5, help='after a claim that did not settle')
+    p.add_argument('--exit-when-empty', action='store_true', help='stop when no entry is pending (default: wait)')
     p.add_argument('--claim-gap-minutes', type=float, default=10,
                    help='between the end of one claimed run and the next claim, so held work can run')
     p.add_argument('--hours', type=float, default=12, help='give up after this long')
@@ -1174,11 +1175,22 @@ def main(argv=None):
                     time.sleep(args.retry_minutes * 60)
                     return
 
+        idle_reported = [False]
         while time.monotonic() < deadline:
             pending = sorted((e for e in entries() if e['status'] == 'pending'), key=queue_order)
             if not pending:
-                print(now(), 'no pending entries; done', flush=True)
-                return 0
+                # An empty queue is a pause, not the end: entries are blocked and released all day, and a watcher that
+                # exits leaves the next pending entry unclaimed (2026-11-24: 37 minutes lost). --exit-when-empty
+                # keeps the old behaviour.
+                if args.exit_when_empty:
+                    print(now(), 'no pending entries; done', flush=True)
+                    return 0
+                if not idle_reported[0]:
+                    print(now(), 'no pending entries; waiting for one', flush=True)
+                    idle_reported[0] = True
+                time.sleep(60)
+                continue
+            idle_reported[0] = False
             claimed = [e for e in pending if window_mode(e) == 'claim'] if args.claim else []
             if claimed:
                 # One claim per round: priorities are re-read before every claim, so an entry queued during a long run
