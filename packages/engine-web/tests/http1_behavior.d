@@ -135,3 +135,42 @@ unittest
     scope current = Request.fromMetadata(&reader.metadata);
     assert(current.header("Host").ok() && current.header("X-Old").error.code == Status.notFound);
 }
+
+@("firstHeader returns the first matching field and how many fields share its name, in one pass")
+unittest
+{
+    import flint.arena : Buffer;
+
+    enum text = "GET /greeting HTTP/1.1\r\nHost: localhost\r\nAccept: application/json\r\n"
+        ~ "X-Other: 1\r\naccept: text/plain\r\n\r\n";
+    ubyte[4096] storage;
+    scope arena = RequestArena(storage[]);
+    Http1Reader reader;
+    ubyte[] payload;
+    auto owned = reserveH1(512, reader.metadata.headers, payload);
+    scope (exit)
+        releaseBytes(owned);
+    assert(reader.open(618, payload, 512, 100).code == Status.ok);
+    scope (exit)
+        reader.close();
+    assert(reader.begin());
+    size_t consumed;
+    assert(reader.feed(cast(const(ubyte)[]) text, arena, consumed) == ReadOutcome.request);
+
+    scope request = Request.fromMetadata(&reader.metadata);
+    Buffer first;
+    assert(request.firstHeader("ACCEPT", first) == 2);
+    assert(request.headerCount("accept") == 2);
+    assert(arena.read(first, (scope const(ubyte)[] bytes) @safe nothrow @nogc {
+            assert(bytes == cast(const(ubyte)[]) "application/json");
+        }) == Status.ok);
+    Buffer single;
+    assert(request.firstHeader("x-other", single) == 1);
+    Buffer absent;
+    assert(request.firstHeader("Accept-Language", absent) == 0 && absent == Buffer.init);
+    // An expired handle reports nothing.
+    assert(arena.reset() == Status.ok);
+    assert(reader.begin());
+    Buffer expired;
+    assert(request.firstHeader("accept", expired) == 0 && expired == Buffer.init);
+}

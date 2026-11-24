@@ -339,6 +339,23 @@ struct Request
         return Result!Buffer(Buffer.init, Error(Status.notFound, "HTTP field is absent"));
     }
 
+    /// The first field with this ASCII case-insensitive name, and how many fields have it, in one pass over the
+    /// fields. Zero, with `first` empty, when none has it or the handle expired.
+    size_t firstHeader(scope const(char)[] name, out Buffer first) const scope nothrow @nogc
+    {
+        size_t count;
+        if (!live())
+            return count;
+        foreach (ref field; state.headers[0 .. state.fieldCount])
+        {
+            if (!sameName(state.names[field.start .. field.end], name))
+                continue;
+            if (count++ == 0)
+                first = field.value;
+        }
+        return count;
+    }
+
     /// Count all fields with this ASCII case-insensitive name.
     size_t headerCount(scope const(char)[] name) const scope nothrow @nogc
     {

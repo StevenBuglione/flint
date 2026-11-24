@@ -216,6 +216,20 @@ unittest
     assert(offer(servlet, "GET", "/hello", "name[]=x").content == `{"id":7,"text":"Hello, x!"}`);
     assert(offer(servlet, "GET", "/hello", "name=&name=").content == `{"id":8,"text":"Hello, ,!"}`);
     assert(controller.calls == 8);
+
+    // The joined value is bound in one decoding pass into a 1,024-byte buffer: exactly full still binds, one more
+    // byte, alone or joined, declines to the generic path before the handler runs.
+    import std.array : replicate;
+
+    const full = "x".replicate(1024);
+    assert(offer(servlet, "GET", "/hello", "name=" ~ full).content == `{"id":9,"text":"Hello, ` ~ full ~ `!"}`);
+    assert(offer(servlet, "GET", "/hello", "name=" ~ full ~ "x").outcome == FastOutcome.declined);
+    const half = "y".replicate(512);
+    assert(offer(servlet, "GET", "/hello", "name=" ~ half ~ "&name=" ~ half).outcome == FastOutcome.declined);
+    const fits = "z".replicate(511);
+    assert(offer(servlet, "GET", "/hello", "name=" ~ fits ~ "&name=" ~ fits ~ "z").content
+            == `{"id":10,"text":"Hello, ` ~ fits ~ "," ~ fits ~ `z!"}`);
+    assert(controller.calls == 10);
 }
 
 @("fast path: requests outside the proof are declined before the handler runs")

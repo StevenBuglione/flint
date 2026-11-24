@@ -13,6 +13,7 @@ with the objects it would have had.
 +/
 module flint.engine.servlet.fast;
 
+import flint.arena : Buffer;
 import flint.conc : Context;
 import flint.engine.aot.fast : FastDispatch, FastExchange, FastOutcome, FastValueVisitor;
 import flint.engine.servlet : ServletEngine;
@@ -48,7 +49,7 @@ FastOutcome serveFast(ServletEngine engine, FastDispatch dispatch,
     size_t used;
     bool fits = true;
     // Copies one arena buffer behind what is already in `head`; the slice is valid for this call only.
-    const(char)[] take(Buffer)(Buffer buffer)
+    const(char)[] take(Buffer buffer)
     {
         size_t start = used, end = used;
         auto room = head[used .. $];
@@ -79,14 +80,11 @@ FastOutcome serveFast(ServletEngine engine, FastDispatch dispatch,
     const(char)[] query = queryBuffer.ok() ? take(queryBuffer.value) : null;
     // `scope`, so the delegates below borrow this frame instead of a GC closure (DMD and LDC; -vgc shows none).
     scope FastExchange exchange;
-    exchange.acceptCount = request.headerCount("accept");
+    // The first `Accept` field and the number of them, in one pass over the fields.
+    Buffer acceptField;
+    exchange.acceptCount = request.firstHeader("accept", acceptField);
     if (exchange.acceptCount != 0)
-    {
-        const acceptBuffer = request.header("accept");
-        if (!acceptBuffer.ok())
-            return FastOutcome.declined;
-        exchange.accept = take(acceptBuffer.value);
-    }
+        exchange.accept = take(acceptField);
     if (!fits)
         return FastOutcome.declined;
     const contextPath = engine.contextPathOf();

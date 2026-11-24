@@ -325,22 +325,35 @@ private bool plainBody(ref const AotHandlerMapping row)
 /++
 `@RequestParam String` binding as the generic path does it: `RequestParamMethodArgumentResolver.resolveName` reads
 every value (then `name[]`), `AbstractNamedValueMethodArgumentResolver` applies the default to an absent or empty
-single value, and the conversion service joins several values with `,`. The value is copied to the GC heap in one
-allocation, because it reaches user code; a default is the generated literal itself.
+single value, and the conversion service joins several values with `,`. The query is decoded once, straight into
+a stack buffer; the value is copied to the GC heap in one allocation, because it reaches user code; a default is
+the generated literal itself. A joined value past the buffer declines to the generic path.
 +/
 private bool bindString(ref scope FastExchange exchange, string name, string defaultValue, bool required,
         out string value)
 {
-    size_t count, total;
-    void measure(scope const(char)[] text)
+    char[1024] stack = void;
+    size_t count, at;
+    bool overflow;
+    void collect(scope const(char)[] text)
     {
-        ++count;
-        total += text.length;
+        if (overflow)
+            return;
+        const separator = count++ != 0;
+        if (at + separator + text.length > stack.length)
+        {
+            overflow = true;
+            return;
+        }
+        if (separator)
+            stack[at++] = ',';
+        stack[at .. at + text.length] = text;
+        at += text.length;
     }
 
     char[64] arrayName = void;
     const(char)[] lookup = name;
-    if (!exchange.parameter(lookup, &measure))
+    if (!exchange.parameter(lookup, &collect))
         return false;
     if (count == 0)
     {
@@ -349,7 +362,7 @@ private bool bindString(ref scope FastExchange exchange, string name, string def
         arrayName[0 .. name.length] = name;
         arrayName[name.length .. name.length + 2] = "[]";
         lookup = arrayName[0 .. name.length + 2];
-        if (!exchange.parameter(lookup, &measure))
+        if (!exchange.parameter(lookup, &collect))
             return false;
     }
     if (count == 0)
@@ -363,27 +376,14 @@ private bool bindString(ref scope FastExchange exchange, string name, string def
         // and the handler has not run.
         return !required;
     }
-    if (count == 1 && total == 0)
+    if (overflow)
+        return false;
+    if (count == 1 && at == 0)
     {
         value = defaultValue !is null ? defaultValue : "";
         return true;
     }
-    char[1024] stack = void;
-    const length = total + count - 1;
-    if (length > stack.length)
-        return false;
-    size_t at, seen;
-    void copy(scope const(char)[] text)
-    {
-        if (seen++ != 0)
-            stack[at++] = ',';
-        stack[at .. at + text.length] = text;
-        at += text.length;
-    }
-
-    if (!exchange.parameter(lookup, &copy) || at != length)
-        return false;
-    value = stack[0 .. length].idup;
+    value = stack[0 .. at].idup;
     return true;
 }
 
