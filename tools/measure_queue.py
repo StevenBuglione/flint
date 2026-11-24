@@ -864,7 +864,8 @@ def measure_command(entry, built, outdir, smoke):
             # Never this checkout's moving HEAD: a step outside a build tree runs at the pinned harness revision.
             cwd = harness[0]
         # {harness}: the pinned harness revision, for a measuring tool newer than the build's commit.
-        command = [part.replace('{out}', str(outdir)).replace('{python}', sys.executable)
+        # {oha}: the pinned oha in this checkout's .tools, for tools that take it as an argument rather than from OHA.
+        command = [part.replace('{out}', str(outdir)).replace('{python}', sys.executable).replace('{oha}', str(oha))
                    .replace('{harness}', str(harness[0]) if harness else '{harness}') for part in step['argv']]
         if smoke and step.get('smoke_args'):
             command += step['smoke_args']
