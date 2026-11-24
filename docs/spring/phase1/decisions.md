@@ -780,3 +780,12 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **Rule:** on every gated path, each comparator matches the Java golden's framing (chunked or `Content-Length`), connection lifetime (`Connection: close` and the actual close, or reuse) and reason phrase, plus everything `semantic` already checks. How a server produces the bytes stays free: write coalescing, internal dispatch, caching.
   - **Go change, and only that:** the 404 and the validation 400 become chunked, the 400 closes its connection as Tomcat does, and the reason phrases are empty as Java's are. Nothing beyond Java.
   - **Process (AGENTS.md):** proof-harness writes ADR-033 (HTTP parity), measures the transport cost first (raw responses, a second request on each socket, accepts per request), makes the change, adds a check-registry rule so `exact` framing and connection lifetime are enforced on gated paths, re-registers the comparator, re-captures the affected Go baselines (gs-rest's error path and petclinic's validation path), and remeasures both sides at one commit. B2's and B3's error-path results stay as history against the old comparator.
+- 2026-11-24, proof-harness: **phase1-http-gs-rest certified at B3** (`d6d15b0073dd`, 21:06–21:46Z, interleaved with Go, no foreign activity; one stray callgrind frozen and continued). Flint / Go, median (99% interval), 9 trials:
+    - **throughput 1.488 (1.475–1.507), which passes** and clears the plan's 1.30: 372,200 against 250,200 req/s (1.323 at B2); every Flint trial ran 367,500–375,800 req/s;
+    - **p99 0.842 (0.783–0.935), which passes** (0.215 against 0.256 ms; 0.851 at B2);
+    - **peak RSS 0.772 (0.751–0.779), which passes** (10.6 against 13.8 MB; 0.944 at B2);
+    - p50 **1.319 (1.190–1.516), which fails** (79 against 60 µs; 1.297 at B2);
+    - CPU per request **1.006 (0.953–1.086), which fails** (8.30 against 8.25 µs; 1.053 at B2);
+    - p99.9 1.13, reported.
+
+    Evidence: `benchmarks/spring/evidence/phase1-http-gs-rest/20261124T210603Z/`.

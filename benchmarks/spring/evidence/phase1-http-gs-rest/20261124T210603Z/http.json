@@ -1,0 +1,3234 @@
+{
+  "schema": 2,
+  "mode": "production",
+  "status": "passed",
+  "workload_sha256": "ebd2e71797d79278116d85c6a983a439e5ca9a7279e2243ab906c87d804e02aa",
+  "manifest": "policy/spring-http-benchmark.json",
+  "effective_workload": {
+    "runs": 9,
+    "duration_seconds": 60,
+    "capacity_seconds": 60,
+    "warmup_seconds": 10,
+    "connections": 64,
+    "request_timeout_seconds": 5,
+    "server_cpus": [
+      2,
+      3
+    ],
+    "load_cpus": [
+      4,
+      5,
+      6,
+      7
+    ],
+    "database_cpus": [
+      8,
+      9
+    ]
+  },
+  "tool": {
+    "version": "oha 1.16.0",
+    "sha256": "620bb9e16fb53eabc9a3fc45f88bdb41fefa3fee5c05e75892011ce320391716"
+  },
+  "load_average_at_start": 0.21240234375,
+  "comparators": {
+    "gs-rest-service": {
+      "directory": "benchmarks/spring/go/gs-rest-service",
+      "commit": "f88554cfc7049d059e942130f77616b0d8eac4ed",
+      "sha256": "d33e8488448a0a4692e048d57b22ec362426e9f3d5ff723fcce64e3cf06be73b",
+      "go": "1.27.4",
+      "wire": "semantic",
+      "registered": "2026-11-23",
+      "measured": false
+    },
+    "gs-relational-data-access": {
+      "directory": "benchmarks/spring/go/gs-relational-data-access",
+      "commit": "f88554cfc7049d059e942130f77616b0d8eac4ed",
+      "sha256": "b295d3b02ac6a61b2da3744e221d49a85f9a5be703bb22473c128339431e5527",
+      "go": "1.27.4",
+      "wire": "semantic",
+      "registered": "2026-11-23",
+      "measured": false
+    },
+    "petclinic-rest": {
+      "directory": "benchmarks/spring/go/petclinic-rest",
+      "commit": "ddd21875ca5d5657068d4999e34775a8134520b5",
+      "sha256": "c279137895e51a7e0961bab37030e5780a70213bdd4ee69f05262eef33d7d962",
+      "go": "1.27.4",
+      "wire": "semantic",
+      "registered": "2026-11-24",
+      "measured": false,
+      "census_sha256": "d03c394b4ce8bdf1061b00a7adeba262127a131c4f98f63357e74b4d0898e9d6"
+    }
+  },
+  "apps": {
+    "gs-rest-service": {
+      "app": "gs-rest-service",
+      "measured": {
+        "flint": {
+          "p50_ms": [
+            0.091066,
+            0.097556,
+            0.073487,
+            0.08451700000000001,
+            0.068117,
+            0.079447,
+            0.08026699999999999,
+            0.076457,
+            0.072357
+          ],
+          "p99_ms": [
+            0.25727,
+            0.23103100000000001,
+            0.204293,
+            0.230441,
+            0.207692,
+            0.19497199999999998,
+            0.215081,
+            0.23429,
+            0.210052
+          ],
+          "p999_ms": [
+            1.1082670000000001,
+            0.963593,
+            1.0671680000000001,
+            1.0692849999999998,
+            1.094605,
+            1.023409,
+            1.0250890000000001,
+            1.0646570000000002,
+            1.076057
+          ],
+          "peak_rss_bytes": [
+            10637312,
+            10694656,
+            10305536,
+            10641408,
+            10657792,
+            10682368,
+            10600448,
+            10584064,
+            10637312
+          ],
+          "cpu_ns_per_request": [
+            8899.644014239431,
+            9016.34358102168,
+            7933.022623280588,
+            8474.809316790372,
+            7633.028012212845,
+            8499.688344760692,
+            8299.716426355433,
+            8116.484045775636,
+            7999.846669605499
+          ],
+          "requests_per_second": [
+            375396.16997968097,
+            375753.198675921,
+            375495.9082271243,
+            370960.54895855946,
+            372176.9437149508,
+            369629.9760856009,
+            367450.28758257173,
+            372452.36149161676,
+            371621.6251316542
+          ]
+        },
+        "go": {
+          "p50_ms": [
+            0.059288,
+            0.060347,
+            0.060148,
+            0.060058,
+            0.060247,
+            0.060827,
+            0.06182800000000001,
+            0.061697,
+            0.059628
+          ],
+          "p99_ms": [
+            0.25807,
+            0.25067,
+            0.251641,
+            0.24346099999999998,
+            0.25549,
+            0.25711,
+            0.267989,
+            0.2747,
+            0.25025
+          ],
+          "p999_ms": [
+            0.852847,
+            1.147575,
+            0.944823,
+            0.77279,
+            1.350055,
+            0.855616,
+            1.168833,
+            1.2252809999999998,
+            0.910844
+          ],
+          "peak_rss_bytes": [
+            13770752,
+            13721600,
+            13901824,
+            13541376,
+            13910016,
+            14118912,
+            13688832,
+            14249984,
+            13746176
+          ],
+          "cpu_ns_per_request": [
+            8249.814379176469,
+            8258.147525014021,
+            8174.816066638501,
+            8166.482920800949,
+            8191.489184401004,
+            8266.336013226137,
+            8391.33101342613,
+            8399.811004252404,
+            8208.141810024434
+          ],
+          "requests_per_second": [
+            251445.6217007895,
+            251186.7959347791,
+            250404.8091123926,
+            250154.65185642033,
+            251438.5995689147,
+            249038.01295379896,
+            248571.68674162417,
+            249179.16704068932,
+            249873.39151473733
+          ]
+        }
+      },
+      "context": {}
+    }
+  },
+  "trials": [
+    {
+      "app": "gs-rest-service",
+      "target": "flint",
+      "trial": 0,
+      "server_command": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/gs-rest-service-flint"
+      ],
+      "server_pid": 3612526,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/gs-rest-service-flint",
+        "sha256": "a06373cc8a95e96bd8c4e43c556bc34ced172b296d008fc1db44e8813219145b"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/00-gs-rest-service-flint-server.log",
+      "warmup": {
+        "count": 199989,
+        "duration_seconds": 10.00129078,
+        "requests_per_second": 19996.318915147072,
+        "p50_ms": 0.076287,
+        "p99_ms": 0.216052,
+        "p999_ms": 0.796459,
+        "cpu_ns_per_request": 8050.040250201251,
+        "peak_rss_bytes": 10309632,
+        "load_cpu_fraction": 0.036361017768181195,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "10s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "20000",
+            "--latency-correction",
+            "http://127.0.0.1:38135/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "ec0b4ee4a7739dff4882e7c447b82e5e277b9e20a433d2c9f5d616f1a2d356ec",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/00-gs-rest-service-flint-warmup.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/00-gs-rest-service-flint-warmup.stderr.txt",
+          "wall_seconds": 10.076801269315183
+        },
+        "process": {
+          "cpu_nanoseconds": 1610000000.0,
+          "peak_rss_bytes": 10309632,
+          "correctness_probes": 10,
+          "rss_samples": 498
+        }
+      },
+      "latency": {
+        "count": 1199989,
+        "duration_seconds": 60.001141486,
+        "requests_per_second": 19999.43618205984,
+        "p50_ms": 0.091066,
+        "p99_ms": 0.25727,
+        "p999_ms": 1.1082670000000001,
+        "cpu_ns_per_request": 8899.644014239431,
+        "peak_rss_bytes": 10637312,
+        "load_cpu_fraction": 0.037876776152806664,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "20000",
+            "--latency-correction",
+            "http://127.0.0.1:38135/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "4c1b3f4fae1ff6c2f03b37ffce2b811ea3c1b72abf824a38a45e151f82972e82",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/00-gs-rest-service-flint-latency.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/00-gs-rest-service-flint-latency.stderr.txt",
+          "wall_seconds": 60.287852661684155
+        },
+        "process": {
+          "cpu_nanoseconds": 10680000000.0,
+          "peak_rss_bytes": 10637312,
+          "correctness_probes": 59,
+          "rss_samples": 2997
+        }
+      },
+      "capacity": {
+        "count": 22524417,
+        "duration_seconds": 60.001722983,
+        "requests_per_second": 375396.16997968097,
+        "p50_ms": 0.169923,
+        "p99_ms": 0.274789,
+        "p999_ms": 0.35160600000000003,
+        "cpu_ns_per_request": 5315.106053502678,
+        "peak_rss_bytes": 10506240,
+        "load_cpu_fraction": 0.49986423564748866,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "http://127.0.0.1:38135/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "5a1edd57444ba4e293bd5b2d8b5fa0246eac8988095492b5007dc420d59027c4",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/00-gs-rest-service-flint-capacity.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/00-gs-rest-service-flint-capacity.stderr.txt",
+          "wall_seconds": 63.80092978384346
+        },
+        "process": {
+          "cpu_nanoseconds": 119720000000.0,
+          "peak_rss_bytes": 10506240,
+          "correctness_probes": 63,
+          "rss_samples": 3164
+        }
+      }
+    },
+    {
+      "app": "gs-rest-service",
+      "target": "go",
+      "trial": 0,
+      "server_command": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/gs-rest-service-go"
+      ],
+      "server_pid": 3613632,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/gs-rest-service-go",
+        "sha256": "d66bce2755a66aaef157c990a3deaa7fea06c13a29636091e70cf62b3351b799"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/00-gs-rest-service-go-server.log",
+      "warmup": {
+        "count": 199990,
+        "duration_seconds": 10.001228385,
+        "requests_per_second": 19996.543654572288,
+        "p50_ms": 0.058688,
+        "p99_ms": 0.24772,
+        "p999_ms": 0.886656,
+        "cpu_ns_per_request": 8050.0,
+        "peak_rss_bytes": 13676544,
+        "load_cpu_fraction": 0.036805860887772594,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "10s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "20000",
+            "--latency-correction",
+            "http://127.0.0.1:38109/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "48a037a641aafbb8a0602136c3ad0e407767fec4d2b8a374b370958e9ac40cd1",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/00-gs-rest-service-go-warmup.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/00-gs-rest-service-go-warmup.stderr.txt",
+          "wall_seconds": 10.077579794451594
+        },
+        "process": {
+          "cpu_nanoseconds": 1610000000.0,
+          "peak_rss_bytes": 13676544,
+          "correctness_probes": 10,
+          "rss_samples": 500
+        }
+      },
+      "latency": {
+        "count": 1199968,
+        "duration_seconds": 60.001287004,
+        "requests_per_second": 19999.037685975032,
+        "p50_ms": 0.059288,
+        "p99_ms": 0.25807,
+        "p999_ms": 0.852847,
+        "cpu_ns_per_request": 8249.814379176469,
+        "peak_rss_bytes": 13770752,
+        "load_cpu_fraction": 0.03814347835726786,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "20000",
+            "--latency-correction",
+            "http://127.0.0.1:38109/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "1c1ae66bf86ff7ad0f5470b94cc17dc1aea6b67d8d3736229847f573ccc28303",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/00-gs-rest-service-go-latency.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/00-gs-rest-service-go-latency.stderr.txt",
+          "wall_seconds": 60.23568376433104
+        },
+        "process": {
+          "cpu_nanoseconds": 9900000000.0,
+          "peak_rss_bytes": 13770752,
+          "correctness_probes": 59,
+          "rss_samples": 2993
+        }
+      },
+      "capacity": {
+        "count": 15087147,
+        "duration_seconds": 60.00162937,
+        "requests_per_second": 251445.6217007895,
+        "p50_ms": 0.216562,
+        "p99_ms": 0.7698400000000001,
+        "p999_ms": 1.54983,
+        "cpu_ns_per_request": 7722.43611939333,
+        "peak_rss_bytes": 14094336,
+        "load_cpu_fraction": 0.37500183806736254,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "http://127.0.0.1:38109/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "708facebe1214b9756431884cee30b3e14e0c9ad1c3ce16693165f0856914d32",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/00-gs-rest-service-go-capacity.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/00-gs-rest-service-go-capacity.stderr.txt",
+          "wall_seconds": 62.34898639563471
+        },
+        "process": {
+          "cpu_nanoseconds": 116510000000.0,
+          "peak_rss_bytes": 14094336,
+          "correctness_probes": 61,
+          "rss_samples": 3089
+        }
+      }
+    },
+    {
+      "app": "gs-rest-service",
+      "target": "go",
+      "trial": 1,
+      "server_command": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/gs-rest-service-go"
+      ],
+      "server_pid": 3614692,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/gs-rest-service-go",
+        "sha256": "d66bce2755a66aaef157c990a3deaa7fea06c13a29636091e70cf62b3351b799"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/01-gs-rest-service-go-server.log",
+      "warmup": {
+        "count": 199989,
+        "duration_seconds": 10.000849177,
+        "requests_per_second": 19997.20188360961,
+        "p50_ms": 0.059508,
+        "p99_ms": 0.24844,
+        "p999_ms": 0.477141,
+        "cpu_ns_per_request": 8150.040750203751,
+        "peak_rss_bytes": 13611008,
+        "load_cpu_fraction": 0.03725709978295929,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "10s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "20000",
+            "--latency-correction",
+            "http://127.0.0.1:57443/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "172697e60701d58b0c4e2a93eec02082620b79e78988ad0c964efa4930c119f9",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/01-gs-rest-service-go-warmup.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/01-gs-rest-service-go-warmup.stderr.txt",
+          "wall_seconds": 10.075663489289582
+        },
+        "process": {
+          "cpu_nanoseconds": 1630000000.0,
+          "peak_rss_bytes": 13611008,
+          "correctness_probes": 10,
+          "rss_samples": 500
+        }
+      },
+      "latency": {
+        "count": 1199968,
+        "duration_seconds": 60.000457269,
+        "requests_per_second": 19999.31424889288,
+        "p50_ms": 0.060347,
+        "p99_ms": 0.25067,
+        "p999_ms": 1.147575,
+        "cpu_ns_per_request": 8258.147525014021,
+        "peak_rss_bytes": 13721600,
+        "load_cpu_fraction": 0.03817156809751853,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "20000",
+            "--latency-correction",
+            "http://127.0.0.1:57443/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "7f2289f770146b73b8867960b3db72105dff1e8af71ea252e4505dc30dac69e4",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/01-gs-rest-service-go-latency.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/01-gs-rest-service-go-latency.stderr.txt",
+          "wall_seconds": 60.23176711332053
+        },
+        "process": {
+          "cpu_nanoseconds": 9910000000.0,
+          "peak_rss_bytes": 13721600,
+          "correctness_probes": 59,
+          "rss_samples": 2991
+        }
+      },
+      "capacity": {
+        "count": 15071673,
+        "duration_seconds": 60.001852183,
+        "requests_per_second": 251186.7959347791,
+        "p50_ms": 0.216522,
+        "p99_ms": 0.7742600000000001,
+        "p999_ms": 1.6605260000000002,
+        "cpu_ns_per_request": 7721.7392504405925,
+        "peak_rss_bytes": 13910016,
+        "load_cpu_fraction": 0.3745760779409598,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "http://127.0.0.1:57443/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "269d5ef297b7d210eb01b70a2dab3dfd9b5b37206997550e4f8f89387c19ee1c",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/01-gs-rest-service-go-capacity.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/01-gs-rest-service-go-capacity.stderr.txt",
+          "wall_seconds": 62.294443970546126
+        },
+        "process": {
+          "cpu_nanoseconds": 116380000000.0,
+          "peak_rss_bytes": 13910016,
+          "correctness_probes": 61,
+          "rss_samples": 3087
+        }
+      }
+    },
+    {
+      "app": "gs-rest-service",
+      "target": "flint",
+      "trial": 1,
+      "server_command": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/gs-rest-service-flint"
+      ],
+      "server_pid": 3615813,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/gs-rest-service-flint",
+        "sha256": "a06373cc8a95e96bd8c4e43c556bc34ced172b296d008fc1db44e8813219145b"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/01-gs-rest-service-flint-server.log",
+      "warmup": {
+        "count": 199969,
+        "duration_seconds": 10.001491431,
+        "requests_per_second": 19993.91804508161,
+        "p50_ms": 0.09426599999999999,
+        "p99_ms": 0.230551,
+        "p999_ms": 4.438608,
+        "cpu_ns_per_request": 8950.939848684111,
+        "peak_rss_bytes": 10231808,
+        "load_cpu_fraction": 0.037834936755602594,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "10s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "20000",
+            "--latency-correction",
+            "http://127.0.0.1:54209/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "f5d4a204b3b64a940229cbfdd867ff0bb1a2ce6b04f5e356ee87bd616fc5335e",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/01-gs-rest-service-flint-warmup.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/01-gs-rest-service-flint-warmup.stderr.txt",
+          "wall_seconds": 10.073368232697248
+        },
+        "process": {
+          "cpu_nanoseconds": 1790000000.0,
+          "peak_rss_bytes": 10231808,
+          "correctness_probes": 10,
+          "rss_samples": 499
+        }
+      },
+      "latency": {
+        "count": 1199984,
+        "duration_seconds": 60.001020461,
+        "requests_per_second": 19999.3931899871,
+        "p50_ms": 0.097556,
+        "p99_ms": 0.23103100000000001,
+        "p999_ms": 0.963593,
+        "cpu_ns_per_request": 9016.34358102168,
+        "peak_rss_bytes": 10694656,
+        "load_cpu_fraction": 0.03765176809508576,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "20000",
+            "--latency-correction",
+            "http://127.0.0.1:54209/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "5bbf3a78fca209192af29bc84d00f0871a7bb38d14cb906ad0cf6f0815b8adc2",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/01-gs-rest-service-flint-latency.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/01-gs-rest-service-flint-latency.stderr.txt",
+          "wall_seconds": 60.269712813198566
+        },
+        "process": {
+          "cpu_nanoseconds": 10820000000.0,
+          "peak_rss_bytes": 10694656,
+          "correctness_probes": 59,
+          "rss_samples": 2991
+        }
+      },
+      "capacity": {
+        "count": 22545866,
+        "duration_seconds": 60.001793942,
+        "requests_per_second": 375753.198675921,
+        "p50_ms": 0.174253,
+        "p99_ms": 0.28823899999999997,
+        "p999_ms": 0.345487,
+        "cpu_ns_per_request": 5313.598091859426,
+        "peak_rss_bytes": 10735616,
+        "load_cpu_fraction": 0.5027190599339432,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "http://127.0.0.1:54209/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "b0f570136f918d9165766d0e61ef8eed264459705053bbe98f7ad47256703c19",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/01-gs-rest-service-flint-capacity.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/01-gs-rest-service-flint-capacity.stderr.txt",
+          "wall_seconds": 63.491704997606575
+        },
+        "process": {
+          "cpu_nanoseconds": 119800000000.0,
+          "peak_rss_bytes": 10735616,
+          "correctness_probes": 62,
+          "rss_samples": 3147
+        }
+      }
+    },
+    {
+      "app": "gs-rest-service",
+      "target": "flint",
+      "trial": 2,
+      "server_command": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/gs-rest-service-flint"
+      ],
+      "server_pid": 3616881,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/gs-rest-service-flint",
+        "sha256": "a06373cc8a95e96bd8c4e43c556bc34ced172b296d008fc1db44e8813219145b"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/02-gs-rest-service-flint-server.log",
+      "warmup": {
+        "count": 199969,
+        "duration_seconds": 10.000499398,
+        "requests_per_second": 19995.90140868283,
+        "p50_ms": 0.057027999999999995,
+        "p99_ms": 0.195372,
+        "p999_ms": 1.7886009999999999,
+        "cpu_ns_per_request": 6150.6458178108705,
+        "peak_rss_bytes": 10194944,
+        "load_cpu_fraction": 0.037017153770050444,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "10s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "20000",
+            "--latency-correction",
+            "http://127.0.0.1:33627/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "ebbcf495c6ae097ded9835cd0b3b9d94c8f429ba5bd9d8265bb17b8b71637df8",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/02-gs-rest-service-flint-warmup.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/02-gs-rest-service-flint-warmup.stderr.txt",
+          "wall_seconds": 10.075085791759193
+        },
+        "process": {
+          "cpu_nanoseconds": 1230000000.0,
+          "peak_rss_bytes": 10194944,
+          "correctness_probes": 10,
+          "rss_samples": 500
+        }
+      },
+      "latency": {
+        "count": 1199988,
+        "duration_seconds": 60.001249622,
+        "requests_per_second": 19999.383472173777,
+        "p50_ms": 0.073487,
+        "p99_ms": 0.204293,
+        "p999_ms": 1.0671680000000001,
+        "cpu_ns_per_request": 7933.022623280588,
+        "peak_rss_bytes": 10305536,
+        "load_cpu_fraction": 0.03735582422962835,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "20000",
+            "--latency-correction",
+            "http://127.0.0.1:33627/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "e15625f6e0589e2653ae9180e59bbb6cc3ef56552c03b406f5444da634a471d8",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/02-gs-rest-service-flint-latency.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/02-gs-rest-service-flint-latency.stderr.txt",
+          "wall_seconds": 60.28565281163901
+        },
+        "process": {
+          "cpu_nanoseconds": 9520000000.0,
+          "peak_rss_bytes": 10305536,
+          "correctness_probes": 59,
+          "rss_samples": 2993
+        }
+      },
+      "capacity": {
+        "count": 22530338,
+        "duration_seconds": 60.001553962,
+        "requests_per_second": 375495.9082271243,
+        "p50_ms": 0.170484,
+        "p99_ms": 0.26831,
+        "p999_ms": 0.342007,
+        "cpu_ns_per_request": 5318.147924581898,
+        "peak_rss_bytes": 10350592,
+        "load_cpu_fraction": 0.5046384907216396,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "http://127.0.0.1:33627/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "0841ed1b26394deee9ecdb9ed8564f1d6b5ed7999b890067036e0556c99c95fc",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/02-gs-rest-service-flint-capacity.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/02-gs-rest-service-flint-capacity.stderr.txt",
+          "wall_seconds": 63.33717767801136
+        },
+        "process": {
+          "cpu_nanoseconds": 119820000000.0,
+          "peak_rss_bytes": 10350592,
+          "correctness_probes": 62,
+          "rss_samples": 3139
+        }
+      }
+    },
+    {
+      "app": "gs-rest-service",
+      "target": "go",
+      "trial": 2,
+      "server_command": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/gs-rest-service-go"
+      ],
+      "server_pid": 3617981,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/gs-rest-service-go",
+        "sha256": "d66bce2755a66aaef157c990a3deaa7fea06c13a29636091e70cf62b3351b799"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/02-gs-rest-service-go-server.log",
+      "warmup": {
+        "count": 199988,
+        "duration_seconds": 10.000786876,
+        "requests_per_second": 19997.226466242715,
+        "p50_ms": 0.059048,
+        "p99_ms": 0.26044,
+        "p999_ms": 1.1335760000000001,
+        "cpu_ns_per_request": 8150.081500815008,
+        "peak_rss_bytes": 13869056,
+        "load_cpu_fraction": 0.03744300010701414,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "10s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "20000",
+            "--latency-correction",
+            "http://127.0.0.1:52169/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "5863035ddd7631ed8073b1c5cfd74ee1a22a2c0e593dd8a3a47d6e9d61b2d0bf",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/02-gs-rest-service-go-warmup.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/02-gs-rest-service-go-warmup.stderr.txt",
+          "wall_seconds": 10.073945702053607
+        },
+        "process": {
+          "cpu_nanoseconds": 1630000000.0,
+          "peak_rss_bytes": 13869056,
+          "correctness_probes": 10,
+          "rss_samples": 499
+        }
+      },
+      "latency": {
+        "count": 1199968,
+        "duration_seconds": 60.000470387,
+        "requests_per_second": 19999.309876410418,
+        "p50_ms": 0.060148,
+        "p99_ms": 0.251641,
+        "p999_ms": 0.944823,
+        "cpu_ns_per_request": 8174.816066638501,
+        "peak_rss_bytes": 13901824,
+        "load_cpu_fraction": 0.038042692626766586,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "20000",
+            "--latency-correction",
+            "http://127.0.0.1:52169/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "0bb26a63bfcd4bc348e8abbf2de7a93b39405c6baef61843b21136cadbebe051",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/02-gs-rest-service-go-latency.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/02-gs-rest-service-go-latency.stderr.txt",
+          "wall_seconds": 60.25768266431987
+        },
+        "process": {
+          "cpu_nanoseconds": 9810000000.0,
+          "peak_rss_bytes": 13901824,
+          "correctness_probes": 59,
+          "rss_samples": 2995
+        }
+      },
+      "capacity": {
+        "count": 15024838,
+        "duration_seconds": 60.00219426,
+        "requests_per_second": 250404.8091123926,
+        "p50_ms": 0.217721,
+        "p99_ms": 0.768701,
+        "p999_ms": 1.384716,
+        "cpu_ns_per_request": 7769.10380562292,
+        "peak_rss_bytes": 13987840,
+        "load_cpu_fraction": 0.37433438692656806,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "http://127.0.0.1:52169/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "6f009f696494c9c41ba8544e29136418af1372e287a5b917294c22519ced7f76",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/02-gs-rest-service-go-capacity.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/02-gs-rest-service-go-capacity.stderr.txt",
+          "wall_seconds": 62.376617178320885
+        },
+        "process": {
+          "cpu_nanoseconds": 116730000000.0,
+          "peak_rss_bytes": 13987840,
+          "correctness_probes": 61,
+          "rss_samples": 3090
+        }
+      }
+    },
+    {
+      "app": "gs-rest-service",
+      "target": "go",
+      "trial": 3,
+      "server_command": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/gs-rest-service-go"
+      ],
+      "server_pid": 3619026,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/gs-rest-service-go",
+        "sha256": "d66bce2755a66aaef157c990a3deaa7fea06c13a29636091e70cf62b3351b799"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/03-gs-rest-service-go-server.log",
+      "warmup": {
+        "count": 199969,
+        "duration_seconds": 10.001210535,
+        "requests_per_second": 19994.47959826395,
+        "p50_ms": 0.059487,
+        "p99_ms": 0.25017,
+        "p999_ms": 0.559508,
+        "cpu_ns_per_request": 8250.866340965802,
+        "peak_rss_bytes": 13484032,
+        "load_cpu_fraction": 0.037608253483746815,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "10s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "20000",
+            "--latency-correction",
+            "http://127.0.0.1:43365/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "79ce08f4597043f3381d85ff690f70ce4e2d50e68ce3b5ce5ed3814f55d8d319",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/03-gs-rest-service-go-warmup.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/03-gs-rest-service-go-warmup.stderr.txt",
+          "wall_seconds": 10.07471671514213
+        },
+        "process": {
+          "cpu_nanoseconds": 1650000000.0,
+          "peak_rss_bytes": 13484032,
+          "correctness_probes": 10,
+          "rss_samples": 499
+        }
+      },
+      "latency": {
+        "count": 1199968,
+        "duration_seconds": 60.0005014,
+        "requests_per_second": 19999.299539186854,
+        "p50_ms": 0.060058,
+        "p99_ms": 0.24346099999999998,
+        "p999_ms": 0.77279,
+        "cpu_ns_per_request": 8166.482920800949,
+        "peak_rss_bytes": 13541376,
+        "load_cpu_fraction": 0.03772777976570421,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "20000",
+            "--latency-correction",
+            "http://127.0.0.1:43365/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "c15ddc8b1cdb88aa52c292ca6358574ef0ab935b5bb2e5249c16df2577dab08c",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/03-gs-rest-service-go-latency.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/03-gs-rest-service-go-latency.stderr.txt",
+          "wall_seconds": 60.276373646222055
+        },
+        "process": {
+          "cpu_nanoseconds": 9800000000.0,
+          "peak_rss_bytes": 13541376,
+          "correctness_probes": 59,
+          "rss_samples": 2996
+        }
+      },
+      "capacity": {
+        "count": 15009953,
+        "duration_seconds": 60.002693888,
+        "requests_per_second": 250154.65185642033,
+        "p50_ms": 0.218312,
+        "p99_ms": 0.76187,
+        "p999_ms": 1.501781,
+        "cpu_ns_per_request": 7778.140646637638,
+        "peak_rss_bytes": 14139392,
+        "load_cpu_fraction": 0.3754016835396929,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "http://127.0.0.1:43365/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "a6ed9fe34c25464eb631405039a96f3b6af6ea9fd3350c9d5eef6e7bc1fb2ea9",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/03-gs-rest-service-go-capacity.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/03-gs-rest-service-go-capacity.stderr.txt",
+          "wall_seconds": 62.294866473414004
+        },
+        "process": {
+          "cpu_nanoseconds": 116750000000.0,
+          "peak_rss_bytes": 14139392,
+          "correctness_probes": 61,
+          "rss_samples": 3089
+        }
+      }
+    },
+    {
+      "app": "gs-rest-service",
+      "target": "flint",
+      "trial": 3,
+      "server_command": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/gs-rest-service-flint"
+      ],
+      "server_pid": 3620103,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/gs-rest-service-flint",
+        "sha256": "a06373cc8a95e96bd8c4e43c556bc34ced172b296d008fc1db44e8813219145b"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/03-gs-rest-service-flint-server.log",
+      "warmup": {
+        "count": 199968,
+        "duration_seconds": 10.0005159,
+        "requests_per_second": 19995.7684183073,
+        "p50_ms": 0.085536,
+        "p99_ms": 0.21897999999999998,
+        "p999_ms": 2.038525,
+        "cpu_ns_per_request": 8600.946104071449,
+        "peak_rss_bytes": 10252288,
+        "load_cpu_fraction": 0.0379360026165659,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "10s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "20000",
+            "--latency-correction",
+            "http://127.0.0.1:60755/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "6f198a0387546abac8f5a38f08ad05dd372dcfc26d2fb3e1aac3d37af10ce43b",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/03-gs-rest-service-flint-warmup.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/03-gs-rest-service-flint-warmup.stderr.txt",
+          "wall_seconds": 10.076779935508966
+        },
+        "process": {
+          "cpu_nanoseconds": 1720000000.0,
+          "peak_rss_bytes": 10252288,
+          "correctness_probes": 10,
+          "rss_samples": 500
+        }
+      },
+      "latency": {
+        "count": 1199968,
+        "duration_seconds": 60.000387427,
+        "requests_per_second": 19999.337528610988,
+        "p50_ms": 0.08451700000000001,
+        "p99_ms": 0.230441,
+        "p999_ms": 1.0692849999999998,
+        "cpu_ns_per_request": 8474.809316790372,
+        "peak_rss_bytes": 10641408,
+        "load_cpu_fraction": 0.03750605146697307,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "20000",
+            "--latency-correction",
+            "http://127.0.0.1:60755/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "7c365d0c499933a9cef63b8639eda9e250dfa36c8e840be2e9f71b1d9b4c4265",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/03-gs-rest-service-flint-latency.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/03-gs-rest-service-flint-latency.stderr.txt",
+          "wall_seconds": 60.28482502326369
+        },
+        "process": {
+          "cpu_nanoseconds": 10170000000.0,
+          "peak_rss_bytes": 10641408,
+          "correctness_probes": 59,
+          "rss_samples": 2996
+        }
+      },
+      "capacity": {
+        "count": 22257983,
+        "duration_seconds": 60.000943665,
+        "requests_per_second": 370960.54895855946,
+        "p50_ms": 0.172893,
+        "p99_ms": 0.264079,
+        "p999_ms": 0.346536,
+        "cpu_ns_per_request": 5373.78732049468,
+        "peak_rss_bytes": 10698752,
+        "load_cpu_fraction": 0.5020815379085424,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "http://127.0.0.1:60755/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "f72d133c1bc8cfa88f9bc51f7aa1d8d5f583c2db29b1c1cd863411e11f1de818",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/03-gs-rest-service-flint-capacity.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/03-gs-rest-service-flint-capacity.stderr.txt",
+          "wall_seconds": 63.277501463890076
+        },
+        "process": {
+          "cpu_nanoseconds": 119610000000.0,
+          "peak_rss_bytes": 10698752,
+          "correctness_probes": 62,
+          "rss_samples": 3136
+        }
+      }
+    },
+    {
+      "app": "gs-rest-service",
+      "target": "flint",
+      "trial": 4,
+      "server_command": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/gs-rest-service-flint"
+      ],
+      "server_pid": 3621200,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/gs-rest-service-flint",
+        "sha256": "a06373cc8a95e96bd8c4e43c556bc34ced172b296d008fc1db44e8813219145b"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/04-gs-rest-service-flint-server.log",
+      "warmup": {
+        "count": 199968,
+        "duration_seconds": 10.001367185,
+        "requests_per_second": 19994.066441227256,
+        "p50_ms": 0.101015,
+        "p99_ms": 0.219111,
+        "p999_ms": 0.554217,
+        "cpu_ns_per_request": 9501.09262565195,
+        "peak_rss_bytes": 10244096,
+        "load_cpu_fraction": 0.037412392268063754,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "10s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "20000",
+            "--latency-correction",
+            "http://127.0.0.1:58079/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "3b41852b8593e290ccc358c4b32fe162c03e5590c435af8fd10f7920c26ddb95",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/04-gs-rest-service-flint-warmup.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/04-gs-rest-service-flint-warmup.stderr.txt",
+          "wall_seconds": 10.074268902651966
+        },
+        "process": {
+          "cpu_nanoseconds": 1900000000.0,
+          "peak_rss_bytes": 10244096,
+          "correctness_probes": 9,
+          "rss_samples": 499
+        }
+      },
+      "latency": {
+        "count": 1199989,
+        "duration_seconds": 60.001191874,
+        "requests_per_second": 19999.41938686696,
+        "p50_ms": 0.068117,
+        "p99_ms": 0.207692,
+        "p999_ms": 1.094605,
+        "cpu_ns_per_request": 7633.028012212845,
+        "peak_rss_bytes": 10657792,
+        "load_cpu_fraction": 0.03782426034602805,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "20000",
+            "--latency-correction",
+            "http://127.0.0.1:58079/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "e22e2033fe054cdab61c2ce006cd3ea234640d24f5d221174153affc711390db",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/04-gs-rest-service-flint-latency.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/04-gs-rest-service-flint-latency.stderr.txt",
+          "wall_seconds": 60.271925455890596
+        },
+        "process": {
+          "cpu_nanoseconds": 9160000000.0,
+          "peak_rss_bytes": 10657792,
+          "correctness_probes": 59,
+          "rss_samples": 2996
+        }
+      },
+      "capacity": {
+        "count": 22331157,
+        "duration_seconds": 60.001451936,
+        "requests_per_second": 372176.9437149508,
+        "p50_ms": 0.17219199999999998,
+        "p99_ms": 0.26327,
+        "p999_ms": 0.353566,
+        "cpu_ns_per_request": 5353.939462331212,
+        "peak_rss_bytes": 10661888,
+        "load_cpu_fraction": 0.49931917598208503,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "http://127.0.0.1:58079/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "3a32aa6e286eace14a0d5a3709c3b5d4f0e587bdb64076e33adb0f0c97ff0e92",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/04-gs-rest-service-flint-capacity.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/04-gs-rest-service-flint-capacity.stderr.txt",
+          "wall_seconds": 63.89264429360628
+        },
+        "process": {
+          "cpu_nanoseconds": 119560000000.0,
+          "peak_rss_bytes": 10661888,
+          "correctness_probes": 63,
+          "rss_samples": 3166
+        }
+      }
+    },
+    {
+      "app": "gs-rest-service",
+      "target": "go",
+      "trial": 4,
+      "server_command": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/gs-rest-service-go"
+      ],
+      "server_pid": 3622631,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/gs-rest-service-go",
+        "sha256": "d66bce2755a66aaef157c990a3deaa7fea06c13a29636091e70cf62b3351b799"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/04-gs-rest-service-go-server.log",
+      "warmup": {
+        "count": 199969,
+        "duration_seconds": 10.001257453,
+        "requests_per_second": 19994.38579995927,
+        "p50_ms": 0.059298000000000003,
+        "p99_ms": 0.25289,
+        "p999_ms": 0.527208,
+        "cpu_ns_per_request": 8250.866340965802,
+        "peak_rss_bytes": 13852672,
+        "load_cpu_fraction": 0.03750991854370756,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "10s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "20000",
+            "--latency-correction",
+            "http://127.0.0.1:54101/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "37d1dcaab6159df07662d3f2a849cf603fda9f99dfd73c7bdc1aba39c2c8f131",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/04-gs-rest-service-go-warmup.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/04-gs-rest-service-go-warmup.stderr.txt",
+          "wall_seconds": 10.074348723515868
+        },
+        "process": {
+          "cpu_nanoseconds": 1650000000.0,
+          "peak_rss_bytes": 13852672,
+          "correctness_probes": 10,
+          "rss_samples": 499
+        }
+      },
+      "latency": {
+        "count": 1199967,
+        "duration_seconds": 60.00138929,
+        "requests_per_second": 19998.986926790876,
+        "p50_ms": 0.060247,
+        "p99_ms": 0.25549,
+        "p999_ms": 1.350055,
+        "cpu_ns_per_request": 8191.489184401004,
+        "peak_rss_bytes": 13910016,
+        "load_cpu_fraction": 0.038103843954466594,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "20000",
+            "--latency-correction",
+            "http://127.0.0.1:54101/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "d908c83fb9227b3cf10031384cc94866b9a4f20b8b47f3642446f8fb5f564a26",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/04-gs-rest-service-go-latency.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/04-gs-rest-service-go-latency.stderr.txt",
+          "wall_seconds": 60.264169219881296
+        },
+        "process": {
+          "cpu_nanoseconds": 9830000000.0,
+          "peak_rss_bytes": 13910016,
+          "correctness_probes": 59,
+          "rss_samples": 2994
+        }
+      },
+      "capacity": {
+        "count": 15086843,
+        "duration_seconds": 60.002096042,
+        "requests_per_second": 251438.5995689147,
+        "p50_ms": 0.216471,
+        "p99_ms": 0.769899,
+        "p999_ms": 1.508639,
+        "cpu_ns_per_request": 7727.893825804564,
+        "peak_rss_bytes": 14254080,
+        "load_cpu_fraction": 0.37632728959382106,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "http://127.0.0.1:54101/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "7a892ef7a67333d87c7f0d7146d599f31d4a34d881d376825711981e81214c61",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/04-gs-rest-service-go-capacity.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/04-gs-rest-service-go-capacity.stderr.txt",
+          "wall_seconds": 62.62476081773639
+        },
+        "process": {
+          "cpu_nanoseconds": 116590000000.0,
+          "peak_rss_bytes": 14254080,
+          "correctness_probes": 62,
+          "rss_samples": 3105
+        }
+      }
+    },
+    {
+      "app": "gs-rest-service",
+      "target": "go",
+      "trial": 5,
+      "server_command": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/gs-rest-service-go"
+      ],
+      "server_pid": 3623726,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/gs-rest-service-go",
+        "sha256": "d66bce2755a66aaef157c990a3deaa7fea06c13a29636091e70cf62b3351b799"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/05-gs-rest-service-go-server.log",
+      "warmup": {
+        "count": 199989,
+        "duration_seconds": 10.000843094,
+        "requests_per_second": 19997.214046882036,
+        "p50_ms": 0.060348,
+        "p99_ms": 0.25005999999999995,
+        "p999_ms": 0.7764580000000001,
+        "cpu_ns_per_request": 8200.082000820008,
+        "peak_rss_bytes": 13545472,
+        "load_cpu_fraction": 0.03764027979501858,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "10s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "20000",
+            "--latency-correction",
+            "http://127.0.0.1:50941/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "9f85d2b8705b7dd275ed45b384d70ed384cbf735a02280f1fd92c700b5919529",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/05-gs-rest-service-go-warmup.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/05-gs-rest-service-go-warmup.stderr.txt",
+          "wall_seconds": 10.072673531249166
+        },
+        "process": {
+          "cpu_nanoseconds": 1640000000.0,
+          "peak_rss_bytes": 13545472,
+          "correctness_probes": 9,
+          "rss_samples": 498
+        }
+      },
+      "latency": {
+        "count": 1199989,
+        "duration_seconds": 60.000721982,
+        "requests_per_second": 19999.57601110187,
+        "p50_ms": 0.060827,
+        "p99_ms": 0.25711,
+        "p999_ms": 0.855616,
+        "cpu_ns_per_request": 8266.336013226137,
+        "peak_rss_bytes": 14118912,
+        "load_cpu_fraction": 0.03808968992701596,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "20000",
+            "--latency-correction",
+            "http://127.0.0.1:50941/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "45c4814950fb916b04e82a995425f48a19979948575ceff242febdf66fab6706",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/05-gs-rest-service-go-latency.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/05-gs-rest-service-go-latency.stderr.txt",
+          "wall_seconds": 60.275812284089625
+        },
+        "process": {
+          "cpu_nanoseconds": 9920000000.0,
+          "peak_rss_bytes": 14118912,
+          "correctness_probes": 59,
+          "rss_samples": 2996
+        }
+      },
+      "capacity": {
+        "count": 14942497,
+        "duration_seconds": 60.000868232,
+        "requests_per_second": 249038.01295379896,
+        "p50_ms": 0.218032,
+        "p99_ms": 0.780958,
+        "p999_ms": 2.000699,
+        "cpu_ns_per_request": 7780.461685341961,
+        "peak_rss_bytes": 13750272,
+        "load_cpu_fraction": 0.3742321021726598,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "http://127.0.0.1:50941/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "778d3bfaa7e20e407b2825333ef94908becf91172e0696aae8257b6b73b3aaf1",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/05-gs-rest-service-go-capacity.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/05-gs-rest-service-go-capacity.stderr.txt",
+          "wall_seconds": 62.29283007699996
+        },
+        "process": {
+          "cpu_nanoseconds": 116260000000.0,
+          "peak_rss_bytes": 13750272,
+          "correctness_probes": 61,
+          "rss_samples": 3085
+        }
+      }
+    },
+    {
+      "app": "gs-rest-service",
+      "target": "flint",
+      "trial": 5,
+      "server_command": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/gs-rest-service-flint"
+      ],
+      "server_pid": 3625822,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/gs-rest-service-flint",
+        "sha256": "a06373cc8a95e96bd8c4e43c556bc34ced172b296d008fc1db44e8813219145b"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/05-gs-rest-service-flint-server.log",
+      "warmup": {
+        "count": 199990,
+        "duration_seconds": 10.001058993,
+        "requests_per_second": 19996.882344157573,
+        "p50_ms": 0.082817,
+        "p99_ms": 0.22693100000000002,
+        "p999_ms": 6.152872,
+        "cpu_ns_per_request": 8400.042000210002,
+        "peak_rss_bytes": 10260480,
+        "load_cpu_fraction": 0.03684096523230453,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "10s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "20000",
+            "--latency-correction",
+            "http://127.0.0.1:58987/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "5233a820718e1b30f476364592bdab301b2ff75fc8d758b427eba788dfa37029",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/05-gs-rest-service-flint-warmup.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/05-gs-rest-service-flint-warmup.stderr.txt",
+          "wall_seconds": 10.07514997664839
+        },
+        "process": {
+          "cpu_nanoseconds": 1680000000.0,
+          "peak_rss_bytes": 10260480,
+          "correctness_probes": 9,
+          "rss_samples": 498
+        }
+      },
+      "latency": {
+        "count": 1199985,
+        "duration_seconds": 60.000939769,
+        "requests_per_second": 19999.43675248871,
+        "p50_ms": 0.079447,
+        "p99_ms": 0.19497199999999998,
+        "p999_ms": 1.023409,
+        "cpu_ns_per_request": 8499.688344760692,
+        "peak_rss_bytes": 10682368,
+        "load_cpu_fraction": 0.037623013735487196,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "20000",
+            "--latency-correction",
+            "http://127.0.0.1:58987/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "7adeffdef6555389192c1aa9efad9db070040da2f3445c31e1ed3c46d3ede361",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/05-gs-rest-service-flint-latency.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/05-gs-rest-service-flint-latency.stderr.txt",
+          "wall_seconds": 60.286199185065925
+        },
+        "process": {
+          "cpu_nanoseconds": 10200000000.0,
+          "peak_rss_bytes": 10682368,
+          "correctness_probes": 59,
+          "rss_samples": 2990
+        }
+      },
+      "capacity": {
+        "count": 22178175,
+        "duration_seconds": 60.00101841,
+        "requests_per_second": 369629.9760856009,
+        "p50_ms": 0.173283,
+        "p99_ms": 0.278298,
+        "p999_ms": 0.336687,
+        "cpu_ns_per_request": 5394.477478079074,
+        "peak_rss_bytes": 10698752,
+        "load_cpu_fraction": 0.5028000323710777,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "http://127.0.0.1:58987/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "bb9fe80cf16355f0c4793568d916bc2b08f92002dfa495deb1b52f94b78797b0",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/05-gs-rest-service-flint-capacity.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/05-gs-rest-service-flint-capacity.stderr.txt",
+          "wall_seconds": 63.38454196136445
+        },
+        "process": {
+          "cpu_nanoseconds": 119640000000.0,
+          "peak_rss_bytes": 10698752,
+          "correctness_probes": 62,
+          "rss_samples": 3141
+        }
+      }
+    },
+    {
+      "app": "gs-rest-service",
+      "target": "flint",
+      "trial": 6,
+      "server_command": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/gs-rest-service-flint"
+      ],
+      "server_pid": 3627663,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/gs-rest-service-flint",
+        "sha256": "a06373cc8a95e96bd8c4e43c556bc34ced172b296d008fc1db44e8813219145b"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/06-gs-rest-service-flint-server.log",
+      "warmup": {
+        "count": 199989,
+        "duration_seconds": 10.001527175,
+        "requests_per_second": 19995.846284345072,
+        "p50_ms": 0.081177,
+        "p99_ms": 0.22821000000000002,
+        "p999_ms": 0.958931,
+        "cpu_ns_per_request": 8350.083500835008,
+        "peak_rss_bytes": 10231808,
+        "load_cpu_fraction": 0.036965315790461285,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "10s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "20000",
+            "--latency-correction",
+            "http://127.0.0.1:55271/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "db06c148445bbe66c0bf17b0d02278b3e2bcf3a384dec819af1023d26f7d63b0",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/06-gs-rest-service-flint-warmup.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/06-gs-rest-service-flint-warmup.stderr.txt",
+          "wall_seconds": 10.077324974350631
+        },
+        "process": {
+          "cpu_nanoseconds": 1670000000.0,
+          "peak_rss_bytes": 10231808,
+          "correctness_probes": 9,
+          "rss_samples": 498
+        }
+      },
+      "latency": {
+        "count": 1199982,
+        "duration_seconds": 60.000624418,
+        "requests_per_second": 19999.491865954802,
+        "p50_ms": 0.08026699999999999,
+        "p99_ms": 0.215081,
+        "p999_ms": 1.0250890000000001,
+        "cpu_ns_per_request": 8299.716426355433,
+        "peak_rss_bytes": 10600448,
+        "load_cpu_fraction": 0.03688081594396434,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "20000",
+            "--latency-correction",
+            "http://127.0.0.1:55271/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "77a7dac8a3b2356771f875ea55f28a086c38e481da939ba89b8af877f902d539",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/06-gs-rest-service-flint-latency.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/06-gs-rest-service-flint-latency.stderr.txt",
+          "wall_seconds": 60.2396176205948
+        },
+        "process": {
+          "cpu_nanoseconds": 9960000000.0,
+          "peak_rss_bytes": 10600448,
+          "correctness_probes": 59,
+          "rss_samples": 2987
+        }
+      },
+      "capacity": {
+        "count": 22047435,
+        "duration_seconds": 60.001136875,
+        "requests_per_second": 367450.28758257173,
+        "p50_ms": 0.17405400000000001,
+        "p99_ms": 0.26859900000000003,
+        "p999_ms": 0.370616,
+        "cpu_ns_per_request": 5424.651813099155,
+        "peak_rss_bytes": 10674176,
+        "load_cpu_fraction": 0.4994410978158157,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "http://127.0.0.1:55271/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "75dd0f8147c92ffccead55ce50ae15bb6fbc397a606f3ea4f5aad5a26f901663",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/06-gs-rest-service-flint-capacity.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/06-gs-rest-service-flint-capacity.stderr.txt",
+          "wall_seconds": 63.73311915900558
+        },
+        "process": {
+          "cpu_nanoseconds": 119600000000.0,
+          "peak_rss_bytes": 10674176,
+          "correctness_probes": 63,
+          "rss_samples": 3158
+        }
+      }
+    },
+    {
+      "app": "gs-rest-service",
+      "target": "go",
+      "trial": 6,
+      "server_command": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/gs-rest-service-go"
+      ],
+      "server_pid": 3630055,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/gs-rest-service-go",
+        "sha256": "d66bce2755a66aaef157c990a3deaa7fea06c13a29636091e70cf62b3351b799"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/06-gs-rest-service-go-server.log",
+      "warmup": {
+        "count": 199966,
+        "duration_seconds": 10.001342435,
+        "requests_per_second": 19993.915946744604,
+        "p50_ms": 0.061988,
+        "p99_ms": 0.284008,
+        "p999_ms": 1.145415,
+        "cpu_ns_per_request": 8551.026123134776,
+        "peak_rss_bytes": 13598720,
+        "load_cpu_fraction": 0.03850413286980238,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "10s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "20000",
+            "--latency-correction",
+            "http://127.0.0.1:45133/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "55f64d5cada5151d7b2481554356479a2b1851669606a7831306cafb81306437",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/06-gs-rest-service-go-warmup.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/06-gs-rest-service-go-warmup.stderr.txt",
+          "wall_seconds": 10.071659094654024
+        },
+        "process": {
+          "cpu_nanoseconds": 1710000000.0,
+          "peak_rss_bytes": 13598720,
+          "correctness_probes": 10,
+          "rss_samples": 499
+        }
+      },
+      "latency": {
+        "count": 1199989,
+        "duration_seconds": 60.001043504,
+        "requests_per_second": 19999.468841237773,
+        "p50_ms": 0.06182800000000001,
+        "p99_ms": 0.267989,
+        "p999_ms": 1.168833,
+        "cpu_ns_per_request": 8391.33101342613,
+        "peak_rss_bytes": 13688832,
+        "load_cpu_fraction": 0.03843000206590041,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "20000",
+            "--latency-correction",
+            "http://127.0.0.1:45133/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "03b86c713058adf225a644a88d53c330688ed59b46730929c1fc9d308bccfc5c",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/06-gs-rest-service-go-latency.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/06-gs-rest-service-go-latency.stderr.txt",
+          "wall_seconds": 60.26397021859884
+        },
+        "process": {
+          "cpu_nanoseconds": 10070000000.0,
+          "peak_rss_bytes": 13688832,
+          "correctness_probes": 59,
+          "rss_samples": 2994
+        }
+      },
+      "capacity": {
+        "count": 14914576,
+        "duration_seconds": 60.001105498,
+        "requests_per_second": 248571.68674162417,
+        "p50_ms": 0.219101,
+        "p99_ms": 0.7732089999999999,
+        "p999_ms": 1.5203,
+        "cpu_ns_per_request": 7821.846418387521,
+        "peak_rss_bytes": 14163968,
+        "load_cpu_fraction": 0.37555144934122275,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "http://127.0.0.1:45133/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "b084017c582bb65431a0b260bb471c29a419dec80fbe2b2710269bea14aea382",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/06-gs-rest-service-go-capacity.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/06-gs-rest-service-go-capacity.stderr.txt",
+          "wall_seconds": 62.28179798275232
+        },
+        "process": {
+          "cpu_nanoseconds": 116660000000.0,
+          "peak_rss_bytes": 14163968,
+          "correctness_probes": 61,
+          "rss_samples": 3090
+        }
+      }
+    },
+    {
+      "app": "gs-rest-service",
+      "target": "go",
+      "trial": 7,
+      "server_command": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/gs-rest-service-go"
+      ],
+      "server_pid": 3631677,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/gs-rest-service-go",
+        "sha256": "d66bce2755a66aaef157c990a3deaa7fea06c13a29636091e70cf62b3351b799"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/07-gs-rest-service-go-server.log",
+      "warmup": {
+        "count": 199967,
+        "duration_seconds": 10.001202182,
+        "requests_per_second": 19994.29632168594,
+        "p50_ms": 0.061697,
+        "p99_ms": 0.27216,
+        "p999_ms": 2.066698,
+        "cpu_ns_per_request": 8401.008120974517,
+        "peak_rss_bytes": 13549568,
+        "load_cpu_fraction": 0.0378819014230742,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "10s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "20000",
+            "--latency-correction",
+            "http://127.0.0.1:42701/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "931fffff9ec26a91c586d69656be3eb9e9ba07f9ca3f2b4eaeb1fb79601ee8d2",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/07-gs-rest-service-go-warmup.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/07-gs-rest-service-go-warmup.stderr.txt",
+          "wall_seconds": 10.073524180799723
+        },
+        "process": {
+          "cpu_nanoseconds": 1680000000.0,
+          "peak_rss_bytes": 13549568,
+          "correctness_probes": 9,
+          "rss_samples": 498
+        }
+      },
+      "latency": {
+        "count": 1199968,
+        "duration_seconds": 60.001162728,
+        "requests_per_second": 19999.07910851244,
+        "p50_ms": 0.061697,
+        "p99_ms": 0.2747,
+        "p999_ms": 1.2252809999999998,
+        "cpu_ns_per_request": 8399.811004252404,
+        "peak_rss_bytes": 14249984,
+        "load_cpu_fraction": 0.038760365740865915,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "20000",
+            "--latency-correction",
+            "http://127.0.0.1:42701/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "fa489f41f7d9174574f693bd95a4aa8d2b87cc63153d8188f675e04cefac057b",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/07-gs-rest-service-go-latency.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/07-gs-rest-service-go-latency.stderr.txt",
+          "wall_seconds": 60.268710197880864
+        },
+        "process": {
+          "cpu_nanoseconds": 10080000000.0,
+          "peak_rss_bytes": 14249984,
+          "correctness_probes": 59,
+          "rss_samples": 2994
+        }
+      },
+      "capacity": {
+        "count": 14951260,
+        "duration_seconds": 60.00204663,
+        "requests_per_second": 249179.16704068932,
+        "p50_ms": 0.218671,
+        "p99_ms": 0.776419,
+        "p999_ms": 1.451763,
+        "cpu_ns_per_request": 7804.661541277857,
+        "peak_rss_bytes": 14802944,
+        "load_cpu_fraction": 0.37602829634336643,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "http://127.0.0.1:42701/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "fa51a435c7a27199553e244c0df89192e59b6f218f34426197e48c16f5ffa947",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/07-gs-rest-service-go-capacity.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/07-gs-rest-service-go-capacity.stderr.txt",
+          "wall_seconds": 62.32952341064811
+        },
+        "process": {
+          "cpu_nanoseconds": 116690000000.0,
+          "peak_rss_bytes": 14802944,
+          "correctness_probes": 61,
+          "rss_samples": 3088
+        }
+      }
+    },
+    {
+      "app": "gs-rest-service",
+      "target": "flint",
+      "trial": 7,
+      "server_command": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/gs-rest-service-flint"
+      ],
+      "server_pid": 3632943,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/gs-rest-service-flint",
+        "sha256": "a06373cc8a95e96bd8c4e43c556bc34ced172b296d008fc1db44e8813219145b"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/07-gs-rest-service-flint-server.log",
+      "warmup": {
+        "count": 199988,
+        "duration_seconds": 10.001241903,
+        "requests_per_second": 19996.316651436162,
+        "p50_ms": 0.070388,
+        "p99_ms": 0.212082,
+        "p999_ms": 2.217063,
+        "cpu_ns_per_request": 7700.115501732526,
+        "peak_rss_bytes": 10186752,
+        "load_cpu_fraction": 0.03722548030010755,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "10s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "20000",
+            "--latency-correction",
+            "http://127.0.0.1:54297/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "f74c13312c8eaf210138946b0a16ed6f50382c32aa3cb7a24ca5cda8ffba2742",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/07-gs-rest-service-flint-warmup.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/07-gs-rest-service-flint-warmup.stderr.txt",
+          "wall_seconds": 10.075148714706302
+        },
+        "process": {
+          "cpu_nanoseconds": 1540000000.0,
+          "peak_rss_bytes": 10186752,
+          "correctness_probes": 9,
+          "rss_samples": 498
+        }
+      },
+      "latency": {
+        "count": 1199968,
+        "duration_seconds": 60.001228337,
+        "requests_per_second": 19999.057240300444,
+        "p50_ms": 0.076457,
+        "p99_ms": 0.23429,
+        "p999_ms": 1.0646570000000002,
+        "cpu_ns_per_request": 8116.484045775636,
+        "peak_rss_bytes": 10584064,
+        "load_cpu_fraction": 0.03772019325140603,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "20000",
+            "--latency-correction",
+            "http://127.0.0.1:54297/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "6a6193ae997486f727e7f29bf121c4e67bee4029455bf625ffb5c4dc508d759a",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/07-gs-rest-service-flint-latency.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/07-gs-rest-service-flint-latency.stderr.txt",
+          "wall_seconds": 60.26132302265614
+        },
+        "process": {
+          "cpu_nanoseconds": 9740000000.0,
+          "peak_rss_bytes": 10584064,
+          "correctness_probes": 59,
+          "rss_samples": 2987
+        }
+      },
+      "capacity": {
+        "count": 22347623,
+        "duration_seconds": 60.001292274,
+        "requests_per_second": 372452.36149161676,
+        "p50_ms": 0.171963,
+        "p99_ms": 0.277319,
+        "p999_ms": 0.348006,
+        "cpu_ns_per_request": 5362.076653577316,
+        "peak_rss_bytes": 10719232,
+        "load_cpu_fraction": 0.5036379299476623,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "http://127.0.0.1:54297/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "9bf8d203b310f62ecf10152d7530c0ae3424319f1b546272ba5789e8665b4aa6",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/07-gs-rest-service-flint-capacity.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/07-gs-rest-service-flint-capacity.stderr.txt",
+          "wall_seconds": 63.32572241593152
+        },
+        "process": {
+          "cpu_nanoseconds": 119830000000.0,
+          "peak_rss_bytes": 10719232,
+          "correctness_probes": 62,
+          "rss_samples": 3141
+        }
+      }
+    },
+    {
+      "app": "gs-rest-service",
+      "target": "flint",
+      "trial": 8,
+      "server_command": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/gs-rest-service-flint"
+      ],
+      "server_pid": 3634186,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/gs-rest-service-flint",
+        "sha256": "a06373cc8a95e96bd8c4e43c556bc34ced172b296d008fc1db44e8813219145b"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/08-gs-rest-service-flint-server.log",
+      "warmup": {
+        "count": 199970,
+        "duration_seconds": 10.000740042,
+        "requests_per_second": 19995.520247520497,
+        "p50_ms": 0.070767,
+        "p99_ms": 0.2359,
+        "p999_ms": 0.960832,
+        "cpu_ns_per_request": 7750.813835452723,
+        "peak_rss_bytes": 10244096,
+        "load_cpu_fraction": 0.03682237090440824,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "10s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "20000",
+            "--latency-correction",
+            "http://127.0.0.1:37679/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "d43f44b254b2df96c7dd37903b7f812ff4b47cf7773d185a8505bf483546df75",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/08-gs-rest-service-flint-warmup.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/08-gs-rest-service-flint-warmup.stderr.txt",
+          "wall_seconds": 10.071031302213669
+        },
+        "process": {
+          "cpu_nanoseconds": 1550000000.0,
+          "peak_rss_bytes": 10244096,
+          "correctness_probes": 9,
+          "rss_samples": 499
+        }
+      },
+      "latency": {
+        "count": 1199964,
+        "duration_seconds": 60.00036083,
+        "requests_per_second": 19999.279727664933,
+        "p50_ms": 0.072357,
+        "p99_ms": 0.210052,
+        "p999_ms": 1.076057,
+        "cpu_ns_per_request": 7999.846669605499,
+        "peak_rss_bytes": 10637312,
+        "load_cpu_fraction": 0.03755279284990962,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "20000",
+            "--latency-correction",
+            "http://127.0.0.1:37679/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "0316ea9263c21a83bddf94978a1ca5a6e07eee741e31e88b043c3ba290e420e8",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/08-gs-rest-service-flint-latency.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/08-gs-rest-service-flint-latency.stderr.txt",
+          "wall_seconds": 60.23616563063115
+        },
+        "process": {
+          "cpu_nanoseconds": 9600000000.0,
+          "peak_rss_bytes": 10637312,
+          "correctness_probes": 59,
+          "rss_samples": 2990
+        }
+      },
+      "capacity": {
+        "count": 22297949,
+        "duration_seconds": 60.001753106,
+        "requests_per_second": 371621.6251316542,
+        "p50_ms": 0.172103,
+        "p99_ms": 0.27890899999999996,
+        "p999_ms": 0.361646,
+        "cpu_ns_per_request": 5369.537220158336,
+        "peak_rss_bytes": 10719232,
+        "load_cpu_fraction": 0.5013608268035114,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "http://127.0.0.1:37679/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "7571a8da475272933a4f0b045a30bcc000f8185504de2a015a6eb1cd1b8ef35d",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/08-gs-rest-service-flint-capacity.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/08-gs-rest-service-flint-capacity.stderr.txt",
+          "wall_seconds": 63.32406333461404
+        },
+        "process": {
+          "cpu_nanoseconds": 119730000000.0,
+          "peak_rss_bytes": 10719232,
+          "correctness_probes": 62,
+          "rss_samples": 3138
+        }
+      }
+    },
+    {
+      "app": "gs-rest-service",
+      "target": "go",
+      "trial": 8,
+      "server_command": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/gs-rest-service-go"
+      ],
+      "server_pid": 3635410,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/gs-rest-service-go",
+        "sha256": "d66bce2755a66aaef157c990a3deaa7fea06c13a29636091e70cf62b3351b799"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/08-gs-rest-service-go-server.log",
+      "warmup": {
+        "count": 199970,
+        "duration_seconds": 10.001400872,
+        "requests_per_second": 19994.199068636233,
+        "p50_ms": 0.061017,
+        "p99_ms": 0.274129,
+        "p999_ms": 1.210782,
+        "cpu_ns_per_request": 8150.815081508151,
+        "peak_rss_bytes": 13635584,
+        "load_cpu_fraction": 0.03751810073516453,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "10s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "20000",
+            "--latency-correction",
+            "http://127.0.0.1:60931/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "eda300b178d140f4e590724881785f646a88babcda8b7ba9c8ef38626b98b0eb",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/08-gs-rest-service-go-warmup.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/08-gs-rest-service-go-warmup.stderr.txt",
+          "wall_seconds": 10.07451050542295
+        },
+        "process": {
+          "cpu_nanoseconds": 1630000000.0,
+          "peak_rss_bytes": 13635584,
+          "correctness_probes": 10,
+          "rss_samples": 499
+        }
+      },
+      "latency": {
+        "count": 1199969,
+        "duration_seconds": 60.000504595,
+        "requests_per_second": 19999.31514075961,
+        "p50_ms": 0.059628,
+        "p99_ms": 0.25025,
+        "p999_ms": 0.910844,
+        "cpu_ns_per_request": 8208.141810024434,
+        "peak_rss_bytes": 13746176,
+        "load_cpu_fraction": 0.03818569048700027,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "20000",
+            "--latency-correction",
+            "http://127.0.0.1:60931/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "770447e2ba92e1aace27aec2b6f10ddafd658778d6eac9aaccf64a905359733b",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/08-gs-rest-service-go-latency.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/08-gs-rest-service-go-latency.stderr.txt",
+          "wall_seconds": 60.274934684857726
+        },
+        "process": {
+          "cpu_nanoseconds": 9850000000.0,
+          "peak_rss_bytes": 13746176,
+          "correctness_probes": 59,
+          "rss_samples": 2995
+        }
+      },
+      "capacity": {
+        "count": 14992946,
+        "duration_seconds": 60.002171136,
+        "requests_per_second": 249873.39151473733,
+        "p50_ms": 0.217441,
+        "p99_ms": 0.779699,
+        "p999_ms": 1.737451,
+        "cpu_ns_per_request": 7756.282645636063,
+        "peak_rss_bytes": 13836288,
+        "load_cpu_fraction": 0.3767654671555063,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "http://127.0.0.1:60931/greeting?name=Flint"
+          ],
+          "exit_code": 0,
+          "sha256": "2ddd96cf1004076ba4be9b783688d61f320d650c2788e76dad793e8c300e04d3",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/08-gs-rest-service-go-capacity.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-http-gs-rest/20261124T210603Z/http-raw/08-gs-rest-service-go-capacity.stderr.txt",
+          "wall_seconds": 62.28918198682368
+        },
+        "process": {
+          "cpu_nanoseconds": 116290000000.0,
+          "peak_rss_bytes": 13836288,
+          "correctness_probes": 61,
+          "rss_samples": 3085
+        }
+      }
+    }
+  ],
+  "acceptance": [
+    {
+      "schema": "flint.spring-acceptance/1",
+      "app": "gs-rest-service",
+      "implementation": "flint",
+      "start": null,
+      "extra_args": [],
+      "binary": null,
+      "wire": "exact",
+      "golden_sha256": "1ea2a9d7e02ba843d4b11162cbb9f69307a2ad5fe3d89d0e2e3ed625f4a50d8e",
+      "cases": [
+        {
+          "name": "default name",
+          "problems": []
+        },
+        {
+          "name": "name parameter",
+          "problems": []
+        },
+        {
+          "name": "percent-encoded UTF-8 name",
+          "problems": []
+        },
+        {
+          "name": "name with spaces and plus",
+          "problems": []
+        },
+        {
+          "name": "empty name takes the default",
+          "problems": []
+        },
+        {
+          "name": "repeated name parameter joins with a comma",
+          "problems": []
+        },
+        {
+          "name": "JSON escaping",
+          "problems": []
+        },
+        {
+          "name": "unknown parameter is ignored",
+          "problems": []
+        },
+        {
+          "name": "Accept application/json",
+          "problems": []
+        },
+        {
+          "name": "Accept application/xml is not acceptable",
+          "problems": []
+        },
+        {
+          "name": "HEAD reaches the handler",
+          "problems": []
+        },
+        {
+          "name": "OPTIONS lists the allowed methods",
+          "problems": []
+        },
+        {
+          "name": "POST is not allowed",
+          "problems": []
+        },
+        {
+          "name": "DELETE is not allowed",
+          "problems": []
+        },
+        {
+          "name": "unknown path is a JSON 404",
+          "problems": []
+        },
+        {
+          "name": "trailing slash does not match",
+          "problems": []
+        },
+        {
+          "name": "unknown path for a browser is the Whitelabel page",
+          "problems": []
+        },
+        {
+          "name": "counter after the errors",
+          "problems": []
+        }
+      ],
+      "passed": 18,
+      "total": 18,
+      "success": true,
+      "seconds": 0.05983628425747156
+    },
+    {
+      "schema": "flint.spring-acceptance/1",
+      "app": "gs-rest-service",
+      "implementation": "go",
+      "start": null,
+      "extra_args": [],
+      "binary": null,
+      "wire": "semantic",
+      "golden_sha256": "1ea2a9d7e02ba843d4b11162cbb9f69307a2ad5fe3d89d0e2e3ed625f4a50d8e",
+      "cases": [
+        {
+          "name": "default name",
+          "problems": []
+        },
+        {
+          "name": "name parameter",
+          "problems": []
+        },
+        {
+          "name": "percent-encoded UTF-8 name",
+          "problems": []
+        },
+        {
+          "name": "name with spaces and plus",
+          "problems": []
+        },
+        {
+          "name": "empty name takes the default",
+          "problems": []
+        },
+        {
+          "name": "repeated name parameter joins with a comma",
+          "problems": []
+        },
+        {
+          "name": "JSON escaping",
+          "problems": []
+        },
+        {
+          "name": "unknown parameter is ignored",
+          "problems": []
+        },
+        {
+          "name": "Accept application/json",
+          "problems": []
+        },
+        {
+          "name": "Accept application/xml is not acceptable",
+          "problems": []
+        },
+        {
+          "name": "HEAD reaches the handler",
+          "problems": []
+        },
+        {
+          "name": "OPTIONS lists the allowed methods",
+          "problems": []
+        },
+        {
+          "name": "POST is not allowed",
+          "problems": []
+        },
+        {
+          "name": "DELETE is not allowed",
+          "problems": []
+        },
+        {
+          "name": "unknown path is a JSON 404",
+          "problems": []
+        },
+        {
+          "name": "trailing slash does not match",
+          "problems": []
+        },
+        {
+          "name": "unknown path for a browser is the Whitelabel page",
+          "problems": []
+        },
+        {
+          "name": "counter after the errors",
+          "problems": []
+        }
+      ],
+      "passed": 18,
+      "total": 18,
+      "success": true,
+      "seconds": 0.05448329169303179
+    }
+  ],
+  "missing_flint": [],
+  "context_errors": []
+}
