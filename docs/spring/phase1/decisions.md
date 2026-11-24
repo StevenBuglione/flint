@@ -766,3 +766,4 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - secondary 0.280 (strict scratch, 900 against 3,208 ms); edit 0.355; static edit 0.596; Oz 0.618.
 
     Evidence: `benchmarks/spring/evidence/phase1-builds-gs-rest/20261124T191046Z/`.
+- 2026-11-24, proof-harness: **phase1-builds-gs-relational certified at B3** (`d6d15b0073dd`, 19:23–19:27Z, no foreign activity). 1/1 everywhere, served binaries included. Served: 1,023 client-served, 18 c-source, 0 refused. **Every gated build metric passes**, median (99% interval), 9 trials: primary 0.020; **deps-primed context 0.688 (0.650–0.721)**, against 1.53 at B2: Flint now builds faster even than Go with its third-party packages cached; secondary 0.121 (strict scratch); edit 0.541; **static edit 0.803 (0.772–0.828)**, 125 against 155 ms (1.053 at B2); Oz 0.662. Evidence: `benchmarks/spring/evidence/phase1-builds-gs-relational/20261124T192301Z/`.
