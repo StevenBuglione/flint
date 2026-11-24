@@ -503,18 +503,26 @@ method descriptor.
 final class DescriptorTransactionAttributeSource : TransactionAttributeSource
 {
     private enum string annotationType = "flint.transaction.annotation.Transactional";
-    private TransactionAttribute[const(MethodDescriptor)* ] cache;
-    private bool[const(MethodDescriptor)* ] nonTransactional;
+    // Spring's `MethodClassKey`: the method and the target class's identity, since the descriptor names both.
+    private static struct MethodClassKey
+    {
+        const(MethodDescriptor)* method;
+        const(void)* targetClass;
+    }
 
-    override TransactionAttribute getTransactionAttribute(const(MethodDescriptor)* method, const Descriptor)
+    private TransactionAttribute[MethodClassKey] cache;
+    private bool[MethodClassKey] nonTransactional;
+
+    override TransactionAttribute getTransactionAttribute(const(MethodDescriptor)* method, const Descriptor targetClass)
     {
         if (method is null)
             return null;
+        const key = MethodClassKey(method, cast(const(void)*) targetClass);
         synchronized (this)
         {
-            if (auto cached = method in cache)
+            if (auto cached = key in cache)
                 return *cached;
-            if (method in nonTransactional)
+            if (key in nonTransactional)
                 return null;
         }
         TransactionAttribute attribute = null;
@@ -526,12 +534,16 @@ final class DescriptorTransactionAttributeSource : TransactionAttributeSource
                 break;
             }
         }
+        // Spring's AbstractFallbackTransactionAttributeSource: the cached attribute carries the qualified method name
+        // as its descriptor, which TransactionAspectSupport then uses as the joinpoint identification.
+        if (auto dta = cast(DefaultTransactionAttribute) attribute)
+            dta.setDescriptor(qualifiedMethodName(method, targetClass));
         synchronized (this)
         {
             if (attribute is null)
-                nonTransactional[method] = true;
+                nonTransactional[key] = true;
             else
-                cache[method] = attribute;
+                cache[key] = attribute;
         }
         return attribute;
     }
@@ -569,6 +581,15 @@ final class DescriptorTransactionAttributeSource : TransactionAttributeSource
 }
 
 private shared FiberLocal!(TransactionAspectSupport.TransactionInfo) transactionInfoHolder;
+
+/// Spring's `ClassUtils.getQualifiedMethodName(method, targetClass)`: the target class's name and the method name, or
+/// the method name alone without a target class; null without a method.
+private string qualifiedMethodName(const(MethodDescriptor)* method, const Descriptor targetClass)
+{
+    if (method is null)
+        return null;
+    return targetClass is null ? method.name : targetClass.name ~ "." ~ method.name;
+}
 
 /++
 Base class for transactional aspects, such as `TransactionInterceptor`. This enables the underlying Spring transaction
@@ -695,7 +716,7 @@ abstract class TransactionAspectSupport
         auto tas = getTransactionAttributeSource();
         auto txAttr = tas !is null ? tas.getTransactionAttribute(method, targetClass) : null;
         auto ptm = asPlatformTransactionManager(determineTransactionManager(txAttr));
-        const joinpointIdentification = methodIdentification(method, targetClass);
+        const joinpointIdentification = methodIdentification(method, targetClass, txAttr);
 
         // Standard transaction demarcation with getTransaction and commit/rollback calls.
         auto txInfo = createTransactionIfNecessary(ptm, txAttr, joinpointIdentification);
@@ -788,13 +809,28 @@ abstract class TransactionAspectSupport
         return ptm;
     }
 
-    /// Convenience method to return a String representation of this method for use in logging: the method name
-    /// qualified by its class, which is also the transaction name.
+    // The joinpoint identification, as Spring builds it: a subclass's `methodIdentification`, else the attribute's
+    // descriptor (the source caches the qualified name there), else the method name qualified by its class.
+    private string methodIdentification(const(MethodDescriptor)* method,
+            const Descriptor targetClass, TransactionAttribute txAttr)
+    {
+        auto identification = methodIdentification(method, targetClass);
+        if (identification is null)
+        {
+            if (auto dta = cast(DefaultTransactionAttribute) txAttr)
+                identification = dta.getDescriptor();
+            if (identification is null)
+                identification = qualifiedMethodName(method, targetClass);
+        }
+        return identification;
+    }
+
+    /// Convenience method to return a String representation of this method for use in logging. Can be overridden
+    /// in subclasses to provide a different identifier for the given method; null by default, so the attribute's
+    /// descriptor or the qualified method name is used.
     protected string methodIdentification(const(MethodDescriptor)* method, const Descriptor targetClass)
     {
-        if (method is null)
-            return null;
-        return targetClass is null ? method.name : targetClass.name ~ "." ~ method.name;
+        return null;
     }
 
     /// Create a transaction if necessary based on the given `TransactionAttribute`. Allows callers to perform

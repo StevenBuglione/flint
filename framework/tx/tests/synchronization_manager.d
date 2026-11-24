@@ -204,3 +204,36 @@ private final class Interleaving
     // The test thread never ran a task: its own state is untouched.
     assert(!TransactionSynchronizationManager.isSynchronizationActive());
 }
+
+unittest
+{
+    // Flint: the first bound resources live inline in the task's state, more go to an associative array; binding,
+    // lookup, replacement, unbinding in any order and the resource map behave the same across that boundary.
+    Key[] keys;
+    Holder[] holders;
+    foreach (i; 0 .. 7)
+    {
+        keys ~= new Key;
+        holders ~= new Holder;
+        TransactionSynchronizationManager.bindResource(keys[i], holders[i]);
+    }
+    foreach (i; 0 .. 7)
+        assert(TransactionSynchronizationManager.getResource(keys[i]) is holders[i]);
+    assert(TransactionSynchronizationManager.getResourceMap().length == 7);
+    // Unbind an inline one, then an overflow one, then the rest; each leaves the others bound.
+    assert(TransactionSynchronizationManager.unbindResource(keys[1]) is holders[1]);
+    assert(TransactionSynchronizationManager.unbindResource(keys[5]) is holders[5]);
+    assert(!TransactionSynchronizationManager.hasResource(keys[1]));
+    assert(!TransactionSynchronizationManager.hasResource(keys[5]));
+    foreach (i; [0, 2, 3, 4, 6])
+        assert(TransactionSynchronizationManager.getResource(keys[i]) is holders[i]);
+    auto map = TransactionSynchronizationManager.getResourceMap();
+    assert(map.length == 5 && map[keys[6]] is holders[6]);
+    foreach (i; [0, 2, 3, 4, 6])
+        TransactionSynchronizationManager.unbindResource(keys[i]);
+    assert(TransactionSynchronizationManager.getResourceMap() is null, "an empty state is released");
+    // A freed inline slot is reused.
+    TransactionSynchronizationManager.bindResource(keys[3], holders[3]);
+    assert(TransactionSynchronizationManager.getResource(keys[3]) is holders[3]);
+    TransactionSynchronizationManager.unbindResource(keys[3]);
+}

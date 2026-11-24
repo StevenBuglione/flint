@@ -715,3 +715,25 @@ version (FlintGroovy)
         assert(attributeSource.getTransactionAttribute(getMetaClassMethod, groovyTestBean()) is null);
     }
 }
+
+@("Flint: the cached attribute carries the qualified method name as its descriptor, per method and target class")
+unittest
+{
+    // Spring's AbstractFallbackTransactionAttributeSource sets the descriptor on the attribute it caches under
+    // MethodClassKey; TransactionAspectSupport then names the transaction from it without building the name again.
+    auto attributeSource = new DescriptorTransactionAttributeSource;
+    auto bean = testBean1();
+    const getAge = getMethod(bean, "getAge");
+    auto attribute = cast(DefaultTransactionAttribute) attributeSource.getTransactionAttribute(getAge, bean);
+    assert(attribute !is null && attribute.getDescriptor() == bean.name ~ ".getAge");
+    assert(attribute.getName() is null, "the name stays unset, as Spring's");
+    assert(attributeSource.getTransactionAttribute(getAge, bean) is attribute, "cached");
+    // Another target class for the same method is its own cache entry, with its own descriptor.
+    auto other = new Descriptor("flint.transaction.annotation.Other", TypeKind.class_);
+    auto otherAttribute = cast(DefaultTransactionAttribute) attributeSource.getTransactionAttribute(getAge, other);
+    assert(otherAttribute !is attribute);
+    assert(otherAttribute.getDescriptor() == "flint.transaction.annotation.Other.getAge");
+    // Without a target class the descriptor is the method name alone.
+    auto bare = cast(DefaultTransactionAttribute) attributeSource.getTransactionAttribute(getAge, null);
+    assert(bare.getDescriptor() == "getAge");
+}

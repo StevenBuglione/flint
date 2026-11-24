@@ -134,9 +134,79 @@ interface ResourceHolder
 }
 
 /// The per-fiber state of `TransactionSynchronizationManager`.
+/// The resources bound to a task, keyed as Java's `HashMap` keys them (`equals`): the first few inline, so binding a
+/// transaction's resource (a `DataSource`'s `ConnectionHolder`) allocates nothing; more go to an associative array.
+private struct BoundResources
+{
+    private enum inlineSlots = 4;
+    private Object[inlineSlots] keys;
+    private Object[inlineSlots] values;
+    private size_t count;
+    private Object[Object] overflow;
+
+    size_t length() const pure nothrow @nogc
+    {
+        return count + overflow.length;
+    }
+
+    /// The value bound to `key`, or null.
+    Object* find(Object key) return
+    {
+        foreach (i; 0 .. count)
+            if (objectEquals(keys[i], key))
+                return &values[i];
+        return key in overflow;
+    }
+
+    /// Bind `value` to `key`, replacing any earlier value.
+    void put(Object key, Object value)
+    {
+        if (auto bound = find(key))
+            *bound = value;
+        else if (count < inlineSlots)
+        {
+            keys[count] = key;
+            values[count] = value;
+            ++count;
+        }
+        else
+            overflow[key] = value;
+    }
+
+    /// Unbind `key`, if bound.
+    void remove(Object key)
+    {
+        foreach (i; 0 .. count)
+            if (objectEquals(keys[i], key))
+            {
+                foreach (j; i + 1 .. count)
+                {
+                    keys[j - 1] = keys[j];
+                    values[j - 1] = values[j];
+                }
+                --count;
+                keys[count] = null; // the freed slot holds no reference
+                values[count] = null;
+                return;
+            }
+        overflow.remove(key);
+    }
+
+    /// Every binding, as a new associative array (`getResourceMap`'s copy).
+    Object[Object] toMap()
+    {
+        Object[Object] map;
+        foreach (i; 0 .. count)
+            map[keys[i]] = values[i];
+        foreach (key, value; overflow)
+            map[key] = value;
+        return map;
+    }
+}
+
 private final class TransactionState
 {
-    Object[Object] resources;
+    BoundResources resources;
     TransactionSynchronization[] synchronizations;
     bool synchronizationActive;
     string currentTransactionName;
@@ -189,7 +259,7 @@ abstract class TransactionSynchronizationManager
     static Object[Object] getResourceMap()
     {
         auto current = state(false);
-        return current is null ? null : current.resources.dup;
+        return current is null ? null : current.resources.toMap();
     }
 
     /// Check if there is a resource for the given key bound to the current task.
@@ -209,7 +279,7 @@ abstract class TransactionSynchronizationManager
         auto current = state(false);
         if (current is null)
             return null;
-        auto found = actualKey in current.resources;
+        auto found = current.resources.find(actualKey);
         if (found is null)
             return null;
         Object value = *found;
@@ -254,9 +324,9 @@ abstract class TransactionSynchronizationManager
         if (value is null)
             throw new IllegalArgumentException("Value must not be null");
         auto current = state(true);
-        auto found = actualKey in current.resources;
+        auto found = current.resources.find(actualKey);
         Object oldValue = found is null ? null : *found;
-        current.resources[actualKey] = value;
+        current.resources.put(actualKey, value);
         // Transparently suppress a ResourceHolder that was marked as void...
         if (auto resourceHolder = cast(ResourceHolder) oldValue)
         {
@@ -288,7 +358,7 @@ abstract class TransactionSynchronizationManager
         auto current = state(false);
         if (current is null)
             return null;
-        auto found = actualKey in current.resources;
+        auto found = current.resources.find(actualKey);
         if (found is null)
             return null;
         Object value = *found;
@@ -438,6 +508,31 @@ abstract class TransactionSynchronizationManager
     {
         auto current = state(false);
         return current !is null && current.actualTransactionActive;
+    }
+
+    /// `prepareSynchronization`'s exposures (actual transaction, isolation level, read-only flag, name) and then
+    /// `initSynchronization`, in Spring's order, reading the task's state once. When synchronization is already
+    /// active it takes the five calls themselves, so the characteristics change and `initSynchronization` throws.
+    private static void startSynchronization(bool active, Nullable!int isolationLevel, bool readOnly, string name)
+    {
+        auto current = state(false);
+        if (current !is null && current.synchronizationActive)
+        {
+            setActualTransactionActive(active);
+            setCurrentTransactionIsolationLevel(isolationLevel);
+            setCurrentTransactionReadOnly(readOnly);
+            setCurrentTransactionName(name);
+            initSynchronization();
+            return;
+        }
+        if (current is null)
+            current = state(true);
+        current.actualTransactionActive = active;
+        current.currentTransactionIsolationLevel = isolationLevel;
+        current.currentTransactionReadOnly = readOnly;
+        current.currentTransactionName = name;
+        current.synchronizationActive = true;
+        current.synchronizations = null;
     }
 
     /// Clear the entire transaction synchronization state for the current task: registered synchronizations and
@@ -2168,13 +2263,10 @@ abstract class AbstractPlatformTransactionManager : PlatformTransactionManager, 
     {
         if (status.isNewSynchronization())
         {
-            TransactionSynchronizationManager.setActualTransactionActive(status.hasTransaction());
-            TransactionSynchronizationManager.setCurrentTransactionIsolationLevel(
+            TransactionSynchronizationManager.startSynchronization(status.hasTransaction(),
                     definition.getIsolationLevel() != TransactionDefinition.ISOLATION_DEFAULT
-                    ? Nullable!int(definition.getIsolationLevel()) : Nullable!int.init);
-            TransactionSynchronizationManager.setCurrentTransactionReadOnly(definition.isReadOnly());
-            TransactionSynchronizationManager.setCurrentTransactionName(definition.getName());
-            TransactionSynchronizationManager.initSynchronization();
+                    ? Nullable!int(definition.getIsolationLevel()) : Nullable!int.init,
+                    definition.isReadOnly(), definition.getName());
         }
     }
 
