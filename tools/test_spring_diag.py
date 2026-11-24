@@ -78,6 +78,21 @@ class Smaps(unittest.TestCase):
         self.assertEqual(list(out['largest_kb'])[0], '[anon]')
 
 
+class Syscalls(unittest.TestCase):
+    def test_strace_log_counts_inside_the_window(self):
+        text = '\n'.join([
+            '101 1000.000100 write(2, "starting", 8) = 8',
+            '102 1010.000100 epoll_pwait(5, [], 64, 10, NULL, 8) = 1',
+            '102 1010.000200 sendto(7, "HTTP/1.1 200", 120, MSG_NOSIGNAL, NULL, 0 <unfinished ...>',
+            '103 1010.000250 futex(0x7f, FUTEX_WAKE_PRIVATE, 1) = 0',
+            '102 1010.000300 <... sendto resumed>) = 120',
+            '102 1010.000400 sendto(7, "{}", 2, MSG_NOSIGNAL, NULL, 0) = 2',
+            '101 1020.000100 write(2, "stopping", 8) = 8'])
+        self.assertEqual(spring_diag.parse_strace_log(text, 1005, 1015), {'epoll_pwait': 1, 'sendto': 2, 'futex': 1})
+        out = spring_diag.syscall_census.__wrapped__ if hasattr(spring_diag.syscall_census, '__wrapped__') else None
+        self.assertIsNone(out)
+
+
 class Cpu(unittest.TestCase):
     def test_thread_and_process_cpu(self):
         threads = spring_diag.thread_cpu(os.getpid())

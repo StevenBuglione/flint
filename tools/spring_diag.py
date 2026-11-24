@@ -32,6 +32,7 @@ import argparse
 import json
 import os
 import re
+import signal
 import socket
 import subprocess
 import sys
@@ -115,9 +116,9 @@ def wait_ready(port, process, seconds=60):
     raise SystemExit(f'the server did not listen on {port} within {seconds} s')
 
 
-def oha_run(oha, url, connections, seconds, cpus, request):
+def oha_run(oha, url, connections, seconds, cpus, request, rate=None):
     argv = ['taskset', '--cpu-list', ','.join(map(str, cpus)), str(oha), '-z', f'{seconds}s', '-c', str(connections),
-            '--no-tui', '--output-format', 'json']
+            '--no-tui', '--output-format', 'json'] + (['-q', str(rate)] if rate else [])
     if request.get('method', 'GET') != 'GET':
         argv += ['-m', request['method']]
     for key, value in request.get('headers', {}).items():
@@ -169,11 +170,11 @@ def perf_finish(perf, requests):
     return out
 
 
-def step(process, pgport, oha, url, connections, seconds, warmup, workload, request):
-    oha_run(oha, url, connections, warmup, workload['load_cpus'], request)
+def step(process, pgport, oha, url, connections, seconds, warmup, workload, request, rate=None):
+    oha_run(oha, url, connections, warmup, workload['load_cpus'], request, rate)
     threads0, pg0 = thread_cpu(process.pid), {p: process_cpu(p) for p in postgres_pids(pgport)} if pgport else {}
     perf = perf_start(process.pid, seconds)
-    raw = oha_run(oha, url, connections, seconds, workload['load_cpus'], request)
+    raw = oha_run(oha, url, connections, seconds, workload['load_cpus'], request, rate)
     threads1 = thread_cpu(process.pid)
     pg1 = {p: process_cpu(p) for p in postgres_pids(pgport)} if pgport else {}
     summary, percentiles = raw['summary'], raw.get('latencyPercentiles', {})
@@ -184,7 +185,7 @@ def step(process, pgport, oha, url, connections, seconds, warmup, workload, requ
     pg_cpu = sum(cpu - pg0.get(pid, 0.0) for pid, cpu in pg1.items())
     expected = str(request.get('status', 200))
     counted = perf_finish(perf, statuses.get(expected, 0))
-    return {'connections': connections, 'seconds': seconds, 'requests': requests, 'statuses': statuses,
+    return {'connections': connections, 'fixed_rate': rate, 'seconds': seconds, 'requests': requests, 'statuses': statuses,
             'unexpected_statuses': requests - statuses.get(expected, 0),
             'requests_per_second': summary['requestsPerSec'],
             'latency_ms': {'mean': summary['average'] * 1000,
@@ -194,6 +195,61 @@ def step(process, pgport, oha, url, connections, seconds, warmup, workload, requ
             'server_cpu_per_thread': {k: round(v, 3) for k, v in sorted(per_thread.items(), key=lambda kv: -kv[1]) if v > 0},
             'perf': counted,
             'postgres_cpu_seconds': pg_cpu, 'postgres_cpu_us_per_request': pg_cpu / requests * 1e6 if requests and pgport else None}
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# The syscall census (coordinator 16:00Z, petclinic CPU plan): writes and waits per response. strace attaches to the
+# warmed-up server (this process's own child, which ptrace_scope 1 allows) only for a counted burst, so start-up
+# writes are not counted and the timed steps never run under ptrace. A fiber park is not a syscall; the waits a
+# parked reactor makes (epoll, io_uring_enter, futex) per response are its visible part.
+
+SYSCALLS = ('sendto', 'sendmsg', 'write', 'writev', 'recvfrom', 'read', 'io_uring_enter', 'epoll_wait', 'epoll_pwait',
+            'epoll_pwait2', 'futex')
+WRITES = ('sendto', 'sendmsg', 'write', 'writev')
+WAITS = ('io_uring_enter', 'epoll_wait', 'epoll_pwait', 'epoll_pwait2', 'futex')
+
+
+def strace_argv(log):
+    """The server runs as strace's child (ptrace_scope 1 lets a tracer trace only its own descendants), every call
+    timestamped, so the census counts only calls inside the burst's window."""
+    return ['strace', '-f', '-ttt', '-qq', '-e', 'trace=' + ','.join(SYSCALLS), '-o', str(log)]
+
+
+def parse_strace_log(text, began, ended):
+    """{syscall: calls} for the calls `strace -f -ttt` logged between `began` and `ended` (epoch seconds). A call
+    split by another thread's ("<unfinished ...>" then "<... resumed>") counts once, at its start."""
+    calls = {}
+    for line in text.splitlines():
+        parts = line.split(None, 2)
+        if len(parts) < 3 or parts[2].startswith('<...'):
+            continue
+        try:
+            when = float(parts[1])
+        except ValueError:
+            continue
+        name = parts[2].split('(', 1)[0]
+        if began <= when <= ended and name in SYSCALLS:
+            calls[name] = calls.get(name, 0) + 1
+    return calls
+
+
+def syscall_census(log, began, ended, requests_ok, connections):
+    calls = parse_strace_log(Path(log).read_text(errors='replace'), began, ended) if Path(log).is_file() else {}
+    per = {name: calls.get(name, 0) / requests_ok for name in SYSCALLS} if requests_ok else {}
+    return {'requests': requests_ok, 'connections': connections, 'calls': calls, 'per_response': per,
+            'writes_per_response': sum(per.get(n, 0) for n in WRITES) if requests_ok else None,
+            'waits_per_response': sum(per.get(n, 0) for n in WAITS) if requests_ok else None}
+
+
+def traced_children(pid):
+    """The traced server: the direct children of strace."""
+    out = []
+    for task in Path(f'/proc/{pid}/task').glob('*/children'):
+        try:
+            out += [int(child) for child in task.read_text().split()]
+        except OSError:
+            pass
+    return out
 
 
 # ---------------------------------------------------------------------------------------------------------------
@@ -318,6 +374,11 @@ def main(argv=None):
     parser.add_argument('--smoke', action='store_true', help='ladder 1,8 for 1 s each')
     parser.add_argument('--census-requests', type=int, default=2000, help='requests in the statement-log census')
     parser.add_argument('--no-census', action='store_true')
+    parser.add_argument('--variant-binary', type=Path, help='the binary the --variant arms run (a floor reference)')
+    parser.add_argument('--variant', action='append', default=[],
+                        help='NAME=KEY=VALUE[,KEY=VALUE]: an arm running --variant-binary with that environment')
+    parser.add_argument('--fixed-rate', type=int, help='also a step at this fixed rate (req/s) beside each capacity step')
+    parser.add_argument('--syscalls', type=int, default=0, help='requests in an untimed strace census per arm (0: none)')
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args(argv)
     if LOCK.exists() and not os.environ.get('FLINT_MEASURE_WINDOW_CERTIFIED') and not args.force:
@@ -329,22 +390,30 @@ def main(argv=None):
     manifest = json.loads(MANIFEST.read_text())
     spec, workload = manifest['apps'][args.app], manifest['workload']
     request = dict(spec['expected'].get('request', {}), status=spec['expected']['status'])
-    impls = args.impl or ['flint', 'go']
+    impls = args.impl if args.impl is not None else ([] if args.variant else ['flint', 'go'])
+    variants = {}
+    for item in args.variant:
+        name, _, settings = item.partition('=')
+        variants[name] = dict(pair.split('=', 1) for pair in settings.split(',') if pair)
+    impls = impls + list(variants)
     result = {'schema': 'flint.spring-diag/1', 'evidence': False, 'app': args.app, 'path': spec['path'],
               'ladder': ladder, 'seconds': seconds, 'warmup_seconds': warmup, 'workload_cpus':
               {k: workload[k] for k in ('server_cpus', 'load_cpus', 'database_cpus')}, 'binaries': {}, 'steps': {}}
     binaries = {'flint': (args.flint_binary.resolve() if args.flint_binary else spring_bench.build_flint(args.app))
                 if 'flint' in impls else None,
                 'go': spring_bench.build_go(args.app) if 'go' in impls else None}
+    for name in variants:
+        binaries[name] = args.variant_binary.resolve()
     database_kind = spring_bench.app_row(args.app).get('database')
     with tempfile.TemporaryDirectory(prefix='flint-diag-') as temporary, \
             (spring_bench.postgres_cluster(workload['database_cpus']) if database_kind == 'postgres'
              else _no_database()) as database:
         for impl in impls:
-            extra_env = dict(item.split('=', 1) for item in args.env) if impl == 'flint' else {}
+            extra_env = (dict(item.split('=', 1) for item in args.env) if impl == 'flint' else dict(variants.get(impl, {})))
+            target = 'go' if impl == 'go' else 'flint'
             result['steps'][impl] = []
 
-            def serve(label, counters=None):
+            def serve(label, counters=None, trace=None):
                 """One server process (a fresh database each launch), for one ladder step or the census."""
                 created = []
 
@@ -355,9 +424,11 @@ def main(argv=None):
                 port = spring_bench.free_port()
                 launch_env = dict(extra_env, **({'FLINT_DIAG_COUNTERS': str(counters)} if counters else {}))
                 argv_, env, cwd, identity = load_bench.spring_server(
-                    spring_bench, args.app, impl, port, tracked if database else None, workload,
+                    spring_bench, args.app, target, port, tracked if database else None, workload,
                     manifest.get('environment', {}), False, binary=binaries[impl])
                 env.update(launch_env)
+                if trace:
+                    argv_ = strace_argv(trace) + argv_
                 result['binaries'][impl] = dict(identity, env=extra_env)
                 log = args.output.with_suffix(f'.{impl}-{label}-server.log')
                 with log.open('wb') as stream:
@@ -367,29 +438,57 @@ def main(argv=None):
                 pgport = int(url_db.rsplit(':', 1)[1].split('/')[0]) if url_db else None
                 return process, url, pgport, url_db.rsplit('/', 1)[1] if url_db else None
 
-            def stop(process):
-                process.terminate()  # SIGTERM: Boot exits cleanly and the counters file is written
+            def stop(process, traced=False):
+                if traced:
+                    # SIGTERM to the traced server, never to strace: a signalled strace detaches and leaves it running.
+                    for child in traced_children(process.pid):
+                        try:
+                            os.kill(child, signal.SIGTERM)
+                        except OSError:
+                            pass
+                else:
+                    process.terminate()  # SIGTERM: Boot exits cleanly and the counters file is written
                 try:
                     process.wait(timeout=15)
                 except subprocess.TimeoutExpired:
                     process.kill()
                     process.wait()
 
-            for connections in ladder:
-                counters = Path(temporary) / f'{impl}-c{connections}-counters.json' if (impl == 'flint' and args.counters) else None
-                process, url, pgport, _ = serve(f'c{connections}', counters)
+            plan = [(c, None) for c in ladder] + ([(c, args.fixed_rate) for c in ladder] if args.fixed_rate else [])
+            for connections, rate in plan:
+                label = f'c{connections}' + (f'-q{rate}' if rate else '')
+                counters = Path(temporary) / f'{impl}-{label}-counters.json' if (target == 'flint' and args.counters) else None
+                process, url, pgport, _ = serve(label, counters)
                 try:
                     wait_ready(int(url.split(':')[2].split('/')[0]), process)
-                    row = step(process, pgport, args.oha, url, connections, seconds, warmup, workload, request)
+                    row = step(process, pgport, args.oha, url, connections, seconds, warmup, workload, request, rate)
                 finally:
                     stop(process)
                 row['counters'] = read_counters(counters)
                 result['steps'][impl].append(row)
-                print(json.dumps({'impl': impl, 'connections': connections,
+                print(json.dumps({'impl': impl, 'connections': connections, 'rate': rate,
                                   'rps': round(row['requests_per_second']),
                                   'server_cpu_us': row['server_cpu_us_per_request'] and round(row['server_cpu_us_per_request'], 1),
                                   'postgres_cpu_us': row['postgres_cpu_us_per_request'] and round(row['postgres_cpu_us_per_request'], 1),
                                   'p50_ms': round(row['latency_ms'].get('p50', 0), 3)}), flush=True)
+            if args.syscalls:
+                trace = args.output.with_suffix(f'.{impl}-strace.log')
+                process, url, pgport, _ = serve('syscalls', trace=trace)
+                try:
+                    wait_ready(int(url.split(':')[2].split('/')[0]), process)
+                    oha_run(args.oha, url, 8, warmup, workload['load_cpus'], request)
+                    count = 200 if args.smoke else args.syscalls
+                    argv = ['taskset', '--cpu-list', ','.join(map(str, workload['load_cpus'])), str(args.oha), '-n',
+                            str(count), '-c', '8', '--no-tui', '--output-format', 'json', url]
+                    began = time.time()
+                    raw = json.loads(subprocess.run(argv, capture_output=True, text=True, check=True).stdout)
+                    ended = time.time()
+                    ok = raw.get('statusCodeDistribution', {}).get(str(request.get('status', 200)), 0)
+                finally:
+                    stop(process, traced=True)
+                result.setdefault('syscalls', {})[impl] = syscall_census(trace, began, ended, ok, 8)
+                print(json.dumps({'impl': impl, 'writes_per_response': result['syscalls'][impl]['writes_per_response'],
+                                  'waits_per_response': result['syscalls'][impl]['waits_per_response']}), flush=True)
             if database and not args.no_census:
                 process, url, pgport, name = serve('census')
                 try:
