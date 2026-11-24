@@ -234,6 +234,20 @@ class Provenance(unittest.TestCase):
             self.assertEqual(len(row['aot_summaries']['distinct']), 1)
 
 
+class ServedCompiles(unittest.TestCase):
+    def test_trace_counts(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            trace = Path(temporary) / 'trace.log'
+            self.assertEqual(measure_queue.server_trace(trace), {'compiled': 0, 'refused': 0})
+            trace.write_text('1.000001 42 accepted\n1.000002 43 received\n1.000100 43 compiled\n'
+                             '1.000200 44 refused\n1.000300 45 compiled\n1.000301 45 reported\n')
+            self.assertEqual(measure_queue.server_trace(trace), {'compiled': 2, 'refused': 1})
+
+    def test_only_this_trees_servers_stop(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            self.assertEqual(measure_queue.stop_tree_compile_servers(temporary), [])
+
+
 class NativeExtractorProbe(unittest.TestCase):
     def fake(self, directory, answer):
         dmd = Path(directory) / 'dmd'

@@ -872,6 +872,11 @@ def measure_command(entry, built, outdir, smoke):
         if smoke and step.get('smoke_args'):
             command += step['smoke_args']
         log = outdir / f'step-{index}.log'
+        # Served compiles (coordinator, B2): each step's compile servers log every request; a builds step must show
+        # served compiles and none refused, or an in-process build could certify silently.
+        trace = outdir / f'dmd-server-trace-{index}.log'
+        env['FLINT_DMD_SERVER_TRACE'] = str(trace)
+        stopped = stop_tree_compile_servers(cwd) if step.get('in') else []
         started = time.time() - 1
         with log.open('wb') as stream:
             completed = subprocess.run(command, cwd=cwd, env=env, stdout=stream,
@@ -881,6 +886,13 @@ def measure_command(entry, built, outdir, smoke):
         if harness and not step.get('in'):
             receipt['harness_toolchain'] = toolchain_receipt(harness[0])  # a step outside a build tree builds with it
         receipt.update(step_provenance(command, cwd, env, log, outdir, started))
+        receipt['dmd_server'] = dict(server_trace(trace), stopped_before=stopped)
+        if any('measure_builds.py' in part for part in command) and not smoke:
+            served = receipt['dmd_server']
+            if served['refused'] or not served['compiled']:
+                receipts.append(dict(receipt, measured=False))
+                raise SystemExit(f"step {index}: the compile server compiled {served['compiled']} and refused "
+                                 f"{served['refused']} requests; builds must be served (see {trace})")
         if completed.returncode and step.get('may_fail'):
             # A failed verdict is a result only if the step wrote its output and that output records no error: a step
             # that refused or crashed measured nothing.
@@ -897,6 +909,36 @@ def measure_command(entry, built, outdir, smoke):
             raise SystemExit(f'step {index} exited with {completed.returncode}; see {log}')
     return {'steps': receipts,
             'outputs': {p.name: sha256(p) for p in sorted(outdir.iterdir()) if p.is_file() and p.suffix == '.json'}}
+
+
+def stop_tree_compile_servers(cwd):
+    """Idle compile servers started from this tree's own DMD before the step: stopped, so the step's first build starts
+    one that inherits FLINT_DMD_SERVER_TRACE. A server's key includes its resolved binary, so only this tree's
+    builds could reach them; nothing else is touched."""
+    dmd = (Path(cwd) / '.tools' / 'dmd2' / 'linux' / 'bin64' / 'dmd').resolve()
+    stopped = []
+    for entry in Path('/proc').iterdir():
+        if not entry.name.isdigit() or int(entry.name) == os.getpid():
+            continue
+        try:
+            if Path(os.readlink(entry / 'exe')) == dmd:
+                os.kill(int(entry.name), 15)
+                stopped.append(int(entry.name))
+        except (OSError, ValueError):
+            continue
+    return stopped
+
+
+def server_trace(path):
+    """Requests the compile server compiled and refused, from FLINT_DMD_SERVER_TRACE (the DMD fork logs one event per
+    request: `compiled`, or `refused` when its zygote cannot serve it and the client compiles in-process)."""
+    counts = {'compiled': 0, 'refused': 0}
+    if Path(path).is_file():
+        for line in Path(path).read_text(errors='replace').splitlines():
+            event = line.rsplit(' ', 1)[-1]
+            if event in counts:
+                counts[event] += 1
+    return counts
 
 
 def step_provenance(command, cwd, env, log, outdir, started):

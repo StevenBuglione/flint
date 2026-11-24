@@ -661,6 +661,13 @@ def consistency_problems(parts, runs_by_family):
         if record.get('mode') != 'production':
             problems.append(f"{part['entry']} {part['file']}: mode {record.get('mode')}; production required")
         if family == 'builds':
+            # Served compiles (coordinator, B2): the builds step's receipt must show compile-server requests compiled
+            # and none refused.
+            served = [step.get('dmd_server') for step in part.get('steps', []) if 'measure_builds.py' in ' '.join(step.get('command', []))]
+            if part.get('steps') is not None and (not served or not served[0] or served[0].get('refused')
+                                                   or not served[0].get('compiled')):
+                problems.append(f"{part['entry']} builds.json: compile server {served[0] if served else 'not traced'}; "
+                                'served compiles with none refused required')
             if record.get('trials_per_series') != 9:
                 problems.append(f"{part['entry']} builds.json: {record.get('trials_per_series')} trials per series; 9 required")
             claimed = record.get('commit')
@@ -754,8 +761,10 @@ def assemble(output):
         if not path.is_file():
             manifest['missing'].append(f'{entry_id}/{name}')
             return
+        receipt = json.loads((directory / 'receipt.json').read_text())
         parts.append({'entry': entry_id, 'file': name, 'path': path, 'family': family,
-                      'record': json.loads(path.read_text()), 'commits': receipt_commits(directory)})
+                      'record': json.loads(path.read_text()), 'commits': receipt_commits(directory),
+                      'steps': receipt.get('summary', {}).get('steps', [])})
 
     for entry_id, files in PHASE1_FILES.items():
         directory = certified(entry_id)
