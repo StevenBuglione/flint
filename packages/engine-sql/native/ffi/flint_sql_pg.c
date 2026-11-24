@@ -687,6 +687,10 @@ int flint_pg_drive(flint_pg_connection *connection, flint_sql_operation *operati
     }
     if (!connection->ready)
         return step_connect(connection, operation, fd, interest);
+    /* The socket is read only when libpq needs more input, at most once per call: not in the call that sent
+       the statement (no answer can be there yet; readiness brings the next call), and not while libpq holds
+       unread results (single-row mode returns each row of one read). */
+    int read = 0;
     if (operation->phase == PG_UNSENT) {
         const int state = start_query(connection, operation);
         if (state != FLINT_SQL_OK) {
@@ -694,23 +698,38 @@ int flint_pg_drive(flint_pg_connection *connection, flint_sql_operation *operati
                 operation->reusable = 0;
             return finish(connection, operation, state);
         }
+        read = 1;
     }
 
     PGconn *database = connection->database;
     *fd = PQsocket(database);
     *interest = FLINT_SQL_READ;
     const int flushed = PQflush(database);
-    if (flushed < 0 || !flint_pg_consume(connection)) {
+    if (flushed < 0) {
         operation->reusable = 0;
         return finish(connection, operation, FLINT_SQL_UNAVAILABLE);
     }
     if (flushed > 0) {
+        /* libpq: while output is pending, input is consumed too, so a server blocked on its own writes drains. */
+        if (!flint_pg_consume(connection)) {
+            operation->reusable = 0;
+            return finish(connection, operation, FLINT_SQL_UNAVAILABLE);
+        }
         *interest |= FLINT_SQL_WRITE;
         return FLINT_SQL_WAIT;
     }
     for (unsigned results = 0; results < 32; ++results) {
-        if (PQisBusy(database))
-            return FLINT_SQL_WAIT;
+        if (PQisBusy(database)) {
+            if (read)
+                return FLINT_SQL_WAIT;
+            read = 1;
+            if (!flint_pg_consume(connection)) {
+                operation->reusable = 0;
+                return finish(connection, operation, FLINT_SQL_UNAVAILABLE);
+            }
+            if (PQisBusy(database))
+                return FLINT_SQL_WAIT;
+        }
         PGresult *result = PQgetResult(database);
         if (!result) {
             if (atomic_load(&operation->cancelled) && operation->phase != PG_QUERY)
