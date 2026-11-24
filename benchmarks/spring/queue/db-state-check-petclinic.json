@@ -1,0 +1,38 @@
+{
+  "schema": "flint.measure-queue/1",
+  "id": "db-state-check-petclinic",
+  "created": "2026-11-24",
+  "status": "pending",
+  "window": "claim",
+  "priority": 6.2,
+  "estimate_minutes": 7,
+  "requested_by": "the coordinator, 10:35Z: first check whether the database state explains petclinic's 6% Go calibration drift",
+  "report_to": "the coordinator",
+  "summary": "Diagnostic, never evidence: Go petclinic calibration trials alternating without and with VACUUM ANALYZE, against the record's band",
+  "why": "The first Flint-only petclinic run's guard found Go 6% below the capture's band. Fresh databases with the app's fixture are used at capture and run alike; VACUUM ANALYZE and cluster warmth are not. Three pairs on one cluster show whether the database state moves calibration by that much.",
+  "harness": "45f8b1273f05",
+  "builds": {},
+  "measure": {
+    "kind": "command",
+    "steps": [
+      {
+        "argv": [
+          "{python}",
+          "{harness}/tools/spring_baseline.py",
+          "db-state-check",
+          "--app",
+          "petclinic-rest",
+          "--record",
+          "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/benchmarks/spring/baselines/go/petclinic-rest/20261124T092019Z",
+          "--pairs",
+          "3",
+          "--output",
+          "{out}/db-state"
+        ],
+        "smoke_args": [
+          "--smoke"
+        ]
+      }
+    ]
+  }
+}
