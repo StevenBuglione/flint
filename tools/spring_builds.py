@@ -210,12 +210,12 @@ def measure_flint(name, trials, timed, logs, temporary, result):
     table = {
         'cached': (spec['cached'], ('cold', 'incremental'), 'keep', 'flint_cached_{state}_seconds'),
         'cached_cleared': (spec['cached'], ('cold',), 'clear', 'flint_cached_cold_digests_cleared_seconds'),
-        'scratch': (spec['scratch'], ('cold',), 'clear', 'flint_scratch_seconds'),
+        'scratch': (spec['scratch'], ('cold',), 'empty', 'flint_scratch_seconds'),
         'cached_static': (spec.get('cached_static'), ('cold', 'incremental'), 'keep', 'flint_static_{state}_seconds'),
         'debug_cached': (debug.get('cached'), ('cold', 'incremental'), 'keep', 'flint_debug_cached_{state}_seconds'),
         'debug_static': (debug.get('cached_static'), ('cold', 'incremental'), 'keep',
                          'flint_debug_static_{state}_seconds'),
-        'debug_scratch': (debug.get('scratch'), ('cold',), 'clear', 'flint_debug_scratch_seconds'),
+        'debug_scratch': (debug.get('scratch'), ('cold',), 'empty', 'flint_debug_scratch_seconds'),
     }
     flavours = [name for name, (command, *_rest) in table.items() if command]
     row = {table[f][3].format(state=state): [] for f in flavours for state in table[f][1]}
@@ -229,10 +229,14 @@ def measure_flint(name, trials, timed, logs, temporary, result):
 
     def clean(digests='keep'):
         """A cold project (no .flint) and a fresh clone of the platform-only cache. Its digest log is a real copy, as
-        flint appends to it; scratch trials and the context series start without one."""
+        flint appends to it; the digests-cleared context series starts without one. A scratch trial ('empty') starts
+        from an empty cache: no platform archives and no derived AOT state (Astra's scratch review, 41053ce3: B's
+        scratch trials took 42 platform AOT models from the clone)."""
         shutil.rmtree(directory / '.flint', ignore_errors=True)
         shutil.rmtree(trial_cache, ignore_errors=True)
-        if platform.is_dir():
+        if digests == 'empty':
+            trial_cache.mkdir(parents=True)
+        elif platform.is_dir():
             shutil.copytree(platform, trial_cache, copy_function=os.link, symlinks=True,
                             ignore=lambda path, names: [DIGEST_LOG] if Path(path) == platform else [])
             if digests == 'keep' and (platform / DIGEST_LOG).is_file():
@@ -262,7 +266,9 @@ def measure_flint(name, trials, timed, logs, temporary, result):
                                              + ' and '.join(PROJECT_CACHE_ENTRIES) + ', deleted after the trial',
                               'platform_cache_files': len(master),
                               'digest_log': 'kept (a copy per trial), its entries under the port pruned; absent in '
-                                            'scratch trials and the digests-cleared context series',
+                                            'the digests-cleared context series',
+                              'scratch_trials': 'an empty FLINT_CACHE: no platform archives, no derived AOT state; '
+                                                'zero AOT cache hits asserted',
                               'port_entries_pruned': pruned}
         for trial in range(trials):
             for flavour in flavours:
@@ -285,6 +291,10 @@ def measure_flint(name, trials, timed, logs, temporary, result):
                         if counts is None or counts[0] == 0:
                             raise RuntimeError(f'{name}: cold trial {trial} ({flavour}) reused project-keyed AOT '
                                                f'state (AOT step {counts}); see {log}')
+                        # A scratch trial derives everything: not one AOT model may come from a cache.
+                        if digests == 'empty' and counts[1] != 0:
+                            raise RuntimeError(f'{name}: scratch trial {trial} ({flavour}) took {counts[1]} AOT '
+                                               f'models from a cache; strict scratch starts empty; see {log}')
                     result['trials'].append(dict(observed, app=name, implementation='flint', flavour=flavour,
                                                  state=state, trial=trial, log=str(log.relative_to(logs.parent))))
                 edit.write_bytes(original)
@@ -311,6 +321,19 @@ def measure_flint(name, trials, timed, logs, temporary, result):
     row['phase_budget_ms'] = PHASE_BUDGET_MS
     row['phase_trials_ms'] = phases
     return row
+
+
+def effective_cpus():
+    """The CPUs the builds may use, the same for Flint's and Go's (both inherit this process's affinity): the count
+    and the cpuset (Astra's scratch review: record each side's effective CPUs; fine if equal)."""
+    allowed = sorted(os.sched_getaffinity(0))
+    cpuset = ''
+    try:
+        cpuset = next((line.split(':', 1)[1].strip() for line in Path('/proc/self/status').read_text().splitlines()
+                       if line.startswith('Cpus_allowed_list:')), '')
+    except OSError:
+        pass
+    return {'flint': len(allowed), 'go': len(allowed), 'cpuset': cpuset, 'gomaxprocs': os.environ.get('GOMAXPROCS')}
 
 
 PHASES = ('total', 'flint', 'aot', 'plan', 'compile', 'link')
@@ -486,7 +509,8 @@ def measure(args, timed):
     logs.mkdir(exist_ok=True)
     result = {'schema': 'flint.spring-builds/1', 'mode': 'smoke' if args.smoke else 'production', 'status': 'running',
               'commit': subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=ROOT, capture_output=True, text=True).stdout.strip(),
-              'host': {'platform': sys.platform, 'cpus': os.cpu_count(), 'load_average_at_start': load},
+              'host': {'platform': sys.platform, 'cpus': os.cpu_count(), 'load_average_at_start': load,
+                       'effective_cpus': effective_cpus()},
               'trials_per_series': args.trials, 'comparators': {n: json.loads(spring_bench.REGISTRY.read_text())['comparators'][n] for n in names},
               'missing_flint': missing, 'apps': {}, 'trials': []}
     try:
