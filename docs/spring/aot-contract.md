@@ -25,6 +25,10 @@ DMD's `-X` JSON leaves out UDAs and does not evaluate attribute arguments, and t
 
 The model therefore holds real types (fully qualified, after aliases), evaluated attribute values (enum members by name, constants folded), and the attribute types' own declarations. Class-presence conditions are answered in the same compile with `__traits(compiles, { import M : T; })`.
 
+**Native extraction.** The forked DMD can produce the same lines without the describer: with `-flint-aot-extract=<file>` it walks the already analysed AST of the modules the file lists (`module <name>` lines in request order, then `known <name>` for each annotation type the generator already holds) and prints the describer's `FLINT-AOT-MODULE`, `-TYPE` and `-ANNOTATION` lines, byte for byte (dmd-arm64, design 3A). The root then only imports the modules and asks the presence questions. The generator tries it first. A compiler that rejects the switch, any unforked DMD or LDC, gets the describer compile instead, so the describer remains the normative definition of every field. With the platform prelude, petclinic-rest's 15 modules took 33 ms natively against 379 ms through the describer (dmd-arm64, venus).
+
+**The platform prelude.** When `flint build` serves the project compile with a platform prelude, the extraction compile gets the same `FLINT_DMD_SERVER_PRELUDE`. The server then has every platform module analysed, so only the requested modules are analysed per build: the describer took 334 ms instead of 450 ms on petclinic-rest (dmd-arm64).
+
 The extractor and the model's JSON schema (`flint.aot.model/1`) are internal to the generator. The runtime never sees them.
 
 ### 1.2 Interface keys

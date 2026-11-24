@@ -68,6 +68,10 @@ struct AotRequest
     /// Emit the per-endpoint fast path (docs/spring/phase1/fast-path.md): on unless the build opts out. Part of
     /// the output key, so a build with it never restores one generated without it.
     bool fastPath;
+    /// The compile server's platform prelude for the extraction compile (FLINT_DMD_SERVER_PRELUDE), or empty:
+    /// the server then has the platform modules analysed, which the describer and the native extractor both need
+    /// to be fast.
+    string prelude;
 }
 
 /// What it did.
@@ -751,6 +755,7 @@ private bool extractInto(const ref AotRequest request, scope const SourceModule[
     extraction.knownAnnotations = known.keys;
     extraction.directory = buildPath(request.root, extractDirectory);
     extraction.workingDirectory = request.root;
+    extraction.prelude = request.prelude;
     auto result = extract(extraction);
     outcome.extractMilliseconds += result.milliseconds;
     outcome.extracted += result.models.length;

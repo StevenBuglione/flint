@@ -21,7 +21,7 @@ struct AotStep
 
 /// Run Flint AOT before the recipe is written.
 AotStep runAotStep(ref Session session, const ref Manifest manifest, const ref Resolution resolution,
-        const ref Toolchain toolchain, string compiler, ref Report report)
+        const ref Toolchain toolchain, string compiler, ref Report report, string prelude = null)
 {
     import std.conv : to;
     import std.path : buildPath;
@@ -52,6 +52,7 @@ AotStep runAotStep(ref Session session, const ref Manifest manifest, const ref R
 
         request.fastPath = environment.get("FLINT_AOT_FAST_PATH", "1") != "0";
     }
+    request.prelude = prelude;
     request.sharedCache = buildPath(cacheRoot(session), "aot");
     // Project-keyed entries apart from the platform's, so a platform-only copy of the cache is <cache> without
     // projects/ (the cold build benchmark starts from one).

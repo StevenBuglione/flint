@@ -903,6 +903,24 @@ unittest
     expect(next.written).toEqual(0);
 }
 
+@("the native extractor's root imports the modules only; its request lists them in order, then the held types")
+unittest
+{
+    import std.algorithm.searching : canFind;
+    import flint_tool.engine.aot.extract : renderNativeRequest, renderRoot;
+
+    const describer = renderRoot(["shop.web", "shop.data"], ["flint.web.Missing"]);
+    const native = renderRoot(["shop.web", "shop.data"], ["flint.web.Missing"], true);
+    expect(describer.canFind("import flint_aot_describe : describeModule;")).toBeTrue();
+    expect(describer.canFind(`static if (describeModule!(shop.web, "shop.web"))`)).toBeTrue();
+    expect(native.canFind("describeModule")).toBeFalse();
+    expect(native.canFind("static import shop.web;\nstatic import shop.data;\n")).toBeTrue();
+    // Presence questions stay pragma(msg) lines in both roots.
+    expect(native.canFind(`pragma(msg, "FLINT-AOT-PRESENT flint.web.Missing ", __traits(compiles,`)).toBeTrue();
+    expect(renderNativeRequest(["shop.web", "shop.data"], ["flint.stereotype.Service"])).toEqual(
+            "module shop.web\nmodule shop.data\nknown flint.stereotype.Service\n");
+}
+
 @("every generator diagnostic names its declaration")
 unittest
 {
