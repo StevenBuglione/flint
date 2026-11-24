@@ -10,7 +10,7 @@
   "report_to": "the coordinator and data-access",
   "summary": "Diagnostic, never evidence: petclinic-rest GET /owners/1 along the concurrency ladder 1/8/10/16/64 at B, Flint and Go",
   "why": "Separates where Flint's ~5 ms per request goes before data-access's wait fix: rps and latency per concurrency, server CPU per request and per thread, PostgreSQL CPU per request. Runs after B's batch (priority 10), so it never displaces a baseline window; claimed because diagnostic numbers need the same quiet. A second entry repeats it at the wait-fix commit with data-access's counters.",
-  "harness": "abebbfb8bf46",
+  "harness": "fa3febb71b74",
   "builds": {
     "tree": {
       "app": "checkout",
