@@ -34,7 +34,7 @@ class Assign(unittest.TestCase):
         self.assertEqual(first['counts']['transaction_commands'], 2)
         self.assertEqual(first['counts']['data_statements'], 1)
         self.assertEqual(first['counts']['parse_unnamed'], 1)
-        self.assertEqual(first['statements'], ['BEGIN READ ONLY', 'SELECT 1', 'COMMIT'])
+        self.assertEqual(first['statements'], ['BEGIN READ ONLY', 'SELECT 1', 'COMMIT continuation'])  # joined
 
     def test_continuation_lines_join_their_statement(self):
         base = census.log_time(line(0, 'x'))
