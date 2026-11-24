@@ -324,14 +324,23 @@ void dubPhases(string output, long wall, ref imported!"flint_tool.engine.receipt
     phases.plan = wall - (phases.compile > 0 ? phases.compile : 0) - (phases.link > 0 ? phases.link : 0);
 }
 
+/// The compile server's platform prelude for this build, or null. The server preloads the platform modules for
+/// dev builds only (coordinator, 2026-11-23): a test build compiles with -unittest, which the prelude's switches
+/// would not match anyway. The project build and the AOT step's extraction compile share it.
+private string serverPrelude(const ref BuildRequest request, const ref ProfileSpec spec, const ref BuildOutcome result)
+{
+    if (result.platform.active && spec.compile_server && !request.test && request.profile == "dev")
+        return result.platform.prelude;
+    return null;
+}
+
 /// A project build's additions to its environment. Returns whether the user asked for DUB's trace.
 private bool projectEnvironment(const ref BuildRequest request, const ref ProfileSpec spec,
         const ref BuildOutcome result, ref EnvVar[] environment)
 {
-    // The compile server preloads the platform modules for dev builds only (coordinator, 2026-11-23): a test build
-    // compiles with -unittest, which the prelude's switches would not match anyway.
-    if (result.platform.active && spec.compile_server && !request.test && request.profile == "dev")
-        environment ~= EnvVar("FLINT_DMD_SERVER_PRELUDE", result.platform.prelude);
+    const prelude = serverPrelude(request, spec, result);
+    if (prelude.length)
+        environment ~= EnvVar("FLINT_DMD_SERVER_PRELUDE", prelude);
     // The Flint DUB reports its phases with FLINT_DUB_TRACE (toolchain/README.md); flint reads them for the
     // receipt and keeps them out of what it shows.
     const userTrace = traceRequested(environment);
@@ -619,12 +628,15 @@ private bool prepareBuild(ref Session session, const ref Manifest manifest, cons
         return false;
     import core.time : MonoTime;
 
+    // The platform comes first so the AOT step's extraction compile is served with its prelude (m7, 2026-11-24):
+    // planPlatform reads no AOT output.
+    if (!preparePlatform(session, manifest, resolution, request, settings, toolchain, result, report))
+        return false;
     const aotStart = MonoTime.currTime;
-    const aot = runAotStep(session, manifest, resolution, toolchain, result.compiler, report);
+    const aot = runAotStep(session, manifest, resolution, toolchain, result.compiler, report,
+            serverPrelude(request, settings.spec, result));
     result.phases.aot = (MonoTime.currTime - aotStart).total!"msecs";
     if (!aot.ok)
-        return false;
-    if (!preparePlatform(session, manifest, resolution, request, settings, toolchain, result, report))
         return false;
     return writeRecipes(session, manifest, resolution, result, condensedDiagnostics(session,
             toolchain, result.compiler), aot.active, report);

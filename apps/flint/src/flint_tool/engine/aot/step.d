@@ -77,7 +77,8 @@ AotStep runAotStep(ref Session session, const ref Manifest manifest, const ref R
                 ~ outcome.application ~ " (" ~ outcome.extracted.to!string ~ " extracted in "
                 ~ outcome.extractMilliseconds.to!string ~ " ms, " ~ outcome.reused.to!string
                 ~ " from the shared cache, " ~ outcome.written.to!string ~ " written, "
-                ~ outcome.totalMilliseconds.to!string ~ " ms)");
+                ~ outcome.totalMilliseconds.to!string ~ " ms" ~ (outcome.extracted ? ", " ~ outcome.extractor : "")
+                ~ ")");
     return AotStep(outcome.ok, true);
 }
 

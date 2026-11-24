@@ -921,6 +921,67 @@ unittest
             "module shop.web\nmodule shop.data\nknown flint.stereotype.Service\n");
 }
 
+@("only a compiler without -flint-aot-extract falls back to the describer; the fork's own errors are reported")
+unittest
+{
+    import flint_tool.engine.aot.extract : rejectsNativeSwitch;
+
+    expect(rejectsNativeSwitch("Error: unrecognized switch '-flint-aot-extract=/p/flint_aot_request.txt'\n"
+            ~ "       run `dmd` to print the compiler manual\n")).toBeTrue();
+    expect(rejectsNativeSwitch("ldc2: Unknown command line argument '-flint-aot-extract=r.txt'.  Try: 'ldc2 --help'"))
+        .toBeTrue();
+    const notImported = "Error: Flint AOT: module `shop.web` is not imported by the extraction root";
+    expect(rejectsNativeSwitch(notImported)).toBeFalse();
+    expect(rejectsNativeSwitch("Error: cannot read the Flint AOT request `/p/flint_aot_request.txt`")).toBeFalse();
+    // A message that merely names the switch, after lines were extracted, is not a missing switch.
+    expect(rejectsNativeSwitch("FLINT-AOT-MODULE {}\nError: unrecognized switch '-flint-aot-extract=x'")).toBeFalse();
+}
+
+version (Posix) @("a fork error fails the extraction without falling back; an unforked compiler falls back")
+unittest
+{
+    import std.algorithm.searching : canFind;
+    import std.conv : octal;
+    import std.file : setAttributes, write;
+    import std.path : buildPath, dirName;
+    import flint_tool.engine.aot.driver : AotRequest, runAot;
+
+    const project = copyFixture("sample");
+    scope (exit)
+        remove(project);
+    // A stand-in compiler: the real one, except that the native switch gets the given reply and exit status 1.
+    string standIn(string name, string reply)
+    {
+        const path = buildPath(dirName(project), name);
+        write(path ~ ".reply", reply ~ "\n");
+        write(path, "#!/bin/sh\nfor a in \"$@\"; do case \"$a\" in -flint-aot-extract=*) cat '"
+                ~ path ~ ".reply' >&2; exit 1;; esac; done\nexec '" ~ compiler() ~ "' \"$@\"\n");
+        setAttributes(path, octal!755);
+        return path;
+    }
+
+    AotRequest request;
+    request.root = project;
+    request.importPaths = [
+        "-I" ~ buildPath(repositoryRoot(), "tests", "aot", "annotations"), "-I" ~ runtimeSource()
+    ];
+    request.flags = ["-preview=dip1000"];
+    request.environmentKey = "test";
+    const notImported = "Error: Flint AOT: module `shop.web` is not imported by the extraction root";
+    request.compiler = standIn("fork-dmd", notImported);
+    auto failed = runAot(request);
+    expect(failed.ok).toBeFalse();
+    expect(failed.extractionErrors.canFind("Flint AOT: module `shop.web` is not imported")).toBeTrue();
+    expect(failed.extractor).toEqual("native extractor");
+
+    request.compiler = standIn("stock-dmd", "Error: unrecognized switch '-flint-aot-extract=x'");
+    auto fallback = runAot(request);
+    expect(fallback.extractionErrors).toEqual("");
+    expect(fallback.ok).toBeTrue();
+    expect(fallback.extracted).toEqual(6);
+    expect(fallback.extractor).toEqual("describer");
+}
+
 @("every generator diagnostic names its declaration")
 unittest
 {

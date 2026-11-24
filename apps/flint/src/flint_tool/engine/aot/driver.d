@@ -93,6 +93,10 @@ struct AotOutcome
     size_t written;
     /// Generated modules in the current output.
     size_t generated;
+    /// Which extractor ran this run's extraction compiles: "native extractor" (the forked DMD's
+    /// -flint-aot-extract), "describer", both joined by " and " when they differed, or empty when nothing was
+    /// extracted. Named in the build's summary line, for the benchmark receipts' provenance.
+    string extractor;
     /// Timings in milliseconds: the extraction compile(s) and the whole step.
     long extractMilliseconds;
     /// ditto
@@ -680,6 +684,17 @@ private string[] staleModules(scope const SourceModule[] sources, const string[s
     return stale;
 }
 
+/// The run's extractor so far (AotOutcome.extractor), after one more extraction compile.
+private string mergeExtractor(string sofar, bool native)
+{
+    import std.algorithm.searching : canFind;
+
+    const ran = native ? "native extractor" : "describer";
+    if (!sofar.length)
+        return ran;
+    return sofar.canFind(ran) ? sofar : "native extractor and describer";
+}
+
 /// A key over every module's extraction key: the generated output can only change when this does.
 // The environment the generated output depends on: the request's, plus the generator options that change it.
 private string outputEnvironment(const ref AotRequest request) pure nothrow
@@ -759,6 +774,7 @@ private bool extractInto(const ref AotRequest request, scope const SourceModule[
     auto result = extract(extraction);
     outcome.extractMilliseconds += result.milliseconds;
     outcome.extracted += result.models.length;
+    outcome.extractor = mergeExtractor(outcome.extractor, result.native);
     if (!result.ok)
     {
         outcome.extractionErrors = result.errors;

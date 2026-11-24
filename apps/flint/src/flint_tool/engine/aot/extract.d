@@ -143,13 +143,24 @@ string renderNativeRequest(scope const string[] modules, scope const string[] kn
     return text;
 }
 
+/// Whether a failed native extraction's output is a compiler without the switch: an unforked DMD ("unrecognized
+/// switch") or LDC ("Unknown command line argument"), and nothing extracted. Only that falls back to the describer;
+/// the fork's own errors (an unreadable request, a module the root does not import, an attribute that fails to
+/// evaluate) are extraction failures and are reported.
+bool rejectsNativeSwitch(string output)
+{
+    import std.algorithm.searching : canFind;
+
+    return (output.canFind("unrecognized switch '-flint-aot-extract=")
+            || output.canFind("Unknown command line argument '-flint-aot-extract=")) && !output.canFind(modulePrefix);
+}
+
 /// One extraction compile, natively (-flint-aot-extract, the forked DMD's walker over the analysed AST, which
 /// prints the describer's lines) or through the describer. `unsupported` is set when the compiler rejected the
 /// native switch, so the caller falls back.
 private ExtractionResult extractOnce(const ref ExtractionRequest request, bool native, out bool unsupported)
 {
     import core.time : MonoTime;
-    import std.algorithm.searching : canFind;
     import std.path : buildPath;
     import flint_tool.support.files : writeIfChanged;
     import flint.os : EnvVar;
@@ -180,9 +191,7 @@ private ExtractionResult extractOnce(const ref ExtractionRequest request, bool n
         "-I" ~ request.directory] ~ switches ~ request.flags ~ [root], launch);
     removeObject(object);
     result.milliseconds = (MonoTime.currTime - started).total!"msecs";
-    // An unforked DMD ("unrecognized switch") or LDC ("Unknown command line argument") names the switch.
-    if (native && outcome.started && !outcome.ok && outcome.combined().canFind("flint-aot-extract")
-            && !outcome.combined().canFind(modulePrefix))
+    if (native && outcome.started && !outcome.ok && rejectsNativeSwitch(outcome.combined()))
     {
         unsupported = true;
         return result;
