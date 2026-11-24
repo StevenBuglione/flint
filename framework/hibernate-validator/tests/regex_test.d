@@ -214,3 +214,13 @@ unittest
     const insensitive = compileRegex("[a-c]+", 0x02);
     assert(insensitive.matches("aBc") && !insensitive.matches("abd"));
 }
+
+@("a greedy loop over one character gives characters back one at a time")
+unittest
+{
+    assert(compileRegex("a*ab").matches("aaab") && !compileRegex("a*ab").matches("b"));
+    assert(compileRegex("[a-c]*cc").matches("abcbcc") && !compileRegex("[a-c]*cc").matches("abcbc"));
+    assert(compileRegex("x.*y.*z").matches("x--y--y--z") && !compileRegex("x.*y").matches("x\ny"));
+    assert(compileRegex("(?i)a*A").matches("aAaA") && compileRegex("é*éa").matches("éééa"));
+    assert(compileRegex("(a*)b\\1").matches("aabaa") && !compileRegex("(a*)b\\1").matches("aaba"));
+}

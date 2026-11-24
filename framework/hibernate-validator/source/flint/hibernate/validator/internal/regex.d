@@ -1149,6 +1149,7 @@ private enum I : ubyte
     atomic, // x: body start, y: continuation
     mark, // x: register: position at a loop iteration's start
     check, // x: register: fail an iteration that consumed nothing
+    span, // a greedy loop over one character: y: the character's op (char_, charCI, any or set), c and x its operands
 }
 
 private struct Inst
@@ -1293,6 +1294,17 @@ private struct Compiler
 
     private void loop(int body_, bool lazy_)
     {
+        const op = nodes[body_].op;
+        if (!lazy_ && (op == Op.char_ || op == Op.any || op == Op.set))
+        {
+            // x* over one character: one instruction consumes the longest run, and backtracking gives it back a
+            // character at a time, as the split/mark/check loop below would.
+            const at = here();
+            emitSimple(nodes[body_]);
+            const one = code[at];
+            code[at] = Inst(I.span, one.c, x: one.x, y: one.op);
+            return;
+        }
         const register = registers++;
         const top = add(Inst(I.split));
         const enter = here();
@@ -1401,9 +1413,12 @@ private struct Frame
 {
     int pc; // resume at pc, or -1 for an undo entry
     int pos;
-    int slot; // undo: captures (>= 0) or registers (-slot - 1)
-    int old;
+    int slot; // undo: captures (>= 0) or registers (-slot - 1); a span: where its run started
+    int old; // undo: the previous value; spanFrame for a span's resume point
 }
+
+// `Frame.old` of a span's resume point: resume at `pos`, then retry one character shorter down to `slot`.
+private enum spanFrame = int.min;
 
 // The backtracking stack of one run: its first frames inline, so a short match never allocates.
 private struct FrameStack
@@ -1499,25 +1514,47 @@ private struct Matcher
             record(inst, pos, stack);
             ++pc;
             return true;
-        case I.check:
-            ++pc;
-            return registers[inst.x] != pos;
-        case I.assert_:
-            ++pc;
-            return anchorHolds(cast(Anchor) inst.x, pos, inst.y != 0);
-        case I.backref:
-            ++pc;
-            return backrefAt(inst.x, inst.y != 0, pos);
         case I.look:
             pc = inst.y;
             return lookAround(inst, pos, stack);
         case I.atomic:
             pc = inst.y;
             return atomic(inst, pos, stack);
+        case I.span:
+            span(inst, pc, pos, stack);
+            return true;
         default:
             ++pc;
+            return test(inst, pos);
+        }
+    }
+
+    // The instructions that test the input and move on: check, assert_, backref, and one code point.
+    private bool test(ref const Inst inst, ref int pos) const scope pure nothrow @nogc
+    {
+        switch (inst.op)
+        {
+        case I.check:
+            return registers[inst.x] != pos;
+        case I.assert_:
+            return anchorHolds(cast(Anchor) inst.x, pos, inst.y != 0);
+        case I.backref:
+            return backrefAt(inst.x, inst.y != 0, pos);
+        default:
             return consume(inst, pos);
         }
+    }
+
+    // A greedy loop over one character: the longest run, with one resume point that gives back a character at a time.
+    private void span(ref const Inst inst, ref int pc, ref int pos, ref FrameStack stack) scope
+    {
+        const start = pos;
+        while (pos < text.length && accepts(cast(I) inst.y, inst.c, inst.x, text[pos]))
+            ++pos;
+        steps += pos - start; // the step budget still bounds the characters a match examines
+        if (pos > start)
+            stack.push(Frame(pc + 1, pos, start, spanFrame));
+        ++pc;
     }
 
     // char_, charCI, any and set: one code point.
@@ -1525,16 +1562,21 @@ private struct Matcher
     {
         if (pos >= text.length)
             return false;
-        const c = text[pos++];
-        if (inst.op == I.char_)
-            return c == inst.c;
-        if (inst.op == I.charCI)
-            return foldAscii(c) == inst.c;
-        if (inst.op == I.any)
-            return (inst.x & 1) || !isLineTerminator(c, (inst.x & 2) != 0);
-        if (c < 0x80)
-            return ((sets[inst.x].ascii[c >> 6] >> (c & 63)) & 1) != 0;
-        return contains(sets, inst.x, c);
+        return accepts(inst.op, inst.c, inst.x, text[pos++]);
+    }
+
+    // Whether the one-character instruction `op` (with operands `c` and `x`) accepts `ch`.
+    private bool accepts(I op, dchar c, int x, dchar ch) const scope pure nothrow @nogc
+    {
+        if (op == I.char_)
+            return ch == c;
+        if (op == I.charCI)
+            return foldAscii(ch) == c;
+        if (op == I.any)
+            return (x & 1) || !isLineTerminator(ch, (x & 2) != 0);
+        if (ch < 0x80)
+            return ((sets[x].ascii[ch >> 6] >> (ch & 63)) & 1) != 0;
+        return contains(sets, x, ch);
     }
 
     // save and mark: set a capture slot or a loop register, with an undo entry.
@@ -1565,11 +1607,20 @@ private struct Matcher
     }
 
     // Pops undo entries until a resume point; false when none is left.
-    private bool backtrack(ref FrameStack stack, ref int pc, ref int pos) scope pure nothrow @nogc
+    private bool backtrack(ref FrameStack stack, ref int pc, ref int pos) scope pure nothrow
     {
         while (!stack.empty)
         {
             const top = stack.pop();
+            if (top.pc >= 0 && top.old == spanFrame)
+            {
+                // A span gives back one character; the shorter runs stay for later backtracking.
+                pc = top.pc;
+                pos = top.pos - 1;
+                if (pos > top.slot)
+                    stack.push(Frame(top.pc, pos, top.slot, spanFrame));
+                return true;
+            }
             if (top.pc >= 0)
             {
                 pc = top.pc;
