@@ -1304,7 +1304,9 @@ def main(argv=None):
 
         idle_reported = [False]
         while time.monotonic() < deadline:
-            pending = sorted((e for e in entries() if e['status'] == 'pending'), key=queue_order)
+            # not_before (UTC, ISO 8601): an entry that must wait, such as a calibration session spread across the day.
+            pending = sorted((e for e in entries() if e['status'] == 'pending' and e.get('not_before', '') <= now()),
+                             key=queue_order)
             if not pending:
                 # An empty queue is a pause, not the end: entries are blocked and released all day, and a watcher that
                 # exits leaves the next pending entry unclaimed (2026-11-24: 37 minutes lost). --exit-when-empty

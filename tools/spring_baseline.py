@@ -295,6 +295,34 @@ def db_state_check(app, record_path, pairs, outdir, smoke=False):
     return out
 
 
+SESSIONS = BASELINES / 'calibration-sessions'
+
+
+def calibrate(app, samples, smoke=False, log=None):
+    """One calibration session (coordinator, 2026-11-24 10:35Z): `samples` Go calibration trials and a probe, appended
+    to benchmarks/spring/baselines/calibration-sessions/<app>.jsonl. Several sessions across idle gaps give the
+    between-session spread that sets the guard's bands; one capture's samples alone understate it."""
+    oha = Path(os.environ.get('OHA') or ROOT / '.tools' / 'oha-1.16.0' / 'oha')
+    spring_bench.build_go(app)
+    workload = load_bench.validate_spring_manifest(json.loads(HTTP_MANIFEST.read_text()), smoke).copy()
+    outdir = Path(os.environ.get('FLINT_CALIBRATION_RAW') or '/tmp/flint-calibration-raw')
+    outdir.mkdir(parents=True, exist_ok=True)
+    context = (spring_bench.postgres_cluster(workload['database_cpus'])
+               if spring_bench.app_row(app).get('database') == 'postgres' else contextlib.nullcontext())
+    with context as database:
+        trials = [calibration_trial(app, workload, oha, outdir, database, n, 'session', smoke) for n in range(samples)]
+    row = {'time': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()), 'app': app, 'smoke': smoke,
+           'fingerprint': fingerprint(app, 'go', ['http']), 'database_protocol': load_bench.DATABASE_PROTOCOL,
+           'calibration': {m: [t[m] for t in trials] for m in CALIBRATION_METRICS},
+           'probe': probe(workload['server_cpus'], samples=5)}
+    log = Path(log) if log else SESSIONS / f'{app}.jsonl'
+    log.parent.mkdir(parents=True, exist_ok=True)
+    with log.open('a') as stream:
+        stream.write(json.dumps(row) + '\n')
+    print(json.dumps({k: statistics.median(v) for k, v in row['calibration'].items()}))
+    return row
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest='command', required=True)
@@ -306,6 +334,11 @@ def main(argv=None):
     p.add_argument('--output-root', type=Path, default=BASELINES)
     p = sub.add_parser('check')
     p.add_argument('record', type=Path)
+    p = sub.add_parser('calibrate')
+    p.add_argument('--app', required=True)
+    p.add_argument('--samples', type=int, default=3)
+    p.add_argument('--smoke', action='store_true')
+    p.add_argument('--log', type=Path, help='the JSON-lines file to append to (default: the app\'s session log)')
     p = sub.add_parser('db-state-check')
     p.add_argument('--app', default='petclinic-rest')
     p.add_argument('--record', type=Path, required=True)
@@ -313,6 +346,9 @@ def main(argv=None):
     p.add_argument('--output', type=Path, required=True)
     p.add_argument('--smoke', action='store_true')
     args = parser.parse_args(argv)
+    if args.command == 'calibrate':
+        calibrate(args.app, args.samples, args.smoke, args.log)
+        return 0
     if args.command == 'db-state-check':
         db_state_check(args.app, args.record, args.pairs, args.output, args.smoke)
         return 0
