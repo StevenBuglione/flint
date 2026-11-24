@@ -9,8 +9,10 @@ itself is trusted where it can be recomputed:
 - `builds.json`: `measure_builds.py --spring`, production, nine trials per series; the two headlines, the
   incremental build and the Oz size are recomputed from the samples against the go_relative ceilings of
   policy/budgets.json;
-- `http.json`: `load_bench.py --manifest policy/spring-http-benchmark.json`, production; p99, peak RSS and CPU per
-  request at most 0.99 of Go's and throughput at least 1.01 times Go's, each a median ratio whose bootstrap 99%
+- `assembled.json`: `spring_bench.py assemble`, with no problems: every part at one source commit, production, the
+  gate's trial counts, and full coverage (it fails closed);
+- `http.json`: `load_bench.py --manifest policy/spring-http-benchmark.json`, production; p50, p99, peak RSS and CPU
+  per request at most 0.99 of Go's (p99.9 reported, not scored) and throughput at least 1.01 times Go's, each a median ratio whose bootstrap 99%
   upper bound must also hold;
 - `http-error-paths.json`: `load_bench.py --manifest policy/spring-error-paths-benchmark.json`, production; the
   404 and validation-error paths' p99 at most 0.99 of Go's (ADR-030 section 4);
@@ -57,8 +59,26 @@ def check_comparators(record, label, registered, failures):
             failures.append(f'{label}: measured a {name} comparator that differs from its registration')
 
 
+def check_assembly(directory, failures, report):
+    """`spring_bench.py assemble` writes assembled.json; the gate refuses evidence it did not assemble, or assembled
+    with problems (parts at different commits, wrong trial counts, gaps in coverage, missing parts)."""
+    manifest = load(directory, 'assembled.json', failures)
+    if manifest is None:
+        return
+    if manifest.get('schema') != 'flint.spring-evidence/2':
+        failures.append(f"assembled.json: schema {manifest.get('schema')}; reassemble with spring_bench.py assemble")
+        return
+    failures += [f'assembly: {problem}' for problem in manifest.get('problems', [])]
+    if manifest.get('missing') and not manifest.get('problems'):
+        failures.append(f"assembly: missing parts {manifest['missing']}")
+    if not manifest.get('commit'):
+        failures.append('assembly: the evidence names no single source commit')
+    report['source commit'] = manifest.get('commit')
+
+
 def spring_gate(directory):
     failures, report = [], {}
+    check_assembly(directory, failures, report)
     apps = list(spring_bench.registry()['apps'])
     failures += spring_bench.check_registry(apps)
     registered = json.loads(spring_bench.REGISTRY.read_text())['comparators'] if spring_bench.REGISTRY.is_file() else {}
@@ -144,10 +164,15 @@ def spring_gate(directory):
                 failures.append(f'http.json: {app} lacks Flint or Go series')
                 continue
             flint, go = measured['flint'], measured['go']
+            # p50 is scored at the same 0.99 as p99 (owner decision 4 of the resume plan, b349fb0a: a strengthening).
             report[f'http {app}'] = {
                 metric: ratio(flint[metric], go[metric], budgets[key], f'http {app} {metric}', failures)
-                for metric, key in (('p99_ms', 'p99_ratio_max'), ('peak_rss_bytes', 'peak_rss_ratio_max'),
-                                    ('cpu_ns_per_request', 'p99_ratio_max'))}
+                for metric, key in (('p50_ms', 'p99_ratio_max'), ('p99_ms', 'p99_ratio_max'),
+                                    ('peak_rss_bytes', 'peak_rss_ratio_max'), ('cpu_ns_per_request', 'p99_ratio_max'))}
+            # p99.9 is reported, never scored: one slow request in a thousand moves it.
+            if flint.get('p999_ms') and go.get('p999_ms'):
+                report[f'http {app}']['p999_ms (reported)'] = ratio(flint['p999_ms'], go['p999_ms'], float('inf'),
+                                                                    f'http {app} p999_ms', [])
             report[f'http {app}']['throughput'] = ratio(
                 [1 / x for x in flint['requests_per_second']], [1 / x for x in go['requests_per_second']],
                 1 / budgets['throughput_ratio_min'], f'http {app} throughput', failures)

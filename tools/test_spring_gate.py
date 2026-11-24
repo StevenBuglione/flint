@@ -17,7 +17,7 @@ def series(value):
 
 
 class SpringGate(unittest.TestCase):
-    def evidence(self, directory, flint_factor=0.5, mode='production', drop=None):
+    def evidence(self, directory, flint_factor=0.5, mode='production', drop=None, assembly=None):
         golden = spring_bench.sha256(spring_bench.golden_path('gs-rest-service'))
         registered = {'gs-rest-service': {'sha256': 'abc'}}
         for impl in spring_bench.IMPLEMENTATIONS:
@@ -32,7 +32,7 @@ class SpringGate(unittest.TestCase):
         (directory / 'builds.json').write_text(json.dumps({
             'mode': mode, 'status': 'passed', 'trials_per_series': 9, 'comparators': registered,
             'apps': {'gs-rest-service': {'go': go, 'flint': flint}}}))
-        metrics = {'p99_ms': 1.0, 'peak_rss_bytes': 1e7, 'cpu_ns_per_request': 1e4}
+        metrics = {'p50_ms': 0.5, 'p99_ms': 1.0, 'p999_ms': 2.0, 'peak_rss_bytes': 1e7, 'cpu_ns_per_request': 1e4}
         go_http = {k: series(v) for k, v in metrics.items()} | {'requests_per_second': series(1e5)}
         flint_http = {k: series(v * flint_factor) for k, v in metrics.items()} | {
             'requests_per_second': series(1e5 / flint_factor)}
@@ -45,6 +45,8 @@ class SpringGate(unittest.TestCase):
                      json.loads((spring_bench.ROOT / 'policy' / 'spring-error-paths-benchmark.json').read_text())['apps']}}))
         (directory / 'gc-matrix-gs-rest-service.json').write_text(json.dumps({
             'mode': mode, 'status': 'passed', 'settings': {'precise': {'suite': {'passed': 18, 'total': 18}}}}))
+        (directory / 'assembled.json').write_text(json.dumps(dict(
+            {'schema': 'flint.spring-evidence/2', 'commit': 'c' * 40, 'missing': [], 'problems': []}, **(assembly or {}))))
         if drop:
             (directory / drop).unlink()
         return registered
@@ -80,8 +82,24 @@ class SpringGate(unittest.TestCase):
     def test_slower_flint_fails_every_comparison(self):
         _, failures = self.gate(flint_factor=1.0)
         joined = ' | '.join(failures)
-        for label in ('primary', 'secondary', 'incremental', 'p99_ms', 'peak_rss_bytes', 'throughput', 'not-found'):
+        for label in ('primary', 'secondary', 'incremental', 'p50_ms', 'p99_ms', 'peak_rss_bytes', 'throughput',
+                      'not-found'):
             self.assertIn(label, joined)
+
+    def test_p999_is_reported_not_scored(self):
+        report, failures = self.gate()
+        self.assertEqual(failures, [])
+        self.assertIn('p999_ms (reported)', report['http gs-rest-service'])
+
+    def test_assembly_problems_and_missing_assembly_fail(self):
+        _, failures = self.gate(assembly={'problems': ['the parts were not all measured at one source commit']})
+        self.assertTrue(any(f.startswith('assembly: the parts were not') for f in failures))
+        _, failures = self.gate(assembly={'commit': None})
+        self.assertTrue(any('no single source commit' in f for f in failures))
+        _, failures = self.gate(drop='assembled.json')
+        self.assertTrue(any('assembled.json: missing' in f for f in failures))
+        _, failures = self.gate(assembly={'schema': 'flint.spring-evidence/1'})
+        self.assertTrue(any('reassemble' in f for f in failures))
 
     def test_smoke_and_missing_evidence_fail(self):
         _, failures = self.gate(mode='smoke')
@@ -109,6 +127,48 @@ class AssembleParts(unittest.TestCase):
             merged = spring_bench.merge_builds(paths)
             self.assertEqual((merged['mode'], merged['status']), ('mixed', 'failed'))
         self.assertEqual(len(spring_bench.merge_acceptance([(None, {'app': 'a'}), (None, [{'app': 'b'}, {'app': 'c'}])])), 3)
+
+
+class AssembleFailsClosed(unittest.TestCase):
+    @staticmethod
+    def part(entry, family, record, commit='a' * 40, file=None):
+        return {'entry': entry, 'family': family, 'record': record, 'commits': {commit},
+                'file': file or {'builds': 'builds.json', 'http': 'http.json'}.get(family, 'x.json')}
+
+    def builds(self, **extra):
+        return dict({'mode': 'production', 'status': 'passed', 'trials_per_series': 9, 'commit': 'a' * 12}, **extra)
+
+    def http(self, runs=9):
+        return {'mode': 'production', 'status': 'passed', 'effective_workload': {'runs': runs}}
+
+    def test_one_commit_production_and_trial_counts_pass(self):
+        parts = [self.part('b', 'builds', self.builds()), self.part('h', 'http', self.http()),
+                 self.part('e', 'error', self.http()), self.part('g', 'gc', self.http())]
+        self.assertEqual(spring_bench.consistency_problems(parts, 9), [])
+
+    def test_mismatched_commits_fail(self):
+        parts = [self.part('b', 'builds', self.builds()), self.part('h', 'http', self.http(), commit='b' * 40)]
+        problems = spring_bench.consistency_problems(parts, 9)
+        self.assertTrue(any('one source commit' in p for p in problems))
+
+    def test_trial_counts_and_self_reported_commit_fail(self):
+        parts = [self.part('b', 'builds', self.builds(trials_per_series=3)), self.part('h', 'http', self.http(runs=4)),
+                 self.part('c', 'builds', self.builds(commit='d' * 12))]
+        problems = ' | '.join(spring_bench.consistency_problems(parts, 9))
+        for text in ('3 trials per series', '4 runs', 'names commit dddd'):
+            self.assertIn(text, problems)
+
+    def test_smoke_part_fails(self):
+        problems = spring_bench.consistency_problems([self.part('h', 'http', dict(self.http(), mode='smoke'))], 9)
+        self.assertTrue(any('mode smoke' in p for p in problems))
+
+    def test_coverage_gaps_fail(self):
+        apps = sorted(spring_bench.registry()['apps'])
+        parts = [self.part('b', 'builds', dict(self.builds(), apps={apps[0]: {}}))]
+        problems = ' | '.join(spring_bench.coverage_problems(parts))
+        self.assertIn('builds: not covered', problems)
+        for family in ('http', 'error', 'gc', 'acceptance'):
+            self.assertIn(f'{family}: not covered', problems)
 
 
 class PlatformOnlyCache(unittest.TestCase):

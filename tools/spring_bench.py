@@ -603,63 +603,141 @@ def merge_gc(records):
     return merged
 
 
+def receipt_commits(directory):
+    """The source commits a certified run built and ran at: its builds' commits and its steps' harness revision."""
+    receipt = json.loads((directory / 'receipt.json').read_text())
+    commits = {row.get('commit') for row in receipt.get('builds', {}).values() if row.get('commit')}
+    commits |= {step.get('harness_commit') for step in receipt.get('summary', {}).get('steps', []) if step.get('harness_commit')}
+    return commits
+
+
+def consistency_problems(parts, http_runs):
+    """Resume plan rule 4 (owner decision, b349fb0a): the assembled evidence fails closed. Every part (builds, HTTP,
+    error and GC) must be measured at one source commit, in production mode, with the gate's trial counts, and the
+    parts together must cover every application, workload and setting the gate scores."""
+    problems = []
+    commits = {}
+    for part in parts:
+        commits.setdefault(tuple(sorted(part['commits'])), []).append(part['entry'])
+    if len(commits) != 1 or any(len(key) != 1 for key in commits):
+        problems.append('the parts were not all measured at one source commit: '
+                        + '; '.join(f"{', '.join(key) or 'no commit'}: {', '.join(sorted(ids))}" for key, ids in commits.items()))
+    for part in parts:
+        record, family = part['record'], part['family']
+        if family == 'acceptance':
+            continue  # scored case by case by the gate; an acceptance record has no mode
+        # Verdicts (a builds record's status fails with a losing budget) are the gate's to score; this is provenance.
+        if record.get('mode') != 'production':
+            problems.append(f"{part['entry']} {part['file']}: mode {record.get('mode')}; production required")
+        if family == 'builds':
+            if record.get('trials_per_series') != 9:
+                problems.append(f"{part['entry']} builds.json: {record.get('trials_per_series')} trials per series; 9 required")
+            claimed = record.get('commit')
+            if claimed and not any(c.startswith(claimed) or claimed.startswith(c) for c in part['commits']):
+                problems.append(f"{part['entry']} builds.json names commit {claimed}, its receipt {sorted(part['commits'])}")
+        elif family in ('http', 'error', 'gc'):
+            runs = record.get('effective_workload', {}).get('runs')
+            if runs != http_runs:
+                problems.append(f"{part['entry']} {part['file']}: {runs} runs; the manifest's {http_runs} required")
+    return problems
+
+
+def coverage_problems(parts):
+    problems = []
+    apps = set(registry()['apps'])
+    measured = {family: set() for family in ('builds', 'http', 'error', 'gc', 'acceptance')}
+    for part in parts:
+        record = part['record']
+        if part['family'] == 'gc':
+            measured['gc'] |= {(record.get('app'), setting) for setting in record.get('settings', {})}
+        elif part['family'] == 'acceptance':
+            for row in record if isinstance(record, list) else [record]:
+                measured['acceptance'].add((row.get('app'), row.get('implementation')))
+        else:
+            measured[part['family']] |= set(record.get('apps', {}))
+    wanted = {
+        'builds': apps,
+        'http': set(json.loads((ROOT / 'policy' / 'spring-http-benchmark.json').read_text())['apps']) & apps,
+        'error': set(json.loads((ROOT / 'policy' / 'spring-error-paths-benchmark.json').read_text())['apps']),
+        'acceptance': {(app, impl) for app in apps for impl in IMPLEMENTATIONS}}
+    matrix = json.loads((ROOT / 'benchmarks' / 'spring' / 'gc-matrix.json').read_text())
+    wanted['gc'] = {(app, setting) for app in matrix['apps'] for setting in matrix['settings']}
+    for family, want in wanted.items():
+        missing = want - measured[family]
+        if missing:
+            problems.append(f'{family}: not covered by any certified part: '
+                            + ', '.join(sorted(' '.join(item) if isinstance(item, tuple) else item for item in missing)))
+    return problems
+
+
 def assemble(output):
     """Copy the newest certified outputs of the Phase 1 entries into `output`, as gates.py --gate spring reads it.
-    Entries with no certified run are reported; the gate then fails on the missing files."""
+    It fails closed: a missing part, parts at different commits, a wrong trial count or a gap in coverage is a
+    problem in assembled.json, which the gate refuses."""
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
-    manifest = {'schema': 'flint.spring-evidence/1', 'assembled': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
-                'sources': {}, 'missing': []}
-    errors = []
-    for entry_id, files in PHASE1_FILES.items():
+    manifest = {'schema': 'flint.spring-evidence/2', 'assembled': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
+                'sources': {}, 'missing': [], 'commits': {}}
+    queue = ROOT / 'benchmarks' / 'spring' / 'queue'
+    parts = []
+
+    def certified(entry_id):
         directory = certified_results(entry_id)
         if directory is None:
             manifest['missing'].append(entry_id)
+            return None
+        manifest['sources'][entry_id] = {'directory': str(directory.relative_to(ROOT)),
+                                         'receipt_sha256': sha256(directory / 'receipt.json')}
+        manifest['commits'][entry_id] = sorted(receipt_commits(directory))
+        return directory
+
+    def add(entry_id, directory, name, family):
+        path = directory / name
+        if not path.is_file():
+            manifest['missing'].append(f'{entry_id}/{name}')
+            return
+        parts.append({'entry': entry_id, 'file': name, 'path': path, 'family': family,
+                      'record': json.loads(path.read_text()), 'commits': receipt_commits(directory)})
+
+    for entry_id, files in PHASE1_FILES.items():
+        directory = certified(entry_id)
+        for name in files if directory else []:
+            add(entry_id, directory, name, 'error')
+    families = {'builds.json': 'builds', 'http.json': 'http'}
+    for prefix, files in PHASE1_SPLIT.items():
+        for entry in sorted(queue.glob(prefix + '*.json')):
+            directory = certified(entry.stem)
+            for name in files if directory else []:
+                add(entry.stem, directory, name, families.get(name, 'acceptance'))
+    for entry in sorted(queue.glob(PHASE1_GC_PREFIX + '*.json')):
+        directory = certified(entry.stem)
+        if directory is None:
             continue
-        manifest['sources'][entry_id] = str(directory.relative_to(ROOT))
-        for name in files:
-            if (directory / name).is_file():
-                if entry_id.startswith('error-'):
-                    errors.append((directory / name, json.loads((directory / name).read_text())))
-                else:
-                    shutil.copy2(directory / name, output / name)
+        found = sorted(directory.glob('gc-matrix-*.json'))
+        if not found:
+            manifest['missing'].append(f'{entry.stem}/gc-matrix-*.json')
+        for path in found:
+            add(entry.stem, directory, path.name, 'gc')
+
+    errors = [(p['path'], p['record']) for p in parts if p['family'] == 'error']
     if errors:
         (output / 'http-error-paths.json').write_text(json.dumps(merge_http(errors), indent=2) + '\n')
-    queue = ROOT / 'benchmarks' / 'spring' / 'queue'
-    commits = {}
-    for prefix, files in PHASE1_SPLIT.items():
-        found = {name: [] for name in files}
-        for entry in sorted(queue.glob(prefix + '*.json')):
-            directory = certified_results(entry.stem)
-            if directory is None:
-                manifest['missing'].append(entry.stem)
-                continue
-            manifest['sources'][entry.stem] = str(directory.relative_to(ROOT))
-            receipt = json.loads((directory / 'receipt.json').read_text())
-            commits[entry.stem] = sorted({row.get('commit') for row in receipt.get('builds', {}).values()})
-            for name in files:
-                if (directory / name).is_file():
-                    found[name].append((directory / name, json.loads((directory / name).read_text())))
-        for name, records in found.items():
-            if records:
-                merged = PHASE1_MERGE.get(name, merge_acceptance)(records)
-                (output / name).write_text(json.dumps(merged, indent=2) + '\n')
-    # The parts are pinned to one commit where every port passes exactly; parts measured elsewhere are flagged.
-    manifest['commits'] = commits
-    if len({tuple(c) for c in commits.values()}) > 1:
-        manifest['problems'] = [f'the per-application parts were measured at different commits: {commits}']
-    parts = []
-    for entry in sorted(queue.glob(PHASE1_GC_PREFIX + '*.json')):
-        directory = certified_results(entry.stem)
-        if directory is None:
-            manifest['missing'].append(entry.stem)
-            continue
-        manifest['sources'][entry.stem] = str(directory.relative_to(ROOT))
-        for path in directory.glob('gc-matrix-*.json'):
-            parts.append((path, json.loads(path.read_text())))
-    for app in sorted({record['app'] for _, record in parts}):
-        merged = merge_gc([(path, record) for path, record in parts if record['app'] == app])
+    for name in PHASE1_SPLIT['phase1-builds-'] + PHASE1_SPLIT['phase1-http-']:
+        records = [(p['path'], p['record']) for p in parts if p['file'] == name]
+        if records:
+            merged = PHASE1_MERGE.get(name, merge_acceptance)(records)
+            (output / name).write_text(json.dumps(merged, indent=2) + '\n')
+    for app in sorted({p['record']['app'] for p in parts if p['family'] == 'gc'}):
+        merged = merge_gc([(p['path'], p['record']) for p in parts if p['family'] == 'gc' and p['record']['app'] == app])
         (output / f'gc-matrix-{app}.json').write_text(json.dumps(merged, indent=2) + '\n')
+
+    http_runs = json.loads((ROOT / 'policy' / 'spring-http-benchmark.json').read_text())['workload']['runs']
+    problems = [f'missing certified part: {item}' for item in manifest['missing']]
+    problems += consistency_problems(parts, http_runs) + coverage_problems(parts)
+    commits = {c for p in parts for c in p['commits']}
+    manifest['commit'] = next(iter(commits)) if len(commits) == 1 else None
+    manifest['problems'] = problems
+    manifest['status'] = 'failed' if problems else 'passed'
     (output / 'assembled.json').write_text(json.dumps(manifest, indent=2) + '\n')
     return manifest
 
@@ -746,7 +824,7 @@ def main(argv=None):
     if args.command == 'assemble':
         manifest = assemble(args.output)
         print(json.dumps(manifest, indent=2))
-        return 0
+        return 1 if manifest['problems'] else 0
     if args.command == 'check-registry':
         problems = check_registry()
         for problem in problems:
