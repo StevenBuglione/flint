@@ -52,5 +52,5 @@
   "estimate_minutes": 165,
   "tree_note": "Resume plan 1.5: every baseline part builds in the same private tree at B (flint, mold, the fork build), so all parts measure one toolchain.",
   "pinned": "B, ca5fbd4a46edd8e558d5876830197f23b5db5295 (coordinator, 2026-11-24 02:06Z)",
-  "blocked_on": "the same decision as phase1-http-petclinic: it loads petclinic-rest on the Spring workload, whose 5,000 req/s fixed-rate warm-up Flint's petclinic-rest cannot sustain at B (about 1,620 req/s, CPU-bound), so load_bench would refuse it after the window"
+  "blocked_on": "superseded by owner refinement b442b9f9: a one-time pinned Java context capture per app and target (JVM, JVM AOT, native) with Go interleaved in every trial, under benchmarks/spring/evidence/java-context/; queued after the ADR-032 Go change and B's batch (decision 096c82ba)"
 }
