@@ -60,6 +60,12 @@ unittest
     assert(captured.last() == "now visible");
     assert(!LoggerFactory.getLogger("org.other.Thing").isDebugEnabled());
     provider.loggers().setLevel("org.example", Level.INFO);
+    // Each logger caches its effective level until a level changes, the root's included.
+    assert(!log.isDebugEnabled() && log.isInfoEnabled());
+    provider.loggers().setLevel("ROOT", Level.TRACE);
+    assert(LoggerFactory.getLogger("org.other.Thing").isTraceEnabled() && !log.isDebugEnabled());
+    provider.loggers().setLevel("ROOT", Level.INFO);
+    assert(!LoggerFactory.getLogger("org.other.Thing").isDebugEnabled());
 }
 
 @("Logger: a disabled level boxes and renders nothing")

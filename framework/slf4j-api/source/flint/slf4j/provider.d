@@ -96,6 +96,8 @@ final class FlintLogLoggerFactory : ILoggerFactory
     private FlintLogLogger[string] loggerMap;
     private Level[string] levels;
     private Level rootLevel = Level.INFO;
+    // Bumped by every level change, so each logger's cached effective level knows when it is stale.
+    private uint levelGeneration = 1;
     private Appender appender;
     private FiberMDCAdapter mdc;
 
@@ -127,7 +129,14 @@ final class FlintLogLoggerFactory : ILoggerFactory
                 rootLevel = level;
             else
                 levels[name] = level;
+            imported!"core.atomic".atomicStore(levelGeneration, levelGeneration + 1); // writers hold the monitor
         }
+    }
+
+    // The generation of the level configuration a cached effective level was computed from.
+    private uint generation() const nothrow @nogc
+    {
+        return imported!"core.atomic".atomicLoad(levelGeneration);
     }
 
     /// The effective level of `name`: the nearest configured ancestor's (`a.b` for `a.b.C`), else the root's.
@@ -168,6 +177,10 @@ final class FlintLogLoggerFactory : ILoggerFactory
 final class FlintLogLogger : AbstractLogger, LoggingEventAware
 {
     private FlintLogLoggerFactory factory;
+    // The effective level and the configuration generation it was computed from, in one word (generation << 8 |
+    // level), so that every thread reads a consistent pair without a lock; 0 before the first check. Logback keeps
+    // each logger's effectiveLevelInt the same way.
+    private ulong cachedLevel;
 
     private this(FlintLogLoggerFactory factory, string name)
     {
@@ -177,7 +190,16 @@ final class FlintLogLogger : AbstractLogger, LoggingEventAware
 
     private bool enabled(Level level)
     {
-        return level >= factory.effectiveLevel(name);
+        import core.atomic : atomicLoad, atomicStore;
+
+        const generation = factory.generation();
+        auto cached = atomicLoad(cachedLevel);
+        if ((cached >> 8) != generation)
+        {
+            cached = (cast(ulong) generation << 8) | cast(ubyte) factory.effectiveLevel(name);
+            atomicStore(cachedLevel, cached);
+        }
+        return level >= cast(Level)(cached & 0xFF);
     }
 
     /// Is the logger instance enabled for the TRACE level?
