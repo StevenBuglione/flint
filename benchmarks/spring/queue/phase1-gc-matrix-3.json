@@ -1,7 +1,7 @@
 {
   "schema": "flint.measure-queue/1",
   "created": "2026-11-23",
-  "status": "pending",
+  "status": "blocked",
   "window": "natural",
   "requested_by": "ADR-030 section 8, Phase 1 exit (coordinator's plan, 2026-11-23 15:20Z)",
   "builds": {
@@ -44,5 +44,6 @@
     ]
   },
   "tree_note": "Resume plan 1.5: every baseline part builds in the same private tree at B (flint, mold, the fork build), so all parts measure one toolchain.",
-  "pinned": "B, ca5fbd4a46edd8e558d5876830197f23b5db5295 (coordinator, 2026-11-24 02:06Z)"
+  "pinned": "B, ca5fbd4a46edd8e558d5876830197f23b5db5295 (coordinator, 2026-11-24 02:06Z)",
+  "blocked_on": "the same decision as phase1-http-petclinic: it loads petclinic-rest on the Spring workload, whose 5,000 req/s fixed-rate warm-up Flint's petclinic-rest cannot sustain at B (about 1,620 req/s, CPU-bound), so load_bench would refuse it after the window"
 }
