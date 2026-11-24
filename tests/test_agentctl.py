@@ -78,6 +78,14 @@ class AgentctlTests(unittest.TestCase):
         self.assertEqual(output.strip(), 'sent to web-http')
         self.assertEqual((self.root / 'inbox' / 'coordinator.md').read_text(), '')
 
+    def test_placeholder_and_self_addressed_mail_is_refused(self):
+        for body in ('noop', 'NOOP', ' ping '):
+            with self.assertRaises(SystemExit):
+                self.run_cli('send', '--from', 'web-http', '--to', 'coordinator', body)
+        with self.assertRaises(SystemExit):
+            self.run_cli('send', '--from', 'coordinator', '--to', 'coordinator', 'real text')
+        self.assertEqual((self.root / 'inbox' / 'coordinator.md').read_text(), '')
+
     def test_handoff_keeps_history_and_refreshes_the_heartbeat(self):
         self.run_cli('claim', 'web-http', '--agent', 'codex-web', '--harness', 'codex')
         self.run_cli('handoff', 'web-http', '--agent', 'codex-web', stdin='## Next\n- wire accept-count\n')

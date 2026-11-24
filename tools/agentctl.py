@@ -48,6 +48,7 @@ from pathlib import Path
 
 DEFAULT_TTL_MIN = 45
 HARNESSES = ('claude', 'codex', 'human', 'other')
+PLACEHOLDER_BODIES = frozenset({'noop', 'no-op', 'test', 'ping', 'x', '.'})
 
 
 def utc_now() -> str:
@@ -183,6 +184,12 @@ class Store:
         message = message.strip()
         if not message:
             raise SystemExit('agentctl: empty message')
+        # Placeholder bodies are never real mail. Three stray "noop" lines were posted under other
+        # roles' names on 2026-11-24, so refuse them rather than log a message nobody sent.
+        if message.lower() in PLACEHOLDER_BODIES:
+            raise SystemExit(f'agentctl: refusing placeholder message {message!r}; send real text')
+        if recipients == [sender]:
+            raise SystemExit(f'agentctl: {sender} cannot send mail to itself')
         with self.locked():
             if recipients == ['all']:
                 recipients = sorted(set(self.roles()) | {p.stem for p in (self.root / 'inbox').glob('*.md')})
