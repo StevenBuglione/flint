@@ -21,7 +21,7 @@ module flint.java.util;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : TypeKind;
 import flint.engine.aot.name : typeNameOf;
-import flint.engine.aot.objects : statelessInstance;
+import flint.engine.aot.objects : assumeClass, assumeClasses, asObjects, objectEquals, statelessInstance;
 import flint.java.lang : ClassCastException, IllegalArgumentException, IndexOutOfBoundsException, Iterable,
     NullPointerException, RuntimeException, UnsupportedOperationException, javaEquals, javaHashCode, valueOf;
 import flint.java.util.stream : Stream;
@@ -993,7 +993,7 @@ abstract class AbstractList(T) : AbstractCollection!T, List!T
 }
 
 /// Java's `Collections.EMPTY_LIST`: no fields, so one instance serves every caller (`emptyList`).
-private final class EmptyList(T) : AbstractList!T
+private final class EmptyList(T) if (!isErasedElement!T) : AbstractList!T
 {
     override T get(int index)
     {
@@ -1032,7 +1032,7 @@ private final class EmptyList(T) : AbstractList!T
     }
 }
 
-private final class ImmutableList(T) : AbstractList!T
+private final class ImmutableList(T) if (!isErasedElement!T) : AbstractList!T
 {
     private T[] items;
 
@@ -1085,7 +1085,7 @@ private void checkIndex(int index, int length)
 }
 
 /// Java's `ArrayList`: a resizable array.
-class ArrayList(T) : AbstractList!T
+class ArrayList(T) if (!isErasedElement!T) : AbstractList!T
 {
     /// Descriptor hook: storage is private, not JSON properties.
     enum __flintOpaque = true;
@@ -1199,6 +1199,577 @@ class ArrayList(T) : AbstractList!T
     {
         if (minCapacity > 0)
             items.reserve(minCapacity);
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Erased lists of a class (playbook B-1): Java's erasure for class element types
+
+/++
+Whether lists of `T` are erased: `T` is a class. Java erases every `List<E>` to one implementation over `Object`;
+Flint does the same for class elements, so `ArrayList!Owner` and `ArrayList!Pet` share `ErasedArrayList`'s code and
+add only thin typed methods (no per-element cast: a class reference is the object's address). Interface, struct and
+scalar elements keep the template implementations (`AbstractList!T`).
++/
+enum bool isErasedElement(T) = is(T == class);
+
+/++
+The non-template part of an erased list of a class: everything that needs only `Object` (search, `toString`, boxing,
+bounds), over `objectAt` and `size`. No fields, so a stateless list (`EmptyList`) can share one instance.
++/
+abstract class ErasedList : RawCollection
+{
+    /// The element at `index`. Throws `IndexOutOfBoundsException`.
+    abstract Object objectAt(int index);
+    /// How many elements.
+    abstract int size();
+    /// Java's `List.equals`, typed by the facade.
+    abstract bool equals(Object o);
+    /// Java's `List.hashCode`, typed by the facade (an element's `hashCode` may be its class's own).
+    abstract int hashCode();
+
+    /// Java's `isEmpty`.
+    bool isEmpty()
+    {
+        return size() == 0;
+    }
+
+    /// A list is not a set.
+    bool isSet()
+    {
+        return false;
+    }
+
+    /// The first index of an element equal to `o`, or -1.
+    final int indexOfObject(Object o)
+    {
+        foreach (i; 0 .. size())
+            if (objectEquals(objectAt(i), o))
+                return i;
+        return -1;
+    }
+
+    /// The last index of an element equal to `o`, or -1.
+    final int lastIndexOfObject(Object o)
+    {
+        for (int i = size() - 1; i >= 0; i--)
+            if (objectEquals(objectAt(i), o))
+                return i;
+        return -1;
+    }
+
+    /// The elements from `fromIndex` to `toIndex` as new storage. Throws `IndexOutOfBoundsException`.
+    final Object[] objectsBetween(int fromIndex, int toIndex)
+    {
+        if (fromIndex < 0 || toIndex > size() || fromIndex > toIndex)
+            throw new IndexOutOfBoundsException("fromIndex: " ~ valueOf(
+                    fromIndex) ~ ", toIndex: " ~ valueOf(toIndex) ~ ", size: " ~ valueOf(size()));
+        auto result = new Object[toIndex - fromIndex];
+        foreach (i, ref e; result)
+            e = objectAt(fromIndex + cast(int) i);
+        return result;
+    }
+
+    /// Every element boxed as an `Any` of the element type named `typeName`.
+    final Any[] objectsToAny(string typeName)
+    {
+        auto result = new Any[size()];
+        foreach (i, ref e; result)
+            e = Any.ofObject(objectAt(cast(int) i), typeName);
+        return result;
+    }
+
+    /// Whether `o` is a list of the same size whose elements equal these in order (`that` reads its elements).
+    final bool equalsElements(int thatSize, scope Object delegate(int) @safe that)
+    {
+        if (thatSize != size())
+            return false;
+        foreach (i; 0 .. thatSize)
+            if (!objectEquals(objectAt(i), that(i)))
+                return false;
+        return true;
+    }
+
+    /// `[a, b, c]`, each element as `String.valueOf` renders it.
+    override string toString()
+    {
+        string result = "[";
+        foreach (i; 0 .. size())
+        {
+            auto e = objectAt(i);
+            if (i)
+                result ~= ", ";
+            result ~= e is this ? "(this Collection)" : valueOf(e);
+        }
+        return result ~ "]";
+    }
+
+    override bool opEquals(Object o)
+    {
+        return equals(o);
+    }
+
+    override size_t toHash() @safe nothrow
+    {
+        try
+            return cast(uint) hashCode();
+        catch (Exception)
+            return 0;
+    }
+}
+
+/// The non-template storage and mutations of an erased list of a class: elements as `Object`s, every one a `T`.
+abstract class ErasedArrayList : ErasedList
+{
+    // Only typed facades in this module store here, each storing only its own T: the erasure invariant.
+    private Object[] items;
+
+    override Object objectAt(int index)
+    {
+        checkIndex(index, cast(int) items.length);
+        return items[index];
+    }
+
+    override int size()
+    {
+        return cast(int) items.length;
+    }
+
+    private void insertObject(int index, Object element)
+    {
+        if (index < 0 || index > items.length)
+            throw new IndexOutOfBoundsException("Index: " ~ valueOf(index) ~ ", Size: " ~ valueOf(cast(int) items
+                    .length));
+        items ~= element;
+        foreach_reverse (i; index + 1 .. items.length)
+            items[i] = items[i - 1];
+        items[index] = element;
+    }
+
+    private Object removeObjectAt(int index)
+    {
+        checkIndex(index, cast(int) items.length);
+        auto removed = items[index];
+        foreach (i; index + 1 .. items.length)
+            items[i - 1] = items[i];
+        items = items[0 .. $ - 1];
+        return removed;
+    }
+
+    private bool removeObjectsIf(scope bool delegate(Object) @safe filter)
+    {
+        size_t kept;
+        foreach (e; items)
+            if (!filter(e))
+                items[kept++] = e;
+        const changed = kept != items.length;
+        items = items[0 .. kept];
+        return changed;
+    }
+
+    private void sortObjects(scope int delegate(Object, Object) @safe compare)
+    {
+        stableSort(items, compare);
+    }
+}
+
+/++
+The typed methods of an erased list of class `T` over `ErasedList`: each reads or writes through the `Object`
+operations and views elements as `T`. `mutable` lists (`ArrayList`) write their `ErasedArrayList` storage; the
+others throw `UnsupportedOperationException` from every mutator, as Java's unmodifiable lists do.
++/
+private mixin template ErasedListMethods(T, bool mutable)
+{
+    T get(int index)
+    {
+        return assumeClass!T(objectAt(index));
+    }
+
+    static if (mutable)
+    {
+        T set(int index, T element)
+        {
+            checkIndex(index, cast(int) items.length);
+            auto previous = items[index];
+            items[index] = element;
+            return assumeClass!T(previous);
+        }
+
+        void add(int index, T element)
+        {
+            insertObject(index, element);
+        }
+
+        bool add(T e)
+        {
+            items ~= e;
+            return true;
+        }
+
+        T removeAt(int index)
+        {
+            return assumeClass!T(removeObjectAt(index));
+        }
+
+        bool remove(T o)
+        {
+            const index = indexOfObject(o);
+            if (index < 0)
+                return false;
+            removeAt(index);
+            return true;
+        }
+
+        bool removeIf(bool delegate(T) @safe filter)
+        {
+            return removeObjectsIf((Object e) => filter(assumeClass!T(e)));
+        }
+
+        void clear()
+        {
+            items = null;
+        }
+
+        T[] toArray()
+        {
+            return assumeClasses!T(items).dup;
+        }
+
+        void sort(Comparator!T c)
+        {
+            if (c is null)
+                sortObjects((Object a, Object b) => compareNatural(assumeClass!T(a), assumeClass!T(b)));
+            else
+                sortObjects((Object a, Object b) => c.compare(assumeClass!T(a), assumeClass!T(b)));
+        }
+    }
+    else
+    {
+        T set(int, T)
+        {
+            throw new UnsupportedOperationException();
+        }
+
+        void add(int, T)
+        {
+            throw new UnsupportedOperationException();
+        }
+
+        bool add(T e)
+        {
+            add(size(), e);
+            return true;
+        }
+
+        T removeAt(int)
+        {
+            throw new UnsupportedOperationException();
+        }
+
+        bool remove(T o)
+        {
+            throw new UnsupportedOperationException();
+        }
+
+        bool removeIf(bool delegate(T) @safe filter)
+        {
+            throw new UnsupportedOperationException();
+        }
+
+        void clear()
+        {
+            throw new UnsupportedOperationException();
+        }
+
+        T[] toArray()
+        {
+            auto result = new T[size()];
+            foreach (i, ref e; result)
+                e = get(cast(int) i);
+            return result;
+        }
+
+        void sort(Comparator!T c)
+        {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    int indexOf(T o)
+    {
+        return indexOfObject(o);
+    }
+
+    int lastIndexOf(T o)
+    {
+        return lastIndexOfObject(o);
+    }
+
+    bool contains(T o)
+    {
+        return indexOfObject(o) >= 0;
+    }
+
+    bool containsAll(Collection!T c)
+    {
+        for (auto it = c.iterator(); it.hasNext();)
+            if (!contains(it.next()))
+                return false;
+        return true;
+    }
+
+    bool addAll(Collection!T c)
+    {
+        bool changed;
+        foreach (e; c.toArray())
+            changed |= add(e);
+        return changed;
+    }
+
+    bool removeAll(Collection!T c)
+    {
+        return removeIf((T e) => c.contains(e));
+    }
+
+    bool retainAll(Collection!T c)
+    {
+        return removeIf((T e) => !c.contains(e));
+    }
+
+    List!T subList(int fromIndex, int toIndex)
+    {
+        auto result = new ArrayList!T();
+        result.items = objectsBetween(fromIndex, toIndex);
+        return result;
+    }
+
+    T getFirst()
+    {
+        if (size() == 0)
+            throw new NoSuchElementException();
+        return get(0);
+    }
+
+    T getLast()
+    {
+        if (size() == 0)
+            throw new NoSuchElementException();
+        return get(size() - 1);
+    }
+
+    Iterator!T iterator()
+    {
+        return new ErasedListIterator!T(this);
+    }
+
+    void forEach(void delegate(T) @safe action)
+    {
+        for (int i = 0; i < size(); i++)
+            action(get(i));
+    }
+
+    int opApply(scope int delegate(T) @safe dg)
+    {
+        for (int i = 0; i < size(); i++)
+            if (const result = dg(get(i)))
+                return result;
+        return 0;
+    }
+
+    Stream!T stream()
+    {
+        return Stream!T.ofArray(toArray());
+    }
+
+    Any[] toAnyArray()
+    {
+        return objectsToAny(typeNameOf!T);
+    }
+
+    void addAny(Any element)
+    {
+        add(element.get!T);
+    }
+
+    string elementTypeName()
+    {
+        return typeNameOf!T;
+    }
+
+    override bool equals(Object o)
+    {
+        if (o is this)
+            return true;
+        auto that = cast(List!T) o;
+        return that !is null && equalsElements(that.size(), (int i) => cast(Object) that.get(i));
+    }
+
+    override int hashCode()
+    {
+        int h = 1;
+        foreach (i; 0 .. size())
+            h = 31 * h + javaHashCode(get(i));
+        return h;
+    }
+}
+
+/// The iterator of an erased list: `AbstractList`'s, reading through the list's `get` and removing with `removeAt`.
+private final class ErasedListIterator(T) : Iterator!T
+{
+    private List!T list;
+    private int cursor;
+    private int last = -1;
+
+    this(List!T list) pure nothrow @nogc
+    {
+        this.list = list;
+    }
+
+    bool hasNext()
+    {
+        return cursor < list.size();
+    }
+
+    T next()
+    {
+        if (cursor >= list.size())
+            throw new NoSuchElementException();
+        last = cursor;
+        return list.get(cursor++);
+    }
+
+    void remove()
+    {
+        if (last < 0)
+            throw new IllegalStateException();
+        list.removeAt(last);
+        cursor = last;
+        last = -1;
+    }
+}
+
+/// Java's `ArrayList` of a class: the erased storage and `ErasedListMethods`.
+class ArrayList(T) if (isErasedElement!T) : ErasedArrayList, List!T
+{
+    /// Descriptor hook: storage is private, not JSON properties.
+    enum __flintOpaque = true;
+
+    mixin ErasedListMethods!(T, true) erased;
+    // Java's remove(T) from the methods and List's remove(int index) in one overload set.
+    alias remove = erased.remove;
+    alias remove = List!T.remove;
+
+    /// An empty list.
+    this() pure nothrow @nogc
+    {
+    }
+
+    /// An empty list with room for `initialCapacity` elements.
+    this(int initialCapacity)
+    {
+        if (initialCapacity < 0)
+            throw new IllegalArgumentException("Illegal Capacity: " ~ valueOf(initialCapacity));
+        items.reserve(initialCapacity);
+    }
+
+    /// A list of `c`'s elements, in its iteration order.
+    this(Collection!T c)
+    {
+        items = asObjects(c.toArray());
+    }
+
+    /// A list of a copy of `elements` (the D array conversion of R10).
+    this(T[] elements) pure nothrow
+    {
+        items = asObjects(elements.dup);
+    }
+
+    override T get(int index)
+    {
+        checkIndex(index, cast(int) items.length);
+        return assumeClass!T(items[index]);
+    }
+
+    /// Ensure room for `minCapacity` elements.
+    void ensureCapacity(int minCapacity)
+    {
+        if (minCapacity > 0)
+            items.reserve(minCapacity);
+    }
+}
+
+/// An unmodifiable list of a class over its own array (`List.of`, `copyOf`, `singletonList`).
+private final class ImmutableList(T) if (isErasedElement!T) : ErasedArrayList, List!T
+{
+    mixin ErasedListMethods!(T, false) erased;
+    // Java's remove(T) from the methods and List's remove(int index) in one overload set.
+    alias remove = erased.remove;
+    alias remove = List!T.remove;
+
+    this(T[] items) pure nothrow @nogc
+    {
+        this.items = asObjects(items);
+    }
+
+    override T[] toArray()
+    {
+        return assumeClasses!T(items).dup;
+    }
+}
+
+/// Java's `Collections.EMPTY_LIST` of a class: no fields, so one instance serves every caller.
+private final class EmptyList(T) if (isErasedElement!T) : ErasedList, List!T
+{
+    mixin ErasedListMethods!(T, false) erased;
+    // Java's remove(T) from the methods and List's remove(int index) in one overload set.
+    alias remove = erased.remove;
+    alias remove = List!T.remove;
+
+    override Object objectAt(int index)
+    {
+        checkIndex(index, 0);
+        assert(false, "checkIndex throws for an empty list");
+    }
+
+    override int size()
+    {
+        return 0;
+    }
+
+    override T[] toArray()
+    {
+        return null;
+    }
+}
+
+/// `Collections.unmodifiableList` of a class: reads through to `backing`, every mutator throws.
+private final class UnmodifiableList(T) if (isErasedElement!T) : ErasedList, List!T
+{
+    mixin ErasedListMethods!(T, false) erased;
+    // Java's remove(T) from the methods and List's remove(int index) in one overload set.
+    alias remove = erased.remove;
+    alias remove = List!T.remove;
+
+    private List!T backing;
+
+    this(List!T backing) pure nothrow @nogc
+    {
+        this.backing = backing;
+    }
+
+    override Object objectAt(int index)
+    {
+        return backing.get(index);
+    }
+
+    override T get(int index)
+    {
+        return backing.get(index);
+    }
+
+    override int size()
+    {
+        return backing.size();
     }
 }
 
@@ -2036,7 +2607,7 @@ struct Collections
     }
 }
 
-private final class UnmodifiableList(T) : AbstractList!T
+private final class UnmodifiableList(T) if (!isErasedElement!T) : AbstractList!T
 {
     private List!T backing;
 
