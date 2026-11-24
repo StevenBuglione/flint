@@ -382,6 +382,12 @@ package(flint.engine.sql) Error waitFor(Interest want, ulong lease, ref const Co
     if (want.fd < 0)
         return owner.yieldUntil(Deadline.afterMillis(1));
 
+    if ((want.events & ~(NativeInterest.read | NativeInterest.error)) == 0)
+    {
+        const polled = pollReadable(owner, want.fd, ctx, end);
+        if (polled.code != Status.unsupported && polled.code != Status.resourceExhausted)
+            return polled;
+    }
     const waker = owner.currentWaker();
     if (!waker.ok())
         return waker.error;
@@ -407,6 +413,28 @@ package(flint.engine.sql) Error waitFor(Interest want, ulong lease, ref const Co
     scope (exit)
         noteSocketWait(started);
     return awaitSignal(owner, index, ctx, end);
+}
+
+/// Wait for the descriptor to become readable with one io_uring poll that resumes this fiber (Reactor.awaitReadable):
+/// no watch stays registered between statements and no epoll_wait looks for the descriptor. Like `awaitSignal`, the end
+/// of the caller's context or of cleanup returns `Error.init`, and the caller checks which; so does the fallback
+/// deadline, after which the caller drives libpq and waits again. `unsupported` or `resourceExhausted`: use a watch.
+private Error pollReadable(ref Reactor owner, int fd, ref const Context context, Deadline cleanup) nothrow @nogc
+{
+    const started = diagnosticNow();
+    scope (exit)
+        noteSocketWait(started);
+    if (cleanup != Deadline.init)
+    {
+        const waited = owner.awaitReadable(fd, cleanup);
+        return waited.code == Status.timedOut ? Error.init : waited;
+    }
+    if (!continueWaiting(context, cleanup))
+        return Error.init;
+    const waited = owner.awaitReadable(fd, Deadline.afterMillis(fallbackMillis), context);
+    if (waited.code == Status.ok || waited.code == Status.timedOut || context.check().code != Status.ok)
+        return Error.init;
+    return waited;
 }
 
 /// Register the watch of the entry at `index` for `interest`, unless it already is.

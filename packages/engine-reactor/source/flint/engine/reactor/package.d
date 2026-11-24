@@ -45,6 +45,7 @@ version (linux)
     import flint.engine.reactor.sys.completion : CompletionPort, KernelEvent, cancelKernel, closeCompletionPort,
         completionSetupFlags, openCompletionPort, pollCompletion, submitAccept, submitRead,
         submitReadable, submitWrite;
+    import flint.engine.reactor.internal.polls : DescriptorPolls, PollState, isPollToken;
     import flint.engine.reactor.sys.nativewatch : NativeWatches;
     import flint.engine.reactor.sys.scratch : Scratch;
 }
@@ -702,6 +703,45 @@ struct Reactor
             return Error(Status.unsupported, "native descriptor watches require Linux, macOS or Windows");
     }
 
+    /// Suspend the active task fiber until `fd` is readable, with one io_uring poll whose completion resumes it and
+    /// that is gone when this returns, so nothing stays registered between waits and no `epoll_wait` finds the
+    /// descriptor. Readiness includes an error or hang-up, which the caller's next read reports. The caller keeps
+    /// ownership of `fd` and must not close it during the call.
+    ///
+    /// Returns `Error.init` once readable; `timedOut` when `deadline` passes first; the task's cancellation or the
+    /// owner stopping; `unsupported` on an owner without io_uring (the readiness backend, macOS, Windows) and
+    /// `resourceExhausted` when no poll can be submitted now, after which the caller uses `watchNative` instead.
+    Error awaitReadable(int fd, Deadline deadline) nothrow @nogc
+    {
+        return awaitPoll(fd, deadline, null);
+    }
+
+    /// Wait like `awaitReadable(fd, deadline)`, and also return `watched`'s error as soon as it is cancelled or
+    /// expires, as `yieldUntil(deadline, watched)` does.
+    Error awaitReadable(int fd, Deadline deadline, ref scope const Context watched) nothrow @nogc
+    {
+        return awaitPoll(fd, deadline, &watched);
+    }
+
+    private Error awaitPoll(int fd, Deadline deadline, scope const(Context)* watched) nothrow @nogc
+    {
+        if (fd < 0)
+            return Error(Status.invalidArgument, "invalid descriptor");
+        if (deadline.monotonicNanoseconds == Deadline.none.monotonicNanoseconds)
+            return Error(Status.invalidArgument, "descriptor wait requires a finite deadline");
+        if (runtime is null || currentRuntime !is runtime)
+            return Error(Status.notFound, "no active fiber");
+        version (linux)
+        {
+            auto worker = &runtime.workers[currentWorkerIndex];
+            if (worker.activeFiber == noSlot)
+                return Error(Status.notFound, "no active fiber");
+            return worker.awaitReadable(fd, deadline, watched);
+        }
+        else
+            return Error(Status.unsupported, "descriptor polls require io_uring");
+    }
+
     /// Stop admission and close the listener, from any thread, while admitted connections keep running.
     /// Each owner retires its accept first: io_uring holds the listener until its pending accept completes,
     /// so the last owner closes it only after every cancelled accept has (ADR-028 sections 7.5 and 10).
@@ -1110,6 +1150,10 @@ private struct Worker
         /// The io_uring poll on the remote-wake doorbell is outstanding.
         bool doorbellPending;
         bool doorbellCancelSent;
+        /// Task fibers' one-shot polls on descriptors the owner does not own (`Reactor.awaitReadable`).
+        DescriptorPolls polls;
+        /// A poll's cancellation could not be submitted yet (the ring was full); each pass retries.
+        bool pollCancelsOwed;
     }
 
     version (ReactorReadinessOnly)
@@ -1526,6 +1570,7 @@ private struct Worker
                     {
                         advanceNativeWatch();
                         advanceDoorbell();
+                        advancePollCancels();
                     }
                     version (Windows)
                     {
@@ -1659,9 +1704,119 @@ private struct Worker
                 completeNativeWatch(event.status);
             else if (event.token == doorbellToken)
                 completeDoorbell(event.status);
+            else if (isPollToken(event.token))
+            {
+                // Readable, hung up, failed or cancelled: the waiter's next read reports which.
+                const waker = polls.complete(event.token);
+                if (waker.valid)
+                    cast(void) wakeTask(waker);
+            }
             else
                 return false;
             return true;
+        }
+
+        /// See `Reactor.awaitReadable`: submit the poll, park until it completes or the wait ends, and leave no poll
+        /// behind for a later wait.
+        Error awaitReadable(int fd, Deadline deadline, scope const(Context)* watched) nothrow @nogc
+        {
+            if (!completions.valid)
+                return Error(Status.unsupported, "descriptor polls require io_uring");
+            const waker = activeWaker();
+            if (!waker.ok)
+                return waker.error;
+            const token = polls.reserve(waker.value);
+            if (token == 0)
+                return Error(Status.resourceExhausted, "every descriptor poll is in use");
+            const submitted = submitReadable(completions, fd, token);
+            if (submitted != Status.ok)
+            {
+                polls.unreserve(token);
+                return Error(submitted == Status.unavailable ? Status.resourceExhausted : submitted,
+                        "could not submit the descriptor poll");
+            }
+            const outcome = parkOnPoll(token, deadline, watched);
+            if (polls.stateOf(token) == PollState.fired)
+            {
+                polls.release(token);
+                return Error.init;
+            }
+            if (polls.abandon(token))
+                cancelPoll(token);
+            return outcome;
+        }
+
+        /// Park until `token`'s poll completes, `deadline` passes, `watched` ends or the task is cancelled. Other wakes
+        /// of the task park it again.
+        private Error parkOnPoll(ulong token, Deadline deadline, scope const(Context)* watched) nothrow @nogc
+        {
+            auto task = &fibers[activeFiber];
+            while (polls.stateOf(token) == PollState.armed)
+            {
+                if (watched !is null)
+                {
+                    const early = watched.check();
+                    if (early.code != Status.ok)
+                        return early;
+                    task.watched = *watched;
+                    task.watching = true;
+                }
+                auto until = deadline;
+                if (watched !is null && watched.deadline().monotonicNanoseconds < until.monotonicNanoseconds)
+                    until = watched.deadline();
+                const yielded = yieldTask(until);
+                task = &fibers[activeFiber];
+                task.watched = Context.init;
+                task.watching = false;
+                if (yielded.code != Status.ok)
+                    return yielded;
+                if (polls.stateOf(token) != PollState.armed)
+                    break;
+                if (watched !is null && watched.check().code != Status.ok)
+                    return watched.check();
+                if (Deadline.afterMillis(0).monotonicNanoseconds >= deadline.monotonicNanoseconds)
+                    return Error(Status.timedOut, "descriptor wait deadline elapsed");
+            }
+            return Error.init;
+        }
+
+        /// Ask the kernel to cancel an abandoned poll; its completion frees the entry.
+        private void cancelPoll(ulong token) nothrow @nogc
+        {
+            if (submitPollCancel(token))
+                polls.cancelling(token);
+        }
+
+        private bool submitPollCancel(ulong token) nothrow @nogc
+        {
+            const status = cancelKernel(completions, token);
+            if (status == Status.ok)
+            {
+                ++cancellationAcks;
+                return true;
+            }
+            if (status == Status.notFound)
+                return true;
+            if (status == Status.unavailable)
+                pollCancelsOwed = true;
+            else
+                fail(Error(status, "descriptor poll cancellation submission failed"));
+            return false;
+        }
+
+        /// Retry the poll cancellations a full ring refused.
+        private void advancePollCancels() nothrow @nogc
+        {
+            if (!pollCancelsOwed)
+                return;
+            pollCancelsOwed = false;
+            polls.cancelAll(&submitAbandonedCancel);
+        }
+
+        /// Shutdown: cancel every poll the kernel still holds.
+        private bool submitAbandonedCancel(ulong token) nothrow @nogc
+        {
+            return polls.stateOf(token) == PollState.abandoned && submitPollCancel(token);
         }
 
         private void completeDoorbell(Status status) nothrow @nogc
@@ -2331,7 +2486,7 @@ private struct Worker
         private bool completionsPending() const pure nothrow @nogc
         {
             version (linux)
-                if (nativePending || doorbellPending)
+                if (nativePending || doorbellPending || polls.outstanding != 0)
                     return true;
             return liveOperations != 0 || acceptPending || cancellationAcks != 0;
         }
@@ -2372,6 +2527,7 @@ private struct Worker
                         cancelInFlight(nativeWatchToken, nativeCancelSent);
                     if (doorbellPending && !doorbellCancelSent)
                         cancelInFlight(doorbellToken, doorbellCancelSent);
+                    polls.cancelAll(&submitPollCancel);
                 }
                 if (completionsPending())
                     waitForCompletions(waitBudgetMillis);

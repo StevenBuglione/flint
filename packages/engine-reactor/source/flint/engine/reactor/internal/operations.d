@@ -9,8 +9,9 @@ import flint.engine.reactor.types : Completion, ConnectionId;
 /// Slot indices fit below maxPendingIoPerCore (8192); the remaining token bits carry the generation.
 package(flint.engine.reactor) enum operationSlotBits = 13;
 private enum slotMask = (1UL << operationSlotBits) - 1;
-/// A slot retires only after 2^51 reservations, so one busy slot never exhausts the fixed table.
-private enum maxGeneration = ulong.max >> operationSlotBits;
+/// A slot retires only after 2^50 reservations, so one busy slot never exhausts the fixed table. Tokens stay below
+/// the top bit, which marks a descriptor poll (internal/polls.d).
+private enum maxGeneration = ulong.max >> (operationSlotBits + 1);
 
 package(flint.engine.reactor) struct OperationId
 {
