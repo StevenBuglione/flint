@@ -105,7 +105,8 @@ class SpringValidatorAdapter : SmartValidator, JakartaValidator
     private void addViolationError(BindingResult bindingResult, ConstraintViolation violation,
             string field, string errorCode, Any[] errorArgs)
     {
-        const nestedField = bindingResult.getNestedPath() ~ field;
+        const nestedPath = bindingResult.getNestedPath();
+        const nestedField = nestedPath.length ? nestedPath ~ field : field;
         if (nestedField.length == 0)
         {
             auto codes = bindingResult.resolveMessageCodes(errorCode);
@@ -156,8 +157,10 @@ class SpringValidatorAdapter : SmartValidator, JakartaValidator
     /// The arguments: the field as a resolvable, then the constraint's attributes in name order.
     protected Any[] getArgumentsForConstraint(string objectName, string field, ConstraintDescriptor descriptor)
     {
-        Any[] arguments = [Any.of(getResolvableField(objectName, field))];
         auto names = descriptor.getAttributeNames().dup;
+        auto arguments = new Any[names.length + 1]; // at most the resolvable and every attribute
+        arguments[0] = Any.of(getResolvableField(objectName, field));
+        size_t count = 1;
         foreach (i; 1 .. names.length) // insertion sort: a handful of names, without std.algorithm's templates
             for (size_t j = i; j > 0 && names[j] < names[j - 1]; j--)
             {
@@ -167,8 +170,8 @@ class SpringValidatorAdapter : SmartValidator, JakartaValidator
             }
         foreach (name; names)
             if (name != "message" && name != "groups" && name != "payload")
-                arguments ~= descriptor.getAttribute(name);
-        return arguments;
+                arguments[count++] = descriptor.getAttribute(name);
+        return arguments[0 .. count];
     }
 
     /// The resolvable for `field`: codes `objectName.field` and `field`, defaulting to the field name.

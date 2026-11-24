@@ -357,6 +357,43 @@ unittest
     assert(result.getTargetMap() is map);
 }
 
+// Flint: the one-buffer path for this class's own formats gives the general path's codes, in order.
+
+private final class GeneralPathResolver : DefaultMessageCodesResolver
+{
+    // A subclass: resolveMessageCodes takes the general (Spring-shaped) path.
+}
+
+unittest
+{
+    foreach (prefix; ["", "pre."])
+        foreach (postfix; [false, true])
+        {
+            auto fast = new DefaultMessageCodesResolver;
+            auto general = new GeneralPathResolver;
+            fast.setPrefix(prefix);
+            general.setPrefix(prefix);
+            const format = postfix ? DefaultMessageCodesResolver.Format.POSTFIX_ERROR_CODE
+                : DefaultMessageCodesResolver.Format.PREFIX_ERROR_CODE;
+            fast.setMessageCodeFormatter(format);
+            general.setMessageCodeFormatter(format);
+            foreach (errorCode; ["NotBlank", ""])
+                foreach (objectName; ["owner", ""])
+                    foreach (field; ["city", "", "address.city", "a.b.c", "city.city", "owner"])
+                        foreach (fieldType; [null, "string", "city", "NotBlank"])
+                        {
+                            const expected = general.resolveMessageCodes(errorCode, objectName, field, fieldType);
+                            assert(fast.resolveMessageCodes(errorCode, objectName, field, fieldType) == expected);
+                        }
+            assert(fast.resolveMessageCodes("NotBlank", "owner") == general.resolveMessageCodes("NotBlank", "owner"));
+        }
+    // Codes are distinct and appending to the returned array never writes into another code's storage.
+    auto codes = new DefaultMessageCodesResolver().resolveMessageCodes("NotBlank", "owner", "city", "city");
+    assert(codes == ["NotBlank.owner.city", "NotBlank.city", "NotBlank"]);
+    codes ~= "extra";
+    assert(codes[0 .. 3] == ["NotBlank.owner.city", "NotBlank.city", "NotBlank"]);
+}
+
 // Bean validation over a stub Jakarta provider
 
 private struct NotBlank

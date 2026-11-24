@@ -522,6 +522,11 @@ class DefaultMessageCodesResolver : MessageCodesResolver
     /// The codes for a field error.
     string[] resolveMessageCodes(string errorCode, string objectName, string field, string fieldType)
     {
+        // This class's own formats over a field without keys: the same codes, built in one buffer (Spring
+        // concatenates each piece). A subclass or a custom formatter takes the general path, so overrides apply.
+        if (formatter is null && typeid(this) is typeid(DefaultMessageCodesResolver) && !hasKey(field))
+            return plainFieldCodes(prefix, format_ == Format.POSTFIX_ERROR_CODE, errorCode,
+                    objectName, field, fieldType);
         string[] codeList;
         string[] fieldList;
         buildFieldList(field, fieldList);
@@ -542,6 +547,105 @@ class DefaultMessageCodesResolver : MessageCodesResolver
             addCode(codeList, code(errorCode, null, fieldType));
         addCode(codeList, code(errorCode, null, null));
         return codeList;
+    }
+
+    private static bool hasKey(string field) pure nothrow @nogc
+    {
+        foreach (c; field)
+            if (c == '[')
+                return true;
+        return false;
+    }
+
+    /// The codes `resolveMessageCodes` produces for a field without keys, in order and without duplicates: the
+    /// field with the object name, the field, its last path segment, the field type, then the error code alone.
+    /// One buffer holds every code's text and one array the codes.
+    private static string[] plainFieldCodes(string prefix, bool postfix, string errorCode,
+            string objectName, string field, string fieldType) pure nothrow
+    {
+        string[3][5] parts;
+        size_t count;
+        void add(string owner, string name)
+        {
+            parts[count][0] = postfix ? owner : errorCode;
+            parts[count][1] = postfix ? name : owner;
+            parts[count][2] = postfix ? errorCode : name;
+            count++;
+        }
+
+        add(objectName, field);
+        add(null, field);
+        const dot = lastIndexOf(field, '.');
+        if (dot >= 0)
+            add(null, field[dot + 1 .. $]);
+        if (fieldType !is null)
+            add(null, fieldType);
+        add(null, null);
+        string text = codesText(prefix, parts[0 .. count]);
+        auto codes = new string[count];
+        size_t unique;
+        size_t at;
+        foreach (code; parts[0 .. count])
+        {
+            const length = codeLength(prefix, code);
+            string candidate = text[at .. at + length];
+            at += length;
+            if (!containsCode(codes[0 .. unique], candidate))
+                codes[unique++] = candidate;
+        }
+        return codes[0 .. unique];
+    }
+
+    /// The length of `prefix` followed by the non-empty `parts` joined with `.`.
+    private static size_t codeLength(string prefix, const string[3] parts) pure nothrow @nogc
+    {
+        size_t length = prefix.length;
+        bool any;
+        foreach (part; parts)
+            if (part.length)
+            {
+                length += part.length + (any ? CODE_SEPARATOR.length : 0);
+                any = true;
+            }
+        return length;
+    }
+
+    /// Every code's text, one after another (a unique buffer, so it converts to `string`).
+    private static char[] codesText(string prefix, scope const string[3][] codes) pure nothrow
+    {
+        size_t total;
+        foreach (code; codes)
+            total += codeLength(prefix, code);
+        auto text = new char[total];
+        size_t at;
+        void put(string piece)
+        {
+            text[at .. at + piece.length] = piece;
+            at += piece.length;
+        }
+
+        foreach (code; codes)
+        {
+            put(prefix);
+            bool any;
+            foreach (part; code)
+                if (part.length)
+                {
+                    if (any)
+                        put(CODE_SEPARATOR);
+                    put(part);
+                    any = true;
+                }
+        }
+        return text;
+    }
+
+    private static bool containsCode(const string[] codes, string code) pure nothrow @nogc
+    {
+        foreach (existing; codes)
+            if (existing == code)
+                return true;
+        return false;
     }
 
     /// Append `code` unless it is already present (Spring's `LinkedHashSet`).
