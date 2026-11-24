@@ -31,7 +31,7 @@
           "petclinic-rest:validation-error",
           "--no-context",
           "--baseline",
-          "PETCLINIC_RECORD",
+          "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/benchmarks/spring/baselines/go/petclinic-rest/20261124T092019Z",
           "--output",
           "{out}/http-error-validation.json"
         ],
@@ -3118,5 +3118,6 @@
       }
     }
   ],
-  "blocked_on": "the Go baseline of petclinic-rest (go-baseline-petclinic-rest), whose record path this entry names"
+  "blocked_on": "the B2 smokes (after go-baseline-petclinic-rest, watcher idle): the tree prepared once, then a builds smoke and the Flint-only HTTP smokes against both Go baselines",
+  "baseline_record": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/benchmarks/spring/baselines/go/petclinic-rest/20261124T092019Z"
 }
