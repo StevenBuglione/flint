@@ -338,6 +338,35 @@ version (FlintNativeLibpq)
         assert(scalar(lease, "SELECT 123", context) == 123);
     }
 
+    @("PostgreSQL prepares BEGIN, COMMIT and ROLLBACK once per connection instead of parsing them per transaction")
+    unittest
+    {
+        const address = environment.get("FLINT_SQL_PG_TEST_DSN");
+        if (address.length == 0)
+            return;
+        Pool pool;
+        assert(pool.open(options(Driver.postgres, address)).code == Status.ok);
+        Context context;
+        scope (exit)
+            assert(pool.close(context).code == Status.ok);
+        auto acquired = pool.acquire(context);
+        assert(acquired.ok());
+        auto lease = acquired.value;
+        scope (exit)
+            assert(pool.release(lease).code == Status.ok);
+        scope RequestArena arena;
+        foreach (_; 0 .. 3)
+        {
+            assert(lease.execute("BEGIN READ ONLY", [], arena, context).ok());
+            assert(lease.execute("COMMIT", [], arena, context).ok());
+            assert(lease.execute("BEGIN", [], arena, context).ok());
+            assert(lease.execute("ROLLBACK", [], arena, context).ok());
+        }
+        // One server-side statement per distinct text, reused by every later transaction.
+        assert(scalar(lease, "SELECT count(*) FROM pg_prepared_statements WHERE statement IN "
+                ~ "('BEGIN READ ONLY', 'COMMIT', 'BEGIN', 'ROLLBACK')", context) == 4);
+    }
+
     @("PostgreSQL disconnect prevents reuse and surfaces a commit without acknowledgment")
     unittest
     {

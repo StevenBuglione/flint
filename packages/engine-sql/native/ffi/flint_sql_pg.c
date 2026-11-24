@@ -278,7 +278,10 @@ static int cacheable(const char *sql)
 {
     while (*sql == ' ' || (*sql >= '\t' && *sql <= '\r'))
         ++sql;
-    const char *verbs[] = {"SELECT", "INSERT", "UPDATE", "DELETE", "VALUES", "WITH", "MERGE"};
+    /* Transaction control is prepared too, as pgjdbc does: every transaction otherwise re-parses its BEGIN
+       and COMMIT (owner decision 355068f5, the Java reference's statements). */
+    const char *verbs[] = {"SELECT", "INSERT", "UPDATE", "DELETE", "VALUES", "WITH", "MERGE",
+                           "BEGIN", "COMMIT", "ROLLBACK", "START"};
     for (size_t index = 0; index < sizeof(verbs) / sizeof(verbs[0]); ++index) {
         size_t length = strlen(verbs[index]);
         if (!strncasecmp(sql, verbs[index], length)) {
@@ -344,13 +347,16 @@ static int send_prepare(flint_pg_connection *connection, flint_sql_operation *op
 
 typedef struct {
     unsigned char scalar[8];
+    /* ISO-8601 date and time text, NUL-terminated: libpq reads text-format parameters as C strings and ignores
+       their lengths, and the caller's bytes are not terminated. The longest java.time form fits. */
+    char text[48];
     const char *value;
     int length;
     int format;
     Oid type;
 } wire_parameter;
 
-static void write_parameter(wire_parameter *output, const flint_sql_parameter *input)
+static int write_parameter(wire_parameter *output, const flint_sql_parameter *input)
 {
     const flint_sql_cell *cell = &input->cell;
     output->type = parameter_type(cell->kind);
@@ -378,8 +384,13 @@ static void write_parameter(wire_parameter *output, const flint_sql_parameter *i
     }
     case FLINT_SQL_DATE: case FLINT_SQL_TIME: case FLINT_SQL_TIMESTAMP:
         /* Text format: the binary forms are day and microsecond counts, not ISO-8601 text. */
+        if (cell->length >= sizeof(output->text) || (cell->length && !input->data))
+            return FLINT_SQL_INVALID;
+        if (cell->length)
+            memcpy(output->text, input->data, cell->length);
+        output->text[cell->length] = '\0';
         output->format = 0;
-        output->value = input->data;
+        output->value = output->text;
         output->length = (int)cell->length;
         break;
     default:
@@ -387,6 +398,7 @@ static void write_parameter(wire_parameter *output, const flint_sql_parameter *i
         output->length = (int)cell->length;
         break;
     }
+    return FLINT_SQL_OK;
 }
 
 static int send_query(flint_pg_connection *connection, flint_sql_operation *operation)
@@ -401,7 +413,9 @@ static int send_query(flint_pg_connection *connection, flint_sql_operation *oper
     if (count && (!items || !values || !sizes || !formats || !types))
         goto release;
     for (size_t index = 0; index < count; ++index) {
-        write_parameter(&items[index], &operation->params[index]);
+        status = write_parameter(&items[index], &operation->params[index]);
+        if (status != FLINT_SQL_OK)
+            goto release;
         values[index] = items[index].value;
         sizes[index] = items[index].length;
         formats[index] = items[index].format;

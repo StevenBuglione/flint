@@ -400,12 +400,7 @@ final class FlintConnection : Connection
 
     private string beginStatement()
     {
-        if (pool.driver == Driver.sqlite)
-            return isolation == TRANSACTION_SERIALIZABLE ? "BEGIN DEFERRED" : "BEGIN";
-        string sql = "BEGIN ISOLATION LEVEL " ~ isolationName(isolation);
-        if (readOnly)
-            sql ~= " READ ONLY";
-        return sql;
+        return beginSql(pool.driver, isolation, readOnly);
     }
 
     package(flint.engine) EngineConnection* engineLease() return
@@ -653,6 +648,30 @@ final class FlintConnection : Connection
     {
         return iface is typeid(FlintConnection) || iface.isBaseOf(typeid(FlintConnection));
     }
+}
+
+/// The statement that begins a transaction at `isolation`. On PostgreSQL, READ COMMITTED (the server's default and
+/// a new connection's level) sends a plain BEGIN, as pgjdbc does (owner decision 355068f5).
+package string beginSql(Driver driver, int isolation, bool readOnly) pure nothrow
+{
+    if (driver == Driver.sqlite)
+        return isolation == Connection.TRANSACTION_SERIALIZABLE ? "BEGIN DEFERRED" : "BEGIN";
+    if (isolation == Connection.TRANSACTION_READ_COMMITTED)
+        return readOnly ? "BEGIN READ ONLY" : "BEGIN";
+    const sql = "BEGIN ISOLATION LEVEL " ~ isolationName(isolation);
+    return readOnly ? sql ~ " READ ONLY" : sql;
+}
+
+@("PostgreSQL's default isolation begins with a plain BEGIN; other levels and SQLite keep their statements")
+unittest
+{
+    assert(beginSql(Driver.postgres, Connection.TRANSACTION_READ_COMMITTED, false) == "BEGIN");
+    assert(beginSql(Driver.postgres, Connection.TRANSACTION_READ_COMMITTED, true) == "BEGIN READ ONLY");
+    assert(beginSql(Driver.postgres, Connection.TRANSACTION_SERIALIZABLE,
+            true) == "BEGIN ISOLATION LEVEL SERIALIZABLE READ ONLY");
+    assert(beginSql(Driver.postgres, Connection.TRANSACTION_REPEATABLE_READ,
+            false) == "BEGIN ISOLATION LEVEL REPEATABLE READ");
+    assert(beginSql(Driver.sqlite, Connection.TRANSACTION_SERIALIZABLE, false) == "BEGIN DEFERRED");
 }
 
 private string isolationName(int level) pure nothrow @nogc
