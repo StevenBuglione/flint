@@ -423,10 +423,16 @@ private final class Body
 Body buffers shared by the reactor threads: slots taken and returned with compare-and-swap, as `JsonFactory`
 recycles its generators, since framework packages keep no thread-local state. A buffer that grew past 64 KiB is
 dropped rather than kept.
+
+A buffer stays borrowed while the exchange sends it, and a send can suspend the handler, so the pool holds as many
+buffers as requests run at once: the servlet engine's handler limit is 200 by default (Tomcat's threads.max). With
+16 slots, 64 keep-alive connections missed on a third of their requests and each miss allocated a new buffer (816
+bytes), most of gs-rest-service's GC traffic. Only buffers actually used are allocated, and idle ones gather in the
+lowest slots, which acquire scans first.
 +/
 private final class BodyPool
 {
-    private Body[16] slots;
+    private Body[256] slots;
 
     Body acquire()
     {
