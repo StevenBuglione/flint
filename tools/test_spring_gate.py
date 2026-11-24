@@ -187,7 +187,7 @@ class AssembleFailsClosed(unittest.TestCase):
     def test_builds_must_be_served(self):
         def part(dmd_server):
             row = self.part('b', 'builds', self.builds())
-            row['steps'] = [{'command': ['python3', 'tools/measure_builds.py'], 'dmd_server': dmd_server}]
+            row['steps'] = [{'command': ['python3', 'tools/measure_builds.py'], 'dmd_server': {'scored': dmd_server}}]
             return row
         self.assertEqual(spring_bench.consistency_problems([part({'compiled': 40, 'refused': 0})], RUNS), [])
         for bad in ({'compiled': 40, 'refused': 2}, {'compiled': 0, 'refused': 0}, None):

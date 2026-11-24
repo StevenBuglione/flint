@@ -246,6 +246,23 @@ class ServedCompiles(unittest.TestCase):
                              '1.000200 44 refused\n1.000300 45 compiled\n1.000301 45 reported\n')
             self.assertEqual(measure_queue.server_trace(trace), {'compiled': 2, 'refused': 1})
 
+    def test_priming_refusals_do_not_count(self):
+        import os
+        with tempfile.TemporaryDirectory() as temporary:
+            logs = Path(temporary) / 'builds-logs'
+            logs.mkdir()
+            prime = logs / 'app-flint-prime-cached.log'
+            prime.write_text('primed')
+            mono_now = time.monotonic()
+            os.utime(prime, (time.time() - 10, time.time() - 10))  # priming ended 10 s ago
+            trace = Path(temporary) / 'trace.log'
+            trace.write_text(f'{mono_now - 20:.6f} 1 refused\n{mono_now - 15:.6f} 2 compiled\n'
+                             f'{mono_now - 5:.6f} 3 compiled\n{mono_now - 4:.6f} 4 compiled\n')
+            self.assertEqual(measure_queue.scored_server_trace(trace, logs),
+                             {'compiled': 2, 'refused': 0, 'after_priming': True})
+            trace.write_text(trace.read_text() + f'{mono_now - 3:.6f} 5 refused\n')
+            self.assertEqual(measure_queue.scored_server_trace(trace, logs)['refused'], 1)
+
     def test_only_this_trees_servers_stop(self):
         with tempfile.TemporaryDirectory() as temporary:
             self.assertEqual(measure_queue.stop_tree_compile_servers(temporary), [])

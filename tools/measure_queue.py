@@ -887,8 +887,10 @@ def measure_command(entry, built, outdir, smoke):
             receipt['harness_toolchain'] = toolchain_receipt(harness[0])  # a step outside a build tree builds with it
         receipt.update(step_provenance(command, cwd, env, log, outdir, started))
         receipt['dmd_server'] = dict(server_trace(trace), stopped_before=stopped)
+        if any('measure_builds.py' in part for part in command):
+            receipt['dmd_server']['scored'] = scored_server_trace(trace, outdir / 'builds-logs')
         if any('measure_builds.py' in part for part in command) and not smoke:
-            served = receipt['dmd_server']
+            served = receipt['dmd_server']['scored']
             if served['refused'] or not served['compiled']:
                 receipts.append(dict(receipt, measured=False))
                 raise SystemExit(f"step {index}: the compile server compiled {served['compiled']} and refused "
@@ -927,6 +929,24 @@ def stop_tree_compile_servers(cwd):
         except (OSError, ValueError):
             continue
     return stopped
+
+
+def scored_server_trace(path, logs):
+    """Like server_trace, counting only events after the last unscored priming build (measure_builds writes
+    builds-logs/*-prime-*.log; the first request of each priming build is refused while its server's zygote is still
+    cold, which says nothing about the scored trials). The trace's clock is CLOCK_MONOTONIC; a log's mtime is wall
+    time, converted with the current offset."""
+    primes = [p.stat().st_mtime for p in Path(logs).glob('*-prime-*.log')] if Path(logs).is_dir() else []
+    cutoff = (max(primes) - (time.time() - time.monotonic())) if primes else None
+    counts = {'compiled': 0, 'refused': 0}
+    if Path(path).is_file():
+        for line in Path(path).read_text(errors='replace').splitlines():
+            parts = line.split()
+            if len(parts) != 3 or parts[2] not in counts:
+                continue
+            if cutoff is None or float(parts[0]) > cutoff:
+                counts[parts[2]] += 1
+    return dict(counts, after_priming=cutoff is not None)
 
 
 def server_trace(path):

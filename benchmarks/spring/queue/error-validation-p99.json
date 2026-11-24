@@ -1,7 +1,7 @@
 {
   "schema": "flint.measure-queue/1",
   "created": "2026-11-23",
-  "status": "blocked",
+  "status": "pending",
   "priority": 8,
   "window": "claim",
   "builds": {
@@ -3118,6 +3118,5 @@
       }
     }
   ],
-  "blocked_on": "the B2 smokes (after go-baseline-petclinic-rest, watcher idle): the tree prepared once, then a builds smoke and the Flint-only HTTP smokes against both Go baselines",
   "baseline_record": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/benchmarks/spring/baselines/go/petclinic-rest/20261124T092019Z"
 }

@@ -2,7 +2,7 @@
   "schema": "flint.measure-queue/1",
   "id": "phase1-http-gs-rest",
   "created": "2026-11-23",
-  "status": "blocked",
+  "status": "pending",
   "window": "claim",
   "priority": 6,
   "claim_when": "B2 order 4 (coordinator 09:12Z)",
@@ -2146,6 +2146,5 @@
         }
       }
     }
-  ],
-  "blocked_on": "the B2 smokes (after go-baseline-petclinic-rest, watcher stopped): the tree prepared once, then a builds smoke (served compiles asserted) and the Flint-only HTTP smokes against both Go baselines"
+  ]
 }
