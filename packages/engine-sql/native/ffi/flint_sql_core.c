@@ -468,14 +468,35 @@ int flint_sql_operation_bind(flint_sql_operation *operation, size_t index, int k
     return FLINT_SQL_OK;
 }
 
+int flint_sql_operation_preamble(flint_sql_operation *operation, const char *sql, size_t length)
+{
+    if (!operation || !sql || !length || length > INT_MAX || memchr(sql, 0, length) ||
+        !flint_sql_utf8(sql, length) || operation->script)
+        return FLINT_SQL_INVALID;
+    if (operation->preamble || operation->lease_identity)
+        return FLINT_SQL_CONFLICT;
+    char *copy = malloc(length + 1);
+    if (!copy)
+        return FLINT_SQL_NOMEM;
+    memcpy(copy, sql, length);
+    copy[length] = 0;
+    operation->preamble = copy;
+    operation->preamble_state = 1;
+    return FLINT_SQL_OK;
+}
+
 void flint_sql_operation_free(flint_sql_operation *operation)
 {
     if (!operation)
         return;
-    for (size_t index = 0; index < operation->parameter_count; ++index)
+    /* While the preamble runs on its own, the operation's parameters are counted in saved_count. */
+    const size_t count = operation->saved_text ? operation->saved_count : operation->parameter_count;
+    for (size_t index = 0; index < count; ++index)
         free((void *)operation->params[index].data);
     free(operation->params);
     free(operation->text);
+    free(operation->saved_text);
+    free(operation->preamble);
     free(operation);
 }
 
@@ -499,6 +520,13 @@ int flint_sql_operation_start(flint_sql_operation *operation, uint64_t slot, uin
         int status = connection->retired ? FLINT_SQL_UNAVAILABLE : FLINT_SQL_CONFLICT;
         pthread_mutex_unlock(&gate);
         return status;
+    }
+    if (operation->preamble) {
+        const flint_sql_driver *pipelining = driver_at(owner->driver);
+        if (!pipelining || !pipelining->preambles) {
+            pthread_mutex_unlock(&gate);
+            return FLINT_SQL_UNSUPPORTED;
+        }
     }
     connection->active = operation;
     memset(&connection->failure, 0, sizeof(connection->failure));

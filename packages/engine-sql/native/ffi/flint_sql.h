@@ -84,6 +84,11 @@ flint_sql_operation *flint_sql_operation_new_script(const char *sql, size_t leng
                                                     int64_t deadline, int *status);
 int flint_sql_operation_bind(flint_sql_operation *operation, size_t index, int kind,
                               int64_t integer, double floating, const void *data, size_t length);
+/* Send sql (a parameterless statement, such as BEGIN) ahead of the operation, before it starts. A
+   driver that cannot send it (SQLite) makes start return FLINT_SQL_UNSUPPORTED without claiming the
+   lease; the caller then runs it as its own operation first. A failure of the preamble is the
+   operation's failure, and the operation's statement is not run. */
+int flint_sql_operation_preamble(flint_sql_operation *operation, const char *sql, size_t length);
 int flint_sql_operation_start(flint_sql_operation *operation, uint64_t slot, uint64_t identity);
 int flint_sql_operation_drive(flint_sql_operation *operation, int *fd, unsigned *interest);
 void flint_sql_operation_cancel(flint_sql_operation *operation);

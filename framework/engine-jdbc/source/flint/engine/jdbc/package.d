@@ -390,12 +390,13 @@ final class FlintConnection : Connection
             throw sqlException(task, result.error.code, result.error.message, lease.lastFailure());
     }
 
-    /// Begin the transaction a manual-commit connection needs before its next statement.
+    /// Begin the transaction a manual-commit connection needs before its next statement: sent with that statement,
+    /// in one round trip on PostgreSQL, as pgjdbc sends BEGIN with a transaction's first query.
     package(flint.engine) void beginIfNeeded()
     {
         if (autoCommit || inTransaction)
             return;
-        run(beginStatement(), "BEGIN");
+        lease.sendBefore(beginStatement());
         inTransaction = true;
     }
 
@@ -464,6 +465,8 @@ final class FlintConnection : Connection
         if (!inTransaction)
             return;
         inTransaction = false;
+        if (lease.dropPreamble())
+            return; // BEGIN was never sent: no statement ran
         run("COMMIT", "COMMIT");
     }
 
@@ -475,6 +478,8 @@ final class FlintConnection : Connection
         if (!inTransaction)
             return;
         inTransaction = false;
+        if (lease.dropPreamble())
+            return; // BEGIN was never sent: no statement ran
         run("ROLLBACK", "ROLLBACK");
     }
 
@@ -493,13 +498,13 @@ final class FlintConnection : Connection
             return;
         closed_ = true;
         Context context;
-        if (inTransaction)
+        if (inTransaction && !lease.dropPreamble())
         {
             auto arena = newArena();
             // Returned to the pool mid-transaction: the engine rolls the lease back on release anyway.
             cast(void) lease.execute("ROLLBACK", [], arena, context);
-            inTransaction = false;
         }
+        inTransaction = false;
         if (readOnly && pool.driver == Driver.sqlite)
         {
             auto arena = newArena();

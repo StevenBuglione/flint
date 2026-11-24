@@ -239,6 +239,8 @@ struct Connection
 {
     private ulong slot;
     private ulong generation;
+    /// The statement `sendBefore` queued for the next one.
+    private string preamble;
 
     private this(Identity identity) nothrow @nogc
     {
@@ -258,11 +260,31 @@ struct Connection
         return slot;
     }
 
+    /++
+    Send `statement` (a parameterless statement such as BEGIN) ahead of this lease's next statement, as pgjdbc
+    sends BEGIN with a transaction's first query. On PostgreSQL both go in one round trip (a pipeline with one
+    Sync) once both are prepared on the connection; until then, and on other drivers, `statement` runs on its
+    own first. Its failure is the next statement's failure, and that statement does not run. Nothing is sent
+    when no statement follows (`dropPreamble`).
+    +/
+    void sendBefore(string statement) nothrow @nogc
+    {
+        preamble = statement;
+    }
+
+    /// Forget a statement `sendBefore` queued and nothing sent; whether there was one.
+    bool dropPreamble() nothrow @nogc
+    {
+        const queued = preamble.length != 0;
+        preamble = null;
+        return queued;
+    }
+
     /// Execute one parameterized statement and return its affected rows.
     Result!ulong execute(scope const(char)[] sql, scope const(SqlValue)[] params,
             ref scope RequestArena arena, ref Context context) nothrow @nogc
     {
-        return perform!RowConsumer(identity(), sql, params, arena, context, null);
+        return performAfter!RowConsumer(identity(), &preamble, sql, params, arena, context, null);
     }
 
     /// Run a complete startup SQL program on this exclusive lease.
@@ -297,7 +319,7 @@ struct Connection
     {
         if (consume is null)
             return Error(Status.invalidArgument, "SQL query requires a row consumer");
-        return perform!RowConsumer(identity(), sql, params, arena, context, consume).error;
+        return performAfter!RowConsumer(identity(), &preamble, sql, params, arena, context, consume).error;
     }
 
     /++
@@ -309,7 +331,7 @@ struct Connection
     {
         if (copy is null)
             return Error(Status.invalidArgument, "SQL query requires a row consumer");
-        return perform!RowCopier(identity(), sql, params, arena, context, copy).error;
+        return performAfter!RowCopier(identity(), &preamble, sql, params, arena, context, copy).error;
     }
 }
 
@@ -339,10 +361,29 @@ private Status bind(ref scope Operation work, scope Parameters params, ref scope
     return Status.ok;
 }
 
+// `perform` with the lease's queued preamble sent ahead (`Connection.sendBefore`). The queue is cleared once
+// the preamble is on its way, so a statement refused before anything is sent leaves it queued. On a driver
+// that cannot send it with the statement, the preamble runs as a statement of its own first.
+private Execution performAfter(Consumer)(Identity lease, scope string* pending,
+        scope const(char)[] sql, scope const(SqlValue)[] params, ref scope RequestArena arena,
+        ref Context context, scope Consumer consume)
+{
+    bool alone;
+    auto result = perform!Consumer(lease, sql, params, arena, context, consume, false, pending, &alone);
+    if (!alone)
+        return result;
+    const queued = *pending;
+    *pending = null;
+    const first = perform!RowConsumer(lease, queued, [], arena, context, null);
+    if (first.error.code != Status.ok)
+        return first;
+    return perform!Consumer(lease, sql, params, arena, context, consume);
+}
+
 // Generic over the row consumer: RowConsumer keeps the whole path nothrow @nogc; a RowCopier may allocate.
 private Execution perform(Consumer)(Identity lease, scope const(char)[] sql,
         scope const(SqlValue)[] params, ref scope RequestArena arena, ref Context context,
-        scope Consumer consume, bool script = false)
+        scope Consumer consume, bool script = false, scope string* pending = null, scope bool* alone = null)
 {
     const ownership = admit();
     if (ownership.code != Status.ok)
@@ -362,7 +403,12 @@ private Execution perform(Consumer)(Identity lease, scope const(char)[] sql,
     if (status == Status.ok)
         status = bind(operation, params, arena);
     if (status == Status.ok)
-        status = operation.start(lease);
+        status = startAfter(operation, lease, pending);
+    if (status == Status.unsupported && pending !is null && pending.length && alone !is null)
+    {
+        *alone = true; // the driver cannot send it with the statement: nothing was sent
+        return Result!ulong(0, Error(status, "SQL driver sends no preamble"));
+    }
     if (status != Status.ok)
         return Result!ulong(0, Error(status, "SQL statement or lease is invalid"));
 
@@ -370,6 +416,22 @@ private Execution perform(Consumer)(Identity lease, scope const(char)[] sql,
     scope (exit)
         noteStatement(started);
     return drain(operation, lease.slot, context, consume);
+}
+
+/// Start `operation` with the queued preamble ahead of it, if any, clearing the queue once it is on its way.
+private Status startAfter(ref scope Operation operation, Identity lease, scope string* pending) nothrow @nogc
+{
+    const preamble = pending is null ? null : *pending;
+    if (preamble.length)
+    {
+        const attached = operation.preamble(preamble);
+        if (attached != Status.ok)
+            return attached;
+    }
+    const status = operation.start(lease);
+    if (status == Status.ok && preamble.length)
+        *pending = null; // on its way with the statement
+    return status;
 }
 
 private Error consumeRow(Consumer)(ref scope Operation operation, ulong slot, scope Consumer consumer)

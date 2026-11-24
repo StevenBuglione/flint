@@ -92,6 +92,7 @@ version (FlintSqlNative)
         private FlintSqlOperation* flint_sql_operation_new(const(char)*, size_t, size_t, int, long, int*);
         private FlintSqlOperation* flint_sql_operation_new_script(const(char)*, size_t, long, int*);
         private int flint_sql_operation_bind(FlintSqlOperation*, size_t, int, long, double, const(void)*, size_t);
+        private int flint_sql_operation_preamble(FlintSqlOperation*, const(char)*, size_t);
         private int flint_sql_operation_start(FlintSqlOperation*, ulong, ulong);
         private int flint_sql_operation_drive(FlintSqlOperation*, int*, uint*);
         private void flint_sql_operation_cancel(FlintSqlOperation*);
@@ -271,6 +272,19 @@ package(flint.engine.sql) struct Operation
                 return Status.conflict;
             return cast(Status) flint_sql_operation_bind(native, index, value.kind, value.integer,
                     value.floating, bytes.ptr, bytes.length);
+        }
+        else
+            return Status.unsupported;
+    }
+
+    // SAFETY: The scoped SQL slice has explicit bounds; the shim copies its bytes before returning.
+    Status preamble(scope const(char)[] sql) scope @trusted nothrow @nogc
+    {
+        version (FlintSqlNative)
+        {
+            if (native is null || started)
+                return Status.conflict;
+            return cast(Status) flint_sql_operation_preamble(native, sql.ptr, sql.length);
         }
         else
             return Status.unsupported;

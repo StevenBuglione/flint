@@ -23,7 +23,9 @@
 #endif
 #endif
 
-enum { PG_UNSENT, PG_EVICTING, PG_PREPARING, PG_QUERY };
+enum { PG_UNSENT, PG_EVICTING, PG_PREPARING, PG_QUERY, PG_PIPE_PREAMBLE, PG_PIPE_SYNC };
+/* operation->preamble_state: none (or done), waiting to be sent, running on its own, pipelined. */
+enum { PREAMBLE_NONE, PREAMBLE_PENDING, PREAMBLE_ALONE, PREAMBLE_PIPELINED };
 enum {
     OID_BOOL = 16, OID_BYTEA = 17, OID_NAME = 19, OID_INT8 = 20,
     OID_INT2 = 21, OID_INT4 = 23, OID_TEXT = 25, OID_FLOAT4 = 700,
@@ -458,10 +460,66 @@ static int send_script(flint_pg_connection *connection, flint_sql_operation *ope
     return FLINT_SQL_OK;
 }
 
+/* The prepared statement for text with no parameters, or -1. */
+static int prepared_plain(const flint_pg_connection *connection, const char *text)
+{
+    for (unsigned index = 0; index < connection->capacity; ++index) {
+        const prepared_entry *entry = &connection->prepared[index];
+        if (entry->sql && entry->count == 0 && !strcmp(entry->sql, text))
+            return (int)index;
+    }
+    return -1;
+}
+
+/* pgjdbc's way with BEGIN: the preamble and the statement in one pipeline with one Sync, so one round trip.
+   Only when both are prepared on this connection (or the statement is not cacheable); otherwise -1 and the
+   preamble runs on its own first, through the ordinary phases that prepare it. */
+static int send_pipelined(flint_pg_connection *connection, flint_sql_operation *operation)
+{
+    const int preamble = prepared_plain(connection, operation->preamble);
+    if (preamble < 0)
+        return -1;
+    const int cache = cache_index(connection, operation);
+    if (cache >= 0) {
+        const prepared_entry *entry = &connection->prepared[cache];
+        if (!entry->sql || strcmp(entry->sql, operation->text) || !type_match(entry, operation))
+            return -1;
+    }
+    PGconn *database = connection->database;
+    char name[32];
+    prepared_name(name, (unsigned) preamble);
+    connection->prepared[preamble].touched = ++connection->counter;
+    if (!PQenterPipelineMode(database) || !PQsendQueryPrepared(database, name, 0, NULL, NULL, NULL, 1))
+        return FLINT_SQL_IO;
+    operation->cache = cache;
+    if (cache >= 0)
+        connection->prepared[cache].touched = ++connection->counter;
+    const int sent = send_query(connection, operation);
+    if (sent != FLINT_SQL_OK)
+        return sent;
+    if (!PQpipelineSync(database))
+        return FLINT_SQL_IO;
+    operation->phase = PG_PIPE_PREAMBLE;
+    operation->preamble_state = PREAMBLE_PIPELINED;
+    return FLINT_SQL_OK;
+}
+
 static int start_query(flint_pg_connection *connection, flint_sql_operation *operation)
 {
     if (operation->script)
         return send_script(connection, operation);
+    if (operation->preamble_state == PREAMBLE_PENDING) {
+        const int pipelined = send_pipelined(connection, operation);
+        if (pipelined >= 0)
+            return pipelined;
+        /* The preamble runs first as a statement of its own, then the operation's (resume_after_preamble). */
+        operation->saved_text = operation->text;
+        operation->saved_count = operation->parameter_count;
+        operation->text = operation->preamble;
+        operation->preamble = NULL;
+        operation->parameter_count = 0;
+        operation->preamble_state = PREAMBLE_ALONE;
+    }
     operation->cache = cache_index(connection, operation);
     if (operation->cache < 0)
         return send_query(connection, operation);
@@ -516,6 +574,20 @@ static int finish_phase(flint_pg_connection *connection, flint_sql_operation *op
         return FLINT_SQL_COMPLETE;
     }
     return FLINT_SQL_WAIT;
+}
+
+/* The preamble ran on its own and succeeded: put the operation's statement back and send it. */
+static int resume_after_preamble(flint_pg_connection *connection, flint_sql_operation *operation)
+{
+    operation->preamble = operation->text;
+    operation->text = operation->saved_text;
+    operation->saved_text = NULL;
+    operation->parameter_count = operation->saved_count;
+    operation->preamble_state = PREAMBLE_NONE;
+    operation->phase = PG_UNSENT;
+    operation->cache = -1;
+    operation->affected = 0;
+    return start_query(connection, operation);
 }
 
 static int status_for_result(PGresult *result)
@@ -731,9 +803,43 @@ int flint_pg_drive(flint_pg_connection *connection, flint_sql_operation *operati
                 return FLINT_SQL_WAIT;
         }
         PGresult *result = PQgetResult(database);
+        if (operation->preamble_state == PREAMBLE_PIPELINED) {
+            /* Preamble's result, NULL, the statement's results, NULL, then the Sync's result. */
+            if (result && PQresultStatus(result) == PGRES_PIPELINE_SYNC) {
+                PQclear(result);
+                operation->preamble_state = PREAMBLE_NONE;
+                if (!PQexitPipelineMode(database))
+                    operation->reusable = 0;
+                return finish(connection, operation, FLINT_SQL_OK);
+            }
+            if (!result) {
+                if (operation->phase == PG_PIPE_PREAMBLE)
+                    operation->phase = PG_QUERY;
+                else
+                    operation->phase = PG_PIPE_SYNC;
+                if (atomic_load(&operation->cancelled))
+                    operation->reusable = 0;
+                continue;
+            }
+            if (operation->phase == PG_PIPE_PREAMBLE && PQresultStatus(result) == PGRES_COMMAND_OK) {
+                PQclear(result);
+                continue;
+            }
+        }
         if (!result) {
             if (atomic_load(&operation->cancelled) && operation->phase != PG_QUERY)
                 operation->reusable = 0;
+            if (operation->preamble_state == PREAMBLE_ALONE && operation->status == FLINT_SQL_OK &&
+                !atomic_load(&operation->cancelled) && operation->phase == PG_QUERY) {
+                const int resumed = resume_after_preamble(connection, operation);
+                if (resumed != FLINT_SQL_OK) {
+                    if (resumed == FLINT_SQL_IO)
+                        operation->reusable = 0;
+                    return finish(connection, operation, resumed);
+                }
+                *interest = FLINT_SQL_READ | FLINT_SQL_WRITE;
+                return FLINT_SQL_WAIT;
+            }
             const int transition = finish_phase(connection, operation);
             if (transition == FLINT_SQL_WAIT)
                 *interest = FLINT_SQL_READ | FLINT_SQL_WRITE;
@@ -942,6 +1048,7 @@ static const flint_sql_driver postgres_driver = {
     .open = driver_open,
     .begin = NULL,
     .drive = driver_drive,
+    .preambles = 1,
     .interrupt = NULL,
     .abandon = NULL,
     .discard = flint_pg_discard,

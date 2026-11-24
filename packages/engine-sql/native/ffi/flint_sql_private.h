@@ -41,6 +41,13 @@ struct flint_sql_operation {
     int dirty;
     atomic_int cancelled;
     flint_sql_failure failure;
+    /* A statement sent ahead of this one (BEGIN): with it in one round trip when the driver pipelines and
+       both are prepared, else on its own first. While it runs on its own, text is the preamble and the
+       operation's own text and parameter count wait in saved_text and saved_count. */
+    char *preamble;
+    char *saved_text;
+    size_t saved_count;
+    int preamble_state;
     /* Driver-owned storage. The row source cannot advance while its Row is published. */
     void *connection;
     void *row;
@@ -67,6 +74,8 @@ typedef struct {
     /* Start an operation on the connection; NULL when the driver starts it on the first drive. */
     int (*begin)(void *connection, flint_sql_operation *operation);
     int (*drive)(void *connection, flint_sql_operation *operation, int *fd, unsigned *interest);
+    /* Nonzero when drive sends an operation's preamble itself (flint_sql_operation_preamble). */
+    int preambles;
     /* Interrupt the connection's running statement; NULL when cancellation is driven instead. */
     void (*interrupt)(void *connection);
     /* Take over an aborted operation and its connection; NULL when the core frees both. */

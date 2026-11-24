@@ -222,6 +222,69 @@ private long scalar(ref Connection lease, scope const(char)[] statement, ref Con
     return output;
 }
 
+/++
+`Connection.sendBefore`: BEGIN goes ahead of the next statement, which then runs inside the transaction.
+PostgreSQL runs the first rounds' BEGIN on its own (nothing is prepared yet) and pipelines the later rounds;
+SQLite always runs it on its own first. Failures and a statement refused before sending behave the same.
++/
+private void exercisePreamble(Driver driver, string address)
+{
+    Pool pool;
+    assert(pool.open(options(driver, address)).code == Status.ok);
+    Context context;
+    scope (exit)
+        assert(pool.close(context).code == Status.ok);
+    auto acquired = pool.acquire(context);
+    assert(acquired.ok());
+    auto lease = acquired.value;
+    scope (exit)
+        assert(pool.release(lease).code == Status.ok);
+    scope RequestArena arena;
+    assert(lease.execute("CREATE TEMP TABLE preamble_rows (x bigint)", [], arena, context).ok());
+    foreach (round; 0 .. 4)
+    {
+        // Rolling back removes the row: the INSERT ran inside the transaction BEGIN opened.
+        lease.sendBefore("BEGIN");
+        assert(lease.execute("INSERT INTO preamble_rows VALUES (1)", [], arena, context).ok());
+        assert(!lease.dropPreamble(), "the preamble stayed queued after it was sent");
+        assert(lease.execute("ROLLBACK", [], arena, context).ok());
+        assert(scalar(lease, "SELECT count(*) FROM preamble_rows", context) == round);
+        // Ahead of a query with rows, then committed.
+        lease.sendBefore("BEGIN");
+        assert(scalar(lease, "SELECT count(*) FROM preamble_rows", context) == round);
+        assert(lease.execute("INSERT INTO preamble_rows VALUES (2)", [], arena, context).ok());
+        assert(lease.execute("COMMIT", [], arena, context).ok());
+    }
+    assert(scalar(lease, "SELECT count(*) FROM preamble_rows", context) == 4);
+
+    // A statement that fails after BEGIN leaves the transaction to roll back, and the lease stays usable.
+    lease.sendBefore("BEGIN");
+    assert(!lease.execute("INSERT INTO preamble_missing VALUES (1)", [], arena, context).ok());
+    assert(lease.execute("ROLLBACK", [], arena, context).ok());
+    assert(scalar(lease, "SELECT count(*) FROM preamble_rows", context) == 4);
+    // The same for a statement that prepares and then fails as it runs: the second time it goes in the pipeline.
+    foreach (_; 0 .. 2)
+    {
+        lease.sendBefore("BEGIN");
+        // SQLite divides by zero to NULL; PostgreSQL fails the statement.
+        const divided = lease.execute("SELECT 1 / (x - x) FROM preamble_rows", [], arena, context);
+        assert(driver == Driver.sqlite || !divided.ok());
+        assert(lease.execute("ROLLBACK", [], arena, context).ok());
+        assert(scalar(lease, "SELECT count(*) FROM preamble_rows", context) == 4);
+    }
+
+    // A statement refused before anything is sent leaves the preamble queued.
+    lease.sendBefore("BEGIN");
+    assert(!lease.execute("SELECT 1\0", [], arena, context).ok());
+    assert(lease.dropPreamble(), "a statement that was never sent consumed the preamble");
+    assert(!lease.dropPreamble());
+
+    // A failing preamble fails the statement, which does not run.
+    lease.sendBefore("BEGIN NONSENSE");
+    assert(!lease.execute("INSERT INTO preamble_rows VALUES (3)", [], arena, context).ok());
+    assert(scalar(lease, "SELECT count(*) FROM preamble_rows", context) == 4);
+}
+
 version (FlintNativeSqlite)
 {
     @("SQLite typed values, explicit binding, statement boundaries and stale rows")
@@ -230,6 +293,7 @@ version (FlintNativeSqlite)
         exerciseValues(Driver.sqlite, ":memory:");
         exerciseTransaction(Driver.sqlite, ":memory:");
         exercisePrepared(Driver.sqlite, ":memory:");
+        exercisePreamble(Driver.sqlite, ":memory:");
     }
 
     @("SQLite refuses an empty statement and the lease stays usable")
@@ -407,6 +471,15 @@ version (FlintNativeLibpq)
         // One server-side statement per distinct text, reused by every later transaction.
         assert(scalar(lease, "SELECT count(*) FROM pg_prepared_statements WHERE statement IN "
                 ~ "('BEGIN READ ONLY', 'COMMIT', 'BEGIN', 'ROLLBACK')", context) == 4);
+    }
+
+    @("PostgreSQL sends BEGIN with the next statement: alone until both are prepared, then pipelined")
+    unittest
+    {
+        const address = environment.get("FLINT_SQL_PG_TEST_DSN");
+        if (address.length == 0)
+            return;
+        exercisePreamble(Driver.postgres, address);
     }
 
     @("PostgreSQL disconnect prevents reuse and surfaces a commit without acknowledgment")
