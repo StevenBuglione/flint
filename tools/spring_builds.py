@@ -269,6 +269,7 @@ def measure_flint(name, trials, timed, logs, temporary, result):
                                             'the digests-cleared context series',
                               'scratch_trials': 'an empty FLINT_CACHE: no platform archives, no derived AOT state; '
                                                 'zero AOT cache hits asserted',
+                              'scratch_boundary': scratch_boundary(),
                               'port_entries_pruned': pruned}
         for trial in range(trials):
             for flavour in flavours:
@@ -321,6 +322,20 @@ def measure_flint(name, trials, timed, logs, temporary, result):
     row['phase_budget_ms'] = PHASE_BUDGET_MS
     row['phase_trials_ms'] = phases
     return row
+
+
+def scratch_boundary():
+    """Owner decision c25ae2b3: what each side's scratch build takes as installed toolchain, written into the result."""
+    native = json.loads((ROOT / 'policy' / 'native-lock.json').read_text())['libraries']
+    return {'flint_prebuilt': ['the pinned C libraries (policy/native-lock.json, the .native install): '
+                               + ', '.join(f"{row['name']} {row.get('version', '')}".strip() for row in native),
+                               "the installed druntime and Phobos (the D toolchain's own runtime libraries)",
+                               'the compilers (DMD, LDC) and the linker'],
+            'flint_rebuilt': ['every Flint platform module and the application (--no-platform-cache), the Flint AOT '
+                              'extraction and generation from empty derived state; zero cache hits asserted'],
+            'go_prebuilt': ['the Go toolchain (compiler and linker)'],
+            'go_rebuilt': ['go build -a with an empty GOCACHE: every package, the standard library and third-party '
+                           'modules included']}
 
 
 def effective_cpus():

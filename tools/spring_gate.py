@@ -146,6 +146,10 @@ def spring_gate(directory):
                     f"Go's std-primed cold build compiles {len(go['third_party_packages'])} third-party package(s) from "
                     "source while Flint links its native libraries prebuilt; the deps-primed ratio is the like-for-like "
                     "comparison. The secondary has no deps-primed equivalent (go build -a recompiles everything).")
+            # Owner decision c25ae2b3: the scratch boundary (what each side takes as installed toolchain) is published
+            # beside the secondary headline.
+            if flint.get('flint_cache', {}).get('scratch_boundary'):
+                report[f'build {app}']['scratch boundary'] = flint['flint_cache']['scratch_boundary']
             # Owner decision 2: edit builds also report the fully static build, as the secondary headline.
             if 'flint_static_incremental_seconds' in flint:
                 report[f'build {app}']['incremental static'] = ratio(
