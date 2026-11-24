@@ -90,8 +90,18 @@ struct Regex
     /// `Pattern.matcher(input).matches()`: whether the whole input matches.
     bool matches(scope const(char)[] input) const
     {
-        auto text = decode(input);
-        auto vm = Matcher(code, sets, groups, registers, text);
+        // A request's value is short: its code points, captures and loop registers live on the (fiber) stack, and
+        // only a long input or a pattern with many groups allocates.
+        dchar[256] smallText = void;
+        const onStack = input.length <= smallText.length;
+        scope dchar[] buffer = onStack ? smallText[0 .. input.length] : new dchar[input.length];
+        scope text = buffer[0 .. decodeInto(input, buffer)];
+        int[32] smallState = void;
+        const captureCount = 2 * (groups + 1);
+        const stateCount = captureCount + registers;
+        scope int[] state = stateCount <= smallState.length ? smallState[0 .. stateCount] : new int[stateCount];
+        state[] = -1;
+        scope vm = Matcher(code, sets, text, state[0 .. captureCount], state[captureCount .. $]);
         return vm.run(0, 0, cast(int) text.length) >= 0;
     }
 }
@@ -112,6 +122,10 @@ Regex compileRegex(string regex, int flags = 0)
     Regex result;
     result.code = compiler.code;
     result.sets = parser.sets;
+    foreach (index, ref set; result.sets)
+        foreach (dchar c; 0 .. 0x80)
+            if (contains(result.sets, cast(int) index, c))
+                set.ascii[c >> 6] |= 1UL << (c & 63);
     result.groups = parser.groupCount;
     result.registers = compiler.registers;
     return result;
@@ -130,6 +144,22 @@ private dchar[] decode(scope const(char)[] text) pure nothrow
     while (i < text.length)
         result ~= decodeUtf8(text, i);
     return result;
+}
+
+// Decode `text` into `target`, which holds at least `text.length` code points; returns how many it wrote.
+private size_t decodeInto(scope const(char)[] text, scope dchar[] target) pure nothrow @nogc
+{
+    import flint.engine.aot.text : decodeUtf8;
+
+    size_t i, n;
+    while (i < text.length)
+    {
+        if (text[i] < 0x80)
+            target[n++] = text[i++];
+        else
+            target[n++] = decodeUtf8(text, i);
+    }
+    return n;
 }
 
 private bool isLineTerminator(dchar c, bool unixLines) pure nothrow @nogc
@@ -258,6 +288,7 @@ private struct CharSet
     bool negated;
     bool caseInsensitive;
     SetTerm[][] unions;
+    ulong[2] ascii; // membership of the 128 ASCII code points, computed once the pattern is parsed
 }
 
 private bool contains(scope const(CharSet)[] sets, int index, dchar c) pure nothrow @nogc
@@ -1374,6 +1405,40 @@ private struct Frame
     int old;
 }
 
+// The backtracking stack of one run: its first frames inline, so a short match never allocates.
+private struct FrameStack
+{
+    private Frame[64] small = void;
+    private Frame[] large;
+    private size_t length;
+
+    void push(Frame frame) pure nothrow
+    {
+        if (length < small.length)
+            small[length] = frame;
+        else
+        {
+            const at = length - small.length;
+            if (at == large.length)
+                large ~= frame;
+            else
+                large[at] = frame;
+        }
+        ++length;
+    }
+
+    bool empty() const pure nothrow @nogc
+    {
+        return length == 0;
+    }
+
+    Frame pop() pure nothrow @nogc
+    {
+        --length;
+        return length < small.length ? small[length] : large[length - small.length];
+    }
+}
+
 private struct Matcher
 {
     const(Inst)[] code;
@@ -1383,22 +1448,22 @@ private struct Matcher
     int[] registers;
     long steps;
 
-    this(const(Inst)[] code, const(CharSet)[] sets, int groups, int registerCount, const(dchar)[] text) pure nothrow
+    // Over the caller's buffers: `captures` and `registers` start at -1.
+    this(const(Inst)[] code, const(CharSet)[] sets, return scope const(dchar)[] text,
+            return scope int[] captures, return scope int[] registers) pure nothrow @nogc
     {
         this.code = code;
         this.sets = sets;
         this.text = text;
-        captures = new int[2 * (groups + 1)];
-        captures[] = -1;
-        registers = new int[registerCount];
-        registers[] = -1;
+        this.captures = captures;
+        this.registers = registers;
     }
 
     // Runs from `pc` at `pos`; returns the end position of the first match the program reaches, -1 when none. With
     // `end` >= 0 only a match ending there counts. Captures a match sets stay set; the caller undoes them if it must.
-    int run(int pc, int pos, int end)
+    int run(int pc, int pos, int end) scope
     {
-        Frame[] stack;
+        FrameStack stack;
         for (;;)
         {
             if (++steps > stepBudget)
@@ -1418,12 +1483,12 @@ private struct Matcher
     }
 
     // One instruction other than `match`: moves `pc` (and `pos`); false when it fails.
-    private bool execute(ref const Inst inst, ref int pc, ref int pos, ref Frame[] stack)
+    private bool execute(ref const Inst inst, ref int pc, ref int pos, ref FrameStack stack) scope
     {
         switch (inst.op)
         {
         case I.split:
-            stack ~= Frame(inst.y, pos);
+            stack.push(Frame(inst.y, pos));
             pc = inst.x;
             return true;
         case I.jmp:
@@ -1456,7 +1521,7 @@ private struct Matcher
     }
 
     // char_, charCI, any and set: one code point.
-    private bool consume(ref const Inst inst, ref int pos) const pure nothrow @nogc
+    private bool consume(ref const Inst inst, ref int pos) const scope pure nothrow @nogc
     {
         if (pos >= text.length)
             return false;
@@ -1467,26 +1532,28 @@ private struct Matcher
             return foldAscii(c) == inst.c;
         if (inst.op == I.any)
             return (inst.x & 1) || !isLineTerminator(c, (inst.x & 2) != 0);
+        if (c < 0x80)
+            return ((sets[inst.x].ascii[c >> 6] >> (c & 63)) & 1) != 0;
         return contains(sets, inst.x, c);
     }
 
     // save and mark: set a capture slot or a loop register, with an undo entry.
-    private void record(ref const Inst inst, int pos, ref Frame[] stack) pure nothrow
+    private void record(ref const Inst inst, int pos, ref FrameStack stack) scope pure nothrow
     {
         if (inst.op == I.save)
         {
-            stack ~= Frame(-1, 0, inst.x, captures[inst.x]);
+            stack.push(Frame(-1, 0, inst.x, captures[inst.x]));
             captures[inst.x] = pos;
         }
         else
         {
-            stack ~= Frame(-1, 0, -inst.x - 1, registers[inst.x]);
+            stack.push(Frame(-1, 0, -inst.x - 1, registers[inst.x]));
             registers[inst.x] = pos;
         }
     }
 
     // (?>X): the body's first match, kept without backtracking into it.
-    private bool atomic(ref const Inst inst, ref int pos, ref Frame[] stack)
+    private bool atomic(ref const Inst inst, ref int pos, ref FrameStack stack) scope
     {
         const before = captures.dup;
         const reached = run(inst.x, pos, -1);
@@ -1498,12 +1565,11 @@ private struct Matcher
     }
 
     // Pops undo entries until a resume point; false when none is left.
-    private bool backtrack(ref Frame[] stack, ref int pc, ref int pos) pure nothrow
+    private bool backtrack(ref FrameStack stack, ref int pc, ref int pos) scope pure nothrow @nogc
     {
-        while (stack.length)
+        while (!stack.empty)
         {
-            const top = stack[$ - 1];
-            stack = stack[0 .. $ - 1];
+            const top = stack.pop();
             if (top.pc >= 0)
             {
                 pc = top.pc;
@@ -1519,14 +1585,14 @@ private struct Matcher
     }
 
     // Captures a nested run set are kept, with undo entries so that backtracking past it restores them.
-    private void keepCaptures(scope const(int)[] before, ref Frame[] stack) pure nothrow
+    private void keepCaptures(scope const(int)[] before, ref FrameStack stack) scope pure nothrow
     {
         foreach (slot, old; before)
             if (captures[slot] != old)
-                stack ~= Frame(-1, 0, cast(int) slot, old);
+                stack.push(Frame(-1, 0, cast(int) slot, old));
     }
 
-    private bool lookAround(ref const Inst inst, int pos, ref Frame[] stack)
+    private bool lookAround(ref const Inst inst, int pos, ref FrameStack stack) scope
     {
         const behind = (inst.c & 1) != 0;
         const negative = (inst.c & 2) != 0;
@@ -1547,7 +1613,7 @@ private struct Matcher
         return found != negative;
     }
 
-    private bool backrefAt(int group, bool caseInsensitive, ref int pos) const pure nothrow @nogc
+    private bool backrefAt(int group, bool caseInsensitive, ref int pos) const scope pure nothrow @nogc
     {
         if (2 * group + 1 >= captures.length || captures[2 * group] < 0 || captures[2 * group + 1] < 0)
             return false;
@@ -1565,7 +1631,7 @@ private struct Matcher
         return true;
     }
 
-    private bool anchorHolds(Anchor anchor, int pos, bool unixLines) const pure nothrow @nogc
+    private bool anchorHolds(Anchor anchor, int pos, bool unixLines) const scope pure nothrow @nogc
     {
         const n = cast(int) text.length;
         final switch (anchor)
@@ -1592,7 +1658,7 @@ private struct Matcher
 
     // MULTILINE `^`: the start, or after a line terminator that is not the input's last character (never between
     // \r and \n).
-    private bool lineStartAt(int pos, bool unixLines) const pure nothrow @nogc
+    private bool lineStartAt(int pos, bool unixLines) const scope pure nothrow @nogc
     {
         if (pos == 0)
             return true;
@@ -1602,7 +1668,7 @@ private struct Matcher
     }
 
     // MULTILINE `$`: the end, or before a line terminator (never between \r and \n).
-    private bool lineEndAt(int pos, bool unixLines) const pure nothrow @nogc
+    private bool lineEndAt(int pos, bool unixLines) const scope pure nothrow @nogc
     {
         if (pos == text.length)
             return true;
@@ -1612,7 +1678,7 @@ private struct Matcher
     }
 
     // Whether only a final line terminator (\n, \r\n, ...) follows `pos`.
-    private bool finalTerminatorAt(int pos, bool unixLines) const pure nothrow @nogc
+    private bool finalTerminatorAt(int pos, bool unixLines) const scope pure nothrow @nogc
     {
         const n = cast(int) text.length;
         if (pos == n - 1)

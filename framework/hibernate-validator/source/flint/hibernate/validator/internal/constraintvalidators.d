@@ -232,13 +232,51 @@ final class PatternCache
     }
 }
 
+/// The property path of the value being checked, built only when an exception names it.
+alias PathText = string delegate() @safe;
+
 /// Run the check of constraint `c` on `value`; `propertyPath` names the element in an UnexpectedTypeException.
 /// `described` is the value's descriptor, through which arrays and associative arrays report their size.
 bool isValid(ref const BuiltinConstraint c, ref Any value, PatternCache patterns, string propertyPath,
         const(Descriptor) described = null)
 {
-    const simple = simpleName(c.annotationType);
-    initialize(c, simple, value, patterns);
+    const prepared = prepare(c, patterns);
+    return isValid(c, prepared, value, () => propertyPath, described);
+}
+
+/// A built-in constraint prepared once, as Hibernate builds a constraint's validator once per constraint: the check
+/// to run, the compiled `@Pattern` or `@Email` expression, and the attribute problem `initialize` reports.
+struct PreparedCheck
+{
+    /// The constraint's simple name, which selects the check.
+    string simple;
+    /// The compiled expression of `@Pattern`, or of an `@Email` regexp other than `.*`.
+    CompiledPattern pattern;
+    /// HV000032's cause when the attributes are invalid, else null.
+    string problem;
+}
+
+/// Prepare `c` for checking: compile its expression through `patterns` and validate its attributes.
+PreparedCheck prepare(ref const BuiltinConstraint c, PatternCache patterns)
+{
+    PreparedCheck prepared;
+    prepared.simple = simpleName(c.annotationType);
+    if (prepared.simple == "Pattern")
+        prepared.pattern = patterns.get(attribute(c, "regexp").text, patternFlags(c));
+    else if (prepared.simple == "Email" && attribute(c, "regexp").text != ".*")
+        prepared.pattern = patterns.get(attribute(c, "regexp").text, patternFlags(c));
+    prepared.problem = initializationProblem(c, prepared);
+    return prepared;
+}
+
+/// Run the check of prepared constraint `c` on `value`. `propertyPath` is called only to name the element in an
+/// UnexpectedTypeException.
+bool isValid(ref const BuiltinConstraint c, ref const PreparedCheck prepared, ref Any value,
+        scope PathText propertyPath, const(Descriptor) described = null)
+{
+    const simple = prepared.simple;
+    if (prepared.problem !is null)
+        throw initializationFailure(simple, value, prepared.problem);
     switch (simple)
     {
     case "NotNull":
@@ -250,16 +288,32 @@ bool isValid(ref const BuiltinConstraint c, ref Any value, PatternCache patterns
     case "NotBlank":
         return checkNotBlank(c, value, propertyPath);
     case "NotEmpty":
-        return (!value.isNull() || isArray(value)) && size(c, value, propertyPath, described) > 0;
+        return checkNotEmpty(c, value, propertyPath, described);
     case "Size":
         return checkSize(c, value, propertyPath, described);
     case "Pattern":
-        return checkPattern(c, value, patterns, propertyPath);
+        return checkPattern(c, prepared, value, propertyPath);
     case "Email":
-        return checkEmail(c, value, patterns, propertyPath);
+        return checkEmail(c, prepared, value, propertyPath);
     default:
         return checkNumber(c, simple, value, propertyPath);
     }
+}
+
+// HV000032, wrapping the IllegalArgumentException that names the attribute problem.
+private ValidationException initializationFailure(string simple, ref Any value, string problem)
+{
+    import flint.java.lang : IllegalArgumentException;
+
+    return new ValidationException("HV000032: Unable to initialize " ~ validatorClass(simple,
+            value) ~ ".", new IllegalArgumentException(problem));
+}
+
+// NotEmptyValidatorFor*: not null (a D array never is) and not empty.
+private bool checkNotEmpty(ref const BuiltinConstraint c, ref Any value, scope PathText propertyPath,
+        const(Descriptor) described)
+{
+    return (!value.isNull() || isArray(value)) && size(c, value, propertyPath, described) > 0;
 }
 
 // NotNullValidator and NullValidator; a D array is never null.
@@ -269,7 +323,7 @@ private bool isNullConstraintMet(bool wantNull, ref Any value) pure nothrow @nog
     return wantNull == isNull;
 }
 
-private bool checkAssert(ref const BuiltinConstraint c, ref Any value, bool expected, string propertyPath)
+private bool checkAssert(ref const BuiltinConstraint c, ref Any value, bool expected, scope PathText propertyPath)
 {
     if (value.isNull())
         return true;
@@ -278,7 +332,7 @@ private bool checkAssert(ref const BuiltinConstraint c, ref Any value, bool expe
     return value.get!bool() == expected;
 }
 
-private bool checkNotBlank(ref const BuiltinConstraint c, ref Any value, string propertyPath)
+private bool checkNotBlank(ref const BuiltinConstraint c, ref Any value, scope PathText propertyPath)
 {
     if (value.isNull())
         return false;
@@ -287,7 +341,8 @@ private bool checkNotBlank(ref const BuiltinConstraint c, ref Any value, string 
     return !isBlank(value.get!string());
 }
 
-private bool checkSize(ref const BuiltinConstraint c, ref Any value, string propertyPath, const(Descriptor) described)
+private bool checkSize(ref const BuiltinConstraint c, ref Any value, scope PathText propertyPath,
+        const(Descriptor) described)
 {
     if (value.isNull() && !isArray(value))
         return true;
@@ -295,18 +350,19 @@ private bool checkSize(ref const BuiltinConstraint c, ref Any value, string prop
     return n >= attribute(c, "min").number && n <= attribute(c, "max").number;
 }
 
-private bool checkPattern(ref const BuiltinConstraint c, ref Any value, PatternCache patterns, string propertyPath)
+private bool checkPattern(ref const BuiltinConstraint c, ref const PreparedCheck prepared, ref Any value,
+        scope PathText propertyPath)
 {
     if (value.isNull())
         return true;
     if (!value.holds!string())
         return unexpected(c, value, propertyPath);
-    return matchesPattern(patterns.get(attribute(c, "regexp").text, patternFlags(c)), value.get!string());
+    return matchesPattern(prepared.pattern, value.get!string());
 }
 
 // PatternValidator: `pattern.matcher(value).matches()`. A match that runs out of steps is an exception inside
 // isValid (HV000028), where Java's would keep backtracking.
-private bool matchesPattern(CompiledPattern pattern, string text)
+private bool matchesPattern(ref const CompiledPattern pattern, string text)
 {
     try
         return pattern.regex.matches(text);
@@ -338,7 +394,8 @@ private string simpleName(string type) pure nothrow @nogc
     return type[start .. $];
 }
 
-private bool checkEmail(ref const BuiltinConstraint c, ref Any value, PatternCache patterns, string propertyPath)
+private bool checkEmail(ref const BuiltinConstraint c, ref const PreparedCheck prepared, ref Any value,
+        scope PathText propertyPath)
 {
     if (value.isNull())
         return true;
@@ -347,11 +404,10 @@ private bool checkEmail(ref const BuiltinConstraint c, ref Any value, PatternCac
     const text = value.get!string();
     if (!isValidEmail(text))
         return false;
-    const extra = attribute(c, "regexp").text;
-    return extra == ".*" || matchesPattern(patterns.get(extra, patternFlags(c)), text);
+    return attribute(c, "regexp").text == ".*" || matchesPattern(prepared.pattern, text);
 }
 
-private bool checkNumber(ref const BuiltinConstraint c, string simple, ref Any value, string propertyPath)
+private bool checkNumber(ref const BuiltinConstraint c, string simple, ref Any value, scope PathText propertyPath)
 {
     if (value.isNull())
         return true;
@@ -375,7 +431,7 @@ private bool isTemporal(string simple) pure nothrow @nogc
     return simple == "Past" || simple == "PastOrPresent" || simple == "Future" || simple == "FutureOrPresent";
 }
 
-private bool checkTemporal(ref const BuiltinConstraint c, string simple, ref Any value, string propertyPath)
+private bool checkTemporal(ref const BuiltinConstraint c, string simple, ref Any value, scope PathText propertyPath)
 {
     const order = compareWithNow(value);
     if (order == int.min)
@@ -609,44 +665,34 @@ private ValidationException notANumber(string text)
 }
 
 // Hibernate's initialize: attribute values the validator rejects before it validates anything, reported as HV000032
-// wrapping the IllegalArgumentException that names the problem.
-private void initialize(ref const BuiltinConstraint c, string simple, ref Any value, PatternCache patterns)
+// wrapping the IllegalArgumentException that names the problem; null when there is none.
+private string initializationProblem(ref const BuiltinConstraint c, ref const PreparedCheck prepared)
 {
-    import flint.java.lang : IllegalArgumentException;
-
-    string problem;
-    switch (simple)
+    switch (prepared.simple)
     {
     case "DecimalMin":
     case "DecimalMax":
         DecimalText bound;
         const text = attribute(c, "value").text;
-        if (!DecimalText.parse(text, bound))
-            problem = "HV000016: " ~ text ~ " does not represent a valid BigDecimal format.";
-        break;
+        return DecimalText.parse(text, bound)
+            ? null : "HV000016: " ~ text ~ " does not represent a valid BigDecimal format.";
     case "Digits":
-        if (attribute(c, "integer").number < 0)
-            problem = "HV000017: The length of the integer part cannot be negative.";
-        else if (attribute(c, "fraction").number < 0)
-            problem = "HV000018: The length of the fraction part cannot be negative.";
-        break;
+        return attribute(c, "integer").number < 0
+            ? "HV000017: The length of the integer part cannot be negative." : attribute(c,
+                    "fraction").number < 0 ? "HV000018: The length of the fraction part cannot be negative." : null;
     case "Size":
         const min = attribute(c, "min").number, max = attribute(c, "max").number;
-        problem = min < 0 ? "HV000019: The min parameter cannot be negative." : max < 0
+        return min < 0 ? "HV000019: The min parameter cannot be negative." : max < 0
             ? "HV000020: The max parameter cannot be negative." : max < min
             ? "HV000021: The length cannot be negative." : null;
-        break;
     case "Pattern":
-        const compiled = patterns.get(attribute(c, "regexp").text, patternFlags(c));
-        if (compiled.problem !is null)
-            problem = compiled.malformed ? "HV000022: Invalid regular expression." : compiled.problem;
-        break;
+        const compiled = prepared.pattern;
+        if (compiled.problem is null)
+            return null;
+        return compiled.malformed ? "HV000022: Invalid regular expression." : compiled.problem;
     default:
-        return;
+        return null;
     }
-    if (problem !is null)
-        throw new ValidationException("HV000032: Unable to initialize " ~ validatorClass(simple,
-                value) ~ ".", new IllegalArgumentException(problem));
 }
 
 // The name of the Hibernate validator class that would have been chosen for `value`.
@@ -671,7 +717,8 @@ private string validatorClass(string simple, ref Any value)
 }
 
 // SizeValidatorForCharSequence, ForCollection, ForMap and ForArray.
-private size_t size(ref const BuiltinConstraint c, ref Any value, string propertyPath, const(Descriptor) described)
+private size_t size(ref const BuiltinConstraint c, ref Any value, scope PathText propertyPath,
+        const(Descriptor) described)
 {
     if (value.holds!string())
         return utf16Length(value.get!string());
@@ -980,11 +1027,11 @@ private bool validIpv4(string text) pure nothrow @nogc
 }
 
 // HV000030 for a constraint applied to a type it has no validator for.
-private bool unexpected(ref const BuiltinConstraint c, ref Any value, string propertyPath)
+private bool unexpected(ref const BuiltinConstraint c, ref Any value, scope PathText propertyPath)
 {
     throw new UnexpectedTypeException("HV000030: No validator could be found for constraint '" ~ javaConstraintName(
             c.annotationType) ~ "' validating type '" ~ javaTypeName(
-            value.typeName()) ~ "'. Check configuration for '" ~ propertyPath ~ "'");
+            value.typeName()) ~ "'. Check configuration for '" ~ propertyPath() ~ "'");
 }
 
 /// Hibernate's name of a constraint annotation: the Jakarta package for the built-ins.

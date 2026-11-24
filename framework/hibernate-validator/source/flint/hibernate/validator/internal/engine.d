@@ -23,7 +23,7 @@ import flint.engine.aot.descriptor : Descriptor, DescriptorTable, MergedAnnotati
     MethodDescriptor, PropertyDescriptor, TypeKind;
 import flint.engine.aot.name : typeNameOf;
 import flint.hibernate.validator.internal.constraintvalidators : BuiltinConstraint, PatternCache,
-    attributeText, isBuiltin, isValid, javaConstraintName, javaTypeName, read;
+    PreparedCheck, attributeText, isBuiltin, isValid, javaConstraintName, javaTypeName, prepare, read;
 import flint.hibernate.validator.internal.custom : ConstraintValidatorContextImpl, CustomValidator;
 import flint.jakarta.validation : Constraint, ConstraintViolation, ElementKind, MessageInterpolator,
     Path, UnexpectedTypeException, Valid, ValidationException, Validator, ValidatorFactory;
@@ -390,6 +390,8 @@ final class ValidatorFactoryImpl : ValidatorFactory
     private MessageInterpolator interpolator;
     private PatternCache patterns;
     private CustomValidator[][string] custom;
+    // Copy-on-write, as the pattern cache: a published table is never changed, so lookups take no lock.
+    private BeanMetaData[const(Descriptor)] beanMetaData;
 
     ///
     this(DescriptorTable descriptors, MessageInterpolator interpolator)
@@ -403,12 +405,65 @@ final class ValidatorFactoryImpl : ValidatorFactory
     void bind(CustomValidator validator)
     {
         custom[validator.annotationType] ~= validator;
+        synchronized (this)
+            beanMetaData = null; // metadata prepared before this binding classified the annotation without it
     }
 
     /// A validator; validators share the factory's state and are thread-safe.
     Validator getValidator()
     {
         return new ValidatorImpl(this);
+    }
+
+    // Hibernate's BeanMetaDataManager: a bean type's constraints, read and prepared on its first validation.
+    private BeanMetaData metaDataOf(const(Descriptor) d)
+    {
+        auto published = beanMetaData;
+        if (auto found = d in published)
+            return *found;
+        auto created = new BeanMetaData(d, this);
+        synchronized (this)
+        {
+            if (auto raced = d in beanMetaData)
+                return *raced;
+            auto grown = beanMetaData.dup;
+            grown[d] = created;
+            imported!"core.atomic".atomicFence(); // the metadata and the table are complete before publication
+            beanMetaData = grown;
+        }
+        return created;
+    }
+
+    // Each annotation as a constraint to check: built-ins read, compiled and validated once.
+    private MetaConstraint[] prepareAll(const(MergedAnnotation)[] annotations)
+    {
+        MetaConstraint[] constraints;
+        constraints.reserve(annotations.length);
+        foreach (i, ref a; annotations)
+        {
+            MetaConstraint m;
+            m.type = a.type;
+            if (isBuiltin(a.type))
+            {
+                m.builtin = true;
+                m.constraint = read(a.type, a.value);
+                m.check = prepare(m.constraint, patterns);
+                m.descriptor = new ConstraintDescriptorImpl(m.constraint);
+            }
+            else if (a.type in custom || isConstraint(a.type))
+                m.annotation = annotations[i .. i + 1];
+            else
+                continue; // not a constraint (@JsonProperty, ...): nothing to check
+            constraints ~= m;
+        }
+        return constraints;
+    }
+
+    // Whether the annotation named `type` is meta-annotated @Constraint.
+    private bool isConstraint(string type)
+    {
+        auto d = descriptors is null ? null : descriptors.find(type);
+        return d !is null && findAnnotation(d.annotations, typeNameOf!Constraint);
     }
 
     /// The configured interpolator.
@@ -524,6 +579,68 @@ final class ValidatorImpl : Validator, ExecutableValidator
     }
 }
 
+// One constraint of an element, prepared once (Hibernate's MetaConstraint): a built-in read from its annotation,
+// with its check and descriptor, or a user-defined annotation looked up among the bound validators when it runs.
+private struct MetaConstraint
+{
+    string type;
+    bool builtin;
+    BuiltinConstraint constraint;
+    PreparedCheck check;
+    ConstraintDescriptorImpl descriptor;
+    const(MergedAnnotation)[] annotation; // the user-defined annotation, alone
+}
+
+// A bean type's properties with their prepared constraints (Hibernate's BeanMetaData).
+private final class BeanMetaData
+{
+    const(Descriptor) descriptor;
+    bool bean;
+    PropertyMetaData[] properties;
+
+    this(const(Descriptor) d, ValidatorFactoryImpl factory)
+    {
+        descriptor = d;
+        bean = d.kind == TypeKind.struct_ || d.kind == TypeKind.class_;
+        if (!bean)
+            return;
+        foreach (i, ref property; d.properties)
+        {
+            if (property.get is null)
+                continue;
+            properties ~= PropertyMetaData(i, factory.prepareAll(property.annotations),
+                    findAnnotation(property.annotations, typeNameOf!Valid));
+        }
+    }
+}
+
+private struct PropertyMetaData
+{
+    size_t index; // into the descriptor's properties
+    MetaConstraint[] constraints;
+    bool cascade; // @Valid
+}
+
+// A property path made only when something needs it: a violation, a cascade or an exception message.
+private struct LazyPath
+{
+    PathImpl parent;
+    string property; // null: the parent itself
+    PathImpl made;
+
+    PathImpl get()
+    {
+        if (made is null)
+            made = property is null ? parent : parent.addPropertyNode(property);
+        return made;
+    }
+
+    string text()
+    {
+        return get().toString();
+    }
+}
+
 private class IllegalArgument : ValidationException
 {
     this(string message, string file = __FILE__, size_t line = __LINE__) pure nothrow
@@ -568,17 +685,19 @@ private struct Run
         }
         const type = bean.typeName().length ? bean.typeName() : declaredType.idup;
         auto d = factory.descriptors is null ? null : factory.descriptors.find(type);
-        if (d is null || (d.kind != TypeKind.struct_ && d.kind != TypeKind.class_))
+        if (d is null)
             return;
-        foreach (ref property; d.properties)
+        auto meta = factory.metaDataOf(d);
+        if (!meta.bean)
+            return;
+        foreach (ref p; meta.properties)
         {
-            if (property.get is null)
-                continue;
+            const property = &d.properties[p.index];
             auto value = property.get(bean);
-            auto at = path.addPropertyNode(property.name);
-            checkConstraints(bean, value, property.annotations, at);
-            if (findAnnotation(property.annotations, typeNameOf!Valid) && !value.isNull())
-                cascade(value, at, property.type);
+            auto at = LazyPath(path, property.name);
+            check(bean, value, p.constraints, at);
+            if (p.cascade && !value.isNull())
+                cascade(value, at.get(), property.type);
         }
     }
 
@@ -647,7 +766,13 @@ private struct Run
             ? null : factory.descriptors.find(value.typeName());
     }
 
-    void checkConstraints(Any leaf, ref Any value, scope const(MergedAnnotation)[] annotations, PathImpl at)
+    void checkConstraints(Any leaf, ref Any value, const(MergedAnnotation)[] annotations, PathImpl at)
+    {
+        auto path = LazyPath(at);
+        check(leaf, value, factory.prepareAll(annotations), path);
+    }
+
+    void check(Any leaf, ref Any value, scope MetaConstraint[] constraints, ref LazyPath at)
     {
         // A Nullable!T (rulebook R5: Java's Integer, a String that may be null) is validated as its value or null,
         // as Hibernate validates the boxed value itself; Optional keeps container semantics.
@@ -655,20 +780,19 @@ private struct Run
         if (d !is null && d.unwrap !is null && d.name.length > 22 && d.name[0 .. 22] == "std.typecons.Nullable!")
         {
             auto inner = d.unwrap(value);
-            return checkConstraints(leaf, inner, annotations, at);
+            return check(leaf, inner, constraints, at);
         }
-        foreach (ref a; annotations)
+        foreach (ref m; constraints)
         {
-            if (isBuiltin(a.type))
+            if (m.builtin)
             {
-                auto constraint = read(a.type, a.value);
-                if (!isValid(constraint, value, factory.patterns, at.toString(), described(value)))
-                    report(leaf, value, at, constraint, [constraint.message]);
+                if (!isValid(m.constraint, m.check, value, () => at.text(), d))
+                    report(leaf, value, at.get(), m.descriptor, [m.constraint.message]);
             }
-            else if (auto bound = a.type in factory.custom)
-                checkCustom(leaf, value, a, *bound, at);
+            else if (auto bound = m.type in factory.custom)
+                checkCustom(leaf, value, m.annotation[0], *bound, at.get());
             else
-                requireBinding(a.type, value, at);
+                requireBinding(m.type, value, at);
         }
     }
 
@@ -690,16 +814,15 @@ private struct Run
         auto constraint = chosen.read(a.value);
         auto context = new ConstraintValidatorContextImpl(constraint.message);
         if (!chosen.run(constraint.annotation, value, context))
-            report(leaf, value, at, constraint, context.violationTemplates());
+            report(leaf, value, at, new ConstraintDescriptorImpl(constraint), context.violationTemplates());
     }
 
     // An annotation whose descriptor carries @Constraint but has no bound validator: Hibernate would instantiate
     // `validatedBy`, which Flint never does from a class name.
-    void requireBinding(string annotationType, ref Any value, PathImpl at)
+    void requireBinding(string annotationType, ref Any value, ref LazyPath at)
     {
-        auto d = factory.descriptors is null ? null : factory.descriptors.find(annotationType);
-        if (d !is null && findAnnotation(d.annotations, typeNameOf!Constraint))
-            throw unexpectedType(annotationType, value, at);
+        if (factory.isConstraint(annotationType))
+            throw unexpectedType(annotationType, value, at.get());
     }
 
     UnexpectedTypeException unexpectedType(string annotationType, ref Any value, PathImpl at)
@@ -709,9 +832,9 @@ private struct Run
                 ~ constraint ~ "' validating type '" ~ type ~ "'. Check configuration for '" ~ at.toString() ~ "'");
     }
 
-    void report(Any leaf, ref Any value, PathImpl at, BuiltinConstraint constraint, string[] templates)
+    void report(Any leaf, ref Any value, PathImpl at, ConstraintDescriptorImpl descriptor,
+            scope const(string)[] templates)
     {
-        auto descriptor = new ConstraintDescriptorImpl(constraint);
         foreach (messageTemplate; templates)
         {
             const message = factory.interpolator.interpolate(messageTemplate,

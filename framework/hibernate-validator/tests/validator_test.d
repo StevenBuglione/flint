@@ -512,3 +512,46 @@ version (FlintInterfaceConstraints)
         assertOnlyViolationAt(violations, typeNameOf!NotNull, "property");
     }
 }
+
+@Constraint(validatedBy: [])
+private struct Unbound
+{
+    string message = "unbound";
+}
+
+private final class WithUnbound
+{
+    @Unbound
+    string name;
+}
+
+@("a bean validated again reports the same violations from its prepared metadata")
+unittest
+{
+    auto validator = getValidator();
+    foreach (round; 0 .. 3)
+    {
+        assertOnlyViolationAt(validator.validate(Any.of(new A())), typeNameOf!NotNull, "b");
+        assertOnlyViolationAt(validator.validate(Any.of(new Foo())), typeNameOf!NotNull, "bar[0].alwaysNull");
+    }
+}
+
+@("an unbound @Constraint still fails with HV000030 naming its property, on every validation")
+unittest
+{
+    auto validator = configurationFor!(WithUnbound, Unbound)().buildValidatorFactory().getValidator();
+    foreach (round; 0 .. 2)
+    {
+        try
+        {
+            validator.validate(Any.of(new WithUnbound()));
+            assert(false, "expected HV000030");
+        }
+        catch (imported!"flint.jakarta.validation".UnexpectedTypeException e)
+        {
+            import std.algorithm.searching : endsWith, startsWith;
+
+            assert(e.msg.startsWith("HV000030: ") && e.msg.endsWith("Check configuration for 'name'"), e.msg);
+        }
+    }
+}

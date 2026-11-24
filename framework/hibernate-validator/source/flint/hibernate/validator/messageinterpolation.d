@@ -35,6 +35,10 @@ class ResourceBundleMessageInterpolator : MessageInterpolator
     /// Whether `${...}` terms are evaluated.
     protected bool evaluateExpressions = true;
     private string[string] userBundle;
+    // AbstractMessageInterpolator's caches (cachingEnabled, its default): a template's bundle resolution, and the
+    // parameter and EL tokens of a message.
+    private Cache!string resolvedMessages;
+    private Cache!(Token[]) parameterTokens, elTokens;
 
     /// The interpolator over Hibernate's default bundle.
     this() pure nothrow @nogc
@@ -57,11 +61,13 @@ class ResourceBundleMessageInterpolator : MessageInterpolator
             return unescapeMessageParameter(messageTemplate);
         try
         {
-            auto resolved = resolveMessage(messageTemplate);
+            auto resolved = resolvedMessages.get(this, messageTemplate, () => resolveMessage(messageTemplate));
             if (contains(resolved, '{'))
             {
-                resolved = interpolateTerms(resolved, false, (string term) => parameter(term, context));
-                resolved = interpolateTerms(resolved, true, (string term) => evaluateExpressions
+                resolved = interpolateTokens(resolved, parameterTokens.get(this, resolved,
+                        () => tokenize(resolved, false)), (string term) => parameter(term, context));
+                resolved = interpolateTokens(resolved, elTokens.get(this, resolved,
+                        () => tokenize(resolved, true)), (string term) => evaluateExpressions
                         ? expression(term, context) : term);
             }
             return unescapeMessageParameter(resolved);
@@ -186,28 +192,17 @@ private bool contains(string s, char c) pure nothrow @nogc
 /// InterpolationHelper.escapeMessageParameter: `\`, `{`, `}` and `$` gain a backslash.
 string escapeMessageParameter(string value) pure nothrow
 {
-    string result;
-    foreach (ch; value)
-    {
-        if (ch == '\\' || ch == '{' || ch == '}' || ch == '$')
-            result ~= '\\';
-        result ~= ch;
-    }
-    return result;
+    if (!needsEscape(value))
+        return value;
+    return escapedCopy(value);
 }
 
 /// The reverse of `escapeMessageParameter`: `\{`, `\}`, `\$` and `\\` lose their backslash.
 string unescapeMessageParameter(string message) pure nothrow
 {
-    string result;
-    for (size_t i; i < message.length; ++i)
-    {
-        if (message[i] == '\\' && i + 1 < message.length && (message[i + 1] == '\\'
-                || message[i + 1] == '{' || message[i + 1] == '}' || message[i + 1] == '$'))
-            ++i;
-        result ~= message[i];
-    }
-    return result;
+    if (!contains(message, '\\'))
+        return message;
+    return unescapedCopy(message);
 }
 
 /// A message template the tokenizer rejects: an unbalanced `{`/`}` or a nested `{`.
@@ -220,19 +215,99 @@ final class MessageDescriptorFormatException : Exception
     }
 }
 
+// escapeMessageParameter's text, built in one allocation (a pure result converts to string).
+private char[] escapedCopy(string value) pure nothrow
+{
+    size_t extra;
+    foreach (ch; value)
+        extra += ch == '\\' || ch == '{' || ch == '}' || ch == '$';
+    auto result = new char[value.length + extra];
+    size_t n;
+    foreach (ch; value)
+    {
+        if (ch == '\\' || ch == '{' || ch == '}' || ch == '$')
+            result[n++] = '\\';
+        result[n++] = ch;
+    }
+    return result;
+}
+
+// unescapeMessageParameter's text, built in one allocation.
+private char[] unescapedCopy(string message) pure nothrow
+{
+    auto result = new char[message.length];
+    size_t n;
+    for (size_t i; i < message.length; ++i)
+    {
+        if (message[i] == '\\' && i + 1 < message.length && (message[i + 1] == '\\'
+                || message[i + 1] == '{' || message[i + 1] == '}' || message[i + 1] == '$'))
+            ++i;
+        result[n++] = message[i];
+    }
+    return result[0 .. n];
+}
+
+private bool needsEscape(string value) pure nothrow @nogc
+{
+    foreach (ch; value)
+        if (ch == '\\' || ch == '{' || ch == '}' || ch == '$')
+            return true;
+    return false;
+}
+
 private struct Token
 {
     string value;
     bool isParameter;
 }
 
+// Messages each cache keeps at most: templates and constraint messages are few, but a custom validator may build
+// templates at run time, which Hibernate's soft-referenced caches let the collector drop.
+private enum cacheLimit = 1024;
+
+// A copy-on-write table, as the pattern cache: a published table is never changed, so lookups take no lock; a miss
+// computes the value and publishes a larger copy under `lock`.
+private struct Cache(V)
+{
+    private V[string] table;
+
+    V get(Object lock, string key, scope V delegate() @safe compute)
+    {
+        auto published = table;
+        if (auto found = key in published)
+            return *found;
+        auto value = compute();
+        synchronized (lock)
+        {
+            if (key in table || table.length >= cacheLimit)
+                return value;
+            auto grown = table.dup;
+            grown[key] = value;
+            imported!"core.atomic".atomicFence(); // the value and the table are complete before publication
+            table = grown;
+        }
+        return value;
+    }
+}
+
 // TokenIterator and interpolateExpression: each interpolation term is replaced by `resolve(term)`; the message
 // comes back as it was when no replacement differs from its term.
 private string interpolateTerms(string message, bool el, scope string delegate(string) @safe resolve)
 {
+    return interpolateTokens(message, tokenize(message, el), resolve);
+}
+
+// interpolateTerms over the message's tokens.
+private string interpolateTokens(string message, const(Token)[] tokens, scope string delegate(string) @safe resolve)
+{
+    bool any;
+    foreach (token; tokens)
+        any = any || token.isParameter;
+    if (!any)
+        return message;
     string result;
     bool replaced;
-    foreach (token; tokenize(message, el))
+    foreach (token; tokens)
     {
         if (!token.isParameter)
         {

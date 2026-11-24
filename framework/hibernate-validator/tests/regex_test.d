@@ -173,3 +173,44 @@ unittest
     const lines = Pattern(regexp: "^a$\\n^b$", flags: [Pattern.Flag.MULTILINE]);
     assert(isValidFor(lines, "a\nb"));
 }
+
+@("matches past the inline buffers: long text, many groups, deep backtracking")
+unittest
+{
+    // 256 code points fit on the stack, 257 do not; 'é' takes two bytes.
+    foreach (n; [255, 256, 257, 600])
+    {
+        string text;
+        foreach (i; 0 .. n)
+            text ~= i % 2 ? "é" : "a";
+        assert(compileRegex("(?:aé)*a?").matches(text));
+        assert(!compileRegex("(?:aé)*b").matches(text));
+    }
+    // 20 groups need 42 capture slots, more than the 32 on the stack.
+    string groups, input;
+    foreach (i; 0 .. 20)
+    {
+        groups ~= "(x)";
+        input ~= "x";
+    }
+    assert(compileRegex(groups ~ "\\1").matches(input ~ "x"));
+    assert(!compileRegex(groups ~ "\\1").matches(input ~ "y"));
+    // Choice points past the 64 inline frames, then backtracking through all of them.
+    string as;
+    foreach (i; 0 .. 200)
+        as ~= "a";
+    assert(compileRegex("a*a*b").matches(as ~ "b"));
+    assert(!compileRegex("a*a*b").matches(as));
+    assert(compileRegex("(a)*(a)*").matches(as));
+}
+
+@("character classes answer ASCII from their table and the rest from their terms")
+unittest
+{
+    const letters = compileRegex("[\\p{L}]+");
+    assert(letters.matches("Ada") && letters.matches("Zoë") && !letters.matches("Ada1"));
+    const negated = compileRegex("[^a-c&&[^x]]+");
+    assert(negated.matches("dxyé") && !negated.matches("dab"));
+    const insensitive = compileRegex("[a-c]+", 0x02);
+    assert(insensitive.matches("aBc") && !insensitive.matches("abd"));
+}
