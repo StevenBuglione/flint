@@ -442,6 +442,46 @@ class ProjectLifecycleTests(unittest.TestCase):
         self.assertEqual((status, codes(document)), (2, ['FLINT-E0902']))
 
 
+class GlueResolutionTests(unittest.TestCase):
+    """policy/boot.json `glue` (D-JDBC-2): a glue library joins the graph when all of its triggers are resolved for
+    the build, as Spring's optional dependencies wire boot-jdbc's health indicator once boot-health is present."""
+
+    def locked(self, dependencies, test_dependencies=()):
+        with tempfile.TemporaryDirectory(prefix='flint-glue-') as temporary:
+            status, document = flint_json('new', 'glue', cwd=Path(temporary))
+            self.assertEqual(status, 0, document)
+            project = Path(temporary) / 'glue'
+            manifest = (project / 'flint.toml').read_text(encoding='utf-8')
+            lines = ''.join(f'"flint:{name}" = {{}}\n' for name in dependencies)
+            manifest = manifest.replace('[dependencies]\n', '[dependencies]\n' + lines, 1)
+            if test_dependencies:
+                tests = ''.join(f'"flint:{name}" = {{}}\n' for name in test_dependencies)
+                manifest = (manifest.replace('[test-dependencies]\n', '[test-dependencies]\n' + tests, 1)
+                            if '[test-dependencies]' in manifest else manifest + '\n[test-dependencies]\n' + tests)
+            (project / 'flint.toml').write_text(manifest, encoding='utf-8', newline='\n')
+            result = flint('lock', cwd=project)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            return set(re.findall(r'^name = "(flint:[^"]+)"', (project / 'flint.lock').read_text(encoding='utf-8'),
+                                  flags=re.M))
+
+    def test_a_glue_library_joins_when_its_triggers_meet(self):
+        self.assertIn('flint:boot-jdbc-health', self.locked(['boot-jdbc', 'boot-health']))
+
+    def test_one_trigger_alone_adds_nothing(self):
+        self.assertNotIn('flint:boot-jdbc-health', self.locked(['boot-jdbc']))
+        self.assertNotIn('flint:boot-jdbc-health', self.locked(['boot-health']))
+
+    def test_a_test_only_trigger_adds_nothing(self):
+        self.assertNotIn('flint:boot-jdbc-health', self.locked(['boot-jdbc'], test_dependencies=['boot-health']))
+
+    def test_every_glue_library_depends_on_its_triggers(self):
+        libraries = json.loads((ROOT / 'policy' / 'boot.json').read_text(encoding='utf-8'))['libraries']
+        glue = {name: entry['glue'] for name, entry in libraries.items() if entry.get('glue')}
+        self.assertIn('boot-jdbc-health', glue)
+        for name, triggers in glue.items():
+            self.assertTrue(set(triggers) <= set(libraries[name]['dependencies']), name)
+
+
 class KnowledgeTests(unittest.TestCase):
     def test_explain_and_catalogue(self):
         status, document = flint_json('explain', 'e0401')

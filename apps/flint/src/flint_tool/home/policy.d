@@ -39,6 +39,10 @@ struct CorePackage
     string summary;
     /// For a starter: its auto-configuration lists, as `module:Symbol` (ADR-029 section 2).
     string[] autoconfiguration;
+    /// For a glue library (policy/boot.json): the packages whose presence together adds it to an application,
+    /// as Spring Boot's optional dependencies wire one module to another when both are on the classpath
+    /// (D-JDBC-2: flint:boot-jdbc-health when flint:boot-jdbc and flint:boot-health are both resolved).
+    string[] glue;
     /// The repo the package belongs to after the split (policy/repos.json, plan section 7): flint, framework, boot,
     /// or a portfolio repo.
     string repo;
@@ -571,6 +575,9 @@ private bool loadStarters(ref Home home, ref Report report)
             item.section = decoded.value.section;
             item.summary = decoded.value.summary;
             item.autoconfiguration = decoded.value.autoconfiguration;
+            item.glue = decoded.value.glue;
+            if (!glueDependsOnTriggers(item, failure))
+                return invalid(report, "policy/boot.json", failure);
             item.repo = decoded.value.repo.length ? decoded.value.repo : "boot";
             item.starter = group == "starters";
             item.boot = !item.starter;
@@ -582,6 +589,22 @@ private bool loadStarters(ref Home home, ref Report report)
         }
     }
     return failure.length == 0 || invalid(report, "policy/boot.json", failure);
+}
+
+/// A glue library depends on every one of its triggers, so adding it never brings a trigger the closure lacked.
+private bool glueDependsOnTriggers(const ref CorePackage item, out string failure)
+{
+    import std.algorithm.searching : canFind;
+
+    foreach (trigger; item.glue)
+    {
+        if (!item.dependencies.canFind(trigger))
+        {
+            failure = item.name ~ ": glue trigger " ~ trigger ~ " is not one of its dependencies";
+            return false;
+        }
+    }
+    return true;
 }
 
 // policy/framework.json: the Spring-layer modules under framework/<artifact> (ADR-030). An application resolves them
@@ -664,6 +687,7 @@ private struct BootRecordJson
     string summary;
     string[] autoconfiguration;
     string repo;
+    string[] glue;
 }
 
 private struct AppJson

@@ -131,6 +131,12 @@ bool resolve(const ref Home home, const ref Manifest manifest, out Resolution re
         return false;
     addCoreClosure(home, found, resolution.workspace);
     markScopes(found, resolution);
+    while (addGlue(home, found, resolution))
+    {
+        addCoreClosure(home, found, resolution.workspace);
+        resolution.packages = null;
+        markScopes(found, resolution);
+    }
     import std.algorithm.sorting : sort;
 
     sort!((a, b) => a.name < b.name)(resolution.packages);
@@ -289,6 +295,33 @@ private void checkPlatformModules(const ref Home home, const ref Resolution reso
                 item.name ~ " resolves from " ~ item.platform ~ ", whose checkout " ~ item.repoRoot ~ " is not fetched",
                 "python3 tools/platform_modules.py --fetch, in the Flint home");
     }
+}
+
+/// Add every glue library (policy/boot.json `glue`) whose triggers are all resolved for the build, as if the
+/// application had declared it: it joins the direct dependencies, so the recipe, the lock, the platform prelude and
+/// the AOT closure all see it. Returns whether one was added; the caller repeats until none is, so glue that
+/// another glue's closure triggers is added too. Test-only triggers add nothing.
+private bool addGlue(const ref Home home, ref ResolvedPackage[string] found, ref Resolution resolution)
+{
+    bool added;
+    foreach (ref library; home.bootLibraries)
+    {
+        const key = "flint:" ~ library.name;
+        if (library.glue.length == 0 || key in found)
+            continue;
+        bool triggered = true;
+        foreach (trigger; library.glue)
+        {
+            const item = ("flint:" ~ trigger) in found;
+            triggered = triggered && item !is null && !item.testOnly;
+        }
+        if (!triggered)
+            continue;
+        found[key] = starterPackage(home, library, resolution.workspace);
+        resolution.direct ~= key;
+        added = true;
+    }
+    return added;
 }
 
 /// A package is test-only unless a build dependency reaches it; collect the packages.

@@ -248,6 +248,10 @@
         "java",
         "engine-aot"
       ],
+      "glue": [
+        "boot-jdbc",
+        "boot-health"
+      ],
       "repo": "boot"
     },
     "boot-sql": {
