@@ -551,3 +551,8 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - Context: digests cleared 622 ms; with debug information, primary 523 ms, static edit 811 ms, scratch 6,346 ms.
 
     Evidence: `benchmarks/spring/evidence/phase1-builds-petclinic/20261124T023031Z/`.
+- 2026-11-23, coordinator: the throughput plan and busy-wait audit by GPT-6.2-Astra High (docs/spring/phase1/throughput-plan-astra.md) is adopted for the runtime slice.
+  - **Order:** the first five changes are (1) data-access lands the engine-sql wait fix; (2) proof-harness builds an owner-1 diagnostic separating lease wait, lease hold, SQL drive, row mapping, dispatch and response; (3) web-http builds the internal cross-thread reactor wake; (4) data-access wires ticket-specific lease handoff once (2) confirms the convoy; (5) web-http does gs-rest's single-pass query and header binding.
+  - **Reactor ownership:** web-http owns engine-reactor for the wake work.
+  - **Design rule (playbook):** a cross-thread wake must not be an ordinary mailbox post, because the mailbox stops being drained when every fiber slot is occupied. It uses reserved per-slot records, a ready bitmap and the owner's eventfd, with a wait-generation handle.
+  - **Targets:** throughput lower 99% bound at least 1.30x Go, and CPU per request, p50, p99 and RSS upper bounds at most 0.99x, on each HTTP app.
