@@ -4,15 +4,15 @@
   "builds": {},
   "id": "go-baseline-petclinic-rest-2",
   "created": "2026-11-24",
-  "status": "blocked",
+  "status": "pending",
   "priority": 8.1,
   "estimate_minutes": 45,
-  "requested_by": "owner decision 118b4482 (ADR-033): re-capture the affected Go baselines after the comparator change; the coordinator, 21:37Z",
+  "requested_by": "owner decisions 118b4482 and 081851b0 (ADR-033 on every gated path): capture once against the final comparator; the coordinator, 22:20Z: unblock after re-registration",
   "report_to": "the coordinator",
   "claim_when": "after transport-pricing (which measures the comparators as they were, at B3's tree)",
-  "summary": "Re-capture the Go baseline of petclinic-rest (HTTP and error workloads, calibration and probe) against the ADR-033 comparator registered at 5aa5637e",
+  "summary": "Re-capture the Go baseline of petclinic-rest (HTTP and error workloads, calibration and probe) against the ADR-033 comparator registered at 075b4715 (parity on every gated path)",
   "why": "ADR-033 changes the comparator on the gated error path (framing, close-after-400, reason phrase), so its error series must be re-captured; the record holds the app's HTTP and error series together, and the current records are stale anyway under the database protocol and the PostgreSQL fingerprint (VACUUM ANALYZE after readiness). Flint's error paths are then remeasured against these records at the next baseline commit; B2's and B3's error results stay as history.",
-  "harness": "61d4d2624f79",
+  "harness": "406199aefc1d",
   "measure": {
     "kind": "command",
     "steps": [
@@ -35,6 +35,5 @@
         ]
       }
     ]
-  },
-  "blocked_by": "the coordinator, 21:50Z: hold until the owner decides whether HTTP parity extends to petclinic's owner GET and every gated path (the comparator would change again; capturing twice costs about 2 hours)"
+  }
 }
