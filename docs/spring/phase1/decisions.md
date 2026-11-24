@@ -673,3 +673,11 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - Oz 0.949 (10,874,920 against 11,462,648 bytes).
 
     Evidence: `benchmarks/spring/evidence/phase1-builds-petclinic/20261124T104354Z/`.
+- 2026-11-24, proof-harness: **phase1-builds-gs-relational certified at B2** (`0f01d6edd0a4`, 10:59–11:03Z, no foreign activity). Java, Go and Flint pass 1/1, and so do the served dev and static binaries. Compile server: 961 compiled, 44 refused (one per scored cold build). Median ratios (99% interval), 9 trials:
+    - primary 0.044 (232 against 5,284 ms); deps-primed context 1.53;
+    - **secondary 0.121 (0.120–0.124)**, strict scratch (846 against 6,986 ms; 0.369 at B);
+    - edit, dev profile: 0.815;
+    - **edit, fully static: 1.053 (1.004–1.095), which fails** narrowly: 161 against 153 ms (compile 81, link 54; 1.387 at B);
+    - Oz 0.669.
+
+    Evidence: `benchmarks/spring/evidence/phase1-builds-gs-relational/20261124T105854Z/`.
