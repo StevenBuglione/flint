@@ -1185,11 +1185,15 @@ def step_provenance(command, cwd, env, log, outdir, started):
 KINDS = {'startup': measure_startup, 'rest-pair': measure_rest_pair, 'command': measure_command}
 
 
-def claim_window(seconds):
+def claim_window(seconds, freezer=None):
     """With the lock taken, wait up to `seconds` for sessions behind `hold` to pause: three quiet samples in a row,
-    5 s apart, with no build process using CPU and at most RUNNING_LIMIT runnable tasks. Returns the last snapshot."""
+    5 s apart, with no build process using CPU and at most RUNNING_LIMIT runnable tasks. Returns the last snapshot.
+    With a freezer, each sample first freezes the strays that appeared since the last one: error-404-p99's claim at
+    21:56Z on 2026-11-24 failed on a session server started after the claim's sweep."""
     deadline, streak = time.monotonic() + seconds, 0
     while True:
+        if freezer:
+            freezer.sweep()
         snapshot = quiet_snapshot(instant=True)
         streak = streak + 1 if snapshot['quiet'] else 0
         if streak >= 3 or time.monotonic() >= deadline:
@@ -1273,7 +1277,7 @@ def _run_window(entry, outdir, built, smoke, force_busy, claim_seconds, locking,
         freezer.sweep()
     # A claimed window (watch --claim): the lock is taken first and sessions behind `hold` pause, then the window
     # must settle. Otherwise venus must already be quiet.
-    before = claim_window(claim_seconds) if (locking and claim_seconds) else quiet_snapshot()
+    before = claim_window(claim_seconds, freezer) if (locking and claim_seconds) else quiet_snapshot()
     held = held_work() if natural else []
     if held:
         before = dict(before, quiet=False, problems=before['problems'] + [f'hold-wrapped work is alive: pids {held}'])

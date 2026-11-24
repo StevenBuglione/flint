@@ -98,6 +98,20 @@ class QuietWindow(unittest.TestCase):
                 mock.patch.object(measure_queue.time, 'monotonic', side_effect=[0, 0, 100]):
             self.assertFalse(measure_queue.claim_window(90)['quiet'])
 
+    def test_a_claim_freezes_strays_before_every_sample(self):
+        quiet = {'quiet': True, 'problems': []}
+        order = []
+        freezer = mock.Mock()
+        freezer.sweep.side_effect = lambda: order.append('sweep')
+
+        def snapshot(**_):
+            order.append('sample')
+            return quiet
+        with mock.patch.object(measure_queue, 'quiet_snapshot', side_effect=snapshot), \
+                mock.patch.object(measure_queue.time, 'sleep'):
+            self.assertTrue(measure_queue.claim_window(600, freezer)['quiet'])
+        self.assertEqual(order, ['sweep', 'sample'] * 3)
+
     def test_only_short_entries_claim_by_default(self):
         mode = measure_queue.window_mode
         self.assertEqual(mode({'id': 'a', 'estimate_minutes': 30}), 'claim')
