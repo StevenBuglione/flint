@@ -172,6 +172,32 @@ def cpu_ticks(pid):
 OWN_DIRECTORIES = []  # set by run(): the run's checkouts and results; a process working there belongs to the run
 
 
+DIAGNOSTIC_COMMANDS = {'strace', 'ltrace', 'perf', 'gdb'}
+VALGRIND_PREFIXES = ('memcheck', 'callgrind', 'cachegrind', 'massif', 'helgrind', 'drd-', 'valgrind')
+STRAY_EXE_PARTS = ('/scratchpad/', '/build/spring/', '/.flint/build/')
+
+
+def stray_kind(pid, command):
+    """Why a process outside the run counts as foreign load at any CPU use (coordinator, 2026-11-24: a session's
+    strace'd server took about 10% of a CPU unseen for two hours): a debugger or tracer, a valgrind tool, a server
+    started from a session's scratchpad or a Spring build directory, or a PostgreSQL cluster in a scratchpad."""
+    if command in DIAGNOSTIC_COMMANDS or command.startswith(VALGRIND_PREFIXES):
+        return 'diagnostic'
+    try:
+        exe = os.readlink(f'/proc/{pid}/exe')
+    except OSError:
+        return None
+    if any(part in exe for part in STRAY_EXE_PARTS):
+        return 'server'
+    if command == 'postgres':
+        try:
+            if '/scratchpad/' in os.readlink(f'/proc/{pid}/cwd'):
+                return 'database'
+        except OSError:
+            return None
+    return None
+
+
 def build_processes():
     """Compiler and build-system processes on the host outside this run's own tree, with where they run. A process
     whose working directory is inside the run's own checkouts belongs to the run even when it is not a descendant:
@@ -184,12 +210,13 @@ def build_processes():
             continue
         try:
             command = Path(f'/proc/{name}/comm').read_text().strip()
-            if command not in BUSY_COMMANDS:
+            kind = 'build' if command in BUSY_COMMANDS else stray_kind(name, command)
+            if kind is None:
                 continue
             cwd = os.readlink(f'/proc/{name}/cwd')
             if any((cwd.removesuffix(' (deleted)') + os.sep).startswith(prefix) for prefix in own):
                 continue
-            found.append({'pid': int(name), 'command': command, 'cwd': cwd, 'ticks': cpu_ticks(name)})
+            found.append({'pid': int(name), 'command': command, 'cwd': cwd, 'ticks': cpu_ticks(name), 'kind': kind})
         except OSError:
             continue
     return found
@@ -206,8 +233,10 @@ def busy_processes(interval=1.0):
             used = cpu_ticks(row['pid']) - row['ticks']
         except OSError:
             continue
-        if used >= ACTIVE_TICKS:
-            busy.append({'pid': row['pid'], 'command': row['command'], 'cwd': row['cwd'], 'cpu_ticks': used})
+        # A build process counts from ACTIVE_TICKS; a tracer, a stray server or a scratchpad database from any use.
+        if used >= (ACTIVE_TICKS if row.get('kind', 'build') == 'build' else 1):
+            busy.append({'pid': row['pid'], 'command': row['command'], 'cwd': row['cwd'], 'cpu_ticks': used,
+                         'kind': row.get('kind', 'build')})
     busy_processes.idle = len(first) - len(busy)
     return busy
 
@@ -903,6 +932,7 @@ def measure_command(entry, built, outdir, smoke):
             errors = [path.name for path in written if 'error' in json.loads(path.read_text())]
             if not written or errors:
                 receipts.append(dict(receipt, measured=False))
+                drift_fallback(entry, index, written)
                 raise SystemExit(f'step {index} measured nothing (exit {completed.returncode}, '
                                  f"{'error in ' + ', '.join(errors) if errors else 'no output'}); see {log}")
             receipt['measured'] = True
@@ -911,6 +941,29 @@ def measure_command(entry, built, outdir, smoke):
             raise SystemExit(f'step {index} exited with {completed.returncode}; see {log}')
     return {'steps': receipts,
             'outputs': {p.name: sha256(p) for p in sorted(outdir.iterdir()) if p.is_file() and p.suffix == '.json'}}
+
+
+def drift_fallback(entry, index, outputs):
+    """Coordinator, 2026-11-24 10:35Z: until the guard's bands come from cross-session calibrations, a Flint-only step
+    whose drift guard fails is measured again interleaved with Go. The step loses --baseline and the entry stays
+    pending, so its next claim runs the interleaved method (c25ae2b3); this window still measured nothing."""
+    drifted = False
+    for path in outputs:
+        try:
+            drifted |= 'runner drift' in (json.loads(Path(path).read_text()).get('error') or '')
+        except (OSError, ValueError):
+            pass
+    argv = entry['measure']['steps'][index]['argv']
+    if not drifted or '--baseline' not in argv:
+        return False
+    position = argv.index('--baseline')
+    record = argv[position + 1]
+    del argv[position:position + 2]
+    entry['drift_fallback'] = {'time': now(), 'record': record,
+                               'note': 'the drift guard failed; measured interleaved with Go from the next claim'}
+    save_entry(entry)
+    print(now(), entry['id'], 'drift guard failed; switched to interleaved for its next claim', flush=True)
+    return True
 
 
 def stop_tree_compile_servers(cwd):

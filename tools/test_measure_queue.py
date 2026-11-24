@@ -1,5 +1,6 @@
 """Unit tests of the measurement queue's quiet-window rules: `python3 tools/test_measure_queue.py`."""
 import json
+import os
 from pathlib import Path
 import socket
 import subprocess
@@ -266,6 +267,44 @@ class ServedCompiles(unittest.TestCase):
     def test_only_this_trees_servers_stop(self):
         with tempfile.TemporaryDirectory() as temporary:
             self.assertEqual(measure_queue.stop_tree_compile_servers(temporary), [])
+
+
+class StrayProcesses(unittest.TestCase):
+    def test_tracers_and_session_servers_are_foreign(self):
+        self.assertEqual(measure_queue.stray_kind(os.getpid(), 'strace'), 'diagnostic')
+        self.assertEqual(measure_queue.stray_kind(os.getpid(), 'callgrind-amd64-'), 'diagnostic')
+        self.assertIsNone(measure_queue.stray_kind(os.getpid(), 'python3'))
+        with tempfile.TemporaryDirectory() as temporary:
+            exe = Path(temporary) / 'build' / 'spring' / 'server'
+            exe.parent.mkdir(parents=True)
+            exe.write_text('#!/bin/sh\nsleep 30\n')
+            exe.chmod(0o755)
+            child = subprocess.Popen([str(exe)])
+            try:
+                time.sleep(0.2)
+                # A shell script's exe is the shell; the check reads the executable, so a script is not a server.
+                self.assertIsNone(measure_queue.stray_kind(child.pid, 'server'))
+            finally:
+                child.kill()
+                child.wait()
+
+
+class DriftFallback(unittest.TestCase):
+    def test_a_drifted_flint_only_step_switches_to_interleaved(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            out = Path(temporary) / 'http.json'
+            out.write_text(json.dumps({'status': 'failed', 'error': 'runner drift against the baseline (not evidence)'}))
+            entry = {'id': 'x', 'measure': {'steps': [{'argv': ['load_bench.py', '--baseline', 'rec', '--output', 'o']}]}}
+            with mock.patch.object(measure_queue, 'save_entry') as saved:
+                self.assertTrue(measure_queue.drift_fallback(entry, 0, [out]))
+                saved.assert_called_once()
+            self.assertEqual(entry['measure']['steps'][0]['argv'], ['load_bench.py', '--output', 'o'])
+            self.assertEqual(entry['drift_fallback']['record'], 'rec')
+            out.write_text(json.dumps({'status': 'failed', 'error': 'server exited'}))
+            entry = {'id': 'y', 'measure': {'steps': [{'argv': ['load_bench.py', '--baseline', 'rec']}]}}
+            with mock.patch.object(measure_queue, 'save_entry') as saved:
+                self.assertFalse(measure_queue.drift_fallback(entry, 0, [out]))
+                saved.assert_not_called()
 
 
 class NativeExtractorProbe(unittest.TestCase):
