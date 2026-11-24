@@ -103,6 +103,12 @@ Queue policy (coordinator, 2026-11-23). A claimed window pauses everyone, so it 
   - phase1-http claims after the io_uring steps and the RSS and GC fixes land, since a run that only confirms today's 0.75x throughput isn't worth pausing everyone.
 
   All five also stay blocked until petclinic-rest scores 109/109 and the parts are pinned to one commit where every port passes exactly.
+- **The baseline at B (resume plan, owner-approved b349fb0a).** The plan's section 2 entries claim windows in its order (priorities 1 to 9), and the GC matrix, framework-timings and java-context run on natural quiet. All of them stay blocked until the coordinator gives B's SHA, then all are pinned to it. Other entries are parked. The pins and receipts fail closed:
+  - every part builds in the same private tree at B: `flint`, mold, the fork build, every step `in: tree`;
+  - a step outside a build tree, or one using `{harness}`, needs a pinned `"harness"` revision, and `run` refuses an unpinned entry before building anything;
+  - each receipt records the tree's toolchain (DMD, LDC, flint and mold digests and versions, DMD's linker switches, the fork flag, whether DMD has the native AOT extractor), and each step records the ports' executables it wrote (digest, `file`, .comment, embedded `gcopt=`), the executables its outputs measured, its Flint AOT summary lines and its GC options;
+  - `spring_bench.py assemble` exits 1, and the gate fails, on any missing part, parts at different source commits, a non-production part, a trial count other than the gate's, a builds record naming another commit, or a gap in coverage (applications, HTTP and error workloads, GC settings, acceptance per implementation);
+  - the gate scores p50 at 0.99 with p99 (owner decision 4), and reports p99.9 without scoring it.
 
 ## Work queue
 

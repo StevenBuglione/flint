@@ -2,7 +2,7 @@
   "schema": "flint.measure-queue/1",
   "id": "phase1-guides",
   "created": "2026-11-23",
-  "status": "pending",
+  "status": "blocked",
   "window": "natural",
   "requested_by": "proof-harness, for the coordinator's window: the Phase 1 evidence that does not wait for petclinic-rest",
   "summary": "gs-rest-service and gs-relational-data-access: both build headlines against Go, and the Spring REST workload for gs-rest-service (Flint vs Go)",
@@ -75,5 +75,6 @@
     ]
   },
   "report_to": "docs/milestones/13.md; the coordinator",
-  "estimate_minutes": 90
+  "estimate_minutes": 90,
+  "blocked_on": "parked by the owner-approved resume plan (b349fb0a section 4: no other streams run until the baseline picks the next work)"
 }

@@ -4,11 +4,19 @@
   "created": "2026-11-23",
   "status": "blocked",
   "window": "natural",
-  "blocked_on": "the phase1-http-* parts having run (the Java context is reported next to their evidence)",
+  "blocked_on": "freeze B (resume plan section 1): the coordinator gives B's full SHA, then every baseline entry is pinned to it",
   "requested_by": "ADR-030 section 8 (context only)",
   "summary": "Java Spring Boot on the JVM and as native images, the Spring workload and the error paths, as context next to the Phase 1 evidence",
   "why": "Context is reported, never compared or gated (benchmarks/spring/README.md). It doubles the HTTP runs, so it runs in its own window, under the same quiet rules, rather than inside the coordinator's paused window.",
-  "builds": {},
+  "builds": {
+    "tree": {
+      "app": "checkout",
+      "commit": "TBD",
+      "flint": true,
+      "linker": "mold",
+      "fork": true
+    }
+  },
   "measure": {
     "kind": "command",
     "ports": [],
@@ -23,7 +31,8 @@
           "{out}/http-context.json",
           "--allow-missing-flint"
         ],
-        "may_fail": true
+        "may_fail": true,
+        "in": "tree"
       },
       {
         "argv": [
@@ -35,10 +44,12 @@
           "{out}/http-error-paths-context.json",
           "--allow-missing-flint"
         ],
-        "may_fail": true
+        "may_fail": true,
+        "in": "tree"
       }
     ]
   },
   "report_to": "docs/milestones/13.md, beside the Phase 1 evidence",
-  "estimate_minutes": 165
+  "estimate_minutes": 165,
+  "tree_note": "Resume plan 1.5: every baseline part builds in the same private tree at B (flint, mold, the fork build), so all parts measure one toolchain."
 }

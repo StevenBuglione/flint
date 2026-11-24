@@ -2,12 +2,20 @@
   "schema": "flint.measure-queue/1",
   "created": "2026-11-23",
   "status": "blocked",
-  "priority": 2,
+  "priority": 5,
   "window": "claim",
-  "builds": {},
+  "builds": {
+    "tree": {
+      "app": "checkout",
+      "commit": "TBD",
+      "flint": true,
+      "linker": "mold",
+      "fork": true
+    }
+  },
   "requested_by": "Spring port P1: real HTTP for webmvc (web-http, local_16478490)",
   "id": "error-validation-p99",
-  "blocked_on": "the petclinic-rest Flint port (item 10) passing its suite",
+  "blocked_on": "freeze B (resume plan section 1): the coordinator gives B's full SHA, then every baseline entry is pinned to it",
   "summary": "p99 of the validation-error path: petclinic-rest POST /petclinic/api/owners failing one constraint, Flint against Go (ADR-030 section 4)",
   "why": "ADR-030 section 4: the validation path gets its own p99 test. Workload: policy/spring-error-paths-benchmark.json 'petclinic-rest:validation-error' (a 400 ProblemDetail from the application's advice; nothing is written, so the request repeats). Change status to pending when the Flint port passes all 109 petclinic-rest cases.",
   "measure": {
@@ -25,10 +33,16 @@
           "--output",
           "{out}/http-error-validation.json"
         ],
-        "may_fail": true
+        "may_fail": true,
+        "in": "tree",
+        "smoke_args": [
+          "--smoke"
+        ]
       }
     ]
   },
   "report_to": "the requester; docs/milestones/13.md",
-  "estimate_minutes": 41
+  "estimate_minutes": 41,
+  "claim_when": "Section 2 of the owner-approved resume plan (b349fb0a), order 5: a claimed window at B, the plan naming every baseline entry (the 41- and 45-minute HTTP and error parts included)",
+  "tree_note": "Resume plan 1.5: every baseline part builds in the same private tree at B (flint, mold, the fork build), so all parts measure one toolchain."
 }

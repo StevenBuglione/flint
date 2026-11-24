@@ -2,7 +2,7 @@
   "schema": "flint.measure-queue/1",
   "id": "framework-timings",
   "created": "2026-11-23",
-  "status": "pending",
+  "status": "blocked",
   "window": "natural",
   "requested_by": "Spring port P0: RELR and class-metadata size levers (local_8b7074aa), for the coordinator",
   "summary": "Timed builds of every policy/framework.json module (cold and edited DMD and LDC, compiler peak RSS, templates, linked bytes)",
@@ -10,8 +10,10 @@
   "builds": {
     "tree": {
       "app": "checkout",
-      "commit": "ec1cda8a7519",
-      "linker": "mold"
+      "commit": "TBD",
+      "flint": true,
+      "linker": "mold",
+      "fork": true
     }
   },
   "measure": {
@@ -32,5 +34,7 @@
     "ports": []
   },
   "report_to": "policy/framework.json via framework_budgets.py apply; the requester",
-  "estimate_minutes": 80
+  "estimate_minutes": 80,
+  "blocked_on": "freeze B (resume plan section 1): the coordinator gives B's full SHA, then every baseline entry is pinned to it",
+  "tree_note": "Resume plan 1.5: every baseline part builds in the same private tree at B (flint, mold, the fork build), so all parts measure one toolchain."
 }

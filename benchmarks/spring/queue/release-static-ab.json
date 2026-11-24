@@ -4,9 +4,9 @@
   "created": "2026-11-23",
   "status": "blocked",
   "window": "claim",
-  "priority": 4,
+  "priority": 8,
   "estimate_minutes": 30,
-  "blocked_on": "the static arm's binaries, prepared in the 12faeecbc922 queue worktree with the watcher paused (docker's container processes are outside hold, so they must not overlap anyone's window): after phase1-builds-petclinic, run in that worktree python3 tools/native_musl.py; python3 tools/native_build.py --target linux-x86_64-musl --retarget-dub; python3 tools/musl_smoke.py gs-rest-service; python3 tools/native_build.py --target linux-x86_64-glibc --retarget-dub; check .flint/musl-smoke/gs-rest-service.json (fully static, 18/18); then pending",
+  "blocked_on": "freeze B (resume plan section 1): the coordinator gives B's full SHA, then every baseline entry is pinned to it",
   "requested_by": "the owner (decisions.md 6ecd8933: measure a static release build before deciding how the measured apps link), scoped by the coordinator 2026-11-23 20:55Z (option 1: musl static)",
   "report_to": "the coordinator",
   "summary": "gs-rest-service release: dynamic glibc (as built now) against fully static musl (flint package), runtime on the Spring workload and stripped O3/Oz against Go; non-gating",
@@ -14,7 +14,7 @@
   "builds": {
     "tree": {
       "app": "checkout",
-      "commit": "12faeecbc922",
+      "commit": "TBD",
       "flint": true,
       "linker": "mold",
       "fork": true
@@ -28,7 +28,7 @@
         "in": "tree",
         "argv": [
           "{python}",
-          "{harness}/tools/spring_binary_ab.py",
+          "tools/spring_binary_ab.py",
           "--app",
           "gs-rest-service",
           "--runs",
@@ -45,5 +45,7 @@
         ]
       }
     ]
-  }
+  },
+  "claim_when": "Section 2 of the owner-approved resume plan (b349fb0a), order 8: a claimed window at B, the plan naming every baseline entry (the 41- and 45-minute HTTP and error parts included)",
+  "tree_note": "Resume plan 1.5: every baseline part builds in the same private tree at B (flint, mold, the fork build), so all parts measure one toolchain."
 }

@@ -50,6 +50,7 @@ import contextlib
 import hashlib
 import json
 import os
+import re
 import shutil
 import socket
 import statistics
@@ -582,7 +583,100 @@ def prepare_checkout(spec, logs):
                                            stderr=subprocess.STDOUT)
             if completed.returncode:
                 raise SystemExit(f'bootstrapping flint at {full[:12]} failed; see {log}')
-    return {'commit': full, 'worktree': str(directory)}
+    return {'commit': full, 'worktree': str(directory), 'fork': bool(spec.get('fork')), 'linker': spec.get('linker'),
+            'toolchain': toolchain_receipt(directory)}
+
+
+def tool_version(argv):
+    try:
+        completed = subprocess.run(argv, capture_output=True, text=True, timeout=30)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return f'unavailable: {exc}'
+    return (completed.stdout or completed.stderr).strip().splitlines()[0] if (completed.stdout or completed.stderr) else ''
+
+
+def toolchain_receipt(directory):
+    """What builds in this tree are made with (resume plan rule 4: receipt provenance fails closed): the digest and
+    version of each compiler and of the flint CLI, DMD's linker configuration, whether the toolchain is the private
+    fork build, and whether DMD carries the native AOT extractor (-flint-aot-extract), which flint build asks first."""
+    tools = directory / '.tools'
+    out = {'tools_directory': str(tools.resolve()) if tools.exists() else None,
+           'fork_build': (tools / 'flint-fork-build').is_dir() and not (tools / 'flint-fork-build').is_symlink()}
+    for name, relative, version in (('dmd', 'dmd2/linux/bin64/dmd', '--version'),
+                                    ('ldc2', 'ldc2-1.43.0-linux-x86_64/bin/ldc2', '--version'),
+                                    ('flint', None, '--version')):
+        path = directory / '.flint' / 'bin' / 'flint' if relative is None else tools / relative
+        if path.is_file():
+            out[name] = {'path': str(path.resolve()), 'sha256': sha256(path), 'version': tool_version([str(path), version])}
+        else:
+            out[name] = None
+    dmd = tools / 'dmd2' / 'linux' / 'bin64' / 'dmd'
+    out['dmd_native_aot_extractor'] = dmd.is_file() and b'flint-aot-extract' in dmd.read_bytes()
+    conf = tools / 'dmd2' / 'linux' / 'bin64' / 'dmd.conf'
+    if conf.is_file():
+        text = conf.read_text(errors='replace')
+        out['dmd_conf'] = {'sha256': sha256(conf),
+                           'linker_switches': sorted({part for part in text.split() if 'ld-path' in part or 'fuse-ld' in part})}
+    molds = sorted(p for p in tools.glob('mold-*/bin/mold') if p.is_file()) if tools.exists() else []
+    out['mold'] = [{'path': str(p.resolve()), 'sha256': sha256(p), 'version': tool_version([str(p), '--version'])}
+                   for p in molds]
+    return out
+
+
+GCOPT = re.compile(rb'gcopt=[\x20-\x7e]{1,200}')
+AOT_LINE = re.compile(r'Generated \d+ Flint AOT modules for .*')
+
+
+def binary_provenance(path):
+    """One built executable: its digest and size, what `file` says (static or dynamic, stripped), the linker recorded
+    in .comment, and the GC options compiled into it (rt_options' gcopt= strings)."""
+    data = path.read_bytes()
+    comment = subprocess.run(['readelf', '-p', '.comment', str(path)], capture_output=True, text=True).stdout
+    return {'sha256': hashlib.sha256(data).hexdigest(), 'bytes': len(data),
+            'file': subprocess.run(['file', '-b', str(path)], capture_output=True, text=True).stdout.strip(),
+            'comment': sorted({line.split(']', 1)[1].strip() for line in comment.splitlines() if ']' in line}),
+            'embedded_gcopt': sorted({m.decode() for m in GCOPT.findall(data)})}
+
+
+def built_artifacts(cwd, since):
+    """The Spring ports' executables (benchmarks/spring/flint/<app>/.flint/build/<profile>/) written since `since`."""
+    out = {}
+    for path in sorted(Path(cwd).glob('benchmarks/spring/flint/*/.flint/build/*/*')):
+        if path.is_file() and os.access(path, os.X_OK) and path.stat().st_mtime >= since and path.suffix == '':
+            out[str(path.relative_to(cwd))] = dict(binary_provenance(path), profile=path.parent.name)
+    return out
+
+
+def measured_binaries(value):
+    """Every server_binary_sha256 a step's output records (load_bench names each trial's executable)."""
+    found = set()
+    if isinstance(value, dict):
+        for key, item in value.items():
+            if key == 'server_binary_sha256' and isinstance(item, str):
+                found.add(item)
+            else:
+                found |= measured_binaries(item)
+    elif isinstance(value, list):
+        for item in value:
+            found |= measured_binaries(item)
+    return found
+
+
+def harness_tree(entry, built):
+    """{harness}: the tools of a pinned revision (entry["harness"]), never this checkout's moving HEAD. It is the
+    build tree itself when the revision is the build's commit; otherwise a detached worktree with this checkout's
+    toolchain directory (the pinned oha) and peers linked."""
+    commit = entry.get('harness')
+    if not commit:
+        raise SystemExit(f"{entry['id']}: a step uses {{harness}} or runs outside a build tree, but the entry pins no "
+                         'harness revision ("harness": <commit>)')
+    directory, full = worktree(commit)
+    for name, source in (('.tools', ROOT / '.tools'), ('.flint/peers', ROOT / '.flint' / 'peers')):
+        target = directory / name
+        if not target.exists() and not target.is_symlink() and source.exists():
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.symlink_to(source.resolve())
+    return directory, full
 
 
 RECIPES = {'bench-rest': build_bench_rest, 'checkout': prepare_checkout}
@@ -729,20 +823,28 @@ def measure_command(entry, built, outdir, smoke):
         oha = ROOT / '.tools' / 'oha-1.16.0' / 'oha'
         if oha.is_file():
             env.setdefault('OHA', str(oha))
+        uses_harness = any('{harness}' in part for part in step['argv'])
+        harness = harness_tree(entry, built) if (uses_harness or not step.get('in')) else None
         if step.get('in'):
             cwd = worktree(built[step['in']]['commit'])[0]
             private = [cwd / '.flint' / 'bin', cwd / '.tools' / 'dmd2' / 'linux' / 'bin64']
             env['PATH'] = os.pathsep.join(str(p) for p in private if p.is_dir()) + os.pathsep + env['PATH']
-        # {harness}: this checkout, for a measuring tool newer than the pinned commit (it builds the worktree's port).
-        command = [part.replace('{out}', str(outdir)).replace('{python}', sys.executable).replace('{harness}', str(ROOT))
-                   for part in step['argv']]
+        else:
+            # Never this checkout's moving HEAD: a step outside a build tree runs at the pinned harness revision.
+            cwd = harness[0]
+        # {harness}: the pinned harness revision, for a measuring tool newer than the build's commit.
+        command = [part.replace('{out}', str(outdir)).replace('{python}', sys.executable)
+                   .replace('{harness}', str(harness[0]) if harness else '{harness}') for part in step['argv']]
         if smoke and step.get('smoke_args'):
             command += step['smoke_args']
         log = outdir / f'step-{index}.log'
+        started = time.time() - 1
         with log.open('wb') as stream:
             completed = subprocess.run(command, cwd=cwd, env=env, stdout=stream,
                                        stderr=subprocess.STDOUT)
-        receipt = {'command': command, 'cwd': str(cwd), 'exit_code': completed.returncode, 'log': str(log)}
+        receipt = {'command': command, 'cwd': str(cwd), 'exit_code': completed.returncode, 'log': str(log),
+                   'harness_commit': harness[1] if harness else None}
+        receipt.update(step_provenance(command, cwd, env, log, outdir, started))
         if completed.returncode and step.get('may_fail'):
             # A failed verdict is a result only if the step wrote its output and that output records no error: a step
             # that refused or crashed measured nothing.
@@ -759,6 +861,29 @@ def measure_command(entry, built, outdir, smoke):
             raise SystemExit(f'step {index} exited with {completed.returncode}; see {log}')
     return {'steps': receipts,
             'outputs': {p.name: sha256(p) for p in sorted(outdir.iterdir()) if p.is_file() and p.suffix == '.json'}}
+
+
+def step_provenance(command, cwd, env, log, outdir, started):
+    """What one step actually built and ran: the ports' executables it wrote (digest, link, embedded GC options), the
+    executables its outputs say were measured, the Flint AOT summary lines of its builds (the extraction path once
+    flint build names it), and the GC options it set through the environment or a benchmark manifest."""
+    gc = {key: value for key, value in env.items() if 'GCOPT' in key.upper() or key.startswith('DRT_')}
+    gc['argv'] = [command[i + 1] for i, part in enumerate(command[:-1]) if part in ('--gcopt', '--setting')]
+    if '--manifest' in command:
+        manifest = Path(cwd) / command[command.index('--manifest') + 1]
+        if manifest.is_file():
+            gc['manifest_environment'] = json.loads(manifest.read_text()).get('environment', {})
+    measured = set()
+    for path in outdir.glob('*.json'):
+        if path.stat().st_mtime >= started:
+            try:
+                measured |= measured_binaries(json.loads(path.read_text()))
+            except ValueError:
+                pass
+    lines = AOT_LINE.findall(Path(log).read_text(errors='replace')) if Path(log).is_file() else []
+    return {'artifacts': built_artifacts(cwd, started), 'measured_binaries': sorted(measured),
+            'aot_summaries': {'count': len(lines), 'distinct': sorted(set(re.sub(r'\d+ ms', 'N ms', l) for l in lines))},
+            'gc_options': gc}
 
 
 KINDS = {'startup': measure_startup, 'rest-pair': measure_rest_pair, 'command': measure_command}
@@ -788,7 +913,23 @@ def queue_order(entry):
     return (entry.get('priority', 9), entry.get('estimate_minutes', 60), entry['created'], entry['id'])
 
 
+def check_pins(entry):
+    """Before anything builds: every build names a commit, every command step runs in a named build tree or at the
+    pinned harness revision, and {harness} needs that revision."""
+    problems = [f'build {slot} has no commit' for slot, spec in entry.get('builds', {}).items()
+                if not spec.get('commit') or spec['commit'] == 'TBD']
+    if entry['measure']['kind'] == 'command':
+        for index, step in enumerate(entry['measure']['steps']):
+            if step.get('in') and step['in'] not in entry.get('builds', {}):
+                problems.append(f"step {index} runs in {step['in']!r}, which is not a build")
+            if (not step.get('in') or any('{harness}' in part for part in step['argv'])) and not entry.get('harness'):
+                problems.append(f'step {index} needs the pinned harness revision ("harness")')
+    if problems:
+        raise SystemExit(f"{entry['id']}: " + '; '.join(problems))
+
+
 def run(entry, force_busy=False, smoke=False, claim_seconds=0):
+    check_pins(entry)
     outdir = WORK / 'results' / entry['id'] / time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())
     outdir.mkdir(parents=True, exist_ok=True)
     built = prepare(entry, outdir)

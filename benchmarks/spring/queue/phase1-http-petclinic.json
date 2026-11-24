@@ -3,10 +3,10 @@
   "id": "phase1-http-petclinic",
   "created": "2026-11-23",
   "status": "blocked",
-  "window": "natural",
-  "priority": 2,
-  "blocked_on": "petclinic-rest scoring 109/109 in proof-harness's independent run, then a pin to one commit where all three ports pass exactly",
-  "claim_when": "Claims a window only once the io_uring steps and the RSS and GC fixes land: a run that only confirms gs-rest-multicore's 0.75x throughput is not worth pausing everyone. Until then it runs only on natural quiet (coordinator, 2026-11-23 16:45Z)",
+  "window": "claim",
+  "priority": 3,
+  "blocked_on": "freeze B (resume plan section 1): the coordinator gives B's full SHA, then every baseline entry is pinned to it",
+  "claim_when": "Section 2 of the owner-approved resume plan (b349fb0a), order 3: a claimed window at B, the plan naming every baseline entry (the 41- and 45-minute HTTP and error parts included)",
   "requested_by": "ADR-030 section 8, Phase 1 exit (coordinator's plan, 2026-11-23 15:20Z); split per application by the coordinator, 2026-11-23 16:45Z",
   "report_to": "the coordinator; docs/milestones/13.md",
   "estimate_minutes": 41,
@@ -17,7 +17,8 @@
       "app": "checkout",
       "commit": "TBD",
       "flint": true,
-      "linker": "mold"
+      "linker": "mold",
+      "fork": true
     }
   },
   "measure": {
@@ -43,5 +44,6 @@
         "in": "tree"
       }
     ]
-  }
+  },
+  "tree_note": "Resume plan 1.5: every baseline part builds in the same private tree at B (flint, mold, the fork build), so all parts measure one toolchain."
 }

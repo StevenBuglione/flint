@@ -154,5 +154,79 @@ class QuietWindow(unittest.TestCase):
             json.dumps(entry)
 
 
+
+class Pins(unittest.TestCase):
+    @staticmethod
+    def entry(steps, builds=None, **extra):
+        return dict({'id': 'x', 'builds': builds if builds is not None else
+                     {'tree': {'app': 'checkout', 'commit': 'abc', 'fork': True}},
+                     'measure': {'kind': 'command', 'steps': steps}}, **extra)
+
+    def test_unpinned_builds_and_steps_are_refused(self):
+        measure_queue.check_pins(self.entry([{'argv': ['tools/x.py'], 'in': 'tree'}]))
+        with self.assertRaisesRegex(SystemExit, 'build tree has no commit'):
+            measure_queue.check_pins(self.entry([{'argv': [], 'in': 'tree'}], {'tree': {'commit': 'TBD'}}))
+        with self.assertRaisesRegex(SystemExit, 'needs the pinned harness'):
+            measure_queue.check_pins(self.entry([{'argv': ['{harness}/tools/x.py'], 'in': 'tree'}]))
+        with self.assertRaisesRegex(SystemExit, 'needs the pinned harness'):
+            measure_queue.check_pins(self.entry([{'argv': ['tools/x.py']}]))
+        with self.assertRaisesRegex(SystemExit, "'other', which is not a build"):
+            measure_queue.check_pins(self.entry([{'argv': [], 'in': 'other'}]))
+        measure_queue.check_pins(self.entry([{'argv': ['{harness}/tools/x.py']}], harness='abc'))
+
+    def test_queued_entries_pin_or_wait(self):
+        # Every entry that may run (pending) pins its builds, its steps' trees and any {harness} revision.
+        for entry in measure_queue.entries():
+            if entry['status'] == 'pending':
+                measure_queue.check_pins(entry)
+
+    def test_baseline_entries_share_one_private_fork_tree(self):
+        # Resume plan 1.5: the baseline's parts all build in the same tree flavour (flint, mold, the fork build).
+        ids = ['phase1-builds-petclinic', 'phase1-http-gs-rest', 'phase1-http-petclinic', 'error-404-p99',
+               'error-validation-p99', 'phase1-builds-gs-relational', 'phase1-builds-gs-rest', 'release-static-ab',
+               'fast-path-pools-ab'] + [f'phase1-gc-matrix-{n}' for n in ('1', '2', '3', 'gs-rest-1', 'gs-rest-2', 'gs-rest-3')]
+        commits = set()
+        for name in ids:
+            entry = measure_queue.load_entry(name)
+            tree = entry['builds']['tree']
+            self.assertEqual((tree['flint'], tree['linker'], tree['fork']), (True, 'mold', True), name)
+            self.assertTrue(all(step.get('in') == 'tree' for step in entry['measure']['steps']), name)
+            commits.add(tree['commit'])
+        self.assertEqual(len(commits), 1)
+
+
+class Provenance(unittest.TestCase):
+    def test_measured_binaries_and_artifacts(self):
+        record = {'apps': {'a': {'trials': [{'server_binary_sha256': 'f1'}, {'server_binary_sha256': 'f2'}]}},
+                  'other': [{'server_binary_sha256': 'f1'}]}
+        self.assertEqual(measure_queue.measured_binaries(record), {'f1', 'f2'})
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            binary = root / 'benchmarks/spring/flint/app/.flint/build/release/app'
+            binary.parent.mkdir(parents=True)
+            binary.write_bytes(b'\x7fELF...gcopt=gc:conservative parallel:1\x00rest')
+            binary.chmod(0o755)
+            (binary.parent / 'app.o').write_bytes(b'')
+            found = measure_queue.built_artifacts(root, time.time() - 60)
+            row = found['benchmarks/spring/flint/app/.flint/build/release/app']
+            self.assertEqual(row['profile'], 'release')
+            self.assertEqual(row['embedded_gcopt'], ['gcopt=gc:conservative parallel:1'])
+            self.assertEqual(len(found), 1)
+            self.assertEqual(measure_queue.built_artifacts(root, time.time() + 60), {})
+
+    def test_step_provenance_records_gc_options_and_aot_lines(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            out = Path(temporary)
+            log = out / 'step-0.log'
+            log.write_text('Generated 3 Flint AOT modules for a (1 extracted in 9 ms, 2 from the shared cache, 3 written, 12 ms)\n'
+                           'Generated 3 Flint AOT modules for a (1 extracted in 7 ms, 2 from the shared cache, 3 written, 10 ms)\n')
+            row = measure_queue.step_provenance(['x', '--gcopt', 'p1=gc:conservative parallel:1'], out,
+                                                {'DRT_GCOPT': 'parallel:1', 'PATH': '/bin'}, log, out, time.time() - 5)
+            self.assertEqual(row['gc_options']['argv'], ['p1=gc:conservative parallel:1'])
+            self.assertEqual(row['gc_options']['DRT_GCOPT'], 'parallel:1')
+            self.assertEqual(row['aot_summaries']['count'], 2)
+            self.assertEqual(len(row['aot_summaries']['distinct']), 1)
+
+
 if __name__ == '__main__':
     unittest.main()

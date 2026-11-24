@@ -2,7 +2,7 @@
   "schema": "flint.measure-queue/1",
   "created": "2026-11-23",
   "id": "string-format-gs-builds",
-  "status": "pending",
+  "status": "blocked",
   "window": "natural",
   "priority": 5,
   "requested_by": "framework-core, for the coordinator (priority 1: a non-templated String.format)",
@@ -67,5 +67,6 @@
         "may_fail": true
       }
     ]
-  }
+  },
+  "blocked_on": "parked by the owner-approved resume plan (b349fb0a section 4: no other streams run until the baseline picks the next work)"
 }

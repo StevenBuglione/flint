@@ -2,14 +2,15 @@
   "schema": "flint.measure-queue/1",
   "created": "2026-11-23",
   "status": "blocked",
-  "priority": 2,
+  "priority": 4,
   "window": "claim",
   "builds": {
     "tree": {
       "app": "checkout",
-      "commit": "f666305d4d10",
+      "commit": "TBD",
       "flint": true,
-      "linker": "mold"
+      "linker": "mold",
+      "fork": true
     }
   },
   "requested_by": "Spring port P1: real HTTP for webmvc (web-http, local_16478490)",
@@ -41,5 +42,7 @@
   },
   "report_to": "the requester; docs/milestones/13.md",
   "estimate_minutes": 45,
-  "blocked_on": "boot's switch of DefaultErrorAttributes to a java.util.Date written with StdDateFormat (.SSS always), which needs java.util.Date (framework-core, flint:java) and a Date serializer (third-party-apis, jackson-databind). Until then about 1 in 1000 Flint 404 bodies drops '.000' and load_bench's body-size check fails, so each attempt would claim a window for nothing."
+  "blocked_on": "freeze B (resume plan section 1): the coordinator gives B's full SHA, then every baseline entry is pinned to it",
+  "claim_when": "Section 2 of the owner-approved resume plan (b349fb0a), order 4: a claimed window at B, the plan naming every baseline entry (the 41- and 45-minute HTTP and error parts included)",
+  "tree_note": "Resume plan 1.5: every baseline part builds in the same private tree at B (flint, mold, the fork build), so all parts measure one toolchain."
 }

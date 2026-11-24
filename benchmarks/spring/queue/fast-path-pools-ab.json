@@ -1,0 +1,55 @@
+{
+  "schema": "flint.measure-queue/1",
+  "id": "fast-path-pools-ab",
+  "created": "2026-11-24",
+  "status": "blocked",
+  "window": "claim",
+  "priority": 9,
+  "requested_by": "docs/spring/phase1/resume-plan.md section 2, order 9 (owner-approved, b349fb0a)",
+  "report_to": "the coordinator",
+  "estimate_minutes": 30,
+  "summary": "parallel:1 against parallel:1 minPoolSize:4 incPoolSize:0 on gs-rest-service, on the default fast path",
+  "why": "Owner decision 2: the small-pools trade-off (-22% RSS, -2.1% throughput) was measured before the fast path (gc-pools-ab, ce87168d); it is decided by this repeat on the shipping default. Same arms and runs as gc-pools-ab.",
+  "builds": {
+    "tree": {
+      "app": "checkout",
+      "commit": "TBD",
+      "flint": true,
+      "linker": "mold",
+      "fork": true
+    }
+  },
+  "measure": {
+    "kind": "command",
+    "ports": [],
+    "steps": [
+      {
+        "in": "tree",
+        "argv": [
+          "{python}",
+          "tools/spring_bench.py",
+          "gc-matrix",
+          "gs-rest-service",
+          "--output",
+          "{out}/fast-path-pools-ab.json",
+          "--setting",
+          "conservative",
+          "--gcopt",
+          "p1=gc:conservative parallel:1",
+          "--gcopt",
+          "p1-pools4=gc:conservative parallel:1 minPoolSize:4 incPoolSize:0",
+          "--runs",
+          "4",
+          "--no-go"
+        ],
+        "smoke_args": [
+          "--smoke"
+        ],
+        "may_fail": true
+      }
+    ]
+  },
+  "blocked_on": "freeze B (resume plan section 1): the coordinator gives B's full SHA, then every baseline entry is pinned to it; and only if RSS still decides after phase1-http-gs-rest (owner decision 2, resume plan section 5)",
+  "tree_note": "Resume plan 1.5: every baseline part builds in the same private tree at B (flint, mold, the fork build), so all parts measure one toolchain.",
+  "claim_when": "Section 2 order 9 of the owner-approved resume plan: a claimed window at B, only if RSS still decides"
+}

@@ -1,15 +1,16 @@
 {
   "schema": "flint.measure-queue/1",
   "created": "2026-11-23",
-  "status": "pending",
+  "status": "blocked",
   "window": "natural",
   "requested_by": "ADR-030 section 8, Phase 1 exit (coordinator's plan, 2026-11-23 15:20Z)",
   "builds": {
     "tree": {
       "app": "checkout",
-      "commit": "08b19d2f3a78",
+      "commit": "TBD",
       "flint": true,
-      "linker": "mold"
+      "linker": "mold",
+      "fork": true
     }
   },
   "report_to": "the coordinator; docs/milestones/13.md",
@@ -43,5 +44,7 @@
         "in": "tree"
       }
     ]
-  }
+  },
+  "blocked_on": "freeze B (resume plan section 1): the coordinator gives B's full SHA, then every baseline entry is pinned to it",
+  "tree_note": "Resume plan 1.5: every baseline part builds in the same private tree at B (flint, mold, the fork build), so all parts measure one toolchain."
 }

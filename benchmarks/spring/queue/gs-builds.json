@@ -2,7 +2,7 @@
   "schema": "flint.measure-queue/1",
   "id": "gs-builds",
   "created": "2026-11-23",
-  "status": "pending",
+  "status": "blocked",
   "priority": 5,
   "requested_by": "m7-flint-cli (local_b3b0e1d4), after the platform cache (9655843b)",
   "summary": "gs-rest-service builds against both ADR-030 headlines: platform cache vs std-primed GOCACHE, and --no-platform-cache vs go build -a",
@@ -1134,5 +1134,6 @@
         }
       }
     }
-  ]
+  ],
+  "blocked_on": "parked by the owner-approved resume plan (b349fb0a section 4: no other streams run until the baseline picks the next work)"
 }

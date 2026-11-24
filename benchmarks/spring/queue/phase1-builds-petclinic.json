@@ -2,9 +2,9 @@
   "schema": "flint.measure-queue/1",
   "id": "phase1-builds-petclinic",
   "created": "2026-11-23",
-  "status": "pending",
+  "status": "blocked",
   "window": "claim",
-  "priority": 3,
+  "priority": 1,
   "requested_by": "ADR-030 section 8, Phase 1 exit (coordinator's plan, 2026-11-23 15:20Z); split per application by the coordinator, 2026-11-23 16:45Z",
   "report_to": "the coordinator; docs/milestones/13.md",
   "estimate_minutes": 17,
@@ -13,7 +13,7 @@
   "builds": {
     "tree": {
       "app": "checkout",
-      "commit": "e77bc654025b",
+      "commit": "TBD",
       "flint": true,
       "linker": "mold",
       "fork": true
@@ -451,5 +451,8 @@
         }
       }
     }
-  ]
+  ],
+  "blocked_on": "freeze B (resume plan section 1): the coordinator gives B's full SHA, then every baseline entry is pinned to it",
+  "claim_when": "Section 2 of the owner-approved resume plan (b349fb0a), order 1: a claimed window at B, the plan naming every baseline entry (the 41- and 45-minute HTTP and error parts included)",
+  "tree_note": "Resume plan 1.5: every baseline part builds in the same private tree at B (flint, mold, the fork build), so all parts measure one toolchain."
 }
