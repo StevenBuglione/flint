@@ -2,26 +2,87 @@
   "schema": "flint.measure-queue/1",
   "id": "floor-reference",
   "created": "2026-11-24",
-  "status": "blocked",
+  "status": "pending",
   "window": "claim",
-  "priority": 11,
-  "estimate_minutes": 25,
-  "blocked_on": "data-access's two reference arms (the minimal owner-1 handler, and minimal plus real mapping, DTOs and Jackson) on main; then one revision for all three arms, at 5,000 req/s and at capacity, recording app and PostgreSQL CPU separately, lease wait and hold, socket wait and ready-to-resume delay (spring_diag with --counters)",
+  "priority": 8.2,
+  "estimate_minutes": 15,
   "requested_by": "the owner (decisions.md 33582c35; docs/spring/phase1/execution-model-astra.md and specialization-astra.md), relayed by the coordinator 03:52Z; reshaped by the petclinic CPU plan (3df9a1c5, coordinator 14:19Z)",
   "report_to": "the coordinator, web-http and data-access",
   "summary": "Diagnostic: petclinic-rest's three-arm floor (petclinic CPU plan 3df9a1c5): ordinary Flint, data-access's minimal owner-1 handler, and minimal plus real mapping, DTOs and Jackson",
-  "why": "The default apps and the reference handlers run with the same affinity, connections and rates through tools/spring_diag.py (the ladder, server CPU per request and per thread, PostgreSQL CPU per request, data-access's lease counters, and the statement census). Instructions per request need perf, which venus refuses to non-root users (perf_event_paranoid 4): the owner must allow it, or the entry reports instructions as unavailable. Syscalls per request come from a separate strace -c run, which slows the server and is never timed. The fixed-rate wake latency is p50/p99 at the manifest's fixed rate.",
+  "why": "The petclinic CPU plan (3df9a1c5): three arms at one revision - ordinary Flint petclinic-rest, data-access's minimal owner-1 handler (rows straight to the response) and minimal plus petclinic's entities, OwnerDto and Jackson - each at capacity (64 connections) and at the manifest's 5,000 req/s fixed rate. Recorded per arm: app CPU and PostgreSQL CPU per request (separately), latency, data-access's lease counters (wait, hold, drive, socket wait), and writes and waits per response from an untimed strace census (web-mvc found servlet responses go out in 3 writes with a fiber park after each). Ready-to-resume delay is not observable from outside; a fiber park is not a syscall, so the waits are its visible part. Diagnostic, never evidence.",
   "builds": {
     "tree": {
       "app": "checkout",
-      "commit": "TBD",
+      "commit": "271fb3143d66",
       "flint": true,
       "linker": "mold",
-      "fork": true
+      "fork": false
     }
   },
   "measure": {
     "kind": "command",
-    "steps": []
-  }
+    "steps": [
+      {
+        "in": "tree",
+        "argv": [
+          "{python}",
+          "tools/spring_bench.py",
+          "build",
+          "petclinic-rest",
+          "--impl",
+          "flint"
+        ]
+      },
+      {
+        "in": "tree",
+        "argv": [
+          "flint",
+          "build",
+          "-C",
+          "benchmarks/spring/floor/petclinic-owner1",
+          "--profile",
+          "release"
+        ]
+      },
+      {
+        "in": "tree",
+        "argv": [
+          "{python}",
+          "tools/spring_diag.py",
+          "--app",
+          "petclinic-rest",
+          "--impl",
+          "flint",
+          "--flint-binary",
+          "build/spring/petclinic-rest-flint",
+          "--variant-binary",
+          "benchmarks/spring/floor/petclinic-owner1/.flint/build/release/petclinic-floor",
+          "--variant",
+          "floor-minimal=FLOOR_ARM=minimal",
+          "--variant",
+          "floor-mapped=FLOOR_ARM=mapped",
+          "--ladder",
+          "64",
+          "--fixed-rate",
+          "5000",
+          "--seconds",
+          "20",
+          "--warmup",
+          "5",
+          "--counters",
+          "--syscalls",
+          "2000",
+          "--no-census",
+          "--oha",
+          "{oha}",
+          "--output",
+          "{out}/floor.json"
+        ],
+        "smoke_args": [
+          "--smoke"
+        ]
+      }
+    ]
+  },
+  "pinned": "main 271fb3143d66: data-access floor arms 0460ca01, the counters, the syscall census"
 }
