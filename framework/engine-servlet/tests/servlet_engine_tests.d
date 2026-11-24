@@ -11,6 +11,7 @@ import flint.jakarta.servlet : DispatcherType, Filter, FilterChain, RequestDispa
     ServletRequest, ServletResponse;
 import flint.jakarta.servlet.http : HttpServlet, HttpServletRequest, HttpServletRequestWrapper, HttpServletResponse;
 import flint.java.lang : IllegalStateException;
+static import flint.java.lang;
 import flint.java.util : Locale;
 import std.socket : InternetAddress, Socket, SocketOption, SocketOptionLevel, TcpSocket;
 
@@ -32,7 +33,7 @@ private final class Probe : HttpServlet
         alias Page = void delegate(HttpServletRequest, HttpServletResponse) @safe;
         const Page[string] pages = [
             "/greeting": &greeting, "/committed": &committed, "/empty": &empty,
-            "/fields": &fields, "/throw": &fail, "/headers": &headers, "/visit": &visit, "/large": &large,
+            "/fields": &fields, "/throw": &fail, "/lazy": &failLazily, "/headers": &headers, "/visit": &visit, "/large": &large,
             "/many": &many
         ];
         if (auto page = request.getServletPath() in pages)
@@ -83,6 +84,12 @@ private final class Probe : HttpServlet
     private void fail(HttpServletRequest, HttpServletResponse)
     {
         throw new IllegalStateException("boom");
+    }
+
+    /// Throws an exception whose message exists only in `getMessage` (built on demand, `msg` empty).
+    private void failLazily(HttpServletRequest, HttpServletResponse)
+    {
+        throw new MessageOnDemand;
     }
 
     private void headers(HttpServletRequest request, HttpServletResponse response)
@@ -168,6 +175,20 @@ private final class Probe : HttpServlet
                     ? "null" : `"` ~ request.getAttribute(RequestDispatcher.ERROR_EXCEPTION_TYPE).get!string ~ `"`)
                     ~ `,"at":"` ~ request.getRequestURI() ~ `"}`));
         response.flushBuffer();
+    }
+}
+
+/// A Flint exception whose message is built on demand: `msg` stays empty and only `getMessage` has the text.
+private final class MessageOnDemand : flint.java.lang.RuntimeException
+{
+    this() pure nothrow
+    {
+        super();
+    }
+
+    override string getMessage() const pure nothrow @nogc
+    {
+        return "on demand";
     }
 }
 
@@ -428,6 +449,18 @@ unittest
 
     // An uncaught exception is a 500 forwarded with the exception's type. As in Tomcat
     // (Http11Processor.statusDropsConnection), a 500 closes the connection with "Connection: close".
+    // The error page reads the message through getMessage(), as Tomcat's valve reads Throwable.getMessage();
+    // on its own connection, since the 500 closes it.
+    {
+        auto lazySocket = fixture.connect();
+        scope (exit)
+            lazySocket.close();
+        char[] lazyPending;
+        const lazyReply = exchange(lazySocket, lazyPending, "GET /lazy HTTP/1.1\r\nHost: localhost\r\n\r\n");
+        assert(lazyReply.content == `{"status":500,"path":"/lazy","message":"on demand",`
+                ~ `"exception":"servlet_engine_tests.MessageOnDemand","at":"/error"}`, lazyReply.content);
+    }
+
     reply = exchange(socket, pending, "GET /throw HTTP/1.1\r\nHost: localhost\r\n\r\n");
     assert(reply.head[0 .. 15] == "HTTP/1.1 500 \r\n", reply.head);
     assert(find(reply.head, "\r\nConnection: close\r\n") > 0, reply.head);

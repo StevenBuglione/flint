@@ -506,7 +506,7 @@ final class ServletEngine : RequestHost
             return;
         request.setAttribute(RequestDispatcher.ERROR_EXCEPTION, Any.of(cast(Object) cause));
         request.setAttribute(RequestDispatcher.ERROR_EXCEPTION_TYPE, Any.of(typeid(cause).name));
-        forwardToErrorPage(request, response, page, 500, cause.msg);
+        forwardToErrorPage(request, response, page, 500, messageOf(cause).idup);
     }
 
     /// Tomcat's `StandardHostValve.status`: after `sendError`, forward to the status's error page.
@@ -1057,4 +1057,17 @@ private final class EngineFilterConfig : FilterConfig
     {
         return parameters.keys;
     }
+}
+
+// Java's `Throwable.getMessage()`: a Flint exception's `getMessage`, which a subclass may build on demand, and
+// druntime's message for any other D throwable (as boot's DefaultErrorAttributes reads it, dad69381).
+private const(char)[] messageOf(Throwable error)
+{
+    import flint.java.lang : AssertionError, RuntimeException;
+
+    if (auto runtime = cast(RuntimeException) error)
+        return runtime.getMessage();
+    if (auto assertion = cast(AssertionError) error)
+        return assertion.getMessage();
+    return error.message();
 }

@@ -762,7 +762,7 @@ class DispatcherServlet : HttpServlet, FastDispatch
         if (request.getAttribute(RequestDispatcher.ERROR_STATUS_CODE).isNull())
             request.setAttribute(RequestDispatcher.ERROR_STATUS_CODE, Any.of(200));
         request.setAttribute(RequestDispatcher.ERROR_EXCEPTION_TYPE, Any.of(typeid(ex).name));
-        request.setAttribute(RequestDispatcher.ERROR_MESSAGE, Any.of(ex.msg));
+        request.setAttribute(RequestDispatcher.ERROR_MESSAGE, Any.of(messageOf(ex).idup));
         request.setAttribute(RequestDispatcher.ERROR_EXCEPTION, Any.of(cast(Object) ex));
         request.setAttribute(RequestDispatcher.ERROR_REQUEST_URI, Any.of(request.getRequestURI()));
         if (servletName !is null)
@@ -778,4 +778,17 @@ class DispatcherServlet : HttpServlet, FastDispatch
         ])
             request.removeAttribute(name);
     }
+}
+
+// Java's `Throwable.getMessage()`: a Flint exception's `getMessage`, which a subclass may build on demand, and
+// druntime's message for any other D throwable (as boot's DefaultErrorAttributes reads it, dad69381).
+private const(char)[] messageOf(Throwable error)
+{
+    import flint.java.lang : AssertionError, RuntimeException;
+
+    if (auto runtime = cast(RuntimeException) error)
+        return runtime.getMessage();
+    if (auto assertion = cast(AssertionError) error)
+        return assertion.getMessage();
+    return error.message();
 }
