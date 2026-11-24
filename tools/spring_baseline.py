@@ -79,6 +79,19 @@ def governors():
     return found or ['unavailable']
 
 
+def postgres_version():
+    """The pinned PostgreSQL: libpq's version in native-lock.json (install_peers.py builds the server from it) and the
+    server binary's digest."""
+    libraries = json.loads((ROOT / 'policy' / 'native-lock.json').read_text())['libraries']
+    rows = libraries if isinstance(libraries, list) else list(libraries.values())
+    version = next(row for row in rows if row.get('name') == 'libpq')['version']
+    try:
+        binary = spring_bench.postgres_bin() / 'postgres'
+        return {'version': version, 'postgres_sha256': spring_bench.sha256(binary)}
+    except SystemExit:
+        return {'version': version, 'postgres_sha256': None}
+
+
 def fingerprint(app, impl, workloads):
     peers = json.loads((ROOT / 'policy' / 'peer-lock.json').read_text())['peers']
     toolchains = json.loads((ROOT / 'policy' / 'toolchains.json').read_text())['versions']
@@ -87,7 +100,8 @@ def fingerprint(app, impl, workloads):
            'http_manifest_sha256': spring_bench.sha256(HTTP_MANIFEST),
            'error_manifest_sha256': spring_bench.sha256(ERROR_MANIFEST) if 'error' in workloads else None,
            'oha_sha256': load_bench.OHA_SHA256,
-           'postgres': peers.get('postgres', {}).get('version') if spring_bench.app_row(app).get('database') == 'postgres' else None,
+           'postgres': postgres_version() if spring_bench.app_row(app).get('database') == 'postgres' else None,
+           'database_protocol': load_bench.DATABASE_PROTOCOL if spring_bench.app_row(app).get('database') == 'postgres' else None,
            'cpu': cpu_identity(), 'kernel': platform.release(), 'governors': governors(),
            'cpu_sets': {k: manifest['workload'][k] for k in ('server_cpus', 'load_cpus', 'database_cpus')}}
     if impl == 'go':
@@ -142,7 +156,7 @@ def probe(cpus, samples=9):
     return out
 
 
-def calibration_trial(app, workload, oha, outdir, database, trial, tag, smoke=False):
+def calibration_trial(app, workload, oha, outdir, database, trial, tag, smoke=False, vacuum=True):
     """One short trial of the registered Go comparator at the app's scored fixed rate."""
     manifest = json.loads(HTTP_MANIFEST.read_text())
     spec = manifest['apps'][app]
@@ -150,7 +164,8 @@ def calibration_trial(app, workload, oha, outdir, database, trial, tag, smoke=Fa
     if smoke:
         short.update(warmup_seconds=1, duration_seconds=2, capacity_seconds=2)
     row = load_bench.spring_measure(spring_bench, app, spec, 'go', short, oha, trial, outdir,
-                                    manifest.get('environment', {}), database, smoke, label=f'go-calibration-{tag}')
+                                    manifest.get('environment', {}), database, smoke, label=f'go-calibration-{tag}',
+                                    vacuum=vacuum)
     return {metric: row['capacity' if metric == 'requests_per_second' else 'latency'][metric]
             for metric in CALIBRATION_METRICS}
 
@@ -255,6 +270,31 @@ def capture(app, impl, workloads, output_root, smoke=False):
     return directory
 
 
+def db_state_check(app, record_path, pairs, outdir, smoke=False):
+    """Does the database state explain a calibration drift (coordinator, 2026-11-24)? Go calibration trials alternate
+    without and with VACUUM ANALYZE on one cluster, each against the record's band. Diagnostic only."""
+    record = load(record_path)
+    oha = Path(os.environ.get('OHA') or ROOT / '.tools' / 'oha-1.16.0' / 'oha')
+    spring_bench.build_go(app)
+    workload = load_bench.validate_spring_manifest(json.loads(HTTP_MANIFEST.read_text()), smoke).copy()
+    outdir = Path(outdir)
+    outdir.mkdir(parents=True, exist_ok=True)
+    rows = []
+    with spring_bench.postgres_cluster(workload['database_cpus']) as database:
+        for n in range(pairs):
+            for vacuum in ((False, True) if n % 2 == 0 else (True, False)):
+                calibration = calibration_trial(app, workload, oha, outdir, database, n, f'vacuum-{vacuum}', smoke, vacuum)
+                rows.append({'pair': n, 'vacuum_analyze': vacuum, 'calibration': calibration,
+                             'out_of_band': drift(record, calibration, {})})
+                print(json.dumps(rows[-1]), flush=True)
+    summary = {v: {m: statistics.median(r['calibration'][m] for r in rows if r['vacuum_analyze'] == v)
+                   for m in CALIBRATION_METRICS} for v in (False, True)}
+    out = {'schema': 'flint.spring-db-state-check/1', 'record': record['_path'], 'bands': record['calibration']['bands'],
+           'rows': rows, 'medians': {str(k): v for k, v in summary.items()}}
+    (outdir / 'db-state-check.json').write_text(json.dumps(out, indent=2) + '\n')
+    return out
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest='command', required=True)
@@ -266,7 +306,16 @@ def main(argv=None):
     p.add_argument('--output-root', type=Path, default=BASELINES)
     p = sub.add_parser('check')
     p.add_argument('record', type=Path)
+    p = sub.add_parser('db-state-check')
+    p.add_argument('--app', default='petclinic-rest')
+    p.add_argument('--record', type=Path, required=True)
+    p.add_argument('--pairs', type=int, default=3)
+    p.add_argument('--output', type=Path, required=True)
+    p.add_argument('--smoke', action='store_true')
     args = parser.parse_args(argv)
+    if args.command == 'db-state-check':
+        db_state_check(args.app, args.record, args.pairs, args.output, args.smoke)
+        return 0
     if args.command == 'capture':
         capture(args.app, args.impl, set(args.workloads.split(',')), args.output_root, args.smoke)
         return 0

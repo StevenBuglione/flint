@@ -436,8 +436,27 @@ def spring_server(spring, app, target, port, database, workload, environment, sm
     argv=["taskset","--cpu-list",",".join(map(str,workload["server_cpus"]))]+argv
     return argv,env,cwd,identity
 
+DATABASE_PROTOCOL="fresh database per launch, fixture loaded by the application, VACUUM ANALYZE after readiness, then the warm-up phase (1)"
+FIXTURE_TABLES=("owners","pets","visits","types","vets","specialties","vet_specialties","users","roles")
+
+def prepare_database(spring,env,vacuum=True):
+    """The coordinator's database-state rule (2026-11-24): every capture, calibration and Flint trial starts from the
+    same state. The application loads the schema and data.sql fixture into a fresh database; this then runs VACUUM
+    ANALYZE and records the fixture's row counts, so a drifted fixture shows in the trial row."""
+    url=env.get("POSTGRES_URL","")
+    if not url.startswith("jdbc:postgresql://"):return None
+    host,_,rest=url[len("jdbc:postgresql://"):].partition(":");port,_,name=rest.partition("/")
+    psql=[str(spring.postgres_bin()/"psql"),"-X","-At","-h",host,"-p",port,"-U",env.get("POSTGRES_USER","petclinic"),"-d",name]
+    if vacuum:
+        subprocess.run(psql+["-c","VACUUM ANALYZE"],check=True,capture_output=True,text=True)
+    counts={}
+    for table in FIXTURE_TABLES:
+        done=subprocess.run(psql+["-c",f"SELECT count(*) FROM {table}"],capture_output=True,text=True)
+        if done.returncode==0:counts[table]=int(done.stdout.strip() or 0)
+    return {"vacuum_analyze":vacuum,"row_counts":counts}
+
 def spring_measure(spring, app, spec, target, workload, oha, trial, outdir, environment, database, smoke,
-                   extra_args=(), binary=None, label=None, observer=None):
+                   extra_args=(), binary=None, label=None, observer=None, vacuum=True):
     """One trial of one target. `observer(event, pid)`, when given, is called at readiness, after each phase, and
     every 15 s during the fixed-rate phase (a diagnostic hook: tools/smaps_census.py); its results go into the row."""
     port=spring.free_port();url=f"http://127.0.0.1:{port}{spec['path']}"
@@ -458,6 +477,7 @@ def spring_measure(spring, app, spec, target, workload, oha, trial, outdir, envi
             if target!="java-jvm":
                 require(file_hash(Path(f"/proc/{process.pid}/exe"))==identity["sha256"],"running process differs from the measured executable")
             check_no_children(process.pid)
+            database_state=prepare_database(spring,env,vacuum)
             observations=[]
             def observe(event):
                 if observer:observations.append({"event":event,"at":time.monotonic(),"data":observer(event,process.pid)})
@@ -488,6 +508,7 @@ def spring_measure(spring, app, spec, target, workload, oha, trial, outdir, envi
                         "load generator used >=85% of its CPUs; comparison may be client-limited")
             row={"app":app,"target":target,"trial":trial,"server_command":argv,"server_pid":process.pid,
                  "identity":identity,"server_log":str(log_path),**phases}
+            if database_state is not None:row["database_state"]=database_state
             if observer:row["observations"]=observations
             return row
         finally:
