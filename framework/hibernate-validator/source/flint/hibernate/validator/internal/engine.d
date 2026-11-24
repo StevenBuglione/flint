@@ -392,6 +392,9 @@ final class ValidatorFactoryImpl : ValidatorFactory
     private CustomValidator[][string] custom;
     // Copy-on-write, as the pattern cache: a published table is never changed, so lookups take no lock.
     private BeanMetaData[const(Descriptor)] beanMetaData;
+    // Prepared constraints of a parameter's, a return value's or a property's annotations, keyed by the address of
+    // the descriptor's annotation array and checked against the array itself.
+    private PreparedAnnotations[size_t] preparedAnnotations;
 
     ///
     this(DescriptorTable descriptors, MessageInterpolator interpolator)
@@ -406,7 +409,11 @@ final class ValidatorFactoryImpl : ValidatorFactory
     {
         custom[validator.annotationType] ~= validator;
         synchronized (this)
-            beanMetaData = null; // metadata prepared before this binding classified the annotation without it
+        {
+            // Metadata prepared before this binding classified the annotation without it.
+            beanMetaData = null;
+            preparedAnnotations = null;
+        }
     }
 
     /// A validator; validators share the factory's state and are thread-safe.
@@ -432,6 +439,32 @@ final class ValidatorFactoryImpl : ValidatorFactory
             beanMetaData = grown;
         }
         return created;
+    }
+
+    // The constraints of `annotations`, a descriptor's array (an executable's parameter, its return value, or a
+    // property validated alone), prepared on first use as a bean's are. Descriptors live as long as the factory, so
+    // an array's address names it; the stored array confirms the match.
+    private MetaConstraint[] preparedFor(const(MergedAnnotation)[] annotations)
+    {
+        if (annotations.length == 0)
+            return null;
+        const key = cast(size_t)&annotations[0];
+        auto published = preparedAnnotations;
+        if (auto found = key in published)
+            if (found.source is annotations)
+                return found.constraints;
+        auto constraints = prepareAll(annotations);
+        synchronized (this)
+        {
+            if (preparedAnnotations.length < preparedLimit)
+            {
+                auto grown = preparedAnnotations.dup;
+                grown[key] = PreparedAnnotations(annotations, constraints);
+                imported!"core.atomic".atomicFence(); // the entry and the table are complete before publication
+                preparedAnnotations = grown;
+            }
+        }
+        return constraints;
     }
 
     // Each annotation as a constraint to check: built-ins read, compiled and validated once.
@@ -551,14 +584,14 @@ final class ValidatorImpl : Validator, ExecutableValidator
                     ~ method.name ~ " expects " ~ expected ~ " parameters, but got " ~ actual ~ ".");
         }
         auto run = Run(factory, object, object.typeName());
-        auto root = PathImpl.createPathForExecutable(method.name);
         foreach (i, ref parameter; method.parameters)
         {
             auto value = parameterValues[i];
-            auto at = root.addParameterNode(parameter.name);
-            run.checkConstraints(object, value, parameter.annotations, at);
+            // The path is built only for a violation or a cascade, as for bean properties.
+            auto at = LazyPath.ofExecutable(method.name, parameter.name);
+            run.check(object, value, factory.preparedFor(parameter.annotations), at);
             if (findAnnotation(parameter.annotations, typeNameOf!Valid) && !value.isNull())
-                run.cascade(value, at, parameter.type);
+                run.cascade(value, at.get(), parameter.type);
         }
         return run.violations;
     }
@@ -571,10 +604,10 @@ final class ValidatorImpl : Validator, ExecutableValidator
         if (method is null)
             throw new IllegalArgument("HV000116: The method to be validated must not be null.");
         auto run = Run(factory, object, object.typeName());
-        auto at = PathImpl.createPathForExecutable(method.name).addReturnValueNode();
-        run.checkConstraints(object, returnValue, method.annotations, at);
+        auto at = LazyPath.ofExecutable(method.name, null, true);
+        run.check(object, returnValue, factory.preparedFor(method.annotations), at);
         if (findAnnotation(method.annotations, typeNameOf!Valid) && !returnValue.isNull())
-            run.cascade(returnValue, at, method.returnType);
+            run.cascade(returnValue, at.get(), method.returnType);
         return run.violations;
     }
 }
@@ -590,6 +623,17 @@ private struct MetaConstraint
     ConstraintDescriptorImpl descriptor;
     const(MergedAnnotation)[] annotation; // the user-defined annotation, alone
 }
+
+// An annotation array and its prepared constraints.
+private struct PreparedAnnotations
+{
+    const(MergedAnnotation)[] source;
+    MetaConstraint[] constraints;
+}
+
+// At most this many annotation arrays are kept prepared: an application's executables are few, and past the limit
+// a call prepares its constraints itself.
+private enum preparedLimit = 4096;
 
 // A bean type's properties with their prepared constraints (Hibernate's BeanMetaData).
 private final class BeanMetaData
@@ -626,11 +670,31 @@ private struct LazyPath
 {
     PathImpl parent;
     string property; // null: the parent itself
+    string method; // or, when set: the path of an executable's parameter (or of its return value)
+    string parameter;
+    bool returnValue;
     PathImpl made;
+
+    // The path to `parameter` of `method`, or to its return value.
+    static LazyPath ofExecutable(string method, string parameter, bool returnValue = false) pure nothrow @nogc
+    {
+        LazyPath path;
+        path.method = method;
+        path.parameter = parameter;
+        path.returnValue = returnValue;
+        return path;
+    }
 
     PathImpl get()
     {
-        if (made is null)
+        if (made !is null)
+            return made;
+        if (method !is null)
+        {
+            auto root = PathImpl.createPathForExecutable(method);
+            made = returnValue ? root.addReturnValueNode() : root.addParameterNode(parameter);
+        }
+        else
             made = property is null ? parent : parent.addPropertyNode(property);
         return made;
     }
@@ -769,11 +833,13 @@ private struct Run
     void checkConstraints(Any leaf, ref Any value, const(MergedAnnotation)[] annotations, PathImpl at)
     {
         auto path = LazyPath(at);
-        check(leaf, value, factory.prepareAll(annotations), path);
+        check(leaf, value, factory.preparedFor(annotations), path);
     }
 
     void check(Any leaf, ref Any value, scope MetaConstraint[] constraints, ref LazyPath at)
     {
+        if (constraints.length == 0)
+            return;
         // A Nullable!T (rulebook R5: Java's Integer, a String that may be null) is validated as its value or null,
         // as Hibernate validates the boxed value itself; Optional keeps container semantics.
         auto d = described(value);

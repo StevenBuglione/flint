@@ -134,3 +134,23 @@ unittest
             ~ " but got 1.";
     assert(thrown);
 }
+
+@("each parameter's constraints are prepared once and stay its own")
+unittest
+{
+    auto validator = executableValidator();
+    foreach (minimum; [0, 5, 0, 5])
+    {
+        MethodDescriptor method;
+        method.name = "page";
+        method.returnType = "void";
+        method.parameters = [ParameterDescriptor("number", "int", [annotation(Min(minimum))])];
+        foreach (round; 0 .. 2)
+        {
+            auto violations = validator.validateParameters(controller(), &method, [Any.of(3)]);
+            assert(violations.length == (minimum > 3 ? 1 : 0));
+            if (violations.length)
+                assert(violations[0].getPropertyPath().toString() == "page.number");
+        }
+    }
+}
