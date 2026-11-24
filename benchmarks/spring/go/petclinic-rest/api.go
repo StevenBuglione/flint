@@ -79,9 +79,9 @@ func (c *clinic) listOwners(w http.ResponseWriter, r *http.Request) error {
 	var owners []*Owner
 	var err error
 	if lastName, present := queryParam(r, "lastName"); present {
-		owners, err = findOwnersByLastName(r.Context(), c.db, lastName)
+		owners, err = readOnly(r.Context(), c.db, func(q querier) ([]*Owner, error) { return findOwnersByLastName(r.Context(), q, lastName) })
 	} else {
-		owners, err = findAllOwners(r.Context(), c.db)
+		owners, err = readOnly(r.Context(), c.db, func(q querier) ([]*Owner, error) { return findAllOwners(r.Context(), q) })
 	}
 	if err != nil {
 		return err
@@ -102,7 +102,7 @@ func (c *clinic) getOwner(w http.ResponseWriter, r *http.Request) error {
 	if err := minZero(ownerID); err != nil {
 		return err
 	}
-	owner, err := findOwner(r.Context(), c.db, ownerID)
+	owner, err := readOnly(r.Context(), c.db, func(q querier) (*Owner, error) { return findOwner(r.Context(), q, ownerID) })
 	if err != nil {
 		return err
 	}
@@ -124,7 +124,7 @@ func (c *clinic) addOwner(w http.ResponseWriter, r *http.Request) error {
 	}
 	owner := &Owner{FirstName: body.FirstName.value, LastName: body.LastName.value, Address: body.Address.value,
 		City: body.City.value, Telephone: body.Telephone.value, Pets: []*Pet{}}
-	if err := saveOwner(r.Context(), c.db, owner); err != nil {
+	if err := inTx(r.Context(), c.db, func(tx *sql.Tx) error { return saveOwner(r.Context(), tx, owner) }); err != nil {
 		return err
 	}
 	created(w, location("owners", owner.ID), owner)
@@ -146,7 +146,7 @@ func (c *clinic) updateOwner(w http.ResponseWriter, r *http.Request) error {
 	if err := minZero(ownerID); err != nil {
 		return err
 	}
-	owner, err := findOwner(r.Context(), c.db, ownerID)
+	owner, err := readOnly(r.Context(), c.db, func(q querier) (*Owner, error) { return findOwner(r.Context(), q, ownerID) })
 	if err != nil {
 		return err
 	}
@@ -157,7 +157,7 @@ func (c *clinic) updateOwner(w http.ResponseWriter, r *http.Request) error {
 	owner.Address, owner.City = body.Address.value, body.City.value
 	owner.FirstName, owner.LastName = body.FirstName.value, body.LastName.value
 	owner.Telephone = body.Telephone.value
-	if err := saveOwner(r.Context(), c.db, owner); err != nil {
+	if err := inTx(r.Context(), c.db, func(tx *sql.Tx) error { return saveOwner(r.Context(), tx, owner) }); err != nil {
 		return err
 	}
 	noContent(w, true)
@@ -212,7 +212,7 @@ func (c *clinic) addPetToOwner(w http.ResponseWriter, r *http.Request) error {
 	if err := minZero(ownerID); err != nil {
 		return err
 	}
-	owner, err := findOwner(r.Context(), c.db, ownerID)
+	owner, err := readOnly(r.Context(), c.db, func(q querier) (*Owner, error) { return findOwner(r.Context(), q, ownerID) })
 	if err != nil {
 		return err
 	}
@@ -241,7 +241,7 @@ func (c *clinic) getOwnersPet(w http.ResponseWriter, r *http.Request) error {
 	if err := minZero(ownerID, petID); err != nil {
 		return err
 	}
-	owner, err := findOwner(r.Context(), c.db, ownerID)
+	owner, err := readOnly(r.Context(), c.db, func(q querier) (*Owner, error) { return findOwner(r.Context(), q, ownerID) })
 	if err != nil {
 		return err
 	}
@@ -276,11 +276,11 @@ func (c *clinic) updateOwnersPet(w http.ResponseWriter, r *http.Request) error {
 	if err := minZero(ownerID, petID); err != nil {
 		return err
 	}
-	owner, err := findOwner(r.Context(), c.db, ownerID)
+	owner, err := readOnly(r.Context(), c.db, func(q querier) (*Owner, error) { return findOwner(r.Context(), q, ownerID) })
 	if err != nil || owner == nil {
 		return notFoundUnless(w, err)
 	}
-	pet, err := findPet(r.Context(), c.db, petID)
+	pet, err := readOnly(r.Context(), c.db, func(q querier) (*Pet, error) { return findPet(r.Context(), q, petID) })
 	if err != nil || pet == nil {
 		return notFoundUnless(w, err)
 	}
@@ -320,7 +320,7 @@ func (c *clinic) addVisitToOwner(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	visit := &Visit{Date: body.Date.value, Description: body.Description.value, PetID: petID}
-	if err := saveVisit(r.Context(), c.db, visit); err != nil {
+	if err := inTx(r.Context(), c.db, func(tx *sql.Tx) error { return saveVisit(r.Context(), tx, visit) }); err != nil {
 		return err
 	}
 	created(w, location("visits", visit.ID), visit)
@@ -336,7 +336,7 @@ func (c *clinic) listOwnersPage(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	owners, err := findOwnersPage(r.Context(), c.db, lastName, page, size)
+	owners, err := readOnly(r.Context(), c.db, func(q querier) (Page[*Owner], error) { return findOwnersPage(r.Context(), q, lastName, page, size) })
 	if err != nil {
 		return err
 	}
@@ -362,7 +362,7 @@ func pageParams(r *http.Request) (page, size int, err error) {
 // Pets
 
 func (c *clinic) listPets(w http.ResponseWriter, r *http.Request) error {
-	pets, err := findAllPets(r.Context(), c.db)
+	pets, err := readOnly(r.Context(), c.db, func(q querier) ([]*Pet, error) { return findAllPets(r.Context(), q) })
 	if err != nil {
 		return err
 	}
@@ -379,7 +379,7 @@ func (c *clinic) listPetsPage(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	pets, err := findPetsPage(r.Context(), c.db, page, size)
+	pets, err := readOnly(r.Context(), c.db, func(q querier) (Page[*Pet], error) { return findPetsPage(r.Context(), q, page, size) })
 	if err != nil {
 		return err
 	}
@@ -395,7 +395,7 @@ func (c *clinic) getPet(w http.ResponseWriter, r *http.Request) error {
 	if err := minZero(petID); err != nil {
 		return err
 	}
-	pet, err := findPet(r.Context(), c.db, petID)
+	pet, err := readOnly(r.Context(), c.db, func(q querier) (*Pet, error) { return findPet(r.Context(), q, petID) })
 	if err != nil || pet == nil {
 		return notFoundUnless(w, err)
 	}
@@ -418,7 +418,7 @@ func (c *clinic) updatePet(w http.ResponseWriter, r *http.Request) error {
 	if err := minZero(petID); err != nil {
 		return err
 	}
-	pet, err := findPet(r.Context(), c.db, petID)
+	pet, err := readOnly(r.Context(), c.db, func(q querier) (*Pet, error) { return findPet(r.Context(), q, petID) })
 	if err != nil || pet == nil {
 		return notFoundUnless(w, err)
 	}
@@ -438,7 +438,7 @@ func (c *clinic) deletePet(w http.ResponseWriter, r *http.Request) error {
 	if err := minZero(petID); err != nil {
 		return err
 	}
-	pet, err := findPet(r.Context(), c.db, petID)
+	pet, err := readOnly(r.Context(), c.db, func(q querier) (*Pet, error) { return findPet(r.Context(), q, petID) })
 	if err != nil || pet == nil {
 		return notFoundUnless(w, err)
 	}
@@ -450,7 +450,7 @@ func (c *clinic) deletePet(w http.ResponseWriter, r *http.Request) error {
 // Visits
 
 func (c *clinic) listVisits(w http.ResponseWriter, r *http.Request) error {
-	visits, err := findAllVisits(r.Context(), c.db)
+	visits, err := readOnly(r.Context(), c.db, func(q querier) ([]Visit, error) { return findAllVisits(r.Context(), q) })
 	if err != nil {
 		return err
 	}
@@ -470,7 +470,7 @@ func (c *clinic) getVisit(w http.ResponseWriter, r *http.Request) error {
 	if err := minZero(visitID); err != nil {
 		return err
 	}
-	visit, err := findVisit(r.Context(), c.db, visitID)
+	visit, err := readOnly(r.Context(), c.db, func(q querier) (*Visit, error) { return findVisit(r.Context(), q, visitID) })
 	if err != nil || visit == nil {
 		return notFoundUnless(w, err)
 	}
@@ -488,7 +488,7 @@ func (c *clinic) addVisit(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	visit := &Visit{Date: body.Date.value, Description: body.Description.value, ID: body.ID.value, PetID: body.PetID.value}
-	if err := saveVisit(r.Context(), c.db, visit); err != nil {
+	if err := inTx(r.Context(), c.db, func(tx *sql.Tx) error { return saveVisit(r.Context(), tx, visit) }); err != nil {
 		return err
 	}
 	created(w, location("visits", visit.ID), visit)
@@ -510,12 +510,12 @@ func (c *clinic) updateVisit(w http.ResponseWriter, r *http.Request) error {
 	if err := minZero(visitID); err != nil {
 		return err
 	}
-	visit, err := findVisit(r.Context(), c.db, visitID)
+	visit, err := readOnly(r.Context(), c.db, func(q querier) (*Visit, error) { return findVisit(r.Context(), q, visitID) })
 	if err != nil || visit == nil {
 		return notFoundUnless(w, err)
 	}
 	visit.Date, visit.Description = body.Date.value, body.Description.value
-	if err := saveVisit(r.Context(), c.db, visit); err != nil {
+	if err := inTx(r.Context(), c.db, func(tx *sql.Tx) error { return saveVisit(r.Context(), tx, visit) }); err != nil {
 		return err
 	}
 	noContent(w, true)
@@ -546,7 +546,7 @@ func (c *clinic) deleteVisit(w http.ResponseWriter, r *http.Request) error {
 // Pet types
 
 func (c *clinic) listPetTypes(w http.ResponseWriter, r *http.Request) error {
-	types, err := findAllPetTypes(r.Context(), c.db)
+	types, err := readOnly(r.Context(), c.db, func(q querier) ([]PetType, error) { return findAllPetTypes(r.Context(), q) })
 	if err != nil {
 		return err
 	}
@@ -566,7 +566,7 @@ func (c *clinic) getPetType(w http.ResponseWriter, r *http.Request) error {
 	if err := minZero(typeID); err != nil {
 		return err
 	}
-	t, err := findPetType(r.Context(), c.db, typeID)
+	t, err := readOnly(r.Context(), c.db, func(q querier) (*PetType, error) { return findPetType(r.Context(), q, typeID) })
 	if err != nil || t == nil {
 		return notFoundUnless(w, err)
 	}
@@ -583,7 +583,7 @@ func (c *clinic) addPetType(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	t := &PetType{Name: body.Name.value}
-	if err := savePetType(r.Context(), c.db, t); err != nil {
+	if err := inTx(r.Context(), c.db, func(tx *sql.Tx) error { return savePetType(r.Context(), tx, t) }); err != nil {
 		return err
 	}
 	created(w, location("pettypes", t.ID), t)
@@ -605,12 +605,12 @@ func (c *clinic) updatePetType(w http.ResponseWriter, r *http.Request) error {
 	if err := minZero(typeID); err != nil {
 		return err
 	}
-	t, err := findPetType(r.Context(), c.db, typeID)
+	t, err := readOnly(r.Context(), c.db, func(q querier) (*PetType, error) { return findPetType(r.Context(), q, typeID) })
 	if err != nil || t == nil {
 		return notFoundUnless(w, err)
 	}
 	t.Name = body.Name.value
-	if err := savePetType(r.Context(), c.db, t); err != nil {
+	if err := inTx(r.Context(), c.db, func(tx *sql.Tx) error { return savePetType(r.Context(), tx, t) }); err != nil {
 		return err
 	}
 	noContent(w, true)
@@ -641,7 +641,7 @@ func (c *clinic) deletePetType(w http.ResponseWriter, r *http.Request) error {
 // Specialties
 
 func (c *clinic) listSpecialties(w http.ResponseWriter, r *http.Request) error {
-	specialties, err := findAllSpecialties(r.Context(), c.db)
+	specialties, err := readOnly(r.Context(), c.db, func(q querier) ([]Specialty, error) { return findAllSpecialties(r.Context(), q) })
 	if err != nil {
 		return err
 	}
@@ -661,7 +661,7 @@ func (c *clinic) getSpecialty(w http.ResponseWriter, r *http.Request) error {
 	if err := minZero(specialtyID); err != nil {
 		return err
 	}
-	s, err := findSpecialty(r.Context(), c.db, specialtyID)
+	s, err := readOnly(r.Context(), c.db, func(q querier) (*Specialty, error) { return findSpecialty(r.Context(), q, specialtyID) })
 	if err != nil || s == nil {
 		return notFoundUnless(w, err)
 	}
@@ -679,7 +679,7 @@ func (c *clinic) addSpecialty(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	s := &Specialty{ID: body.ID.value, Name: body.Name.value}
-	if err := saveSpecialty(r.Context(), c.db, s); err != nil {
+	if err := inTx(r.Context(), c.db, func(tx *sql.Tx) error { return saveSpecialty(r.Context(), tx, s) }); err != nil {
 		return err
 	}
 	created(w, location("specialties", s.ID), s)
@@ -701,12 +701,12 @@ func (c *clinic) updateSpecialty(w http.ResponseWriter, r *http.Request) error {
 	if err := minZero(specialtyID); err != nil {
 		return err
 	}
-	s, err := findSpecialty(r.Context(), c.db, specialtyID)
+	s, err := readOnly(r.Context(), c.db, func(q querier) (*Specialty, error) { return findSpecialty(r.Context(), q, specialtyID) })
 	if err != nil || s == nil {
 		return notFoundUnless(w, err)
 	}
 	s.Name = body.Name.value
-	if err := saveSpecialty(r.Context(), c.db, s); err != nil {
+	if err := inTx(r.Context(), c.db, func(tx *sql.Tx) error { return saveSpecialty(r.Context(), tx, s) }); err != nil {
 		return err
 	}
 	noContent(w, true)
@@ -737,7 +737,7 @@ func (c *clinic) deleteSpecialty(w http.ResponseWriter, r *http.Request) error {
 // Vets
 
 func (c *clinic) listVets(w http.ResponseWriter, r *http.Request) error {
-	vets, err := findAllVets(r.Context(), c.db)
+	vets, err := readOnly(r.Context(), c.db, func(q querier) ([]*Vet, error) { return findAllVets(r.Context(), q) })
 	if err != nil {
 		return err
 	}
@@ -757,7 +757,7 @@ func (c *clinic) getVet(w http.ResponseWriter, r *http.Request) error {
 	if err := minZero(vetID); err != nil {
 		return err
 	}
-	vet, err := findVet(r.Context(), c.db, vetID)
+	vet, err := readOnly(r.Context(), c.db, func(q querier) (*Vet, error) { return findVet(r.Context(), q, vetID) })
 	if err != nil || vet == nil {
 		return notFoundUnless(w, err)
 	}
@@ -783,7 +783,7 @@ func (c *clinic) vetSpecialties(r *http.Request, body *vetBody) ([]Specialty, er
 			names = append(names, s.Name.value)
 		}
 	}
-	specialties, err := findSpecialtiesByNameIn(r.Context(), c.db, names)
+	specialties, err := readOnly(r.Context(), c.db, func(q querier) ([]Specialty, error) { return findSpecialtiesByNameIn(r.Context(), q, names) })
 	if specialties == nil {
 		specialties = []Specialty{}
 	}
@@ -827,7 +827,7 @@ func (c *clinic) updateVet(w http.ResponseWriter, r *http.Request) error {
 	if err := minZero(vetID); err != nil {
 		return err
 	}
-	vet, err := findVet(r.Context(), c.db, vetID)
+	vet, err := readOnly(r.Context(), c.db, func(q querier) (*Vet, error) { return findVet(r.Context(), q, vetID) })
 	if err != nil || vet == nil {
 		return notFoundUnless(w, err)
 	}
@@ -951,7 +951,9 @@ func (c *clinic) actuatorLinks(w http.ResponseWriter, r *http.Request) error {
 // health aggregates the database check (DataSourceHealthIndicator validates a connection) with the probes.
 func (c *clinic) health(w http.ResponseWriter, r *http.Request) error {
 	status, code := "UP", http.StatusOK
-	if err := c.db.PingContext(r.Context()); err != nil {
+	// DataSourceHealthIndicator without a validation query: Connection.isValid, which pgjdbc sends as an empty
+	// query (ADR-032). Borrowing the connection may send Hikari's validation first (openDatabase).
+	if _, err := c.db.ExecContext(r.Context(), ""); err != nil {
 		status, code = "DOWN", http.StatusServiceUnavailable
 	}
 	writeJSON(w, code, actuatorMediaType(r), healthStatus{Groups: []string{"liveness", "readiness"}, Status: status})

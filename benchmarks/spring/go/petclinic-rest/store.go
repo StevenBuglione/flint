@@ -6,6 +6,7 @@ import (
 	"errors"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 // The data access mirrors the reference's repository/jdbc classes statement for statement: the same queries, in
@@ -47,6 +48,87 @@ func inTx(ctx context.Context, db *sql.DB, fn func(tx *sql.Tx) error) error {
 		return err
 	}
 	return tx.Commit()
+}
+
+// readOnly runs fn in a read-only transaction, as the reference's @Transactional(readOnly = true) service finders
+// do (ClinicServiceImpl): every service call the reference's controller makes is one transaction (ADR-032). A
+// finder that finds nothing commits, as the reference's does; any other error rolls back.
+func readOnly[T any](ctx context.Context, db *sql.DB, fn func(q querier) (T, error)) (T, error) {
+	var zero T
+	tx, err := db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
+	if err != nil {
+		return zero, err
+	}
+	value, err := fn(tx)
+	if err != nil && !absent(err) {
+		_ = tx.Rollback()
+		return zero, err
+	}
+	if commitErr := tx.Commit(); commitErr != nil {
+		return zero, commitErr
+	}
+	return value, err
+}
+
+// The two catalog queries pgjdbc's DatabaseMetaData sends when Spring's SimpleJdbcInsert compiles, on the first
+// insert into each table (getTables, then getColumns with the schema it returned), copied from the reference's
+// statement log (ADR-032: the comparator sends the reference's SQL, first-use statements included).
+const (
+	metadataTables  = `SELECT current_database() AS "TABLE_CAT", n.nspname AS "TABLE_SCHEM", c.relname AS "TABLE_NAME",  CASE n.nspname ~ '^pg_' OR n.nspname = 'information_schema'  WHEN true THEN CASE  WHEN n.nspname = 'pg_catalog' OR n.nspname = 'information_schema' THEN CASE c.relkind   WHEN 'r' THEN 'SYSTEM TABLE'   WHEN 'v' THEN 'SYSTEM VIEW'   WHEN 'i' THEN 'SYSTEM INDEX'   ELSE NULL   END  WHEN n.nspname = 'pg_toast' THEN CASE c.relkind   WHEN 'r' THEN 'SYSTEM TOAST TABLE'   WHEN 'i' THEN 'SYSTEM TOAST INDEX'   ELSE NULL   END  ELSE CASE c.relkind   WHEN 'r' THEN 'TEMPORARY TABLE'   WHEN 'p' THEN 'TEMPORARY TABLE'   WHEN 'i' THEN 'TEMPORARY INDEX'   WHEN 'S' THEN 'TEMPORARY SEQUENCE'   WHEN 'v' THEN 'TEMPORARY VIEW'   ELSE NULL   END  END  WHEN false THEN CASE c.relkind  WHEN 'r' THEN 'TABLE'  WHEN 'p' THEN 'PARTITIONED TABLE'  WHEN 'i' THEN 'INDEX'  WHEN 'P' then 'PARTITIONED INDEX'  WHEN 'S' THEN 'SEQUENCE'  WHEN 'v' THEN 'VIEW'  WHEN 'c' THEN 'TYPE'  WHEN 'f' THEN 'FOREIGN TABLE'  WHEN 'm' THEN 'MATERIALIZED VIEW'  ELSE NULL  END  ELSE NULL  END  AS "TABLE_TYPE", d.description AS "REMARKS",  '' as "TYPE_CAT", '' as "TYPE_SCHEM", '' as "TYPE_NAME", '' AS "SELF_REFERENCING_COL_NAME", '' AS "REF_GENERATION"  FROM pg_catalog.pg_namespace n, pg_catalog.pg_class c  LEFT JOIN pg_catalog.pg_description d ON (c.oid = d.objoid AND d.objsubid = 0  and d.classoid = 'pg_class'::regclass)  WHERE c.relnamespace = n.oid  AND c.relname LIKE $1 ORDER BY "TABLE_TYPE","TABLE_SCHEM","TABLE_NAME" `
+	metadataColumns = `SELECT * FROM (SELECT current_database() AS current_database, n.nspname,c.relname,a.attname,a.atttypid,a.attnotnull  OR (t.typtype = 'd' AND t.typnotnull) AS attnotnull,a.atttypmod,a.attlen,t.typtypmod,row_number() OVER (PARTITION BY a.attrelid ORDER BY a.attnum) AS attnum, nullif(a.attidentity, '') as attidentity,nullif(a.attgenerated, '') as attgenerated,pg_catalog.pg_get_expr(def.adbin, def.adrelid) AS adsrc,dsc.description,t.typbasetype,t.typtype  FROM pg_catalog.pg_namespace n  JOIN pg_catalog.pg_class c ON (c.relnamespace = n.oid)  JOIN pg_catalog.pg_attribute a ON (a.attrelid=c.oid)  JOIN pg_catalog.pg_type t ON (a.atttypid = t.oid)  LEFT JOIN pg_catalog.pg_attrdef def ON (a.attrelid=def.adrelid AND a.attnum = def.adnum)  LEFT JOIN pg_catalog.pg_description dsc ON (c.oid=dsc.objoid AND a.attnum = dsc.objsubid)  LEFT JOIN pg_catalog.pg_class dc ON (dc.oid=dsc.classoid AND dc.relname='pg_class')  LEFT JOIN pg_catalog.pg_namespace dn ON (dc.relnamespace=dn.oid AND dn.nspname='pg_catalog')  WHERE c.relkind in ('r','p','v','f','m') and a.attnum > 0 AND NOT a.attisdropped  AND n.nspname LIKE $1 AND c.relname LIKE $2) c WHERE true  ORDER BY nspname,c.relname,attnum `
+)
+
+var described = struct {
+	sync.Mutex
+	tables map[string]bool
+}{tables: map[string]bool{}}
+
+// describeTable sends the reference's first-insert metadata queries for table, once per process, inside the
+// caller's transaction, as SimpleJdbcInsert does just before its first INSERT.
+func describeTable(ctx context.Context, q querier, table string) error {
+	described.Lock()
+	defer described.Unlock()
+	if described.tables[table] {
+		return nil
+	}
+	rows, err := q.QueryContext(ctx, metadataTables, table)
+	if err != nil {
+		return err
+	}
+	names, err := rows.Columns()
+	if err != nil {
+		rows.Close()
+		return err
+	}
+	schema := ""
+	for rows.Next() {
+		values := make([]any, len(names))
+		pointers := make([]any, len(values))
+		for i := range values {
+			pointers[i] = &values[i]
+		}
+		if err := rows.Scan(pointers...); err != nil {
+			rows.Close()
+			return err
+		}
+		if s, ok := values[1].(string); ok && schema == "" {
+			schema = s
+		}
+	}
+	if err := rows.Close(); err != nil {
+		return err
+	}
+	columns, err := q.QueryContext(ctx, metadataColumns, schema, table)
+	if err != nil {
+		return err
+	}
+	for columns.Next() {
+	}
+	if err := columns.Close(); err != nil {
+		return err
+	}
+	described.tables[table] = true
+	return nil
 }
 
 // collect reads every row of a query.
@@ -228,6 +310,9 @@ func petTypeByID(types []PetType, id int) (PetType, error) {
 
 func saveOwner(ctx context.Context, q querier, o *Owner) error {
 	if o.ID == 0 {
+		if err := describeTable(ctx, q, "owners"); err != nil {
+			return err
+		}
 		return q.QueryRowContext(ctx, "INSERT INTO owners (first_name, last_name, address, city, telephone) "+
 			"VALUES ($1, $2, $3, $4, $5) RETURNING id", o.FirstName, o.LastName, o.Address, o.City, o.Telephone).Scan(&o.ID)
 	}
@@ -345,6 +430,9 @@ func savePet(ctx context.Context, q querier, pet *Pet) error {
 	}
 	pet.Type = *t
 	if pet.ID == 0 {
+		if err := describeTable(ctx, q, "pets"); err != nil {
+			return err
+		}
 		return q.QueryRowContext(ctx, "INSERT INTO pets (name, birth_date, type_id, owner_id) VALUES ($1, $2, $3, $4) RETURNING id",
 			pet.Name, pet.BirthDate, pet.Type.ID, pet.OwnerID).Scan(&pet.ID)
 	}
@@ -421,6 +509,9 @@ func findAllVisits(ctx context.Context, q querier) ([]Visit, error) {
 
 func saveVisit(ctx context.Context, q querier, v *Visit) error {
 	if v.ID == 0 {
+		if err := describeTable(ctx, q, "visits"); err != nil {
+			return err
+		}
 		return q.QueryRowContext(ctx, "INSERT INTO visits (pet_id, visit_date, description) VALUES ($1, $2, $3) RETURNING id",
 			v.PetID, v.Date, v.Description).Scan(&v.ID)
 	}
@@ -458,6 +549,9 @@ func findAllPetTypes(ctx context.Context, q querier) ([]PetType, error) {
 
 func savePetType(ctx context.Context, q querier, t *PetType) error {
 	if t.ID == 0 {
+		if err := describeTable(ctx, q, "types"); err != nil {
+			return err
+		}
 		return q.QueryRowContext(ctx, "INSERT INTO types (name) VALUES ($1) RETURNING id", t.Name).Scan(&t.ID)
 	}
 	_, err := q.ExecContext(ctx, "UPDATE types SET name=$1 WHERE id=$2", t.Name, t.ID)
@@ -531,6 +625,9 @@ func findSpecialtiesByNameIn(ctx context.Context, q querier, names []string) ([]
 
 func saveSpecialty(ctx context.Context, q querier, s *Specialty) error {
 	if s.ID == 0 {
+		if err := describeTable(ctx, q, "specialties"); err != nil {
+			return err
+		}
 		return q.QueryRowContext(ctx, "INSERT INTO specialties (name) VALUES ($1) RETURNING id", s.Name).Scan(&s.ID)
 	}
 	_, err := q.ExecContext(ctx, "UPDATE specialties SET name=$1 WHERE id=$2", s.Name, s.ID)
@@ -620,6 +717,9 @@ func findVet(ctx context.Context, q querier, id int) (*Vet, error) {
 func saveVet(ctx context.Context, q querier, vet *Vet) error {
 	var err error
 	if vet.ID == 0 {
+		if err := describeTable(ctx, q, "vets"); err != nil {
+			return err
+		}
 		err = q.QueryRowContext(ctx, "INSERT INTO vets (first_name, last_name) VALUES ($1, $2) RETURNING id",
 			vet.FirstName, vet.LastName).Scan(&vet.ID)
 	} else {
@@ -663,6 +763,9 @@ func saveUser(ctx context.Context, q querier, u *User) error {
 	case err == nil:
 		_, err = q.ExecContext(ctx, "UPDATE users SET password=$1, enabled=$2 WHERE username=$3", u.Password, u.Enabled, u.Username)
 	case errors.Is(err, sql.ErrNoRows):
+		if err := describeTable(ctx, q, "users"); err != nil {
+			return err
+		}
 		_, err = q.ExecContext(ctx, "INSERT INTO users (username, password, enabled) VALUES ($1, $2, $3)",
 			u.Username, u.Password, u.Enabled)
 	}

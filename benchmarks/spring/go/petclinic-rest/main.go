@@ -13,10 +13,12 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
-	_ "github.com/jackc/pgx/v5/stdlib" // database/sql driver "pgx"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/stdlib" // database/sql over pgx
 )
 
 //go:embed schema.sql
@@ -102,10 +104,13 @@ func openDatabase() (*sql.DB, error) {
 		query.Set("sslmode", mode)
 	}
 	parsed.RawQuery = query.Encode()
-	db, err := sql.Open("pgx", parsed.String())
+	config, err := pgx.ParseConfig(parsed.String())
 	if err != nil {
 		return nil, err
 	}
+	validation := newHikariValidation()
+	db := stdlib.OpenDB(*config, stdlib.OptionAfterConnect(validation.connected),
+		stdlib.OptionShouldPing(validation.borrowed))
 	// HikariCP's defaults: a fixed pool of 10 connections, replaced after 30 minutes.
 	db.SetMaxOpenConns(10)
 	db.SetMaxIdleConns(10)
@@ -160,4 +165,39 @@ func splitScript(script string) []string {
 	}
 	flush()
 	return statements
+}
+
+// hikariValidation reproduces HikariCP's check on borrowing a connection (ADR-032: the comparator sends the
+// reference's SQL): a connection unused for longer than aliveBypassWindowMs (500 ms) is validated with
+// Connection.isValid, which pgjdbc sends as an empty query. pgx's own check (a "-- ping" after 1 s idle) is
+// replaced. A new connection counts as just used, as Hikari's does; a failed validation lets pgx ping and discard it.
+type hikariValidation struct {
+	sync.Mutex
+	lastUsed map[*pgx.Conn]time.Time
+}
+
+const aliveBypassWindow = 500 * time.Millisecond
+
+func newHikariValidation() *hikariValidation {
+	return &hikariValidation{lastUsed: map[*pgx.Conn]time.Time{}}
+}
+
+func (h *hikariValidation) connected(_ context.Context, conn *pgx.Conn) error {
+	h.Lock()
+	h.lastUsed[conn] = time.Now()
+	h.Unlock()
+	return nil
+}
+
+func (h *hikariValidation) borrowed(ctx context.Context, params stdlib.ShouldPingParams) bool {
+	now := time.Now()
+	h.Lock()
+	last, known := h.lastUsed[params.Conn]
+	h.lastUsed[params.Conn] = now
+	h.Unlock()
+	if known && now.Sub(last) <= aliveBypassWindow {
+		return false
+	}
+	_, err := params.Conn.Exec(ctx, "")
+	return err != nil
 }
