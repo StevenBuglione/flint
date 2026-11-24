@@ -273,15 +273,15 @@ private void writeCollection(MapperConfig config, RawCollection collection, Json
 private void writeMap(MapperConfig config, RawMap map, JsonGenerator g)
 {
     g.writeStartObject();
-    foreach (key; map.keysAsAny())
-    {
-        auto value = map.getAny(key);
+    // Entry by entry from the map itself: no key array, no lookup per key.
+    map.forEachAny((ref Any key, ref Any value) {
         if (!includeContent(config, value))
-            continue;
+            return 0;
         const name = keyText(config, key);
         g.writeName(name);
         withPath(Reference(name, -1, "java.util.Map"), () { serializeValue(config, value, null, g); });
-    }
+        return 0;
+    });
     g.writeEndObject();
 }
 
@@ -420,11 +420,10 @@ private void writeAnyGetter(MapperConfig config, BeanDescription bean, ref Any v
     Any[] keys, values;
     if (auto raw = cast(RawMap) map.asObject())
     {
-        foreach (key; raw.keysAsAny())
-        {
-            auto entry = raw.getAny(key);
+        raw.forEachAny((ref Any key, ref Any entry) {
             writeAnyEntry(config, bean, key, entry, g);
-        }
+            return 0;
+        });
         return;
     }
     if (auto d = config.descriptor(map.typeName()))
