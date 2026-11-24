@@ -21,6 +21,7 @@ import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : ConstructorDescriptor, Descriptor, MergedAnnotation,
     PropertyDescriptor, TypeKind, findAnnotation;
 import flint.engine.aot.name : typeNameOf;
+import std.typecons : Rebindable;
 import flint.jackson.annotation : JsonAlias, JsonAnyGetter, JsonCreator, JsonUnwrapped, JsonFormat,
     JsonGetter, JsonIgnore,
     JsonIgnoreProperties, JsonInclude, JsonIncludeProperties, JsonProperty, JsonPropertyOrder,
@@ -105,6 +106,13 @@ final class BeanPropertyDefinition
     package(flint.jackson) immutable(ubyte)[] quotedName;
     /// ditto
     package(flint.jackson) ScalarKind scalarKind;
+    /// How a value of exactly the declared type is written, decided on the first such write: `route` is stored last
+    /// (atomically), after the descriptor and, for an object, the class the decision holds for.
+    package(flint.jackson) ValueRoute route;
+    /// ditto
+    package(flint.jackson) Rebindable!(const Descriptor) routeDescriptor;
+    /// ditto
+    package(flint.jackson) TypeInfo_Class routeClass;
 
     // Prepare the writer's state from the final name and type.
     package(flint.jackson) void prepareWriter() pure nothrow
@@ -185,6 +193,17 @@ package(flint.jackson) enum ScalarKind : ubyte
     float_, ///
     double_, /// double, real
     char_, /// char, wchar, dchar: a one-character String
+}
+
+/// What serializeValue does with a non-scalar value of a property's exact declared type, so later writes go straight
+/// there: a bean through its description, a Nullable through its unwrapped value, a collection element by element.
+package(flint.jackson) enum ValueRoute : ubyte
+{
+    unknown, /// not decided yet
+    generic, /// serializeValue's full dispatch
+    bean, ///
+    nullable, ///
+    collection, ///
 }
 
 /// The scalar kind of the D type named `type`.

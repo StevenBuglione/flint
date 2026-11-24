@@ -26,7 +26,8 @@ import flint.jackson.databind.cfg : EnumFeature, MapperConfig, MapperFeature, Se
 import flint.jackson.databind.exc : DatabindException, InvalidDefinitionException, Reference;
 import flint.jackson.databind.ext.javatime : JavaTimeFormat, writeJavaTime;
 import flint.jackson.databind.stddateformat : dateKeyText, writeJavaUtilDate;
-import flint.jackson.databind.introspect : BeanDescription, BeanPropertyDefinition, ScalarKind, scalarKindOf;
+import flint.jackson.databind.introspect : BeanDescription, BeanPropertyDefinition, ScalarKind,
+    ValueRoute, scalarKindOf;
 import flint.jackson.databind.node : JsonNode;
 import flint.java.util : RawCollection, RawMap;
 
@@ -492,7 +493,80 @@ private void writeProperty(MapperConfig config, BeanPropertyDefinition p, ref An
         if (runtime.length == 0 || runtime == p.type)
             return writeScalar(p.scalarKind, v, g);
     }
+    if (!v.isNull() && v.typeName() == p.type && writeRouted(config, p, v, g))
+        return;
     serializeValue(config, v, p.type, g, p.hasFormat ? JavaTimeFormat.of(p.format) : JavaTimeFormat.init);
+}
+
+// A value of the property's exact declared type, written the way serializeValue would, by the property's route;
+// false when the route is generic (or the object's class is not the one the route was decided for).
+private bool writeRouted(MapperConfig config, BeanPropertyDefinition p, ref Any v, JsonGenerator g)
+{
+    import core.atomic : atomicLoad;
+
+    auto route = atomicLoad(p.route);
+    if (route == ValueRoute.unknown)
+        route = decideRoute(config, p, v);
+    if (route == ValueRoute.generic)
+        return false;
+    auto o = v.asObject();
+    if (o !is null && typeid(o) !is p.routeClass)
+        return false;
+    final switch (route)
+    {
+    case ValueRoute.bean:
+        writeBean(config, config.bean(p.routeDescriptor), v, g);
+        return true;
+    case ValueRoute.nullable:
+        auto inner = p.routeDescriptor.unwrap(v);
+        serializeValue(config, inner, p.routeDescriptor.elementType, g, p.hasFormat
+                ? JavaTimeFormat.of(p.format) : JavaTimeFormat.init);
+        return true;
+    case ValueRoute.collection:
+        writeCollection(config, cast(RawCollection) o, g);
+        return true;
+    case ValueRoute.unknown:
+    case ValueRoute.generic:
+        assert(false, "not a direct route");
+    }
+}
+
+// The route serializeValue takes for `v` (non-null, of exactly the declared type), recorded on the property.
+private ValueRoute decideRoute(MapperConfig config, BeanPropertyDefinition p, ref Any v)
+{
+    import core.atomic : atomicStore;
+
+    const d = handledBefore(p.type) ? null : config.descriptor(p.type);
+    auto o = v.asObject();
+    const route = routeFor(d, o, p.type);
+    p.routeDescriptor = d;
+    p.routeClass = o is null ? null : typeid(o);
+    atomicStore(p.route, route);
+    return route;
+}
+
+// The types serializeValue writes before it looks for a container or a descriptor: bytes, java.time and Date.
+private bool handledBefore(string type)
+{
+    import flint.jackson.databind.ext.javatime : isJavaTime;
+    import flint.jackson.databind.stddateformat : isJavaUtilDate;
+
+    return type == "byte[]" || type == "ubyte[]" || isJavaTime(type) || isJavaUtilDate(type);
+}
+
+// writeContainer's and writeDescribed's choice for a value with descriptor `d` (object `o`, or null for a struct).
+private ValueRoute routeFor(const Descriptor d, Object o, string type)
+{
+    if (d is null || (o !is null && typeid(o).name != type))
+        return ValueRoute.generic;
+    if (o !is null && (cast(JsonNode) o !is null || cast(RawMap) o !is null))
+        return ValueRoute.generic;
+    if (o !is null && cast(RawCollection) o !is null)
+        return ValueRoute.collection;
+    if (d.unwrap !is null)
+        return ValueRoute.nullable;
+    const bean = d.kind == TypeKind.struct_ || d.kind == TypeKind.class_ || d.kind == TypeKind.interface_;
+    return bean && d.length is null && d.toKeys is null ? ValueRoute.bean : ValueRoute.generic;
 }
 
 private bool isNumberOrBoolean(ref Any v)
@@ -527,6 +601,21 @@ private Any unwrapNullable(MapperConfig config, ref Any value, out bool wrapper)
     return value;
 }
 
+// ditto, for property `p`: a Nullable of its declared type unwraps through the descriptor its route recorded.
+private Any unwrapNullable(MapperConfig config, BeanPropertyDefinition p, ref Any value, out bool wrapper)
+{
+    import core.atomic : atomicLoad;
+
+    enum prefix = "std.typecons.Nullable!";
+    if (atomicLoad(p.route) == ValueRoute.nullable && value.typeName() == p.type
+            && p.type.length > prefix.length && p.type[0 .. prefix.length] == prefix)
+    {
+        wrapper = true;
+        return p.routeDescriptor.unwrap(value);
+    }
+    return unwrapNullable(config, value, wrapper);
+}
+
 // ditto
 private Any unwrapNullable(MapperConfig config, ref Any value)
 {
@@ -538,7 +627,7 @@ private Any unwrapNullable(MapperConfig config, ref Any value)
 private bool include(MapperConfig config, BeanDescription bean, BeanPropertyDefinition p, ref Any property)
 {
     bool wrapper;
-    auto v = unwrapNullable(config, property, wrapper);
+    auto v = unwrapNullable(config, p, property, wrapper);
     // With WRITE_EMPTY_JSON_ARRAYS disabled an empty container property is left out, whatever the inclusion.
     if (!config.isEnabled(SerializationFeature.WRITE_EMPTY_JSON_ARRAYS) && isEmptyContainer(config, v))
         return false;
