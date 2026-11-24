@@ -1,0 +1,39 @@
+{
+  "schema": "flint.measure-queue/1",
+  "id": "go-baseline-gs-rest-service",
+  "created": "2026-11-24",
+  "status": "pending",
+  "window": "claim",
+  "priority": 1,
+  "estimate_minutes": 45,
+  "requested_by": "owner decision c015f307; the coordinator, 07:56Z: capture the Go baselines now, while venus is free, ahead of B2",
+  "report_to": "the coordinator",
+  "claim_when": "Named by the coordinator (07:56Z): one claimed capture per app, its HTTP and error workloads together (a Flint-only part needs both in one record), about 45 minutes",
+  "summary": "The one-time Go baseline of gs-rest-service: the manifests' production trials of its HTTP and error workloads, the Go calibration trials and the probe",
+  "why": "Routine runs and CI then measure Flint only against this record, with the drift guard (tools/spring_baseline.py). The comparator is the ADR-032 re-registration; the record does not depend on the Flint commit.",
+  "harness": "57d49362feab",
+  "builds": {},
+  "measure": {
+    "kind": "command",
+    "steps": [
+      {
+        "argv": [
+          "{python}",
+          "{harness}/tools/spring_baseline.py",
+          "capture",
+          "--app",
+          "gs-rest-service",
+          "--impl",
+          "go",
+          "--workloads",
+          "http,error",
+          "--output-root",
+          "{out}/baselines"
+        ],
+        "smoke_args": [
+          "--smoke"
+        ]
+      }
+    ]
+  }
+}
