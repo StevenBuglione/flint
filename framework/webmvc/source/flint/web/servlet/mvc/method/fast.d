@@ -16,14 +16,16 @@ Only what user code sees is GC memory: the bound strings and whatever the handle
 module flint.web.servlet.mvc.method.fast;
 
 import flint.engine.aot.any : Any;
-import flint.engine.aot.fast : FastExchange, FastOutcome;
+import flint.engine.aot.fast : FastExchange, FastField, FastOutcome;
 import flint.engine.aot.mapping : AotHandlerMapping = HandlerMapping, ArgumentKind, ArgumentSpec;
-import flint.http : MediaType;
+import flint.http : MediaType, ResponseEntity;
 import flint.http.converter : HttpMessageConverter, HttpMessageNotWritableException;
 import flint.http.converter.json : JacksonJsonHttpMessageConverter;
 import flint.jakarta.servlet.http : HttpServletRequest, HttpServletResponse;
 import flint.util : MimeTypeUtils;
+import flint.web.context.request : ServletWebRequest;
 import flint.web.method : HandlerMethod;
+import flint.web.method.support : ModelAndViewContainer;
 import flint.web.bind.annotation : ValueConstants;
 import flint.web.method.annotation : RequestParamMethodArgumentResolver;
 import flint.web.servlet : DispatcherStrategies, DispatcherServlet, FastPath, FastPathFactory;
@@ -134,7 +136,9 @@ final class FastPathTable : FastPath
         try
             result = route.handler.invokeArguments(arguments[0 .. route.arguments.length], null);
         catch (Exception ex)
-            return complete(servlet, exchange, route, ex, null, null);
+            return complete(servlet, exchange, route, ex, 0, null, null);
+        if (route.entityProcessor !is null)
+            return serveEntity(route, servlet, exchange, result, entry);
 
         // writeWithMessageConverters writes no body and no Content-Type for a null value: a 200 with Content-Length 0.
         if (result.isNull())
@@ -155,20 +159,80 @@ final class FastPathTable : FastPath
 
             Exception ex = cast(IOException) e !is null ? e : new HttpMessageNotWritableException(
                     "Could not write JSON: " ~ e.msg, e);
-            return complete(servlet, exchange, route, ex, entry.contentType, buffer.data);
+            return complete(servlet, exchange, route, ex, 0, entry.contentType, buffer.data);
         }
         exchange.respond(200, entry.contentType, buffer.data);
         return FastOutcome.written;
     }
 
+    /++
+    S2: a `ResponseEntity` as `HttpEntityMethodProcessor.handleReturnValue` writes it: the entity's status; no body,
+    no `Content-Type` and `Content-Length: 0` without a body; otherwise the Jackson converter's body with the
+    negotiated `Content-Type`, sent chunked because the processor flushes. An entity the fast path does not write
+    exactly (headers of its own, no status, a body another converter would write) goes to that very processor on
+    the materialized request and response: the handler has run, so the request can no longer be declined.
+    +/
+    private FastOutcome serveEntity(ref Route route, DispatcherServlet servlet,
+            ref scope FastExchange exchange, Any result, ref const AcceptEntry entry)
+    {
+        if (!result.holds!ResponseEntity)
+            return completeReturn(servlet, exchange, route, result);
+        auto entity = result.get!ResponseEntity;
+        const status = entity.getStatusCode().value();
+        auto content = entity.getBody();
+        if (status == 0 || !entity.getHeaders().isEmpty() || (!content.isNull()
+                && !jacksonWrites(route, content.typeName(), entry)))
+            return completeReturn(servlet, exchange, route, result);
+        if (content.isNull())
+        {
+            exchange.respondFields(status, null, null, false);
+            return FastOutcome.written;
+        }
+        auto buffer = pool.acquire();
+        scope (exit)
+            pool.release(buffer);
+        try
+            route.jackson.getMapper().writeValue(&buffer.put, content);
+        catch (Exception e)
+        {
+            import flint.java.io : IOException;
+
+            Exception ex = cast(IOException) e !is null ? e : new HttpMessageNotWritableException(
+                    "Could not write JSON: " ~ e.msg, e);
+            return complete(servlet, exchange, route, ex, status, entry.contentType, buffer.data);
+        }
+        FastField[1] fields = [FastField("Content-Type", entry.contentType)];
+        exchange.respondFields(status, fields[], buffer.data, true);
+        return FastOutcome.written;
+    }
+
+    /// The handler returned `result`, which the fast path does not write: the generic return handling writes it.
+    private static FastOutcome completeReturn(DispatcherServlet servlet,
+            ref scope FastExchange exchange, ref Route route, Any result)
+    {
+        Object request, response;
+        exchange.materialize(request, response);
+        auto processor = route.entityProcessor;
+        auto returnType = route.handler.getReturnType();
+        servlet.completeFastReturn(cast(HttpServletRequest) request, cast(HttpServletResponse) response,
+                route.handler, (HttpServletRequest servletRequest, HttpServletResponse servletResponse) {
+            processor.handleReturnValue(result, returnType, new ModelAndViewContainer,
+                new ServletWebRequest(servletRequest, servletResponse));
+        });
+        return FastOutcome.materialized;
+    }
+
     /// The handler ran and `ex` escaped: build the servlet objects and let the dispatcher resolve it.
     private static FastOutcome complete(DispatcherServlet servlet, ref scope FastExchange exchange,
-            ref Route route, Exception ex, string contentType, const(ubyte)[] partial)
+            ref Route route, Exception ex, int status, string contentType, const(ubyte)[] partial)
     {
         Object request, response;
         exchange.materialize(request, response);
         auto servletRequest = cast(HttpServletRequest) request;
         auto servletResponse = cast(HttpServletResponse) response;
+        // HttpEntityMethodProcessor sets the entity's status before it writes.
+        if (status != 0)
+            servletResponse.setStatus(status);
         if (partial.length != 0)
         {
             servletResponse.setContentType(contentType);
@@ -297,6 +361,10 @@ private struct Route
     /// Per argument: the template variable a path variable binds.
     size_t[maxArguments] variableOf;
     JacksonJsonHttpMessageConverter jackson;
+    /// S2: the adapter's `HttpEntityMethodProcessor` for a `ResponseEntity` return, else null.
+    HttpEntityMethodProcessor entityProcessor;
+    /// The adapter's converters, in order: for an entity's body the writer is chosen per request.
+    HttpMessageConverter[] converters;
     /// Per `acceptKeys` slot: the `Content-Type` the generic path writes, or `null` where it does not write one.
     AcceptEntry[acceptKeys.length] accept;
 }
@@ -304,6 +372,19 @@ private struct Route
 private struct AcceptEntry
 {
     string contentType;
+    /// The selected type itself, for `canWrite`.
+    MediaType selected;
+}
+
+/// Whether the first converter that writes `typeName` as the entry's type is exactly the Jackson converter, as
+/// `writeWithMessageConverters` picks it.
+private bool jacksonWrites(ref Route route, string typeName, ref const AcceptEntry entry)
+{
+    MediaType selected = entry.selected;
+    foreach (converter; route.converters)
+        if (converter.canWrite(typeName, &selected))
+            return typeid(cast(Object) converter) is typeid(JacksonJsonHttpMessageConverter);
+    return false;
 }
 
 /++
@@ -402,7 +483,7 @@ private bool prove(ref const AotHandlerMapping row, RequestMappingInfoHandlerMap
             || handler.getResponseStatus() != 0 || handler.getResponseStatusReason() !is null
             || handler.isVoid() || handler.getBean() is null)
         return false;
-    if (!plainValue(row, handler, adapter) || !boundArguments(row, handler, adapter, variables, route))
+    if (!returnHandling(row, handler, adapter, route) || !boundArguments(row, handler, adapter, variables, route))
         return false;
     route.arguments = row.arguments;
     return acceptTable(row, adapter, route);
@@ -562,15 +643,26 @@ private bool mayOverlap(const(Segment)[] segments, const(bool)[] numeric, string
 
 // invokeAndHandle sends ResponseEntity, HttpEntity and HttpHeaders returns to their own handlers before
 // @ResponseBody, and those take status and headers from the value; ProblemDetail takes its own status and
-// application/problem+json. Only a plain @ResponseBody value is the fast path's (web-http's review).
-private bool plainValue(ref const AotHandlerMapping row, HandlerMethod handler, RequestMappingHandlerAdapter adapter)
+// application/problem+json (web-http's review). The fast path writes a plain @ResponseBody value, and (S2) a
+// ResponseEntity whose handler is exactly HttpEntityMethodProcessor, on a mapping whose produces condition fixes
+// the producible type to application/json.
+private bool returnHandling(ref const AotHandlerMapping row, HandlerMethod handler,
+        RequestMappingHandlerAdapter adapter, ref Route route)
 {
+    enum entity = "flint.http.ResponseEntity";
     auto returnType = handler.getReturnType();
     foreach (returnHandler; adapter.getReturnValueHandlers().getHandlers())
-        if (returnHandler.supportsReturnType(returnType) && (cast(HttpEntityMethodProcessor) returnHandler
-                || cast(HttpHeadersReturnValueHandler) returnHandler))
+    {
+        if (!returnHandler.supportsReturnType(returnType) || (cast(HttpEntityMethodProcessor) returnHandler is null
+                && cast(HttpHeadersReturnValueHandler) returnHandler is null))
+            continue;
+        if (row.returnType != entity || row.produces != ["application/json"]
+                || typeid(cast(Object) returnHandler) !is typeid(HttpEntityMethodProcessor))
             return false;
-    return plainBody(row);
+        route.entityProcessor = cast(HttpEntityMethodProcessor) returnHandler;
+        return true;
+    }
+    return row.returnType != entity && plainBody(row);
 }
 
 /++
@@ -653,11 +745,16 @@ private bool acceptTable(ref const AotHandlerMapping row, RequestMappingHandlerA
             continue;
         HttpMessageConverter writer;
         foreach (converter; converters)
-            if (converter.canWrite(valueType, &selected))
+        {
+            // An entity's body type is known per request (jacksonWrites); the table holds the Jackson converter.
+            const candidate = route.entityProcessor !is null ? typeid(cast(Object) converter) is typeid(
+                    JacksonJsonHttpMessageConverter) : converter.canWrite(valueType, &selected);
+            if (candidate)
             {
                 writer = converter;
                 break;
             }
+        }
         if (writer is null || typeid(cast(Object) writer) !is typeid(JacksonJsonHttpMessageConverter))
             continue;
         const header = selected.toString();
@@ -668,9 +765,10 @@ private bool acceptTable(ref const AotHandlerMapping row, RequestMappingHandlerA
         if (!parameterless)
             continue;
         jackson = cast(JacksonJsonHttpMessageConverter) writer;
-        route.accept[slot] = AcceptEntry(header);
+        route.accept[slot] = AcceptEntry(header, selected);
     }
     route.jackson = jackson;
+    route.converters = converters;
     return jackson !is null;
 }
 

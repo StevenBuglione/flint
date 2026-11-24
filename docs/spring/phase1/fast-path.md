@@ -31,7 +31,7 @@ Flint AOT emits `fast_<id>` only when all of these hold:
 - `@RequestMapping(method = GET)` exactly, with no `params`, `headers` or `consumes`, and `produces` at most exactly `application/json` (S1);
 - `@ResponseBody` (directly or through `@RestController`), with no `@ResponseStatus` and no reason;
 - no `@CrossOrigin` on the class or the method;
-- a return type that Flint AOT describes, so the Jackson converter writes it by its descriptor, and that is a plain value: not `void`, `Object`, `Any`, `ResponseEntity`, `HttpEntity`, `HttpHeaders` or `ProblemDetail`;
+- a return type that Flint AOT describes, so the Jackson converter writes it by its descriptor, and that is a plain value: not `void`, `Object`, `Any`, `HttpEntity`, `HttpHeaders` or `ProblemDetail`. Or (S2) a `ResponseEntity` whose return value handler is exactly `HttpEntityMethodProcessor`, on a mapping with `produces = application/json`, which fixes the producible type whatever the body;
 - every parameter is `@RequestParam string` or (S1) a `@PathVariable` `int`, `long` or `string` named by a template variable, neither `@Valid` nor an exception parameter. Constraint annotations such as `@Min` are fine: they run in the bean's `@Validated` proxy, which both paths call.
 
 The prototype stops here on purpose. Path variables, `ResponseEntity`, `@RequestHeader`, `@CrossOrigin` and `@RequestBody` are the next shapes (section 9).
@@ -64,7 +64,13 @@ After the handler has run, the fast path never declines. Running the handler twi
 
 The fast path writes only what the generic path writes for the requests it accepts. Everything else is declined, so it is answered by the unchanged generic code.
 
-- **Status.** 200 only. `@ResponseStatus` and `ResponseEntity` are outside the shape.
+- **Status.** 200 for a plain value; `@ResponseStatus` stays outside the shape.
+- **`ResponseEntity` (S2).** As `HttpEntityMethodProcessor.handleReturnValue`:
+  - the entity's status;
+  - without a body, no `Content-Type` and `Content-Length: 0`;
+  - with a body, the negotiated `Content-Type` and the Jackson converter's bytes, sent chunked, because the processor flushes.
+
+  The body's writer is checked per request, as `writeWithMessageConverters` picks it: the first converter that `canWrite` the body's type as the selected type must be exactly the Jackson converter. Anything the fast path doesn't write exactly goes to that very processor on the materialized request and response (`DispatcherServlet.completeFastReturn`), because the handler has already run. That covers entity headers, a zero status, and a body another converter (or none) would write.
 - **`Content-Type`.** The table's value, computed at startup by the generic negotiation code. A type with a charset, or one written by another converter, is declined. Spring 7's Jackson converter writes `application/json` without a charset, which gs-rest-service's golden confirms.
 - **`Vary`.** Spring adds `Vary` only through CORS processing, which applies only to handlers with a CORS configuration. Those are outside the proof, so a fast response never has `Vary`, as the generic one has none. A future CORS shape writes the processor's fixed `Vary` fields, computed at startup.
 - **`Content-Length` and chunked.** The servlet response buffers 8,192 bytes. A body written without a flush is sent with `Content-Length` when it fits, and chunked when it overflows. The fast path's `respond` makes the same choice from the body length. Chunk boundaries can differ, which no client sees. `Date`, `Keep-Alive`, `Connection` and the status line come from the same `FiberResponse`.

@@ -616,6 +616,26 @@ class DispatcherServlet : HttpServlet, FastDispatch
         processDispatchResult(request, response, mappedHandler, null, ex);
     }
 
+    /++
+    Flint: the rest of `doDispatch` for a fast-path request whose handler ran and returned a value the fast path does
+    not write itself (a `ResponseEntity` with headers, say), on the materialized request and response. The handler
+    mappings run again, as for `completeFastDispatch`; `handleReturn` then runs the generic return value handling
+    that `invokeAndHandle` would have run, and `processDispatchResult` finishes with whatever it threw.
+    +/
+    package(flint.web) final void completeFastReturn(HttpServletRequest request, HttpServletResponse response,
+            Object handler, scope void delegate(HttpServletRequest, HttpServletResponse) @safe handleReturn)
+    {
+        auto mappedHandler = getHandler(request);
+        if (mappedHandler is null || mappedHandler.getHandler() !is handler)
+            throw new IllegalStateException("fast path: the handler mappings no longer choose the specialised handler");
+        Exception dispatchException;
+        try
+            handleReturn(request, response);
+        catch (Exception ex)
+            dispatchException = ex;
+        processDispatchResult(request, response, mappedHandler, null, dispatchException);
+    }
+
     /// Spring's `doDispatch`.
     protected void doDispatch(HttpServletRequest request, HttpServletResponse response)
     {

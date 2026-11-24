@@ -32,6 +32,19 @@ enum FastOutcome
 /// Visits each decoded value of one query parameter; a value is borrowed for the call.
 alias FastValueVisitor = void delegate(scope const(char)[] value) @safe;
 
+/// One response header field the fast path writes, in the order the generic response would hold it.
+struct FastField
+{
+    /// The field name, as the generic path spells it.
+    string name;
+    /// The value.
+    string value;
+}
+
+/// Sends a whole response with its fields in order (`FastExchange.respondFields`).
+alias FastResponder = void delegate(int status, scope const(FastField)[] fields,
+        scope const(ubyte)[] content, bool chunked) @safe;
+
 /++
 One request as the container holds it before any servlet object exists. Every slice and delegate is valid only
 during `FastDispatch.dispatchFast`.
@@ -52,6 +65,10 @@ struct FastExchange
     /// Sends a whole response: `status`, one `Content-Type` field (none when `contentType` is null), and
     /// `content`, framed as the servlet response would frame the same bytes written without a flush.
     void delegate(int status, string contentType, scope const(ubyte)[] content) @safe respond;
+    /// Sends a whole response with `fields` in order. `chunked`: the generic path commits it with a flush before
+    /// the content is complete (`HttpEntityMethodProcessor`), so it goes out with `Transfer-Encoding: chunked`;
+    /// otherwise it is framed as `respond` frames it (`Content-Length` when it fits the servlet buffer).
+    FastResponder respondFields;
     /// Builds the request and response the generic path would have built (the container's own classes, as
     /// `Object`s for this low-level package); the outcome is then `FastOutcome.materialized`.
     void delegate(out Object request, out Object response) @safe materialize;

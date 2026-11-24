@@ -15,10 +15,10 @@ module flint.engine.servlet.fast;
 
 import flint.arena : Buffer;
 import flint.conc : Context;
-import flint.engine.aot.fast : FastDispatch, FastExchange, FastOutcome, FastValueVisitor;
+import flint.engine.aot.fast : FastDispatch, FastExchange, FastField, FastOutcome, FastValueVisitor;
 import flint.engine.servlet : ServletEngine;
-import flint.engine.servlet.request : ServletEngineRequest, componentTooLong, decodeComponent, decodeComponentInto,
-    malformedComponent, methodName;
+import flint.engine.servlet.request : ServletEngineRequest, componentTooLong, decodeComponent,
+    decodeComponentInto, malformedComponent, methodName;
 import flint.engine.servlet.response : ServletEngineResponse, defaultBufferSize;
 import flint.engine.web.fiber : FiberResponse, unknownLength;
 import flint.engine.web.stream : StreamField;
@@ -38,8 +38,8 @@ Offer one exchange to `dispatch`. `declined`: nothing ran and nothing was sent. 
 anything; the caller finishes them as it finishes the generic path. This is `ServletEngineOptions.fastOffer`, which
 only Flint AOT's generated customizer sets; it is public for that customizer alone.
 +/
-FastOutcome serveFast(ServletEngine engine, FastDispatch dispatch,
-        ref scope Request request, ref scope RequestContext context, FiberResponse transport,
+FastOutcome serveFast(ServletEngine engine, FastDispatch dispatch, ref scope Request request,
+        ref scope RequestContext context, FiberResponse transport,
         out ServletEngineRequest servletRequest, out ServletEngineResponse servletResponse, out Exception failure)
 {
     const method = request.method();
@@ -123,6 +123,27 @@ FastOutcome serveFast(ServletEngine engine, FastDispatch dispatch,
         check(transport.finish(transportContext));
     }
 
+    // The generic response's fields in order; more than fit on the stack is a GC copy, as the handler already ran.
+    void respondFields(int status, scope const(FastField)[] given, scope const(ubyte)[] content, bool chunked)
+    {
+        Context transportContext;
+        StreamField[16] storage;
+        StreamField[] fields = given.length <= storage.length ? storage[0 .. given.length]
+            : new StreamField[given.length];
+        foreach (index, ref field; given)
+            fields[index] = StreamField(field.name, field.value);
+        began = true;
+        if (!chunked && content.length <= defaultBufferSize)
+        {
+            check(transport.respond(cast(ushort) status, fields, content, false, transportContext));
+            return;
+        }
+        check(transport.begin(cast(ushort) status, fields, unknownLength, transportContext));
+        if (content.length != 0)
+            check(transport.send(content, transportContext));
+        check(transport.finish(transportContext));
+    }
+
     void materialize(out Object materializedRequest, out Object materializedResponse)
     {
         if (servletRequest is null)
@@ -136,6 +157,7 @@ FastOutcome serveFast(ServletEngine engine, FastDispatch dispatch,
 
     exchange.parameter = &parameter;
     exchange.respond = &respond;
+    exchange.respondFields = &respondFields;
     exchange.materialize = &materialize;
     FastOutcome outcome;
     try
@@ -225,9 +247,9 @@ private void check(E)(E result)
 unittest
 {
     static immutable string[] corpus = [
-        "", "plain", "a+b", "%41", "%4", "%", "%%", "%zz", "%4g", "x%41y", "%C3%A9t%C3%A9", "Jane+Q%20Public",
-        "%22quoted%22%5Cslash%3C%3E", "a%2", "a%2B", "+", "++%2b", "%ff%FE", "%0a%0D", "name[]", "n%61me",
-        "%e9", "trailing%", "trailing%4", "%41%", "%41%4", "%41%41",
+        "", "plain", "a+b", "%41", "%4", "%", "%%", "%zz", "%4g", "x%41y", "%C3%A9t%C3%A9",
+        "Jane+Q%20Public", "%22quoted%22%5Cslash%3C%3E", "a%2", "a%2B", "+", "++%2b", "%ff%FE",
+        "%0a%0D", "name[]", "n%61me", "%e9", "trailing%", "trailing%4", "%41%", "%41%4", "%41%41",
     ];
     char[valueLimit] storage;
     foreach (text; corpus)

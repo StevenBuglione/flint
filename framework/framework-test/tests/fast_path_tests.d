@@ -6,10 +6,11 @@ as the container does, and checks what the fast path answers and when it decline
 module fast_path_tests;
 
 import flint.engine.aot.any : Any;
-import flint.engine.aot.descriptor : DescriptorTable;
-import flint.engine.aot.fast : FastExchange, FastOutcome, FastValueVisitor;
+import flint.engine.aot.descriptor : DescriptorTable, descriptorOf;
+import flint.engine.aot.fast : FastExchange, FastField, FastOutcome, FastValueVisitor;
 import flint.engine.aot.mapping : AotHandlerMapping = HandlerMapping;
-import flint.http : HttpStatus, ResponseEntity;
+import flint.http : HttpHeaders, HttpStatus, ResponseEntity;
+import flint.mock.web : MockHttpServletRequest, MockHttpServletResponse;
 import flint.http.converter.json : JacksonJsonHttpMessageConverter;
 import flint.jakarta.servlet.http : HttpServletRequest, HttpServletResponse;
 import flint.test.web.servlet.setup : StaticBeanFactory;
@@ -136,6 +137,29 @@ class ShadowController
     }
 }
 
+/// S2: ResponseEntity returns with a fixed producible type, each status and body shape.
+@RestController
+class EntityRoutesController
+{
+    long calls; ///
+
+    ///
+    @GetMapping(value: ["/entities/{id}"], produces: ["application/json"])
+    ResponseEntity entity(@PathVariable("id") int id)
+    {
+        ++calls;
+        if (id == 0)
+            return ResponseEntity(HttpStatus.NOT_FOUND);
+        if (id == 2)
+        {
+            HttpHeaders headers;
+            headers.set("X-Extra", "1");
+            return ResponseEntity.of(Hello(id, "headers"), headers, HttpStatus.OK);
+        }
+        return ResponseEntity.of(Hello(id, "entity"), HttpStatus.CREATED);
+    }
+}
+
 private final class CountingInterceptor : HandlerInterceptor
 {
 }
@@ -154,7 +178,8 @@ private DispatcherServlet dispatcher(C)(C controller, string beanName, bool arra
         foreach (ref row; rows)
             row.invokeArguments = null;
     auto table = DescriptorTable.withBuiltins();
-    auto descriptors = handlerDescriptorsOf!C();
+    // Hello, which ResponseEntity returns carry inside, as Flint AOT registers every described body type.
+    auto descriptors = handlerDescriptorsOf!C() ~ descriptorOf!Hello();
     foreach (descriptor; descriptors)
         table.add(descriptor);
     auto support = new WebMvcConfigurationSupport(rows, null, beans, configurers, table);
@@ -174,10 +199,16 @@ private struct Offer
     int status;
     string contentType;
     string content;
+    /// Through `respondFields`: whether chunked, and the fields in order.
+    bool chunked;
+    string[2][] fields;
+    /// The materialized response, when the dispatcher asked for the servlet objects.
+    MockHttpServletResponse materialized;
 }
 
 /// Offers a request as the container does: `query` undecoded pairs (the container's decoding is engine-servlet's).
-private Offer offer(DispatcherServlet servlet, string method, string path, string query = null, string[] accept = null)
+private Offer offer(DispatcherServlet servlet, string method, string path, string query = null,
+        string[] accept = null, bool materializes = false)
 {
     Offer result;
     bool parameter(scope const(char)[] name, scope FastValueVisitor visit)
@@ -207,9 +238,25 @@ private Offer offer(DispatcherServlet servlet, string method, string path, strin
         result.content = (cast(const(char)[]) content).idup;
     }
 
+    void respondFields(int status, scope const(FastField)[] fields, scope const(ubyte)[] content, bool chunked)
+    {
+        result.status = status;
+        result.chunked = chunked;
+        foreach (ref field; fields)
+        {
+            result.fields ~= [field.name, field.value];
+            if (field.name == "Content-Type")
+                result.contentType = field.value;
+        }
+        result.content = (cast(const(char)[]) content).idup;
+    }
+
     void materialize(out Object request, out Object response)
     {
-        assert(false, "no exception was expected");
+        assert(materializes, "no materialization was expected");
+        result.materialized = new MockHttpServletResponse;
+        request = new MockHttpServletRequest(method, path);
+        response = result.materialized;
     }
 
     scope FastExchange exchange;
@@ -220,6 +267,7 @@ private Offer offer(DispatcherServlet servlet, string method, string path, strin
         exchange.accept = accept[0];
     exchange.parameter = &parameter;
     exchange.respond = &respond;
+    exchange.respondFields = &respondFields;
     exchange.materialize = &materialize;
     result.outcome = servlet.dispatchFast(exchange);
     return result;
@@ -354,4 +402,32 @@ unittest
     assert(offer(servlet, "GET", "/items/3").outcome == FastOutcome.declined);
     // The literal route itself is still proved.
     assert(offer(servlet, "GET", "/items/7").content == `{"id":7,"text":"seven"}`);
+}
+
+@("fast path S2: a ResponseEntity is written as HttpEntityMethodProcessor writes it, or handed to it")
+unittest
+{
+    auto controller = new EntityRoutesController;
+    auto servlet = dispatcher(controller, "entityRoutesController");
+    // A body: the entity's status, the negotiated Content-Type, and chunked (the processor flushes).
+    const created = offer(servlet, "GET", "/entities/1", null, ["*/*"]);
+    assert(created.outcome == FastOutcome.written && created.status == 201 && created.chunked);
+    assert(created.fields == [["Content-Type", "application/json"]]);
+    assert(created.content == `{"id":1,"text":"entity"}`, created.content);
+    // No body: no Content-Type, not chunked (Content-Length: 0).
+    const missing = offer(servlet, "GET", "/entities/0");
+    assert(missing.outcome == FastOutcome.written && missing.status == 404 && !missing.chunked);
+    assert(missing.fields.length == 0 && missing.content.length == 0);
+    // Headers of the entity's own: the handler ran once, and the generic processor writes the materialized
+    // response, headers included.
+    auto extra = offer(servlet, "GET", "/entities/2", null, null, true);
+    assert(extra.outcome == FastOutcome.materialized);
+    assert(extra.materialized.getStatus() == 200);
+    assert(extra.materialized.getHeader("X-Extra") == "1");
+    assert(extra.materialized.getContentAsString() == `{"id":2,"text":"headers"}`,
+            extra.materialized.getContentAsString());
+    assert(controller.calls == 3);
+    // A mapping without produces keeps the generic path (the producible type would depend on the body).
+    assert(offer(dispatcher(new EntityController, "entityController"), "GET", "/entity").outcome == FastOutcome
+            .declined);
 }
