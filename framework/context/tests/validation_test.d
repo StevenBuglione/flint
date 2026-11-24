@@ -343,6 +343,12 @@ unittest
     auto exception = new BindException(result);
     assert(exception.getBindingResult() is result && exception.getFieldErrorCount("name") == 1);
     assert(contains(exception.getMessage(), "3 errors"));
+    // The message is built on demand: msg stays null, toString shows getMessage as Java's Throwable.toString does,
+    // and a later error appears in the next getMessage.
+    assert(exception.msg is null);
+    assert(exception.toString() == typeid(exception).name ~ ": " ~ exception.getMessage());
+    result.reject("late");
+    assert(contains(exception.getMessage(), "4 errors"));
 }
 
 unittest

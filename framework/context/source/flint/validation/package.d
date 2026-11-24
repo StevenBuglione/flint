@@ -1355,7 +1355,7 @@ class BindException : Exception, BindingResult
     {
         Assert.notNull(bindingResult, "BindingResult must not be null");
         this.bindingResult = bindingResult;
-        super(valueOf(cast(Object) bindingResult), file, line);
+        super(null, file, line); // the message is built on demand, in getMessage, as Spring builds it
     }
 
     /// An exception over a new `BeanPropertyBindingResult` for `target`.
@@ -1370,10 +1370,17 @@ class BindException : Exception, BindingResult
         return bindingResult;
     }
 
-    /// The message: the binding result's summary.
+    /// The message: the binding result's summary, built on each call (`msg` stays null unless a subclass sets it).
     string getMessage()
     {
         return valueOf(cast(Object) bindingResult);
+    }
+
+    /// Java's `Throwable.toString()`: the class name and `getMessage()`.
+    override string toString()
+    {
+        const message = getMessage();
+        return message is null ? typeid(this).name : typeid(this).name ~ ": " ~ message;
     }
 
     // Errors and BindingResult, delegated.
