@@ -404,6 +404,21 @@ struct Any
             return cast(U) long_;
     }
 
+    /// A pointer to the held struct of type `T`, inline or boxed, or null: one type check, for descriptor
+    /// accessors that read or write a field in place.
+    inout(T)* structPointer(T)() inout return if (is(T == struct))
+    {
+        static if (isInlineable!T)
+        {
+            if (slot_ == Slot.inlined)
+                return typeName_ == typeNameOf!T ? &inlineValue!T(object_) : null;
+        }
+        if (slot_ != Slot.box || typeName_ != typeNameOf!T)
+            return null;
+        auto box = cast(inout(Box!T)) object_;
+        return box is null ? null : &box.value;
+    }
+
     /// The box of a held value type, or null (also for an inline struct: use `get!T`, which returns by `ref`).
     inout(Box!T) box(T)() inout pure nothrow @nogc
     {

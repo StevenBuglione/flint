@@ -698,6 +698,17 @@ private struct LargeRecord
     long[5] values;
 }
 
+private struct InlineTwin
+{
+    long id;
+    string content;
+}
+
+private struct LargeTwin
+{
+    long[5] values;
+}
+
 unittest
 {
     import flint.engine.aot.any : Any;
@@ -737,4 +748,73 @@ unittest
     auto created = descriptor.create();
     descriptor.property("content").set(created, Any.of("made"));
     assert(created.get!InlineGreeting.content == "made");
+}
+
+unittest
+{
+    import flint.engine.aot.any : Any;
+
+    // structPointer: one type check for an inline or a boxed struct, null for another type or no value.
+    auto inline = Any.of(InlineGreeting(1, "a"));
+    assert(inline.structPointer!InlineGreeting !is null && inline.structPointer!InlineGreeting.content == "a");
+    inline.structPointer!InlineGreeting.id = 9;
+    assert(inline.get!InlineGreeting.id == 9);
+    const large = Any.of(LargeRecord.init);
+    assert(large.structPointer!LargeRecord !is null && large.structPointer!InlineGreeting is null);
+    assert(inline.structPointer!LargeRecord is null && Any.init.structPointer!InlineGreeting is null);
+}
+
+unittest
+{
+    import core.memory : GC;
+    import flint.engine.aot.any : Any;
+
+    // Wrong type: a struct with InlineGreeting's exact layout, another boxed struct, and scalar or text values.
+    static assert(InlineTwin.sizeof == InlineGreeting.sizeof);
+    const twin = Any.of(InlineTwin(1, "a"));
+    assert(twin.structPointer!InlineTwin !is null && twin.structPointer!InlineGreeting is null);
+    const boxed = Any.of(LargeRecord.init);
+    assert(boxed.structPointer!LargeTwin is null && Any.of(LargeTwin.init).structPointer!LargeRecord is null);
+    assert(Any.of(5L).structPointer!InlineGreeting is null && Any.of("a").structPointer!InlineGreeting is null);
+
+    // Copies: an inline pointer reaches only its own Any; a boxed pointer reaches the box every copy shares.
+    auto original = Any.of(InlineGreeting(1, "a"));
+    auto copy = original;
+    copy.structPointer!InlineGreeting.id = 2;
+    original.structPointer!InlineGreeting.content = "b";
+    assert(original.get!InlineGreeting == InlineGreeting(1, "b") && copy.get!InlineGreeting == InlineGreeting(2, "a"));
+    auto large = Any.of(LargeRecord.init);
+    const sharing = large;
+    large.structPointer!LargeRecord.values[0] = 7;
+    assert(sharing.get!LargeRecord.values[0] == 7);
+
+    // Lifetime: a boxed pointer keeps its box alive after the Any lets go of it.
+    auto kept = large.structPointer!LargeRecord;
+    large = Any.init;
+    GC.collect();
+    assert(kept.values[0] == 7);
+}
+
+unittest
+{
+    import flint.engine.aot.any : Any;
+
+    // Negative (DIP1000): a pointer into a local Any cannot outlive it, inline or boxed.
+    static assert(!__traits(compiles, () @safe {
+            auto local = Any.of(InlineGreeting(1, "a"));
+            return local.structPointer!InlineGreeting;
+        }));
+    static assert(!__traits(compiles, () @safe {
+            InlineGreeting* outer;
+            {
+                auto local = Any.of(InlineGreeting(1, "a"));
+                outer = local.structPointer!InlineGreeting;
+            }
+            return outer;
+        }));
+    // Positive: the same calls compile while the pointer stays in scope.
+    static assert(__traits(compiles, () @safe {
+            auto local = Any.of(InlineGreeting(1, "a"));
+            return local.structPointer!InlineGreeting.id;
+        }));
 }
