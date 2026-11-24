@@ -346,8 +346,10 @@ private struct HeaderWriter
             full = true;
             return;
         }
-        foreach (character; bytes)
-            destination[offset++] = cast(ubyte) character;
+        // One block copy (memcpy) instead of a bounds-checked store per byte: a response head of a dozen fields
+        // is several hundred bytes.
+        destination[offset .. offset + bytes.length] = cast(const(ubyte)[]) bytes;
+        offset += bytes.length;
     }
 
     void decimal(ulong number) scope nothrow @nogc
