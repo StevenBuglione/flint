@@ -188,11 +188,23 @@ else version (ReactorNestedWatches)
     {
         Readiness receiver;
         private Entry[] entries;
+        /// Indices of the live entries, dense in their first `liveCount` places: lookups scan only live watches,
+        /// a handful even when the table holds a thousand.
+        private uint[] live;
+        private uint liveCount;
+        /// Indices of free entries, a stack: the lowest index is handed out first.
+        private uint[] free;
+        private uint freeCount;
         private ulong generation;
 
         void reserve(uint capacity)
         {
             entries = new Entry[capacity];
+            live = new uint[capacity];
+            free = new uint[capacity];
+            foreach (position; 0 .. capacity)
+                free[position] = capacity - 1 - position;
+            freeCount = capacity;
         }
 
         bool enabled() const pure nothrow @nogc
@@ -202,34 +214,46 @@ else version (ReactorNestedWatches)
 
         Status update(int fd, NativeInterest interest, NativeReadyFn callback) nothrow @nogc
         {
-            size_t empty = entries.length;
-            foreach (index, ref entry; entries)
+            const position = livePosition(fd);
+            if (position != liveCount)
             {
-                if (entry.generation == 0)
-                {
-                    if (empty == entries.length)
-                        empty = index;
-                }
-                else if (entry.descriptor == fd)
-                    return configure(index, Entry(entry.generation, fd, interest, callback));
+                const index = live[position];
+                return configure(index, Entry(entries[index].generation, fd, interest, callback));
             }
-            if (empty == entries.length || generation == ulong.max >> 16)
+            if (freeCount == 0 || generation == ulong.max >> 16)
                 return Status.resourceExhausted;
-            return configure(empty, Entry(++generation, fd, interest, callback));
+            const index = free[freeCount - 1];
+            const status = configure(index, Entry(++generation, fd, interest, callback));
+            if (status == Status.ok)
+            {
+                --freeCount;
+                live[liveCount++] = index;
+            }
+            return status;
         }
 
         Status remove(int fd) nothrow @nogc
         {
-            foreach (ref entry; entries)
-            {
-                if (entry.generation == 0 || entry.descriptor != fd)
-                    continue;
-                const outcome = setNativeInterest(receiver, fd, 0, entry.interest, NativeInterest.none);
-                if (outcome == Status.ok)
-                    entry = Entry.init;
+            const position = livePosition(fd);
+            if (position == liveCount)
+                return Status.ok;
+            const index = live[position];
+            const outcome = setNativeInterest(receiver, fd, 0, entries[index].interest, NativeInterest.none);
+            if (outcome != Status.ok)
                 return outcome;
-            }
-            return Status.ok;
+            entries[index] = Entry.init;
+            live[position] = live[--liveCount];
+            free[freeCount++] = index;
+            return outcome;
+        }
+
+        /// Position of `fd`'s watch in `live`, or `liveCount` when it has none.
+        private uint livePosition(int fd) const nothrow @nogc
+        {
+            foreach (position; 0 .. liveCount)
+                if (entries[live[position]].descriptor == fd)
+                    return position;
+            return liveCount;
         }
 
         Error notify(uint budget) nothrow @nogc
@@ -257,6 +281,10 @@ else version (ReactorNestedWatches)
         {
             destroyReadiness(receiver);
             entries = null;
+            live = null;
+            free = null;
+            liveCount = 0;
+            freeCount = 0;
         }
 
         private Status configure(size_t index, Entry updated) nothrow @nogc

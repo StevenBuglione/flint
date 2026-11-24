@@ -100,4 +100,81 @@ version (Posix)
         version (FlintNativeLiburing)
             exercise(Backend.ioUring);
     }
+
+    private enum tableWatches = 3;
+    private shared int[tableWatches + 1] tableFds;
+    private shared uint seenMask;
+
+    private void onTableReady(int fd, NativeInterest) @safe nothrow @nogc
+    {
+        foreach (index; 0 .. tableWatches + 1)
+            if (atomicLoad(tableFds[index]) == fd)
+                atomicOp!"|="(seenMask, 1U << index);
+        // Level-triggered: stop watching once seen, so the loop does not spin on it.
+        assert(Reactor.current().unwatchNative(fd).code == Status.ok);
+    }
+
+    private NativeReadyFn tableCallback() @safe nothrow @nogc
+    {
+        return delegate void(int fd, NativeInterest events) @safe nothrow @nogc {
+            onTableReady(fd, events);
+        };
+    }
+
+    private void tableTask() @safe nothrow @nogc
+    {
+        auto reactor = Reactor.current();
+        foreach (index; 0 .. tableWatches)
+            assert(reactor.watchNative(atomicLoad(tableFds[index]), NativeInterest.read,
+                    tableCallback()).code == Status.ok);
+        const extra = atomicLoad(tableFds[tableWatches]);
+        // Full: a new descriptor is refused, while updating a live watch needs no free entry.
+        assert(reactor.watchNative(extra, NativeInterest.read, tableCallback()).code == Status.resourceExhausted);
+        assert(reactor.watchNative(atomicLoad(tableFds[0]), NativeInterest.read, tableCallback()).code == Status.ok);
+        // Removing a middle watch frees its entry for the next descriptor.
+        assert(reactor.unwatchNative(atomicLoad(tableFds[1])).code == Status.ok);
+        assert(reactor.unwatchNative(atomicLoad(tableFds[1])).code == Status.ok);
+        assert(reactor.watchNative(extra, NativeInterest.read, tableCallback()).code == Status.ok);
+        assert(reactor.yieldUntil(Deadline.afterMillis(30)).code == Status.ok);
+        reactor.stop();
+    }
+
+    private void exerciseTable(Backend backend) @system
+    {
+        ReactorOptions options;
+        options.cores = 1;
+        options.backend = backend;
+        options.fiberPoolSize = 1;
+        options.maxNativeWatchesPerCore = tableWatches;
+        auto server = Reactor.create(options);
+        if (backend == Backend.ioUring && !server.ok)
+            return;
+        assert(server.ok, server.error.message);
+        int[2][tableWatches + 1] pairs;
+        foreach (index, ref pair; pairs)
+        {
+            assert(socketpair(AF_UNIX, SOCK_STREAM, 0, pair) == 0);
+            atomicStore(tableFds[index], pair[0]);
+            // Every descriptor is readable; only the watched ones may be reported.
+            const ubyte datum = 7;
+            assert(send(pair[1], &datum, 1, 0) == 1);
+        }
+        scope (exit)
+            foreach (ref pair; pairs)
+                foreach (fd; pair)
+                    close(fd);
+        atomicStore(seenMask, 0U);
+        assert(server.value.post(0, &tableTask).code == Status.ok);
+        assert(server.value.run().code == Status.ok);
+        // Watches 0, 2 and the extra one; never the removed watch 1.
+        assert(atomicLoad(seenMask) == 0b1101);
+    }
+
+    @("a full watch table refuses a new descriptor, updates a live one, and reuses a removed entry")
+    @system unittest
+    {
+        exerciseTable(readinessBackend);
+        version (FlintNativeLiburing)
+            exerciseTable(Backend.ioUring);
+    }
 }
