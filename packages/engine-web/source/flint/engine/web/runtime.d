@@ -7,7 +7,7 @@ import core.thread.osthread : Thread;
 import core.time : MonoTime, dur, ticksToNSecs;
 import flint.arena : Buffer, Error, RequestArena, Result, Status;
 import flint.conc : CancelSource, Context, Deadline;
-import flint.engine.reactor : AcceptDelegate, Completion, CompletionDelegate, ConnectionId,
+import flint.engine.reactor : AcceptDelegate, Completion, CompletionDelegate, ConnectionId, IoId,
     ListenOptions, ReadDelegate, Reactor, ReactorOptions, TaskContext, TaskDelegate, TaskWaker;
 import flint.engine.web.dispatch : executeMatched, executeStream, failureResponse, lookupRoute;
 import flint.engine.web.fiber : FiberEndpoint, FiberHandler, FiberResponse, FiberRoute,
@@ -96,6 +96,8 @@ private struct Connection
     string replyType;
     size_t bodySent;
     size_t writeBytes;
+    /// The plain (non-TLS) write in flight, which a later fiber write in the same loop turn may extend.
+    IoId pendingWrite;
     /// The streaming handler fiber while it waits for a read, write or close.
     TaskWaker streamWaiter;
     /// A fiber route's handler is running; the stream fields above track its response.
@@ -888,9 +890,20 @@ private final class RuntimeDriver() : StreamEndpoint, FiberEndpoint
                 && connection.phase != ConnectionPhase.writing && !fiber))
             return false;
         connection.peerClosed = true;
-        if (connection.phase == ConnectionPhase.handling)
+        // A request still waiting for its handler is cancelled, unless it is bound for the fiber route, which
+        // answers like a container whether or not its fiber has started yet.
+        if (connection.phase == ConnectionPhase.handling && !fiberBound(connection))
             connection.cancellation.cancel();
         return true;
+    }
+
+    /// Whether the request on `connection` goes to the fiber route (no owner-loop or stream route matches it).
+    private bool fiberBound(Connection* connection) nothrow @nogc
+    {
+        if (routes.fiber() is null)
+            return false;
+        auto matched = lookupRoute(routes, &connection.parser.metadata, connection.request.arena);
+        return matched.handler is null && matched.stream is null;
     }
 
     private void receive(Connection* connection, scope const(ubyte)[] bytes) nothrow @nogc
@@ -1127,12 +1140,31 @@ private final class RuntimeDriver() : StreamEndpoint, FiberEndpoint
             if (returned && connection.streamEnded && !connection.closing)
             {
                 endFiber(connection);
+                if (connection.writeActive)
+                {
+                    // The response's last write is still in flight: its completion continues the connection,
+                    // as for a reply (`written`, then `writeNext`, then `nextRequest`), without parking here.
+                    connection.phase = ConnectionPhase.writing;
+                    connection.response = Buffer.init;
+                    connection.bodySent = 0;
+                    return;
+                }
                 nextRequest(connection);
                 return;
             }
+            // A handler that failed after writing: what it wrote leaves before the connection closes.
+            drainWrite(connection, connection.request.cancellation);
         }
         endFiber(connection);
         close(connection);
+    }
+
+    /// On the handler's fiber: wait until the write in flight is done, the connection closes or `context` ends.
+    private void drainWrite(scope Connection* connection, ref scope const Context context) scope nothrow @nogc
+    {
+        while (connection.writeActive && !connection.closing)
+            if (waitForStream(connection, context).code != Status.ok)
+                return;
     }
 
     private static void endFiber(Connection* connection) nothrow @nogc
@@ -1237,7 +1269,7 @@ private final class RuntimeDriver() : StreamEndpoint, FiberEndpoint
                 connection.parser.versionMinor, head.persistence);
         if (count == 0)
             return Error(Status.invalidArgument, "invalid or oversized fiber HTTP response fields");
-        const sent = writeStream(connection, header[0 .. count], context);
+        const sent = writeStream(connection, header[0 .. count], context, true);
         if (sent.code == Status.ok)
             startFiber(connection, head);
         return sent;
@@ -1256,7 +1288,7 @@ private final class RuntimeDriver() : StreamEndpoint, FiberEndpoint
         // Tomcat's VoidOutputFilter: a 204 or 304 body is discarded, not an error.
         if (connection.fiberHead || payload.length == 0 || connection.fiberFraming == FiberFraming.none)
             return context.check();
-        return writeFramed(connection, payload, connection.fiberFraming == FiberFraming.chunked, context);
+        return writeFramed(connection, payload, connection.fiberFraming == FiberFraming.chunked, context, true);
     }
     // dfmt on
 
@@ -1275,7 +1307,7 @@ private final class RuntimeDriver() : StreamEndpoint, FiberEndpoint
 
     /// Write body bytes in pieces of at most one write, each as a chunk when `chunked`.
     private Error writeFramed(scope Connection* connection, scope const(ubyte)[] payload, bool chunked,
-            ref scope const Context context) scope nothrow @nogc
+            ref scope const Context context, bool behind = false) scope nothrow @nogc
     {
         const bounded = ioBytes < limits.writeQueueBytes ? ioBytes : limits.writeQueueBytes;
         if (chunked && bounded <= 12)
@@ -1288,7 +1320,7 @@ private final class RuntimeDriver() : StreamEndpoint, FiberEndpoint
             const count = payload.length - first < capacity ? payload.length - first : capacity;
             const piece = payload[first .. first + count];
             const framed = chunked ? frame[0 .. writeChunk(frame[], piece)] : piece;
-            const sent = writeStream(connection, framed, context);
+            const sent = writeStream(connection, framed, context, behind);
             if (sent.code != Status.ok)
                 return sent;
             first += count;
@@ -1305,13 +1337,15 @@ private final class RuntimeDriver() : StreamEndpoint, FiberEndpoint
             return Error(Status.conflict, "fiber HTTP response already finished or not started");
         if (connection.fiberFraming == FiberFraming.length && connection.fiberRemaining != 0)
         {
+            // What the handler wrote still leaves, then the connection closes rather than desynchronize.
+            drainWrite(connection, context);
             close(connection);
             return Error(Status.invalidArgument, "fiber HTTP body is shorter than its Content-Length");
         }
         connection.streamEnded = true;
         if (connection.fiberFraming != FiberFraming.chunked || connection.fiberHead)
             return context.check();
-        return writeStream(connection, cast(const(ubyte)[]) "0\r\n\r\n", context);
+        return writeStream(connection, cast(const(ubyte)[]) "0\r\n\r\n", context, true);
     }
 
     // dfmt off
@@ -1336,7 +1370,7 @@ private final class RuntimeDriver() : StreamEndpoint, FiberEndpoint
         const whole = composeWhole(connection, frame[], count, head.framing, sent);
         if (whole != 0)
         {
-            const written = writeStream(connection, frame[0 .. whole], context);
+            const written = writeStream(connection, frame[0 .. whole], context, true);
             if (written.code == Status.ok)
             {
                 startFiber(connection, head);
@@ -1345,7 +1379,7 @@ private final class RuntimeDriver() : StreamEndpoint, FiberEndpoint
             }
             return written;
         }
-        const begun = writeStream(connection, frame[0 .. count], context);
+        const begun = writeStream(connection, frame[0 .. count], context, true);
         if (begun.code != Status.ok)
             return begun;
         startFiber(connection, head);
@@ -1512,30 +1546,63 @@ private final class RuntimeDriver() : StreamEndpoint, FiberEndpoint
     }
 
     // dfmt off
+    /// Send `bytes` on the connection. With `behind`, a fiber response's write returns once its bytes are the
+    /// engine's (copied into the write's own storage, or appended to a write still queued in this loop turn) instead
+    /// of parking until the kernel took them: parking after every piece of a response queued it behind every other
+    /// ready connection (error-404-stall.md). One write stays in flight at most, so a slow reader still holds the
+    /// handler back at its next write, and the response's end waits for the last write (`dispatchFiber`).
     private Error writeStream(scope Connection* connection, scope const(ubyte)[] bytes,
-            ref scope const Context context) scope nothrow @nogc
+            ref scope const Context context, bool behind = false) scope nothrow @nogc
+    {
+        const ready = readyToWrite(connection, context);
+        if (ready.code != Status.ok)
+            return ready;
+        if (behind && appendPending(connection, bytes))
+            return Error.init;
+        const queued = queueWrite(connection, bytes, context);
+        if (queued.code != Status.ok || behind)
+            return queued;
+        const done = awaitWrite(connection, context);
+        if (done.code != Status.ok)
+            return done;
+        return connection.closing ? streamUnavailable() : Error.init;
+    }
+
+    /// The context is live, an interim 100 Continue in flight has gone, and the connection is open.
+    private Error readyToWrite(scope Connection* connection, ref scope const Context context) scope nothrow @nogc
     {
         const checked = context.check();
         if (checked.code != Status.ok)
             return checked;
-        while (connection.continuing && connection.writeActive && !connection.closing)
+        if (connection.continuing)
         {
-            const resumed = waitForStream(connection, context);
-            if (resumed.code != Status.ok)
-            {
-                close(connection);
-                return resumed;
-            }
+            const interim = awaitWrite(connection, context);
+            if (interim.code != Status.ok)
+                return interim;
         }
+        return connection.closing ? streamUnavailable() : Error.init;
+    }
+
+    /// Wait for the write in flight, then submit `bytes` as the next one (copied into its own storage).
+    private Error queueWrite(scope Connection* connection, scope const(ubyte)[] bytes,
+            ref scope const Context context) scope nothrow @nogc
+    {
+        const previous = awaitWrite(connection, context);
+        if (previous.code != Status.ok)
+            return previous;
         if (connection.closing)
             return streamUnavailable();
-        if (connection.writeActive)
-            return Error(Status.conflict, "HTTP/1 response write is already pending");
         if (!submitWrite(connection, bytes))
         {
             close(connection);
             return Error(Status.ioError, "unable to write HTTP stream bytes");
         }
+        return Error.init;
+    }
+
+    /// Wait on the handler's fiber until no write is in flight; a failed wait closes the connection.
+    private Error awaitWrite(scope Connection* connection, ref scope const Context context) scope nothrow @nogc
+    {
         while (connection.writeActive && !connection.closing)
         {
             const resumed = waitForStream(connection, context);
@@ -1545,7 +1612,7 @@ private final class RuntimeDriver() : StreamEndpoint, FiberEndpoint
                 return resumed;
             }
         }
-        return connection.closing ? streamUnavailable() : Error.init;
+        return Error.init;
     }
     // dfmt on
 
@@ -1657,7 +1724,18 @@ private final class RuntimeDriver() : StreamEndpoint, FiberEndpoint
         auto context = connection.peerClosed ? Context.init.withDeadline(following(
                 limits.idleTimeoutNanos)) : connection.request.cancellation.withDeadline(
                 following(limits.idleTimeoutNanos));
-        const submitted = writePlain(tls, connection.id, bytes, move(context), writeDone);
+        Status submitted;
+        if (tls is null)
+        {
+            const queued = Reactor.current().writeWith(connection.id, bytes, move(context), writeDone);
+            submitted = queued.error.code;
+            connection.pendingWrite = queued.ok ? queued.value : IoId.init;
+        }
+        else
+        {
+            submitted = writePlain(tls, connection.id, bytes, move(context), writeDone);
+            connection.pendingWrite = IoId.init;
+        }
         if (submitted == Status.ok)
         {
             connection.writeBytes = bytes.length;
@@ -1666,12 +1744,24 @@ private final class RuntimeDriver() : StreamEndpoint, FiberEndpoint
         return submitted == Status.ok;
     }
 
+    /// Add `bytes` to the write in flight when it has not started yet: it leaves with them in one send.
+    private bool appendPending(scope Connection* connection, scope const(ubyte)[] bytes) scope nothrow @nogc
+    {
+        if (!connection.writeActive || connection.pendingWrite.generation == 0)
+            return false;
+        if (Reactor.current().appendWrite(connection.pendingWrite, bytes) != Status.ok)
+            return false;
+        connection.writeBytes += bytes.length;
+        return true;
+    }
+
     private void written(Completion completion) nothrow @nogc
     {
         auto connection = slot(completion.connection);
         if (connection is null || connection.id != completion.connection || !connection.writeActive)
             return;
         connection.writeActive = false;
+        connection.pendingWrite = IoId.init;
         wakeStream(connection.streamWaiter);
         const interim = connection.continuing;
         connection.continuing = false;

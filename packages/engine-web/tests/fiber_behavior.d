@@ -35,6 +35,18 @@ private final class Handlers
                 reply.value)) : Result!Response(Response.init, reply.error);
     }
 
+    /// Four megabytes in many writes; the client may reset the connection part way (its result is ignored).
+    private static void huge(ref scope RequestContext context, FiberResponse response)
+    {
+        const StreamField[1] type = [StreamField("Content-Type", "application/octet-stream")];
+        if (response.begin(200, type[], unknownLength, context.cancellation).code != Status.ok)
+            return;
+        auto piece = new ubyte[64 * 1024];
+        foreach (_; 0 .. 64)
+            if (response.send(piece, context.cancellation).code != Status.ok)
+                return;
+    }
+
     /// The fiber route: full D, with the GC and exceptions.
     void serve(ref scope Request request, ref scope RequestContext context, FiberResponse response)
     {
@@ -98,6 +110,8 @@ private final class Handlers
                     context.cancellation).code == Status.ok);
             return;
         }
+        if (path == "/huge")
+            return huge(context, response);
         if (path == "/large")
         {
             auto big = new ubyte[20_000];
@@ -431,4 +445,86 @@ unittest
     const first = find(received, "\r\n7\r\nhello, \r\n6\r\nchunks\r\n0\r\n\r\n");
     assert(first > 0, received);
     assert(find(received, "/after? host=a; HTTP/1.1", first) > first, received);
+}
+
+@("a streaming fiber response's head, chunks and terminator leave without the fiber parking after each write")
+unittest
+{
+    Fixture fixture;
+    fixture.open();
+    scope (exit)
+        fixture.close();
+    auto socket = fixture.connect();
+    scope (exit)
+        socket.close();
+    char[] pending;
+    string head;
+
+    sendAll(socket, "GET /chunked HTTP/1.1\r\nHost: a\r\n\r\n");
+    assert(readOne(socket, pending, head) == "hello, chunks");
+    enum rounds = 50;
+    const before = fixture.server.taskResumptions();
+    foreach (_; 0 .. rounds)
+    {
+        sendAll(socket, "GET /chunked HTTP/1.1\r\nHost: a\r\n\r\n");
+        // The same bytes as before: head, both chunks and the terminator, Tomcat's framing.
+        assert(readOne(socket, pending, head) == "hello, chunks");
+        assert(find(head, "Content-Type: text/plain\r\nTransfer-Encoding: chunked\r\nDate: ") > 0, head);
+    }
+    // One resumption per request, its start: the writes are queued behind, and the last write's completion,
+    // not the fiber, continues the connection. Parking after each write cost four.
+    const resumed = fixture.server.taskResumptions() - before;
+    assert(resumed == rounds, "fiber resumptions per request: " ~ decimal(resumed) ~ " for " ~ decimal(rounds));
+}
+
+@("a peer that resets during a long fiber response does not disturb the server, and shutdown drains queued writes")
+unittest
+{
+    Fixture fixture;
+    fixture.open();
+    scope (exit)
+        fixture.close();
+    // Reset part way through four megabytes: the handler's next write fails and the connection closes.
+    {
+        auto socket = fixture.connect();
+        sendAll(socket, "GET /huge HTTP/1.1\r\nHost: a\r\n\r\n");
+        ubyte[4096] some;
+        assert(receiveSome(socket, some[]) > 0);
+        resetConnection(socket);
+    }
+    // The server keeps serving.
+    auto next = fixture.connect();
+    scope (exit)
+        next.close();
+    char[] pending;
+    string head;
+    sendAll(next, "GET /chunked HTTP/1.1\r\nHost: a\r\n\r\n");
+    assert(readOne(next, pending, head) == "hello, chunks");
+    // A response still being written when the server shuts down: the scope's close runs with it in flight.
+    sendAll(next, "GET /huge HTTP/1.1\r\nHost: a\r\n\r\n");
+}
+
+/// Close with a reset (SO_LINGER zero), as a client that gives up abruptly does.
+private void resetConnection(Socket socket)
+{
+    import std.socket : Linger;
+
+    Linger linger;
+    linger.on = 1;
+    linger.time = 0;
+    socket.setOption(SocketOptionLevel.SOCKET, SocketOption.LINGER, linger);
+    socket.close();
+}
+
+private string decimal(ulong value) pure nothrow
+{
+    char[20] digits;
+    size_t first = digits.length;
+    do
+    {
+        digits[--first] = cast(char)('0' + value % 10);
+        value /= 10;
+    }
+    while (value != 0);
+    return digits[first .. $].idup;
 }

@@ -501,6 +501,21 @@ struct Reactor
         return sendTo(id, data, ctx, IoCallbacks(null, null, null, fn));
     }
 
+    /++
+    Add `bytes` to the end of `operation`, a write queued on this loop that has not started: the loop sends them in
+    the same operation, and its completion counts them. Writes a handler makes in one turn on the loop then leave as
+    one send. `conflict` once the write has started (or is a read, or is being cancelled), `resourceExhausted` when
+    the bytes do not fit its slot, `notFound` for an operation that has ended; the caller then waits for its
+    completion and writes anew.
+    +/
+    Status appendWrite(IoId operation, scope const(ubyte)[] bytes) nothrow @nogc
+    {
+        if (currentRuntime is null || runtime is null || currentRuntime !is runtime
+                || operation.connection.ownerCore != currentWorkerIndex)
+            return Status.invalidArgument;
+        return runtime.workers[currentWorkerIndex].appendWrite(operation, bytes);
+    }
+
     private Result!IoId sendTo(ConnectionId id, scope const(ubyte)[] data, Context ctx, IoCallbacks cb) nothrow @nogc
     {
         if (currentCore() != id.ownerCore || currentRuntime is null || (cb.write is null && cb.boundWrite is null))
@@ -1886,6 +1901,22 @@ private struct Worker
         activeIo[operation.slot / ioWordBits] |= 1UL << (operation.slot % ioWordBits);
         ++liveOperations;
         return Result!IoId(IoId(id, operation.slot, cast(uint) operation.generation));
+    }
+
+    Status appendWrite(IoId operation, scope const(ubyte)[] bytes) nothrow @nogc
+    {
+        if (operation.generation == 0 || !workItems.present(operation.slot))
+            return Status.notFound;
+        auto work = &workItems[operation.slot];
+        if (cast(uint) work.id.generation != operation.generation || work.connection != operation.connection)
+            return Status.notFound;
+        if (work.callbacks.reading || work.started || work.cancellation != Status.ok)
+            return Status.conflict;
+        if (bytes.length > runtime.options.ioBufferBytes - work.length)
+            return Status.resourceExhausted;
+        operationBuffer(operation.slot)[work.length .. work.length + bytes.length] = bytes;
+        work.length += bytes.length;
+        return Status.ok;
     }
 
     Status cancelIo(IoId operation) nothrow @nogc
