@@ -258,6 +258,9 @@ private struct Scalar
 // The JDK scalars of NumberDeserializers, StringDeserializer and BooleanDeserializer; not found for other types.
 private Scalar readScalar(MapperConfig config, JsonParser p, string type, JsonToken t)
 {
+    // String first, the common case: it has no empty-text coercion, so neither switch over the scalar names runs.
+    if (type == "string")
+        return Scalar(true, readString(p, t, type));
     if (auto empty = readEmptyScalar(config, p, type, t))
         return empty;
     switch (type)
@@ -274,18 +277,24 @@ private Scalar readScalar(MapperConfig config, JsonParser p, string type, JsonTo
     case "double", "real":
         return Scalar(true, Any.of(readFloating(config, p, t, type)));
     case "char", "wchar", "dchar":
-        auto text = readString(p, t, type);
-        import flint.engine.aot.text : codePointCount, decodeUtf8;
-
-        const s = text.isNull() ? "" : text.get!string();
-        if (codePointCount(s) != 1)
-            throw new InvalidFormatException("Cannot deserialize value of type `char` from String \"" ~ s
-                    ~ "\": expected either Integer value code or 1-character String", s, type, p.currentLocation());
-        size_t next;
-        return Scalar(true, Any.of(decodeUtf8(s, next)));
+        return Scalar(true, readCharacter(p, t, type));
     default:
         return Scalar.init;
     }
+}
+
+// CharacterDeserializer: a one-character String.
+private Any readCharacter(JsonParser p, JsonToken t, string type)
+{
+    import flint.engine.aot.text : codePointCount, decodeUtf8;
+
+    auto text = readString(p, t, type);
+    const s = text.isNull() ? "" : text.get!string();
+    if (codePointCount(s) != 1)
+        throw new InvalidFormatException("Cannot deserialize value of type `char` from String \"" ~ s
+                ~ "\": expected either Integer value code or 1-character String", s, type, p.currentLocation());
+    size_t next;
+    return Any.of(decodeUtf8(s, next));
 }
 
 private Any readString(JsonParser p, JsonToken t, string type)
@@ -860,8 +869,12 @@ private Any readWithCreator(MapperConfig config, JsonParser p, BeanDescription b
         Any value;
     }
 
-    auto arguments = new Any[bean.creator.parameters.length];
-    auto seen = new bool[arguments.length];
+    // The creator arguments live on the stack for the usual few parameters: the creator copies them into the instance.
+    Any[8] argumentsOnStack;
+    bool[8] seenOnStack;
+    const count = bean.creator.parameters.length;
+    scope Any[] arguments = count <= argumentsOnStack.length ? argumentsOnStack[0 .. count] : new Any[count];
+    scope bool[] seen = count <= seenOnStack.length ? seenOnStack[0 .. count] : new bool[count];
     Pending[] pending;
     for (auto t = p.nextToken(); t == JsonToken.PROPERTY_NAME; t = p.nextToken())
     {
@@ -897,7 +910,7 @@ private Any readWithCreator(MapperConfig config, JsonParser p, BeanDescription b
     return instance;
 }
 
-private Any construct(BeanDescription bean, Any[] arguments)
+private Any construct(BeanDescription bean, scope Any[] arguments)
 {
     const d = bean.descriptor;
     try
