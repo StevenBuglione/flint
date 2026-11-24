@@ -6,6 +6,7 @@ import flint.arena : Error, Status;
 import flint.conc : Context, Deadline;
 import flint.engine.reactor : NativeInterest, Reactor, TaskWaker;
 import flint.engine.sql.ffi.shim : Interest, waitOffReactor;
+import flint.engine.sql.sys.diagnostics : diagnosticNow, noteSocketWait;
 
 @safe:
 
@@ -74,6 +75,12 @@ package(flint.engine.sql) void joinLeaseQueue(ulong pool) nothrow @nogc
 package(flint.engine.sql) void leaveLeaseQueue(ulong pool) nothrow @nogc
 {
     atomicOp!"-="(leaseSleepers[pool % leaseSleepers.length], 1U);
+}
+
+/// Waiters registered on the pool, for diagnostics.
+package(flint.engine.sql) uint leaseWaiterCount(ulong pool) nothrow @nogc
+{
+    return atomicLoad(leaseSleepers[pool % leaseSleepers.length]);
 }
 
 /// Observe the pool's lease generation before an acquisition attempt.
@@ -249,6 +256,9 @@ package(flint.engine.sql) Error waitFor(Interest interest, ref const Context con
         return status;
     scope (exit)
         owner.unwatchNative(interest.fd);
+    const started = diagnosticNow();
+    scope (exit)
+        noteSocketWait(started);
     return awaitSignal(owner, index, context, cleanup);
 }
 

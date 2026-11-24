@@ -9,8 +9,10 @@ import flint.engine.sql.ffi.shim : Cell, Failure, Identity, Interest, Operation,
     enablePostgresDriver, enableSqliteDriver,
     endTransaction, inspectCell,
     leaseFailure, nameCell, openPool, releasePool, retireLease, rowColumns, withdrawPool;
+import flint.engine.sql.sys.diagnostics : decideDiagnostics, diagnosticNow, noteAcquire, noteQueue,
+    noteRelease, noteRow, noteStatement, reportDiagnostics;
 import flint.engine.sql.sys.wait : admit, admitStartup, joinLeaseQueue, leaseChanged, leaseMark,
-    leaveLeaseQueue, pause, pauseForLease, waitFor;
+    leaseWaiterCount, leaveLeaseQueue, pause, pauseForLease, waitFor;
 
 @safe:
 
@@ -357,11 +359,15 @@ private Execution perform(Consumer)(Identity lease, scope const(char)[] sql,
     if (status != Status.ok)
         return Result!ulong(0, Error(status, "SQL statement or lease is invalid"));
 
+    const started = diagnosticNow();
+    scope (exit)
+        noteStatement(started);
     return drain(operation, lease.slot, context, consume);
 }
 
 private Error consumeRow(Consumer)(ref scope Operation operation, ulong slot, scope Consumer consumer)
 {
+    noteRow();
     const generation = operation.publishRow();
     if (generation == 0)
         return Error(Status.resourceExhausted, "SQL row identity exhausted");
@@ -499,6 +505,7 @@ struct Pool
                 options.maxConnections, options.maxWaiters, options.maxPreparedPerConnection, created);
         if (status != Status.ok)
             return Error(status, "could not open SQL pool");
+        decideDiagnostics();
         enum maxAcquireNanos = 5_000_000_000L;
         this = Pool(created, options.driver, options.acquireTimeoutNanos < maxAcquireNanos
                 ? options.acquireTimeoutNanos : maxAcquireNanos);
@@ -519,6 +526,8 @@ struct Pool
             return Result!Connection(Connection.init, ownership);
         const start = Deadline.afterMillis(0).monotonicNanoseconds;
         const local = start < long.max - waitNanos ? start + waitNanos : long.max - 1;
+        const diagnosed = diagnosticNow();
+        bool queued;
         LeaseWait wait = LeaseWait(identity());
         scope (exit)
             wait.leave();
@@ -533,7 +542,10 @@ struct Pool
             Identity lease;
             const status = wait.attempt(lease);
             if (status == Status.ok)
+            {
+                noteAcquire(slot, lease.slot, diagnosed, queued);
                 return Result!Connection(Connection(lease));
+            }
             if (status != Status.conflict)
                 return Result!Connection(Connection.init, Error(status, "SQL pool rejected acquisition"));
             if (Deadline.afterMillis(0).monotonicNanoseconds >= local)
@@ -541,6 +553,8 @@ struct Pool
             // Retry once registered so that a release after this point wakes the sleep below.
             if (!wait.register())
                 continue;
+            queued = true;
+            noteQueue(leaseWaiterCount(slot));
             const paused = pauseForLease(slot, mark);
             if (paused.code != Status.ok)
                 return Result!Connection(Connection.init, paused);
@@ -561,6 +575,7 @@ struct Pool
         const status = releasePool(identity(), handle);
         if (status != Status.ok)
             return Error(status, "SQL lease could not be released");
+        noteRelease(slot, handle.slot, leaseWaiterCount(slot));
         leaseChanged(slot);
         connection = Connection.init;
         return cleanup;
@@ -577,6 +592,7 @@ struct Pool
             if (status == Status.ok || status == Status.notFound)
             {
                 this = Pool.init;
+                reportDiagnostics();
                 return Error.init;
             }
             if (status != Status.conflict)
