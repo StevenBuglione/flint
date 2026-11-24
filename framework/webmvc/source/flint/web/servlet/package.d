@@ -607,6 +607,11 @@ class DispatcherServlet : HttpServlet, FastDispatch
     carries the attributes the generic lookup sets (the fast path's mapping proof makes them choose `handler`), and
     the chain's interceptors run `preHandle`: the fast path only serves handlers without registered interceptors, so
     that is at most the CORS interceptor, whose `Vary` fields the generic response carries too.
+
+    `preHandle` runs here after the handler, where `doDispatch` runs it before. That is safe only because a route
+    with a CORS configuration declines every request with an `Origin` field (mvc/method/fast.d, S3): for any other
+    request the CORS interceptor adds its `Vary` fields and lets it through, so it cannot reject a request the fast
+    path already served. The exception below guards that invariant.
     +/
     package(flint.web) final HandlerExecutionChain prepareFastCompletion(HttpServletRequest request,
             HttpServletResponse response, Object handler)
@@ -641,7 +646,11 @@ class DispatcherServlet : HttpServlet, FastDispatch
     {
         Exception dispatchException;
         try
+        {
             handleReturn(request, response);
+            // doDispatch's postHandle after a normal handle; the model and view is null for a handled return.
+            mappedHandler.applyPostHandle(request, response, null);
+        }
         catch (Exception ex)
             dispatchException = ex;
         processDispatchResult(request, response, mappedHandler, null, dispatchException);
