@@ -1,0 +1,35 @@
+{
+  "schema": "flint.spring-parity/1",
+  "app": "petclinic-rest",
+  "implementation": "go",
+  "adr": "docs/adr/ADR-033-http-parity-on-the-gated-paths.md",
+  "manifest": "policy/spring-error-paths-benchmark.json",
+  "golden_sha256": "ff1317216f4f1930c14cf55b099ab6c45126b6bb796b3deb92e7613aec2f5d61",
+  "binary_sha256": "b25c6e3fac96592384a69f4089b2553dbd0aa7f7883b6d2d6fc252ca3aac0cd9",
+  "comparator_sha256": "8f0159ddcb4f3fd6d26286cbb1c28305ef9e1ed99e6dd9c5ad19b200faa1523b",
+  "taken": "2026-11-24T21:48:20Z",
+  "workloads": {
+    "petclinic-rest:validation-error": {
+      "golden_cases": [
+        "create owner: telephone with letters",
+        "create owner: blank city",
+        "create owner: missing first name",
+        "create owner: first name with digits"
+      ],
+      "expected": {
+        "reason": "",
+        "framing": "chunked",
+        "connection": "close"
+      },
+      "observed": {
+        "reason": "",
+        "framing": "chunked",
+        "connection": "close"
+      },
+      "repeats_agree": true,
+      "problems": [],
+      "response": "HTTP/1.1 400 \r\nCache-Control: no-cache, no-store, max-age=0, must-revalidate\r\nConnection: close\r\nContent-Type: application/problem+json\r\nExpires: 0\r\nPragma: no-cache\r\nVary: Origin\r\nVary: Access-Control-Request-Method\r\nVary: Access-Control-Request-Headers\r\nX-Content-Type-Options: nosniff\r\nX-Frame-Options: SAMEORIGIN\r\nX-Xss-Protection: 0\r\nDate: Tue, 24 Nov 2026 21:48:20 GMT\r\nTransfer-Encoding: chunked\r\n\r\n1aa\r\n{\"detail\":\"The request contains invalid or missing parameters\",\"status\":400,\"title\":\"MethodArgumentNotValidException\",\"type\":\"http://127.0.0.1:59367/petclinic/api/owners\",\"timestamp\":\"2026-11-24T21:48:20.776157583Z\",\"schemaValidationErrors\":[{\"message\":\"Field 'telephone' must match \\\"^[0-9]{10}$\\\" (rejected value: 01234abcde)\",\"field\":\"telephone\",\"defaultMessage\":\"must match \\\"^[0-9]{10}$\\\"\",\"rejectedValue\":\"01234abcde\"}]}\r\n0\r\n\r\n"
+    }
+  },
+  "problems": 0
+}

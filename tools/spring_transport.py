@@ -300,7 +300,8 @@ def parity_main(argv):
     require(keys, f'{a.app} has no gated error path in {ERRORS}')
     golden_file = spring.golden_path(a.app)
     golden = json.loads(golden_file.read_text())
-    binary = a.binary or (spring.build_go(a.app) if a.impl == 'go' else spring.build_flint(a.app))
+    # Absolute: a Flint port runs from its own directory.
+    binary = a.binary.resolve() if a.binary else (spring.build_go(a.app) if a.impl == 'go' else spring.build_flint(a.app))
     record = {'schema': 'flint.spring-parity/1', 'app': a.app, 'implementation': a.impl,
               'adr': 'docs/adr/ADR-033-http-parity-on-the-gated-paths.md', 'manifest': ERRORS,
               'golden_sha256': spring.sha256(golden_file), 'binary_sha256': spring.sha256(binary),

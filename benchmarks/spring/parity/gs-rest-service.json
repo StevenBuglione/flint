@@ -1,0 +1,32 @@
+{
+  "schema": "flint.spring-parity/1",
+  "app": "gs-rest-service",
+  "implementation": "go",
+  "adr": "docs/adr/ADR-033-http-parity-on-the-gated-paths.md",
+  "manifest": "policy/spring-error-paths-benchmark.json",
+  "golden_sha256": "1ea2a9d7e02ba843d4b11162cbb9f69307a2ad5fe3d89d0e2e3ed625f4a50d8e",
+  "binary_sha256": "ab63046ce06d0272664665aeed55ebf24825984d77ae94851630934c11eed0f7",
+  "comparator_sha256": "545f3cee98edb3e6539ba19188ccdf38e01ea308ccf548933d887149899f359f",
+  "taken": "2026-11-24T21:48:18Z",
+  "workloads": {
+    "gs-rest-service:not-found": {
+      "golden_cases": [
+        "unknown path is a JSON 404"
+      ],
+      "expected": {
+        "reason": "",
+        "framing": "chunked",
+        "connection": "keep"
+      },
+      "observed": {
+        "reason": "",
+        "framing": "chunked",
+        "connection": "keep"
+      },
+      "repeats_agree": true,
+      "problems": [],
+      "response": "HTTP/1.1 404 \r\nContent-Type: application/json\r\nDate: Tue, 24 Nov 2026 21:48:18 GMT\r\nTransfer-Encoding: chunked\r\n\r\n59\r\n{\"timestamp\":\"2026-11-24T21:48:18.407Z\",\"status\":404,\"error\":\"Not Found\",\"path\":\"/nope\"}\n\r\n0\r\n\r\n"
+    }
+  },
+  "problems": 0
+}

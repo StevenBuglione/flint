@@ -182,6 +182,11 @@ func writeJSON(w http.ResponseWriter, status int, contentType string, value any)
 		return
 	}
 	w.Header().Set("Content-Type", contentType)
+	if status == http.StatusBadRequest {
+		// ADR-033: Tomcat sends a 400 chunked and closes the connection after it.
+		w.Header().Set("Transfer-Encoding", "chunked")
+		w.Header().Set("Connection", "close")
+	}
 	w.WriteHeader(status)
 	_, _ = w.Write(body)
 }

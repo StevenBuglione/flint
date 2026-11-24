@@ -148,5 +148,30 @@ class Parity(unittest.TestCase):
         self.assertEqual(st.parity_problems(st.golden_transport(GOLDEN, INVALID)[0], seen), [])
 
 
+class Registry(unittest.TestCase):
+    def test_record_required_current_complete_and_clean(self):
+        import json
+        import tempfile
+        from pathlib import Path
+        from unittest import mock
+        import spring_bench
+        with tempfile.TemporaryDirectory() as temporary, mock.patch.object(spring_bench, 'PARITY', Path(temporary)):
+            self.assertIn('no HTTP parity record', spring_bench.parity_problems('petclinic-rest', 'abc')[0])
+            golden = spring_bench.sha256(spring_bench.golden_path('petclinic-rest'))
+            record = {'comparator_sha256': 'abc', 'golden_sha256': golden,
+                      'workloads': {'petclinic-rest:validation-error': {'problems': [], 'repeats_agree': True}}}
+            path = Path(temporary) / 'petclinic-rest.json'
+            path.write_text(json.dumps(record))
+            self.assertEqual(spring_bench.parity_problems('petclinic-rest', 'abc'), [])
+            self.assertIn('another comparator source', spring_bench.parity_problems('petclinic-rest', 'def')[0])
+            record['workloads']['petclinic-rest:validation-error']['problems'] = ["connection: expected 'close'"]
+            path.write_text(json.dumps(record))
+            self.assertIn('differs from the Java golden', spring_bench.parity_problems('petclinic-rest', 'abc')[0])
+            record['workloads'] = {}
+            path.write_text(json.dumps(record))
+            self.assertIn('does not cover', spring_bench.parity_problems('petclinic-rest', 'abc')[0])
+            self.assertEqual(spring_bench.parity_problems('gs-relational-data-access', 'zzz'), [])
+
+
 if __name__ == '__main__':
     unittest.main()

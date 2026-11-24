@@ -490,7 +490,38 @@ def census_problems(name, digest):
     return problems
 
 
-def register(names):
+PARITY = ROOT / 'benchmarks' / 'spring' / 'parity'
+GATED_ERRORS = ROOT / 'policy' / 'spring-error-paths-benchmark.json'
+
+
+def parity_problems(name, digest):
+    """ADR-033 (owner decision 118b4482): on the gated error paths a comparator matches the Java golden's reason
+    phrase, framing and connection lifetime; its record (spring_transport.py parity --app <name> --record) must be
+    of its current source and the current golden, cover every gated path of the app, and show no difference."""
+    manifest = json.loads(GATED_ERRORS.read_text())
+    keys = sorted(key for key, spec in manifest['apps'].items() if spec.get('app', key) == name)
+    if not keys:
+        return []
+    path = PARITY / f'{name}.json'
+    if not path.is_file():
+        return [f'{name}: no HTTP parity record of the comparator (spring_transport.py parity --app {name} --record)']
+    record = json.loads(path.read_text())
+    problems = []
+    if record.get('comparator_sha256') != digest:
+        problems.append(f'{name}: the HTTP parity record is of another comparator source; take it again')
+    if record.get('golden_sha256') != sha256(golden_path(name)):
+        problems.append(f'{name}: the HTTP parity record predates the golden file; take it again')
+    if sorted(record.get('workloads', {})) != keys:
+        problems.append(f'{name}: the HTTP parity record does not cover the gated paths {keys}')
+    for key, workload in sorted(record.get('workloads', {}).items()):
+        for problem in workload.get('problems', []):
+            problems.append(f'{name}: {key} differs from the Java golden (ADR-033): {problem}')
+        if not workload.get('repeats_agree', False):
+            problems.append(f'{name}: {key} answered differently across the record\'s exchanges')
+    return problems
+
+
+def register(names, adr=None):
     """Record each comparator's last commit and source digest. The sources must be committed and clean, so the
     registered commit holds exactly the code that will be measured."""
     rows = json.loads(REGISTRY.read_text()) if REGISTRY.is_file() else {
@@ -508,17 +539,22 @@ def register(names):
         commit = git('log', '-1', '--format=%H', '--', directory)
         if not commit:
             raise SystemExit(f'{name}: the comparator has never been committed')
-        problems = census_problems(name, comparator_digest(name))
+        problems = census_problems(name, comparator_digest(name)) + parity_problems(name, comparator_digest(name))
         if problems:
             raise SystemExit('; '.join(problems))
         previous = rows['comparators'].get(name)
-        if previous and previous['sha256'] != comparator_digest(name) and previous.get('measured'):
-            raise SystemExit(f'{name}: the registered comparator has been measured; changing it needs an ADR')
+        changed = previous and previous['sha256'] != comparator_digest(name)
+        if changed and previous.get('measured') and not adr:
+            raise SystemExit(f'{name}: the registered comparator has been measured; changing it needs an ADR (--adr)')
         rows['comparators'][name] = {'directory': directory, 'commit': commit, 'sha256': comparator_digest(name),
                                      'go': go_version, 'wire': 'semantic',
                                      'registered': time.strftime('%Y-%m-%d', time.gmtime()), 'measured': False}
         if (CENSUS / f'{name}.json').is_file() and app_row(name).get('database') == 'postgres':
             rows['comparators'][name]['census_sha256'] = sha256(CENSUS / f'{name}.json')
+        if (PARITY / f'{name}.json').is_file():
+            rows['comparators'][name]['parity_sha256'] = sha256(PARITY / f'{name}.json')
+        if changed and adr:
+            rows['comparators'][name]['changed_by'] = adr
         print(f'{name}: registered {commit[:12]} ({rows["comparators"][name]["sha256"][:12]})')
     REGISTRY.write_text(json.dumps(rows, indent=2) + '\n')
 
@@ -537,6 +573,10 @@ def check_registry(names=None):
             problems += census_problems(name, row['sha256'])
         elif app_row(name).get('database') == 'postgres' and row.get('census_sha256') != sha256(CENSUS / f'{name}.json'):
             problems.append(f'{name}: the SQL census changed since registration; register again')
+        elif parity_problems(name, row['sha256']):
+            problems += parity_problems(name, row['sha256'])
+        elif (PARITY / f'{name}.json').is_file() and row.get('parity_sha256') != sha256(PARITY / f'{name}.json'):
+            problems.append(f'{name}: the HTTP parity record changed since registration; register again')
         else:
             try:
                 git('merge-base', '--is-ancestor', row['commit'], 'HEAD')
@@ -830,6 +870,7 @@ def main(argv=None):
     p.add_argument('--no-build', action='store_true', help='use what build/spring already holds')
     p.add_argument('--json', type=Path)
     p = sub.add_parser('register'); p.add_argument('apps', nargs='*')
+    p.add_argument('--adr', help='the accepted ADR that changes an already measured comparator (AGENTS.md)')
     sub.add_parser('check-registry')
     p = sub.add_parser('assemble', help="gather the Phase 1 entries' newest certified outputs for gates.py --gate spring")
     p.add_argument('output', type=Path)
@@ -893,7 +934,7 @@ def main(argv=None):
             args.json.write_text(json.dumps(records if len(records) > 1 else records[0], indent=2) + '\n')
         return 1 if failed else 0
     if args.command == 'register':
-        register(names)
+        register(names, args.adr)
         return 0
     if args.command == 'assemble':
         manifest = assemble(args.output)

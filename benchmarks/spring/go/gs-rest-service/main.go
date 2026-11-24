@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -84,6 +85,10 @@ func writeError(w http.ResponseWriter, r *http.Request, status int) {
 		_, _ = w.Write([]byte(fmt.Sprintf(whitelabel, created, http.StatusText(status), status)))
 		return
 	}
+	if status == http.StatusNotFound {
+		// ADR-033: Boot's JSON 404 goes out chunked, as Tomcat sends it after the error dispatch.
+		w.Header().Set("Transfer-Encoding", "chunked")
+	}
 	writeJSON(w, status, errorBody{
 		Timestamp: now.UTC().Format("2006-01-02T15:04:05.000Z07:00"),
 		Status:    status,
@@ -135,7 +140,11 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/greeting", s.greeting)
 	mux.HandleFunc("/", notFound)
-	httpServer := &http.Server{Addr: ":" + port, Handler: mux, ReadHeaderTimeout: 10 * time.Second}
+	httpServer := &http.Server{Handler: mux, ReadHeaderTimeout: 10 * time.Second}
+	listener, err := net.Listen("tcp", ":"+port)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
@@ -145,7 +154,8 @@ func main() {
 		defer cancel()
 		_ = httpServer.Shutdown(shutdown)
 	}()
-	if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+	// ADR-033: Tomcat's 404 carries no reason phrase.
+	if err := httpServer.Serve(parityListener{listener, []int{http.StatusNotFound}}); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Fatal(err)
 	}
 }

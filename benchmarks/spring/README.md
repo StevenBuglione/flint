@@ -76,7 +76,11 @@ The origin is recorded as `{origin}`, because `ProblemDetail.type` and the actua
 
 **Wire modes:**
 - **`exact`** is the default, and the mode Java and Flint must pass. It also compares the reason phrase (Tomcat sends none), the message framing (`Content-Length` or `Transfer-Encoding: chunked`) and compact JSON with Spring's key order.
-- **`semantic`** is the mode the Go comparators are registered with. It drops only the reason phrase, the framing headers (`Content-Length`, `Transfer-Encoding`, `Connection`, `Keep-Alive`) and JSON key order. Forcing Go to emit chunked framing would only slow Go down and flatter Flint.
+- **`semantic`** is the mode the Go comparators are registered with. It drops only the reason phrase, the framing headers (`Content-Length`, `Transfer-Encoding`, `Connection`, `Keep-Alive`) and JSON key order.
+- **HTTP parity on the gated error paths** ([ADR-033](../../docs/adr/ADR-033-http-parity-on-the-gated-paths.md), owner decision 118b4482). On the paths `policy/spring-error-paths-benchmark.json` measures, a comparator also matches the golden's reason phrase, framing and connection lifetime: `Connection: close` and an actual close, or neither and the connection reused. Tomcat closes after a 400, so on the validation path every side pays a reconnect.
+  - `spring_transport.py parity --app <app> --record` checks this with raw exchanges, including a second request on each socket, and writes `benchmarks/spring/parity/<app>.json`.
+  - `register` and `check-registry` require that record for the comparator's current source.
+  - How the bytes are produced stays free, so write coalescing and chunk boundaries are not compared.
 
 **Every implementation runs in the same environment:**
 - the port comes from `SERVER_PORT`;
