@@ -542,3 +542,12 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - the Spring gate is strengthened so that p50 (at 0.99) and receipt provenance (exact SHA, trial counts and coverage across build, HTTP, error and GC parts) fail closed, with p99.9 reported;
     - runtime metrics apply to the two HTTP apps, with gs-relational-data-access measured on builds, size and acceptance;
     - third-party-apis' next item is chosen from the baseline.
+- 2026-11-24, proof-harness: **phase1-builds-petclinic certified at B** (`ca5fbd4a46ed`, the resume plan's baseline, claimed window 02:30–02:37Z). Java, Go and Flint pass 109/109. The build ran in B's private fork tree (DMD `1d521b26`, native extractor present; shared toolchain `7145bb79`), and all 69 extracting builds used the native extractor. Median ratios (99% interval), production, 9 trials:
+    - **primary 0.261 (0.244–0.276), which passes**: 512 ms against Go's std-primed 1,963 ms. Against a deps-primed GOCACHE (context) it is 1.72 (1.66–1.77), down from 4.18 at `6ab588f8`. Phases: flint 36, AOT 216, compile 222, link 34 ms;
+    - **secondary 1.417 (1.409–1.448), which fails**: 5,744 ms against `go build -a`'s 4,053 ms. This is the first valid scratch build, and 4,953 ms of it is the platform build from source;
+    - **edit build, dev profile: 0.645 (0.620–0.656), which passes**: 192 ms against 298 ms (2.08 at `6ab588f8`). Compile 116, link 32 ms;
+    - **edit build, fully static: 2.53 (2.48–2.58), which fails**: 755 ms; compile 395, link 313 ms;
+    - **Oz: 0.948, which passes**: 10,788,160 against 11,380,728 bytes, stripped (1.070 at `6ab588f8`).
+    - Context: digests cleared 622 ms; with debug information, primary 523 ms, static edit 811 ms, scratch 6,346 ms.
+
+    Evidence: `benchmarks/spring/evidence/phase1-builds-petclinic/20261124T023031Z/`.

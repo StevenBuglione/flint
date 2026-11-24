@@ -1,0 +1,7 @@
+   Generated 33 Flint AOT modules for org.springframework.samples.petclinic.PetClinicApplication (15 extracted in 136 ms, 42 from the shared cache, 34 written, 211 ms, native extractor)
+    Building petclinic-rest 0.0.1 (dev, dmd)
+    Building directly, without DUB
+    Finished .flint/build/dev/petclinic-rest (non-canonical: --no-debug builds without debug information or a symbol table; the toolchain is not verified against its receipt)
+warning[FLINT-E0804] toolchain receipt missing
+  cause: no toolchain receipt at /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/ca5fbd4a46ed/.tools/flint-toolchain.json, so the installed fork cannot be traced to toolchain/*.patch
+  fix: flint toolchain install
