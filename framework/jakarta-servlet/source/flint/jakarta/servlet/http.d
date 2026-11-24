@@ -166,6 +166,18 @@ class Cookie
     }
 }
 
+/++
+Flint: a request that can hand over its header fields as received, in one pass. Spring's `ServletServerHttpRequest`
+copies every field into `HttpHeaders` through `getHeaderNames` and `getHeaders(name)`, a scan and an allocation
+per name; a container request that implements this gives the same fields, in arrival order, without either. A
+request without it (a wrapper, a mock) is read through the servlet API as before.
++/
+package(flint) interface HeaderFieldSource
+{
+    /// Calls `visit` with each header field's name and value, in the order the request carried them.
+    void visitHeaderFields(scope void delegate(string name, string value) @safe visit);
+}
+
 /// `jakarta.servlet.http.HttpServletRequest`.
 interface HttpServletRequest : ServletRequest
 {

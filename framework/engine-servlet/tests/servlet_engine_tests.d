@@ -32,7 +32,7 @@ private final class Probe : HttpServlet
         alias Page = void delegate(HttpServletRequest, HttpServletResponse) @safe;
         const Page[string] pages = [
             "/greeting": &greeting, "/committed": &committed, "/empty": &empty,
-            "/fields": &fields, "/throw": &fail, "/headers": &headers, "/large": &large,
+            "/fields": &fields, "/throw": &fail, "/headers": &headers, "/visit": &visit, "/large": &large,
             "/many": &many
         ];
         if (auto page = request.getServletPath() in pages)
@@ -93,6 +93,21 @@ private final class Probe : HttpServlet
                     "x-trace") ~ "|" ~ request.getServerName() ~ "|" ~ decimal(
                     request.getServerPort()) ~ "|" ~ request.getRequestURL() ~ "|" ~ request.getQueryString()
                     ~ "|" ~ request.getProtocol() ~ "|" ~ request.getLocale().toLanguageTag());
+    }
+
+    /// The header fields as the request hands them over in one pass (its HeaderFieldSource side).
+    private void visit(HttpServletRequest request, HttpServletResponse response)
+    {
+        import flint.engine.servlet.request : ServletEngineRequest;
+
+        string text;
+        auto source = cast(ServletEngineRequest) request;
+        if (source is null)
+            text = "no source";
+        else
+            source.visitHeaderFields((string name, string value) { text ~= name ~ "=" ~ value ~ ";"; });
+        response.setContentType("text/plain");
+        response.getWriter().print(text);
     }
 
     /// More attributes, parameters and fields than the request and response hold inside themselves.
@@ -463,6 +478,11 @@ unittest
             ~ "X-Trace: 7\r\nAccept-Language: de;q=0.5, fr-CH\r\n\r\n");
     assert(reply.content == "7|7|example.test|8443|http://example.test:8443/headers|a=1&b|HTTP/1.1|fr-CH",
             reply.content);
+
+    // The request hands its fields over in arrival order with repeats kept, names lower-cased as it stores them.
+    reply = exchange(socket, pending, "GET /visit HTTP/1.1\r\nHost: localhost\r\nX-A: 1\r\nAccept: */*\r\n"
+            ~ "x-a: 2\r\n\r\n");
+    assert(reply.content == "host=localhost;x-a=1;accept=*/*;x-a=2;", reply.content);
 
     // Repeated fields keep their order; a replaced field keeps its first position; Content-Type, then
     // Content-Language, follow the application's fields, as Tomcat writes them.

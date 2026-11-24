@@ -13,7 +13,7 @@ import flint.engine.aot.any : Any;
 import flint.engine.web.types : Method;
 import flint.jakarta.servlet : DispatcherType, RequestDispatcher, ServletContext,
     ServletInputStream, ServletRequest, ServletResponse;
-import flint.jakarta.servlet.http : Cookie, HttpServletRequest;
+import flint.jakarta.servlet.http : Cookie, HeaderFieldSource, HttpServletRequest;
 import flint.java.lang : IllegalArgumentException, IllegalStateException, NumberFormatException;
 import flint.java.util : Locale;
 
@@ -51,7 +51,7 @@ private struct Parameter
 }
 
 /// The request a servlet sees for one exchange on the servlet engine.
-final class ServletEngineRequest : HttpServletRequest
+final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
 {
     private RequestHost host;
     private string method;
@@ -474,6 +474,12 @@ final class ServletEngineRequest : HttpServletRequest
             if (equalsIgnoreCase(existing, name))
                 return values[index];
         return null;
+    }
+
+    void visitHeaderFields(scope void delegate(string name, string value) @safe visit)
+    {
+        foreach (index, name; names)
+            visit(name, values[index]);
     }
 
     string[] getHeaders(string name)

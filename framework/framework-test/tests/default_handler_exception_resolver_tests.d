@@ -17,6 +17,7 @@ import flint.engine.aot.any : Any;
 import flint.http : HttpHeaders, HttpInputMessage, HttpMethod, HttpStatus, MediaType;
 import flint.http.converter : HttpMessageNotReadableException, HttpMessageNotWritableException;
 import flint.http.server : ServletServerHttpRequest;
+static import flint.jakarta.servlet.http;
 import flint.java.io : IOException;
 import flint.mock.web : MockHttpServletRequest, MockHttpServletResponse;
 import flint.web : ErrorResponseException, HttpMediaTypeNotSupportedException, HttpRequestMethodNotSupportedException;
@@ -399,4 +400,47 @@ private final class MockHttpInputMessage : HttpInputMessage
     {
         return content;
     }
+}
+
+/// A mock request that also hands its fields over in one pass, as the servlet engine's request does.
+private final class FieldSourceRequest : MockHttpServletRequest, flint.jakarta.servlet.http.HeaderFieldSource
+{
+    int visits;
+
+    this()
+    {
+        super("POST", "/owners");
+    }
+
+    void visitHeaderFields(scope void delegate(string name, string value) @safe visit)
+    {
+        ++visits;
+        foreach (name; getHeaderNames())
+            foreach (value; getHeaders(name))
+                visit(name, value);
+    }
+}
+
+@("Flint: ServletServerHttpRequest reads a field source's headers in one pass, with the same result")
+unittest
+{
+    static void fill(MockHttpServletRequest request)
+    {
+        request.addHeader("Accept", "application/json");
+        request.addHeader("Content-Type", "application/json;charset=UTF-8");
+        request.addHeader("Accept", "text/plain");
+        request.addHeader("X-Trace", "7");
+    }
+
+    auto plain = new MockHttpServletRequest("POST", "/owners");
+    fill(plain);
+    auto source = new FieldSourceRequest;
+    fill(source);
+    const viaApi = new ServletServerHttpRequest(plain).getHeaders();
+    const viaSource = new ServletServerHttpRequest(source).getHeaders();
+    assert(source.visits == 1, "the field source was not used");
+    assert(viaSource.size() == viaApi.size());
+    foreach (name; ["Accept", "Content-Type", "X-Trace", "Content-Length"])
+        assert(viaSource.get(name) == viaApi.get(name), name);
+    assert(viaSource.get("Accept") == ["application/json", "text/plain"]);
 }

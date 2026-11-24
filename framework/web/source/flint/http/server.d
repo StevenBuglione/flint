@@ -14,7 +14,7 @@ module flint.http.server;
 
 import flint.http : HttpHeaders, HttpInputMessage, HttpMethod, HttpOutputMessage, HttpRequest,
     HttpStatusCode, MediaType;
-import flint.jakarta.servlet.http : HttpServletRequest, HttpServletResponse;
+import flint.jakarta.servlet.http : HeaderFieldSource, HttpServletRequest, HttpServletResponse;
 import flint.java.net : URI;
 
 @safe:
@@ -72,9 +72,14 @@ class ServletServerHttpRequest : ServerHttpRequest
         if (!headersRead)
         {
             headers = HttpHeaders.create();
-            foreach (name; servletRequest.getHeaderNames())
-                foreach (value; servletRequest.getHeaders(name))
-                    headers.add(name, value);
+            // A container request hands its fields over in one pass; HttpHeaders groups each name's values
+            // case-insensitively in arrival order, as reading them name by name does.
+            if (auto fields = cast(HeaderFieldSource) servletRequest)
+                fields.visitHeaderFields((string name, string value) { headers.add(name, value); });
+            else
+                foreach (name; servletRequest.getHeaderNames())
+                    foreach (value; servletRequest.getHeaders(name))
+                        headers.add(name, value);
             // Spring adds Content-Type with the request's character encoding when the header lacks one.
             const contentType = servletRequest.getContentType();
             if (contentType !is null && !headers.containsHeader(HttpHeaders.CONTENT_TYPE))
