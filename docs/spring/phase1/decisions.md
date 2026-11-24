@@ -511,3 +511,16 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - Phase 1 extends the qualifying shapes so petclinic-rest's endpoints use it: path variables, ResponseEntity, @CrossOrigin, static security headers.
     - Later modules (Security, Data repositories, JPA, Thymeleaf and others) design a build-time, generated direct path from the start, with the Spring-shaped objects materialised only when asked for. This becomes a performance-playbook rule.
   - Certified measurements use the default, so the fast path is part of every Flint/Go result from now on.
+- 2026-11-24, proof-harness: **gc-pools-ab, druntime collector settings on gs-rest-service** (data-access's A/B, the coordinator's three-arm design of 22:10Z). Queue entry `gc-pools-ab`, 23:48–00:15Z, a claimed window with no foreign build in 143 samples.
+  - **Setup:** `b520e07a`, the same binary under three `--DRT-gcopt` settings, no Go (`--no-go`, mode "ab"), 4 trials per arm on the Spring workload. Every arm passes 18/18.
+  - **Results:** ratios of medians against conservative (druntime's default), with bootstrap 99% intervals. They are wide at 4 trials (`ratios-vs-conservative.json` beside the evidence).
+
+    | arm | throughput | p50 | p99 | peak RSS | CPU per request | median max pause |
+    | --- | --- | --- | --- | --- | --- | --- |
+    | conservative | 228.5k req/s | 0.103 ms | 0.390 ms | 19.7 MB | 11.2 µs | 13.5 ms |
+    | `parallel:1` | 1.005 (0.993–1.015) | 0.904 | 0.809 (0.726–1.068) | 0.993 (0.982–1.007) | 0.896 (0.799–1.164) | 4.0 ms |
+    | `parallel:1 minPoolSize:4 incPoolSize:0` | **0.979 (0.970–0.993)** | 0.866 | 0.823 (0.710–1.052) | **0.775 (0.764–0.788)** | 0.855 (0.766–1.052) | 3.5 ms |
+
+  - **The rule** (lowest p99 and RSS with no throughput or CPU loss beyond its interval) **picks `parallel:1`.** It loses nothing beyond an interval, and its median max pause falls from 13.5 to 4 ms; its p99 and RSS changes are within their intervals.
+  - **`minPoolSize:4 incPoolSize:0` cuts peak RSS by 22% (about 4.4 MB, beyond its interval)** but costs 2.1% of throughput beyond its interval, so the rule excludes it. Accepting that trade is the coordinator's call.
+  - Evidence: `benchmarks/spring/evidence/gc-pools-ab/`.

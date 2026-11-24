@@ -1,0 +1,19 @@
+
+  _____ _ _       _
+ |  ___| (_)_ __ | |_
+ | |_  | | | '_ \| __|
+ |  _| | | | | | | |_
+ |_|   |_|_|_| |_|\__|
+
+ :: Flint Boot ::                 (v0.7.0)
+
+2026-11-23T23:48:34.380Z  INFO 479180 --- [           main] c.e.restservice.RestServiceApplication   : Starting RestServiceApplication using Flint 0.7.0 with PID 479180 (/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/b520e07a7ff4/build/spring/gs-rest-service-flint started by olfa in /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/b520e07a7ff4/benchmarks/spring/flint/gs-rest-service)
+2026-11-23T23:48:34.380Z  INFO 479180 --- [           main] c.e.restservice.RestServiceApplication   : No active profile set, falling back to 1 default profile: "default"
+2026-11-23T23:48:34.383Z  INFO 479180 --- [           main] c.e.restservice.RestServiceApplication   : Started RestServiceApplication in 0.003 seconds (process running for 0.0)
+	Number of collections:  8975
+	Total GC prep time:  280 milliseconds
+	Total mark time:  2253 milliseconds
+	Total sweep time:  114 milliseconds
+	Max Pause Time:  16 milliseconds
+	Grand total GC time:  2648 milliseconds
+GC summary:   12 MB, 8975 GC 2648 ms, Pauses 2533 ms <   16 ms
