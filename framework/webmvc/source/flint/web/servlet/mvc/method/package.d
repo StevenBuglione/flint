@@ -393,16 +393,29 @@ final class RequestMappingInfo
             acceptedMediaTypes = getAcceptedMediaTypes(request);
         catch (HttpMediaTypeNotAcceptableException)
             return found(produces);
-        MediaTypeExpression[] matched;
-        foreach (e; produces)
+        bool matches(MediaTypeExpression e)
         {
             bool compatible;
             foreach (accepted; acceptedMediaTypes)
                 compatible = compatible || e.mediaType.isCompatibleWith(accepted);
-            if (compatible != e.isNegated)
-                matched ~= e;
+            return compatible != e.isNegated;
         }
-        return matched.length == 0 ? Matched!MediaTypeExpression.init : found(matched);
+
+        // Usually every expression matches: then the condition is this mapping's own, read only, with no
+        // allocation per request (the matching info is then this one, see getMatchingCondition).
+        size_t count;
+        foreach (e; produces)
+            count += matches(e);
+        if (count == produces.length)
+            return found(produces);
+        if (count == 0)
+            return Matched!MediaTypeExpression.init;
+        MediaTypeExpression[] matched;
+        matched.reserve(count);
+        foreach (e; produces)
+            if (matches(e))
+                matched ~= e;
+        return found(matched);
     }
 
     // RequestMethodsRequestCondition.compareTo: by method count (`other - this`, so an explicit method beats none),

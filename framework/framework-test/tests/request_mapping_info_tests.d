@@ -287,6 +287,27 @@ unittest
     assert(match is null);
 }
 
+@("Flint: a produces condition that matches whole is the mapping's own; a partial match keeps only the matching types")
+unittest
+{
+    auto request = initRequest("GET", "/foo", true);
+    request.addHeader("Accept", "text/plain");
+    auto info = paths("/foo").produces("text/plain", "!application/xml").build();
+    // Every expression matches: the matching info is the mapping itself, with nothing built per request.
+    assert(info.getMatchingCondition(request) is info);
+
+    // Only text/plain of two matches: a new matching info carries the matching type alone.
+    auto partial = paths("/foo").produces("text/plain", "application/xml").build();
+    auto match = partial.getMatchingCondition(request);
+    assert(match !is null && match !is partial);
+    // The narrowed condition now matches whole, so matching it again returns it unchanged.
+    assert(match.getMatchingCondition(request) is match);
+    // Accept */* is compatible with both: the mapping itself again.
+    auto any = initRequest("GET", "/foo", true);
+    any.addHeader("Accept", "*/*");
+    assert(partial.getMatchingCondition(any) is partial);
+}
+
 @("RequestMappingInfoTests.matchCustomCondition")
 unittest
 {
