@@ -1,0 +1,24 @@
+Picked up JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=2
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v4.2.0)
+
+2026-11-24T03:48:35.022Z  INFO 1041823 --- [           main] c.e.restservice.RestServiceApplication   : Starting RestServiceApplication v0.0.1-SNAPSHOT using Java 21.0.13.1 with PID 1041823 (/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/ca5fbd4a46ed/.flint/spring/src/gs-rest-service-e15fec6773dc/complete/target/rest-service-complete-0.0.1-SNAPSHOT.jar started by olfa in /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/ca5fbd4a46ed/.flint/spring/src/gs-rest-service-e15fec6773dc/complete)
+2026-11-24T03:48:35.028Z  INFO 1041823 --- [           main] c.e.restservice.RestServiceApplication   : No active profile set, falling back to 1 default profile: "default"
+2026-11-24T03:48:35.481Z  INFO 1041823 --- [           main] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 43047 (http)
+2026-11-24T03:48:35.490Z  INFO 1041823 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-11-24T03:48:35.490Z  INFO 1041823 --- [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.27]
+2026-11-24T03:48:35.505Z  INFO 1041823 --- [           main] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 439 ms
+2026-11-24T03:48:35.659Z  INFO 1041823 --- [           main] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 43047 (http) with context path '/'
+2026-11-24T03:48:35.667Z  INFO 1041823 --- [           main] c.e.restservice.RestServiceApplication   : Started RestServiceApplication in 0.844 seconds (process running for 1.025)
+2026-11-24T03:48:35.724Z  INFO 1041823 --- [io-43047-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-11-24T03:48:35.724Z  INFO 1041823 --- [io-43047-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-11-24T03:48:35.725Z  INFO 1041823 --- [io-43047-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+2026-11-24T03:50:46.538Z  INFO 1041823 --- [ionShutdownHook] o.s.boot.tomcat.GracefulShutdown         : Commencing graceful shutdown. Waiting for active requests to complete
+2026-11-24T03:50:46.544Z  INFO 1041823 --- [tomcat-shutdown] o.s.boot.tomcat.GracefulShutdown         : Graceful shutdown complete

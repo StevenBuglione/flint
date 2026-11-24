@@ -574,3 +574,8 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **Fix whichever side diverges.** Where Go differs from Java, the comparator is corrected. Where Flint differs (extra statements, re-prepares, validation queries), Flint is corrected. Neither side is allowed to drop work Java does.
   - **AGENTS.md integrity rule:** a comparator change needs its own ADR and a remeasurement of both sides. proof-harness drafts the ADR with the census as evidence, and the change lands only with it. No certified result changes: phase1-http-petclinic has never been certified (it's blocked), gs-rest-service has no database, and gs-relational-data-access is measured on builds and size only.
   - The same census applies to every future comparator before its first measurement.
+- 2026-11-24, proof-harness: **error-404-p99 certified at B** (`ca5fbd4a46ed`, claimed window 03:37–04:37Z, no foreign activity; the error-path workload with the Java context, 9 trials). gs-rest-service GET /nope (404 ProblemDetail), Flint / Go median (99% interval):
+    - **p99 5.74 (5.26–6.35), which fails** (684 against 119 µs). The Java context's p99 is 574 µs, so Flint's 404 path is slower than Spring Boot on the JVM;
+    - p50 5.57, throughput 0.335 (82,400 against 246,000 req/s), CPU per request 3.56 (32.6 against 9.1 µs), peak RSS 1.45; p99.9 5.08, reported.
+
+    The 404 path costs about 4x the CPU of the /greeting fast path (7.9 µs per request): it goes through the full servlet dispatch, error attributes and problem rendering. Evidence: `benchmarks/spring/evidence/error-404-p99/20261124T033719Z/`.
