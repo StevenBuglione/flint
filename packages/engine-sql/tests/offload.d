@@ -159,3 +159,88 @@ version (FlintSqlReactorTest)
         assert(next.value.execute("SELECT 17", [], arena, context).ok());
     }
 }
+
+version (FlintNativeLibpq)
+{
+    private final class RoundTrips
+    {
+        Pool pool;
+        long elapsedMicros = -1;
+
+        void exercise() nothrow @nogc
+        {
+            import core.time : MonoTime;
+
+            auto owner = Reactor.current();
+            scope (exit)
+                owner.stop();
+            Context context;
+            auto acquired = pool.acquire(context);
+            assert(acquired.ok(), acquired.error.message);
+            scope (exit)
+                assert(pool.release(acquired.value).code == Status.ok);
+            scope RequestArena arena;
+            assert(acquired.value.execute("SELECT 1", [], arena, context).ok());
+            const start = MonoTime.currTime;
+            foreach (_; 0 .. roundTrips)
+                assert(acquired.value.execute("SELECT 1", [], arena, context).ok());
+            elapsedMicros = (MonoTime.currTime - start).total!"usecs";
+        }
+    }
+
+    private enum roundTrips = 200;
+
+    private __gshared RoundTrips roundTripOwner;
+
+    // SAFETY: The harness publishes before starting the reactor and clears after all workers join.
+    private void publishRoundTrips(RoundTrips owner) @trusted nothrow @nogc
+    {
+        roundTripOwner = owner;
+    }
+
+    // SAFETY: This fixture has one reactor owner and leaves its startup object rooted until run returns.
+    private void startRoundTrips() @trusted nothrow @nogc
+    {
+        roundTripOwner.exercise();
+    }
+
+    @("libpq readiness resumes the waiting fiber at once, not at the next millisecond poll")
+    unittest
+    {
+        import std.process : environment;
+
+        const address = environment.get("FLINT_SQL_PG_TEST_DSN");
+        if (address.length == 0)
+            return;
+        PoolOptions config;
+        config.driver = Driver.postgres;
+        config.connectionString = address;
+        config.maxConnections = 1;
+        auto work = new RoundTrips;
+        assert(work.pool.open(config).code == Status.ok);
+        Context context;
+        scope (exit)
+            assert(work.pool.close(context).code == Status.ok);
+
+        ReactorOptions options;
+        version (OSX)
+            options.backend = Backend.kqueue;
+        else version (Windows)
+            options.backend = Backend.iocp;
+        else
+            options.backend = Backend.epoll;
+        options.cores = 1;
+        auto owner = Reactor.create(options);
+        assert(owner.ok(), owner.error.message);
+        publishRoundTrips(work);
+        scope (exit)
+            publishRoundTrips(null);
+        assert(owner.value.post(0, &startRoundTrips).code == Status.ok);
+        const ran = owner.value.run();
+        assert(ran.code == Status.ok, ran.message);
+        // Waking on readiness, a local round trip takes tens of microseconds; resuming only at a 1 ms poll
+        // deadline, 200 of them took at least 200 ms.
+        assert(work.elapsedMicros >= 0 && work.elapsedMicros < roundTrips * 500,
+                "SQL waits resumed at the poll deadline rather than on readiness");
+    }
+}

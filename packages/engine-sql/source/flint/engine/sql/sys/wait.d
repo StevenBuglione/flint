@@ -4,7 +4,7 @@ module flint.engine.sql.sys.wait;
 import core.atomic : atomicLoad, atomicOp;
 import flint.arena : Error, Status;
 import flint.conc : Context, Deadline;
-import flint.engine.reactor : NativeInterest, Reactor;
+import flint.engine.reactor : NativeInterest, Reactor, TaskWaker;
 import flint.engine.sql.ffi.shim : Interest, waitOffReactor;
 
 @safe:
@@ -13,23 +13,32 @@ private struct Signal
 {
     int descriptor = -1;
     bool ready;
+    TaskWaker waker;
 
     void receive(int fd, NativeInterest events) nothrow @nogc
     {
-        if (descriptor == fd && events != NativeInterest.none)
-            ready = true;
+        if (descriptor != fd || events == NativeInterest.none)
+            return;
+        ready = true;
+        // The watch is level-triggered: until the waiting fiber reads, every loop pass reports the descriptor
+        // again, so resume it on the next pass rather than at its fallback deadline.
+        cast(void) Reactor.current().wake(waker);
     }
 }
 
+/// How long a fiber waiting on a watched descriptor sleeps before re-checking without a wake. The watch's wake
+/// resumes it first; this only bounds a missed one.
+private enum fallbackMillis = 1_000;
+
 private Signal[256] signals;
 
-private size_t reserveSignal(int fd) nothrow @nogc
+private size_t reserveSignal(int fd, TaskWaker waker) nothrow @nogc
 {
     foreach (index, ref signal; signals)
     {
         if (signal.descriptor != -1)
             continue;
-        signal = Signal(fd);
+        signal = Signal(fd, false, waker);
         return index;
     }
     return size_t.max;
@@ -222,7 +231,10 @@ package(flint.engine.sql) Error waitFor(Interest interest, ref const Context con
     if (interest.fd < 0)
         return owner.yieldUntil(Deadline.afterMillis(1));
 
-    const index = reserveSignal(interest.fd);
+    const waker = owner.currentWaker();
+    if (!waker.ok())
+        return waker.error;
+    const index = reserveSignal(interest.fd, waker.value);
     if (index == size_t.max)
         return owner.yieldUntil(Deadline.afterMillis(1));
     scope (exit)
@@ -237,12 +249,45 @@ package(flint.engine.sql) Error waitFor(Interest interest, ref const Context con
         return status;
     scope (exit)
         owner.unwatchNative(interest.fd);
+    return awaitSignal(owner, index, context, cleanup);
+}
 
+/// Sleep until the signal at `index` is ready, the caller's context ends or cleanup expires.
+private Error awaitSignal(ref Reactor owner, size_t index, ref const Context context, Deadline cleanup) nothrow @nogc
+{
     while (!signals[index].ready && continueWaiting(context, cleanup))
     {
-        const yielded = owner.yieldUntil(Deadline.afterMillis(1));
-        if (yielded.code != Status.ok)
-            return yielded;
+        const slept = sleepOnSignal(owner, context, cleanup);
+        if (slept.contextEnded)
+            return Error.init;
+        if (slept.error.code != Status.ok)
+            return slept.error;
     }
     return Error.init;
+}
+
+/// How one sleep on a signal ended.
+private struct Slept
+{
+    /// A failure to report: the task's cancellation or the reactor stopping.
+    Error error;
+    /// The caller's context ended; the caller then cancels the statement and drains it under its cleanup deadline.
+    bool contextEnded;
+}
+
+/// One sleep of a fiber waiting on its signal: the watch's wake or the fallback deadline resumes it, and so does
+/// the end of the caller's context before cleanup starts.
+private Slept sleepOnSignal(ref Reactor owner, ref const Context context, Deadline cleanup) nothrow @nogc
+{
+    auto fallback = Deadline.afterMillis(fallbackMillis);
+    if (cleanup != Deadline.init)
+    {
+        if (cleanup.monotonicNanoseconds < fallback.monotonicNanoseconds)
+            fallback = cleanup;
+        return Slept(owner.yieldUntil(fallback));
+    }
+    const yielded = owner.yieldUntil(fallback, context);
+    if (yielded.code != Status.ok && context.check().code != Status.ok)
+        return Slept(Error.init, true);
+    return Slept(yielded);
 }
