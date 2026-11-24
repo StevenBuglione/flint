@@ -2230,6 +2230,124 @@ private imported!"flint.engine.aot.descriptor".Descriptor buildBeanDescriptor(T)
     return descriptor;
 }
 
+/// `T`'s typed writers, indexed as `beanDescriptorOf!T().properties`: built once per type (`ProcessSlot`).
+package(flint.jdbc) const(BeanPropertyRowMapping.TypedWriter)[] typedWritersOf(T)() if (is(T == class))
+{
+    import flint.conc.slot : ProcessSlot;
+
+    static shared ProcessSlot!TypedWriters slot;
+    if (auto built = slot.get())
+        return built.writers;
+    auto writers = new BeanPropertyRowMapping.TypedWriter[beanDescriptorOf!T().properties.length];
+    foreach (i, ref property; beanDescriptorOf!T().properties)
+        if (property.set !is null)
+            writers[i] = typedWriter!T(property.name, property.type);
+    return slot.setIfAbsent(new TypedWriters(writers)).writers;
+}
+
+/// A type's typed writers (`typedWritersOf`); not changed after construction.
+private final class TypedWriters
+{
+    private const(BeanPropertyRowMapping.TypedWriter)[] writers;
+
+    this(const(BeanPropertyRowMapping.TypedWriter)[] writers) pure nothrow
+    {
+        this.writers = writers;
+    }
+}
+
+/++
+The typed writer of `T`'s property `name` of type `type` (descriptor names): the public one-parameter setter `set` +
+`name` capitalized whose parameter is that type, when it is a type `BeanPropertyRowMapping.columnValue` reads with a
+typed getter. Null otherwise, and the descriptor writes the property.
++/
+private BeanPropertyRowMapping.TypedWriter typedWriter(T)(string name, string type)
+{
+    import flint.engine.aot.name : typeNameOf;
+
+    static foreach (member; __traits(allMembers, T))
+    {
+        static if (member.length > 3 && member[0 .. 3] == "set" && member[3] >= 'A' && member[3] <= 'Z')
+        {
+            static if (__traits(compiles, __traits(getOverloads, T, member)))
+            {
+                static foreach (overload; __traits(getOverloads, T, member))
+                {
+                    static if (__traits(getVisibility, overload) == "public"
+                            && isTypedColumn!(SetterParameter!overload))
+                    {
+                        if (type == typeNameOf!(SetterParameter!overload) && isSetterOf(member, name))
+                            return &writeColumn!(T, member, SetterParameter!overload);
+                    }
+                }
+            }
+        }
+    }
+    return null;
+}
+
+/// The unqualified type of a one-parameter function's parameter; `void` for any other symbol.
+private template SetterParameter(alias overload)
+{
+    static if (is(typeof(overload) P == function) && P.length == 1)
+        alias SetterParameter = typeof(cast() P[0].init);
+    else
+        alias SetterParameter = void;
+}
+
+/// Whether `member` is the setter of the bean property `name`: `set` and `name` with its first letter capitalized.
+private bool isSetterOf(string member, string name) pure nothrow @nogc
+{
+    if (name.length == 0 || member.length != name.length + 3)
+        return false;
+    const first = name[0] >= 'a' && name[0] <= 'z' ? cast(char)(name[0] - ('a' - 'A')) : name[0];
+    return member[3] == first && member[4 .. $] == name[1 .. $];
+}
+
+/// The types `BeanPropertyRowMapping.columnValue` reads with a typed getter, by the type names it switches on.
+private template isTypedColumn(V)
+{
+    import flint.engine.aot.name : typeNameOf;
+    import flint.java.time : LocalDate, LocalDateTime, LocalTime;
+
+    static if (is(V == string))
+        enum isTypedColumn = typeNameOf!V == "string";
+    else static if (is(V == bool) || is(V == byte) || is(V == short) || is(V == int) || is(V == long)
+            || is(V == float) || is(V == double))
+        enum isTypedColumn = typeNameOf!V == V.stringof;
+    else static if (is(V == LocalDate) || is(V == LocalTime) || is(V == LocalDateTime))
+        enum isTypedColumn = typeNameOf!V == "flint.java.time." ~ V.stringof;
+    else
+        enum isTypedColumn = false;
+}
+
+/// A typed writer: `columnValue`'s NULL test and getter for `V`, then `T`'s setter `member` with the value.
+private bool writeColumn(T, string member, V)(Object target, ResultSet rs, int column) @safe
+{
+    if (rs.getObject(column).isNull)
+        return false;
+    static if (is(V == string))
+        auto value = rs.getString(column);
+    else static if (is(V == bool))
+        auto value = rs.getBoolean(column);
+    else static if (is(V == byte))
+        auto value = rs.getByte(column);
+    else static if (is(V == short))
+        auto value = rs.getShort(column);
+    else static if (is(V == int))
+        auto value = rs.getInt(column);
+    else static if (is(V == long))
+        auto value = rs.getLong(column);
+    else static if (is(V == float))
+        auto value = rs.getFloat(column);
+    else static if (is(V == double))
+        auto value = rs.getDouble(column);
+    else
+        auto value = rs.getObject!V(column);
+    __traits(getMember, cast(T) target, member)(value);
+    return true;
+}
+
 class BeanPropertyRowMapper(T) : RowMapper!T
 {
     /// The erased engine.
@@ -2283,9 +2401,19 @@ class BeanPropertyRowMapper(T) : RowMapper!T
         return mapping.isPrimitivesDefaultedForNullValue();
     }
 
-    /// Extract the values for all columns in the current row, using the descriptor's properties.
+    /// Extract the values for all columns in the current row, using the descriptor's properties. A class with a
+    /// default constructor is created directly and its properties set through typed writers (`typedWritersOf`).
     override T mapRow(ResultSet rs, int rowNumber)
     {
+        static if (is(T == class) && __traits(compiles, new T()))
+        {
+            if (mapping.populatesByWriters())
+            {
+                auto instance = new T();
+                mapping.populate(rs, instance, typedWritersOf!T());
+                return instance;
+            }
+        }
         auto instance = mapping.mapRow(rs, rowNumber);
         return instance.get!T;
     }
@@ -2627,45 +2755,115 @@ final class BeanPropertyRowMapping
         auto mappedObject = constructMappedInstance(rs);
         if (!hasMappedProperties()) // Nothing left to populate via setters (for example, a record mapped through its constructor)
             return mappedObject;
-        const plan = columnPlan(rs);
-        // Which mapped properties a column populated, only when that is checked: one word, or one array past 64.
-        ulong populatedBits;
-        bool[] populatedMany = checkFullyPopulated && descriptor.properties.length > 64
-            ? new bool[descriptor.properties.length] : null;
-        size_t populated;
-        foreach (column, found; plan)
+        auto populated = Populated(checkFullyPopulated, descriptor.properties.length);
+        foreach (column, found; columnPlan(rs))
         {
             if (found == size_t.max)
                 continue;
             const index = cast(int) column + 1;
             auto property = &descriptor.properties[found];
-            auto value = columnValue(rs, index, property.type);
-            if (value.isNull && isPrimitive(property.type))
-            {
-                if (!primitivesDefaultedForNullValue)
-                    throw new TypeMismatchDataAccessException("Failed to convert null to required type '"
-                            ~ property.type ~ "' for property '" ~ property.name ~ "'");
-            }
-            else
-                property.set(mappedObject, value);
-            if (!checkFullyPopulated)
+            writeByDescriptor(mappedObject, property, columnValue(rs, index, property.type));
+            populated.mark(found);
+        }
+        checkPopulated(populated);
+        return mappedObject;
+    }
+
+    /++
+    A property's typed writer (`BeanPropertyRowMapper!T`): unless column `column` is SQL NULL, reads it with the
+    getter `columnValue` uses for the property's type and passes it to the property's setter on `target`, returning
+    true. It returns false for NULL, setting nothing, and the descriptor's NULL handling follows.
+    +/
+    alias TypedWriter = bool function(Object target, ResultSet rs, int column) @safe;
+
+    /// Whether `populate` may map rows: properties are set through setters only (no constructor, nothing suppressed),
+    /// and the mapping was made for its type (`beanColumnIndexOf`).
+    bool populatesByWriters() const pure nothrow @nogc
+    {
+        return mappedConstructor is null && suppressed is null && columns !is null && mappedPropertyCount > 0;
+    }
+
+    /++
+    `mapRow`'s properties for `target`, an instance the caller created as `descriptor.create` does: each column's
+    property through `writers` (indexed as the descriptor's properties), or, for a property without one and for a
+    NULL, through the descriptor as `mapRow` does. The same values, setters, NULL handling and checks as `mapRow`.
+    +/
+    void populate(ResultSet rs, Object target, scope const(TypedWriter)[] writers)
+    {
+        auto populated = Populated(checkFullyPopulated, descriptor.properties.length);
+        Any boxed; // `target` as an `Any`, made only for a property the descriptor writes
+        foreach (column, found; columnPlan(rs))
+        {
+            if (found == size_t.max)
                 continue;
-            if (populatedMany is null)
+            const index = cast(int) column + 1;
+            auto writer = found < writers.length ? writers[found] : null;
+            if (writer is null || !writer(target, rs, index))
+            {
+                if (boxed.isNull)
+                    boxed = Any.of(target);
+                auto property = &descriptor.properties[found];
+                // A NULL the writer found is the same value `columnValue` returns for it: `getObject`'s.
+                writeByDescriptor(boxed, property, writer is null ? columnValue(rs, index,
+                        property.type) : rs.getObject(index));
+            }
+            populated.mark(found);
+        }
+        checkPopulated(populated);
+    }
+
+    /// Set `property` of `target` to `value` through the descriptor: a NULL for a primitive is refused, or ignored
+    /// when primitives are defaulted for NULL.
+    private void writeByDescriptor(ref Any target, const(PropertyDescriptor)* property, Any value)
+    {
+        if (value.isNull && isPrimitive(property.type))
+        {
+            if (!primitivesDefaultedForNullValue)
+                throw new TypeMismatchDataAccessException(
+                        "Failed to convert null to required type '" ~ property.type
+                        ~ "' for property '" ~ property.name ~ "'");
+        }
+        else
+            property.set(target, value);
+    }
+
+    /// Which mapped properties a column populated, only when that is checked: one word, or one array past 64.
+    private static struct Populated
+    {
+        bool checked;
+        ulong bits;
+        bool[] many;
+        size_t count;
+
+        this(bool checked, size_t properties) pure nothrow
+        {
+            this.checked = checked;
+            many = checked && properties > 64 ? new bool[properties] : null;
+        }
+
+        void mark(size_t found) pure nothrow @nogc
+        {
+            if (!checked)
+                return;
+            if (many is null)
             {
                 const bit = 1UL << found;
-                populated += (populatedBits & bit) == 0;
-                populatedBits |= bit;
+                count += (bits & bit) == 0;
+                bits |= bit;
             }
             else
             {
-                populated += !populatedMany[found];
-                populatedMany[found] = true;
+                count += !many[found];
+                many[found] = true;
             }
         }
-        if (checkFullyPopulated && populated != mappedPropertyCount)
+    }
+
+    private void checkPopulated(ref const Populated populated)
+    {
+        if (checkFullyPopulated && populated.count != mappedPropertyCount)
             throw new InvalidDataAccessApiUsageException("Given ResultSet does not contain all properties "
                     ~ "necessary to populate object of class " ~ descriptor.name);
-        return mappedObject;
     }
 
     /// Each column's mapped property index in `rs`, matched by name once per result set rather than on every row, and
@@ -2981,6 +3179,112 @@ unittest
     assert(mapping.mappedPropertyIndex("first_name") == size_t.max && mapping.mappedPropertyCount == 2);
     assert(columns.find("first_name", mapping.suppressed) == size_t.max, "the index ignored a suppressed property");
     assert(columns.find("city", mapping.suppressed) == index("city"));
+}
+
+version (unittest) private final class RowsResultSet : imported!"std.typecons".BlackHole!ResultSet
+{
+    import flint.java.sql : ResultSetMetaData;
+
+    private string[] labels;
+    private Any[] row;
+
+    this(string[] labels, Any[] row)
+    {
+        this.labels = labels;
+        this.row = row;
+    }
+
+    override Any getObject(int column)
+    {
+        return row[column - 1];
+    }
+
+    override string getString(int column)
+    {
+        return row[column - 1].isNull ? null : row[column - 1].get!string;
+    }
+
+    override long getLong(int column)
+    {
+        return row[column - 1].isNull ? 0 : row[column - 1].get!long;
+    }
+
+    override ResultSetMetaData getMetaData()
+    {
+        return new RowsMetaData(labels);
+    }
+}
+
+version (unittest) private final class RowsMetaData : imported!"std.typecons".BlackHole!(
+        imported!"flint.java.sql".ResultSetMetaData)
+{
+    private string[] labels;
+
+    this(string[] labels)
+    {
+        this.labels = labels;
+    }
+
+    override int getColumnCount()
+    {
+        return cast(int) labels.length;
+    }
+
+    override string getColumnLabel(int column)
+    {
+        return labels[column - 1];
+    }
+}
+
+@("BeanPropertyRowMapper: typed writers set what the descriptor sets, NULLs included (Flint)")
+unittest
+{
+    const writers = typedWritersOf!RowMappingBean();
+    assert(typedWritersOf!RowMappingBean() is writers, "the writers are built once per type");
+    foreach (i, ref property; beanDescriptorOf!RowMappingBean().properties)
+        assert((writers[i]!is null) == (property.set !is null), property.name);
+
+    auto labels = ["first_name", "id", "CITY", "unmapped"];
+    foreach (row; [
+            [Any.of("Ann"), Any.of(7L), Any.of("Paris"), Any.of(1L)],
+            [Any.of("Bo"), Any.of(8L), Any.init, Any.init],
+            [Any.init, Any.of(9L), Any.of("Rome"), Any.of(2L)]
+        ])
+    {
+        auto typed = new BeanPropertyRowMapper!RowMappingBean;
+        assert(typed.mapping.populatesByWriters());
+        auto mapped = typed.mapRow(new RowsResultSet(labels, row), 0);
+        auto generic = new BeanPropertyRowMapping(beanDescriptorOf!RowMappingBean(), false);
+        assert(!generic.populatesByWriters(), "a mapping made from a descriptor alone keeps the descriptor path");
+        auto expected = generic.mapRow(new RowsResultSet(labels, row), 0).get!RowMappingBean;
+        assert(mapped.getFirstName() == expected.getFirstName()
+                && mapped.getId() == expected.getId() && mapped.getCity() == expected.getCity());
+        assert(mapped.getCity() is null || mapped.getCity() == row[2].get!string);
+    }
+
+    // A NULL for a primitive property is refused, or left at its default, as through the descriptor.
+    auto nullId = [Any.of("Ann"), Any.init, Any.of("Paris"), Any.init];
+    auto strict = new BeanPropertyRowMapper!RowMappingBean;
+    bool refused;
+    try
+        strict.mapRow(new RowsResultSet(labels, nullId), 0);
+    catch (TypeMismatchDataAccessException)
+        refused = true;
+    assert(refused, "a NULL for a long property was accepted");
+    auto lenient = new BeanPropertyRowMapper!RowMappingBean;
+    lenient.setPrimitivesDefaultedForNullValue(true);
+    auto defaulted = lenient.mapRow(new RowsResultSet(labels, nullId), 0);
+    assert(defaulted.getId() == 0 && defaulted.getFirstName() == "Ann" && defaulted.getCity() == "Paris");
+
+    // Checking that every property is populated works the same through the writers.
+    auto full = new BeanPropertyRowMapper!RowMappingBean(true);
+    full.mapRow(new RowsResultSet(labels, [Any.of("Ann"), Any.of(7L), Any.of("Paris"), Any.init]), 0);
+    bool incomplete;
+    try
+        full.mapRow(new RowsResultSet(["first_name", "id"], [Any.of("Ann"), Any.of(7L)]), 0);
+    catch (InvalidDataAccessApiUsageException)
+        incomplete = true;
+    assert(incomplete, "a result set without the city column populated every property");
 }
 
 @("BeanColumnIndex.planFor: one plan per list of column labels, reused without allocating, validated by the labels")
