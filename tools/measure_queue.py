@@ -233,8 +233,10 @@ def busy_processes(interval=1.0):
             used = cpu_ticks(row['pid']) - row['ticks']
         except OSError:
             continue
-        # A build process counts from ACTIVE_TICKS; a tracer, a stray server or a scratchpad database from any use.
-        if used >= (ACTIVE_TICKS if row.get('kind', 'build') == 'build' else 1):
+        # Every kind counts from ACTIVE_TICKS in the sampling second. Idle daemons tick now and then (a scratchpad
+        # PostgreSQL's checkpointer voided phase1-http-petclinic at B2 with one tick, 12:12Z); the load this check was
+        # added for (an strace'd server at about 10% of a CPU) is several ticks every second.
+        if used >= ACTIVE_TICKS:
             busy.append({'pid': row['pid'], 'command': row['command'], 'cwd': row['cwd'], 'cpu_ticks': used,
                          'kind': row.get('kind', 'build')})
     busy_processes.idle = len(first) - len(busy)
