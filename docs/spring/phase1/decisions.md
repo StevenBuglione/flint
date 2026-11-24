@@ -748,3 +748,16 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - **Syscalls per response** (untimed strace census, 2,000 requests at 8 connections): 5 `sendto` in every arm, the five statements (BEGIN, three SELECTs, COMMIT); the HTTP response goes through io_uring (about 2.6 `io_uring_enter` per response), so its writes are not visible as syscalls. About 17.6 `recvfrom` per response in every arm (3.5 per statement), 22–29% of them returning EAGAIN across the whole logs: libpq's non-blocking reads.
 
     Evidence: `benchmarks/spring/evidence/floor-reference/` (the strace logs, 170–200 MB each, stay in .flint/measure/results).
+- 2026-11-24, coordinator: **B3 = `d6d15b0073dda669dacf790dea443f033f4dbb55`**, the third same-commit baseline. Beyond B2 it adds:
+  - **builds:** flint-aot's served AOT extraction (6200b84b), shared toolchain v4.2 (served compiles all-or-none, 4ac873d8), m7's gs-relational static-edit fixes (d8854571, 01d15212), the D-JDBC-2 glue resolver;
+  - **runtime:** web-http's write-behind response path (45e8b765) and gs-rest allocation fix (1b73f250); data-access's direct row mapping (f83eabd9, bf353ba4), libpq read driving (da10da45) and engine-jdbc and engine-sql cuts; third-party-apis' Jackson property writers and the validator fixes (8f1a7ef7 included); framework-core's transaction interceptor, HashMap and emptyList fixes;
+  - **size:** framework-core's collections erasure (14ebc0c8, af1573af; petclinic Oz −415 KB);
+  - **fast path:** S1–S3, not yet active for petclinic until S4.
+
+  The batch runs Flint-only against the captured Go baselines and falls back to interleaved, since the cross-session guard bands land about 4 AM EST tomorrow. Builds assert 0 refused compiles again. Order:
+  1. phase1-builds for gs-rest, gs-relational and petclinic;
+  2. phase1-http-petclinic;
+  3. phase1-http-gs-rest;
+  4. error-404-p99 and error-validation-p99.
+
+  The GC matrix waits for natural quiet. B2's results stay as history.
