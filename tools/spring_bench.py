@@ -665,8 +665,8 @@ def consistency_problems(parts, runs_by_family):
             # and none refused.
             served = [(step.get('dmd_server') or {}).get('scored') for step in part.get('steps', [])
                       if 'measure_builds.py' in ' '.join(step.get('command', []))]
-            if part.get('steps') is not None and (not served or not served[0] or served[0].get('refused')
-                                                   or not served[0].get('compiled')):
+            if part.get('steps') is not None and (not served or not served[0] or not served[0].get('compiled') or
+                                                   (served[0].get('refused') and served[0].get('policy') != 'report')):
                 problems.append(f"{part['entry']} builds.json: compile server {served[0] if served else 'not traced'}; "
                                 'served compiles with none refused required')
             if record.get('trials_per_series') != 9:

@@ -920,7 +920,11 @@ def measure_command(entry, built, outdir, smoke):
             receipt['dmd_server']['scored'] = scored_server_trace(trace, outdir / 'builds-logs')
         if any('measure_builds.py' in part for part in command) and not smoke:
             served = receipt['dmd_server']['scored']
-            if served['refused'] or not served['compiled']:
+            # 'strict' (the default): served and none refused. 'report' (coordinator, B2 only: B2's toolchain predates
+            # the client-side signal of 4ac873d8): served, with the refusals recorded rather than failing the part.
+            policy = entry.get('served_compiles', 'strict')
+            served['policy'] = policy
+            if (served['refused'] and policy != 'report') or not served['compiled']:
                 receipts.append(dict(receipt, measured=False))
                 raise SystemExit(f"step {index}: the compile server compiled {served['compiled']} and refused "
                                  f"{served['refused']} requests; builds must be served (see {trace})")

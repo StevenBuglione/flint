@@ -190,7 +190,10 @@ class AssembleFailsClosed(unittest.TestCase):
             row['steps'] = [{'command': ['python3', 'tools/measure_builds.py'], 'dmd_server': {'scored': dmd_server}}]
             return row
         self.assertEqual(spring_bench.consistency_problems([part({'compiled': 40, 'refused': 0})], RUNS), [])
-        for bad in ({'compiled': 40, 'refused': 2}, {'compiled': 0, 'refused': 0}, None):
+        self.assertEqual(spring_bench.consistency_problems([part({'compiled': 40, 'refused': 2, 'policy': 'report'})],
+                                                           RUNS), [])
+        for bad in ({'compiled': 40, 'refused': 2}, {'compiled': 0, 'refused': 0}, None,
+                    {'compiled': 0, 'refused': 2, 'policy': 'report'}):
             problems = spring_bench.consistency_problems([part(bad)], RUNS)
             self.assertTrue(any('served compiles' in p for p in problems), bad)
 
