@@ -568,7 +568,7 @@ class ObjectMapper
     /// ditto, erased.
     string writeValueAsString(Any value)
     {
-        return (cast(const(char)[]) writeValueAsBytes(value)).idup;
+        return writeCollected!string(writeContext(_config.isEnabled(SerializationFeature.INDENT_OUTPUT)), value);
     }
 
     /// Method that can be used to serialize any Java value as a byte array, UTF-8 encoded.
@@ -585,13 +585,17 @@ class ObjectMapper
         return writeCollected(writeContext(_config.isEnabled(SerializationFeature.INDENT_OUTPUT)), value);
     }
 
-    // Serialize into a recycled buffered generator and copy the document out: one allocation, the result.
-    private ubyte[] writeCollected(ObjectWriteContext context, Any value)
+    // Serialize into a recycled buffered generator and copy the document out, as bytes or as a string: one
+    // allocation, the result.
+    private R writeCollected(R = ubyte[])(ObjectWriteContext context, Any value)
     {
         auto g = _config.factory.acquireGenerator(context, null);
         writeValue(g, value);
         g.close();
-        auto document = g.written().dup;
+        static if (is(R == string))
+            auto document = (cast(const(char)[]) g.written()).idup;
+        else
+            auto document = g.written().dup;
         _config.factory.releaseGenerator(g);
         return document;
     }
@@ -805,7 +809,7 @@ class ObjectWriter
     /// ditto, erased.
     string writeValueAsString(Any value)
     {
-        return (cast(const(char)[]) mapper.writeCollected(mapper.writeContext(indent), value)).idup;
+        return mapper.writeCollected!string(mapper.writeContext(indent), value);
     }
 }
 

@@ -1012,6 +1012,15 @@ class UTF8JsonGenerator : JsonGenerator
         return this;
     }
 
+    // ASCII bytes written as they are whatever the features: not a control character, `"`, `\\` or `/` (which
+    // ESCAPE_FORWARD_SLASHES escapes). The others take outputEscape's answer.
+    private static immutable bool[128] plainAscii = () {
+        bool[128] table;
+        foreach (c; 0x20 .. 0x80)
+            table[c] = c != '"' && c != '\\' && c != '/';
+        return table;
+    }();
+
     private void quoted(scope const(char)[] text)
     {
         put('"');
@@ -1027,6 +1036,11 @@ class UTF8JsonGenerator : JsonGenerator
         while (i < bytes.length)
         {
             immutable b = bytes[i];
+            if (b < 0x80 && plainAscii[b])
+            {
+                ++i;
+                continue;
+            }
             int esc;
             if (b < 0x80)
                 esc = outputEscape(b, _escapeSlash);
