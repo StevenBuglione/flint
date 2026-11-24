@@ -128,8 +128,7 @@ private string formatted(MapperConfig config, ref Any value, Kind kind, JavaTime
                 : DateTimeFormatter.ISO_LOCAL_DATE_TIME);
     case Kind.instant:
         const instant = value.get!Instant();
-        return custom ? pattern.withZone(ZoneId.of("UTC"))
-            .format(instant) : DateTimeFormatter.ISO_INSTANT.format(instant);
+        return custom ? pattern.withZone(ZoneId.of("UTC")).format(instant) : isoInstant(instant);
     case Kind.offsetDateTime:
         return value.get!OffsetDateTime().format(custom ? pattern
                 : DateTimeFormatter.ISO_OFFSET_DATE_TIME);
@@ -138,6 +137,89 @@ private string formatted(MapperConfig config, ref Any value, Kind kind, JavaTime
             ? DateTimeFormatter.ISO_ZONED_DATE_TIME : DateTimeFormatter.ISO_OFFSET_DATE_TIME;
         return value.get!ZonedDateTime().format(custom ? pattern : zoned);
     }
+}
+
+// InstantSerializer's default, DateTimeFormatter.ISO_INSTANT: "2007-12-03T10:15:30Z", with a fraction of 3, 6 or 9
+// digits when there is one. Years 0000 to 9999 are written digit by digit into one buffer; the others, which take a
+// sign, go through the formatter.
+private string isoInstant(const Instant instant)
+{
+    enum long firstSecond = -62_167_219_200; // 0000-01-01T00:00:00Z
+    enum long lastSecond = 253_402_300_799; // 9999-12-31T23:59:59Z
+    const seconds = instant.getEpochSecond();
+    if (seconds < firstSecond || seconds > lastSecond)
+        return DateTimeFormatter.ISO_INSTANT.format(instant);
+    long days = seconds / 86_400, secondOfDay = seconds % 86_400;
+    if (secondOfDay < 0)
+    {
+        secondOfDay += 86_400;
+        --days;
+    }
+    // civil_from_days (Howard Hinnant's algorithm, as java.time's civilOf).
+    const z = days + 719_468;
+    const era = (z >= 0 ? z : z - 146_096) / 146_097;
+    const doe = z - era * 146_097;
+    const yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
+    const doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    const mp = (5 * doy + 2) / 153;
+    const day = doy - (153 * mp + 2) / 5 + 1;
+    const month = mp < 10 ? mp + 3 : mp - 9;
+    const year = yoe + era * 400 + (month <= 2 ? 1 : 0);
+    char[30] text = void;
+    size_t n;
+    void digits(long value, int width)
+    {
+        foreach_reverse (i; 0 .. width)
+        {
+            text[n + i] = cast(char)('0' + value % 10);
+            value /= 10;
+        }
+        n += width;
+    }
+
+    digits(year, 4);
+    text[n++] = '-';
+    digits(month, 2);
+    text[n++] = '-';
+    digits(day, 2);
+    text[n++] = 'T';
+    digits(secondOfDay / 3600, 2);
+    text[n++] = ':';
+    digits(secondOfDay / 60 % 60, 2);
+    text[n++] = ':';
+    digits(secondOfDay % 60, 2);
+    const nano = instant.getNano();
+    if (nano != 0)
+    {
+        text[n++] = '.';
+        if (nano % 1_000_000 == 0)
+            digits(nano / 1_000_000, 3);
+        else if (nano % 1000 == 0)
+            digits(nano / 1000, 6);
+        else
+            digits(nano, 9);
+    }
+    text[n++] = 'Z';
+    return text[0 .. n].idup;
+}
+
+// The direct writer agrees with ISO_INSTANT on both sides of its range, at day and year edges, and for every
+// fraction length.
+unittest
+{
+    static immutable long[] secondsList = [
+        -62_167_219_201, -62_167_219_200, -1, 0, 1, 951_782_400, 1_234_567_890, 253_402_300_799,
+        253_402_300_800
+    ];
+    static immutable int[] nanosList = [
+        0, 1, 999, 1000, 120_000, 1_000_000, 500_000_000, 999_999_999
+    ];
+    foreach (seconds; secondsList)
+        foreach (nanos; nanosList)
+        {
+            const instant = Instant.ofEpochSecond(seconds, nanos);
+            assert(isoInstant(instant) == DateTimeFormatter.ISO_INSTANT.format(instant), isoInstant(instant));
+        }
 }
 
 private void writeTimestamp(MapperConfig config, ref Any value, Kind kind, JsonGenerator g)

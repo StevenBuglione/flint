@@ -310,7 +310,6 @@ final class StdDateFormat : DateFormat
 
 /// StdDateFormat._format without a calendar object, so writing a date links no parsing: `millis` at `offset`
 /// milliseconds from UTC, "2009-02-13T23:31:30.123Z" ("+05:30" or "+0530" for an offset).
-@cold
 string formatIso(long millis, long offset, bool colon = true, bool zeroAsZ = true) pure nothrow
 {
     import flint.java.util.calendar : gregorianFields;
@@ -397,31 +396,26 @@ private int fractionMillis(string dateStr, Iso8601 m)
     return msecs;
 }
 
-// Text built in place: one growing array, copied once by `text`.
+// Text built in place on the stack, copied once by `text`: an ISO-8601 date is at most 36 characters (a nine-digit
+// year with its sign, the fields and an offset).
 private struct Text
 {
-    char[] data;
+    char[48] data = void;
     size_t used;
 
-    @cold
-    void put(scope const(char)[] s) pure nothrow
+    void put(scope const(char)[] s) pure nothrow @nogc
     {
-        if (used + s.length > data.length)
-            data.length = (used + s.length) * 2 + 16;
         data[used .. used + s.length] = s[];
         used += s.length;
     }
 
-    @cold
-    void put(char c) pure nothrow
+    void put(char c) pure nothrow @nogc
     {
-        const char[1] one = [c];
-        put(one[]);
+        data[used++] = c;
     }
 
     // A non-negative number, zero-padded to `width` digits.
-    @cold
-    void pad(long value, int width) pure nothrow
+    void pad(long value, int width) pure nothrow @nogc
     {
         char[20] digits;
         size_t n;
@@ -436,7 +430,6 @@ private struct Text
         put(digits[$ - n .. $]);
     }
 
-    @cold
     string text() const pure nothrow
     {
         return data[0 .. used].idup;

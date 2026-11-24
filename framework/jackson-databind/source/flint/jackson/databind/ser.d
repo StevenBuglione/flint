@@ -420,11 +420,14 @@ private void writeAnyGetter(MapperConfig config, BeanDescription bean, ref Any v
     Any[] keys, values;
     if (auto raw = cast(RawMap) map.asObject())
     {
-        keys = raw.keysAsAny();
-        foreach (ref key; keys)
-            values ~= raw.getAny(key);
+        foreach (key; raw.keysAsAny())
+        {
+            auto entry = raw.getAny(key);
+            writeAnyEntry(config, bean, key, entry, g);
+        }
+        return;
     }
-    else if (auto d = config.descriptor(map.typeName()))
+    if (auto d = config.descriptor(map.typeName()))
     {
         if (d.toKeys is null || d.toValues is null)
             throw new InvalidDefinitionException("@JsonAnyGetter property `" ~ bean.anyGetter.internalName
@@ -433,15 +436,19 @@ private void writeAnyGetter(MapperConfig config, BeanDescription bean, ref Any v
         values = d.toValues(map);
     }
     foreach (i, ref key; keys)
-    {
-        if (!includeContent(config, values[i]))
-            continue;
-        const name = keyText(config, key);
-        g.writeName(name);
-        withPath(Reference(name, -1, null, bean.descriptor.name), () {
-            serializeValue(config, values[i], null, g);
-        });
-    }
+        writeAnyEntry(config, bean, key, values[i], g);
+}
+
+// One any-getter entry as a property, unless content inclusion leaves it out.
+private void writeAnyEntry(MapperConfig config, BeanDescription bean, ref Any key, ref Any value, JsonGenerator g)
+{
+    if (!includeContent(config, value))
+        return;
+    const name = keyText(config, key);
+    g.writeName(name);
+    withPath(Reference(name, -1, null, bean.descriptor.name), () {
+        serializeValue(config, value, null, g);
+    });
 }
 
 private void writeProperty(MapperConfig config, BeanPropertyDefinition p, ref Any v, JsonGenerator g)
@@ -579,9 +586,9 @@ private bool isEmptyContainer(MapperConfig config, ref Any v)
     if (auto o = v.asObject())
     {
         if (auto c = cast(RawCollection) o)
-            return c.toAnyArray().length == 0;
+            return c.size() == 0;
         if (auto m = cast(RawMap) o)
-            return m.keysAsAny().length == 0;
+            return m.size() == 0;
         return false;
     }
     const d = v.typeName().length ? config.descriptor(v.typeName()) : null;
@@ -603,9 +610,9 @@ bool isEmptyValue(ref Any v)
     if (auto o = v.asObject())
     {
         if (auto c = cast(RawCollection) o)
-            return c.toAnyArray().length == 0;
+            return c.size() == 0;
         if (auto m = cast(RawMap) o)
-            return m.keysAsAny().length == 0;
+            return m.size() == 0;
     }
     return false;
 }
