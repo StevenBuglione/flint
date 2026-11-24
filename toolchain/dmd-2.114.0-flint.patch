@@ -2224,6 +2224,19 @@ diff -ruN a/dmd/timetrace.d b/dmd/timetrace.d
              if (name)
                  event.name = eventPrefixes[eventType] ~ name();
              else if (!event.name)
+diff --git a/build.d b/build.d
+index 7b08cb3..807a093 100755
+--- a/build.d
++++ b/build.d
+@@ -1400,7 +1400,7 @@ auto sourceFiles()
+             parse.d pragmasem.d printast.d rootobject.d safe.d
+             semantic2.d semantic3.d sideeffect.d statement.d
+             statementsem.d staticassert.d staticcond.d stmtstate.d target.d targetcompiler.d templatesem.d templateparamsem.d traits.d
+-            typesem.d typinf.d utils.d
++            typesem.d typinf.d utils.d flintaot.d
+             iasm/package.d iasm/gcc.d
+             mangle/package.d mangle/basic.d mangle/cpp.d mangle/cppwin.d
+             visitor/package.d visitor/foreachvar.d visitor/parsetime.d visitor/permissive.d visitor/postorder.d visitor/statement_rewrite_walker.d
 diff --git a/dmd/argtypes_aarch64.d b/dmd/argtypes_aarch64.d
 index 7c01e17..d040f8c 100644
 --- a/dmd/argtypes_aarch64.d
@@ -6322,6 +6335,1191 @@ index c9c6158..9ddbeb4 100644
                  if (0 && !(funcsym_p.Sfunc.Fflags & Fmember))
                  {
                      if (!cg.hasframe)
+diff --git a/dmd/flintaot.d b/dmd/flintaot.d
+new file mode 100644
+index 0000000..160ace0
+--- /dev/null
++++ b/dmd/flintaot.d
+@@ -0,0 +1,1179 @@
++/**
++ * Flint toolchain fork: native extraction for Flint AOT (`-flint-aot-extract=<request file>`).
++ *
++ * Flint AOT's extraction compile normally evaluates a CTFE describer (flint_aot_describe.d, in the flint
++ * repository's apps/flint/src/flint_tool/engine/aot/extract.d) over the modules it needs and prints their models
++ * (schema flint.aot.model/1) with pragma(msg). This module applies the same rules to the analysed AST after
++ * semantic2 and prints the same lines, byte for byte: FLINT-AOT-MODULE, FLINT-AOT-TYPE and FLINT-AOT-ANNOTATION.
++ * Every question the describer asks with a trait is asked here with the same trait (a TraitsExp evaluated in the
++ * root module's scope); the few it asks through CTFE or `__traits(compiles)` are evaluated the same way, as
++ * gagged D snippets. The describer stays the generator's fallback for compilers without this switch.
++ *
++ * The request file has one entry per line: `module <name>` (a module to describe, which the root module imports)
++ * or `known <name>` (an annotation type the generator already holds: not described again).
++ */
++module dmd.flintaot;
++
++import core.stdc.stdio;
++import core.stdc.string;
++
++import dmd.aggregate;
++import dmd.arraytypes;
++import dmd.root.string : toDString;
++import dmd.tokens : EXP, TOK;
++import dmd.astenums;
++import dmd.attrib;
++import dmd.attribsem : getAttributes;
++import dmd.common.outbuffer;
++import dmd.dclass;
++import dmd.declaration;
++import dmd.denum;
++import dmd.dinterpret : ctfeInterpret;
++import dmd.dmodule;
++import dmd.dscope;
++import dmd.dstruct;
++import dmd.dsymbol;
++import dmd.dsymbolsem : scopeCreateGlobal, dsymbolSemantic;
++import dmd.dtemplate;
++import dmd.errors : error;
++import dmd.expression;
++import dmd.expressionsem : expressionSemantic, toInteger;
++import dmd.func;
++import dmd.funcsem : functionSemantic;
++import dmd.globals;
++import dmd.id;
++import dmd.identifier;
++import dmd.location;
++import dmd.mtype;
++import dmd.parse;
++import dmd.root.file : File;
++import dmd.root.filename : FileName;
++import dmd.rootobject;
++import dmd.astcodegen;
++import dmd.traits : semanticTraits;
++import dmd.dcast : implicitConvTo;
++import dmd.typesem : stripDefaultArgs, toDsymbol, castMod, constOf, arrayOf, isUnsigned, isIntegral, isFloating, toBasetype, nextOf;
++
++
++/// The request file of `-flint-aot-extract=`, or null.
++__gshared const(char)* flintAotRequest;
++
++private __gshared
++{
++    Scope* sc;                         // the root module's scope: where the describer's questions are asked
++    Module root;
++    OutBuffer output;                  // the lines, written to stderr at the end as pragma(msg) writes them
++    bool[string] known;                // annotation types the generator holds
++    bool[string] announced;            // annotation types printed (or being printed) in this compile
++    string[const(char)*] typeRefs;     // memoized typeRef by type deco
++    int runtimeName = -1;              // whether flint.engine.aot.name.canonicalTypeName is importable
++    Identifier idT;                    // the alias a snippet names its type or symbol by
++}
++
++/// Describe the requested modules. Called after semantic2 of the root module, which imports them.
++void flintAotExtract(Module rootModule)
++{
++    import core.stdc.stdlib : exit;
++
++    root = rootModule;
++    sc = scopeCreateGlobal(root, global.errorSink);
++    idT = Identifier.idPool("__flintAotT");
++    OutBuffer text;
++    if (File.read(flintAotRequest.toDString, text)) // true on failure
++    {
++        fprintf(stderr, "Error: cannot read the Flint AOT request `%s`\n", flintAotRequest);
++        exit(1);
++    }
++    string[] modules;
++    foreach (line; splitLines(cast(const(char)[]) text[]))
++    {
++        if (line.length > 7 && line[0 .. 7] == "module ")
++            modules ~= line[7 .. $].idup;
++        else if (line.length > 6 && line[0 .. 6] == "known ")
++            known[line[6 .. $].idup] = true;
++    }
++    foreach (name; modules)
++    {
++        Module m = findModule(name);
++        if (!m)
++        {
++            error(Loc.initial, "Flint AOT: module `%.*s` is not imported by the extraction root",
++                cast(int) name.length, name.ptr);
++            continue;
++        }
++        describeModule(m, name);
++    }
++    fprintf(stderr, "%s", output.extractChars());
++}
++
++private const(char)[][] splitLines(const(char)[] s)
++{
++    const(char)[][] r;
++    size_t start = 0;
++    foreach (i, c; s)
++    {
++        if (c == '\n')
++        {
++            auto line = s[start .. i];
++            if (line.length && line[$ - 1] == '\r')
++                line = line[0 .. $ - 1];
++            if (line.length)
++                r ~= line;
++            start = i + 1;
++        }
++    }
++    if (start < s.length)
++        r ~= s[start .. $];
++    return r;
++}
++
++private Module findModule(const(char)[] name)
++{
++    foreach (m; Module.amodules)
++    {
++        if (m.toPrettyChars().toDString == name)
++            return m;
++    }
++    return null;
++}
++
++// ---------------------------------------------------------------------------------------------------------------
++// Asking DMD the describer's questions
++
++/// Evaluate `__traits(id, args)` as the describer's scope would: errors are reported, as the describer's would be.
++private Expression trait(Identifier id, RootObject[] args...)
++{
++    auto objects = new Objects();
++    foreach (a; args)
++        objects.push(a);
++    Expression r = semanticTraits(new TraitsExp(Loc.initial, id, objects), sc);
++    if (!r || r.op == EXP.error)
++        return null;
++    return r;
++}
++
++/// The same under `__traits(compiles)`: null when it does not compile, nothing reported.
++private Expression traitIfCompiles(Identifier id, RootObject[] args...)
++{
++    const gagged = global.startGagging();
++    Expression r = trait(id, args);
++    if (global.endGagging(gagged))
++        return null;
++    return r;
++}
++
++private StringExp str(const(char)[] s)
++{
++    return new StringExp(Loc.initial, s);
++}
++
++/// The strings of a tuple result (allMembers, derivedMembers, getFunctionAttributes, ...).
++private string[] strings(Expression e)
++{
++    string[] r;
++    if (!e)
++        return r;
++    if (auto t = e.isTupleExp())
++    {
++        foreach (x; *t.exps)
++        {
++            if (auto s = x.isStringExp())
++                r ~= s.peekString().idup;
++        }
++    }
++    return r;
++}
++
++private string stringOf(Expression e)
++{
++    if (e)
++    {
++        if (auto s = e.isStringExp())
++            return s.peekString().idup;
++    }
++    return null;
++}
++
++private bool truth(Expression e)
++{
++    return e && e.isIntegerExp() && e.toInteger() != 0;
++}
++
++/// Evaluate a D expression in the describer's scope, `__flintAotT` naming `type` or `symbol`. Null on failure.
++private Expression snippet(const(char)[] code, Type type, Dsymbol symbol = null, bool interpret = true)
++{
++    const gagged = global.startGagging();
++    scope (exit)
++        global.endGagging(gagged);
++    auto sds = new ScopeDsymbol();
++    sds.symtab = new DsymbolTable();
++    Scope* sc2 = sc.push(sds);
++    scope (exit)
++        sc2.pop();
++    AliasDeclaration a = type ? new AliasDeclaration(Loc.initial, idT, type)
++        : new AliasDeclaration(Loc.initial, idT, symbol);
++    sds.symtab.insert(a);
++    a.parent = sds;
++    a.dsymbolSemantic(sc2);
++    const len = code.length;
++    auto buffer = (code ~ '\0').ptr;
++    scope p = new Parser!ASTCodegen(root, buffer[0 .. len], false, global.errorSink, &global.compileEnv, false);
++    p.nextToken();
++    Expression e = p.parseExpression();
++    if (global.gaggedErrors || p.token.value != TOK.endOfFile)
++        return null;
++    e = e.expressionSemantic(sc2);
++    if (!e || e.op == EXP.error)
++        return null;
++    if (interpret)
++    {
++        e = e.ctfeInterpret();
++        if (!e || e.op == EXP.error)
++            return null;
++    }
++    return e;
++}
++
++/// The value of an expression, evaluated at compile time (an attribute, a default value).
++private Expression evaluated(Expression e)
++{
++    if (!e || e.isTypeExp())
++        return e;
++    auto r = e.expressionSemantic(sc).ctfeInterpret();
++    return r && r.op != EXP.error ? r : null;
++}
++
++// ---------------------------------------------------------------------------------------------------------------
++// JSON pieces, spelled as the describer spells them
++
++private void quote(ref OutBuffer b, const(char)[] s)
++{
++    enum hex = "0123456789abcdef";
++    b.writeByte('"');
++    foreach (char c; s)
++    {
++        if (c == '"' || c == '\\')
++        {
++            b.writeByte('\\');
++            b.writeByte(c);
++        }
++        else if (c == '\n')
++            b.writestring("\\n");
++        else if (c == '\t')
++            b.writestring("\\t");
++        else if (c < 0x20)
++        {
++            b.writestring("\\u00");
++            b.writeByte(hex[c >> 4]);
++            b.writeByte(hex[c & 15]);
++        }
++        else
++            b.writeByte(c);
++    }
++    b.writeByte('"');
++}
++
++private string quoted(const(char)[] s)
++{
++    OutBuffer b;
++    quote(b, s);
++    return b.extractSlice().idup;
++}
++
++private string number(long v)
++{
++    if (v == long.min)
++        return "-9223372036854775808";
++    char[24] buf;
++    const n = snprintf(buf.ptr, buf.length, "%lld", v);
++    return buf[0 .. n].idup;
++}
++
++private string unsigned(ulong v)
++{
++    char[24] buf;
++    const n = snprintf(buf.ptr, buf.length, "%llu", v);
++    return buf[0 .. n].idup;
++}
++
++// ---------------------------------------------------------------------------------------------------------------
++// Symbols
++
++/// `__traits(parent, s)`, with the trait's special cases.
++private Dsymbol parentOf(Dsymbol s)
++{
++    if (auto ad = s.isAggregateDeclaration())
++    {
++        if (ad.isNested())
++        {
++            if (auto p = s.toParent())
++            {
++                if (auto ti = p.isTemplateInstance())
++                {
++                    s = p;
++                    if (ti.tempdecl)
++                        s = ti.tempdecl;
++                }
++            }
++        }
++    }
++    if (auto fd = s.isFuncDeclaration())
++        s = fd.toAliasFunc();
++    if (!s.isImport())
++        s = s.toParent();
++    return s;
++}
++
++/// The describer's moduleOf: the qualified name of the module declaring s.
++private string moduleOf(Dsymbol s)
++{
++    while (s && !s.isModule())
++        s = parentOf(s);
++    if (!s)
++        return "";
++    string prefix;
++    for (Dsymbol p = s.toParent(); p && p.isPackage() && !p.isModule(); p = p.toParent())
++        prefix = p.ident.toString().idup ~ "." ~ prefix;
++    return prefix ~ s.ident.toString().idup;
++}
++
++private string fullyQualifiedName(RootObject o)
++{
++    return stringOf(trait(Id.fullyQualifiedName, o));
++}
++
++/// A template's qualified name without its parameter list.
++private string templateName(string name)
++{
++    foreach (i, char c; name)
++    {
++        if (c == '(')
++            return name[0 .. i];
++    }
++    return name;
++}
++
++/// `is(T == X!Args, alias X, Args...)`: the instance a struct, class or interface type was made by. The pattern
++/// matches through every qualifier (shared(S!int) gives S and int), so the qualifier is not looked at.
++private TemplateInstance instanceOf(Type t)
++{
++    AggregateDeclaration ad;
++    if (auto ts = t.isTypeStruct())
++        ad = ts.sym;
++    else if (auto tc = t.isTypeClass())
++        ad = tc.sym;
++    if (!ad || !ad.parent)
++        return null;
++    return ad.parent.isTemplateInstance();
++}
++
++private bool isAggregateOrEnum(Type t)
++{
++    return t.isTypeStruct() || t.isTypeClass() || t.isTypeEnum();
++}
++
++// ---------------------------------------------------------------------------------------------------------------
++// Types: typeName, typeModules, typeRef
++
++/// The describer's typeName: the D source spelling of a type.
++private string typeName(Type t)
++{
++    if (t.equals(Type.tstring))
++        return "string";
++    if (t.equals(Type.twstring))
++        return "wstring";
++    if (t.equals(Type.tdstring))
++        return "dstring";
++    switch (t.mod)
++    {
++        case MODFlags.immutable_:
++            return "immutable(" ~ typeName(t.castMod(0)) ~ ")";
++        case MODFlags.shared_ | MODFlags.const_:
++            return "shared(const(" ~ typeName(t.castMod(0)) ~ "))";
++        case MODFlags.const_:
++            return "const(" ~ typeName(t.castMod(0)) ~ ")";
++        case MODFlags.wild:
++            return "inout(" ~ typeName(t.castMod(0)) ~ ")";
++        case MODFlags.shared_ | MODFlags.wild:
++            return "inout(" ~ typeName(t.castMod(MODFlags.shared_)) ~ ")";
++        case MODFlags.shared_:
++            return "shared(" ~ typeName(t.castMod(0)) ~ ")";
++        case MODFlags.shared_ | MODFlags.wildconst:
++            return "shared(" ~ typeName(t.castMod(MODFlags.wildconst)) ~ ")";
++        case 0:
++            break;
++        default:
++            return t.toChars().toDString.idup;
++    }
++    if (auto ta = t.isTypeAArray())
++        return typeName(ta.next) ~ "[" ~ typeName(ta.index) ~ "]";
++    if (auto td = t.isTypeDArray())
++        return typeName(td.next) ~ "[]";
++    if (auto ts = t.isTypeSArray())
++        return typeName(ts.next) ~ "[" ~ unsigned(ts.dim.toInteger()) ~ "]";
++    if (auto tp = t.isTypePointer())
++        return typeName(tp.next) ~ "*";
++    if (auto ti = instanceOf(t))
++        return templateName(fullyQualifiedName(ti.tempdecl)) ~ "!(" ~ argumentNames(ti) ~ ")";
++    if (isAggregateOrEnum(t))
++        return fullyQualifiedName(t);
++    return t.toChars().toDString.idup;
++}
++
++private string argumentNames(TemplateInstance ti)
++{
++    string r;
++    if (!ti.tiargs)
++        return r;
++    foreach (i, o; *ti.tiargs)
++    {
++        if (i)
++            r ~= ", ";
++        if (auto t = isType(o))
++            r ~= typeName(t);
++        else
++            r ~= o.toChars().toDString.idup;
++    }
++    return r;
++}
++
++private string joinModules(string a, string b)
++{
++    if (!a.length)
++        return b;
++    if (!b.length)
++        return a;
++    return a ~ "," ~ b;
++}
++
++/// The describer's typeModules: the modules declaring the named parts of a type, as a JSON array body.
++private string typeModules(Type t)
++{
++    if (t.equals(Type.tstring) || t.equals(Type.twstring) || t.equals(Type.tdstring))
++        return "";
++    switch (t.mod)
++    {
++        case 0:
++            break;
++        case MODFlags.shared_ | MODFlags.wild:
++            return typeModules(t.castMod(MODFlags.shared_));
++        case MODFlags.shared_ | MODFlags.wildconst:
++            return typeModules(t.castMod(MODFlags.wildconst));
++        case MODFlags.immutable_, MODFlags.const_, MODFlags.wild, MODFlags.shared_,
++            MODFlags.shared_ | MODFlags.const_:
++            return typeModules(t.castMod(0));
++        default:
++            return "";
++    }
++    if (auto ta = t.isTypeAArray())
++        return joinModules(typeModules(ta.next), typeModules(ta.index));
++    if (auto td = t.isTypeDArray())
++        return typeModules(td.next);
++    if (auto ts = t.isTypeSArray())
++        return typeModules(ts.next);
++    if (auto tp = t.isTypePointer())
++        return typeModules(tp.next);
++    if (auto ti = instanceOf(t))
++    {
++        string r = quoted(moduleOf(ti.tempdecl));
++        if (ti.tiargs)
++        {
++            foreach (o; *ti.tiargs)
++            {
++                if (auto at = isType(o))
++                    r = joinModules(r, typeModules(at));
++            }
++        }
++        return r;
++    }
++    if (isAggregateOrEnum(t))
++        return quoted(moduleOf(t.toDsymbol(null)));
++    return "";
++}
++
++/// `is(T : const(char)[])`.
++private bool isCharArray(Type t)
++{
++    return t.implicitConvTo(Type.tchar.constOf().arrayOf()) != MATCH.nomatch;
++}
++
++/// The describer's typeRef, memoized as typeRefOf.
++private string typeRef(Type t)
++{
++    // A type passed to a template (typeRefOf!T) loses parameter names, default arguments and UDAs.
++    t = stripDefaultArgs(t);
++    const(char)* key = t.deco;
++    if (key)
++    {
++        if (auto p = key in typeRefs)
++            return *p;
++    }
++    OutBuffer b;
++    b.writestring(`{"name":`);
++    quote(b, typeName(t));
++    b.writestring(`,"modules":[`);
++    b.writestring(typeModules(t));
++    b.writestring("]");
++    // is(T == E[], E) also matches a qualified array, the qualifier carried into E (const(T[]) gives const(T)).
++    if (t.isTypeDArray() && !isCharArray(t))
++    {
++        b.writestring(`,"element":`);
++        b.writestring(typeRef(t.nextOf()));
++    }
++    if (auto ti = instanceOf(t))
++    {
++        b.writestring(`,"template":`);
++        quote(b, templateName(fullyQualifiedName(ti.tempdecl)));
++        b.writestring(`,"arguments":[`);
++        if (ti.tiargs)
++        {
++            foreach (i, o; *ti.tiargs)
++            {
++                if (i)
++                    b.writeByte(',');
++                if (auto at = isType(o))
++                    b.writestring(typeRef(at));
++                else
++                {
++                    b.writestring(`{"name":`);
++                    quote(b, o.toChars().toDString);
++                    b.writestring(`,"modules":[]}`);
++                }
++            }
++        }
++        b.writestring("]");
++        if (hasRuntimeName())
++        {
++            const fqn = stringOf(traitIfCompiles(Id.fullyQualifiedName, t));
++            if (fqn.length)
++            {
++                if (auto c = canonicalTypeName(fqn))
++                {
++                    b.writestring(`,"canonical":`);
++                    quote(b, c);
++                }
++            }
++        }
++    }
++    {
++        // The kind of the type itself, through qualifiers: is(T == class) holds for const(C) too.
++        Type u = t.castMod(0);
++        if (u.isTypeClass())
++            b.writestring(u.isTypeClass().sym.isInterfaceDeclaration() ? `,"kind":"interface"` : `,"kind":"class"`);
++        else if (u.isTypeStruct())
++            b.writestring(`,"kind":"struct"`);
++        else if (u.isTypeEnum())
++            b.writestring(`,"kind":"enum"`);
++    }
++    b.writestring("}");
++    string r = b.extractSlice().idup;
++    if (key)
++        typeRefs[key] = r;
++    return r;
++}
++
++/// Whether the closure has the runtime's canonicalTypeName (`import flint.engine.aot.name : canonicalTypeName`).
++private bool hasRuntimeName()
++{
++    if (runtimeName < 0)
++        runtimeName = truth(snippet(`__traits(compiles, { import flint.engine.aot.name : canonicalTypeName; })`,
++            Type.tint32)) ? 1 : 0;
++    return runtimeName == 1;
++}
++
++private string canonicalTypeName(string fqn)
++{
++    auto e = snippet("(() { import flint.engine.aot.name : canonicalTypeName; return canonicalTypeName("
++        ~ quoted(fqn) ~ "); })()", Type.tint32);
++    return stringOf(e);
++}
++
++// ---------------------------------------------------------------------------------------------------------------
++// Values and attributes
++
++/// `value(T)(T v)`: the JSON of a compile-time value whose static type is t.
++private void value(ref OutBuffer b, Type t, Expression v)
++{
++    if (auto te = t.isTypeEnum())
++    {
++        if (t.mod == 0)
++        {
++            foreach (member; strings(trait(Id.allMembers, te.sym)))
++            {
++                auto m = trait(Id.getMember, te.sym, str(member));
++                if (m && equal(v, m))
++                {
++                    b.writestring(`{"enum":`);
++                    quote(b, typeName(t));
++                    b.writestring(`,"modules":[`);
++                    b.writestring(typeModules(t));
++                    b.writestring(`],"name":`);
++                    quote(b, member);
++                    b.writestring("}");
++                    return;
++                }
++            }
++            b.writestring("null");
++            return;
++        }
++    }
++    if (isCharArray(t))
++    {
++        if (!v || v.isNullExp())
++            b.writestring("null");
++        else if (auto s = v.isStringExp())
++            quote(b, s.peekString());
++        else
++            b.writestring("null");
++        return;
++    }
++    Type u = t.toBasetype();
++    if (!t.isTypeEnum())
++    {
++        switch (u.ty)
++        {
++            case Tbool:
++                b.writestring(v && v.toInteger() ? "true" : "false");
++                return;
++            case Tchar, Twchar, Tdchar:
++                b.writestring(`{"char":`);
++                b.writestring(number(v ? cast(long) v.toInteger() : 0));
++                b.writestring("}");
++                return;
++            default:
++                break;
++        }
++        if (u.isUnsigned())
++        {
++            b.writestring(unsigned(v ? v.toInteger() : 0));
++            return;
++        }
++        if (u.isIntegral())
++        {
++            b.writestring(number(v ? cast(long) v.toInteger() : 0));
++            return;
++        }
++        if (u.isFloating())
++        {
++            // The describer quotes v.stringof, which is the parameter's name.
++            b.writestring(`{"float":"v"}`);
++            return;
++        }
++    }
++    if (auto ta = arrayElement(t))
++    {
++        b.writeByte('[');
++        if (auto al = v ? v.isArrayLiteralExp() : null)
++        {
++            foreach (i; 0 .. al.elements.length)
++            {
++                if (i)
++                    b.writeByte(',');
++                value(b, ta, al[i]);
++            }
++        }
++        b.writeByte(']');
++        return;
++    }
++    if (auto ts = t.isTypeStruct())
++    {
++        if (isEnumLike(t))
++        {
++            b.writestring(`{"enum":`);
++            quote(b, typeName(t));
++            b.writestring(`,"modules":[`);
++            b.writestring(typeModules(t));
++            b.writestring(`],"name":`);
++            quote(b, enumLikeName(v));
++            b.writestring("}");
++            return;
++        }
++        annotationValue(b, t, v);
++        return;
++    }
++    b.writestring("null");
++}
++
++/// `is(T : E[], E)`: the element type when t converts to a dynamic array.
++private Type arrayElement(Type t)
++{
++    Type u = t.toBasetype();
++    if (auto ts = u.isTypeSArray())
++        return ts.next;
++    if (auto td = u.isTypeDArray())
++        return td.next;
++    return null;
++}
++
++private bool equal(Expression a, Expression b)
++{
++    if (!a || !b)
++        return false;
++    auto e = new EqualExp(EXP.equal, Loc.initial, a, b);
++    auto r = e.expressionSemantic(sc).ctfeInterpret();
++    if (!r || r.op == EXP.error)
++        return false;
++    return truth(r);
++}
++
++private __gshared bool[const(char)*] enumLike;
++
++/// A Java enum with methods, ported as a struct with static constants: named by name().
++private bool isEnumLike(Type t)
++{
++    if (auto p = t.deco in enumLike)
++        return *p;
++    const r = truth(snippet(`__traits(compiles, { string n = __flintAotT.init.name(); int o = __flintAotT.init.ordinal(); })`
++        ~ ` && __traits(compiles, __traits(getMember, __flintAotT, __flintAotT.init.name()))`, t));
++    enumLike[t.deco] = r;
++    return r;
++}
++
++private string enumLikeName(Expression v)
++{
++    if (!v)
++        return null;
++    auto call = new CallExp(Loc.initial, new DotIdExp(Loc.initial, v, Identifier.idPool("name")));
++    auto r = call.expressionSemantic(sc).ctfeInterpret();
++    if (!r || r.op == EXP.error)
++        return null;
++    return stringOf(r);
++}
++
++/// `annotationValue(T)(T v)`: an annotation instance, announcing its type.
++private void annotationValue(ref OutBuffer b, Type t, Expression v)
++{
++    auto sd = t.isTypeStruct().sym;
++    announce(t);
++    b.writestring(`{"type":`);
++    quote(b, typeName(t));
++    b.writestring(`,"modules":[`);
++    b.writestring(typeModules(t));
++    b.writestring(`],"values":{`);
++    auto sl = v ? v.isStructLiteralExp() : null;
++    foreach (i, field; sd.fields)
++    {
++        if (i)
++            b.writeByte(',');
++        quote(b, field.ident.toString());
++        b.writeByte(':');
++        Expression e = sl && sl.elements && i < sl.elements.length ? (*sl.elements)[i] : null;
++        value(b, field.type, e);
++    }
++    b.writestring("}}");
++}
++
++/// The default value of a struct type (`T.init`), evaluated.
++private StructLiteralExp initOf(Type t)
++{
++    auto e = new DotIdExp(Loc.initial, new TypeExp(Loc.initial, t), Id._init);
++    auto r = e.expressionSemantic(sc).ctfeInterpret();
++    if (!r || r.op == EXP.error)
++        return null;
++    return r.isStructLiteralExp();
++}
++
++/// `attributes(attrs...)`: a list of attributes.
++private void attributes(ref OutBuffer b, UserAttributeDeclaration udad)
++{
++    b.writeByte('[');
++    if (udad)
++    {
++        auto exps = new TupleExp(Loc.initial, udad.getAttributes());
++        Expression tup = exps.expressionSemantic(sc);
++        bool first = true;
++        if (auto te = tup ? tup.isTupleExp() : null)
++        {
++            foreach (a; *te.exps)
++            {
++                if (!first)
++                    b.writeByte(',');
++                first = false;
++                attribute(b, a);
++            }
++        }
++    }
++    b.writeByte(']');
++}
++
++private void attribute(ref OutBuffer b, Expression a)
++{
++    if (auto te = a.isTypeExp())
++    {
++        Type t = te.type;
++        if (t.isTypeStruct())
++        {
++            annotationValue(b, t, initOf(t));
++            return;
++        }
++        b.writestring(`{"type":`);
++        quote(b, typeName(t));
++        b.writestring(`,"modules":[`);
++        b.writestring(typeModules(t));
++        b.writestring(`],"values":{}}`);
++        return;
++    }
++    auto v = evaluated(a);
++    if (v && v.type && v.type.isTypeStruct())
++    {
++        annotationValue(b, v.type, v);
++        return;
++    }
++    b.writestring(`{"value":`);
++    value(b, a.type ? a.type : (v ? v.type : Type.tint32), v);
++    b.writestring("}");
++}
++
++/// `announce!T`: print an annotation type once per compile, unless the generator holds it.
++private void announce(Type t)
++{
++    const name = typeName(t);
++    if (name in announced)
++        return;
++    announced[name] = true;
++    if (name in known)
++        return;
++    auto line = describeAnnotationType(t);
++    output.writestring("FLINT-AOT-ANNOTATION ");
++    output.writestring(line);
++    output.writeByte('\n');
++}
++
++private string describeAnnotationType(Type t)
++{
++    auto sd = t.isTypeStruct().sym;
++    OutBuffer b;
++    b.writestring(`{"name":`);
++    quote(b, typeName(t));
++    b.writestring(`,"modules":[`);
++    b.writestring(typeModules(t));
++    b.writestring(`],"meta":`);
++    attributes(b, sd.userAttribDecl);
++    b.writestring(`,"fields":[`);
++    auto init = initOf(t);
++    foreach (i, field; sd.fields)
++    {
++        if (i)
++            b.writeByte(',');
++        b.writestring(`{"name":`);
++        quote(b, field.ident.toString());
++        b.writestring(`,"type":`);
++        b.writestring(typeRef(field.type));
++        b.writestring(`,"default":`);
++        value(b, field.type, init && init.elements && i < init.elements.length ? (*init.elements)[i] : null);
++        b.writestring(`,"annotations":`);
++        attributes(b, field.userAttribDecl);
++        b.writestring("}");
++    }
++    b.writestring("]}");
++    return b.extractSlice().idup;
++}
++
++// ---------------------------------------------------------------------------------------------------------------
++// Modules and types
++
++private void describeModule(Module m, string name)
++{
++    output.writestring("FLINT-AOT-MODULE ");
++    output.writestring(name);
++    if (truth(trait(Id.hasMember, m, str("flintAotDescriptors"))))
++        output.writestring(" descriptors");
++    output.writeByte('\n');
++    foreach (member; strings(trait(Id.allMembers, m)))
++    {
++        if (auto t = localType(m, member, name))
++            describeTypes(t, name);
++    }
++}
++
++/// `isLocalType!(M, member, moduleName)`: the member's type when it is a class, struct, interface, enum or union
++/// declared in M itself.
++private Type localType(Dsymbol scopeSymbol, string member, string moduleName = null)
++{
++    auto e = traitIfCompiles(Id.getMember, scopeSymbol, str(member));
++    if (!e)
++        return null;
++    auto te = e.isTypeExp();
++    if (!te || !isAggregateOrEnum(te.type))
++        return null;
++    Dsymbol s = te.type.toDsymbol(null);
++    if (!s)
++        return null;
++    Dsymbol p = parentOf(s);
++    if (!p)
++        return null;
++    if (p == scopeSymbol)
++        return te.type;
++    if (moduleName.length && fullyQualifiedName(p) == moduleName)
++        return te.type;
++    return null;
++}
++
++private void describeTypes(Type t, string moduleName)
++{
++    auto line = describeType(t);
++    output.writestring("FLINT-AOT-TYPE ");
++    output.writestring(moduleName);
++    output.writeByte(' ');
++    output.writestring(line);
++    output.writeByte('\n');
++    if (t.isTypeEnum())
++        return;
++    Dsymbol s = t.toDsymbol(null);
++    foreach (member; strings(trait(Id.derivedMembers, s)))
++    {
++        if (auto nested = localType(s, member))
++            describeTypes(nested, moduleName);
++    }
++}
++
++private void location(ref OutBuffer b, Dsymbol s)
++{
++    auto e = trait(Id.getLocation, s);
++    auto te = e ? e.isTupleExp() : null;
++    b.writestring(`,"file":`);
++    quote(b, te ? stringOf((*te.exps)[0]) : "");
++    b.writestring(`,"line":`);
++    b.writestring(number(te ? cast(long) (*te.exps)[1].toInteger() : 0));
++}
++
++private string visibility(Dsymbol s)
++{
++    return stringOf(trait(Id.getVisibility, s));
++}
++
++private string supertypes(ClassDeclaration cd)
++{
++    string r;
++    if (!cd.baseclasses)
++        return r;
++    foreach (i, bc; *cd.baseclasses)
++    {
++        if (i)
++            r ~= ",";
++        r ~= typeRef(bc.type);
++        if (auto bcd = bc.type.isTypeClass())
++        {
++            const more = supertypes(bcd.sym);
++            if (more.length)
++                r ~= "," ~ more;
++        }
++    }
++    return r;
++}
++
++private string supertypeNames(ClassDeclaration cd)
++{
++    string r;
++    if (!cd.baseclasses)
++        return r;
++    foreach (bc; *cd.baseclasses)
++    {
++        auto bcd = bc.type.isTypeClass();
++        if (bcd && bcd.sym == ClassDeclaration.object)
++            continue;
++        r ~= (r.length ? "," : "") ~ quoted(typeName(bc.type));
++        if (bcd)
++        {
++            const more = supertypeNames(bcd.sym);
++            if (more.length)
++                r ~= "," ~ more;
++        }
++    }
++    return r;
++}
++
++private string describeType(Type t)
++{
++    Dsymbol s = t.toDsymbol(null);
++    auto cd = t.isTypeClass() ? t.isTypeClass().sym : null;
++    const isInterface = cd && cd.isInterfaceDeclaration();
++    const kind = t.isTypeEnum() ? "enum" : cd ? (isInterface ? "interface" : "class") : "struct";
++    OutBuffer b;
++    b.writestring(`{"name":`);
++    quote(b, s.ident.toString());
++    b.writestring(`,"fqn":`);
++    quote(b, typeName(t));
++    b.writestring(`,"kind":"`);
++    b.writestring(kind);
++    b.writestring(`"`);
++    location(b, s);
++    b.writestring(`,"visibility":`);
++    quote(b, visibility(s));
++    b.writestring(`,"annotations":`);
++    attributes(b, s.userAttribDecl);
++    if (cd && !isInterface)
++    {
++        b.writestring(`,"abstract":`);
++        b.writestring(truth(trait(Id.isAbstractClass, t)) ? "true" : "false");
++        b.writestring(`,"final":`);
++        b.writestring(truth(trait(Id.isFinalClass, t)) ? "true" : "false");
++    }
++    if (cd)
++    {
++        b.writestring(`,"supertypes":[`);
++        b.writestring(supertypes(cd));
++        b.writestring("]");
++    }
++    if (auto te = t.isTypeEnum())
++    {
++        b.writestring(`,"constants":[`);
++        foreach (i, member; strings(trait(Id.allMembers, te.sym)))
++        {
++            if (i)
++                b.writeByte(',');
++            quote(b, member);
++        }
++        b.writestring("]");
++    }
++    else
++    {
++        auto ad = s.isAggregateDeclaration();
++        b.writestring(`,"fields":[`);
++        size_t index = 0;
++        foreach (field; ad.fields)
++        {
++            if (cd && field.isThisDeclaration())
++                continue;
++            if (index)
++                b.writeByte(',');
++            b.writestring(`{"name":`);
++            quote(b, field.ident.toString());
++            b.writestring(`,"index":`);
++            b.writestring(number(index));
++            b.writestring(`,"type":`);
++            b.writestring(typeRef(field.type));
++            b.writestring(`,"visibility":`);
++            quote(b, visibility(field));
++            b.writestring(`,"annotations":`);
++            attributes(b, field.userAttribDecl);
++            b.writestring("}");
++            index++;
++        }
++        b.writestring(`],"methods":[`);
++        bool first = true;
++        auto declared = strings(trait(Id.derivedMembers, s));
++        auto members = cd ? strings(trait(Id.allMembers, s)) : declared;
++        foreach (member; members)
++        {
++            if (member == "this" || member == "Monitor" || member == "factory")
++                continue;
++            if (member.length >= 2 && member[0 .. 2] == "__" && member != "__ctor")
++                continue;
++            auto overloads = traitIfCompiles(Id.getOverloads, s, str(member));
++            if (!overloads)
++                continue;
++            auto te = overloads.isTupleExp();
++            if (!te)
++                continue;
++            bool inherited = true;
++            foreach (d; declared)
++            {
++                if (d == member)
++                {
++                    inherited = false;
++                    break;
++                }
++            }
++            foreach (index2, o; *te.exps)
++            {
++                FuncDeclaration fd = overloadFunction(o);
++                if (!fd)
++                    continue;
++                if (parentOf(fd) == ClassDeclaration.object)
++                    continue;
++                if (!first)
++                    b.writeByte(',');
++                first = false;
++                function_(b, member, fd, inherited);
++            }
++        }
++        b.writestring("]");
++    }
++    b.writestring("}");
++    return b.extractSlice().idup;
++}
++
++private FuncDeclaration overloadFunction(Expression e)
++{
++    if (auto ve = e.isVarExp())
++        return ve.var.isFuncDeclaration();
++    if (auto dve = e.isDotVarExp())
++        return dve.var.isFuncDeclaration();
++    return null;
++}
++
++private void words(ref OutBuffer b, Expression e)
++{
++    b.writeByte('[');
++    foreach (i, w; strings(e))
++    {
++        if (i)
++            b.writeByte(',');
++        quote(b, w);
++    }
++    b.writeByte(']');
++}
++
++private void function_(ref OutBuffer b, string name, FuncDeclaration fd, bool inherited)
++{
++    fd.functionSemantic();
++    b.writestring(`{"name":`);
++    quote(b, name);
++    location(b, fd);
++    b.writestring(`,"visibility":`);
++    quote(b, visibility(fd));
++    b.writestring(`,"static":`);
++    b.writestring(truth(trait(Id.isStaticFunction, fd)) ? "true" : "false");
++    b.writestring(`,"final":`);
++    b.writestring(truth(trait(Id.isFinalFunction, fd)) ? "true" : "false");
++    b.writestring(`,"abstract":`);
++    b.writestring(truth(trait(Id.isAbstractFunction, fd)) ? "true" : "false");
++    b.writestring(`,"override":`);
++    b.writestring(truth(trait(Id.isOverrideFunction, fd)) ? "true" : "false");
++    b.writestring(`,"annotations":`);
++    attributes(b, fd.userAttribDecl);
++    // typeof(F) of a @property function is the type of calling it, not a function type: the describer then lists
++    // neither a return type nor parameters.
++    auto tf = fd.type ? fd.type.isTypeFunction() : null;
++    if (tf && tf.isProperty)
++        tf = null;
++    if (tf && tf.next)
++    {
++        b.writestring(`,"returns":`);
++        b.writestring(typeRef(tf.next));
++        if (auto rc = tf.next.isTypeClass())
++        {
++            b.writestring(`,"returnSupertypes":[`);
++            b.writestring(supertypeNames(rc.sym));
++            b.writestring("]");
++        }
++    }
++    b.writestring(`,"attributes":`);
++    words(b, trait(Id.getFunctionAttributes, fd));
++    b.writestring(`,"parameters":[`);
++    if (tf)
++    {
++        foreach (i; 0 .. tf.parameterList.length)
++        {
++            auto p = tf.parameterList[i];
++            if (i)
++                b.writeByte(',');
++            b.writestring(`{"name":`);
++            if (p.ident)
++                quote(b, p.ident.toString());
++            else
++                quote(b, "_param_" ~ number(i));
++            b.writestring(`,"type":`);
++            b.writestring(typeRef(p.type));
++            b.writestring(`,"storage":`);
++            words(b, trait(Id.getParameterStorageClasses, fd, new IntegerExp(Loc.initial, i, Type.tsize_t)));
++            b.writestring(`,"annotations":`);
++            attributes(b, p.userAttribDecl);
++            b.writestring("}");
++        }
++    }
++    b.writestring(`],"inherited":`);
++    b.writestring(inherited ? "true" : "false");
++    b.writestring("}");
++}
 diff --git a/dmd/glue/e2ir.d b/dmd/glue/e2ir.d
 index ca39388..83cfc58 100644
 --- a/dmd/glue/e2ir.d
@@ -6940,10 +8138,24 @@ index 820f7b3..84baf07 100644
          // merge #define's with output
          argv.push("-dD");       // https://gcc.gnu.org/onlinedocs/cpp/Invocation.html#index-dD
 diff --git a/dmd/main.d b/dmd/main.d
-index b0c2fd7..9d092df 100644
+index b0c2fd7..22961b9 100644
 --- a/dmd/main.d
 +++ b/dmd/main.d
-@@ -1179,7 +1179,8 @@ bool parseCommandlineAndConfig(const(char)[][] argv, out Param params, ref Strin
+@@ -761,6 +761,13 @@ private int tryMain(const(char)[][] argv, out Param params)
+     if (global.errors)
+         removeHdrFilesAndFail(params.dihdr.doOutput, modules);
+ 
++    // Flint: native extraction for Flint AOT, over the analysed modules (dmd.flintaot).
++    {
++        import dmd.flintaot : flintAotRequest, flintAotExtract;
++        if (flintAotRequest && modules.length)
++            flintAotExtract(modules[0]);
++    }
++
+     // Do pass 3 semantic analysis
+     foreach (m; modules)
+     {
+@@ -1179,7 +1186,8 @@ bool parseCommandlineAndConfig(const(char)[][] argv, out Param params, ref Strin
      if (char* p = getenv("DDOCFILE"))
          global.params.ddoc.files.shift(p);
  
@@ -6953,6 +8165,23 @@ index b0c2fd7..9d092df 100644
          eSink.error(Loc.initial, "the architecture must not be changed in the %s section of %.*s",
                envsection.ptr, cast(int)global.inifilename.length, global.inifilename.ptr);
  
+diff --git a/dmd/mars.d b/dmd/mars.d
+index 5fbbc3d..9750a43 100644
+--- a/dmd/mars.d
++++ b/dmd/mars.d
+@@ -951,6 +951,12 @@ bool parseCommandLine(const ref Strings arguments, const size_t argc, out Param
+             driverParams.map = true;
+         else if (arg == "-multiobj")
+             params.multiobj = true;
++        else if (startsWith(p + 1, "flint-aot-extract="))
++        {
++            // Flint: describe modules for Flint AOT natively (dmd.flintaot).
++            import dmd.flintaot : flintAotRequest;
++            flintAotRequest = p + "-flint-aot-extract=".length;
++        }
+         else if (startsWith(p + 1, "mixin="))
+         {
+             auto tmp = p + 6 + 1;
 diff --git a/dmd/target.d b/dmd/target.d
 index e697db0..79a62cc 100644
 --- a/dmd/target.d
@@ -6991,3 +8220,16 @@ index e697db0..79a62cc 100644
  
              TypeTuple tt = toArgTypes_aarch64(tn);
              if (!tt)
+diff --git a/dmd/typesem.d b/dmd/typesem.d
+index 2a01382..59c5136 100644
+--- a/dmd/typesem.d
++++ b/dmd/typesem.d
+@@ -9487,7 +9487,7 @@ Expression semanticLength(Scope* sc, TupleDeclaration tup, Expression exp)
+  *      `t` if no parameter identifiers or default arguments found, otherwise a new type that is
+  *      the same as t but with no parameter identifiers or default arguments.
+  */
+-Type stripDefaultArgs(Type t)
++public Type stripDefaultArgs(Type t) // Flint: public for dmd.flintaot
+ {
+     static Parameters* stripParams(Parameters* parameters)
+     {

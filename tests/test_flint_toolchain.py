@@ -47,11 +47,12 @@ class ForkSourcesTests(unittest.TestCase):
         # hdrgen.d and timetrace.d: -ftime-trace event naming without semantic side effects.
         # errors.d, flintdiag.d and mars.d: -verror-hide, confined to the diagnostic sink (ADR-027 section 5).
         # templatesem.d: a served compile emits the template instances an in-process one would (platform prelude).
+        # flintaot.d and typesem.d: -flint-aot-extract, an output switch like -X (stripDefaultArgs made public).
         files = [f for f in patched_files(TOOLCHAIN / 'dmd-2.114.0-flint.patch') if f not in AARCH64_FILES]
         self.assertEqual(files,
-                         ['build.d', 'dmd/cond.d', 'dmd/errors.d', 'dmd/expressionsem.d', 'dmd/flintdiag.d',
-                          'dmd/flintlink.d', 'dmd/flintserver.d', 'dmd/hdrgen.d', 'dmd/link.d', 'dmd/main.d',
-                          'dmd/mars.d', 'dmd/templatesem.d', 'dmd/timetrace.d'])
+                         ['build.d', 'dmd/cond.d', 'dmd/errors.d', 'dmd/expressionsem.d', 'dmd/flintaot.d',
+                          'dmd/flintdiag.d', 'dmd/flintlink.d', 'dmd/flintserver.d', 'dmd/hdrgen.d', 'dmd/link.d',
+                          'dmd/main.d', 'dmd/mars.d', 'dmd/templatesem.d', 'dmd/timetrace.d', 'dmd/typesem.d'])
 
     def test_dmd_patch_leaves_out_local_classes_on_request(self):
         # ADR-030 section 5: -fno-moduleinfo-localclasses, named as LDC's, empties ModuleInfo.localClasses.
@@ -175,8 +176,8 @@ class FlintDubTests(unittest.TestCase):
 
 def fork_dmd():
     """The installed DMD fork when it serves a platform prelude (FLINT_DMD_SERVER_PRELUDE), else None."""
-    for host in ('linux', 'osx'):
-        dmd = ROOT / '.tools' / 'dmd2' / host / 'bin64' / 'dmd'
+    for host, exe in (('linux', 'dmd'), ('osx', 'dmd'), ('windows', 'dmd.exe')):
+        dmd = ROOT / '.tools' / 'dmd2' / host / 'bin64' / exe
         if dmd.is_file() and b'FLINT_DMD_SERVER_PRELUDE' in dmd.read_bytes():
             return dmd
     return None
@@ -330,10 +331,140 @@ class CompileServerPreludeTests(unittest.TestCase):
         self.assertEqual(self.sockets(), [])
 
 
+def aot_extract_dmd():
+    """The installed DMD fork when it has native Flint AOT extraction (-flint-aot-extract=), else None."""
+    for host, exe in (('linux', 'dmd'), ('osx', 'dmd'), ('windows', 'dmd.exe')):
+        dmd = ROOT / '.tools' / 'dmd2' / host / 'bin64' / exe
+        if dmd.is_file() and b'cannot read the Flint AOT request' in dmd.read_bytes():
+            return dmd
+    return None
+
+
+class AotExtractionTests(unittest.TestCase):
+    """-flint-aot-extract (design 3A): the fork prints the lines Flint AOT's CTFE describer prints, byte for byte,
+    from the analysed AST. The describer is taken from extract.d, so the two cannot drift apart unnoticed."""
+
+    FIXTURE = {
+        'fx/ann.d': '''module fx.ann;
+enum Level { low, high = 5 }
+struct Meta { string note = "m"; }
+@Meta struct Mark { string value = "v\\t\\"q\\""; bool on = true; int count = -3; uint size = 7; char c = 'x';
+    double ratio = 1.5; Level level = Level.high; string[] tags = ["a", "b"]; string none; }
+struct Known { int x; }
+struct Kind
+{
+    string id = "ALPHA";
+    string name() const { return id; }
+    int ordinal() const { return 0; }
+    static immutable Kind ALPHA = Kind("ALPHA");
+}
+struct Tagged { Kind kind = Kind.ALPHA; Mark mark; }
+''',
+        'fx/box.d': 'module fx.box;\nstruct Box(T, int n) { T[n] items; }\n',
+        'fx/model.d': '''module fx.model;
+import fx.ann;
+import fx.box;
+interface Named { string name(); }
+@Mark("base", false) abstract class Base : Named
+{
+    protected int id;
+    string name() { return "b"; }
+    abstract void run(int times);
+}
+@Known(1) @Tagged() @(42) @(Level.low) @Mark final class Item : Base
+{
+    @Mark("f") private const(string)[] labels;
+    Box!(int, 3) box;
+    shared(Box!(Item, 1)) slot;
+    const(Box!(int, 2)) frozen;
+    int[string] counts;
+    Item* next;
+    shared(const(int))* view;
+    this(int id) { this.id = id; }
+    @property bool ready() const { return true; }
+    override void run(int times) {}
+    void run(string label, int times = 2) {}
+    static Item make(scope void delegate(string key, Object value) @safe sink, const(int[]) values,
+        ref int counter, @Mark("p") out string result) { return null; }
+    private void hidden(void function(int unnamed) callback) {}
+    Base parent() { return null; }
+    enum Inner { a, b }
+    struct Nested { float weight; }
+}
+struct Plain { int x; void touch() {} }
+''',
+    }
+    MODULES = ['fx.ann', 'fx.box', 'fx.model']
+
+    def setUp(self):
+        self.dmd = aot_extract_dmd()
+        if self.dmd is None:
+            self.skipTest('the installed DMD fork has no native Flint AOT extraction')
+        self.work = Path(tempfile.mkdtemp(prefix='flint-aot-extract-'))
+        self.addCleanup(shutil.rmtree, self.work, ignore_errors=True)
+        for name, text in self.FIXTURE.items():
+            (self.work / name).parent.mkdir(parents=True, exist_ok=True)
+            (self.work / name).write_text(text, encoding='utf-8')
+        source = (ROOT / 'apps/flint/src/flint_tool/engine/aot/extract.d').read_text(encoding='utf-8')
+        describer = re.search(r'^enum describerSource = `(.*?)`;$', source, re.S | re.M).group(1)
+        (self.work / 'flint_aot_describe.d').write_text(describer, encoding='utf-8')
+        (self.work / 'flint_aot_known.d').write_text(
+            'module flint_aot_known;\nbool flintAotKnownAnnotation(string name) pure nothrow @safe @nogc\n{\n'
+            '    return name == "fx.ann.Known";\n}\n', encoding='utf-8')
+        imports = ''.join(f'static import {m};\n' for m in self.MODULES)
+        (self.work / 'r_describer.d').write_text(
+            'module r_describer;\nimport flint_aot_describe : describeModule;\n' + imports
+            + ''.join(f'static if (describeModule!({m}, "{m}"))\n{{\n}}\n' for m in self.MODULES), encoding='utf-8')
+        (self.work / 'r_native.d').write_text('module r_native;\n' + imports, encoding='utf-8')
+        (self.work / 'request.txt').write_text(
+            ''.join(f'module {m}\n' for m in self.MODULES) + 'known fx.ann.Known\n', encoding='utf-8')
+
+    def extract(self, *arguments):
+        env = dict(os.environ, FLINT_DMD_SERVER='0')
+        env.pop('FLINT_DMD_SERVER_PRELUDE', None)
+        result = subprocess.run([str(self.dmd), '-c', '-of=' + str(self.work / 'x.o'), '-I' + str(self.work),
+                                 *arguments], cwd=self.work, env=env, capture_output=True, text=True)
+        return result.returncode, [line for line in (result.stdout + result.stderr).splitlines()
+                                   if line.startswith('FLINT-AOT-')], result.stderr
+
+    def test_native_extraction_prints_the_describers_lines(self):
+        status, expected, errors = self.extract(str(self.work / 'r_describer.d'))
+        self.assertEqual(status, 0, errors)
+        status, actual, errors = self.extract('-flint-aot-extract=' + str(self.work / 'request.txt'),
+                                              str(self.work / 'r_native.d'))
+        self.assertEqual(status, 0, errors)
+        # The fixture reaches every rule that differed while the parity runs were made: inherited and private
+        # methods, @property, overloads, a constructor, qualified arrays, an associative array, pointers,
+        # delegate and function parameters (names dropped as in a template argument), template instances (also
+        # qualified ones: is(T == X!Args) matches through shared and const),
+        # nested types, enum, enum-like and nested annotation values, and a known annotation type.
+        self.assertGreater(len(expected), 8)
+        self.assertEqual(actual, expected)
+        self.assertNotIn('fx.ann.Known"', ''.join(line for line in actual if line.startswith('FLINT-AOT-ANNOTATION')))
+
+    def test_a_module_the_root_does_not_import_is_an_error(self):
+        (self.work / 'request.txt').write_text('module fx.missing\n', encoding='utf-8')
+        status, actual, errors = self.extract('-flint-aot-extract=' + str(self.work / 'request.txt'),
+                                              str(self.work / 'r_native.d'))
+        self.assertNotEqual(status, 0)
+        self.assertEqual(actual, [])
+        self.assertIn('module `fx.missing` is not imported by the extraction root', errors)
+
+    def test_an_attribute_that_fails_to_evaluate_fails_the_compile(self):
+        # The describer reports an attribute's error and fails; native extraction must not swallow it.
+        (self.work / 'fx/bad.d').write_text('module fx.bad;\nint boom() { assert(0); }\n@(boom()) struct Bad {}\n',
+                                            encoding='utf-8')
+        (self.work / 'r_native.d').write_text('module r_native;\nstatic import fx.bad;\n', encoding='utf-8')
+        (self.work / 'request.txt').write_text('module fx.bad\n', encoding='utf-8')
+        status, actual, errors = self.extract('-flint-aot-extract=' + str(self.work / 'request.txt'),
+                                              str(self.work / 'r_native.d'))
+        self.assertNotEqual(status, 0)
+
+
 def server_dmd():
     """The installed DMD fork when it has the compile server, else None."""
-    for host in ('linux', 'osx'):
-        dmd = ROOT / '.tools' / 'dmd2' / host / 'bin64' / 'dmd'
+    for host, exe in (('linux', 'dmd'), ('osx', 'dmd'), ('windows', 'dmd.exe')):
+        dmd = ROOT / '.tools' / 'dmd2' / host / 'bin64' / exe
         if dmd.is_file() and b'-fork-server=' in dmd.read_bytes():
             return dmd
     return None
