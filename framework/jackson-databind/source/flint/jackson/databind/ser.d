@@ -21,11 +21,12 @@ import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : Descriptor, TypeKind;
 import flint.jackson.annotation : JsonFormat, JsonInclude;
 import flint.jackson.core : JsonGenerator;
+import flint.jackson.core.json : UTF8JsonGenerator;
 import flint.jackson.databind.cfg : EnumFeature, MapperConfig, MapperFeature, SerializationFeature;
 import flint.jackson.databind.exc : DatabindException, InvalidDefinitionException, Reference;
 import flint.jackson.databind.ext.javatime : JavaTimeFormat, writeJavaTime;
 import flint.jackson.databind.stddateformat : dateKeyText, writeJavaUtilDate;
-import flint.jackson.databind.introspect : BeanDescription, BeanPropertyDefinition;
+import flint.jackson.databind.introspect : BeanDescription, BeanPropertyDefinition, ScalarKind, scalarKindOf;
 import flint.jackson.databind.node : JsonNode;
 import flint.java.util : RawCollection, RawMap;
 
@@ -182,37 +183,47 @@ private string kindName(TypeKind kind) pure nothrow
 // The JDK scalars of Jackson's NumberSerializers, StringSerializer and BooleanSerializer.
 private bool writeScalar(ref Any value, string type, JsonGenerator g)
 {
-    switch (type)
+    const kind = scalarKindOf(type);
+    if (kind == ScalarKind.none)
+        return false;
+    writeScalar(kind, value, g);
+    return true;
+}
+
+// ditto, for a known kind.
+private void writeScalar(ScalarKind kind, ref Any value, JsonGenerator g)
+{
+    final switch (kind)
     {
-    case "string":
+    case ScalarKind.string_:
         g.writeString(value.get!string());
-        return true;
-    case "bool":
+        return;
+    case ScalarKind.bool_:
         g.writeBoolean(value.get!bool());
-        return true;
-    case "byte", "short", "int", "ubyte", "ushort":
+        return;
+    case ScalarKind.int_:
         g.writeNumber(cast(int) value.get!long());
-        return true;
-    case "long", "uint":
+        return;
+    case ScalarKind.long_:
         g.writeNumber(value.get!long());
-        return true;
-    case "ulong":
+        return;
+    case ScalarKind.ulong_:
         import flint.engine.aot.text : decimal;
 
         g.writeNumber(decimal(value.get!ulong()));
-        return true;
-    case "float":
+        return;
+    case ScalarKind.float_:
         g.writeNumber(cast(float) value.get!double());
-        return true;
-    case "double", "real":
+        return;
+    case ScalarKind.double_:
         g.writeNumber(value.get!double());
-        return true;
-    case "char", "wchar", "dchar":
+        return;
+    case ScalarKind.char_:
         // Java's char serializes as a one-character String.
         g.writeString(imported!"flint.engine.aot.text".utf8(value.get!dchar()));
-        return true;
-    default:
-        return false;
+        return;
+    case ScalarKind.none:
+        assert(false, "not a scalar");
     }
 }
 
@@ -357,16 +368,18 @@ void writeBean(MapperConfig config, BeanDescription bean, ref Any value, JsonGen
 private void writeFields(MapperConfig config, BeanDescription bean, ref Any value, JsonGenerator g,
         string prefix, string suffix)
 {
+    // The UTF-8 generator takes each prepared name in one piece (a cast to a final class is one comparison).
+    auto utf8 = prefix.length || suffix.length ? null : cast(UTF8JsonGenerator) g;
     foreach (unwrappedPass; [false, true])
         foreach (p; bean.properties)
             if (p.unwrapped == unwrappedPass)
-                writeField(config, bean, p, value, g, prefix, suffix);
+                writeField(config, bean, p, value, g, utf8, prefix, suffix);
     if (bean.anyGetter !is null)
         writeAnyGetter(config, bean, value, g);
 }
 
 private void writeField(MapperConfig config, BeanDescription bean, BeanPropertyDefinition p,
-        ref Any value, JsonGenerator g, string prefix, string suffix)
+        ref Any value, JsonGenerator g, UTF8JsonGenerator utf8, string prefix, string suffix)
 {
     {
         if (!p.isReadable())
@@ -391,10 +404,20 @@ private void writeField(MapperConfig config, BeanDescription bean, BeanPropertyD
         withPath(Reference(p.name, -1, null, bean.descriptor.name), () {
             if (p.unwrapped)
                 return writeUnwrapped(config, p, v, g, prefix ~ p.unwrapPrefix, p.unwrapSuffix ~ suffix);
-            g.writeName(prefix.length || suffix.length ? prefix ~ p.name ~ suffix : p.name);
+            writeFieldName(p, g, utf8, prefix, suffix);
             writeProperty(config, p, v, g);
         });
     }
+}
+
+// The property's name: its prepared quoted bytes through the UTF-8 generator when it has them, else writeName.
+private void writeFieldName(BeanPropertyDefinition p, JsonGenerator g, UTF8JsonGenerator utf8,
+        string prefix, string suffix)
+{
+    if (utf8 !is null && p.quotedName.length)
+        utf8.writePreparedName(p.name, p.quotedName);
+    else
+        g.writeName(prefix.length || suffix.length ? prefix ~ p.name ~ suffix : p.name);
 }
 
 // UnwrappingBeanSerializer: a null value writes nothing; a bean writes its properties into the enclosing object.
@@ -461,6 +484,13 @@ private void writeProperty(MapperConfig config, BeanPropertyDefinition p, ref An
     {
         g.writeString(scalarText(v));
         return;
+    }
+    // A JDK scalar of the declared type: what serializeValue would decide, without matching the type's name.
+    if (p.scalarKind != ScalarKind.none && !v.isNull())
+    {
+        const runtime = v.typeName();
+        if (runtime.length == 0 || runtime == p.type)
+            return writeScalar(p.scalarKind, v, g);
     }
     serializeValue(config, v, p.type, g, p.hasFormat ? JavaTimeFormat.of(p.format) : JavaTimeFormat.init);
 }

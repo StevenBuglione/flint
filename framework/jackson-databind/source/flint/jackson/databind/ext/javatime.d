@@ -120,7 +120,7 @@ private string formatted(MapperConfig config, ref Any value, Kind kind, JavaTime
     switch (kind)
     {
     case Kind.localDate:
-        return value.get!LocalDate().format(custom ? pattern : DateTimeFormatter.ISO_LOCAL_DATE);
+        return custom ? value.get!LocalDate().format(pattern) : isoLocalDate(value.get!LocalDate());
     case Kind.localTime:
         return value.get!LocalTime().format(custom ? pattern : DateTimeFormatter.ISO_LOCAL_TIME);
     case Kind.localDateTime:
@@ -137,6 +137,31 @@ private string formatted(MapperConfig config, ref Any value, Kind kind, JavaTime
             ? DateTimeFormatter.ISO_ZONED_DATE_TIME : DateTimeFormatter.ISO_OFFSET_DATE_TIME;
         return value.get!ZonedDateTime().format(custom ? pattern : zoned);
     }
+}
+
+// LocalDateSerializer's default, DateTimeFormatter.ISO_LOCAL_DATE: "2000-09-07". Years 0000 to 9999 are written digit
+// by digit into one buffer; the others, which take a sign, go through the formatter.
+private string isoLocalDate(const LocalDate date)
+{
+    const year = date.getYear();
+    if (year < 0 || year > 9999)
+        return date.format(DateTimeFormatter.ISO_LOCAL_DATE);
+    char[10] text = void;
+    static void digits(scope char[] into, long value)
+    {
+        foreach_reverse (ref c; into)
+        {
+            c = cast(char)('0' + value % 10);
+            value /= 10;
+        }
+    }
+
+    digits(text[0 .. 4], year);
+    text[4] = '-';
+    digits(text[5 .. 7], date.getMonthValue());
+    text[7] = '-';
+    digits(text[8 .. 10], date.getDayOfMonth());
+    return text[].idup;
 }
 
 // InstantSerializer's default, DateTimeFormatter.ISO_INSTANT: "2007-12-03T10:15:30Z", with a fraction of 3, 6 or 9
@@ -201,6 +226,18 @@ private string isoInstant(const Instant instant)
     }
     text[n++] = 'Z';
     return text[0 .. n].idup;
+}
+
+// The direct writer agrees with ISO_LOCAL_DATE on both sides of its range and at month and year edges.
+unittest
+{
+    foreach (year; [-1, 0, 1, 999, 2000, 2024, 9999, 10_000])
+        foreach (month; [1, 2, 9, 12])
+            foreach (day; [1, 9, 28])
+            {
+                const date = LocalDate.of(year, month, day);
+                assert(isoLocalDate(date) == date.format(DateTimeFormatter.ISO_LOCAL_DATE), isoLocalDate(date));
+            }
 }
 
 // The direct writer agrees with ISO_INSTANT on both sides of its range, at day and year edges, and for every

@@ -100,6 +100,22 @@ final class BeanPropertyDefinition
     /// ditto
     Any defaultValue;
 
+    /// BeanPropertyWriter's prepared state, set once the description is complete: the name in quotes when it needs no
+    /// escaping under any feature (Jackson's SerializedString), and the JDK scalar the declared type is, if any.
+    package(flint.jackson) immutable(ubyte)[] quotedName;
+    /// ditto
+    package(flint.jackson) ScalarKind scalarKind;
+
+    // Prepare the writer's state from the final name and type.
+    package(flint.jackson) void prepareWriter() pure nothrow
+    {
+        bool plain = name.length != 0;
+        foreach (c; name)
+            plain = plain && c >= 0x20 && c < 0x7F && c != '"' && c != '\\' && c != '/';
+        quotedName = plain ? cast(immutable(ubyte)[])("\"" ~ name ~ "\"") : null;
+        scalarKind = scalarKindOf(type);
+    }
+
     /// Whether serialization writes this property.
     bool isReadable() const pure nothrow @nogc
     {
@@ -157,6 +173,46 @@ final class BeanDescription
 }
 
 /// The naming strategy hook the collector applies to implicit names.
+/// The JDK scalars of Jackson's NumberSerializers, StringSerializer and BooleanSerializer, by their D types.
+package(flint.jackson) enum ScalarKind : ubyte
+{
+    none, /// not a JDK scalar
+    string_, ///
+    bool_, ///
+    int_, /// byte, short, int, ubyte, ushort: written as an int
+    long_, /// long, uint
+    ulong_, ///
+    float_, ///
+    double_, /// double, real
+    char_, /// char, wchar, dchar: a one-character String
+}
+
+/// The scalar kind of the D type named `type`.
+package(flint.jackson) ScalarKind scalarKindOf(scope const(char)[] type) pure nothrow @nogc
+{
+    switch (type)
+    {
+    case "string":
+        return ScalarKind.string_;
+    case "bool":
+        return ScalarKind.bool_;
+    case "byte", "short", "int", "ubyte", "ushort":
+        return ScalarKind.int_;
+    case "long", "uint":
+        return ScalarKind.long_;
+    case "ulong":
+        return ScalarKind.ulong_;
+    case "float":
+        return ScalarKind.float_;
+    case "double", "real":
+        return ScalarKind.double_;
+    case "char", "wchar", "dchar":
+        return ScalarKind.char_;
+    default:
+        return ScalarKind.none;
+    }
+}
+
 alias NameTranslator = string delegate(string implicitName) @safe;
 
 /**
@@ -201,6 +257,8 @@ struct POJOPropertiesCollector
                 regular ~= p;
         }
         bean.properties = regular;
+        foreach (p; bean.properties)
+            p.prepareWriter();
         return bean;
     }
 

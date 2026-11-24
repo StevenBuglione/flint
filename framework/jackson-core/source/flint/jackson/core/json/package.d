@@ -980,6 +980,27 @@ class UTF8JsonGenerator : JsonGenerator
 
     override JsonGenerator writeName(string name)
     {
+        beforeName(name);
+        if (_quoteNames)
+            quoted(name);
+        else
+            escaped(name);
+        return this;
+    }
+
+    /// `writeName` for a bean property whose name needs no escaping under any feature (plain ASCII without `"`,
+    /// `\\` or `/`): `quoted` is the name in quotes, written in one piece, as Jackson's BeanPropertyWriter writes
+    /// its prepared SerializedString. The bytes are exactly what `writeName(name)` writes.
+    package(flint.jackson) JsonGenerator writePreparedName(string name, scope const(ubyte)[] quoted)
+    {
+        beforeName(name);
+        put(_quoteNames ? quoted : cast(const(ubyte)[]) name);
+        return this;
+    }
+
+    // The context's check and the separator before a property name.
+    private void beforeName(string name)
+    {
         verifyOpen();
         immutable status = _streamWriteContext.writeName(name);
         if (status == JsonWriteContext.STATUS_EXPECT_VALUE)
@@ -993,11 +1014,6 @@ class UTF8JsonGenerator : JsonGenerator
         }
         else if (status == JsonWriteContext.STATUS_OK_AFTER_COMMA)
             put(',');
-        if (_quoteNames)
-            quoted(name);
-        else
-            escaped(name);
-        return this;
     }
 
     override JsonGenerator writeString(string value)
