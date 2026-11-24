@@ -11,7 +11,7 @@
   "report_to": "the coordinator; docs/adr/ADR-033-http-parity-on-the-gated-paths.md",
   "summary": "Diagnostic (never evidence): the price of HTTP framing and connection lifetime on the error paths and petclinic's owner GET, Go as it was against chunked and close-after-400 variants, with raw responses, a second request on each socket and accepts per request",
   "why": "ADR-033: Tomcat (Java and Flint) sends the 404 and the validation 400 chunked and closes after the 400; the Go comparator sent Content-Length and kept every connection. The owner approved parity; this prices it for the record before the comparator changes. B3's tree holds the comparators as they were.",
-  "harness": "f983c6634af0",
+  "harness": "f983c6639ca3",
   "builds": {
     "tree": {
       "app": "checkout",
