@@ -1,0 +1,503 @@
+{
+  "schema": "flint.spring-baseline/1",
+  "mode": "production",
+  "app": "gs-rest-service",
+  "impl": "go",
+  "captured": "20261124T082805Z",
+  "fingerprint": {
+    "app": "gs-rest-service",
+    "impl": "go",
+    "workloads": [
+      "error",
+      "http"
+    ],
+    "http_manifest_sha256": "ebd2e71797d79278116d85c6a983a439e5ca9a7279e2243ab906c87d804e02aa",
+    "error_manifest_sha256": "960fbb63f8a0681cedb7de47dbebd2f92c9103f64545244061268cbbc1e5c55e",
+    "oha_sha256": "620bb9e16fb53eabc9a3fc45f88bdb41fefa3fee5c05e75892011ce320391716",
+    "postgres": null,
+    "cpu": {
+      "model": "AMD RYZEN AI MAX+ 395 w/ Radeon 8060S",
+      "microcode": "0xb700032",
+      "logical_cpus": 32
+    },
+    "kernel": "7.0.0-31-generic",
+    "governors": [
+      "performance"
+    ],
+    "cpu_sets": {
+      "server_cpus": [
+        2,
+        3
+      ],
+      "load_cpus": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "database_cpus": [
+        8,
+        9
+      ]
+    },
+    "comparator_sha256": "d33e8488448a0a4692e048d57b22ec362426e9f3d5ff723fcce64e3cf06be73b",
+    "go": "1.27.4",
+    "census_sha256": null
+  },
+  "acceptance": {
+    "passed": 18,
+    "total": 18
+  },
+  "series": {
+    "gs-rest-service": {
+      "p50_ms": [
+        0.060187,
+        0.061098000000000006,
+        0.06116799999999999,
+        0.061598,
+        0.06108700000000001,
+        0.059818,
+        0.060677999999999996,
+        0.059217,
+        0.060458000000000005
+      ],
+      "p99_ms": [
+        0.258969,
+        0.266199,
+        0.26506,
+        0.26783999999999997,
+        0.26133,
+        0.25138,
+        0.264309,
+        0.248171,
+        0.25627
+      ],
+      "p999_ms": [
+        1.2512809999999999,
+        1.602507,
+        1.044629,
+        1.1092870000000001,
+        1.430574,
+        0.7887890000000001,
+        0.940473,
+        0.735441,
+        0.793629
+      ],
+      "peak_rss_bytes": [
+        13729792,
+        13942784,
+        13934592,
+        13975552,
+        13754368,
+        14000128,
+        13787136,
+        14069760,
+        13946880
+      ],
+      "cpu_ns_per_request": [
+        8233.004013172806,
+        8174.6662011301205,
+        8241.343880698007,
+        8224.671013159474,
+        8183.142393344156,
+        8224.808087811285,
+        8208.011852869096,
+        8208.005013132808,
+        8166.333208060671
+      ],
+      "requests_per_second": [
+        250890.21290376948,
+        251037.26828370016,
+        250372.78885596202,
+        251060.69790520432,
+        250942.23092573212,
+        250709.96222416227,
+        250321.02909162303,
+        250083.88552114984,
+        249588.39418685934
+      ]
+    },
+    "gs-rest-service:not-found": {
+      "p50_ms": [
+        0.041058,
+        0.040369,
+        0.040369,
+        0.040969,
+        0.040638,
+        0.040068000000000006,
+        0.040759000000000004,
+        0.040018000000000005,
+        0.040868
+      ],
+      "p99_ms": [
+        0.114855,
+        0.119306,
+        0.112986,
+        0.11831599999999999,
+        0.113746,
+        0.109676,
+        0.113285,
+        0.11235500000000001,
+        0.124485
+      ],
+      "p999_ms": [
+        0.286109,
+        0.395156,
+        0.27497,
+        0.306459,
+        0.28695,
+        0.281699,
+        0.287899,
+        0.27476999999999996,
+        0.306888
+      ],
+      "peak_rss_bytes": [
+        13717504,
+        13873152,
+        13840384,
+        13754368,
+        13828096,
+        13660160,
+        13934592,
+        13824000,
+        13950976
+      ],
+      "cpu_ns_per_request": [
+        9199.172074513293,
+        9165.85701596359,
+        9166.009769299866,
+        9265.832741719913,
+        9215.990827339328,
+        9149.237563536371,
+        9199.310051746119,
+        9182.675241607685,
+        9215.837241314948
+      ],
+      "requests_per_second": [
+        245134.43418774745,
+        245039.4244929019,
+        244330.80656794962,
+        245440.74148101092,
+        245309.81134732038,
+        245700.5882064069,
+        245945.51963810486,
+        244959.02352744286,
+        245985.8177035196
+      ]
+    }
+  },
+  "effective_workloads": {
+    "gs-rest-service": {
+      "runs": 9,
+      "duration_seconds": 60,
+      "capacity_seconds": 60,
+      "warmup_seconds": 10,
+      "connections": 64,
+      "request_timeout_seconds": 5,
+      "server_cpus": [
+        2,
+        3
+      ],
+      "load_cpus": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "database_cpus": [
+        8,
+        9
+      ]
+    },
+    "gs-rest-service:not-found": {
+      "runs": 9,
+      "duration_seconds": 60,
+      "capacity_seconds": 60,
+      "warmup_seconds": 10,
+      "connections": 64,
+      "request_timeout_seconds": 5,
+      "server_cpus": [
+        2,
+        3
+      ],
+      "load_cpus": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "database_cpus": [
+        8,
+        9
+      ]
+    }
+  },
+  "trials": [
+    {
+      "workload": "gs-rest-service",
+      "trial": 0,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/57d49362feab/build/spring/gs-rest-service-go",
+        "sha256": "d66bce2755a66aaef157c990a3deaa7fea06c13a29636091e70cf62b3351b799"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/go-baseline-gs-rest-service/20261124T082746Z/baselines/go/gs-rest-service/20261124T082805Z/raw/00-gs-rest-service-go-http-server.log"
+    },
+    {
+      "workload": "gs-rest-service",
+      "trial": 1,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/57d49362feab/build/spring/gs-rest-service-go",
+        "sha256": "d66bce2755a66aaef157c990a3deaa7fea06c13a29636091e70cf62b3351b799"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/go-baseline-gs-rest-service/20261124T082746Z/baselines/go/gs-rest-service/20261124T082805Z/raw/01-gs-rest-service-go-http-server.log"
+    },
+    {
+      "workload": "gs-rest-service",
+      "trial": 2,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/57d49362feab/build/spring/gs-rest-service-go",
+        "sha256": "d66bce2755a66aaef157c990a3deaa7fea06c13a29636091e70cf62b3351b799"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/go-baseline-gs-rest-service/20261124T082746Z/baselines/go/gs-rest-service/20261124T082805Z/raw/02-gs-rest-service-go-http-server.log"
+    },
+    {
+      "workload": "gs-rest-service",
+      "trial": 3,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/57d49362feab/build/spring/gs-rest-service-go",
+        "sha256": "d66bce2755a66aaef157c990a3deaa7fea06c13a29636091e70cf62b3351b799"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/go-baseline-gs-rest-service/20261124T082746Z/baselines/go/gs-rest-service/20261124T082805Z/raw/03-gs-rest-service-go-http-server.log"
+    },
+    {
+      "workload": "gs-rest-service",
+      "trial": 4,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/57d49362feab/build/spring/gs-rest-service-go",
+        "sha256": "d66bce2755a66aaef157c990a3deaa7fea06c13a29636091e70cf62b3351b799"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/go-baseline-gs-rest-service/20261124T082746Z/baselines/go/gs-rest-service/20261124T082805Z/raw/04-gs-rest-service-go-http-server.log"
+    },
+    {
+      "workload": "gs-rest-service",
+      "trial": 5,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/57d49362feab/build/spring/gs-rest-service-go",
+        "sha256": "d66bce2755a66aaef157c990a3deaa7fea06c13a29636091e70cf62b3351b799"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/go-baseline-gs-rest-service/20261124T082746Z/baselines/go/gs-rest-service/20261124T082805Z/raw/05-gs-rest-service-go-http-server.log"
+    },
+    {
+      "workload": "gs-rest-service",
+      "trial": 6,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/57d49362feab/build/spring/gs-rest-service-go",
+        "sha256": "d66bce2755a66aaef157c990a3deaa7fea06c13a29636091e70cf62b3351b799"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/go-baseline-gs-rest-service/20261124T082746Z/baselines/go/gs-rest-service/20261124T082805Z/raw/06-gs-rest-service-go-http-server.log"
+    },
+    {
+      "workload": "gs-rest-service",
+      "trial": 7,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/57d49362feab/build/spring/gs-rest-service-go",
+        "sha256": "d66bce2755a66aaef157c990a3deaa7fea06c13a29636091e70cf62b3351b799"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/go-baseline-gs-rest-service/20261124T082746Z/baselines/go/gs-rest-service/20261124T082805Z/raw/07-gs-rest-service-go-http-server.log"
+    },
+    {
+      "workload": "gs-rest-service",
+      "trial": 8,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/57d49362feab/build/spring/gs-rest-service-go",
+        "sha256": "d66bce2755a66aaef157c990a3deaa7fea06c13a29636091e70cf62b3351b799"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/go-baseline-gs-rest-service/20261124T082746Z/baselines/go/gs-rest-service/20261124T082805Z/raw/08-gs-rest-service-go-http-server.log"
+    },
+    {
+      "workload": "gs-rest-service:not-found",
+      "trial": 0,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/57d49362feab/build/spring/gs-rest-service-go",
+        "sha256": "d66bce2755a66aaef157c990a3deaa7fea06c13a29636091e70cf62b3351b799"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/go-baseline-gs-rest-service/20261124T082746Z/baselines/go/gs-rest-service/20261124T082805Z/raw/00-gs-rest-service-go-error-server.log"
+    },
+    {
+      "workload": "gs-rest-service:not-found",
+      "trial": 1,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/57d49362feab/build/spring/gs-rest-service-go",
+        "sha256": "d66bce2755a66aaef157c990a3deaa7fea06c13a29636091e70cf62b3351b799"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/go-baseline-gs-rest-service/20261124T082746Z/baselines/go/gs-rest-service/20261124T082805Z/raw/01-gs-rest-service-go-error-server.log"
+    },
+    {
+      "workload": "gs-rest-service:not-found",
+      "trial": 2,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/57d49362feab/build/spring/gs-rest-service-go",
+        "sha256": "d66bce2755a66aaef157c990a3deaa7fea06c13a29636091e70cf62b3351b799"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/go-baseline-gs-rest-service/20261124T082746Z/baselines/go/gs-rest-service/20261124T082805Z/raw/02-gs-rest-service-go-error-server.log"
+    },
+    {
+      "workload": "gs-rest-service:not-found",
+      "trial": 3,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/57d49362feab/build/spring/gs-rest-service-go",
+        "sha256": "d66bce2755a66aaef157c990a3deaa7fea06c13a29636091e70cf62b3351b799"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/go-baseline-gs-rest-service/20261124T082746Z/baselines/go/gs-rest-service/20261124T082805Z/raw/03-gs-rest-service-go-error-server.log"
+    },
+    {
+      "workload": "gs-rest-service:not-found",
+      "trial": 4,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/57d49362feab/build/spring/gs-rest-service-go",
+        "sha256": "d66bce2755a66aaef157c990a3deaa7fea06c13a29636091e70cf62b3351b799"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/go-baseline-gs-rest-service/20261124T082746Z/baselines/go/gs-rest-service/20261124T082805Z/raw/04-gs-rest-service-go-error-server.log"
+    },
+    {
+      "workload": "gs-rest-service:not-found",
+      "trial": 5,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/57d49362feab/build/spring/gs-rest-service-go",
+        "sha256": "d66bce2755a66aaef157c990a3deaa7fea06c13a29636091e70cf62b3351b799"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/go-baseline-gs-rest-service/20261124T082746Z/baselines/go/gs-rest-service/20261124T082805Z/raw/05-gs-rest-service-go-error-server.log"
+    },
+    {
+      "workload": "gs-rest-service:not-found",
+      "trial": 6,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/57d49362feab/build/spring/gs-rest-service-go",
+        "sha256": "d66bce2755a66aaef157c990a3deaa7fea06c13a29636091e70cf62b3351b799"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/go-baseline-gs-rest-service/20261124T082746Z/baselines/go/gs-rest-service/20261124T082805Z/raw/06-gs-rest-service-go-error-server.log"
+    },
+    {
+      "workload": "gs-rest-service:not-found",
+      "trial": 7,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/57d49362feab/build/spring/gs-rest-service-go",
+        "sha256": "d66bce2755a66aaef157c990a3deaa7fea06c13a29636091e70cf62b3351b799"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/go-baseline-gs-rest-service/20261124T082746Z/baselines/go/gs-rest-service/20261124T082805Z/raw/07-gs-rest-service-go-error-server.log"
+    },
+    {
+      "workload": "gs-rest-service:not-found",
+      "trial": 8,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/57d49362feab/build/spring/gs-rest-service-go",
+        "sha256": "d66bce2755a66aaef157c990a3deaa7fea06c13a29636091e70cf62b3351b799"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/go-baseline-gs-rest-service/20261124T082746Z/baselines/go/gs-rest-service/20261124T082805Z/raw/08-gs-rest-service-go-error-server.log"
+    }
+  ],
+  "calibration": {
+    "samples": {
+      "requests_per_second": [
+        250305.87626748323,
+        251283.60530721926,
+        251780.77846666056,
+        252867.70467023383,
+        250407.31878977196
+      ],
+      "p50_ms": [
+        0.060418000000000006,
+        0.060048,
+        0.061188,
+        0.059967,
+        0.059947
+      ],
+      "p99_ms": [
+        0.264079,
+        0.25958,
+        0.26156999999999997,
+        0.2621,
+        0.26021
+      ],
+      "cpu_ns_per_request": [
+        8150.774323560739,
+        8250.783824463324,
+        8199.959000204999,
+        8200.287010045351,
+        8250.041250206252
+      ]
+    },
+    "bands": {
+      "requests_per_second": {
+        "mean": 251329.05670027377,
+        "sd": 1057.1252211211884,
+        "n": 5,
+        "lower": 245997.5203762515,
+        "upper": 256660.59302429605
+      },
+      "p50_ms": {
+        "mean": 0.0603136,
+        "sd": 0.0005245343649371321,
+        "n": 5,
+        "lower": 0.05766814801003213,
+        "upper": 0.06295905198996787
+      },
+      "p99_ms": {
+        "mean": 0.2615078,
+        "sd": 0.0017582901353303537,
+        "n": 5,
+        "lower": 0.2526399879968569,
+        "upper": 0.27037561200314314
+      },
+      "cpu_ns_per_request": {
+        "mean": 8210.369081696133,
+        "sd": 41.73962610599544,
+        "n": 5,
+        "lower": 7999.8582280252685,
+        "upper": 8420.879935366998
+      }
+    }
+  },
+  "probe": {
+    "samples": {
+      "cpu_seconds": [
+        0.027724730782210827,
+        0.027385693043470383,
+        0.027407673187553883,
+        0.028514700010418892,
+        0.027382084168493748,
+        0.027270818129181862,
+        0.027384953573346138,
+        0.028134524822235107,
+        0.027544407173991203
+      ],
+      "memory_seconds": [
+        0.07461154274642467,
+        0.06970707233995199,
+        0.0706871123984456,
+        0.06890308298170567,
+        0.06814470235258341,
+        0.06858561374247074,
+        0.07111610658466816,
+        0.06688274070620537,
+        0.07099748216569424
+      ]
+    },
+    "bands": {
+      "cpu_seconds": {
+        "mean": 0.027638842765655782,
+        "sd": 0.00042018930773847485,
+        "n": 9,
+        "lower": 0.026152851465545933,
+        "upper": 0.02912483406576563
+      },
+      "memory_seconds": {
+        "mean": 0.06995949511312777,
+        "sd": 0.002247590532839103,
+        "n": 9,
+        "lower": 0.06201093498439904,
+        "upper": 0.0779080552418565
+      }
+    }
+  }
+}
