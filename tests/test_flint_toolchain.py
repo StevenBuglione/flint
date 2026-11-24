@@ -375,6 +375,8 @@ interface Named { string name(); }
 {
     @Mark("f") private const(string)[] labels;
     Box!(int, 3) box;
+    shared(Box!(Item, 1)) slot;
+    const(Box!(int, 2)) frozen;
     int[string] counts;
     Item* next;
     shared(const(int))* view;
@@ -433,7 +435,8 @@ struct Plain { int x; void touch() {} }
         self.assertEqual(status, 0, errors)
         # The fixture reaches every rule that differed while the parity runs were made: inherited and private
         # methods, @property, overloads, a constructor, qualified arrays, an associative array, pointers,
-        # delegate and function parameters (names dropped as in a template argument), template instances,
+        # delegate and function parameters (names dropped as in a template argument), template instances (also
+        # qualified ones: is(T == X!Args) matches through shared and const),
         # nested types, enum, enum-like and nested annotation values, and a known annotation type.
         self.assertGreater(len(expected), 8)
         self.assertEqual(actual, expected)

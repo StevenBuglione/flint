@@ -6337,10 +6337,10 @@ index c9c6158..9ddbeb4 100644
                      if (!cg.hasframe)
 diff --git a/dmd/flintaot.d b/dmd/flintaot.d
 new file mode 100644
-index 0000000..d89c557
+index 0000000..160ace0
 --- /dev/null
 +++ b/dmd/flintaot.d
-@@ -0,0 +1,1180 @@
+@@ -0,0 +1,1179 @@
 +/**
 + * Flint toolchain fork: native extraction for Flint AOT (`-flint-aot-extract=<request file>`).
 + *
@@ -6696,11 +6696,10 @@ index 0000000..d89c557
 +    return name;
 +}
 +
-+/// `is(T == X!Args, alias X, Args...)`: the instance a struct, class or interface type was made by.
++/// `is(T == X!Args, alias X, Args...)`: the instance a struct, class or interface type was made by. The pattern
++/// matches through every qualifier (shared(S!int) gives S and int), so the qualifier is not looked at.
 +private TemplateInstance instanceOf(Type t)
 +{
-+    if (t.mod)
-+        return null;
 +    AggregateDeclaration ad;
 +    if (auto ts = t.isTypeStruct())
 +        ad = ts.sym;
