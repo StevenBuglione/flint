@@ -611,3 +611,11 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - p50 7.23, throughput 0.120 (19,000 against 158,000 req/s), **CPU per request 6.65** (106 against 16 µs), peak RSS 0.939 (passes); p99.9 5.16, reported.
 
     The request does no SQL, so the 106 µs is binding, validation and problem rendering on the servlet path: the third-party-apis (validation) and boot (error attributes) items the resume plan names for a missing error path. Evidence: `benchmarks/spring/evidence/error-validation-p99/20261124T044658Z/`.
+- 2026-11-24, proof-harness: **phase1-builds-gs-relational certified at B** (`ca5fbd4a46ed`, claimed window 06:11–06:16Z; a first attempt at 05:57Z was voided by an unwrapped ldc2 compile from dmd-arm64's checkout). Java, Go and Flint pass 1/1. Median ratios (99% interval), production, 9 trials:
+    - **primary 0.042 (0.041–0.044), which passes** (228 ms against Go's std-primed 5,428 ms, which compiles the pure-Go SQLite); against a deps-primed GOCACHE (context) 1.46 (1.39–1.55), against 1.295 at `6ab588f8` (Go's deps-primed build is now 156 ms). Phases: flint 20, AOT 103, compile 83, link 18 ms;
+    - **secondary 0.369, which passes** (B's scratch mode, which still cloned the platform AOT models; the strict scratch of owner decision c25ae2b3 applies from the next certification);
+    - **edit build, dev profile: 0.765, which passes** (125 against 163 ms);
+    - **edit build, fully static: 1.387 (1.355–1.466), which fails** (226 ms: compile 91, link 109);
+    - **Oz: 0.662, which passes** (4,430,936 against 6,695,800 bytes; 1.249 at `6ab588f8`): the L1 size win certifies.
+
+    Evidence: `benchmarks/spring/evidence/phase1-builds-gs-relational/20261124T061138Z/`.

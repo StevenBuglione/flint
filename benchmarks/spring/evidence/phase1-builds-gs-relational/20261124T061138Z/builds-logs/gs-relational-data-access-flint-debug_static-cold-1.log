@@ -1,0 +1,6 @@
+   Generated 8 Flint AOT modules for com.example.relationaldataaccess.RelationalDataAccessApplication (1 extracted in 92 ms, 14 from the shared cache, 9 written, 104 ms, native extractor)
+    Building gs-relational-data-access 0.0.1 (dev, dmd)
+    Finished .flint/build/dev/gs-relational-data-access (non-canonical: the toolchain is not verified against its receipt)
+warning[FLINT-E0804] toolchain receipt missing
+  cause: no toolchain receipt at /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/ca5fbd4a46ed/.tools/flint-toolchain.json, so the installed fork cannot be traced to toolchain/*.patch
+  fix: flint toolchain install

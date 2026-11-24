@@ -2,7 +2,7 @@
   "schema": "flint.measure-queue/1",
   "id": "phase1-builds-gs-relational",
   "created": "2026-11-23",
-  "status": "pending",
+  "status": "done",
   "window": "claim",
   "priority": 6,
   "requested_by": "ADR-030 section 8, Phase 1 exit (coordinator's plan, 2026-11-23 15:20Z); split per application by the coordinator, 2026-11-23 16:45Z",
@@ -394,6 +394,439 @@
           "acceptance-go.json": "420758e8fac9d8801eabefd0c64b9c4cd2a30e0e5d66ac7b80b13509b06699b9",
           "acceptance-java.json": "988443256d103f5e6d9f15cb2f55fe088fbc4d81f06a2f4cdd1f94ff8b852339",
           "builds.json": "9048a6ee66ec3ce96045addedc823ffb28a1d82594cf6eaece499fd766cb7f98"
+        }
+      }
+    },
+    {
+      "time": "2026-11-24T06:16:14Z",
+      "outcome": "measured",
+      "evidence": true,
+      "host": "venus",
+      "builds": {
+        "tree": {
+          "commit": "ca5fbd4a46edd8e558d5876830197f23b5db5295",
+          "worktree": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/ca5fbd4a46ed",
+          "fork": true,
+          "linker": "mold",
+          "toolchain": {
+            "tools_directory": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/ca5fbd4a46ed/.tools",
+            "fork_build": true,
+            "dmd": {
+              "path": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/ca5fbd4a46ed/.tools/dmd2/linux/bin64/dmd",
+              "sha256": "1d521b26d2dd7b0b00852fff561c320b50b5b9bf359840025394a09ca59ac0a8",
+              "version": "DMD64 D Compiler v2.114.0"
+            },
+            "ldc2": {
+              "path": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/ca5fbd4a46ed/.tools/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+              "sha256": "06e4bb5bb6abe26a0201e6b112beb19810a13947c7389ebb41493c45bafe9604",
+              "version": "LDC - the LLVM D compiler (1.43.0):"
+            },
+            "flint": {
+              "path": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/ca5fbd4a46ed/.flint/bin/flint",
+              "sha256": "432c8b68aec3bf60d91f5b7c2f5aa3f3a84f7affff64d1a338f00c18e31d0835",
+              "version": "flint 0.7.0 (platform 1.0)"
+            },
+            "dmd_native_aot_extractor": true,
+            "dmd_conf": {
+              "sha256": "aa63c9885b1e23c026add6dbf8474cd13597a7a94c0307b3ec99f7a1dcdea4f3",
+              "linker_switches": [
+                "-Xcc=-fuse-ld=mold"
+              ]
+            },
+            "mold": [
+              {
+                "path": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/ca5fbd4a46ed/.tools/mold-2.40.4-x86_64-linux/bin/mold",
+                "sha256": "23bf6ca9d9fb342a774ebdd7885e0aa1941bdc25dea0fba2483303ecd89af886",
+                "version": "mold 2.40.4 (083901f42dea2491be8bc7cf6e3b1e2b9a3c850d; compatible with GNU ld)"
+              }
+            ]
+          }
+        }
+      },
+      "shared_toolchain": {
+        "path": "/home/olfa/flint-work/flint/.tools",
+        "resolved": "/home/olfa/flint-work/flint/.tools-v3",
+        "dmd_sha256": "7145bb79e84f818c5179f5258562b7f45f18c86f7bc70657914e20e0351524b1"
+      },
+      "window_before": {
+        "time": "2026-11-24T06:12:05Z",
+        "load_average": [
+          1.03466796875,
+          1.51171875,
+          2.470703125
+        ],
+        "running_tasks": 1,
+        "instant": true,
+        "busy_processes": [],
+        "idle_build_processes": 4812,
+        "quiet": true,
+        "problems": []
+      },
+      "window_during": [
+        {
+          "time": "2026-11-24T06:12:16Z",
+          "load_average": [
+            1.25439453125,
+            1.5361328125,
+            2.46240234375
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T06:12:27Z",
+          "load_average": [
+            1.29541015625,
+            1.53515625,
+            2.45166015625
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T06:12:39Z",
+          "load_average": [
+            1.404296875,
+            1.55078125,
+            2.44677734375
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T06:12:50Z",
+          "load_average": [
+            1.49609375,
+            1.56640625,
+            2.44189453125
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T06:13:01Z",
+          "load_average": [
+            2.63330078125,
+            1.81640625,
+            2.51025390625
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T06:13:12Z",
+          "load_average": [
+            4.8935546875,
+            2.34521484375,
+            2.67578125
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T06:13:24Z",
+          "load_average": [
+            4.4482421875,
+            2.33349609375,
+            2.66796875
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T06:13:35Z",
+          "load_average": [
+            4.1513671875,
+            2.3388671875,
+            2.666015625
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T06:13:46Z",
+          "load_average": [
+            3.68017578125,
+            2.322265625,
+            2.65478515625
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T06:13:57Z",
+          "load_average": [
+            3.34765625,
+            2.294921875,
+            2.6416015625
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T06:14:09Z",
+          "load_average": [
+            6.14501953125,
+            2.91455078125,
+            2.8388671875
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T06:14:20Z",
+          "load_average": [
+            8.0703125,
+            3.41552734375,
+            3.00146484375
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T06:14:31Z",
+          "load_average": [
+            6.64501953125,
+            3.32861328125,
+            2.9794921875
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T06:14:42Z",
+          "load_average": [
+            5.77685546875,
+            3.25146484375,
+            2.9580078125
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T06:14:54Z",
+          "load_average": [
+            5.27587890625,
+            3.2265625,
+            2.953125
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T06:15:05Z",
+          "load_average": [
+            4.771484375,
+            3.185546875,
+            2.9423828125
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T06:15:16Z",
+          "load_average": [
+            4.15673828125,
+            3.126953125,
+            2.92626953125
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T06:15:27Z",
+          "load_average": [
+            3.82470703125,
+            3.08935546875,
+            2.91552734375
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T06:15:39Z",
+          "load_average": [
+            3.63037109375,
+            3.0703125,
+            2.9111328125
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T06:15:50Z",
+          "load_average": [
+            3.37939453125,
+            3.03466796875,
+            2.90087890625
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T06:16:01Z",
+          "load_average": [
+            3.07275390625,
+            2.9833984375,
+            2.88623046875
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T06:16:12Z",
+          "load_average": [
+            2.82763671875,
+            2.93408203125,
+            2.87109375
+          ],
+          "busy_processes": []
+        }
+      ],
+      "foreign_activity_during": 0,
+      "window_after": {
+        "time": "2026-11-24T06:16:14Z",
+        "load_average": [
+          2.82763671875,
+          2.93408203125,
+          2.87109375
+        ],
+        "running_tasks": 0,
+        "instant": false,
+        "busy_processes": [],
+        "idle_build_processes": 4810,
+        "quiet": true,
+        "problems": []
+      },
+      "results_directory": ".flint/measure/results/phase1-builds-gs-relational/20261124T061138Z",
+      "summary": {
+        "steps": [
+          {
+            "command": [
+              "/usr/bin/python3",
+              "tools/spring_bench.py",
+              "accept",
+              "gs-relational-data-access",
+              "--impl",
+              "java",
+              "--json",
+              "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-builds-gs-relational/20261124T061138Z/acceptance-java.json"
+            ],
+            "cwd": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/ca5fbd4a46ed",
+            "exit_code": 0,
+            "log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-builds-gs-relational/20261124T061138Z/step-0.log",
+            "harness_commit": null,
+            "artifacts": {},
+            "measured_binaries": [],
+            "aot_summaries": {
+              "count": 0,
+              "distinct": [],
+              "extractors": []
+            },
+            "gc_options": {
+              "argv": []
+            }
+          },
+          {
+            "command": [
+              "/usr/bin/python3",
+              "tools/spring_bench.py",
+              "accept",
+              "gs-relational-data-access",
+              "--impl",
+              "go",
+              "--json",
+              "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-builds-gs-relational/20261124T061138Z/acceptance-go.json"
+            ],
+            "cwd": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/ca5fbd4a46ed",
+            "exit_code": 0,
+            "log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-builds-gs-relational/20261124T061138Z/step-1.log",
+            "harness_commit": null,
+            "artifacts": {},
+            "measured_binaries": [],
+            "aot_summaries": {
+              "count": 0,
+              "distinct": [],
+              "extractors": []
+            },
+            "gc_options": {
+              "argv": []
+            }
+          },
+          {
+            "command": [
+              "/usr/bin/python3",
+              "tools/spring_bench.py",
+              "accept",
+              "gs-relational-data-access",
+              "--impl",
+              "flint",
+              "--json",
+              "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-builds-gs-relational/20261124T061138Z/acceptance-flint.json"
+            ],
+            "cwd": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/ca5fbd4a46ed",
+            "exit_code": 0,
+            "log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-builds-gs-relational/20261124T061138Z/step-2.log",
+            "harness_commit": null,
+            "artifacts": {
+              "benchmarks/spring/flint/gs-relational-data-access/.flint/build/release/gs-relational-data-access": {
+                "sha256": "8ac31037684601a0878e1d7bb2db328019a8a782a37075dac2e07c7d183f9708",
+                "bytes": 6644936,
+                "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=fee8f4157ee7beb836a0e495171400d23f764a7c, for GNU/Linux 3.2.0, not stripped",
+                "comment": [
+                  "GCC: (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+                  "Ubuntu clang version 22.1.8 (++20260613092327+e80beda6e255-1~exp1~20260613092437.81)",
+                  "ldc version 1.43.0"
+                ],
+                "embedded_gcopt": [
+                  "gcopt=parallel:"
+                ],
+                "profile": "release"
+              }
+            },
+            "measured_binaries": [],
+            "aot_summaries": {
+              "count": 0,
+              "distinct": [],
+              "extractors": []
+            },
+            "gc_options": {
+              "argv": []
+            }
+          },
+          {
+            "command": [
+              "/usr/bin/python3",
+              "tools/measure_builds.py",
+              "--spring",
+              "--spring-app",
+              "gs-relational-data-access",
+              "--no-context",
+              "--output",
+              "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-builds-gs-relational/20261124T061138Z/builds.json"
+            ],
+            "cwd": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/ca5fbd4a46ed",
+            "exit_code": 1,
+            "log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-builds-gs-relational/20261124T061138Z/step-3.log",
+            "harness_commit": null,
+            "artifacts": {
+              "benchmarks/spring/flint/gs-relational-data-access/.flint/build/size/gs-relational-data-access": {
+                "sha256": "f627ea8f06ea002dc6f22e9da242c5873d62bdb29c042de7293c1f890a8049d6",
+                "bytes": 6381136,
+                "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=98a7ef46a748b3a426c3805dfae3b1871c0c4f0a, for GNU/Linux 3.2.0, not stripped",
+                "comment": [
+                  "GCC: (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+                  "Ubuntu clang version 22.1.8 (++20260613092327+e80beda6e255-1~exp1~20260613092437.81)",
+                  "ldc version 1.43.0"
+                ],
+                "embedded_gcopt": [
+                  "gcopt=parallel:"
+                ],
+                "profile": "size"
+              }
+            },
+            "measured_binaries": [],
+            "aot_summaries": {
+              "count": 69,
+              "distinct": [
+                "Generated 8 Flint AOT modules for com.example.relationaldataaccess.RelationalDataAccessApplication (0 extracted in N ms, 15 from the shared cache, 9 written, N ms)",
+                "Generated 8 Flint AOT modules for com.example.relationaldataaccess.RelationalDataAccessApplication (1 extracted in N ms, 14 from the shared cache, 9 written, N ms, native extractor)",
+                "Generated 8 Flint AOT modules for com.example.relationaldataaccess.RelationalDataAccessApplication (15 extracted in N ms, 0 from the shared cache, 9 written, N ms, native extractor)"
+              ],
+              "extractors": [
+                "native extractor"
+              ]
+            },
+            "gc_options": {
+              "argv": []
+            },
+            "measured": true
+          }
+        ],
+        "outputs": {
+          "acceptance-flint.json": "d0877f50d35da26d100a5877ccf30cd0e8b15f6f98fcb909b57bbbddfb12d53a",
+          "acceptance-go.json": "650c7c7a5c674f76165fea84fc713764975bfa7f5514eee868282c8f6935abc6",
+          "acceptance-java.json": "124b16ecf82ce955620dd47eade37c01178751a249669cb68ac2cc17e461a6f2",
+          "builds.json": "3f0605296bbefe40e7c064c05e2e3ac8fca5a784dd84d628b699da0aac3b9e17"
         }
       }
     }
