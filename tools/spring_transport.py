@@ -45,6 +45,7 @@ import argparse
 import json
 import os
 import random
+import re
 import shutil
 import socket
 import statistics
@@ -56,6 +57,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 LOCK = HERE.parent / '.flint' / 'measure' / 'MEASURING'
 ERRORS = 'policy/spring-error-paths-benchmark.json'
+GATED = (ERRORS, 'policy/spring-http-benchmark.json')  # every timed workload (owner decision 081851b0)
 WORKLOADS = {'gs-rest-service:not-found': ERRORS, 'petclinic-rest:validation-error': ERRORS,
              'petclinic-rest': 'policy/spring-http-benchmark.json'}
 
@@ -245,22 +247,37 @@ def exchange(port, spec):
 # ADR-033: parity with the golden on the gated paths
 
 
+def path_shape(path):
+    """A request path without its query, with each number as {n}: /owners/1 and /owners/6 are one endpoint."""
+    return re.sub(r'/\d+(?=/|$)', '/{n}', path.split('?', 1)[0])
+
+
 def golden_transport(golden, spec):
     """(expected transport, golden case names) of a gated workload: the golden's cases with the workload's method,
-    path, status and media type, which must agree."""
+    path, status and media type, which must agree. A workload path the suite does not request verbatim (owner 1,
+    `?name=Flint`) is matched by its endpoint: the same path shape."""
+    exact = golden_cases(golden, spec, lambda path: path == spec['path'])
+    return exact if exact[0] else golden_cases(golden, spec, lambda path: path_shape(path) == path_shape(spec['path']),
+                                               required=True)
+
+
+def golden_cases(golden, spec, same_path, required=False):
     request = spec['expected'].get('request', {})
     rows, names = [], []
     for case in golden['observations']:
         response = case['response']
         headers = {name.lower(): value for name, value in response.get('headers', [])}
-        if (case['request'].get('method', 'GET') == request.get('method', 'GET') and case['request'].get('path') == spec['path']
+        if (case['request'].get('method', 'GET') == request.get('method', 'GET') and same_path(case['request'].get('path', ''))
                 and response.get('status') == spec['expected']['status']
                 and headers.get('content-type', '').split(';')[0].strip() == spec['expected']['content_type']):
             rows.append({'reason': response.get('reason', ''),
                          'framing': 'chunked' if headers.get('transfer-encoding', '').lower() == 'chunked' else 'content-length',
                          'connection': 'close' if headers.get('connection', '').lower() == 'close' else 'keep'})
             names.append(case['name'])
-    require(rows, f"the golden has no case for {request.get('method', 'GET')} {spec['path']} {spec['expected']['status']}")
+    if not rows:
+        require(not required, f"the golden has no case for {request.get('method', 'GET')} {spec['path']} "
+                              f"{spec['expected']['status']}")
+        return None, []
     require(all(row == rows[0] for row in rows), f"the golden's cases for {spec['path']} disagree on transport: {rows}")
     return rows[0], names
 
@@ -295,23 +312,23 @@ def parity_main(argv):
     require(not (a.record and (a.impl != 'go' or a.binary)), '--record is for the checkout\'s Go comparator')
     sys.path.insert(0, str(HERE))
     import spring_bench as spring
-    manifest = json.loads((spring.ROOT / ERRORS).read_text())
-    keys = [key for key, spec in manifest['apps'].items() if spec.get('app', key) == a.app]
-    require(keys, f'{a.app} has no gated error path in {ERRORS}')
+    manifests = {path: json.loads((spring.ROOT / path).read_text()) for path in GATED}
+    gated = {key: (path, spec) for path in GATED for key, spec in manifests[path]['apps'].items()
+             if spec.get('app', key) == a.app}
+    require(gated, f'{a.app} has no gated workload in {GATED}')
     golden_file = spring.golden_path(a.app)
     golden = json.loads(golden_file.read_text())
     # Absolute: a Flint port runs from its own directory.
     binary = a.binary.resolve() if a.binary else (spring.build_go(a.app) if a.impl == 'go' else spring.build_flint(a.app))
     record = {'schema': 'flint.spring-parity/1', 'app': a.app, 'implementation': a.impl,
-              'adr': 'docs/adr/ADR-033-http-parity-on-the-gated-paths.md', 'manifest': ERRORS,
+              'adr': 'docs/adr/ADR-033-http-parity-on-the-gated-paths.md', 'manifests': list(GATED),
               'golden_sha256': spring.sha256(golden_file), 'binary_sha256': spring.sha256(binary),
               'comparator_sha256': spring.comparator_digest(a.app) if a.impl == 'go' else None,
               'taken': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()), 'workloads': {}}
     import contextlib
     with (spring.postgres_cluster() if spring.app_row(a.app).get('database') == 'postgres'
           else contextlib.nullcontext()) as database:
-        for key in keys:
-            spec = manifest['apps'][key]
+        for key, (path, spec) in gated.items():
             expected, cases = golden_transport(golden, spec)
             port = spring.free_port()
             argv, env, cwd = spring.launch(a.app, a.impl, port, database, (), binary)
@@ -337,12 +354,21 @@ def parity_main(argv):
                         process.wait()
             observed = [observed_transport(result) for result in exchanges]
             problems = sorted({problem for seen in observed for problem in parity_problems(expected, seen)})
-            record['workloads'][key] = {'golden_cases': cases, 'expected': expected, 'observed': observed[0],
+            record['workloads'][key] = {'manifest': path, 'golden_cases': cases, 'expected': expected, 'observed': observed[0],
                                         'repeats_agree': all(seen == observed[0] for seen in observed),
                                         'problems': problems,
                                         'response': exchanges[0]['first']['raw']}
             print(f"{key} [{a.impl}]: {'parity' if not problems else '; '.join(problems)}")
-    record['problems'] = sum(len(w['problems']) + (not w['repeats_agree']) for w in record['workloads'].values())
+    # Every request the black-box suite scores, in the `parity` wire mode (owner decision 081851b0).
+    acceptance = spring.accept(a.app, a.impl, 'parity', binary=binary)
+    failures = [{'case': case['name'], 'problems': case['problems']} for case in acceptance['cases'] if case['problems']]
+    record['suite'] = {'wire': 'parity', 'passed': acceptance['passed'], 'total': acceptance['total'],
+                       'failures': failures}
+    for failure in failures:
+        print(f"suite case {failure['case']!r} [{a.impl}]: {'; '.join(failure['problems'])}")
+    print(f"suite [{a.impl}, wire parity]: {acceptance['passed']}/{acceptance['total']}")
+    record['problems'] = (sum(len(w['problems']) + (not w['repeats_agree']) for w in record['workloads'].values())
+                          + len(failures))
     if a.record:
         spring.PARITY.mkdir(parents=True, exist_ok=True)
         (spring.PARITY / f'{a.app}.json').write_text(json.dumps(record, indent=2) + '\n')

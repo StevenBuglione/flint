@@ -174,7 +174,19 @@ func requestURL(r *http.Request) string {
 // ---------------------------------------------------------------------------------------------------------------
 // Responses
 
+// writeJSON writes a JSON response as Spring MVC's message converters do on Tomcat (ADR-033): streamed, so chunked,
+// and after a 400 or a 500 Tomcat closes the connection.
 func writeJSON(w http.ResponseWriter, status int, contentType string, value any) {
+	writeJSONFramed(w, status, contentType, value, true)
+}
+
+// writeJSONLength writes a JSON response with Content-Length, as Tomcat frames a body written whole (the actuator's
+// link index).
+func writeJSONLength(w http.ResponseWriter, status int, contentType string, value any) {
+	writeJSONFramed(w, status, contentType, value, false)
+}
+
+func writeJSONFramed(w http.ResponseWriter, status int, contentType string, value any, chunked bool) {
 	body, err := json.Marshal(value)
 	if err != nil {
 		log.Printf("ERROR encoding a response: %v", err)
@@ -182,9 +194,10 @@ func writeJSON(w http.ResponseWriter, status int, contentType string, value any)
 		return
 	}
 	w.Header().Set("Content-Type", contentType)
-	if status == http.StatusBadRequest {
-		// ADR-033: Tomcat sends a 400 chunked and closes the connection after it.
+	if chunked {
 		w.Header().Set("Transfer-Encoding", "chunked")
+	}
+	if status == http.StatusBadRequest || status == http.StatusInternalServerError {
 		w.Header().Set("Connection", "close")
 	}
 	w.WriteHeader(status)

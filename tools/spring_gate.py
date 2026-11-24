@@ -5,7 +5,7 @@ itself is trusted where it can be recomputed:
 
 - `acceptance-java.json`, `acceptance-go.json`, `acceptance-flint.json`: `spring_bench.py accept --impl <impl>
   --json`, one record per application, every case passing in the implementation's wire mode (exact for Java and
-  Flint, semantic for the Go comparators), against the golden files as they are now;
+  Flint, parity for the Go comparators (ADR-033)), against the golden files as they are now;
 - `builds.json`: `measure_builds.py --spring`, production, nine trials per series; the two headlines, the
   incremental build and the Oz size are recomputed from the samples against the go_relative ceilings of
   policy/budgets.json;

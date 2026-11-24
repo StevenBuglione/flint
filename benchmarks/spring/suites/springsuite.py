@@ -21,8 +21,15 @@ Wire modes:
   message framing (`Content-Length` versus `Transfer-Encoding: chunked`) and compact JSON with Spring's key order.
 - `semantic` (the mode Go comparators are registered with): the reason phrase and the framing headers
   (`Content-Length`, `Transfer-Encoding`, `Connection`, `Keep-Alive`) are not compared and JSON key order is free.
-  These are transport details a comparator need not copy; forcing Go to emit chunked framing would only slow Go down
-  and flatter Flint. Every other header, the status and the body values are compared exactly.
+  Every other header, the status and the body values are compared exactly. It remains for context comparisons.
+- `parity` (the mode Go comparators are registered with, ADR-033 and owner decisions 118b4482 and 081851b0):
+  `semantic` plus HTTP parity with the golden, so a comparator does the Java reference's transport work:
+  - the reason phrase;
+  - the framing: `Transfer-Encoding`, and whether `Content-Length` is present, though not its value, since body
+    bytes may differ where `semantic` allows it;
+  - the connection lifetime: the `Connection` header, and what the server then does. Each case runs on a raw
+    socket, followed by a harmless second request (`PROBE`) on the same socket. A case the golden marks
+    `Connection: close` must close; any other case must answer the second request.
 
 A command case (an application that runs to completion, such as gs-relational-data-access) compares the exit code
 and the application's own log events, extracted from Spring Boot's default console pattern with the timestamp and
@@ -45,6 +52,8 @@ from dataclasses import dataclass, field
 from urllib.parse import urlsplit
 
 FRAMING = ('content-length', 'transfer-encoding', 'connection', 'keep-alive')
+WIRES = ('exact', 'parity', 'semantic')
+PROBE = '/flint-parity-probe'  # a path no application maps: the lifetime check's second request changes no state
 MATCHERS = {
     # java.time.Instant as Jackson writes it: the fraction trimmed to 0, 3, 6 or 9 digits (ProblemDetail properties).
     'instant': re.compile(r'^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d{1,9})?Z$'),
@@ -195,7 +204,12 @@ def json_difference(expected, actual, path, ordered):
 
 
 def header_multiset(headers, wire):
-    rows = [(name, value) for name, value in headers if wire == 'exact' or name not in FRAMING]
+    if wire == 'parity':
+        # Framing as Java does it, not the body's length: the presence of Content-Length, never its value.
+        rows = [(name, 'present' if name == 'content-length' else value) for name, value in headers
+                if name != 'keep-alive']
+    else:
+        rows = [(name, value) for name, value in headers if wire == 'exact' or name not in FRAMING]
     grouped = {}
     for name, value in rows:
         grouped.setdefault(name, []).append(value)
@@ -207,7 +221,7 @@ def compare(expected, actual, wire):
     problems = []
     if expected['status'] != actual['status']:
         problems.append(f"status {actual['status']}, expected {expected['status']}")
-    if wire == 'exact' and expected['reason'] != actual['reason']:
+    if wire in ('exact', 'parity') and expected['reason'] != actual['reason']:
         problems.append(f"reason phrase {actual['reason']!r}, expected {expected['reason']!r}")
     want = header_multiset([tuple(row) for row in expected['headers']], wire)
     got = header_multiset([tuple(row) for row in actual['headers']], wire)
@@ -225,7 +239,16 @@ def compare(expected, actual, wire):
                 problems.append('JSON body whitespace differs from Spring\'s compact output')
     elif expected.get('text') != actual.get('text', json.dumps(actual.get('json'))):
         problems.append(f"body {actual.get('text', actual.get('json'))!r:.300}, expected {expected.get('text')!r:.300}")
+    if wire == 'parity':
+        want = expected_lifetime(expected)
+        if actual.get('lifetime') != want:
+            problems.append(f"connection lifetime {actual.get('lifetime')!r}, expected {want!r}")
     return problems
+
+
+def expected_lifetime(expected):
+    """Tomcat's connection lifetime as the golden records it: `close` when it sent `Connection: close`."""
+    return 'close' if ['connection', 'close'] in [list(row) for row in expected['headers']] else 'keep'
 
 
 # ---------------------------------------------------------------------------------------------------------------
@@ -247,6 +270,99 @@ def exchange(origin, case, timeout=10):
         return response.status, response.reason, response.getheaders(), raw
     finally:
         connection.close()
+
+
+def raw_request(origin, method, path, headers, body):
+    """The bytes http.client sends for exchange()'s request: Host and Accept-Encoding first, then the headers, then
+    Content-Length (0 for a method that expects a body and has none)."""
+    target = urlsplit(origin)
+    lines = [f'{method} {path} HTTP/1.1', f'Host: {target.hostname}:{target.port}', 'Accept-Encoding: identity']
+    lines += [f'{name}: {value}' for name, value in headers.items()]
+    if body is not None or method in ('POST', 'PUT', 'PATCH'):
+        lines.append(f'Content-Length: {len(body or b"")}')
+    return ('\r\n'.join(lines) + '\r\n\r\n').encode('latin-1') + (body or b'')
+
+
+class _Reader:
+    def __init__(self, sock):
+        self.sock, self.buffer = sock, b''
+
+    def fill(self):
+        data = self.sock.recv(65536)
+        if not data:
+            raise EOFError('the connection closed')
+        self.buffer += data
+
+    def until(self, marker):
+        while marker not in self.buffer:
+            self.fill()
+        index = self.buffer.index(marker) + len(marker)
+        part, self.buffer = self.buffer[:index], self.buffer[index:]
+        return part
+
+    def exactly(self, count):
+        while len(self.buffer) < count:
+            self.fill()
+        part, self.buffer = self.buffer[:count], self.buffer[count:]
+        return part
+
+    def rest(self):
+        while True:
+            try:
+                self.fill()
+            except EOFError:
+                part, self.buffer = self.buffer, b''
+                return part
+
+
+def read_response(reader, method):
+    """(status, reason, headers, body) of one HTTP/1.1 response, skipping interim 1xx responses."""
+    while True:
+        head = reader.until(b'\r\n\r\n').decode('latin-1').split('\r\n')
+        parts = head[0].split(' ', 2)
+        status = int(parts[1])
+        if not 100 <= status < 200:
+            break
+    reason = parts[2].strip() if len(parts) > 2 else ''
+    headers = [(name, value.strip()) for name, _, value in (line.partition(':') for line in head[1:] if line)]
+    names = {name.lower(): value for name, value in headers}
+    if method == 'HEAD' or status in (204, 304):
+        return status, reason, headers, b''
+    if names.get('transfer-encoding', '').lower() == 'chunked':
+        body = b''
+        while True:
+            size = int(reader.until(b'\r\n').split(b';')[0], 16)
+            if size == 0:
+                while reader.until(b'\r\n') != b'\r\n':  # trailers, if any, then the empty line
+                    pass
+                return status, reason, headers, body
+            body += reader.exactly(size + 2)[:-2]
+    if 'content-length' in names:
+        return status, reason, headers, reader.exactly(int(names['content-length']))
+    return status, reason, headers, reader.rest()
+
+
+def lifetime_exchange(origin, case, timeout=10):
+    """exchange() on a raw socket, plus the connection's lifetime: after the response, a second request (PROBE) goes
+    on the same socket; `keep` when it is answered, `close` when the server has closed the connection."""
+    target = urlsplit(origin)
+    headers = {'Accept': '*/*', 'User-Agent': 'flint-spring-suite/1'}
+    headers.update(case.headers)
+    body = case.request_body()
+    if body is not None and 'Content-Type' not in headers:
+        headers['Content-Type'] = 'application/json'
+    with socket.create_connection((target.hostname, target.port), timeout=timeout) as sock:
+        sock.sendall(raw_request(origin, case.method, case.path, headers, body))
+        reader = _Reader(sock)
+        status, reason, response_headers, raw = read_response(reader, case.method)
+        try:
+            sock.sendall(raw_request(origin, 'GET', PROBE, {'Accept': '*/*', 'User-Agent': 'flint-spring-suite/1'},
+                                     None))
+            read_response(reader, 'GET')
+            lifetime = 'keep'
+        except (EOFError, ConnectionResetError, BrokenPipeError):
+            lifetime = 'close'
+    return status, reason, response_headers, raw, lifetime
 
 
 def wait_for_port(origin, process, deadline, log_path):
@@ -283,8 +399,9 @@ def stop(process):
         process.wait(timeout=5)
 
 
-def run_http(cases, origin, command, env, cwd, log_path, startup_timeout=90, mask=True):
-    """Start `command`, run every case in order, stop it. Returns [(case, observation)]."""
+def run_http(cases, origin, command, env, cwd, log_path, startup_timeout=90, mask=True, lifetime=False):
+    """Start `command`, run every case in order, stop it. Returns [(case, observation)]. `lifetime` (wire `parity`)
+    runs each case through lifetime_exchange and records the connection's lifetime in the observation."""
     if not port_free(origin):
         raise RuntimeError(f'{origin} is already in use; stop whatever listens there first')
     with open(log_path, 'wb') as log:
@@ -295,8 +412,14 @@ def run_http(cases, origin, command, env, cwd, log_path, startup_timeout=90, mas
             wait_for_port(origin, process, started + startup_timeout, log_path)
             results = []
             for case in cases:
-                status, reason, headers, raw = exchange(origin, case)
-                results.append((case, observe(case, status, reason, headers, raw, origin, mask)))
+                if lifetime:
+                    status, reason, headers, raw, kept = lifetime_exchange(origin, case)
+                    observation = observe(case, status, reason, headers, raw, origin, mask)
+                    observation['lifetime'] = kept
+                else:
+                    status, reason, headers, raw = exchange(origin, case)
+                    observation = observe(case, status, reason, headers, raw, origin, mask)
+                results.append((case, observation))
             return results, time.monotonic() - started
         finally:
             stop(process)

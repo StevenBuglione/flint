@@ -148,6 +148,25 @@ class Parity(unittest.TestCase):
         self.assertEqual(st.parity_problems(st.golden_transport(GOLDEN, INVALID)[0], seen), [])
 
 
+class Shapes(unittest.TestCase):
+    def test_a_workload_path_matches_its_endpoint(self):
+        golden = {'observations': [
+            {'name': 'owner 6', 'request': {'method': 'GET', 'path': '/api/owners/6'},
+             'response': {'status': 200, 'reason': '', 'headers': [['content-type', 'application/json'],
+                                                                   ['transfer-encoding', 'chunked']]}},
+            {'name': 'owner 999', 'request': {'method': 'GET', 'path': '/api/owners/999'},
+             'response': {'status': 404, 'reason': '', 'headers': [['content-length', '0']]}},
+            {'name': 'greeting', 'request': {'method': 'GET', 'path': '/greeting?name=User'},
+             'response': {'status': 200, 'reason': '', 'headers': [['content-type', 'application/json'],
+                                                                   ['content-length', '33']]}}]}
+        owner = {'path': '/api/owners/1', 'expected': {'status': 200, 'content_type': 'application/json'}}
+        self.assertEqual(st.golden_transport(golden, owner),
+                         ({'reason': '', 'framing': 'chunked', 'connection': 'keep'}, ['owner 6']))
+        greeting = {'path': '/greeting?name=Flint', 'expected': {'status': 200, 'content_type': 'application/json'}}
+        self.assertEqual(st.golden_transport(golden, greeting)[0]['framing'], 'content-length')
+        self.assertEqual(st.path_shape('/api/owners/12/pets/3?x=1'), '/api/owners/{n}/pets/{n}')
+
+
 class Registry(unittest.TestCase):
     def test_record_required_current_complete_and_clean(self):
         import json
@@ -158,16 +177,22 @@ class Registry(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary, mock.patch.object(spring_bench, 'PARITY', Path(temporary)):
             self.assertIn('no HTTP parity record', spring_bench.parity_problems('petclinic-rest', 'abc')[0])
             golden = spring_bench.sha256(spring_bench.golden_path('petclinic-rest'))
+            clean = {'problems': [], 'repeats_agree': True}
             record = {'comparator_sha256': 'abc', 'golden_sha256': golden,
-                      'workloads': {'petclinic-rest:validation-error': {'problems': [], 'repeats_agree': True}}}
+                      'workloads': {'petclinic-rest:validation-error': dict(clean), 'petclinic-rest': dict(clean)},
+                      'suite': {'wire': 'parity', 'passed': 109, 'total': 109}}
             path = Path(temporary) / 'petclinic-rest.json'
             path.write_text(json.dumps(record))
             self.assertEqual(spring_bench.parity_problems('petclinic-rest', 'abc'), [])
             self.assertIn('another comparator source', spring_bench.parity_problems('petclinic-rest', 'def')[0])
+            record['suite']['passed'] = 108
+            path.write_text(json.dumps(record))
+            self.assertIn('parity wire mode passed 108/109', spring_bench.parity_problems('petclinic-rest', 'abc')[0])
+            record['suite']['passed'] = 109
             record['workloads']['petclinic-rest:validation-error']['problems'] = ["connection: expected 'close'"]
             path.write_text(json.dumps(record))
             self.assertIn('differs from the Java golden', spring_bench.parity_problems('petclinic-rest', 'abc')[0])
-            record['workloads'] = {}
+            record['workloads'] = {'petclinic-rest': dict(clean)}
             path.write_text(json.dumps(record))
             self.assertIn('does not cover', spring_bench.parity_problems('petclinic-rest', 'abc')[0])
             self.assertEqual(spring_bench.parity_problems('gs-relational-data-access', 'zzz'), [])

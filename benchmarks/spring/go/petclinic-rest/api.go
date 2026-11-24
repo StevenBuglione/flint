@@ -944,7 +944,7 @@ func (c *clinic) actuatorLinks(w http.ResponseWriter, r *http.Request) error {
 	index.Links.Self = link{Href: base}
 	index.Links.Health = link{Href: base + "/health"}
 	index.Links.HealthPath = link{Href: base + "/health/{*path}", Templated: true}
-	writeJSON(w, http.StatusOK, actuatorMediaType(r), index)
+	writeJSONLength(w, http.StatusOK, actuatorMediaType(r), index)
 	return nil
 }
 

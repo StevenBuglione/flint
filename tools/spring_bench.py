@@ -45,7 +45,8 @@ BUILD = ROOT / 'build' / 'spring'
 IMPLEMENTATIONS = ('java', 'go', 'flint')
 # Context only: reported next to the measured implementations, never compared or gated.
 CONTEXT_IMPLEMENTATIONS = ('java-native',)
-WIRE_DEFAULT = {'java': 'exact', 'flint': 'exact', 'go': 'semantic', 'java-native': 'exact'}
+# ADR-033: the Go comparators match the golden's reason phrase, framing and connection lifetime on every scored case.
+WIRE_DEFAULT = {'java': 'exact', 'flint': 'exact', 'go': 'parity', 'java-native': 'exact'}
 
 sys.path.insert(0, str(SUITES))
 sys.path.insert(0, str(ROOT / 'tools'))
@@ -373,7 +374,7 @@ def maybe_postgres(name):
 
 
 def observe(name, implementation=None, start=None, url=None, logs=None, mask=True, extra_args=(), binary=None,
-            start_cwd=None):
+            start_cwd=None, lifetime=False):
     """Run the suite once and return (observations, seconds)."""
     row = app_row(name)
     module = load_suite(name)
@@ -396,7 +397,8 @@ def observe(name, implementation=None, start=None, url=None, logs=None, mask=Tru
             observed, seconds = springsuite.run_command(module.SUITE, command, env, cwd, log_path)
             return observed, seconds
         origin = url.rstrip('/') if url else f'http://127.0.0.1:{port}'
-        results, seconds = springsuite.run_http(module.CASES, origin, command, env, cwd, log_path, mask=mask)
+        results, seconds = springsuite.run_http(module.CASES, origin, command, env, cwd, log_path, mask=mask,
+                                                lifetime=lifetime)
         return [{'name': case.name, 'request': {'method': case.method, 'path': case.path},
                  'response': response} for case, response in results], seconds
 
@@ -433,7 +435,7 @@ def record(name):
 def accept(name, implementation, wire, start=None, url=None, extra_args=(), binary=None, start_cwd=None):
     golden = json.loads(golden_path(name).read_text())
     observed, seconds = observe(name, implementation, start, url, mask=False, extra_args=extra_args, binary=binary,
-                                start_cwd=start_cwd)
+                                start_cwd=start_cwd, lifetime=wire == 'parity')
     if golden['kind'] == 'command':
         problems = springsuite.compare_command(golden['observations'], observed)
         cases = [{'name': 'run to completion', 'problems': problems}]
@@ -491,15 +493,17 @@ def census_problems(name, digest):
 
 
 PARITY = ROOT / 'benchmarks' / 'spring' / 'parity'
-GATED_ERRORS = ROOT / 'policy' / 'spring-error-paths-benchmark.json'
+GATED_MANIFESTS = (ROOT / 'policy' / 'spring-error-paths-benchmark.json', ROOT / 'policy' / 'spring-http-benchmark.json')
 
 
 def parity_problems(name, digest):
-    """ADR-033 (owner decision 118b4482): on the gated error paths a comparator matches the Java golden's reason
-    phrase, framing and connection lifetime; its record (spring_transport.py parity --app <name> --record) must be
-    of its current source and the current golden, cover every gated path of the app, and show no difference."""
-    manifest = json.loads(GATED_ERRORS.read_text())
-    keys = sorted(key for key, spec in manifest['apps'].items() if spec.get('app', key) == name)
+    """ADR-033 (owner decisions 118b4482 and 081851b0): on every gated path, each timed workload's request and every
+    request the black-box suite scores, a comparator matches the Java golden's reason phrase, framing and connection
+    lifetime. Its record (spring_transport.py parity --app <name> --record) must be of its current source and the
+    current golden, cover every timed workload of the app, pass the whole suite in the `parity` wire mode, and show
+    no difference."""
+    keys = sorted(key for manifest in GATED_MANIFESTS for key, spec in json.loads(manifest.read_text())['apps'].items()
+                  if spec.get('app', key) == name)
     if not keys:
         return []
     path = PARITY / f'{name}.json'
@@ -518,6 +522,10 @@ def parity_problems(name, digest):
             problems.append(f'{name}: {key} differs from the Java golden (ADR-033): {problem}')
         if not workload.get('repeats_agree', False):
             problems.append(f'{name}: {key} answered differently across the record\'s exchanges')
+    suite = record.get('suite', {})
+    if suite.get('wire') != 'parity' or not suite.get('total') or suite.get('passed') != suite.get('total'):
+        problems.append(f"{name}: the suite in the parity wire mode passed {suite.get('passed')}/{suite.get('total')} "
+                        '(ADR-033: every scored request matches the golden\'s transport)')
     return problems
 
 
@@ -547,7 +555,7 @@ def register(names, adr=None):
         if changed and previous.get('measured') and not adr:
             raise SystemExit(f'{name}: the registered comparator has been measured; changing it needs an ADR (--adr)')
         rows['comparators'][name] = {'directory': directory, 'commit': commit, 'sha256': comparator_digest(name),
-                                     'go': go_version, 'wire': 'semantic',
+                                     'go': go_version, 'wire': WIRE_DEFAULT['go'],
                                      'registered': time.strftime('%Y-%m-%d', time.gmtime()), 'measured': False}
         if (CENSUS / f'{name}.json').is_file() and app_row(name).get('database') == 'postgres':
             rows['comparators'][name]['census_sha256'] = sha256(CENSUS / f'{name}.json')
@@ -863,7 +871,7 @@ def main(argv=None):
     p = sub.add_parser('record'); p.add_argument('apps', nargs='*')
     p = sub.add_parser('accept'); p.add_argument('apps', nargs='*')
     p.add_argument('--impl', choices=IMPLEMENTATIONS + CONTEXT_IMPLEMENTATIONS)
-    p.add_argument('--wire', choices=['exact', 'semantic'])
+    p.add_argument('--wire', choices=list(springsuite.WIRES))
     p.add_argument('--start', help='start command of an implementation built elsewhere')
     p.add_argument('--url', help='the origin it listens on, http://127.0.0.1:<port>')
     p.add_argument('--cwd', help='with --start: the working directory (a Flint port runs from its own directory)')

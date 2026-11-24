@@ -59,8 +59,8 @@ func run(ctx context.Context) error {
 		ReadHeaderTimeout: 20 * time.Second, // Tomcat's connectionTimeout
 	}
 	served := make(chan error, 1)
-	// ADR-033: Tomcat's 400 carries no reason phrase.
-	go func() { served <- server.Serve(parityListener{listener, []int{http.StatusBadRequest}}) }()
+	// ADR-033: Tomcat sends no reason phrase.
+	go func() { served <- server.Serve(parityListener{listener}) }()
 	log.Printf("INFO petclinic-rest listening on %s (context path %s) after %s", listener.Addr(), contextPath,
 		time.Since(started).Round(time.Millisecond))
 
