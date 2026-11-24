@@ -2,7 +2,7 @@
   "schema": "flint.measure-queue/1",
   "id": "phase1-http-petclinic",
   "created": "2026-11-23",
-  "status": "pending",
+  "status": "blocked",
   "window": "claim",
   "priority": 3,
   "claim_when": "Section 2 of the owner-approved resume plan (b349fb0a), order 3: a claimed window at B, the plan naming every baseline entry (the 41- and 45-minute HTTP and error parts included)",
@@ -45,5 +45,6 @@
     ]
   },
   "tree_note": "Resume plan 1.5: every baseline part builds in the same private tree at B (flint, mold, the fork build), so all parts measure one toolchain.",
-  "pinned": "B, ca5fbd4a46edd8e558d5876830197f23b5db5295 (coordinator, 2026-11-24 02:06Z)"
+  "pinned": "B, ca5fbd4a46edd8e558d5876830197f23b5db5295 (coordinator, 2026-11-24 02:06Z)",
+  "blocked_on": "the coordinator's decision (2026-11-24 02:40Z): at B, Flint petclinic-rest serves about 1,620 req/s at 64 connections (1,550 at 8), CPU-bound on its 2 server CPUs (10 CPU-s in 5 s, GC 17 ms of it, PostgreSQL idle), against Go's 28,300; the manifest's 5,000 req/s fixed-rate warm-up cannot be sustained, so load_bench refuses the run (smoke 20261124T021828Z: 'fixed-rate offered load was not sustained') and a 41-minute window would measure nothing. The workload is owner-only; run it once the request path sustains 5,000 req/s"
 }
