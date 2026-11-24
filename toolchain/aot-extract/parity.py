@@ -10,7 +10,8 @@ toolchain tests (AotExtractionTests) carry the regression fixture.
                               extraction compile and the annotation types it already held
   parity.py run <app> [--modules a,b | --prelude-modules] [--src DIR] [--like APP]
                               one parity set; --like takes the flags and known types of an app captured before
-  parity.py all               every set recorded in README.md (captures what is missing)
+  parity.py all [--cold]      every set recorded in README.md (captures what is missing); --cold gives no known
+                              annotation types, as a cold build's extraction has none
   parity.py timing <app>      served compiles (the compile server, with and without the platform prelude) of an
                               import-only root, the native root and the describer root
 
@@ -197,17 +198,23 @@ def prelude_modules(record):
     return [m for m in lines if not m.startswith('-') and m not in DESCRIBER_FAILS]
 
 
-def every_set(dmd):
+def every_set(dmd, cold=False):
+    """Every set; cold leaves the known annotation types out, as a cold build's extraction has none, so every
+    annotation type reached is announced and its position is compared too."""
+    def known(record):
+        return [] if cold else record['known']
+    prefix = 'cold-' if cold else ''
     petclinic = APPS / 'petclinic-rest'
     pc = captured(petclinic)
-    yield run(dmd, 'petclinic-rest-platform', petclinic, prelude_modules(pc), pc['flags'], pc['known'])
+    yield run(dmd, prefix + 'petclinic-rest-platform', petclinic, prelude_modules(pc), pc['flags'], known(pc))
     for name in ('petclinic-rest', 'gs-rest-service', 'gs-relational-data-access'):
         record = captured(APPS / name)
-        yield run(dmd, name, APPS / name, source_modules(APPS / name / 'src'), record['flags'], record['known'])
+        yield run(dmd, prefix + name, APPS / name, source_modules(APPS / name / 'src'), record['flags'],
+                  known(record))
     for name in TESTS_AOT:
         test = ROOT / 'tests' / 'aot' / name
         src = test if name == 'annotations' else test / ('source' if (test / 'source').is_dir() else 'src')
-        yield run(dmd, 'tests-aot-' + name, test, source_modules(src), pc['flags'], pc['known'], src)
+        yield run(dmd, prefix + 'tests-aot-' + name, test, source_modules(src), pc['flags'], known(pc), src)
 
 
 def verdict(result):
@@ -262,6 +269,7 @@ def main():
     ap.add_argument('--like')
     ap.add_argument('--repeat', type=int, default=7)
     ap.add_argument('--json', action='store_true', help='print results as JSON lines')
+    ap.add_argument('--cold', action='store_true', help='no known annotation types, as a cold build extracts')
     a = ap.parse_args()
     dmd = a.dmd or default_dmd()
     if a.command != 'all' and not a.app:
@@ -272,14 +280,14 @@ def main():
         timing(dmd, a.app, a.repeat)
     else:
         if a.command == 'all':
-            results = every_set(dmd)
+            results = every_set(dmd, a.cold)
         else:
             app = Path(a.app).resolve()
             record = captured(APPS / a.like if a.like else app)
             modules = (a.modules.split(',') if a.modules else prelude_modules(record) if a.prelude_modules
                        else source_modules(a.src or app / 'src'))
             src = a.src.resolve() if a.src else None
-            results = [run(dmd, app.name, app, modules, record['flags'], record['known'], src)]
+            results = [run(dmd, app.name, app, modules, record['flags'], [] if a.cold else record['known'], src)]
         if not a.json:
             print('| Set | Modules | Lines | Result | Describer ms | Native ms |\n| --- | --- | --- | --- | --- | --- |')
         failed = False

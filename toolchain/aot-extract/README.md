@@ -45,6 +45,25 @@ Fork built from `toolchain/dmd-2.114.0-flint.patch` (sha256 `8466554b…`), on v
 | tests-aot-petclinic-rest | 9 | 29 | identical | 128 | 91 |
 | tests-aot-sample | 6 | 0 | both fail, same first error | 28 | 27 |
 
+Cold (`parity.py all --cold`: no known annotation types, as a cold build's extraction has none, so every annotation type reached is announced and its position compared), after the announcement-order fix below:
+
+| Set | Modules | Lines | Result | Describer ms | Native ms |
+| --- | --- | --- | --- | --- | --- |
+| cold-petclinic-rest-platform | 397 | 2494 | identical | 5202 | 347 |
+| cold-petclinic-rest | 15 | 153 | identical | 474 | 136 |
+| cold-gs-rest-service | 1 | 21 | identical | 94 | 75 |
+| cold-gs-relational-data-access | 1 | 13 | identical | 100 | 89 |
+| cold-tests-aot-annotations | 23 | 92 | identical | 51 | 10 |
+| cold-tests-aot-autoconfig | 1 | 12 | identical | 85 | 73 |
+| cold-tests-aot-date | 3 | 23 | identical | 92 | 74 |
+| cold-tests-aot-diagnostics | 1 | 0 | both fail, same first error | 25 | 26 |
+| cold-tests-aot-exporter | 1 | 3 | both fail, same first error | 78 | 72 |
+| cold-tests-aot-gs-rest-service | 3 | 23 | identical | 90 | 85 |
+| cold-tests-aot-hierarchy | 3 | 20 | both fail, same first error | 88 | 79 |
+| cold-tests-aot-imports | 3 | 25 | identical | 90 | 75 |
+| cold-tests-aot-petclinic-rest | 9 | 57 | identical | 129 | 100 |
+| cold-tests-aot-sample | 6 | 0 | both fail, same first error | 30 | 29 |
+
 Served through the compile server (`parity.py timing`, petclinic-rest's 15 modules, median of 7 after two warm-ups):
 
 | Root | With the platform prelude | Without |
@@ -53,7 +72,7 @@ Served through the compile server (`parity.py timing`, petclinic-rest's 15 modul
 | Native (`-flint-aot-extract`) | 30.8 ms | 94.6 ms |
 | Describer | 282.9 ms | 348.9 ms |
 
-The rule a run found: until a `shared(ProcessSlot!(…))` field reached the platform closure, the native walker gave a
+The rules runs found. flint-aot's cold parity found the first: the describer announces an annotation type when the compiler analyses `annotationValue!T`, which happens when `value!F` for a field type is analysed, whatever the value. So an empty `ClassRef[]` default announces `ClassRef` before the annotation it belongs to. The walker now reaches annotation types by type, as that analysis does. The second: until a `shared(ProcessSlot!(…))` field reached the platform closure, the native walker gave a
 qualified template instance no `template`, `arguments` or `canonical` fields. The describer's
 `is(T == X!Args, alias X, Args...)` matches through every qualifier, so now the walker does too, and the fixture
 has `shared` and `const` instances.

@@ -6419,10 +6419,10 @@ index c9c6158..9ddbeb4 100644
                      if (!cg.hasframe)
 diff --git a/dmd/flintaot.d b/dmd/flintaot.d
 new file mode 100644
-index 0000000..160ace0
+index 0000000..ec761bf
 --- /dev/null
 +++ b/dmd/flintaot.d
-@@ -0,0 +1,1179 @@
+@@ -0,0 +1,1223 @@
 +/**
 + * Flint toolchain fork: native extraction for Flint AOT (`-flint-aot-extract=<request file>`).
 + *
@@ -6490,6 +6490,8 @@ index 0000000..160ace0
 +    OutBuffer output;                  // the lines, written to stderr at the end as pragma(msg) writes them
 +    bool[string] known;                // annotation types the generator holds
 +    bool[string] announced;            // annotation types printed (or being printed) in this compile
++    bool[const(char)*] reachedValues;  // value!T the describer would have analysed, by type deco
++    bool[const(char)*] reachedAnnotations; // annotationValue!T likewise
 +    string[const(char)*] typeRefs;     // memoized typeRef by type deco
 +    int runtimeName = -1;              // whether flint.engine.aot.name.canonicalTypeName is importable
 +    Identifier idT;                    // the alias a snippet names its type or symbol by
@@ -7087,6 +7089,7 @@ index 0000000..160ace0
 +    }
 +    if (auto ta = arrayElement(t))
 +    {
++        reachValue(ta);
 +        b.writeByte('[');
 +        if (auto al = v ? v.isArrayLiteralExp() : null)
 +        {
@@ -7117,6 +7120,47 @@ index 0000000..160ace0
 +        return;
 +    }
 +    b.writestring("null");
++}
++
++/**
++ * The describer announces an annotation type when the compiler analyses its annotationValue!T, and analysing
++ * value!T instantiates (and analyses) the value!F and annotationValue!F its body names. So what gets announced, and
++ * in which order, follows types, not values: an empty `ClassRef[]` default still announces ClassRef, before the
++ * annotation whose field it is. These walk the types as that analysis does; each instance is analysed once.
++ */
++private void reachValue(Type t)
++{
++    if (!t.deco || t.deco in reachedValues)
++        return;
++    reachedValues[t.deco] = true;
++    // The branches of value(), in its order: only a struct or an array of one reaches an annotation type.
++    if (t.isTypeEnum() && t.mod == 0)
++        return;
++    if (isCharArray(t))
++        return;
++    Type u = t.toBasetype();
++    if (!t.isTypeEnum() && (u.ty == Tbool || u.ty == Tchar || u.ty == Twchar || u.ty == Tdchar || u.isUnsigned()
++            || u.isIntegral() || u.isFloating()))
++        return;
++    if (auto ta = arrayElement(t))
++        return reachValue(ta);
++    if (t.isTypeStruct() && !isEnumLike(t))
++        reachAnnotation(t);
++}
++
++/// annotationValue!T: T is announced, then its fields' value!F are analysed in field order.
++private void reachAnnotation(Type t)
++{
++    if (t.deco && t.deco in reachedAnnotations)
++    {
++        announce(t);
++        return;
++    }
++    if (t.deco)
++        reachedAnnotations[t.deco] = true;
++    announce(t);
++    foreach (field; t.isTypeStruct().sym.fields)
++        reachValue(field.type);
 +}
 +
 +/// `is(T : E[], E)`: the element type when t converts to a dynamic array.
@@ -7169,7 +7213,7 @@ index 0000000..160ace0
 +private void annotationValue(ref OutBuffer b, Type t, Expression v)
 +{
 +    auto sd = t.isTypeStruct().sym;
-+    announce(t);
++    reachAnnotation(t);
 +    b.writestring(`{"type":`);
 +    quote(b, typeName(t));
 +    b.writestring(`,"modules":[`);

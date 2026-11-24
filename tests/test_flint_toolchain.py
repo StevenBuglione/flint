@@ -446,6 +446,8 @@ struct Kind
     static immutable Kind ALPHA = Kind("ALPHA");
 }
 struct Tagged { Kind kind = Kind.ALPHA; Mark mark; }
+struct Ref { string name; }
+struct Excluding { Ref[] exclude; }
 ''',
         'fx/box.d': 'module fx.box;\nstruct Box(T, int n) { T[n] items; }\n',
         'fx/model.d': '''module fx.model;
@@ -478,7 +480,7 @@ interface Named { string name(); }
     enum Inner { a, b }
     struct Nested { float weight; }
 }
-struct Plain { int x; void touch() {} }
+@Excluding struct Plain { int x; void touch() {} }
 ''',
     }
     MODULES = ['fx.ann', 'fx.box', 'fx.model']
@@ -524,7 +526,8 @@ struct Plain { int x; void touch() {} }
         # methods, @property, overloads, a constructor, qualified arrays, an associative array, pointers,
         # delegate and function parameters (names dropped as in a template argument), template instances (also
         # qualified ones: is(T == X!Args) matches through shared and const),
-        # nested types, enum, enum-like and nested annotation values, and a known annotation type.
+        # nested types, enum, enum-like and nested annotation values, a known annotation type, and an annotation
+        # type reached only through an empty array's element type (announced before the annotation using it).
         self.assertGreater(len(expected), 8)
         self.assertEqual(actual, expected)
         self.assertNotIn('fx.ann.Known"', ''.join(line for line in actual if line.startswith('FLINT-AOT-ANNOTATION')))
