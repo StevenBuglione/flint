@@ -1588,6 +1588,16 @@ private struct Worker
         }
     }
 
+    /// No slot can be handed out. Every slot in use: hold until one closes. A chunk that could not be allocated
+    /// is transient, like descriptor exhaustion: back off for one loop budget and try again.
+    private void deferAccept() nothrow @nogc
+    {
+        if (connectionsUsed < connections.length)
+            pauseAccept();
+        else
+            holdAcceptWhileFull();
+    }
+
     /// A slot is free again: take connections from the listener. A completion backend arms its next accept on
     /// its own (`advanceAccept`).
     private void releaseAcceptHold() nothrow @nogc
@@ -1979,9 +1989,9 @@ private struct Worker
         {
             if (acceptClosed)
                 return;
-            if (nextFree == noSlot)
+            if (slotsExhausted())
             {
-                holdAcceptWhileFull();
+                deferAccept();
                 return;
             }
             auto incoming = acceptConnection(runtime.listener);
@@ -2041,9 +2051,9 @@ private struct Worker
                 return;
             // A completed accept always finds a slot: none is armed while every slot is in use, and only this
             // owner takes its slots.
-            if (nextFree == noSlot)
+            if (slotsExhausted())
             {
-                acceptFull = true;
+                deferAccept();
                 return;
             }
             version (Windows)
