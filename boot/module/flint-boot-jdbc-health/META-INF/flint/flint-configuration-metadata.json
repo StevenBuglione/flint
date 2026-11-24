@@ -1,0 +1,19 @@
+{
+  "groups": [
+    {
+      "name": "management.health.db",
+      "type": "flint.boot.jdbc.autoconfigure.health.DataSourceHealthIndicatorProperties",
+      "sourceType": "flint.boot.jdbc.autoconfigure.health.DataSourceHealthIndicatorProperties"
+    }
+  ],
+  "properties": [
+    {
+      "name": "management.health.db.ignore-routing-data-sources",
+      "type": "java.lang.Boolean",
+      "description": "Whether to ignore AbstractRoutingDataSources when creating database health indicators.",
+      "sourceType": "flint.boot.jdbc.autoconfigure.health.DataSourceHealthIndicatorProperties",
+      "defaultValue": false
+    }
+  ],
+  "hints": []
+}

@@ -71,6 +71,13 @@ scope = "build"
 dependencies = ["flint:beans", "flint:boot-autoconfigure", "flint:boot-core", "flint:boot-sql", "flint:boot-transaction", "flint:context", "flint:engine-aot", "flint:engine-jdbc", "flint:java", "flint:jdbc", "flint:tx"]
 
 [[package]]
+name = "flint:boot-jdbc-health"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = ["flint:beans", "flint:boot-autoconfigure", "flint:boot-core", "flint:boot-health", "flint:boot-jdbc", "flint:context", "flint:core", "flint:engine-aot", "flint:java", "flint:jdbc", "flint:tx"]
+
+[[package]]
 name = "flint:boot-security"
 kind = "core"
 source = "workspace"

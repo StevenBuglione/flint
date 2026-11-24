@@ -14,6 +14,8 @@ executable = "petclinic-rest"
 "flint:boot-starter-jdbc" = {}
 "flint:postgresql" = {}
 "flint:boot-starter-actuator" = {}
+# Stopgap for D-JDBC-2 (docs/spring/phase1/boot.md): the resolver will add it whenever boot-jdbc and boot-health meet.
+"flint:boot-jdbc-health" = {}
 "flint:boot-starter-validation" = {}
 "flint:boot-starter-security" = {}
 "flint:boot-core" = {}

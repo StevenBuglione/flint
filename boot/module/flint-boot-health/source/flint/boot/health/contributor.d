@@ -1,6 +1,7 @@
 // Ported from spring-boot v4.2.0: module/spring-boot-health/src/main/java/org/springframework/boot/health/contributor/Status.java
 // with Health.java, HealthContributor.java, HealthIndicator.java, CompositeHealthContributor.java,
-// AbstractHealthIndicator.java and PingHealthIndicator.java from the same directory.
+// AbstractHealthIndicator.java, PingHealthIndicator.java and MapCompositeHealthContributor.java from the same
+// directory.
 // Copyright 2012-present the original author or authors.
 // Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
 // Modified by the Flint authors: details are `LinkedHashMap!(string, Any)` (R12); the sealed `HealthContributor`
@@ -10,7 +11,7 @@
 module flint.boot.health.contributor;
 
 import flint.engine.aot.any : Any;
-import flint.java.util : LinkedHashMap;
+import flint.java.util : LinkedHashMap, Map;
 
 @safe:
 
@@ -292,11 +293,68 @@ interface CompositeHealthContributor : HealthContributor
 
     /// The children, in order.
     NamedContributor[] getContributors();
+
+    /// A composite of `map`'s values, each adapted by `valueAdapter` and named by its key, in the map's order.
+    static CompositeHealthContributor fromMap(V)(Map!(string, V) map,
+            scope HealthContributor delegate(V) @safe valueAdapter)
+    {
+        import flint.java.lang : IllegalArgumentException;
+
+        if (map is null)
+            throw new IllegalArgumentException("'map' must not be null");
+        NamedContributor[] children;
+        foreach (name; map.keySet().toArray())
+        {
+            auto contributor = valueAdapter(map.get(name));
+            if (contributor is null)
+                throw new IllegalArgumentException("'valueAdapter' must not return null");
+            children ~= NamedContributor(name, contributor);
+        }
+        return new MapCompositeHealthContributor(children);
+    }
+}
+
+/// `CompositeHealthContributor.fromMap`'s composite: named children in order.
+private final class MapCompositeHealthContributor : CompositeHealthContributor
+{
+    private NamedContributor[] children;
+
+    this(NamedContributor[] children) pure nothrow @nogc
+    {
+        this.children = children;
+    }
+
+    HealthContributor getContributor(string name)
+    {
+        foreach (child; children)
+            if (child.name == name)
+                return child.contributor;
+        return null;
+    }
+
+    NamedContributor[] getContributors()
+    {
+        return children;
+    }
 }
 
 /// A `HealthIndicator` whose `doHealthCheck` fills a builder; a check that throws reports `DOWN` with the error.
 abstract class AbstractHealthIndicator : HealthIndicator
 {
+    // The message Java logs, at WARN, when a check throws; Flint's health module does not log yet.
+    private string healthCheckFailedMessage = "Health check failed";
+
+    /// With the default failure message.
+    protected this() pure nothrow @nogc
+    {
+    }
+
+    /// With the message that describes a failed health check.
+    protected this(string healthCheckFailedMessage) pure nothrow @nogc
+    {
+        this.healthCheckFailedMessage = healthCheckFailedMessage;
+    }
+
     /// The health from `doHealthCheck`.
     final Health health()
     {

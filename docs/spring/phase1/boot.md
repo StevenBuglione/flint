@@ -167,6 +167,14 @@ Boot's exceptions extend `flint.java.lang`'s `RuntimeException`, `IllegalArgumen
 
 - JDBC drivers: Flint AOT links each declared driver package's `META-INF/services` provider (`30cebc6a`), whose registration Boot's `determineDriverClassName` check finds, so boot-jdbc has no driver auto-configurations and `DataSourceAutoConfiguration.dataSource` takes only the properties, as in Boot. The temporary auto-configurations of D-JDBC-1 are gone; what remains of D-JDBC-1 is that a program without Boot (no Flint AOT) enables its driver itself.
 
+- **D-JDBC-2, JDBC health (`flint:boot-jdbc-health`).** spring-boot-jdbc compiles its `health` package and `DataSourceHealthContributorAutoConfiguration` against an *optional* spring-boot-health dependency, and the auto-configuration turns on by class presence. So a Spring application with JDBC and the actuator gets the `db` indicator without declaring anything. Flint has no optional dependencies, and `@ConditionalOnClass` asks whether a class is in the application's dependency closure. If boot-jdbc depended on boot-health, every JDBC application would compile and register health, including gs-relational, which has no actuator. So the classes live in the glue library `flint:boot-jdbc-health`, under their Spring names: `flint.boot.jdbc.health.DataSourceHealthIndicator`, and `DataSourceHealthIndicatorProperties` and `DataSourceHealthContributorAutoConfiguration` in `flint.boot.jdbc.autoconfigure.health`. boot-jdbc's `autoconfigure.d` became `autoconfigure/package.d` so that the second module can exist.
+  - **Required follow-up (coordinator, 2026-11-24, m7):** the resolver adds `flint:boot-jdbc-health` automatically whenever `flint:boot-jdbc` and `flint:boot-health` are both in the closure, so a drop-in application declares nothing. Until then, petclinic-rest's `flint.toml` declares it. That line is a stopgap.
+  - **Gaps:**
+    - `@ConditionalOnEnabledHealthIndicator("db")` is `management.health.db.enabled` (true when missing), as for `ping`, and `management.health.defaults.enabled` is not consulted.
+    - There is no `AbstractRoutingDataSource`, so no `RoutingDataSourceHealthContributor`, and `management.health.db.ignore-routing-data-sources` binds but changes nothing.
+    - There are no `DataSourcePoolMetadataProvider`s, so the validation query is always `isValid()`. That is also Boot's answer for a Hikari pool without `connection-test-query`.
+    - `AbstractHealthIndicator` keeps its failure message, but nothing logs it yet.
+
 ## Contracts needed from the other Phase 1 sessions
 
 | From | What Boot needs | Status |

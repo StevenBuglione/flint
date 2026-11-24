@@ -225,6 +225,10 @@ DUR = 'import core.time : Duration;'
 MAP = 'import flint.java.util : LinkedHashMap, Map;'
 DU = 'import flint.boot.convert : ChronoUnit, DurationUnit;'
 
+dbhealth = Cls('DataSourceHealthIndicatorProperties', 'External configuration properties for `DataSourceHealthIndicator`.', [
+    F('ignoreRoutingDataSources', 'bool', 'false', 'Whether to ignore AbstractRoutingDataSources when creating database health indicators.'),
+], prefix='management.health.db')
+
 # ---- jdbc -----------------------------------------------------------------------------------------------------
 datasource = Cls('DataSourceProperties', 'Base settings of the auto-configured `DataSource`.', [
     F('generateUniqueName', 'bool', 'true', 'Whether to generate a random datasource name (`generate-unique-name`, default true).'),
@@ -554,12 +558,17 @@ UNITS = [
           'import flint.jackson.core : StreamReadFeature, StreamWriteFeature;', 'import flint.jackson.core.json : JsonReadFeature, JsonWriteFeature;',
           'import flint.jackson.databind.cfg : DateTimeFeature, DeserializationFeature, EnumFeature, MapperFeature, SerializationFeature;'],
          [jackson], 'boot/module/flint-boot-jackson'),
-    Unit('boot/module/flint-boot-jdbc/source/flint/boot/jdbc/autoconfigure.d',
+    Unit('boot/module/flint-boot-jdbc/source/flint/boot/jdbc/autoconfigure/package.d',
          header('module/spring-boot-jdbc/src/main/java/org/springframework/boot/jdbc/autoconfigure/DataSourceProperties.java\n// with JdbcProperties.java, DataSourceAutoConfiguration.java, DataSourceConfiguration.java and\n// DataSourceTransactionManagerAutoConfiguration.java from the same directory, and ../EmbeddedDatabaseConnection.java',
                 '`type` is the class name; `jndiName` is excluded (jvm-platform); the `hikari` keys bind onto the pool data-access provides'),
          'flint.boot.jdbc.autoconfigure',
          '`org.springframework.boot.jdbc.autoconfigure`: the JDBC configuration properties. `flint.datasource.hikari.*` (alias `pool`) binds onto the pool `DataSource` the data-access module provides, as Boot binds `spring.datasource.hikari.*` onto `HikariDataSource`.',
          [CP, DU, DUR, OPT, MAP], [edc, datasource, jdbc], 'boot/module/flint-boot-jdbc'),
+    Unit('boot/module/flint-boot-jdbc-health/source/flint/boot/jdbc/autoconfigure/health.d',
+         header('module/spring-boot-jdbc/src/main/java/org/springframework/boot/jdbc/autoconfigure/health/DataSourceHealthIndicatorProperties.java\n// with DataSourceHealthContributorAutoConfiguration.java from the same directory',
+                'the module is flint:boot-jdbc-health (deviation D-JDBC-2)'),
+         'flint.boot.jdbc.autoconfigure.health', '`org.springframework.boot.jdbc.autoconfigure.health`: the auto-configuration of the `db` health contributor.',
+         [CP], [dbhealth], 'boot/module/flint-boot-jdbc-health'),
     Unit('boot/module/flint-boot-sql/source/flint/boot/sql/init/package.d',
          header('module/spring-boot-sql/src/main/java/org/springframework/boot/sql/init/DatabaseInitializationMode.java'),
          'flint.boot.sql.init', '`org.springframework.boot.sql.init`: SQL database initialization support.', [], [mode], 'boot/module/flint-boot-sql'),

@@ -55,6 +55,10 @@
       "repo": "boot",
       "version": "monorepo"
     },
+    "flint:boot-jdbc-health": {
+      "repo": "boot",
+      "version": "monorepo"
+    },
     "flint:boot-security": {
       "repo": "boot",
       "version": "monorepo"

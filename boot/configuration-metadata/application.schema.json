@@ -1572,6 +1572,21 @@
               }
             }
           }
+        },
+        "health": {
+          "type": "object",
+          "properties": {
+            "db": {
+              "type": "object",
+              "properties": {
+                "ignore-routing-data-sources": {
+                  "type": "boolean",
+                  "description": "Whether to ignore AbstractRoutingDataSources when creating database health indicators.",
+                  "default": false
+                }
+              }
+            }
+          }
         }
       }
     },

@@ -231,6 +231,25 @@
       ],
       "repo": "boot"
     },
+    "boot-jdbc-health": {
+      "directory": "boot/module/flint-boot-jdbc-health",
+      "module": "flint.boot.jdbc.health",
+      "layer": "module",
+      "dependencies": [
+        "boot-core",
+        "boot-autoconfigure",
+        "boot-health",
+        "boot-jdbc",
+        "beans",
+        "context",
+        "core",
+        "jdbc",
+        "tx",
+        "java",
+        "engine-aot"
+      ],
+      "repo": "boot"
+    },
     "boot-sql": {
       "directory": "boot/module/flint-boot-sql",
       "module": "flint.boot.sql",
