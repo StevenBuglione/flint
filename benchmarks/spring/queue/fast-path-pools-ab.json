@@ -8,12 +8,12 @@
   "requested_by": "docs/spring/phase1/resume-plan.md section 2, order 9 (owner-approved, b349fb0a)",
   "report_to": "the coordinator",
   "estimate_minutes": 30,
-  "summary": "parallel:1 against parallel:1 minPoolSize:4 incPoolSize:0 on gs-rest-service, on the default fast path",
-  "why": "Owner decision 2: the small-pools trade-off (-22% RSS, -2.1% throughput) was measured before the fast path (gc-pools-ab, ce87168d); it is decided by this repeat on the shipping default. Same arms and runs as gc-pools-ab.",
+  "summary": "parallel:1 against fixed 4 MiB and 1 MiB pools (minPoolSize:4/1 incPoolSize:0) on gs-rest-service, Go interleaved, with a smaps census per phase and every 15 s of the fixed-rate rise",
+  "why": "Owner decision 2: the small-pools trade-off (-22% RSS, -2.1% throughput) was measured before the fast path (gc-pools-ab, ce87168d); it is decided by this repeat on the shipping default. Same arms and runs as gc-pools-ab. Reshaped (coordinator, 41053ce3): a 1 MiB fixed-pool arm beside the 4 MiB one, Go interleaved, and gc-matrix --smaps for Flint and Go: Flint sits below Go after warm-up (11.57 against 13.80 MB) and climbs about 8 MB during the 60 s fixed-rate phase. Budget 13.0 MB. 3 runs keep it inside a 30-minute claim.",
   "builds": {
     "tree": {
       "app": "checkout",
-      "commit": "ca5fbd4a46ed",
+      "commit": "5d7890bd6adb",
       "flint": true,
       "linker": "mold",
       "fork": true
@@ -32,15 +32,15 @@
           "gs-rest-service",
           "--output",
           "{out}/fast-path-pools-ab.json",
-          "--setting",
-          "conservative",
           "--gcopt",
           "p1=gc:conservative parallel:1",
           "--gcopt",
           "p1-pools4=gc:conservative parallel:1 minPoolSize:4 incPoolSize:0",
+          "--gcopt",
+          "p1-pools1=gc:conservative parallel:1 minPoolSize:1 incPoolSize:0",
           "--runs",
-          "4",
-          "--no-go"
+          "3",
+          "--smaps"
         ],
         "smoke_args": [
           "--smoke"
@@ -51,6 +51,6 @@
   },
   "tree_note": "Resume plan 1.5: every baseline part builds in the same private tree at B (flint, mold, the fork build), so all parts measure one toolchain.",
   "claim_when": "Section 2 order 9 of the owner-approved resume plan: a claimed window at B, only if RSS still decides",
-  "pinned": "B, ca5fbd4a46edd8e558d5876830197f23b5db5295 (coordinator, 2026-11-24 02:06Z)",
+  "pinned": "main 5d7890bd6adb (2026-11-24 06:4xZ): the ADR-032 comparator, data-access fixes, 72b04c1c; reshaped per Astra RSS review 41053ce3",
   "released": "RSS still decides at B: phase1-http-gs-rest peak RSS 1.418 (1.393-1.453) of Go, certified 03:27Z"
 }

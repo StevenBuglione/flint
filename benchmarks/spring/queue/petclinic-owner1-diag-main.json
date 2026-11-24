@@ -10,11 +10,11 @@
   "report_to": "the coordinator and data-access",
   "summary": "Diagnostic, never evidence: petclinic-rest GET /owners/1 along the ladder 1/8/10/16/64 at main with data-access's counters, Flint and Go, plus the statement census",
   "why": "At main (data-access's wait fix 61586b1b and counters 0dcde00f): rps, latency, server CPU per request and per thread, PostgreSQL CPU per request without logging (ADR-032's row), the lease counters (wait, hold, drive, socket wait, handoff; the change-4 criterion is the idle lease behind a sleeping FIFO head), the statement census, and perf counts if kernel.perf_event_paranoid allows. Runs after B's batch (priority 10).",
-  "pinned": "main at f2a1cd804a20 (2026-11-24 05:0xZ), containing 0dcde00f",
+  "pinned": "main 5d7890bd6adb: 0dcde00f counters, 55dbabbc prepared BEGIN/COMMIT, the ADR-032 comparator (f0087ee3)",
   "builds": {
     "tree": {
       "app": "checkout",
-      "commit": "f2a1cd804a20",
+      "commit": "5d7890bd6adb",
       "flint": true,
       "linker": "mold",
       "fork": true

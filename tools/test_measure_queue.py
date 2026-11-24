@@ -189,7 +189,8 @@ class Pins(unittest.TestCase):
         # Resume plan 1.5: the baseline's parts all build in the same tree flavour (flint, mold, the fork build).
         ids = ['phase1-builds-petclinic', 'phase1-http-gs-rest', 'phase1-http-petclinic', 'error-404-p99',
                'error-validation-p99', 'phase1-builds-gs-relational', 'phase1-builds-gs-rest', 'release-static-ab',
-               'fast-path-pools-ab'] + [f'phase1-gc-matrix-{n}' for n in ('1', '2', '3', 'gs-rest-1', 'gs-rest-2', 'gs-rest-3')]
+               ] + [f'phase1-gc-matrix-{n}' for n in ('1', '2', '3', 'gs-rest-1', 'gs-rest-2', 'gs-rest-3')]
+        # fast-path-pools-ab is an A/B inside one commit, never assembled: it moved to main with the RSS census.
         commits = set()
         for name in ids:
             entry = measure_queue.load_entry(name)
