@@ -1,7 +1,7 @@
 /++
-Flint's tests of the erased lists of a class (playbook B-1): `ArrayList!T`, `List.of`, `Collections.emptyList`,
-`singletonList` and `unmodifiableList` for a class `T` share one `Object` implementation and must behave exactly as
-the template lists do for every other element type.
+Flint's tests of the erased collections of a class (playbook B-1): `ArrayList!T`, `List.of`, `Collections.emptyList`,
+`singletonList`, `unmodifiableList`, `HashSet!T` and `LinkedHashSet!T` (and so every map's `entrySet`) for a class
+`T` share one `Object` implementation and must behave exactly as the template collections do for other elements.
 +/
 module flint.java.erased_list_test;
 
@@ -9,7 +9,8 @@ import flint.engine.aot.any : Any;
 import flint.engine.aot.name : typeNameOf;
 import flint.java.lang : ClassCastException, IllegalStateException, IndexOutOfBoundsException,
     UnsupportedOperationException;
-import flint.java.util : ArrayList, Collection, Collections, Comparator, List, NoSuchElementException, RawCollection;
+import flint.java.util : ArrayList, Collection, Collections, Comparator, HashMap, HashSet,
+    LinkedHashSet, List, MapEntry, NoSuchElementException, RawCollection, Set;
 
 @safe:
 
@@ -195,4 +196,72 @@ unittest
     foreach (pet; of)
         names ~= pet.name;
     assert(names == "ab");
+}
+
+@("HashSet of a class: Java equals and hashCode decide membership; insertion order, iteration, bulk and freeze")
+unittest
+{
+    auto set = new HashSet!Pet();
+    assert(set.isEmpty() && set.isSet() && set.toString() == "[]");
+    assert(set.add(new Pet("b")) && set.add(new Cat("a")) && !set.add(new Pet("b", 9)), "equal by name: one element");
+    assert(set.size() == 2 && set.contains(new Pet("a")) && !set.contains(new Pet("z")));
+    assert(set.toString() == "[b, a]");
+    string names;
+    foreach (pet; set)
+        names ~= pet.name;
+    set.forEach((Pet p) { names ~= p.name; });
+    assert(names == "baba");
+    auto it = set.iterator();
+    it.next();
+    it.remove();
+    assert(set.toString() == "[a]" && !set.contains(new Pet("b")));
+    expectThrow!IllegalStateException(() @safe { it.remove(); return 0; });
+    assert(set.addAll(new ArrayList!Pet([new Pet("c"), new Pet("d"), new Pet("a")])) && set.size() == 3);
+    assert(set.removeAll(new ArrayList!Pet([new Pet("c")])) && set.toString() == "[a, d]");
+    assert(set.retainAll(new ArrayList!Pet([new Pet("d")])) && set.toString() == "[d]");
+    assert(set.remove(new Pet("d")) && !set.remove(new Pet("d")) && set.isEmpty());
+}
+
+@("HashSet of a class: equality, Java's set hashCode, boxing, and frozen sets")
+unittest
+{
+    // Equality and Java's set hashCode: the sum of the elements' own hashCode (name length).
+    auto one = new LinkedHashSet!Pet([new Pet("ab"), new Pet("xyz")]);
+    auto two = new HashSet!Pet(cast(Collection!Pet) new ArrayList!Pet([new Pet("xyz"), new Pet("ab")]));
+    assert(one.equals(two) && two.equals(one) && one.hashCode() == 5 && one == two);
+    assert(one.toArray().length == 2 && one.toArray()[0].name == "ab" && one.stream().count() == 2);
+    RawCollection raw = one;
+    assert(raw.toAnyArray()[1].get!Pet.name == "xyz" && raw.elementTypeName() == typeNameOf!Pet && raw.isSet());
+    raw.addAny(Any.of(new Pet("q")));
+    assert(one.size() == 3);
+}
+
+@("Set.of and emptySet of a class are frozen")
+unittest
+{
+    auto frozen = Set!Pet.of(new Pet("f"));
+    expectThrow!UnsupportedOperationException(() @safe => frozen.add(new Pet("g")));
+    expectThrow!UnsupportedOperationException(() @safe => frozen.remove(new Pet("f")));
+    expectThrow!UnsupportedOperationException(() @safe { frozen.clear(); return 0; });
+    expectThrow!UnsupportedOperationException(() @safe => frozen.removeIf((Pet p) => true));
+    auto frozenIt = frozen.iterator();
+    frozenIt.next();
+    expectThrow!UnsupportedOperationException(() @safe { frozenIt.remove(); return 0; });
+    assert(Collections.emptySet!Pet().size() == 0 && frozen.contains(new Pet("f")));
+}
+
+@("A map's entrySet is an erased set of its entries: order, membership and removal by entry")
+unittest
+{
+    auto map = new HashMap!(string, Pet)();
+    map.put("x", new Pet("x"));
+    map.put("y", new Pet("y"));
+    auto entries = map.entrySet();
+    string keys;
+    foreach (entry; entries)
+        keys ~= entry.getKey() ~ entry.getValue().name;
+    assert(keys == "xxyy" && entries.size() == 2);
+    auto counts = new HashMap!(string, int)();
+    counts.put("a", 1);
+    assert(counts.entrySet().toString() == "[a=1]");
 }

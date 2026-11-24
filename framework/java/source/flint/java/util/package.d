@@ -1774,7 +1774,7 @@ private final class UnmodifiableList(T) if (isErasedElement!T) : ErasedList, Lis
 }
 
 /// Java's `HashSet`. Iterates in insertion order (a rulebook deviation; Java's order is unspecified).
-class HashSet(T) : AbstractCollection!T, Set!T
+class HashSet(T) if (!isErasedElement!T) : AbstractCollection!T, Set!T
 {
     /// Descriptor hook: storage is private, not JSON properties.
     enum __flintOpaque = true;
@@ -1960,6 +1960,317 @@ class HashSet(T) : AbstractCollection!T, Set!T
             return cast(uint) hashCode();
         catch (Exception)
             return 0;
+    }
+}
+
+/++
+The non-template part of an erased set of a class: elements as `Object`s in insertion order, positions keyed by the
+elements themselves (an associative array keyed by `Object` hashes and compares through the same virtual `toHash`
+and `opEquals` as one keyed by the class), and the frozen flag of `Set.of` and `emptySet`.
++/
+abstract class ErasedHashSet : RawCollection
+{
+    // Only the typed HashSet facade in this module stores here, each storing only its own T: the erasure invariant.
+    private Object[] items;
+    private size_t[Object] positions;
+    private bool frozen;
+
+    /// Java's `Set.equals`, typed by the facade.
+    abstract bool equals(Object o);
+    /// Java's `Set.hashCode`, typed by the facade (an element's `hashCode` may be its class's own).
+    abstract int hashCode();
+
+    private bool insertObject(Object e)
+    {
+        if (e in positions)
+            return false;
+        positions[e] = items.length;
+        items ~= e;
+        return true;
+    }
+
+    package(flint.java) void freeze() pure nothrow @nogc
+    {
+        frozen = true;
+    }
+
+    private void checkModifiable()
+    {
+        if (frozen)
+            throw new UnsupportedOperationException();
+    }
+
+    /// How many elements.
+    int size()
+    {
+        return cast(int) items.length;
+    }
+
+    /// Java's `isEmpty`.
+    bool isEmpty()
+    {
+        return items.length == 0;
+    }
+
+    /// A set is a set.
+    bool isSet()
+    {
+        return true;
+    }
+
+    /// Java's `clear`. Throws `UnsupportedOperationException` when frozen.
+    void clear()
+    {
+        checkModifiable();
+        items = null;
+        positions = null;
+    }
+
+    private bool containsObject(Object o)
+    {
+        return (o in positions) !is null;
+    }
+
+    private bool removeObject(Object o)
+    {
+        checkModifiable();
+        auto position = o in positions;
+        if (position is null)
+            return false;
+        removeAtPosition(*position);
+        return true;
+    }
+
+    private void removeAtPosition(size_t position)
+    {
+        positions.remove(items[position]);
+        foreach (i; position + 1 .. items.length)
+        {
+            items[i - 1] = items[i];
+            positions[items[i - 1]] = i - 1;
+        }
+        items = items[0 .. $ - 1];
+    }
+
+    private bool removeObjectsIf(scope bool delegate(Object) @safe filter)
+    {
+        checkModifiable();
+        Object[] kept;
+        foreach (e; items)
+            if (!filter(e))
+                kept ~= e;
+        if (kept.length == items.length)
+            return false;
+        items = null;
+        positions = null;
+        foreach (e; kept)
+            insertObject(e);
+        return true;
+    }
+
+    /// Every element boxed as an `Any` of the element type named `typeName`.
+    final Any[] objectsToAny(string typeName)
+    {
+        auto result = new Any[items.length];
+        foreach (i, ref e; result)
+            e = Any.ofObject(items[i], typeName);
+        return result;
+    }
+
+    /// `[a, b, c]`, each element as `String.valueOf` renders it.
+    override string toString()
+    {
+        string result = "[";
+        foreach (i, e; items)
+        {
+            if (i)
+                result ~= ", ";
+            result ~= e is this ? "(this Collection)" : valueOf(e);
+        }
+        return result ~ "]";
+    }
+
+    override bool opEquals(Object o)
+    {
+        return equals(o);
+    }
+
+    override size_t toHash() @safe nothrow
+    {
+        try
+            return cast(uint) hashCode();
+        catch (Exception)
+            return 0;
+    }
+}
+
+/// Java's `HashSet` of a class: the erased storage and thin typed methods. Iterates in insertion order.
+class HashSet(T) if (isErasedElement!T) : ErasedHashSet, Set!T
+{
+    /// Descriptor hook: storage is private, not JSON properties.
+    enum __flintOpaque = true;
+
+    /// An empty set.
+    this() pure nothrow @nogc
+    {
+    }
+
+    /// A set of `c`'s elements.
+    this(Collection!T c)
+    {
+        foreach (e; c.toArray())
+            insertObject(e);
+    }
+
+    /// A set of `elements` (the D array conversion of R10).
+    this(T[] elements)
+    {
+        foreach (e; elements)
+            insertObject(e);
+    }
+
+    bool contains(T o)
+    {
+        return containsObject(o);
+    }
+
+    bool containsAll(Collection!T c)
+    {
+        for (auto it = c.iterator(); it.hasNext();)
+            if (!contains(it.next()))
+                return false;
+        return true;
+    }
+
+    bool add(T e)
+    {
+        checkModifiable();
+        return insertObject(e);
+    }
+
+    bool remove(T o)
+    {
+        return removeObject(o);
+    }
+
+    bool addAll(Collection!T c)
+    {
+        bool changed;
+        foreach (e; c.toArray())
+            changed |= add(e);
+        return changed;
+    }
+
+    bool removeAll(Collection!T c)
+    {
+        return removeIf((T e) => c.contains(e));
+    }
+
+    bool retainAll(Collection!T c)
+    {
+        return removeIf((T e) => !c.contains(e));
+    }
+
+    bool removeIf(bool delegate(T) @safe filter)
+    {
+        return removeObjectsIf((Object e) => filter(assumeClass!T(e)));
+    }
+
+    T[] toArray()
+    {
+        return assumeClasses!T(items).dup;
+    }
+
+    Stream!T stream()
+    {
+        return Stream!T.ofArray(toArray());
+    }
+
+    Iterator!T iterator()
+    {
+        return new ErasedSetIterator!T(this);
+    }
+
+    void forEach(void delegate(T) @safe action)
+    {
+        for (size_t i = 0; i < items.length; i++)
+            action(assumeClass!T(items[i]));
+    }
+
+    int opApply(scope int delegate(T) @safe dg)
+    {
+        for (size_t i = 0; i < items.length; i++)
+            if (const result = dg(assumeClass!T(items[i])))
+                return result;
+        return 0;
+    }
+
+    Any[] toAnyArray()
+    {
+        return objectsToAny(typeNameOf!T);
+    }
+
+    void addAny(Any element)
+    {
+        add(element.get!T);
+    }
+
+    string elementTypeName()
+    {
+        return typeNameOf!T;
+    }
+
+    /// Java's `Set.equals`: another set with the same elements.
+    override bool equals(Object o)
+    {
+        if (o is this)
+            return true;
+        auto that = cast(Set!T) o;
+        return that !is null && that.size() == size() && containsAll(that);
+    }
+
+    /// Java's `Set.hashCode`: the sum of the elements' hash codes.
+    override int hashCode()
+    {
+        int h;
+        foreach (e; items)
+            h += javaHashCode(assumeClass!T(e));
+        return h;
+    }
+}
+
+/// The iterator of an erased set: insertion order; `remove` honours the frozen flag.
+private final class ErasedSetIterator(T) : Iterator!T
+{
+    private ErasedHashSet set;
+    private size_t cursor;
+    private bool canRemove;
+
+    this(ErasedHashSet set) pure nothrow @nogc
+    {
+        this.set = set;
+    }
+
+    bool hasNext()
+    {
+        return cursor < set.items.length;
+    }
+
+    T next()
+    {
+        if (cursor >= set.items.length)
+            throw new NoSuchElementException();
+        canRemove = true;
+        return assumeClass!T(set.items[cursor++]);
+    }
+
+    void remove()
+    {
+        if (!canRemove)
+            throw new IllegalStateException();
+        set.checkModifiable();
+        set.removeAtPosition(--cursor);
+        canRemove = false;
     }
 }
 
