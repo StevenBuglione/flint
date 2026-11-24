@@ -715,3 +715,4 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     4. A 2 MiB pool arm for petclinic (boot, via --DRT-gcopt) and web-http's wake bisect.
     5. Re-profile before spending on maps, Jackson or transaction glue.
   - **Not budgeted:** a 30–40 µs win from a JDBC executor alone. An arena entity graph copied at the boundary is rejected (two representations, lifetime hazards).
+- 2026-11-24, owner: **fixed 1 MiB GC pools confirmed as Boot's default** (owner: "1 MiB pools"). The provisional decision 236459b6, implemented in 0f01d6ed, is now final. A per-app arm for petclinic (2 or 4 MiB through `--DRT-gcopt`) stays an experiment in the petclinic CPU plan. Changing the default for any app comes back to the owner with its measurements.
