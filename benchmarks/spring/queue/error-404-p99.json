@@ -30,8 +30,6 @@
           "--app",
           "gs-rest-service:not-found",
           "--no-context",
-          "--baseline",
-          "benchmarks/spring/baselines/go/gs-rest-service/20261124T082805Z",
           "--output",
           "{out}/http-error-404.json"
         ],
@@ -3075,5 +3073,10 @@
         }
       }
     }
-  ]
+  ],
+  "drift_fallback": {
+    "time": "2026-11-24T14:10:31Z",
+    "record": "benchmarks/spring/baselines/go/gs-rest-service/20261124T082805Z",
+    "note": "the drift guard failed; measured interleaved with Go from the next claim"
+  }
 }

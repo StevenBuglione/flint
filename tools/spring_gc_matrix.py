@@ -170,9 +170,14 @@ def main(args):
                         target = result['settings'][name]
                         profile = gc_profile(row['server_log'])
                         if profile and 'collections' in profile:
-                            # The process ran the three phases plus readiness; collections per second of load.
+                            # The process ran the three phases plus readiness; collections per second of load, and per
+                            # 1,000 requests served across the phases (the petclinic CPU plan, 3df9a1c5).
                             loaded = workload['warmup_seconds'] + workload['duration_seconds'] + workload['capacity_seconds']
                             profile['collections_per_load_second'] = profile['collections'] / loaded
+                            served = sum((row.get(phase) or {}).get('count', 0) for phase in ('warmup', 'latency', 'capacity'))
+                            if served:
+                                profile['requests'] = served
+                                profile['collections_per_1000_requests'] = profile['collections'] * 1000 / served
                         target['gc_profiles'].append(profile)
                         row['gc_profile'] = profile
                     row['setting'] = name
