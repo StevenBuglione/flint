@@ -4,7 +4,7 @@
   "created": "2026-11-24",
   "status": "pending",
   "window": "claim",
-  "priority": 9,
+  "priority": 0.5,
   "estimate_minutes": 4,
   "not_before": "2026-11-25T02:30:00Z",
   "requested_by": "the coordinator, 10:35Z: set the drift guard's bands from the Go calibration across separate sessions",

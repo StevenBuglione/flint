@@ -2,10 +2,10 @@
   "schema": "flint.measure-queue/1",
   "id": "phase1-http-gs-rest",
   "created": "2026-11-23",
-  "status": "done",
+  "status": "blocked",
   "window": "claim",
-  "priority": 6,
-  "claim_when": "B2 order 4 (coordinator 09:12Z)",
+  "priority": 5,
+  "claim_when": "B3 order 5 (coordinator 19:04Z)",
   "requested_by": "ADR-030 section 8, Phase 1 exit (coordinator's plan, 2026-11-23 15:20Z); split per application by the coordinator, 2026-11-23 16:45Z",
   "report_to": "the coordinator; docs/milestones/13.md",
   "estimate_minutes": 25,
@@ -14,7 +14,7 @@
   "builds": {
     "tree": {
       "app": "checkout",
-      "commit": "0f01d6edd0a4",
+      "commit": "d6d15b0073dd",
       "flint": true,
       "linker": "mold",
       "fork": false
@@ -33,8 +33,6 @@
           "--app",
           "gs-rest-service",
           "--no-context",
-          "--baseline",
-          "benchmarks/spring/baselines/go/gs-rest-service/20261124T082805Z",
           "--output",
           "{out}/http.json"
         ],
@@ -46,8 +44,8 @@
       }
     ]
   },
-  "tree_note": "B2: one private tree with a copy of the shared toolchain v4.1 (DMD e7757432, DUB with c17ea1ba), mold, builds served with none refused asserted (FLINT_DMD_SERVER_TRACE), strict scratch; runtime parts Flint-only against the captured Go baselines (c015f307)",
-  "pinned": "B2, 0f01d6edd0a416a709e828cd7a7e94d7c531c563 (coordinator 09:12Z, decisions.md 686e28a1)",
+  "tree_note": "B3: one private tree with a copy of shared v4.2 (4ac873d8: every compile client-served or client-local), mold, strict served compiles (0 client-local except c-source and forced), strict scratch; runtime parts interleaved with Go (the Go records' fingerprints predate the database protocol, so B3's tools refuse them as stale)",
+  "pinned": "B3, d6d15b0073dda669dacf790dea443f033f4dbb55 (coordinator 19:04Z, decisions.md 1927861e)",
   "attempts": [
     {
       "time": "2026-11-24T03:27:19Z",
@@ -3317,5 +3315,6 @@
         }
       }
     }
-  ]
+  ],
+  "blocked_on": "the B3 builds smoke (client-served check live), then unblocked"
 }

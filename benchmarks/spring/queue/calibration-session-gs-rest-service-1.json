@@ -2,7 +2,7 @@
   "schema": "flint.measure-queue/1",
   "id": "calibration-session-gs-rest-service-1",
   "created": "2026-11-24",
-  "status": "pending",
+  "status": "done",
   "window": "claim",
   "priority": 9,
   "estimate_minutes": 4,
@@ -33,5 +33,242 @@
         ]
       }
     ]
-  }
+  },
+  "attempts": [
+    {
+      "time": "2026-11-24T18:32:14Z",
+      "outcome": "measured",
+      "evidence": true,
+      "host": "venus",
+      "builds": {},
+      "shared_toolchain": {
+        "path": "/home/olfa/flint-work/flint/.tools",
+        "resolved": "/home/olfa/flint-work/flint/.tools-v4.2",
+        "dmd_sha256": "663977a9340a84167083b5f03a2b9518783358b94c795b8813ce872891d0f213"
+      },
+      "window_before": {
+        "time": "2026-11-24T18:30:55Z",
+        "load_average": [
+          0.3349609375,
+          0.31787109375,
+          0.5107421875
+        ],
+        "running_tasks": 0,
+        "instant": true,
+        "busy_processes": [],
+        "idle_build_processes": 353,
+        "quiet": true,
+        "problems": []
+      },
+      "window_during": [
+        {
+          "time": "2026-11-24T18:31:06Z",
+          "load_average": [
+            0.283203125,
+            0.30712890625,
+            0.5048828125
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T18:31:17Z",
+          "load_average": [
+            0.56005859375,
+            0.36328125,
+            0.52099609375
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T18:31:28Z",
+          "load_average": [
+            0.6953125,
+            0.400390625,
+            0.53173828125
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T18:31:39Z",
+          "load_average": [
+            0.66162109375,
+            0.40380859375,
+            0.53173828125
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T18:31:50Z",
+          "load_average": [
+            1.10009765625,
+            0.51513671875,
+            0.56689453125
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T18:32:01Z",
+          "load_average": [
+            0.9306640625,
+            0.49755859375,
+            0.56005859375
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T18:32:12Z",
+          "load_average": [
+            1.4765625,
+            0.6298828125,
+            0.6025390625
+          ],
+          "busy_processes": []
+        }
+      ],
+      "foreign_activity_during": 0,
+      "window_after": {
+        "time": "2026-11-24T18:32:14Z",
+        "load_average": [
+          1.4765625,
+          0.6298828125,
+          0.6025390625
+        ],
+        "running_tasks": 0,
+        "instant": false,
+        "busy_processes": [],
+        "idle_build_processes": 223,
+        "quiet": true,
+        "problems": []
+      },
+      "frozen": [
+        {
+          "pid": 3266839,
+          "start": 579102942,
+          "command": "postgres",
+          "kind": "database",
+          "cwd": "/tmp/claude-1000/-home-olfa-flint-work-flint--claude-worktrees-elastic-lamport-35bb31/a8e3e165-f7a8-4a3b-b16d-c5de47b9adba/scratchpad/stall/pg",
+          "frozen_at": "2026-11-24T18:30:42Z"
+        },
+        {
+          "pid": 3266841,
+          "start": 579102942,
+          "command": "postgres",
+          "kind": "database",
+          "cwd": "/tmp/claude-1000/-home-olfa-flint-work-flint--claude-worktrees-elastic-lamport-35bb31/a8e3e165-f7a8-4a3b-b16d-c5de47b9adba/scratchpad/stall/pg",
+          "frozen_at": "2026-11-24T18:30:42Z"
+        },
+        {
+          "pid": 3266842,
+          "start": 579102942,
+          "command": "postgres",
+          "kind": "database",
+          "cwd": "/tmp/claude-1000/-home-olfa-flint-work-flint--claude-worktrees-elastic-lamport-35bb31/a8e3e165-f7a8-4a3b-b16d-c5de47b9adba/scratchpad/stall/pg",
+          "frozen_at": "2026-11-24T18:30:42Z"
+        },
+        {
+          "pid": 3266843,
+          "start": 579102942,
+          "command": "postgres",
+          "kind": "database",
+          "cwd": "/tmp/claude-1000/-home-olfa-flint-work-flint--claude-worktrees-elastic-lamport-35bb31/a8e3e165-f7a8-4a3b-b16d-c5de47b9adba/scratchpad/stall/pg",
+          "frozen_at": "2026-11-24T18:30:42Z"
+        },
+        {
+          "pid": 3266844,
+          "start": 579102942,
+          "command": "postgres",
+          "kind": "database",
+          "cwd": "/tmp/claude-1000/-home-olfa-flint-work-flint--claude-worktrees-elastic-lamport-35bb31/a8e3e165-f7a8-4a3b-b16d-c5de47b9adba/scratchpad/stall/pg",
+          "frozen_at": "2026-11-24T18:30:42Z"
+        },
+        {
+          "pid": 3266845,
+          "start": 579102942,
+          "command": "postgres",
+          "kind": "database",
+          "cwd": "/tmp/claude-1000/-home-olfa-flint-work-flint--claude-worktrees-elastic-lamport-35bb31/a8e3e165-f7a8-4a3b-b16d-c5de47b9adba/scratchpad/stall/pg",
+          "frozen_at": "2026-11-24T18:30:42Z"
+        },
+        {
+          "pid": 3266847,
+          "start": 579102942,
+          "command": "postgres",
+          "kind": "database",
+          "cwd": "/tmp/claude-1000/-home-olfa-flint-work-flint--claude-worktrees-elastic-lamport-35bb31/a8e3e165-f7a8-4a3b-b16d-c5de47b9adba/scratchpad/stall/pg",
+          "frozen_at": "2026-11-24T18:30:42Z"
+        },
+        {
+          "pid": 3266848,
+          "start": 579102942,
+          "command": "postgres",
+          "kind": "database",
+          "cwd": "/tmp/claude-1000/-home-olfa-flint-work-flint--claude-worktrees-elastic-lamport-35bb31/a8e3e165-f7a8-4a3b-b16d-c5de47b9adba/scratchpad/stall/pg",
+          "frozen_at": "2026-11-24T18:30:42Z"
+        },
+        {
+          "pid": 3266849,
+          "start": 579102942,
+          "command": "postgres",
+          "kind": "database",
+          "cwd": "/tmp/claude-1000/-home-olfa-flint-work-flint--claude-worktrees-elastic-lamport-35bb31/a8e3e165-f7a8-4a3b-b16d-c5de47b9adba/scratchpad/stall/pg",
+          "frozen_at": "2026-11-24T18:30:42Z"
+        },
+        {
+          "pid": 3268845,
+          "start": 579114338,
+          "command": "callgrind-amd64",
+          "kind": "diagnostic",
+          "cwd": "/home/olfa/flint-work/flint/.claude/worktrees/suspicious-einstein-e3fb8f/benchmarks/spring/flint/petclinic-rest",
+          "frozen_at": "2026-11-24T18:30:42Z"
+        }
+      ],
+      "results_directory": ".flint/measure/results/calibration-session-gs-rest-service-1/20261124T183042Z",
+      "summary": {
+        "steps": [
+          {
+            "command": [
+              "/usr/bin/python3",
+              "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/45e8b765f772/tools/spring_baseline.py",
+              "calibrate",
+              "--app",
+              "gs-rest-service",
+              "--samples",
+              "3",
+              "--log",
+              "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/calibration-session-gs-rest-service-1/20261124T183042Z/session.jsonl"
+            ],
+            "cwd": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/45e8b765f772",
+            "exit_code": 0,
+            "log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/calibration-session-gs-rest-service-1/20261124T183042Z/step-0.log",
+            "harness_commit": "45e8b765f772e0980632092edb9bd3d3ec59d3fd",
+            "harness_toolchain": {
+              "tools_directory": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools",
+              "fork_build": false,
+              "dmd": null,
+              "ldc2": null,
+              "flint": null,
+              "dmd_native_aot_extractor": null,
+              "mold": []
+            },
+            "artifacts": {},
+            "measured_binaries": [],
+            "aot_summaries": {
+              "count": 0,
+              "distinct": [],
+              "extractors": []
+            },
+            "gc_options": {
+              "argv": []
+            },
+            "dmd_server": {
+              "compiled": 0,
+              "refused": 0,
+              "stopped_before": []
+            }
+          }
+        ],
+        "outputs": {}
+      }
+    }
+  ]
 }
