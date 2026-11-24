@@ -627,3 +627,10 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - **Oz: 0.625, which passes** (4,147,432 against 6,634,456 bytes).
 
     Evidence: `benchmarks/spring/evidence/phase1-builds-gs-rest/20261124T062614Z/`.
+- 2026-11-24, proof-harness: **release-static-ab certified at B** (`ca5fbd4a46ed`, claimed window 06:39–07:07Z, no foreign activity; non-gating, owner rule 6ecd8933). gs-rest-service release, dynamic glibc (as built) against fully static musl (`flint package --target linux-x86_64-musl`, prepared at B with the watcher stopped), both 18/18 exact, 6 interleaved runs per arm. Static / dynamic, median (99% interval):
+    - throughput **0.924 (0.915–0.931), worse beyond its interval** (298,200 against 322,800 req/s);
+    - p50 **1.109 (1.043–1.147), worse**; p99 1.139 (0.885–1.542) and CPU per request 1.087 (0.978–1.198), inside their intervals;
+    - peak RSS **0.918 (0.909–0.944), better** (17.9 against 19.5 MB);
+    - stripped size: O3 5,407,920 against 4,745,176 bytes, Oz 4,904,368 against 4,147,432 (Oz 0.739 of Go's 6,634,456, a pass, but larger than the dynamic Oz).
+
+    **Verdict under 6ecd8933: the measured release profile stays dynamic glibc.** The rule switches only if no runtime metric gets worse beyond its interval, and throughput and p50 do (musl's mallocng and libc replace glibc's, as playbook M-5 recorded). The 8% RSS saving is real; it goes to the RSS work as a lead, not a profile switch. Evidence: `benchmarks/spring/evidence/release-static-ab/20261124T063926Z/`.

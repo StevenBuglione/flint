@@ -1,0 +1,20 @@
+{"trial": 0, "arm": "dynamic-glibc", "status": "measured"}
+{"trial": 0, "arm": "static-musl", "status": "measured"}
+{"trial": 1, "arm": "static-musl", "status": "measured"}
+{"trial": 1, "arm": "dynamic-glibc", "status": "measured"}
+{"trial": 2, "arm": "dynamic-glibc", "status": "measured"}
+{"trial": 2, "arm": "static-musl", "status": "measured"}
+{"trial": 3, "arm": "static-musl", "status": "measured"}
+{"trial": 3, "arm": "dynamic-glibc", "status": "measured"}
+{"trial": 4, "arm": "dynamic-glibc", "status": "measured"}
+{"trial": 4, "arm": "static-musl", "status": "measured"}
+{"trial": 5, "arm": "static-musl", "status": "measured"}
+{"trial": 5, "arm": "dynamic-glibc", "status": "measured"}
+static-musl/dynamic-glibc
+  requests_per_second  0.924 [0.915, 0.931]
+  p50_ms               1.109 [1.043, 1.147]
+  p99_ms               1.139 [0.885, 1.542]
+  p999_ms              0.932 [0.700, 2.101]
+  peak_rss_bytes       0.918 [0.909, 0.944]
+  cpu_ns_per_request   1.087 [0.978, 1.198]
+sizes {"dynamic-glibc": {"O3": {"bytes": 4745176}, "Oz": {"bytes": 4147432}}, "static-musl": {"O3": {"bytes": 5407920}, "Oz": {"bytes": 4904368}}}
