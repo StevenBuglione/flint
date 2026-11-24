@@ -526,7 +526,7 @@ struct Replay
 }
 
 /// Part of the replay record: a change to its layout invalidates every record.
-private enum replayFormat = "flint.direct-replay/2";
+private enum replayFormat = "flint.direct-replay/3";
 
 /// The compile and link commands in DUB's `-v` output: `[cwd=<directory>] <compiler> <arguments>` lines. False
 /// when there is not exactly one link, or an argument could hold a space (the pipeline does not quote them).
@@ -576,7 +576,89 @@ private bool addReplayCommand(ref Replay replay, string directory, string[] argu
     return true;
 }
 
-/// Record what DUB just ran, for the next static dev build.
+/// A link input whose repeats `collapseRepeatedInputs` may merge: an archive, as a path or `-L<path>`, or `-L-l`.
+private bool linkInput(string argument)
+{
+    import std.algorithm.searching : endsWith, startsWith;
+
+    if (argument.startsWith("-L-l"))
+        return argument.length > "-L-l".length;
+    const path = argument.startsWith("-L") ? argument["-L".length .. $] : argument;
+    return path.length > 2 && path[0] != '-' && path.endsWith(".a");
+}
+
+/// DUB passes every package's native linker flags once per dependency path to it, without removing repeats:
+/// petclinic-rest's link names libflint_ffi_base.a 1,431 times, 3,463 archive mentions for 67 archives, and mold
+/// spends 318 ms on it instead of 128. The repeats follow the platform's group, outside any group. This replaces
+/// the stretch from the first repeated input to the last with one group of its inputs, each once, in first-seen
+/// order. A group is scanned until nothing more resolves, so it resolves whatever any number of repeats did, with
+/// ld.bfd too; mold and lld ignore groups, and their output is unchanged byte for byte. The link stays as it was
+/// unless that stretch holds only link inputs outside any group.
+string[] collapseRepeatedInputs(scope const string[] link)
+{
+    size_t[string] seen;
+    size_t first = size_t.max, last;
+    int depth;
+    foreach (index, argument; link)
+    {
+        if (argument == "-L--start-group" || argument == "-L-(")
+            depth++;
+        else if (argument == "-L--end-group" || argument == "-L-)")
+            depth--;
+        else if (depth == 0 && linkInput(argument))
+        {
+            if (auto at = argument in seen)
+            {
+                if (*at < first)
+                    first = *at;
+                last = index;
+            }
+            else
+                seen[argument] = index;
+        }
+    }
+    if (first == size_t.max)
+        return link.dup;
+    string[] unique;
+    bool[string] kept;
+    foreach (argument; link[first .. last + 1])
+    {
+        if (!linkInput(argument))
+            return link.dup;
+        if (argument !in kept)
+        {
+            kept[argument] = true;
+            unique ~= argument;
+        }
+    }
+    return link[0 .. first].dup ~ "-L--start-group" ~ unique ~ "-L--end-group" ~ link[last + 1 .. $].dup;
+}
+
+@safe unittest
+{
+    const link = [
+        "dmd", "-ofapp", "app.o", "-L--start-group", "-L/p/libweb.a", "-L/p/libweb.a",
+        "-L--end-group", "/n/libbase.a", "/n/libyaml.a",
+        "-L-lpthread", "/n/libbase.a", "/n/libyaml.a", "-L-lpthread", "/n/libssl.a", "/n/libbase.a",
+        "-L-z"
+    ];
+    assert(collapseRepeatedInputs(link) == [
+        "dmd", "-ofapp", "app.o", "-L--start-group", "-L/p/libweb.a", "-L/p/libweb.a", "-L--end-group",
+        "-L--start-group", "/n/libbase.a", "/n/libyaml.a", "-L-lpthread", "/n/libssl.a",
+        "-L--end-group", "-L-z"
+    ]);
+    // Nothing repeats outside a group: unchanged.
+    assert(collapseRepeatedInputs(link[0 .. 10]) == link[0 .. 10]);
+    // A flag between the repeats keeps the order meaningful: unchanged.
+    const ordered = ["dmd", "/n/a.a", "-L--as-needed", "/n/a.a"];
+    assert(collapseRepeatedInputs(ordered) == ordered);
+    // An object file is not merged.
+    const objects = ["dmd", "x.o", "/n/a.a", "x.o", "/n/a.a"];
+    assert(collapseRepeatedInputs(objects) == objects);
+}
+
+/// Record what DUB just ran, for the next static dev build. Repeated link inputs are merged
+/// (`collapseRepeatedInputs`).
 void recordReplay(const ref DirectBuild build, string dubOutput)
 {
     import std.array : join;
@@ -589,6 +671,7 @@ void recordReplay(const ref DirectBuild build, string dubOutput)
     const record = buildPath(build.recipeDirectory, "replay-" ~ build.configuration ~ ".txt");
     if (!parseReplay(dubOutput, build.compiler, replay))
         return;
+    replay.link = collapseRepeatedInputs(replay.link);
     string text = replayFormat ~ "\n" ~ settingsStamp(build) ~ "\n";
     foreach (line; replayWatched(build, replay))
         text ~= line ~ "\n";
