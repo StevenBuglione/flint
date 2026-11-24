@@ -275,6 +275,58 @@ private bool traceRequested(scope const EnvVar[] environment)
     return false;
 }
 
+/// `text` with every Flint DUB trace line on a line of its own. DUB's stdout reaches the pipe in 4096-byte blocks
+/// while its trace goes to stderr unbuffered, so a trace line can land inside a long `-v` command line; it moves
+/// to just before the line it split, which is joined again. `parseReplay` and `dubPhases` read whole lines.
+string separateTrace(string text)
+{
+    import std.algorithm.searching : startsWith;
+    import std.string : indexOf;
+
+    enum marker = "[flint-dub ";
+    string result, line, traces;
+    size_t at = 0;
+    while (at < text.length)
+    {
+        const newline = text.indexOf('\n', at);
+        const lineStop = newline < 0 ? text.length : cast(size_t) newline + 1;
+        if (text[at .. $].startsWith(marker))
+        {
+            const trace = text[at .. lineStop];
+            const whole = trace[$ - 1] == '\n' ? trace : trace ~ "\n";
+            if (line.length)
+                traces ~= whole; // it split `line`: it goes before it
+            else
+                result ~= whole;
+            at = lineStop;
+            continue;
+        }
+        const next = text.indexOf(marker, at);
+        const stop = next >= 0 && cast(size_t) next < lineStop ? cast(size_t) next : lineStop;
+        line ~= text[at .. stop];
+        at = stop;
+        if (line[$ - 1] == '\n')
+        {
+            result ~= traces ~ line;
+            traces = null;
+            line = null;
+        }
+    }
+    return result ~ traces ~ line;
+}
+
+@("separateTrace moves a trace line out of the command line it split, and leaves whole lines alone")
+unittest
+{
+    enum split = "[cwd=/p] dmd -c -I/a/sour[flint-dub   54.8ms] compile begin\nce -of/o/x.o x.d\n";
+    assert(separateTrace(split) == "[flint-dub   54.8ms] compile begin\n[cwd=/p] dmd -c -I/a/source -of/o/x.o x.d\n");
+    enum twice = "head\n[cwd=/p] dmd -c -I/a[flint-dub 1ms] a\n -I/b[flint-dub 2ms] b\n x.d\ntail\n";
+    assert(separateTrace(twice) == "head\n[flint-dub 1ms] a\n[flint-dub 2ms] b\n[cwd=/p] dmd -c -I/a -I/b x.d\ntail\n");
+    enum whole = "[flint-dub 1ms] a\nline\n[flint-dub 2ms] b\n";
+    assert(separateTrace(whole) == whole);
+    assert(separateTrace("no trace\n") == "no trace\n");
+}
+
 /// `text` without the Flint DUB's `[flint-dub ...]` trace lines.
 string withoutTrace(string text)
 {
@@ -291,37 +343,52 @@ string withoutTrace(string text)
 }
 
 /// The DUB process's phases from its trace: compile from "pipeline N compile jobs" (or "pipeline planned") to
-/// "pipeline compiled", link from "link begin" to "link end", and the rest of `wall` as plan.
+/// "pipeline compiled", or DUB's own build's first "compile begin" to its last "compile end"; link from
+/// "link begin" to "link end"; and the rest of `wall` as plan.
 void dubPhases(string output, long wall, ref imported!"flint_tool.engine.receipt".PhasesRecord phases)
 {
-    import std.algorithm.searching : canFind, findSplit, startsWith;
+    import std.algorithm.searching : findSplit, startsWith;
     import std.conv : ConvException, to;
     import std.string : lineSplitter, strip;
 
-    double compileStart = -1, compileEnd = -1, linkStart = -1, linkEnd = -1;
+    PhaseMarks marks;
     foreach (line; output.lineSplitter)
     {
         if (!line.startsWith("[flint-dub "))
             continue;
         auto parts = line["[flint-dub ".length .. $].findSplit("ms]");
-        double at;
         try
-            at = parts[0].strip.to!double;
+            marks.note(parts[2].strip, parts[0].strip.to!double);
         catch (ConvException)
             continue;
-        const event = parts[2].strip;
+    }
+    phases.compile = marks.compileStart >= 0 && marks.compileEnd >= marks.compileStart
+        ? cast(long)(marks.compileEnd - marks.compileStart) : -1;
+    phases.link = marks.linkStart >= 0 && marks.linkEnd >= marks.linkStart
+        ? cast(long)(marks.linkEnd - marks.linkStart) : -1;
+    phases.plan = wall - (phases.compile > 0 ? phases.compile : 0) - (phases.link > 0 ? phases.link : 0);
+}
+
+/// The trace events that bound DUB's compile and link, in milliseconds since DUB started.
+private struct PhaseMarks
+{
+    double compileStart = -1, compileEnd = -1, linkStart = -1, linkEnd = -1;
+
+    void note(scope const(char)[] event, double at) pure
+    {
+        import std.algorithm.searching : canFind, startsWith;
+
         if (event == "pipeline planned" || (event.startsWith("pipeline ") && event.canFind(" compile jobs")))
             compileStart = at;
-        else if (event == "pipeline compiled")
-            compileEnd = at;
+        else if (event == "pipeline compiled" || event == "compile end")
+            compileEnd = at; // DUB's own build traces each compile: the last end
+        else if (event == "compile begin" && compileStart < 0)
+            compileStart = at; // and the first begin
         else if (event == "link begin")
             linkStart = at;
         else if (event == "link end")
             linkEnd = at;
     }
-    phases.compile = compileStart >= 0 && compileEnd >= compileStart ? cast(long)(compileEnd - compileStart) : -1;
-    phases.link = linkStart >= 0 && linkEnd >= linkStart ? cast(long)(linkEnd - linkStart) : -1;
-    phases.plan = wall - (phases.compile > 0 ? phases.compile : 0) - (phases.link > 0 ? phases.link : 0);
 }
 
 /// The compile server's platform prelude for this build, or null. The server preloads the platform modules for
@@ -449,6 +516,7 @@ private bool buildWithDub(ref Session session, scope const(string)[] command, En
 
     const start = MonoTime.currTime;
     const built = runDub(session, command, environment, root, result.output, hideTrace);
+    result.output = separateTrace(result.output);
     dubPhases(result.output, (MonoTime.currTime - start).total!"msecs", result.phases);
     if (hideTrace)
         result.output = withoutTrace(result.output);
@@ -503,21 +571,30 @@ private imported!"flint_tool.engine.direct".DirectBuild directBuildOf(const ref 
 }
 
 /// Build without DUB when the project allows it: a shared dev build compiles and links itself; a static one
-/// replays DUB's recorded commands. Otherwise build with DUB, and for a static dev build record what it ran.
+/// replays DUB's recorded commands. Otherwise build with DUB, and for a static dev build record what it ran. DUB
+/// compiles a static dev build one root module per compiler process (`--build-mode=singleFile`, in parallel), so
+/// a replay recompiles only the modules an edit can affect: separate compilation's template emission is sound
+/// only when every object comes from a compile of its own module.
 private bool buildEligible(ref Session session, const imported!"flint_tool.engine.direct".DirectBuild build,
         scope const(string)[] command, EnvVar[] environment, bool hideTrace, ref BuildOutcome result)
 {
-    import flint_tool.engine.direct : DirectResult, directBuild, recordReplay, replayBuild;
+    import std.datetime.systime : Clock;
+    import flint_tool.engine.direct : DirectResult, directBuild, recordReplay, recordReplayModules, replayBuild;
 
     const shared_ = result.platformShared.length > 0;
     const direct = shared_ ? directBuild(session, build, result.output, result.phases) : replayBuild(session,
             build, result.output, result.phases);
     if (direct != DirectResult.unavailable)
         return direct == DirectResult.built;
-    const built = buildWithDub(session, shared_ ? command : command ~ "-v", environment,
-            build.root, hideTrace, result);
+    const started = Clock.currTime;
+    const built = buildWithDub(session, shared_ ? command : command ~ [
+        "-v", "--build-mode=singleFile", "--parallel"
+    ], environment, build.root, hideTrace, result);
     if (built && !shared_)
+    {
         recordReplay(build, result.output);
+        recordReplayModules(build, started);
+    }
     return built;
 }
 

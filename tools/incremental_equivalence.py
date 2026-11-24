@@ -3,9 +3,17 @@
 
     python3 tools/incremental_equivalence.py petclinic-rest --seed 7 --steps 12
 
+    python3 tools/incremental_equivalence.py petclinic-rest --static --seed 7 --steps 12
+
 Each step makes one random edit to the port's modules, then builds it twice:
-- incrementally, with `flint build`, so only the modules the edit can affect recompile;
+- incrementally, with `flint build` (`--static`: `flint build --static`, which replays DUB's recorded
+  one-module-per-compile commands), so only the modules the edit can affect recompile;
 - from clean, through DUB (`FLINT_DIRECT_BUILD=0 flint build --force`), as one whole compile.
+With --static a third build follows: DUB from scratch, one module per compile, as the first static build runs it;
+the incremental executable must equal it byte for byte. Static mode compiles without the compile server
+(FLINT_DMD_SERVER=0): a served compile leaves out the template instances the preloaded platform provides, so the
+bytes would depend on which compiles the server answered. The port's .flint is restored after the reference builds,
+so the next step builds incrementally on the previous one.
 The two executables must define the same global symbols of the port's own modules: its src/ modules, their
 generated Flint AOT modules and the AOT registry. Instances of other modules' templates, such as druntime's
 hashOf!int, are excluded: each separately compiled object carries its own copy, while one whole compile takes them
@@ -46,6 +54,7 @@ class Port:
         self.work = work
         self.originals = {}
         self.added = []  # (path, module, function, user path, version)
+        self.static = False
 
     def remember(self, path):
         if path not in self.originals and path.exists():
@@ -123,8 +132,14 @@ def edit(port, rng, step):
 
 def flint(port, *args, env=None):
     local = ROOT / '.flint' / 'bin' / 'flint'
-    command = [str(local) if local.is_file() else 'flint', 'build', *args]
-    done = subprocess.run(command, cwd=port.directory, env=env or os.environ, capture_output=True, text=True)
+    command = [str(local) if local.is_file() else 'flint', 'build', *(['--static'] if port.static else []), *args]
+    env = dict(env or os.environ)
+    if port.static:
+        # A compile the server answers leaves out template instances the preloaded platform provides, while one in
+        # the compiler's own process emits them; which modules the server answers depends on its state (it is
+        # still starting, or busy). Byte-for-byte comparisons need every compile in-process.
+        env['FLINT_DMD_SERVER'] = '0'
+    done = subprocess.run(command, cwd=port.directory, env=env, capture_output=True, text=True)
     if done.returncode != 0:
         raise SystemExit(f'{" ".join(command)} failed:\n{done.stdout[-2000:]}{done.stderr[-3000:]}')
 
@@ -143,14 +158,65 @@ def project_prefixes(port):
     return tuple(sorted(prefixes | {mangled('flint_aot_registry')}))
 
 
+# DMD numbers some compiler-generated names with a counter over the whole compilation (`__anonclass16`), so one
+# compile of every module and one compile per module name the same declaration differently.
+COUNTED = re.compile(r'\d+(__anonclass|__dgliteral|__lambda|__foreachbody|__funcliteral)\d+')
+
+
 def symbols(path, prefixes):
     out = subprocess.run(['nm', '--defined-only', str(path)], capture_output=True, text=True, check=True).stdout
     names = set()
     for line in out.splitlines():
         parts = line.split()
         if len(parts) == 3 and parts[1].isupper() and parts[2].startswith(prefixes):
-            names.add(parts[2])
+            names.add(COUNTED.sub(lambda m: m.group(1) + 'N', parts[2]))
     return names
+
+
+def save_state(port):
+    """A copy of the port's .flint, modification times kept, to build the references in and restore afterwards."""
+    snapshot = port.work / 'flint-state'
+    shutil.rmtree(snapshot, ignore_errors=True)
+    shutil.copytree(port.directory / '.flint', snapshot, symlinks=True)
+    return snapshot
+
+
+def restore_state(port, snapshot):
+    shutil.rmtree(port.directory / '.flint')
+    shutil.move(str(snapshot), str(port.directory / '.flint'))
+
+
+def fresh_static_problems(port, incremental):
+    """DUB from scratch, one module per compile, as the first static build runs it: the replay record, the
+    per-module record and DUB's cache of the port go. The incremental executable must equal it byte for byte."""
+    flint_dir = port.directory / '.flint'
+    kept = port.work / 'objects-incremental'
+    shutil.rmtree(kept, ignore_errors=True)
+    kept.mkdir()
+    for path in replay_objects(port):
+        shutil.copy2(path, kept / path.name)
+    for path in (flint_dir / 'generated' / 'dub').glob('replay-*.txt'):
+        path.unlink()
+    shutil.rmtree(flint_dir / 'build' / 'dev-static-objects', ignore_errors=True)
+    shutil.rmtree(flint_dir / 'dub' / 'cache' / port.app, ignore_errors=True)
+    flint(port)
+    fresh = executable(port, 'fresh')
+    if incremental.read_bytes() != fresh.read_bytes():
+        differing = sorted(path.name for path in replay_objects(port)
+                           if not (kept / path.name).is_file() or (kept / path.name).read_bytes() != path.read_bytes())
+        return [f'the incremental executable differs from a fresh one-module-per-compile build ({fresh}); '
+                f'objects that differ: {differing} (incremental copies in {kept})']
+    return []
+
+
+def replay_objects(port):
+    """The objects the static replay record's compiles write (`-of`)."""
+    objects = []
+    for record in (port.directory / '.flint' / 'generated' / 'dub').glob('replay-*.txt'):
+        for line in record.read_text(encoding='utf-8').splitlines():
+            if line.startswith('compile\t'):
+                objects += [Path(a[3:]) for a in line.split('\t', 1)[1].split('\x1f') if a.startswith('-of')]
+    return [path for path in objects if path.is_file()]
 
 
 def free_port():
@@ -192,9 +258,11 @@ def main():
     parser.add_argument('--steps', type=int, default=10)
     parser.add_argument('--accept-every', type=int, default=1, help='run the acceptance suite every N steps')
     parser.add_argument('--work', type=Path, default=ROOT / '.flint' / 'incremental-equivalence')
+    parser.add_argument('--static', action='store_true', help='static dev builds: the per-module replay')
     args = parser.parse_args()
     args.work.mkdir(parents=True, exist_ok=True)
     port = Port(args.app, args.work)
+    port.static = args.static
     rng = random.Random(args.seed)
     results = []
     try:
@@ -203,9 +271,13 @@ def main():
             description = edit(port, rng, step)
             flint(port)
             incremental = executable(port, 'incremental')
+            snapshot = save_state(port) if port.static else None
             flint(port, '--force', env=dict(os.environ, FLINT_DIRECT_BUILD='0'))
             reference = executable(port, 'clean')
             problems = check(port, incremental, reference, step % args.accept_every == 0)
+            if port.static:
+                problems += fresh_static_problems(port, incremental)
+                restore_state(port, snapshot)
             results.append({'step': step, 'edit': description, 'problems': problems})
             print(json.dumps(results[-1]), flush=True)
             if problems:

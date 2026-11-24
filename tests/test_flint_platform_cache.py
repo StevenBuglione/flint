@@ -308,7 +308,12 @@ class PlatformCacheTests(unittest.TestCase):
         edit(greeting.read_text(encoding='utf-8') + '\n// again\n')
         self.assertIn("DUB's recorded commands", build())
         replayed = binary.read_bytes()
-        build('--force', environment_=environment(FLINT_CACHE=str(self.cache), FLINT_DIRECT_BUILD='0'))
+        # DUB again from scratch, one module per compile as flint runs it: the replay is its binary byte for byte.
+        for record in (project / '.flint/generated/dub').glob('replay-*.txt'):
+            record.unlink()
+        shutil.rmtree(project / '.flint/build/dev-static-objects', ignore_errors=True)
+        shutil.rmtree(project / '.flint/dub/cache/demo', ignore_errors=True)
+        self.assertNotIn("DUB's recorded commands", build())
         self.assertEqual(replayed, binary.read_bytes(), "a replay links DUB's binary byte for byte")
 
         shutil.rmtree(extras)
@@ -328,6 +333,64 @@ class PlatformCacheTests(unittest.TestCase):
         (project / 'config/application-staging.toml').write_text('[app]\ngreeting = "Hi"\n', encoding='utf-8',
                                                                   newline='\n')
         self.assertNotIn("DUB's recorded commands", build(), 'a new string-import file discards the record')
+
+    def test_a_static_edit_recompiles_only_the_modules_it_can_affect(self):
+        """A static dev build compiles one root module per compiler process (DUB's singleFile mode, recorded), so a
+        replay recompiles the changed module and its importers only, by the shared dev build's rules."""
+        project = self.directory / 'static-incremental'
+        shutil.copytree(self.project, project, ignore=shutil.ignore_patterns('.flint'))
+        env = environment(FLINT_CACHE=str(self.cache))
+        app, greeting = project / 'src/demo/app.d', project / 'src/demo/greeting.d'
+
+        def build(expect_ok=True):
+            built = flint('build', '--static', cwd=project, env=env)
+            self.assertEqual(built.returncode == 0, expect_ok, built.stdout + built.stderr)
+            return built.stderr
+
+        def objects():
+            """Each module's object, from the replay record's compiles: source name -> modification time."""
+            found = {}
+            record = project / '.flint/generated/dub/replay-dev.txt'
+            for line in record.read_text(encoding='utf-8').splitlines():
+                if line.startswith('compile\t'):
+                    arguments = line.split('\t', 1)[1].split('\x1f')
+                    source = next(a for a in arguments if a.endswith('.d') and not a.startswith('-'))
+                    output = Path(next(a for a in arguments if a.startswith('-of'))[3:])
+                    found[Path(source).name] = output.stat().st_mtime_ns
+            return found
+
+        def append(path, text):
+            path.write_text(path.read_text(encoding='utf-8') + text, encoding='utf-8', newline='\n')
+
+        build()  # through DUB, one module per compile, recorded
+        self.assertTrue((project / '.flint/build/dev-static-objects/modules.txt').is_file())
+        before = objects()
+        self.assertTrue({'app.d', 'greeting.d'} <= set(before), before)
+        append(app, '\nprivate enum appEdit = 1;\n')
+        self.assertIn("DUB's recorded commands", build())
+        after = objects()
+        self.assertNotEqual(after['app.d'], before['app.d'])
+        self.assertEqual(after['greeting.d'], before['greeting.d'], 'nothing imports demo.app')
+
+        # A body edit an importer runs at compile time: a stale importer object would keep the old value.
+        append(greeting, '\n/// Used at compile time by demo.app.\nint answer() pure { return 41; }\n')
+        append(app, '\nimport demo.greeting : answer;\nstatic assert(answer() == 41);\n')
+        build()
+        greeting.write_text(greeting.read_text(encoding='utf-8').replace('return 41;', 'return 42;'),
+                            encoding='utf-8', newline='\n')
+        build(expect_ok=False)
+        app.write_text(app.read_text(encoding='utf-8').replace('== 41', '== 42'), encoding='utf-8', newline='\n')
+        self.assertIn("DUB's recorded commands", build())
+        before = objects()
+        greeting.write_text(greeting.read_text(encoding='utf-8').replace('~ "!"', '~ "?"'), encoding='utf-8',
+                            newline='\n')
+        build()
+        after = objects()
+        self.assertNotEqual(after['greeting.d'], before['greeting.d'])
+        self.assertNotEqual(after['app.d'], before['app.d'], 'demo.app imports demo.greeting')
+        ran = subprocess.run([str(project / '.flint/build/dev/demo')], cwd=project, capture_output=True, text=True,
+                             encoding='utf-8', timeout=60)
+        self.assertIn('Hello, world?', ran.stdout)
 
     def test_a_build_of_another_configuration_keeps_the_platform_description(self):
         """DUB copies each library it builds into its package's directory. A description recorded for one

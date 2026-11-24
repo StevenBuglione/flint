@@ -41,6 +41,12 @@ struct ModuleCompile
     string objects;
     /// The compiler's environment.
     EnvVar[] environment;
+    /// A static dev build's recorded compiles (direct.d's replay): each source's own command, run as it is, and
+    /// the object it writes. Empty for a shared dev build, whose commands are the compiler, `flags`, `-of` and the
+    /// source, each object under `objects`.
+    string[][] commands;
+    /// ditto
+    string[] outputs;
 }
 
 /// What an incremental compile did.
@@ -67,18 +73,47 @@ bool compileModules(const ref ModuleCompile request, out ModuleOutcome outcome, 
         shas ~= sourceSha(texts[$ - 1]);
         names ~= moduleName(texts[$ - 1], source, request.root);
     }
-    foreach (name; names)
-        outcome.objects ~= buildPath(request.objects, name ~ ".o");
+    if (request.commands.length)
+        outcome.objects = request.outputs.dup;
+    else
+        foreach (name; names)
+            outcome.objects ~= buildPath(request.objects, name ~ ".o");
     const record = buildPath(request.objects, "modules.txt");
     const stamp = recordStamp(request);
     const stale = staleModules(request.sources, texts, shas, names, outcome.objects, record, stamp);
-    removeOrphans(request.objects, outcome.objects);
+    if (!request.commands.length)
+        removeOrphans(request.objects, outcome.objects);
     outcome.compiled = stale.length;
     if (stale.length == 0)
         return true;
     const compiled = runJobs(request, stale, outcome.objects, output);
     writeRecord(record, stamp, request.sources, shas, compiled ? null : stale);
     return compiled;
+}
+
+/// Record every module as compiled, as DUB just compiled them all with `request.commands`, so the next build
+/// recompiles only what changes. Nothing is recorded, and the next build compiles every module, when a source
+/// changed after `since`, the time DUB started: its object may be older than its text.
+void recordCompiled(const ref ModuleCompile request, imported!"std.datetime.systime".SysTime since)
+{
+    import std.file : FileException, mkdirRecurse, timeLastModified;
+    import std.path : buildPath;
+
+    mkdirRecurse(request.objects);
+    const record = buildPath(request.objects, "modules.txt");
+    string[] shas;
+    try
+    {
+        foreach (source; request.sources)
+        {
+            if (timeLastModified(source) >= since)
+                return removeIfPresent(record);
+            shas ~= sourceSha(readSource(source));
+        }
+    }
+    catch (FileException)
+        return removeIfPresent(record);
+    writeRecord(record, recordStamp(request), request.sources, shas, null);
 }
 
 private string readSource(string path)
@@ -279,6 +314,8 @@ private bool runJobs(const ref ModuleCompile request, scope const size_t[] stale
 
 private string[] job(const ref ModuleCompile request, size_t index, scope const string[] objects)
 {
+    if (request.commands.length)
+        return request.commands[index].dup;
     return [request.compiler] ~ request.flags.dup ~ ["-of" ~ objects[index], request.sources[index]];
 }
 

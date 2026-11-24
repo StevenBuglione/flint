@@ -750,6 +750,9 @@ private string[] replayWatched(const ref DirectBuild build, const ref Replay rep
     // generated recipe's source path is also an import path), and the trees flint generates or reads.
     string[] trees = ["src", ".flint/generated/aot", ".flint/generated/aot-library", "config"];
     const root = buildNormalizedPath(absolutePath(build.root));
+    bool[string] inProject;
+    foreach (tree; trees)
+        inProject[buildNormalizedPath(root, tree)] = true;
     foreach (command; replay.compiles)
     {
         foreach (argument; command)
@@ -757,8 +760,13 @@ private string[] replayWatched(const ref DirectBuild build, const ref Replay rep
             if (argument.length <= 2 || (argument[0 .. 2] != "-I" && argument[0 .. 2] != "-J"))
                 continue;
             const directory = buildNormalizedPath(absolutePath(argument[2 .. $], replay.directory));
-            if (directory.length > root.length && directory[0 .. root.length + 1] == root ~ "/")
+            // One compile per module repeats every path: each tree is walked once.
+            if (directory.length > root.length && directory[0 .. root.length + 1] == root ~ "/"
+                    && directory !in inProject)
+            {
+                inProject[directory] = true;
                 trees ~= directory;
+            }
         }
     }
     string[] sources = replaySources(replay);
@@ -826,6 +834,109 @@ private string[] replayInputs(const ref Replay replay)
     return inputs;
 }
 
+/// A replay whose compiles are one per root module (DUB's `--build-mode=singleFile`): each names one D source and
+/// its object with `-of`, with the same flags otherwise. `request` gets them for flint_tool.engine.incremental,
+/// with the per-module record under `.flint/build/<configuration>-static-objects`.
+private bool replayModules(const ref DirectBuild build, const ref Replay replay,
+        out imported!"flint_tool.engine.incremental".ModuleCompile request)
+{
+    import std.algorithm.searching : startsWith;
+    import std.path : absolutePath, buildPath;
+
+    if (replay.compiles.length < 2)
+        return false;
+    string[] common;
+    foreach (position, command; replay.compiles)
+    {
+        string source, output;
+        string[] flags;
+        if (!splitCompile(command, source, output, flags) || (position && flags != common))
+            return false;
+        common = flags;
+        request.commands ~= command.dup;
+        request.sources ~= absolutePath(source, replay.directory);
+        request.outputs ~= absolutePath(output, replay.directory);
+    }
+    request.compiler = build.compiler;
+    request.compilerSha256 = build.compilerSha256;
+    request.flags = replay.compiles[0][0] ~ common;
+    foreach (argument; common)
+    {
+        if (argument.startsWith("-J"))
+            request.stringImportPaths ~= absolutePath(argument["-J".length .. $], replay.directory);
+    }
+    foreach (argument; replay.link[1 .. $])
+    {
+        if (linkInput(argument) && !argument.startsWith("-L-l"))
+            request.linkerFiles ~= argument.startsWith("-L") ? argument["-L".length .. $] : argument;
+    }
+    request.root = replay.directory;
+    request.objects = buildPath(build.root, ".flint", "build", build.configuration ~ "-static-objects");
+    request.environment = compilerEnvironment(build);
+    return true;
+}
+
+/// One recorded compile's single D source, its `-of` object and its other flags; false unless it names exactly
+/// one source and an object.
+private bool splitCompile(scope const string[] command, out string source, out string output, out string[] flags)
+{
+    import std.algorithm.searching : startsWith;
+    import std.path : extension;
+
+    foreach (argument; command[1 .. $])
+    {
+        if (argument.length && argument[0] != '-' && argument.extension == ".d")
+        {
+            if (source.length)
+                return false;
+            source = argument;
+        }
+        else if (argument.startsWith("-of"))
+            output = argument["-of".length .. $];
+        else
+            flags ~= argument;
+    }
+    return source.length && output.length;
+}
+
+/// After DUB built a static dev build with one compile per root module, record each module as compiled, so the
+/// next replay recompiles only the modules an edit can affect. `since` is when DUB started.
+void recordReplayModules(const ref DirectBuild build, imported!"std.datetime.systime".SysTime since)
+{
+    import std.path : buildPath;
+    import flint_tool.engine.incremental : ModuleCompile, recordCompiled;
+
+    Replay replay;
+    ModuleCompile request;
+    if (readReplay(build, buildPath(build.recipeDirectory, "replay-" ~ build.configuration ~ ".txt"),
+            replay) && replayModules(build, replay, request))
+        recordCompiled(request, since);
+}
+
+/// Run a replay's compiles: with one compile per root module, only the modules that changed and their importers
+/// (flint_tool.engine.incremental); otherwise every recorded compile.
+private bool replayCompiles(const ref DirectBuild build, const ref Replay replay,
+        imported!"flint_tool.support.process".Launch launch, ref string output)
+{
+    import flint_tool.engine.incremental : ModuleCompile, ModuleOutcome, compileModules;
+    import flint_tool.support.process : capture;
+
+    ModuleCompile request;
+    if (replayModules(build, replay, request))
+    {
+        ModuleOutcome outcome;
+        return compileModules(request, outcome, output);
+    }
+    foreach (command; replay.compiles)
+    {
+        const outcome = capture(command, launch);
+        output ~= outcome.combined;
+        if (!outcome.ok)
+            return false;
+    }
+    return true;
+}
+
 /// Rebuild a static dev build with DUB's recorded commands, or report that DUB must run (and be recorded).
 DirectResult replayBuild(ref Session session, const ref DirectBuild build, out string output,
         ref imported!"flint_tool.engine.receipt".PhasesRecord phases)
@@ -863,13 +974,8 @@ DirectResult replayBuild(ref Session session, const ref DirectBuild build, out s
     launch.environment = compilerEnvironment(build);
     launch.inherit = false;
     const compileStart = MonoTime.currTime;
-    foreach (command; replay.compiles)
-    {
-        const outcome = capture(command, launch);
-        output ~= outcome.combined;
-        if (!outcome.ok)
-            return DirectResult.failed;
-    }
+    if (!replayCompiles(build, replay, launch, output))
+        return DirectResult.failed;
     phases.compile = (MonoTime.currTime - compileStart).total!"msecs";
     const linkStart = MonoTime.currTime;
     // DUB's link, written straight to the artifact: the output's name is not part of the binary, so this is DUB's
@@ -882,7 +988,10 @@ DirectResult replayBuild(ref Session session, const ref DirectBuild build, out s
     const linked = capture(link, launch);
     output ~= linked.combined;
     if (!linked.ok)
+    {
+        forgetModules(buildPath(build.root, ".flint", "build", build.configuration ~ "-static-objects"));
         return DirectResult.failed;
+    }
     phases.link = (MonoTime.currTime - linkStart).total!"msecs";
     rename(partial, build.artifact);
     return DirectResult.built;
