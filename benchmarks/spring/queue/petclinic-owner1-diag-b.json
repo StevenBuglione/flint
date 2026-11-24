@@ -2,7 +2,7 @@
   "schema": "flint.measure-queue/1",
   "id": "petclinic-owner1-diag-b",
   "created": "2026-11-24",
-  "status": "pending",
+  "status": "blocked",
   "window": "claim",
   "priority": 10,
   "estimate_minutes": 8,
@@ -53,5 +53,6 @@
         ]
       }
     ]
-  }
+  },
+  "blocked_on": "superseded by petclinic-owner1-diag-main (coordinator 04:55Z: re-measure at current main); B's spin is already characterised by the smokes (fixed ~5 ms per request at any concurrency)"
 }

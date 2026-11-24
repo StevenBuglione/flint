@@ -1,0 +1,58 @@
+{
+  "schema": "flint.measure-queue/1",
+  "id": "petclinic-owner1-diag-main",
+  "created": "2026-11-24",
+  "status": "pending",
+  "window": "claim",
+  "priority": 10,
+  "estimate_minutes": 10,
+  "requested_by": "the throughput plan, change 2, and the coordinator (04:55Z: re-measure ADR-032's PostgreSQL CPU row at current main, logging off)",
+  "report_to": "the coordinator and data-access",
+  "summary": "Diagnostic, never evidence: petclinic-rest GET /owners/1 along the ladder 1/8/10/16/64 at main with data-access's counters, Flint and Go, plus the statement census",
+  "why": "At main (data-access's wait fix 61586b1b and counters 0dcde00f): rps, latency, server CPU per request and per thread, PostgreSQL CPU per request without logging (ADR-032's row), the lease counters (wait, hold, drive, socket wait, handoff; the change-4 criterion is the idle lease behind a sleeping FIFO head), the statement census, and perf counts if kernel.perf_event_paranoid allows. Runs after B's batch (priority 10).",
+  "pinned": "main at f2a1cd804a20 (2026-11-24 05:0xZ), containing 0dcde00f",
+  "builds": {
+    "tree": {
+      "app": "checkout",
+      "commit": "f2a1cd804a20",
+      "flint": true,
+      "linker": "mold",
+      "fork": true
+    }
+  },
+  "measure": {
+    "kind": "command",
+    "steps": [
+      {
+        "in": "tree",
+        "argv": [
+          "{python}",
+          "tools/spring_bench.py",
+          "build",
+          "petclinic-rest",
+          "--impl",
+          "flint"
+        ]
+      },
+      {
+        "in": "tree",
+        "argv": [
+          "{python}",
+          "tools/spring_diag.py",
+          "--app",
+          "petclinic-rest",
+          "--flint-binary",
+          "build/spring/petclinic-rest-flint",
+          "--counters",
+          "--oha",
+          "{oha}",
+          "--output",
+          "{out}/diag.json"
+        ],
+        "smoke_args": [
+          "--smoke"
+        ]
+      }
+    ]
+  }
+}

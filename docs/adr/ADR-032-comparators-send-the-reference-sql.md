@@ -12,7 +12,9 @@ The census measured what each implementation sends. `tools/spring_sql_census.py`
 |---|---|---|---|
 | Benchmark request, GET /petclinic/api/owners/{id} | `BEGIN READ ONLY`, 3 SELECTs, `COMMIT`; 0 parses once warm | the same 3 SELECTs in `BEGIN ISOLATION LEVEL READ COMMITTED READ ONLY` … `COMMIT`; 2 unnamed parses (BEGIN, COMMIT) | the 3 SELECTs, no transaction |
 | Cases whose data statements or transaction commands differ from Java's | – | 2 of 109 (actuator health only) | 66 of 109 |
-| PostgreSQL CPU per owner request, 8 connections, no logging | – | 58.6 µs | 21.4 µs |
+| PostgreSQL CPU per owner request, 8 connections, no logging | – | 58.6 µs **at B, with the 5 ms spin: not a valid per-request cost** (see below) | 21.4 µs |
+
+The PostgreSQL CPU row is marked: at B, Flint's 5 ms socket spin (fixed by data-access's wait fix, 61586b1b) let Flint complete few requests, so the backends' fixed background CPU divided by them overstates the cost per request. data-access measured 9.7 µs per request at the wait fix (c=8, 17,900 req/s, with statement logging on, which inflates it). The row is re-measured at main (`f2a1cd804a20`, queue entry petclinic-owner1-diag-main, logging off) and replaced then.
 
 Go's divergences:
 1. **No read-only transaction around reads (54 cases).** spring-petclinic-rest's `ClinicServiceImpl` is `@Transactional(readOnly = true)` for its finders, so the reference brackets each read in `BEGIN READ ONLY` … `COMMIT`. The Go comparator (`benchmarks/spring/go/petclinic-rest`, for example `getOwner` → `findOwner`) runs the SELECTs in autocommit.
