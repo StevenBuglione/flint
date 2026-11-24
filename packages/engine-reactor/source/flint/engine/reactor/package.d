@@ -12,6 +12,7 @@ import flint.conc.wait : replaceWaitHook;
 import flint.engine.reactor.internal.operations : OperationId, OperationTable;
 import flint.engine.reactor.sys.chunks : Chunked;
 import flint.engine.reactor.internal.queues : Mailbox, Message, Timers;
+import flint.engine.reactor.internal.wakes : Recorded, RemoteWakes, WakeLane, statusOf;
 import flint.engine.reactor.sys.fibers : createFiber, PoolFiber, releaseFiber, resetFiber, resumeFiber, yieldFiber;
 import flint.engine.reactor.sys.locals : cellStamp, loadCell, localStorable, localWords, storeCell;
 import flint.engine.reactor.sys.offload : OffloadPool;
@@ -86,6 +87,8 @@ private enum noSlot = uint.max;
 private enum ioWordBits = ulong.sizeof * 8;
 private enum listenToken = 1UL;
 private enum nativeWatchToken = 2UL;
+/// The owner's doorbell for remote wakes (`RemoteWaker`), outside the public watch capacity.
+private enum doorbellToken = 3UL;
 private enum waitBudgetMillis = 5;
 private enum maxIdentity = ulong.max >> 16;
 
@@ -233,6 +236,44 @@ private void*[] localCell(uint offset, size_t words, out size_t stamp, bool writ
     return threadLocalWords[first .. end];
 }
 
+/// A handle that any thread can use to end one wait of a suspended task fiber: a resource released on another
+/// worker, an offload thread or a plain thread resumes the task that waits for it (`Reactor.armRemoteWake`).
+/// It does not go through the owner's mailbox, so it works while every fiber slot is busy and the mailbox is
+/// full. The handle keeps the runtime's wake state alive: a signal after the runtime stopped is rejected.
+struct RemoteWaker
+{
+    private RemoteWakes wakes;
+    /// Loop that owns the fiber.
+    uint ownerCore = uint.max;
+    /// Fiber slot in the owner's pool.
+    uint slot;
+    /// Lifetime of the task in that slot.
+    ulong generation;
+    /// The wait this handle ends. Unique per owner loop; zero marks an empty handle.
+    ulong wait;
+
+    /// Whether this handle names a wait, armed or ended.
+    bool valid() const pure nothrow @nogc
+    {
+        return wait != 0;
+    }
+
+    /// End the wait from any thread, without blocking. `Status.ok` once the signal is recorded: the task's yield
+    /// returns, or its next yield returns at once if it has not parked yet. `notFound` when that wait has ended
+    /// (the yield returned, a newer wait was armed or the task finished), `cancelled` when the runtime has
+    /// stopped, `invalidArgument` for an empty handle. Duplicate signals coalesce. On the owner loop itself the
+    /// signal makes no system call; from another thread it rings the owner's doorbell at most once per drain.
+    Status signal() nothrow @nogc
+    {
+        if (wakes is null || wait == 0 || ownerCore >= wakes.lanes.length)
+            return Status.invalidArgument;
+        auto loop = currentRuntime;
+        if (loop !is null && loop.wakes is wakes && currentWorkerIndex == ownerCore)
+            return loop.workers[ownerCore].signalLocal(slot, wait);
+        return wakes.lanes[ownerCore].post(slot, wait);
+    }
+}
+
 /// Noncopyable owner for a bounded, single-run reactor.
 struct Reactor
 {
@@ -276,6 +317,10 @@ struct Reactor
             if (status != Status.ok)
                 return Result!Reactor(Reactor.init, Error(status, "could not reserve reactor I/O scratch"));
         }
+        runtime.wakes = new RemoteWakes(count);
+        foreach (ref lane; runtime.wakes.lanes)
+            if (!lane.initialize(options.fiberPoolSize))
+                return Result!Reactor(Reactor.init, Error(Status.ioError, "could not open a remote-wake doorbell"));
         const result = runtime.prepareBackend(options.backend);
         if (result.code != Status.ok)
             return Result!Reactor(Reactor.init, result);
@@ -518,14 +563,18 @@ struct Reactor
     {
         if (runtime is null || currentRuntime !is runtime)
             return Error(Status.notFound, "no active fiber");
-        const early = watched.check();
-        if (early.code != Status.ok)
-            return early;
-        if (watched.deadline().monotonicNanoseconds < deadline.monotonicNanoseconds)
-            deadline = watched.deadline();
         auto worker = &runtime.workers[currentWorkerIndex];
         if (worker.activeFiber == noSlot)
             return Error(Status.notFound, "no active fiber");
+        const early = watched.check();
+        if (early.code != Status.ok)
+        {
+            // The yield returns without parking, which still ends an armed remote wait.
+            worker.endRemoteWait(worker.activeFiber);
+            return early;
+        }
+        if (watched.deadline().monotonicNanoseconds < deadline.monotonicNanoseconds)
+            deadline = watched.deadline();
         worker.fibers[worker.activeFiber].watched = watched;
         worker.fibers[worker.activeFiber].watching = true;
         const outcome = worker.yieldTask(deadline);
@@ -541,6 +590,18 @@ struct Reactor
         if (runtime is null || currentRuntime !is runtime)
             return Result!TaskWaker(TaskWaker.init, Error(Status.notFound, "no active fiber"));
         return runtime.workers[currentWorkerIndex].activeWaker();
+    }
+
+    /// Arm a new wait of the active task fiber and return the handle that ends it from any thread. The wait is
+    /// the fiber's next `yieldUntil`: it returns as soon as the handle is signalled, or at once when the signal
+    /// came before it parked. Any return from that yield (signal, deadline or cancellation) ends the wait, so one
+    /// registration ends at most one yield and a late signal cannot end a later one. Arm again for the next wait;
+    /// arming again before yielding replaces the previous registration.
+    Result!RemoteWaker armRemoteWake() nothrow @nogc
+    {
+        if (runtime is null || currentRuntime !is runtime)
+            return Result!RemoteWaker(RemoteWaker.init, Error(Status.notFound, "no active fiber"));
+        return runtime.workers[currentWorkerIndex].armRemote();
     }
 
     /// Mark a suspended fiber due, so the owner's next pass resumes it before blocking. Waking a running
@@ -680,6 +741,16 @@ struct Reactor
         }
     }
 
+    /// Doorbell writes for remote wakes on every loop so far: one per burst of signals to a sleeping owner.
+    package(flint) ulong remoteWakeRings() const nothrow @nogc
+    {
+        ulong total;
+        if (runtime !is null && runtime.wakes !is null)
+            foreach (ref lane; runtime.wakes.lanes)
+                total += atomicLoad(lane.rings);
+        return total;
+    }
+
     /// Retrieve GC and affinity observations once all workers have joined.
     Result!WorkerStats workerStats(uint core) const nothrow @nogc
     {
@@ -704,6 +775,8 @@ private struct Runtime
     AcceptDelegate acceptDelegate;
     /// Threads for `Reactor.offload`, or null when disabled.
     OffloadPool offload;
+    /// Remote-wake lanes, one per worker. `RemoteWaker`s keep them alive past the runtime.
+    RemoteWakes wakes;
     /// Set by `stopAccepting`; each owner then retires its accept and counts itself in `acceptRetired`.
     shared bool acceptStopping;
     shared uint acceptRetired;
@@ -741,6 +814,26 @@ private struct Runtime
 
     version (Posix)
     {
+        /// On a readiness backend, every owner watches its remote-wake doorbell and the shared listener.
+        Error registerReadiness() nothrow @nogc
+        {
+            if (backend != Backend.epoll && backend != Backend.kqueue)
+                return Error.init;
+            foreach (index, ref worker; workers)
+            {
+                const bell = wakes.lanes[index].bell;
+                const watched = bell.valid ? setInterest(worker.readiness, Socket(bell.reader),
+                        doorbellToken, Interest.none, Interest.read) : Status.ok;
+                if (watched != Status.ok)
+                    return Error(watched, "could not register the remote-wake doorbell");
+                const listening = listener.valid ? setInterest(worker.readiness, listener,
+                        listenToken, Interest.none, Interest.read) : Status.ok;
+                if (listening != Status.ok)
+                    return Error(listening, "could not register listener");
+            }
+            return Error.init;
+        }
+
         Error prepareReadiness(Backend selected) nothrow @nogc
         {
             backend = selected;
@@ -794,15 +887,9 @@ private struct Runtime
 
         version (Posix)
         {
-            if (listener.valid && (backend == Backend.epoll || backend == Backend.kqueue))
-            {
-                foreach (ref worker; workers)
-                {
-                    const status = setInterest(worker.readiness, listener, listenToken, Interest.none, Interest.read);
-                    if (status != Status.ok)
-                        return Error(status, "could not register listener");
-                }
-            }
+            const registered = registerReadiness();
+            if (registered.code != Status.ok)
+                return registered;
         }
 
         foreach (ref worker; workers)
@@ -852,6 +939,9 @@ private struct Runtime
 
     void release() nothrow @nogc
     {
+        // Signallers stop before the doorbells close; owner loops have joined or never started.
+        if (wakes !is null)
+            wakes.close();
         foreach (ref worker; workers)
             worker.release();
         if (offload !is null)
@@ -916,6 +1006,8 @@ private struct FiberTask
     bool shielded;
     /// The task wrote FiberLocal storage, which is cleared when it ends.
     bool localsDirty;
+    /// The task armed a remote wait (`Reactor.armRemoteWake`) that its next yield ends.
+    bool remoteArmed;
     uint next;
     /// Position in the worker's suspended list, or noSlot while free or running.
     uint suspendedAt = noSlot;
@@ -1000,6 +1092,9 @@ private struct Worker
     {
         bool nativePending;
         bool nativeCancelSent;
+        /// The io_uring poll on the remote-wake doorbell is outstanding.
+        bool doorbellPending;
+        bool doorbellCancelSent;
     }
 
     version (ReactorReadinessOnly)
@@ -1105,18 +1200,79 @@ private struct Worker
         return Error.init;
     }
 
+    /// This worker's remote-wake lane.
+    ref WakeLane lane() return nothrow @nogc
+    {
+        return runtime.wakes.lanes[index];
+    }
+
+    Result!RemoteWaker armRemote() nothrow @nogc
+    {
+        if (activeFiber == noSlot)
+            return Result!RemoteWaker(RemoteWaker.init, Error(Status.notFound, "no active fiber"));
+        auto task = &fibers[activeFiber];
+        const key = lane.arm(activeFiber);
+        task.remoteArmed = true;
+        return Result!RemoteWaker(RemoteWaker(runtime.wakes, index, activeFiber, task.generation, key));
+    }
+
+    /// A signal sent on this owner loop: record it and wake the task without the doorbell.
+    Status signalLocal(uint slot, ulong key) nothrow @nogc
+    {
+        const recorded = lane.record(slot, key);
+        if (recorded == Recorded.fresh)
+            deliverRemote(slot);
+        return statusOf(recorded);
+    }
+
+    /// Resume `slot`'s task on the next pass if its armed wait was signalled. A task that has not parked yet sees
+    /// the signal before it would (`yieldTask`).
+    void deliverRemote(uint slot) nothrow @nogc
+    {
+        if (slot >= fibers.length)
+            return;
+        auto task = &fibers[slot];
+        if (!task.remoteArmed || slot == activeFiber || task.suspendedAt == noSlot || !lane.signalledNow(slot))
+            return;
+        task.wake = Deadline(long.min);
+        nextWake = long.min;
+    }
+
+    /// End `slot`'s armed remote wait, if any.
+    void endRemoteWait(uint slot) nothrow @nogc
+    {
+        auto task = &fibers[slot];
+        if (!task.remoteArmed)
+            return;
+        lane.disarm(slot);
+        task.remoteArmed = false;
+    }
+
+    /// Deliver every remote signal posted since the last drain.
+    void drainRemoteWakes() nothrow @nogc
+    {
+        lane.drain(&deliverRemote);
+    }
+
     Error yieldTask(Deadline deadline) nothrow @nogc
     {
         if (activeFiber == noSlot)
             return Error(Status.notFound, "no active fiber");
+        const slot = activeFiber;
+        // Any return from this yield ends an armed remote wait, so a late signal cannot end a later yield.
+        scope (exit)
+            endRemoteWait(slot);
         if (deadline.monotonicNanoseconds == Deadline.none.monotonicNanoseconds)
             return Error(Status.invalidArgument, "fiber yield requires a finite deadline");
         if (atomicLoad(runtime.state) != State.running)
             return Error(Status.cancelled, "reactor is stopping");
-        auto task = &fibers[activeFiber];
+        auto task = &fibers[slot];
         const initial = task.context.cancellation.check();
         if (initial.code != Status.ok)
             return initial;
+        // Signalled before parking: the wait is already over.
+        if (task.remoteArmed && lane.signalledNow(slot))
+            return Error.init;
         task.wake = deadline;
         yieldFiber();
         if (atomicLoad(runtime.state) != State.running)
@@ -1235,6 +1391,7 @@ private struct Worker
                 task.suspendedAt = noSlot;
             }
             resetFiber(task.fiber);
+            endRemoteWait(slot);
             if (task.localsDirty)
             {
                 // The generation stamp already hides these cells; clearing them releases their references.
@@ -1296,7 +1453,7 @@ private struct Worker
     /// Bound the backend wait by the earliest timer, suspended fiber deadline and runnable mailbox work.
     private uint loopWaitMillis() nothrow @nogc
     {
-        if (nextWake == long.min || (freeFiber != noSlot && mailbox.pending()))
+        if (nextWake == long.min || (freeFiber != noSlot && mailbox.pending()) || lane.pending())
             return 0;
         if (nextWake == long.max && timers.empty)
             return waitBudgetMillis;
@@ -1331,6 +1488,7 @@ private struct Worker
         const initialCollections = GC.profileStats.numCollections;
         while (atomicLoad(runtime.state) == State.running)
         {
+            drainRemoteWakes();
             resumeReadyTasks();
             processMessages();
             processTimers();
@@ -1350,7 +1508,10 @@ private struct Worker
                 {
                     advanceAccept();
                     version (linux)
+                    {
                         advanceNativeWatch();
+                        advanceDoorbell();
+                    }
                     version (Windows)
                     {
                         // Watched sockets post no completion packet: poll them each pass, and wait at most 1 ms while
@@ -1460,6 +1621,44 @@ private struct Worker
                 nativePending = true;
             else if (outcome != Status.unavailable)
                 fail(Error(outcome, "could not submit native descriptor readiness"));
+        }
+
+        /// Keep one io_uring poll outstanding on the remote-wake doorbell. A signal that lands while it is being
+        /// rearmed leaves the descriptor readable, so the new poll completes at once.
+        private void advanceDoorbell() nothrow @nogc
+        {
+            const bell = lane.bell;
+            if (!bell.valid || doorbellPending || atomicLoad(runtime.state) != State.running)
+                return;
+            const outcome = submitReadable(completions, bell.reader, doorbellToken);
+            if (outcome == Status.ok)
+                doorbellPending = true;
+            else if (outcome != Status.unavailable)
+                fail(Error(outcome, "could not submit the remote-wake doorbell poll"));
+        }
+
+        /// A completed poll on the nested native poller or the remote-wake doorbell. False for other tokens.
+        private bool pollCompleted(KernelEvent event) nothrow @nogc
+        {
+            if (event.token == nativeWatchToken)
+                completeNativeWatch(event.status);
+            else if (event.token == doorbellToken)
+                completeDoorbell(event.status);
+            else
+                return false;
+            return true;
+        }
+
+        private void completeDoorbell(Status status) nothrow @nogc
+        {
+            doorbellPending = false;
+            doorbellCancelSent = false;
+            if (atomicLoad(runtime.state) != State.running)
+                return;
+            if (status == Status.ok)
+                drainRemoteWakes();
+            else if (status != Status.cancelled && status != Status.unavailable)
+                fail(Error(status, "remote-wake doorbell poll failed"));
         }
 
         private void completeNativeWatch(Status status) nothrow @nogc
@@ -1904,19 +2103,8 @@ private struct Worker
             {
                 if (atomicLoad(runtime.state) != State.running)
                     return;
-                version (ReactorNativeWatches)
-                {
-                    if (event.token == nativeWatchToken)
-                    {
-                        notifyNativeWatches();
-                        continue;
-                    }
-                }
-                if (event.token == listenToken)
-                {
-                    acceptReady();
+                if (controlEvent(event.token))
                     continue;
-                }
                 const id = ConnectionId(index, cast(ushort) event.token, event.token >> 16);
                 if (!validConnection(id))
                     continue;
@@ -1926,6 +2114,27 @@ private struct Worker
                 if (validConnection(id) && (event.directions & Interest.write) && connection.write.generation != 0)
                     performReadyIo(connection.write, now);
             }
+        }
+
+        /// Handle a readiness event for the owner's own descriptors: the nested native poller, the listener or the
+        /// remote-wake doorbell. False for a connection's token.
+        private bool controlEvent(ulong token) nothrow @nogc
+        {
+            version (ReactorNativeWatches)
+            {
+                if (token == nativeWatchToken)
+                {
+                    notifyNativeWatches();
+                    return true;
+                }
+            }
+            if (token == listenToken)
+                acceptReady();
+            else if (token == doorbellToken)
+                drainRemoteWakes();
+            else
+                return false;
+            return true;
         }
 
         private void acceptReady() nothrow @nogc
@@ -2072,11 +2281,8 @@ private struct Worker
 
             version (linux)
             {
-                if (event.token == nativeWatchToken)
-                {
-                    completeNativeWatch(event.status);
+                if (pollCompleted(event))
                     return;
-                }
             }
 
             const id = OperationId.fromToken(event.token);
@@ -2094,7 +2300,7 @@ private struct Worker
         private bool completionsPending() const pure nothrow @nogc
         {
             version (linux)
-                if (nativePending)
+                if (nativePending || doorbellPending)
                     return true;
             return liveOperations != 0 || acceptPending || cancellationAcks != 0;
         }
@@ -2130,8 +2336,12 @@ private struct Worker
                 if (acceptPending && !acceptCancelSent)
                     cancelInFlight(listenToken, acceptCancelSent);
                 version (linux)
+                {
                     if (nativePending && !nativeCancelSent)
                         cancelInFlight(nativeWatchToken, nativeCancelSent);
+                    if (doorbellPending && !doorbellCancelSent)
+                        cancelInFlight(doorbellToken, doorbellCancelSent);
+                }
                 if (completionsPending())
                     waitForCompletions(waitBudgetMillis);
             }
