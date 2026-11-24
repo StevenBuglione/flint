@@ -2,7 +2,7 @@
   "schema": "flint.measure-queue/1",
   "id": "phase1-builds-gs-rest",
   "created": "2026-11-23",
-  "status": "pending",
+  "status": "done",
   "window": "claim",
   "priority": 7,
   "requested_by": "ADR-030 section 8, Phase 1 exit (coordinator's plan, 2026-11-23 15:20Z); split per application by the coordinator, 2026-11-23 16:45Z",
@@ -340,6 +340,361 @@
           "acceptance-go.json": "a5384f17f5c351e13ab43a3b3dabcb8bc0643aac8997ea2d595bb2bdbc899bd7",
           "acceptance-java.json": "718fe7d2309df485592b6a34bc44f8189b8aaa8318700986e59d451fb79a2ed5",
           "builds.json": "87e3cc49bd1d717c8abfa23aac1ca5c6694318df31d0cfdf545a018cfffad0f6"
+        }
+      }
+    },
+    {
+      "time": "2026-11-24T06:29:26Z",
+      "outcome": "measured",
+      "evidence": true,
+      "host": "venus",
+      "builds": {
+        "tree": {
+          "commit": "ca5fbd4a46edd8e558d5876830197f23b5db5295",
+          "worktree": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/ca5fbd4a46ed",
+          "fork": true,
+          "linker": "mold",
+          "toolchain": {
+            "tools_directory": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/ca5fbd4a46ed/.tools",
+            "fork_build": true,
+            "dmd": {
+              "path": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/ca5fbd4a46ed/.tools/dmd2/linux/bin64/dmd",
+              "sha256": "1d521b26d2dd7b0b00852fff561c320b50b5b9bf359840025394a09ca59ac0a8",
+              "version": "DMD64 D Compiler v2.114.0"
+            },
+            "ldc2": {
+              "path": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/ca5fbd4a46ed/.tools/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+              "sha256": "06e4bb5bb6abe26a0201e6b112beb19810a13947c7389ebb41493c45bafe9604",
+              "version": "LDC - the LLVM D compiler (1.43.0):"
+            },
+            "flint": {
+              "path": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/ca5fbd4a46ed/.flint/bin/flint",
+              "sha256": "432c8b68aec3bf60d91f5b7c2f5aa3f3a84f7affff64d1a338f00c18e31d0835",
+              "version": "flint 0.7.0 (platform 1.0)"
+            },
+            "dmd_native_aot_extractor": true,
+            "dmd_conf": {
+              "sha256": "aa63c9885b1e23c026add6dbf8474cd13597a7a94c0307b3ec99f7a1dcdea4f3",
+              "linker_switches": [
+                "-Xcc=-fuse-ld=mold"
+              ]
+            },
+            "mold": [
+              {
+                "path": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/ca5fbd4a46ed/.tools/mold-2.40.4-x86_64-linux/bin/mold",
+                "sha256": "23bf6ca9d9fb342a774ebdd7885e0aa1941bdc25dea0fba2483303ecd89af886",
+                "version": "mold 2.40.4 (083901f42dea2491be8bc7cf6e3b1e2b9a3c850d; compatible with GNU ld)"
+              }
+            ]
+          }
+        }
+      },
+      "shared_toolchain": {
+        "path": "/home/olfa/flint-work/flint/.tools",
+        "resolved": "/home/olfa/flint-work/flint/.tools-v3",
+        "dmd_sha256": "7145bb79e84f818c5179f5258562b7f45f18c86f7bc70657914e20e0351524b1"
+      },
+      "window_before": {
+        "time": "2026-11-24T06:26:28Z",
+        "load_average": [
+          1.66650390625,
+          3.33154296875,
+          3.14892578125
+        ],
+        "running_tasks": 0,
+        "instant": true,
+        "busy_processes": [],
+        "idle_build_processes": 4680,
+        "quiet": true,
+        "problems": []
+      },
+      "window_during": [
+        {
+          "time": "2026-11-24T06:26:39Z",
+          "load_average": [
+            1.78515625,
+            3.3037109375,
+            3.14208984375
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T06:26:51Z",
+          "load_average": [
+            4.134765625,
+            3.74169921875,
+            3.28564453125
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T06:27:02Z",
+          "load_average": [
+            3.58740234375,
+            3.63916015625,
+            3.2587890625
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T06:27:13Z",
+          "load_average": [
+            6.6171875,
+            4.279296875,
+            3.47119140625
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T06:27:24Z",
+          "load_average": [
+            6.37451171875,
+            4.30322265625,
+            3.48779296875
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T06:27:36Z",
+          "load_average": [
+            6.291015625,
+            4.35791015625,
+            3.5146484375
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T06:27:47Z",
+          "load_average": [
+            5.32763671875,
+            4.24072265625,
+            3.48974609375
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T06:27:58Z",
+          "load_average": [
+            4.88916015625,
+            4.1826171875,
+            3.478515625
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T06:28:09Z",
+          "load_average": [
+            5.041015625,
+            4.24169921875,
+            3.50537109375
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T06:28:21Z",
+          "load_average": [
+            4.72021484375,
+            4.19970703125,
+            3.5
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T06:28:32Z",
+          "load_average": [
+            4.1845703125,
+            4.107421875,
+            3.48046875
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T06:28:43Z",
+          "load_average": [
+            3.84814453125,
+            4.03759765625,
+            3.4638671875
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T06:28:54Z",
+          "load_average": [
+            3.5634765625,
+            3.9697265625,
+            3.447265625
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T06:29:06Z",
+          "load_average": [
+            3.32275390625,
+            3.90478515625,
+            3.431640625
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T06:29:17Z",
+          "load_average": [
+            3.10302734375,
+            3.8271484375,
+            3.41357421875
+          ],
+          "busy_processes": []
+        }
+      ],
+      "foreign_activity_during": 0,
+      "window_after": {
+        "time": "2026-11-24T06:29:26Z",
+        "load_average": [
+          3.0146484375,
+          3.79638671875,
+          3.40576171875
+        ],
+        "running_tasks": 0,
+        "instant": false,
+        "busy_processes": [],
+        "idle_build_processes": 4550,
+        "quiet": true,
+        "problems": []
+      },
+      "results_directory": ".flint/measure/results/phase1-builds-gs-rest/20261124T062614Z",
+      "summary": {
+        "steps": [
+          {
+            "command": [
+              "/usr/bin/python3",
+              "tools/spring_bench.py",
+              "accept",
+              "gs-rest-service",
+              "--impl",
+              "java",
+              "--json",
+              "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-builds-gs-rest/20261124T062614Z/acceptance-java.json"
+            ],
+            "cwd": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/ca5fbd4a46ed",
+            "exit_code": 0,
+            "log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-builds-gs-rest/20261124T062614Z/step-0.log",
+            "harness_commit": null,
+            "artifacts": {},
+            "measured_binaries": [],
+            "aot_summaries": {
+              "count": 0,
+              "distinct": [],
+              "extractors": []
+            },
+            "gc_options": {
+              "argv": []
+            }
+          },
+          {
+            "command": [
+              "/usr/bin/python3",
+              "tools/spring_bench.py",
+              "accept",
+              "gs-rest-service",
+              "--impl",
+              "go",
+              "--json",
+              "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-builds-gs-rest/20261124T062614Z/acceptance-go.json"
+            ],
+            "cwd": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/ca5fbd4a46ed",
+            "exit_code": 0,
+            "log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-builds-gs-rest/20261124T062614Z/step-1.log",
+            "harness_commit": null,
+            "artifacts": {},
+            "measured_binaries": [],
+            "aot_summaries": {
+              "count": 0,
+              "distinct": [],
+              "extractors": []
+            },
+            "gc_options": {
+              "argv": []
+            }
+          },
+          {
+            "command": [
+              "/usr/bin/python3",
+              "tools/spring_bench.py",
+              "accept",
+              "gs-rest-service",
+              "--impl",
+              "flint",
+              "--json",
+              "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-builds-gs-rest/20261124T062614Z/acceptance-flint.json"
+            ],
+            "cwd": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/ca5fbd4a46ed",
+            "exit_code": 0,
+            "log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-builds-gs-rest/20261124T062614Z/step-2.log",
+            "harness_commit": null,
+            "artifacts": {},
+            "measured_binaries": [],
+            "aot_summaries": {
+              "count": 0,
+              "distinct": [],
+              "extractors": []
+            },
+            "gc_options": {
+              "argv": []
+            }
+          },
+          {
+            "command": [
+              "/usr/bin/python3",
+              "tools/measure_builds.py",
+              "--spring",
+              "--spring-app",
+              "gs-rest-service",
+              "--no-context",
+              "--output",
+              "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-builds-gs-rest/20261124T062614Z/builds.json"
+            ],
+            "cwd": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/ca5fbd4a46ed",
+            "exit_code": 1,
+            "log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-builds-gs-rest/20261124T062614Z/step-3.log",
+            "harness_commit": null,
+            "artifacts": {
+              "benchmarks/spring/flint/gs-rest-service/.flint/build/size/gs-rest-service": {
+                "sha256": "9b56c592bf832b2eb9d567659a29847a61963883df297cf724487dd7230a4b0e",
+                "bytes": 6542288,
+                "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=1baf5fdc7b03e25df616a790cd90c4428070f0c6, for GNU/Linux 3.2.0, not stripped",
+                "comment": [
+                  "GCC: (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+                  "Ubuntu clang version 22.1.8 (++20260613092327+e80beda6e255-1~exp1~20260613092437.81)",
+                  "ldc version 1.43.0"
+                ],
+                "embedded_gcopt": [
+                  "gcopt=parallel:"
+                ],
+                "profile": "size"
+              }
+            },
+            "measured_binaries": [],
+            "aot_summaries": {
+              "count": 69,
+              "distinct": [
+                "Generated 11 Flint AOT modules for com.example.restservice.RestServiceApplication (0 extracted in N ms, 23 from the shared cache, 12 written, N ms)",
+                "Generated 11 Flint AOT modules for com.example.restservice.RestServiceApplication (1 extracted in N ms, 22 from the shared cache, 12 written, N ms, native extractor)",
+                "Generated 11 Flint AOT modules for com.example.restservice.RestServiceApplication (23 extracted in N ms, 0 from the shared cache, 12 written, N ms, native extractor)"
+              ],
+              "extractors": [
+                "native extractor"
+              ]
+            },
+            "gc_options": {
+              "argv": []
+            },
+            "measured": true
+          }
+        ],
+        "outputs": {
+          "acceptance-flint.json": "b5d3bd8197b58f7784b97de25b4f71419140f1e4fcd964fc42012379736b3bb5",
+          "acceptance-go.json": "3836d6c1fe9430748b15471d2dfffd5738b78004872f1ddc64b0429dd6bb897d",
+          "acceptance-java.json": "e23da806c65a66fa569602564cfdb5183033130093def00bae63574f6cc778ce",
+          "builds.json": "de7e2e0993700895666dff6f452308ac8e53d1a4dbcf226d633f43c04f5a5c28"
         }
       }
     }

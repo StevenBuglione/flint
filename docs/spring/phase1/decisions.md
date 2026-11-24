@@ -619,3 +619,11 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - **Oz: 0.662, which passes** (4,430,936 against 6,695,800 bytes; 1.249 at `6ab588f8`): the L1 size win certifies.
 
     Evidence: `benchmarks/spring/evidence/phase1-builds-gs-relational/20261124T061138Z/`.
+- 2026-11-24, proof-harness: **phase1-builds-gs-rest certified at B** (`ca5fbd4a46ed`, claimed window 06:26–06:29Z, no foreign activity). Java, Go and Flint pass 18/18. Median ratios (99% interval), production, 9 trials:
+    - **primary 1.063 (0.962–1.103), which fails** (170 against 160 ms), against 0.933 at `6ab588f8`. Phases: flint 21, **AOT 100**, compile 20, link 20 ms; the AOT step (extraction and the fast path's generated code) is now most of the cold build, against 74 ms at the last gs-builds certification;
+    - **secondary 0.985 (0.973–1.039), which fails** on its upper bound (3,289 against 3,340 ms; B's scratch mode);
+    - **edit build, dev profile: 0.387, which passes** (64 against 166 ms);
+    - **edit build, fully static: 1.093 (1.067–1.297), which fails** (176 ms; link 128);
+    - **Oz: 0.625, which passes** (4,147,432 against 6,634,456 bytes).
+
+    Evidence: `benchmarks/spring/evidence/phase1-builds-gs-rest/20261124T062614Z/`.
