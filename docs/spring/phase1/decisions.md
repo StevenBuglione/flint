@@ -689,3 +689,12 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - Oz 0.628.
 
     Evidence: `benchmarks/spring/evidence/phase1-builds-gs-rest/20261124T111251Z/`.
+- 2026-11-24, proof-harness: **phase1-http-gs-rest certified at B2** (`0f01d6edd0a4`, 11:25–11:47Z, no foreign activity): the first Flint-only part (owner c015f307), against the Go baseline `benchmarks/spring/baselines/go/gs-rest-service/20261124T082805Z`. **The drift guard stayed in band** before and after (Go calibration 253,500 and 251,600 req/s, p99 262 and 261 µs; both probes in band), so the 6% drift seen on petclinic is not machine-wide. Flint / Go, median (99% interval), 9 trials:
+    - **throughput 1.323 (1.318–1.330), which passes**, and its lower bound clears the throughput plan's 1.30;
+    - **p99 0.851, which passes**;
+    - **peak RSS 0.944 (0.927–0.962), which passes**: 13.2 against 13.9 MB (1.418 at B; B2 has fixed 1 MiB pools by default);
+    - **p50 1.297 (1.131–1.356), which fails** (79 against 61 µs);
+    - **CPU per request 1.053 (0.984–1.087), which fails** on its upper bound (8,641 against 8,208 ns);
+    - p99.9 1.131, reported.
+
+    Evidence: `benchmarks/spring/evidence/phase1-http-gs-rest/20261124T112529Z/`.

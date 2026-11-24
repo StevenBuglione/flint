@@ -1,0 +1,9 @@
+{"workload": "gs-rest-service", "trial": 0, "target": "flint", "status": "measured"}
+{"workload": "gs-rest-service", "trial": 1, "target": "flint", "status": "measured"}
+{"workload": "gs-rest-service", "trial": 2, "target": "flint", "status": "measured"}
+{"workload": "gs-rest-service", "trial": 3, "target": "flint", "status": "measured"}
+{"workload": "gs-rest-service", "trial": 4, "target": "flint", "status": "measured"}
+{"workload": "gs-rest-service", "trial": 5, "target": "flint", "status": "measured"}
+{"workload": "gs-rest-service", "trial": 6, "target": "flint", "status": "measured"}
+{"workload": "gs-rest-service", "trial": 7, "target": "flint", "status": "measured"}
+{"workload": "gs-rest-service", "trial": 8, "target": "flint", "status": "measured"}
