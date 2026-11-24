@@ -18,7 +18,9 @@ files and follows no links.
 
 Environment: SERVER_PORT, POSTGRES_URL (jdbc:postgresql://host:port/database), POSTGRES_USER, POSTGRES_PASS, and
 FLOOR_SQL_DIR (petclinic's db/postgres scripts, run at startup as petclinic's flint.sql.init.mode=always does).
-SIGTERM stops it.
+Without FLOOR_SQL_DIR it reads resources/db/postgres when started from petclinic-rest's directory, as the benchmark
+launcher starts a Flint port (tools/spring_diag.py --flint-binary), and petclinic-rest's copy when started from this
+project's directory. SIGTERM stops it.
 +/
 module org.springframework.floor.app;
 
@@ -654,6 +656,15 @@ private Pool openPool()
     return pool;
 }
 
+/// petclinic-rest's scripts: its own resources when started from its directory, else from this project's.
+private string defaultScripts()
+{
+    import std.file : exists;
+
+    enum fromPetclinic = "resources/db/postgres";
+    return exists(fromPetclinic ~ "/schema.sql") ? fromPetclinic : "../../flint/petclinic-rest/" ~ fromPetclinic;
+}
+
 /// petclinic-rest's flint.sql.init.mode=always: its schema and data scripts on every start.
 private void initializeDatabase(ref Pool pool)
 {
@@ -661,7 +672,7 @@ private void initializeDatabase(ref Pool pool)
     import std.path : buildPath;
     import std.process : environment;
 
-    const scripts = environment.get("FLOOR_SQL_DIR", "../../flint/petclinic-rest/resources/db/postgres");
+    const scripts = environment.get("FLOOR_SQL_DIR", defaultScripts());
     Context context;
     auto lease = pool.acquire(context);
     if (!lease.ok())
