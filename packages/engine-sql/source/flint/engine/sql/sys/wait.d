@@ -4,6 +4,7 @@ module flint.engine.sql.sys.wait;
 import core.atomic : atomicLoad, atomicOp;
 import flint.arena : Error, Status;
 import flint.conc : Context, Deadline;
+import flint.conc.park : park, wakeAll;
 import flint.engine.reactor : NativeInterest, Reactor, TaskWaker;
 import flint.engine.sql.ffi.shim : Interest, waitOffReactor;
 import flint.engine.sql.sys.diagnostics : diagnosticNow, noteSocketWait;
@@ -108,111 +109,6 @@ package(flint.engine.sql) Error pauseForLease(ulong pool, uint mark) nothrow @no
         return owner.yieldUntil(Deadline.afterMillis(1));
     park(leaseEpochs[pool % leaseEpochs.length], mark, 2_000_000);
     return Error.init;
-}
-
-version (linux)
-{
-    version (X86_64)
-        private enum futexCall = 202;
-    else version (AArch64)
-        private enum futexCall = 98;
-    else version (RISCV64)
-        private enum futexCall = 98;
-}
-else version (OSX)
-{
-    // <os/os_sync_wait_on_address.h>, libSystem since macOS 14.4 (ADR-024). Flags 0 keeps the wait
-    // process private, as FUTEX_PRIVATE_FLAG does.
-    private enum osClockMachAbsoluteTime = 32; // OS_CLOCK_MACH_ABSOLUTE_TIME
-    private extern (C) @system nothrow @nogc
-    {
-        int os_sync_wait_on_address_with_timeout(void* address, ulong value, size_t size, uint flags,
-                uint clock, ulong timeoutNanos);
-        int os_sync_wake_by_address_all(void* address, size_t size, uint flags);
-    }
-}
-
-version (Windows)
-{
-    // WaitOnAddress and WakeByAddressAll, resolved from KernelBase so no synchronization.lib reaches the link
-    // (ADR-026). A race resolves the same pointers.
-    private alias Word = shared(uint)*;
-    private extern (Windows) alias AddressWait = int function(Word, scope uint*, size_t, uint) @system nothrow @nogc;
-    private extern (Windows) alias AddressWake = void function(scope Word) @system nothrow @nogc;
-    private __gshared AddressWait waitOnAddress;
-    private __gshared AddressWake wakeByAddressAll;
-
-    // SAFETY: GetProcAddress returns either null or the named export, whose signature the aliases above state.
-    private bool addressWaits() @trusted nothrow @nogc
-    {
-        import core.sys.windows.winbase : GetModuleHandleW, GetProcAddress;
-
-        if (waitOnAddress is null)
-        {
-            auto kernel = GetModuleHandleW("kernelbase.dll"w.ptr);
-            if (kernel !is null)
-            {
-                wakeByAddressAll = cast(AddressWake) GetProcAddress(kernel, "WakeByAddressAll");
-                waitOnAddress = cast(AddressWait) GetProcAddress(kernel, "WaitOnAddress");
-            }
-        }
-        return waitOnAddress !is null && wakeByAddressAll !is null;
-    }
-}
-
-// SAFETY: The kernel compares the aligned 32-bit word with expected and sleeps at most nanos.
-// It reads the word only during the call and retains neither address. Without a futex this sleeps.
-private void park(ref shared uint word, uint expected, long nanos) @trusted nothrow @nogc
-{
-    version (Windows)
-    {
-        // Timeouts and spurious returns go back to a caller that retries its acquisition.
-        uint compare = expected;
-        const millis = nanos <= 1_000_000 ? 1 : cast(uint)(nanos / 1_000_000);
-        if (addressWaits())
-            cast(void) waitOnAddress(&word, &compare, uint.sizeof, millis);
-        else
-            waitOffReactor(Interest.init, 2);
-    }
-    else version (OSX)
-    {
-        // EINTR, EFAULT and ETIMEDOUT all return to a caller that retries its acquisition.
-        cast(void) os_sync_wait_on_address_with_timeout(cast(void*)&word, expected, uint.sizeof,
-                0, osClockMachAbsoluteTime, nanos > 0 ? cast(ulong) nanos : 1);
-    }
-    else static if (is(typeof(futexCall)))
-    {
-        import core.sys.linux.unistd : syscall;
-        import core.sys.posix.time : timespec;
-
-        enum waitPrivate = 128; // FUTEX_WAIT | FUTEX_PRIVATE_FLAG
-        timespec limit;
-        limit.tv_sec = nanos / 1_000_000_000;
-        limit.tv_nsec = nanos % 1_000_000_000;
-        // EINTR, EAGAIN and ETIMEDOUT all return to a caller that retries its acquisition.
-        syscall(futexCall, cast(void*)&word, waitPrivate, expected, &limit, null, 0);
-    }
-    else
-        waitOffReactor(Interest.init, 2);
-}
-
-// SAFETY: The kernel uses the word address only as a key for waking its current waiters.
-private void wakeAll(ref shared uint word) @trusted nothrow @nogc
-{
-    version (Windows)
-    {
-        if (addressWaits())
-            wakeByAddressAll(&word);
-    }
-    else version (OSX)
-        cast(void) os_sync_wake_by_address_all(cast(void*)&word, uint.sizeof, 0);
-    else static if (is(typeof(futexCall)))
-    {
-        import core.sys.linux.unistd : syscall;
-
-        enum wakePrivate = 129; // FUTEX_WAKE | FUTEX_PRIVATE_FLAG
-        syscall(futexCall, cast(void*)&word, wakePrivate, int.max, null, null, 0);
-    }
 }
 
 package(flint.engine.sql) Error pause() nothrow @nogc
