@@ -54,6 +54,10 @@ static import flint.arena.gc;
 // set before main; the program's rt_options and --DRT-gcopt override it.
 static import flint.arena.mark_threads;
 
+// Takes the loader's read-only-after-relocation memory (PT_GNU_RELRO) out of the collector's root ranges at startup,
+// so collections stop scanning vtables, TypeInfo and generated tables (performance playbook R-33, 8bb4aa7b).
+static import flint.arena.data_roots;
+
 public import flint.boot.context.properties : ClassRef;
 
 @safe:
