@@ -1,0 +1,12 @@
+
+  _____ _ _       _
+ |  ___| (_)_ __ | |_
+ | |_  | | | '_ \| __|
+ |  _| | | | | | | |_
+ |_|   |_|_|_| |_|\__|
+
+ :: Flint Boot ::                 (v0.7.0)
+
+2026-11-24T22:34:48.470Z  INFO 3674546 --- [           main] c.e.restservice.RestServiceApplication   : Starting RestServiceApplication using Flint 0.7.0 with PID 3674546 (/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/gs-rest-service-flint started by olfa in /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/benchmarks/spring/flint/gs-rest-service)
+2026-11-24T22:34:48.470Z  INFO 3674546 --- [           main] c.e.restservice.RestServiceApplication   : No active profile set, falling back to 1 default profile: "default"
+2026-11-24T22:34:48.472Z  INFO 3674546 --- [           main] c.e.restservice.RestServiceApplication   : Started RestServiceApplication in 0.002 seconds (process running for 0.0)
