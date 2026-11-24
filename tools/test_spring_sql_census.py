@@ -36,6 +36,13 @@ class Assign(unittest.TestCase):
         self.assertEqual(first['counts']['parse_unnamed'], 1)
         self.assertEqual(first['statements'], ['BEGIN READ ONLY', 'SELECT 1', 'COMMIT'])
 
+    def test_continuation_lines_join_their_statement(self):
+        base = census.log_time(line(0, 'x'))
+        marks = [('a', 'POST', '/a', base + 0.100, base + 0.200)]
+        lines = [line(150, 'duration: 0.1 ms  execute <unnamed>: INSERT INTO owners (a) VALUES($1)'), '\tRETURNING "id"']
+        self.assertEqual(census.summarize(census.assign(lines, marks)[0])['statements'],
+                         ['INSERT INTO owners (a) VALUES($1) RETURNING "id"'])
+
     def test_table_marks_divergence_from_java(self):
         def result(impl, kinds):
             counts = {'data_statements': 1, 'transaction_commands': 0, 'parse': 0, 'parse_unnamed': 0, 'execute': 1,

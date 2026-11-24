@@ -83,8 +83,21 @@ def log_time(line):
     return stamp.replace(tzinfo=datetime.timezone.utc).timestamp()
 
 
+def join_continuations(lines):
+    """A statement that spans lines is logged with its continuation lines (a tab, no prefix) after the first: they are
+    joined to it, so the recorded text is whole (pgjdbc puts its own RETURNING on such a line)."""
+    joined = []
+    for line in lines:
+        if log_time(line) is None and joined:
+            joined[-1] += ' ' + line.strip()
+        else:
+            joined.append(line)
+    return joined
+
+
 def assign(lines, marks, slack=0.003):
     """{case index or 'startup' or 'between': [log line]} by each line's timestamp."""
+    lines = join_continuations(lines)
     out = {}
     first = marks[0][3] if marks else float('inf')
     index = 0

@@ -10,7 +10,7 @@ The census measured what each implementation sends. `tools/spring_sql_census.py`
 
 | | Java (reference) | Flint | Go comparator |
 |---|---|---|---|
-| Benchmark request, GET /petclinic/api/owners/{id} | `BEGIN READ ONLY`, 3 SELECTs, `COMMIT`; 0 parses once warm | the same 3 SELECTs in `BEGIN ISOLATION LEVEL READ COMMITTED READ ONLY` … `COMMIT`; 2 unnamed parses (BEGIN, COMMIT) | the 3 SELECTs, no transaction |
+| Benchmark request, GET /petclinic/api/owners/{id} | `BEGIN READ ONLY`, 3 SELECTs, `COMMIT`; 0 parses once warm | the same 3 SELECTs in `BEGIN ISOLATION LEVEL READ COMMITTED READ ONLY` … `COMMIT`; 2 unnamed parses (BEGIN, COMMIT), fixed in 55dbabbc | the 3 SELECTs, no transaction (fixed by this ADR) |
 | Cases whose data statements or transaction commands differ from Java's | – | 2 of 109 (actuator health only) | 66 of 109 |
 | PostgreSQL CPU per owner request, 8 connections, no logging | – | 58.6 µs **at B, with the 5 ms spin: not a valid per-request cost** (see below) | 21.4 µs |
 
@@ -29,7 +29,7 @@ Go's divergences:
 3. **First-use and pool statements are matched too** (owner, no exemptions). The Go comparator sends SimpleJdbcInsert's two catalog queries, byte for byte from the reference's log, inside the write transaction just before its first insert into each table, once per process. It validates a borrowed connection as HikariCP does: an empty query when the connection has been unused for longer than 500 ms (aliveBypassWindowMs), in place of pgx's `-- ping` after 1 s. And actuator health checks the database with the empty query of pgjdbc's `Connection.isValid`.
 4. **Enforcement.** `spring_bench.py register` records a census for each database app beside the comparator's digest, and `check-registry` fails when the comparator's digest has changed since its census, or when the census shows a per-request divergence in data statements or transaction commands from Java with no exemptions. The census record is `benchmarks/spring/census/<app>.json` (`spring_sql_census.py --record`); a failed statement, which PostgreSQL logs as an error rather than a duration, counts as sent.
 5. **Remeasurement of both sides.** After the change the comparator is registered again (a new digest), and every certified or pending part that loads or builds petclinic-rest is measured again at one commit: phase1-builds-petclinic, phase1-http-petclinic, error-validation-p99 and the petclinic GC-matrix parts. Earlier petclinic numbers against the old comparator are kept as history and never assembled with the new ones (assembly already fails on mixed commits).
-6. **Flint's own divergences** are not comparator matters and go to data-access: the per-transaction re-parse of `BEGIN` and `COMMIT` (236 parses across the suite against the reference's 129), the explicit isolation clause, `RETURNING "id"` on inserts, and the missing pool validation in actuator health.
+6. **Flint's own divergences** are not comparator matters and go to data-access: the per-transaction re-parse of `BEGIN` and `COMMIT` (236 parses across the suite against the reference's 129), the explicit isolation clause (both fixed in 55dbabbc), and the missing pool validation in actuator health (left as is: Flint sends fewer statements). The first census also listed `RETURNING "id"` on inserts as a divergence; it is not one: pgjdbc appends `RETURNING "id"` itself, on a continuation line the first census did not read.
 
 ## Consequences
 
