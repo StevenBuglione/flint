@@ -1,0 +1,17 @@
+[project]
+name = "floor"
+version = "0.0.1"
+flint = "1.0"
+type = "executable"
+description = "Floor reference for petclinic-rest GET /owners/{id}: diagnostic only, never evidence (docs/spring/phase1/petclinic-cpu-astra.md)"
+
+[build]
+executable = "petclinic-floor"
+
+[dependencies]
+"flint:arena" = {}
+"flint:conc" = {}
+"flint:engine-reactor" = {}
+"flint:engine-sql" = {}
+"flint:engine-web" = {}
+"flint:os" = {}
