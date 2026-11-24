@@ -1,0 +1,44 @@
+{
+  "schema": "flint.measure-queue/1",
+  "id": "transport-pricing",
+  "created": "2026-11-24",
+  "status": "pending",
+  "window": "claim",
+  "priority": 7.5,
+  "estimate_minutes": 80,
+  "claim_when": "after B3's error-404-p99 and error-validation-p99 (coordinator 21:34Z and 21:37Z: in the next authorized window)",
+  "requested_by": "the coordinator, 21:34Z and 21:37Z: Astra's error-path review action 1; owner decision 118b4482 (HTTP parity), measure the transport cost first",
+  "report_to": "the coordinator; docs/adr/ADR-033-http-parity-on-the-gated-paths.md",
+  "summary": "Diagnostic (never evidence): the price of HTTP framing and connection lifetime on the error paths and petclinic's owner GET, Go as it was against chunked and close-after-400 variants, with raw responses, a second request on each socket and accepts per request",
+  "why": "ADR-033: Tomcat (Java and Flint) sends the 404 and the validation 400 chunked and closes after the 400; the Go comparator sent Content-Length and kept every connection. The owner approved parity; this prices it for the record before the comparator changes. B3's tree holds the comparators as they were.",
+  "harness": "fa898d57eb4f",
+  "builds": {
+    "tree": {
+      "app": "checkout",
+      "commit": "d6d15b0073dd",
+      "flint": true,
+      "linker": "mold",
+      "fork": false
+    }
+  },
+  "tree_note": "B3's tree (the pre-ADR-033 comparators, B3's Flint); the tool from the pinned harness revision",
+  "measure": {
+    "kind": "command",
+    "ports": [],
+    "steps": [
+      {
+        "argv": [
+          "{python}",
+          "{harness}/tools/spring_transport.py",
+          "--output",
+          "{out}/transport.json"
+        ],
+        "in": "tree",
+        "may_fail": true,
+        "smoke_args": [
+          "--smoke"
+        ]
+      }
+    ]
+  }
+}
