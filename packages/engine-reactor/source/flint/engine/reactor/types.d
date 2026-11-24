@@ -174,6 +174,9 @@ struct TaskWaker
     uint slot;
     /// Lifetime of the task in that slot. Zero marks an empty handle.
     ulong generation;
+    /// The reactor run that issued the handle, so a wake from another run is rejected rather than resuming
+    /// whichever task holds the same slot and generation there. Zero for a handle built by hand.
+    ulong run;
 
     /// Whether this handle names a task, live or retired.
     bool valid() const pure nothrow @nogc

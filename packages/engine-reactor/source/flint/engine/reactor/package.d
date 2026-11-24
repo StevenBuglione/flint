@@ -15,6 +15,7 @@ import flint.engine.reactor.internal.queues : Mailbox, Message, Timers;
 import flint.engine.reactor.sys.fibers : createFiber, PoolFiber, releaseFiber, resetFiber, resumeFiber, yieldFiber;
 import flint.engine.reactor.sys.locals : cellStamp, loadCell, localStorable, localWords, storeCell;
 import flint.engine.reactor.sys.offload : OffloadPool;
+import flint.engine.reactor.sys.remote : RemoteWakes;
 import flint.engine.reactor.sys.workers : availableCpus, joinWorker, pinWorker, startWorker, workerUsage, yieldWorker;
 
 public import flint.engine.reactor.types : AcceptDelegate, AcceptFn, Backend, Completion, CompletionDelegate,
@@ -87,6 +88,10 @@ private enum ioWordBits = ulong.sizeof * 8;
 private enum listenToken = 1UL;
 private enum nativeWatchToken = 2UL;
 private enum waitBudgetMillis = 5;
+/// Remote wakes one worker queues between two of its passes before refusing more (`Reactor.wakeFromAnyThread`).
+private enum remoteWakeCapacity = 256;
+/// The last reactor run identity issued (`Runtime.run`).
+private shared ulong reactorRuns;
 private enum maxIdentity = ulong.max >> 16;
 
 private ulong nextIdentity() nothrow @nogc
@@ -270,6 +275,7 @@ struct Reactor
         scope (exit)
             if (!ready)
                 runtime.release();
+        runtime.run = atomicOp!"+="(reactorRuns, 1UL);
         foreach (index, ref worker; runtime.workers)
         {
             const status = worker.initialize(runtime, cast(uint) index, cpus[index]);
@@ -279,6 +285,13 @@ struct Reactor
         const result = runtime.prepareBackend(options.backend);
         if (result.code != Status.ok)
             return Result!Reactor(Reactor.init, result);
+        foreach (ref worker; runtime.workers)
+        {
+            worker.remote = new RemoteWakes(remoteWakeCapacity);
+            worker.remoteTaken = new TaskWaker[remoteWakeCapacity];
+            if (worker.remote.open() != Status.ok)
+                return Result!Reactor(Reactor.init, Error(Status.ioError, "could not open remote wake signals"));
+        }
         if (options.offloadThreads != 0)
         {
             runtime.offload = new OffloadPool(options.offloadThreads, options.offloadQueueCapacity, count);
@@ -553,6 +566,25 @@ struct Reactor
         return runtime.workers[currentWorkerIndex].wakeTask(waker);
     }
 
+    /// Mark a suspended fiber due from any thread. On the fiber's own loop this is `wake`; elsewhere the owner
+    /// applies it on its next pass, with `wake`'s rules: a handle whose task ended is rejected and waking a
+    /// running or due fiber does nothing, so waiters re-check their condition. Returns `unavailable` when the
+    /// owner cannot be signalled (no native watches, or the reactor is not running) and `resourceExhausted` when
+    /// its queue of remote wakes is full; the waiter's own deadline then resumes it.
+    Error wakeFromAnyThread(TaskWaker waker) nothrow @nogc
+    {
+        if (runtime is null || waker.ownerCore >= runtime.workers.length || !waker.valid || waker.run != runtime.run)
+            return Error(Status.invalidArgument, "fiber wake requires a task handle this reactor issued");
+        if (currentRuntime is runtime && currentWorkerIndex == waker.ownerCore)
+            return runtime.workers[waker.ownerCore].wakeTask(waker);
+        auto worker = &runtime.workers[waker.ownerCore];
+        if (atomicLoad(runtime.state) != State.running || !atomicLoad(worker.remoteWatched))
+            return Error(Status.unavailable, "the owner loop cannot be signalled");
+        if (!worker.remote.post(waker))
+            return Error(Status.resourceExhausted, "the owner's remote wake queue is full");
+        return Error.init;
+    }
+
     /// Run blocking `work` on an offload thread and suspend the calling task fiber until it returns, so
     /// other fibers keep running. `work` may borrow this fiber's frame. When the admission queue is full the
     /// fiber waits for room. Cancellation of the task withdraws work that has not started; work that has
@@ -707,6 +739,8 @@ private struct Runtime
     /// Set by `stopAccepting`; each owner then retires its accept and counts itself in `acceptRetired`.
     shared bool acceptStopping;
     shared uint acceptRetired;
+    /// This run's identity in the task handles it issues (`TaskWaker.run`), unique in the process.
+    ulong run;
 
     @disable this(this);
 
@@ -992,6 +1026,11 @@ private struct Worker
     /// Whether this worker tried, and managed, to watch its offload signal.
     bool offloadWatchTried;
     bool offloadWatched;
+    /// Wakes other threads queue for this worker's fibers, the owner's buffer for taking them, and whether the
+    /// owner watches the list's signal (read by posting threads).
+    RemoteWakes remote;
+    TaskWaker[] remoteTaken;
+    shared bool remoteWatched;
 
     version (Posix) Readiness readiness;
 
@@ -1089,12 +1128,13 @@ private struct Worker
     {
         if (activeFiber == noSlot)
             return Result!TaskWaker(TaskWaker.init, Error(Status.notFound, "no active fiber"));
-        return Result!TaskWaker(TaskWaker(index, activeFiber, fibers[activeFiber].generation));
+        return Result!TaskWaker(TaskWaker(index, activeFiber, fibers[activeFiber].generation, runtime.run));
     }
 
     Error wakeTask(TaskWaker waker) nothrow @nogc
     {
-        if (waker.generation == 0 || waker.slot >= fibers.length || fibers[waker.slot].generation != waker.generation)
+        if (waker.generation == 0 || waker.run != runtime.run || waker.slot >= fibers.length
+                || fibers[waker.slot].generation != waker.generation)
             return Error(Status.notFound, "fiber task already ended");
         auto task = &fibers[waker.slot];
         // A running fiber re-checks its condition before yielding; a due one is already resumable.
@@ -1169,6 +1209,13 @@ private struct Worker
     }
 
     /// On the owner loop, when the offload signal is readable: resume every fiber whose work returned.
+    void remoteReady(int, NativeInterest) nothrow @nogc
+    {
+        const taken = remote.take(remoteTaken);
+        foreach (waker; remoteTaken[0 .. taken])
+            cast(void) wakeTask(waker);
+    }
+
     void offloadReady(int, NativeInterest) nothrow @nogc
     {
         auto pool = runtime.offload;
@@ -1325,6 +1372,15 @@ private struct Worker
         stats.affinityPinned = pinWorker(cpu);
         while (atomicLoad(runtime.state) == State.starting)
             yieldWorker();
+        version (ReactorNativeWatches)
+        {
+            const remoteSignal = remote.signal();
+            if (remoteSignal >= 0)
+            {
+                const watched = watchNative(remoteSignal, NativeInterest.read, &remoteReady);
+                atomicStore(remoteWatched, watched.code == Status.ok);
+            }
+        }
 
         const initialUsage = workerUsage();
         const initialGc = GC.stats.allocatedInCurrentThread;
@@ -1398,6 +1454,8 @@ private struct Worker
         }
         version (ReactorNativeWatches)
             nativeWatches.release();
+        if (remote !is null)
+            remote.close();
         version (linux)
             buffers.release();
         connections.release();

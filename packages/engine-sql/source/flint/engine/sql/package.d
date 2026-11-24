@@ -10,7 +10,7 @@ import flint.engine.sql.ffi.shim : Cell, Failure, Identity, Interest, Operation,
     endTransaction, inspectCell,
     leaseFailure, nameCell, openPool, releasePool, retireLease, rowColumns, withdrawPool;
 import flint.engine.sql.sys.wait : admit, admitStartup, joinLeaseQueue, leaseChanged, leaseMark,
-    leaveLeaseQueue, pause, pauseForLease, waitFor;
+    leaveLeaseQueue, pause, pauseForLease, prepareLeaseWaiters, waitFor;
 
 @safe:
 
@@ -499,6 +499,7 @@ struct Pool
                 options.maxConnections, options.maxWaiters, options.maxPreparedPerConnection, created);
         if (status != Status.ok)
             return Error(status, "could not open SQL pool");
+        prepareLeaseWaiters(created.slot, options.maxWaiters);
         enum maxAcquireNanos = 5_000_000_000L;
         this = Pool(created, options.driver, options.acquireTimeoutNanos < maxAcquireNanos
                 ? options.acquireTimeoutNanos : maxAcquireNanos);
@@ -541,7 +542,7 @@ struct Pool
             // Retry once registered so that a release after this point wakes the sleep below.
             if (!wait.register())
                 continue;
-            const paused = pauseForLease(slot, mark);
+            const paused = pauseForLease(slot, mark, wait.ticket);
             if (paused.code != Status.ok)
                 return Result!Connection(Connection.init, paused);
         }

@@ -244,3 +244,94 @@ version (FlintNativeLibpq)
                 "SQL waits resumed at the poll deadline rather than on readiness");
     }
 }
+
+version (FlintNativeLibpq)
+{
+    private enum stressClients = 256;
+    private enum stressRounds = 20;
+
+    private __gshared Pool stressPool;
+    private shared uint stressDone;
+    private shared uint stressFailures;
+    private shared long stressStart;
+    private shared long stressElapsed;
+
+    // SAFETY: The harness publishes the pool before the reactor starts and every fiber only copies the scalar handle.
+    private Pool sharedStressPool() @trusted nothrow @nogc
+    {
+        return stressPool;
+    }
+
+    // SAFETY: Written once by the harness before the reactor starts.
+    private void publishStressPool(Pool pool) @trusted nothrow @nogc
+    {
+        stressPool = pool;
+    }
+
+    private void leaseClient() nothrow @nogc
+    {
+        auto pool = sharedStressPool();
+        Context context;
+        foreach (_; 0 .. stressRounds)
+        {
+            auto lease = pool.acquire(context);
+            if (!lease.ok())
+            {
+                atomicOp!"+="(stressFailures, 1u);
+                break;
+            }
+            scope RequestArena arena;
+            if (!lease.value.execute("SELECT 1", [], arena, context).ok())
+                atomicOp!"+="(stressFailures, 1u);
+            if (pool.release(lease.value).code != Status.ok)
+                atomicOp!"+="(stressFailures, 1u);
+        }
+        if (atomicOp!"+="(stressDone, 1u) == stressClients)
+        {
+            atomicStore(stressElapsed, Deadline.afterMillis(0).monotonicNanoseconds - atomicLoad(stressStart));
+            Reactor.current().stop();
+        }
+    }
+
+    @("ten leases serve 256 fibers on two workers, each release waking the queue head at once")
+    unittest
+    {
+        import std.process : environment;
+
+        const address = environment.get("FLINT_SQL_PG_TEST_DSN");
+        if (address.length == 0)
+            return;
+        PoolOptions config;
+        config.driver = Driver.postgres;
+        config.connectionString = address;
+        config.maxConnections = 10;
+        config.maxWaiters = stressClients;
+        Pool pool;
+        assert(pool.open(config).code == Status.ok);
+        Context context;
+        scope (exit)
+            assert(pool.close(context).code == Status.ok);
+        publishStressPool(pool);
+
+        ReactorOptions options;
+        options.cores = 2;
+        options.fiberPoolSize = stressClients / 2 + 8;
+        auto owner = Reactor.create(options);
+        assert(owner.ok(), owner.error.message);
+        atomicStore(stressDone, 0u);
+        atomicStore(stressFailures, 0u);
+        foreach (client; 0 .. stressClients)
+            assert(owner.value.post(client % 2, &leaseClient).code == Status.ok);
+        atomicStore(stressStart, Deadline.afterMillis(0).monotonicNanoseconds);
+        const ran = owner.value.run();
+        assert(ran.code == Status.ok, ran.message);
+        assert(atomicLoad(stressDone) == stressClients);
+        assert(atomicLoad(stressFailures) == 0);
+        // 5,120 handoffs at one per millisecond poll took at least 5 s.
+        assert(atomicLoad(stressElapsed) < 2_500_000_000L, "lease handoffs waited for the waiters' polls");
+        // Every lease came back: the full pool is acquirable again.
+        auto again = pool.acquire(context);
+        assert(again.ok());
+        assert(pool.release(again.value).code == Status.ok);
+    }
+}

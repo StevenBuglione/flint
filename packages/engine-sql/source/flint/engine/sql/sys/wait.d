@@ -1,7 +1,7 @@
 /// Cooperative deadline and native descriptor waits.
 module flint.engine.sql.sys.wait;
 
-import core.atomic : atomicLoad, atomicOp;
+import core.atomic : atomicLoad, atomicOp, atomicStore, cas;
 import flint.arena : Error, Status;
 import flint.conc : Context, Deadline;
 import flint.engine.reactor : NativeInterest, Reactor, TaskWaker;
@@ -70,10 +70,116 @@ package(flint.engine.sql) void joinLeaseQueue(ulong pool) nothrow @nogc
     atomicOp!"+="(leaseSleepers[pool % leaseSleepers.length], 1U);
 }
 
-/// Remove a waiter registered by joinLeaseQueue.
+/// Remove a waiter registered by joinLeaseQueue, and the calling fiber's wake registration with it.
 package(flint.engine.sql) void leaveLeaseQueue(ulong pool) nothrow @nogc
 {
+    auto owner = Reactor.current();
+    if (owner.currentCore() != uint.max)
+    {
+        const waker = owner.currentWaker();
+        if (waker.ok())
+            forgetLeaseWaiter(pool, waker.value);
+    }
     atomicOp!"-="(leaseSleepers[pool % leaseSleepers.length], 1U);
+}
+
+/// A reactor fiber queued for a lease: its FIFO ticket and the handle that resumes it.
+private struct LeaseWaiter
+{
+    ulong ticket;
+    TaskWaker waker;
+}
+
+/// The reactor fibers queued on one pool slot, so a released lease wakes the queue head at once instead of at
+/// its next poll. Pointer-free, so the collector never scans it.
+private struct LeaseWaiters
+{
+    shared bool locked;
+    LeaseWaiter[] entries;
+}
+
+private __gshared LeaseWaiters[64] leaseWaiters;
+
+/// How long a registered reactor waiter sleeps before re-checking without a wake: a release on a thread with no
+/// reactor, or a full remote wake queue, wakes no one.
+private enum leaseFallbackMillis = 10;
+
+/// Reserve room for `capacity` reactor waiters on a pool slot. Called when the pool opens, before any waiter.
+// SAFETY: Each slot's table is replaced only here, while its pool is opening and has no waiters.
+package(flint.engine.sql) @trusted void prepareLeaseWaiters(ulong pool, uint capacity)
+{
+    auto table = &leaseWaiters[pool % leaseWaiters.length];
+    if (table.entries.length < capacity)
+        table.entries = new LeaseWaiter[capacity];
+    else
+        table.entries[] = LeaseWaiter.init;
+}
+
+// SAFETY: The spin lock serializes every access to the slot's table, which only prepareLeaseWaiters resizes.
+private @trusted LeaseWaiters* lockWaiters(ulong pool) nothrow @nogc
+{
+    auto table = &leaseWaiters[pool % leaseWaiters.length];
+    while (!cas(&table.locked, false, true))
+    {
+    }
+    return table;
+}
+
+private void unlockWaiters(LeaseWaiters* table) nothrow @nogc
+{
+    atomicStore(table.locked, false);
+}
+
+/// Record the calling fiber's ticket and handle. False when the table is full or missing.
+private bool rememberLeaseWaiter(ulong pool, ulong ticket, TaskWaker waker) nothrow @nogc
+{
+    auto table = lockWaiters(pool);
+    scope (exit)
+        unlockWaiters(table);
+    size_t free = size_t.max;
+    foreach (index, ref entry; table.entries)
+    {
+        if (entry.ticket != 0 && entry.waker == waker)
+        {
+            entry.ticket = ticket;
+            return true;
+        }
+        if (entry.ticket == 0 && free == size_t.max)
+            free = index;
+    }
+    if (free == size_t.max)
+        return false;
+    table.entries[free] = LeaseWaiter(ticket, waker);
+    return true;
+}
+
+private void forgetLeaseWaiter(ulong pool, TaskWaker waker) nothrow @nogc
+{
+    auto table = lockWaiters(pool);
+    scope (exit)
+        unlockWaiters(table);
+    foreach (ref entry; table.entries)
+        if (entry.ticket != 0 && entry.waker == waker)
+            entry = LeaseWaiter.init;
+}
+
+/// The handle of the reactor waiter with the lowest ticket, the queue's head among them, or an empty handle.
+private TaskWaker leaseHead(ulong pool) nothrow @nogc
+{
+    auto table = lockWaiters(pool);
+    scope (exit)
+        unlockWaiters(table);
+    ulong lowest = ulong.max;
+    TaskWaker head;
+    foreach (ref entry; table.entries)
+    {
+        if (entry.ticket != 0 && entry.ticket < lowest)
+        {
+            lowest = entry.ticket;
+            head = entry.waker;
+        }
+    }
+    return head;
 }
 
 /// Observe the pool's lease generation before an acquisition attempt.
@@ -91,14 +197,30 @@ package(flint.engine.sql) void leaseChanged(ulong pool) nothrow @nogc
         return;
     atomicOp!"+="(leaseEpochs[index], 1U);
     wakeAll(leaseEpochs[index]);
+    const head = leaseHead(pool);
+    if (!head.valid)
+        return;
+    auto owner = Reactor.current();
+    if (owner.currentCore() != uint.max)
+        cast(void) owner.wakeFromAnyThread(head);
 }
 
-/// Wait for a lease-queue change after mark, bounded so asynchronous replacement is still observed.
-package(flint.engine.sql) Error pauseForLease(ulong pool, uint mark) nothrow @nogc
+/// Wait for a lease-queue change after mark, bounded so asynchronous replacement is still observed. A reactor
+/// fiber holding `ticket` registers for a wake when it reaches the queue head; one that cannot polls every
+/// millisecond.
+package(flint.engine.sql) Error pauseForLease(ulong pool, uint mark, ulong ticket) nothrow @nogc
 {
     auto owner = Reactor.current();
     if (owner.currentCore() != uint.max)
-        return owner.yieldUntil(Deadline.afterMillis(1));
+    {
+        const waker = owner.currentWaker();
+        if (ticket == 0 || !waker.ok() || !rememberLeaseWaiter(pool, ticket, waker.value))
+            return owner.yieldUntil(Deadline.afterMillis(1));
+        // A release between the failed attempt and the registration above announced itself in the epoch.
+        if (leaseMark(pool) != mark)
+            return Error.init;
+        return owner.yieldUntil(Deadline.afterMillis(leaseFallbackMillis));
+    }
     park(leaseEpochs[pool % leaseEpochs.length], mark, 2_000_000);
     return Error.init;
 }

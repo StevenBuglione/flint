@@ -226,3 +226,83 @@ unittest
     assert(owner.value.run().code == Status.ok);
     assert(fixture.resumed && fixture.elapsed < 50_000_000, "watched cancellation waited for the deadline");
 }
+
+// The waiting fiber on worker 0 publishes its handle field by field and then the round it waits in; the
+// waking fiber on worker 1 reads the round, then the fields.
+private shared uint remoteRound;
+private shared uint remoteSlot;
+private shared ulong remoteGeneration;
+private shared ulong remoteRun;
+private shared uint remoteWoken;
+private shared long remoteElapsed;
+private shared bool remoteForeignRejected;
+
+private void remoteWaiter() nothrow @nogc
+{
+    auto owner = Reactor.current();
+    const waker = owner.currentWaker().value;
+    assert(waker.ownerCore == 0 && waker.run != 0);
+    atomicStore(remoteSlot, waker.slot);
+    atomicStore(remoteGeneration, waker.generation);
+    atomicStore(remoteRun, waker.run);
+    const started = monotonicNow();
+    foreach (round; 1 .. wakeRounds + 1)
+    {
+        atomicStore(remoteRound, round);
+        // Wakes are re-checked conditions: a wake that arrives before this yield makes it return at once.
+        while (atomicLoad(remoteWoken) < round)
+            assert(owner.yieldUntil(Deadline.afterMillis(farMillis)).code == Status.ok);
+    }
+    atomicStore(remoteElapsed, monotonicNow() - started);
+    owner.stop();
+}
+
+private void remoteWaker() nothrow @nogc
+{
+    auto owner = Reactor.current();
+    assert(owner.currentCore() == 1);
+    // A handle no run issued, and one naming another run, are refused rather than resuming a stranger.
+    const foreign = owner.wakeFromAnyThread(TaskWaker(0, 0, 1)).code == Status.invalidArgument
+        && owner.wakeFromAnyThread(TaskWaker(0, 0, 1, ulong.max)).code == Status.invalidArgument;
+    atomicStore(remoteForeignRejected, foreign);
+    uint served;
+    while (served < wakeRounds)
+    {
+        const round = atomicLoad(remoteRound);
+        if (round == served)
+        {
+            // This side polls the round only to drive the test; the waiter never polls.
+            if (owner.yieldUntil(Deadline.afterMillis(0)).code != Status.ok)
+                return;
+            continue;
+        }
+        const handle = TaskWaker(0, atomicLoad(remoteSlot), atomicLoad(remoteGeneration), atomicLoad(remoteRun));
+        atomicStore(remoteWoken, round);
+        assert(owner.wakeFromAnyThread(handle).code == Status.ok);
+        served = round;
+    }
+}
+
+@("a fiber on another worker resumes a suspended fiber on its owner's next pass, and foreign handles are refused")
+unittest
+{
+    foreach (backend; [Backend.automatic, readinessBackend])
+    {
+        ReactorOptions options;
+        options.backend = backend;
+        options.cores = 2;
+        options.fiberPoolSize = 1;
+        auto owner = Reactor.create(options);
+        assert(owner.ok);
+        atomicStore(remoteRound, 0);
+        atomicStore(remoteWoken, 0);
+        atomicStore(remoteElapsed, long.max);
+        atomicStore(remoteForeignRejected, false);
+        assert(owner.value.post(0, &remoteWaiter).code == Status.ok);
+        assert(owner.value.post(1, &remoteWaker).code == Status.ok);
+        assert(owner.value.run().code == Status.ok);
+        assert(atomicLoad(remoteForeignRejected));
+        // Without the cross-thread wake each round sleeps its 10 s deadline; a millisecond poll takes 200 ms.
+        assert(atomicLoad(remoteElapsed) < wakeRounds * 500_000, "a remote wake waited for a poll");
+    }
+}
