@@ -111,6 +111,15 @@ def summarize(lines):
         if 'connection authorized' in line:
             counts['connections'] += 1
             continue
+        if ' STATEMENT:  ' in line:
+            # A statement that failed is logged as ERROR, DETAIL and STATEMENT, never as a duration line: it is
+            # counted as sent, with its kind marked failed.
+            sql = line.split(' STATEMENT:  ', 1)[1]
+            kind = 'failed ' + statement_kind(sql)
+            kinds[kind] = kinds.get(kind, 0) + 1
+            statements.append('FAILED ' + ' '.join(sql.split())[:300])
+            counts['failed'] = counts.get('failed', 0) + 1
+            continue
         match = DURATION.search(line)
         if not match:
             continue
@@ -161,6 +170,46 @@ def census_one(app, impl, output, binary=None):
             'cases': cases}
 
 
+def divergences(results, reference='java'):
+    """Per implementation, the cases whose data statements by kind or transaction commands differ from Java's."""
+    by = {r['impl']: r for r in results}
+    out = {}
+    for impl in by:
+        if impl == reference:
+            continue
+        rows = []
+        for index, want in enumerate(by[reference]['cases']):
+            got = by[impl]['cases'][index]
+            parts = {}
+            for label, keep in (('data', lambda k: k not in TRANSACTION_KINDS), ('transactions', lambda k: k in TRANSACTION_KINDS)):
+                mine = {k: v for k, v in got['kinds'].items() if keep(k)}
+                theirs = {k: v for k, v in want['kinds'].items() if keep(k)}
+                if mine != theirs:
+                    parts[label] = {'implementation': mine, 'java': theirs}
+            if parts:
+                rows.append(dict(case=want['name'], method=want['method'], path=want['path'], **parts))
+        out[impl] = rows
+    return out
+
+
+def record(app, output, results):
+    """benchmarks/spring/census/<app>.json: what `spring_bench.py register` and `check-registry` require of a
+    database app's comparator (ADR-032 section 4): the census of the comparator's current source, with its
+    per-request divergences from the reference."""
+    found = divergences(results)
+    summary = {'schema': 'flint.spring-sql-census-record/1', 'app': app,
+               'comparator_sha256': spring_bench.comparator_digest(app),
+               'golden_sha256': spring_bench.sha256(spring_bench.golden_path(app)),
+               'divergences': {impl: len(rows) for impl, rows in found.items()},
+               'go_divergent_cases': [row['case'] for row in found.get('go', [])],
+               'evidence': str(output.resolve().relative_to(ROOT)) if output.resolve().is_relative_to(ROOT) else str(output),
+               'recorded': time.strftime('%Y-%m-%d %H:%M:%SZ', time.gmtime())}
+    path = spring_bench.CENSUS / f'{app}.json'
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(summary, indent=2) + '\n')
+    return path
+
+
 def table(results, reference='java'):
     """Markdown: per case, each implementation's statements against the reference; a row is marked when the data
     statements by kind or the transaction commands differ from Java's."""
@@ -198,6 +247,8 @@ def main(argv=None):
     parser.add_argument('--impl', action='append', choices=['java', 'flint', 'go'])
     parser.add_argument('--flint-binary', type=Path)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--record', action='store_true',
+                        help='write benchmarks/spring/census/<app>.json for registration (needs java and go)')
     args = parser.parse_args(argv)
     if spring_bench.app_row(args.app).get('database') != 'postgres':
         raise SystemExit(f'{args.app} does not use PostgreSQL; its statements are not in a server log')
@@ -212,11 +263,16 @@ def main(argv=None):
         results.append(census_one(args.app, impl, args.output, binary))
         print(json.dumps({'impl': impl, 'cases': len(results[-1]['cases']),
                           'startup_statements': results[-1]['startup']['counts']}), flush=True)
-    (args.output / 'census.json').write_text(json.dumps({'schema': 'flint.spring-sql-census/1', 'app': args.app,
-                                                          'results': results}, indent=1) + '\n')
+    (args.output / 'census.json').write_text(json.dumps({
+        'schema': 'flint.spring-sql-census/1', 'app': args.app, 'comparator_sha256': spring_bench.comparator_digest(args.app),
+        'divergences': divergences(results), 'results': results}, indent=1) + '\n')
     text, differing = table(results)
     (args.output / 'table.md').write_text(text)
     print(f'{differing} of {len(results[0]["cases"])} cases differ from Java; see {args.output / "table.md"}')
+    if args.record:
+        if not {'java', 'go'} <= set(impls):
+            raise SystemExit('--record needs the java and go censuses')
+        print('recorded', record(args.app, args.output, results))
     return 0
 
 

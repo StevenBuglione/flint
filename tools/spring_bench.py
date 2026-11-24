@@ -469,6 +469,27 @@ def git(*args):
     return subprocess.run(['git', *args], cwd=ROOT, capture_output=True, text=True, check=True).stdout.strip()
 
 
+CENSUS = ROOT / 'benchmarks' / 'spring' / 'census'
+
+
+def census_problems(name, digest):
+    """ADR-032 section 4: a database app's comparator needs a census of its current source with no per-request
+    divergence from the reference (spring_sql_census.py --record)."""
+    if app_row(name).get('database') != 'postgres':
+        return []
+    path = CENSUS / f'{name}.json'
+    if not path.is_file():
+        return [f'{name}: no SQL census of the comparator (spring_sql_census.py --app {name} --record)']
+    census = json.loads(path.read_text())
+    problems = []
+    if census.get('comparator_sha256') != digest:
+        problems.append(f'{name}: the SQL census is of another comparator source; take it again')
+    if census.get('divergences', {}).get('go') != 0:
+        problems.append(f"{name}: the comparator's SQL differs from the reference's in "
+                        f"{census.get('divergences', {}).get('go')} case(s) (ADR-032)")
+    return problems
+
+
 def register(names):
     """Record each comparator's last commit and source digest. The sources must be committed and clean, so the
     registered commit holds exactly the code that will be measured."""
@@ -487,12 +508,17 @@ def register(names):
         commit = git('log', '-1', '--format=%H', '--', directory)
         if not commit:
             raise SystemExit(f'{name}: the comparator has never been committed')
+        problems = census_problems(name, comparator_digest(name))
+        if problems:
+            raise SystemExit('; '.join(problems))
         previous = rows['comparators'].get(name)
         if previous and previous['sha256'] != comparator_digest(name) and previous.get('measured'):
             raise SystemExit(f'{name}: the registered comparator has been measured; changing it needs an ADR')
         rows['comparators'][name] = {'directory': directory, 'commit': commit, 'sha256': comparator_digest(name),
                                      'go': go_version, 'wire': 'semantic',
                                      'registered': time.strftime('%Y-%m-%d', time.gmtime()), 'measured': False}
+        if (CENSUS / f'{name}.json').is_file() and app_row(name).get('database') == 'postgres':
+            rows['comparators'][name]['census_sha256'] = sha256(CENSUS / f'{name}.json')
         print(f'{name}: registered {commit[:12]} ({rows["comparators"][name]["sha256"][:12]})')
     REGISTRY.write_text(json.dumps(rows, indent=2) + '\n')
 
@@ -507,6 +533,10 @@ def check_registry(names=None):
             problems.append(f'{name}: the Go comparator is not registered (spring_bench.py register {name})')
         elif row['sha256'] != comparator_digest(name):
             problems.append(f'{name}: the Go comparator differs from its registration at {row["commit"][:12]}')
+        elif census_problems(name, row['sha256']):
+            problems += census_problems(name, row['sha256'])
+        elif app_row(name).get('database') == 'postgres' and row.get('census_sha256') != sha256(CENSUS / f'{name}.json'):
+            problems.append(f'{name}: the SQL census changed since registration; register again')
         else:
             try:
                 git('merge-base', '--is-ancestor', row['commit'], 'HEAD')

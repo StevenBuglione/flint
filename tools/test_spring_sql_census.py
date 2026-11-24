@@ -25,6 +25,11 @@ class Assign(unittest.TestCase):
         self.assertEqual(len(groups[0]), 4)
         self.assertEqual(len(groups['between']), 1)
         self.assertEqual(len(groups[1]), 1)
+        failed = census.summarize([line(1, 'ERROR:  insert or update on table "visits" violates foreign key constraint'),
+                                   line(1, 'DETAIL:  Key (pet_id)=(999) is not present in table "pets".'),
+                                   line(1, 'STATEMENT:  INSERT INTO visits (pet_id) VALUES($1)')])
+        self.assertEqual(failed['kinds'], {'failed insert': 1})
+        self.assertEqual(failed['counts']['data_statements'], 1)
         first = census.summarize(groups[0])
         self.assertEqual(first['counts']['transaction_commands'], 2)
         self.assertEqual(first['counts']['data_statements'], 1)
@@ -40,6 +45,33 @@ class Assign(unittest.TestCase):
                                         result('go', {'select': 1})])
         self.assertEqual(differing, 1)
         self.assertIn("go: txn {} vs {'begin': 1, 'commit': 1}", text)
+
+
+
+class Registration(unittest.TestCase):
+    def test_census_required_current_and_clean(self):
+        import json
+        import tempfile
+        from pathlib import Path
+        from unittest import mock
+        import spring_bench
+        with tempfile.TemporaryDirectory() as temporary, mock.patch.object(spring_bench, 'CENSUS', Path(temporary)):
+            self.assertIn('no SQL census', spring_bench.census_problems('petclinic-rest', 'abc')[0])
+            path = Path(temporary) / 'petclinic-rest.json'
+            path.write_text(json.dumps({'comparator_sha256': 'abc', 'divergences': {'go': 0, 'flint': 2}}))
+            self.assertEqual(spring_bench.census_problems('petclinic-rest', 'abc'), [])
+            self.assertIn('another comparator source', spring_bench.census_problems('petclinic-rest', 'def')[0])
+            path.write_text(json.dumps({'comparator_sha256': 'abc', 'divergences': {'go': 3}}))
+            self.assertIn('differs from the reference', spring_bench.census_problems('petclinic-rest', 'abc')[0])
+            self.assertEqual(spring_bench.census_problems('gs-rest-service', 'zzz'), [])
+
+    def test_divergences_list_cases(self):
+        def result(impl, kinds):
+            return {'impl': impl, 'cases': [{'name': 'c', 'method': 'GET', 'path': '/x', 'kinds': kinds}]}
+        found = census.divergences([result('java', {'begin': 1, 'select': 1, 'commit': 1}), result('go', {'select': 1}),
+                                    result('flint', {'begin': 1, 'select': 1, 'commit': 1})])
+        self.assertEqual(found['flint'], [])
+        self.assertEqual(found['go'][0]['transactions'], {'implementation': {}, 'java': {'begin': 1, 'commit': 1}})
 
 
 if __name__ == '__main__':
