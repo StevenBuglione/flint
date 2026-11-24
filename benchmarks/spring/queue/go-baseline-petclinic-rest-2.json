@@ -1,0 +1,39 @@
+{
+  "schema": "flint.measure-queue/1",
+  "window": "claim",
+  "builds": {},
+  "id": "go-baseline-petclinic-rest-2",
+  "created": "2026-11-24",
+  "status": "pending",
+  "priority": 8.1,
+  "estimate_minutes": 45,
+  "requested_by": "owner decision 118b4482 (ADR-033): re-capture the affected Go baselines after the comparator change; the coordinator, 21:37Z",
+  "report_to": "the coordinator",
+  "claim_when": "after transport-pricing (which measures the comparators as they were, at B3's tree)",
+  "summary": "Re-capture the Go baseline of petclinic-rest (HTTP and error workloads, calibration and probe) against the ADR-033 comparator registered at 5aa5637e",
+  "why": "ADR-033 changes the comparator on the gated error path (framing, close-after-400, reason phrase), so its error series must be re-captured; the record holds the app's HTTP and error series together, and the current records are stale anyway under the database protocol and the PostgreSQL fingerprint (VACUUM ANALYZE after readiness). Flint's error paths are then remeasured against these records at the next baseline commit; B2's and B3's error results stay as history.",
+  "harness": "61d4d2624f79",
+  "measure": {
+    "kind": "command",
+    "steps": [
+      {
+        "argv": [
+          "{python}",
+          "{harness}/tools/spring_baseline.py",
+          "capture",
+          "--app",
+          "petclinic-rest",
+          "--impl",
+          "go",
+          "--workloads",
+          "http,error",
+          "--output-root",
+          "{out}/baselines"
+        ],
+        "smoke_args": [
+          "--smoke"
+        ]
+      }
+    ]
+  }
+}
