@@ -681,3 +681,37 @@ unittest
         assert(map.size() == 1 && map.keysAsAny()[0].get!string == "again");
     }
 }
+
+@("Collections.emptyList: one shared instance per element type, empty and unmodifiable, equal to any empty list")
+unittest
+{
+    auto empty = Collections.emptyList!string();
+    assert(empty is Collections.emptyList!string() && cast(Object) empty !is cast(Object) Collections.emptyList!int());
+    assert(empty.isEmpty() && empty.size() == 0 && empty.toArray().length == 0 && !empty.contains("a"));
+    foreach (element; empty)
+        assert(false, "an empty list has no element " ~ element);
+    assert(empty.equals(new ArrayList!string()) && empty.hashCode() == new ArrayList!string().hashCode());
+    bool outOfBounds;
+    try
+        empty.get(0);
+    catch (IndexOutOfBoundsException)
+        outOfBounds = true;
+    assert(outOfBounds);
+    foreach (mutation; 0 .. 3)
+    {
+        bool unsupported;
+        try
+        {
+            if (mutation == 0)
+                empty.add("a");
+            else if (mutation == 1)
+                empty.clear();
+            else
+                empty.remove("a");
+        }
+        catch (UnsupportedOperationException)
+            unsupported = true;
+        assert(unsupported);
+    }
+    assert(empty.size() == 0);
+}

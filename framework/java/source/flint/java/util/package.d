@@ -21,6 +21,7 @@ module flint.java.util;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : TypeKind;
 import flint.engine.aot.name : typeNameOf;
+import flint.engine.aot.objects : statelessInstance;
 import flint.java.lang : ClassCastException, IllegalArgumentException, IndexOutOfBoundsException, Iterable,
     NullPointerException, RuntimeException, UnsupportedOperationException, javaEquals, javaHashCode, valueOf;
 import flint.java.util.stream : Stream;
@@ -991,6 +992,46 @@ abstract class AbstractList(T) : AbstractCollection!T, List!T
     }
 }
 
+/// Java's `Collections.EMPTY_LIST`: no fields, so one instance serves every caller (`emptyList`).
+private final class EmptyList(T) : AbstractList!T
+{
+    override T get(int index)
+    {
+        checkIndex(index, 0);
+        assert(false, "checkIndex throws for an empty list");
+    }
+
+    override int size()
+    {
+        return 0;
+    }
+
+    override T[] toArray()
+    {
+        return null;
+    }
+
+    override bool remove(T o)
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    override void clear()
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    override bool removeIf(bool delegate(T) @safe filter)
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    override void sort(Comparator!T c)
+    {
+        throw new UnsupportedOperationException();
+    }
+}
+
 private final class ImmutableList(T) : AbstractList!T
 {
     private T[] items;
@@ -1922,10 +1963,10 @@ class LinkedHashMap(K, V) : HashMap!(K, V)
 /// Java's `Collections` statics.
 struct Collections
 {
-    /// An empty unmodifiable list.
+    /// An empty unmodifiable list: one shared instance per element type, as Java's `EMPTY_LIST` is one object.
     static List!T emptyList(T)()
     {
-        return new ImmutableList!T(null);
+        return statelessInstance!(EmptyList!T)();
     }
 
     /// An empty unmodifiable set.
