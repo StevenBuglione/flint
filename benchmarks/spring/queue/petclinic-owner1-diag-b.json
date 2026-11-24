@@ -1,0 +1,57 @@
+{
+  "schema": "flint.measure-queue/1",
+  "id": "petclinic-owner1-diag-b",
+  "created": "2026-11-24",
+  "status": "pending",
+  "window": "claim",
+  "priority": 10,
+  "estimate_minutes": 8,
+  "requested_by": "the throughput plan, change 2 (docs/spring/phase1/throughput-plan-astra.md, adopted 860c8a52; coordinator 03:26Z)",
+  "report_to": "the coordinator and data-access",
+  "summary": "Diagnostic, never evidence: petclinic-rest GET /owners/1 along the concurrency ladder 1/8/10/16/64 at B, Flint and Go",
+  "why": "Separates where Flint's ~5 ms per request goes before data-access's wait fix: rps and latency per concurrency, server CPU per request and per thread, PostgreSQL CPU per request. Runs after B's batch (priority 10), so it never displaces a baseline window; claimed because diagnostic numbers need the same quiet. A second entry repeats it at the wait-fix commit with data-access's counters.",
+  "harness": "abebbfb8bf46",
+  "builds": {
+    "tree": {
+      "app": "checkout",
+      "commit": "ca5fbd4a46ed",
+      "flint": true,
+      "linker": "mold",
+      "fork": true
+    }
+  },
+  "measure": {
+    "kind": "command",
+    "steps": [
+      {
+        "in": "tree",
+        "argv": [
+          "{python}",
+          "tools/spring_bench.py",
+          "build",
+          "petclinic-rest",
+          "--impl",
+          "flint"
+        ]
+      },
+      {
+        "in": "tree",
+        "argv": [
+          "{python}",
+          "{harness}/tools/spring_diag.py",
+          "--app",
+          "petclinic-rest",
+          "--flint-binary",
+          "build/spring/petclinic-rest-flint",
+          "--oha",
+          "{oha}",
+          "--output",
+          "{out}/diag.json"
+        ],
+        "smoke_args": [
+          "--smoke"
+        ]
+      }
+    ]
+  }
+}
