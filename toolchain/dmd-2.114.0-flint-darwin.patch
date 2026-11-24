@@ -105,10 +105,10 @@ index ae18049..d1d04fa 100644
      char[4200] cache;
      snprintf(cache.ptr, cache.length, "%s/link-%016llx.txt", dir.ptr, h);
 diff --git a/dmd/flintserver.d b/dmd/flintserver.d
-index 105cb5b..a929c29 100644
+index a0239a5..7683c9b 100644
 --- a/dmd/flintserver.d
 +++ b/dmd/flintserver.d
-@@ -88,11 +88,43 @@ extern (C) private
+@@ -93,11 +93,43 @@ extern (C) private
  {
      int flock(int fd, int operation);
      long syscall(long number, ...);
@@ -153,7 +153,7 @@ index 105cb5b..a929c29 100644
  private enum LOCK_EX = 2, LOCK_NB = 4;
  private enum SYS_pidfd_open = 434;
  private enum uint magic = 0x464C4E54; // "FLNT"
-@@ -158,18 +190,30 @@ private bool fileExists(const(char)* path)
+@@ -163,18 +195,30 @@ private bool fileExists(const(char)* path)
  private const(char)* selfExe()
  {
      __gshared char[4096] buf;
@@ -192,7 +192,7 @@ index 105cb5b..a929c29 100644
          return st.st_mtim;
      else
      {
-@@ -188,7 +232,7 @@ private const(char)* socketDirectory()
+@@ -193,7 +237,7 @@ private const(char)* socketDirectory()
          snprintf(dir.ptr, dir.length, "%s/flint-dmd", runtime);
      else
          snprintf(dir.ptr, dir.length, "/tmp/flint-dmd-%u", cast(uint) getuid());
@@ -201,7 +201,7 @@ index 105cb5b..a929c29 100644
      return dir.ptr;
  }
  private enum octal700 = 448;
-@@ -496,7 +540,10 @@ private __gshared int traceFd = -2;
+@@ -578,7 +622,10 @@ private __gshared int traceFd = -2;
  /// Append a timestamped event for this worker when FLINT_DMD_SERVER_TRACE names a file.
  private void traceMark(const(char)* what)
  {

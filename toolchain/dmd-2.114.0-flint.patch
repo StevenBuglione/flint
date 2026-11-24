@@ -748,7 +748,7 @@ diff -ruN a/dmd/flintlink.d b/dmd/flintlink.d
 diff -ruN a/dmd/flintserver.d b/dmd/flintserver.d
 --- a/dmd/flintserver.d	1969-12-31 19:00:00.000000000 -0500
 +++ b/dmd/flintserver.d	2026-11-21 17:52:11.090753585 -0500
-@@ -0,0 +1,1036 @@
+@@ -0,0 +1,1115 @@
 +/**
 + * Resident toolchain compile server ("zygote") for the DMD driver.
 + *
@@ -769,8 +769,10 @@ diff -ruN a/dmd/flintserver.d b/dmd/flintserver.d
 + * server.
 + *
 + * The client side runs at the start of the normal `dmd` entry point.  When
-+ * no compatible server is running it starts one in the background and
-+ * compiles in-process, so the first build never waits for the server.
++ * no compatible server is running it starts one and waits for it to listen:
++ * a served compile's objects are not a stock compile's (the preloaded
++ * analysis decides some instances and ModuleInfo imports), so the compiles of
++ * one build must all be served, or all stock (FLINT_DMD_SERVER=0).
 + *
 + * A child refuses (exit status `zygoteIncompatible`) before producing any
 + * output whenever the request could observe the preloaded state:
@@ -781,7 +783,10 @@ diff -ruN a/dmd/flintserver.d b/dmd/flintserver.d
 + * The client then compiles in-process with the stock driver.
 + *
 + * Environment:
-+ *   FLINT_DMD_SERVER=0         disable the client entirely
++ *   FLINT_DMD_SERVER=0         disable the client entirely: stock compiles
++ *   FLINT_DMD_SERVER=private   serve this compile from a private server started for it (a served compile's
++ *                              objects without a resident server)
++ *   FLINT_DMD_SERVER_TRACE=<file>  server and client events (client-served, client-local <reason>)
 + *   FLINT_DMD_SERVER_IDLE=<s>  idle seconds before a server exits (default 1800)
 + *   FLINT_DMD_SERVER_PRELUDE=<file>  platform prelude (see above)
 + *
@@ -983,8 +988,14 @@ diff -ruN a/dmd/flintserver.d b/dmd/flintserver.d
 +bool tryCompileServer(const(char)[][] dargs, out int status)
 +{
 +    const env = getenv("FLINT_DMD_SERVER");
++    // FLINT_DMD_SERVER=0: the stock driver, without any server.
 +    if (env && env[0] == '0')
 +        return false;
++    // FLINT_DMD_SERVER=private: no resident server, but the compile runs in a private server that serves this one
++    // request, so it writes exactly what a served compile writes (the preload's analysis changes the objects:
++    // toolchain/README.md, "Served compiles and stock compiles").
++    const oneShot = env && strcmp(env, "private") == 0;
++    import core.sys.posix.stdlib : mkdtemp, setenv;
 +    foreach (a; dargs)
 +        if (a.length > 13 && a[0 .. 13] == "-fork-server=")
 +            return false;
@@ -1063,7 +1074,10 @@ diff -ruN a/dmd/flintserver.d b/dmd/flintserver.d
 +    {
 +        const a = args[i];
 +        if (forcesLocal(a))
++        {
++            traceMark("client-local forced");
 +            return false;
++        }
 +        if (a[0] != '-')
 +        {
 +            const n = strlen(a);
@@ -1071,7 +1085,10 @@ diff -ruN a/dmd/flintserver.d b/dmd/flintserver.d
 +                haveSource = true;
 +            else if ((n > 2 && strcmp(a + n - 2, ".c") == 0) || (n > 2 && strcmp(a + n - 2, ".i") == 0)
 +                || (n > 2 && strcmp(a + n - 2, ".h") == 0))
++            {
++                traceMark("client-local c-source");
 +                return false;
++            }
 +            continue;
 +        }
 +        if (excludedFromKey(a))
@@ -1082,24 +1099,62 @@ diff -ruN a/dmd/flintserver.d b/dmd/flintserver.d
 +    if (!haveSource)
 +        return false;
 +
-+    const dir = socketDirectory();
++    char[64] privateDir;
++    const(char)* dir;
++    if (oneShot)
++    {
++        // A short path (sun_path), removed with what the server leaves in it once the request is answered.
++        strcpy(privateDir.ptr, "/tmp/fdmd-XXXXXX");
++        if (!mkdtemp(privateDir.ptr))
++            return false;
++        dir = privateDir.ptr;
++    }
++    else
++        dir = socketDirectory();
 +    char[1100] sock;
 +    snprintf(sock.ptr, sock.length, "%s/%016llx.sock", dir, h);
++    scope (exit)
++        if (oneShot)
++        {
++            char[1200] path;
++            foreach (suffix; ["", ".lock", ".log", ".failed"])
++            {
++                snprintf(path.ptr, path.length, "%s%s", sock.ptr, suffix.ptr);
++                unlink(path.ptr);
++            }
++            rmdir(dir);
++        }
 +
-+    const fd = socket(AF_UNIX, SOCK_STREAM, 0);
-+    if (fd < 0)
-+        return false;
-+    scope (exit) close(fd);
 +    sockaddr_un addr;
 +    addr.sun_family = AF_UNIX;
 +    if (strlen(sock.ptr) >= addr.sun_path.length)
++    {
++        traceMark("client-local socket-path");
 +        return false;
++    }
 +    strcpy(cast(char*) addr.sun_path.ptr, sock.ptr);
++    int fd = socket(AF_UNIX, SOCK_STREAM, 0);
++    if (fd < 0)
++        return false;
++    scope (exit) close(fd);
 +    if (connect(fd, cast(sockaddr*) &addr, addr.sizeof) != 0)
 +    {
-+        if (!recentlyFailed(sock.ptr))
-+            spawnServer(exe, sock.ptr, keyArgs, usePrelude);
-+        return false;
++        if (recentlyFailed(sock.ptr))
++        {
++            traceMark("client-local no-server");
++            return false;
++        }
++        if (oneShot)
++            setenv("FLINT_DMD_SERVER_IDLE", "1", 1); // it serves this request only
++        spawnServer(exe, sock.ptr, keyArgs, usePrelude);
++        // Wait for it: compiling here instead would write the stock driver's objects, not a served compile's.
++        close(fd);
++        fd = connectWhenReady(addr, sock.ptr);
++        if (fd < 0)
++        {
++            traceMark("client-local no-server");
++            return false;
++        }
 +    }
 +
 +    // Request: header, cwd, args, environment, all NUL separated.
@@ -1151,9 +1206,36 @@ diff -ruN a/dmd/flintserver.d b/dmd/flintserver.d
 +    if (!readAll(fd, &result, result.sizeof))
 +        return false;
 +    if (result == zygoteIncompatible)
++    {
++        traceMark("client-local refused");
 +        return false;
++    }
++    traceMark("client-served");
 +    status = result;
 +    return true;
++}
++
++/**
++ * Connects to the server just started for `sock`, once it listens: it preloads first (about a second for druntime and
++ * Phobos, more with a platform prelude). Returns the socket, or -1 if the server failed to start or did not listen
++ * within two minutes.
++ */
++private int connectWhenReady(ref sockaddr_un addr, const(char)* sock)
++{
++    import core.sys.posix.unistd : usleep;
++    foreach (attempt; 0 .. 12_000)
++    {
++        const fd = socket(AF_UNIX, SOCK_STREAM, 0);
++        if (fd < 0)
++            return -1;
++        if (connect(fd, cast(sockaddr*) &addr, addr.sizeof) == 0)
++            return fd;
++        close(fd);
++        if (recentlyFailed(sock))
++            return -1;
++        usleep(10_000);
++    }
++    return -1;
 +}
 +
 +/// Reads a whole file into malloc'd memory (NUL terminated), or returns null.
@@ -1441,10 +1523,7 @@ diff -ruN a/dmd/flintserver.d b/dmd/flintserver.d
 +    strcpy(cast(char*) addr.sun_path.ptr, serverSocketPath);
 +    unlink(serverSocketPath);
 +    if (listen_ < 0 || bind(listen_, cast(sockaddr*) &addr, addr.sizeof) != 0 || listen(listen_, 512) != 0)
-+    {
-+        fprintf(stderr, "flint-dmd-server: cannot listen on %s\n", serverSocketPath);
-+        _exit(1);
-+    }
++        preludeFailed("cannot listen on", serverSocketPath); // clients waiting for it compile locally
 +    chmod(serverSocketPath, octal600);
 +    fflush(stdout);
 +    fflush(stderr);

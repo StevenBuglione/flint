@@ -34,7 +34,7 @@ The server holds druntime and Phobos, plus the platform modules a build names in
 - a root module belongs to a preloaded package,
 - the request lacks one of the platform prelude's import paths or version identifiers.
 
-**Platform prelude (ADR-030 section 5).** `flint build` writes `.flint/generated/platform/dmd-server-prelude.txt` and passes it as `FLINT_DMD_SERVER_PRELUDE`: `-I<dir>` and `-version=<id>` lines, the build's DFLAGS, then the platform's module names. The server applies the paths and versions, then analyses those modules after the toolchain's, so an edit build analyses only the project's own modules. Windows' worker pool does not read it yet. The file's content and `DFLAGS` are part of the server key, so a platform change starts a new server. A request may name the prelude's import paths by any spelling that resolves to the same directory, as DUB's relative paths do. These rules keep a served compile's objects byte-identical to an in-process compile's:
+**Platform prelude (ADR-030 section 5).** `flint build` writes `.flint/generated/platform/dmd-server-prelude.txt` and passes it as `FLINT_DMD_SERVER_PRELUDE`: `-I<dir>` and `-version=<id>` lines, the build's DFLAGS, then the platform's module names. The server applies the paths and versions, then analyses those modules after the toolchain's, so an edit build analyses only the project's own modules. Windows' worker pool does not read it yet. The file's content and `DFLAGS` are part of the server key, so a platform change starts a new server. A request may name the prelude's import paths by any spelling that resolves to the same directory, as DUB's relative paths do. These rules keep a served compile from leaving out what a stock compile emits (what can still differ, and why it does not matter, is in "Served compiles and stock compiles"):
 
 - `-allinst` compiles (packages DUB splits into chunks, and Flint AOT's generated platform library) use the toolchain-only server. Under `-allinst` an import makes the root module emit every instance the imported module instantiates, and a preloaded module's instances would escape that.
 - DMD skips an instance that a non-root module also instantiates, because that module's object emits it. The server ignores such instantiations by preloaded modules the request does not import, directly or not, because those modules would not have been loaded in-process.
@@ -72,14 +72,45 @@ The caller never uses the server for `-v`, `-deps`, `-makedeps`, `-X`, `-H`, `-D
 
 **Smaller overheads.** The compiler platform probe is cached by the compiler executable's identity. Targets are hard-linked rather than copied out of the cache. DUB exits without druntime teardown once its output is complete.
 
+## Served compiles and stock compiles
+
+A served compile's objects are not always a stock DMD compile's. The server analyses the toolchain and platform
+modules once, before any request. Some of that analysis has effects an in-process compile only gets when its own
+code needs them:
+- semantic3 work queued for TypeInfo, whose RTInfo the request then emits;
+- `needmoduleinfo` set by template instances with static constructors, which adds modules to the ModuleInfo's
+  imports and so can add modules to a static link;
+- speculative instances, which decide whether the request emits an instance.
+
+So prelude builds match the server, not stock DMD. Two rules keep that from mattering:
+- **One build is all served or all stock.** When no server runs yet, the client starts one and waits for it, rather
+  than compiling the first compiles in-process. Before this, one static link once mixed both and linked a different
+  set of modules. `FLINT_DMD_SERVER=0` builds are stock throughout. A request the server refuses compiles stock in
+  either case, which is the same for that request every time.
+- **Unserved still means served objects.** `FLINT_DMD_SERVER=private` serves one compile from a private server
+  started for it, so equivalence checks and reproducibility runs get a served compile's bytes without a resident
+  server.
+
+The gate is `CompileServerPreludeTests.test_a_private_compile_writes_the_served_object`: served twice and private once
+must be byte-identical, while a stock compile of the same fixture differs. A build receipt can assert that every
+compile was served from the client's trace events (no `client-local`).
+
+`toolchain/served-acceptance.py` runs each Phase 1 application's acceptance suite on a served dev build with the
+platform prelude and on a stock build (`FLINT_DMD_SERVER=0`, no platform cache). Any behaviour difference from
+the extra ModuleInfo imports or static constructors fails there. Release builds use LDC and have no compile server.
+
+Making served compiles equal stock ones instead, by replaying the preload's side effects per request, is parked:
+the work in progress and its four open cases are in `coordination/notes/dmd-arm64-replay-status.md`.
+
 ## Controls
 
 | Variable | Effect |
 | --- | --- |
-| `FLINT_DMD_SERVER=0` | Never use or start the compile server |
+| `FLINT_DMD_SERVER=0` | Never use or start the compile server: stock compiles |
+| `FLINT_DMD_SERVER=private` | Serve the compile from a private server started for it, without a resident server: a served compile's objects |
 | `FLINT_DMD_SERVER_IDLE=<seconds>` | Server idle lifetime (default 1800) |
 | `FLINT_DMD_SERVER_POOL=<n>` | Pre-forked workers per server |
-| `FLINT_DMD_SERVER_TRACE=<file>` | Append worker timing events (`compiled` or `refused` per request) |
+| `FLINT_DMD_SERVER_TRACE=<file>` | Append worker timing events (`compiled` or `refused` per request) and the client's (`client-served`, or `client-local` with the reason: `refused`, `no-server`, `forced`, `c-source`, `socket-path`) |
 | `FLINT_DMD_SERVER_PRELUDE=<file>` | Platform prelude: import paths, versions and modules the server also preloads |
 | `FLINT_DMD_DIRECT_LINK=0` | Always link through `cc` |
 | `FLINT_LINK_THREADS=<n>` | mold thread count (default 4) |

@@ -286,6 +286,17 @@ def layer_registration():
         require(path not in registered,f'FLINT-E0535: {path} is registered now; remove it from policy/unregistered-packages.json')
     return {'packages':len(found),'unregistered_allowed':len(allowed)}
 
+def compile_server_consistency():
+    """The Flint DMD fork's compile server (toolchain/README.md, "Served compiles and stock compiles"): a private
+    compile writes exactly the served object, a build's first compile waits for the server instead of compiling stock,
+    and the client traces every compile it does not serve. The tests skip themselves without the installed fork."""
+    cases=['tests.test_flint_toolchain.CompileServerPreludeTests.'+name for name in
+           ['test_a_private_compile_writes_the_served_object','test_the_first_compile_waits_for_the_server',
+            'test_the_client_traces_a_refused_compile']]
+    done=subprocess.run([sys.executable,'-m','unittest',*cases],cwd=ROOT,capture_output=True,text=True)
+    require(done.returncode==0,'compile server consistency (dmd-arm64): '+done.stderr[-1500:])
+    return 'skipped (no Flint DMD fork installed)' if 'skipped=' in done.stderr else 'passed'
+
 def structural(selected):
     visited=set();active=set()
     def visit(n):
@@ -543,6 +554,7 @@ def main():
         require(not failures,'api: '+' | '.join(failures))
         return
     result=structural(selected)
+    result['compile_server']=compile_server_consistency()
     if a.repo:result['repo']=a.repo
     _,deferred=edge_violations(ROOT)
     if deferred:result['pending_repo_edges']=sorted(message for _,_,message in deferred)

@@ -310,7 +310,9 @@ class CompileServerPreludeTests(unittest.TestCase):
         before = self.trace.read_text().count('\n') if self.trace.exists() else 0
         result = self.compile(*args, env=env)
         events = self.trace.read_text().splitlines()[before:] if self.trace.exists() else []
-        verdicts = [line.split()[-1] for line in events if line.split()[-1] in ('compiled', 'refused')]
+        # The server's verdict; the client's own events (client-served, client-local <reason>) are not verdicts.
+        verdicts = [line.split()[-1] for line in events
+                    if line.split()[-1] in ('compiled', 'refused') and not line.split()[2].startswith('client-')]
         self.assertEqual(len(verdicts), 1, events)
         return result, verdicts[0]
 
@@ -361,6 +363,58 @@ class CompileServerPreludeTests(unittest.TestCase):
         link.symlink_to(toolchain, target_is_directory=True)
         self.dmd = link / self.dmd.resolve().relative_to(toolchain)
         self.assert_served_object_is_the_in_process_object()
+
+    # A template whose instances have a static constructor, instantiated only by a preloaded module the app never
+    # imports: the preload sets plat.reg's needmoduleinfo, so a served app object lists plat.reg among its ModuleInfo's
+    # imports, which a stock compile (which never analyses plat.regs) does not.
+    REG = {'plat/reg.d': 'module plat.reg;\ntemplate Register(T)\n{\n    shared static this() {}\n    enum Register = true;\n}\n',
+           'plat/regs.d': 'module plat.regs;\nimport plat.reg;\nenum registered = Register!int;\n'}
+    REG_APP = 'module regapp;\nimport plat.reg;\nint main() { return 0; }\n'
+
+    def write_reg_fixture(self):
+        for name, text in self.REG.items():
+            (self.temp / 'lib' / name).write_text(text, encoding='utf-8')
+        self.write_prelude('plat.regs\n')
+        (self.temp / 'regapp.d').write_text(self.REG_APP, encoding='utf-8')
+        return ['-I' + str(self.temp / 'lib'), '-version=PlatformOn', '-c', 'regapp.d']
+
+    def test_a_private_compile_writes_the_served_object(self):
+        # The gate for served and unserved builds (toolchain/README.md, "Served compiles and stock compiles"): served
+        # twice and FLINT_DMD_SERVER=private once, byte for byte. The stock compile differs: that is why there is one.
+        common = self.write_reg_fixture()
+        objects = []
+        for name in ('served1.o', 'served2.o'):
+            result, verdict = self.served(*common, '-of' + name)
+            self.assertEqual((result.returncode, verdict), (0, 'compiled'), result.stderr)
+            objects.append((self.temp / name).read_bytes())
+        private = self.compile(*common, '-ofprivate.o', env=dict(self.env, FLINT_DMD_SERVER='private'))
+        self.assertEqual(private.returncode, 0, private.stderr)
+        self.assertEqual(objects[0], objects[1])
+        self.assertEqual(objects[0], (self.temp / 'private.o').read_bytes())
+        stock = self.compile(*common, '-ofstock.o', env=dict(self.env, FLINT_DMD_SERVER='0'))
+        self.assertEqual(stock.returncode, 0, stock.stderr)
+        self.assertNotEqual(objects[0], (self.temp / 'stock.o').read_bytes())
+        self.assertFalse(list(Path('/tmp').glob('fdmd-*' + '/' + '*.sock')), 'a private server left its socket')
+
+    def test_the_first_compile_waits_for_the_server(self):
+        # A build's first compile once ran in-process while the server started, so one build mixed stock and served
+        # objects (a different set of linked modules in a static link). It waits for the server now.
+        common = self.write_reg_fixture()
+        first = self.compile(*common, '-offirst.o')
+        self.assertEqual(first.returncode, 0, first.stderr)
+        events = self.trace.read_text().splitlines()
+        self.assertIn('client-served', [' '.join(line.split()[2:]) for line in events], events)
+        result, verdict = self.served(*common, '-ofsecond.o')
+        self.assertEqual((result.returncode, verdict), (0, 'compiled'), result.stderr)
+        self.assertEqual((self.temp / 'first.o').read_bytes(), (self.temp / 'second.o').read_bytes())
+
+    def test_the_client_traces_a_refused_compile(self):
+        # A build receipt can assert that every compile was served: the client writes client-served, or
+        # client-local with the reason, to FLINT_DMD_SERVER_TRACE.
+        result, verdict = self.served('-Ilib', '-c', 'app.d')
+        self.assertEqual(verdict, 'refused')
+        events = [' '.join(line.split()[2:]) for line in self.trace.read_text().splitlines()]
+        self.assertIn('client-local refused', events)
 
     def test_a_request_without_the_platform_paths_or_versions_compiles_in_process(self):
         # A relative spelling of the platform path is the same path (DUB passes them relative to the package).
