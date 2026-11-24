@@ -926,10 +926,10 @@ def measure_command(entry, built, outdir, smoke):
             # the client-side signal of 4ac873d8): served, with the refusals recorded rather than failing the part.
             policy = entry.get('served_compiles', 'strict')
             served['policy'] = policy
-            if (served['refused'] and policy != 'report') or not served['compiled']:
+            problem = served_problem(served, policy)
+            if problem:
                 receipts.append(dict(receipt, measured=False))
-                raise SystemExit(f"step {index}: the compile server compiled {served['compiled']} and refused "
-                                 f"{served['refused']} requests; builds must be served (see {trace})")
+                raise SystemExit(f'step {index}: {problem}; builds must be served (see {trace})')
         if completed.returncode and step.get('may_fail'):
             # A failed verdict is a result only if the step wrote its output and that output records no error: a step
             # that refused or crashed measured nothing.
@@ -997,7 +997,8 @@ def scored_server_trace(path, logs):
     time, converted with the current offset."""
     primes = [p.stat().st_mtime for p in Path(logs).glob('*-prime-*.log')] if Path(logs).is_dir() else []
     cutoff = (max(primes) - (time.time() - time.monotonic())) if primes else None
-    counts = {'compiled': 0, 'refused': 0}
+    counts = {'compiled': 0, 'refused': 0, 'client_served': 0, 'client_local': 0}
+    local_reasons = {}
     # Each build log is written to its end, so a request belongs to the first log that ends after it: that names the
     # build (flavour, state, trial) a refused request fell in, the finest identity B2's toolchain gives.
     offset = time.time() - time.monotonic()
@@ -1006,14 +1007,42 @@ def scored_server_trace(path, logs):
     if Path(path).is_file():
         for line in Path(path).read_text(errors='replace').splitlines():
             parts = line.split()
-            if len(parts) != 3 or parts[2] not in counts:
+            if len(parts) < 3:
+                continue
+            # 4ac873d8's client events: 'client-served', or 'client-local <reason>' for a compile it ran itself.
+            event = {'client-served': 'client_served', 'client-local': 'client_local'}.get(parts[2], parts[2])
+            if event not in counts:
                 continue
             if cutoff is None or float(parts[0]) > cutoff:
-                counts[parts[2]] += 1
+                counts[event] += 1
+                if event == 'client_local':
+                    reason = parts[3] if len(parts) > 3 else 'unknown'
+                    local_reasons[reason] = local_reasons.get(reason, 0) + 1
                 if parts[2] == 'refused':
                     build = next((name for end, name in ends if end >= float(parts[0])), 'after the last build log')
                     refused_in[build] = refused_in.get(build, 0) + 1
-    return dict(counts, after_priming=cutoff is not None, refused_in=refused_in)
+    return dict(counts, after_priming=cutoff is not None, refused_in=refused_in, client_local_reasons=local_reasons)
+
+
+# A compile the client always runs itself, by design and deterministically (dmd-arm64, 4ac873d8).
+CLIENT_LOCAL_EXPECTED = {'c-source', 'forced'}
+
+
+def served_problem(served, policy):
+    """Why a builds step's compiles do not count as served, or None. With 4ac873d8's client trace the client's verdict
+    decides: every compile client-served, except the deterministic c-source and forced kinds (m7, 13:46Z); the
+    server's own 'refused' events are then diagnostic. Without it (B2's toolchain), the server's counts decide, with
+    'report' recording refusals instead of failing."""
+    if served.get('client_served') or served.get('client_local'):
+        unexpected = {r: n for r, n in served.get('client_local_reasons', {}).items() if r not in CLIENT_LOCAL_EXPECTED}
+        if unexpected:
+            return f'compiles run in-process by the client: {unexpected}'
+        return None if served['client_served'] else 'no compile was client-served'
+    if not served.get('compiled'):
+        return 'the compile server compiled nothing'
+    if served.get('refused') and policy != 'report':
+        return f"the compile server refused {served['refused']} requests"
+    return None
 
 
 def server_trace(path):

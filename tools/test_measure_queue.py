@@ -260,12 +260,29 @@ class ServedCompiles(unittest.TestCase):
             trace.write_text(f'{mono_now - 20:.6f} 1 refused\n{mono_now - 15:.6f} 2 compiled\n'
                              f'{mono_now - 5:.6f} 3 compiled\n{mono_now - 4:.6f} 4 compiled\n')
             self.assertEqual(measure_queue.scored_server_trace(trace, logs),
-                             {'compiled': 2, 'refused': 0, 'after_priming': True, 'refused_in': {}})
+                             {'compiled': 2, 'refused': 0, 'client_served': 0, 'client_local': 0, 'after_priming': True,
+                              'refused_in': {}, 'client_local_reasons': {}})
             trial = logs / 'app-flint-cached-cold-0.log'
             trial.write_text('built')
             trace.write_text(trace.read_text() + f'{mono_now - 3:.6f} 5 refused\n')
             out = measure_queue.scored_server_trace(trace, logs)
             self.assertEqual((out['refused'], out['refused_in']), (1, {'app-flint-cached-cold-0.log': 1}))
+
+    def test_client_verdict_decides_when_present(self):
+        problem = measure_queue.served_problem
+        self.assertIsNone(problem({'compiled': 100, 'refused': 4, 'client_served': 120, 'client_local': 1,
+                                   'client_local_reasons': {'c-source': 1}}, 'strict'))
+        self.assertIn('in-process', problem({'client_served': 120, 'client_local': 2,
+                                             'client_local_reasons': {'refused': 1, 'c-source': 1}}, 'strict'))
+        self.assertIsNone(problem({'compiled': 100, 'refused': 4}, 'report'))
+        self.assertIn('refused 4', problem({'compiled': 100, 'refused': 4}, 'strict'))
+        self.assertIn('compiled nothing', problem({'compiled': 0, 'refused': 0}, 'report'))
+        with tempfile.TemporaryDirectory() as temporary:
+            trace = Path(temporary) / 'trace.log'
+            trace.write_text('1.0 9 client-served\n1.1 9 client-local c-source\n1.2 9 client-local refused\n1.3 7 refused\n')
+            out = measure_queue.scored_server_trace(trace, Path(temporary) / 'none')
+            self.assertEqual((out['client_served'], out['client_local'], out['refused']), (1, 2, 1))
+            self.assertEqual(out['client_local_reasons'], {'c-source': 1, 'refused': 1})
 
     def test_only_this_trees_servers_stop(self):
         with tempfile.TemporaryDirectory() as temporary:
