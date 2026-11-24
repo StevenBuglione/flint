@@ -1,0 +1,10 @@
+2026/11/24 05:50:03.360372 INFO petclinic-rest listening on [::]:56865 (context path /petclinic) after 13ms
+2026/11/24 05:50:04.703593 ERROR unexpected error at GET /petclinic/actuator/info: NoResourceFoundException
+2026/11/24 05:50:05.203555 ERROR unexpected error at GET /petclinic/api/owners/abc: MethodArgumentTypeMismatchException
+2026/11/24 05:50:06.634702 ERROR unexpected error at GET /petclinic/api/v2/pets?size=0: ConstraintViolationException
+2026/11/24 05:50:07.132771 ERROR unexpected error at POST /petclinic/api/owners: HttpMessageNotReadableException
+2026/11/24 05:50:07.194672 ERROR unexpected error at POST /petclinic/api/owners: HttpMediaTypeNotSupportedException
+2026/11/24 05:50:07.877451 ERROR unexpected error at POST /petclinic/api/owners/11/pets: NullPointerException
+2026/11/24 05:50:10.434418 ERROR unexpected error at POST /petclinic/api/users: IllegalArgumentException
+2026/11/24 05:50:10.808594 ERROR unexpected error at GET /petclinic/api/nothing-here: NoResourceFoundException
+2026/11/24 05:50:10.870698 ERROR unexpected error at PATCH /petclinic/api/owners/1: HttpRequestMethodNotSupportedException

@@ -22,12 +22,13 @@
     },
     "petclinic-rest": {
       "directory": "benchmarks/spring/go/petclinic-rest",
-      "commit": "d5fae3547a88bbc228971cc06ff572fdc53f28ea",
-      "sha256": "cd28d977c0b60b871fc6ae79618686338659818f336d8b1a1ef4748303a728da",
+      "commit": "ddd21875ca5d5657068d4999e34775a8134520b5",
+      "sha256": "c279137895e51a7e0961bab37030e5780a70213bdd4ee69f05262eef33d7d962",
       "go": "1.27.4",
       "wire": "semantic",
-      "registered": "2026-11-23",
-      "measured": false
+      "registered": "2026-11-24",
+      "measured": false,
+      "census_sha256": "d03c394b4ce8bdf1061b00a7adeba262127a131c4f98f63357e74b4d0898e9d6"
     }
   }
 }

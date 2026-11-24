@@ -146,7 +146,10 @@ def census_one(app, impl, output, binary=None):
     original = springsuite.exchange
 
     def exchange(origin, case, timeout=10):
-        time.sleep(0.03)
+        # Every implementation waits the same 1 s after readiness before its first case, so start-up speed does
+        # not decide whether its pool's idle validation runs (HikariCP validates a connection unused for more
+        # than 500 ms; a slow start-up idles the pool past that, a fast one does not).
+        time.sleep(1.0 if not marks else 0.03)
         started = time.time()
         try:
             return original(origin, case, timeout)
