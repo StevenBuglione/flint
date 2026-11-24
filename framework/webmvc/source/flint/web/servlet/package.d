@@ -401,6 +401,18 @@ class NoHandlerFoundException : ServletException, ErrorResponse
     }
 }
 
+/++
+Flint: a handler whose handling, through a given adapter, can only end in an exception it can build up front.
+`DispatcherServlet.doDispatch` takes that exception as the dispatch exception directly, exactly as its catch would
+receive it from `HandlerAdapter.handle` (post-handle interceptors skipped, the same resolvers and error page), and
+skips the unwinding. `null` means "handle as usual", for any other adapter or a subclass that may handle differently.
++/
+package(flint.web) interface ImmediateFailure
+{
+    /// The exception `adapter.handle` would throw for `request`, or `null` to handle the request normally.
+    Exception immediateFailure(Object adapter, HttpServletRequest request);
+}
+
 /// The strategies `DispatcherServlet` uses, in Spring's order.
 struct DispatcherStrategies
 {
@@ -623,8 +635,15 @@ class DispatcherServlet : HttpServlet, FastDispatch
                 auto ha = getHandlerAdapter(mappedHandler.getHandler());
                 if (!mappedHandler.applyPreHandle(request, response))
                     return;
-                mv = ha.handle(request, response, mappedHandler.getHandler());
-                mappedHandler.applyPostHandle(request, response, mv);
+                // Flint: a handler that would only throw hands the exception over directly, as the catch below
+                // would receive it, without unwinding the stack (17.5k instructions per 404).
+                auto immediate = cast(ImmediateFailure) mappedHandler.getHandler();
+                dispatchException = immediate !is null ? immediate.immediateFailure(cast(Object) ha, request) : null;
+                if (dispatchException is null)
+                {
+                    mv = ha.handle(request, response, mappedHandler.getHandler());
+                    mappedHandler.applyPostHandle(request, response, mv);
+                }
             }
             catch (Exception ex)
                 dispatchException = ex;

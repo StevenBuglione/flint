@@ -18,7 +18,7 @@ import flint.http : HttpMethod, HttpStatus, HttpStatusCode, ProblemDetail;
 import flint.jakarta.servlet : ServletException;
 import flint.jakarta.servlet.http : HttpServletRequest, HttpServletResponse;
 import flint.web : ErrorResponse, skipBacktrace;
-import flint.web.servlet : HandlerAdapter, HandlerMapping, ModelAndView;
+import flint.web.servlet : HandlerAdapter, HandlerMapping, ImmediateFailure, ModelAndView;
 import flint.web.servlet.handler : AbstractHandlerMapping, lookupPath, parsedLookupPath;
 import flint.web.util.pattern : PathPattern, PathPatternParser;
 
@@ -75,15 +75,30 @@ class NoResourceFoundException : ServletException, ErrorResponse
 }
 
 /// `ResourceHttpRequestHandler`: serves static resources; none are configured, so every path is a 404.
-class ResourceHttpRequestHandler : HttpRequestHandler
+class ResourceHttpRequestHandler : HttpRequestHandler, ImmediateFailure
 {
     void handleRequest(HttpServletRequest request, HttpServletResponse response)
+    {
+        throw notFound(request);
+    }
+
+    /// Flint: through Spring's `HttpRequestHandlerAdapter`, this handler's 404 is known before it runs, so the
+    /// dispatcher takes it without a throw. A subclass or another adapter keeps the usual path.
+    Exception immediateFailure(Object adapter, HttpServletRequest request)
+    {
+        if (typeid(this) !is typeid(ResourceHttpRequestHandler) || adapter is null
+                || typeid(adapter) !is typeid(HttpRequestHandlerAdapter))
+            return null;
+        return notFound(request);
+    }
+
+    private NoResourceFoundException notFound(HttpServletRequest request)
     {
         auto pathWithin = request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
         string path = pathWithin.isNull() ? lookupPath(request) : pathWithin.get!string;
         while (path.length != 0 && path[0] == '/')
             path = path[1 .. $];
-        throw new NoResourceFoundException(HttpMethod.valueOf(request.getMethod()), request.getRequestURI(), path);
+        return new NoResourceFoundException(HttpMethod.valueOf(request.getMethod()), request.getRequestURI(), path);
     }
 }
 

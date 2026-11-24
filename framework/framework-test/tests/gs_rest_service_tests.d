@@ -16,6 +16,8 @@ import flint.http : MediaType;
 import flint.test.web.servlet.request : MockMvcRequestBuilders;
 import flint.test.web.servlet.result : MockMvcResultHandlers, MockMvcResultMatchers;
 import flint.test.web.servlet.setup : MockMvcBuilders;
+static import flint.web.servlet;
+static import flint.web.servlet.resource;
 
 @safe:
 
@@ -113,4 +115,79 @@ unittest
     catch (AssertionError e)
         message = e.getMessage();
     assert(message == `JSON path "$.content" expected:<Hi> but was:<Hello, World!>`, message);
+}
+
+/// Records the interceptor callbacks one request makes.
+private final class RecordingInterceptor : flint.web.servlet.HandlerInterceptor
+{
+    import flint.jakarta.servlet.http : HttpServletRequest, HttpServletResponse;
+    import flint.web.servlet : ModelAndView;
+
+    int pre, post, after;
+    Object handler;
+    Exception completedWith;
+
+    override bool preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
+    {
+        ++pre;
+        this.handler = handler;
+        return true;
+    }
+
+    override void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler,
+            ModelAndView modelAndView)
+    {
+        ++post;
+    }
+
+    override void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler,
+            Exception ex)
+    {
+        ++after;
+        completedWith = ex;
+    }
+}
+
+@("Flint: the static-resource 404 skips its unwind and interceptors see what a throw gives them")
+unittest
+{
+    import flint.web.servlet.resource : ResourceHttpRequestHandler;
+
+    auto recorder = new RecordingInterceptor;
+    auto mockMvc = MockMvcBuilders.standaloneSetup(new GreetingController()).addInterceptors(recorder).build();
+    mockMvc.perform(get("/nope")).andExpect(status().isNotFound()).andExpect(status()
+            .reason("No static resource nope."));
+    // As when handleRequest throws: preHandle ran, postHandle did not, and afterCompletion saw a handled request.
+    assert(recorder.pre == 1 && recorder.post == 0 && recorder.after == 1);
+    assert(cast(ResourceHttpRequestHandler) recorder.handler !is null && recorder.completedWith is null);
+}
+
+/// A subclass of the resource handler: the dispatcher must call it, as Spring would.
+private final class CountingResourceHandler : flint.web.servlet.resource.ResourceHttpRequestHandler
+{
+    import flint.jakarta.servlet.http : HttpServletRequest, HttpServletResponse;
+
+    int calls;
+
+    override void handleRequest(HttpServletRequest request, HttpServletResponse response)
+    {
+        ++calls;
+        super.handleRequest(request, response);
+    }
+}
+
+@("Flint: only the stock resource handler and adapter take the direct 404; a subclass is called as usual")
+unittest
+{
+    import flint.mock.web : MockHttpServletRequest;
+    import flint.web.servlet.resource : HttpRequestHandlerAdapter, ResourceHttpRequestHandler;
+
+    auto request = new MockHttpServletRequest("GET", "/nope");
+    auto adapter = new HttpRequestHandlerAdapter;
+    auto stock = new ResourceHttpRequestHandler;
+    auto direct = stock.immediateFailure(adapter, request);
+    assert(direct !is null && direct.msg == "No static resource nope for request '/nope'.");
+    assert(new CountingResourceHandler().immediateFailure(adapter, request) is null);
+    assert(stock.immediateFailure(null, request) is null);
+    assert(stock.immediateFailure(new Object, request) is null);
 }
