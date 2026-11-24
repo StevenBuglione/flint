@@ -2,7 +2,7 @@
   "schema": "flint.measure-queue/1",
   "id": "fast-path-pools-ab",
   "created": "2026-11-24",
-  "status": "blocked",
+  "status": "pending",
   "window": "claim",
   "priority": 9,
   "requested_by": "docs/spring/phase1/resume-plan.md section 2, order 9 (owner-approved, b349fb0a)",
@@ -49,8 +49,8 @@
       }
     ]
   },
-  "blocked_on": "only if RSS still decides after phase1-http-gs-rest (owner decision 2, resume plan section 5)",
   "tree_note": "Resume plan 1.5: every baseline part builds in the same private tree at B (flint, mold, the fork build), so all parts measure one toolchain.",
   "claim_when": "Section 2 order 9 of the owner-approved resume plan: a claimed window at B, only if RSS still decides",
-  "pinned": "B, ca5fbd4a46edd8e558d5876830197f23b5db5295 (coordinator, 2026-11-24 02:06Z)"
+  "pinned": "B, ca5fbd4a46edd8e558d5876830197f23b5db5295 (coordinator, 2026-11-24 02:06Z)",
+  "released": "RSS still decides at B: phase1-http-gs-rest peak RSS 1.418 (1.393-1.453) of Go, certified 03:27Z"
 }

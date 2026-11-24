@@ -203,8 +203,8 @@ class Pins(unittest.TestCase):
 class Provenance(unittest.TestCase):
     def test_measured_binaries_and_artifacts(self):
         record = {'apps': {'a': {'trials': [{'server_binary_sha256': 'f1'}, {'server_binary_sha256': 'f2'}]}},
-                  'other': [{'server_binary_sha256': 'f1'}]}
-        self.assertEqual(measure_queue.measured_binaries(record), {'f1', 'f2'})
+                  'other': [{'server_binary_sha256': 'f1'}], 'trials': [{'identity': {'executable': 'x', 'sha256': 'f3'}}]}
+        self.assertEqual(measure_queue.measured_binaries(record), {'f1', 'f2', 'f3'})
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             binary = root / 'benchmarks/spring/flint/app/.flint/build/release/app'

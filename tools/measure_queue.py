@@ -685,6 +685,8 @@ def measured_binaries(value):
         for key, item in value.items():
             if key == 'server_binary_sha256' and isinstance(item, str):
                 found.add(item)
+            elif key == 'identity' and isinstance(item, dict) and isinstance(item.get('sha256'), str):
+                found.add(item['sha256'])  # load_bench's Spring trials name the executable this way
             else:
                 found |= measured_binaries(item)
     elif isinstance(value, list):

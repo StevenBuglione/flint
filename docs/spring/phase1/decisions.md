@@ -556,3 +556,12 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **Reactor ownership:** web-http owns engine-reactor for the wake work.
   - **Design rule (playbook):** a cross-thread wake must not be an ordinary mailbox post, because the mailbox stops being drained when every fiber slot is occupied. It uses reserved per-slot records, a ready bitmap and the owner's eventfd, with a wait-generation handle.
   - **Targets:** throughput lower 99% bound at least 1.30x Go, and CPU per request, p50, p99 and RSS upper bounds at most 0.99x, on each HTTP app.
+- 2026-11-24, proof-harness: **phase1-http-gs-rest certified at B** (`ca5fbd4a46ed`, claimed window 02:47–03:27Z, no foreign activity). The Spring workload, production, 9 interleaved trials, against the registered Go comparator; the default fast path, release `--no-debug`, binary `4675a607` (receipt artifact and measured identity agree). Median ratios, Flint / Go (99% interval):
+    - **throughput 1.280 (1.272–1.293), which passes** the 1.01 floor (319,300 against 249,500 req/s). It misses the throughput plan's 1.30 lower bound;
+    - **p99 0.826 (0.746–0.868), which passes**;
+    - **p50 1.140 (1.100–1.261), which fails** (69 against 61 µs). p50 is scored since owner decision 4;
+    - **peak RSS 1.418 (1.393–1.453), which fails** (19.6 against 13.9 MB);
+    - **CPU per request 0.951 (0.932–1.029), which fails** on its upper bound (7,850 against 8,250 ns);
+    - p99.9 0.956 (0.718–1.089), reported only.
+
+    RSS still decides, so fast-path-pools-ab (resume plan order 9) is pending. Evidence: `benchmarks/spring/evidence/phase1-http-gs-rest/20261124T024702Z/`.
