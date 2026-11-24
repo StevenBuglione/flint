@@ -1,0 +1,52 @@
+{
+  "schema": "flint.measure-queue/1",
+  "id": "gc-pools-petclinic",
+  "created": "2026-11-24",
+  "status": "pending",
+  "window": "claim",
+  "priority": 8.5,
+  "estimate_minutes": 24,
+  "requested_by": "the petclinic CPU plan (docs/spring/phase1/petclinic-cpu-astra.md, adopted 3df9a1c5), coordinator 14:19Z",
+  "report_to": "the coordinator, boot and data-access",
+  "summary": "Diagnostic A/B: petclinic-rest with fixed 1, 2 and 4 MiB collector pools (incPoolSize:0, the default mark threads), smaps census",
+  "why": "Decides whether a per-app pool setting is worth it (gs-rest stays at 1 MiB). Each arm overrides only minPoolSize and incPoolSize; parallel keeps Boot's affinity default (rt_options merge key by key). Recorded per arm: collections per 1,000 requests and per second, mark and sweep time, pauses, RSS with the smaps census, throughput, latency and CPU. Allocations and bytes per request do not depend on the pool size: they come from data-access's request-allocation gate at this commit. Live bytes after a collection are not visible from outside the process. 3 runs, no Go, to stay inside a claim.",
+  "builds": {
+    "tree": {
+      "app": "checkout",
+      "commit": "f4e81ead05aa",
+      "flint": true,
+      "linker": "mold",
+      "fork": false
+    }
+  },
+  "measure": {
+    "kind": "command",
+    "steps": [
+      {
+        "in": "tree",
+        "argv": [
+          "{python}",
+          "tools/spring_bench.py",
+          "gc-matrix",
+          "petclinic-rest",
+          "--output",
+          "{out}/gc-pools-petclinic.json",
+          "--gcopt",
+          "pools1=minPoolSize:1 incPoolSize:0",
+          "--gcopt",
+          "pools2=minPoolSize:2 incPoolSize:0",
+          "--gcopt",
+          "pools4=minPoolSize:4 incPoolSize:0",
+          "--runs",
+          "3",
+          "--no-go",
+          "--smaps"
+        ],
+        "smoke_args": [
+          "--smoke"
+        ],
+        "may_fail": true
+      }
+    ]
+  }
+}

@@ -6,10 +6,10 @@
   "window": "claim",
   "priority": 11,
   "estimate_minutes": 25,
-  "blocked_on": "data-access's lease handoff (throughput plan change 4) on main, web-http's /greeting reference handler and data-access's owner-1 reference handler (same pinned libpq, pool of 10, read-only transaction, three queries, byte-identical JSON), and a pin to the commit that has all three",
-  "requested_by": "the owner (decisions.md 33582c35; docs/spring/phase1/execution-model-astra.md and specialization-astra.md), relayed by the coordinator 03:52Z",
+  "blocked_on": "data-access's two reference arms (the minimal owner-1 handler, and minimal plus real mapping, DTOs and Jackson) on main; then one revision for all three arms, at 5,000 req/s and at capacity, recording app and PostgreSQL CPU separately, lease wait and hold, socket wait and ready-to-resume delay (spring_diag with --counters)",
+  "requested_by": "the owner (decisions.md 33582c35; docs/spring/phase1/execution-model-astra.md and specialization-astra.md), relayed by the coordinator 03:52Z; reshaped by the petclinic CPU plan (3df9a1c5, coordinator 14:19Z)",
   "report_to": "the coordinator, web-http and data-access",
-  "summary": "Diagnostic, never evidence: how far gs-rest-service and petclinic-rest sit from hand-written minimal floors for /greeting and GET /owners/1",
+  "summary": "Diagnostic: petclinic-rest's three-arm floor (petclinic CPU plan 3df9a1c5): ordinary Flint, data-access's minimal owner-1 handler, and minimal plus real mapping, DTOs and Jackson",
   "why": "The default apps and the reference handlers run with the same affinity, connections and rates through tools/spring_diag.py (the ladder, server CPU per request and per thread, PostgreSQL CPU per request, data-access's lease counters, and the statement census). Instructions per request need perf, which venus refuses to non-root users (perf_event_paranoid 4): the owner must allow it, or the entry reports instructions as unavailable. Syscalls per request come from a separate strace -c run, which slows the server and is never timed. The fixed-rate wake latency is p50/p99 at the manifest's fixed rate.",
   "builds": {
     "tree": {
