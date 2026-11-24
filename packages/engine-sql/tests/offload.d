@@ -204,24 +204,8 @@ version (FlintNativeLibpq)
         roundTripOwner.exercise();
     }
 
-    @("libpq readiness resumes the waiting fiber at once, not at the next millisecond poll")
-    unittest
+    private void runOnOneWorker(void function() @safe nothrow @nogc start)
     {
-        import std.process : environment;
-
-        const address = environment.get("FLINT_SQL_PG_TEST_DSN");
-        if (address.length == 0)
-            return;
-        PoolOptions config;
-        config.driver = Driver.postgres;
-        config.connectionString = address;
-        config.maxConnections = 1;
-        auto work = new RoundTrips;
-        assert(work.pool.open(config).code == Status.ok);
-        Context context;
-        scope (exit)
-            assert(work.pool.close(context).code == Status.ok);
-
         ReactorOptions options;
         version (OSX)
             options.backend = Backend.kqueue;
@@ -232,15 +216,182 @@ version (FlintNativeLibpq)
         options.cores = 1;
         auto owner = Reactor.create(options);
         assert(owner.ok(), owner.error.message);
-        publishRoundTrips(work);
-        scope (exit)
-            publishRoundTrips(null);
-        assert(owner.value.post(0, &startRoundTrips).code == Status.ok);
+        assert(owner.value.post(0, start).code == Status.ok);
         const ran = owner.value.run();
         assert(ran.code == Status.ok, ran.message);
-        // Waking on readiness, a local round trip takes tens of microseconds; resuming only at a 1 ms poll
-        // deadline, 200 of them took at least 200 ms.
-        assert(work.elapsedMicros >= 0 && work.elapsedMicros < roundTrips * 500,
-                "SQL waits resumed at the poll deadline rather than on readiness");
+    }
+
+    private PoolOptions libpqPool(string address)
+    {
+        PoolOptions config;
+        config.driver = Driver.postgres;
+        config.connectionString = address;
+        config.maxConnections = 1;
+        return config;
+    }
+
+    @("libpq readiness resumes the waiting fiber at once, not at the next millisecond poll, on reused descriptors too")
+    unittest
+    {
+        import std.process : environment;
+
+        const address = environment.get("FLINT_SQL_PG_TEST_DSN");
+        if (address.length == 0)
+            return;
+        // The second pass opens a new pool on a new reactor, so its connection usually reuses the first one's
+        // descriptor number: no watch or signal may survive the first pass.
+        foreach (pass; 0 .. 2)
+        {
+            auto work = new RoundTrips;
+            assert(work.pool.open(libpqPool(address)).code == Status.ok);
+            Context context;
+            scope (exit)
+                assert(work.pool.close(context).code == Status.ok);
+            publishRoundTrips(work);
+            scope (exit)
+                publishRoundTrips(null);
+            runOnOneWorker(&startRoundTrips);
+            // Waking on readiness, a local round trip takes tens of microseconds; resuming only at a 1 ms poll
+            // deadline, 200 of them took at least 200 ms.
+            assert(work.elapsedMicros >= 0 && work.elapsedMicros < roundTrips * 500,
+                    "SQL waits resumed at the poll deadline rather than on readiness");
+        }
+    }
+
+    private enum delayedReplies = 10;
+    private enum replyDelayMillis = 20;
+
+    private final class DelayedReplies
+    {
+        Pool pool;
+        long elapsedMicros = -1;
+
+        void exercise() nothrow @nogc
+        {
+            import core.time : MonoTime;
+
+            auto owner = Reactor.current();
+            scope (exit)
+                owner.stop();
+            Context context;
+            auto acquired = pool.acquire(context);
+            assert(acquired.ok(), acquired.error.message);
+            scope (exit)
+                assert(pool.release(acquired.value).code == Status.ok);
+            scope RequestArena arena;
+            const start = MonoTime.currTime;
+            foreach (_; 0 .. delayedReplies)
+                assert(acquired.value.execute("SELECT pg_sleep(0.02)", [], arena, context).ok());
+            elapsedMicros = (MonoTime.currTime - start).total!"usecs";
+        }
+    }
+
+    private __gshared DelayedReplies delayedOwner;
+
+    // SAFETY: The harness publishes before starting the reactor and clears after all workers join.
+    private void publishDelayed(DelayedReplies owner) @trusted nothrow @nogc
+    {
+        delayedOwner = owner;
+    }
+
+    // SAFETY: This fixture has one reactor owner and leaves its startup object rooted until run returns.
+    private void startDelayed() @trusted nothrow @nogc
+    {
+        delayedOwner.exercise();
+    }
+
+    @("a server that answers late wakes the waiting fiber when its reply arrives, not at the fallback deadline")
+    unittest
+    {
+        import std.process : environment;
+
+        const address = environment.get("FLINT_SQL_PG_TEST_DSN");
+        if (address.length == 0)
+            return;
+        auto work = new DelayedReplies;
+        assert(work.pool.open(libpqPool(address)).code == Status.ok);
+        Context context;
+        scope (exit)
+            assert(work.pool.close(context).code == Status.ok);
+        publishDelayed(work);
+        scope (exit)
+            publishDelayed(null);
+        runOnOneWorker(&startDelayed);
+        // Each reply is ready about 20 ms after its query; the fallback would make each wait last a second.
+        assert(work.elapsedMicros >= delayedReplies * replyDelayMillis * 1_000, "a reply arrived before its delay");
+        assert(work.elapsedMicros < delayedReplies * replyDelayMillis * 1_000 + 150_000,
+                "a delayed reply waited for the fallback deadline");
+    }
+
+    private final class StoppedWhileWaiting
+    {
+        Pool pool;
+        Status outcome = Status.ok;
+        long elapsedMicros = -1;
+
+        void exercise() nothrow @nogc
+        {
+            import core.time : MonoTime;
+
+            auto owner = Reactor.current();
+            Context context;
+            auto acquired = pool.acquire(context);
+            assert(acquired.ok(), acquired.error.message);
+            scope (exit)
+                cast(void) pool.release(acquired.value);
+            assert(owner.schedule(Deadline.afterMillis(50), &stopOwner).ok());
+            scope RequestArena arena;
+            const start = MonoTime.currTime;
+            // No deadline of its own: only the reactor stopping ends this wait.
+            outcome = acquired.value.execute("SELECT pg_sleep(10)", [], arena, context).error.code;
+            elapsedMicros = (MonoTime.currTime - start).total!"usecs";
+        }
+    }
+
+    private void stopOwner() nothrow @nogc
+    {
+        Reactor.current().stop();
+    }
+
+    private __gshared StoppedWhileWaiting stoppedOwner;
+
+    // SAFETY: The harness publishes before starting the reactor and clears after all workers join.
+    private void publishStopped(StoppedWhileWaiting owner) @trusted nothrow @nogc
+    {
+        stoppedOwner = owner;
+    }
+
+    // SAFETY: This fixture has one reactor owner and leaves its startup object rooted until run returns.
+    private void startStopped() @trusted nothrow @nogc
+    {
+        stoppedOwner.exercise();
+    }
+
+    @("stopping the reactor ends a libpq wait promptly, and the pool still serves afterwards")
+    unittest
+    {
+        import std.process : environment;
+
+        const address = environment.get("FLINT_SQL_PG_TEST_DSN");
+        if (address.length == 0)
+            return;
+        auto work = new StoppedWhileWaiting;
+        assert(work.pool.open(libpqPool(address)).code == Status.ok);
+        Context context;
+        scope (exit)
+            assert(work.pool.close(context).code == Status.ok);
+        publishStopped(work);
+        scope (exit)
+            publishStopped(null);
+        runOnOneWorker(&startStopped);
+        assert(work.outcome != Status.ok, "the statement cannot have finished its 10 s sleep");
+        assert(work.elapsedMicros >= 0 && work.elapsedMicros < 2_000_000, "shutdown waited for the statement");
+
+        auto next = work.pool.acquire(context);
+        assert(next.ok(), next.error.message);
+        scope (exit)
+            assert(work.pool.release(next.value).code == Status.ok);
+        scope RequestArena arena;
+        assert(next.value.execute("SELECT 17", [], arena, context).ok());
     }
 }
