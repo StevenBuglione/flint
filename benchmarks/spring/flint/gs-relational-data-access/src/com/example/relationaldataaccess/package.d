@@ -23,12 +23,12 @@ struct Customer
     string firstName; ///
     string lastName; ///
 
-    /// The guide's `toString`.
+    /// The guide's `toString`, through Java's `String.format` (flint:java's non-template `Formatter`).
     string toString() const
     {
-        import std.format : format;
+        import flint.java.lang : String;
 
-        return format("Customer[id=%d, firstName='%s', lastName='%s']", id, firstName, lastName);
+        return String.format("Customer[id=%d, firstName='%s', lastName='%s']", id, firstName, lastName);
     }
 }
 
