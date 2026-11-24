@@ -647,6 +647,7 @@ def consistency_problems(parts, runs_by_family):
     parts together must cover every application, workload and setting the gate scores."""
     problems = []
     commits = {}
+    baselines, checked = {}, set()
     for part in parts:
         commits.setdefault(tuple(sorted(part['commits'])), []).append(part['entry'])
     if len(commits) != 1 or any(len(key) != 1 for key in commits):
@@ -668,11 +669,30 @@ def consistency_problems(parts, runs_by_family):
             elif not any(c.startswith(claimed) or claimed.startswith(c) for c in part['commits']):
                 problems.append(f"{part['entry']} builds.json names commit {claimed}, its receipt {sorted(part['commits'])}")
         elif family in ('http', 'error', 'gc'):
+            # Owner decision c015f307: per application, every runtime part is measured against the same captured Go
+            # baseline (or every one interleaves Go); a record must still be current.
+            apps_of = ([record.get('app')] if family == 'gc'
+                       else sorted({row.get('app', key) for key, row in record.get('apps', {}).items()}))
+            for app_name in apps_of:
+                baselines.setdefault(app_name, set()).add((record.get('baseline') or {}).get('sha256'))
+            if record.get('baseline') and record['baseline']['record'] not in checked:
+                checked.add(record['baseline']['record'])
+                import spring_baseline
+                try:
+                    differing = spring_baseline.stale(spring_baseline.load(record['baseline']['record']))
+                except (OSError, ValueError, KeyError) as exc:
+                    differing = [f'unreadable: {exc}']
+                if differing:
+                    problems.append(f"{part['entry']}: its baseline record is stale: {', '.join(differing)}")
             # The GC matrix takes the HTTP manifest's workload; the error paths have their own manifest.
             want = runs_by_family[family]
             runs = record.get('effective_workload', {}).get('runs')
             if runs != want:
                 problems.append(f"{part['entry']} {part['file']}: {runs} runs; the manifest's {want} required")
+    for app_name, records in sorted(baselines.items()):
+        if len(records) > 1:
+            problems.append(f'{app_name}: its runtime parts use different comparator sides '
+                            f"({', '.join(sorted(r[:12] if r else 'interleaved Go' for r in records))})")
     return problems
 
 
@@ -817,6 +837,7 @@ def main(argv=None):
     p.add_argument('--no-go', action='store_true', help='leave out the Go comparator; makes an ab record')
     p.add_argument('--binary', help='a stand-in executable for harness checks; never evidence')
     p.add_argument('--smaps', action='store_true', help='a smaps census per phase and every 15 s of the fixed-rate phase')
+    p.add_argument('--baseline', type=Path, help='Flint only, against a captured Go baseline record (spring_baseline.py)')
     args = parser.parse_args(argv)
     names = getattr(args, 'apps', None) or list(registry()['apps'])
 

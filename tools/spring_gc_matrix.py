@@ -83,7 +83,18 @@ def main(args):
     if app not in manifest['apps']:
         raise SystemExit(f'{app} has no Spring workload in {manifest_path.relative_to(ROOT)}')
     with_go = not getattr(args, 'no_go', False)
-    settings, options, ab = arms(matrix['settings'], args.setting, args.gcopt, args.runs, not with_go)
+    baseline = None
+    if getattr(args, 'baseline', None):
+        # Flint only against a captured Go baseline (owner decision c015f307): the record's HTTP series stand for Go.
+        import spring_baseline
+        baseline = spring_baseline.load(args.baseline)
+        if baseline['impl'] != 'go' or baseline['app'] != app or app not in baseline['series']:
+            raise SystemExit(f'the baseline is not a Go capture of {app}\'s HTTP workload')
+        differing = spring_baseline.stale(baseline)
+        if differing:
+            raise SystemExit('the baseline record is stale (re-capture it): ' + ', '.join(differing))
+        with_go = False
+    settings, options, ab = arms(matrix['settings'], args.setting, args.gcopt, args.runs, not with_go and not baseline)
     workload = load_bench.validate_spring_manifest(manifest, args.smoke).copy()
     if args.runs is not None:
         workload['runs'] = args.runs
@@ -136,7 +147,15 @@ def main(args):
         comparator = ['go'] if with_go else []
         database_context = (spring_bench.postgres_cluster(workload['database_cpus'])
                             if spring_bench.app_row(app).get('database') == 'postgres' else load_bench.contextlib.nullcontext())
+        if baseline:
+            result['go'] = {'series': baseline['series'][app], 'from_baseline': baseline['_path']}
+            result['baseline'] = {'record': baseline['_path'], 'sha256': baseline['_sha256'],
+                                  'captured': baseline['captured'], 'fingerprint': baseline['fingerprint'], 'guards': []}
+            spring_bench.build_go(app)
         with database_context as database:
+            if baseline:
+                result['baseline']['guards'].append(spring_baseline.guard(baseline, app, workload, oha, outdir, database,
+                                                                          'before', args.smoke))
             for trial in range(workload['runs']):
                 order = comparator + settings if trial % 2 == 0 else list(reversed(settings)) + comparator
                 for name in order:
@@ -161,7 +180,14 @@ def main(args):
                     for key in load_bench.FIELDS:
                         target['series'][key].append(row['capacity' if key == 'requests_per_second' else 'latency'][key])
                     print(json.dumps({'app': app, 'trial': trial, 'setting': name, 'status': 'measured'}), flush=True)
-        go = {key: statistics.median(values) for key, values in result['go']['series'].items()} if with_go else None
+            if baseline:
+                result['baseline']['guards'].append(spring_baseline.guard(baseline, app, workload, oha, outdir, database,
+                                                                          'after', args.smoke))
+                drifted = [f"{g['when']}: {p}" for g in result['baseline']['guards'] for p in g['out_of_band']]
+                if drifted:
+                    raise ValueError('runner drift against the baseline (not evidence; re-capture): ' + '; '.join(drifted))
+        go = ({key: statistics.median(values) for key, values in result['go']['series'].items()}
+              if (with_go or baseline) else None)
         for name, row in result['settings'].items():
             medians = {key: statistics.median(values) for key, values in row['series'].items()}
             row['medians'] = medians
@@ -179,6 +205,7 @@ def main(args):
         args.output.write_text(json.dumps(result, indent=2) + '\n')
         raise
     args.output.write_text(json.dumps(result, indent=2) + '\n')
+    with_go = with_go or bool(baseline)
     against = 'Go' if with_go else settings[0]
     print(f"against {against}: {'setting':28} {'p99':>8} {'RSS':>8} {'CPU':>8} {'rps':>8} {'max pause ms':>13}")
     base = None if with_go else result['settings'][settings[0]]['medians']

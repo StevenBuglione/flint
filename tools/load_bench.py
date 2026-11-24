@@ -512,6 +512,19 @@ def spring_main(a, raw, m):
     require(version==OHA_VERSION,"oha version differs from pin")
     problems=spring.check_registry(apps)
     require(not problems,"Go comparators: "+"; ".join(problems))
+    baseline=None
+    if getattr(a,"baseline",None):
+        # Flint-only against a captured comparator baseline (owner decision c015f307): the record's Go series stand
+        # where interleaved Go trials would, after the record proves current and the runner proves undrifted.
+        import spring_baseline
+        baseline=spring_baseline.load(a.baseline)
+        require(baseline["impl"]=="go" and baseline["mode"]=="production" or a.smoke,
+                "the baseline must be a production capture of the Go comparator")
+        require(set(apps)=={baseline["app"]},"the baseline is of "+baseline["app"]+", not "+", ".join(apps))
+        differing=spring_baseline.stale(baseline)
+        require(not differing,"the baseline record is stale (re-capture it): "+", ".join(differing))
+        missing_keys=[key for key in keys if key not in baseline["series"]]
+        require(not missing_keys,"the baseline has no series for "+", ".join(missing_keys))
     a.output.parent.mkdir(parents=True,exist_ok=True)
     outdir=a.output.parent/(a.output.stem+"-raw");outdir.mkdir(exist_ok=True)
     targets=list(m["targets"])
@@ -525,10 +538,15 @@ def spring_main(a, raw, m):
             "tool":{"version":version,"sha256":OHA_SHA256},"load_average_at_start":load,
             "comparators":json.loads(spring.REGISTRY.read_text())["comparators"],"apps":{},"trials":[],"acceptance":[],
             "missing_flint":missing,"context_errors":[]}
+    if baseline:
+        result["baseline"]={"record":baseline["_path"],"sha256":baseline["_sha256"],"captured":baseline["captured"],
+                            "fingerprint":baseline["fingerprint"],"guards":[]}
     try:
         for key in keys:
             spec=m["apps"][key];app=app_of[key]
             measured=[t for t in targets if not (t=="flint" and app in missing)]
+            if baseline:
+                measured=["flint"];context=[]
             builds={"go":spring.build_go,"flint":spring.build_flint,"java-jvm":spring.build_java,
                     "java-native":spring.build_java_native}
             available=list(context)
@@ -554,6 +572,10 @@ def spring_main(a, raw, m):
             series={t:{k:[] for k in FIELDS} for t in measured+available}
             with spring.postgres_cluster(workload["database_cpus"]) if spring.app_row(app).get("database")=="postgres" \
                     else contextlib.nullcontext() as database:
+                if baseline:
+                    spring.build_go(app)
+                    result["baseline"]["guards"].append(spring_baseline.guard(baseline,app,workload,oha,outdir,database,
+                                                                              key+"-before",a.smoke))
                 for trial in range(workload["runs"]):
                     order=measured if trial%2==0 else list(reversed(measured))
                     for target in order+available:
@@ -566,7 +588,16 @@ def spring_main(a, raw, m):
                         for field in FIELDS:
                             series[target][field].append(row["capacity" if field=="requests_per_second" else "latency"][field])
                         print(json.dumps({"workload":key,"trial":trial,"target":target,"status":"measured"}),flush=True)
+                if baseline:
+                    result["baseline"]["guards"].append(spring_baseline.guard(baseline,app,workload,oha,outdir,database,
+                                                                              key+"-after",a.smoke))
             result["apps"][key]={"app":app,"measured":{t:series[t] for t in measured},"context":{t:series[t] for t in available}}
+            if baseline:
+                result["apps"][key]["measured"]["go"]=baseline["series"][key]
+                result["apps"][key]["go_from_baseline"]=baseline["_path"]
+        if baseline:
+            drifted=[f"{g['when']}: {p}" for g in result["baseline"]["guards"] for p in g["out_of_band"]]
+            require(not drifted,"runner drift against the baseline (not evidence; re-capture): "+"; ".join(drifted))
         result["status"]="incomplete" if missing else "passed"
         a.output.write_text(json.dumps(result,indent=2)+"\n")
         return 0
@@ -585,6 +616,8 @@ def main(argv=None):
     parser.add_argument("--allow-missing-flint",action="store_true",
                         help="schema 2: record the Go and Java sides when a Flint port is missing; the record is incomplete and never passes a gate")
     parser.add_argument("--no-context",action="store_true",help="schema 2: skip the Java context target")
+    parser.add_argument("--baseline",type=Path,help="schema 2: Flint only, against this captured Go baseline record "
+                        "(tools/spring_baseline.py), with the drift guard before and after")
     a=parser.parse_args(argv)
     require(sys.platform=="linux" and hasattr(os,"sched_getaffinity"),"performance harness requires Linux/proc and CPU affinity")
     require(shutil.which("taskset"),"taskset is required")
