@@ -171,7 +171,7 @@ index 0345565..b143d55 100644
  		auto tpath = NativePath(settings.targetPath) ~ getTargetFileName(settings, platform);
  		auto args = ["-of"~tpath.toNativeString()];
 diff --git a/source/dub/generators/build.d b/source/dub/generators/build.d
-index c4adc0d..e04a955 100644
+index c4adc0d..40e5939 100644
 --- a/source/dub/generators/build.d
 +++ b/source/dub/generators/build.d
 @@ -26,6 +26,9 @@ import std.file;
@@ -198,7 +198,7 @@ index c4adc0d..e04a955 100644
  		// Recursive build starts here
  
  		bool any_cached = false;
-@@ -195,6 +205,261 @@ class BuildGenerator : ProjectGenerator {
+@@ -195,6 +205,272 @@ class BuildGenerator : ProjectGenerator {
  		}
  	}
  
@@ -213,7 +213,8 @@ index c4adc0d..e04a955 100644
 +		foreach (name, ti; targets) {
 +			const bs = ti.buildSettings;
 +			if (bs.options & BuildOption.syntaxOnly) return false;
-+			if (bs.preBuildCommands.length || bs.postBuildCommands.length) return false;
++			// Pre-build commands run in step 2, in plan order, before any compile job starts.
++			if (bs.postBuildCommands.length) return false;
 +			final switch (bs.targetType) {
 +				case TargetType.executable:
 +				case TargetType.library:
@@ -226,8 +227,9 @@ index c4adc0d..e04a955 100644
 +				case TargetType.object:
 +					return false;
 +			}
++			// C sources compile in the target's own jobs through DMD's ImportC, as in the recursive build.
 +			foreach (f; bs.sourceFiles)
-+				if (!f.endsWith(".d") && !f.endsWith(".di") && !isLinkerFile(settings.platform, f))
++				if (!f.endsWith(".d") && !f.endsWith(".di") && !f.endsWith(".c") && !isLinkerFile(settings.platform, f))
 +					return false;
 +		}
 +		return true;
@@ -313,6 +315,15 @@ index c4adc0d..e04a955 100644
 +			}
 +			logInfo("Building", Color.light_green, "%s %s: building configuration [%s]",
 +				t.pack.name.color(Mode.bold), t.pack.version_, t.config.color(Color.blue));
++			// As the recursive build runs them just before compiling the package, with its environment; here every
++			// target's run, in dependency order, before the first compile job starts.
++			if (t.bs.preBuildCommands.length) {
++				logInfo("Pre-build", Color.light_green, "Running commands");
++				ftrace("pre-build " ~ t.name);
++				runBuildCommands(CommandType.preBuild, t.bs.preBuildCommands, t.pack, m_project, settings,
++					targets[t.name].buildSettings);
++				ftrace("pre-build done " ~ t.name);
++			}
 +			auto cbs = t.bs.dup;
 +			t.sources = cbs.sourceFiles.filter!(f => !isLinkerFile(settings.platform, f)).array;
 +			cbs.sourceFiles = null;
@@ -460,7 +471,7 @@ index c4adc0d..e04a955 100644
  	override void performPostGenerateActions(GeneratorSettings settings, in TargetInfo[string] targets)
  	{
  		// run the generated executable
-@@ -504,7 +769,16 @@ class BuildGenerator : ProjectGenerator {
+@@ -504,7 +780,16 @@ class BuildGenerator : ProjectGenerator {
  		{
  			auto src = build_path ~ filename;
  			logDiagnostic("Copying target from %s to %s", src.toNativeString(), buildsettings.targetPath);
@@ -478,7 +489,7 @@ index c4adc0d..e04a955 100644
  		}
  	}
  
-@@ -751,6 +1025,66 @@ class BuildGenerator : ProjectGenerator {
+@@ -751,6 +1036,66 @@ class BuildGenerator : ProjectGenerator {
  	}
  }
  

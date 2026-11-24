@@ -174,6 +174,64 @@ class FlintDubTests(unittest.TestCase):
             self.assertEqual(json.loads(result.stdout)['compiler'], 'ldc')
 
 
+def toolchain_tool(name):
+    """A tool of the toolchain under test: FLINT_TOOLCHAIN_DIR's when set (as flint reads it), else this checkout's
+    .tools; None when it is not installed."""
+    tools = Path(os.environ.get('FLINT_TOOLCHAIN_DIR') or ROOT / '.tools')
+    path = tools / 'dmd2' / 'linux' / 'bin64' / name
+    return path if path.is_file() else None
+
+
+class DubPipelineTests(unittest.TestCase):
+    """The Flint DUB's parallel pipeline takes a graph with a pre-build command and a C source (41053ce3): flint:term
+    builds its terminal object in a pre-build script and flint:os has a C source, and either one used to send a whole
+    application graph down DUB's serial path."""
+
+    def test_a_pre_build_command_and_a_c_source_take_the_pipeline(self):
+        dub, dmd = toolchain_tool('dub'), toolchain_tool('dmd')
+        if dub is None or dmd is None or sys.platform != 'linux':
+            self.skipTest('the Flint DUB and DMD are not installed')
+        with tempfile.TemporaryDirectory(prefix='flint-pipeline-') as temp:
+            temp = Path(temp)
+
+            def write(path, text):
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(text, encoding='utf-8', newline='\n')
+
+            # pre: its pre-build command writes the file the app string-imports, so it must run before the app
+            # compiles, and it appends to a log, so it must run once.
+            write(temp / 'pre/dub.sdl', 'name "pre"\ntargetType "library"\n'
+                  'preBuildCommands "sh stamp.sh"\n')
+            write(temp / 'pre/stamp.sh', 'mkdir -p views\necho ran >> ../pre-build.log\n'
+                  'printf generated > views/stamp.txt\n')
+            write(temp / 'pre/source/pre/value.d', 'module pre.value;\n\nint preValue() { return 1; }\n')
+            # cpart: a C source beside a D module, compiled by DMD (ImportC).
+            write(temp / 'cpart/dub.sdl', 'name "cpart"\ntargetType "library"\nsourceFiles "c/answer.c"\n')
+            write(temp / 'cpart/c/answer.c', 'int c_answer(void) { return 41; }\n')
+            write(temp / 'cpart/source/cpart/answer.d', 'module cpart.answer;\n\nextern (C) int c_answer();\n\n'
+                  'int answer() { return c_answer() + 1; }\n')
+            write(temp / 'app/dub.sdl', 'name "app"\ntargetType "executable"\nstringImportPaths "../pre/views"\n'
+                  'dependency "pre" path="../pre"\ndependency "cpart" path="../cpart"\n')
+            write(temp / 'app/source/app.d', 'import std.stdio : writeln;\nimport cpart.answer : answer;\n'
+                  'import pre.value : preValue;\n\nenum stamp = import("stamp.txt");\n\n'
+                  'void main() { writeln(stamp, " ", answer() + preValue()); }\n')
+            env = dict(os.environ, DUB_HOME=str(temp / 'dub-home'), HOME=str(temp), FLINT_DMD_SERVER='0')
+            env.pop('FLINT_DUB_PIPELINE', None)
+            built = subprocess.run([str(dub), 'build', '--root', str(temp / 'app'), '--skip-registry=all',
+                                    '--compiler=' + str(dmd), '-v'], capture_output=True, text=True,
+                                   encoding='utf-8', env=env, timeout=600)
+            output = built.stdout + built.stderr
+            self.assertEqual(built.returncode, 0, output)
+            self.assertRegex(output, r'Compiling \d+ modules in \d+ parallel jobs', 'the pipeline built the graph')
+            self.assertEqual((temp / 'pre-build.log').read_text(encoding='utf-8'), 'ran\n', 'the pre-build ran once')
+            jobs = [line for line in output.splitlines() if line.strip().startswith('[cwd=') and ' -c ' in line]
+            c_jobs = [line for line in jobs if 'answer.c' in line]
+            self.assertEqual(len(c_jobs), 1, jobs)
+            self.assertIn('answer.d', c_jobs[0], 'the C source compiles in its target\'s one job')
+            ran = subprocess.run([str(temp / 'app' / 'app')], capture_output=True, text=True, timeout=60)
+            self.assertEqual(ran.stdout.strip(), 'generated 43', ran.stdout + ran.stderr)
+
+
 def fork_dmd():
     """The installed DMD fork when it serves a platform prelude (FLINT_DMD_SERVER_PRELUDE), else None."""
     for host, exe in (('linux', 'dmd'), ('osx', 'dmd'), ('windows', 'dmd.exe')):
