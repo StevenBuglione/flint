@@ -706,3 +706,12 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - p99.9 2.71, reported.
 
     The remaining gap is CPU per request: the next runtime candidate for data-access (the per-row locks, bind arrays and monitors of the throughput plan) and the S1–S4 fast-path shapes. Evidence: `benchmarks/spring/evidence/phase1-http-petclinic/20261124T125955Z/`.
+- 2026-11-24, coordinator: **petclinic CPU plan adopted** (GPT-6.2-Astra High, `petclinic-cpu-astra.md`). At B2, Go uses 63.3 µs per request at the scored rate and 55.5 µs at capacity; Flint uses 99.9 and 104.0. The CPU gate needs about 62.7 µs (before the confidence interval), the 1.30 throughput target 76.7 µs per two-CPU tier, and closing p50 needs about 243 µs of elapsed time, so wake and dispatch delay matter as well as CPU. Plan for 55–65 µs on a Spring-faithful path.
+  - **Allocation target:** 100 per owner-1 request first, then 60–80 (235 at 6200b84b).
+  - **Order:**
+    1. The floor diagnostic, three arms at one revision: ordinary Flint, a minimal handler with identical bytes, and that handler with the real mapping, DTOs and Jackson restored (proof-harness with data-access).
+    2. Direct mapping of the six pet-type rows through a metadata-validated ordinal plan (data-access with flint-aot), widened only if it pays end to end.
+    3. S1–S4 (flint-aot), measured alone and combined.
+    4. A 2 MiB pool arm for petclinic (boot, via --DRT-gcopt) and web-http's wake bisect.
+    5. Re-profile before spending on maps, Jackson or transaction glue.
+  - **Not budgeted:** a 30–40 µs win from a JDBC executor alone. An arena entity graph copied at the boundary is rejected (two representations, lifetime hazards).
