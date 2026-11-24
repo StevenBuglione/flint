@@ -735,3 +735,16 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     | 4 MiB | **1.037×** | 1.032× | 1.162× (25.1 MB) | 1.001× | 3.3 | 2.1 s | 4 ms |
 
     CPU per request does not move, so the collector is not petclinic's CPU gap. 4 MiB pools buy 3.7% throughput through a third fewer collections, for 3.5 MB of RSS that still stays under Go's 26.3-26.5 MB (about 0.95x). The smaps census shows the heap filling in warm-up and flat through the fixed-rate phase for every arm. Whether a per-app setting is worth it is boot's and data-access's call; gs-rest stays at 1 MiB. Allocations per request come from data-access's request-allocation gate (pool size does not change them). Evidence: `benchmarks/spring/evidence/gc-pools-petclinic/20261124T164958Z/`.
+- 2026-11-24, proof-harness: **floor-reference, the three-arm floor diagnostic** (the petclinic CPU plan 3df9a1c5; main `271fb314` with data-access's arms 0460ca01; 17:24–17:31Z, no foreign activity, nothing frozen; diagnostic, never evidence). GET /petclinic/api/owners/1, one server per step, the manifest's CPU sets, data-access's lease counters, 20 s per step:
+
+    | arm | capacity (64 conn.) | app CPU/request | PostgreSQL CPU/request | lease wait at capacity | lease hold at 5,000 req/s | p50 / p99 at 5,000 req/s |
+    |---|---|---|---|---|---|---|
+    | ordinary Flint petclinic-rest | 20,008 req/s | 98.0 µs | 56–57 µs | 2.54 ms | 305 µs | 0.462 / 1.083 ms |
+    | floor, minimal (rows to the response) | 23,327 | 65.4 | 59–61 | 2.18 ms | 215 | 0.289 / 0.581 |
+    | floor, mapped (+ entities, OwnerDto, Jackson) | 22,782 | 69.2 | 59–60 | 2.23 ms | 220 | 0.309 / 0.638 |
+
+    - **Where the CPU is:** petclinic's mapping, DTOs and Jackson cost about 4 µs per request; the other 29 µs between the mapped floor and ordinary Flint is the servlet and MVC layer (dispatch, filters, argument and return handling). Ordinary Flint also holds its lease about 85 µs longer.
+    - **What limits capacity:** in every arm the pool of 10 is saturated (lease waits of 2.2–2.5 ms), so capacity is about the pool size over the lease hold; PostgreSQL spends 56–61 µs of CPU per request, about as much as the floor's own CPU.
+    - **Syscalls per response** (untimed strace census, 2,000 requests at 8 connections): 5 `sendto` in every arm, the five statements (BEGIN, three SELECTs, COMMIT); the HTTP response goes through io_uring (about 2.6 `io_uring_enter` per response), so its writes are not visible as syscalls. About 17.6 `recvfrom` per response in every arm (3.5 per statement), 22–29% of them returning EAGAIN across the whole logs: libpq's non-blocking reads.
+
+    Evidence: `benchmarks/spring/evidence/floor-reference/` (the strace logs, 170–200 MB each, stay in .flint/measure/results).

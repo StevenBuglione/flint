@@ -1,0 +1,9 @@
+{"impl": "flint", "connections": 64, "rate": null, "rps": 20008, "server_cpu_us": 98.0, "postgres_cpu_us": 56.1, "p50_ms": 3.143}
+{"impl": "flint", "connections": 64, "rate": 5000, "rps": 5000, "server_cpu_us": 97.8, "postgres_cpu_us": 57.1, "p50_ms": 0.462}
+{"impl": "flint", "writes_per_response": 5.0, "waits_per_response": 4.727}
+{"impl": "floor-minimal", "connections": 64, "rate": null, "rps": 23327, "server_cpu_us": 65.4, "postgres_cpu_us": 59.2, "p50_ms": 2.78}
+{"impl": "floor-minimal", "connections": 64, "rate": 5000, "rps": 5000, "server_cpu_us": 67.4, "postgres_cpu_us": 60.6, "p50_ms": 0.289}
+{"impl": "floor-minimal", "writes_per_response": 5.0, "waits_per_response": 4.6605}
+{"impl": "floor-mapped", "connections": 64, "rate": null, "rps": 22782, "server_cpu_us": 69.2, "postgres_cpu_us": 59.3, "p50_ms": 2.832}
+{"impl": "floor-mapped", "connections": 64, "rate": 5000, "rps": 5000, "server_cpu_us": 71.0, "postgres_cpu_us": 60.0, "p50_ms": 0.309}
+{"impl": "floor-mapped", "writes_per_response": 5.0, "waits_per_response": 4.428}

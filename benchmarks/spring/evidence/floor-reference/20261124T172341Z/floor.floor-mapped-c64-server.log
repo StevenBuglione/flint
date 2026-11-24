@@ -1,0 +1,13 @@
+
+  _____ _ _       _
+ |  ___| (_)_ __ | |_
+ | |_  | | | '_ \| __|
+ |  _| | | | | | | |_
+ |_|   |_|_|_| |_|\__|
+
+ :: Flint Boot ::                 (v0.7.0)
+
+2026-11-24T17:29:39.187Z  INFO 3209670 --- [           main] o.s.samples.petclinic.FloorApplication   : Starting FloorApplication using Flint 0.7.0 with PID 3209670 (/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/271fb3143d66/benchmarks/spring/floor/petclinic-owner1/.flint/build/release/petclinic-floor started by olfa in /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/271fb3143d66/benchmarks/spring/flint/petclinic-rest)
+2026-11-24T17:29:39.187Z  INFO 3209670 --- [           main] o.s.samples.petclinic.FloorApplication   : The following 2 profiles are active: "postgres", "jdbc"
+2026-11-24T17:29:39.187Z  INFO 3209670 --- [           main] o.s.samples.petclinic.FloorApplication   : Started FloorApplication in 0.001 seconds (process running for 0.009)
+floor: serving on port 54901

@@ -2,7 +2,7 @@
   "schema": "flint.measure-queue/1",
   "id": "floor-reference",
   "created": "2026-11-24",
-  "status": "pending",
+  "status": "done",
   "window": "claim",
   "priority": 8.2,
   "estimate_minutes": 15,
@@ -84,5 +84,691 @@
       }
     ]
   },
-  "pinned": "main 271fb3143d66: data-access floor arms 0460ca01, the counters, the syscall census"
+  "pinned": "main 271fb3143d66: data-access floor arms 0460ca01, the counters, the syscall census",
+  "attempts": [
+    {
+      "time": "2026-11-24T17:30:37Z",
+      "outcome": "measured",
+      "evidence": true,
+      "host": "venus",
+      "builds": {
+        "tree": {
+          "commit": "271fb3143d6680a2bce12254e441be42ac8e98cc",
+          "worktree": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/271fb3143d66",
+          "fork": false,
+          "linker": "mold",
+          "toolchain": {
+            "tools_directory": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/271fb3143d66/.tools",
+            "fork_build": false,
+            "dmd": {
+              "path": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/271fb3143d66/.tools/dmd2/linux/bin64/dmd",
+              "sha256": "663977a9340a84167083b5f03a2b9518783358b94c795b8813ce872891d0f213",
+              "version": "DMD64 D Compiler v2.114.0"
+            },
+            "ldc2": {
+              "path": "/home/olfa/flint-work/flint/.tools-v4.2/ldc2-1.43.0-linux-x86_64/bin/ldc2",
+              "sha256": "06e4bb5bb6abe26a0201e6b112beb19810a13947c7389ebb41493c45bafe9604",
+              "version": "LDC - the LLVM D compiler (1.43.0):"
+            },
+            "flint": {
+              "path": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/271fb3143d66/.flint/bin/flint",
+              "sha256": "096a25c0e76c15e4531676c1b31b70520a0bde9acc4f6f9c28c4f8b36ea9ac96",
+              "version": "flint 0.7.0 (platform 1.0)"
+            },
+            "dmd_native_aot_extractor": true,
+            "dmd_conf": {
+              "sha256": "aa63c9885b1e23c026add6dbf8474cd13597a7a94c0307b3ec99f7a1dcdea4f3",
+              "linker_switches": [
+                "-Xcc=-fuse-ld=mold"
+              ]
+            },
+            "mold": [
+              {
+                "path": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/271fb3143d66/.tools/mold-2.40.4-x86_64-linux/bin/mold",
+                "sha256": "23bf6ca9d9fb342a774ebdd7885e0aa1941bdc25dea0fba2483303ecd89af886",
+                "version": "mold 2.40.4 (083901f42dea2491be8bc7cf6e3b1e2b9a3c850d; compatible with GNU ld)"
+              }
+            ]
+          }
+        }
+      },
+      "shared_toolchain": {
+        "path": "/home/olfa/flint-work/flint/.tools",
+        "resolved": "/home/olfa/flint-work/flint/.tools-v4.2",
+        "dmd_sha256": "663977a9340a84167083b5f03a2b9518783358b94c795b8813ce872891d0f213"
+      },
+      "window_before": {
+        "time": "2026-11-24T17:26:30Z",
+        "load_average": [
+          1.87890625,
+          1.89794921875,
+          1.9638671875
+        ],
+        "running_tasks": 2,
+        "instant": true,
+        "busy_processes": [],
+        "idle_build_processes": 993,
+        "quiet": true,
+        "problems": []
+      },
+      "window_during": [
+        {
+          "time": "2026-11-24T17:26:41Z",
+          "load_average": [
+            1.7431640625,
+            1.86767578125,
+            1.953125
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T17:26:52Z",
+          "load_average": [
+            1.62841796875,
+            1.83837890625,
+            1.9423828125
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T17:27:03Z",
+          "load_average": [
+            1.53125,
+            1.81005859375,
+            1.931640625
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T17:27:15Z",
+          "load_average": [
+            1.41259765625,
+            1.76953125,
+            1.91552734375
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T17:27:26Z",
+          "load_average": [
+            1.3486328125,
+            1.74365234375,
+            1.90478515625
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T17:27:37Z",
+          "load_average": [
+            1.375,
+            1.73583984375,
+            1.90087890625
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T17:27:48Z",
+          "load_average": [
+            2.2783203125,
+            1.91064453125,
+            1.9560546875
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T17:27:59Z",
+          "load_average": [
+            2.5869140625,
+            1.99755859375,
+            1.984375
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T17:28:10Z",
+          "load_average": [
+            2.96484375,
+            2.09716796875,
+            2.017578125
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T17:28:21Z",
+          "load_average": [
+            2.50830078125,
+            2.02734375,
+            1.9951171875
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T17:28:32Z",
+          "load_average": [
+            2.27587890625,
+            1.9931640625,
+            1.984375
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T17:28:43Z",
+          "load_average": [
+            1.92529296875,
+            1.92724609375,
+            1.962890625
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T17:28:55Z",
+          "load_average": [
+            2.67529296875,
+            2.0947265625,
+            2.01806640625
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T17:29:06Z",
+          "load_average": [
+            3.408203125,
+            2.2724609375,
+            2.0771484375
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T17:29:17Z",
+          "load_average": [
+            3.0439453125,
+            2.23046875,
+            2.0654296875
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T17:29:28Z",
+          "load_average": [
+            2.7353515625,
+            2.18994140625,
+            2.0537109375
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T17:29:39Z",
+          "load_average": [
+            2.7138671875,
+            2.21337890625,
+            2.06396484375
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T17:29:50Z",
+          "load_average": [
+            3.1259765625,
+            2.3212890625,
+            2.10107421875
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T17:30:01Z",
+          "load_average": [
+            3.2607421875,
+            2.37744140625,
+            2.12158203125
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T17:30:12Z",
+          "load_average": [
+            3.736328125,
+            2.5126953125,
+            2.1689453125
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T17:30:24Z",
+          "load_average": [
+            3.32177734375,
+            2.46240234375,
+            2.15625
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T17:30:35Z",
+          "load_average": [
+            2.81298828125,
+            2.390625,
+            2.13720703125
+          ],
+          "busy_processes": []
+        }
+      ],
+      "foreign_activity_during": 0,
+      "window_after": {
+        "time": "2026-11-24T17:30:37Z",
+        "load_average": [
+          2.81298828125,
+          2.390625,
+          2.13720703125
+        ],
+        "running_tasks": 0,
+        "instant": false,
+        "busy_processes": [],
+        "idle_build_processes": 993,
+        "quiet": true,
+        "problems": []
+      },
+      "frozen": [],
+      "results_directory": ".flint/measure/results/floor-reference/20261124T172341Z",
+      "summary": {
+        "steps": [
+          {
+            "command": [
+              "/usr/bin/python3",
+              "tools/spring_bench.py",
+              "build",
+              "petclinic-rest",
+              "--impl",
+              "flint"
+            ],
+            "cwd": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/271fb3143d66",
+            "exit_code": 0,
+            "log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/floor-reference/20261124T172341Z/step-0.log",
+            "harness_commit": null,
+            "artifacts": {
+              "benchmarks/spring/flint/petclinic-rest/.flint/build/release/petclinic-rest": {
+                "sha256": "929f152734c0523a3a5b55e2138bb862181d124ae1c3681e7bd19e725829115c",
+                "bytes": 16759656,
+                "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=6705e93334998d942b0ddc784b93d24e4ab723a3, for GNU/Linux 3.2.0, not stripped",
+                "comment": [
+                  "GCC: (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+                  "Ubuntu clang version 22.1.8 (++20260613092327+e80beda6e255-1~exp1~20260613092437.81)",
+                  "ldc version 1.43.0"
+                ],
+                "embedded_gcopt": [
+                  "gcopt=minPoolSize:1 incPoolSize:0",
+                  "gcopt=parallel:"
+                ],
+                "profile": "release"
+              }
+            },
+            "measured_binaries": [],
+            "aot_summaries": {
+              "count": 0,
+              "distinct": [],
+              "extractors": []
+            },
+            "gc_options": {
+              "argv": []
+            },
+            "dmd_server": {
+              "compiled": 3,
+              "refused": 0,
+              "stopped_before": [
+                3205576,
+                3205638,
+                3205671,
+                3205673,
+                3205675,
+                3205677,
+                3205679,
+                3205681,
+                3205683,
+                3205685,
+                3205687,
+                3205689,
+                3205691,
+                3205692,
+                3205694,
+                3205695,
+                3205698,
+                3205700,
+                3205702,
+                3205704,
+                3205706,
+                3205708,
+                3205710,
+                3205712,
+                3205715,
+                3205717,
+                3205718,
+                3205719,
+                3205720,
+                3205721,
+                3205722,
+                3205723,
+                3205724,
+                3205725,
+                3205726,
+                3205727,
+                3205728,
+                3205729,
+                3205730,
+                3205731,
+                3205732,
+                3205733,
+                3205734,
+                3205735,
+                3205736,
+                3205737,
+                3205738,
+                3205739,
+                3205740,
+                3205741,
+                3205742,
+                3205743,
+                3205744,
+                3205745,
+                3205746,
+                3205747,
+                3205748,
+                3205749,
+                3205750,
+                3205751,
+                3205752,
+                3205753,
+                3205754,
+                3205755,
+                3205756,
+                3205757,
+                3205758,
+                3205759,
+                3205760,
+                3205761,
+                3205762,
+                3205763,
+                3205764,
+                3205765,
+                3205766,
+                3205767,
+                3205768,
+                3205769,
+                3205770,
+                3205771,
+                3205772,
+                3205773,
+                3205774,
+                3205775,
+                3205776,
+                3205777,
+                3205778,
+                3205779,
+                3205780,
+                3205781,
+                3205782,
+                3205783,
+                3205784,
+                3205785,
+                3205786,
+                3205787,
+                3205788,
+                3205789,
+                3205790,
+                3205791,
+                3205792,
+                3205793,
+                3205794,
+                3205795,
+                3205796,
+                3205797,
+                3205798,
+                3205799,
+                3205800,
+                3205801,
+                3205802,
+                3205803,
+                3205804,
+                3205805,
+                3205806,
+                3205807,
+                3205808,
+                3205809,
+                3205810,
+                3205811,
+                3205812,
+                3205813,
+                3205814,
+                3205815,
+                3205816,
+                3205817,
+                3205818,
+                3205819,
+                3205820,
+                3205821
+              ]
+            }
+          },
+          {
+            "command": [
+              "flint",
+              "build",
+              "-C",
+              "benchmarks/spring/floor/petclinic-owner1",
+              "--profile",
+              "release"
+            ],
+            "cwd": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/271fb3143d66",
+            "exit_code": 0,
+            "log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/floor-reference/20261124T172341Z/step-1.log",
+            "harness_commit": null,
+            "artifacts": {},
+            "measured_binaries": [],
+            "aot_summaries": {
+              "count": 1,
+              "distinct": [
+                "Generated 7 Flint AOT modules for org.springframework.samples.petclinic.FloorApplication (14 extracted in N ms, 0 from the shared cache, 8 written, N ms, native extractor)"
+              ],
+              "extractors": [
+                "native extractor"
+              ]
+            },
+            "gc_options": {
+              "argv": []
+            },
+            "dmd_server": {
+              "compiled": 2,
+              "refused": 0,
+              "stopped_before": [
+                3207252,
+                3207256,
+                3207257,
+                3207258,
+                3207259,
+                3207260,
+                3207261,
+                3207262,
+                3207263,
+                3207264,
+                3207265,
+                3207266,
+                3207267,
+                3207268,
+                3207269,
+                3207270,
+                3207271,
+                3207272,
+                3207273,
+                3207274,
+                3207275,
+                3207276,
+                3207277,
+                3207278,
+                3207279,
+                3207280,
+                3207281,
+                3207282,
+                3207283,
+                3207284,
+                3207285,
+                3207286,
+                3207287,
+                3207288,
+                3207289,
+                3207290,
+                3207291,
+                3207292,
+                3207293,
+                3207294,
+                3207295,
+                3207296,
+                3207297,
+                3207298,
+                3207299,
+                3207300,
+                3207301,
+                3207302,
+                3207303,
+                3207304,
+                3207305,
+                3207306,
+                3207307,
+                3207308,
+                3207309,
+                3207310,
+                3207311,
+                3207312,
+                3207313,
+                3207314,
+                3207315,
+                3207316,
+                3207317,
+                3207320,
+                3207323
+              ]
+            }
+          },
+          {
+            "command": [
+              "/usr/bin/python3",
+              "tools/spring_diag.py",
+              "--app",
+              "petclinic-rest",
+              "--impl",
+              "flint",
+              "--flint-binary",
+              "build/spring/petclinic-rest-flint",
+              "--variant-binary",
+              "benchmarks/spring/floor/petclinic-owner1/.flint/build/release/petclinic-floor",
+              "--variant",
+              "floor-minimal=FLOOR_ARM=minimal",
+              "--variant",
+              "floor-mapped=FLOOR_ARM=mapped",
+              "--ladder",
+              "64",
+              "--fixed-rate",
+              "5000",
+              "--seconds",
+              "20",
+              "--warmup",
+              "5",
+              "--counters",
+              "--syscalls",
+              "2000",
+              "--no-census",
+              "--oha",
+              "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+              "--output",
+              "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/floor-reference/20261124T172341Z/floor.json"
+            ],
+            "cwd": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/271fb3143d66",
+            "exit_code": 0,
+            "log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/floor-reference/20261124T172341Z/step-2.log",
+            "harness_commit": null,
+            "artifacts": {},
+            "measured_binaries": [],
+            "aot_summaries": {
+              "count": 0,
+              "distinct": [],
+              "extractors": []
+            },
+            "gc_options": {
+              "argv": []
+            },
+            "dmd_server": {
+              "compiled": 0,
+              "refused": 0,
+              "stopped_before": [
+                3207909,
+                3207912,
+                3207913,
+                3207914,
+                3207915,
+                3207916,
+                3207917,
+                3207918,
+                3207919,
+                3207920,
+                3207921,
+                3207922,
+                3207923,
+                3207924,
+                3207925,
+                3207926,
+                3207927,
+                3207928,
+                3207929,
+                3207930,
+                3207931,
+                3207932,
+                3207933,
+                3207934,
+                3207935,
+                3207936,
+                3207937,
+                3207938,
+                3207939,
+                3207940,
+                3207941,
+                3207942,
+                3207943,
+                3207944,
+                3207945,
+                3207946,
+                3207947,
+                3207948,
+                3207949,
+                3207950,
+                3207951,
+                3207952,
+                3207953,
+                3207954,
+                3207955,
+                3207956,
+                3207957,
+                3207958,
+                3207959,
+                3207960,
+                3207961,
+                3207962,
+                3207963,
+                3207964,
+                3207965,
+                3207966,
+                3207967,
+                3207968,
+                3207969,
+                3207970,
+                3207971,
+                3207972,
+                3207973,
+                3207974,
+                3207984
+              ]
+            }
+          }
+        ],
+        "outputs": {
+          "floor.json": "8782b5894b31b552505a32efe5b9d7a45ac009b98bed1607ff7cf27e0eee4473"
+        }
+      }
+    }
+  ]
 }
