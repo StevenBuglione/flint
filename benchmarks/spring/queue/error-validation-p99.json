@@ -1,7 +1,7 @@
 {
   "schema": "flint.measure-queue/1",
   "created": "2026-11-23",
-  "status": "pending",
+  "status": "blocked",
   "priority": 8,
   "window": "claim",
   "builds": {
@@ -3118,5 +3118,6 @@
       }
     }
   ],
-  "baseline_record": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/benchmarks/spring/baselines/go/petclinic-rest/20261124T092019Z"
+  "baseline_record": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/benchmarks/spring/baselines/go/petclinic-rest/20261124T092019Z",
+  "blocked_on": "the drift-guard decision (coordinator): the first B2 run (10:12-10:34Z) held the 5k warm-up for all 9 trials (Flint 18,429 req/s, p99 1.12 ms) but its Go calibration ran 6% below the capture's band (19,620 and 19,835 against 20,499-21,161 req/s; same Go binary 5546d077, probes in band), so it measured nothing; not retried"
 }
