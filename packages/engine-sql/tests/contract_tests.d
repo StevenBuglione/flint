@@ -232,6 +232,24 @@ version (FlintNativeSqlite)
         exercisePrepared(Driver.sqlite, ":memory:");
     }
 
+    @("SQLite refuses an empty statement and the lease stays usable")
+    unittest
+    {
+        Pool pool;
+        assert(pool.open(options(Driver.sqlite, ":memory:", 1)).code == Status.ok);
+        Context context;
+        scope (exit)
+            assert(pool.close(context).code == Status.ok);
+        auto acquired = pool.acquire(context);
+        assert(acquired.ok());
+        auto lease = acquired.value;
+        scope (exit)
+            assert(pool.release(lease).code == Status.ok);
+        scope RequestArena arena;
+        assert(!lease.execute("", [], arena, context).ok());
+        assert(scalar(lease, "SELECT 5", context) == 5);
+    }
+
     @("Sixteen live SQLite leases saturate and cannot be used after release")
     unittest
     {
@@ -336,6 +354,30 @@ version (FlintNativeLibpq)
         lease = acquired.value;
         assert(scalar(lease, "SELECT pg_backend_pid()", context) == originalBackend);
         assert(scalar(lease, "SELECT 123", context) == 123);
+    }
+
+    @("PostgreSQL answers an empty statement, the query JDBC drivers validate connections with")
+    unittest
+    {
+        const address = environment.get("FLINT_SQL_PG_TEST_DSN");
+        if (address.length == 0)
+            return;
+        Pool pool;
+        assert(pool.open(options(Driver.postgres, address)).code == Status.ok);
+        Context context;
+        scope (exit)
+            assert(pool.close(context).code == Status.ok);
+        auto acquired = pool.acquire(context);
+        assert(acquired.ok());
+        auto lease = acquired.value;
+        scope (exit)
+            assert(pool.release(lease).code == Status.ok);
+        scope RequestArena arena;
+        const empty = lease.execute("", [], arena, context);
+        assert(empty.ok() && empty.value == 0);
+        // An empty script is still refused, and the lease stays usable.
+        assert(lease.executeScript("", context).code != Status.ok);
+        assert(scalar(lease, "SELECT 5", context) == 5);
     }
 
     @("PostgreSQL prepares BEGIN, COMMIT and ROLLBACK once per connection instead of parsing them per transaction")

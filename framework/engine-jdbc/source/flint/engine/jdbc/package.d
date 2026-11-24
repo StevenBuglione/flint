@@ -18,6 +18,7 @@ $(UL
 +/
 module flint.engine.jdbc;
 
+import core.atomic : atomicLoad, atomicStore;
 import flint.arena : ArenaError = Error, Buffer, RequestArena, Result, Status;
 import flint.conc : CancelSource, Context, Deadline;
 import flint.engine.aot.any : Any;
@@ -504,6 +505,7 @@ final class FlintConnection : Connection
             auto arena = newArena();
             cast(void) lease.execute("PRAGMA query_only = OFF", [], arena, context);
         }
+        const slot = lease.leaseSlot();
         cast(void) pool.release(lease);
         if (ownsPool)
             cast(void) pool.close(context);
@@ -512,7 +514,7 @@ final class FlintConnection : Connection
             if (scratch !is null)
                 source.giveScratch(scratch);
             scratch = null;
-            source.returned();
+            source.returned(slot);
         }
     }
 
@@ -617,7 +619,8 @@ final class FlintConnection : Connection
             return false;
         try
         {
-            run("SELECT 1");
+            // pgjdbc validates with an empty query, which the server answers without parsing anything.
+            run(pool.driver == Driver.postgres ? "" : "SELECT 1");
             return true;
         }
         catch (SQLException)
@@ -2372,8 +2375,7 @@ final class FlintDataSource : DataSource
                 opened = true;
             }
         }
-        auto connection = new FlintConnection(pool, acquireLease(pool), false, jdbcUrl, username);
-        connection.source = this;
+        auto connection = borrowAlive();
         try
         {
             if (transactionIsolation >= 0)
@@ -2397,8 +2399,33 @@ final class FlintDataSource : DataSource
         throw new SQLFeatureNotSupportedException("FlintDataSource.getConnection(username, password)", "0A000");
     }
 
-    private void returned()
+    /// When each physical connection last came back to the pool (monotonic nanoseconds), by lease slot; zero for one
+    /// never returned.
+    private shared long[1024] returnedAt;
+
+    /// HikariCP's aliveBypassWindowMs: a connection idle for longer is validated when it is borrowed.
+    private enum aliveBypassNanos = 500_000_000L;
+
+    private void returned(ulong slot)
     {
+        atomicStore(returnedAt[slot % returnedAt.length], Deadline.afterMillis(0).monotonicNanoseconds);
+    }
+
+    /// Borrow a lease, validating its connection first if it sat idle past the alive-bypass window, as HikariCP does;
+    /// a connection that fails validation is closed (the engine retires a broken one) and another is borrowed.
+    private FlintConnection borrowAlive()
+    {
+        foreach (attempt; 0 .. 2)
+        {
+            auto connection = new FlintConnection(pool, acquireLease(pool), false, jdbcUrl, username);
+            connection.source = this;
+            const slot = connection.engineLease().leaseSlot();
+            const idleSince = atomicLoad(returnedAt[slot % returnedAt.length]);
+            if (Deadline.afterMillis(0).monotonicNanoseconds - idleSince <= aliveBypassNanos || connection.isValid(0))
+                return connection;
+            connection.close();
+        }
+        throw new SQLTransientConnectionException("Connection is not available: validation failed", "08003");
     }
 
     /++

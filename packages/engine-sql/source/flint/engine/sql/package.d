@@ -251,6 +251,13 @@ struct Connection
         return Identity(slot, generation);
     }
 
+    /// The pool's slot for the physical connection this lease holds: the same for every lease of that connection,
+    /// for per-connection bookkeeping such as how long it sat idle.
+    ulong leaseSlot() const pure nothrow @nogc
+    {
+        return slot;
+    }
+
     /// Execute one parameterized statement and return its affected rows.
     Result!ulong execute(scope const(char)[] sql, scope const(SqlValue)[] params,
             ref scope RequestArena arena, ref Context context) nothrow @nogc

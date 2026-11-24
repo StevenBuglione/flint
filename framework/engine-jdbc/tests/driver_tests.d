@@ -183,6 +183,51 @@ unittest
     assert(connection.getMetaData().getDatabaseProductName() == "PostgreSQL");
 }
 
+@("FlintDataSource validates a borrowed PostgreSQL connection only after it sat idle, as HikariCP does")
+unittest
+{
+    import core.thread.osthread : Thread;
+    import core.time : msecs;
+    import flint.engine.sql.diagnostics : enableSqlDiagnostics, sqlDiagnostics;
+
+    const url = environment.get("FLINT_JDBC_PG_TEST_URL");
+    if (url.length == 0)
+        return;
+    auto source = new FlintDataSource;
+    source.setJdbcUrl(url);
+    source.setMaximumPoolSize(1);
+    scope (exit)
+        source.close();
+    enableSqlDiagnostics(true);
+    scope (exit)
+        enableSqlDiagnostics(false);
+    ulong statementsFor(scope void delegate() @safe borrow)
+    {
+        const before = sqlDiagnostics().statements;
+        borrow();
+        return sqlDiagnostics().statements - before;
+    }
+
+    void borrowAndReturn() @safe
+    {
+        auto connection = source.getConnection();
+        connection.close();
+    }
+
+    // A connection never returned before is validated: one empty query.
+    assert(statementsFor(&borrowAndReturn) == 1);
+    // Back within HikariCP's 500 ms alive-bypass window: borrowed without a query.
+    assert(statementsFor(&borrowAndReturn) == 0);
+    Thread.sleep(600.msecs);
+    // Idle past the window: validated again.
+    assert(statementsFor(&borrowAndReturn) == 1);
+    // isValid itself is that one empty query, as pgjdbc's.
+    auto connection = source.getConnection();
+    scope (exit)
+        connection.close();
+    assert(statementsFor(() @safe { assert(connection.isValid(0)); }) == 1);
+}
+
 /// The behaviour both engines share.
 private void exercise(Connection connection, string table)
 {

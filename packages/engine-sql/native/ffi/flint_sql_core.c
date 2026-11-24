@@ -398,7 +398,8 @@ flint_sql_operation *flint_sql_operation_new(const char *sql, size_t length,
                                              size_t count, int rows, int64_t deadline, int *status)
 {
     *status = FLINT_SQL_INVALID;
-    if (!sql || !length || length > INT_MAX || count > UINT16_MAX ||
+    /* An empty statement is allowed: it is how JDBC drivers validate a connection (pgjdbc's isValid). */
+    if (!sql || length > INT_MAX || count > UINT16_MAX ||
         memchr(sql, 0, length) || !flint_sql_utf8(sql, length))
         return NULL;
     *status = FLINT_SQL_NOMEM;
@@ -425,6 +426,10 @@ flint_sql_operation *flint_sql_operation_new(const char *sql, size_t length,
 flint_sql_operation *flint_sql_operation_new_script(const char *sql, size_t length,
                                                     int64_t deadline, int *status)
 {
+    if (!length) {
+        *status = FLINT_SQL_INVALID;
+        return NULL;
+    }
     flint_sql_operation *operation = flint_sql_operation_new(sql, length, 0, 0, deadline, status);
     if (operation)
         operation->script = 1;
