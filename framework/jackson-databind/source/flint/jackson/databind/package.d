@@ -623,6 +623,15 @@ class ObjectMapper
         _config.factory.releaseGenerator(g);
     }
 
+    /// Factory method for constructing a `JsonGenerator` that writes UTF-8 JSON to `sink` (Java's
+    /// `createGenerator(OutputStream)`, R7), configured as this mapper writes: its features and its INDENT_OUTPUT
+    /// choice. The generator is the caller's and is never recycled, so it stays valid for as long as it is kept.
+    final JsonGenerator createGenerator(OutputSink sink)
+    {
+        return _config.factory.createGenerator(
+                writeContext(_config.isEnabled(SerializationFeature.INDENT_OUTPUT)), sink);
+    }
+
     /// Method that can be used to serialize any Java value as JSON output, using provided `JsonGenerator`.
     void writeValue(T)(JsonGenerator g, T value) if (!is(T == Any))
     {

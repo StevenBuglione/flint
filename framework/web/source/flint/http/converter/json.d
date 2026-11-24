@@ -108,12 +108,12 @@ class JacksonJsonHttpMessageConverter : AbstractHttpMessageConverter
 
         if (value.holds!ProblemDetail)
         {
-            string json;
             try
-                json = problemDetailJson(value.get!ProblemDetail);
+                writeProblemDetail(value.get!ProblemDetail, outputMessage);
+            catch (IOException e)
+                throw e;
             catch (Exception e)
                 throw new HttpMessageNotWritableException("Could not write JSON: " ~ e.msg, e);
-            outputMessage.writeBody(cast(const(ubyte)[]) json);
             return;
         }
         // Streamed into the response as Spring's converter does: the mapper's recycled generator hands each full
@@ -128,29 +128,31 @@ class JacksonJsonHttpMessageConverter : AbstractHttpMessageConverter
     }
 
     /// `ProblemDetailJacksonMixin`: `@JsonInclude(NON_EMPTY)`, Jackson 3's name order for the bean properties
-    /// (detail, instance, status, title, type), then the `properties` map as `@JsonAnyGetter`. Each value is
-    /// written by the mapper, so escaping and numbers are Jackson's.
-    private string problemDetailJson(ProblemDetail detail)
+    /// (detail, instance, status, title, type), then the `properties` map as `@JsonAnyGetter`. One generator from the
+    /// mapper streams the whole object into the body, as Spring's converter serializes it, so escaping, numbers and
+    /// each property's value are Jackson's.
+    private void writeProblemDetail(ProblemDetail detail, HttpOutputMessage outputMessage)
     {
-        string json = "{";
-        void member(string name, string encoded)
-        {
-            json ~= (json.length > 1 ? "," : "") ~ mapper.writeValueAsString(Any.of(name)) ~ ":" ~ encoded;
-        }
-
+        auto g = mapper.createGenerator(&outputMessage.writeBody);
+        g.writeStartObject();
         if (detail.getDetail().length != 0)
-            member("detail", mapper.writeValueAsString(Any.of(detail.getDetail())));
+            g.writeStringProperty("detail", detail.getDetail());
         if (auto instance = detail.getInstance())
             if (instance.toString().length != 0)
-                member("instance", mapper.writeValueAsString(Any.of(instance.toString())));
-        member("status", mapper.writeValueAsString(Any.of(cast(long) detail.getStatus())));
+                g.writeStringProperty("instance", instance.toString());
+        g.writeName("status");
+        g.writeNumber(cast(long) detail.getStatus());
         if (detail.getTitle().length != 0)
-            member("title", mapper.writeValueAsString(Any.of(detail.getTitle())));
+            g.writeStringProperty("title", detail.getTitle());
         if (auto type = detail.getType())
             if (type.toString().length != 0)
-                member("type", mapper.writeValueAsString(Any.of(type.toString())));
+                g.writeStringProperty("type", type.toString());
         foreach (name; detail.getPropertyNames())
-            member(name, mapper.writeValueAsString(detail.getProperty(name)));
-        return json ~ "}";
+        {
+            g.writeName(name);
+            mapper.writeValue(g, detail.getProperty(name));
+        }
+        g.writeEndObject();
+        g.close();
     }
 }
