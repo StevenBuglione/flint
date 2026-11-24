@@ -1052,7 +1052,7 @@ private bool writeRecipes(ref Session session, const ref Manifest manifest, cons
 {
     import std.path : buildPath;
     import flint_tool.engine.cbuild : NativeCPolicy, loadNativeCPolicy;
-    import flint_tool.engine.platformcache : linkGroup;
+    import flint_tool.engine.platformcache : linkGroup, platformObjects;
     import flint_tool.engine.recipe : RecipeExtras, dependencyRecipeDirectory, recipeDirectory,
         renderDependencyRecipe, renderRecipe;
     import flint_tool.support.files : writeIfChanged;
@@ -1083,7 +1083,8 @@ private bool writeRecipes(ref Session session, const ref Manifest manifest, cons
     }
     extras.platform = result.platform.active;
     extras.platformLflags = linkGroup(extras.aotArchive.length
-            ? result.platform.archives ~ extras.aotArchive : result.platform.archives);
+            ? result.platform.archives ~ extras.aotArchive : result.platform.archives) ~ platformObjects(
+            result.platform.modules);
     if (result.platform.active && result.platform.inputs.sharedLink && !linkShared(result, extras, report))
         return false;
     if (result.native.objects.length)

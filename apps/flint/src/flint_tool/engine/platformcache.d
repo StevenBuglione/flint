@@ -1105,23 +1105,61 @@ string phobosDirectory(string compiler)
 /// which DUB hands to the final link rather than to the archive), their linker flags and their libraries.
 string[] platformNativeFlags(scope const PlatformModule[] modules)
 {
-    import std.path : extension;
-
     string[] flags;
     foreach (ref item; modules)
     {
         if (item.archive.length == 0)
             continue;
-        foreach (file; item.files)
-        {
-            if (file.extension == ".o")
-                flags ~= file;
-        }
+        flags ~= moduleObjects(item);
         flags ~= item.lflags;
         foreach (library; item.libs)
             flags ~= "-l" ~ library;
     }
     return flags;
+}
+
+/// The object files the platform modules list as sources (flint:term's C shim). DUB hands them to the final link,
+/// not to the module's archive, so a static link of the cached archives names them itself: an archive built one
+/// object per module pulls the whole module that calls the shim, where `dmd -lib`'s one object per function
+/// pulled only what the program used.
+string[] platformObjects(scope const PlatformModule[] modules)
+{
+    string[] objects;
+    foreach (ref item; modules)
+    {
+        if (item.archive.length)
+            objects ~= moduleObjects(item);
+    }
+    return objects;
+}
+
+private string[] moduleObjects(const ref PlatformModule item)
+{
+    import std.path : extension;
+
+    string[] objects;
+    foreach (file; item.files)
+    {
+        if (file.extension == ".o")
+            objects ~= file;
+    }
+    return objects;
+}
+
+@("a static link names the platform modules' object sources, as the shared object's link does")
+@safe unittest
+{
+    PlatformModule term, core, sourceOnly;
+    term.archive = "/c/libflint_term.a";
+    term.files = ["/h/term/build/terminal-linux.o", "/h/term/source/flint/term/package.d"];
+    term.lflags = ["-lutil"];
+    core.archive = "/c/libflint_core.a";
+    core.files = ["/h/core/source/flint/core.d"];
+    sourceOnly.files = ["/h/x/build/x.o"]; // no archive: not linked from the cache
+    assert(platformObjects([term, core, sourceOnly]) == ["/h/term/build/terminal-linux.o"]);
+    assert(platformNativeFlags([term, core, sourceOnly]) == [
+        "/h/term/build/terminal-linux.o", "-lutil"
+    ]);
 }
 
 /// The linker flags that link the cached archives: one group on ELF linkers, which resolve archives in one pass,
