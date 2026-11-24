@@ -1,0 +1,37 @@
+{
+  "schema": "flint.measure-queue/1",
+  "id": "calibration-session-gs-rest-service-2",
+  "created": "2026-11-24",
+  "status": "pending",
+  "window": "claim",
+  "priority": 9,
+  "estimate_minutes": 4,
+  "not_before": "2026-11-24T20:30:00Z",
+  "requested_by": "the coordinator, 10:35Z: set the drift guard's bands from the Go calibration across separate sessions",
+  "report_to": "the coordinator",
+  "summary": "Calibration session 2 of 8 for gs-rest-service: three Go calibration trials and a probe (diagnostic, never evidence)",
+  "why": "One capture's five calibration samples understate between-session spread on a database workload (petclinic's Go calibration ran 3.5-6% below its band in later sessions, the database state ruled out; error-404's guard failed on p99 alone). Sessions spread over a day give the spread the guard's bands are set from, recorded in the baselines README.",
+  "harness": "45e8b765f772",
+  "builds": {},
+  "measure": {
+    "kind": "command",
+    "steps": [
+      {
+        "argv": [
+          "{python}",
+          "{harness}/tools/spring_baseline.py",
+          "calibrate",
+          "--app",
+          "gs-rest-service",
+          "--samples",
+          "3",
+          "--log",
+          "{out}/session.jsonl"
+        ],
+        "smoke_args": [
+          "--smoke"
+        ]
+      }
+    ]
+  }
+}
