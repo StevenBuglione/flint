@@ -7,10 +7,10 @@
   "builds": {
     "tree": {
       "app": "checkout",
-      "commit": "ca5fbd4a46ed",
+      "commit": "0f01d6edd0a4",
       "flint": true,
       "linker": "mold",
-      "fork": true
+      "fork": false
     }
   },
   "report_to": "the coordinator; docs/milestones/13.md",
@@ -33,7 +33,9 @@
           "--setting",
           "precise-large-pools",
           "--setting",
-          "precise-heap-factor-4"
+          "precise-heap-factor-4",
+          "--baseline",
+          "benchmarks/spring/baselines/go/gs-rest-service/20261124T082805Z"
         ],
         "may_fail": true,
         "smoke_args": [
@@ -43,7 +45,7 @@
       }
     ]
   },
-  "tree_note": "Resume plan 1.5: every baseline part builds in the same private tree at B (flint, mold, the fork build), so all parts measure one toolchain.",
-  "pinned": "B, ca5fbd4a46edd8e558d5876830197f23b5db5295 (coordinator, 2026-11-24 02:06Z)",
-  "blocked_on": "superseded by B2 (coordinator 07:07Z: the whole baseline re-runs at B2 = change 4 + .tools-v4); blocked at 07:25Z so venus stays free after fast-path-pools-ab for data-access's change-4 verification (coordinator 07:24Z)"
+  "tree_note": "B2: one private tree with a copy of the shared toolchain v4.1 (DMD e7757432, DUB with c17ea1ba), mold, builds served with none refused asserted (FLINT_DMD_SERVER_TRACE), strict scratch; runtime parts Flint-only against the captured Go baselines (c015f307)",
+  "pinned": "B2, 0f01d6edd0a416a709e828cd7a7e94d7c531c563 (coordinator 09:12Z, decisions.md 686e28a1)",
+  "blocked_on": "the B2 smokes (after go-baseline-petclinic-rest, watcher stopped): the tree prepared once, then a builds smoke (served compiles asserted) and the Flint-only HTTP smokes against both Go baselines"
 }

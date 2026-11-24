@@ -4,20 +4,20 @@
   "created": "2026-11-23",
   "status": "blocked",
   "window": "claim",
-  "priority": 3,
-  "claim_when": "Section 2 of the owner-approved resume plan (b349fb0a), order 3: a claimed window at B, the plan naming every baseline entry (the 41- and 45-minute HTTP and error parts included)",
+  "priority": 2,
+  "claim_when": "B2 order 2 (coordinator 09:12Z): its first measurement; if the 5,000 req/s warm-up does not hold on the runner, stop and report, do not retry",
   "requested_by": "ADR-030 section 8, Phase 1 exit (coordinator's plan, 2026-11-23 15:20Z); split per application by the coordinator, 2026-11-23 16:45Z",
   "report_to": "the coordinator; docs/milestones/13.md",
-  "estimate_minutes": 41,
+  "estimate_minutes": 25,
   "summary": "Phase 1: the Spring-style REST workload for petclinic-rest, Flint vs Go",
   "why": "One part of the Phase 1 REST evidence, split per application: the manifest's runs, durations and comparator unchanged, scheduled separately. spring_bench.py assemble merges the parts, which must share one commit.",
   "builds": {
     "tree": {
       "app": "checkout",
-      "commit": "ca5fbd4a46ed",
+      "commit": "0f01d6edd0a4",
       "flint": true,
       "linker": "mold",
-      "fork": true
+      "fork": false
     }
   },
   "measure": {
@@ -33,6 +33,8 @@
           "--app",
           "petclinic-rest",
           "--no-context",
+          "--baseline",
+          "PETCLINIC_RECORD",
           "--output",
           "{out}/http.json"
         ],
@@ -44,7 +46,7 @@
       }
     ]
   },
-  "tree_note": "Resume plan 1.5: every baseline part builds in the same private tree at B (flint, mold, the fork build), so all parts measure one toolchain.",
-  "pinned": "B, ca5fbd4a46edd8e558d5876830197f23b5db5295 (coordinator, 2026-11-24 02:06Z)",
-  "blocked_on": "the coordinator's decision (2026-11-24 02:40Z): at B, Flint petclinic-rest serves about 1,620 req/s at 64 connections (1,550 at 8), CPU-bound on its 2 server CPUs (10 CPU-s in 5 s, GC 17 ms of it, PostgreSQL idle), against Go's 28,300; the manifest's 5,000 req/s fixed-rate warm-up cannot be sustained, so load_bench refuses the run (smoke 20261124T021828Z: 'fixed-rate offered load was not sustained') and a 41-minute window would measure nothing. The workload is owner-only; run it once the request path sustains 5,000 req/s"
+  "tree_note": "B2: one private tree with a copy of the shared toolchain v4.1 (DMD e7757432, DUB with c17ea1ba), mold, builds served with none refused asserted (FLINT_DMD_SERVER_TRACE), strict scratch; runtime parts Flint-only against the captured Go baselines (c015f307)",
+  "pinned": "B2, 0f01d6edd0a416a709e828cd7a7e94d7c531c563 (coordinator 09:12Z, decisions.md 686e28a1)",
+  "blocked_on": "the Go baseline of petclinic-rest (go-baseline-petclinic-rest), whose record path this entry names"
 }

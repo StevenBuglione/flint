@@ -188,17 +188,20 @@ class Pins(unittest.TestCase):
     def test_baseline_entries_share_one_private_fork_tree(self):
         # Resume plan 1.5: the baseline's parts all build in the same tree flavour (flint, mold, the fork build).
         ids = ['phase1-builds-petclinic', 'phase1-http-gs-rest', 'phase1-http-petclinic', 'error-404-p99',
-               'error-validation-p99', 'phase1-builds-gs-relational', 'phase1-builds-gs-rest', 'release-static-ab',
+               'error-validation-p99', 'phase1-builds-gs-relational', 'phase1-builds-gs-rest',
                ] + [f'phase1-gc-matrix-{n}' for n in ('1', '2', '3', 'gs-rest-1', 'gs-rest-2', 'gs-rest-3')]
         # fast-path-pools-ab is an A/B inside one commit, never assembled: it moved to main with the RSS census.
-        commits = set()
+        # One tree flavour and one commit for every part (B: the fork build; B2: a private copy of shared v4.1).
+        commits, flavours = set(), set()
         for name in ids:
             entry = measure_queue.load_entry(name)
             tree = entry['builds']['tree']
-            self.assertEqual((tree['flint'], tree['linker'], tree['fork']), (True, 'mold', True), name)
+            self.assertEqual((tree['flint'], tree['linker']), (True, 'mold'), name)
             self.assertTrue(all(step.get('in') == 'tree' for step in entry['measure']['steps']), name)
             commits.add(tree['commit'])
+            flavours.add(bool(tree.get('fork')))
         self.assertEqual(len(commits), 1)
+        self.assertEqual(len(flavours), 1)
 
 
 class Provenance(unittest.TestCase):

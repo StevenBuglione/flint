@@ -4,7 +4,7 @@
   "created": "2026-11-24",
   "status": "pending",
   "window": "claim",
-  "priority": 2,
+  "priority": 1,
   "estimate_minutes": 45,
   "requested_by": "owner decision c015f307; the coordinator, 07:56Z: capture the Go baselines now, while venus is free, ahead of B2",
   "report_to": "the coordinator",
