@@ -478,10 +478,17 @@ final class ServletEngineRequest : HttpServletRequest
 
     string[] getHeaders(string name)
     {
-        string[] found;
+        // Counted first, so the result is one exact allocation, or none when the field is absent.
+        size_t count;
+        foreach (existing; names)
+            count += equalsIgnoreCase(existing, name);
+        if (count == 0)
+            return null;
+        auto found = new string[count];
+        size_t at;
         foreach (index, existing; names)
             if (equalsIgnoreCase(existing, name))
-                found ~= values[index];
+                found[at++] = values[index];
         return found;
     }
 

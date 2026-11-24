@@ -114,3 +114,25 @@ unittest
     assert(ex.getMessage().startsWith("Could not parse 'Accept' header"));
     assert(ex.getMessage().canFind("Invalid mime type"));
 }
+
+@("Flint: resolveHeaderValues gives the strategy's answer for the same Accept values without a request")
+unittest
+{
+    // No Accept field: the all-types list, as for a request without one.
+    const none = HeaderContentNegotiationStrategy.resolveHeaderValues(null);
+    assert(none.length == 1 && none[0] == MediaType.ALL);
+    auto fixture = setup();
+    fixture.servletRequest.addHeader("Accept", "text/plain; q=0.5, text/html");
+    fixture.servletRequest.addHeader("Accept", "application/json");
+    const viaRequest = fixture.strategy.resolveMediaTypes(fixture.webRequest);
+    const direct = HeaderContentNegotiationStrategy.resolveHeaderValues(
+            ["text/plain; q=0.5, text/html", "application/json"]);
+    assert(direct.map!(m => m.toString()).array == viaRequest.map!(m => m.toString()).array);
+    // An unparsable value is refused the same way.
+    bool refused;
+    try
+        HeaderContentNegotiationStrategy.resolveHeaderValues(["textplain; q=0.5"]);
+    catch (HttpMediaTypeNotAcceptableException)
+        refused = true;
+    assert(refused);
+}

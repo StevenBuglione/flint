@@ -24,8 +24,7 @@ import flint.java.lang : IllegalStateException;
 import flint.util : MimeTypeUtils;
 import flint.web : HttpMediaTypeNotAcceptableException, HttpMediaTypeNotSupportedException,
     HttpRequestMethodNotSupportedException;
-import flint.web.accept : ContentNegotiationManager;
-import flint.web.context.request : ServletWebRequest;
+import flint.web.accept : HeaderContentNegotiationStrategy;
 import flint.web.method : HandlerMethod;
 import flint.web.servlet : HandlerMapping;
 import flint.web.cors : CorsConfiguration;
@@ -378,7 +377,11 @@ final class RequestMappingInfo
         auto cached = request.getAttribute(mediaTypesAttribute);
         if (!cached.isNull())
             return cached.get!(MediaType[]);
-        auto result = new ContentNegotiationManager().resolveMediaTypes(new ServletWebRequest(request));
+        // Spring's DEFAULT_CONTENT_NEGOTIATION_MANAGER holds only the header strategy, whose answer it returns (the
+        // all-types list included): resolving the Accept values directly gives the same list without building a
+        // manager and a request wrapper per lookup.
+        auto values = request.getHeaders(HttpHeaders.ACCEPT);
+        auto result = HeaderContentNegotiationStrategy.resolveHeaderValues(values.length == 0 ? null : values);
         request.setAttribute(mediaTypesAttribute, Any.of(result));
         return result;
     }

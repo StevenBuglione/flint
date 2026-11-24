@@ -35,7 +35,16 @@ class HeaderContentNegotiationStrategy : ContentNegotiationStrategy
 {
     MediaType[] resolveMediaTypes(NativeWebRequest request)
     {
-        auto headerValueArray = request.getHeaderValues(HttpHeaders.ACCEPT);
+        return resolveHeaderValues(request.getHeaderValues(HttpHeaders.ACCEPT));
+    }
+
+    /++
+    Flint: the media types of the given `Accept` values (null when the request has none), as `resolveMediaTypes`
+    reads them from a request. A caller that holds the request itself, such as `ProducesRequestCondition`'s
+    lookup with Spring's default manager, uses it without wrapping the request or building a manager.
+    +/
+    static MediaType[] resolveHeaderValues(string[] headerValueArray)
+    {
         if (headerValueArray is null)
             return MEDIA_TYPE_ALL_LIST();
         try

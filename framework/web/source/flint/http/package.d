@@ -1181,11 +1181,11 @@ struct HttpHeaders
         return view;
     }
 
-    /// An empty, read-only instance (Java's `HttpHeaders.EMPTY`).
-    static HttpHeaders EMPTY() pure nothrow
+    /// An empty, read-only instance (Java's `HttpHeaders.EMPTY`). Flint: it has no store until something asks for
+    /// one (every read treats a missing store as empty, and every write is refused), so it allocates nothing.
+    static HttpHeaders EMPTY() pure nothrow @nogc
     {
         HttpHeaders result;
-        result.store = new Store;
         result.readOnly = true;
         return result;
     }

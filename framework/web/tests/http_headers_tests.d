@@ -527,3 +527,25 @@ unittest
     assert(seen == "Y:y X-0:again ", seen);
     assert(headers.headerNames() == ["Y"]);
 }
+
+@("Flint: HttpHeaders.EMPTY is empty and read-only without a store, and a writable copy of it works")
+unittest
+{
+    auto empty = HttpHeaders.EMPTY();
+    assert(empty.isEmpty() && empty.size() == 0);
+    assert(empty.getFirst("Accept") is null && empty.get("Accept") is null);
+    assert(!empty.containsHeader("Accept"));
+    bool refused;
+    try
+        empty.add("Accept", "text/plain");
+    catch (UnsupportedOperationException)
+        refused = true;
+    assert(refused && empty.isEmpty());
+    // As Java's HttpHeaders(HttpHeaders): a writable instance over it.
+    auto writable = HttpHeaders(empty);
+    writable.add("Accept", "text/plain");
+    assert(writable.getFirst("Accept") == "text/plain");
+    // Each EMPTY is still empty.
+    assert(HttpHeaders.EMPTY().isEmpty());
+    assert(HttpHeaders.readOnlyHttpHeaders(HttpHeaders.EMPTY()).isEmpty());
+}
