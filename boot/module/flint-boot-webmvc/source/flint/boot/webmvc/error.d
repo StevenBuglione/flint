@@ -160,14 +160,17 @@ class DefaultErrorAttributes : ErrorAttributes, HandlerExceptionResolver, Ordere
         return typeid(error).name ~ ": " ~ messageOf(error).idup ~ "\n\tat " ~ error.file ~ ":" ~ lineOf(error);
     }
 
-    // Java's `Throwable.getMessage()`: a Flint exception's `getMessage`, which a subclass may build on demand, and
-    // druntime's message for any other D throwable.
+    // Java's `Throwable.getMessage()`: a Flint exception's `getMessage` (RuntimeException, AssertionError and the
+    // BindException family), which a subclass may build on demand, and druntime's message for any other D throwable.
     private static const(char)[] messageOf(Throwable error)
     {
         import flint.java.lang : AssertionError, RuntimeException;
+        import flint.validation : BindException;
 
         if (auto runtime = cast(RuntimeException) error)
             return runtime.getMessage();
+        if (auto bind = cast(BindException) error) // a checked exception in Java, so a D Exception here
+            return bind.getMessage();
         if (auto assertion = cast(AssertionError) error)
             return assertion.getMessage();
         return error.message();

@@ -114,6 +114,29 @@ private final class MessageOnDemandException : RuntimeException
     assert(trace.startsWith("error_test.MessageOnDemandException: built on demand\n\tat "), trace);
 }
 
+@("FlintErrorMessageBindException: a BindException's trace reads its getMessage(), built on demand with a null msg")
+unittest
+{
+    import flint.java.util : HashMap;
+    import flint.validation : BindException, MapBindingResult, ObjectError;
+    import std.algorithm.searching : startsWith;
+
+    auto target = new HashMap!(string, Any);
+    target.put("a", Any.of("b"));
+    auto result = new MapBindingResult(target, "objectName");
+    result.addError(new ObjectError("c", "d"));
+    auto exception = new BindException(result);
+    assert(exception.msg is null);
+    auto errorAttributes = new DefaultErrorAttributes;
+    auto request = errorRequest(400, "/x");
+    errorAttributes.resolveException(request, new MockHttpServletResponse, null, exception);
+    auto attributes = errorAttributes.getErrorAttributes(new ServletWebRequest(request),
+            ErrorAttributeOptions.of(Include.STACK_TRACE));
+    const trace = attributes.get("trace").get!string;
+    assert(exception.getMessage().length);
+    assert(trace.startsWith("flint.validation.BindException: " ~ exception.getMessage() ~ "\n\tat "), trace);
+}
+
 @("FlintErrorMessageEmpty: an empty getMessage() is no message") unittest
 {
     auto errorAttributes = new DefaultErrorAttributes;
