@@ -1,7 +1,7 @@
 {
   "schema": "flint.measure-queue/1",
   "created": "2026-11-23",
-  "status": "pending",
+  "status": "blocked",
   "window": "natural",
   "requested_by": "the coordinator, via data-access (2026-11-23 17:07Z): the same three setting groups as petclinic-rest's",
   "builds": {
@@ -46,5 +46,6 @@
     ]
   },
   "tree_note": "Resume plan 1.5: every baseline part builds in the same private tree at B (flint, mold, the fork build), so all parts measure one toolchain.",
-  "pinned": "B, ca5fbd4a46edd8e558d5876830197f23b5db5295 (coordinator, 2026-11-24 02:06Z)"
+  "pinned": "B, ca5fbd4a46edd8e558d5876830197f23b5db5295 (coordinator, 2026-11-24 02:06Z)",
+  "blocked_on": "superseded by B2 (coordinator 07:07Z: the whole baseline re-runs at B2 = change 4 + .tools-v4); blocked at 07:25Z so venus stays free after fast-path-pools-ab for data-access's change-4 verification (coordinator 07:24Z)"
 }

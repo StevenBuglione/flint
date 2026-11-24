@@ -2,7 +2,7 @@
   "schema": "flint.measure-queue/1",
   "id": "petclinic-owner1-diag-main",
   "created": "2026-11-24",
-  "status": "pending",
+  "status": "blocked",
   "window": "claim",
   "priority": 10,
   "estimate_minutes": 10,
@@ -54,5 +54,6 @@
         ]
       }
     ]
-  }
+  },
+  "blocked_on": "superseded by B2 (coordinator 07:07Z: the whole baseline re-runs at B2 = change 4 + .tools-v4); blocked at 07:25Z so venus stays free after fast-path-pools-ab for data-access's change-4 verification (coordinator 07:24Z)"
 }
