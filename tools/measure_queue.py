@@ -996,6 +996,11 @@ def scored_server_trace(path, logs):
     primes = [p.stat().st_mtime for p in Path(logs).glob('*-prime-*.log')] if Path(logs).is_dir() else []
     cutoff = (max(primes) - (time.time() - time.monotonic())) if primes else None
     counts = {'compiled': 0, 'refused': 0}
+    # Each build log is written to its end, so a request belongs to the first log that ends after it: that names the
+    # build (flavour, state, trial) a refused request fell in, the finest identity B2's toolchain gives.
+    offset = time.time() - time.monotonic()
+    ends = sorted((p.stat().st_mtime - offset, p.name) for p in Path(logs).glob('*.log')) if Path(logs).is_dir() else []
+    refused_in = {}
     if Path(path).is_file():
         for line in Path(path).read_text(errors='replace').splitlines():
             parts = line.split()
@@ -1003,7 +1008,10 @@ def scored_server_trace(path, logs):
                 continue
             if cutoff is None or float(parts[0]) > cutoff:
                 counts[parts[2]] += 1
-    return dict(counts, after_priming=cutoff is not None)
+                if parts[2] == 'refused':
+                    build = next((name for end, name in ends if end >= float(parts[0])), 'after the last build log')
+                    refused_in[build] = refused_in.get(build, 0) + 1
+    return dict(counts, after_priming=cutoff is not None, refused_in=refused_in)
 
 
 def server_trace(path):

@@ -80,6 +80,60 @@
           "1"
         ],
         "in": "tree"
+      },
+      {
+        "in": "tree",
+        "served_acceptance": "dev",
+        "argv": [
+          "sh",
+          "-c",
+          "cd benchmarks/spring/flint/gs-rest-service && flint build --no-debug"
+        ]
+      },
+      {
+        "in": "tree",
+        "served_acceptance": "dev",
+        "argv": [
+          "{python}",
+          "tools/spring_bench.py",
+          "accept",
+          "gs-rest-service",
+          "--wire",
+          "exact",
+          "--start",
+          "./.flint/build/dev/gs-rest-service",
+          "--cwd",
+          "benchmarks/spring/flint/gs-rest-service",
+          "--json",
+          "{out}/acceptance-flint-served-dev.json"
+        ]
+      },
+      {
+        "in": "tree",
+        "served_acceptance": "static",
+        "argv": [
+          "sh",
+          "-c",
+          "cd benchmarks/spring/flint/gs-rest-service && flint build --static --no-debug"
+        ]
+      },
+      {
+        "in": "tree",
+        "served_acceptance": "static",
+        "argv": [
+          "{python}",
+          "tools/spring_bench.py",
+          "accept",
+          "gs-rest-service",
+          "--wire",
+          "exact",
+          "--start",
+          "./.flint/build/dev/gs-rest-service",
+          "--cwd",
+          "benchmarks/spring/flint/gs-rest-service",
+          "--json",
+          "{out}/acceptance-flint-served-static.json"
+        ]
       }
     ]
   },
@@ -703,5 +757,5 @@
   "tree_note": "B2: one private tree with a copy of the shared toolchain v4.1 (DMD e7757432, DUB with c17ea1ba), mold, builds served with none refused asserted (FLINT_DMD_SERVER_TRACE), strict scratch; runtime parts Flint-only against the captured Go baselines (c015f307)",
   "pinned": "B2, 0f01d6edd0a416a709e828cd7a7e94d7c531c563 (coordinator 09:12Z, decisions.md 686e28a1)",
   "served_compiles": "report",
-  "served_note": "coordinator, option 1: B2's toolchain predates 4ac873d8's client-side signal, so about one request per cold build is refused by the server; certified with the compiled and refused counts reported, acceptance passing on the built binaries; the next baseline returns to 0 refused"
+  "served_note": "coordinator, option 1: B2's toolchain predates 4ac873d8's client-side signal, so about one request per cold build is refused by the server; certified with the compiled and refused counts reported (refused requests named by the build they fell in), and acceptance passing on served dev and static binaries built in the same tree after the measurement; the next baseline returns to 0 refused"
 }

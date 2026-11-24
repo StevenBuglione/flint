@@ -260,9 +260,12 @@ class ServedCompiles(unittest.TestCase):
             trace.write_text(f'{mono_now - 20:.6f} 1 refused\n{mono_now - 15:.6f} 2 compiled\n'
                              f'{mono_now - 5:.6f} 3 compiled\n{mono_now - 4:.6f} 4 compiled\n')
             self.assertEqual(measure_queue.scored_server_trace(trace, logs),
-                             {'compiled': 2, 'refused': 0, 'after_priming': True})
+                             {'compiled': 2, 'refused': 0, 'after_priming': True, 'refused_in': {}})
+            trial = logs / 'app-flint-cached-cold-0.log'
+            trial.write_text('built')
             trace.write_text(trace.read_text() + f'{mono_now - 3:.6f} 5 refused\n')
-            self.assertEqual(measure_queue.scored_server_trace(trace, logs)['refused'], 1)
+            out = measure_queue.scored_server_trace(trace, logs)
+            self.assertEqual((out['refused'], out['refused_in']), (1, {'app-flint-cached-cold-0.log': 1}))
 
     def test_only_this_trees_servers_stop(self):
         with tempfile.TemporaryDirectory() as temporary:
