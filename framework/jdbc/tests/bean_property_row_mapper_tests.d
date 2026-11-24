@@ -430,6 +430,8 @@ private final class MockResultSet : BlackHole!ResultSet
     private int[string] columns;
     private int rowsServed;
     int closeCalls;
+    /// Flint: how often a mapper asked for the columns.
+    int metaDataCalls;
 
     this(MockType type)
     {
@@ -486,6 +488,7 @@ private final class MockResultSet : BlackHole!ResultSet
 
     override ResultSetMetaData getMetaData()
     {
+        ++metaDataCalls;
         return new MockMetaData(labels);
     }
 
@@ -607,6 +610,21 @@ version (FlintJdbcRowMapperMappedClass) // BeanPropertyRowMapper!T fixes its cla
         auto mapper = new BeanPropertyRowMapper!Person;
         mapper.setMappedClass(typeid(Person));
     }
+}
+
+@("BeanPropertyRowMapper matches columns to properties once per result set, not on every row (Flint)")
+unittest
+{
+    auto mapper = new BeanPropertyRowMapper!Person;
+    auto rows = new MockResultSet(MockType.ONE);
+    verifyPerson(mapper.mapRow(rows, 0));
+    verifyPerson(mapper.mapRow(rows, 1));
+    assert(rows.metaDataCalls == 1, "the second row matched its columns again");
+    // Another result set, whose first column is labelled differently, is matched afresh.
+    auto relabelled = new MockResultSet(MockType.THREE);
+    auto person = mapper.mapRow(relabelled, 0);
+    assert(relabelled.metaDataCalls == 1);
+    assert(person.getName() is null && person.getAge() == 22, "the plan of the earlier result set was reused");
 }
 
 @("BeanPropertyRowMapperTests.staticQueryWithRowMapper")

@@ -2179,6 +2179,17 @@ underscored form (`first_name` for `firstName`).
 +/
 /// `descriptorOf!T` plus the properties `T` inherits from its base classes: `descriptorOf` describes the members a
 /// class declares, and a JavaBean's setters may be declared by a superclass (petclinic's `Owner.setFirstName`).
+/// `T`'s column-name index (`BeanColumnIndex`), built once per type, as its descriptor is.
+package(flint.jdbc) BeanColumnIndex beanColumnIndexOf(T)()
+{
+    import flint.conc.slot : ProcessSlot;
+
+    static shared ProcessSlot!BeanColumnIndex slot;
+    if (auto built = slot.get())
+        return built;
+    return slot.setIfAbsent(new BeanColumnIndex(beanDescriptorOf!T()));
+}
+
 package(flint.jdbc) imported!"flint.engine.aot.descriptor".Descriptor beanDescriptorOf(T)()
 {
     import flint.conc.slot : ProcessSlot;
@@ -2228,7 +2239,7 @@ class BeanPropertyRowMapper(T) : RowMapper!T
     /// base classes, as Spring's `BeanUtils.getPropertyDescriptors` includes inherited setters.
     this()
     {
-        this(beanDescriptorOf!T());
+        mapping = new BeanPropertyRowMapping(beanDescriptorOf!T(), false, beanColumnIndexOf!T());
     }
 
     /// Create a new `BeanPropertyRowMapper` for `T`, described by `descriptor`: the descriptor Flint AOT generated
@@ -2315,6 +2326,133 @@ class DataClassRowMapper(T) : BeanPropertyRowMapper!T
     }
 }
 
+/++
+A bean type's settable properties by the names a column may carry: each property's lower-case name and its
+underscored name (`first_name` for `firstName`), Spring's `mappedProperties` keys, sorted so a column label is
+matched with one binary search instead of converting every property's name. Built once per type
+(`beanColumnIndexOf`) and only read afterwards.
++/
+final class BeanColumnIndex
+{
+    import flint.engine.aot.descriptor : Descriptor;
+
+    private string[] keys;
+    /// Per key, the properties it names, the last first: as in Spring's map, later properties replace earlier ones.
+    private size_t[][] candidates;
+
+    /// Index the settable properties of `descriptor`.
+    this(const(Descriptor) descriptor)
+    {
+        static struct Entry
+        {
+            string key;
+            size_t property;
+        }
+
+        Entry[] entries;
+        foreach (i, ref property; descriptor.properties)
+        {
+            if (property.set is null)
+                continue;
+            const lowered = lowerName(property.name);
+            entries ~= Entry(lowered, i);
+            const underscored = JdbcUtils.convertPropertyNameToUnderscoreName(property.name);
+            if (underscored != lowered)
+                entries ~= Entry(underscored, i);
+        }
+        // Sorted by key, the later property first within a key; once per type, over a few names.
+        foreach (i; 1 .. entries.length)
+        {
+            const entry = entries[i];
+            size_t j = i;
+            for (; j > 0 && (entries[j - 1].key > entry.key || (entries[j - 1].key == entry.key
+                    && entries[j - 1].property < entry.property)); --j)
+                entries[j] = entries[j - 1];
+            entries[j] = entry;
+        }
+        foreach (entry; entries)
+        {
+            if (keys.length != 0 && keys[$ - 1] == entry.key)
+            {
+                if (candidates[$ - 1][$ - 1] != entry.property)
+                    candidates[$ - 1] ~= entry.property;
+                continue;
+            }
+            keys ~= entry.key;
+            candidates ~= [entry.property];
+        }
+    }
+
+    /// The property `column` maps to, skipping those `suppressed` marks, or `size_t.max`. `column` is compared without
+    /// its spaces, ignoring ASCII case. Allocates nothing.
+    size_t find(scope const(char)[] column, scope const(bool)[] suppressed) const pure nothrow @nogc
+    {
+        char[128] buffer;
+        size_t length;
+        foreach (c; column)
+        {
+            if (c == ' ')
+                continue;
+            if (length == buffer.length)
+                return findLong(column, suppressed);
+            buffer[length++] = c >= 'A' && c <= 'Z' ? cast(char)(c + ('a' - 'A')) : c;
+        }
+        const name = buffer[0 .. length];
+        size_t low = 0, high = keys.length;
+        while (low < high)
+        {
+            const middle = (low + high) / 2;
+            if (keys[middle] < name)
+                low = middle + 1;
+            else
+                high = middle;
+        }
+        if (low == keys.length || keys[low] != name)
+            return size_t.max;
+        foreach (property; candidates[low])
+            if (suppressed is null || !suppressed[property])
+                return property;
+        return size_t.max;
+    }
+
+    /// A label longer than the stack buffer: compared key by key.
+    private size_t findLong(scope const(char)[] column, scope const(bool)[] suppressed) const pure nothrow @nogc
+    {
+        foreach (k, key; keys)
+        {
+            size_t j;
+            bool same = true;
+            foreach (c; column)
+            {
+                if (c == ' ')
+                    continue;
+                const lowered = c >= 'A' && c <= 'Z' ? cast(char)(c + ('a' - 'A')) : c;
+                if (j == key.length || key[j] != lowered)
+                {
+                    same = false;
+                    break;
+                }
+                ++j;
+            }
+            if (!same || j != key.length)
+                continue;
+            foreach (property; candidates[k])
+                if (suppressed is null || !suppressed[property])
+                    return property;
+        }
+        return size_t.max;
+    }
+
+    private static string lowerName(string name) pure nothrow
+    {
+        char[] lowered = name.dup;
+        foreach (ref c; lowered)
+            if (c >= 'A' && c <= 'Z')
+                c = cast(char)(c + ('a' - 'A'));
+        return lowered.idup;
+    }
+}
+
 /// The erased engine of `BeanPropertyRowMapper` and `DataClassRowMapper`: maps a row through a type's descriptor.
 final class BeanPropertyRowMapping
 {
@@ -2330,6 +2468,16 @@ final class BeanPropertyRowMapping
     private const(ConstructorDescriptor)* mappedConstructor;
     private size_t[string] underscoredParameterIndexes;
     private size_t[string] lowerCaseParameterIndexes;
+    /// The result set whose columns `columnProperties` maps, and for each of its `plannedColumns` columns the mapped
+    /// property's index (`size_t.max` for none): worked out on its first row, reused for the rest. Holding the result
+    /// set keeps its identity from being reused by another.
+    private ResultSet plannedResult;
+    private size_t[] columnProperties;
+    private size_t plannedColumns;
+    /// Room for the plan of a result with up to 16 columns, so a mapping made per query allocates none.
+    private size_t[16] inlinePlan;
+    /// The descriptor's names, sorted for lookup, when the mapping was built for a type (`beanColumnIndexOf`).
+    private const(BeanColumnIndex) columns;
 
     /++
     Map rows to instances of the type `descriptor` describes. A column maps to the property whose lower-case name or
@@ -2337,10 +2485,11 @@ final class BeanPropertyRowMapping
     `mappedProperties` keys. The match is made on the descriptor's names as each row is mapped, so building a
     mapping, which callers do per query (`BeanPropertyRowMapper.newInstance`), allocates no names or maps.
     +/
-    this(const(Descriptor) descriptor, bool checkFullyPopulated)
+    this(const(Descriptor) descriptor, bool checkFullyPopulated, const(BeanColumnIndex) columns = null)
     {
         this.descriptor = descriptor;
         this.checkFullyPopulated = checkFullyPopulated;
+        this.columns = columns;
         foreach (ref property; descriptor.properties)
             if (property.set !is null)
                 ++mappedPropertyCount;
@@ -2420,18 +2569,17 @@ final class BeanPropertyRowMapping
         auto mappedObject = constructMappedInstance(rs);
         if (!hasMappedProperties()) // Nothing left to populate via setters (for example, a record mapped through its constructor)
             return mappedObject;
-        auto rsmd = rs.getMetaData();
-        const columnCount = rsmd.getColumnCount();
+        const plan = columnPlan(rs);
         // Which mapped properties a column populated, only when that is checked: one word, or one array past 64.
         ulong populatedBits;
         bool[] populatedMany = checkFullyPopulated && descriptor.properties.length > 64
             ? new bool[descriptor.properties.length] : null;
         size_t populated;
-        foreach (index; 1 .. columnCount + 1)
+        foreach (column, found; plan)
         {
-            const found = mappedPropertyIndex(JdbcUtils.lookupColumnName(rsmd, index));
             if (found == size_t.max)
                 continue;
+            const index = cast(int) column + 1;
             auto property = &descriptor.properties[found];
             auto value = columnValue(rs, index, property.type);
             if (value.isNull && isPrimitive(property.type))
@@ -2460,6 +2608,26 @@ final class BeanPropertyRowMapping
             throw new InvalidDataAccessApiUsageException("Given ResultSet does not contain all properties "
                     ~ "necessary to populate object of class " ~ descriptor.name);
         return mappedObject;
+    }
+
+    /// Each column's mapped property index in `rs`, matched by name once per result set rather than on every row.
+    private const(size_t)[] columnPlan(ResultSet rs)
+    {
+        if (rs is plannedResult)
+            return columnProperties[0 .. plannedColumns];
+        auto rsmd = rs.getMetaData();
+        const columnCount = rsmd.getColumnCount();
+        if (columnProperties.length < columnCount)
+            columnProperties = columnCount <= inlinePlan.length ? inlinePlan[] : new size_t[columnCount];
+        foreach (index; 1 .. columnCount + 1)
+        {
+            const label = JdbcUtils.lookupColumnName(rsmd, index);
+            columnProperties[index - 1] = columns !is null ? columns.find(label,
+                    suppressed) : mappedPropertyIndex(label);
+        }
+        plannedResult = rs;
+        plannedColumns = columnCount;
+        return columnProperties[0 .. columnCount];
     }
 
     /++
@@ -2728,7 +2896,20 @@ unittest
     assert(mapping.mappedPropertyIndex("last_name") == size_t.max);
     assert(GC.stats().allocatedInCurrentThread == matching, "matching a column allocated");
 
+    // The per-type index finds the same properties without converting names, and allocates nothing either.
+    auto columns = beanColumnIndexOf!RowMappingBean();
+    assert(beanColumnIndexOf!RowMappingBean() is columns, "the index is built once per type");
+    static immutable labels = [
+        "FIRST_NAME", "first name", "FirstName", "id", "CITY", "first_nam", "firstname_", "last_name"
+    ];
+    const looking = GC.stats().allocatedInCurrentThread;
+    foreach (label; labels)
+        assert(columns.find(label, null) == mapping.mappedPropertyIndex(label), label);
+    assert(GC.stats().allocatedInCurrentThread == looking, "an index lookup allocated");
+
     // DataClassRowMapper: a constructor parameter suppresses the property it maps, by either of its names.
     mapping.suppressProperty("first_name");
     assert(mapping.mappedPropertyIndex("first_name") == size_t.max && mapping.mappedPropertyCount == 2);
+    assert(columns.find("first_name", mapping.suppressed) == size_t.max, "the index ignored a suppressed property");
+    assert(columns.find("city", mapping.suppressed) == index("city"));
 }
