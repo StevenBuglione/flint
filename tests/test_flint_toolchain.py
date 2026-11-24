@@ -323,6 +323,35 @@ class CompileServerPreludeTests(unittest.TestCase):
         self.assertEqual(link.returncode, 0, link.stderr)
         self.assertEqual(subprocess.run([str(self.temp / 'app')]).returncode, 0)
 
+    # druntime instances the server's preload creates speculatively (inside CTFE and __traits(compiles)), which this
+    # module instantiates for real: mulu has inline assembly, the array hooks are templates.
+    HOOKS = ('module hooks;\nimport core.checkedint : mulu;\nint[] both(int[] a, int[] b) { return a ~ b; }\n'
+             'void add(ref int[] a, int x) { a ~= x; }\nstring bang(string s) { return s ~ "!"; }\n'
+             'size_t product(size_t a, size_t b) { bool overflow; return mulu(a, b, overflow); }\n')
+
+    def assert_served_object_is_the_in_process_object(self, *switches):
+        (self.temp / 'hooks.d').write_text(self.HOOKS, encoding='utf-8')
+        common = ['-I' + str(self.temp / 'lib'), '-version=PlatformOn', '-c', *switches, 'hooks.d']
+        local = self.compile(*common, '-oflocal.o', env=dict(self.env, FLINT_DMD_SERVER='0'))
+        self.assertEqual(local.returncode, 0, local.stderr)
+        objects = []
+        for name in ('served1.o', 'served2.o'):
+            result, verdict = self.served(*common, '-of' + name)
+            self.assertEqual((result.returncode, verdict), (0, 'compiled'), result.stderr)
+            objects.append((self.temp / name).read_bytes())
+        self.assertEqual(objects[0], objects[1])
+        # Byte for byte, so the same symbols are defined and undefined and the linker pulls the same members: a served
+        # object once left mulu and __arrayAlloc!char undefined (the instance stayed in the preloaded module that
+        # created it speculatively), and then assembled mulu with 16-bit addressing (preloaded before backend_init).
+        self.assertEqual(objects[0], (self.temp / 'local.o').read_bytes())
+
+    def test_a_served_object_is_the_in_process_object(self):
+        self.assert_served_object_is_the_in_process_object()
+
+    def test_a_served_object_is_the_in_process_object_with_codegen_switches(self):
+        # The server's own backend_init must not leave its switches in the backend configuration a request sees.
+        self.assert_served_object_is_the_in_process_object('-O', '-g', '-release')
+
     def test_a_request_without_the_platform_paths_or_versions_compiles_in_process(self):
         # A relative spelling of the platform path is the same path (DUB passes them relative to the package).
         result, verdict = self.served('-Ilib', '-version=PlatformOn', '-c', 'app.d')

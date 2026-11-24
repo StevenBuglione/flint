@@ -1889,7 +1889,7 @@ diff -ruN a/dmd/link.d b/dmd/link.d
          foreach (i; 0 .. argv.length)
          {
 diff --git a/dmd/main.d b/dmd/main.d
-index 2d7f373..b0c2fd7 100644
+index 2d7f373..048bb39 100644
 --- a/dmd/main.d
 +++ b/dmd/main.d
 @@ -73,6 +73,8 @@ import dmd.target;
@@ -1901,7 +1901,7 @@ index 2d7f373..b0c2fd7 100644
  
  /**
   * DMD's entry point, C main.
-@@ -148,9 +150,40 @@ extern (C) int _Dmain(const(char)[][] dargs)
+@@ -148,9 +150,82 @@ extern (C) int _Dmain(const(char)[][] dargs)
              fputs(buf.peekChars(), stderr);
          }
  
@@ -1936,13 +1936,55 @@ index 2d7f373..b0c2fd7 100644
 +int zygoteChildMain(const(char)[][] argv)
 +{
 +    driverParams = DMDparams.init;
++    freshBackend.restore();
 +    return tryMain(argv, global.params);
 +}
++
++/**
++ * Flint: the backend state `backend_init` sets, as a fresh process has it. The compile server runs `backend_init`
++ * before preloading, as an ordinary compile runs it before semantic analysis: the inline assembler encodes
++ * addresses by the target's pointer size, and without it assembled 16-bit addressing into preloaded instances.
++ * Each request then starts from the fresh state again, so its own `backend_init` (`config` accumulates flags) gives
++ * what it would give without the server.
++ */
++private struct FreshBackend
++{
++    import dmd.backend.cc : config;
++    import dmd.backend.cdef : Config;
++    import dmd.backend.ty : tytab, _tyrelax, tyequiv, _tysize, _tyalignsize, TYMAX;
++
++    Config config_;
++    uint[256] tytab_;
++    ubyte[TYMAX] tyrelax_, tyequiv_;
++    byte[256] tysize_, tyalignsize_;
++
++    void save()
++    {
++        config_ = config;
++        tytab_ = tytab;
++        tyrelax_ = _tyrelax;
++        tyequiv_ = tyequiv;
++        tysize_ = _tysize;
++        tyalignsize_ = _tyalignsize;
++    }
++
++    void restore()
++    {
++        config = config_;
++        tytab = tytab_;
++        _tyrelax = tyrelax_;
++        tyequiv = tyequiv_;
++        _tysize = tysize_;
++        _tyalignsize = tyalignsize_;
++    }
++}
++
++private __gshared FreshBackend freshBackend;
 +
  /************************************************************************************/
  
  private:
-@@ -176,7 +209,8 @@ private int tryMain(const(char)[][] argv, out Param params)
+@@ -176,7 +251,8 @@ private int tryMain(const(char)[][] argv, out Param params)
  
      Strings files;
      Strings libmodules;
@@ -1952,7 +1994,7 @@ index 2d7f373..b0c2fd7 100644
  
      ErrorSink eSink = global.errorSink;
  
-@@ -187,11 +221,26 @@ private int tryMain(const(char)[][] argv, out Param params)
+@@ -187,11 +263,26 @@ private int tryMain(const(char)[][] argv, out Param params)
          global.plugErrorSinks();
      }
  
@@ -1980,7 +2022,7 @@ index 2d7f373..b0c2fd7 100644
      if (global.params.v.messageStyle == MessageStyle.sarif)
      {
          // Hand off the settings the CLI wrote into the original sink so the
-@@ -376,7 +425,7 @@ private int tryMain(const(char)[][] argv, out Param params)
+@@ -376,7 +467,7 @@ private int tryMain(const(char)[][] argv, out Param params)
      {
          fatal();
      }
@@ -1989,7 +2031,7 @@ index 2d7f373..b0c2fd7 100644
      {
          if (params.jsonFieldFlags)
          {
-@@ -395,13 +444,16 @@ private int tryMain(const(char)[][] argv, out Param params)
+@@ -395,13 +486,16 @@ private int tryMain(const(char)[][] argv, out Param params)
      setDefaultLibraries(target, driverParams.defaultlibname, driverParams.debuglibname);
  
      // Initialization
@@ -2013,7 +2055,7 @@ index 2d7f373..b0c2fd7 100644
  
      reconcileLinkRunLib(params, files.length, target.obj_ext, eSink);
      version(CRuntime_Microsoft)
-@@ -410,10 +462,13 @@ private int tryMain(const(char)[][] argv, out Param params)
+@@ -410,10 +504,13 @@ private int tryMain(const(char)[][] argv, out Param params)
          initFPU();
      }
      import dmd.root.ctfloat : CTFloat;
@@ -2030,7 +2072,7 @@ index 2d7f373..b0c2fd7 100644
  
      if (params.v.verbose)
      {
-@@ -465,8 +520,33 @@ private int tryMain(const(char)[][] argv, out Param params)
+@@ -465,8 +562,33 @@ private int tryMain(const(char)[][] argv, out Param params)
          atexit(&flushMixins); // see comment for flushMixins
      }
      scope(exit) flushMixins();
@@ -2064,7 +2106,7 @@ index 2d7f373..b0c2fd7 100644
  
      if (params.timeTrace)
      {
-@@ -474,6 +554,13 @@ private int tryMain(const(char)[][] argv, out Param params)
+@@ -474,6 +596,15 @@ private int tryMain(const(char)[][] argv, out Param params)
          initializeTimeTrace(params.timeTraceGranularityUs, toCString(argv[0]).ptr);
      }
  
@@ -2072,13 +2114,15 @@ index 2d7f373..b0c2fd7 100644
 +    {
 +        foreach (p; global.importPaths)
 +            zygoteImportPaths.push(p);
++        freshBackend.save();
++        backend_init(params, driverParams, target);
 +        runServer(&zygoteChildMain, &preloadModule);
 +    }
 +
      // Create Modules
      Modules modules;
      if (createModules(files, libmodules, params, target, eSink, modules))
-@@ -580,6 +667,17 @@ private int tryMain(const(char)[][] argv, out Param params)
+@@ -580,6 +711,17 @@ private int tryMain(const(char)[][] argv, out Param params)
      }
      }
  
@@ -2096,7 +2140,21 @@ index 2d7f373..b0c2fd7 100644
      if (anydocfiles && modules.length && (driverParams.oneobj || params.objname))
      {
          eSink.error(Loc.initial, "conflicting Ddoc and obj generation options");
-@@ -802,6 +900,10 @@ private int tryMain(const(char)[][] argv, out Param params)
+@@ -663,6 +805,13 @@ private int tryMain(const(char)[][] argv, out Param params)
+     if (global.errors)
+         removeHdrFilesAndFail(params.dihdr.doOutput, modules);
+ 
++    // Flint: native extraction for Flint AOT, over the analysed modules (dmd.flintaot).
++    {
++        import dmd.flintaot : flintAotRequest, flintAotExtract;
++        if (flintAotRequest && modules.length)
++            flintAotExtract(modules[0]);
++    }
++
+     // Do pass 3 semantic analysis
+     foreach (m; modules)
+     {
+@@ -802,6 +951,10 @@ private int tryMain(const(char)[][] argv, out Param params)
              params.objfiles.push(mainModule.objfile.toChars());
      }
  
@@ -2107,7 +2165,7 @@ index 2d7f373..b0c2fd7 100644
      {
          ObjcGlue_initialize();
          timeTraceBeginEvent(TimeTraceEventType.codegenGlobal);
-@@ -911,6 +1013,63 @@ private int tryMain(const(char)[][] argv, out Param params)
+@@ -911,6 +1064,63 @@ private int tryMain(const(char)[][] argv, out Param params)
      return status;
  }
  
@@ -2171,6 +2229,16 @@ index 2d7f373..b0c2fd7 100644
  /**
   * Parses the command line arguments and configuration files
   *
+@@ -1020,7 +1230,8 @@ bool parseCommandlineAndConfig(const(char)[][] argv, out Param params, ref Strin
+     if (char* p = getenv("DDOCFILE"))
+         global.params.ddoc.files.shift(p);
+ 
+-    if (target.isX86_64 != isX86_64 && !target.isAArch64)
++    // -marm64 in DFLAGS selects AArch64, which `dmd --version` returns before applying
++    if (target.isX86_64 != isX86_64 && !target.isAArch64 && arch != "arm64")
+         eSink.error(Loc.initial, "the architecture must not be changed in the %s section of %.*s",
+               envsection.ptr, cast(int)global.inifilename.length, global.inifilename.ptr);
+ 
 diff -ruN a/dmd/mars.d b/dmd/mars.d
 --- a/dmd/mars.d	2026-10-31 19:29:10.000000000 -0400
 +++ b/dmd/mars.d	2026-11-23 04:00:00.000000000 -0500
@@ -2194,10 +2262,24 @@ diff -ruN a/dmd/mars.d b/dmd/mars.d
          {
              if (!params.v.errorSupplementLimit.parseDigits(p.toDString()[20 .. $]))
 diff --git a/dmd/templatesem.d b/dmd/templatesem.d
-index fdb78e5..a57b192 100644
+index fdb78e5..f731f0e 100644
 --- a/dmd/templatesem.d
 +++ b/dmd/templatesem.d
-@@ -3456,7 +3456,9 @@ bool needsCodegen(TemplateInstance ti)
+@@ -1158,6 +1158,13 @@ void templateInstanceSemantic(TemplateInstance tempinst, Scope* sc, ArgumentList
+                 // get codegen chances (depending on `tempinst.inst.needsCodegen()`).
+                 tempinst.inst.appendToModuleMember();
+             }
++            else if (!global.params.allInst && tempinst.inst.memberOf && !tempinst.inst.memberOf.isRoot())
++            {
++                // Flint: a speculative instance the compile server created while preloading, before any root
++                // module existed, sits in the members of the module declaring the template. Without the server it
++                // would sit in a root module's; move it there so it gets the same codegen chance.
++                tempinst.inst.appendToModuleMember();
++            }
+ 
+             assert(tempinst.inst.memberOf && tempinst.inst.memberOf.isRoot(), "no codegen chances");
+         }
+@@ -3456,7 +3463,9 @@ bool needsCodegen(TemplateInstance ti)
          }
  
          // Elide codegen if `this` doesn't need it.
@@ -8137,34 +8219,6 @@ index 820f7b3..84baf07 100644
  
          // merge #define's with output
          argv.push("-dD");       // https://gcc.gnu.org/onlinedocs/cpp/Invocation.html#index-dD
-diff --git a/dmd/main.d b/dmd/main.d
-index b0c2fd7..22961b9 100644
---- a/dmd/main.d
-+++ b/dmd/main.d
-@@ -761,6 +761,13 @@ private int tryMain(const(char)[][] argv, out Param params)
-     if (global.errors)
-         removeHdrFilesAndFail(params.dihdr.doOutput, modules);
- 
-+    // Flint: native extraction for Flint AOT, over the analysed modules (dmd.flintaot).
-+    {
-+        import dmd.flintaot : flintAotRequest, flintAotExtract;
-+        if (flintAotRequest && modules.length)
-+            flintAotExtract(modules[0]);
-+    }
-+
-     // Do pass 3 semantic analysis
-     foreach (m; modules)
-     {
-@@ -1179,7 +1186,8 @@ bool parseCommandlineAndConfig(const(char)[][] argv, out Param params, ref Strin
-     if (char* p = getenv("DDOCFILE"))
-         global.params.ddoc.files.shift(p);
- 
--    if (target.isX86_64 != isX86_64 && !target.isAArch64)
-+    // -marm64 in DFLAGS selects AArch64, which `dmd --version` returns before applying
-+    if (target.isX86_64 != isX86_64 && !target.isAArch64 && arch != "arm64")
-         eSink.error(Loc.initial, "the architecture must not be changed in the %s section of %.*s",
-               envsection.ptr, cast(int)global.inifilename.length, global.inifilename.ptr);
- 
 diff --git a/dmd/mars.d b/dmd/mars.d
 index 5fbbc3d..9750a43 100644
 --- a/dmd/mars.d
