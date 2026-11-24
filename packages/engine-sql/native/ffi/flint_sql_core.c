@@ -48,7 +48,9 @@ typedef struct {
 
 static pthread_mutex_t gate = PTHREAD_MUTEX_INITIALIZER;
 static uint64_t sequence;
-static pool_slot pools[MAX_POOLS];
+/* Each slot is allocated when a pool first opens there and reused after it closes: inline, the table was 470 KB
+   of .bss that the D collector scans word by word on every collection (performance playbook R-20). */
+static pool_slot *pools[MAX_POOLS];
 
 static uint64_t next_identity(void)
 {
@@ -57,17 +59,17 @@ static uint64_t next_identity(void)
 
 static pool_slot *pool_at(uint64_t slot, uint64_t generation)
 {
-    if (!slot || slot > MAX_POOLS || !generation || pools[slot - 1].identity != generation)
+    if (!slot || slot > MAX_POOLS || !generation || !pools[slot - 1] || pools[slot - 1]->identity != generation)
         return NULL;
-    return &pools[slot - 1];
+    return pools[slot - 1];
 }
 
 static connection_slot *connection_at(uint64_t slot, pool_slot **owner)
 {
     if (!slot || slot > MAX_POOLS * MAX_CONNECTIONS)
         return NULL;
-    pool_slot *pool = &pools[(slot - 1) / MAX_CONNECTIONS];
-    if (!pool->identity)
+    pool_slot *pool = pools[(slot - 1) / MAX_CONNECTIONS];
+    if (!pool || !pool->identity)
         return NULL;
     *owner = pool;
     return &pool->connections[(slot - 1) % MAX_CONNECTIONS];
@@ -117,7 +119,12 @@ int flint_sql_pool_open(int driver, const char *address, size_t length, unsigned
 
     pthread_mutex_lock(&gate);
     for (size_t index = 0; index < MAX_POOLS; ++index) {
-        pool_slot *pool = &pools[index];
+        if (!pools[index] && !(pools[index] = calloc(1, sizeof(pool_slot)))) {
+            pthread_mutex_unlock(&gate);
+            free(copy);
+            return FLINT_SQL_NOMEM;
+        }
+        pool_slot *pool = pools[index];
         if (pool->identity)
             continue;
         uint64_t generation = next_identity();
