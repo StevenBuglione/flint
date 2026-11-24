@@ -403,6 +403,82 @@ bool verifyArtifact(string artifact, const ref Receipt receipt, scope const Comp
     return report.errors() == before;
 }
 
+/// A source identity whose git commands run while the build compiles and links: `git rev-parse HEAD` and
+/// `git status` cost about 9 ms of a 120 ms edit build when they run after the link. Started at the beginning of a
+/// build (`startSourceIdentity`), read when its receipt is written (`finishSourceIdentity`); the record describes
+/// the sources as the build found them.
+struct PendingSource
+{
+    /// The root the commands describe.
+    string root;
+    /// Both commands started.
+    bool started;
+    private imported!"std.process".Pid head, status;
+    private imported!"std.process".Pipe headOut, statusOut;
+}
+
+/// Start `root`'s source identity in the background; `pending.started` is false when git could not start.
+void startSourceIdentity(string root, out PendingSource pending)
+{
+    import std.process : Config, pipe, spawnProcess;
+    import std.stdio : File;
+
+    pending.root = root;
+    // spawnProcess closes the files it is handed in this process, so each child gets its own.
+    try
+    {
+        pending.headOut = pipe();
+        pending.head = spawnProcess(["git", "rev-parse", "HEAD"], File("/dev/null"),
+                pending.headOut.writeEnd, File("/dev/null", "w"), null, Config.none, root);
+        pending.statusOut = pipe();
+        pending.status = spawnProcess([
+            "git", "status", "--porcelain", "--untracked-files=normal", "--", "."
+        ], File("/dev/null"), pending.statusOut.writeEnd, File("/dev/null", "w"), null, Config.none, root);
+        pending.started = true;
+    }
+    catch (Exception)
+        pending.started = false; // computed when the receipt is written instead
+}
+
+/// The source identity of `root`: the pending one when it describes `root`, else computed now.
+SourceRecord finishSourceIdentity(ref PendingSource pending, string root)
+{
+    import std.process : wait;
+    import std.string : strip;
+
+    if (!pending.started || pending.root != root)
+        return sourceIdentity(root);
+    pending.started = false;
+    const head = drain(pending.headOut);
+    const headOk = wait(pending.head) == 0;
+    const status = drain(pending.statusOut);
+    const statusOk = wait(pending.status) == 0;
+    SourceRecord record;
+    if (!headOk)
+        return record;
+    record.available = true;
+    record.commit = head.strip.idup;
+    record.dirty = !statusOk || status.strip.length != 0;
+    return record;
+}
+
+/// Everything a child wrote to `output`, after closing this process's copy of the write end.
+private string drain(ref imported!"std.process".Pipe output)
+{
+    output.writeEnd.close();
+    string text;
+    auto buffer = new ubyte[4096];
+    for (;;)
+    {
+        const read = output.readEnd.rawRead(buffer);
+        if (read.length == 0)
+            break;
+        text ~= cast(const(char)[]) read;
+    }
+    output.readEnd.close();
+    return text;
+}
+
 /// The current source identity of `root`.
 SourceRecord sourceIdentity(string root)
 {

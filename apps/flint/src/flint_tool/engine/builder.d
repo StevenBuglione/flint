@@ -3,9 +3,9 @@ module flint_tool.engine.builder;
 
 import flint.os : EnvVar;
 import flint_tool.engine.receipt : AdditionsRecord, ComponentRecord, EnvironmentRecord,
-    NativePackageRecord, OutputRecord, ProfileRecord,
-    Receipt, ToolchainRecord,
-    nativeIdentity, outputRecord, pendingOutputRecord, receiptPath, sourceIdentity, writeReceipt;
+    NativePackageRecord, OutputRecord, ProfileRecord, Receipt,
+    ToolchainRecord, finishSourceIdentity, nativeIdentity, outputRecord, pendingOutputRecord,
+    receiptPath, writeReceipt;
 import flint_tool.engine.cbuild : CBuild, compileNativeC;
 import flint_tool.engine.session : Session;
 import flint_tool.diagnostics.report : Report, Severity, at, diagnostic;
@@ -909,6 +909,12 @@ bool buildProject(ref Session session, const ref Manifest manifest, const ref Re
     ProfileSpec spec;
     if (!selectProfile(session, request.profile, spec, report))
         return false;
+    {
+        import flint_tool.engine.receipt : startSourceIdentity;
+
+        // The receipt's git commands run while the project builds.
+        startSourceIdentity(manifest.root, session.pendingSource);
+    }
     const compiler = request.compiler.length ? request.compiler : spec.compiler;
     result.compiler = compiler;
     const flags = composeFlags(spec, manifest.overrideFor(request.profile), request);
@@ -1320,7 +1326,7 @@ private Receipt baseReceipt(ref Session session, string sourceRoot, const ref To
     receipt.tool.release = session.home.platform.release;
     receipt.tool.platform = session.home.platform.flint;
     receipt.tool.sha256 = session.toolSha();
-    receipt.source = sourceIdentity(sourceRoot);
+    receipt.source = finishSourceIdentity(session.pendingSource, sourceRoot);
     receipt.toolchain = toolchainRecord(toolchain, components);
     receipt.native = nativeIdentity(session.home.root);
     receipt.environment = influentialEnvironment();

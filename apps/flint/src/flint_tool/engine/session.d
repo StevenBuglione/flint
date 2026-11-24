@@ -29,6 +29,8 @@ struct Session
     string executableSha;
     /// Terminal width of stderr, or zero.
     uint width;
+    /// The build's source identity, started with the build and read by its receipt.
+    imported!"flint_tool.engine.receipt".PendingSource pendingSource;
 
     /// Print a progress line on stderr in human mode.
     void progress(string verb, string detail)
