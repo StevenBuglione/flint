@@ -9,6 +9,7 @@ import spring_bench
 import spring_gate
 
 APPS = ['gs-rest-service']
+RUNS = {'http': 9, 'gc': 9, 'error': 9}
 MATRIX = {'settings': {'precise': 'gc:precise'}, 'apps': ['gs-rest-service']}
 
 
@@ -17,7 +18,7 @@ def series(value):
 
 
 class SpringGate(unittest.TestCase):
-    def evidence(self, directory, flint_factor=0.5, mode='production', drop=None, assembly=None):
+    def evidence(self, directory, flint_factor=0.5, mode='production', drop=None, assembly=None, tamper=None, stray=None):
         golden = spring_bench.sha256(spring_bench.golden_path('gs-rest-service'))
         registered = {'gs-rest-service': {'sha256': 'abc'}}
         for impl in spring_bench.IMPLEMENTATIONS:
@@ -45,10 +46,16 @@ class SpringGate(unittest.TestCase):
                      json.loads((spring_bench.ROOT / 'policy' / 'spring-error-paths-benchmark.json').read_text())['apps']}}))
         (directory / 'gc-matrix-gs-rest-service.json').write_text(json.dumps({
             'mode': mode, 'status': 'passed', 'settings': {'precise': {'suite': {'passed': 18, 'total': 18}}}}))
+        files = {path.name: spring_bench.sha256(path) for path in directory.glob('*.json')}
         (directory / 'assembled.json').write_text(json.dumps(dict(
-            {'schema': 'flint.spring-evidence/2', 'commit': 'c' * 40, 'missing': [], 'problems': []}, **(assembly or {}))))
+            {'schema': 'flint.spring-evidence/2', 'commit': 'c' * 40, 'missing': [], 'problems': [], 'files': files},
+            **(assembly or {}))))
         if drop:
             (directory / drop).unlink()
+        if tamper:
+            (directory / tamper).write_text((directory / tamper).read_text() + ' ')
+        if stray:
+            (directory / stray).write_text('{}')
         return registered
 
     def gate(self, **kwargs):
@@ -101,6 +108,12 @@ class SpringGate(unittest.TestCase):
         _, failures = self.gate(assembly={'schema': 'flint.spring-evidence/1'})
         self.assertTrue(any('reassemble' in f for f in failures))
 
+    def test_files_not_written_by_the_assembly_fail(self):
+        _, failures = self.gate(tamper='http.json')
+        self.assertIn('http.json: differs from what the assembly wrote', failures)
+        _, failures = self.gate(stray='http-extra.json')
+        self.assertIn('http-extra.json: not written by the assembly', failures)
+
     def test_smoke_and_missing_evidence_fail(self):
         _, failures = self.gate(mode='smoke')
         self.assertTrue(any('builds.json: mode smoke' in f for f in failures))
@@ -144,22 +157,35 @@ class AssembleFailsClosed(unittest.TestCase):
     def test_one_commit_production_and_trial_counts_pass(self):
         parts = [self.part('b', 'builds', self.builds()), self.part('h', 'http', self.http()),
                  self.part('e', 'error', self.http()), self.part('g', 'gc', self.http())]
-        self.assertEqual(spring_bench.consistency_problems(parts, 9), [])
+        self.assertEqual(spring_bench.consistency_problems(parts, RUNS), [])
 
     def test_mismatched_commits_fail(self):
         parts = [self.part('b', 'builds', self.builds()), self.part('h', 'http', self.http(), commit='b' * 40)]
-        problems = spring_bench.consistency_problems(parts, 9)
+        problems = spring_bench.consistency_problems(parts, RUNS)
         self.assertTrue(any('one source commit' in p for p in problems))
 
     def test_trial_counts_and_self_reported_commit_fail(self):
         parts = [self.part('b', 'builds', self.builds(trials_per_series=3)), self.part('h', 'http', self.http(runs=4)),
                  self.part('c', 'builds', self.builds(commit='d' * 12))]
-        problems = ' | '.join(spring_bench.consistency_problems(parts, 9))
+        problems = ' | '.join(spring_bench.consistency_problems(parts, RUNS))
         for text in ('3 trials per series', '4 runs', 'names commit dddd'):
             self.assertIn(text, problems)
 
+    def test_builds_without_commit_and_error_runs_from_their_own_manifest(self):
+        builds = self.builds(); builds.pop('commit')
+        problems = ' | '.join(spring_bench.consistency_problems([self.part('b', 'builds', builds)], RUNS))
+        self.assertIn('names no commit', problems)
+        problems = spring_bench.consistency_problems([self.part('e', 'error', self.http(runs=9))], dict(RUNS, error=5))
+        self.assertTrue(any("manifest's 5 required" in p for p in problems))
+
+    def test_assemble_refuses_a_non_empty_directory(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            (Path(temporary) / 'http.json').write_text('{}')
+            with self.assertRaisesRegex(SystemExit, 'not empty'):
+                spring_bench.assemble(temporary)
+
     def test_smoke_part_fails(self):
-        problems = spring_bench.consistency_problems([self.part('h', 'http', dict(self.http(), mode='smoke'))], 9)
+        problems = spring_bench.consistency_problems([self.part('h', 'http', dict(self.http(), mode='smoke'))], RUNS)
         self.assertTrue(any('mode smoke' in p for p in problems))
 
     def test_coverage_gaps_fail(self):

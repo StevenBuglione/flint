@@ -107,7 +107,7 @@ Queue policy (coordinator, 2026-11-23). A claimed window pauses everyone, so it 
   - every part builds in the same private tree at B: `flint`, mold, the fork build, every step `in: tree`;
   - a step outside a build tree, or one using `{harness}`, needs a pinned `"harness"` revision, and `run` refuses an unpinned entry before building anything;
   - each receipt records the tree's toolchain (DMD, LDC, flint and mold digests and versions, DMD's linker switches, the fork flag, whether DMD has the native AOT extractor), and each step records the ports' executables it wrote (digest, `file`, .comment, embedded `gcopt=`), the executables its outputs measured, its Flint AOT summary lines and its GC options;
-  - `spring_bench.py assemble` exits 1, and the gate fails, on any missing part, parts at different source commits, a non-production part, a trial count other than the gate's, a builds record naming another commit, or a gap in coverage (applications, HTTP and error workloads, GC settings, acceptance per implementation);
+  - `spring_bench.py assemble` exits 1, and the gate fails, on any missing part, parts at different source commits, a non-production part, a trial count other than the gate's, a builds record naming no commit or another one, or a gap in coverage (applications, HTTP and error workloads, GC settings, acceptance per implementation). It assembles only into an empty directory and records each written file's digest, and the gate refuses a scored file it did not write; a baseline part may pin a harness only at its build commit;
   - the gate scores p50 at 0.99 with p99 (owner decision 4), and reports p99.9 without scoring it.
 
 ## Work queue

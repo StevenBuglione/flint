@@ -74,6 +74,15 @@ def check_assembly(directory, failures, report):
     if not manifest.get('commit'):
         failures.append('assembly: the evidence names no single source commit')
     report['source commit'] = manifest.get('commit')
+    # Every scored file must be the one assemble wrote: a stale or edited file beside a clean assembly fails.
+    written = manifest.get('files', {})
+    for path in sorted(Path(directory).glob('*.json')):
+        if path.name == 'assembled.json':
+            continue
+        if path.name not in written:
+            failures.append(f'{path.name}: not written by the assembly')
+        elif spring_bench.sha256(path) != written[path.name]:
+            failures.append(f'{path.name}: differs from what the assembly wrote')
 
 
 def spring_gate(directory):

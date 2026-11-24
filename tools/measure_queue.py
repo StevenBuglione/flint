@@ -844,6 +844,8 @@ def measure_command(entry, built, outdir, smoke):
                                        stderr=subprocess.STDOUT)
         receipt = {'command': command, 'cwd': str(cwd), 'exit_code': completed.returncode, 'log': str(log),
                    'harness_commit': harness[1] if harness else None}
+        if harness and not step.get('in'):
+            receipt['harness_toolchain'] = toolchain_receipt(harness[0])  # a step outside a build tree builds with it
         receipt.update(step_provenance(command, cwd, env, log, outdir, started))
         if completed.returncode and step.get('may_fail'):
             # A failed verdict is a result only if the step wrote its output and that output records no error: a step
@@ -924,8 +926,20 @@ def check_pins(entry):
                 problems.append(f"step {index} runs in {step['in']!r}, which is not a build")
             if (not step.get('in') or any('{harness}' in part for part in step['argv'])) and not entry.get('harness'):
                 problems.append(f'step {index} needs the pinned harness revision ("harness")')
+    # A baseline part assembles only with every part at one commit (spring_bench.consistency_problems), and the
+    # receipt counts the harness revision as one: a harness pin other than the build's would fail only after its
+    # window, so it is refused now.
+    if entry['id'].startswith(BASELINE_PREFIXES) and entry.get('harness'):
+        builds = {spec.get('commit', '') for spec in entry.get('builds', {}).values()}
+        if not all(c.startswith(entry['harness']) or entry['harness'].startswith(c) for c in builds):
+            problems.append(f"baseline part pins harness {entry['harness']} beside builds {sorted(builds)}; "
+                            'one commit is required')
     if problems:
         raise SystemExit(f"{entry['id']}: " + '; '.join(problems))
+
+
+# The entries spring_bench.py assemble merges into the gate's evidence.
+BASELINE_PREFIXES = ('phase1-builds-', 'phase1-http-', 'phase1-gc-matrix-', 'error-404-p99', 'error-validation-p99')
 
 
 def run(entry, force_busy=False, smoke=False, claim_seconds=0):

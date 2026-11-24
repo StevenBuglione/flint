@@ -611,7 +611,7 @@ def receipt_commits(directory):
     return commits
 
 
-def consistency_problems(parts, http_runs):
+def consistency_problems(parts, runs_by_family):
     """Resume plan rule 4 (owner decision, b349fb0a): the assembled evidence fails closed. Every part (builds, HTTP,
     error and GC) must be measured at one source commit, in production mode, with the gate's trial counts, and the
     parts together must cover every application, workload and setting the gate scores."""
@@ -633,12 +633,16 @@ def consistency_problems(parts, http_runs):
             if record.get('trials_per_series') != 9:
                 problems.append(f"{part['entry']} builds.json: {record.get('trials_per_series')} trials per series; 9 required")
             claimed = record.get('commit')
-            if claimed and not any(c.startswith(claimed) or claimed.startswith(c) for c in part['commits']):
+            if not claimed:
+                problems.append(f"{part['entry']} builds.json names no commit")
+            elif not any(c.startswith(claimed) or claimed.startswith(c) for c in part['commits']):
                 problems.append(f"{part['entry']} builds.json names commit {claimed}, its receipt {sorted(part['commits'])}")
         elif family in ('http', 'error', 'gc'):
+            # The GC matrix takes the HTTP manifest's workload; the error paths have their own manifest.
+            want = runs_by_family[family]
             runs = record.get('effective_workload', {}).get('runs')
-            if runs != http_runs:
-                problems.append(f"{part['entry']} {part['file']}: {runs} runs; the manifest's {http_runs} required")
+            if runs != want:
+                problems.append(f"{part['entry']} {part['file']}: {runs} runs; the manifest's {want} required")
     return problems
 
 
@@ -675,6 +679,10 @@ def assemble(output):
     It fails closed: a missing part, parts at different commits, a wrong trial count or a gap in coverage is a
     problem in assembled.json, which the gate refuses."""
     output = Path(output)
+    # A stale or hand-placed file beside a clean assembly would be scored with it: assemble only into an empty
+    # directory, and record the digest of every file written, which the gate checks.
+    if output.exists() and any(output.iterdir()):
+        raise SystemExit(f'{output} is not empty; assemble into a new directory')
     output.mkdir(parents=True, exist_ok=True)
     manifest = {'schema': 'flint.spring-evidence/2', 'assembled': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
                 'sources': {}, 'missing': [], 'commits': {}}
@@ -732,8 +740,11 @@ def assemble(output):
         (output / f'gc-matrix-{app}.json').write_text(json.dumps(merged, indent=2) + '\n')
 
     http_runs = json.loads((ROOT / 'policy' / 'spring-http-benchmark.json').read_text())['workload']['runs']
+    error_runs = json.loads((ROOT / 'policy' / 'spring-error-paths-benchmark.json').read_text())['workload']['runs']
     problems = [f'missing certified part: {item}' for item in manifest['missing']]
-    problems += consistency_problems(parts, http_runs) + coverage_problems(parts)
+    problems += (consistency_problems(parts, {'http': http_runs, 'gc': http_runs, 'error': error_runs})
+                 + coverage_problems(parts))
+    manifest['files'] = {path.name: sha256(path) for path in sorted(output.iterdir()) if path.is_file()}
     commits = {c for p in parts for c in p['commits']}
     manifest['commit'] = next(iter(commits)) if len(commits) == 1 else None
     manifest['problems'] = problems

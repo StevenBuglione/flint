@@ -173,6 +173,11 @@ class Pins(unittest.TestCase):
         with self.assertRaisesRegex(SystemExit, "'other', which is not a build"):
             measure_queue.check_pins(self.entry([{'argv': [], 'in': 'other'}]))
         measure_queue.check_pins(self.entry([{'argv': ['{harness}/tools/x.py']}], harness='abc'))
+        with self.assertRaisesRegex(SystemExit, 'one commit is required'):
+            measure_queue.check_pins(dict(self.entry([{'argv': ['{harness}/tools/x.py'], 'in': 'tree'}], harness='def'),
+                                          id='phase1-http-gs-rest'))
+        measure_queue.check_pins(dict(self.entry([{'argv': ['{harness}/tools/x.py'], 'in': 'tree'}], harness='abc'),
+                                      id='phase1-http-gs-rest'))
 
     def test_queued_entries_pin_or_wait(self):
         # Every entry that may run (pending) pins its builds, its steps' trees and any {harness} revision.
