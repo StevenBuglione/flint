@@ -72,6 +72,13 @@ private struct Scratch
     size_t used;
     bool overflowed;
 
+    /// Empty, without touching `storage`.
+    void reset() pure nothrow @nogc
+    {
+        used = 0;
+        overflowed = false;
+    }
+
     /// Copy `buffer`'s bytes and return where they are, or an empty text once the block is full.
     Text copy(ref scope RequestArena arena, Buffer buffer) nothrow @nogc
     {
@@ -149,6 +156,16 @@ private struct OwnerRows
     TypeRow[maxTypes] types;
     size_t typeCount;
     bool tooMany;
+
+    /// No rows, without touching the row arrays.
+    void reset() pure nothrow @nogc
+    {
+        found = false;
+        id = 0;
+        text[] = Text.init;
+        petCount = visitCount = typeCount = 0;
+        tooMany = false;
+    }
 }
 
 /// The JSON body, built in a stack block.
@@ -157,6 +174,13 @@ private struct Body
     char[16_384] storage;
     size_t used;
     bool overflowed;
+
+    /// Empty, without touching `storage`.
+    void reset() pure nothrow @nogc
+    {
+        used = 0;
+        overflowed = false;
+    }
 
     void put(scope const(char)[] text) nothrow @nogc
     {
@@ -374,8 +398,12 @@ private final class Floor
             respond(response, context, 404, null);
             return;
         }
-        Scratch scratch;
-        OwnerRows rows;
+        // The blocks are 48 KB together: left uninitialized (their bytes are written before they are read), only
+        // their counters are set, as a handler would keep such buffers. Initializing them cost 49k instructions.
+        Scratch scratch = void;
+        scratch.reset();
+        OwnerRows rows = void;
+        rows.reset();
         const read = load(id, context.arena, context.cancellation, scratch, rows);
         if (read.code != Status.ok || scratch.overflowed || rows.tooMany)
         {
@@ -403,7 +431,8 @@ private final class Floor
             respond(response, context, 200, cast(const(char)[]) json);
             return;
         }
-        Body output;
+        Body output = void;
+        output.reset();
         writeOwner(rows, scratch, output);
         if (output.overflowed)
         {
