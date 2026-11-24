@@ -148,7 +148,7 @@ final class FastPathTable : FastPath
         FastField[maxFields] storage;
         if (result.isNull())
         {
-            exchange.respondFields(200, responseFields(route, null, storage), null, false);
+            exchange.respondFields(200, responseFields(route, exchange, null, storage), null, false);
             return FastOutcome.written;
         }
         auto buffer = pool.acquire();
@@ -166,7 +166,7 @@ final class FastPathTable : FastPath
                     "Could not write JSON: " ~ e.msg, e);
             return complete(servlet, exchange, route, ex, 0, entry.contentType, buffer.data);
         }
-        exchange.respondFields(200, responseFields(route, entry.contentType, storage), buffer.data, false);
+        exchange.respondFields(200, responseFields(route, exchange, entry.contentType, storage), buffer.data, false);
         return FastOutcome.written;
     }
 
@@ -191,7 +191,7 @@ final class FastPathTable : FastPath
         FastField[maxFields] storage;
         if (content.isNull())
         {
-            exchange.respondFields(status, responseFields(route, null, storage), null, false);
+            exchange.respondFields(status, responseFields(route, exchange, null, storage), null, false);
             return FastOutcome.written;
         }
         auto buffer = pool.acquire();
@@ -207,7 +207,7 @@ final class FastPathTable : FastPath
                     "Could not write JSON: " ~ e.msg, e);
             return complete(servlet, exchange, route, ex, status, entry.contentType, buffer.data);
         }
-        exchange.respondFields(status, responseFields(route, entry.contentType, storage), buffer.data, true);
+        exchange.respondFields(status, responseFields(route, exchange, entry.contentType, storage), buffer.data, true);
         return FastOutcome.written;
     }
 
@@ -346,19 +346,26 @@ private bool canonicalDigits(scope const(char)[] text, size_t maxDigits, out lon
 /// The most arguments a fast route binds, on the stack; a handler with more stays generic.
 private enum size_t maxArguments = 8;
 
-/// The most fields a fast response writes: the `Vary` fields and `Content-Type`.
-private enum size_t maxFields = 4;
+/// The fields a fast response writes on the stack; more (many filter fields) take one GC copy.
+private enum size_t maxFields = 16;
 
-/// The route's `Vary` fields, then `Content-Type` when given, as the generic response holds them, on `storage`.
-private const(FastField)[] responseFields(ref const Route route, string contentType,
-        return ref FastField[maxFields] storage)
+/++
+The fields the generic response holds: the mapped filters' (S4: the security headers, which `HeaderWriterFilter`
+writes before the servlet runs), the route's `Vary` fields (S3), then `Content-Type` when given.
++/
+private const(FastField)[] responseFields(ref const Route route, ref scope FastExchange exchange,
+        string contentType, return ref FastField[maxFields] storage)
 {
-    size_t count;
+    const count = exchange.filterFields.length + route.vary.length + (contentType !is null);
+    FastField[] fields = count <= storage.length ? storage[0 .. count] : new FastField[count];
+    size_t used;
+    foreach (ref field; exchange.filterFields)
+        fields[used++] = field;
     foreach (ref field; route.vary)
-        storage[count++] = field;
+        fields[used++] = field;
     if (contentType !is null)
-        storage[count++] = FastField("Content-Type", contentType);
-    return storage[0 .. count];
+        fields[used++] = FastField("Content-Type", contentType);
+    return fields;
 }
 
 /// Where a template variable's text lies in the request path.

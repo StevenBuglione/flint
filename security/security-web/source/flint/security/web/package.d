@@ -13,6 +13,7 @@
 +/
 module flint.security.web;
 
+import flint.engine.aot.fast : FastField, FastFilter, FastFilterEffect;
 import flint.jakarta.servlet : Filter, FilterChain, FilterConfig, ServletRequest, ServletResponse;
 import flint.jakarta.servlet.http : HttpServletRequest, HttpServletResponse;
 import flint.java.lang : IllegalArgumentException;
@@ -75,7 +76,7 @@ The single servlet filter in front of the security chains (Spring Security's `Fi
 `springSecurityFilterChain`): runs the first matching chain's filters, then the rest of the servlet chain, and clears
 the security context afterwards.
 +/
-class FilterChainProxy : Filter
+class FilterChainProxy : Filter, FastFilter
 {
     mixin Filter.Defaults;
 
@@ -105,6 +106,44 @@ class FilterChainProxy : Filter
         return null;
     }
 
+    /++
+    Flint's fast path (fast-path.md S4): the effect of this proxy on a `GET` the dispatcher answers fast, stated when
+    it is static: one `DefaultSecurityFilterChain` for any request, whose filters are each exactly one whose effect
+    is known. `SecurityContextHolderFilter` over the request-attribute repository loads nothing for a fresh request;
+    `HeaderWriterFilter`'s writers state their fields; `AnonymousAuthenticationFilter` installs its token (`enter`);
+    `AuthorizationFilter` grants every request; `ExceptionTranslationFilter` answers security exceptions (`handles`).
+    The context is cleared afterwards (`exit`), as `doFilter` clears it. Any other chain or filter: `false`.
+    +/
+    bool fastEffect(bool secure, out FastFilterEffect effect)
+    {
+        import flint.security.web.access : ExceptionTranslationFilter;
+        import flint.security.web.authentication : AnonymousAuthenticationFilter;
+        import flint.security.web.util.matcher : AnyRequestMatcher;
+
+        if (filterChains.length != 1)
+            return false;
+        auto chain = cast(DefaultSecurityFilterChain) filterChains[0];
+        if (chain is null || typeid(chain) !is typeid(DefaultSecurityFilterChain)
+                || typeid(cast(Object) chain.requestMatcher) !is typeid(AnyRequestMatcher))
+            return false;
+        AnonymousAuthenticationFilter anonymous;
+        ExceptionTranslationFilter translation;
+        foreach (filter; chain.filters)
+            if (!knownEffect(filter, secure, effect, anonymous, translation))
+                return false;
+        if (anonymous !is null)
+            effect.enter = () { anonymous.populate(); };
+        effect.exit = () { SecurityContextHolder.clearContext(); };
+        if (translation !is null)
+        {
+            effect.handles = (Exception e) => translation.translates(e);
+            effect.handle = (Object request, Object response, Exception e) {
+                translation.translate(cast(HttpServletRequest) request, cast(HttpServletResponse) response, e);
+            };
+        }
+        return true;
+    }
+
     /// Run the matching chain, then `chain`; the context is cleared afterwards.
     void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
     {
@@ -119,6 +158,45 @@ class FilterChainProxy : Filter
         }
         new VirtualFilterChain(chain, filters).doFilter(request, response);
     }
+}
+
+/++
+One filter of a chain whose fast-path effect `FilterChainProxy.fastEffect` states: its fields join `effect`, the
+anonymous and translation filters are kept for `enter` and `handles`, and a filter whose effect is unknown is
+`false`.
++/
+private bool knownEffect(Filter filter, bool secure, ref FastFilterEffect effect,
+        ref imported!"flint.security.web.authentication"
+            .AnonymousAuthenticationFilter anonymous,
+        ref imported!"flint.security.web.access".ExceptionTranslationFilter translation)
+{
+    import flint.security.web.access : AuthorizationFilter, ExceptionTranslationFilter;
+    import flint.security.web.authentication : AnonymousAuthenticationFilter;
+    import flint.security.web.context : SecurityContextHolderFilter;
+    import flint.security.web.header : HeaderWriterFilter;
+
+    const type = typeid(cast(Object) filter);
+    if (type is typeid(SecurityContextHolderFilter))
+        return (cast(SecurityContextHolderFilter) filter).loadsNothingFresh();
+    if (type is typeid(HeaderWriterFilter))
+    {
+        FastField[] fields;
+        if (!(cast(HeaderWriterFilter) filter).fastFields(secure, fields))
+            return false;
+        effect.fields ~= fields;
+        return true;
+    }
+    if (type is typeid(AnonymousAuthenticationFilter) && anonymous is null)
+    {
+        anonymous = cast(AnonymousAuthenticationFilter) filter;
+        return true;
+    }
+    if (type is typeid(ExceptionTranslationFilter) && translation is null)
+    {
+        translation = cast(ExceptionTranslationFilter) filter;
+        return true;
+    }
+    return type is typeid(AuthorizationFilter) && (cast(AuthorizationFilter) filter).grantsEveryRequest();
 }
 
 /// The filters of the first chain matching `request`, without `getFilters`' copy for Flint's own chain (read-only;

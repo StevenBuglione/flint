@@ -250,6 +250,49 @@ private final class CountingFilter : imported!"flint.jakarta.servlet".Filter
     assert(target.calls == 1);
 }
 
+// A filter that states a fast-path effect (fast-path.md S4).
+private final class EffectFilter : imported!"flint.jakarta.servlet".Filter,
+    imported!"flint.engine.aot.fast".FastFilter
+{
+    mixin imported!"flint.jakarta.servlet".Filter.Defaults;
+
+    void doFilter(imported!"flint.jakarta.servlet".ServletRequest,
+            imported!"flint.jakarta.servlet".ServletResponse, imported!"flint.jakarta.servlet".FilterChain)
+    {
+    }
+
+    bool fastEffect(bool secure, out imported!"flint.engine.aot.fast".FastFilterEffect effect)
+    {
+        import flint.engine.aot.fast : FastField;
+
+        effect.fields = [FastField("X-Effect", secure ? "secure" : "plain")];
+        return true;
+    }
+}
+
+@("DelegatingFilterProxy: forwards its delegate's fast-path effect, and states none for a plain filter") unittest
+{
+    import flint.boot.web.server.servlet : DelegatingFilterProxyRegistrationBean;
+    import flint.context.support : GenericApplicationContext;
+    import flint.engine.aot.fast : FastFilter, FastFilterEffect;
+
+    auto context = new GenericApplicationContext;
+    context.getBeanFactory().registerSingleton("effectFilter", new EffectFilter);
+    context.getBeanFactory().registerSingleton("plainFilter", new CountingFilter);
+    context.refresh();
+    scope (exit)
+        context.close();
+    FastFilterEffect effect;
+    auto stated = new DelegatingFilterProxyRegistrationBean("effectFilter");
+    stated.setApplicationContext(context);
+    auto proxy = cast(FastFilter) stated.getFilter();
+    assert(proxy !is null && proxy.fastEffect(false, effect));
+    assert(effect.fields.length == 1 && effect.fields[0].name == "X-Effect" && effect.fields[0].value == "plain");
+    auto plain = new DelegatingFilterProxyRegistrationBean("plainFilter");
+    plain.setApplicationContext(context);
+    assert(!(cast(FastFilter) plain.getFilter()).fastEffect(false, effect));
+}
+
 @("ServletContextInitializerBeans: a DelegatingFilterProxyRegistrationBean's target is not adapted again") unittest
 {
     import flint.boot.web.server.servlet : AbstractFilterRegistrationBean, DelegatingFilterProxyRegistrationBean;

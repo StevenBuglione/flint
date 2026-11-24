@@ -144,3 +144,46 @@ unittest
     securedChain().doFilter(request("Basic YWRtaW46YWRtaW4="), response, new Denying);
     assert(response.getStatus() == 403 && response.getErrorMessage() == "Forbidden");
 }
+
+@("FilterChainProxy.fastEffect: petclinic's permit-all chain states the generic chain's headers and context")
+unittest
+{
+    import flint.engine.aot.fast : FastFilterEffect;
+    import flint.security.authentication : AnonymousAuthenticationToken;
+
+    FastFilterEffect effect;
+    assert(disabledChain().fastEffect(false, effect));
+    // The same fields, in order, as the generic chain writes on a fresh response.
+    auto response = new MockHttpServletResponse;
+    disabledChain().doFilter(new MockHttpServletRequest("GET", "/api/owners/1"), response, new Endpoint);
+    string[2][] generic;
+    foreach (name; response.getHeaderNames())
+        foreach (value; response.getHeaders(name))
+            generic ~= [name, value];
+    string[2][] stated;
+    foreach (ref field; effect.fields)
+        stated ~= [field.name, field.value];
+    assert(stated == generic);
+    assert(stated.length == 6 && stated[$ - 1] == ["X-Frame-Options", "SAMEORIGIN"]);
+    // enter installs the anonymous token AnonymousAuthenticationFilter would; exit clears the context.
+    effect.enter();
+    assert(cast(AnonymousAuthenticationToken) SecurityContextHolder.getContext().getAuthentication() !is null);
+    effect.exit();
+    assert(SecurityContextHolder.getContext().getAuthentication() is null);
+    // A security exception escaping the servlet is the translation filter's; others are not.
+    assert(effect.handles(new imported!"flint.security.access".AccessDeniedException("denied")));
+    assert(!effect.handles(new Exception("other")));
+}
+
+@("FilterChainProxy.fastEffect: a chain with authentication or a denying rule states no effect") unittest
+{
+    import flint.engine.aot.fast : FastFilterEffect;
+
+    FastFilterEffect effect;
+    assert(!securedChain().fastEffect(false, effect));
+    auto rules = new RequestMatcherDelegatingAuthorizationManager;
+    rules.add(AnyRequestMatcher.INSTANCE(), SingleResultAuthorizationManager!RequestAuthorizationContext.denyAll());
+    Filter[] filters = [new AuthorizationFilter(rules)];
+    assert(!new FilterChainProxy(new DefaultSecurityFilterChain(AnyRequestMatcher.INSTANCE(),
+            filters)).fastEffect(false, effect));
+}

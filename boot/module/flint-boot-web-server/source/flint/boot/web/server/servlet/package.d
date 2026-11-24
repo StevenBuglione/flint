@@ -16,6 +16,7 @@ module flint.boot.web.server.servlet;
 
 import flint.boot.web.server : Shutdown, WebServer;
 import flint.context : ApplicationContext, ApplicationContextAware;
+import flint.engine.aot.fast : FastFilter, FastFilterEffect;
 import flint.core : Ordered;
 import flint.jakarta.servlet : DispatcherType, Filter, FilterChain, Servlet, ServletContext,
     ServletRequest, ServletResponse;
@@ -365,7 +366,7 @@ class DelegatingFilterProxyRegistrationBean : AbstractFilterRegistrationBean, Ap
 
 // spring-web's DelegatingFilterProxy as Boot's registration bean uses it: the delegate is looked up on the first
 // request (initFilterBean is skipped), and its lifecycle stays with the context (targetFilterLifecycle is false).
-private final class DelegatingFilterProxy : Filter
+private final class DelegatingFilterProxy : Filter, FastFilter
 {
     private string targetBeanName;
     private ApplicationContext context;
@@ -385,6 +386,16 @@ private final class DelegatingFilterProxy : Filter
         if (delegate_ is null)
             delegate_ = cast(Filter) context.getBean(targetBeanName);
         delegate_.doFilter(request, response, chain);
+    }
+
+    /// Flint's fast path (fast-path.md S4): the delegate's effect, when it states one. The container asks when it
+    /// starts, after the context refreshed, so the delegate bean exists.
+    bool fastEffect(bool secure, out FastFilterEffect effect)
+    {
+        if (delegate_ is null)
+            delegate_ = cast(Filter) context.getBean(targetBeanName);
+        auto fast = cast(FastFilter) delegate_;
+        return fast !is null && fast.fastEffect(secure, effect);
     }
 }
 

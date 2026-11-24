@@ -71,6 +71,14 @@ class SecurityContextHolderFilter : SecurityFilter
         this.repository = repository;
     }
 
+    /// Flint's fast path (S4): whether the repository finds nothing for a fresh request, so this filter only
+    /// clears the context afterwards: the request-attribute repository, whose attribute a fresh request lacks.
+    package(flint.security) bool loadsNothingFresh()
+    {
+        return repository !is null && typeid(cast(Object) repository) is typeid(
+                RequestAttributeSecurityContextRepository);
+    }
+
     override void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
     {
         auto context = repository.loadContext(request);

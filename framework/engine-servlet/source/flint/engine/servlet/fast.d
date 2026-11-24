@@ -15,7 +15,7 @@ module flint.engine.servlet.fast;
 
 import flint.arena : Buffer;
 import flint.conc : Context;
-import flint.engine.aot.fast : FastDispatch, FastExchange, FastField, FastOutcome, FastValueVisitor;
+import flint.engine.aot.fast : FastDispatch, FastExchange, FastField, FastFilterEffect, FastOutcome, FastValueVisitor;
 import flint.engine.servlet : ServletEngine;
 import flint.engine.servlet.request : ServletEngineRequest, componentTooLong, decodeComponent,
     decodeComponentInto, malformedComponent, methodName;
@@ -100,6 +100,7 @@ FastOutcome serveFast(ServletEngine engine, FastDispatch dispatch, ref scope Req
     }
     exchange.method = methodName(method);
     exchange.path = path;
+    exchange.filterFields = engine.fastFilterFields;
 
     bool parameter(scope const(char)[] name, scope FastValueVisitor visit)
     {
@@ -125,15 +126,11 @@ FastOutcome serveFast(ServletEngine engine, FastDispatch dispatch, ref scope Req
         check(transport.finish(transportContext));
     }
 
-    // The generic response's fields in order; more than fit on the stack is a GC copy, as the handler already ran.
     void respondFields(int status, scope const(FastField)[] given, scope const(ubyte)[] content, bool chunked)
     {
         Context transportContext;
         StreamField[16] storage;
-        StreamField[] fields = given.length <= storage.length ? storage[0 .. given.length]
-            : new StreamField[given.length];
-        foreach (index, ref field; given)
-            fields[index] = StreamField(field.name, field.value);
+        auto fields = streamFields(given, storage);
         began = true;
         if (!chunked && content.length <= defaultBufferSize)
         {
@@ -152,6 +149,10 @@ FastOutcome serveFast(ServletEngine engine, FastDispatch dispatch, ref scope Req
         {
             servletRequest = engine.captureRequest(request, context);
             servletResponse = engine.newResponse(transport);
+            // What the mapped filters wrote before the servlet ran (HeaderWriterFilter writes eagerly), on the
+            // fresh response, where their writers' presence checks all pass.
+            foreach (ref field; engine.fastFilterFields)
+                servletResponse.addHeader(field.name, field.value);
         }
         materializedRequest = servletRequest;
         materializedResponse = servletResponse;
@@ -161,6 +162,12 @@ FastOutcome serveFast(ServletEngine engine, FastDispatch dispatch, ref scope Req
     exchange.respond = &respond;
     exchange.respondFields = &respondFields;
     exchange.materialize = &materialize;
+    // The filters' per-request state (a security context) around the servlet, undone in reverse order on every
+    // path, for exactly the filters whose enter ran (one that throws is not undone, as its filter never ran).
+    size_t entered;
+    scope (exit)
+        exitFilters(engine, entered);
+    enterFilters(engine, entered);
     FastOutcome outcome;
     try
         outcome = dispatch.dispatchFast(exchange);
@@ -170,6 +177,15 @@ FastOutcome serveFast(ServletEngine engine, FastDispatch dispatch, ref scope Req
         // would forward nowhere: the exception leaves the exchange as complete()'s IOException does (web-http).
         if (began)
             throw e;
+        // A filter that answers such an exception itself (ExceptionTranslationFilter's security exceptions) does so
+        // on the servlet objects, innermost first, as the exception would have passed the filters.
+        if (auto effect = filterHandling(engine, e))
+        {
+            Object handledRequest, handledResponse;
+            materialize(handledRequest, handledResponse);
+            effect.handle(handledRequest, handledResponse, e);
+            return FastOutcome.materialized;
+        }
         // Whatever escapes the dispatcher is an uncaught exception of the generic path: the container answers it
         // with its servlet objects, built now if the dispatcher had not.
         failure = e;
@@ -183,6 +199,43 @@ FastOutcome serveFast(ServletEngine engine, FastDispatch dispatch, ref scope Req
         materialize(ignoredRequest, ignoredResponse);
     }
     return outcome;
+}
+
+/// The fields as the transport takes them, on `storage` when they fit; more is a GC copy, as the handler ran.
+private StreamField[] streamFields(scope const(FastField)[] given, return ref StreamField[16] storage)
+{
+    StreamField[] fields = given.length <= storage.length ? storage[0 .. given.length] : new StreamField[given.length];
+    foreach (index, ref field; given)
+        fields[index] = StreamField(field.name, field.value);
+    return fields;
+}
+
+/// Runs each mapped filter's `enter` in chain order; `entered` counts those that ran.
+private void enterFilters(ServletEngine engine, ref size_t entered)
+{
+    foreach (ref effect; engine.fastFilterEffects)
+    {
+        if (effect.enter !is null)
+            effect.enter();
+        ++entered;
+    }
+}
+
+/// Undoes the first `entered` filters' `enter`, innermost first.
+private void exitFilters(ServletEngine engine, size_t entered)
+{
+    foreach_reverse (ref effect; engine.fastFilterEffects[0 .. entered])
+        if (effect.exit !is null)
+            effect.exit();
+}
+
+/// The innermost mapped filter that answers `e` itself, or null.
+private FastFilterEffect* filterHandling(ServletEngine engine, Exception e)
+{
+    foreach_reverse (ref effect; engine.fastFilterEffects)
+        if (effect.handles !is null && effect.handles(e))
+            return &effect;
+    return null;
 }
 
 /++

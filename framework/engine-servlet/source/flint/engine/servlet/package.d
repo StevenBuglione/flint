@@ -18,7 +18,7 @@ module flint.engine.servlet;
 import flint.arena : Status;
 import flint.conc : Context, Deadline;
 import flint.engine.aot.any : Any;
-import flint.engine.aot.fast : FastDispatch, FastOutcome;
+import flint.engine.aot.fast : FastDispatch, FastField, FastFilter, FastFilterEffect, FastOutcome;
 import flint.engine.servlet.request : DispatchState, RequestHost, ServletEngineRequest, decimal, methodName;
 import flint.engine.servlet.response : ServletEngineResponse;
 import flint.engine.web.fiber : FiberResponse, FiberRoute;
@@ -148,10 +148,13 @@ final class ServletEngine : RequestHost
     private ServletEntry defaultServlet;
     private FilterEntry[] chainOrder;
     // The servlet's fast path (fast-path.md), offered each request before capture; null when the servlet has
-    // none or any filter is mapped, since a filter sees the servlet objects of every request it maps.
+    // none, or a mapped filter does not state its effect (S4), since a filter sees the objects of every request.
     private FastDispatch fastDispatch;
     // The proved error-page shortcut, once `install` accepted this engine; null forwards generically.
     private ErrorPageShortcut errorShortcut;
+    // The mapped filters' effects on fast-path requests, in chain order, and their fields (fast-path.md S4).
+    package(flint.engine.servlet) FastFilterEffect[] fastFilterEffects;
+    package(flint.engine.servlet) FastField[] fastFilterFields;
     private Server server;
     private bool started;
     private bool stopped;
@@ -278,7 +281,7 @@ final class ServletEngine : RequestHost
             entry.servlet.init(new EngineConfig(entry.name, servletContext, entry.parameters));
         foreach (entry; filters)
             entry.filter.init(new EngineFilterConfig(entry.name, servletContext, entry.parameters));
-        if (options.fastOffer !is null && chainOrder.length == 0)
+        if (options.fastOffer !is null && fastFiltersStated())
             if (auto candidate = cast(FastDispatch) defaultServlet.servlet)
                 if (candidate.hasFastPath())
                     fastDispatch = candidate;
@@ -295,6 +298,33 @@ final class ServletEngine : RequestHost
             if (entry.applies(servletPath, type, defaultServlet.name))
                 found ~= entry.filter;
         return found;
+    }
+
+    /++
+    Whether every mapped filter states its effect on a fast-path request (fast-path.md S4): it is mapped at `/*` for
+    `REQUEST` dispatches, so it runs for every request the fast path could answer, and it implements `FastFilter`.
+    The effects are kept in chain order. This engine has no secure connector, so the effect is the plain one.
+    +/
+    private bool fastFiltersStated()
+    {
+        FastFilterEffect[] effects;
+        foreach (entry; chainOrder)
+        {
+            auto fast = cast(FastFilter) entry.filter;
+            if (fast is null || entry.urlPatterns != ["/*"] || entry.servletNames.length != 0)
+                return false;
+            bool request = entry.dispatcherTypes.length == 0;
+            foreach (type; entry.dispatcherTypes)
+                request = request || type == DispatcherType.REQUEST;
+            FastFilterEffect effect;
+            if (!request || !fast.fastEffect(false, effect))
+                return false;
+            effects ~= effect;
+        }
+        fastFilterEffects = effects;
+        foreach (ref effect; effects)
+            fastFilterFields ~= effect.fields;
+        return true;
     }
 
     /// Stop at once: admitted requests are cancelled. Idempotent.

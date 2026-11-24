@@ -16,11 +16,35 @@
 +/
 module flint.security.web.header;
 
+import flint.engine.aot.fast : FastField;
 import flint.jakarta.servlet : FilterChain;
 import flint.jakarta.servlet.http : HttpServletRequest, HttpServletResponse;
 import flint.security.web : SecurityFilter;
 
 @safe:
+
+// Whether `written` holds a field `name` (header names compare case-insensitively, as containsHeader does).
+private bool present(const(FastField)[] written, string name) pure nothrow @nogc
+{
+    foreach (ref field; written)
+    {
+        if (field.name.length != name.length)
+            continue;
+        bool same = true;
+        foreach (index, c; name)
+        {
+            char a = c, b = field.name[index];
+            if (a >= 'A' && a <= 'Z')
+                a += 32;
+            if (b >= 'A' && b <= 'Z')
+                b += 32;
+            same = same && a == b;
+        }
+        if (same)
+            return true;
+    }
+    return false;
+}
 
 /// Writes headers to a response (Spring Security's `HeaderWriter`).
 interface HeaderWriter
@@ -46,22 +70,60 @@ class HeaderWriterFilter : SecurityFilter
             writer.writeHeaders(request, response);
         chain.doFilter(request, response);
     }
+
+    /++
+    Flint's fast path (fast-path.md S4): the fields every writer writes on a fresh response, in order. Each writer
+    applies its own presence rule to the fields written before it, as `writeHeaders` applies it to the response, and
+    shares its names and values with `writeHeaders`. `false` for a writer of another type, whose effect is unknown.
+    +/
+    package(flint.security) bool fastFields(bool secure, out FastField[] fields)
+    {
+        foreach (writer; headerWriters)
+        {
+            if (auto known = cast(XContentTypeOptionsHeaderWriter) writer)
+                known.appendFields(secure, fields);
+            else if (auto known = cast(XXssProtectionHeaderWriter) writer)
+                known.appendFields(secure, fields);
+            else if (auto known = cast(CacheControlHeadersWriter) writer)
+                known.appendFields(secure, fields);
+            else if (auto known = cast(HstsHeaderWriter) writer)
+                known.appendFields(secure, fields);
+            else if (auto known = cast(XFrameOptionsHeaderWriter) writer)
+                known.appendFields(secure, fields);
+            else if (auto known = cast(StaticHeadersWriter) writer)
+                known.appendFields(secure, fields);
+            else
+                return false;
+        }
+        return true;
+    }
 }
 
 /// `X-Content-Type-Options: nosniff`.
 final class XContentTypeOptionsHeaderWriter : HeaderWriter
 {
+    private enum name = "X-Content-Type-Options";
+    private enum value = "nosniff";
+
     /// Write it unless present.
     void writeHeaders(HttpServletRequest, HttpServletResponse response)
     {
-        if (!response.containsHeader("X-Content-Type-Options"))
-            response.setHeader("X-Content-Type-Options", "nosniff");
+        if (!response.containsHeader(name))
+            response.setHeader(name, value);
+    }
+
+    package(flint.security) void appendFields(bool, ref FastField[] written)
+    {
+        if (!present(written, name))
+            written ~= FastField(name, value);
     }
 }
 
 /// `X-XSS-Protection`: `0` by default (Spring Security 6's `HeaderValue.DISABLED`).
 final class XXssProtectionHeaderWriter : HeaderWriter
 {
+    private enum name = "X-XSS-Protection";
+
     /// The header values.
     enum HeaderValue : string
     {
@@ -81,8 +143,14 @@ final class XXssProtectionHeaderWriter : HeaderWriter
     /// Write it unless present.
     void writeHeaders(HttpServletRequest, HttpServletResponse response)
     {
-        if (!response.containsHeader("X-XSS-Protection"))
-            response.setHeader("X-XSS-Protection", headerValue);
+        if (!response.containsHeader(name))
+            response.setHeader(name, headerValue);
+    }
+
+    package(flint.security) void appendFields(bool, ref FastField[] written)
+    {
+        if (!present(written, name))
+            written ~= FastField(name, headerValue);
     }
 }
 
@@ -90,21 +158,34 @@ final class XXssProtectionHeaderWriter : HeaderWriter
 /// response already sets one of them (Spring Security's `CacheControlHeadersWriter`).
 final class CacheControlHeadersWriter : HeaderWriter
 {
+    private static immutable FastField[3] fields = [
+        FastField("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate"),
+        FastField("Pragma", "no-cache"), FastField("Expires", "0")
+    ];
+
     /// Write them unless any is present.
     void writeHeaders(HttpServletRequest, HttpServletResponse response)
     {
         if (response.getHeader("Cache-Control") !is null || response.getHeader("Expires") !is null
                 || response.getHeader("Pragma") !is null)
             return;
-        response.setHeader("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate");
-        response.setHeader("Pragma", "no-cache");
-        response.setHeader("Expires", "0");
+        foreach (ref field; fields)
+            response.setHeader(field.name, field.value);
+    }
+
+    package(flint.security) void appendFields(bool, ref FastField[] written)
+    {
+        if (present(written, "Cache-Control") || present(written, "Expires") || present(written, "Pragma"))
+            return;
+        written ~= fields[];
     }
 }
 
 /// `Strict-Transport-Security` on secure requests (Spring Security's `HstsHeaderWriter`).
 final class HstsHeaderWriter : HeaderWriter
 {
+    private enum name = "Strict-Transport-Security";
+
     private long maxAgeInSeconds = 31_536_000;
     private bool includeSubDomains = true;
     private bool preload;
@@ -124,18 +205,31 @@ final class HstsHeaderWriter : HeaderWriter
     /// Write it on secure requests, unless present.
     void writeHeaders(HttpServletRequest request, HttpServletResponse response)
     {
+        if (!request.isSecure() || response.containsHeader(name))
+            return;
+        response.setHeader(name, value());
+    }
+
+    package(flint.security) void appendFields(bool secure, ref FastField[] written)
+    {
+        if (secure && !present(written, name))
+            written ~= FastField(name, value());
+    }
+
+    private string value() const
+    {
         import flint.java.lang : valueOf;
 
-        if (!request.isSecure() || response.containsHeader("Strict-Transport-Security"))
-            return;
-        response.setHeader("Strict-Transport-Security", "max-age=" ~ valueOf(maxAgeInSeconds) ~ (includeSubDomains
-                ? " ; includeSubDomains" : "") ~ (preload ? " ; preload" : ""));
+        return "max-age=" ~ valueOf(maxAgeInSeconds) ~ (includeSubDomains
+                ? " ; includeSubDomains" : "") ~ (preload ? " ; preload" : "");
     }
 }
 
 /// `X-Frame-Options` (Spring Security's `XFrameOptionsHeaderWriter`).
 final class XFrameOptionsHeaderWriter : HeaderWriter
 {
+    private enum name = "X-Frame-Options";
+
     /// The policies.
     enum XFrameOptionsMode : string
     {
@@ -154,8 +248,14 @@ final class XFrameOptionsHeaderWriter : HeaderWriter
     /// Write it unless present.
     void writeHeaders(HttpServletRequest, HttpServletResponse response)
     {
-        if (!response.containsHeader("X-Frame-Options"))
-            response.setHeader("X-Frame-Options", mode);
+        if (!response.containsHeader(name))
+            response.setHeader(name, mode);
+    }
+
+    package(flint.security) void appendFields(bool, ref FastField[] written)
+    {
+        if (!present(written, name))
+            written ~= FastField(name, mode);
     }
 }
 
@@ -179,5 +279,13 @@ final class StaticHeadersWriter : HeaderWriter
             return;
         foreach (value; values)
             response.addHeader(name, value);
+    }
+
+    package(flint.security) void appendFields(bool, ref FastField[] written)
+    {
+        if (present(written, name))
+            return;
+        foreach (value; values)
+            written ~= FastField(name, value);
     }
 }

@@ -231,4 +231,10 @@ final class SingleResultAuthorizationManager(T) : AuthorizationManager!T
     {
         return new AuthorizationDecision(granted);
     }
+
+    /// Flint's fast path (fast-path.md S4): the fixed decision, read once at startup.
+    package(flint.security) bool isGranted() const pure nothrow @nogc
+    {
+        return granted;
+    }
 }

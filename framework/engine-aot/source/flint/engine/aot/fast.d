@@ -59,6 +59,9 @@ struct FastExchange
     size_t acceptCount;
     /// ditto
     const(char)[] accept;
+    /// The response fields the mapped filters write (`FastFilterEffect.fields`, in chain order), which the generic
+    /// response holds beside the dispatcher's own fields.
+    const(FastField)[] filterFields;
     /// How many `Origin` fields the request has: a CORS request (or a same-origin one) takes the generic path when
     /// its handler has a CORS configuration.
     size_t originCount;
@@ -75,6 +78,34 @@ struct FastExchange
     /// Builds the request and response the generic path would have built (the container's own classes, as
     /// `Object`s for this low-level package); the outcome is then `FastOutcome.materialized`.
     void delegate(out Object request, out Object response) @safe materialize;
+}
+
+/++
+What a servlet filter does to a request the fast path answers (a `GET` or `HEAD` the dispatcher's proof admits),
+stated once, at startup (fast-path.md S4). The container offers requests while filters are mapped only when every
+one of them states its effect.
++/
+struct FastFilterEffect
+{
+    /// The response fields the filter writes on a fresh response, in order (`HeaderWriterFilter`'s writers).
+    FastField[] fields;
+    /// Per-request state the filter installs before the rest of the chain runs, or null (a security context).
+    void delegate() @safe enter;
+    /// Undoes `enter` when the request is done, whatever happened, or null.
+    void delegate() @safe exit;
+    /// Whether the filter would answer `ex`, escaping the servlet, itself (`ExceptionTranslationFilter`); null when
+    /// it rethrows every exception.
+    bool delegate(Exception ex) @safe handles;
+    /// Answers `ex` on the materialized request and response, as the filter does when `handles` is true.
+    void delegate(Object request, Object response, Exception ex) @safe handle;
+}
+
+/// Implemented by a servlet filter that can state its effect on fast-path requests (`FastFilterEffect`).
+interface FastFilter
+{
+    /// The filter's effect on a request over a secure connection, or not; `false` when it cannot state it, and
+    /// the container then offers no request to the fast path.
+    bool fastEffect(bool secure, out FastFilterEffect effect);
 }
 
 /// Implemented by a servlet that can answer some requests from a `FastExchange`.

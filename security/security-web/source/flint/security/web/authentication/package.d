@@ -45,10 +45,16 @@ class AnonymousAuthenticationFilter : SecurityFilter
 
     override void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
     {
+        populate();
+        chain.doFilter(request, response);
+    }
+
+    /// The anonymous token, unless the context holds an authentication; Flint's fast path runs it too (S4).
+    package(flint.security) void populate()
+    {
         auto context = SecurityContextHolder.getContext();
         if (context.getAuthentication() is null)
             context.setAuthentication(new AnonymousAuthenticationToken(key, principal, authorities));
-        chain.doFilter(request, response);
     }
 }
 

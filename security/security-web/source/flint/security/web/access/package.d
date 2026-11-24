@@ -79,14 +79,31 @@ class ExceptionTranslationFilter : SecurityFilter
             chain.doFilter(request, response);
         catch (Exception e)
         {
-            for (Throwable cause = e; cause !is null; cause = cause.next)
-            {
-                if (auto authentication = cast(AuthenticationException) cause)
-                    return sendStartAuthentication(request, response, authentication);
-                if (auto denied = cast(AccessDeniedException) cause)
-                    return handleAccessDenied(request, response, denied);
-            }
-            throw e;
+            if (!translates(e))
+                throw e;
+            translate(request, response, e);
+        }
+    }
+
+    /// Whether `e` or one of its causes is an authentication or access-denied exception, which this filter answers;
+    /// Flint's fast path asks it too (S4).
+    package(flint.security) bool translates(Exception e)
+    {
+        for (Throwable cause = e; cause !is null; cause = cause.next)
+            if (cast(AuthenticationException) cause || cast(AccessDeniedException) cause)
+                return true;
+        return false;
+    }
+
+    /// Answer `e`, which `translates`: start authentication, or handle the denied access.
+    package(flint.security) void translate(HttpServletRequest request, HttpServletResponse response, Exception e)
+    {
+        for (Throwable cause = e; cause !is null; cause = cause.next)
+        {
+            if (auto authentication = cast(AuthenticationException) cause)
+                return sendStartAuthentication(request, response, authentication);
+            if (auto denied = cast(AccessDeniedException) cause)
+                return handleAccessDenied(request, response, denied);
         }
     }
 
@@ -146,6 +163,20 @@ class RequestMatcherDelegatingAuthorizationManager : AuthorizationManager!HttpSe
         managers ~= manager;
     }
 
+    /// Flint's fast path (S4): whether the rules grant every request without reading it, the authentication or
+    /// the time: exactly one rule, for any request, that always grants.
+    package(flint.security) bool grantsEveryRequest()
+    {
+        import flint.security.authorization : SingleResultAuthorizationManager;
+        import flint.security.web.util.matcher : AnyRequestMatcher;
+
+        if (matchers.length != 1 || typeid(cast(Object) matchers[0]) !is typeid(AnyRequestMatcher))
+            return false;
+        alias Fixed = SingleResultAuthorizationManager!RequestAuthorizationContext;
+        auto fixed = cast(Fixed) managers[0];
+        return fixed !is null && typeid(fixed) is typeid(Fixed) && fixed.isGranted();
+    }
+
     /// The first matching rule's decision; denied when none matches.
     AuthorizationResult authorize(AuthenticationSupplier authentication, HttpServletRequest request)
     {
@@ -175,6 +206,14 @@ class AuthorizationFilter : SecurityFilter
         if (result !is null && !result.isGranted())
             throw new AuthorizationDeniedException("Access Denied", result);
         chain.doFilter(request, response);
+    }
+
+    /// Flint's fast path (S4): whether this filter grants every request statically (its manager's rules do).
+    package(flint.security) bool grantsEveryRequest()
+    {
+        auto delegating = cast(RequestMatcherDelegatingAuthorizationManager) authorizationManager;
+        return delegating !is null && typeid(delegating) is typeid(RequestMatcherDelegatingAuthorizationManager)
+            && delegating.grantsEveryRequest();
     }
 
     private Authentication currentAuthentication()

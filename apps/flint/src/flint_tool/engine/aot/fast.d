@@ -13,42 +13,40 @@ import flint_tool.engine.aot.plan : BeanPlan, FactoryKind, HandlerPlan, Plan;
 @safe:
 
 /++
-Whether Flint AOT may specialise `handler`: one literal `GET` path; no `params`, `headers`, `consumes` or `produces`;
-`@ResponseBody` without `@ResponseStatus`; a non-void, described return type (the Jackson converter writes it by
-its descriptor); and every parameter an `@RequestParam string`, neither validated nor an exception.
+Whether the runtime may prove `handler` for the fast path, so the build needs the two beans: one `GET` path, literal
+or with whole-segment `{name}` variables; no `params`, `headers` or `consumes`, and `produces` at most exactly
+`application/json`; `@ResponseBody` without `@ResponseStatus`; a described plain value, or (S2) a `ResponseEntity`
+on a mapping that produces `application/json`; and every parameter an `@RequestParam string` or (S1) a
+`@PathVariable` `int`, `long` or `string`, neither validated nor an exception. `@CrossOrigin` is the runtime's to
+prove (S3). The runtime decides each endpoint at startup; this only keeps builds that cannot use the fast path from
+linking it.
 +/
 bool fastShape(const ref HandlerPlan handler) pure nothrow
 {
-    return simpleMapping(handler) && literalPath(handler.paths[0]) && requestParamsOnly(handler);
+    return simpleMapping(handler) && templatePath(handler.paths[0]) && bindableArguments(handler);
 }
 
-// One `GET` path, no other condition, `@ResponseBody` of a described non-void type, no `@ResponseStatus`.
+// One `GET` path, no other condition but `produces = application/json`, `@ResponseBody` without `@ResponseStatus`,
+// returning a described plain value or a ResponseEntity with that fixed producible type.
 private bool simpleMapping(const ref HandlerPlan handler) pure nothrow
 {
     if (handler.paths.length != 1 || handler.methods != ["GET"])
         return false;
-    if (handler.params.length || handler.headers.length || handler.consumes.length || handler.produces.length)
+    if (handler.params.length || handler.headers.length || handler.consumes.length)
+        return false;
+    const json = handler.produces == ["application/json"];
+    if (handler.produces.length && !json)
         return false;
     if (!handler.responseBody || handler.status != 0 || handler.reason.length != 0)
         return false;
-    return !crossOrigin(handler) && handler.returnDescribed && plainReturn(handler.method.returns.name);
-}
-
-// `@CrossOrigin` on the class (merged) or the method: CORS processing adds Vary fields (fast-path.md 4).
-private bool crossOrigin(const ref HandlerPlan handler) pure nothrow
-{
-    enum name = "flint.web.bind.annotation.CrossOrigin";
-    foreach (ref item; handler.typeAnnotations.items)
-        if (item.annotation.type == name)
-            return true;
-    foreach (ref annotation; handler.method.annotations)
-        if (annotation.type == name)
-            return true;
-    return false;
+    const returns = handler.method.returns.name;
+    if (returns == "flint.http.ResponseEntity")
+        return json;
+    return handler.returnDescribed && plainReturn(returns);
 }
 
 // A value @ResponseBody writes as it is: not void, and not a type with its own return value handler or status
-// (ResponseEntity, HttpEntity, HttpHeaders, ProblemDetail), nor Object or Any (fast-path.md 3.1).
+// (HttpEntity, HttpHeaders, ProblemDetail), nor Object or Any (fast-path.md 3.1).
 private bool plainReturn(string type) pure nothrow @nogc
 {
     switch (type)
@@ -61,23 +59,65 @@ private bool plainReturn(string type) pure nothrow @nogc
     }
 }
 
-// A path the request's raw bytes can be compared with: no pattern syntax, no escapes, no matrix parameters.
-private bool literalPath(string path) pure nothrow @nogc
+// A path the runtime matches byte for byte: literal segments without pattern syntax, escapes or matrix parameters,
+// and whole-segment `{name}` variables.
+private bool templatePath(string path) pure nothrow @nogc
 {
     if (path.length == 0 || path[0] != '/')
         return false;
-    foreach (c; path)
-        if (c == '{' || c == '}' || c == '*' || c == '?' || c == '%' || c == ';' || c == '\\')
+    size_t start = 1;
+    while (start <= path.length)
+    {
+        size_t end = start;
+        while (end < path.length && path[end] != '/')
+            ++end;
+        if (!templateSegment(path[start .. end]))
+            return false;
+        start = end + 1;
+    }
+    return true;
+}
+
+// `{name}` with a word name, or a literal without pattern syntax, escapes or matrix parameters.
+private bool templateSegment(string text) pure nothrow @nogc
+{
+    const variable = text.length > 2 && text[0] == '{' && text[$ - 1] == '}';
+    foreach (c; variable ? text[1 .. $ - 1] : text)
+        if (variable ? !wordChar(c) : syntaxChar(c))
             return false;
     return true;
 }
 
-// Every parameter an `@RequestParam string`, neither validated nor an exception.
-private bool requestParamsOnly(const ref HandlerPlan handler) pure nothrow
+private bool wordChar(char c) pure nothrow @nogc
+{
+    return c == '_' || (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+}
+
+private bool syntaxChar(char c) pure nothrow @nogc
+{
+    switch (c)
+    {
+    case '{', '}', '*', '?', '%', ';', '\\':
+        return true;
+    default:
+        return false;
+    }
+}
+
+// Every parameter an `@RequestParam string` or a `@PathVariable` int, long or string; neither validated nor an
+// exception.
+private bool bindableArguments(const ref HandlerPlan handler) pure nothrow
 {
     foreach (ref argument; handler.arguments)
-        if (argument.kind != "requestParam" || argument.type != "string" || argument.validate || argument.exception)
+    {
+        if (argument.validate || argument.exception)
             return false;
+        const param = argument.kind == "requestParam" && argument.type == "string";
+        const variable = argument.kind == "pathVariable" && (argument.type == "int"
+                || argument.type == "long" || argument.type == "string");
+        if (!param && !variable)
+            return false;
+    }
     return true;
 }
 
@@ -168,18 +208,31 @@ unittest
     refuses((ref HandlerPlan h) { h.methods = ["POST"]; });
     refuses((ref HandlerPlan h) { h.methods = ["GET", "HEAD"]; });
     refuses((ref HandlerPlan h) { h.paths = ["/a", "/b"]; });
-    refuses((ref HandlerPlan h) { h.paths = ["/owners/{id}"]; });
+    refuses((ref HandlerPlan h) { h.paths = ["/owners/{id:[0-9]+}"]; });
     refuses((ref HandlerPlan h) { h.paths = ["/files/**"]; });
     refuses((ref HandlerPlan h) { h.paths = ["relative"]; });
     refuses((ref HandlerPlan h) { h.params = ["x=1"]; });
-    refuses((ref HandlerPlan h) { h.produces = ["application/json"]; });
+    refuses((ref HandlerPlan h) { h.produces = ["text/plain"]; });
     refuses((ref HandlerPlan h) { h.responseBody = false; });
     refuses((ref HandlerPlan h) { h.status = 201; });
     refuses((ref HandlerPlan h) { h.returnDescribed = false; });
     refuses((ref HandlerPlan h) { h.method.returns.name = "void"; });
     refuses((ref HandlerPlan h) { h.method.returns.name = "flint.http.ResponseEntity"; });
     refuses((ref HandlerPlan h) { h.method.returns.name = "flint.http.ProblemDetail"; });
-    refuses((ref HandlerPlan h) { h.arguments[0].kind = "pathVariable"; });
     refuses((ref HandlerPlan h) { h.arguments[0].type = "int"; });
+    refuses((ref HandlerPlan h) { h.arguments[0].kind = "requestBody"; });
     refuses((ref HandlerPlan h) { h.arguments[0].validate = true; });
+
+    // S1-S3: a petclinic-shaped GET by id qualifies.
+    HandlerPlan owner = greeting;
+    owner.paths = ["/api/owners/{ownerId}"];
+    owner.produces = ["application/json"];
+    owner.method.returns.name = "flint.http.ResponseEntity";
+    owner.returnDescribed = false;
+    ArgumentPlan id;
+    id.kind = "pathVariable";
+    id.name = "ownerId";
+    id.type = "int";
+    owner.arguments = [id];
+    assert(fastShape(owner));
 }
