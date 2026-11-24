@@ -140,6 +140,8 @@ Deviations:
 
 `flint.boot` also links the Flint collector (`static import flint.arena.gc`, registered with druntime as `flint`). A Boot binary can select it with `--DRT-gcopt=gc:flint` or `rt_options`, and keeps druntime's collector otherwise (docs/spring/phase1/gc.md).
 
+It also links `flint.arena.mark_threads`, so a Boot binary marks with one parallel thread per CPU the process may run on, less the collecting thread's own (`gcopt=parallel:<CPUs - 1>`; 0 on one CPU). The setting is in place before `main`, and the application's `rt_options` or an operator's `--DRT-gcopt=parallel:N` overrides it. druntime alone sizes `parallel` from the host's hardware threads and ignores affinity. gc-pools-ab certified the change at ce87168d: p99 0.81× and a median max pause of 13.5 → 4.0 ms, with no throughput loss (performance-playbook R-26). Smaller pools and a collection at startup are separate experiments.
+
 `tests/boot/test_boot_shutdown.py` stops gs-rest-service with each signal. It expects exit 0 and the GC report, and skips, visibly, in a checkout that does not link the pinned llhttp.
 
 ### Origins
