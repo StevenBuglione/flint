@@ -761,3 +761,8 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   4. error-404-p99 and error-validation-p99.
 
   The GC matrix waits for natural quiet. B2's results stay as history.
+- 2026-11-24, proof-harness: **phase1-builds-gs-rest certified at B3** (`d6d15b0073dd`, 19:11–19:13Z, no foreign activity; a private copy of shared v4.2, strict served compiles, strict scratch). Java, Go and Flint 18/18, and the served dev and static binaries 18/18. Served: 1,093 compiles client-served, 18 client-local (all c-source, allowed), 0 refused by the server. **Every gated build metric passes**, median (99% interval), 9 trials:
+    - **primary 0.554 (0.519–0.594)**: 86 against 156 ms, AOT 26 ms (101 at B2: flint-aot's 6200b84b serves the extraction);
+    - secondary 0.280 (strict scratch, 900 against 3,208 ms); edit 0.355; static edit 0.596; Oz 0.618.
+
+    Evidence: `benchmarks/spring/evidence/phase1-builds-gs-rest/20261124T191046Z/`.
