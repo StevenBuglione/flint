@@ -610,8 +610,7 @@ def toolchain_receipt(directory):
             out[name] = {'path': str(path.resolve()), 'sha256': sha256(path), 'version': tool_version([str(path), version])}
         else:
             out[name] = None
-    dmd = tools / 'dmd2' / 'linux' / 'bin64' / 'dmd'
-    out['dmd_native_aot_extractor'] = dmd.is_file() and b'flint-aot-extract' in dmd.read_bytes()
+    out['dmd_native_aot_extractor'] = native_extractor(tools / 'dmd2' / 'linux' / 'bin64' / 'dmd')
     conf = tools / 'dmd2' / 'linux' / 'bin64' / 'dmd.conf'
     if conf.is_file():
         text = conf.read_text(errors='replace')
@@ -621,6 +620,38 @@ def toolchain_receipt(directory):
     out['mold'] = [{'path': str(p.resolve()), 'sha256': sha256(p), 'version': tool_version([str(p), '--version'])}
                    for p in molds]
     return out
+
+
+def native_extractor(dmd):
+    """Whether DMD accepts -flint-aot-extract, probed as flint build meets it: a fork with the native extractor
+    answers a missing request file with 'cannot read the Flint AOT request', any other DMD with 'unrecognized switch'.
+    The switch name is not a byte string in the binary, so it is asked, not searched for."""
+    if not dmd.is_file():
+        return None
+    import tempfile
+    with tempfile.TemporaryDirectory(prefix='flint-measure-probe-') as temporary:
+        source = Path(temporary) / 'probe.d'
+        source.write_text('module probe;\n')  # without a source file DMD prints its manual instead
+        try:
+            completed = subprocess.run([str(dmd), f'-flint-aot-extract={temporary}/missing', '-o-', '-c', str(source)],
+                                       capture_output=True, text=True, timeout=30)
+        except (OSError, subprocess.TimeoutExpired):
+            return None
+    answer = completed.stdout + completed.stderr
+    if 'cannot read the Flint AOT request' in answer:
+        return True
+    return False if 'nrecognized switch' in answer else None
+
+
+def shared_toolchain_receipt():
+    """The shared toolchain other sessions build with (.tools, a symlink m7 switches atomically): its target and its
+    DMD's digest, recorded beside the private fork tree's."""
+    try:
+        shared = shared_tools()
+    except SystemExit as exc:
+        return {'error': str(exc)}
+    dmd = shared / 'dmd2' / 'linux' / 'bin64' / 'dmd'
+    return {'path': str(shared), 'resolved': str(shared.resolve()), 'dmd_sha256': sha256(dmd) if dmd.is_file() else None}
 
 
 GCOPT = re.compile(rb'gcopt=[\x20-\x7e]{1,200}')
@@ -1003,7 +1034,8 @@ def run(entry, force_busy=False, smoke=False, claim_seconds=0):
     foreign = sampler.foreign_activity()
     evidence = before['quiet'] and after['quiet'] and not foreign and not smoke
     receipt = {'time': now(), 'outcome': 'measured' if evidence else ('smoke' if smoke else 'busy'),
-               'evidence': evidence, 'host': os.uname().nodename, 'builds': built, 'window_before': before,
+               'evidence': evidence, 'host': os.uname().nodename, 'builds': built,
+               'shared_toolchain': shared_toolchain_receipt(), 'window_before': before,
                'window_during': sampler.samples, 'foreign_activity_during': len(foreign), 'window_after': after, 'results_directory': str(outdir.relative_to(ROOT)), 'summary': summary}
     (outdir / 'receipt.json').write_text(json.dumps(receipt, indent=2) + '\n')
     log_attempt(entry, {'time': receipt['time'], 'outcome': receipt['outcome'], 'evidence': evidence,

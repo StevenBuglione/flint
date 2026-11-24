@@ -233,5 +233,20 @@ class Provenance(unittest.TestCase):
             self.assertEqual(len(row['aot_summaries']['distinct']), 1)
 
 
+class NativeExtractorProbe(unittest.TestCase):
+    def fake(self, directory, answer):
+        dmd = Path(directory) / 'dmd'
+        dmd.write_text(f'#!/bin/sh\necho "{answer}" >&2\nexit 1\n')
+        dmd.chmod(0o755)
+        return dmd
+
+    def test_the_switch_is_probed(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            self.assertTrue(measure_queue.native_extractor(self.fake(temporary, 'Error: cannot read the Flint AOT request `x`')))
+            self.assertFalse(measure_queue.native_extractor(self.fake(temporary, "Error: unrecognized switch '-flint-aot-extract=x'")))
+            self.assertIsNone(measure_queue.native_extractor(self.fake(temporary, 'something else')))
+            self.assertIsNone(measure_queue.native_extractor(Path(temporary) / 'absent'))
+
+
 if __name__ == '__main__':
     unittest.main()
