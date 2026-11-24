@@ -533,3 +533,12 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **The rule** (lowest p99 and RSS with no throughput or CPU loss beyond its interval) **picks `parallel:1`.** It loses nothing beyond an interval, and its median max pause falls from 13.5 to 4 ms; its p99 and RSS changes are within their intervals.
   - **`minPoolSize:4 incPoolSize:0` cuts peak RSS by 22% (about 4.4 MB, beyond its interval)** but costs 2.1% of throughput beyond its interval, so the rule excludes it. Accepting that trade is the coordinator's call.
   - Evidence: `benchmarks/spring/evidence/gc-pools-ab/`.
+- 2026-11-23, owner (via the coordinator): **docs/spring/phase1/resume-plan.md is approved as written (82601fed), and work resumes on it.**
+  - **The order:** integrate; one same-commit baseline B; then one build bottleneck and one runtime bottleneck at a time.
+  - **Active team:** dmd-arm64, flint-aot, boot, data-access and proof-harness, plus framework-core for the Any trim only. Every other role stays parked until named for a slice.
+  - **Decisions carried with the approval:**
+    - small GC pools are deferred until fast-path-pools-ab on the default fast path;
+    - static edit builds stay gating;
+    - the Spring gate is strengthened so that p50 (at 0.99) and receipt provenance (exact SHA, trial counts and coverage across build, HTTP, error and GC parts) fail closed, with p99.9 reported;
+    - runtime metrics apply to the two HTTP apps, with gs-relational-data-access measured on builds, size and acceptance;
+    - third-party-apis' next item is chosen from the baseline.
