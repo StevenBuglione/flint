@@ -321,6 +321,10 @@ interface RawMap
     int size();
     /// Every key, boxed, in iteration order.
     Any[] keysAsAny();
+    /// Each entry, boxed, in iteration order, without copying the map; stops at the visitor's first nonzero result
+    /// and returns it (`opApply`'s protocol). Adding or removing a key from the visitor is a concurrent
+    /// modification.
+    int forEachAny(scope int delegate(ref Any key, ref Any value) @safe visit);
     /// The value for a boxed key; `Any.init` when absent.
     Any getAny(Any key);
     /// Put a boxed entry.
@@ -1532,10 +1536,25 @@ class HashMap(K, V) : Map!(K, V)
     /// Descriptor hook: storage is private, not JSON properties.
     enum __flintOpaque = true;
 
+    // Entries in insertion order. The first `count_` slots are live; slots past them are cleared slots a `remove`
+    // left, which the next `store` reuses, so appends keep the arrays' capacity (a shrunk slice would lose it).
     private K[] keys_;
     private V[] values_;
+    private size_t count_;
+    // Each key's slot, built once the map outgrows `linearLimit`; a smaller map finds keys by scanning, so it
+    // allocates no associative-array node per entry.
     private size_t[K] positions;
+    private bool indexed;
+    // Structural changes (an added or removed key), as Java's modCount: forEachAny fails on one mid-iteration.
+    private uint modCount;
     private bool frozen;
+
+    // The capacity the first entry reserves, and the size up to which keys are found by a linear scan: keys whose
+    // `==` is @safe (strings, numbers, plain structs); class and interface keys use the table from the first entry,
+    // through the associative array's own equality as before.
+    private enum reserved = 8;
+    private enum bool safeEquality = __traits(compiles, () @safe { K a, b; return a == b; });
+    private enum linearLimit = safeEquality ? reserved : 0;
 
     /// An empty map.
     this() pure nothrow @nogc
@@ -1555,18 +1574,60 @@ class HashMap(K, V) : Map!(K, V)
             store(k, v);
     }
 
+    // The slot of `key`, or -1.
+    private ptrdiff_t slotOf(K key)
+    {
+        if (indexed)
+        {
+            auto position = key in positions;
+            return position is null ? -1 : cast(ptrdiff_t)*position;
+        }
+        static if (safeEquality)
+            foreach (i, ref k; keys_[0 .. count_])
+                if (k == key)
+                    return cast(ptrdiff_t) i;
+        return -1;
+    }
+
     private V store(K key, V value)
     {
-        if (auto position = key in positions)
+        const at = slotOf(key);
+        if (at >= 0)
         {
-            auto previous = values_[*position];
-            values_[*position] = value;
+            auto previous = values_[at];
+            values_[at] = value;
             return previous;
         }
-        positions[key] = keys_.length;
-        keys_ ~= key;
-        values_ ~= value;
+        if (count_ == keys_.length)
+        {
+            if (keys_.length == 0)
+            {
+                keys_.reserve(reserved);
+                values_.reserve(reserved);
+            }
+            keys_ ~= key;
+            values_ ~= value;
+        }
+        else
+        {
+            keys_[count_] = key;
+            values_[count_] = value;
+        }
+        ++count_;
+        ++modCount;
+        if (indexed)
+            positions[key] = count_ - 1;
+        else if (count_ > linearLimit)
+            index();
         return V.init;
+    }
+
+    // Build the slot table, once the map outgrows a linear scan.
+    private void index()
+    {
+        foreach (i, ref k; keys_[0 .. count_])
+            positions[k] = i;
+        indexed = true;
     }
 
     package(flint.java) void freeze() pure nothrow @nogc
@@ -1583,25 +1644,25 @@ class HashMap(K, V) : Map!(K, V)
     /// Java's `size`.
     int size()
     {
-        return cast(int) keys_.length;
+        return cast(int) count_;
     }
 
     /// Java's `isEmpty`.
     bool isEmpty()
     {
-        return keys_.length == 0;
+        return count_ == 0;
     }
 
     /// Java's `containsKey`.
     bool containsKey(K key)
     {
-        return (key in positions) !is null;
+        return slotOf(key) >= 0;
     }
 
     /// Java's `containsValue`.
     bool containsValue(V value)
     {
-        foreach (v; values_)
+        foreach (v; values_[0 .. count_])
             if (javaEquals(v, value))
                 return true;
         return false;
@@ -1610,14 +1671,14 @@ class HashMap(K, V) : Map!(K, V)
     /// Java's `get`.
     V get(K key)
     {
-        auto position = key in positions;
-        return position is null ? V.init : values_[*position];
+        const at = slotOf(key);
+        return at < 0 ? V.init : values_[at];
     }
 
     V getOrDefault(K key, V defaultValue)
     {
-        auto position = key in positions;
-        return position is null ? defaultValue : values_[*position];
+        const at = slotOf(key);
+        return at < 0 ? defaultValue : values_[at];
     }
 
     /// Java's `put`.
@@ -1630,8 +1691,9 @@ class HashMap(K, V) : Map!(K, V)
     /// Java's `putIfAbsent`.
     V putIfAbsent(K key, V value)
     {
-        if (auto position = key in positions)
-            return values_[*position];
+        const at = slotOf(key);
+        if (at >= 0)
+            return values_[at];
         put(key, value);
         return V.init;
     }
@@ -1640,20 +1702,24 @@ class HashMap(K, V) : Map!(K, V)
     V remove(K key)
     {
         checkModifiable();
-        auto position = key in positions;
-        if (position is null)
+        const found = slotOf(key);
+        if (found < 0)
             return V.init;
-        const at = *position;
+        const at = cast(size_t) found;
         auto previous = values_[at];
-        positions.remove(key);
-        foreach (i; at + 1 .. keys_.length)
+        if (indexed)
+            positions.remove(key);
+        foreach (i; at + 1 .. count_)
         {
             keys_[i - 1] = keys_[i];
             values_[i - 1] = values_[i];
-            positions[keys_[i - 1]] = i - 1;
+            if (indexed)
+                positions[keys_[i - 1]] = i - 1;
         }
-        keys_ = keys_[0 .. $ - 1];
-        values_ = values_[0 .. $ - 1];
+        --count_;
+        keys_[count_] = K.init; // the cleared slot holds no reference
+        values_[count_] = V.init;
+        ++modCount;
         return previous;
     }
 
@@ -1669,26 +1735,29 @@ class HashMap(K, V) : Map!(K, V)
         checkModifiable();
         keys_ = null;
         values_ = null;
+        count_ = 0;
         positions = null;
+        indexed = false;
+        ++modCount;
     }
 
     /// Java's `keySet`.
     Set!K keySet()
     {
-        return new LinkedHashSet!K(keys_);
+        return new LinkedHashSet!K(keys_[0 .. count_]);
     }
 
     /// Java's `values`.
     Collection!V values()
     {
-        return new ArrayList!V(values_);
+        return new ArrayList!V(values_[0 .. count_]);
     }
 
     /// Java's `entrySet`.
     Set!(MapEntry!(K, V)) entrySet()
     {
         auto result = new LinkedHashSet!(MapEntry!(K, V))();
-        foreach (i, k; keys_)
+        foreach (i, k; keys_[0 .. count_])
             result.add(new MapEntry!(K, V)(k, values_[i], this));
         return result;
     }
@@ -1696,16 +1765,16 @@ class HashMap(K, V) : Map!(K, V)
     /// Java's `forEach`.
     void forEach(void delegate(K, V) @safe action)
     {
-        foreach (i, k; keys_.dup)
+        foreach (i, k; keys_[0 .. count_].dup)
             action(k, values_[i]);
     }
 
     /// Java's `computeIfAbsent`.
     V computeIfAbsent(K key, V delegate(K) @safe mappingFunction)
     {
-        if (auto position = key in positions)
-            if (!Objects.isNull(values_[*position]))
-                return values_[*position];
+        const at = slotOf(key);
+        if (at >= 0 && !Objects.isNull(values_[at]))
+            return values_[at];
         auto value = mappingFunction(key);
         if (!Objects.isNull(value))
             put(key, value);
@@ -1715,9 +1784,8 @@ class HashMap(K, V) : Map!(K, V)
     /// Java's `merge`.
     V merge(K key, V value, V delegate(V, V) @safe remapping)
     {
-        auto position = key in positions;
-        auto merged = position is null || Objects.isNull(values_[*position]) ? value
-            : remapping(values_[*position], value);
+        const at = slotOf(key);
+        auto merged = at < 0 || Objects.isNull(values_[at]) ? value : remapping(values_[at], value);
         put(key, merged);
         return merged;
     }
@@ -1725,7 +1793,7 @@ class HashMap(K, V) : Map!(K, V)
     /// Iterate as `foreach (key, value; map)`.
     int opApply(scope int delegate(K, V) @safe dg)
     {
-        foreach (i, k; keys_.dup)
+        foreach (i, k; keys_[0 .. count_].dup)
             if (const result = dg(k, values_[i]))
                 return result;
         return 0;
@@ -1734,16 +1802,35 @@ class HashMap(K, V) : Map!(K, V)
     /// Java's `keysAsAny`.
     Any[] keysAsAny()
     {
-        Any[] result;
-        foreach (k; keys_)
-            result ~= Any.of(k);
+        auto result = new Any[count_];
+        foreach (i, k; keys_[0 .. count_])
+            result[i] = Any.of(k);
         return result;
+    }
+
+    /// Each entry, boxed, in iteration order, without copying the map; stops at the visitor's first nonzero result
+    /// and returns it. A visitor may replace values (and sees the new ones), but one that adds or removes a key
+    /// gets `ConcurrentModificationException`, as Java's `HashMap.forEach` throws.
+    int forEachAny(scope int delegate(ref Any key, ref Any value) @safe visit)
+    {
+        const expected = modCount;
+        foreach (i; 0 .. count_)
+        {
+            auto key = Any.of(keys_[i]);
+            auto value = Any.of(values_[i]);
+            const result = visit(key, value);
+            if (modCount != expected)
+                throw new ConcurrentModificationException();
+            if (result)
+                return result;
+        }
+        return 0;
     }
 
     Any getAny(Any key)
     {
-        auto position = key.get!K in positions;
-        return position is null ? Any.init : Any.of(values_[*position]);
+        const at = slotOf(key.get!K);
+        return at < 0 ? Any.init : Any.of(values_[at]);
     }
 
     /// Java's `putAny`.
@@ -1772,7 +1859,7 @@ class HashMap(K, V) : Map!(K, V)
         auto that = cast(Map!(K, V)) o;
         if (that is null || that.size() != size())
             return false;
-        foreach (i, k; keys_)
+        foreach (i, k; keys_[0 .. count_])
             if (!that.containsKey(k) || !javaEquals(that.get(k), values_[i]))
                 return false;
         return true;
@@ -1782,7 +1869,7 @@ class HashMap(K, V) : Map!(K, V)
     int hashCode()
     {
         int h;
-        foreach (i, k; keys_)
+        foreach (i, k; keys_[0 .. count_])
             h += javaHashCode(k) ^ javaHashCode(values_[i]);
         return h;
     }
@@ -1804,7 +1891,7 @@ class HashMap(K, V) : Map!(K, V)
     override string toString()
     {
         string result = "{";
-        foreach (i, k; keys_)
+        foreach (i, k; keys_[0 .. count_])
         {
             if (i)
                 result ~= ", ";

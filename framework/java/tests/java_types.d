@@ -9,9 +9,9 @@ import flint.java.lang : Boolean, Double, IllegalArgumentException, IllegalState
     Long, NullPointerException,
     NumberFormatException, RuntimeException, UnsupportedOperationException, equals, javaHashCode,
     javaToString, stringHashCode, valueOf;
-import flint.java.util : ArrayList, Arrays, Collection, Collections, Comparator, HashMap, HashSet,
-    LinkedHashMap, LinkedHashSet, List, Map, MapEntry, NoSuchElementException, Objects, Optional,
-    RawCollection, RawMap, Set;
+import flint.java.util : ArrayList, Arrays, Collection, Collections, Comparator, ConcurrentModificationException,
+    HashMap, HashSet, LinkedHashMap, LinkedHashSet, List, Map, MapEntry, NoSuchElementException,
+    Objects, Optional, RawCollection, RawMap, Set;
 import flint.java.util.function_ : Function, Predicate, Supplier;
 import flint.java.util.stream : Collectors, Stream;
 
@@ -594,4 +594,90 @@ unittest
     assert(Locale.fromPosix("C") == Locale.US && Locale.fromPosix("") == Locale.US
             && Locale.fromPosix("de") == Locale.GERMAN);
     assert(Locale.getDefault().toLanguageTag().length >= 2);
+}
+
+@("RawMap.forEachAny: entries in order without a copy, early exit, empty map, and a structural change fails")
+unittest
+{
+    auto map = new LinkedHashMap!(string, int)();
+    RawMap raw = map;
+    int visits;
+    assert(raw.forEachAny((ref Any k, ref Any v) { ++visits; return 0; }) == 0 && visits == 0);
+    foreach (i, name; ["c", "a", "b", "d"])
+        map.put(name, cast(int) i);
+    string order;
+    int sum;
+    assert(raw.forEachAny((ref Any k, ref Any v) { order ~= k.get!string; sum += v.get!int; return 0; }) == 0);
+    assert(order == "cabd" && sum == 6);
+    // A nonzero result stops the walk and comes back.
+    string seen;
+    assert(raw.forEachAny((ref Any k, ref Any v) {
+            seen ~= k.get!string;
+            return k.get!string == "a" ? 7 : 0;
+        }) == 7);
+    assert(seen == "ca");
+    // Replacing a value is allowed and seen; adding or removing a key is a concurrent modification.
+    raw.forEachAny((ref Any k, ref Any v) { map.put(k.get!string, 10); return 0; });
+    assert(map.get("b") == 10 && map.size() == 4);
+    foreach (structural; [true, false])
+    {
+        bool threw;
+        try
+            raw.forEachAny((ref Any k, ref Any v) {
+                if (structural)
+                    map.put("new", 1);
+                else
+                    map.remove("d");
+                return 0;
+            });
+        catch (ConcurrentModificationException)
+            threw = true;
+        assert(threw);
+        map.remove("new");
+        map.put("d", 3);
+    }
+}
+
+@("HashMap: store, remove and store again keep order, contents and lookups, small and past the linear limit")
+unittest
+{
+    foreach (size; [3, 8, 9, 40])
+    {
+        auto map = new HashMap!(string, int)();
+        string[] expected;
+        foreach (i; 0 .. size)
+        {
+            const key = "k" ~ valueOf(i);
+            map.put(key, i);
+            expected ~= key;
+        }
+        // Remove every third key, then add new ones into the freed slots' places at the end.
+        foreach (round; 0 .. 3)
+        {
+            foreach (i; 0 .. size)
+                if (i % 3 == round)
+                {
+                    const key = "k" ~ valueOf(i);
+                    assert(map.remove(key) == i);
+                    import std.algorithm.mutation : remove;
+                    import std.algorithm.searching : countUntil;
+
+                    expected = expected.remove(expected.countUntil(key));
+                    map.put(key, i);
+                    expected ~= key;
+                }
+            string[] keys;
+            foreach (k, v; map)
+            {
+                keys ~= k;
+                assert(map.get(k) == v && map.containsKey(k));
+            }
+            assert(keys == expected && map.size() == size);
+            assert(map.get("absent") == 0 && !map.containsKey("absent") && map.remove("absent") == 0);
+        }
+        map.clear();
+        assert(map.isEmpty() && map.get("k0") == 0);
+        map.put("again", 1);
+        assert(map.size() == 1 && map.keysAsAny()[0].get!string == "again");
+    }
 }

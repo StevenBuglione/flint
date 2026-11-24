@@ -2535,6 +2535,12 @@ class MultiValueMapAdapter(K, V) : MultiValueMap!(K, V)
         return targetMap.keysAsAny();
     }
 
+    /// The entries, erased, without copying the target map.
+    int forEachAny(scope int delegate(ref Any key, ref Any value) @safe visit)
+    {
+        return targetMap.forEachAny(visit);
+    }
+
     /// The values of an erased key.
     Any getAny(Any key)
     {
@@ -2779,6 +2785,11 @@ private final class UnmodifiableMultiValueMap(K, V) : MultiValueMap!(K, V)
     Any[] keysAsAny()
     {
         return delegate_.keysAsAny();
+    }
+
+    int forEachAny(scope int delegate(ref Any key, ref Any value) @safe visit)
+    {
+        return delegate_.forEachAny(visit);
     }
 
     Any getAny(Any key)
