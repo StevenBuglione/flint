@@ -914,3 +914,12 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - p99.9 1.04, reported.
 
     B4's trees were ThinLTO-codegenned at O0; B5 has the O3 fix (dd774a24) and the fast path S5. Evidence: `benchmarks/spring/evidence/phase1-http-petclinic/20261125T124138Z/`.
+- 2026-11-25, proof-harness: **phase1-http-gs-rest certified at B5** (`8ed3de37dc57`, 13:31–14:12Z, interleaved from the start; no foreign activity). Go 18/18 in the parity wire mode (`8d29301a`). **Every gated runtime metric passes.** Flint / Go, median (99% interval), 9 trials:
+    - **throughput 1.861 (1.851–1.875)**: 439,600 against 236,170 req/s (1.451 at B4);
+    - **p50 0.679 (0.668–0.689)**: 43 against 63 µs;
+    - **p99 0.397 (0.382–0.409)**: 114 against 288 µs;
+    - **peak RSS 0.673 (0.661–0.689)**: 9.5 against 14.1 MB;
+    - **CPU per request 0.564 (0.557–0.568)**: 4.90 against 8.69 µs (0.718 at B4);
+    - p99.9 0.81, reported.
+
+    Evidence: `benchmarks/spring/evidence/phase1-http-gs-rest/20261125T133134Z/`.
