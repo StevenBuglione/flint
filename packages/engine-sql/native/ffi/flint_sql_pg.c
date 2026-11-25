@@ -27,7 +27,7 @@ enum { PG_UNSENT, PG_EVICTING, PG_PREPARING, PG_QUERY, PG_PIPE_PREAMBLE, PG_PIPE
 /* operation->preamble_state: none (or done), waiting to be sent, running on its own, pipelined. */
 enum { PREAMBLE_NONE, PREAMBLE_PENDING, PREAMBLE_ALONE, PREAMBLE_PIPELINED };
 enum {
-    OID_BOOL = 16, OID_BYTEA = 17, OID_NAME = 19, OID_INT8 = 20,
+    OID_BOOL = 16, OID_BYTEA = 17, OID_CHAR = 18, OID_NAME = 19, OID_INT8 = 20, OID_OID = 26,
     OID_INT2 = 21, OID_INT4 = 23, OID_TEXT = 25, OID_FLOAT4 = 700,
     OID_FLOAT8 = 701, OID_BPCHAR = 1042, OID_VARCHAR = 1043, OID_DATE = 1082, OID_TIME = 1083,
     OID_TIMESTAMP = 1114
@@ -1009,6 +1009,23 @@ int flint_pg_cell(const flint_sql_operation *operation, uint32_t index, flint_sq
     case OID_BYTEA:
         *data = bytes;
         *cell = (flint_sql_cell){.kind = FLINT_SQL_BYTES, .length = length};
+        return FLINT_SQL_OK;
+    case OID_OID:
+        /* An object identifier: unsigned 32 bits (pg_catalog's atttypid, typbasetype). */
+        if (length != 4)
+            return FLINT_SQL_IO;
+        *cell = (flint_sql_cell){.kind = FLINT_SQL_INT, .integer = (int64_t)network_load(bytes, 4)};
+        return FLINT_SQL_OK;
+    case OID_CHAR:
+        /* The one-byte "char" (pg_catalog's typtype, attidentity): text; its zero byte is the empty string, as
+           PostgreSQL prints it. */
+        if (length != 1)
+            return FLINT_SQL_IO;
+        length = *(const unsigned char *)bytes ? 1 : 0;
+        if (!flint_sql_utf8(bytes, length))
+            return FLINT_SQL_INVALID;
+        *data = bytes;
+        *cell = (flint_sql_cell){.kind = FLINT_SQL_TEXT, .length = length};
         return FLINT_SQL_OK;
     case OID_DATE: case OID_TIME: case OID_TIMESTAMP:
         return decode_temporal(cell, type, bytes, length, data);

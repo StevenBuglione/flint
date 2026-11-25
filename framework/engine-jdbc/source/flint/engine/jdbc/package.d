@@ -23,6 +23,7 @@ import flint.arena : ArenaError = Error, Buffer, RequestArena, Result, Status;
 import flint.conc : CancelSource, Context, Deadline;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.objects : objectToString;
+import flint.engine.jdbc.pgmetadata : CatalogColumn, MetaValue, columnLabels, columnRow, columnsSql, tablesSql;
 import flint.engine.sql : Driver, EngineConnection = Connection, enabled, enablePostgresEngine = enablePostgres,
     enableSqliteEngine = enableSqlite, Pool, PoolOptions, Row, SqlFailure, SqlValue, ValueKind;
 import flint.java.sql;
@@ -1342,6 +1343,30 @@ private int clampInt(long value) pure nothrow @nogc
 // ---------------------------------------------------------------------------------------------------------------
 // Result sets
 
+/// Rows the driver computed, not a statement's (pgjdbc's createDriverResultSet): `labels`, then `cells` row after row.
+private FlintResultSet driverResultSet(const(string)[] labels, Cell[] cells, size_t rows)
+{
+    auto result = new FlintResultSet(null);
+    result.labels = labels.dup;
+    result.cells = cells;
+    result.rowCount_ = rows;
+    return result;
+}
+
+/// A computed metadata value as a result-set cell.
+private Cell cellOf(MetaValue value) pure nothrow
+{
+    final switch (value.kind)
+    {
+    case MetaValue.Kind.null_:
+        return Cell(ValueKind.null_);
+    case MetaValue.Kind.integer:
+        return Cell(ValueKind.int64, value.integer);
+    case MetaValue.Kind.text:
+        return Cell(ValueKind.text, 0, 0, value.text);
+    }
+}
+
 /// The rows of a query, copied into GC memory.
 final class FlintResultSet : ResultSet
 {
@@ -2092,14 +2117,7 @@ final class FlintDatabaseMetaData : DatabaseMetaData
                 ~ "FROM sqlite_master WHERE type IN ('table', 'view') AND name NOT LIKE 'sqlite\\_%' ESCAPE '\\' "
                 ~ "AND name LIKE ?";
         else
-        {
-            sql = "SELECT table_catalog AS \"TABLE_CAT\", table_schema AS \"TABLE_SCHEM\", "
-                ~ "table_name AS \"TABLE_NAME\", CASE table_type WHEN 'BASE TABLE' THEN 'TABLE' "
-                ~ "ELSE table_type END AS \"TABLE_TYPE\", NULL AS \"REMARKS\" FROM information_schema.tables "
-                ~ "WHERE table_name LIKE ? AND table_schema LIKE ? "
-                ~ "AND table_schema NOT IN ('pg_catalog', 'information_schema')";
-            args ~= schemaPattern is null ? "%" : schemaPattern;
-        }
+            return postgresTables(catalog, schemaPattern, tableNamePattern, types);
         if (types.length)
         {
             sql ~= " AND " ~ (sqlite() ? "CASE type WHEN 'view' THEN 'VIEW' ELSE 'TABLE' END"
@@ -2131,15 +2149,75 @@ final class FlintDatabaseMetaData : DatabaseMetaData
             sql ~= "AND m.name LIKE ? AND p.name LIKE ? ORDER BY m.name, p.cid";
             return metaDataQuery(sql, [table, column]);
         }
-        sql = "SELECT table_catalog AS \"TABLE_CAT\", table_schema AS \"TABLE_SCHEM\", ";
-        sql ~= "table_name AS \"TABLE_NAME\", column_name AS \"COLUMN_NAME\", ";
-        sql ~= postgresDataType("data_type") ~ " AS \"DATA_TYPE\", data_type AS \"TYPE_NAME\", ";
-        sql ~= "character_maximum_length AS \"COLUMN_SIZE\", numeric_scale AS \"DECIMAL_DIGITS\", ";
-        sql ~= "CASE is_nullable WHEN 'YES' THEN 1 ELSE 0 END AS \"NULLABLE\", ";
-        sql ~= "ordinal_position AS \"ORDINAL_POSITION\", is_nullable AS \"IS_NULLABLE\" ";
-        sql ~= "FROM information_schema.columns WHERE table_name LIKE ? AND table_schema LIKE ? ";
-        sql ~= "AND column_name LIKE ? ORDER BY table_schema, table_name, ordinal_position";
-        return metaDataQuery(sql, [table, schemaPattern is null ? "%" : schemaPattern, column]);
+        return postgresColumns(catalog, schemaPattern, tableNamePattern, columnNamePattern);
+    }
+
+    /// The database this connection's URL names: pgjdbc's catalog. Null when the URL names none.
+    private string currentCatalog()
+    {
+        enum prefix = "jdbc:postgresql:";
+        if (!startsWith(connection.url, prefix))
+            return null;
+        auto rest = connection.url[prefix.length .. $];
+        if (startsWith(rest, "//"))
+        {
+            const slash = indexOf(rest[2 .. $], '/');
+            rest = slash < 0 ? "" : rest[2 + slash + 1 .. $];
+        }
+        const question = indexOf(rest, '?');
+        const database = question < 0 ? rest : rest[0 .. question];
+        return database.length ? database : null;
+    }
+
+    /// Whether `catalog` names another database than this connection's, as pgjdbc tests it.
+    private bool otherCatalog(string catalog)
+    {
+        const current = currentCatalog();
+        return catalog !is null && current !is null && catalog != current;
+    }
+
+    /// pgjdbc's getTables (flint.engine.jdbc.pgmetadata): its catalog query, the same text and parameters.
+    private ResultSet postgresTables(string catalog, string schemaPattern, string tableNamePattern, string[] types)
+    {
+        if (otherCatalog(catalog))
+            return driverResultSet([
+            "TABLE_CAT", "TABLE_SCHEM", "TABLE_NAME", "TABLE_TYPE", "REMARKS", "TYPE_CAT",
+            "TYPE_SCHEM", "TYPE_NAME", "SELF_REFERENCING_COL_NAME", "REF_GENERATION"
+        ], [], 0);
+        string[] args;
+        const sql = tablesSql(schemaPattern, tableNamePattern, types, args);
+        return metaDataQuery(sql, args);
+    }
+
+    /// pgjdbc's getColumns (flint.engine.jdbc.pgmetadata): its catalog query, then its 24 columns per row.
+    private ResultSet postgresColumns(string catalog, string schemaPattern, string tableNamePattern,
+            string columnNamePattern)
+    {
+        if (otherCatalog(catalog))
+            return driverResultSet(columnLabels[], [], 0);
+        string[] args;
+        auto raw = metaDataQuery(columnsSql(schemaPattern, tableNamePattern, columnNamePattern, args), args);
+        scope (exit)
+            raw.close();
+        Cell[] cells;
+        size_t rows;
+        const current = currentCatalog();
+        while (raw.next())
+        {
+            CatalogColumn column = {
+                catalog: current, nspname: raw.getString("nspname"), relname: raw.getString("relname"), attname: raw
+                    .getString("attname"), typtype: raw.getString("typtype"),
+                adsrc: raw.getString("adsrc"), attidentity: raw.getString("attidentity"), attgenerated: raw.getString(
+                            "attgenerated"), description: raw.getString("description"),
+                atttypid: raw.getLong("atttypid"), typbasetype: raw.getLong("typbasetype"),
+                atttypmod: raw.getInt("atttypmod"), typtypmod: raw.getInt("typtypmod"), attnum: raw.getInt("attnum"),
+                attnotnull: raw.getBoolean("attnotnull")
+            };
+            foreach (value; columnRow(column))
+                cells ~= cellOf(value);
+            ++rows;
+        }
+        return driverResultSet(columnLabels[], cells, rows);
     }
 
     /// Run a metadata query with string parameters on the connection.
@@ -2170,40 +2248,6 @@ final class FlintDatabaseMetaData : DatabaseMetaData
         sql ~= " WHEN " ~ like("%TIMESTAMP%") ~ " THEN " ~ decimal(Types.TIMESTAMP);
         sql ~= " WHEN " ~ like("%DATE%") ~ " THEN " ~ decimal(Types.DATE);
         return sql ~ " ELSE " ~ decimal(Types.NUMERIC) ~ " END";
-    }
-
-    /// The `Types` code of a PostgreSQL `information_schema` data type, as pgjdbc reports it.
-    private static string postgresDataType(string column)
-    {
-        static immutable string[2][] names = [
-            ["integer", "INTEGER"], ["bigint", "BIGINT"], ["smallint", "SMALLINT"],
-            ["character varying", "VARCHAR"], ["character", "CHAR"], ["text", "VARCHAR"],
-            ["boolean", "BIT"], ["date", "DATE"], ["time without time zone", "TIME"],
-            ["timestamp without time zone", "TIMESTAMP"], ["timestamp with time zone", "TIMESTAMP"],
-            ["numeric", "NUMERIC"], ["double precision", "DOUBLE"], ["real", "REAL"],
-            ["bytea", "BINARY"]
-        ];
-        string sql = "CASE " ~ column;
-        foreach (pair; names)
-            sql ~= " WHEN '" ~ pair[0] ~ "' THEN " ~ decimal(typeCode(pair[1]));
-        return sql ~ " ELSE " ~ decimal(Types.OTHER) ~ " END";
-    }
-
-    private static int typeCode(string name)
-    {
-        switch (name)
-        {
-            static foreach (member; [
-                "INTEGER", "BIGINT", "SMALLINT", "VARCHAR", "CHAR", "BIT", "DATE", "TIME",
-                "TIMESTAMP", "NUMERIC", "DOUBLE", "REAL", "BINARY"
-            ])
-            {
-        case member:
-                return __traits(getMember, Types, member);
-            }
-        default:
-            return Types.OTHER;
-        }
     }
 
     override Connection getConnection()

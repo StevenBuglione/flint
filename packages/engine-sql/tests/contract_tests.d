@@ -473,6 +473,51 @@ version (FlintNativeLibpq)
                 ~ "('BEGIN READ ONLY', 'COMMIT', 'BEGIN', 'ROLLBACK')", context) == 4);
     }
 
+    @("PostgreSQL reads oid and \"char\" columns, as pg_catalog queries return them")
+    unittest
+    {
+        const address = environment.get("FLINT_SQL_PG_TEST_DSN");
+        if (address.length == 0)
+            return;
+        Pool pool;
+        assert(pool.open(options(Driver.postgres, address)).code == Status.ok);
+        Context context;
+        scope (exit)
+            assert(pool.close(context).code == Status.ok);
+        auto acquired = pool.acquire(context);
+        assert(acquired.ok());
+        auto lease = acquired.value;
+        scope (exit)
+            assert(pool.release(lease).code == Status.ok);
+        assert(scalar(lease, "SELECT 'int4'::regtype::oid", context) == 23);
+        assert(scalar(lease, "SELECT 4294967295::oid", context) == 4_294_967_295);
+        ubyte[256] scratch;
+        scope arena = RequestArena(scratch[]); // text cells are copied into the arena
+        size_t rows;
+        bool letterRead, letterIsB, emptyRead, emptyIsEmpty;
+        int letterStatus, letterKind;
+        // The callback only records: an assertion inside it would leave the operation open.
+        const read = lease.query("SELECT 'b'::\"char\", ''::\"char\"", [], arena, context,
+                (ref Row row) @safe nothrow @nogc {
+            const letter = row.value(0, arena);
+            const empty = row.value(1, arena);
+            letterRead = letter.ok();
+            letterStatus = cast(int) letter.error.code;
+            letterKind = letterRead ? cast(int) letter.value.kind : -1;
+            letterIsB = letterRead && letter.value.kind == ValueKind.text && isText(arena, letter.value, "b");
+            emptyRead = empty.ok();
+            emptyIsEmpty = emptyRead && empty.value.kind == ValueKind.text && isText(arena, empty.value, "");
+            ++rows;
+            return Error.init;
+        });
+        assert(read.code == Status.ok && rows == 1, read.message);
+        // The cell is read, as text, before its value is compared.
+        assert(letterRead, "status " ~ imported!"std.conv".to!string(letterStatus));
+        assert(letterKind == cast(int) ValueKind.text, "kind " ~ imported!"std.conv".to!string(letterKind));
+        assert(letterRead && letterIsB, "\"char\" 'b' was not read as the text b");
+        assert(emptyRead && emptyIsEmpty, "\"char\" '' was not read as empty text");
+    }
+
     @("PostgreSQL sends BEGIN with the next statement: alone until both are prepared, then pipelined")
     unittest
     {

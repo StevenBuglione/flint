@@ -145,6 +145,24 @@
     "file": "druntime/src/core/internal/gc/impl/conservative/gc.d",
     "method": "LargeObjectPool.allocPages"
    }
+  },
+  {
+   "file": "framework/engine-jdbc/source/flint/engine/jdbc/pgmetadata.d",
+   "function": "precisionOf",
+   "upstream": {
+    "project": "pgjdbc",
+    "file": "pgjdbc/src/main/java/org/postgresql/jdbc/TypeInfoCache.java",
+    "method": "getPrecision"
+   }
+  },
+  {
+   "file": "framework/engine-jdbc/source/flint/engine/jdbc/pgmetadata.d",
+   "function": "displaySizeOf",
+   "upstream": {
+    "project": "pgjdbc",
+    "file": "pgjdbc/src/main/java/org/postgresql/jdbc/TypeInfoCache.java",
+    "method": "getDisplaySize"
+   }
   }
  ]
 }
