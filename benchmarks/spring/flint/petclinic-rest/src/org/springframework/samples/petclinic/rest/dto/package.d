@@ -1886,8 +1886,10 @@ class ValidationMessageDto
     @JsonAnySetter
     ValidationMessageDto putAdditionalProperty(string key, string value)
     {
+        // The validation advice puts three properties (field, defaultMessage, rejectedValue): Java's
+        // HashMap(int initialCapacity), sized for them (R-96).
         if (this.additionalProperties is null)
-            this.additionalProperties = new LinkedHashMap!(string, string)();
+            this.additionalProperties = new LinkedHashMap!(string, string)(3);
         this.additionalProperties.put(key, value);
         return this;
     }

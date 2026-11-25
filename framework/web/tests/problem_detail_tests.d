@@ -64,10 +64,22 @@ private final class CopiedProblem : ProblemDetail
     }
 }
 
-@("ProblemDetail properties keep insertion order, replace in place, grow past four, and copy (Flint)")
+@("ProblemDetail properties keep insertion order, replace in place, grow past two, and copy (Flint)")
 unittest
 {
     import flint.engine.aot.any : Any;
+
+    auto pair = ProblemDetail.forStatus(400);
+    pair.setProperty("timestamp", 1);
+    pair.setProperty("errors", 2);
+    pair.setProperty("timestamp", 10);
+    assert(pair.getPropertyNames() == ["timestamp", "errors"] && pair.getProperty("timestamp").get!int == 10);
+    auto pairCopy = new CopiedProblem(pair);
+    pairCopy.setProperty("errors", 30);
+    pairCopy.setProperty("third", 3);
+    assert(pair.getProperty("errors").get!int == 2 && pair.getPropertyNames().length == 2);
+    assert(pairCopy.getPropertyNames() == ["timestamp", "errors", "third"] && pairCopy.getProperty("errors").get!int == 30);
+    assert(pair.toString().length != 0 && pairCopy.toString().length != 0);
 
     auto detail = ProblemDetail.forStatus(400);
     assert(!detail.hasProperties() && detail.getPropertyNames().length == 0 && detail.getProperty("a").isNull);

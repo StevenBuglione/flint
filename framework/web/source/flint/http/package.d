@@ -2577,12 +2577,28 @@ A `ProblemDetail`'s extension properties in insertion order, names and values si
 handful, so the first four live in the object itself and a name is found by a scan: one allocation, where an
 associative array made a table, buckets and an entry per property. Past four, the names and values move to arrays.
 +/
-private final class ProblemProperties
+private struct ProblemProperties
 {
-    private string[4] inlineNames;
-    private Any[4] inlineValues;
-    string[] names;
-    Any[] values;
+    // A plain struct (no class header), so two properties, the usual count (a timestamp and one more), fill one
+    // 176-byte block. A third moves every property to `more`.
+    private size_t count;
+    private string[2] inlineNames;
+    private Any[2] inlineValues;
+    private Overflow* more;
+
+    private static struct Overflow
+    {
+        string[] names;
+        Any[] values;
+    }
+
+    static assert(ProblemProperties.sizeof <= 176, "ProblemProperties must fit druntime's 176-byte size class");
+
+    /// The names in insertion order.
+    const(string)[] names() const return pure nothrow @nogc
+    {
+        return more !is null ? more.names : inlineNames[0 .. count];
+    }
 
     /// The index of the property `name`, or -1.
     ptrdiff_t indexOf(scope const(char)[] name) const pure nothrow @nogc
@@ -2593,36 +2609,56 @@ private final class ProblemProperties
         return -1;
     }
 
+    /// The value at `index`, an index `indexOf` returned.
+    Any valueAt(size_t index) pure nothrow @nogc
+    {
+        return more !is null ? more.values[index] : inlineValues[index];
+    }
+
+    /// The type name of the value at `index`.
+    string typeNameAt(size_t index) const pure nothrow @nogc
+    {
+        return more !is null ? more.values[index].typeName() : inlineValues[index].typeName();
+    }
+
     /// Set `name` to `value`, replacing an earlier value.
     void set(string name, Any value) pure nothrow
     {
         const at = indexOf(name);
         if (at >= 0)
         {
-            values[at] = value;
+            if (more !is null)
+                more.values[at] = value;
+            else
+                inlineValues[at] = value;
             return;
         }
-        const count = names.length;
-        if (count < inlineNames.length)
+        if (more is null && count < inlineNames.length)
         {
             inlineNames[count] = name;
             inlineValues[count] = value;
-            names = inlineNames[0 .. count + 1];
-            values = inlineValues[0 .. count + 1];
+            ++count;
+            return;
         }
-        else
+        if (more is null)
         {
-            names = names ~ name;
-            values = values ~ value;
+            more = new Overflow;
+            more.names = inlineNames[0 .. count].dup;
+            more.values = inlineValues[0 .. count].dup;
+            inlineNames = inlineNames.init;
+            inlineValues = inlineValues.init;
         }
+        more.names ~= name;
+        more.values ~= value;
+        ++count;
     }
 
     /// A copy with its own storage.
-    ProblemProperties copy() pure nothrow
+    ProblemProperties* copy() pure nothrow
     {
         auto result = new ProblemProperties;
         foreach (i, name; names)
-            result.set(name, values[i]);
+            result.set(name, valueAt(i));
         return result;
     }
 }
@@ -2640,7 +2676,7 @@ class ProblemDetail
     private URI* instance;
     // The extension properties, made on the first `setProperty`: a problem without any (a 404's) carries one null
     // reference.
-    private ProblemProperties properties;
+    private ProblemProperties* properties;
 
     /// Spring's protected `ProblemDetail(int rawStatusCode)`.
     protected this(int rawStatusCode) pure nothrow @nogc
@@ -2766,7 +2802,7 @@ class ProblemDetail
         if (properties is null)
             return Any.init;
         const at = properties.indexOf(name);
-        return at < 0 ? Any.init : properties.values[at];
+        return at < 0 ? Any.init : properties.valueAt(at);
     }
 
     /// Whether any extension property is set.
@@ -2814,7 +2850,7 @@ class ProblemDetail
     {
         string text = "{";
         foreach (i, name; properties.names)
-            text ~= (i == 0 ? "" : ", ") ~ name ~ "=<" ~ properties.values[i].typeName() ~ ">";
+            text ~= (i == 0 ? "" : ", ") ~ name ~ "=<" ~ properties.typeNameAt(i) ~ ">";
         return text ~ "}";
     }
 
