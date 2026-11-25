@@ -641,7 +641,7 @@ unittest
 @("HashMap: store, remove and store again keep order, contents and lookups, small and past the linear limit")
 unittest
 {
-    foreach (size; [3, 8, 9, 40])
+    foreach (size; [1, 3, 6, 7, 8, 9, 40])
     {
         auto map = new HashMap!(string, int)();
         string[] expected;
@@ -680,6 +680,44 @@ unittest
         map.put("again", 1);
         assert(map.size() == 1 && map.keysAsAny()[0].get!string == "again");
     }
+}
+
+@("HashMap.forEach: entries in order without a copy, replaced values seen, and a structural change fails")
+unittest
+{
+    auto map = new HashMap!(string, int)();
+    map.forEach((string k, int v) { assert(false, "an empty map has no entry " ~ k); });
+    foreach (i, name; ["c", "a", "b", "d"])
+        map.put(name, cast(int) i);
+    string order;
+    int sum;
+    map.forEach((string k, int v) { order ~= k; sum += v; });
+    assert(order == "cabd" && sum == 6);
+    // Replacing a value is allowed; a later entry's new value is the one the action sees.
+    int[] seen;
+    map.forEach((string k, int v) {
+        seen ~= v;
+        if (k == "c")
+            map.put("b", 20);
+    });
+    assert(seen == [0, 1, 20, 3] && map.size() == 4);
+    foreach (structural; [true, false])
+    {
+        bool threw;
+        try
+            map.forEach((string k, int v) {
+                if (structural)
+                    map.put("new", 1);
+                else
+                    map.remove("d");
+            });
+        catch (ConcurrentModificationException)
+            threw = true;
+        assert(threw);
+        map.remove("new");
+        map.put("d", 3);
+    }
+    assert(map.size() == 4 && map.get("d") == 3);
 }
 
 @("Collections.emptyList: one shared instance per element type, empty and unmodifiable, equal to any empty list")
