@@ -138,9 +138,11 @@ interface ResourceHolder
 /// transaction's resource (a `DataSource`'s `ConnectionHolder`) allocates nothing; more go to an associative array.
 private struct BoundResources
 {
-    private enum inlineSlots = 4;
+    private enum inlineSlots = 3;
     private Object[inlineSlots] keys;
     private Object[inlineSlots] values;
+    // Each inline value as a `ResourceHolder`, or null: cast once when bound, not on every lookup.
+    private ResourceHolder[inlineSlots] holders;
     private size_t count;
     private Object[Object] overflow;
 
@@ -149,24 +151,45 @@ private struct BoundResources
         return count + overflow.length;
     }
 
-    /// The value bound to `key`, or null.
-    Object* find(Object key) return
+    /// The value bound to `key`, or null, and that value as a `ResourceHolder` when it is one.
+    Object* find(Object key, out ResourceHolder holder) return
     {
         foreach (i; 0 .. count)
             if (objectEquals(keys[i], key))
+            {
+                holder = holders[i];
                 return &values[i];
-        return key in overflow;
+            }
+        auto found = key in overflow;
+        if (found !is null)
+            holder = cast(ResourceHolder)*found;
+        return found;
+    }
+
+    /// The value bound to `key`, or null.
+    Object* find(Object key) return
+    {
+        ResourceHolder ignored;
+        return find(key, ignored);
     }
 
     /// Bind `value` to `key`, replacing any earlier value.
     void put(Object key, Object value)
     {
-        if (auto bound = find(key))
+        foreach (i; 0 .. count)
+            if (objectEquals(keys[i], key))
+            {
+                values[i] = value;
+                holders[i] = cast(ResourceHolder) value;
+                return;
+            }
+        if (auto bound = key in overflow)
             *bound = value;
         else if (count < inlineSlots)
         {
             keys[count] = key;
             values[count] = value;
+            holders[count] = cast(ResourceHolder) value;
             ++count;
         }
         else
@@ -183,10 +206,12 @@ private struct BoundResources
                 {
                     keys[j - 1] = keys[j];
                     values[j - 1] = values[j];
+                    holders[j - 1] = holders[j];
                 }
                 --count;
                 keys[count] = null; // the freed slot holds no reference
                 values[count] = null;
+                holders[count] = null;
                 return;
             }
         overflow.remove(key);
@@ -213,12 +238,6 @@ private final class TransactionState
     bool currentTransactionReadOnly;
     Nullable!int currentTransactionIsolationLevel;
     bool actualTransactionActive;
-
-    bool empty() const pure nothrow @nogc
-    {
-        return resources.length == 0 && !synchronizationActive && currentTransactionName is null
-            && !currentTransactionReadOnly && currentTransactionIsolationLevel.isNull && !actualTransactionActive;
-    }
 }
 
 private shared FiberLocal!TransactionState transactionState;
@@ -233,6 +252,8 @@ synchronization must be activated and deactivated by a transaction manager with 
 +/
 abstract class TransactionSynchronizationManager
 {
+    // The task's state, made on its first write. It stays with the task once made, even when emptied: FiberLocal drops it
+    // when the task ends, and a later transaction of the same task uses it again rather than making another.
     private static TransactionState state(bool create)
     {
         auto current = transactionState.get();
@@ -244,12 +265,6 @@ abstract class TransactionSynchronizationManager
                 throw new IllegalStateException("Could not store the transaction state: " ~ stored.message);
         }
         return current;
-    }
-
-    private static void release(TransactionState current)
-    {
-        if (current !is null && current.empty)
-            transactionState.remove();
     }
 
     // -----------------------------------------------------------------------------------------------------------
@@ -279,17 +294,17 @@ abstract class TransactionSynchronizationManager
         auto current = state(false);
         if (current is null)
             return null;
-        auto found = current.resources.find(actualKey);
+        ResourceHolder resourceHolder;
+        auto found = current.resources.find(actualKey, resourceHolder);
         if (found is null)
             return null;
         Object value = *found;
         // Transparently remove ResourceHolder that was marked as void...
-        if (auto resourceHolder = cast(ResourceHolder) value)
+        if (resourceHolder !is null)
         {
             if (resourceHolder.isVoid())
             {
                 current.resources.remove(actualKey);
-                release(current);
                 value = null;
             }
         }
@@ -363,7 +378,6 @@ abstract class TransactionSynchronizationManager
             return null;
         Object value = *found;
         current.resources.remove(actualKey);
-        release(current);
         // Transparently suppress a ResourceHolder that was marked as void...
         if (auto resourceHolder = cast(ResourceHolder) value)
         {
@@ -436,7 +450,6 @@ abstract class TransactionSynchronizationManager
         auto current = state(false);
         current.synchronizationActive = false;
         current.synchronizations = null;
-        release(current);
     }
 
     // -----------------------------------------------------------------------------------------------------------
@@ -449,7 +462,6 @@ abstract class TransactionSynchronizationManager
             return;
         auto current = state(true);
         current.currentTransactionName = name;
-        release(current);
     }
 
     /// Return the name of the current transaction, or null if none set.
@@ -466,7 +478,6 @@ abstract class TransactionSynchronizationManager
             return;
         auto current = state(true);
         current.currentTransactionReadOnly = readOnly;
-        release(current);
     }
 
     /// Return whether the current transaction is marked as read-only.
@@ -483,7 +494,6 @@ abstract class TransactionSynchronizationManager
             return;
         auto current = state(true);
         current.currentTransactionIsolationLevel = isolationLevel;
-        release(current);
     }
 
     /// Return the isolation level for the current transaction, if any.
@@ -500,7 +510,6 @@ abstract class TransactionSynchronizationManager
             return;
         auto current = state(true);
         current.actualTransactionActive = active;
-        release(current);
     }
 
     /// Return whether there currently is an actual transaction active.
@@ -548,7 +557,6 @@ abstract class TransactionSynchronizationManager
         current.currentTransactionReadOnly = false;
         current.currentTransactionIsolationLevel.nullify();
         current.actualTransactionActive = false;
-        release(current);
     }
 }
 
