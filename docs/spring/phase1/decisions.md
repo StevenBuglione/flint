@@ -867,3 +867,12 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - p99.9 1.42, reported.
 
     Evidence: `benchmarks/spring/evidence/phase1-http-petclinic/20261125T073334Z/`.
+- 2026-11-25, proof-harness: **phase1-http-gs-rest certified at B4** (`fb4c73d1adc7`, 09:17–09:57Z, interleaved with Go after the Flint-only run's guards missed by 0.5–1.5%; no foreign activity). Go is the ADR-033 comparator with Tomcat's keep-alive limit (`8d29301a`), accepted 18/18 in the parity wire mode. **Every gated runtime metric passes, for the first time on gs-rest.** Flint / Go, median (99% interval), 9 trials:
+    - **throughput 1.451 (1.437–1.469)**: 342,190 against 235,810 req/s (1.488 at B3, against the comparator without the keep-alive limit);
+    - **p50 0.809 (0.799–0.820)**: 51 against 63 µs (1.319 at B3);
+    - **p99 0.481 (0.450–0.508)**: 136 against 283 µs (0.842 at B3);
+    - **peak RSS 0.736 (0.726–0.746)**: 10.3 against 14.0 MB;
+    - **CPU per request 0.718 (0.709–0.725)**: 6.20 against 8.63 µs (1.006 at B3);
+    - p99.9 0.69, reported.
+
+    Evidence: `benchmarks/spring/evidence/phase1-http-gs-rest/20261125T091722Z/`.
