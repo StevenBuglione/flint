@@ -33,12 +33,13 @@ package(flint.engine.sql) struct Identity
     ulong generation;
 }
 
-package(flint.engine.sql) struct Cell
+/// One cell as the C core reports it (`flint_sql_cell`); `flint.engine.sql.RowCell` to callers of `Row.readAll`.
+struct Cell
 {
-    int kind;
-    long integer;
-    double floating;
-    size_t length;
+    int kind; /// A `ValueKind`.
+    long integer; /// An integer or boolean value; for text and bytes from `readAll`, the value's offset.
+    double floating; /// A floating-point value.
+    size_t length; /// The byte length of a text or bytes value.
 }
 
 package(flint.engine.sql) enum Progress : int
@@ -106,6 +107,8 @@ version (FlintSqlNative)
         private int flint_sql_row_info(ulong, ulong, uint, Cell*);
         private int flint_sql_row_copy(ulong, ulong, uint, void*, size_t);
         private int flint_sql_row_name(ulong, ulong, uint, char*, size_t, size_t*);
+        private int flint_sql_row_read(ulong, ulong, Cell*, uint, void*, size_t, size_t*, uint*);
+        private int flint_sql_row_names(ulong, ulong, char*, size_t, size_t*);
         private int flint_sql_lease_failure(ulong, ulong, Failure*);
         private int flint_sql_poll(int, uint, uint);
     }
@@ -426,6 +429,31 @@ package(flint.engine.sql) @trusted nothrow @nogc Status nameCell(Identity row, u
 {
     version (FlintSqlNative)
         return cast(Status) flint_sql_row_name(row.slot, row.generation, index, into.ptr, into.length, &size);
+    else
+        return Status.unsupported;
+}
+
+// The shim checks the row generation and compares its column count with cells.length (more than uint.max passes as
+// SAFETY: uint.max) under its lock before writing a cell; text and bytes go only within data.length. Counts by value.
+package(flint.engine.sql) @trusted nothrow @nogc Status readRow(Identity row, scope Cell[] cells,
+        scope ubyte[] data, out size_t used, out uint columns)
+{
+    version (FlintSqlNative)
+    {
+        const count = cells.length > uint.max ? uint.max : cast(uint) cells.length;
+        return cast(Status) flint_sql_row_read(row.slot, row.generation, cells.ptr, count,
+                data.ptr, data.length, &used, &columns);
+    }
+    else
+        return Status.unsupported;
+}
+
+// SAFETY: Generation checks run under the shim's lock; the zero-terminated labels go only within into.length bytes,
+// and the full length comes back by value, so a short span gets `resourceExhausted`.
+package(flint.engine.sql) @trusted nothrow @nogc Status rowNames(Identity row, scope char[] into, out size_t used)
+{
+    version (FlintSqlNative)
+        return cast(Status) flint_sql_row_names(row.slot, row.generation, into.ptr, into.length, &used);
     else
         return Status.unsupported;
 }

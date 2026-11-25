@@ -2,7 +2,8 @@ module sql_contract_tests;
 
 import flint.arena : Error, RequestArena, Status;
 import flint.conc : CancelSource, Context, Deadline;
-import flint.engine.sql : Connection, Driver, Isolation, Pool, PoolOptions, Row, SqlValue, ValueKind, withTransaction;
+import flint.engine.sql : Connection, Driver, Isolation, Pool, PoolOptions, Row, RowCell, SqlValue,
+    ValueKind, withTransaction;
 import std.process : environment;
 
 @safe:
@@ -108,10 +109,58 @@ private void exerciseValues(Driver driver, string path)
     assert(seen == 2);
     assert(saved.columns() == 0);
     assert(saved.value(0, arena).error.code == Status.notFound);
+    exerciseWholeRow(connection, arena, context, text, blob);
     exerciseTextRules(driver, connection, arena, context);
     const multi = connection.execute("SELECT 1; SELECT 2", [], arena, context);
     assert(multi.error.code == Status.invalidArgument);
     assert(connection.execute("SELECT 1", [], arena, context).ok());
+}
+
+/// `Row.readAll` and `Row.names`: a row and its labels in one call each, short spans and a stale row. The callback
+/// only records; the checks run once the query is over, so a failed check cannot leave the operation running.
+private void exerciseWholeRow(ref Connection connection, ref scope RequestArena arena,
+        ref Context context, string text, string blob)
+{
+    RowCell[8] cells;
+    ubyte[64] data;
+    char[64] names;
+    size_t used, shortUsed, namesUsed, shortNamesUsed;
+    uint width, fewWidth, shortWidth;
+    Status whole = Status.notFound, few, shortData, labels, shortLabels;
+    Row saved;
+    const read = connection.query("SELECT n,k,b,z,f FROM values_test ORDER BY z DESC", [], arena,
+            context, (ref Row row) @safe nothrow @nogc {
+        if (whole != Status.notFound)
+            return Error.init;
+        saved = row;
+        whole = row.readAll(cells[], data[], used, width);
+        RowCell[2] narrow;
+        RowCell[8] spare;
+        ubyte[4] tiny;
+        size_t unused;
+        few = row.readAll(narrow[], data[], unused, fewWidth);
+        shortData = row.readAll(spare[], tiny[], shortUsed, shortWidth);
+        labels = row.names(names[], namesUsed);
+        char[3] small;
+        shortLabels = row.names(small[], shortNamesUsed);
+        return Error.init;
+    });
+    assert(read.code == Status.ok, read.message);
+    assert(whole == Status.ok && width == 5 && used == text.length + blob.length);
+    assert(cells[0].kind == ValueKind.null_ && cells[3].kind == ValueKind.int64 && cells[3].integer == 0);
+    assert(cells[4].kind == ValueKind.boolean && cells[4].integer == 0);
+    assert(cells[1].kind == ValueKind.text && cells[2].kind == ValueKind.bytes);
+    const k = cast(size_t) cells[1].integer, b = cast(size_t) cells[2].integer;
+    assert(cast(const(char)[]) data[k .. k + cells[1].length] == text);
+    assert(cast(const(char)[]) data[b .. b + cells[2].length] == blob);
+    assert(few == Status.invalidArgument && fewWidth == 5, "fewer cells than columns read nothing");
+    assert(shortData == Status.resourceExhausted && shortUsed == used && shortWidth == 5,
+            "a short span reports what the values need");
+    assert(labels == Status.ok && names[0 .. namesUsed] == "n\0k\0b\0z\0f\0");
+    assert(shortLabels == Status.resourceExhausted && shortNamesUsed == 10);
+    // A stale row reads nothing, and reports no columns.
+    assert(saved.readAll(cells[], data[], used, width) == Status.notFound && width == 0 && used == 0);
+    assert(saved.names(names[], namesUsed) == Status.notFound && namesUsed == 0);
 }
 
 private void exerciseTextRules(Driver driver, ref Connection connection, ref scope RequestArena arena,

@@ -6,8 +6,9 @@ import flint.arena : Buffer, Error, RequestArena, Result, Status;
 import flint.conc : CancelSource, Context, Deadline;
 import flint.engine.sql.ffi.shim : Cell, Failure, Identity, Interest, Operation, Progress,
     acquirePool, claimTransaction, closePool, copyCell, dirtyLease, driverEnabled,
-    enablePostgresDriver, enableSqliteDriver, endTransaction,
-    inspectCell, leaseFailure, nameCell, openPool, releasePool, retireLease, rowColumns, setRetiredHook, withdrawPool;
+    enablePostgresDriver, enableSqliteDriver,
+    endTransaction, inspectCell, leaseFailure, nameCell, openPool, readRow, releasePool,
+    retireLease, rowColumns, rowNames, setRetiredHook, withdrawPool;
 import flint.engine.sql.sys.diagnostics : decideDiagnostics, diagnosticNow, noteAcquire, noteQueue,
     noteRelease, noteRow, noteStatement, reportDiagnostics;
 import flint.engine.sql.sys.wait : admit, admitStartup, armLeaseWait, forgetLeaseWaiter, joinLeaseQueue,
@@ -150,6 +151,12 @@ struct SqlFailure
     }
 }
 
+/++
+One cell of `Row.readAll`: `kind` (a `ValueKind`), and the value: `integer` or `floating` for a scalar, and for text
+and bytes the value's offset in the data span (`integer`) and its byte length (`length`).
++/
+alias RowCell = Cell;
+
 /// Generation-checked access to the row currently inside a consumer.
 struct Row
 {
@@ -187,6 +194,24 @@ struct Row
             output.bytes = destination.value;
         }
         return Result!SqlValue(output);
+    }
+
+    /++
+    Read the whole row in one call to the engine: each cell's kind and scalar value into `cells`, and the text and
+    bytes values back to back into `data` (see `RowCell`). `columns` is the row's column count on every path.
+    Returns `invalidArgument` when `cells` is shorter than the row; `resourceExhausted` when the values need more
+    than `data` holds, with `used` the bytes they need, the cells read, and nothing written past `data`.
+    +/
+    Status readAll(scope RowCell[] cells, scope ubyte[] data, out size_t used, out uint columns) const nothrow @nogc
+    {
+        return readRow(Identity(slot, generation), cells, data, used, columns);
+    }
+
+    /// Every column label, as `name` reports each, followed by a zero byte, back to back into `into`; `used` is the
+    /// bytes they take, and `resourceExhausted` means they need more than `into` holds.
+    Status names(scope char[] into, out size_t used) const nothrow @nogc
+    {
+        return rowNames(Identity(slot, generation), into, used);
     }
 
     /// Column count while the row is live. A stale row reports zero.

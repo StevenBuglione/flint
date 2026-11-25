@@ -26,7 +26,7 @@ import flint.engine.aot.any : Any;
 import flint.engine.aot.objects : objectToString;
 import flint.engine.jdbc.pgmetadata : CatalogColumn, MetaValue, columnLabels, columnRow, columnsSql, tablesSql;
 import flint.engine.sql : Driver, EngineConnection = Connection, enabled, enablePostgresEngine = enablePostgres,
-    enableSqliteEngine = enableSqlite, Pool, PoolOptions, Row, SqlFailure, SqlValue, ValueKind;
+    enableSqliteEngine = enableSqlite, Pool, PoolOptions, Row, RowCell, SqlFailure, SqlValue, ValueKind;
 import flint.java.sql;
 import flint.java.util : Properties;
 import flint.javax.sql : DataSource;
@@ -1439,7 +1439,50 @@ final class FlintResultSet : ResultSet
         this.statement = statement;
     }
 
+    /// Copy `row` in: its cells read in one call to the engine, its text and bytes through a stack buffer, and its
+    /// text values sliced from one string; a row too wide or too long for the buffers takes `appendEach`.
     private void append(ref Row row, ref RequestArena arena)
+    {
+        RowCell[64] read = void;
+        ubyte[1024] data = void;
+        size_t used;
+        uint count;
+        const status = row.readAll(read[], data[], used, count);
+        if (status == Status.invalidArgument || status == Status.resourceExhausted)
+            return appendEach(row, arena);
+        if (status != Status.ok)
+            throw new SQLException("Column values unavailable", "HY000");
+        if (labels is null && count)
+        {
+            labels = columnLabels(row, arena, count);
+            reserveRows(count);
+        }
+        string text; // the row's text values, back to back: one allocation per row, not per value
+        foreach (ref cell; read[0 .. count])
+            if (cell.kind == ValueKind.text)
+            {
+                text = (cast(const(char)[]) data[0 .. used]).idup;
+                break;
+            }
+        foreach (ref cell; read[0 .. count])
+        {
+            const kind = cast(ValueKind) cell.kind;
+            if (kind == ValueKind.text || kind == ValueKind.bytes)
+            {
+                const from = cast(size_t) cell.integer, to = from + cell.length;
+                if (kind == ValueKind.text)
+                    cells ~= Cell(kind, 0, 0, text[from .. to]);
+                else
+                    cells ~= Cell(kind, 0, 0, null, data[from .. to].dup);
+            }
+            else
+                cells ~= Cell(kind, cell.integer, cell.floating);
+        }
+        ++rowCount_;
+    }
+
+    /// `append` one cell at a time, for a row of more than 64 columns or more than 1 KiB of text and bytes.
+    private void appendEach(ref Row row, ref RequestArena arena)
     {
         const count = row.columns;
         if (labels is null && count)
@@ -1517,23 +1560,55 @@ final class FlintResultSet : ResultSet
     private string[] columnLabels(ref Row row, ref RequestArena arena, uint count)
     {
         auto found = statement.infoOf(sqlText);
-        if (found !is null)
-        {
-            if (auto cached = found.labels.get())
-                if (cached.names.length == count && sameLabels(row, arena, cached.names))
-                    return cached.names;
-        }
+        auto cached = found is null ? null : found.labels.get();
+        if (cached !is null && cached.names.length != count)
+            cached = null;
+        // Every label in one call to the engine, each followed by a zero byte; past the buffer, one call per label.
+        char[512] local = void;
+        size_t used;
+        const all = row.names(local[], used) == Status.ok ? local[0 .. used] : null;
+        if (cached !is null && (all !is null ? sameLabels(all, cached.names) : sameLabels(row, arena, cached.names)))
+            return cached.names;
         auto fresh = new string[count];
-        foreach (column; 0 .. count)
+        if (all !is null)
         {
-            auto label = row.name(column, arena);
-            if (!label.ok)
-                throw new SQLException("Column label unavailable", "HY000");
-            fresh[column] = readText(arena, label.value);
+            size_t start;
+            foreach (column; 0 .. count)
+            {
+                size_t end = start;
+                while (end < all.length && all[end] != 0)
+                    ++end;
+                if (end == all.length)
+                    throw new SQLException("Column label unavailable", "HY000");
+                fresh[column] = all[start .. end].idup;
+                start = end + 1;
+            }
         }
+        else
+            foreach (column; 0 .. count)
+            {
+                auto label = row.name(column, arena);
+                if (!label.ok)
+                    throw new SQLException("Column label unavailable", "HY000");
+                fresh[column] = readText(arena, label.value);
+            }
         if (found !is null)
             found.labels.set(new ColumnLabels(fresh));
         return fresh;
+    }
+
+    /// Whether `all`, labels each followed by a zero byte, are `expected`, in order.
+    private static bool sameLabels(scope const(char)[] all, string[] expected) pure nothrow @nogc
+    {
+        size_t start;
+        foreach (name; expected)
+        {
+            const end = start + name.length;
+            if (end >= all.length || all[start .. end] != name || all[end] != 0)
+                return false;
+            start = end + 1;
+        }
+        return start == all.length;
     }
 
     private static bool sameLabels(ref Row row, ref RequestArena arena, string[] expected)

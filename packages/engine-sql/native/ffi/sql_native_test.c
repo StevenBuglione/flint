@@ -164,6 +164,37 @@ static void check_names(uint64_t lease, uint64_t row)
     assert(length == 10 && name[0] == 'x');
     assert(flint_sql_row_name(lease, row, 2, name, sizeof(name), &length) == FLINT_SQL_INVALID);
     assert(flint_sql_row_name(lease, row + 1, 0, name, sizeof(name), &length) == FLINT_SQL_NOT_FOUND);
+
+    /* Every label in one call, each followed by a zero byte; a short span gets nothing past its end. */
+    char names[32];
+    size_t used = 0;
+    assert(flint_sql_row_names(lease, row, names, sizeof(names), &used) == FLINT_SQL_OK);
+    assert(used == 14 && !memcmp(names, "id\0first_name\0", 14));
+    memset(names, 'x', sizeof(names));
+    assert(flint_sql_row_names(lease, row, names, 5, &used) == FLINT_SQL_EXHAUSTED);
+    assert(used == 14 && !memcmp(names, "id\0xx", 5));
+    assert(flint_sql_row_names(lease, row, NULL, 0, &used) == FLINT_SQL_EXHAUSTED && used == 14);
+    assert(flint_sql_row_names(lease, row + 1, names, sizeof(names), &used) == FLINT_SQL_NOT_FOUND && used == 0);
+
+    /* Every cell in one call: the integer, and the text at its offset in the data span. The kinds are
+       flint_sql_private.h's FLINT_SQL_INT and FLINT_SQL_TEXT. */
+    enum { CELL_INT = 2, CELL_TEXT = 4 };
+    flint_sql_cell cells[4];
+    char data[16];
+    uint32_t columns = 0;
+    assert(flint_sql_row_read(lease, row, cells, 4, data, sizeof(data), &used, &columns) == FLINT_SQL_OK);
+    assert(columns == 2 && cells[0].kind == CELL_INT && cells[0].integer == 1);
+    assert(cells[1].kind == CELL_TEXT && cells[1].integer == 0 && cells[1].length == 4 && used == 4);
+    assert(!memcmp(data, "Josh", 4));
+    /* Too few cells for the row: nothing read. A short data span: the cells, and nothing past its end. */
+    assert(flint_sql_row_read(lease, row, cells, 1, data, sizeof(data), &used, &columns) == FLINT_SQL_INVALID);
+    assert(columns == 2);
+    memset(data, 'x', sizeof(data));
+    assert(flint_sql_row_read(lease, row, cells, 4, data, 3, &used, &columns) == FLINT_SQL_EXHAUSTED);
+    assert(used == 4 && cells[1].length == 4 && data[0] == 'x' && cells[0].integer == 1);
+    assert(flint_sql_row_read(lease, row, cells, 4, NULL, 0, &used, &columns) == FLINT_SQL_EXHAUSTED);
+    assert(flint_sql_row_read(lease, row + 1, cells, 4, data, sizeof(data), &used, &columns)
+           == FLINT_SQL_NOT_FOUND && used == 0 && columns == 0);
 }
 
 static void failures_and_names(void)

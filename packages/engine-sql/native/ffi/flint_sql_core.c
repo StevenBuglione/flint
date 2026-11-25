@@ -775,6 +775,73 @@ int flint_sql_row_name(uint64_t slot, uint64_t row, uint32_t index, char *output
     return status;
 }
 
+int flint_sql_row_read(uint64_t slot, uint64_t row, flint_sql_cell *cells, uint32_t count, void *data,
+                       size_t capacity, size_t *used, uint32_t *columns)
+{
+    size_t total = 0;
+    uint32_t width = 0;
+    pthread_mutex_lock(&gate);
+    pool_slot *owner = NULL;
+    const connection_slot *connection = connection_at(slot, &owner);
+    int status = FLINT_SQL_NOT_FOUND;
+    if (connection && row && row == connection->row && connection->active) {
+        width = connection->columns;
+        const flint_sql_driver *entry = driver_at(owner->driver);
+        status = !entry ? FLINT_SQL_UNSUPPORTED : width > count || (width && !cells) ? FLINT_SQL_INVALID : FLINT_SQL_OK;
+        for (uint32_t index = 0; status == FLINT_SQL_OK && index < width; ++index) {
+            const void *bytes = NULL;
+            status = entry->cell(connection->active, index, &cells[index], &bytes);
+            if (status != FLINT_SQL_OK || cells[index].kind < FLINT_SQL_TEXT)
+                continue;
+            const size_t length = cells[index].length;
+            if (length > SIZE_MAX - total) {
+                status = FLINT_SQL_INVALID;
+                continue;
+            }
+            /* A value is copied now: a driver's text may live in a buffer its next cell reuses. */
+            if (length && data && total <= capacity && length <= capacity - total)
+                memcpy((char *)data + total, bytes, length);
+            cells[index].integer = (int64_t)total;
+            total += length;
+        }
+        if (status == FLINT_SQL_OK && (total > capacity || (total && !data)))
+            status = FLINT_SQL_EXHAUSTED;
+    }
+    pthread_mutex_unlock(&gate);
+    *used = total;
+    *columns = width;
+    return status;
+}
+
+int flint_sql_row_names(uint64_t slot, uint64_t row, char *names, size_t capacity, size_t *used)
+{
+    size_t total = 0;
+    pthread_mutex_lock(&gate);
+    pool_slot *owner = NULL;
+    const connection_slot *connection = connection_at(slot, &owner);
+    int status = FLINT_SQL_NOT_FOUND;
+    if (connection && row && row == connection->row && connection->active) {
+        const flint_sql_driver *entry = driver_at(owner->driver);
+        status = entry ? FLINT_SQL_OK : FLINT_SQL_UNSUPPORTED;
+        for (uint32_t index = 0; status == FLINT_SQL_OK && index < connection->columns; ++index) {
+            const char *name = entry->name(connection->active, index);
+            if (!name) {
+                status = FLINT_SQL_NOMEM;
+                continue;
+            }
+            const size_t length = strlen(name) + 1;
+            if (length && names && total <= capacity && length <= capacity - total)
+                memcpy(names + total, name, length);
+            total += length;
+        }
+        if (status == FLINT_SQL_OK && (total > capacity || (total && !names)))
+            status = FLINT_SQL_EXHAUSTED;
+    }
+    pthread_mutex_unlock(&gate);
+    *used = total;
+    return status;
+}
+
 int flint_sql_poll(int fd, unsigned interest, unsigned millis)
 {
     if (millis > INT_MAX)

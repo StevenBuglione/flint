@@ -103,6 +103,17 @@ int flint_sql_row_info(uint64_t slot, uint64_t row, uint32_t column, flint_sql_c
 int flint_sql_row_copy(uint64_t slot, uint64_t row, uint32_t column, void *data, size_t length);
 int flint_sql_row_name(uint64_t slot, uint64_t row, uint32_t column, char *data, size_t capacity,
                        size_t *length);
+/* Every cell of the live row in one call, under one lock: cell i's kind and scalar value into cells[i]
+   (count must be at least the row's columns), and the text and bytes values back to back into
+   data[0..capacity), each cell's offset there in its integer and its byte length in length. *used is
+   the bytes those values take and *columns the row's column count, on every path. When they do not fit,
+   the cells are still read, nothing is written past capacity, and the call returns FLINT_SQL_EXHAUSTED. */
+int flint_sql_row_read(uint64_t slot, uint64_t row, flint_sql_cell *cells, uint32_t count, void *data,
+                       size_t capacity, size_t *used, uint32_t *columns);
+/* Every column label of the live row, each followed by a zero byte, back to back into names[0..capacity);
+   *used is the bytes they take. FLINT_SQL_EXHAUSTED when they do not fit, with nothing written past
+   capacity. */
+int flint_sql_row_names(uint64_t slot, uint64_t row, char *names, size_t capacity, size_t *used);
 int flint_sql_lease_failure(uint64_t slot, uint64_t identity, flint_sql_failure *output);
 int flint_sql_poll(int fd, unsigned interest, unsigned millis);
 
