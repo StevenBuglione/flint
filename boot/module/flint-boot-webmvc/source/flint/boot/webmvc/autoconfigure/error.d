@@ -184,19 +184,41 @@ class BasicErrorController : AbstractErrorController
     /// The attributes to include, from the error properties and the request's parameters.
     protected ErrorAttributeOptions getErrorAttributeOptions(HttpServletRequest request, string)
     {
+        import core.atomic : atomicLoad, cas;
+
         alias Include = ErrorAttributeOptions.Include;
-        auto options = ErrorAttributeOptions.defaults();
+        // Flint: the options are one of 32 combinations of these choices, and ErrorAttributeOptions is immutable
+        // (`including` and `excluding` return new options), so each combination is built once and shared instead
+        // of per request. The choices are read from the properties and the request each time, as Boot reads them.
+        uint choice;
         if (errorProperties.isIncludeException())
-            options = options.including(Include.EXCEPTION);
+            choice |= 1;
         if (isIncluded(errorProperties.getIncludeStacktrace(), request, "trace"))
-            options = options.including(Include.STACK_TRACE);
+            choice |= 2;
         if (isIncluded(errorProperties.getIncludeMessage(), request, "message"))
-            options = options.including(Include.MESSAGE);
+            choice |= 4;
         if (isIncluded(errorProperties.getIncludeBindingErrors(), request, "errors"))
+            choice |= 8;
+        if (isIncluded(errorProperties.getIncludePath(), request, "path"))
+            choice |= 16;
+        if (auto cached = atomicLoad(optionsByChoice[choice]))
+            return cached;
+        auto options = ErrorAttributeOptions.defaults();
+        if (choice & 1)
+            options = options.including(Include.EXCEPTION);
+        if (choice & 2)
+            options = options.including(Include.STACK_TRACE);
+        if (choice & 4)
+            options = options.including(Include.MESSAGE);
+        if (choice & 8)
             options = options.including(Include.BINDING_ERRORS);
-        return isIncluded(errorProperties.getIncludePath(), request, "path") ? options.including(
-                Include.PATH) : options.excluding(Include.PATH);
+        options = choice & 16 ? options.including(Include.PATH) : options.excluding(Include.PATH);
+        cas(&optionsByChoice[choice], cast(ErrorAttributeOptions) null, options);
+        return options;
     }
+
+    // The options of each combination of getErrorAttributeOptions' choices, built on first use.
+    private ErrorAttributeOptions[32] optionsByChoice;
 
     /// The error properties.
     protected ErrorProperties getErrorProperties() pure nothrow @nogc
