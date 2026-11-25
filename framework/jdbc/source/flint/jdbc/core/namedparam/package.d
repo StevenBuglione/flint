@@ -966,7 +966,7 @@ interface NamedParameterJdbcOperations
     void execute(string sql, SqlParameterSource paramSource, scope PreparedStatementAction action);
 
     /// Query given SQL and parameters, reading the `ResultSet` with the given delegate.
-    void query(string sql, SqlParameterSource paramSource, ResultSetReader extractor);
+    void query(string sql, SqlParameterSource paramSource, scope ResultSetReader extractor);
 
     // Non-generic operations.
 
@@ -1044,7 +1044,8 @@ interface NamedParameterJdbcOperations
     T query(T)(string sql, SqlParameterSource paramSource, ResultSetExtractor!T rse)
     {
         T result;
-        query(sql, paramSource, ResultSetReader((ResultSet rs) { result = rse.extractData(rs); }));
+        scope reader = ResultSetReader((ResultSet rs) { result = rse.extractData(rs); });
+        query(sql, paramSource, reader);
         return result;
     }
 
@@ -1222,7 +1223,7 @@ class NamedParameterJdbcTemplate : NamedParameterJdbcOperations
         getJdbcOperations().execute(getPreparedStatementCreator(sql, paramSource), action);
     }
 
-    override void query(string sql, SqlParameterSource paramSource, ResultSetReader extractor)
+    override void query(string sql, SqlParameterSource paramSource, scope ResultSetReader extractor)
     {
         getJdbcOperations().query(getPreparedStatementCreator(sql, paramSource), null, extractor);
     }

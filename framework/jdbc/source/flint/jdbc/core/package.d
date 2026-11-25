@@ -866,10 +866,10 @@ interface JdbcOperations
     void execute(string sql, scope void delegate(PreparedStatement) @safe action);
 
     /// Execute a static query, reading its `ResultSet` with the given delegate.
-    void query(string sql, ResultSetReader extractor);
+    void query(string sql, scope ResultSetReader extractor);
 
     /// Query using a prepared statement, reading the `ResultSet` with the given delegate.
-    void query(PreparedStatementCreator psc, PreparedStatementSetter pss, ResultSetReader extractor);
+    void query(PreparedStatementCreator psc, PreparedStatementSetter pss, scope ResultSetReader extractor);
 
     // Non-generic operations.
 
@@ -993,7 +993,8 @@ interface JdbcOperations
     T query(T)(string sql, ResultSetExtractor!T rse)
     {
         T result;
-        query(sql, ResultSetReader((ResultSet rs) { result = rse.extractData(rs); }));
+        scope reader = ResultSetReader((ResultSet rs) { result = rse.extractData(rs); });
+        query(sql, reader);
         return result;
     }
 
@@ -1001,7 +1002,8 @@ interface JdbcOperations
     T query(T)(PreparedStatementCreator psc, ResultSetExtractor!T rse)
     {
         T result;
-        query(psc, null, ResultSetReader((ResultSet rs) { result = rse.extractData(rs); }));
+        scope reader = ResultSetReader((ResultSet rs) { result = rse.extractData(rs); });
+        query(psc, null, reader);
         return result;
     }
 
@@ -1010,9 +1012,8 @@ interface JdbcOperations
     T query(T)(string sql, PreparedStatementSetter pss, ResultSetExtractor!T rse)
     {
         T result;
-        query(simplePreparedStatementCreator(sql), pss, ResultSetReader((ResultSet rs) {
-                result = rse.extractData(rs);
-            }));
+        scope reader = ResultSetReader((ResultSet rs) { result = rse.extractData(rs); });
+        query(simplePreparedStatementCreator(sql), pss, reader);
         return result;
     }
 
@@ -1444,7 +1445,7 @@ class JdbcTemplate : JdbcAccessor, JdbcOperations
         executeStatement((Statement stmt) { stmt.execute(sql); }, sql, "StatementCallback");
     }
 
-    override void query(string sql, ResultSetReader extractor)
+    override void query(string sql, scope ResultSetReader extractor)
     {
         if (sql is null)
             throw new IllegalArgumentException("SQL must not be null");
@@ -1461,7 +1462,8 @@ class JdbcTemplate : JdbcAccessor, JdbcOperations
 
     override void query(string sql, RowCallbackHandler rch)
     {
-        query(sql, ResultSetReader((ResultSet rs) { processRows(rs, rch); }));
+        scope reader = ResultSetReader((ResultSet rs) { processRows(rs, rch); });
+        query(sql, reader);
     }
 
     private void processRows(ResultSet rs, RowCallbackHandler rch)
@@ -1583,7 +1585,7 @@ class JdbcTemplate : JdbcAccessor, JdbcOperations
         execute(simplePreparedStatementCreator(sql), action);
     }
 
-    override void query(PreparedStatementCreator psc, PreparedStatementSetter pss, ResultSetReader extractor)
+    override void query(PreparedStatementCreator psc, PreparedStatementSetter pss, scope ResultSetReader extractor)
     {
         logger.debug_("Executing prepared SQL query");
         execute(psc, (PreparedStatement ps) {
@@ -1603,14 +1605,14 @@ class JdbcTemplate : JdbcAccessor, JdbcOperations
 
     override void query(PreparedStatementCreator psc, RowCallbackHandler rch)
     {
-        query(psc, null, ResultSetReader((ResultSet rs) { processRows(rs, rch); }));
+        scope reader = ResultSetReader((ResultSet rs) { processRows(rs, rch); });
+        query(psc, null, reader);
     }
 
     override void query(string sql, PreparedStatementSetter pss, RowCallbackHandler rch)
     {
-        query(simplePreparedStatementCreator(sql), pss, ResultSetReader((ResultSet rs) {
-                processRows(rs, rch);
-            }));
+        scope reader = ResultSetReader((ResultSet rs) { processRows(rs, rch); });
+        query(simplePreparedStatementCreator(sql), pss, reader);
     }
 
     override void query(string sql, Any[] args, int[] argTypes, RowCallbackHandler rch)
