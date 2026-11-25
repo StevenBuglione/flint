@@ -75,8 +75,9 @@ void uninstallAllocationCounter() nothrow
     flint.arena.sys.gc.counting.uninstall();
 }
 
-/// The allocations every thread but the caller has made since it first allocated under the counting proxy; false
-/// when the proxy is not installed. A thread counts an allocation before returning it.
+/// The allocations every thread but the caller has made since it first allocated under the counting proxy, threads
+/// that have since exited included; false when the proxy is not installed. A thread counts an allocation before
+/// returning it.
 bool otherThreadsAllocations(out Allocations totals) nothrow @nogc
 {
     if (!flint.arena.sys.gc.counting.isInstalled())

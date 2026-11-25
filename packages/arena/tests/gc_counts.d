@@ -79,18 +79,23 @@ private void allocateHundreds(size_t count)
 
 }
 
-@("the allocation counter forgets a thread when it exits")
+@("the allocation counter keeps an exited thread's totals, and a reinstall starts again from zero")
 @system unittest
 {
     assert(installAllocationCounter());
-    scope (exit)
-        uninstallAllocationCounter();
     auto worker = new Thread({ allocateHundreds(100); });
     worker.start();
     worker.join();
     Allocations exited;
     assert(otherThreadsAllocations(exited));
-    assert(exited.count < 100, "an exited thread's totals are forgotten");
+    assert(exited.count >= 100 && exited.bytes >= 100 * 100, "a server's workers exit before the run is reported");
+    uninstallAllocationCounter();
+    assert(installAllocationCounter());
+    scope (exit)
+        uninstallAllocationCounter();
+    Allocations fresh;
+    assert(otherThreadsAllocations(fresh));
+    assert(fresh.count == 0, "an earlier installation's exited threads are not counted again");
 }
 
 @("the counter's bytes on a thread equal druntime's own allocatedInCurrentThread for the same allocations")

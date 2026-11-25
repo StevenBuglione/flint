@@ -709,6 +709,9 @@ class FlintApplication
     /// process exit code: 0, or 1 after a startup failure; `main` returning lets druntime finish (its GC report).
     static int runMain(App)(string[] args)
     {
+        const allocationReport = startAllocationReport();
+        scope (exit)
+            finishAllocationReport(allocationReport);
         auto hook = new ShutdownHook;
         hook.install();
         scope (exit)
@@ -1174,6 +1177,58 @@ mixin template FlintMain(App)
 }
 
 private:
+
+/// With FLINT_ALLOCATION_REPORT=<file>, count every GC allocation of the run (flint.arena's counting proxy,
+/// installed here before any thread starts) and write "<allocations> <bytes>" to the file when `main` returns.
+/// tools/spring_instr.py subtracts a run of W requests from a run of W + M to get allocations and bytes per
+/// request. Returns the file, or null when the variable is unset.
+string startAllocationReport()
+{
+    import std.process : environment;
+    import flint.arena.gc : installAllocationCounter;
+
+    const path = environment.get("FLINT_ALLOCATION_REPORT", null);
+    if (path.length)
+        cast(void) installAllocationCounter();
+    return path;
+}
+
+/// ditto
+void finishAllocationReport(string path)
+{
+    import std.file : FileException, write;
+    import flint.arena.gc : Allocations, otherThreadsAllocations, thisThreadAllocations;
+
+    if (path.length == 0)
+        return;
+    Allocations others, mine;
+    if (!otherThreadsAllocations(others) || !thisThreadAllocations(mine))
+        return;
+    try
+        write(path, decimal(others.count + mine.count) ~ " " ~ decimal(others.bytes + mine.bytes) ~ "\n");
+    catch (FileException)
+    {
+    }
+}
+
+string decimal(ulong value) pure nothrow
+{
+    char[20] digits;
+    size_t at = digits.length;
+    do
+    {
+        digits[--at] = cast(char)('0' + value % 10);
+        value /= 10;
+    }
+    while (value);
+    return digits[at .. $].idup;
+}
+
+unittest
+{
+    assert(decimal(0) == "0" && decimal(7) == "7" && decimal(1_234_567) == "1234567");
+    assert(decimal(ulong.max) == "18446744073709551615");
+}
 
 // Boot binds these through LenientObjectToEnumConverterFactory: the constant whose letters and digits match ignoring
 // case, with `true` also matching `ON` and `false` matching `OFF` (YAML's `off` is the boolean false).

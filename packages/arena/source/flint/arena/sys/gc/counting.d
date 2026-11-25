@@ -54,6 +54,10 @@ private __gshared ThreadCounts* registry;
 /// Rows recorded by threads that have exited, kept for a census (malloc'd, under `registryLock`).
 private __gshared void*[siteDepth + 2]* retired;
 private __gshared size_t retiredCount;
+/// The totals of threads that have exited, under `registryLock`: a server's workers exit before a program reports
+/// its run (Flint Boot's FLINT_ALLOCATION_REPORT), and a thread that exits between two readings must not take its
+/// allocations back.
+private __gshared ulong exitedCount, exitedBytes;
 private shared SpinLock registryLock = SpinLock(SpinLock.Contention.brief);
 private __gshared CountingGC installed;
 private shared bool recordSites;
@@ -306,7 +310,11 @@ private void unregister(ThreadBase owner) nothrow @nogc
     {
         if ((*link).owner is owner)
         {
+            import core.atomic : MemoryOrder, atomicLoad;
+
             auto counts = *link;
+            exitedCount += atomicLoad!(MemoryOrder.raw)(counts.count);
+            exitedBytes += atomicLoad!(MemoryOrder.raw)(counts.bytes);
             *link = counts.next;
             counts.registered = false;
             counts.next = null;
@@ -413,6 +421,7 @@ private void record(size_t bytes, void* block) nothrow @nogc
     for (auto counts = registry; counts !is null; counts = counts.next)
         releaseSites(*counts);
     freeRetired();
+    exitedCount = exitedBytes = 0;
     registryLock.unlock();
 }
 
@@ -432,6 +441,8 @@ private void record(size_t bytes, void* block) nothrow @nogc
     registryLock.lock();
     scope (exit)
         registryLock.unlock();
+    count = exitedCount;
+    bytes = exitedBytes;
     for (auto counts = registry; counts !is null; counts = counts.next)
     {
         if (counts is &threadCounts)
