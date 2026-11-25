@@ -1,7 +1,7 @@
 {
   "schema": "flint.measure-queue/1",
   "created": "2026-11-23",
-  "status": "blocked",
+  "status": "pending",
   "priority": 6,
   "window": "claim",
   "builds": {
@@ -23,27 +23,18 @@
     "steps": [
       {
         "argv": [
-          "{python}",
-          "tools/load_bench.py",
-          "--manifest",
-          "policy/spring-error-paths-benchmark.json",
-          "--app",
-          "petclinic-rest:validation-error",
-          "--no-context",
-          "--output",
-          "{out}/http-error-validation.json"
+          "sh",
+          "-c",
+          "FLINT_BENCH_ROOT=\"$PWD\" {python} {harness}/tools/load_bench.py --manifest policy/spring-error-paths-benchmark.json --app petclinic-rest:validation-error --no-context --output {out}/http-error-validation.json"
         ],
         "may_fail": true,
-        "in": "tree",
-        "smoke_args": [
-          "--smoke"
-        ]
+        "in": "tree"
       }
     ]
   },
   "report_to": "the requester; docs/milestones/13.md",
   "estimate_minutes": 45,
-  "claim_when": "B5 order 6 (coordinator 11:02Z)",
+  "claim_when": "B5, right after error-404-p99 (coordinator 14:55Z)",
   "tree_note": "B5: one private tree with a copy of shared v4.2, mold; interleaved with the registered Go comparator (8d29301a: ADR-033 parity and Tomcat's keep-alive limit) from the start, while the owner decides on Flint-only (baselines/README.md)",
   "pinned": "B5, 8ed3de37dc5713907b163f778b629c09a1317d8e (fp main when scoreboard-B4 landed; coordinator 11:02Z)",
   "attempts": [
@@ -9362,5 +9353,6 @@
       }
     }
   ],
-  "blocked_by": "2026-11-25 14:24Z at B5: load_bench refused the run, 'load generator used >=85% of its CPUs; comparison may be client-limited'. Flint's capacity phase reached 55,769 req/s with a new TCP connection per request (Tomcat closes after each 400, ADR-033), which saturates oha's 4 load CPUs (B4: Flint 42,060, Go 52,750, both under the limit). The gated metric (p99 at 5,000/s) is unaffected. Changing the workload or the check is the owner's (coordinator asked)."
+  "harness": "44d970c1cc0f",
+  "harness_note": "owner decision ae7858f8: the tree is B5 (8ed3de37) and is what is built and measured (FLINT_BENCH_ROOT=the tree); the harness load_bench at 44d970c1 differs from B5's only by the client-limit rule (capacity on the error paths is context)"
 }
