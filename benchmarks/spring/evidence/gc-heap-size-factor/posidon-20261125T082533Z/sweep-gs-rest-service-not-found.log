@@ -1,0 +1,10 @@
+{"workload": "gs-rest-service:not-found", "trial": 0, "arm": "go", "p99_ms": 0.25}
+{"workload": "gs-rest-service:not-found", "trial": 0, "arm": "hsf2", "p99_ms": 0.47}
+{"workload": "gs-rest-service:not-found", "trial": 0, "arm": "hsf3", "p99_ms": 0.432}
+{"workload": "gs-rest-service:not-found", "trial": 0, "arm": "hsf4", "p99_ms": 0.436}
+{"workload": "gs-rest-service:not-found", "trial": 0, "arm": "hsf8", "p99_ms": 0.43}
+{"workload": "gs-rest-service:not-found", "trial": 1, "arm": "hsf8", "p99_ms": 0.43}
+{"workload": "gs-rest-service:not-found", "trial": 1, "arm": "hsf4", "p99_ms": 0.433}
+{"workload": "gs-rest-service:not-found", "trial": 1, "arm": "hsf3", "p99_ms": 0.42}
+{"workload": "gs-rest-service:not-found", "trial": 1, "arm": "hsf2", "p99_ms": 0.469}
+{"workload": "gs-rest-service:not-found", "trial": 1, "arm": "go", "p99_ms": 0.268}
