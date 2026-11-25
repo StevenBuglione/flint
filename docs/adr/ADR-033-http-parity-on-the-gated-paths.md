@@ -1,8 +1,9 @@
 # ADR-033: HTTP parity on the gated paths
 
-Status: **accepted** by the owner on 2026-11-24, in two steps:
-- 118b4482: parity for the gated error paths ("Yes, your recommendation");
-- 081851b0: parity extended to every gated path ("Yes, all gated paths").
+Status: **accepted** by the owner in three steps:
+- 118b4482 (2026-11-24): parity for the gated error paths ("Yes, your recommendation");
+- 081851b0 (2026-11-24): parity extended to every gated path ("Yes, all gated paths");
+- 8163a833 (2026-11-25): Tomcat's keep-alive request limit is part of connection lifetime, matched by Flint and the Go comparator ("Yes, match Tomcat").
 
 Drafted by proof-harness from action 1 and the fairness verdict of Astra's error-path review (`docs/spring/phase1/error-paths-astra.md`). AGENTS.md requires a comparator change to have its own reviewed ADR and a remeasurement of both sides; this is that ADR.
 
@@ -68,7 +69,9 @@ What the prices mean:
 
 The reason phrase was not a separate arm: it changes a few bytes of the status line.
 
-**Context, not gated: Tomcat's keep-alive limit.** Java accepted about 0.0101 connections per request on the paths it keeps, about one per 100 requests. That is Tomcat's default `maxKeepAliveRequests` of 100. Neither Flint nor Go has that limit, so the two sides stay equal. The golden cannot record a limit that only a hundred requests on one connection reveal, so it is outside this ADR's rule and goes to the owner as a question.
+**Tomcat's keep-alive limit.** Java accepted about 0.0101 connections per request on the paths it keeps, about one per 100 requests. That is Tomcat's default `maxKeepAliveRequests` of 100. Neither Flint nor Go had that limit. The golden cannot record a limit that only a hundred requests on one connection reveal, so the owner decided it separately (8163a833, decision 7 below).
+
+`spring_transport.py keepalive --impl java` confirmed Tomcat's behaviour on 2026-11-25. On every kept timed workload of both apps (gs-rest's `/greeting` and 404, petclinic's owner GET), the 100th response on a connection carries `Connection: close`, and the connection closes after it.
 
 ## Decision
 
@@ -102,9 +105,16 @@ The reason phrase was not a separate arm: it changes a few bytes of the status l
    B2's and B3's results stay as history against the old comparator; assembly already refuses mixed commits.
 6. **Idiomatic Go stays visible.** The comparator as it was remains in `transport-pricing` as the labelled `go` arm, the price of parity, and is never gated.
 
+7. **Tomcat's keep-alive request limit** (owner decision 8163a833). The limit is part of connection lifetime: Spring Boot's `server.tomcat.max-keep-alive-requests`, default 100.
+   - **Flint** binds the property with Boot's default; −1 means unlimited. engine-web closes a connection with `Connection: close` on the Nth response, as Tomcat does. Owners: boot (the property) and web-http (engine-web).
+   - **The Go comparators** apply the same limit, and nothing beyond Java (`parity.go`). A per-connection request count is set through `http.Server.ConnContext`, and a handler wrapper adds `Connection: close` to the 100th response; net/http closes after it.
+   - **Enforcement.** The parity record runs `keep_alive_probe` on every timed workload whose connection is kept. The checks are the 100th response announcing the close and the connection closing after it, against `MAX_KEEP_ALIVE_REQUESTS`. `register` and `check-registry` refuse a record without it.
+   - **Sequencing.** The Go baselines captured against the comparator without the limit stay valid while neither side has it. The Flint and Go changes land together; then the comparator is re-registered, its parity record retaken, and the baselines captured once more.
+
 ## Consequences
 
 - **The validation path.** The gated Go comparator now pays about one connect and one accept per request, as Java and Flint do. Its p99 and CPU per request move by the measured price, and so does the bar Flint must beat.
 - **The 404 path and petclinic's owner GET** change in framing and the reason phrase only. Their price is in `transport-pricing`.
 - **The README** describes the `parity` mode. `semantic` remains available for context comparisons.
+- **The keep-alive limit costs both sides about one reconnect per 100 requests** on kept paths, as Java pays, so it moves both sides of each ratio alike.
 - **Flint's close-on-400 stays.** It is the reference's behaviour, and exact mode requires it.
