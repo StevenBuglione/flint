@@ -390,7 +390,6 @@ class MethodArgumentNotValidException : BindException, ErrorResponse
     {
         super(bindingResult);
         this.parameter = parameter;
-        body = ProblemDetail.forStatusAndDetail(getStatusCode(), "Invalid request content.");
         skipBacktrace(this);
     }
 
@@ -407,10 +406,13 @@ class MethodArgumentNotValidException : BindException, ErrorResponse
         return HttpStatus.BAD_REQUEST;
     }
 
+    /// The problem body. Spring builds it in the constructor; Flint builds it on the first call and returns the same
+    /// instance after, so a handler that answers with its own problem (petclinic's advice) never pays for it.
     ProblemDetail getBody()
     {
-        return
-        body;
+        if (body is null)
+            body = ProblemDetail.forStatusAndDetail(getStatusCode(), "Invalid request content.");
+        return body;
     }
 
     /// The method parameter that failed validation.

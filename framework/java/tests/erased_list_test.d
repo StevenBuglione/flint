@@ -182,6 +182,10 @@ unittest
     auto view = Collections.unmodifiableList!Pet(backing);
     assert(of.toString() == "[a, b]" && empty.size() == 0 && single.get(0).name == "s" && view.get(0).name == "x");
     assert(empty is Collections.emptyList!Pet());
+    // Java's List.of() is one shared empty list, like EMPTY_LIST.
+    assert(List!Pet.of() is List!Pet.of() && List!Pet.of().size() == 0 && List!Pet.of().equals(cast(Object) empty));
+    assertUnmodifiable(List!Pet.of());
+    assert(List!int.of() is List!int.of() && List!int.of().size() == 0 && List!int.of(1).size() == 1);
     foreach (list; [of, empty, single, view])
         assertUnmodifiable(list);
     expectThrow!IndexOutOfBoundsException(() @safe => empty.get(0));

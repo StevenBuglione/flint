@@ -599,9 +599,12 @@ interface List(T) : Collection!T
         return new ArrayList!T(items);
     }
 
-    /// An unmodifiable list of `elements`.
+    /// An unmodifiable list of `elements`. With none, one shared empty list per element type, as Java's
+    /// `List.of()` returns its one `EMPTY_LIST`.
     static List!T of(T[] elements...)
     {
+        if (elements.length == 0)
+            return Collections.emptyList!T();
         return new ImmutableList!T(elements.dup);
     }
 

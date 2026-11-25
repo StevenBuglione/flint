@@ -24,6 +24,9 @@ unittest
     assert(ex.getStatusCode() == HttpStatus.BAD_REQUEST);
     assert(ex.getBody().getStatus() == 400 && ex.getBody().getTitle() == "Bad Request");
     assert(ex.getBody().getDetail() == "Invalid request content.");
+    // Built on first use, then the same instance, so changes to it stick as they do in Spring.
+    ex.getBody().setProperty("traceId", "t-1");
+    assert(ex.getBody() is ex.getBody() && ex.getBody().getProperty("traceId").get!string == "t-1");
     assert(ex.getBindingResult() is result && ex.getFieldErrors().size() == 1);
     assert(ex.getHeaders().isEmpty());
 
