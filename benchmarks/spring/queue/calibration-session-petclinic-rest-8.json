@@ -2,7 +2,7 @@
   "schema": "flint.measure-queue/1",
   "id": "calibration-session-petclinic-rest-8",
   "created": "2026-11-24",
-  "status": "pending",
+  "status": "done",
   "window": "claim",
   "priority": 0.5,
   "estimate_minutes": 4,
@@ -33,5 +33,170 @@
         ]
       }
     ]
-  }
+  },
+  "attempts": [
+    {
+      "time": "2026-11-25T09:07:22Z",
+      "outcome": "measured",
+      "evidence": true,
+      "host": "venus",
+      "builds": {},
+      "shared_toolchain": {
+        "path": "/home/olfa/flint-work/flint/.tools",
+        "resolved": "/home/olfa/flint-work/flint/.tools-v4.2",
+        "dmd_sha256": "663977a9340a84167083b5f03a2b9518783358b94c795b8813ce872891d0f213"
+      },
+      "window_before": {
+        "time": "2026-11-25T09:06:03Z",
+        "load_average": [
+          0.39892578125,
+          0.646484375,
+          1.1357421875
+        ],
+        "running_tasks": 0,
+        "instant": true,
+        "busy_processes": [],
+        "idle_build_processes": 826,
+        "quiet": true,
+        "problems": []
+      },
+      "window_during": [
+        {
+          "time": "2026-11-25T09:06:14Z",
+          "load_average": [
+            0.3369140625,
+            0.625,
+            1.123046875
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-25T09:06:25Z",
+          "load_average": [
+            0.525390625,
+            0.654296875,
+            1.126953125
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-25T09:06:36Z",
+          "load_average": [
+            0.6796875,
+            0.68603515625,
+            1.1298828125
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-25T09:06:47Z",
+          "load_average": [
+            0.8154296875,
+            0.71337890625,
+            1.1337890625
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-25T09:06:58Z",
+          "load_average": [
+            0.83740234375,
+            0.72265625,
+            1.13232421875
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-25T09:07:09Z",
+          "load_average": [
+            1.39111328125,
+            0.84716796875,
+            1.1689453125
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-25T09:07:21Z",
+          "load_average": [
+            2.04296875,
+            1.01904296875,
+            1.22021484375
+          ],
+          "busy_processes": []
+        }
+      ],
+      "foreign_activity_during": 0,
+      "window_after": {
+        "time": "2026-11-25T09:07:22Z",
+        "load_average": [
+          2.04296875,
+          1.01904296875,
+          1.22021484375
+        ],
+        "running_tasks": 0,
+        "instant": false,
+        "busy_processes": [],
+        "idle_build_processes": 826,
+        "quiet": true,
+        "problems": []
+      },
+      "frozen": [
+        {
+          "pid": 519565,
+          "start": 584529958,
+          "command": "petclinic-table",
+          "kind": "server",
+          "cwd": "/home/olfa/flint-work/flint/.claude/worktrees/eager-torvalds-271a3c/benchmarks/spring/flint/petclinic-rest",
+          "frozen_at": "2026-11-25T09:05:50Z"
+        }
+      ],
+      "results_directory": ".flint/measure/results/calibration-session-petclinic-rest-8/20261125T090550Z",
+      "summary": {
+        "steps": [
+          {
+            "command": [
+              "/usr/bin/python3",
+              "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/45e8b765f772/tools/spring_baseline.py",
+              "calibrate",
+              "--app",
+              "petclinic-rest",
+              "--samples",
+              "3",
+              "--log",
+              "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/calibration-session-petclinic-rest-8/20261125T090550Z/session.jsonl"
+            ],
+            "cwd": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/45e8b765f772",
+            "exit_code": 0,
+            "log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/calibration-session-petclinic-rest-8/20261125T090550Z/step-0.log",
+            "harness_commit": "45e8b765f772e0980632092edb9bd3d3ec59d3fd",
+            "harness_toolchain": {
+              "tools_directory": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools",
+              "fork_build": false,
+              "dmd": null,
+              "ldc2": null,
+              "flint": null,
+              "dmd_native_aot_extractor": null,
+              "mold": []
+            },
+            "artifacts": {},
+            "measured_binaries": [],
+            "aot_summaries": {
+              "count": 0,
+              "distinct": [],
+              "extractors": []
+            },
+            "gc_options": {
+              "argv": []
+            },
+            "dmd_server": {
+              "compiled": 0,
+              "refused": 0,
+              "stopped_before": []
+            }
+          }
+        ],
+        "outputs": {}
+      }
+    }
+  ]
 }

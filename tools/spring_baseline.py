@@ -51,7 +51,9 @@ TARGETS = {'go': 'go', 'java': 'java-jvm'}
 CALIBRATION = {'warmup_seconds': 5, 'duration_seconds': 10, 'capacity_seconds': 10}
 CALIBRATION_METRICS = ('requests_per_second', 'p50_ms', 'p99_ms', 'cpu_ns_per_request')
 # t(0.995, df) for the 99% prediction band, df = n - 1.
-T995 = {1: 63.657, 2: 9.925, 3: 5.841, 4: 4.604, 5: 4.032, 6: 3.707, 7: 3.499, 8: 3.355, 9: 3.250, 10: 3.169}
+T995 = {1: 63.657, 2: 9.925, 3: 5.841, 4: 4.604, 5: 4.032, 6: 3.707, 7: 3.499, 8: 3.355, 9: 3.250, 10: 3.169,
+        11: 3.106, 12: 3.055, 13: 3.012, 14: 2.977, 15: 2.947, 16: 2.921, 17: 2.898, 18: 2.878, 19: 2.861, 20: 2.845,
+        21: 2.831, 22: 2.819, 23: 2.807, 24: 2.797, 25: 2.787, 26: 2.779, 27: 2.771, 28: 2.763, 29: 2.756, 30: 2.750}
 
 
 # ---------------------------------------------------------------------------------------------------------------
@@ -170,19 +172,66 @@ def calibration_trial(app, workload, oha, outdir, database, trial, tag, smoke=Fa
             for metric in CALIBRATION_METRICS}
 
 
-def drift(record, observed_calibration, observed_probe):
-    """Which reference metrics fall outside the record's bands: [] means in band."""
+GUARD_BANDS = BASELINES / 'guard-bands.json'
+
+
+def guard_band(record, kind, metric, bands=None):
+    """The band a guard reading is judged against: per metric, the wider of the record's own 99% prediction band and
+    the cross-session band (coordinator, 2026-11-25: guard-bands.json, a relative half-width from the pooled
+    calibration sessions, centred on the record's own mean)."""
+    own = record[kind]['bands'][metric]
+    if bands is None:
+        bands = json.loads(GUARD_BANDS.read_text()) if GUARD_BANDS.is_file() else {}
+    half = bands.get('apps', {}).get(record.get('app'), {}).get(kind, {}).get(metric, {}).get('relative_half_width')
+    if half is None:
+        return dict(own, source='record')
+    lower, upper = own['mean'] * (1 - half), own['mean'] * (1 + half)
+    if lower <= own['lower'] and upper >= own['upper']:
+        return dict(own, lower=lower, upper=upper, source='sessions')
+    return dict(own, lower=min(lower, own['lower']), upper=max(upper, own['upper']), source='wider of both')
+
+
+def drift(record, observed_calibration, observed_probe, bands=None):
+    """Which reference metrics fall outside the guard's bands (guard_band): [] means in band."""
     out = []
     for metric, value in observed_calibration.items():
-        b = record['calibration']['bands'][metric]
+        b = guard_band(record, 'calibration', metric, bands)
         if not b['lower'] <= value <= b['upper']:
-            out.append(f'calibration {metric} {value:.6g} outside [{b["lower"]:.6g}, {b["upper"]:.6g}]')
+            out.append(f'calibration {metric} {value:.6g} outside [{b["lower"]:.6g}, {b["upper"]:.6g}] ({b["source"]})')
     for metric, values in observed_probe.items():
         value = statistics.median(values)
-        b = record['probe']['bands'][metric]
+        b = guard_band(record, 'probe', metric, bands)
         if not b['lower'] <= value <= b['upper']:
-            out.append(f'probe {metric} {value:.6g} outside [{b["lower"]:.6g}, {b["upper"]:.6g}]')
+            out.append(f'probe {metric} {value:.6g} outside [{b["lower"]:.6g}, {b["upper"]:.6g}] ({b["source"]})')
     return out
+
+
+SESSION_EXCLUSIONS = BASELINES / 'calibration-sessions' / 'excluded.json'
+
+
+def session_bands(rows, exclusions=()):
+    """Relative 99% prediction half-widths of one calibration trial (and one probe median) from the pooled trials of
+    every session. The spread is robust: 1.4826 x the median absolute deviation of the trials relative to their
+    median, so one disturbed trial cannot widen the band; trials named in `exclusions` ({time, metric-independent
+    trial index}) are left out explicitly, with their reason kept in the exclusions file."""
+    skip = {(e['time'], e['trial']) for e in exclusions}
+    result = {'calibration': {}, 'probe': {}}
+    for metric in CALIBRATION_METRICS:
+        values = [v for row in rows for i, v in enumerate(row['calibration'][metric]) if (row['time'], i) not in skip]
+        result['calibration'][metric] = _relative_band(values)
+    for metric in ('cpu_seconds', 'memory_seconds'):
+        values = [statistics.median(row['probe'][metric]) for row in rows if row.get('probe')]
+        result['probe'][metric] = _relative_band(values)
+    return result
+
+
+def _relative_band(values):
+    centre = statistics.median(values)
+    relative = [v / centre for v in values]
+    mad = statistics.median(abs(r - 1) for r in relative)
+    n = len(values)
+    half = T995.get(n - 1, 2.576) * 1.4826 * mad * math.sqrt(1 + 1 / n)
+    return {'relative_half_width': half, 'n': n, 'median': centre, 'robust_sd': 1.4826 * mad}
 
 
 def load(path):
@@ -323,6 +372,24 @@ def calibrate(app, samples, smoke=False, log=None):
     return row
 
 
+def bands_main(apps, output=GUARD_BANDS):
+    """guard-bands.json from the committed session logs and their exclusions."""
+    exclusions = json.loads(SESSION_EXCLUSIONS.read_text()) if SESSION_EXCLUSIONS.is_file() else []
+    out = {'schema': 'flint.guard-bands/1', 'computed': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
+           'rule': 'per metric, the wider of the record\'s own 99% prediction band and this relative half-width '
+                   'around the record\'s mean (coordinator, 2026-11-25); 1.4826 x MAD of pooled session trials',
+           'apps': {}}
+    for app in apps:
+        log = SESSIONS / f'{app}.jsonl'
+        rows = [json.loads(line) for line in log.read_text().splitlines() if line.strip()]
+        rows = [row for row in rows if not row.get('smoke')]
+        excluded = [e for e in exclusions if e['app'] == app]
+        out['apps'][app] = dict(session_bands(rows, excluded), sessions=len(rows),
+                                first=rows[0]['time'], last=rows[-1]['time'], excluded=excluded)
+    output.write_text(json.dumps(out, indent=2) + '\n')
+    return out
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest='command', required=True)
@@ -339,6 +406,8 @@ def main(argv=None):
     p.add_argument('--samples', type=int, default=3)
     p.add_argument('--smoke', action='store_true')
     p.add_argument('--log', type=Path, help='the JSON-lines file to append to (default: the app\'s session log)')
+    p = sub.add_parser('bands', help='guard-bands.json from the committed calibration sessions')
+    p.add_argument('--app', action='append', default=None)
     p = sub.add_parser('db-state-check')
     p.add_argument('--app', default='petclinic-rest')
     p.add_argument('--record', type=Path, required=True)
@@ -346,6 +415,11 @@ def main(argv=None):
     p.add_argument('--output', type=Path, required=True)
     p.add_argument('--smoke', action='store_true')
     args = parser.parse_args(argv)
+    if args.command == 'bands':
+        result = bands_main(args.app or ['gs-rest-service', 'petclinic-rest'])
+        for app, row in result['apps'].items():
+            print(app, {m: f"{v['relative_half_width'] * 100:.2f}%" for m, v in row['calibration'].items()})
+        return 0
     if args.command == 'calibrate':
         calibrate(args.app, args.samples, args.smoke, args.log)
         return 0

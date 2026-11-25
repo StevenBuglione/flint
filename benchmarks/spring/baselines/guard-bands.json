@@ -1,0 +1,161 @@
+{
+  "schema": "flint.guard-bands/1",
+  "computed": "2026-11-25T09:07:41Z",
+  "rule": "per metric, the wider of the record's own 99% prediction band and this relative half-width around the record's mean (coordinator, 2026-11-25); 1.4826 x MAD of pooled session trials",
+  "apps": {
+    "gs-rest-service": {
+      "calibration": {
+        "requests_per_second": {
+          "relative_half_width": 0.010903104503355052,
+          "n": 23,
+          "median": 252963.29020605618,
+          "robust_sd": 0.0037862858287087712
+        },
+        "p50_ms": {
+          "relative_half_width": 0.05210871099677967,
+          "n": 23,
+          "median": 0.059728,
+          "robust_sd": 0.018095623493168945
+        },
+        "p99_ms": {
+          "relative_half_width": 0.17932452726426942,
+          "n": 23,
+          "median": 0.26522,
+          "robust_sd": 0.06227344845788394
+        },
+        "cpu_ns_per_request": {
+          "relative_half_width": 0.026032562902871238,
+          "n": 23,
+          "median": 8200.082000820008,
+          "robust_sd": 0.009040243902439031
+        }
+      },
+      "probe": {
+        "cpu_seconds": {
+          "relative_half_width": 0.01725266430788918,
+          "n": 8,
+          "median": 0.026952638756483793,
+          "robust_sd": 0.004648747613849121
+        },
+        "memory_seconds": {
+          "relative_half_width": 0.08787554365162921,
+          "n": 8,
+          "median": 0.06003541359677911,
+          "robust_sd": 0.02367815292617757
+        }
+      },
+      "sessions": 8,
+      "first": "2026-11-24T18:32:12Z",
+      "last": "2026-11-25T08:55:48Z",
+      "excluded": [
+        {
+          "app": "gs-rest-service",
+          "session": "5",
+          "time": "2026-11-25T03:25:38Z",
+          "trial": 0,
+          "classification": "anomalous, cause not identified",
+          "reason": "the first of session 5's three Go calibration trials deviates far beyond every other gs-rest trial of the eight sessions",
+          "evidence": {
+            "trial": {
+              "requests_per_second": 238435.57558202554,
+              "p50_ms": 0.083427,
+              "p99_ms": 0.40131500000000003,
+              "cpu_ns_per_request": 11251.012591133202
+            },
+            "deviation_from_median_of_other_23_trials": {
+              "requests_per_second": -0.0574,
+              "p50_ms": 0.3968,
+              "p99_ms": 0.5131,
+              "cpu_ns_per_request": 0.3721
+            },
+            "range_of_other_23_trials": {
+              "requests_per_second": [
+                250795.2917567721,
+                255220.45598891407
+              ],
+              "p50_ms": [
+                0.057686999999999995,
+                0.062628
+              ],
+              "p99_ms": [
+                0.239281,
+                0.295588
+              ],
+              "cpu_ns_per_request": [
+                8100.040500202501,
+                8650.908345376265
+              ]
+            },
+            "session_other_trials": {
+              "requests_per_second": [
+                252664.16077641776,
+                253446.09291178943
+              ],
+              "p50_ms": [
+                0.060047,
+                0.062628
+              ],
+              "p99_ms": [
+                0.275909,
+                0.289528
+              ],
+              "cpu_ns_per_request": [
+                8350.083500835008,
+                8650.908345376265
+              ]
+            },
+            "window": "claimed 03:24:07-03:25:40Z on 2026-11-25; receipt (results 20261125T032407Z): evidence true, 0 foreign samples, no busy processes in any 10 s sample, load 1.6-1.9, nothing frozen; proof-harness's own hold-wrapped work had ended by 03:14:43Z and its commits by 03:15:15Z",
+            "results": ".flint/measure/results/calibration-session-gs-rest-service-5/20261125T032407Z"
+          },
+          "decided": "coordinator, 2026-11-25 ~09:00Z: mark it explicitly rather than let the robust (MAD) spread absorb it silently"
+        }
+      ]
+    },
+    "petclinic-rest": {
+      "calibration": {
+        "requests_per_second": {
+          "relative_half_width": 0.013494659568505402,
+          "n": 24,
+          "median": 20156.101523467056,
+          "robust_sd": 0.004710371242665458
+        },
+        "p50_ms": {
+          "relative_half_width": 0.030531691838785725,
+          "n": 24,
+          "median": 0.2385855,
+          "robust_sd": 0.0106572235110684
+        },
+        "p99_ms": {
+          "relative_half_width": 0.09068396084675026,
+          "n": 24,
+          "median": 0.6151964999999999,
+          "robust_sd": 0.0316536418851537
+        },
+        "cpu_ns_per_request": {
+          "relative_half_width": 0.0130160161997753,
+          "n": 24,
+          "median": 63596.8201653511,
+          "robust_sd": 0.0045432986353044925
+        }
+      },
+      "probe": {
+        "cpu_seconds": {
+          "relative_half_width": 0.02381746875919597,
+          "n": 8,
+          "median": 0.0269819893874228,
+          "robust_sd": 0.006417640724140694
+        },
+        "memory_seconds": {
+          "relative_half_width": 0.19529310251570672,
+          "n": 8,
+          "median": 0.0608595022931695,
+          "robust_sd": 0.052621921351935164
+        }
+      },
+      "sessions": 8,
+      "first": "2026-11-24T18:43:43Z",
+      "last": "2026-11-25T09:07:19Z",
+      "excluded": []
+    }
+  }
+}

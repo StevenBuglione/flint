@@ -1,0 +1,63 @@
+[
+  {
+    "app": "gs-rest-service",
+    "session": "5",
+    "time": "2026-11-25T03:25:38Z",
+    "trial": 0,
+    "classification": "anomalous, cause not identified",
+    "reason": "the first of session 5's three Go calibration trials deviates far beyond every other gs-rest trial of the eight sessions",
+    "evidence": {
+      "trial": {
+        "requests_per_second": 238435.57558202554,
+        "p50_ms": 0.083427,
+        "p99_ms": 0.40131500000000003,
+        "cpu_ns_per_request": 11251.012591133202
+      },
+      "deviation_from_median_of_other_23_trials": {
+        "requests_per_second": -0.0574,
+        "p50_ms": 0.3968,
+        "p99_ms": 0.5131,
+        "cpu_ns_per_request": 0.3721
+      },
+      "range_of_other_23_trials": {
+        "requests_per_second": [
+          250795.2917567721,
+          255220.45598891407
+        ],
+        "p50_ms": [
+          0.057686999999999995,
+          0.062628
+        ],
+        "p99_ms": [
+          0.239281,
+          0.295588
+        ],
+        "cpu_ns_per_request": [
+          8100.040500202501,
+          8650.908345376265
+        ]
+      },
+      "session_other_trials": {
+        "requests_per_second": [
+          252664.16077641776,
+          253446.09291178943
+        ],
+        "p50_ms": [
+          0.060047,
+          0.062628
+        ],
+        "p99_ms": [
+          0.275909,
+          0.289528
+        ],
+        "cpu_ns_per_request": [
+          8350.083500835008,
+          8650.908345376265
+        ]
+      },
+      "window": "claimed 03:24:07-03:25:40Z on 2026-11-25; receipt (results 20261125T032407Z): evidence true, 0 foreign samples, no busy processes in any 10 s sample, load 1.6-1.9, nothing frozen; proof-harness's own hold-wrapped work had ended by 03:14:43Z and its commits by 03:15:15Z",
+      "results": ".flint/measure/results/calibration-session-gs-rest-service-5/20261125T032407Z"
+    },
+    "decided": "coordinator, 2026-11-25 ~09:00Z: mark it explicitly rather than let the robust (MAD) spread absorb it silently"
+  }
+]

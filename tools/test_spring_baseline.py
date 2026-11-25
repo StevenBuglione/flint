@@ -40,6 +40,37 @@ class Bands(unittest.TestCase):
         self.assertTrue(found[1].startswith('probe cpu_seconds'))
 
 
+class SessionBands(unittest.TestCase):
+    def rows(self):
+        base = [{'time': f't{i}', 'calibration': {m: [100.0 + d, 100.5 + d, 99.5 + d]
+                                                  for m in spring_baseline.CALIBRATION_METRICS},
+                 'probe': {'cpu_seconds': [0.1] * 5, 'memory_seconds': [0.05] * 5}} for i, d in enumerate([0, 1, -1, 0.5])]
+        base[2]['calibration']['cpu_ns_per_request'][0] = 140.0  # one disturbed trial
+        return base
+
+    def test_a_disturbed_trial_cannot_widen_the_band(self):
+        bands = spring_baseline.session_bands(self.rows())
+        self.assertLess(bands['calibration']['cpu_ns_per_request']['relative_half_width'], 0.05)
+        clean = spring_baseline.session_bands(self.rows(), [{'time': 't2', 'trial': 0}])
+        self.assertEqual(clean['calibration']['cpu_ns_per_request']['n'], 11)
+
+    def test_the_guard_takes_the_wider_band_per_metric(self):
+        r = record(app='demo')
+        own = r['calibration']['bands']['p99_ms']
+        wide = {'apps': {'demo': {'calibration': {'p99_ms': {'relative_half_width': 0.20}}, 'probe': {}}}}
+        b = spring_baseline.guard_band(r, 'calibration', 'p99_ms', wide)
+        self.assertEqual(b['source'], 'sessions')
+        self.assertAlmostEqual(b['upper'], own['mean'] * 1.2)
+        narrow = {'apps': {'demo': {'calibration': {'p99_ms': {'relative_half_width': 0.0001}}, 'probe': {}}}}
+        self.assertEqual(spring_baseline.guard_band(r, 'calibration', 'p99_ms', narrow)['upper'], own['upper'])
+        self.assertEqual(spring_baseline.guard_band(r, 'calibration', 'p99_ms', {})['source'], 'record')
+        ok = {m: 100.0 for m in spring_baseline.CALIBRATION_METRICS}
+        drifted = dict(ok, p99_ms=115.0)
+        probe = {'cpu_seconds': [0.1] * 5, 'memory_seconds': [0.05] * 5}
+        self.assertTrue(spring_baseline.drift(r, drifted, probe, {}))
+        self.assertEqual(spring_baseline.drift(r, drifted, probe, wide), [])
+
+
 class Fingerprint(unittest.TestCase):
     def test_stale_names_the_changed_inputs(self):
         now = spring_baseline.fingerprint('gs-rest-service', 'go', ['http'])
