@@ -2,9 +2,11 @@ module flint.os.sys.interrupts;
 
 import core.atomic : atomicExchange, atomicLoad, atomicOp, atomicStore, cas;
 import core.thread.osthread : Thread;
+import core.thread.types : ThreadID;
 import flint.arena : Error, Result, Status;
 import flint.os.sys.process : nativeStatus, waitForOutput;
-import flint.os.sys.threads : joinThread;
+import flint.os.sys.threads : CoordinatorLaunch, attachForCallbacks, detachAfterCallbacks,
+    joinLowLevel, orphanLowLevel, startLowLevel;
 import flint.os.types : ShutdownSignal;
 
 @safe:
@@ -104,7 +106,12 @@ private struct Coordinator
     size_t count;
     ulong lastId;
     ulong epoch;
-    Thread worker;
+    /// The coordinator: a thread druntime does not know until it first has callbacks to run, so a stop-the-world
+    /// collection neither signals nor scans it while it waits (docs/spring/phase1/gc.md, section 3c).
+    ThreadID worker;
+    bool running;
+    /// The epoch of a coordinator that retired itself from one of its own callbacks: nobody joins it.
+    ulong orphanEpoch;
     Disposition[signalKinds] actions;
     int descriptor = -1;
     version (Windows) bool ownsHandler;
@@ -186,18 +193,21 @@ else
     }
 }
 
-// SAFETY: The daemon captures only its immutable descriptor and epoch, and uses a safe D entry.
-private @trusted void startCoordinator(ref Coordinator state)
+private Error startCoordinator(ref Coordinator state) nothrow @nogc
 {
-    if (state.worker !is null)
-        return;
+    if (state.running)
+        return Error.init;
 
     const epoch = ++state.epoch;
-    const descriptor = state.descriptor;
-    auto worker = new Thread(() { dispatchLoop(descriptor, epoch); });
-    worker.isDaemon = true;
-    worker.start();
-    state.worker = worker;
+    const started = startLowLevel(CoordinatorLaunch(state.descriptor, epoch, &dispatchLoop));
+    if (!started.ok)
+    {
+        --state.epoch;
+        return started.error;
+    }
+    state.worker = started.value;
+    state.running = true;
+    return Error.init;
 }
 
 version (Windows)
@@ -398,9 +408,12 @@ package(flint.os) Result!ulong registerInterrupt(Callback callback, uint signals
     if (claimed.code != Status.ok)
         return Result!ulong(0, claimed);
 
-    scope (failure)
+    const coordinatorStarted = startCoordinator(*state);
+    if (coordinatorStarted.code != Status.ok)
+    {
         release(*state, signals);
-    startCoordinator(*state);
+        return Result!ulong(0, coordinatorStarted);
+    }
     const id = ++state.lastId;
     state.subscriptions[free] = Subscription(id, callback, signals);
     ++state.count;
@@ -411,7 +424,8 @@ package(flint.os) Error unregisterInterrupt(ulong id) nothrow
 {
     auto state = lock();
     Error result;
-    Thread retiredWorker;
+    ThreadID retiredWorker;
+    bool retired;
     size_t removedSlot = state.subscriptions.length;
 
     foreach (slot, ref entry; state.subscriptions)
@@ -432,7 +446,12 @@ package(flint.os) Error unregisterInterrupt(ulong id) nothrow
         if (--state.count == 0)
         {
             retiredWorker = state.worker;
-            state.worker = null;
+            retired = state.running;
+            state.worker = ThreadID.init;
+            state.running = false;
+            // A coordinator retiring itself from its own callback cannot be joined: it detaches as it ends.
+            if (retired && onCoordinator)
+                state.orphanEpoch = state.epoch;
         }
         break;
     }
@@ -440,11 +459,8 @@ package(flint.os) Error unregisterInterrupt(ulong id) nothrow
 
     if (!onCoordinator)
     {
-        if (retiredWorker !is null)
-        {
-            if (joinThread(retiredWorker) !is null && result.code == Status.ok)
-                result = Error(Status.ioError, "interrupt coordinator could not join");
-        }
+        if (retired)
+            joinLowLevel(retiredWorker);
         else if (removedSlot < capacity)
             waitForCallback(removedSlot, id);
     }
@@ -464,6 +480,14 @@ private void waitForCallback(size_t slot, ulong id) nothrow @nogc
     }
 }
 
+private bool orphaned(ulong epoch) nothrow @nogc
+{
+    auto state = lock();
+    scope (exit)
+        unlock();
+    return state.orphanEpoch == epoch;
+}
+
 private struct Notification
 {
     bool terminating;
@@ -476,7 +500,7 @@ private Notification notifications(int fd, ulong epoch) nothrow @nogc
     auto state = lock();
     scope (exit)
         unlock();
-    if (state.worker is null || state.epoch != epoch)
+    if (!state.running || state.epoch != epoch)
         return Notification(true);
     const counts = takeSignal(fd);
     if (counts == 0)
@@ -534,9 +558,21 @@ private bool deliver(ref Subscription active, ulong counts) nothrow
     return true;
 }
 
+/// The coordinator's loop. It waits unregistered: druntime neither signals nor scans it, and it touches no GC memory.
+/// The first notification with callbacks to run attaches it to druntime (with this thread's module constructors),
+/// for good: druntime cannot attach a thread a second time once it detached, and a shutdown signal is rare, so the
+/// coordinator stays registered until it retires.
 private void dispatchLoop(int fd, ulong epoch) nothrow
 {
     onCoordinator = true;
+    bool attached;
+    scope (exit)
+    {
+        if (attached)
+            detachAfterCallbacks();
+        if (orphaned(epoch))
+            orphanLowLevel();
+    }
     for (;;)
     {
         waitForOutput(fd, -1, 20);
@@ -545,6 +581,11 @@ private void dispatchLoop(int fd, ulong epoch) nothrow
             return;
         if (notification.through == 0)
             continue;
+        if (!attached)
+        {
+            attachForCallbacks();
+            attached = true;
+        }
         foreach (slot; 0 .. capacity)
         {
             auto active = beginCallback(slot, notification.through, epoch);

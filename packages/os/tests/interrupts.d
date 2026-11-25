@@ -2,13 +2,15 @@ module flint.os.interrupt_test;
 
 version (Posix)
 {
-    import core.atomic : atomicLoad, atomicOp;
+    import core.atomic : atomicLoad, atomicOp, atomicStore;
+    import core.lifetime : move;
+    import core.memory : GC;
     import core.sys.posix.signal : SIGINT, SIGTERM, SIG_IGN, kill, sigaction, sigaction_t, sigemptyset;
     import core.sys.posix.unistd : getpid;
     import core.thread.osthread : Thread;
     import core.time : msecs;
     import flint.arena : Status;
-    import flint.os : ShutdownSignal, onInterrupt, onShutdownSignal, watchShutdownSignals;
+    import flint.os : InterruptSubscription, ShutdownSignal, onInterrupt, onShutdownSignal, watchShutdownSignals;
 
     private shared uint first;
     private shared uint second;
@@ -183,6 +185,86 @@ version (Posix)
             assert(signals.close().code == Status.ok);
             assert(ignoring(SIGINT) && ignoring(SIGTERM));
         }
+    }
+
+    private shared bool callbackRegistered;
+    private shared uint coordinatedCalls;
+    private __gshared InterruptSubscription selfClosing;
+
+    private size_t druntimeThreads()
+    {
+        return Thread.getAll().length;
+    }
+
+    private void waitForThreads(size_t count)
+    {
+        foreach (_; 0 .. 1000)
+        {
+            if (druntimeThreads() == count)
+                return;
+            Thread.sleep(1.msecs);
+        }
+        assert(0, "the coordinator did not leave druntime's thread list");
+    }
+
+    @("the coordinator waits unknown to druntime, and joins it only to run callbacks, which may allocate and collect")
+    unittest
+    {
+        auto saved = Ignored.install();
+        scope (exit)
+            saved.restore();
+        const threads = druntimeThreads();
+
+        auto subscription = onShutdownSignal((ShutdownSignal) @trusted {
+            atomicStore(callbackRegistered, Thread.getThis() !is null);
+            auto block = new ubyte[](4096);
+            GC.collect();
+            block[0] = 1;
+            atomicOp!"+="(coordinatedCalls, 1U);
+        });
+        assert(subscription.ok, subscription.error.message);
+        // Waiting, the coordinator is no druntime thread: a collection neither signals nor scans it.
+        assert(druntimeThreads() == threads);
+        GC.collect();
+
+        const before = atomicLoad(coordinatedCalls);
+        assert(kill(getpid(), SIGTERM) == 0);
+        waitUntil(coordinatedCalls, before + 1);
+        assert(atomicLoad(callbackRegistered));
+        // Registered for its callbacks from the first one on, then gone once the last subscription closes.
+        assert(druntimeThreads() == threads + 1);
+        assert(kill(getpid(), SIGINT) == 0);
+        waitUntil(coordinatedCalls, before + 2);
+        assert(subscription.value.close().code == Status.ok);
+        assert(druntimeThreads() == threads);
+    }
+
+    @("a callback that closes the last subscription retires its own coordinator, and a new subscription starts another")
+    unittest
+    {
+        auto saved = Ignored.install();
+        scope (exit)
+            saved.restore();
+        const threads = druntimeThreads();
+
+        auto subscribed = onShutdownSignal((ShutdownSignal) @trusted {
+            assert(selfClosing.close().code == Status.ok);
+            atomicOp!"+="(coordinatedCalls, 1U);
+        });
+        assert(subscribed.ok, subscribed.error.message);
+        move(subscribed.value, selfClosing);
+        const before = atomicLoad(coordinatedCalls);
+        assert(kill(getpid(), SIGTERM) == 0);
+        waitUntil(coordinatedCalls, before + 1);
+        waitForThreads(threads);
+        assert(ignoring(SIGINT) && ignoring(SIGTERM));
+
+        auto next = onShutdownSignal((ShutdownSignal) @safe { atomicOp!"+="(coordinatedCalls, 1U); });
+        assert(next.ok, next.error.message);
+        assert(kill(getpid(), SIGINT) == 0);
+        waitUntil(coordinatedCalls, before + 2);
+        assert(next.value.close().code == Status.ok);
+        waitForThreads(threads);
     }
 
     @("a custom SIGTERM handler keeps ownership and the shutdown subscription gives SIGINT back")
