@@ -679,6 +679,30 @@ class DispatcherServlet : HttpServlet, FastDispatch
     /// Spring's `doDispatch`.
     protected void doDispatch(HttpServletRequest request, HttpServletResponse response)
     {
+        dispatch(request, response, 0);
+    }
+
+    /++
+    Flint (fast-path.md S6): `doDispatch` for a `GET` the container offered and no fast-path route took, on the
+    materialized request and response. `doGet`, `processRequest` and `doService` only lead to `doDispatch`, so it is
+    entered directly. When `firstMappingMisses` (no registration of the first handler mapping has a pattern that
+    matches the path), that mapping's lookup would find nothing and leave only its lookup-path attribute: the
+    dispatch sets that attribute and asks the remaining mappings, as `getHandler` would go on to ask them.
+    +/
+    package(flint.web) final void dispatchUnmatched(HttpServletRequest request, HttpServletResponse response,
+            bool firstMappingMisses)
+    {
+        if (!firstMappingMisses)
+            return doDispatch(request, response);
+        import flint.web.servlet.handler : lookupPath;
+
+        request.setAttribute(HandlerMapping.LOOKUP_PATH, Any.of(lookupPath(request)));
+        dispatch(request, response, 1);
+    }
+
+    // doDispatch, with the handler mappings asked from `firstMapping` on.
+    private void dispatch(HttpServletRequest request, HttpServletResponse response, size_t firstMapping)
+    {
         HandlerExecutionChain mappedHandler;
         try
         {
@@ -686,7 +710,7 @@ class DispatcherServlet : HttpServlet, FastDispatch
             Exception dispatchException;
             try
             {
-                mappedHandler = getHandler(request);
+                mappedHandler = firstMapping == 0 ? getHandler(request) : handlerFrom(request, firstMapping);
                 if (mappedHandler is null)
                 {
                     noHandlerFound(request, response);
@@ -745,6 +769,15 @@ class DispatcherServlet : HttpServlet, FastDispatch
     protected HandlerExecutionChain getHandler(HttpServletRequest request)
     {
         foreach (mapping; strategies.handlerMappings)
+            if (auto handler = mapping.getHandler(request))
+                return handler;
+        return null;
+    }
+
+    // getHandler's loop from the mapping at `first` on.
+    private HandlerExecutionChain handlerFrom(HttpServletRequest request, size_t first)
+    {
+        foreach (mapping; strategies.handlerMappings[first < $ ? first : $ .. $])
             if (auto handler = mapping.getHandler(request))
                 return handler;
         return null;

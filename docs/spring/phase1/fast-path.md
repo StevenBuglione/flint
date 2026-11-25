@@ -364,6 +364,27 @@ offered.
 - an invalid body: the advice's 400, byte for byte, and no handler run;
 - declines: another `Content-Type` value, two fields, none, an empty body, malformed JSON, a GET.
 
+### 9.1.2 S6: the unmatched GET
+
+A `GET` that no route takes is materialized and enters the generic dispatch at `doDispatch`
+(`DispatcherServlet.dispatchUnmatched`). `doGet`, `processRequest` and `doService` only lead there.
+
+**The skip:** when no registration of the first handler mapping has a pattern that matches the path, that mapping's
+lookup would find nothing and leave only its lookup-path attribute. The test is the lookup's own
+`PathPattern.matches` on the request's own `parsedLookupPath`. The dispatch then sets that attribute and asks the
+remaining mappings, as `getHandler` would.
+
+**Otherwise:** it is `doDispatch` itself.
+
+The resource handler, interceptors, resolvers, `sendError` and the engine's status forward all stay generic. Only an
+exact `DispatcherServlet` with an exact `RequestMappingHandlerMapping` first is served this way; a subclass of either
+could look up differently. A route that matches the path but declines its request still declines, and the container
+takes the generic path.
+
+**Tests:** framework-test `unmatchedLikeGeneric` compares the materialized response with the same request through
+the servlet's own `service` (status, error message, Content-Type, body). The cases are trailing-slash, deep and dot
+paths, template mismatches, a shadowed template, the S5 POST path's GET (405), and `Accept: text/html`.
+
 ### 9.2 The error-page shortcut (default JSON 404)
 
 A 404 that reaches Boot's error page costs a second full pass: the engine forwards to `/error`, which runs the ERROR filter chain, the `DispatcherServlet` lookup, `BasicErrorController.error`, `HttpEntityMethodProcessor`'s negotiation and the Jackson converter (coordination note web-http-404-specialization.md). The shortcut writes that response in place of the forward when startup has proved the whole ERROR dispatch stock. The first dispatch, which raises and resolves the 404, is unchanged.

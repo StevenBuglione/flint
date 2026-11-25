@@ -718,6 +718,12 @@ abstract class RequestMappingInfoHandlerMapping : AbstractHandlerMapping
                 visit(registrations[index].info, registrations[index].handlerMethod);
     }
 
+    /// Flint's fast path (S6): every registration's mapping, live, in registration order.
+    package(flint) RequestMappingInfo[] registeredMappingInfos() pure nothrow @nogc
+    {
+        return registeredInfos;
+    }
+
     // The parameters of every registered handler method, for the adapter's resolver cache.
     package(flint) MethodParameter[] mappedParameters()
     {

@@ -35,7 +35,8 @@ import flint.web.servlet.config.annotation : WebMvcConfigurer;
 import flint.web.servlet.mvc.method : RequestMappingInfo, RequestMappingInfoHandlerMapping;
 import flint.web.servlet.mvc.method.annotation : AbstractMessageConverterMethodProcessor,
     HttpEntityMethodProcessor, HttpHeadersReturnValueHandler,
-    PathVariableMethodArgumentResolver, RequestMappingHandlerAdapter,
+    PathVariableMethodArgumentResolver,
+    RequestMappingHandlerAdapter, RequestMappingHandlerMapping,
     RequestResponseBodyMethodProcessor, ServletRequestMethodArgumentResolver;
 import flint.core : MethodParameter;
 
@@ -72,11 +73,16 @@ final class FastPathTable : FastPath
 {
     private Route[] routes;
     private BodyPool pool;
+    // S6: the first handler mapping, when it is exactly Spring's RequestMappingHandlerMapping (a subclass could look
+    // up otherwise); null keeps every unmatched request generic.
+    private RequestMappingInfoHandlerMapping unmatched;
 
-    private this(Route[] routes)
+    private this(Route[] routes, RequestMappingInfoHandlerMapping mappings)
     {
         this.routes = routes;
         pool = new BodyPool;
+        if (typeid(mappings) is typeid(RequestMappingHandlerMapping))
+            unmatched = mappings;
     }
 
     /++
@@ -106,7 +112,7 @@ final class FastPathTable : FastPath
             }
         }
         auto proved = literal ~ templates;
-        return proved.length != 0 ? new FastPathTable(proved) : null;
+        return proved.length != 0 ? new FastPathTable(proved, mappings) : null;
     }
 
     FastOutcome dispatch(DispatcherServlet servlet, ref scope FastExchange exchange)
@@ -120,36 +126,58 @@ final class FastPathTable : FastPath
                     route.segments, values))
                 return serve(route, servlet, exchange, values);
         }
+        // S6: a GET no route took goes straight to doDispatch on the servlet objects (fast-path.md 9.1.2).
+        if (unmatched !is null && exchange.method == "GET" && typeid(servlet) is typeid(DispatcherServlet))
+            return serveUnmatched(servlet, exchange);
         return FastOutcome.declined;
+    }
+
+    /++
+    S6: the generic dispatch of a `GET` that no route took, entered at `doDispatch` (`doGet`, `processRequest` and
+    `doService` only lead there). When no registration of the first handler mapping has a pattern that matches the
+    path (the lookup's own `PathPattern.matches` on the request's own parse), that mapping's lookup would find
+    nothing, so the dispatch skips it: an unmatched request, typically a 404, costs no lookup. Otherwise it is
+    `doDispatch` itself. Either way the response is the generic one.
+    +/
+    private FastOutcome serveUnmatched(DispatcherServlet servlet, ref scope FastExchange exchange)
+    {
+        Object request, response;
+        exchange.materialize(request, response);
+        auto servletRequest = cast(HttpServletRequest) request;
+        auto servletResponse = cast(HttpServletResponse) response;
+        servlet.dispatchUnmatched(servletRequest, servletResponse, firstMappingMisses(servletRequest));
+        return FastOutcome.materialized;
+    }
+
+    // Whether no pattern of any registration of the first mapping matches the request's lookup path.
+    private bool firstMappingMisses(HttpServletRequest request)
+    {
+        import flint.web.servlet.handler : parsedLookupPath;
+
+        const path = parsedLookupPath(request);
+        foreach (info; unmatched.registeredMappingInfos())
+            foreach (pattern; info.getPatterns())
+                if (pattern.matches(path))
+                    return false;
+        return true;
     }
 
     private FastOutcome serve(ref Route route, DispatcherServlet servlet,
             ref scope FastExchange exchange, ref const Span[maxArguments] values)
     {
         size_t key;
-        if (!acceptKey(exchange, key))
-            return FastOutcome.declined;
-        // S3: a request with an Origin field may be a CORS request; DefaultCorsProcessor answers it generically.
-        if (route.vary.length != 0 && exchange.originCount != 0)
+        if (!admitted(route, exchange, key))
             return FastOutcome.declined;
         const entry = route.accept[key];
-        if (entry.contentType is null)
-            return FastOutcome.declined; // 406 or a type the table does not write: the generic path answers
-
-        // S5: a body only as the proved Content-Type, whole.
-        if (route.bodyIndex != maxArguments && !bodyAdmitted(exchange))
-            return FastOutcome.declined;
-        // Every argument is bound before the handler runs, so a declined request has run nothing.
+        // Every argument is bound before the handler runs, so a declined request has run nothing. S5: a body that
+        // RequestResponseBodyMethodProcessor's own validation rejects is resolved as doDispatch resolves it (the
+        // handler has not run).
         Any[maxArguments] arguments;
-        if (route.bodyIndex != maxArguments && !bindBody(route, exchange, arguments[route.bodyIndex]))
+        Exception failure;
+        if (!bound(route, exchange, values, arguments, failure))
             return FastOutcome.declined;
-        if (!bindArguments(route, exchange, values, arguments))
-            return FastOutcome.declined;
-        // S5: RequestResponseBodyMethodProcessor validates the bound body with its own code; a failure is resolved as
-        // doDispatch resolves it (the handler has not run).
-        if (route.bodyIndex != maxArguments)
-            if (auto failure = route.bodyProcessor.validationFailure(arguments[route.bodyIndex], route.bodyParameter))
-                return complete(servlet, exchange, route, failure, 0, null, null);
+        if (failure !is null)
+            return complete(servlet, exchange, route, failure, 0, null, null);
         Any result;
         try
             result = route.handler.invokeArguments(arguments[0 .. route.arguments.length], null);
@@ -182,6 +210,34 @@ final class FastPathTable : FastPath
         }
         exchange.respondFields(200, responseFields(route, exchange, entry.contentType, storage), buffer.data, false);
         return FastOutcome.written;
+    }
+
+    // The guards that decline before anything runs: the Accept key; S3's Origin on a route with a CORS
+    // configuration (DefaultCorsProcessor answers it generically); a key the table does not write (406, or a type the
+    // generic path chooses); S5's body offered whole as the proved Content-Type.
+    private static bool admitted(ref const Route route, ref scope FastExchange exchange, out size_t key)
+    {
+        if (!acceptKey(exchange, key))
+            return false;
+        if (route.vary.length != 0 && exchange.originCount != 0)
+            return false;
+        if (route.accept[key].contentType is null)
+            return false;
+        return route.bodyIndex == maxArguments || bodyAdmitted(exchange);
+    }
+
+    // Binds every argument, S5's body first (read, then validated by the processor's own code into `failure`);
+    // false declines.
+    private static bool bound(ref Route route, ref scope FastExchange exchange,
+            ref const Span[maxArguments] values, ref Any[maxArguments] arguments, out Exception failure)
+    {
+        if (route.bodyIndex != maxArguments && !bindBody(route, exchange, arguments[route.bodyIndex]))
+            return false;
+        if (!bindArguments(route, exchange, values, arguments))
+            return false;
+        if (route.bodyIndex != maxArguments)
+            failure = route.bodyProcessor.validationFailure(arguments[route.bodyIndex], route.bodyParameter);
+        return true;
     }
 
     /++
@@ -828,10 +884,7 @@ private bool prove(ref const AotHandlerMapping row, RequestMappingInfoHandlerMap
     route.handler = variables.length == 0 ? directHandler(route.path, route.method,
             mappings) : patternHandler(row, route.segments, mappings);
     auto handler = route.handler;
-    if (handler is null || handler.getArrayInvoker() !is row.invokeArguments
-            || !handler.invokesArguments() || row.arguments.length > maxArguments
-            || handler.getResponseStatus() != 0 || handler.getResponseStatusReason() !is null
-            || handler.isVoid() || handler.getBean() is null)
+    if (!invocableRow(handler, row))
         return false;
     if (!returnHandling(row, handler, adapter, route) || !boundArguments(row, handler, adapter,
             variables, route) || !corsFields(handler, mappings, route))
@@ -843,12 +896,25 @@ private bool prove(ref const AotHandlerMapping row, RequestMappingInfoHandlerMap
     return acceptTable(row, adapter, route);
 }
 
+// The row's own handler, invoked through its array invoker with at most `maxArguments` arguments, on a bean, with a
+// return value and no @ResponseStatus.
+private bool invocableRow(HandlerMethod handler, ref const AotHandlerMapping row)
+{
+    if (handler is null || handler.getArrayInvoker() !is row.invokeArguments || !handler.invokesArguments())
+        return false;
+    if (row.arguments.length > maxArguments || handler.getBean() is null || handler.isVoid())
+        return false;
+    return handler.getResponseStatus() == 0 && handler.getResponseStatusReason() is null;
+}
+
 // One GET path without consumes, or (S5) one POST path consuming exactly application/json; no params or headers,
 // produces at most application/json, @ResponseBody without a status. A @CrossOrigin handler's CORS processing is
 // proved by corsFields (S3).
 private bool simpleRow(ref const AotHandlerMapping row)
 {
-    if (row.paths.length != 1 || row.params.length || row.headers.length || !row.responseBody || row.responseStatus != 0)
+    if (row.paths.length != 1 || row.params.length || row.headers.length)
+        return false;
+    if (!row.responseBody || row.responseStatus != 0)
         return false;
     if (row.produces.length != 0 && row.produces != ["application/json"])
         return false;
@@ -900,8 +966,7 @@ private HandlerMethod directHandler(string path, string method, RequestMappingIn
             return;
         ++found;
         handler = candidate;
-        auto consumable = info.getConsumableMediaTypes();
-        consumesJson = method != "POST" || (consumable.length == 1 && consumable[0] == MediaType.APPLICATION_JSON);
+        consumesJson = consumesRouteType(info, method);
     });
     return found == 1 && consumesJson ? handler : null;
 }
@@ -932,8 +997,7 @@ private HandlerMethod patternHandler(ref const AotHandlerMapping row, const(Segm
     if (found != 1)
         return null;
     const method = row.methods[0];
-    auto consumable = registered.getConsumableMediaTypes();
-    if (method == "POST" && (consumable.length != 1 || consumable[0] != MediaType.APPLICATION_JSON))
+    if (!consumesRouteType(registered, method))
         return null;
     const numeric = numericVariables(row, segments);
     foreach (index, info; infos)
@@ -945,6 +1009,16 @@ private HandlerMethod patternHandler(ref const AotHandlerMapping row, const(Segm
                 return null;
     }
     return handler;
+}
+
+// S5: a POST registration consumes exactly application/json, the Content-Type its route admits; a GET one is not
+// asked.
+private bool consumesRouteType(RequestMappingInfo info, string method)
+{
+    if (method != "POST")
+        return true;
+    auto consumable = info.getConsumableMediaTypes();
+    return consumable.length == 1 && consumable[0] == MediaType.APPLICATION_JSON;
 }
 
 // Whether `info`'s method condition admits a route's requests: GET or HEAD for a GET route, POST for a POST route
@@ -1121,20 +1195,27 @@ private bool boundArguments(ref const AotHandlerMapping row, HandlerMethod handl
                 return false;
             continue;
         }
-        if (typeid(cast(Object) resolver) !is typeid(PathVariableMethodArgumentResolver)
-                || spec.kind != ArgumentKind.pathVariable || (type != "int" && type != "long" && type != "string"))
-            return false;
-        bool named;
-        foreach (variable, name; variables)
-            if (name == spec.name)
-            {
-                route.variableOf[index] = variable;
-                named = true;
-            }
-        if (!named)
+        if (!pathArgument(index, spec, type, cast(Object) resolver, variables, route))
             return false;
     }
     return true;
+}
+
+// S1: a `@PathVariable` `int`, `long` or `string` resolved by exactly `PathVariableMethodArgumentResolver` and named
+// by a template variable, whose index the route records.
+private bool pathArgument(size_t index, ref const ArgumentSpec spec, string type, Object resolver,
+        const(string)[] variables, ref Route route)
+{
+    if (typeid(resolver) !is typeid(PathVariableMethodArgumentResolver)
+            || spec.kind != ArgumentKind.pathVariable || (type != "int" && type != "long" && type != "string"))
+        return false;
+    foreach (variable, name; variables)
+        if (name == spec.name)
+        {
+            route.variableOf[index] = variable;
+            return true;
+        }
+    return false;
 }
 
 /++

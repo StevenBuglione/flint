@@ -332,14 +332,19 @@ unittest
     auto servlet = dispatcher(controller, "helloController");
     assert(offer(servlet, "POST", "/hello").outcome == FastOutcome.declined);
     assert(offer(servlet, "OPTIONS", "/hello").outcome == FastOutcome.declined);
-    assert(offer(servlet, "GET", "/hello/").outcome == FastOutcome.declined);
-    assert(offer(servlet, "GET", "/hell%6F").outcome == FastOutcome.declined);
-    assert(offer(servlet, "GET", "/nope").outcome == FastOutcome.declined);
     assert(offer(servlet, "GET", "/hello", null, ["application/xml"]).outcome == FastOutcome.declined);
     assert(offer(servlet, "GET", "/hello", null, ["text/html"]).outcome == FastOutcome.declined);
     assert(offer(servlet, "GET", "/hello", null, ["application/json;q=0.9"]).outcome == FastOutcome.declined);
     assert(offer(servlet, "GET", "/hello", null, ["*/*", "*/*"]).outcome == FastOutcome.declined);
     assert(controller.calls == 0, "a declined request must not have run the handler");
+    // S6: a GET no route takes is the generic dispatch on the servlet objects.
+    foreach (path; ["/hello/", "/nope", "/deep/er/nope.json"])
+        unmatchedLikeGeneric(servlet, path);
+    // An encoded path the generic lookup decodes to /hello: the handler answers it on the servlet objects (its body
+    // carries the call count, so it is not compared byte for byte).
+    auto encoded = offer(servlet, "GET", "/hell%6F", null, null, true);
+    assert(encoded.outcome == FastOutcome.materialized && encoded.materialized.getStatus() == 200);
+    unmatchedLikeGeneric(servlet, "/nope", ["text/html"]);
 }
 
 @("fast path: no table without the rows' array invokers, with an interceptor, or for a @CrossOrigin handler")
@@ -405,9 +410,8 @@ unittest
         "/owners/1/", "/owners/1/pets/a%20b", "/owners/1/pets/a;v=1", "/owners/1/pets/", "/owners",
         "/owners/1/x"
     ])
-        assert(offer(servlet, "GET", path).outcome == FastOutcome.declined, path);
+        unmatchedLikeGeneric(servlet, path); // S6: the generic dispatch, on the servlet objects
     assert(offer(servlet, "DELETE", "/owners/1").outcome == FastOutcome.declined);
-    assert(controller.calls == 4);
     // The literal /owners/find is not a canonical number, so it does not overlap the numeric template; it is
     // a route of its own.
     assert(offer(servlet, "GET", "/owners/find").content == `{"id":0,"text":"find"}`);
@@ -417,7 +421,7 @@ unittest
 unittest
 {
     auto servlet = dispatcher(new ShadowController, "shadowController");
-    assert(offer(servlet, "GET", "/items/3").outcome == FastOutcome.declined);
+    unmatchedLikeGeneric(servlet, "/items/3"); // S6: the generic dispatch, on the servlet objects
     // The literal route itself is still proved.
     assert(offer(servlet, "GET", "/items/7").content == `{"id":7,"text":"seven"}`);
 }
@@ -622,13 +626,46 @@ unittest
     assert(offer(servlet, "POST", "/owners", null, null, false, 0, valid,
             ["application/json;charset=UTF-8"]).outcome == FastOutcome.declined);
     assert(offer(servlet, "POST", "/owners", null, null, false, 0, valid, [
-            "application/json", "application/json"
+        "application/json", "application/json"
     ]).outcome == FastOutcome.declined);
     assert(offer(servlet, "POST", "/owners", null, null, false, 0, valid).outcome == FastOutcome.declined);
     assert(offer(servlet, "POST", "/owners", null, null, false, 0, "", ["application/json"])
             .outcome == FastOutcome.declined);
     assert(offer(servlet, "POST", "/owners", null, null, false, 0, `{"firstName":`,
             ["application/json"]).outcome == FastOutcome.declined);
-    assert(offer(servlet, "GET", "/owners").outcome == FastOutcome.declined);
     assert(controller.calls == 0);
+    unmatchedLikeGeneric(servlet, "/owners"); // S6: the generic 405, on the servlet objects
+}
+
+// S6: a GET no route takes is materialized and dispatched generically: the same status, error message, Content-Type
+// and body as the same request through the servlet's own service. A route that matches the path but does not bind
+// it declines instead (the container then takes the generic path itself).
+private void unmatchedLikeGeneric(DispatcherServlet servlet, string path, string[] accept = null)
+{
+    import flint.jakarta.servlet : ServletRequest, ServletResponse;
+
+    auto fast = offer(servlet, "GET", path, null, accept, true);
+    assert(fast.outcome != FastOutcome.written, path);
+    if (fast.outcome == FastOutcome.declined)
+        return;
+    auto request = new MockHttpServletRequest("GET", path);
+    foreach (value; accept)
+        request.addHeader("Accept", value);
+    auto expected = new MockHttpServletResponse;
+    servlet.service(cast(ServletRequest) request, cast(ServletResponse) expected);
+    auto actual = fast.materialized;
+    assert(actual.getStatus() == expected.getStatus(), path);
+    assert(actual.getErrorMessage() == expected.getErrorMessage(), path ~ ": " ~ actual.getErrorMessage());
+    assert(actual.getContentType() == expected.getContentType(), path);
+    assert(actual.getContentAsString() == expected.getContentAsString(), path);
+}
+
+@("fast path S6: an unmatched GET skips the first mapping's lookup and answers the generic 404")
+unittest
+{
+    auto servlet = dispatcher(new HelloController, "helloController");
+    // The generic dispatch's 404 comes from the resource handler's NoResourceFoundException.
+    auto fast = offer(servlet, "GET", "/nope", null, null, true);
+    assert(fast.materialized.getStatus() == 404);
+    assert(fast.materialized.getErrorMessage() == "No static resource nope.", fast.materialized.getErrorMessage());
 }
