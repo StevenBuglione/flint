@@ -59,6 +59,37 @@ package(flint.engine.reactor) bool pinWorker(uint cpu) @trusted nothrow @nogc
     }
 }
 
+/// The calling thread's CPU affinity, saved before it runs a loop that pins it (Linux; empty elsewhere).
+package(flint.engine.reactor) struct Affinity
+{
+    version (linux)
+    {
+        cpu_set_t mask;
+        bool saved;
+    }
+}
+
+// SAFETY: sched_getaffinity writes the calling thread's mask into the returned local value only.
+package(flint.engine.reactor) Affinity callerAffinity() @trusted nothrow @nogc
+{
+    Affinity affinity;
+    version (linux)
+        affinity.saved = sched_getaffinity(0, affinity.mask.sizeof, &affinity.mask) == 0;
+    return affinity;
+}
+
+// SAFETY: sched_setaffinity reads a local copy of the saved mask for the calling thread and retains nothing.
+package(flint.engine.reactor) void restoreAffinity(ref const Affinity affinity) @trusted nothrow @nogc
+{
+    version (linux)
+    {
+        if (!affinity.saved)
+            return;
+        cpu_set_t mask = affinity.mask;
+        sched_setaffinity(0, mask.sizeof, &mask);
+    }
+}
+
 // SAFETY: A new druntime thread owns this entry and can only invoke its safe nonthrowing delegate.
 @trusted package(flint.engine.reactor) Thread startWorker(void delegate() @safe nothrow entry)
 {

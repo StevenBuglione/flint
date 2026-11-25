@@ -16,7 +16,8 @@ import flint.engine.reactor.internal.wakes : Recorded, RemoteWakes, WakeLane, st
 import flint.engine.reactor.sys.fibers : createFiber, PoolFiber, releaseFiber, resetFiber, resumeFiber, yieldFiber;
 import flint.engine.reactor.sys.locals : cellStamp, loadCell, localStorable, localWords, storeCell;
 import flint.engine.reactor.sys.offload : OffloadPool;
-import flint.engine.reactor.sys.workers : availableCpus, joinWorker, pinWorker, startWorker, workerUsage, yieldWorker;
+import flint.engine.reactor.sys.workers : availableCpus, callerAffinity, joinWorker, pinWorker,
+    restoreAffinity, startWorker, workerUsage, yieldWorker;
 
 public import flint.engine.reactor.types : AcceptDelegate, AcceptFn, Backend, Completion, CompletionDelegate,
     CompletionFn, ConnectionId, IoId, ListenOptions, NativeInterest, NativeReadyFn, OffloadInterrupt, OffloadWork,
@@ -952,7 +953,10 @@ private struct Runtime
         if (offload !is null)
             offload.start();
 
-        auto threads = new Thread[workers.length];
+        // The calling thread runs the last loop itself rather than waiting for it: an idle joiner would be one more
+        // thread for every stop-the-world collection to signal (docs/spring/phase1/gc.md, section 3c).
+        const loops = workers.length;
+        auto threads = new Thread[loops > 0 ? loops - 1 : 0];
         size_t started;
         scope (failure)
         {
@@ -960,12 +964,28 @@ private struct Runtime
             foreach (thread; threads[0 .. started])
                 joinWorker(thread);
         }
-        foreach (ref worker; workers)
+        foreach (ref worker; workers[0 .. $ - 1])
         {
             threads[started] = startWorker(&worker.execute);
             ++started;
         }
         cas(&state, State.starting, State.running);
+        {
+            // The loop starts as on a thread of its own: unpinned afterwards, and with empty FiberLocal thread
+            // values, so loop callbacks never see the caller's and the caller gets its own back.
+            const affinity = callerAffinity();
+            void*[maxFiberLocalWords] callerLocals;
+            callerLocals[] = threadLocalWords[];
+            threadLocalWords[] = null;
+            scope (exit)
+            {
+                threadLocalWords = callerLocals;
+                restoreAffinity(affinity);
+            }
+            workers[$ - 1].execute();
+        }
+        // A loop leaves only once the reactor stops, or when it fails: then the others stop too.
+        stop();
 
         Error result;
         foreach (thread; threads)
