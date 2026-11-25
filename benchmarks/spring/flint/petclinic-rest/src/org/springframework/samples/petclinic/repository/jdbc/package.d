@@ -34,10 +34,11 @@ import std.typecons : Nullable;
 
 @safe:
 
-/// A `HashMap<String, Object>` of named parameters.
+/// A `HashMap<String, Object>` of named parameters, sized for the one parameter most queries bind (`new
+/// HashMap<>(1)`); a query with more grows it.
 private HashMap!(string, Any) params()
 {
-    return new HashMap!(string, Any);
+    return new HashMap!(string, Any)(1);
 }
 
 private enum ownerColumns = "SELECT id, first_name, last_name, address, city, telephone FROM owners";

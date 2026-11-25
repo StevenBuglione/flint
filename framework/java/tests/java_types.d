@@ -720,6 +720,32 @@ unittest
     assert(map.size() == 4 && map.get("d") == 3);
 }
 
+@("HashMap(initialCapacity): a one-key map grows past its capacity in order; a negative capacity is refused")
+unittest
+{
+    foreach (capacity; [0, 1, 2, 16])
+    {
+        auto map = new LinkedHashMap!(string, int)(capacity);
+        string[] expected;
+        foreach (i; 0 .. 12)
+        {
+            const key = "k" ~ valueOf(i);
+            map.put(key, i);
+            expected ~= key;
+        }
+        string[] keys;
+        foreach (k, v; map)
+            keys ~= k;
+        assert(keys == expected && map.size() == 12 && map.get("k11") == 11);
+    }
+    bool refused;
+    try
+        new HashMap!(string, int)(-1);
+    catch (IllegalArgumentException)
+        refused = true;
+    assert(refused);
+}
+
 @("Collections.emptyList: one shared instance per element type, empty and unmodifiable, equal to any empty list")
 unittest
 {

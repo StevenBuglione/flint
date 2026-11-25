@@ -2477,8 +2477,10 @@ class HashMap(K, V) : Map!(K, V)
     // Structural changes (an added or removed key), as Java's modCount: forEachAny fails on one mid-iteration.
     private uint modCount;
     private bool frozen;
+    // What the first entry reserves: `reserved`, or the capacity a caller asked for (`HashMap(initialCapacity)`).
+    private uint firstCapacity = reserved;
 
-    // The capacity the first entry reserves: most maps hold up to six keys (a query's named parameters, Boot's
+    // The capacity the first entry reserves by default: most maps hold up to six keys (a query's named parameters, Boot's
     // error attributes before the options remove some), and the collector's size classes round it up (seven
     // string-to-Any entries fit in 512 bytes, against 688 for the separate key and value arrays of eight this
     // replaced); a larger map grows by appending.
@@ -2492,6 +2494,16 @@ class HashMap(K, V) : Map!(K, V)
     /// An empty map.
     this() pure nothrow @nogc
     {
+    }
+
+    /// An empty map whose first entry reserves room for `initialCapacity` entries (at least one), as Java's
+    /// `HashMap(int)` sizes its table: a map that will hold one key costs one entry's block. Throws
+    /// `IllegalArgumentException` for a negative capacity, as Java does.
+    this(int initialCapacity)
+    {
+        if (initialCapacity < 0)
+            throw new IllegalArgumentException("Illegal initial capacity: " ~ valueOf(initialCapacity));
+        firstCapacity = initialCapacity < 1 ? 1 : cast(uint) initialCapacity;
     }
 
     /// A map of `m`'s entries.
@@ -2534,7 +2546,7 @@ class HashMap(K, V) : Map!(K, V)
         if (count_ == entries_.length)
         {
             if (entries_.length == 0)
-                entries_.reserve(reserved);
+                entries_.reserve(firstCapacity);
             entries_ ~= Entry(key, value);
         }
         else
@@ -2851,6 +2863,12 @@ class LinkedHashMap(K, V) : HashMap!(K, V)
     /// An empty map.
     this() pure nothrow @nogc
     {
+    }
+
+    /// An empty map with room for `initialCapacity` entries on its first insert (`HashMap(int)`).
+    this(int initialCapacity)
+    {
+        super(initialCapacity);
     }
 
     /// A map of `m`'s entries.
