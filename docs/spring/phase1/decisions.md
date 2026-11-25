@@ -881,3 +881,8 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - Effect of `-plugin-opt=O3` at the link: petclinic owner 1 360,928 → 273,344 instructions (−24.3%); validation 400 292,788 → 200,940 (−31.4%); allocations unchanged; stripped release 15.90 → 14.34 MB.
   - Decision: the flint CLI passes each profile's optimisation level to every LDC LTO link path, with a regression test (m7). This restores what the profiles already state, so no budget, gate, workload or comparator changes. DMD builds have no LTO and are unaffected.
   - Consequence: every certified Flint CPU, latency, size and release link-time number up to B4 was measured with unoptimised Flint code. B5 is named only after the fix lands, and re-measures all parts (builds, sizes, runtime).
+- 2026-11-25, proof-harness: **error-validation-p99 certified at B4** (`fb4c73d1adc7`, 10:07–10:47Z, interleaved from the start (coordinator, 2fe4a4f6); no foreign activity; a stray callgrind frozen and continued). Go is the ADR-033 comparator with Tomcat's keep-alive limit (`8d29301a`): it closes after the 400, as Java and Flint do, and passes 109/109 in the parity wire mode. Flint / Go, median (99% interval), 9 trials:
+    - **p99 1.81 (1.72–1.92), which fails**: 389 against 215 µs. At B3 it was 3.23 against the comparator that kept connections; transport-pricing predicted about 1.85 under parity;
+    - context: p50 1.095 (111 against 102 µs); CPU per request 1.41 (46.4 against 32.8 µs); capacity 0.797 (42,060 against 52,750 req/s; 0.227 at B3); RSS 0.72; p99.9 1.45.
+
+    Evidence: `benchmarks/spring/evidence/error-validation-p99/20261125T100737Z/`.
