@@ -338,6 +338,61 @@ These are posidon diagnostics, never evidence. Full notes are in `coordination/n
 
 **What is left:** fewer permanent pointer-bearing objects, family by family (`coordination/notes/permanent-objects.md`), and fewer allocations per request. At O3 the default petclinic's p99 on posidon was 0.652/0.672 ms against Go's 0.687 ms in the same session.
 
+## 3c. Generational GC, slice 0 go/no-go (m7, 2026-11-25)
+
+Slice 0 (6bdd5365) of `gengc-final-plan.md` instruments the collector without changing it. These measurements ran on posidon under `timed`, using the commands in `gengc-slice0-notes.md`. They are diagnostics, never evidence. Each run used one O3 binary per application, built with `-O3`, `-plugin-opt=O3` and `FlintCollector`, and interleaved its arms. Raw logs are in posidon `~/m7-scratch/s0/`.
+
+**Verdict: no-go for slices 1 and 2.** Slice 1 (sticky marking, `gc:flint-sticky-all`) was reviewed in `coordination/notes/gengc-slice1-review-m7.md` and is not landed.
+
+1. **Parity: passes without thread caches.** Each ratio is per collection, against `gc:conservative`, for 3 rounds per application.
+
+   | Arm | petclinic mark | petclinic pause | gs-rest mark | gs-rest pause |
+   | --- | --- | --- | --- | --- |
+   | `gc:flint-no-cache` | 0.995–1.003 | 0.995–1.003 | 0.972–1.002 | 0.989–1.017 |
+   | `gc:flint` (caches on) | 1.074–1.077 | 1.072–1.074 | 1.088–1.116 | 1.085–1.108 |
+
+   Flint's marker matches druntime's at O3. The earlier "2.05x" and "1.7x" figures (section 3b, the D3 notes) came from the O0 link that `elf_lflags` fixed. Each collection marks about 0.42 ms on petclinic and 0.139 ms on gs-rest.
+
+2. **Prediction: fails.** Each estimate is a fraction of the stock stop-the-world pause on the error-path workloads. Slice 2 is shown before enumeration and before the soft-dirty clear.
+
+   | Path | Stock pause | Slice 1 (target ≤ 0.8) | Slice 2 (target ≤ 0.6) | Floor: suspend + resume + roots |
+   | --- | --- | --- | --- | --- |
+   | `/nope` | 121–123 µs | 1.30–1.35 | 1.05–1.09 | 102 µs (17 + 22 + 63) |
+   | petclinic 400 | 277–278 µs | 1.23 | 0.79 | 144 µs (19 + 26 + 99) |
+
+   About 94% of the live heap is permanent. A minor collection therefore saves little tracing and still pays for the roots and for re-scanning old objects. Between collections, 50% (`/nope`) and 38% (petclinic) of scannable old bytes sit on soft-dirty pages. `clear_refs` alone costs about 180 µs per collection in the server process.
+
+3. **Ceiling: passes.** With `gc:flint heapSizeFactor:1000000` there were zero collections in the fixed phase, and Go ran in the same session. Flint's p99 over Go's was 0.897 and 0.877 on `/nope`, and 0.860 and 0.741 on petclinic 400. On both paths the remaining gap to Go is the collector's pause.
+
+4. **Kernel probe: passes on `PAGEMAP_SCAN`.** This is kernel 6.8, at 1,500 pages, median of 9 trials. The ioctl takes 6.7 µs at both 37 and 2,237 VMAs. pread plus enumeration takes 18.5 µs at 37 VMAs (over the 15 µs limit) and 12.7 µs at 2,237. `clear_refs` takes 23 µs at 37 VMAs and 190 µs at 2,237.
+
+**The floor, by part.** Two rounds were run on each error path. The suspend and resume figures come from an `LD_PRELOAD` shim that timestamps druntime's `pthread_kill`, `sem_wait`, `sem_post` and `sigsuspend` on real `gc:conservative` collections. The root figures come from timed re-scans in the predictor (slice 0 build plus a local patch). The scripts are in posidon `~/m7-scratch` (`stw_probe.c`, `stw-analyze.py`, `anatomy-patch.py`).
+
+- **Threads.** The server has 5 threads on 2 CPUs: main (in `nanosleep`), one thread blocked in `poll`, one in a futex wait, and 2 reactors in `io_uring` wait. A collection runs on a reactor and signals the other 4. Three of those 4 are idle threads, not reactors.
+- **Suspend** takes 16 µs at p50 on `/nope` and 18 µs on petclinic.
+  - The loop that sends the 4 signals takes 11.8 and 15.6 µs: each `tgkill` costs 3–4 µs in the sender, because the kernel wakes the target inside the call.
+  - Delivery, from kill to the handler's acknowledgement, takes 4–7 µs at p50.
+- **Resume.**
+  - The send loop takes 12–17 µs, again 4 `tgkill`s.
+  - Reactors are running again 4–10 µs after their signal at p50.
+  - Idle threads wake 1–3.5 ms late at p99, because 5 threads share 2 CPUs.
+- **Roots** take 59 µs on `/nope` and 94 µs on petclinic.
+
+  | Source | `/nope` | petclinic |
+  | --- | --- | --- |
+  | Static data (`.data`+`.bss`, one range) | 24.6 µs, 273 KiB | 47.7 µs, 506 KiB |
+  | Thread stacks (5 live extents) | 12.8 µs, 98 KiB | 18.2 µs, 140 KiB |
+  | Other registered ranges | 10.0 µs, 95 KiB | 12.9 µs, 127 KiB |
+  | TLS (5 threads) | 7.7 µs, 79 KiB | 12.5 µs, 129 KiB |
+  | Fiber stacks | 7.4 µs | 9.8 µs |
+  | `roots[]` | 0 | 0 |
+
+  There are 200 parked fiber contexts of about 170 bytes each. Only about 2 change between collections.
+
+The cheapest lever is to stop signalling the 3 idle threads. They could park in a known blocking state with their registers saved, or detach if they hold no GC pointers. That saves about 20 of the 39 µs spent on suspend and resume. Next in size are the static-data range and the thread stacks plus TLS.
+
+**D1 open issue: thread-cache retention.** With caches on, `gc:flint` spends 7–11% more mark time per collection than the same binary without them. The suspected cause is not yet confirmed: slots parked in a thread's cache look allocated, so the mark scans their stale words and keeps whatever those words reach. Testing it means counting the bytes scanned through cached slots, and clearing or `NO_SCAN`-marking slots when they enter a cache. This is not on the critical path, because the generational baseline runs without caches.
+
 ## 4. How p99 and RSS are measured
 
 - **Evidence.** Only proof-harness's queue (`tools/measure_queue.py`) produces evidence. It uses `policy/spring-http-benchmark.json`: 2 server CPUs, 4 load CPUs, 64 connections, a 10 s warm-up, 60 s capacity and fixed-rate phases, 9 trials interleaved with the Go comparator, and a quiet-window check.
