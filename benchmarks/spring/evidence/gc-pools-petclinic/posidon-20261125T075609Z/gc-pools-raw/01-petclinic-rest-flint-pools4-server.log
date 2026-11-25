@@ -1,0 +1,25 @@
+
+  _____ _ _       _
+ |  ___| (_)_ __ | |_
+ | |_  | | | '_ \| __|
+ |  _| | | | | | | |_
+ |_|   |_|_|_| |_|\__|
+
+ :: Flint Boot ::                 (v0.7.0)
+
+2026-11-25T08:03:21.581Z  INFO 160707 --- [           main] o.s.s.petclinic.PetClinicApplication     : Starting PetClinicApplication using Flint 0.7.0 with PID 160707 (/home/olfa/flint-work/wt-proof-harness/build/spring/petclinic-rest-flint started by olfa in /home/olfa/flint-work/wt-proof-harness/benchmarks/spring/flint/petclinic-rest)
+2026-11-25T08:03:21.581Z  INFO 160707 --- [           main] o.s.s.petclinic.PetClinicApplication     : The following 2 profiles are active: "postgres", "jdbc"
+2026-11-25T08:03:21.609Z  WARN 160707 --- [           main] .s.a.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: 4c595e17-17a5-4332-8156-76731272d425
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2026-11-25T08:03:21.610Z  INFO 160707 --- [           main] o.s.s.petclinic.PetClinicApplication     : Started PetClinicApplication in 0.029 seconds (process running for 0.029)
+	Number of collections:  2684
+	Total GC prep time:  67 milliseconds
+	Total mark time:  1395 milliseconds
+	Total sweep time:  58 milliseconds
+	Max Pause Time:  0 milliseconds
+	Grand total GC time:  1522 milliseconds
+GC summary:   24 MB, 2684 GC 1522 ms, Pauses 1463 ms <    0 ms

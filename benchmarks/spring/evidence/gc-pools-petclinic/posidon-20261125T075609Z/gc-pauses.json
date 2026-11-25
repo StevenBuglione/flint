@@ -1,0 +1,72 @@
+{
+  "schema": "flint.gc-pauses/1",
+  "note": "diagnostic, never evidence",
+  "rate": 5000,
+  "seconds": 20,
+  "binary_sha256": "cf7f9dfa73ec2485a139939c18704f13dc31dbf346eda32fbd2724b9adf4833c",
+  "arms": {
+    "pools1": {
+      "gcopt": "minPoolSize:1 incPoolSize:0",
+      "requests": 99997,
+      "suspend_signal": "SIGRT_2",
+      "collections": 247,
+      "collections_per_1000_requests": 2.470074102223067,
+      "pause_ms": {
+        "p50": 0.45490264892578125,
+        "p90": 0.4971027374267578,
+        "p99": 0.5729198455810547,
+        "max": 0.7679462432861328,
+        "mean": 0.4581874198759133,
+        "total": 113.17229270935059
+      },
+      "threads_suspended_median": 2,
+      "latency_ms": {
+        "p50": 0.406821,
+        "p99": 0.9833629999999999,
+        "p99.9": 2.463122
+      }
+    },
+    "pools2": {
+      "gcopt": "minPoolSize:2 incPoolSize:0",
+      "requests": 99992,
+      "suspend_signal": "SIGRT_2",
+      "collections": 327,
+      "collections_per_1000_requests": 3.2702616209296744,
+      "pause_ms": {
+        "p50": 0.4680156707763672,
+        "p90": 0.5331039428710938,
+        "p99": 0.6251335144042969,
+        "max": 8.636951446533203,
+        "mean": 0.49023744892272014,
+        "total": 160.3076457977295
+      },
+      "threads_suspended_median": 2,
+      "latency_ms": {
+        "p50": 0.402908,
+        "p99": 1.0536860000000001,
+        "p99.9": 3.75519
+      }
+    },
+    "pools4": {
+      "gcopt": "minPoolSize:4 incPoolSize:0",
+      "requests": 99992,
+      "suspend_signal": "SIGRT_2",
+      "collections": 144,
+      "collections_per_1000_requests": 1.4401152092167373,
+      "pause_ms": {
+        "p50": 0.4990100860595703,
+        "p90": 0.5571842193603516,
+        "p99": 9.102821350097656,
+        "max": 9.16290283203125,
+        "mean": 0.7326056559880575,
+        "total": 105.49521446228027
+      },
+      "threads_suspended_median": 2.0,
+      "latency_ms": {
+        "p50": 0.405379,
+        "p99": 0.9808009999999999,
+        "p99.9": 7.460072
+      }
+    }
+  }
+}

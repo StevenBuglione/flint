@@ -1,0 +1,11 @@
+{"app": "petclinic-rest", "trial": 0, "setting": "pools1", "status": "measured"}
+{"app": "petclinic-rest", "trial": 0, "setting": "pools2", "status": "measured"}
+{"app": "petclinic-rest", "trial": 0, "setting": "pools4", "status": "measured"}
+{"app": "petclinic-rest", "trial": 1, "setting": "pools4", "status": "measured"}
+{"app": "petclinic-rest", "trial": 1, "setting": "pools2", "status": "measured"}
+{"app": "petclinic-rest", "trial": 1, "setting": "pools1", "status": "measured"}
+against pools1: setting                           p99      RSS      CPU      rps  max pause ms
+pools1                          1.000    1.000    1.000    1.000           0.0
+pools2                          1.026    1.078    1.004    1.008           1.5
+pools4                          1.031    1.009    1.008    1.001           0.0
+Wrote the GC matrix /home/olfa/flint-work/logs/ph-gc/gc-pools.json (passed)
