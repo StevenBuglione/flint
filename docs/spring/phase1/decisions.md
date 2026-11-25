@@ -969,3 +969,14 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - capacity 1.488, a lower bound: Flint's capacity phase was client-limited in all 9 trials (oha saturated at a connection per request) and is recorded as context under owner decision ae7858f8; Go's was not.
 
     Evidence: `benchmarks/spring/evidence/error-validation-p99/20261125T183025Z/`.
+- 2026-11-25, owner: **Rule: a class's metadata object (`typeid(X)`, `X.classinfo`, any `TypeInfo`) never owns a GC-allocated monitor.** No `new Mutex(<TypeInfo/ClassInfo>)` and no `setSameMutex` that gives one a GC mutex. `synchronized(typeid(X))` stays allowed (C-heap monitor).
+  - Purpose: the collector stops scanning class metadata and other provably pointer-free static data on every collection (m7's static-data census). That is about 25 µs of the 404's ~123 µs pause and about 48 µs of petclinic's. No metadata is removed or changed: only what the GC reads.
+  - The owner requires certainty that nothing breaks and the development experience is unaffected. So the rule is enforced three ways:
+    1. A semantic build-time gate (typed, not textual): any `Mutex` construction or `setSameMutex` whose argument is a TypeInfo/ClassInfo, in app, framework or dependency code. It fails with file:line and the fix.
+    2. A verify mode, on by default in debug and test profiles and in every app's `flint test`: each collection also checks every ClassInfo monitor word, and aborts with the class name if one points into the GC heap.
+    3. Release: a startup validation of the build-time `.data` map, with a fallback to whole-range scanning if it's missing or mismatched. `FLINT_GC_STATIC_TRIM=0` turns trimming off.
+  - Acceptance:
+    - full framework and app suites pass in verify mode on DMD and LDC;
+    - 109/109, 18/18 and 1/1;
+    - negative tests prove that both the gate and the verifier catch a violation;
+    - dev, edit and static-edit build times are unchanged within noise.
