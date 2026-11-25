@@ -186,6 +186,27 @@ COMPILER_COMMANDS = BUSY_COMMANDS | {'ld', 'ld.gold', 'ld.bfd', 'ld.lld', 'mold'
 NON_BENCHMARK_CPUS = None  # set lazily: every CPU outside the server, load and database sets
 
 
+def tool_script(pid, command=None):
+    """The script a `python3` process runs (a project tool such as tools/gates.py, a test or a probe), or None.
+    error-404-p99 at B6 (2026-11-25 19:36Z): an unheld `gates.py --gate structural` spent its CPU in python3 itself,
+    while its `dmd -o-` audits were served compiles of a few milliseconds; neither check named python3. The queue's
+    own `measure_queue.py` (watch, hold, timed) is never a tool."""
+    try:
+        command = command or Path(f'/proc/{pid}/comm').read_text().strip()
+        if not command.startswith('python'):
+            return None
+        argv = Path(f'/proc/{pid}/cmdline').read_bytes().split(b'\0')
+    except OSError:
+        return None
+    for part in argv[1:]:
+        if part.endswith(b'.py'):
+            name = part.decode('utf-8', 'replace')
+            return None if name.endswith('measure_queue.py') else name
+        if part == b'-m':  # python3 -m unittest ...
+            return ' '.join(x.decode('utf-8', 'replace') for x in argv[1:4])
+    return None
+
+
 def is_compile_server(pid):
     try:
         return any(part.startswith(b'-fork-server') for part in Path(f'/proc/{pid}/cmdline').read_bytes().split(b'\0'))
@@ -285,6 +306,8 @@ def build_processes():
         try:
             command = Path(f'/proc/{name}/comm').read_text().strip()
             kind = 'build' if command in BUSY_COMMANDS else stray_kind(name, command)
+            if kind is None and tool_script(name, command):
+                kind = 'tool'
             if kind is None:
                 continue
             if descends_from(int(name), {me}):  # born after own_tree()'s snapshot
@@ -333,7 +356,7 @@ def busy_processes(interval=1.0, steps=4):
             busy.append({'pid': pid, 'command': row['command'], 'cwd': row['cwd'], 'cpu_ticks': used,
                          'kind': row.get('kind', 'build')})
     for pid, row in born.items():
-        if row.get('kind', 'build') == 'build':
+        if row.get('kind', 'build') in ('build', 'tool'):
             busy.append({'pid': pid, 'command': row['command'], 'cwd': row['cwd'], 'cpu_ticks': row['ticks'],
                          'kind': 'build', 'started_in_window': True})
     busy_processes.idle = len(first) - sum(1 for row in busy if not row.get('started_in_window'))
@@ -418,6 +441,12 @@ class Freezer:
                     if is_compile_server(name) or descends_from(int(name), holds):
                         continue
                     kind = 'compiler'
+                elif kind is None and fields[0] not in ('T', 't') and tool_script(name, command):
+                    # A project tool (python3 tools/gates.py, a test, a probe) outside `hold`: frozen only while it
+                    # burns CPU across the grace (sweep), so an idle daemon written in Python is never touched.
+                    if descends_from(int(name), holds):
+                        continue
+                    kind = 'tool'
                 if kind is None:
                     continue
                 cwd = os.readlink(info / 'cwd')
@@ -425,31 +454,36 @@ class Freezer:
                     continue
                 if kind == 'compiler' and any(os.readlink(info / 'exe').startswith(prefix) for prefix in own):
                     continue
-                yield {'pid': int(name), 'start': start_time(name), 'command': command, 'kind': kind, 'cwd': cwd}
+                yield {'pid': int(name), 'start': start_time(name), 'command': command, 'kind': kind, 'cwd': cwd,
+                       'ticks': cpu_ticks(name, children=True)}
             except (OSError, ValueError, IndexError):
                 continue
 
     def sweep(self):
         rows = list(self.candidates())
-        if any(row['kind'] == 'compiler' for row in rows):
-            time.sleep(GRACE_SECONDS)  # a compiler needs a second sighting: a brand-new process gets this grace
+        if any(row['kind'] in ('compiler', 'tool') for row in rows):
+            time.sleep(GRACE_SECONDS)  # a second sighting: a brand-new process gets this grace
         for row in rows:
             # Every safeguard is re-checked live just before the signal, whatever the candidate list said.
             if self.protected(row['pid']):
                 continue
-            if row['kind'] == 'compiler':
+            if row['kind'] in ('compiler', 'tool'):
                 try:
                     if start_time(row['pid']) != row['start']:
                         continue  # gone, or its pid reused
+                    used = cpu_ticks(row['pid'], children=True) - row.get('ticks', 0)
                 except OSError:
                     continue
                 if descends_from(row['pid'], set(held_work())):
                     continue
-                reason = f'compiler outside hold, foreign in two sightings {GRACE_SECONDS:g} s apart'
+                if row['kind'] == 'tool' and used < 1:
+                    continue  # idle across the grace: not load
+                reason = (f"{row['kind']} outside hold, foreign in two sightings {GRACE_SECONDS:g} s apart"
+                          + (f', {used} CPU ticks between them' if row['kind'] == 'tool' else ''))
             else:
                 reason = f"{row['kind']} stray"
             row = dict(row, chain=parent_chain(row['pid']), reason=reason)
-            if row['kind'] == 'compiler' and self.log_only:
+            if row['kind'] in ('compiler', 'tool') and self.log_only:
                 if (row['pid'], row['start']) not in {(r['pid'], r['start']) for r in self.logged}:
                     self.logged.append(dict(row, seen_at=now()))
                     print(now(), f"would freeze (log-only) {row['command']} pid {row['pid']} ({row['cwd']}); "

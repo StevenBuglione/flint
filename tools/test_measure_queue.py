@@ -277,6 +277,69 @@ class QuietWindow(unittest.TestCase):
                 os.kill(dub, 18)
                 os.kill(dub, 9)
 
+    def detached_tool(self, directory, busy=True, seconds=6):
+        """The B6 case: an unheld `python3 tools/gates.py`-like tool that burns CPU itself while its `dmd` children
+        (served compiles) are near-instant; or, with busy=False, an idle Python daemon. Returns its pid."""
+        import shlex
+        d = Path(directory)
+        (d / 'tools').mkdir()
+        (d / 'dmd').symlink_to('/bin/true')
+        work = ('    t = time.process_time()\n    while time.process_time() - t < 0.09:\n        pass\n'
+                f'    subprocess.run([{str(d / "dmd")!r}, "-o-"])\n') if busy else '    time.sleep(0.1)\n'
+        (d / 'tools' / 'gates_like.py').write_text(
+            f'import subprocess, time\nend = time.time() + {seconds}\nwhile time.time() < end:\n{work}')
+        pidfile = d / 'pid'
+        subprocess.run(['sh', '-c', f'cd {shlex.quote(str(d))} && setsid {shlex.quote(sys.executable)} tools/gates_like.py '
+                                    f'> /dev/null 2>&1 < /dev/null & echo $! > {shlex.quote(str(pidfile))}'], check=True)
+        return int(pidfile.read_text())
+
+    def test_an_unheld_python_tool_is_load_and_is_frozen(self):
+        """error-404-p99 at B6: `python3 tools/gates.py --gate structural` (its CPU in python3, its dmd audits
+        served in milliseconds) went unseen by the sampler and the freezer."""
+        with tempfile.TemporaryDirectory() as directory:
+            tool = self.detached_tool(directory)
+            try:
+                time.sleep(0.3)
+                busy = measure_queue.busy_processes()
+                self.assertIn(tool, [row['pid'] for row in busy if row['kind'] == 'tool'], busy)
+                watched = measure_queue.Freezer(log_only_compilers=True)
+                with mock.patch.object(measure_queue, 'FROZEN', Path(directory) / 'FROZEN'):
+                    watched.sweep()
+                self.assertIn(tool, [row['pid'] for row in watched.logged])
+                self.assertFalse(self.stopped(tool))
+                f = measure_queue.Freezer(log_only_compilers=False)
+                with mock.patch.object(measure_queue, 'FROZEN', Path(directory) / 'FROZEN'):
+                    f.sweep()
+                row = next(row for row in f.frozen if row['pid'] == tool)
+                self.assertEqual(row['kind'], 'tool')
+                self.assertIn('CPU ticks', row['reason'])
+                self.assertIn(f'{tool}:python', row['chain'])
+                time.sleep(0.1)
+                self.assertTrue(self.stopped(tool))
+                f.thaw()
+            finally:
+                os.kill(tool, 18)
+                os.kill(tool, 9)
+
+    def test_an_idle_python_daemon_is_never_frozen(self):
+        with tempfile.TemporaryDirectory() as directory:
+            idle = self.detached_tool(directory, busy=False)
+            try:
+                time.sleep(0.3)
+                f = measure_queue.Freezer(log_only_compilers=False)
+                with mock.patch.object(measure_queue, 'FROZEN', Path(directory) / 'FROZEN'):
+                    f.sweep()
+                self.assertNotIn(idle, [row['pid'] for row in f.frozen])
+                self.assertFalse(self.stopped(idle))
+            finally:
+                os.kill(idle, 9)
+
+    def test_the_queues_own_commands_are_never_tools(self):
+        with mock.patch.object(Path, 'read_bytes', return_value=b'python3\0-u\0tools/measure_queue.py\0watch\0'):
+            self.assertIsNone(measure_queue.tool_script(1, 'python3'))
+        with mock.patch.object(Path, 'read_bytes', return_value=b'python3\0tools/gates.py\0--gate\0'):
+            self.assertEqual(measure_queue.tool_script(1, 'python3'), 'tools/gates.py')
+
     def test_under_hold_follows_the_ancestry(self):
         table = {30: 20, 20: 10, 10: 1, 40: 1}
         self.assertTrue(measure_queue.under_hold(30, table, {10}))
