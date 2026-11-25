@@ -79,7 +79,7 @@ struct RootSettings
 }
 
 /// Part of the settings record: a change to its layout invalidates every record.
-private enum directFormat = "flint.direct-build/1";
+private enum directFormat = "flint.direct-build/2";
 /// The settings `dub describe --data` reports, in this order.
 private immutable string[] dataKinds = [
     "dflags", "versions", "debug-versions", "import-paths", "string-import-paths", "source-files",
@@ -159,16 +159,15 @@ private string settingsStamp(const ref DirectBuild build)
     return sha256Hex(cast(const(ubyte)[]) text);
 }
 
-/// The directories holding the root's sources, with their modification times: adding or removing a source
-/// changes its directory's time.
+/// The directories holding the root's sources, with the digest of the names each holds: adding, removing or renaming
+/// a source changes it, however coarse the file system's clock (`listingDigest`).
 private string[] watched(scope const string[] sources)
 {
     import std.algorithm.iteration : uniq;
     import std.algorithm.sorting : sort;
     import std.array : array;
-    import std.conv : to;
-    import std.file : FileException, timeLastModified;
     import std.path : dirName;
+    import flint_tool.support.files : listingDigest;
 
     string[] directories;
     foreach (source; sources)
@@ -176,15 +175,7 @@ private string[] watched(scope const string[] sources)
     sort(directories);
     string[] lines;
     foreach (directory; directories.uniq.array)
-    {
-        long time = -1;
-        try
-            time = timeLastModified(directory).stdTime;
-        catch (FileException)
-        {
-        }
-        lines ~= "d " ~ directory ~ " " ~ time.to!string;
-    }
+        lines ~= "d " ~ directory ~ " " ~ listingDigest(directory);
     return lines;
 }
 
@@ -526,7 +517,7 @@ struct Replay
 }
 
 /// Part of the replay record: a change to its layout invalidates every record.
-private enum replayFormat = "flint.direct-replay/3";
+private enum replayFormat = "flint.direct-replay/4";
 
 /// The compile and link commands in DUB's `-v` output: `[cwd=<directory>] <compiler> <arguments>` lines. False
 /// when there is not exactly one link, or an argument could hold a space (the pipeline does not quote them).

@@ -245,7 +245,7 @@ private string[] dubCommand(const ref PlatformInputs inputs, string verb, string
 }
 
 /// Part of the description record: a change to its layout invalidates every record.
-private enum describeFormat = "flint.platform-describe/4";
+private enum describeFormat = "flint.platform-describe/5";
 
 /// The platform modules as DUB describes them, from the project's description record while it is current. The
 /// record holds what `dub describe` said and what it depends on: the describe root, the tools, flags and
@@ -382,17 +382,17 @@ private bool linkedBinary(string file) pure
 }
 
 /// What a description depends on besides its stamp: `f <file> <sha256|absent>` for each package's root recipe files,
-/// and `d <directory> <mtime>` for its source, import and string-import directories. The package root itself is
-/// not watched by time: DUB copies each built library into it (libflint_boot-core.a), so a build of another
+/// and `d <directory> <listing digest>` for its source, import and string-import directories: the names they hold,
+/// not their modification times, which a coarse file system clock can leave unchanged by an added module. The package
+/// root itself is not watched: DUB copies each built library into it (libflint_boot-core.a), so a build of another
 /// configuration would otherwise make the record stale (m7, 2026-11-23: every certified cold trial re-described).
 private string[] watched(scope const PlatformModule[] modules)
 {
     import std.algorithm.sorting : sort;
     import std.algorithm.iteration : uniq;
     import std.array : array;
-    import std.conv : to;
-    import std.file : FileException, timeLastModified;
     import std.path : buildPath, dirName;
+    import flint_tool.support.files : listingDigest;
 
     string[] directories;
     string[] lines;
@@ -413,15 +413,7 @@ private string[] watched(scope const PlatformModule[] modules)
     }
     sort(directories);
     foreach (directory; directories.uniq.array)
-    {
-        long time = -1;
-        try
-            time = timeLastModified(directory).stdTime;
-        catch (FileException)
-        {
-        }
-        lines ~= "d " ~ directory ~ " " ~ time.to!string;
-    }
+        lines ~= "d " ~ directory ~ " " ~ listingDigest(directory);
     return lines;
 }
 

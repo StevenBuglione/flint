@@ -14,6 +14,61 @@ string sha256Hex(scope const(ubyte)[] bytes)
     return toHexString!(LetterCase.lower)(sha256Of(bytes)).idup;
 }
 
+/++
+The names in `directory`, as a digest, or `absent` when it cannot be listed. Adding, removing or renaming an entry
+changes it, at any file system timestamp granularity. A directory's modification time can miss an entry added within
+one clock tick of the directory's previous change: kernels before 6.13 stamp it from a coarse clock (about 4 ms), and
+posidon's 6.8 did so in flint's own test. Rewriting a file in place, or replacing it through a rename (an editor's
+atomic save), leaves the digest as it was.
++/
+string listingDigest(string directory)
+{
+    import std.algorithm.sorting : sort;
+    import std.file : FileException, SpanMode, dirEntries;
+    import std.path : baseName;
+
+    string[] names;
+    try
+    {
+        foreach (entry; dirEntries(directory, SpanMode.shallow, false))
+            names ~= baseName(entry.name);
+    }
+    catch (FileException)
+        return "absent";
+    sort(names);
+    string joined;
+    foreach (name; names)
+        joined ~= name ~ "\0";
+    return sha256Hex(cast(const(ubyte)[]) joined);
+}
+
+@("a listing digest follows the names a directory holds, not its time")
+unittest
+{
+    import std.conv : to;
+    import std.file : mkdirRecurse, remove, rename, rmdirRecurse, tempDir, write;
+    import std.path : buildPath;
+    import std.process : thisProcessID;
+
+    const root = buildPath(tempDir, "flint-listing-" ~ thisProcessID.to!string);
+    mkdirRecurse(root);
+    scope (exit)
+        rmdirRecurse(root);
+    write(buildPath(root, "a.d"), "module a;\n");
+    const one = listingDigest(root);
+    // Within the same clock tick, which a directory's modification time cannot tell apart.
+    write(buildPath(root, "b.d"), "module b;\n");
+    const two = listingDigest(root);
+    assert(two != one, "an added file");
+    write(buildPath(root, "b.d"), "module b; // edited\n");
+    write(buildPath(root, "b.d.tmp"), "module b;\n");
+    rename(buildPath(root, "b.d.tmp"), buildPath(root, "b.d"));
+    assert(listingDigest(root) == two, "a rewrite or an atomic save keeps the names");
+    remove(buildPath(root, "b.d"));
+    assert(listingDigest(root) == one, "a removed file");
+    assert(listingDigest(buildPath(root, "missing")) == "absent");
+}
+
 /// SHA-256 of a file, or null when it cannot be read.
 string sha256File(string path)
 {
