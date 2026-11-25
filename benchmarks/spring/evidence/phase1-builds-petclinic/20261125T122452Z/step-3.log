@@ -1,0 +1,27 @@
+Measuring petclinic-rest
+petclinic-rest flint_cached_cold_seconds phase medians (ms): total 386 (budget 100), flint 24 (budget 20), aot 98, plan 0, compile 226 (budget 60), link 35 (budget 20)
+petclinic-rest flint_cached_incremental_seconds phase medians (ms): total 174 (budget 100), flint 24 (budget 20), aot 3, plan 0, compile 112 (budget 60), link 34 (budget 20)
+petclinic-rest flint_cached_cold_digests_cleared_seconds phase medians (ms): total 482 (budget 100), flint 127 (budget 20), aot 99, plan 0, compile 223 (budget 60), link 33 (budget 20)
+petclinic-rest flint_scratch_seconds phase medians (ms): total 1984 (budget 100), flint 55 (budget 20), aot 386, plan 261, compile 641 (budget 60), link 653 (budget 20)
+petclinic-rest flint_static_cold_seconds phase medians (ms): total 746 (budget 100), flint 43 (budget 20), aot 100, plan 68, compile 228 (budget 60), link 307 (budget 20)
+petclinic-rest flint_static_incremental_seconds phase medians (ms): total 227 (budget 100), flint 32 (budget 20), aot 3, plan 0, compile 113 (budget 60), link 79 (budget 20)
+petclinic-rest flint_debug_cached_cold_seconds phase medians (ms): total 410 (budget 100), flint 23 (budget 20), aot 99, plan 0, compile 249 (budget 60), link 38 (budget 20)
+petclinic-rest flint_debug_cached_incremental_seconds phase medians (ms): total 185 (budget 100), flint 24 (budget 20), aot 3, plan 0, compile 120 (budget 60), link 40 (budget 20)
+petclinic-rest flint_debug_static_cold_seconds phase medians (ms): total 761 (budget 100), flint 42 (budget 20), aot 96, plan 68, compile 239 (budget 60), link 315 (budget 20)
+petclinic-rest flint_debug_static_incremental_seconds phase medians (ms): total 243 (budget 100), flint 31 (budget 20), aot 3, plan 0, compile 122 (budget 60), link 87 (budget 20)
+petclinic-rest flint_debug_scratch_seconds phase medians (ms): total 2072 (budget 100), flint 56 (budget 20), aot 388, plan 270, compile 696 (budget 60), link 674 (budget 20)
+petclinic-rest: Go std-primed cold 1.855s, -a 4.027s, binary 11474936 bytes
+  primary: platform cache vs std-primed GOCACHE: 0.198 pass
+    deps-primed: 1.214 (1.169-1.655); Go's std-primed cold build compiles its 31 third-party package(s) from source, while Flint links its native libraries and platform archives prebuilt; the deps-primed ratio is the like-for-like comparison.
+  secondary: from scratch vs go build -a: 0.493 pass
+    No deps-primed equivalent exists: go build -a recompiles every package, the third-party ones included, while Flint's --no-platform-cache rebuilds the D modules but links the native C libraries prebuilt.
+  incremental: dev profile as built: 0.543 pass
+  incremental: fully static: 0.709 pass
+  stricter: platform cache vs deps-primed GOCACHE: 1.214 FAIL
+  context: primary with the digest log cleared: 0.247 pass
+  context: primary with debug information: 0.210 pass
+  context: secondary with debug information: 0.514 pass
+  context: edit build, dev profile, with debug information: 0.585 pass
+  context: edit build, fully static, with debug information: 0.755 pass
+  Oz binary size: 0.889 pass
+Wrote Spring build evidence /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-builds-petclinic/20261125T122452Z/builds.json (passed)
