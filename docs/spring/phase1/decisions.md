@@ -993,3 +993,11 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - context: p50 0.679 (29 against 43 µs); CPU per request 0.527 (5.27 against 10.0 µs; 1.55 at B4); throughput 2.046; RSS 0.64; p99.9 2.01, reported.
 
     With this part, **every gated runtime target of Phase 1 has passed at least once.** Evidence: `benchmarks/spring/evidence/error-404-p99/20261125T201109Z/`.
+- 2026-11-25, owner: **Phase 1 closes on performance at B7, and Phase 2 porting moves to an autonomous agent (gpt-6.2-sol) behind CI guardrails.** Plan (a):
+  1. **Finish B7's gated parts** (validation, petclinic, gs-rest, builds ×3). If all pass, Phase 1's performance claim is certified at one commit: every gated metric beats Go, with byte-identical output against Java.
+  2. **Defer the rest of the exit ledger, without blocking anything:** the GC-matrix parts, framework timings, Java context, platform-lane receipts and `docs/milestones/13.md`. They run in natural quiet or later, and are no longer on the critical path.
+  3. **Build CI guardrails first (about a day), so an autonomous porter is steered by failing checks rather than by review:**
+     - `flint budget`: per-endpoint instruction, allocation and byte budgets from deterministic counts, failing CI on regression;
+     - a per-module definition of done: API-coverage, structural, allocation and acceptance gates, upstream tests ported, and budgets set for each new request shape;
+     - the performance playbook's rules and today's lessons as agent instructions: bytes per request decide GC tails; no per-request locks or allocations in caches; proved fast paths with fallback; the ClassInfo-monitor rule (e170ffd0); exchange-storage lifetime (8cb4beb8).
+  4. **Then gpt-6.2-sol ports Phase 2 module by module,** each in its own worktree. Existing sessions review anything touching the shared engines (reactor, HTTP, GC, AOT); venus certifies at baselines.
