@@ -1,0 +1,39 @@
+{
+  "schema": "flint.measure-queue/1",
+  "window": "claim",
+  "builds": {},
+  "estimate_minutes": 45,
+  "report_to": "the coordinator",
+  "measure": {
+    "kind": "command",
+    "steps": [
+      {
+        "argv": [
+          "{python}",
+          "{harness}/tools/spring_baseline.py",
+          "capture",
+          "--app",
+          "gs-rest-service",
+          "--impl",
+          "go",
+          "--workloads",
+          "http,error",
+          "--output-root",
+          "{out}/baselines"
+        ],
+        "smoke_args": [
+          "--smoke"
+        ]
+      }
+    ]
+  },
+  "id": "go-baseline-gs-rest-service-3",
+  "created": "2026-11-25",
+  "status": "pending",
+  "priority": 8,
+  "harness": "60d514f3554c",
+  "requested_by": "owner decision 8163a833 (Tomcat keep-alive limit, ADR-033 decision 7): re-capture once after the Flint and Go changes land; the coordinator, 01:55Z",
+  "summary": "Re-capture the Go baseline of gs-rest-service (HTTP and error workloads, calibration and probe) against the comparator with the keep-alive limit (registered at 8d29301a)",
+  "why": "Flint (c116cf36, 027314dd) and the Go comparator (8d29301a) now both close a persistent connection with its 100th response, as Tomcat does. The -2 records predate the limit on both sides; this capture is the one B4 Flint-only runs use.",
+  "claim_when": "next, after the calibration session due"
+}
