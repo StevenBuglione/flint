@@ -369,6 +369,27 @@ version (FlintWebMvcFunctional)
     }
 }
 
+@("Flint: each handler's invocable is prepared once and reused, for the controller's handlers and the advice's")
+unittest
+{
+    auto f = setup();
+    loadConfiguration!MyConfig(f);
+    assert(f.resolver.preparedHandlers() == 0);
+    HandlerMethod handlerMethod = handlerMethodOf(new ResponseBodyController(), "handle");
+    foreach (round; 0 .. 3)
+    {
+        // The controller's own handler.
+        f.response = new MockHttpServletResponse();
+        auto mav = f.resolver.resolveException(f.request, f.response, handlerMethod, new IllegalArgumentException());
+        assertExceptionHandledAsBody(f, mav, "IllegalArgumentException");
+        // An advice's handler.
+        f.response = new MockHttpServletResponse();
+        mav = f.resolver.resolveException(f.request, f.response, handlerMethod, new IllegalAccessException());
+        assertExceptionHandledAsBody(f, mav, "AnotherTestExceptionResolver: IllegalAccessException");
+        assert(f.resolver.preparedHandlers() == 2, "a handler was prepared again");
+    }
+}
+
 @("ExceptionHandlerExceptionResolverTests.resolveExceptionGlobalHandlerOrdered")
 unittest
 {

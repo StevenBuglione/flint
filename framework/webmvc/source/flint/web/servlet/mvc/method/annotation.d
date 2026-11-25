@@ -1130,6 +1130,12 @@ class ExceptionHandlerExceptionResolver : AbstractHandlerExceptionResolver
     private ControllerAdviceBean[] adviceBeans;
     private BeanFactory beanFactory;
     private RequestMappingHandlerAdapter adapter;
+    // Flint: Spring's exceptionHandlerCache and exceptionHandlerAdviceCache, built once here: each controller's and
+    // each advice's handlers with their method resolver and a prepared invocable per handler (HandlerGroup).
+    private HandlerGroup[string] localGroups;
+    private HandlerGroup[] adviceGroups;
+    // Whether any advice selects controllers by assignable type, which needs the controller's supertypes.
+    private bool adviceByType;
 
     /// Over Flint AOT's exception-handler table, sharing the adapter's resolvers and handlers.
     this(ExceptionHandlerSpec[] handlerSpecs, BeanFactory beanFactory,
@@ -1174,6 +1180,22 @@ class ExceptionHandlerExceptionResolver : AbstractHandlerExceptionResolver
             }
             adviceBeans[j] = a;
         }
+        foreach (spec; handlerSpecs)
+            if (!spec.advice)
+            {
+                if (auto group = spec.bean in localGroups)
+                    group.specs ~= spec;
+                else
+                    localGroups[spec.bean] = HandlerGroup([spec]);
+            }
+        foreach (bean; localGroups.keys)
+            localGroups[bean].complete();
+        foreach (ref advice; adviceBeans)
+        {
+            adviceGroups ~= HandlerGroup(advice.handlers);
+            adviceGroups[$ - 1].complete();
+            adviceByType = adviceByType || advice.assignableTypes.length != 0;
+        }
     }
 
     protected override bool shouldApplyTo(HttpServletRequest request, Object handler)
@@ -1189,15 +1211,11 @@ class ExceptionHandlerExceptionResolver : AbstractHandlerExceptionResolver
     {
         auto handlerMethod = cast(HandlerMethod) handler;
         Object bean;
-        ExceptionHandlerSpec* spec = findHandler(handlerMethod, exception, bean);
+        HandlerGroup* group;
+        ExceptionHandlerSpec* spec = findHandler(handlerMethod, exception, bean, group);
         if (spec is null)
             return null;
-        auto exceptionHandlerMethod = new ServletInvocableHandlerMethod(new HandlerMethod(bean,
-                spec.beanType.length != 0 ? spec.beanType : typeid(bean).name, *spec));
-        exceptionHandlerMethod.setHandlerMethodArgumentResolvers(adapter.getArgumentResolvers());
-        exceptionHandlerMethod.setHandlerMethodReturnValueHandlers(adapter.getReturnValueHandlers(),
-                adapter.getResponseBodyHandler());
-        exceptionHandlerMethod.setDataBinderFactory(adapter.getBinderFactory());
+        auto exceptionHandlerMethod = group.invocable(spec, bean, adapter);
         auto webRequest = new ServletWebRequest(request, response);
         auto mavContainer = new ModelAndViewContainer;
         Any[] provided = [Any.of(cast(Object) exception)];
@@ -1224,32 +1242,123 @@ class ExceptionHandlerExceptionResolver : AbstractHandlerExceptionResolver
         return mav;
     }
 
-    private ExceptionHandlerSpec* findHandler(HandlerMethod handlerMethod, Exception exception, out Object bean)
+    /// Flint, for tests: how many handlers have a prepared invocable.
+    package(flint) size_t preparedHandlers()
+    {
+        import core.atomic : atomicLoad;
+
+        size_t count;
+        foreach (ref group; localGroups.byValue)
+            foreach (ref slot; group.prepared)
+                count += atomicLoad(slot) !is null;
+        foreach (ref group; adviceGroups)
+            foreach (ref slot; group.prepared)
+                count += atomicLoad(slot) !is null;
+        return count;
+    }
+
+    private ExceptionHandlerSpec* findHandler(HandlerMethod handlerMethod, Exception exception,
+            out Object bean, out HandlerGroup* group)
     {
         if (handlerMethod !is null)
-        {
-            ExceptionHandlerSpec[] local;
-            foreach (spec; handlerSpecs)
-                if (!spec.advice && spec.bean == handlerMethod.getBeanName())
-                    local ~= spec;
-            if (auto found = new ExceptionHandlerMethodResolver(local).resolveMethod(exception))
-            {
-                bean = handlerMethod.getBean();
-                return found;
-            }
-        }
-        const supertypes = handlerMethod is null ? null : supertypesOf(handlerMethod.getBean());
-        foreach (ref advice; adviceBeans)
+            if (auto local = handlerMethod.getBeanName() in localGroups)
+                if (auto found = local.resolver.resolveMethod(exception))
+                {
+                    bean = handlerMethod.getBean();
+                    group = local;
+                    return found;
+                }
+        // The supertypes matter only to an advice that selects controllers by assignable type.
+        const supertypes = handlerMethod is null || !adviceByType ? null : supertypesOf(handlerMethod.getBean());
+        foreach (index, ref advice; adviceBeans)
         {
             if (handlerMethod is null ? !advice.isApplicableToBeanType(null) : !advice.isApplicableToBeanType(
                     handlerMethod.getBeanType(), handlerMethod.getBeanTypeAnnotations(), supertypes))
                 continue;
-            if (auto found = new ExceptionHandlerMethodResolver(advice.handlers).resolveMethod(exception))
+            if (auto found = adviceGroups[index].resolver.resolveMethod(exception))
             {
                 bean = beanFactory.getBean(advice.beanName);
+                group = &adviceGroups[index];
                 return found;
             }
         }
         return null;
+    }
+}
+
+/++
+Flint: one bean's `@ExceptionHandler` methods (a controller's or an advice's), with their method resolver and, per
+handler, the `ServletInvocableHandlerMethod` Spring would build for every exception, prepared on first use and shared
+by every reactor thread as the adapter's prepared invocables are. A prepared invocable is reused only for the same bean
+and while the adapter still has the resolvers, handlers and binder factory it was built with; otherwise the handler
+gets a fresh one, as before.
++/
+private struct HandlerGroup
+{
+    ExceptionHandlerSpec[] specs;
+    ExceptionHandlerMethodResolver resolver;
+    PreparedExceptionHandler[] prepared;
+
+    void complete()
+    {
+        resolver = new ExceptionHandlerMethodResolver(specs);
+        prepared = new PreparedExceptionHandler[specs.length];
+    }
+
+    ServletInvocableHandlerMethod invocable(ExceptionHandlerSpec* spec, Object bean,
+            RequestMappingHandlerAdapter adapter)
+    {
+        import core.atomic : atomicLoad, cas;
+
+        size_t index = specs.length;
+        foreach (i, ref candidate; specs)
+            if (&candidate is spec)
+                index = i;
+        if (index < specs.length)
+        {
+            auto known = atomicLoad(prepared[index]);
+            if (known !is null && known.serves(bean, adapter))
+                return known.invocable;
+        }
+        auto created = new PreparedExceptionHandler(spec, bean, adapter);
+        if (index < specs.length)
+        {
+            auto known = atomicLoad(prepared[index]);
+            if (known is null || !known.serves(bean, adapter))
+                cas(&prepared[index], known, created);
+        }
+        return created.invocable;
+    }
+}
+
+// One handler's invocable and what it was built from.
+private final class PreparedExceptionHandler
+{
+    Object bean;
+    ServletInvocableHandlerMethod invocable;
+    HandlerMethodArgumentResolverComposite argumentResolvers;
+    HandlerMethodReturnValueHandlerComposite returnValueHandlers;
+    HandlerMethodReturnValueHandler responseBody;
+    WebDataBinderFactory binderFactory;
+
+    this(ExceptionHandlerSpec* spec, Object bean, RequestMappingHandlerAdapter adapter)
+    {
+        this.bean = bean;
+        argumentResolvers = adapter.getArgumentResolvers();
+        returnValueHandlers = adapter.getReturnValueHandlers();
+        responseBody = adapter.getResponseBodyHandler();
+        binderFactory = adapter.getBinderFactory();
+        invocable = new ServletInvocableHandlerMethod(new HandlerMethod(bean,
+                spec.beanType.length != 0 ? spec.beanType : typeid(bean).name, *spec));
+        invocable.setHandlerMethodArgumentResolvers(argumentResolvers);
+        invocable.setHandlerMethodReturnValueHandlers(returnValueHandlers, responseBody);
+        invocable.setDataBinderFactory(binderFactory);
+    }
+
+    bool serves(Object bean, RequestMappingHandlerAdapter adapter)
+    {
+        return this.bean is bean && argumentResolvers is adapter.getArgumentResolvers()
+            && returnValueHandlers is adapter.getReturnValueHandlers()
+            && responseBody is adapter.getResponseBodyHandler() && binderFactory is adapter.getBinderFactory();
     }
 }
