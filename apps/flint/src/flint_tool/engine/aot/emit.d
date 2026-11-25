@@ -526,9 +526,16 @@ private struct Emitter
 
     string signature(const ref Method method, string name)
     {
+        need(method.returns);
+        const parameters = parameterList(method);
+        return (method.has("ref") ? "ref " : "") ~ method.returns.name ~ " " ~ name ~ "(" ~ parameters
+            ~ ")" ~ postfixAttributes(method);
+    }
+
+    string parameterList(const ref Method method)
+    {
         import std.array : join;
 
-        need(method.returns);
         string[] parameters;
         foreach (index, ref parameter; method.parameters)
         {
@@ -538,8 +545,7 @@ private struct Emitter
                 storage ~= item ~ " ";
             parameters ~= storage ~ parameter.type.name ~ " " ~ parameterName(parameter, index);
         }
-        return (method.has("ref") ? "ref " : "") ~ method.returns.name ~ " " ~ name ~ "(" ~ parameters.join(
-                ", ") ~ ")" ~ postfixAttributes(method);
+        return parameters.join(", ");
     }
 
     static string parameterName(const ref Parameter parameter, size_t index)
@@ -640,22 +646,49 @@ private struct Emitter
         const method = &item.method;
         const call = "__flintTarget." ~ method.name ~ "(" ~ callArguments(*method) ~ ")";
         const returnsVoid = method.returns.name == "void";
-        string text = "    override " ~ signature(*method, method.name) ~ "\n    {\n";
+        const header = "    override " ~ signature(*method, method.name) ~ "\n    {\n";
         if (!item.advised)
-            return text ~ "        " ~ (returnsVoid ? "" : "return ") ~ call ~ ";\n    }\n";
+            return header ~ "        " ~ (returnsVoid ? "" : "return ") ~ call ~ ";\n    }\n";
         string[] boxed;
         foreach (index, ref parameter; method.parameters)
             boxed ~= "Any.of(" ~ parameterName(parameter, index) ~ ")";
-        text ~= "        auto invocation = Invocation(&__flintDescriptor.methods[" ~ item.index.to!string
-            ~ "], __flintTarget, " ~ (boxed.length ? "[" ~ boxed.join(", ") ~ "]" : "null") ~ ");\n";
+        const index = item.index.to!string;
+        const arguments = boxed.length ? "[" ~ boxed.join(", ") ~ "]" : "null";
+        const invocation = "        auto invocation = Invocation(&__flintDescriptor.methods["
+            ~ index ~ "], __flintTarget, " ~ arguments ~ ");\n";
+        const names = callArguments(*method);
         if (item.async_)
-            return text ~ "        auto target = __flintTarget;\n        __flintChain.invokeDetached(invocation, "
-                ~ "(ref Invocation call) { target." ~ method.name ~ "(" ~ callArguments(*method) ~ "); });\n    }\n";
-        text ~= "        __flintChain.invoke(invocation, (ref Invocation call) { " ~ (returnsVoid
+            return header ~ invocation ~ "        auto target = __flintTarget;\n        __flintChain.invokeDetached("
+                ~ "invocation, (ref Invocation call) { target." ~ method.name ~ "(" ~ names ~ "); });\n    }\n";
+        const chain = "        __flintChain.invoke(invocation, (ref Invocation call) { " ~ (returnsVoid
                 ? call : "call.result = Any.of(" ~ call ~ ")") ~ "; });\n";
-        if (!returnsVoid)
-            text ~= "        return invocation.result.get!(" ~ method.returns.name ~ ")();\n";
-        return text ~ "    }\n";
+        if (returnsVoid)
+            return header ~ invocation ~ chain ~ "    }\n";
+        const result = method.returns.name;
+        if (!anyForm(item))
+            return header ~ invocation ~ chain ~ "        return invocation.result.get!(" ~ result ~ ")();\n    }\n";
+        // The result as the chain left it, for a caller that boxes it anyway (an array invoker); the typed method
+        // unboxes it, so the value is boxed once on that path.
+        const any = anyName(*method);
+        const typed = header ~ "        return " ~ any ~ "(" ~ names ~ ").get!(" ~ result ~ ")();\n    }\n";
+        const attributes = postfixAttributes(*method);
+        const anyHeader = "    Any " ~ any ~ "(" ~ parameterList(*method) ~ ")" ~ attributes ~ "\n    {\n";
+        const anyResult = "        if (invocation.result.holds!(" ~ result
+            ~ "))\n            return invocation.result;\n"
+            ~ "        return Any.of(invocation.result.get!(" ~ result ~ ")());\n    }\n";
+        return typed ~ "\n" ~ anyHeader ~ invocation ~ chain ~ anyResult;
+    }
+
+    /// Whether an advised method also gets the `Any` form (`__flintAny_<name>`): it returns a value by value, runs
+    /// synchronously, and is not a template.
+    static bool anyForm(const ref imported!"flint_tool.engine.aot.plan".ProxyMethod item)
+    {
+        return item.advised && !item.async_ && item.method.returns.name != "void" && !item.method.has("ref");
+    }
+
+    static string anyName(const ref Method method)
+    {
+        return "__flintAny_" ~ method.name;
     }
 
     // ---- descriptors ----
@@ -831,14 +864,42 @@ private struct Emitter
         const callee = "(cast(" ~ handler.className ~ ") bean)." ~ handler.method.name;
         // Two forms: the HandlerArguments one, and invokeArguments' (b181a524), which takes the resolved arguments
         // as a scope slice, so the runtime needs no wrapper object or heap array per request.
-        const boxed = invocation(callee, handler.method, handler.arguments);
-        const slice = invocation(callee, handler.method, handler.arguments, true);
+        const proxy = advisedProxy(handler);
+        const boxed = invocation(callee, handler.method, handler.arguments, false, proxy);
+        const slice = invocation(callee, handler.method, handler.arguments, true, proxy);
         return "private void handle_" ~ id ~ "(Object bean, HandlerArguments arguments, ref Any result)\n{\n    "
             ~ boxed ~ "\n}\n\nprivate void handleArray_"
             ~ id ~ "(Object bean, scope Any[] arguments, ref Any result)\n{\n    " ~ slice ~ "\n}\n\n";
     }
 
-    string invocation(string callee, const ref Method method, const ArgumentPlan[] arguments, bool slice = false)
+    /// The proxy class of `handler`'s bean in this module, when the handler's method has the proxy's `Any` form
+    /// (`proxyMethod`): the invoker then takes the chain's result as it is instead of boxing it a second time.
+    string advisedProxy(const ref HandlerPlan handler)
+    {
+        foreach (ref proxy; plan.proxies)
+        {
+            if (proxy.className != handler.className)
+                continue;
+            foreach (ref item; proxy.methods)
+                if (anyForm(item) && item.method.name == handler.method.name
+                        && sameParameters(item.method, handler.method))
+                    return proxy.simple ~ "__FlintProxy";
+        }
+        return null;
+    }
+
+    static bool sameParameters(const ref Method a, const ref Method b)
+    {
+        if (a.parameters.length != b.parameters.length)
+            return false;
+        foreach (index, ref parameter; a.parameters)
+            if (parameter.type.name != b.parameters[index].type.name)
+                return false;
+        return true;
+    }
+
+    string invocation(string callee, const ref Method method, const ArgumentPlan[] arguments,
+            bool slice = false, string proxy = null)
     {
         import std.array : join;
         import std.conv : to;
@@ -853,7 +914,13 @@ private struct Emitter
                 ~ argument.type ~ ")()";
         }
         const call = callee ~ "(" ~ parts.join(", ") ~ ")";
-        return method.returns.name == "void" ? call ~ ";\n    result = Any.init;" : "result = Any.of(" ~ call ~ ");";
+        if (method.returns.name == "void")
+            return call ~ ";\n    result = Any.init;";
+        if (proxy is null)
+            return "result = Any.of(" ~ call ~ ");";
+        const viaProxy = "proxy." ~ anyName(method) ~ "(" ~ parts.join(", ") ~ ")";
+        return "if (auto proxy = cast(" ~ proxy ~ ") bean)\n    {\n        result = " ~ viaProxy
+            ~ ";\n        return;\n    }\n    result = Any.of(" ~ call ~ ");";
     }
 
     string exceptionInvoker(const ref ExceptionPlan handler)
