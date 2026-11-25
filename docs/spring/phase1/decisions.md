@@ -1016,3 +1016,14 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - p99.9 1.115 (0.917–1.646), reported.
 
     Neither side's capacity phase was client-limited. Evidence: `benchmarks/spring/evidence/phase1-http-petclinic/20261125T224601Z/`.
+- 2026-11-25 23:50Z, owner: **Phase 1 closes now; Phase 2 starts at once.** In the owner's words: "we are good … we can fix stuff later after we complete all the original library work since ci and benching is the thing that takes the longest." This amends 087f28a3:
+  - **B7's remaining parts no longer gate the close.**
+    - phase1-http-gs-rest was already measuring; it is recorded here if it certifies clean.
+    - builds ×3 and the GC matrix are cancelled.
+    - The close-out cites B6 (`be86e77f`) for gs-rest runtime and all 15 build metrics, where every one passed, and B7 (`43db0cae`) for the 404, validation and petclinic runtime.
+    - **The performance claim is therefore "every gated metric passed at a certified baseline (B6 or B7)", not "at one commit".** [closeout.md](closeout.md) states this plainly.
+  - **venus certification stops blocking development.** It runs only on request, or overnight in natural quiet. MEASURING is released after gs-rest, so held builds are no longer paused.
+  - **Guardrails:**
+    - **`flint budget` no longer gates the start.** Phase 2 starts behind the definition of done, the allocation gates (now with the forced static trim) and the playbook.
+    - m7 lands `flint budget` as soon as it is seeded; from then on every lane must pass it.
+  - **Phase 2 runs on gpt-6.2-sol** in three parallel lanes: data, security, context and client ([../phase2/launch-plan.md](../phase2/launch-plan.md)). The existing Claude sessions review shared-engine changes.

@@ -1,5 +1,7 @@
 # Phase 1 resume plan (measure first, then fix one build and one runtime bottleneck at a time)
 
+> **Closed 2026-11-25 23:50Z.** The owner closed Phase 1; see [closeout.md](closeout.md). Phase 2 runs from [../phase2/launch-plan.md](../phase2/launch-plan.md). This plan is kept as history.
+
 The coordinator synthesised this from two independent reviews: Gemini 4 Neon High's full assessment ([assessment-2026-11-23-neon.md](assessment-2026-11-23-neon.md)) and GPT-6.2-Astra High's verification and correction of it ([assessment-2026-11-23-astra.md](assessment-2026-11-23-astra.md)). Where they disagree, Astra's corrections stand, because they were checked against the repository. Waiting for owner approval.
 
 ## Principle
