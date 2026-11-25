@@ -923,3 +923,7 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - p99.9 0.81, reported.
 
     Evidence: `benchmarks/spring/evidence/phase1-http-gs-rest/20261125T133134Z/`.
+- 2026-11-25, owner: **On the error-path workloads, the load-generator saturation check applies only to the gated fixed-rate phase.**
+  - Background: B5 error-validation-p99 was refused at 14:24Z (008cc880). Flint's capacity phase reached 55,769 req/s; with a new connection per 400 (ADR-033), that saturated oha's four load CPUs.
+  - Rule: when oha saturates in the capacity phase, it is recorded as "client-limited, context". The gated metric (p99 at the fixed rate) and its own saturation check are unchanged. No workload, CPU set or comparator changes, and Go's records stay valid.
+  - Applies to error-validation-p99 and error-404-p99. proof-harness implements it and re-queues validation at B5.
