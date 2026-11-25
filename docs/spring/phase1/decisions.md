@@ -905,3 +905,12 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - Factor 8 failed the RSS gate.
   - The setting is baked in by `packages/arena/source/flint/arena/sys/gc/fixed_pools.d`, which Boot imports. An application's `rt_options` and an operator's `--DRT-gcopt` still override it, as in Spring Boot, where JVM heap flags override defaults.
   - B5 (8ed3de37) measures factor 2. The change lands after it and is certified from B6.
+- 2026-11-25, proof-harness: **phase1-http-petclinic certified at B5** (`8ed3de37dc57`, 12:41–13:21Z, interleaved from the start; no foreign activity). Go is the ADR-033 comparator with Tomcat's keep-alive limit (`8d29301a`), 109/109 in the parity wire mode. **Every gated runtime metric passes, for the first time on petclinic.** Flint / Go, median (99% interval), 9 trials:
+    - **throughput 1.613 (1.608–1.621)**: 31,620 against 19,600 req/s (1.416 at B4);
+    - **p50 0.830 (0.820–0.840)**: 198 against 238 µs (1.048 at B4);
+    - **p99 0.899 (0.854–0.949)**: 525 against 584 µs (1.133 at B4);
+    - **peak RSS 0.700 (0.654–0.707)**: 18.6 against 26.6 MB;
+    - **CPU per request 0.824 (0.817–0.839)**: 53.6 against 65.1 µs (1.044 at B4);
+    - p99.9 1.04, reported.
+
+    B4's trees were ThinLTO-codegenned at O0; B5 has the O3 fix (dd774a24) and the fast path S5. Evidence: `benchmarks/spring/evidence/phase1-http-petclinic/20261125T124138Z/`.
