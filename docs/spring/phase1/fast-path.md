@@ -439,6 +439,22 @@ attributes read the request.
 - the fields: the mapped filters' fields (S4), then the negotiated `Content-Type`, flushed (chunked), as the forward
   leaves the response.
 
+**The template body** (the coordinator's 20:02Z item, playbook R-100). Built as above, the body cost a map, a
+`Date`, an entity and boxed values per request: about half of the 404's bytes. Only two of its parts change between
+requests, the timestamp and the path; `stockJsonError` and the mapper proof fix everything else. So
+`StockErrorPageShortcut.proveTemplate` proves a template at startup:
+- it renders the body once, through the real attributes and the converter's mapper, for a probe path holding every
+  byte a JSON string keeps as itself: printable ASCII except `"` and `\`;
+- it splits the bytes around the timestamp and the path, after finding each exactly once. The timestamp is
+  jackson-databind's `formatIsoUtc` text, `writeJavaUtilDate`'s text under the default configuration, for a
+  millisecond read around the rendering;
+- it keeps the template only when reassembling the parts gives the same bytes, and the path appears exactly when
+  `include-path` is `ALWAYS`.
+
+Jackson escapes each character on its own, so any path of those bytes is written as itself. Per request, the page
+fills the template on the stack: the clock's millisecond as `formatIsoUtc` writes it, and the path. A path with any
+other byte, a body longer than 1 KiB, or an unproved template takes the attributes and the mapper as before.
+
 **Not eligible.** petclinic: it has a global CORS configuration and `@ControllerAdvice` for `Exception`. Any
 application with interceptors, custom resolvers, a context-path-only request, or another error page.
 

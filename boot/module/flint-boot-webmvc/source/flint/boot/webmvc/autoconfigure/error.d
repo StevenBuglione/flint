@@ -644,6 +644,10 @@ final class StockErrorPageShortcut : Shortcut, imported!"flint.engine.aot.fast".
     // S6: the dispatch of an unmatched GET ends in sendError(404) with nothing else on the response.
     private bool unmatchedProved;
     private string unmatchedWhy;
+    // S6's template body (`proveTemplate`): the mapper's bytes for the 404 body around its timestamp and its path;
+    // `templated` when proved, `templatePath` when the body holds the path.
+    private const(ubyte)[] beforeTimestamp, beforePath, afterPath;
+    private bool templated, templatePath;
 
     /// Over `context`, with Boot's Jackson proof.
     this(ApplicationContext context, JsonMapperProof stockMapper) pure nothrow @nogc
@@ -685,7 +689,81 @@ final class StockErrorPageShortcut : Shortcut, imported!"flint.engine.aot.fast".
         auto errorAttributes = cast(Object) stock.controller.errorAttributes;
         unmatchedProved = ErrorShortcutRoute.provesUnmatched(servlet, (Object resolver) => resolver is errorAttributes
                 && typeid(resolver) is typeid(DefaultErrorAttributes), unmatchedWhy);
+        proveTemplate();
         return true;
+    }
+
+    /++
+    S6's template body (coordinator 20:02Z). `stockJsonError` and the mapper proof fix the 404 body's shape: the
+    stock attributes' timestamp, status, error and, when included, path, written by the auto-configured mapper. Only
+    the timestamp and the path change between requests. The body for a probe path is rendered here through the real
+    attributes and mapper, and the template is what surrounds the timestamp and the path in those bytes. It holds
+    only when those bytes are exactly the template with the timestamp `formatIsoUtc` writes, for a millisecond read
+    around the rendering, and the probe path verbatim. The probe holds every byte `verbatim` admits, and Jackson
+    escapes each character on its own, so any such path is written as itself.
+    +/
+    private void proveTemplate()
+    {
+        import flint.engine.aot.clock : currentTimeMillis;
+        import flint.jackson.databind.stddateformat : formatIsoUtc;
+
+        templated = false;
+        char[] probe = ['/'];
+        foreach (c; 0x20 .. 0x7F)
+            if (c != '/' && verbatim([cast(char) c]))
+                probe ~= cast(char) c;
+        const path = probe.idup;
+        const before = currentTimeMillis();
+        const(ubyte)[] rendered;
+        if (route is null || !route.render(stock.errorResponse(404, path), rendered))
+            return;
+        const after = currentTimeMillis();
+        foreach (millis; before .. after + 1)
+        {
+            char[48] stampStorage;
+            const stamp = cast(const(ubyte)[]) formatIsoUtc(millis, stampStorage);
+            const at = soleIndex(rendered, stamp);
+            if (at == size_t.max)
+                continue;
+            const rest = rendered[at + stamp.length .. $];
+            const pathAt = soleIndex(rest, cast(const(ubyte)[]) path);
+            templatePath = pathAt != size_t.max;
+            if (templatePath != stock.isIncludePath())
+                return;
+            beforeTimestamp = rendered[0 .. at];
+            beforePath = templatePath ? rest[0 .. pathAt] : rest;
+            afterPath = templatePath ? rest[pathAt + path.length .. $] : null;
+            templated = true;
+            ubyte[bodyLimit] storage;
+            templated = assemble(cast(const(char)[]) stamp, path, storage) == rendered;
+            return;
+        }
+    }
+
+    // The template body stamped `stamp` for `requestUri`, in `storage`; null when it does not fit.
+    private const(ubyte)[] assemble(scope const(char)[] stamp, scope const(char)[] requestUri,
+            return ref ubyte[bodyLimit] storage) const
+    {
+        size_t used;
+        bool put(scope const(ubyte)[] bytes)
+        {
+            if (bytes.length > storage.length - used)
+                return false;
+            storage[used .. used + bytes.length] = bytes[];
+            used += bytes.length;
+            return true;
+        }
+
+        if (!templated || !put(beforeTimestamp) || !put(cast(const(ubyte)[]) stamp)
+                || !put(beforePath) || (templatePath && !put(cast(const(ubyte)[]) requestUri)) || !put(afterPath))
+            return null;
+        return storage[0 .. used];
+    }
+
+    /// S6: whether the template body was proved (diagnosis, tests).
+    bool templateProved() const pure nothrow @nogc
+    {
+        return templated;
     }
 
     /// S6: why the unmatched-GET proof failed, or null when it holds (diagnosis, tests).
@@ -708,6 +786,22 @@ final class StockErrorPageShortcut : Shortcut, imported!"flint.engine.aot.fast".
         size_t slot;
         if (!route.admits(exchange, slot))
             return false;
+        // The template body (proveTemplate): the timestamp the stock attributes' Date would hold, formatted as the
+        // mapper formats it, and the path, when it is written as itself.
+        if (templated && (!templatePath || verbatim(requestUri)))
+        {
+            import flint.engine.aot.clock : currentTimeMillis;
+            import flint.jackson.databind.stddateformat : formatIsoUtc;
+
+            char[48] stampStorage;
+            ubyte[bodyLimit] storage = void;
+            const content = assemble(formatIsoUtc(currentTimeMillis(), stampStorage), requestUri, storage);
+            if (content !is null)
+            {
+                route.write(exchange, slot, 404, content);
+                return true;
+            }
+        }
         return route.write(exchange, slot, stock.errorResponse(404, requestUri.idup));
     }
 
@@ -742,6 +836,39 @@ final class StockErrorPageShortcut : Shortcut, imported!"flint.engine.aot.fast".
             return false;
         }
     }
+}
+
+// S6's template body: the largest body it assembles on the stack; a longer path takes the mapper.
+private enum size_t bodyLimit = 1024;
+
+// Whether Jackson writes `text` as itself in a JSON string: printable ASCII but '"' and '\\', which it escapes, as it
+// escapes control characters. Non-ASCII text is left to the mapper.
+private bool verbatim(scope const(char)[] text) pure nothrow @nogc
+{
+    foreach (c; text)
+        if (c < 0x20 || c > 0x7E || c == '"' || c == '\\')
+            return false;
+    return true;
+}
+
+// The index of the only occurrence of `needle` in `haystack`, or size_t.max for none or several.
+private size_t soleIndex(scope const(ubyte)[] haystack, scope const(ubyte)[] needle) pure nothrow @nogc
+{
+    const first = firstIndex(haystack, needle);
+    if (first == haystack.length || firstIndex(haystack[first + 1 .. $], needle) != haystack.length - first - 1)
+        return size_t.max;
+    return first;
+}
+
+// The index of the first occurrence of `needle` in `haystack`, or its length.
+private size_t firstIndex(scope const(ubyte)[] haystack, scope const(ubyte)[] needle) pure nothrow @nogc
+{
+    if (needle.length == 0 || needle.length > haystack.length)
+        return haystack.length;
+    foreach (i; 0 .. haystack.length - needle.length + 1)
+        if (haystack[i .. i + needle.length] == needle)
+            return i;
+    return haystack.length;
 }
 
 /++

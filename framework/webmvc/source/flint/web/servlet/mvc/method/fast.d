@@ -514,6 +514,39 @@ final class ErrorShortcutRoute
     }
 
     /++
+    S6, the template body: the bytes `write` would send for `entity` (its body, by the converter's mapper), copied;
+    `false` when `write` would decline it. The caller proves a body template against them at startup.
+    +/
+    bool render(ResponseEntity entity, out const(ubyte)[] bytes)
+    {
+        auto content = entity.getBody();
+        if (entity.getStatusCode().value() == 0 || !entity.getHeaders().isEmpty()
+                || content.isNull() || content.typeName() != bodyType)
+            return false;
+        auto buffer = pool.acquire();
+        scope (exit)
+            pool.release(buffer);
+        try
+            jackson.getMapper().writeValue(&buffer.put, content);
+        catch (Exception)
+            return false;
+        bytes = buffer.data.idup;
+        return true;
+    }
+
+    /++
+    S6, the template body: `write` for an entity of `status` whose body the mapper writes as `content` (the caller
+    proved them equal), for a request `admits` admitted in `slot`.
+    +/
+    void write(ref scope FastExchange exchange, size_t slot, int status, scope const(ubyte)[] content)
+    {
+        Route plain;
+        FastField[maxFields] storage;
+        exchange.respondFields(status, responseFields(plain, exchange, accept[slot].contentType,
+                storage), content, true);
+    }
+
+    /++
     S6: whether the dispatch of a `GET` that `servlet`'s first handler mapping does not match ends, through
     `doDispatch`, in exactly `sendError(404)` with nothing else written or set on the response. It holds when:
     $(UL

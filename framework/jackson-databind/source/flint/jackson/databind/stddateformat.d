@@ -44,6 +44,18 @@ else
     private enum cold = 0;
 }
 
+/++
+Flint: `formatIso(millis, 0)`, the text `writeJavaUtilDate` writes for a `java.util.Date` under the default
+configuration, in `storage` instead of a new string (Boot's proved error page, fast-path.md 9.1.3).
++/
+package(flint) const(char)[] formatIsoUtc(long millis, return ref char[48] storage) pure nothrow
+{
+    Text buffer;
+    isoText(buffer, millis, 0, true, true);
+    storage[0 .. buffer.used] = buffer.data[0 .. buffer.used];
+    return storage[0 .. buffer.used];
+}
+
 package(flint.jackson.databind):
 
 /// The Flint type name of `java.util.Date`.
@@ -312,11 +324,18 @@ final class StdDateFormat : DateFormat
 /// milliseconds from UTC, "2009-02-13T23:31:30.123Z" ("+05:30" or "+0530" for an offset).
 string formatIso(long millis, long offset, bool colon = true, bool zeroAsZ = true) pure nothrow
 {
+    Text buffer;
+    isoText(buffer, millis, offset, colon, zeroAsZ);
+    return buffer.text();
+}
+
+// formatIso's text in `buffer`.
+private void isoText(ref Text buffer, long millis, long offset, bool colon, bool zeroAsZ) pure nothrow
+{
     import flint.java.util.calendar : gregorianFields;
 
     int[Calendar.FIELD_COUNT] f;
     gregorianFields(millis, offset, f);
-    Text buffer;
     if (f[Calendar.ERA] == GregorianCalendar.BC)
         _formatBCEYear(buffer, f[Calendar.YEAR]);
     else
@@ -339,7 +358,6 @@ string formatIso(long millis, long offset, bool colon = true, bool zeroAsZ = tru
         buffer.put('Z');
     else
         appendOffset(buffer, offset, colon);
-    return buffer.text();
 }
 
 @cold
@@ -892,4 +910,19 @@ private Any readArray(MapperConfig config, JsonParser p, CustomFormat custom)
         }
     }
     throw mismatch(DATE_TYPE, JsonToken.START_ARRAY);
+}
+
+@("formatIsoUtc writes formatIso's UTC text into the caller's storage")
+unittest
+{
+    char[48] storage;
+    foreach (millis; [
+        0L, 1_234_567_890_123L, 1_795_000_000_007L, -1L, -62_135_769_600_001L, 253_402_300_800_000L
+    ])
+    {
+        const text = formatIsoUtc(millis, storage);
+        assert(text == formatIso(millis, 0), formatIso(millis, 0));
+        assert(text.ptr is storage.ptr);
+    }
+    assert(formatIsoUtc(1_234_567_890_123L, storage) == "2009-02-13T23:31:30.123Z");
 }

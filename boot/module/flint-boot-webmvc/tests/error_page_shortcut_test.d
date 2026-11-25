@@ -287,7 +287,12 @@ private Outcome generic404(MvcFixture fixture, string uri, string[] accepts)
     auto app = fixture();
     auto shortcut = proved(app);
     assert(shortcut.unmatchedFailure() is null, shortcut.unmatchedFailure());
-    foreach (uri; ["/nope", `/a"b\c`, "/café", "/tab\there", "/deep/er/path.json", "/trailing/"])
+    // Plain paths take the template body; a quote, backslash, control or non-ASCII character takes the mapper.
+    assert(shortcut.templateProved());
+    foreach (uri; [
+            "/nope", `/a"b\c`, "/café", "/tab\there", "/deep/er/path.json", "/trailing/",
+            "/<&>'~!$*+,=@"
+        ])
         foreach (accepts; [cast(string[]) null, ["*/*"], ["application/json"]])
         {
             const expected = generic404(app, uri, accepts);
@@ -298,6 +303,40 @@ private Outcome generic404(MvcFixture fixture, string uri, string[] accepts)
         }
     enum body404 = `{"timestamp":"","status":404,"error":"Not Found","path":"/nope"}`;
     assert(unmatched(shortcut, "/nope", null).body == body404);
+}
+
+@("full S6: the template body's timestamp is the mapper's text for the clock's millisecond") unittest
+{
+    import flint.engine.aot.clock : currentTimeMillis;
+    import flint.engine.aot.fast : FastExchange, FastField;
+    import flint.java.time : Instant;
+
+    auto shortcut = proved(fixture());
+    string raw;
+    void respondFields(int, scope const(FastField)[], scope const(ubyte)[] content, bool)
+    {
+        raw = (cast(const(char)[]) content).idup;
+    }
+
+    scope FastExchange exchange;
+    exchange.method = "GET";
+    exchange.path = "/nope";
+    exchange.respondFields = &respondFields;
+    const before = currentTimeMillis();
+    assert(shortcut.writeUnmatched(exchange, "/error", "/nope"));
+    const after = currentTimeMillis();
+    // The mapper's java.util.Date text: always three fraction digits and Z, unlike Instant.toString.
+    enum prefix = `{"timestamp":"`, suffix = `","status":404,"error":"Not Found","path":"/nope"}`;
+    assert(raw.length == prefix.length + 24 + suffix.length && raw[0 .. prefix.length] == prefix
+            && raw[$ - suffix.length .. $] == suffix, raw);
+    const stamp = raw[prefix.length .. prefix.length + 24];
+    bool found;
+    foreach (millis; before .. after + 1)
+    {
+        const iso = Instant.ofEpochMilli(millis).toString(); // "...:SS.mmmZ", or "...:SSZ" on a whole second
+        found = found || (iso.length == 24 ? stamp == iso : stamp == iso[0 .. 19] ~ ".000Z");
+    }
+    assert(found, raw);
 }
 
 @("full S6: the page declines what it does not write, having written nothing") unittest
