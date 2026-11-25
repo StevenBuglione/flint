@@ -175,6 +175,8 @@ Boot's exceptions extend `flint.java.lang`'s `RuntimeException`, `IllegalArgumen
     - There are no `DataSourcePoolMetadataProvider`s, so the validation query is always `isValid()`. That is also Boot's answer for a Hikari pool without `connection-test-query`.
     - `AbstractHealthIndicator` keeps its failure message, but nothing logs it yet.
 
+- **`server.tomcat.max-keep-alive-requests` (owner `8163a833`).** Flint binds this one Tomcat key, because its engine reproduces Tomcat's behaviour: the Nth response on a connection carries `Connection: close` and the connection closes, with a default of 100 and -1 for unlimited. It binds onto `TomcatServerProperties`, Spring's class name, which sits beside `ServerProperties` here; in Boot the class lives in spring-boot-tomcat. Tomcat's 0 disables keep-alive, so the factory passes 1 for it, since the engine reads 0 or less as unlimited. Flint's other engine settings stay under `server.flint.*`, because Tomcat's keys would promise semantics Flint's engine does not have.
+
 ## Contracts needed from the other Phase 1 sessions
 
 | From | What Boot needs | Status |
