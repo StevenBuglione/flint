@@ -510,7 +510,7 @@ abstract class NamedParameterUtils
     /// Convert a `Map` of named parameter values to a corresponding array, in the order the statement needs them.
     static Any[] buildValueArray(string sql, Map!(string, Any) paramMap)
     {
-        return buildValueArray(parseSqlStatement(sql), new MapSqlParameterSource(paramMap), null);
+        return buildValueArray(parseSqlStatement(sql), MapSqlParameterSource.reading(paramMap), null);
     }
 }
 
@@ -646,6 +646,8 @@ can be used to add values to this parameter source, and return the source for ch
 class MapSqlParameterSource : AbstractSqlParameterSource
 {
     private Map!(string, Any) values;
+    /// `values` is a caller's map read in place (`reading`), copied before this source changes or hands it out.
+    private bool borrowed;
 
     /// Create an empty `MapSqlParameterSource`, with values to be added via `addValue`.
     this()
@@ -667,6 +669,40 @@ class MapSqlParameterSource : AbstractSqlParameterSource
         // Java's addValues, without a virtual call in a constructor.
         if (values !is null)
             values.forEach((string key, Any value) { addAny(key, value); });
+    }
+
+    /// A source over a caller's map, read in place instead of copied: NamedParameterJdbcOperations' Map overloads,
+    /// which use the source within the one call. It copies the map before it changes or returns it (`getValues`), so
+    /// the caller's map is never written; names and SqlParameterValue types are taken as the copying constructor
+    /// takes them.
+    package(flint.jdbc) static MapSqlParameterSource reading(Map!(string, Any) values)
+    {
+        return new MapSqlParameterSource(values, true);
+    }
+
+    private this(Map!(string, Any) values, bool reading)
+    {
+        this.values = values;
+        borrowed = true;
+        if (values !is null)
+            values.forEach((string key, Any value) {
+                if (key is null)
+                    throw new IllegalArgumentException("Parameter name must not be null");
+                if (auto parameterValue = parameterValueOf(value))
+                    registerSqlType(key, parameterValue.getSqlType());
+            });
+    }
+
+    /// A map of this source's own, made from the caller's when it was read in place.
+    private void own()
+    {
+        if (!borrowed)
+            return;
+        auto copy = new LinkedHashMap!(string, Any);
+        if (values !is null)
+            values.forEach((string key, Any value) { copy.put(key, value); });
+        values = copy;
+        borrowed = false;
     }
 
     /// Add a parameter to this parameter source (R7: any D value, or an `Any`).
@@ -696,6 +732,7 @@ class MapSqlParameterSource : AbstractSqlParameterSource
     {
         if (paramName is null)
             throw new IllegalArgumentException("Parameter name must not be null");
+        own();
         values.put(paramName, value);
         if (auto parameterValue = parameterValueOf(value))
             registerSqlType(paramName, parameterValue.getSqlType());
@@ -713,18 +750,19 @@ class MapSqlParameterSource : AbstractSqlParameterSource
     /// Return whether this parameter source has been configured with any values.
     bool hasValues()
     {
-        return !values.isEmpty();
+        return values !is null && !values.isEmpty();
     }
 
     /// Expose the current parameter values as a read-only `Map`.
     Map!(string, Any) getValues()
     {
+        own();
         return values;
     }
 
     override bool hasValue(string paramName)
     {
-        return values.containsKey(paramName);
+        return values !is null && values.containsKey(paramName);
     }
 
     override Any getValue(string paramName)
@@ -736,7 +774,7 @@ class MapSqlParameterSource : AbstractSqlParameterSource
 
     override string[] getParameterNames()
     {
-        return values.keySet().toArray();
+        return values is null ? [] : values.keySet().toArray();
     }
 }
 
@@ -993,7 +1031,7 @@ interface NamedParameterJdbcOperations
     /// ditto, with a `Map` of parameters.
     T execute(T)(string sql, Map!(string, Any) paramMap, PreparedStatementCallback!T action)
     {
-        return execute(sql, new MapSqlParameterSource(paramMap), action);
+        return execute(sql, MapSqlParameterSource.reading(paramMap), action);
     }
 
     /// ditto, with no parameters.
@@ -1013,7 +1051,7 @@ interface NamedParameterJdbcOperations
     /// ditto, with a `Map` of parameters.
     T query(T)(string sql, Map!(string, Any) paramMap, ResultSetExtractor!T rse)
     {
-        return query(sql, new MapSqlParameterSource(paramMap), rse);
+        return query(sql, MapSqlParameterSource.reading(paramMap), rse);
     }
 
     /// ditto, with no parameters.
@@ -1031,7 +1069,7 @@ interface NamedParameterJdbcOperations
     /// ditto, with a `Map` of parameters.
     List!T query(T)(string sql, Map!(string, Any) paramMap, RowMapper!T rowMapper)
     {
-        return query(sql, new MapSqlParameterSource(paramMap), rowMapper);
+        return query(sql, MapSqlParameterSource.reading(paramMap), rowMapper);
     }
 
     /// ditto, with no parameters.
@@ -1049,7 +1087,7 @@ interface NamedParameterJdbcOperations
     /// ditto, with a `Map` of parameters.
     List!T query(T)(string sql, Map!(string, Any) paramMap, T delegate(ResultSet, int) @safe mapper)
     {
-        return query(sql, new MapSqlParameterSource(paramMap), .rowMapper(mapper));
+        return query(sql, MapSqlParameterSource.reading(paramMap), .rowMapper(mapper));
     }
 
     /// ditto, with no parameters.
@@ -1069,7 +1107,7 @@ interface NamedParameterJdbcOperations
     /// ditto, with a `Map` of parameters.
     T queryForObject(T)(string sql, Map!(string, Any) paramMap, RowMapper!T rowMapper)
     {
-        return queryForObject(sql, new MapSqlParameterSource(paramMap), rowMapper);
+        return queryForObject(sql, MapSqlParameterSource.reading(paramMap), rowMapper);
     }
 
     /// Query given SQL and parameters, mapping a single result row with a delegate (R9).
@@ -1081,7 +1119,7 @@ interface NamedParameterJdbcOperations
     /// ditto, with a `Map` of parameters.
     T queryForObject(T)(string sql, Map!(string, Any) paramMap, T delegate(ResultSet, int) @safe mapper)
     {
-        return queryForObject(sql, new MapSqlParameterSource(paramMap), .rowMapper(mapper));
+        return queryForObject(sql, MapSqlParameterSource.reading(paramMap), .rowMapper(mapper));
     }
 
     /// Query given SQL and parameters for a single result object of type `T` (Java's `Class<T>`, R4).
@@ -1093,7 +1131,7 @@ interface NamedParameterJdbcOperations
     /// ditto, with a `Map` of parameters.
     T queryForObject(T)(string sql, Map!(string, Any) paramMap)
     {
-        return queryForObject!T(sql, new MapSqlParameterSource(paramMap));
+        return queryForObject!T(sql, MapSqlParameterSource.reading(paramMap));
     }
 
     /// Query given SQL and parameters for a result list of `T` values (R4).
@@ -1105,7 +1143,7 @@ interface NamedParameterJdbcOperations
     /// ditto, with a `Map` of parameters.
     List!T queryForList(T)(string sql, Map!(string, Any) paramMap)
     {
-        return queryForList!T(sql, new MapSqlParameterSource(paramMap));
+        return queryForList!T(sql, MapSqlParameterSource.reading(paramMap));
     }
 }
 
@@ -1196,7 +1234,7 @@ class NamedParameterJdbcTemplate : NamedParameterJdbcOperations
 
     override void query(string sql, Map!(string, Any) paramMap, RowCallbackHandler rch)
     {
-        query(sql, new MapSqlParameterSource(paramMap), rch);
+        query(sql, MapSqlParameterSource.reading(paramMap), rch);
     }
 
     override void query(string sql, RowCallbackHandler rch)
@@ -1214,7 +1252,7 @@ class NamedParameterJdbcTemplate : NamedParameterJdbcOperations
 
     override Map!(string, Any) queryForMap(string sql, Map!(string, Any) paramMap)
     {
-        return queryForMap(sql, new MapSqlParameterSource(paramMap));
+        return queryForMap(sql, MapSqlParameterSource.reading(paramMap));
     }
 
     override List!(Map!(string, Any)) queryForList(string sql, SqlParameterSource paramSource)
@@ -1224,7 +1262,7 @@ class NamedParameterJdbcTemplate : NamedParameterJdbcOperations
 
     override List!(Map!(string, Any)) queryForList(string sql, Map!(string, Any) paramMap)
     {
-        return queryForList(sql, new MapSqlParameterSource(paramMap));
+        return queryForList(sql, MapSqlParameterSource.reading(paramMap));
     }
 
     override int update(string sql, SqlParameterSource paramSource)
@@ -1234,7 +1272,7 @@ class NamedParameterJdbcTemplate : NamedParameterJdbcOperations
 
     override int update(string sql, Map!(string, Any) paramMap)
     {
-        return update(sql, new MapSqlParameterSource(paramMap));
+        return update(sql, MapSqlParameterSource.reading(paramMap));
     }
 
     override int update(string sql, SqlParameterSource paramSource, KeyHolder generatedKeyHolder)
@@ -1387,7 +1425,7 @@ class NamedParameterJdbcTemplate : NamedParameterJdbcOperations
     /// ditto
     List!T queryForList(T)(string sql, Map!(string, Any) paramMap)
     {
-        return query(sql, new MapSqlParameterSource(paramMap), new SingleColumnRowMapper!T);
+        return query(sql, MapSqlParameterSource.reading(paramMap), new SingleColumnRowMapper!T);
     }
 }
 
@@ -1484,4 +1522,48 @@ unittest
     auto creator = template_.getPreparedStatementCreator(parsed.getOriginalSql(), typed);
     auto provider = cast(imported!"flint.jdbc.core".SqlProvider) creator;
     assert(provider.getSql() == "SELECT * FROM owners WHERE id = ? AND city = ?");
+}
+
+@("MapSqlParameterSource.reading reads a caller's map in place and never writes it (Flint)")
+unittest
+{
+    import flint.java.sql : Types;
+    import flint.java.util : HashMap;
+
+    auto callers = new HashMap!(string, Any);
+    callers.put("id", Any.of(7));
+    auto source = MapSqlParameterSource.reading(callers);
+    assert(source.hasValues() && source.hasValue("id") && source.getValue("id").get!int == 7);
+    assert(!source.hasValue("name") && source.getParameterNames() == ["id"]);
+
+    // A change makes the source's own copy: the caller's map keeps its one entry.
+    source.addValue("name", "Leo");
+    assert(source.hasValue("name") && source.getValue("id").get!int == 7);
+    assert(callers.size() == 1 && !callers.containsKey("name"));
+
+    // getValues hands out the source's copy, not the caller's map.
+    auto read = MapSqlParameterSource.reading(callers);
+    auto values = read.getValues();
+    values.put("other", Any.of(1));
+    assert(!callers.containsKey("other"));
+
+    // An absent map is an empty source.
+    auto empty = MapSqlParameterSource.reading(null);
+    assert(!empty.hasValues() && !empty.hasValue("id") && empty.getParameterNames().length == 0);
+
+    // A null name is refused, as the copying constructor refuses it.
+    auto bad = new HashMap!(string, Any);
+    bad.put(null, Any.of(1));
+    bool refused;
+    try
+        cast(void) MapSqlParameterSource.reading(bad);
+    catch (IllegalArgumentException)
+        refused = true;
+    assert(refused);
+
+    // An SqlParameterValue declares its SQL type, as through the copying constructor.
+    auto typed = new HashMap!(string, Any);
+    typed.put("id", Any.ofObject(new SqlParameterValue(Types.BIGINT, Any.of(7L)), typeid(SqlParameterValue).name));
+    assert(MapSqlParameterSource.reading(typed).getSqlType("id") == Types.BIGINT);
+    assert(new MapSqlParameterSource(typed).getSqlType("id") == Types.BIGINT);
 }
