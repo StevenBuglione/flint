@@ -158,6 +158,9 @@
       "framework/web/source/flint/http/package.d": {
         "dfmt: formatter difference": 1
       },
+      "framework/web/source/flint/web/bind/package.d": {
+        "dfmt: formatter difference": 1
+      },
       "framework/web/source/flint/web/bind/support.d": {
         "dscanner.metric.cyclomatic_complexity: Cyclomatic complexity of this function is #.": 1
       },
