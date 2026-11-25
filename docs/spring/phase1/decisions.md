@@ -963,3 +963,9 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
 
     Evidence: `benchmarks/spring/evidence/phase1-http-petclinic/20261125T165002Z/`.
 - 2026-11-25, proof-harness: **phase1-http-gs-rest certified at B6** (`be86e77f7651`, 17:40–18:20Z, interleaved; no foreign activity, nothing frozen). Go 18/18 in the parity wire mode. **Every gated runtime metric passes.** Flint / Go, median (99% interval), 9 trials: **throughput 1.846 (1.833–1.855)**, 437,590 against 237,010 req/s; **p50 0.683 (0.679–0.696)**; **p99 0.384 (0.380–0.404)**, 110 against 286 µs; **peak RSS 0.758 (0.741–0.769)**, 10.6 against 14.0 MB (0.673 at B5, heapSizeFactor:3); **CPU per request 0.568 (0.564–0.573)**, 4.91 against 8.64 µs; p99.9 0.77, reported. Evidence: `benchmarks/spring/evidence/phase1-http-gs-rest/20261125T173958Z/`.
+- 2026-11-25, proof-harness: **error-validation-p99 certified at B6** (`be86e77f7651`, 18:30–19:10Z, interleaved; no foreign activity, nothing frozen). Go is the parity comparator (`8d29301a`), 109/109. **The gated p99 passes for the first time.** Flint / Go, median (99% interval), 9 trials:
+    - **p99 0.896 (0.862–0.932), which passes**: 190 against 213 µs (1.81 at B4);
+    - context: p50 0.722 (73 against 101 µs); CPU per request 0.768 (25.1 against 32.6 µs; 1.41 at B4); RSS 0.73; p99.9 1.11;
+    - capacity 1.488, a lower bound: Flint's capacity phase was client-limited in all 9 trials (oha saturated at a connection per request) and is recorded as context under owner decision ae7858f8; Go's was not.
+
+    Evidence: `benchmarks/spring/evidence/error-validation-p99/20261125T183025Z/`.
