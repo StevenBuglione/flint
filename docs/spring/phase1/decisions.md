@@ -1001,3 +1001,9 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
      - a per-module definition of done: API-coverage, structural, allocation and acceptance gates, upstream tests ported, and budgets set for each new request shape;
      - the performance playbook's rules and today's lessons as agent instructions: bytes per request decide GC tails; no per-request locks or allocations in caches; proved fast paths with fallback; the ClassInfo-monitor rule (e170ffd0); exchange-storage lifetime (8cb4beb8).
   4. **Then gpt-6.2-sol ports Phase 2 module by module,** each in its own worktree. Existing sessions review anything touching the shared engines (reactor, HTTP, GC, AOT); venus certifies at baselines.
+- 2026-11-25, proof-harness: **error-validation-p99 certified at B7** (`43db0cae5fbc`, 21:55–22:36Z, interleaved; no foreign activity). The freezer stopped one stray at the claim, another session's callgrind, and thawed it at window end. The first attempt (21:05–21:45Z) is not evidence: an unheld python3 from another session ran 0.44 s of CPU inside the window. Go is the parity comparator (`8d29301a`), 109/109. Flint / Go, median (99% interval), 9 trials:
+    - **p99 0.810 (0.780–0.835), which passes**: 173 against 213 µs (0.896 at B6, 1.81 at B4);
+    - context: p50 0.703 (71 against 100 µs); CPU per request 0.728 (23.5 against 32.3 µs; 0.768 at B6); RSS 0.75; p99.9 1.045, reported;
+    - capacity 1.612 is a lower bound: as at B6, Flint's capacity phase was client-limited in all 9 trials and is recorded as context (owner decision ae7858f8); Go's was not.
+
+    Evidence: `benchmarks/spring/evidence/error-validation-p99/20261125T215555Z/`.
