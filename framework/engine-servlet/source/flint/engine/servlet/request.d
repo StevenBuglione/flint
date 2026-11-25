@@ -57,31 +57,12 @@ private struct Parameter
 /// The request a servlet sees for one exchange on the servlet engine.
 final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
 {
+    // A handle: everything this exchange says or changes (the request line, the fields and body, redirects,
+    // attributes and parameters) lives in its pooled RequestState, checked out with `stateGeneration`
+    // (flint.engine.servlet.exchange). Once the exchange has completed, every method throws (owner decision (a)).
     private RequestHost host;
-    private string method;
-    private string requestURI;
-    private string queryString;
-    private string protocol;
-    private string servletPath;
-    private string contextPath;
-    // The exchange's pooled storage (field, attribute and parameter slots) and its generation at checkout
-    // (flint.engine.servlet.exchange): once the exchange has completed, every method throws (owner decision (a)).
     private RequestState state;
     private ulong stateGeneration;
-    // The field names and values, in the state's slots when they fit (eight, as Tomcat's MimeHeaders starts with).
-    private string[] names;
-    private string[] values;
-    private immutable(ubyte)[] content;
-    private ulong requestNumber;
-    private DispatcherType dispatcherType = DispatcherType.REQUEST;
-    private bool parametersParsed;
-    private bool inputUsed;
-    // A request holds a handful of attributes: slots in insertion order (getAttributeNames' order), in the state's
-    // inline slots until they outgrow them, then in its retained overflow block or the GC heap.
-    private Attribute[] attributeSlots;
-    private size_t attributeCount;
-    // The parameters and the character encoding live in the state (RequestState), so the façade fits the 256-byte
-    // size class.
 
     package(flint.engine.servlet) this(RequestHost host, string method, string requestURI, string queryString,
             string protocol, string contextPath, string[] names, string[] values,
@@ -90,17 +71,16 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
         this.state = state;
         stateGeneration = generation;
         this.host = host;
-        this.method = method;
-        this.requestURI = requestURI;
-        this.queryString = queryString;
-        this.protocol = protocol;
-        this.contextPath = contextPath;
-        this.servletPath = requestURI.length >= contextPath.length ? requestURI[contextPath.length .. $] : requestURI;
-        this.names = names;
-        this.values = values;
-        this.content = content;
-        this.requestNumber = requestNumber;
-        attributeSlots = state.inlineAttributes[];
+        state.method = method;
+        state.requestURI = requestURI;
+        state.queryString = queryString;
+        state.protocol = protocol;
+        state.contextPath = contextPath;
+        state.servletPath = requestURI.length >= contextPath.length ? requestURI[contextPath.length .. $] : requestURI;
+        state.names = names;
+        state.values = values;
+        state.content = content;
+        state.requestNumber = requestNumber;
     }
 
     /// The pooled state and its generation, for the engine's return at the end of the exchange.
@@ -125,29 +105,29 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
     /// The fields and body `ServletEngine.capture` copied out of the request arena.
     package(flint.engine.servlet) void setCaptured(string[] names, string[] values, immutable(ubyte)[] content)
     {
-        this.names = names;
-        this.values = values;
-        this.content = content;
+        state.names = names;
+        state.values = values;
+        state.content = content;
     }
 
     /// Change the path the request reports, as a forward or error dispatch does; returns the previous state.
     package(flint.engine.servlet) DispatchState redirect(string uri, string query, DispatcherType type)
     {
-        auto previous = DispatchState(requestURI, servletPath, queryString, dispatcherType);
-        requestURI = contextPath ~ uri;
-        servletPath = uri;
-        queryString = query;
-        dispatcherType = type;
+        auto previous = DispatchState(state.requestURI, state.servletPath, state.queryString, state.dispatcherType);
+        state.requestURI = state.contextPath ~ uri;
+        state.servletPath = uri;
+        state.queryString = query;
+        state.dispatcherType = type;
         return previous;
     }
 
     /// Restore the state `redirect` returned.
     package(flint.engine.servlet) void restore(DispatchState state)
     {
-        requestURI = state.requestURI;
-        servletPath = state.servletPath;
-        queryString = state.queryString;
-        dispatcherType = state.dispatcherType;
+        state.requestURI = state.requestURI;
+        state.servletPath = state.servletPath;
+        state.queryString = state.queryString;
+        state.dispatcherType = state.dispatcherType;
     }
 
     // ServletRequest
@@ -156,24 +136,24 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
     {
         auto access = enter();
         const index = attributeIndex(name);
-        return index < attributeCount ? attributeSlots[index].value : Any.init;
+        return index < state.attributeCount ? state.attributeSlots[index].value : Any.init;
     }
 
     string[] getAttributeNames()
     {
         auto access = enter();
-        auto names = new string[attributeCount];
-        foreach (index, ref attribute; attributeSlots[0 .. attributeCount])
-            names[index] = attribute.name;
-        return names;
+        auto list = new string[state.attributeCount];
+        foreach (index, ref attribute; state.attributeSlots[0 .. state.attributeCount])
+            list[index] = attribute.name;
+        return list;
     }
 
     private size_t attributeIndex(scope const(char)[] name) const pure nothrow @nogc
     {
-        foreach (index, ref attribute; attributeSlots[0 .. attributeCount])
+        foreach (index, ref attribute; state.attributeSlots[0 .. state.attributeCount])
             if (attribute.name.length == name.length && (attribute.name.ptr is name.ptr || attribute.name == name))
                 return index;
-        return attributeCount;
+        return state.attributeCount;
     }
 
     string getCharacterEncoding()
@@ -187,7 +167,7 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
     void setCharacterEncoding(string env)
     {
         auto access = enter();
-        if (!parametersParsed && !inputUsed)
+        if (!state.parametersParsed && !state.inputUsed)
             state.characterEncoding = env;
     }
 
@@ -203,7 +183,7 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
         auto access = enter();
         const text = getHeader("content-length");
         if (text is null)
-            return content.length != 0 ? cast(long) content.length : -1;
+            return state.content.length != 0 ? cast(long) state.content.length : -1;
         long value;
         foreach (c; text)
         {
@@ -223,8 +203,8 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
     ServletInputStream getInputStream()
     {
         auto access = enter();
-        inputUsed = true;
-        return new BodyInput(content, this);
+        state.inputUsed = true;
+        return new BodyInput(state.content, this);
     }
 
     string getParameter(string name)
@@ -239,10 +219,10 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
     {
         auto access = enter();
         parseParameters();
-        auto names = new string[state.parameterCount];
+        auto list = new string[state.parameterCount];
         foreach (index, ref parameter; state.parameterSlots[0 .. state.parameterCount])
-            names[index] = parameter.name;
-        return names;
+            list[index] = parameter.name;
+        return list;
     }
 
     string[] getParameterValues(string name)
@@ -266,7 +246,7 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
     string getProtocol()
     {
         auto access = enter();
-        return protocol;
+        return state.protocol;
     }
 
     string getScheme()
@@ -343,35 +323,35 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
             return;
         }
         const index = attributeIndex(name);
-        if (index < attributeCount)
+        if (index < state.attributeCount)
         {
-            attributeSlots[index].value = o;
+            state.attributeSlots[index].value = o;
             return;
         }
         // A copy on the GC heap (inline slots cannot grow), by 7/4: the first, eight to fourteen 72-byte slots, fills
         // druntime's 1,024-byte size class, where doubling to sixteen took a 1,360-byte block. A 404's error forward
         // sets about a dozen attributes (R-83).
-        if (attributeCount == attributeSlots.length)
+        if (state.attributeCount == state.attributeSlots.length)
         {
-            const grown = attributeCount * 7 / 4;
+            const grown = state.attributeCount * 7 / 4;
             // The state keeps the first overflow block across exchanges, so a request that outgrows the inline slots
             // usually reuses it instead of allocating.
-            if (attributeSlots.ptr is state.inlineAttributes.ptr && state.attributeBlock.length >= grown)
+            if (state.attributeSlots.ptr is state.inlineAttributes.ptr && state.attributeBlock.length >= grown)
             {
-                state.attributeBlock[0 .. attributeCount] = attributeSlots[];
-                attributeSlots = state.attributeBlock;
+                state.attributeBlock[0 .. state.attributeCount] = state.attributeSlots[];
+                state.attributeSlots = state.attributeBlock;
             }
             else
             {
-                const first = attributeSlots.ptr is state.inlineAttributes.ptr;
+                const first = state.attributeSlots.ptr is state.inlineAttributes.ptr;
                 auto block = new Attribute[grown];
-                block[0 .. attributeCount] = attributeSlots[];
-                attributeSlots = block;
+                block[0 .. state.attributeCount] = state.attributeSlots[];
+                state.attributeSlots = block;
                 if (first && state.attributeBlock.length == 0)
                     state.attributeBlock = block;
             }
         }
-        attributeSlots[attributeCount++] = Attribute(name, o);
+        state.attributeSlots[state.attributeCount++] = Attribute(name, o);
     }
 
     /// `HttpServletRequest.removeAttribute`.
@@ -379,11 +359,11 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
     {
         auto access = enter();
         const index = attributeIndex(name);
-        if (index == attributeCount)
+        if (index == state.attributeCount)
             return;
-        foreach (later; index + 1 .. attributeCount)
-            attributeSlots[later - 1] = attributeSlots[later];
-        attributeSlots[--attributeCount] = Attribute.init;
+        foreach (later; index + 1 .. state.attributeCount)
+            state.attributeSlots[later - 1] = state.attributeSlots[later];
+        state.attributeSlots[--state.attributeCount] = Attribute.init;
     }
 
     /// `HttpServletRequest.isSecure`.
@@ -402,10 +382,10 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
         {
             // Relative to the current servlet path's directory.
             size_t slash;
-            foreach (index, c; servletPath)
+            foreach (index, c; state.servletPath)
                 if (c == '/')
                     slash = index;
-            path = servletPath[0 .. slash + 1] ~ path;
+            path = state.servletPath[0 .. slash + 1] ~ path;
         }
         return host.dispatcher(path);
     }
@@ -451,14 +431,14 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
     DispatcherType getDispatcherType()
     {
         auto access = enter();
-        return dispatcherType;
+        return state.dispatcherType;
     }
 
     string getRequestId()
     {
         auto access = enter();
         // Formatted on demand: most requests never ask for it.
-        return decimal(cast(long) requestNumber);
+        return decimal(cast(long) state.requestNumber);
     }
 
     /// HTTP/1 has no protocol-level request id.
@@ -495,11 +475,11 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
     {
         auto access = enter();
         Cookie[] cookies;
-        foreach (index, name; names)
+        foreach (index, name; state.names)
         {
             if (name != "cookie")
                 continue;
-            foreach (pair; splitter(values[index], ';'))
+            foreach (pair; splitter(state.values[index], ';'))
             {
                 const text = trim(pair);
                 size_t equals = text.length;
@@ -542,9 +522,9 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
     string getHeader(string name)
     {
         auto access = enter();
-        foreach (index, existing; names)
+        foreach (index, existing; state.names)
             if (equalsIgnoreCase(existing, name))
-                return values[index];
+                return state.values[index];
         return null;
     }
 
@@ -552,8 +532,8 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
     void visitHeaderFields(scope void delegate(string name, string value) @safe visit)
     {
         auto access = enter();
-        foreach (index, name; names)
-            visit(name, values[index]);
+        foreach (index, name; state.names)
+            visit(name, state.values[index]);
     }
 
     string[] getHeaders(string name)
@@ -561,15 +541,15 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
         auto access = enter();
         // Counted first, so the result is one exact allocation, or none when the field is absent.
         size_t count;
-        foreach (existing; names)
+        foreach (existing; state.names)
             count += equalsIgnoreCase(existing, name);
         if (count == 0)
             return null;
         auto found = new string[count];
         size_t at;
-        foreach (index, existing; names)
+        foreach (index, existing; state.names)
             if (equalsIgnoreCase(existing, name))
-                found[at++] = values[index];
+                found[at++] = state.values[index];
         return found;
     }
 
@@ -577,7 +557,7 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
     {
         auto access = enter();
         string[] distinct;
-        outer: foreach (name; names)
+        outer: foreach (name; state.names)
         {
             foreach (seen; distinct)
                 if (seen == name)
@@ -613,7 +593,7 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
     string getMethod()
     {
         auto access = enter();
-        return method;
+        return state.method;
     }
 
     /// The servlet mapped at `/` has no path info.
@@ -632,13 +612,13 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
     string getContextPath()
     {
         auto access = enter();
-        return contextPath;
+        return state.contextPath;
     }
 
     string getQueryString()
     {
         auto access = enter();
-        return queryString;
+        return state.queryString;
     }
 
     string getRemoteUser()
@@ -663,7 +643,7 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
     string getRequestURI()
     {
         auto access = enter();
-        return requestURI;
+        return state.requestURI;
     }
 
     string getRequestURL()
@@ -672,14 +652,14 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
         const port = getServerPort();
         const name = getServerName();
         if (port == 80)
-            return "http://" ~ name ~ requestURI;
-        return httpURL(name, port, requestURI);
+            return "http://" ~ name ~ state.requestURI;
+        return httpURL(name, port, state.requestURI);
     }
 
     string getServletPath()
     {
         auto access = enter();
-        return servletPath;
+        return state.servletPath;
     }
 
     /// `HttpServletRequest.isRequestedSessionIdValid`.
@@ -691,15 +671,15 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
 
     private void parseParameters()
     {
-        if (parametersParsed)
+        if (state.parametersParsed)
             return;
-        parametersParsed = true;
-        addParameters(queryString);
-        if (method == "POST" && !inputUsed && content.length != 0)
+        state.parametersParsed = true;
+        addParameters(state.queryString);
+        if (state.method == "POST" && !state.inputUsed && state.content.length != 0)
         {
             const type = getContentType();
             if (type !is null && equalsIgnoreCase(trim(splitter(type, ';').front), "application/x-www-form-urlencoded"))
-                addParameters(cast(string) content);
+                addParameters(cast(string) state.content);
         }
     }
 
@@ -1234,6 +1214,26 @@ package(flint.engine.servlet) final class RequestState : PooledState
     /// The first attribute overflow block (fourteen slots, a 1,024-byte block), kept across exchanges.
     Attribute[] attributeBlock;
     Parameter[4] inlineParameters; ///
+
+    // Everything one exchange's request says or changes, behind its façade (a handle of a few words).
+    string method; ///
+    string requestURI; /// as a forward or error dispatch reports it
+    string queryString; ///
+    string protocol; ///
+    string servletPath; ///
+    string contextPath; ///
+    /// The field names and values, in `inlineFields` when they fit (eight, as Tomcat's MimeHeaders starts with).
+    string[] names;
+    string[] values; /// ditto
+    immutable(ubyte)[] content; /// the body, frozen with the head
+    ulong requestNumber; ///
+    DispatcherType dispatcherType = DispatcherType.REQUEST; ///
+    bool parametersParsed; ///
+    bool inputUsed; ///
+    /// A request holds a handful of attributes: slots in insertion order (getAttributeNames' order), in
+    /// `inlineAttributes` until they outgrow them, then in `attributeBlock` or the GC heap.
+    Attribute[] attributeSlots;
+    size_t attributeCount; ///
     /// The parameters in the order they arrive (Tomcat's LinkedHashMap order): in `inlineParameters` until they
     /// outgrow it. They are found by a scan while there are few and through `parameterIndex` once there are many,
     /// so a request with thousands of names stays linear.
@@ -1245,6 +1245,7 @@ package(flint.engine.servlet) final class RequestState : PooledState
 
     this() nothrow
     {
+        attributeSlots = inlineAttributes[];
         parameterSlots = inlineParameters[];
     }
 
@@ -1257,6 +1258,14 @@ package(flint.engine.servlet) final class RequestState : PooledState
         else
             attributeBlock[] = Attribute.init;
         inlineParameters[] = Parameter.init;
+        method = requestURI = queryString = protocol = servletPath = contextPath = null;
+        names = values = null;
+        content = null;
+        requestNumber = 0;
+        dispatcherType = DispatcherType.REQUEST;
+        parametersParsed = inputUsed = false;
+        attributeSlots = inlineAttributes[];
+        attributeCount = 0;
         parameterSlots = inlineParameters[];
         parameterCount = 0;
         parameterIndex = null;
@@ -1264,5 +1273,5 @@ package(flint.engine.servlet) final class RequestState : PooledState
     }
 }
 
-// The façade fits the 256-byte size class; the storage is pooled (coordination/notes/exchange-pool.md).
-static assert(__traits(classInstanceSize, ServletEngineRequest) <= 256);
+// The façade is a handle in the 64-byte size class; the storage is pooled (coordination/notes/exchange-pool.md).
+static assert(__traits(classInstanceSize, ServletEngineRequest) <= 64);
