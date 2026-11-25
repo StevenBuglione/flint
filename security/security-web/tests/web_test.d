@@ -187,3 +187,32 @@ unittest
     assert(!new FilterChainProxy(new DefaultSecurityFilterChain(AnyRequestMatcher.INSTANCE(),
             filters)).fastEffect(false, effect));
 }
+
+@("AnonymousAuthenticationFilter defers the anonymous token to the context's first read, as Spring Security 6 does")
+unittest
+{
+    import flint.security.authentication : AnonymousAuthenticationToken, UsernamePasswordAuthenticationToken;
+    import flint.security.core.context : SecurityContextImpl;
+
+    SecurityContextHolder.clearContext();
+    auto filter = new AnonymousAuthenticationFilter("key");
+    auto chain = new Endpoint;
+    // The chain holds a deferred context: present, made on the first read with the token, the same one after.
+    filter.doFilter(new MockHttpServletRequest("GET", "/"), new MockHttpServletResponse, chain);
+    assert(SecurityContextHolder.hasContext());
+    auto context = SecurityContextHolder.getContext();
+    auto token = cast(AnonymousAuthenticationToken) context.getAuthentication();
+    assert(token !is null && token.getPrincipal().get!string == "anonymousUser");
+    assert(SecurityContextHolder.getContext() is context);
+    SecurityContextHolder.clearContext();
+    assert(!SecurityContextHolder.hasContext());
+    // A context already holding an authentication keeps it; an empty one gets the token at once.
+    auto user = new UsernamePasswordAuthenticationToken(Any.of("user"), Any.of("secret"));
+    SecurityContextHolder.setContext(new SecurityContextImpl(user));
+    filter.doFilter(new MockHttpServletRequest("GET", "/"), new MockHttpServletResponse, chain);
+    assert(SecurityContextHolder.getContext().getAuthentication() is user);
+    SecurityContextHolder.setContext(new SecurityContextImpl);
+    filter.doFilter(new MockHttpServletRequest("GET", "/"), new MockHttpServletResponse, chain);
+    assert(cast(AnonymousAuthenticationToken) SecurityContextHolder.getContext().getAuthentication() !is null);
+    SecurityContextHolder.clearContext();
+}

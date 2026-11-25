@@ -96,7 +96,67 @@ interface SecurityContextHolderStrategy
     SecurityContext createEmptyContext();
 }
 
+/++
+Flint: a context the holder creates only when it is first read (Spring Security 6's deferred context,
+`SecurityContextHolderStrategy.setDeferredContext(Supplier)`). The holder stores this placeholder, and `getContext`
+replaces it with `materialize()`'s context on the first read, so a request that never reads its context never
+builds one (`AnonymousAuthenticationFilter`'s anonymous token). The placeholder itself never leaves the holder; it
+holds no per-request state, so one instance may be stored for every request.
++/
+abstract class DeferredSecurityContext : SecurityContext
+{
+    /// The context to use from the first read on (Spring's `Supplier.get`).
+    abstract SecurityContext materialize();
+
+    /// Never called: the holder materializes the context before anyone reads it.
+    final Authentication getAuthentication()
+    {
+        throw new IllegalStateException("a deferred security context is read through SecurityContextHolder");
+    }
+
+    /// Never called: the holder materializes the context before anyone changes it.
+    final void setAuthentication(Authentication)
+    {
+        throw new IllegalStateException("a deferred security context is changed through SecurityContextHolder");
+    }
+}
+
 private shared FiberLocal!SecurityContext contextHolder;
+
+// The fiber's context, materializing a deferred one; created empty and stored when absent.
+private SecurityContext currentContext()
+{
+    auto context = contextHolder.get();
+    if (auto deferred = cast(DeferredSecurityContext) context)
+    {
+        context = deferred.materialize();
+        if (context is null)
+            context = new SecurityContextImpl;
+        storeContext(context);
+        return context;
+    }
+    if (context is null)
+    {
+        context = new SecurityContextImpl;
+        storeContext(context);
+    }
+    return context;
+}
+
+private void storeContext(SecurityContext context)
+{
+    const stored = contextHolder.set(context);
+    if (stored.code != 0)
+        throw new IllegalStateException("Could not store the security context: " ~ stored.message);
+}
+
+private void replaceContext(SecurityContext context)
+{
+    if (context is null)
+        throw new imported!"flint.java.lang".IllegalArgumentException(
+                "Only non-null SecurityContext instances are permitted");
+    storeContext(context);
+}
 
 /// The fiber-local strategy (Java's `ThreadLocalSecurityContextHolderStrategy`).
 final class FiberLocalSecurityContextHolderStrategy : SecurityContextHolderStrategy
@@ -107,25 +167,23 @@ final class FiberLocalSecurityContextHolderStrategy : SecurityContextHolderStrat
         contextHolder.remove();
     }
 
-    /// The fiber's context, created and stored when absent.
+    /// The fiber's context, created and stored when absent; a deferred one is materialized on this first read.
     SecurityContext getContext()
     {
-        auto context = contextHolder.get();
-        if (context is null)
-        {
-            context = createEmptyContext();
-            store(context);
-        }
-        return context;
+        return currentContext();
     }
 
     /// Store `context` for the fiber.
     void setContext(SecurityContext context)
     {
-        if (context is null)
-            throw new imported!"flint.java.lang".IllegalArgumentException(
-                    "Only non-null SecurityContext instances are permitted");
-        store(context);
+        replaceContext(context);
+    }
+
+    /// Flint: store `deferred` for the fiber, materialized on the first `getContext` (Spring's
+    /// `setDeferredContext`).
+    void setDeferredContext(DeferredSecurityContext deferred)
+    {
+        replaceContext(deferred);
     }
 
     /// A new `SecurityContextImpl`.
@@ -133,40 +191,47 @@ final class FiberLocalSecurityContextHolderStrategy : SecurityContextHolderStrat
     {
         return new SecurityContextImpl;
     }
-
-    private static void store(SecurityContext context)
-    {
-        const stored = contextHolder.set(context);
-        if (stored.code != 0)
-            throw new IllegalStateException("Could not store the security context: " ~ stored.message);
-    }
 }
 
 /// Associates the security context with the current fiber (Spring Security's `SecurityContextHolder`).
 struct SecurityContextHolder
 {
+    // The static methods use the fiber-local storage directly, without a strategy object per call.
+
     /// Forget the current context.
     static void clearContext()
     {
-        getContextHolderStrategy().clearContext();
+        contextHolder.remove();
     }
 
-    /// The current context, never null.
+    /// The current context, never null; a deferred one is materialized on this first read.
     static SecurityContext getContext()
     {
-        return getContextHolderStrategy().getContext();
+        return currentContext();
     }
 
     /// Replace the current context.
     static void setContext(SecurityContext context)
     {
-        getContextHolderStrategy().setContext(context);
+        replaceContext(context);
+    }
+
+    /// Flint: a context materialized on the first `getContext` (Spring's `setDeferredContext`).
+    static void setDeferredContext(DeferredSecurityContext deferred)
+    {
+        replaceContext(deferred);
+    }
+
+    /// Flint: whether the fiber holds a context (deferred or not), without creating or materializing one.
+    static bool hasContext()
+    {
+        return contextHolder.get() !is null;
     }
 
     /// A new empty context.
     static SecurityContext createEmptyContext()
     {
-        return getContextHolderStrategy().createEmptyContext();
+        return new SecurityContextImpl;
     }
 
     /// The fiber-local strategy.
