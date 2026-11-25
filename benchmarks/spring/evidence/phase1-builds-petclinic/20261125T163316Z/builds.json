@@ -1,0 +1,4199 @@
+{
+  "schema": "flint.spring-builds/1",
+  "mode": "production",
+  "status": "passed",
+  "commit": "be86e77f76512c680a004f9389889d6023e3ecab",
+  "host": {
+    "platform": "linux",
+    "cpus": 32,
+    "load_average_at_start": 2.2216796875,
+    "effective_cpus": {
+      "flint": 32,
+      "go": 32,
+      "cpuset": "0-31",
+      "gomaxprocs": null
+    }
+  },
+  "trials_per_series": 9,
+  "comparators": {
+    "petclinic-rest": {
+      "directory": "benchmarks/spring/go/petclinic-rest",
+      "commit": "8d29301ae6f09497a22f137f6d5629fa6c2e1290",
+      "sha256": "3e834bcc1298e765de0ce0b120640074a53aab5f964f903203ca1711b9636623",
+      "go": "1.27.4",
+      "wire": "parity",
+      "registered": "2026-11-25",
+      "measured": false,
+      "census_sha256": "a42e2a90bf681b765d6c5f49df3823833f5db09ce88cc92f2c40d3e5bac9214f",
+      "parity_sha256": "79b2d8810b7f39807840513304eb0364e67686988097c42d8571a1e09357a713",
+      "changed_by": "ADR-033"
+    }
+  },
+  "missing_flint": [],
+  "apps": {
+    "petclinic-rest": {
+      "go": {
+        "go_std_cold_seconds": [
+          2.084114175,
+          1.937874993,
+          1.967331226,
+          2.0075101,
+          2.064840567,
+          2.060571682,
+          2.048894588,
+          1.884746844,
+          2.00802565
+        ],
+        "go_std_incremental_seconds": [
+          0.335972239,
+          0.32619668,
+          0.33723603,
+          0.333902129,
+          0.335627652,
+          0.341293922,
+          0.32364896,
+          0.330247912,
+          0.330681076
+        ],
+        "go_deps_cold_seconds": [
+          0.331989824,
+          0.322542483,
+          0.333003905,
+          0.319565448,
+          0.319453513,
+          0.327541108,
+          0.328114216,
+          0.323534584,
+          0.330642488
+        ],
+        "go_scratch_seconds": [
+          4.072629945,
+          4.02961514,
+          4.081676702,
+          4.042380834,
+          4.054209073,
+          4.026112558,
+          4.067339343,
+          4.094660378,
+          4.076283294
+        ],
+        "third_party_packages": [
+          "github.com/jackc/pgx/v5/internal/pgio",
+          "github.com/jackc/pgx/v5/internal/pgdatetime",
+          "github.com/jackc/pgx/v5/internal/sanitize",
+          "github.com/jackc/pgpassfile",
+          "github.com/jackc/pgservicefile",
+          "github.com/jackc/pgx/v5/internal/iobufpool",
+          "github.com/jackc/pgx/v5/pgconn/ctxwatch",
+          "github.com/jackc/pgx/v5/pgconn/internal/bgreader",
+          "github.com/jackc/pgx/v5/pgproto3",
+          "github.com/jackc/pgx/v5/pgtype",
+          "golang.org/x/text/internal/tag",
+          "golang.org/x/text/internal/language",
+          "golang.org/x/text/internal/language/compact",
+          "golang.org/x/text/language",
+          "golang.org/x/text/internal",
+          "golang.org/x/text/transform",
+          "golang.org/x/text/unicode/norm",
+          "golang.org/x/text/cases",
+          "golang.org/x/text/runes",
+          "golang.org/x/text/unicode/bidi",
+          "golang.org/x/text/secure/bidirule",
+          "golang.org/x/text/width",
+          "golang.org/x/text/secure/precis",
+          "github.com/jackc/pgx/v5/pgconn",
+          "github.com/jackc/pgx/v5/internal/stmtcache",
+          "github.com/jackc/pgx/v5",
+          "github.com/jackc/puddle/v2/internal/genstack",
+          "golang.org/x/sync/semaphore",
+          "github.com/jackc/puddle/v2",
+          "github.com/jackc/pgx/v5/pgxpool",
+          "github.com/jackc/pgx/v5/stdlib"
+        ],
+        "binary_bytes": 11474936
+      },
+      "flint": {
+        "flint_cached_cold_seconds": [
+          0.595336384,
+          0.381615521,
+          0.38602019,
+          0.404721781,
+          0.385928333,
+          0.421400511,
+          0.388550301,
+          0.387882537,
+          0.408128538
+        ],
+        "flint_cached_incremental_seconds": [
+          0.181364173,
+          0.178241256,
+          0.17579659,
+          0.180267746,
+          0.18042367,
+          0.175224153,
+          0.185180815,
+          0.183415664,
+          0.179892421
+        ],
+        "flint_cached_cold_digests_cleared_seconds": [
+          0.494353669,
+          0.495201096,
+          0.49943431,
+          0.494638978,
+          0.487729227,
+          0.506185968,
+          0.502297399,
+          0.49636096,
+          0.477875302
+        ],
+        "flint_scratch_seconds": [
+          3.239946632,
+          3.273277192,
+          1.931728363,
+          1.921648757,
+          1.919854327,
+          2.149112524,
+          1.978768581,
+          1.913839612,
+          1.909541478
+        ],
+        "flint_static_cold_seconds": [
+          0.743687244,
+          0.752802029,
+          0.750586175,
+          0.742907084,
+          0.746323571,
+          0.760664762,
+          0.748643351,
+          0.751457891,
+          0.729390361
+        ],
+        "flint_static_incremental_seconds": [
+          0.428974436,
+          0.230586076,
+          0.236144189,
+          0.239252828,
+          0.232877887,
+          0.233768991,
+          0.241432924,
+          0.230743299,
+          0.228263396
+        ],
+        "flint_debug_cached_cold_seconds": [
+          0.786354351,
+          0.413410643,
+          0.411268075,
+          0.410489776,
+          0.405648635,
+          0.403812676,
+          0.402387411,
+          0.401268476,
+          0.406825999
+        ],
+        "flint_debug_cached_incremental_seconds": [
+          0.194387356,
+          0.201310276,
+          0.194176564,
+          0.199217568,
+          0.194822229,
+          0.193940413,
+          0.193667544,
+          0.195471903,
+          0.197388999
+        ],
+        "flint_debug_static_cold_seconds": [
+          0.795807343,
+          0.792080098,
+          0.773677335,
+          0.780887644,
+          0.766856351,
+          0.768262606,
+          0.779319445,
+          0.814907149,
+          0.753848338
+        ],
+        "flint_debug_static_incremental_seconds": [
+          0.461240769,
+          0.247848853,
+          0.24331381,
+          0.24689597,
+          0.246861161,
+          0.24459105,
+          0.245994605,
+          0.245282293,
+          0.256573773
+        ],
+        "flint_debug_scratch_seconds": [
+          4.28121075,
+          2.306200663,
+          2.109095783,
+          2.087929977,
+          2.046534982,
+          2.021064904,
+          2.070238698,
+          2.035250472,
+          2.046282301
+        ],
+        "flint_prime_seconds": {
+          "cached": 2.421870806,
+          "cached_static": 0.893218567,
+          "debug_cached": 2.353672633,
+          "debug_static": 0.9690999
+        },
+        "flint_first_build_seconds": 2.421870806,
+        "dev_linker": "mold",
+        "flint_cache": {
+          "platform_cache_primed": true,
+          "cold_trials": "a fresh hard-link clone of the primed cache without projects, deleted after the trial",
+          "platform_cache_files": 266,
+          "digest_log": "kept (a copy per trial), its entries under the port pruned; absent in the digests-cleared context series",
+          "scratch_trials": "an empty FLINT_CACHE: no platform archives, no derived AOT state; zero AOT cache hits asserted",
+          "scratch_boundary": {
+            "flint_prebuilt": [
+              "the pinned C libraries (policy/native-lock.json, the .native install): brotli 1.2.1, crypt-blowfish 1.3, curl 8.23.0, hiredis 1.5.1, libarchive 3.8.11, libpq 18.7, librdkafka 2.16.0, libsodium 1.0.22, liburing 2.15, libyaml 0.2.5, llhttp 9.4.4, nghttp2 1.71.0, openssl 3.5.9, protobuf-c 1.5.2, protoc 30.2, sdl3 3.4.20, sqlite 3.54.1, stb snapshot-2026-11-21, utf8proc 2.12.0, wamr 2.4.6, wasmtime 51.0.0, webkitgtk webkit2gtk-4.1 >= 2.40.0 with gtk+-3.0 >= 3.24.0, wkwebview WebKit, AppKit and Foundation from the macOS SDK (deployment target 13.0), webview 0.12.0, wgpu-native 29.0.1.1, zlib 1.4, zstd 1.5.7",
+              "the installed druntime and Phobos (the D toolchain's own runtime libraries)",
+              "the compilers (DMD, LDC) and the linker"
+            ],
+            "flint_rebuilt": [
+              "every Flint platform module and the application (--no-platform-cache), the Flint AOT extraction and generation from empty derived state; zero cache hits asserted"
+            ],
+            "go_prebuilt": [
+              "the Go toolchain (compiler and linker)"
+            ],
+            "go_rebuilt": [
+              "go build -a with an empty GOCACHE: every package, the standard library and third-party modules included"
+            ]
+          },
+          "port_entries_pruned": 0,
+          "aot_extracted_and_shared_per_cold_trial": {
+            "flint_cached_cold_seconds": [
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ]
+            ],
+            "flint_cached_cold_digests_cleared_seconds": [
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ]
+            ],
+            "flint_scratch_seconds": [
+              [
+                59,
+                0
+              ],
+              [
+                59,
+                0
+              ],
+              [
+                59,
+                0
+              ],
+              [
+                59,
+                0
+              ],
+              [
+                59,
+                0
+              ],
+              [
+                59,
+                0
+              ],
+              [
+                59,
+                0
+              ],
+              [
+                59,
+                0
+              ],
+              [
+                59,
+                0
+              ]
+            ],
+            "flint_static_cold_seconds": [
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ]
+            ],
+            "flint_debug_cached_cold_seconds": [
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ]
+            ],
+            "flint_debug_static_cold_seconds": [
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ],
+              [
+                15,
+                44
+              ]
+            ],
+            "flint_debug_scratch_seconds": [
+              [
+                59,
+                0
+              ],
+              [
+                59,
+                0
+              ],
+              [
+                59,
+                0
+              ],
+              [
+                59,
+                0
+              ],
+              [
+                59,
+                0
+              ],
+              [
+                59,
+                0
+              ],
+              [
+                59,
+                0
+              ],
+              [
+                59,
+                0
+              ],
+              [
+                59,
+                0
+              ]
+            ]
+          }
+        },
+        "O3": {
+          "binary_bytes": 10540504,
+          "unstripped_bytes": 14448872,
+          "strip": "GNU strip (GNU Binutils for Ubuntu) 2.42",
+          "sha256": "b0ba3c9dd275fb78c6db62c76f040316dbccf42cd4504a24e03fe11100633c63"
+        },
+        "Oz": {
+          "binary_bytes": 10205464,
+          "unstripped_bytes": 14204360,
+          "strip": "GNU strip (GNU Binutils for Ubuntu) 2.42",
+          "sha256": "07294c35fa38756a3a7dc2e57eea377936fe9c473dd68622a4c658c6e767a165"
+        },
+        "phase_medians_ms": {
+          "flint_cached_cold_seconds": {
+            "total": 380,
+            "flint": 23,
+            "aot": 101,
+            "plan": 0,
+            "compile": 226,
+            "link": 32
+          },
+          "flint_cached_incremental_seconds": {
+            "total": 175,
+            "flint": 24,
+            "aot": 3,
+            "plan": 0,
+            "compile": 112,
+            "link": 34
+          },
+          "flint_cached_cold_digests_cleared_seconds": {
+            "total": 489,
+            "flint": 127,
+            "aot": 98,
+            "plan": 0,
+            "compile": 224,
+            "link": 35
+          },
+          "flint_scratch_seconds": {
+            "total": 1924,
+            "flint": 55,
+            "aot": 392,
+            "plan": 265,
+            "compile": 624,
+            "link": 593
+          },
+          "flint_static_cold_seconds": {
+            "total": 739,
+            "flint": 42,
+            "aot": 97,
+            "plan": 68,
+            "compile": 222,
+            "link": 308
+          },
+          "flint_static_incremental_seconds": {
+            "total": 229,
+            "flint": 31,
+            "aot": 3,
+            "plan": 0,
+            "compile": 112,
+            "link": 80
+          },
+          "flint_debug_cached_cold_seconds": {
+            "total": 399,
+            "flint": 23,
+            "aot": 99,
+            "plan": 0,
+            "compile": 239,
+            "link": 38
+          },
+          "flint_debug_cached_incremental_seconds": {
+            "total": 188,
+            "flint": 24,
+            "aot": 3,
+            "plan": 0,
+            "compile": 123,
+            "link": 39
+          },
+          "flint_debug_static_cold_seconds": {
+            "total": 770,
+            "flint": 43,
+            "aot": 97,
+            "plan": 68,
+            "compile": 234,
+            "link": 324
+          },
+          "flint_debug_static_incremental_seconds": {
+            "total": 242,
+            "flint": 31,
+            "aot": 3,
+            "plan": 0,
+            "compile": 121,
+            "link": 86
+          },
+          "flint_debug_scratch_seconds": {
+            "total": 2065,
+            "flint": 56,
+            "aot": 396,
+            "plan": 269,
+            "compile": 674,
+            "link": 650
+          }
+        },
+        "phase_budget_ms": {
+          "total": 100,
+          "flint": 20,
+          "compile": 60,
+          "link": 20
+        },
+        "phase_trials_ms": {
+          "flint_cached_cold_seconds": [
+            {
+              "total": 586,
+              "flint": 25,
+              "aot": 100,
+              "plan": 0,
+              "compile": 431,
+              "link": 30
+            },
+            {
+              "total": 375,
+              "flint": 23,
+              "aot": 96,
+              "plan": 0,
+              "compile": 219,
+              "link": 37
+            },
+            {
+              "total": 376,
+              "flint": 21,
+              "aot": 101,
+              "plan": 0,
+              "compile": 223,
+              "link": 31
+            },
+            {
+              "total": 398,
+              "flint": 23,
+              "aot": 101,
+              "plan": 0,
+              "compile": 235,
+              "link": 39
+            },
+            {
+              "total": 377,
+              "flint": 24,
+              "aot": 96,
+              "plan": 0,
+              "compile": 225,
+              "link": 32
+            },
+            {
+              "total": 411,
+              "flint": 23,
+              "aot": 101,
+              "plan": 0,
+              "compile": 253,
+              "link": 34
+            },
+            {
+              "total": 379,
+              "flint": 26,
+              "aot": 101,
+              "plan": 0,
+              "compile": 221,
+              "link": 31
+            },
+            {
+              "total": 380,
+              "flint": 23,
+              "aot": 95,
+              "plan": 0,
+              "compile": 226,
+              "link": 36
+            },
+            {
+              "total": 399,
+              "flint": 24,
+              "aot": 107,
+              "plan": 0,
+              "compile": 237,
+              "link": 31
+            }
+          ],
+          "flint_cached_incremental_seconds": [
+            {
+              "total": 173,
+              "flint": 24,
+              "aot": 3,
+              "plan": 0,
+              "compile": 112,
+              "link": 34
+            },
+            {
+              "total": 172,
+              "flint": 23,
+              "aot": 3,
+              "plan": 0,
+              "compile": 112,
+              "link": 34
+            },
+            {
+              "total": 171,
+              "flint": 24,
+              "aot": 3,
+              "plan": 0,
+              "compile": 112,
+              "link": 32
+            },
+            {
+              "total": 176,
+              "flint": 24,
+              "aot": 3,
+              "plan": 0,
+              "compile": 114,
+              "link": 35
+            },
+            {
+              "total": 175,
+              "flint": 23,
+              "aot": 3,
+              "plan": 0,
+              "compile": 114,
+              "link": 35
+            },
+            {
+              "total": 171,
+              "flint": 25,
+              "aot": 3,
+              "plan": 0,
+              "compile": 110,
+              "link": 33
+            },
+            {
+              "total": 178,
+              "flint": 24,
+              "aot": 3,
+              "plan": 0,
+              "compile": 116,
+              "link": 35
+            },
+            {
+              "total": 175,
+              "flint": 24,
+              "aot": 3,
+              "plan": 0,
+              "compile": 111,
+              "link": 37
+            },
+            {
+              "total": 175,
+              "flint": 25,
+              "aot": 3,
+              "plan": 0,
+              "compile": 113,
+              "link": 34
+            }
+          ],
+          "flint_cached_cold_digests_cleared_seconds": [
+            {
+              "total": 489,
+              "flint": 127,
+              "aot": 99,
+              "plan": 0,
+              "compile": 220,
+              "link": 43
+            },
+            {
+              "total": 484,
+              "flint": 125,
+              "aot": 98,
+              "plan": 0,
+              "compile": 224,
+              "link": 37
+            },
+            {
+              "total": 492,
+              "flint": 127,
+              "aot": 101,
+              "plan": 0,
+              "compile": 229,
+              "link": 35
+            },
+            {
+              "total": 484,
+              "flint": 128,
+              "aot": 103,
+              "plan": 0,
+              "compile": 219,
+              "link": 34
+            },
+            {
+              "total": 481,
+              "flint": 130,
+              "aot": 98,
+              "plan": 0,
+              "compile": 218,
+              "link": 35
+            },
+            {
+              "total": 498,
+              "flint": 126,
+              "aot": 97,
+              "plan": 0,
+              "compile": 238,
+              "link": 37
+            },
+            {
+              "total": 490,
+              "flint": 128,
+              "aot": 99,
+              "plan": 0,
+              "compile": 226,
+              "link": 37
+            },
+            {
+              "total": 489,
+              "flint": 126,
+              "aot": 95,
+              "plan": 0,
+              "compile": 234,
+              "link": 34
+            },
+            {
+              "total": 472,
+              "flint": 129,
+              "aot": 95,
+              "plan": 0,
+              "compile": 213,
+              "link": 35
+            }
+          ],
+          "flint_scratch_seconds": [
+            {
+              "total": 3230,
+              "flint": 54,
+              "aot": 460,
+              "plan": 265,
+              "compile": 685,
+              "link": 1766
+            },
+            {
+              "total": 3268,
+              "flint": 53,
+              "aot": 390,
+              "plan": 266,
+              "compile": 627,
+              "link": 1932
+            },
+            {
+              "total": 1924,
+              "flint": 54,
+              "aot": 411,
+              "plan": 265,
+              "compile": 613,
+              "link": 581
+            },
+            {
+              "total": 1915,
+              "flint": 54,
+              "aot": 402,
+              "plan": 272,
+              "compile": 612,
+              "link": 575
+            },
+            {
+              "total": 1915,
+              "flint": 58,
+              "aot": 389,
+              "plan": 262,
+              "compile": 633,
+              "link": 573
+            },
+            {
+              "total": 2144,
+              "flint": 55,
+              "aot": 392,
+              "plan": 269,
+              "compile": 662,
+              "link": 766
+            },
+            {
+              "total": 1971,
+              "flint": 55,
+              "aot": 388,
+              "plan": 262,
+              "compile": 624,
+              "link": 642
+            },
+            {
+              "total": 1908,
+              "flint": 57,
+              "aot": 399,
+              "plan": 256,
+              "compile": 603,
+              "link": 593
+            },
+            {
+              "total": 1904,
+              "flint": 55,
+              "aot": 392,
+              "plan": 267,
+              "compile": 621,
+              "link": 569
+            }
+          ],
+          "flint_static_cold_seconds": [
+            {
+              "total": 734,
+              "flint": 42,
+              "aot": 96,
+              "plan": 68,
+              "compile": 225,
+              "link": 303
+            },
+            {
+              "total": 745,
+              "flint": 43,
+              "aot": 99,
+              "plan": 68,
+              "compile": 225,
+              "link": 310
+            },
+            {
+              "total": 743,
+              "flint": 45,
+              "aot": 97,
+              "plan": 71,
+              "compile": 218,
+              "link": 312
+            },
+            {
+              "total": 734,
+              "flint": 42,
+              "aot": 98,
+              "plan": 70,
+              "compile": 219,
+              "link": 305
+            },
+            {
+              "total": 739,
+              "flint": 43,
+              "aot": 98,
+              "plan": 69,
+              "compile": 230,
+              "link": 299
+            },
+            {
+              "total": 753,
+              "flint": 41,
+              "aot": 100,
+              "plan": 69,
+              "compile": 238,
+              "link": 305
+            },
+            {
+              "total": 737,
+              "flint": 43,
+              "aot": 97,
+              "plan": 67,
+              "compile": 222,
+              "link": 308
+            },
+            {
+              "total": 743,
+              "flint": 42,
+              "aot": 96,
+              "plan": 65,
+              "compile": 222,
+              "link": 318
+            },
+            {
+              "total": 722,
+              "flint": 42,
+              "aot": 96,
+              "plan": 68,
+              "compile": 208,
+              "link": 308
+            }
+          ],
+          "flint_static_incremental_seconds": [
+            {
+              "total": 423,
+              "flint": 31,
+              "aot": 3,
+              "plan": 0,
+              "compile": 309,
+              "link": 80
+            },
+            {
+              "total": 225,
+              "flint": 31,
+              "aot": 3,
+              "plan": 0,
+              "compile": 113,
+              "link": 78
+            },
+            {
+              "total": 231,
+              "flint": 33,
+              "aot": 3,
+              "plan": 0,
+              "compile": 112,
+              "link": 83
+            },
+            {
+              "total": 234,
+              "flint": 31,
+              "aot": 3,
+              "plan": 0,
+              "compile": 112,
+              "link": 88
+            },
+            {
+              "total": 226,
+              "flint": 32,
+              "aot": 3,
+              "plan": 0,
+              "compile": 109,
+              "link": 82
+            },
+            {
+              "total": 229,
+              "flint": 30,
+              "aot": 3,
+              "plan": 0,
+              "compile": 116,
+              "link": 80
+            },
+            {
+              "total": 236,
+              "flint": 35,
+              "aot": 3,
+              "plan": 0,
+              "compile": 117,
+              "link": 81
+            },
+            {
+              "total": 223,
+              "flint": 32,
+              "aot": 3,
+              "plan": 0,
+              "compile": 111,
+              "link": 77
+            },
+            {
+              "total": 221,
+              "flint": 31,
+              "aot": 3,
+              "plan": 0,
+              "compile": 109,
+              "link": 78
+            }
+          ],
+          "flint_debug_cached_cold_seconds": [
+            {
+              "total": 778,
+              "flint": 22,
+              "aot": 290,
+              "plan": 0,
+              "compile": 429,
+              "link": 37
+            },
+            {
+              "total": 404,
+              "flint": 23,
+              "aot": 96,
+              "plan": 0,
+              "compile": 241,
+              "link": 44
+            },
+            {
+              "total": 402,
+              "flint": 23,
+              "aot": 97,
+              "plan": 0,
+              "compile": 239,
+              "link": 43
+            },
+            {
+              "total": 402,
+              "flint": 24,
+              "aot": 102,
+              "plan": 0,
+              "compile": 244,
+              "link": 32
+            },
+            {
+              "total": 396,
+              "flint": 23,
+              "aot": 95,
+              "plan": 0,
+              "compile": 238,
+              "link": 40
+            },
+            {
+              "total": 394,
+              "flint": 24,
+              "aot": 99,
+              "plan": 0,
+              "compile": 236,
+              "link": 35
+            },
+            {
+              "total": 394,
+              "flint": 22,
+              "aot": 102,
+              "plan": 0,
+              "compile": 237,
+              "link": 33
+            },
+            {
+              "total": 394,
+              "flint": 21,
+              "aot": 95,
+              "plan": 0,
+              "compile": 234,
+              "link": 44
+            },
+            {
+              "total": 399,
+              "flint": 23,
+              "aot": 99,
+              "plan": 0,
+              "compile": 239,
+              "link": 38
+            }
+          ],
+          "flint_debug_cached_incremental_seconds": [
+            {
+              "total": 188,
+              "flint": 23,
+              "aot": 3,
+              "plan": 0,
+              "compile": 123,
+              "link": 39
+            },
+            {
+              "total": 196,
+              "flint": 24,
+              "aot": 3,
+              "plan": 0,
+              "compile": 124,
+              "link": 45
+            },
+            {
+              "total": 189,
+              "flint": 24,
+              "aot": 3,
+              "plan": 0,
+              "compile": 121,
+              "link": 41
+            },
+            {
+              "total": 192,
+              "flint": 24,
+              "aot": 3,
+              "plan": 0,
+              "compile": 130,
+              "link": 35
+            },
+            {
+              "total": 187,
+              "flint": 24,
+              "aot": 3,
+              "plan": 0,
+              "compile": 124,
+              "link": 36
+            },
+            {
+              "total": 186,
+              "flint": 24,
+              "aot": 3,
+              "plan": 0,
+              "compile": 123,
+              "link": 36
+            },
+            {
+              "total": 188,
+              "flint": 25,
+              "aot": 3,
+              "plan": 0,
+              "compile": 124,
+              "link": 36
+            },
+            {
+              "total": 188,
+              "flint": 24,
+              "aot": 3,
+              "plan": 0,
+              "compile": 118,
+              "link": 43
+            },
+            {
+              "total": 192,
+              "flint": 23,
+              "aot": 3,
+              "plan": 0,
+              "compile": 121,
+              "link": 45
+            }
+          ],
+          "flint_debug_static_cold_seconds": [
+            {
+              "total": 787,
+              "flint": 43,
+              "aot": 94,
+              "plan": 67,
+              "compile": 234,
+              "link": 349
+            },
+            {
+              "total": 784,
+              "flint": 44,
+              "aot": 101,
+              "plan": 69,
+              "compile": 241,
+              "link": 329
+            },
+            {
+              "total": 765,
+              "flint": 44,
+              "aot": 97,
+              "plan": 65,
+              "compile": 234,
+              "link": 325
+            },
+            {
+              "total": 773,
+              "flint": 43,
+              "aot": 100,
+              "plan": 70,
+              "compile": 236,
+              "link": 324
+            },
+            {
+              "total": 758,
+              "flint": 41,
+              "aot": 99,
+              "plan": 71,
+              "compile": 233,
+              "link": 314
+            },
+            {
+              "total": 761,
+              "flint": 43,
+              "aot": 97,
+              "plan": 68,
+              "compile": 230,
+              "link": 323
+            },
+            {
+              "total": 770,
+              "flint": 41,
+              "aot": 95,
+              "plan": 65,
+              "compile": 245,
+              "link": 324
+            },
+            {
+              "total": 807,
+              "flint": 43,
+              "aot": 97,
+              "plan": 75,
+              "compile": 235,
+              "link": 357
+            },
+            {
+              "total": 747,
+              "flint": 41,
+              "aot": 96,
+              "plan": 68,
+              "compile": 228,
+              "link": 314
+            }
+          ],
+          "flint_debug_static_incremental_seconds": [
+            {
+              "total": 457,
+              "flint": 32,
+              "aot": 3,
+              "plan": 0,
+              "compile": 327,
+              "link": 95
+            },
+            {
+              "total": 242,
+              "flint": 31,
+              "aot": 3,
+              "plan": 0,
+              "compile": 121,
+              "link": 87
+            },
+            {
+              "total": 239,
+              "flint": 30,
+              "aot": 3,
+              "plan": 0,
+              "compile": 120,
+              "link": 86
+            },
+            {
+              "total": 243,
+              "flint": 35,
+              "aot": 3,
+              "plan": 0,
+              "compile": 120,
+              "link": 85
+            },
+            {
+              "total": 242,
+              "flint": 30,
+              "aot": 3,
+              "plan": 0,
+              "compile": 121,
+              "link": 88
+            },
+            {
+              "total": 239,
+              "flint": 31,
+              "aot": 3,
+              "plan": 0,
+              "compile": 121,
+              "link": 84
+            },
+            {
+              "total": 242,
+              "flint": 31,
+              "aot": 3,
+              "plan": 0,
+              "compile": 122,
+              "link": 86
+            },
+            {
+              "total": 240,
+              "flint": 32,
+              "aot": 3,
+              "plan": 0,
+              "compile": 120,
+              "link": 85
+            },
+            {
+              "total": 247,
+              "flint": 32,
+              "aot": 3,
+              "plan": 0,
+              "compile": 118,
+              "link": 94
+            }
+          ],
+          "flint_debug_scratch_seconds": [
+            {
+              "total": 4263,
+              "flint": 56,
+              "aot": 390,
+              "plan": 268,
+              "compile": 754,
+              "link": 2795
+            },
+            {
+              "total": 2297,
+              "flint": 55,
+              "aot": 385,
+              "plan": 266,
+              "compile": 660,
+              "link": 931
+            },
+            {
+              "total": 2101,
+              "flint": 57,
+              "aot": 465,
+              "plan": 283,
+              "compile": 671,
+              "link": 625
+            },
+            {
+              "total": 2081,
+              "flint": 54,
+              "aot": 387,
+              "plan": 269,
+              "compile": 702,
+              "link": 669
+            },
+            {
+              "total": 2040,
+              "flint": 56,
+              "aot": 397,
+              "plan": 269,
+              "compile": 674,
+              "link": 644
+            },
+            {
+              "total": 2016,
+              "flint": 57,
+              "aot": 398,
+              "plan": 266,
+              "compile": 645,
+              "link": 650
+            },
+            {
+              "total": 2065,
+              "flint": 54,
+              "aot": 404,
+              "plan": 269,
+              "compile": 696,
+              "link": 642
+            },
+            {
+              "total": 2028,
+              "flint": 59,
+              "aot": 396,
+              "plan": 278,
+              "compile": 648,
+              "link": 647
+            },
+            {
+              "total": 2042,
+              "flint": 55,
+              "aot": 385,
+              "plan": 265,
+              "compile": 685,
+              "link": 652
+            }
+          ]
+        }
+      },
+      "verdicts": {
+        "primary: platform cache vs std-primed GOCACHE": {
+          "median_ratio": 0.1934986741827725,
+          "lower_99": 0.18694915053942757,
+          "upper_99": 0.21419906593807095,
+          "gating": true,
+          "pass": true,
+          "third_party_context": {
+            "deps_primed_ratio": 1.1862642322135637,
+            "deps_primed_lower_99": 1.1630569551427177,
+            "deps_primed_upper_99": 1.3064961461216258,
+            "packages": 31,
+            "note": "Go's std-primed cold build compiles its 31 third-party package(s) from source, while Flint links its native libraries and platform archives prebuilt; the deps-primed ratio is the like-for-like comparison."
+          }
+        },
+        "secondary: from scratch vs go build -a": {
+          "median_ratio": 0.47493661091360767,
+          "lower_99": 0.46950603625048254,
+          "upper_99": 0.801494655018444,
+          "gating": true,
+          "pass": true,
+          "third_party_context": {
+            "note": "No deps-primed equivalent exists: go build -a recompiles every package, the third-party ones included, while Flint's --no-platform-cache rebuilds the D modules but links the native C libraries prebuilt."
+          }
+        },
+        "incremental: dev profile as built": {
+          "median_ratio": 0.5398819903900643,
+          "lower_99": 0.5237845837565255,
+          "upper_99": 0.555996379239666,
+          "gating": true,
+          "pass": true
+        },
+        "incremental: fully static": {
+          "median_ratio": 0.7001123104548999,
+          "lower_99": 0.6863247888763809,
+          "upper_99": 0.7334618733703849,
+          "gating": true,
+          "pass": true
+        },
+        "stricter: platform cache vs deps-primed GOCACHE": {
+          "median_ratio": 1.1862642322135637,
+          "lower_99": 1.1630569551427177,
+          "upper_99": 1.3064961461216258,
+          "gating": false,
+          "pass": false
+        },
+        "context: primary with the digest log cleared": {
+          "median_ratio": 0.2466109414488804,
+          "lower_99": 0.2376074698498704,
+          "upper_99": 0.25613672801029846,
+          "gating": false,
+          "pass": true
+        },
+        "context: primary with debug information": {
+          "median_ratio": 0.2026000011503837,
+          "lower_99": 0.19556603180588322,
+          "upper_99": 0.2122263182535428,
+          "gating": false,
+          "pass": true
+        },
+        "context: secondary with debug information": {
+          "median_ratio": 0.5089908963615086,
+          "lower_99": 0.49973862086308457,
+          "upper_99": 0.5705055405969698,
+          "gating": false,
+          "pass": true
+        },
+        "context: edit build, dev profile, with debug information": {
+          "median_ratio": 0.5834710595690752,
+          "lower_99": 0.5757883106381011,
+          "upper_99": 0.6051226487038434,
+          "gating": false,
+          "pass": true
+        },
+        "context: edit build, fully static, with debug information": {
+          "median_ratio": 0.7393219136976512,
+          "lower_99": 0.7273312196208691,
+          "upper_99": 0.776912627384,
+          "gating": false,
+          "pass": true
+        },
+        "Oz binary size": {
+          "ratio": 0.8893700147870106,
+          "gating": true,
+          "pass": true
+        }
+      }
+    }
+  },
+  "trials": [
+    {
+      "seconds": 2.084114175,
+      "peak_rss_bytes": 404115456,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/be86e77f7651/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-38zuxa35/petclinic-rest-go-std-0/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "go",
+      "flavour": "std",
+      "state": "cold",
+      "trial": 0,
+      "log": "builds-logs/petclinic-rest-go-std-cold-0.log"
+    },
+    {
+      "seconds": 0.335972239,
+      "peak_rss_bytes": 220975104,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/be86e77f7651/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-38zuxa35/petclinic-rest-go-std-0/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "go",
+      "flavour": "std",
+      "state": "incremental",
+      "trial": 0,
+      "log": "builds-logs/petclinic-rest-go-std-incremental-0.log"
+    },
+    {
+      "seconds": 0.331989824,
+      "peak_rss_bytes": 220139520,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/be86e77f7651/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-38zuxa35/petclinic-rest-go-deps-0/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "go",
+      "flavour": "deps",
+      "state": "cold",
+      "trial": 0,
+      "log": "builds-logs/petclinic-rest-go-deps-cold-0.log"
+    },
+    {
+      "seconds": 4.072629945,
+      "peak_rss_bytes": 650788864,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/be86e77f7651/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-38zuxa35/petclinic-rest-go-scratch-0/comparator",
+        "-a",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "go",
+      "flavour": "scratch",
+      "state": "cold",
+      "trial": 0,
+      "log": "builds-logs/petclinic-rest-go-scratch-cold-0.log"
+    },
+    {
+      "seconds": 1.937874993,
+      "peak_rss_bytes": 406351872,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/be86e77f7651/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-38zuxa35/petclinic-rest-go-std-1/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "go",
+      "flavour": "std",
+      "state": "cold",
+      "trial": 1,
+      "log": "builds-logs/petclinic-rest-go-std-cold-1.log"
+    },
+    {
+      "seconds": 0.32619668,
+      "peak_rss_bytes": 222703616,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/be86e77f7651/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-38zuxa35/petclinic-rest-go-std-1/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "go",
+      "flavour": "std",
+      "state": "incremental",
+      "trial": 1,
+      "log": "builds-logs/petclinic-rest-go-std-incremental-1.log"
+    },
+    {
+      "seconds": 0.322542483,
+      "peak_rss_bytes": 223223808,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/be86e77f7651/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-38zuxa35/petclinic-rest-go-deps-1/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "go",
+      "flavour": "deps",
+      "state": "cold",
+      "trial": 1,
+      "log": "builds-logs/petclinic-rest-go-deps-cold-1.log"
+    },
+    {
+      "seconds": 4.02961514,
+      "peak_rss_bytes": 707383296,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/be86e77f7651/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-38zuxa35/petclinic-rest-go-scratch-1/comparator",
+        "-a",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "go",
+      "flavour": "scratch",
+      "state": "cold",
+      "trial": 1,
+      "log": "builds-logs/petclinic-rest-go-scratch-cold-1.log"
+    },
+    {
+      "seconds": 1.967331226,
+      "peak_rss_bytes": 408555520,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/be86e77f7651/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-38zuxa35/petclinic-rest-go-std-2/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "go",
+      "flavour": "std",
+      "state": "cold",
+      "trial": 2,
+      "log": "builds-logs/petclinic-rest-go-std-cold-2.log"
+    },
+    {
+      "seconds": 0.33723603,
+      "peak_rss_bytes": 224227328,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/be86e77f7651/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-38zuxa35/petclinic-rest-go-std-2/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "go",
+      "flavour": "std",
+      "state": "incremental",
+      "trial": 2,
+      "log": "builds-logs/petclinic-rest-go-std-incremental-2.log"
+    },
+    {
+      "seconds": 0.333003905,
+      "peak_rss_bytes": 228511744,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/be86e77f7651/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-38zuxa35/petclinic-rest-go-deps-2/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "go",
+      "flavour": "deps",
+      "state": "cold",
+      "trial": 2,
+      "log": "builds-logs/petclinic-rest-go-deps-cold-2.log"
+    },
+    {
+      "seconds": 4.081676702,
+      "peak_rss_bytes": 652984320,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/be86e77f7651/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-38zuxa35/petclinic-rest-go-scratch-2/comparator",
+        "-a",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "go",
+      "flavour": "scratch",
+      "state": "cold",
+      "trial": 2,
+      "log": "builds-logs/petclinic-rest-go-scratch-cold-2.log"
+    },
+    {
+      "seconds": 2.0075101,
+      "peak_rss_bytes": 407289856,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/be86e77f7651/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-38zuxa35/petclinic-rest-go-std-3/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "go",
+      "flavour": "std",
+      "state": "cold",
+      "trial": 3,
+      "log": "builds-logs/petclinic-rest-go-std-cold-3.log"
+    },
+    {
+      "seconds": 0.333902129,
+      "peak_rss_bytes": 218918912,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/be86e77f7651/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-38zuxa35/petclinic-rest-go-std-3/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "go",
+      "flavour": "std",
+      "state": "incremental",
+      "trial": 3,
+      "log": "builds-logs/petclinic-rest-go-std-incremental-3.log"
+    },
+    {
+      "seconds": 0.319565448,
+      "peak_rss_bytes": 221282304,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/be86e77f7651/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-38zuxa35/petclinic-rest-go-deps-3/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "go",
+      "flavour": "deps",
+      "state": "cold",
+      "trial": 3,
+      "log": "builds-logs/petclinic-rest-go-deps-cold-3.log"
+    },
+    {
+      "seconds": 4.042380834,
+      "peak_rss_bytes": 700989440,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/be86e77f7651/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-38zuxa35/petclinic-rest-go-scratch-3/comparator",
+        "-a",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "go",
+      "flavour": "scratch",
+      "state": "cold",
+      "trial": 3,
+      "log": "builds-logs/petclinic-rest-go-scratch-cold-3.log"
+    },
+    {
+      "seconds": 2.064840567,
+      "peak_rss_bytes": 405671936,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/be86e77f7651/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-38zuxa35/petclinic-rest-go-std-4/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "go",
+      "flavour": "std",
+      "state": "cold",
+      "trial": 4,
+      "log": "builds-logs/petclinic-rest-go-std-cold-4.log"
+    },
+    {
+      "seconds": 0.335627652,
+      "peak_rss_bytes": 216584192,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/be86e77f7651/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-38zuxa35/petclinic-rest-go-std-4/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "go",
+      "flavour": "std",
+      "state": "incremental",
+      "trial": 4,
+      "log": "builds-logs/petclinic-rest-go-std-incremental-4.log"
+    },
+    {
+      "seconds": 0.319453513,
+      "peak_rss_bytes": 221474816,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/be86e77f7651/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-38zuxa35/petclinic-rest-go-deps-4/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "go",
+      "flavour": "deps",
+      "state": "cold",
+      "trial": 4,
+      "log": "builds-logs/petclinic-rest-go-deps-cold-4.log"
+    },
+    {
+      "seconds": 4.054209073,
+      "peak_rss_bytes": 683577344,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/be86e77f7651/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-38zuxa35/petclinic-rest-go-scratch-4/comparator",
+        "-a",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "go",
+      "flavour": "scratch",
+      "state": "cold",
+      "trial": 4,
+      "log": "builds-logs/petclinic-rest-go-scratch-cold-4.log"
+    },
+    {
+      "seconds": 2.060571682,
+      "peak_rss_bytes": 402874368,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/be86e77f7651/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-38zuxa35/petclinic-rest-go-std-5/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "go",
+      "flavour": "std",
+      "state": "cold",
+      "trial": 5,
+      "log": "builds-logs/petclinic-rest-go-std-cold-5.log"
+    },
+    {
+      "seconds": 0.341293922,
+      "peak_rss_bytes": 222158848,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/be86e77f7651/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-38zuxa35/petclinic-rest-go-std-5/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "go",
+      "flavour": "std",
+      "state": "incremental",
+      "trial": 5,
+      "log": "builds-logs/petclinic-rest-go-std-incremental-5.log"
+    },
+    {
+      "seconds": 0.327541108,
+      "peak_rss_bytes": 226017280,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/be86e77f7651/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-38zuxa35/petclinic-rest-go-deps-5/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "go",
+      "flavour": "deps",
+      "state": "cold",
+      "trial": 5,
+      "log": "builds-logs/petclinic-rest-go-deps-cold-5.log"
+    },
+    {
+      "seconds": 4.026112558,
+      "peak_rss_bytes": 692584448,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/be86e77f7651/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-38zuxa35/petclinic-rest-go-scratch-5/comparator",
+        "-a",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "go",
+      "flavour": "scratch",
+      "state": "cold",
+      "trial": 5,
+      "log": "builds-logs/petclinic-rest-go-scratch-cold-5.log"
+    },
+    {
+      "seconds": 2.048894588,
+      "peak_rss_bytes": 408760320,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/be86e77f7651/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-38zuxa35/petclinic-rest-go-std-6/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "go",
+      "flavour": "std",
+      "state": "cold",
+      "trial": 6,
+      "log": "builds-logs/petclinic-rest-go-std-cold-6.log"
+    },
+    {
+      "seconds": 0.32364896,
+      "peak_rss_bytes": 221855744,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/be86e77f7651/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-38zuxa35/petclinic-rest-go-std-6/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "go",
+      "flavour": "std",
+      "state": "incremental",
+      "trial": 6,
+      "log": "builds-logs/petclinic-rest-go-std-incremental-6.log"
+    },
+    {
+      "seconds": 0.328114216,
+      "peak_rss_bytes": 217849856,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/be86e77f7651/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-38zuxa35/petclinic-rest-go-deps-6/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "go",
+      "flavour": "deps",
+      "state": "cold",
+      "trial": 6,
+      "log": "builds-logs/petclinic-rest-go-deps-cold-6.log"
+    },
+    {
+      "seconds": 4.067339343,
+      "peak_rss_bytes": 679272448,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/be86e77f7651/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-38zuxa35/petclinic-rest-go-scratch-6/comparator",
+        "-a",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "go",
+      "flavour": "scratch",
+      "state": "cold",
+      "trial": 6,
+      "log": "builds-logs/petclinic-rest-go-scratch-cold-6.log"
+    },
+    {
+      "seconds": 1.884746844,
+      "peak_rss_bytes": 441040896,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/be86e77f7651/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-38zuxa35/petclinic-rest-go-std-7/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "go",
+      "flavour": "std",
+      "state": "cold",
+      "trial": 7,
+      "log": "builds-logs/petclinic-rest-go-std-cold-7.log"
+    },
+    {
+      "seconds": 0.330247912,
+      "peak_rss_bytes": 220233728,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/be86e77f7651/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-38zuxa35/petclinic-rest-go-std-7/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "go",
+      "flavour": "std",
+      "state": "incremental",
+      "trial": 7,
+      "log": "builds-logs/petclinic-rest-go-std-incremental-7.log"
+    },
+    {
+      "seconds": 0.323534584,
+      "peak_rss_bytes": 220655616,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/be86e77f7651/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-38zuxa35/petclinic-rest-go-deps-7/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "go",
+      "flavour": "deps",
+      "state": "cold",
+      "trial": 7,
+      "log": "builds-logs/petclinic-rest-go-deps-cold-7.log"
+    },
+    {
+      "seconds": 4.094660378,
+      "peak_rss_bytes": 675127296,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/be86e77f7651/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-38zuxa35/petclinic-rest-go-scratch-7/comparator",
+        "-a",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "go",
+      "flavour": "scratch",
+      "state": "cold",
+      "trial": 7,
+      "log": "builds-logs/petclinic-rest-go-scratch-cold-7.log"
+    },
+    {
+      "seconds": 2.00802565,
+      "peak_rss_bytes": 407547904,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/be86e77f7651/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-38zuxa35/petclinic-rest-go-std-8/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "go",
+      "flavour": "std",
+      "state": "cold",
+      "trial": 8,
+      "log": "builds-logs/petclinic-rest-go-std-cold-8.log"
+    },
+    {
+      "seconds": 0.330681076,
+      "peak_rss_bytes": 217706496,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/be86e77f7651/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-38zuxa35/petclinic-rest-go-std-8/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "go",
+      "flavour": "std",
+      "state": "incremental",
+      "trial": 8,
+      "log": "builds-logs/petclinic-rest-go-std-incremental-8.log"
+    },
+    {
+      "seconds": 0.330642488,
+      "peak_rss_bytes": 221806592,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/be86e77f7651/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-38zuxa35/petclinic-rest-go-deps-8/comparator",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "go",
+      "flavour": "deps",
+      "state": "cold",
+      "trial": 8,
+      "log": "builds-logs/petclinic-rest-go-deps-cold-8.log"
+    },
+    {
+      "seconds": 4.076283294,
+      "peak_rss_bytes": 678612992,
+      "command": [
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/be86e77f7651/.tools/go/bin/go",
+        "build",
+        "-buildvcs=false",
+        "-trimpath",
+        "-ldflags=-s -w",
+        "-o",
+        "/tmp/flint-spring-builds-38zuxa35/petclinic-rest-go-scratch-8/comparator",
+        "-a",
+        "."
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "go",
+      "flavour": "scratch",
+      "state": "cold",
+      "trial": 8,
+      "log": "builds-logs/petclinic-rest-go-scratch-cold-8.log"
+    },
+    {
+      "seconds": 0.595336384,
+      "peak_rss_bytes": 272121856,
+      "command": [
+        "flint",
+        "build",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "4f1bb3c04295be085de0c1bf06b52106b62f1fff89f8733a5ed4a80346e260a7",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached",
+      "state": "cold",
+      "trial": 0,
+      "log": "builds-logs/petclinic-rest-flint-cached-cold-0.log"
+    },
+    {
+      "seconds": 0.181364173,
+      "peak_rss_bytes": 176287744,
+      "command": [
+        "flint",
+        "build",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "cd025213c37ce03873080376114002ad0d2e54f39dc5959fd931c6205389356f",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached",
+      "state": "incremental",
+      "trial": 0,
+      "log": "builds-logs/petclinic-rest-flint-cached-incremental-0.log"
+    },
+    {
+      "seconds": 0.494353669,
+      "peak_rss_bytes": 267399168,
+      "command": [
+        "flint",
+        "build",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "882741f13e489ce8fc5ee35d296971f2cf4f8cd213f965b19e4234e2216d85c6",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached_cleared",
+      "state": "cold",
+      "trial": 0,
+      "log": "builds-logs/petclinic-rest-flint-cached_cleared-cold-0.log"
+    },
+    {
+      "seconds": 3.239946632,
+      "peak_rss_bytes": 2810454016,
+      "command": [
+        "flint",
+        "build",
+        "--force",
+        "--no-platform-cache",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "df2bdd533409af2514b265cf675f8ccc33fbd9e7d575bc45cb66d2199dc9a97b",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "scratch",
+      "state": "cold",
+      "trial": 0,
+      "log": "builds-logs/petclinic-rest-flint-scratch-cold-0.log"
+    },
+    {
+      "seconds": 0.743687244,
+      "peak_rss_bytes": 1636143104,
+      "command": [
+        "flint",
+        "build",
+        "--static",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "e80829b07e08672c78a86496ce0aaa832283ec6836de1c9b55a9a7109b81171b",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached_static",
+      "state": "cold",
+      "trial": 0,
+      "log": "builds-logs/petclinic-rest-flint-cached_static-cold-0.log"
+    },
+    {
+      "seconds": 0.428974436,
+      "peak_rss_bytes": 471134208,
+      "command": [
+        "flint",
+        "build",
+        "--static",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "3e877df41afc354d6f37174dda2c4298909fdb1f56cb76b5373de091af990135",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached_static",
+      "state": "incremental",
+      "trial": 0,
+      "log": "builds-logs/petclinic-rest-flint-cached_static-incremental-0.log"
+    },
+    {
+      "seconds": 0.786354351,
+      "peak_rss_bytes": 281624576,
+      "command": [
+        "flint",
+        "build"
+      ],
+      "exit_code": 0,
+      "log_sha256": "55988185a3236396295e410badc4cbe223ae206d96066b92c83927e4cb75ef34",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_cached",
+      "state": "cold",
+      "trial": 0,
+      "log": "builds-logs/petclinic-rest-flint-debug_cached-cold-0.log"
+    },
+    {
+      "seconds": 0.194387356,
+      "peak_rss_bytes": 240107520,
+      "command": [
+        "flint",
+        "build"
+      ],
+      "exit_code": 0,
+      "log_sha256": "a8ccb182d3527febead21ba8ae8069d42e09794e92f05c36f103ed3d0dda7200",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_cached",
+      "state": "incremental",
+      "trial": 0,
+      "log": "builds-logs/petclinic-rest-flint-debug_cached-incremental-0.log"
+    },
+    {
+      "seconds": 0.795807343,
+      "peak_rss_bytes": 1774129152,
+      "command": [
+        "flint",
+        "build",
+        "--static"
+      ],
+      "exit_code": 0,
+      "log_sha256": "3e0238b4e7363216a297fd0effcfee7e9bb4b7a92f27a95828d89facaeac79aa",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_static",
+      "state": "cold",
+      "trial": 0,
+      "log": "builds-logs/petclinic-rest-flint-debug_static-cold-0.log"
+    },
+    {
+      "seconds": 0.461240769,
+      "peak_rss_bytes": 616366080,
+      "command": [
+        "flint",
+        "build",
+        "--static"
+      ],
+      "exit_code": 0,
+      "log_sha256": "4ea5376e3f864318fbdf00bb39431a043b6a2dc115435f065325732edb4d1d61",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_static",
+      "state": "incremental",
+      "trial": 0,
+      "log": "builds-logs/petclinic-rest-flint-debug_static-incremental-0.log"
+    },
+    {
+      "seconds": 4.28121075,
+      "peak_rss_bytes": 3027951616,
+      "command": [
+        "flint",
+        "build",
+        "--force",
+        "--no-platform-cache"
+      ],
+      "exit_code": 0,
+      "log_sha256": "b41666f77d9888e308cd20c53f9966364de14f702fc89183101a5bb1840b8d77",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_scratch",
+      "state": "cold",
+      "trial": 0,
+      "log": "builds-logs/petclinic-rest-flint-debug_scratch-cold-0.log"
+    },
+    {
+      "seconds": 0.381615521,
+      "peak_rss_bytes": 254205952,
+      "command": [
+        "flint",
+        "build",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "b07d6804b07fa84d2e2570f2bf81a20f71c1b16f9cd227a897d0ed865ae1654d",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached",
+      "state": "cold",
+      "trial": 1,
+      "log": "builds-logs/petclinic-rest-flint-cached-cold-1.log"
+    },
+    {
+      "seconds": 0.178241256,
+      "peak_rss_bytes": 176209920,
+      "command": [
+        "flint",
+        "build",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "cd025213c37ce03873080376114002ad0d2e54f39dc5959fd931c6205389356f",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached",
+      "state": "incremental",
+      "trial": 1,
+      "log": "builds-logs/petclinic-rest-flint-cached-incremental-1.log"
+    },
+    {
+      "seconds": 0.495201096,
+      "peak_rss_bytes": 234487808,
+      "command": [
+        "flint",
+        "build",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "8e98162a01fbd8232f75dd28546a8190b50f8751be1ebfdbec1e64991e5d1821",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached_cleared",
+      "state": "cold",
+      "trial": 1,
+      "log": "builds-logs/petclinic-rest-flint-cached_cleared-cold-1.log"
+    },
+    {
+      "seconds": 3.273277192,
+      "peak_rss_bytes": 2826375168,
+      "command": [
+        "flint",
+        "build",
+        "--force",
+        "--no-platform-cache",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "9c256dea449f9d87cca654bd041f9bad71ecf2fd2a700b9d54e48cf5d32bb5ec",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "scratch",
+      "state": "cold",
+      "trial": 1,
+      "log": "builds-logs/petclinic-rest-flint-scratch-cold-1.log"
+    },
+    {
+      "seconds": 0.752802029,
+      "peak_rss_bytes": 1634652160,
+      "command": [
+        "flint",
+        "build",
+        "--static",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "dac540e6f8ae22368f345504e313bd8c1656da57231c2aa6b718e4810efb5872",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached_static",
+      "state": "cold",
+      "trial": 1,
+      "log": "builds-logs/petclinic-rest-flint-cached_static-cold-1.log"
+    },
+    {
+      "seconds": 0.230586076,
+      "peak_rss_bytes": 477622272,
+      "command": [
+        "flint",
+        "build",
+        "--static",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "3e877df41afc354d6f37174dda2c4298909fdb1f56cb76b5373de091af990135",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached_static",
+      "state": "incremental",
+      "trial": 1,
+      "log": "builds-logs/petclinic-rest-flint-cached_static-incremental-1.log"
+    },
+    {
+      "seconds": 0.413410643,
+      "peak_rss_bytes": 260894720,
+      "command": [
+        "flint",
+        "build"
+      ],
+      "exit_code": 0,
+      "log_sha256": "bd118961540f22200bc434c2ad6c447d426f4f194d5dbaab91a16d6b6b36b4c5",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_cached",
+      "state": "cold",
+      "trial": 1,
+      "log": "builds-logs/petclinic-rest-flint-debug_cached-cold-1.log"
+    },
+    {
+      "seconds": 0.201310276,
+      "peak_rss_bytes": 241471488,
+      "command": [
+        "flint",
+        "build"
+      ],
+      "exit_code": 0,
+      "log_sha256": "a8ccb182d3527febead21ba8ae8069d42e09794e92f05c36f103ed3d0dda7200",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_cached",
+      "state": "incremental",
+      "trial": 1,
+      "log": "builds-logs/petclinic-rest-flint-debug_cached-incremental-1.log"
+    },
+    {
+      "seconds": 0.792080098,
+      "peak_rss_bytes": 1769234432,
+      "command": [
+        "flint",
+        "build",
+        "--static"
+      ],
+      "exit_code": 0,
+      "log_sha256": "4bf11dc55c52f2e462bcf228433e500d47ba64d057a69c1fc5e106b4943f82ae",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_static",
+      "state": "cold",
+      "trial": 1,
+      "log": "builds-logs/petclinic-rest-flint-debug_static-cold-1.log"
+    },
+    {
+      "seconds": 0.247848853,
+      "peak_rss_bytes": 628932608,
+      "command": [
+        "flint",
+        "build",
+        "--static"
+      ],
+      "exit_code": 0,
+      "log_sha256": "4ea5376e3f864318fbdf00bb39431a043b6a2dc115435f065325732edb4d1d61",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_static",
+      "state": "incremental",
+      "trial": 1,
+      "log": "builds-logs/petclinic-rest-flint-debug_static-incremental-1.log"
+    },
+    {
+      "seconds": 2.306200663,
+      "peak_rss_bytes": 3043987456,
+      "command": [
+        "flint",
+        "build",
+        "--force",
+        "--no-platform-cache"
+      ],
+      "exit_code": 0,
+      "log_sha256": "08c0c6071229521d9614cbb37a589b9f3b4971a5fc8bc854a9b796c04ed37a19",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_scratch",
+      "state": "cold",
+      "trial": 1,
+      "log": "builds-logs/petclinic-rest-flint-debug_scratch-cold-1.log"
+    },
+    {
+      "seconds": 0.38602019,
+      "peak_rss_bytes": 256319488,
+      "command": [
+        "flint",
+        "build",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "84137e41a2889998708d895223058a88343d8468e16cf8abd25d84b5c5d05cd8",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached",
+      "state": "cold",
+      "trial": 2,
+      "log": "builds-logs/petclinic-rest-flint-cached-cold-2.log"
+    },
+    {
+      "seconds": 0.17579659,
+      "peak_rss_bytes": 172896256,
+      "command": [
+        "flint",
+        "build",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "cd025213c37ce03873080376114002ad0d2e54f39dc5959fd931c6205389356f",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached",
+      "state": "incremental",
+      "trial": 2,
+      "log": "builds-logs/petclinic-rest-flint-cached-incremental-2.log"
+    },
+    {
+      "seconds": 0.49943431,
+      "peak_rss_bytes": 249872384,
+      "command": [
+        "flint",
+        "build",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "e103a028bfea689530ef85351e3abeb7b756672a7e3bd971a9e099961aaffc12",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached_cleared",
+      "state": "cold",
+      "trial": 2,
+      "log": "builds-logs/petclinic-rest-flint-cached_cleared-cold-2.log"
+    },
+    {
+      "seconds": 1.931728363,
+      "peak_rss_bytes": 2863636480,
+      "command": [
+        "flint",
+        "build",
+        "--force",
+        "--no-platform-cache",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "a3c5f0b58773c9434218a8fc65c04c3d082dce754017155465139789c3239e29",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "scratch",
+      "state": "cold",
+      "trial": 2,
+      "log": "builds-logs/petclinic-rest-flint-scratch-cold-2.log"
+    },
+    {
+      "seconds": 0.750586175,
+      "peak_rss_bytes": 1632681984,
+      "command": [
+        "flint",
+        "build",
+        "--static",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "e80829b07e08672c78a86496ce0aaa832283ec6836de1c9b55a9a7109b81171b",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached_static",
+      "state": "cold",
+      "trial": 2,
+      "log": "builds-logs/petclinic-rest-flint-cached_static-cold-2.log"
+    },
+    {
+      "seconds": 0.236144189,
+      "peak_rss_bytes": 476786688,
+      "command": [
+        "flint",
+        "build",
+        "--static",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "3e877df41afc354d6f37174dda2c4298909fdb1f56cb76b5373de091af990135",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached_static",
+      "state": "incremental",
+      "trial": 2,
+      "log": "builds-logs/petclinic-rest-flint-cached_static-incremental-2.log"
+    },
+    {
+      "seconds": 0.411268075,
+      "peak_rss_bytes": 249077760,
+      "command": [
+        "flint",
+        "build"
+      ],
+      "exit_code": 0,
+      "log_sha256": "1b8b06169e38f3841b446665c4e8d572a1a7a564256161ad078dd2169d8fef73",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_cached",
+      "state": "cold",
+      "trial": 2,
+      "log": "builds-logs/petclinic-rest-flint-debug_cached-cold-2.log"
+    },
+    {
+      "seconds": 0.194176564,
+      "peak_rss_bytes": 239603712,
+      "command": [
+        "flint",
+        "build"
+      ],
+      "exit_code": 0,
+      "log_sha256": "a8ccb182d3527febead21ba8ae8069d42e09794e92f05c36f103ed3d0dda7200",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_cached",
+      "state": "incremental",
+      "trial": 2,
+      "log": "builds-logs/petclinic-rest-flint-debug_cached-incremental-2.log"
+    },
+    {
+      "seconds": 0.773677335,
+      "peak_rss_bytes": 1764773888,
+      "command": [
+        "flint",
+        "build",
+        "--static"
+      ],
+      "exit_code": 0,
+      "log_sha256": "08425e42c8105f3dec93054ecab082b3abfc40bd77aa623df7d94cbb3c6f6491",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_static",
+      "state": "cold",
+      "trial": 2,
+      "log": "builds-logs/petclinic-rest-flint-debug_static-cold-2.log"
+    },
+    {
+      "seconds": 0.24331381,
+      "peak_rss_bytes": 625602560,
+      "command": [
+        "flint",
+        "build",
+        "--static"
+      ],
+      "exit_code": 0,
+      "log_sha256": "4ea5376e3f864318fbdf00bb39431a043b6a2dc115435f065325732edb4d1d61",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_static",
+      "state": "incremental",
+      "trial": 2,
+      "log": "builds-logs/petclinic-rest-flint-debug_static-incremental-2.log"
+    },
+    {
+      "seconds": 2.109095783,
+      "peak_rss_bytes": 3061501952,
+      "command": [
+        "flint",
+        "build",
+        "--force",
+        "--no-platform-cache"
+      ],
+      "exit_code": 0,
+      "log_sha256": "df86284f431fb087dd0106242f027ef856d2bacdc80fe163f1aba3c795814347",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_scratch",
+      "state": "cold",
+      "trial": 2,
+      "log": "builds-logs/petclinic-rest-flint-debug_scratch-cold-2.log"
+    },
+    {
+      "seconds": 0.404721781,
+      "peak_rss_bytes": 247255040,
+      "command": [
+        "flint",
+        "build",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "7ffb2d53fa7b5c39698ad80f7bf64276a1bc6713e67e3a866ef52d07286e5efe",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached",
+      "state": "cold",
+      "trial": 3,
+      "log": "builds-logs/petclinic-rest-flint-cached-cold-3.log"
+    },
+    {
+      "seconds": 0.180267746,
+      "peak_rss_bytes": 173932544,
+      "command": [
+        "flint",
+        "build",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "cd025213c37ce03873080376114002ad0d2e54f39dc5959fd931c6205389356f",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached",
+      "state": "incremental",
+      "trial": 3,
+      "log": "builds-logs/petclinic-rest-flint-cached-incremental-3.log"
+    },
+    {
+      "seconds": 0.494638978,
+      "peak_rss_bytes": 291028992,
+      "command": [
+        "flint",
+        "build",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "83d9aa0ec20422602a21387b1b094c45afbe5fd7109cd7da5277c3d4bdc7ba02",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached_cleared",
+      "state": "cold",
+      "trial": 3,
+      "log": "builds-logs/petclinic-rest-flint-cached_cleared-cold-3.log"
+    },
+    {
+      "seconds": 1.921648757,
+      "peak_rss_bytes": 2852016128,
+      "command": [
+        "flint",
+        "build",
+        "--force",
+        "--no-platform-cache",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "a3200c07c5b68dd67686dc18d51c178047eeaa1d00d0c8a70c8a947f50eea41e",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "scratch",
+      "state": "cold",
+      "trial": 3,
+      "log": "builds-logs/petclinic-rest-flint-scratch-cold-3.log"
+    },
+    {
+      "seconds": 0.742907084,
+      "peak_rss_bytes": 1630683136,
+      "command": [
+        "flint",
+        "build",
+        "--static",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "4def08d10405864bcc0c1f5087f7bb78cbd7d7769310cd91aab458937602bf7f",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached_static",
+      "state": "cold",
+      "trial": 3,
+      "log": "builds-logs/petclinic-rest-flint-cached_static-cold-3.log"
+    },
+    {
+      "seconds": 0.239252828,
+      "peak_rss_bytes": 476663808,
+      "command": [
+        "flint",
+        "build",
+        "--static",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "3e877df41afc354d6f37174dda2c4298909fdb1f56cb76b5373de091af990135",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached_static",
+      "state": "incremental",
+      "trial": 3,
+      "log": "builds-logs/petclinic-rest-flint-cached_static-incremental-3.log"
+    },
+    {
+      "seconds": 0.410489776,
+      "peak_rss_bytes": 267767808,
+      "command": [
+        "flint",
+        "build"
+      ],
+      "exit_code": 0,
+      "log_sha256": "8e96501002856810320f2bd53fe51b954e93a1b3346b840d861d372bfdb3d4d8",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_cached",
+      "state": "cold",
+      "trial": 3,
+      "log": "builds-logs/petclinic-rest-flint-debug_cached-cold-3.log"
+    },
+    {
+      "seconds": 0.199217568,
+      "peak_rss_bytes": 211767296,
+      "command": [
+        "flint",
+        "build"
+      ],
+      "exit_code": 0,
+      "log_sha256": "a8ccb182d3527febead21ba8ae8069d42e09794e92f05c36f103ed3d0dda7200",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_cached",
+      "state": "incremental",
+      "trial": 3,
+      "log": "builds-logs/petclinic-rest-flint-debug_cached-incremental-3.log"
+    },
+    {
+      "seconds": 0.780887644,
+      "peak_rss_bytes": 1767288832,
+      "command": [
+        "flint",
+        "build",
+        "--static"
+      ],
+      "exit_code": 0,
+      "log_sha256": "5a52cdd52de3d8863dc920001d5e1e59182cbd501e3ed6b70f7df20e1ad42a72",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_static",
+      "state": "cold",
+      "trial": 3,
+      "log": "builds-logs/petclinic-rest-flint-debug_static-cold-3.log"
+    },
+    {
+      "seconds": 0.24689597,
+      "peak_rss_bytes": 624316416,
+      "command": [
+        "flint",
+        "build",
+        "--static"
+      ],
+      "exit_code": 0,
+      "log_sha256": "4ea5376e3f864318fbdf00bb39431a043b6a2dc115435f065325732edb4d1d61",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_static",
+      "state": "incremental",
+      "trial": 3,
+      "log": "builds-logs/petclinic-rest-flint-debug_static-incremental-3.log"
+    },
+    {
+      "seconds": 2.087929977,
+      "peak_rss_bytes": 3037540352,
+      "command": [
+        "flint",
+        "build",
+        "--force",
+        "--no-platform-cache"
+      ],
+      "exit_code": 0,
+      "log_sha256": "56e2cf38750481959c1c0b64470751c59a588ed122e7e7c3bd0f2677b202f095",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_scratch",
+      "state": "cold",
+      "trial": 3,
+      "log": "builds-logs/petclinic-rest-flint-debug_scratch-cold-3.log"
+    },
+    {
+      "seconds": 0.385928333,
+      "peak_rss_bytes": 251441152,
+      "command": [
+        "flint",
+        "build",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "777cc45301534dae4a0937161ae7647772fe3292b27483410303d2114d290073",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached",
+      "state": "cold",
+      "trial": 4,
+      "log": "builds-logs/petclinic-rest-flint-cached-cold-4.log"
+    },
+    {
+      "seconds": 0.18042367,
+      "peak_rss_bytes": 173080576,
+      "command": [
+        "flint",
+        "build",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "cd025213c37ce03873080376114002ad0d2e54f39dc5959fd931c6205389356f",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached",
+      "state": "incremental",
+      "trial": 4,
+      "log": "builds-logs/petclinic-rest-flint-cached-incremental-4.log"
+    },
+    {
+      "seconds": 0.487729227,
+      "peak_rss_bytes": 261959680,
+      "command": [
+        "flint",
+        "build",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "452e80f9a216a0dceb5cfde7d14f1f52054312fa3f0f29375ab1d218fc4d05d5",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached_cleared",
+      "state": "cold",
+      "trial": 4,
+      "log": "builds-logs/petclinic-rest-flint-cached_cleared-cold-4.log"
+    },
+    {
+      "seconds": 1.919854327,
+      "peak_rss_bytes": 2836934656,
+      "command": [
+        "flint",
+        "build",
+        "--force",
+        "--no-platform-cache",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "9c256dea449f9d87cca654bd041f9bad71ecf2fd2a700b9d54e48cf5d32bb5ec",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "scratch",
+      "state": "cold",
+      "trial": 4,
+      "log": "builds-logs/petclinic-rest-flint-scratch-cold-4.log"
+    },
+    {
+      "seconds": 0.746323571,
+      "peak_rss_bytes": 1629245440,
+      "command": [
+        "flint",
+        "build",
+        "--static",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "4def08d10405864bcc0c1f5087f7bb78cbd7d7769310cd91aab458937602bf7f",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached_static",
+      "state": "cold",
+      "trial": 4,
+      "log": "builds-logs/petclinic-rest-flint-cached_static-cold-4.log"
+    },
+    {
+      "seconds": 0.232877887,
+      "peak_rss_bytes": 473636864,
+      "command": [
+        "flint",
+        "build",
+        "--static",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "3e877df41afc354d6f37174dda2c4298909fdb1f56cb76b5373de091af990135",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached_static",
+      "state": "incremental",
+      "trial": 4,
+      "log": "builds-logs/petclinic-rest-flint-cached_static-incremental-4.log"
+    },
+    {
+      "seconds": 0.405648635,
+      "peak_rss_bytes": 246484992,
+      "command": [
+        "flint",
+        "build"
+      ],
+      "exit_code": 0,
+      "log_sha256": "b416fa8eae542730f50cd25fa26a23ef85ce5b76d4a2dbdefa630da5c7767d51",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_cached",
+      "state": "cold",
+      "trial": 4,
+      "log": "builds-logs/petclinic-rest-flint-debug_cached-cold-4.log"
+    },
+    {
+      "seconds": 0.194822229,
+      "peak_rss_bytes": 197459968,
+      "command": [
+        "flint",
+        "build"
+      ],
+      "exit_code": 0,
+      "log_sha256": "a8ccb182d3527febead21ba8ae8069d42e09794e92f05c36f103ed3d0dda7200",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_cached",
+      "state": "incremental",
+      "trial": 4,
+      "log": "builds-logs/petclinic-rest-flint-debug_cached-incremental-4.log"
+    },
+    {
+      "seconds": 0.766856351,
+      "peak_rss_bytes": 1779867648,
+      "command": [
+        "flint",
+        "build",
+        "--static"
+      ],
+      "exit_code": 0,
+      "log_sha256": "2747b310f118239a727bcdacd6ab463ea8c92a29d2e807379ccd369a7ce20510",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_static",
+      "state": "cold",
+      "trial": 4,
+      "log": "builds-logs/petclinic-rest-flint-debug_static-cold-4.log"
+    },
+    {
+      "seconds": 0.246861161,
+      "peak_rss_bytes": 616472576,
+      "command": [
+        "flint",
+        "build",
+        "--static"
+      ],
+      "exit_code": 0,
+      "log_sha256": "4ea5376e3f864318fbdf00bb39431a043b6a2dc115435f065325732edb4d1d61",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_static",
+      "state": "incremental",
+      "trial": 4,
+      "log": "builds-logs/petclinic-rest-flint-debug_static-incremental-4.log"
+    },
+    {
+      "seconds": 2.046534982,
+      "peak_rss_bytes": 3038584832,
+      "command": [
+        "flint",
+        "build",
+        "--force",
+        "--no-platform-cache"
+      ],
+      "exit_code": 0,
+      "log_sha256": "7866f36e9b55447bf5420dfd293a5d178b2adfe8947c886de8f6154207823e51",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_scratch",
+      "state": "cold",
+      "trial": 4,
+      "log": "builds-logs/petclinic-rest-flint-debug_scratch-cold-4.log"
+    },
+    {
+      "seconds": 0.421400511,
+      "peak_rss_bytes": 232284160,
+      "command": [
+        "flint",
+        "build",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "f972ee62ef30a9d1dabab744d904b8cbfe57f473092364259e2d1b28bbb08798",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached",
+      "state": "cold",
+      "trial": 5,
+      "log": "builds-logs/petclinic-rest-flint-cached-cold-5.log"
+    },
+    {
+      "seconds": 0.175224153,
+      "peak_rss_bytes": 161710080,
+      "command": [
+        "flint",
+        "build",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "cd025213c37ce03873080376114002ad0d2e54f39dc5959fd931c6205389356f",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached",
+      "state": "incremental",
+      "trial": 5,
+      "log": "builds-logs/petclinic-rest-flint-cached-incremental-5.log"
+    },
+    {
+      "seconds": 0.506185968,
+      "peak_rss_bytes": 259272704,
+      "command": [
+        "flint",
+        "build",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "032c3e99edb024a7c290b90b2b5fcca5b798151a07b48bd381e941b6cbbf2c04",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached_cleared",
+      "state": "cold",
+      "trial": 5,
+      "log": "builds-logs/petclinic-rest-flint-cached_cleared-cold-5.log"
+    },
+    {
+      "seconds": 2.149112524,
+      "peak_rss_bytes": 2835378176,
+      "command": [
+        "flint",
+        "build",
+        "--force",
+        "--no-platform-cache",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "556bb3c9bcf6518c0e921c4997eb15445fd4d39c88eb8b5a79155d07e22b5f98",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "scratch",
+      "state": "cold",
+      "trial": 5,
+      "log": "builds-logs/petclinic-rest-flint-scratch-cold-5.log"
+    },
+    {
+      "seconds": 0.760664762,
+      "peak_rss_bytes": 1631350784,
+      "command": [
+        "flint",
+        "build",
+        "--static",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "931d75525fdd8ce2fd2ab24085e3dbe9cad010087073936809be521508c40e2d",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached_static",
+      "state": "cold",
+      "trial": 5,
+      "log": "builds-logs/petclinic-rest-flint-cached_static-cold-5.log"
+    },
+    {
+      "seconds": 0.233768991,
+      "peak_rss_bytes": 475893760,
+      "command": [
+        "flint",
+        "build",
+        "--static",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "3e877df41afc354d6f37174dda2c4298909fdb1f56cb76b5373de091af990135",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached_static",
+      "state": "incremental",
+      "trial": 5,
+      "log": "builds-logs/petclinic-rest-flint-cached_static-incremental-5.log"
+    },
+    {
+      "seconds": 0.403812676,
+      "peak_rss_bytes": 256798720,
+      "command": [
+        "flint",
+        "build"
+      ],
+      "exit_code": 0,
+      "log_sha256": "3c14f6e320229cd9557acd431703348607f97fe181686055e09efea7a902a8a9",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_cached",
+      "state": "cold",
+      "trial": 5,
+      "log": "builds-logs/petclinic-rest-flint-debug_cached-cold-5.log"
+    },
+    {
+      "seconds": 0.193940413,
+      "peak_rss_bytes": 215527424,
+      "command": [
+        "flint",
+        "build"
+      ],
+      "exit_code": 0,
+      "log_sha256": "a8ccb182d3527febead21ba8ae8069d42e09794e92f05c36f103ed3d0dda7200",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_cached",
+      "state": "incremental",
+      "trial": 5,
+      "log": "builds-logs/petclinic-rest-flint-debug_cached-incremental-5.log"
+    },
+    {
+      "seconds": 0.768262606,
+      "peak_rss_bytes": 1778827264,
+      "command": [
+        "flint",
+        "build",
+        "--static"
+      ],
+      "exit_code": 0,
+      "log_sha256": "2509d8ea10a6817df78b0319bf014b4131601284ef315399d0a8ee39b45727b1",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_static",
+      "state": "cold",
+      "trial": 5,
+      "log": "builds-logs/petclinic-rest-flint-debug_static-cold-5.log"
+    },
+    {
+      "seconds": 0.24459105,
+      "peak_rss_bytes": 626712576,
+      "command": [
+        "flint",
+        "build",
+        "--static"
+      ],
+      "exit_code": 0,
+      "log_sha256": "4ea5376e3f864318fbdf00bb39431a043b6a2dc115435f065325732edb4d1d61",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_static",
+      "state": "incremental",
+      "trial": 5,
+      "log": "builds-logs/petclinic-rest-flint-debug_static-incremental-5.log"
+    },
+    {
+      "seconds": 2.021064904,
+      "peak_rss_bytes": 3055325184,
+      "command": [
+        "flint",
+        "build",
+        "--force",
+        "--no-platform-cache"
+      ],
+      "exit_code": 0,
+      "log_sha256": "bbf0fbcffdfdc608ec91e9cff7138687dc9a90c0beffca2a2d820c2efeac7423",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_scratch",
+      "state": "cold",
+      "trial": 5,
+      "log": "builds-logs/petclinic-rest-flint-debug_scratch-cold-5.log"
+    },
+    {
+      "seconds": 0.388550301,
+      "peak_rss_bytes": 262381568,
+      "command": [
+        "flint",
+        "build",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "f972ee62ef30a9d1dabab744d904b8cbfe57f473092364259e2d1b28bbb08798",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached",
+      "state": "cold",
+      "trial": 6,
+      "log": "builds-logs/petclinic-rest-flint-cached-cold-6.log"
+    },
+    {
+      "seconds": 0.185180815,
+      "peak_rss_bytes": 178118656,
+      "command": [
+        "flint",
+        "build",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "cd025213c37ce03873080376114002ad0d2e54f39dc5959fd931c6205389356f",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached",
+      "state": "incremental",
+      "trial": 6,
+      "log": "builds-logs/petclinic-rest-flint-cached-incremental-6.log"
+    },
+    {
+      "seconds": 0.502297399,
+      "peak_rss_bytes": 284688384,
+      "command": [
+        "flint",
+        "build",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "79bf089558deac926f83e915f0b54ed4f4da05d3bf724196a94e519d08578929",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached_cleared",
+      "state": "cold",
+      "trial": 6,
+      "log": "builds-logs/petclinic-rest-flint-cached_cleared-cold-6.log"
+    },
+    {
+      "seconds": 1.978768581,
+      "peak_rss_bytes": 2851762176,
+      "command": [
+        "flint",
+        "build",
+        "--force",
+        "--no-platform-cache",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "cfff92b50747bda99ad23d735541475a2c43e8434e8f16d6e55da876c2cffc21",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "scratch",
+      "state": "cold",
+      "trial": 6,
+      "log": "builds-logs/petclinic-rest-flint-scratch-cold-6.log"
+    },
+    {
+      "seconds": 0.748643351,
+      "peak_rss_bytes": 1631924224,
+      "command": [
+        "flint",
+        "build",
+        "--static",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "10419c8d3b67da5845fe6d642e251f4d421e67290002113fd31470f49ec656b4",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached_static",
+      "state": "cold",
+      "trial": 6,
+      "log": "builds-logs/petclinic-rest-flint-cached_static-cold-6.log"
+    },
+    {
+      "seconds": 0.241432924,
+      "peak_rss_bytes": 475516928,
+      "command": [
+        "flint",
+        "build",
+        "--static",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "3e877df41afc354d6f37174dda2c4298909fdb1f56cb76b5373de091af990135",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached_static",
+      "state": "incremental",
+      "trial": 6,
+      "log": "builds-logs/petclinic-rest-flint-cached_static-incremental-6.log"
+    },
+    {
+      "seconds": 0.402387411,
+      "peak_rss_bytes": 275812352,
+      "command": [
+        "flint",
+        "build"
+      ],
+      "exit_code": 0,
+      "log_sha256": "7f53dd54a19c54a40e1f0ecbdfdc42af43de74297a6255c16a91b70a3cf3e61f",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_cached",
+      "state": "cold",
+      "trial": 6,
+      "log": "builds-logs/petclinic-rest-flint-debug_cached-cold-6.log"
+    },
+    {
+      "seconds": 0.193667544,
+      "peak_rss_bytes": 234631168,
+      "command": [
+        "flint",
+        "build"
+      ],
+      "exit_code": 0,
+      "log_sha256": "a8ccb182d3527febead21ba8ae8069d42e09794e92f05c36f103ed3d0dda7200",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_cached",
+      "state": "incremental",
+      "trial": 6,
+      "log": "builds-logs/petclinic-rest-flint-debug_cached-incremental-6.log"
+    },
+    {
+      "seconds": 0.779319445,
+      "peak_rss_bytes": 1766944768,
+      "command": [
+        "flint",
+        "build",
+        "--static"
+      ],
+      "exit_code": 0,
+      "log_sha256": "597057ec1b715b192f29648310f5a90f428a4276006f149e2ca1975d55faf321",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_static",
+      "state": "cold",
+      "trial": 6,
+      "log": "builds-logs/petclinic-rest-flint-debug_static-cold-6.log"
+    },
+    {
+      "seconds": 0.245994605,
+      "peak_rss_bytes": 622649344,
+      "command": [
+        "flint",
+        "build",
+        "--static"
+      ],
+      "exit_code": 0,
+      "log_sha256": "4ea5376e3f864318fbdf00bb39431a043b6a2dc115435f065325732edb4d1d61",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_static",
+      "state": "incremental",
+      "trial": 6,
+      "log": "builds-logs/petclinic-rest-flint-debug_static-incremental-6.log"
+    },
+    {
+      "seconds": 2.070238698,
+      "peak_rss_bytes": 3056205824,
+      "command": [
+        "flint",
+        "build",
+        "--force",
+        "--no-platform-cache"
+      ],
+      "exit_code": 0,
+      "log_sha256": "a765478a6ef14de44f2533ef227c1ebf2f0d30a2652b30c8fc3fd5f70dd6c8ce",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_scratch",
+      "state": "cold",
+      "trial": 6,
+      "log": "builds-logs/petclinic-rest-flint-debug_scratch-cold-6.log"
+    },
+    {
+      "seconds": 0.387882537,
+      "peak_rss_bytes": 233885696,
+      "command": [
+        "flint",
+        "build",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "fe8f4d87f73eeec538478c463c3ca0e13ce3154dabcea90daee653ad7217fdf3",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached",
+      "state": "cold",
+      "trial": 7,
+      "log": "builds-logs/petclinic-rest-flint-cached-cold-7.log"
+    },
+    {
+      "seconds": 0.183415664,
+      "peak_rss_bytes": 179462144,
+      "command": [
+        "flint",
+        "build",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "cd025213c37ce03873080376114002ad0d2e54f39dc5959fd931c6205389356f",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached",
+      "state": "incremental",
+      "trial": 7,
+      "log": "builds-logs/petclinic-rest-flint-cached-incremental-7.log"
+    },
+    {
+      "seconds": 0.49636096,
+      "peak_rss_bytes": 235581440,
+      "command": [
+        "flint",
+        "build",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "5f67e58caca3b5b79b758a41da58cb7ac0b50fcf77c3281877e37ea311a3db60",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached_cleared",
+      "state": "cold",
+      "trial": 7,
+      "log": "builds-logs/petclinic-rest-flint-cached_cleared-cold-7.log"
+    },
+    {
+      "seconds": 1.913839612,
+      "peak_rss_bytes": 2845163520,
+      "command": [
+        "flint",
+        "build",
+        "--force",
+        "--no-platform-cache",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "ba97fc04dbc648a5f5c839a64183d3e6644ae5c8937124f40e7579295aca7303",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "scratch",
+      "state": "cold",
+      "trial": 7,
+      "log": "builds-logs/petclinic-rest-flint-scratch-cold-7.log"
+    },
+    {
+      "seconds": 0.751457891,
+      "peak_rss_bytes": 1627897856,
+      "command": [
+        "flint",
+        "build",
+        "--static",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "e80829b07e08672c78a86496ce0aaa832283ec6836de1c9b55a9a7109b81171b",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached_static",
+      "state": "cold",
+      "trial": 7,
+      "log": "builds-logs/petclinic-rest-flint-cached_static-cold-7.log"
+    },
+    {
+      "seconds": 0.230743299,
+      "peak_rss_bytes": 472399872,
+      "command": [
+        "flint",
+        "build",
+        "--static",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "3e877df41afc354d6f37174dda2c4298909fdb1f56cb76b5373de091af990135",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached_static",
+      "state": "incremental",
+      "trial": 7,
+      "log": "builds-logs/petclinic-rest-flint-cached_static-incremental-7.log"
+    },
+    {
+      "seconds": 0.401268476,
+      "peak_rss_bytes": 273678336,
+      "command": [
+        "flint",
+        "build"
+      ],
+      "exit_code": 0,
+      "log_sha256": "bd2692513b14cfcd2d5972d8cc73bd082008c88cfa73b7cd1f86c76f5b7901da",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_cached",
+      "state": "cold",
+      "trial": 7,
+      "log": "builds-logs/petclinic-rest-flint-debug_cached-cold-7.log"
+    },
+    {
+      "seconds": 0.195471903,
+      "peak_rss_bytes": 215384064,
+      "command": [
+        "flint",
+        "build"
+      ],
+      "exit_code": 0,
+      "log_sha256": "a8ccb182d3527febead21ba8ae8069d42e09794e92f05c36f103ed3d0dda7200",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_cached",
+      "state": "incremental",
+      "trial": 7,
+      "log": "builds-logs/petclinic-rest-flint-debug_cached-incremental-7.log"
+    },
+    {
+      "seconds": 0.814907149,
+      "peak_rss_bytes": 1780207616,
+      "command": [
+        "flint",
+        "build",
+        "--static"
+      ],
+      "exit_code": 0,
+      "log_sha256": "d26bef476de5342b968380b6c7dd2e7de3d5d2cf8e5eab53c6f97a09cbad2208",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_static",
+      "state": "cold",
+      "trial": 7,
+      "log": "builds-logs/petclinic-rest-flint-debug_static-cold-7.log"
+    },
+    {
+      "seconds": 0.245282293,
+      "peak_rss_bytes": 625446912,
+      "command": [
+        "flint",
+        "build",
+        "--static"
+      ],
+      "exit_code": 0,
+      "log_sha256": "4ea5376e3f864318fbdf00bb39431a043b6a2dc115435f065325732edb4d1d61",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_static",
+      "state": "incremental",
+      "trial": 7,
+      "log": "builds-logs/petclinic-rest-flint-debug_static-incremental-7.log"
+    },
+    {
+      "seconds": 2.035250472,
+      "peak_rss_bytes": 3076628480,
+      "command": [
+        "flint",
+        "build",
+        "--force",
+        "--no-platform-cache"
+      ],
+      "exit_code": 0,
+      "log_sha256": "632f20704f2a9d3301b1269163bb3757fba4b194267d0ae4a7f191b58dbf3632",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_scratch",
+      "state": "cold",
+      "trial": 7,
+      "log": "builds-logs/petclinic-rest-flint-debug_scratch-cold-7.log"
+    },
+    {
+      "seconds": 0.408128538,
+      "peak_rss_bytes": 254005248,
+      "command": [
+        "flint",
+        "build",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "934f2075e74e0d319cbc2d3be17aff37b4358101060ce3ffb133222091f5c810",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached",
+      "state": "cold",
+      "trial": 8,
+      "log": "builds-logs/petclinic-rest-flint-cached-cold-8.log"
+    },
+    {
+      "seconds": 0.179892421,
+      "peak_rss_bytes": 170246144,
+      "command": [
+        "flint",
+        "build",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "cd025213c37ce03873080376114002ad0d2e54f39dc5959fd931c6205389356f",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached",
+      "state": "incremental",
+      "trial": 8,
+      "log": "builds-logs/petclinic-rest-flint-cached-incremental-8.log"
+    },
+    {
+      "seconds": 0.477875302,
+      "peak_rss_bytes": 274337792,
+      "command": [
+        "flint",
+        "build",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "5f67e58caca3b5b79b758a41da58cb7ac0b50fcf77c3281877e37ea311a3db60",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached_cleared",
+      "state": "cold",
+      "trial": 8,
+      "log": "builds-logs/petclinic-rest-flint-cached_cleared-cold-8.log"
+    },
+    {
+      "seconds": 1.909541478,
+      "peak_rss_bytes": 2855079936,
+      "command": [
+        "flint",
+        "build",
+        "--force",
+        "--no-platform-cache",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "556bb3c9bcf6518c0e921c4997eb15445fd4d39c88eb8b5a79155d07e22b5f98",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "scratch",
+      "state": "cold",
+      "trial": 8,
+      "log": "builds-logs/petclinic-rest-flint-scratch-cold-8.log"
+    },
+    {
+      "seconds": 0.729390361,
+      "peak_rss_bytes": 1630175232,
+      "command": [
+        "flint",
+        "build",
+        "--static",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "ea31626bd627d67125176ea1a5e28615a6547b0f0a8f85c2f49c2756d63994c9",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached_static",
+      "state": "cold",
+      "trial": 8,
+      "log": "builds-logs/petclinic-rest-flint-cached_static-cold-8.log"
+    },
+    {
+      "seconds": 0.228263396,
+      "peak_rss_bytes": 474140672,
+      "command": [
+        "flint",
+        "build",
+        "--static",
+        "--no-debug"
+      ],
+      "exit_code": 0,
+      "log_sha256": "3e877df41afc354d6f37174dda2c4298909fdb1f56cb76b5373de091af990135",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "cached_static",
+      "state": "incremental",
+      "trial": 8,
+      "log": "builds-logs/petclinic-rest-flint-cached_static-incremental-8.log"
+    },
+    {
+      "seconds": 0.406825999,
+      "peak_rss_bytes": 281767936,
+      "command": [
+        "flint",
+        "build"
+      ],
+      "exit_code": 0,
+      "log_sha256": "19afc26dd75ea345d011bf6827ee51d5cf60a008d7e3f3fd536cb7514cb8cb9c",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_cached",
+      "state": "cold",
+      "trial": 8,
+      "log": "builds-logs/petclinic-rest-flint-debug_cached-cold-8.log"
+    },
+    {
+      "seconds": 0.197388999,
+      "peak_rss_bytes": 242585600,
+      "command": [
+        "flint",
+        "build"
+      ],
+      "exit_code": 0,
+      "log_sha256": "a8ccb182d3527febead21ba8ae8069d42e09794e92f05c36f103ed3d0dda7200",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_cached",
+      "state": "incremental",
+      "trial": 8,
+      "log": "builds-logs/petclinic-rest-flint-debug_cached-incremental-8.log"
+    },
+    {
+      "seconds": 0.753848338,
+      "peak_rss_bytes": 1790119936,
+      "command": [
+        "flint",
+        "build",
+        "--static"
+      ],
+      "exit_code": 0,
+      "log_sha256": "5857e7c8a6b293af17bfe8c34b356f3573d3d13d43025fd82cd75c7ebfa2ed9b",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_static",
+      "state": "cold",
+      "trial": 8,
+      "log": "builds-logs/petclinic-rest-flint-debug_static-cold-8.log"
+    },
+    {
+      "seconds": 0.256573773,
+      "peak_rss_bytes": 613556224,
+      "command": [
+        "flint",
+        "build",
+        "--static"
+      ],
+      "exit_code": 0,
+      "log_sha256": "4ea5376e3f864318fbdf00bb39431a043b6a2dc115435f065325732edb4d1d61",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_static",
+      "state": "incremental",
+      "trial": 8,
+      "log": "builds-logs/petclinic-rest-flint-debug_static-incremental-8.log"
+    },
+    {
+      "seconds": 2.046282301,
+      "peak_rss_bytes": 3056549888,
+      "command": [
+        "flint",
+        "build",
+        "--force",
+        "--no-platform-cache"
+      ],
+      "exit_code": 0,
+      "log_sha256": "c312cd187427fa64ed97be2280d13a2d59c3b3c7313d8d4ebc3ace99ccab7fec",
+      "memory_method": "sum of process-tree RSS sampled every 1 ms; sampling can miss shorter peaks",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "flavour": "debug_scratch",
+      "state": "cold",
+      "trial": 8,
+      "log": "builds-logs/petclinic-rest-flint-debug_scratch-cold-8.log"
+    }
+  ]
+}
