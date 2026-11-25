@@ -33,7 +33,8 @@ enum int defaultBufferSize = 8192;
 final class ServletEngineResponse : HttpServletResponse
 {
     private FiberResponse transport;
-    private int status = SC_OK;
+    // Flint: the fields are grouped, and the inline body is 480 bytes, so this object stays within druntime's
+    // 1,024-byte size class (at 1,056 bytes it took a 1,360-byte block; R-73): the 4- and 1-byte fields come last.
     private string message;
     // Header fields in the order they were added: inside this object while they fit, then on the GC heap.
     private string[] headerNames;
@@ -42,19 +43,20 @@ final class ServletEngineResponse : HttpServletResponse
     private string[8] inlineValues;
     private string contentType;
     private string characterEncoding;
-    private bool characterEncodingSet;
     private string contentLanguage;
     private Locale locale;
-    private bool localeSet;
     private long contentLength = -1;
+    private ulong written;
     private ubyte[] buffer;
     // A small body is buffered inside this object, so it costs no allocation of its own; a larger one moves to the
     // GC heap as it grows.
-    private ubyte[512] inlineBody;
-    private bool bufferInline;
+    private ubyte[480] inlineBody;
+    private int status = SC_OK;
     private int bufferSize = defaultBufferSize;
+    private bool characterEncodingSet;
+    private bool localeSet;
+    private bool bufferInline;
     private bool committed;
-    private ulong written;
     private bool suspended;
     private bool error;
     private bool finished;
@@ -704,3 +706,6 @@ unittest
     assert(httpDate(784_111_777_000L) == "Sun, 06 Nov 1994 08:49:37 GMT");
     assert(httpDate(0) == "Thu, 01 Jan 1970 00:00:00 GMT");
 }
+
+// Flint: within druntime's 1,024-byte size class (R-73).
+static assert(__traits(classInstanceSize, ServletEngineResponse) <= 1024);
