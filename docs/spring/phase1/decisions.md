@@ -927,3 +927,14 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - Background: B5 error-validation-p99 was refused at 14:24Z (008cc880). Flint's capacity phase reached 55,769 req/s; with a new connection per 400 (ADR-033), that saturated oha's four load CPUs.
   - Rule: when oha saturates in the capacity phase, it is recorded as "client-limited, context". The gated metric (p99 at the fixed rate) and its own saturation check are unchanged. No workload, CPU set or comparator changes, and Go's records stay valid.
   - Applies to error-validation-p99 and error-404-p99. proof-harness implements it and re-queues validation at B5.
+- 2026-11-25, owner: **Per-exchange storage is pooled; a request or response retained past its exchange throws `IllegalStateException` (option (a))**, as Tomcat does with `RECYCLE_FACADES=true`. Servlet 6.0 §3.13 makes request objects valid only within `service`/`doFilter` and lets containers recycle them.
+  - Design: `coordination/notes/exchange-pool.md` (web-http). It is the top error-path lever in `docs/spring/phase1/gc-tail-astra.md`: about 3.4 KB of /nope's 5.2 KB per request.
+  - Never acceptable: a retained façade seeing another exchange's data.
+  - m7's required changes, before slice 1:
+    - R1: a seqlock generation check, bumped at return and at checkout;
+    - R2: the check covers every object reaching pooled storage (streams, writers, header, attribute and parameter views, cookies, parts);
+    - R3: body readers are covered too;
+    - R4: storage returns only after the final write completes, and is never handed to the reactor by reference;
+    - R5: the pool holds only free states, and a return is idempotent per generation;
+    - R6: each state is its own GC block.
+  - Retained RSS is capped. m7 reviews every slice before it lands; the 30-minute rule does not apply.
