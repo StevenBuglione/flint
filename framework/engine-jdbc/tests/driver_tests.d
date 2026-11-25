@@ -65,6 +65,38 @@ unittest
     assert(again is first, "the data source numbered the same statement twice");
 }
 
+@("a data source keeps one entry per statement text, two per set, found without a lock; a third text evicts the older")
+unittest
+{
+    import core.atomic : atomicLoad;
+    import flint.engine.aot.text : decimal;
+
+    auto source = new FlintDataSource;
+    enum first = "select * from t where a = ?";
+    auto entry = source.statementInfo(first, true);
+    assert(entry.numbered == "select * from t where a = $1" && entry.text == first);
+    assert(source.statementInfo(first.idup, true) is entry);
+    assert(source.statementInfo("select 1", false).numbered == "select 1");
+    entry.rowsReturned(6);
+    assert(atomicLoad(entry.rows) == 6);
+    assert(entry.labels.get() is null);
+    entry.labels.set(new ColumnLabels(["id", "name"]));
+    assert(source.statementInfo(first, true).labels.get().names == ["id", "name"]);
+    // Two other texts in the entry's set: the first keeps it in the set, the second evicts it.
+    const set = hashOf(first) % statementSets;
+    string[] others;
+    for (size_t i; others.length < 2; ++i)
+    {
+        const candidate = "select " ~ decimal(cast(long) i);
+        if (hashOf(candidate) % statementSets == set)
+            others ~= candidate;
+    }
+    const second = source.statementInfo(others[0], false);
+    assert(source.statementInfo(first, true) is entry && source.statementInfo(others[0], false) is second);
+    source.statementInfo(others[1], false);
+    assert(source.statementInfo(first, true) !is entry);
+}
+
 @("parseUrl maps JDBC URLs to engine settings and rejects other drivers")
 unittest
 {
