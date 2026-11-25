@@ -2,7 +2,7 @@
   "schema": "flint.measure-queue/1",
   "id": "calibration-session-gs-rest-service-2",
   "created": "2026-11-24",
-  "status": "pending",
+  "status": "done",
   "window": "claim",
   "priority": 0.5,
   "estimate_minutes": 4,
@@ -33,5 +33,170 @@
         ]
       }
     ]
-  }
+  },
+  "attempts": [
+    {
+      "time": "2026-11-24T20:44:31Z",
+      "outcome": "measured",
+      "evidence": true,
+      "host": "venus",
+      "builds": {},
+      "shared_toolchain": {
+        "path": "/home/olfa/flint-work/flint/.tools",
+        "resolved": "/home/olfa/flint-work/flint/.tools-v4.2",
+        "dmd_sha256": "663977a9340a84167083b5f03a2b9518783358b94c795b8813ce872891d0f213"
+      },
+      "window_before": {
+        "time": "2026-11-24T20:43:13Z",
+        "load_average": [
+          0.3330078125,
+          0.58984375,
+          1.31201171875
+        ],
+        "running_tasks": 0,
+        "instant": true,
+        "busy_processes": [],
+        "idle_build_processes": 311,
+        "quiet": true,
+        "problems": []
+      },
+      "window_during": [
+        {
+          "time": "2026-11-24T20:43:24Z",
+          "load_average": [
+            0.28125,
+            0.56982421875,
+            1.29736328125
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T20:43:35Z",
+          "load_average": [
+            0.55224609375,
+            0.61767578125,
+            1.3046875
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T20:43:46Z",
+          "load_average": [
+            0.76904296875,
+            0.6630859375,
+            1.31201171875
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T20:43:57Z",
+          "load_average": [
+            0.9189453125,
+            0.69677734375,
+            1.31201171875
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T20:44:08Z",
+          "load_average": [
+            1.072265625,
+            0.7392578125,
+            1.3193359375
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T20:44:19Z",
+          "load_average": [
+            0.9072265625,
+            0.71435546875,
+            1.3046875
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T20:44:30Z",
+          "load_average": [
+            1.22314453125,
+            0.78955078125,
+            1.3232421875
+          ],
+          "busy_processes": []
+        }
+      ],
+      "foreign_activity_during": 0,
+      "window_after": {
+        "time": "2026-11-24T20:44:31Z",
+        "load_average": [
+          1.28564453125,
+          0.81005859375,
+          1.3271484375
+        ],
+        "running_tasks": 0,
+        "instant": false,
+        "busy_processes": [],
+        "idle_build_processes": 311,
+        "quiet": true,
+        "problems": []
+      },
+      "frozen": [
+        {
+          "pid": 3306194,
+          "start": 579374268,
+          "command": "callgrind-amd64",
+          "kind": "diagnostic",
+          "cwd": "/home/olfa/flint-work/flint/.claude/worktrees/suspicious-einstein-e3fb8f/benchmarks/spring/flint/petclinic-rest",
+          "frozen_at": "2026-11-24T20:42:59Z"
+        }
+      ],
+      "results_directory": ".flint/measure/results/calibration-session-gs-rest-service-2/20261124T204259Z",
+      "summary": {
+        "steps": [
+          {
+            "command": [
+              "/usr/bin/python3",
+              "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/45e8b765f772/tools/spring_baseline.py",
+              "calibrate",
+              "--app",
+              "gs-rest-service",
+              "--samples",
+              "3",
+              "--log",
+              "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/calibration-session-gs-rest-service-2/20261124T204259Z/session.jsonl"
+            ],
+            "cwd": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/45e8b765f772",
+            "exit_code": 0,
+            "log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/calibration-session-gs-rest-service-2/20261124T204259Z/step-0.log",
+            "harness_commit": "45e8b765f772e0980632092edb9bd3d3ec59d3fd",
+            "harness_toolchain": {
+              "tools_directory": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools",
+              "fork_build": false,
+              "dmd": null,
+              "ldc2": null,
+              "flint": null,
+              "dmd_native_aot_extractor": null,
+              "mold": []
+            },
+            "artifacts": {},
+            "measured_binaries": [],
+            "aot_summaries": {
+              "count": 0,
+              "distinct": [],
+              "extractors": []
+            },
+            "gc_options": {
+              "argv": []
+            },
+            "dmd_server": {
+              "compiled": 0,
+              "refused": 0,
+              "stopped_before": []
+            }
+          }
+        ],
+        "outputs": {}
+      }
+    }
+  ]
 }

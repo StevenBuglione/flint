@@ -2,10 +2,10 @@
   "schema": "flint.measure-queue/1",
   "id": "phase1-http-gs-rest",
   "created": "2026-11-23",
-  "status": "done",
+  "status": "pending",
   "window": "claim",
   "priority": 5,
-  "claim_when": "B3 order 5 (coordinator 19:04Z)",
+  "claim_when": "B4 order 5 (coordinator 05:45Z)",
   "requested_by": "ADR-030 section 8, Phase 1 exit (coordinator's plan, 2026-11-23 15:20Z); split per application by the coordinator, 2026-11-23 16:45Z",
   "report_to": "the coordinator; docs/milestones/13.md",
   "estimate_minutes": 25,
@@ -14,7 +14,7 @@
   "builds": {
     "tree": {
       "app": "checkout",
-      "commit": "d6d15b0073dd",
+      "commit": "fb4c73d1adc7",
       "flint": true,
       "linker": "mold",
       "fork": false
@@ -33,6 +33,8 @@
           "--app",
           "gs-rest-service",
           "--no-context",
+          "--baseline",
+          "benchmarks/spring/baselines/go/gs-rest-service/20261125T034727Z",
           "--output",
           "{out}/http.json"
         ],
@@ -44,8 +46,8 @@
       }
     ]
   },
-  "tree_note": "B3: one private tree with a copy of shared v4.2 (4ac873d8: every compile client-served or client-local), mold, strict served compiles (0 client-local except c-source and forced), strict scratch; runtime parts interleaved with Go (the Go records' fingerprints predate the database protocol, so B3's tools refuse them as stale)",
-  "pinned": "B3, d6d15b0073dda669dacf790dea443f033f4dbb55 (coordinator 19:04Z, decisions.md 1927861e)",
+  "tree_note": "B4: one private tree with a copy of shared v4.2, mold; runtime parts Flint-only against the -3 Go records (comparators 8d29301a: ADR-033 parity on every gated path and Tomcat's keep-alive limit), with the drift guard before and after; a failed guard switches the part to interleaved for its next claim (drift_fallback)",
+  "pinned": "B4, fb4c73d1adc7550f728b76b3e53258f0708cb4d3 (coordinator 05:45Z on 2026-11-25, decisions.md f345940e)",
   "attempts": [
     {
       "time": "2026-11-24T03:27:19Z",

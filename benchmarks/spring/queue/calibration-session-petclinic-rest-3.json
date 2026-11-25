@@ -2,7 +2,7 @@
   "schema": "flint.measure-queue/1",
   "id": "calibration-session-petclinic-rest-3",
   "created": "2026-11-24",
-  "status": "pending",
+  "status": "done",
   "window": "claim",
   "priority": 0.5,
   "estimate_minutes": 4,
@@ -33,5 +33,250 @@
         ]
       }
     ]
-  }
+  },
+  "attempts": [
+    {
+      "time": "2026-11-24T23:11:05Z",
+      "outcome": "measured",
+      "evidence": true,
+      "host": "venus",
+      "builds": {},
+      "shared_toolchain": {
+        "path": "/home/olfa/flint-work/flint/.tools",
+        "resolved": "/home/olfa/flint-work/flint/.tools-v4.2",
+        "dmd_sha256": "663977a9340a84167083b5f03a2b9518783358b94c795b8813ce872891d0f213"
+      },
+      "window_before": {
+        "time": "2026-11-24T23:09:47Z",
+        "load_average": [
+          0.3701171875,
+          0.39501953125,
+          0.7568359375
+        ],
+        "running_tasks": 0,
+        "instant": true,
+        "busy_processes": [],
+        "idle_build_processes": 190,
+        "quiet": true,
+        "problems": []
+      },
+      "window_during": [
+        {
+          "time": "2026-11-24T23:09:58Z",
+          "load_average": [
+            1.36474609375,
+            0.6064453125,
+            0.81982421875
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T23:10:09Z",
+          "load_average": [
+            2.2060546875,
+            0.81640625,
+            0.88623046875
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T23:10:20Z",
+          "load_average": [
+            2.40869140625,
+            0.9052734375,
+            0.9150390625
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T23:10:31Z",
+          "load_average": [
+            2.03759765625,
+            0.875,
+            0.904296875
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T23:10:42Z",
+          "load_average": [
+            2.11181640625,
+            0.92919921875,
+            0.921875
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T23:10:53Z",
+          "load_average": [
+            2.49853515625,
+            1.07861328125,
+            0.97119140625
+          ],
+          "busy_processes": []
+        },
+        {
+          "time": "2026-11-24T23:11:04Z",
+          "load_average": [
+            2.576171875,
+            1.142578125,
+            0.99365234375
+          ],
+          "busy_processes": []
+        }
+      ],
+      "foreign_activity_during": 0,
+      "window_after": {
+        "time": "2026-11-24T23:11:05Z",
+        "load_average": [
+          2.576171875,
+          1.142578125,
+          0.99365234375
+        ],
+        "running_tasks": 1,
+        "instant": false,
+        "busy_processes": [],
+        "idle_build_processes": 190,
+        "quiet": true,
+        "problems": []
+      },
+      "frozen": [
+        {
+          "pid": 3306194,
+          "start": 579374268,
+          "command": "callgrind-amd64",
+          "kind": "diagnostic",
+          "cwd": "/home/olfa/flint-work/flint/.claude/worktrees/suspicious-einstein-e3fb8f/benchmarks/spring/flint/petclinic-rest",
+          "frozen_at": "2026-11-24T23:09:34Z"
+        },
+        {
+          "pid": 3703996,
+          "start": 580950403,
+          "command": "gs-rest-service",
+          "kind": "server",
+          "cwd": "/home/olfa/flint-work/flint/.claude/worktrees/elastic-lamport-35bb31/benchmarks/spring/flint/gs-rest-service",
+          "frozen_at": "2026-11-24T23:09:34Z"
+        },
+        {
+          "pid": 3704256,
+          "start": 580952913,
+          "command": "postgres",
+          "kind": "database",
+          "cwd": "/tmp/claude-1000/-home-olfa-flint-work-flint--claude-worktrees-elastic-lamport-35bb31/a8e3e165-f7a8-4a3b-b16d-c5de47b9adba/scratchpad/sor/pg",
+          "frozen_at": "2026-11-24T23:09:40Z"
+        },
+        {
+          "pid": 3704258,
+          "start": 580952914,
+          "command": "postgres",
+          "kind": "database",
+          "cwd": "/tmp/claude-1000/-home-olfa-flint-work-flint--claude-worktrees-elastic-lamport-35bb31/a8e3e165-f7a8-4a3b-b16d-c5de47b9adba/scratchpad/sor/pg",
+          "frozen_at": "2026-11-24T23:09:40Z"
+        },
+        {
+          "pid": 3704259,
+          "start": 580952914,
+          "command": "postgres",
+          "kind": "database",
+          "cwd": "/tmp/claude-1000/-home-olfa-flint-work-flint--claude-worktrees-elastic-lamport-35bb31/a8e3e165-f7a8-4a3b-b16d-c5de47b9adba/scratchpad/sor/pg",
+          "frozen_at": "2026-11-24T23:09:40Z"
+        },
+        {
+          "pid": 3704260,
+          "start": 580952914,
+          "command": "postgres",
+          "kind": "database",
+          "cwd": "/tmp/claude-1000/-home-olfa-flint-work-flint--claude-worktrees-elastic-lamport-35bb31/a8e3e165-f7a8-4a3b-b16d-c5de47b9adba/scratchpad/sor/pg",
+          "frozen_at": "2026-11-24T23:09:40Z"
+        },
+        {
+          "pid": 3704261,
+          "start": 580952914,
+          "command": "postgres",
+          "kind": "database",
+          "cwd": "/tmp/claude-1000/-home-olfa-flint-work-flint--claude-worktrees-elastic-lamport-35bb31/a8e3e165-f7a8-4a3b-b16d-c5de47b9adba/scratchpad/sor/pg",
+          "frozen_at": "2026-11-24T23:09:40Z"
+        },
+        {
+          "pid": 3704262,
+          "start": 580952914,
+          "command": "postgres",
+          "kind": "database",
+          "cwd": "/tmp/claude-1000/-home-olfa-flint-work-flint--claude-worktrees-elastic-lamport-35bb31/a8e3e165-f7a8-4a3b-b16d-c5de47b9adba/scratchpad/sor/pg",
+          "frozen_at": "2026-11-24T23:09:40Z"
+        },
+        {
+          "pid": 3704264,
+          "start": 580952914,
+          "command": "postgres",
+          "kind": "database",
+          "cwd": "/tmp/claude-1000/-home-olfa-flint-work-flint--claude-worktrees-elastic-lamport-35bb31/a8e3e165-f7a8-4a3b-b16d-c5de47b9adba/scratchpad/sor/pg",
+          "frozen_at": "2026-11-24T23:09:40Z"
+        },
+        {
+          "pid": 3704265,
+          "start": 580952914,
+          "command": "postgres",
+          "kind": "database",
+          "cwd": "/tmp/claude-1000/-home-olfa-flint-work-flint--claude-worktrees-elastic-lamport-35bb31/a8e3e165-f7a8-4a3b-b16d-c5de47b9adba/scratchpad/sor/pg",
+          "frozen_at": "2026-11-24T23:09:40Z"
+        },
+        {
+          "pid": 3704266,
+          "start": 580952914,
+          "command": "postgres",
+          "kind": "database",
+          "cwd": "/tmp/claude-1000/-home-olfa-flint-work-flint--claude-worktrees-elastic-lamport-35bb31/a8e3e165-f7a8-4a3b-b16d-c5de47b9adba/scratchpad/sor/pg",
+          "frozen_at": "2026-11-24T23:09:40Z"
+        }
+      ],
+      "results_directory": ".flint/measure/results/calibration-session-petclinic-rest-3/20261124T230934Z",
+      "summary": {
+        "steps": [
+          {
+            "command": [
+              "/usr/bin/python3",
+              "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/45e8b765f772/tools/spring_baseline.py",
+              "calibrate",
+              "--app",
+              "petclinic-rest",
+              "--samples",
+              "3",
+              "--log",
+              "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/calibration-session-petclinic-rest-3/20261124T230934Z/session.jsonl"
+            ],
+            "cwd": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/45e8b765f772",
+            "exit_code": 0,
+            "log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/calibration-session-petclinic-rest-3/20261124T230934Z/step-0.log",
+            "harness_commit": "45e8b765f772e0980632092edb9bd3d3ec59d3fd",
+            "harness_toolchain": {
+              "tools_directory": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools",
+              "fork_build": false,
+              "dmd": null,
+              "ldc2": null,
+              "flint": null,
+              "dmd_native_aot_extractor": null,
+              "mold": []
+            },
+            "artifacts": {},
+            "measured_binaries": [],
+            "aot_summaries": {
+              "count": 0,
+              "distinct": [],
+              "extractors": []
+            },
+            "gc_options": {
+              "argv": []
+            },
+            "dmd_server": {
+              "compiled": 0,
+              "refused": 0,
+              "stopped_before": []
+            }
+          }
+        ],
+        "outputs": {}
+      }
+    }
+  ]
 }
