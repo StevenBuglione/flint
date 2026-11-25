@@ -4,13 +4,13 @@
   "comparators": {
     "gs-rest-service": {
       "directory": "benchmarks/spring/go/gs-rest-service",
-      "commit": "075b4715e2633c26afc839ac9cd26279179d2535",
-      "sha256": "b5ef797c888b2c00f6552dc4c733cc5a4ddadcddb37bfce4b220a846913d1476",
+      "commit": "8d29301ae6f09497a22f137f6d5629fa6c2e1290",
+      "sha256": "207b8ac16e2a016110684e904b5bf05b8bb8b79a774ba60b796f9546c09ef9d3",
       "go": "1.27.4",
       "wire": "parity",
-      "registered": "2026-11-24",
+      "registered": "2026-11-25",
       "measured": false,
-      "parity_sha256": "d269559b685de6054cc157732a9ef75a381d42266b65ee8fabb06a51ad9ac0bc",
+      "parity_sha256": "0f265676839a14623e6369bacaa22800c8ade4aea81dc6299036bfb97e2e0163",
       "changed_by": "ADR-033"
     },
     "gs-relational-data-access": {
@@ -24,14 +24,14 @@
     },
     "petclinic-rest": {
       "directory": "benchmarks/spring/go/petclinic-rest",
-      "commit": "075b4715e2633c26afc839ac9cd26279179d2535",
-      "sha256": "c5858a2a101b54427d109e9723b44d7dbd418f14ba89bfc10a0fdabf0cd6e7f7",
+      "commit": "8d29301ae6f09497a22f137f6d5629fa6c2e1290",
+      "sha256": "3e834bcc1298e765de0ce0b120640074a53aab5f964f903203ca1711b9636623",
       "go": "1.27.4",
       "wire": "parity",
-      "registered": "2026-11-24",
+      "registered": "2026-11-25",
       "measured": false,
-      "census_sha256": "69b3aac9ab14341a81d950ae16d7ed323bc75fff2f0b0fd1edb22d5678034b07",
-      "parity_sha256": "deb2f91945ae2758351b2d2963ba69233dd83a7c5fe9dca863386db129485652",
+      "census_sha256": "a42e2a90bf681b765d6c5f49df3823833f5db09ce88cc92f2c40d3e5bac9214f",
+      "parity_sha256": "79b2d8810b7f39807840513304eb0364e67686988097c42d8571a1e09357a713",
       "changed_by": "ADR-033"
     }
   }
