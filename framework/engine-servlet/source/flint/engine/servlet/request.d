@@ -62,8 +62,10 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
     private string contextPath;
     private string[] names;
     private string[] values;
-    // The field names and values of a usual request, inside this object: no allocation of their own.
-    private string[32] inlineFields;
+    // The field names and values of a usual request, inside this object: no allocation of their own. Eight fields, as
+    // Tomcat's MimeHeaders starts with, keep the object within druntime's 1,360-byte size class (R-80); a request with
+    // more takes a GC array.
+    private string[16] inlineFields;
     private immutable(ubyte)[] content;
     private ulong requestNumber;
     private DispatcherType dispatcherType = DispatcherType.REQUEST;
@@ -1079,3 +1081,6 @@ unittest
     assert(locales[4].toLanguageTag() == "de");
     assert(acceptLanguages(["en;q=x"]).length == 0 && acceptLanguages(null).length == 0);
 }
+
+// Flint: within druntime's 1,360-byte size class (R-80).
+static assert(__traits(classInstanceSize, ServletEngineRequest) <= 1360);

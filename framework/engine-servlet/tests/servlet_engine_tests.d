@@ -517,6 +517,17 @@ unittest
             "GET /visit HTTP/1.1\r\nHost: localhost\r\nX-A: 1\r\nAccept: */*\r\n" ~ "x-a: 2\r\n\r\n");
     assert(reply.content == "host=localhost;x-a=1;accept=*/*;x-a=2;", reply.content);
 
+    // More fields than the request keeps inside itself (eight) arrive whole and in order.
+    string many = "GET /visit HTTP/1.1\r\nHost: localhost\r\n";
+    string expected = "host=localhost;";
+    foreach (index; 0 .. 11)
+    {
+        many ~= "X-F" ~ decimal(index) ~ ": v" ~ decimal(index) ~ "\r\n";
+        expected ~= "x-f" ~ decimal(index) ~ "=v" ~ decimal(index) ~ ";";
+    }
+    reply = exchange(socket, pending, many ~ "\r\n");
+    assert(reply.content == expected, reply.content);
+
     // Repeated fields keep their order; a replaced field keeps its first position; Content-Type, then
     // Content-Language, follow the application's fields, as Tomcat writes them.
     reply = exchange(socket, pending, "GET /fields HTTP/1.1\r\nHost: localhost\r\n\r\n");
