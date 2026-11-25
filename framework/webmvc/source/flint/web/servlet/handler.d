@@ -182,6 +182,13 @@ abstract class AbstractHandlerMapping : HandlerMapping
         Object handler = getHandlerInternal(request);
         if (handler is null)
             return null;
+        return chainFor(handler, request);
+    }
+
+    /// The rest of `getHandler` once the handler is known: its interceptors, then CORS processing. Flint's fast path
+    /// uses it after a lookup its startup proof has already made (`provedHandler`).
+    package(flint) final HandlerExecutionChain chainFor(Object handler, HttpServletRequest request)
+    {
         auto chain = getHandlerExecutionChain(handler, request);
         if (hasCorsConfigurationSource(handler) || CorsUtils.isPreFlightRequest(request))
         {

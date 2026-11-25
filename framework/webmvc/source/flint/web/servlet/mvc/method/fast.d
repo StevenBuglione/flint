@@ -290,7 +290,8 @@ final class FastPathTable : FastPath
         exchange.materialize(request, response);
         auto servletRequest = cast(HttpServletRequest) request;
         auto servletResponse = cast(HttpServletResponse) response;
-        auto chain = servlet.prepareFastCompletion(servletRequest, servletResponse, route.handler);
+        auto chain = servlet.prepareProvedCompletion(servletRequest, servletResponse,
+                route.mapping.provedHandler(route.info, route.handler, servletRequest));
         auto processor = route.entityProcessor;
         auto returnType = route.handler.getReturnType();
         servlet.completeFastReturn(servletRequest, servletResponse, chain,
@@ -310,7 +311,8 @@ final class FastPathTable : FastPath
         auto servletRequest = cast(HttpServletRequest) request;
         auto servletResponse = cast(HttpServletResponse) response;
         // The interceptors' preHandle (CORS's Vary) comes before anything the handler's return wrote.
-        auto chain = servlet.prepareFastCompletion(servletRequest, servletResponse, route.handler);
+        auto chain = servlet.prepareProvedCompletion(servletRequest, servletResponse,
+                route.mapping.provedHandler(route.info, route.handler, servletRequest));
         // HttpEntityMethodProcessor sets the entity's status before it writes.
         if (status != 0)
             servletResponse.setStatus(status);
@@ -728,6 +730,11 @@ private struct Route
     ProvenBody[acceptKeys.length] provenBody;
     /// The method the route answers: `GET` (and `HEAD`), or (S5) `POST`.
     string method;
+    /// The registration the lookup chooses for the route's requests, and its handler mapping: a hand-back builds the
+    /// lookup's attributes and chain from them without a second lookup (`provedHandler`).
+    RequestMappingInfo info;
+    /// ditto
+    RequestMappingInfoHandlerMapping mapping;
     /// S5: the `@RequestBody` argument's index (`maxArguments` without one), its parameter and declared type, the
     /// converter that reads it (exactly the Jackson converter) and the processor that validates it.
     size_t bodyIndex = maxArguments;
@@ -881,8 +888,9 @@ private bool prove(ref const AotHandlerMapping row, RequestMappingInfoHandlerMap
     string[] variables;
     if (!parseTemplate(route.path, route.segments, variables))
         return false;
-    route.handler = variables.length == 0 ? directHandler(route.path, route.method,
-            mappings) : patternHandler(row, route.segments, mappings);
+    route.handler = variables.length == 0 ? directHandler(route.path, route.method, mappings,
+            route.info) : patternHandler(row, route.segments, mappings, route.info);
+    route.mapping = mappings;
     auto handler = route.handler;
     if (!invocableRow(handler, row))
         return false;
@@ -956,7 +964,8 @@ private bool corsFields(HandlerMethod handler, RequestMappingInfoHandlerMapping 
 // The one registration lookupHandlerMethod finds by the plain path for `method`, before it scans any pattern: the
 // only one there whose methods condition the request reaches (GET routes count HEAD too); null otherwise. A POST
 // registration must also consume exactly application/json, the Content-Type the route admits.
-private HandlerMethod directHandler(string path, string method, RequestMappingInfoHandlerMapping mappings)
+private HandlerMethod directHandler(string path, string method,
+        RequestMappingInfoHandlerMapping mappings, out RequestMappingInfo registered)
 {
     size_t found;
     HandlerMethod handler;
@@ -966,6 +975,7 @@ private HandlerMethod directHandler(string path, string method, RequestMappingIn
             return;
         ++found;
         handler = candidate;
+        registered = info;
         consumesJson = consumesRouteType(info, method);
     });
     return found == 1 && consumesJson ? handler : null;
@@ -977,7 +987,7 @@ The registration of `row`'s template, when no other registration that the route'
 every such path. null otherwise.
 +/
 private HandlerMethod patternHandler(ref const AotHandlerMapping row, const(Segment)[] segments,
-        RequestMappingInfoHandlerMapping mappings)
+        RequestMappingInfoHandlerMapping mappings, out RequestMappingInfo registered)
 {
     auto infos = mappings.getHandlerMethods();
     auto handlers = mappings.mappedHandlerMethods();
@@ -985,7 +995,6 @@ private HandlerMethod patternHandler(ref const AotHandlerMapping row, const(Segm
         return null;
     size_t found;
     HandlerMethod handler;
-    RequestMappingInfo registered;
     foreach (index, info; infos)
         foreach (pattern; info.getPatterns())
             if (pattern.getPatternString() == row.paths[0] && handlers[index].getArrayInvoker() is row.invokeArguments)

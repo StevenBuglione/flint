@@ -26,7 +26,7 @@ import flint.web : HttpMediaTypeNotAcceptableException, HttpMediaTypeNotSupporte
     HttpRequestMethodNotSupportedException;
 import flint.web.accept : HeaderContentNegotiationStrategy;
 import flint.web.method : HandlerMethod;
-import flint.web.servlet : HandlerMapping;
+import flint.web.servlet : HandlerExecutionChain, HandlerMapping;
 import flint.web.cors : CorsConfiguration;
 import flint.web.servlet.handler : AbstractHandlerMapping, lookupPath, parsedLookupPath;
 import flint.web.util.pattern : PathMatchInfo, PathPattern, PathPatternParser;
@@ -824,6 +824,25 @@ abstract class RequestMappingInfoHandlerMapping : AbstractHandlerMapping
         request.setAttribute(HandlerMapping.BEST_MATCHING_HANDLER_ATTRIBUTE, Any.of(cast(Object) best.handlerMethod));
         handleMatch(best.info, lookupPath, request);
         return best.handlerMethod;
+    }
+
+    /++
+    Flint's fast path: `getHandler` for a request its startup proof shows `info`'s registration alone matches, with
+    every condition matched whole, so that the lookup's match is `info` itself. It sets what `getHandlerInternal` and
+    `lookupHandlerMethod` set (the lookup path, the best matching handler, `handleMatch`'s attributes) and builds the
+    chain with `chainFor`, without scanning the registrations again.
+    +/
+    package(flint) HandlerExecutionChain provedHandler(RequestMappingInfo info, HandlerMethod handlerMethod,
+            HttpServletRequest request)
+    {
+        request.removeAttribute(HandlerMapping.PRODUCIBLE_MEDIA_TYPES_ATTRIBUTE);
+        scope (exit)
+            request.removeAttribute(RequestMappingInfo.mediaTypesAttribute);
+        const path = lookupPath(request);
+        request.setAttribute(HandlerMapping.LOOKUP_PATH, Any.of(path));
+        request.setAttribute(HandlerMapping.BEST_MATCHING_HANDLER_ATTRIBUTE, Any.of(cast(Object) handlerMethod));
+        handleMatch(info, path, request);
+        return chainFor(handlerMethod, request);
     }
 
     /// Exposes the best pattern, URI variables and producible media types.

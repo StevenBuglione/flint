@@ -645,6 +645,18 @@ class DispatcherServlet : HttpServlet, FastDispatch
     }
 
     /++
+    Flint: `prepareFastCompletion` when the fast path has the chain the handler mappings would return already
+    (`RequestMappingInfoHandlerMapping.provedHandler`): the interceptors' `preHandle`, under the same invariant.
+    +/
+    package(flint.web) final HandlerExecutionChain prepareProvedCompletion(HttpServletRequest request,
+            HttpServletResponse response, HandlerExecutionChain mappedHandler)
+    {
+        if (!mappedHandler.applyPreHandle(request, response))
+            throw new IllegalStateException("fast path: an interceptor stopped a request the proof admitted");
+        return mappedHandler;
+    }
+
+    /++
     Flint: the rest of `doDispatch` for a fast-path request whose handler ran and threw `ex`, after
     `prepareFastCompletion`: `processDispatchResult` resolves the exception as `doDispatch` does.
     +/
