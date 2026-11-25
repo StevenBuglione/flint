@@ -315,6 +315,29 @@ D3 pays off for a large live set with little mutation, which is not gs-rest-serv
 
 The lead lever for RSS and pauses is the pool A/B, gc-pools-ab. Separately, `gc:flint`'s stopped mark is about 1.7× druntime's. That is a D1 regression to find before the collector is measured again.
 
+## 3b. Pause levers measured and set aside (m7, 2026-11-25)
+
+These are posidon diagnostics, never evidence. Full notes are in `coordination/notes/m7-gc-mark-census-fork.md`.
+
+**Where a petclinic pause goes.** druntime's stopped mark is about 0.52 ms per collection at O0 and 0.42-0.43 ms at O3. Callgrind of the mark, with per-instruction and cache-simulated dumps, shows:
+- Each collection scans about 222K words. Words that are not heap pointers cost about 0.04 ns per byte.
+- 96% of the mark's L1 misses are first touches of newly marked objects, about 5.9K per collection at about 50 ns each.
+- The live heap is about 7.8K objects. All of it is permanent start-up data; the allocations of 3,000 requests leave 12 KB live.
+- So the pause scales with the number of permanent pointer-bearing objects, not with bytes or with requests in flight.
+
+**Set aside, with the numbers:**
+- **Trimming class metadata out of the static roots.** One scan of the 529 KB data range costs 21 us, 4.1% of the mark. ClassInfo, `__init` and ModuleInfo together are worth at most 2.2%. ClassInfo's monitor word must stay scanned: `Mutex(Object)` can make it the only reference to a GC Mutex.
+- **Prefetch on mark-stack push.** Worth about 4% in `gc:flint` (1.07 to 1.025 ms), because the depth-first mark leaves little lead time. Not worth a druntime rebuild.
+- **`gc:flint` against druntime.** On petclinic `gc:flint`'s stopped mark is 2.05x druntime's (1.07 against 0.52 ms per collection), which widens D1's 1.7x regression.
+- **`fork:1`.** The heap grows while the child marks: median RSS at the fixed rate rose from 19.4 to 93 MB and kept climbing. The parent's stop p99 went from 0.77 to 10.0 ms, and p99.9 rose 2.7-4.5x.
+- **A permanent start-up region**, branch `m7/startup-region-prototype` (f6890435, kept as a record). The main thread's scannable start-up allocations are bump-allocated from root-ranged chunks until `run` returns.
+  - It holds 2.66 MB in 14,906 blocks, which is 2.4x the live start-up set. It keeps start-up garbage, scans all of it every collection, and that garbage keeps heap objects alive.
+  - Every allocation also passes through the proxy.
+  - Petclinic owner 1 at 5,000/s, O3: p99 0.652/0.672 against 0.852 ms, p99.9 0.875/0.859 against 1.053 ms, CPU 81.8 against 84.2 us/req, capacity 24,264 against 22,970/s, peak RSS 18.6 against 19.1 MB. Start-up is 0.027 s either way.
+  - A version that keeps only long-lived objects would need either an allocation-site allowlist or copying the survivors out after start-up, and a conservative collector cannot move objects safely.
+
+**What is left:** fewer permanent pointer-bearing objects, family by family (`coordination/notes/permanent-objects.md`), and fewer allocations per request. At O3 the default petclinic's p99 on posidon was 0.652/0.672 ms against Go's 0.687 ms in the same session.
+
 ## 4. How p99 and RSS are measured
 
 - **Evidence.** Only proof-harness's queue (`tools/measure_queue.py`) produces evidence. It uses `policy/spring-http-benchmark.json`: 2 server CPUs, 4 load CPUs, 64 connections, a 10 s warm-up, 60 s capacity and fixed-rate phases, 9 trials interleaved with the Go comparator, and a quiet-window check.
