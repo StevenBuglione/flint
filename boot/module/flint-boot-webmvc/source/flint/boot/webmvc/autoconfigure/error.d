@@ -476,6 +476,95 @@ final class StockJsonError
     {
         return controller.error(request);
     }
+
+    /++
+    Flint's fast path (S6): what `error` returns for the ERROR dispatch of a `sendError(status)` for `requestUri`,
+    built without the request: the controller's options, and the stock attributes over the only attributes they
+    read that this response keeps (the status and the URI). `stockJsonError` proves the rest is left out: the
+    exception and message, which the dispatch also records, are never included.
+    +/
+    ResponseEntity errorResponse(int status, string requestUri)
+    {
+        auto attributes = new ErrorPageAttributes(status, requestUri);
+        auto body = controller.errorAttributes.getErrorAttributes(attributes, jsonOptions());
+        return ResponseEntity.of(body, HttpStatus.valueOf(status));
+    }
+
+    // The options `error` passes: no include depends on the request (stockJsonError), so none reads it.
+    private ErrorAttributeOptions jsonOptions()
+    {
+        return controller.getErrorAttributeOptions(null, MediaType.ALL_VALUE);
+    }
+}
+
+/// The request attributes an error page's `DefaultErrorAttributes` reads for a `sendError` with no exception it can
+/// include: the status and the request URI (S6, `StockJsonError.errorResponse`).
+private final class ErrorPageAttributes : imported!"flint.web.context.request".WebRequest
+{
+    private int status;
+    private string requestUri;
+
+    this(int status, string requestUri) pure nothrow @nogc
+    {
+        this.status = status;
+        this.requestUri = requestUri;
+    }
+
+    Any getAttribute(string name, int scope_)
+    {
+        if (scope_ != SCOPE_REQUEST)
+            return Any.init;
+        if (name == RequestDispatcher.ERROR_STATUS_CODE)
+            return Any.of(status);
+        if (name == RequestDispatcher.ERROR_REQUEST_URI)
+            return Any.of(requestUri);
+        return Any.init;
+    }
+
+    void setAttribute(string, Any, int)
+    {
+    }
+
+    void removeAttribute(string, int)
+    {
+    }
+
+    string[] getAttributeNames(int scope_)
+    {
+        return scope_ == SCOPE_REQUEST ? [
+            RequestDispatcher.ERROR_STATUS_CODE, RequestDispatcher.ERROR_REQUEST_URI
+        ] : null;
+    }
+
+    string getHeader(string)
+    {
+        return null;
+    }
+
+    string[] getHeaderValues(string)
+    {
+        return null;
+    }
+
+    string getParameter(string)
+    {
+        return null;
+    }
+
+    string[] getParameterValues(string)
+    {
+        return null;
+    }
+
+    string getContextPath()
+    {
+        return null;
+    }
+
+    string getDescription(bool)
+    {
+        return "uri=" ~ requestUri;
+    }
 }
 
 /++
@@ -537,9 +626,10 @@ Per request it writes a 404 for the error path, for `GET`, `POST`, `PUT`, `DELET
 from the same attributes), written by the converter's mapper; headers the request's handler set stay on the
 response, as they do through the forward.
 +/
-final class StockErrorPageShortcut : Shortcut
+final class StockErrorPageShortcut : Shortcut, imported!"flint.engine.aot.fast".FastErrorPage
 {
     import flint.boot.web.server.engine : FlintServletWebServerFactory;
+    import flint.engine.aot.fast : FastExchange;
     import flint.jackson.databind : JsonMapper;
     import flint.web.servlet : DispatcherServlet;
     import flint.web.servlet.mvc.method.fast : ErrorShortcutRoute;
@@ -551,6 +641,9 @@ final class StockErrorPageShortcut : Shortcut
     private JsonMapperProof stockMapper;
     private StockJsonError stock;
     private ErrorShortcutRoute route;
+    // S6: the dispatch of an unmatched GET ends in sendError(404) with nothing else on the response.
+    private bool unmatchedProved;
+    private string unmatchedWhy;
 
     /// Over `context`, with Boot's Jackson proof.
     this(ApplicationContext context, JsonMapperProof stockMapper) pure nothrow @nogc
@@ -588,7 +681,34 @@ final class StockErrorPageShortcut : Shortcut
         if (proved is null || proved.converterMapper() !is cast(Object) mapper)
             return false;
         route = proved;
+        // S6: the resolver ahead of Spring's is the stock error attributes, which only record the exception.
+        auto errorAttributes = cast(Object) stock.controller.errorAttributes;
+        unmatchedProved = ErrorShortcutRoute.provesUnmatched(servlet, (Object resolver) => resolver is errorAttributes
+                && typeid(resolver) is typeid(DefaultErrorAttributes), unmatchedWhy);
         return true;
+    }
+
+    /// S6: why the unmatched-GET proof failed, or null when it holds (diagnosis, tests).
+    string unmatchedFailure() const pure nothrow @nogc
+    {
+        return unmatchedProved ? null : unmatchedWhy is null ? "not proved" : unmatchedWhy;
+    }
+
+    /++
+    S6: write the 404 of a `GET` that no registration of the dispatcher's first mapping matches, with no servlet
+    objects: `provesUnmatched` says the dispatch ends in `sendError(404)` with nothing else on the response; the
+    engine's forward to this page then runs no filter (`install`), and the page writes the controller's own body
+    for the status and URI (`StockJsonError.errorResponse`) after the mapped filters' fields, as `writeErrorPage`
+    writes it on the forwarded response. `false`, having written nothing, for anything else.
+    +/
+    bool writeUnmatched(ref scope FastExchange exchange, string page, scope const(char)[] requestUri)
+    {
+        if (route is null || !unmatchedProved || page != stock.getErrorPath() || exchange.method != "GET")
+            return false;
+        size_t slot;
+        if (!route.admits(exchange, slot))
+            return false;
+        return route.write(exchange, slot, stock.errorResponse(404, requestUri.idup));
     }
 
     /// Write the error page of `status` at `page` as the ERROR dispatch would, or answer `false` having written

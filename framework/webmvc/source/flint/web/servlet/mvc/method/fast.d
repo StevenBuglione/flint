@@ -76,13 +76,21 @@ final class FastPathTable : FastPath
     // S6: the first handler mapping, when it is exactly Spring's RequestMappingHandlerMapping (a subclass could look
     // up otherwise); null keeps every unmatched request generic.
     private RequestMappingInfoHandlerMapping unmatched;
+    // Full S6: the literal text every registration pattern of `unmatched` starts with, up to its first variable or
+    // wildcard. A path that starts with none of them is matched by none of the patterns.
+    private string[] patternPrefixes;
 
     private this(Route[] routes, RequestMappingInfoHandlerMapping mappings)
     {
         this.routes = routes;
         pool = new BodyPool;
         if (typeid(mappings) is typeid(RequestMappingHandlerMapping))
+        {
             unmatched = mappings;
+            foreach (info; mappings.registeredMappingInfos())
+                foreach (pattern; info.getPatterns())
+                    patternPrefixes ~= literalPrefix(pattern.getPatternString());
+        }
     }
 
     /++
@@ -126,10 +134,26 @@ final class FastPathTable : FastPath
                     route.segments, values))
                 return serve(route, servlet, exchange, values);
         }
-        // S6: a GET no route took goes straight to doDispatch on the servlet objects (fast-path.md 9.1.2).
+        // S6: a GET no route took goes straight to doDispatch on the servlet objects (fast-path.md 9.1.2), or, when
+        // no registration can match its path, to the container's proved error page without them (9.1.3).
         if (unmatched !is null && exchange.method == "GET" && typeid(servlet) is typeid(DispatcherServlet))
+        {
+            if (exchange.unmatched !is null && plainPath(exchange.path)
+                    && !anyPrefix(exchange.path) && exchange.unmatched())
+                return FastOutcome.written;
             return serveUnmatched(servlet, exchange);
+        }
         return FastOutcome.declined;
+    }
+
+    // Whether `path` starts with a registration pattern's literal prefix, ignoring ASCII case (a pattern parser
+    // may match case-insensitively; a false positive only keeps the request on the servlet objects).
+    private bool anyPrefix(scope const(char)[] path) const
+    {
+        foreach (prefix; patternPrefixes)
+            if (path.length >= prefix.length && equalsAsciiIgnoreCase(path[0 .. prefix.length], prefix))
+                return true;
+        return false;
     }
 
     /++
@@ -456,6 +480,99 @@ final class ErrorShortcutRoute
         response.flushBuffer();
         return true;
     }
+
+    /// S6: `admits` for the request `exchange` holds.
+    bool admits(ref scope FastExchange exchange, out size_t slot)
+    {
+        return acceptKey(exchange, slot) && accept[slot].contentType !is null;
+    }
+
+    /++
+    S6: `write` straight to `exchange`, for a request whose response holds only the mapped filters' fields: the
+    status, those fields then the `Content-Type`, the mapper's bytes, flushed (chunked), as `write` leaves the
+    servlet response for the engine to frame.
+    +/
+    bool write(ref scope FastExchange exchange, size_t slot, ResponseEntity entity)
+    {
+        const entry = accept[slot];
+        const status = entity.getStatusCode().value();
+        auto content = entity.getBody();
+        if (entry.contentType is null || status == 0 || !entity.getHeaders().isEmpty()
+                || content.isNull() || content.typeName() != bodyType)
+            return false;
+        auto buffer = pool.acquire();
+        scope (exit)
+            pool.release(buffer);
+        try
+            jackson.getMapper().writeValue(&buffer.put, content);
+        catch (Exception)
+            return false;
+        Route plain;
+        FastField[maxFields] storage;
+        exchange.respondFields(status, responseFields(plain, exchange, entry.contentType, storage), buffer.data, true);
+        return true;
+    }
+
+    /++
+    S6: whether the dispatch of a `GET` that `servlet`'s first handler mapping does not match ends, through
+    `doDispatch`, in exactly `sendError(404)` with nothing else written or set on the response. It holds when:
+    $(UL
+        $(LI the handler mappings are exactly that mapping and the stock resource mapping (`/**` to an exact
+            `ResourceHttpRequestHandler`, no interceptors, no CORS), whose handler raises `NoResourceFoundException`
+            through an exact `HttpRequestHandlerAdapter`, the first adapter that supports it;)
+        $(LI the exception resolvers are `recordsOnly` (a resolver that only records the exception, Boot's
+            `DefaultErrorAttributes`), then exactly Spring's three: `ExceptionHandlerExceptionResolver` with no advice
+            (which leaves a resource handler's exceptions alone), `ResponseStatusExceptionResolver` finding no
+            `@ResponseStatus` on `NoResourceFoundException` or its bases, and `DefaultHandlerExceptionResolver`, which
+            sends `ErrorResponse`'s status and detail with no headers; none of them adds `Cache-Control`.)
+    )
+    The detail message and the request attributes the dispatch leaves are the error page's to prove unread.
+    +/
+    static bool provesUnmatched(DispatcherServlet servlet, scope bool delegate(Object) @safe recordsOnly, out string why)
+    {
+        import flint.http : HttpMethod;
+        import flint.web.servlet.mvc.annotation : ResponseStatusExceptionResolver;
+        import flint.web.servlet.mvc.method.annotation : ExceptionHandlerExceptionResolver;
+        import flint.web.servlet.mvc.support : DefaultHandlerExceptionResolver;
+        import flint.web.servlet.resource : HttpRequestHandlerAdapter, NoResourceFoundException,
+            provedResourceFallback;
+
+        bool fails(string reason)
+        {
+            why = reason;
+            return false;
+        }
+
+        auto strategies = &servlet.proofStrategies();
+        if (strategies.handlerMappings.length != 2 || !provedResourceFallback(strategies.handlerMappings[1]))
+            return fails("handler mappings");
+        // getHandlerAdapter takes the first that supports the resource handler: the request mapping adapter
+        // supports only handler methods, so it is the HttpRequestHandlerAdapter, exactly.
+        auto adapters = strategies.handlerAdapters;
+        if (adapters.length < 2 || typeid(cast(Object) adapters[0]) !is typeid(RequestMappingHandlerAdapter)
+                || typeid(cast(Object) adapters[1]) !is typeid(HttpRequestHandlerAdapter))
+            return fails("handler adapters");
+        auto resolvers = strategies.handlerExceptionResolvers;
+        if (resolvers.length != 4 || !recordsOnly(cast(Object) resolvers[0]))
+            return fails("exception resolvers");
+        // DefaultHandlerExceptionResolver copies the exception's headers before sendError: it has none.
+        if (!new NoResourceFoundException(HttpMethod.GET, "/", "").getHeaders().isEmpty())
+            return fails("NoResourceFoundException headers");
+        auto handlers = cast(ExceptionHandlerExceptionResolver) resolvers[1];
+        auto status = cast(ResponseStatusExceptionResolver) resolvers[2];
+        auto defaults = cast(DefaultHandlerExceptionResolver) resolvers[3];
+        if (handlers is null || typeid(handlers) !is typeid(ExceptionHandlerExceptionResolver)
+                || !handlers.leavesResourceHandlers())
+            return fails("ExceptionHandlerExceptionResolver");
+        if (status is null || typeid(status) !is typeid(ResponseStatusExceptionResolver)
+                || !status.resolvesNothingFor(typeid(NoResourceFoundException)))
+            return fails("ResponseStatusExceptionResolver");
+        if (defaults is null || typeid(defaults) !is typeid(DefaultHandlerExceptionResolver))
+            return fails("DefaultHandlerExceptionResolver");
+        if (handlers.preventsResponseCaching() || status.preventsResponseCaching() || defaults.preventsResponseCaching())
+            return fails("Cache-Control");
+        return true;
+    }
 }
 
 // The first handler mapping and adapter, which `getHandler` and `getHandlerAdapter` consult first, when they are
@@ -573,6 +690,44 @@ private bool equalsAsciiIgnoreCase(scope const(char)[] a, scope const(char)[] b)
         const y = b[i] >= 'A' && b[i] <= 'Z' ? cast(char)(b[i] + 32) : b[i];
         if (x != y)
             return false;
+    }
+    return true;
+}
+
+/++
+The literal text a path pattern starts with, before its first variable, wildcard or escape (`{`, `*`, `?`, `%`):
+every path the pattern matches starts with it, since the literal part of a pattern matches only itself.
++/
+private string literalPrefix(string pattern) pure nothrow @nogc
+{
+    foreach (i, c; pattern)
+        if (c == '{' || c == '*' || c == '?' || c == '%')
+            return pattern[0 .. i];
+    return pattern;
+}
+
+/++
+Whether `path`, still percent-encoded, is its own lookup path: it starts with `/` and has no `%` (nothing to decode),
+no `;` (no path parameters to strip), no empty segment and no `.` or `..` segment (nothing to normalize). Then the
+literal prefixes compare with what the patterns are matched against.
++/
+private bool plainPath(scope const(char)[] path) pure nothrow @nogc
+{
+    if (path.length == 0 || path[0] != '/')
+        return false;
+    size_t segmentStart = 1;
+    foreach (i; 1 .. path.length + 1)
+    {
+        if (i < path.length && path[i] != '/')
+        {
+            if (path[i] == '%' || path[i] == ';' || path[i] == '\\')
+                return false;
+            continue;
+        }
+        const segment = path[segmentStart .. i];
+        if ((segment.length == 0 && i < path.length) || segment == "." || segment == "..")
+            return false;
+        segmentStart = i + 1;
     }
     return true;
 }

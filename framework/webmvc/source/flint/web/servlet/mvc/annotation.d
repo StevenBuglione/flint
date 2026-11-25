@@ -45,6 +45,19 @@ class ResponseStatusExceptionResolver : AbstractHandlerExceptionResolver
         return null;
     }
 
+    /// Flint's fast path (S6): whether `findResponseStatus` finds nothing for an exception of class `type`: no
+    /// descriptor of it or of a base class carries `@ResponseStatus`.
+    package(flint.web) bool resolvesNothingFor(TypeInfo_Class type)
+    {
+        if (descriptors is null)
+            return true;
+        for (auto info = type; info !is null; info = info.base)
+            if (auto descriptor = descriptors.find(info.name))
+                if (descriptor.annotation("flint.web.bind.annotation.ResponseStatus") !is null)
+                    return false;
+        return true;
+    }
+
     private ResponseStatus findResponseStatus(Exception ex, out bool found)
     {
         if (descriptors is null)

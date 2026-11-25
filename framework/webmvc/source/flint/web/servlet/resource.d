@@ -102,6 +102,24 @@ class ResourceHttpRequestHandler : HttpRequestHandler, ImmediateFailure
     }
 }
 
+/++
+Flint's fast path (S6): whether `mapping` is exactly the stock resource mapping `WebMvcConfigurationSupport` builds:
+a `SimpleUrlHandlerMapping` mapping only `/**`, to an exact `ResourceHttpRequestHandler` (which raises
+`NoResourceFoundException` for every path), with no interceptors and no CORS configuration, so its chain for a `GET`
+is the bare handler.
++/
+package(flint.web) bool provedResourceFallback(HandlerMapping mapping)
+{
+    auto resources = cast(SimpleUrlHandlerMapping) mapping;
+    if (resources is null || typeid(resources) !is typeid(SimpleUrlHandlerMapping)
+            || resources.entries.length != 1 || resources.getAdaptedInterceptors().length != 0
+            || resources.hasGlobalCorsConfiguration())
+        return false;
+    auto entry = resources.entries[0];
+    return entry.pattern.getPatternString() == "/**" && entry.handler !is null
+        && typeid(entry.handler) is typeid(ResourceHttpRequestHandler);
+}
+
 /// `HttpRequestHandlerAdapter`.
 class HttpRequestHandlerAdapter : HandlerAdapter
 {

@@ -216,7 +216,7 @@ private struct Offer
 /// Offers a request as the container does: `query` undecoded pairs (the container's decoding is engine-servlet's).
 private Offer offer(DispatcherServlet servlet, string method, string path, string query = null,
         string[] accept = null, bool materializes = false, size_t origins = 0, string content = null,
-        string[] contentTypes = null)
+        string[] contentTypes = null, bool delegate() @safe unmatchedPage = null)
 {
     Offer result;
     bool parameter(scope const(char)[] name, scope FastValueVisitor visit)
@@ -290,6 +290,7 @@ private Offer offer(DispatcherServlet servlet, string method, string path, strin
     exchange.respond = &respond;
     exchange.respondFields = &respondFields;
     exchange.materialize = &materialize;
+    exchange.unmatched = unmatchedPage;
     result.outcome = servlet.dispatchFast(exchange);
     return result;
 }
@@ -686,4 +687,47 @@ unittest
     auto fast = offer(servlet, "GET", "/nope", null, null, true);
     assert(fast.materialized.getStatus() == 404);
     assert(fast.materialized.getErrorMessage() == "No static resource nope.", fast.materialized.getErrorMessage());
+}
+
+@("fast path full S6: only a plain path no registration pattern can match reaches the container's error page")
+unittest
+{
+    auto servlet = dispatcher(new HelloController, "helloController");
+    size_t calls;
+    bool answer = true;
+    bool page() @safe
+    {
+        ++calls;
+        return answer;
+    }
+
+    // Written by the page, with no servlet objects.
+    foreach (path; ["/nope", "/", "/deep/er/path.json", "/trailing/", "/caf\u00e9"])
+    {
+        calls = 0;
+        auto fast = offer(servlet, "GET", path, null, null, false, 0, null, null, &page);
+        assert(fast.outcome == FastOutcome.written && calls == 1 && fast.materialized is null, path);
+    }
+    // A path that needs decoding or normalizing, or that a registration's literal prefix covers (ignoring case):
+    // lean S6, on the servlet objects, as before.
+    foreach (path; [
+        "/a%20b", "/a;jsessionid=1", "/a/../b", "/a//b", "/./a", "/a/.", "/a\\b", "/HELLO-there",
+        "/hellothere"
+    ])
+    {
+        calls = 0;
+        auto fast = offer(servlet, "GET", path, null, null, true, 0, null, null, &page);
+        assert(calls == 0 && fast.outcome != FastOutcome.written, path);
+    }
+    // The page declines: lean S6.
+    answer = false;
+    calls = 0;
+    auto declined = offer(servlet, "GET", "/nope", null, null, true, 0, null, null, &page);
+    assert(calls == 1 && declined.outcome == FastOutcome.materialized && declined.materialized.getStatus() == 404);
+    // Only a GET is offered to the page.
+    answer = true;
+    calls = 0;
+    offer(servlet, "HEAD", "/nope", null, null, true, 0, null, null, &page);
+    offer(servlet, "POST", "/nope", null, null, true, 0, null, ["application/json"], &page);
+    assert(calls == 0);
 }

@@ -320,6 +320,12 @@ abstract class AbstractHandlerExceptionResolver : HandlerExceptionResolver
         this.preventResponseCaching = preventResponseCaching;
     }
 
+    /// Flint's fast path (S6): whether `resolveException` adds `Cache-Control: no-store`.
+    package(flint.web) bool preventsResponseCaching() const pure nothrow @nogc
+    {
+        return preventResponseCaching;
+    }
+
     // dfmt off
     ModelAndView resolveException(HttpServletRequest request, HttpServletResponse response, Object handler,
             Exception ex)

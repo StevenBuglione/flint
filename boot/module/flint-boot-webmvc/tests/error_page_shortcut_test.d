@@ -237,3 +237,85 @@ private void same(MvcFixture fixture, StockErrorPageShortcut shortcut, string me
     assert(!unproved.writeErrorPage(new MockHttpServletRequest("GET", "/nope"),
             new MockHttpServletResponse, 404, "/error"));
 }
+
+// S6: `writeUnmatched` for an unmatched GET, as the container's exchange records it.
+private Outcome unmatched(StockErrorPageShortcut shortcut, string uri, string[] accepts,
+        string page = "/error", string method = "GET")
+{
+    import flint.engine.aot.fast : FastExchange, FastField;
+
+    Outcome outcome;
+    void respondFields(int status, scope const(FastField)[] fields, scope const(ubyte)[] content, bool chunked)
+    {
+        outcome.status = status;
+        foreach (ref field; fields)
+        {
+            if (field.name == "Content-Type")
+                outcome.contentType = field.value;
+            else
+                outcome.headers ~= field.name ~ ": " ~ field.value;
+        }
+        outcome.body = withoutTimestamp((cast(const(char)[]) content).idup);
+        outcome.committed = chunked;
+    }
+
+    scope FastExchange exchange;
+    exchange.method = method;
+    exchange.path = uri;
+    exchange.acceptCount = accepts.length;
+    if (accepts.length)
+        exchange.accept = accepts[0];
+    exchange.respondFields = &respondFields;
+    outcome.shortcut = shortcut.writeUnmatched(exchange, page, uri);
+    return outcome;
+}
+
+// The generic 404 of `uri` (the dispatch, then the ERROR forward), without the Content-Type among the headers.
+private Outcome generic404(MvcFixture fixture, string uri, string[] accepts)
+{
+    auto outcome = forward(fixture, null, "GET", uri, null, accepts);
+    string[] headers;
+    foreach (header; outcome.headers)
+        if (header.length < 13 || header[0 .. 13] != "Content-Type:")
+            headers ~= header;
+    outcome.headers = headers;
+    return outcome;
+}
+
+@("full S6: an unmatched GET's 404 written from the exchange is the dispatch and ERROR forward's") unittest
+{
+    auto app = fixture();
+    auto shortcut = proved(app);
+    assert(shortcut.unmatchedFailure() is null, shortcut.unmatchedFailure());
+    foreach (uri; ["/nope", `/a"b\c`, "/café", "/tab\there", "/deep/er/path.json", "/trailing/"])
+        foreach (accepts; [cast(string[]) null, ["*/*"], ["application/json"]])
+        {
+            const expected = generic404(app, uri, accepts);
+            auto actual = unmatched(shortcut, uri, accepts);
+            assert(actual.shortcut, uri ~ ": the page must write");
+            actual.shortcut = false;
+            assert(actual == expected, uri ~ ": " ~ actual.body ~ " / " ~ expected.body);
+        }
+    enum body404 = `{"timestamp":"","status":404,"error":"Not Found","path":"/nope"}`;
+    assert(unmatched(shortcut, "/nope", null).body == body404);
+}
+
+@("full S6: the page declines what it does not write, having written nothing") unittest
+{
+    auto app = fixture();
+    auto shortcut = proved(app);
+    foreach (accepts; [
+            ["text/html"], ["application/json;q=0.9"], ["application/xml"], [
+                "*/*", "application/json"
+            ]
+        ])
+    {
+        const outcome = unmatched(shortcut, "/nope", accepts);
+        assert(!outcome.shortcut && outcome.status == 0, accepts[0]);
+    }
+    assert(!unmatched(shortcut, "/nope", null, "/oops").shortcut);
+    assert(!unmatched(shortcut, "/nope", null, "/error", "HEAD").shortcut);
+    // Unproved: the page never writes.
+    auto unproved = new StockErrorPageShortcut(app.context, &otherMapperProof);
+    assert(!unproved.prove(app.servlet) && !unmatched(unproved, "/nope", null).shortcut);
+}

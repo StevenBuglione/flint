@@ -1199,6 +1199,13 @@ class ExceptionHandlerExceptionResolver : AbstractHandlerExceptionResolver
         }
     }
 
+    /// Flint's fast path (S6): whether this resolver leaves every exception of a `ResourceHttpRequestHandler`
+    /// alone (`shouldApplyTo` is false for it): there is no `@ControllerAdvice`.
+    package(flint.web) bool leavesResourceHandlers() const pure nothrow @nogc
+    {
+        return adviceBeans.length == 0;
+    }
+
     protected override bool shouldApplyTo(HttpServletRequest request, Object handler)
     {
         // AbstractHandlerMethodExceptionResolver, plus Spring 6.1's default for ResourceHttpRequestHandler: global

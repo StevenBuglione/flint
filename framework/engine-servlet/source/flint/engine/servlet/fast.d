@@ -15,7 +15,8 @@ module flint.engine.servlet.fast;
 
 import flint.arena : Buffer;
 import flint.conc : Context;
-import flint.engine.aot.fast : FastDispatch, FastExchange, FastField, FastFilterEffect, FastOutcome, FastValueVisitor;
+import flint.engine.aot.fast : FastDispatch, FastErrorPage, FastExchange, FastField,
+    FastFilterEffect, FastOutcome, FastValueVisitor;
 import flint.engine.servlet : ServletEngine;
 import flint.engine.servlet.request : ServletEngineRequest, componentTooLong, decodeComponent,
     decodeComponentInto, malformedComponent, methodName;
@@ -110,6 +111,7 @@ FastOutcome serveFast(ServletEngine engine, FastDispatch dispatch, ref scope Req
         return FastOutcome.declined;
     if (!fits)
         return FastOutcome.declined;
+    const requestUri = path; // getRequestURI: the path as received, with the context path
     const contextPath = engine.contextPathOf();
     if (contextPath.length != 0)
     {
@@ -179,10 +181,21 @@ FastOutcome serveFast(ServletEngine engine, FastDispatch dispatch, ref scope Req
         materializedResponse = servletResponse;
     }
 
+    // S6: the installed error page writes an unmatched GET's 404 from the exchange, when it can (FastErrorPage).
+    string notFoundPage;
+    auto errorPage = engine.fastErrorPage(404, notFoundPage);
+    bool unmatched()
+    {
+        // The page writes through respondFields, which marks the response begun.
+        return errorPage.writeUnmatched(exchange, notFoundPage, requestUri);
+    }
+
     exchange.parameter = &parameter;
     exchange.respond = &respond;
     exchange.respondFields = &respondFields;
     exchange.materialize = &materialize;
+    if (errorPage !is null)
+        exchange.unmatched = &unmatched;
     // The filters' per-request state (a security context) around the servlet, undone in reverse order on every
     // path, for exactly the filters whose enter ran (one that throws is not undone, as its filter never ran).
     size_t entered;

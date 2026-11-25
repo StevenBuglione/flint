@@ -85,6 +85,29 @@ struct FastExchange
     /// Builds the request and response the generic path would have built (the container's own classes, as
     /// `Object`s for this low-level package); the outcome is then `FastOutcome.materialized`.
     void delegate(out Object request, out Object response) @safe materialize;
+    /++
+    S6: offers a `GET` that no registration of the dispatcher's first handler mapping can match (the dispatcher
+    proved that for this path) to the container's startup-proved error page (`FastErrorPage`). It writes the 404 that
+    the rest of the dispatch and the error page would write, and returns `true`; the outcome is then
+    `FastOutcome.written`. Or it returns `false` having written nothing. Null when the container has no such page.
+    +/
+    bool delegate() @safe unmatched;
+}
+
+/++
+S6 (fast-path.md 9.1.3): an error page the container can write from a `FastExchange` alone, implemented by the error
+page the container installed (Boot's stock JSON error page). Its startup proof covers what the dispatch does after
+the first handler mapping finds nothing: the resource fallback, the exception resolvers and `sendError(404)`, and the
+page itself. Every request it writes is one the dispatcher proved its first mapping cannot match.
++/
+interface FastErrorPage
+{
+    /++
+    Write what the dispatch and the error page `page` would write for `exchange`, a `GET` no registration of the
+    first handler mapping matches, whose URI is `requestUri` (`HttpServletRequest.getRequestURI`), and return `true`;
+    or return `false` having written nothing.
+    +/
+    bool writeUnmatched(ref scope FastExchange exchange, string page, scope const(char)[] requestUri);
 }
 
 /++

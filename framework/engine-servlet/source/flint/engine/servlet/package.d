@@ -18,7 +18,7 @@ module flint.engine.servlet;
 import flint.arena : Status;
 import flint.conc : Context, Deadline;
 import flint.engine.aot.any : Any;
-import flint.engine.aot.fast : FastDispatch, FastField, FastFilter, FastFilterEffect, FastOutcome;
+import flint.engine.aot.fast : FastDispatch, FastErrorPage, FastField, FastFilter, FastFilterEffect, FastOutcome;
 import flint.engine.servlet.request : DispatchState, RequestHost, RequestState,
     ServletEngineRequest, decimal, methodName;
 import flint.engine.servlet.exchange : StatePool, freshState, retire;
@@ -510,6 +510,17 @@ final class ServletEngine : RequestHost
     package(flint.engine.servlet) ServletEngineResponse newResponse(FiberResponse transport, uint worker)
     {
         return openResponse(transport, worker);
+    }
+
+    /// S6: the installed error-page shortcut as a `FastErrorPage`, with the page `status` forwards to, or null
+    /// when there is no such shortcut or no page for `status`.
+    package(flint.engine.servlet) FastErrorPage fastErrorPage(int status, out string page)
+    {
+        auto fast = cast(FastErrorPage) errorShortcut;
+        if (fast is null)
+            return null;
+        page = errorPage(status);
+        return page is null ? null : fast;
     }
 
     /// `server.servlet.context-path`, for the fast path's own context check.

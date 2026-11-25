@@ -391,6 +391,64 @@ the servlet's own `service`: status, error message, Content-Type, body, and the 
 
 gs-rest's `spring_error_identity.py` with the fast path on and off: 31 responses byte for byte, 0 problems.
 
+### 9.1.3 Full S6: the unmatched GET written from the exchange
+
+When the rest of an unmatched `GET`'s dispatch and its error page are both proved stock, the 404 is written from the
+`FastExchange` with no servlet request or response, resource handler, exception resolver or error forward (the
+coordinator's 15:10Z item, Astra's GC-tail rank 3). It is the same response: lean S6, the dispatch and the error page
+(9.2) are the reference.
+
+**Hand-off.** engine-aot's `FastExchange.unmatched` and `FastErrorPage` (`flint.engine.aot.fast`). The engine
+(`serveFast`) sets `unmatched` only when its installed error-page shortcut is also a `FastErrorPage` and the status
+404 has a page. The dispatcher calls it for a request its first mapping cannot match. The page writes, or returns
+`false` having written nothing, and the dispatcher continues with lean S6.
+
+**The dispatcher's per-request proof** (webmvc `FastPathTable.dispatch`), for an exact `DispatcherServlet` and
+`RequestMappingHandlerMapping`, on top of lean S6's conditions:
+- the method is `GET`;
+- the path is its own lookup path (`plainPath`): it starts with `/`, and has no `%`, `;`, `\`, empty segment, or `.`
+  or `..` segment, so nothing is decoded, stripped or normalized;
+- it starts with no registration pattern's literal prefix (the text before its first `{`, `*`, `?` or `%`),
+  compared ignoring ASCII case. The literal part of a pattern matches only itself, so no pattern can match the
+  path, and the lookup and `handleNoMatch` find nothing.
+
+A path that fails any of these takes lean S6.
+
+**The page's startup proof** (Boot's `StockErrorPageShortcut.prove`, through webmvc's
+`ErrorShortcutRoute.provesUnmatched`), in addition to 9.2's:
+- the handler mappings are exactly the request mappings and the stock resource mapping: `SimpleUrlHandlerMapping` of
+  `/**` only, to an exact `ResourceHttpRequestHandler`, with no interceptors and no CORS configuration;
+- the adapters are the request mapping adapter, then an exact `HttpRequestHandlerAdapter`;
+- the exception resolvers are exactly four:
+  - Boot's `DefaultErrorAttributes` bean, which only records the exception;
+  - `ExceptionHandlerExceptionResolver` with no `@ControllerAdvice`, so it leaves a resource handler's exceptions alone;
+  - `ResponseStatusExceptionResolver`, with no descriptor putting `@ResponseStatus` on `NoResourceFoundException` or a
+    base class;
+  - `DefaultHandlerExceptionResolver`, which copies the exception's headers (it has none) and calls
+    `sendError(404, detail)`;
+- none of the three Spring resolvers adds `Cache-Control`.
+
+The dispatch then ends in `sendError(404)` with nothing else on the response. The detail is unread, since `include-message` is
+`NEVER`, and so are the attributes the dispatch leaves, since the ERROR chain runs no filter and only the stock
+attributes read the request.
+
+**Per request, the page** (`writeUnmatched`) admits the `Accept` keys of 9.2, then writes:
+- the body: the controller's own body, from the stock `DefaultErrorAttributes` over a `WebRequest` holding only the
+  status and `getRequestURI()`, with the controller's options. The exception and message, which the dispatch records,
+  are never included, so the map is the same: timestamp, status, error, path;
+- the fields: the mapped filters' fields (S4), then the negotiated `Content-Type`, flushed (chunked), as the forward
+  leaves the response.
+
+**Not eligible.** petclinic: it has a global CORS configuration and `@ControllerAdvice` for `Exception`. Any
+application with interceptors, custom resolvers, a context-path-only request, or another error page.
+
+**Tests:**
+- framework-test: which paths reach the page and which take lean S6. That covers the encoded, `;`, `..`, `//`, `.`
+  and backslash paths, prefix collisions in any case, a declining page, HEAD and POST.
+- boot-webmvc: `writeUnmatched` against the dispatch and ERROR forward for every `Accept` key and escaped, non-ASCII
+  and trailing-slash paths, field by field; and the declines.
+- gs-rest: `spring_error_identity.py` with the fast path on and off, and acceptance 18/18.
+
 ### 9.2 The error-page shortcut (default JSON 404)
 
 A 404 that reaches Boot's error page costs a second full pass: the engine forwards to `/error`, which runs the ERROR filter chain, the `DispatcherServlet` lookup, `BasicErrorController.error`, `HttpEntityMethodProcessor`'s negotiation and the Jackson converter (coordination note web-http-404-specialization.md). The shortcut writes that response in place of the forward when startup has proved the whole ERROR dispatch stock. The first dispatch, which raises and resolves the 404, is unchanged.
