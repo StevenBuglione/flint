@@ -712,17 +712,25 @@ private string qualifiedName(string symbol) @safe pure nothrow @nogc
     return symbol;
 }
 
-/// `word` up to its parameter list when that part is a qualified name, else null.
+/// `word` up to its parameter list when that part is a qualified name, else null. A template's argument list
+/// (`!(...)`, whose arguments may hold parentheses of their own, as `immutable(char)[]`) is part of the name.
 private string functionPart(string word) @safe pure nothrow @nogc
 {
+    int templateDepth;
     foreach (i, c; word)
-        if (c == '(' && (i == 0 || word[i - 1] != '!'))
+    {
+        if (c == '(' && (templateDepth > 0 || (i > 0 && word[i - 1] == '!')))
+            ++templateDepth;
+        else if (c == ')' && templateDepth > 0)
+            --templateDepth;
+        else if (c == '(')
         {
             foreach (d; word[0 .. i])
                 if (d == '.')
                     return word[0 .. i];
             return null;
         }
+    }
     return null;
 }
 
@@ -785,4 +793,9 @@ private void sortDescending(string[] lines)
             "immutable(char)[] flint.java.lang.String.format(immutable(char)[], Any[])") == "flint.java.lang.String.format");
     assert(qualifiedName("const(flint.http.MediaType)[] flint.web.f!(int).g(int)") == "flint.web.f!(int).g");
     assert(qualifiedName("_d_newarrayT") == "_d_newarrayT");
+    // A template argument with parentheses of its own stays in the name.
+    assert(qualifiedName("flint.engine.aot.any.Any flint.java.util.HashMap!(immutable(char)[], flint.engine.aot.any."
+            ~ "Any).HashMap.store(immutable(char)[], flint.engine.aot.any.Any)")
+            == "flint.java.util.HashMap!(immutable(char)[], flint.engine.aot.any.Any).HashMap.store");
+    assert(qualifiedName("void flint.a.f!(const(int)*, g!(h(x)))(int)") == "flint.a.f!(const(int)*, g!(h(x)))");
 }
