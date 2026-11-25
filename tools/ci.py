@@ -403,6 +403,19 @@ def request_allocation_tests(runner):
         import spring_bench
         with spring_bench.postgres_cluster() as database:
             runner.run(command,env=dict(os.environ,**database()))
+    # The same gates with the static-data map applied in the test binaries (FLINT_GC_STATIC_VERIFY=0; the test
+    # profile otherwise audits instead of trimming): only this configuration exposed a mid-word keep range.
+    sys.path.insert(0,str(ROOT/'tools'))
+    import spring_bench
+    for app in sorted(budgeted):
+        command=[ROOT/'.flint/bin/flint','test','-C',ROOT/rows[app]['flint']['directory'],'--compiler','both',
+                 '--verify']
+        trimmed=dict(os.environ,FLINT_GC_STATIC_VERIFY='0')
+        if rows[app].get('database')!='postgres' or runner.plan:
+            runner.run(command,env=trimmed)
+            continue
+        with spring_bench.postgres_cluster() as database:
+            runner.run(command,env=dict(trimmed,**database()))
 
 def platform_run(runner,target):
     if not runner.plan:implementation_required()

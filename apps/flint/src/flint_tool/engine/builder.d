@@ -948,6 +948,12 @@ bool buildProject(ref Session session, const ref Manifest manifest, const ref Re
     result.artifact = artifactPath(manifest, request);
     if (!artifactExists(result.artifact, report))
         return false;
+    // The static-data map (docs/spring/phase1/gc.md, 3d), on every build path, before the receipt hashes the file.
+    {
+        import flint_tool.support.gcmap : attachStaticMap, auditsStaticData;
+
+        attachStaticMap(result.artifact, auditsStaticData(request.profile));
+    }
     storeAotArchive(session, result);
     auto receipt = projectReceipt(session, manifest, toolchain, request, flags, result);
     finishPhases(session, result.phases); // after the receipt's hashing, which is flint's work too

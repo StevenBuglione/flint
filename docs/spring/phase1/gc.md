@@ -393,6 +393,60 @@ The cheapest lever is to stop signalling the 3 idle threads. They could park in 
 
 **D1 open issue: thread-cache retention.** With caches on, `gc:flint` spends 7–11% more mark time per collection than the same binary without them. The suspected cause is not yet confirmed: slots parked in a thread's cache look allocated, so the mark scans their stale words and keeps whatever those words reach. Testing it means counting the bytes scanned through cached slots, and clearing or `NO_SCAN`-marking slots when they enter a cache. This is not on the critical path, because the generational baseline runs without caches.
 
+## 3d. Static data: class metadata never owns a GC monitor (owner rule, e170ffd0)
+
+After the RELRO trim (R-33), each collection still reads the executable's whole writable `.data` and `.bss`: 267 KiB on gs-rest-service and 484 KiB on petclinic-rest, from L3 or DRAM, in every stop-the-world phase. That is 42–51% of the root scan (section 3c). Almost all of it can never hold a GC pointer:
+
+| What `.data` holds | gs-rest | petclinic |
+| --- | --- | --- |
+| ClassInfo and Interface objects | 176 KiB | 322 KiB |
+| class and struct `__init` images | 44 KiB | 62 KiB |
+| ModuleInfo | 20 KiB | 31 KiB |
+| C library tables (OpenSSL…) | 7 KiB | 38 KiB |
+| alignment padding | 15 KiB | 25 KiB |
+| mutable D data (`__gshared`, array literal storage) | ~9 KiB | ~18 KiB |
+
+A ClassInfo or TypeInfo object is static except for its monitor word. **The rule:** class metadata never owns a GC-allocated monitor. In D that can happen only through `new Mutex(obj)` or `setSameMutex(ownee, …)` with class metadata as the object. `synchronized (typeid(X))` is fine: druntime allocates those monitors from the C heap. Nothing in druntime, Phobos or Flint breaks the rule. Under it, the collector does not need to scan class metadata.
+
+**The map.**
+- After the link, `flint build` classifies the executable's symbols by mangled name (`flint_tool.support.gcmap`). It appends to the file the ranges that can hold a GC pointer, after everything the loader maps, with a checksummed trailer that names the writable segment and the build-id. Stripping the file drops the map.
+- At startup `flint.arena` validates the map against the loaded segment, the build-id and the range druntime registered. It then replaces that range with the keep list (`flint.arena.sys.gc.static_map`).
+- A map that is missing, damaged or belongs to another binary leaves the whole range scanned.
+- The map carries two keep lists:
+  - full: without class metadata, `__init` images, ModuleInfo, `__minfo` and padding;
+  - provable: without `__init` images, ModuleInfo, `__minfo` and padding, keeping class metadata.
+- A symbol the classification keeps is always scanned, even where a dropped one overlaps it. Gaps no symbol names and that are 16 bytes or longer are kept, and C data is kept.
+
+**The switches.**
+- `FLINT_GC_STATIC_TRIM=0` (or `off`) scans the whole range, as without a map.
+- `FLINT_GC_STATIC_TRIM=provable` keeps class metadata scanned.
+- `FLINT_GC_STATIC_VERIFY=1` or `0` forces the audit on or off.
+- `FLINT_GC_STATIC_REPORT=1` prints one startup line with the map's state, the mode and the bytes dropped.
+
+**Measured.** Posidon, O3, petclinic's validation 400, two rounds. The binaries differ only in the map: none, the provable list, or the full list.
+
+| Arm | Pause/collection | Mark/collection |
+| --- | --- | --- |
+| No map | 264.0 / 260.5 µs | 244 / 240 µs |
+| Provable | 262.3 / 267.1 µs | 242 / 247 µs |
+| Full (the rule) | 238.5 / 236.9 µs (−9.5%) | 218 / 217 µs |
+
+CPU per request, RSS and p99 at the fixed rate are unchanged within noise. The provable list alone saves nothing: what it drops is small and interleaved with class metadata. The map keeps 16.7 KiB of gs-rest's 279 KiB region (71 ranges) and 66.7 KiB of petclinic's 518 KiB (99 ranges; petclinic's C library data stays scanned). Building the map costs 2–5 ms per link (read the file, classify, encode): under 0.5% of an edit build. `/nope` no longer collects at all since B7's zero-allocation 404, so it has no pause to cut.
+
+**The three safety layers.**
+1. **The typed gate, FLINT-E0536** (`tools/check_class_monitor.py`, in the structural gate and `flint check`; never in `flint build`).
+   - The pinned compiler type-checks every module that mentions `Mutex`, `setSameMutex`, `core.sync` or `__monitor`, against a copy of druntime whose `Mutex(TypeInfo)` and `setSameMutex(TypeInfo, …)` overloads are `@disable`d.
+   - A metadata argument is therefore rejected through locals, `auto`, parameters, fields, returns, casts, UFCS, aliases and template instances, at the compiler's own file:line: `FLINT-E0536: \`new Mutex(...)\` gives a TypeInfo/ClassInfo (class metadata) a GC-allocated monitor; lock a dedicated \`new Mutex()\` instead`.
+   - A deliberate negative test marks its line `// flint: allow-class-monitor (reason)`. The gate counts the markers, and it fails on one with no reason or one that matches no finding.
+   - It takes about 0.7 s on the whole repository.
+   - It cannot see a value whose static type is `Object`; layer 2 covers that.
+2. **Verify mode**, on in the dev and test profiles (`flint test`) and in debug builds (`dub test`).
+   - A watcher thread checks every 5 ms, and so after every collection, every ClassInfo's monitor (from ModuleInfo's class lists) and every word the map drops.
+   - It is a low-level thread, so collections neither signal nor scan it.
+   - Nothing is trimmed in this mode, so an object the rule's violation references stays alive until the check sees it.
+   - A violation aborts with the class's name.
+3. **Release fallback**: the startup validation above, and `FLINT_GC_STATIC_TRIM=0`.
+
 ## 4. How p99 and RSS are measured
 
 - **Evidence.** Only proof-harness's queue (`tools/measure_queue.py`) produces evidence. It uses `policy/spring-http-benchmark.json`: 2 server CPUs, 4 load CPUs, 64 connections, a 10 s warm-up, 60 s capacity and fixed-rate phases, 9 trials interleaved with the Go comparator, and a quiet-window check.
