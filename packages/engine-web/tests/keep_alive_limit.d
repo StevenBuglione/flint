@@ -94,6 +94,9 @@ private struct Reader
             }
             char[4096] chunk;
             const got = socket.receive(chunk[]);
+            // A collection's suspend signal interrupts the blocking receive: that is not the peer closing.
+            if (got == Socket.ERROR && interrupted())
+                continue;
             if (got <= 0)
             {
                 ended = true;
@@ -103,6 +106,13 @@ private struct Reader
             buffered ~= chunk[0 .. got];
         }
     }
+}
+
+private bool interrupted() @trusted
+{
+    import core.stdc.errno : EINTR, errno;
+
+    return errno == EINTR;
 }
 
 private bool closes(string head) pure
