@@ -2662,8 +2662,9 @@ final class BeanPropertyRowMapping
     private ResultSet plannedResult;
     private const(size_t)[] plannedProperties;
     private size_t[] columnProperties;
-    /// Room for the plan of a result with up to 16 columns, so a mapping made per query allocates none.
-    private size_t[16] inlinePlan;
+    /// The most columns whose labels `columnPlan` gathers on the stack for the type's shared plans
+    /// (`BeanColumnIndex.planFor`); a wider result, or a mapping with suppressed properties, plans in its own array.
+    private enum plannedColumns = 16;
     /// The descriptor's names, sorted for lookup, when the mapping was built for a type (`beanColumnIndexOf`).
     private BeanColumnIndex columns;
 
@@ -2876,9 +2877,9 @@ final class BeanPropertyRowMapping
             return plannedProperties;
         auto rsmd = rs.getMetaData();
         const columnCount = rsmd.getColumnCount();
-        if (columns !is null && suppressed is null && columnCount <= inlinePlan.length)
+        if (columns !is null && suppressed is null && columnCount <= plannedColumns)
         {
-            string[inlinePlan.length] labels;
+            string[plannedColumns] labels;
             foreach (index; 1 .. columnCount + 1)
                 labels[index - 1] = JdbcUtils.lookupColumnName(rsmd, index);
             plannedProperties = columns.planFor(labels[0 .. columnCount]);
@@ -2886,7 +2887,7 @@ final class BeanPropertyRowMapping
         else
         {
             if (columnProperties.length < columnCount)
-                columnProperties = columnCount <= inlinePlan.length ? inlinePlan[] : new size_t[columnCount];
+                columnProperties = new size_t[columnCount];
             foreach (index; 1 .. columnCount + 1)
             {
                 const label = JdbcUtils.lookupColumnName(rsmd, index);
