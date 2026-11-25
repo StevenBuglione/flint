@@ -6,7 +6,7 @@ module servlet_engine_tests;
 
 import core.time : MonoTime, dur;
 import flint.engine.aot.any : Any;
-import flint.engine.servlet : ServletEngine, ServletEngineException, ServletEngineOptions;
+import flint.engine.servlet : ErrorPageShortcut, ServletEngine, ServletEngineException, ServletEngineOptions;
 import flint.jakarta.servlet : DispatcherType, Filter, FilterChain, RequestDispatcher,
     ServletRequest, ServletResponse;
 import flint.jakarta.servlet.http : HttpServlet, HttpServletRequest, HttpServletRequestWrapper, HttpServletResponse;
@@ -33,8 +33,8 @@ private final class Probe : HttpServlet
         alias Page = void delegate(HttpServletRequest, HttpServletResponse) @safe;
         const Page[string] pages = [
             "/greeting": &greeting, "/committed": &committed, "/empty": &empty,
-            "/fields": &fields, "/throw": &fail, "/lazy": &failLazily, "/headers": &headers, "/visit": &visit, "/large": &large,
-            "/many": &many
+            "/fields": &fields, "/throw": &fail, "/lazy": &failLazily, "/headers": &headers,
+            "/visit": &visit, "/large": &large, "/many": &many
         ];
         if (auto page = request.getServletPath() in pages)
             return (*page)(request, response);
@@ -513,8 +513,8 @@ unittest
             reply.content);
 
     // The request hands its fields over in arrival order with repeats kept, names lower-cased as it stores them.
-    reply = exchange(socket, pending, "GET /visit HTTP/1.1\r\nHost: localhost\r\nX-A: 1\r\nAccept: */*\r\n"
-            ~ "x-a: 2\r\n\r\n");
+    reply = exchange(socket, pending,
+            "GET /visit HTTP/1.1\r\nHost: localhost\r\nX-A: 1\r\nAccept: */*\r\n" ~ "x-a: 2\r\n\r\n");
     assert(reply.content == "host=localhost;x-a=1;accept=*/*;x-a=2;", reply.content);
 
     // Repeated fields keep their order; a replaced field keeps its first position; Content-Type, then
@@ -749,4 +749,121 @@ unittest
     // The connection stays usable: the next response follows directly, with no stray body bytes before it.
     auto next = exchange(socket, pending, "GET /owners/11 HTTP/1.1\r\nHost: localhost\r\n\r\n", true);
     assert(next.headWithoutDate() == reply.headWithoutDate(), next.head);
+}
+
+/// Stands in for the shortcut Flint AOT installs: writes its own body for a 404 and refuses anything else.
+private final class Shortcut : ErrorPageShortcut
+{
+    bool accept = true;
+    Filter[] errorFilters;
+    Filter[] requestFilters;
+    uint written;
+    uint refused;
+    string seenUri;
+
+    bool install(ServletEngine engine)
+    {
+        errorFilters = engine.filtersFor(DispatcherType.ERROR, "/error");
+        requestFilters = engine.filtersFor(DispatcherType.REQUEST, "/nope");
+        return accept;
+    }
+
+    bool writeErrorPage(HttpServletRequest request, HttpServletResponse response, int status, string page)
+    {
+        if (status != 404 || page != "/error")
+        {
+            ++refused;
+            return false;
+        }
+        ++written;
+        // The attributes are set before the shortcut runs, as before the ERROR dispatch.
+        seenUri = request.getAttribute(RequestDispatcher.ERROR_REQUEST_URI).get!string;
+        response.setContentType("application/json");
+        response.getOutputStream().write(cast(const(ubyte)[]) `{"shortcut":404}`);
+        response.flushBuffer();
+        return true;
+    }
+}
+
+private final class Counting : Filter
+{
+    mixin Filter.Defaults;
+    uint calls;
+
+    void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+    {
+        ++calls;
+        chain.doFilter(request, response);
+    }
+}
+
+private ServletEngine openWith(Shortcut shortcut, Counting onError)
+{
+    ServletEngineOptions options;
+    options.address = "127.0.0.1";
+    options.port = 0;
+    options.errorPageShortcut = shortcut;
+    auto engine = new ServletEngine(options);
+    engine.addServlet("dispatcherServlet", new Probe);
+    if (onError !is null)
+        engine.addFilter("onError", onError, ["/*"], [DispatcherType.ERROR]);
+    engine.addFilter("onRequest", new Counting, ["/*"], [DispatcherType.REQUEST]);
+    engine.start();
+    return engine;
+}
+
+@("an installed error-page shortcut writes the 404 in place of the ERROR dispatch, and a refusal forwards")
+unittest
+{
+    auto shortcut = new Shortcut;
+    auto onError = new Counting;
+    auto engine = openWith(shortcut, onError);
+    const port = cast(ushort) engine.getPort();
+    scope (exit)
+        engine.stop();
+    // The proof sees the filters a dispatch would run: only the ERROR-mapped one for the error page.
+    assert(shortcut.errorFilters.length == 1 && shortcut.errorFilters[0] is onError);
+    assert(shortcut.requestFilters.length == 1 && shortcut.requestFilters[0]!is onError);
+
+    auto socket = new TcpSocket(new InternetAddress("127.0.0.1", port));
+    socket.setOption(SocketOptionLevel.SOCKET, SocketOption.RCVTIMEO, dur!"msecs"(3_000));
+    scope (exit)
+        socket.close();
+    char[] pending;
+    auto reply = exchange(socket, pending, "GET /nope HTTP/1.1\r\nHost: localhost\r\n\r\n");
+    assert(reply.headWithoutDate() == "HTTP/1.1 404 \r\nAllow: GET\r\nContent-Type: application/json\r\n"
+            ~ "Transfer-Encoding: chunked\r\n\r\n", reply.head);
+    assert(reply.content == `{"shortcut":404}`, reply.content);
+    assert(shortcut.written == 1 && shortcut.seenUri == "/nope" && onError.calls == 0);
+
+    // A 405 is refused: the generic forward runs the ERROR chain and the page.
+    reply = exchange(socket, pending, "POST /greeting HTTP/1.1\r\nHost: localhost\r\nContent-Length: 0\r\n\r\n");
+    assert(reply.head[0 .. 15] == "HTTP/1.1 405 \r\n", reply.head);
+    assert(reply.content == `{"status":405,"path":"/greeting","message":"Method 'POST' is not supported.",`
+            ~ `"exception":null,"at":"/error"}`, reply.content);
+    assert(shortcut.refused == 1 && onError.calls == 1);
+
+    // The connection stays in step.
+    reply = exchange(socket, pending, "GET /greeting HTTP/1.1\r\nHost: localhost\r\n\r\n");
+    assert(reply.content == `{"id":1,"content":"Hello, World!"}`, reply.content);
+}
+
+@("a shortcut whose install declines is never called: every forward stays generic")
+unittest
+{
+    auto shortcut = new Shortcut;
+    shortcut.accept = false;
+    auto engine = openWith(shortcut, null);
+    const port = cast(ushort) engine.getPort();
+    scope (exit)
+        engine.stop();
+    assert(shortcut.errorFilters.length == 0);
+    auto socket = new TcpSocket(new InternetAddress("127.0.0.1", port));
+    socket.setOption(SocketOptionLevel.SOCKET, SocketOption.RCVTIMEO, dur!"msecs"(3_000));
+    scope (exit)
+        socket.close();
+    char[] pending;
+    const reply = exchange(socket, pending, "GET /nope HTTP/1.1\r\nHost: localhost\r\n\r\n");
+    assert(reply.content == `{"status":404,"path":"/nope","message":"","exception":null,"at":"/error"}`, reply.content);
+    assert(shortcut.written == 0 && shortcut.refused == 0);
 }

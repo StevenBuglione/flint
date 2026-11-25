@@ -476,6 +476,7 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
         return null;
     }
 
+    /// Each header field as received, in order, repeated names included (`HeaderFieldSource`).
     void visitHeaderFields(scope void delegate(string name, string value) @safe visit)
     {
         foreach (index, name; names)

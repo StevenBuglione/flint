@@ -27,6 +27,7 @@ import flint.engine.web.types : Request, RequestContext, ServerOptions, Shutdown
 import flint.jakarta.servlet : DispatcherType, Filter, FilterChain, FilterConfig,
     FilterRegistration, RequestDispatcher, Servlet, ServletConfig,
     ServletContext, ServletException, ServletRegistration, ServletRequest, ServletRequestWrapper, ServletResponse;
+import flint.jakarta.servlet.http : HttpServletRequest, HttpServletResponse;
 import flint.java.lang : IllegalArgumentException, IllegalStateException;
 
 @safe:
@@ -84,6 +85,30 @@ struct ServletEngineOptions
     /// set only by the customizer Flint AOT generates when an endpoint qualifies; null serves every request
     /// generically and links none of the fast path.
     FastOffer fastOffer;
+    /// Flint's error-page shortcut (`ErrorPageShortcut`), set only by the customizer Flint AOT generates when
+    /// startup proves stock error handling; null forwards every error generically.
+    ErrorPageShortcut errorPageShortcut;
+}
+
+/++
+Flint addition: a startup-proved replacement for the error-page forward (docs/spring/phase1/fast-path.md). Flint
+AOT installs one only after it has proved that forwarding to the error page would run stock Spring error handling
+(Boot's error controller, attributes and converter) through an empty ERROR filter chain. It then writes the same
+response without the second dispatch.
+
+The engine calls `install` once when it starts, after its filters are mapped, and `writeErrorPage` at each forward:
+after the `jakarta.servlet.error.*` attributes are set and the response is reset for the page, and before the
+ERROR dispatch.
++/
+interface ErrorPageShortcut
+{
+    /// Whether to serve this engine's forwards, decided once at start, when the filter chain is final, so the
+    /// proof can inspect it (`ServletEngine.filtersFor`). False leaves every forward generic.
+    bool install(ServletEngine engine);
+
+    /// Write the response that forwarding to `page` for `status` would write, and return true. Or return false
+    /// having changed nothing, and the engine forwards. A throw ends the forward as a failing error page does.
+    bool writeErrorPage(HttpServletRequest request, HttpServletResponse response, int status, string page);
 }
 
 /// The fast path's offer of one exchange to a servlet (`flint.engine.servlet.fast.serveFast`).
@@ -125,6 +150,8 @@ final class ServletEngine : RequestHost
     // The servlet's fast path (fast-path.md), offered each request before capture; null when the servlet has
     // none or any filter is mapped, since a filter sees the servlet objects of every request it maps.
     private FastDispatch fastDispatch;
+    // The proved error-page shortcut, once `install` accepted this engine; null forwards generically.
+    private ErrorPageShortcut errorShortcut;
     private Server server;
     private bool started;
     private bool stopped;
@@ -255,6 +282,19 @@ final class ServletEngine : RequestHost
             if (auto candidate = cast(FastDispatch) defaultServlet.servlet)
                 if (candidate.hasFastPath())
                     fastDispatch = candidate;
+        if (options.errorPageShortcut !is null && options.errorPageShortcut.install(this))
+            errorShortcut = options.errorPageShortcut;
+    }
+
+    /// Flint addition: the filters a dispatch of `type` to `servletPath` runs, in chain order, once the engine has
+    /// started; for proofs such as an `ErrorPageShortcut`'s.
+    Filter[] filtersFor(DispatcherType type, string servletPath)
+    {
+        Filter[] found;
+        foreach (entry; chainOrder)
+            if (entry.applies(servletPath, type, defaultServlet.name))
+                found ~= entry.filter;
+        return found;
     }
 
     /// Stop at once: admitted requests are cancelled. Idempotent.
@@ -543,6 +583,16 @@ final class ServletEngine : RequestHost
         request.setAttribute(RequestDispatcher.ERROR_METHOD, Any.of(request.getMethod()));
         request.setAttribute(RequestDispatcher.ERROR_SERVLET_NAME, Any.of(defaultServlet.name));
         response.prepareErrorPage();
+        if (errorShortcut !is null)
+        {
+            bool written;
+            try
+                written = errorShortcut.writeErrorPage(request, response, code, page);
+            catch (Exception)
+                return; // as a failing error page: the status with what was written
+            if (written)
+                return;
+        }
         auto previous = request.redirect(page, null, DispatcherType.ERROR);
         scope (exit)
             request.restore(previous);
