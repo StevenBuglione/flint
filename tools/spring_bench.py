@@ -613,10 +613,14 @@ PHASE1_GC_PREFIX = 'phase1-gc-matrix-'  # parts of the GC matrix per application
 
 
 def certified_results(entry_id):
-    """The newest results directory of a queue entry whose receipt counts as evidence, or None."""
+    """The newest results directory of a queue entry whose receipt counts as evidence and that is not voided, or
+    None. A VOID.json beside the receipt voids a run after the fact for an identified contamination the window's own
+    checks missed (its reason and decision inside); the run's files stay as they are."""
     base = ROOT / '.flint' / 'measure' / 'results' / entry_id
     for directory in sorted(base.glob('2*/'), reverse=True) if base.is_dir() else []:
         receipt = directory / 'receipt.json'
+        if (directory / 'VOID.json').is_file():
+            continue
         if receipt.is_file() and json.loads(receipt.read_text()).get('evidence'):
             return directory
     return None

@@ -210,6 +210,23 @@ class AssembleFailsClosed(unittest.TestCase):
             self.assertIn(f'{family}: not covered', problems)
 
 
+class VoidedRuns(unittest.TestCase):
+    def test_a_voided_run_is_never_the_certified_one(self):
+        import json
+        import tempfile
+        from pathlib import Path
+        from unittest import mock
+        import spring_bench
+        with tempfile.TemporaryDirectory() as root, mock.patch.object(spring_bench, 'ROOT', Path(root)):
+            base = Path(root) / '.flint' / 'measure' / 'results' / 'error-404-p99'
+            for stamp in ('20261125T105931Z', '20261125T143428Z'):
+                (base / stamp).mkdir(parents=True)
+                (base / stamp / 'receipt.json').write_text(json.dumps({'evidence': True}))
+            self.assertEqual(spring_bench.certified_results('error-404-p99').name, '20261125T143428Z')
+            (base / '20261125T143428Z' / 'VOID.json').write_text(json.dumps({'reason': 'unheld build'}))
+            self.assertEqual(spring_bench.certified_results('error-404-p99').name, '20261125T105931Z')
+
+
 class PlatformOnlyCache(unittest.TestCase):
     def test_project_entries_are_stripped_and_stray_ones_refused(self):
         import spring_builds

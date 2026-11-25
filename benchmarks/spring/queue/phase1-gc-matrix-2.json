@@ -1,7 +1,7 @@
 {
   "schema": "flint.measure-queue/1",
   "created": "2026-11-23",
-  "status": "pending",
+  "status": "blocked",
   "window": "natural",
   "requested_by": "ADR-030 section 8, Phase 1 exit (coordinator's plan, 2026-11-23 15:20Z)",
   "builds": {
@@ -49,5 +49,6 @@
   "pinned": "B5, 8ed3de37dc5713907b163f778b629c09a1317d8e (coordinator 11:55Z): after the seven gated B5 parts; natural quiet only",
   "baseline_record": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/benchmarks/spring/baselines/go/petclinic-rest/20261124T092019Z",
   "interleaved_note": "B2 order 2, INTERLEAVED with Go trial by trial (coordinator 10:35Z, the c25ae2b3 method): the Flint-only run against the petclinic Go record was rejected by its drift guard (Go calibration 6% below band); until the guard bands come from cross-session calibrations, petclinic runs interleaved",
-  "priority": 8.1
+  "priority": 8.1,
+  "blocked_by": "held while B6 is named and pinned (coordinator 15:1xZ)"
 }

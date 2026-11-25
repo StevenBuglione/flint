@@ -1,7 +1,7 @@
 {
   "schema": "flint.measure-queue/1",
   "created": "2026-11-23",
-  "status": "pending",
+  "status": "blocked",
   "window": "natural",
   "requested_by": "the coordinator, via data-access (2026-11-23 17:07Z): the same three setting groups as petclinic-rest's",
   "builds": {
@@ -47,5 +47,6 @@
   },
   "tree_note": "B3: one private tree with a copy of shared v4.2 (4ac873d8: every compile client-served or client-local), mold, strict served compiles (0 client-local except c-source and forced), strict scratch; runtime parts interleaved with Go (the Go records' fingerprints predate the database protocol, so B3's tools refuse them as stale)",
   "pinned": "B5, 8ed3de37dc5713907b163f778b629c09a1317d8e (coordinator 11:55Z): after the seven gated B5 parts; natural quiet only",
-  "priority": 8.3
+  "priority": 8.3,
+  "blocked_by": "held while B6 is named and pinned (coordinator 15:1xZ)"
 }

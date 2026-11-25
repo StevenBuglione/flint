@@ -938,3 +938,4 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - R5: the pool holds only free states, and a return is idempotent per generation;
     - R6: each state is its own GC block.
   - Retained RSS is capped. m7 reviews every slice before it lands; the 30-minute rule does not apply.
+- 2026-11-25, proof-harness: **error-404-p99 at B5 voided** (results `20261125T143428Z`, coordinator 15:12Z). An unheld `dub build :tx --compiler=dmd` (data-access, taskset CPUs 0–3, about 14:59:30–15:00:50Z) overlapped Flint trial 5's fixed-rate phase (14:59:14–15:00:14Z) and capacity phase. The receipt counted the run as evidence with 0 foreign samples: freeze-strays never freezes compilers, and the 10 s busy sampler did not see the build. The run is marked `VOID.json` (`spring_bench.certified_results` skips it), is not re-run at B5, and is deferred to B6 with validation.
