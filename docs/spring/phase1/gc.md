@@ -346,3 +346,26 @@ These are posidon diagnostics, never evidence. Full notes are in `coordination/n
   - A candidate is compared with its base commit under the same toolchain and workload (AGENTS.md). The candidate never replaces its own baseline.
 - **GC data per run.** `spring_gc_matrix.py` adds `profile:1` to each setting and reads collections, total pause, max pause, mark and sweep time from the server log. This needs item 3 above.
 - **Local diagnosis.** The local probes (the smaps breakdown, and gdb's `gc_profileStats` on a gdb-launched server, since `ptrace_scope=1` forbids attaching) find causes. They are never cited as evidence. They run through `measure_queue.py hold`, on CPUs outside the measurement sets.
+
+### Slice 0 diagnostics
+
+Build the release app under the runner’s measurement lock with
+`python3 "$FLINT_HOME/tools/measure_queue.py" hold -- flint build --profile release -- -d-version=FlintCollector`
+from the app directory, with `FLINT_HOME` set to the checkout root.
+Run that binary with `"--DRT-gcopt=gc:flint-predict profile:1"` to print cumulative
+phase times, the second root scan, the address-ordered live-object scan and the
+soft-dirty census. `flint.arena.gc.pauseProfile()` returns the same totals in-process.
+Use successive snapshots to isolate a phase. The first collection establishes the
+process-wide soft-dirty baseline. The exit report counts only complete census intervals.
+Use `gc:flint`, `gc:flint-no-cache` and `gc:conservative` for latency comparisons.
+The predictor performs additional work while the mutators are stopped.
+
+On Linux, with the runner's measurement lock and pinned toolchain exported, run:
+
+```sh
+python3 tools/measure_queue.py hold -- ldc2 -O3 -preview=dip1000 -d-version=FlintSoftDirtyProbe \
+  packages/arena/tests/softdirty_probe.d -of=/tmp/flint-softdirty-probe
+python3 tools/measure_queue.py hold -- /tmp/flint-softdirty-probe --self-test
+```
+
+For posidon measurements use the [slice 0 runbook](gengc-slice0-notes.md).

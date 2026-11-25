@@ -20,6 +20,17 @@ module flint.arena.gc;
 static import flint.arena.sys.gc.collector;
 static import flint.arena.sys.gc.counting;
 
+public import flint.arena.sys.gc.profile : PauseProfile;
+
+/// Cumulative phase totals of the active Flint collector. Zero with druntime's collector.
+PauseProfile pauseProfile() nothrow @nogc
+{
+    version (FlintCollector)
+        return flint.arena.sys.gc.collector.pauseProfile();
+    else
+        return PauseProfile.init;
+}
+
 /// The name to select with `--DRT-gcopt=gc:<name>` or `rt_options`.
 enum collectorName = "flint";
 

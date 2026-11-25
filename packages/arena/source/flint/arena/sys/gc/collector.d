@@ -58,6 +58,7 @@ else
     version (Posix) version = COLLECT_FORK;
 }
 
+import flint.arena.sys.gc.profile : PauseProfile;
 import core.internal.gc.bits;
 import core.internal.gc.os;
 import core.gc.config;
@@ -260,7 +261,42 @@ private pragma(crt_constructor) void flintCollectorCtor()
     import core.gc.registry : registerGCFactory;
 
     registerGCFactory("flint", &initialize);
+    registerGCFactory("flint-no-cache", &initializeWithoutCaches); // Flint: slice 0 parity arm
+    registerGCFactory("flint-predict", &initializePredict);
     registerGCFactory("flint-concurrent", &initializeConcurrent); // Flint: D3
+}
+
+// Flint: slice 0. The no-cache parity and prediction arms use the same allocation path.
+private GC initializeWithoutCaches()
+{
+    auto gc = createCollector();
+    gc.threadCaches = false;
+    return gc;
+}
+
+private GC initializePredict()
+{
+    auto gc = createCollector();
+    gc.threadCaches = false;
+    gc.gcx.predict = true;
+    version (COLLECT_FORK)
+        gc.gcx.shouldFork = false; // the predictor needs a complete mark in this process
+    version (linux)
+        gc.gcx.softDirty.open();
+    return gc;
+}
+
+private __gshared PauseProfile phases;
+
+// SAFETY: All writers hold gcLock. A finalizer already holds it on this thread. Only scalars escape.
+@trusted PauseProfile pauseProfile() nothrow @nogc
+{
+    if (ConservativeGC._inFinalizer)
+        return phases;
+    ConservativeGC.gcLock.lock();
+    scope (exit)
+        ConservativeGC.gcLock.unlock();
+    return phases;
 }
 
 /// Flint: D3. Collections whose marking began with the program running.
@@ -294,7 +330,7 @@ running, or the kernel tracks no written pages (not Linux, or no /proc); collect
         scope (exit)
             ConservativeGC.gcLock.unlock();
         auto gcx = Gcx.instance;
-        if (gcx is null || ConservativeGC.isPrecise || (on && !gcx.softDirty.open()))
+        if (gcx is null || ConservativeGC.isPrecise || (on && (gcx.predict || !gcx.softDirty.open())))
             return false;
         gcx.concurrentMark = on;
         return true;
@@ -304,6 +340,11 @@ running, or the kernel tracks no written pages (not Linux, or no /proc); collect
 }
 
 private GC initialize()
+{
+    return createCollector();
+}
+
+private ConservativeGC createCollector()
 {
     import core.lifetime : emplace;
 
@@ -2003,6 +2044,7 @@ struct Gcx
     version (Posix) __gshared Gcx* instance;
 
     // Flint: D3, mostly-concurrent marking (setConcurrentMarking).
+    bool predict, censusArmed; // Flint: slice 0 diagnostic factory only
     bool concurrentMark;
     version (linux) SoftDirty softDirty;
 
@@ -2044,6 +2086,20 @@ struct Gcx
     {
         if (config.profile)
         {
+            printf("Flint pause ns: collections=%llu suspend=%llu mark=%llu resume=%llu sweep=%llu lock=%llu\n",
+                    phases.collections, phases.suspendNs, phases.markNs, phases.resumeNs,
+                    phases.sweepNs, phases.lockNs);
+            if (predict)
+            {
+                printf("Flint prediction ns: predictions=%llu roots=%llu oldScan=%llu census=%llu clear=%llu\n",
+                        phases.predictions, phases.rootScanNs, phases.oldScanNs, phases.censusNs, phases.clearNs);
+                printf("Flint census: intervals=%llu scannablePages=%llu scannableObjects=%llu scannableBytes=%llu"
+                        ~ " dirtyPages=%llu dirtyObjects=%llu dirtyBytes=%llu dirtyScanBytes=%llu\n",
+                        phases.censuses, phases.scannablePages,
+                        phases.scannableObjects,
+                        phases.scannableBytes, phases.dirtyPages, phases.dirtyObjects,
+                        phases.dirtyBytes, phases.dirtyScanBytes);
+            }
             printf("\tNumber of collections:  %llu\n", cast(ulong) numCollections);
             printf("\tTotal GC prep time:  %lld milliseconds\n", prepTime.total!("msecs"));
             printf("\tTotal mark time:  %lld milliseconds\n", markTime.total!("msecs"));
@@ -3202,6 +3258,7 @@ struct Gcx
             ++numConcurrentCollections;
             begin = start = stop;
             thread_suspendAll();
+            phases.suspendNs += (currTime - stop).total!"nsecs";
             return true;
         }
         else
@@ -3257,6 +3314,155 @@ struct Gcx
             const start = bin == Bins.B_PAGE ? pn : pn - pool.bPageOffsets[pn];
             if (pool.mark.test(start) && !pool.noscan.test(start))
                 markConservative!false(page, page + PAGESIZE);
+        }
+    }
+
+    // Flint: the pool table and bit words are both in ascending address order.
+    private static size_t scannableWord(Pool* pool, size_t word) nothrow @nogc
+    {
+        return pool.mark.data[word] & ~pool.freebits.data[word] & ~pool.noscan.data[word];
+    }
+
+    private void scanMarkedObjects() nothrow
+    {
+        foreach (pool; pooltable[])
+        {
+            for (size_t pn = 0; pn < pool.npages; ++pn)
+            {
+                const bin = pool.pagetable[pn];
+                auto page = pool.baseAddr + pn * PAGESIZE;
+                if (bin == Bins.B_PAGE)
+                {
+                    const size_t pages = pool.bPageOffsets[pn];
+                    if (pool.mark.test(pn) && !pool.noscan.test(pn))
+                        markConservative!false(page, page + pages * PAGESIZE);
+                    pn += pages - 1;
+                }
+                else if (bin < Bins.B_PAGE)
+                {
+                    // Coalesce adjacent slots, even across bitmap word boundaries.
+                    void* begin, end;
+                    foreach (w; 0 .. PageBits.length)
+                    {
+                        auto bits = scannableWord(pool, pn * PageBits.length + w);
+                        while (bits)
+                        {
+                            const bit = w * GCBits.BITS_PER_WORD + bsf(bits);
+                            auto slot = page + (bit << Pool.ShiftBy.Small);
+                            if (slot != end)
+                            {
+                                if (begin !is null)
+                                    markConservative!false(begin, end);
+                                begin = slot;
+                            }
+                            end = slot + binsize[bin];
+                            bits &= bits - 1;
+                        }
+                    }
+                    if (begin !is null)
+                        markConservative!false(begin, end);
+                }
+            }
+        }
+    }
+
+    version (linux) private bool census(ref PauseProfile sample) nothrow @nogc
+    {
+        bool[softDirtyBatch] dirty = void;
+        foreach (pool; pooltable[])
+        {
+            size_t lastDirtyBlock = size_t.max;
+            for (size_t first = 0; first < pool.npages; first += softDirtyBatch)
+            {
+                const count = pool.npages - first < dirty.length ? pool.npages - first : dirty.length;
+                if (!softDirty.read(pool.baseAddr + first * PAGESIZE, dirty[0 .. count]))
+                    return false; // discard the entire partial sample
+                foreach (i; 0 .. count)
+                {
+                    if (!censusPage(pool, first + i, dirty[i], lastDirtyBlock, sample))
+                        continue;
+                    ++sample.scannablePages;
+                    sample.dirtyPages += dirty[i];
+                }
+            }
+        }
+        return true;
+    }
+
+    // Adds one page's scannable objects to the census; false when the page holds none.
+    version (linux) private static bool censusPage(Pool* pool, size_t pn, bool dirty,
+            ref size_t lastDirtyBlock, ref PauseProfile sample) nothrow @nogc
+    {
+        const bin = pool.pagetable[pn];
+        if (bin < Bins.B_PAGE)
+        {
+            size_t slots;
+            foreach (w; 0 .. PageBits.length)
+                slots += popcnt(scannableWord(pool, pn * PageBits.length + w));
+            if (!slots)
+                return false;
+            const bytes = slots * binsize[bin];
+            sample.scannableObjects += slots;
+            sample.scannableBytes += bytes;
+            if (dirty)
+            {
+                sample.dirtyObjects += slots;
+                sample.dirtyBytes += bytes;
+                sample.dirtyScanBytes += bytes;
+            }
+            return true;
+        }
+        if (bin != Bins.B_PAGE && bin != Bins.B_PAGEPLUS)
+            return false;
+        const start = bin == Bins.B_PAGE ? pn : pn - pool.bPageOffsets[pn];
+        if (!pool.mark.test(start) || pool.noscan.test(start))
+            return false;
+        const bytes = cast(size_t) pool.bPageOffsets[start] * PAGESIZE;
+        if (pn == start)
+        {
+            ++sample.scannableObjects;
+            sample.scannableBytes += bytes;
+        }
+        if (dirty)
+        {
+            sample.dirtyScanBytes += PAGESIZE;
+            if (lastDirtyBlock != start)
+            {
+                lastDirtyBlock = start;
+                ++sample.dirtyObjects;
+                sample.dirtyBytes += bytes;
+            }
+        }
+        return true;
+    }
+
+    private void predictMinor(MonoTime marked) nothrow
+    {
+        markAll!(markConservative!false)();
+        const rootsDone = currTime;
+        scanMarkedObjects();
+        const scanDone = currTime;
+        ++phases.predictions;
+        phases.rootScanNs += (rootsDone - marked).total!"nsecs";
+        phases.oldScanNs += (scanDone - rootsDone).total!"nsecs";
+        version (linux)
+        {
+            PauseProfile sample;
+            if (censusArmed && census(sample))
+            {
+                phases.censusNs += (currTime - scanDone).total!"nsecs";
+                ++phases.censuses;
+                phases.scannablePages += sample.scannablePages;
+                phases.scannableObjects += sample.scannableObjects;
+                phases.scannableBytes += sample.scannableBytes;
+                phases.dirtyPages += sample.dirtyPages;
+                phases.dirtyObjects += sample.dirtyObjects;
+                phases.dirtyBytes += sample.dirtyBytes;
+                phases.dirtyScanBytes += sample.dirtyScanBytes;
+            }
+            const clearBegin = currTime;
+            censusArmed = softDirty.clear();
+            phases.clearNs += (currTime - clearBegin).total!"nsecs";
         }
     }
 
@@ -3702,6 +3908,9 @@ struct Gcx
         MonoTime start, stop, begin;
         begin = start = currTime;
         const collectionBegin = begin; // Flint: D3 moves `begin` to the start of the pause
+        const previousHold = phases.lockNs; // recursive completion of a fork shares this lock hold
+        scope (exit)
+            phases.lockNs = previousHold + (currTime - collectionBegin).total!"nsecs";
 
         debug (COLLECT_PRINTF)
             printf("Gcx.fullcollect()\n");
@@ -3767,7 +3976,9 @@ struct Gcx
             const concurrent = !doFork && !isFinal && markConcurrently(begin, start);
             if (!concurrent)
             {
+                const suspendBegin = currTime;
                 thread_suspendAll();
+                phases.suspendNs += (currTime - suspendBegin).total!"nsecs";
 
                 prepare();
 
@@ -3776,6 +3987,7 @@ struct Gcx
                 start = stop;
             }
 
+            const markBegin = concurrent ? currTime : start;
             if (concurrent)
             {
                 markAfterConcurrent();
@@ -3821,8 +4033,15 @@ struct Gcx
                     markAll!(markConservative!false)();
             }
 
+            const marked = currTime;
+            phases.markNs += (marked - markBegin).total!"nsecs";
+            ++phases.collections;
+            if (predict)
+                predictMinor(marked);
+            const resumeBegin = predict ? currTime : marked;
             thread_processTLSGCData(&clearBlkCacheData);
             thread_resumeAll();
+            phases.resumeNs += (currTime - resumeBegin).total!"nsecs";
             isFinal = false;
         }
 
@@ -3844,6 +4063,7 @@ struct Gcx
             scope (failure)
                 ConservativeGC._inFinalizer = false;
             freedPages = sweep();
+            phases.sweepNs += (currTime - start).total!"nsecs";
             ConservativeGC._inFinalizer = false;
         }
 
@@ -3972,7 +4192,8 @@ struct Gcx
                 version (linux)
                 {
                     Gcx.instance.softDirty.close();
-                    if (Gcx.instance.concurrentMark && !Gcx.instance.softDirty.open())
+                    Gcx.instance.censusArmed = false;
+                    if ((Gcx.instance.concurrentMark || Gcx.instance.predict) && !Gcx.instance.softDirty.open())
                         Gcx.instance.concurrentMark = false;
                 }
 
