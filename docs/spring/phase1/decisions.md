@@ -980,3 +980,11 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - 109/109, 18/18 and 1/1;
     - negative tests prove that both the gate and the verifier catch a violation;
     - dev, edit and static-edit build times are unchanged within noise.
+- 2026-11-25, coordinator: **B7 = `43db0cae5fbc57f5f6035ab97f3d6d6caf3ac5f6`**, named when flint-aot's template 404 landed (R-100), pinned at 83e811d7. The owner chose to skip B6's 404 and go straight to B7 (20:15Z).
+  - **Contents beyond B6:**
+    - the exchange pool, slices 1–2 (R-94, R-97);
+    - full S6 and the template 404: /nope at O3 is 17,850 instructions with 0 allocations and 0 bytes per request (B4: 67,752 / 27 / 5,216);
+    - the validation cuts (R-99 and third-party-apis);
+    - R-96, R-95;
+    - the sampler/freezer fixes (7ad165cc, 87b68463, 45095ca7).
+  - **Order:** the deciding part first: 404, validation, petclinic, gs-rest, builds ×3, all interleaved. GC-matrix last.
