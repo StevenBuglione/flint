@@ -801,10 +801,11 @@ final class FlintPreparedStatement : PreparedStatement
         return numberParameters(text, count);
     }
 
-    /// Bind the parameters into the arena as engine values.
-    private SqlValue[] bind(ref RequestArena arena, Any[] values)
+    /// Bind the parameters into the arena as engine values, in `room` when they fit (the engine reads them only while
+    /// the statement runs), else in a new array.
+    private SqlValue[] bind(ref RequestArena arena, Any[] values, return scope SqlValue[] room)
     {
-        auto bound = new SqlValue[values.length];
+        auto bound = values.length <= room.length ? room[0 .. values.length] : new SqlValue[values.length];
         foreach (index, value; values)
             bound[index] = toSqlValue(arena, value, cast(int) index + 1);
         return bound;
@@ -818,7 +819,8 @@ final class FlintPreparedStatement : PreparedStatement
         auto timeout = timeoutSource();
         auto context = timeout.ok ? timeout.value.context() : Context.init;
         auto arena = connection.newArena();
-        auto params = bind(arena, values);
+        SqlValue[8] room;
+        auto params = bind(arena, values, room[]);
         auto lease = connection.engineLease();
         const native = nativeSql(text);
         if (!wantRows)
@@ -866,7 +868,8 @@ final class FlintPreparedStatement : PreparedStatement
         auto timeout = timeoutSource();
         auto context = timeout.ok ? timeout.value.context() : Context.init;
         auto arena = connection.newArena();
-        auto params = bind(arena, parameters);
+        SqlValue[8] room;
+        auto params = bind(arena, parameters, room[]);
         auto lease = connection.engineLease();
         string failure;
         auto status = lease.queryRows(nativeSql(requireSql()), params, arena, context, (ref Row row) @safe nothrow{
