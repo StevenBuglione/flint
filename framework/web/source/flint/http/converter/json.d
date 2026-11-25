@@ -28,6 +28,8 @@ import flint.jackson.databind.exc : InvalidDefinitionException;
 class JacksonJsonHttpMessageConverter : AbstractHttpMessageConverter
 {
     private ObjectMapper mapper;
+    /// Spring's `problemDetailMediaTypes`: one list for every `ProblemDetail`, not one per response.
+    private MediaType[] problemDetailMediaTypes;
 
     /// With a default mapper.
     this()
@@ -40,13 +42,14 @@ class JacksonJsonHttpMessageConverter : AbstractHttpMessageConverter
     {
         super(MediaType.APPLICATION_JSON, MediaType("application", "*+json"));
         this.mapper = mapper;
+        problemDetailMediaTypes = [MediaType.APPLICATION_PROBLEM_JSON];
     }
 
     /// `getMediaTypesForProblemDetail`: a `ProblemDetail` is written as `application/problem+json` (RFC 9457).
     override MediaType[] getSupportedMediaTypes(string typeName)
     {
         if (typeName == "flint.http.ProblemDetail")
-            return [MediaType.APPLICATION_PROBLEM_JSON];
+            return problemDetailMediaTypes;
         return super.getSupportedMediaTypes(typeName);
     }
 

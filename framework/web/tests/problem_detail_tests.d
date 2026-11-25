@@ -54,3 +54,32 @@ version (FlintProblemDetailRead)
         assert(originalDetail.toHash() == deserializedDetail.toHash());
     }
 }
+
+/// A subclass, to reach Spring's protected copy constructor.
+private final class CopiedProblem : ProblemDetail
+{
+    this(ProblemDetail other)
+    {
+        super(other);
+    }
+}
+
+@("ProblemDetail properties keep insertion order, replace in place, grow past four, and copy (Flint)")
+unittest
+{
+    import flint.engine.aot.any : Any;
+
+    auto detail = ProblemDetail.forStatus(400);
+    assert(!detail.hasProperties() && detail.getPropertyNames().length == 0 && detail.getProperty("a").isNull);
+    foreach (i, name; ["a", "b", "c", "d", "e", "f"])
+        detail.setProperty(name, cast(int) i);
+    detail.setProperty("b", 20);
+    assert(detail.getPropertyNames() == ["a", "b", "c", "d", "e", "f"]);
+    assert(detail.getProperty("b").get!int == 20 && detail.getProperty("f").get!int == 5);
+    assert(detail.getProperty("missing").isNull && detail.hasProperties());
+
+    auto copy = new CopiedProblem(detail);
+    assert(copy.getPropertyNames() == detail.getPropertyNames() && copy.getProperty("e").get!int == 4);
+    copy.setProperty("a", 100);
+    assert(detail.getProperty("a").get!int == 0, "the copy has its own properties");
+}

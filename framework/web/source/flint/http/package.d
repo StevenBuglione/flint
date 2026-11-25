@@ -2573,6 +2573,61 @@ struct RequestEntity
 // ProblemDetail
 
 /++
+A `ProblemDetail`'s extension properties in insertion order, names and values side by side. A problem body sets a
+handful, so the first four live in the object itself and a name is found by a scan: one allocation, where an
+associative array made a table, buckets and an entry per property. Past four, the names and values move to arrays.
++/
+private final class ProblemProperties
+{
+    private string[4] inlineNames;
+    private Any[4] inlineValues;
+    string[] names;
+    Any[] values;
+
+    /// The index of the property `name`, or -1.
+    ptrdiff_t indexOf(scope const(char)[] name) const pure nothrow @nogc
+    {
+        foreach (i, known; names)
+            if (known == name)
+                return cast(ptrdiff_t) i;
+        return -1;
+    }
+
+    /// Set `name` to `value`, replacing an earlier value.
+    void set(string name, Any value) pure nothrow
+    {
+        const at = indexOf(name);
+        if (at >= 0)
+        {
+            values[at] = value;
+            return;
+        }
+        const count = names.length;
+        if (count < inlineNames.length)
+        {
+            inlineNames[count] = name;
+            inlineValues[count] = value;
+            names = inlineNames[0 .. count + 1];
+            values = inlineValues[0 .. count + 1];
+        }
+        else
+        {
+            names = names ~ name;
+            values = values ~ value;
+        }
+    }
+
+    /// A copy with its own storage.
+    ProblemProperties copy() pure nothrow
+    {
+        auto result = new ProblemProperties;
+        foreach (i, name; names)
+            result.set(name, values[i]);
+        return result;
+    }
+}
+
+/++
 RFC 9457 problem details. A class, as in Java, because applications extend it. Spring 7 leaves `type`
 unset by default (`null`), so the JSON omits it under the Jackson mixin's `NON_EMPTY` rule.
 +/
@@ -2583,8 +2638,9 @@ class ProblemDetail
     private int status;
     private string detail;
     private URI* instance;
-    private string[] propertyNames;
-    private Any[string] propertyValues;
+    // The extension properties, made on the first `setProperty`: a problem without any (a 404's) carries one null
+    // reference.
+    private ProblemProperties properties;
 
     /// Spring's protected `ProblemDetail(int rawStatusCode)`.
     protected this(int rawStatusCode) pure nothrow @nogc
@@ -2600,9 +2656,8 @@ class ProblemDetail
         status = other.status;
         detail = other.detail;
         instance = other.instance;
-        propertyNames = other.propertyNames.dup;
-        foreach (name, value; other.propertyValues)
-            propertyValues[name] = value;
+        if (other.properties !is null)
+            properties = other.properties.copy();
     }
 
     /// Spring's protected no-argument constructor, for deserialization.
@@ -2694,29 +2749,30 @@ class ProblemDetail
     /// Sets an extension property, kept in insertion order.
     void setProperty(T)(string name, T value)
     {
-        if (name !in propertyValues)
-            propertyNames ~= name;
-        propertyValues[name] = boxBody(value);
+        if (properties is null)
+            properties = new ProblemProperties;
+        properties.set(name, boxBody(value));
     }
 
     /// The extension property names in insertion order (Java's `getProperties().keySet()`; R10).
     const(string)[] getPropertyNames() const pure nothrow @nogc
     {
-        return propertyNames;
+        return properties is null ? null : properties.names;
     }
 
     /// The extension property `name`, or a null `Any`.
     Any getProperty(string name)
     {
-        if (auto value = name in propertyValues)
-            return *value;
-        return Any.init;
+        if (properties is null)
+            return Any.init;
+        const at = properties.indexOf(name);
+        return at < 0 ? Any.init : properties.values[at];
     }
 
     /// Whether any extension property is set.
     bool hasProperties() const pure nothrow @nogc
     {
-        return propertyNames.length != 0;
+        return getPropertyNames().length != 0;
     }
 
     override bool opEquals(Object other) const
@@ -2730,7 +2786,7 @@ class ProblemDetail
             && getTitle() == that.getTitle()
             && status == that.status && detail == that.detail && ((instance is null
                     && that.instance is null) || (instance !is null && that.instance !is null
-                    && *instance == *that.instance)) && propertyNames == that.propertyNames;
+                    && *instance == *that.instance)) && getPropertyNames() == that.getPropertyNames();
     }
 
     override size_t toHash() const nothrow
@@ -2750,15 +2806,15 @@ class ProblemDetail
         return "type='" ~ (type is null
                 ? "null" : type.toString()) ~ "'" ~ ", title='" ~ nullText(getTitle()) ~ "'" ~ ", status=" ~ decimal(
                 getStatus()) ~ ", detail='" ~ nullText(getDetail()) ~ "'" ~ ", instance='" ~ (instance is null
-                ? "null" : instance.toString()) ~ "'" ~ ", properties='" ~ (propertyNames.length == 0
+                ? "null" : instance.toString()) ~ "'" ~ ", properties='" ~ (getPropertyNames().length == 0
                 ? "null" : propertiesText()) ~ "'";
     }
 
     private string propertiesText() const
     {
         string text = "{";
-        foreach (i, name; propertyNames)
-            text ~= (i == 0 ? "" : ", ") ~ name ~ "=<" ~ propertyValues[name].typeName() ~ ">";
+        foreach (i, name; properties.names)
+            text ~= (i == 0 ? "" : ", ") ~ name ~ "=<" ~ properties.values[i].typeName() ~ ">";
         return text ~ "}";
     }
 
