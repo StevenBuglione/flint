@@ -69,6 +69,76 @@ unittest
     assert(listingDigest(buildPath(root, "missing")) == "absent");
 }
 
+/++
+Now, as the file system stamps files: the modification time of a marker written in `directory` (removed again). File
+times are ordered across files, so whatever was written before this call is at or before the result, and whatever is
+written after it is at or after it; "changed since" tests use `>=` against it. A clock reading cannot promise both:
+Linux before 6.13 stamps files from the coarse clock, which a precise reading runs ahead of by up to a tick (about
+4 ms), so an edit just after a precise reading could look older than the build that missed it; and 6.13's multigrain
+stamps can be finer than a coarse reading, so a file written just before a coarse reading could look newer than it.
+Without a writable `directory`, the coarse clock, the right side of that trade: no missed edit, at worst a rebuild.
++/
+imported!"std.datetime.systime".SysTime fileClockNow(string directory)
+{
+    import core.time : ClockType;
+    import std.conv : to;
+    import std.datetime.systime : Clock;
+    import std.file : FileException, remove, timeLastModified, write;
+    import std.path : buildPath;
+    import std.process : thisProcessID;
+
+    const marker = buildPath(directory, ".flint-clock-" ~ thisProcessID.to!string);
+    try
+    {
+        write(marker, "");
+        scope (exit)
+            remove(marker);
+        return timeLastModified(marker);
+    }
+    catch (FileException)
+        return Clock.currTime!(ClockType.coarse)();
+}
+
+/// Give a just-built `artifact` the modification time `started`, the `fileClockNow` reading taken before the build
+/// read its first input. An input edited while the build ran is then at or after the artifact's time, and the next
+/// up-to-date check (`input >= artifact`) rebuilds instead of keeping a binary built from the old text. False when the
+/// time cannot be set; the artifact keeps its link time.
+bool stampBuilt(string artifact, imported!"std.datetime.systime".SysTime started)
+{
+    import std.datetime.systime : Clock;
+    import std.file : FileException, setTimes;
+
+    try
+        setTimes(artifact, Clock.currTime, started);
+    catch (FileException)
+        return false;
+    return true;
+}
+
+@("a write after fileClockNow is stamped at or after it, and a built artifact takes its start time")
+unittest
+{
+    import std.conv : to;
+    import std.file : remove, tempDir, timeLastModified, write;
+    import std.path : buildPath;
+    import std.process : thisProcessID;
+
+    const path = buildPath(tempDir, "flint-clock-" ~ thisProcessID.to!string);
+    scope (exit)
+        remove(path);
+    foreach (attempt; 0 .. 200)
+    {
+        write(path, "before");
+        const now = fileClockNow(tempDir);
+        assert(timeLastModified(path) <= now, "a write before the reading stamped after it");
+        write(path, "after");
+        assert(timeLastModified(path) >= now, "a write after the reading stamped before it");
+    }
+    const started = fileClockNow(tempDir);
+    write(path, "artifact");
+    assert(stampBuilt(path, started) && timeLastModified(path) == started);
+}
+
 /// SHA-256 of a file, or null when it cannot be read.
 string sha256File(string path)
 {

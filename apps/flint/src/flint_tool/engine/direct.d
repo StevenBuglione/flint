@@ -11,6 +11,7 @@ module flint_tool.engine.direct;
 
 import flint.os : EnvVar;
 import flint_tool.engine.session : Session;
+import flint_tool.support.files : fileClockNow, stampBuilt;
 
 @safe:
 
@@ -113,6 +114,8 @@ DirectResult directBuild(ref Session session, const ref DirectBuild build, out s
         return DirectResult.built;
     session.progress("Building", "directly, without DUB");
     const objects = buildPath(build.root, ".flint", "build", build.configuration ~ "-objects");
+    // The artifact's time (`stampBuilt`): an edit made while the build runs stays at or after it.
+    const started = fileClockNow(build.recipeDirectory);
     const compileStart = MonoTime.currTime;
     string[] objectFiles;
     if (!compile(build, settings, objects, objectFiles, output))
@@ -125,6 +128,7 @@ DirectResult directBuild(ref Session session, const ref DirectBuild build, out s
         return DirectResult.failed;
     }
     phases.link = (MonoTime.currTime - linkStart).total!"msecs";
+    stampBuilt(build.artifact, started);
     return DirectResult.built;
 }
 
@@ -331,8 +335,8 @@ private void writeSettings(string record, string stamp, const ref RootSettings s
     rename(partial, record);
 }
 
-/// The artifact is newer than its settings record, every source, every linker file and every file the string
-/// import paths hold (config/application.toml), as DUB checks.
+/// No source, linker file or file the string import paths hold (config/application.toml) was modified at or after the
+/// build that made the artifact started, and the settings record not after it.
 private bool upToDate(string artifact, string record, const ref RootSettings settings)
 {
     import std.file : FileException, SpanMode, dirEntries, exists, isDir, timeLastModified;
@@ -342,7 +346,12 @@ private bool upToDate(string artifact, string record, const ref RootSettings set
     try
     {
         const built = timeLastModified(artifact);
-        string[] inputs = settings.sources.dup ~ settings.linkerFiles.dup ~ record;
+        // The artifact carries the build's start time (`stampBuilt`). The settings record is flint's own, written
+        // just before that reading and so often in the same tick of the file clock; a later settings change is
+        // written by a later build, in a later tick.
+        if (timeLastModified(record) > built)
+            return false;
+        string[] inputs = settings.sources.dup ~ settings.linkerFiles.dup;
         foreach (path; settings.stringImportPaths)
         {
             if (!exists(path) || !isDir(path))
@@ -960,6 +969,8 @@ DirectResult replayBuild(ref Session session, const ref DirectBuild build, out s
         }
     }
     session.progress("Building", "directly, with DUB's recorded commands");
+    // The artifact's time (`stampBuilt`): an edit made while the build runs stays at or after it.
+    const started = fileClockNow(build.recipeDirectory);
     Launch launch;
     launch.directory = replay.directory;
     launch.environment = compilerEnvironment(build);
@@ -985,5 +996,6 @@ DirectResult replayBuild(ref Session session, const ref DirectBuild build, out s
     }
     phases.link = (MonoTime.currTime - linkStart).total!"msecs";
     rename(partial, build.artifact);
+    stampBuilt(build.artifact, started);
     return DirectResult.built;
 }

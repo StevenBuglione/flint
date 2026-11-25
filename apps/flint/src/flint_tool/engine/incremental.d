@@ -93,7 +93,8 @@ bool compileModules(const ref ModuleCompile request, out ModuleOutcome outcome, 
 
 /// Record every module as compiled, as DUB just compiled them all with `request.commands`, so the next build
 /// recompiles only what changes. Nothing is recorded, and the next build compiles every module, when a source
-/// changed after `since`, the time DUB started: its object may be older than its text.
+/// changed at or after `since`, the time DUB started (`fileClockNow`, read from the file system): its object may be
+/// older than its text.
 void recordCompiled(const ref ModuleCompile request, imported!"std.datetime.systime".SysTime since)
 {
     import std.file : FileException, mkdirRecurse, timeLastModified;

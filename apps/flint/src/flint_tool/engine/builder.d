@@ -590,7 +590,6 @@ private imported!"flint_tool.engine.direct".DirectBuild directBuildOf(const ref 
 private bool buildEligible(ref Session session, const imported!"flint_tool.engine.direct".DirectBuild build,
         scope const(string)[] command, EnvVar[] environment, bool hideTrace, ref BuildOutcome result)
 {
-    import std.datetime.systime : Clock;
     import flint_tool.engine.direct : DirectResult, directBuild, recordReplay, recordReplayModules, replayBuild;
 
     const shared_ = result.platformShared.length > 0;
@@ -598,7 +597,10 @@ private bool buildEligible(ref Session session, const imported!"flint_tool.engin
             build, result.output, result.phases);
     if (direct != DirectResult.unavailable)
         return direct == DirectResult.built;
-    const started = Clock.currTime;
+    import flint_tool.support.files : fileClockNow, stampBuilt;
+
+    // Before DUB reads a source: an edit while it builds is then newer than both the artifact and the record.
+    const started = fileClockNow(build.recipeDirectory);
     const built = buildWithDub(session, shared_ ? command : command ~ [
         "-v", "--build-mode=singleFile", "--parallel"
     ], environment, build.root, hideTrace, result);
@@ -607,6 +609,8 @@ private bool buildEligible(ref Session session, const imported!"flint_tool.engin
         recordReplay(build, result.output);
         recordReplayModules(build, started);
     }
+    if (built)
+        stampBuilt(build.artifact, started);
     return built;
 }
 
