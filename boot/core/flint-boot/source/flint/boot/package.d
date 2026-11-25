@@ -712,6 +712,7 @@ class FlintApplication
         const allocationReport = startAllocationReport();
         scope (exit)
             finishAllocationReport(allocationReport);
+        const region = openStartupRegionIfAsked();
         auto hook = new ShutdownHook;
         hook.install();
         scope (exit)
@@ -719,6 +720,8 @@ class FlintApplication
         try
         {
             auto context = run!App(args.length ? args[1 .. $] : null);
+            if (region)
+                closeStartupRegion();
             if (auto keepAlive = cast(KeepAliveApplicationContext) context)
                 hook.await(keepAlive);
             if (context !is null && context.isActive())
@@ -1182,6 +1185,24 @@ private:
 /// installed here before any thread starts) and write "<allocations> <bytes>" to the file when `main` returns.
 /// tools/spring_instr.py subtracts a run of W requests from a run of W + M to get allocations and bytes per
 /// request. Returns the file, or null when the variable is unset.
+/// Prototype, opt-in: with FLINT_STARTUP_REGION=1, the main thread's start-up allocations come from flint.arena's
+/// permanent start-up region until `run` returns (refresh, runners and readiness done). Off by default.
+bool openStartupRegionIfAsked()
+{
+    import flint.arena.gc : openStartupRegion;
+    import std.process : environment;
+
+    return environment.get("FLINT_STARTUP_REGION") == "1" && openStartupRegion();
+}
+
+/// Close the start-up region opened by `openStartupRegionIfAsked`.
+void closeStartupRegion()
+{
+    static import flint.arena.gc;
+
+    flint.arena.gc.closeStartupRegion();
+}
+
 string startAllocationReport()
 {
     import std.process : environment;

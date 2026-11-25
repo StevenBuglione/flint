@@ -19,6 +19,7 @@ module flint.arena.gc;
 
 static import flint.arena.sys.gc.collector;
 static import flint.arena.sys.gc.counting;
+static import flint.arena.sys.gc.startup_region;
 
 /// The name to select with `--DRT-gcopt=gc:<name>` or `rt_options`.
 enum collectorName = "flint";
@@ -120,4 +121,38 @@ string[] topAllocationSites(size_t limit, bool includeCaller = false)
 string[] topAllocationSitesByBytes(size_t limit, bool includeCaller = false)
 {
     return flint.arena.sys.gc.counting.topSitesByBytes(limit, includeCaller);
+}
+
+/++
+Open the permanent start-up region on the calling thread (prototype, opt-in; flint.arena.sys.gc.startup_region):
+until `closeStartupRegion`, this thread's allocations without a finalizer come from root-ranged chunks the collector
+scans as plain memory instead of marking object by object. Region memory is never freed or reused. Call before the
+program starts other threads; false if a region was opened before.
++/
+// SAFETY: Installs a forwarding proxy through druntime's gc_setProxy before other threads exist; the proxy hands
+// out only zeroed memory it owns and registers as a root range.
+@trusted bool openStartupRegion() nothrow
+{
+    return flint.arena.sys.gc.startup_region.openStartupRegion();
+}
+
+/// Close the start-up region: every later allocation goes to the collector. Call on the opening thread.
+// SAFETY: Replaces the region's root ranges with their allocated prefixes under the region's lock.
+@trusted void closeStartupRegion() nothrow
+{
+    flint.arena.sys.gc.startup_region.closeStartupRegion();
+}
+
+/// Bytes and blocks allocated from the start-up region.
+// SAFETY: Reads two counters the opening thread writes; a stale value is harmless.
+@trusted size_t startupRegionBytes() nothrow @nogc
+{
+    return flint.arena.sys.gc.startup_region.startupRegionBytes();
+}
+
+/// ditto
+// SAFETY: As startupRegionBytes.
+@trusted size_t startupRegionBlocks() nothrow @nogc
+{
+    return flint.arena.sys.gc.startup_region.startupRegionBlocks();
 }
