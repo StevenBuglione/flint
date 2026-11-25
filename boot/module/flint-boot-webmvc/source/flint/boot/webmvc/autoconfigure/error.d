@@ -632,7 +632,7 @@ final class StockErrorPageShortcut : Shortcut, imported!"flint.engine.aot.fast".
     import flint.engine.aot.fast : FastExchange;
     import flint.jackson.databind : JsonMapper;
     import flint.web.servlet : DispatcherServlet;
-    import flint.web.servlet.mvc.method.fast : ErrorShortcutRoute;
+    import flint.web.servlet.mvc.method.fast : ErrorShortcutRoute, FastPathTable;
 
     /// Boot's proof that the application's `JsonMapper` is the auto-configured one, or `null`.
     alias JsonMapperProof = JsonMapper function(ApplicationContext context) @safe;
@@ -689,6 +689,10 @@ final class StockErrorPageShortcut : Shortcut, imported!"flint.engine.aot.fast".
         auto errorAttributes = cast(Object) stock.controller.errorAttributes;
         unmatchedProved = ErrorShortcutRoute.provesUnmatched(servlet, (Object resolver) => resolver is errorAttributes
                 && typeid(resolver) is typeid(DefaultErrorAttributes), unmatchedWhy);
+        // S7: the same resolver only records an exception for every other request, so the fast path may run it
+        // without a response ahead of the advice it resolves a validation failure with.
+        if (typeid(errorAttributes) is typeid(DefaultErrorAttributes))
+            FastPathTable.admitRecordingResolver(servlet, errorAttributes);
         proveTemplate();
         return true;
     }

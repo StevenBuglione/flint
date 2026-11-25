@@ -324,7 +324,7 @@ class InvocableHandlerMethod : HandlerMethod
     // The generated invoker of an @ExceptionHandler casts this to the handler's exception parameter, so it is the
     // provided exception (the exception or one of its causes) that parameter resolved to, as Spring passes it as
     // that argument; without such a parameter, the top-level exception, which providedArgs lists first.
-    private static Exception invokedException(scope Any[] args, Any[] providedArgs)
+    package(flint.web) static Exception invokedException(scope Any[] args, scope Any[] providedArgs)
     {
         foreach (arg; args)
         {
@@ -368,7 +368,8 @@ class InvocableHandlerMethod : HandlerMethod
         }
     }
 
-    private static bool findProvidedArgument(MethodParameter parameter, Any[] providedArgs, ref Any result)
+    package(flint.web) static bool findProvidedArgument(MethodParameter parameter, scope Any[] providedArgs,
+            ref Any result)
     {
         foreach (provided; providedArgs)
         {

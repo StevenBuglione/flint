@@ -166,11 +166,13 @@ FastOutcome serveFast(ServletEngine engine, FastDispatch dispatch, ref scope Req
         check(transport.finish(transportContext));
     }
 
+    // S7: the request alone (materializeRequest), or both; whichever is still missing is built, the request first.
     void materialize(out Object materializedRequest, out Object materializedResponse)
     {
         if (servletRequest is null)
-        {
             servletRequest = engine.captureRequest(request, context);
+        if (servletResponse is null)
+        {
             servletResponse = engine.newResponse(transport, context.worker);
             // What the mapped filters wrote before the servlet ran (HeaderWriterFilter writes eagerly), on the
             // fresh response, where their writers' presence checks all pass.
@@ -179,6 +181,13 @@ FastOutcome serveFast(ServletEngine engine, FastDispatch dispatch, ref scope Req
         }
         materializedRequest = servletRequest;
         materializedResponse = servletResponse;
+    }
+
+    void materializeRequest(out Object materializedRequest)
+    {
+        if (servletRequest is null)
+            servletRequest = engine.captureRequest(request, context);
+        materializedRequest = servletRequest;
     }
 
     // S6: the installed error page writes an unmatched GET's 404 from the exchange, when it can (FastErrorPage).
@@ -194,6 +203,7 @@ FastOutcome serveFast(ServletEngine engine, FastDispatch dispatch, ref scope Req
     exchange.respond = &respond;
     exchange.respondFields = &respondFields;
     exchange.materialize = &materialize;
+    exchange.materializeRequest = &materializeRequest;
     if (errorPage !is null)
         exchange.unmatched = &unmatched;
     // The filters' per-request state (a security context) around the servlet, undone in reverse order on every

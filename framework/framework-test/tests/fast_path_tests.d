@@ -15,6 +15,7 @@ import flint.http.converter.json : JacksonJsonHttpMessageConverter;
 import flint.jakarta.servlet.http : HttpServletRequest, HttpServletResponse;
 import flint.test.web.servlet.setup : StaticBeanFactory;
 import flint.jakarta.validation : Valid;
+import flint.java.lang : IllegalStateException;
 import flint.web.bind : MethodArgumentNotValidException;
 import flint.web.bind.annotation : CrossOrigin, DeleteMapping, ExceptionHandler, GetMapping,
     PathVariable, PostMapping, RequestBody, RequestParam, RestController, RestControllerAdvice;
@@ -259,20 +260,36 @@ private Offer offer(DispatcherServlet servlet, string method, string path, strin
         result.content = (cast(const(char)[]) content).idup;
     }
 
+    // As the container: one request, built by whichever materialization comes first (S7 builds it alone).
+    MockHttpServletRequest built()
+    {
+        if (result.materializedRequest is null)
+        {
+            auto servletRequest = new MockHttpServletRequest(method, path);
+            foreach (value; accept)
+                servletRequest.addHeader("Accept", value);
+            foreach (value; contentTypes)
+                servletRequest.addHeader("Content-Type", value);
+            if (content.length)
+                servletRequest.setContent(cast(const(ubyte)[]) content);
+            result.materializedRequest = servletRequest;
+        }
+        return result.materializedRequest;
+    }
+
     void materialize(out Object request, out Object response)
     {
         assert(materializes, "no materialization was expected");
-        result.materialized = new MockHttpServletResponse;
-        auto servletRequest = new MockHttpServletRequest(method, path);
-        foreach (value; accept)
-            servletRequest.addHeader("Accept", value);
-        foreach (value; contentTypes)
-            servletRequest.addHeader("Content-Type", value);
-        if (content.length)
-            servletRequest.setContent(cast(const(ubyte)[]) content);
-        request = servletRequest;
-        result.materializedRequest = servletRequest;
+        if (result.materialized is null)
+            result.materialized = new MockHttpServletResponse;
+        request = built();
         response = result.materialized;
+    }
+
+    void materializeRequest(out Object request)
+    {
+        assert(materializes, "no materialization was expected");
+        request = built();
     }
 
     scope FastExchange exchange;
@@ -290,6 +307,7 @@ private Offer offer(DispatcherServlet servlet, string method, string path, strin
     exchange.respond = &respond;
     exchange.respondFields = &respondFields;
     exchange.materialize = &materialize;
+    exchange.materializeRequest = &materializeRequest;
     exchange.unmatched = unmatchedPage;
     result.outcome = servlet.dispatchFast(exchange);
     return result;
@@ -548,19 +566,20 @@ class PostingAdvice
 }
 
 // The same controller, advice and validator, through the generic dispatch (MockMvc) and through the fast path.
-private DispatcherServlet postingDispatcher(PostingController controller)
+private DispatcherServlet postingDispatcher(Advice = PostingAdvice)(PostingController controller,
+        Advice advice = new Advice)
 {
     import flint.web.servlet.mvc.method.aot : exceptionHandlersOf;
 
     auto beans = new StaticBeanFactory;
     beans.addBean("postingController", controller);
-    beans.addBean("postingAdvice", new PostingAdvice);
+    beans.addBean("postingAdvice", advice);
     auto rows = requestMappingsOf!PostingController("postingController");
     auto table = DescriptorTable.withBuiltins();
-    auto descriptors = handlerDescriptorsOf!PostingController() ~ handlerDescriptorsOf!PostingAdvice();
+    auto descriptors = handlerDescriptorsOf!PostingController() ~ handlerDescriptorsOf!Advice();
     foreach (descriptor; descriptors)
         table.add(descriptor);
-    auto support = new WebMvcConfigurationSupport(rows, exceptionHandlersOf!PostingAdvice("postingAdvice"),
+    auto support = new WebMvcConfigurationSupport(rows, exceptionHandlersOf!Advice("postingAdvice"),
             beans, [cast(WebMvcConfigurer) new FastPathConfigurer], table);
     support.setValidator(new PostedOwnerValidator);
     auto converters = support.getMessageConverters();
@@ -576,9 +595,17 @@ private DispatcherServlet postingDispatcher(PostingController controller)
 private MockHttpServletResponse generic(DispatcherServlet servlet, string content,
         string[] contentTypes, string[] accept = null)
 {
+    MockHttpServletRequest request;
+    return generic(servlet, content, contentTypes, accept, request);
+}
+
+// ditto, and the request it dispatched.
+private MockHttpServletResponse generic(DispatcherServlet servlet, string content,
+        string[] contentTypes, string[] accept, out MockHttpServletRequest request)
+{
     import flint.jakarta.servlet : ServletRequest, ServletResponse;
 
-    auto request = new MockHttpServletRequest("POST", "/owners");
+    request = new MockHttpServletRequest("POST", "/owners");
     foreach (value; accept)
         request.addHeader("Accept", value);
     foreach (value; contentTypes)
@@ -607,17 +634,109 @@ unittest
         assert(fast.outcome == FastOutcome.written && controller.calls == before + 2);
         assert(fast.status == reference.getStatus() && fast.contentType == reference.getContentType());
         assert(fast.content == reference.getContentAsString(), fast.content);
-        // An invalid body: the handler does not run; the advice answers on the materialized request, as generic.
-        auto failed = offer(servlet, "POST", "/owners", null, accept, true, 0, invalid, [
-            "application/json"
-        ]);
-        auto expected = generic(servlet, invalid, ["application/json"], accept);
-        assert(failed.outcome == FastOutcome.materialized && controller.calls == before + 2);
-        assert(failed.materialized.getStatus() == 400 && expected.getStatus() == 400);
-        assert(failed.materialized.getContentType() == expected.getContentType());
-        assert(failed.materialized.getContentAsString() == expected.getContentAsString(),
-                failed.materialized.getContentAsString());
+        // An invalid body: the handler does not run; the advice answers (S7: from the exchange, with the request
+        // alone) exactly as the generic dispatch does.
+        adviceLikeGeneric(servlet, invalid, accept);
+        assert(controller.calls == before + 2);
     }
+}
+
+// S7: the failure's response through the fast path equals the generic dispatch's: written from the exchange
+// (chunked, as HttpEntityMethodProcessor flushes) with no response object, or, when `written` is false, on the
+// servlet objects. Either way the request carries the generic dispatch's attributes.
+private void adviceLikeGeneric(DispatcherServlet servlet, string invalid, string[] accept, bool written = true)
+{
+    auto failed = offer(servlet, "POST", "/owners", null, accept, true, 0, invalid, [
+        "application/json"
+    ]);
+    MockHttpServletRequest dispatched;
+    auto expected = generic(servlet, invalid, ["application/json"], accept, dispatched);
+    if (written)
+    {
+        assert(failed.outcome == FastOutcome.written && failed.materialized is null);
+        assert(failed.chunked && failed.status == expected.getStatus());
+        assert(failed.fields == [["Content-Type", expected.getContentType()]], failed.contentType);
+        assert(failed.content == expected.getContentAsString(), failed.content);
+    }
+    else
+    {
+        assert(failed.outcome == FastOutcome.materialized);
+        auto actual = failed.materialized;
+        assert(actual.getStatus() == expected.getStatus());
+        assert(actual.getErrorMessage() == expected.getErrorMessage(), actual.getErrorMessage());
+        assert(actual.getContentType() == expected.getContentType());
+        assert(actual.getHeader("X-Advice") == expected.getHeader("X-Advice"));
+        assert(actual.getContentAsString() == expected.getContentAsString(), actual.getContentAsString());
+    }
+    assert(attributeTypes(failed.materializedRequest) == attributeTypes(dispatched), "attributes differ");
+}
+
+/// S7: an advice that reads the request, and whose answer depends on the rejected telephone: a problem as
+/// `PostingAdvice`'s; for "throw", an exception (the resolver then resolves nothing); for "header", an entity with a
+/// header of its own (written by HttpEntityMethodProcessor on the servlet objects).
+@RestControllerAdvice
+class RequestAdvice
+{
+    long calls; ///
+
+    ///
+    @ExceptionHandler
+    ResponseEntity handle(MethodArgumentNotValidException ex, HttpServletRequest request)
+    {
+        ++calls;
+        string telephone;
+        foreach (error; ex.getBindingResult().getFieldErrors().toArray())
+            if (error.getField() == "telephone")
+                telephone = error.getRejectedValue().get!string;
+        if (telephone == "throw")
+            throw new IllegalStateException("advice failed");
+        auto detail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
+                request.getMethod() ~ " " ~ request.getRequestURI() ~ " " ~ (
+                    request.getAttribute("org.springframework.web.servlet.HandlerMapping.bestMatchingPattern")
+                    .isNull() ? "-" : "pattern"));
+        detail.setTitle(ex.getObjectName());
+        if (telephone == "header")
+            return ResponseEntity.badRequest().header("X-Advice", "1").body(detail);
+        return ResponseEntity.badRequest().body(detail);
+    }
+}
+
+/// S7: an advice taking the response, which only the servlet objects have.
+@RestControllerAdvice
+class ResponseAdvice
+{
+    ///
+    @ExceptionHandler
+    ResponseEntity handle(MethodArgumentNotValidException ex, HttpServletResponse response)
+    {
+        response.setHeader("X-Advice", ex.getObjectName());
+        return ResponseEntity.badRequest().body(ProblemDetail.forStatus(HttpStatus.BAD_REQUEST));
+    }
+}
+
+@("fast path S7: the advice runs once on the request alone; what it returns otherwise finishes generically")
+unittest
+{
+    auto advice = new RequestAdvice;
+    auto servlet = postingDispatcher!RequestAdvice(new PostingController, advice);
+    foreach (accept; [cast(string[]) null, ["*/*"], ["application/json"]])
+    {
+        const before = advice.calls;
+        adviceLikeGeneric(servlet, `{"firstName":"","telephone":"01234abcde"}`, accept);
+        assert(advice.calls == before + 2); // once per path
+        // The advice throws: the next resolvers answer (DefaultHandlerExceptionResolver's 400), as generic.
+        adviceLikeGeneric(servlet, `{"firstName":"","telephone":"throw"}`, accept, false);
+        // An entity with headers of its own: HttpEntityMethodProcessor writes it on the servlet objects.
+        adviceLikeGeneric(servlet, `{"firstName":"","telephone":"header"}`, accept, false);
+        assert(advice.calls == before + 6);
+    }
+}
+
+@("fast path S7: an advice outside the proof is resolved on the servlet objects, as S5 hands it back")
+unittest
+{
+    auto servlet = postingDispatcher!ResponseAdvice(new PostingController);
+    adviceLikeGeneric(servlet, `{"firstName":"","telephone":"01234abcde"}`, null, false);
 }
 
 @("fast path S5: what the route does not bind exactly declines before anything runs")

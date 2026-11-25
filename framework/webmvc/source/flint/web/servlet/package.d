@@ -688,6 +688,42 @@ class DispatcherServlet : HttpServlet, FastDispatch
         processDispatchResult(request, response, mappedHandler, null, dispatchException);
     }
 
+    /++
+    Flint (fast-path.md S7): the rest of `doDispatch` for a fast-path request whose exception `ex` the resolvers
+    before `firstResolver` already saw without resolving it (the S7 proof's recording resolvers, then an
+    `ExceptionHandlerExceptionResolver` whose advice threw), on the materialized request and response after
+    `prepareProvedCompletion`: `processHandlerException` from that resolver on, then as `processDispatchResult` and
+    `doDispatch`'s handler for what escapes it.
+    +/
+    package(flint.web) final void completeFastResolution(HttpServletRequest request, HttpServletResponse response,
+            HandlerExecutionChain mappedHandler, Exception ex, size_t firstResolver)
+    {
+        try
+        {
+            auto mv = resolveFrom(request, response, mappedHandler.getHandler(), ex, firstResolver);
+            if (mv !is null && !mv.wasCleared())
+            {
+                render(mv, request, response);
+                clearErrorRequestAttributes(request);
+            }
+            mappedHandler.triggerAfterCompletion(request, response, null);
+        }
+        catch (Exception escaped)
+        {
+            mappedHandler.triggerAfterCompletion(request, response, escaped);
+            throw escaped;
+        }
+    }
+
+    /++
+    Flint (S7): what `processHandlerException` records when a resolver handled `ex` and wrote the response itself (an
+    empty model and view), on a request whose dispatch then only runs the interceptors' `afterCompletion`.
+    +/
+    package(flint.web) static void recordHandledException(HttpServletRequest request, Exception ex)
+    {
+        request.setAttribute(EXCEPTION_ATTRIBUTE, Any.of(cast(Object) ex));
+    }
+
     /// Spring's `doDispatch`.
     protected void doDispatch(HttpServletRequest request, HttpServletResponse response)
     {
@@ -820,9 +856,17 @@ class DispatcherServlet : HttpServlet, FastDispatch
     protected ModelAndView processHandlerException(HttpServletRequest request,
             HttpServletResponse response, Object handler, Exception ex)
     {
+        return resolveFrom(request, response, handler, ex, 0);
+    }
+
+    // processHandlerException, with the resolvers asked from `first` on (S7).
+    private ModelAndView resolveFrom(HttpServletRequest request, HttpServletResponse response, Object handler,
+            Exception ex, size_t first)
+    {
         request.removeAttribute(HandlerMapping.PRODUCIBLE_MEDIA_TYPES_ATTRIBUTE);
         ModelAndView exMv;
-        foreach (resolver; strategies.handlerExceptionResolvers)
+        auto resolvers = strategies.handlerExceptionResolvers;
+        foreach (resolver; resolvers[first < resolvers.length ? first : $ .. $])
         {
             exMv = resolver.resolveException(request, response, handler, ex);
             if (exMv !is null)
@@ -832,7 +876,7 @@ class DispatcherServlet : HttpServlet, FastDispatch
         {
             if (exMv.isEmpty())
             {
-                request.setAttribute(EXCEPTION_ATTRIBUTE, Any.of(cast(Object) ex));
+                recordHandledException(request, ex);
                 return null;
             }
             exposeErrorRequestAttributes(request, ex, getServletName());

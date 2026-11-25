@@ -465,6 +465,69 @@ application with interceptors, custom resolvers, a context-path-only request, or
   and trailing-slash paths, field by field; and the declines.
 - gs-rest: `spring_error_identity.py` with the fast path on and off, and acceptance 18/18.
 
+### 9.1.4 S7: the validation failure resolved from the exchange
+
+S5's failure, `RequestResponseBodyMethodProcessor`'s `MethodArgumentNotValidException`, resolved as
+`processHandlerException` resolves it while building the servlet request alone. The advice writes its entity from
+the `FastExchange`, without a servlet response, `ServletWebRequest`, model container, output message or resolver
+objects (the coordinator's 19:04Z item, full S6's counterpart for the validation 400). The reference is S5's
+hand-back, which is the generic dispatch.
+
+**Hand-off.** engine-aot's `FastExchange.materializeRequest` builds the request `materialize` would build, and a
+later `materialize` adds only the response. engine-servlet then accepts `FastOutcome.written` with a request and no
+response, and closes both null-safely.
+
+**Proof, per request and remembered where it holds for good** (webmvc `FastPathTable.serveFailure`):
+- **The dispatcher and mapping:** an exact `DispatcherServlet` and `RequestMappingHandlerMapping`, so
+  `processHandlerException` and `handleMatch` are Spring's.
+- **The resolvers:**
+  - every one before the first `ExceptionHandlerExceptionResolver` only records the exception on the request and
+    resolves nothing, whatever it is given (`FastPathTable.admitRecordingResolver`). Boot's
+    `StockErrorPageShortcut.prove` admits the stock `DefaultErrorAttributes` bean, exactly that class;
+  - that resolver is exactly `ExceptionHandlerExceptionResolver`, adding no `Cache-Control`. It applies to every
+    handler method.
+- **The advice:** its choice for the failure (`adviceFor`, the resolver's own `findHandler` and prepared invocable,
+  from the routes' adapter) has this shape (`adviceProof`, remembered per route as `writesBody` remembers):
+  - exactly a `ServletInvocableHandlerMethod` over Flint AOT's array invoker, without `@ResponseStatus`;
+  - each parameter takes a provided argument (the exception, its causes, the handler method; matched per request
+    by `InvocableHandlerMethod.findProvidedArgument`), or is exactly `HttpServletRequest`, which
+    `ServletRequestMethodArgumentResolver` resolves first;
+  - a `ResponseEntity` return, whose first handler is exactly `HttpEntityMethodProcessor`.
+- **The writer** (`ErrorShortcutRoute.forBody`): per `Accept` key, the type `writeWithMessageConverters` selects for a
+  `ProblemDetail` with the converters' own producible types (`processHandlerException` removes the mapping's), when
+  one Jackson converter writes it. The bytes are the converter's own (`JacksonJsonHttpMessageConverter.writeTo`, the
+  body `writeInternal` streams): a `ProblemDetail` goes through Spring's mixin rules, not the mapper's bean walk.
+  The fast path's other writers (S1, S2, the error page) use the same method. Before S7 they called the mapper
+  directly, which fails on a `ProblemDetail` body that the generic path writes.
+
+Anything above that fails before the request is built hands back as S5 does.
+
+**Per request, in the dispatch's order:**
+1. The request is built alone, and gets the lookup's attributes without the producible types
+   (`exposeProvedMatch`), which the generic dispatch sets and then removes before any resolver runs.
+2. The recording resolvers run on it.
+3. The advice runs once with the bound arguments.
+4. The writer writes an entity with a status, no headers and a `ProblemDetail` body for the request's slot:
+   - the filters' fields, then the route's `Vary` (S3), then `Content-Type`, chunked, as the processor flushes;
+   - the request records the handled exception, as `processHandlerException` does for an empty model and view.
+
+The interceptors' `preHandle` and `afterCompletion` are not run; the route's proof (S3) limits them to the CORS
+interceptor, whose only effect is that `Vary`.
+
+**After the advice ran, anything else finishes on the servlet objects**, from where the generic dispatch would be.
+The response is materialized and the chain's `preHandle` runs, then:
+- if the advice threw, the resolver resolved nothing: `completeFastResolution` resumes `processHandlerException` at
+  the next resolver;
+- for any other return (no status, headers, another body type, a mapper failure), the adapter's
+  `HttpEntityMethodProcessor` handles it as `invokeAndHandle` would; a failure there resumes at the next resolver.
+
+**Tests:** framework-test `fast_path_tests.d`, against MockMvc's generic dispatch with the same validator and
+advice; responses compare by status, fields, body, and the whole set of request attributes:
+- S5's advice for each `Accept` key: written from the exchange, no response object;
+- an advice taking the request: run once per request. When it throws, `DefaultHandlerExceptionResolver`'s 400 comes
+  through. An entity with its own header is written by the processor on the servlet objects;
+- an advice taking the response: outside the proof, handed back.
+
 ### 9.2 The error-page shortcut (default JSON 404)
 
 A 404 that reaches Boot's error page costs a second full pass: the engine forwards to `/error`, which runs the ERROR filter chain, the `DispatcherServlet` lookup, `BasicErrorController.error`, `HttpEntityMethodProcessor`'s negotiation and the Jackson converter (coordination note web-http-404-specialization.md). The shortcut writes that response in place of the forward when startup has proved the whole ERROR dispatch stock. The first dispatch, which raises and resolves the 404, is unchanged.

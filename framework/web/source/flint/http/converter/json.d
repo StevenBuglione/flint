@@ -19,6 +19,7 @@ import flint.http : HttpInputMessage, HttpOutputMessage, MediaType, ProblemDetai
 import flint.http.converter : AbstractHttpMessageConverter, HttpMessageConversionException,
     HttpMessageNotReadableException, HttpMessageNotWritableException;
 import flint.jackson.core : JacksonException, JsonGenerator;
+import flint.jackson.core.json : OutputSink;
 import flint.jackson.databind : JsonMapper, ObjectMapper;
 import flint.jackson.databind.exc : InvalidDefinitionException;
 
@@ -112,7 +113,7 @@ class JacksonJsonHttpMessageConverter : AbstractHttpMessageConverter
         if (value.holds!ProblemDetail)
         {
             try
-                writeProblemDetail(value.get!ProblemDetail, outputMessage);
+                writeProblemDetail(value.get!ProblemDetail, &outputMessage.writeBody);
             catch (IOException e)
                 throw e;
             catch (Exception e)
@@ -130,13 +131,26 @@ class JacksonJsonHttpMessageConverter : AbstractHttpMessageConverter
             throw new HttpMessageNotWritableException("Could not write JSON: " ~ e.msg, e);
     }
 
+    /++
+    Flint's fast path: the bytes `writeInternal` streams for `value` (a `ProblemDetail` through the mixin, anything
+    else through the mapper), to `sink`, with the mapper's exceptions unwrapped. The fast path writes a body the
+    generic path would write with this converter, to a buffer of its own.
+    +/
+    package(flint) void writeTo(Any value, OutputSink sink)
+    {
+        if (value.holds!ProblemDetail)
+            writeProblemDetail(value.get!ProblemDetail, sink);
+        else
+            mapper.writeValue(sink, value);
+    }
+
     /// `ProblemDetailJacksonMixin`: `@JsonInclude(NON_EMPTY)`, Jackson 3's name order for the bean properties
     /// (detail, instance, status, title, type), then the `properties` map as `@JsonAnyGetter`. One generator from the
     /// mapper (its recycled one: the converter never keeps it) streams the whole object into the body, as Spring's
     /// converter serializes it, so escaping, numbers and each property's value are Jackson's.
-    private void writeProblemDetail(ProblemDetail detail, HttpOutputMessage outputMessage)
+    private void writeProblemDetail(ProblemDetail detail, OutputSink sink)
     {
-        mapper.writeWith(&outputMessage.writeBody, (JsonGenerator g) {
+        mapper.writeWith(sink, (JsonGenerator g) {
             g.writeStartObject();
             if (detail.getDetail().length != 0)
                 g.writeStringProperty("detail", detail.getDetail());

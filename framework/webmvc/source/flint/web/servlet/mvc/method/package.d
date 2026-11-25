@@ -845,8 +845,34 @@ abstract class RequestMappingInfoHandlerMapping : AbstractHandlerMapping
         return chainFor(handlerMethod, request);
     }
 
+    /++
+    Flint's fast path (S7): the attributes `provedHandler` sets, less the producible media types, which
+    `processHandlerException` removes before any resolver runs; for a request whose exception is resolved right after
+    the lookup, with no chain (its interceptors' effects are the route's proof). Only for exactly
+    `RequestMappingHandlerMapping`, whose `handleMatch` is this class's.
+    +/
+    package(flint) void exposeProvedMatch(RequestMappingInfo info, HandlerMethod handlerMethod,
+            HttpServletRequest request)
+    {
+        scope (exit)
+            request.removeAttribute(RequestMappingInfo.mediaTypesAttribute);
+        const path = lookupPath(request);
+        request.setAttribute(HandlerMapping.LOOKUP_PATH, Any.of(path));
+        request.setAttribute(HandlerMapping.BEST_MATCHING_HANDLER_ATTRIBUTE, Any.of(cast(Object) handlerMethod));
+        exposeMatch(info, request);
+    }
+
     /// Exposes the best pattern, URI variables and producible media types.
     protected void handleMatch(RequestMappingInfo info, string lookupPath, HttpServletRequest request)
+    {
+        exposeMatch(info, request);
+        auto producible = info.getProducibleMediaTypes();
+        if (producible.length != 0)
+            request.setAttribute(HandlerMapping.PRODUCIBLE_MEDIA_TYPES_ATTRIBUTE, Any.of(producible));
+    }
+
+    // handleMatch's best pattern and URI variables.
+    private void exposeMatch(RequestMappingInfo info, HttpServletRequest request)
     {
         auto pattern = info.getPatterns()[0];
         request.setAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE, Any.of(pattern.getPatternString()));
@@ -854,9 +880,6 @@ abstract class RequestMappingInfoHandlerMapping : AbstractHandlerMapping
         auto matchInfo = pattern.matchAndExtract(parsed);
         string[2][] variables = matchInfo is null ? null : matchInfo.getUriVariables();
         request.setAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE, Any.of(variables));
-        auto producible = info.getProducibleMediaTypes();
-        if (producible.length != 0)
-            request.setAttribute(HandlerMapping.PRODUCIBLE_MEDIA_TYPES_ATTRIBUTE, Any.of(producible));
     }
 
     /// Spring's `handleNoMatch`: 405 (or the OPTIONS handler), 415, 406, unsatisfied params, or `null`.

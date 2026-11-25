@@ -27,16 +27,16 @@ import flint.web.context.request : ServletWebRequest;
 import flint.web.accept : HeaderContentNegotiationStrategy;
 import flint.web.cors : DefaultCorsProcessor;
 import flint.web.method : HandlerMethod;
-import flint.web.method.support : ModelAndViewContainer;
+import flint.web.method.support : InvocableHandlerMethod, ModelAndViewContainer;
 import flint.web.bind.annotation : ValueConstants;
 import flint.web.method.annotation : RequestParamMethodArgumentResolver;
 import flint.web.servlet : DispatcherStrategies, DispatcherServlet, FastPath, FastPathFactory;
 import flint.web.servlet.config.annotation : WebMvcConfigurer;
 import flint.web.servlet.mvc.method : RequestMappingInfo, RequestMappingInfoHandlerMapping;
 import flint.web.servlet.mvc.method.annotation : AbstractMessageConverterMethodProcessor,
-    HttpEntityMethodProcessor, HttpHeadersReturnValueHandler,
-    PathVariableMethodArgumentResolver,
-    RequestMappingHandlerAdapter, RequestMappingHandlerMapping,
+    ExceptionHandlerExceptionResolver, HttpEntityMethodProcessor, HttpHeadersReturnValueHandler,
+    ServletInvocableHandlerMethod,
+    PathVariableMethodArgumentResolver, RequestMappingHandlerAdapter, RequestMappingHandlerMapping,
     RequestResponseBodyMethodProcessor, ServletRequestMethodArgumentResolver;
 import flint.core : MethodParameter;
 
@@ -79,11 +79,19 @@ final class FastPathTable : FastPath
     // Full S6: the literal text every registration pattern of `unmatched` starts with, up to its first variable or
     // wildcard. A path that starts with none of them is matched by none of the patterns.
     private string[] patternPrefixes;
+    // S7: the adapter the routes were proved against; the resolvers ahead of Spring's that only record an exception
+    // (`admitRecordingResolver`, set at startup before any request); and the writer of an advice's `ProblemDetail`
+    // entity, per Accept slot, over the adapter's converters (null when no slot is written by Jackson).
+    private RequestMappingHandlerAdapter adapter;
+    private Object[] recording;
+    private ErrorShortcutRoute problemWriter;
 
-    private this(Route[] routes, RequestMappingInfoHandlerMapping mappings)
+    private this(Route[] routes, RequestMappingInfoHandlerMapping mappings, RequestMappingHandlerAdapter adapter)
     {
         this.routes = routes;
+        this.adapter = adapter;
         pool = new BodyPool;
+        problemWriter = ErrorShortcutRoute.forBody(adapter.getMessageConverters(), "flint.http.ProblemDetail");
         if (typeid(mappings) is typeid(RequestMappingHandlerMapping))
         {
             unmatched = mappings;
@@ -120,7 +128,19 @@ final class FastPathTable : FastPath
             }
         }
         auto proved = literal ~ templates;
-        return proved.length != 0 ? new FastPathTable(proved, mappings) : null;
+        return proved.length != 0 ? new FastPathTable(proved, mappings, adapter) : null;
+    }
+
+    /++
+    S7: names `resolver`, one of `servlet`'s exception resolvers, as one that only records the exception on the
+    request and resolves nothing, whatever the request, response and handler (Boot's stock `DefaultErrorAttributes`,
+    proved by the error page's startup proof). Called at startup, before requests run; a servlet without a fast path
+    ignores it.
+    +/
+    package(flint) static void admitRecordingResolver(DispatcherServlet servlet, Object resolver)
+    {
+        if (auto table = cast(FastPathTable) servlet.proofStrategies().fastPath)
+            table.recording ~= resolver;
     }
 
     FastOutcome dispatch(DispatcherServlet servlet, ref scope FastExchange exchange)
@@ -201,7 +221,7 @@ final class FastPathTable : FastPath
         if (!bound(route, exchange, values, arguments, failure))
             return FastOutcome.declined;
         if (failure !is null)
-            return complete(servlet, exchange, route, failure, 0, null, null);
+            return serveFailure(route, servlet, exchange, failure, key);
         Any result;
         try
             result = route.handler.invokeArguments(arguments[0 .. route.arguments.length], null);
@@ -221,7 +241,7 @@ final class FastPathTable : FastPath
         scope (exit)
             pool.release(buffer);
         try
-            route.jackson.getMapper().writeValue(&buffer.put, result);
+            route.jackson.writeTo(result, &buffer.put);
         catch (Exception e)
         {
             // JacksonJsonHttpMessageConverter.writeInternal's wrapping; what it streamed before failing goes out
@@ -293,7 +313,7 @@ final class FastPathTable : FastPath
         scope (exit)
             pool.release(buffer);
         try
-            route.jackson.getMapper().writeValue(&buffer.put, content);
+            route.jackson.writeTo(content, &buffer.put);
         catch (Exception e)
         {
             import flint.java.io : IOException;
@@ -347,6 +367,183 @@ final class FastPathTable : FastPath
         }
         servlet.completeFastDispatch(servletRequest, servletResponse, chain, ex);
         return FastOutcome.materialized;
+    }
+
+    /++
+    S7 (fast-path.md 9.2): S5's validation failure resolved as `processHandlerException` resolves it, building the
+    request alone. It applies when the resolvers ahead of Spring's `ExceptionHandlerExceptionResolver` only record the
+    exception (`admitRecordingResolver`), that resolver picks an advice method of the shape `adviceProof` proves, and
+    every argument is one Spring provides (the exception, its causes, the handler method) or the request. Then the
+    request gets the lookup's attributes, the recording resolvers and the advice run as the dispatch runs them, and
+    the advice's entity, when `problemWriter` writes it, goes out from the exchange with the fields the servlet
+    response would hold. Before the request is built, anything else hands back as S5 does (`complete`); after the
+    advice ran, it finishes on the servlet objects from the point the generic dispatch would be at.
+    +/
+    private FastOutcome serveFailure(ref Route route, DispatcherServlet servlet,
+            ref scope FastExchange exchange, Exception failure, size_t key)
+    {
+        size_t first;
+        auto handlers = adviceResolver(servlet, first);
+        RequestMappingHandlerAdapter preparedFrom;
+        auto invocable = handlers is null || exchange.materializeRequest is null
+            ? null : handlers.adviceFor(route.handler, failure, preparedFrom);
+        auto proof = invocable is null || preparedFrom !is adapter ? null : adviceProof(route, invocable);
+        Any[maxArguments] providedStorage;
+        auto provided = proof is null ? null : ExceptionHandlerExceptionResolver.providedArguments(failure,
+                route.handler, providedStorage[]);
+        if (provided is null)
+            return complete(servlet, exchange, route, failure, 0, null, null);
+        // InvocableHandlerMethod's resolution: a provided argument by type, else the parameter's resolver, which the
+        // proof shows is the request's.
+        const parameters = invocable.getMethodParameters().length;
+        Any[maxArguments] arguments;
+        bool[maxArguments] given;
+        foreach (index, parameter; invocable.getMethodParameters())
+        {
+            given[index] = InvocableHandlerMethod.findProvidedArgument(parameter, provided, arguments[index]);
+            if (!given[index] && !proof.request[index])
+                return complete(servlet, exchange, route, failure, 0, null, null);
+        }
+
+        Object requestObject;
+        exchange.materializeRequest(requestObject);
+        auto request = cast(HttpServletRequest) requestObject;
+        foreach (index; 0 .. parameters)
+            if (!given[index])
+                arguments[index] = Any.of(cast(Object) request);
+        route.mapping.exposeProvedMatch(route.info, route.handler, request);
+        // processHandlerException: the recording resolvers (which read no response), then the advice's resolver,
+        // which applies to a handler method and adds no Cache-Control (adviceResolver).
+        foreach (resolver; servlet.proofStrategies().handlerExceptionResolvers[0 .. first])
+            resolver.resolveException(request, null, route.handler, failure);
+        Any result;
+        try
+            result = invocable.invokeArguments(arguments[0 .. parameters],
+                    InvocableHandlerMethod.invokedException(arguments[0 .. parameters], provided));
+        catch (Exception)
+            return resumeResolution(route, servlet, exchange, request, failure, first + 1); // the resolver's null
+        if (problemWriter.write(exchange, key, route, result))
+        {
+            DispatcherServlet.recordHandledException(request, failure);
+            return FastOutcome.written;
+        }
+        return handleAdviceReturn(route, servlet, exchange, request, failure, result, invocable, proof, first + 1);
+    }
+
+    // S7: the first exception resolver that is not a recording one, when it is exactly Spring's
+    // ExceptionHandlerExceptionResolver adding no Cache-Control, its index in `first`; null otherwise, and for a
+    // servlet or mapping subclass (which could resolve or expose the match otherwise).
+    private ExceptionHandlerExceptionResolver adviceResolver(DispatcherServlet servlet, out size_t first)
+    {
+        if (unmatched is null || problemWriter is null || typeid(servlet) !is typeid(DispatcherServlet))
+            return null;
+        foreach (index, resolver; servlet.proofStrategies().handlerExceptionResolvers)
+        {
+            auto object = cast(Object) resolver;
+            bool records;
+            foreach (candidate; recording)
+                records = records || candidate is object;
+            if (records)
+                continue;
+            auto handlers = cast(ExceptionHandlerExceptionResolver) object;
+            if (handlers is null || typeid(handlers) !is typeid(ExceptionHandlerExceptionResolver)
+                    || handlers.preventsResponseCaching())
+                return null;
+            first = index;
+            return handlers;
+        }
+        return null;
+    }
+
+    // S7: the advice threw, so its resolver resolves nothing: the servlet objects, the interceptors' preHandle as
+    // S5's hand-back runs it, and processHandlerException from the next resolver on.
+    private static FastOutcome resumeResolution(ref Route route, DispatcherServlet servlet,
+            ref scope FastExchange exchange, HttpServletRequest request, Exception failure, size_t next)
+    {
+        Object requestObject, responseObject;
+        exchange.materialize(requestObject, responseObject);
+        auto response = cast(HttpServletResponse) responseObject;
+        auto chain = servlet.prepareProvedCompletion(request, response,
+                route.mapping.chainFor(route.handler, request));
+        servlet.completeFastResolution(request, response, chain, failure, next);
+        return FastOutcome.materialized;
+    }
+
+    // S7: the advice returned what problemWriter does not write: the servlet objects, preHandle, and the return value
+    // handling invokeAndHandle runs; a failure there is the resolver's null, as in resumeResolution.
+    private static FastOutcome handleAdviceReturn(ref Route route, DispatcherServlet servlet,
+            ref scope FastExchange exchange,
+            HttpServletRequest request,
+            Exception failure, Any result, ServletInvocableHandlerMethod invocable, ProvenAdvice proof, size_t next)
+    {
+        Object requestObject, responseObject;
+        exchange.materialize(requestObject, responseObject);
+        auto response = cast(HttpServletResponse) responseObject;
+        auto chain = servlet.prepareProvedCompletion(request, response,
+                route.mapping.chainFor(route.handler, request));
+        try
+            proof.processor.handleReturnValue(result, invocable.getReturnType(),
+                    new ModelAndViewContainer, new ServletWebRequest(request, response));
+        catch (Exception)
+        {
+            servlet.completeFastResolution(request, response, chain, failure, next);
+            return FastOutcome.materialized;
+        }
+        DispatcherServlet.recordHandledException(request, failure);
+        chain.triggerAfterCompletion(request, response, null);
+        return FastOutcome.materialized;
+    }
+
+    /++
+    S7: whether `invocable`, the advice method the resolver chose for a route's failure, has the shape the fast
+    resolution invokes as `invokeAndHandle` does, remembered per route like `writesBody` (the resolver's prepared
+    invocables are shared and kept): exactly a `ServletInvocableHandlerMethod` over Flint AOT's array invoker, without
+    `@ResponseStatus`; at most `maxArguments` parameters, each either provided or exactly an `HttpServletRequest`
+    that `ServletRequestMethodArgumentResolver` resolves first; and a `ResponseEntity` return whose first handler is
+    exactly `HttpEntityMethodProcessor`.
+    +/
+    private ProvenAdvice adviceProof(ref Route route, ServletInvocableHandlerMethod invocable)
+    {
+        import core.atomic : atomicLoad, cas;
+
+        auto proven = atomicLoad(route.provenAdvice);
+        if (proven !is null && proven.invocable is invocable)
+            return proven;
+        if (typeid(invocable) !is typeid(ServletInvocableHandlerMethod) || !invocable.invokesArguments()
+                || invocable.getResponseStatus() != 0 || invocable.getResponseStatusReason() !is null)
+            return null;
+        auto parameters = invocable.getMethodParameters();
+        if (parameters.length > maxArguments)
+            return null;
+        auto created = new ProvenAdvice(invocable);
+        foreach (index, parameter; parameters)
+        {
+            auto resolver = adapter.getArgumentResolvers().getArgumentResolver(parameter);
+            created.request[index] = resolver !is null
+                && typeid(cast(Object) resolver) is typeid(ServletRequestMethodArgumentResolver)
+                && parameter.getParameterType() == "flint.jakarta.servlet.http.HttpServletRequest";
+        }
+        created.processor = entityHandler(invocable, adapter);
+        if (created.processor is null)
+            return null;
+        if (proven is null)
+            cas(&route.provenAdvice, cast(ProvenAdvice) null, created);
+        return created;
+    }
+}
+
+// S7: an advice method `adviceProof` proved; immutable once published.
+private final class ProvenAdvice
+{
+    ServletInvocableHandlerMethod invocable;
+    /// The adapter's `HttpEntityMethodProcessor`, which handles its `ResponseEntity`.
+    HttpEntityMethodProcessor processor;
+    /// Per parameter: resolved to the request when no provided argument matches it.
+    bool[maxArguments] request;
+
+    this(ServletInvocableHandlerMethod invocable) pure nothrow @nogc
+    {
+        this.invocable = invocable;
     }
 }
 
@@ -411,6 +608,27 @@ final class ErrorShortcutRoute
         return route.jackson !is null ? route : null;
     }
 
+    /++
+    S7: the writer of a `bodyType` entity that an exception handler returns, per Accept slot, over `converters`. The
+    producible types are the converters' own, since `processHandlerException` removes the mapping's before any
+    resolver runs. Null when no slot is written by one Jackson converter.
+    +/
+    static ErrorShortcutRoute forBody(HttpMessageConverter[] converters, string bodyType)
+    {
+        auto producible = AbstractMessageConverterMethodProcessor.producibleTypes(converters, bodyType);
+        auto route = new ErrorShortcutRoute(bodyType);
+        foreach (slot, key; acceptKeys)
+        {
+            auto writer = acceptEntry(key, producible, bodyType, false, converters, route.accept[slot]);
+            if (writer is null)
+                continue;
+            if (route.jackson !is null && route.jackson !is writer)
+                return null;
+            route.jackson = writer;
+        }
+        return route.jackson !is null ? route : null;
+    }
+
     /// The Jackson converter's mapper, which writes every body: the caller proves it is the application's stock one.
     Object converterMapper()
     {
@@ -471,7 +689,7 @@ final class ErrorShortcutRoute
         scope (exit)
             pool.release(buffer);
         try
-            jackson.getMapper().writeValue(&buffer.put, content);
+            jackson.writeTo(content, &buffer.put);
         catch (Exception)
             return false;
         response.setStatus(status);
@@ -494,6 +712,20 @@ final class ErrorShortcutRoute
     +/
     bool write(ref scope FastExchange exchange, size_t slot, ResponseEntity entity)
     {
+        Route plain;
+        return write(exchange, slot, plain, entity);
+    }
+
+    /// S7: `write` for an exception handler's `result` on `route`'s request, with the route's `Vary` fields after the
+    /// filters' (its CORS interceptor's preHandle adds them first); `false` for a result that is not an entity.
+    bool write(ref scope FastExchange exchange, size_t slot, ref const Route route, Any result)
+    {
+        return !result.isNull() && result.holds!ResponseEntity && write(exchange, slot, route,
+                result.get!ResponseEntity);
+    }
+
+    private bool write(ref scope FastExchange exchange, size_t slot, ref const Route route, ResponseEntity entity)
+    {
         const entry = accept[slot];
         const status = entity.getStatusCode().value();
         auto content = entity.getBody();
@@ -504,12 +736,11 @@ final class ErrorShortcutRoute
         scope (exit)
             pool.release(buffer);
         try
-            jackson.getMapper().writeValue(&buffer.put, content);
+            jackson.writeTo(content, &buffer.put);
         catch (Exception)
             return false;
-        Route plain;
         FastField[maxFields] storage;
-        exchange.respondFields(status, responseFields(plain, exchange, entry.contentType, storage), buffer.data, true);
+        exchange.respondFields(status, responseFields(route, exchange, entry.contentType, storage), buffer.data, true);
         return true;
     }
 
@@ -527,7 +758,7 @@ final class ErrorShortcutRoute
         scope (exit)
             pool.release(buffer);
         try
-            jackson.getMapper().writeValue(&buffer.put, content);
+            jackson.writeTo(content, &buffer.put);
         catch (Exception)
             return false;
         bytes = buffer.data.idup;
@@ -704,13 +935,20 @@ private bool requestOnly(HandlerMethod handler, RequestMappingHandlerAdapter ada
 // `HttpEntityMethodProcessor`, as the composite selects it.
 private bool entityReturn(HandlerMethod handler, RequestMappingHandlerAdapter adapter)
 {
+    return entityHandler(handler, adapter) !is null;
+}
+
+// entityReturn's processor, or null.
+private HttpEntityMethodProcessor entityHandler(HandlerMethod handler, RequestMappingHandlerAdapter adapter)
+{
     auto returnType = handler.getReturnType();
     if (returnType.getParameterType() != "flint.http.ResponseEntity")
-        return false;
+        return null;
     foreach (returnHandler; adapter.getReturnValueHandlers().getHandlers())
         if (returnHandler.supportsReturnType(returnType))
-            return typeid(cast(Object) returnHandler) is typeid(HttpEntityMethodProcessor);
-    return false;
+            return typeid(cast(Object) returnHandler) is typeid(HttpEntityMethodProcessor) ? cast(
+                    HttpEntityMethodProcessor) returnHandler : null;
+    return null;
 }
 
 private bool equalsAsciiIgnoreCase(scope const(char)[] a, scope const(char)[] b) pure nothrow @nogc
@@ -936,6 +1174,8 @@ private struct Route
     RequestResponseBodyMethodProcessor bodyProcessor;
     /// Per `acceptKeys` slot: the `Content-Type` the generic path writes, or `null` where it does not write one.
     AcceptEntry[acceptKeys.length] accept;
+    /// S7: the advice method `adviceProof` last proved for this route's failures.
+    ProvenAdvice provenAdvice;
 }
 
 private struct AcceptEntry

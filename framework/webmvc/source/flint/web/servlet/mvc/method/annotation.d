@@ -1257,6 +1257,48 @@ class ExceptionHandlerExceptionResolver : AbstractHandlerExceptionResolver
         return mav;
     }
 
+    /++
+    Flint's fast path (S7): the prepared invocable `doResolveException` would invoke for `exception` raised for
+    `handlerMethod`, and the adapter it was prepared from; null when no handler method resolves it.
+    +/
+    package(flint.web) ServletInvocableHandlerMethod adviceFor(HandlerMethod handlerMethod, Exception exception,
+            out RequestMappingHandlerAdapter preparedFrom)
+    {
+        Object bean;
+        HandlerGroup* group;
+        ExceptionHandlerSpec* spec = findHandler(handlerMethod, exception, bean, group);
+        if (spec is null)
+            return null;
+        preparedFrom = adapter;
+        return group.invocable(spec, bean, adapter);
+    }
+
+    /++
+    Flint's fast path (S7): the arguments `doResolveException` provides, in `storage`: the exception, its causes,
+    then the handler method; null when they do not fit.
+    +/
+    package(flint.web) static Any[] providedArguments(Exception exception, HandlerMethod handlerMethod,
+            return scope Any[] storage)
+    {
+        size_t at;
+        if (storage.length == 0)
+            return null;
+        storage[at++] = Any.of(cast(Object) exception);
+        for (Throwable cause = causeOf(exception); cause !is null; cause = causeOf(cause))
+        {
+            if (at == storage.length)
+                return null;
+            storage[at++] = Any.of(cast(Object) cause);
+        }
+        if (handlerMethod !is null)
+        {
+            if (at == storage.length)
+                return null;
+            storage[at++] = Any.of(cast(Object) handlerMethod);
+        }
+        return storage[0 .. at];
+    }
+
     /// Flint, for tests: how many handlers have a prepared invocable.
     package(flint) size_t preparedHandlers()
     {

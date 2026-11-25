@@ -86,6 +86,13 @@ struct FastExchange
     /// `Object`s for this low-level package); the outcome is then `FastOutcome.materialized`.
     void delegate(out Object request, out Object response) @safe materialize;
     /++
+    S7: builds only the request `materialize` would build (the same object; a later `materialize` adds the
+    response). The dispatcher may still answer `FastOutcome.written` through `respondFields`, for a response that
+    holds nothing the servlet response would add: the container then finishes the request without a response
+    object. Null when the container cannot build the request alone.
+    +/
+    void delegate(out Object request) @safe materializeRequest;
+    /++
     S6: offers a `GET` that no registration of the dispatcher's first handler mapping can match (the dispatcher
     proved that for this path) to the container's startup-proved error page (`FastErrorPage`). It writes the 404 that
     the rest of the dispatch and the error page would write, and returns `true`; the outcome is then
