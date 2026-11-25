@@ -297,6 +297,28 @@ struct Server
         return Error.init;
     }
 
+    /// Run the event loops on the calling thread until the server stops (`ServerOptions.hostOnCaller`), and return
+    /// their result. Returns at once when the server does not host on its caller, or when the loops were taken
+    /// already (by another `host`, or by `releaseHost`).
+    Error host() nothrow
+    {
+        if (driver is null || !driver.limits.hostOnCaller || !cas(&driver.hostClaimed, false, true))
+            return Error.init;
+        driver.execute();
+        return driver.result;
+    }
+
+    /// Stop a server hosted on its caller that no thread hosts yet: its loops never ran, so nothing waits to drain,
+    /// and `shutdown` would otherwise wait for a host that never comes (a startup that failed after the server bound
+    /// its port, or a stop that came first). Does nothing once a host took the loops.
+    void releaseHost() nothrow
+    {
+        if (driver is null || !driver.limits.hostOnCaller || !cas(&driver.hostClaimed, false, true))
+            return;
+        driver.stop();
+        driver.execute();
+    }
+
     /// Stop admission and wait through final connection completions up to an absolute deadline.
     Error shutdown(long deadlineNanos) nothrow @nogc
     {
@@ -487,6 +509,8 @@ private final class RuntimeDriver() : StreamEndpoint, FiberEndpoint
     /// Owner cores that have not yet received the drain's idle-connection sweep.
     private uint unsweptCore;
     private shared DriverPhase phase;
+    /// Whether a thread took the event loops (`Server.host` or `Server.releaseHost`), when hosted on a caller.
+    private shared bool hostClaimed;
     private Error result;
     private bool released;
     private size_t arenaBytes;
@@ -567,6 +591,14 @@ private final class RuntimeDriver() : StreamEndpoint, FiberEndpoint
             return listening;
         }
 
+        return startDriver();
+    }
+
+    /// Start the driver thread, unless the loops run on the thread that calls `Server.host`.
+    private Error startDriver()
+    {
+        if (limits.hostOnCaller)
+            return Error.init;
         try
             launchDriver(&execute);
         catch (Exception)

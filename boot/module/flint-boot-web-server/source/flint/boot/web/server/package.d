@@ -135,6 +135,15 @@ interface WebServer
     void shutDownGracefully(GracefulShutdownCallback callback);
 }
 
+/// Flint addition: a web server whose request loops can run on the thread that calls `host`, where Boot's
+/// servers run their own threads. `FlintApplication.runMain` hosts it on the main thread, which would otherwise wait
+/// idle (docs/spring/phase1/gc.md, section 3c).
+interface HostedWebServer
+{
+    /// Serve requests on the calling thread until the server stops; return at once when it runs its own threads.
+    void host();
+}
+
 /// The result of a graceful shutdown.
 enum GracefulShutdownResult
 {

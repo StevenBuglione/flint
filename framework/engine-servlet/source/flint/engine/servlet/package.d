@@ -56,6 +56,9 @@ struct ServletEngineOptions
     string address = "0.0.0.0";
     /// `server.port`; 0 binds an ephemeral port, which `getPort` reports.
     ushort port = 8080;
+    /// Flint addition: run the request loops on the thread that calls `ServletEngine.host` (Flint Boot's main
+    /// thread) instead of on a thread of the engine's own (`flint.engine.web.ServerOptions.hostOnCaller`).
+    bool hostOnCaller;
     /// `server.servlet.context-path`: `""` or a path starting with `/` and not ending with one.
     string contextPath = "";
     /// Error pages by status code.
@@ -114,8 +117,9 @@ interface ErrorPageShortcut
 }
 
 /// The fast path's offer of one exchange to a servlet (`flint.engine.servlet.fast.serveFast`).
-alias FastOffer = FastOutcome function(ServletEngine engine, FastDispatch dispatch, ref scope Request request,
-        ref scope RequestContext context, FiberResponse transport, out ServletEngineRequest servletRequest,
+alias FastOffer = FastOutcome function(ServletEngine engine, FastDispatch dispatch,
+        ref scope Request request, ref scope RequestContext context,
+        FiberResponse transport, out ServletEngineRequest servletRequest,
         out ServletEngineResponse servletResponse, out Exception failure) @safe;
 
 /// The reactor threads for `cores`: `cores` itself, or for 0 the CPUs this process may run on (on Linux, its
@@ -241,6 +245,7 @@ final class ServletEngine : RequestHost
         serverOptions.address = options.address;
         serverOptions.port = options.port;
         serverOptions.cores = reactorThreads(options.cores);
+        serverOptions.hostOnCaller = options.hostOnCaller;
         // One pool of exchange storage per worker, touched only by that worker (coordination/notes/exchange-pool.md).
         responsePools = new StatePool!ResponseState[serverOptions.cores];
         requestPools = new StatePool!RequestState[serverOptions.cores];
@@ -345,8 +350,17 @@ final class ServletEngine : RequestHost
         if (!started || stopped)
             return;
         stopped = true;
+        server.releaseHost();
         server.shutdown(nanosFromNow(5_000_000_000L));
         destroyComponents();
+    }
+
+    /// Flint addition: serve requests on the calling thread until the engine stops, when it was started with
+    /// `hostOnCaller`; otherwise return at once.
+    void host()
+    {
+        if (started)
+            server.host();
     }
 
     /// The bound port, which resolves a configured port of 0; -1 before `start`.
@@ -363,6 +377,7 @@ final class ServletEngine : RequestHost
         if (!started || stopped)
             return true;
         stopped = true;
+        server.releaseHost();
         const drained = server.drain(nanosFromNow(timeoutNanos));
         destroyComponents();
         return drained.code == Status.ok;
@@ -405,8 +420,8 @@ final class ServletEngine : RequestHost
             ServletEngineRequest fastRequest;
             ServletEngineResponse fastResponse;
             Exception fastFailure;
-            final switch (options.fastOffer(this, fastDispatch, request, context, transport, fastRequest,
-                    fastResponse, fastFailure))
+            final switch (options.fastOffer(this, fastDispatch, request, context, transport,
+                        fastRequest, fastResponse, fastFailure))
             {
             case FastOutcome.declined:
                 // Nothing ran (serveFast asserts it); storage a broken dispatcher took anyway is returned, so its
@@ -489,8 +504,8 @@ final class ServletEngine : RequestHost
 
     /// Tomcat's valves after the filter chain: an uncaught exception or `sendError` goes to the error page, then
     /// the response completes.
-    private void finishExchange(ServletEngineRequest servletRequest, ServletEngineResponse servletResponse,
-            Exception failure)
+    private void finishExchange(ServletEngineRequest servletRequest,
+            ServletEngineResponse servletResponse, Exception failure)
     {
         if (failure !is null)
             throwable(servletRequest, servletResponse, failure);

@@ -115,6 +115,10 @@ struct ServerOptions
     ushort port = 8080;
     /// Number of HTTP reactor workers.
     uint cores = 1;
+    /// Run the event loops on the thread that calls `Server.host`, instead of on a driver thread the server
+    /// starts itself. Flint Boot hosts its server on the main thread, which would otherwise wait idle: every
+    /// stop-the-world collection signals each thread (docs/spring/phase1/gc.md, section 3c).
+    bool hostOnCaller;
     /// Maximum active connection records per worker.
     uint maxConnectionsPerCore = 4096;
     /// Maximum admitted HTTP/2 streams per connection.

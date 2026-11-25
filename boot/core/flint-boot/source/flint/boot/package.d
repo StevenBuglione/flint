@@ -183,10 +183,12 @@ private enum aliasOfConfiguration = AliasFor("proxyBeanMethods",
 
 /// Marks the application's `@Configuration` class; `@FlintBootApplication` carries it, so the application class is
 /// a bean (its runners run, its `@Bean` methods register).
-@Configuration struct FlintBootConfiguration
+@Configuration
+struct FlintBootConfiguration
 {
     /// Whether `@Bean` methods are proxied to enforce singleton semantics; an alias of `Configuration.proxyBeanMethods`.
-    @aliasOfConfiguration bool proxyBeanMethods = true;
+    @aliasOfConfiguration
+    bool proxyBeanMethods = true;
 }
 
 /// The environment Boot prepares: spring-core's `StandardEnvironment` over Boot's config data.
@@ -556,10 +558,22 @@ interface KeepAliveApplicationContext
     bool isTerminated();
 }
 
+/// Flint addition: a context whose web server can serve requests on the main thread once the application runs,
+/// instead of the main thread waiting idle: one thread fewer for every stop-the-world collection to signal
+/// (docs/spring/phase1/gc.md, section 3c). The servlet web server application context implements it.
+interface MainThreadHost
+{
+    /// Serve requests on the calling thread until the web server stops; return at once when it does not host on
+    /// the main thread (`server.flint.main-thread`).
+    void hostOnMainThread();
+}
+
 /// Boot's `SpringApplicationShutdownHook` for a process: SIGTERM and SIGINT (Ctrl+Break and Ctrl+C on Windows),
-/// through `flint.os.onShutdownSignal`, ask `FlintApplication.runMain` to close the context on its own thread. The
-/// signal callback only records the request. A second signal is counted but does not cut the web server's drain
-/// short (it is bounded by the grace period): flint:os has no safe immediate exit yet.
+/// through `flint.os.onShutdownSignal`. By default the signal callback only records the request, and
+/// `FlintApplication.runMain` closes the context on its own thread. When the main thread serves requests
+/// (`closeOnSignal`), the callback closes the context itself on flint:os's signal thread, as Spring's hook thread
+/// does. A second signal is counted but does not cut the web server's drain short (it is bounded by the grace
+/// period): flint:os has no safe immediate exit yet.
 final class ShutdownHook
 {
     import flint.os : InterruptSubscription, ShutdownSignal;
@@ -567,6 +581,12 @@ final class ShutdownHook
     private shared uint received;
     private InterruptSubscription subscription;
     private bool installed;
+    // The context to close on a signal (`closeOnSignal`), published before `closingSet`.
+    private ConfigurableApplicationContext closing;
+    private shared bool closingSet;
+    // Exactly one thread closes it, and `await` waits until it has finished.
+    private shared bool closeStarted;
+    private shared bool closeDone;
 
     /// Watch SIGTERM and SIGINT; a signal that already has a custom handler keeps it, and nothing is watched.
     void install()
@@ -612,19 +632,55 @@ final class ShutdownHook
         return atomicLoad(received);
     }
 
-    /// Wait until `context` terminates or a shutdown signal arrives.
+    /// Close `context` when a shutdown signal arrives, on the signal thread, rather than leaving it to the caller
+    /// of `await`: for a main thread that serves requests (`MainThreadHost`) until the close stops the server. A
+    /// signal that arrived already closes it now, on the calling thread.
+    void closeOnSignal(ConfigurableApplicationContext context)
+    {
+        import core.atomic : atomicStore;
+
+        closing = context;
+        atomicStore(closingSet, true);
+        if (isShutdownRequested())
+            closeOnce();
+    }
+
+    /// Wait until `context` terminates or a shutdown signal arrives; with `closeOnSignal`, until the close the
+    /// signal began has finished, so the process does not end under the beans being destroyed.
     void await(KeepAliveApplicationContext context)
     {
+        import core.atomic : atomicLoad;
         import core.thread.osthread : Thread;
         import core.time : msecs;
 
-        while (!context.isTerminated() && !isShutdownRequested())
+        while (!context.isTerminated() && !(isShutdownRequested() && (!atomicLoad(closingSet)
+                || atomicLoad(closeDone))))
             Thread.sleep(50.msecs);
     }
 
-    private void receive(ShutdownSignal) @safe nothrow @nogc
+    private void closeOnce() nothrow
     {
-        import core.atomic : atomicOp;
+        import core.atomic : atomicStore, cas;
+
+        if (!cas(&closeStarted, false, true))
+            return;
+        scope (exit)
+            atomicStore(closeDone, true);
+        try
+            closing.close();
+        catch (Exception)
+        {
+            // The close reports its own failures; the process still ends.
+        }
+    }
+
+    private void receive(ShutdownSignal) @safe nothrow
+    {
+        import core.atomic : atomicLoad, atomicOp;
+
+        scope (exit)
+            if (atomicLoad(closingSet))
+                closeOnce();
 
         atomicOp!"+="(received, 1U);
     }
@@ -719,9 +775,22 @@ class FlintApplication
             hook.uninstall();
         try
         {
-            auto context = run!App(args.length ? args[1 .. $] : null);
+            import flint.engine.aot.name : typeNameOf;
+
+            auto application = new FlintApplication(ClassRef(typeNameOf!App));
+            // The main thread serves requests once the application runs, instead of waiting idle; an application
+            // can turn it off with server.flint.main-thread=false.
+            application.setDefaultProperties(["server.flint.main-thread": "true"]);
+            auto context = application.run(args.length ? args[1 .. $] : null);
             if (auto keepAlive = cast(KeepAliveApplicationContext) context)
+            {
+                if (auto host = cast(MainThreadHost) context)
+                {
+                    hook.closeOnSignal(context);
+                    host.hostOnMainThread();
+                }
                 hook.await(keepAlive);
+            }
             if (context !is null && context.isActive())
                 context.close();
             return 0;

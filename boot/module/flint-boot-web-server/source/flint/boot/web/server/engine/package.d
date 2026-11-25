@@ -9,15 +9,15 @@
 /// Flint's embedded servlet web server: `FlintWebServer` and `FlintServletWebServerFactory`.
 module flint.boot.web.server.engine;
 
-import flint.boot.web.server : GracefulShutdownCallback, GracefulShutdownResult, PortInUseException,
-    Shutdown, WebServer, WebServerException;
+import flint.boot.web.server : GracefulShutdownCallback, GracefulShutdownResult, HostedWebServer,
+    PortInUseException, Shutdown, WebServer, WebServerException;
 import flint.boot.web.server.servlet : ConfigurableServletWebServerFactory, ServletContextInitializer;
 import flint.engine.servlet : ServletEngine, ServletEngineException, ServletEngineOptions;
 
 @safe:
 
 /// A `WebServer` over a `ServletEngine`.
-final class FlintWebServer : WebServer
+final class FlintWebServer : WebServer, HostedWebServer
 {
     // Boot's spring.lifecycle.timeout-per-shutdown-phase default.
     private enum long gracePeriodNanos = 30_000_000_000L;
@@ -68,6 +68,14 @@ final class FlintWebServer : WebServer
         return engine.getPort();
     }
 
+    /// Serve requests on the calling thread until the server stops, when its factory hosts on the main thread
+    /// (`server.flint.main-thread`); otherwise return at once.
+    void host()
+    {
+        if (started)
+            engine.host();
+    }
+
     /// Stop serving and release the engine.
     void destroy()
     {
@@ -108,6 +116,7 @@ class FlintServletWebServerFactory : ConfigurableServletWebServerFactory
     private int threads;
     private int maxHandlers = 200;
     private int maxKeepAliveRequests = 100;
+    private bool mainThread;
     private FastOffer fastOffer;
     private ErrorPageShortcut errorPageShortcut;
 
@@ -142,6 +151,7 @@ class FlintServletWebServerFactory : ConfigurableServletWebServerFactory
         options.globalErrorPage = errorPath;
         options.shutdown = shutdown == Shutdown.GRACEFUL ? ShutdownMode.graceful : ShutdownMode.immediate;
         options.cores = threads;
+        options.hostOnCaller = mainThread;
         options.maxHandlers = cast(uint) maxHandlers; // setMaxHandlers keeps it non-negative
         // Tomcat's 0 disables keep-alive, as 1 does; the engine's 0 or less is unlimited, Tomcat's -1.
         options.maxKeepAliveRequests = maxKeepAliveRequests == 0 ? 1 : maxKeepAliveRequests;
@@ -159,6 +169,19 @@ class FlintServletWebServerFactory : ConfigurableServletWebServerFactory
     int getPort() const pure nothrow @nogc
     {
         return port;
+    }
+
+    /// Flint addition: whether the server's request loops run on the thread that hosts it
+    /// (`HostedWebServer.host`, the main thread under `FlintApplication.runMain`) instead of a thread of its own.
+    bool isMainThread() const pure nothrow @nogc
+    {
+        return mainThread;
+    }
+
+    /// Set `mainThread`.
+    void setMainThread(bool mainThread) pure nothrow @nogc
+    {
+        this.mainThread = mainThread;
     }
 
     /// Set the port; 0 picks a free port.

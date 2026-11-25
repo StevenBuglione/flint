@@ -13,8 +13,8 @@
 module flint.boot.web.server.servlet.context;
 
 import flint.boot : ApplicationContextFactory, DefaultApplicationContextFactory,
-    KeepAliveApplicationContext, WebApplicationType;
-import flint.boot.web.server : GracefulShutdownCallback, GracefulShutdownResult, WebServer;
+    KeepAliveApplicationContext, MainThreadHost, WebApplicationType;
+import flint.boot.web.server : GracefulShutdownCallback, GracefulShutdownResult, HostedWebServer, WebServer;
 import flint.boot.web.server.servlet : ServletContextInitializer, ServletWebServerFactory;
 import flint.context : ApplicationContextException, ConfigurableApplicationContext;
 import flint.context.support : GenericApplicationContext;
@@ -24,7 +24,7 @@ import flint.context.support : GenericApplicationContext;
 /// An application context that creates, starts and stops an embedded servlet web server: the single
 /// `ServletWebServerFactory` bean builds it, and every `ServletContextInitializer` bean (a `ServletRegistrationBean`,
 /// for instance) configures its `ServletContext`.
-class ServletWebServerApplicationContext : GenericApplicationContext, KeepAliveApplicationContext
+class ServletWebServerApplicationContext : GenericApplicationContext, KeepAliveApplicationContext, MainThreadHost
 {
     /// The name of the `DispatcherServlet` bean and registration.
     enum string DISPATCHER_SERVLET_NAME = "dispatcherServlet";
@@ -89,6 +89,14 @@ class ServletWebServerApplicationContext : GenericApplicationContext, KeepAliveA
     WebServer getWebServer() pure nothrow @nogc
     {
         return webServer;
+    }
+
+    /// Flint addition (`MainThreadHost`): serve requests on the calling thread until the web server stops, when the
+    /// server hosts on the main thread (`server.flint.main-thread`); otherwise return at once.
+    void hostOnMainThread()
+    {
+        if (auto hosted = cast(HostedWebServer) webServer)
+            hosted.host();
     }
 
     /// Whether the context has been closed, or failed to start.

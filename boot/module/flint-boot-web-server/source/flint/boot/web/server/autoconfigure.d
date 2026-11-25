@@ -33,6 +33,22 @@ final class ServerProperties
     {
         private int threads = 0;
         private int maxHandlers = 200;
+        private bool mainThread;
+
+        /// Whether the main thread serves requests once the application has started, as one of the reactor
+        /// threads, instead of waiting idle for the context to close: one thread fewer for every stop-the-world
+        /// collection to signal (docs/spring/phase1/gc.md, section 3c). `FlintApplication.runMain` sets it by
+        /// default; an application that calls `run` itself leaves it off.
+        bool isMainThread() const pure nothrow @nogc
+        {
+            return mainThread;
+        }
+
+        /// Set `mainThread`.
+        void setMainThread(bool mainThread) pure nothrow @nogc
+        {
+            this.mainThread = mainThread;
+        }
 
         /// Number of reactor threads serving requests. 0 uses every CPU the process may run on, up to 16, as Tomcat's
         /// request thread pool spans the CPUs.
@@ -292,6 +308,7 @@ class ServletWebServerFactoryCustomizer : WebServerFactoryCustomizer
         if (auto flintFactory = cast(FlintServletWebServerFactory) factory)
         {
             flintFactory.setThreads(serverProperties.getFlint().getThreads());
+            flintFactory.setMainThread(serverProperties.getFlint().isMainThread());
             flintFactory.setMaxHandlers(serverProperties.getFlint().getMaxHandlers());
             if (tomcatProperties !is null)
                 flintFactory.setMaxKeepAliveRequests(tomcatProperties.getMaxKeepAliveRequests());
