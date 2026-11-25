@@ -1,7 +1,7 @@
 {
   "schema": "flint.measure-queue/1",
   "created": "2026-11-23",
-  "status": "pending",
+  "status": "blocked",
   "priority": 6,
   "window": "claim",
   "builds": {
@@ -9361,5 +9361,6 @@
         }
       }
     }
-  ]
+  ],
+  "blocked_by": "2026-11-25 14:24Z at B5: load_bench refused the run, 'load generator used >=85% of its CPUs; comparison may be client-limited'. Flint's capacity phase reached 55,769 req/s with a new TCP connection per request (Tomcat closes after each 400, ADR-033), which saturates oha's 4 load CPUs (B4: Flint 42,060, Go 52,750, both under the limit). The gated metric (p99 at 5,000/s) is unaffected. Changing the workload or the check is the owner's (coordinator asked)."
 }
