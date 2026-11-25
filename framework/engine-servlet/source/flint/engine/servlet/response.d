@@ -39,6 +39,8 @@ final class ServletEngineResponse : HttpServletResponse
     // Header fields in the order they were added: inside this object while they fit, then on the GC heap.
     private string[] headerNames;
     private string[] headerValues;
+    // Past the inline slots, the names and values share one GC block, names in its first half (R-90).
+    private string[] headerBlock;
     private string[8] inlineNames;
     private string[8] inlineValues;
     private string contentType;
@@ -418,8 +420,21 @@ final class ServletEngineResponse : HttpServletResponse
             headerValues = inlineValues[0 .. count + 1];
             return;
         }
-        headerNames ~= name;
-        headerValues ~= value;
+        // One block for both halves instead of two `~=` arrays: one allocation, sized to fill its size class.
+        const capacity = headerBlock.length / 2;
+        if (headerNames.ptr !is headerBlock.ptr || count == capacity)
+        {
+            const grown = count < 16 ? 16 : count * 2;
+            auto block = new string[grown * 2];
+            block[0 .. count] = headerNames[];
+            block[grown .. grown + count] = headerValues[];
+            headerBlock = block;
+        }
+        const half = headerBlock.length / 2;
+        headerBlock[count] = name;
+        headerBlock[half + count] = value;
+        headerNames = headerBlock[0 .. count + 1];
+        headerValues = headerBlock[half .. half + count + 1];
     }
 
     /// `HttpServletResponse.addHeader`.

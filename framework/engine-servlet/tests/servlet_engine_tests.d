@@ -138,6 +138,12 @@ private final class Probe : HttpServlet
             response.addHeader("X-" ~ decimal(index), decimal(index));
         response.setHeader("X-2", "two"); // inside the response's slots, now on the heap
         response.setHeader("X-9", "nine");
+        // Past the heap block's first growth, then a replacement that drops a repeat, then more fields.
+        foreach (index; 10 .. 18)
+            response.addHeader("X-" ~ decimal(index), decimal(index));
+        response.addHeader("X-3", "again");
+        response.setHeader("X-3", "three"); // keeps the first X-3's place, drops the repeat
+        response.addHeader("X-18", "18");
         response.setContentType("text/plain");
         response.getWriter().print(attributes ~ "|" ~ parameters);
     }
@@ -561,8 +567,9 @@ unittest
     assert(reply.content == "a0=0 a1=1 a2=2 a3=30 a4=4 a6=6 a7=7 a8=8 a9=9 a10=10 a11=11 "
             ~ "|p1=1,1b,p2=2,p3=3,p4=4,p5=5,p6=A,", reply.content);
     const contentLength = decimal(reply.content.length);
-    assert(reply.headWithoutDate() == "HTTP/1.1 200 \r\nX-0: 0\r\nX-1: 1\r\nX-2: two\r\nX-3: 3\r\n"
-            ~ "X-4: 4\r\nX-5: 5\r\nX-6: 6\r\nX-7: 7\r\nX-8: 8\r\nX-9: nine\r\n"
+    assert(reply.headWithoutDate() == "HTTP/1.1 200 \r\nX-0: 0\r\nX-1: 1\r\nX-2: two\r\nX-3: three\r\n"
+            ~ "X-4: 4\r\nX-5: 5\r\nX-6: 6\r\nX-7: 7\r\nX-8: 8\r\nX-9: nine\r\nX-10: 10\r\nX-11: 11\r\n"
+            ~ "X-12: 12\r\nX-13: 13\r\nX-14: 14\r\nX-15: 15\r\nX-16: 16\r\nX-17: 17\r\nX-18: 18\r\n"
             ~ "Content-Type: text/plain;charset=ISO-8859-1\r\nContent-Length: " ~ contentLength ~ "\r\n\r\n",
             reply.head);
 

@@ -1219,11 +1219,18 @@ class ExceptionHandlerExceptionResolver : AbstractHandlerExceptionResolver
         auto exceptionHandlerMethod = group.invocable(spec, bean, adapter);
         auto webRequest = new ServletWebRequest(request, response);
         auto mavContainer = new ModelAndViewContainer;
-        Any[] provided = [Any.of(cast(Object) exception)];
+        // The exception, its causes, then the handler method, as Spring provides them; counted first, so the array
+        // is one allocation instead of one per `~=`.
+        size_t providedCount = 1 + (handlerMethod !is null);
         for (Throwable cause = causeOf(exception); cause !is null; cause = causeOf(cause))
-            provided ~= Any.of(cast(Object) cause);
+            ++providedCount;
+        auto provided = new Any[providedCount];
+        size_t at;
+        provided[at++] = Any.of(cast(Object) exception);
+        for (Throwable cause = causeOf(exception); cause !is null; cause = causeOf(cause))
+            provided[at++] = Any.of(cast(Object) cause);
         if (handlerMethod !is null)
-            provided ~= Any.of(cast(Object) handlerMethod);
+            provided[at++] = Any.of(cast(Object) handlerMethod);
         try
             exceptionHandlerMethod.invokeAndHandle(webRequest, mavContainer, provided);
         catch (Exception invocationEx)
