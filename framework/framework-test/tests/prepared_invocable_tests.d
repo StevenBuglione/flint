@@ -82,3 +82,41 @@ unittest
     adapter.setDescriptors(null);
     assert(handle(adapter, method) == "hello 4");
 }
+
+@("Flint: handleOrFail is handle, for the stock adapter on a normal request and for a subclass always")
+unittest
+{
+    static final class Subclassed : RequestMappingHandlerAdapter
+    {
+        int handled;
+
+        this()
+        {
+            HttpMessageConverter[] converters = [new StringHttpMessageConverter];
+            super(converters);
+        }
+
+        override imported!"flint.web.servlet".ModelAndView handle(
+                imported!"flint.jakarta.servlet.http".HttpServletRequest request,
+                imported!"flint.jakarta.servlet.http".HttpServletResponse response, Object handler)
+        {
+            ++handled;
+            return super.handle(request, response, handler);
+        }
+    }
+
+    auto method = greetMethod(new Greeter);
+    foreach (adapter; [newAdapter(), new Subclassed])
+    {
+        auto response = new MockHttpServletResponse;
+        Exception failure = new Exception("not cleared");
+        assert(adapter.handleOrFail(new MockHttpServletRequest("GET", "/"), response, method, failure) is null);
+        assert(failure is null);
+        assert(response.getContentAsString()[0 .. 6] == "hello ");
+    }
+    // A subclass may override handle, so handleOrFail goes through it.
+    auto subclassed = new Subclassed;
+    Exception failure;
+    subclassed.handleOrFail(new MockHttpServletRequest("GET", "/"), new MockHttpServletResponse, method, failure);
+    assert(subclassed.handled == 1);
+}

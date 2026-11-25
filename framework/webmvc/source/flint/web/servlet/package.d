@@ -413,6 +413,19 @@ package(flint.web) interface ImmediateFailure
     Exception immediateFailure(Object adapter, HttpServletRequest request);
 }
 
+/++
+Flint: an adapter that can return the exception its handling would throw up to `doDispatch`, instead of throwing it.
+`doDispatch` takes `failure` as its catch would take the exception from `HandlerAdapter.handle` (post-handle
+interceptors skipped, the same resolvers and error page), and skips the unwinding. A null `failure` is a normal
+`handle`.
++/
+package(flint.web) interface DeferredFailure
+{
+    /// `handle`, with the exception it would throw returned in `failure` where the adapter can.
+    ModelAndView handleOrFail(HttpServletRequest request, HttpServletResponse response,
+            Object handler, out Exception failure);
+}
+
 /// The strategies `DispatcherServlet` uses, in Spring's order.
 struct DispatcherStrategies
 {
@@ -688,8 +701,12 @@ class DispatcherServlet : HttpServlet, FastDispatch
                 dispatchException = immediate !is null ? immediate.immediateFailure(cast(Object) ha, request) : null;
                 if (dispatchException is null)
                 {
-                    mv = ha.handle(request, response, mappedHandler.getHandler());
-                    mappedHandler.applyPostHandle(request, response, mv);
+                    // Flint: likewise an exception the adapter hands back instead of throwing (DeferredFailure).
+                    auto deferring = cast(DeferredFailure) ha;
+                    mv = deferring !is null ? deferring.handleOrFail(request, response, mappedHandler.getHandler(),
+                            dispatchException) : ha.handle(request, response, mappedHandler.getHandler());
+                    if (dispatchException is null)
+                        mappedHandler.applyPostHandle(request, response, mv);
                 }
             }
             catch (Exception ex)

@@ -44,7 +44,7 @@ import flint.web.method.annotation : AbstractNamedValueMethodArgumentResolver, C
 import flint.web.method.support : HandlerMethodArgumentResolver, HandlerMethodArgumentResolverComposite,
     HandlerMethodReturnValueHandler,
     HandlerMethodReturnValueHandlerComposite, InvocableHandlerMethod, ModelAndViewContainer;
-import flint.web.servlet : HandlerAdapter, HandlerMapping, ModelAndView, View;
+import flint.web.servlet : DeferredFailure, HandlerAdapter, HandlerMapping, ModelAndView, View;
 import flint.web.servlet.resource : ResourceHttpRequestHandler;
 import flint.web.servlet.handler : AbstractHandlerExceptionResolver;
 import flint.web.cors : CorsConfiguration;
@@ -586,7 +586,13 @@ class RequestResponseBodyMethodProcessor : AbstractMessageConverterMethodProcess
         if (arg.isNull() && parameter.getArgumentSpec().required && !parameter.isOptional())
             throw new HttpMessageNotReadableException("Required request body is missing: " ~ parameter.getExecutable(),
                     null, new ServletServerHttpRequest(webRequest.getNativeRequest()));
-        if (!arg.isNull())
+        if (arg.isNull())
+            return arg;
+        // Flint: under a stock adapter, the failure goes to doDispatch without unwinding (deferredFailure).
+        if (mavContainer !is null && mavContainer.defersFailure
+                && typeid(this) is typeid(RequestResponseBodyMethodProcessor))
+            mavContainer.deferredFailure = validationFailure(arg, parameter);
+        else
             validateIfApplicable(arg, parameter);
         return arg;
     }
@@ -596,16 +602,22 @@ class RequestResponseBodyMethodProcessor : AbstractMessageConverterMethodProcess
     /// `MethodArgumentNotValidException`.
     protected void validateIfApplicable(Any arg, MethodParameter parameter)
     {
+        if (auto failure = validationFailure(arg, parameter))
+            throw failure;
+    }
+
+    // validateIfApplicable's exception, or null when the argument is valid or not validated.
+    private Exception validationFailure(Any arg, MethodParameter parameter)
+    {
         import flint.validation : BeanPropertyBindingResult;
         import flint.web.bind : MethodArgumentNotValidException;
 
         if (validator is null || !parameter.getArgumentSpec().validate)
-            return;
+            return null;
         auto result = new BeanPropertyBindingResult(arg,
                 variableNameOf(parameter.getNestedParameterType()), descriptors);
         validator.validate(arg, result);
-        if (result.hasErrors())
-            throw new MethodArgumentNotValidException(parameter, result);
+        return result.hasErrors() ? new MethodArgumentNotValidException(parameter, result) : null;
     }
 
     /// `Conventions.getVariableNameForParameter` for a single value: the simple type name, uncapitalized unless
@@ -816,6 +828,8 @@ class ServletInvocableHandlerMethod : InvocableHandlerMethod
     void invokeAndHandle(ServletWebRequest webRequest, ModelAndViewContainer mavContainer, Any[] providedArgs = null)
     {
         auto returnValue = invokeForRequest(webRequest, mavContainer, providedArgs);
+        if (mavContainer.deferredFailure !is null)
+            return;
         setResponseStatus(webRequest);
         if (returnValue.isNull() && (isVoid() || !getReturnType().getParameterType().length))
         {
@@ -900,7 +914,7 @@ private struct DefaultHandlers
 }
 
 /// `RequestMappingHandlerAdapter`: invokes `HandlerMethod`s.
-class RequestMappingHandlerAdapter : HandlerAdapter
+class RequestMappingHandlerAdapter : HandlerAdapter, DeferredFailure
 {
     private HttpMessageConverter[] messageConverters;
     private ContentNegotiationManager contentNegotiationManager;
@@ -994,6 +1008,24 @@ class RequestMappingHandlerAdapter : HandlerAdapter
 
     ModelAndView handle(HttpServletRequest request, HttpServletResponse response, Object handler)
     {
+        Exception failure;
+        return invoke(request, response, handler, false, failure);
+    }
+
+    /// Flint (`DeferredFailure`): `handle`, except that an exception the stock argument resolution would throw up
+    /// to `doDispatch` comes back in `failure`, with a null model and view, when this adapter, the invocable and the
+    /// resolver composite are all exactly Spring's classes. Otherwise exactly `handle`.
+    ModelAndView handleOrFail(HttpServletRequest request, HttpServletResponse response,
+            Object handler, out Exception failure)
+    {
+        if (typeid(this) !is typeid(RequestMappingHandlerAdapter))
+            return handle(request, response, handler);
+        return invoke(request, response, handler, true, failure);
+    }
+
+    private ModelAndView invoke(HttpServletRequest request, HttpServletResponse response,
+            Object handler, bool defer, out Exception failure)
+    {
         auto handlerMethod = cast(HandlerMethod) handler;
         auto webRequest = new ServletWebRequest(request, response);
         ServletInvocableHandlerMethod invocable;
@@ -1002,8 +1034,11 @@ class RequestMappingHandlerAdapter : HandlerAdapter
         if (invocable is null)
             invocable = createInvocable(handlerMethod);
         auto mavContainer = new ModelAndViewContainer;
+        mavContainer.defersFailure = defer && typeid(invocable) is typeid(ServletInvocableHandlerMethod)
+            && typeid(handlers.argumentResolvers) is typeid(HandlerMethodArgumentResolverComposite);
         invocable.invokeAndHandle(webRequest, mavContainer);
-        return getModelAndView(mavContainer);
+        failure = mavContainer.deferredFailure;
+        return failure is null ? getModelAndView(mavContainer) : null;
     }
 
     private static ModelAndView getModelAndView(ModelAndViewContainer mavContainer)
