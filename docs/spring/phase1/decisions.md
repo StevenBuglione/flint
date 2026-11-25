@@ -886,3 +886,8 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - context: p50 1.095 (111 against 102 µs); CPU per request 1.41 (46.4 against 32.8 µs); capacity 0.797 (42,060 against 52,750 req/s; 0.227 at B3); RSS 0.72; p99.9 1.45.
 
     Evidence: `benchmarks/spring/evidence/error-validation-p99/20261125T100737Z/`.
+- 2026-11-25, proof-harness: **error-404-p99 certified at B4** (`fb4c73d1adc7`, 10:59–11:39Z, interleaved from the start; no foreign activity). Go is the ADR-033 comparator with Tomcat's keep-alive limit (`8d29301a`): a chunked 404 with no reason phrase, 18/18 in the parity wire mode. Flint / Go, median (99% interval), 9 trials:
+    - **p99 1.80 (1.55–1.87), which fails**: 236 against 131 µs (2.98 at B3: 340 against 114 µs, against the Content-Length comparator);
+    - context: p50 1.43 (61 against 43 µs); CPU per request 1.55 (15.3 against 9.9 µs; 1.96 at B3); capacity 0.587; RSS 0.81; p99.9 3.70.
+
+    Evidence: `benchmarks/spring/evidence/error-404-p99/20261125T105931Z/`.
