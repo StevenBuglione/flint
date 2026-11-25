@@ -623,6 +623,18 @@ class ObjectMapper
         _config.factory.releaseGenerator(g);
     }
 
+    /// Flint: run `write` with the mapper's recycled generator over `sink`, then close it. For Flint's own writers
+    /// (the ProblemDetail converter), never user code: the generator goes back to the pool when `write` returns, so
+    /// `write` must not keep it. A failure drops the generator instead of recycling it.
+    package(flint) final void writeWith(OutputSink sink, scope void delegate(JsonGenerator g) @safe write)
+    {
+        auto g = _config.factory.acquireGenerator(
+                writeContext(_config.isEnabled(SerializationFeature.INDENT_OUTPUT)), sink);
+        write(g);
+        g.close();
+        _config.factory.releaseGenerator(g);
+    }
+
     /// Factory method for constructing a `JsonGenerator` that writes UTF-8 JSON to `sink` (Java's
     /// `createGenerator(OutputStream)`, R7), configured as this mapper writes: its features and its INDENT_OUTPUT
     /// choice. The generator is the caller's and is never recycled, so it stays valid for as long as it is kept.

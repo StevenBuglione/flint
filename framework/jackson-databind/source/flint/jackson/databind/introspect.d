@@ -209,6 +209,9 @@ package(flint.jackson) enum ValueRoute : ubyte
 /// The scalar kind of the D type named `type`.
 package(flint.jackson) ScalarKind scalarKindOf(scope const(char)[] type) pure nothrow @nogc
 {
+    // Every scalar's name is at most six characters; a qualified type name is not one of them.
+    if (type.length > 6)
+        return ScalarKind.none;
     switch (type)
     {
     case "string":

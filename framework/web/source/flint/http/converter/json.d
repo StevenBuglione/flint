@@ -18,7 +18,7 @@ import flint.engine.aot.any : Any;
 import flint.http : HttpInputMessage, HttpOutputMessage, MediaType, ProblemDetail;
 import flint.http.converter : AbstractHttpMessageConverter, HttpMessageConversionException,
     HttpMessageNotReadableException, HttpMessageNotWritableException;
-import flint.jackson.core : JacksonException;
+import flint.jackson.core : JacksonException, JsonGenerator;
 import flint.jackson.databind : JsonMapper, ObjectMapper;
 import flint.jackson.databind.exc : InvalidDefinitionException;
 
@@ -129,30 +129,30 @@ class JacksonJsonHttpMessageConverter : AbstractHttpMessageConverter
 
     /// `ProblemDetailJacksonMixin`: `@JsonInclude(NON_EMPTY)`, Jackson 3's name order for the bean properties
     /// (detail, instance, status, title, type), then the `properties` map as `@JsonAnyGetter`. One generator from the
-    /// mapper streams the whole object into the body, as Spring's converter serializes it, so escaping, numbers and
-    /// each property's value are Jackson's.
+    /// mapper (its recycled one: the converter never keeps it) streams the whole object into the body, as Spring's
+    /// converter serializes it, so escaping, numbers and each property's value are Jackson's.
     private void writeProblemDetail(ProblemDetail detail, HttpOutputMessage outputMessage)
     {
-        auto g = mapper.createGenerator(&outputMessage.writeBody);
-        g.writeStartObject();
-        if (detail.getDetail().length != 0)
-            g.writeStringProperty("detail", detail.getDetail());
-        if (auto instance = detail.getInstance())
-            if (instance.toString().length != 0)
-                g.writeStringProperty("instance", instance.toString());
-        g.writeName("status");
-        g.writeNumber(cast(long) detail.getStatus());
-        if (detail.getTitle().length != 0)
-            g.writeStringProperty("title", detail.getTitle());
-        if (auto type = detail.getType())
-            if (type.toString().length != 0)
-                g.writeStringProperty("type", type.toString());
-        foreach (name; detail.getPropertyNames())
-        {
-            g.writeName(name);
-            mapper.writeValue(g, detail.getProperty(name));
-        }
-        g.writeEndObject();
-        g.close();
+        mapper.writeWith(&outputMessage.writeBody, (JsonGenerator g) {
+            g.writeStartObject();
+            if (detail.getDetail().length != 0)
+                g.writeStringProperty("detail", detail.getDetail());
+            if (auto instance = detail.getInstance())
+                if (instance.toString().length != 0)
+                    g.writeStringProperty("instance", instance.toString());
+            g.writeName("status");
+            g.writeNumber(cast(long) detail.getStatus());
+            if (detail.getTitle().length != 0)
+                g.writeStringProperty("title", detail.getTitle());
+            if (auto type = detail.getType())
+                if (type.toString().length != 0)
+                    g.writeStringProperty("type", type.toString());
+            foreach (name; detail.getPropertyNames())
+            {
+                g.writeName(name);
+                mapper.writeValue(g, detail.getProperty(name));
+            }
+            g.writeEndObject();
+        });
     }
 }
