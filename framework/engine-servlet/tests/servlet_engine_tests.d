@@ -34,7 +34,7 @@ private final class Probe : HttpServlet
         const Page[string] pages = [
             "/greeting": &greeting, "/committed": &committed, "/empty": &empty,
             "/fields": &fields, "/throw": &fail, "/lazy": &failLazily, "/headers": &headers,
-            "/visit": &visit, "/large": &large, "/many": &many
+            "/visit": &visit, "/large": &large, "/many": &many, "/twelve": &twelve
         ];
         if (auto page = request.getServletPath() in pages)
             return (*page)(request, response);
@@ -146,6 +146,23 @@ private final class Probe : HttpServlet
         response.addHeader("X-18", "18");
         response.setContentType("text/plain");
         response.getWriter().print(attributes ~ "|" ~ parameters);
+    }
+
+    /// Twelve fields, past the inline slots and inside the block the state keeps: `tag` in each value, `drop` set
+    /// replaces X-3 so the fields move to a fresh array before the twelfth.
+    private void twelve(HttpServletRequest request, HttpServletResponse response)
+    {
+        const tag = request.getParameter("tag");
+        foreach (index; 0 .. 11)
+            response.addHeader("X-" ~ decimal(index), tag ~ decimal(index));
+        if (request.getParameter("drop") !is null)
+        {
+            response.addHeader("X-3", "repeat");
+            response.setHeader("X-3", tag ~ "-three");
+        }
+        response.addHeader("X-11", tag ~ "11");
+        response.setContentType("text/plain");
+        response.getWriter().print(tag);
     }
 
     private void large(HttpServletRequest, HttpServletResponse response)
@@ -576,6 +593,36 @@ unittest
     // The next request on the connection starts from empty slots.
     reply = exchange(socket, pending, "GET /many?q=1 HTTP/1.1\r\nHost: localhost\r\n\r\n");
     assert(reply.content == "a0=0 a1=1 a2=2 a3=30 a4=4 a6=6 a7=7 a8=8 a9=9 a10=10 a11=11 |q=1,", reply.content);
+}
+
+@("a response reusing the header block an earlier exchange grew carries only its own fields")
+unittest
+{
+    Fixture fixture;
+    fixture.open();
+    scope (exit)
+        fixture.close();
+    auto socket = fixture.connect();
+    scope (exit)
+        socket.close();
+    char[] pending;
+
+    // The same worker serves all three, so each reuses the block the first one grew.
+    foreach (round; 0 .. 3)
+    {
+        const tag = ["a", "b", "c"][round], drop = round == 1 ? "&drop=1" : "";
+        const reply = exchange(socket, pending,
+                "GET /twelve?tag=" ~ tag ~ drop ~ " HTTP/1.1\r\nHost: localhost\r\n\r\n");
+        string expected = "HTTP/1.1 200 \r\n";
+        foreach (index; 0 .. 11)
+        {
+            const value = index == 3 && drop.length ? tag ~ "-three" : tag ~ decimal(index);
+            expected ~= "X-" ~ decimal(index) ~ ": " ~ value ~ "\r\n";
+        }
+        expected ~= "X-11: " ~ tag ~ "11\r\nContent-Type: text/plain;charset=ISO-8859-1\r\nContent-Length: 1\r\n\r\n";
+        assert(reply.headWithoutDate() == expected, reply.head);
+        assert(reply.content == tag, reply.content);
+    }
 }
 
 @("a second engine on a bound port fails to start with ServletEngineException")

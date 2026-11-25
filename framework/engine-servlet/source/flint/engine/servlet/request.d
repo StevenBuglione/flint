@@ -74,19 +74,14 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
     private immutable(ubyte)[] content;
     private ulong requestNumber;
     private DispatcherType dispatcherType = DispatcherType.REQUEST;
+    private bool parametersParsed;
+    private bool inputUsed;
     // A request holds a handful of attributes: slots in insertion order (getAttributeNames' order), in the state's
     // inline slots until they outgrow them, then in its retained overflow block or the GC heap.
     private Attribute[] attributeSlots;
     private size_t attributeCount;
-    private string characterEncoding;
-    // Parameters in the order they arrive (Tomcat's LinkedHashMap order), found by a scan while there are few and
-    // through an index once there are many, so a request with thousands of names stays linear. The first few
-    // slots are in the state.
-    private Parameter[] parameterSlots;
-    private size_t parameterCount;
-    private size_t[string] parameterIndex;
-    private bool parametersParsed;
-    private bool inputUsed;
+    // The parameters and the character encoding live in the state (RequestState), so the façade fits the 256-byte
+    // size class.
 
     package(flint.engine.servlet) this(RequestHost host, string method, string requestURI, string queryString,
             string protocol, string contextPath, string[] names, string[] values,
@@ -106,7 +101,6 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
         this.content = content;
         this.requestNumber = requestNumber;
         attributeSlots = state.inlineAttributes[];
-        parameterSlots = state.inlineParameters[];
     }
 
     /// The pooled state and its generation, for the engine's return at the end of the exchange.
@@ -185,8 +179,8 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
     string getCharacterEncoding()
     {
         auto access = enter();
-        if (characterEncoding !is null)
-            return characterEncoding;
+        if (state.characterEncoding !is null)
+            return state.characterEncoding;
         return charsetOf(getContentType());
     }
 
@@ -194,7 +188,7 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
     {
         auto access = enter();
         if (!parametersParsed && !inputUsed)
-            characterEncoding = env;
+            state.characterEncoding = env;
     }
 
     int getContentLength()
@@ -238,15 +232,15 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
         auto access = enter();
         parseParameters();
         const index = parameterAt(name);
-        return index < parameterCount ? parameterSlots[index].first : null;
+        return index < state.parameterCount ? state.parameterSlots[index].first : null;
     }
 
     string[] getParameterNames()
     {
         auto access = enter();
         parseParameters();
-        auto names = new string[parameterCount];
-        foreach (index, ref parameter; parameterSlots[0 .. parameterCount])
+        auto names = new string[state.parameterCount];
+        foreach (index, ref parameter; state.parameterSlots[0 .. state.parameterCount])
             names[index] = parameter.name;
         return names;
     }
@@ -256,7 +250,7 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
         auto access = enter();
         parseParameters();
         const index = parameterAt(name);
-        return index < parameterCount ? parameterSlots[index].values() : null;
+        return index < state.parameterCount ? state.parameterSlots[index].values() : null;
     }
 
     string[][string] getParameterMap()
@@ -264,7 +258,7 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
         auto access = enter();
         parseParameters();
         string[][string] copy;
-        foreach (ref parameter; parameterSlots[0 .. parameterCount])
+        foreach (ref parameter; state.parameterSlots[0 .. state.parameterCount])
             copy[parameter.name] = parameter.values();
         return copy;
     }
@@ -677,7 +671,9 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
         auto access = enter();
         const port = getServerPort();
         const name = getServerName();
-        return port == 80 ? "http://" ~ name ~ requestURI : "http://" ~ name ~ ":" ~ decimal(port) ~ requestURI;
+        if (port == 80)
+            return "http://" ~ name ~ requestURI;
+        return httpURL(name, port, requestURI);
     }
 
     string getServletPath()
@@ -736,35 +732,35 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
     private void addParameter(string name, string value)
     {
         const index = parameterAt(name);
-        if (index < parameterCount)
+        if (index < state.parameterCount)
         {
-            parameterSlots[index].rest ~= value;
+            state.parameterSlots[index].rest ~= value;
             return;
         }
-        if (parameterCount == parameterSlots.length)
-            parameterSlots.length = parameterCount * 2;
-        parameterSlots[parameterCount++] = Parameter(name, value);
-        if (parameterIndex !is null)
-            parameterIndex[name] = parameterCount - 1;
-        else if (parameterCount > indexedParameters)
-            foreach (at, ref parameter; parameterSlots[0 .. parameterCount])
-                parameterIndex[parameter.name] = at;
+        if (state.parameterCount == state.parameterSlots.length)
+            state.parameterSlots.length = state.parameterCount * 2;
+        state.parameterSlots[state.parameterCount++] = Parameter(name, value);
+        if (state.parameterIndex !is null)
+            state.parameterIndex[name] = state.parameterCount - 1;
+        else if (state.parameterCount > indexedParameters)
+            foreach (at, ref parameter; state.parameterSlots[0 .. state.parameterCount])
+                state.parameterIndex[parameter.name] = at;
     }
 
     private enum indexedParameters = 16;
 
     private size_t parameterAt(scope const(char)[] name) const pure nothrow
     {
-        if (parameterIndex !is null)
+        if (state.parameterIndex !is null)
         {
-            if (auto found = name in parameterIndex)
+            if (auto found = name in state.parameterIndex)
                 return *found;
-            return parameterCount;
+            return state.parameterCount;
         }
-        foreach (index, ref parameter; parameterSlots[0 .. parameterCount])
+        foreach (index, ref parameter; state.parameterSlots[0 .. state.parameterCount])
             if (parameter.name == name)
                 return index;
-        return parameterCount;
+        return state.parameterCount;
     }
 }
 
@@ -1050,16 +1046,65 @@ package(flint.engine.servlet) string decimal(long value) pure nothrow
 {
     if (value == 0)
         return "0";
-    char[20] digits;
+    char[20] digits = void;
+    return decimalDigits(value, digits).idup;
+}
+
+/// `http://name:port` and `path`, in one allocation (a strongly pure result converts to `string`). Written by hand:
+/// a concatenation mixing `string` and `char[]` operands allocates once per operator.
+private char[] httpURL(string name, long port, string path) pure nothrow
+{
+    enum scheme = "http://";
+    char[20] digits = void;
+    const number = decimalDigits(port, digits);
+    auto url = new char[scheme.length + name.length + 1 + number.length + path.length];
+    size_t at;
+    void put(scope const(char)[] part) pure nothrow @nogc
+    {
+        url[at .. at + part.length] = part[];
+        at += part.length;
+    }
+
+    put(scheme);
+    put(name);
+    put(":");
+    put(number);
+    put(path);
+    return url;
+}
+
+@("the request URL names a non-default port")
+unittest
+{
+    assert(httpURL("localhost", 8080, "/ctx/a") == "http://localhost:8080/ctx/a");
+    assert(httpURL("h", -1, "") == "http://h:-1");
+}
+
+/// `value` in decimal with its sign, written at the end of `digits` (long.min needs all twenty); the part written.
+private char[] decimalDigits(long value, return ref char[20] digits) pure nothrow @nogc
+{
     size_t first = digits.length;
     const negative = value < 0;
     ulong magnitude = negative ? -cast(ulong) value : cast(ulong) value;
-    while (magnitude != 0)
+    do
     {
         digits[--first] = cast(char)('0' + magnitude % 10);
         magnitude /= 10;
     }
-    return (negative ? "-" : "") ~ digits[first .. $].idup;
+    while (magnitude != 0);
+    if (negative)
+        digits[--first] = '-';
+    return digits[first .. $];
+}
+
+@("decimal formats zero, signs and both extremes in one allocation")
+unittest
+{
+    assert(decimal(0) == "0");
+    assert(decimal(7) == "7");
+    assert(decimal(-42) == "-42");
+    assert(decimal(long.max) == "9223372036854775807");
+    assert(decimal(long.min) == "-9223372036854775808");
 }
 
 @("form decoding treats + as a space, decodes UTF-8 percent bytes and rejects malformed escapes")
@@ -1189,6 +1234,19 @@ package(flint.engine.servlet) final class RequestState : PooledState
     /// The first attribute overflow block (fourteen slots, a 1,024-byte block), kept across exchanges.
     Attribute[] attributeBlock;
     Parameter[4] inlineParameters; ///
+    /// The parameters in the order they arrive (Tomcat's LinkedHashMap order): in `inlineParameters` until they
+    /// outgrow it. They are found by a scan while there are few and through `parameterIndex` once there are many,
+    /// so a request with thousands of names stays linear.
+    Parameter[] parameterSlots;
+    size_t parameterCount; ///
+    size_t[string] parameterIndex; ///
+    /// What `setCharacterEncoding` set, else null.
+    string characterEncoding;
+
+    this() nothrow
+    {
+        parameterSlots = inlineParameters[];
+    }
 
     protected override void clear() nothrow
     {
@@ -1199,8 +1257,12 @@ package(flint.engine.servlet) final class RequestState : PooledState
         else
             attributeBlock[] = Attribute.init;
         inlineParameters[] = Parameter.init;
+        parameterSlots = inlineParameters[];
+        parameterCount = 0;
+        parameterIndex = null;
+        characterEncoding = null;
     }
 }
 
-// The façade is a few hundred bytes; the storage is pooled (coordination/notes/exchange-pool.md).
-static assert(__traits(classInstanceSize, ServletEngineRequest) <= 368);
+// The façade fits the 256-byte size class; the storage is pooled (coordination/notes/exchange-pool.md).
+static assert(__traits(classInstanceSize, ServletEngineRequest) <= 256);

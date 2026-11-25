@@ -458,12 +458,15 @@ final class ServletEngineResponse : HttpServletResponse
             headerValues = state.inlineValues[0 .. count + 1];
             return;
         }
-        // One block for both halves instead of two `~=` arrays: one allocation, sized to fill its size class.
+        // One block for both halves instead of two `~=` arrays: one allocation, sized to fill its size class. The
+        // block an earlier exchange grew is kept (ResponseState.clear) and taken again while it has room; only this
+        // exchange's header arrays ever point into it, and they do not yet, so nothing else sees it overwritten.
         const capacity = state.headerBlock.length / 2;
         if (headerNames.ptr !is state.headerBlock.ptr || count == capacity)
         {
-            const grown = count < 16 ? 16 : count * 2;
-            auto block = new string[grown * 2];
+            const reuse = count < capacity;
+            const grown = reuse ? capacity : count < 16 ? 16 : count * 2;
+            auto block = reuse ? state.headerBlock : new string[grown * 2];
             block[0 .. count] = headerNames[];
             block[grown .. grown + count] = headerValues[];
             state.headerBlock = block;
