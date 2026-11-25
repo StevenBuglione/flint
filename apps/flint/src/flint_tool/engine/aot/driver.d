@@ -119,6 +119,8 @@ private struct SourceModule
     bool user;
     /// The interface mentions `FlintBootApplication`, which turns AOT on.
     bool marker;
+    /// A platform module's source digest (cachedSha256File), which revalidates a remembered interface.
+    string digest;
 }
 
 private struct State
@@ -137,6 +139,8 @@ private struct State
     string annotations;
     /// Platform modules found on the import paths, with their interfaces (findModule).
     SourceModule[string] platform;
+    /// A remembered platform module was read again this run (its source changed): the shared entry is rewritten.
+    bool platformRefreshed;
     /// Something worth saving was learnt this run although nothing was extracted (a platform module found).
     bool dirty;
     /// This run's parsed models (by module, with the model's hash) and annotation types (with the file's hash):
@@ -251,7 +255,7 @@ AotOutcome runAot(const ref AotRequest request)
     if (stale.length && !extractImports(request, cache, sources, stale, keys, state, outcome))
         return finish(outcome, started);
     outcome.ok = produceOutput(request, sources, autoConfigurations, services, keys, stale.length > 0, state, outcome);
-    if (state.platform.length > knownPlatform)
+    if (state.platform.length > knownPlatform || state.platformRefreshed)
         storePlatformInterfaces(request, state);
     if (!outcome.ok)
         saveState(cache, state);
@@ -482,18 +486,31 @@ private SourceModule[] autoConfigurationModules(scope const string[] classes,
     return result;
 }
 
-/// A platform module's source and interface. The state remembers them: it is reset whenever the environment key
-/// changes, which covers every package's contents, so within one state a platform module neither moves nor
-/// changes, and an edit build neither searches the import paths nor lexes the platform sources again.
+/++
+A platform module's source and interface. The state (and the shared interface cache) remembers them, so an edit
+build neither searches the import paths nor lexes the platform sources again; a remembered module is reused only
+while its source's digest is unchanged (cachedSha256File: a stat check). The environment key does not cover
+everything: a workspace package (this checkout's own framework and Boot packages) has no content hash, so an edit
+there kept the old interface, its extraction key and its stale model (a changed `@Bean` signature generated a call
+to the old one).
++/
 private bool findModule(string moduleName, scope const string[] importPaths, ref State state, out SourceModule module_)
 {
+    import std.file : exists;
+    import flint_tool.support.files : cachedSha256File;
+
     if (const known = moduleName in state.platform)
     {
-        module_ = SourceModule(known.name, known.path, known.packageModule, known.hash, known.imports.dup, false);
-        return true;
+        if (known.digest.length && exists(known.path) && cachedSha256File(known.path) == known.digest)
+        {
+            module_ = SourceModule(known.name, known.path, known.packageModule, known.hash,
+                    known.imports.dup, false, false, known.digest);
+            return true;
+        }
     }
     if (!searchModule(moduleName, importPaths, module_))
         return false;
+    state.platformRefreshed = state.platformRefreshed || (moduleName in state.platform) !is null;
     state.platform[moduleName] = module_;
     state.dirty = true;
     return true;
@@ -505,6 +522,7 @@ private bool searchModule(string moduleName, scope const string[] importPaths, o
     import std.file : exists, readText;
     import std.path : buildPath;
     import flint_tool.engine.aot.iface : ModuleInterface, readInterface;
+    import flint_tool.support.files : cachedSha256File;
 
     foreach (flag; importPaths)
     {
@@ -518,7 +536,7 @@ private bool searchModule(string moduleName, scope const string[] importPaths, o
             if (!readInterface(readText(candidate), found))
                 return false;
             module_ = SourceModule(moduleName, candidate, candidate[$ - 9 .. $] == "package.d",
-                    found.hash, found.imports, false);
+                    found.hash, found.imports, false, false, cachedSha256File(candidate));
             return true;
         }
     }
@@ -1020,8 +1038,10 @@ private void readPlatform(const ref imported!"std.json".JSONValue root, ref Stat
         string[] imports;
         foreach (ref entry; item["imports"].arrayNoRef)
             imports ~= entry.str;
+        const digest = "digest" in item.objectNoRef;
         state.platform[name] = SourceModule(name, item["path"].str,
-                item["package"].type == JSONType.true_, item["hash"].str, imports, false);
+                item["package"].type == JSONType.true_, item["hash"].str, imports, false, false,
+                digest !is null ? digest.str : null);
     }
 }
 
@@ -1098,7 +1118,8 @@ private imported!"std.json".JSONValue platformJson(const ref State state)
         "path": JSONValue(item.path),
         "package": JSONValue(item.packageModule),
         "hash": JSONValue(item.hash),
-        "imports": JSONValue(item.imports)
+        "imports": JSONValue(item.imports),
+        "digest": JSONValue(item.digest)
     ]);
     return JSONValue(modules);
 }

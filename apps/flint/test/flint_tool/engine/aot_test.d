@@ -1345,6 +1345,59 @@ unittest
     expect(readText(entries[0]).canFind(`"flintsample.autoconfig"`)).toBeTrue();
 }
 
+@("an edited platform module is read again: its new interface reaches the model and the output, cached or not")
+unittest
+{
+    import std.algorithm.searching : canFind;
+    import std.array : replace;
+    import std.conv : to;
+    import std.file : exists, readText, rmdirRecurse, tempDir, write;
+    import std.path : buildPath;
+    import std.process : thisProcessID;
+    import flint_tool.engine.aot.driver : AotRequest, runAot;
+
+    // A workspace package has no content hash, so the environment key stays the same across the edit.
+    const shared_ = buildPath(tempDir, "flint-aot-platform-edit-" ~ thisProcessID.to!string);
+    if (exists(shared_))
+        rmdirRecurse(shared_);
+    scope (exit)
+        if (exists(shared_))
+            rmdirRecurse(shared_);
+    const platform = copyFixture("autoconfig");
+    const project = copyFixture("sample");
+    scope (exit)
+        remove(project);
+    string generate(string root)
+    {
+        AotRequest request;
+        request.root = root;
+        request.compiler = compiler();
+        request.importPaths = [
+            "-I" ~ buildPath(repositoryRoot(), "tests", "aot", "annotations"),
+            "-I" ~ buildPath(platform, "source")
+        ];
+        request.flags = ["-preview=dip1000"];
+        request.packageDirectories = [platform];
+        request.environmentKey = "test";
+        request.sharedCache = shared_;
+        auto outcome = runAot(request);
+        expect(outcome.extractionErrors).toEqual("");
+        expect(outcome.ok).toBeTrue();
+        return readText(buildPath(root, ".flint", "generated", "aot", "flint_aot", "flintsample", "autoconfig.d"));
+    }
+
+    expect(generate(project).canFind(".widget()")).toBeTrue();
+    const source = buildPath(platform, "source", "flintsample", "autoconfig.d");
+    write(source, readText(source).replace("    Widget widget()", "    Widget primaryWidget()"));
+    // The same project, its state remembering the old interface.
+    const edited = generate(project);
+    expect(edited.canFind(".primaryWidget()")).toBeTrue();
+    expect(edited.canFind(".widget()")).toBeFalse();
+    // A fresh project, seeded from the shared interface entry.
+    const fresh = copyFixture("sample");
+    expect(generate(fresh)).toEqual(edited);
+}
+
 @("a cached cold build (a clean .flint, the shared cache kept) extracts nothing and restores the output")
 unittest
 {
