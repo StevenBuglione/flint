@@ -1,0 +1,27 @@
+Measuring gs-relational-data-access
+gs-relational-data-access flint_cached_cold_seconds phase medians (ms): total 101 (budget 100), flint 14 (budget 20), aot 18, plan 0, compile 52 (budget 60), link 17 (budget 20)
+gs-relational-data-access flint_cached_incremental_seconds phase medians (ms): total 82 (budget 100), flint 14 (budget 20), aot 0, plan 0, compile 51 (budget 60), link 16 (budget 20)
+gs-relational-data-access flint_cached_cold_digests_cleared_seconds phase medians (ms): total 192 (budget 100), flint 105 (budget 20), aot 20, plan 0, compile 52 (budget 60), link 18 (budget 20)
+gs-relational-data-access flint_scratch_seconds phase medians (ms): total 844 (budget 100), flint 55 (budget 20), aot 163, plan 174, compile 320 (budget 60), link 129 (budget 20)
+gs-relational-data-access flint_static_cold_seconds phase medians (ms): total 197 (budget 100), flint 17 (budget 20), aot 19, plan 21, compile 50 (budget 60), link 89 (budget 20)
+gs-relational-data-access flint_static_incremental_seconds phase medians (ms): total 120 (budget 100), flint 16 (budget 20), aot 0, plan 0, compile 51 (budget 60), link 53 (budget 20)
+gs-relational-data-access flint_debug_cached_cold_seconds phase medians (ms): total 102 (budget 100), flint 14 (budget 20), aot 18, plan 0, compile 52 (budget 60), link 18 (budget 20)
+gs-relational-data-access flint_debug_cached_incremental_seconds phase medians (ms): total 86 (budget 100), flint 15 (budget 20), aot 0, plan 0, compile 52 (budget 60), link 20 (budget 20)
+gs-relational-data-access flint_debug_static_cold_seconds phase medians (ms): total 202 (budget 100), flint 16 (budget 20), aot 17, plan 22, compile 52 (budget 60), link 93 (budget 20)
+gs-relational-data-access flint_debug_static_incremental_seconds phase medians (ms): total 125 (budget 100), flint 16 (budget 20), aot 0, plan 0, compile 52 (budget 60), link 57 (budget 20)
+gs-relational-data-access flint_debug_scratch_seconds phase medians (ms): total 865 (budget 100), flint 54 (budget 20), aot 165, plan 179, compile 326 (budget 60), link 133 (budget 20)
+gs-relational-data-access: Go std-primed cold 5.287s, -a 6.987s, binary 6695800 bytes
+  primary: platform cache vs std-primed GOCACHE: 0.020 pass
+    deps-primed: 0.682 (0.643-0.813); Go's std-primed cold build compiles its 12 third-party package(s) from source, while Flint links its native libraries and platform archives prebuilt; the deps-primed ratio is the like-for-like comparison.
+  secondary: from scratch vs go build -a: 0.120 pass
+    No deps-primed equivalent exists: go build -a recompiles every package, the third-party ones included, while Flint's --no-platform-cache rebuilds the D modules but links the native C libraries prebuilt.
+  incremental: dev profile as built: 0.526 pass
+  incremental: fully static: 0.773 pass
+  stricter: platform cache vs deps-primed GOCACHE: 0.682 pass
+  context: primary with the digest log cleared: 0.037 pass
+  context: primary with debug information: 0.020 pass
+  context: secondary with debug information: 0.123 pass
+  context: edit build, dev profile, with debug information: 0.562 pass
+  context: edit build, fully static, with debug information: 0.802 pass
+  Oz binary size: 0.668 pass
+Wrote Spring build evidence /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-builds-gs-relational/20261125T060905Z/builds.json (passed)

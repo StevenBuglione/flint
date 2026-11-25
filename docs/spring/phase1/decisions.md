@@ -842,3 +842,4 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - secondary 0.277 (strict scratch, 906 against 3,272 ms); edit 0.368; static edit 0.600; Oz 0.624.
 
     Evidence: `benchmarks/spring/evidence/phase1-builds-gs-rest/20261125T055404Z/`.
+- 2026-11-25, proof-harness: **phase1-builds-gs-relational certified at B4** (`fb4c73d1adc7`, 06:09–06:13Z, no foreign activity). 1/1 everywhere (Go in the parity wire mode), served binaries included. Served: 1,023 client-served, 18 c-source, 0 refused. **Every gated build metric passes**, median (99% interval), 9 trials: primary 0.020; deps-primed context 0.682 (0.643–0.813); secondary 0.120 (strict scratch); edit 0.526; static edit 0.773 (0.751–0.810), 126 against 163 ms; Oz 0.668. Evidence: `benchmarks/spring/evidence/phase1-builds-gs-relational/20261125T060905Z/`.

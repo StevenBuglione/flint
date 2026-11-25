@@ -1,0 +1,3 @@
+   Generated 8 Flint AOT modules for com.example.relationaldataaccess.RelationalDataAccessApplication (0 extracted in 0 ms, 15 from the shared cache, 9 written, 8 ms)
+    Building gs-relational-data-access 0.0.1 (dev, dmd)
+    Finished .flint/build/dev/gs-relational-data-access (non-canonical: --no-debug builds without debug information or a symbol table)
