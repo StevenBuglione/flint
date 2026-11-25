@@ -15,6 +15,7 @@ module flint.engine.servlet.response;
 
 import flint.arena : Status, TransportError = Error;
 import flint.conc : Context;
+import flint.engine.servlet.exchange : Access, PooledState;
 import flint.engine.servlet.request : charsetOf, decimal, equalsIgnoreCase, splitter, trim;
 import flint.engine.web.fiber : FiberResponse, unknownLength;
 import flint.engine.web.stream : StreamField;
@@ -33,26 +34,24 @@ enum int defaultBufferSize = 8192;
 final class ServletEngineResponse : HttpServletResponse
 {
     private FiberResponse transport;
-    // Flint: the fields are grouped, and the inline body is 480 bytes, so this object stays within druntime's
-    // 1,024-byte size class (at 1,056 bytes it took a 1,360-byte block; R-73): the 4- and 1-byte fields come last.
+    // The exchange's pooled storage (inline header slots, header block, inline body) and its generation at checkout
+    // (flint.engine.servlet.exchange): once the exchange has completed, every method throws (owner decision (a)).
+    private ResponseState state;
+    private ulong stateGeneration;
     private string message;
-    // Header fields in the order they were added: inside this object while they fit, then on the GC heap.
+    // Header fields in the order they were added: in the state's inline slots while they fit, then in its block.
     private string[] headerNames;
     private string[] headerValues;
-    // Past the inline slots, the names and values share one GC block, names in its first half (R-90).
-    private string[] headerBlock;
-    private string[8] inlineNames;
-    private string[8] inlineValues;
     private string contentType;
     private string characterEncoding;
     private string contentLanguage;
-    private Locale locale;
+    // Set only by setLocale, which few responses call: kept off the object, so the façade stays in its size class.
+    private Locale* locale;
     private long contentLength = -1;
     private ulong written;
+    // A small body is buffered in the state's inline body, so it costs no allocation of its own; a larger one moves
+    // to the GC heap as it grows.
     private ubyte[] buffer;
-    // A small body is buffered inside this object, so it costs no allocation of its own; a larger one moves to the
-    // GC heap as it grows.
-    private ubyte[480] inlineBody;
     private int status = SC_OK;
     private int bufferSize = defaultBufferSize;
     private bool characterEncodingSet;
@@ -67,9 +66,24 @@ final class ServletEngineResponse : HttpServletResponse
     private ServletOutputStream stream;
     private PrintWriter writer;
 
-    package(flint.engine.servlet) this(FiberResponse transport)
+    package(flint.engine.servlet) this(FiberResponse transport, ResponseState state, ulong generation)
     {
         this.transport = transport;
+        this.state = state;
+        stateGeneration = generation;
+    }
+
+    /// The pooled state and its generation, for the engine's return at the end of the exchange.
+    package(flint.engine.servlet) ResponseState pooledState(out ulong generation) pure nothrow @nogc
+    {
+        generation = stateGeneration;
+        return state;
+    }
+
+    // Entered by every method user code can reach: throws once the exchange has completed.
+    private Access enter()
+    {
+        return Access(state, stateGeneration, "response");
     }
 
     /// Whether `sendError` was called and the error page has not run yet.
@@ -141,11 +155,13 @@ final class ServletEngineResponse : HttpServletResponse
 
     string getCharacterEncoding()
     {
+        auto access = enter();
         return characterEncoding is null ? "ISO-8859-1" : characterEncoding;
     }
 
     string getContentType()
     {
+        auto access = enter();
         if (contentType is null)
             return null;
         return characterEncodingSet && characterEncoding !is null
@@ -154,6 +170,7 @@ final class ServletEngineResponse : HttpServletResponse
 
     ServletOutputStream getOutputStream()
     {
+        auto access = enter();
         if (usingWriter)
             throw new IllegalStateException("getWriter() has already been called for this response");
         usingStream = true;
@@ -164,6 +181,7 @@ final class ServletEngineResponse : HttpServletResponse
 
     PrintWriter getWriter()
     {
+        auto access = enter();
         if (usingStream)
             throw new IllegalStateException("getOutputStream() has already been called for this response");
         if (!usingWriter && !characterEncodingSet && !appCommitted())
@@ -180,6 +198,7 @@ final class ServletEngineResponse : HttpServletResponse
 
     void setCharacterEncoding(string charset)
     {
+        auto access = enter();
         if (appCommitted() || usingWriter)
             return;
         characterEncoding = charset;
@@ -188,11 +207,13 @@ final class ServletEngineResponse : HttpServletResponse
 
     void setContentLength(int len)
     {
+        auto access = enter();
         setContentLengthLong(len);
     }
 
     void setContentLengthLong(long len)
     {
+        auto access = enter();
         if (appCommitted())
             return;
         contentLength = len < 0 ? -1 : len;
@@ -200,6 +221,7 @@ final class ServletEngineResponse : HttpServletResponse
 
     void setContentType(string type)
     {
+        auto access = enter();
         if (appCommitted())
             return;
         if (type is null)
@@ -235,6 +257,7 @@ final class ServletEngineResponse : HttpServletResponse
 
     void setBufferSize(int size)
     {
+        auto access = enter();
         if (committed || buffer.length != 0)
             throw new IllegalStateException("Cannot change buffer size after data has been written");
         bufferSize = size > 0 ? size : defaultBufferSize;
@@ -242,12 +265,14 @@ final class ServletEngineResponse : HttpServletResponse
 
     int getBufferSize()
     {
+        auto access = enter();
         return bufferSize;
     }
 
     /// `HttpServletResponse.flushBuffer`.
     void flushBuffer()
     {
+        auto access = enter();
         if (suspended)
             return;
         Context context;
@@ -263,6 +288,7 @@ final class ServletEngineResponse : HttpServletResponse
     /// `HttpServletResponse.resetBuffer`.
     void resetBuffer()
     {
+        auto access = enter();
         if (committed)
             throw new IllegalStateException("Cannot reset buffer after response has been committed");
         buffer = null;
@@ -272,12 +298,14 @@ final class ServletEngineResponse : HttpServletResponse
     /// `HttpServletResponse.isCommitted`.
     bool isCommitted()
     {
+        auto access = enter();
         return appCommitted();
     }
 
     /// `HttpServletResponse.reset`.
     void reset()
     {
+        auto access = enter();
         if (committed)
             throw new IllegalStateException("Cannot reset buffer after response has been committed");
         status = SC_OK;
@@ -302,6 +330,7 @@ final class ServletEngineResponse : HttpServletResponse
     /// `HttpServletResponse.addCookie`.
     void addCookie(Cookie cookie)
     {
+        auto access = enter();
         if (appCommitted())
             return;
         string text = cookie.getName() ~ "=" ~ cookie.getValue();
@@ -313,6 +342,7 @@ final class ServletEngineResponse : HttpServletResponse
     /// `HttpServletResponse.containsHeader`.
     bool containsHeader(string name)
     {
+        auto access = enter();
         if (equalsIgnoreCase(name, "content-type"))
             return contentType !is null;
         if (equalsIgnoreCase(name, "content-length"))
@@ -326,18 +356,21 @@ final class ServletEngineResponse : HttpServletResponse
     /// No sessions: URLs are returned unchanged.
     string encodeURL(string url)
     {
+        auto access = enter();
         return url;
     }
 
     /// ditto
     string encodeRedirectURL(string url)
     {
+        auto access = enter();
         return url;
     }
 
     /// `HttpServletResponse.sendError`.
     void sendError(int sc, string msg)
     {
+        auto access = enter();
         if (appCommitted())
             throw new IllegalStateException("Cannot call sendError() after the response has been committed");
         error = true;
@@ -351,12 +384,14 @@ final class ServletEngineResponse : HttpServletResponse
     /// `HttpServletResponse.sendError`.
     void sendError(int sc)
     {
+        auto access = enter();
         sendError(sc, null);
     }
 
     /// `HttpServletResponse.sendRedirect`.
     void sendRedirect(string location)
     {
+        auto access = enter();
         if (appCommitted())
             throw new IllegalStateException("Cannot call sendRedirect() after the response has been committed");
         buffer = null;
@@ -367,17 +402,20 @@ final class ServletEngineResponse : HttpServletResponse
 
     void setDateHeader(string name, long date)
     {
+        auto access = enter();
         setHeader(name, httpDate(date));
     }
 
     /// `HttpServletResponse.addDateHeader`.
     void addDateHeader(string name, long date)
     {
+        auto access = enter();
         addHeader(name, httpDate(date));
     }
 
     void setHeader(string name, string value)
     {
+        auto access = enter();
         if (name is null || name.length == 0 || appCommitted())
             return;
         if (special(name, value))
@@ -412,34 +450,35 @@ final class ServletEngineResponse : HttpServletResponse
     {
         const count = headerNames.length;
         // Slices of the inline arrays have no capacity, so `~=` would move them at once: fill them by hand.
-        if (count < inlineNames.length && (count == 0 || headerNames.ptr is inlineNames.ptr))
+        if (count < state.inlineNames.length && (count == 0 || headerNames.ptr is state.inlineNames.ptr))
         {
-            inlineNames[count] = name;
-            inlineValues[count] = value;
-            headerNames = inlineNames[0 .. count + 1];
-            headerValues = inlineValues[0 .. count + 1];
+            state.inlineNames[count] = name;
+            state.inlineValues[count] = value;
+            headerNames = state.inlineNames[0 .. count + 1];
+            headerValues = state.inlineValues[0 .. count + 1];
             return;
         }
         // One block for both halves instead of two `~=` arrays: one allocation, sized to fill its size class.
-        const capacity = headerBlock.length / 2;
-        if (headerNames.ptr !is headerBlock.ptr || count == capacity)
+        const capacity = state.headerBlock.length / 2;
+        if (headerNames.ptr !is state.headerBlock.ptr || count == capacity)
         {
             const grown = count < 16 ? 16 : count * 2;
             auto block = new string[grown * 2];
             block[0 .. count] = headerNames[];
             block[grown .. grown + count] = headerValues[];
-            headerBlock = block;
+            state.headerBlock = block;
         }
-        const half = headerBlock.length / 2;
-        headerBlock[count] = name;
-        headerBlock[half + count] = value;
-        headerNames = headerBlock[0 .. count + 1];
-        headerValues = headerBlock[half .. half + count + 1];
+        const half = state.headerBlock.length / 2;
+        state.headerBlock[count] = name;
+        state.headerBlock[half + count] = value;
+        headerNames = state.headerBlock[0 .. count + 1];
+        headerValues = state.headerBlock[half .. half + count + 1];
     }
 
     /// `HttpServletResponse.addHeader`.
     void addHeader(string name, string value)
     {
+        auto access = enter();
         if (name is null || name.length == 0 || appCommitted())
             return;
         if (special(name, value))
@@ -451,17 +490,20 @@ final class ServletEngineResponse : HttpServletResponse
 
     void setIntHeader(string name, int value)
     {
+        auto access = enter();
         setHeader(name, decimal(value));
     }
 
     /// `HttpServletResponse.addIntHeader`.
     void addIntHeader(string name, int value)
     {
+        auto access = enter();
         addHeader(name, decimal(value));
     }
 
     void setStatus(int sc)
     {
+        auto access = enter();
         if (appCommitted())
             return;
         status = sc;
@@ -469,11 +511,13 @@ final class ServletEngineResponse : HttpServletResponse
 
     int getStatus()
     {
+        auto access = enter();
         return status;
     }
 
     string getHeader(string name)
     {
+        auto access = enter();
         if (equalsIgnoreCase(name, "content-type"))
             return getContentType();
         if (equalsIgnoreCase(name, "content-length"))
@@ -486,6 +530,7 @@ final class ServletEngineResponse : HttpServletResponse
 
     string[] getHeaders(string name)
     {
+        auto access = enter();
         if (equalsIgnoreCase(name, "content-type") || equalsIgnoreCase(name, "content-length"))
         {
             const value = getHeader(name);
@@ -500,6 +545,7 @@ final class ServletEngineResponse : HttpServletResponse
 
     string[] getHeaderNames()
     {
+        auto access = enter();
         string[] distinct;
         outer: foreach (name; headerNames)
         {
@@ -519,9 +565,11 @@ final class ServletEngineResponse : HttpServletResponse
     /// after `Content-Type`. Tomcat's locale-to-charset mapping is not applied; Spring's views name their charset.
     void setLocale(Locale loc)
     {
+        auto access = enter();
         if (appCommitted())
             return;
-        locale = loc;
+        locale = new Locale;
+        *locale = loc;
         localeSet = true;
         contentLanguage = loc.toLanguageTag();
     }
@@ -529,24 +577,26 @@ final class ServletEngineResponse : HttpServletResponse
     /// `ServletResponse.getLocale`: the last locale set, else the default locale.
     Locale getLocale()
     {
-        return localeSet ? locale : Locale.getDefault();
+        auto access = enter();
+        return localeSet ? *locale : Locale.getDefault();
     }
 
     // Body
 
     package(flint.engine.servlet) void write(scope const(ubyte)[] bytes)
     {
+        auto access = enter(); // the output stream and writer write here (R2)
         if (suspended || finished || bytes.length == 0)
             return;
-        if ((buffer.length == 0 || bufferInline) && buffer.length + bytes.length <= inlineBody.length)
+        if ((buffer.length == 0 || bufferInline) && buffer.length + bytes.length <= state.inlineBody.length)
         {
-            inlineBody[buffer.length .. buffer.length + bytes.length] = bytes;
-            buffer = inlineBody[0 .. buffer.length + bytes.length];
+            state.inlineBody[buffer.length .. buffer.length + bytes.length] = bytes;
+            buffer = state.inlineBody[0 .. buffer.length + bytes.length];
             bufferInline = true;
         }
         else
         {
-            buffer ~= bytes; // a slice of inlineBody has no capacity, so this moves it to the GC heap
+            buffer ~= bytes; // a slice of the inline body has no capacity, so this moves it to the GC heap
             bufferInline = false;
         }
         written += bytes.length;
@@ -722,5 +772,28 @@ unittest
     assert(httpDate(0) == "Thu, 01 Jan 1970 00:00:00 GMT");
 }
 
-// Flint: within druntime's 1,024-byte size class (R-73).
-static assert(__traits(classInstanceSize, ServletEngineResponse) <= 1024);
+/// The pooled storage of one response (flint.engine.servlet.exchange): what used to make each response a kilobyte.
+package(flint.engine.servlet) final class ResponseState : PooledState
+{
+    string[8] inlineNames; ///
+    string[8] inlineValues; ///
+    /// Past the inline slots, the names and values share one GC block, names in its first half (R-90).
+    string[] headerBlock;
+    /// A small body, buffered here.
+    ubyte[480] inlineBody;
+
+    protected override void clear() nothrow
+    {
+        inlineNames[] = null;
+        inlineValues[] = null;
+        // A block grown past its first size goes back to the GC; the usual 16 pairs are kept, cleared.
+        if (headerBlock.length > 32)
+            headerBlock = null;
+        else
+            headerBlock[] = null;
+        // The inline body holds bytes, not references; every read is bounded by the length written in its exchange.
+    }
+}
+
+// The façade is a fraction of a kilobyte; the storage is pooled (coordination/notes/exchange-pool.md).
+static assert(__traits(classInstanceSize, ServletEngineResponse) <= 256);

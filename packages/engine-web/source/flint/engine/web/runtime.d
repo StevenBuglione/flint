@@ -805,6 +805,7 @@ private final class RuntimeDriver() : StreamEndpoint, FiberEndpoint
         }
         move(source.value, connection.cancellation);
         connection.request.cancellation = connection.cancellation.context();
+        connection.request.worker = id.ownerCore;
         if (!newRequest(connection))
         {
             close(connection);

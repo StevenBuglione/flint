@@ -169,7 +169,7 @@ FastOutcome serveFast(ServletEngine engine, FastDispatch dispatch, ref scope Req
         if (servletRequest is null)
         {
             servletRequest = engine.captureRequest(request, context);
-            servletResponse = engine.newResponse(transport);
+            servletResponse = engine.newResponse(transport, context.worker);
             // What the mapped filters wrote before the servlet ran (HeaderWriterFilter writes eagerly), on the
             // fresh response, where their writers' presence checks all pass.
             foreach (ref field; engine.fastFilterFields)

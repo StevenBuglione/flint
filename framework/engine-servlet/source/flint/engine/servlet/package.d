@@ -20,7 +20,8 @@ import flint.conc : Context, Deadline;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.fast : FastDispatch, FastField, FastFilter, FastFilterEffect, FastOutcome;
 import flint.engine.servlet.request : DispatchState, RequestHost, ServletEngineRequest, decimal, methodName;
-import flint.engine.servlet.response : ServletEngineResponse;
+import flint.engine.servlet.exchange : StatePool, freshState, retire;
+import flint.engine.servlet.response : ResponseState, ServletEngineResponse;
 import flint.engine.web.fiber : FiberResponse, FiberRoute;
 import flint.engine.web.runtime : Server;
 import flint.engine.web.types : Request, RequestContext, ServerOptions, ShutdownMode;
@@ -239,6 +240,8 @@ final class ServletEngine : RequestHost
         serverOptions.address = options.address;
         serverOptions.port = options.port;
         serverOptions.cores = reactorThreads(options.cores);
+        // One pool of exchange storage per worker, touched only by that worker (coordination/notes/exchange-pool.md).
+        responsePools = new StatePool!ResponseState[serverOptions.cores];
         serverOptions.http2 = false;
         serverOptions.idleTimeoutNanos = options.keepAliveTimeoutNanos;
         serverOptions.maxKeepAliveRequests = options.maxKeepAliveRequests;
@@ -406,19 +409,22 @@ final class ServletEngine : RequestHost
             case FastOutcome.declined:
                 break;
             case FastOutcome.written:
+                closeExchange(fastResponse, context.worker);
                 return;
             case FastOutcome.materialized:
                 finishExchange(fastRequest, fastResponse, fastFailure);
+                closeExchange(fastResponse, context.worker);
                 return;
             }
         }
         auto servletRequest = capture(request, context);
-        auto servletResponse = new ServletEngineResponse(transport);
+        auto servletResponse = openResponse(transport, context.worker);
         if (!withinContext(servletRequest.getRequestURI()))
         {
             // Tomcat's Mapper finds no context for the URI: the host's ErrorReportValve answers 404.
             hostErrorReport(servletResponse, 404, "Not Found");
             servletResponse.complete();
+            closeExchange(servletResponse, context.worker);
             return;
         }
         Exception failure;
@@ -427,6 +433,42 @@ final class ServletEngine : RequestHost
         catch (Exception e)
             failure = e;
         finishExchange(servletRequest, servletResponse, failure);
+        // Only an exchange that ended normally returns its storage. One that exits by an exception keeps it: the
+        // exception may carry the objects onward, so they stay valid, and the storage is dropped to the GC.
+        closeExchange(servletResponse, context.worker);
+    }
+
+    // Per-worker pools of exchange storage, indexed by `RequestContext.worker` (flint.engine.servlet.exchange).
+    private StatePool!ResponseState[] responsePools;
+
+    // A response for a new exchange on `worker`, with storage from that worker's pool.
+    private ServletEngineResponse openResponse(FiberResponse transport, uint worker)
+    {
+        ulong generation;
+        auto state = worker < responsePools.length ? responsePools[worker].take(generation)
+            : freshState!ResponseState(generation);
+        return new ServletEngineResponse(transport, state, generation);
+    }
+
+    // The end of a completed exchange: everything the exchange wrote has been copied to the transport (engine-web
+    // takes `scope` bytes and copies them), so its storage goes back to the worker's pool and its objects stop
+    // working (owner decision (a)).
+    private void closeExchange(ServletEngineResponse response, uint worker)
+    {
+        if (response is null)
+            return;
+        ulong generation;
+        auto state = response.pooledState(generation);
+        if (worker < responsePools.length)
+            responsePools[worker].release(state, generation);
+        else
+            retire(state, generation);
+    }
+
+    /// For tests: the free response states the worker's pool holds.
+    package(flint.engine.servlet) size_t pooledResponses(uint worker) const pure nothrow @nogc
+    {
+        return worker < responsePools.length ? responsePools[worker].held() : 0;
     }
 
     /// Tomcat's valves after the filter chain: an uncaught exception or `sendError` goes to the error page, then
@@ -449,9 +491,9 @@ final class ServletEngine : RequestHost
     }
 
     /// ditto
-    package(flint.engine.servlet) ServletEngineResponse newResponse(FiberResponse transport)
+    package(flint.engine.servlet) ServletEngineResponse newResponse(FiberResponse transport, uint worker)
     {
-        return new ServletEngineResponse(transport);
+        return openResponse(transport, worker);
     }
 
     /// `server.servlet.context-path`, for the fast path's own context check.

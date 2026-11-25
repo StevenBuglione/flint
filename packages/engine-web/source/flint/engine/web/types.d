@@ -185,6 +185,9 @@ struct RequestContext
     Context cancellation;
     /// Application correlation identity.
     ulong requestId;
+    /// The worker (reactor core) whose loop serves this request and runs its handler: per-worker state, such as a
+    /// pool of exchange storage, is touched only from this worker.
+    uint worker;
 }
 
 package(flint.engine.web) enum maximumFields = 64;
