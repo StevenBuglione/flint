@@ -84,6 +84,15 @@ bool linksGlibcPie(string target)
     return target.length == 0 && hostTarget().endsWith("-glibc");
 }
 
+/// A build for `target` (empty for the host's native build) links a Linux ELF executable, glibc or musl, which takes
+/// a profile's elf_lflags; a Windows build never does.
+bool linksElf(string target)
+{
+    import std.algorithm.searching : startsWith;
+
+    return (target.length ? target : hostTarget()).startsWith("linux-");
+}
+
 /// Targets flint can package for from this host.
 string[] availableTargets()
 {

@@ -115,6 +115,9 @@ struct ProfileSpec
     /// Linker flags added for Linux glibc position-independent executables (the host's native build on
     /// linux-*-glibc), such as RELR packed relocations.
     string[] glibc_lflags;
+    /// Linker flags added for Linux ELF executables, glibc or musl (never Windows), such as the ThinLTO
+    /// code-generation level DUB's LDC link step does not forward.
+    string[] elf_lflags;
     /// The forked DMD's compile server may be used.
     bool compile_server;
     /// The forked DUB's parallel pipeline may be used.
@@ -129,7 +132,7 @@ struct ProfileSpec
 ProfileSpec copyOf(const ProfileSpec spec)
 {
     return ProfileSpec(spec.description, spec.compiler, spec.compilers.dup, spec.build_type,
-            spec.dflags.dup, spec.lflags.dup, spec.glibc_lflags.dup, spec.compile_server,
+            spec.dflags.dup, spec.lflags.dup, spec.glibc_lflags.dup, spec.elf_lflags.dup, spec.compile_server,
             spec.dub_pipeline, spec.native_profile, spec.native_sanitize);
 }
 

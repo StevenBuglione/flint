@@ -20,6 +20,15 @@
 #                   Windows output. -z pack-relative-relocs stores the PIE's
 #                   relative relocations as RELR (glibc 2.36+, GNU ld 2.38+,
 #                   mold, lld), with PIE, relro and now unchanged.
+#   elf_lflags      linker flags added when the output is a Linux ELF
+#                   executable (glibc or musl), never Windows. The release and
+#                   size profiles pass the ThinLTO code-generation level here:
+#                   DUB's LDC link step forwards --flto but not -O (its
+#                   isLinkerDFlag), so without it ldc2 hands the linker plugin
+#                   -plugin-opt=O0 and every Flint function is code-generated
+#                   unoptimised. ldc2 itself passes O3 for -O3 and O2 for -Os and
+#                   -Oz; the plugin (ld.bfd and gold's LLVMgold, lld, mold) keeps
+#                   the last -plugin-opt=O, and user -L flags follow ldc2's own.
 #   compile_server  allow the forked DMD's resident compile server
 #   dub_pipeline    allow the forked DUB's parallel build pipeline
 #   native_profile  tools/native_build.py provider profile the build links
@@ -38,6 +47,7 @@ build_type = "plain"
 dflags = ["-preview=dip1000", "-debug", "-g", "-boundscheck=on"]
 lflags = []
 glibc_lflags = ["-z", "pack-relative-relocs"]
+elf_lflags = []
 compile_server = true
 dub_pipeline = true
 native_profile = "ci"
@@ -51,6 +61,7 @@ build_type = "unittest"
 dflags = []
 lflags = []
 glibc_lflags = ["-z", "pack-relative-relocs"]
+elf_lflags = []
 compile_server = true
 dub_pipeline = true
 native_profile = "ci"
@@ -64,6 +75,7 @@ build_type = "plain"
 dflags = ["-preview=dip1000", "-release", "-boundscheck=safeonly", "-O3", "--flto=thin", "-link-defaultlib-shared=false", "-fno-moduleinfo-localclasses"]
 lflags = []
 glibc_lflags = ["-z", "pack-relative-relocs"]
+elf_lflags = ["-plugin-opt=O3"]
 compile_server = false
 dub_pipeline = true
 native_profile = "ci"
@@ -77,6 +89,7 @@ build_type = "plain"
 dflags = ["-preview=dip1000", "-release", "-boundscheck=safeonly", "-Oz", "--flto=thin", "-link-defaultlib-shared=false", "-fno-moduleinfo-localclasses"]
 lflags = []
 glibc_lflags = ["-z", "pack-relative-relocs"]
+elf_lflags = ["-plugin-opt=O2"]
 compile_server = false
 dub_pipeline = true
 native_profile = "ci"
@@ -91,6 +104,7 @@ dflags = ["-g", "-O1", "-unittest", "-preview=dip1000", "-boundscheck=on", "-fsa
 lflags = []
 # The sanitizer lane keeps the default relocation format: its binaries are never shipped.
 glibc_lflags = []
+elf_lflags = []
 compile_server = false
 dub_pipeline = true
 native_profile = "ci"

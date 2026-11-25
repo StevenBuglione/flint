@@ -75,14 +75,20 @@ class SharedPolicyTests(unittest.TestCase):
         import measure_builds
         # Measurement links as flint builds: RELR packed relocations on a glibc host (ADR-030 section 5).
         relr = ['-L-z', '-Lpack-relative-relocs'] if profiles.glibc_host() else []
+        # ThinLTO's code-generation level on Linux: DUB's LDC link step drops -O, so the profile passes it.
+        linux = sys.platform.startswith('linux')
         self.assertEqual(measure_builds.native_profiles(), {
             'dmd': ['-preview=dip1000', '-debug', '-g', '-boundscheck=on'] + relr,
             'O3': ['-preview=dip1000', '-release', '-boundscheck=safeonly', '-O3', '--flto=thin',
-                   '-link-defaultlib-shared=false', '-fno-moduleinfo-localclasses'] + relr,
+                   '-link-defaultlib-shared=false', '-fno-moduleinfo-localclasses'] + relr
+                  + (['-L-plugin-opt=O3'] if linux else []),
             'Oz': ['-preview=dip1000', '-release', '-boundscheck=safeonly', '-Oz', '--flto=thin',
-                   '-link-defaultlib-shared=false', '-fno-moduleinfo-localclasses'] + relr})
+                   '-link-defaultlib-shared=false', '-fno-moduleinfo-localclasses'] + relr
+                  + (['-L-plugin-opt=O2'] if linux else [])})
         self.assertEqual(measure_builds.native_profiles('/x/ld.lld')['O3'][-1], '-linker=/x/ld.lld')
-        self.assertEqual(profiles.link_dflags('release', glibc=False), [])
+        self.assertEqual(profiles.link_dflags('release', glibc=False, elf=False), [])
+        self.assertEqual(profiles.link_dflags('release', glibc=False, elf=True), ['-L-plugin-opt=O3'])
+        self.assertEqual(profiles.link_dflags('size', glibc=False, elf=True), ['-L-plugin-opt=O2'])
         self.assertEqual(profiles.link_dflags('sanitize', glibc=True), [])
 
     def test_sanitizer_flags_unchanged_by_the_move_to_policy(self):

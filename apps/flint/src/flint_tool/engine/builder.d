@@ -1002,7 +1002,7 @@ struct Flags
 
 private Flags composeFlags(const ref ProfileSpec spec, ProfileOverride additions, const ref BuildRequest request)
 {
-    import flint_tool.engine.target : linksGlibcPie;
+    import flint_tool.engine.target : linksElf, linksGlibcPie;
 
     Flags flags;
     // A "plain" profile's flags are the complete flag set (through DFLAGS). Other build types, such as the
@@ -1029,6 +1029,8 @@ private Flags composeFlags(const ref ProfileSpec spec, ProfileOverride additions
     flags.lflags = spec.lflags.dup;
     if (linksGlibcPie(request.target))
         flags.lflags ~= spec.glibc_lflags;
+    if (linksElf(request.target))
+        flags.lflags ~= spec.elf_lflags;
     flags.lflags ~= additions.lflags ~ request.lflags;
     if (request.noDebug && !request.debugger)
         flags.lflags ~= "-s"; // no symbol table either, as Go's -s

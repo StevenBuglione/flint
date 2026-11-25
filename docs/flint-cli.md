@@ -354,7 +354,7 @@ defines = ["SHOP_FAST=1"]
 
 ### Profiles
 
-`policy/profiles.toml` defines the canonical profiles. `flint`, `tools/ci.py` and `tools/measure_builds.py` all read it.
+`policy/profiles.toml` defines the canonical profiles. `flint`, `tools/ci.py` and `tools/measure_builds.py` all read it. Its `elf_lflags` are added to every Linux ELF link, glibc or musl. The release and size profiles use them to pass ThinLTO's code-generation level (`-plugin-opt=O3`, and `O2` for `-Oz`, as `ldc2` itself would). DUB's LDC link step forwards `--flto` but not `-O`, so without them the linker plugin code-generates every Flint function at O0.
 
 | Profile | Compiler | Flags |
 | --- | --- | --- |
