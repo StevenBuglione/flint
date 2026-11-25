@@ -795,3 +795,8 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - context: p50 2.34 (93 against 40 µs); CPU per request 1.96 (17.8 against 9.1 µs; 3.87 at B2); capacity 0.579 (142,900 against 246,700 req/s); RSS 0.84; p99.9 3.56.
 
     Evidence: `benchmarks/spring/evidence/error-404-p99/20261124T220806Z/`.
+- 2026-11-25, proof-harness: **error-validation-p99 certified at B3** (`d6d15b0073dd`, 23:21Z–00:00Z on 11-24/25, interleaved with Go, no foreign activity; a stray callgrind and a session's scratchpad PostgreSQL cluster frozen and continued). Against the pre-ADR-033 comparator, which kept every connection where Flint, like Tomcat, closes after the 400; so it is history once parity lands. Flint / Go, median (99% interval), 9 trials:
+    - **p99 3.23 (3.10–3.31), which fails**: 383 against 119 µs (3.995 at B2: 491 µs);
+    - context: p50 2.66 (109 against 41 µs); CPU per request 2.98 (47.2 against 15.8 µs); capacity 0.227 (35,800 against 157,900 req/s, Flint reconnecting after every 400); RSS 0.69; p99.9 2.21.
+
+    Evidence: `benchmarks/spring/evidence/error-validation-p99/20261124T232105Z/`.

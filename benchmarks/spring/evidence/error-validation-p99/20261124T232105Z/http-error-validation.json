@@ -1,0 +1,4646 @@
+{
+  "schema": 2,
+  "mode": "production",
+  "status": "passed",
+  "workload_sha256": "960fbb63f8a0681cedb7de47dbebd2f92c9103f64545244061268cbbc1e5c55e",
+  "manifest": "policy/spring-error-paths-benchmark.json",
+  "effective_workload": {
+    "runs": 9,
+    "duration_seconds": 60,
+    "capacity_seconds": 60,
+    "warmup_seconds": 10,
+    "connections": 64,
+    "request_timeout_seconds": 5,
+    "server_cpus": [
+      2,
+      3
+    ],
+    "load_cpus": [
+      4,
+      5,
+      6,
+      7
+    ],
+    "database_cpus": [
+      8,
+      9
+    ]
+  },
+  "tool": {
+    "version": "oha 1.16.0",
+    "sha256": "620bb9e16fb53eabc9a3fc45f88bdb41fefa3fee5c05e75892011ce320391716"
+  },
+  "load_average_at_start": 0.16552734375,
+  "comparators": {
+    "gs-rest-service": {
+      "directory": "benchmarks/spring/go/gs-rest-service",
+      "commit": "f88554cfc7049d059e942130f77616b0d8eac4ed",
+      "sha256": "d33e8488448a0a4692e048d57b22ec362426e9f3d5ff723fcce64e3cf06be73b",
+      "go": "1.27.4",
+      "wire": "semantic",
+      "registered": "2026-11-23",
+      "measured": false
+    },
+    "gs-relational-data-access": {
+      "directory": "benchmarks/spring/go/gs-relational-data-access",
+      "commit": "f88554cfc7049d059e942130f77616b0d8eac4ed",
+      "sha256": "b295d3b02ac6a61b2da3744e221d49a85f9a5be703bb22473c128339431e5527",
+      "go": "1.27.4",
+      "wire": "semantic",
+      "registered": "2026-11-23",
+      "measured": false
+    },
+    "petclinic-rest": {
+      "directory": "benchmarks/spring/go/petclinic-rest",
+      "commit": "ddd21875ca5d5657068d4999e34775a8134520b5",
+      "sha256": "c279137895e51a7e0961bab37030e5780a70213bdd4ee69f05262eef33d7d962",
+      "go": "1.27.4",
+      "wire": "semantic",
+      "registered": "2026-11-24",
+      "measured": false,
+      "census_sha256": "d03c394b4ce8bdf1061b00a7adeba262127a131c4f98f63357e74b4d0898e9d6"
+    }
+  },
+  "apps": {
+    "petclinic-rest:validation-error": {
+      "app": "petclinic-rest",
+      "measured": {
+        "flint": {
+          "p50_ms": [
+            0.107746,
+            0.109396,
+            0.107426,
+            0.10839599999999999,
+            0.112205,
+            0.106986,
+            0.110296,
+            0.110536,
+            0.108786
+          ],
+          "p99_ms": [
+            0.376705,
+            0.387735,
+            0.373286,
+            0.383335,
+            0.393564,
+            0.377645,
+            0.39091400000000004,
+            0.384045,
+            0.378305
+          ],
+          "p999_ms": [
+            0.50051,
+            0.5049399999999999,
+            0.477041,
+            0.48547100000000004,
+            0.49467,
+            0.4996,
+            0.49701,
+            0.48751,
+            0.480911
+          ],
+          "peak_rss_bytes": [
+            16572416,
+            16732160,
+            16818176,
+            16625664,
+            16740352,
+            16543744,
+            16637952,
+            16592896,
+            16580608
+          ],
+          "cpu_ns_per_request": [
+            46824.59274268803,
+            47158.64969621831,
+            46691.28429359853,
+            47057.882528594666,
+            49890.68707174661,
+            46458.61384026769,
+            47857.73322313168,
+            48290.82474329877,
+            47157.70670239321
+          ],
+          "requests_per_second": [
+            36646.11777538112,
+            35942.34468911534,
+            35568.11874778226,
+            35399.618803494195,
+            36146.87936604181,
+            35774.726498760465,
+            35659.16223952496,
+            36261.21873618577,
+            35739.42300884995
+          ]
+        },
+        "go": {
+          "p50_ms": [
+            0.040768,
+            0.040948,
+            0.041079,
+            0.040838,
+            0.040949,
+            0.040978,
+            0.040769,
+            0.040658,
+            0.040808
+          ],
+          "p99_ms": [
+            0.117985,
+            0.118626,
+            0.11716599999999999,
+            0.119016,
+            0.120955,
+            0.12257500000000002,
+            0.121935,
+            0.118095,
+            0.116105
+          ],
+          "p999_ms": [
+            0.224601,
+            0.227301,
+            0.207152,
+            0.223701,
+            0.215411,
+            0.287588,
+            0.6334850000000001,
+            0.202071,
+            0.210962
+          ],
+          "peak_rss_bytes": [
+            24047616,
+            24023040,
+            24096768,
+            24137728,
+            24354816,
+            24031232,
+            24092672,
+            24485888,
+            23904256
+          ],
+          "cpu_ns_per_request": [
+            15730.344567865439,
+            15830.325571474754,
+            15897.244477623879,
+            15897.032553923267,
+            15797.05121710614,
+            15830.378329378516,
+            15830.378329378516,
+            15763.671569068543,
+            15797.261807953288
+          ],
+          "requests_per_second": [
+            158577.4797956041,
+            157754.435242398,
+            157916.80695318992,
+            157472.839619868,
+            157667.07489554974,
+            158015.69484380024,
+            157967.29764871742,
+            158012.84377185197,
+            157783.45889790356
+          ]
+        }
+      },
+      "context": {}
+    }
+  },
+  "trials": [
+    {
+      "app": "petclinic-rest",
+      "target": "flint",
+      "trial": 0,
+      "server_command": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/petclinic-rest-flint"
+      ],
+      "server_pid": 3711460,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/petclinic-rest-flint",
+        "sha256": "403036e785d01a72b785f544bf3475c08342daf38796a79a0ece56feca68f8d6"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/00-petclinic-rest-flint-server.log",
+      "warmup": {
+        "count": 49997,
+        "duration_seconds": 10.000699637,
+        "requests_per_second": 4999.350226960526,
+        "p50_ms": 0.110555,
+        "p99_ms": 0.382815,
+        "p999_ms": 0.528089,
+        "cpu_ns_per_request": 47194.33667959845,
+        "peak_rss_bytes": 16547840,
+        "load_cpu_fraction": 0.03809328852180307,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "10s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "5000",
+            "--latency-correction",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:57247/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "a73b8d196d5b3be3ff22d57bba51ed4e40f4ea2b3f7c1692f9099a3219df2239",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/00-petclinic-rest-flint-warmup.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/00-petclinic-rest-flint-warmup.stderr.txt",
+          "wall_seconds": 10.04049571044743
+        },
+        "process": {
+          "cpu_nanoseconds": 2360000000.0,
+          "peak_rss_bytes": 16547840,
+          "correctness_probes": 9,
+          "rss_samples": 498
+        }
+      },
+      "latency": {
+        "count": 299997,
+        "duration_seconds": 60.00110029,
+        "requests_per_second": 4999.85831176497,
+        "p50_ms": 0.107746,
+        "p99_ms": 0.376705,
+        "p999_ms": 0.50051,
+        "cpu_ns_per_request": 46824.59274268803,
+        "peak_rss_bytes": 16572416,
+        "load_cpu_fraction": 0.038533611742025624,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "5000",
+            "--latency-correction",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:57247/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "c63db7f2e04824817dae924cc0372a1ded9fc52a9bb46c0ea5717b06a799d5be",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/00-petclinic-rest-flint-latency.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/00-petclinic-rest-flint-latency.stderr.txt",
+          "wall_seconds": 60.09806491807103
+        },
+        "process": {
+          "cpu_nanoseconds": 14050000000.0,
+          "peak_rss_bytes": 16572416,
+          "correctness_probes": 59,
+          "rss_samples": 2981
+        }
+      },
+      "capacity": {
+        "count": 2199029,
+        "duration_seconds": 60.007147646,
+        "requests_per_second": 36646.11777538112,
+        "p50_ms": 1.54332,
+        "p99_ms": 4.499433,
+        "p999_ms": 6.714556,
+        "cpu_ns_per_request": 43008.738167822296,
+        "peak_rss_bytes": 17395712,
+        "load_cpu_fraction": 0.8175912507340833,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:57247/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "ea60dc2b21fd31880a736a650ee7b4a81e786e367a9e4ca9e9eb24ce8953f539",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/00-petclinic-rest-flint-capacity.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/00-petclinic-rest-flint-capacity.stderr.txt",
+          "wall_seconds": 60.44469770882279
+        },
+        "process": {
+          "cpu_nanoseconds": 94580000000.0,
+          "peak_rss_bytes": 17395712,
+          "correctness_probes": 59,
+          "rss_samples": 2989
+        }
+      },
+      "database_state": {
+        "vacuum_analyze": true,
+        "row_counts": {
+          "owners": 10,
+          "pets": 13,
+          "visits": 4,
+          "types": 6,
+          "vets": 6,
+          "specialties": 3,
+          "vet_specialties": 5,
+          "users": 1,
+          "roles": 3
+        }
+      }
+    },
+    {
+      "app": "petclinic-rest",
+      "target": "go",
+      "trial": 0,
+      "server_command": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/petclinic-rest-go"
+      ],
+      "server_pid": 3712542,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/petclinic-rest-go",
+        "sha256": "5546d077dce57b44f3677c3a845937fb850f1b26bf07ab29acb76763442bbd7c"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/00-petclinic-rest-go-server.log",
+      "warmup": {
+        "count": 49993,
+        "duration_seconds": 10.00051917,
+        "requests_per_second": 4999.0404648161875,
+        "p50_ms": 0.040938,
+        "p99_ms": 0.121225,
+        "p999_ms": 0.439663,
+        "cpu_ns_per_request": 15999.360025598977,
+        "peak_rss_bytes": 23932928,
+        "load_cpu_fraction": 0.012703371179698298,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "10s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "5000",
+            "--latency-correction",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:44285/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "be56fa866baed1ab48de3a8847d302df76d27445299d5371bd0e05944b802638",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/00-petclinic-rest-go-warmup.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/00-petclinic-rest-go-warmup.stderr.txt",
+          "wall_seconds": 10.0288339368999
+        },
+        "process": {
+          "cpu_nanoseconds": 800000000.0,
+          "peak_rss_bytes": 23932928,
+          "correctness_probes": 9,
+          "rss_samples": 498
+        }
+      },
+      "latency": {
+        "count": 299998,
+        "duration_seconds": 60.001010163,
+        "requests_per_second": 4999.882488395098,
+        "p50_ms": 0.040768,
+        "p99_ms": 0.117985,
+        "p999_ms": 0.224601,
+        "cpu_ns_per_request": 15730.344567865439,
+        "peak_rss_bytes": 24047616,
+        "load_cpu_fraction": 0.01268984492101909,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "5000",
+            "--latency-correction",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:44285/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "a72e1e21e546becafa101bd970ed26b85af7670c9badfee1354e932927f9f68f",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/00-petclinic-rest-go-latency.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/00-petclinic-rest-go-latency.stderr.txt",
+          "wall_seconds": 60.070552851073444
+        },
+        "process": {
+          "cpu_nanoseconds": 4720000000.0,
+          "peak_rss_bytes": 24047616,
+          "correctness_probes": 59,
+          "rss_samples": 2984
+        }
+      },
+      "capacity": {
+        "count": 9514930,
+        "duration_seconds": 60.001773343,
+        "requests_per_second": 158577.4797956041,
+        "p50_ms": 0.340146,
+        "p99_ms": 1.2805799999999998,
+        "p999_ms": 3.486873,
+        "cpu_ns_per_request": 12248.042299571518,
+        "peak_rss_bytes": 25362432,
+        "load_cpu_fraction": 0.2671914562348183,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:44285/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "829592240970d9e2a981e803e1a5db5448bb6e1bb7c3c9327ac139a96076d42e",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/00-petclinic-rest-go-capacity.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/00-petclinic-rest-go-capacity.stderr.txt",
+          "wall_seconds": 61.48109199106693
+        },
+        "process": {
+          "cpu_nanoseconds": 116540000000.0,
+          "peak_rss_bytes": 25362432,
+          "correctness_probes": 60,
+          "rss_samples": 3045
+        }
+      },
+      "database_state": {
+        "vacuum_analyze": true,
+        "row_counts": {
+          "owners": 10,
+          "pets": 13,
+          "visits": 4,
+          "types": 6,
+          "vets": 6,
+          "specialties": 3,
+          "vet_specialties": 5,
+          "users": 1,
+          "roles": 3
+        }
+      }
+    },
+    {
+      "app": "petclinic-rest",
+      "target": "go",
+      "trial": 1,
+      "server_command": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/petclinic-rest-go"
+      ],
+      "server_pid": 3713688,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/petclinic-rest-go",
+        "sha256": "5546d077dce57b44f3677c3a845937fb850f1b26bf07ab29acb76763442bbd7c"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/01-petclinic-rest-go-server.log",
+      "warmup": {
+        "count": 49997,
+        "duration_seconds": 10.000822121,
+        "requests_per_second": 4999.288997952971,
+        "p50_ms": 0.041638999999999995,
+        "p99_ms": 0.129065,
+        "p999_ms": 0.479311,
+        "cpu_ns_per_request": 16198.05623325201,
+        "peak_rss_bytes": 23998464,
+        "load_cpu_fraction": 0.012839533892318993,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "10s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "5000",
+            "--latency-correction",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:40053/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "8204bb48c3ff5a18278b37dc1c70b659ed28aedebddff959bb1c5ee6ac644ea5",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/01-petclinic-rest-go-warmup.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/01-petclinic-rest-go-warmup.stderr.txt",
+          "wall_seconds": 10.025597586296499
+        },
+        "process": {
+          "cpu_nanoseconds": 810000000.0,
+          "peak_rss_bytes": 23998464,
+          "correctness_probes": 9,
+          "rss_samples": 498
+        }
+      },
+      "latency": {
+        "count": 299998,
+        "duration_seconds": 60.00101048,
+        "requests_per_second": 4999.882461979497,
+        "p50_ms": 0.040948,
+        "p99_ms": 0.118626,
+        "p999_ms": 0.227301,
+        "cpu_ns_per_request": 15830.325571474754,
+        "peak_rss_bytes": 24023040,
+        "load_cpu_fraction": 0.012753541587375771,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "5000",
+            "--latency-correction",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:40053/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "aef70af941c729035eeab78245ed64a0b9e707186f9873ea7aad39b2a0aa979d",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/01-petclinic-rest-go-latency.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/01-petclinic-rest-go-latency.stderr.txt",
+          "wall_seconds": 60.07002013921738
+        },
+        "process": {
+          "cpu_nanoseconds": 4750000000.0,
+          "peak_rss_bytes": 24023040,
+          "correctness_probes": 59,
+          "rss_samples": 2987
+        }
+      },
+      "capacity": {
+        "count": 9465528,
+        "duration_seconds": 60.001660083,
+        "requests_per_second": 157754.435242398,
+        "p50_ms": 0.34181700000000004,
+        "p99_ms": 1.28582,
+        "p999_ms": 3.5477299999999996,
+        "cpu_ns_per_request": 12303.51328374811,
+        "peak_rss_bytes": 25554944,
+        "load_cpu_fraction": 0.267669174891788,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:40053/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "cb830b3d6bf4d3daf6089a93d18ed34bd294ba1fba9c48f7c56be2ffb3e9dcd6",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/01-petclinic-rest-go-capacity.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/01-petclinic-rest-go-capacity.stderr.txt",
+          "wall_seconds": 61.68438056670129
+        },
+        "process": {
+          "cpu_nanoseconds": 116460000000.0,
+          "peak_rss_bytes": 25554944,
+          "correctness_probes": 61,
+          "rss_samples": 3056
+        }
+      },
+      "database_state": {
+        "vacuum_analyze": true,
+        "row_counts": {
+          "owners": 10,
+          "pets": 13,
+          "visits": 4,
+          "types": 6,
+          "vets": 6,
+          "specialties": 3,
+          "vet_specialties": 5,
+          "users": 1,
+          "roles": 3
+        }
+      }
+    },
+    {
+      "app": "petclinic-rest",
+      "target": "flint",
+      "trial": 1,
+      "server_command": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/petclinic-rest-flint"
+      ],
+      "server_pid": 3715070,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/petclinic-rest-flint",
+        "sha256": "403036e785d01a72b785f544bf3475c08342daf38796a79a0ece56feca68f8d6"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/01-petclinic-rest-flint-server.log",
+      "warmup": {
+        "count": 49993,
+        "duration_seconds": 10.000477387,
+        "requests_per_second": 4999.061351309868,
+        "p50_ms": 0.109956,
+        "p99_ms": 0.388675,
+        "p999_ms": 0.48228099999999996,
+        "cpu_ns_per_request": 47198.112075516976,
+        "peak_rss_bytes": 16453632,
+        "load_cpu_fraction": 0.03820760749222589,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "10s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "5000",
+            "--latency-correction",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:57293/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "a555ea043310788a3e5c6c9c70b8d5ee1aed4578bccacb05e7e84ae45ed6d9f2",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/01-petclinic-rest-flint-warmup.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/01-petclinic-rest-flint-warmup.stderr.txt",
+          "wall_seconds": 10.040408839471638
+        },
+        "process": {
+          "cpu_nanoseconds": 2360000000.0,
+          "peak_rss_bytes": 16453632,
+          "correctness_probes": 9,
+          "rss_samples": 498
+        }
+      },
+      "latency": {
+        "count": 299992,
+        "duration_seconds": 60.001428803,
+        "requests_per_second": 4999.747605760361,
+        "p50_ms": 0.109396,
+        "p99_ms": 0.387735,
+        "p999_ms": 0.5049399999999999,
+        "cpu_ns_per_request": 47158.64969621831,
+        "peak_rss_bytes": 16732160,
+        "load_cpu_fraction": 0.03866970946813852,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "5000",
+            "--latency-correction",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:57293/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "145cde55d62c6004d0269a36b4f05bc15291427861099a76cf4c2d541960975b",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/01-petclinic-rest-flint-latency.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/01-petclinic-rest-flint-latency.stderr.txt",
+          "wall_seconds": 60.09000408742577
+        },
+        "process": {
+          "cpu_nanoseconds": 14150000000.0,
+          "peak_rss_bytes": 16732160,
+          "correctness_probes": 59,
+          "rss_samples": 2982
+        }
+      },
+      "capacity": {
+        "count": 2156994,
+        "duration_seconds": 60.012612384,
+        "requests_per_second": 35942.34468911534,
+        "p50_ms": 1.569678,
+        "p99_ms": 4.541972,
+        "p999_ms": 6.646109,
+        "cpu_ns_per_request": 43809.77194348029,
+        "peak_rss_bytes": 17436672,
+        "load_cpu_fraction": 0.813158389468018,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:57293/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "6ba2cc3c7f26bf588a9f7501b412a63db893b95824d035cac482f93585b90c36",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/01-petclinic-rest-flint-capacity.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/01-petclinic-rest-flint-capacity.stderr.txt",
+          "wall_seconds": 60.4505510693416
+        },
+        "process": {
+          "cpu_nanoseconds": 94500000000.0,
+          "peak_rss_bytes": 17436672,
+          "correctness_probes": 59,
+          "rss_samples": 2986
+        }
+      },
+      "database_state": {
+        "vacuum_analyze": true,
+        "row_counts": {
+          "owners": 10,
+          "pets": 13,
+          "visits": 4,
+          "types": 6,
+          "vets": 6,
+          "specialties": 3,
+          "vet_specialties": 5,
+          "users": 1,
+          "roles": 3
+        }
+      }
+    },
+    {
+      "app": "petclinic-rest",
+      "target": "flint",
+      "trial": 2,
+      "server_command": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/petclinic-rest-flint"
+      ],
+      "server_pid": 3716167,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/petclinic-rest-flint",
+        "sha256": "403036e785d01a72b785f544bf3475c08342daf38796a79a0ece56feca68f8d6"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/02-petclinic-rest-flint-server.log",
+      "warmup": {
+        "count": 49992,
+        "duration_seconds": 10.001176794,
+        "requests_per_second": 4998.611766366502,
+        "p50_ms": 0.108046,
+        "p99_ms": 0.38115499999999997,
+        "p999_ms": 0.49195,
+        "cpu_ns_per_request": 46999.060018799624,
+        "peak_rss_bytes": 16605184,
+        "load_cpu_fraction": 0.03828081199852135,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "10s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "5000",
+            "--latency-correction",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:41033/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "3e64bad9c8e89cb2a78152b874ab32685a552f8190b3bbc6a704f34d46b5c742",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/02-petclinic-rest-flint-warmup.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/02-petclinic-rest-flint-warmup.stderr.txt",
+          "wall_seconds": 10.028006982058287
+        },
+        "process": {
+          "cpu_nanoseconds": 2350000000.0,
+          "peak_rss_bytes": 16605184,
+          "correctness_probes": 9,
+          "rss_samples": 494
+        }
+      },
+      "latency": {
+        "count": 299997,
+        "duration_seconds": 60.001009721,
+        "requests_per_second": 4999.8658588407525,
+        "p50_ms": 0.107426,
+        "p99_ms": 0.373286,
+        "p999_ms": 0.477041,
+        "cpu_ns_per_request": 46691.28429359853,
+        "peak_rss_bytes": 16818176,
+        "load_cpu_fraction": 0.03864798686776866,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "5000",
+            "--latency-correction",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:41033/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "48d961ca2d7de6969a311701babcb3d23d2b377592f4d3d18ffa86b33cc62586",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/02-petclinic-rest-flint-latency.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/02-petclinic-rest-flint-latency.stderr.txt",
+          "wall_seconds": 60.0891841519624
+        },
+        "process": {
+          "cpu_nanoseconds": 14010000000.0,
+          "peak_rss_bytes": 16818176,
+          "correctness_probes": 59,
+          "rss_samples": 2981
+        }
+      },
+      "capacity": {
+        "count": 2134355,
+        "duration_seconds": 60.007531327,
+        "requests_per_second": 35568.11874778226,
+        "p50_ms": 1.579828,
+        "p99_ms": 4.677936,
+        "p999_ms": 6.948207,
+        "cpu_ns_per_request": 43913.69247015809,
+        "peak_rss_bytes": 17678336,
+        "load_cpu_fraction": 0.8108441757332091,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:41033/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "ef2f366f92edbce4511bd2e9479fff52312e005c545a5197c545fa0da4d4658e",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/02-petclinic-rest-flint-capacity.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/02-petclinic-rest-flint-capacity.stderr.txt",
+          "wall_seconds": 60.40043508447707
+        },
+        "process": {
+          "cpu_nanoseconds": 93730000000.0,
+          "peak_rss_bytes": 17678336,
+          "correctness_probes": 59,
+          "rss_samples": 2980
+        }
+      },
+      "database_state": {
+        "vacuum_analyze": true,
+        "row_counts": {
+          "owners": 10,
+          "pets": 13,
+          "visits": 4,
+          "types": 6,
+          "vets": 6,
+          "specialties": 3,
+          "vet_specialties": 5,
+          "users": 1,
+          "roles": 3
+        }
+      }
+    },
+    {
+      "app": "petclinic-rest",
+      "target": "go",
+      "trial": 2,
+      "server_command": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/petclinic-rest-go"
+      ],
+      "server_pid": 3717284,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/petclinic-rest-go",
+        "sha256": "5546d077dce57b44f3677c3a845937fb850f1b26bf07ab29acb76763442bbd7c"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/02-petclinic-rest-go-server.log",
+      "warmup": {
+        "count": 49997,
+        "duration_seconds": 10.000702063,
+        "requests_per_second": 4999.349014203304,
+        "p50_ms": 0.040828,
+        "p99_ms": 0.124235,
+        "p999_ms": 0.50571,
+        "cpu_ns_per_request": 15798.1042274927,
+        "peak_rss_bytes": 24059904,
+        "load_cpu_fraction": 0.012763761209551623,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "10s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "5000",
+            "--latency-correction",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:60743/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "fb45430d5856ad882dac1573fbdbe9a59ae96e65c1899499aec9a8c88ef72433",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/02-petclinic-rest-go-warmup.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/02-petclinic-rest-go-warmup.stderr.txt",
+          "wall_seconds": 10.028313590213656
+        },
+        "process": {
+          "cpu_nanoseconds": 790000000.0,
+          "peak_rss_bytes": 24059904,
+          "correctness_probes": 9,
+          "rss_samples": 498
+        }
+      },
+      "latency": {
+        "count": 299993,
+        "duration_seconds": 60.001501717,
+        "requests_per_second": 4999.758196302012,
+        "p50_ms": 0.041079,
+        "p99_ms": 0.11716599999999999,
+        "p999_ms": 0.207152,
+        "cpu_ns_per_request": 15897.244477623879,
+        "peak_rss_bytes": 24096768,
+        "load_cpu_fraction": 0.012739157764480837,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "5000",
+            "--latency-correction",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:60743/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "2a03f2d2f35cfd2adadbe8c1c1fabc6d755d176803df28722bfc40be5bed7750",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/02-petclinic-rest-go-latency.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/02-petclinic-rest-go-latency.stderr.txt",
+          "wall_seconds": 60.084133044816554
+        },
+        "process": {
+          "cpu_nanoseconds": 4770000000.0,
+          "peak_rss_bytes": 24096768,
+          "correctness_probes": 59,
+          "rss_samples": 2987
+        }
+      },
+      "capacity": {
+        "count": 9475262,
+        "duration_seconds": 60.0016058,
+        "requests_per_second": 157916.80695318992,
+        "p50_ms": 0.341497,
+        "p99_ms": 1.2805900000000001,
+        "p999_ms": 3.57724,
+        "cpu_ns_per_request": 12305.650404281776,
+        "peak_rss_bytes": 24936448,
+        "load_cpu_fraction": 0.26750413478926305,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:60743/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "4a260d5a1f190f9ae858c1a921f45f50695ad82009a9bc8c89e15264f6f9caae",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/02-petclinic-rest-go-capacity.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/02-petclinic-rest-go-capacity.stderr.txt",
+          "wall_seconds": 61.47988614439964
+        },
+        "process": {
+          "cpu_nanoseconds": 116600000000.0,
+          "peak_rss_bytes": 24936448,
+          "correctness_probes": 60,
+          "rss_samples": 3047
+        }
+      },
+      "database_state": {
+        "vacuum_analyze": true,
+        "row_counts": {
+          "owners": 10,
+          "pets": 13,
+          "visits": 4,
+          "types": 6,
+          "vets": 6,
+          "specialties": 3,
+          "vet_specialties": 5,
+          "users": 1,
+          "roles": 3
+        }
+      }
+    },
+    {
+      "app": "petclinic-rest",
+      "target": "go",
+      "trial": 3,
+      "server_command": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/petclinic-rest-go"
+      ],
+      "server_pid": 3718802,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/petclinic-rest-go",
+        "sha256": "5546d077dce57b44f3677c3a845937fb850f1b26bf07ab29acb76763442bbd7c"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/03-petclinic-rest-go-server.log",
+      "warmup": {
+        "count": 49992,
+        "duration_seconds": 10.001331612,
+        "requests_per_second": 4998.534389162498,
+        "p50_ms": 0.041619,
+        "p99_ms": 0.125416,
+        "p999_ms": 0.25904,
+        "cpu_ns_per_request": 15999.680006399873,
+        "peak_rss_bytes": 24031232,
+        "load_cpu_fraction": 0.01289500435436325,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "10s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "5000",
+            "--latency-correction",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:38297/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "7191806656e8cbe9ae0f9b43c3f413926babdc79069f2e361a65dccb1c25e3ad",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/03-petclinic-rest-go-warmup.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/03-petclinic-rest-go-warmup.stderr.txt",
+          "wall_seconds": 10.064498346298933
+        },
+        "process": {
+          "cpu_nanoseconds": 800000000.0,
+          "peak_rss_bytes": 24031232,
+          "correctness_probes": 9,
+          "rss_samples": 499
+        }
+      },
+      "latency": {
+        "count": 299997,
+        "duration_seconds": 60.001199454,
+        "requests_per_second": 4999.850048497666,
+        "p50_ms": 0.040838,
+        "p99_ms": 0.119016,
+        "p999_ms": 0.223701,
+        "cpu_ns_per_request": 15897.032553923267,
+        "peak_rss_bytes": 24137728,
+        "load_cpu_fraction": 0.012796753180830563,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "5000",
+            "--latency-correction",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:38297/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "3fb854f861801aa9102a4157af1b571ead1b712589913a1e5c2ba8c364bd6637",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/03-petclinic-rest-go-latency.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/03-petclinic-rest-go-latency.stderr.txt",
+          "wall_seconds": 60.078012690879405
+        },
+        "process": {
+          "cpu_nanoseconds": 4770000000.0,
+          "peak_rss_bytes": 24137728,
+          "correctness_probes": 59,
+          "rss_samples": 2986
+        }
+      },
+      "capacity": {
+        "count": 9448706,
+        "duration_seconds": 60.002131306,
+        "requests_per_second": 157472.839619868,
+        "p50_ms": 0.341657,
+        "p99_ms": 1.298279,
+        "p999_ms": 3.6397869999999997,
+        "cpu_ns_per_request": 12304.25091443148,
+        "peak_rss_bytes": 25300992,
+        "load_cpu_fraction": 0.26709793401406556,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:38297/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "3708b464f72739b7107d5e6a3b811fc577bd19ef65f3116be8518ba7f93c596e",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/03-petclinic-rest-go-capacity.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/03-petclinic-rest-go-capacity.stderr.txt",
+          "wall_seconds": 61.694396142847836
+        },
+        "process": {
+          "cpu_nanoseconds": 116260000000.0,
+          "peak_rss_bytes": 25300992,
+          "correctness_probes": 61,
+          "rss_samples": 3057
+        }
+      },
+      "database_state": {
+        "vacuum_analyze": true,
+        "row_counts": {
+          "owners": 10,
+          "pets": 13,
+          "visits": 4,
+          "types": 6,
+          "vets": 6,
+          "specialties": 3,
+          "vet_specialties": 5,
+          "users": 1,
+          "roles": 3
+        }
+      }
+    },
+    {
+      "app": "petclinic-rest",
+      "target": "flint",
+      "trial": 3,
+      "server_command": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/petclinic-rest-flint"
+      ],
+      "server_pid": 3719917,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/petclinic-rest-flint",
+        "sha256": "403036e785d01a72b785f544bf3475c08342daf38796a79a0ece56feca68f8d6"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/03-petclinic-rest-flint-server.log",
+      "warmup": {
+        "count": 49998,
+        "duration_seconds": 10.00119633,
+        "requests_per_second": 4999.201930475451,
+        "p50_ms": 0.109466,
+        "p99_ms": 0.380015,
+        "p999_ms": 0.47789099999999995,
+        "cpu_ns_per_request": 47393.364928909956,
+        "peak_rss_bytes": 16424960,
+        "load_cpu_fraction": 0.03803552543058821,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "10s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "5000",
+            "--latency-correction",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:53527/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "9eaa3aa980d0f4fd97d0097710109760e740e38dee8ee1e0fa82b7ec393704c9",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/03-petclinic-rest-flint-warmup.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/03-petclinic-rest-flint-warmup.stderr.txt",
+          "wall_seconds": 10.049999196082354
+        },
+        "process": {
+          "cpu_nanoseconds": 2370000000.0,
+          "peak_rss_bytes": 16424960,
+          "correctness_probes": 9,
+          "rss_samples": 498
+        }
+      },
+      "latency": {
+        "count": 299997,
+        "duration_seconds": 60.000844416,
+        "requests_per_second": 4999.879633693988,
+        "p50_ms": 0.10839599999999999,
+        "p99_ms": 0.383335,
+        "p999_ms": 0.48547100000000004,
+        "cpu_ns_per_request": 47057.882528594666,
+        "peak_rss_bytes": 16625664,
+        "load_cpu_fraction": 0.03850151359353257,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "5000",
+            "--latency-correction",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:53527/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "8d458b7fd53b655e605e64eed8affa435ba90bb6a9183b6854a957b0da6a86a7",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/03-petclinic-rest-flint-latency.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/03-petclinic-rest-flint-latency.stderr.txt",
+          "wall_seconds": 60.09298165328801
+        },
+        "process": {
+          "cpu_nanoseconds": 14120000000.0,
+          "peak_rss_bytes": 16625664,
+          "correctness_probes": 59,
+          "rss_samples": 2981
+        }
+      },
+      "capacity": {
+        "count": 2124210,
+        "duration_seconds": 60.00657837,
+        "requests_per_second": 35399.618803494195,
+        "p50_ms": 1.5751249999999999,
+        "p99_ms": 4.773842999999999,
+        "p999_ms": 6.857201,
+        "cpu_ns_per_request": 43911.576170437926,
+        "peak_rss_bytes": 17481728,
+        "load_cpu_fraction": 0.8131083873463909,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:53527/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "211b7c8933621a87d12e194e8ddfffcc9053ffccb12161741f1ac69c307bb2ec",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/03-petclinic-rest-flint-capacity.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/03-petclinic-rest-flint-capacity.stderr.txt",
+          "wall_seconds": 60.450718212872744
+        },
+        "process": {
+          "cpu_nanoseconds": 93280000000.0,
+          "peak_rss_bytes": 17481728,
+          "correctness_probes": 59,
+          "rss_samples": 2987
+        }
+      },
+      "database_state": {
+        "vacuum_analyze": true,
+        "row_counts": {
+          "owners": 10,
+          "pets": 13,
+          "visits": 4,
+          "types": 6,
+          "vets": 6,
+          "specialties": 3,
+          "vet_specialties": 5,
+          "users": 1,
+          "roles": 3
+        }
+      }
+    },
+    {
+      "app": "petclinic-rest",
+      "target": "flint",
+      "trial": 4,
+      "server_command": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/petclinic-rest-flint"
+      ],
+      "server_pid": 3721060,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/petclinic-rest-flint",
+        "sha256": "403036e785d01a72b785f544bf3475c08342daf38796a79a0ece56feca68f8d6"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/04-petclinic-rest-flint-server.log",
+      "warmup": {
+        "count": 49998,
+        "duration_seconds": 10.000943381,
+        "requests_per_second": 4999.328372860028,
+        "p50_ms": 0.11666499999999999,
+        "p99_ms": 0.407543,
+        "p999_ms": 0.5140290000000001,
+        "cpu_ns_per_request": 50592.916991621176,
+        "peak_rss_bytes": 16527360,
+        "load_cpu_fraction": 0.03760498073177318,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "10s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "5000",
+            "--latency-correction",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:33749/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "cf8873089c000839f87f2c8c82edfeb605f5829db59f5e5219242b9bcbeba565",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/04-petclinic-rest-flint-warmup.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/04-petclinic-rest-flint-warmup.stderr.txt",
+          "wall_seconds": 10.045650673098862
+        },
+        "process": {
+          "cpu_nanoseconds": 2530000000.0,
+          "peak_rss_bytes": 16527360,
+          "correctness_probes": 9,
+          "rss_samples": 498
+        }
+      },
+      "latency": {
+        "count": 299997,
+        "duration_seconds": 60.001189142,
+        "requests_per_second": 4999.850907788196,
+        "p50_ms": 0.112205,
+        "p99_ms": 0.393564,
+        "p999_ms": 0.49467,
+        "cpu_ns_per_request": 49890.68707174661,
+        "peak_rss_bytes": 16740352,
+        "load_cpu_fraction": 0.038340459908014025,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "5000",
+            "--latency-correction",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:33749/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "a1086a167da1d5d8ce44cf8ecdbdede4ed7fc09f0f6735db8bdfc52a63b420e6",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/04-petclinic-rest-flint-latency.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/04-petclinic-rest-flint-latency.stderr.txt",
+          "wall_seconds": 60.08795292302966
+        },
+        "process": {
+          "cpu_nanoseconds": 14970000000.0,
+          "peak_rss_bytes": 16740352,
+          "correctness_probes": 59,
+          "rss_samples": 2976
+        }
+      },
+      "capacity": {
+        "count": 2169091,
+        "duration_seconds": 60.007697429,
+        "requests_per_second": 36146.87936604181,
+        "p50_ms": 1.584155,
+        "p99_ms": 4.571693,
+        "p999_ms": 6.671397,
+        "cpu_ns_per_request": 44390.6599359196,
+        "peak_rss_bytes": 17600512,
+        "load_cpu_fraction": 0.8151368022163366,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:33749/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "8469f18236ecc24cb015cdef5f4c65ccf28e7263c885deab3f5993fd6ff6f586",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/04-petclinic-rest-flint-capacity.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/04-petclinic-rest-flint-capacity.stderr.txt",
+          "wall_seconds": 60.394068352878094
+        },
+        "process": {
+          "cpu_nanoseconds": 96290000000.0,
+          "peak_rss_bytes": 17600512,
+          "correctness_probes": 59,
+          "rss_samples": 2984
+        }
+      },
+      "database_state": {
+        "vacuum_analyze": true,
+        "row_counts": {
+          "owners": 10,
+          "pets": 13,
+          "visits": 4,
+          "types": 6,
+          "vets": 6,
+          "specialties": 3,
+          "vet_specialties": 5,
+          "users": 1,
+          "roles": 3
+        }
+      }
+    },
+    {
+      "app": "petclinic-rest",
+      "target": "go",
+      "trial": 4,
+      "server_command": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/petclinic-rest-go"
+      ],
+      "server_pid": 3722137,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/petclinic-rest-go",
+        "sha256": "5546d077dce57b44f3677c3a845937fb850f1b26bf07ab29acb76763442bbd7c"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/04-petclinic-rest-go-server.log",
+      "warmup": {
+        "count": 49992,
+        "duration_seconds": 10.001303611,
+        "requests_per_second": 4998.548383734293,
+        "p50_ms": 0.040917999999999996,
+        "p99_ms": 0.123805,
+        "p999_ms": 0.329167,
+        "cpu_ns_per_request": 16199.676006479871,
+        "peak_rss_bytes": 24264704,
+        "load_cpu_fraction": 0.012939449832729941,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "10s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "5000",
+            "--latency-correction",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:34747/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "a3fa8b2fb85e85fbae9d19f4a3018518079baf79ec6d296d59cd2cfd453733a7",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/04-petclinic-rest-go-warmup.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/04-petclinic-rest-go-warmup.stderr.txt",
+          "wall_seconds": 10.035666251555085
+        },
+        "process": {
+          "cpu_nanoseconds": 810000000.0,
+          "peak_rss_bytes": 24264704,
+          "correctness_probes": 9,
+          "rss_samples": 498
+        }
+      },
+      "latency": {
+        "count": 299997,
+        "duration_seconds": 60.000946037,
+        "requests_per_second": 4999.871165614702,
+        "p50_ms": 0.040949,
+        "p99_ms": 0.120955,
+        "p999_ms": 0.215411,
+        "cpu_ns_per_request": 15797.05121710614,
+        "peak_rss_bytes": 24354816,
+        "load_cpu_fraction": 0.012833335661388647,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "5000",
+            "--latency-correction",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:34747/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "d8971e1b34dfd45508f5549d7f8f83056b1cd21ba00d43836b3e18b8fad1c96b",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/04-petclinic-rest-go-latency.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/04-petclinic-rest-go-latency.stderr.txt",
+          "wall_seconds": 60.08233325649053
+        },
+        "process": {
+          "cpu_nanoseconds": 4740000000.0,
+          "peak_rss_bytes": 24354816,
+          "correctness_probes": 59,
+          "rss_samples": 2988
+        }
+      },
+      "capacity": {
+        "count": 9460416,
+        "duration_seconds": 60.00248312,
+        "requests_per_second": 157667.07489554974,
+        "p50_ms": 0.342036,
+        "p99_ms": 1.274469,
+        "p999_ms": 3.410742,
+        "cpu_ns_per_request": 12339.758344108865,
+        "peak_rss_bytes": 25210880,
+        "load_cpu_fraction": 0.26796176361713,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:34747/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "c8c9a944e2d4d94ee2894874d0f71920f3a19c4a7c3d95969073b4fcf3537221",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/04-petclinic-rest-go-capacity.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/04-petclinic-rest-go-capacity.stderr.txt",
+          "wall_seconds": 61.68965779617429
+        },
+        "process": {
+          "cpu_nanoseconds": 116740000000.0,
+          "peak_rss_bytes": 25210880,
+          "correctness_probes": 61,
+          "rss_samples": 3055
+        }
+      },
+      "database_state": {
+        "vacuum_analyze": true,
+        "row_counts": {
+          "owners": 10,
+          "pets": 13,
+          "visits": 4,
+          "types": 6,
+          "vets": 6,
+          "specialties": 3,
+          "vet_specialties": 5,
+          "users": 1,
+          "roles": 3
+        }
+      }
+    },
+    {
+      "app": "petclinic-rest",
+      "target": "go",
+      "trial": 5,
+      "server_command": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/petclinic-rest-go"
+      ],
+      "server_pid": 3723299,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/petclinic-rest-go",
+        "sha256": "5546d077dce57b44f3677c3a845937fb850f1b26bf07ab29acb76763442bbd7c"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/05-petclinic-rest-go-server.log",
+      "warmup": {
+        "count": 49995,
+        "duration_seconds": 10.001090153,
+        "requests_per_second": 4998.955037416909,
+        "p50_ms": 0.040979,
+        "p99_ms": 0.124585,
+        "p999_ms": 0.460452,
+        "cpu_ns_per_request": 15998.720102391808,
+        "peak_rss_bytes": 23871488,
+        "load_cpu_fraction": 0.012791191322553167,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "10s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "5000",
+            "--latency-correction",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:56265/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "b4dea8021a34c6fb2d88b16cb347d41cd725fc2c78cce9c1fb21225d6bc76f38",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/05-petclinic-rest-go-warmup.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/05-petclinic-rest-go-warmup.stderr.txt",
+          "wall_seconds": 10.0495721437037
+        },
+        "process": {
+          "cpu_nanoseconds": 800000000.0,
+          "peak_rss_bytes": 23871488,
+          "correctness_probes": 9,
+          "rss_samples": 499
+        }
+      },
+      "latency": {
+        "count": 299997,
+        "duration_seconds": 60.00111771,
+        "requests_per_second": 4999.85686016648,
+        "p50_ms": 0.040978,
+        "p99_ms": 0.12257500000000002,
+        "p999_ms": 0.287588,
+        "cpu_ns_per_request": 15830.378329378516,
+        "peak_rss_bytes": 24031232,
+        "load_cpu_fraction": 0.012808322972683167,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "5000",
+            "--latency-correction",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:56265/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "ce64027353f9fb2afdf255fc3d6e006d80b229eec91023ce1c745906d28032ef",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/05-petclinic-rest-go-latency.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/05-petclinic-rest-go-latency.stderr.txt",
+          "wall_seconds": 60.07576102204621
+        },
+        "process": {
+          "cpu_nanoseconds": 4750000000.0,
+          "peak_rss_bytes": 24031232,
+          "correctness_probes": 59,
+          "rss_samples": 2986
+        }
+      },
+      "capacity": {
+        "count": 9481408,
+        "duration_seconds": 60.002951032,
+        "requests_per_second": 158015.69484380024,
+        "p50_ms": 0.341287,
+        "p99_ms": 1.271879,
+        "p999_ms": 3.3652740000000003,
+        "cpu_ns_per_request": 12315.603448748654,
+        "peak_rss_bytes": 25137152,
+        "load_cpu_fraction": 0.26884243232184274,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:56265/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "21841eff20e8a476195d3b78b3902801283bc60880009653912066a15a20a154",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/05-petclinic-rest-go-capacity.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/05-petclinic-rest-go-capacity.stderr.txt",
+          "wall_seconds": 61.49594990350306
+        },
+        "process": {
+          "cpu_nanoseconds": 116770000000.0,
+          "peak_rss_bytes": 25137152,
+          "correctness_probes": 60,
+          "rss_samples": 3048
+        }
+      },
+      "database_state": {
+        "vacuum_analyze": true,
+        "row_counts": {
+          "owners": 10,
+          "pets": 13,
+          "visits": 4,
+          "types": 6,
+          "vets": 6,
+          "specialties": 3,
+          "vet_specialties": 5,
+          "users": 1,
+          "roles": 3
+        }
+      }
+    },
+    {
+      "app": "petclinic-rest",
+      "target": "flint",
+      "trial": 5,
+      "server_command": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/petclinic-rest-flint"
+      ],
+      "server_pid": 3724409,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/petclinic-rest-flint",
+        "sha256": "403036e785d01a72b785f544bf3475c08342daf38796a79a0ece56feca68f8d6"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/05-petclinic-rest-flint-server.log",
+      "warmup": {
+        "count": 49992,
+        "duration_seconds": 10.000429816,
+        "requests_per_second": 4998.9851356204945,
+        "p50_ms": 0.107965,
+        "p99_ms": 0.36920600000000003,
+        "p999_ms": 0.468551,
+        "cpu_ns_per_request": 46599.06801863963,
+        "peak_rss_bytes": 16318464,
+        "load_cpu_fraction": 0.03854676547130614,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "10s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "5000",
+            "--latency-correction",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:56745/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "c15a98229325b72b53ba3733ea242c729a8e6459405cd23baba0fc77ae8cd91c",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/05-petclinic-rest-flint-warmup.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/05-petclinic-rest-flint-warmup.stderr.txt",
+          "wall_seconds": 10.046951936557889
+        },
+        "process": {
+          "cpu_nanoseconds": 2330000000.0,
+          "peak_rss_bytes": 16318464,
+          "correctness_probes": 9,
+          "rss_samples": 498
+        }
+      },
+      "latency": {
+        "count": 299993,
+        "duration_seconds": 60.001297432,
+        "requests_per_second": 4999.775218860637,
+        "p50_ms": 0.106986,
+        "p99_ms": 0.377645,
+        "p999_ms": 0.4996,
+        "cpu_ns_per_request": 46458.61384026769,
+        "peak_rss_bytes": 16543744,
+        "load_cpu_fraction": 0.03854854580645555,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "5000",
+            "--latency-correction",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:56745/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "ab9e7cba5103fa60a2c40f5614c56b49217eb116cb70628f0616ba84285090c6",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/05-petclinic-rest-flint-latency.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/05-petclinic-rest-flint-latency.stderr.txt",
+          "wall_seconds": 60.08778545446694
+        },
+        "process": {
+          "cpu_nanoseconds": 13940000000.0,
+          "peak_rss_bytes": 16543744,
+          "correctness_probes": 59,
+          "rss_samples": 2980
+        }
+      },
+      "capacity": {
+        "count": 2146771,
+        "duration_seconds": 60.008033886,
+        "requests_per_second": 35774.726498760465,
+        "p50_ms": 1.5592080000000001,
+        "p99_ms": 4.676502,
+        "p999_ms": 6.923801999999999,
+        "cpu_ns_per_request": 43683.01169631503,
+        "peak_rss_bytes": 17354752,
+        "load_cpu_fraction": 0.8164020645277726,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:56745/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "1e2c7c24832e24305495817591594f11b9f2c4c5f6525a9b50feba25b4fad851",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/05-petclinic-rest-flint-capacity.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/05-petclinic-rest-flint-capacity.stderr.txt",
+          "wall_seconds": 60.44988663587719
+        },
+        "process": {
+          "cpu_nanoseconds": 93780000000.0,
+          "peak_rss_bytes": 17354752,
+          "correctness_probes": 59,
+          "rss_samples": 2985
+        }
+      },
+      "database_state": {
+        "vacuum_analyze": true,
+        "row_counts": {
+          "owners": 10,
+          "pets": 13,
+          "visits": 4,
+          "types": 6,
+          "vets": 6,
+          "specialties": 3,
+          "vet_specialties": 5,
+          "users": 1,
+          "roles": 3
+        }
+      }
+    },
+    {
+      "app": "petclinic-rest",
+      "target": "flint",
+      "trial": 6,
+      "server_command": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/petclinic-rest-flint"
+      ],
+      "server_pid": 3725562,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/petclinic-rest-flint",
+        "sha256": "403036e785d01a72b785f544bf3475c08342daf38796a79a0ece56feca68f8d6"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/06-petclinic-rest-flint-server.log",
+      "warmup": {
+        "count": 49992,
+        "duration_seconds": 10.001528787,
+        "requests_per_second": 4998.435845625888,
+        "p50_ms": 0.110686,
+        "p99_ms": 0.393314,
+        "p999_ms": 0.530768,
+        "cpu_ns_per_request": 48399.03201935961,
+        "peak_rss_bytes": 16433152,
+        "load_cpu_fraction": 0.038626085460723436,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "10s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "5000",
+            "--latency-correction",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:52065/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "14a052deb2083bd2682859e0055a102ce28f44eb21d6871e8b339213c417a4f5",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/06-petclinic-rest-flint-warmup.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/06-petclinic-rest-flint-warmup.stderr.txt",
+          "wall_seconds": 10.017472528852522
+        },
+        "process": {
+          "cpu_nanoseconds": 2420000000.0,
+          "peak_rss_bytes": 16433152,
+          "correctness_probes": 9,
+          "rss_samples": 497
+        }
+      },
+      "latency": {
+        "count": 299997,
+        "duration_seconds": 60.001119375,
+        "requests_per_second": 4999.856721423041,
+        "p50_ms": 0.110296,
+        "p99_ms": 0.39091400000000004,
+        "p999_ms": 0.49701,
+        "cpu_ns_per_request": 47857.73322313168,
+        "peak_rss_bytes": 16637952,
+        "load_cpu_fraction": 0.0384939547646511,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "5000",
+            "--latency-correction",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:52065/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "32f5591c6d24de7f0842332d39ad55982a9bf94653222b00dbe6ffabd34f0092",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/06-petclinic-rest-flint-latency.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/06-petclinic-rest-flint-latency.stderr.txt",
+          "wall_seconds": 60.08844152651727
+        },
+        "process": {
+          "cpu_nanoseconds": 14360000000.0,
+          "peak_rss_bytes": 16637952,
+          "correctness_probes": 59,
+          "rss_samples": 2981
+        }
+      },
+      "capacity": {
+        "count": 2139867,
+        "duration_seconds": 60.00889717,
+        "requests_per_second": 35659.16223952496,
+        "p50_ms": 1.569887,
+        "p99_ms": 4.780749,
+        "p999_ms": 7.032279,
+        "cpu_ns_per_request": 43870.67590187698,
+        "peak_rss_bytes": 17473536,
+        "load_cpu_fraction": 0.8147360447514962,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:52065/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "66109197e46c6abdff746a36805b7fd0555779f7320857344c4a587527841c4a",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/06-petclinic-rest-flint-capacity.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/06-petclinic-rest-flint-capacity.stderr.txt",
+          "wall_seconds": 60.400677086785436
+        },
+        "process": {
+          "cpu_nanoseconds": 93880000000.0,
+          "peak_rss_bytes": 17473536,
+          "correctness_probes": 59,
+          "rss_samples": 2985
+        }
+      },
+      "database_state": {
+        "vacuum_analyze": true,
+        "row_counts": {
+          "owners": 10,
+          "pets": 13,
+          "visits": 4,
+          "types": 6,
+          "vets": 6,
+          "specialties": 3,
+          "vet_specialties": 5,
+          "users": 1,
+          "roles": 3
+        }
+      }
+    },
+    {
+      "app": "petclinic-rest",
+      "target": "go",
+      "trial": 6,
+      "server_command": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/petclinic-rest-go"
+      ],
+      "server_pid": 3726690,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/petclinic-rest-go",
+        "sha256": "5546d077dce57b44f3677c3a845937fb850f1b26bf07ab29acb76763442bbd7c"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/06-petclinic-rest-go-server.log",
+      "warmup": {
+        "count": 49997,
+        "duration_seconds": 10.001147361,
+        "requests_per_second": 4999.126419731194,
+        "p50_ms": 0.041308,
+        "p99_ms": 0.126265,
+        "p999_ms": 0.700672,
+        "cpu_ns_per_request": 15798.1042274927,
+        "peak_rss_bytes": 24068096,
+        "load_cpu_fraction": 0.01289578710704065,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "10s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "5000",
+            "--latency-correction",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:37095/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "b4826a46ac1e1f8fbc47d4cf16c67838f5371cf96a4db51ef47af5ddf585294a",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/06-petclinic-rest-go-warmup.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/06-petclinic-rest-go-warmup.stderr.txt",
+          "wall_seconds": 10.046653137542307
+        },
+        "process": {
+          "cpu_nanoseconds": 790000000.0,
+          "peak_rss_bytes": 24068096,
+          "correctness_probes": 9,
+          "rss_samples": 499
+        }
+      },
+      "latency": {
+        "count": 299997,
+        "duration_seconds": 60.001255829,
+        "requests_per_second": 4999.845350820216,
+        "p50_ms": 0.040769,
+        "p99_ms": 0.121935,
+        "p999_ms": 0.6334850000000001,
+        "cpu_ns_per_request": 15830.378329378516,
+        "peak_rss_bytes": 24092672,
+        "load_cpu_fraction": 0.012687832204744348,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "5000",
+            "--latency-correction",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:37095/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "061778b86630bcc443387c3c42974f2b9d7b95fb93fbf0c92667ef514aa10297",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/06-petclinic-rest-go-latency.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/06-petclinic-rest-go-latency.stderr.txt",
+          "wall_seconds": 60.08134310878813
+        },
+        "process": {
+          "cpu_nanoseconds": 4750000000.0,
+          "peak_rss_bytes": 24092672,
+          "correctness_probes": 59,
+          "rss_samples": 2984
+        }
+      },
+      "capacity": {
+        "count": 9478283,
+        "duration_seconds": 60.001551847,
+        "requests_per_second": 157967.29764871742,
+        "p50_ms": 0.341797,
+        "p99_ms": 1.273959,
+        "p999_ms": 3.281439,
+        "cpu_ns_per_request": 12324.937773940257,
+        "peak_rss_bytes": 25157632,
+        "load_cpu_fraction": 0.2686385960640687,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:37095/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "2c27096acd87e3c355629085530ff8ed1d91c2f2b909884b09efc5724cb6149f",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/06-petclinic-rest-go-capacity.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/06-petclinic-rest-go-capacity.stderr.txt",
+          "wall_seconds": 61.6655080197379
+        },
+        "process": {
+          "cpu_nanoseconds": 116820000000.0,
+          "peak_rss_bytes": 25157632,
+          "correctness_probes": 61,
+          "rss_samples": 3058
+        }
+      },
+      "database_state": {
+        "vacuum_analyze": true,
+        "row_counts": {
+          "owners": 10,
+          "pets": 13,
+          "visits": 4,
+          "types": 6,
+          "vets": 6,
+          "specialties": 3,
+          "vet_specialties": 5,
+          "users": 1,
+          "roles": 3
+        }
+      }
+    },
+    {
+      "app": "petclinic-rest",
+      "target": "go",
+      "trial": 7,
+      "server_command": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/petclinic-rest-go"
+      ],
+      "server_pid": 3727795,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/petclinic-rest-go",
+        "sha256": "5546d077dce57b44f3677c3a845937fb850f1b26bf07ab29acb76763442bbd7c"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/07-petclinic-rest-go-server.log",
+      "warmup": {
+        "count": 49992,
+        "duration_seconds": 10.001344644,
+        "requests_per_second": 4998.527875948277,
+        "p50_ms": 0.040859000000000006,
+        "p99_ms": 0.12731499999999998,
+        "p999_ms": 1.123985,
+        "cpu_ns_per_request": 15799.684006319874,
+        "peak_rss_bytes": 24395776,
+        "load_cpu_fraction": 0.012823814429893464,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "10s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "5000",
+            "--latency-correction",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:37247/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "301896e7fa316fef505bd2a9488cc4b3ef8307edf853ce696d3ae9ede7676b0b",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/07-petclinic-rest-go-warmup.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/07-petclinic-rest-go-warmup.stderr.txt",
+          "wall_seconds": 10.03075182531029
+        },
+        "process": {
+          "cpu_nanoseconds": 790000000.0,
+          "peak_rss_bytes": 24395776,
+          "correctness_probes": 9,
+          "rss_samples": 497
+        }
+      },
+      "latency": {
+        "count": 299998,
+        "duration_seconds": 60.000984658,
+        "requests_per_second": 4999.884613726934,
+        "p50_ms": 0.040658,
+        "p99_ms": 0.118095,
+        "p999_ms": 0.202071,
+        "cpu_ns_per_request": 15763.671569068543,
+        "peak_rss_bytes": 24485888,
+        "load_cpu_fraction": 0.01274242349787721,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "5000",
+            "--latency-correction",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:37247/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "4fabf44c97f37b0055d914fc011bb6b9ced4b6be0c17912da461bb2fe423c060",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/07-petclinic-rest-go-latency.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/07-petclinic-rest-go-latency.stderr.txt",
+          "wall_seconds": 60.079191382043064
+        },
+        "process": {
+          "cpu_nanoseconds": 4730000000.0,
+          "peak_rss_bytes": 24485888,
+          "correctness_probes": 59,
+          "rss_samples": 2986
+        }
+      },
+      "capacity": {
+        "count": 9481013,
+        "duration_seconds": 60.001533886,
+        "requests_per_second": 158012.84377185197,
+        "p50_ms": 0.341626,
+        "p99_ms": 1.271639,
+        "p999_ms": 3.366436,
+        "cpu_ns_per_request": 12324.55440433799,
+        "peak_rss_bytes": 25366528,
+        "load_cpu_fraction": 0.2683700693638318,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:37247/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "f246f28c96ad5d73e53f621d5ffe3c7a8b1effc09ae9129b66fccefafe4e2012",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/07-petclinic-rest-go-capacity.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/07-petclinic-rest-go-capacity.stderr.txt",
+          "wall_seconds": 61.478564055636525
+        },
+        "process": {
+          "cpu_nanoseconds": 116850000000.0,
+          "peak_rss_bytes": 25366528,
+          "correctness_probes": 60,
+          "rss_samples": 3048
+        }
+      },
+      "database_state": {
+        "vacuum_analyze": true,
+        "row_counts": {
+          "owners": 10,
+          "pets": 13,
+          "visits": 4,
+          "types": 6,
+          "vets": 6,
+          "specialties": 3,
+          "vet_specialties": 5,
+          "users": 1,
+          "roles": 3
+        }
+      }
+    },
+    {
+      "app": "petclinic-rest",
+      "target": "flint",
+      "trial": 7,
+      "server_command": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/petclinic-rest-flint"
+      ],
+      "server_pid": 3728953,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/petclinic-rest-flint",
+        "sha256": "403036e785d01a72b785f544bf3475c08342daf38796a79a0ece56feca68f8d6"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/07-petclinic-rest-flint-server.log",
+      "warmup": {
+        "count": 49992,
+        "duration_seconds": 10.001388581,
+        "requests_per_second": 4998.5059169655315,
+        "p50_ms": 0.11196600000000001,
+        "p99_ms": 0.398754,
+        "p999_ms": 0.48296100000000003,
+        "cpu_ns_per_request": 48399.03201935961,
+        "peak_rss_bytes": 16449536,
+        "load_cpu_fraction": 0.03818275444500593,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "10s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "5000",
+            "--latency-correction",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:47013/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "7c691995ecf21debec690a70e7a2e97ce22d8d8107d0a863896d62c9ed99369a",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/07-petclinic-rest-flint-warmup.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/07-petclinic-rest-flint-warmup.stderr.txt",
+          "wall_seconds": 10.043441222980618
+        },
+        "process": {
+          "cpu_nanoseconds": 2420000000.0,
+          "peak_rss_bytes": 16449536,
+          "correctness_probes": 9,
+          "rss_samples": 498
+        }
+      },
+      "latency": {
+        "count": 299998,
+        "duration_seconds": 60.001095443,
+        "requests_per_second": 4999.875382025199,
+        "p50_ms": 0.110536,
+        "p99_ms": 0.384045,
+        "p999_ms": 0.48751,
+        "cpu_ns_per_request": 48290.82474329877,
+        "peak_rss_bytes": 16592896,
+        "load_cpu_fraction": 0.03841585369649942,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "5000",
+            "--latency-correction",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:47013/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "6ff23b542e6daf017d18d43eeb8bfbb3c130debc3bfbe49d5fa376fe605e7457",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/07-petclinic-rest-flint-latency.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/07-petclinic-rest-flint-latency.stderr.txt",
+          "wall_seconds": 60.08208273164928
+        },
+        "process": {
+          "cpu_nanoseconds": 14490000000.0,
+          "peak_rss_bytes": 16592896,
+          "correctness_probes": 59,
+          "rss_samples": 2979
+        }
+      },
+      "capacity": {
+        "count": 2175922,
+        "duration_seconds": 60.006863416,
+        "requests_per_second": 36261.21873618577,
+        "p50_ms": 1.5686280000000001,
+        "p99_ms": 4.54229,
+        "p999_ms": 6.584109000000001,
+        "cpu_ns_per_request": 44049.09785517429,
+        "peak_rss_bytes": 17510400,
+        "load_cpu_fraction": 0.8160071024057526,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:47013/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "27278388ce7ea9b71cb0e2cbc99ae3e9f05943f628cd2bf08cf7881e116d39a8",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/07-petclinic-rest-flint-capacity.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/07-petclinic-rest-flint-capacity.stderr.txt",
+          "wall_seconds": 60.44999835733324
+        },
+        "process": {
+          "cpu_nanoseconds": 95850000000.0,
+          "peak_rss_bytes": 17510400,
+          "correctness_probes": 59,
+          "rss_samples": 2988
+        }
+      },
+      "database_state": {
+        "vacuum_analyze": true,
+        "row_counts": {
+          "owners": 10,
+          "pets": 13,
+          "visits": 4,
+          "types": 6,
+          "vets": 6,
+          "specialties": 3,
+          "vet_specialties": 5,
+          "users": 1,
+          "roles": 3
+        }
+      }
+    },
+    {
+      "app": "petclinic-rest",
+      "target": "flint",
+      "trial": 8,
+      "server_command": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/petclinic-rest-flint"
+      ],
+      "server_pid": 3730396,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/petclinic-rest-flint",
+        "sha256": "403036e785d01a72b785f544bf3475c08342daf38796a79a0ece56feca68f8d6"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/08-petclinic-rest-flint-server.log",
+      "warmup": {
+        "count": 49998,
+        "duration_seconds": 10.000962257,
+        "requests_per_second": 4999.31893703576,
+        "p50_ms": 0.11004499999999999,
+        "p99_ms": 0.397304,
+        "p999_ms": 0.48983000000000004,
+        "cpu_ns_per_request": 47993.28094066831,
+        "peak_rss_bytes": 16543744,
+        "load_cpu_fraction": 0.03818385117737553,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "10s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "5000",
+            "--latency-correction",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:55547/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "4aab6f0bf3f446e27f25b4c9439ad46fa7aab7d6d3ab9369437b80f77b666fc5",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/08-petclinic-rest-flint-warmup.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/08-petclinic-rest-flint-warmup.stderr.txt",
+          "wall_seconds": 10.047035282477736
+        },
+        "process": {
+          "cpu_nanoseconds": 2400000000.0,
+          "peak_rss_bytes": 16543744,
+          "correctness_probes": 9,
+          "rss_samples": 498
+        }
+      },
+      "latency": {
+        "count": 299998,
+        "duration_seconds": 60.001064508,
+        "requests_per_second": 4999.877959831879,
+        "p50_ms": 0.108786,
+        "p99_ms": 0.378305,
+        "p999_ms": 0.480911,
+        "cpu_ns_per_request": 47157.70670239321,
+        "peak_rss_bytes": 16580608,
+        "load_cpu_fraction": 0.03854298733104055,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "5000",
+            "--latency-correction",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:55547/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "c8f45d58a11c35242e2cd0677b980d93aa447d3732d237142d0df7c41d1691b2",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/08-petclinic-rest-flint-latency.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/08-petclinic-rest-flint-latency.stderr.txt",
+          "wall_seconds": 60.088193997740746
+        },
+        "process": {
+          "cpu_nanoseconds": 14150000000.0,
+          "peak_rss_bytes": 16580608,
+          "correctness_probes": 59,
+          "rss_samples": 2981
+        }
+      },
+      "capacity": {
+        "count": 2144634,
+        "duration_seconds": 60.007516055,
+        "requests_per_second": 35739.42300884995,
+        "p50_ms": 1.578258,
+        "p99_ms": 4.6620159999999995,
+        "p999_ms": 6.893847,
+        "cpu_ns_per_request": 44066.91307333964,
+        "peak_rss_bytes": 17584128,
+        "load_cpu_fraction": 0.8108877925526446,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:55547/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "023b0051fc30ed210eecf59ad85f741cc4b10201c2a71d0531370061afbce087",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/08-petclinic-rest-flint-capacity.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/08-petclinic-rest-flint-capacity.stderr.txt",
+          "wall_seconds": 60.44765311572701
+        },
+        "process": {
+          "cpu_nanoseconds": 94510000000.0,
+          "peak_rss_bytes": 17584128,
+          "correctness_probes": 59,
+          "rss_samples": 2984
+        }
+      },
+      "database_state": {
+        "vacuum_analyze": true,
+        "row_counts": {
+          "owners": 10,
+          "pets": 13,
+          "visits": 4,
+          "types": 6,
+          "vets": 6,
+          "specialties": 3,
+          "vet_specialties": 5,
+          "users": 1,
+          "roles": 3
+        }
+      }
+    },
+    {
+      "app": "petclinic-rest",
+      "target": "go",
+      "trial": 8,
+      "server_command": [
+        "taskset",
+        "--cpu-list",
+        "2,3",
+        "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/petclinic-rest-go"
+      ],
+      "server_pid": 3731609,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/d6d15b0073dd/build/spring/petclinic-rest-go",
+        "sha256": "5546d077dce57b44f3677c3a845937fb850f1b26bf07ab29acb76763442bbd7c"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/08-petclinic-rest-go-server.log",
+      "warmup": {
+        "count": 49997,
+        "duration_seconds": 10.000855168,
+        "requests_per_second": 4999.2724782153355,
+        "p50_ms": 0.040888,
+        "p99_ms": 0.125665,
+        "p999_ms": 0.464262,
+        "cpu_ns_per_request": 15798.1042274927,
+        "peak_rss_bytes": 23879680,
+        "load_cpu_fraction": 0.01289833291471248,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "10s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "5000",
+            "--latency-correction",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:43157/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "f44e20688cca6392d8eafeaedca13d0895ae78ce9fb23d87a85ae81e87495c0b",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/08-petclinic-rest-go-warmup.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/08-petclinic-rest-go-warmup.stderr.txt",
+          "wall_seconds": 10.035986887291074
+        },
+        "process": {
+          "cpu_nanoseconds": 790000000.0,
+          "peak_rss_bytes": 23879680,
+          "correctness_probes": 9,
+          "rss_samples": 498
+        }
+      },
+      "latency": {
+        "count": 299993,
+        "duration_seconds": 60.001239402,
+        "requests_per_second": 4999.780054376683,
+        "p50_ms": 0.040808,
+        "p99_ms": 0.116105,
+        "p999_ms": 0.210962,
+        "cpu_ns_per_request": 15797.261807953288,
+        "peak_rss_bytes": 23904256,
+        "load_cpu_fraction": 0.012754119001756168,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-q",
+            "5000",
+            "--latency-correction",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:43157/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "8c524f4fa22b241c7dd83303c85042e1f077dd6a1c867032c0f3669e4eb57fe7",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/08-petclinic-rest-go-latency.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/08-petclinic-rest-go-latency.stderr.txt",
+          "wall_seconds": 60.07490598876029
+        },
+        "process": {
+          "cpu_nanoseconds": 4740000000.0,
+          "peak_rss_bytes": 23904256,
+          "correctness_probes": 59,
+          "rss_samples": 2986
+        }
+      },
+      "capacity": {
+        "count": 9467334,
+        "duration_seconds": 60.002069077,
+        "requests_per_second": 157783.45889790356,
+        "p50_ms": 0.342126,
+        "p99_ms": 1.279659,
+        "p999_ms": 3.435814,
+        "cpu_ns_per_request": 12326.517730222276,
+        "peak_rss_bytes": 25137152,
+        "load_cpu_fraction": 0.2682666144286462,
+        "receipt": {
+          "command": [
+            "taskset",
+            "--cpu-list",
+            "4,5,6,7",
+            "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.tools/oha-1.16.0/oha",
+            "--no-tui",
+            "--output-format",
+            "json",
+            "--http-version",
+            "1.1",
+            "--worker-threads",
+            "4",
+            "-c",
+            "64",
+            "-z",
+            "60s",
+            "-w",
+            "-t",
+            "5s",
+            "-m",
+            "POST",
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "Accept: */*",
+            "-d",
+            "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"address\":\"12 St James Sq.\",\"city\":\"London\",\"telephone\":\"01234abcde\"}",
+            "http://127.0.0.1:43157/petclinic/api/owners"
+          ],
+          "exit_code": 0,
+          "sha256": "8b4342ec162f794f083f59fb4245b91fd183d5810a65a51af161d3db71f510a6",
+          "raw_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/08-petclinic-rest-go-capacity.json",
+          "stderr_file": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/error-validation-p99/20261124T232105Z/http-error-validation-raw/08-petclinic-rest-go-capacity.stderr.txt",
+          "wall_seconds": 61.44508527498692
+        },
+        "process": {
+          "cpu_nanoseconds": 116700000000.0,
+          "peak_rss_bytes": 25137152,
+          "correctness_probes": 60,
+          "rss_samples": 3043
+        }
+      },
+      "database_state": {
+        "vacuum_analyze": true,
+        "row_counts": {
+          "owners": 10,
+          "pets": 13,
+          "visits": 4,
+          "types": 6,
+          "vets": 6,
+          "specialties": 3,
+          "vet_specialties": 5,
+          "users": 1,
+          "roles": 3
+        }
+      }
+    }
+  ],
+  "acceptance": [
+    {
+      "schema": "flint.spring-acceptance/1",
+      "app": "petclinic-rest",
+      "implementation": "flint",
+      "start": null,
+      "extra_args": [],
+      "binary": null,
+      "wire": "exact",
+      "golden_sha256": "ff1317216f4f1930c14cf55b099ab6c45126b6bb796b3deb92e7613aec2f5d61",
+      "cases": [
+        {
+          "name": "root redirects to the Swagger UI",
+          "problems": []
+        },
+        {
+          "name": "actuator links",
+          "problems": []
+        },
+        {
+          "name": "actuator health",
+          "problems": []
+        },
+        {
+          "name": "actuator liveness group",
+          "problems": []
+        },
+        {
+          "name": "actuator readiness group",
+          "problems": []
+        },
+        {
+          "name": "actuator endpoint that is not exposed",
+          "problems": []
+        },
+        {
+          "name": "actuator health with an explicit Accept",
+          "problems": []
+        },
+        {
+          "name": "list owners",
+          "problems": []
+        },
+        {
+          "name": "owners by last name",
+          "problems": []
+        },
+        {
+          "name": "owners by last name prefix",
+          "problems": []
+        },
+        {
+          "name": "owners by an unknown last name",
+          "problems": []
+        },
+        {
+          "name": "owner with pets and visits",
+          "problems": []
+        },
+        {
+          "name": "unknown owner",
+          "problems": []
+        },
+        {
+          "name": "owner id that is not a number",
+          "problems": []
+        },
+        {
+          "name": "owner pet",
+          "problems": []
+        },
+        {
+          "name": "pet of another owner",
+          "problems": []
+        },
+        {
+          "name": "list pets",
+          "problems": []
+        },
+        {
+          "name": "pet",
+          "problems": []
+        },
+        {
+          "name": "unknown pet",
+          "problems": []
+        },
+        {
+          "name": "list visits",
+          "problems": []
+        },
+        {
+          "name": "visit",
+          "problems": []
+        },
+        {
+          "name": "unknown visit",
+          "problems": []
+        },
+        {
+          "name": "list pet types",
+          "problems": []
+        },
+        {
+          "name": "pet type",
+          "problems": []
+        },
+        {
+          "name": "unknown pet type",
+          "problems": []
+        },
+        {
+          "name": "list specialties",
+          "problems": []
+        },
+        {
+          "name": "specialty",
+          "problems": []
+        },
+        {
+          "name": "unknown specialty",
+          "problems": []
+        },
+        {
+          "name": "list vets",
+          "problems": []
+        },
+        {
+          "name": "vet with specialties",
+          "problems": []
+        },
+        {
+          "name": "unknown vet",
+          "problems": []
+        },
+        {
+          "name": "v2 owners default page",
+          "problems": []
+        },
+        {
+          "name": "v2 owners page and size",
+          "problems": []
+        },
+        {
+          "name": "v2 owners past the end",
+          "problems": []
+        },
+        {
+          "name": "v2 owners by last name",
+          "problems": []
+        },
+        {
+          "name": "v2 pets page",
+          "problems": []
+        },
+        {
+          "name": "v2 size below the minimum",
+          "problems": []
+        },
+        {
+          "name": "create owner",
+          "problems": []
+        },
+        {
+          "name": "created owner reads back",
+          "problems": []
+        },
+        {
+          "name": "create owner with UTF-8 names",
+          "problems": []
+        },
+        {
+          "name": "create owner: telephone with letters",
+          "problems": []
+        },
+        {
+          "name": "create owner: blank city",
+          "problems": []
+        },
+        {
+          "name": "create owner: missing first name",
+          "problems": []
+        },
+        {
+          "name": "create owner: first name with digits",
+          "problems": []
+        },
+        {
+          "name": "create owner: malformed JSON",
+          "problems": []
+        },
+        {
+          "name": "create owner: wrong content type",
+          "problems": []
+        },
+        {
+          "name": "update owner",
+          "problems": []
+        },
+        {
+          "name": "updated owner reads back",
+          "problems": []
+        },
+        {
+          "name": "update unknown owner",
+          "problems": []
+        },
+        {
+          "name": "update owner: last name with four parts",
+          "problems": []
+        },
+        {
+          "name": "add pet to owner",
+          "problems": []
+        },
+        {
+          "name": "added pet reads back through the owner",
+          "problems": []
+        },
+        {
+          "name": "add pet to unknown owner",
+          "problems": []
+        },
+        {
+          "name": "add pet: birth date in the future",
+          "problems": []
+        },
+        {
+          "name": "add pet: birth date older than 50 years",
+          "problems": []
+        },
+        {
+          "name": "add pet: blank name",
+          "problems": []
+        },
+        {
+          "name": "add pet: unknown pet type",
+          "problems": []
+        },
+        {
+          "name": "update owner pet",
+          "problems": []
+        },
+        {
+          "name": "update pet of unknown owner",
+          "problems": []
+        },
+        {
+          "name": "add visit through the owner",
+          "problems": []
+        },
+        {
+          "name": "owner with the new pet and visit",
+          "problems": []
+        },
+        {
+          "name": "update pet",
+          "problems": []
+        },
+        {
+          "name": "updated pet reads back",
+          "problems": []
+        },
+        {
+          "name": "update unknown pet",
+          "problems": []
+        },
+        {
+          "name": "create visit",
+          "problems": []
+        },
+        {
+          "name": "create visit: whitespace description",
+          "problems": []
+        },
+        {
+          "name": "create visit for an unknown pet",
+          "problems": []
+        },
+        {
+          "name": "update visit",
+          "problems": []
+        },
+        {
+          "name": "updated visit reads back",
+          "problems": []
+        },
+        {
+          "name": "update unknown visit",
+          "problems": []
+        },
+        {
+          "name": "delete visit",
+          "problems": []
+        },
+        {
+          "name": "delete unknown visit",
+          "problems": []
+        },
+        {
+          "name": "create pet type",
+          "problems": []
+        },
+        {
+          "name": "create pet type: name starting with a digit",
+          "problems": []
+        },
+        {
+          "name": "update pet type without an id",
+          "problems": []
+        },
+        {
+          "name": "update pet type",
+          "problems": []
+        },
+        {
+          "name": "updated pet type reads back",
+          "problems": []
+        },
+        {
+          "name": "update unknown pet type",
+          "problems": []
+        },
+        {
+          "name": "delete pet type",
+          "problems": []
+        },
+        {
+          "name": "delete pet type in use deletes its pets",
+          "problems": []
+        },
+        {
+          "name": "delete unknown pet type",
+          "problems": []
+        },
+        {
+          "name": "create specialty",
+          "problems": []
+        },
+        {
+          "name": "create specialty: name with digits",
+          "problems": []
+        },
+        {
+          "name": "update specialty",
+          "problems": []
+        },
+        {
+          "name": "updated specialty reads back",
+          "problems": []
+        },
+        {
+          "name": "update unknown specialty",
+          "problems": []
+        },
+        {
+          "name": "create vet with a specialty",
+          "problems": []
+        },
+        {
+          "name": "create vet: last name too long",
+          "problems": []
+        },
+        {
+          "name": "update vet",
+          "problems": []
+        },
+        {
+          "name": "updated vet reads back",
+          "problems": []
+        },
+        {
+          "name": "update unknown vet",
+          "problems": []
+        },
+        {
+          "name": "delete vet",
+          "problems": []
+        },
+        {
+          "name": "delete unknown vet",
+          "problems": []
+        },
+        {
+          "name": "delete specialty",
+          "problems": []
+        },
+        {
+          "name": "delete unknown specialty",
+          "problems": []
+        },
+        {
+          "name": "create user",
+          "problems": []
+        },
+        {
+          "name": "create user: role without the ROLE_ prefix",
+          "problems": []
+        },
+        {
+          "name": "create user: missing roles",
+          "problems": []
+        },
+        {
+          "name": "delete pet",
+          "problems": []
+        },
+        {
+          "name": "delete unknown pet",
+          "problems": []
+        },
+        {
+          "name": "delete owner",
+          "problems": []
+        },
+        {
+          "name": "delete unknown owner",
+          "problems": []
+        },
+        {
+          "name": "owners after the changes",
+          "problems": []
+        },
+        {
+          "name": "unknown API path",
+          "problems": []
+        },
+        {
+          "name": "wrong method",
+          "problems": []
+        },
+        {
+          "name": "path outside the context path",
+          "problems": []
+        },
+        {
+          "name": "CORS simple request",
+          "problems": []
+        },
+        {
+          "name": "CORS preflight",
+          "problems": []
+        },
+        {
+          "name": "CORS preflight for a method that is not mapped",
+          "problems": []
+        }
+      ],
+      "passed": 109,
+      "total": 109,
+      "success": true,
+      "seconds": 0.11476409528404474
+    },
+    {
+      "schema": "flint.spring-acceptance/1",
+      "app": "petclinic-rest",
+      "implementation": "go",
+      "start": null,
+      "extra_args": [],
+      "binary": null,
+      "wire": "semantic",
+      "golden_sha256": "ff1317216f4f1930c14cf55b099ab6c45126b6bb796b3deb92e7613aec2f5d61",
+      "cases": [
+        {
+          "name": "root redirects to the Swagger UI",
+          "problems": []
+        },
+        {
+          "name": "actuator links",
+          "problems": []
+        },
+        {
+          "name": "actuator health",
+          "problems": []
+        },
+        {
+          "name": "actuator liveness group",
+          "problems": []
+        },
+        {
+          "name": "actuator readiness group",
+          "problems": []
+        },
+        {
+          "name": "actuator endpoint that is not exposed",
+          "problems": []
+        },
+        {
+          "name": "actuator health with an explicit Accept",
+          "problems": []
+        },
+        {
+          "name": "list owners",
+          "problems": []
+        },
+        {
+          "name": "owners by last name",
+          "problems": []
+        },
+        {
+          "name": "owners by last name prefix",
+          "problems": []
+        },
+        {
+          "name": "owners by an unknown last name",
+          "problems": []
+        },
+        {
+          "name": "owner with pets and visits",
+          "problems": []
+        },
+        {
+          "name": "unknown owner",
+          "problems": []
+        },
+        {
+          "name": "owner id that is not a number",
+          "problems": []
+        },
+        {
+          "name": "owner pet",
+          "problems": []
+        },
+        {
+          "name": "pet of another owner",
+          "problems": []
+        },
+        {
+          "name": "list pets",
+          "problems": []
+        },
+        {
+          "name": "pet",
+          "problems": []
+        },
+        {
+          "name": "unknown pet",
+          "problems": []
+        },
+        {
+          "name": "list visits",
+          "problems": []
+        },
+        {
+          "name": "visit",
+          "problems": []
+        },
+        {
+          "name": "unknown visit",
+          "problems": []
+        },
+        {
+          "name": "list pet types",
+          "problems": []
+        },
+        {
+          "name": "pet type",
+          "problems": []
+        },
+        {
+          "name": "unknown pet type",
+          "problems": []
+        },
+        {
+          "name": "list specialties",
+          "problems": []
+        },
+        {
+          "name": "specialty",
+          "problems": []
+        },
+        {
+          "name": "unknown specialty",
+          "problems": []
+        },
+        {
+          "name": "list vets",
+          "problems": []
+        },
+        {
+          "name": "vet with specialties",
+          "problems": []
+        },
+        {
+          "name": "unknown vet",
+          "problems": []
+        },
+        {
+          "name": "v2 owners default page",
+          "problems": []
+        },
+        {
+          "name": "v2 owners page and size",
+          "problems": []
+        },
+        {
+          "name": "v2 owners past the end",
+          "problems": []
+        },
+        {
+          "name": "v2 owners by last name",
+          "problems": []
+        },
+        {
+          "name": "v2 pets page",
+          "problems": []
+        },
+        {
+          "name": "v2 size below the minimum",
+          "problems": []
+        },
+        {
+          "name": "create owner",
+          "problems": []
+        },
+        {
+          "name": "created owner reads back",
+          "problems": []
+        },
+        {
+          "name": "create owner with UTF-8 names",
+          "problems": []
+        },
+        {
+          "name": "create owner: telephone with letters",
+          "problems": []
+        },
+        {
+          "name": "create owner: blank city",
+          "problems": []
+        },
+        {
+          "name": "create owner: missing first name",
+          "problems": []
+        },
+        {
+          "name": "create owner: first name with digits",
+          "problems": []
+        },
+        {
+          "name": "create owner: malformed JSON",
+          "problems": []
+        },
+        {
+          "name": "create owner: wrong content type",
+          "problems": []
+        },
+        {
+          "name": "update owner",
+          "problems": []
+        },
+        {
+          "name": "updated owner reads back",
+          "problems": []
+        },
+        {
+          "name": "update unknown owner",
+          "problems": []
+        },
+        {
+          "name": "update owner: last name with four parts",
+          "problems": []
+        },
+        {
+          "name": "add pet to owner",
+          "problems": []
+        },
+        {
+          "name": "added pet reads back through the owner",
+          "problems": []
+        },
+        {
+          "name": "add pet to unknown owner",
+          "problems": []
+        },
+        {
+          "name": "add pet: birth date in the future",
+          "problems": []
+        },
+        {
+          "name": "add pet: birth date older than 50 years",
+          "problems": []
+        },
+        {
+          "name": "add pet: blank name",
+          "problems": []
+        },
+        {
+          "name": "add pet: unknown pet type",
+          "problems": []
+        },
+        {
+          "name": "update owner pet",
+          "problems": []
+        },
+        {
+          "name": "update pet of unknown owner",
+          "problems": []
+        },
+        {
+          "name": "add visit through the owner",
+          "problems": []
+        },
+        {
+          "name": "owner with the new pet and visit",
+          "problems": []
+        },
+        {
+          "name": "update pet",
+          "problems": []
+        },
+        {
+          "name": "updated pet reads back",
+          "problems": []
+        },
+        {
+          "name": "update unknown pet",
+          "problems": []
+        },
+        {
+          "name": "create visit",
+          "problems": []
+        },
+        {
+          "name": "create visit: whitespace description",
+          "problems": []
+        },
+        {
+          "name": "create visit for an unknown pet",
+          "problems": []
+        },
+        {
+          "name": "update visit",
+          "problems": []
+        },
+        {
+          "name": "updated visit reads back",
+          "problems": []
+        },
+        {
+          "name": "update unknown visit",
+          "problems": []
+        },
+        {
+          "name": "delete visit",
+          "problems": []
+        },
+        {
+          "name": "delete unknown visit",
+          "problems": []
+        },
+        {
+          "name": "create pet type",
+          "problems": []
+        },
+        {
+          "name": "create pet type: name starting with a digit",
+          "problems": []
+        },
+        {
+          "name": "update pet type without an id",
+          "problems": []
+        },
+        {
+          "name": "update pet type",
+          "problems": []
+        },
+        {
+          "name": "updated pet type reads back",
+          "problems": []
+        },
+        {
+          "name": "update unknown pet type",
+          "problems": []
+        },
+        {
+          "name": "delete pet type",
+          "problems": []
+        },
+        {
+          "name": "delete pet type in use deletes its pets",
+          "problems": []
+        },
+        {
+          "name": "delete unknown pet type",
+          "problems": []
+        },
+        {
+          "name": "create specialty",
+          "problems": []
+        },
+        {
+          "name": "create specialty: name with digits",
+          "problems": []
+        },
+        {
+          "name": "update specialty",
+          "problems": []
+        },
+        {
+          "name": "updated specialty reads back",
+          "problems": []
+        },
+        {
+          "name": "update unknown specialty",
+          "problems": []
+        },
+        {
+          "name": "create vet with a specialty",
+          "problems": []
+        },
+        {
+          "name": "create vet: last name too long",
+          "problems": []
+        },
+        {
+          "name": "update vet",
+          "problems": []
+        },
+        {
+          "name": "updated vet reads back",
+          "problems": []
+        },
+        {
+          "name": "update unknown vet",
+          "problems": []
+        },
+        {
+          "name": "delete vet",
+          "problems": []
+        },
+        {
+          "name": "delete unknown vet",
+          "problems": []
+        },
+        {
+          "name": "delete specialty",
+          "problems": []
+        },
+        {
+          "name": "delete unknown specialty",
+          "problems": []
+        },
+        {
+          "name": "create user",
+          "problems": []
+        },
+        {
+          "name": "create user: role without the ROLE_ prefix",
+          "problems": []
+        },
+        {
+          "name": "create user: missing roles",
+          "problems": []
+        },
+        {
+          "name": "delete pet",
+          "problems": []
+        },
+        {
+          "name": "delete unknown pet",
+          "problems": []
+        },
+        {
+          "name": "delete owner",
+          "problems": []
+        },
+        {
+          "name": "delete unknown owner",
+          "problems": []
+        },
+        {
+          "name": "owners after the changes",
+          "problems": []
+        },
+        {
+          "name": "unknown API path",
+          "problems": []
+        },
+        {
+          "name": "wrong method",
+          "problems": []
+        },
+        {
+          "name": "path outside the context path",
+          "problems": []
+        },
+        {
+          "name": "CORS simple request",
+          "problems": []
+        },
+        {
+          "name": "CORS preflight",
+          "problems": []
+        },
+        {
+          "name": "CORS preflight for a method that is not mapped",
+          "problems": []
+        }
+      ],
+      "passed": 109,
+      "total": 109,
+      "success": true,
+      "seconds": 0.08737380336970091
+    }
+  ],
+  "missing_flint": [],
+  "context_errors": []
+}
