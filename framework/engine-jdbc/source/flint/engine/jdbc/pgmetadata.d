@@ -1,14 +1,12 @@
+// Ported from pgjdbc REL42.7.14: pgjdbc/src/main/java/org/postgresql/jdbc/PgDatabaseMetaData.java
+// Also ported: pgjdbc/src/main/java/org/postgresql/jdbc/TypeInfoCache.java (the built-in type table, getPrecision,
+// getScale and getDisplaySize); from PgDatabaseMetaData: getTables, getColumns and tableTypeClauses.
+// Copyright (c) 2004, PostgreSQL Global Development Group
+// Copyright (c) 2005, PostgreSQL Global Development Group (TypeInfoCache)
+// Licensed under the BSD 2-Clause License (SPDX-License-Identifier: BSD-2-Clause); see the LICENSE file in pgjdbc's
+// root and Flint's NOTICE.
+// Modified by the Flint authors.
 /*
- * Copyright (c) 2004, PostgreSQL Global Development Group
- * Copyright (c) 2005, PostgreSQL Global Development Group (TypeInfoCache)
- * See the LICENSE file in the project root for more information.
- *
- * Port of pgjdbc 42.7.14 (https://github.com/pgjdbc/pgjdbc, tag REL42.7.14), BSD-2-Clause:
- * pgjdbc/src/main/java/org/postgresql/jdbc/PgDatabaseMetaData.java: getTables, getColumns and tableTypeClauses
- * pgjdbc/src/main/java/org/postgresql/jdbc/TypeInfoCache.java: the built-in type table, getPrecision, getScale and
- * getDisplaySize
- *
- * Modified by the Flint authors.
  * Changes: D. The queries are built as pgjdbc builds them for a server of version 12 or later (Flint's PostgreSQL
  * support) with hideUnprivilegedObjects off, so the server receives the same statement text and parameters. The
  * getColumns row post-processing returns plain values for flint.engine.jdbc to put in its result set.
