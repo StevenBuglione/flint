@@ -1,0 +1,507 @@
+{
+  "schema": "flint.spring-baseline/1",
+  "mode": "production",
+  "app": "petclinic-rest",
+  "impl": "go",
+  "captured": "20261125T043938Z",
+  "fingerprint": {
+    "app": "petclinic-rest",
+    "impl": "go",
+    "workloads": [
+      "error",
+      "http"
+    ],
+    "http_manifest_sha256": "ebd2e71797d79278116d85c6a983a439e5ca9a7279e2243ab906c87d804e02aa",
+    "error_manifest_sha256": "960fbb63f8a0681cedb7de47dbebd2f92c9103f64545244061268cbbc1e5c55e",
+    "oha_sha256": "620bb9e16fb53eabc9a3fc45f88bdb41fefa3fee5c05e75892011ce320391716",
+    "postgres": {
+      "version": "18.7",
+      "postgres_sha256": "8f028b7770e78b3b69fe03ad965947c41cac51f913a5485c4c632508692bcc99"
+    },
+    "database_protocol": "fresh database per launch, fixture loaded by the application, VACUUM ANALYZE after readiness, then the warm-up phase (1)",
+    "cpu": {
+      "model": "AMD RYZEN AI MAX+ 395 w/ Radeon 8060S",
+      "microcode": "0xb700032",
+      "logical_cpus": 32
+    },
+    "kernel": "7.0.0-31-generic",
+    "governors": [
+      "performance"
+    ],
+    "cpu_sets": {
+      "server_cpus": [
+        2,
+        3
+      ],
+      "load_cpus": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "database_cpus": [
+        8,
+        9
+      ]
+    },
+    "comparator_sha256": "3e834bcc1298e765de0ce0b120640074a53aab5f964f903203ca1711b9636623",
+    "go": "1.27.4",
+    "census_sha256": "a42e2a90bf681b765d6c5f49df3823833f5db09ce88cc92f2c40d3e5bac9214f"
+  },
+  "acceptance": {
+    "passed": 109,
+    "total": 109
+  },
+  "series": {
+    "petclinic-rest": {
+      "p50_ms": [
+        0.23578100000000002,
+        0.234561,
+        0.236591,
+        0.235418,
+        0.23612899999999998,
+        0.235489,
+        0.23696899999999999,
+        0.237189,
+        0.23646
+      ],
+      "p99_ms": [
+        0.5565490000000001,
+        0.548389,
+        0.5586089999999999,
+        0.561642,
+        0.5680729999999999,
+        0.5509449999999999,
+        0.566145,
+        0.559836,
+        0.554007
+      ],
+      "p999_ms": [
+        1.063,
+        1.0617590000000001,
+        0.946914,
+        1.535702,
+        1.522488,
+        1.1030499999999999,
+        1.162818,
+        1.521684,
+        1.222598
+      ],
+      "peak_rss_bytes": [
+        26853376,
+        26701824,
+        26755072,
+        26501120,
+        26349568,
+        26955776,
+        26591232,
+        26804224,
+        27004928
+      ],
+      "cpu_ns_per_request": [
+        64587.72833161699,
+        64287.78532078905,
+        64287.78532078905,
+        64054.496312367315,
+        64389.053860843655,
+        64222.20148507592,
+        64655.45972031514,
+        64422.381528473496,
+        64222.20148507592
+      ],
+      "requests_per_second": [
+        19716.127340141757,
+        19750.96154559393,
+        19806.59541443872,
+        19750.19766389745,
+        19704.928656833432,
+        19700.54052670425,
+        19694.12297124944,
+        19644.96917039054,
+        19699.759648493673
+      ]
+    },
+    "petclinic-rest:validation-error": {
+      "p50_ms": [
+        0.09900500000000001,
+        0.100166,
+        0.10015500000000001,
+        0.099496,
+        0.099886,
+        0.100405,
+        0.09973599999999999,
+        0.101346,
+        0.10126600000000001
+      ],
+      "p99_ms": [
+        0.206212,
+        0.216811,
+        0.213231,
+        0.207511,
+        0.216961,
+        0.21105200000000002,
+        0.21022200000000002,
+        0.220621,
+        0.21688100000000002
+      ],
+      "p999_ms": [
+        0.351935,
+        0.384044,
+        0.39091400000000004,
+        0.358376,
+        0.391954,
+        0.371475,
+        0.34594600000000003,
+        0.354146,
+        0.371366
+      ],
+      "peak_rss_bytes": [
+        22863872,
+        22802432,
+        23080960,
+        22626304,
+        22339584,
+        23035904,
+        22355968,
+        22958080,
+        22589440
+      ],
+      "cpu_ns_per_request": [
+        31661.178729020303,
+        32027.781851145803,
+        31927.79918147521,
+        32160.66334284267,
+        31961.233257012973,
+        32093.902158589866,
+        32160.55616099608,
+        32927.735618278224,
+        32894.29832162425
+      ],
+      "requests_per_second": [
+        53081.97089896206,
+        53534.665291837824,
+        53683.360487327904,
+        53809.178072734256,
+        53186.340011646265,
+        53824.065847894206,
+        53241.42163737683,
+        52936.40798558857,
+        53101.99669597376
+      ]
+    }
+  },
+  "effective_workloads": {
+    "petclinic-rest": {
+      "runs": 9,
+      "duration_seconds": 60,
+      "capacity_seconds": 60,
+      "warmup_seconds": 10,
+      "connections": 64,
+      "request_timeout_seconds": 5,
+      "server_cpus": [
+        2,
+        3
+      ],
+      "load_cpus": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "database_cpus": [
+        8,
+        9
+      ]
+    },
+    "petclinic-rest:validation-error": {
+      "runs": 9,
+      "duration_seconds": 60,
+      "capacity_seconds": 60,
+      "warmup_seconds": 10,
+      "connections": 64,
+      "request_timeout_seconds": 5,
+      "server_cpus": [
+        2,
+        3
+      ],
+      "load_cpus": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "database_cpus": [
+        8,
+        9
+      ]
+    }
+  },
+  "trials": [
+    {
+      "workload": "petclinic-rest",
+      "trial": 0,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/60d514f3554c/build/spring/petclinic-rest-go",
+        "sha256": "17ce17f4410596553414c5dcb6df2278af0f58386910ff5d3d36bab5843c3445"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/go-baseline-petclinic-rest-3/20261125T043924Z/baselines/go/petclinic-rest/20261125T043938Z/raw/00-petclinic-rest-go-http-server.log"
+    },
+    {
+      "workload": "petclinic-rest",
+      "trial": 1,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/60d514f3554c/build/spring/petclinic-rest-go",
+        "sha256": "17ce17f4410596553414c5dcb6df2278af0f58386910ff5d3d36bab5843c3445"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/go-baseline-petclinic-rest-3/20261125T043924Z/baselines/go/petclinic-rest/20261125T043938Z/raw/01-petclinic-rest-go-http-server.log"
+    },
+    {
+      "workload": "petclinic-rest",
+      "trial": 2,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/60d514f3554c/build/spring/petclinic-rest-go",
+        "sha256": "17ce17f4410596553414c5dcb6df2278af0f58386910ff5d3d36bab5843c3445"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/go-baseline-petclinic-rest-3/20261125T043924Z/baselines/go/petclinic-rest/20261125T043938Z/raw/02-petclinic-rest-go-http-server.log"
+    },
+    {
+      "workload": "petclinic-rest",
+      "trial": 3,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/60d514f3554c/build/spring/petclinic-rest-go",
+        "sha256": "17ce17f4410596553414c5dcb6df2278af0f58386910ff5d3d36bab5843c3445"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/go-baseline-petclinic-rest-3/20261125T043924Z/baselines/go/petclinic-rest/20261125T043938Z/raw/03-petclinic-rest-go-http-server.log"
+    },
+    {
+      "workload": "petclinic-rest",
+      "trial": 4,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/60d514f3554c/build/spring/petclinic-rest-go",
+        "sha256": "17ce17f4410596553414c5dcb6df2278af0f58386910ff5d3d36bab5843c3445"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/go-baseline-petclinic-rest-3/20261125T043924Z/baselines/go/petclinic-rest/20261125T043938Z/raw/04-petclinic-rest-go-http-server.log"
+    },
+    {
+      "workload": "petclinic-rest",
+      "trial": 5,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/60d514f3554c/build/spring/petclinic-rest-go",
+        "sha256": "17ce17f4410596553414c5dcb6df2278af0f58386910ff5d3d36bab5843c3445"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/go-baseline-petclinic-rest-3/20261125T043924Z/baselines/go/petclinic-rest/20261125T043938Z/raw/05-petclinic-rest-go-http-server.log"
+    },
+    {
+      "workload": "petclinic-rest",
+      "trial": 6,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/60d514f3554c/build/spring/petclinic-rest-go",
+        "sha256": "17ce17f4410596553414c5dcb6df2278af0f58386910ff5d3d36bab5843c3445"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/go-baseline-petclinic-rest-3/20261125T043924Z/baselines/go/petclinic-rest/20261125T043938Z/raw/06-petclinic-rest-go-http-server.log"
+    },
+    {
+      "workload": "petclinic-rest",
+      "trial": 7,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/60d514f3554c/build/spring/petclinic-rest-go",
+        "sha256": "17ce17f4410596553414c5dcb6df2278af0f58386910ff5d3d36bab5843c3445"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/go-baseline-petclinic-rest-3/20261125T043924Z/baselines/go/petclinic-rest/20261125T043938Z/raw/07-petclinic-rest-go-http-server.log"
+    },
+    {
+      "workload": "petclinic-rest",
+      "trial": 8,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/60d514f3554c/build/spring/petclinic-rest-go",
+        "sha256": "17ce17f4410596553414c5dcb6df2278af0f58386910ff5d3d36bab5843c3445"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/go-baseline-petclinic-rest-3/20261125T043924Z/baselines/go/petclinic-rest/20261125T043938Z/raw/08-petclinic-rest-go-http-server.log"
+    },
+    {
+      "workload": "petclinic-rest:validation-error",
+      "trial": 0,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/60d514f3554c/build/spring/petclinic-rest-go",
+        "sha256": "17ce17f4410596553414c5dcb6df2278af0f58386910ff5d3d36bab5843c3445"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/go-baseline-petclinic-rest-3/20261125T043924Z/baselines/go/petclinic-rest/20261125T043938Z/raw/00-petclinic-rest-go-error-server.log"
+    },
+    {
+      "workload": "petclinic-rest:validation-error",
+      "trial": 1,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/60d514f3554c/build/spring/petclinic-rest-go",
+        "sha256": "17ce17f4410596553414c5dcb6df2278af0f58386910ff5d3d36bab5843c3445"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/go-baseline-petclinic-rest-3/20261125T043924Z/baselines/go/petclinic-rest/20261125T043938Z/raw/01-petclinic-rest-go-error-server.log"
+    },
+    {
+      "workload": "petclinic-rest:validation-error",
+      "trial": 2,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/60d514f3554c/build/spring/petclinic-rest-go",
+        "sha256": "17ce17f4410596553414c5dcb6df2278af0f58386910ff5d3d36bab5843c3445"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/go-baseline-petclinic-rest-3/20261125T043924Z/baselines/go/petclinic-rest/20261125T043938Z/raw/02-petclinic-rest-go-error-server.log"
+    },
+    {
+      "workload": "petclinic-rest:validation-error",
+      "trial": 3,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/60d514f3554c/build/spring/petclinic-rest-go",
+        "sha256": "17ce17f4410596553414c5dcb6df2278af0f58386910ff5d3d36bab5843c3445"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/go-baseline-petclinic-rest-3/20261125T043924Z/baselines/go/petclinic-rest/20261125T043938Z/raw/03-petclinic-rest-go-error-server.log"
+    },
+    {
+      "workload": "petclinic-rest:validation-error",
+      "trial": 4,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/60d514f3554c/build/spring/petclinic-rest-go",
+        "sha256": "17ce17f4410596553414c5dcb6df2278af0f58386910ff5d3d36bab5843c3445"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/go-baseline-petclinic-rest-3/20261125T043924Z/baselines/go/petclinic-rest/20261125T043938Z/raw/04-petclinic-rest-go-error-server.log"
+    },
+    {
+      "workload": "petclinic-rest:validation-error",
+      "trial": 5,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/60d514f3554c/build/spring/petclinic-rest-go",
+        "sha256": "17ce17f4410596553414c5dcb6df2278af0f58386910ff5d3d36bab5843c3445"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/go-baseline-petclinic-rest-3/20261125T043924Z/baselines/go/petclinic-rest/20261125T043938Z/raw/05-petclinic-rest-go-error-server.log"
+    },
+    {
+      "workload": "petclinic-rest:validation-error",
+      "trial": 6,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/60d514f3554c/build/spring/petclinic-rest-go",
+        "sha256": "17ce17f4410596553414c5dcb6df2278af0f58386910ff5d3d36bab5843c3445"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/go-baseline-petclinic-rest-3/20261125T043924Z/baselines/go/petclinic-rest/20261125T043938Z/raw/06-petclinic-rest-go-error-server.log"
+    },
+    {
+      "workload": "petclinic-rest:validation-error",
+      "trial": 7,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/60d514f3554c/build/spring/petclinic-rest-go",
+        "sha256": "17ce17f4410596553414c5dcb6df2278af0f58386910ff5d3d36bab5843c3445"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/go-baseline-petclinic-rest-3/20261125T043924Z/baselines/go/petclinic-rest/20261125T043938Z/raw/07-petclinic-rest-go-error-server.log"
+    },
+    {
+      "workload": "petclinic-rest:validation-error",
+      "trial": 8,
+      "identity": {
+        "executable": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/60d514f3554c/build/spring/petclinic-rest-go",
+        "sha256": "17ce17f4410596553414c5dcb6df2278af0f58386910ff5d3d36bab5843c3445"
+      },
+      "server_log": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/go-baseline-petclinic-rest-3/20261125T043924Z/baselines/go/petclinic-rest/20261125T043938Z/raw/08-petclinic-rest-go-error-server.log"
+    }
+  ],
+  "calibration": {
+    "samples": {
+      "requests_per_second": [
+        19550.194103256115,
+        19536.428179751583,
+        19527.93867722897,
+        19550.840350894152,
+        19677.258095162266
+      ],
+      "p50_ms": [
+        0.23718,
+        0.2366,
+        0.23756,
+        0.238261,
+        0.23050199999999998
+      ],
+      "p99_ms": [
+        0.586476,
+        0.629205,
+        0.5958870000000001,
+        0.640786,
+        0.55421
+      ],
+      "cpu_ns_per_request": [
+        64997.40010399584,
+        64990.90127382166,
+        65192.17693876735,
+        64790.92926990221,
+        64797.40810367585
+      ]
+    },
+    "bands": {
+      "requests_per_second": {
+        "mean": 19568.531881258616,
+        "sd": 61.54086000856092,
+        "n": 5,
+        "lower": 19258.15490415914,
+        "upper": 19878.908858358092
+      },
+      "p50_ms": {
+        "mean": 0.2360206,
+        "sd": 0.003143405923516726,
+        "n": 5,
+        "lower": 0.22016705443365603,
+        "upper": 0.25187414556634397
+      },
+      "p99_ms": {
+        "mean": 0.6013128,
+        "sd": 0.03465671668955384,
+        "n": 5,
+        "lower": 0.42652409927660395,
+        "upper": 0.776101500723396
+      },
+      "cpu_ns_per_request": {
+        "mean": 64953.763138032584,
+        "sd": 166.64808106317707,
+        "n": 5,
+        "lower": 64113.285321625364,
+        "upper": 65794.24095443981
+      }
+    }
+  },
+  "probe": {
+    "samples": {
+      "cpu_seconds": [
+        0.02753355447202921,
+        0.027032404206693172,
+        0.027071962133049965,
+        0.027038522996008396,
+        0.027262166142463684,
+        0.027027844451367855,
+        0.027036592364311218,
+        0.02755160443484783,
+        0.027037804014980793
+      ],
+      "memory_seconds": [
+        0.07075047958642244,
+        0.060514675453305244,
+        0.06114392168819904,
+        0.0610033068805933,
+        0.060775634832680225,
+        0.06046408787369728,
+        0.06039973068982363,
+        0.061276196502149105,
+        0.060665979981422424
+      ]
+    },
+    "bands": {
+      "cpu_seconds": {
+        "mean": 0.027176939468416903,
+        "sd": 0.00021999056645685255,
+        "n": 9,
+        "lower": 0.026398947116301686,
+        "upper": 0.02795493182053212
+      },
+      "memory_seconds": {
+        "mean": 0.06188822372092141,
+        "sd": 0.003337539563880959,
+        "n": 9,
+        "lower": 0.05008508007980252,
+        "upper": 0.0736913673620403
+      }
+    }
+  }
+}
