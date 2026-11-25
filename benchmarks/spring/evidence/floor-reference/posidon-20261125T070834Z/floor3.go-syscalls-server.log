@@ -1,0 +1,4 @@
+2026/11/25 07:09:25.511844 INFO petclinic-rest listening on [::]:45859 (context path /petclinic) after 21ms
+2026/11/25 07:09:30.539798 ERROR unexpected error at GET /petclinic/api/owners/1: sql: transaction has already been committed or rolled back
+2026/11/25 07:09:30.539995 ERROR unexpected error at GET /petclinic/api/owners/1: sql: transaction has already been committed or rolled back
+2026/11/25 07:09:30.540185 ERROR unexpected error at GET /petclinic/api/owners/1: context canceled

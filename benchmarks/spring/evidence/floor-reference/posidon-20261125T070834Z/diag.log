@@ -1,0 +1,18 @@
+{"impl": "go", "connections": 64, "rate": null, "rps": 16855, "server_cpu_us": 83.0, "postgres_cpu_us": 8.0, "p50_ms": 2.772}
+{"impl": "go", "connections": 64, "rate": 5000, "rps": 5000, "server_cpu_us": 95.1, "postgres_cpu_us": 72.2, "p50_ms": 0.324}
+{"impl": "go", "writes_per_response": 6.0075, "waits_per_response": 1.116}
+{"impl": "flint", "connections": 64, "rate": null, "rps": 16838, "server_cpu_us": 116.7, "postgres_cpu_us": 76.5, "p50_ms": 3.71}
+{"impl": "flint", "connections": 64, "rate": 5000, "rps": 5000, "server_cpu_us": 116.0, "postgres_cpu_us": 77.3, "p50_ms": 0.414}
+{"impl": "flint", "writes_per_response": 5.0, "waits_per_response": 2.914}
+{"impl": "floor-minimal", "connections": 64, "rate": null, "rps": 27577, "server_cpu_us": 63.2, "postgres_cpu_us": 72.2, "p50_ms": 2.318}
+{"impl": "floor-minimal", "connections": 64, "rate": 5000, "rps": 5000, "server_cpu_us": 63.2, "postgres_cpu_us": 88.0, "p50_ms": 0.301}
+{"impl": "floor-minimal", "writes_per_response": 5.0, "waits_per_response": 2.2365000000000004}
+{"impl": "floor-mapped-1", "connections": 64, "rate": null, "rps": 26294, "server_cpu_us": 71.8, "postgres_cpu_us": 72.6, "p50_ms": 2.409}
+{"impl": "floor-mapped-1", "connections": 64, "rate": 5000, "rps": 5000, "server_cpu_us": 75.7, "postgres_cpu_us": 84.6, "p50_ms": 0.304}
+{"impl": "floor-mapped-1", "writes_per_response": 5.0, "waits_per_response": 2.2144999999999997}
+{"impl": "floor-mapped-2", "connections": 64, "rate": null, "rps": 26098, "server_cpu_us": 72.2, "postgres_cpu_us": 72.6, "p50_ms": 2.428}
+{"impl": "floor-mapped-2", "connections": 64, "rate": 5000, "rps": 5000, "server_cpu_us": 75.6, "postgres_cpu_us": 85.6, "p50_ms": 0.31}
+{"impl": "floor-mapped-2", "writes_per_response": 5.0, "waits_per_response": 2.315}
+{"impl": "floor-mapped-3", "connections": 64, "rate": null, "rps": 25721, "server_cpu_us": 72.1, "postgres_cpu_us": 72.7, "p50_ms": 2.467}
+{"impl": "floor-mapped-3", "connections": 64, "rate": 5000, "rps": 5000, "server_cpu_us": 74.6, "postgres_cpu_us": 81.8, "p50_ms": 0.288}
+{"impl": "floor-mapped-3", "writes_per_response": 5.0, "waits_per_response": 2.3139999999999996}
