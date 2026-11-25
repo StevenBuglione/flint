@@ -107,6 +107,7 @@ class FlintServletWebServerFactory : ConfigurableServletWebServerFactory
     private Shutdown shutdown = Shutdown.GRACEFUL;
     private int threads;
     private int maxHandlers = 200;
+    private int maxKeepAliveRequests = 100;
     private FastOffer fastOffer;
 
     /// The engine's fast-path offer type, named through its options, as the shutdown mode is.
@@ -138,6 +139,8 @@ class FlintServletWebServerFactory : ConfigurableServletWebServerFactory
         options.shutdown = shutdown == Shutdown.GRACEFUL ? ShutdownMode.graceful : ShutdownMode.immediate;
         options.cores = threads;
         options.maxHandlers = cast(uint) maxHandlers; // setMaxHandlers keeps it non-negative
+        // Tomcat's 0 disables keep-alive, as 1 does; the engine's 0 or less is unlimited, Tomcat's -1.
+        options.maxKeepAliveRequests = maxKeepAliveRequests == 0 ? 1 : maxKeepAliveRequests;
         if (fastOffer !is null)
             options.fastOffer = fastOffer;
         auto engine = new ServletEngine(options);
@@ -245,6 +248,19 @@ class FlintServletWebServerFactory : ConfigurableServletWebServerFactory
         if (maxHandlers < 0)
             throw new IllegalArgumentException("Max handlers must not be negative");
         this.maxHandlers = maxHandlers;
+    }
+
+    /// The maximum number of requests a connection serves before it closes, as Tomcat's `maxKeepAliveRequests`:
+    /// 0 or 1 disables keep-alive, -1 allows any number (`server.tomcat.max-keep-alive-requests`, default 100).
+    int getMaxKeepAliveRequests() const pure nothrow @nogc
+    {
+        return maxKeepAliveRequests;
+    }
+
+    /// Set the maximum number of requests a connection serves before it closes (Tomcat's `setMaxKeepAliveRequests`).
+    void setMaxKeepAliveRequests(int maxKeepAliveRequests) pure nothrow @nogc
+    {
+        this.maxKeepAliveRequests = maxKeepAliveRequests;
     }
 
     /// Flint addition: the per-endpoint fast path's offer (docs/spring/phase1/fast-path.md), or null for none.

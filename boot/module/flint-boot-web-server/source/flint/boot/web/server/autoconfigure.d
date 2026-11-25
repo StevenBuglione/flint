@@ -224,6 +224,28 @@ final class ServerProperties
     }
 }
 
+/// Tomcat server properties: only the keep-alive request limit, which Flint's engine applies as Tomcat does (owner
+/// 8163a833; Boot's class lives in spring-boot-tomcat). Bound under `server.tomcat`.
+@ConfigurationProperties("server.tomcat")
+final class TomcatServerProperties
+{
+    private int maxKeepAliveRequests = 100;
+
+    /// Maximum number of HTTP requests that can be pipelined before the connection is closed. When set to 0 or 1, keep-
+    /// alive and pipelining are disabled. When set to -1, an unlimited number of pipelined or keep-alive requests are
+    /// allowed.
+    int getMaxKeepAliveRequests() const pure nothrow @nogc
+    {
+        return maxKeepAliveRequests;
+    }
+
+    /// Set `maxKeepAliveRequests`.
+    void setMaxKeepAliveRequests(int maxKeepAliveRequests) pure nothrow @nogc
+    {
+        this.maxKeepAliveRequests = maxKeepAliveRequests;
+    }
+}
+
 /// Flint AOT's descriptors of this module's properties types and their container property types, compiled
 /// once with the platform instead of in each application's generated module (aot-contract.md section 3).
 imported!"flint.engine.aot.descriptor".Descriptor[] flintAotDescriptors()
@@ -232,7 +254,8 @@ imported!"flint.engine.aot.descriptor".Descriptor[] flintAotDescriptors()
 
     return [
         descriptorOf!(ServerProperties)(), descriptorOf!(ServerProperties.Flint)(),
-        descriptorOf!(ServerProperties.Servlet)(), descriptorOf!(typeof(ServerProperties.port))(),
+        descriptorOf!(ServerProperties.Servlet)(), descriptorOf!(TomcatServerProperties)(),
+        descriptorOf!(typeof(ServerProperties.port))(),
         descriptorOf!(typeof(ServerProperties.Servlet.contextParameters))(),
     ];
 }
@@ -240,15 +263,18 @@ imported!"flint.engine.aot.descriptor".Descriptor[] flintAotDescriptors()
 // ---- end: generated region
 
 /// Applies `server.*` to the servlet web server factory: the port, the address, the context path and the shutdown (Boot's
-/// `ServletWebServerFactoryCustomizer`), and on Flint's factory `server.flint.threads` and `server.flint.max-handlers`.
+/// `ServletWebServerFactoryCustomizer`), and on Flint's factory `server.flint.threads`, `server.flint.max-handlers` and
+/// `server.tomcat.max-keep-alive-requests` (Boot's `TomcatWebServerFactoryCustomizer`).
 class ServletWebServerFactoryCustomizer : WebServerFactoryCustomizer
 {
     private ServerProperties serverProperties;
+    private TomcatServerProperties tomcatProperties;
 
-    /// Over `serverProperties`.
-    this(ServerProperties serverProperties) pure nothrow @nogc
+    /// Over `serverProperties`, and `tomcatProperties` when bound.
+    this(ServerProperties serverProperties, TomcatServerProperties tomcatProperties = null) pure nothrow @nogc
     {
         this.serverProperties = serverProperties;
+        this.tomcatProperties = tomcatProperties;
     }
 
     /// Apply the properties that are set.
@@ -267,6 +293,8 @@ class ServletWebServerFactoryCustomizer : WebServerFactoryCustomizer
         {
             flintFactory.setThreads(serverProperties.getFlint().getThreads());
             flintFactory.setMaxHandlers(serverProperties.getFlint().getMaxHandlers());
+            if (tomcatProperties !is null)
+                flintFactory.setMaxKeepAliveRequests(tomcatProperties.getMaxKeepAliveRequests());
         }
     }
 }
@@ -278,14 +306,17 @@ class ServletWebServerFactoryCustomizer : WebServerFactoryCustomizer
 @AutoConfigureOrder(int.min)
 @ConditionalOnClass(null, ["flint.engine.servlet.ServletEngine"])
 @ConditionalOnWebApplication(ConditionalOnWebApplication.Type.SERVLET)
-@EnableConfigurationProperties([ClassRef(typeNameOf!ServerProperties)])
+@EnableConfigurationProperties([
+    ClassRef(typeNameOf!ServerProperties), ClassRef(typeNameOf!TomcatServerProperties)
+])
 final class FlintServletWebServerAutoConfiguration
 {
     /// The customizer that applies `server.*`.
     @Bean
-    ServletWebServerFactoryCustomizer servletWebServerFactoryCustomizer(ServerProperties serverProperties)
+    ServletWebServerFactoryCustomizer servletWebServerFactoryCustomizer(ServerProperties serverProperties,
+            TomcatServerProperties tomcatProperties)
     {
-        return new ServletWebServerFactoryCustomizer(serverProperties);
+        return new ServletWebServerFactoryCustomizer(serverProperties, tomcatProperties);
     }
 
     /// The servlet web server factory.

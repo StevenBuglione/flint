@@ -4,7 +4,7 @@ module server_properties_test;
 import flint.boot.context.properties.bind : Binder;
 import flint.boot.context.properties.source : ConfigurationPropertySource, MapConfigurationPropertySource;
 import flint.boot.web.server : Compression, Http2, Shutdown;
-import flint.boot.web.server.autoconfigure : ServerProperties;
+import flint.boot.web.server.autoconfigure : ServerProperties, TomcatServerProperties;
 import flint.engine.aot.descriptor : descriptorOf;
 import flint.java.util : Optional;
 
@@ -85,4 +85,33 @@ private ServerProperties.Flint bindFlint(string key, string value)
         assert(cast(IllegalArgumentException) failure.getCause() !is null, failure.msg);
         assert(failure.getCause().msg == "Max handlers must not be negative");
     }
+}
+
+/// `server.tomcat.*` bound from the one property `key=value`.
+private TomcatServerProperties bindTomcat(string key, string value)
+{
+    string[2][] entries = [[key, value]];
+    auto binder = new Binder([
+        cast(ConfigurationPropertySource) new MapConfigurationPropertySource("test", entries)
+    ]);
+    return binder.bindOrCreate!TomcatServerProperties("server.tomcat");
+}
+
+// Ported from spring-boot v4.2.0: module/spring-boot-tomcat/src/test/java/org/springframework/boot/tomcat/autoconfigure/TomcatServerPropertiesTests.java
+// (Apache-2.0, Copyright 2012-present the original author or authors; modified by the Flint authors: the one
+// Tomcat key Flint binds).
+@("testCustomizeTomcatMaxKeepAliveRequests") unittest
+{
+    assert(bindTomcat("server.tomcat.max-keep-alive-requests", "200").getMaxKeepAliveRequests() == 200);
+}
+
+@("testCustomizeTomcatMaxKeepAliveRequestsWithInfinite") unittest
+{
+    assert(bindTomcat("server.tomcat.max-keep-alive-requests", "-1").getMaxKeepAliveRequests() == -1);
+}
+
+@("tomcatMaxKeepAliveRequestsDefault: Tomcat's endpoint default, 100") unittest
+{
+    assert(new TomcatServerProperties().getMaxKeepAliveRequests() == 100);
+    assert(bindTomcat("server.port", "8080").getMaxKeepAliveRequests() == 100);
 }

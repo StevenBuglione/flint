@@ -292,6 +292,10 @@ tx = Cls('TransactionProperties', 'Settings of the transaction managers.', [
     '}']])
 
 # ---- web server -----------------------------------------------------------------------------------------------
+tomcatprops = Cls('TomcatServerProperties', "Tomcat server properties: only the keep-alive request limit, which Flint's engine applies as Tomcat does (owner 8163a833; Boot's class lives in spring-boot-tomcat).", [
+    F('maxKeepAliveRequests', 'int', '100', 'Maximum number of HTTP requests that can be pipelined before the connection is closed. When set to 0 or 1, keep-alive and pipelining are disabled. When set to -1, an unlimited number of pipelined or keep-alive requests are allowed.'),
+], prefix='server.tomcat')
+
 server = Cls('ServerProperties', 'Settings of the embedded web server.', [
     F('port', 'Optional!int', None, 'Server HTTP port. The server factory uses 8080 when unset; 0 picks a free port.'),
     F('address', 'string', None, 'Network address to which the server should bind.'),
@@ -522,10 +526,10 @@ UNITS = [
          header('module/spring-boot-web-server/src/main/java/org/springframework/boot/web/server/Shutdown.java\n// with Compression.java and Http2.java from the same directory', '`DataSize minResponseSize` waits on spring-core\'s `DataSize`'),
          'flint.boot.web.server', '`org.springframework.boot.web.server`: embedded web server support.', [], [shutdown, compression, http2], WEB_SERVER),
     Unit(f'{WEB_SERVER}/source/flint/boot/web/server/autoconfigure.d',
-         header('module/spring-boot-web-server/src/main/java/org/springframework/boot/web/server/autoconfigure/ServerProperties.java',
+         header('module/spring-boot-web-server/src/main/java/org/springframework/boot/web/server/autoconfigure/ServerProperties.java\n// with module/spring-boot-tomcat/src/main/java/org/springframework/boot/tomcat/autoconfigure/TomcatServerProperties.java',
                 '`InetAddress address` is the address text; the deprecated `forward-headers-strategy`, `max-http-request-header-size` (`DataSize`), `ssl`, `mime-mappings`, `reactive.*`, `request.*` and the servlet `jsp`, `session` and `encoding` groups follow with their modules'),
          'flint.boot.web.server.autoconfigure', '`org.springframework.boot.web.server.autoconfigure`: the web server properties.',
-         [CP, 'import flint.boot.web.server : Compression, Http2, Shutdown;', MAP, OPT], [server], WEB_SERVER),
+         [CP, 'import flint.boot.web.server : Compression, Http2, Shutdown;', MAP, OPT], [server, tomcatprops], WEB_SERVER),
     Unit('boot/module/flint-boot-actuator/source/flint/boot/actuate/autoconfigure/endpoint/web.d',
          header('module/spring-boot-actuator-autoconfigure/src/main/java/org/springframework/boot/actuate/autoconfigure/endpoint/web/WebEndpointProperties.java\n// with ../expose/IncludeExcludeEndpointFilter.java',
                 '`Map<EndpointId, String>` is keyed by the id text; the endpoint filter matches ids as Boot does, `*` for all'),

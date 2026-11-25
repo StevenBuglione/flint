@@ -24,6 +24,11 @@
       "name": "server.flint",
       "type": "flint.boot.web.server.autoconfigure.ServerProperties$Flint",
       "sourceType": "flint.boot.web.server.autoconfigure.ServerProperties$Flint"
+    },
+    {
+      "name": "server.tomcat",
+      "type": "flint.boot.web.server.autoconfigure.TomcatServerProperties",
+      "sourceType": "flint.boot.web.server.autoconfigure.TomcatServerProperties"
     }
   ],
   "properties": [
@@ -121,6 +126,13 @@
       "description": "Maximum number of requests handled at once, across the reactor threads, as Tomcat's server.tomcat.threads.max. Requests past it wait on their connections. 0 runs one handler per connection slot.",
       "sourceType": "flint.boot.web.server.autoconfigure.ServerProperties$Flint",
       "defaultValue": 200
+    },
+    {
+      "name": "server.tomcat.max-keep-alive-requests",
+      "type": "java.lang.Integer",
+      "description": "Maximum number of HTTP requests that can be pipelined before the connection is closed. When set to 0 or 1, keep-alive and pipelining are disabled. When set to -1, an unlimited number of pipelined or keep-alive requests are allowed.",
+      "sourceType": "flint.boot.web.server.autoconfigure.TomcatServerProperties",
+      "defaultValue": 100
     }
   ],
   "hints": []

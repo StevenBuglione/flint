@@ -5,7 +5,8 @@ module web_server_test;
 
 import flint.boot : DefaultApplicationContextFactory, WebApplicationType;
 import flint.boot.web.server : PortInUseException, PortInUseFailureAnalyzer, Shutdown;
-import flint.boot.web.server.autoconfigure : ServerProperties, ServletWebServerFactoryCustomizer;
+import flint.boot.web.server.autoconfigure : ServerProperties, ServletWebServerFactoryCustomizer,
+    TomcatServerProperties;
 import flint.boot.web.server.engine : FlintServletWebServerFactory;
 import flint.boot.web.server.servlet.context : ServletWebServerApplicationContext;
 import flint.java.lang : IllegalArgumentException;
@@ -94,6 +95,28 @@ import flint.java.util : Optional;
     catch (IllegalArgumentException)
         thrown = true;
     assert(thrown && factory.getMaxHandlers() == 0);
+}
+
+// Ported from spring-boot v4.2.0: module/spring-boot-tomcat/src/test/java/org/springframework/boot/tomcat/autoconfigure/TomcatWebServerFactoryCustomizerTests.java
+// (defaultMaxKeepAliveRequests, customMaxKeepAliveRequests; the factory's setting stands for the protocol handler's).
+@("defaultMaxKeepAliveRequests") unittest
+{
+    auto factory = new FlintServletWebServerFactory;
+    assert(factory.getMaxKeepAliveRequests() == 100);
+    new ServletWebServerFactoryCustomizer(new ServerProperties, new TomcatServerProperties).customize(factory);
+    assert(factory.getMaxKeepAliveRequests() == 100);
+}
+
+@("customMaxKeepAliveRequests") unittest
+{
+    auto tomcat = new TomcatServerProperties;
+    tomcat.setMaxKeepAliveRequests(-1);
+    auto factory = new FlintServletWebServerFactory;
+    new ServletWebServerFactoryCustomizer(new ServerProperties, tomcat).customize(factory);
+    assert(factory.getMaxKeepAliveRequests() == -1);
+    tomcat.setMaxKeepAliveRequests(1);
+    new ServletWebServerFactoryCustomizer(new ServerProperties, tomcat).customize(factory);
+    assert(factory.getMaxKeepAliveRequests() == 1);
 }
 
 @("server.servlet.context-path is cleaned as Boot cleans it: trimmed, without a trailing slash") unittest
