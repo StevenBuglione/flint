@@ -87,6 +87,8 @@ private struct Connection
     bool replyDeferred;
     /// Methods for the Allow field of a router-generated 405.
     ubyte allow;
+    /// Requests dispatched on this connection, for `maxKeepAliveRequests`.
+    uint requests;
     StreamMode streamMode;
     bool streamStarted;
     bool streamEnded;
@@ -776,6 +778,7 @@ private final class RuntimeDriver() : StreamEndpoint, FiberEndpoint
         }
         connection.id = id;
         connection.phase = ConnectionPhase.reading;
+        connection.requests = 0;
         atomicOp!"+="(openConnections, 1U);
         ownerSweep = &sweepIdle;
         const capacity = arenaBytes + limits.maxHeaderBytes + ioBytes;
@@ -1057,6 +1060,7 @@ private final class RuntimeDriver() : StreamEndpoint, FiberEndpoint
         auto connection = checked(id, ConnectionPhase.handling);
         if (connection is null)
             return;
+        ++connection.requests;
         if (requestCancelled(connection))
         {
             connection.taskActive = false;
@@ -1081,7 +1085,7 @@ private final class RuntimeDriver() : StreamEndpoint, FiberEndpoint
         // RFC 9110 section 7.8: an ordinary route ignores a body-less Upgrade offer such as h2c. The parser
         // stopped at the upgrade boundary, so the connection closes after this HTTP/1.1 response.
         const head = connection.parser.metadata.method == Method.head;
-        const keep = connection.parser.keepAlive && !connection.parser.upgradeRequested;
+        const keep = persistent(connection);
         const response = executeMatched(routes, &connection.parser.metadata, connection.request, matched);
         connection.allow = matched.allowed;
         connection.taskActive = false;
@@ -1210,11 +1214,20 @@ private final class RuntimeDriver() : StreamEndpoint, FiberEndpoint
         }
         else
             head.framing = connection.parser.versionMinor == 1 ? FiberFraming.chunked : FiberFraming.close;
-        head.persistence.keep = connection.parser.keepAlive && !connection.parser.upgradeRequested
-            && !draining() && head.framing != FiberFraming.close && !statusDropsConnection(status);
+        head.persistence.keep = persistent(connection) && !draining()
+            && head.framing != FiberFraming.close && !statusDropsConnection(status);
         head.persistence.requested = requestedKeepAlive(connection);
         head.persistence.timeoutSeconds = limits.idleTimeoutNanos / 1_000_000_000L;
         return head;
+    }
+
+    /// Whether the current request's response may keep the connection open: the client allows it, it is no
+    /// upgrade, and the connection has not reached `maxKeepAliveRequests`. Tomcat's `Http11Processor` decides it
+    /// per request the same way, so the Nth response carries `Connection: close`.
+    private bool persistent(scope const Connection* connection) scope const nothrow @nogc
+    {
+        return connection.parser.keepAlive && !connection.parser.upgradeRequested
+            && (limits.maxKeepAliveRequests <= 0 || connection.requests < limits.maxKeepAliveRequests);
     }
 
     // Tomcat's Http11Processor.statusDropsConnection: after these statuses the connection closes, with

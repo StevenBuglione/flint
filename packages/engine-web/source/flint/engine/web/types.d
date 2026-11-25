@@ -136,6 +136,11 @@ struct ServerOptions
     long headerTimeoutNanos = 5_000_000_000L;
     /// Time permitted without connection activity, measured monotonically.
     long idleTimeoutNanos = 30_000_000_000L;
+    /// HTTP/1 requests a persistent connection serves, as Tomcat's `maxKeepAliveRequests`: the response to the
+    /// Nth request carries `Connection: close` and the connection closes after it, discarding requests pipelined
+    /// behind it. 1 disables keep-alive; zero or less is unlimited (the engine's default; Flint Boot sets Spring's
+    /// 100 through the servlet engine).
+    int maxKeepAliveRequests;
     /// Advertise HTTP/2 when negotiating a supported encrypted profile.
     bool http2 = true;
     /// Require the HTTP/2 preface on this explicit cleartext listener.

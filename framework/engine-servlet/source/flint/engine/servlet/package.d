@@ -66,6 +66,11 @@ struct ServletEngineOptions
     uint cores = 0;
     /// Idle keep-alive time; Tomcat's default keep-alive timeout is its 60 s connection timeout.
     long keepAliveTimeoutNanos = 60_000_000_000L;
+    /// `server.tomcat.max-keep-alive-requests`: requests a persistent connection serves before its response
+    /// carries `Connection: close` and it closes, Tomcat's default of 100. 1 disables keep-alive; any value below 1
+    /// is unlimited, as Tomcat's `Http11Processor` limits only values above 0. Boot documents 0 as disabling
+    /// keep-alive, so Flint Boot's factory passes 1 for a property of 0; this field takes the engine value as is.
+    int maxKeepAliveRequests = 100;
     /// Largest request body (the engine caps it at 1 MiB).
     size_t maxBodyBytes = 1_048_576;
     /// Connections each reactor thread holds.
@@ -206,6 +211,7 @@ final class ServletEngine : RequestHost
         serverOptions.cores = reactorThreads(options.cores);
         serverOptions.http2 = false;
         serverOptions.idleTimeoutNanos = options.keepAliveTimeoutNanos;
+        serverOptions.maxKeepAliveRequests = options.maxKeepAliveRequests;
         serverOptions.maxBodyBytes = options.maxBodyBytes;
         serverOptions.maxConnectionsPerCore = options.maxConnectionsPerCore;
         serverOptions.maxHandlers = options.maxHandlers;
