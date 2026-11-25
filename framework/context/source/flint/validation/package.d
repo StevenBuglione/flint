@@ -289,7 +289,11 @@ abstract class AbstractErrors : Errors
     protected string fixedField(string field)
     {
         if (StringUtils.hasLength(field))
-            return nestedPath ~ canonicalFieldName(field);
+        {
+            // Without a nested path the field is its own name: no copy.
+            const name = canonicalFieldName(field);
+            return nestedPath.length ? nestedPath ~ name : name;
+        }
         const path = nestedPath;
         return path.length && path[$ - 1 .. $] == NESTED_PATH_SEPARATOR ? path[0 .. $ - 1] : path;
     }
@@ -755,6 +759,10 @@ abstract class AbstractBindingResult : AbstractErrors, BindingResult
     private MessageCodesResolver messageCodesResolver;
     private ObjectError[] errors;
     private string[] suppressedFields;
+    // getFieldErrors' list for the first `fieldErrorsCount` errors. Errors are only ever added, so it stays right
+    // until the next one.
+    private List!FieldError fieldErrorsView;
+    private size_t fieldErrorsCount;
 
     /// A result for `objectName`.
     protected this(string objectName)
@@ -854,14 +862,22 @@ abstract class AbstractBindingResult : AbstractErrors, BindingResult
         return null;
     }
 
-    /// The field errors.
+    /// The field errors, in the order they were added, as an unmodifiable list. It is a snapshot: errors added later
+    /// appear in the next call's list. Repeated calls between errors return the same list.
     override List!FieldError getFieldErrors()
     {
-        FieldError[] result;
+        if (fieldErrorsView !is null && fieldErrorsCount == errors.length)
+            return fieldErrorsView;
+        int count;
+        foreach (error; errors)
+            count += cast(FieldError) error !is null;
+        auto list = new ArrayList!FieldError(count);
         foreach (error; errors)
             if (auto fieldError = cast(FieldError) error)
-                result ~= fieldError;
-        return Collections.unmodifiableList!FieldError(new ArrayList!FieldError(result));
+                list.add(fieldError);
+        fieldErrorsView = Collections.unmodifiableList!FieldError(list);
+        fieldErrorsCount = errors.length;
+        return fieldErrorsView;
     }
 
     /// The first field error, or null.
