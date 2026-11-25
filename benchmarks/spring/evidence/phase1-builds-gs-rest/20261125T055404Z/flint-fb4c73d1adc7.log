@@ -1,0 +1,29 @@
+     Warning 
+     Warning ## Warning for package flint-tool, configuration unittest ##
+     Warning 
+     Warning The following compiler flags have been specified in the package description
+     Warning file. They are handled by DUB and direct use in packages is discouraged.
+     Warning Alternatively, you can set the DFLAGS environment variable to pass custom flags
+     Warning to the compiler, or use one of the suggestions below:
+     Warning 
+     Warning debugInfo: Call DUB with --build=debug
+     Warning unittests: Call DUB with --build=unittest
+     Warning 
+    Starting Performing "plain" build using /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/fb4c73d1adc7/.tools/dmd2/linux/bin64/dmd for x86_64.
+    Building flint:arena ~master: building configuration [library]
+    Building flint:validate ~master: building configuration [library]
+    Building flint:cli ~master: building configuration [library]
+    Building flint:conc ~master: building configuration [library]
+    Building flint:serde ~master: building configuration [library]
+    Building flint:config ~master: building configuration [library]
+    Building flint:log ~master: building configuration [library]
+    Building flint:os ~master: building configuration [library]
+    Building flint:term ~master: building configuration [library]
+   Pre-build Running commands
+    Building flint-tool ~master: building configuration [dev]
+   Compiling 178 modules in 30 parallel jobs
+     Linking flint
+     Priming 10 platform module(s) into the cache
+    Building flint-tool 0.7.0 (release, ldc2)
+    Finished apps/flint/.flint/build/release/flint (canonical)
+{"compiler": "flint", "version": "0.7.0", "bin": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/fb4c73d1adc7/.flint/bin", "sha256": "1767f662a6dbf7501c84372f52a4b35e635958287f13ecf159348243210a3119", "receipt": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/worktrees/fb4c73d1adc7/.flint/bin/flint.receipt.json"}

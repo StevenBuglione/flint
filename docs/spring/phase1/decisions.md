@@ -837,3 +837,8 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   4. error-validation-p99 and error-404-p99.
 
   The calibration sessions keep their slots.
+- 2026-11-25, proof-harness: **phase1-builds-gs-rest certified at B4** (`fb4c73d1adc7`, 05:54–05:59Z, no foreign activity; a private copy of shared v4.2, strict served compiles, strict scratch). Java, Go (parity wire mode, ADR-033) and Flint 18/18; the served dev and static binaries 18/18. Served: 1,093 compiles client-served, 18 client-local (all c-source, allowed), 0 refused. **Every gated build metric passes**, median (99% interval), 9 trials:
+    - primary 0.530 (0.497–0.568): 87 against 165 ms;
+    - secondary 0.277 (strict scratch, 906 against 3,272 ms); edit 0.368; static edit 0.600; Oz 0.624.
+
+    Evidence: `benchmarks/spring/evidence/phase1-builds-gs-rest/20261125T055404Z/`.
