@@ -1,7 +1,7 @@
 {
   "schema": "flint.measure-queue/1",
   "created": "2026-11-23",
-  "status": "pending",
+  "status": "blocked",
   "priority": 6,
   "window": "claim",
   "builds": {
@@ -9354,5 +9354,6 @@
     }
   ],
   "harness": "44d970c1cc0f",
-  "harness_note": "owner decision ae7858f8: the tree is B5 (8ed3de37) and is what is built and measured (FLINT_BENCH_ROOT=the tree); the harness load_bench at 44d970c1 differs from B5's only by the client-limit rule (capacity on the error paths is context)"
+  "harness_note": "owner decision ae7858f8: the tree is B5 (8ed3de37) and is what is built and measured (FLINT_BENCH_ROOT=the tree); the harness load_bench at 44d970c1 differs from B5's only by the client-limit rule (capacity on the error paths is context)",
+  "blocked_by": "check_pins and assembly require one commit for a baseline part (harness == build); B5's tree lacks the client-limit rule (44d970c1). Waiting for the coordinator: a declared harness exception for this part, or measure it at a later baseline."
 }
