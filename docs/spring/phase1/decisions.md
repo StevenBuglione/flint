@@ -988,3 +988,8 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - R-96, R-95;
     - the sampler/freezer fixes (7ad165cc, 87b68463, 45095ca7).
   - **Order:** the deciding part first: 404, validation, petclinic, gs-rest, builds ×3, all interleaved. GC-matrix last.
+- 2026-11-25, proof-harness: **error-404-p99 certified at B7** (`43db0cae5fbc`, 20:11–20:55Z, interleaved; no foreign activity, nothing frozen, under the tightened sampler and freezer). B7 carries flint-aot's template 404 (43db0cae). Go is the parity comparator (`8d29301a`): a chunked 404 with no reason phrase, 18/18. **The gated p99 passes for the first time.** Flint / Go, median (99% interval), 9 trials:
+    - **p99 0.558 (0.495–0.623), which passes**: 77 against 139 µs (1.80 at B4, 2.98 at B3);
+    - context: p50 0.679 (29 against 43 µs); CPU per request 0.527 (5.27 against 10.0 µs; 1.55 at B4); throughput 2.046; RSS 0.64; p99.9 2.01, reported.
+
+    With this part, **every gated runtime target of Phase 1 has passed at least once.** Evidence: `benchmarks/spring/evidence/error-404-p99/20261125T201109Z/`.
