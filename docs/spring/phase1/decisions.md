@@ -876,3 +876,8 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - p99.9 0.69, reported.
 
     Evidence: `benchmarks/spring/evidence/phase1-http-gs-rest/20261125T091722Z/`.
+- 2026-11-25, coordinator: **Release and size builds were ThinLTO-codegenned at O0. Fixing it is a bug fix, not a policy change.** web-http found it (diagnostic A/B on posidon at 6590fac7, spring_instr, same tree).
+  - Cause: `policy/profiles.toml` gives `-O3 --flto=thin` (release) and `-Oz --flto=thin` (size) as DFLAGS. DUB's LDC link step forwards `--flto` but not `-O`, so ldc2 passes `-Wl,-plugin-opt=O0` to the ThinLTO plugin. All Flint bitcode (framework and app) was optimised at O0 at link; only the prebuilt druntime was optimised.
+  - Effect of `-plugin-opt=O3` at the link: petclinic owner 1 360,928 → 273,344 instructions (−24.3%); validation 400 292,788 → 200,940 (−31.4%); allocations unchanged; stripped release 15.90 → 14.34 MB.
+  - Decision: the flint CLI passes each profile's optimisation level to every LDC LTO link path, with a regression test (m7). This restores what the profiles already state, so no budget, gate, workload or comparator changes. DMD builds have no LTO and are unaffected.
+  - Consequence: every certified Flint CPU, latency, size and release link-time number up to B4 was measured with unoptimised Flint code. B5 is named only after the fix lands, and re-measures all parts (builds, sizes, runtime).
