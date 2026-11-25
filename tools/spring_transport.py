@@ -437,6 +437,7 @@ def keepalive_main(argv):
     elif binary is None:
         binary = spring.build_go(a.app) if a.impl == 'go' else spring.build_flint(a.app)
     manifests = {path: json.loads((spring.ROOT / path).read_text()) for path in GATED}
+    golden = json.loads(spring.golden_path(a.app).read_text())
     result = 0
     with (spring.postgres_cluster() if spring.app_row(a.app).get('database') == 'postgres'
           else contextlib.nullcontext()) as database:
@@ -446,7 +447,13 @@ def keepalive_main(argv):
                     continue
                 with serving(spring, a.app, a.impl, binary, database, spec) as port:
                     observed = keep_alive_probe(port, spec)
-                problems = keep_alive_problems(observed)
+                # A workload the golden closes after one response (the validation 400) has no keep-alive limit.
+                if golden_transport(golden, spec)[0]['connection'] == 'close':
+                    problems = [] if observed == {'announced_at': 1, 'closed_after': 1} else [
+                        f'closes after each response in the golden, got {observed}']
+                    observed = dict(observed, note='closed after each response, as the golden; no limit applies')
+                else:
+                    problems = keep_alive_problems(observed)
                 print(json.dumps({'workload': key, 'impl': a.impl, **observed, 'problems': problems}))
                 result |= bool(problems)
     return result

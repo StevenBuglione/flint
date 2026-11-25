@@ -1,13 +1,13 @@
 {
   "schema": "flint.spring-sql-census-record/1",
   "app": "petclinic-rest",
-  "comparator_sha256": "c5858a2a101b54427d109e9723b44d7dbd418f14ba89bfc10a0fdabf0cd6e7f7",
+  "comparator_sha256": "3e834bcc1298e765de0ce0b120640074a53aab5f964f903203ca1711b9636623",
   "golden_sha256": "ff1317216f4f1930c14cf55b099ab6c45126b6bb796b3deb92e7613aec2f5d61",
   "divergences": {
     "flint": 2,
     "go": 0
   },
   "go_divergent_cases": [],
-  "evidence": "/tmp/claude-1000/-home-olfa-flint-work-flint--claude-worktrees-jolly-mendeleev-ea37ba/360dfd98-da71-4a20-85f3-ba4baa277bcc/scratchpad/parity/census2",
-  "recorded": "2026-11-24 22:49:22Z"
+  "evidence": "/tmp/claude-1000/-home-olfa-flint-work-flint--claude-worktrees-jolly-mendeleev-ea37ba/360dfd98-da71-4a20-85f3-ba4baa277bcc/scratchpad/parity/census3",
+  "recorded": "2026-11-25 03:14:41Z"
 }
