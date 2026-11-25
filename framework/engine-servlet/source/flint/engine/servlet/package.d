@@ -300,6 +300,13 @@ final class ServletEngine : RequestHost
         return found;
     }
 
+    /// Flint addition: the servlet every dispatch ends at, the one mapped at `/` (null before the engine starts);
+    /// for proofs such as an `ErrorPageShortcut`'s.
+    Servlet defaultServletInstance()
+    {
+        return defaultServlet is null ? null : defaultServlet.servlet;
+    }
+
     /++
     Whether every mapped filter states its effect on a fast-path request (fast-path.md S4): it is mapped at `/*` for
     `REQUEST` dispatches, so it runs for every request the fast path could answer, and it implements `FastFilter`.

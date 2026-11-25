@@ -595,6 +595,13 @@ class DispatcherServlet : HttpServlet, FastDispatch
         return strategies.fastPath !is null;
     }
 
+    /// Flint: the strategies this servlet dispatches with, for startup proofs over them (the error-page shortcut,
+    /// fast-path.md).
+    package(flint) ref DispatcherStrategies proofStrategies() return
+    {
+        return strategies;
+    }
+
     /// Flint: the container's offer of a request before any servlet object exists (fast-path.md).
     final FastOutcome dispatchFast(ref scope FastExchange exchange)
     {

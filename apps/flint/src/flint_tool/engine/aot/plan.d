@@ -760,34 +760,48 @@ private final class Analysis
     }
 
     /// The fast path's two beans (flint_tool.engine.aot.fast), when the option is on, an endpoint qualifies and the
-    /// closure has the classes they need; otherwise nothing, so the build links none of the fast path.
+    /// closure has the classes they need, and the error-page shortcut's bean when the closure has Boot's error
+    /// handling, Jackson and Flint's server; otherwise nothing, so the build links none of either.
     void planFastPath()
     {
-        import flint_tool.engine.aot.fast : fastPathBeans, fastPathClasses, hasFastHandler;
+        import flint_tool.engine.aot.fast : errorShortcutBean, errorShortcutClasses, fastPathBeans,
+            fastPathClasses, hasFastHandler;
         import flint_tool.engine.aot.names : packageOf;
 
-        if (!input.fastPath || plan.application.length == 0 || !hasFastHandler(plan))
+        if (!input.fastPath || plan.application.length == 0)
             return;
-        bool unknown;
-        foreach (name; fastPathClasses)
+        const application = model.type(plan.application);
+        const target = application is null ? packageOf(plan.application) : application.module_;
+        if (hasFastHandler(plan) && classesPresent(fastPathClasses))
+            foreach (bean; fastPathBeans())
+            {
+                bean.rank = rank++;
+                addBean(target, bean);
+            }
+        if (classesPresent(errorShortcutClasses))
+        {
+            auto bean = errorShortcutBean();
+            bean.rank = rank++;
+            addBean(target, bean);
+        }
+    }
+
+    // Whether every class of `names` is in the closure; an unknown one is asked (the driver probes once) and
+    // counts as absent until then.
+    bool classesPresent(const(string)[] names)
+    {
+        bool present = true;
+        foreach (name; names)
         {
             if (name !in model.present)
             {
                 plan.unknownClasses ~= name;
-                unknown = true;
+                present = false;
             }
             else if (!model.present[name])
-                return;
+                present = false;
         }
-        if (unknown)
-            return;
-        const application = model.type(plan.application);
-        const target = application is null ? packageOf(plan.application) : application.module_;
-        foreach (bean; fastPathBeans())
-        {
-            bean.rank = rank++;
-            addBean(target, bean);
-        }
+        return present;
     }
 
     /// The canonical names of Jackson's java.util.Date module and of Boot's builder customizer.

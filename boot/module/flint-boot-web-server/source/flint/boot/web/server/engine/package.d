@@ -109,9 +109,13 @@ class FlintServletWebServerFactory : ConfigurableServletWebServerFactory
     private int maxHandlers = 200;
     private int maxKeepAliveRequests = 100;
     private FastOffer fastOffer;
+    private ErrorPageShortcut errorPageShortcut;
 
     /// The engine's fast-path offer type, named through its options, as the shutdown mode is.
     alias FastOffer = typeof(ServletEngineOptions.init.fastOffer);
+
+    /// The engine's error-page shortcut type (`flint.engine.servlet.ErrorPageShortcut`), named through its options.
+    alias ErrorPageShortcut = typeof(ServletEngineOptions.init.errorPageShortcut);
 
     /// The default factory.
     this() pure nothrow @nogc
@@ -143,6 +147,8 @@ class FlintServletWebServerFactory : ConfigurableServletWebServerFactory
         options.maxKeepAliveRequests = maxKeepAliveRequests == 0 ? 1 : maxKeepAliveRequests;
         if (fastOffer !is null)
             options.fastOffer = fastOffer;
+        if (errorPageShortcut !is null)
+            options.errorPageShortcut = errorPageShortcut;
         auto engine = new ServletEngine(options);
         foreach (initializer; initializers)
             initializer.onStartup(engine.getServletContext());
@@ -277,5 +283,22 @@ class FlintServletWebServerFactory : ConfigurableServletWebServerFactory
     void setFastOffer(FastOffer fastOffer) pure nothrow @nogc
     {
         this.fastOffer = fastOffer;
+    }
+
+    /// Flint addition: the error-page shortcut (docs/spring/phase1/fast-path.md), or null for none.
+    ErrorPageShortcut getErrorPageShortcut() pure nothrow @nogc
+    {
+        return errorPageShortcut;
+    }
+
+    /++
+    Flint addition: the error-page shortcut, which writes Boot's stock JSON error in place of the ERROR dispatch once
+    its startup proof holds (`flint.boot.webmvc.autoconfigure.error.StockErrorPageShortcut`). Only the
+    `WebServerFactoryCustomizer` Flint AOT generates with the fast path calls it; there is no configuration property.
+    Null forwards every error generically.
+    +/
+    void setErrorPageShortcut(ErrorPageShortcut errorPageShortcut) pure nothrow @nogc
+    {
+        this.errorPageShortcut = errorPageShortcut;
     }
 }

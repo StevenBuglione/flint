@@ -175,6 +175,36 @@ BeanPlan[] fastPathBeans()
     return [table, offer];
 }
 
+/// The classes the error-page shortcut's bean needs: Boot's error handling, Jackson auto-configuration (its
+/// `stockJsonMapper` proof) and Flint's server factory.
+immutable string[] errorShortcutClasses = [
+    "flint.boot.webmvc.autoconfigure.error.ErrorPageShortcutCustomizer",
+    "flint.boot.jackson.autoconfigure.JacksonAutoConfiguration",
+    "flint.boot.web.server.engine.FlintServletWebServerFactory",
+];
+
+/++
+The error-page shortcut's bean (fast-path.md, "The error-page shortcut"), under the same switch as the fast path: a
+`WebServerFactoryCustomizer` that gives the server factory Boot's `StockErrorPageShortcut`, with Boot's Jackson proof.
+The shortcut proves the whole ERROR dispatch stock at startup, so the bean does not depend on any endpoint.
++/
+BeanPlan errorShortcutBean()
+{
+    enum customizer = "flint.boot.webmvc.autoconfigure.error.ErrorPageShortcutCustomizer";
+    BeanPlan bean;
+    bean.name = "flintAotErrorPageShortcut";
+    bean.type = customizer;
+    bean.types = [customizer, "flint.boot.web.server.WebServerFactoryCustomizer"];
+    bean.className = customizer;
+    bean.factory = FactoryKind.expression;
+    bean.expression = "new " ~ customizer ~ "(&flint.boot.jackson.autoconfigure.stockJsonMapper)";
+    bean.expressionModules = [
+        "flint.boot.webmvc.autoconfigure.error", "flint.boot.jackson.autoconfigure"
+    ];
+    bean.source = "Flint AOT: the error-page shortcut";
+    return bean;
+}
+
 @("fastShape accepts gs-rest-service's greeting and refuses every other shape")
 unittest
 {

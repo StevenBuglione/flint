@@ -207,6 +207,14 @@ final class RequestMappingInfo
         return result;
     }
 
+    /// Flint: whether this mapping's only conditions are one plain path and at most `produces`, so `compareTo`
+    /// between two such mappings of the same path is `compareProducesFor` (the error-page shortcut's proof).
+    package(flint) bool pathAndProducesOnly() const pure nothrow @nogc
+    {
+        return patterns.length == 1 && !patterns[0].hasPatternSyntax() && methods.length == 0
+            && params.length == 0 && headers.length == 0 && consumes.length == 0;
+    }
+
     /// Whether every pattern is a plain path (Spring's "direct path" lookup).
     bool hasDirectPaths() const pure nothrow @nogc
     {
@@ -396,6 +404,21 @@ final class RequestMappingInfo
             acceptedMediaTypes = getAcceptedMediaTypes(request);
         catch (HttpMediaTypeNotAcceptableException)
             return found(produces);
+        return matchProducesFor(acceptedMediaTypes);
+    }
+
+    /// Flint: `matchProduces` for a request that is not a CORS preflight and whose `Accept` resolves to
+    /// `acceptedMediaTypes`. It is a function of them alone, so a startup proof can evaluate the condition for
+    /// an `Accept` value without a request (the error-page shortcut, fast-path.md).
+    package(flint) bool producesMatch(MediaType[] acceptedMediaTypes)
+    {
+        return matchProducesFor(acceptedMediaTypes).ok;
+    }
+
+    private Matched!MediaTypeExpression matchProducesFor(MediaType[] acceptedMediaTypes)
+    {
+        if (produces.length == 0)
+            return found(produces);
         bool matches(MediaTypeExpression e)
         {
             bool compatible;
@@ -499,6 +522,15 @@ final class RequestMappingInfo
         try
             acceptedMediaTypes = getAcceptedMediaTypes(request);
         catch (HttpMediaTypeNotAcceptableException)
+            return 0;
+        return compareProducesFor(other, acceptedMediaTypes);
+    }
+
+    /// Flint: `compareProduces` for a request whose `Accept` resolves to `acceptedMediaTypes`, a function of them
+    /// alone (see `producesMatch`).
+    package(flint) int compareProducesFor(RequestMappingInfo other, MediaType[] acceptedMediaTypes)
+    {
+        if (produces.length == 0 && other.produces.length == 0)
             return 0;
         auto mine = producesToCompare();
         auto theirs = other.producesToCompare();

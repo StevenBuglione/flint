@@ -20,7 +20,7 @@ import flint.boot.web.error : ErrorAttributeOptions;
 import flint.boot.web.server : WebServerFactoryCustomizer;
 import flint.boot.web.server.servlet : ConfigurableServletWebServerFactory;
 import flint.boot.webmvc.error : DefaultErrorAttributes, ErrorAttributes, ErrorController;
-import flint.context : ApplicationContext;
+import flint.context : ApplicationContext, ApplicationContextAware;
 import flint.context.annotation : Bean;
 import flint.core.annotation : classOf;
 import flint.engine.aot.any : Any;
@@ -487,11 +487,154 @@ StockJsonError stockJsonError(ApplicationContext context)
         return null;
     auto properties = controller.getErrorProperties();
     if (properties.isIncludeException() || properties.getIncludeStacktrace() != Include.NEVER
-            || properties.getIncludeMessage() != Include.NEVER
-            || properties.getIncludeBindingErrors() != Include.NEVER)
+            || properties.getIncludeMessage() != Include.NEVER || properties.getIncludeBindingErrors() != Include.NEVER)
         return null;
     const includePath = properties.getIncludePath();
     if (includePath == Include.ON_PARAM)
         return null;
     return new StockJsonError(properties.getPath(), includePath == Include.ALWAYS, controller);
 }
+
+/++
+Flint addition: the error-page shortcut for Boot's stock JSON error (docs/spring/phase1/fast-path.md, "The
+error-page shortcut"). The servlet engine asks it at each error-page forward, after the `jakarta.servlet.error.*`
+attributes are set and before the ERROR dispatch; it writes what that dispatch would write, or answers `false` having
+written nothing, and the engine forwards generically.
+
+`install` holds only when the whole ERROR dispatch is proved stock at startup:
+$(UL
+    $(LI Boot: `stockJsonError`, and the Jackson converter's mapper is exactly the auto-configured one, the
+        `stockMapper` proof (`flint.boot.jackson.autoconfigure.stockJsonMapper`, which Flint AOT's customizer passes,
+        since this package does not depend on boot-jackson);)
+    $(LI the engine: the ERROR dispatch to the error path runs no filter, and ends at the `DispatcherServlet`;)
+    $(LI the dispatcher: `ErrorShortcutRoute.prove`, for `BasicErrorController.error` and its body type.)
+)
+Per request it writes a 404 for the error path, for `GET`, `POST`, `PUT`, `DELETE` or `PATCH` (HEAD and the methods
+`HttpServlet` answers itself stay generic), at most one `Accept` field the route answers, and a response without a
+`Content-Type` of its own. The body is the controller's own `ResponseEntity` (its timestamp, status, reason and path,
+from the same attributes), written by the converter's mapper; headers the request's handler set stay on the
+response, as they do through the forward.
++/
+final class StockErrorPageShortcut : Shortcut
+{
+    import flint.boot.web.server.engine : FlintServletWebServerFactory;
+    import flint.jackson.databind : JsonMapper;
+    import flint.web.servlet : DispatcherServlet;
+    import flint.web.servlet.mvc.method.fast : ErrorShortcutRoute;
+
+    /// Boot's proof that the application's `JsonMapper` is the auto-configured one, or `null`.
+    alias JsonMapperProof = JsonMapper function(ApplicationContext context) @safe;
+
+    private ApplicationContext context;
+    private JsonMapperProof stockMapper;
+    private StockJsonError stock;
+    private ErrorShortcutRoute route;
+
+    /// Over `context`, with Boot's Jackson proof.
+    this(ApplicationContext context, JsonMapperProof stockMapper) pure nothrow @nogc
+    {
+        this.context = context;
+        this.stockMapper = stockMapper;
+    }
+
+    /// Whether this engine's error forwards may be written in place: its ERROR dispatch to the error path runs no
+    /// filter and ends at a `DispatcherServlet` that `prove` accepts.
+    bool install(Engine engine)
+    {
+        import flint.jakarta.servlet : DispatcherType;
+
+        auto error = stockJsonError(context);
+        if (error is null || engine.filtersFor(DispatcherType.ERROR, error.getErrorPath()).length != 0)
+            return false;
+        auto servlet = cast(DispatcherServlet) engine.defaultServletInstance();
+        return servlet !is null && prove(servlet);
+    }
+
+    /// The Boot and dispatcher proofs against `servlet`; `install` adds the engine's.
+    bool prove(DispatcherServlet servlet)
+    {
+        import flint.web.method : HandlerMethod;
+
+        route = null;
+        stock = stockJsonError(context);
+        auto mapper = stockMapper is null ? null : stockMapper(context);
+        if (stock is null || mapper is null)
+            return false;
+        auto controller = cast(Object) stock.controller;
+        auto proved = ErrorShortcutRoute.prove(servlet, stock.getErrorPath(), bodyType(),
+                (HandlerMethod handler) => handler.getBean() is controller && handler.getMethodName() == "error");
+        if (proved is null || proved.converterMapper() !is cast(Object) mapper)
+            return false;
+        route = proved;
+        return true;
+    }
+
+    /// Write the error page of `status` at `page` as the ERROR dispatch would, or answer `false` having written
+    /// nothing.
+    bool writeErrorPage(HttpServletRequest request, HttpServletResponse response, int status, string page)
+    {
+        if (route is null || status != 404 || page != stock.getErrorPath()
+                || !shortcutMethod(request.getMethod()) || response.isCommitted() || response.getContentType() !is null)
+            return false;
+        size_t slot;
+        if (!route.admits(request, slot))
+            return false;
+        return route.write(response, slot, stock.errorResponse(request));
+    }
+
+    // The body type `BasicErrorController.error` returns: the error attributes' map.
+    private static string bodyType()
+    {
+        return Any.of(new LinkedHashMap!(string, Any)).typeName();
+    }
+
+    // The methods `FrameworkServlet` sends straight to `processRequest`; HEAD drops the body, and OPTIONS and TRACE
+    // have `HttpServlet` answers of their own.
+    private static bool shortcutMethod(string method) pure nothrow @nogc
+    {
+        switch (method)
+        {
+        case "GET", "POST", "PUT", "DELETE", "PATCH":
+            return true;
+        default:
+            return false;
+        }
+    }
+}
+
+/++
+Flint addition: the `WebServerFactoryCustomizer` Flint AOT generates with the fast path
+(`flintAotErrorPageShortcut`, when the fast path is on and the application has Boot's web server, error handling and
+Jackson): it gives the server factory a `StockErrorPageShortcut` over the application context, with Boot's Jackson
+proof. Nothing else creates one, so an application without it links none of the shortcut.
++/
+final class ErrorPageShortcutCustomizer : WebServerFactoryCustomizer, ApplicationContextAware
+{
+    private StockErrorPageShortcut.JsonMapperProof stockMapper;
+    private ApplicationContext context;
+
+    /// With Boot's Jackson proof, `flint.boot.jackson.autoconfigure.stockJsonMapper`.
+    this(StockErrorPageShortcut.JsonMapperProof stockMapper) pure nothrow @nogc
+    {
+        this.stockMapper = stockMapper;
+    }
+
+    void setApplicationContext(ApplicationContext context)
+    {
+        this.context = context;
+    }
+
+    void customize(ConfigurableServletWebServerFactory factory)
+    {
+        import flint.boot.web.server.engine : FlintServletWebServerFactory;
+
+        if (auto server = cast(FlintServletWebServerFactory) factory)
+            if (context !is null)
+                server.setErrorPageShortcut(new StockErrorPageShortcut(context, stockMapper));
+    }
+}
+
+// The engine's `ErrorPageShortcut` and `ServletEngine`, named through the server factory (this package reaches the
+// engine only through boot-web-server).
+private alias Shortcut = imported!"flint.boot.web.server.engine".FlintServletWebServerFactory.ErrorPageShortcut;
+private alias Engine = imported!"std.traits".Parameters!(Shortcut.install)[0];

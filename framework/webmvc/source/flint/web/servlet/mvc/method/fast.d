@@ -21,9 +21,10 @@ import flint.engine.aot.mapping : AotHandlerMapping = HandlerMapping, ArgumentKi
 import flint.http : HttpHeaders, MediaType, ResponseEntity;
 import flint.http.converter : HttpMessageConverter, HttpMessageNotWritableException;
 import flint.http.converter.json : JacksonJsonHttpMessageConverter;
-import flint.jakarta.servlet.http : HttpServletRequest, HttpServletResponse;
+import flint.jakarta.servlet.http : HeaderFieldSource, HttpServletRequest, HttpServletResponse;
 import flint.util : MimeTypeUtils;
 import flint.web.context.request : ServletWebRequest;
+import flint.web.accept : HeaderContentNegotiationStrategy;
 import flint.web.cors : DefaultCorsProcessor;
 import flint.web.method : HandlerMethod;
 import flint.web.method.support : ModelAndViewContainer;
@@ -32,8 +33,9 @@ import flint.web.method.annotation : RequestParamMethodArgumentResolver;
 import flint.web.servlet : DispatcherStrategies, DispatcherServlet, FastPath, FastPathFactory;
 import flint.web.servlet.config.annotation : WebMvcConfigurer;
 import flint.web.servlet.mvc.method : RequestMappingInfo, RequestMappingInfoHandlerMapping;
-import flint.web.servlet.mvc.method.annotation : AbstractMessageConverterMethodProcessor, HttpEntityMethodProcessor,
-    HttpHeadersReturnValueHandler, PathVariableMethodArgumentResolver, RequestMappingHandlerAdapter;
+import flint.web.servlet.mvc.method.annotation : AbstractMessageConverterMethodProcessor,
+    HttpEntityMethodProcessor, HttpHeadersReturnValueHandler,
+    PathVariableMethodArgumentResolver, RequestMappingHandlerAdapter, ServletRequestMethodArgumentResolver;
 
 @safe:
 
@@ -251,6 +253,257 @@ final class FastPathTable : FastPath
         servlet.completeFastDispatch(servletRequest, servletResponse, chain, ex);
         return FastOutcome.materialized;
     }
+}
+
+/++
+Flint addition: the dispatcher's side of the error-page shortcut (fast-path.md, "The error-page shortcut").
+
+`prove` checks once, against the strategies themselves, what the generic ERROR dispatch of a request to the error
+path does for each `Accept` key:
+$(UL
+    $(LI the first handler mapping finds the error path among its plain paths, has no interceptors, and every
+        registration there has no condition but the path and at most one `produces` type; for the key, the
+        registrations whose `produces` matches compare as `lookupHandlerMethod` sorts them, and `json` (Boot's
+        `BasicErrorController.error`) is strictly first;)
+    $(LI no CORS processing applies (`corsFields` with no `Vary`): no global configuration, none of its own;)
+    $(LI the first adapter resolves its only parameter, the `HttpServletRequest`, to the request itself, and hands
+        its `ResponseEntity` to exactly `HttpEntityMethodProcessor`;)
+    $(LI that processor's negotiation (the header-only manager, which `WebMvcConfigurationSupport` always gives the
+        adapter) selects a parameterless type that the Jackson converter is the first to write for `bodyType`.)
+)
+Flint has no `ResponseBodyAdvice` chain and no `@ModelAttribute` or `@InitBinder` advice, so nothing else acts on the
+body.
+
+`write` then writes what that processor writes for the controller's `ResponseEntity`: the status, the negotiated
+`Content-Type`, the converter's own mapper's bytes, then the flush, so the engine frames it as the generic path does.
+For anything it does not write exactly it writes nothing and answers `false`, and the caller forwards generically.
++/
+final class ErrorShortcutRoute
+{
+    private string bodyType;
+    private AcceptEntry[acceptKeys.length] accept;
+    private JacksonJsonHttpMessageConverter jackson;
+    private BodyPool pool;
+
+    private this(string bodyType)
+    {
+        this.bodyType = bodyType;
+        pool = new BodyPool;
+    }
+
+    /// The route for `servlet`'s ERROR dispatch to `errorPath` choosing the handler `json` selects, whose body is a
+    /// `bodyType`; `null` when any condition above fails.
+    static ErrorShortcutRoute prove(DispatcherServlet servlet, string errorPath, string bodyType,
+            scope bool delegate(HandlerMethod) @safe json)
+    {
+        RequestMappingInfoHandlerMapping mappings;
+        RequestMappingHandlerAdapter adapter;
+        ErrorRegistrations registrations;
+        if (!firstStrategies(servlet, mappings, adapter))
+            return null;
+        if (!registrations.collect(mappings, errorPath, json) || !plainHandler(registrations.json, mappings, adapter))
+            return null;
+        auto converters = adapter.getMessageConverters();
+        auto producible = AbstractMessageConverterMethodProcessor.producibleTypes(converters, bodyType);
+        auto route = new ErrorShortcutRoute(bodyType);
+        foreach (slot, key; acceptKeys)
+        {
+            if (!registrations.chooseJson(key))
+                continue;
+            if (auto writer = acceptEntry(key, producible, bodyType, false, converters, route.accept[slot]))
+                route.jackson = writer;
+        }
+        return route.jackson !is null ? route : null;
+    }
+
+    /// The Jackson converter's mapper, which writes every body: the caller proves it is the application's stock one.
+    Object converterMapper()
+    {
+        return cast(Object) jackson.getMapper();
+    }
+
+    /++
+    The `acceptKeys` slot of `request`'s one `Accept` field (slot 0 without one), when the route writes it; `false`
+    for several fields, another value, or a key the dispatch would not answer with the Jackson converter.
+    +/
+    bool admits(HttpServletRequest request, out size_t slot)
+    {
+        size_t count;
+        string value;
+        if (auto source = cast(HeaderFieldSource) request)
+            source.visitHeaderFields((string name, string field) {
+                if (equalsAsciiIgnoreCase(name, HttpHeaders.ACCEPT))
+                {
+                    ++count;
+                    value = field;
+                }
+            });
+        else
+        {
+            auto values = request.getHeaders(HttpHeaders.ACCEPT);
+            count = values.length;
+            value = count != 0 ? values[0] : null;
+        }
+        if (count > 1)
+            return false;
+        if (count == 1)
+        {
+            slot = acceptKeys.length;
+            foreach (index, candidate; acceptKeys[1 .. $])
+                if (value == candidate)
+                    slot = index + 1;
+            if (slot == acceptKeys.length)
+                return false;
+        }
+        return accept[slot].contentType !is null;
+    }
+
+    /++
+    Write `entity`, which the error controller returned for an admitted request in `slot`, as
+    `HttpEntityMethodProcessor` writes it: `setStatus`, then (at the body) the `Content-Type`, the body, and
+    `flushBuffer`. `false`, having written nothing, for an entity with headers, without a status or body, or with a
+    body of another type, and when the mapper fails: the generic forward then does exactly that.
+    +/
+    bool write(HttpServletResponse response, size_t slot, ResponseEntity entity)
+    {
+        const entry = accept[slot];
+        const status = entity.getStatusCode().value();
+        auto content = entity.getBody();
+        if (entry.contentType is null || status == 0 || !entity.getHeaders().isEmpty()
+                || content.isNull() || content.typeName() != bodyType)
+            return false;
+        auto buffer = pool.acquire();
+        scope (exit)
+            pool.release(buffer);
+        try
+            jackson.getMapper().writeValue(&buffer.put, content);
+        catch (Exception)
+            return false;
+        response.setStatus(status);
+        response.setContentType(entry.contentType);
+        response.getOutputStream().write(buffer.data);
+        response.flushBuffer();
+        return true;
+    }
+}
+
+// The first handler mapping and adapter, which `getHandler` and `getHandlerAdapter` consult first, when they are
+// the request-mapping ones and the mapping has no interceptors.
+private bool firstStrategies(DispatcherServlet servlet, out RequestMappingInfoHandlerMapping mappings,
+        out RequestMappingHandlerAdapter adapter)
+{
+    auto strategies = &servlet.proofStrategies();
+    if (strategies.handlerMappings.length == 0 || strategies.handlerAdapters.length == 0)
+        return false;
+    mappings = cast(RequestMappingInfoHandlerMapping) strategies.handlerMappings[0];
+    adapter = cast(RequestMappingHandlerAdapter) strategies.handlerAdapters[0];
+    return mappings !is null && adapter !is null && mappings.getAdaptedInterceptors().length == 0;
+}
+
+// No CORS processing applies to `handler`, its only parameter is the request itself, and its `ResponseEntity` goes
+// to exactly `HttpEntityMethodProcessor`.
+private bool plainHandler(HandlerMethod handler, RequestMappingInfoHandlerMapping mappings,
+        RequestMappingHandlerAdapter adapter)
+{
+    Route cors;
+    if (!corsFields(handler, mappings, cors) || cors.vary.length != 0)
+        return false;
+    return requestOnly(handler, adapter) && entityReturn(handler, adapter);
+}
+
+/// The registrations `lookupHandlerMethod` finds by the error path, and the JSON handler among them.
+private struct ErrorRegistrations
+{
+    RequestMappingInfo[] infos;
+    HandlerMethod[] handlers;
+    HandlerMethod json;
+    size_t jsonIndex;
+
+    // Every registration at `errorPath` has only the path and at most one `produces` type (so a match is the
+    // registration itself, not a narrowed copy), and exactly one is the JSON handler.
+    bool collect(RequestMappingInfoHandlerMapping mappings, string errorPath,
+            scope bool delegate(HandlerMethod) @safe isJson)
+    {
+        bool plain = true;
+        mappings.visitDirectPath(errorPath, (RequestMappingInfo info, HandlerMethod handler) {
+            plain = plain && info.pathAndProducesOnly() && info.getProducibleMediaTypes().length <= 1;
+            infos ~= info;
+            handlers ~= handler;
+        });
+        if (!plain)
+            return false;
+        foreach (index, handler; handlers)
+        {
+            if (!isJson(handler))
+                continue;
+            if (json !is null)
+                return false;
+            json = handler;
+            jsonIndex = index;
+        }
+        return json !is null;
+    }
+
+    // Whether the lookup for `key` (no field for null) chooses the JSON handler: it matches, and it compares
+    // strictly first against every other match, so the sort puts it first and no ambiguity is raised. With only
+    // paths and produces, `compareTo` between them is the produces comparison.
+    bool chooseJson(string key)
+    {
+        string[] values = key is null ? null : [key];
+        MediaType[] accepted;
+        try
+            accepted = HeaderContentNegotiationStrategy.resolveHeaderValues(values);
+        catch (Exception)
+            return false;
+        auto mine = infos[jsonIndex];
+        if (!mine.producesMatch(accepted))
+            return false;
+        foreach (index, info; infos)
+            if (index != jsonIndex && info.producesMatch(accepted) && mine.compareProducesFor(info, accepted) >= 0)
+                return false;
+        return true;
+    }
+}
+
+// The JSON handler's parameters are all the request itself, as `ServletRequestMethodArgumentResolver` resolves an
+// `HttpServletRequest` (the native request of the dispatch).
+private bool requestOnly(HandlerMethod handler, RequestMappingHandlerAdapter adapter)
+{
+    foreach (parameter; handler.getMethodParameters())
+    {
+        auto resolver = adapter.getArgumentResolvers().getArgumentResolver(parameter);
+        if (resolver is null || typeid(cast(Object) resolver) !is typeid(ServletRequestMethodArgumentResolver)
+                || parameter.getParameterType() != "flint.jakarta.servlet.http.HttpServletRequest")
+            return false;
+    }
+    return true;
+}
+
+// The first return value handler that supports the JSON handler's `ResponseEntity` is exactly
+// `HttpEntityMethodProcessor`, as the composite selects it.
+private bool entityReturn(HandlerMethod handler, RequestMappingHandlerAdapter adapter)
+{
+    auto returnType = handler.getReturnType();
+    if (returnType.getParameterType() != "flint.http.ResponseEntity")
+        return false;
+    foreach (returnHandler; adapter.getReturnValueHandlers().getHandlers())
+        if (returnHandler.supportsReturnType(returnType))
+            return typeid(cast(Object) returnHandler) is typeid(HttpEntityMethodProcessor);
+    return false;
+}
+
+private bool equalsAsciiIgnoreCase(scope const(char)[] a, scope const(char)[] b) pure nothrow @nogc
+{
+    if (a.length != b.length)
+        return false;
+    foreach (i, c; a)
+    {
+        const x = c >= 'A' && c <= 'Z' ? cast(char)(c + 32) : c;
+        const y = b[i] >= 'A' && b[i] <= 'Z' ? cast(char)(b[i] + 32) : b[i];
+        if (x != y)
+            return false;
+    }
+    return true;
 }
 
 /// The `acceptKeys` slot of the request's one `Accept` field (slot 0 without one); `false` for several fields or a
@@ -776,56 +1029,65 @@ private bool acceptTable(ref const AotHandlerMapping row, RequestMappingHandlerA
         return false;
     JacksonJsonHttpMessageConverter jackson;
     foreach (slot, key; acceptKeys)
-    {
-        MediaType[] acceptable;
-        if (key is null)
-            acceptable = [MediaType.ALL];
-        else
-        {
-            // HeaderContentNegotiationStrategy.resolveMediaTypes for one Accept field.
-            try
-                acceptable = MediaType.parseMediaTypes([key]);
-            catch (Exception)
-                continue;
-            MimeTypeUtils.sortBySpecificity(acceptable);
-            if (acceptable.length == 0)
-                acceptable = [MediaType.ALL];
-        }
-        MediaType selected;
-        if (AbstractMessageConverterMethodProcessor.selectMediaType(acceptable, producible,
-                valueType, selected) != AbstractMessageConverterMethodProcessor.Selection.selected)
-            continue;
-        selected = selected.removeQualityValue();
-        // AbstractHttpMessageConverter.addDefaultHeaders keeps a concrete type other than octet-stream as it is.
-        if (!selected.isConcrete() || selected.equals(MediaType.APPLICATION_OCTET_STREAM))
-            continue;
-        HttpMessageConverter writer;
-        foreach (converter; converters)
-        {
-            // An entity's body type is known per request (jacksonWrites); the table holds the Jackson converter.
-            const candidate = route.entityProcessor !is null ? typeid(cast(Object) converter) is typeid(
-                    JacksonJsonHttpMessageConverter) : converter.canWrite(valueType, &selected);
-            if (candidate)
-            {
-                writer = converter;
-                break;
-            }
-        }
-        if (writer is null || typeid(cast(Object) writer) !is typeid(JacksonJsonHttpMessageConverter))
-            continue;
-        const header = selected.toString();
-        bool parameterless = true;
-        foreach (c; header)
-            if (c == ';')
-                parameterless = false;
-        if (!parameterless)
-            continue;
-        jackson = cast(JacksonJsonHttpMessageConverter) writer;
-        route.accept[slot] = AcceptEntry(header, selected);
-    }
+        if (auto writer = acceptEntry(key, producible, valueType, route.entityProcessor !is null,
+                converters, route.accept[slot]))
+            jackson = writer;
     route.jackson = jackson;
     route.converters = converters;
     return jackson !is null;
+}
+
+/++
+One `Accept` key's negotiation, as `writeWithMessageConverters` runs it with the header-only negotiation manager:
+`HeaderContentNegotiationStrategy`'s parse and sort, `selectMediaType` over `producible`, then the first converter
+that writes `valueType` as the selected type. The Jackson converter, with `entry` filled, when it is that converter
+and the type is concrete and parameterless; `null` otherwise, and the key takes the generic path. For an `entity`
+the body type is known per request (`jacksonWrites`), so the writer is the Jackson converter itself.
++/
+private JacksonJsonHttpMessageConverter acceptEntry(string key, MediaType[] producible,
+        string valueType, bool entity, HttpMessageConverter[] converters, out AcceptEntry entry)
+{
+    MediaType[] acceptable;
+    if (key is null)
+        acceptable = [MediaType.ALL];
+    else
+    {
+        // HeaderContentNegotiationStrategy.resolveMediaTypes for one Accept field.
+        try
+            acceptable = MediaType.parseMediaTypes([key]);
+        catch (Exception)
+            return null;
+        MimeTypeUtils.sortBySpecificity(acceptable);
+        if (acceptable.length == 0)
+            acceptable = [MediaType.ALL];
+    }
+    MediaType selected;
+    if (AbstractMessageConverterMethodProcessor.selectMediaType(acceptable, producible, valueType,
+            selected) != AbstractMessageConverterMethodProcessor.Selection.selected)
+        return null;
+    selected = selected.removeQualityValue();
+    // AbstractHttpMessageConverter.addDefaultHeaders keeps a concrete type other than octet-stream as it is.
+    if (!selected.isConcrete() || selected.equals(MediaType.APPLICATION_OCTET_STREAM))
+        return null;
+    HttpMessageConverter writer;
+    foreach (converter; converters)
+    {
+        const candidate = entity ? typeid(cast(Object) converter) is typeid(JacksonJsonHttpMessageConverter)
+            : converter.canWrite(valueType, &selected);
+        if (candidate)
+        {
+            writer = converter;
+            break;
+        }
+    }
+    if (writer is null || typeid(cast(Object) writer) !is typeid(JacksonJsonHttpMessageConverter))
+        return null;
+    const header = selected.toString();
+    foreach (c; header)
+        if (c == ';')
+            return null;
+    entry = AcceptEntry(header, selected);
+    return cast(JacksonJsonHttpMessageConverter) writer;
 }
 
 /// Whether the declared return type is a plain value: not `Object`, `Any` or `ProblemDetail` (or a subtype).

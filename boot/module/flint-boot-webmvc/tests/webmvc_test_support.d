@@ -133,9 +133,10 @@ final class MvcFixture
 /// Load `populate` (the rows Flint AOT generates for the test's controllers), register `beans` as the user's
 /// singletons, then call the auto-configurations' `@Bean` methods in definition order with `webEntries` bound into
 /// `WebProperties`. A user bean named `error` replaces the Whitelabel view, as `@ConditionalOnMissingBean(name =
-/// "error")` lets it.
+/// "error")` lets it. `jsonMappers` are the application's `JsonMapper` beans, which the message converters use.
 MvcFixture mvcFixture(RegistryPopulator populate, string[2][] webEntries = null, Object[string] beans = null,
-        HandlerExceptionResolver[] userResolvers = null, imported!"flint.validation".Validator[] validators = null)
+        HandlerExceptionResolver[] userResolvers = null,
+        imported!"flint.validation".Validator[] validators = null, JsonMapper[] jsonMappers = null)
 {
     auto fixture = new MvcFixture;
     auto context = new GenericApplicationContext;
@@ -168,7 +169,7 @@ MvcFixture mvcFixture(RegistryPopulator populate, string[2][] webEntries = null,
     }
     context.refresh();
     auto support = new WebMvcAutoConfiguration().webMvcConfigurationSupport(context, null,
-            [cast(HandlerExceptionResolver) attributes] ~ userResolvers, viewResolvers, null, validators, null);
+            [cast(HandlerExceptionResolver) attributes] ~ userResolvers, viewResolvers, jsonMappers, validators, null);
     fixture.servlet = new DispatcherServletAutoConfiguration().dispatcherServlet(support);
     return fixture;
 }

@@ -330,6 +330,39 @@ From the generated mapping rows: petclinic-rest has 37 mappings, all `ResponseEn
 
 Each shape lands with its own black-box cases on the default, gate entries, and a petclinic A/B (on against `FLINT_AOT_FAST_PATH=0`).
 
+### 9.2 The error-page shortcut (default JSON 404)
+
+A 404 that reaches Boot's error page costs a second full pass: the engine forwards to `/error`, which runs the ERROR filter chain, the `DispatcherServlet` lookup, `BasicErrorController.error`, `HttpEntityMethodProcessor`'s negotiation and the Jackson converter (coordination note web-http-404-specialization.md). The shortcut writes that response in place of the forward when startup has proved the whole ERROR dispatch stock. The first dispatch, which raises and resolves the 404, is unchanged.
+
+**Where.** The engine asks a startup-installed `ErrorPageShortcut` (engine-servlet, `ServletEngineOptions.errorPageShortcut`) at each forward, after the `jakarta.servlet.error.*` attributes are set and the buffer reset. Boot's `StockErrorPageShortcut` (boot-webmvc, `autoconfigure/error.d`) answers. The only way in is `flintAotErrorPageShortcut`, a `WebServerFactoryCustomizer` Flint AOT generates under the fast path's switch (`FLINT_AOT_FAST_PATH=0` turns both off) when the closure has Boot's error handling, Jackson and Flint's server. It passes Boot's `stockJsonMapper` as a function, since boot-webmvc does not depend on boot-jackson.
+
+**The startup proof (`install`)**, all or nothing:
+- Boot: `stockJsonError` (exactly `BasicErrorController` and `DefaultErrorAttributes`, `ErrorPageCustomizer`, includes that do not depend on the request), and the Jackson converter's mapper is exactly `stockJsonMapper`'s.
+- Engine: `filtersFor(ERROR, errorPath)` is empty, and `defaultServletInstance()` is the `DispatcherServlet`.
+- Dispatcher (`ErrorShortcutRoute.prove`, webmvc `mvc/method/fast.d`):
+  - The first handler mapping has no interceptors. Every registration at the error path has only the path and at most one `produces` type. For each `Accept` key (none, `*/*`, `application/json`), the registrations whose `produces` matches compare with `BasicErrorController.error` strictly first. `RequestMappingInfo.producesMatch` and `compareProducesFor` are the request-free halves of the lookup's own code.
+  - No CORS processing applies.
+  - The only parameter is the `HttpServletRequest`, resolved by exactly `ServletRequestMethodArgumentResolver`.
+  - The `ResponseEntity` goes to exactly `HttpEntityMethodProcessor`. Its header-only negotiation (`acceptEntry`, the same code the fast path's table uses) selects a parameterless type, and the Jackson converter is the first to write the error map for it.
+  - Flint has no `ResponseBodyAdvice`, `@ModelAttribute` or `@InitBinder` advice.
+
+**Per request (`writeErrorPage`).** The shortcut writes only when all of these hold:
+- the status is 404 and the page is the proved error path;
+- the method is `GET`, `POST`, `PUT`, `DELETE` or `PATCH` (HEAD, OPTIONS and TRACE stay generic);
+- the request has at most one `Accept` field, whose value is one of the keys and was proved for it;
+- the response has no `Content-Type` of its own.
+
+The body is `BasicErrorController.error(request)` itself, from the same attributes, written by the converter's own mapper into a pooled buffer. Then, as the processor does: `setStatus`, `setContentType`, the body, `flushBuffer` (so the engine frames it chunked). An entity with headers, a body of another type, or a mapper failure writes nothing and the engine forwards. Headers a handler set before its 404 stay on the response, as they do through the forward.
+
+**Evidence.** boot-webmvc `error_page_shortcut_test.d` runs each case twice through the auto-configured `DispatcherServlet` with the engine's forward sequence, once through the shortcut and once through the ERROR dispatch. The two responses must be identical: status, every header, the body byte for byte apart from the timestamp's value, and the commit. The cases are:
+- five methods by three `Accept` keys;
+- escaping, encoded, non-ASCII and control-character paths, and a query string;
+- a handler that sets a header and then sends 404;
+- the declines: `text/html`, a q-value, another type, two `Accept` fields, HEAD, and a handler's own `Content-Type`;
+- proof failures: a mapper that is not Boot's, request-dependent attributes.
+
+web-http's engine-level byte-identity suite covers the wire.
+
 ## 10. Checklist for a new fast-path shape or a new Spring hook
 
 - Every Spring feature that runs per request (filter, interceptor, advice, `ResponseBodyAdvice`, `@InitBinder`, `@ModelAttribute`, `@SessionAttributes`, a `WebDataBinder` customisation, a `ConversionService` converter for a bound type) declares how the proof sees it: either the proof excludes the endpoint, or a startup evaluation shows it is a no-op for the route.
