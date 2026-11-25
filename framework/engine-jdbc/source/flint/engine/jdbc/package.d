@@ -850,9 +850,41 @@ final class FlintPreparedStatement : PreparedStatement
                 throw new SQLException("Could not read a row: " ~ failure, "HY000");
             throw sqlException(null, status.code, status.message, lease.lastFailure());
         }
+        if (auto source = connection.source)
+            source.cacheRows(text, rows.rowCount_);
         if (maxRows > 0)
             rows.limit(maxRows);
         return rows;
+    }
+
+    /// Run this statement's query and give each row to `sink`, materializing none: the driver's own catalog rows,
+    /// which it turns into other rows (pgjdbc's getColumns).
+    package(flint.engine) void eachRow(scope void delegate(ref Row row, ref RequestArena arena) @safe sink)
+    {
+        checkOpen();
+        connection.beginIfNeeded();
+        auto timeout = timeoutSource();
+        auto context = timeout.ok ? timeout.value.context() : Context.init;
+        auto arena = connection.newArena();
+        auto params = bind(arena, parameters);
+        auto lease = connection.engineLease();
+        string failure;
+        auto status = lease.queryRows(nativeSql(requireSql()), params, arena, context, (ref Row row) @safe nothrow{
+            try
+                sink(row, arena);
+            catch (Exception ex)
+            {
+                failure = ex.msg;
+                return ArenaError(Status.invalidArgument, "row read failed");
+            }
+            cast(void) arena.reset();
+            return ArenaError.init;
+        });
+        if (status.code == Status.ok)
+            return;
+        if (failure.length)
+            throw new SQLException("Could not read a row: " ~ failure, "HY000");
+        throw sqlException(null, status.code, status.message, lease.lastFailure());
     }
 
     private bool returnsKeys()
@@ -1392,7 +1424,10 @@ final class FlintResultSet : ResultSet
     {
         const count = row.columns;
         if (labels is null && count)
+        {
             labels = columnLabels(row, arena, count);
+            reserveRows(count);
+        }
         // A row's text values are copied out as one string and sliced: one allocation per row, not per value.
         char[1024] rowText = void;
         size_t textUsed;
@@ -1444,6 +1479,18 @@ final class FlintResultSet : ResultSet
             cell.floating = 0;
         }
         ++rowCount_;
+    }
+
+    /// Room for as many rows of `columns` cells as this statement returned last time, so the cells are allocated
+    /// once instead of growing row by row.
+    private void reserveRows(uint columns)
+    {
+        auto source = statement is null ? null : statement.connection.source;
+        if (source is null)
+            return;
+        const rows = source.cachedRows(sqlText);
+        if (rows > 1)
+            cells.reserve(rows * columns);
     }
 
     /// The column labels of `row`: the data source's cached labels for this statement when the server reports the same
@@ -2196,28 +2243,63 @@ final class FlintDatabaseMetaData : DatabaseMetaData
         if (otherCatalog(catalog))
             return driverResultSet(columnLabels[], [], 0);
         string[] args;
-        auto raw = metaDataQuery(columnsSql(schemaPattern, tableNamePattern, columnNamePattern, args), args);
+        auto statement = cast(FlintPreparedStatement) connection.prepareStatement(columnsSql(schemaPattern,
+                tableNamePattern, columnNamePattern, args));
         scope (exit)
-            raw.close();
-        Cell[] cells;
-        size_t rows;
+            statement.close();
+        foreach (index, arg; args)
+            statement.setString(cast(int) index + 1, arg);
+        // The catalog rows are read as they arrive, not kept as a result set of their own.
+        CatalogColumn[] found;
         const current = currentCatalog();
-        while (raw.next())
-        {
-            CatalogColumn column = {
-                catalog: current, nspname: raw.getString("nspname"), relname: raw.getString("relname"), attname: raw
-                    .getString("attname"), typtype: raw.getString("typtype"),
-                adsrc: raw.getString("adsrc"), attidentity: raw.getString("attidentity"), attgenerated: raw.getString(
-                            "attgenerated"), description: raw.getString("description"),
-                atttypid: raw.getLong("atttypid"), typbasetype: raw.getLong("typbasetype"),
-                atttypmod: raw.getInt("atttypmod"), typtypmod: raw.getInt("typtypmod"), attnum: raw.getInt("attnum"),
-                attnotnull: raw.getBoolean("attnotnull")
-            };
-            foreach (value; columnRow(column))
-                cells ~= cellOf(value);
-            ++rows;
-        }
-        return driverResultSet(columnLabels[], cells, rows);
+        statement.eachRow((ref Row row, ref RequestArena arena) {
+            found ~= catalogColumn(row, arena, current);
+        });
+        auto cells = new Cell[](found.length * columnLabels.length);
+        foreach (r, ref column; found)
+            foreach (i, value; columnRow(column))
+                cells[r * columnLabels.length + i] = cellOf(value);
+        return driverResultSet(columnLabels[], cells, found.length);
+    }
+
+    /// The columns of a getColumns catalog row (columnsSql's select list, in order) that pgjdbc reads.
+    private static CatalogColumn catalogColumn(ref Row row, ref RequestArena arena, string catalog)
+    {
+        CatalogColumn column;
+        column.catalog = catalog;
+        column.nspname = textAt(row, 1, arena);
+        column.relname = textAt(row, 2, arena);
+        column.attname = textAt(row, 3, arena);
+        column.atttypid = integerAt(row, 4, arena);
+        column.attnotnull = integerAt(row, 5, arena) != 0;
+        column.atttypmod = cast(int) integerAt(row, 6, arena);
+        column.typtypmod = cast(int) integerAt(row, 8, arena);
+        column.attnum = cast(int) integerAt(row, 9, arena);
+        column.attidentity = textAt(row, 10, arena);
+        column.attgenerated = textAt(row, 11, arena);
+        column.adsrc = textAt(row, 12, arena);
+        column.description = textAt(row, 13, arena);
+        column.typbasetype = integerAt(row, 14, arena);
+        column.typtype = textAt(row, 15, arena);
+        return column;
+    }
+
+    /// Column `column`'s text, or null for SQL NULL.
+    private static string textAt(ref Row row, uint column, ref RequestArena arena)
+    {
+        auto value = row.value(column, arena);
+        if (!value.ok)
+            throw new SQLException("Column value unavailable: " ~ value.error.message, "HY000");
+        return value.value.kind == ValueKind.null_ ? null : readText(arena, value.value.bytes);
+    }
+
+    /// Column `column`'s integer or boolean, or zero for SQL NULL.
+    private static long integerAt(ref Row row, uint column, ref RequestArena arena)
+    {
+        auto value = row.value(column, arena);
+        if (!value.ok)
+            throw new SQLException("Column value unavailable: " ~ value.error.message, "HY000");
+        return value.value.integer;
     }
 
     /// Run a metadata query with string parameters on the connection.
@@ -2396,6 +2478,8 @@ final class FlintDataSource : DataSource
     /// `numberedSql`'s cache: each statement's text with numbered placeholders. Guarded by this object's monitor.
     private string[string] numberedStatements;
     private string[][string] statementLabels;
+    /// Per statement, how many rows its last execution returned: a result set reserves that many rows' cells.
+    private size_t[string] statementRows;
     private size_t freeScratch;
 
     /// Create an unconfigured data source.
@@ -2620,6 +2704,28 @@ final class FlintDataSource : DataSource
                 return *found;
         }
         return null;
+    }
+
+    /// How many rows `sql` returned when it last ran to completion; zero when unknown.
+    package(flint.engine) size_t cachedRows(string sql)
+    {
+        synchronized (this)
+        {
+            if (auto found = sql in statementRows)
+                return *found;
+        }
+        return 0;
+    }
+
+    /// Keep `rows`, the row count of a completed execution of `sql`, for its later executions.
+    package(flint.engine) void cacheRows(string sql, size_t rows)
+    {
+        synchronized (this)
+        {
+            if (statementRows.length >= 256)
+                statementRows = null;
+            statementRows[sql] = rows;
+        }
     }
 
     /// Keep `labels` for `sql`'s later executions. Up to 256 statements are kept, as numbered SQL is.
