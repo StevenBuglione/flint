@@ -644,13 +644,12 @@ class InvalidConfigurationPropertyNameException : RuntimeException
     /// The rejected name and the characters that made it invalid.
     this(string name, string invalidCharacters) pure
     {
+        import flint.engine.aot.text : utf8;
         import std.algorithm.iteration : map;
         import std.array : join;
-        import std.conv : to;
 
-        super("Configuration property name '" ~ name ~ "' is not valid:\n    Invalid characters: "
-                ~ invalidCharacters.map!(c => "'" ~ c.to!string ~ "'")
-                    .join(", ")
+        const characters = invalidCharacters.map!(c => "'" ~ utf8(c) ~ "'").join(", ");
+        super("Configuration property name '" ~ name ~ "' is not valid:\n    Invalid characters: " ~ characters
                 ~ "\n    Bean: \n    Reason: Canonical names should be kebab-case ('-' separated), lowercase "
                 ~ "alpha-numeric characters and must start with a letter");
         this.name = name;

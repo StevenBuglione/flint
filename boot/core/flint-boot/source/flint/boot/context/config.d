@@ -57,11 +57,16 @@ final class FileConfigDataResourceReader : ConfigDataResourceReader
     /// The bytes of the file `path`, or `null` when it is missing or a directory.
     const(ubyte)[] read(string path)
     {
-        import std.file : exists, isFile, readFile = read;
+        import flint.engine.aot.host : describe, FileError, fileFacts, readFile;
+        import std.file : FileException;
 
-        if (!exists(path) || !isFile(path))
+        if (!fileFacts(path).regular)
             return null;
-        return cast(const(ubyte)[]) readFile(path);
+        FileError error;
+        auto bytes = readFile(path, error);
+        if (error != FileError.none)
+            throw new FileException(path, describe(error));
+        return bytes;
     }
 
     /// The subdirectories of `directory`, sorted by name.

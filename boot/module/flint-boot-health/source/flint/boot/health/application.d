@@ -23,8 +23,8 @@ class AvailabilityStateHealthIndicator(S) : AbstractHealthIndicator if (isAvaila
     /// Over `applicationAvailability`, with the mappings `mappings` adds.
     this(ApplicationAvailability applicationAvailability, void delegate(StatusMappings) @safe mappings)
     {
+        import flint.engine.aot.text : enumName;
         import flint.java.lang : IllegalArgumentException, IllegalStateException;
-        import std.conv : to;
         import std.traits : EnumMembers;
 
         if (applicationAvailability is null)
@@ -36,20 +36,20 @@ class AvailabilityStateHealthIndicator(S) : AbstractHealthIndicator if (isAvaila
             foreach (state; EnumMembers!S)
             {
                 if (state !in statusMappings)
-                    throw new IllegalStateException("StatusMappings does not include " ~ state.to!string);
+                    throw new IllegalStateException("StatusMappings does not include " ~ enumName(state));
             }
         }
     }
 
     protected override void doHealthCheck(Health.Builder builder)
     {
+        import flint.engine.aot.text : enumName;
         import flint.java.lang : IllegalStateException;
-        import std.conv : to;
 
         const state = getState(applicationAvailability);
         auto status = state in statusMappings ? statusMappings[state] : defaultStatus;
         if (status is null)
-            throw new IllegalStateException("No mapping provided for " ~ state.to!string);
+            throw new IllegalStateException("No mapping provided for " ~ enumName(state));
         builder.status(status);
     }
 

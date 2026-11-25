@@ -159,21 +159,51 @@ string enclosed(string value) pure
 }
 
 /// `yyyy-MM-dd'T'HH:mm:ss.SSSXXX` for a timestamp in the zone `offsetMinutes` from UTC.
-string timestamp(long millis, int offsetMinutes) pure
+string timestamp(long millis, int offsetMinutes) pure nothrow
 {
-    import std.format : format;
-
     const local = millis + offsetMinutes * 60_000L;
     const days = floorDiv(local, 86_400_000L);
     const ms = local - days * 86_400_000L;
     const date = civilFromDays(days);
-    const text = format("%04d-%02d-%02dT%02d:%02d:%02d.%03d", date.year, date.month, date.day,
-            ms / 3_600_000, ms / 60_000 % 60, ms / 1000 % 60, ms % 1000);
+    const day = padded(date.year, 4) ~ "-" ~ padded(date.month, 2) ~ "-" ~ padded(date.day, 2);
+    const time = padded(ms / 3_600_000, 2) ~ ":" ~ padded(ms / 60_000 % 60, 2) ~ ":" ~ padded(ms / 1000 % 60, 2);
+    const text = day ~ "T" ~ time ~ "." ~ padded(ms % 1000, 3);
     if (offsetMinutes == 0)
         return text ~ "Z";
-    const sign = offsetMinutes < 0 ? '-' : '+';
+    const sign = offsetMinutes < 0 ? "-" : "+";
     const magnitude = offsetMinutes < 0 ? -offsetMinutes : offsetMinutes;
-    return text ~ format("%s%02d:%02d", sign, magnitude / 60, magnitude % 60);
+    return text ~ sign ~ padded(magnitude / 60, 2) ~ ":" ~ padded(magnitude % 60, 2);
+}
+
+/// `%0<width>d`: at least `width` digits, zero-filled, with a leading `-` for a negative value (counted in the width,
+/// as std.format counts it).
+private string padded(long value, size_t width) pure nothrow
+{
+    char[24] digits;
+    size_t at = digits.length;
+    ulong magnitude = value < 0 ? 0 - cast(ulong) value : cast(ulong) value;
+    do
+    {
+        digits[--at] = cast(char)('0' + magnitude % 10);
+        magnitude /= 10;
+    }
+    while (magnitude);
+    const signed = value < 0 ? 1 : 0;
+    while (digits.length - at + signed < width && at > signed)
+        digits[--at] = '0';
+    if (signed)
+        digits[--at] = '-';
+    return digits[at .. $].idup;
+}
+
+unittest
+{
+    assert(padded(7, 2) == "07" && padded(2026, 4) == "2026" && padded(12_345, 4) == "12345");
+    assert(padded(-5, 4) == "-005" && padded(0, 3) == "000");
+    assert(timestamp(0, 0) == "1970-01-01T00:00:00.000Z");
+    assert(timestamp(1_764_057_600_123, -300) == "2025-11-25T03:00:00.123-05:00");
+    assert(timestamp(1_764_057_600_123, 330) == "2025-11-25T13:30:00.123+05:30");
+    assert(timestamp(-1, 0) == "1969-12-31T23:59:59.999Z");
 }
 
 private long floorDiv(long a, long b) pure nothrow @nogc

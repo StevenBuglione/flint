@@ -90,9 +90,9 @@ class WebMvcEndpointHandlerMapping
 
     private static string methodName(WebOperation operation)
     {
-        import std.conv : to;
+        import flint.engine.aot.text : enumName;
 
-        return operation.getRequestPredicate().getHttpMethod().to!string;
+        return enumName(operation.getRequestPredicate().getHttpMethod());
     }
 }
 

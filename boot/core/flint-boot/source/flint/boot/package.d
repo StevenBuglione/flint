@@ -1283,15 +1283,22 @@ string stripSlash(string path) pure nothrow @nogc
     return path;
 }
 
-string seconds(long millis) pure
+/// Java's `double` printing of `millis / 1000.0`: at least one fractional digit, no trailing zeros. Whole
+/// milliseconds are exact in three decimals, so the digits come from integer arithmetic, not a float printer.
+string seconds(long millis) pure nothrow
 {
-    import std.format : format;
+    const magnitude = millis < 0 ? 0 - cast(ulong) millis : cast(ulong) millis;
+    auto fraction = decimal(1000 + magnitude % 1000)[1 .. $];
+    while (fraction.length > 1 && fraction[$ - 1] == '0')
+        fraction = fraction[0 .. $ - 1];
+    return (millis < 0 ? "-" : "") ~ decimal(magnitude / 1000) ~ "." ~ fraction;
+}
 
-    // Java's `double` printing of `millis / 1000.0`: at least one fractional digit, no trailing zeros.
-    auto text = format("%.3f", millis / 1000.0);
-    while (text.length > 3 && text[$ - 1] == '0' && text[$ - 2] != '.')
-        text = text[0 .. $ - 1];
-    return text;
+unittest
+{
+    assert(seconds(0) == "0.0" && seconds(5) == "0.005" && seconds(10) == "0.01" && seconds(1000) == "1.0");
+    assert(seconds(1234) == "1.234" && seconds(1200) == "1.2" && seconds(86_400_000) == "86400.0");
+    assert(seconds(-500) == "-0.5" && seconds(-1001) == "-1.001");
 }
 
 long monotonicNanos()
@@ -1301,23 +1308,51 @@ long monotonicNanos()
     return (MonoTime.currTime - MonoTime.zero).total!"nsecs";
 }
 
-long processUptimeMillis()
+long processUptimeMillis() nothrow
 {
-    import std.file : readText;
-    import std.string : split;
-    import std.conv : to;
+    import flint.engine.aot.host : FileError, readFile;
+    import flint.engine.aot.text : parseDouble, parseLong;
 
-    try
-    {
-        // Linux: field 22 of /proc/self/stat is the start time in clock ticks since boot.
-        const stat = readText("/proc/self/stat");
-        const fields = stat[lastIndexOf(stat, ')') + 2 .. $].split(' ');
-        const startTicks = fields[19].to!long;
-        const uptime = readText("/proc/uptime").split(' ')[0].to!double;
-        return cast(long)((uptime - startTicks / 100.0) * 1000);
-    }
-    catch (Exception)
+    // Linux: field 22 of /proc/self/stat is the start time in clock ticks since boot. 0 when it cannot be read.
+    FileError error;
+    const stat = cast(const(char)[]) readFile("/proc/self/stat", error);
+    if (error != FileError.none)
         return 0;
+    const uptimeText = cast(const(char)[]) readFile("/proc/uptime", error);
+    if (error != FileError.none)
+        return 0;
+    size_t close = stat.length;
+    while (close && stat[close - 1] != ')')
+        close--;
+    long startTicks;
+    double uptime;
+    if (close == 0 || close + 1 > stat.length)
+        return 0;
+    if (!parseLong(spaceField(stat[close + 1 .. $], 19), startTicks) || !parseDouble(spaceField(uptimeText, 0), uptime))
+        return 0;
+    return cast(long)((uptime - startTicks / 100.0) * 1000);
+}
+
+/// Field `index` of `text` split at each space, as `text.split(' ')[index]`; null when there are fewer fields.
+const(char)[] spaceField(return scope const(char)[] text, size_t index) pure nothrow @nogc
+{
+    size_t start;
+    foreach (i, c; text)
+    {
+        if (c != ' ')
+            continue;
+        if (index-- == 0)
+            return text[start .. i];
+        start = i + 1;
+    }
+    return index == 0 ? text[start .. $] : null;
+}
+
+unittest
+{
+    assert(spaceField("12.5 7.25
+", 0) == "12.5" && spaceField("a b c", 2) == "c" && spaceField("a b c", 3) is null);
+    assert(spaceField("a  b", 1) == "" && spaceField("a  b", 2) == "b");
 }
 
 size_t lastIndexOf(string text, char ch) pure nothrow @nogc

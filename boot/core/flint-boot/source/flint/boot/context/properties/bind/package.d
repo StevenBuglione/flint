@@ -934,12 +934,13 @@ private bool parseBoolean(string text, string type)
 
 private double parseFloating(string text, string type)
 {
-    import std.conv : ConvException, to;
+    import flint.engine.aot.text : tryParseDouble;
 
-    try
-        return text.to!double;
-    catch (ConvException)
+    // flint.engine.aot.text reads text as `std.conv.to!double` does, without its templates.
+    const parsed = tryParseDouble(text);
+    if (!parsed.ok)
         throw new ConversionFailedException(text, type, "For input string: \"" ~ text ~ "\"");
+    return parsed.value;
 }
 
 private Any integral(string text, string type)
@@ -1112,10 +1113,17 @@ private auto parseIsoDuration(string text)
 private auto isoComponent(string number, char unit, bool time)
 {
     import core.time : days, hours, minutes, nsecs;
+    import flint.engine.aot.text : tryParseDouble;
     import std.conv : ConvException, to;
 
     if (unit == 'S' && time)
-        return nsecs(cast(long)(number.to!double * 1_000_000_000));
+    {
+        // flint.engine.aot.text reads text as `std.conv.to!double` does, without its templates.
+        const seconds = tryParseDouble(number);
+        if (!seconds.ok)
+            throw new ConvException("not a number of seconds");
+        return nsecs(cast(long)(seconds.value * 1_000_000_000));
+    }
     if (unit == 'D' && !time)
         return days(number.to!long);
     if (unit == 'H' && time)
