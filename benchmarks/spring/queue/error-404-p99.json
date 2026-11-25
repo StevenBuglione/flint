@@ -1,13 +1,13 @@
 {
   "schema": "flint.measure-queue/1",
   "created": "2026-11-23",
-  "status": "blocked",
-  "priority": 7,
+  "status": "pending",
+  "priority": 1,
   "window": "claim",
   "builds": {
     "tree": {
       "app": "checkout",
-      "commit": "be86e77f7651",
+      "commit": "43db0cae5fbc",
       "flint": true,
       "linker": "mold",
       "fork": false
@@ -43,9 +43,9 @@
   },
   "report_to": "the requester; docs/milestones/13.md",
   "estimate_minutes": 25,
-  "claim_when": "B7 (deferred from B6)",
-  "tree_note": "B6: one private tree with a copy of shared v4.2, mold; interleaved with the registered Go comparator (8d29301a) from the start; the tree's load_bench has the error-path client-limit rule (ae7858f8)",
-  "pinned": "B6, be86e77f76512c680a004f9389889d6023e3ecab (fp main when scoreboard-B5 landed; coordinator ~15:10Z)",
+  "claim_when": "B7 order 1 (the deciding 404 first)",
+  "tree_note": "B7: one private tree with a copy of shared v4.2, mold; interleaved with the registered Go comparator (8d29301a) from the start; the tree's load_bench has the error-path client-limit rule (ae7858f8)",
+  "pinned": "B7, 43db0cae5fbc57f5f6035ab97f3d6d6caf3ac5f6 (fp main when flint-aot's template 404 landed, 20:10Z; owner schedule change 20:15Z)",
   "attempts": [
     {
       "time": "2026-11-24T04:36:58Z",
@@ -13436,6 +13436,5 @@
       "commit": "be86e77f7651",
       "reason": "unheld structural gate (dmd -o-) during Flint trial 3's gated phase, missed by the freezer and the sampler; VOID.json"
     }
-  ],
-  "blocked_by": "abandoned, superseded by B7 (owner, 20:15Z on 2026-11-25): the B6 re-run was not claimed; the 404 is measured first at B7"
+  ]
 }
