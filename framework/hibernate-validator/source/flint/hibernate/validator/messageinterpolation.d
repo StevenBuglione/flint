@@ -64,8 +64,12 @@ class ResourceBundleMessageInterpolator : MessageInterpolator
             auto resolved = resolvedMessages.get(this, messageTemplate, () => resolveMessage(messageTemplate));
             if (contains(resolved, '{'))
             {
-                resolved = interpolateTokens(resolved, parameterTokens.get(this, resolved,
-                        () => tokenize(resolved, false)), (string term) => parameter(term, context));
+                auto tokens = parameterTokens.get(this, resolved, () => tokenize(resolved, false));
+                // Without `$` or `\\` in the message no `${...}` term can form and nothing is escaped, so escaping the
+                // values, evaluating no expression and unescaping would give the values back: join them raw, once.
+                if (!contains(resolved, '$') && !contains(resolved, '\\'))
+                    return interpolateTokens(resolved, tokens, (string term) => parameter(term, context, false));
+                resolved = interpolateTokens(resolved, tokens, (string term) => parameter(term, context));
                 resolved = interpolateTokens(resolved, elTokens.get(this, resolved,
                         () => tokenize(resolved, true)), (string term) => evaluateExpressions
                         ? expression(term, context) : term);
@@ -115,7 +119,7 @@ class ResourceBundleMessageInterpolator : MessageInterpolator
     private enum maxBundleDepth = 32;
 
     // ParameterTermResolver: an element of the constraint, escaped; the term itself when there is none.
-    private string parameter(string term, Context context)
+    private string parameter(string term, Context context, bool escape = true)
     {
         auto descriptor = cast(ConstraintDescriptorImpl) context.getConstraintDescriptor();
         if (descriptor is null)
@@ -125,7 +129,7 @@ class ResourceBundleMessageInterpolator : MessageInterpolator
         const name = term[1 .. $ - 1];
         const constraint = descriptor.builtin();
         const value = name == "message" ? descriptor.getMessageTemplate() : attributeText(constraint, name);
-        return value is null ? term : escapeMessageParameter(value);
+        return value is null ? term : escape ? escapeMessageParameter(value) : value;
     }
 
     // ElTermResolver: the expression's value over the constraint's elements and `validatedValue`.

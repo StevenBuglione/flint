@@ -206,11 +206,16 @@ final class PathImpl : Path
 final class ConstraintDescriptorImpl : ConstraintDescriptor
 {
     private BuiltinConstraint constraint;
+    private string[] attributeNames; // `message` first, then the elements: fixed by the constraint, built once
 
     ///
-    this(BuiltinConstraint constraint) pure nothrow @nogc
+    this(BuiltinConstraint constraint) pure nothrow
     {
         this.constraint = constraint;
+        attributeNames = new string[constraint.attributes.length + 1];
+        attributeNames[0] = "message";
+        foreach (i, a; constraint.attributes)
+            attributeNames[i + 1] = a.name;
     }
 
     /// The annotation, boxed.
@@ -257,14 +262,10 @@ final class ConstraintDescriptorImpl : ConstraintDescriptor
         return Any.init;
     }
 
-    /// The element names, `message` first.
+    /// The element names, `message` first. The descriptor's own array, built with it: read it, do not change it.
     string[] getAttributeNames()
     {
-        auto names = new string[constraint.attributes.length + 1];
-        names[0] = "message";
-        foreach (i, a; constraint.attributes)
-            names[i + 1] = a.name;
-        return names;
+        return attributeNames;
     }
 
     /// Built-in constraints report each failure on its own.
