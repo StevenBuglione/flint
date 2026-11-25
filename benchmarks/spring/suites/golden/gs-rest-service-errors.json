@@ -1,0 +1,1161 @@
+{
+ "schema": "flint.spring-error-identity/1",
+ "app": "gs-rest-service",
+ "reference": {
+  "repo": "https://github.com/spring-guides/gs-rest-service",
+  "commit": "e15fec6773dc1eb6028055630e3e68cbd8653240",
+  "spring_boot": "4.2.0"
+ },
+ "runs": [
+  {
+   "label": "default",
+   "properties": {},
+   "observations": [
+    {
+     "name": "no Accept",
+     "request": {
+      "method": "GET",
+      "target": "/nope",
+      "fields": []
+     },
+     "response": {
+      "status": 404,
+      "reason": "",
+      "headers": [
+       [
+        "content-type",
+        "application/json"
+       ],
+       [
+        "transfer-encoding",
+        "chunked"
+       ]
+      ],
+      "compact": true,
+      "json": {
+       "timestamp": {
+        "$match": "instant-millis"
+       },
+       "status": 404,
+       "error": "Not Found",
+       "path": "/nope"
+      },
+      "lifetime": "keep"
+     }
+    },
+    {
+     "name": "Accept */*",
+     "request": {
+      "method": "GET",
+      "target": "/nope",
+      "fields": [
+       [
+        "Accept",
+        "*/*"
+       ]
+      ]
+     },
+     "response": {
+      "status": 404,
+      "reason": "",
+      "headers": [
+       [
+        "content-type",
+        "application/json"
+       ],
+       [
+        "transfer-encoding",
+        "chunked"
+       ]
+      ],
+      "compact": true,
+      "json": {
+       "timestamp": {
+        "$match": "instant-millis"
+       },
+       "status": 404,
+       "error": "Not Found",
+       "path": "/nope"
+      },
+      "lifetime": "keep"
+     }
+    },
+    {
+     "name": "Accept application/json",
+     "request": {
+      "method": "GET",
+      "target": "/nope",
+      "fields": [
+       [
+        "Accept",
+        "application/json"
+       ]
+      ]
+     },
+     "response": {
+      "status": 404,
+      "reason": "",
+      "headers": [
+       [
+        "content-type",
+        "application/json"
+       ],
+       [
+        "transfer-encoding",
+        "chunked"
+       ]
+      ],
+      "compact": true,
+      "json": {
+       "timestamp": {
+        "$match": "instant-millis"
+       },
+       "status": 404,
+       "error": "Not Found",
+       "path": "/nope"
+      },
+      "lifetime": "keep"
+     }
+    },
+    {
+     "name": "nested path",
+     "request": {
+      "method": "GET",
+      "target": "/a/b/c",
+      "fields": [
+       [
+        "Accept",
+        "*/*"
+       ]
+      ]
+     },
+     "response": {
+      "status": 404,
+      "reason": "",
+      "headers": [
+       [
+        "content-type",
+        "application/json"
+       ],
+       [
+        "transfer-encoding",
+        "chunked"
+       ]
+      ],
+      "compact": true,
+      "json": {
+       "timestamp": {
+        "$match": "instant-millis"
+       },
+       "status": 404,
+       "error": "Not Found",
+       "path": "/a/b/c"
+      },
+      "lifetime": "keep"
+     }
+    },
+    {
+     "name": "trailing slash after a mapped path",
+     "request": {
+      "method": "GET",
+      "target": "/greeting/",
+      "fields": [
+       [
+        "Accept",
+        "*/*"
+       ]
+      ]
+     },
+     "response": {
+      "status": 404,
+      "reason": "",
+      "headers": [
+       [
+        "content-type",
+        "application/json"
+       ],
+       [
+        "transfer-encoding",
+        "chunked"
+       ]
+      ],
+      "compact": true,
+      "json": {
+       "timestamp": {
+        "$match": "instant-millis"
+       },
+       "status": 404,
+       "error": "Not Found",
+       "path": "/greeting/"
+      },
+      "lifetime": "keep"
+     }
+    },
+    {
+     "name": "percent-encoded quotes",
+     "request": {
+      "method": "GET",
+      "target": "/nope%22q%22",
+      "fields": [
+       [
+        "Accept",
+        "*/*"
+       ]
+      ]
+     },
+     "response": {
+      "status": 404,
+      "reason": "",
+      "headers": [
+       [
+        "content-type",
+        "application/json"
+       ],
+       [
+        "transfer-encoding",
+        "chunked"
+       ]
+      ],
+      "compact": true,
+      "json": {
+       "timestamp": {
+        "$match": "instant-millis"
+       },
+       "status": 404,
+       "error": "Not Found",
+       "path": "/nope%22q%22"
+      },
+      "lifetime": "keep"
+     }
+    },
+    {
+     "name": "percent-encoded quote and backslash",
+     "request": {
+      "method": "GET",
+      "target": "/nope%22q%22%5Cs",
+      "fields": [
+       [
+        "Accept",
+        "*/*"
+       ]
+      ]
+     },
+     "response": {
+      "status": 400,
+      "reason": "",
+      "headers": [
+       [
+        "content-type",
+        "text/html;charset=utf-8"
+       ],
+       [
+        "content-language",
+        "en"
+       ],
+       [
+        "content-length",
+        "435"
+       ],
+       [
+        "connection",
+        "close"
+       ]
+      ],
+      "text": "<!doctype html><html lang=\"en\"><head><title>HTTP Status 400 – Bad Request</title><style type=\"text/css\">body {font-family:Tahoma,Arial,sans-serif;} h1, h2, h3, b {color:white;background-color:#525D76;} h1 {font-size:22px;} h2 {font-size:16px;} h3 {font-size:14px;} p {font-size:12px;} a {color:black;} .line {height:1px;background-color:#525D76;border:none;}</style></head><body><h1>HTTP Status 400 – Bad Request</h1></body></html>",
+      "lifetime": "close"
+     }
+    },
+    {
+     "name": "percent-encoded UTF-8",
+     "request": {
+      "method": "GET",
+      "target": "/caf%C3%A9",
+      "fields": [
+       [
+        "Accept",
+        "*/*"
+       ]
+      ]
+     },
+     "response": {
+      "status": 404,
+      "reason": "",
+      "headers": [
+       [
+        "content-type",
+        "application/json"
+       ],
+       [
+        "transfer-encoding",
+        "chunked"
+       ]
+      ],
+      "compact": true,
+      "json": {
+       "timestamp": {
+        "$match": "instant-millis"
+       },
+       "status": 404,
+       "error": "Not Found",
+       "path": "/caf%C3%A9"
+      },
+      "lifetime": "keep"
+     }
+    },
+    {
+     "name": "percent-encoded control characters",
+     "request": {
+      "method": "GET",
+      "target": "/c%01t%1Fl%7F",
+      "fields": [
+       [
+        "Accept",
+        "*/*"
+       ]
+      ]
+     },
+     "response": {
+      "status": 404,
+      "reason": "",
+      "headers": [
+       [
+        "content-type",
+        "application/json"
+       ],
+       [
+        "transfer-encoding",
+        "chunked"
+       ]
+      ],
+      "compact": true,
+      "json": {
+       "timestamp": {
+        "$match": "instant-millis"
+       },
+       "status": 404,
+       "error": "Not Found",
+       "path": "/c%01t%1Fl%7F"
+      },
+      "lifetime": "keep"
+     }
+    },
+    {
+     "name": "raw UTF-8 in the path",
+     "request": {
+      "method": "GET",
+      "target": "/café",
+      "fields": [
+       [
+        "Accept",
+        "*/*"
+       ]
+      ]
+     },
+     "response": {
+      "status": 400,
+      "reason": "",
+      "headers": [
+       [
+        "content-type",
+        "text/html;charset=utf-8"
+       ],
+       [
+        "content-language",
+        "en"
+       ],
+       [
+        "content-length",
+        "435"
+       ],
+       [
+        "connection",
+        "close"
+       ]
+      ],
+      "text": "<!doctype html><html lang=\"en\"><head><title>HTTP Status 400 – Bad Request</title><style type=\"text/css\">body {font-family:Tahoma,Arial,sans-serif;} h1, h2, h3, b {color:white;background-color:#525D76;} h1 {font-size:22px;} h2 {font-size:16px;} h3 {font-size:14px;} p {font-size:12px;} a {color:black;} .line {height:1px;background-color:#525D76;border:none;}</style></head><body><h1>HTTP Status 400 – Bad Request</h1></body></html>",
+      "lifetime": "close"
+     }
+    },
+    {
+     "name": "query string",
+     "request": {
+      "method": "GET",
+      "target": "/nope?x=1&y=%22z%22&path=false",
+      "fields": [
+       [
+        "Accept",
+        "*/*"
+       ]
+      ]
+     },
+     "response": {
+      "status": 404,
+      "reason": "",
+      "headers": [
+       [
+        "content-type",
+        "application/json"
+       ],
+       [
+        "transfer-encoding",
+        "chunked"
+       ]
+      ],
+      "compact": true,
+      "json": {
+       "timestamp": {
+        "$match": "instant-millis"
+       },
+       "status": 404,
+       "error": "Not Found",
+       "path": "/nope"
+      },
+      "lifetime": "keep"
+     }
+    },
+    {
+     "name": "empty query string",
+     "request": {
+      "method": "GET",
+      "target": "/nope?",
+      "fields": [
+       [
+        "Accept",
+        "*/*"
+       ]
+      ]
+     },
+     "response": {
+      "status": 404,
+      "reason": "",
+      "headers": [
+       [
+        "content-type",
+        "application/json"
+       ],
+       [
+        "transfer-encoding",
+        "chunked"
+       ]
+      ],
+      "compact": true,
+      "json": {
+       "timestamp": {
+        "$match": "instant-millis"
+       },
+       "status": 404,
+       "error": "Not Found",
+       "path": "/nope"
+      },
+      "lifetime": "keep"
+     }
+    },
+    {
+     "name": "POST with a body",
+     "request": {
+      "method": "POST",
+      "target": "/nope",
+      "fields": [
+       [
+        "Accept",
+        "*/*"
+       ],
+       [
+        "Content-Type",
+        "application/json"
+       ]
+      ]
+     },
+     "response": {
+      "status": 404,
+      "reason": "",
+      "headers": [
+       [
+        "content-type",
+        "application/json"
+       ],
+       [
+        "transfer-encoding",
+        "chunked"
+       ]
+      ],
+      "compact": true,
+      "json": {
+       "timestamp": {
+        "$match": "instant-millis"
+       },
+       "status": 404,
+       "error": "Not Found",
+       "path": "/nope"
+      },
+      "lifetime": "keep"
+     }
+    },
+    {
+     "name": "PUT with a body",
+     "request": {
+      "method": "PUT",
+      "target": "/nope",
+      "fields": [
+       [
+        "Accept",
+        "*/*"
+       ],
+       [
+        "Content-Type",
+        "application/json"
+       ]
+      ]
+     },
+     "response": {
+      "status": 404,
+      "reason": "",
+      "headers": [
+       [
+        "content-type",
+        "application/json"
+       ],
+       [
+        "transfer-encoding",
+        "chunked"
+       ]
+      ],
+      "compact": true,
+      "json": {
+       "timestamp": {
+        "$match": "instant-millis"
+       },
+       "status": 404,
+       "error": "Not Found",
+       "path": "/nope"
+      },
+      "lifetime": "keep"
+     }
+    },
+    {
+     "name": "PATCH without a body",
+     "request": {
+      "method": "PATCH",
+      "target": "/nope",
+      "fields": [
+       [
+        "Accept",
+        "*/*"
+       ],
+       [
+        "Content-Length",
+        "0"
+       ]
+      ]
+     },
+     "response": {
+      "status": 404,
+      "reason": "",
+      "headers": [
+       [
+        "content-type",
+        "application/json"
+       ],
+       [
+        "transfer-encoding",
+        "chunked"
+       ]
+      ],
+      "compact": true,
+      "json": {
+       "timestamp": {
+        "$match": "instant-millis"
+       },
+       "status": 404,
+       "error": "Not Found",
+       "path": "/nope"
+      },
+      "lifetime": "keep"
+     }
+    },
+    {
+     "name": "DELETE",
+     "request": {
+      "method": "DELETE",
+      "target": "/nope",
+      "fields": [
+       [
+        "Accept",
+        "*/*"
+       ]
+      ]
+     },
+     "response": {
+      "status": 404,
+      "reason": "",
+      "headers": [
+       [
+        "content-type",
+        "application/json"
+       ],
+       [
+        "transfer-encoding",
+        "chunked"
+       ]
+      ],
+      "compact": true,
+      "json": {
+       "timestamp": {
+        "$match": "instant-millis"
+       },
+       "status": 404,
+       "error": "Not Found",
+       "path": "/nope"
+      },
+      "lifetime": "keep"
+     }
+    },
+    {
+     "name": "OPTIONS",
+     "request": {
+      "method": "OPTIONS",
+      "target": "/nope",
+      "fields": [
+       [
+        "Accept",
+        "*/*"
+       ]
+      ]
+     },
+     "response": {
+      "status": 404,
+      "reason": "",
+      "headers": [
+       [
+        "content-type",
+        "application/json"
+       ],
+       [
+        "transfer-encoding",
+        "chunked"
+       ]
+      ],
+      "compact": true,
+      "json": {
+       "timestamp": {
+        "$match": "instant-millis"
+       },
+       "status": 404,
+       "error": "Not Found",
+       "path": "/nope"
+      },
+      "lifetime": "keep"
+     }
+    },
+    {
+     "name": "HEAD",
+     "request": {
+      "method": "HEAD",
+      "target": "/nope",
+      "fields": [
+       [
+        "Accept",
+        "*/*"
+       ]
+      ]
+     },
+     "response": {
+      "status": 404,
+      "reason": "",
+      "headers": [
+       [
+        "content-type",
+        "application/json"
+       ]
+      ],
+      "text": "",
+      "lifetime": "keep"
+     }
+    },
+    {
+     "name": "Accept text/html",
+     "request": {
+      "method": "GET",
+      "target": "/nope",
+      "fields": [
+       [
+        "Accept",
+        "text/html"
+       ]
+      ]
+     },
+     "response": {
+      "status": 404,
+      "reason": "",
+      "headers": [
+       [
+        "content-type",
+        "text/html;charset=UTF-8"
+       ],
+       [
+        "content-language",
+        "en-US"
+       ],
+       [
+        "content-length",
+        "275"
+       ]
+      ],
+      "text": "<html><body><h1>Whitelabel Error Page</h1><p>This application has no explicit mapping for /error, so you are seeing this as a fallback.</p><div id='created'>*</div><div>There was an unexpected error (type=Not Found, status=404).</div></body></html>",
+      "lifetime": "keep"
+     }
+    },
+    {
+     "name": "Accept with a q-value",
+     "request": {
+      "method": "GET",
+      "target": "/nope",
+      "fields": [
+       [
+        "Accept",
+        "application/json;q=0.9"
+       ]
+      ]
+     },
+     "response": {
+      "status": 404,
+      "reason": "",
+      "headers": [
+       [
+        "content-type",
+        "application/json"
+       ],
+       [
+        "transfer-encoding",
+        "chunked"
+       ]
+      ],
+      "compact": true,
+      "json": {
+       "timestamp": {
+        "$match": "instant-millis"
+       },
+       "status": 404,
+       "error": "Not Found",
+       "path": "/nope"
+      },
+      "lifetime": "keep"
+     }
+    },
+    {
+     "name": "Accept with two types",
+     "request": {
+      "method": "GET",
+      "target": "/nope",
+      "fields": [
+       [
+        "Accept",
+        "application/json, text/plain"
+       ]
+      ]
+     },
+     "response": {
+      "status": 404,
+      "reason": "",
+      "headers": [
+       [
+        "content-type",
+        "application/json"
+       ],
+       [
+        "transfer-encoding",
+        "chunked"
+       ]
+      ],
+      "compact": true,
+      "json": {
+       "timestamp": {
+        "$match": "instant-millis"
+       },
+       "status": 404,
+       "error": "Not Found",
+       "path": "/nope"
+      },
+      "lifetime": "keep"
+     }
+    },
+    {
+     "name": "two Accept fields",
+     "request": {
+      "method": "GET",
+      "target": "/nope",
+      "fields": [
+       [
+        "Accept",
+        "application/json"
+       ],
+       [
+        "Accept",
+        "*/*"
+       ]
+      ]
+     },
+     "response": {
+      "status": 404,
+      "reason": "",
+      "headers": [
+       [
+        "content-type",
+        "application/json"
+       ],
+       [
+        "transfer-encoding",
+        "chunked"
+       ]
+      ],
+      "compact": true,
+      "json": {
+       "timestamp": {
+        "$match": "instant-millis"
+       },
+       "status": 404,
+       "error": "Not Found",
+       "path": "/nope"
+      },
+      "lifetime": "keep"
+     }
+    },
+    {
+     "name": "Accept application/xml",
+     "request": {
+      "method": "GET",
+      "target": "/nope",
+      "fields": [
+       [
+        "Accept",
+        "application/xml"
+       ]
+      ]
+     },
+     "response": {
+      "status": 404,
+      "reason": "",
+      "headers": [
+       [
+        "content-length",
+        "0"
+       ]
+      ],
+      "text": "",
+      "lifetime": "keep"
+     }
+    },
+    {
+     "name": "path longer than the stack copy",
+     "request": {
+      "method": "GET",
+      "target": "/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "fields": [
+       [
+        "Accept",
+        "*/*"
+       ]
+      ]
+     },
+     "response": {
+      "status": 404,
+      "reason": "",
+      "headers": [
+       [
+        "content-type",
+        "application/json"
+       ],
+       [
+        "transfer-encoding",
+        "chunked"
+       ]
+      ],
+      "compact": true,
+      "json": {
+       "timestamp": {
+        "$match": "instant-millis"
+       },
+       "status": 404,
+       "error": "Not Found",
+       "path": "/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      },
+      "lifetime": "keep"
+     }
+    },
+    {
+     "name": "mapped request after the errors",
+     "request": {
+      "method": "GET",
+      "target": "/greeting?name=after",
+      "fields": [
+       [
+        "Accept",
+        "*/*"
+       ]
+      ]
+     },
+     "response": {
+      "status": 200,
+      "reason": "",
+      "headers": [
+       [
+        "content-type",
+        "application/json"
+       ],
+       [
+        "content-length",
+        "34"
+       ]
+      ],
+      "compact": true,
+      "json": {
+       "id": 1,
+       "content": "Hello, after!"
+      },
+      "lifetime": "keep"
+     }
+    }
+   ]
+  },
+  {
+   "label": "include-message always",
+   "properties": {
+    "web.error.include-message": "always"
+   },
+   "observations": [
+    {
+     "name": "no Accept",
+     "request": {
+      "method": "GET",
+      "target": "/nope",
+      "fields": []
+     },
+     "response": {
+      "status": 404,
+      "reason": "",
+      "headers": [
+       [
+        "content-type",
+        "application/json"
+       ],
+       [
+        "transfer-encoding",
+        "chunked"
+       ]
+      ],
+      "compact": true,
+      "json": {
+       "timestamp": {
+        "$match": "instant-millis"
+       },
+       "status": 404,
+       "error": "Not Found",
+       "message": "No static resource nope.",
+       "path": "/nope"
+      },
+      "lifetime": "keep"
+     }
+    },
+    {
+     "name": "Accept */*",
+     "request": {
+      "method": "GET",
+      "target": "/nope",
+      "fields": [
+       [
+        "Accept",
+        "*/*"
+       ]
+      ]
+     },
+     "response": {
+      "status": 404,
+      "reason": "",
+      "headers": [
+       [
+        "content-type",
+        "application/json"
+       ],
+       [
+        "transfer-encoding",
+        "chunked"
+       ]
+      ],
+      "compact": true,
+      "json": {
+       "timestamp": {
+        "$match": "instant-millis"
+       },
+       "status": 404,
+       "error": "Not Found",
+       "message": "No static resource nope.",
+       "path": "/nope"
+      },
+      "lifetime": "keep"
+     }
+    }
+   ]
+  },
+  {
+   "label": "include-path on-param",
+   "properties": {
+    "web.error.include-path": "on-param"
+   },
+   "observations": [
+    {
+     "name": "path parameter absent",
+     "request": {
+      "method": "GET",
+      "target": "/nope",
+      "fields": [
+       [
+        "Accept",
+        "*/*"
+       ]
+      ]
+     },
+     "response": {
+      "status": 404,
+      "reason": "",
+      "headers": [
+       [
+        "content-type",
+        "application/json"
+       ],
+       [
+        "transfer-encoding",
+        "chunked"
+       ]
+      ],
+      "compact": true,
+      "json": {
+       "timestamp": {
+        "$match": "instant-millis"
+       },
+       "status": 404,
+       "error": "Not Found"
+      },
+      "lifetime": "keep"
+     }
+    },
+    {
+     "name": "path=false",
+     "request": {
+      "method": "GET",
+      "target": "/nope?path=false",
+      "fields": [
+       [
+        "Accept",
+        "*/*"
+       ]
+      ]
+     },
+     "response": {
+      "status": 404,
+      "reason": "",
+      "headers": [
+       [
+        "content-type",
+        "application/json"
+       ],
+       [
+        "transfer-encoding",
+        "chunked"
+       ]
+      ],
+      "compact": true,
+      "json": {
+       "timestamp": {
+        "$match": "instant-millis"
+       },
+       "status": 404,
+       "error": "Not Found"
+      },
+      "lifetime": "keep"
+     }
+    },
+    {
+     "name": "path=true",
+     "request": {
+      "method": "GET",
+      "target": "/nope?path=true",
+      "fields": [
+       [
+        "Accept",
+        "*/*"
+       ]
+      ]
+     },
+     "response": {
+      "status": 404,
+      "reason": "",
+      "headers": [
+       [
+        "content-type",
+        "application/json"
+       ],
+       [
+        "transfer-encoding",
+        "chunked"
+       ]
+      ],
+      "compact": true,
+      "json": {
+       "timestamp": {
+        "$match": "instant-millis"
+       },
+       "status": 404,
+       "error": "Not Found",
+       "path": "/nope"
+      },
+      "lifetime": "keep"
+     }
+    }
+   ]
+  },
+  {
+   "label": "include-path never",
+   "properties": {
+    "web.error.include-path": "never"
+   },
+   "observations": [
+    {
+     "name": "Accept */*",
+     "request": {
+      "method": "GET",
+      "target": "/nope",
+      "fields": [
+       [
+        "Accept",
+        "*/*"
+       ]
+      ]
+     },
+     "response": {
+      "status": 404,
+      "reason": "",
+      "headers": [
+       [
+        "content-type",
+        "application/json"
+       ],
+       [
+        "transfer-encoding",
+        "chunked"
+       ]
+      ],
+      "compact": true,
+      "json": {
+       "timestamp": {
+        "$match": "instant-millis"
+       },
+       "status": 404,
+       "error": "Not Found"
+      },
+      "lifetime": "keep"
+     }
+    }
+   ]
+  }
+ ]
+}
