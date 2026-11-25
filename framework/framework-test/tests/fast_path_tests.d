@@ -209,6 +209,8 @@ private struct Offer
     string[2][] fields;
     /// The materialized response, when the dispatcher asked for the servlet objects.
     MockHttpServletResponse materialized;
+    /// ditto: the materialized request.
+    MockHttpServletRequest materializedRequest;
 }
 
 /// Offers a request as the container does: `query` undecoded pairs (the container's decoding is engine-servlet's).
@@ -269,6 +271,7 @@ private Offer offer(DispatcherServlet servlet, string method, string path, strin
         if (content.length)
             servletRequest.setContent(cast(const(ubyte)[]) content);
         request = servletRequest;
+        result.materializedRequest = servletRequest;
         response = result.materialized;
     }
 
@@ -338,7 +341,7 @@ unittest
     assert(offer(servlet, "GET", "/hello", null, ["*/*", "*/*"]).outcome == FastOutcome.declined);
     assert(controller.calls == 0, "a declined request must not have run the handler");
     // S6: a GET no route takes is the generic dispatch on the servlet objects.
-    foreach (path; ["/hello/", "/nope", "/deep/er/nope.json"])
+    foreach (path; ["/hello/", "/nope", "/deep/er/nope.json", "/a/../nope", "/x;y/nope"])
         unmatchedLikeGeneric(servlet, path);
     // An encoded path the generic lookup decodes to /hello: the handler answers it on the servlet objects (its body
     // carries the call count, so it is not compared byte for byte).
@@ -658,6 +661,21 @@ private void unmatchedLikeGeneric(DispatcherServlet servlet, string path, string
     assert(actual.getErrorMessage() == expected.getErrorMessage(), path ~ ": " ~ actual.getErrorMessage());
     assert(actual.getContentType() == expected.getContentType(), path);
     assert(actual.getContentAsString() == expected.getContentAsString(), path);
+    // web-http's review: the whole set of request attributes the dispatch leaves (the error page reads any of them),
+    // by name and by the type of the value.
+    assert(attributeTypes(fast.materializedRequest) == attributeTypes(request), path);
+}
+
+// A request's attributes, as `name: type` in name order.
+private string[] attributeTypes(MockHttpServletRequest request)
+{
+    import std.algorithm.sorting : sort;
+
+    string[] result;
+    foreach (name; request.getAttributeNames())
+        result ~= name ~ ": " ~ request.getAttribute(name).typeName();
+    result.sort();
+    return result;
 }
 
 @("fast path S6: an unmatched GET skips the first mapping's lookup and answers the generic 404")

@@ -382,8 +382,14 @@ could look up differently. A route that matches the path but declines its reques
 takes the generic path.
 
 **Tests:** framework-test `unmatchedLikeGeneric` compares the materialized response with the same request through
-the servlet's own `service` (status, error message, Content-Type, body). The cases are trailing-slash, deep and dot
-paths, template mismatches, a shadowed template, the S5 POST path's GET (405), and `Accept: text/html`.
+the servlet's own `service`: status, error message, Content-Type, body, and the whole set of request attributes left
+(by name and value type; web-http's review). The cases are:
+- trailing-slash, deep, dot, `..` and `;` paths;
+- template mismatches and a shadowed template;
+- the S5 POST path's GET (405);
+- `Accept: text/html`.
+
+gs-rest's `spring_error_identity.py` with the fast path on and off: 31 responses byte for byte, 0 problems.
 
 ### 9.2 The error-page shortcut (default JSON 404)
 
