@@ -1208,7 +1208,7 @@ class NamedParameterJdbcTemplate : NamedParameterJdbcOperations
 
     private JdbcOperations classicJdbcTemplate;
     private int cacheLimit = DEFAULT_CACHE_LIMIT;
-    /// The parsed statements, read without a lock; null when the cache limit is zero or less.
+    /// The parsed statements, read without a lock (`cache`): made on the first parse.
     private shared imported!"flint.conc.slot".ProcessSlot!ParsedSqlCache parsedSqlCache;
 
     /// Create a new `NamedParameterJdbcTemplate` for the given `DataSource`. Creates a classic `JdbcTemplate` and
@@ -1224,7 +1224,16 @@ class NamedParameterJdbcTemplate : NamedParameterJdbcOperations
         if (classicJdbcTemplate is null)
             throw new IllegalArgumentException("JdbcTemplate must not be null");
         this.classicJdbcTemplate = classicJdbcTemplate;
-        parsedSqlCache.set(new ParsedSqlCache(cacheLimit));
+    }
+
+    // The parsed-statement cache, made on the first parse: a template that never parses (an application builds one
+    // per repository) keeps no table of slots live. Null when the cache limit is zero or less.
+    private ParsedSqlCache cache()
+    {
+        auto current = parsedSqlCache.get();
+        if (current is null && cacheLimit > 0)
+            current = parsedSqlCache.setIfAbsent(new ParsedSqlCache(cacheLimit));
+        return current;
     }
 
     /// Create a new `NamedParameterJdbcTemplate` for the given classic `JdbcTemplate`, sharing the SQL cache of
@@ -1233,7 +1242,7 @@ class NamedParameterJdbcTemplate : NamedParameterJdbcOperations
     {
         this(classicJdbcTemplate);
         cacheLimit = original.cacheLimit;
-        parsedSqlCache.set(original.parsedSqlCache.get());
+        parsedSqlCache.set(original.cache());
     }
 
     override JdbcOperations getJdbcOperations()
@@ -1257,7 +1266,7 @@ class NamedParameterJdbcTemplate : NamedParameterJdbcOperations
         synchronized (this)
         {
             this.cacheLimit = cacheLimit;
-            parsedSqlCache.set(cacheLimit > 0 ? new ParsedSqlCache(cacheLimit) : null);
+            parsedSqlCache.set(null);
         }
     }
 
@@ -1437,13 +1446,13 @@ class NamedParameterJdbcTemplate : NamedParameterJdbcOperations
     {
         if (sql is null)
             throw new IllegalArgumentException("SQL must not be null");
-        auto cache = parsedSqlCache.get();
-        if (cache is null)
+        auto statements = cache();
+        if (statements is null)
             return NamedParameterUtils.parseSqlStatement(sql);
-        if (auto cached = cache.find(sql))
+        if (auto cached = statements.find(sql))
             return cached;
         auto parsedSql = NamedParameterUtils.parseSqlStatement(sql);
-        cache.add(parsedSql);
+        statements.add(parsedSql);
         return parsedSql;
     }
 

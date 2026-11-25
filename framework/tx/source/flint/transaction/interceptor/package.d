@@ -509,17 +509,17 @@ final class DescriptorTransactionAttributeSource : TransactionAttributeSource
     {
         const(MethodDescriptor)* method;
         const(void)* targetClass;
+
+        /// The address words that order the table's keys.
+        size_t[2] ordinal() const pure nothrow @nogc
+        {
+            return [cast(size_t) method, cast(size_t) targetClass];
+        }
     }
 
     // Each method's attribute, null for a method without one, as Spring's attributeCache holds NULL_TRANSACTION_ATTRIBUTE.
-    // Read without a lock: a new method's entry is added under this object's monitor into a copy, which then replaces
-    // the published table. Entries are added once per method and class, so the copies stop once the methods are known.
-    private static final class AttributeTable
-    {
-        TransactionAttribute[MethodClassKey] attributes;
-    }
-
-    private shared ProcessSlot!AttributeTable table;
+    // Read without a lock (`SortedTable`); a new entry is published under this object's monitor.
+    private shared ProcessSlot!(SortedTable!(MethodClassKey, TransactionAttribute)) table;
 
     override TransactionAttribute getTransactionAttribute(const(MethodDescriptor)* method, const Descriptor targetClass)
     {
@@ -527,8 +527,11 @@ final class DescriptorTransactionAttributeSource : TransactionAttributeSource
             return null;
         const key = MethodClassKey(method, cast(const(void)*) targetClass);
         if (auto current = table.get())
-            if (auto cached = key in current.attributes)
-                return *cached;
+        {
+            const at = current.indexOf(key);
+            if (at >= 0)
+                return current.values[at];
+        }
         TransactionAttribute attribute = null;
         foreach (ref merged; method.annotations)
         {
@@ -547,13 +550,12 @@ final class DescriptorTransactionAttributeSource : TransactionAttributeSource
             // A racing caller's entry, stored first, wins, so every caller gets the same attribute object.
             auto current = table.get();
             if (current !is null)
-                if (auto cached = key in current.attributes)
-                    return *cached;
-            auto next = new AttributeTable;
-            if (current !is null)
-                next.attributes = current.attributes.dup;
-            next.attributes[key] = attribute;
-            table.set(next);
+            {
+                const at = current.indexOf(key);
+                if (at >= 0)
+                    return current.values[at];
+            }
+            table.set(SortedTable!(MethodClassKey, TransactionAttribute).plus(current, key, attribute));
         }
         return attribute;
     }
@@ -571,21 +573,31 @@ final class DescriptorTransactionAttributeSource : TransactionAttributeSource
         rbta.setReadOnly(attributes.readOnly);
         const qualifier = attributes.value.length ? attributes.value : attributes.transactionManager;
         rbta.setQualifier(qualifier.length ? qualifier : null);
-        auto labels = new LinkedHashSet!string;
-        foreach (label; attributes.label)
-            labels.add(label);
-        rbta.setLabels(labels);
-
-        auto rollbackRules = new ArrayList!RollbackRuleAttribute;
-        foreach (rbRule; attributes.rollbackFor)
-            rollbackRules.add(new RollbackRuleAttribute(rbRule));
-        foreach (rbRule; attributes.rollbackForClassName)
-            rollbackRules.add(new RollbackRuleAttribute(rbRule));
-        foreach (rbRule; attributes.noRollbackFor)
-            rollbackRules.add(new NoRollbackRuleAttribute(rbRule));
-        foreach (rbRule; attributes.noRollbackForClassName)
-            rollbackRules.add(new NoRollbackRuleAttribute(rbRule));
-        rbta.setRollbackRules(rollbackRules);
+        // An attribute lives as long as the application, and most declare no labels and no rules. Without labels it
+        // keeps the shared empty list it starts with (Spring sets an empty LinkedHashSet); without rules its list is
+        // made when first asked for (getRollbackRules), as RuleBasedTransactionAttribute's own default does. Either
+        // way the attribute reads, prints and rolls back the same, with fewer objects for every collection to mark.
+        if (attributes.label.length)
+        {
+            auto labels = new LinkedHashSet!string;
+            foreach (label; attributes.label)
+                labels.add(label);
+            rbta.setLabels(labels);
+        }
+        if (attributes.rollbackFor.length || attributes.rollbackForClassName.length || attributes.noRollbackFor.length
+                || attributes.noRollbackForClassName.length)
+        {
+            auto rollbackRules = new ArrayList!RollbackRuleAttribute;
+            foreach (rbRule; attributes.rollbackFor)
+                rollbackRules.add(new RollbackRuleAttribute(rbRule));
+            foreach (rbRule; attributes.rollbackForClassName)
+                rollbackRules.add(new RollbackRuleAttribute(rbRule));
+            foreach (rbRule; attributes.noRollbackFor)
+                rollbackRules.add(new NoRollbackRuleAttribute(rbRule));
+            foreach (rbRule; attributes.noRollbackForClassName)
+                rollbackRules.add(new NoRollbackRuleAttribute(rbRule));
+            rbta.setRollbackRules(rollbackRules);
+        }
         return rbta;
     }
 }
@@ -1056,14 +1068,67 @@ abstract class TransactionAspectSupport
     }
 }
 
-/// The descriptor that declares an advised method.
-private final class Owner
+/// An advised method, as `TransactionInterceptor`'s table keys it.
+private struct MethodKey
 {
-    const Descriptor descriptor;
+    const(MethodDescriptor)* method;
 
-    this(const Descriptor descriptor)
+    /// The address words that order the table's keys.
+    size_t[2] ordinal() const pure nothrow @nogc
     {
-        this.descriptor = descriptor;
+        return [cast(size_t) method, 0];
+    }
+}
+
+/++
+A cache that lives as long as the application, published whole with `ProcessSlot` and read without a lock: its keys
+sorted by their `ordinal`, its values beside them. It is three objects for every collection to mark, where a built-in
+associative array keeps an entry object per key (and the interceptor's table an `Owner` object per method as well). A
+new entry goes into a copy (`plus`), which its owner publishes under its monitor; the copies stop once the keys are
+known, at start-up or on each method's first call.
++/
+private final class SortedTable(K, V)
+{
+    K[] keys;
+    V[] values;
+
+    /// The index of `key`, or -1.
+    ptrdiff_t indexOf(K key) const pure nothrow @nogc
+    {
+        const at = lowerBound(key.ordinal());
+        return at < keys.length && keys[at].ordinal() == key.ordinal() ? cast(ptrdiff_t) at : -1;
+    }
+
+    private size_t lowerBound(size_t[2] target) const pure nothrow @nogc
+    {
+        size_t low, high = keys.length;
+        while (low < high)
+        {
+            const middle = (low + high) / 2;
+            if (keys[middle].ordinal() < target)
+                low = middle + 1;
+            else
+                high = middle;
+        }
+        return low;
+    }
+
+    /// A copy of `table` (null for none) with `key` mapped to `value`, replacing an earlier value.
+    static SortedTable plus(SortedTable table, K key, V value) pure nothrow
+    {
+        auto next = new SortedTable;
+        if (table is null)
+        {
+            next.keys = [key];
+            next.values = [value];
+            return next;
+        }
+        const at = table.lowerBound(key.ordinal());
+        const replace = at < table.keys.length && table.keys[at].ordinal() == key.ordinal();
+        const rest = replace ? at + 1 : at;
+        next.keys = table.keys[0 .. at] ~ key ~ table.keys[rest .. $];
+        next.values = table.values[0 .. at] ~ value ~ table.values[rest .. $];
+        return next;
     }
 }
 
@@ -1099,8 +1164,9 @@ Register it as a bean, with the default transaction manager or the bean factory 
 class TransactionInterceptor : TransactionAspectSupport, Advisor
 {
     private int order = int.max;
-    // The descriptor that declares each advised method, learned when the chain is built, for transaction names.
-    private Owner[const(MethodDescriptor)* ] owners;
+    // The descriptor that declares each advised method, learned when the chain is built, for transaction names: read
+    // without a lock (`SortedTable`), published under this object's monitor.
+    private shared ProcessSlot!(SortedTable!(MethodKey, const(Descriptor))) owners;
 
     /// Create a new `TransactionInterceptor`. The transaction manager and the bean factory still need to be set.
     this()
@@ -1133,7 +1199,7 @@ class TransactionInterceptor : TransactionAspectSupport, Advisor
         if (tas is null || tas.getTransactionAttribute(method, descriptor) is null)
             return false;
         synchronized (this)
-            owners[method] = new Owner(descriptor);
+            owners.set(SortedTable!(MethodKey, const(Descriptor)).plus(owners.get(), MethodKey(method), descriptor));
         return true;
     }
 
@@ -1142,17 +1208,23 @@ class TransactionInterceptor : TransactionAspectSupport, Advisor
         return order;
     }
 
+    // The descriptor that declares `method`, or null.
+    private const(Descriptor) ownerOf(const(MethodDescriptor)* method)
+    {
+        if (auto table = owners.get())
+        {
+            const at = table.indexOf(MethodKey(method));
+            if (at >= 0)
+                return table.values[at];
+        }
+        return null;
+    }
+
     /// Run the rest of the chain and the target within a transaction, as the method's attribute defines it.
     override void invoke(ref Invocation invocation, scope Proceed proceed)
     {
         Invocation* current = &invocation;
-        Owner owner;
-        synchronized (this)
-        {
-            if (auto found = invocation.method in owners)
-                owner = *found;
-        }
-        invokeWithinTransaction(invocation.method, owner is null ? null : owner.descriptor, () @safe {
+        invokeWithinTransaction(invocation.method, ownerOf(invocation.method), () @safe {
             proceed(*current);
         });
     }

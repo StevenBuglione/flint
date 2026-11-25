@@ -853,21 +853,23 @@ final class FlintPreparedStatement : PreparedStatement
     }
 
     /// The data source's entry for `text`, looked up once while this statement runs the same text; null without a
-    /// data source.
-    package(flint.engine) StatementInfo infoOf(string text)
+    /// data source. `keep` false (a plain `Statement`'s text that returns no rows: a schema script's DDL and inserts)
+    /// makes no entry, since each would stay live for the life of the data source.
+    package(flint.engine) StatementInfo infoOf(string text, bool keep = true)
     {
         if (info !is null && info.text is text)
             return info;
         auto source = connection.source;
-        if (source is null)
+        if (source is null || !keep)
             return null;
         info = source.statementInfo(text, connection.driver == Driver.postgres);
         return info;
     }
 
-    private string nativeSql(string text)
+    /// `text` with numbered placeholders for PostgreSQL; `rows` when the statement is run for its rows.
+    private string nativeSql(string text, bool rows = true)
     {
-        if (auto found = infoOf(text))
+        if (auto found = infoOf(text, sql !is null || rows))
             return found.numbered;
         if (connection.driver != Driver.postgres)
             return text;
@@ -896,7 +898,7 @@ final class FlintPreparedStatement : PreparedStatement
         SqlValue[8] room;
         auto params = bind(arena, values, room[]);
         auto lease = connection.engineLease();
-        const native = nativeSql(text);
+        const native = nativeSql(text, wantRows);
         if (!wantRows)
         {
             auto result = lease.execute(native, params, arena, context);
