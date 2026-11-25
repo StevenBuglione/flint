@@ -924,7 +924,7 @@ private Any construct(BeanDescription bean, scope Any[] arguments)
 
 private void unknown(MapperConfig config, JsonParser p, BeanDescription bean, string name, bool readOnly)
 {
-    if (readOnly || name in bean.ignoredNames || bean.ignoreUnknown
+    if (readOnly || bean.ignores(name) || bean.ignoreUnknown
             || !config.isEnabled(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES))
     {
         p.skipChildren();

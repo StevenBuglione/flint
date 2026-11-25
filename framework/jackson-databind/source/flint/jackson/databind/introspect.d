@@ -149,8 +149,24 @@ final class BeanDescription
     const(ConstructorDescriptor)* creator;
     /// Creator properties, by parameter position.
     BeanPropertyDefinition[] creatorProperties;
-    /// Names that are ignored on input without being unknown.
-    bool[string] ignoredNames;
+    /// Names that are ignored on input without being unknown (a few at most: a plain array, no table to mark).
+    string[] ignoredNames;
+
+    /// Whether `name` is ignored on input.
+    bool ignores(scope const(char)[] name) const pure nothrow @nogc
+    {
+        foreach (ignored; ignoredNames)
+            if (ignored == name)
+                return true;
+        return false;
+    }
+
+    // Record `name` as ignored, once.
+    package(flint.jackson) void ignore(string name) pure nothrow
+    {
+        if (!ignores(name))
+            ignoredNames ~= name;
+    }
     /// `@JsonIgnoreProperties(ignoreUnknown: true)`.
     bool ignoreUnknown;
     /// `@JsonInclude` on the type, or `USE_DEFAULTS`.
@@ -451,7 +467,7 @@ struct POJOPropertiesCollector
         {
             bean.ignoreUnknown = ignore.ignoreUnknown;
             foreach (name; ignore.value)
-                bean.ignoredNames[name] = true;
+                bean.ignore(name);
         }
         JsonIncludeProperties include;
         const including = annotation(d.annotations, include);
@@ -467,9 +483,9 @@ struct POJOPropertiesCollector
                 ignoredAccessors ~= p.name;
                 continue;
             }
-            if (p.name in bean.ignoredNames || (including && !contains(include.value, p.name)))
+            if (bean.ignores(p.name) || (including && !contains(include.value, p.name)))
             {
-                bean.ignoredNames[p.name] = true;
+                bean.ignore(p.name);
                 continue;
             }
             kept ~= p;
@@ -477,7 +493,7 @@ struct POJOPropertiesCollector
         bean.properties = kept;
         foreach (name; ignoredAccessors)
             if (bean.findForInput(name) is null)
-                bean.ignoredNames[name] = true;
+                bean.ignore(name);
     }
 
     // A class's @JsonNaming overrides the mapper's strategy.

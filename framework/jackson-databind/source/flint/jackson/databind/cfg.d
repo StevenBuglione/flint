@@ -450,6 +450,63 @@ ulong defaultFeatures(E)() pure nothrow @nogc
  * deserializers: feature bits, naming, inclusion defaults and the descriptor
  * table. Introspected beans are cached here, as Jackson caches serializers.
  */
+// MapperConfig's introspected beans: names and descriptions in one open-addressed array, at most half full, never
+// changed once published (a new entry makes a new table).
+private final class BeanTable
+{
+    import flint.jackson.databind.introspect : BeanDescription;
+
+    private static struct Slot
+    {
+        string name; // null: empty
+        BeanDescription bean;
+    }
+
+    private Slot[] slots;
+    private size_t mask; // slots.length - 1: the length is a power of two
+
+    // The description named `name`, or null.
+    BeanDescription find(scope const(char)[] name) pure nothrow @nogc
+    {
+        for (size_t i = hashOf(name) & mask;; i = (i + 1) & mask)
+        {
+            if (slots[i].name is null)
+                return null;
+            if (slots[i].name == name)
+                return slots[i].bean;
+        }
+    }
+
+    // A table with `table`'s entries and `name`'s.
+    static BeanTable adding(BeanTable table, string name, BeanDescription bean) pure nothrow
+    {
+        size_t count = 1;
+        if (table !is null)
+            foreach (ref slot; table.slots)
+                count += slot.name !is null;
+        size_t size = 8;
+        while (size < count * 2)
+            size *= 2;
+        auto grown = new BeanTable;
+        grown.slots = new Slot[size];
+        grown.mask = size - 1;
+        if (table !is null)
+            foreach (ref slot; table.slots)
+                if (slot.name !is null)
+                    grown.put(slot.name, slot.bean);
+        grown.put(name, bean);
+        return grown;
+    }
+
+    private void put(string name, BeanDescription bean) pure nothrow @nogc
+    {
+        size_t i = hashOf(name) & mask;
+        while (slots[i].name !is null)
+            i = (i + 1) & mask;
+        slots[i] = Slot(name, bean);
+    }
+}
+
 final class MapperConfig
 {
     import flint.engine.aot.descriptor : Descriptor, DescriptorTable;
@@ -489,9 +546,10 @@ final class MapperConfig
     /// The registered modules (`JacksonModule`s), in registration order.
     Object[] modules;
 
-    // Introspected beans by type name. Copy-on-write: a published table is never changed, so every reactor thread
+    // Introspected beans by type name, in one open-addressed array (a built-in table would be an object per entry
+    // for every collection to mark). Copy-on-write: a published array is never changed, so every reactor thread
     // reads it without a lock; a miss builds the description and publishes a larger copy under the monitor.
-    private BeanDescription[string] beans;
+    private BeanTable beans;
 
     /// Whether `f` is enabled.
     bool isEnabled(SerializationFeature f) const pure nothrow @nogc
@@ -540,9 +598,9 @@ final class MapperConfig
     {
         // A single word read of a table published after a fence; the table it points to is immutable from then
         // on, and reads through it depend on the loaded address (RCU-style publication).
-        auto published = beans;
-        if (auto found = d.name in published)
-            return *found;
+        auto published = beans; // one reference: a table and its slots are published together
+        if (auto found = published is null ? null : published.find(d.name))
+            return found;
         POJOPropertiesCollector collector;
         collector.sortAlphabetically = isEnabled(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY);
         collector.sortCreatorPropertiesFirst = isEnabled(MapperFeature.SORT_CREATOR_PROPERTIES_FIRST);
@@ -553,10 +611,9 @@ final class MapperConfig
         applyRealDefaults(collected);
         synchronized (this)
         {
-            if (auto raced = d.name in beans)
-                return *raced;
-            auto grown = beans.dup;
-            grown[d.name] = collected;
+            if (auto raced = beans is null ? null : beans.find(d.name))
+                return raced;
+            auto grown = BeanTable.adding(beans, d.name, collected);
             imported!"core.atomic".atomicFence(); // the description and the table are complete before publication
             beans = grown;
         }
