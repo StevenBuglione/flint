@@ -939,3 +939,14 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - R6: each state is its own GC block.
   - Retained RSS is capped. m7 reviews every slice before it lands; the 30-minute rule does not apply.
 - 2026-11-25, proof-harness: **error-404-p99 at B5 voided** (results `20261125T143428Z`, coordinator 15:12Z). An unheld `dub build :tx --compiler=dmd` (data-access, taskset CPUs 0–3, about 14:59:30–15:00:50Z) overlapped Flint trial 5's fixed-rate phase (14:59:14–15:00:14Z) and capacity phase. The receipt counted the run as evidence with 0 foreign samples: freeze-strays never freezes compilers, and the 10 s busy sampler did not see the build. The run is marked `VOID.json` (`spring_bench.certified_results` skips it), is not re-run at B5, and is deferred to B6 with validation.
+- 2026-11-25, coordinator: **B6 = `be86e77f76512c680a004f9389889d6023e3ecab`**, named by proof-harness when scoreboard-B5 landed (pinned at fc5f127c).
+  - **Contents beyond B5:**
+    - Boot's heapSizeFactor:3 (05397ca6);
+    - S5 live (dcee361d), lean S6 (f028e7c0) and the hand-back lookup cut (9b5b9c0b);
+    - data-access R-79 and R-84..R-87, R-92;
+    - web-http R-80, R-83, R-90, R-93;
+    - third-party-apis rounds 1–2;
+    - m7's registry flattening (R-91);
+    - the error-path client-limit rule (44d970c1; decision ae7858f8).
+  - **Measurement:** every gated part, all interleaved from the start. The GC-matrix parts follow on natural quiet.
+  - **scoreboard-B5 for the record:** every gated build and HTTP runtime metric of both apps passes. Both error paths are deferred to B6: validation by the harness rule, and the 404 voided as contaminated by an unheld build.
