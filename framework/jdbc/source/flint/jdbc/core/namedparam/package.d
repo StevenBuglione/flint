@@ -40,6 +40,33 @@ import flint.jdbc.support : JdbcUtils, KeyHolder;
 // ---------------------------------------------------------------------------------------------------------------
 // ParsedSql and NamedParameterUtils
 
+/// A `PreparedStatementCreatorFactory` built for a statement and the parameter types it declares; not changed
+/// after construction, and never customized.
+private final class FactoryPlan
+{
+    private PreparedStatementCreatorFactory factory;
+    private int[] sqlTypes;
+    private string[] typeNames;
+
+    this(PreparedStatementCreatorFactory factory, int[] sqlTypes, string[] typeNames) pure nothrow
+    {
+        this.factory = factory;
+        this.sqlTypes = sqlTypes;
+        this.typeNames = typeNames;
+    }
+
+    /// Whether `paramSource` declares each of `names` with this plan's SQL type and type name.
+    bool matches(const(string)[] names, SqlParameterSource paramSource)
+    {
+        if (names.length != sqlTypes.length)
+            return false;
+        foreach (i, name; names)
+            if (paramSource.getSqlType(name) != sqlTypes[i] || paramSource.getTypeName(name) != typeNames[i])
+                return false;
+        return true;
+    }
+}
+
 /// Holds information about a parsed SQL statement.
 class ParsedSql
 {
@@ -52,6 +79,9 @@ class ParsedSql
     /// The statement with every named parameter replaced by one `?`: what `substituteNamedParameters` returns when
     /// no value is a list, made once when the statement is parsed rather than on every call.
     private string singlePlaceholderSql;
+    /// The `PreparedStatementCreatorFactory` `NamedParameterJdbcTemplate` built for this statement's first call
+    /// without list values, and the parameter types it was built for: later calls with the same types reuse it.
+    private shared imported!"flint.conc.slot".ProcessSlot!FactoryPlan factoryPlan;
 
     /// Create a new instance of the `ParsedSql` class.
     package(flint.jdbc) this(string originalSql)
@@ -334,7 +364,7 @@ abstract class NamedParameterUtils
     }
 
     /// Whether a value `paramSource` supplies for one of `parsedSql`'s parameters is a list.
-    private static bool hasListValue(ParsedSql parsedSql, SqlParameterSource paramSource)
+    package(flint.jdbc) static bool hasListValue(ParsedSql parsedSql, SqlParameterSource paramSource)
     {
         if (paramSource is null)
             return false;
@@ -1273,11 +1303,44 @@ class NamedParameterJdbcTemplate : NamedParameterJdbcOperations
             SqlParameterSource paramSource, scope void delegate(PreparedStatementCreatorFactory) @safe customizer)
     {
         auto parsedSql = getParsedSql(sql);
-        auto pscf = getPreparedStatementCreatorFactory(parsedSql, paramSource);
-        if (customizer !is null)
-            customizer(pscf);
+        // Without a customizer, and unless a subclass builds its own factories, a statement's factory is built
+        // once for its parameter types and reused: each call passes only its own values.
+        auto pscf = customizer is null && typeid(this) is typeid(NamedParameterJdbcTemplate)
+            ? plannedFactory(parsedSql, paramSource) : null;
+        if (pscf is null)
+        {
+            pscf = getPreparedStatementCreatorFactory(parsedSql, paramSource);
+            if (customizer !is null)
+                customizer(pscf);
+        }
         auto params = NamedParameterUtils.buildValueArray(parsedSql, paramSource, null);
         return pscf.newPreparedStatementCreator(params);
+    }
+
+    /++
+    The factory `getPreparedStatementCreatorFactory` would build for `parsedSql` and `paramSource`, built once: the
+    published plan when `paramSource` declares the same parameter types, else a new one published for later calls.
+    Null when a value is a list (its placeholders depend on the values) or another plan holds the statement.
+    +/
+    private PreparedStatementCreatorFactory plannedFactory(ParsedSql parsedSql, SqlParameterSource paramSource)
+    {
+        if (NamedParameterUtils.hasListValue(parsedSql, paramSource))
+            return null;
+        const names = parsedSql.getParameterNames();
+        if (paramSource is null && names.length)
+            return null;
+        if (auto plan = parsedSql.factoryPlan.get())
+            return plan.matches(names, paramSource) ? plan.factory : null;
+        auto factory = getPreparedStatementCreatorFactory(parsedSql, paramSource);
+        auto sqlTypes = new int[names.length];
+        auto typeNames = new string[names.length];
+        foreach (i, name; names)
+        {
+            sqlTypes[i] = paramSource.getSqlType(name);
+            typeNames[i] = paramSource.getTypeName(name);
+        }
+        auto held = parsedSql.factoryPlan.setIfAbsent(new FactoryPlan(factory, sqlTypes, typeNames));
+        return held.matches(names, paramSource) ? held.factory : factory;
     }
 
     /// Obtain a parsed representation of the given SQL statement. The default implementation uses an LRU cache
@@ -1396,4 +1459,29 @@ private string decimal(long value)
     import flint.engine.aot.text : decimal;
 
     return decimal(value);
+}
+
+@("NamedParameterJdbcTemplate builds a statement's creator factory once for its parameter types (Flint)")
+unittest
+{
+    import flint.java.sql : Types;
+
+    auto template_ = new NamedParameterJdbcTemplate(new JdbcTemplate());
+    auto parsed = template_.getParsedSql("SELECT * FROM owners WHERE id = :id AND city = :city");
+    auto first = template_.plannedFactory(parsed, new MapSqlParameterSource("id", 1).addValue("city", "Madison"));
+    assert(first !is null && first.getSql() == "SELECT * FROM owners WHERE id = ? AND city = ?");
+    // Other values, same types: the same factory, each creator with its own values.
+    auto again = template_.plannedFactory(parsed, new MapSqlParameterSource("id", 2).addValue("city", "Monona"));
+    assert(again is first);
+    // A list value changes the placeholders, and declared types differ: neither takes the plan.
+    auto listed = new MapSqlParameterSource("id", [Any.of(1), Any.of(2)]).addValue("city", "Madison");
+    assert(template_.plannedFactory(parsed, listed) is null);
+    auto typed = new MapSqlParameterSource("city", "Madison");
+    typed.addValue("id", 1, Types.BIGINT);
+    assert(template_.plannedFactory(parsed, typed) is null);
+    assert(template_.plannedFactory(parsed, null) is null);
+    // The ordinary path still gives a statement with the values of each call.
+    auto creator = template_.getPreparedStatementCreator(parsed.getOriginalSql(), typed);
+    auto provider = cast(imported!"flint.jdbc.core".SqlProvider) creator;
+    assert(provider.getSql() == "SELECT * FROM owners WHERE id = ? AND city = ?");
 }
