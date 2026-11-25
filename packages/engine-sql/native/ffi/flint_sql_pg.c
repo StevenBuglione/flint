@@ -433,6 +433,10 @@ static int write_parameter(wire_parameter *output, const flint_sql_parameter *in
 
 enum { STACK_PARAMETERS = 16 };
 
+/* Rows arrive in results of up to this many (libpq 17's chunked-rows mode) rather than one result per row: each
+   result is one allocation and one PQclear, and the operation walks the rows of a result by row_index. */
+enum { CHUNK_ROWS = 128 };
+
 static int send_query(flint_pg_connection *connection, flint_sql_operation *operation)
 {
     size_t count = operation->parameter_count;
@@ -472,7 +476,7 @@ static int send_query(flint_pg_connection *connection, flint_sql_operation *oper
         sent = PQsendQueryParams(database, operation->text, (int)count, types, values, sizes, formats, 1);
     }
 
-    if (sent && PQsetSingleRowMode(database)) {
+    if (sent && PQsetChunkedRowsMode(database, CHUNK_ROWS)) {
         operation->phase = PG_QUERY;
         status = FLINT_SQL_OK;
     } else
@@ -494,7 +498,7 @@ static int send_script(flint_pg_connection *connection, flint_sql_operation *ope
     const char *standard = PQparameterStatus(database, "standard_conforming_strings");
     if (!flint_pg_script_allowed(operation->text, standard && !strcmp(standard, "off")))
         return FLINT_SQL_INVALID;
-    if (!PQsendQuery(database, operation->text) || !PQsetSingleRowMode(database))
+    if (!PQsendQuery(database, operation->text) || !PQsetChunkedRowsMode(database, CHUNK_ROWS))
         return FLINT_SQL_IO;
     operation->phase = PG_QUERY;
     return FLINT_SQL_OK;
@@ -697,6 +701,7 @@ static int handle_result(flint_sql_operation *operation, PGresult *result)
     case PGRES_EMPTY_QUERY:
         break;
     case PGRES_SINGLE_TUPLE:
+    case PGRES_TUPLES_CHUNK:
     case PGRES_TUPLES_OK:
         if (operation->rows && PQntuples(result) > 0 && !atomic_load(&operation->cancelled)) {
             operation->row = result;
@@ -810,7 +815,7 @@ int flint_pg_drive(flint_pg_connection *connection, flint_sql_operation *operati
         return step_connect(connection, operation, fd, interest);
     /* The socket is read only when libpq needs more input, at most once per call: not in the call that sent
        the statement (no answer can be there yet; readiness brings the next call), and not while libpq holds
-       unread results (single-row mode returns each row of one read). */
+       unread results (one read can hold several of them). */
     int read = 0;
     if (operation->phase == PG_UNSENT) {
         const int state = start_query(connection, operation);
