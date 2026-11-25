@@ -878,3 +878,109 @@ unittest
     assert(reply.content == `{"status":404,"path":"/nope","message":"","exception":null,"at":"/error"}`, reply.content);
     assert(shortcut.written == 0 && shortcut.refused == 0);
 }
+
+/// S5's engine side: a servlet whose fast path answers POST /fast from the offered body and declines the rest, which
+/// the generic path then serves by reading the same body from the request's input stream.
+private final class FastEcho : HttpServlet, imported!"flint.engine.aot.fast".FastDispatch
+{
+    import flint.engine.aot.fast : FastExchange, FastOutcome;
+
+    size_t offers;
+    string offeredBody;
+    string offeredContentType;
+    size_t offeredContentTypes;
+
+    bool hasFastPath()
+    {
+        return true;
+    }
+
+    FastOutcome dispatchFast(ref scope FastExchange exchange)
+    {
+        ++offers;
+        offeredBody = cast(string) exchange.requestBody.idup;
+        offeredContentType = exchange.contentType.idup;
+        offeredContentTypes = exchange.contentTypeCount;
+        if (exchange.method != "POST" || exchange.path != "/fast")
+            return FastOutcome.declined;
+        exchange.respond(200, "text/plain", cast(const(ubyte)[])("fast:" ~ offeredBody));
+        return FastOutcome.written;
+    }
+
+    protected override string[] getDeclaredMethods()
+    {
+        return ["GET", "POST"];
+    }
+
+    protected override void doGet(HttpServletRequest request, HttpServletResponse response)
+    {
+        response.setContentType("text/plain");
+        response.getWriter().print("get");
+    }
+
+    protected override void doPost(HttpServletRequest request, HttpServletResponse response)
+    {
+        response.setContentType("text/plain");
+        response.getWriter().print("generic:" ~ cast(string) request.getInputStream().readAllBytes().idup);
+    }
+}
+
+@("S5: a POST is offered with its whole body; a declined one reads the same body; chunked and oversized ones are not offered")
+unittest
+{
+    import flint.engine.servlet.fast : serveFast;
+
+    ServletEngineOptions options;
+    options.address = "127.0.0.1";
+    options.port = 0;
+    options.fastOffer = &serveFast;
+    auto engine = new ServletEngine(options);
+    auto echo = new FastEcho;
+    engine.addServlet("dispatcherServlet", echo);
+    engine.start();
+    scope (exit)
+        engine.stop();
+    auto socket = new TcpSocket(new InternetAddress("127.0.0.1", cast(ushort) engine.getPort()));
+    socket.setOption(SocketOptionLevel.SOCKET, SocketOption.RCVTIMEO, dur!"msecs"(3_000));
+    scope (exit)
+        socket.close();
+    char[] pending;
+
+    // Offered with the body, the Content-Type and its count; the fast path answers.
+    auto reply = exchange(socket, pending, "POST /fast HTTP/1.1\r\nHost: localhost\r\n"
+            ~ "Content-Type: application/json\r\nContent-Length: 7\r\n\r\n{\"a\":1}");
+    assert(reply.content == `fast:{"a":1}`, reply.content);
+    assert(echo.offers == 1 && echo.offeredBody == `{"a":1}`
+            && echo.offeredContentType == "application/json" && echo.offeredContentTypes == 1);
+
+    // Offered and declined: the generic path reads the same body from the input stream.
+    reply = exchange(socket, pending, "POST /other HTTP/1.1\r\nHost: localhost\r\nContent-Type: text/plain\r\n"
+            ~ "Content-Type: application/json\r\nContent-Length: 5\r\n\r\nhello");
+    assert(reply.content == "generic:hello", reply.content);
+    assert(echo.offers == 2 && echo.offeredBody == "hello" && echo.offeredContentType == "text/plain"
+            && echo.offeredContentTypes == 2);
+
+    // A POST without Content-Type, or with an empty body, is still offered.
+    reply = exchange(socket, pending, "POST /fast HTTP/1.1\r\nHost: localhost\r\nContent-Length: 0\r\n\r\n");
+    assert(reply.content == "fast:", reply.content);
+    assert(echo.offers == 3 && echo.offeredContentTypes == 0 && echo.offeredBody.length == 0);
+
+    // Chunked: not offered, served generically with the dechunked body.
+    reply = exchange(socket, pending,
+            "POST /fast HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding: chunked\r\n\r\n" ~ "3\r\nabc\r\n0\r\n\r\n");
+    assert(reply.content == "generic:abc", reply.content);
+    assert(echo.offers == 3);
+
+    // Larger than the fast path's stack copy (4 KiB): not offered.
+    string large;
+    foreach (_; 0 .. 4097)
+        large ~= "x";
+    reply = exchange(socket, pending, "POST /fast HTTP/1.1\r\nHost: localhost\r\nContent-Length: 4097\r\n\r\n" ~ large);
+    assert(reply.content == "generic:" ~ large);
+    assert(echo.offers == 3);
+
+    // A GET is still offered, with no body.
+    reply = exchange(socket, pending, "GET /fast HTTP/1.1\r\nHost: localhost\r\n\r\n");
+    assert(reply.content == "get", reply.content);
+    assert(echo.offers == 4 && echo.offeredBody.length == 0);
+}

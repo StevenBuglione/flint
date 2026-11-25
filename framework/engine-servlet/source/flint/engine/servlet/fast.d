@@ -32,6 +32,9 @@ private enum size_t headLimit = 2048;
 /// The longest parameter name or value the fast path decodes; a longer one makes it decline.
 private enum size_t valueLimit = 1024;
 
+/// S5: the largest request body the fast path offers, copied to the stack; a larger one is served generically.
+private enum size_t bodyLimit = 4096;
+
 /++
 Offer one exchange to `dispatch`. `declined`: nothing ran and nothing was sent. `written`: the response is complete.
 `materialized`: `servletRequest` and `servletResponse` are set, and `failure` holds what escaped the dispatcher, if
@@ -43,9 +46,11 @@ FastOutcome serveFast(ServletEngine engine, FastDispatch dispatch, ref scope Req
         out ServletEngineRequest servletRequest, out ServletEngineResponse servletResponse, out Exception failure)
 {
     const method = request.method();
-    if (method != Method.get && method != Method.head)
+    // S5: a POST is offered with its whole body (offerBody); every other method with a body is served generically.
+    if (method != Method.get && method != Method.head && method != Method.post)
         return FastOutcome.declined;
     char[headLimit] head = void;
+    ubyte[bodyLimit] body = void; // S5: a POST's body, copied by offerBody
     size_t used;
     bool fits = true;
     // Copies one arena buffer behind what is already in `head`; the slice is valid for this call only.
@@ -87,6 +92,22 @@ FastOutcome serveFast(ServletEngine engine, FastDispatch dispatch, ref scope Req
         exchange.accept = take(acceptField);
     Buffer originField;
     exchange.originCount = request.firstHeader("origin", originField);
+    // S5: a POST's Content-Type fields and its whole body, or no offer.
+    bool post()
+    {
+        Buffer contentTypeField;
+        exchange.contentTypeCount = request.firstHeader("content-type", contentTypeField);
+        if (exchange.contentTypeCount != 0)
+            exchange.contentType = take(contentTypeField);
+        size_t bodyLength;
+        if (!offerBody(request, context, body, bodyLength))
+            return false;
+        exchange.requestBody = body[0 .. bodyLength];
+        return true;
+    }
+
+    if (method == Method.post && !post())
+        return FastOutcome.declined;
     if (!fits)
         return FastOutcome.declined;
     const contextPath = engine.contextPathOf();
@@ -199,6 +220,61 @@ FastOutcome serveFast(ServletEngine engine, FastDispatch dispatch, ref scope Req
         materialize(ignoredRequest, ignoredResponse);
     }
     return outcome;
+}
+
+/++
+S5: copies a POST's body to the start of `storage` and sets `copiedLength`, when the engine holds the whole body as received:
+exactly one `Content-Length` field whose value is the body's length, and no `Transfer-Encoding` or `Expect` field
+(a chunked or 100-continue request is served generically). False, offering nothing, otherwise or when the body is
+larger than `storage`. A request the fast path hands back is captured from the same arena, so its input stream gives
+the same bytes (`materialize`).
++/
+private bool offerBody(ref scope Request request, ref scope RequestContext context,
+        ref ubyte[bodyLimit] storage, out size_t copiedLength)
+{
+    Buffer field;
+    if (request.firstHeader("transfer-encoding", field) != 0 || request.firstHeader("expect", field) != 0)
+        return false;
+    Buffer lengthField;
+    if (request.firstHeader("content-length", lengthField) != 1)
+        return false;
+    const bodyBuffer = request.body();
+    if (!bodyBuffer.ok())
+        return false;
+    const length = bodyBuffer.value.length();
+    if (length > storage.length || !lengthIs(context, lengthField, length))
+        return false;
+    bool copied = length == 0;
+    if (length != 0)
+        context.arena.read(bodyBuffer.value, (scope const(ubyte)[] bytes) @safe nothrow @nogc {
+            if (bytes.length != length)
+                return;
+            storage[0 .. length] = bytes;
+            copied = true;
+        });
+    if (!copied)
+        return false;
+    copiedLength = length;
+    return true;
+}
+
+/// Whether the `Content-Length` field's value is exactly the decimal `length` (no sign, spaces or other text).
+private bool lengthIs(ref scope RequestContext context, Buffer field, size_t length)
+{
+    bool equal;
+    context.arena.read(field, (scope const(ubyte)[] text) @safe nothrow @nogc {
+        if (text.length == 0 || text.length > 19)
+            return;
+        ulong value;
+        foreach (digit; text)
+        {
+            if (digit < '0' || digit > '9')
+                return;
+            value = value * 10 + (digit - '0');
+        }
+        equal = value == length;
+    });
+    return equal;
 }
 
 /// The fields as the transport takes them, on `storage` when they fit; more is a GC copy, as the handler ran.
