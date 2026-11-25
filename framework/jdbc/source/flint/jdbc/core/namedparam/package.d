@@ -684,12 +684,15 @@ class MapSqlParameterSource : AbstractSqlParameterSource
     {
         this.values = values;
         borrowed = true;
+        // forEachAny takes its visitor as scope, so reading a map allocates no closure (forEach's would).
         if (values !is null)
-            values.forEach((string key, Any value) {
-                if (key is null)
+            values.forEachAny((ref Any key, ref Any value) {
+                const name = key.get!string;
+                if (name is null)
                     throw new IllegalArgumentException("Parameter name must not be null");
                 if (auto parameterValue = parameterValueOf(value))
-                    registerSqlType(key, parameterValue.getSqlType());
+                    registerSqlType(name, parameterValue.getSqlType());
+                return 0;
             });
     }
 
