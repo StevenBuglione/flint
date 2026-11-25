@@ -844,3 +844,17 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     Evidence: `benchmarks/spring/evidence/phase1-builds-gs-rest/20261125T055404Z/`.
 - 2026-11-25, proof-harness: **phase1-builds-gs-relational certified at B4** (`fb4c73d1adc7`, 06:09–06:13Z, no foreign activity). 1/1 everywhere (Go in the parity wire mode), served binaries included. Served: 1,023 client-served, 18 c-source, 0 refused. **Every gated build metric passes**, median (99% interval), 9 trials: primary 0.020; deps-primed context 0.682 (0.643–0.813); secondary 0.120 (strict scratch); edit 0.526; static edit 0.773 (0.751–0.810), 126 against 163 ms; Oz 0.668. Evidence: `benchmarks/spring/evidence/phase1-builds-gs-relational/20261125T060905Z/`.
 - 2026-11-25, proof-harness: **phase1-builds-petclinic certified at B4** (`fb4c73d1adc7`, 06:23–06:29Z, no foreign activity). 109/109 everywhere (Go in the parity wire mode), served dev and static binaries included. Served: 2,463 client-served, 18 c-source, 0 refused. **Every gated build metric passes**, median (99% interval), 9 trials: primary 0.214 (412 against 1,927 ms); secondary 0.490 (strict scratch); edit 0.578; static edit 0.770; Oz 0.935. Context: deps-primed 1.27. **All 15 gated build metrics of the three applications pass at B4.** Evidence: `benchmarks/spring/evidence/phase1-builds-petclinic/20261125T062255Z/`.
+- 2026-11-25, coordinator: **petclinic CPU work goes to the Spring framework path, not transport or mapping.** This is diagnostic evidence from posidon, never certification: `benchmarks/spring/evidence/floor-reference/posidon-20261125T065217Z/` and `posidon-20261125T070834Z/`, the second clean under the host-wide lock (e1b85c5d) and freeze-strays. App CPU per request at 5,000/s on one machine:
+  - Go: 95.1 µs;
+  - floor-minimal (same HTTP stack and libpq, identical bytes): 63.2;
+  - floor-mapped (plus the real mapping, DTOs and Jackson): about 75.3;
+  - ordinary Flint: 116.0.
+
+  PostgreSQL CPU and I/O syscalls are equal across the arms. The roughly 41 µs between floor-mapped and ordinary Flint is servlet, MVC and security filters, the tx interceptor, and NamedParameterJdbcTemplate/BeanPropertyRowMapper over JDBC. It is the only share above Go. Ordinary Flint also has about 0.45 more fiber parks and 0.4 more futex calls per request, with identical I/O. Use the deltas between arms, not posidon's ratios: posidon is Intel, venus is AMD.
+
+  Owners:
+  - flint-aot: the next fast-path layers;
+  - data-access: JDBC and tx, plus the extra parks and futex calls;
+  - web-http: the extra park if it is in the engine.
+
+  Mapping work (direct row mapping) is deprioritized, since about 11 µs is the whole mapping-plus-Jackson cost.
