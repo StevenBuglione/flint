@@ -2,7 +2,7 @@
   "schema": "flint.measure-queue/1",
   "id": "phase1-builds-gs-relational",
   "created": "2026-11-23",
-  "status": "done",
+  "status": "pending",
   "window": "claim",
   "priority": 2,
   "requested_by": "ADR-030 section 8, Phase 1 exit (coordinator's plan, 2026-11-23 15:20Z); split per application by the coordinator, 2026-11-23 16:45Z",
@@ -13,7 +13,7 @@
   "builds": {
     "tree": {
       "app": "checkout",
-      "commit": "fb4c73d1adc7",
+      "commit": "8ed3de37dc57",
       "flint": true,
       "linker": "mold",
       "fork": false
@@ -8926,7 +8926,7 @@
       }
     }
   ],
-  "claim_when": "B4 order 2 (coordinator 05:45Z)",
-  "tree_note": "B4: one private tree with a copy of shared v4.2 (every compile client-served or client-local), mold, strict served compiles (0 refused; client-local only c-source and forced), strict scratch; Go acceptance in the parity wire mode",
-  "pinned": "B4, fb4c73d1adc7550f728b76b3e53258f0708cb4d3 (coordinator 05:45Z on 2026-11-25, decisions.md f345940e)"
+  "claim_when": "B5 order 2 (coordinator 11:02Z)",
+  "tree_note": "B5: one private tree with a copy of shared v4.2 (every compile client-served or client-local), mold, strict served compiles, strict scratch; Go acceptance in the parity wire mode; flint built at the tree's commit (ThinLTO level fix a8dc0aea/8ba53b8f)",
+  "pinned": "B5, 8ed3de37dc5713907b163f778b629c09a1317d8e (fp main when scoreboard-B4 landed; coordinator 11:02Z)"
 }
