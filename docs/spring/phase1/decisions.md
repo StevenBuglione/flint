@@ -1007,3 +1007,12 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - capacity 1.612 is a lower bound: as at B6, Flint's capacity phase was client-limited in all 9 trials and is recorded as context (owner decision ae7858f8); Go's was not.
 
     Evidence: `benchmarks/spring/evidence/error-validation-p99/20261125T215555Z/`.
+- 2026-11-25, proof-harness: **phase1-http-petclinic certified at B7** (`43db0cae5fbc`, 22:46–23:25Z, interleaved; no foreign activity, nothing frozen). Go 109/109 in the parity wire mode (`8d29301a`). **Every gated runtime metric passes again.** Flint / Go, median (99% interval), 9 trials:
+    - **throughput 1.662 (1.653–1.666)**: 32,550 against 19,580 req/s (1.649 at B6);
+    - **p50 0.820 (0.809–0.838)**: 195 against 238 µs;
+    - **p99 0.812 (0.790–0.856)**: 467 against 575 µs (0.828 at B6);
+    - **peak RSS 0.758 (0.752–0.772)**: 20.3 against 26.7 MB;
+    - **CPU per request 0.810 (0.800–0.821)**: 52.6 against 64.9 µs;
+    - p99.9 1.115 (0.917–1.646), reported.
+
+    Neither side's capacity phase was client-limited. Evidence: `benchmarks/spring/evidence/phase1-http-petclinic/20261125T224601Z/`.
