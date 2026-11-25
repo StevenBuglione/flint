@@ -330,6 +330,40 @@ From the generated mapping rows: petclinic-rest has 37 mappings, all `ResponseEn
 
 Each shape lands with its own black-box cases on the default, gate entries, and a petclinic A/B (on against `FLINT_AOT_FAST_PATH=0`).
 
+### 9.1.1 S5: the validated POST
+
+A `POST` mapping that consumes exactly `application/json`, takes one `@RequestBody` (validated with `@Valid` or not)
+besides S1's path variables, and writes as S1 or S2. The design and the review notes are in the coordination note
+`s5-validated-post.md`.
+
+**Proof (`FastPathTable.build`):**
+- The route's method selects the registration: `directHandler` finds the only registration at the path that a `POST`
+  reaches, and its `consumes` is exactly `application/json`. Templates use S1's overlap check, restricted to
+  registrations a `POST` reaches. (The same rule now lets GET routes share a path with other methods' mappings, as
+  the lookup's method condition does.)
+- The body parameter resolves with exactly `RequestResponseBodyMethodProcessor`; it is required and not `Optional`.
+- The first converter that reads the declared type as `application/json` is exactly the Jackson converter.
+- Returns, `Accept` keys, CORS and filters are proved as S1–S4.
+
+**Per request:**
+- **Decline** unless the container offers the whole body with exactly one `Content-Type` field whose value is
+  `application/json`.
+- **Read:** the body is copied (as `readAllBytes` copies it) and read with the converter's own mapper; any read
+  failure declines.
+- **Validate:** the processor's own `validationFailure` (made `package(flint)`).
+- **Failure:** the same `MethodArgumentNotValidException` goes to `complete`, then the generic
+  `processDispatchResult`, so advice and resolvers run exactly as they do generically.
+- **Success:** the handler runs and writes as S1 or S2.
+
+**Engine:** the container must offer `POST` with `FastExchange.requestBody`, `contentTypeCount` and `contentType`
+set, and `materialize` must replay the body. Until engine-servlet does (web-http), POST routes are proved but never
+offered.
+
+**Tests:** framework-test `fast_path_tests.d`, against MockMvc's generic dispatch with the same validator and advice:
+- a valid body for each `Accept` key: the same status, `Content-Type` and body, one handler run;
+- an invalid body: the advice's 400, byte for byte, and no handler run;
+- declines: another `Content-Type` value, two fields, none, an empty body, malformed JSON, a GET.
+
 ### 9.2 The error-page shortcut (default JSON 404)
 
 A 404 that reaches Boot's error page costs a second full pass: the engine forwards to `/error`, which runs the ERROR filter chain, the `DispatcherServlet` lookup, `BasicErrorController.error`, `HttpEntityMethodProcessor`'s negotiation and the Jackson converter (coordination note web-http-404-specialization.md). The shortcut writes that response in place of the forward when startup has proved the whole ERROR dispatch stock. The first dispatch, which raises and resolves the 404, is unchanged.

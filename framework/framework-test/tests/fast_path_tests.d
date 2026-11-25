@@ -9,12 +9,15 @@ import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : DescriptorTable, descriptorOf;
 import flint.engine.aot.fast : FastExchange, FastField, FastOutcome, FastValueVisitor;
 import flint.engine.aot.mapping : AotHandlerMapping = HandlerMapping;
-import flint.http : HttpHeaders, HttpStatus, ResponseEntity;
+import flint.http : HttpHeaders, HttpStatus, ProblemDetail, ResponseEntity;
 import flint.mock.web : MockHttpServletRequest, MockHttpServletResponse;
 import flint.http.converter.json : JacksonJsonHttpMessageConverter;
 import flint.jakarta.servlet.http : HttpServletRequest, HttpServletResponse;
 import flint.test.web.servlet.setup : StaticBeanFactory;
-import flint.web.bind.annotation : CrossOrigin, DeleteMapping, GetMapping, PathVariable, RequestParam, RestController;
+import flint.jakarta.validation : Valid;
+import flint.web.bind : MethodArgumentNotValidException;
+import flint.web.bind.annotation : CrossOrigin, DeleteMapping, ExceptionHandler, GetMapping,
+    PathVariable, PostMapping, RequestBody, RequestParam, RestController, RestControllerAdvice;
 import flint.web.servlet : DispatcherServlet, HandlerInterceptor;
 import flint.web.servlet.config.annotation : InterceptorRegistry, WebMvcConfigurationSupport, WebMvcConfigurer;
 import flint.web.servlet.mvc.method.aot : handlerDescriptorsOf, requestMappingsOf;
@@ -210,7 +213,8 @@ private struct Offer
 
 /// Offers a request as the container does: `query` undecoded pairs (the container's decoding is engine-servlet's).
 private Offer offer(DispatcherServlet servlet, string method, string path, string query = null,
-        string[] accept = null, bool materializes = false, size_t origins = 0)
+        string[] accept = null, bool materializes = false, size_t origins = 0, string content = null,
+        string[] contentTypes = null)
 {
     Offer result;
     bool parameter(scope const(char)[] name, scope FastValueVisitor visit)
@@ -257,7 +261,14 @@ private Offer offer(DispatcherServlet servlet, string method, string path, strin
     {
         assert(materializes, "no materialization was expected");
         result.materialized = new MockHttpServletResponse;
-        request = new MockHttpServletRequest(method, path);
+        auto servletRequest = new MockHttpServletRequest(method, path);
+        foreach (value; accept)
+            servletRequest.addHeader("Accept", value);
+        foreach (value; contentTypes)
+            servletRequest.addHeader("Content-Type", value);
+        if (content.length)
+            servletRequest.setContent(cast(const(ubyte)[]) content);
+        request = servletRequest;
         response = result.materialized;
     }
 
@@ -268,6 +279,10 @@ private Offer offer(DispatcherServlet servlet, string method, string path, strin
     exchange.originCount = origins;
     if (accept.length)
         exchange.accept = accept[0];
+    exchange.requestBody = cast(const(ubyte)[]) content;
+    exchange.contentTypeCount = contentTypes.length;
+    if (contentTypes.length)
+        exchange.contentType = contentTypes[0];
     exchange.parameter = &parameter;
     exchange.respond = &respond;
     exchange.respondFields = &respondFields;
@@ -461,4 +476,159 @@ unittest
     assert(hello.outcome == FastOutcome.written && hello.fields == [
         ["Content-Type", "application/json"]
     ]);
+}
+
+/// S5: an owner as petclinic-rest posts it.
+struct PostedOwner
+{
+    string firstName; ///
+    string telephone; ///
+}
+
+// Rejects a blank first name and a non-numeric telephone, as the DTO's constraints would.
+private final class PostedOwnerValidator : imported!"flint.validation".Validator
+{
+    bool supports(string typeName)
+    {
+        return typeName.length != 0;
+    }
+
+    void validate(Any target, imported!"flint.validation".Errors errors)
+    {
+        const owner = target.get!PostedOwner;
+        if (owner.firstName.length == 0)
+            errors.rejectValue("firstName", "NotBlank", "must not be blank");
+        foreach (c; owner.telephone)
+            if (c < '0' || c > '9')
+            {
+                errors.rejectValue("telephone", "Pattern", "must match \"^[0-9]*$\"");
+                break;
+            }
+    }
+}
+
+/// S5: `POST /owners`, consuming and producing JSON, with a validated body.
+@RestController
+class PostingController
+{
+    long calls; ///
+
+    ///
+    @PostMapping(value: ["/owners"], consumes: ["application/json"], produces: ["application/json"])
+    PostedOwner addOwner(@Valid @RequestBody PostedOwner owner)
+    {
+        ++calls;
+        return owner;
+    }
+}
+
+/// S5: the advice petclinic-rest's resembles: a 400 problem listing the rejected fields.
+@RestControllerAdvice
+class PostingAdvice
+{
+    ///
+    @ExceptionHandler
+    ResponseEntity handle(MethodArgumentNotValidException ex)
+    {
+        auto detail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Validation failed");
+        string fields;
+        foreach (error; ex.getBindingResult().getFieldErrors().toArray())
+            fields ~= (fields.length ? "," : "") ~ ex.getObjectName() ~ "." ~ error.getField();
+        detail.setTitle(fields);
+        return ResponseEntity.badRequest().body(detail);
+    }
+}
+
+// The same controller, advice and validator, through the generic dispatch (MockMvc) and through the fast path.
+private DispatcherServlet postingDispatcher(PostingController controller)
+{
+    import flint.web.servlet.mvc.method.aot : exceptionHandlersOf;
+
+    auto beans = new StaticBeanFactory;
+    beans.addBean("postingController", controller);
+    beans.addBean("postingAdvice", new PostingAdvice);
+    auto rows = requestMappingsOf!PostingController("postingController");
+    auto table = DescriptorTable.withBuiltins();
+    auto descriptors = handlerDescriptorsOf!PostingController() ~ handlerDescriptorsOf!PostingAdvice();
+    foreach (descriptor; descriptors)
+        table.add(descriptor);
+    auto support = new WebMvcConfigurationSupport(rows, exceptionHandlersOf!PostingAdvice("postingAdvice"),
+            beans, [cast(WebMvcConfigurer) new FastPathConfigurer], table);
+    support.setValidator(new PostedOwnerValidator);
+    auto converters = support.getMessageConverters();
+    foreach (converter; converters)
+        if (auto json = cast(JacksonJsonHttpMessageConverter) converter)
+            foreach (descriptor; descriptors)
+                json.getMapper().descriptors().add(descriptor);
+    support.setMessageConverters(converters);
+    return new DispatcherServlet(support.build());
+}
+
+// The generic dispatch's response to the same request.
+private MockHttpServletResponse generic(DispatcherServlet servlet, string content,
+        string[] contentTypes, string[] accept = null)
+{
+    import flint.jakarta.servlet : ServletRequest, ServletResponse;
+
+    auto request = new MockHttpServletRequest("POST", "/owners");
+    foreach (value; accept)
+        request.addHeader("Accept", value);
+    foreach (value; contentTypes)
+        request.addHeader("Content-Type", value);
+    request.setContent(cast(const(ubyte)[]) content);
+    auto response = new MockHttpServletResponse;
+    servlet.service(cast(ServletRequest) request, cast(ServletResponse) response);
+    return response;
+}
+
+@("fast path S5: a validated POST binds and writes as the generic path; a failure goes to the advice")
+unittest
+{
+    auto controller = new PostingController;
+    auto servlet = postingDispatcher(controller);
+    const valid = `{"firstName":"George","telephone":"6085551023"}`;
+    const invalid = `{"firstName":"","telephone":"01234abcde"}`;
+    foreach (accept; [cast(string[]) null, ["*/*"], ["application/json"]])
+    {
+        // A valid body: the handler runs once, and the response is the generic one.
+        const before = controller.calls;
+        auto fast = offer(servlet, "POST", "/owners", null, accept, false, 0, valid, [
+            "application/json"
+        ]);
+        auto reference = generic(servlet, valid, ["application/json"], accept);
+        assert(fast.outcome == FastOutcome.written && controller.calls == before + 2);
+        assert(fast.status == reference.getStatus() && fast.contentType == reference.getContentType());
+        assert(fast.content == reference.getContentAsString(), fast.content);
+        // An invalid body: the handler does not run; the advice answers on the materialized request, as generic.
+        auto failed = offer(servlet, "POST", "/owners", null, accept, true, 0, invalid, [
+            "application/json"
+        ]);
+        auto expected = generic(servlet, invalid, ["application/json"], accept);
+        assert(failed.outcome == FastOutcome.materialized && controller.calls == before + 2);
+        assert(failed.materialized.getStatus() == 400 && expected.getStatus() == 400);
+        assert(failed.materialized.getContentType() == expected.getContentType());
+        assert(failed.materialized.getContentAsString() == expected.getContentAsString(),
+                failed.materialized.getContentAsString());
+    }
+}
+
+@("fast path S5: what the route does not bind exactly declines before anything runs")
+unittest
+{
+    auto controller = new PostingController;
+    auto servlet = postingDispatcher(controller);
+    const valid = `{"firstName":"George","telephone":"6085551023"}`;
+    // Another Content-Type value, two fields, none; an empty or malformed body; a GET.
+    assert(offer(servlet, "POST", "/owners", null, null, false, 0, valid,
+            ["application/json;charset=UTF-8"]).outcome == FastOutcome.declined);
+    assert(offer(servlet, "POST", "/owners", null, null, false, 0, valid, [
+            "application/json", "application/json"
+    ]).outcome == FastOutcome.declined);
+    assert(offer(servlet, "POST", "/owners", null, null, false, 0, valid).outcome == FastOutcome.declined);
+    assert(offer(servlet, "POST", "/owners", null, null, false, 0, "", ["application/json"])
+            .outcome == FastOutcome.declined);
+    assert(offer(servlet, "POST", "/owners", null, null, false, 0, `{"firstName":`,
+            ["application/json"]).outcome == FastOutcome.declined);
+    assert(offer(servlet, "GET", "/owners").outcome == FastOutcome.declined);
+    assert(controller.calls == 0);
 }

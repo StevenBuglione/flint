@@ -30,9 +30,12 @@ bool fastShape(const ref HandlerPlan handler) pure nothrow
 // returning a described plain value or a ResponseEntity with that fixed producible type.
 private bool simpleMapping(const ref HandlerPlan handler) pure nothrow
 {
-    if (handler.paths.length != 1 || handler.methods != ["GET"])
+    if (handler.paths.length != 1 || handler.params.length || handler.headers.length)
         return false;
-    if (handler.params.length || handler.headers.length || handler.consumes.length)
+    // One GET without consumes, or (S5) one POST consuming exactly application/json.
+    const get = handler.methods == ["GET"] && handler.consumes.length == 0;
+    const post = handler.methods == ["POST"] && handler.consumes == ["application/json"];
+    if (!get && !post)
         return false;
     const json = handler.produces == ["application/json"];
     if (handler.produces.length && !json)
@@ -104,12 +107,18 @@ private bool syntaxChar(char c) pure nothrow @nogc
     }
 }
 
-// Every parameter an `@RequestParam string` or a `@PathVariable` int, long or string; neither validated nor an
-// exception.
+// Every parameter an `@RequestParam string` or a `@PathVariable` int, long or string, neither validated nor an
+// exception; and (S5) a POST's one `@RequestBody`, validated or not.
 private bool bindableArguments(const ref HandlerPlan handler) pure nothrow
 {
+    size_t bodies;
     foreach (ref argument; handler.arguments)
     {
+        if (argument.kind == "requestBody" && !argument.exception)
+        {
+            ++bodies;
+            continue;
+        }
         if (argument.validate || argument.exception)
             return false;
         const param = argument.kind == "requestParam" && argument.type == "string";
@@ -118,7 +127,7 @@ private bool bindableArguments(const ref HandlerPlan handler) pure nothrow
         if (!param && !variable)
             return false;
     }
-    return true;
+    return handler.methods == ["POST"] ? bodies == 1 : bodies == 0;
 }
 
 /// The classes the fast path's beans need, probed for presence like the date customizer's.
@@ -265,4 +274,23 @@ unittest
     id.type = "int";
     owner.arguments = [id];
     assert(fastShape(owner));
+
+    // S5: a petclinic-shaped validated POST qualifies; without consumes, or with a second body, it does not.
+    HandlerPlan add = owner;
+    add.paths = ["/api/owners"];
+    add.methods = ["POST"];
+    add.consumes = ["application/json"];
+    ArgumentPlan body;
+    body.kind = "requestBody";
+    body.name = "ownerFieldsDto";
+    body.type = "org.springframework.samples.petclinic.rest.dto.OwnerFieldsDto";
+    body.validate = true;
+    add.arguments = [body];
+    assert(fastShape(add));
+    HandlerPlan noConsumes = add;
+    noConsumes.consumes = null;
+    assert(!fastShape(noConsumes));
+    HandlerPlan twoBodies = add;
+    twoBodies.arguments = [body, body];
+    assert(!fastShape(twoBodies));
 }

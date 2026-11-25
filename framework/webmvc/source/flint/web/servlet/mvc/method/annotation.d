@@ -606,8 +606,9 @@ class RequestResponseBodyMethodProcessor : AbstractMessageConverterMethodProcess
             throw failure;
     }
 
-    // validateIfApplicable's exception, or null when the argument is valid or not validated.
-    private Exception validationFailure(Any arg, MethodParameter parameter)
+    // validateIfApplicable's exception, or null when the argument is valid or not validated. Flint's fast path
+    // (S5) validates a bound body through this very code.
+    package(flint) Exception validationFailure(Any arg, MethodParameter parameter)
     {
         import flint.validation : BeanPropertyBindingResult;
         import flint.web.bind : MethodArgumentNotValidException;

@@ -35,7 +35,9 @@ import flint.web.servlet.config.annotation : WebMvcConfigurer;
 import flint.web.servlet.mvc.method : RequestMappingInfo, RequestMappingInfoHandlerMapping;
 import flint.web.servlet.mvc.method.annotation : AbstractMessageConverterMethodProcessor,
     HttpEntityMethodProcessor, HttpHeadersReturnValueHandler,
-    PathVariableMethodArgumentResolver, RequestMappingHandlerAdapter, ServletRequestMethodArgumentResolver;
+    PathVariableMethodArgumentResolver, RequestMappingHandlerAdapter,
+    RequestResponseBodyMethodProcessor, ServletRequestMethodArgumentResolver;
+import flint.core : MethodParameter;
 
 @safe:
 
@@ -109,10 +111,10 @@ final class FastPathTable : FastPath
 
     FastOutcome dispatch(DispatcherServlet servlet, ref scope FastExchange exchange)
     {
-        if (exchange.method != "GET" && exchange.method != "HEAD")
-            return FastOutcome.declined;
         foreach (ref route; routes)
         {
+            if (!answers(route, exchange.method))
+                continue;
             Span[maxArguments] values;
             if (route.segments.length == 0 ? exchange.path == route.path : matchTemplate(exchange.path,
                     route.segments, values))
@@ -134,10 +136,20 @@ final class FastPathTable : FastPath
         if (entry.contentType is null)
             return FastOutcome.declined; // 406 or a type the table does not write: the generic path answers
 
+        // S5: a body only as the proved Content-Type, whole.
+        if (route.bodyIndex != maxArguments && !bodyAdmitted(exchange))
+            return FastOutcome.declined;
         // Every argument is bound before the handler runs, so a declined request has run nothing.
         Any[maxArguments] arguments;
+        if (route.bodyIndex != maxArguments && !bindBody(route, exchange, arguments[route.bodyIndex]))
+            return FastOutcome.declined;
         if (!bindArguments(route, exchange, values, arguments))
             return FastOutcome.declined;
+        // S5: RequestResponseBodyMethodProcessor validates the bound body with its own code; a failure is resolved as
+        // doDispatch resolves it (the handler has not run).
+        if (route.bodyIndex != maxArguments)
+            if (auto failure = route.bodyProcessor.validationFailure(arguments[route.bodyIndex], route.bodyParameter))
+                return complete(servlet, exchange, route, failure, 0, null, null);
         Any result;
         try
             result = route.handler.invokeArguments(arguments[0 .. route.arguments.length], null);
@@ -533,6 +545,8 @@ private bool bindArguments(ref const Route route, ref scope FastExchange exchang
 {
     foreach (index, ref spec; route.arguments)
     {
+        if (index == route.bodyIndex)
+            continue; // bound by serve (bindBody)
         if (spec.kind == ArgumentKind.pathVariable)
         {
             const span = values[route.variableOf[index]];
@@ -656,6 +670,19 @@ private struct Route
     /// Per `acceptKeys` slot: the entity body type `jacksonWrites` last proved, so a repeated type is not proved
     /// again (`writesBody`).
     ProvenBody[acceptKeys.length] provenBody;
+    /// The method the route answers: `GET` (and `HEAD`), or (S5) `POST`.
+    string method;
+    /// S5: the `@RequestBody` argument's index (`maxArguments` without one), its parameter and declared type, the
+    /// converter that reads it (exactly the Jackson converter) and the processor that validates it.
+    size_t bodyIndex = maxArguments;
+    /// ditto
+    MethodParameter bodyParameter;
+    /// ditto
+    string bodyType;
+    /// ditto
+    JacksonJsonHttpMessageConverter reader;
+    /// ditto
+    RequestResponseBodyMethodProcessor bodyProcessor;
     /// Per `acceptKeys` slot: the `Content-Type` the generic path writes, or `null` where it does not write one.
     AcceptEntry[acceptKeys.length] accept;
 }
@@ -794,11 +821,12 @@ private bool prove(ref const AotHandlerMapping row, RequestMappingInfoHandlerMap
     if (!simpleRow(row))
         return false;
     route.path = row.paths[0];
+    route.method = row.methods[0];
     string[] variables;
     if (!parseTemplate(route.path, route.segments, variables))
         return false;
-    route.handler = variables.length == 0 ? directHandler(route.path, mappings) : patternHandler(row,
-            route.segments, mappings);
+    route.handler = variables.length == 0 ? directHandler(route.path, route.method,
+            mappings) : patternHandler(row, route.segments, mappings);
     auto handler = route.handler;
     if (handler is null || handler.getArrayInvoker() !is row.invokeArguments
             || !handler.invokesArguments() || row.arguments.length > maxArguments
@@ -808,18 +836,25 @@ private bool prove(ref const AotHandlerMapping row, RequestMappingInfoHandlerMap
     if (!returnHandling(row, handler, adapter, route) || !boundArguments(row, handler, adapter,
             variables, route) || !corsFields(handler, mappings, route))
         return false;
+    // S5: a POST route binds exactly one body; a GET route none.
+    if ((route.method == "POST") != (route.bodyIndex != maxArguments))
+        return false;
     route.arguments = row.arguments;
     return acceptTable(row, adapter, route);
 }
 
-// One GET path, no params, headers or consumes, produces at most application/json, @ResponseBody without a status.
-// A @CrossOrigin handler's CORS processing is proved by corsFields (S3).
+// One GET path without consumes, or (S5) one POST path consuming exactly application/json; no params or headers,
+// produces at most application/json, @ResponseBody without a status. A @CrossOrigin handler's CORS processing is
+// proved by corsFields (S3).
 private bool simpleRow(ref const AotHandlerMapping row)
 {
-    if (row.paths.length != 1 || row.methods != ["GET"] || row.params.length || row.headers.length
-            || row.consumes.length || !row.responseBody || row.responseStatus != 0)
+    if (row.paths.length != 1 || row.params.length || row.headers.length || !row.responseBody || row.responseStatus != 0)
         return false;
-    return row.produces.length == 0 || row.produces == ["application/json"];
+    if (row.produces.length != 0 && row.produces != ["application/json"])
+        return false;
+    if (row.methods == ["GET"])
+        return row.consumes.length == 0;
+    return row.methods == ["POST"] && row.consumes == ["application/json"];
 }
 
 /++
@@ -852,21 +887,29 @@ private bool corsFields(HandlerMethod handler, RequestMappingInfoHandlerMapping 
     return true;
 }
 
-// The one registration lookupHandlerMethod finds by the plain path, before it scans any pattern; null otherwise.
-private HandlerMethod directHandler(string path, RequestMappingInfoHandlerMapping mappings)
+// The one registration lookupHandlerMethod finds by the plain path for `method`, before it scans any pattern: the
+// only one there whose methods condition the request reaches (GET routes count HEAD too); null otherwise. A POST
+// registration must also consume exactly application/json, the Content-Type the route admits.
+private HandlerMethod directHandler(string path, string method, RequestMappingInfoHandlerMapping mappings)
 {
     size_t found;
     HandlerMethod handler;
+    bool consumesJson = true;
     mappings.visitDirectPath(path, (RequestMappingInfo info, HandlerMethod candidate) {
+        if (!reachedBy(info, method))
+            return;
         ++found;
         handler = candidate;
+        auto consumable = info.getConsumableMediaTypes();
+        consumesJson = method != "POST" || (consumable.length == 1 && consumable[0] == MediaType.APPLICATION_JSON);
     });
-    return found == 1 ? handler : null;
+    return found == 1 && consumesJson ? handler : null;
 }
 
 /++
-The registration of `row`'s template, when no other registration that a `GET` or `HEAD` can reach could match a path
-the route accepts: then lookupHandlerMethod's scan finds this one alone for every such path. null otherwise.
+The registration of `row`'s template, when no other registration that the route's method (`GET` with `HEAD`, or S5's
+`POST`) can reach could match a path the route accepts: then lookupHandlerMethod's scan finds this one alone for
+every such path. null otherwise.
 +/
 private HandlerMethod patternHandler(ref const AotHandlerMapping row, const(Segment)[] segments,
         RequestMappingInfoHandlerMapping mappings)
@@ -877,19 +920,25 @@ private HandlerMethod patternHandler(ref const AotHandlerMapping row, const(Segm
         return null;
     size_t found;
     HandlerMethod handler;
+    RequestMappingInfo registered;
     foreach (index, info; infos)
         foreach (pattern; info.getPatterns())
             if (pattern.getPatternString() == row.paths[0] && handlers[index].getArrayInvoker() is row.invokeArguments)
             {
                 ++found;
                 handler = handlers[index];
+                registered = info;
             }
     if (found != 1)
+        return null;
+    const method = row.methods[0];
+    auto consumable = registered.getConsumableMediaTypes();
+    if (method == "POST" && (consumable.length != 1 || consumable[0] != MediaType.APPLICATION_JSON))
         return null;
     const numeric = numericVariables(row, segments);
     foreach (index, info; infos)
     {
-        if (handlers[index] is handler || !reachedByGet(info))
+        if (handlers[index] is handler || !reachedBy(info, method))
             continue;
         foreach (pattern; info.getPatterns())
             if (mayOverlap(segments, numeric, pattern.getPatternString()))
@@ -898,16 +947,49 @@ private HandlerMethod patternHandler(ref const AotHandlerMapping row, const(Segm
     return handler;
 }
 
-// Whether `info`'s method condition admits GET or HEAD (none admits every method).
-private bool reachedByGet(RequestMappingInfo info)
+// Whether `info`'s method condition admits a route's requests: GET or HEAD for a GET route, POST for a POST route
+// (none admits every method).
+private bool reachedBy(RequestMappingInfo info, string routeMethod)
 {
     auto methods = info.getMethods();
     if (methods.length == 0)
         return true;
     foreach (method; methods)
-        if (method.name() == "GET" || method.name() == "HEAD")
+    {
+        const name = method.name();
+        if (routeMethod == "GET" ? name == "GET" || name == "HEAD" : name == routeMethod)
             return true;
+    }
     return false;
+}
+
+// Whether a route answers requests of `method`: a GET route answers HEAD too (Spring maps HEAD to GET handlers).
+private bool answers(ref const Route route, scope const(char)[] method)
+{
+    return route.method == "GET" ? method == "GET" || method == "HEAD" : method == route.method;
+}
+
+// S5: the body is offered whole, with exactly one Content-Type field whose value is the one key the route admits.
+private bool bodyAdmitted(ref scope FastExchange exchange)
+{
+    return exchange.requestBody.length != 0 && exchange.contentTypeCount == 1
+        && exchange.contentType == "application/json";
+}
+
+/++
+S5: the body as `RequestResponseBodyMethodProcessor` reads it: the Jackson converter's `readInternal`, its mapper's
+`readValue` of the body as the declared type. The body is copied first, as the servlet request's `readAllBytes`
+copies it, so nothing the handler keeps points into the container's buffer. Any failure, or a JSON `null`,
+declines: reading has no side effect, and the generic path then reads the body again and answers it.
++/
+private bool bindBody(ref Route route, ref scope FastExchange exchange, out Any value)
+{
+    const content = exchange.requestBody.dup;
+    try
+        value = route.reader.getMapper().readValue(content, route.bodyType);
+    catch (Exception)
+        return false;
+    return !value.isNull();
 }
 
 // Per template variable: whether the route only accepts canonical digits there (it binds an int or a long).
@@ -1027,6 +1109,12 @@ private bool boundArguments(ref const AotHandlerMapping row, HandlerMethod handl
             return false;
         const spec = row.arguments[index];
         const type = parameter.getParameterType();
+        if (spec.kind == ArgumentKind.requestBody)
+        {
+            if (!bodyArgument(index, parameter, cast(Object) resolver, adapter, route))
+                return false;
+            continue;
+        }
         if (typeid(cast(Object) resolver) is typeid(RequestParamMethodArgumentResolver))
         {
             if (spec.kind != ArgumentKind.requestParam || type != "string")
@@ -1047,6 +1135,38 @@ private bool boundArguments(ref const AotHandlerMapping row, HandlerMethod handl
             return false;
     }
     return true;
+}
+
+/++
+S5: a `@RequestBody` parameter of a POST route, as the generic path resolves it: exactly
+`RequestResponseBodyMethodProcessor` (whose own `validationFailure` the route calls), a required, non-`Optional` body,
+and as the first converter that reads the declared type as `application/json` (`readWithMessageConverters`' choice
+for the one Content-Type the route admits), exactly the Jackson converter. One body per route.
++/
+private bool bodyArgument(size_t index, MethodParameter parameter, Object resolver,
+        RequestMappingHandlerAdapter adapter, ref Route route)
+{
+    auto processor = cast(RequestResponseBodyMethodProcessor) resolver;
+    if (route.method != "POST" || route.bodyIndex != maxArguments || processor is null
+            || typeid(processor) !is typeid(RequestResponseBodyMethodProcessor)
+            || !parameter.getArgumentSpec().required || parameter.isOptional())
+        return false;
+    const type = parameter.getNestedParameterType();
+    MediaType json = MediaType.APPLICATION_JSON;
+    foreach (converter; adapter.getMessageConverters())
+    {
+        if (!converter.canRead(type, &json))
+            continue;
+        if (typeid(cast(Object) converter) !is typeid(JacksonJsonHttpMessageConverter))
+            return false;
+        route.reader = cast(JacksonJsonHttpMessageConverter) converter;
+        route.bodyIndex = index;
+        route.bodyParameter = parameter;
+        route.bodyType = type;
+        route.bodyProcessor = processor;
+        return true;
+    }
+    return false;
 }
 
 /++

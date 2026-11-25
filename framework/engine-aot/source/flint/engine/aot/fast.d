@@ -65,6 +65,13 @@ struct FastExchange
     /// How many `Origin` fields the request has: a CORS request (or a same-origin one) takes the generic path when
     /// its handler has a CORS configuration.
     size_t originCount;
+    /// S5: the request body, whole, when the container offers a request that has one (a `POST` whose body it
+    /// already holds); borrowed for the offer, like `path`. Empty for a request without a body.
+    const(ubyte)[] requestBody;
+    /// S5: how many `Content-Type` fields the request has, and the first one's value, as received.
+    size_t contentTypeCount;
+    /// ditto
+    const(char)[] contentType;
     /// Visits every value of query parameter `name`, in order, decoded as the servlet request decodes it. Returns
     /// `false` when the fast path cannot decode the query within its bounds, so the caller declines.
     bool delegate(scope const(char)[] name, scope FastValueVisitor visit) @safe parameter;
