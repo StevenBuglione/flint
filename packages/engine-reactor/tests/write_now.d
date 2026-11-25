@@ -11,7 +11,7 @@ version (Posix)
     import core.time : msecs;
     import flint.arena : Status;
     import flint.conc : Context, Deadline;
-    import flint.engine.reactor : Completion, ConnectionId, ListenOptions, Reactor, ReactorOptions;
+    import flint.engine.reactor : Backend, Completion, ConnectionId, ListenOptions, Reactor, ReactorOptions;
     import flint.engine.reactor.test_support : readinessBackend;
     import std.socket : InternetAddress, SocketOption, SocketOptionLevel, TcpSocket;
 
@@ -93,15 +93,17 @@ version (Posix)
         current.write(payload[0 .. smallBytes]);
     }
 
-    private Writer serve(Mode mode)
+    private Writer serve(Mode mode, Backend backend = readinessBackend)
     {
         ReactorOptions options;
-        options.backend = readinessBackend;
+        options.backend = backend;
         options.cores = 1;
         options.ioBufferBytes = largeBytes;
         options.maxPendingIoPerCore = 4;
         options.fiberPoolSize = 1;
         auto server = Reactor.create(options);
+        if (backend != readinessBackend && !server.ok)
+            return null;
         assert(server.ok, server.error.message);
         auto writer = new Writer;
         writer.mode = mode;
@@ -171,5 +173,24 @@ version (Posix)
     {
         const writer = serve(Mode.closedPeer);
         assert(writer.last != Status.ok && writer.writes < 64);
+    }
+
+    // io_uring sends a starting write inline too; EAGAIN and the rest of a partial write go through the ring.
+    version (FlintNativeLiburing)
+    {
+        @("io_uring: each write case completes with every byte, sent inline first")
+        unittest
+        {
+            const whole = serve(Mode.whole, Backend.ioUring);
+            if (whole is null)
+                return;
+            assert(whole.writes == 1 && whole.last == Status.ok && whole.written == smallBytes);
+            const larger = serve(Mode.larger, Backend.ioUring);
+            assert(larger.writes == 1 && larger.last == Status.ok && larger.written == largeBytes);
+            const backToBack = serve(Mode.backToBack, Backend.ioUring);
+            assert(backToBack.writes == 2 && backToBack.last == Status.ok && backToBack.written == 2 * largeBytes);
+            const closed = serve(Mode.closedPeer, Backend.ioUring);
+            assert(closed.last != Status.ok && closed.writes < 64);
+        }
     }
 }

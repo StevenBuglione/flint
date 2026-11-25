@@ -1139,6 +1139,11 @@ private struct Worker
     /// Whether this worker tried, and managed, to watch its offload signal.
     bool offloadWatchTried;
     bool offloadWatched;
+    /// Writes queued since the loop last started them (`startFresh`), oldest first. A response leaves as soon as its
+    /// handler returns to the loop, not after every handler of the pass. When it is full, the pass's
+    /// `advanceOperations` starts the rest, as before.
+    uint[32] fresh;
+    uint freshCount;
 
     version (Posix) Readiness readiness;
 
@@ -1468,6 +1473,7 @@ private struct Worker
         }
         if (failure !is null)
             fail(Error(Status.ioError, "reactor task fiber terminated with an error"));
+        startFresh();
     }
 
     private void resumeReadyTasks(bool stopping = false) nothrow @nogc
@@ -2052,6 +2058,7 @@ private struct Worker
         {
             connection.write = operation;
             operationBuffer(operation.slot)[0 .. length] = input;
+            noteFresh(operation.slot);
         }
         activeIo[operation.slot / ioWordBits] |= 1UL << (operation.slot % ioWordBits);
         ++liveOperations;
@@ -2100,6 +2107,34 @@ private struct Worker
             return buffers.slice(offset, offset + length);
         else
             return buffers[offset .. offset + length];
+    }
+
+    /// Remember a newly queued write for `startFresh`; past the list's capacity the pass's `advanceOperations` starts it.
+    private void noteFresh(uint slot) nothrow @nogc
+    {
+        if (freshCount < fresh.length)
+            fresh[freshCount++] = slot;
+    }
+
+    /// Start the writes queued since the last call: those a fiber made before returning to the loop, or a completion
+    /// callback made. Starting one may deliver it at once (an inline send), and its callback may queue another, which
+    /// this call starts too. Writes appended to a queued write before it starts still merge into it (`appendWrite`).
+    private void startFresh() nothrow @nogc
+    {
+        if (freshCount == 0 || atomicLoad(runtime.state) != State.running)
+            return;
+        const now = Deadline.afterMillis(0).monotonicNanoseconds;
+        for (uint next = 0; next < freshCount; ++next)
+        {
+            const slot = fresh[next];
+            if (!workItems.present(slot))
+                continue;
+            const id = workItems[slot].id;
+            if (id.generation == 0 || workItems[slot].started || workItems[slot].callbacks.reading)
+                continue;
+            advanceOperation(id, now);
+        }
+        freshCount = 0;
     }
 
     private void advanceOperations() nothrow @nogc
@@ -2176,6 +2211,13 @@ private struct Worker
         {
             if (completions.valid)
             {
+                // A starting write is sent at once, as on the readiness backend; only EAGAIN or the rest of a
+                // partial write waits in the ring, whose submission comes with the loop's next wait.
+                version (Posix)
+                {
+                    if (starting && writeNow(id))
+                        return;
+                }
                 if (!work.pending)
                     submitOperation(id);
             }
@@ -2299,6 +2341,7 @@ private struct Worker
                     performReadyIo(connection.read, now);
                 if (validConnection(id) && (event.directions & Interest.write) && connection.write.generation != 0)
                     performReadyIo(connection.write, now);
+                startFresh();
             }
         }
 
@@ -2436,6 +2479,7 @@ private struct Worker
                 if (!event.value.received)
                     return;
                 processCompletion(event.value);
+                startFresh();
                 millis = 0;
             }
         }
