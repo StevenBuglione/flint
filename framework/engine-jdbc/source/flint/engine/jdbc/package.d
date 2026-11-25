@@ -252,10 +252,50 @@ private size_t closing(string sql, size_t from, char quoteChar)
 private struct Cell
 {
     ValueKind kind;
-    long integer;
-    double floating;
+    // An integer, a boolean or a floating-point value: only one is ever meaningful, so they share their word.
+    union
+    {
+        long integer;
+        double floating;
+    }
+    /// A text value; a bytes value's bytes are kept here too, as immutable bytes (`bytes`), so a cell is 32 bytes.
     string text;
-    ubyte[] bytes;
+
+    /// A scalar of `kind`, from an engine value's integer and floating-point fields.
+    static Cell scalar(ValueKind kind, long integer, double floating) pure nothrow @nogc
+    {
+        Cell cell;
+        cell.kind = kind;
+        if (kind == ValueKind.float64)
+            cell.floating = floating;
+        else
+            cell.integer = integer;
+        return cell;
+    }
+
+    /// A text value.
+    static Cell ofText(string text) pure nothrow @nogc
+    {
+        Cell cell;
+        cell.kind = ValueKind.text;
+        cell.text = text;
+        return cell;
+    }
+
+    /// A bytes value.
+    static Cell ofBytes(immutable(ubyte)[] bytes) pure nothrow @nogc
+    {
+        Cell cell;
+        cell.kind = ValueKind.bytes;
+        cell.text = cast(string) bytes;
+        return cell;
+    }
+
+    /// A bytes value's bytes.
+    immutable(ubyte)[] bytes() const pure nothrow @nogc
+    {
+        return cast(immutable(ubyte)[]) text;
+    }
 }
 
 /// The `SQLException` for an engine failure: its JDBC 4 subclass chosen by SQLSTATE class.
@@ -1410,11 +1450,11 @@ private Cell cellOf(MetaValue value) pure nothrow
     final switch (value.kind)
     {
     case MetaValue.Kind.null_:
-        return Cell(ValueKind.null_);
+        return Cell.init;
     case MetaValue.Kind.integer:
-        return Cell(ValueKind.int64, value.integer);
+        return Cell.scalar(ValueKind.int64, value.integer, 0);
     case MetaValue.Kind.text:
-        return Cell(ValueKind.text, 0, 0, value.text);
+        return Cell.ofText(value.text);
     }
 }
 
@@ -1477,12 +1517,12 @@ final class FlintResultSet : ResultSet
             {
                 const from = cast(size_t) cell.integer, to = from + cell.length;
                 if (kind == ValueKind.text)
-                    *target = Cell(kind, 0, 0, text[from .. to]);
+                    *target = Cell.ofText(text[from .. to]);
                 else
-                    *target = Cell(kind, 0, 0, null, data[from .. to].dup);
+                    *target = Cell.ofBytes(data[from .. to].idup);
             }
             else
-                *target = Cell(kind, cell.integer, cell.floating);
+                *target = Cell.scalar(kind, cell.integer, cell.floating);
         }
         ++rowCount_;
     }
@@ -1500,15 +1540,17 @@ final class FlintResultSet : ResultSet
         char[1024] rowText = void;
         size_t textUsed;
         bool textFits = true;
-        // The text cells waiting for the row's string, by column; columns past 64 take their own string.
+        // The text cells waiting for the row's string, by column; columns past 64 take their own string. Until the
+        // string exists, a waiting cell's `integer` holds its value's offset in it, and `lengths` its length.
         ulong pending;
+        size_t[64] lengths = void;
         const first = cells.length;
         foreach (column; 0 .. count)
         {
             auto value = row.value(column, arena);
             if (!value.ok)
                 throw new SQLException("Column value unavailable: " ~ value.error.message, "HY000");
-            auto cell = Cell(value.value.kind, value.value.integer, value.value.floating);
+            auto cell = Cell.scalar(value.value.kind, value.value.integer, value.value.floating);
             if (cell.kind == ValueKind.text)
             {
                 const length = value.value.bytes.length;
@@ -1516,9 +1558,8 @@ final class FlintResultSet : ResultSet
                 {
                     pending |= 1UL << column;
                     readInto(arena, value.value.bytes, rowText[textUsed .. textUsed + length]);
-                    // Until the row's string exists, `integer` holds the value's offset in it.
                     cell.integer = cast(long) textUsed;
-                    cell.floating = length;
+                    lengths[column] = length;
                     textUsed += length;
                 }
                 else
@@ -1528,7 +1569,10 @@ final class FlintResultSet : ResultSet
                 }
             }
             else if (cell.kind == ValueKind.bytes)
-                cell.bytes = readBytes(arena, value.value.bytes);
+            {
+                cell.integer = 0;
+                cell.text = cast(string) readBytes(arena, value.value.bytes).idup;
+            }
             cells ~= cell;
         }
         if (pending == 0)
@@ -1542,9 +1586,8 @@ final class FlintResultSet : ResultSet
             if (column >= 64 || (pending & (1UL << column)) == 0)
                 continue;
             const offset = cast(size_t) cell.integer;
-            cell.text = shared_[offset .. offset + cast(size_t) cell.floating];
+            cell.text = shared_[offset .. offset + lengths[column]];
             cell.integer = 0;
-            cell.floating = 0;
         }
         ++rowCount_;
     }
