@@ -31,7 +31,7 @@ import flint.java.sql : Connection, Driver, DriverManager, SQLException,
 import flint.java.util : Properties;
 import flint.javax.sql : DataSource;
 import flint.jdbc : CannotGetJdbcConnectionException;
-import flint.slf4j : Logger, LoggerFactory;
+import flint.slf4j : ILoggerFactory, Logger, LoggerFactory;
 import flint.transaction : CannotCreateTransactionException, NestedTransactionNotSupportedException,
     SavepointManager, TransactionDefinition, TransactionSystemException, TransactionUsageException;
 import flint.transaction.support : AbstractPlatformTransactionManager, DefaultTransactionStatus,
@@ -381,6 +381,21 @@ abstract class JdbcTransactionObjectSupport : SavepointManager, SmartTransaction
 // ---------------------------------------------------------------------------------------------------------------
 // DataSourceUtils
 
+/// A logger and the factory it came from (`DataSourceUtils.logger`).
+private final class FactoryLogger
+{
+    ILoggerFactory factory;
+    Logger logger;
+
+    this(ILoggerFactory factory, Logger logger)
+    {
+        this.factory = factory;
+        this.logger = logger;
+    }
+}
+
+private shared imported!"flint.conc.slot".ProcessSlot!FactoryLogger cachedLogger;
+
 /++
 Helper class that provides static methods for obtaining JDBC `Connection`s from a `DataSource`. Includes special
 support for Spring-managed transactional `Connection`s, for example managed by `DataSourceTransactionManager`. Used
@@ -391,9 +406,19 @@ abstract class DataSourceUtils
     /// Order value for `TransactionSynchronization` objects that clean up JDBC `Connection`s.
     enum int CONNECTION_SYNCHRONIZATION_ORDER = 1000;
 
-    private static Logger logger()
+    package(flint.jdbc) static Logger logger()
     {
-        return LoggerFactory.getLogger("org.springframework.jdbc.datasource.DataSourceUtils");
+        // Spring's static final logger, looked up once per logger factory: the factory's own lookup hashes the name
+        // under a lock, twice per transaction. A provider installed later (Boot's) is a new factory, so the logger
+        // follows it; level changes reach the cached logger through the factory.
+        auto factory = LoggerFactory.getILoggerFactory();
+        if (auto cached = cachedLogger.get())
+            if (cached.factory is factory)
+                return cached.logger;
+        enum name = "org.springframework.jdbc.datasource.DataSourceUtils";
+        auto made = new FactoryLogger(factory, factory.getLogger(name));
+        cachedLogger.set(made);
+        return made.logger;
     }
 
     /++

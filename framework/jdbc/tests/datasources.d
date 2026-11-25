@@ -235,3 +235,23 @@ unittest
     {
     }
 }
+
+@("DataSourceUtils looks its logger up once per logger factory, and follows a provider installed later (Flint)")
+unittest
+{
+    import flint.slf4j : LoggerFactory;
+    import flint.slf4j.provider : FlintLogServiceProvider;
+
+    auto first = DataSourceUtils.logger();
+    assert(DataSourceUtils.logger() is first);
+    assert(first.getName() == "org.springframework.jdbc.datasource.DataSourceUtils");
+    auto previous = LoggerFactory.getProvider();
+    scope (exit)
+        LoggerFactory.installProvider(previous);
+    LoggerFactory.installProvider(new FlintLogServiceProvider());
+    auto replaced = DataSourceUtils.logger();
+    assert(replaced !is first && replaced.getName() == first.getName());
+    assert(DataSourceUtils.logger() is replaced);
+    LoggerFactory.installProvider(previous);
+    assert(DataSourceUtils.logger() is first, "the earlier factory's own logger again");
+}
