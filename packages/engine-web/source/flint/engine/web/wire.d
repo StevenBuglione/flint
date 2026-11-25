@@ -341,14 +341,15 @@ private struct HeaderWriter
 
     void write(scope const(char)[] bytes) scope nothrow @nogc
     {
-        if (bytes.length > destination.length - offset)
+        import flint.engine.web.sys.copy : copyBytes;
+
+        // One memmove per piece (sys/copy.d), neither a bounds-checked store per byte nor druntime's generic slice
+        // copy: a response head is a few dozen small pieces (R-67).
+        if (!copyBytes(destination[offset .. $], cast(const(ubyte)[]) bytes))
         {
             full = true;
             return;
         }
-        // One block copy (memcpy) instead of a bounds-checked store per byte: a response head of a dozen fields
-        // is several hundred bytes.
-        destination[offset .. offset + bytes.length] = cast(const(ubyte)[]) bytes;
         offset += bytes.length;
     }
 

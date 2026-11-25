@@ -127,13 +127,13 @@ package(flint.engine.web) bool validFiberFields(scope const(StreamField)[] field
     {
         if (field.name.length == 0 || field.name.length > 128 || field.value.length > 8192)
             return false;
-        foreach (character; field.name)
-            if (!tokenCharacter(character))
-                return false;
-        foreach (character; field.value)
-            if ((character < ' ' && character != '\t') || character == 0x7f)
-                return false;
-        if (engineField(field.name))
+        // One table load per byte, accumulated without a branch; any rejected byte fails the field (R-67).
+        uint rejected;
+        foreach (character; cast(const(ubyte)[]) field.name)
+            rejected |= nameRejected[character];
+        foreach (character; cast(const(ubyte)[]) field.value)
+            rejected |= valueRejected[character];
+        if (rejected != 0 || engineField(field.name))
             return false;
     }
     return true;
@@ -197,10 +197,22 @@ package(flint.engine.web) bool hasConnectionToken(scope const(char)[] value, sco
 }
 // dfmt on
 
-private bool tokenCharacter(char value) pure nothrow @nogc
-{
-    return tokenTable[value];
-}
+// Field-name bytes outside RFC 9110 tchar.
+private immutable ubyte[256] nameRejected = () {
+    ubyte[256] table;
+    foreach (index; 0 .. 256)
+        table[index] = !tokenTable[index];
+    return table;
+}();
+
+// Field-value bytes RFC 9110 forbids: controls other than HTAB, and DEL. obs-text (0x80-0xFF) passes.
+private immutable ubyte[256] valueRejected = () {
+    ubyte[256] table;
+    foreach (index; 0 .. 0x20)
+        table[index] = index != '\t';
+    table[0x7f] = 1;
+    return table;
+}();
 
 // RFC 9110 tchar, by byte: one load per character of every response field name.
 private immutable bool[256] tokenTable = () {
@@ -215,6 +227,20 @@ private immutable bool[256] tokenTable = () {
         table[c] = true;
     return table;
 }();
+
+@("fiber field bytes: HTAB and obs-text pass in values; other controls, DEL and non-tchar names fail")
+unittest
+{
+    assert(validFiberFields([StreamField("X-Tab", "a\tb")]));
+    assert(validFiberFields([StreamField("X-Text", "caf\xC3\xA9 \xFF")]));
+    assert(validFiberFields([StreamField("X-Visible", " !\"~")]));
+    foreach (bad; ["a\x00b", "\x01", "x\x1F", "\x7F", "a\nb", "a\rb"])
+        assert(!validFiberFields([StreamField("X-Value", bad)]), bad);
+    foreach (bad; ["X:Y", "X Y", "X\x7F", "X\xC3\xA9", "X\"", "X@", "X\t"])
+        assert(!validFiberFields([StreamField(bad, "v")]), bad);
+    // A bad byte in the second field fails the whole list.
+    assert(!validFiberFields([StreamField("X-A", "fine"), StreamField("X-B", "bad\x00")]));
+}
 
 @("fiber fields accept mixed-case tokens and reject framing, hop-by-hop and malformed fields")
 unittest
