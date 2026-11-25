@@ -891,3 +891,8 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - context: p50 1.43 (61 against 43 µs); CPU per request 1.55 (15.3 against 9.9 µs; 1.96 at B3); capacity 0.587; RSS 0.81; p99.9 3.70.
 
     Evidence: `benchmarks/spring/evidence/error-404-p99/20261125T105931Z/`.
+- 2026-11-25, coordinator: **B5 = `8ed3de37dc5713907b163f778b629c09a1317d8e`**, named by proof-harness when scoreboard-B4 landed (pinned at c103021b).
+  - **Contents:** the ThinLTO level fix (a8dc0aea, 8ba53b8f; decision dd774a24), so B5 is the first baseline whose release and size builds are optimised at link. It also includes the morning's landed slices: data-access R-61, R-63..R-65, R-76 and R-77; flint-aot S4, the error-page shortcut and 817b5d73, 3bd9d852, 43567442, d531a1ba, 40cfddfa, 34a9836e and d3e2e6c1 (S5, inert until web-http's POST hook); web-http R-67 and R-69; m7's std.format cuts and build-cache race fixes.
+  - **Measurement:** every gated part is re-measured, builds ×3 then the four runtime parts. All run interleaved from the start, pending the owner's choice between interleaved and Flint-only. Comparators are unchanged since B4.
+  - **GC parts:** B4's GC-matrix parts are superseded (O0 code) and re-pinned to B5, after the gated parts.
+  - **B4 for the record:** scoreboard-B4 (8ed3de37) passes all 15 build metrics and every gs-rest runtime metric. Petclinic fails p50 1.048, p99 1.133 and CPU 1.044. Validation fails at p99 1.81 and the 404 at p99 1.80.
