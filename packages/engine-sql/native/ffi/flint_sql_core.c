@@ -372,6 +372,15 @@ int flint_sql_utf8(const void *data, size_t length)
     const unsigned char *text = data;
     size_t index = 0;
     while (index != length) {
+        /* ASCII, the common case for SQL and most values, eight bytes at a time. */
+        if (length - index >= 8) {
+            uint64_t word;
+            memcpy(&word, text + index, 8);
+            if (!(word & 0x8080808080808080u)) {
+                index += 8;
+                continue;
+            }
+        }
         unsigned lead = text[index++];
         if (lead < 0x80)
             continue;

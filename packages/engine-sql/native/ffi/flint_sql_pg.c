@@ -35,10 +35,32 @@ enum {
 
 typedef struct {
     char *sql;
+    uint64_t key; /* text_key(sql): the cache compares it before the text */
     Oid *types;
     size_t count;
     uint64_t touched;
 } prepared_entry;
+
+/* A cheap key for a statement text: its length and three 8-byte samples. Two texts with different keys differ;
+   equal keys are confirmed with strcmp. */
+static uint64_t text_key(const char *text)
+{
+    const size_t length = strlen(text);
+    uint64_t key = (uint64_t)length * 0x9e3779b97f4a7c15u;
+    if (length >= 8) {
+        uint64_t sample;
+        memcpy(&sample, text, 8);
+        key ^= sample;
+        memcpy(&sample, text + length / 2 - 4, 8);
+        key ^= sample * 0xff51afd7ed558ccdu;
+        memcpy(&sample, text + length - 8, 8);
+        key ^= sample * 0xc4ceb9fe1a85ec53u;
+    } else {
+        for (size_t index = 0; index < length; ++index)
+            key ^= (uint64_t)(unsigned char)text[index] << (8 * index);
+    }
+    return key;
+}
 
 struct flint_pg_connection {
     PGconn *database;
@@ -306,15 +328,21 @@ static int type_match(const prepared_entry *entry, const flint_sql_operation *op
     return 1;
 }
 
-static int cache_index(flint_pg_connection *connection, const flint_sql_operation *operation)
+/* The cache slot of the operation's statement, *hit set when that slot holds it prepared with the same parameter
+   types; otherwise the least recently used slot (to prepare it in), or -1 when it is not cached. */
+static int cache_index(flint_pg_connection *connection, const flint_sql_operation *operation, int *hit)
 {
+    *hit = 0;
     if (!connection->capacity || !cacheable(operation->text))
         return -1;
+    const uint64_t key = text_key(operation->text);
     unsigned oldest = 0;
     for (unsigned index = 0; index < connection->capacity; ++index) {
         prepared_entry *entry = &connection->prepared[index];
-        if (entry->sql && !strcmp(entry->sql, operation->text) && type_match(entry, operation))
+        if (entry->sql && entry->key == key && !strcmp(entry->sql, operation->text) && type_match(entry, operation)) {
+            *hit = 1;
             return (int)index;
+        }
         if (entry->touched < connection->prepared[oldest].touched)
             oldest = index;
     }
@@ -403,14 +431,24 @@ static int write_parameter(wire_parameter *output, const flint_sql_parameter *in
     return FLINT_SQL_OK;
 }
 
+enum { STACK_PARAMETERS = 16 };
+
 static int send_query(flint_pg_connection *connection, flint_sql_operation *operation)
 {
     size_t count = operation->parameter_count;
-    wire_parameter *items = count ? calloc(count, sizeof(*items)) : NULL;
-    const char **values = count ? malloc(count * sizeof(*values)) : NULL;
-    int *sizes = count ? malloc(count * sizeof(*sizes)) : NULL;
-    int *formats = count ? malloc(count * sizeof(*formats)) : NULL;
-    Oid *types = count ? malloc(count * sizeof(*types)) : NULL;
+    /* A statement's few parameters are laid out on the stack; libpq copies them before PQsendQuery* returns. */
+    wire_parameter stack_items[STACK_PARAMETERS];
+    const char *stack_values[STACK_PARAMETERS];
+    int stack_sizes[STACK_PARAMETERS], stack_formats[STACK_PARAMETERS];
+    Oid stack_types[STACK_PARAMETERS];
+    const int heap = count > STACK_PARAMETERS;
+    wire_parameter *items = !count ? NULL : heap ? calloc(count, sizeof(*items)) : stack_items;
+    const char **values = !count ? NULL : heap ? malloc(count * sizeof(*values)) : stack_values;
+    int *sizes = !count ? NULL : heap ? malloc(count * sizeof(*sizes)) : stack_sizes;
+    int *formats = !count ? NULL : heap ? malloc(count * sizeof(*formats)) : stack_formats;
+    Oid *types = !count ? NULL : heap ? malloc(count * sizeof(*types)) : stack_types;
+    if (count && !heap)
+        memset(stack_items, 0, count * sizeof(stack_items[0]));
     int status = FLINT_SQL_NOMEM;
     if (count && (!items || !values || !sizes || !formats || !types))
         goto release;
@@ -440,11 +478,13 @@ static int send_query(flint_pg_connection *connection, flint_sql_operation *oper
     } else
         status = FLINT_SQL_IO;
 release:
-    free(types);
-    free(formats);
-    free(sizes);
-    free(values);
-    free(items);
+    if (heap) {
+        free(types);
+        free(formats);
+        free(sizes);
+        free(values);
+        free(items);
+    }
     return status;
 }
 
@@ -463,9 +503,10 @@ static int send_script(flint_pg_connection *connection, flint_sql_operation *ope
 /* The prepared statement for text with no parameters, or -1. */
 static int prepared_plain(const flint_pg_connection *connection, const char *text)
 {
+    const uint64_t key = text_key(text);
     for (unsigned index = 0; index < connection->capacity; ++index) {
         const prepared_entry *entry = &connection->prepared[index];
-        if (entry->sql && entry->count == 0 && !strcmp(entry->sql, text))
+        if (entry->sql && entry->key == key && entry->count == 0 && !strcmp(entry->sql, text))
             return (int)index;
     }
     return -1;
@@ -479,12 +520,10 @@ static int send_pipelined(flint_pg_connection *connection, flint_sql_operation *
     const int preamble = prepared_plain(connection, operation->preamble);
     if (preamble < 0 || !operation->text[0])
         return -1;
-    const int cache = cache_index(connection, operation);
-    if (cache >= 0) {
-        const prepared_entry *entry = &connection->prepared[cache];
-        if (!entry->sql || strcmp(entry->sql, operation->text) || !type_match(entry, operation))
-            return -1;
-    }
+    int hit;
+    const int cache = cache_index(connection, operation, &hit);
+    if (cache >= 0 && !hit)
+        return -1;
     PGconn *database = connection->database;
     char name[32];
     prepared_name(name, (unsigned) preamble);
@@ -528,13 +567,14 @@ static int start_query(flint_pg_connection *connection, flint_sql_operation *ope
         operation->phase = PG_QUERY;
         return FLINT_SQL_OK;
     }
-    operation->cache = cache_index(connection, operation);
+    int hit;
+    operation->cache = cache_index(connection, operation, &hit);
     if (operation->cache < 0)
         return send_query(connection, operation);
     prepared_entry *entry = &connection->prepared[operation->cache];
     if (!entry->sql)
         return send_prepare(connection, operation);
-    if (!strcmp(entry->sql, operation->text) && type_match(entry, operation)) {
+    if (hit) {
         entry->touched = ++connection->counter;
         return send_query(connection, operation);
     }
@@ -550,6 +590,7 @@ static int save_prepared(flint_pg_connection *connection, flint_sql_operation *o
 {
     prepared_entry *entry = &connection->prepared[operation->cache];
     entry->sql = strdup(operation->text);
+    entry->key = entry->sql ? text_key(entry->sql) : 0;
     entry->count = operation->parameter_count;
     entry->types = entry->count ? malloc(entry->count * sizeof(entry->types[0])) : NULL;
     if (!entry->sql || (entry->count && !entry->types)) {

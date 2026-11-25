@@ -63,6 +63,34 @@ static void invalid_native_input(void)
     assert(flint_sql_row_copy(1, 2, 0, NULL, 0) == FLINT_SQL_NOT_FOUND);
 }
 
+/* UTF-8 checks read ASCII eight bytes at a time: a bad byte at any position of a run is still found, a valid
+   two-byte sequence anywhere passes, and one cut at the end fails. Validation precedes the bind's own conflict
+   check, so a valid text reads OK the first time and CONFLICT after. */
+static void utf8_positions(void)
+{
+    int status;
+    char text[40];
+    flint_sql_operation *operation = flint_sql_operation_new("SELECT ?", 8, 1, 1, INT64_MAX, &status);
+    assert(operation && status == FLINT_SQL_OK);
+    for (size_t length = 1; length <= sizeof(text); ++length) {
+        for (size_t at = 0; at < length; ++at) {
+            memset(text, 'a', length);
+            text[at] = (char)0xff;
+            assert(flint_sql_operation_bind(operation, 0, 4, 0, 0.0, text, length) == FLINT_SQL_INVALID);
+            if (at + 2 > length)
+                continue;
+            text[at] = (char)0xc3;
+            text[at + 1] = (char)0xa9;
+            assert(flint_sql_operation_bind(operation, 0, 4, 0, 0.0, text, length) != FLINT_SQL_INVALID);
+            assert(flint_sql_operation_bind(operation, 0, 4, 0, 0.0, text, at + 1) == FLINT_SQL_INVALID);
+        }
+    }
+    flint_sql_operation_free(operation);
+    /* The statement text goes through the same check. */
+    assert(!flint_sql_operation_new("SELECT 'abcdefgh\xff'", 18, 0, 0, INT64_MAX, &status));
+    assert(status == FLINT_SQL_INVALID);
+}
+
 static void boundary_value(size_t length)
 {
     int status;
@@ -267,6 +295,7 @@ int main(void)
     driver_composition();
     saturation();
     invalid_native_input();
+    utf8_positions();
     boundary_values();
     dropped_operations();
     failures_and_names();
