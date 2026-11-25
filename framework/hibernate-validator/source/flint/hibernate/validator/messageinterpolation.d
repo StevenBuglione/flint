@@ -305,20 +305,39 @@ private string interpolateTokens(string message, const(Token)[] tokens, scope st
         any = any || token.isParameter;
     if (!any)
         return message;
-    string result;
+    // The pieces first, then the message in one allocation (a message has a handful of tokens).
+    string[16] onStack;
+    scope string[] pieces = tokens.length <= onStack.length ? onStack[0 .. tokens.length] : new string[tokens.length];
     bool replaced;
-    foreach (token; tokens)
+    foreach (i, token; tokens)
     {
         if (!token.isParameter)
         {
-            result ~= token.value;
+            pieces[i] = token.value;
             continue;
         }
-        const replacement = resolve(token.value);
-        replaced = replaced || replacement != token.value;
-        result ~= replacement;
+        pieces[i] = resolve(token.value);
+        replaced = replaced || pieces[i] != token.value;
     }
-    return replaced ? result : message;
+    if (!replaced)
+        return message;
+    return joined(pieces);
+}
+
+// The pieces end to end (a pure result converts to string).
+private char[] joined(scope const(string)[] pieces) pure nothrow
+{
+    size_t length;
+    foreach (piece; pieces)
+        length += piece.length;
+    auto text = new char[length];
+    size_t at;
+    foreach (piece; pieces)
+    {
+        text[at .. at + piece.length] = piece[];
+        at += piece.length;
+    }
+    return text;
 }
 
 // TokenCollector with its parser states. In PARAMETER mode (`el` false) `{...}` is a term and `$` is text; in EL

@@ -143,21 +143,26 @@ final class PathImpl : Path
     /// A path one property deeper.
     PathImpl addPropertyNode(string propertyName) pure nothrow
     {
-        auto path = copy();
-        if (path.nodeList.length == 1 && path.nodeList[0].name is null && !path.nodeList[0].inIterable)
-            path.nodeList = null;
         auto node = new NodeImpl(propertyName, ElementKind.PROPERTY);
+        // The root bean node gives way to the first property.
+        size_t keep = nodeList.length;
+        if (keep == 1 && nodeList[0].name is null && !nodeList[0].inIterable)
+            keep = 0;
         // As Hibernate's NodeImpl reports its parent's iterable position: the property of an element is the node
         // in the iterable, so the position marker becomes this node (`bar`, then `alwaysNull` at index 0).
-        if (path.nodeList.length && path.nodeList[$ - 1].name is null && path.nodeList[$ - 1].inIterable)
+        if (keep && nodeList[keep - 1].name is null && nodeList[keep - 1].inIterable)
         {
-            auto marker = path.nodeList[$ - 1];
+            auto marker = nodeList[keep - 1];
             node.inIterable = true;
             node.index = marker.index;
             node.key = marker.key;
-            path.nodeList = path.nodeList[0 .. $ - 1];
+            --keep;
         }
-        path.nodeList ~= node;
+        // The new list at its final size: no copy that grows.
+        auto path = new PathImpl();
+        path.nodeList = new NodeImpl[keep + 1];
+        path.nodeList[0 .. keep] = nodeList[0 .. keep];
+        path.nodeList[keep] = node;
         return path;
     }
 
@@ -255,9 +260,10 @@ final class ConstraintDescriptorImpl : ConstraintDescriptor
     /// The element names, `message` first.
     string[] getAttributeNames()
     {
-        string[] names = ["message"];
-        foreach (a; constraint.attributes)
-            names ~= a.name;
+        auto names = new string[constraint.attributes.length + 1];
+        names[0] = "message";
+        foreach (i, a; constraint.attributes)
+            names[i + 1] = a.name;
         return names;
     }
 
@@ -390,6 +396,9 @@ final class ValidatorFactoryImpl : ValidatorFactory
     private MessageInterpolator interpolator;
     private PatternCache patterns;
     private CustomValidator[][string] custom;
+    // The root path every validate() call starts from: a PathImpl is never changed once made (each add returns a
+    // copy), so one serves every call and thread.
+    private PathImpl rootPath;
     // Copy-on-write, as the pattern cache: a published table is never changed, so lookups take no lock.
     private BeanMetaData[const(Descriptor)] beanMetaData;
     // Prepared constraints of executables' parameters and return values and of properties validated alone, keyed by
@@ -403,6 +412,7 @@ final class ValidatorFactoryImpl : ValidatorFactory
         this.descriptors = descriptors;
         this.interpolator = interpolator;
         patterns = new PatternCache();
+        rootPath = PathImpl.createRootPath();
     }
 
     /// Bind a user-defined constraint validator (from a `ConstraintMapping`).
@@ -561,7 +571,7 @@ final class ValidatorImpl : Validator, ExecutableValidator
         if (object.isNull())
             throw new IllegalArgument("HV000116: The object to be validated must not be null.");
         auto run = Run(factory, object, object.typeName());
-        run.validateBean(object, PathImpl.createRootPath(), null);
+        run.validateBean(object, factory.rootPath, null, true);
         return run.violations;
     }
 
@@ -724,6 +734,7 @@ private final class BeanMetaData
 {
     const(Descriptor) descriptor;
     bool bean;
+    bool cascades; // a property is @Valid
     PropertyMetaData[] properties;
 
     this(const(Descriptor) d, ValidatorFactoryImpl factory)
@@ -738,6 +749,7 @@ private final class BeanMetaData
                 continue;
             properties ~= PropertyMetaData(i, factory.prepareAll(property.annotations),
                     findAnnotation(property.annotations, typeNameOf!Valid));
+            cascades = cascades || properties[$ - 1].cascade;
         }
     }
 }
@@ -822,21 +834,22 @@ private struct Run
         return d;
     }
 
-    void validateBean(ref Any bean, PathImpl path, scope const(char)[] declaredType)
+    // `root`: the one bean of a validate() call, which nothing else can reach again unless it cascades.
+    void validateBean(ref Any bean, PathImpl path, scope const(char)[] declaredType, bool root = false)
     {
-        if (auto o = bean.asObject())
-        {
-            // Cycles: a bean is validated once per call, as Hibernate's processed-beans tracking does.
-            if (o in visited)
-                return;
-            visited[o] = true;
-        }
         const type = bean.typeName().length ? bean.typeName() : declaredType.idup;
         auto d = factory.descriptors is null ? null : factory.descriptors.find(type);
-        if (d is null)
-            return;
-        auto meta = factory.metaDataOf(d);
-        if (!meta.bean)
+        auto meta = d is null ? null : factory.metaDataOf(d);
+        // Cycles: a bean is validated once per call, as Hibernate's processed-beans tracking does. The root of a
+        // validate() call with no @Valid property reaches no other bean, so it needs no entry in the set.
+        if (auto o = bean.asObject())
+            if (!root || meta is null || meta.cascades)
+            {
+                if (o in visited)
+                    return;
+                visited[o] = true;
+            }
+        if (meta is null || !meta.bean)
             return;
         foreach (ref p; meta.properties)
         {
