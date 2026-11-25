@@ -193,6 +193,44 @@ def is_compile_server(pid):
         return False
 
 
+def live_parent(pid):
+    """A process's parent as /proc says now (0 if it is gone)."""
+    try:
+        stat = Path(f'/proc/{pid}/stat').read_text()
+        return int(stat[stat.rindex(')') + 2:].split()[1])
+    except (OSError, ValueError, IndexError):
+        return 0
+
+
+def descends_from(pid, roots):
+    """Whether `pid` is one of `roots` or descends from one, walking the live parent chain: a snapshot of the process
+    table misses every process born after it (B6, 2026-11-25 15:42Z: the freezer stopped the run's own Go `compile`,
+    born after its table was taken, and held phase1-builds-gs-relational for 25 minutes)."""
+    seen = set()
+    while pid > 1 and pid not in seen:
+        if pid in roots:
+            return True
+        seen.add(pid)
+        pid = live_parent(pid)
+    return False
+
+
+def parent_chain(pid, limit=8):
+    """`pid:comm <- ppid:comm <- ...` from the live /proc, for the freeze log."""
+    links = []
+    while pid > 1 and len(links) < limit:
+        try:
+            links.append(f"{pid}:{Path(f'/proc/{pid}/comm').read_text().strip()}")
+        except OSError:
+            links.append(f'{pid}:?')
+            break
+        pid = live_parent(pid)
+    return ' <- '.join(links)
+
+
+GRACE_SECONDS = 0.25  # a compiler must look foreign in two sightings this far apart before it is frozen
+
+
 def under_hold(pid, table, holds):
     """Whether `pid` descends from a `measure_queue.py hold` (`holds`): hold pauses its own builds."""
     seen = set()
@@ -240,6 +278,7 @@ def build_processes():
     mine = own_tree()
     own = [str(Path(d).resolve()) + os.sep for d in OWN_DIRECTORIES]
     found = []
+    me = os.getpid()
     for name in os.listdir('/proc'):
         if not name.isdigit() or int(name) in mine:
             continue
@@ -247,6 +286,8 @@ def build_processes():
             command = Path(f'/proc/{name}/comm').read_text().strip()
             kind = 'build' if command in BUSY_COMMANDS else stray_kind(name, command)
             if kind is None:
+                continue
+            if descends_from(int(name), {me}):  # born after own_tree()'s snapshot
                 continue
             cwd = os.readlink(f'/proc/{name}/cwd')
             if any((cwd.removesuffix(' (deleted)') + os.sep).startswith(prefix) for prefix in own):
@@ -318,8 +359,37 @@ class Freezer:
     recorded in the receipt and in FROZEN, and gets SIGCONT when the window ends, on every path; a watcher that
     starts after a crash continues whatever FROZEN still names (recover_frozen)."""
 
-    def __init__(self):
+    def __init__(self, log_only_compilers=None):
         self.frozen = []
+        self.logged = []  # log-only mode: compilers that would have been frozen
+        # FLINT_FREEZE_COMPILERS=log: detect and report foreign compilers, never stop them (a soak window, coordinator
+        # 2026-11-25 after the freezer stopped the run's own compile at B6).
+        self.log_only = (os.environ.get('FLINT_FREEZE_COMPILERS') == 'log' if log_only_compilers is None
+                         else log_only_compilers)
+
+    @staticmethod
+    def protected(pid):
+        """Why `pid` must never be frozen, or None. Whatever a candidate list said: this watcher's own session or
+        process group, the session of any of its measured children, a measured child or its child, or a live
+        descendant of the watcher."""
+        me = os.getpid()
+        try:
+            sid, pgid = os.getsid(pid), os.getpgid(pid)
+            own_sids = {os.getsid(me)}
+            for name in os.listdir('/proc'):
+                if name.isdigit() and live_parent(int(name)) == me:
+                    with contextlib.suppress(OSError):
+                        own_sids.add(os.getsid(int(name)))
+        except OSError:
+            return 'gone'
+        if sid in own_sids or pgid == os.getpgid(me):
+            return "the watcher's own session or process group"
+        parent = live_parent(pid)
+        if parent == me or live_parent(parent) == me:
+            return "the watcher's measured child or its child"
+        if descends_from(pid, {me}):
+            return 'a descendant of the watcher'
+        return None
 
     def candidates(self):
         table, ancestors, pid = parents(), set(), os.getpid()
@@ -345,7 +415,7 @@ class Freezer:
                 if kind is None and command in COMPILER_COMMANDS and fields[0] not in ('T', 't'):
                     # A compiler, linker or build tool outside `hold` (coordinator, 2026-11-25: an unheld build voided
                     # error-404-p99 at B5). Never a shared compile server's pool, never one `hold` already manages.
-                    if is_compile_server(name) or under_hold(int(name), table, holds):
+                    if is_compile_server(name) or descends_from(int(name), holds):
                         continue
                     kind = 'compiler'
                 if kind is None:
@@ -360,13 +430,38 @@ class Freezer:
                 continue
 
     def sweep(self):
-        for row in list(self.candidates()):
+        rows = list(self.candidates())
+        if any(row['kind'] == 'compiler' for row in rows):
+            time.sleep(GRACE_SECONDS)  # a compiler needs a second sighting: a brand-new process gets this grace
+        for row in rows:
+            # Every safeguard is re-checked live just before the signal, whatever the candidate list said.
+            if self.protected(row['pid']):
+                continue
+            if row['kind'] == 'compiler':
+                try:
+                    if start_time(row['pid']) != row['start']:
+                        continue  # gone, or its pid reused
+                except OSError:
+                    continue
+                if descends_from(row['pid'], set(held_work())):
+                    continue
+                reason = f'compiler outside hold, foreign in two sightings {GRACE_SECONDS:g} s apart'
+            else:
+                reason = f"{row['kind']} stray"
+            row = dict(row, chain=parent_chain(row['pid']), reason=reason)
+            if row['kind'] == 'compiler' and self.log_only:
+                if (row['pid'], row['start']) not in {(r['pid'], r['start']) for r in self.logged}:
+                    self.logged.append(dict(row, seen_at=now()))
+                    print(now(), f"would freeze (log-only) {row['command']} pid {row['pid']} ({row['cwd']}); "
+                                 f"chain {row['chain']}; reason: {reason}", flush=True)
+                continue
             try:
                 os.kill(row['pid'], signal.SIGSTOP)
             except OSError:
                 continue
             self.frozen.append(dict(row, frozen_at=now()))
-            print(now(), f"froze {row['command']} pid {row['pid']} ({row['kind']}, {row['cwd']})", flush=True)
+            print(now(), f"froze {row['command']} pid {row['pid']} ({row['kind']}, {row['cwd']}); chain {row['chain']}; "
+                         f"reason: {reason}", flush=True)
         if self.frozen:
             FROZEN.write_text(json.dumps(self.frozen, indent=2) + '\n')
 
@@ -1451,7 +1546,8 @@ def _run_window(entry, outdir, built, smoke, force_busy, claim_seconds, locking,
                'evidence': evidence, 'host': os.uname().nodename, 'builds': built,
                'shared_toolchain': shared_toolchain_receipt(), 'window_before': before,
                'window_during': sampler.samples, 'foreign_activity_during': len(foreign), 'window_after': after,
-               'frozen': freezer.frozen if freezer else [], 'results_directory': str(outdir.relative_to(ROOT)), 'summary': summary}
+               'frozen': freezer.frozen if freezer else [],
+               'would_freeze': freezer.logged if freezer else [], 'results_directory': str(outdir.relative_to(ROOT)), 'summary': summary}
     (outdir / 'receipt.json').write_text(json.dumps(receipt, indent=2) + '\n')
     log_attempt(entry, {'time': receipt['time'], 'outcome': receipt['outcome'], 'evidence': evidence,
                         'receipt': str((outdir / 'receipt.json').relative_to(ROOT))})

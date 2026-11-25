@@ -60,17 +60,18 @@ class QuietWindow(unittest.TestCase):
     def test_processes_in_the_runs_own_checkout_are_not_foreign(self):
         import tempfile
         with tempfile.TemporaryDirectory() as own:
-            worker = subprocess.Popen(['sleep', '5'], cwd=own, start_new_session=True)
+            pidfile = Path(own) / 'pid'  # detached: reparented and in its own session, as another session's work is
+            subprocess.run(['sh', '-c', f'cd {own} && setsid sleep 5 > /dev/null 2>&1 < /dev/null & echo $! > {pidfile}'],
+                           check=True)
+            worker = int(pidfile.read_text())
             try:
-                with mock.patch.object(measure_queue, 'BUSY_COMMANDS', {'sleep'}), \
-                        mock.patch.object(measure_queue, 'own_tree', return_value=set()):
-                    self.assertIn(worker.pid, [row['pid'] for row in measure_queue.build_processes()])
+                with mock.patch.object(measure_queue, 'BUSY_COMMANDS', {'sleep'}):
+                    self.assertIn(worker, [row['pid'] for row in measure_queue.build_processes()])
                     measure_queue.OWN_DIRECTORIES[:] = [own]
-                    self.assertNotIn(worker.pid, [row['pid'] for row in measure_queue.build_processes()])
+                    self.assertNotIn(worker, [row['pid'] for row in measure_queue.build_processes()])
             finally:
                 measure_queue.OWN_DIRECTORIES[:] = []
-                worker.kill()
-                worker.wait()
+                os.kill(worker, 9)
 
     def test_hold_pauses_while_the_lock_exists(self):
         import tempfile, threading
@@ -160,8 +161,8 @@ class QuietWindow(unittest.TestCase):
             f'import subprocess, time\nend = time.time() + {seconds}\nwhile time.time() < end:\n'
             f'    subprocess.run([{str(d / "dmd")!r}, {str(d / "burn.py")!r}])\n    time.sleep(0.05)\n')
         pidfile = d / 'pid'
-        subprocess.run(['sh', '-c', f'{shlex.quote(str(d / "dub"))} {shlex.quote(str(d / "driver.py"))} '
-                                    f'> /dev/null 2>&1 & echo $! > {shlex.quote(str(pidfile))}'], check=True)
+        subprocess.run(['sh', '-c', f'setsid {shlex.quote(str(d / "dub"))} {shlex.quote(str(d / "driver.py"))} '
+                                    f'> /dev/null 2>&1 < /dev/null & echo $! > {shlex.quote(str(pidfile))}'], check=True)
         return int(pidfile.read_text())
 
     def test_an_unheld_served_compile_is_detected(self):
@@ -186,6 +187,94 @@ class QuietWindow(unittest.TestCase):
                 with mock.patch.object(measure_queue, 'is_compile_server', return_value=True):
                     self.assertNotIn(dub, {row['pid'] for row in measure_queue.Freezer().candidates()})
             finally:
+                os.kill(dub, 9)
+
+    def test_the_runs_own_new_process_is_never_frozen_or_foreign(self):
+        """B6, 15:42Z: the run's own Go `compile`, born after the freezer's process-table snapshot, was frozen."""
+        with tempfile.TemporaryDirectory() as directory:
+            (Path(directory) / 'compile').symlink_to(sys.executable)
+            child = subprocess.Popen([str(Path(directory) / 'compile'), '-c',
+                                      'import time\nt=time.time()\nwhile time.time()-t<3: pass'])
+            try:
+                time.sleep(0.2)
+                with mock.patch.object(measure_queue, 'own_tree', return_value=set()):  # the stale snapshot
+                    self.assertNotIn(child.pid, [row['pid'] for row in measure_queue.build_processes()])
+                    freezer = measure_queue.Freezer()
+                    with mock.patch.object(measure_queue.Freezer, 'candidates',
+                                           return_value=iter([{'pid': child.pid, 'start': 0, 'command': 'compile',
+                                                               'kind': 'compiler', 'cwd': directory}])), \
+                            mock.patch.object(measure_queue, 'FROZEN', Path(directory) / 'FROZEN'):
+                        freezer.sweep()
+                    self.assertEqual(freezer.frozen, [])
+                state = Path(f'/proc/{child.pid}/stat').read_text().rsplit(')', 1)[1].split()[0]
+                self.assertNotIn(state, ('T', 't'))
+            finally:
+                child.kill()
+                child.wait()
+
+    def sweep_on(self, pid, kind='compiler', **freezer):
+        """One sweep of a Freezer whose only candidate is `pid`; returns the Freezer."""
+        f = measure_queue.Freezer(**freezer)
+        row = {'pid': pid, 'start': measure_queue.start_time(pid), 'command': 'x', 'kind': kind, 'cwd': '/tmp'}
+        with tempfile.TemporaryDirectory() as directory, \
+                mock.patch.object(measure_queue.Freezer, 'candidates', return_value=iter([row])), \
+                mock.patch.object(measure_queue, 'FROZEN', Path(directory) / 'FROZEN'):
+            f.sweep()
+        return f
+
+    def stopped(self, pid):
+        return Path(f'/proc/{pid}/stat').read_text().rsplit(')', 1)[1].split()[0] in ('T', 't')
+
+    def test_safeguard_own_session_or_group_holds_when_the_chain_walk_fails(self):
+        child = subprocess.Popen(['sleep', '5'])  # this process's session and process group
+        try:
+            with mock.patch.object(measure_queue, 'descends_from', return_value=False):
+                f = self.sweep_on(child.pid)
+            self.assertEqual(f.frozen, [])
+            self.assertFalse(self.stopped(child.pid))
+        finally:
+            child.kill()
+            child.wait()
+
+    def test_safeguard_a_measured_childs_child_is_never_frozen(self):
+        measured = subprocess.Popen(['sh', '-c', 'sleep 5 & wait'], start_new_session=True)  # its own session
+        try:
+            time.sleep(0.2)
+            grandchild = next(pid for pid in map(int, filter(str.isdigit, os.listdir('/proc')))
+                              if measure_queue.live_parent(pid) == measured.pid)
+            with mock.patch.object(measure_queue, 'descends_from', return_value=False):
+                f = self.sweep_on(grandchild)
+            self.assertEqual(f.frozen, [])
+            self.assertFalse(self.stopped(grandchild))
+        finally:
+            os.killpg(measured.pid, 9)
+            measured.wait()
+
+    def test_safeguard_a_brand_new_compiler_gets_a_grace_sample(self):
+        with tempfile.TemporaryDirectory() as directory:
+            pidfile = Path(directory) / 'pid'
+            subprocess.run(['sh', '-c', f'sleep 0.1 & echo $! > {pidfile}'], check=True)  # foreign, gone in 100 ms
+            pid = int(pidfile.read_text())
+            f = self.sweep_on(pid)
+            self.assertEqual(f.frozen, [])
+
+    def test_a_foreign_compiler_is_frozen_with_its_chain_and_reason_and_log_only_only_reports(self):
+        with tempfile.TemporaryDirectory() as directory:
+            dub = self.detached_build(directory, seconds=5)
+            try:
+                time.sleep(0.2)
+                watched = self.sweep_on(dub, log_only_compilers=True)
+                self.assertEqual(watched.frozen, [])
+                self.assertEqual(watched.logged[0]['pid'], dub)
+                self.assertFalse(self.stopped(dub))
+                f = self.sweep_on(dub, log_only_compilers=False)
+                self.assertEqual(f.frozen[0]['pid'], dub)
+                self.assertIn(f'{dub}:dub', f.frozen[0]['chain'])
+                self.assertIn('two sightings', f.frozen[0]['reason'])
+                time.sleep(0.1)  # SIGSTOP is delivered asynchronously
+                self.assertTrue(self.stopped(dub))
+            finally:
+                os.kill(dub, 18)
                 os.kill(dub, 9)
 
     def test_under_hold_follows_the_ancestry(self):
@@ -437,7 +526,11 @@ class Freezing(unittest.TestCase):
             exe.parent.mkdir()
             import shutil as _shutil
             _shutil.copy('/bin/sleep', exe)
-            child = subprocess.Popen([str(exe), '60'], start_new_session=True, stdin=subprocess.DEVNULL)
+            pidfile = Path(temporary) / 'pid'  # detached, as another session's stray is
+            subprocess.run(['sh', '-c', f'setsid {exe} 60 > /dev/null 2>&1 < /dev/null & echo $! > {pidfile}'], check=True)
+            child = type('Detached', (), {'pid': int(pidfile.read_text())})()
+            child.kill = lambda: os.kill(child.pid, 9)
+            child.wait = lambda: None
             try:
                 time.sleep(0.2)
                 state = lambda: Path(f'/proc/{child.pid}/stat').read_text().rsplit(')', 1)[1].split()[0]
