@@ -980,13 +980,13 @@ class InvalidMediaTypeException : IllegalArgumentException
 /// Java's `Double.parseDouble` for the decimal forms headers use.
 package(flint) double parseJavaDouble(scope const(char)[] text) pure
 {
-    import std.conv : ConvException, to;
+    import flint.engine.aot.text : tryParseDouble;
 
-    const trimmed = trimmedAscii(text);
-    try
-        return to!double(trimmed);
-    catch (ConvException)
+    // flint.engine.aot.text reads text as `std.conv.to!double` does, without its templates.
+    const parsed = tryParseDouble(trimmedAscii(text));
+    if (!parsed.ok)
         throw new NumberFormatException("For input string: \"" ~ text.idup ~ "\"");
+    return parsed.value;
 }
 
 private const(char)[] trimmedAscii(return scope const(char)[] text) pure nothrow @nogc

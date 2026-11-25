@@ -179,12 +179,12 @@ package(flint) struct SimpleConversion
     /// `value` converted to `targetType`; null for a blank value and a non-string target.
     static Any convert(string value, string targetType)
     {
+        import flint.engine.aot.text : stripWhite;
         import flint.java.time : DateTimeException;
-        import std.conv : ConvException, to;
-        import std.string : strip;
+        import std.conv : ConvException;
 
         if (targetType != "string" && !isArray(targetType) && (targetType == "char"
-                ? value.length == 0 : value.strip.length == 0))
+                ? value.length == 0 : stripWhite(value).length == 0))
             return Any.init;
         try
         {
@@ -193,29 +193,29 @@ package(flint) struct SimpleConversion
             case "string":
                 return Any.of(value);
             case localDate, localTime, localDateTime, instant, offsetDateTime, zonedDateTime:
-                return parseTemporal(value.strip, targetType);
+                return parseTemporal(stripWhite(value), targetType);
             case "bool":
                 return Any.of(parseBoolean(value));
             case "byte":
-                return Any.of(value.strip.to!byte);
+                return Any.of(cast(byte) signedIn(value, byte.min, byte.max));
             case "ubyte":
-                return Any.of(value.strip.to!ubyte);
+                return Any.of(cast(ubyte) unsignedUpTo(value, ubyte.max));
             case "short":
-                return Any.of(value.strip.to!short);
+                return Any.of(cast(short) signedIn(value, short.min, short.max));
             case "ushort":
-                return Any.of(value.strip.to!ushort);
+                return Any.of(cast(ushort) unsignedUpTo(value, ushort.max));
             case "int":
-                return Any.of(value.strip.to!int);
+                return Any.of(cast(int) signedIn(value, int.min, int.max));
             case "uint":
-                return Any.of(value.strip.to!uint);
+                return Any.of(cast(uint) unsignedUpTo(value, uint.max));
             case "long":
-                return Any.of(value.strip.to!long);
+                return Any.of(signedIn(value, long.min, long.max));
             case "ulong":
-                return Any.of(value.strip.to!ulong);
+                return Any.of(unsignedUpTo(value, ulong.max));
             case "float":
-                return Any.of(value.strip.to!float);
+                return Any.of(floatOf(value));
             case "double":
-                return Any.of(value.strip.to!double);
+                return Any.of(doubleOf(value));
             case "char":
                 if (value.length != 1)
                     throw new ConvException("not a single character");
@@ -226,14 +226,14 @@ package(flint) struct SimpleConversion
                 {
                     int[] result;
                     foreach (part; splitComma(value))
-                        result ~= part.strip.to!int;
+                        result ~= cast(int) signedIn(part, int.min, int.max);
                     return Any.of(result);
                 }
             case "long[]":
                 {
                     long[] result;
                     foreach (part; splitComma(value))
-                        result ~= part.strip.to!long;
+                        result ~= signedIn(part, long.min, long.max);
                     return Any.of(result);
                 }
             default:
@@ -245,6 +245,55 @@ package(flint) struct SimpleConversion
                     new imported!"flint.java.lang".NumberFormatException(forInput(value)));
         catch (DateTimeException e)
             throw conversionFailed(targetType, value, e);
+    }
+
+    // The number in `text` without surrounding white space, as `text.strip.to!T` reads it (flint.engine.aot.text gives
+    // std.conv's results without its templates); a ConvException where `to!T` throws one.
+    private static long signedIn(string text, long low, long high)
+    {
+        import flint.engine.aot.text : stripWhite, tryParseLong;
+        import std.conv : ConvException;
+
+        const parsed = tryParseLong(stripWhite(text));
+        if (!parsed.ok || parsed.value < low || parsed.value > high)
+            throw new ConvException("not a number in range");
+        return parsed.value;
+    }
+
+    /// ditto
+    private static ulong unsignedUpTo(string text, ulong high)
+    {
+        import flint.engine.aot.text : stripWhite, tryParseULong;
+        import std.conv : ConvException;
+
+        const parsed = tryParseULong(stripWhite(text));
+        if (!parsed.ok || parsed.value > high)
+            throw new ConvException("not a number in range");
+        return parsed.value;
+    }
+
+    /// ditto
+    private static float floatOf(string text)
+    {
+        import flint.engine.aot.text : stripWhite, tryParseFloat;
+        import std.conv : ConvException;
+
+        const parsed = tryParseFloat(stripWhite(text));
+        if (!parsed.ok)
+            throw new ConvException("not a float");
+        return parsed.value;
+    }
+
+    /// ditto
+    private static double doubleOf(string text)
+    {
+        import flint.engine.aot.text : stripWhite, tryParseDouble;
+        import std.conv : ConvException;
+
+        const parsed = tryParseDouble(stripWhite(text));
+        if (!parsed.ok)
+            throw new ConvException("not a double");
+        return parsed.value;
     }
 
     // TemporalAccessorParser's ISO fallback (`LocalDate.parse(text)` and the like); the localized SHORT style is
