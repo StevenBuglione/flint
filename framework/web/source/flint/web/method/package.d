@@ -95,13 +95,16 @@ class HandlerMethod
 
     private void initParameters(ArgumentSpec[] arguments, string returnTypeName)
     {
+        // One log message for the method's parameters and return type, not one concatenation each: these objects
+        // live as long as the application, and every collection marks them.
+        const owner = getShortLogMessage();
         parameters = new MethodParameter[arguments.length];
         foreach (i, ref argument; arguments)
-            parameters[i] = new MethodParameter(argument, cast(int) i, getShortLogMessage());
+            parameters[i] = new MethodParameter(argument, cast(int) i, owner);
         ArgumentSpec returnSpec;
         returnSpec.kind = ArgumentKind.byType;
         returnSpec.type = returnTypeName;
-        returnType = new MethodParameter(returnSpec, -1, getShortLogMessage());
+        returnType = new MethodParameter(returnSpec, -1, owner);
     }
 
     /// The bean, or `null` when it is resolved by name later.
