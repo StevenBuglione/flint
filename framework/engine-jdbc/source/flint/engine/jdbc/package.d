@@ -1431,6 +1431,8 @@ final class FlintResultSet : ResultSet
     /// `getMetaData`'s object, made once: a row mapper asks for it on every row.
     private FlintResultSetMetaData metaData;
     private size_t position;
+    /// The label index `findColumn` tries first: the one after the label it last found.
+    private size_t nextLabel;
     private bool closed_;
     private bool lastWasNull;
 
@@ -1464,19 +1466,23 @@ final class FlintResultSet : ResultSet
                 text = (cast(const(char)[]) data[0 .. used]).idup;
                 break;
             }
-        foreach (ref cell; read[0 .. count])
+        // The row's cells are added with one length change, then filled in place: not one append per cell.
+        const first = cells.length;
+        cells.length = first + count;
+        foreach (column, ref cell; read[0 .. count])
         {
             const kind = cast(ValueKind) cell.kind;
+            auto target = &cells[first + column];
             if (kind == ValueKind.text || kind == ValueKind.bytes)
             {
                 const from = cast(size_t) cell.integer, to = from + cell.length;
                 if (kind == ValueKind.text)
-                    cells ~= Cell(kind, 0, 0, text[from .. to]);
+                    *target = Cell(kind, 0, 0, text[from .. to]);
                 else
-                    cells ~= Cell(kind, 0, 0, null, data[from .. to].dup);
+                    *target = Cell(kind, 0, 0, null, data[from .. to].dup);
             }
             else
-                cells ~= Cell(kind, cell.integer, cell.floating);
+                *target = Cell(kind, cell.integer, cell.floating);
         }
         ++rowCount_;
     }
@@ -1860,9 +1866,16 @@ final class FlintResultSet : ResultSet
     override int findColumn(string columnLabel)
     {
         checkOpen();
+        // A row mapper reads the same columns in the same order on every row: the column after the last one found
+        // is tried first, so most lookups compare one label.
+        if (nextLabel < labels.length && equalsIgnoreCase(labels[nextLabel], columnLabel))
+            return cast(int)++nextLabel;
         foreach (index, label; labels)
             if (equalsIgnoreCase(label, columnLabel))
-                return cast(int) index + 1;
+            {
+                nextLabel = index + 1;
+                return cast(int) nextLabel;
+            }
         throw new SQLException("The column name " ~ columnLabel ~ " was not found in this ResultSet", "42703");
     }
 

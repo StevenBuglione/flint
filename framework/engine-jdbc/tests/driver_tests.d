@@ -297,6 +297,23 @@ unittest
     assert(statementsFor(() @safe { assert(connection.isValid(0)); }) == 1);
 }
 
+/// `findColumn` tries the column after the last one it found first; any order still finds each label, in any case.
+private void checkFindColumn(ResultSet rows)
+{
+    foreach (label, index; ["id": 1, "FIRST_NAME": 2, "score": 3, "note": 4])
+        assert(rows.findColumn(label) == index);
+    const labels = ["note", "note", "Id", "score", "first_name", "score", "first_name"];
+    const indexes = [4, 4, 1, 3, 2, 3, 2];
+    foreach (i, label; labels)
+        assert(rows.findColumn(label) == indexes[i], label);
+    bool unknown;
+    try
+        rows.findColumn("missing");
+    catch (SQLException)
+        unknown = true;
+    assert(unknown && rows.findColumn("first_name") == 2);
+}
+
 /// The behaviour both engines share.
 private void exercise(Connection connection, string table)
 {
@@ -332,6 +349,7 @@ private void exercise(Connection connection, string table)
     assert(rows.getInt(1) == 1 && rows.getString("FIRST_NAME") == "John" && rows.getDouble("score") == 1.5);
     assert(rows.getString("note") is null && rows.wasNull());
     assert(rows.getObject("id").get!long == 1);
+    checkFindColumn(rows);
     auto meta = rows.getMetaData();
     assert(meta.getColumnCount() == 4 && meta.getColumnLabel(2) == "first_name");
     string[] names;
