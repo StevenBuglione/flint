@@ -29,6 +29,11 @@ as evidence. `--force-busy` measures anyway and marks the receipt `busy`, for ha
 While a measurement runs, .flint/measure/MEASURING holds its entry id, start time and pid; other sessions hold
 their compiles while it exists (docs/spring/phase1/coordination.md, "Measurement").
 
+On a runner several checkouts share (posidon: one worktree per role), FLINT_MEASURE_LOCK names one host-wide lock
+(`source ~/flint-work/posidon.env`). The measurer writes it instead of this checkout's MEASURING, `hold` honours it
+as long as the process that wrote it lives, and `timed -- <command>` takes it for an ad-hoc timed run (a diagnostic),
+waiting for any other first. Unset, everything behaves as before (venus).
+
 Two kinds of window (the coordinator's policy, coordination.md "Measurement"). An entry's `window` is `claim` or
 `natural`; without one, an entry of at most 30 estimated minutes claims and a longer one is natural.
 - `claim`: `watch` takes MEASURING first, sessions behind `hold` pause, and the run starts once the window settles.
@@ -448,8 +453,68 @@ def lock_paths():
     another checkout; docs/spring/phase1/coordination.md names its path)."""
     paths = [LOCK]
     if os.environ.get('FLINT_MEASURE_LOCK'):
-        paths.append(Path(os.environ['FLINT_MEASURE_LOCK']))
+        paths.append(Path(os.environ['FLINT_MEASURE_LOCK']).expanduser())
     return paths
+
+
+def measure_lock():
+    """The lock a timed run takes: FLINT_MEASURE_LOCK when set, so every checkout and worktree on a shared runner
+    (posidon: ~/flint-work/posidon.env) sees one host-wide lock; otherwise this checkout's MEASURING (venus,
+    unchanged)."""
+    override = os.environ.get('FLINT_MEASURE_LOCK')
+    return Path(override).expanduser() if override else LOCK
+
+
+def lock_held(path):
+    """Whether `path` holds a timed run. This checkout's lock counts while it exists, as always. The shared
+    FLINT_MEASURE_LOCK counts only while the process that wrote it lives, so a crashed run on a shared runner
+    cannot pause everyone's builds forever."""
+    if not path.exists():
+        return False
+    if path == LOCK:
+        return True
+    try:
+        pid = int(json.loads(path.read_text()).get('pid'))
+    except (OSError, ValueError, TypeError, AttributeError):
+        return True  # unreadable: someone holds it; never guess it away
+    return Path(f'/proc/{pid}').exists()
+
+
+def timed(argv, label, settle_seconds=10, poll_seconds=5):
+    """Run `argv` as a timed run on a runner shared by several checkouts (posidon): wait while another timed run
+    holds the lock, take it atomically, give builds behind `hold` `settle_seconds` to pause, run `argv`, and release
+    the lock. Returns `argv`'s exit status."""
+    if not argv:
+        raise SystemExit('usage: measure_queue.py timed [--label NAME] -- <command> [args...]')
+    path = measure_lock()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    waited = False
+    while True:
+        if not any(lock_held(other) for other in lock_paths() if other != path):
+            try:
+                descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
+            except FileExistsError:
+                if not lock_held(path):
+                    path.unlink(missing_ok=True)  # a crashed run's lock
+                    continue
+            else:
+                with os.fdopen(descriptor, 'w') as stream:
+                    stream.write(json.dumps({'id': label, 'started': now(), 'pid': os.getpid(),
+                                             'host': os.uname().nodename}) + '\n')
+                break
+        if not waited:
+            print(f'{now()} timed: waiting for the timed run holding the lock', file=sys.stderr, flush=True)
+            waited = True
+        time.sleep(poll_seconds)
+    try:
+        print(f'{now()} timed: took {path}; {settle_seconds} s for held builds to pause', file=sys.stderr, flush=True)
+        time.sleep(settle_seconds)
+        return subprocess.run(argv).returncode
+    finally:
+        with contextlib.suppress(OSError, ValueError):
+            if json.loads(path.read_text()).get('pid') == os.getpid():
+                path.unlink()
+        print(f'{now()} timed: released {path}', file=sys.stderr, flush=True)
 
 
 def hold(argv):
@@ -462,7 +527,7 @@ def hold(argv):
     paused = False
     try:
         while process.poll() is None:
-            locked = any(path.exists() for path in lock_paths())
+            locked = any(lock_held(path) for path in lock_paths())
             if locked and not paused:
                 os.killpg(process.pid, signal.SIGSTOP)
                 paused = True
@@ -1255,10 +1320,11 @@ def run(entry, force_busy=False, smoke=False, claim_seconds=0):
     locking = not (smoke or force_busy)
     # A natural entry never claims: it writes its own marker, which `hold` ignores, and gives way to other work.
     natural = window_mode(entry) == 'natural'
-    marker = NATURAL if natural else LOCK
+    marker = NATURAL if natural else measure_lock()
     if natural:
         claim_seconds = 0
     LOCK.parent.mkdir(parents=True, exist_ok=True)
+    marker.parent.mkdir(parents=True, exist_ok=True)
     freezer = Freezer() if (locking and not natural) else None
     if locking:
         marker.write_text(json.dumps({'id': entry['id'], 'started': now(), 'pid': os.getpid(),
@@ -1347,6 +1413,10 @@ def main(argv=None):
     sub.add_parser('next')
     p = sub.add_parser('hold', help='run a command, pausing it while a timed run holds the MEASURING lock')
     p.add_argument('argv', nargs=argparse.REMAINDER)
+    p = sub.add_parser('timed', help='run a timed command under the (FLINT_MEASURE_LOCK) lock, after any other')
+    p.add_argument('--label', default='timed run', help='who holds the lock (a role name)')
+    p.add_argument('--settle', type=int, default=10, help='seconds for held builds to pause before the command')
+    p.add_argument('argv', nargs=argparse.REMAINDER)
     p = sub.add_parser('watch', help='wait for quiet, run the pending entries, repeat until none is pending')
     p.add_argument('--quiet-minutes', type=int, default=5, help='--no-claim: quiet checks in a row before a run')
     p.add_argument('--no-claim', dest='claim', action='store_false',
@@ -1390,6 +1460,8 @@ def main(argv=None):
         return 0
     if args.command == 'hold':
         return hold(args.argv[1:] if args.argv[:1] == ['--'] else args.argv)
+    if args.command == 'timed':
+        return timed(args.argv[1:] if args.argv[:1] == ['--'] else args.argv, args.label, args.settle)
     if args.command == 'watch':
         # Claimed windows first (short entries that gate a decision): the lock is taken, sessions behind `hold`
         # pause, and the run starts once the window settles. Natural entries (long, low priority) and, with

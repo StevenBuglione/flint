@@ -86,6 +86,68 @@ class QuietWindow(unittest.TestCase):
             self.assertGreater(time.monotonic() - started, 4.5)  # 3 s of work plus the ~2 s it was held
             self.assertEqual(len(out.read_text()), 30)
 
+    def test_the_shared_lock_overrides_only_when_set(self):
+        with tempfile.TemporaryDirectory() as directory, mock.patch.dict(os.environ, {}, clear=False):
+            os.environ.pop('FLINT_MEASURE_LOCK', None)
+            self.assertEqual(measure_queue.measure_lock(), measure_queue.LOCK)  # venus: unchanged
+            self.assertEqual(measure_queue.lock_paths(), [measure_queue.LOCK])
+            shared = Path(directory) / 'MEASURING'
+            os.environ['FLINT_MEASURE_LOCK'] = str(shared)
+            self.assertEqual(measure_queue.measure_lock(), shared)
+            self.assertEqual(measure_queue.lock_paths(), [measure_queue.LOCK, shared])
+
+    def test_a_dead_writer_frees_only_the_shared_lock(self):
+        with tempfile.TemporaryDirectory() as directory:
+            dead = subprocess.Popen(['true'])
+            dead.wait()
+            shared, local = Path(directory) / 'shared', Path(directory) / 'local'
+            with mock.patch.object(measure_queue, 'LOCK', local):
+                shared.write_text(json.dumps({'pid': dead.pid}))
+                self.assertFalse(measure_queue.lock_held(shared))
+                shared.write_text(json.dumps({'pid': os.getpid()}))
+                self.assertTrue(measure_queue.lock_held(shared))
+                shared.write_text('not json')
+                self.assertTrue(measure_queue.lock_held(shared))  # unreadable: never guessed away
+                local.write_text(json.dumps({'pid': dead.pid}))
+                self.assertTrue(measure_queue.lock_held(local))  # this checkout's lock: existence, as always
+
+    def test_timed_takes_the_shared_lock_after_the_holder_and_releases_it(self):
+        import threading
+        with tempfile.TemporaryDirectory() as directory, \
+                mock.patch.dict(os.environ, {'FLINT_MEASURE_LOCK': str(Path(directory) / 'MEASURING')}), \
+                mock.patch.object(measure_queue, 'LOCK', Path(directory) / 'local'):
+            shared, seen = Path(directory) / 'MEASURING', Path(directory) / 'seen'
+            holder = subprocess.Popen(['sleep', '30'])
+            try:
+                shared.write_text(json.dumps({'id': 'other role', 'pid': holder.pid}))
+                threading.Timer(1.5, shared.unlink).start()  # the other run releases its lock
+                script = f'import pathlib\npathlib.Path({str(seen)!r}).write_text(pathlib.Path({str(shared)!r}).read_text())'
+                started = time.monotonic()
+                code = measure_queue.timed([sys.executable, '-c', script], 'proof-harness', settle_seconds=0,
+                                           poll_seconds=0.2)
+            finally:
+                holder.kill()
+                holder.wait()
+            self.assertEqual(code, 0)
+            self.assertGreater(time.monotonic() - started, 1.4)  # it waited for the other run
+            held = json.loads(seen.read_text())
+            self.assertEqual((held['id'], held['pid']), ('proof-harness', os.getpid()))
+            self.assertFalse(shared.exists())  # released
+
+    def test_hold_pauses_for_the_shared_lock(self):
+        import threading
+        with tempfile.TemporaryDirectory() as directory, \
+                mock.patch.dict(os.environ, {'FLINT_MEASURE_LOCK': str(Path(directory) / 'MEASURING')}), \
+                mock.patch.object(measure_queue, 'LOCK', Path(directory) / 'local'):
+            shared, out = Path(directory) / 'MEASURING', Path(directory) / 'ticks'
+            shared.write_text(json.dumps({'pid': os.getpid()}))
+            threading.Timer(2.5, shared.unlink).start()
+            script = f'import time\nfor i in range(20):\n    open({str(out)!r}, "a").write("x")\n    time.sleep(0.1)\n'
+            started = time.monotonic()
+            self.assertEqual(measure_queue.hold([sys.executable, '-c', script]), 0)
+            self.assertGreater(time.monotonic() - started, 3.5)
+            self.assertEqual(len(out.read_text()), 20)
+
     def test_a_claimed_window_needs_three_quiet_samples(self):
         quiet = {'quiet': True, 'problems': []}
         busy = {'quiet': False, 'problems': ['ldc2']}
