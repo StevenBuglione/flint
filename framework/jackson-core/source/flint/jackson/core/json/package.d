@@ -1037,6 +1037,23 @@ class UTF8JsonGenerator : JsonGenerator
         return table;
     }();
 
+    // The same over every byte value: with ESCAPE_NON_ASCII off a byte of a multi-byte character is written as it is
+    // (plainUtf8); with it on, such bytes take the escape path (plainAsciiOnly). One lookup per byte, the table chosen
+    // once per string.
+    private static immutable bool[256] plainUtf8 = () {
+        bool[256] table;
+        foreach (c; 0 .. 256)
+            table[c] = c >= 0x80 || plainAscii[c];
+        return table;
+    }();
+    /// ditto
+    private static immutable bool[256] plainAsciiOnly = () {
+        bool[256] table;
+        foreach (c; 0 .. 0x80)
+            table[c] = plainAscii[c];
+        return table;
+    }();
+
     private void quoted(scope const(char)[] text)
     {
         put('"');
@@ -1047,12 +1064,13 @@ class UTF8JsonGenerator : JsonGenerator
     private void escaped(scope const(char)[] text)
     {
         auto bytes = cast(const(ubyte)[]) text;
+        const plain = _escapeNonAscii ? &plainAsciiOnly : &plainUtf8;
         size_t run;
         size_t i;
         while (i < bytes.length)
         {
             immutable b = bytes[i];
-            if (b < 0x80 && plainAscii[b])
+            if ((*plain)[b])
             {
                 ++i;
                 continue;
