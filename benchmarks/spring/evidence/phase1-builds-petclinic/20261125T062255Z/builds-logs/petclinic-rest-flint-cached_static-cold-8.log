@@ -1,0 +1,3 @@
+   Generated 34 Flint AOT modules for org.springframework.samples.petclinic.PetClinicApplication (15 extracted in 33 ms, 44 from the shared cache, 35 written, 111 ms, native extractor)
+    Building petclinic-rest 0.0.1 (dev, dmd)
+    Finished .flint/build/dev/petclinic-rest (non-canonical: --no-debug builds without debug information or a symbol table)

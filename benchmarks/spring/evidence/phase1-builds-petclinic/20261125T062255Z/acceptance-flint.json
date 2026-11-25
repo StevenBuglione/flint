@@ -1,0 +1,452 @@
+{
+  "schema": "flint.spring-acceptance/1",
+  "app": "petclinic-rest",
+  "implementation": "flint",
+  "start": null,
+  "extra_args": [],
+  "binary": null,
+  "wire": "exact",
+  "golden_sha256": "ff1317216f4f1930c14cf55b099ab6c45126b6bb796b3deb92e7613aec2f5d61",
+  "cases": [
+    {
+      "name": "root redirects to the Swagger UI",
+      "problems": []
+    },
+    {
+      "name": "actuator links",
+      "problems": []
+    },
+    {
+      "name": "actuator health",
+      "problems": []
+    },
+    {
+      "name": "actuator liveness group",
+      "problems": []
+    },
+    {
+      "name": "actuator readiness group",
+      "problems": []
+    },
+    {
+      "name": "actuator endpoint that is not exposed",
+      "problems": []
+    },
+    {
+      "name": "actuator health with an explicit Accept",
+      "problems": []
+    },
+    {
+      "name": "list owners",
+      "problems": []
+    },
+    {
+      "name": "owners by last name",
+      "problems": []
+    },
+    {
+      "name": "owners by last name prefix",
+      "problems": []
+    },
+    {
+      "name": "owners by an unknown last name",
+      "problems": []
+    },
+    {
+      "name": "owner with pets and visits",
+      "problems": []
+    },
+    {
+      "name": "unknown owner",
+      "problems": []
+    },
+    {
+      "name": "owner id that is not a number",
+      "problems": []
+    },
+    {
+      "name": "owner pet",
+      "problems": []
+    },
+    {
+      "name": "pet of another owner",
+      "problems": []
+    },
+    {
+      "name": "list pets",
+      "problems": []
+    },
+    {
+      "name": "pet",
+      "problems": []
+    },
+    {
+      "name": "unknown pet",
+      "problems": []
+    },
+    {
+      "name": "list visits",
+      "problems": []
+    },
+    {
+      "name": "visit",
+      "problems": []
+    },
+    {
+      "name": "unknown visit",
+      "problems": []
+    },
+    {
+      "name": "list pet types",
+      "problems": []
+    },
+    {
+      "name": "pet type",
+      "problems": []
+    },
+    {
+      "name": "unknown pet type",
+      "problems": []
+    },
+    {
+      "name": "list specialties",
+      "problems": []
+    },
+    {
+      "name": "specialty",
+      "problems": []
+    },
+    {
+      "name": "unknown specialty",
+      "problems": []
+    },
+    {
+      "name": "list vets",
+      "problems": []
+    },
+    {
+      "name": "vet with specialties",
+      "problems": []
+    },
+    {
+      "name": "unknown vet",
+      "problems": []
+    },
+    {
+      "name": "v2 owners default page",
+      "problems": []
+    },
+    {
+      "name": "v2 owners page and size",
+      "problems": []
+    },
+    {
+      "name": "v2 owners past the end",
+      "problems": []
+    },
+    {
+      "name": "v2 owners by last name",
+      "problems": []
+    },
+    {
+      "name": "v2 pets page",
+      "problems": []
+    },
+    {
+      "name": "v2 size below the minimum",
+      "problems": []
+    },
+    {
+      "name": "create owner",
+      "problems": []
+    },
+    {
+      "name": "created owner reads back",
+      "problems": []
+    },
+    {
+      "name": "create owner with UTF-8 names",
+      "problems": []
+    },
+    {
+      "name": "create owner: telephone with letters",
+      "problems": []
+    },
+    {
+      "name": "create owner: blank city",
+      "problems": []
+    },
+    {
+      "name": "create owner: missing first name",
+      "problems": []
+    },
+    {
+      "name": "create owner: first name with digits",
+      "problems": []
+    },
+    {
+      "name": "create owner: malformed JSON",
+      "problems": []
+    },
+    {
+      "name": "create owner: wrong content type",
+      "problems": []
+    },
+    {
+      "name": "update owner",
+      "problems": []
+    },
+    {
+      "name": "updated owner reads back",
+      "problems": []
+    },
+    {
+      "name": "update unknown owner",
+      "problems": []
+    },
+    {
+      "name": "update owner: last name with four parts",
+      "problems": []
+    },
+    {
+      "name": "add pet to owner",
+      "problems": []
+    },
+    {
+      "name": "added pet reads back through the owner",
+      "problems": []
+    },
+    {
+      "name": "add pet to unknown owner",
+      "problems": []
+    },
+    {
+      "name": "add pet: birth date in the future",
+      "problems": []
+    },
+    {
+      "name": "add pet: birth date older than 50 years",
+      "problems": []
+    },
+    {
+      "name": "add pet: blank name",
+      "problems": []
+    },
+    {
+      "name": "add pet: unknown pet type",
+      "problems": []
+    },
+    {
+      "name": "update owner pet",
+      "problems": []
+    },
+    {
+      "name": "update pet of unknown owner",
+      "problems": []
+    },
+    {
+      "name": "add visit through the owner",
+      "problems": []
+    },
+    {
+      "name": "owner with the new pet and visit",
+      "problems": []
+    },
+    {
+      "name": "update pet",
+      "problems": []
+    },
+    {
+      "name": "updated pet reads back",
+      "problems": []
+    },
+    {
+      "name": "update unknown pet",
+      "problems": []
+    },
+    {
+      "name": "create visit",
+      "problems": []
+    },
+    {
+      "name": "create visit: whitespace description",
+      "problems": []
+    },
+    {
+      "name": "create visit for an unknown pet",
+      "problems": []
+    },
+    {
+      "name": "update visit",
+      "problems": []
+    },
+    {
+      "name": "updated visit reads back",
+      "problems": []
+    },
+    {
+      "name": "update unknown visit",
+      "problems": []
+    },
+    {
+      "name": "delete visit",
+      "problems": []
+    },
+    {
+      "name": "delete unknown visit",
+      "problems": []
+    },
+    {
+      "name": "create pet type",
+      "problems": []
+    },
+    {
+      "name": "create pet type: name starting with a digit",
+      "problems": []
+    },
+    {
+      "name": "update pet type without an id",
+      "problems": []
+    },
+    {
+      "name": "update pet type",
+      "problems": []
+    },
+    {
+      "name": "updated pet type reads back",
+      "problems": []
+    },
+    {
+      "name": "update unknown pet type",
+      "problems": []
+    },
+    {
+      "name": "delete pet type",
+      "problems": []
+    },
+    {
+      "name": "delete pet type in use deletes its pets",
+      "problems": []
+    },
+    {
+      "name": "delete unknown pet type",
+      "problems": []
+    },
+    {
+      "name": "create specialty",
+      "problems": []
+    },
+    {
+      "name": "create specialty: name with digits",
+      "problems": []
+    },
+    {
+      "name": "update specialty",
+      "problems": []
+    },
+    {
+      "name": "updated specialty reads back",
+      "problems": []
+    },
+    {
+      "name": "update unknown specialty",
+      "problems": []
+    },
+    {
+      "name": "create vet with a specialty",
+      "problems": []
+    },
+    {
+      "name": "create vet: last name too long",
+      "problems": []
+    },
+    {
+      "name": "update vet",
+      "problems": []
+    },
+    {
+      "name": "updated vet reads back",
+      "problems": []
+    },
+    {
+      "name": "update unknown vet",
+      "problems": []
+    },
+    {
+      "name": "delete vet",
+      "problems": []
+    },
+    {
+      "name": "delete unknown vet",
+      "problems": []
+    },
+    {
+      "name": "delete specialty",
+      "problems": []
+    },
+    {
+      "name": "delete unknown specialty",
+      "problems": []
+    },
+    {
+      "name": "create user",
+      "problems": []
+    },
+    {
+      "name": "create user: role without the ROLE_ prefix",
+      "problems": []
+    },
+    {
+      "name": "create user: missing roles",
+      "problems": []
+    },
+    {
+      "name": "delete pet",
+      "problems": []
+    },
+    {
+      "name": "delete unknown pet",
+      "problems": []
+    },
+    {
+      "name": "delete owner",
+      "problems": []
+    },
+    {
+      "name": "delete unknown owner",
+      "problems": []
+    },
+    {
+      "name": "owners after the changes",
+      "problems": []
+    },
+    {
+      "name": "unknown API path",
+      "problems": []
+    },
+    {
+      "name": "wrong method",
+      "problems": []
+    },
+    {
+      "name": "path outside the context path",
+      "problems": []
+    },
+    {
+      "name": "CORS simple request",
+      "problems": []
+    },
+    {
+      "name": "CORS preflight",
+      "problems": []
+    },
+    {
+      "name": "CORS preflight for a method that is not mapped",
+      "problems": []
+    }
+  ],
+  "passed": 109,
+  "total": 109,
+  "success": true,
+  "seconds": 0.10855739656835794
+}
