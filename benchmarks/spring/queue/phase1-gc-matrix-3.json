@@ -47,5 +47,14 @@
   "pinned": "B5, 8ed3de37dc5713907b163f778b629c09a1317d8e (coordinator 11:55Z): after the seven gated B5 parts; natural quiet only",
   "baseline_record": "/home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/benchmarks/spring/baselines/go/petclinic-rest/20261124T092019Z",
   "interleaved_note": "B2 order 2, INTERLEAVED with Go trial by trial (coordinator 10:35Z, the c25ae2b3 method): the Flint-only run against the petclinic Go record was rejected by its drift guard (Go calibration 6% below band); until the guard bands come from cross-session calibrations, petclinic runs interleaved",
-  "priority": 8.2
+  "priority": 8.2,
+  "abandoned_attempts": [
+    {
+      "time": "2026-11-25T11:50:17Z",
+      "commit": "fb4c73d1adc7",
+      "outcome_recorded": "interrupted: gave way to other work",
+      "classification": "abandoned, superseded by the O3 fix (dd774a24)",
+      "why": "B4 trees were ThinLTO-codegenned at O0 (coordinator 11:55Z on 2026-11-25); stopped at 11:50:17Z through the natural-window give-way rule (a hold-wrapped command), not a failure"
+    }
+  ]
 }
