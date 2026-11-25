@@ -1,6 +1,10 @@
 /++
-The program's default collector pools: fixed 1 MiB pools (`gcopt=minPoolSize:1 incPoolSize:0`), the 1 MiB arm of
-fast-path-pools-ab (certified at 5d7890bd; docs/spring/phase1/decisions.md, provisional for B2 at 236459b6).
+The program's default collector settings: fixed 1 MiB pools and a heap size factor of 3
+(`gcopt=minPoolSize:1 incPoolSize:0 heapSizeFactor:3`). The pools are the 1 MiB arm of fast-path-pools-ab (certified at
+5d7890bd; docs/spring/phase1/decisions.md, provisional for B2 at 236459b6). The heap size factor is the owner's
+decision dc0ca836 (certified from B6): druntime lets the heap grow to 3 times the live set before it collects again,
+instead of 2, so collections come about a quarter less often (petclinic about 2.6 to 2.0 per 1,000 requests in the
+posidon sweep) at a few MB of RSS.
 
 druntime's pools start at `minPoolSize` (1 MB) and each new pool is `incPoolSize` (3 MB) larger than the last, so a
 server whose live set outgrows the first pools maps a 7 MiB pool and fills it with garbage between collections. With
@@ -15,7 +19,7 @@ module flint.arena.sys.gc.fixed_pools;
 @safe:
 
 /// The `gcopt` value this program's startup puts first in `rt_options`.
-enum fixedPoolsOption = "minPoolSize:1 incPoolSize:0";
+enum fixedPoolsOption = "minPoolSize:1 incPoolSize:0 heapSizeFactor:3";
 
 /// Whether this program's startup put `fixedPoolsOption` first in `rt_options`.
 // SAFETY: Reads one word that only the C constructor below writes, before any D code runs.

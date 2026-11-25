@@ -37,6 +37,7 @@ private extern (C) extern __gshared string[] rt_options;
     foreach (option; rt_options[0 .. $ - 1])
         found = found || option == text[0 .. length];
     assert(found, "the default is ahead of the program's own options");
-    assert(rt_options[$ - 1] == "gcopt=gc:" ~ collectorName, "the program's own options follow, so they override");
+    assert(rt_options[$ - 1] == "gcopt=gc:" ~ collectorName ~ " heapSizeFactor:4",
+            "the program's own options follow, so they override");
     assert(config.parallel == threads, "druntime parsed the default before the collector started");
 }

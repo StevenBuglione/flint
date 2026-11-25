@@ -11,18 +11,21 @@ import flint.arena.fixed_pools : fixedPoolsApplied, fixedPoolsOption;
 
 private extern (C) extern __gshared string[] rt_options;
 
-@("the fixed pools come ahead of the program's own rt_options, and druntime applied them")
+@("the default pools and heap size factor come ahead of the program's own rt_options, which override them")
 @system unittest
 {
     import core.gc.config : config;
     import flint.arena.gc : collectorName;
 
     assert(fixedPoolsApplied());
+    assert(fixedPoolsOption == "minPoolSize:1 incPoolSize:0 heapSizeFactor:3", "the default (owner decision dc0ca836)");
     bool found;
     foreach (option; rt_options[0 .. $ - 1])
         found = found || option == "gcopt=" ~ fixedPoolsOption;
     assert(found, "the default is ahead of the program's own options");
-    assert(rt_options[$ - 1] == "gcopt=gc:" ~ collectorName, "the program's own options come last, so they override");
+    assert(rt_options[$ - 1] == "gcopt=gc:" ~ collectorName ~ " heapSizeFactor:4",
+            "the program's own options come last, so they override");
     assert(config.minPoolSize == 1 << 20, "druntime parsed minPoolSize:1 before the collector started");
     assert(config.incPoolSize == 0, "druntime parsed incPoolSize:0 before the collector started");
+    assert(config.heapSizeFactor == 4, "the program's own heapSizeFactor:4 overrode the default's 3");
 }

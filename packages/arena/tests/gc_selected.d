@@ -10,7 +10,8 @@ import flint.arena.gc : collectorName;
 @safe:
 
 /// druntime reads this before `main`: the test program starts on the Flint collector.
-extern (C) __gshared string[] rt_options = ["gcopt=gc:" ~ collectorName];
+// heapSizeFactor:4 overrides the default's 3 (tests/fixed_pools.d checks that the program's own option wins).
+extern (C) __gshared string[] rt_options = ["gcopt=gc:" ~ collectorName ~ " heapSizeFactor:4"];
 
 private extern (C) GC gc_getProxy() nothrow @nogc;
 

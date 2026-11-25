@@ -58,9 +58,10 @@ static import flint.arena.mark_threads;
 // so collections stop scanning vtables, TypeInfo and generated tables (performance playbook R-33, 8bb4aa7b).
 static import flint.arena.data_roots;
 
-// Fixed 1 MiB collector pools (gcopt=minPoolSize:1 incPoolSize:0), set before main: the heap grows by 1 MiB pools
-// rather than druntime's 1, 4, 7 MB (fast-path-pools-ab; provisional for B2, decisions.md). rt_options and
-// --DRT-gcopt override it.
+// Fixed 1 MiB collector pools and a heap size factor of 3 (gcopt=minPoolSize:1 incPoolSize:0 heapSizeFactor:3), set
+// before main: the heap grows by 1 MiB pools rather than druntime's 1, 4, 7 MB (fast-path-pools-ab; provisional for
+// B2), and to 3 times the live set before collecting (owner decision dc0ca836, from B6). rt_options and --DRT-gcopt
+// override it.
 static import flint.arena.fixed_pools;
 
 public import flint.boot.context.properties : ClassRef;

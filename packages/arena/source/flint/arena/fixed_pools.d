@@ -1,8 +1,10 @@
 /++
-Importing this module gives the program fixed 1 MiB collector pools (`gcopt=minPoolSize:1 incPoolSize:0`), set
-before `main`: the heap grows in 1 MiB pools rather than druntime's 1, 4, 7 MB sequence. The program's own
-`rt_options` and an operator's `--DRT-gcopt` still override it. Flint Boot imports it; the measurement behind the
-default is the 1 MiB arm of fast-path-pools-ab (docs/spring/phase1/decisions.md, performance-playbook R-18).
+Importing this module gives the program fixed 1 MiB collector pools and a heap size factor of 3
+(`gcopt=minPoolSize:1 incPoolSize:0 heapSizeFactor:3`), set before `main`: the heap grows in 1 MiB pools rather than
+druntime's 1, 4, 7 MB sequence, and to 3 times the live set rather than 2 before the next collection. The program's
+own `rt_options` and an operator's `--DRT-gcopt` still override either. Flint Boot imports it. The pools are the 1 MiB
+arm of fast-path-pools-ab (docs/spring/phase1/decisions.md, performance-playbook R-18); the factor is the owner's
+decision dc0ca836.
 +/
 module flint.arena.fixed_pools;
 
