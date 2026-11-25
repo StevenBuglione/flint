@@ -60,3 +60,15 @@ unittest
     // Every one is an IllegalArgumentException, as in Java.
     assert(collectException!IllegalArgumentException(String.format("%", "x")) !is null);
 }
+
+@("String.format: a text longer than the formatter's stack buffer is whole, and an empty format is empty")
+unittest
+{
+    import std.array : replicate;
+
+    const chunk = "x".replicate(250);
+    assert(String.format("%s-%s-%s", chunk, chunk, "end") == chunk ~ "-" ~ chunk ~ "-end");
+    assert(String.format("%s", "y".replicate(300)) == "y".replicate(300));
+    assert(String.format("%300s", "r").length == 300);
+    assert(String.format("").length == 0);
+}
