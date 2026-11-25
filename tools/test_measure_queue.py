@@ -148,6 +148,51 @@ class QuietWindow(unittest.TestCase):
             self.assertGreater(time.monotonic() - started, 3.5)
             self.assertEqual(len(out.read_text()), 20)
 
+    def detached_build(self, directory, seconds=6):
+        """The B5 case: a `dub` outside the run (reparented, not a descendant) whose compiles are short-lived `dmd`
+        children burning CPU, as served compiles are. Returns the `dub` pid."""
+        import shlex
+        d = Path(directory)
+        for name in ('dub', 'dmd'):
+            (d / name).symlink_to(sys.executable)
+        (d / 'burn.py').write_text('import time\nt = time.process_time()\nwhile time.process_time() - t < 0.08:\n    pass\n')
+        (d / 'driver.py').write_text(
+            f'import subprocess, time\nend = time.time() + {seconds}\nwhile time.time() < end:\n'
+            f'    subprocess.run([{str(d / "dmd")!r}, {str(d / "burn.py")!r}])\n    time.sleep(0.05)\n')
+        pidfile = d / 'pid'
+        subprocess.run(['sh', '-c', f'{shlex.quote(str(d / "dub"))} {shlex.quote(str(d / "driver.py"))} '
+                                    f'> /dev/null 2>&1 & echo $! > {shlex.quote(str(pidfile))}'], check=True)
+        return int(pidfile.read_text())
+
+    def test_an_unheld_served_compile_is_detected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            dub = self.detached_build(directory)
+            try:
+                time.sleep(0.3)
+                busy = measure_queue.busy_processes()
+                self.assertTrue(any(row['command'] in ('dub', 'dmd') for row in busy), busy)
+            finally:
+                os.kill(dub, 9)
+
+    def test_the_freezer_names_an_unheld_compiler_but_not_held_work_or_a_server_pool(self):
+        with tempfile.TemporaryDirectory() as directory:
+            dub = self.detached_build(directory)
+            try:
+                time.sleep(0.3)
+                named = {row['pid']: row['kind'] for row in measure_queue.Freezer().candidates()}
+                self.assertEqual(named.get(dub), 'compiler')
+                with mock.patch.object(measure_queue, 'held_work', return_value=[dub]):
+                    self.assertNotIn(dub, {row['pid'] for row in measure_queue.Freezer().candidates()})
+                with mock.patch.object(measure_queue, 'is_compile_server', return_value=True):
+                    self.assertNotIn(dub, {row['pid'] for row in measure_queue.Freezer().candidates()})
+            finally:
+                os.kill(dub, 9)
+
+    def test_under_hold_follows_the_ancestry(self):
+        table = {30: 20, 20: 10, 10: 1, 40: 1}
+        self.assertTrue(measure_queue.under_hold(30, table, {10}))
+        self.assertFalse(measure_queue.under_hold(40, table, {10}))
+
     def test_a_claimed_window_needs_three_quiet_samples(self):
         quiet = {'quiet': True, 'problems': []}
         busy = {'quiet': False, 'problems': ['ldc2']}

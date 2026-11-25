@@ -169,10 +169,39 @@ def held_work():
     return found
 
 
-def cpu_ticks(pid):
+def cpu_ticks(pid, children=False):
+    """utime + stime; with `children`, also the CPU of reaped children (cutime + cstime), so a build tool whose
+    compiles are short-lived child processes counts their work too."""
     stat = Path(f'/proc/{pid}/stat').read_text()
     fields = stat[stat.rindex(')') + 2:].split()
-    return int(fields[11]) + int(fields[12])
+    ticks = int(fields[11]) + int(fields[12])
+    return ticks + int(fields[13]) + int(fields[14]) if children else ticks
+
+
+# Compilers, linkers and build tools: foreign ones count as load (BUSY_COMMANDS) and, outside a `hold`, are frozen
+# for a claimed window. A shared compile server's pool (`dmd -fork-server=...`) is never frozen: the run's own
+# builds may be its clients; its forked compiles are counted as they appear (busy_processes).
+COMPILER_COMMANDS = BUSY_COMMANDS | {'ld', 'ld.gold', 'ld.bfd', 'ld.lld', 'mold', 'collect2', 'cc', 'gcc', 'c++', 'g++',
+                                     'clang', 'as', 'flint', 'make', 'go', 'compile', 'link'}
+NON_BENCHMARK_CPUS = None  # set lazily: every CPU outside the server, load and database sets
+
+
+def is_compile_server(pid):
+    try:
+        return any(part.startswith(b'-fork-server') for part in Path(f'/proc/{pid}/cmdline').read_bytes().split(b'\0'))
+    except OSError:
+        return False
+
+
+def under_hold(pid, table, holds):
+    """Whether `pid` descends from a `measure_queue.py hold` (`holds`): hold pauses its own builds."""
+    seen = set()
+    while pid > 1 and pid not in seen:
+        if pid in holds:
+            return True
+        seen.add(pid)
+        pid = table.get(pid, 0)
+    return False
 
 
 OWN_DIRECTORIES = []  # set by run(): the run's checkouts and results; a process working there belongs to the run
@@ -222,30 +251,51 @@ def build_processes():
             cwd = os.readlink(f'/proc/{name}/cwd')
             if any((cwd.removesuffix(' (deleted)') + os.sep).startswith(prefix) for prefix in own):
                 continue
-            found.append({'pid': int(name), 'command': command, 'cwd': cwd, 'ticks': cpu_ticks(name), 'kind': kind})
+            # The run's own compile servers run the tree's own DMD (a private toolchain copy) from a temporary
+            # directory: their binary, not their cwd, places them in the run.
+            if kind == 'build' and any(os.readlink(f'/proc/{name}/exe').startswith(prefix) for prefix in own):
+                continue
+            found.append({'pid': int(name), 'command': command, 'cwd': cwd, 'ticks': cpu_ticks(name, children=True),
+                          'kind': kind})
         except OSError:
             continue
     return found
 
 
-def busy_processes(interval=1.0):
+def busy_processes(interval=1.0, steps=4):
     """The build processes that use CPU during `interval` seconds. The DMD compile servers keep pre-forked workers
-    asleep between builds, often thousands of them on a shared host; those are idle, not load."""
-    first = build_processes()
-    time.sleep(interval)
+    asleep between builds, often thousands of them on a shared host; those are idle, not load.
+
+    A build is mostly short-lived processes: a served compile is a fork of a compile server that lives for a fraction
+    of a second, and its client and `dub` mostly wait (error-404-p99 at B5, 2026-11-25: an unheld `dub build` on the
+    server CPUs went unseen by a single before/after sample). So the window is sampled `steps` times: a process
+    present throughout counts from ACTIVE_TICKS (its own CPU and its reaped children's), and a build process that
+    appears during the window counts as soon as it has used CPU."""
+    first = {row['pid']: row for row in build_processes()}
+    latest, born = {}, {}
+    for _ in range(steps):
+        time.sleep(interval / steps)
+        for row in build_processes():
+            if row['pid'] in first:
+                latest[row['pid']] = row['ticks']
+            elif row['ticks'] > 0:
+                born[row['pid']] = row
     busy = []
-    for row in first:
-        try:
-            used = cpu_ticks(row['pid']) - row['ticks']
-        except OSError:
+    for pid, row in first.items():
+        if pid not in latest:
             continue
+        used = latest[pid] - row['ticks']
         # Every kind counts from ACTIVE_TICKS in the sampling second. Idle daemons tick now and then (a scratchpad
         # PostgreSQL's checkpointer voided phase1-http-petclinic at B2 with one tick, 12:12Z); the load this check was
         # added for (an strace'd server at about 10% of a CPU) is several ticks every second.
         if used >= ACTIVE_TICKS:
-            busy.append({'pid': row['pid'], 'command': row['command'], 'cwd': row['cwd'], 'cpu_ticks': used,
+            busy.append({'pid': pid, 'command': row['command'], 'cwd': row['cwd'], 'cpu_ticks': used,
                          'kind': row.get('kind', 'build')})
-    busy_processes.idle = len(first) - len(busy)
+    for pid, row in born.items():
+        if row.get('kind', 'build') == 'build':
+            busy.append({'pid': pid, 'command': row['command'], 'cwd': row['cwd'], 'cpu_ticks': row['ticks'],
+                         'kind': 'build', 'started_in_window': True})
+    busy_processes.idle = len(first) - sum(1 for row in busy if not row.get('started_in_window'))
     return busy
 
 
@@ -260,8 +310,10 @@ def start_time(pid):
 class Freezer:
     """Strays frozen for a claimed window (coordinator, 2026-11-24 15:30Z: three windows were lost to other sessions'
     daemons that escaped `hold`). At the claim and at every sample, each process the stray rule names (a tracer, a
-    valgrind tool, a session server, a scratchpad PostgreSQL) gets SIGSTOP, at any CPU use. Never frozen: this run's
-    own processes, compilers and the shared compile servers (the stray rule does not name them), another user's
+    valgrind tool, a session server, a scratchpad PostgreSQL) gets SIGSTOP, at any CPU use, and so does any compiler,
+    linker or build tool that no `hold` manages (coordinator, 2026-11-25, after an unheld build voided error-404-p99
+    at B5). Never frozen: this run's own processes (its tree, its directories, its own toolchain's binaries), shared
+    compile-server pools (`-fork-server`; the run's builds may be their clients), work under `hold`, another user's
     processes, and any process with a controlling terminal (a person's interactive program). Every frozen process is
     recorded in the receipt and in FROZEN, and gets SIGCONT when the window ends, on every path; a watcher that
     starts after a crash continues whatever FROZEN still names (recover_frozen)."""
@@ -277,6 +329,7 @@ class Freezer:
         mine = own_tree() | ancestors
         own = [str(Path(d).resolve()) + os.sep for d in OWN_DIRECTORIES]
         frozen = {row['pid'] for row in self.frozen}
+        holds = set(held_work())
         for name in os.listdir('/proc'):
             if not name.isdigit() or int(name) in mine or int(name) in frozen:
                 continue
@@ -289,10 +342,18 @@ class Freezer:
                     continue
                 command = (info / 'comm').read_text().strip()
                 kind = stray_kind(name, command)
+                if kind is None and command in COMPILER_COMMANDS and fields[0] not in ('T', 't'):
+                    # A compiler, linker or build tool outside `hold` (coordinator, 2026-11-25: an unheld build voided
+                    # error-404-p99 at B5). Never a shared compile server's pool, never one `hold` already manages.
+                    if is_compile_server(name) or under_hold(int(name), table, holds):
+                        continue
+                    kind = 'compiler'
                 if kind is None:
                     continue
                 cwd = os.readlink(info / 'cwd')
                 if any((cwd.removesuffix(' (deleted)') + os.sep).startswith(prefix) for prefix in own):
+                    continue
+                if kind == 'compiler' and any(os.readlink(info / 'exe').startswith(prefix) for prefix in own):
                     continue
                 yield {'pid': int(name), 'start': start_time(name), 'command': command, 'kind': kind, 'cwd': cwd}
             except (OSError, ValueError, IndexError):
@@ -354,6 +415,11 @@ class WindowSampler:
         self.thread = threading.Thread(target=self.loop, daemon=True)
 
     def loop(self):
+        # The samples scan /proc several times a second: keep that off the server, load and database CPUs.
+        with contextlib.suppress(OSError, AttributeError):
+            spare = set(os.sched_getaffinity(0)) - set(SERVER_CPUS) - set(LOAD_CPUS) - set(range(8, 10))
+            if spare:
+                os.sched_setaffinity(0, spare)  # this thread only (Linux)
         while not self.stop.wait(self.INTERVAL):
             if self.freezer:
                 self.freezer.sweep()  # a stray that appeared since the last sample
