@@ -1,0 +1,88 @@
+{
+  "schema": "flint.spring-acceptance/1",
+  "app": "gs-rest-service",
+  "implementation": "custom",
+  "start": "./.flint/build/dev/gs-rest-service",
+  "extra_args": [],
+  "binary": null,
+  "wire": "exact",
+  "golden_sha256": "1ea2a9d7e02ba843d4b11162cbb9f69307a2ad5fe3d89d0e2e3ed625f4a50d8e",
+  "cases": [
+    {
+      "name": "default name",
+      "problems": []
+    },
+    {
+      "name": "name parameter",
+      "problems": []
+    },
+    {
+      "name": "percent-encoded UTF-8 name",
+      "problems": []
+    },
+    {
+      "name": "name with spaces and plus",
+      "problems": []
+    },
+    {
+      "name": "empty name takes the default",
+      "problems": []
+    },
+    {
+      "name": "repeated name parameter joins with a comma",
+      "problems": []
+    },
+    {
+      "name": "JSON escaping",
+      "problems": []
+    },
+    {
+      "name": "unknown parameter is ignored",
+      "problems": []
+    },
+    {
+      "name": "Accept application/json",
+      "problems": []
+    },
+    {
+      "name": "Accept application/xml is not acceptable",
+      "problems": []
+    },
+    {
+      "name": "HEAD reaches the handler",
+      "problems": []
+    },
+    {
+      "name": "OPTIONS lists the allowed methods",
+      "problems": []
+    },
+    {
+      "name": "POST is not allowed",
+      "problems": []
+    },
+    {
+      "name": "DELETE is not allowed",
+      "problems": []
+    },
+    {
+      "name": "unknown path is a JSON 404",
+      "problems": []
+    },
+    {
+      "name": "trailing slash does not match",
+      "problems": []
+    },
+    {
+      "name": "unknown path for a browser is the Whitelabel page",
+      "problems": []
+    },
+    {
+      "name": "counter after the errors",
+      "problems": []
+    }
+  ],
+  "passed": 18,
+  "total": 18,
+  "success": true,
+  "seconds": 0.05914383567869663
+}

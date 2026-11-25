@@ -1,0 +1,25 @@
+Measuring gs-rest-service
+gs-rest-service flint_cached_cold_seconds phase medians (ms): total 79 (budget 100), flint 16 (budget 20), aot 24, plan 0, compile 19 (budget 60), link 20 (budget 20)
+gs-rest-service flint_cached_incremental_seconds phase medians (ms): total 48 (budget 100), flint 14 (budget 20), aot 0, plan 0, compile 18 (budget 60), link 16 (budget 20)
+gs-rest-service flint_cached_cold_digests_cleared_seconds phase medians (ms): total 165 (budget 100), flint 104 (budget 20), aot 22, plan 0, compile 21 (budget 60), link 17 (budget 20)
+gs-rest-service flint_scratch_seconds phase medians (ms): total 896 (budget 100), flint 49 (budget 20), aot 181, plan 183, compile 344 (budget 60), link 139 (budget 20)
+gs-rest-service flint_static_cold_seconds phase medians (ms): total 175 (budget 100), flint 18 (budget 20), aot 23, plan 24, compile 17 (budget 60), link 93 (budget 20)
+gs-rest-service flint_static_incremental_seconds phase medians (ms): total 88 (budget 100), flint 17 (budget 20), aot 0, plan 0, compile 18 (budget 60), link 54 (budget 20)
+gs-rest-service flint_debug_cached_cold_seconds phase medians (ms): total 77 (budget 100), flint 15 (budget 20), aot 22, plan 0, compile 20 (budget 60), link 18 (budget 20)
+gs-rest-service flint_debug_cached_incremental_seconds phase medians (ms): total 52 (budget 100), flint 14 (budget 20), aot 0, plan 0, compile 20 (budget 60), link 18 (budget 20)
+gs-rest-service flint_debug_static_cold_seconds phase medians (ms): total 181 (budget 100), flint 16 (budget 20), aot 22, plan 23, compile 19 (budget 60), link 98 (budget 20)
+gs-rest-service flint_debug_static_incremental_seconds phase medians (ms): total 95 (budget 100), flint 16 (budget 20), aot 0, plan 0, compile 20 (budget 60), link 57 (budget 20)
+gs-rest-service flint_debug_scratch_seconds phase medians (ms): total 926 (budget 100), flint 49 (budget 20), aot 182, plan 190, compile 355 (budget 60), link 146 (budget 20)
+gs-rest-service: Go std-primed cold 0.157s, -a 3.239s, binary 6642616 bytes
+  primary: platform cache vs std-primed GOCACHE: 0.522 pass
+  secondary: from scratch vs go build -a: 0.277 pass
+  incremental: dev profile as built: 0.326 pass
+  incremental: fully static: 0.588 pass
+  stricter: platform cache vs deps-primed GOCACHE: 0.518 pass
+  context: primary with the digest log cleared: 1.066 FAIL
+  context: primary with debug information: 0.515 pass
+  context: secondary with debug information: 0.287 pass
+  context: edit build, dev profile, with debug information: 0.351 pass
+  context: edit build, fully static, with debug information: 0.624 pass
+  Oz binary size: 0.549 pass
+Wrote Spring build evidence /home/olfa/flint-work/flint/.claude/worktrees/jolly-mendeleev-ea37ba/.flint/measure/results/phase1-builds-gs-rest/20261125T115517Z/builds.json (passed)
