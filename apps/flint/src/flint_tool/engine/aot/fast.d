@@ -32,13 +32,8 @@ private bool simpleMapping(const ref HandlerPlan handler) pure nothrow
 {
     if (handler.paths.length != 1 || handler.params.length || handler.headers.length)
         return false;
-    // One GET without consumes, or (S5) one POST consuming exactly application/json.
-    const get = handler.methods == ["GET"] && handler.consumes.length == 0;
-    const post = handler.methods == ["POST"] && handler.consumes == ["application/json"];
-    if (!get && !post)
-        return false;
     const json = handler.produces == ["application/json"];
-    if (handler.produces.length && !json)
+    if (!simpleExchange(handler, json))
         return false;
     if (!handler.responseBody || handler.status != 0 || handler.reason.length != 0)
         return false;
@@ -46,6 +41,15 @@ private bool simpleMapping(const ref HandlerPlan handler) pure nothrow
     if (returns == "flint.http.ResponseEntity")
         return json;
     return handler.returnDescribed && plainReturn(returns);
+}
+
+// One GET without consumes, or (S5) one POST consuming exactly application/json; producing nothing declared or
+// exactly application/json (`json`).
+private bool simpleExchange(const ref HandlerPlan handler, bool json) pure nothrow
+{
+    const get = handler.methods == ["GET"] && handler.consumes.length == 0;
+    const post = handler.methods == ["POST"] && handler.consumes == ["application/json"];
+    return (get || post) && (handler.produces.length == 0 || json);
 }
 
 // A value @ResponseBody writes as it is: not void, and not a type with its own return value handler or status
