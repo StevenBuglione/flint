@@ -131,29 +131,30 @@ package(flint.engine.servlet) struct StatePool(T : PooledState)
 // The access holder while the owner returns a state; no thread has this id.
 private enum ulong releasing = ulong.max;
 
-// This thread's id for the access lock: druntime's id, or one fixed value for a thread druntime does not know.
-private ulong selfId() nothrow
+// This thread's token for the access lock, unique among live threads, including threads druntime does not know: the
+// address of this thread's own copy of a thread-local marker. The marker is never written; only its address is used.
+private ulong selfId() nothrow @nogc
 {
-    auto self = Thread.getThis();
-    ulong id = 1;
-    if (self !is null)
-    {
-        try
-            id = cast(ulong) self.id;
-        catch (Exception)
-            id = 1;
-    }
-    return id == 0 || id == releasing ? 1UL : id;
+    static ubyte marker;
+    return cast(ulong)&marker;
 }
 
 /++
 Entered at the top of every façade method that may reach pooled storage. On the owner thread it only checks the
 generation. On another thread it takes the access lock (reentrant per thread) and then checks, so the access cannot
 straddle a return. A completed exchange throws `IllegalStateException`.
+
+On the owner thread the check at entry covers the whole call only if the state cannot be returned during it, so a
+guarded call must not yield to a fiber that could end the exchange. The façades' only yields are transport calls, and
+engine-web accepts those only from the exchange's own task on its own worker (`streamConnection`): the task that
+returns the state when it ends, which cannot happen while it is parked inside the call. Assertion builds check this
+at exit. Another thread never yields or blocks inside a guarded call: its transport calls fail at once, off the
+owner's worker.
 +/
 package(flint.engine.servlet) struct Access
 {
     private PooledState state;
+    private ulong generation;
     private bool locked;
 
     @disable this(this);
@@ -161,6 +162,7 @@ package(flint.engine.servlet) struct Access
     this(PooledState state, ulong generation, string what)
     {
         this.state = state;
+        this.generation = generation;
         if (state is null)
             return;
         if (Thread.getThis() is state.owner)
@@ -190,7 +192,15 @@ package(flint.engine.servlet) struct Access
 
     ~this()
     {
+        // A guarded call did not outlive its exchange (see above; nothing can move the state on while it is locked).
+        assert(current(), "a guarded call outlived its exchange");
         leave();
+    }
+
+    // Whether the exchange entered is still the state's current one.
+    private bool current() const nothrow @nogc
+    {
+        return state is null || state.generation() == generation;
     }
 
     private void leave() nothrow @nogc
@@ -224,14 +234,6 @@ version (unittest)
         worker.join();
     }
 
-    // Enter `state` twice on the calling thread (the lock is reentrant per thread), then leave both.
-    private bool entersTwice(PooledState state, ulong generation)
-    {
-        auto outer = Access(state, generation, "test");
-        auto inner = Access(state, generation, "test");
-        return true;
-    }
-
     private final class TestState : PooledState
     {
         string value;
@@ -242,6 +244,14 @@ version (unittest)
             value = null;
             ++clears;
         }
+    }
+
+    // Enter `state` twice on the calling thread (the lock is reentrant per thread), then leave both.
+    private bool entersTwice(PooledState state, ulong generation)
+    {
+        auto outer = Access(state, generation, "test");
+        auto inner = Access(state, generation, "test");
+        return true;
     }
 
     private bool throwsCompleted(scope void delegate() @safe action)
@@ -352,4 +362,30 @@ unittest
     });
     assert(foreign !is own && pool.held() == 1);
     assert(throwsCompleted(() { auto access = Access(foreign, foreignGeneration, "test"); }));
+}
+
+@("the access lock's thread token is stable on a thread and distinct across live threads")
+unittest
+{
+    const mine = selfId();
+    assert(mine == selfId() && mine != 0 && mine != releasing);
+    ulong first, second;
+    onAnotherThread(() nothrow {
+        first = selfId();
+        onAnotherThread(() nothrow { second = selfId(); });
+    });
+    assert(first != mine && second != mine && first != second);
+}
+
+@("an owner-thread access that outlives its exchange is what the exit assertion catches")
+unittest
+{
+    StatePool!TestState pool;
+    ulong generation;
+    auto state = pool.take(generation);
+    auto access = Access(state, generation, "test");
+    assert(access.current());
+    pool.release(state, generation); // what a yield inside a guarded call would let happen
+    assert(!access.current());
+    access.state = null; // leave without tripping the assertion this test shows
 }

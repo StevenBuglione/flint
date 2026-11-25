@@ -999,9 +999,46 @@ private struct Stash
     imported!"flint.jakarta.servlet".ServletOutputStream stream;
     string[] headerNames;
     string[] headerValues;
+    HttpServletRequest request;
+    imported!"flint.jakarta.servlet".ServletInputStream input;
+    string[] attributeNames;
+    string[] requestHeaders;
 }
 
 private __gshared Stash stash;
+// The foreign thread of the race test (m7 A2): its attempts and how it ended.
+private __gshared imported!"core.thread".Thread racer;
+private shared int racerAttempts;
+private __gshared string racerResult;
+
+/// "ise;" when `action` throws `IllegalStateException`, "ok;" when it returns.
+private string outcome(Action)(scope Action action) @trusted
+{
+    try
+        action();
+    catch (IllegalStateException)
+        return "ise;";
+    return "ok;";
+}
+
+/// Every retained object of A, used from the calling thread: "ise;" or "ok;" per use.
+private string fromThisThread() @trusted
+{
+    string seen;
+    seen ~= outcome(() { stash.response.getStatus(); });
+    seen ~= outcome(() { stash.response.setHeader("X-Injected", "from-thread"); });
+    seen ~= outcome(() { stash.response.addHeader("X-Injected", "from-thread"); });
+    seen ~= outcome(() { stash.stream.write(cast(const(ubyte)[]) "injected"); });
+    seen ~= outcome(() { stash.response.flushBuffer(); });
+    seen ~= outcome(() { stash.response.getHeader("X-Secret"); });
+    seen ~= outcome(() { stash.request.getAttribute("secret"); });
+    seen ~= outcome(() { stash.request.setAttribute("injected", Any.of("from-thread")); });
+    seen ~= outcome(() { stash.request.getAttributeNames(); });
+    seen ~= outcome(() { stash.request.getHeader("X-Client"); });
+    seen ~= outcome(() { stash.request.getRequestURI(); });
+    seen ~= outcome(() { stash.input.readAllBytes(); });
+    return seen;
+}
 
 /// A servlet for the exchange pool's adversarial test (coordination/notes/exchange-pool.md, test 1).
 private final class Leaky : HttpServlet
@@ -1016,42 +1053,106 @@ private final class Leaky : HttpServlet
     protected override void doGet(HttpServletRequest request, HttpServletResponse response) @trusted
     {
         const path = request.getServletPath();
-        if (path == "/a")
-        {
-            response.setHeader("X-Secret", "alpha");
-            response.addHeader("X-Trace", "a-1");
-            stash.response = response;
-            stash.stream = response.getOutputStream();
-            stash.headerNames = response.getHeaderNames();
-            stash.headerValues = response.getHeaders("X-Secret");
-            stash.stream.write(cast(const(ubyte)[]) "A-body");
-            return;
-        }
-        // B, C, ...: different fields and bodies on the storage A's exchange used. Touching A's objects from this
-        // fiber, on the same worker, must throw.
-        response.setHeader("X-Secret", "beta-" ~ path[1 .. $]);
-        response.getOutputStream().write(cast(const(ubyte)[])("B-body-" ~ path[1 .. $]));
-        string seen;
-        foreach (attempt; [
-            () { stash.response.getStatus(); },
-            () { stash.response.setHeader("X-Injected", "from-a"); },
-            () { stash.stream.write(cast(const(ubyte)[]) "injected"); },
-            () { stash.response.getHeaderNames(); },
-        ])
-        {
-            try
+        if (path == "/error" || path == "/plain")
+            response.getOutputStream().write(cast(const(ubyte)[])(path == "/error" ? "error-page" : "plain"));
+        else if (path == "/race")
+            race(response);
+        else if (path == "/fail")
+            fail(request, response);
+        else if (path == "/a")
+            keep(request, response);
+        else
+            later(request, response, path);
+    }
+
+    // Another thread uses this response while the handler returns: off the worker, its flushes fail at once (the
+    // transport is the worker's), so the return never waits on it for long, and once the exchange has completed it
+    // gets IllegalStateException.
+    private void race(HttpServletResponse response) @trusted
+    {
+        import core.atomic : atomicLoad, atomicOp;
+        import core.thread : Thread;
+
+        racer = new Thread({
+            for (;;)
             {
-                attempt();
-                seen ~= "ok;";
+                try
+                {
+                    response.setHeader("X-Race", "racer");
+                    response.flushBuffer();
+                }
+                catch (IllegalStateException)
+                {
+                    racerResult = "ise";
+                    return;
+                }
+                catch (Exception)
+                {
+                }
+                atomicOp!"+="(racerAttempts, 1);
             }
-            catch (IllegalStateException)
-                seen ~= "ise;";
-        }
+        });
+        racer.start();
+        while (atomicLoad(racerAttempts) < 3)
+            Thread.yield();
+        response.getOutputStream().write(cast(const(ubyte)[]) "race");
+    }
+
+    // An exchange that ends in an exception, with its objects retained.
+    private void fail(HttpServletRequest request, HttpServletResponse response) @trusted
+    {
+        stash.request = request;
+        stash.response = response;
+        stash.input = request.getInputStream();
+        request.setAttribute("failing", Any.of("yes"));
+        response.setHeader("X-Failing", "yes");
+        throw new Exception("fail");
+    }
+
+    // A: retain every object the exchange hands out.
+    private void keep(HttpServletRequest request, HttpServletResponse response) @trusted
+    {
+        response.setHeader("X-Secret", "alpha");
+        response.addHeader("X-Trace", "a-1");
+        stash.response = response;
+        stash.stream = response.getOutputStream();
+        stash.headerNames = response.getHeaderNames();
+        stash.headerValues = response.getHeaders("X-Secret");
+        request.setAttribute("secret", Any.of("alpha"));
+        stash.request = request;
+        stash.input = request.getInputStream();
+        stash.attributeNames = request.getAttributeNames();
+        stash.requestHeaders = request.getHeaders("X-Client");
+        stash.stream.write(cast(const(ubyte)[]) "A-body");
+    }
+
+    // B, C, ...: different fields and bodies on the storage A's exchange used. Touching A's objects from this fiber,
+    // on the same worker, must throw.
+    private void later(HttpServletRequest request, HttpServletResponse response, string path) @trusted
+    {
+        response.setHeader("X-Secret", "beta-" ~ path[1 .. $]);
+        auto output = response.getOutputStream();
+        output.write(cast(const(ubyte)[])("B-body-" ~ path[1 .. $]));
+        string seen;
+        seen ~= outcome(() { stash.response.getStatus(); });
+        seen ~= outcome(() { stash.response.setHeader("X-Injected", "from-a"); });
+        seen ~= outcome(() { stash.stream.write(cast(const(ubyte)[]) "injected"); });
+        seen ~= outcome(() { stash.response.getHeaderNames(); });
+        seen ~= outcome(() { stash.request.getAttribute("secret"); });
+        seen ~= outcome(() { stash.request.setAttribute("injected", Any.of("from-a")); });
+        seen ~= outcome(() { stash.request.getHeader("X-Client"); });
+        seen ~= outcome(() { stash.input.read(); });
         fromFiber = seen;
+        // This exchange's own attributes and fields: nothing of A's, nothing injected.
+        string attributes;
+        foreach (name; request.getAttributeNames())
+            attributes ~= name ~ ",";
+        output.write(cast(const(ubyte)[])("|" ~ attributes ~ "|" ~ request.getHeader("X-Client")));
     }
 }
 
-@("exchange pool: a retained response and its stream throw after the exchange, on the same worker and off it, and never touch a later exchange")
+@("exchange pool: retained request and response objects throw after their exchange, on its worker and off it, "
+        ~ "and never touch a later exchange")
 @trusted unittest
 {
     ServletEngineOptions options;
@@ -1070,39 +1171,81 @@ private final class Leaky : HttpServlet
         socket.close();
     char[] pending;
 
-    auto reply = exchange(socket, pending, "GET /a HTTP/1.1\r\nHost: localhost\r\n\r\n");
+    auto reply = exchange(socket, pending, "GET /a HTTP/1.1\r\nHost: localhost\r\nX-Client: alpha-client\r\n\r\n");
     assert(reply.content == "A-body", reply.content);
     assert(find(reply.head, "X-Secret: alpha") > 0);
 
     // B reuses A's storage; from B's fiber every use of A's objects throws, and B's own response is whole.
-    reply = exchange(socket, pending, "GET /b HTTP/1.1\r\nHost: localhost\r\n\r\n");
-    assert(reply.content == "B-body-b", reply.content);
+    reply = exchange(socket, pending, "GET /b HTTP/1.1\r\nHost: localhost\r\nX-Client: beta-client\r\n\r\n");
+    assert(reply.content == "B-body-b||beta-client", reply.content);
     assert(find(reply.head, "X-Secret: beta-b") > 0 && find(reply.head, "X-Injected") < 0
             && find(reply.head, "alpha") < 0, reply.head);
-    assert(leaky.fromFiber == "ise;ise;ise;ise;", leaky.fromFiber);
+    assert(leaky.fromFiber == "ise;ise;ise;ise;ise;ise;ise;ise;", leaky.fromFiber);
 
     // From this thread (not the worker): every use throws too.
-    size_t thrown;
-    foreach (attempt; [
-        () { stash.response.getStatus(); },
-        () { stash.response.setHeader("X-Injected", "from-thread"); },
-        () { stash.response.addHeader("X-Injected", "from-thread"); },
-        () { stash.stream.write(cast(const(ubyte)[]) "injected"); },
-        () { stash.response.flushBuffer(); },
-        () { stash.response.getHeader("X-Secret"); },
-    ])
-    {
-        try
-            attempt();
-        catch (IllegalStateException)
-            ++thrown;
-    }
-    assert(thrown == 6, "a retained object worked after its exchange");
+    const seen = fromThisThread();
+    assert(seen == "ise;ise;ise;ise;ise;ise;ise;ise;ise;ise;ise;ise;",
+            "a retained object worked after its exchange: " ~ seen);
     // What A obtained during its exchange keeps A's values: fresh arrays, not views of the pooled storage.
     assert(stash.headerNames == ["X-Secret", "X-Trace"] && stash.headerValues == ["alpha"]);
+    assert(stash.attributeNames == ["secret"] && stash.requestHeaders == ["alpha-client"]);
 
     // And C sees nothing anyone did to A's objects.
-    reply = exchange(socket, pending, "GET /c HTTP/1.1\r\nHost: localhost\r\n\r\n");
-    assert(reply.content == "B-body-c" && find(reply.head, "X-Injected") < 0 && find(reply.head, "alpha") < 0,
-            reply.head ~ reply.content);
+    reply = exchange(socket, pending, "GET /c HTTP/1.1\r\nHost: localhost\r\nX-Client: gamma-client\r\n\r\n");
+    assert(reply.content == "B-body-c||gamma-client" && find(reply.head, "X-Injected") < 0
+            && find(reply.head, "alpha") < 0, reply.head ~ reply.content);
+
+    // An exchange that ends in an exception (a 500 through the error page, which closes its connection): its
+    // retained objects stop working too, and the next exchange on the worker sees none of its state.
+    auto failing = new TcpSocket(new InternetAddress("127.0.0.1", cast(ushort) engine.getPort()));
+    failing.setOption(SocketOptionLevel.SOCKET, SocketOption.RCVTIMEO, dur!"msecs"(3_000));
+    char[] failingPending;
+    reply = exchange(failing, failingPending,
+            "GET /fail HTTP/1.1\r\nHost: localhost\r\nX-Client: fail-client\r\n\r\n");
+    failing.close();
+    assert(reply.head[0 .. 15] == "HTTP/1.1 500 \r\n" && reply.content == "error-page", reply.head ~ reply.content);
+    string afterFailure;
+    afterFailure ~= outcome(() { stash.request.getAttribute("failing"); });
+    afterFailure ~= outcome(() { stash.request.setAttribute("injected", Any.of("after-failure")); });
+    afterFailure ~= outcome(() { stash.response.setHeader("X-Injected", "after-failure"); });
+    afterFailure ~= outcome(() { stash.input.read(); });
+    assert(afterFailure == "ise;ise;ise;ise;", "a retained object of a failed exchange worked: " ~ afterFailure);
+    reply = exchange(socket, pending, "GET /d HTTP/1.1\r\nHost: localhost\r\nX-Client: delta-client\r\n\r\n");
+    assert(reply.content == "B-body-d||delta-client" && find(reply.head, "X-Failing") < 0
+            && find(reply.head, "X-Injected") < 0, reply.head ~ reply.content);
+    assert(leaky.fromFiber == "ise;ise;ise;ise;ise;ise;ise;ise;", leaky.fromFiber);
+}
+
+@("exchange pool: another thread using a response while its handler returns neither hangs the worker nor "
+        ~ "reaches the next exchange")
+@trusted unittest
+{
+    import core.atomic : atomicLoad, atomicStore;
+
+    ServletEngineOptions options;
+    options.address = "127.0.0.1";
+    options.port = 0;
+    options.cores = 1;
+    auto engine = new ServletEngine(options);
+    engine.addServlet("dispatcherServlet", new Leaky);
+    engine.start();
+    scope (exit)
+        engine.stop();
+    auto socket = new TcpSocket(new InternetAddress("127.0.0.1", cast(ushort) engine.getPort()));
+    socket.setOption(SocketOptionLevel.SOCKET, SocketOption.RCVTIMEO, dur!"msecs"(3_000));
+    scope (exit)
+        socket.close();
+    char[] pending;
+    foreach (round; 0 .. 20)
+    {
+        racer = null;
+        racerResult = null;
+        atomicStore(racerAttempts, 0);
+        auto reply = exchange(socket, pending, "GET /race HTTP/1.1\r\nHost: localhost\r\n\r\n");
+        assert(reply.head[0 .. 15] == "HTTP/1.1 200 \r\n" && reply.content == "race", reply.head ~ reply.content);
+        racer.join();
+        assert(racerResult == "ise" && atomicLoad(racerAttempts) >= 3, racerResult);
+        reply = exchange(socket, pending, "GET /plain HTTP/1.1\r\nHost: localhost\r\n\r\n");
+        assert(reply.content == "plain" && find(reply.head, "X-Race") < 0, reply.head ~ reply.content);
+    }
 }

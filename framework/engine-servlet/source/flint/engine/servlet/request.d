@@ -9,6 +9,7 @@ an `application/x-www-form-urlencoded` body; the servlet mapped at `/` sees the 
 +/
 module flint.engine.servlet.request;
 
+import flint.engine.servlet.exchange : Access, PooledState;
 import flint.engine.aot.any : Any;
 import flint.engine.web.types : Method;
 import flint.jakarta.servlet : DispatcherType, RequestDispatcher, ServletContext,
@@ -63,26 +64,25 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
     private string protocol;
     private string servletPath;
     private string contextPath;
+    // The exchange's pooled storage (field, attribute and parameter slots) and its generation at checkout
+    // (flint.engine.servlet.exchange): once the exchange has completed, every method throws (owner decision (a)).
+    private RequestState state;
+    private ulong stateGeneration;
+    // The field names and values, in the state's slots when they fit (eight, as Tomcat's MimeHeaders starts with).
     private string[] names;
     private string[] values;
-    // The field names and values of a usual request, inside this object: no allocation of their own. Eight fields, as
-    // Tomcat's MimeHeaders starts with, keep the object within druntime's 1,360-byte size class (R-80); a request with
-    // more takes a GC array.
-    private string[16] inlineFields;
     private immutable(ubyte)[] content;
     private ulong requestNumber;
     private DispatcherType dispatcherType = DispatcherType.REQUEST;
-    // A request holds a handful of attributes: slots in insertion order (getAttributeNames' order), inside this
-    // object until they outgrow it, then on the GC heap.
+    // A request holds a handful of attributes: slots in insertion order (getAttributeNames' order), in the state's
+    // inline slots until they outgrow them, then in its retained overflow block or the GC heap.
     private Attribute[] attributeSlots;
-    private Attribute[8] inlineAttributes;
     private size_t attributeCount;
     private string characterEncoding;
     // Parameters in the order they arrive (Tomcat's LinkedHashMap order), found by a scan while there are few and
     // through an index once there are many, so a request with thousands of names stays linear. The first few
-    // slots are inside this object.
+    // slots are in the state.
     private Parameter[] parameterSlots;
-    private Parameter[4] inlineParameters;
     private size_t parameterCount;
     private size_t[string] parameterIndex;
     private bool parametersParsed;
@@ -90,8 +90,10 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
 
     package(flint.engine.servlet) this(RequestHost host, string method, string requestURI, string queryString,
             string protocol, string contextPath, string[] names, string[] values,
-            immutable(ubyte)[] content, ulong requestNumber)
+            immutable(ubyte)[] content, ulong requestNumber, RequestState state, ulong generation)
     {
+        this.state = state;
+        stateGeneration = generation;
         this.host = host;
         this.method = method;
         this.requestURI = requestURI;
@@ -103,14 +105,27 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
         this.values = values;
         this.content = content;
         this.requestNumber = requestNumber;
-        attributeSlots = inlineAttributes[];
-        parameterSlots = inlineParameters[];
+        attributeSlots = state.inlineAttributes[];
+        parameterSlots = state.inlineParameters[];
     }
 
-    /// Storage for `length` field names and values: inside this object when they fit.
+    /// The pooled state and its generation, for the engine's return at the end of the exchange.
+    package(flint.engine.servlet) RequestState pooledState(out ulong generation) pure nothrow @nogc
+    {
+        generation = stateGeneration;
+        return state;
+    }
+
+    // Entered by every method user code can reach: throws once the exchange has completed.
+    private Access enter()
+    {
+        return Access(state, stateGeneration, "request");
+    }
+
+    /// Storage for `length` field names and values: in the state's slots when they fit.
     package(flint.engine.servlet) string[] fieldStorage(size_t length) return
     {
-        return length <= inlineFields.length ? inlineFields[0 .. length] : new string[length];
+        return length <= state.inlineFields.length ? state.inlineFields[0 .. length] : new string[length];
     }
 
     /// The fields and body `ServletEngine.capture` copied out of the request arena.
@@ -145,12 +160,14 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
 
     Any getAttribute(string name)
     {
+        auto access = enter();
         const index = attributeIndex(name);
         return index < attributeCount ? attributeSlots[index].value : Any.init;
     }
 
     string[] getAttributeNames()
     {
+        auto access = enter();
         auto names = new string[attributeCount];
         foreach (index, ref attribute; attributeSlots[0 .. attributeCount])
             names[index] = attribute.name;
@@ -167,6 +184,7 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
 
     string getCharacterEncoding()
     {
+        auto access = enter();
         if (characterEncoding !is null)
             return characterEncoding;
         return charsetOf(getContentType());
@@ -174,18 +192,21 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
 
     void setCharacterEncoding(string env)
     {
+        auto access = enter();
         if (!parametersParsed && !inputUsed)
             characterEncoding = env;
     }
 
     int getContentLength()
     {
+        auto access = enter();
         const length = getContentLengthLong();
         return length > int.max ? -1 : cast(int) length;
     }
 
     long getContentLengthLong()
     {
+        auto access = enter();
         const text = getHeader("content-length");
         if (text is null)
             return content.length != 0 ? cast(long) content.length : -1;
@@ -201,17 +222,20 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
 
     string getContentType()
     {
+        auto access = enter();
         return getHeader("content-type");
     }
 
     ServletInputStream getInputStream()
     {
+        auto access = enter();
         inputUsed = true;
-        return new BodyInput(content);
+        return new BodyInput(content, this);
     }
 
     string getParameter(string name)
     {
+        auto access = enter();
         parseParameters();
         const index = parameterAt(name);
         return index < parameterCount ? parameterSlots[index].first : null;
@@ -219,6 +243,7 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
 
     string[] getParameterNames()
     {
+        auto access = enter();
         parseParameters();
         auto names = new string[parameterCount];
         foreach (index, ref parameter; parameterSlots[0 .. parameterCount])
@@ -228,6 +253,7 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
 
     string[] getParameterValues(string name)
     {
+        auto access = enter();
         parseParameters();
         const index = parameterAt(name);
         return index < parameterCount ? parameterSlots[index].values() : null;
@@ -235,6 +261,7 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
 
     string[][string] getParameterMap()
     {
+        auto access = enter();
         parseParameters();
         string[][string] copy;
         foreach (ref parameter; parameterSlots[0 .. parameterCount])
@@ -244,16 +271,19 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
 
     string getProtocol()
     {
+        auto access = enter();
         return protocol;
     }
 
     string getScheme()
     {
+        auto access = enter();
         return "http";
     }
 
     string getServerName()
     {
+        auto access = enter();
         const authority = getHeader("host");
         if (authority is null || authority.length == 0)
             return host.localAddress();
@@ -272,6 +302,7 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
 
     int getServerPort()
     {
+        auto access = enter();
         const authority = getHeader("host");
         if (authority is null || authority.length == 0)
             return host.localPort();
@@ -298,17 +329,20 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
     /// The engine does not expose the peer address yet; `null`, as for a request without one.
     string getRemoteAddr()
     {
+        auto access = enter();
         return null;
     }
 
     /// ditto
     string getRemoteHost()
     {
+        auto access = enter();
         return null;
     }
 
     void setAttribute(string name, Any o)
     {
+        auto access = enter();
         if (o.isNull())
         {
             removeAttribute(name);
@@ -324,13 +358,32 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
         // druntime's 1,024-byte size class, where doubling to sixteen took a 1,360-byte block. A 404's error forward
         // sets about a dozen attributes (R-83).
         if (attributeCount == attributeSlots.length)
-            attributeSlots.length = attributeCount * 7 / 4;
+        {
+            const grown = attributeCount * 7 / 4;
+            // The state keeps the first overflow block across exchanges, so a request that outgrows the inline slots
+            // usually reuses it instead of allocating.
+            if (attributeSlots.ptr is state.inlineAttributes.ptr && state.attributeBlock.length >= grown)
+            {
+                state.attributeBlock[0 .. attributeCount] = attributeSlots[];
+                attributeSlots = state.attributeBlock;
+            }
+            else
+            {
+                const first = attributeSlots.ptr is state.inlineAttributes.ptr;
+                auto block = new Attribute[grown];
+                block[0 .. attributeCount] = attributeSlots[];
+                attributeSlots = block;
+                if (first && state.attributeBlock.length == 0)
+                    state.attributeBlock = block;
+            }
+        }
         attributeSlots[attributeCount++] = Attribute(name, o);
     }
 
     /// `HttpServletRequest.removeAttribute`.
     void removeAttribute(string name)
     {
+        auto access = enter();
         const index = attributeIndex(name);
         if (index == attributeCount)
             return;
@@ -342,11 +395,13 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
     /// `HttpServletRequest.isSecure`.
     bool isSecure()
     {
+        auto access = enter();
         return false;
     }
 
     RequestDispatcher getRequestDispatcher(string path)
     {
+        auto access = enter();
         if (path is null)
             return null;
         if (path.length == 0 || path[0] != '/')
@@ -364,42 +419,50 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
     /// See `getRemoteAddr`.
     int getRemotePort()
     {
+        auto access = enter();
         return -1;
     }
 
     string getLocalName()
     {
+        auto access = enter();
         return host.localAddress();
     }
 
     string getLocalAddr()
     {
+        auto access = enter();
         return host.localAddress();
     }
 
     int getLocalPort()
     {
+        auto access = enter();
         return host.localPort();
     }
 
     ServletContext getServletContext()
     {
+        auto access = enter();
         return host.context();
     }
 
     /// `HttpServletRequest.isAsyncSupported`.
     bool isAsyncSupported()
     {
+        auto access = enter();
         return false;
     }
 
     DispatcherType getDispatcherType()
     {
+        auto access = enter();
         return dispatcherType;
     }
 
     string getRequestId()
     {
+        auto access = enter();
         // Formatted on demand: most requests never ask for it.
         return decimal(cast(long) requestNumber);
     }
@@ -407,18 +470,21 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
     /// HTTP/1 has no protocol-level request id.
     string getProtocolRequestId()
     {
+        auto access = enter();
         return "";
     }
 
     /// `HttpServletRequest.getLocale`: Tomcat's first `Accept-Language` locale, else the default locale.
     Locale getLocale()
     {
+        auto access = enter();
         return getLocales()[0];
     }
 
     /// `HttpServletRequest.getLocales`.
     Locale[] getLocales()
     {
+        auto access = enter();
         auto locales = acceptLanguages(getHeaders("accept-language"));
         return locales.length != 0 ? locales : [Locale.getDefault()];
     }
@@ -427,11 +493,13 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
 
     string getAuthType()
     {
+        auto access = enter();
         return null;
     }
 
     Cookie[] getCookies()
     {
+        auto access = enter();
         Cookie[] cookies;
         foreach (index, name; names)
         {
@@ -467,6 +535,7 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
 
     long getDateHeader(string name)
     {
+        auto access = enter();
         const text = getHeader(name);
         if (text is null)
             return -1;
@@ -478,6 +547,7 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
 
     string getHeader(string name)
     {
+        auto access = enter();
         foreach (index, existing; names)
             if (equalsIgnoreCase(existing, name))
                 return values[index];
@@ -487,12 +557,14 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
     /// Each header field as received, in order, repeated names included (`HeaderFieldSource`).
     void visitHeaderFields(scope void delegate(string name, string value) @safe visit)
     {
+        auto access = enter();
         foreach (index, name; names)
             visit(name, values[index]);
     }
 
     string[] getHeaders(string name)
     {
+        auto access = enter();
         // Counted first, so the result is one exact allocation, or none when the field is absent.
         size_t count;
         foreach (existing; names)
@@ -509,6 +581,7 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
 
     string[] getHeaderNames()
     {
+        auto access = enter();
         string[] distinct;
         outer: foreach (name; names)
         {
@@ -522,6 +595,7 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
 
     int getIntHeader(string name)
     {
+        auto access = enter();
         const text = getHeader(name);
         if (text is null)
             return -1;
@@ -544,53 +618,63 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
 
     string getMethod()
     {
+        auto access = enter();
         return method;
     }
 
     /// The servlet mapped at `/` has no path info.
     string getPathInfo()
     {
+        auto access = enter();
         return null;
     }
 
     string getPathTranslated()
     {
+        auto access = enter();
         return null;
     }
 
     string getContextPath()
     {
+        auto access = enter();
         return contextPath;
     }
 
     string getQueryString()
     {
+        auto access = enter();
         return queryString;
     }
 
     string getRemoteUser()
     {
+        auto access = enter();
         return null;
     }
 
     /// `HttpServletRequest.isUserInRole`.
     bool isUserInRole(string)
     {
+        auto access = enter();
         return false;
     }
 
     string getRequestedSessionId()
     {
+        auto access = enter();
         return null;
     }
 
     string getRequestURI()
     {
+        auto access = enter();
         return requestURI;
     }
 
     string getRequestURL()
     {
+        auto access = enter();
         const port = getServerPort();
         const name = getServerName();
         return port == 80 ? "http://" ~ name ~ requestURI : "http://" ~ name ~ ":" ~ decimal(port) ~ requestURI;
@@ -598,12 +682,14 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
 
     string getServletPath()
     {
+        auto access = enter();
         return servletPath;
     }
 
     /// `HttpServletRequest.isRequestedSessionIdValid`.
     bool isRequestedSessionIdValid()
     {
+        auto access = enter();
         return false;
     }
 
@@ -717,19 +803,24 @@ private final class BodyInput : ServletInputStream
 {
     private immutable(ubyte)[] content;
     private size_t position;
+    // Its request: the stream stops working with it, once the exchange has completed (owner decision (a), R3).
+    private ServletEngineRequest request;
 
-    this(immutable(ubyte)[] content) pure nothrow @nogc
+    this(immutable(ubyte)[] content, ServletEngineRequest request) pure nothrow @nogc
     {
         this.content = content;
+        this.request = request;
     }
 
     override int read()
     {
+        auto access = request.enter();
         return position < content.length ? content[position++] : -1;
     }
 
     override ubyte[] readAllBytes()
     {
+        auto access = request.enter();
         auto rest = content[position .. $].dup;
         position = content.length;
         return rest;
@@ -737,11 +828,13 @@ private final class BodyInput : ServletInputStream
 
     override bool isFinished()
     {
+        auto access = request.enter();
         return position >= content.length;
     }
 
     override bool isReady()
     {
+        auto access = request.enter();
         return true;
     }
 }
@@ -1088,5 +1181,26 @@ unittest
     assert(acceptLanguages(["en;q=x"]).length == 0 && acceptLanguages(null).length == 0);
 }
 
-// Flint: within druntime's 1,360-byte size class (R-80).
-static assert(__traits(classInstanceSize, ServletEngineRequest) <= 1360);
+/// The pooled storage of one request (flint.engine.servlet.exchange): what used to make each request 1.3 KB.
+package(flint.engine.servlet) final class RequestState : PooledState
+{
+    string[16] inlineFields; /// eight field names and values
+    Attribute[8] inlineAttributes; ///
+    /// The first attribute overflow block (fourteen slots, a 1,024-byte block), kept across exchanges.
+    Attribute[] attributeBlock;
+    Parameter[4] inlineParameters; ///
+
+    protected override void clear() nothrow
+    {
+        inlineFields[] = null;
+        inlineAttributes[] = Attribute.init;
+        if (attributeBlock.length > 14)
+            attributeBlock = null;
+        else
+            attributeBlock[] = Attribute.init;
+        inlineParameters[] = Parameter.init;
+    }
+}
+
+// The façade is a few hundred bytes; the storage is pooled (coordination/notes/exchange-pool.md).
+static assert(__traits(classInstanceSize, ServletEngineRequest) <= 368);

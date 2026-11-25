@@ -214,6 +214,8 @@ FastOutcome serveFast(ServletEngine engine, FastDispatch dispatch, ref scope Req
         materialize(ignoredRequest, ignoredResponse);
         return FastOutcome.materialized;
     }
+    // `declined` means nothing ran, so no exchange storage was taken (serve() closes any anyway, exchange pool).
+    assert(outcome != FastOutcome.declined || servletRequest is null, "a declined fast offer took exchange storage");
     if (outcome == FastOutcome.materialized && servletRequest is null)
     {
         Object ignoredRequest, ignoredResponse;

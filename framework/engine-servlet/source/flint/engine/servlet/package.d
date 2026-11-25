@@ -19,7 +19,8 @@ import flint.arena : Status;
 import flint.conc : Context, Deadline;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.fast : FastDispatch, FastField, FastFilter, FastFilterEffect, FastOutcome;
-import flint.engine.servlet.request : DispatchState, RequestHost, ServletEngineRequest, decimal, methodName;
+import flint.engine.servlet.request : DispatchState, RequestHost, RequestState,
+    ServletEngineRequest, decimal, methodName;
 import flint.engine.servlet.exchange : StatePool, freshState, retire;
 import flint.engine.servlet.response : ResponseState, ServletEngineResponse;
 import flint.engine.web.fiber : FiberResponse, FiberRoute;
@@ -242,6 +243,7 @@ final class ServletEngine : RequestHost
         serverOptions.cores = reactorThreads(options.cores);
         // One pool of exchange storage per worker, touched only by that worker (coordination/notes/exchange-pool.md).
         responsePools = new StatePool!ResponseState[serverOptions.cores];
+        requestPools = new StatePool!RequestState[serverOptions.cores];
         serverOptions.http2 = false;
         serverOptions.idleTimeoutNanos = options.keepAliveTimeoutNanos;
         serverOptions.maxKeepAliveRequests = options.maxKeepAliveRequests;
@@ -407,13 +409,16 @@ final class ServletEngine : RequestHost
                     fastResponse, fastFailure))
             {
             case FastOutcome.declined:
+                // Nothing ran (serveFast asserts it); storage a broken dispatcher took anyway is returned, so its
+                // façades stop working, and the generic path takes its own.
+                closeExchange(fastRequest, fastResponse, context.worker);
                 break;
             case FastOutcome.written:
-                closeExchange(fastResponse, context.worker);
+                closeExchange(fastRequest, fastResponse, context.worker);
                 return;
             case FastOutcome.materialized:
                 finishExchange(fastRequest, fastResponse, fastFailure);
-                closeExchange(fastResponse, context.worker);
+                closeExchange(fastRequest, fastResponse, context.worker);
                 return;
             }
         }
@@ -424,7 +429,7 @@ final class ServletEngine : RequestHost
             // Tomcat's Mapper finds no context for the URI: the host's ErrorReportValve answers 404.
             hostErrorReport(servletResponse, 404, "Not Found");
             servletResponse.complete();
-            closeExchange(servletResponse, context.worker);
+            closeExchange(servletRequest, servletResponse, context.worker);
             return;
         }
         Exception failure;
@@ -433,36 +438,47 @@ final class ServletEngine : RequestHost
         catch (Exception e)
             failure = e;
         finishExchange(servletRequest, servletResponse, failure);
-        // Only an exchange that ended normally returns its storage. One that exits by an exception keeps it: the
-        // exception may carry the objects onward, so they stay valid, and the storage is dropped to the GC.
-        closeExchange(servletResponse, context.worker);
+        // The storage is returned whenever finishExchange returns, after a handler's exception too (the error page
+        // has answered it), and the exchange's objects then throw. Only an exception out of finishExchange itself
+        // (the client gone mid-response) skips this: the storage then goes to the GC, never reused.
+        closeExchange(servletRequest, servletResponse, context.worker);
     }
 
     // Per-worker pools of exchange storage, indexed by `RequestContext.worker` (flint.engine.servlet.exchange).
     private StatePool!ResponseState[] responsePools;
+    private StatePool!RequestState[] requestPools;
 
     // A response for a new exchange on `worker`, with storage from that worker's pool.
     private ServletEngineResponse openResponse(FiberResponse transport, uint worker)
     {
         ulong generation;
-        auto state = worker < responsePools.length ? responsePools[worker].take(generation)
-            : freshState!ResponseState(generation);
+        auto state = worker < responsePools.length
+            ? responsePools[worker].take(generation) : freshState!ResponseState(generation);
         return new ServletEngineResponse(transport, state, generation);
     }
 
     // The end of a completed exchange: everything the exchange wrote has been copied to the transport (engine-web
     // takes `scope` bytes and copies them), so its storage goes back to the worker's pool and its objects stop
     // working (owner decision (a)).
-    private void closeExchange(ServletEngineResponse response, uint worker)
+    private void closeExchange(ServletEngineRequest request, ServletEngineResponse response, uint worker)
     {
-        if (response is null)
-            return;
         ulong generation;
-        auto state = response.pooledState(generation);
-        if (worker < responsePools.length)
-            responsePools[worker].release(state, generation);
-        else
-            retire(state, generation);
+        if (request !is null)
+        {
+            auto state = request.pooledState(generation);
+            if (worker < requestPools.length)
+                requestPools[worker].release(state, generation);
+            else
+                retire(state, generation);
+        }
+        if (response !is null)
+        {
+            auto state = response.pooledState(generation);
+            if (worker < responsePools.length)
+                responsePools[worker].release(state, generation);
+            else
+                retire(state, generation);
+        }
     }
 
     /// For tests: the free response states the worker's pool holds.
@@ -593,9 +609,12 @@ final class ServletEngine : RequestHost
         const path = frozen[0 .. sizes[0]];
         // A request without '?' has no query string; "?" alone is an empty one.
         string query = sizes[1] != 0 ? frozen[sizes[0] .. sizes[0] + sizes[1]] : null;
+        ulong generation;
+        auto state = context.worker < requestPools.length
+            ? requestPools[context.worker].take(generation) : freshState!RequestState(generation);
         auto captured = new ServletEngineRequest(this, methodName(request.method()), path, query,
                 request.protocolMinor() == 0 ? "HTTP/1.0" : "HTTP/1.1", options.contextPath, null,
-                null, null, context.requestId);
+                null, null, context.requestId, state, generation);
         auto fields = captured.fieldStorage(count * 2);
         auto names = fields[0 .. count], values = fields[count .. $];
         size_t at = sizes[0] + sizes[1];

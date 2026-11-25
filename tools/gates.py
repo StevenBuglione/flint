@@ -7,6 +7,7 @@ from perf_stats import finite_samples,median_ratio_interval
 from workspace import Workspace,edge_violations,package_repos
 import module_budgets
 import framework_budgets
+import check_exchange_retention
 import request_allocation_ratchet
 import template_budget_ratchet
 ROOT=Path(__file__).resolve().parents[1]
@@ -328,6 +329,8 @@ def structural(selected):
     skipped=request_allocation_ratchet.not_applicable(ROOT)
     if skipped:print(skipped,file=sys.stderr)
     raised=request_allocation_ratchet.check(ROOT);require(not raised,'; '.join(raised))
+    # The exchange pool's retention audit (coordination/notes/exchange-pool.md): no unreviewed holder of a request.
+    retained=check_exchange_retention.violations(ROOT);require(not retained,'; '.join(retained))
     framework=framework_layers()
     layer_registration()
     mixin_packages=set()
