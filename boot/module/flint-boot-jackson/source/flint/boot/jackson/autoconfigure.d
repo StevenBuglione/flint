@@ -491,3 +491,46 @@ F featureNamed(F)(string name) if (is(F == enum))
     }
     throw new IllegalArgumentException("No enum constant " ~ F.stringof ~ "." ~ name);
 }
+
+/++
+Flint addition: the auto-configured `JsonMapper` when Jackson is configured as Boot leaves it, or `null`: the one
+`JsonMapper` and `JsonMapper.Builder` beans are this auto-configuration's, its `StandardJsonMapperBuilderCustomizer`
+is the only customizer, no `JacksonModule` bean is registered, and no `flint.jackson.*` property is set. The
+default-JSON-404 specialization (coordination note web-http-404-specialization.md) requires the converter's mapper to
+be this one, then compares its bytes with the generic path's at startup.
++/
+JsonMapper stockJsonMapper(ApplicationContext context)
+{
+    import flint.jackson.databind : JacksonModule;
+
+    if (context.getBeanNamesForType!JsonMapper() != ["jacksonJsonMapper"]
+            || context.getBeanNamesForType!(JsonMapper.Builder)() != ["jsonMapperBuilder"]
+            || context.getBeanNamesForType!JacksonModule().length != 0)
+        return null;
+    const customizers = context.getBeanNamesForType!JsonMapperBuilderCustomizer();
+    if (customizers.length != 1
+            || typeid(context.getBean(customizers[0])) !is typeid(StandardJsonMapperBuilderCustomizer))
+        return null;
+    const properties = context.getBeanNamesForType!JacksonProperties();
+    if (properties.length != 1 || !isDefault(cast(JacksonProperties) context.getBean(properties[0])))
+        return null;
+    return cast(JsonMapper) context.getBean("jacksonJsonMapper");
+}
+
+// Whether no `flint.jackson.*` property is set: every field as a new `JacksonProperties` has it.
+private bool isDefault(JacksonProperties p)
+{
+    static bool empty(V)(Map!(string, V) map)
+    {
+        return map is null || map.isEmpty();
+    }
+
+    return p !is null && p.getDateFormat() is null && p.getPropertyNamingStrategy() is null
+        && empty(p.getVisibility()) && empty(p.getSerialization()) && empty(p.getDeserialization())
+        && empty(p.getMapper()) && !p.getDefaultPropertyInclusion().isPresent() && !p.getDefaultLeniency()
+            .isPresent() && p.getConstructorDetector() == JacksonProperties.ConstructorDetectorStrategy.DEFAULT
+        && p.getTimeZone() is null && p.getLocale() is null && !p.isUseJackson2Defaults()
+        && p.isFindAndAddModules() && empty(p.getDatatype().getEnum()) && empty(p.getDatatype()
+                .getDatetime()) && empty(p.getRead()) && empty(p.getWrite()) && empty(p.getJson()
+                .getRead()) && empty(p.getJson().getWrite());
+}

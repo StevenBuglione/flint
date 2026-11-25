@@ -417,3 +417,81 @@ private enum ConditionalOnBooleanProperty whitelabelEnabled = () {
     condition.matchIfMissing = true;
     return condition;
 }();
+
+/++
+Flint addition: proof that the application answers a JSON error exactly as Boot's stock error handling does, for the
+default-JSON-404 specialization (coordination note web-http-404-specialization.md). The specialization writes
+the body without the `/error` dispatch only while this holds, and falls back to the generic path otherwise.
++/
+final class StockJsonError
+{
+    private string errorPath;
+    private bool includePath;
+    private BasicErrorController controller;
+
+    private this(string errorPath, bool includePath, BasicErrorController controller) pure nothrow @nogc
+    {
+        this.errorPath = errorPath;
+        this.includePath = includePath;
+        this.controller = controller;
+    }
+
+    /// The error controller's path, `flint.web.error.path`, that `ErrorPageCustomizer` registers as the error page.
+    string getErrorPath() const pure nothrow @nogc
+    {
+        return errorPath;
+    }
+
+    /// Whether the body has `path` (`flint.web.error.include-path` is `ALWAYS`; it is otherwise `NEVER`).
+    bool isIncludePath() const pure nothrow @nogc
+    {
+        return includePath;
+    }
+
+    /// What Boot's `BasicErrorController.error` returns for `request`, an ERROR dispatch's request carrying the
+    /// `jakarta.servlet.error.*` attributes: the reference for the specialization's startup self-test.
+    ResponseEntity errorResponse(HttpServletRequest request)
+    {
+        return controller.error(request);
+    }
+}
+
+/++
+Flint addition: the `StockJsonError` proof for `context`, or `null` when Boot's JSON error response is not stock
+there. It holds when:
+$(UL
+    $(LI the only `ErrorController` bean is exactly `BasicErrorController` and the only `ErrorAttributes` bean exactly
+        `DefaultErrorAttributes`, not subclasses, whose overrides could change the body, and the controller uses that
+        bean;)
+    $(LI `ErrorPageCustomizer` registers the controller's path as the error page;)
+    $(LI no include depends on the request or the error: `include-exception` is false, `include-stacktrace`,
+        `include-message` and `include-binding-errors` are `NEVER`, and `include-path` is `NEVER` or `ALWAYS`.)
+)
+The JSON mapper (`flint.boot.jackson.autoconfigure.stockJsonMapper`) and the dispatcher's side are proved by their
+owners. None of it replaces the startup comparison of the specialization's bytes with the generic path's.
++/
+StockJsonError stockJsonError(ApplicationContext context)
+{
+    alias Include = ErrorProperties.IncludeAttribute;
+
+    const controllers = context.getBeanNamesForType!ErrorController();
+    const attributes = context.getBeanNamesForType!ErrorAttributes();
+    if (controllers.length != 1 || attributes.length != 1
+            || context.getBeanNamesForType!ErrorPageCustomizer().length != 1)
+        return null;
+    auto controller = cast(BasicErrorController) context.getBean(controllers[0]);
+    auto errorAttributes = context.getBean(attributes[0]);
+    if (controller is null || typeid(controller) !is typeid(BasicErrorController)
+            || typeid(errorAttributes) !is typeid(DefaultErrorAttributes)
+            || cast(Object) controller.errorAttributes !is errorAttributes)
+        return null;
+    auto properties = controller.getErrorProperties();
+    if (properties.isIncludeException() || properties.getIncludeStacktrace() != Include.NEVER
+            || properties.getIncludeMessage() != Include.NEVER
+            || properties.getIncludeBindingErrors() != Include.NEVER)
+        return null;
+    const includePath = properties.getIncludePath();
+    if (includePath == Include.ON_PARAM)
+        return null;
+    return new StockJsonError(properties.getPath(), includePath == Include.ALWAYS, controller);
+}
