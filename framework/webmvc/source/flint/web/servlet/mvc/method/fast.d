@@ -144,7 +144,7 @@ final class FastPathTable : FastPath
         catch (Exception ex)
             return complete(servlet, exchange, route, ex, 0, null, null);
         if (route.entityProcessor !is null)
-            return serveEntity(route, servlet, exchange, result, entry);
+            return serveEntity(route, servlet, exchange, result, key);
 
         // writeWithMessageConverters writes no body and no Content-Type for a null value: a 200 with Content-Length 0.
         FastField[maxFields] storage;
@@ -180,15 +180,16 @@ final class FastPathTable : FastPath
     the materialized request and response: the handler has run, so the request can no longer be declined.
     +/
     private FastOutcome serveEntity(ref Route route, DispatcherServlet servlet,
-            ref scope FastExchange exchange, Any result, ref const AcceptEntry entry)
+            ref scope FastExchange exchange, Any result, size_t slot)
     {
+        const entry = route.accept[slot];
         if (!result.holds!ResponseEntity)
             return completeReturn(servlet, exchange, route, result);
         auto entity = result.get!ResponseEntity;
         const status = entity.getStatusCode().value();
         auto content = entity.getBody();
         if (status == 0 || !entity.getHeaders().isEmpty() || (!content.isNull()
-                && !jacksonWrites(route, content.typeName(), entry)))
+                && !writesBody(route, content.typeName(), slot)))
             return completeReturn(servlet, exchange, route, result);
         FastField[maxFields] storage;
         if (content.isNull())
@@ -652,6 +653,9 @@ private struct Route
     HttpEntityMethodProcessor entityProcessor;
     /// The adapter's converters, in order: for an entity's body the writer is chosen per request.
     HttpMessageConverter[] converters;
+    /// Per `acceptKeys` slot: the entity body type `jacksonWrites` last proved, so a repeated type is not proved
+    /// again (`writesBody`).
+    ProvenBody[acceptKeys.length] provenBody;
     /// Per `acceptKeys` slot: the `Content-Type` the generic path writes, or `null` where it does not write one.
     AcceptEntry[acceptKeys.length] accept;
 }
@@ -661,6 +665,37 @@ private struct AcceptEntry
     string contentType;
     /// The selected type itself, for `canWrite`.
     MediaType selected;
+}
+
+/++
+`jacksonWrites` for an entity body of `typeName` in `slot`, remembered: the slot keeps the first type it proved, in an
+object that holds the name (so its memory is never reused for another name), published with one atomic store and
+never changed. The same name, by pointer or by content, is then proved without asking the converters again; another
+type is proved each time, as before.
++/
+private bool writesBody(ref Route route, string typeName, size_t slot)
+{
+    import core.atomic : atomicLoad, cas;
+
+    auto proven = atomicLoad(route.provenBody[slot]);
+    if (proven !is null && (proven.name is typeName || proven.name == typeName))
+        return true;
+    if (!jacksonWrites(route, typeName, route.accept[slot]))
+        return false;
+    if (proven is null)
+        cas(&route.provenBody[slot], cast(ProvenBody) null, new ProvenBody(typeName));
+    return true;
+}
+
+// A body type `writesBody` proved; immutable once published.
+private final class ProvenBody
+{
+    private string name;
+
+    this(string name) pure nothrow @nogc
+    {
+        this.name = name;
+    }
 }
 
 /// Whether the first converter that writes `typeName` as the entry's type is exactly the Jackson converter, as

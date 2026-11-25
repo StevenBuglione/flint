@@ -156,6 +156,8 @@ class EntityRoutesController
             headers.set("X-Extra", "1");
             return ResponseEntity.of(Hello(id, "headers"), headers, HttpStatus.OK);
         }
+        if (id == 3)
+            return ResponseEntity.of("text", HttpStatus.OK);
         return ResponseEntity.of(Hello(id, "entity"), HttpStatus.CREATED);
     }
 }
@@ -428,6 +430,14 @@ unittest
     assert(extra.materialized.getContentAsString() == `{"id":2,"text":"headers"}`,
             extra.materialized.getContentAsString());
     assert(controller.calls == 3);
+    // The proved body type is remembered per Accept key; a body of another type in the same slot is proved again
+    // (a string goes to the string converter, so the generic processor writes it), and the first type still writes.
+    auto text = offer(servlet, "GET", "/entities/3", null, ["*/*"], true);
+    assert(text.outcome == FastOutcome.materialized
+            && text.materialized.getContentAsString() == "text", text.materialized.getContentAsString());
+    const again = offer(servlet, "GET", "/entities/1", null, ["*/*"]);
+    assert(again.outcome == FastOutcome.written && again.content == `{"id":1,"text":"entity"}`, again.content);
+    assert(controller.calls == 5);
     // A mapping without produces keeps the generic path (the producible type would depend on the body).
     assert(offer(dispatcher(new EntityController, "entityController"), "GET", "/entity").outcome == FastOutcome
             .declined);
