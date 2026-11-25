@@ -522,6 +522,9 @@ def parity_problems(name, digest):
             problems.append(f'{name}: {key} differs from the Java golden (ADR-033): {problem}')
         if not workload.get('repeats_agree', False):
             problems.append(f'{name}: {key} answered differently across the record\'s exchanges')
+        if workload.get('expected', {}).get('connection') == 'keep' and not workload.get('keep_alive'):
+            problems.append(f"{name}: {key} has no keep-alive limit check (owner decision 8163a833: Tomcat closes "
+                            'with the 100th response on a connection)')
     suite = record.get('suite', {})
     if suite.get('wire') != 'parity' or not suite.get('total') or suite.get('passed') != suite.get('total'):
         problems.append(f"{name}: the suite in the parity wire mode passed {suite.get('passed')}/{suite.get('total')} "

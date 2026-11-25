@@ -6,9 +6,39 @@ package main
 // bytes are produced stays free.
 
 import (
+	"context"
 	"net"
 	"net/http"
 )
+
+// maxKeepAliveRequests is server.tomcat.max-keep-alive-requests at Spring Boot's default (owner decision 8163a833):
+// Tomcat answers the 100th request on a persistent connection with `Connection: close` and closes it.
+const maxKeepAliveRequests = 100
+
+// connRequests counts the requests one connection has carried. net/http serves a connection's requests one at a
+// time, so the count needs no lock.
+type connRequests struct{ served int }
+
+type connRequestsKey struct{}
+
+// parityConnContext gives each connection its request count (http.Server.ConnContext).
+func parityConnContext(ctx context.Context, _ net.Conn) context.Context {
+	return context.WithValue(ctx, connRequestsKey{}, &connRequests{})
+}
+
+// keepAliveLimit closes a connection with its maxKeepAliveRequests-th response, as Tomcat does; net/http closes the
+// connection after a response that says `Connection: close`.
+func keepAliveLimit(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if count, ok := r.Context().Value(connRequestsKey{}).(*connRequests); ok {
+			count.served++
+			if count.served >= maxKeepAliveRequests {
+				w.Header().Set("Connection", "close")
+			}
+		}
+		next.ServeHTTP(w, r)
+	})
+}
 
 // parityListener wraps each accepted connection so every status line goes out without its reason phrase.
 type parityListener struct {

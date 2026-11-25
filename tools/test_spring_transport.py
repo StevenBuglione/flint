@@ -148,6 +148,24 @@ class Parity(unittest.TestCase):
         self.assertEqual(st.parity_problems(st.golden_transport(GOLDEN, INVALID)[0], seen), [])
 
 
+class KeepAlive(unittest.TestCase):
+    def test_the_nth_response_closes(self):
+        ok = b'HTTP/1.1 200 \r\nContent-Length: 2\r\n\r\n{}'
+        last = b'HTTP/1.1 200 \r\nContent-Length: 2\r\nConnection: close\r\n\r\n{}'
+        port = serve([ok] * 3 + [last], 4)
+        observed = st.keep_alive_probe(port, {'path': '/x', 'expected': {}}, limit=4, extra=2)
+        self.assertEqual(observed, {'announced_at': 4, 'closed_after': 4})
+        self.assertEqual(st.keep_alive_problems(observed, limit=4), [])
+        self.assertTrue(st.keep_alive_problems(observed))  # Tomcat's 100
+
+    def test_no_limit_is_a_problem(self):
+        ok = b'HTTP/1.1 200 \r\nContent-Length: 2\r\n\r\n{}'
+        port = serve([ok] * 6, 6)
+        observed = st.keep_alive_probe(port, {'path': '/x', 'expected': {}}, limit=4, extra=2)
+        self.assertEqual(observed, {'announced_at': None, 'closed_after': None})
+        self.assertTrue(st.keep_alive_problems(observed, limit=4))
+
+
 class Shapes(unittest.TestCase):
     def test_a_workload_path_matches_its_endpoint(self):
         golden = {'observations': [
@@ -177,7 +195,8 @@ class Registry(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary, mock.patch.object(spring_bench, 'PARITY', Path(temporary)):
             self.assertIn('no HTTP parity record', spring_bench.parity_problems('petclinic-rest', 'abc')[0])
             golden = spring_bench.sha256(spring_bench.golden_path('petclinic-rest'))
-            clean = {'problems': [], 'repeats_agree': True}
+            clean = {'problems': [], 'repeats_agree': True, 'expected': {'connection': 'keep'},
+                     'keep_alive': {'announced_at': 100, 'closed_after': 100}}
             record = {'comparator_sha256': 'abc', 'golden_sha256': golden,
                       'workloads': {'petclinic-rest:validation-error': dict(clean), 'petclinic-rest': dict(clean)},
                       'suite': {'wire': 'parity', 'passed': 109, 'total': 109}}
@@ -192,6 +211,9 @@ class Registry(unittest.TestCase):
             record['workloads']['petclinic-rest:validation-error']['problems'] = ["connection: expected 'close'"]
             path.write_text(json.dumps(record))
             self.assertIn('differs from the Java golden', spring_bench.parity_problems('petclinic-rest', 'abc')[0])
+            record['workloads']['petclinic-rest'] = dict(clean, keep_alive=None)
+            path.write_text(json.dumps(record))
+            self.assertIn('no keep-alive limit check', spring_bench.parity_problems('petclinic-rest', 'abc')[0])
             record['workloads'] = {'petclinic-rest': dict(clean)}
             path.write_text(json.dumps(record))
             self.assertIn('does not cover', spring_bench.parity_problems('petclinic-rest', 'abc')[0])

@@ -138,7 +138,9 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/greeting", s.greeting)
 	mux.HandleFunc("/", notFound)
-	httpServer := &http.Server{Handler: mux, ReadHeaderTimeout: 10 * time.Second}
+	// ADR-033: Tomcat's keep-alive request limit.
+	httpServer := &http.Server{Handler: keepAliveLimit(mux), ConnContext: parityConnContext,
+		ReadHeaderTimeout: 10 * time.Second}
 	listener, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		log.Fatal(err)

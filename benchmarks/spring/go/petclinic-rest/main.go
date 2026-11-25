@@ -55,7 +55,8 @@ func run(ctx context.Context) error {
 		return err
 	}
 	server := &http.Server{
-		Handler:           container(routes(&clinic{db: db})),
+		Handler:           keepAliveLimit(container(routes(&clinic{db: db}))), // ADR-033: Tomcat's keep-alive limit
+		ConnContext:       parityConnContext,
 		ReadHeaderTimeout: 20 * time.Second, // Tomcat's connectionTimeout
 	}
 	served := make(chan error, 1)

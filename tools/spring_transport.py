@@ -244,6 +244,39 @@ def exchange(port, spec):
 
 
 # ---------------------------------------------------------------------------------------------------------------
+# ADR-033: Tomcat's keep-alive request limit (owner decision 8163a833)
+
+# server.tomcat.max-keep-alive-requests, Spring Boot's default: Tomcat answers the Nth request on a connection with
+# `Connection: close` and closes it. The golden cannot record it (one request per connection), so the expectation is
+# this constant, confirmed against the Java reference with `spring_transport.py keepalive --impl java`.
+MAX_KEEP_ALIVE_REQUESTS = 100
+
+
+def keep_alive_probe(port, spec, limit=MAX_KEEP_ALIVE_REQUESTS, extra=5):
+    """Requests in a row on one connection until the server closes it or limit + extra are answered: which response
+    first says `Connection: close`, and after how many responses the connection closed (None: never)."""
+    request = request_bytes(spec, port)
+    announced, answered = None, 0
+    with socket.create_connection(('127.0.0.1', port), timeout=5) as sock:
+        reader = Reader(sock)
+        while answered < limit + extra:
+            try:
+                sock.sendall(request)
+                _, response = read_response(reader)
+            except (EOFError, ConnectionResetError, BrokenPipeError):
+                return {'announced_at': announced, 'closed_after': answered}
+            answered += 1
+            if announced is None and (response['connection'] or '').lower() == 'close':
+                announced = answered
+    return {'announced_at': announced, 'closed_after': None}
+
+
+def keep_alive_problems(observed, limit=MAX_KEEP_ALIVE_REQUESTS):
+    expected = {'announced_at': limit, 'closed_after': limit}
+    return [] if observed == expected else [f'keep-alive limit: expected {expected}, got {observed}']
+
+
+# ---------------------------------------------------------------------------------------------------------------
 # ADR-033: parity with the golden on the gated paths
 
 
@@ -330,33 +363,17 @@ def parity_main(argv):
           else contextlib.nullcontext()) as database:
         for key, (path, spec) in gated.items():
             expected, cases = golden_transport(golden, spec)
-            port = spring.free_port()
-            argv, env, cwd = spring.launch(a.app, a.impl, port, database, (), binary)
-            with tempfile_log() as log:
-                process = subprocess.Popen(argv, cwd=cwd, env=env, stdout=log, stderr=subprocess.STDOUT,
-                                           start_new_session=True)
-                try:
-                    exchanges = None
-                    deadline = time.monotonic() + 30
-                    while exchanges is None:
-                        require(process.poll() is None, f'{a.app} [{a.impl}] exited before it answered')
-                        try:
-                            exchanges = [exchange(port, spec) for _ in range(3)]
-                        except OSError:
-                            require(time.monotonic() < deadline, f'{a.app} [{a.impl}] did not answer')
-                            time.sleep(.1)
-                finally:
-                    process.terminate()
-                    try:
-                        process.wait(10)
-                    except subprocess.TimeoutExpired:
-                        process.kill()
-                        process.wait()
+            with serving(spring, a.app, a.impl, binary, database, spec) as port:
+                exchanges = [exchange(port, spec) for _ in range(3)]
+                # Tomcat's keep-alive limit (owner decision 8163a833), on each workload whose connection is kept.
+                keep_alive = keep_alive_probe(port, spec) if expected['connection'] == 'keep' else None
             observed = [observed_transport(result) for result in exchanges]
             problems = sorted({problem for seen in observed for problem in parity_problems(expected, seen)})
+            if keep_alive is not None:
+                problems += keep_alive_problems(keep_alive)
             record['workloads'][key] = {'manifest': path, 'golden_cases': cases, 'expected': expected, 'observed': observed[0],
                                         'repeats_agree': all(seen == observed[0] for seen in observed),
-                                        'problems': problems,
+                                        'keep_alive': keep_alive, 'problems': problems,
                                         'response': exchanges[0]['first']['raw']}
             print(f"{key} [{a.impl}]: {'parity' if not problems else '; '.join(problems)}")
     # Every request the black-box suite scores, in the `parity` wire mode (owner decision 081851b0).
@@ -376,10 +393,63 @@ def parity_main(argv):
 
 
 @__import__('contextlib').contextmanager
-def tempfile_log():
+def serving(spring, app, impl, binary, database, spec):
+    """One implementation started on a free port, yielded once it answers the workload's request."""
     import tempfile
-    with tempfile.TemporaryFile() as stream:
-        yield stream
+    port = spring.free_port()
+    argv, env, cwd = spring.launch(app, impl, port, database, (), binary)
+    with tempfile.TemporaryFile() as log:
+        process = subprocess.Popen(argv, cwd=cwd, env=env, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
+        try:
+            deadline = time.monotonic() + (120 if impl == 'java' else 30)
+            while True:
+                require(process.poll() is None, f'{app} [{impl}] exited before it answered')
+                try:
+                    exchange(port, spec)
+                    break
+                except OSError:
+                    require(time.monotonic() < deadline, f'{app} [{impl}] did not answer')
+                    time.sleep(.1)
+            yield port
+        finally:
+            process.terminate()
+            try:
+                process.wait(10)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait()
+
+
+def keepalive_main(argv):
+    """`spring_transport.py keepalive --app <app> --impl java|go|flint [--binary]`: the keep-alive limit each
+    implementation applies on each of the app's kept timed workloads (the Java run confirms Tomcat's)."""
+    p = argparse.ArgumentParser(prog='spring_transport.py keepalive')
+    p.add_argument('--app', required=True)
+    p.add_argument('--impl', choices=['java', 'go', 'flint'], required=True)
+    p.add_argument('--binary', type=Path)
+    a = p.parse_args(argv)
+    sys.path.insert(0, str(HERE))
+    import spring_bench as spring
+    import contextlib
+    binary = a.binary.resolve() if a.binary else None
+    if a.impl == 'java':
+        spring.build_java(a.app)
+    elif binary is None:
+        binary = spring.build_go(a.app) if a.impl == 'go' else spring.build_flint(a.app)
+    manifests = {path: json.loads((spring.ROOT / path).read_text()) for path in GATED}
+    result = 0
+    with (spring.postgres_cluster() if spring.app_row(a.app).get('database') == 'postgres'
+          else contextlib.nullcontext()) as database:
+        for path in GATED:
+            for key, spec in manifests[path]['apps'].items():
+                if spec.get('app', key) != a.app:
+                    continue
+                with serving(spring, a.app, a.impl, binary, database, spec) as port:
+                    observed = keep_alive_probe(port, spec)
+                problems = keep_alive_problems(observed)
+                print(json.dumps({'workload': key, 'impl': a.impl, **observed, 'problems': problems}))
+                result |= bool(problems)
+    return result
 
 
 # ---------------------------------------------------------------------------------------------------------------
@@ -449,6 +519,8 @@ def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
     if argv[:1] == ['parity']:
         return parity_main(argv[1:])
+    if argv[:1] == ['keepalive']:
+        return keepalive_main(argv[1:])
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument('--workload', action='append', choices=list(WORKLOADS))
     p.add_argument('--trials', type=int, default=7, help='interleaved trials of each Go arm')
