@@ -34,6 +34,9 @@ private struct Attribute
     Any value;
 }
 
+// The first growth past the eight inline slots (setAttribute) stays within druntime's 1,024-byte size class.
+static assert((8 * 7 / 4) * Attribute.sizeof <= 1024);
+
 private struct Parameter
 {
     string name;
@@ -317,8 +320,11 @@ final class ServletEngineRequest : HttpServletRequest, HeaderFieldSource
             attributeSlots[index].value = o;
             return;
         }
+        // A copy on the GC heap (inline slots cannot grow), by 7/4: the first, eight to fourteen 72-byte slots, fills
+        // druntime's 1,024-byte size class, where doubling to sixteen took a 1,360-byte block. A 404's error forward
+        // sets about a dozen attributes (R-83).
         if (attributeCount == attributeSlots.length)
-            attributeSlots.length = attributeCount * 2; // a copy on the GC heap: inline slots cannot grow
+            attributeSlots.length = attributeCount * 7 / 4;
         attributeSlots[attributeCount++] = Attribute(name, o);
     }
 
