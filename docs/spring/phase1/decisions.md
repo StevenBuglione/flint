@@ -823,3 +823,17 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
 - 2026-11-25, coordinator: **posidon is the timed-diagnostics runner** (owner provided olfa@10.10.10.12). It's an i7-11700K (8 cores, 16 threads), 31 GB RAM, Ubuntu 24.04, kernel 6.8, the same pinned DMD v4.2, LDC, Go, oha, PostgreSQL 18.7 and liburing as venus. Acceptance passes there (18/18, 109/109, 1/1, Go in parity mode), and `load_bench --smoke` passes. `~/flint-work/bench-mode.sh on|off|status` is on: performance governor, docker, snapd, apt and other timers stopped, the network untouched.
   - **Use:** timed before/after (A/B) diagnostics that a session needs beyond deterministic counts. Its numbers are NEVER certification evidence and never mixed with venus (different CPU and kernel; its PostgreSQL CPUs 8–9 are hyperthread siblings of cores 0–1). venus does certification only.
   - **Rules:** one timed run at a time, under `tools/measure_queue.py hold` on posidon. Stop every server you start. Push your commit to posidon's bare repo (`git push olfa@10.10.10.12:flint-work/flint.git <commit>:refs/heads/<your-role>`, key `~/.ssh/full-access-ssh-key`) rather than copying trees. Re-emit native blocks after a pull. Never delete the owner's files there; the disk has 18 GB free.
+- 2026-11-25, coordinator: **B4 = `fb4c73d1adc7550f728b76b3e53258f0708cb4d3`**, named now rather than at 09:00Z, so it doesn't sit idle for 3 hours. Beyond B3 it adds:
+  - **responses:** sent on handler return (83973b57) and io_uring poll waits (e03f50f4);
+  - **petclinic:** BEGIN pipelined with the first query (2719028d), libpq read driving (da10da45), the fast-path S1–S4 (S4 18c696a6: owner 1 at −18.9% instructions), the JDBC allocation slices (owner 1 at about 107 allocations, from 164) and the pgjdbc catalog port (census 0 of 109);
+  - **404:** the shortcut's engine and Boot halves (not active until flint-aot's bean lands);
+  - **builds:** the AOT digest fix;
+  - **fidelity:** Tomcat's keep-alive limit on Flint and Go.
+
+  Runtime parts run Flint-only against the `-3` Go records (8d29301a comparators), and the guard's fallback switches any part that fails it to interleaved; the cross-session bands land after 08:30Z and apply from B5. Order:
+  1. builds for the three apps (strict, 0 refused);
+  2. phase1-http-petclinic;
+  3. phase1-http-gs-rest;
+  4. error-validation-p99 and error-404-p99.
+
+  The calibration sessions keep their slots.
