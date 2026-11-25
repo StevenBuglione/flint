@@ -1,0 +1,68 @@
+{"workload": "gs-rest-service:not-found", "exchange": "flint", "framing": "chunked", "reused": true}
+{"workload": "gs-rest-service:not-found", "exchange": "java-jvm", "framing": "chunked", "reused": true}
+{"workload": "gs-rest-service:not-found", "exchange": "go", "framing": "content-length", "reused": true}
+{"workload": "gs-rest-service:not-found", "exchange": "go-chunked", "framing": "chunked", "reused": true}
+{"workload": "gs-rest-service:not-found", "trial": 0, "arm": "go", "p99_us": 108, "accepts_per_request": 0.0002}
+{"workload": "gs-rest-service:not-found", "trial": 0, "arm": "go-chunked", "p99_us": 106, "accepts_per_request": 0.0002}
+{"workload": "gs-rest-service:not-found", "trial": 1, "arm": "go-chunked", "p99_us": 139, "accepts_per_request": 0.0002}
+{"workload": "gs-rest-service:not-found", "trial": 1, "arm": "go", "p99_us": 124, "accepts_per_request": 0.0002}
+{"workload": "gs-rest-service:not-found", "trial": 2, "arm": "go", "p99_us": 114, "accepts_per_request": 0.0002}
+{"workload": "gs-rest-service:not-found", "trial": 2, "arm": "go-chunked", "p99_us": 114, "accepts_per_request": 0.0002}
+{"workload": "gs-rest-service:not-found", "trial": 3, "arm": "go-chunked", "p99_us": 154, "accepts_per_request": 0.0002}
+{"workload": "gs-rest-service:not-found", "trial": 3, "arm": "go", "p99_us": 106, "accepts_per_request": 0.0002}
+{"workload": "gs-rest-service:not-found", "trial": 4, "arm": "go", "p99_us": 119, "accepts_per_request": 0.0002}
+{"workload": "gs-rest-service:not-found", "trial": 4, "arm": "go-chunked", "p99_us": 102, "accepts_per_request": 0.0002}
+{"workload": "gs-rest-service:not-found", "trial": 5, "arm": "go-chunked", "p99_us": 115, "accepts_per_request": 0.0002}
+{"workload": "gs-rest-service:not-found", "trial": 5, "arm": "go", "p99_us": 107, "accepts_per_request": 0.0002}
+{"workload": "gs-rest-service:not-found", "trial": 6, "arm": "go", "p99_us": 111, "accepts_per_request": 0.0002}
+{"workload": "gs-rest-service:not-found", "trial": 6, "arm": "go-chunked", "p99_us": 110, "accepts_per_request": 0.0002}
+{"workload": "gs-rest-service:not-found", "trial": 7, "arm": "flint", "p99_us": 327, "accepts_per_request": 0.0002}
+{"workload": "gs-rest-service:not-found", "trial": 7, "arm": "java-jvm", "p99_us": 622, "accepts_per_request": 0.0101}
+{"workload": "petclinic-rest:validation-error", "exchange": "flint", "framing": "chunked", "reused": false}
+{"workload": "petclinic-rest:validation-error", "exchange": "java-jvm", "framing": "chunked", "reused": false}
+{"workload": "petclinic-rest:validation-error", "exchange": "go", "framing": "content-length", "reused": true}
+{"workload": "petclinic-rest:validation-error", "exchange": "go-chunked", "framing": "chunked", "reused": true}
+{"workload": "petclinic-rest:validation-error", "exchange": "go-chunked-close", "framing": "chunked", "reused": false}
+{"workload": "petclinic-rest:validation-error", "trial": 0, "arm": "go", "p99_us": 121, "accepts_per_request": 0.0004}
+{"workload": "petclinic-rest:validation-error", "trial": 0, "arm": "go-chunked", "p99_us": 128, "accepts_per_request": 0.0004}
+{"workload": "petclinic-rest:validation-error", "trial": 0, "arm": "go-chunked-close", "p99_us": 210, "accepts_per_request": 1.0}
+{"workload": "petclinic-rest:validation-error", "trial": 1, "arm": "go-chunked", "p99_us": 120, "accepts_per_request": 0.0004}
+{"workload": "petclinic-rest:validation-error", "trial": 1, "arm": "go-chunked-close", "p99_us": 223, "accepts_per_request": 1.0}
+{"workload": "petclinic-rest:validation-error", "trial": 1, "arm": "go", "p99_us": 124, "accepts_per_request": 0.0004}
+{"workload": "petclinic-rest:validation-error", "trial": 2, "arm": "go-chunked-close", "p99_us": 212, "accepts_per_request": 1.0}
+{"workload": "petclinic-rest:validation-error", "trial": 2, "arm": "go", "p99_us": 127, "accepts_per_request": 0.0004}
+{"workload": "petclinic-rest:validation-error", "trial": 2, "arm": "go-chunked", "p99_us": 135, "accepts_per_request": 0.0004}
+{"workload": "petclinic-rest:validation-error", "trial": 3, "arm": "go", "p99_us": 118, "accepts_per_request": 0.0004}
+{"workload": "petclinic-rest:validation-error", "trial": 3, "arm": "go-chunked", "p99_us": 126, "accepts_per_request": 0.0004}
+{"workload": "petclinic-rest:validation-error", "trial": 3, "arm": "go-chunked-close", "p99_us": 206, "accepts_per_request": 1.0}
+{"workload": "petclinic-rest:validation-error", "trial": 4, "arm": "go-chunked", "p99_us": 126, "accepts_per_request": 0.0004}
+{"workload": "petclinic-rest:validation-error", "trial": 4, "arm": "go-chunked-close", "p99_us": 205, "accepts_per_request": 1.0}
+{"workload": "petclinic-rest:validation-error", "trial": 4, "arm": "go", "p99_us": 115, "accepts_per_request": 0.0004}
+{"workload": "petclinic-rest:validation-error", "trial": 5, "arm": "go-chunked-close", "p99_us": 210, "accepts_per_request": 1.0}
+{"workload": "petclinic-rest:validation-error", "trial": 5, "arm": "go", "p99_us": 121, "accepts_per_request": 0.0004}
+{"workload": "petclinic-rest:validation-error", "trial": 5, "arm": "go-chunked", "p99_us": 119, "accepts_per_request": 0.0004}
+{"workload": "petclinic-rest:validation-error", "trial": 6, "arm": "go", "p99_us": 122, "accepts_per_request": 0.0004}
+{"workload": "petclinic-rest:validation-error", "trial": 6, "arm": "go-chunked", "p99_us": 120, "accepts_per_request": 0.0004}
+{"workload": "petclinic-rest:validation-error", "trial": 6, "arm": "go-chunked-close", "p99_us": 202, "accepts_per_request": 1.0}
+{"workload": "petclinic-rest:validation-error", "trial": 7, "arm": "flint", "p99_us": 388, "accepts_per_request": 1.0}
+{"workload": "petclinic-rest:validation-error", "trial": 7, "arm": "java-jvm", "p99_us": 48823, "accepts_per_request": 1.0}
+{"workload": "petclinic-rest", "exchange": "flint", "framing": "chunked", "reused": true}
+{"workload": "petclinic-rest", "exchange": "java-jvm", "framing": "chunked", "reused": true}
+{"workload": "petclinic-rest", "exchange": "go", "framing": "content-length", "reused": true}
+{"workload": "petclinic-rest", "exchange": "go-chunked", "framing": "chunked", "reused": true}
+{"workload": "petclinic-rest", "trial": 0, "arm": "go", "p99_us": 597, "accepts_per_request": 0.0004}
+{"workload": "petclinic-rest", "trial": 0, "arm": "go-chunked", "p99_us": 563, "accepts_per_request": 0.0004}
+{"workload": "petclinic-rest", "trial": 1, "arm": "go-chunked", "p99_us": 550, "accepts_per_request": 0.0004}
+{"workload": "petclinic-rest", "trial": 1, "arm": "go", "p99_us": 588, "accepts_per_request": 0.0004}
+{"workload": "petclinic-rest", "trial": 2, "arm": "go", "p99_us": 609, "accepts_per_request": 0.0004}
+{"workload": "petclinic-rest", "trial": 2, "arm": "go-chunked", "p99_us": 545, "accepts_per_request": 0.0004}
+{"workload": "petclinic-rest", "trial": 3, "arm": "go-chunked", "p99_us": 553, "accepts_per_request": 0.0004}
+{"workload": "petclinic-rest", "trial": 3, "arm": "go", "p99_us": 600, "accepts_per_request": 0.0004}
+{"workload": "petclinic-rest", "trial": 4, "arm": "go", "p99_us": 625, "accepts_per_request": 0.0004}
+{"workload": "petclinic-rest", "trial": 4, "arm": "go-chunked", "p99_us": 541, "accepts_per_request": 0.0004}
+{"workload": "petclinic-rest", "trial": 5, "arm": "go-chunked", "p99_us": 539, "accepts_per_request": 0.0004}
+{"workload": "petclinic-rest", "trial": 5, "arm": "go", "p99_us": 602, "accepts_per_request": 0.0004}
+{"workload": "petclinic-rest", "trial": 6, "arm": "go", "p99_us": 610, "accepts_per_request": 0.0004}
+{"workload": "petclinic-rest", "trial": 6, "arm": "go-chunked", "p99_us": 551, "accepts_per_request": 0.0004}
+{"workload": "petclinic-rest", "trial": 7, "arm": "flint", "p99_us": 852, "accepts_per_request": 0.0004}
+{"workload": "petclinic-rest", "trial": 7, "arm": "java-jvm", "p99_us": 585914, "accepts_per_request": 0.0102}

@@ -800,3 +800,12 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - context: p50 2.66 (109 against 41 µs); CPU per request 2.98 (47.2 against 15.8 µs); capacity 0.227 (35,800 against 157,900 req/s, Flint reconnecting after every 400); RSS 0.69; p99.9 2.21.
 
     Evidence: `benchmarks/spring/evidence/error-validation-p99/20261124T232105Z/`.
+- 2026-11-25, proof-harness: **transport-pricing measured** (ADR-033's price, diagnostic, never evidence; B3's tree with the pre-parity comparators, 00:10–01:07Z, claimed, no foreign activity; 7 interleaved trials per Go arm). Go variant / Go as it was:
+    - **chunked framing costs almost nothing**: the 404's p99 is 1.03 (not significant) and CPU 1.01; the owner GET's p99 is 0.91 and CPU 1.01; the 400's CPU is 1.04 and capacity 0.92;
+    - **close-after-400 is the price**: p99 1.74 (121 to 210 µs), p50 2.42, CPU 1.98 (15.9 to 31.4 µs), capacity 0.331, 1.0 accepts per request (against 0.0004).
+
+    Java and Flint send identical transport on all three paths (no reason phrase, chunked, the 400 closed). At these levels Flint's validation p99 against the parity comparator would be about 1.85, against 3.23 at B3.
+
+    New question for the owner: Tomcat's default `maxKeepAliveRequests` of 100 closes Java's kept connections about once per 100 requests (0.0101 accepts per request). Neither Flint nor Go does this, and the golden cannot record it.
+
+    Evidence: `benchmarks/spring/evidence/transport-pricing/20261125T001045Z/`, with ADR-033's price section.

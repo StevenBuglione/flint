@@ -48,7 +48,27 @@ The price is measured by `tools/spring_transport.py`, queue entry `transport-pri
 
 The workloads are the 404, the validation 400 and petclinic's owner GET.
 
-**Results: added when the entry reports.**
+**Results** (`benchmarks/spring/evidence/transport-pricing/20261125T001045Z/`, 2026-11-25 00:10–01:07Z, a claimed window with no foreign activity). Seven interleaved trials per Go arm: 30 s at the fixed rate, then 20 s at capacity. Ratios are variant / Go as it was, median (99% interval).
+
+| Workload | Variant | p50 | p99 | CPU per request | Capacity | Accepts per request |
+|---|---|---|---|---|---|---|
+| 404 | chunked | 1.01 | 1.03 (0.89–1.38) | 1.01 | 0.964 | 0.0002, as before |
+| validation 400 | chunked | 1.03 | 1.04 (0.97–1.12) | 1.04 | 0.922 | 0.0004, as before |
+| validation 400 | chunked, closed after the 400 | **2.42** | **1.74** (1.65–1.84) | **1.98** | **0.331** | **1.0** |
+| owner GET | chunked | 0.98 | 0.91 (0.88–0.94) | 1.01 | 0.987 | 0.0004, as before |
+
+The raw exchanges confirm the starting point:
+- Java and Flint answer identically on all three paths: no reason phrase, chunked, the 404 and the owner GET reused, the 400 with `Connection: close` and then closed.
+- Go as it was sends the reason phrase and `Content-Length`, and keeps every connection.
+
+What the prices mean:
+- **Chunked framing costs Go almost nothing.** On the 404 and the owner GET no latency difference is significant. On the 400 it costs about 4% CPU and 8% capacity.
+- **Close-after-400 is the real price.** Go's p99 goes from 121 to 210 µs, CPU per request from 15.9 to 31.4 µs, and capacity falls to a third.
+- **Flint against the parity comparator**, at the levels measured here: the validation p99 ratio would be about 388 / 210 = 1.85 rather than 3.23 at B3. The 404 stays about 2.9, and the owner GET's p99 about 852 / 550 = 1.55.
+
+The reason phrase was not a separate arm: it changes a few bytes of the status line.
+
+**Context, not gated: Tomcat's keep-alive limit.** Java accepted about 0.0101 connections per request on the paths it keeps, about one per 100 requests. That is Tomcat's default `maxKeepAliveRequests` of 100. Neither Flint nor Go has that limit, so the two sides stay equal. The golden cannot record a limit that only a hundred requests on one connection reveal, so it is outside this ADR's rule and goes to the owner as a question.
 
 ## Decision
 
