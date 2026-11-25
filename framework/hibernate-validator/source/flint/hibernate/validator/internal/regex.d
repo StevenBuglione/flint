@@ -1549,8 +1549,21 @@ private struct Matcher
     private void span(ref const Inst inst, ref int pc, ref int pos, ref FrameStack stack) scope
     {
         const start = pos;
-        while (pos < text.length && accepts(cast(I) inst.y, inst.c, inst.x, text[pos]))
-            ++pos;
+        const op = cast(I) inst.y;
+        if (op == I.set)
+        {
+            // A class's run: ASCII from its table inline, the rest through its terms.
+            const ascii = sets[inst.x].ascii;
+            foreach (c; text[pos .. $])
+            {
+                if (c < 0x80 ? ((ascii[c >> 6] >> (c & 63)) & 1) == 0 : !contains(sets, inst.x, c))
+                    break;
+                ++pos;
+            }
+        }
+        else
+            while (pos < text.length && accepts(op, inst.c, inst.x, text[pos]))
+                ++pos;
         steps += pos - start; // the step budget still bounds the characters a match examines
         if (pos > start)
             stack.push(Frame(pc + 1, pos, start, spanFrame));
