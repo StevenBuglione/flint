@@ -1,0 +1,592 @@
+{
+  "schema": "flint.spring-diag/1",
+  "evidence": false,
+  "app": "petclinic-rest",
+  "path": "/petclinic/api/owners/1",
+  "ladder": [
+    64
+  ],
+  "seconds": 20,
+  "warmup_seconds": 5,
+  "workload_cpus": {
+    "server_cpus": [
+      2,
+      3
+    ],
+    "load_cpus": [
+      4,
+      5,
+      6,
+      7
+    ],
+    "database_cpus": [
+      8,
+      9
+    ]
+  },
+  "binaries": {
+    "flint": {
+      "executable": "/home/olfa/flint-work/wt-proof-harness/build/spring/petclinic-rest-flint",
+      "sha256": "270d574045423ef1c190e5779388be063669fcafaffcf33264ef71c6451ddf8b",
+      "env": {}
+    },
+    "floor-minimal": {
+      "executable": "/home/olfa/flint-work/wt-proof-harness/benchmarks/spring/floor/petclinic-owner1/.flint/build/release/petclinic-floor",
+      "sha256": "9f071f20da7f84de3a075d4241627f8010487ada8ffd20463d37b5a6febceefc",
+      "env": {
+        "FLOOR_ARM": "minimal"
+      }
+    },
+    "floor-mapped": {
+      "executable": "/home/olfa/flint-work/wt-proof-harness/benchmarks/spring/floor/petclinic-owner1/.flint/build/release/petclinic-floor",
+      "sha256": "9f071f20da7f84de3a075d4241627f8010487ada8ffd20463d37b5a6febceefc",
+      "env": {
+        "FLOOR_ARM": "mapped"
+      }
+    }
+  },
+  "steps": {
+    "flint": [
+      {
+        "connections": 64,
+        "fixed_rate": null,
+        "seconds": 20,
+        "requests": 338029,
+        "statuses": {
+          "200": 338029
+        },
+        "unexpected_statuses": 0,
+        "requests_per_second": 16902.914474663106,
+        "latency_ms": {
+          "mean": 3.7845048791731153,
+          "p50": 3.68783,
+          "p99": 4.672819,
+          "p999": 4.9961590000000005
+        },
+        "server_cpu_seconds": 39.2,
+        "server_cpu_us_per_request": 115.96638158264528,
+        "server_cpu_per_thread": {
+          "petclinic-rest-[88856]": 19.42,
+          "petclinic-rest-[88857]": 19.33,
+          "petclinic-rest-[88852]": 0.42,
+          "petclinic-rest-[88850]": 0.01,
+          "petclinic-rest-[88851]": 0.01,
+          "petclinic-rest-[88855]": 0.01
+        },
+        "perf": {
+          "available": true,
+          "perf_event_paranoid": 2,
+          "per_request": {},
+          "unavailable": []
+        },
+        "postgres_cpu_seconds": 25.16,
+        "postgres_cpu_us_per_request": 74.43148368926927,
+        "counters": {
+          "schema": "flint.diag-counters/1",
+          "timers": {
+            "sql.lease_wait": {
+              "count": 421089,
+              "sum_ns": 1351013384200,
+              "max_ns": 9713800,
+              "mean_ns": 3208379.6636815495
+            },
+            "sql.lease_hold": {
+              "count": 421089,
+              "sum_ns": 182465150700,
+              "max_ns": 13365300,
+              "mean_ns": 433317.3051302694
+            },
+            "sql.drive": {
+              "count": 1684425,
+              "sum_ns": 171169822200,
+              "max_ns": 9087300,
+              "mean_ns": 101619.14136871633
+            },
+            "sql.socket_wait": {
+              "count": 1684534,
+              "sum_ns": 151360678400,
+              "max_ns": 9063800,
+              "mean_ns": 89853.1453802654
+            },
+            "sql.handoff": {
+              "count": 238245,
+              "sum_ns": 11812414500,
+              "max_ns": 0,
+              "mean_ns": 49580.95447963231
+            }
+          },
+          "gauges": {
+            "sql.acquires": 421089,
+            "sql.queued_acquires": 421067,
+            "sql.releases_with_waiters": 421073,
+            "sql.idle_with_waiters_ns": 11812414500,
+            "sql.max_queue_depth": 63,
+            "sql.statements": 1684425,
+            "sql.rows": 3368696
+          }
+        }
+      },
+      {
+        "connections": 64,
+        "fixed_rate": 5000,
+        "seconds": 20,
+        "requests": 99997,
+        "statuses": {
+          "200": 99997
+        },
+        "unexpected_statuses": 0,
+        "requests_per_second": 4999.687705633633,
+        "latency_ms": {
+          "mean": 0.47597847886436917,
+          "p50": 0.40557,
+          "p99": 1.948587,
+          "p999": 8.817836000000002
+        },
+        "server_cpu_seconds": 11.91,
+        "server_cpu_us_per_request": 119.10357310719321,
+        "server_cpu_per_thread": {
+          "petclinic-rest-[89252]": 6.0,
+          "petclinic-rest-[89253]": 5.82,
+          "petclinic-rest-[89248]": 0.09
+        },
+        "perf": {
+          "available": true,
+          "perf_event_paranoid": 2,
+          "per_request": {},
+          "unavailable": []
+        },
+        "postgres_cpu_seconds": 7.96,
+        "postgres_cpu_us_per_request": 79.60238807164215,
+        "counters": {
+          "schema": "flint.diag-counters/1",
+          "timers": {
+            "sql.lease_wait": {
+              "count": 124994,
+              "sum_ns": 2960881400,
+              "max_ns": 13940600,
+              "mean_ns": 23688.188233035187
+            },
+            "sql.lease_hold": {
+              "count": 124994,
+              "sum_ns": 41396397200,
+              "max_ns": 20649900,
+              "mean_ns": 331187.0745795798
+            },
+            "sql.drive": {
+              "count": 500045,
+              "sum_ns": 38208593300,
+              "max_ns": 16659200,
+              "mean_ns": 76410.30967212952
+            },
+            "sql.socket_wait": {
+              "count": 500156,
+              "sum_ns": 32082605300,
+              "max_ns": 12209400,
+              "mean_ns": 64145.19729844289
+            },
+            "sql.handoff": {
+              "count": 806,
+              "sum_ns": 65266400,
+              "max_ns": 0,
+              "mean_ns": 80975.682382134
+            }
+          },
+          "gauges": {
+            "sql.acquires": 124994,
+            "sql.queued_acquires": 1138,
+            "sql.releases_with_waiters": 1218,
+            "sql.idle_with_waiters_ns": 65266400,
+            "sql.max_queue_depth": 55,
+            "sql.statements": 500045,
+            "sql.rows": 999936
+          }
+        }
+      }
+    ],
+    "floor-minimal": [
+      {
+        "connections": 64,
+        "fixed_rate": null,
+        "seconds": 20,
+        "requests": 375414,
+        "statuses": {
+          "200": 375414
+        },
+        "unexpected_statuses": 0,
+        "requests_per_second": 18772.901413055137,
+        "latency_ms": {
+          "mean": 3.4069653387113954,
+          "p50": 2.794025,
+          "p99": 11.930866,
+          "p999": 18.734865
+        },
+        "server_cpu_seconds": 24.18,
+        "server_cpu_us_per_request": 64.40889258258882,
+        "server_cpu_per_thread": {
+          "petclinic-floor[89886]": 12.62,
+          "petclinic-floor[89885]": 11.56
+        },
+        "perf": {
+          "available": true,
+          "perf_event_paranoid": 2,
+          "per_request": {},
+          "unavailable": []
+        },
+        "postgres_cpu_seconds": 30.42,
+        "postgres_cpu_us_per_request": 81.03054228132143,
+        "counters": {
+          "schema": "flint.diag-counters/1",
+          "timers": {
+            "sql.lease_wait": {
+              "count": 512331,
+              "sum_ns": 1356246738100,
+              "max_ns": 24219700,
+              "mean_ns": 2647208.03172168
+            },
+            "sql.lease_hold": {
+              "count": 512331,
+              "sum_ns": 206864650000,
+              "max_ns": 16001800,
+              "mean_ns": 403771.48757346324
+            },
+            "sql.drive": {
+              "count": 2049322,
+              "sum_ns": 205405810300,
+              "max_ns": 12442700,
+              "mean_ns": 100231.10584866605
+            },
+            "sql.socket_wait": {
+              "count": 2049503,
+              "sum_ns": 187584858900,
+              "max_ns": 12434300,
+              "mean_ns": 91526.99893583957
+            },
+            "sql.handoff": {
+              "count": 391176,
+              "sum_ns": 10297506700,
+              "max_ns": 0,
+              "mean_ns": 26324.48488659836
+            }
+          },
+          "gauges": {
+            "sql.acquires": 512331,
+            "sql.queued_acquires": 512310,
+            "sql.releases_with_waiters": 512310,
+            "sql.idle_with_waiters_ns": 10297506700,
+            "sql.max_queue_depth": 64,
+            "sql.statements": 2049322,
+            "sql.rows": 4098640
+          }
+        }
+      },
+      {
+        "connections": 64,
+        "fixed_rate": 5000,
+        "seconds": 20,
+        "requests": 99991,
+        "statuses": {
+          "200": 99991
+        },
+        "unexpected_statuses": 0,
+        "requests_per_second": 4999.517635196743,
+        "latency_ms": {
+          "mean": 0.44352098495864184,
+          "p50": 0.288705,
+          "p99": 3.2920480000000003,
+          "p999": 4.927078
+        },
+        "server_cpu_seconds": 6.5,
+        "server_cpu_us_per_request": 65.00585052654739,
+        "server_cpu_per_thread": {
+          "petclinic-floor[90386]": 4.76,
+          "petclinic-floor[90387]": 1.74
+        },
+        "perf": {
+          "available": true,
+          "perf_event_paranoid": 2,
+          "per_request": {},
+          "unavailable": []
+        },
+        "postgres_cpu_seconds": 8.49,
+        "postgres_cpu_us_per_request": 84.9076416877519,
+        "counters": {
+          "schema": "flint.diag-counters/1",
+          "timers": {
+            "sql.lease_wait": {
+              "count": 124991,
+              "sum_ns": 6414607600,
+              "max_ns": 23920000,
+              "mean_ns": 51320.55588002336
+            },
+            "sql.lease_hold": {
+              "count": 124991,
+              "sum_ns": 40518556100,
+              "max_ns": 45783700,
+              "mean_ns": 324171.78916882013
+            },
+            "sql.drive": {
+              "count": 499962,
+              "sum_ns": 40199248200,
+              "max_ns": 34865000,
+              "mean_ns": 80404.6071501434
+            },
+            "sql.socket_wait": {
+              "count": 500139,
+              "sum_ns": 35888894100,
+              "max_ns": 14147000,
+              "mean_ns": 71757.83952061327
+            },
+            "sql.handoff": {
+              "count": 2349,
+              "sum_ns": 133492700,
+              "max_ns": 0,
+              "mean_ns": 56829.58705832269
+            }
+          },
+          "gauges": {
+            "sql.acquires": 124991,
+            "sql.queued_acquires": 2985,
+            "sql.releases_with_waiters": 3330,
+            "sql.idle_with_waiters_ns": 133492700,
+            "sql.max_queue_depth": 64,
+            "sql.statements": 499962,
+            "sql.rows": 999920
+          }
+        }
+      }
+    ],
+    "floor-mapped": [
+      {
+        "connections": 64,
+        "fixed_rate": null,
+        "seconds": 20,
+        "requests": 245089,
+        "statuses": {
+          "200": 245089
+        },
+        "unexpected_statuses": 0,
+        "requests_per_second": 12256.650739165705,
+        "latency_ms": {
+          "mean": 5.218746455365246,
+          "p50": 3.1019300000000003,
+          "p99": 13.891833,
+          "p999": 22.058944
+        },
+        "server_cpu_seconds": 18.74,
+        "server_cpu_us_per_request": 76.46201991929462,
+        "server_cpu_per_thread": {
+          "petclinic-floor[90656]": 9.6,
+          "petclinic-floor[90655]": 9.12,
+          "petclinic-floor[90692]": 0.02
+        },
+        "perf": {
+          "available": true,
+          "perf_event_paranoid": 2,
+          "per_request": {},
+          "unavailable": []
+        },
+        "postgres_cpu_seconds": 22.07,
+        "postgres_cpu_us_per_request": 90.04892100420663,
+        "counters": {
+          "schema": "flint.diag-counters/1",
+          "timers": {
+            "sql.lease_wait": {
+              "count": 343492,
+              "sum_ns": 1379533653500,
+              "max_ns": 57507600,
+              "mean_ns": 4016203.153202986
+            },
+            "sql.lease_hold": {
+              "count": 343492,
+              "sum_ns": 178093092600,
+              "max_ns": 50019600,
+              "mean_ns": 518478.1380643508
+            },
+            "sql.drive": {
+              "count": 1373966,
+              "sum_ns": 176998843200,
+              "max_ns": 49402800,
+              "mean_ns": 128823.30654470343
+            },
+            "sql.socket_wait": {
+              "count": 1374139,
+              "sum_ns": 164277831400,
+              "max_ns": 49393500,
+              "mean_ns": 119549.64628760263
+            },
+            "sql.handoff": {
+              "count": 239330,
+              "sum_ns": 14345579400,
+              "max_ns": 0,
+              "mean_ns": 59940.581623699494
+            }
+          },
+          "gauges": {
+            "sql.acquires": 343492,
+            "sql.queued_acquires": 343471,
+            "sql.releases_with_waiters": 343472,
+            "sql.idle_with_waiters_ns": 14345579400,
+            "sql.max_queue_depth": 64,
+            "sql.statements": 1373966,
+            "sql.rows": 2747928
+          }
+        }
+      },
+      {
+        "connections": 64,
+        "fixed_rate": 5000,
+        "seconds": 20,
+        "requests": 99996,
+        "statuses": {
+          "200": 99996
+        },
+        "unexpected_statuses": 0,
+        "requests_per_second": 4999.701641337112,
+        "latency_ms": {
+          "mean": 0.4915598671646848,
+          "p50": 0.331729,
+          "p99": 3.5219449999999997,
+          "p999": 7.527664
+        },
+        "server_cpu_seconds": 7.450000000000001,
+        "server_cpu_us_per_request": 74.50298011920478,
+        "server_cpu_per_thread": {
+          "petclinic-floor[91262]": 5.64,
+          "petclinic-floor[91261]": 1.81
+        },
+        "perf": {
+          "available": true,
+          "perf_event_paranoid": 2,
+          "per_request": {},
+          "unavailable": []
+        },
+        "postgres_cpu_seconds": 8.56,
+        "postgres_cpu_us_per_request": 85.60342413696549,
+        "counters": {
+          "schema": "flint.diag-counters/1",
+          "timers": {
+            "sql.lease_wait": {
+              "count": 124999,
+              "sum_ns": 9708790000,
+              "max_ns": 35535700,
+              "mean_ns": 77670.94136753093
+            },
+            "sql.lease_hold": {
+              "count": 124999,
+              "sum_ns": 46482075900,
+              "max_ns": 32796700,
+              "mean_ns": 371859.58207665663
+            },
+            "sql.drive": {
+              "count": 499994,
+              "sum_ns": 46142454000,
+              "max_ns": 30003500,
+              "mean_ns": 92286.01543218519
+            },
+            "sql.socket_wait": {
+              "count": 500171,
+              "sum_ns": 41781286100,
+              "max_ns": 17840800,
+              "mean_ns": 83534.00357077879
+            },
+            "sql.handoff": {
+              "count": 3157,
+              "sum_ns": 348868900,
+              "max_ns": 0,
+              "mean_ns": 110506.46183085207
+            }
+          },
+          "gauges": {
+            "sql.acquires": 124999,
+            "sql.queued_acquires": 4373,
+            "sql.releases_with_waiters": 5040,
+            "sql.idle_with_waiters_ns": 348868900,
+            "sql.max_queue_depth": 64,
+            "sql.statements": 499994,
+            "sql.rows": 999984
+          }
+        }
+      }
+    ]
+  },
+  "syscalls": {
+    "flint": {
+      "requests": 2000,
+      "connections": 8,
+      "calls": {
+        "io_uring_enter": 4568,
+        "read": 19,
+        "futex": 795,
+        "sendto": 10000,
+        "recvfrom": 8000
+      },
+      "per_response": {
+        "sendto": 5.0,
+        "sendmsg": 0.0,
+        "write": 0.0,
+        "writev": 0.0,
+        "recvfrom": 4.0,
+        "read": 0.0095,
+        "io_uring_enter": 2.284,
+        "epoll_wait": 0.0,
+        "epoll_pwait": 0.0,
+        "epoll_pwait2": 0.0,
+        "futex": 0.3975
+      },
+      "writes_per_response": 5.0,
+      "waits_per_response": 2.6814999999999998
+    },
+    "floor-minimal": {
+      "requests": 2000,
+      "connections": 8,
+      "calls": {
+        "read": 17,
+        "io_uring_enter": 4451,
+        "sendto": 10000,
+        "recvfrom": 8000,
+        "futex": 43
+      },
+      "per_response": {
+        "sendto": 5.0,
+        "sendmsg": 0.0,
+        "write": 0.0,
+        "writev": 0.0,
+        "recvfrom": 4.0,
+        "read": 0.0085,
+        "io_uring_enter": 2.2255,
+        "epoll_wait": 0.0,
+        "epoll_pwait": 0.0,
+        "epoll_pwait2": 0.0,
+        "futex": 0.0215
+      },
+      "writes_per_response": 5.0,
+      "waits_per_response": 2.247
+    },
+    "floor-mapped": {
+      "requests": 2000,
+      "connections": 8,
+      "calls": {
+        "io_uring_enter": 4413,
+        "futex": 56,
+        "sendto": 10000,
+        "recvfrom": 8000,
+        "read": 20
+      },
+      "per_response": {
+        "sendto": 5.0,
+        "sendmsg": 0.0,
+        "write": 0.0,
+        "writev": 0.0,
+        "recvfrom": 4.0,
+        "read": 0.01,
+        "io_uring_enter": 2.2065,
+        "epoll_wait": 0.0,
+        "epoll_pwait": 0.0,
+        "epoll_pwait2": 0.0,
+        "futex": 0.028
+      },
+      "writes_per_response": 5.0,
+      "waits_per_response": 2.2345
+    }
+  }
+}
