@@ -858,3 +858,12 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - web-http: the extra park if it is in the engine.
 
   Mapping work (direct row mapping) is deprioritized, since about 11 µs is the whole mapping-plus-Jackson cost.
+- 2026-11-25, proof-harness: **phase1-http-petclinic certified at B4** (`fb4c73d1adc7`, 07:33–08:13Z, interleaved with Go after the Flint-only run's closing drift guard missed by 0.6% on Go calibration CPU; no foreign activity; a stray callgrind frozen and continued). Go is the ADR-033 comparator with Tomcat's keep-alive limit (`8d29301a`), accepted 109/109 in the parity wire mode. Flint / Go, median (99% interval), 9 trials:
+    - **throughput 1.416 (1.407–1.423), which passes**: 27,610 against 19,500 req/s (1.132 at B3); Flint's trials ran 27,020–27,760 req/s;
+    - **peak RSS 0.754, which passes** (20.2 against 26.8 MB);
+    - p50 **1.048 (1.030–1.057), which fails** (250 against 238 µs; 1.478 at B3);
+    - p99 **1.133 (1.078–1.188), which fails** (668 against 590 µs; 1.445 at B3);
+    - CPU per request **1.044 (1.033–1.054), which fails** (68.2 against 65.3 µs; 1.331 at B3);
+    - p99.9 1.42, reported.
+
+    Evidence: `benchmarks/spring/evidence/phase1-http-petclinic/20261125T073334Z/`.
