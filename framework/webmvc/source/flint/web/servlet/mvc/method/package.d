@@ -235,14 +235,18 @@ final class RequestMappingInfo
             return null;
         if (!matchParams(request) || !matchHeaders(request))
             return null;
+        // Flint: the patterns before the media types. Spring checks them last, but every condition is a predicate
+        // of the request (the accepted media types a produces condition parses are cached for the lookup and removed
+        // after it), so the order changes no result; a mapping whose path does not match then costs no Content-Type
+        // or Accept parse. The cheap method, params and headers checks stay first.
+        auto matchedPatterns = matchPatterns(request);
+        if (matchedPatterns.length == 0)
+            return null;
         auto matchedConsumes = matchConsumes(request);
         if (!matchedConsumes.ok)
             return null;
         auto matchedProduces = matchProduces(request);
         if (!matchedProduces.ok)
-            return null;
-        auto matchedPatterns = matchPatterns(request);
-        if (matchedPatterns.length == 0)
             return null;
         // The usual match is every condition of this mapping as it is (one pattern, its method, its media types):
         // then the matching info is this one, without an allocation per request.
@@ -644,6 +648,9 @@ abstract class RequestMappingInfoHandlerMapping : AbstractHandlerMapping
     }
 
     private Registration[] registrations;
+    // Flint: every registration's mapping, in registration order, kept as they are added, so a request that no
+    // mapping matches hands handleNoMatch this list instead of building it.
+    private RequestMappingInfo[] registeredInfos;
     private size_t[][string] directPathRegistrations;
     private CorsConfiguration[HandlerMethod] corsLookup;
 
@@ -698,6 +705,7 @@ abstract class RequestMappingInfoHandlerMapping : AbstractHandlerMapping
             if (!pattern.hasPatternSyntax())
                 directPathRegistrations[pattern.getPatternString()] ~= registrations.length;
         registrations ~= Registration(info, handlerMethod);
+        registeredInfos ~= info;
     }
 
     /// Flint's fast path: every registration found by its plain path `path`, as `lookupHandlerMethod` reads
@@ -787,12 +795,7 @@ abstract class RequestMappingInfoHandlerMapping : AbstractHandlerMapping
             return single.handlerMethod;
         }
         if (matches.length == 0)
-        {
-            RequestMappingInfo[] infos;
-            foreach (r; registrations)
-                infos ~= r.info;
-            return handleNoMatch(infos, lookupPath, request);
-        }
+            return handleNoMatch(registeredInfos, lookupPath, request); // the live list, as Spring passes its registry key set
         for (size_t i = 1; i < matches.length; i++)
         {
             auto m = matches[i];
