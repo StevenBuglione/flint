@@ -27,7 +27,10 @@ import threading
 import time
 from urllib.parse import urlsplit
 
-ROOT = Path(__file__).resolve().parents[1]
+# FLINT_BENCH_ROOT: measure another checkout (its Flint port, comparator, manifests and toolchain) with this file's
+# harness, for a harness fix newer than a pinned baseline commit (owner decision ae7858f8 at B5).
+ROOT = Path(os.environ.get("FLINT_BENCH_ROOT") or Path(__file__).resolve().parents[1]).resolve()
+ERROR_PATHS_MANIFEST = "spring-error-paths-benchmark.json"
 OHA_VERSION = "oha 1.16.0"
 OHA_SHA256 = "620bb9e16fb53eabc9a3fc45f88bdb41fefa3fee5c05e75892011ce320391716"
 FIELDS = ["p50_ms","p99_ms","p999_ms","peak_rss_bytes","cpu_ns_per_request","requests_per_second"]
@@ -455,8 +458,19 @@ def prepare_database(spring,env,vacuum=True):
         if done.returncode==0:counts[table]=int(done.stdout.strip() or 0)
     return {"vacuum_analyze":vacuum,"row_counts":counts}
 
+def client_limit(phases, capacity_context=False):
+    """A comparison is refused when oha used >=85% of its load CPUs (the result may measure the client). On the
+    error-path workloads (owner decision ae7858f8) the capacity phase is context, never gated: a saturated capacity
+    phase is recorded as "client-limited, context" in place of refusing the run; the gated fixed-rate phase keeps
+    its own check. Everywhere else both phases must stay under the limit."""
+    require(phases["latency"]["load_cpu_fraction"]<.85,
+            "load generator used >=85% of its CPUs in the fixed-rate phase; comparison may be client-limited")
+    if phases["capacity"]["load_cpu_fraction"]>=.85:
+        require(capacity_context,"load generator used >=85% of its CPUs; comparison may be client-limited")
+        phases["capacity"]["client_limited"]="client-limited, context (owner decision ae7858f8)"
+
 def spring_measure(spring, app, spec, target, workload, oha, trial, outdir, environment, database, smoke,
-                   extra_args=(), binary=None, label=None, observer=None, vacuum=True):
+                   extra_args=(), binary=None, label=None, observer=None, vacuum=True, capacity_context=False):
     """One trial of one target. `observer(event, pid)`, when given, is called at readiness, after each phase, and
     every 15 s during the fixed-rate phase (a diagnostic hook: tools/smaps_census.py); its results go into the row."""
     port=spring.free_port();url=f"http://127.0.0.1:{port}{spec['path']}"
@@ -504,8 +518,7 @@ def spring_measure(spring, app, spec, target, workload, oha, trial, outdir, envi
                 observe("after-"+phase)
                 spring_verifier(url,expected)
             if not smoke:
-                require(phases["latency"]["load_cpu_fraction"]<.85 and phases["capacity"]["load_cpu_fraction"]<.85,
-                        "load generator used >=85% of its CPUs; comparison may be client-limited")
+                client_limit(phases,capacity_context)
             row={"app":app,"target":target,"trial":trial,"server_command":argv,"server_pid":process.pid,
                  "identity":identity,"server_log":str(log_path),**phases}
             if database_state is not None:row["database_state"]=database_state
@@ -601,7 +614,8 @@ def spring_main(a, raw, m):
                     order=measured if trial%2==0 else list(reversed(measured))
                     for target in order+available:
                         try:
-                            row=spring_measure(spring,app,spec,target,workload,oha,trial,outdir,m.get("environment",{}),database,a.smoke)
+                            row=spring_measure(spring,app,spec,target,workload,oha,trial,outdir,m.get("environment",{}),database,a.smoke,
+                                               capacity_context=Path(a.manifest).name==ERROR_PATHS_MANIFEST)
                         except ValueError as exc:
                             if target not in context:raise
                             result["context_errors"].append(f"{app} [{target}] trial {trial}: {exc}");continue
