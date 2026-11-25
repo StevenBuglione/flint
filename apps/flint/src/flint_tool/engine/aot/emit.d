@@ -1,7 +1,8 @@
 /// Flint AOT's emitter: one plain D module per module plan, plus the thin registry (docs/spring/aot-contract.md
 /// sections 3-8).
 ///
-/// Generated code is `@safe`, declares no templates and instantiates only `Any.of!T` and `Any.get!T`. It imports
+/// Generated code is `@safe`, declares no templates and instantiates only `Any.of!T`, `Any.get!T` and
+/// `flint.engine.aot.permanent`'s carving functions. It imports
 /// its own user module, the modules declaring the types it names (statically), the annotation modules whose values
 /// it spells, and `flint.engine.aot.*`; never another generated module.
 module flint_tool.engine.aot.emit;
@@ -89,6 +90,40 @@ string sanitize(string text)
     return result;
 }
 
+/// What generated code carves from its `Permanent`, by D type: lists and their elements, boxed values, objects.
+private struct Reservation
+{
+    size_t[string] lists;
+    size_t[string] elements;
+    size_t[string] boxes;
+    size_t[string] objects;
+
+    /// The bytes as a D expression of `Permanent`'s size functions, in a stable order; "0" when nothing is carved.
+    string expression() const
+    {
+        import std.array : join;
+        import std.conv : to;
+
+        string[] terms;
+        foreach (type; sorted(lists))
+            terms ~= "Permanent.bytes!(" ~ type ~ ")(" ~ lists[type].to!string ~ ", " ~ elements[type].to!string ~ ")";
+        foreach (type; sorted(boxes))
+            terms ~= "Permanent.boxBytes!(" ~ type ~ ")(" ~ boxes[type].to!string ~ ")";
+        foreach (type; sorted(objects))
+            terms ~= "Permanent.objectBytes!(" ~ type ~ ")(" ~ objects[type].to!string ~ ")";
+        return terms.length ? terms.join("\n    + ") : "0";
+    }
+
+    private static string[] sorted(const size_t[string] counts)
+    {
+        import std.algorithm.sorting : sort;
+
+        auto keys = counts.keys;
+        sort(keys);
+        return keys;
+    }
+}
+
 private struct Emitter
 {
     const ModulePlan plan;
@@ -98,6 +133,72 @@ private struct Emitter
     bool[string] used;
     string[string] descriptorLocal;
     string body_;
+    /// Whether the code being emitted carves its tables from a `permanent` in scope: a `describe_` function or the
+    /// registration (flint.engine.aot.permanent). Elsewhere lists, boxes and objects stay GC literals.
+    bool permanentScope;
+    /// What the code being emitted carves, by type, for its reservation.
+    Reservation reservation;
+    /// The `describeBytes_` enums of this module's descriptors, which the registration reserves with its own.
+    string[] describeBytes;
+
+    /// The `permanent.list` call, or the array literal outside a permanent scope; "null" when `parts` is empty.
+    string list(string type, scope const string[] parts, string separator = ", ")
+    {
+        import std.array : join;
+
+        if (parts.length == 0)
+            return "null";
+        if (!permanentScope)
+            return "[" ~ parts.join(separator) ~ "]";
+        reservation.lists[type] = reservation.lists.get(type, 0) + 1;
+        reservation.elements[type] = reservation.elements.get(type, 0) + parts.length;
+        return "permanent.list!(" ~ type ~ ")(" ~ parts.join(separator) ~ ")";
+    }
+
+    /// A string list (`stringArray`), carved in a permanent scope.
+    string strings(scope const string[] items)
+    {
+        import flint_tool.engine.aot.conditions : literal;
+
+        string[] parts;
+        foreach (item; items)
+            parts ~= literal(item);
+        return list("string", parts);
+    }
+
+    /// `Any.of(value)` of a `type` value, its box carved in a permanent scope.
+    string boxed(string type, string value)
+    {
+        if (!permanentScope)
+            return "Any.of(" ~ value ~ ")";
+        reservation.boxes[type] = reservation.boxes.get(type, 0) + 1;
+        return "permanent.any(" ~ value ~ ")";
+    }
+
+    /// `new type(arguments)`, carved in a permanent scope.
+    string object(string type, string arguments)
+    {
+        if (!permanentScope)
+            return "new " ~ type ~ "(" ~ arguments ~ ")";
+        reservation.objects[type] = reservation.objects.get(type, 0) + 1;
+        return "permanent.make!(" ~ type ~ ")(" ~ arguments ~ ")";
+    }
+
+    /// Start a permanent scope with nothing reserved yet.
+    void beginPermanent()
+    {
+        permanentScope = true;
+        reservation = Reservation.init;
+    }
+
+    /// End the permanent scope: the D expression of the bytes its code carves.
+    string endPermanent()
+    {
+        permanentScope = false;
+        auto result = reservation.expression();
+        reservation = Reservation.init;
+        return result;
+    }
 
     string render()
     {
@@ -159,6 +260,8 @@ private struct Emitter
             text ~= "import flint.engine.aot.proxy : AdviceChain, Invocation, adviceChain, allocateProxy;\n";
         if (plan.queries.length)
             text ~= "import flint.engine.aot.query : DerivedQuery, QueryKind;\n";
+        if ("permanent" in used || plan.descriptors.length)
+            text ~= "import flint.engine.aot.permanent : Permanent;\n";
         return text ~ "import flint.engine.aot.registry : AotRegistry;\n";
     }
 
@@ -231,14 +334,43 @@ private struct Emitter
 
     string array(const ref Value item)
     {
-        import std.array : join;
-
         if (item.items.length == 0)
             return "null";
         string[] parts;
         foreach (ref element; item.items)
             parts ~= value(element);
-        return "[" ~ parts.join(", ") ~ "]";
+        const type = elementType(item);
+        if (type is null)
+        {
+            // An element type the literal leaves to the field (integers, mixed values): a GC literal.
+            const scope_ = permanentScope;
+            permanentScope = false;
+            scope (exit)
+                permanentScope = scope_;
+            return list("", parts);
+        }
+        return list(type, parts);
+    }
+
+    /// The D element type of an annotation array value whose spelling fixes it (strings, enum members of one enum,
+    /// annotations of one type), or null.
+    static string elementType(const ref Value item)
+    {
+        string type;
+        foreach (ref element; item.items)
+        {
+            string next;
+            if (element.kind == Value.Kind.text)
+                next = "string";
+            else if (element.kind == Value.Kind.enumMember)
+                next = element.enumType;
+            else if (element.kind == Value.Kind.annotation)
+                next = element.nested[0].type;
+            if (next is null || (type !is null && next != type))
+                return null;
+            type = next;
+        }
+        return type;
     }
 
     /// An expression of the annotation's struct type with every field set.
@@ -261,24 +393,23 @@ private struct Emitter
         import std.conv : to;
         import flint_tool.engine.aot.conditions : literal;
 
-        string text = "[\n";
-        bool any;
+        string[] parts;
         foreach (aggregate; 0 .. inherited.length + 1)
         {
             const items = aggregate == 0 ? merged.items : inherited[aggregate - 1].items;
             foreach (ref item; items)
             {
-                any = true;
                 const index = aggregate == 0 ? "" : ", " ~ aggregate.to!string;
                 const value = annotationLiteral(item.annotation);
-                text ~= indent ~ "    MergedAnnotation(" ~ literal(
-                        item.annotation.type) ~ ", Any.of(" ~ value ~ "), " ~ item.distance.to!string ~ index ~ "),\n";
+                parts ~= "\n" ~ indent ~ "    MergedAnnotation(" ~ literal(
+                        item.annotation.type) ~ ", " ~ boxed(item.annotation.type,
+                        value) ~ ", " ~ item.distance.to!string ~ index ~ ")";
             }
         }
-        if (!any)
+        if (parts.length == 0)
             return "null";
         used["merged"] = true;
-        return text ~ indent ~ "]";
+        return list("MergedAnnotation", parts, ",");
     }
 
     static bool hasInherited(const ref DescriptorPlan descriptor)
@@ -461,8 +592,10 @@ private struct Emitter
         import flint_tool.engine.aot.merge : shortName;
 
         const proxy = shortName(bean.type) ~ "__FlintProxy";
-        return "private Object proxy_" ~ id ~ "(Object target, BeanFactory factory)\n{\n    auto descriptor = describe_"
-            ~ sanitize(shortName(bean.type)) ~ "();\n    auto proxy = cast(" ~ proxy ~ ") allocateProxy(typeid("
+        const described = sanitize(shortName(bean.type));
+        return "private Object proxy_" ~ id ~ "(Object target, BeanFactory factory)\n{\n"
+            ~ "    auto permanent = Permanent(describeBytes_" ~ described ~ ");\n    auto descriptor = describe_"
+            ~ described ~ "(permanent);\n    auto proxy = cast(" ~ proxy ~ ") allocateProxy(typeid("
             ~ proxy ~ "));\n    proxy.__flintBind(cast(" ~ bean.type
             ~ ") target, adviceChain(factory, descriptor), descriptor);\n    return proxy;\n}\n\n";
     }
@@ -475,14 +608,14 @@ private struct Emitter
         const id = beanId(bean);
         string text = "    {\n        BeanDefinition definition;\n        definition.name = " ~ literal(
                 bean.name) ~ ";\n        definition.type = " ~ literal(
-                bean.type) ~ ";\n        definition.types = " ~ stringArray(bean.types) ~ ";\n";
+                bean.type) ~ ";\n        definition.types = " ~ strings(bean.types) ~ ";\n";
         if (bean.objectTypes.length)
-            text ~= "        definition.objectTypes = " ~ stringArray(bean.objectTypes) ~ ";\n";
+            text ~= "        definition.objectTypes = " ~ strings(bean.objectTypes) ~ ";\n";
         text ~= "        definition.rank = " ~ (bean.rank + 1).to!string ~ ";\n";
         if (bean.dependsOn.length)
-            text ~= "        definition.dependsOn = " ~ stringArray(bean.dependsOn) ~ ";\n";
+            text ~= "        definition.dependsOn = " ~ strings(bean.dependsOn) ~ ";\n";
         if (bean.qualifiers.length)
-            text ~= "        definition.qualifiers = " ~ stringArray(bean.qualifiers) ~ ";\n";
+            text ~= "        definition.qualifiers = " ~ strings(bean.qualifiers) ~ ";\n";
         if (bean.scope_ != "singleton")
             text ~= "        definition.scope_ = ScopeKind." ~ sanitize(bean.scope_) ~ ";\n";
         foreach (flag, set; [
@@ -724,49 +857,53 @@ private struct Emitter
         import std.conv : to;
         import flint_tool.engine.aot.conditions : literal;
 
-        string text = "private Descriptor describe_" ~ id ~ "()\n{\n    auto descriptor = new Descriptor(" ~ literal(
-                descriptor.type) ~ ", TypeKind." ~ descriptor.kind ~ ");\n";
+        beginPermanent();
+        string text = "private Descriptor describe_" ~ id ~ "(ref Permanent permanent)\n{\n    auto descriptor = "
+            ~ object("Descriptor", literal(descriptor.type) ~ ", TypeKind." ~ descriptor.kind) ~ ";\n";
         if (descriptor.supertypes.length)
-            text ~= "    descriptor.supertypes = " ~ stringArray(descriptor.supertypes) ~ ";\n";
+            text ~= "    descriptor.supertypes = " ~ strings(descriptor.supertypes) ~ ";\n";
         if (descriptor.annotations.items.length || hasInherited(descriptor))
             text ~= "    descriptor.annotations = " ~ mergedArray(descriptor.annotations, "    ",
                     descriptor.inherited) ~ ";\n";
         if (descriptor.properties.length)
         {
-            text ~= "    descriptor.properties = [\n";
+            string[] properties;
             foreach (ref property; descriptor.properties)
-                text ~= "        PropertyDescriptor(" ~ literal(property.name) ~ ", " ~ typeNameText(
+                properties ~= "\n        PropertyDescriptor(" ~ literal(property.name) ~ ", " ~ typeNameText(
                         property.type) ~ ", " ~ mergedArray(property.annotations,
                         "        ") ~ ", &get_" ~ id ~ "_" ~ sanitize(property.name) ~ ", " ~ (property.writable
-                        ? "&set_" ~ id ~ "_" ~ sanitize(property.name) : "null") ~ "),\n";
-            text ~= "    ];\n";
+                        ? "&set_" ~ id ~ "_" ~ sanitize(property.name) : "null") ~ ")";
+            text ~= "    descriptor.properties = " ~ list("PropertyDescriptor", properties, ",") ~ ";\n";
         }
         if (descriptor.methods.length)
         {
-            text ~= "    descriptor.methods = [\n";
+            string[] methods;
             foreach (index, ref method; descriptor.methods)
-                text ~= "        MethodDescriptor(" ~ literal(method.method.name) ~ ", " ~ literal(
+                methods ~= "\n        MethodDescriptor(" ~ literal(method.method.name) ~ ", " ~ literal(
                         method.method.returns.name) ~ ", " ~ parameterDescriptors(method) ~ ", " ~ mergedArray(
-                        method.annotations, "        ", method.inherited) ~ ", " ~ index.to!string ~ "),\n";
-            text ~= "    ];\n";
+                        method.annotations, "        ", method.inherited) ~ ", " ~ index.to!string ~ ")";
+            text ~= "    descriptor.methods = " ~ list("MethodDescriptor", methods, ",") ~ ";\n";
             text ~= expressionTables(descriptor, id);
         }
         if (descriptor.constructors.length)
         {
-            text ~= "    descriptor.constructors = [\n";
+            string[] constructors;
             foreach (index, ref constructor; descriptor.constructors)
-                text ~= "        ConstructorDescriptor(" ~ constructorParameters(
+                constructors ~= "\n        ConstructorDescriptor(" ~ constructorParameters(
                         constructor) ~ ", " ~ mergedArray(constructor.annotations,
                         "        ") ~ ", &construct_" ~ id ~ "_" ~ index.to!string ~ (constructor.kind == "literal"
-                        ? ", true" : "") ~ "),\n";
-            text ~= "    ];\n";
+                        ? ", true" : "") ~ ")";
+            text ~= "    descriptor.constructors = " ~ list("ConstructorDescriptor", constructors, ",") ~ ";\n";
         }
         if (descriptor.create.length)
             text ~= "    descriptor.create = &new_" ~ id ~ ";\n";
         if (descriptor.constants.length)
-            text ~= "    descriptor.enumConstants = " ~ stringArray(
+            text ~= "    descriptor.enumConstants = " ~ strings(
                     descriptor.constants) ~ ";\n" ~ "    descriptor.enumValue = &enum_" ~ id ~ ";\n";
-        return text ~ "    return descriptor;\n}\n\n";
+        text ~= "    return descriptor;\n}\n\n";
+        // The registration reserves this with its own tables; a proxy factory reserves it alone.
+        describeBytes ~= "describeBytes_" ~ id;
+        return text ~ "private enum size_t describeBytes_" ~ id ~ " = " ~ endPermanent() ~ ";\n\n";
     }
 
     /// Contract 2: an enum constant by its declaration index (Java's ordinal), or `Any.init`.
@@ -785,16 +922,14 @@ private struct Emitter
     {
         import flint_tool.engine.aot.conditions : literal;
 
-        if (constructor.parameters.length == 0)
-            return "null";
-        string text = "[";
+        string[] parts;
         foreach (index, ref parameter; constructor.parameters)
         {
             const annotations = mergedArray(constructor.parameterAnnotations[index], "        ");
-            text ~= (index ? ", " : "") ~ "ParameterDescriptor(" ~ literal(
-                    parameter.name) ~ ", " ~ literal(parameter.type.name) ~ ", " ~ annotations ~ ")";
+            parts ~= "ParameterDescriptor(" ~ literal(parameter.name) ~ ", " ~ literal(
+                    parameter.type.name) ~ ", " ~ annotations ~ ")";
         }
-        return text ~ "]";
+        return list("ParameterDescriptor", parts);
     }
 
     string constructorFunction(const ref DescriptorPlan descriptor,
@@ -818,14 +953,12 @@ private struct Emitter
     {
         import flint_tool.engine.aot.conditions : literal;
 
-        if (method.method.parameters.length == 0)
-            return "null";
-        string text = "[";
+        string[] parts;
         foreach (index, ref parameter; method.method.parameters)
-            text ~= (index ? ", " : "") ~ "ParameterDescriptor(" ~ literal(parameter.name) ~ ", " ~ literal(
+            parts ~= "ParameterDescriptor(" ~ literal(parameter.name) ~ ", " ~ literal(
                     parameter.type.name) ~ ", " ~ mergedArray(method.parameters[index], "        ",
                     index < method.parameterInherited.length ? method.parameterInherited[index] : null) ~ ")";
-        return text ~ "]";
+        return list("ParameterDescriptor", parts);
     }
 
     string accessors(const ref DescriptorPlan descriptor,
@@ -1019,13 +1152,13 @@ private struct Emitter
         {
             if (method.expressions.length == 0)
                 continue;
-            text ~= "    descriptor.methods[" ~ index.to!string ~ "].expressions = [\n";
+            string[] specs;
             foreach (position, ref expression; method.expressions)
-                text ~= "        ExpressionSpec(" ~ literal(expression.annotation) ~ ", " ~ literal(
+                specs ~= "\n        ExpressionSpec(" ~ literal(expression.annotation) ~ ", " ~ literal(
                         expression.attribute) ~ ", " ~ literal(
-                        expression.source) ~ ", &spel_" ~ id ~ "_" ~ index.to!string ~ "_" ~ position.to!string
-                    ~ "),\n";
-            text ~= "    ];\n";
+                        expression.source) ~ ", &spel_" ~ id ~ "_" ~ index.to!string ~ "_" ~ position.to!string ~ ")";
+            text ~= "    descriptor.methods[" ~ index.to!string ~ "].expressions = " ~ list("ExpressionSpec",
+                    specs, ",") ~ ";\n";
         }
         return text;
     }
@@ -1034,11 +1167,10 @@ private struct Emitter
     {
         import flint_tool.engine.aot.conditions : literal;
 
-        if (arguments.length == 0)
-            return "null";
-        string text = "[\n";
+        string[] parts;
         foreach (ref argument; arguments)
         {
+            string text = "\n";
             foreach (name; argument.modules)
                 imports[name] = true;
             const required = argument.required ? "true" : "false";
@@ -1059,9 +1191,9 @@ private struct Emitter
             }
             if (argument.annotations.items.length)
                 text ~= "a.annotations = " ~ mergedArray(argument.annotations, "            ") ~ "; ";
-            text ~= "return a; }(),\n";
+            parts ~= text ~ "return a; }()";
         }
-        return text ~ "        ]";
+        return list("ArgumentSpec", parts, ",");
     }
 
     string mappingRegistration(const ref HandlerPlan handler)
@@ -1071,7 +1203,7 @@ private struct Emitter
 
         const id = sanitize(handler.className) ~ "_" ~ sanitize(handler.method.name);
         string text = "    {\n        HandlerMapping mapping;\n        mapping.bean = " ~ literal(
-                handler.bean) ~ ";\n        mapping.paths = " ~ stringArray(handler.paths) ~ ";\n";
+                handler.bean) ~ ";\n        mapping.paths = " ~ strings(handler.paths) ~ ";\n";
         foreach (field, items; [
             "methods": handler.methods,
             "params": handler.params,
@@ -1081,7 +1213,7 @@ private struct Emitter
         ])
         {
             if (items.length)
-                text ~= "        mapping." ~ field ~ " = " ~ stringArray(items) ~ ";\n";
+                text ~= "        mapping." ~ field ~ " = " ~ strings(items) ~ ";\n";
         }
         text ~= "        mapping.beanType = " ~ literal(handler.className) ~ ";\n";
         if (handler.typeAnnotations.items.length)
@@ -1114,7 +1246,7 @@ private struct Emitter
 
         const id = sanitize(handler.className) ~ "_" ~ sanitize(handler.method.name);
         string text = "    {\n        ExceptionHandlerSpec handler;\n        handler.bean = " ~ literal(
-                handler.bean) ~ ";\n        handler.exceptionTypes = " ~ stringArray(
+                handler.bean) ~ ";\n        handler.exceptionTypes = " ~ strings(
                 handler.exceptionTypes) ~ ";\n        handler.advice = " ~ (handler.advice ? "true" : "false") ~ ";\n";
         text ~= "        handler.beanType = " ~ literal(handler.className) ~ ";\n";
         foreach (field, items; [
@@ -1125,7 +1257,7 @@ private struct Emitter
         ])
         {
             if (items.length)
-                text ~= "        handler." ~ field ~ " = " ~ stringArray(items) ~ ";\n";
+                text ~= "        handler." ~ field ~ " = " ~ strings(items) ~ ";\n";
         }
         text ~= "        handler.arguments = " ~ argumentSpecs(
                 handler.arguments) ~ ";\n        handler.returnType = " ~ literal(
@@ -1168,20 +1300,20 @@ private struct Emitter
                 query.repository) ~ ";\n        query.method = " ~ literal(
                 query.query.method) ~ ";\n        query.domainType = " ~ literal(
                 query.domainType) ~ ";\n        query.sql = " ~ literal(
-                query.query.sql) ~ ";\n        query.parameters = " ~ stringArray(
-                query.query.parameters) ~ ";\n        query.likeTransforms = " ~ stringArray(
+                query.query.sql) ~ ";\n        query.parameters = " ~ strings(
+                query.query.parameters) ~ ";\n        query.likeTransforms = " ~ strings(
                 query.query.likeTransforms) ~ ";\n        query.kind = QueryKind."
-            ~ query.query.kind.to!string ~ ";\n        query.limit = "
-            ~ query.query.limit.to!string ~ ";\n        query.source = " ~ literal(
-                    query.source) ~ ";\n        registry.query(query);\n    }\n";
+            ~ query.query.kind.to!string ~ ";\n        query.limit = " ~ query.query.limit.to!string
+            ~ ";\n        query.source = " ~ literal(query.source) ~ ";\n        registry.query(query);\n    }\n";
     }
 
     string registration()
     {
+        import std.array : join;
         import flint_tool.engine.aot.names : entryPoint;
 
-        string text = "/// Registers this module's definitions, descriptors and tables (aot-contract.md section 3).\n"
-            ~ "extern (C) void " ~ entryPoint(plan.name) ~ "(scope AotRegistry registry)\n{\n";
+        beginPermanent();
+        string text;
         if (plan.exportsDescriptors)
         {
             // Compiled once with the platform module: no descriptorOf or accessor instances here.
@@ -1193,7 +1325,7 @@ private struct Emitter
         {
             const id = sanitize(descriptor.simple);
             text ~= "    auto descriptor_" ~ id ~ " = describe_" ~ id
-                ~ "();\n    registry.descriptor(descriptor_" ~ id ~ ");\n";
+                ~ "(permanent);\n    registry.descriptor(descriptor_" ~ id ~ ");\n";
         }
         enum describe = "    registry.descriptor(imported!\"flint.engine.aot.descriptor\".descriptorOf!(";
         foreach (type; plan.containerDescriptors)
@@ -1211,6 +1343,15 @@ private struct Emitter
             text ~= listenerRegistration(listener);
         foreach (ref query; plan.queries)
             text ~= queryRegistration(query);
-        return text ~ "}\n";
+        const own = endPermanent();
+        enum comment = "/// Registers this module's definitions, descriptors and tables (aot-contract.md section 3).\n";
+        const header = comment ~ "extern (C) void " ~ entryPoint(plan.name) ~ "(scope AotRegistry registry)\n{\n";
+        if (own == "0" && describeBytes.length == 0)
+            return header ~ text ~ "}\n";
+        // One block for every table the registration and its descriptors build (flint.engine.aot.permanent).
+        used["permanent"] = true;
+        const terms = describeBytes ~ (own == "0" ? null : [own]);
+        return "private enum size_t permanentBytes = " ~ terms.join(
+                "\n    + ") ~ ";\n\n" ~ header ~ "    auto permanent = Permanent(permanentBytes);\n" ~ text ~ "}\n";
     }
 }

@@ -749,7 +749,12 @@ unittest
     // Contract 2 fields.
     const web = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot", "shop", "web.d"));
     expect(web.canFind(`mapping.beanType = "shop.web.OwnerController";`)).toBeTrue();
-    expect(web.canFind("mapping.typeAnnotations = [")).toBeTrue();
+    expect(web.canFind("mapping.typeAnnotations = permanent.list!(MergedAnnotation)(")).toBeTrue();
+    // Start-up tables carved from one block per module (flint.engine.aot.permanent).
+    expect(web.canFind("    auto permanent = Permanent(permanentBytes);\n")).toBeTrue();
+    expect(web.canFind("private enum size_t permanentBytes = ")).toBeTrue();
+    expect(web.canFind("mapping.paths = permanent.list!(string)(")).toBeTrue();
+    expect(web.canFind(", permanent.any(() { ")).toBeTrue();
     expect(web.canFind("definition.rank = ")).toBeTrue();
     const pricing = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot", "shop", "pricing.d"));
     expect(pricing.canFind("return Any.of((context.argument(0).get!(long)() > 10L));")).toBeTrue();
@@ -759,6 +764,8 @@ unittest
     const data = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot", "shop", "data.d"));
     expect(data.canFind("&construct_Owner_0, true)")).toBeTrue();
     expect(data.canFind("descriptor.enumValue = &enum_OwnerStatus;")).toBeTrue();
+    expect(data.canFind("(ref Permanent permanent)\n{\n    auto descriptor = permanent.make!(Descriptor)(")).toBeTrue();
+    expect(data.canFind("private enum size_t describeBytes_Owner = ")).toBeTrue();
     const ran = capture([binary], launch);
     expect(ran.ok).toBeTrue();
     // Windows' text-mode stdout ends lines with CRLF; expected.txt uses LF.
@@ -1142,16 +1149,16 @@ unittest
         expect(item.code ~ " " ~ item.message).toEqual("");
     expect(outcome.ok).toBeTrue();
     const web = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot", "hier", "web.d"));
-    expect(web.canFind(`mapping.paths = ["/api/ping"];`)).toBeTrue();
-    expect(web.canFind(`mapping.paths = ["/api/version"];`)).toBeTrue();
+    expect(web.canFind(`mapping.paths = permanent.list!(string)("/api/ping");`)).toBeTrue();
+    expect(web.canFind(`mapping.paths = permanent.list!(string)("/api/version");`)).toBeTrue();
     // RequestMappingInfo.combine: the class's methods, params and headers join the method's, each once.
-    expect(web.canFind(`mapping.paths = ["/v2/status"];`)).toBeTrue();
-    expect(web.canFind(`mapping.methods = ["GET", "HEAD"];`)).toBeTrue();
-    expect(web.canFind(`mapping.params = ["version=2", "full"];`)).toBeTrue();
-    expect(web.canFind(`mapping.headers = ["X-Api=1"];`)).toBeTrue();
+    expect(web.canFind(`mapping.paths = permanent.list!(string)("/v2/status");`)).toBeTrue();
+    expect(web.canFind(`mapping.methods = permanent.list!(string)("GET", "HEAD");`)).toBeTrue();
+    expect(web.canFind(`mapping.params = permanent.list!(string)("version=2", "full");`)).toBeTrue();
+    expect(web.canFind(`mapping.headers = permanent.list!(string)("X-Api=1");`)).toBeTrue();
     // Contract 3: the controller's descriptor carries PingApi's @RequestMapping as aggregate 1.
-    expect(web.canFind(`MergedAnnotation("flint.web.bind.annotation.RequestMapping", Any.of(`)).toBeTrue();
-    expect(web.canFind(`), 0, 1),`)).toBeTrue();
+    expect(web.canFind(`MergedAnnotation("flint.web.bind.annotation.RequestMapping", permanent.any(`)).toBeTrue();
+    expect(web.canFind(`), 0, 1)`)).toBeTrue();
     // The first aggregate with a match wins: ReportService's meta-annotated @Transactional, not BaseService's.
     const service = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot", "hier", "service.d"));
     expect(service.canFind(`a.value = "readOnlyManager";`)).toBeTrue();
@@ -1159,7 +1166,7 @@ unittest
     foreach (line; imported!"std.string".splitLines(service))
     {
         if (line.canFind(`"baseManager"`))
-            expect(line.canFind("), 0, 1),")).toBeTrue();
+            expect(line.canFind("), 0, 1)")).toBeTrue(); // the list's last element closes the call
     }
 }
 
@@ -1758,8 +1765,8 @@ unittest
     expect(outcome.application).toEqual("com.example.restservice.restserviceapplication.RestServiceApplication");
     const controller = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot",
             "com", "example", "restservice", "greetingcontroller.d"));
-    expect(controller.canFind(`mapping.paths = ["/greeting"];`)).toBeTrue();
-    expect(controller.canFind(`mapping.methods = ["GET"];`)).toBeTrue();
+    expect(controller.canFind(`mapping.paths = permanent.list!(string)("/greeting");`)).toBeTrue();
+    expect(controller.canFind(`mapping.methods = permanent.list!(string)("GET");`)).toBeTrue();
     expect(controller.canFind(`a.kind = ArgumentKind.requestParam; a.name = "name"; a.type = "string"; `
             ~ `a.required = false; a.defaultValue = "World";`)).toBeTrue();
     expect(controller.canFind("mapping.responseBody = true;")).toBeTrue();
@@ -1807,8 +1814,8 @@ unittest
     const application = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot",
             "com", "example", "dated", "application.d"));
     expect(application.canFind(`definition.name = "flintAotJavaUtilDateModuleCustomizer";`)).toBeTrue();
-    expect(application.canFind(`definition.types = ["flint.boot.jackson.autoconfigure.JsonMapperBuilderCustomizer"];`))
-        .toBeTrue();
+    enum customizer = `"flint.boot.jackson.autoconfigure.JsonMapperBuilderCustomizer"`;
+    expect(application.canFind("definition.types = permanent.list!(string)(" ~ customizer ~ ");")).toBeTrue();
     const added = "builder.addModule(new flint.jackson.databind.module_.JavaUtilDateModule());";
     expect(application.canFind(added)).toBeTrue();
     string[] sources;
@@ -1869,8 +1876,8 @@ unittest
             "springframework", "samples", "petclinic");
     const controller = readText(buildPath(generated, "rest", "controller", "ownerrestcontroller.d"));
     // The mapping is found on the implemented OwnersApi method, combined with the class's /api.
-    expect(controller.canFind(`mapping.paths = ["/api/owners/{ownerId}"];`)).toBeTrue();
-    expect(controller.canFind(`mapping.produces = ["application/json"];`)).toBeTrue();
+    expect(controller.canFind(`mapping.paths = permanent.list!(string)("/api/owners/{ownerId}");`)).toBeTrue();
+    expect(controller.canFind(`mapping.produces = permanent.list!(string)("application/json");`)).toBeTrue();
     expect(controller.canFind(`a.kind = ArgumentKind.pathVariable; a.name = "ownerId"; a.type = "int";`)).toBeTrue();
     expect(controller.canFind(`a.kind = ArgumentKind.requestBody; a.name = "ownerFieldsDto"; `
             ~ `a.type = "org.springframework.samples.petclinic.rest.dto.ownerdto.OwnerFieldsDto"; a.required = true; `
@@ -1888,8 +1895,8 @@ unittest
     // Method validation: @Validated on OwnersApi advises the controller, and @Min on the interface's parameter is in
     // the advised method's parameter descriptor.
     expect(controller.canFind(`MergedAnnotation("flint.validation.annotation.Validated"`)).toBeTrue();
-    expect(controller.canFind(`ParameterDescriptor("size", "int", [`)).toBeTrue();
-    expect(controller.canFind(`MergedAnnotation("flint.jakarta.validation.constraints.Min", Any.of(() { `
+    expect(controller.canFind(`ParameterDescriptor("size", "int", permanent.list!(MergedAnnotation)(`)).toBeTrue();
+    expect(controller.canFind(`MergedAnnotation("flint.jakarta.validation.constraints.Min", permanent.any(() { `
             ~ `flint.jakarta.validation.constraints.Min a;`)).toBeTrue();
     // Contract 3: in the parameter's table, @Min comes from the implemented OwnersApi method, aggregate 1 (the
     // handler's ArgumentSpec keeps the merged view).
@@ -1921,8 +1928,8 @@ unittest
             ~ `PrePostMethodSecurityConfiguration")`)).toBeTrue();
     // A FactoryBean's object types come first, so getBean(Vets) finds the factory's object.
     const vets = readText(buildPath(generated, "model", "vets.d"));
-    expect(vets.canFind(`definition.objectTypes = ["org.springframework.samples.petclinic.model.vets.Vets"];`))
-        .toBeTrue();
+    enum vetsType = `"org.springframework.samples.petclinic.model.vets.Vets"`;
+    expect(vets.canFind("definition.objectTypes = permanent.list!(string)(" ~ vetsType ~ ");")).toBeTrue();
     // A DTO's container-typed properties have their descriptors registered (data-access: List!(VisitDto),
     // Nullable!int in petclinic-rest's DTOs).
     const dto = readText(buildPath(generated, "rest", "dto", "ownerdto.d"));

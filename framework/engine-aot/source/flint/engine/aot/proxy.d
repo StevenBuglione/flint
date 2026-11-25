@@ -80,12 +80,29 @@ AdviceChain adviceChain(BeanFactory factory, const Descriptor descriptor)
         }
         advisors[j] = current;
     }
-    Advisor[][] perMethod;
-    perMethod.length = descriptor.methods.length;
+    // Every method's advisors are slices of one array: a collection marks one object, not one per advised method
+    // (the permanent-object census, 2026-11-25). Each `appliesTo` runs once, as before.
+    auto applies = new bool[descriptor.methods.length * advisors.length];
+    size_t total;
     foreach (index, ref method; descriptor.methods)
-        foreach (advisor; advisors)
+        foreach (position, advisor; advisors)
             if (advisor.appliesTo(descriptor, &method))
-                perMethod[index] ~= advisor;
+            {
+                applies[index * advisors.length + position] = true;
+                total++;
+            }
+    auto all = new Advisor[total];
+    auto perMethod = new Advisor[][descriptor.methods.length];
+    size_t next;
+    foreach (index; 0 .. descriptor.methods.length)
+    {
+        const first = next;
+        foreach (position, advisor; advisors)
+            if (applies[index * advisors.length + position])
+                all[next++] = advisor;
+        if (next > first)
+            perMethod[index] = all[first .. next];
+    }
     auto executor = cast(DetachedExecutor) factory.findBeanOfType(typeNameOf!DetachedExecutor);
     return new OrderedChain(perMethod, executor);
 }

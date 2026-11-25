@@ -230,29 +230,60 @@ const(MergedAnnotation)* findAnnotation(return scope const(MergedAnnotation)[] a
     return best;
 }
 
-/// Descriptors by name, with the runtime's own descriptors for scalars and `string`.
+/++
+Descriptors by name, with the runtime's own descriptors for scalars and `string`.
+
+One open-addressed array keyed by `Descriptor.name` (linear probing, at most three quarters full): a collection marks
+it as one object, where a built-in associative array kept an entry object per descriptor
+(coordination census, 2026-11-25).
++/
 final class DescriptorTable
 {
-    private Descriptor[string] byName;
+    private Descriptor[] slots; // a power-of-two length; null marks a free slot
+    private size_t count;
 
     /// Add or replace a descriptor.
     void add(Descriptor descriptor) pure nothrow
     {
-        byName[descriptor.name] = descriptor;
+        if ((count + 1) * 4 > slots.length * 3)
+            grow();
+        const slot = slotOf(descriptor.name);
+        if (slots[slot] is null)
+            count++;
+        slots[slot] = descriptor;
     }
 
     /// The descriptor named `name`, or null.
     inout(Descriptor) find(scope const(char)[] name) inout nothrow
     {
-        if (auto found = name in byName)
-            return *found;
-        return null;
+        return slots.length ? slots[slotOf(name)] : null;
     }
 
     /// How many descriptors the table holds.
     size_t length() const pure nothrow @nogc
     {
-        return byName.length;
+        return count;
+    }
+
+    /// The slot holding `name`, or the free slot where it belongs.
+    private size_t slotOf(scope const(char)[] name) const pure nothrow @nogc
+    {
+        const mask = slots.length - 1;
+        size_t slot = hashOf(name) & mask;
+        while (slots[slot]!is null && slots[slot].name != name)
+            slot = (slot + 1) & mask;
+        return slot;
+    }
+
+    private void grow() pure nothrow
+    {
+        auto old = slots;
+        slots = new Descriptor[old.length ? old.length * 2 : 64];
+        foreach (descriptor; old)
+        {
+            if (descriptor !is null)
+                slots[slotOf(descriptor.name)] = descriptor;
+        }
     }
 
     /// A table holding the built-in scalar and string descriptors.

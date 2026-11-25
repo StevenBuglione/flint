@@ -214,6 +214,20 @@ struct Any
         }
     }
 
+    /// Whether `Any.of!T` puts a `T` in a `Box` (a struct too large or elaborate to sit inline, or a non-integral
+    /// enum): such a box may be built elsewhere and wrapped with `ofBox` (`flint.engine.aot.permanent`).
+    enum bool boxes(T) = categoryOf!(typeof(cast() T.init)) == Category.boxed && !isInlineable!(typeof(cast() T.init));
+
+    /// Wrap `box`, built as `Any.of` would build it for a `T` that `boxes`: the same value, sharing that box.
+    static Any ofBox(T)(Box!T box) if (boxes!T)
+    {
+        Any result;
+        result.typeName_ = typeNameOf!T;
+        result.object_ = box;
+        result.slot_ = Slot.box;
+        return result;
+    }
+
     /// Wrap an object whose static type is known only by name (a bean instance created by a generated factory).
     static Any ofObject(Object value, string typeName) pure nothrow @nogc
     {
