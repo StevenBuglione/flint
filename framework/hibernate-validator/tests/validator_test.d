@@ -555,3 +555,42 @@ unittest
         }
     }
 }
+
+@("a root property's path is made once and shared by later violations; nodes() is the caller's own array")
+unittest
+{
+    import flint.jakarta.validation : Path;
+
+    auto validator = getValidator();
+    auto first = validator.validate(Any.of(new A()))[0].getPropertyPath();
+    auto again = validator.validate(Any.of(new A()))[0].getPropertyPath();
+    assert(again is first && again.toString() == "b");
+    auto nodes = first.nodes();
+    nodes[0] = null; // the caller's copy: the path keeps its node
+    assert(first.nodes()[0] !is null && first.nodes()[0].getName() == "b");
+    // A cascaded property's path is its own per validation, under its container's position.
+    auto nested = validator.validate(Any.of(new Foo()))[0].getPropertyPath();
+    assert(nested.toString() == "bar[0].alwaysNull");
+    assert(validator.validate(Any.of(new Foo()))[0].getPropertyPath() !is nested);
+}
+
+@("a violation reports its leaf bean, root class and template whether or not they follow from its root")
+unittest
+{
+    auto validator = getValidator();
+    auto a = new A();
+    auto onRoot = validator.validate(Any.of(a))[0];
+    assert(onRoot.getLeafBean() == Any.of(a) && onRoot.getRootBean() == Any.of(a));
+    assert(onRoot.getRootBeanClass() == typeNameOf!A);
+    assert(onRoot.getMessageTemplate() == "{jakarta.validation.constraints.NotNull.message}");
+    assert(onRoot.getMessageTemplate() == onRoot.getConstraintDescriptor().getMessageTemplate());
+    // In a cascade the leaf is the element, not the root.
+    auto foo = new Foo();
+    auto inElement = validator.validate(Any.of(foo))[0];
+    assert(inElement.getRootBean() == Any.of(foo) && inElement.getRootBeanClass() == typeNameOf!Foo);
+    assert(inElement.getLeafBean() != Any.of(foo) && inElement.getLeafBean().typeName() == typeNameOf!Bar);
+    // validateValue has no root bean: the root class is the named type.
+    auto onValue = validator.validateValue(typeNameOf!A, "b", Any.init)[0];
+    assert(onValue.getRootBeanClass() == typeNameOf!A && onValue.getRootBean().isNull());
+    assert(onValue.getMessageTemplate() == "{jakarta.validation.constraints.NotNull.message}");
+}

@@ -245,13 +245,23 @@ interface Errors
 abstract class AbstractErrors : Errors
 {
     private string nestedPath = "";
-    private string[] nestedPathStack;
+    // State few results use, made on first use: a pushed nested path, a suppressed field (R-87). Every validation
+    // failure makes a result, so this keeps a BeanPropertyBindingResult in the collector's 176-byte size class.
+    private RareErrorsState rare;
+
+    private RareErrorsState rareState()
+    {
+        if (rare is null)
+            rare = new RareErrorsState;
+        return rare;
+    }
 
     /// Set the nested path.
     void setNestedPath(string nestedPath)
     {
         doSetNestedPath(nestedPath);
-        nestedPathStack = null;
+        if (rare !is null)
+            rare.nestedPathStack = null;
     }
 
     /// The nested path.
@@ -263,17 +273,18 @@ abstract class AbstractErrors : Errors
     /// Push a sub-path.
     void pushNestedPath(string subPath)
     {
-        nestedPathStack ~= nestedPath;
+        rareState().nestedPathStack ~= nestedPath;
         doSetNestedPath(nestedPath ~ subPath);
     }
 
     /// Pop the previous nested path.
     void popNestedPath()
     {
-        if (nestedPathStack.length == 0)
+        if (rare is null || rare.nestedPathStack.length == 0)
             throw new IllegalStateException("Cannot pop nested path: no nested path on stack");
-        doSetNestedPath(nestedPathStack[$ - 1]);
-        nestedPathStack = nestedPathStack[0 .. $ - 1];
+        auto stack = rare.nestedPathStack;
+        doSetNestedPath(stack[$ - 1]);
+        rare.nestedPathStack = stack[0 .. $ - 1];
     }
 
     /// Set the nested path, appending the separator when it is not empty.
@@ -523,6 +534,15 @@ class DefaultMessageCodesResolver : MessageCodesResolver
         return resolveMessageCodes(errorCode, objectName, "", null);
     }
 
+    /// The codes a new `DefaultMessageCodesResolver` gives, without one: a field without keys (and a global error)
+    /// takes the static path; a keyed field, rare, asks a fresh resolver.
+    package static string[] defaultCodes(string errorCode, string objectName, string field, string fieldType)
+    {
+        if (!hasKey(field))
+            return plainFieldCodes("", false, errorCode, objectName, field, fieldType);
+        return new DefaultMessageCodesResolver().resolveMessageCodes(errorCode, objectName, field, fieldType);
+    }
+
     /// The codes for a field error.
     string[] resolveMessageCodes(string errorCode, string objectName, string field, string fieldType)
     {
@@ -753,12 +773,19 @@ interface BindingResult : Errors
 }
 
 /// Abstract implementation of `BindingResult`: the error list and code resolution (Spring's `AbstractBindingResult`).
+// AbstractErrors' rarely used state.
+private final class RareErrorsState
+{
+    string[] nestedPathStack;
+    string[] suppressedFields;
+}
+
 abstract class AbstractBindingResult : AbstractErrors, BindingResult
 {
     private string objectName;
+    // Null until set or asked for: the default resolver's codes need no instance (Spring makes one per result).
     private MessageCodesResolver messageCodesResolver;
     private ObjectError[] errors;
-    private string[] suppressedFields;
     // getFieldErrors' list for the first `fieldErrorsCount` errors. Errors are only ever added, so it stays right
     // until the next one.
     private List!FieldError fieldErrorsView;
@@ -768,7 +795,6 @@ abstract class AbstractBindingResult : AbstractErrors, BindingResult
     protected this(string objectName)
     {
         this.objectName = objectName;
-        messageCodesResolver = new DefaultMessageCodesResolver;
     }
 
     /// Set the codes resolver.
@@ -781,6 +807,8 @@ abstract class AbstractBindingResult : AbstractErrors, BindingResult
     /// The codes resolver.
     MessageCodesResolver getMessageCodesResolver()
     {
+        if (messageCodesResolver is null)
+            messageCodesResolver = new DefaultMessageCodesResolver;
         return messageCodesResolver;
     }
 
@@ -868,14 +896,18 @@ abstract class AbstractBindingResult : AbstractErrors, BindingResult
     {
         if (fieldErrorsView !is null && fieldErrorsCount == errors.length)
             return fieldErrorsView;
-        int count;
+        size_t count;
         foreach (error; errors)
             count += cast(FieldError) error !is null;
-        auto list = new ArrayList!FieldError(count);
+        // Collected on the stack (a result has a handful), then one unmodifiable list holds its own copy: Spring's
+        // unmodifiable view of a new list, without the list.
+        FieldError[8] room;
+        FieldError[] found = count <= room.length ? room[0 .. count] : new FieldError[count];
+        size_t at;
         foreach (error; errors)
             if (auto fieldError = cast(FieldError) error)
-                list.add(fieldError);
-        fieldErrorsView = Collections.unmodifiableList!FieldError(list);
+                found[at++] = fieldError;
+        fieldErrorsView = List!FieldError.of(found);
         fieldErrorsCount = errors.length;
         return fieldErrorsView;
     }
@@ -936,26 +968,29 @@ abstract class AbstractBindingResult : AbstractErrors, BindingResult
     /// The codes for a global error code.
     string[] resolveMessageCodes(string errorCode)
     {
-        return messageCodesResolver.resolveMessageCodes(errorCode, getObjectName());
+        return messageCodesResolver is null ? DefaultMessageCodesResolver.defaultCodes(errorCode, getObjectName(), "",
+                null) : messageCodesResolver.resolveMessageCodes(errorCode, getObjectName());
     }
 
     /// The codes for a field error code.
     string[] resolveMessageCodes(string errorCode, string field)
     {
         const fixed = fixedField(field);
-        return messageCodesResolver.resolveMessageCodes(errorCode, getObjectName(), fixed, getFieldType(field));
+        const type = getFieldType(field);
+        return messageCodesResolver is null ? DefaultMessageCodesResolver.defaultCodes(errorCode, getObjectName(),
+                fixed, type) : messageCodesResolver.resolveMessageCodes(errorCode, getObjectName(), fixed, type);
     }
 
     /// Record a suppressed field.
     void recordSuppressedField(string field)
     {
-        suppressedFields ~= field;
+        rareState().suppressedFields ~= field;
     }
 
     /// The suppressed fields.
     string[] getSuppressedFields()
     {
-        return suppressedFields.dup;
+        return rare is null ? null : rare.suppressedFields.dup;
     }
 
     /// The current value of `field` in the target.
@@ -970,6 +1005,9 @@ class BeanPropertyBindingResult : AbstractBindingResult
 {
     private Any target;
     private DescriptorTable descriptors;
+
+    // The collector's size class: every validation failure makes one (AbstractErrors' rare state, R-87).
+    static assert(__traits(classInstanceSize, BeanPropertyBindingResult) <= 176);
 
     /// A result for `target`, named `objectName`; nested types resolve in `descriptors` (may be null).
     this(Any target, string objectName, DescriptorTable descriptors = null)

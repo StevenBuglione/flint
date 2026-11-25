@@ -833,3 +833,65 @@ unittest
     assert(result.getFieldType("roles[0].name") == "string");
     assert(result.getFieldType("roles[0]") == typeNameOf!PathRole);
 }
+
+unittest
+{
+    // A result without a resolver of its own gives the codes a new DefaultMessageCodesResolver gives (field, nested
+    // field and global), and getMessageCodesResolver still hands out a resolver, which later codes then use.
+    auto table = new DescriptorTable;
+    table.add(descriptorOf!TestBean);
+    table.add(descriptorOf!Pet);
+    auto tb = new TestBean("Ann");
+    auto plain = new BeanPropertyBindingResult(Any.of(tb), "testBean", table);
+    auto explicit = new BeanPropertyBindingResult(Any.of(tb), "testBean", table);
+    explicit.setMessageCodesResolver(new DefaultMessageCodesResolver);
+    foreach (field; ["name", "pet.name", ""])
+        assert(plain.resolveMessageCodes("bad", field) == explicit.resolveMessageCodes("bad", field), field);
+    assert(plain.resolveMessageCodes("bad") == explicit.resolveMessageCodes("bad"));
+    auto resolver = cast(DefaultMessageCodesResolver) plain.getMessageCodesResolver();
+    assert(resolver !is null && plain.getMessageCodesResolver() is resolver);
+    resolver.setPrefix("p.");
+    assert(plain.resolveMessageCodes("bad", "name")[0] == "p.bad.testBean.name");
+    // Nested paths and suppressed fields live in state made on first use; a result without them reports none.
+    assert(plain.getSuppressedFields() is null);
+    plain.recordSuppressedField("secret");
+    plain.recordSuppressedField("token");
+    assert(plain.getSuppressedFields() == ["secret", "token"]);
+    plain.pushNestedPath("pet");
+    plain.pushNestedPath("owner");
+    assert(plain.getNestedPath() == "pet.owner.");
+    plain.setNestedPath("");
+    bool threw;
+    try
+        plain.popNestedPath(); // setNestedPath clears the stack
+    catch (IllegalStateException)
+        threw = true;
+    assert(threw);
+}
+
+unittest
+{
+    // getFieldErrors: the field errors in order, unmodifiable, the same list until the next error is added; more
+    // field errors than the stack holds take the heap path.
+    import flint.java.lang : UnsupportedOperationException;
+
+    auto table = new DescriptorTable;
+    table.add(descriptorOf!TestBean);
+    auto result = new BeanPropertyBindingResult(Any.of(new TestBean("Ann")), "testBean", table);
+    result.reject("global");
+    result.rejectValue("name", "first");
+    result.rejectValue("age", "second");
+    auto errors = result.getFieldErrors();
+    assert(errors.size() == 2 && errors.get(0).getCode() == "first" && errors.get(1).getCode() == "second");
+    assert(result.getFieldErrors() is errors);
+    bool threw;
+    try
+        errors.add(errors.get(0));
+    catch (UnsupportedOperationException)
+        threw = true;
+    assert(threw);
+    foreach (i; 0 .. 9)
+        result.rejectValue("name", "more");
+    assert(result.getFieldErrors() !is errors && result.getFieldErrors().size() == 11);
+    assert(result.getFieldErrors().get(10).getCode() == "more" && errors.size() == 2);
+}

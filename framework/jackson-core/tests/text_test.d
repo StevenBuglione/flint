@@ -80,3 +80,17 @@ unittest
     // Negative: text that is not a number or a boolean after trimming takes the default.
     assert(p.nextToken() == JsonToken.VALUE_STRING && p.getValueAsLong(-7) == -7 && !p.getValueAsBoolean());
 }
+
+@("writeString(buffer, offset, len) writes the slice escaped, as writeString of the same text; a separator first")
+unittest
+{
+    auto output = new ByteArrayBuilder();
+    auto g = new JsonFactory().createGenerator(ObjectWriteContext.empty(), output);
+    char[16] buffer = `xx"a\é/b"yy`;
+    g.writeStartArray();
+    g.writeString(buffer[], 2, 8); // é is two bytes
+    g.writeString(`"a\é/b"`);
+    g.writeEndArray();
+    g.close();
+    assert(output.toUtf8String() == `["\"a\\é/b\"","\"a\\é/b\""]`, output.toUtf8String());
+}

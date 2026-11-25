@@ -139,10 +139,15 @@ class SpringValidatorAdapter : SmartValidator, JakartaValidator
             const name = node.getName();
             if (name.length && node.getKind() == ElementKind.PROPERTY && name[0] != '<')
             {
-                if (!first)
-                    result ~= ".";
+                if (first && result.length == 0)
+                    result = name; // the field is this name alone so far: no copy (a later `~=` copies)
+                else
+                {
+                    if (!first)
+                        result ~= ".";
+                    result ~= name;
+                }
                 first = false;
-                result ~= name;
             }
         }
         return result;
@@ -157,21 +162,27 @@ class SpringValidatorAdapter : SmartValidator, JakartaValidator
     /// The arguments: the field as a resolvable, then the constraint's attributes in name order.
     protected Any[] getArgumentsForConstraint(string objectName, string field, ConstraintDescriptor descriptor)
     {
-        auto names = descriptor.getAttributeNames().dup;
-        auto arguments = new Any[names.length + 1]; // at most the resolvable and every attribute
-        arguments[0] = Any.of(getResolvableField(objectName, field));
-        size_t count = 1;
-        foreach (i; 1 .. names.length) // insertion sort: a handful of names, without std.algorithm's templates
+        // The argument names in order, sorted on the stack (a descriptor has a handful); a longer list is copied.
+        const all = descriptor.getAttributeNames();
+        string[16] room;
+        string[] names = all.length <= room.length ? room[0 .. all.length] : new string[all.length];
+        size_t named;
+        foreach (name; all)
+            if (name != "message" && name != "groups" && name != "payload")
+                names[named++] = name;
+        names = names[0 .. named];
+        foreach (i; 1 .. names.length) // insertion sort, without std.algorithm's templates
             for (size_t j = i; j > 0 && names[j] < names[j - 1]; j--)
             {
                 const swap = names[j];
                 names[j] = names[j - 1];
                 names[j - 1] = swap;
             }
-        foreach (name; names)
-            if (name != "message" && name != "groups" && name != "payload")
-                arguments[count++] = descriptor.getAttribute(name);
-        return arguments[0 .. count];
+        auto arguments = new Any[names.length + 1]; // exactly the resolvable and the arguments
+        arguments[0] = Any.of(getResolvableField(objectName, field));
+        foreach (i, name; names)
+            arguments[i + 1] = descriptor.getAttribute(name);
+        return arguments;
     }
 
     /// The resolvable for `field`: codes `objectName.field` and `field`, defaulting to the field name.
@@ -243,50 +254,52 @@ class SpringValidatorAdapter : SmartValidator, JakartaValidator
     }
 }
 
-/// An `ObjectError` wrapping its `ConstraintViolation`.
+/// An `ObjectError` wrapping its `ConstraintViolation` (its source, `unwrap!ConstraintViolation`).
 class ViolationObjectError : ObjectError
 {
-    private SpringValidatorAdapter adapter;
-    private ConstraintViolation violation;
+    // Rulebook deviation: Spring keeps the adapter and the violation and asks `requiresMessageFormat` when the error
+    // is rendered; Flint asks once here, as the violation and its message are fixed. The error is two references
+    // smaller, which keeps a FieldError in the collector's 176-byte size class instead of 256.
+    private bool renderDefault;
 
     /// An error from `violation`.
     this(string objectName, string[] codes, Any[] arguments, ConstraintViolation violation,
             SpringValidatorAdapter adapter)
     {
         super(objectName, codes, arguments, violation.getMessage());
-        this.adapter = adapter;
-        this.violation = violation;
+        renderDefault = adapter.requiresMessageFormat(violation);
         wrap(cast(Object) violation);
     }
 
     /// Render the default message when it has `{0}` placeholders.
     override bool shouldRenderDefaultMessage()
     {
-        return adapter.requiresMessageFormat(violation);
+        return renderDefault;
     }
 }
 
 /// A `FieldError` wrapping its `ConstraintViolation`.
 class ViolationFieldError : FieldError
 {
-    private SpringValidatorAdapter adapter;
-    private ConstraintViolation violation;
+    private bool renderDefault; // asked once, as ViolationObjectError does (the same rulebook deviation)
 
     /// An error on `field` from `violation`.
     this(string objectName, string field, Any rejectedValue, string[] codes, Any[] arguments,
             ConstraintViolation violation, SpringValidatorAdapter adapter)
     {
         super(objectName, field, rejectedValue, false, codes, arguments, violation.getMessage());
-        this.adapter = adapter;
-        this.violation = violation;
+        renderDefault = adapter.requiresMessageFormat(violation);
         wrap(cast(Object) violation);
     }
 
     /// Render the default message when it has `{0}` placeholders.
     override bool shouldRenderDefaultMessage()
     {
-        return adapter.requiresMessageFormat(violation);
+        return renderDefault;
     }
+
+    // The collector's size class: a field error and its violation are made for every failed constraint.
+    static assert(__traits(classInstanceSize, ViolationFieldError) <= 176);
 }
 
 /++

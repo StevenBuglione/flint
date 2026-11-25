@@ -1028,6 +1028,14 @@ class UTF8JsonGenerator : JsonGenerator
         return this;
     }
 
+    /// The characters `buffer[offset .. offset + len]` as a String value, escaped from the buffer as they are.
+    override JsonGenerator writeString(scope const(char)[] buffer, int offset, int len)
+    {
+        verifyValueWrite("write a string");
+        quoted(buffer[offset .. offset + len]);
+        return this;
+    }
+
     // ASCII bytes written as they are whatever the features: not a control character, `"`, `\\` or `/` (which
     // ESCAPE_FORWARD_SLASHES escapes). The others take outputEscape's answer.
     private static immutable bool[128] plainAscii = () {

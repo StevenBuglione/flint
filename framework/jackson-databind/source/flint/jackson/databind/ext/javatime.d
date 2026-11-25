@@ -108,9 +108,23 @@ bool writeJavaTime(MapperConfig config, ref Any value, string type, JsonGenerato
         g.writeString(value.get!ZoneId().getId());
     else if (useTimestamp(config, format, DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS))
         writeTimestamp(config, value, kind, g);
+    else if (format.pattern.length == 0 && (kind == Kind.instant || kind == Kind.localDate))
+        writeIso(value, kind, g);
     else
         g.writeString(formatted(config, value, kind, format));
     return true;
+}
+
+// The default ISO forms of an Instant and a LocalDate, written from a stack buffer: no string per value.
+private void writeIso(ref Any value, Kind kind, JsonGenerator g)
+{
+    char[30] text = void;
+    const n = kind == Kind.instant ? isoInstant(value.get!Instant(), text) : isoLocalDate(value.get!LocalDate(), text);
+    if (n != 0)
+        g.writeString(text[], 0, cast(int) n);
+    else // a year outside 0000 to 9999: the formatter's own text
+        g.writeString(kind == Kind.instant ? DateTimeFormatter.ISO_INSTANT.format(value.get!Instant())
+                : value.get!LocalDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
 }
 
 private string formatted(MapperConfig config, ref Any value, Kind kind, JavaTimeFormat format)
@@ -143,10 +157,17 @@ private string formatted(MapperConfig config, ref Any value, Kind kind, JavaTime
 // by digit into one buffer; the others, which take a sign, go through the formatter.
 private string isoLocalDate(const LocalDate date)
 {
+    char[10] text = void;
+    const n = isoLocalDate(date, text);
+    return n == 0 ? date.format(DateTimeFormatter.ISO_LOCAL_DATE) : text[0 .. n].idup;
+}
+
+// The same into `text`: its length, or 0 for a year outside 0000 to 9999.
+private size_t isoLocalDate(const LocalDate date, scope char[] text)
+{
     const year = date.getYear();
     if (year < 0 || year > 9999)
-        return date.format(DateTimeFormatter.ISO_LOCAL_DATE);
-    char[10] text = void;
+        return 0;
     static void digits(scope char[] into, long value)
     {
         foreach_reverse (ref c; into)
@@ -161,7 +182,7 @@ private string isoLocalDate(const LocalDate date)
     digits(text[5 .. 7], date.getMonthValue());
     text[7] = '-';
     digits(text[8 .. 10], date.getDayOfMonth());
-    return text[].idup;
+    return 10;
 }
 
 // InstantSerializer's default, DateTimeFormatter.ISO_INSTANT: "2007-12-03T10:15:30Z", with a fraction of 3, 6 or 9
@@ -169,11 +190,19 @@ private string isoLocalDate(const LocalDate date)
 // sign, go through the formatter.
 private string isoInstant(const Instant instant)
 {
+    char[30] text = void;
+    const n = isoInstant(instant, text);
+    return n == 0 ? DateTimeFormatter.ISO_INSTANT.format(instant) : text[0 .. n].idup;
+}
+
+// The same into `text` (30 characters): its length, or 0 for a year outside 0000 to 9999.
+private size_t isoInstant(const Instant instant, scope char[] text)
+{
     enum long firstSecond = -62_167_219_200; // 0000-01-01T00:00:00Z
     enum long lastSecond = 253_402_300_799; // 9999-12-31T23:59:59Z
     const seconds = instant.getEpochSecond();
     if (seconds < firstSecond || seconds > lastSecond)
-        return DateTimeFormatter.ISO_INSTANT.format(instant);
+        return 0;
     long days = seconds / 86_400, secondOfDay = seconds % 86_400;
     if (secondOfDay < 0)
     {
@@ -190,7 +219,6 @@ private string isoInstant(const Instant instant)
     const day = doy - (153 * mp + 2) / 5 + 1;
     const month = mp < 10 ? mp + 3 : mp - 9;
     const year = yoe + era * 400 + (month <= 2 ? 1 : 0);
-    char[30] text = void;
     size_t n;
     void digits(long value, int width)
     {
@@ -225,7 +253,7 @@ private string isoInstant(const Instant instant)
             digits(nano, 9);
     }
     text[n++] = 'Z';
-    return text[0 .. n].idup;
+    return n;
 }
 
 // The direct writer agrees with ISO_LOCAL_DATE on both sides of its range and at month and year edges.

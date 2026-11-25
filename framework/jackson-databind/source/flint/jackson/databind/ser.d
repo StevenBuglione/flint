@@ -29,7 +29,7 @@ import flint.jackson.databind.stddateformat : dateKeyText, writeJavaUtilDate;
 import flint.jackson.databind.introspect : BeanDescription, BeanPropertyDefinition, ScalarKind,
     ValueRoute, scalarKindOf;
 import flint.jackson.databind.node : JsonNode;
-import flint.java.util : RawCollection, RawMap;
+import flint.java.util : ErasedList, RawCollection, RawMap;
 
 @safe:
 
@@ -273,6 +273,19 @@ private void writeEnum(MapperConfig config, const Descriptor d, ref Any value, J
 
 private void writeCollection(MapperConfig config, RawCollection collection, JsonGenerator g)
 {
+    // A list of class instances is written element by element from the list itself: no boxed copy of the list.
+    if (auto list = cast(ErasedList) collection)
+    {
+        const type = list.elementTypeName();
+        g.writeStartArray();
+        foreach (i; 0 .. list.size())
+            withPath(Reference(null, i, "java.util.List"), () {
+                auto e = Any.ofObject(list.objectAt(i), type);
+                serializeValue(config, e, null, g);
+            });
+        g.writeEndArray();
+        return;
+    }
     auto elements = collection.toAnyArray();
     g.writeStartArray();
     foreach (i, ref e; elements)

@@ -178,12 +178,12 @@ final class PathImpl : Path
         return path;
     }
 
-    /// The nodes from the root, in order.
+    /// The nodes from the root, in order: a new array, the caller's own.
     Path.Node[] nodes()
     {
-        Path.Node[] result;
-        foreach (n; nodeList)
-            result ~= n;
+        auto result = new Path.Node[nodeList.length];
+        foreach (i, n; nodeList)
+            result[i] = n;
         return result;
     }
 
@@ -285,26 +285,31 @@ final class ConstraintDescriptorImpl : ConstraintDescriptor
 final class ConstraintViolationImpl : ConstraintViolation
 {
     private string interpolatedMessage;
-    private string messageTemplate;
     private Any rootBean;
-    private string rootBeanClass;
-    private Any leafBean;
     private Path propertyPath;
     private Any value;
     private ConstraintDescriptor descriptor;
+    // What usually follows from the fields above, kept only when it does not: the leaf bean when it is not the root,
+    // the root class when it is not the root's own type, the template when it is not the descriptor's. A violation
+    // is made for every failed constraint; without these it is one object in the collector's 176-byte size class
+    // instead of 256 (R-103).
+    private ViolationDetails details;
+
+    // The collector's size class (see `details`).
+    static assert(__traits(classInstanceSize, ConstraintViolationImpl) <= 176);
 
     ///
     this(string messageTemplate, string interpolatedMessage, string rootBeanClass, Any rootBean,
             Any leafBean, Any value, Path propertyPath, ConstraintDescriptor descriptor)
     {
-        this.messageTemplate = messageTemplate;
         this.interpolatedMessage = interpolatedMessage;
-        this.rootBeanClass = rootBeanClass;
         this.rootBean = rootBean;
-        this.leafBean = leafBean;
         this.value = value;
         this.propertyPath = propertyPath;
         this.descriptor = descriptor;
+        if (leafBean !is rootBean || rootBeanClass != rootBean.typeName() || descriptor is null
+                || messageTemplate != descriptor.getMessageTemplate())
+            details = new ViolationDetails(leafBean, rootBeanClass, messageTemplate);
     }
 
     /// The interpolated message.
@@ -316,7 +321,7 @@ final class ConstraintViolationImpl : ConstraintViolation
     /// The message template.
     string getMessageTemplate()
     {
-        return messageTemplate;
+        return details !is null ? details.messageTemplate : descriptor.getMessageTemplate();
     }
 
     /// The root bean.
@@ -328,13 +333,13 @@ final class ConstraintViolationImpl : ConstraintViolation
     /// The root bean's Flint type name.
     string getRootBeanClass()
     {
-        return rootBeanClass;
+        return details !is null ? details.rootBeanClass : rootBean.typeName();
     }
 
     /// The bean holding the failing value.
     Any getLeafBean()
     {
-        return leafBean;
+        return details !is null ? details.leafBean : rootBean;
     }
 
     /// The path from the root bean.
@@ -356,11 +361,26 @@ final class ConstraintViolationImpl : ConstraintViolation
     }
 
     /// As Hibernate prints a violation.
-    override string toString() const
+    override string toString()
     {
         return "ConstraintViolationImpl{interpolatedMessage='" ~ interpolatedMessage
             ~ "', propertyPath=" ~ propertyPath.toString() ~ ", rootBeanClass=class "
-            ~ rootBeanClass ~ ", messageTemplate='" ~ messageTemplate ~ "'}";
+            ~ getRootBeanClass() ~ ", messageTemplate='" ~ getMessageTemplate() ~ "'}";
+    }
+}
+
+// A violation's leaf bean, root class and template, when they do not follow from its root and descriptor.
+private final class ViolationDetails
+{
+    Any leafBean;
+    string rootBeanClass;
+    string messageTemplate;
+
+    this(Any leafBean, string rootBeanClass, string messageTemplate) pure nothrow @nogc
+    {
+        this.leafBean = leafBean;
+        this.rootBeanClass = rootBeanClass;
+        this.messageTemplate = messageTemplate;
     }
 }
 
@@ -760,6 +780,9 @@ private struct PropertyMetaData
     size_t index; // into the descriptor's properties
     MetaConstraint[] constraints;
     bool cascade; // @Valid
+    // The path from a validate() call's root bean to this property: the same for every call, so made on the first
+    // violation (or cascade) and shared after, published by compare-and-swap. Paths are immutable once made.
+    PathImpl fromRoot;
 }
 
 // A property path made only when something needs it: a violation, a cascade or an exception message.
@@ -771,6 +794,17 @@ private struct LazyPath
     string parameter;
     bool returnValue;
     PathImpl made;
+    PathImpl* shared_; // when set: where the path, the same for every call, is kept once made
+
+    // The path to `property` of the root bean, kept in `cell` (a property's metadata) once made.
+    static LazyPath fromRoot(PathImpl root, string property, PathImpl* cell) pure nothrow @nogc
+    {
+        LazyPath path;
+        path.parent = root;
+        path.property = property;
+        path.shared_ = cell;
+        return path;
+    }
 
     // The path to `parameter` of `method`, or to its return value.
     static LazyPath ofExecutable(string method, string parameter, bool returnValue = false) pure nothrow @nogc
@@ -784,8 +818,20 @@ private struct LazyPath
 
     PathImpl get()
     {
+        import core.atomic : atomicLoad, cas;
+
         if (made !is null)
             return made;
+        if (shared_ !is null)
+        {
+            made = atomicLoad(*shared_);
+            if (made is null)
+            {
+                auto created = parent.addPropertyNode(property);
+                made = cas(shared_, cast(PathImpl) null, created) ? created : atomicLoad(*shared_);
+            }
+            return made;
+        }
         if (method !is null)
         {
             auto root = PathImpl.createPathForExecutable(method);
@@ -852,11 +898,13 @@ private struct Run
             }
         if (meta is null || !meta.bean)
             return;
-        foreach (ref p; meta.properties)
+        const fromRoot = root && path is factory.rootPath;
+        foreach (i, ref p; meta.properties)
         {
             const property = &d.properties[p.index];
             auto value = property.get(bean);
-            auto at = LazyPath(path, property.name);
+            auto at = fromRoot ? LazyPath.fromRoot(path, property.name, &meta.properties[i].fromRoot)
+                : LazyPath(path, property.name);
             check(bean, value, p.constraints, at);
             if (p.cascade && !value.isNull())
                 cascade(value, at.get(), property.type);
@@ -999,10 +1047,18 @@ private struct Run
     void report(Any leaf, ref Any value, PathImpl at, ConstraintDescriptorImpl descriptor,
             scope const(string)[] templates)
     {
+        import flint.hibernate.validator.messageinterpolation : ParameterMessageInterpolator,
+            ResourceBundleMessageInterpolator;
+
+        // The built-in interpolators read the constraint and the value directly; any other interpolator (an
+        // application's, or a subclass) gets a context, as Hibernate passes one.
+        const dynamic = typeid(cast(Object) factory.interpolator); // the class: typeid of an interface is its own
+        auto own = dynamic is typeid(ResourceBundleMessageInterpolator) || dynamic is typeid(ParameterMessageInterpolator)
+            ? cast(ResourceBundleMessageInterpolator) factory.interpolator : null;
         foreach (messageTemplate; templates)
         {
-            const message = factory.interpolator.interpolate(messageTemplate,
-                    new MessageInterpolatorContext(descriptor, value));
+            const message = own !is null ? own.interpolateFor(messageTemplate, descriptor, value)
+                : factory.interpolator.interpolate(messageTemplate, new MessageInterpolatorContext(descriptor, value));
             violations ~= new ConstraintViolationImpl(messageTemplate, message, rootType, root,
                     leaf, value, at, descriptor);
         }

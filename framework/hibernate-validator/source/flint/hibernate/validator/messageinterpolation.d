@@ -21,6 +21,7 @@ import flint.hibernate.validator.internal.el : ElException, ElValue, evaluate;
 import flint.hibernate.validator.internal.engine : ConstraintDescriptorImpl;
 import flint.hibernate.validator.internal.messages : defaultMessage;
 import flint.jakarta.validation : MessageInterpolator;
+import flint.jakarta.validation.metadata : ConstraintDescriptor;
 
 @safe:
 
@@ -54,6 +55,20 @@ class ResourceBundleMessageInterpolator : MessageInterpolator
     /// Interpolates the message template based on the constraint validation context. A template the tokenizer
     /// rejects (an unbalanced or nested brace) is returned unchanged, as Hibernate logs and returns it.
     string interpolate(string messageTemplate, Context context)
+    {
+        return render(messageTemplate, Terms(context));
+    }
+
+    // `interpolate` over a constraint and its validated value, without a context object: the validator calls this
+    // when the factory's interpolator is exactly this class (or ParameterMessageInterpolator), so a violation's
+    // message needs nothing on the heap besides itself. An override of `interpolate` is always called instead.
+    package(flint.hibernate.validator) final string interpolateFor(string messageTemplate,
+            ConstraintDescriptor descriptor, ref Any validatedValue)
+    {
+        return render(messageTemplate, Terms(null, descriptor, validatedValue));
+    }
+
+    private string render(string messageTemplate, Terms context)
     {
         if (messageTemplate is null)
             return null;
@@ -119,7 +134,7 @@ class ResourceBundleMessageInterpolator : MessageInterpolator
     private enum maxBundleDepth = 32;
 
     // ParameterTermResolver: an element of the constraint, escaped; the term itself when there is none.
-    private string parameter(string term, Context context, bool escape = true)
+    private string parameter(string term, ref Terms context, bool escape = true)
     {
         auto descriptor = cast(ConstraintDescriptorImpl) context.getConstraintDescriptor();
         if (descriptor is null)
@@ -133,7 +148,7 @@ class ResourceBundleMessageInterpolator : MessageInterpolator
     }
 
     // ElTermResolver: the expression's value over the constraint's elements and `validatedValue`.
-    private string expression(string term, Context context)
+    private string expression(string term, Terms context) // a copy: the evaluator's lookup keeps it
     {
         auto descriptor = cast(ConstraintDescriptorImpl) context.getConstraintDescriptor();
         ElValue lookup(string name)
@@ -172,6 +187,24 @@ class ResourceBundleMessageInterpolator : MessageInterpolator
         if (auto o = value.asObject())
             return ElValue.of(objectToString(o));
         return ElValue.of(value.toString());
+    }
+}
+
+// What a message's terms read: a caller's context, or the constraint and the value themselves.
+private struct Terms
+{
+    MessageInterpolator.Context context; // when set, the source of both
+    ConstraintDescriptor descriptor;
+    Any value;
+
+    ConstraintDescriptor getConstraintDescriptor()
+    {
+        return context !is null ? context.getConstraintDescriptor() : descriptor;
+    }
+
+    Any getValidatedValue()
+    {
+        return context !is null ? context.getValidatedValue() : value;
     }
 }
 
