@@ -1149,6 +1149,50 @@ interface NamedParameterJdbcOperations
 }
 
 /++
+`NamedParameterJdbcTemplate`'s parsed statements, as Spring's `ConcurrentLruCache` of `cacheLimit` entries holds them:
+two per set, the set chosen by the statement's hash, each published with `ProcessSlot` so a lookup takes no lock. A
+new statement goes first in its set and the set's newer entry moves second, replacing the older, so a statement with
+literal values in its text displaces one entry at a time. Two callers parsing the same new statement at once may each
+keep their own result; both are the same parse.
++/
+private final class ParsedSqlCache
+{
+    import flint.conc.slot : ProcessSlot;
+
+    private shared(ProcessSlot!ParsedSql)[] entries;
+
+    this(int limit)
+    {
+        entries = new shared(ProcessSlot!ParsedSql)[limit < 2 ? 2 : limit + limit % 2];
+    }
+
+    private size_t setOf(string sql) const
+    {
+        return 2 * (hashOf(sql) % (entries.length / 2));
+    }
+
+    /// The parsed form of `sql`, or null.
+    ParsedSql find(string sql)
+    {
+        const set = setOf(sql);
+        foreach (way; 0 .. 2)
+            if (auto found = entries[set + way].get())
+                if (found.getOriginalSql() == sql)
+                    return found;
+        return null;
+    }
+
+    /// Keep `parsed`, first in its set.
+    void add(ParsedSql parsed)
+    {
+        const set = setOf(parsed.getOriginalSql());
+        if (auto newer = entries[set].get())
+            entries[set + 1].set(newer);
+        entries[set].set(parsed);
+    }
+}
+
+/++
 Template class with a basic set of JDBC operations, allowing the use of named parameters rather than traditional '?'
 placeholders. This class delegates to a wrapped `JdbcTemplate` once the substitution from named parameters to JDBC
 style '?' placeholders is done at execution time. It also allows for expanding a `List` of values to the appropriate
@@ -1161,7 +1205,8 @@ class NamedParameterJdbcTemplate : NamedParameterJdbcOperations
 
     private JdbcOperations classicJdbcTemplate;
     private int cacheLimit = DEFAULT_CACHE_LIMIT;
-    private ParsedSql[string] parsedSqlCache;
+    /// The parsed statements, read without a lock; null when the cache limit is zero or less.
+    private shared imported!"flint.conc.slot".ProcessSlot!ParsedSqlCache parsedSqlCache;
 
     /// Create a new `NamedParameterJdbcTemplate` for the given `DataSource`. Creates a classic `JdbcTemplate` and
     /// wraps it.
@@ -1176,6 +1221,7 @@ class NamedParameterJdbcTemplate : NamedParameterJdbcOperations
         if (classicJdbcTemplate is null)
             throw new IllegalArgumentException("JdbcTemplate must not be null");
         this.classicJdbcTemplate = classicJdbcTemplate;
+        parsedSqlCache.set(new ParsedSqlCache(cacheLimit));
     }
 
     /// Create a new `NamedParameterJdbcTemplate` for the given classic `JdbcTemplate`, sharing the SQL cache of
@@ -1184,7 +1230,7 @@ class NamedParameterJdbcTemplate : NamedParameterJdbcOperations
     {
         this(classicJdbcTemplate);
         cacheLimit = original.cacheLimit;
-        parsedSqlCache = original.parsedSqlCache;
+        parsedSqlCache.set(original.parsedSqlCache.get());
     }
 
     override JdbcOperations getJdbcOperations()
@@ -1208,7 +1254,7 @@ class NamedParameterJdbcTemplate : NamedParameterJdbcOperations
         synchronized (this)
         {
             this.cacheLimit = cacheLimit;
-            parsedSqlCache = null;
+            parsedSqlCache.set(cacheLimit > 0 ? new ParsedSqlCache(cacheLimit) : null);
         }
     }
 
@@ -1382,25 +1428,20 @@ class NamedParameterJdbcTemplate : NamedParameterJdbcOperations
         return held.matches(names, paramSource) ? held.factory : factory;
     }
 
-    /// Obtain a parsed representation of the given SQL statement. The default implementation uses an LRU cache
-    /// with an upper limit of 256 entries.
+    /// Obtain a parsed representation of the given SQL statement. The default implementation uses a cache of up
+    /// to 256 entries (`setCacheLimit`), read without a lock.
     protected ParsedSql getParsedSql(string sql)
     {
         if (sql is null)
             throw new IllegalArgumentException("SQL must not be null");
-        if (cacheLimit <= 0)
+        auto cache = parsedSqlCache.get();
+        if (cache is null)
             return NamedParameterUtils.parseSqlStatement(sql);
-        synchronized (this)
-        {
-            if (auto cached = sql in parsedSqlCache)
-                return *cached;
-            // A bounded cache: when full, start again rather than track recency.
-            if (parsedSqlCache.length >= cacheLimit)
-                parsedSqlCache = null;
-            auto parsedSql = NamedParameterUtils.parseSqlStatement(sql);
-            parsedSqlCache[sql] = parsedSql;
-            return parsedSql;
-        }
+        if (auto cached = cache.find(sql))
+            return cached;
+        auto parsedSql = NamedParameterUtils.parseSqlStatement(sql);
+        cache.add(parsedSql);
+        return parsedSql;
     }
 
     /// Build a `PreparedStatementCreatorFactory` based on the given SQL and named parameters.

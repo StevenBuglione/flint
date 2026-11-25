@@ -422,6 +422,49 @@ unittest
     assert(f.namedParameterTemplate.getJdbcTemplate().getDataSource() is f.dataSource);
 }
 
+/// `getParsedSql` made visible.
+private final class ParsingTemplate : NamedParameterJdbcTemplate
+{
+    this(DataSource dataSource)
+    {
+        super(dataSource);
+    }
+
+    this(NamedParameterJdbcTemplate original, JdbcTemplate classic)
+    {
+        super(original, classic);
+    }
+
+    ParsedSql parsed(string sql)
+    {
+        return getParsedSql(sql);
+    }
+}
+
+@("NamedParameterJdbcTemplate keeps each parsed statement up to its cache limit, read without a lock (Flint)")
+unittest
+{
+    auto f = Fixture.setup();
+    auto template_ = new ParsingTemplate(f.dataSource);
+    auto first = template_.parsed(SELECT_NAMED_PARAMETERS);
+    assert(template_.parsed(SELECT_NAMED_PARAMETERS.idup) is first);
+    assert(template_.parsed(SELECT_NO_PARAMETERS) !is first);
+    // A template made from another shares its cache.
+    auto sharing = new ParsingTemplate(template_, template_.getJdbcTemplate());
+    assert(sharing.parsed(SELECT_NAMED_PARAMETERS) is first);
+    // A limit of two is one set: a third statement evicts the older of the first two.
+    template_.setCacheLimit(2);
+    assert(template_.getCacheLimit() == 2);
+    auto a = template_.parsed("select :a");
+    auto b = template_.parsed("select :b");
+    assert(template_.parsed("select :a") is a && template_.parsed("select :b") is b);
+    template_.parsed("select :c");
+    assert(template_.parsed("select :b") is b && template_.parsed("select :a") !is a);
+    // No cache: every call parses again.
+    template_.setCacheLimit(0);
+    assert(template_.parsed("select :b") !is b && template_.parsed("select :b") !is template_.parsed("select :b"));
+}
+
 @("NamedParameterJdbcTemplateTests.execute")
 unittest
 {

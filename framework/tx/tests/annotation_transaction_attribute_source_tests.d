@@ -371,6 +371,26 @@ unittest
     assert(attributeSource.getTransactionAttribute(method, null) is null);
 }
 
+@("DescriptorTransactionAttributeSource caches each method's attribute, or none, per class, lock-free (Flint)")
+unittest
+{
+    auto attributeSource = new DescriptorTransactionAttributeSource;
+    const bean = testBean1();
+    const method = getMethod(bean, "getAge");
+    auto first = attributeSource.getTransactionAttribute(method, bean);
+    assert(first !is null);
+    // Spring's attributeCache: the same attribute object for every later call, after other methods were added.
+    const plain = empty();
+    assert(attributeSource.getTransactionAttribute(getMethod(plain, "getAge"), plain) is null);
+    assert(attributeSource.getTransactionAttribute(getMethod(plain, "getAge"), plain) is null);
+    assert(attributeSource.getTransactionAttribute(method, bean) is first);
+    // Another target class is its own entry, with its own descriptor.
+    auto other = attributeSource.getTransactionAttribute(method, null);
+    assert(other !is null && other !is first);
+    assert(attributeSource.getTransactionAttribute(method, null) is other);
+    assert(attributeSource.getTransactionAttribute(method, bean) is first);
+}
+
 /// Test the important case where the invocation is on a proxied interface method but the attribute is defined on
 /// the target class.
 @("AnnotationTransactionAttributeSourceTests.transactionAttributeDeclaredOnClassMethod")

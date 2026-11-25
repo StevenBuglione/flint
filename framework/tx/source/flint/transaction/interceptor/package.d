@@ -30,6 +30,7 @@ import flint.core.annotation : ClassRef;
 import flint.engine.aot.bean : BeanFactory;
 import flint.engine.aot.descriptor : Descriptor, MethodDescriptor;
 import flint.engine.aot.proxy : Advisor, Invocation, Proceed;
+import flint.conc.slot : ProcessSlot;
 import flint.engine.reactor : FiberLocal;
 import flint.java.lang : IllegalArgumentException, IllegalStateException, RuntimeException, javaToString;
 import flint.java.util : ArrayList, Collection, Collections, LinkedHashSet, List;
@@ -510,21 +511,24 @@ final class DescriptorTransactionAttributeSource : TransactionAttributeSource
         const(void)* targetClass;
     }
 
-    private TransactionAttribute[MethodClassKey] cache;
-    private bool[MethodClassKey] nonTransactional;
+    // Each method's attribute, null for a method without one, as Spring's attributeCache holds NULL_TRANSACTION_ATTRIBUTE.
+    // Read without a lock: a new method's entry is added under this object's monitor into a copy, which then replaces
+    // the published table. Entries are added once per method and class, so the copies stop once the methods are known.
+    private static final class AttributeTable
+    {
+        TransactionAttribute[MethodClassKey] attributes;
+    }
+
+    private shared ProcessSlot!AttributeTable table;
 
     override TransactionAttribute getTransactionAttribute(const(MethodDescriptor)* method, const Descriptor targetClass)
     {
         if (method is null)
             return null;
         const key = MethodClassKey(method, cast(const(void)*) targetClass);
-        synchronized (this)
-        {
-            if (auto cached = key in cache)
+        if (auto current = table.get())
+            if (auto cached = key in current.attributes)
                 return *cached;
-            if (key in nonTransactional)
-                return null;
-        }
         TransactionAttribute attribute = null;
         foreach (ref merged; method.annotations)
         {
@@ -540,10 +544,16 @@ final class DescriptorTransactionAttributeSource : TransactionAttributeSource
             dta.setDescriptor(qualifiedMethodName(method, targetClass));
         synchronized (this)
         {
-            if (attribute is null)
-                nonTransactional[key] = true;
-            else
-                cache[key] = attribute;
+            // A racing caller's entry, stored first, wins, so every caller gets the same attribute object.
+            auto current = table.get();
+            if (current !is null)
+                if (auto cached = key in current.attributes)
+                    return *cached;
+            auto next = new AttributeTable;
+            if (current !is null)
+                next.attributes = current.attributes.dup;
+            next.attributes[key] = attribute;
+            table.set(next);
         }
         return attribute;
     }
