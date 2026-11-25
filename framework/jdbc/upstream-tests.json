@@ -1,0 +1,593 @@
+{
+  "classes": {
+    "org/springframework/jdbc/core/BeanPropertyRowMapperTests.java": {
+      "d": "framework/jdbc/tests/bean_property_row_mapper_tests.d",
+      "methods": {
+        "ported": [
+          "mappingNullValue",
+          "mappingNullValueWithPrimitivesDefaultedForNullValue",
+          "mappingWithInheritance",
+          "mappingWithNoUnpopulatedFieldsFound",
+          "mappingWithUnpopulatedFieldsNotAccepted",
+          "mappingWithUnpopulatedFieldsNotChecked",
+          "overridingDifferentClassDefinedForMapping",
+          "overridingSameClassDefinedForMapping",
+          "queryWithCustomNameMatchOnBirthDate",
+          "queryWithDirectNameMatchOnBirthDate",
+          "queryWithSpaceInColumnNameAndLocalDate",
+          "queryWithSpaceInColumnNameAndLocalDateTime",
+          "staticQueryWithRowMapper",
+          "underscoreName"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/jdbc/core/DataClassRowMapperTests.java": {
+      "d": "framework/jdbc/tests/data_class_row_mapper_tests.d",
+      "methods": {
+        "ported": [
+          "staticQueryWithDataClass",
+          "staticQueryWithDataClassAndGenerics",
+          "staticQueryWithDataClassAndSetters",
+          "staticQueryWithDataClassResolvesColumnsViaMetaData",
+          "staticQueryWithDataRecord",
+          "staticQueryWithDataRecordAndMissingColumn",
+          "staticQueryWithDataRecordSkipsSetterPopulation"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/jdbc/core/JdbcTemplateTests.java": {
+      "d": [
+        "framework/jdbc/tests/jdbc_template.d",
+        "framework/jdbc/tests/jdbc_template_upstream_tests.d"
+      ],
+      "methods": {
+        "ported": [
+          "batchUpdateFails",
+          "batchUpdateReturnsGeneratedKeys_whenDatabaseDoesNotSupportBatchUpdates",
+          "batchUpdateReturnsGeneratedKeys_whenDatabaseSupportsBatchUpdates",
+          "batchUpdateWithBatchFailingHasUpdateCounts",
+          "batchUpdateWithBatchFailingMatchesOriginalException",
+          "batchUpdateWithBatchFailure",
+          "batchUpdateWithCollectionOfObjects",
+          "batchUpdateWithEmptyList",
+          "batchUpdateWithListOfObjectArraysPlusTypeInfo",
+          "batchUpdateWithNoBatchSupport",
+          "batchUpdateWithNoBatchSupportAndSelect",
+          "batchUpdateWithPreparedStatementAndNoBatchSupport",
+          "batchUpdateWithPreparedStatementWithEmptyData",
+          "beanProperties",
+          "bogusUpdate",
+          "caseInsensitiveResultsMap",
+          "closeConnectionOnRequest",
+          "connectionCallback",
+          "connectionCallbackWithStatementSettings",
+          "couldNotClose",
+          "couldNotGetConnectionForOperationOrExceptionTranslator",
+          "couldNotGetConnectionForOperationWithLazyExceptionTranslator",
+          "couldNotGetConnectionInOperationWithExceptionTranslatorInitializedInAfterPropertiesSet",
+          "couldNotGetConnectionInOperationWithExceptionTranslatorInitializedViaBeanProperty",
+          "discardFurtherRowsOnceMaxRowsHasBeenReachedForRowCallbackHandler",
+          "discardFurtherRowsOnceMaxRowsHasBeenReachedForStream",
+          "equallyNamedColumn",
+          "exceptionComesBack",
+          "executeClosed",
+          "fatalWarning",
+          "ignoredWarning",
+          "interruptibleBatchUpdate",
+          "interruptibleBatchUpdateWithBaseClass",
+          "interruptibleBatchUpdateWithBaseClassAndNoBatchSupport",
+          "leaveConnectionOpenOnRequest",
+          "preparedStatementSetterFails",
+          "preparedStatementSetterSucceeds",
+          "skipFurtherRowsOnceMaxRowsHasBeenReachedForRowMapper",
+          "sqlErrorCodeTranslation",
+          "sqlErrorCodeTranslationWithSpecifiedDatabaseName",
+          "sqlUpdate",
+          "sqlUpdateEncountersSqlException",
+          "sqlUpdateWithArguments",
+          "sqlUpdateWithThreadConnection",
+          "staticResultSetClosed",
+          "stringsWithEmptyPreparedStatementArgs",
+          "stringsWithEmptyPreparedStatementSetter",
+          "stringsWithPreparedStatementArgs",
+          "stringsWithPreparedStatementSetter",
+          "stringsWithStaticSql",
+          "stringsWithStaticSqlAndFetchSizeAndMaxRows",
+          "useCustomExceptionTranslator"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/jdbc/core/RowMapperTests.java": {
+      "d": "framework/jdbc/tests/row_mapper_tests.d",
+      "methods": {
+        "ported": [
+          "preparedStatementCreatorWithRowMapper",
+          "preparedStatementSetterWithRowMapper",
+          "queryWithArgsAndRowMapper",
+          "queryWithArgsAndTypesAndRowMapper",
+          "staticQueryWithRowMapper"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/jdbc/core/SingleColumnRowMapperTests.java": {
+      "d": "framework/jdbc/tests/single_column_row_mapper_tests.d",
+      "methods": {
+        "ported": [
+          "doesNotUseConversionService",
+          "useCustomConversionService",
+          "useDefaultConversionService"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/jdbc/core/StatementCreatorUtilsTests.java": {
+      "d": "framework/jdbc/tests/statement_creator_utils_tests.d",
+      "methods": {
+        "ported": [
+          "javaTimeTypesToSqlParameterType",
+          "setParameterValueWithCalendarAndUnknownType",
+          "setParameterValueWithDateAndCalendar",
+          "setParameterValueWithDateAndUnknownType",
+          "setParameterValueWithDateAndUtilDate",
+          "setParameterValueWithJavaTimeTypes",
+          "setParameterValueWithNullAndGetParameterTypeWorking",
+          "setParameterValueWithNullAndNotSupported",
+          "setParameterValueWithNullAndType",
+          "setParameterValueWithNullAndTypeName",
+          "setParameterValueWithNullAndUnknownType",
+          "setParameterValueWithNullAndUnknownTypeOnDerbyEmbedded",
+          "setParameterValueWithNullAndUnknownTypeOnInformix",
+          "setParameterValueWithNullAndVendorSpecificType",
+          "setParameterValueWithOffsetDateTimeAndNotSupported",
+          "setParameterValueWithSqlDate",
+          "setParameterValueWithSqlTime",
+          "setParameterValueWithSqlTimestamp",
+          "setParameterValueWithString",
+          "setParameterValueWithStringAndSpecialType",
+          "setParameterValueWithStringAndUnknownType",
+          "setParameterValueWithStringAndVendorSpecificType",
+          "setParameterValueWithTimeAndCalendar",
+          "setParameterValueWithTimeAndUtilDate",
+          "setParameterValueWithTimestampAndCalendar",
+          "setParameterValueWithTimestampAndUtilDate"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/jdbc/core/namedparam/BeanPropertySqlParameterSourceTests.java": {
+      "d": "framework/jdbc/tests/bean_property_sql_parameter_source_tests.d",
+      "methods": {
+        "ported": [
+          "getValueWhereTheUnderlyingBeanHasNoSuchProperty",
+          "getValueWhereTheUnderlyingBeanPropertyIsNotReadable",
+          "hasValueWhereTheUnderlyingBeanHasNoSuchProperty",
+          "hasValueWhereTheUnderlyingBeanPropertyIsNotReadable",
+          "successfulPropertyAccess",
+          "successfulPropertyAccessWithOverriddenSqlType",
+          "toStringDoesNotShowTypeUnknown",
+          "toStringShowsCustomSqlType",
+          "toStringShowsParameterDetails",
+          "withNullBeanPassedToCtor"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/jdbc/core/namedparam/MapSqlParameterSourceTests.java": {
+      "d": "framework/jdbc/tests/map_sql_parameter_source_tests.d",
+      "methods": {
+        "ported": [
+          "getValueChokesIfParameterIsNotPresent",
+          "nullParameterValuesPassedToCtorIsOk",
+          "sqlParameterValueRegistersSqlType",
+          "toStringDoesNotShowTypeUnknown",
+          "toStringShowsCustomSqlType",
+          "toStringShowsParameterDetails"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/jdbc/core/namedparam/NamedParameterJdbcTemplateTests.java": {
+      "d": "framework/jdbc/tests/named_parameter_jdbc_template_tests.d",
+      "methods": {
+        "ported": [
+          "batchUpdateWithEmptyMap",
+          "batchUpdateWithGeneratedKeys",
+          "batchUpdateWithInClause",
+          "batchUpdateWithPlainMap",
+          "batchUpdateWithSqlParameterSource",
+          "batchUpdateWithSqlParameterSourcePlusTypeInfo",
+          "execute",
+          "executeArray",
+          "executeNoParameters",
+          "executeWithTypedParameters",
+          "nullDataSourceProvidedToCtor",
+          "nullJdbcTemplateProvidedToCtor",
+          "queryForObjectWithRowMapper",
+          "queryForStreamWithRowMapper",
+          "queryWithResultSetExtractor",
+          "queryWithResultSetExtractorNoParameters",
+          "queryWithRowCallbackHandler",
+          "queryWithRowCallbackHandlerNoParameters",
+          "queryWithRowMapper",
+          "queryWithRowMapperNoParameters",
+          "templateConfiguration",
+          "update",
+          "updateWithTypedParameters"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/jdbc/core/namedparam/NamedParameterUtilsTests.java": {
+      "d": "framework/jdbc/tests/named_parameters.d",
+      "methods": {
+        "ported": [
+          "buildValueArrayWithMissingParameterValue",
+          "convertParamMapToArray",
+          "convertSqlParameterValueToArray",
+          "parseSql",
+          "substituteNamedParameters"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/jdbc/core/namedparam/SqlParameterSourceUtilsTests.java": {
+      "d": "framework/jdbc/tests/sql_parameter_source_utils_tests.d",
+      "methods": {
+        "ported": [
+          "createBatchWithMapBeanAndSqlParameterSource",
+          "createBatchWithSqlParameterSourceVarargs"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/jdbc/core/simple/JdbcClientIndexedParameterTests.java": {
+      "d": "framework/jdbc/tests/jdbc_client_indexed_parameter_tests.d",
+      "methods": {
+        "ported": [
+          "batchUpdateMultipleRows",
+          "batchUpdateSingleRow",
+          "batchUpdateWithGeneratedKeys",
+          "batchUpdateWithGeneratedKeysAndKeyColumnNames",
+          "batchUpdateWithParametersAndSqlType",
+          "batchUpdateWithTypedParameters",
+          "queryForObjectWithRowMapper",
+          "queryForStreamWithRowMapper",
+          "queryWithResultSetExtractor",
+          "queryWithResultSetExtractorNoParameters",
+          "queryWithRowCallbackHandler",
+          "queryWithRowCallbackHandlerNoParameters",
+          "queryWithRowMapper",
+          "queryWithRowMapperNoParameters",
+          "update",
+          "updateWithGeneratedKeys",
+          "updateWithGeneratedKeysAndKeyColumnNames",
+          "updateWithTypedParameters"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/jdbc/core/simple/JdbcClientNamedParameterTests.java": {
+      "d": "framework/jdbc/tests/jdbc_client_named_parameter_tests.d",
+      "methods": {
+        "ported": [
+          "batchUpdateMultipleRows",
+          "batchUpdateSingleRow",
+          "batchUpdateWithGeneratedKeys",
+          "batchUpdateWithGeneratedKeysAndKeyColumnNames",
+          "batchUpdateWithParametersAndSqlType",
+          "batchUpdateWithTypedParameters",
+          "queryForObjectWithRowMapper",
+          "queryForStreamWithRowMapper",
+          "queryWithResultSetExtractor",
+          "queryWithResultSetExtractorNoParameters",
+          "queryWithResultSetExtractorParameterSource",
+          "queryWithRowCallbackHandler",
+          "queryWithRowCallbackHandlerNoParameters",
+          "queryWithRowCallbackHandlerParameterSource",
+          "queryWithRowMapper",
+          "queryWithRowMapperNoParameters",
+          "update",
+          "updateWithGeneratedKeys",
+          "updateWithGeneratedKeysAndKeyColumnNames",
+          "updateWithParameterSourceSuppliedAsObject",
+          "updateWithTypedParameters"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/jdbc/core/simple/JdbcClientQueryTests.java": {
+      "d": "framework/jdbc/tests/jdbc_client_query_tests.d",
+      "methods": {
+        "ported": [
+          "queryForIntWithIndexedParam",
+          "queryForIntWithNamedParam",
+          "queryForIntegerWithIndexedParam",
+          "queryForIntegerWithIndexedParamAndNonExistingValue",
+          "queryForIntegerWithIndexedParamAndOptionalValue",
+          "queryForIntegerWithIndexedParamAndRowMapper",
+          "queryForIntegerWithIndexedParamAndSingleValue",
+          "queryForIntegerWithNamedParam",
+          "queryForIntegerWithNamedParamAndList",
+          "queryForIntegerWithNamedParamAndListOfExpressionLists",
+          "queryForIntegerWithNamedParamAndRowMapper",
+          "queryForIntegerWithNamedParamAndSingleValue",
+          "queryForListWithIndexedParam",
+          "queryForListWithIndexedParamAndEmptyResult",
+          "queryForListWithIndexedParamAndSingleColumn",
+          "queryForListWithIndexedParamAndSingleRow",
+          "queryForListWithNamedParam",
+          "queryForListWithNamedParamAndEmptyResult",
+          "queryForListWithNamedParamAndSingleColumn",
+          "queryForListWithNamedParamAndSingleRow",
+          "queryForLongWithParamBean",
+          "queryForLongWithParamBeanWithCollection",
+          "queryForLongWithParamFieldHolder",
+          "queryForLongWithParamRecord",
+          "queryForMapWithIndexedParamAndSingleRow",
+          "queryForMapWithNamedParamAndSingleRow",
+          "queryForMappedFieldHolderWithNamedParam",
+          "queryForMappedRecordWithNamedParam",
+          "queryForObjectWithIndexedParamAndList",
+          "queryForOptionalWithIndexedParamAndRowMapper",
+          "queryForOptionalWithNamedParamAndRowMapper",
+          "queryForRowSetWithIndexedParam",
+          "queryForRowSetWithNamedParam"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/jdbc/core/simple/SimpleJdbcInsertTests.java": {
+      "d": "framework/jdbc/tests/simple_jdbc_insert_tests.d",
+      "methods": {
+        "ported": [
+          "exceptionThrownWhileRetrievingColumnNamesFromMetadata",
+          "methodChaining",
+          "missingTableName",
+          "noSuchTable",
+          "retrieveColumnNamesFromMetadata",
+          "usingCatalog",
+          "usingColumns",
+          "usingColumnsAndQuotedIdentifiers",
+          "usingColumnsAndQuotedIdentifiersWithSchemaName",
+          "usingQuotedIdentifiersWithoutSupplyingColumnNames",
+          "usingSchema",
+          "usingSchemaAndCatalog"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/jdbc/core/simple/TableMetaDataContextTests.java": {
+      "d": "framework/jdbc/tests/table_meta_data_context_tests.d",
+      "methods": {
+        "ported": [
+          "declaredColumnsWithoutOverlapAreUsedAsIs",
+          "matchInParametersAndSqlTypeInfoWrapping",
+          "overlappingDeclaredAndGeneratedKeyColumnsAreRejected",
+          "overlappingDeclaredAndGeneratedKeyColumnsAreRejectedRegardlessOfCase",
+          "tableWithSingleColumnGeneratedKey"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/jdbc/datasource/DataSourceTransactionManagerTests.java": {
+      "d": [
+        "framework/jdbc/tests/datasource_transaction_manager.d",
+        "framework/jdbc/tests/datasource_transaction_manager_upstream_tests.d"
+      ],
+      "methods": {
+        "ported": [
+          "existingTransactionWithManualSavepoint",
+          "existingTransactionWithManualSavepointAndRollback",
+          "existingTransactionWithPropagationNested",
+          "existingTransactionWithPropagationNestedAndRequiredRollback",
+          "existingTransactionWithPropagationNestedAndRequiredRollbackOnly",
+          "existingTransactionWithPropagationNestedAndRollback",
+          "existingTransactionWithPropagationNestedTwice",
+          "participatingTransactionWithDifferentConnectionObtainedFromSynch",
+          "participatingTransactionWithIncompatibleIsolationLevel",
+          "participatingTransactionWithIncompatibleReadOnly",
+          "participatingTransactionWithRollbackOnly",
+          "participatingTransactionWithRollbackOnlyAndFailEarly",
+          "participatingTransactionWithRollbackOnlyAndInnerSynch",
+          "participatingTransactionWithTransactionStartedFromSynch",
+          "propagationNeverWithExistingTransaction",
+          "propagationNotSupportedWithExistingTransaction",
+          "propagationRequiresNewWithExistingTransaction",
+          "propagationRequiresNewWithExistingTransactionAndUnrelatedDataSource",
+          "propagationRequiresNewWithExistingTransactionAndUnrelatedFailingDataSource",
+          "propagationSupportsAndRequiresNew",
+          "propagationSupportsAndRequiresNewWithEarlyAccess",
+          "transactionAwareDataSourceProxy",
+          "transactionAwareDataSourceProxyWithEarlyConnection",
+          "transactionAwareDataSourceProxyWithLazyFalse",
+          "transactionAwareDataSourceProxyWithSuspension",
+          "transactionAwareDataSourceProxyWithSuspensionAndReobtaining",
+          "transactionCommitWithAutoCommitFalse",
+          "transactionCommitWithAutoCommitFalseAndLazyConnection",
+          "transactionCommitWithAutoCommitFalseAndLazyConnectionAndStatementCreated",
+          "transactionCommitWithAutoCommitTrue",
+          "transactionCommitWithAutoCommitTrueAndLazyConnection",
+          "transactionCommitWithAutoCommitTrueAndLazyConnectionAndStatementCreated",
+          "transactionRollbackOnly",
+          "transactionRollbackWithAutoCommitFalse",
+          "transactionRollbackWithAutoCommitFalseAndLazyConnection",
+          "transactionRollbackWithAutoCommitFalseAndLazyConnectionAndCreateStatement",
+          "transactionRollbackWithAutoCommitTrue",
+          "transactionRollbackWithAutoCommitTrueAndLazyConnection",
+          "transactionRollbackWithAutoCommitTrueAndLazyConnectionAndCreateStatement",
+          "transactionWithDefaultReadOnly",
+          "transactionWithEnforceReadOnly",
+          "transactionWithExceptionOnBegin",
+          "transactionWithExceptionOnCommit",
+          "transactionWithExceptionOnCommitAndRollbackOnCommitFailure",
+          "transactionWithExceptionOnRollback",
+          "transactionWithIsolationAndReadOnly",
+          "transactionWithLazyConnectionDataSourceAndStatement",
+          "transactionWithLazyConnectionDataSourceNoStatement",
+          "transactionWithPropagationNested",
+          "transactionWithPropagationNestedAndRollback",
+          "transactionWithReadOnlyDataSourceAndStatement",
+          "transactionWithReadOnlyDataSourceNoStatement",
+          "transactionWithTimeout"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/jdbc/datasource/DataSourceUtilsTests.java": {
+      "d": "framework/jdbc/tests/data_source_utils_tests.d",
+      "methods": {
+        "ported": [
+          "connectionNotAcquiredExceptionIsPropagated",
+          "connectionSQLExceptionIsPropagated"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/jdbc/datasource/DelegatingDataSourceTests.java": {
+      "d": "framework/jdbc/tests/delegating_data_source_tests.d",
+      "methods": {
+        "ported": [
+          "shouldDelegateGetConnection",
+          "shouldDelegateGetConnectionWithUsernameAndPassword",
+          "shouldDelegateGetLogWriter",
+          "shouldDelegateGetLoginTimeout",
+          "shouldDelegateIsWrapperForImplementing",
+          "shouldDelegateIsWrapperForWithoutImplementing",
+          "shouldDelegateSetLogWriter",
+          "shouldDelegateSetLoginTimeoutWithSeconds",
+          "shouldDelegateUnwrapImplementing",
+          "shouldDelegateUnwrapWithoutImplementing"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/jdbc/datasource/DriverManagerDataSourceTests.java": {
+      "d": "framework/jdbc/tests/datasources.d",
+      "methods": {
+        "ported": [
+          "standardUsage",
+          "usageWithConnectionProperties",
+          "usageWithConnectionPropertiesAndUserCredentials"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/jdbc/datasource/init/CompositeDatabasePopulatorTests.java": {
+      "d": "framework/jdbc/tests/composite_database_populator_tests.d",
+      "methods": {
+        "ported": [
+          "addPopulators",
+          "constructWithCollection",
+          "constructWithVarargs",
+          "setPopulatorsForOverride",
+          "setPopulatorsWithMultiple"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/jdbc/datasource/init/ResourceDatabasePopulatorTests.java": {
+      "d": "framework/jdbc/tests/resource_database_populator_tests.d",
+      "methods": {
+        "ported": [
+          "addScriptsWithNullResource",
+          "addScriptsWithNullResourceArray",
+          "constructWithMultipleResources",
+          "constructWithMultipleResourcesAndThenAddScript",
+          "constructWithNullResource",
+          "constructWithNullResourceArray",
+          "constructWithResource",
+          "setScriptsAndThenAddScript",
+          "setScriptsWithNullResource",
+          "setScriptsWithNullResourceArray"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/jdbc/datasource/init/ScriptUtilsTests.java": {
+      "d": "framework/jdbc/tests/scripts.d",
+      "methods": {
+        "ported": [
+          "readAndSplitScriptWithMultipleNewlinesAsSeparator",
+          "splitScriptWithSingleQuotesNestedInsideDoubleQuotes",
+          "splitSqlScriptDelimitedWithSemicolon"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/jdbc/support/JdbcTransactionManagerTests.java": {
+      "d": "framework/jdbc/tests/jdbc_transaction_manager_upstream_tests.d",
+      "methods": {
+        "ported": [
+          "transactionWithExceptionOnCommitAndRollbackOnCommitFailure"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/jdbc/support/JdbcUtilsTests.java": {
+      "d": "framework/jdbc/tests/jdbc_utils_tests.d",
+      "methods": {
+        "ported": [
+          "commonDatabaseName",
+          "convertUnderscoreNameToPropertyName",
+          "resolveTypeName"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/jdbc/support/KeyHolderTests.java": {
+      "d": "framework/jdbc/tests/key_holder_tests.d",
+      "methods": {
+        "ported": [
+          "getKeyAsIntegerWithNullValue",
+          "getKeyAsStringForSingleKey",
+          "getKeyAsWrongType",
+          "getKeyForSingleNonNumericKey",
+          "getKeyForSingleNumericKey",
+          "getKeyWithMultipleKeysInMap",
+          "getKeyWithNoKeysInMap",
+          "getKeysWithMultipleKeyRows"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/jdbc/support/SQLStateSQLExceptionTranslatorTests.java": {
+      "d": [
+        "framework/jdbc/tests/sql_state_sql_exception_translator_upstream_tests.d",
+        "framework/jdbc/tests/translators.d"
+      ],
+      "methods": {
+        "ported": [
+          "translateBadSqlGrammar",
+          "translateCannotAcquireLock",
+          "translateDataAccessResourceFailure",
+          "translateDataIntegrityViolation",
+          "translateDuplicateKey",
+          "translateDuplicateKeyInformix1",
+          "translateDuplicateKeyInformix2",
+          "translateDuplicateKeyMSSQL1",
+          "translateDuplicateKeyMSSQL2",
+          "translateDuplicateKeyMySQL",
+          "translateDuplicateKeyOracle",
+          "translateDuplicateKeySapHana",
+          "translateNullException",
+          "translatePessimisticLockingFailure",
+          "translateQueryTimeout",
+          "translateTransientDataAccessResourceFailure",
+          "translateWithinQualifiedBatch",
+          "translateWithinUnqualifiedBatch"
+        ]
+      },
+      "status": "ported"
+    }
+  },
+  "module": "jdbc",
+  "schema": "flint.upstream-tests/1",
+  "test_packages": [
+    ":jdbc"
+  ],
+  "upstream": "spring-framework@v7.1.0"
+}

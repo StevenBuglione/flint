@@ -1,0 +1,92 @@
+# Per-module definition of done
+
+One command tells a porter whether a module is done and, if it is not, what to fix:
+
+```bash
+python3 tools/gates.py --module framework/jdbc --definition-of-done
+```
+
+It is the guardrail for autonomous porting in Phase 2 (owner decision 087f28a3). The design is in `coordination/notes/definition-of-done.md`, and the code is in `tools/definition_of_done.py`.
+
+## Steps
+
+Each step reports one of:
+- **PASS**;
+- **FAIL**: the module's own problem;
+- **SKIP**: with its reason, and never counted as a pass;
+- **ERROR**: the environment, not the module.
+
+Each failure names what is wrong, where, the rule it breaks, and the command that reruns that step alone (`--step NAME`, repeatable).
+
+| Step | What it runs | Passes when |
+|---|---|---|
+| `resolve` | `workspace.package_repos()` and the policy entry | the directory is a registered module (FLINT-E0535 otherwise) |
+| `structural` | `gates.py --gate structural`, with `--package` for an engine package and `--repo` otherwise | no structural failure names this module. A repo-wide failure elsewhere is an ERROR |
+| `api` | `flint api headers <dir>`, then `flint api coverage --repo R`, filtered to the module's Java packages | every ported file has its header, and no upstream element the module owns is unclassified. `--release` also fails `deferred` exclusions |
+| `quality` | `quality.py --path <dir> --baseline policy/quality-baseline.json` | no dfmt (`+flint.stack-udas`), D-Scanner or complexity-allowlist finding beyond the baseline, and no baseline entry that is gone (see below) |
+| `tests` | `dub test :<name> --build=unittest` on DMD and LDC, plus the record's `test_packages` | both compilers pass |
+| `upstream-tests` | `<dir>/upstream-tests.json`, checked against the D files and the fetched upstream | see below |
+| `budgets` | `measure_builds.py --framework-sizes --framework <name>` | `incremental_linked_bytes` and `template_instances` are within `policy/framework.json`. Provisional keys are reported, not gated |
+| `apps` | for each Spring app whose dependency closure has the module: `flint test --compiler both --verify`, `spring_bench.py accept --impl flint`, and `flint budget` once m7 lands it | allocation budgets hold, the golden suite passes in `exact` mode, and no budget regresses |
+
+### Ownership of Java packages
+
+A module owns the longest Java package prefix that maps to it:
+- **Spring ports:** by rule R1 inverted. `flint.web.servlet` (webmvc) owns `org.springframework.web.servlet`; `flint.web` and `flint.http` (web) own the rest of `org.springframework.web` and `org.springframework.http`.
+- **Ports of other libraries** (Jackson, Jakarta, SLF4J): by the packages that their mapped elements' `d` symbols come from.
+- **Spring Boot ports:** `boot/core/flint-*` and `boot/module/flint-*`, pinned to the `spring-boot` upstream. The `flint.boot_*` libraries are Flint's own, so they own no Java packages and have no upstream tests.
+
+## The quality ratchet
+
+The coordinator decided this on 2026-11-25: `framework/`, `boot/` and `security/` stay out of `quality.py`'s default trees until their findings are fixed. Until then, `policy/quality-baseline.json` records the findings they have today:
+- **Keys.** Findings are listed per file, keyed by check and message, with numbers and line positions left out, so an edit elsewhere in a file does not move them.
+- **What fails:** any finding not in the baseline, which means new files or new findings in changed files. A recorded finding that is gone also fails, until the baseline is shrunk:
+
+  ```bash
+  python3 tools/quality.py --path framework/jdbc --baseline policy/quality-baseline.json --shrink-baseline
+  ```
+
+  Shrinking never adds an entry, so the baseline only shrinks, like the budgets. Recording findings (`--record-baseline`) is the integration owner's job, not the porter's.
+
+## The upstream-tests record
+
+AGENTS.md requires every ported module to port its upstream tests. `upstream-tests.json` in the module directory records how:
+
+```json
+{"schema": "flint.upstream-tests/1", "upstream": "spring-framework@v7.1.0", "module": "jdbc",
+ "test_packages": [":jdbc"],
+ "classes": {
+   "org/springframework/jdbc/support/JdbcUtilsTests.java":
+     {"status": "ported", "d": "framework/jdbc/tests/jdbc_utils_tests.d",
+      "methods": {"ported": ["commonDatabaseName", "lookupColumnName"]}},
+   "org/springframework/jdbc/core/JdbcTemplateTests.java":
+     {"status": "partial", "d": "framework/jdbc/tests/jdbc_template.d",
+      "methods": {"ported": ["testUpdateCount"],
+                  "skipped": {"testBatchUpdateWithSqlParameterSource": "no SqlParameterSource batch yet"}}},
+   "org/springframework/jdbc/datasource/init/ScriptUtilsTests.java":
+     {"status": "excluded", "reason": "R12: scripts run by Flint Boot's initializer"}}}
+```
+
+- **Keys** are paths under the upstream's `src/test/java`.
+- **`d`** is the D file that ports the class, or a list of files when its tests are spread over several.
+- **`status`** is `ported`, `partial` (it needs `methods.skipped` with reasons) or `excluded` (it needs `reason`).
+- **A ported method needs a named unittest in `d`:**
+  - `@("Class.method") unittest` in a file that ports several classes;
+  - `@("method") unittest` in a file that ports one.
+
+  Unittests whose names are not identifiers are Flint's own tests, and are never counted as ported methods.
+- **Every upstream test class the module owns** must appear in the record. The list comes from the sources `flint api fetch --tests` downloads to `FLINT_CACHE` or `~/.flint/cache`. Without that cache, the step is an ERROR, never a pass.
+- **`test_packages`** adds other packages whose tests exercise the module. For example, webmvc adds `:framework-test`, where MockMvc lives.
+
+**Drafting the record.** `--write-upstream-tests` drafts the record from the module's `Ported from <project> <tag>, <path>/src/test/java/...Tests.java` headers and its unittest names. It keeps any entries that already exist. Then add the classes it could not see, and give each exclusion and skip its reason.
+
+## Output
+
+- A summary on stdout, or the full report with `--json`.
+- The report is also written to `artifacts/definition-of-done/<name>.json`, with schema `flint.definition-of-done/1`.
+- Exit status:
+  - **0:** every step passed or was skipped;
+  - **1:** a step failed;
+  - **2:** an environment error, such as a missing `flint`, `dmd`, `ldc2`, `dub`, `dfmt` or `dscanner`, natives that are not emitted, or no fetched upstream sources.
+
+The whole command runs under one `measure_queue.py hold`, its own Python work included, so a measurement window on venus pauses it. Use `--no-hold` on other machines.

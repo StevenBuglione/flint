@@ -1,0 +1,488 @@
+#!/usr/bin/env python3
+"""The per-module definition of done: `python3 tools/measure_queue.py hold -- python3 tools/test_definition_of_done.py`.
+
+Every step runs with a fake command runner; resolution and ownership read the real policy."""
+import json
+import os
+import subprocess
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import definition_of_done as dod  # noqa: E402
+
+ROOT = dod.ROOT
+
+
+class FakeRunner:
+    """Answers each command by the first rule whose words all appear in it; records every command."""
+
+    def __init__(self, *rules, default=(0, '', '')):
+        self.rules = rules
+        self.default = default
+        self.calls = []
+
+    def __call__(self, argv, timeout=3600):
+        argv = [str(a) for a in argv]
+        self.calls.append(argv)
+        for words, answer in self.rules:
+            if all(w in argv for w in words):
+                return answer(argv) if callable(answer) else answer
+        return self.default
+
+
+def module(**fields):
+    base = dict(name='jdbc', kind='framework', repo='framework', directory='framework/jdbc', roots=['framework/jdbc'],
+                java_packages=['org.springframework.jdbc'], upstream='spring-framework@v7.1.0',
+                budget={'incremental_linked_bytes': 1000, 'template_instances': 100}, provisional=['ldc_cold_seconds'])
+    base.update(fields)
+    return dod.Module(**base)
+
+
+class Resolve(unittest.TestCase):
+    def test_a_framework_module_resolves_with_its_java_packages(self):
+        m = dod.resolve('framework/web/')
+        self.assertEqual((m.name, m.kind, m.repo), ('web', 'framework', 'framework'))
+        self.assertEqual(m.java_packages, ['org.springframework.http', 'org.springframework.web'])
+        self.assertEqual(m.upstream, 'spring-framework@v7.1.0')
+        self.assertIn('template_instances', m.budget)
+
+    def test_a_port_of_another_library_owns_that_library_s_packages(self):
+        self.assertEqual(dod.resolve('framework/jackson-databind').java_packages, ['tools.jackson.databind'])
+
+    def test_a_spring_boot_port_is_a_boot_module_with_the_spring_boot_pin(self):
+        m = dod.resolve('boot/module/flint-boot-webmvc')
+        self.assertEqual((m.kind, m.java_packages), ('boot', ['org.springframework.boot.webmvc']))
+        self.assertTrue(m.upstream.startswith('spring-boot@'))
+
+    def test_flint_s_own_boot_library_and_engine_packages_port_nothing(self):
+        self.assertEqual(dod.resolve('boot/boot').java_packages, [])
+        self.assertEqual(dod.resolve('packages/arena').kind, 'package')
+
+    def test_an_unregistered_directory_says_how_to_register_it(self):
+        with self.assertRaises(LookupError) as caught:
+            dod.resolve('framework/nonesuch')
+        self.assertIn('FLINT-E0535', str(caught.exception))
+        self.assertIn('platform_modules.py --write', str(caught.exception))
+
+    def test_the_longest_package_prefix_owns_an_element(self):
+        table = dod.ownership(ROOT)
+        self.assertEqual(dod.owner('org.springframework.web.servlet.DispatcherServlet#doService()', table), 'webmvc')
+        self.assertEqual(dod.owner('org.springframework.web.bind.annotation.RequestMapping', table), 'web')
+        self.assertEqual(dod.owner('org.springframework.validation.Errors', table), 'context')
+        self.assertEqual(dod.owner('org.springframework.jdbc.core.JdbcTemplate#query', table), 'jdbc')
+        self.assertEqual(dod.owner('org/springframework/boot/SpringApplicationTests', table), 'boot-core')
+
+    def test_apps_are_chosen_by_dependency_closure(self):
+        self.assertEqual(dod.using_apps(dod.resolve('framework/jdbc')), ['gs-relational-data-access', 'petclinic-rest'])
+        self.assertNotIn('gs-relational-data-access', dod.using_apps(dod.resolve('framework/webmvc')))
+
+
+class Structural(unittest.TestCase):
+    def test_pass(self):
+        run = FakeRunner()
+        self.assertEqual(dod.structural(module(), run).status, 'pass')
+        self.assertEqual(run.calls[0][-2:], ['--repo', 'framework'])
+
+    def test_an_engine_package_is_checked_alone(self):
+        run = FakeRunner()
+        dod.structural(module(name='arena', kind='package', repo='flint'), run)
+        self.assertEqual(run.calls[0][-2:], ['--package', 'arena'])
+
+    def test_a_failure_naming_the_module_is_the_module_s(self):
+        run = FakeRunner(default=(1, '', 'GATE FAILED: jdbc imports flint.web without a DUB dependency\n'))
+        result = dod.structural(module(), run)
+        self.assertEqual(result.status, 'fail')
+        self.assertIn('jdbc imports flint.web', result.messages[0])
+
+    def test_a_failure_elsewhere_is_an_environment_error(self):
+        run = FakeRunner(default=(1, '', 'GATE FAILED: webmvc: stale platform modules (FLINT-E0534)\n'))
+        result = dod.structural(module(), run)
+        self.assertEqual(result.status, 'error')
+        self.assertIn('not this module', result.messages[1])
+
+
+class Api(unittest.TestCase):
+    def setUp(self):
+        self.flint = Path(tempfile.mkdtemp()) / 'flint'
+        self.flint.write_text('')
+
+    def coverage(self, ids):
+        return json.dumps({'ok': False, 'result': {'manifests': []},
+                           'unclassified_ids': {'spring-framework@v7.1.0': ids}})
+
+    def test_only_the_module_s_unclassified_elements_count(self):
+        run = FakeRunner((['headers'], (0, json.dumps({'ok': True, 'files': 3, 'ported': 2, 'problems': 0}), '')),
+                         (['coverage'], (1, self.coverage(['org.springframework.jdbc.core.JdbcTemplate#queryForStream()',
+                                                           'org.springframework.web.client.RestClient']), '')))
+        result = dod.api(module(), run, self.flint)
+        self.assertEqual(result.status, 'fail')
+        self.assertEqual(result.details['unclassified'], 1)
+        self.assertIn('  org.springframework.jdbc.core.JdbcTemplate#queryForStream()', result.messages)
+        self.assertFalse(any('RestClient' in m for m in result.messages))
+        self.assertIn('api/framework/mapping.json', result.messages[-1])
+
+    def test_another_module_s_gaps_do_not_fail_this_one(self):
+        run = FakeRunner((['headers'], (0, json.dumps({'ok': True}), '')),
+                         (['coverage'], (1, self.coverage(['org.springframework.web.client.RestClient']), '')))
+        self.assertEqual(dod.api(module(), run, self.flint).status, 'pass')
+
+    def test_header_problems_name_the_file(self):
+        bad = {'ok': False, 'diagnostics': [{'severity': 'error', 'file': 'framework/jdbc/source/flint/jdbc/x.d',
+                                             'message': 'no "Modified by the Flint authors"'}]}
+        run = FakeRunner((['headers'], (1, json.dumps(bad), '')), (['coverage'], (0, self.coverage([]), '')))
+        result = dod.api(module(), run, self.flint)
+        self.assertEqual(result.status, 'fail')
+        self.assertIn('framework/jdbc/source/flint/jdbc/x.d', result.messages[1])
+
+    def test_another_build_module_s_types_are_not_the_module_s(self):
+        web = dod.resolve('framework/web')
+        self.assertEqual(web.upstream_modules, ['spring-web'])
+        run = FakeRunner((['headers'], (0, json.dumps({'ok': True}), '')),
+                         (['coverage'], (1, self.coverage(['org.springframework.web.reactive.DispatcherHandler',
+                                                           'org.springframework.web.client.RestClient#nope()']), '')))
+        result = dod.api(web, run, self.flint)
+        self.assertEqual(result.details['unclassified'], 1)
+        self.assertIn('  org.springframework.web.client.RestClient#nope()', result.messages)
+
+    def test_no_json_is_an_environment_error(self):
+        run = FakeRunner(default=(1, '', 'Segmentation fault'))
+        self.assertEqual(dod.api(module(), run, self.flint).status, 'error')
+
+    def test_a_missing_flint_is_an_environment_error(self):
+        self.assertEqual(dod.api(module(), FakeRunner(), self.flint.parent / 'nope').status, 'error')
+
+
+class Tests(unittest.TestCase):
+    def test_both_compilers_and_the_record_s_test_packages_run(self):
+        run = FakeRunner()
+        result = dod.tests(module(name='webmvc'), run, {'test_packages': [':webmvc', ':framework-test']})
+        self.assertEqual(result.status, 'pass')
+        self.assertEqual([c[2:4] for c in run.calls], [[':webmvc', '--compiler=dmd'], [':webmvc', '--compiler=ldc2'],
+                                                       [':framework-test', '--compiler=dmd'],
+                                                       [':framework-test', '--compiler=ldc2']])
+
+    def test_a_failing_compiler_names_the_command(self):
+        run = FakeRunner((['--compiler=ldc2'], (1, 'core.exception.AssertError@x.d(9): unittest failure\n', '')))
+        result = dod.tests(module(), run)
+        self.assertEqual(result.status, 'fail')
+        self.assertIn('`dub test :jdbc --compiler=ldc2 --build=unittest` failed (exit 1):', result.messages)
+
+    def test_missing_natives_are_an_environment_error(self):
+        run = FakeRunner(default=(2, '', 'Error: the pinned llhttp provider is unavailable\n'))
+        self.assertEqual(dod.tests(module(), run).status, 'error')
+
+
+SINGLE = '''/++
+Ported from spring-projects/spring-framework v7.1.0,
+spring-jdbc/src/test/java/org/springframework/jdbc/support/JdbcUtilsTests.java.
+Modified by the Flint authors.
++/
+module flint.jdbc.jdbc_utils_tests;
+
+@("commonDatabaseName")
+unittest {}
+
+@("lookupColumnName") @safe
+unittest {}
+
+@("a reused statement keeps its text")  // Flint's own
+unittest {}
+'''
+
+MULTI = '''// Ported from spring-framework v7.1.0: spring-jdbc/src/test/java/org/springframework/jdbc/core/AlphaTests.java
+// Ported from spring-framework v7.1.0: spring-jdbc/src/test/java/org/springframework/jdbc/core/BetaTests.java
+@("AlphaTests.one")  // gh-1
+unittest {}
+@("BetaTests.two")
+nothrow unittest {}
+@("BetaTests.three")
+void notATest() {}
+'''
+
+
+class UpstreamTests(unittest.TestCase):
+    def setUp(self):
+        self.root = Path(tempfile.mkdtemp())
+        tests = self.root / 'framework' / 'jdbc' / 'tests'
+        tests.mkdir(parents=True)
+        (tests / 'single.d').write_text(SINGLE)
+        (tests / 'multi.d').write_text(MULTI)
+        (self.root / 'policy').mkdir()
+        (self.root / 'policy' / 'framework.json').write_text(json.dumps({'modules': {'jdbc': {
+            'module': 'flint.jdbc', 'upstream': 'spring-framework@v7.1.0', 'directory': 'framework/jdbc'}}}))
+        (self.root / 'api').mkdir()
+        (self.root / 'api' / 'upstreams.json').write_text(json.dumps({'upstreams': []}))
+        self.cache = self.root / 'cache'
+        dod._OWNERSHIP.pop(self.root, None)
+
+    def inventory(self, *classes):
+        for cls in classes:
+            path = self.cache / 'spring-framework-v7.1.0' / 'spring-jdbc' / 'src' / 'test' / 'java' / cls
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text('class X {}')
+
+    def test_drafting_reads_headers_and_names(self):
+        record = dod.draft(module(), self.root)
+        classes = record['classes']
+        self.assertEqual(classes['org/springframework/jdbc/support/JdbcUtilsTests.java']['methods']['ported'],
+                         ['commonDatabaseName', 'lookupColumnName'])
+        self.assertEqual(classes['org/springframework/jdbc/core/AlphaTests.java']['methods']['ported'], ['one'])
+        self.assertEqual(classes['org/springframework/jdbc/core/BetaTests.java']['methods']['ported'], ['two'])
+        self.assertTrue((self.root / 'framework' / 'jdbc' / 'upstream-tests.json').is_file())
+
+    def test_a_class_ported_across_files_lists_every_file(self):
+        (self.root / 'framework' / 'jdbc' / 'tests' / 'more.d').write_text(
+            '// Ported from spring-framework v7.1.0: spring-jdbc/src/test/java/org/springframework/jdbc/core/AlphaTests.java\n'
+            '// Ported from spring-framework v7.1.0: spring-jdbc/src/test/java/org/springframework/jdbc/core/GammaTests.java\n'
+            '@("AlphaTests.four")\nunittest {}\n')
+        record = dod.draft(module(), self.root)
+        alpha = record['classes']['org/springframework/jdbc/core/AlphaTests.java']
+        self.assertEqual(alpha['d'], ['framework/jdbc/tests/more.d', 'framework/jdbc/tests/multi.d'])
+        self.assertEqual(alpha['methods']['ported'], ['four', 'one'])
+        self.assertEqual(dod.check_upstream_tests(module(), record, self.root), [])
+
+    def test_a_drafted_record_checks_clean_against_its_inventory(self):
+        dod.draft(module(), self.root)
+        self.inventory('org/springframework/jdbc/support/JdbcUtilsTests.java',
+                       'org/springframework/jdbc/core/AlphaTests.java', 'org/springframework/jdbc/core/BetaTests.java')
+        result = dod.upstream_tests(module(), root=self.root, caches=[self.cache])
+        self.assertEqual(result.status, 'pass', result.messages)
+        self.assertEqual(result.details['methods_ported'], 4)
+        self.assertEqual(result.details['inventory'], 3)
+
+    def test_an_uncovered_upstream_class_fails(self):
+        dod.draft(module(), self.root)
+        self.inventory('org/springframework/jdbc/support/JdbcUtilsTests.java',
+                       'org/springframework/jdbc/core/AlphaTests.java', 'org/springframework/jdbc/core/BetaTests.java',
+                       'org/springframework/jdbc/core/JdbcTemplateTests.java',
+                       'org/springframework/web/OtherModuleTests.java')
+        result = dod.upstream_tests(module(), root=self.root, caches=[self.cache])
+        self.assertEqual(result.status, 'fail')
+        self.assertIn('  org/springframework/jdbc/core/JdbcTemplateTests.java', result.messages)
+        self.assertFalse(any('OtherModuleTests' in m for m in result.messages))
+
+    def test_the_inventory_keeps_to_the_module_s_build_modules(self):
+        dod.draft(module(), self.root)
+        self.inventory('org/springframework/jdbc/support/JdbcUtilsTests.java',
+                       'org/springframework/jdbc/core/AlphaTests.java', 'org/springframework/jdbc/core/BetaTests.java')
+        stray = self.cache / 'spring-framework-v7.1.0' / 'spring-other' / 'src' / 'test' / 'java' / 'org' / \
+            'springframework' / 'jdbc' / 'core' / 'StrayTests.java'
+        stray.parent.mkdir(parents=True)
+        stray.write_text('class X {}')
+        self.assertIn('org/springframework/jdbc/core/StrayTests.java',
+                      dod.upstream_inventory(module(), self.root, [self.cache]))
+        narrowed = dod.upstream_inventory(module(upstream_modules=['spring-jdbc']), self.root, [self.cache])
+        self.assertEqual(len(narrowed), 3)
+        (self.root / 'framework' / 'jdbc' / 'tests' / 'x.d').write_text(
+            '// Ported from spring-projects/spring-framework v7.1.0: spring-jdbc/src/main/java/org/x/Y.java\n'
+            '// Ported from spring-projects/spring-boot v4.2.0: core/spring-boot/src/main/java/org/x/Z.java\n')
+        self.assertEqual(dod.upstream_modules(module(), self.root), ['spring-jdbc'])
+
+    def test_no_fetched_upstream_is_an_environment_error(self):
+        dod.draft(module(), self.root)
+        result = dod.upstream_tests(module(), root=self.root, caches=[self.cache])
+        self.assertEqual(result.status, 'error')
+        self.assertIn('flint api fetch --tests', result.messages[0])
+
+    def test_each_inconsistency_is_named(self):
+        record = {'schema': dod.SCHEMA, 'classes': {
+            'org/springframework/jdbc/core/AlphaTests.java': {'status': 'ported', 'd': 'framework/jdbc/tests/multi.d',
+                                                             'methods': {'ported': ['one', 'missing']}},
+            'org/springframework/jdbc/core/BetaTests.java': {'status': 'partial', 'd': 'framework/jdbc/tests/multi.d',
+                                                            'methods': {'ported': ['two', 'three']}},
+            'org/springframework/jdbc/core/GammaTests.java': {'status': 'excluded'},
+            'org/springframework/jdbc/core/DeltaTests.java': {'status': 'ported', 'd': 'framework/jdbc/tests/gone.d'},
+            'org/springframework/jdbc/core/EpsilonTests.java': {'status': 'partial', 'd': 'framework/jdbc/tests/multi.d',
+                                                               'methods': {'skipped': {'x': ''}}},
+            'org/springframework/jdbc/core/ZetaTests.java': {'status': 'todo'}}}
+        text = '\n'.join(dod.check_upstream_tests(module(), record, self.root))
+        self.assertIn('AlphaTests.java: ported method missing has no `@("AlphaTests.missing") unittest`', text)
+        self.assertIn('BetaTests.java: ported method three', text)  # @("BetaTests.three") is not on a unittest
+        self.assertIn('BetaTests.java: "partial", but', text)
+        self.assertIn('GammaTests.java: excluded without a "reason"', text)
+        self.assertIn("DeltaTests.java: its D file 'framework/jdbc/tests/gone.d' does not exist", text)
+        self.assertIn('EpsilonTests.java: skipped method x has no reason', text)
+        self.assertIn("ZetaTests.java: \"status\" must be ported, partial or excluded, not 'todo'", text)
+
+    def test_a_missing_record_fails_with_the_drafting_command(self):
+        result = dod.upstream_tests(module(), root=self.root, caches=[self.cache])
+        self.assertEqual(result.status, 'fail')
+        self.assertIn('--write-upstream-tests', result.messages[1])
+
+    def test_a_module_with_no_pinned_upstream_skips(self):
+        result = dod.upstream_tests(module(upstream='Flint AOT contract'), root=self.root, caches=[self.cache])
+        self.assertEqual(result.status, 'skip')
+
+
+class Budgets(unittest.TestCase):
+    def sizes(self, linked, templates):
+        def write(argv):
+            Path(argv[argv.index('--output') + 1]).write_text(json.dumps({'framework': {'jdbc': {
+                'incremental_linked_bytes': linked, 'template_instances': templates}}}))
+            return 0, '', ''
+        return FakeRunner((['--framework-sizes'], write))
+
+    def test_within_budget_passes_and_reports_the_provisional_keys(self):
+        result = dod.budgets(module(), self.sizes(999, 100))
+        self.assertEqual(result.status, 'pass')
+        self.assertEqual(result.details['provisional, not gated'], ['ldc_cold_seconds'])
+
+    def test_a_miss_is_a_blocker(self):
+        result = dod.budgets(module(), self.sizes(1001, 100))
+        self.assertEqual(result.status, 'fail')
+        self.assertIn('incremental_linked_bytes 1001 exceeds the budget 1000', result.messages[0])
+
+    def test_a_module_without_a_probe_fails(self):
+        run = FakeRunner((['--framework-sizes'], lambda argv: (Path(argv[argv.index('--output') + 1]).write_text(
+            json.dumps({'framework': {}})), 0, '', '')[1:]))
+        self.assertIn('"bench" entry', dod.budgets(module(), run).messages[0])
+
+    def test_engine_packages_skip_rather_than_pass(self):
+        self.assertEqual(dod.budgets(module(kind='package'), FakeRunner()).status, 'skip')
+
+
+class Apps(unittest.TestCase):
+    def setUp(self):
+        self.flint = Path(tempfile.mkdtemp()) / 'flint'
+        self.flint.write_text('')
+
+    def test_without_flint_budget_its_part_is_skipped_not_passed(self):
+        run = FakeRunner((['budget', '--help'], (1, '', 'unknown command budget')))
+        result = dod.applications(module(), run, 'petclinic-rest', self.flint)
+        self.assertEqual(result.status, 'pass')
+        self.assertTrue(result.details['petclinic-rest flint budget'].startswith('skip'))
+        self.assertIn(['-C', 'benchmarks/spring/flint/petclinic-rest', '--compiler', 'both', '--verify'],
+                      [c[2:] for c in run.calls])
+
+    def test_a_flint_budget_regression_fails_the_step(self):
+        run = FakeRunner((['budget', '--app'], (1, '', 'GET /owners: 74 allocations against a budget of 70')))
+        result = dod.applications(module(), run, 'petclinic-rest', self.flint)
+        self.assertEqual(result.status, 'fail')
+        self.assertIn('  GET /owners: 74 allocations against a budget of 70', result.messages)
+
+    def test_a_failing_golden_suite_fails_the_step(self):
+        run = FakeRunner((['accept'], (1, 'GET /owners/1: status 500, expected 200', '')))
+        result = dod.applications(module(), run, 'petclinic-rest', self.flint)
+        self.assertIn('petclinic-rest: the golden suite fails in exact mode (benchmarks/spring/suites):',
+                      result.messages)
+
+    def test_none_skips(self):
+        self.assertEqual(dod.applications(module(), FakeRunner(), 'none', self.flint).status, 'skip')
+
+
+FAKE_DFMT = '''#!/usr/bin/env python3
+import sys
+if '--version' in sys.argv: print('v0.15.2+flint.stack-udas'); sys.exit(0)
+text = open(sys.argv[-1]).read()
+sys.stdout.write(text.replace('UNFORMATTED', 'formatted'))
+'''
+FAKE_DSCANNER = '''#!/usr/bin/env python3
+import json, sys
+issues = []
+for name in [a for a in sys.argv[1:] if a.endswith('.d')]:
+    for number, line in enumerate(open(name), 1):
+        if 'WARN' in line:
+            issues.append({'type': 'warn', 'key': 'dscanner.fake', 'fileName': name, 'line': number,
+                           'message': 'fake finding on line %d' % number})
+print(json.dumps({'issues': issues}))
+'''
+
+
+class QualityRatchet(unittest.TestCase):
+    """quality.py --baseline: inherited findings pass, new ones fail, and the baseline only shrinks."""
+
+    def setUp(self):
+        self.dir = Path(tempfile.mkdtemp())
+        self.tree = self.dir / 'tree'
+        self.tree.mkdir()
+        for name, text in (('dfmt', FAKE_DFMT), ('dscanner', FAKE_DSCANNER)):
+            (self.dir / name).write_text(text)
+            (self.dir / name).chmod(0o755)
+        self.baseline = self.dir / 'baseline.json'
+        (self.tree / 'a.d').write_text('module a;\n// WARN one\n// WARN two\n')
+        (self.tree / 'b.d').write_text('module b; // UNFORMATTED\n')
+
+    def quality(self, *extra):
+        return subprocess.run([sys.executable, str(ROOT / 'tools' / 'quality.py'), '--dfmt', str(self.dir / 'dfmt'),
+                               '--dscanner', str(self.dir / 'dscanner'), '--path', str(self.tree),
+                               '--baseline', str(self.baseline), *extra], capture_output=True, text=True)
+
+    def recorded(self):
+        return {f: v for tree in json.loads(self.baseline.read_text())['trees'].values() for f, v in tree.items()}
+
+    def test_without_a_baseline_entry_every_finding_fails(self):
+        done = self.quality()
+        self.assertNotEqual(done.returncode, 0)
+        self.assertIn('fake finding on line 2', done.stderr)
+        self.assertIn('b.d: formatter difference', done.stderr)
+
+    def test_recorded_findings_pass_even_when_lines_move(self):
+        self.assertEqual(self.quality('--record-baseline').returncode, 0)
+        (self.tree / 'a.d').write_text('module a;\n\n\n// WARN one\n// WARN two\n')
+        done = self.quality()
+        self.assertEqual(done.returncode, 0, done.stderr)
+
+    def test_a_new_finding_fails_alone(self):
+        self.quality('--record-baseline')
+        (self.tree / 'a.d').write_text('module a;\n// WARN one\n// WARN two\n// WARN three\n')
+        (self.tree / 'c.d').write_text('module c; // UNFORMATTED\n')
+        done = self.quality()
+        self.assertNotEqual(done.returncode, 0)
+        failures = [line for line in done.stderr.splitlines() if line.strip()]
+        self.assertEqual(len(failures), 2, failures)
+        self.assertTrue(any(line.endswith('a.d:4: fake finding on line 4') for line in failures), failures)
+        self.assertTrue(any(line.endswith('c.d: formatter difference') for line in failures), failures)
+
+    def test_a_fixed_finding_fails_until_the_baseline_shrinks_and_shrinking_never_adds(self):
+        self.quality('--record-baseline')
+        (self.tree / 'a.d').write_text('module a;\n// WARN one\n')
+        (self.tree / 'b.d').write_text('module b; // WARN new\n')
+        done = self.quality()
+        self.assertIn('1 of 2 baseline finding(s) "dscanner.fake: fake finding on line #" are gone', done.stderr)
+        self.assertIn('--shrink-baseline', done.stderr)
+        self.assertEqual(self.quality('--shrink-baseline').returncode, 0)
+        counts = self.recorded()
+        self.assertEqual([v for f, v in counts.items() if f.endswith('a.d')], [{'dscanner.fake: fake finding on line #': 1}])
+        self.assertFalse(any(f.endswith('b.d') for f in counts), counts)  # its dfmt entry is gone, its new WARN not added
+        self.assertIn('b.d:1: fake finding on line 1', self.quality().stderr)
+
+    def test_the_step_runs_against_the_committed_baseline(self):
+        run = FakeRunner()
+        self.assertEqual(dod.quality(module(), run).status, 'pass')
+        self.assertEqual(run.calls[0][-2:], ['--baseline', 'policy/quality-baseline.json'])
+
+
+class Command(unittest.TestCase):
+    def test_exit_status_orders_fail_over_error(self):
+        R = dod.Result
+        self.assertEqual(dod.exit_status([R('a', 'pass'), R('b', 'skip')]), 0)
+        self.assertEqual(dod.exit_status([R('a', 'error'), R('b', 'pass')]), 2)
+        self.assertEqual(dod.exit_status([R('a', 'error'), R('b', 'fail')]), 1)
+
+    def test_gates_py_dispatches_and_reports(self):
+        done = subprocess.run([sys.executable, str(ROOT / 'tools' / 'gates.py'), '--module', 'framework/jdbc',
+                               '--definition-of-done', '--step', 'resolve', '--no-hold', '--json'],
+                              cwd=ROOT, capture_output=True, text=True)
+        self.assertEqual(done.returncode, 0, done.stderr)
+        out = json.loads(done.stdout)
+        self.assertEqual((out['schema'], out['module'], out['done']), ('flint.definition-of-done/1', 'jdbc', True))
+        self.assertEqual(out['steps'][0]['details']['java_packages'], ['org.springframework.jdbc'])
+
+    def test_an_unregistered_module_exits_1_with_its_fix(self):
+        done = subprocess.run([sys.executable, str(ROOT / 'tools' / 'gates.py'), '--module', 'framework/nonesuch',
+                               '--definition-of-done', '--no-hold'], cwd=ROOT, capture_output=True, text=True)
+        self.assertEqual(done.returncode, 1)
+        self.assertIn('FLINT-E0535', done.stdout)
+        self.assertIn('NOT DONE: framework/nonesuch', done.stdout)
+
+    def test_the_structural_gate_is_unchanged(self):
+        done = subprocess.run([sys.executable, str(ROOT / 'tools' / 'gates.py'), '--help'], cwd=ROOT,
+                              capture_output=True, text=True)
+        self.assertIn('--gate', done.stdout)
+
+
+if __name__ == '__main__':
+    unittest.main()

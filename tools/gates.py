@@ -529,6 +529,11 @@ def api_gate(repos,flint,release=False):
     return report,failures
 
 def main():
+    if '--definition-of-done' in sys.argv[1:]:
+        # The per-module definition of done (coordination/notes/definition-of-done.md) is its own command, so the
+        # structural output stays as tests/test_flint_cli.py pins it.
+        import definition_of_done
+        sys.exit(definition_of_done.main(sys.argv[1:]))
     ap=argparse.ArgumentParser();ap.add_argument('--package',action='append',choices=sorted(P));ap.add_argument('--gate',choices=['structural','baseline','all','api','spring'],required=True)
     ap.add_argument('--flint',type=Path,default=ROOT/'.flint'/'bin'/'flint',help='api gate: the flint executable (default: .flint/bin/flint)')
     ap.add_argument('--release',action='store_true',help='api gate: require every element classified, not just the baseline ratchet')

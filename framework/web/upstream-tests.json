@@ -1,0 +1,444 @@
+{
+  "classes": {
+    "org/springframework/http/HttpEntityTests.java": {
+      "d": "framework/web/tests/http_entity_tests.d",
+      "methods": {
+        "ported": [
+          "equals",
+          "headerAreMutable",
+          "httpHeaders",
+          "multiValueMap",
+          "noHeaders",
+          "requestEntity",
+          "responseEntity"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/http/HttpHeadersTests.java": {
+      "d": "framework/web/tests/http_headers_tests.d",
+      "methods": {
+        "ported": [
+          "accept",
+          "acceptWithMultipleCommaSeparatedHeaderValues",
+          "acceptWithMultipleHeaderValues",
+          "accessControlAllowCredentials",
+          "accessControlAllowHeaders",
+          "accessControlAllowHeadersMultipleValues",
+          "accessControlAllowMethods",
+          "accessControlAllowOrigin",
+          "accessControlExposeHeaders",
+          "accessControlMaxAge",
+          "accessControlRequestHeaders",
+          "accessControlRequestMethod",
+          "allow",
+          "basicAuth",
+          "basicAuthIllegalChar",
+          "bearerAuth",
+          "cacheControl",
+          "cacheControlAllValues",
+          "constructorUnwrapsReadonly",
+          "contentLength",
+          "contentType",
+          "copyOfCopiesHeaders",
+          "date",
+          "dateInvalid",
+          "dateOtherLocale",
+          "eTag",
+          "eTagWithoutQuotes",
+          "equalsUnwrapsHttpHeaders",
+          "expiresInvalidDate",
+          "expiresLong",
+          "firstDate",
+          "getAllowEmptySet",
+          "getContentLengthReturnsMinusOneForAbsentHeader",
+          "getFirst",
+          "getOrEmpty",
+          "getValuesAsList",
+          "ifModifiedSince",
+          "invalidIfModifiedSinceHeader",
+          "lastModified",
+          "location",
+          "rfc9651Dates_invalid",
+          "rfc9651Dates_valid",
+          "setContentLengthWithNegativeValue",
+          "weakETagWithoutLeadingQuote",
+          "writableHttpHeadersUnwrapsMultiple"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/http/HttpStatusTests.java": {
+      "d": "framework/web/tests/http_status_tests.d",
+      "methods": {
+        "ported": [
+          "allStatusSeriesShouldMatchExpectations",
+          "fromEnumToMap",
+          "fromMapToEnum"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/http/MediaTypeTests.java": {
+      "d": "framework/web/tests/media_type_tests.d",
+      "methods": {
+        "ported": [
+          "compareTo",
+          "compareToCaseSensitivity",
+          "compareToConsistentWithEquals",
+          "getDefaultQualityValue",
+          "isConcrete",
+          "isLessSpecific",
+          "isMoreSpecific",
+          "parseMediaType",
+          "parseMediaTypes",
+          "parseMediaTypesWithTrailingComma",
+          "parseURLConnectionMediaType",
+          "removeQualityValue",
+          "removeQualityValueWithUpperCaseParameterName",
+          "slashInSubtype",
+          "slashInType",
+          "sortBySpecificity",
+          "toStringOutput"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/http/ProblemDetailTests.java": {
+      "d": "framework/web/tests/problem_detail_tests.d",
+      "methods": {
+        "ported": [
+          "equalsAndHashCode"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/http/ResponseEntityTests.java": {
+      "d": "framework/web/tests/response_entity_tests.d",
+      "methods": {
+        "ported": [
+          "Etagheader",
+          "createdLocation",
+          "headers",
+          "headersCopy",
+          "headersCopyWithEmptyAndNull",
+          "normal",
+          "ofEmptyOptional",
+          "ofNullNullable",
+          "ofNullable",
+          "ofOptional",
+          "okEntity",
+          "okNoBody"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/http/converter/ByteArrayHttpMessageConverterTests.java": {
+      "d": "framework/web/tests/byte_array_http_message_converter_tests.d",
+      "methods": {
+        "ported": [
+          "canRead",
+          "canWrite",
+          "read",
+          "readWithContentLengthHeaderSet",
+          "repeatableWrites",
+          "write"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/http/converter/HttpMessageConverterTests.java": {
+      "d": "framework/web/tests/http_message_converter_tests.d",
+      "methods": {
+        "ported": [
+          "canRead",
+          "canReadWithWildcardSubtype",
+          "canWrite",
+          "canWriteWithWildcardInSupportedSubtype"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/http/converter/StringHttpMessageConverterTests.java": {
+      "d": "framework/web/tests/string_http_message_converter_tests.d",
+      "methods": {
+        "ported": [
+          "canRead",
+          "canWrite",
+          "read",
+          "readJson",
+          "readJsonApi",
+          "readWithContentLengthHeader",
+          "repeatableWrites",
+          "writeDefaultCharset",
+          "writeJson",
+          "writeJsonApi",
+          "writeOverrideRequestedContentType",
+          "writeUTF8",
+          "writeWithWildCardMediaType"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/http/converter/json/JacksonJsonHttpMessageConverterTests.java": {
+      "d": "framework/web/tests/jackson_json_http_message_converter_tests.d",
+      "methods": {
+        "ported": [
+          "canRead",
+          "canReadAndWriteMicroformats",
+          "canReadWithObjectMapperRegistrationForType",
+          "canWrite",
+          "classLevelJsonView",
+          "fieldLevelJsonView",
+          "filters",
+          "getSupportedMediaTypes",
+          "prefixJson",
+          "prefixJsonCustom",
+          "prettyPrint",
+          "prettyPrintWithSse",
+          "readAndWriteGenerics",
+          "readAndWriteParameterizedType",
+          "readAscii",
+          "readEmptyAsNull",
+          "readInvalidJson",
+          "readNonUnicode",
+          "readTyped",
+          "readUnresolable",
+          "readUntyped",
+          "readValidJsonWithUnknownProperty",
+          "readWithCustomized",
+          "readWithNoDefaultConstructor",
+          "repeatableWrites",
+          "write",
+          "writeAscii",
+          "writeOptional",
+          "writeParameterizedBaseType",
+          "writeSubType",
+          "writeSubTypeList",
+          "writeUTF16",
+          "writeWithBaseType",
+          "writeWithCustomized"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/web/ErrorResponseExceptionTests.java": {
+      "d": "framework/web/tests/error_response_exception_tests.d",
+      "methods": {
+        "ported": [
+          "asyncRequestTimeoutException",
+          "handlerMethodValidationException",
+          "httpMediaTypeNotAcceptableException",
+          "httpMediaTypeNotAcceptableExceptionWithParseError",
+          "httpMediaTypeNotSupportedException",
+          "httpMediaTypeNotSupportedExceptionWithParseError",
+          "httpRequestMethodNotSupportedException",
+          "methodArgumentNotValidException",
+          "methodNotAllowedException",
+          "methodNotAllowedExceptionWithoutSupportedMethods",
+          "missingMatrixVariableException",
+          "missingPathVariableException",
+          "missingPathVariableExceptionAfterConversion",
+          "missingRequestCookieException",
+          "missingRequestHeaderException",
+          "missingRequestValueException",
+          "missingServletRequestParameterException",
+          "missingServletRequestPartException",
+          "notAcceptableStatusException",
+          "notAcceptableStatusExceptionWithParseError",
+          "serverErrorException",
+          "unsatisfiedRequestParameterException",
+          "unsatisfiedServletRequestParameterException",
+          "unsupportedMediaTypeStatusException",
+          "unsupportedMediaTypeStatusExceptionWithParseError",
+          "webExchangeBindException"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/web/ErrorResponseTests.java": {
+      "d": "framework/web/tests/error_response_tests.d",
+      "methods": {
+        "ported": [
+          "createWithHttpHeader",
+          "createWithHttpHeadersConsumer"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/web/bind/annotation/RequestMethodTests.java": {
+      "d": "framework/web/tests/request_method_tests.d",
+      "methods": {
+        "ported": [
+          "asHttpMethod",
+          "resolveHttpMethod",
+          "resolveString"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/web/cors/CorsConfigurationTests.java": {
+      "d": "framework/web/tests/cors_configuration_tests.d",
+      "methods": {
+        "ported": [
+          "changePermitDefaultValues",
+          "checkHeadersAllowed",
+          "checkHeadersNotAllowed",
+          "checkMethodAllowed",
+          "checkMethodNotAllowed",
+          "checkOriginAllowed",
+          "checkOriginNotAllowed",
+          "checkOriginPatternAllowed",
+          "checkOriginPatternNotAllowed",
+          "combine",
+          "combinePatternWithDefaultPermitValues",
+          "combinePatternWithDefaultPermitValuesAndCustomOrigin",
+          "combineWithAsteriskWildCard",
+          "combineWithDefaultPermitValues",
+          "combineWithDuplicatedElements",
+          "combineWithNull",
+          "combineWithNullProperties",
+          "permitDefaultDoesntSetOriginWhenPatternPresent",
+          "setNullValues",
+          "setValues"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/web/method/annotation/MethodArgumentTypeMismatchExceptionTests.java": {
+      "d": "framework/web/tests/method_argument_type_mismatch_exception_tests.d",
+      "methods": {
+        "ported": []
+      },
+      "status": "ported"
+    },
+    "org/springframework/web/util/UriComponentsBuilderTests.java": {
+      "d": "framework/web/tests/uri_components_builder_tests.d",
+      "methods": {
+        "ported": [
+          "fromUriString",
+          "fromUriStringIPv6Host",
+          "multipleFromSameBuilder",
+          "plain"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/web/util/UriComponentsTests.java": {
+      "d": "framework/web/tests/uri_components_tests.d",
+      "methods": {
+        "ported": [
+          "copyToUriComponentsBuilder",
+          "emptyPortSet",
+          "encodeAndExpand",
+          "encodeAndExpandPartially",
+          "encodeAndExpandWithDollarSign",
+          "equalsHierarchicalUriComponents",
+          "equalsOpaqueUriComponents",
+          "expand",
+          "expandAndEncode",
+          "expandEncoded",
+          "expandQueryParamWithArray",
+          "expandQueryParamWithList",
+          "expandWithFragmentOrder",
+          "expandWithRegexVar",
+          "invalidCharacters",
+          "invalidEncodedSequence",
+          "invalidPortParsed",
+          "invalidPortSet",
+          "normalize",
+          "port",
+          "toUriAlreadyEncoded",
+          "toUriEncoded",
+          "toUriNotEncoded",
+          "toUriStringWithPortVariable",
+          "toUriWithIpv6HostAlreadyEncoded",
+          "uirTemplateExpandWithMismatchedCurlyBraces"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/web/util/UriUtilsTests.java": {
+      "d": "framework/web/tests/uri_utils_tests.d",
+      "methods": {
+        "ported": [
+          "decode",
+          "decodeInvalidSequence",
+          "encode",
+          "encodeFragment",
+          "encodeHost",
+          "encodePath",
+          "encodePathSegment",
+          "encodePort",
+          "encodeQuery",
+          "encodeQueryParam",
+          "encodeScheme",
+          "encodeUserInfo",
+          "extractFileExtension"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/web/util/pattern/PathPatternParserTests.java": {
+      "d": "framework/web/tests/path_pattern_parser_tests.d",
+      "methods": {
+        "ported": [
+          "compareTests",
+          "equalsAndHashcode",
+          "noEncoding",
+          "normalizedLengthWhenMultipleSeparator",
+          "normalizedLengthWhenVariable",
+          "patternPropertyGetCaptureCountTests",
+          "patternPropertyGetWildcardCountTests",
+          "separatorTests",
+          "toStringTests"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/web/util/pattern/PathPatternTests.java": {
+      "d": "framework/web/tests/path_pattern_tests.d",
+      "methods": {
+        "ported": [
+          "captureVariableRegexWithTooManyCharacterAccessAttempts",
+          "caseInsensitive",
+          "caseSensitivity",
+          "combineEmptyPatternsShouldReturnEmpty",
+          "combineMatchingPatternsShouldFailWhenNoMatch",
+          "combineMatchingPatternsShouldMergeWhenMatch",
+          "combineMatchingWithStaticShouldConcatenateWhenNoWildcardMatch",
+          "combineMatchingWithStaticShouldMergeWhenWildcardMatch",
+          "combineStaticPatternsShouldConcatenate",
+          "combineStaticWithMatchingShouldConcatenate",
+          "combineWithEmptyPatternShouldReturnPattern",
+          "compare_spr15597",
+          "extractPathWithinPattern",
+          "extractPathWithinPatternCustomSeparator",
+          "extractPathWithinPatternWildards",
+          "extractUriTemplateVariables",
+          "extractUriTemplateVariablesRegex",
+          "extractUriTemplateVarsRegexCapturingGroups",
+          "extractUriTemplateVarsRegexQualifiers",
+          "hasPatternSyntax",
+          "parameters",
+          "pathContainer",
+          "pathRemainderBasicCases",
+          "pathRemainingCornerCases",
+          "pathRemainingEnhancements",
+          "patternComparator",
+          "patternComparatorSort",
+          "patternCompareWithNull",
+          "regexPathElementPatterns",
+          "regexWithTooManyCharacterAccessAttempts"
+        ]
+      },
+      "status": "ported"
+    }
+  },
+  "module": "web",
+  "schema": "flint.upstream-tests/1",
+  "test_packages": [
+    ":web"
+  ],
+  "upstream": "spring-framework@v7.1.0"
+}

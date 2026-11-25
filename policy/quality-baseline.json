@@ -1,0 +1,183 @@
+{
+  "schema": "flint.quality-baseline/1",
+  "note": "Known quality findings per file, a ratchet: tools/quality.py --baseline fails on any finding not listed here and on any listed finding that is gone. It only shrinks (--shrink-baseline); recording findings (--record-baseline) is the integration owner's, 2026-11-25 coordinator decision on the definition of done.",
+  "trees": {
+    "boot": {
+      "boot/core/flint-boot/source/flint/boot/package.d": {
+        "dfmt: formatter difference": 1
+      },
+      "boot/core/flint-boot/tests/boot_tests/bind_validation_failure_analyzer_test.d": {
+        "dfmt: formatter difference": 1
+      },
+      "boot/core/flint-boot/tests/boot_tests/binder_test.d": {
+        "dscanner.style.undocumented_declaration: Public declaration is undocumented.": 1
+      },
+      "boot/module/flint-boot-jackson/source/flint/boot/jackson/autoconfigure.d": {
+        "dscanner.metric.cyclomatic_complexity: Cyclomatic complexity of this function is #.": 1
+      },
+      "boot/module/flint-boot-jackson/tests/stock_json_mapper_test.d": {
+        "dfmt: formatter difference": 1,
+        "dscanner.suspicious.unmodified: Variable mapper is never modified and could have been declared const or immutable.": 1,
+        "dscanner.suspicious.unused_parameter: Parameter builder is never used.": 1
+      },
+      "boot/module/flint-boot-jdbc-health/tests/datasource_health_contributor_autoconfiguration_upstream_test.d": {
+        "dfmt: formatter difference": 1,
+        "dscanner.suspicious.unmodified: Variable contributor is never modified and could have been declared const or immutable.": 1
+      },
+      "boot/module/flint-boot-jdbc/source/flint/boot/jdbc/package.d": {
+        "dfmt: formatter difference": 1
+      },
+      "boot/module/flint-boot-jdbc/tests/database_driver_upstream_test.d": {
+        "dfmt: formatter difference": 1
+      },
+      "boot/module/flint-boot-jdbc/tests/datasource_properties_upstream_test.d": {
+        "dfmt: formatter difference": 1
+      },
+      "boot/module/flint-boot-webmvc/tests/basic_error_controller_mock_mvc_test.d": {
+        "dfmt: formatter difference": 1
+      },
+      "boot/module/flint-boot-webmvc/tests/error_page_shortcut_test.d": {
+        "dfmt: formatter difference": 1
+      },
+      "boot/module/flint-boot-webmvc/tests/stock_json_error_test.d": {
+        "dfmt: formatter difference": 1
+      }
+    },
+    "framework": {
+      "framework/context/source/flint/validation/package.d": {
+        "dfmt: formatter difference": 1
+      },
+      "framework/engine-aot/source/flint/engine/aot/descriptor.d": {
+        "dscanner.suspicious.length_subtraction: Avoid subtracting from '.length' as it may be unsigned.": 1
+      },
+      "framework/engine-aot/source/flint/engine/aot/host.d": {
+        "dscanner.metric.cyclomatic_complexity: Cyclomatic complexity of this function is #.": 1,
+        "dscanner.style.undocumented_declaration: Public declaration 'name' is undocumented.": 1,
+        "dscanner.style.undocumented_declaration: Public declaration 'value' is undocumented.": 1,
+        "dscanner.suspicious.unmodified: Variable name is never modified and could have been declared const or immutable.": 2
+      },
+      "framework/engine-aot/source/flint/engine/aot/sys/environment.d": {
+        "dfmt: formatter difference": 1,
+        "dscanner.unused_result: Function return value is discarded": 1
+      },
+      "framework/engine-aot/source/flint/engine/aot/sys/files.d": {
+        "dfmt: formatter difference": 1,
+        "dscanner.confusing.argument_parameter_mismatch: Argument # is named 'length', but this is the name of parameter #": 1,
+        "dscanner.style.undocumented_declaration: Public declaration 'directory' is undocumented.": 1,
+        "dscanner.style.undocumented_declaration: Public declaration 'exists' is undocumented.": 1,
+        "dscanner.style.undocumented_declaration: Public declaration 'size' is undocumented.": 1
+      },
+      "framework/engine-servlet/source/flint/engine/servlet/exchange.d": {
+        "dfmt: formatter difference": 1,
+        "dscanner.suspicious.unmodified: Variable access is never modified and could have been declared const or immutable.": 6,
+        "dscanner.suspicious.unmodified: Variable generation is never modified and could have been declared const or immutable.": 3,
+        "dscanner.suspicious.unmodified: Variable inner is never modified and could have been declared const or immutable.": 1,
+        "dscanner.suspicious.unmodified: Variable mine is never modified and could have been declared const or immutable.": 1,
+        "dscanner.suspicious.unmodified: Variable next is never modified and could have been declared const or immutable.": 1,
+        "dscanner.suspicious.unmodified: Variable outer is never modified and could have been declared const or immutable.": 1,
+        "dscanner.suspicious.unmodified: Variable self is never modified and could have been declared const or immutable.": 2,
+        "dscanner.suspicious.unused_variable: Variable access is never used.": 6,
+        "dscanner.suspicious.unused_variable: Variable inner is never used.": 1,
+        "dscanner.suspicious.unused_variable: Variable outer is never used.": 1,
+        "dscanner.unused_result: Function return value is discarded": 1
+      },
+      "framework/engine-servlet/source/flint/engine/servlet/fast.d": {
+        "dscanner.metric.cyclomatic_complexity: Cyclomatic complexity of this function is #.": 2
+      },
+      "framework/engine-servlet/source/flint/engine/servlet/package.d": {
+        "dfmt: formatter difference": 1,
+        "dscanner.suspicious.unmodified: Variable generation is never modified and could have been declared const or immutable.": 2
+      },
+      "framework/engine-servlet/source/flint/engine/servlet/request.d": {
+        "dfmt: formatter difference": 1,
+        "dscanner.suspicious.unmodified: Variable access is never modified and could have been declared const or immutable.": 57,
+        "dscanner.suspicious.unused_variable: Variable access is never used.": 57
+      },
+      "framework/engine-servlet/source/flint/engine/servlet/response.d": {
+        "dscanner.suspicious.unmodified: Variable access is never modified and could have been declared const or immutable.": 35,
+        "dscanner.suspicious.unused_variable: Variable access is never used.": 35
+      },
+      "framework/engine-servlet/tests/servlet_engine_tests.d": {
+        "dfmt: formatter difference": 1,
+        "dscanner.style.long_line: Line is longer than # characters": 1
+      },
+      "framework/framework-test/source/flint/test/util.d": {
+        "dscanner.metric.cyclomatic_complexity: Cyclomatic complexity of this function is #.": 2
+      },
+      "framework/framework-test/source/flint/test/web/servlet/request.d": {
+        "dscanner.metric.cyclomatic_complexity: Cyclomatic complexity of this function is #.": 1
+      },
+      "framework/framework-test/tests/fast_path_tests.d": {
+        "dscanner.style.undocumented_declaration: Public declaration 'Box' is undocumented.": 1,
+        "dscanner.style.undocumented_declaration: Public declaration 'CorsController' is undocumented.": 1,
+        "dscanner.style.undocumented_declaration: Public declaration 'EntityController' is undocumented.": 1,
+        "dscanner.style.undocumented_declaration: Public declaration 'Hello' is undocumented.": 1,
+        "dscanner.style.undocumented_declaration: Public declaration 'HelloController' is undocumented.": 1,
+        "dscanner.style.undocumented_declaration: Public declaration 'NullController' is undocumented.": 1,
+        "dscanner.style.undocumented_declaration: Public declaration 'calls' is undocumented.": 2,
+        "dscanner.style.undocumented_declaration: Public declaration 'cors' is undocumented.": 1,
+        "dscanner.style.undocumented_declaration: Public declaration 'entity' is undocumented.": 1,
+        "dscanner.style.undocumented_declaration: Public declaration 'find' is undocumented.": 1,
+        "dscanner.style.undocumented_declaration: Public declaration 'hello' is undocumented.": 1,
+        "dscanner.style.undocumented_declaration: Public declaration 'id' is undocumented.": 1,
+        "dscanner.style.undocumented_declaration: Public declaration 'item' is undocumented.": 1,
+        "dscanner.style.undocumented_declaration: Public declaration 'nothing' is undocumented.": 1,
+        "dscanner.style.undocumented_declaration: Public declaration 'owner' is undocumented.": 1,
+        "dscanner.style.undocumented_declaration: Public declaration 'pet' is undocumented.": 1,
+        "dscanner.style.undocumented_declaration: Public declaration 'remove' is undocumented.": 1,
+        "dscanner.style.undocumented_declaration: Public declaration 'seven' is undocumented.": 1,
+        "dscanner.style.undocumented_declaration: Public declaration 'text' is undocumented.": 1,
+        "dscanner.suspicious.unmodified: Variable answer is never modified and could have been declared const or immutable.": 1,
+        "dscanner.suspicious.unmodified: Variable fast is never modified and could have been declared const or immutable.": 3,
+        "dscanner.suspicious.unmodified: Variable plain is never modified and could have been declared const or immutable.": 1,
+        "dscanner.unused_result: Function return value is discarded": 2
+      },
+      "framework/framework-test/tests/gs_rest_service_tests.d": {
+        "dfmt: formatter difference": 1,
+        "dscanner.suspicious.unmodified: Variable direct is never modified and could have been declared const or immutable.": 1
+      },
+      "framework/framework-test/tests/header_content_negotiation_strategy_tests.d": {
+        "dfmt: formatter difference": 1
+      },
+      "framework/framework-test/tests/request_body_validation_tests.d": {
+        "dscanner.style.long_line: Line is longer than # characters": 1
+      },
+      "framework/hibernate-validator/source/flint/hibernate/validator/internal/engine.d": {
+        "dfmt: formatter difference": 1,
+        "dscanner.style.long_line: Line is longer than # characters": 1
+      },
+      "framework/hibernate-validator/tests/validator_test.d": {
+        "dfmt: formatter difference": 1
+      },
+      "framework/jackson-databind/source/flint/jackson/databind/ext/javatime.d": {
+        "dfmt: formatter difference": 1
+      },
+      "framework/tx/source/flint/transaction/interceptor/package.d": {
+        "dfmt: formatter difference": 1
+      },
+      "framework/web/source/flint/http/package.d": {
+        "dfmt: formatter difference": 1
+      },
+      "framework/web/source/flint/web/bind/support.d": {
+        "dscanner.metric.cyclomatic_complexity: Cyclomatic complexity of this function is #.": 1
+      },
+      "framework/web/tests/problem_detail_tests.d": {
+        "dfmt: formatter difference": 1,
+        "dscanner.style.long_line: Line is longer than # characters": 1
+      },
+      "framework/webmvc/source/flint/web/servlet/mvc/method/annotation.d": {
+        "dfmt: formatter difference": 1
+      },
+      "framework/webmvc/source/flint/web/servlet/mvc/method/fast.d": {
+        "dscanner.metric.cyclomatic_complexity: Cyclomatic complexity of this function is #.": 4,
+        "dscanner.style.long_line: Line is longer than # characters": 2
+      },
+      "framework/webmvc/source/flint/web/servlet/mvc/method/package.d": {
+        "dfmt: formatter difference": 1
+      },
+      "framework/webmvc/source/flint/web/servlet/package.d": {
+        "dfmt: formatter difference": 1
+      }
+    }
+  }
+}
