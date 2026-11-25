@@ -12,7 +12,8 @@ Rules:
 - Only the thread that opened the region allocates from it, and only while it is open. Other threads, and every
   allocation after `close`, go to the collector unchanged.
 - An allocation with a finalizer (`FINALIZE` or `STRUCTFINAL`) goes to the collector, so every destructor still runs
-  as before.
+  as before. So does a `NO_SCAN` allocation: the collector never reads one, while the region is scanned whole, so
+  moving pointer-free buffers (petclinic's 2 MB of JDBC arenas) into it would add to every collection.
 - Region memory is never freed or reused. `free` ignores a region block, `extend` cannot grow one, and `realloc`
   copies one out to a new block. An object that start-up drops stays in the region, scanned, holding whatever it
   pointed to: retained, never reused.
@@ -163,7 +164,7 @@ private size_t regionSize(const void* p) nothrow @nogc
 private bool fromRegion(uint bits) nothrow @nogc
 {
     alias Attr = core.memory.GC.BlkAttr;
-    return regionThread && !(bits & (Attr.FINALIZE | Attr.STRUCTFINAL));
+    return regionThread && !(bits & (Attr.FINALIZE | Attr.STRUCTFINAL | Attr.NO_SCAN));
 }
 
 /// Forwards every call to the collector it was installed over, except the opening thread's allocations while the

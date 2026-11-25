@@ -38,12 +38,18 @@ private struct Holder
         removeStartupRegionProxy();
     assert(!openStartupRegion(), "a second region is refused");
 
-    // The opening thread's allocations without a finalizer come from the region; the collector does not know them.
-    auto numbers = new int[](10);
+    // The opening thread's scanned allocations without a finalizer come from the region; the collector does not know
+    // them.
+    auto numbers = new int*[](10);
     auto pair = new Holder;
     assert(inStartupRegion(numbers.ptr) && inStartupRegion(pair));
     assert(GC.addrOf(numbers.ptr) is null && GC.addrOf(pair) is null);
-    assert(numbers == new int[](10), "region memory starts zeroed");
+    foreach (p; numbers)
+        assert(p is null, "region memory starts zeroed");
+
+    // A NO_SCAN allocation stays in the collector, which never reads it; the region is scanned whole.
+    auto bytes = new ubyte[](4096);
+    assert(!inStartupRegion(bytes.ptr) && GC.addrOf(bytes.ptr)!is null);
 
     // A finalized object goes to the collector, so its destructor still runs.
     auto finalizedObject = new Finalized;
@@ -51,7 +57,7 @@ private struct Holder
 
     // Another thread's allocations go to the collector even while the region is open.
     void* other;
-    auto worker = new Thread({ other = cast(void*) new int[](10).ptr; });
+    auto worker = new Thread({ other = cast(void*) new int*[](10).ptr; });
     worker.start();
     worker.join();
     assert(!inStartupRegion(other) && GC.addrOf(other)!is null);
@@ -60,16 +66,17 @@ private struct Holder
     pair.target = finalizedObject;
     finalizedObject = null;
     // A block start-up drops: filled with a canary, then forgotten.
-    auto dropped = new ubyte[](256);
-    dropped[] = 0xA5;
+    auto dropped = new size_t*[](32);
+    foreach (ref slot; dropped)
+        slot = cast(size_t*) 0xA5A5A5A5;
     const droppedAddress = cast(size_t) dropped.ptr;
     dropped = null;
 
     // Appending to a region array copies it (the collector does not know the block, so it cannot grow in place); while
     // the region is open the copy comes from the region too. The original block stays as it was.
     auto grown = numbers;
-    grown ~= 1;
-    assert(grown.ptr !is numbers.ptr && grown.length == 11 && grown[10] == 1);
+    grown ~= null;
+    assert(grown.ptr !is numbers.ptr && grown.length == 11);
     assert(inStartupRegion(numbers.ptr) && numbers.length == 10);
 
     // realloc copies a region block out; free ignores one.
@@ -81,16 +88,16 @@ private struct Holder
     GC.free(block);
     assert(inStartupRegion(block) && (cast(ubyte*) block)[0] == 0x3C, "freeing a region block changes nothing");
 
-    const bytes = startupRegionBytes();
+    const regionBytes = startupRegionBytes();
     const blocks = startupRegionBlocks();
-    assert(bytes >= 10 * int.sizeof + Holder.sizeof + 256 + 48 && blocks >= 4);
+    assert(regionBytes >= 10 * (int*).sizeof + Holder.sizeof + 32 * (size_t*).sizeof + 48 && blocks >= 4);
 
     closeStartupRegion();
 
     // After close, every allocation goes to the collector.
-    auto later = new int[](10);
+    auto later = new int*[](10);
     assert(!inStartupRegion(later.ptr) && GC.addrOf(later.ptr)!is null);
-    assert(startupRegionBytes() == bytes && startupRegionBlocks() == blocks);
+    assert(startupRegionBytes() == regionBytes && startupRegionBlocks() == blocks);
 
     // Collections neither finalize what the region holds nor reuse what it dropped.
     foreach (round; 0 .. 5)
@@ -105,7 +112,7 @@ private struct Holder
     }
     assert(!atomicLoad(finalized), "the heap object a region block holds stays alive");
     assert((cast(Finalized) pair.target).value == 7);
-    auto canary = (cast(ubyte*) droppedAddress)[0 .. 256];
-    foreach (b; canary)
-        assert(b == 0xA5, "a block start-up dropped is retained, never reused");
+    auto canary = (cast(size_t*) droppedAddress)[0 .. 32];
+    foreach (word; canary)
+        assert(word == 0xA5A5A5A5, "a block start-up dropped is retained, never reused");
 }
