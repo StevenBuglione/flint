@@ -392,11 +392,163 @@ interface AttributeAccessor
     string[] attributeNames();
 }
 
+/++
+An insertion-ordered map from names, for long-lived registries (bean definitions, singletons, attributes). It is
+three arrays however many entries it holds: the names, the values and a NO_SCAN slot table. A built-in associative
+array allocates a node per entry, and a collection marks every node of every live registry on each cycle (about
+50 ns each; m7's census of petclinic-rest, coordination/notes/permanent-objects.md). Not part of the Spring API.
+
+`in` returns a pointer into the value array, valid until the next insertion or removal (read it at once, as the
+callers do). Removal shifts the later entries down to keep insertion order, and is linear in the map's size.
++/
+package(flint) struct NameMap(V)
+{
+    private string[] names;
+    private V[] values;
+    /// Open addressing: 0 is empty, otherwise the entry's index plus one. Twice the entries, a power of two.
+    private uint[] slots;
+
+    /// The number of entries.
+    size_t length() const pure nothrow @nogc
+    {
+        return names.length;
+    }
+
+    /// The value of `name`, or null.
+    inout(V)* opBinaryRight(string op : "in")(scope const(char)[] name) inout nothrow
+    {
+        const index = find(name);
+        return index == size_t.max ? null : &values[index];
+    }
+
+    /// The value of `name`; a RangeError when it is absent, as an associative array's.
+    ref inout(V) opIndex(scope const(char)[] name) inout
+    {
+        import core.exception : RangeError;
+
+        const index = find(name);
+        if (index == size_t.max)
+            throw new RangeError();
+        return values[index];
+    }
+
+    /// The value of `name`, or `fallback`.
+    inout(V) get(scope const(char)[] name, inout(V) fallback) inout nothrow
+    {
+        const index = find(name);
+        return index == size_t.max ? fallback : values[index];
+    }
+
+    /// Set `name` to `value`: replaced in place, or appended.
+    void opIndexAssign(V value, string name) nothrow
+    {
+        const index = find(name);
+        if (index != size_t.max)
+        {
+            values[index] = value;
+            return;
+        }
+        names ~= name;
+        values ~= value;
+        if ((names.length * 2) > slots.length)
+            rehash();
+        else
+            place(names.length - 1);
+    }
+
+    /// Remove `name`; false when it was absent.
+    bool remove(scope const(char)[] name) nothrow
+    {
+        const index = find(name);
+        if (index == size_t.max)
+            return false;
+        names = names[0 .. index] ~ names[index + 1 .. $];
+        values = values[0 .. index] ~ values[index + 1 .. $];
+        rehash();
+        return true;
+    }
+
+    /// Empty the map.
+    void opAssign(typeof(null)) nothrow
+    {
+        names = null;
+        values = null;
+        slots = null;
+    }
+
+    /// The names, in insertion order.
+    const(string)[] keys() const pure nothrow @nogc
+    {
+        return names;
+    }
+
+    /// The values, in insertion order.
+    inout(V)[] byValue() inout pure nothrow @nogc
+    {
+        return values;
+    }
+
+    private size_t find(scope const(char)[] name) const nothrow
+    {
+        if (slots.length == 0)
+            return size_t.max;
+        const mask = slots.length - 1;
+        for (size_t slot = hashOf(name) & mask;; slot = (slot + 1) & mask)
+        {
+            const entry = slots[slot];
+            if (entry == 0)
+                return size_t.max;
+            if (names[entry - 1] == name)
+                return entry - 1;
+        }
+    }
+
+    private void place(size_t index) nothrow
+    {
+        const mask = slots.length - 1;
+        size_t slot = hashOf(names[index]) & mask;
+        while (slots[slot] != 0)
+            slot = (slot + 1) & mask;
+        slots[slot] = cast(uint)(index + 1);
+    }
+
+    private void rehash() nothrow
+    {
+        size_t capacity = 8;
+        while (capacity < names.length * 2)
+            capacity *= 2;
+        slots = new uint[](capacity);
+        foreach (index; 0 .. names.length)
+            place(index);
+    }
+}
+
+@("a NameMap keeps insertion order, replaces in place, removes, and answers in and get as an associative array")
+@system unittest
+{
+    NameMap!int map;
+    assert(("a" in map) is null && map.length == 0 && map.get("a", -1) == -1);
+    foreach (i; 0 .. 100)
+        map[cast(string)("k" ~ cast(char)('0' + i / 10) ~ cast(char)('0' + i % 10))] = i;
+    assert(map.length == 100 && *("k42" in map) == 42 && map["k07"] == 7);
+    map["k42"] = -42;
+    assert(map.length == 100 && map["k42"] == -42 && map.keys[42] == "k42");
+    assert(map.remove("k00") && !map.remove("k00") && map.length == 99);
+    assert(map.keys[0] == "k01" && ("k00" in map) is null && map["k99"] == 99);
+    bool threw;
+    try
+        cast(void) map["nope"];
+    catch (Throwable)
+        threw = true;
+    assert(threw);
+    map = null;
+    assert(map.length == 0 && ("k01" in map) is null);
+}
+
 /// `AttributeAccessor` backed by an insertion-ordered map.
 class AttributeAccessorSupport : AttributeAccessor
 {
-    private Any[string] attributes;
-    private string[] names;
+    private NameMap!Any attributes;
 
     /// Set the attribute `name`; `Any.init` removes it.
     void setAttribute(string name, Any value)
@@ -407,8 +559,6 @@ class AttributeAccessorSupport : AttributeAccessor
             removeAttribute(name);
             return;
         }
-        if ((name in attributes) is null)
-            names ~= name;
         attributes[name] = value;
     }
 
@@ -441,12 +591,6 @@ class AttributeAccessorSupport : AttributeAccessor
             return Any.init;
         auto value = *found;
         attributes.remove(name);
-        foreach (i, existing; names)
-            if (existing == name)
-            {
-                names = names[0 .. i] ~ names[i + 1 .. $];
-                break;
-            }
         return value;
     }
 
@@ -460,7 +604,7 @@ class AttributeAccessorSupport : AttributeAccessor
     /// The attribute names, in insertion order.
     string[] attributeNames()
     {
-        return names.dup;
+        return attributes.keys.dup;
     }
 
     /// Copy the attributes of `source` into this accessor.

@@ -10,6 +10,7 @@
 /// uses these, and the day those land, this file is deleted and its importers switch over.
 module flint.boot.internal.core_env;
 
+import flint.core : NameMap;
 import flint.java.lang : IllegalArgumentException;
 
 @safe:
@@ -18,7 +19,7 @@ import flint.java.lang : IllegalArgumentException;
 final class CommandLineArgs
 {
     private string[] names;
-    private string[][string] options;
+    private NameMap!(string[]) options;
     private string[] nonOptionArgs;
 
     /// Record option `name` with `value` (`null` for `--name` without a value).

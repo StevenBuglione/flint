@@ -48,7 +48,7 @@ import flint.beans.factory : BeanCreationException,
 import flint.beans.factory.config : BeanDefinition, BeanPostProcessor,
     ConfigurableListableBeanFactory, ConfigurationPropertiesBinder, DestructionAwareBeanPostProcessor;
 import flint.engine.aot.descriptor : DescriptorTable;
-import flint.core : AliasRegistry, AttributeAccessorSupport, OrderComparator, Ordered,
+import flint.core : AliasRegistry, AttributeAccessorSupport, NameMap, OrderComparator, Ordered,
     PriorityOrdered, SimpleAliasRegistry;
 import flint.core.convert : ConversionService, TypeDescriptor;
 import flint.engine.aot.any : Any;
@@ -413,26 +413,26 @@ definitions, creating singletons on demand.
 +/
 class DefaultListableBeanFactory : SimpleAliasRegistry, ConfigurableListableBeanFactory, BeanDefinitionRegistry
 {
-    private RootBeanDefinition[string] definitions;
+    private NameMap!RootBeanDefinition definitions;
     private string[] definitionNames;
-    private Object[string] singletons;
-    private Object[string] factoryBeanObjects; // the objects of singleton FactoryBeans, by factory name
+    private NameMap!Object singletons;
+    private NameMap!Object factoryBeanObjects; // the objects of singleton FactoryBeans, by factory name
     private OrderComparator dependencyComparator;
-    private Object[string] rawInstances; // what the factory created: destruction callbacks receive it
-    private DisposableBean[string] disposableBeans;
-    private Object[string] earlySingletons;
-    private bool[string] earlyReferenced;
+    private NameMap!Object rawInstances; // what the factory created: destruction callbacks receive it
+    private NameMap!DisposableBean disposableBeans;
+    private NameMap!Object earlySingletons;
+    private NameMap!bool earlyReferenced;
     private string[] singletonOrder;
-    private bool[string] inCreation;
+    private NameMap!bool inCreation;
     private string[] creating; // the beans being created, innermost last
     private bool allowCircularReferences = true;
-    private string[][string] dependents;
-    private string[][string] dependencies;
+    private NameMap!(string[]) dependents;
+    private NameMap!(string[]) dependencies;
     private BeanPostProcessor[] postProcessors;
     private StringValueResolver[] valueResolvers;
     private ConversionService conversionService;
     private DescriptorTable descriptors;
-    private Object[string] resolvableDependencies;
+    private NameMap!Object resolvableDependencies;
     private BeanFactory parent;
     private bool frozen;
     // Spring's allBeanNamesByType: the names by type once the configuration is frozen, cleared by any registration.
@@ -782,7 +782,7 @@ class DefaultListableBeanFactory : SimpleAliasRegistry, ConfigurableListableBean
         addUnique(dependencies, dependentBeanName, canonical);
     }
 
-    private static void addUnique(ref string[][string] map, string key, string value)
+    private static void addUnique(ref NameMap!(string[]) map, string key, string value)
     {
         auto values = key in map;
         if (values is null)

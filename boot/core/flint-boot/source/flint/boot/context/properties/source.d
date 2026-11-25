@@ -18,6 +18,7 @@
 /// case and every non-alphanumeric character, which is Spring Boot's relaxed binding.
 module flint.boot.context.properties.source;
 
+import flint.core : NameMap;
 import flint.java.lang : IllegalArgumentException, IndexOutOfBoundsException, RuntimeException;
 
 @safe:
@@ -750,8 +751,8 @@ class MapConfigurationPropertySource : ConfigurationPropertySource
 {
     private string sourceName;
     private string[] keys;
-    private string[string] values;
-    private string[string] origins;
+    private NameMap!string values; // flat maps: two arrays and a slot table, not a node per property
+    private NameMap!string origins;
     private ConfigurationPropertyName[] names;
     private ConfigurationPropertyName function(string) pure @safe mapper;
 
