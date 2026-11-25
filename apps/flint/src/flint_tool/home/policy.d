@@ -132,8 +132,8 @@ struct ProfileSpec
 ProfileSpec copyOf(const ProfileSpec spec)
 {
     return ProfileSpec(spec.description, spec.compiler, spec.compilers.dup, spec.build_type,
-            spec.dflags.dup, spec.lflags.dup, spec.glibc_lflags.dup, spec.elf_lflags.dup, spec.compile_server,
-            spec.dub_pipeline, spec.native_profile, spec.native_sanitize);
+            spec.dflags.dup, spec.lflags.dup, spec.glibc_lflags.dup, spec.elf_lflags.dup,
+            spec.compile_server, spec.dub_pipeline, spec.native_profile, spec.native_sanitize);
 }
 
 /// The closed set of canonical profiles.
