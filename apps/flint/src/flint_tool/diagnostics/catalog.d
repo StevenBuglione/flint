@@ -397,6 +397,14 @@ immutable CodeInfo[] catalog = [
             ~ "policy/unregistered-packages.json lists the packages unregistered on 2026-11-23; it only shrinks, "
             ~ "and an entry that is registered or gone must be removed.",
             `"web": {"directory": "framework/web", "module": "flint.web", "repo": "framework", ...}`),
+    CodeInfo("FLINT-E0536", ExitCode.user, "class metadata gets a GC-allocated monitor",
+            "A class's metadata object (`typeid(X)`, `X.classinfo`, any `TypeInfo`) never owns a GC-allocated "
+            ~ "monitor, so the collector need not scan class metadata (owner rule of 2026-11-25). The gate "
+            ~ "type-checks the argument of every `new Mutex(obj)` and `setSameMutex(ownee, owner)` with the pinned "
+            ~ "compiler and rejects one whose static type is a TypeInfo or ClassInfo; druntime's `_d_setSameMutex` "
+            ~ "and `__monitor` are off limits. `synchronized (typeid(X))` is fine: its monitor is C heap. A "
+            ~ "deliberate negative test may carry `// flint: allow-class-monitor (reason)` on the line or the line "
+            ~ "above.", "private Mutex lock;\nthis() { lock = new Mutex(); }    // not new Mutex(typeid(Registry))"),
     CodeInfo("FLINT-E0601", ExitCode.user, "source is not formatted",
             "One formatter: dfmt 0.15.2 with Flint's stacked-UDA patch and the repository's .editorconfig. "
             ~ "`flint check` compares its output byte for byte.", "flint fmt"),

@@ -823,6 +823,11 @@ private void checkWorkspace(ref Session session, const ref CheckArgs args, strin
     const dmd = componentPath(session.home, toolchainDirectory(session.home), "dmd");
     payload.structural = structuralGate(session.home, selected, dmd, report);
     payload.structural.repo = args.repo;
+    // Class metadata never owns a GC monitor (FLINT-E0536): typed, so it compiles; `flint build` never runs it.
+    session.progress("Checking", "class metadata monitors");
+    const monitors = imported!"flint_tool.check.classmonitor".checkClassMonitor(session.home.root, dmd, report);
+    if (monitors.length)
+        session.progress("Checked", "class metadata monitors: " ~ monitors);
     if (args.gate.length == 0)
     {
         payload.checks ~= "quality";

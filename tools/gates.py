@@ -8,6 +8,7 @@ from workspace import Workspace,edge_violations,package_repos
 import module_budgets
 import framework_budgets
 import check_exchange_retention
+import check_class_monitor
 import request_allocation_ratchet
 import template_budget_ratchet
 ROOT=Path(__file__).resolve().parents[1]
@@ -331,6 +332,9 @@ def structural(selected):
     raised=request_allocation_ratchet.check(ROOT);require(not raised,'; '.join(raised))
     # The exchange pool's retention audit (coordination/notes/exchange-pool.md): no unreviewed holder of a request.
     retained=check_exchange_retention.violations(ROOT);require(not retained,'; '.join(retained))
+    # Owner rule of 2026-11-25: class metadata never owns a GC monitor (FLINT-E0536, tools/check_class_monitor.py).
+    # Typed: it compiles the modules that can reach Mutex(Object)/setSameMutex. The summary goes to stderr, as stdout is parity-checked.
+    monitors=check_class_monitor.check(ROOT);print(monitors.summary(),file=sys.stderr);require(monitors.ok,'; '.join(monitors.lines()))
     framework=framework_layers()
     layer_registration()
     mixin_packages=set()
