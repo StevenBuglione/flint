@@ -23,3 +23,17 @@ unittest
     byteWriter.close();
     assert(bytes.toByteArray() == cast(const(ubyte)[]) "é😀");
 }
+
+@("PrintWriter writes non-null text and returns itself from append")
+unittest
+{
+    auto output = new StringWriter;
+    auto printer = new PrintWriter(output);
+
+    printer.write("é");
+    printer.print("Ω".dup);
+    printer.print(cast(wchar) 'λ');
+    printer.print("");
+    assert(printer.append("😀") is printer);
+    assert(output.toString() == "éΩλ😀");
+}
