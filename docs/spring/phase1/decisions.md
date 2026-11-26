@@ -1226,3 +1226,8 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **JDK closure violations:** 664 → 36, with 0 new.
   - **App sizes:** matched.
   - **Next:** a certified venus build run in tonight's overnight window confirms the gated build metrics. This was a profile-wide change, never a per-package flag (36c5384c).
+- 2026-11-26 04:48Z, owner: **every difference between Flint's public API and the Java original is kept in one running, user-facing log,** so none of it is knowledge that people are expected to just know.
+  - **The log:** `docs/spring/java-differences.md` is GENERATED from `api/*/mapping.json`. It lists every adapted element with its rule or deviation and its Java-to-Flint form, every excluded element with its reason, and deferred elements as counts.
+  - **A front section** explains R1–R22 and the common deviations in plain language, with examples.
+  - **A gate** keeps it in sync on every landing, and every adapted entry must cite a rule or deviation that exists in `api-mapping.md`.
+  - **Owner of the work:** api-coverage.
