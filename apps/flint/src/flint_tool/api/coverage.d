@@ -237,7 +237,7 @@ private bool checkPorted(const ref MappingEntry entry, out string error)
 
 private bool checkAdapted(const ref MappingEntry entry, out string error)
 {
-    enum known = "R1 to R23, or a deviation such as D-7";
+    enum known = "such as R4, or a deviation such as D-7";
     if (entry.rules.length == 0)
         error = entry.match ~ ": an adapted element needs the rulebook `rules` it follows, " ~ known;
     foreach (rule; entry.rules)
@@ -316,23 +316,19 @@ bool validSymbol(string symbol)
     return !start;
 }
 
-/// Whether `rule` is a rulebook rule id, `R1` to `R23`, or a deviation id (`D-7`, `D-JPA-2`). Whether a deviation is
-/// defined in docs/spring/api-mapping.md is checked by tools/api_differences.py.
+/// Whether `rule` is shaped like a rulebook rule id (`R1`, `R24`: `R` and a number without a leading zero) or a
+/// deviation id (`D-7`, `D-JPA-2`). Whether the rule or deviation is defined in docs/spring/api-mapping.md is checked
+/// by tools/api_differences.py, so a new rule needs no change here.
 bool validRule(string rule)
 {
-    import std.conv : ConvException, to;
-
     if (rule.length > 2 && rule[0 .. 2] == "D-")
         return validDeviation(rule[2 .. $]);
-    if (rule.length < 2 || rule.length > 3 || rule[0] != 'R' || rule[1] == '0')
+    if (rule.length < 2 || rule.length > 4 || rule[0] != 'R' || rule[1] == '0')
         return false;
-    try
-    {
-        const number = rule[1 .. $].to!uint;
-        return number >= 1 && number <= 23;
-    }
-    catch (ConvException)
-        return false;
+    foreach (c; rule[1 .. $])
+        if (c < '0' || c > '9')
+            return false;
+    return true;
 }
 
 /// Upper-case letters and digits in dash-separated groups: `7`, `JPA-2`, `AOT-MEMBER`.
