@@ -11174,6 +11174,18 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.nio.CharBuffer#toString()` | 2 | Character sequence, append and read contracts follow the heap array cursor slice. |
 | framework | `java.nio.CharBuffer#wrap(CharSequence)` | 2 | Character sequence, append and read contracts follow the heap array cursor slice. |
 | framework | `java.nio.CharBuffer#wrap(CharSequence,int,int)` | 2 | Character sequence, append and read contracts follow the heap array cursor slice. |
+| framework | `java.security.DigestException#<init>()` | 2 | The Java constructor leaves the cause open to one later initCause call. The checked Flint exception base lacks that API. |
+| framework | `java.security.DigestException#<init>(String)` | 2 | The Java constructor leaves the cause open to one later initCause call. The checked Flint exception base lacks that API. |
+| framework | `java.security.DigestException#<init>(String,Throwable)` | 2 | Java initializes the cause even when it is null. The checked Flint exception base carries a D exception chain and still needs Java cause access and initialization. |
+| framework | `java.security.DigestException#<init>(Throwable)` | 2 | Requires Java cause initialization, including null, and derives the detail from a non-null cause's virtual toString. The checked Flint exception base still needs that behavior. |
+| framework | `java.security.GeneralSecurityException#<init>()` | 2 | The Java constructor leaves the cause open to one later initCause call. The checked Flint exception base lacks that API. |
+| framework | `java.security.GeneralSecurityException#<init>(String)` | 2 | The Java constructor leaves the cause open to one later initCause call. The checked Flint exception base lacks that API. |
+| framework | `java.security.GeneralSecurityException#<init>(String,Throwable)` | 2 | Java initializes the cause even when it is null. The checked Flint exception base carries a D exception chain and still needs Java cause access and initialization. |
+| framework | `java.security.GeneralSecurityException#<init>(Throwable)` | 2 | Requires Java cause initialization, including null, and derives the detail from a non-null cause's virtual toString. The checked Flint exception base still needs that behavior. |
+| framework | `java.security.NoSuchAlgorithmException#<init>()` | 2 | The Java constructor leaves the cause open to one later initCause call. The checked Flint exception base lacks that API. |
+| framework | `java.security.NoSuchAlgorithmException#<init>(String)` | 2 | The Java constructor leaves the cause open to one later initCause call. The checked Flint exception base lacks that API. |
+| framework | `java.security.NoSuchAlgorithmException#<init>(String,Throwable)` | 2 | Java initializes the cause even when it is null. The checked Flint exception base carries a D exception chain and still needs Java cause access and initialization. |
+| framework | `java.security.NoSuchAlgorithmException#<init>(Throwable)` | 2 | Requires Java cause initialization, including null, and derives the detail from a non-null cause's virtual toString. The checked Flint exception base still needs that behavior. |
 | framework | `java.text.DateFormat` | 2 | Java DateFormat extends Format and is usable through its generic format(Object) contract. Flint has no Format supertype. |
 | framework | `java.text.DateFormat#<init>()` | 2 | Subclass initialization is implicit. Flint has no DateFormat constructor for an explicit super() call, which Java subclasses can make. |
 | framework | `java.text.DateFormat#format(Date)` | 2 | With SimpleDateFormat, a null Date or an absent Calendar can terminate the process. Java throws NullPointerException (R8). |
