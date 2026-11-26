@@ -16,6 +16,7 @@ $(UL
 module flint.java.lang;
 
 public import flint.java.lang.boolean : Boolean;
+public import flint.java.lang.runnable : Runnable;
 
 import flint.engine.aot.objects : objectEquals, objectToHash, objectToString;
 public import flint.java.classref : ClassRef, classOf; // a leaf, so annotation-only clients skip this module
@@ -276,13 +277,6 @@ class AssertionError : Exception
 
 // ---------------------------------------------------------------------------------------------------------------
 // Core interfaces
-
-/// Java's `Runnable`: a task with no arguments and no result (R9: APIs also accept `void delegate()`).
-interface Runnable
-{
-    /// Run the task.
-    void run();
-}
 
 /// Java's `AutoCloseable`: a resource released by `close`.
 interface AutoCloseable
