@@ -438,18 +438,36 @@ for out in ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md'):
                 log += '\n' + json.dumps(report)
             return ok, log
 
-    def test_a_budget_only_failure_is_bisected_with_flint_budget_alone(self):
-        for i, role in enumerate(('sol-a', 'sol-b', 'sol-c', 'sol-d', 'sol-e', 'sol-f')):
+    def test_a_submission_that_regresses_alone_is_screened_out_and_the_rest_land(self):
+        for i, role in enumerate(('sol-a', 'sol-b', 'sol-c', 'sol-d', 'sol-e')):
             self.lane(role, {'src/SLOW' if role == 'sol-b' else f'src/{i}.txt': str(i)})
         self.hold_slot()
         posidon = self.ModalVerifier(self, 'posidon', budget=True)
         result = self.stacked(self.FakeVerifier(self, 'desktop'), posidon).run('runner')
-        self.assertEqual((result['landed'], result['failed']), (['sol-a'], ['sol-b']))
-        self.assertEqual(posidon.modes[0][0], 'full')  # the deepest candidate
-        self.assertEqual(posidon.modes[1], ('budget', tuple(merge_train.APPS)))  # the prefix, once
-        self.assertTrue(all(mode == ('budget', ('petclinic-rest',)) for mode in posidon.modes[2:]), posidon.modes)
+        self.assertEqual((result['landed'], result['failed']), (['sol-a', 'sol-c', 'sol-d'], ['sol-b']))
+        self.assertEqual(result['pending'], ['sol-e'])  # one acceptance verifier: a batch of four
+        self.assertEqual([m for m in posidon.modes[:4]], [('budget', tuple(merge_train.APPS))] * 4)  # each alone
         mail = self.store.inbox('sol-b', True, False)
         self.assertIn("petclinic-rest 'list vets' 407,377 -> 412,348 (+1.22%, tolerance 1.00%)", mail)
+
+    def test_a_new_package_is_not_screened(self):
+        self.lane('sol-a', {'src/a.txt': 'a'})
+        self.lane('sol-b', {'docs/b.md': 'b'})  # outside the closure ('src/')
+        self.hold_slot()
+        posidon = self.ModalVerifier(self, 'posidon', budget=True)
+        result = self.stacked(self.FakeVerifier(self, 'desktop'), posidon).run('runner')
+        self.assertEqual(result['landed'], ['sol-a', 'sol-b'])
+        self.assertEqual(len(posidon.modes), 2)  # sol-a alone, then the stack once
+
+    def test_a_budget_only_failure_is_bisected_with_flint_budget_alone(self):
+        for i, role in enumerate(('sol-a', 'sol-b', 'sol-c', 'sol-d')):
+            self.lane(role, {'src/SLOW' if role == 'sol-c' else f'src/{i}.txt': str(i)})
+        self.hold_slot()
+        posidon = self.ModalVerifier(self, 'posidon', budget=True)  # posidon alone: no screening, the stacked path
+        result = self.stacked(posidon).run('runner')
+        self.assertEqual((result['landed'], result['failed']), (['sol-a', 'sol-b'], ['sol-c']))
+        self.assertEqual(posidon.modes[0][0], 'full')
+        self.assertTrue(all(mode == ('budget', ('petclinic-rest',)) for mode in posidon.modes[1:]), posidon.modes)
 
     def test_budget_logs_are_parsed(self):
         dod = json.dumps({'steps': [{'step': 'apps', 'details': {'petclinic-rest allocation tests': 'pass',
