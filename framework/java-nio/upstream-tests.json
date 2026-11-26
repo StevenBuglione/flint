@@ -1,0 +1,14 @@
+{
+  "schema": "flint.upstream-tests/1",
+  "module": "java-nio",
+  "upstream": "openjdk@21.0.13",
+  "test_packages": [
+    ":java-nio"
+  ],
+  "classes": {
+    "java/nio/ByteOrder/NativeOrder.java": {
+      "status": "excluded",
+      "reason": "GPL-2.0-only without the Classpath exception. The original ByteOrder fixture checks native byte-order selection."
+    }
+  }
+}

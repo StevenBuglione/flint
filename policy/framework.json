@@ -662,6 +662,38 @@
     "compiler_peak_rss_bytes"
    ]
   },
+  "java-nio": {
+   "directory": "framework/java-nio",
+   "module": "flint.java.nio.byteorder",
+   "repo": "framework",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "upstream": "openjdk@21.0.13",
+   "dependencies": [],
+   "bench": {
+    "fixture": "framework/java-nio/bench",
+    "baseline": "framework/java-nio/bench/baseline",
+    "edit_source": "framework/java-nio/source/flint/java/nio/byteorder.d"
+   },
+   "java_types": [
+    "java.nio.ByteOrder"
+   ],
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ],
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "compiler_peak_rss_bytes": 536870912,
+    "incremental_linked_bytes": 80,
+    "template_instances": 2
+   }
+  },
   "java-regex": {
    "directory": "framework/java-regex",
    "module": "flint.java.util.regex",

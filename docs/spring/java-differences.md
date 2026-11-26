@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,103 | 242 | 1,871 | 15,205 |
+| framework | openjdk@21.0.13 | 1,105 | 245 | 1,871 | 15,200 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -1954,6 +1954,14 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.math.RoundingMode#valueOf(String)` | `flint.java.math.roundingmode.valueOf` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) |  |
 | `java.math.RoundingMode#valueOf(int)` | `flint.java.math.roundingmode.valueOf` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) |  |
 | `java.math.RoundingMode#values()` | `flint.java.math.roundingmode.values` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) |  |
+
+#### java.nio
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `java.nio.ByteOrder` | `flint.java.nio.byteorder.ByteOrder` | [R1](api-mapping.md#r1-packages-and-names), [R15](api-mapping.md#r15-enums-with-fields) | The standalone leaf uses distinct private byte-order flags for the two named values, so R15 value equality preserves their distinction. The default value is BIG_ENDIAN. |
+| `java.nio.ByteOrder#BIG_ENDIAN` | `flint.java.nio.byteorder.ByteOrder.BIG_ENDIAN` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `java.nio.ByteOrder#LITTLE_ENDIAN` | `flint.java.nio.byteorder.ByteOrder.LITTLE_ENDIAN` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 
 #### java.sql
 
@@ -9993,7 +10001,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.math | 137 | 0 |
 | java.net | 821 | 0 |
 | java.net.spi | 0 | 19 |
-| java.nio | 377 | 0 |
+| java.nio | 372 | 0 |
 | java.nio.channels | 0 | 332 |
 | java.nio.channels.spi | 0 | 53 |
 | java.nio.charset | 103 | 0 |

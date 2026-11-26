@@ -357,6 +357,8 @@ Jackson pointer append reuses the shared empty pointer and composes the original
 Stream contexts build typed JSON Pointers on demand by walking the parent chain and writing escaped segments from the end of a sized buffer. Interner misses retain an empty name as a static string and hits keep their existing lookup. D-JACKSON-11 makes both context wrappers final so ordinary app links can discard the pointer code. The matched jackson-core probe on venus at `75af5f40` and `08590a56` moved from 43,157 to 43,229 loadable bytes and 599 to 596 DMD templates. In pinned-LDC `flint build --profile size` links on venus, virtual accessors added 7,608 bytes to gs-rest-service and 7,568 to petclinic-rest. The final accessors added 120 and 128 bytes.
 The Spring Beans factory exception types reuse the existing `BeanCreationException` and `FatalBeanException` constructors for bean names, diagnostic text and causes. The Beans probe on venus against `68fedff0c` kept 257,478 loadable bytes and moved from 1,632 to 1,642 DMD template instances against the 3,000 cap.
 
+**Represent Java NIO byte order as a value.** A private boolean distinguishes both named constants and the target endian selects the native order at compile time. On venus the matched Java NIO probe at `0ee09533d` added 72 loadable bytes at O3 and Oz with one DMD template instance. The new-module-rule caps are 80 bytes and 2 instances. The stock closure probe added 120 bytes in each profile with zero closure violations.
+
 ## 3. Build time
 
 | ID | Rule | Evidence | Enforced by |
