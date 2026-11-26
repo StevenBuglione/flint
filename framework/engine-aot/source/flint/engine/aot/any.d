@@ -285,13 +285,13 @@ struct Any
     }
 
     /// The fully qualified D name of the held value's type; empty for `Any.init`.
-    string typeName() const pure nothrow @nogc
+    string typeName() const return scope pure nothrow @nogc
     {
         return typeName_;
     }
 
     /// The held class reference; null for every other kind of value.
-    inout(Object) asObject() inout pure nothrow @nogc
+    inout(Object) asObject() inout return scope pure nothrow @nogc
     {
         return slot_ == Slot.reference ? object_ : null;
     }

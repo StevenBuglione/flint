@@ -233,6 +233,28 @@ unittest
     assert(new Box!Pet(Pet("a", 1)) == new Box!Pet(Pet("a", 1)));
 }
 
+@("Scoped Any access preserves the receiver and prevents escape")
+unittest
+{
+    void read(scope Any borrowed, scope Object expected)
+    {
+        assert(borrowed.typeName() == typeNameOf!OwnerService);
+        assert(borrowed.asObject() is expected);
+    }
+
+    auto service = new OwnerService;
+    read(Any.of(service), service);
+
+    static assert(!__traits(compiles, () @safe {
+            scope Any borrowed = Any.of(new OwnerService);
+            return borrowed;
+        }));
+    static assert(!__traits(compiles, () @safe {
+            scope Any borrowed = Any.of(new OwnerService);
+            return borrowed.asObject();
+        }));
+}
+
 unittest
 {
     // The runtime's own descriptors, looked up by name.
