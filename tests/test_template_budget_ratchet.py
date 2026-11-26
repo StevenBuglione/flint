@@ -120,5 +120,74 @@ class TemplateBudgetRatchet(unittest.TestCase):
         self.assertIsNone(ratchet.not_applicable(nested, {}))
 
 
+class ApprovedRaises(unittest.TestCase):
+    """A raise passes only in a commit whose Budget-Raise-Approved trailer names a rule or a decisions.md commit."""
+
+    def setUp(self):
+        self.directory = tempfile.TemporaryDirectory()
+        self.repo = Repository(self.directory.name)
+        self.anchor = self.repo.commit({'arena': 50, 'engine-web': 50}, {'ai-model': 50}, 'old budgets')
+        (self.repo.root / ratchet.RULES).write_text(json.dumps({'rules': {
+            'api-growth-rule': {'not_for': ['package engine-*', 'framework engine-*']}, 'new-module-rule': {}}}))
+        self.repo.commit({'arena': 100, 'engine-web': 100}, {'ai-model': 1200}, 'reset, and the raise rules')
+
+    def tearDown(self):
+        self.directory.cleanup()
+
+    def raise_ai_model(self, message):
+        return self.repo.commit({'arena': 100, 'engine-web': 100}, {'ai-model': 1260}, message)
+
+    def test_a_named_rule_in_the_trailer_approves_and_is_reported(self):
+        commit = self.raise_ai_model('ai-model: RateLimit\n\n1,200 to 1,260\n\nBudget-Raise-Approved: api-growth-rule\n')
+        problems, accepted = ratchet.report(self.repo.root, {'template_budget_ratchet': {'after': self.anchor}})
+        self.assertEqual(problems, [])
+        self.assertEqual(accepted, [f'framework ai-model: template_instances budget raised from 1200 to 1260 in '
+                                    f'{commit[:12]}, approved by api-growth-rule'])
+
+    def test_a_raise_without_the_trailer_fails(self):
+        self.raise_ai_model('ai-model: RateLimit')
+        problems = self.repo.check(self.anchor)
+        self.assertEqual(len(problems), 1)
+        self.assertIn('raised from 1200 to 1260', problems[0])
+        self.assertIn('no Budget-Raise-Approved', problems[0])
+
+    def test_an_unknown_id_fails(self):
+        self.raise_ai_model('ai-model: RateLimit\n\nBudget-Raise-Approved: my-own-rule\n')
+        problems = self.repo.check(self.anchor)
+        self.assertEqual(len(problems), 1)
+        self.assertIn("'my-own-rule' is neither a rule", problems[0])
+
+    def test_a_rule_does_not_cover_what_it_excludes(self):
+        self.repo.commit({'arena': 100, 'engine-web': 120}, {'ai-model': 1200},
+                         'engine-web grows\n\nBudget-Raise-Approved: api-growth-rule\n')
+        problems = self.repo.check(self.anchor)
+        self.assertEqual(len(problems), 1)
+        self.assertIn('api-growth-rule does not cover package engine-web', problems[0])
+
+    def test_a_commit_that_recorded_a_decision_approves(self):
+        decisions = self.repo.root / ratchet.DECISIONS
+        decisions.parent.mkdir(parents=True)
+        decisions.write_text('- owner: ai-model may grow to 1,260\n')
+        git(self.repo.root, 'add', '-A')
+        git(self.repo.root, 'commit', '--quiet', '-m', 'decision')
+        decision = git(self.repo.root, 'rev-parse', 'HEAD')
+        self.raise_ai_model(f'ai-model: RateLimit\n\nBudget-Raise-Approved: {decision[:10]}\n')
+        self.assertEqual(self.repo.check(self.anchor), [])
+
+    def test_a_commit_that_recorded_no_decision_does_not_approve(self):
+        unrelated = git(self.repo.root, 'rev-parse', 'HEAD')  # changed the rules file, not decisions.md
+        self.raise_ai_model(f'ai-model: RateLimit\n\nBudget-Raise-Approved: {unrelated}\n')
+        problems = self.repo.check(self.anchor)
+        self.assertEqual(len(problems), 1)
+        self.assertIn('nor a commit that changed', problems[0])
+
+    def test_the_trailer_cannot_approve_a_working_tree_raise(self):
+        self.repo.write({'arena': 100, 'engine-web': 100}, {'ai-model': 1260})
+        problems = self.repo.check(self.anchor)
+        self.assertEqual(len(problems), 1)
+        self.assertIn('in the working tree', problems[0])
+        self.assertIn('commit it with the trailer', problems[0])
+
+
 if __name__ == '__main__':
     unittest.main()

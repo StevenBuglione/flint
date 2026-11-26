@@ -1,0 +1,19 @@
+{
+  "schema": "flint.budget-raise-rules/1",
+  "description": "Named, owner-approved exceptions to 'budgets only go down'. A commit that raises a budget carries the trailer 'Budget-Raise-Approved: <id>', where <id> is one of these rules or the hash of a commit that records the decision in docs/spring/phase1/decisions.md. The gates check that the trailer names a rule; the rule's conditions (its evidence, its exact delta) are the reviewer's to check. tools/template_budget_ratchet.py reads this file.",
+  "rules": {
+    "new-module-rule": {
+      "decision": "docs/spring/phase1/decisions.md, 2026-11-26 02:00Z",
+      "summary": "A new module's first caps: measured linked bytes and templates plus 10%, cited by receipt."
+    },
+    "api-growth-rule": {
+      "decision": "docs/spring/phase1/decisions.md, 2026-11-26 02:03Z",
+      "summary": "An API module's cap may rise by a slice's measured delta of newly ported public API plus 10%, with before and after numbers. Not for engines.",
+      "not_for": ["package engine-*", "framework engine-*"]
+    },
+    "jdk-leaf-rule": {
+      "decision": "docs/spring/phase1/decisions.md, 2026-11-26 01:45Z",
+      "summary": "A JDK package's budget rises by exactly the budget of a leaf it adds."
+    }
+  }
+}

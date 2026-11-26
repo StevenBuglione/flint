@@ -325,7 +325,9 @@ def structural(selected):
     # Outside a git checkout there is no history: say so on stderr (stdout is the parity-checked report).
     skipped=template_budget_ratchet.not_applicable(ROOT,B)
     if skipped:print(skipped,file=sys.stderr)
-    ratchet=template_budget_ratchet.check(ROOT,B);require(not ratchet,'; '.join(ratchet))
+    ratchet,approved=template_budget_ratchet.report(ROOT,B)
+    for line in approved:print('template budget raise accepted: '+line,file=sys.stderr)
+    require(not ratchet,'; '.join(ratchet))
     # Owner decision 9a9aefa0: per-request allocation budgets only go down (tools/request_allocation_ratchet.py).
     skipped=request_allocation_ratchet.not_applicable(ROOT)
     if skipped:print(skipped,file=sys.stderr)
