@@ -8565,6 +8565,7 @@
 "java.util.regex.Matcher#lookingAt()":{"d":"flint.java.util.regex.pattern.Matcher.lookingAt","status":"ported"},
 "java.util.regex.Matcher#reset()":{"d":"flint.java.util.regex.pattern.Matcher.reset","status":"ported"},
 "java.util.regex.Matcher#reset(CharSequence)":{"d":"flint.java.util.regex.pattern.Matcher.reset","status":"adapted","rules":["R5","R26"]},
+"java.util.regex.Matcher#toMatchResult()":{"d":"flint.java.util.regex.pattern.Matcher.toMatchResult","status":"adapted","rules":["R3"],"note":"Returns a detached snapshot of the numbered MatchResult state. Java default methods remain deferred."},
 "java.util.regex.Matcher#pattern()":{"status":"ported","d":"flint.java.util.regex.pattern.Matcher.pattern"},
 "java.util.regex.Pattern#CANON_EQ":{"status":"ported","d":"flint.java.util.regex.pattern.Pattern.CANON_EQ"},
 "java.util.regex.Pattern#CASE_INSENSITIVE":{"status":"ported","d":"flint.java.util.regex.pattern.Pattern.CASE_INSENSITIVE"},

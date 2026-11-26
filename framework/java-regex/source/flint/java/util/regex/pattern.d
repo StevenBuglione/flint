@@ -81,11 +81,11 @@ final class Pattern
     }
 }
 
-/// Whole-input matching against a compiled Pattern.
-final class Matcher : MatchResult
+// Numbered access is shared by a live Matcher and a detached result.
+private class NumberedMatch : MatchResult
 {
-    private Pattern compiled;
     private string input;
+    private immutable int groups;
     private int[2] wholeMatch;
     private int[] capturePoints;
     private bool matched;
@@ -95,10 +95,96 @@ final class Matcher : MatchResult
         int first, last;
     }
 
+    private this(string input, int groups) pure nothrow @nogc
+    {
+        this.input = input;
+        this.groups = groups;
+    }
+
+    /// Count the capturing groups defined by the pattern.
+    final override int groupCount() const pure nothrow @nogc
+    {
+        return groups;
+    }
+
+    final override int start() const
+    {
+        return start(0);
+    }
+
+    final override int start(int group) const
+    {
+        return utf16Offset(capture(group).first);
+    }
+
+    final override int end() const
+    {
+        return end(0);
+    }
+
+    final override int end(int group) const
+    {
+        return utf16Offset(capture(group).last);
+    }
+
+    final override Nullable!string group() const
+    {
+        return group(0);
+    }
+
+    final override Nullable!string group(int index) const
+    {
+        const range = capture(index);
+        if (range.first < 0)
+            return Nullable!string.init;
+        size_t at;
+        advance(range.first, at);
+        const first = at;
+        advance(range.last - range.first, at);
+        return Nullable!string(input[first .. at]);
+    }
+
+    private Capture capture(int group) const
+    {
+        if (!matched)
+            throw new IllegalStateException("No match found");
+        if (cast(uint) group > cast(uint) groupCount())
+            throw new IndexOutOfBoundsException("Invalid capture group");
+        if (!capturePoints.length)
+            return Capture(wholeMatch[0], wholeMatch[1]);
+        const slot = 2 * group;
+        const pair = capturePoints[slot .. slot + 2];
+        return Capture(pair[0], pair[1]);
+    }
+
+    pragma(inline, false) private int utf16Offset(int point) const pure nothrow @nogc
+    {
+        if (point < 0)
+            return -1;
+        size_t at;
+        return advance(point, at);
+    }
+
+    pragma(inline, false) private int advance(int points, ref size_t at) const pure nothrow @nogc
+    {
+        import flint.engine.aot.text : decodeUtf8;
+
+        int units;
+        foreach (i; 0 .. points)
+            units += decodeUtf8(input, at) > wchar.max ? 2 : 1;
+        return units;
+    }
+}
+
+/// Whole-input or prefix matching against a compiled Pattern.
+final class Matcher : NumberedMatch
+{
+    private Pattern compiled;
+
     private this(Pattern compiled, string input)
     {
+        super(input, compiled.program.groupCount());
         this.compiled = compiled;
-        this.input = input;
     }
 
     /// The compiled expression associated with this matcher.
@@ -149,77 +235,22 @@ final class Matcher : MatchResult
         return matched;
     }
 
-    /// Count the capturing groups defined by the pattern.
-    override int groupCount() const pure nothrow @nogc
+    /// Capture a detached view of the current numbered match state.
+    MatchResult toMatchResult() const pure nothrow
     {
-        return compiled.program.groupCount();
-    }
-
-    override int start() const
-    {
-        return start(0);
-    }
-
-    override int start(int group) const
-    {
-        return utf16Offset(capture(group).first);
-    }
-
-    override int end() const
-    {
-        return end(0);
-    }
-
-    override int end(int group) const
-    {
-        return utf16Offset(capture(group).last);
-    }
-
-    override Nullable!string group() const
-    {
-        return group(0);
-    }
-
-    override Nullable!string group(int index) const
-    {
-        const range = capture(index);
-        if (range.first < 0)
-            return Nullable!string.init;
-        int units;
-        const first = byteOffset(range.first, units);
-        const last = byteOffset(range.last, units);
-        return Nullable!string(input[first .. last]);
-    }
-
-    private Capture capture(int group) const
-    {
-        if (!matched)
-            throw new IllegalStateException("No match found");
-        if (cast(uint) group > cast(uint) groupCount())
-            throw new IndexOutOfBoundsException("Invalid capture group");
-        if (!capturePoints.length)
-            return Capture(wholeMatch[0], wholeMatch[1]);
-        const slot = 2 * group;
-        return Capture(capturePoints[slot], capturePoints[slot + 1]);
-    }
-
-    private int utf16Offset(int point) const pure nothrow @nogc
-    {
-        if (point < 0)
-            return -1;
-        int units;
-        byteOffset(point, units);
-        return units;
-    }
-
-    private size_t byteOffset(int point, out int units) const pure nothrow @nogc
-    {
-        import flint.engine.aot.text : decodeUtf8;
-
-        size_t at;
-        foreach (i; 0 .. point)
-            units += decodeUtf8(input, at) > wchar.max ? 2 : 1;
-        return at;
+        auto result = new NumberedMatch(matched ? input : null, groupCount());
+        if (matched)
+        {
+            result.matched = true;
+            result.wholeMatch = wholeMatch;
+            if (capturePoints.length)
+            {
+                auto copy = new int[capturePoints.length];
+                copy[] = capturePoints[];
+                result.capturePoints = copy;
+            }
+        }
+        return result;
     }
 }
 

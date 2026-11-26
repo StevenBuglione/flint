@@ -233,3 +233,32 @@ unittest
     auto empty = Pattern.compile("()").matcher("x");
     assert(empty.reset(null).matches() && empty.end() == 0);
 }
+
+@("Matcher snapshots keep both the captured text and offsets after later matches")
+unittest
+{
+    import flint.java.lang : IllegalStateException;
+    import std.exception : assertThrown;
+
+    auto matcher = Pattern.compile("(😀)(a)?()").matcher("😀a");
+    auto absent = matcher.toMatchResult();
+    assert(absent.groupCount() == 3 && cast(Matcher) absent is null);
+    assertThrown!IllegalStateException(absent.start(99));
+    assert(matcher.matches());
+    auto first = matcher.toMatchResult();
+    assert(cast(Matcher) first is null);
+    assert(matcher.reset("😀tail").lookingAt() && matcher.group(2).isNull);
+    assert(first.group().get == "😀a" && first.start() == 0 && first.end() == 3);
+    assert(first.group(2).get == "a" && first.start(2) == 2 && first.end(2) == 3);
+    assert(!first.group(3).isNull && first.group(3).get == "" && first.end(3) == 3);
+    auto second = matcher.toMatchResult();
+    assert(!matcher.reset("fail").matches());
+    assertThrown!IllegalStateException(matcher.toMatchResult().group());
+    assertThrown!IllegalStateException(absent.group());
+    assert(second.group().get == "😀" && second.group(2).isNull && second.end(3) == 2);
+    auto noCaptures = Pattern.compile("a").matcher("a");
+    assert(noCaptures.matches());
+    auto whole = noCaptures.toMatchResult();
+    noCaptures.reset("b");
+    assert(whole.groupCount() == 0 && whole.group().get == "a" && whole.end() == 1);
+}
