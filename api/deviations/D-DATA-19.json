@@ -1,0 +1,5 @@
+{
+ "id": "D-DATA-19",
+ "deviation": "The wildcard PersistentProperty<?> uses the zero-argument PersistentProperty!() interface. Typed PersistentProperty!(P) refines that shared metadata view.",
+ "reason": "D has no wildcard template arguments. The shared view accepts properties with different concrete types while typed entity and association APIs keep their property type constraints."
+}

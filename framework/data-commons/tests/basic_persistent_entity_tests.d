@@ -129,7 +129,7 @@ private final class AssignedId : Persistable!long
     }
 }
 
-private final class Property : PersistentProperty!Property
+private class Property : PersistentProperty!Property
 {
     private string name;
     private ClassRef type;
@@ -177,6 +177,25 @@ private final class Property : PersistentProperty!Property
     override bool isAssociation()
     {
         return association;
+    }
+}
+
+private final class EquivalentProperty : Property
+{
+    this(string name, bool identifier = false, bool versioned = false)
+    {
+        super(name, classOf!long, identifier, versioned);
+    }
+
+    override bool opEquals(const Object other) const
+    {
+        const property = cast(const(EquivalentProperty)) other;
+        return property !is null && property.name == name;
+    }
+
+    override size_t toHash() const nothrow
+    {
+        return name.length;
     }
 }
 
@@ -622,6 +641,33 @@ unittest
     assert(entity.hasVersionProperty());
     assert(entity.getRequiredVersionProperty() is revision);
 }
+
+@("entity property roles use equality through the wildcard view")
+unittest
+{
+    auto model = mapped!Person();
+    PersistentEntity!(Person, Property) entity = model;
+    auto id = new EquivalentProperty("id", identifier:
+            true);
+    auto revision = new EquivalentProperty("revision", versioned:
+            true);
+    assert(!entity.isIdProperty(null) && !entity.isVersionProperty(null));
+    assert(!entity.isIdProperty(id) && !entity.isVersionProperty(revision));
+
+    model.addPersistentProperty(id);
+    model.addPersistentProperty(revision);
+    PersistentProperty!() wildcard = new EquivalentProperty("id");
+    assert(entity.isIdProperty(id) && entity.isIdProperty(wildcard));
+    assert(entity.isVersionProperty(revision));
+    assert(entity.isVersionProperty(new EquivalentProperty("revision")));
+    assert(!entity.isIdProperty(revision) && !entity.isVersionProperty(id));
+    assert(!entity.isIdProperty(new Property("id")) && !entity.isVersionProperty(new Property("revision")));
+    assert(!entity.isIdProperty(null) && !entity.isVersionProperty(null));
+}
+
+static assert(__traits(compiles, (PersistentEntity!(Person, Property) entity, PersistentProperty!Object property) {
+        return entity.isIdProperty(property) || entity.isVersionProperty(property);
+    }));
 
 @("association handlers and delegates receive registered associations in order")
 unittest

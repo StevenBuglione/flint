@@ -82,11 +82,6 @@ class MappingException : RuntimeException
     }
 }
 
-package(flint.data) interface PersistentPropertyType
-{
-    ClassRef getType();
-}
-
 package(flint.data) enum PrimitivePropertyKind
 {
     reference,
@@ -117,11 +112,14 @@ package(flint.data) PrimitivePropertyKind primitivePropertyKind(ClassRef type) p
     }
 }
 
-/// Describes a property of a persistent entity.
-interface PersistentProperty(P) : PersistentPropertyType
+/// Shared metadata of a persistent property when its concrete property type is unspecified.
+interface PersistentProperty()
 {
     /// The name of this property.
     string getName();
+
+    /// The declared property type.
+    ClassRef getType();
 
     /// Whether this property is the identifier.
     bool isIdProperty();
@@ -134,6 +132,11 @@ interface PersistentProperty(P) : PersistentPropertyType
 
     /// Whether this property denotes an association.
     bool isAssociation();
+}
+
+/// Describes a persistent property in APIs that retain its concrete property type.
+interface PersistentProperty(P) : PersistentProperty!()
+{
 }
 
 /// The two persistent properties connected by an association.
@@ -193,7 +196,7 @@ interface PersistentPropertyAccessor(T, P) if (is(P : PersistentProperty!P))
 package(flint.data) interface PersistentEntityIdentity
 {
     ClassRef getType();
-    PersistentPropertyType getRequiredIdProperty();
+    PersistentProperty!() getRequiredIdProperty();
     IdentifierAccessor getIdentifierAccessor(Any bean);
     bool isNew(Any bean);
 }
@@ -213,6 +216,9 @@ interface PersistentEntity(T, P) : PersistentEntityIdentity, Iterable!P if (is(P
     /// Whether the entity has an identifier property.
     bool hasIdProperty();
 
+    /// Whether the supplied property matches the entity's identifier.
+    bool isIdProperty(PersistentProperty!() property);
+
     /// The version property, or null when no version is mapped.
     P getVersionProperty();
 
@@ -221,6 +227,9 @@ interface PersistentEntity(T, P) : PersistentEntityIdentity, Iterable!P if (is(P
 
     /// Whether a version property is mapped.
     bool hasVersionProperty();
+
+    /// Whether the supplied property matches the entity's version.
+    bool isVersionProperty(PersistentProperty!() property);
 
     /// The first persistent property with the given name, or null.
     P getPersistentProperty(string name);

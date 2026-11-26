@@ -212,6 +212,11 @@ class BasicPersistentEntity(T, P) : MutablePersistentEntity!(T, P), EnvironmentC
         return idProperty !is null;
     }
 
+    override bool isIdProperty(PersistentProperty!() property)
+    {
+        return idProperty !is null && Objects.equals(idProperty, property);
+    }
+
     /// The version property, or null when no version is mapped.
     override P getVersionProperty()
     {
@@ -222,6 +227,11 @@ class BasicPersistentEntity(T, P) : MutablePersistentEntity!(T, P), EnvironmentC
     override bool hasVersionProperty()
     {
         return versionProperty !is null;
+    }
+
+    override bool isVersionProperty(PersistentProperty!() property)
+    {
+        return versionProperty !is null && Objects.equals(versionProperty, property);
     }
 
     /// Registers a property and remembers the identifier and version roles.
