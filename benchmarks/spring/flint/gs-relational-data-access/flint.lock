@@ -96,7 +96,7 @@ name = "flint:core"
 kind = "core"
 source = "workspace"
 scope = "build"
-dependencies = ["flint:engine-aot", "flint:jakarta-annotation", "flint:java"]
+dependencies = ["flint:conc", "flint:engine-aot", "flint:jakarta-annotation", "flint:java"]
 
 [[package]]
 name = "flint:engine-aot"

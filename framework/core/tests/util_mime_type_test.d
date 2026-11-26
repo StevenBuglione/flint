@@ -23,6 +23,25 @@ import flint.util.test_support : contains, expectThrows;
 
 @safe:
 
+@("multipart boundaries are owned ASCII tokens of Spring's length")
+unittest
+{
+    ubyte[] first = MimeTypeUtils.generateMultipartBoundary();
+    ubyte[] second = MimeTypeUtils.generateMultipartBoundary();
+    const text = MimeTypeUtils.generateMultipartBoundaryString();
+    assert(first.ptr != second.ptr);
+    foreach (boundary; [first, second, cast(const(ubyte)[]) text])
+    {
+        assert(boundary.length >= 30 && boundary.length <= 40);
+        foreach (unit; boundary)
+        {
+            const letter = ('a' <= unit && unit <= 'z') || ('A' <= unit && unit <= 'Z');
+            const digit = '0' <= unit && unit <= '9';
+            assert(letter || digit || unit == '-' || unit == '_');
+        }
+    }
+}
+
 /// `e`'s message ends with `suffix` (AssertJ's `withMessageEndingWith`).
 private bool messageEndsWith(const Throwable e, string suffix)
 {

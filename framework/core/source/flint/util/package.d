@@ -5805,7 +5805,7 @@ class InvalidMimeTypeException : IllegalArgumentException
     }
 }
 
-/// `org.springframework.util.MimeTypeUtils`: constants and parsing.
+/// `org.springframework.util.MimeTypeUtils`: MIME types and multipart boundaries.
 struct MimeTypeUtils
 {
     static immutable MimeType ALL = MimeType.literal("*", "*"); ///
@@ -5830,6 +5830,42 @@ struct MimeTypeUtils
     enum string TEXT_PLAIN_VALUE = "text/plain"; ///
     static immutable MimeType TEXT_XML = MimeType.literal("text", "xml"); ///
     enum string TEXT_XML_VALUE = "text/xml"; ///
+
+    /// Generate an owned ASCII multipart boundary of 30 to 40 bytes.
+    static ubyte[] generateMultipartBoundary()
+    {
+        ubyte[40] boundary;
+        const length = fillMultipartBoundary(boundary);
+        return boundary[0 .. length].dup;
+    }
+
+    /// Generate an ASCII multipart boundary as a string.
+    static string generateMultipartBoundaryString()
+    {
+        ubyte[40] boundary;
+        const length = fillMultipartBoundary(boundary);
+        return cast(string) boundary[0 .. length].idup;
+    }
+
+    private static size_t fillMultipartBoundary(ref ubyte[40] boundary)
+    {
+        import flint.conc : fillSecureRandom;
+
+        enum alphabet = "-_1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        static assert(alphabet.length == 64);
+        ubyte[41] entropy;
+        auto result = fillSecureRandom(entropy[]);
+        // Accept 253 of 256 length bytes so each of the 11 lengths has equal probability.
+        while (!result.code && entropy[0] >= 253)
+            result = fillSecureRandom(entropy[0 .. 1]);
+        if (result.code)
+            throw new IllegalStateException(result.message);
+
+        const size_t length = 30 + entropy[0] % 11;
+        foreach (index; 0 .. length)
+            boundary[index] = alphabet[entropy[index + 1] & 63];
+        return length;
+    }
 
     /++
     Parses one MIME type.
